@@ -1878,9 +1878,8 @@ function buildAppForm(body,item){
           </div>
           <input class="fc" id="ip-in" type="text" placeholder="Name (e.g. radarr) or full URL"
             autocomplete="off" value="${esc(siurl)}" class="icon-url-input">
-          <label class="btn bg sm upload-label" id="ip-upload-lbl" title="Upload icon from your computer">
-            ↑ Upload<input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden">
-          </label>
+          <button type="button" class="btn bg sm upload-label" id="ip-upload-lbl" title="Upload icon from your computer">↑ Upload</button>
+          <input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden">
         </div>
         <div class="iprs" id="iprs"></div>
         <div class="hint">Type a name to search, paste a full URL, or upload your own .svg / .png.</div>
@@ -2168,12 +2167,15 @@ function wireIcon(){
 
   /* Upload handler */
   const upInput=document.getElementById('ip-upload');
-  if(upInput){
+  const upBtn=document.getElementById('ip-upload-lbl');
+  /* Explicit click handler — more reliable than a <label> wrapping the input,
+     especially since the button text is swapped during upload. */
+  if(upBtn&&upInput){
+    upBtn.onclick=()=>upInput.click();
     upInput.onchange=async()=>{
       const file=upInput.files[0];if(!file)return;
-      const lbl=document.getElementById('ip-upload-lbl');
-      const origText=lbl?lbl.childNodes[0]?.textContent:'';
-      if(lbl)lbl.childNodes[0].textContent='↑ Uploading…';
+      const origText=upBtn.textContent;
+      upBtn.textContent='↑ Uploading…';
       try{
         const form=new FormData();form.append('icon',file,file.name);
         const r=await fetch('/api/icons/upload',{method:'POST',body:form});
@@ -2187,7 +2189,7 @@ function wireIcon(){
         updPrev();
         toast(`Uploaded ${d.filename}`);
       }catch(e){toast('Upload failed: '+e.message,'err');}
-      finally{if(lbl&&lbl.childNodes[0])lbl.childNodes[0].textContent=origText;upInput.value='';}
+      finally{upBtn.textContent=origText;upInput.value='';}
     };
   }
 
