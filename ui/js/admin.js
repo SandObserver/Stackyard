@@ -1879,7 +1879,7 @@ function buildAppForm(body,item){
           <input class="fc" id="ip-in" type="text" placeholder="Name (e.g. radarr) or full URL"
             autocomplete="off" value="${esc(siurl)}" class="icon-url-input">
           <label class="btn bg sm upload-label" id="ip-upload-lbl" title="Upload icon from your computer">
-            ↑ Upload<input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none">
+            ↑ Upload<input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden">
           </label>
         </div>
         <div class="iprs" id="iprs"></div>
