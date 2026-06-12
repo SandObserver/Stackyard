@@ -400,7 +400,7 @@ export function buildMobile() {
        overlayHref + mobile:true add a transparent layer so swipes page the home screen
        (iframes otherwise swallow the touch) while a tap opens the widget's link. */
     const overlayHref = item.url || item.href || item.widgetConfig?.scrutinyHref || item.widgetConfig?.linkUrl || null;
-    mountScaledWidget(card, { src: widgetSrc(item), title: widgetTitle(item), design, iframeOpts: item.iframe, overlayHref, mobile: true,
+    mountScaledWidget(card, { src: widgetSrc(item, { mobile: true }), title: widgetTitle(item), design, iframeOpts: item.iframe, overlayHref, mobile: true,
       onSwipe: dir => goTo(st().pg + dir) });
     return card;
   }
