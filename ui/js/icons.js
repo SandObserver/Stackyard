@@ -1,9 +1,14 @@
-export let LOCAL_ICONS = new Set();
+export const LOCAL_ICONS = new Set();
 
 export async function loadLocalIcons() {
   try {
     const r = await fetch('/api/icons/local', { cache:'no-store' });
-    if (r.ok) LOCAL_ICONS = new Set((await r.json()).files || []);
+    if (r.ok) {
+      /* Mutate the existing Set so all modules sharing the reference see the update.
+         Reassigning LOCAL_ICONS = new Set(...) would leave other modules with a stale reference. */
+      LOCAL_ICONS.clear();
+      ((await r.json()).files || []).forEach(f => LOCAL_ICONS.add(f));
+    }
   } catch {}
 }
 
