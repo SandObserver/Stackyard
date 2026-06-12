@@ -3,7 +3,7 @@ const https = require('https');
 const fs    = require('fs');
 const path  = require('path');
 
-const { on, json, readBody, setCORS } = require('./router');
+const { on, json, readBody, setPreflightHeaders } = require('./router');
 const { loadConfig, saveConfig, ICONS_PATH } = require('./config');
 const { fetchJSON, pingUrl, checkSsrf, strictCheckSsrf, rewriteUrl } = require('./proxy');
 const { cpuPercent, ramPercent, cpuTemp, diskStats } = require('./metrics');
@@ -186,9 +186,17 @@ on('POST', '/api/auth/logout', (req, res) => {
 on('POST', '/api/auth/set-password', async(req, res) => {
   if (!checkOrigin(req, res)) return;
   try {
+    const cfg = loadConfig();
+    const hasPassword = !!cfg.settings?.auth?.passwordHash;
+    /* If a password is already set, changing it requires an authenticated session.
+       Without this, anyone on the LAN could overwrite the password while auth is
+       disabled (isAuthenticated returns true when auth is off) and lock out the owner.
+       First-time setup (no password yet) is allowed without a session. */
+    if (hasPassword && !require('./auth').hasValidSession(req)) {
+      return json(res, 401, { error:'Authentication required to change the existing password.' });
+    }
     const { password = '' } = JSON.parse(await readBody(req));
     if (!password || password.length < 8) return json(res, 400, { error:'Password must be at least 8 characters.' });
-    const cfg = loadConfig();
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
     cfg.settings.auth.passwordHash = await hashPassword(password);
@@ -217,11 +225,12 @@ on('POST', '/api/auth/toggle', async(req, res) => {
 
 // ── Config routes ──
 
-on('GET', '/api/config', (_, res) => {
-  const cfg  = loadConfig();
+/* Deep-copy a config object and strip all sensitive credentials, replacing each
+   with a boolean *Set indicator. Shared by GET /api/config and /api/config/export
+   so secrets never leave the server in plaintext through either path. */
+function scrubSecrets(cfg) {
   const safe = JSON.parse(JSON.stringify(cfg));
   if (safe.settings?.background?.apiKey) delete safe.settings.background.apiKey;
-  /* Strip sensitive widget credentials — replace password with a boolean indicator */
   if (Array.isArray(safe.items)) {
     safe.items.forEach(item => {
       if (item.type === 'widget' && item.widgetConfig) {
@@ -234,7 +243,6 @@ on('GET', '/api/config', (_, res) => {
           item.widgetConfig.network.myspeedPassSet = true;
           delete item.widgetConfig.network.myspeedPass;
         }
-        /* Strip per-slot passwords, set PassSet flags */
         if (item.widgetType === 'duplicati' && Array.isArray(item.widgetConfig?.slots)) {
           item.widgetConfig.slots = item.widgetConfig.slots.map(s => {
             const out = {...s};
@@ -258,12 +266,20 @@ on('GET', '/api/config', (_, res) => {
       }
     });
   }
-  /* Strip GitHub token — replace with boolean indicator */
   if (safe.settings?.githubToken) {
     safe.settings.githubTokenSet = true;
     delete safe.settings.githubToken;
   }
-  json(res, 200, safe);
+  /* Strip the auth secret and password hash — never expose these through any read path */
+  if (safe.settings?.auth) {
+    delete safe.settings.auth.secret;
+    delete safe.settings.auth.passwordHash;
+  }
+  return safe;
+}
+
+on('GET', '/api/config', (_, res) => {
+  json(res, 200, scrubSecrets(loadConfig()));
 });
 
 on('GET', '/api/settings/unsplash-key', (_, res) => {
@@ -379,7 +395,9 @@ on('POST', '/api/config', async(req, res) => {
 });
 
 on('GET', '/api/config/export', (_, res) => {
-  const d = JSON.stringify(loadConfig(), null, 2);
+  /* Export uses the same secret-scrubbing as GET /api/config — secrets are
+     never written to an exported file. Restored configs re-prompt for credentials. */
+  const d = JSON.stringify(scrubSecrets(loadConfig()), null, 2);
   res.writeHead(200, { 'Content-Type':'application/json', 'Content-Disposition':'attachment; filename="dashboard-apps.json"', 'Content-Length':Buffer.byteLength(d) });
   res.end(d);
 });
@@ -935,15 +953,12 @@ on('POST', '/api/github-token', async(req, res) => {
 // ── GitHub ──
 // Shared helper: resolves the stored GitHub token for a widget item.
 // Token lives in settings.githubToken (server-side, never sent to browser).
-function getGithubToken(widgetId) {
-  const cfg = loadConfig();
-  const token = cfg.settings?.githubToken;
-  if (!token) return null;
-  return token;
+function getGithubToken() {
+  return loadConfig().settings?.githubToken || null;
 }
 
 on('GET', '/api/github-data/:id', async(req, res) => {
-  const token = getGithubToken(req.params.id);
+  const token = getGithubToken();
   if (!token) return json(res, 503, { error: 'GitHub token not configured' });
 
   const cfg = loadConfig();
@@ -961,8 +976,8 @@ on('GET', '/api/github-data/:id', async(req, res) => {
        or fine-grained PAT with "User contributions" read access.
        Private repo contributions only appear with correct token scope. */
     try {
-      const query = `{
-        user(login: "${username}") {
+      const query = `query($login: String!) {
+        user(login: $login) {
           contributionsCollection {
             contributionCalendar {
               totalContributions
@@ -983,7 +998,7 @@ on('GET', '/api/github-data/:id', async(req, res) => {
           'Content-Type': 'application/json',
           'User-Agent': 'homelab-dashboard/1.0',
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, variables: { login: username } }),
         timeout: 10000,
       });
       if (r.status === 401) return json(res, 401, { error: 'Invalid GitHub token' });
@@ -1337,7 +1352,7 @@ on('POST', '/api/duplicati-jobs/:id', async(req, res) => {
   } catch(e) { json(res, 502, { error: e.message }); }
 });
 
-on('OPTIONS', '*', (_, res) => { setCORS(res); res.writeHead(204); res.end(); });
+on('OPTIONS', '*', (_, res) => { setPreflightHeaders(res); res.writeHead(204); res.end(); });
 
 // ── Kopia ──
 

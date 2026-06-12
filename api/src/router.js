@@ -13,7 +13,7 @@ function on(m, p, h) {
 function dispatch(req, res) {
   const u      = new URL(req.url, 'http://x');
   const method = req.method.toUpperCase();
-  setCORS(res);
+  setPreflightHeaders(res);
 
   if (method !== 'OPTIONS' && !PUBLIC_PATHS.has(u.pathname)) {
     if (!isAuthenticated(req)) return json(res, 401, { error:'Unauthorised', auth:true });
@@ -31,7 +31,11 @@ function dispatch(req, res) {
   json(res, 404, { error:'Not found' });
 }
 
-function setCORS(res) {
+/* Sets CORS preflight response headers only. Deliberately does NOT set
+   Access-Control-Allow-Origin — the app is same-origin (UI and API share one
+   Nginx origin), so no cross-origin access is granted. Renamed from setCORS
+   to avoid implying that cross-origin requests are permitted. */
+function setPreflightHeaders(res) {
   res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers','Content-Type');
 }
@@ -52,4 +56,4 @@ function readBody(req) {
   });
 }
 
-module.exports = { on, dispatch, json, readBody, setCORS };
+module.exports = { on, dispatch, json, readBody, setPreflightHeaders };

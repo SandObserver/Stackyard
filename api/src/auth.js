@@ -104,7 +104,8 @@ function rateLimit(ip, key, max, windowMs) {
 }
 setInterval(() => {
   const now = Date.now();
-  for (const [k, v] of _rateBuckets) if (now - v.first > 3_600_000) _rateBuckets.delete(k);
+  for (const [k, v] of _rateBuckets)   if (now - v.first > 3_600_000)     _rateBuckets.delete(k);
+  for (const [k, v] of _loginAttempts) if (now - v.first > LOGIN_WINDOW_MS) _loginAttempts.delete(k);
 }, 600_000);
 
 function isAuthenticated(req) {
@@ -117,9 +118,22 @@ function isAuthenticated(req) {
   return !!verifyToken(token, secret);
 }
 
+/* Like isAuthenticated, but does NOT return true just because auth is disabled.
+   Verifies an actual valid session cookie against the signing secret. Used to
+   gate sensitive operations (e.g. changing an existing password) that must not
+   be possible from an unauthenticated request even when auth is turned off. */
+function hasValidSession(req) {
+  const cfg = loadConfig();
+  const secret = cfg.settings?.auth?.secret;
+  if (!secret) return false;
+  const token = parseCookies(req).ds;
+  if (!token) return false;
+  return !!verifyToken(token, secret);
+}
+
 module.exports = {
   crypto, getOrCreateSecret, hashPassword, verifyPassword,
   makeToken, parseCookies, setSessionCookie, clearSessionCookie,
-  checkRateLimit, recordFailedAttempt, clearAttempts, rateLimit, isAuthenticated,
+  checkRateLimit, recordFailedAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
   log,
 };
