@@ -21,7 +21,11 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
       img.setAttribute('aria-hidden', 'true');
       img.style.cssText = `width:${isz}px;height:${isz}px;object-fit:contain;position:relative;z-index:3;`;
       let step = 0;
-      img.onerror = () => { step++; if (step < chain.length) img.src = chain[step]; else img.replaceWith(fb(item.label, sz)); };
+      const tryNext = () => { step++; if (step < chain.length) img.src = chain[step]; else img.replaceWith(fb(item.label, sz)); };
+      img.onerror = tryNext;
+      /* 403 responses don't trigger onerror — the browser considers them a successful
+         load. Check naturalWidth on load; a broken/blocked image has zero dimensions. */
+      img.onload = () => { if (img.naturalWidth === 0) tryNext(); };
       w.appendChild(img);
     } else w.appendChild(fb(item.label, sz));
   } else w.appendChild(fb(item.label, sz));
