@@ -23,6 +23,11 @@ services:
     pids_limit: 256
     ports:
       - "8700:80"
+    # Allows the container to reach services on the host by IP (e.g. http://10.0.0.100:8989).
+    # On Linux, containers cannot reach the host's LAN IP without this.
+    # host-gateway is a Docker built-in that resolves to the host machine's IP.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./data:/data
       - ./icons:/icons
@@ -39,6 +44,8 @@ services:
       # - SOCKET_PROXY_URL=http://socket-proxy:2375
       # Set to true if behind a reverse proxy (Nginx Proxy Manager, Traefik, etc.)
       # - TRUST_PROXY=true
+      # Set to true to allow widget URLs using private/LAN IP addresses
+      # - ALLOW_PRIVATE_IPS=true
     healthcheck:
       test:
         - CMD
@@ -56,8 +63,13 @@ services:
         max-file: "3"
     networks:
       - stackyard_network
+      # Add your reverse proxy network here, e.g.:
+      # - proxy-net
 
 networks:
   stackyard_network:
     name: stackyard_network
     driver: bridge
+  # proxy-net:
+  #   name: proxy-net
+  #   external: true
