@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backup</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1c1c1e;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+
+  .widget {
+    width: 100%; height: 100%;
+    display: flex; align-items: stretch; justify-content: center;
+    padding: 10px; gap: 12px; box-sizing: border-box;
+  }
+
+  /* Card sizing:
+     Desktop: body is 150px tall, width is large (1-col or 2-col grid).
+              Use calc-based thirds for medium, 62% for small.
+     Mobile:  body is square (small) or wide+short (medium).
+              Use percentage widths that fill the available space.
+     We detect mobile by body height ≤ 200px (small) or aspect ratio > 1.5 (medium mobile).
+     On mobile we fill available width equally; on desktop use aspect-ratio logic. */
+  .card-wrap {
+    position: relative; border-radius: 10px; overflow: hidden;
+    flex-shrink: 0;
+    /* Height always fills the widget (minus padding) */
+    align-self: stretch;
+  }
+  .card-wrap.clickable { cursor: pointer; }
+  .card-wrap.inactive  { opacity: 0.38; pointer-events: none; }
+
+  /* Back card */
+  .card-back {
+    position: absolute; inset: 0; border-radius: 10px;
+    transition: background 0.3s ease;
+    background: rgba(255,255,255,0.08); overflow: hidden;
+  }
+  .card-back canvas {
+    position: absolute; top: 0; left: 0; right: 0;
+    width: 100%; height: calc(100% - 64px);
+    display: block;
+  }
+
+  .card-name-zone {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 64px; padding: 4px 7px 8px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .card-back-meta {
+    font-size: 6.5px; font-weight: 500; opacity: 0.85; line-height: 1.45;
+    max-height: 22px; overflow: hidden; flex-shrink: 0; margin-bottom: 2px;
+    white-space: nowrap; text-overflow: ellipsis;
+  }
+  .card-back-name {
+    font-size: 7px; font-weight: 700; line-height: 1.18; word-break: break-word;
+    flex-shrink: 0;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-back.running { animation: pulse-bg 2s ease-in-out infinite; }
+  @keyframes pulse-bg { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.15)} }
+
+  /* Front card */
+  .card-front {
+    position: absolute; inset: 0; border-radius: 10px;
+    background: #f0f0f0;
+    transition: opacity 0.22s ease;
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+    overflow: hidden;
+  }
+  .card-front::before {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 0; height: 0; border-style: solid;
+    border-width: 0 20px 20px 0;
+    border-color: transparent var(--status-color, rgba(100,100,110,0.22)) transparent transparent;
+    border-radius: 0 10px 0 0;
+  }
+  .card-front::after {
+    content: ''; position: absolute; top: 1px; right: 20px;
+    width: 20px; height: 1px; background: rgba(0,0,0,0.10);
+    transform-origin: right top; transform: rotate(45deg);
+  }
+  .card-front canvas {
+    position: absolute; top: 0; left: 0; right: 0;
+    width: 100%; height: calc(100% - 64px);
+    display: block;
+  }
+  .card-wrap:hover .card-front,
+  .card-wrap:active .card-front { opacity: 0; }
+
+  .card-front-name-zone {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 0 7px 8px;
+  }
+  .card-front-name {
+    font-size: 7px; font-weight: 700; color: #1c1c1e;
+    line-height: 1.18; word-break: break-word;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .sync-icon {
+    display: inline-block; width: 10px; height: 10px;
+    margin-right: 3px; vertical-align: middle; opacity: 0.85;
+    animation: spin 1.4s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;animation:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="widget" id="widget" role="group" aria-label="Backup status"></div>
+<script>
+const id   = new URLSearchParams(location.search).get('id')   || '';
+const size = new URLSearchParams(location.search).get('size') || 'small';
+const API  = '/api';
+
+const NAMED = { green:'#008932', yellow:'#ffcc00', red:'#e9152d', blue:'#1e6ef4' };
+
+function needsDark(hex) {
+  try {
+    const h=hex.replace(/^#/,''); if(h.length!==6) return false;
+    const [r,g,b]=[0,2,4].map(i=>{const v=parseInt(h.slice(i,i+2),16)/255;
+      return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+    const L=0.2126*r+0.7152*g+0.0722*b;
+    return (L+0.05)/0.0617>1.05/(L+0.05);
+  } catch { return false; }
+}
+
+function statusColor(s) {
+  if(s==='healthy') return NAMED.green;
+  if(s==='warning') return NAMED.yellow;
+  if(s==='running') return NAMED.blue;
+  if(s==='error'||s==='missed') return NAMED.red;
+  return null;
+}
+
+let _cfg={}, _pollTimer=null, _pollSec=60, _href='', _jobSlots=[], _hrefs=[];
+
+function parseDate(v) {
+  if(!v) return null;
+  if(typeof v==='number') return new Date(v);
+  const s=String(v).trim();
+  const net=s.match(/\/Date\((-?\d+)([+-]\d{4})?\)\//);
+  if(net) return new Date(parseInt(net[1],10));
+  const c=s.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
+  if(c){const[,yr,mo,dy,hh,mm,ss]=c;return new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:${ss}Z`);}
+  const d=new Date(s); return isNaN(d)?null:d;
+}
+
+function relTime(v) {
+  const d=parseDate(v); if(!d) return '—';
+  const diff=(Date.now()-d.getTime())/1000, abs=Math.abs(diff), past=diff>=0;
+  let l;
+  if(abs<90) l='< 2m'; else if(abs<3600) l=Math.round(abs/60)+'m';
+  else if(abs<86400) l=Math.round(abs/3600)+'h'; else l=Math.round(abs/86400)+'d';
+  return past?l+' ago':'in '+l;
+}
+
+/* ── Seeded LCG ── */
+function mkRng(seed) {
+  let s=seed>>>0;
+  return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/0x100000000; };
+}
+
+const HAIKUS = [
+  ['Trust, but','verify.'],
+  ['Backup or','regret.'],
+  ['Nothing lasts','forever.'],
+  ['Nightly run.','Morning calm.','Data lives.'],
+  ['Backup first.','Delete later.','Sleep better.'],
+  ['Logs green.','Coffee warm.','All good.'],
+  ['Hope is not','a strategy.'],
+  ['Keep it safe.'],
+  ['Expect the','unexpected.'],
+  ['Worries don\'t.','Good backups','do.'],
+  ['Prepare early.','Panic rarely.','Smile.'],
+];
+
+/* Safe rounded rect — avoids ctx.roundRect which has iframe bugs in Safari */
+function rrect(ctx, x, y, w, h, r) {
+  if (w <= 0 || h <= 0) return;
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y,     x + w, y + r,     r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x,     y + h, x,     y + h - r, r);
+  ctx.lineTo(x,     y + r);
+  ctx.arcTo(x,     y,     x + r, y,         r);
+  ctx.closePath();
+}
+
+/* ── Canvas placeholder drawing ──
+   Draws dots/dashes (and optional haiku lines) directly onto a canvas.
+   Zero extra DOM nodes. Called once at buildShell, and redrawn on resize. */
+function drawPh(canvas, haiku, isFront) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2); /* cap DPR at 2 */
+  const W   = canvas.offsetWidth;
+  const H   = canvas.offsetHeight;
+  if (!W || !H) return;
+
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const rng = Math.random.bind(Math);
+
+  /* Colors */
+  const dotC  = isFront ? 'rgba(0,0,0,0.08)'   : 'rgba(255,255,255,0.35)';
+  const dashC = isFront ? 'rgba(0,0,0,0.06)'   : 'rgba(255,255,255,0.28)';
+  const textC = isFront ? 'rgba(0,0,0,0.20)'   : 'rgba(255,255,255,0.50)';
+
+  const PAD    = 10;  /* horizontal padding matching card padding */
+  const usableW = W - PAD * 2;
+  const ROW_H  = 3;   /* dash height px */
+  const GAP    = 5;   /* gap between rows */
+  const STEP   = ROW_H + GAP;
+  const TEXT_H = 8;   /* font size for haiku lines */
+  const TEXT_STEP = TEXT_H + GAP;
+
+  /* Build row plan */
+  const plan = [];
+  if (haiku && haiku.length > 0) {
+    const haikuPx  = haiku.length * TEXT_STEP;
+    const plainPx  = Math.max(0, H - haikuPx);
+    const plainN   = Math.floor((plainPx + GAP) / STEP);
+    /* At least 3 rows above haiku, distribute evenly between gaps */
+    const minTop   = Math.min(3, Math.max(1, Math.floor(plainN * 0.35)));
+    const between  = Math.max(1, Math.floor((plainN - minTop) / Math.max(1, haiku.length)));
+    const after    = Math.max(0, plainN - minTop - between * (haiku.length - 1));
+    for (let r=0; r<minTop; r++) plan.push({type:'plain'});
+    haiku.forEach((line, li) => {
+      plan.push({type:'text', line});
+      if (li < haiku.length-1)
+        for (let r=0; r<between; r++) plan.push({type:'plain'});
+    });
+    for (let r=0; r<after; r++) plan.push({type:'plain'});
+  } else {
+    const n = Math.floor((H+GAP)/STEP);
+    for (let r=0; r<n; r++) plan.push({type:'plain'});
+  }
+
+  /* Draw rows top to bottom */
+  let y = 2; /* top padding */
+  for (const entry of plan) {
+    if (y > H) break;
+
+    if (entry.type === 'text') {
+      ctx.font = `700 ${TEXT_H}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.fillStyle = textC;
+      ctx.textBaseline = 'top';
+      /* Small left dash */
+      const ldW = 4 + Math.floor(rng() * 10);
+      ctx.fillStyle = dashC;
+      rrect(ctx, PAD, y + TEXT_H/2 - 1, ldW, 2, 1);
+      ctx.fill();
+      /* Text */
+      ctx.fillStyle = textC;
+      ctx.fillText(entry.line, PAD + ldW + 3, y);
+      /* Right dash — measure text first */
+      const textW = ctx.measureText(entry.line).width;
+      const rdX   = PAD + ldW + 3 + textW + 3;
+      const rdW   = Math.max(4, usableW - (ldW + 3 + textW + 3));
+      ctx.fillStyle = dashC;
+      if (rdW > 0 && rdX + rdW <= W - PAD) {
+        rrect(ctx, rdX, y + TEXT_H/2 - 1, rdW, 2, 1);
+        ctx.fill();
+      }
+      y += TEXT_STEP;
+
+    } else {
+      /* Plain row: 1–4 dash segments with gaps */
+      let x = PAD;
+      const segs = 1 + Math.floor(rng() * 3);
+      const budgetW = usableW / segs;
+      for (let s=0; s<segs; s++) {
+        const segW = Math.floor((0.3 + rng() * 0.6) * budgetW);
+        /* Occasionally replace a dash with dots */
+        if (rng() < 0.18) {
+          const dotSz = 2 + Math.floor(rng() * 2);
+          const dotCount = 2 + Math.floor(rng() * 4);
+          ctx.fillStyle = dotC;
+          for (let d=0; d<dotCount; d++) {
+            const dx = x + d * (dotSz + 2);
+            if (dx + dotSz > W - PAD) break;
+            ctx.beginPath();
+            ctx.arc(dx + dotSz/2, y + ROW_H/2, dotSz/2, 0, Math.PI*2);
+            ctx.fill();
+          }
+        } else {
+          ctx.fillStyle = dashC;
+          rrect(ctx, x, y, segW, ROW_H, 1.5);
+          ctx.fill();
+        }
+        x += budgetW; /* advance by full budget slot — gap is implicit */
+      }
+      y += STEP;
+    }
+  }
+}
+
+/* ── Mobile detection ──
+   Primary: URL param set by dashboard parent (most reliable).
+   Fallback: check at draw time when dimensions are known. */
+const _mobileParam = new URLSearchParams(location.search).get('mobile') === '1';
+let _isMobile = _mobileParam;
+let _isMobileSquare = false;
+if (_isMobile) document.body.classList.add('is-mobile');
+const _canvases = {}; /* id → {front, back} */
+
+const CARD_COUNT = size==='small' ? 1 : 3;
+
+function slotList() {
+  const base = _jobSlots.slice(0, CARD_COUNT);
+  while (base.length < CARD_COUNT) base.push(null);
+  return base;
+}
+
+function assignHaikus(slots) {
+  /* Shuffle pool randomly — different every reload */
+  const pool = [...HAIKUS].sort(() => Math.random()-0.5);
+  if (size==='small') return slots.map(j => j ? pool[0] : null);
+  const activeIdxs = slots.map((j,i)=>j?i:-1).filter(i=>i>=0);
+  if (!activeIdxs.length) return slots.map(()=>null);
+  const chosen = activeIdxs[Math.floor(Math.random()*activeIdxs.length)];
+  return slots.map((j,i) => (i===chosen&&j) ? pool[0] : null);
+}
+
+async function boot() {
+  try {
+    const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
+    if(r.ok) _cfg=(await r.json()).widgetConfig||{};
+  } catch {}
+  const rawSlots = Array.isArray(_cfg.slots) ? _cfg.slots : [];
+  const count = size==='small' ? 1 : 3;
+  _jobSlots = Array.from({length: count}, (_,i) => rawSlots[i]?.jobId || null);
+  /* Per-slot click URL — each card opens its own instance's link */
+  _hrefs = Array.from({length: count}, (_,i) => {
+    const sl = rawSlots[i]; if(!sl?.provider) return '';
+    return (sl.provider==='kopia' ? sl.kopiaHref : sl.dupHref) || '';
+  });
+  /* pollSec from first configured slot */
+  const firstSlot = rawSlots.find(s=>s?.provider);
+  _pollSec = Math.max(10, parseInt(firstSlot?.dupPollSec || 60, 10));
+  buildShell();
+  await tick();
+  schedulePoll();
+}
+
+function openUrl(u){
+  if(!u) return;
+  try { const a=document.createElement('a'); a.href=u; a.target='_blank'; a.rel='noopener noreferrer';
+        document.body.appendChild(a); a.click(); a.remove(); }
+  catch(_){ window.open(u,'_blank','noopener,noreferrer'); }
+}
+function buildShell() {
+  const w = document.getElementById('widget');
+  w.innerHTML = '';
+
+  const slots  = slotList();
+  const haikus = assignHaikus(slots);
+
+  /* Compute card width based on actual iframe dimensions.
+     On desktop: body is 150px tall, wide iframe — use aspect-ratio-equivalent calc.
+     On mobile:  body can be square (small) or wide+short (medium) — fill proportionally.
+     Strategy: if body is wider than tall (landscape/desktop ratio), cards use fixed width
+     fractions. If body is square or portrait (mobile small widget), cards fill width. */
+  const bodyW = document.body.clientWidth  || window.innerWidth  || 375;
+  const bodyH = document.body.clientHeight || window.innerHeight || 150;
+  const PAD   = 10, GAP = 12;
+  const inner = bodyW - PAD * 2;
+
+  /* Re-evaluate mobile using actual dimensions as fallback.
+     Desktop iframes are always 150px tall. Mobile iframes are taller.
+     Also check square ratio for small mobile slots. */
+  if (!_isMobile && bodyH > 160) {
+    _isMobile = true;
+    document.body.classList.add('is-mobile');
+    /* Apply mobile font sizes to any already-created elements */
+  }
+  _isMobileSquare = _isMobile && (bodyH >= bodyW * 0.75);
+
+  const isMobile       = _isMobile;
+  const isMobileSquare = _isMobileSquare;
+  const isTouch        = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+  let cardW, cardH;
+  if (size === 'small') {
+    if (isMobileSquare) {
+      /* Mobile small: square iframe — card at 55% width, height from aspect ratio */
+      const w = Math.round(inner * 0.62);
+      const h = Math.round(w / 0.68);
+      cardW = w + 'px';
+      cardH = Math.min(h, bodyH - PAD * 2) + 'px';
+    } else if (isMobile) {
+      /* Mobile small in non-square slot — use aspect-ratio-derived width */
+      const h = bodyH - PAD * 2;
+      const w = Math.round(h * 0.68);
+      cardW = Math.min(w, inner) + 'px';
+      cardH = h + 'px';
+    } else {
+      /* Desktop small: larger page */
+      cardW = '80%';
+      cardH = null;
+    }
+  } else {
+    /* Medium: 3 equal columns.
+       On mobile: card height = 80% of iframe height (same ratio as small widget uses),
+       width from aspect ratio — gives same physical card size as small widget. */
+    if (isMobile) {
+      const h = Math.round((bodyH - PAD * 2) * 0.9);
+      const w = Math.round(h * 0.68);
+      cardW = w + 'px';
+      cardH = h + 'px';
+    } else {
+      cardW = `calc((100% - ${GAP * 2}px) / 3)`;
+      cardH = null;
+    }
+  }
+
+  slots.forEach((jobId, idx) => {
+    const isActive = !!jobId;
+    const href  = _hrefs[idx] || '';
+    const seed  = idx * 9371 + 3;
+    const haiku = haikus[idx];
+
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap'
+      + (href&&isActive?' clickable':'')
+      + (isActive?'':' inactive');
+    wrap.style.width = cardW;
+    wrap.style.flex  = '0 0 ' + cardW;
+    if (cardH) { wrap.style.height = cardH; wrap.style.alignSelf = 'center'; }
+
+    if (href && isActive) {
+      if (isTouch) {
+        let _revealTimer = null;
+        wrap.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          const isRevealed = wrap.classList.contains('touch-revealed');
+          /* Reset all cards and clear any pending timers */
+          clearTimeout(_revealTimer);
+          document.querySelectorAll('.card-wrap.touch-revealed').forEach(el => {
+            el.classList.remove('touch-revealed');
+            const f = el.querySelector('.card-front');
+            if (f) f.style.opacity = '';
+          });
+          if (isRevealed) {
+            openUrl(href);
+          } else {
+            wrap.classList.add('touch-revealed');
+            const front = wrap.querySelector('.card-front');
+            if (front) front.style.opacity = '0';
+            /* Auto-reset after 3 seconds if no second tap */
+            _revealTimer = setTimeout(() => {
+              wrap.classList.remove('touch-revealed');
+              if (front) front.style.opacity = '';
+            }, 3000);
+          }
+        });
+      } else {
+        wrap.classList.add('clickable');
+        wrap.addEventListener('click', () => openUrl(href));
+      }
+    }
+
+    /* ── Back card ── */
+    const back = document.createElement('div');
+    back.className = 'card-back'; back.id = `back-${idx}`;
+
+    const backCanvas = document.createElement('canvas');
+    if (isMobile) backCanvas.style.height = 'calc(100% - 100px)';
+    back.appendChild(backCanvas);
+    const backZone = document.createElement('div');
+    backZone.className = 'card-name-zone';
+    if (isMobile) backZone.style.height = '100px';
+
+    const bmeta = document.createElement('div');
+    bmeta.className = 'card-back-meta'; bmeta.id = `back-meta-${idx}`;
+    bmeta.innerHTML = '&nbsp;<br>&nbsp;';
+    if (isMobile) { bmeta.style.fontSize = '10px'; bmeta.style.marginBottom = '2px'; }
+
+    const bname = document.createElement('div');
+    bname.className = 'card-back-name'; bname.id = `back-name-${idx}`;
+    bname.textContent = isActive ? '—' : '';
+    if (isMobile) bname.style.fontSize = '15px';
+
+    backZone.append(bmeta, bname);
+    back.appendChild(backZone);
+
+    /* ── Front card ── */
+    const front = document.createElement('div');
+    front.className = 'card-front'; front.id = `front-${idx}`;
+    front.style.setProperty('--status-color',
+      isActive ? 'rgba(100,100,110,0.28)' : 'rgba(100,100,110,0.14)');
+
+    const frontCanvas = document.createElement('canvas');
+    if (isMobile) frontCanvas.style.height = 'calc(100% - 100px)';
+    front.appendChild(frontCanvas);
+
+    const frontZone = document.createElement('div');
+    frontZone.className = 'card-front-name-zone';
+    const fname = document.createElement('div');
+    fname.className = 'card-front-name'; fname.id = `front-name-${idx}`;
+    fname.textContent = isActive ? '—' : '';
+    if (isMobile) fname.style.fontSize = '15px';
+    frontZone.appendChild(fname);
+    front.appendChild(frontZone);
+
+    wrap.append(back, front);
+    w.appendChild(wrap);
+
+    _canvases[idx] = { front: frontCanvas, back: backCanvas, haiku };
+
+    /* Stagger draws across cards to avoid simultaneous canvas pressure */
+    setTimeout(() => {
+      drawPh(frontCanvas, haiku, true);
+      drawPh(backCanvas,  haiku, false);
+    }, idx * 80);
+  });
+
+}
+
+async function tick() {
+  try {
+    const r=await fetch(`${API}/backup-data/${encodeURIComponent(id)}`);
+    if(!r.ok){applyError(await r.json().catch(()=>({})));return;}
+    const data=await r.json();
+    apply(data);
+    schedulePoll(data.some(j=>j&&j.status==='running')?5:_pollSec);
+  } catch(e){applyError({error:e.message});}
+}
+
+function schedulePoll(sec) {
+  clearTimeout(_pollTimer);
+  _pollTimer=setTimeout(async()=>{await tick();},(sec??_pollSec)*1000);
+}
+
+function apply(jobs) {
+  /* jobs is indexed by slot (same order as slotList) — map directly, never by id,
+     so slots sharing a container/source keep their own name and status. */
+  slotList().forEach((jobId,idx)=>{
+    applyCard(idx, jobId ? (jobs[idx]||null) : null);
+  });
+}
+
+function applyCard(idx, job) {
+  const back  = document.getElementById(`back-${idx}`);
+  const front = document.getElementById(`front-${idx}`);
+  const bname = document.getElementById(`back-name-${idx}`);
+  const bmeta = document.getElementById(`back-meta-${idx}`);
+  const fname = document.getElementById(`front-name-${idx}`);
+  if(!back||!front) return;
+
+  if(!job) {
+    back.style.background='rgba(255,255,255,0.06)'; back.style.color='';
+    back.classList.remove('running');
+    return;
+  }
+
+  const color = statusColor(job.status);
+  const dark  = color ? needsDark(color) : false;
+  const fg    = dark ? '#1c1c1e' : '#fff';
+
+  back.style.background = color||'rgba(255,255,255,0.08)';
+  back.style.color = fg;
+  back.classList.toggle('running', job.status==='running');
+  front.style.setProperty('--status-color', color||'rgba(100,100,110,0.28)');
+
+  /* Redraw back canvas with updated text color when status changes */
+  const c = _canvases[idx];
+  if (c && c.back.offsetWidth && c.back.offsetHeight) {
+    drawPh(c.back, c.haiku, false);
+  }
+
+  if(bname) bname.textContent = job.name||'—';
+  if(fname) fname.textContent = job.name||'—';
+
+  const running = job.status==='running';
+  const last = running ? '' : relTime(job.lastFinished);
+  const next = (!running && job.nextRun) ? relTime(job.nextRun) : '';
+  if(bmeta) {
+    if(running){
+      bmeta.innerHTML=`<svg class="sync-icon" aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg>Running…<br>&nbsp;`;
+    } else {
+      bmeta.innerHTML = next ? `Last ${last}<br>Next ${next}` : `Last ${last}`;
+    }
+  }
+  /* Screen-reader summary on the visible face — status is otherwise colour-only */
+  front.setAttribute('role','img');
+  front.setAttribute('aria-label', `${job.name||'Backup'}: ${running?'running':(job.status||'unknown')}${last?', last '+last:''}${next?', next '+next:''}`);
+  back.setAttribute('aria-hidden','true');
+}
+
+function applyError(err) {
+  slotList().forEach((_,idx)=>{
+    const back  = document.getElementById(`back-${idx}`);
+    const front = document.getElementById(`front-${idx}`);
+    const bname = document.getElementById(`back-name-${idx}`);
+    const bmeta = document.getElementById(`back-meta-${idx}`);
+    const fname = document.getElementById(`front-name-${idx}`);
+    if(back){back.style.background=NAMED.red;back.style.color='#fff';}
+    if(front){ front.style.setProperty('--status-color',NAMED.red); front.setAttribute('role','img'); front.setAttribute('aria-label', `Backup error: ${err?.error||'Unreachable'}`); }
+    if(back) back.setAttribute('aria-hidden','true');
+    if(bname) bname.textContent='Error';
+    if(bmeta) bmeta.innerHTML=(err?.error||'Unreachable')+'<br>&nbsp;';
+    if(fname) fname.textContent='Error';
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+name: stackyard
+
+services:
+  stackyard:
+    container_name: stackyard
+    image: ghcr.io/sandobserver/stackyard:latest
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    privileged: false
+    mem_limit: 384m
+    mem_reservation: 96m
+    memswap_limit: 384m
+    cpu_shares: 90
+    pids_limit: 256
+    ports:
+      - "8700:80"
+    volumes:
+      - ./data:/data
+      - ./icons:/icons
+      # Optional: CPU temperature sensors
+      # - /sys/class/thermal:/sys/class/thermal:ro
+      # Optional: disk usage monitoring (add your mount paths)
+      # - /mnt/your-drive:/mnt/your-drive:ro
+    environment:
+      # Optional overrides — defaults shown
+      # - CONFIG_PATH=/data/apps.json
+      # - ICONS_PATH=/icons
+      # - PORT=3000
+      # Socket proxy URL for Docker container health monitoring
+      # - SOCKET_PROXY_URL=http://socket-proxy:2375
+      # Set to true if behind a reverse proxy (Nginx Proxy Manager, Traefik, etc.)
+      # - TRUST_PROXY=true
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - "-qO-"
+        - http://localhost/api/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - stackyard_network
+
+networks:
+  stackyard_network:
+    name: stackyard_network
+    driver: bridge

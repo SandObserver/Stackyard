@@ -1,0 +1,667 @@
+/* ── Design tokens ── */
+    :root {
+      --glass-bg:         rgba(0,0,0,.32);
+      --glass-border:     rgba(255,255,255,.09);
+      --glass-blur:       blur(16px) saturate(140%);
+      --dock-bg:          rgba(155,155,158,.09);
+      --dock-blur:        blur(14px) saturate(160%);
+      --dock-border:      rgba(255,255,255,.07);
+      --dock-shadow:      0 2px 10px rgba(0,0,0,.20),
+                          inset 0 0 0 1px rgba(255,255,255,.06),
+                          inset 1px 1px 0 rgba(255,255,255,.12),
+                          inset -1px -1px 0 rgba(0,0,0,.10);
+      --icon-inset-shadow: inset 1px 1px 0 rgba(255,255,255,.18),
+                           inset -1px -1px 0 rgba(0,0,0,.14);
+      --icon-sheen:       linear-gradient(135deg,rgba(255,255,255,.10) 0%,transparent 60%);
+      --label-color:      rgba(255,255,255,.90);
+      --label-shadow:     0 1px 4px rgba(0,0,0,.70);
+      --text-shadow-hvy:  0 1px 6px rgba(0,0,0,.70);
+      --bounce-spring:    cubic-bezier(.34,1.56,.64,1);
+      --page-ease:        cubic-bezier(.77,0,.175,1);
+      --badge-red:        rgb(231,18,77);
+      --badge-blue:       rgb(30,110,244);
+    }
+
+    /* ── Reset ── */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+
+    /* ── Root ── */
+    html {
+      width:100vw; height:100vh; overflow:hidden;
+      background: var(--bg-color, #0d1117);
+      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    html::before {
+      content:''; position:fixed; inset:0; z-index:0;
+      background-image: var(--bg-image, none);
+      background-size:cover; background-position:center; pointer-events:none;
+      filter: brightness(var(--bg-brightness, 1));
+      -webkit-transform:translateZ(0); transform:translateZ(0);
+    }
+    body {
+      background:transparent; width:100vw; height:100vh;
+      overflow:hidden; position:relative; z-index:1;
+    }
+    /* ── Boot loading veil — fades out once boot() finishes ── */
+    body::after {
+      content:''; position:fixed; inset:0; z-index:9999;
+      background:#0d1117; pointer-events:none;
+      -webkit-transition:opacity .4s ease; transition:opacity .4s ease;
+    }
+    body.ready::after { opacity:0; }
+
+    /* ── Page strip ── */
+    #pages {
+      position:fixed; inset:0; z-index:10;
+      display:-webkit-flex; display:flex;
+      -webkit-transition:-webkit-transform .44s var(--page-ease);
+      transition:transform .44s var(--page-ease);
+    }
+    .page {
+      -webkit-flex:0 0 100vw; flex:0 0 100vw; width:100vw; height:100vh;
+      display:-webkit-flex; display:flex;
+      -webkit-flex-direction:column; flex-direction:column;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:start; justify-content:start;
+      overflow:hidden;
+      /* Vertical padding: top clears the clock bar, bottom clears the dock.
+         clamp scales gracefully on taller/shorter screens. */
+      padding:clamp(44px,4vh,70px) 270px clamp(110px,10vh,160px);
+    }
+    .grid {
+      display:grid; grid-template-columns:repeat(6,1fr);
+      column-gap:25px; row-gap:30px;
+      width:min(1041px,calc(100vw - 88px)); align-items:start;
+    }
+    .c1 { grid-column:span 1 }
+    .c2 { grid-column:span 2 }
+    .r2 { grid-row:span 2 }
+    .r3 { grid-row:span 3 }
+
+    /* ── Widget card ── */
+    .wc {
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:stretch; align-items:stretch;
+    }
+    .widget {
+      width:100%; border-radius:18px; overflow:hidden;
+      border:1px solid var(--glass-border); background:var(--glass-bg);
+      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    }
+    .widget iframe { display:block; border:0; width:100% }
+
+    /* ── Per-widget-type transparency ── */
+    .widget[data-wtype="duplicati"] {
+      background: rgba(0,0,0,.08);
+      -webkit-backdrop-filter: blur(24px) saturate(140%);
+              backdrop-filter: blur(24px) saturate(140%);
+    }
+    .widget[data-wtype="github"] {
+      background: rgba(0,0,0,.25);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+              backdrop-filter: blur(22px) saturate(140%);
+    }
+    .widget[data-wtype="stats"][data-wsubtype="disk-health"] {
+      background: rgba(18,18,20,0.82);
+      -webkit-backdrop-filter: blur(20px) saturate(120%);
+              backdrop-filter: blur(20px) saturate(120%);
+    }
+    .icon {
+      height:152px;
+      display:-webkit-flex; display:flex;
+      -webkit-flex-direction:column; flex-direction:column;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      text-decoration:none; cursor:pointer; grid-column:span 1;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    /* ── Icon wrap (grid + dock share structure, differ in size via inline style) ── */
+    .iwrap, .dwrap {
+      position:relative;
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      flex-shrink:0; overflow:visible;
+      -webkit-transition:-webkit-transform .18s var(--bounce-spring);
+      transition:transform .18s var(--bounce-spring);
+    }
+    .iwrap { border-radius:16px }
+    .dwrap { border-radius:15px }
+
+    /* Inset shadow bevel — applied via ::before so it doesn't clip children */
+    .iwrap::before, .dwrap::before {
+      content:''; position:absolute; inset:0; border-radius:inherit;
+      background:inherit; z-index:0;
+      box-shadow:var(--icon-inset-shadow);
+    }
+    /* Gloss sheen */
+    .iwrap::after, .dwrap::after {
+      content:''; position:absolute; inset:0; border-radius:inherit;
+      background:var(--icon-sheen);
+      pointer-events:none; z-index:2;
+    }
+    .iwrap img, .dwrap img { object-fit:contain; position:relative; z-index:3 }
+    .iwrap .fb, .dwrap .fb,
+    .dyn-mob-icon .fb, .dyn-dock-icon .fb { position:relative; z-index:3; font-weight:600; color:rgba(255,255,255,.85) }
+
+    /* Hover lift */
+    .icon:hover .iwrap,
+    .folder-icon-link:hover .iwrap {
+      -webkit-transform:scale(1.10) translateY(-4px);
+      transform:scale(1.10) translateY(-4px);
+    }
+    .di:hover .dwrap {
+      -webkit-transform:scale(1.15) translateY(-8px);
+      transform:scale(1.15) translateY(-8px);
+    }
+
+    /* ── Icon label ── */
+    .ilabel {
+      font-size:0.8125rem; font-weight:500; color:var(--label-color);
+      text-align:center; text-shadow:var(--label-shadow); margin-top:6px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+
+    /* ── Badge — iOS size (used by both; desktop overrides below) ── */
+    .badge {
+      position:absolute; top:-13px; right:-13px;
+      min-width:43px; height:43px; border-radius:50px; padding:0 10px;
+      display:none;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      font-size:1.3125rem; font-weight:800; color:#fff; line-height:1;
+      z-index:20; pointer-events:none;
+    }
+    .badge.on  { display:-webkit-flex; display:flex }
+    .badge.red  { background:var(--badge-red) }
+    .badge.blue { background:var(--badge-blue) }
+    .badge.green { background:#00a050 }
+    /* Desktop: restore compact badge size */
+    body:not(.is-mob) .badge {
+      top:-7px; right:-7px;
+      min-width:20px; height:20px; padding:0 5px;
+      font-size:0.6875rem; font-weight:700;
+    }
+
+    /* ── Clock ── */
+    #clock {
+      position:fixed; top:14px; left:max(44px,calc((100vw - 1500px)/2)); z-index:200;
+      color:var(--label-color); font-size:0.8125rem;
+      text-shadow:var(--text-shadow-hvy);
+      pointer-events:none; -webkit-user-select:none; user-select:none;
+    }
+
+    /* ── Top-right controls ── */
+    #ctrls {
+      position:fixed; top:10px; right:max(44px,calc((100vw - 1160px)/2));
+      z-index:200; display:-webkit-flex; display:flex; gap:6px;
+    }
+    .ctrl {
+      width:34px; height:34px; border-radius:9px; border:0; cursor:pointer;
+      background:rgba(255,255,255,.10); color:rgba(255,255,255,.62); font-size:1rem;
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      -webkit-transition:background .15s,color .15s; transition:background .15s,color .15s;
+      text-decoration:none;
+      -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    }
+    .ctrl:hover { background:rgba(255,255,255,.18); color:rgba(255,255,255,.90) }
+
+    /* ── Page dots — iOS-style pill ── */
+    #dots {
+      position:fixed; bottom:160px; left:50%; /* desktop only — mobile overrides bottom inline */
+      -webkit-transform:translateX(-50%); transform:translateX(-50%);
+      display:-webkit-flex; display:flex; gap:10px; z-index:500;
+      background:rgba(255,255,255,.28);
+      -webkit-backdrop-filter:blur(12px) saturate(140%); backdrop-filter:blur(12px) saturate(140%);
+      border-radius:24px; padding:10px 18px;
+      -webkit-align-items:center; align-items:center;
+    }
+    .dot {
+      width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.50);
+      -webkit-transition:background .2s,-webkit-transform .2s,width .25s,opacity .25s;
+      transition:background .2s,transform .2s,width .25s,opacity .25s;
+      cursor:pointer; flex-shrink:0;
+    }
+    .dot.on { background:#fff; -webkit-transform:scale(1.25); transform:scale(1.25) }
+
+    /* ── iOS search pill — mobile only ── */
+    #mob-search-pill {
+      position:fixed; left:50%; z-index:500;
+      -webkit-transform:translateX(-50%); transform:translateX(-50%);
+      display:none; /* shown by buildMobile */
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      background:rgba(60,60,67,.72);
+      -webkit-backdrop-filter:blur(20px) saturate(160%); backdrop-filter:blur(20px) saturate(160%);
+      border-radius:29px;  /* half of 58px = perfect capsule ends */
+      border:0.5px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      overflow:hidden;
+      -webkit-transition:width .25s cubic-bezier(.4,0,.2,1);
+      transition:width .25s cubic-bezier(.4,0,.2,1);
+    }
+    /* Search content — shown when idle */
+    #mob-search-pill .msp-search {
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      gap:5px;
+      position:absolute; inset:0;
+      -webkit-transition:opacity .18s ease; transition:opacity .18s ease;
+      pointer-events:none;
+    }
+    #mob-search-pill .msp-icon {
+      font-size:15px; color:rgba(255,255,255,.60); line-height:1;
+      font-style:normal;
+    }
+    #mob-search-pill .msp-label {
+      font-size:1.375rem; font-weight:400; color:rgba(255,255,255,.80);
+      white-space:nowrap; letter-spacing:0.01em;
+    }
+    /* Dots row — shown when paging */
+    #mob-search-pill .msp-dots {
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      gap:6px;
+      position:absolute; inset:0;
+      opacity:0;
+      -webkit-transition:opacity .18s ease; transition:opacity .18s ease;
+      pointer-events:none;
+    }
+    /* Pill dots — 11px to match JS _pdotSz */
+    #mob-search-pill .msp-dot {
+      width:11px; height:11px; border-radius:50%;
+      background:rgba(255,255,255,.38); flex-shrink:0;
+      -webkit-transition:background .18s,-webkit-transform .18s; transition:background .18s,transform .18s;
+    }
+    #mob-search-pill .msp-dot.on { background:rgba(255,255,255,.90); -webkit-transform:scale(1.2); transform:scale(1.2) }
+    /* State transitions */
+    #mob-search-pill.paging .msp-search { opacity:0; pointer-events:none }
+    #mob-search-pill.paging .msp-dots   { opacity:1; pointer-events:auto }
+
+    /* ── Dock ── */
+    #dock {
+      position:fixed; bottom:12px; left:50%;
+      -webkit-transform:translateX(-50%); transform:translateX(-50%);
+      z-index:400;
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      gap:15px; padding:22px;
+      background:var(--dock-bg);
+      -webkit-backdrop-filter:var(--dock-blur); backdrop-filter:var(--dock-blur);
+      border:1px solid var(--dock-border); border-radius:45px;
+      box-shadow:var(--dock-shadow);
+    }
+    .mdock {
+      position:fixed; left:50%;
+      -webkit-transform:translateX(-50%); transform:translateX(-50%);
+      z-index:400;
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:space-around; justify-content:space-around;
+      background:var(--dock-bg);
+      -webkit-backdrop-filter:var(--dock-blur); backdrop-filter:var(--dock-blur);
+      border:1px solid var(--dock-border);
+      box-shadow:var(--dock-shadow);
+    }
+    .di {
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      cursor:pointer; text-decoration:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    /* ── Spotlight overlay — shared base ── */
+    #spot {
+      position:fixed; inset:0; z-index:1000;
+      display:none; opacity:0;
+      -webkit-transition:opacity .2s ease; transition:opacity .2s ease;
+    }
+    #spot.on  { display:-webkit-flex; display:flex;
+                -webkit-flex-direction:column; flex-direction:column; }
+    #spot.vis { opacity:1 }
+
+    /* ── Spotlight — mobile layout (default, overridden for desktop below) ── */
+    #spot {
+      background:rgba(0,0,0,.52);
+      -webkit-backdrop-filter:blur(40px) saturate(180%) brightness(.76);
+      backdrop-filter:blur(40px) saturate(180%) brightness(.76);
+      -webkit-align-items:stretch; align-items:stretch;
+      -webkit-justify-content:flex-end; justify-content:flex-end;
+      padding-bottom:0; box-sizing:border-box;
+    }
+    /* Results fill from below X button to sbox */
+    #spot #sres {
+      -webkit-flex:1 1 0; flex:1 1 0;
+      overflow-y:auto; -webkit-overflow-scrolling:touch;
+      padding:170px 0 4px; /* 120px (X top) + 40px (X height) + 10px gap */
+      min-height:0;
+    }
+    /* Search bar pinned to bottom on mobile */
+    #spot #sbox {
+      -webkit-flex-shrink:0; flex-shrink:0;
+      padding:10px 16px 12px; box-sizing:border-box;
+    }
+    /* Hide desktop Cancel button on mobile */
+    #spot #spot-cancel { display:none !important; }
+
+    /* ✕ close button — mobile only, shown via JS when spotlight opens */
+    #spot-cancel-mob {
+      display:none; position:fixed; top:120px; right:16px; z-index:1002;
+    }
+    #spot.on #spot-cancel-mob { display:block; }
+    #spot-cancel-mob-btn {
+      width:40px; height:40px; border-radius:50%;
+      background:rgba(118,118,128,.50);
+      border:0; outline:0; cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      position:relative;
+    }
+    #spot-cancel-mob-btn::after { content:''; position:absolute; inset:-7px; }
+
+    /* ── Spotlight — desktop overrides ── */
+    body:not(.is-mob) #spot {
+      background:rgba(0,0,0,.45);
+      -webkit-backdrop-filter:blur(20px) saturate(160%);
+      backdrop-filter:blur(20px) saturate(160%);
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:flex-start; justify-content:flex-start;
+      -webkit-flex-direction:column; flex-direction:column;
+      padding-top:max(env(safe-area-inset-top),80px);
+      box-sizing:border-box;
+    }
+    /* Search bar as a floating card at the top */
+    body:not(.is-mob) #sbox {
+      width:min(680px,92vw);
+      background:rgba(28,28,32,.92);
+      border:1px solid rgba(255,255,255,.14); border-radius:18px;
+      box-shadow:0 20px 60px rgba(0,0,0,.60); overflow:hidden;
+      flex-shrink:0; padding:0;
+    }
+    /* Results as a separate card below the search bar */
+    body:not(.is-mob) #sres {
+      width:min(680px,92vw);
+      max-height:60vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+      padding:6px 0; margin-top:8px; flex:none; min-height:0;
+      background:rgba(28,28,32,.92);
+      border:1px solid rgba(255,255,255,.14); border-radius:18px;
+      box-shadow:0 20px 60px rgba(0,0,0,.40);
+    }
+    body:not(.is-mob) #sres:empty { display:none; }
+    body:not(.is-mob) #spot-cancel-mob { display:none; }
+    body:not(.is-mob) #spot-cancel { display:-webkit-flex; display:flex; }
+
+    /* ── Search bar ── */
+    .spot-bar {
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      gap:10px; padding:14px 18px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    #spot .spot-bar {
+      background:rgba(118,118,128,.30);
+      border-radius:50px; border-bottom:none;
+      padding:22px 22px; gap:14px;
+    }
+    .spot-icon {
+      color:rgba(255,255,255,.45); flex-shrink:0;
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      pointer-events:none;
+    }
+    #sin {
+      -webkit-flex:1; flex:1; background:transparent; border:0; outline:none;
+      font-size:1rem; color:rgba(255,255,255,.92);
+      font-family:inherit; caret-color:#007aff;
+      -webkit-appearance:none; appearance:none;
+      min-height:26px; padding:0; margin:0; width:100%;
+    }
+    /* Mobile only — larger input text to match the bigger search bar */
+    body.is-mob #spot #sin { font-size:1.5625rem; }
+    #sin::placeholder { color:rgba(255,255,255,.38); }
+    #spot #sin::placeholder { color:rgba(235,235,245,.38); }
+    #spot-cancel {
+      display:none; flex-shrink:0; background:transparent; border:0;
+      outline:0; cursor:pointer; -webkit-tap-highlight-color:transparent;
+      font-size:1.0625rem; color:rgba(255,255,255,.55); font-weight:400;
+      padding:0 4px; white-space:nowrap;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+    }
+
+    /* ── Mobile result rows — only apply on mobile ── */
+    body.is-mob #sres .sr { padding:16px 20px; gap:20px; }
+    body.is-mob #sres .sr + .sr { border-top:0.5px solid rgba(255,255,255,.10); }
+    body.is-mob #sres .sr-section { display:none; }
+    body.is-mob #sres .srn { font-size:1.625rem !important; font-weight:500; }
+    body.is-mob #sres .srh { display:none !important; }
+    body.is-mob #sres .sri { width:88px !important; height:88px !important; border-radius:20px; flex-shrink:0; }
+    body.is-mob #sres .sri img, body.is-mob #sres .sri .sri-img { width:60px !important; height:60px !important; }
+
+    /* ── Spotlight result rows ── */
+    .sr-section {
+      font-size:0.8125rem; font-weight:600; color:rgba(255,255,255,.42);
+      padding:10px 16px 4px; letter-spacing:0.04em; text-transform:uppercase;
+      border-bottom:0.5px solid rgba(255,255,255,.08);
+    }
+    .sr {
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      gap:14px; padding:12px 16px; cursor:pointer; text-decoration:none;
+      -webkit-transition:background .12s; transition:background .12s;
+    }
+    .sr:hover, .sr:active, .sr.sel { background:rgba(255,255,255,.07) }
+    .sri {
+      width:44px; height:44px; border-radius:12px;
+      display:-webkit-flex; display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      flex-shrink:0; overflow:hidden;
+    }
+    .sri img, .sri .sri-img { width:28px; height:28px; object-fit:contain }
+    #sres .sri img, #sres .sri .sri-img { width:34px !important; height:34px !important; }
+    .srn { font-size:1.0625rem; font-weight:400; color:rgba(255,255,255,.92) }
+    .srh { font-size:0.8125rem; color:rgba(255,255,255,.38); margin-top:1px }
+
+    /* ── Folder overlay — mobile ── */
+    .folder-overlay-mobile {
+      position:fixed; inset:0; z-index:800;
+      -webkit-backdrop-filter:blur(22px) brightness(.72);
+      backdrop-filter:blur(22px) brightness(.72);
+      background:rgba(0,0,0,.18);
+    }
+    .folder-title-mobile {
+      font-weight:700; color:#fff;
+      text-align:left; line-height:1.05;
+      text-shadow:0 1px 6px rgba(0,0,0,.45);
+      -webkit-user-select:none; user-select:none;
+    }
+    /* Reference: frosted glass, very low opacity dark tint, visible blur of background */
+    .folder-box-mobile {
+      background:rgba(200,200,210,.18);
+      border:0.5px solid rgba(255,255,255,.22);
+      -webkit-backdrop-filter:blur(80px) saturate(180%) brightness(1.40);
+      backdrop-filter:blur(80px) saturate(180%) brightness(1.40);
+    }
+    .folder-dots {
+      display:flex; justify-content:center; align-items:center;
+      flex-shrink:0;
+    }
+    .folder-dot {
+      border-radius:50%; cursor:pointer; flex-shrink:0;
+      background:rgba(255,255,255,.35);
+      -webkit-transition:background .2s,-webkit-transform .2s;
+      transition:background .2s,transform .2s;
+    }
+    .folder-dot.on { background:#fff; -webkit-transform:scale(1.25); transform:scale(1.25) }
+
+    /* ── Folder overlay — desktop ── */
+    .folder-overlay {
+      position:fixed; inset:0; z-index:800;
+      display:flex;
+      -webkit-align-items:center; align-items:center;
+      -webkit-justify-content:center; justify-content:center;
+      background:rgba(0,0,0,.45);
+      -webkit-backdrop-filter:blur(24px); backdrop-filter:blur(24px);
+    }
+    .folder-outer {
+      display:flex; flex-direction:column; align-items:center;
+      gap:16px; max-width:600px; width:90vw;
+    }
+    .folder-title-desktop {
+      font-size:22px; font-weight:600; color:rgba(255,255,255,.95);
+      text-shadow:0 1px 8px rgba(0,0,0,.6); text-align:center;
+    }
+    .folder-box-desktop {
+      background:rgba(30,34,52,.88); border-radius:28px; padding:28px 32px 24px;
+      border:1px solid rgba(255,255,255,.16); width:100%;
+      box-shadow:0 32px 80px rgba(0,0,0,.65),0 0 0 0.5px rgba(255,255,255,.08);
+      -webkit-backdrop-filter:blur(40px) saturate(160%);
+      backdrop-filter:blur(40px) saturate(160%);
+    }
+    .folder-icon-link {
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      text-decoration:none; cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    /* ── Folder icon grid (thumbnail on main homescreen page) ── */
+    .folder-icon-grid {
+      position:absolute; inset:0; border-radius:16px;
+      background:rgba(100,110,140,.30);
+      display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
+      gap:3px; padding:10px; overflow:hidden;
+      -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+      box-shadow:var(--icon-inset-shadow);
+    }
+    .folder-icon-grid-sheen {
+      position:absolute; inset:0; border-radius:16px;
+      pointer-events:none; z-index:2;
+      background:var(--icon-sheen);
+    }
+    .folder-mini-cell {
+      display:flex; align-items:center; justify-content:center; z-index:1;
+    }
+    .folder-mini-bg {
+      width:100%; height:100%; border-radius:28%;
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden; box-shadow:inset 0 0 0 0.5px rgba(255,255,255,.15);
+    }
+    .folder-mini-img { width:72%; height:72%; object-fit:contain }
+    .folder-mini-fb  { font-size:50%; font-weight:700; color:rgba(255,255,255,.85) }
+
+    /* Dynamic layout classes — pixel values set via CSS custom properties from JS */
+    .dyn-box        { position:relative; flex-shrink:0; }
+    .dyn-sz         { width:var(--sz); height:var(--sz); }
+    .dyn-folder-box { position:relative; width:var(--iw); height:var(--iw); flex-shrink:0; }
+    .dyn-grid       { display:grid; grid-template-columns:repeat(6,var(--iw)); gap:24px; justify-content:center; }
+    .dyn-mob-btn    { flex:1; height:var(--rh); background:none; border:none; padding:0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; -webkit-tap-highlight-color:transparent; -webkit-appearance:none; }
+    .dyn-mob-icon   { display:flex; flex-direction:column; align-items:center; justify-content:center; width:var(--cw); height:var(--rh); cursor:pointer; text-decoration:none; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+    .dyn-mob-label  { font-weight:500; color:rgba(255,255,255,.88); text-align:center; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
+    .dyn-fold-label { font-weight:500; color:rgba(255,255,255,.90); text-align:center; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
+    .dyn-fold-wrap  { position:absolute; inset:0; pointer-events:none; border-radius:var(--br); background:rgba(120,130,160,.35); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:var(--gap); padding:var(--pad); overflow:hidden; -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); box-shadow:inset 1px 1px 0 rgba(255,255,255,.22),inset -1px -1px 0 rgba(0,0,0,.12); }
+    .dyn-fold-cell  { display:flex; align-items:center; justify-content:center; z-index:1; pointer-events:none; }
+    .dyn-fold-sheen { position:absolute; inset:0; pointer-events:none; z-index:2; border-radius:inherit; background:linear-gradient(135deg,rgba(255,255,255,.12) 0%,transparent 55%); }
+    .dyn-clip       { overflow:hidden; flex-shrink:0; width:var(--gw); height:var(--gh); }
+    .dyn-strip      { display:flex; height:var(--gh); will-change:transform; transition:transform .3s cubic-bezier(.4,0,.2,1); -webkit-transition:transform .3s cubic-bezier(.4,0,.2,1); }
+    .dyn-page-grid  { flex-shrink:0; display:grid; gap:var(--gap); justify-content:center; align-content:start; width:var(--gw); height:var(--gh); grid-template-columns:repeat(3,var(--fiw)); grid-template-rows:repeat(3,var(--fiw)); }
+    .dyn-dot        { border-radius:50%; cursor:pointer; flex-shrink:0; width:var(--dsz); height:var(--dsz); }
+    .dyn-dots-row   { display:flex; justify-content:center; align-items:center; flex-shrink:0; width:100%; }
+    .dyn-fold-anchor { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; -webkit-tap-highlight-color:transparent; }
+    .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
+    .dyn-title-mob  { position:absolute; pointer-events:none; font-size:var(--tfs); }
+    .dyn-box-mob    { position:absolute; display:flex; flex-direction:column; align-items:center; left:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
+    .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:1; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; overflow:visible; position:relative; }
+
+/* Reduced-motion / reduced-transparency: strip backdrop-filter blur effects
+   for users who prefer it and on older Safari/iOS where blur is expensive. */
+/* Reduced transparency → drop blur/material (legibility), keep motion as-is */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass-blur: none; --dock-blur: none; }
+  * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}
+
+/* Reduced motion → neutralize slides, springs, and lift transforms (HIG: honor Reduce Motion) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    -webkit-transition-duration: .01ms !important; transition-duration: .01ms !important;
+    -webkit-animation-duration: .01ms !important;  animation-duration: .01ms !important;
+    -webkit-animation-iteration-count: 1 !important; animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  #pages { -webkit-transition: none !important; transition: none !important; }
+  .icon:hover .iwrap, .folder-icon-link:hover .iwrap, .di:hover .dwrap,
+  .dot.on { -webkit-transform: none !important; transform: none !important; }
+}
+
+/* API error screen — no inline styles, CSP-safe */
+.api-error-screen {
+  position: fixed; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: rgba(255,255,255,.7); font-family: inherit; gap: 16px; z-index: 10000;
+}
+.api-error-title { font-size: 17px; font-weight: 500; margin: 0; }
+.api-error-sub   { font-size: 13px; color: rgba(255,255,255,.4); margin: 0; }
+.api-error-btn   {
+  margin-top: 8px; padding: 10px 24px; border-radius: 20px;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+  color: #fff; font-size: 15px; cursor: pointer; font-family: inherit;
+}
+
+/* ── Accessibility layer (added in Phase 3) ── */
+
+/* Screen-reader-only utility (used by the search results live region) */
+.visually-hidden {
+  position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* Visible keyboard focus for all interactive elements (HIG: clear, visible focus) */
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
+.icon:focus-visible, .di:focus-visible, .ctrl:focus-visible, .sr:focus-visible,
+.dot:focus-visible, .dyn-mob-icon:focus-visible, .dyn-mob-btn:focus-visible,
+.dyn-dock-icon:focus-visible, .dyn-fold-anchor:focus-visible,
+.folder-icon-link:focus-visible {
+  outline:2px solid #0a84ff; outline-offset:3px; border-radius:8px;
+}
+#sin:focus-visible { outline:none; }
+.spot-bar:focus-within { outline:2px solid #0a84ff; outline-offset:2px; }
+
+/* Larger tap/click area for page dots without changing their visual size */
+.dot { position:relative; }
+.dot::after { content:''; position:absolute; inset:-11px; }
+
+/* Increased-contrast mode (HIG: provide higher contrast when Increase Contrast is on) */
+@media (prefers-contrast: more) {
+  :root {
+    --glass-bg:      rgba(0,0,0,.62);
+    --glass-border:  rgba(255,255,255,.30);
+    --dock-bg:       rgba(40,40,44,.55);
+    --dock-border:   rgba(255,255,255,.30);
+    --label-color:   #ffffff;
+    --label-shadow:  0 1px 4px rgba(0,0,0,.95);
+  }
+  .ilabel, .dyn-mob-label, .dyn-fold-label, .dyn-fold-inner-label { color:#fff; }
+  .ctrl { color:#fff; background:rgba(255,255,255,.22); }
+  .srn  { color:#fff; }
+  .srh, .sr-section { color:rgba(235,235,245,.85); }
+  .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
+  .dot { background:rgba(255,255,255,.75); }
+  .badge { box-shadow:0 0 0 1.5px rgba(0,0,0,.85); }
+}
+
+/* NOTE: widget interiors live in cross-document iframes, so they size to the
+   iframe viewport (vw/vh) directly — no parent container-query needed. Do NOT
+   add `container-type:size` here: it applies size containment and collapses the
+   desktop .widget (which has no explicit height) to 0, hiding all widgets. */

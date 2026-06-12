@@ -1,0 +1,19 @@
+{
+  "name": "Stackyard",
+  "short_name": "Stackyard",
+  "description": "Stackyard — self-hosted homelab dashboard",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    {
+      "src": "/icons/favicon.png",
+      "sizes": "2538x2538",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

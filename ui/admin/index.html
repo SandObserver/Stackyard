@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard Settings</title>
+  <link rel="stylesheet" href="/css/admin.css?v=16">
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>Dashboard Settings</h1>
+    <div class="sp"></div>
+    <div class="flex-gap8">
+      <a href="/" class="btn bg sm">Dashboard</a>
+      <button class="btn bg sm" id="btn-exp">Export</button>
+      <label class="btn bg sm cursor-ptr">Import<input type="file" id="imp" accept=".json" class="file-hidden" aria-label="Import configuration JSON"></label>
+      <button class="btn bp sm" id="btn-add">+ Add</button>
+    </div>
+  </header>
+  <main>
+    <!-- Interface -->
+    <div class="card" id="card-display">
+      <div class="lh" id="lh-display" role="button" tabindex="0" aria-controls="body-display">
+        <h2>Interface</h2><span class="sp"></span><span class="lh-chevron" aria-hidden="true">▼</span>
+      </div>
+      <div class="card-body card-body-display" id="body-display">
+        <div class="trow">
+          <div><div class="tlbl">App titles — Desktop</div></div>
+          <label class="tog"><input type="checkbox" id="set-lbl-d" aria-label="App titles — Desktop"><div class="tr"></div></label>
+        </div>
+        <div class="trow trow-bb">
+          <div><div class="tlbl">App titles — iOS</div></div>
+          <label class="tog"><input type="checkbox" id="set-lbl-m" aria-label="App titles — iOS"><div class="tr"></div></label>
+        </div>
+        <div class="fr pt12 mb0-fr">
+          <label for="bg-type">Wallpaper source</label>
+          <select class="fc" id="bg-type">
+            <option value="unsplash">Unsplash (random photo)</option>
+            <option value="url">Image URL</option>
+            <option value="color">Solid color</option>
+          </select>
+        </div>
+        <div id="bg-unsplash-fields">
+          <div class="fr"><label for="bg-apikey">Unsplash API key</label>
+            <input class="fc" id="bg-apikey" type="text" placeholder="Your Unsplash API key" autocomplete="off"></div>
+          <div class="fr"><label for="bg-col">Collection ID <span class="opt-label">(optional)</span></label>
+            <input class="fc" id="bg-col" type="text" placeholder="AGVpqBZnzUE">
+            <div class="hint">Leave blank for random. Find IDs at unsplash.com/collections</div></div>
+        </div>
+        <div id="bg-url-fields" class="d-none">
+          <div class="fr"><label for="bg-url">Image URL</label>
+            <input class="fc" id="bg-url" type="url" placeholder="https://example.com/photo.jpg"></div>
+        </div>
+        <div id="bg-color-fields" class="d-none">
+          <div class="fr"><label for="bg-color">Color</label>
+            <input class="fc" id="bg-color" type="text" placeholder="#0d1117"></div>
+        </div>
+        <div class="fr" id="bg-brightness-row">
+          <label for="bg-br">Brightness <span id="bg-br-val" class="br-val"></span></label>
+          <input type="range" id="bg-br" min="0.1" max="1.0" step="0.01"
+            class="range-full">
+        </div>
+        <button type="button" class="btn bp sm save-btn" id="bg-save">Save</button>
+      </div>
+    </div>
+    <!-- Server -->
+    <div class="card" id="card-server">
+      <div class="lh" id="lh-server" role="button" tabindex="0" aria-controls="body-server">
+        <h2>Server</h2><span class="sp"></span><span class="lh-chevron" aria-hidden="true">▼</span>
+      </div>
+      <div class="card-body flex card-body-server" id="body-server">
+        <div class="fr">
+          <label for="srv-ip">Host IP</label>
+          <input class="fc" id="srv-ip" type="text" placeholder="e.g. 192.168.1.100">
+          <div class="hint">LAN IP of your server. Used to allow your server's IP in badge URLs and SSRF protection.</div>
+        </div>
+        <div class="trow">
+          <div><div class="tlbl">Docker health checks</div>
+            <div class="tdsc">Shows red badge when a container is down</div></div>
+          <label class="tog"><input type="checkbox" id="srv-docker-en" aria-label="Docker health checks"><div class="tr"></div></label>
+        </div>
+        <div class="sub" id="srv-docker-sub">
+          <div class="fr mb0-fr">
+            <label for="srv-socket">Socket URL</label>
+            <input class="fc" id="srv-socket" type="text" placeholder="http://socket-proxy:2375">
+            <div class="hint">Use the URL of a <strong>socket proxy</strong> container for least-privilege access.<br><span style="color:var(--rd)">⚠ No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly — only do this on a private, trusted network you fully control.</span></div>
+          </div>
+        </div>
+        <div class="trow" id="srv-hide-healthy-row" style="display:none">
+          <div><div class="tlbl">Hide healthy badge</div>
+            <div class="tdsc">Only show badge when a container is unhealthy</div></div>
+          <label class="tog"><input type="checkbox" id="srv-hide-healthy" aria-label="Hide healthy badge"><div class="tr"></div></label>
+        </div>
+        <div class="divider-h"></div>
+        <div class="trow trow-noborder">
+          <div><div class="tlbl">Password protection</div>
+            <div class="tdsc">Require a password to access the dashboard</div></div>
+          <label class="tog"><input type="checkbox" id="sec-en" aria-label="Password protection"><div class="tr"></div></label>
+        </div>
+        <div class="sub" id="sec-sub">
+          <div class="fr">
+            <label for="sec-pw">Password</label>
+            <input class="fc" id="sec-pw" type="password" placeholder="●●●●●●●●●● (configured)" autocomplete="new-password">
+            <div id="sec-pw-bars" class="pw-bars">
+              <div class="pwbar" ></div>
+              <div class="pwbar" ></div>
+              <div class="pwbar" ></div>
+              <div class="pwbar" ></div>
+            </div>
+            <div id="sec-pw-hint" class="pw-hint"></div>
+            <div class="hint pw-hint-static">Leave blank to keep existing password. Min 8 characters.</div>
+          </div>
+          <div class="hint" style="margin-top:8px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:var(--rs);border:1px solid var(--bd)">
+            💡 For stronger protection, consider placing the dashboard behind a dedicated authentication proxy. This built-in password is a lightweight gate, not a full sophisticated authentication layer.
+          </div>
+        </div>
+        <div class="sec-actions">
+          <button type="button" class="btn bp sm" id="srv-save">Save</button>
+          <button type="button" class="btn bg sm d-none" id="sec-logout">Sign out</button>
+        </div>
+      </div>
+    </div>
+    <!-- Apps & Widgets -->
+    <div class="card" id="card-apps">
+      <div class="lh open" id="lh-apps" role="button" tabindex="0" aria-controls="body-apps">
+        <h2>Apps &amp; Widgets</h2><span class="sp"></span><span class="lh-chevron" aria-hidden="true">▼</span>
+      </div>
+      <div class="card-body open" id="body-apps">
+        <div id="al"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="ov">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+    <div class="mh"><h2 id="mt">Add</h2><button class="mx" id="mcls" type="button" aria-label="Close">×</button></div>
+    <div id="type-sw"></div>
+    <div class="mb" id="mb"></div>
+    <div class="mf">
+      <button class="btn bg" id="mcan">Cancel</button>
+      <button class="btn bp" id="msave">Save</button>
+    </div>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Login overlay -->
+<div id="login-screen" class="login-screen">
+  <div class="login-wrap">
+
+    <div class="login-header">
+      <div class="login-icon">
+        <svg width="42" height="42" viewBox="0 0 894 894" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#2681cf" d="M434 100c7.75-5.47 18.9-5.17 26.57.32C492.12 124.76 523.17 149.86 554.55 174.54 583.49 197.18 611.9 220.53 641.07 242.88c6.5 5.77 13.71 10.67 20.32 16.32l.55.29c.11-19.64.08-39.28 0-58.92 1.15-6 6.87-10.63 13-10.41 19.05-.04 38.11-.01 57.16-.03 6 .19 11.48 4.94 12.65 10.73.22 41.46-.18 82.92.41 124.38l.74.7c19.84 16.07 40.01 31.74 60.02 47.59 6.29 5.03 12.86 9.73 18.71 15.27 4.09 3.69 5.76 10.24 2.87 15.13-1.8 3.03-4.66 6.37-8.51 6.22-24.07.37-48.14-.18-72.21.46-.02 42.26-.18 84.52.13 126.78-.44 23.33.29 46.67-.16 70.01-.03 55.69.01 111.39-.03 167.07-1.49 7.91-6.67 14.89-13.43 19.16-8.4 4.52-18.13 3.75-27.33 3.71H173.01c-9.22-.07-17.8-5.68-22.74-13.27-2.76-3.93-3.77-8.65-4.88-13.22.6-16.48.13-32.81.28-48.51.11-104-.09-207.48.03-311.51H76.99c-7.45.35-14.18-7.25-12.77-14.63.64-4.37 3.96-7.64 7.28-10.24C185.01 296.78 298.59 207.04 411.98 117.06 419.21 111.23 426.45 105.41 434 100z"/>
+          <path fill="#90c7f1" d="M442.29 208.33c6.79-2.03 13.86.97 19.1 5.32 64.13 49.89 128.4 99.59 192.53 149.48 3.56 2.47 6.52 5.88 8.02 9.81 2.23 5.31 1.47 11.18 1.37 16.82v304.01c.13 11.77-11 21.76-22.54 21.47H251.03c-10.86.19-21-9.59-20.72-20.46-.02-102-.02-204.01-.04-306 .01-5.27-.45-10.86 2-15.74 1.9-4.5 5.81-7.6 9.58-10.48 13.15-10.56 26.55-20.82 39.95-31.08C326.13 296.12 370.73 261.81 415.04 227.13c6.18-4.87 12.5-9.57 18.7-14.44 2.53-1.99 5.41-3.57 8.55-4.36z"/>
+          <path fill="#2681cf" d="M271.37 374.5c1.49-.51 3.07-.62 4.64-.68 112.31-.04 224.62-.01 336.94-.05 4.36.02 9.23-.49 12.93 2.33 3.91 2.58 5.54 7.39 5.55 11.9-.03 21.35.05 42.71-.04 64.06.01 6.64-5.69 12.43-12.38 12.3-113.01.16-226.03.09-339.04.11-3.88-.08-8.06.14-11.5-1.98-4.25-2.53-5.96-7.75-5.99-12.46-.03-20.68-.02-41.36-.01-62.04-.42-5.86 3.12-11.77 6.9-13.49zM272.17 485.11c1.24-.38 2.52-.58 3.82-.59 113.99-.03 227.98 0 341.97-.02 4.53-.13 9.25 2.04 11.52 5.98 2.22 3.74 1.97 8.25 1.96 12.44-.02 17.64.01 35.29-.01 52.93.06 3.74.56 7.7-1.09 11.2-1.8 4.43-6.45 7.51-11.23 7.45-112.68.03-225.36.05-338.04-.08-4-.1-8.37.57-11.95-1.67-4.52-2.55-6.73-7.93-6.55-12.96-.09-21-.04-42-.1-63 .1-5.7 4.44-10.55 9.83-11.93z"/>
+          <path fill="#2681cf" d="M271.41 595.61c1.48-.57 3.07-.67 4.64-.71 109.65-.06 219.3-.06 328.95-.06 5.36.09 10.76-.09 16.11.54 5.67.9 9.97 5.97 10.2 11.44.23 20.98.1 41.97.14 62.95.1 3.5-.25 7.2-2.3 10.18-2.08 3.49-6.27 5.12-10.17 5.3-112.32.01-224.65.02-336.98.01-2.97-.04-5.95.17-8.91-.17-6.15-1.03-10.87-7.15-10.59-13.33-.03-21.34-.02-42.69-.02-64.03-.25-5.56 3.8-10.54 8.91-12.36z"/>
+        </svg>
+      </div>
+      <div class="login-title">Stackyard</div>
+      <div class="login-sub">Sign in to continue</div>
+    </div>
+
+    <!-- Error -->
+    <div id="login-err" class="login-err" role="alert"></div>
+
+    <!-- Password -->
+    <input id="login-pw" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" class="login-pw">
+
+    <!-- Sign in button -->
+    <button id="login-btn" type="button" class="login-btn">
+      Sign in
+    </button>
+  </div>
+</div>
+
+<!-- Set-password overlay — shown in Security settings when no password is set yet -->
+<div id="setpw-screen" class="setpw-screen">
+  <div class="setpw-wrap">
+    <div class="setpw-card">
+      <div class="setpw-title">Set a password</div>
+      <div class="setpw-desc">Choose a strong password for your dashboard.</div>
+      <input id="setpw-input" type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" class="setpw-input">
+      <!-- Strength indicator -->
+      <div id="setpw-bars" class="setpw-bars">
+        <div class="pwbar" ></div>
+        <div class="pwbar" ></div>
+        <div class="pwbar" ></div>
+        <div class="pwbar" ></div>
+      </div>
+      <div id="setpw-hint" class="setpw-hint"></div>
+      <div id="setpw-err" class="setpw-err" role="alert"></div>
+      <button id="setpw-btn" type="button" class="setpw-btn">
+        Set password
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/js/admin.js?v=38"></script>
+</body></html>
