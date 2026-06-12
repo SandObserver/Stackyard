@@ -1,0 +1,8 @@
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V3
+.Trashes
+__MACOSX/
+*.log
+data/apps.json
