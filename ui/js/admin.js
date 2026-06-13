@@ -1,6 +1,6 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
 import { WIDGET_TYPES, widgetSrc } from '/js/widget-types.js?v=36';
-import { clr as rc } from '/js/utils.js?v=36';
+import { clr as rc } from '/js/utils.js?v=37';
 
 /* Admin UI — Stackyard Dashboard */
 const API = '';

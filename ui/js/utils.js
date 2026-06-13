@@ -54,7 +54,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   if (o.loading) ifr.setAttribute('loading', o.loading);
   ifr.setAttribute('aria-label', title);
   ifr.style.cssText = `position:absolute;top:0;left:0;display:block;border:0;` +
-    `width:${dw}px;height:${dh}px;transform-origin:top left;`;
+    `width:${dw}px;height:${dh}px;transform-origin:top left;opacity:0;transition:opacity .12s ease;`;
   clip.appendChild(ifr); card.appendChild(clip);
 
   /* Optional auto-refresh: reload the iframe on an interval */
@@ -99,6 +99,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     const s = Math.max(w / dw, h / dh);            /* cover; with matched aspect = exact fill */
     const tx = (w - dw * s) / 2, ty = (h - dh * s) / 2;
     ifr.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+    ifr.style.opacity = '1';            /* reveal only once scaled — avoids the flash of unscaled content on load */
   };
   if (typeof ResizeObserver !== 'undefined') { new ResizeObserver(fit).observe(card); }
   else { window.addEventListener('resize', fit); }

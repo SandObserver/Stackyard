@@ -1,6 +1,6 @@
 import { iconChain } from '/js/icons.js?v=36';
 import { widgetSrc, WIDGET_DESIGN } from '/js/widget-types.js?v=36';
-import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=36';
+import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=37';
 
 let _state = null;
 export function initUI(state) { _state = state; }
