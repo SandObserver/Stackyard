@@ -1,0 +1,16 @@
+{
+  "name": "adguard",
+  "label": "AdGuard",
+  "sizes": ["small", "medium"],
+  "fields": [
+    { "key": "adguardUrl",  "type": "text",   "label": "AdGuard Home URL", "placeholder": "adguard-home:80", "hint": "Container name and port, or a full URL." },
+    { "key": "adguardHref", "type": "text",   "label": "Click URL", "optional": true, "hint": "Where clicking the widget opens. Leave blank to disable." },
+    { "key": "adguardUser", "type": "text",   "label": "Username", "optional": true },
+    { "key": "adguardPass", "type": "secret", "label": "Password", "optional": true }
+  ],
+  "data": {
+    "url": "adguardUrl",
+    "auth": { "type": "basic", "user": "adguardUser", "pass": "adguardPass" },
+    "endpoints": { "stats": "/control/stats" }
+  }
+}
