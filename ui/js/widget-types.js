@@ -22,7 +22,7 @@ export const WIDGET_TYPES = {
       if(view==='vpn') return `/widgets/connections-vpn.html?v=6&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}`;
       return `/widgets/connections-map.html?v=11&id=${encodeURIComponent(id)}`;
     }},
-  adguard: { label:'AdGuard',       sizes:['small','medium'],        src:(id,item)=>`/widgets/adguard-stats.html?v=2&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
+  adguard: { label:'AdGuard',       sizes:['small','medium'],        src:(id,item)=>`/widgets/adguard/index.html?v=3&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
   github:  { label:'GitHub',        sizes:['small','medium','large','xlarge'],src:(id,item)=>{
     const view=item?.widgetConfig?.githubView||'prs';
     const file=view==='contributions'?'github-contributions':'github-pullrequests';
