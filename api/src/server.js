@@ -7,6 +7,8 @@ if (process.env.PORT !== undefined && (isNaN(_port) || _port < 1 || _port > 6553
 const PORT = isNaN(_port) ? 3000 : _port;
 
 require('./routes');
+require('./widgets');
+require('./widget-data');
 
 const { dispatch } = require('./router');
 
