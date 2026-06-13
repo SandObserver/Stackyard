@@ -1149,16 +1149,21 @@ on('POST', '/api/icons/upload', async(req, res) => {
     if (/\.svg$/i.test(filename)) {
       const SAFE_ELEMENTS = new Set(['svg','g','path','circle','ellipse','rect','line','polyline','polygon','text','tspan','defs','linearGradient','radialGradient','stop','clipPath','mask','symbol','use','title','desc','style']);
       const SAFE_ATTRS    = new Set(['viewBox','xmlns','width','height','fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','opacity','fill-opacity','stroke-opacity','transform','d','cx','cy','r','rx','ry','x','y','x1','y1','x2','y2','points','offset','stop-color','stop-opacity','gradientUnits','gradientTransform','patternUnits','patternTransform','clip-path','mask','id','class','style','preserveAspectRatio','text-anchor','font-size','font-family','font-weight']);
+      /* Names are compared lowercased, so the allowlists must be too — otherwise
+         camelCase items (viewBox, preserveAspectRatio, linearGradient, …) never
+         match and get stripped, leaving icons with no size. */
+      const SAFE_ELEMENTS_LC = new Set([...SAFE_ELEMENTS].map(s => s.toLowerCase()));
+      const SAFE_ATTRS_LC    = new Set([...SAFE_ATTRS].map(s => s.toLowerCase()));
       const UNSAFE_ATTR_RE = /^(on\w|href|xlink:href|src|action|formaction|data)$/i;
       let svg = fileData.toString('utf8');
       svg = svg.replace(/<\?[\s\S]*?\?>/g, '').replace(/<!--[\s\S]*?-->/g, '').replace(/<!DOCTYPE[^>]*>/gi, '');
       svg = svg.replace(/<(\/?)\s*([a-zA-Z][a-zA-Z0-9:]*)([\s\S]*?)(\/?)?>/g, (match, close, tag, attrs, selfClose) => {
         const localTag = tag.split(':').pop().toLowerCase();
-        if (!SAFE_ELEMENTS.has(localTag)) return '';
+        if (!SAFE_ELEMENTS_LC.has(localTag)) return '';
         const safeAttrs = attrs.replace(/\s([a-zA-Z:_][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))/g, (m, name) => {
           const lname = name.toLowerCase();
           if (UNSAFE_ATTR_RE.test(lname)) return '';
-          if (!SAFE_ATTRS.has(lname) && !lname.startsWith('aria-') && !lname.startsWith('data-')) return '';
+          if (!SAFE_ATTRS_LC.has(lname) && !lname.startsWith('aria-') && !lname.startsWith('data-')) return '';
           return m;
         });
         return `<${close}${tag}${safeAttrs}${selfClose||''}>`;
