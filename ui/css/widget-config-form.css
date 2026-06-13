@@ -1,0 +1,66 @@
+/* Styles for the auto-generated widget config form (widget-config-form.js).
+   Namespaced .wcf-* so they cannot collide with existing admin rules. Only the
+   repeatable-group affordances need styling — all simple fields reuse the
+   existing .fr/.fc/.stl/.hint/.tog classes. Uses the admin theme variables. */
+
+.wcf-group { margin: 6px 0 4px; }
+
+.wcf-row {
+  border: 1px solid var(--bd);
+  border-radius: var(--rs);
+  padding: 12px 14px 6px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.wcf-row-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.wcf-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dm);
+  letter-spacing: 0.02em;
+}
+
+.wcf-add,
+.wcf-remove {
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--rs);
+  border: 1px solid var(--bd);
+  background: none;
+  color: var(--ac2);
+  transition: background var(--t), opacity var(--t);
+}
+
+.wcf-add {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.wcf-remove {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--dm);
+}
+
+.wcf-add:hover,
+.wcf-remove:hover:not(:disabled) { background: rgba(235, 235, 245, 0.08); }
+.wcf-add:active:not(:disabled),
+.wcf-remove:active:not(:disabled) { transform: scale(.97); }
+.wcf-remove:disabled { opacity: .4; cursor: not-allowed; }
+
+.wcf-add:focus-visible,
+.wcf-remove:focus-visible { outline: 2px solid var(--ac2); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wcf-add, .wcf-remove { transition: none; }
+}
