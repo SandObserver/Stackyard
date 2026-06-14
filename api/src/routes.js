@@ -905,33 +905,6 @@ on('GET', '/api/speed-data/:id', async(req, res) => {
 });
 
 
-// ── AdGuard Home ──
-
-on('GET', '/api/adguard-stats/:id', async(req, res) => {
-  const cfg = loadConfig();
-  const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
-  if (!w) return json(res, 404, { error: 'widget not found' });
-
-  const wc = w.widgetConfig || {};
-  if (!wc.adguardUrl) return json(res, 503, { error: 'AdGuard URL not configured' });
-
-  try {
-    const base    = wc.adguardUrl.includes('://') ? wc.adguardUrl.replace(/\/$/, '') : `http://${wc.adguardUrl.replace(/\/$/,'')}`;
-    const headers = {};
-    /* Only attach Authorization when at least one credential is set */
-    if (wc.adguardUser || wc.adguardPass) {
-      headers['Authorization'] = 'Basic ' +
-        Buffer.from(`${wc.adguardUser || ''}:${wc.adguardPass || ''}`).toString('base64');
-    }
-    const r = await fetchJSON(base + '/control/stats', { headers, timeout: 8000 });
-    if (r.status === 401) return json(res, 401, { error: 'AdGuard returned 401 — check credentials' });
-    if (r.status === 403) return json(res, 403, { error: 'AdGuard returned 403 — check credentials' });
-    json(res, 200, r.data);
-  } catch(e) { json(res, 502, { error: e.message }); }
-});
-
-
-
 on('GET', '/api/github-token', (_, res) => {
   const cfg = loadConfig();
   json(res, 200, { configured: !!cfg.settings?.githubToken });
