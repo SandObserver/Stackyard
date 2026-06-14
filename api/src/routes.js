@@ -8,6 +8,8 @@ const { loadConfig, saveConfig, ICONS_PATH } = require('./config');
 const { fetchJSON, pingUrl, checkSsrf, strictCheckSsrf, rewriteUrl } = require('./proxy');
 const { cpuPercent, ramPercent, cpuTemp, diskStats } = require('./metrics');
 const log = require('./log');
+const { scrubConfigSecrets, preserveConfigSecrets, scrubWidgetSecrets } = require('./widget-secrets');
+const { getRegistry } = require('./widgets');
 const {
   crypto, getOrCreateSecret, hashPassword, verifyPassword,
   makeToken, setSessionCookie, clearSessionCookie,
@@ -230,14 +232,12 @@ on('POST', '/api/auth/toggle', async(req, res) => {
    so secrets never leave the server in plaintext through either path. */
 function scrubSecrets(cfg) {
   const safe = JSON.parse(JSON.stringify(cfg));
+  /* Registry widgets: strip declared secrets generically (e.g. AdGuard password). */
+  scrubConfigSecrets(safe);
   if (safe.settings?.background?.apiKey) delete safe.settings.background.apiKey;
   if (Array.isArray(safe.items)) {
     safe.items.forEach(item => {
       if (item.type === 'widget' && item.widgetConfig) {
-        if ('adguardPass' in item.widgetConfig) {
-          item.widgetConfig.adguardPassSet = true;
-          delete item.widgetConfig.adguardPass;
-        }
         if (item.widgetType === 'stats' && item.widgetConfig.network &&
             'myspeedPass' in item.widgetConfig.network) {
           item.widgetConfig.network.myspeedPassSet = true;
@@ -322,15 +322,10 @@ on('POST', '/api/config', async(req, res) => {
       data.settings = data.settings || {};
       data.settings.auth = data.settings.auth || existing.settings.auth;
     }
-    /* Preserve adguardPass for any widget where the browser omitted it
-       (password is stripped from GET /api/config and never round-tripped) */
+    /* Registry widgets: restore declared secrets the browser omitted (e.g. AdGuard password). */
+    preserveConfigSecrets(data, existing);
     if (Array.isArray(data.items) && Array.isArray(existing.items)) {
       data.items.forEach(item => {
-        if (item.type === 'widget' && item.widgetConfig && !('adguardPass' in item.widgetConfig)) {
-          const prev = existing.items.find(e => e.id === item.id);
-          if (prev?.widgetConfig?.adguardPass)
-            item.widgetConfig.adguardPass = prev.widgetConfig.adguardPass;
-        }
         /* Preserve myspeedPass */
         if (item.type === 'widget' && item.widgetType === 'stats' &&
             item.widgetConfig?.network && !('myspeedPass' in item.widgetConfig.network)) {
@@ -563,7 +558,10 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   if (!w) return json(res, 404, { error:'widget not found' });
   /* Never expose stored secrets to the browser — the server proxies all API calls. */
   const wc = JSON.parse(JSON.stringify(w.widgetConfig || {}));
-  ['adguardPass','githubToken'].forEach(k => delete wc[k]);
+  /* Registry widgets: strip declared secrets generically (e.g. AdGuard password). */
+  const _entry = getRegistry()[w.widgetType];
+  if (_entry) scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
+  ['githubToken'].forEach(k => delete wc[k]);
   if (wc.network) delete wc.network.myspeedPass;
   if (Array.isArray(wc.slots)) wc.slots.forEach(s => { if(s){ delete s.dupPass; delete s.kopiaPass; } });
   if (wc.vpn) { delete wc.vpn.apiKey; delete wc.vpn.token; }
