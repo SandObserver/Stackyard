@@ -1,10 +1,11 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
 import { WIDGET_TYPES, widgetSrc } from '/js/widget-types.js?v=36';
 import { clr as rc } from '/js/utils.js?v=37';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=1';
 
 /* Admin UI — Stackyard Dashboard */
 const API = '';
-let items=[],eid=null,saving=false,_settings={};
+let items=[],eid=null,saving=false,_settings={},_widgetReg={};
 const collapsedFolders=new Set(); /* tracks which folder ids are collapsed */
 let ctype='app',siurl='',scol='dark',spaths=[],fnums=[];
 
@@ -130,6 +131,8 @@ async function load(){
   const c=await ag('/api/config');
   items=c.items||[];
   _settings=c.settings||{};
+  /* Folder-style widgets: registry drives their auto-generated config editor. */
+  try{ const wr=await ag('/api/widgets'); _widgetReg={}; (wr.widgets||[]).forEach(w=>{ _widgetReg[w.name]=w; }); }catch{ _widgetReg={}; }
   /* All folders start collapsed — user can expand by clicking */
   items.filter(i=>i.type==='folder').forEach(f=>collapsedFolders.add(f.id));
   render();
@@ -534,6 +537,8 @@ const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk' };
 
 /* State for current widget config while modal is open */
 let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wadguardCfg={}, _wgithubCfg={}, _wclockCfg={}, _wduplicatiCfg={}, _wstatsSubType='system-summary', _wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]}, _iframeOpts={};
+/* Auto-generated config form (folder-style widgets driven by the registry). */
+let _wAutoCfg={}, _autoForm=null, _autoFormType=null;
 
 function buildWidgetForm(body,item){
   const wt0 = item?.widgetType || 'custom';
@@ -542,6 +547,8 @@ function buildWidgetForm(body,item){
   const wc = item?.widgetConfig || {};
   _wtype = wt; _wsize = ws;
   _wlabel = item?.label || '';
+  /* Snapshot of stored config for the auto-generated editor (registry widgets). */
+  _wAutoCfg = Object.assign({}, wc);
   /* Restore slots */
   _wslots = (wc.slots || [{type:'cpu'},{type:'ram'},{type:'disk',primary:'/',secondary:''}]);
   while(_wslots.length < 3) _wslots.push({type:'cpu'});
@@ -611,6 +618,9 @@ function buildWidgetForm(body,item){
 }
 
 function _renderWidgetForm(body){
+  /* Re-render of the same registry widget (e.g. size change): keep typed values. */
+  if(_autoForm && _autoFormType===_wtype){ _wAutoCfg=Object.assign({}, _wAutoCfg, _autoForm.getValues()); }
+  _autoForm=null;
   body.innerHTML='';
 
     const nameDiv=document.createElement('div');nameDiv.className='fr';
@@ -727,7 +737,12 @@ function _renderWidgetForm(body){
   body.appendChild(sizeDiv);
 
     const cfgDiv=document.createElement('div');cfgDiv.className='div';body.appendChild(cfgDiv);
-  if(_wtype==='stats')        _renderStatsConfig(body);
+  if(_widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
+    const d=document.createElement('div'); body.appendChild(d);
+    _autoForm=renderWidgetConfigForm(d, _widgetReg[_wtype].fields||[], _wAutoCfg);
+    _autoFormType=_wtype;
+  }
+  else if(_wtype==='stats')        _renderStatsConfig(body);
   else if(_wtype==='connections') _renderConnectionsConfig(body);
   else if(_wtype==='adguard') _renderAdguardConfig(body);
   else if(_wtype==='github')  _renderGithubConfig(body);
@@ -2582,7 +2597,13 @@ async function doSave(orig){
       /* Generate clean IDs: only letters, digits and underscores */
       const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'widget';
       const wlabel=_wlabel.trim()||(_wtype==='stats'?(_wstatsSubType==='disk-health'?'Disk Health':'System Summary'):_wtype==='connections'?'Connections':_wtype==='adguard'?'AdGuard':_wtype==='github'?'GitHub':_wtype==='clock'?'Clock':_wtype==='duplicati'?'Backup':'Widget');
-      if(_wtype==='clock'){
+      if(_autoForm && _autoFormType===_wtype && _widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
+        const missing=_autoForm.validate();
+        if(missing.length){ toast(missing[0]+' is required','err'); return; }
+        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:_wtype,
+          label:wlabel,widgetSize:_wsize,widgetConfig:_autoForm.getValues()};
+      }
+      else if(_wtype==='clock'){
         const tz=document.getElementById('clk-tz-en')?.checked?(document.getElementById('clk-tz-val')?.value||''):'';
         item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'clock',
           label:wlabel,widgetSize:'small',widgetConfig:{
