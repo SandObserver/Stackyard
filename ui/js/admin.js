@@ -499,7 +499,7 @@ function closeModal(){
   eid=null;
   /* Reset widget state so stale values don't bleed into the next modal open */
   _wtype='custom';_wsize='medium';_wslots=[];_wnet={enabled:false,url:'',provider:'myspeed'};
-  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wadguardCfg={};_wgithubCfg={};_wclockCfg={};_wduplicatiCfg={};_wstatsSubType='system-summary';_wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]};_iframeOpts={};
+  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wduplicatiCfg={};_wstatsSubType='system-summary';_wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]};_iframeOpts={};
 }
 
 function buildTypeSwitch(item){
@@ -536,7 +536,7 @@ const STAT_TYPES  = ['cpu','ram','temp','disk'];
 const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk' };
 
 /* State for current widget config while modal is open */
-let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wadguardCfg={}, _wgithubCfg={}, _wclockCfg={}, _wduplicatiCfg={}, _wstatsSubType='system-summary', _wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]}, _iframeOpts={};
+let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wgithubCfg={}, _wclockCfg={}, _wduplicatiCfg={}, _wstatsSubType='system-summary', _wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]}, _iframeOpts={};
 /* Auto-generated config form (folder-style widgets driven by the registry). */
 let _wAutoCfg={}, _autoForm=null, _autoFormType=null;
 
@@ -587,13 +587,6 @@ function buildWidgetForm(body,item){
     name:      wc.vpn?.name       || '',
     href:      wc.vpn?.href       || '',
     color:     wc.vpn?.color      || '#30D158',
-  };
-  _wadguardCfg = {
-    url:     wc.adguardUrl     || '',
-    user:    wc.adguardUser    || '',
-    passSet: wc.adguardPassSet || false,
-    href:    wc.adguardHref    || '',
-    /* adguardPass is never sent to the browser — passSet tells us one is stored */
   };
   _wgithubCfg = {
     user:      wc.githubUser       || '',
@@ -744,7 +737,6 @@ function _renderWidgetForm(body){
   }
   else if(_wtype==='stats')        _renderStatsConfig(body);
   else if(_wtype==='connections') _renderConnectionsConfig(body);
-  else if(_wtype==='adguard') _renderAdguardConfig(body);
   else if(_wtype==='github')  _renderGithubConfig(body);
   else if(_wtype==='clock')   _renderClockConfig(body);
   else if(_wtype==='duplicati'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderDuplicatiConfig(d); }
@@ -1751,52 +1743,6 @@ function _renderDuplicatiConfig(body){
   }
 }
 
-function _renderAdguardConfig(body){
-  /* ── Connection ── */
-  const hd=document.createElement('div');hd.className='stl';hd.textContent='Connection';body.appendChild(hd);
-
-  const urlDiv=document.createElement('div');urlDiv.className='fr';
-  urlDiv.innerHTML=`<label>AdGuard Home URL <span class="req">*</span></label>
-    <input class="fc" id="ag-url" type="text" placeholder="adguard-home:8080"
-      value="${esc(_wadguardCfg.url||'')}">
-    <div class="hint">Container name and port, or a full URL.</div>`;
-  body.appendChild(urlDiv);
-
-  const hrefDiv=document.createElement('div');hrefDiv.className='fr';
-  hrefDiv.innerHTML=`<label>Click URL <span class="opt-span">(optional)</span></label>
-    <input class="fc" id="ag-href" type="text" placeholder="https://adguard.yourdomain.com"
-      value="${esc(_wadguardCfg.href||'')}">
-    <div class="hint">Where clicking the widget opens. Leave blank to disable clicking.</div>`;
-  body.appendChild(hrefDiv);
-
-  const div1=document.createElement('div');div1.className='div';body.appendChild(div1);
-
-  /* ── Auth ── */
-  const authHd=document.createElement('div');authHd.className='stl';authHd.textContent='Authentication';body.appendChild(authHd);
-
-  const authHint=document.createElement('div');authHint.className='hint';authHint.style.marginBottom='12px';
-  authHint.textContent='Leave blank if your AdGuard Home instance has no login configured.';
-  body.appendChild(authHint);
-
-  const userDiv=document.createElement('div');userDiv.className='fr';
-  userDiv.innerHTML=`<label>Username <span class="opt-span">(optional)</span></label>
-    <input class="fc" id="ag-user" type="text" autocomplete="off"
-      placeholder="admin" value="${esc(_wadguardCfg.user||'')}">`;
-  body.appendChild(userDiv);
-
-  const passDiv=document.createElement('div');passDiv.className='fr';
-  const passHint=_wadguardCfg.passSet
-    ?'A password is saved. Enter a new one to replace it, or leave blank to keep it.'
-    :'Leave blank if no password is required.';
-  passDiv.innerHTML=`<label>Password <span class="opt-span">(optional)</span></label>
-    <div style="position:relative">
-      <input class="fc" id="ag-pass" type="password" autocomplete="new-password"
-        placeholder="${_wadguardCfg.passSet?'••••••••  (saved — leave blank to keep)':'Enter password if required'}">
-    </div>
-    <div class="hint">${esc(passHint)}</div>`;
-  body.appendChild(passDiv);
-}
-
 function _renderGithubConfig(body){
   const curView = _wgithubCfg.view || 'prs';
 
@@ -2657,22 +2603,6 @@ async function doSave(orig){
           item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'connections',
             label:wlabel, widgetSize:'medium',widgetConfig:{ view:'map', services, showLegend:_wmapCfg.showLegend!==false }};
         }
-      }else if(_wtype==='adguard'){
-        const agUrl=document.getElementById('ag-url')?.value?.trim();
-        if(!agUrl){toast('AdGuard URL is required','err');return;}
-        const agUser=document.getElementById('ag-user')?.value?.trim()||'';
-        const agPass=document.getElementById('ag-pass')?.value?.trim()||'';
-        const agHref=document.getElementById('ag-href')?.value?.trim()||'';
-        const wc={adguardUrl:agUrl};
-        if(agUser) wc.adguardUser=agUser;
-        else if(_wadguardCfg.user) wc.adguardUser=_wadguardCfg.user;
-        /* Only include adguardPass if the user typed a new one.
-           If blank, the server preserves the existing password automatically
-           (POST /api/config merges missing adguardPass from existing config). */
-        if(agPass) wc.adguardPass=agPass;
-        if(agHref) wc.adguardHref=agHref;
-        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'adguard',
-          label:wlabel,widgetSize:_wsize,widgetConfig:wc};
       }else if(_wtype==='duplicati'){
         /* Flush current DOM values into slot state before saving */
         _wduplicatiCfg.slots.forEach((slot,si) => {
