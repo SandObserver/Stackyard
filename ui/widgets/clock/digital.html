@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Clock</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+
+  .widget {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 12px 14px; gap: 5px;
+  }
+  .mode-dark  { background: #1c1c1e; }
+  .mode-light { background: #ffffff; }
+
+  /* Two rows: HH on top, MM below */
+  .time-block {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px; flex: 1; width: 100%; min-height: 0;
+  }
+
+  .seg-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 3px; flex-shrink: 0; line-height: 0;
+  }
+
+  .date-line {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    white-space: nowrap; line-height: 1; flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .mode-dark  .date-line { color: rgba(255,255,255,0.38); }
+  .mode-light .date-line { color: rgba(0,0,0,0.33); }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
+</style>
+</head>
+<body>
+<div class="widget mode-dark" id="widget" role="img" aria-label="Clock">
+  <div class="time-block" id="time-block" aria-hidden="true">
+    <div class="seg-row" id="row-h"></div>
+    <div class="seg-row" id="row-m"></div>
+  </div>
+  <div class="date-line" id="date-line" aria-hidden="true"></div>
+</div>
+<script>
+const id  = new URLSearchParams(location.search).get('id') || '';
+const API = '/api';
+
+let _mode     = 'dark';
+let _timezone = '';
+let _showDate = true;
+let _tickId   = null;
+
+const W = 22, H = 40, S = 3.4, G = 1.8, MID = H / 2, PAD = S;
+
+const _DFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const _MFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function _a11yLabel(now){
+  const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
+  return `${hh}:${mm}, ${_DFULL[now.getDay()]}, ${_MFULL[now.getMonth()]} ${now.getDate()}`;
+}
+
+
+function hSeg(y) {
+  const x0 = G, x1 = W - G;
+  return [[x0,y],[x0+S,y-S],[x1-S,y-S],[x1,y],[x1-S,y+S],[x0+S,y+S]]
+    .map(([x,y])=>`${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
+}
+function vSeg(x, y0, y1) {
+  const ya = y0+G, yb = y1-G;
+  return [[x,ya],[x+S,ya+S],[x+S,yb-S],[x,yb],[x-S,yb-S],[x-S,ya+S]]
+    .map(([px,py])=>`${px.toFixed(2)},${py.toFixed(2)}`).join(' ');
+}
+const SEG_PTS = [
+  hSeg(0), vSeg(W,0,MID), vSeg(W,MID,H), hSeg(H),
+  vSeg(0,MID,H), vSeg(0,0,MID), hSeg(MID),
+];
+const SEGS = {
+  0:[1,1,1,1,1,1,0],1:[0,1,1,0,0,0,0],2:[1,1,0,1,1,0,1],
+  3:[1,1,1,1,0,0,1],4:[0,1,1,0,0,1,1],5:[1,0,1,1,0,1,1],
+  6:[1,0,1,1,1,1,1],7:[1,1,1,0,0,0,0],8:[1,1,1,1,1,1,1],
+  9:[1,1,1,1,0,1,1],
+};
+const NS = 'http://www.w3.org/2000/svg';
+
+function makeDigitSVG(dw, dh) {
+  const ph = dh + PAD * 2;
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `${-PAD} ${-PAD} ${W+PAD*2} ${H+PAD*2}`);
+  svg.setAttribute('width', dw);
+  svg.setAttribute('height', ph);
+  svg.style.cssText = 'display:block;flex-shrink:0;';
+  SEG_PTS.forEach(pts => {
+    const p = document.createElementNS(NS, 'polygon');
+    p.setAttribute('points', pts);
+    svg.appendChild(p);
+  });
+  return svg;
+}
+
+let _hSVGs = [], _mSVGs = [], _lastH = [-1,-1], _lastM = [-1,-1];
+
+function getColors() {
+  const dark = _mode === 'dark';
+  return {
+    on:  dark ? 'rgba(255,255,255,0.93)' : 'rgba(0,0,0,0.86)',
+    off: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
+  };
+}
+
+function buildShell() {
+  const w  = document.getElementById('widget');
+  const rh = document.getElementById('row-h');
+  const rm = document.getElementById('row-m');
+  const dl = document.getElementById('date-line');
+
+  w.className = 'widget mode-' + _mode;
+  rh.innerHTML = ''; rm.innerHTML = '';
+  _hSVGs = []; _mSVGs = [];
+  _lastH = [-1,-1]; _lastM = [-1,-1];
+
+  const ww    = w.clientWidth  || 220;
+  const wh    = w.clientHeight || 150;
+  const dateR = _showDate ? 20 : 0;
+  const padV  = 14;
+
+  const availH = wh - dateR - padV;
+  const dh     = Math.min(Math.floor((availH - 2) / 2), 100);
+  let   dw     = Math.round(dh * W / H);
+  if (2*dw + 3 > ww - 16) dw = Math.floor((ww - 19) / 2);
+
+  const { off } = getColors();
+
+  function makeRow(container, svgArr) {
+    const d1 = makeDigitSVG(dw, dh);
+    const d2 = makeDigitSVG(dw, dh);
+    container.style.gap = '3px';
+    container.append(d1, d2);
+    svgArr.push(d1, d2);
+    [d1, d2].forEach(svg =>
+      svg.querySelectorAll('polygon').forEach(p => { p.style.fill = off; })
+    );
+  }
+
+  makeRow(rh, _hSVGs);
+  makeRow(rm, _mSVGs);
+  dl.style.display = _showDate ? '' : 'none';
+}
+
+function applyDigit(svg, n, prev) {
+  if (n === prev) return;
+  const { on, off } = getColors();
+  const bits = SEGS[n];
+  svg.querySelectorAll('polygon').forEach((p, i) => { p.style.fill = bits[i] ? on : off; });
+}
+
+function tick() {
+  const now = _timezone
+    ? new Date(new Date().toLocaleString('en-US', { timeZone: _timezone }))
+    : new Date();
+  const h = now.getHours(), m = now.getMinutes();
+  document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now));
+  const hd = [Math.floor(h/10), h%10];
+  const md = [Math.floor(m/10), m%10];
+  hd.forEach((n,i) => { applyDigit(_hSVGs[i], n, _lastH[i]); _lastH[i] = n; });
+  md.forEach((n,i) => { applyDigit(_mSVGs[i], n, _lastM[i]); _lastM[i] = n; });
+  if (_showDate) {
+    const D = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('date-line').textContent =
+      `${D[now.getDay()]}, ${M[now.getMonth()]} ${now.getDate()}`;
+  }
+  if (_tickId) clearTimeout(_tickId);
+  _tickId = setTimeout(tick, (60 - now.getSeconds()) * 1000);
+}
+
+async function boot() {
+  try {
+    const r = await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
+    if (r.ok) { const d = await r.json(); const wc = d.widgetConfig||{};
+      _mode     = wc.clockMode     || 'dark';
+      _timezone = wc.clockTimezone || '';
+      _showDate = wc.clockShowDate !== false;
+    }
+  } catch {}
+  buildShell();
+  tick();
+}
+
+boot();
+</script>
+</body>
+</html>
