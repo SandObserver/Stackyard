@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GitHub Pull Requests</title>
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:100%;height:100%;overflow:hidden;background:transparent;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;}
+
+  .widget{width:100%;height:100%;display:flex;flex-direction:column;
+    padding:12px 14px;overflow:hidden;container-type:inline-size;gap:0;}
+
+  /* Header row */
+  .hdr{display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:10px;flex-shrink:0;}
+  .hdr-left{display:flex;align-items:center;gap:7px;}
+  .pr-icon{color:#3fb950;display:flex;align-items:center;}
+  .hdr-count{font-weight:600;color:rgba(255,255,255,0.85);}
+  .hdr-label{color:rgba(255,255,255,0.45);font-weight:400;}
+  .gh-logo{opacity:0.7;flex-shrink:0;}
+
+  /* Small */
+  .small-body{display:flex;flex-direction:column;align-items:flex-start;
+    justify-content:flex-end;flex:1;gap:4px;}
+  .small-count{font-weight:700;color:#fff;line-height:1;letter-spacing:-0.03em;}
+  .small-sub{color:rgba(255,255,255,0.45);}
+
+  /* PR list */
+  .pr-list{display:flex;flex-direction:column;gap:0;overflow:hidden;flex:1;min-height:0;}
+  .pr-item{display:flex;flex-direction:column;gap:1px;
+    padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+    cursor:pointer;transition:opacity .15s;flex-shrink:0;}
+  .pr-item:last-child{border-bottom:none;}
+  .pr-item:active{opacity:.65;}
+  .pr-meta{color:rgba(255,255,255,0.38);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pr-title{font-weight:500;color:rgba(255,255,255,0.88);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;line-height:1.3;}
+
+  .msg{flex:1;display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:rgba(255,255,255,0.28);text-align:center;}
+
+  /* Font scale variables — overridden to vw-based values on mobile */
+  :root {
+    --fs-small-count: 42px;
+    --fs-small-sub:   12px;
+    --fs-hdr-count:   14px;
+    --fs-hdr-label:   12px;
+    --fs-pr-title:    13px;
+    --fs-pr-meta:     11px;
+  }
+  .small-count { font-size: var(--fs-small-count); }
+  .small-sub   { font-size: var(--fs-small-sub);   }
+  .hdr-count   { font-size: var(--fs-hdr-count);   }
+  .hdr-label   { font-size: var(--fs-hdr-label);   }
+  .pr-title    { font-size: var(--fs-pr-title);     }
+  .pr-meta     { font-size: var(--fs-pr-meta);      }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
+</style>
+</head>
+<body>
+<div class="widget" id="widget" role="group" aria-label="GitHub pull requests"></div>
+<script>
+const TICK_MS = 60000;
+const id      = new URLSearchParams(location.search).get('id')      || '';
+const size    = new URLSearchParams(location.search).get('size')    || 'medium';
+const mobile  = new URLSearchParams(location.search).get('compact') === '1';
+const API     = '/api';
+
+/* Max PRs to show per size */
+const MAX_ITEMS = size === 'xlarge' ? 16 : size === 'large' ? 10 : size === 'medium' ? 2 : 0;
+
+let cfg = null;
+
+const PR_ICON = `<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+  <path fill="#3fb950" d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"/>
+</svg>`;
+
+const GH_LOGO = `<svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+  <path fill-rule="evenodd" clip-rule="evenodd"
+    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+       0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+       -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87
+       2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+       0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82
+       .64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82
+       .44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65
+       3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38
+       A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+    fill="rgba(255,255,255,0.55)"/>
+</svg>`;
+
+async function boot() {
+  const iw = parseInt(new URLSearchParams(location.search).get('iw')||'0',10);
+  if (iw) {
+    const vp = document.querySelector('meta[name=viewport]');
+    if (vp) vp.setAttribute('content',`width=${Math.round(iw/3)},initial-scale=1`);
+  }
+  if (mobile) {
+    const s = document.createElement('style');
+    s.textContent = `
+      .small-count { font-size: 54px !important; }
+      .small-sub   { font-size: 16px !important; }
+      .hdr-count   { font-size: 20px !important; }
+      .hdr-label   { font-size: 16px !important; }
+      .pr-title    { font-size: 18px !important; }
+      .pr-meta     { font-size: 14px !important; }
+    `;
+    document.head.appendChild(s);
+  }
+  try {
+    const r = await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
+    if (r.ok) cfg = await r.json();
+  } catch {}
+  if (!cfg) cfg = { widgetConfig:{} };
+  buildShell();
+  await tick();
+  setInterval(tick, TICK_MS);
+}
+
+function buildShell() {
+  const w = document.getElementById('widget');
+  w.innerHTML = '';
+
+  if (size === 'small') {
+    /* Small: PR icon + count + label + GitHub logo */
+    const hdr = document.createElement('div'); hdr.className = 'hdr';
+    const hl  = document.createElement('div'); hl.className = 'hdr-left';
+    const ico = document.createElement('span'); ico.className = 'pr-icon'; ico.innerHTML = PR_ICON; ico.setAttribute('aria-hidden','true');
+    const lbl = document.createElement('span'); lbl.className = 'hdr-label'; lbl.id = 'hdr-label';
+    lbl.textContent = '—';
+    if (mobile) lbl.style.fontSize = '16px';
+    const gh  = document.createElement('span'); gh.className = 'gh-logo'; gh.innerHTML = GH_LOGO; gh.setAttribute('aria-hidden','true');    hl.append(ico, lbl); hdr.append(hl, gh);
+
+    const body  = document.createElement('div'); body.className = 'small-body';
+    const count = document.createElement('div'); count.className = 'small-count'; count.id = 'small-count';
+    count.textContent = '—';
+    const sub   = document.createElement('div'); sub.className = 'small-sub'; sub.id = 'small-sub';
+    sub.textContent = 'Pull Requests';
+    if (mobile) {
+      count.style.fontSize = '54px';
+      sub.style.fontSize   = '16px';
+    }
+    body.append(count, sub);
+    w.append(hdr, body);
+  } else {
+    /* Medium / Large: header + list */
+    const hdr = document.createElement('div'); hdr.className = 'hdr';
+    const hl  = document.createElement('div'); hl.className = 'hdr-left';
+    const ico = document.createElement('span'); ico.className = 'pr-icon'; ico.innerHTML = PR_ICON;
+    const cnt = document.createElement('span'); cnt.className = 'hdr-count'; cnt.id = 'hdr-count';
+    cnt.textContent = '—';
+    const lbl = document.createElement('span'); lbl.className = 'hdr-label'; lbl.id = 'hdr-label';
+    lbl.textContent = '';
+    const gh  = document.createElement('span'); gh.className = 'gh-logo'; gh.innerHTML = GH_LOGO;
+    hl.append(ico, cnt, lbl); hdr.append(hl, gh);
+
+    const list = document.createElement('div'); list.className = 'pr-list'; list.id = 'pr-list';
+    w.append(hdr, list);
+  }
+}
+
+async function tick() {
+  try {
+    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=data`);
+    if (!r.ok) {
+      const d = await r.json().catch(()=>({}));
+      showError(r.status===503?'Not configured':r.status===401?'Bad token':d.error||('Error '+r.status));
+      return;
+    }
+    const d = await r.json();
+    if (d && d.error) { showError(d.error); return; }
+    render(d);
+  } catch { showError('Unreachable'); }
+}
+
+function render(data) {
+  /* data: { totalCount, label, items:[{number,title,repo,url}] } */
+  const total = data.totalCount ?? 0;
+  const label = data.label     || 'created';
+  const items = data.items     || [];
+
+  /* Remove any existing error message */
+  const existing = document.getElementById('pr-error');
+  if (existing) existing.remove();
+
+  if (size === 'small') {
+    const sc = document.getElementById('small-count'); if(sc) sc.textContent = total;
+    const sl = document.getElementById('hdr-label');   if(sl) sl.textContent = `${total} ${label}`;
+    /* Make count clickable to open all PRs */
+    const body = document.querySelector('.small-body');
+    if (body && data.allUrl) {
+      body.style.cursor = 'pointer';
+      body.setAttribute('role','link'); body.setAttribute('tabindex','0');
+      body.setAttribute('aria-label', `${total} pull requests ${label} — view all`);
+      const go = () => window.open(data.allUrl, '_blank', 'noopener,noreferrer');
+      body.onclick = go;
+      body.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } };
+    }
+    return;
+  }
+
+  /* Medium / Large */
+  const cnt = document.getElementById('hdr-count'); if(cnt) cnt.textContent = total;
+  const lbl = document.getElementById('hdr-label'); if(lbl) lbl.textContent = ` ${label}`;
+
+  /* Header click → all PRs */
+  const hdr = document.querySelector('.hdr');
+  if (hdr && data.allUrl) {
+    hdr.style.cursor = 'pointer';
+    hdr.setAttribute('role','link'); hdr.setAttribute('tabindex','0');
+    hdr.setAttribute('aria-label', `${total} pull requests ${label} — view all`);
+    const go = () => window.open(data.allUrl, '_blank', 'noopener,noreferrer');
+    hdr.onclick = go;
+    hdr.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } };
+  }
+
+  /* Rebuild list */
+  const list = document.getElementById('pr-list'); if (!list) return;
+  list.innerHTML = ''; list.setAttribute('role','list');
+
+  const visible = items.slice(0, MAX_ITEMS);
+  if (visible.length === 0) {
+    const empty = document.createElement('div'); empty.className = 'msg';
+    empty.textContent = 'No pull requests'; list.appendChild(empty); return;
+  }
+
+  visible.forEach(pr => {
+    const item  = document.createElement('div'); item.className = 'pr-item';
+    const meta  = document.createElement('div'); meta.className = 'pr-meta';
+    meta.textContent = `${pr.repo} #${pr.number}`;
+    const title = document.createElement('div'); title.className = 'pr-title';
+    title.textContent = pr.title;
+    item.append(meta, title);
+    item.setAttribute('aria-label', `${pr.repo} #${pr.number}: ${pr.title}`);
+    if (pr.url) {
+      item.setAttribute('role','link'); item.setAttribute('tabindex','0');
+      const go = () => window.open(pr.url,'_blank','noopener,noreferrer');
+      item.addEventListener('click', go);
+      item.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } });
+    } else { item.setAttribute('role','listitem'); }
+    list.appendChild(item);
+  });
+}
+
+function showError(msg) {
+  if (size === 'small') {
+    const sc = document.getElementById('small-count'); if(sc) sc.textContent = '—';
+    return;
+  }
+  const list = document.getElementById('pr-list'); if (!list) return;
+  list.innerHTML = '';
+  const m = document.createElement('div'); m.className = 'msg'; m.id = 'pr-error';
+  m.textContent = msg; list.appendChild(m);
+}
+
+boot();
+</script>
+</body>
+</html>
