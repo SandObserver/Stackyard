@@ -1,0 +1,21 @@
+{
+  "name": "clock",
+  "label": "Clock",
+  "sizes": ["small"],
+  "fields": [
+    { "key": "clockStyle", "type": "select", "variant": "pills", "label": "Style",
+      "options": [
+        { "value": "digital", "label": "Digital" },
+        { "value": "analog",  "label": "Analog" }
+      ] },
+    { "key": "clockMode", "type": "select", "variant": "pills", "label": "Theme",
+      "options": [
+        { "value": "dark",  "label": "Dark" },
+        { "value": "light", "label": "Light" }
+      ] },
+    { "key": "clockTimezone", "type": "text", "label": "Timezone", "optional": true,
+      "placeholder": "America/Toronto",
+      "hint": "IANA timezone name. Leave blank for the browser's local time." },
+    { "key": "clockShowDate", "type": "toggle", "label": "Show date", "default": true }
+  ]
+}
