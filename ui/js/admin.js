@@ -253,19 +253,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     /* Remove from any folder */
     items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==item.id);});
     items.splice(idx,1);
-    const wasLastGithub=item.type==='widget'&&item.widgetType==='github'
-      &&items.filter(i=>i.type==='widget'&&i.widgetType==='github').length===0;
-    /* Save first, then clear token after save completes so the GET /api/config
-       inside save() doesn't re-read and re-write the token over our deletion */
-    save().then(()=>{
-      if(wasLastGithub){
-        fetch('/api/github-token',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({token:''})}).then(()=>{
-          _settings.githubTokenSet=false;
-          delete _settings.githubToken;
-        }).catch(()=>{});
-      }
-    }).catch(()=>{});
+    save().catch(()=>{});
   };
   ac.appendChild(dl);
   row.append(handle,ico,inf,pb,ac);
@@ -588,20 +576,6 @@ function buildWidgetForm(body,item){
     href:      wc.vpn?.href       || '',
     color:     wc.vpn?.color      || '#30D158',
   };
-  _wgithubCfg = {
-    user:      wc.githubUser       || '',
-    prFilter:  wc.githubPrFilter   || 'created',
-    prFilters: wc.githubPrFilters  || [wc.githubPrFilter||'created'],
-    view:      wc.githubView       || 'prs',
-    href:      wc.githubHref       || '',
-    tokenSet:  !!(_settings.githubTokenSet || _settings.githubToken),
-  };
-  _wclockCfg = {
-    style:    wc.clockStyle    || 'digital',
-    mode:     wc.clockMode     || 'dark',
-    timezone: wc.clockTimezone || '',
-    showDate: wc.clockShowDate !== false,
-  };
   _wduplicatiCfg = {
     /* Per-slot useDefault: first instance of a provider is its default; later
        instances use that default unless turned off (then they get their own container). */
@@ -665,7 +639,7 @@ function _renderWidgetForm(body){
   const sizeRow=document.createElement('div');sizeRow.className='wtype-row';sizeRow.setAttribute('role','group');sizeRow.setAttribute('aria-label','Widget size');
   /* Only render sizes this widget actually supports (no greyed-out chips).
      Contributions view further restricts github to small/medium. */
-  const _ghContrib=(_wtype==='github'&&(_wgithubCfg.view||'prs')==='contributions');
+  const _ghContrib=(_wtype==='github'&&(_wAutoCfg.githubView||'prs')==='contributions');
   let _sizeOpts=(WIDGET_SIZES[_wtype]||['medium']).filter(s=>!(_ghContrib&&(s==='large'||s==='xlarge')));
   if(_wtype==='connections') _sizeOpts = (_wconnView==='map') ? ['medium'] : ['small','medium'];
   if(!_sizeOpts.includes(_wsize)) _wsize=_sizeOpts.includes('medium')?'medium':_sizeOpts[0];
@@ -701,8 +675,6 @@ function _renderWidgetForm(body){
   }
   else if(_wtype==='stats')        _renderStatsConfig(body);
   else if(_wtype==='connections') _renderConnectionsConfig(body);
-  else if(_wtype==='github')  _renderGithubConfig(body);
-  else if(_wtype==='clock')   _renderClockConfig(body);
   else if(_wtype==='duplicati'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderDuplicatiConfig(d); }
   else                        _renderCustomConfig(body);
 }
@@ -1178,82 +1150,6 @@ function _renderMapConfig(body){
   body.appendChild(lRow);
 }
 
-function _renderClockConfig(body){
-  /* ── Mode ── */
-  const modeDiv=document.createElement('div');modeDiv.className='fr';
-  modeDiv.innerHTML='<label>Mode</label>';
-  const modeRow=document.createElement('div');modeRow.className='wtype-row';
-  modeRow.setAttribute('role','group');modeRow.setAttribute('aria-label','Clock mode');
-  [['dark','Dark'],['light','Light']].forEach(([v,l])=>{
-    const b=document.createElement('button');b.type='button';
-    b.className='wchip'+(_wclockCfg.mode===v?' on':'');b.textContent=l;
-    b.setAttribute('aria-pressed',String(_wclockCfg.mode===v));
-    b.onclick=()=>{_wclockCfg.mode=v;modeRow.querySelectorAll('.wchip').forEach(c=>{const on=c===b;c.classList.toggle('on',on);c.setAttribute('aria-pressed',String(on));});};
-    modeRow.appendChild(b);
-  });
-  modeDiv.appendChild(modeRow);body.appendChild(modeDiv);
-
-  const div1=document.createElement('div');div1.className='div';body.appendChild(div1);
-
-  /* ── Show date ── */
-  const dateRow=document.createElement('div');dateRow.className='trow trow-noborder';
-  dateRow.innerHTML=`<div><div class="tlbl">Show date</div><div class="tdsc">Display day and date below the time</div></div>
-    <label class="tog"><input type="checkbox" id="clk-date" ${_wclockCfg.showDate?'checked':''}><div class="tr"></div></label>`;
-  body.appendChild(dateRow);
-  dateRow.querySelector('#clk-date').onchange=e=>{_wclockCfg.showDate=e.target.checked;};
-
-  const div2=document.createElement('div');div2.className='div';body.appendChild(div2);
-
-  /* ── Timezone ── */
-  const tzHd=document.createElement('div');tzHd.className='stl';tzHd.textContent='Timezone';body.appendChild(tzHd);
-  const tzRow=document.createElement('div');tzRow.className='trow trow-noborder';
-  tzRow.innerHTML=`<div><div class="tlbl">Custom timezone</div><div class="tdsc">Override browser local time</div></div>
-    <label class="tog"><input type="checkbox" id="clk-tz-en" ${_wclockCfg.timezone?'checked':''}><div class="tr"></div></label>`;
-  body.appendChild(tzRow);
-  const tzSub=document.createElement('div');tzSub.className='sub'+(_wclockCfg.timezone?' open':'');
-
-  /* Common IANA timezone list */
-  const TZ_LIST=[
-    'Africa/Cairo','Africa/Johannesburg','Africa/Lagos','Africa/Nairobi',
-    'America/Anchorage','America/Chicago','America/Denver','America/Halifax',
-    'America/Los_Angeles','America/Mexico_City','America/New_York',
-    'America/Phoenix','America/Sao_Paulo','America/St_Johns','America/Toronto',
-    'America/Vancouver','Asia/Bangkok','Asia/Colombo','Asia/Dubai',
-    'Asia/Hong_Kong','Asia/Jakarta','Asia/Karachi','Asia/Kolkata',
-    'Asia/Seoul','Asia/Shanghai','Asia/Singapore','Asia/Taipei',
-    'Asia/Tehran','Asia/Tokyo','Atlantic/Azores','Australia/Adelaide',
-    'Australia/Brisbane','Australia/Perth','Australia/Sydney',
-    'Europe/Amsterdam','Europe/Athens','Europe/Berlin','Europe/Brussels',
-    'Europe/Bucharest','Europe/Budapest','Europe/Dublin','Europe/Helsinki',
-    'Europe/Istanbul','Europe/Kiev','Europe/Lisbon','Europe/London',
-    'Europe/Madrid','Europe/Moscow','Europe/Oslo','Europe/Paris',
-    'Europe/Prague','Europe/Rome','Europe/Stockholm','Europe/Vienna',
-    'Europe/Warsaw','Europe/Zurich','Pacific/Auckland','Pacific/Fiji',
-    'Pacific/Honolulu','Pacific/Midway','UTC',
-  ];
-  const sel=document.createElement('select');sel.className='fc';sel.id='clk-tz-val';
-  TZ_LIST.forEach(tz=>{
-    const o=document.createElement('option');o.value=tz;o.textContent=tz.replace('_',' ');
-    if(tz===_wclockCfg.timezone)o.selected=true;
-    sel.appendChild(o);
-  });
-  const tzFr=document.createElement('div');tzFr.className='fr fr-mb0';
-  const tzLbl=document.createElement('label');tzLbl.textContent='Select timezone';tzLbl.htmlFor='clk-tz-val';
-  const tzHint=document.createElement('div');tzHint.className='hint';
-  tzHint.textContent='IANA timezone name. The widget will show time in this zone regardless of your browser.';
-  tzFr.append(tzLbl,sel,tzHint);
-  tzSub.appendChild(tzFr);
-  body.appendChild(tzSub);
-
-  tzRow.querySelector('#clk-tz-en').onchange=e=>{
-    const open=e.target.checked;
-    tzSub.classList.toggle('open',open);
-    if(!open)_wclockCfg.timezone='';
-    else _wclockCfg.timezone=sel.value;
-  };
-  sel.onchange=()=>{_wclockCfg.timezone=sel.value;};
-}
-
 function _renderCustomConfig(body){
   const fr=document.createElement('div');fr.className='fr';fr.style.marginBottom='0';
   const lbl=document.createElement('label');
@@ -1704,61 +1600,6 @@ function _renderDuplicatiConfig(body){
   for (let si=0; si<slotCount; si++) {
     if (si > 0) { const d=document.createElement('div');d.className='div';body.appendChild(d); }
     body.appendChild(buildSlotSection(si));
-  }
-}
-
-function _renderGithubConfig(body){
-  const curView = _wgithubCfg.view || 'prs';
-
-  /* ── Token ── */
-  const tokHd=document.createElement('div');tokHd.className='stl';tokHd.textContent='GitHub Token';body.appendChild(tokHd);
-  const tokDiv=document.createElement('div');tokDiv.className='fr';
-  tokDiv.innerHTML=`<label>Personal Access Token <span class="opt-span">(${_wgithubCfg.tokenSet?'saved':'required'})</span></label>
-    <input class="fc" id="gh-token" type="password" autocomplete="new-password"
-      placeholder="${_wgithubCfg.tokenSet?'••••••••  (saved — leave blank to keep)':'ghp_xxxxxxxxxxxxxxxx'}">
-    <div class="hint">Scopes needed: <code>read:user</code> + <code>repo</code>. Shared across all GitHub widgets.</div>`;
-  body.appendChild(tokDiv);
-
-  const div1=document.createElement('div');div1.className='div';body.appendChild(div1);
-
-  /* ── 3. Account ── */
-  const accHd=document.createElement('div');accHd.className='stl';accHd.textContent='Account';body.appendChild(accHd);
-  const userDiv=document.createElement('div');userDiv.className='fr';
-  userDiv.innerHTML=`<label>GitHub Username <span class="req">*</span></label>
-    <input class="fc" id="gh-user" type="text" autocomplete="off"
-      placeholder="your-github-username" value="${esc(_wgithubCfg.user||'')}">`;
-  body.appendChild(userDiv);
-
-  const hrefDiv=document.createElement('div');hrefDiv.className='fr';
-  hrefDiv.innerHTML=`<label>Click URL <span class="opt-span">(optional)</span></label>
-    <input class="fc" id="gh-href" type="text" placeholder="https://github.com"
-      value="${esc(_wgithubCfg.href||'')}">
-    <div class="hint">Where clicking the widget opens. Leave blank to disable.</div>`;
-  body.appendChild(hrefDiv);
-
-  /* ── 4. PR-specific section ── */
-  if(curView==='prs'){
-    const div2=document.createElement('div');div2.className='div';body.appendChild(div2);
-    const prHd=document.createElement('div');prHd.className='stl';prHd.textContent='Pull Requests';body.appendChild(prHd);
-
-    const activeFilters=_wgithubCfg.prFilters||[_wgithubCfg.prFilter||'created'];
-    const filterWrap=document.createElement('div');filterWrap.className='fr';
-    filterWrap.innerHTML='<label>Show pull requests</label>';
-    /* Checkboxes — one per filter, all visible, no dropdown */
-    const cbWrap=document.createElement('div');cbWrap.style.cssText='display:flex;flex-direction:column;gap:8px;margin-top:4px';
-    [['created','Created by me'],['assigned','Assigned to me'],
-     ['mentioned','Mentioning me'],['review-requested','Review requested']].forEach(([v,l])=>{
-      const row=document.createElement('label');
-      row.style.cssText='display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx)';
-      const cb=document.createElement('input');cb.type='checkbox';cb.value=v;cb.id=`gh-filter-${v}`;
-      cb.style.cssText='width:16px;height:16px;cursor:pointer;accent-color:var(--ac)';
-      cb.checked=activeFilters.includes(v);
-      const lbl=document.createElement('span');lbl.textContent=l;
-      row.append(cb,lbl);
-      cbWrap.appendChild(row);
-    });
-    filterWrap.appendChild(cbWrap);
-    body.appendChild(filterWrap);
   }
 }
 
@@ -2513,16 +2354,7 @@ async function doSave(orig){
         item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:_wtype,
           label:wlabel,widgetSize:_wsize,widgetConfig:_autoForm.getValues()};
       }
-      else if(_wtype==='clock'){
-        const tz=document.getElementById('clk-tz-en')?.checked?(document.getElementById('clk-tz-val')?.value||''):'';
-        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'clock',
-          label:wlabel,widgetSize:'small',widgetConfig:{
-            clockStyle:_wclockCfg.style||'digital',
-            clockMode:_wclockCfg.mode||'dark',
-            clockTimezone:tz,
-            clockShowDate:_wclockCfg.showDate!==false,
-          }};
-      }else if(_wtype==='custom'){
+      else if(_wtype==='custom'){
         const url=document.getElementById('f-url')?.value?.trim();
         if(!url){toast('URL required','err');return;}
         const ifo={};
@@ -2638,26 +2470,6 @@ async function doSave(orig){
         item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'duplicati',
           label:wlabel,widgetSize:_wsize,widgetConfig:{slots:savableSlots}};
 
-      }else if(_wtype==='github'){
-        const ghUser=document.getElementById('gh-user')?.value?.trim()||'';
-        if(!ghUser){toast('GitHub username is required','err');return;}
-        const ghToken=document.getElementById('gh-token')?.value?.trim()||'';
-        const ghHref=document.getElementById('gh-href')?.value?.trim()||'';
-        const ghView=_wgithubCfg.view||'prs';
-        const wc={githubUser:ghUser,githubView:ghView};
-        if(ghHref) wc.githubHref=ghHref;
-        if(ghView==='prs'){
-          /* Read from checkboxes */
-          const filters=['created','assigned','mentioned','review-requested']
-            .filter(v=>document.getElementById(`gh-filter-${v}`)?.checked);
-          wc.githubPrFilters=filters.length?filters:['created'];
-        }
-        if(ghToken){
-          fetch('/api/github-token',{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({token:ghToken})}).catch(()=>{});
-        }
-        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',
-          widgetType:'github',label:wlabel,widgetSize:_wsize,widgetConfig:wc};
       }else{
         /* stats — collect final disk field values from DOM */
         const slots=_wslots.slice(0,3).map((s,i)=>{
