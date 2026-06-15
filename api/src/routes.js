@@ -266,10 +266,6 @@ function scrubSecrets(cfg) {
       }
     });
   }
-  if (safe.settings?.githubToken) {
-    safe.settings.githubTokenSet = true;
-    delete safe.settings.githubToken;
-  }
   /* Strip the auth secret and password hash — never expose these through any read path */
   if (safe.settings?.auth) {
     delete safe.settings.auth.secret;
@@ -377,11 +373,6 @@ on('POST', '/api/config', async(req, res) => {
           });
         }
       });
-    }
-    /* Preserve githubToken — stripped from GET response, never round-tripped */
-    if (existing.settings?.githubToken && !data.settings?.githubToken) {
-      data.settings = data.settings || {};
-      data.settings.githubToken = existing.settings.githubToken;
     }
     saveConfig(data);
     log.audit('config saved', {});
@@ -561,7 +552,6 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   /* Registry widgets: strip declared secrets generically (e.g. AdGuard password). */
   const _entry = getRegistry()[w.widgetType];
   if (_entry) scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
-  ['githubToken'].forEach(k => delete wc[k]);
   if (wc.network) delete wc.network.myspeedPass;
   if (Array.isArray(wc.slots)) wc.slots.forEach(s => { if(s){ delete s.dupPass; delete s.kopiaPass; } });
   if (wc.vpn) { delete wc.vpn.apiKey; delete wc.vpn.token; }
@@ -903,136 +893,6 @@ on('GET', '/api/speed-data/:id', async(req, res) => {
 });
 
 
-on('GET', '/api/github-token', (_, res) => {
-  const cfg = loadConfig();
-  json(res, 200, { configured: !!cfg.settings?.githubToken });
-});
-
-on('POST', '/api/github-token', async(req, res) => {
-  if (!checkOrigin(req, res)) return;
-  try {
-    const { token = '' } = JSON.parse(await readBody(req));
-    const cfg = loadConfig();
-    cfg.settings = cfg.settings || {};
-    if (token.trim()) cfg.settings.githubToken = token.trim();
-    else delete cfg.settings.githubToken;
-    saveConfig(cfg);
-    json(res, 200, { ok: true });
-  } catch(e) { json(res, 400, { error: e.message }); }
-});
-
-// ── GitHub ──
-// Shared helper: resolves the stored GitHub token for a widget item.
-// Token lives in settings.githubToken (server-side, never sent to browser).
-function getGithubToken() {
-  return loadConfig().settings?.githubToken || null;
-}
-
-on('GET', '/api/github-data/:id', async(req, res) => {
-  const token = getGithubToken();
-  if (!token) return json(res, 503, { error: 'GitHub token not configured' });
-
-  const cfg = loadConfig();
-  const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
-  if (!w) return json(res, 404, { error: 'widget not found' });
-
-  const wc       = w.widgetConfig || {};
-  const username = wc.githubUser;
-  if (!username) return json(res, 503, { error: 'GitHub username not configured' });
-
-  const view = req.url.includes('view=prs') || wc.githubView !== 'contributions' ? 'prs' : 'contributions';
-
-  if (view === 'contributions') {
-    /* Contribution calendar via GraphQL — requires classic PAT with read:user
-       or fine-grained PAT with "User contributions" read access.
-       Private repo contributions only appear with correct token scope. */
-    try {
-      const query = `query($login: String!) {
-        user(login: $login) {
-          contributionsCollection {
-            contributionCalendar {
-              totalContributions
-              weeks {
-                contributionDays {
-                  contributionCount
-                  date
-                }
-              }
-            }
-          }
-        }
-      }`;
-      const r = await fetchJSON('https://api.github.com/graphql', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'homelab-dashboard/1.0',
-        },
-        body: JSON.stringify({ query, variables: { login: username } }),
-        timeout: 10000,
-      });
-      if (r.status === 401) return json(res, 401, { error: 'Invalid GitHub token' });
-      if (r.data?.errors) return json(res, 502, { error: r.data.errors[0]?.message || 'GraphQL error' });
-      const cal  = r.data?.data?.user?.contributionsCollection?.contributionCalendar || {};
-      const weeks = cal.weeks || [];
-      json(res, 200, { view: 'contributions', weeks, totalContributions: cal.totalContributions || 0 });
-    } catch(e) { json(res, 502, { error: e.message }); }
-    return;
-  }
-
-  /* Pull Requests */
-  try {
-    const filters  = (wc.githubPrFilters || [wc.githubPrFilter || 'created']);
-    const filterArr = Array.isArray(filters) ? filters : [filters];
-
-    /* Build search qualifier — OR across selected filters */
-    const qualifiers = filterArr.map(f => {
-      if (f === 'created')          return `author:${username}`;
-      if (f === 'assigned')         return `assignee:${username}`;
-      if (f === 'mentioned')        return `mentions:${username}`;
-      if (f === 'review-requested') return `review-requested:${username}`;
-      return `author:${username}`;
-    });
-    /* Combine with OR — GitHub search supports multiple qualifiers; use first for primary count */
-    const qualifier = qualifiers.join(' ');
-    const q   = encodeURIComponent(`is:open is:pr ${qualifier}`);
-    const url = `https://api.github.com/search/issues?q=${q}&sort=updated&order=desc&per_page=20`;
-
-    const r = await fetchJSON(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'homelab-dashboard/1.0',
-      },
-      timeout: 10000,
-    });
-    if (r.status === 401) return json(res, 401, { error: 'Invalid GitHub token' });
-    if (r.status === 422) return json(res, 502, { error: 'Invalid search query — check username' });
-
-    const items = (r.data?.items || []).map(pr => {
-      const repoMatch = (pr.repository_url || '').match(/repos\/(.+)$/);
-      const repo = repoMatch ? repoMatch[1] : '—';
-      return { number: pr.number, title: pr.title, repo, url: pr.html_url };
-    });
-
-    const labelMap = {
-      'created':'created','assigned':'assigned',
-      'mentioned':'mentioned','review-requested':'review requested',
-    };
-    const label = filterArr.map(f => labelMap[f] || f).join(', ');
-    const allUrl = `https://github.com/pulls?q=${encodeURIComponent(`is:open is:pr ${qualifier}`)}`;
-
-    json(res, 200, {
-      view: 'prs',
-      totalCount: r.data?.total_count ?? items.length,
-      label,
-      allUrl,
-      items,
-    });
-  } catch(e) { json(res, 502, { error: e.message }); }
-});
 
 
 // ── Wallpaper ──
