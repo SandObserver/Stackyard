@@ -9,6 +9,8 @@
         { "value": "contributions", "label": "Contributions" }
       ] },
     { "key": "githubUser", "type": "text", "label": "GitHub Username", "placeholder": "octocat" },
+    { "key": "githubToken", "type": "secret", "label": "Personal Access Token",
+      "hint": "Classic PAT with repo + read:user scope (or a fine-grained PAT with the equivalent read access). Used only by this widget." },
     { "key": "githubHref", "type": "text", "label": "Click URL", "optional": true,
       "hint": "Where clicking the widget opens. Leave blank to disable." },
     { "key": "githubPrFilters", "type": "multiselect", "label": "Pull request filters",
