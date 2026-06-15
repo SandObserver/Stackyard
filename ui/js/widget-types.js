@@ -25,12 +25,12 @@ export const WIDGET_TYPES = {
   adguard: { label:'DNS Server',       sizes:['small','medium'],        src:(id,item)=>`/widgets/adguard/index.html?v=3&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
   github:  { label:'GitHub',        sizes:['small','medium','large','xlarge'],src:(id,item)=>{
     const view=item?.widgetConfig?.githubView||'prs';
-    const file=view==='contributions'?'github-contributions':'github-pullrequests';
-    return `/widgets/${file}.html?v=4&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}`;
+    const file=view==='contributions'?'github/contributions':'github/pullrequests';
+    return `/widgets/${file}.html?v=5&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}`;
   }},
   clock:   { label:'Clock',          sizes:['small'],                 src:(id,item)=>{
     const style=item?.widgetConfig?.clockStyle||'digital';
-    return `/widgets/clock-${style}.html?v=2&id=${encodeURIComponent(id)}`;
+    return `/widgets/clock/${style}.html?v=2&id=${encodeURIComponent(id)}`;
   }},
   duplicati:{ label:'Backup',     sizes:['small','medium'],        src:(id,item,opts)=>`/widgets/backup.html?v=13&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}${opts?.mobile?'&mobile=1':''}` },
   custom:  { label:'Custom',        sizes:['small','medium','large','xlarge'],src:(_,item)=>item?.url||'' },

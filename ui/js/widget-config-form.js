@@ -134,6 +134,38 @@ function _pills(field, value) {
   return { el: row, get, control: group, liveValue: () => sel };
 }
 
+/* ── Multi-select: like pills, but each chip toggles independently and the
+   value is the array of selected option values (in declared order). ── */
+
+function _multiselect(field, value) {
+  const row = document.createElement('div'); row.className = 'fr';
+  const opts = Array.isArray(field.options) ? field.options : [];
+  const cur = new Set(
+    Array.isArray(value) ? value.map(String)
+    : (Array.isArray(field.default) ? field.default.map(String) : [])
+  );
+  row.innerHTML = _labelHtml(field) + (field.hint ? `<div class="hint">${esc(field.hint)}</div>` : '');
+  const group = document.createElement('div');
+  group.className = 'wtype-row'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', field.label);
+  opts.forEach(o => {
+    const b = document.createElement('button'); b.type = 'button';
+    const on = cur.has(String(o.value));
+    b.className = 'wchip' + (on ? ' on' : ''); b.textContent = o.label;
+    b.setAttribute('aria-pressed', String(on));
+    b.addEventListener('click', () => {
+      const nowOn = !b.classList.contains('on');
+      b.classList.toggle('on', nowOn); b.setAttribute('aria-pressed', String(nowOn));
+      if (nowOn) cur.add(String(o.value)); else cur.delete(String(o.value));
+      group.dispatchEvent(new Event('change'));
+    });
+    group.appendChild(b);
+  });
+  const hint = row.querySelector('.hint');
+  if (hint) row.insertBefore(group, hint); else row.appendChild(group);
+  const get = () => [field.key, opts.map(o => String(o.value)).filter(v => cur.has(v))];
+  return { el: row, get, control: group, liveValue: () => [...cur] };
+}
+
 /* ── Repeatable group: a stack of removable rows, each holding the group's
    sub-fields, with an Add button bounded by min/max. ── */
 
@@ -208,6 +240,7 @@ function _buildSimple(field, config) {
     case 'number': return _number(field, value);
     case 'toggle': return _toggle(field, value);
     case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value);
+    case 'multiselect': return _multiselect(field, value);
     case 'text':
     default:       return _textLike(field, value, 'text');
   }
