@@ -107,6 +107,33 @@ function _select(field, value) {
   return { el: row, get, control: sel, liveValue: () => sel.value };
 }
 
+/* Segmented pill control (variant:"pills") — same look as the widget size picker.
+   Dispatches 'change' on click so the showIf wiring re-evaluates. */
+function _pills(field, value) {
+  const row = document.createElement('div'); row.className = 'fr';
+  const opts = Array.isArray(field.options) ? field.options : [];
+  let sel = value != null ? value : (field.default != null ? field.default : (opts[0] ? opts[0].value : ''));
+  row.innerHTML = _labelHtml(field) + (field.hint ? `<div class="hint">${esc(field.hint)}</div>` : '');
+  const group = document.createElement('div');
+  group.className = 'wtype-row'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', field.label);
+  opts.forEach(o => {
+    const b = document.createElement('button'); b.type = 'button';
+    const on = String(o.value) === String(sel);
+    b.className = 'wchip' + (on ? ' on' : ''); b.textContent = o.label;
+    b.setAttribute('aria-pressed', String(on));
+    b.addEventListener('click', () => {
+      sel = o.value;
+      group.querySelectorAll('.wchip').forEach(c => { const a = c === b; c.classList.toggle('on', a); c.setAttribute('aria-pressed', String(a)); });
+      group.dispatchEvent(new Event('change'));
+    });
+    group.appendChild(b);
+  });
+  const hint = row.querySelector('.hint');
+  if (hint) row.insertBefore(group, hint); else row.appendChild(group);
+  const get = () => [field.key, sel];
+  return { el: row, get, control: group, liveValue: () => sel };
+}
+
 /* ── Repeatable group: a stack of removable rows, each holding the group's
    sub-fields, with an Add button bounded by min/max. ── */
 
@@ -180,7 +207,7 @@ function _buildSimple(field, config) {
     case 'secret': return _secret(field, config[field.key + 'Set'] === true);
     case 'number': return _number(field, value);
     case 'toggle': return _toggle(field, value);
-    case 'select': return _select(field, value);
+    case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value);
     case 'text':
     default:       return _textLike(field, value, 'text');
   }
