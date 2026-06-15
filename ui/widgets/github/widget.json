@@ -1,0 +1,25 @@
+{
+  "name": "github",
+  "label": "GitHub",
+  "sizes": ["small", "medium", "large", "xlarge"],
+  "fields": [
+    { "key": "githubView", "type": "select", "variant": "pills", "label": "View",
+      "options": [
+        { "value": "prs",           "label": "Pull Requests" },
+        { "value": "contributions", "label": "Contributions" }
+      ] },
+    { "key": "githubUser", "type": "text", "label": "GitHub Username", "placeholder": "octocat" },
+    { "key": "githubHref", "type": "text", "label": "Click URL", "optional": true,
+      "hint": "Where clicking the widget opens. Leave blank to disable." },
+    { "key": "githubPrFilters", "type": "multiselect", "label": "Pull request filters",
+      "default": ["created"],
+      "showIf": { "field": "githubView", "equals": "prs" },
+      "hint": "Which open PRs to show. Multiple filters are combined.",
+      "options": [
+        { "value": "created",          "label": "Created" },
+        { "value": "assigned",         "label": "Assigned" },
+        { "value": "mentioned",        "label": "Mentioned" },
+        { "value": "review-requested", "label": "Review requested" }
+      ] }
+  ]
+}
