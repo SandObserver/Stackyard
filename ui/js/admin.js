@@ -639,45 +639,9 @@ function _renderWidgetForm(body){
   typeDiv.appendChild(typeSel);
   body.appendChild(typeDiv);
 
-  /* GitHub sub-type chips — shown between Widget Type and Size, only for github */
-  if(_wtype==='github'){
-    const curView=_wgithubCfg.view||'prs';
-    const ghViewDiv=document.createElement('div');ghViewDiv.className='fr';
-    ghViewDiv.innerHTML='<label>View</label>';
-    const ghViewRow=document.createElement('div');ghViewRow.className='wtype-row';
-    [['prs','Pull Requests'],['contributions','Contribution Graph']].forEach(([v,l])=>{
-      const b=document.createElement('button');b.type='button';
-      b.className='wchip'+(v===curView?' on':'');
-      b.textContent=l;
-      b.onclick=()=>{
-        _wgithubCfg.view=v;
-        if(v==='contributions'&&(_wsize==='large'||_wsize==='xlarge')) _wsize='medium';
-        _renderWidgetForm(body);
-      };
-      ghViewRow.appendChild(b);
-    });
-    ghViewDiv.appendChild(ghViewRow);
-    body.appendChild(ghViewDiv);
-  }
+  /* GitHub view is now a field in the registry auto-editor (githubView). */
 
-  /* Clock style chips — shown between Widget Type and Size, only for clock */
-  if(_wtype==='clock'){
-    const curStyle=_wclockCfg.style||'digital';
-    const clkStyleDiv=document.createElement('div');clkStyleDiv.className='fr';
-    clkStyleDiv.innerHTML='<label>Style</label>';
-    const clkStyleRow=document.createElement('div');clkStyleRow.className='wtype-row';
-    clkStyleRow.setAttribute('role','group');clkStyleRow.setAttribute('aria-label','Clock style');
-    [['digital','Digital'],['analog','Analog']].forEach(([v,l])=>{
-      const b=document.createElement('button');b.type='button';
-      b.className='wchip'+(v===curStyle?' on':'');
-      b.setAttribute('aria-pressed',String(v===curStyle));
-      b.textContent=l;
-      b.onclick=()=>{ _wclockCfg.style=v; _renderWidgetForm(body); };
-      clkStyleRow.appendChild(b);
-    });
-    clkStyleDiv.appendChild(clkStyleRow);
-    body.appendChild(clkStyleDiv);
-  }
+  /* Clock style is now a field in the registry auto-editor (clockStyle). */
 
   /* Connections view chips (Map / VPN) — like github's view switch */
   if(_wtype==='connections'){
