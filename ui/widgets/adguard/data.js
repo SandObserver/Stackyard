@@ -66,11 +66,10 @@ async function piHole(base, config, fetchJSON) {
 
   const q = sum.data.queries;
   const out = {
-    num_dns_queries:           q.total   || 0,
-    num_blocked_filtering:     q.blocked || 0,
-    /* Pi-hole has no malware / parental categories. */
-    num_replaced_safebrowsing: 0,
-    num_replaced_parental:     0,
+    num_dns_queries:       q.total     || 0,
+    num_blocked_filtering: q.blocked   || 0,
+    num_cached:            q.cached    || 0,
+    num_forwarded:         q.forwarded || 0,
   };
 
   /* History: Pi-hole returns 10-minute slots with timestamps; the chart expects

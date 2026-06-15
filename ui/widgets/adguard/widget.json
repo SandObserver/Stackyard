@@ -3,7 +3,7 @@
   "label": "DNS Server",
   "sizes": ["small", "medium"],
   "fields": [
-    { "key": "provider", "type": "select", "label": "Provider",
+    { "key": "provider", "type": "select", "variant": "pills", "label": "Provider",
       "options": [
         { "value": "adguard", "label": "AdGuard Home" },
         { "value": "pihole",  "label": "Pi-hole" }

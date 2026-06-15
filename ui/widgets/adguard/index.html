@@ -106,6 +106,14 @@ const STAT_META = {
   malware: { label:'Malware',  title:'Blocked malware',       lineColor:'rgba(255,214,10,0.90)',  fillOpacity:0.26, lineWidth:1.5 },
   parental:{ label:'Parental', title:'Parental blocks',       lineColor:'rgba(10,132,255,0.90)', fillOpacity:0.26, lineWidth:1.5 },
   total:   { label:'Total',    title:'Total DNS queries',     lineColor:'rgba(180,180,190,0.85)', fillOpacity:0.16, lineWidth:1.2 },
+  cached:  { label:'Cached',   title:'Served from cache',     lineColor:'rgba(48,209,88,0.90)',   fillOpacity:0.22, lineWidth:1.5 },
+  forwarded:{label:'Forwarded',title:'Forwarded upstream',    lineColor:'rgba(94,92,230,0.90)',   fillOpacity:0.22, lineWidth:1.5 },
+};
+
+/* Which response field feeds each tile — lets one HTML serve both providers. */
+const STAT_FIELD = {
+  filter:'num_blocked_filtering', malware:'num_replaced_safebrowsing', parental:'num_replaced_parental',
+  total:'num_dns_queries', cached:'num_cached', forwarded:'num_forwarded',
 };
 
 /* Chart series order: blocked first, then malware, parental, total last (underneath) */
@@ -134,6 +142,13 @@ const ICONS_SVG_16 = {
       stroke="rgba(255,255,255,0.40)" stroke-width="1.0"/>
     <path d="M2.5 8h11M3 5.5h10M3 10.5h10"
       stroke="rgba(255,255,255,0.40)" stroke-width="1.0" opacity="0.7"/></svg>`,
+  cached:`<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <ellipse cx="8" cy="3.6" rx="4.8" ry="1.9" stroke="#30d158" stroke-width="1.2"/>
+    <path d="M3.2 3.6v8.8c0 1.05 2.15 1.9 4.8 1.9s4.8-.85 4.8-1.9V3.6" stroke="#30d158" stroke-width="1.2"/>
+    <path d="M3.2 8c0 1.05 2.15 1.9 4.8 1.9s4.8-.85 4.8-1.9" stroke="#30d158" stroke-width="1.0" opacity=".7"/></svg>`,
+  forwarded:`<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M2.5 8h8.6M8 4.2l4 3.8-4 3.8" stroke="#5e5ce6" stroke-width="1.5"
+      stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 
 /* ── Boot ── */
@@ -146,7 +161,7 @@ async function boot() {
   _href = cfg.widgetConfig?.adguardHref || '';
   _provider = cfg.widgetConfig?.provider || 'adguard';
   /* Pi-hole reports only blocked + total — drop the AdGuard-only tiles. */
-  if (_provider === 'pihole') STAT_KEYS = ['filter','total'];
+  if (_provider === 'pihole') STAT_KEYS = ['filter','cached','forwarded','total'];
   buildShell();
   await tick();
   setInterval(tick, TICK_MS);
@@ -271,18 +286,11 @@ function timeLabel(idx) {
 /* ── Apply — only updates numbers, never touches click handlers ── */
 function apply(d) {
   const set = (key,v) => { const el=document.getElementById(`num-${key}`); if(el) el.textContent=fmt(v); };
-  set('filter',  d.num_blocked_filtering);
-  set('malware', d.num_replaced_safebrowsing);
-  set('parental',d.num_replaced_parental);
-  set('total',   d.num_dns_queries);
+  STAT_KEYS.forEach(k => set(k, d[STAT_FIELD[k]]));
 
   const sr = document.getElementById('ag-sr');
-  if (sr) {
-    const label = _provider === 'pihole' ? 'Pi-hole' : 'AdGuard';
-    sr.textContent = _provider === 'pihole'
-      ? `${label}: ${fmt(d.num_blocked_filtering)} blocked, ${fmt(d.num_dns_queries)} total queries`
-      : `${label}: ${fmt(d.num_blocked_filtering)} blocked, ${fmt(d.num_replaced_safebrowsing)} malware, ${fmt(d.num_replaced_parental)} parental, ${fmt(d.num_dns_queries)} total queries`;
-  }
+  if (sr) sr.textContent = (_provider === 'pihole' ? 'Pi-hole: ' : 'AdGuard: ') +
+    STAT_KEYS.map(k => `${fmt(d[STAT_FIELD[k]])} ${STAT_META[k].label.toLowerCase()}`).join(', ');
 
   if (size !== 'medium') return;
 
