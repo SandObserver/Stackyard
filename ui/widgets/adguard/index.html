@@ -98,7 +98,8 @@ let _dataLen = 0;
 let _chartW  = 0;
 let _scrubActive = false; /* true while mouse is moving over chart */
 
-const STAT_KEYS = ['filter','malware','parental','total'];
+let _provider = 'adguard';
+let STAT_KEYS = ['filter','malware','parental','total'];
 
 const STAT_META = {
   filter:  { label:'Blocked',  title:'Blocked by filter',     lineColor:'rgba(255,59,48,0.90)',   fillOpacity:0.26, lineWidth:1.5 },
@@ -143,6 +144,9 @@ async function boot() {
   } catch {}
   if (!cfg) cfg = { widgetConfig:{} };
   _href = cfg.widgetConfig?.adguardHref || '';
+  _provider = cfg.widgetConfig?.provider || 'adguard';
+  /* Pi-hole reports only blocked + total — drop the AdGuard-only tiles. */
+  if (_provider === 'pihole') STAT_KEYS = ['filter','total'];
   buildShell();
   await tick();
   setInterval(tick, TICK_MS);
@@ -271,7 +275,12 @@ function apply(d) {
   set('total',   d.num_dns_queries);
 
   const sr = document.getElementById('ag-sr');
-  if (sr) sr.textContent = `AdGuard: ${fmt(d.num_blocked_filtering)} blocked, ${fmt(d.num_replaced_safebrowsing)} malware, ${fmt(d.num_replaced_parental)} parental, ${fmt(d.num_dns_queries)} total queries`;
+  if (sr) {
+    const label = _provider === 'pihole' ? 'Pi-hole' : 'AdGuard';
+    sr.textContent = _provider === 'pihole'
+      ? `${label}: ${fmt(d.num_blocked_filtering)} blocked, ${fmt(d.num_dns_queries)} total queries`
+      : `${label}: ${fmt(d.num_blocked_filtering)} blocked, ${fmt(d.num_replaced_safebrowsing)} malware, ${fmt(d.num_replaced_parental)} parental, ${fmt(d.num_dns_queries)} total queries`;
+  }
 
   if (size !== 'medium') return;
 

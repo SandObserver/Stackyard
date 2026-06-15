@@ -1,16 +1,27 @@
 {
   "name": "adguard",
-  "label": "AdGuard",
+  "label": "DNS Server",
   "sizes": ["small", "medium"],
   "fields": [
-    { "key": "adguardUrl",  "type": "text",   "label": "AdGuard Home URL", "placeholder": "adguard-home:80", "hint": "Container name and port, or a full URL." },
-    { "key": "adguardHref", "type": "text",   "label": "Click URL", "optional": true, "hint": "Where clicking the widget opens. Leave blank to disable." },
-    { "key": "adguardUser", "type": "text",   "label": "Username", "optional": true },
-    { "key": "adguardPass", "type": "secret", "label": "Password", "optional": true }
-  ],
-  "data": {
-    "url": "adguardUrl",
-    "auth": { "type": "basic", "user": "adguardUser", "pass": "adguardPass" },
-    "endpoints": { "stats": "/control/stats" }
-  }
+    { "key": "provider", "type": "select", "label": "Provider",
+      "options": [
+        { "value": "adguard", "label": "AdGuard Home" },
+        { "value": "pihole",  "label": "Pi-hole (v6)" }
+      ],
+      "hint": "Which DNS sinkhole this widget reads from." },
+
+    { "key": "adguardUrl",  "type": "text", "label": "Server URL", "placeholder": "dns-host:80",
+      "hint": "Container name and port, or a full URL." },
+    { "key": "adguardHref", "type": "text", "label": "Click URL", "optional": true,
+      "hint": "Where clicking the widget opens. Leave blank to disable." },
+
+    { "key": "adguardUser", "type": "text",   "label": "Username", "optional": true,
+      "showIf": { "field": "provider", "equals": "adguard" } },
+    { "key": "adguardPass", "type": "secret", "label": "Password", "optional": true,
+      "showIf": { "field": "provider", "equals": "adguard" } },
+
+    { "key": "piholePassword", "type": "secret", "label": "Pi-hole Password", "optional": true,
+      "showIf": { "field": "provider", "equals": "pihole" },
+      "hint": "Leave blank if your Pi-hole has no password set." }
+  ]
 }
