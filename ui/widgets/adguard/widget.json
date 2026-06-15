@@ -6,7 +6,7 @@
     { "key": "provider", "type": "select", "label": "Provider",
       "options": [
         { "value": "adguard", "label": "AdGuard Home" },
-        { "value": "pihole",  "label": "Pi-hole (v6)" }
+        { "value": "pihole",  "label": "Pi-hole" }
       ],
       "hint": "Which DNS sinkhole this widget reads from." },
 

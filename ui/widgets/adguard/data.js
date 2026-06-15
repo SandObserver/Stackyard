@@ -93,5 +93,9 @@ async function piHole(base, config, fetchJSON) {
     }
   } catch { /* chart is optional — summary numbers already returned */ }
 
+  /* Release the session. Pi-hole v6 caps concurrent API sessions, and polling
+     every interval would otherwise pile up sessions until it locks us out. */
+  if (sid) { try { await fetchJSON(base + '/api/auth', { method: 'DELETE', headers, timeout: 5000 }); } catch {} }
+
   return out;
 }

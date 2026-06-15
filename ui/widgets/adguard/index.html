@@ -239,7 +239,9 @@ async function tick() {
                r.status===502?'Unreachable':d.error||('Error '+r.status));
       return;
     }
-    apply(await r.json());
+    const d = await r.json();
+    if (d && d.error) { setError(d.error); return; }
+    apply(d);
   } catch { setError('Unreachable'); }
 }
 
