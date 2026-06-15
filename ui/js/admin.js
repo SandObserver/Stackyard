@@ -216,7 +216,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const mt=document.createElement('div');mt.className='rmt';
   if(item.type==='widget'){
     const wt=item.widgetType||'custom';
-    const wtLabel=wt==='stats'?'Stats':(wt==='connections'||wt==='map')?'Connections':wt==='adguard'?'AdGuard':wt==='github'?'GitHub':wt==='clock'?'Clock':wt==='duplicati'?'Backup':'Custom';
+    const wtLabel=wt==='stats'?'Stats':(wt==='connections'||wt==='map')?'Connections':wt==='adguard'?'DNS Server':wt==='github'?'GitHub':wt==='clock'?'Clock':wt==='duplicati'?'Backup':'Custom';
     mt.textContent=`${wtLabel} widget · ${item.widgetSize||'medium'}`;
   }
   else if(item.type==='folder')mt.textContent=`${(item.children||[]).length} apps`;
@@ -2542,7 +2542,7 @@ async function doSave(orig){
     if(ctype==='widget'){
       /* Generate clean IDs: only letters, digits and underscores */
       const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'widget';
-      const wlabel=_wlabel.trim()||(_wtype==='stats'?(_wstatsSubType==='disk-health'?'Disk Health':'System Summary'):_wtype==='connections'?'Connections':_wtype==='adguard'?'AdGuard':_wtype==='github'?'GitHub':_wtype==='clock'?'Clock':_wtype==='duplicati'?'Backup':'Widget');
+      const wlabel=_wlabel.trim()||(_wtype==='stats'?(_wstatsSubType==='disk-health'?'Disk Health':'System Summary'):_wtype==='connections'?'Connections':_wtype==='adguard'?'DNS Server':_wtype==='github'?'GitHub':_wtype==='clock'?'Clock':_wtype==='duplicati'?'Backup':'Widget');
       if(_autoForm && _autoFormType===_wtype && _widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
         const missing=_autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
