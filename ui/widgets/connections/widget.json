@@ -1,0 +1,6 @@
+{
+  "name": "connections",
+  "label": "Connections",
+  "sizes": ["small", "medium"],
+  "customEditor": true
+}
