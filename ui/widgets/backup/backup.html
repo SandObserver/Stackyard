@@ -84,7 +84,7 @@
   }
   .card-front canvas {
     position: absolute; top: 0; left: 0; right: 0;
-    width: 100%; height: calc(100% - 64px);
+    width: 100%; height: calc(100% - 28px);
     display: block;
   }
   .card-wrap:hover .card-front,
@@ -520,7 +520,7 @@ function buildShell() {
       isActive ? 'rgba(100,100,110,0.28)' : 'rgba(100,100,110,0.14)');
 
     const frontCanvas = document.createElement('canvas');
-    if (isMobile) frontCanvas.style.height = 'calc(100% - 100px)';
+    if (isMobile) frontCanvas.style.height = 'calc(100% - 48px)';
     front.appendChild(frontCanvas);
 
     const frontZone = document.createElement('div');
