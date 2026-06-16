@@ -15,13 +15,6 @@ export const WIDGET_TYPES = {
       if(view==='vpn') return `/widgets/connections/connections-vpn.html?v=6&id=${encodeURIComponent(id)}&size=${size}`;
       return `/widgets/connections/connections-map.html?v=11&id=${encodeURIComponent(id)}`;
     }},
-  /* Legacy alias: existing saved widgets with widgetType:'map' still render. */
-  map:     { label:'Connections',   sizes:['medium'],  legacy:true,
-    src:(id,item)=>{
-      const view=item?.widgetConfig?.view||'map';
-      if(view==='vpn') return `/widgets/connections/connections-vpn.html?v=6&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}`;
-      return `/widgets/connections/connections-map.html?v=11&id=${encodeURIComponent(id)}`;
-    }},
   adguard: { label:'DNS Server',       sizes:['small','medium'],        src:(id,item)=>`/widgets/adguard/index.html?v=3&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
   github:  { label:'GitHub',        sizes:['small','medium','large','xlarge'],src:(id,item)=>{
     const view=item?.widgetConfig?.githubView||'prs';
@@ -32,7 +25,7 @@ export const WIDGET_TYPES = {
     const style=item?.widgetConfig?.clockStyle||'digital';
     return `/widgets/clock/${style}.html?v=2&id=${encodeURIComponent(id)}`;
   }},
-  duplicati:{ label:'Backup',     sizes:['small','medium'],        src:(id,item,opts)=>`/widgets/backup.html?v=13&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}${opts?.mobile?'&mobile=1':''}` },
+  backup:  { label:'Backup',     sizes:['small','medium'],        src:(id,item,opts)=>`/widgets/backup/backup.html?v=14&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}${opts?.mobile?'&mobile=1':''}` },
   custom:  { label:'Custom',        sizes:['small','medium','large','xlarge'],src:(_,item)=>item?.url||'' },
 };
 
