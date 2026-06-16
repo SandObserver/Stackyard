@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Stats</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1c1c1e;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+
+  /* ── Layout ── */
+  .widget { width: 100%; height: 100%; display: flex; flex-direction: column;
+    padding: 12px 14px 12px 16px; gap: 0; container-type: inline-size;
+    justify-content: space-evenly; }
+  .widget.size-medium { flex-direction: row; }
+
+  /* Small: stacked value rows matching medium left column style */
+  .slot-row { display: flex; align-items: center; flex: 1; min-height: 0; }
+
+  /* Medium: left column (values) + right column (charts) */
+  .col-left  { display: flex; flex-direction: column; justify-content: space-evenly;
+    width: 46%; padding-right: 10px; border-right: 1px solid rgba(255,255,255,0.08);
+    min-width: 0; overflow: hidden; }
+  .col-right { display: flex; flex-direction: column; justify-content: space-evenly;
+    flex: 1; padding-left: 12px; min-width: 0; overflow: hidden; }
+
+  /* Value display — medium */
+  .v        { font-size: clamp(18px, 7cqw, 28px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+  /* Slot colors driven by CSS custom properties set per-slot in JS */
+  .v.c-cpu  { color: var(--sc0, #ff2d55); } .v.c-ram  { color: var(--sc1, #30d158); }
+  .v.c-temp { color: var(--sc2, #00c0e8); } .v.c-disk { color: var(--sc2, #00c0e8); }
+  .disk-line { display: flex; align-items: baseline; white-space: nowrap; }
+  .disk-num  { font-size: clamp(15px, 5.2cqw, 22px); font-weight: 700; color: var(--sc2, #00c0e8);
+    letter-spacing: -0.02em; line-height: 1; }
+  .disk-unit { font-size: clamp(9px, 3cqw, 14px); font-weight: 600; color: var(--sc2, #00c0e8); margin: 0 1px; }
+  .disk-sep  { font-size: clamp(11px, 3.5cqw, 17px); font-weight: 400; color: var(--sc2, #00c0e8);
+    opacity: 0.5; margin: 0 1px; }
+  .disk-sub  { font-size: clamp(9px, 2.4cqw, 11px); font-weight: 500; color: var(--sc2, #00c0e8);
+    margin-top: 2px; opacity: 0.7; }
+
+  /* Sparkline chart — medium right column */
+  .chart-section { display: flex; flex-direction: column; }
+  .chart-lbl { font-size: clamp(9px, 1.9cqw, 12px); font-weight: 700; letter-spacing: .07em;
+    color: rgba(255,255,255,0.88); text-transform: uppercase; line-height: 1; margin-bottom: 4px; }
+  .spark-wrap { position: relative; height: 28px; flex-shrink: 0; overflow: hidden; }
+  .spark-wrap::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: repeating-linear-gradient(to right, rgba(255,255,255,0.18) 0,
+      rgba(255,255,255,0.18) 2px, transparent 2px, transparent 6px); pointer-events: none; }
+  .spark { display: flex; align-items: flex-end; height: 100%; padding-bottom: 2px; gap: 1px; overflow: hidden; }
+  .bar-slot { position: relative; height: 100%; flex-shrink: 0; }
+  .bar-bg   { position: absolute; inset: 0; background: rgba(255,255,255,0.07); border-radius: 1px 1px 0 0; }
+  .bar-fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 1px 1px 0 0; transition: height 0.5s ease; }
+  .bc-0 { background: var(--sc0, #ff2d55); }
+  .bc-1 { background: var(--sc1, #30d158); }
+  .bc-2 { background: var(--sc2, #00c0e8); }
+
+  /* Disk bar track */
+  .disk-bars   { display: flex; flex-direction: column; gap: 4px; }
+  .disk-track  { width: 100%; height: 10px; background: rgba(255,255,255,0.13);
+    border-radius: 2px; overflow: hidden; }
+  .disk-track.secondary { height: 6px; }
+  .disk-fill   { height: 100%; background: var(--sc2, #00c0e8); border-radius: 2px; width: 0%;
+    transition: width 0.6s ease; }
+
+  /* Network slot — text only, always one line */
+  .net-row  { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; white-space: nowrap; }
+  .net-item { font-size: clamp(10px, 2.6cqw, 13px); font-weight: 500;
+    color: rgba(255,255,255,0.65); white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce){
+    .bar-fill,.disk-fill,.spark,.spark *{transition:none !important;animation:none !important}
+  }
+</style>
+</head>
+<body>
+<p id="sr-sum" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:-1px;"></p>
+<div class="widget" id="widget" aria-hidden="true"></div>
+<script>
+const TICK_MS  = 10000;
+const SPEED_MS = 60000;
+const id       = new URLSearchParams(location.search).get('id') || '';
+const API      = '/api';
+
+let cfg = null;      /* widget config from /api/widget-config/:id */
+let stats = null;    /* latest /api/system-stats response */
+let speed = null;    /* latest myspeed response */
+
+/* History arrays keyed by slot index */
+const history = [{},{},{},{}];
+let BARS = 50;
+
+/* ── Boot — load config then start polling ── */
+async function boot() {
+  try {
+    const r = await fetch(`${API}/widget-config/${id}`);
+    if (r.ok) cfg = await r.json();
+  } catch {}
+  if (!cfg) cfg = { widgetType:'stats', widgetSize:'medium',
+    widgetConfig:{ slots:[{type:'cpu'},{type:'ram'},{type:'disk',primary:'/'}], network:{enabled:false} }};
+
+  /* Detect narrow/iOS */
+  if (document.documentElement.clientHeight >= 180) document.body.classList.add('narrow');
+
+  buildShell();
+  await tickStats();
+  if (cfg.widgetConfig?.network?.enabled) tickSpeed();
+
+  setInterval(tickStats, TICK_MS);
+  if (cfg.widgetConfig?.network?.enabled) setInterval(tickSpeed, SPEED_MS);
+}
+
+/* ── Build static HTML shell based on config ── */
+function buildShell() {
+  const w     = document.getElementById('widget');
+  const wc    = cfg.widgetConfig || {};
+  const slots = (wc.slots || []).slice(0, 3);
+  const net   = wc.network || {};
+  const size  = cfg.widgetSize || 'medium';
+
+  w.className = 'widget' + (size === 'medium' ? ' size-medium' : '');
+
+  /* Apply per-slot color as CSS custom property so both text and charts update automatically */
+  const SLOT_DEFS = ['#ff2d55','#30d158','#00c0e8'];
+  slots.forEach((slot, i) => {
+    const c = slot.color || SLOT_DEFS[i] || SLOT_DEFS[0];
+    document.documentElement.style.setProperty('--sc'+i, c);
+  });
+
+  if (size === 'medium') {
+    /* Left: numeric values. Right: charts. */
+    const left  = document.createElement('div'); left.className  = 'col-left';
+    const right = document.createElement('div'); right.className = 'col-right';
+
+    slots.forEach((slot, i) => {
+      left.appendChild(mkValueEl(slot, i));
+      right.appendChild(mkChartEl(slot, i));
+    });
+    /* Network slot — left value only, no chart */
+    if (net.enabled) {
+      left.appendChild(mkNetValueEl());
+    }
+    w.append(left, right);
+  } else {
+    /* Small: stacked text rows */
+    slots.forEach((slot, i) => w.appendChild(mkSmallRow(slot, i)));
+    if (net.enabled) w.appendChild(mkSmallNetRow());
+  }
+
+  /* Initialize history arrays immediately so applyStats never hits undefined.vals */
+  [0,1,2].forEach(i => { history[i].vals = Array(BARS).fill(null); });
+
+  /* Refine bar count once layout is painted — doesn't affect data correctness */
+  requestAnimationFrame(() => {
+    const wrap = document.querySelector('.spark-wrap');
+    if (wrap) {
+      const n = Math.max(20, Math.floor(wrap.offsetWidth / 2.2));
+      if (n !== BARS) {
+        BARS = n;
+        [0,1,2].forEach(i => { history[i].vals = Array(BARS).fill(null); });
+      }
+    }
+  });
+}
+
+/* ── DOM element builders ── */
+function mkValueEl(slot, i) {
+  const d = document.createElement('div');
+  d.id = `val-${i}`;
+  if (slot.type === 'disk') {
+    d.innerHTML = `<div class="disk-line">
+      <span class="disk-num" id="disk-used-${i}">—</span><span class="disk-unit">GB</span>
+      <span class="disk-sep">/</span>
+      <span class="disk-num" id="disk-total-${i}">—</span><span class="disk-unit">GB</span>
+    </div>
+    ${slot.secondary ? `<div class="disk-sub" id="disk-sec-${i}">— / —</div>` : ''}`;
+  } else {
+    const unit = slot.type === 'temp' ? '°' : '%';
+    d.innerHTML = `<div class="v c-${slot.type}" id="pct-${i}">—${unit}</div>`;
+  }
+  return d;
+}
+
+function mkChartEl(slot, i) {
+  const d = document.createElement('div'); d.className = 'chart-section';
+  const lbl = { cpu:'CPU', ram:'RAM', temp:'TEMP', disk:'DISK' }[slot.type] || slot.type.toUpperCase();
+  if (slot.type === 'disk') {
+    d.innerHTML = `<div class="chart-lbl">${lbl}</div>
+      <div class="disk-bars">
+        <div class="disk-track"><div class="disk-fill" id="disk-bar-p-${i}"></div></div>
+        ${slot.secondary ? `<div class="disk-track secondary"><div class="disk-fill" id="disk-bar-s-${i}"></div></div>` : ''}
+      </div>`;
+  } else {
+    d.innerHTML = `<div class="chart-lbl">${lbl}</div>
+      <div class="spark-wrap"><div class="spark" id="spark-${i}"></div></div>`;
+  }
+  return d;
+}
+
+function mkNetValueEl() {
+  const d = document.createElement('div'); d.id = 'net-val';
+  d.innerHTML = `<div class="net-row">
+    <div class="net-item">↓ <span id="net-dn">—</span></div>
+    <div class="net-item">↑ <span id="net-up">—</span></div>
+  </div>`;
+  return d;
+}
+
+function mkSmallRow(slot, i) {
+  const d = document.createElement('div'); d.className = 'slot-row';
+  if (slot.type === 'disk') {
+    /* Disk: show used/total in cyan like medium left column */
+    d.innerHTML = `<div class="disk-line">
+      <span class="disk-num" id="small-disk-used-${i}">—</span><span class="disk-unit">GB</span>
+      <span class="disk-sep">/</span>
+      <span class="disk-num" id="small-disk-total-${i}">—</span><span class="disk-unit">GB</span>
+    </div>`;
+  } else {
+    const unit = slot.type === 'temp' ? '°' : '%';
+    d.innerHTML = `<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`;
+  }
+  return d;
+}
+
+function mkSmallNetRow() {
+  const d = document.createElement('div'); d.className = 'slot-row';
+  d.innerHTML = `<div class="net-row">
+    <div class="net-item">↓ <span id="net-dn">—</span></div>
+    <div class="net-item">↑ <span id="net-up">—</span></div>
+  </div>`;
+  return d;
+}
+
+/* ── Sparkline ── */
+function buildSpark(id, hist, colorCls) {
+  const el = document.getElementById(id); if (!el) return;
+  el.innerHTML = '';
+  hist.forEach((v, i) => {
+    const accent = (i + 1) % 5 === 0;
+    const slot = document.createElement('div'); slot.className = 'bar-slot';
+    slot.style.cssText = `width:1px;min-width:1px;${accent?'margin-right:1px;':''}`;
+    const bg = document.createElement('div'); bg.className = 'bar-bg'; slot.appendChild(bg);
+    if (v !== null) {
+      const fill = document.createElement('div');
+      fill.className = `bar-fill ${colorCls}`;
+      fill.style.height = Math.max(2, v) + '%';
+      slot.appendChild(fill);
+    }
+    el.appendChild(slot);
+  });
+}
+
+/* ── Update DOM from stats ── */
+function applyStats(data) {
+  const wc    = cfg.widgetConfig || {};
+  const slots = (wc.slots || []).slice(0, 3);
+  const size  = cfg.widgetSize || 'medium';
+
+  /* Build a disk lookup by mount path */
+  const diskByMount = {};
+  (data.disks || []).forEach(d => { diskByMount[d.mount] = d; });
+
+  slots.forEach((slot, i) => {
+    if (!history[i].vals) history[i].vals = Array(BARS).fill(null);
+
+    /* val holds a percentage (cpu/ram) or a temperature in °C — named generically to cover both */
+    let val = null;
+    if (slot.type === 'cpu')  val = data.cpu  ?? null;
+    if (slot.type === 'ram')  val = data.ram  ?? null;
+    if (slot.type === 'temp') {
+      /* Each temp slot has its own thermalZone — read the right zone from data.temps */
+      const zone = Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0;
+      val = data.temps?.[zone] ?? null;
+    }
+
+    if (size === 'medium') {
+      if (slot.type === 'disk') {
+        const pd = diskByMount[slot.primary || '/'];
+        const sd = slot.secondary ? diskByMount[slot.secondary] : null;
+        if (pd) {
+          document.getElementById(`disk-used-${i}`)  && (document.getElementById(`disk-used-${i}`).textContent  = Math.round((pd.usedPct/100)*pd.totalGb));
+          document.getElementById(`disk-total-${i}`) && (document.getElementById(`disk-total-${i}`).textContent = Math.round(pd.totalGb));
+          const bp = document.getElementById(`disk-bar-p-${i}`); if (bp) bp.style.width = pd.usedPct + '%';
+        }
+        if (sd) {
+          const tb = sd.totalGb >= 1000 ? (sd.totalGb/1024).toFixed(2)+' TB' : Math.round(sd.totalGb)+' GB';
+          const ub = sd.totalGb >= 1000 ? ((sd.usedPct/100)*sd.totalGb/1024).toFixed(2)+' TB' : Math.round((sd.usedPct/100)*sd.totalGb)+' GB';
+          const sec = document.getElementById(`disk-sec-${i}`); if (sec) sec.textContent = `${ub} / ${tb}`;
+          const bs = document.getElementById(`disk-bar-s-${i}`); if (bs) bs.style.width = sd.usedPct + '%';
+        }
+      } else if (val !== null) {
+        const unit = slot.type === 'temp' ? '°' : '%';
+        const el = document.getElementById(`pct-${i}`); if (el) el.textContent = (slot.type === 'temp' ? val.toFixed(1) : Math.round(val)) + unit;
+        const h = history[i].vals; h.push(val); h.shift();
+        const colorCls = 'bc-'+i;
+        buildSpark(`spark-${i}`, h, colorCls);
+      }
+    } else {
+      /* Small size */
+      if (slot.type === 'disk') {
+        const pd = diskByMount[slot.primary || '/'];
+        if (pd) {
+          const u = document.getElementById(`small-disk-used-${i}`);
+          const t = document.getElementById(`small-disk-total-${i}`);
+          if (u) u.textContent = Math.round((pd.usedPct/100)*pd.totalGb);
+          if (t) t.textContent = Math.round(pd.totalGb); /* GB suffix is in the HTML */
+        }
+      } else if (val !== null) {
+        const unit = slot.type === 'temp' ? '°' : '%';
+        const el = document.getElementById(`small-${i}`);
+        if (el) el.textContent = (slot.type === 'temp' ? val.toFixed(1) : Math.round(val)) + unit;
+      }
+    }
+  });
+
+  /* Screen-reader summary of the headline metrics (HIG: expose key values) */
+  const sum = document.getElementById('sr-sum');
+  if (sum) {
+    const parts = [];
+    if (data.cpu != null) parts.push('CPU ' + Math.round(data.cpu) + ' percent');
+    if (data.ram != null) parts.push('RAM ' + Math.round(data.ram) + ' percent');
+    const root = (data.disks || []).find(d => d.mount === '/');
+    if (root) parts.push('disk ' + Math.round(root.usedPct) + ' percent used');
+    sum.textContent = parts.join(', ');
+  }
+}
+
+/* ── Fetch and apply ── */
+async function tickStats() {
+  try {
+    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=system`);
+    if (!r.ok) return;
+    stats = await r.json();
+    if (stats && stats.error) return;
+    applyStats(stats);
+  } catch {}
+}
+
+function fmtMbps(v) {
+  if (v == null || isNaN(v)) return 'No data';
+  return v >= 1000 ? (v/1000).toFixed(1)+' Gbps' : Math.round(v)+' Mbps';
+}
+
+async function tickSpeed() {
+  try {
+    const r = await fetch(`${API}/speed-data/${encodeURIComponent(id)}`);
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d) return;
+    const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtMbps(d.download);
+    const up = document.getElementById('net-up'); if (up) up.textContent = fmtMbps(d.upload);
+  } catch {}
+}
+
+boot();
+</script>
+</body>
+</html>
