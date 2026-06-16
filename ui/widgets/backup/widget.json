@@ -1,0 +1,6 @@
+{
+  "name": "backup",
+  "label": "Backup",
+  "sizes": ["small", "medium"],
+  "customEditor": true
+}
