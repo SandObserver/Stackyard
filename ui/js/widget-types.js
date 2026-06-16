@@ -12,15 +12,15 @@ export const WIDGET_TYPES = {
     src:(id,item)=>{
       const view=item?.widgetConfig?.view||'map';
       const size=encodeURIComponent(item?.widgetSize||'medium');
-      if(view==='vpn') return `/widgets/connections-vpn.html?v=6&id=${encodeURIComponent(id)}&size=${size}`;
-      return `/widgets/connections-map.html?v=11&id=${encodeURIComponent(id)}`;
+      if(view==='vpn') return `/widgets/connections/connections-vpn.html?v=6&id=${encodeURIComponent(id)}&size=${size}`;
+      return `/widgets/connections/connections-map.html?v=11&id=${encodeURIComponent(id)}`;
     }},
   /* Legacy alias: existing saved widgets with widgetType:'map' still render. */
   map:     { label:'Connections',   sizes:['medium'],  legacy:true,
     src:(id,item)=>{
       const view=item?.widgetConfig?.view||'map';
-      if(view==='vpn') return `/widgets/connections-vpn.html?v=6&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}`;
-      return `/widgets/connections-map.html?v=11&id=${encodeURIComponent(id)}`;
+      if(view==='vpn') return `/widgets/connections/connections-vpn.html?v=6&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}`;
+      return `/widgets/connections/connections-map.html?v=11&id=${encodeURIComponent(id)}`;
     }},
   adguard: { label:'DNS Server',       sizes:['small','medium'],        src:(id,item)=>`/widgets/adguard/index.html?v=3&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
   github:  { label:'GitHub',        sizes:['small','medium','large','xlarge'],src:(id,item)=>{
