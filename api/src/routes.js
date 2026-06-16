@@ -532,42 +532,8 @@ on('GET', '/api/widget-config/:id', (req, res) => {
    unknown names simply yield no code (widget omits the flag). */
 
 
-// ── Map ──
-
-const MAP_DEFAULT_COLOR = { conduit:'#AF52DE', gluetun:'#30D158', netbird:'#FF9F0A', plausible:'#5E5CE6', umami:'#64D2FF' };
+// ── Map service secret keys (stripped/preserved by the config scrub) ──
 const MAP_SVC_SECRETS = ['token','apiKey','password'];
-const mapNormBase = u => (u && u.includes('://')) ? u : ('http://' + u);
-function mapServices(wc){
-  if (Array.isArray(wc.services) && wc.services.length) return wc.services;
-  const out = [];  /* legacy single-instance config → synthesize a services array */
-  if (wc.conduit?.url) out.push({ id:'conduit', type:'conduit', name:wc.conduit.name||'Conduit', color:wc.conduit.color||MAP_DEFAULT_COLOR.conduit, url:wc.conduit.url, adminUrl:wc.conduit.adminUrl||'', enabled:wc.conduit.enabled!==false });
-  if (wc.gluetun?.url) out.push({ id:'gluetun', type:'gluetun', name:wc.gluetun.name||'Gluetun', color:wc.gluetun.color||MAP_DEFAULT_COLOR.gluetun, url:wc.gluetun.url, adminUrl:wc.gluetun.adminUrl||'', enabled:wc.gluetun.enabled!==false });
-  return out;
-}
-function mapRawGet(base, path, headers){
-  return new Promise((resolve, reject) => {
-    let u; try { u = new URL(path, base); } catch(e){ return reject(e); }
-    const lib = u.protocol === 'https:' ? https : http;
-    const port = u.port ? parseInt(u.port) : (u.protocol === 'https:' ? 443 : 80);
-    const r2 = lib.get({ hostname:u.hostname, port, path:u.pathname + u.search, timeout:8000, headers:headers||{} }, rs => {
-      const chunks = []; rs.on('data', c => chunks.push(c));
-      rs.on('end', () => resolve({ status:rs.statusCode, body:Buffer.concat(chunks).toString('utf8') }));
-    });
-    r2.on('timeout', () => { r2.destroy(); reject(new Error('Timed out')); });
-    r2.on('error', reject);
-  });
-}
-function parseConduitText(raw){
-  const regions = {}; let limit = 0, connected = 0, live = 0;
-  String(raw).split('\n').forEach(line => {
-    let m;
-    if ((m = line.match(/^conduit_region_connected_clients\{region="([A-Z]{2})",scope="common"\}\s+([\d.eE+]+)/))) { const v = Math.round(parseFloat(m[2])); if (v > 0) regions[m[1]] = v; }
-    else if ((m = line.match(/^conduit_max_common_clients\s+([\d.eE+]+)/))) limit = parseFloat(m[1]);
-    else if ((m = line.match(/^conduit_connected_clients\s+([\d.eE+]+)/))) connected = parseFloat(m[1]);
-    else if ((m = line.match(/^conduit_is_live\s+([\d.eE+]+)/))) live = parseFloat(m[1]);
-  });
-  return { regions, limit, connected, live };
-}
 
 
 
