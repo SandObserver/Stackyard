@@ -472,41 +472,7 @@ on('POST', '/api/badge-proxy', async(req, res) => {
   } catch(e) { json(res, 502, { error:e.message }); }
 });
 
-// ── System stats ──
 
-on('GET', '/api/system-stats', async(req, res) => {
-  try {
-    const cfg = loadConfig();
-    const id  = new URL(req.url, 'http://x').searchParams.get('id') || '';
-    const widget = cfg.items?.find(i => i.id === id && i.type === 'widget');
-    const slots  = widget?.widgetConfig?.slots || [];
-
-    /* Collect unique mount paths from disk slots */
-    const mounts = new Set();
-    for (const s of slots) {
-      if (s.type !== 'disk') continue;
-      if (s.primary)   mounts.add(s.primary);
-      if (s.secondary) mounts.add(s.secondary);
-    }
-    /* Fall back to the global diskMount setting if no widget-specific mounts */
-    if (!mounts.size) mounts.add(cfg.settings?.stats?.diskMount || '/');
-
-    const [cpu, ...diskResults] = await Promise.all([
-      cpuPercent(),
-      ...[...mounts].map(m => Promise.resolve({ mount: m, ...diskStats(m) })),
-    ]);
-    const ram   = ramPercent();
-    const temps = (() => {
-      const zones = new Set([0]);
-      for (const s of slots) if (s.type === 'temp' && Number.isInteger(s.thermalZone)) zones.add(s.thermalZone);
-      const out = {};
-      for (const z of zones) { const t = cpuTemp(z); if (t !== null) out[z] = t; }
-      return out;
-    })();
-
-    json(res, 200, { cpu, ram, temp: temps[0] ?? null, temps, disks: diskResults });
-  } catch(e) { json(res, 500, { error:e.message }); }
-});
 
 // ── Network stats background poller ──
 
@@ -809,46 +775,7 @@ on('GET', '/api/scrutiny-devices/:id', async(req, res) => {
   } catch(e) { json(res, 502, { error: e.message }); }
 });
 
-// ── Disk Health widget polling ──
 
-on('GET', '/api/disk-health/:id', async(req, res) => {
-  const cfg = loadConfig();
-  const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
-  if (!w) return json(res, 404, { error:'widget not found' });
-  const wc  = w.widgetConfig || {};
-  const url = wc.scrutinyUrl;
-  if (!url) return json(res, 503, { error:'scrutinyUrl not configured' });
-  const bays = wc.bays || []; /* array of device_id strings or null */
-
-  try {
-    const base = url.includes('://') ? url.replace(/\/$/, '') : `http://${url.replace(/\/$/,'')}`;
-    const r    = await fetchJSON(base + '/api/summary', { timeout: 8000 });
-    const summary = r.data?.data?.summary || {};
-
-    /* Build a map: device_id → summary entry */
-    const byId = {};
-    Object.values(summary).forEach(entry => {
-      if (entry.device?.device_id) byId[entry.device.device_id] = entry;
-    });
-
-    const result = bays.map(deviceId => {
-      if (!deviceId) return null;
-      const entry = byId[deviceId];
-      if (!entry) return { device_id:deviceId, device_status:0, hasSmart:false, error:'not found' };
-      return {
-        device_id:     deviceId,
-        device_status: entry.device.device_status ?? 0,
-        hasSmart:      !!(entry.smart),
-        model_name:    entry.device.model_name || entry.device.device_serial_id || entry.device.device_name,
-        device_name:   entry.device.device_name,
-        temp:          entry.smart?.temp ?? null,
-        capacity:      entry.device.capacity || null,
-      };
-    });
-
-    json(res, 200, { bays: result, href: wc.scrutinyHref || '' });
-  } catch(e) { json(res, 502, { error: e.message }); }
-});
 
 on('GET', '/api/speed-data/:id', async(req, res) => {
   const cfg = loadConfig();

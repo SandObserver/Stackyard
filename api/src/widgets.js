@@ -113,7 +113,7 @@ function loadRegistry() {
     reg[name] = {
       manifest,
       hasDataFn:    fs.existsSync(path.join(dir, 'data.js')),
-      customEditor: fs.existsSync(path.join(dir, 'config.js')),
+      customEditor: fs.existsSync(path.join(dir, 'config.js')) || manifest.customEditor === true,
     };
   }
 
