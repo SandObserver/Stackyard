@@ -1,0 +1,6 @@
+{
+  "name": "stats",
+  "label": "Stats",
+  "sizes": ["small", "medium"],
+  "customEditor": true
+}
