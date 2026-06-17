@@ -1,5 +1,4 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { WIDGET_TYPES, widgetSrc } from '/js/widget-types.js?v=36';
 import { clr as rc } from '/js/utils.js?v=37';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=1';
 
@@ -487,7 +486,7 @@ function closeModal(){
   eid=null;
   /* Reset widget state so stale values don't bleed into the next modal open */
   _wtype='custom';_wsize='medium';_wslots=[];_wnet={enabled:false,url:'',provider:'myspeed'};
-  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wduplicatiCfg={};_wstatsSubType='system-summary';_wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]};_iframeOpts={};
+  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wbackupCfg={};_wstatsSubType='system-summary';_wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]};_iframeOpts={};
 }
 
 function buildTypeSwitch(item){
@@ -515,16 +514,15 @@ function buildFormBody(item){
   else buildAppForm(body,item);
 }
 
-/* Derive allowed sizes from WIDGET_TYPES — automatically stays in sync when types are added */
-const WIDGET_SIZES = Object.fromEntries(
-  Object.entries(WIDGET_TYPES).map(([k,v]) => [k, v.sizes])
-);
+/* Allowed sizes come from the widget registry (folder-driven). 'custom' is the only built-in type. */
+const CUSTOM_SIZES = ['small','medium','large','xlarge'];
+function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (_widgetReg[type]?.sizes || ['medium']); }
 const SIZE_LABELS = { small:'Small', medium:'Medium', large:'Large', xlarge:'Extra Large' };
 const STAT_TYPES  = ['cpu','ram','temp','disk'];
 const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk' };
 
 /* State for current widget config while modal is open */
-let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wgithubCfg={}, _wclockCfg={}, _wduplicatiCfg={}, _wstatsSubType='system-summary', _wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]}, _iframeOpts={};
+let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wgithubCfg={}, _wclockCfg={}, _wbackupCfg={}, _wstatsSubType='system-summary', _wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]}, _iframeOpts={};
 /* Auto-generated config form (folder-style widgets driven by the registry). */
 let _wAutoCfg={}, _autoForm=null, _autoFormType=null;
 
@@ -576,7 +574,7 @@ function buildWidgetForm(body,item){
     href:      wc.vpn?.href       || '',
     color:     wc.vpn?.color      || '#30D158',
   };
-  _wduplicatiCfg = {
+  _wbackupCfg = {
     /* Per-slot useDefault: first instance of a provider is its default; later
        instances use that default unless turned off (then they get their own container). */
     slots: _normBackupSlots(wc.slots, _wsize),
@@ -604,12 +602,13 @@ function _renderWidgetForm(body){
   const typeDiv=document.createElement('div');typeDiv.className='fr';
   typeDiv.innerHTML='<label>Widget Type</label>';
   const typeSel=document.createElement('select');typeSel.className='fc';typeSel.id='f-wtype';
-  Object.entries(WIDGET_TYPES).filter(([,def])=>!def.legacy).sort(([,a],[,b])=>a.label.localeCompare(b.label)).forEach(([t,def])=>{
-    const o=document.createElement('option');o.value=t;o.textContent=def.label;
-    if(t===_wtype) o.selected=true;
-    typeSel.appendChild(o);
-  });
-  typeSel.onchange=()=>{ _wtype=typeSel.value; _wsize=WIDGET_SIZES[_wtype][0]; _renderWidgetForm(body); };
+  [...Object.values(_widgetReg).map(w=>[w.name,w.label]), ['custom','Custom']]
+    .sort((a,b)=>a[1].localeCompare(b[1])).forEach(([t,label])=>{
+      const o=document.createElement('option');o.value=t;o.textContent=label;
+      if(t===_wtype) o.selected=true;
+      typeSel.appendChild(o);
+    });
+  typeSel.onchange=()=>{ _wtype=typeSel.value; _wsize=widgetSizes(_wtype)[0]; _renderWidgetForm(body); };
   typeDiv.appendChild(typeSel);
   body.appendChild(typeDiv);
 
@@ -640,7 +639,7 @@ function _renderWidgetForm(body){
   /* Only render sizes this widget actually supports (no greyed-out chips).
      Contributions view further restricts github to small/medium. */
   const _ghContrib=(_wtype==='github'&&(_wAutoCfg.githubView||'prs')==='contributions');
-  let _sizeOpts=(WIDGET_SIZES[_wtype]||['medium']).filter(s=>!(_ghContrib&&(s==='large'||s==='xlarge')));
+  let _sizeOpts=widgetSizes(_wtype).filter(s=>!(_ghContrib&&(s==='large'||s==='xlarge')));
   if(_wtype==='connections') _sizeOpts = (_wconnView==='map') ? ['medium'] : ['small','medium'];
   if(!_sizeOpts.includes(_wsize)) _wsize=_sizeOpts.includes('medium')?'medium':_sizeOpts[0];
   _sizeOpts.forEach(s=>{
@@ -652,9 +651,9 @@ function _renderWidgetForm(body){
       sizeRow.querySelectorAll('.wchip').forEach(c=>{c.classList.toggle('on',c===b);c.setAttribute('aria-pressed',String(c===b));});
       /* Re-norm backup slots when size changes so slot count matches */
       if(_wtype==='backup'){
-        _wduplicatiCfg.slots=_normBackupSlots(_wduplicatiCfg.slots, s);
+        _wbackupCfg.slots=_normBackupSlots(_wbackupCfg.slots, s);
         const cfgBody=body.querySelector('#bak-cfg-body');
-        if(cfgBody){ cfgBody.innerHTML=''; _renderDuplicatiConfig(cfgBody); }
+        if(cfgBody){ cfgBody.innerHTML=''; _renderBackupConfig(cfgBody); }
       }
       /* Re-render disk-health bay rows when size changes */
       if(_wtype==='stats'&&_wstatsSubType==='disk-health'){
@@ -675,7 +674,7 @@ function _renderWidgetForm(body){
   }
   else if(_wtype==='stats')        _renderStatsConfig(body);
   else if(_wtype==='connections') _renderConnectionsConfig(body);
-  else if(_wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderDuplicatiConfig(d); }
+  else if(_wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderBackupConfig(d); }
   else                        _renderCustomConfig(body);
 }
 
@@ -1242,7 +1241,7 @@ function _normBackupSlots(saved, size) {
 
 /* Auto-fill connection from first same-provider slot that has a URL */
 function _autofillSlot(si, provider) {
-  const slots = _wduplicatiCfg.slots;
+  const slots = _wbackupCfg.slots;
   const first = slots.findIndex((s,i) => i!==si && s.provider===provider &&
     (provider==='duplicati' ? s.dupUrl : s.kopiaUrl));
   if (first === -1) return;
@@ -1309,11 +1308,11 @@ function _customDrop(container, opt){
   wrap.append(btn,list); container.appendChild(wrap);
 }
 
-function _renderDuplicatiConfig(body){
+function _renderBackupConfig(body){
   const esc2 = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
   const slotCount = _wsize === 'small' ? 1 : 3;
   const SLOT_NAMES = ['First','Second','Third'];
-  const slots = _wduplicatiCfg.slots;
+  const slots = _wbackupCfg.slots;
   const PLABEL = p => p==='duplicati' ? 'Duplicati' : 'Kopia';
   const firstProvIdx = prov => slots.findIndex(s => s.provider===prov);
   /* The provider's default is active only if its first instance opts to be the default. */
@@ -1347,7 +1346,7 @@ function _renderDuplicatiConfig(body){
     });
   }
   /* Scoped re-render — body IS the #bak-cfg-body sub-container, never the whole form. */
-  const rerender = () => { flushDom(); body.innerHTML=''; _renderDuplicatiConfig(body); };
+  const rerender = () => { flushDom(); body.innerHTML=''; _renderBackupConfig(body); };
 
   function addNameField(div, si){
     const slot=slots[si];
@@ -2401,7 +2400,7 @@ async function doSave(orig){
         }
       }else if(_wtype==='backup'){
         /* Flush current DOM values into slot state before saving */
-        _wduplicatiCfg.slots.forEach((slot,si) => {
+        _wbackupCfg.slots.forEach((slot,si) => {
           slot.customName = (document.getElementById(`bak-name-${si}`)?.value||'').trim();
           const defEl = document.getElementById(`bak-def-${si}`);
           if (defEl) slot.useDefault = defEl.checked;
@@ -2428,11 +2427,11 @@ async function doSave(orig){
            uses the default, so the runtime resolves each slot directly. */
         if(_wsize!=='small'){
           const propagate=(prov)=>{
-            const fi=_wduplicatiCfg.slots.findIndex(s=>s.provider===prov);
+            const fi=_wbackupCfg.slots.findIndex(s=>s.provider===prov);
             if(fi<0) return;
-            const def=_wduplicatiCfg.slots[fi];
+            const def=_wbackupCfg.slots[fi];
             if(def.useDefault===false) return;   /* default instance opted out → no sharing */
-            _wduplicatiCfg.slots.forEach((t,j)=>{
+            _wbackupCfg.slots.forEach((t,j)=>{
               if(j===fi || t.provider!==prov || t.useDefault===false) return;
               if(prov==='duplicati'){
                 t.dupUrl=def.dupUrl; t.dupHref=def.dupHref; t.dupPollSec=def.dupPollSec;
@@ -2446,12 +2445,12 @@ async function doSave(orig){
           propagate('duplicati'); propagate('kopia');
         }
         /* Validate (after propagation, every provider slot has a URL) */
-        for(const [si,slot] of _wduplicatiCfg.slots.entries()){
+        for(const [si,slot] of _wbackupCfg.slots.entries()){
           if(slot.provider==='duplicati'&&!slot.dupUrl){toast(`URL required for ${['First','Second','Third'][si]||''} Duplicati instance`,'err');return;}
           if(slot.provider==='kopia'&&!slot.kopiaUrl){toast(`URL required for ${['First','Second','Third'][si]||''} Kopia instance`,'err');return;}
         }
         /* Strip runtime-only fields before saving */
-        const savableSlots = _wduplicatiCfg.slots.map(s=>({
+        const savableSlots = _wbackupCfg.slots.map(s=>({
           provider:    s.provider,
           jobId:       s.jobId    ||null,
           customName:  s.customName||undefined,
