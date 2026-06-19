@@ -102,8 +102,11 @@ function preserveConfigSecrets(newCfg, oldCfg) {
   return newCfg;
 }
 
+const MAP_SVC_SECRETS = ['token','apiKey','password'];
+
 module.exports = {
   secretSpec,
   scrubWidgetSecrets, preserveWidgetSecrets,
   scrubConfigSecrets, preserveConfigSecrets,
+  MAP_SVC_SECRETS,
 };

@@ -31,10 +31,6 @@ function dispatch(req, res) {
   json(res, 404, { error:'Not found' });
 }
 
-/* Sets CORS preflight response headers only. Deliberately does NOT set
-   Access-Control-Allow-Origin — the app is same-origin (UI and API share one
-   Nginx origin), so no cross-origin access is granted. Renamed from setCORS
-   to avoid implying that cross-origin requests are permitted. */
 function setPreflightHeaders(res) {
   res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers','Content-Type');
@@ -56,4 +52,24 @@ function readBody(req) {
   });
 }
 
-module.exports = { on, dispatch, json, readBody, setPreflightHeaders };
+const TRUST_PROXY = process.env.TRUST_PROXY === 'true';
+function getIp(req) {
+  if (TRUST_PROXY) {
+    const fwd = req.headers['x-forwarded-for'];
+    if (fwd) return fwd.split(',').map(s => s.trim()).filter(Boolean)[0];
+  }
+  return req.socket?.remoteAddress || 'unknown';
+}
+function checkOrigin(req, res) {
+  const origin = req.headers['origin'];
+  if (!origin) return true;
+  try {
+    const originHost = new URL(origin).host;
+    const serverHost = req.headers['host'];
+    if (originHost === serverHost) return true;
+  } catch {}
+  json(res, 403, { error:'Forbidden: origin mismatch' });
+  return false;
+}
+
+module.exports = { on, dispatch, json, readBody, setPreflightHeaders, checkOrigin, getIp };
