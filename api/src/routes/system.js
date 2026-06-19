@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const { on, json } = require('../router');
 const { loadConfig } = require('../config');
-const { fetchJSON } = require('../proxy');
+const { fetchJSON, strictCheckSsrf } = require('../proxy');
 const { scrubWidgetSecrets, MAP_SVC_SECRETS } = require('../widget-secrets');
 const { getRegistry } = require('../widgets');
 
@@ -57,6 +57,8 @@ on('GET', '/api/scrutiny-proxy', async(req, res) => {
   if (!raw) return json(res, 400, { error:'url param required' });
   try {
     const base    = raw.includes('://') ? raw.replace(/\/$/, '') : `http://${raw.replace(/\/$/,'')}`;
+    const ssrfErr = await strictCheckSsrf(base);
+    if (ssrfErr) return json(res, 403, { error: ssrfErr });
     const r       = await fetchJSON(base + '/api/summary', { timeout: 8000 });
     const summary = r.data?.data?.summary || {};
     const devices = Object.values(summary)
