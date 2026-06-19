@@ -34,7 +34,7 @@ EXPOSE 80
 
 # Healthcheck runs through Nginx → Node, covering both processes.
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
-  CMD wget -qO- http://127.0.0.1:80/api/health > /dev/null || exit 1
+  CMD wget -qO- http://127.0.0.1:80/health > /dev/null || exit 1
 
 # supervisord runs as root so it can bind port 80 (nginx) and spawn processes.
 # It drops the API process to the unprivileged 'node' user (see supervisord.conf).
