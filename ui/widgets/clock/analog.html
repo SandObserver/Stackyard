@@ -19,22 +19,23 @@
 
   .face { position: relative; }
 
+  .date-layer {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .date-layer text {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+  }
+  .mode-dark  .date-layer text { fill: rgba(255,255,255,0.5); }
+  .mode-light .date-layer text { fill: rgba(0,0,0,0.45); }
+
   .disc {
     position: absolute; left: 50%; top: 50%;
     transform-origin: 50% 50%;
     will-change: transform;
   }
   .disc svg { display: block; overflow: visible; }
-  .mode-dark  .disc svg circle { mix-blend-mode: screen; }
-  .mode-light .disc svg circle { mix-blend-mode: multiply; }
-
-  .date-line {
-    position: absolute; left: 0; right: 0; text-align: center;
-    font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-    white-space: nowrap; line-height: 1; pointer-events: none;
-  }
-  .mode-dark  .date-line { color: rgba(255,255,255,0.46); }
-  .mode-light .date-line { color: rgba(0,0,0,0.42); }
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
@@ -57,12 +58,12 @@ function _a11yLabel(now){
 
 const _reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COLORS = {
-  dark:  { hour:'#ff2d2d', minute:'#ffe400', second:'#0a96ff', tick:'rgba(255,255,255,0.92)', dot:'#111' },
-  light: { hour:'#ff2d4d', minute:'#ffe400', second:'#00b8e6', tick:'rgba(0,0,0,0.55)',       dot:'#222' },
+  dark:  { hour:'#ff2d2d', minute:'#ffe400', second:'#0a96ff', tick:'rgba(255,255,255,0.95)', dot:'#111', op:0.7  },
+  light: { hour:'#ff2d4d', minute:'#ffe400', second:'#00b8e6', tick:'rgba(0,0,0,0.6)',         dot:'#222', op:0.62 },
 };
 
 let _mode='dark', _timezone='', _showDate=true;
-let _discs=null, _rafId=null, _running=false, _sz=0;
+let _discs=null, _dateText=null, _rafId=null, _running=false, _sz=0;
 
 function _now(){
   return _timezone
@@ -82,11 +83,25 @@ function buildShell(){
   face.style.height=_sz+'px';
 
   const col=COLORS[_mode];
-  const rHour=_sz*0.345, rMinSec=_sz*0.285, dist=_sz*0.175;
+
+  const dateSvg=document.createElementNS(NS,'svg');
+  dateSvg.setAttribute('class','date-layer');
+  dateSvg.setAttribute('viewBox',`0 0 ${_sz} ${_sz}`);
+  const txt=document.createElementNS(NS,'text');
+  txt.setAttribute('x',_sz/2);
+  txt.setAttribute('y',_sz-Math.round(_sz*0.07));
+  txt.setAttribute('text-anchor','middle');
+  txt.setAttribute('font-size',Math.max(10, Math.round(_sz*0.075)));
+  dateSvg.appendChild(txt);
+  dateSvg.style.display=_showDate?'':'none';
+  face.appendChild(dateSvg);
+  _dateText=txt;
+
+  const rHour=_sz*0.36, rMin=_sz*0.3, rSec=_sz*0.245, dist=_sz*0.175;
   const specs=[
-    { key:'hour',   r:rHour,   color:col.hour   },
-    { key:'minute', r:rMinSec, color:col.minute },
-    { key:'second', r:rMinSec, color:col.second },
+    { key:'hour',   r:rHour, color:col.hour   },
+    { key:'minute', r:rMin,  color:col.minute },
+    { key:'second', r:rSec,  color:col.second },
   ];
 
   _discs={};
@@ -99,7 +114,7 @@ function buildShell(){
     svg.setAttribute('viewBox',`${-box/2} ${-box/2} ${box} ${box}`);
     const c=document.createElementNS(NS,'circle');
     c.setAttribute('cx',0); c.setAttribute('cy',-dist); c.setAttribute('r',sp.r);
-    c.setAttribute('fill',sp.color);
+    c.setAttribute('fill',sp.color); c.setAttribute('fill-opacity',col.op);
     const tickLen=Math.max(6, _sz*0.058), tw=Math.max(2, _sz*0.016);
     const ln=document.createElementNS(NS,'line');
     ln.setAttribute('x1',0); ln.setAttribute('y1',-dist-sp.r+tickLen);
@@ -118,14 +133,6 @@ function buildShell(){
   dot.style.cssText=`position:absolute;left:50%;top:50%;width:${dotR*2}px;height:${dotR*2}px;`+
     `margin-left:${-dotR}px;margin-top:${-dotR}px;border-radius:50%;background:${col.dot};`;
   face.appendChild(dot);
-
-  const dl=document.createElement('div');
-  dl.className='date-line';
-  dl.id='date-line';
-  dl.style.fontSize=Math.max(9, Math.round(_sz*0.066))+'px';
-  dl.style.bottom=Math.round(_sz*0.03)+'px';
-  dl.style.display=_showDate?'':'none';
-  face.appendChild(dl);
 }
 
 function _rotate(el, deg){ el.style.transform=`rotate(${deg}deg)`; }
@@ -138,10 +145,10 @@ function render(smoothSeconds){
   _rotate(_discs.second, (s + (smoothSeconds ? ms/1000 : 0))*6);
 
   document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now));
-  if(_showDate){
+  if(_showDate && _dateText){
     const D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    document.getElementById('date-line').textContent=`${D[now.getDay()]}, ${M[now.getMonth()]} ${now.getDate()}`;
+    _dateText.textContent=`${D[now.getDay()]}, ${M[now.getMonth()]} ${now.getDate()}`;
   }
 }
 
