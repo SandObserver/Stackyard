@@ -10,6 +10,7 @@ on('GET', '/api/auth/check', (req, res) => {
     enabled: !!(cfg.settings?.auth?.enabled),
     authenticated: isAuthenticated(req),
     passwordSet: !!(cfg.settings?.auth?.passwordHash),
+    setupPrompted: !!(cfg.settings?.auth?.setupPrompted),
   });
 });
 
@@ -54,12 +55,24 @@ on('POST', '/api/auth/set-password', async(req, res) => {
     cfg.settings.auth = cfg.settings.auth || {};
     cfg.settings.auth.passwordHash = await hashPassword(password);
     cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
+    cfg.settings.auth.enabled = true;
+    cfg.settings.auth.setupPrompted = true;
     saveConfig(cfg);
     log.audit('password changed', {});
     const sessionId = crypto.randomBytes(24).toString('hex');
     setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret));
     json(res, 200, { ok:true });
   } catch(e) { json(res, 400, { error:e.message }); }
+});
+
+on('POST', '/api/auth/dismiss-setup', (req, res) => {
+  if (!checkOrigin(req, res)) return;
+  const cfg = loadConfig();
+  cfg.settings = cfg.settings || {};
+  cfg.settings.auth = cfg.settings.auth || {};
+  cfg.settings.auth.setupPrompted = true;
+  saveConfig(cfg);
+  json(res, 200, { ok:true });
 });
 
 on('POST', '/api/auth/toggle', async(req, res) => {
