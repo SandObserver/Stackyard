@@ -665,3 +665,38 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
    iframe viewport (vw/vh) directly — no parent container-query needed. Do NOT
    add `container-type:size` here: it applies size containment and collapses the
    desktop .widget (which has no explicit height) to 0, hiding all widgets. */
+
+.setup-prompt {
+  position: fixed; inset: 0; z-index: 10001;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.5);
+  -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%);
+  font-family: inherit; padding: 24px;
+}
+.setup-card {
+  width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px;
+  padding: 24px; border-radius: 20px;
+  background: rgba(40,40,44,.7); border: 1px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
+  color: #fff;
+}
+.setup-title { font-size: 17px; font-weight: 600; margin: 0; }
+.setup-sub   { font-size: 13px; line-height: 1.4; color: rgba(255,255,255,.55); margin: 0; }
+.setup-pw {
+  width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 12px;
+  background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.16);
+  color: #fff; font-size: 15px; font-family: inherit; outline: none;
+}
+.setup-pw:focus { border-color: #0a84ff; }
+.setup-bars { display: flex; gap: 4px; }
+.setup-bars .pwbar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); transition: background .15s; }
+.setup-hint { font-size: 12px; min-height: 14px; color: rgba(255,255,255,.5); }
+.setup-err  { display: none; font-size: 13px; color: #ff453a; }
+.setup-btns { display: flex; gap: 10px; margin-top: 4px; }
+.setup-btn {
+  flex: 1; padding: 10px; border-radius: 14px; font-size: 15px; cursor: pointer; font-family: inherit;
+  border: 1px solid rgba(255,255,255,.18);
+}
+.setup-btn-skip { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
+.setup-btn-set  { background: #0a84ff; border-color: #0a84ff; color: #fff; }
+.setup-btn-set:disabled { opacity: .4; cursor: default; }
