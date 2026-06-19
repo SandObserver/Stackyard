@@ -87,7 +87,9 @@ on('POST', '/api/config', async(req, res) => {
     }
     if (existing.settings?.auth) {
       data.settings = data.settings || {};
-      data.settings.auth = data.settings.auth || existing.settings.auth;
+      data.settings.auth = data.settings.auth || {};
+      if (existing.settings.auth.secret) data.settings.auth.secret = existing.settings.auth.secret;
+      if (existing.settings.auth.passwordHash) data.settings.auth.passwordHash = existing.settings.auth.passwordHash;
     }
     preserveConfigSecrets(data, existing);
     if (Array.isArray(data.items) && Array.isArray(existing.items)) {
