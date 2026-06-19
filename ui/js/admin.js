@@ -1,5 +1,5 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { clr as rc } from '/js/utils.js?v=37';
+import { clr as rc, esc } from '/js/utils.js?v=37';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=1';
 
 /* Admin UI — Stackyard Dashboard */
@@ -143,8 +143,6 @@ async function save(){
   catch(e){toast('Save failed: '+e.message,'err');}
   saving=false;render();
 }
-
-const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 /* resolveIconFull: admin-only async icon probe for live preview.
    resolveIcon and iconChain are imported from /js/icons.js. */
@@ -1309,7 +1307,6 @@ function _customDrop(container, opt){
 }
 
 function _renderBackupConfig(body){
-  const esc2 = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
   const slotCount = _wsize === 'small' ? 1 : 3;
   const SLOT_NAMES = ['First','Second','Third'];
   const slots = _wbackupCfg.slots;
@@ -1353,7 +1350,7 @@ function _renderBackupConfig(body){
     const w=document.createElement('div'); w.className='fr';
     w.innerHTML=`<label for="bak-name-${si}">Display name <span class="opt-span">(optional)</span></label>
       <input class="fc" id="bak-name-${si}" type="text" placeholder="Shown on the card"
-        value="${esc2(slot.customName||'')}">
+        value="${esc(slot.customName||'')}">
       <div class="hint">Overrides the backup name on the widget — handy for Kopia's long path names.</div>`;
     div.appendChild(w);
   }
@@ -1442,7 +1439,7 @@ function _renderBackupConfig(body){
       urlWrap.innerHTML=`<label for="dup-url-${si}">URL <span class="req">*</span></label>
         <div style="display:flex;gap:6px;align-items:center">
           <input class="fc" id="dup-url-${si}" type="text" placeholder="http://duplicati:8200"
-            value="${esc2(slot.dupUrl)}" style="flex:1;min-width:0">
+            value="${esc(slot.dupUrl)}" style="flex:1;min-width:0">
           <button type="button" class="btn bg sm" id="dup-fetch-${si}" style="flex-shrink:0;white-space:nowrap">Fetch Jobs</button>
         </div>`;
       div.appendChild(urlWrap);
@@ -1456,13 +1453,13 @@ function _renderBackupConfig(body){
       const hrefWrap=document.createElement('div');hrefWrap.className='fr';
       hrefWrap.innerHTML=`<label for="dup-href-${si}">Click URL <span class="opt-span">(optional)</span></label>
         <input class="fc" id="dup-href-${si}" type="text" placeholder="http://duplicati:8200"
-          value="${esc2(slot.dupHref)}">`;
+          value="${esc(slot.dupHref)}">`;
       div.appendChild(hrefWrap);
 
       const pollWrap=document.createElement('div');pollWrap.className='fr';
       pollWrap.innerHTML=`<label for="dup-poll-${si}">Poll interval <span class="opt-span">(sec)</span></label>
         <input class="fc" id="dup-poll-${si}" type="number" min="10" max="3600"
-          value="${esc2(slot.dupPollSec)}" style="width:90px">`;
+          value="${esc(slot.dupPollSec)}" style="width:90px">`;
       div.appendChild(pollWrap);
 
       const jobWrap=document.createElement('div');jobWrap.className='fr';jobWrap.id=`dup-job-wrap-${si}`;
@@ -1505,7 +1502,7 @@ function _renderBackupConfig(body){
       urlWrap.innerHTML=`<label for="kopia-url-${si}">URL <span class="req">*</span></label>
         <div style="display:flex;gap:6px;align-items:center">
           <input class="fc" id="kopia-url-${si}" type="text" placeholder="http://kopia:51515"
-            value="${esc2(slot.kopiaUrl)}" style="flex:1;min-width:0">
+            value="${esc(slot.kopiaUrl)}" style="flex:1;min-width:0">
           <button type="button" class="btn bg sm" id="kopia-fetch-${si}" style="flex-shrink:0;white-space:nowrap">Fetch Sources</button>
         </div>`;
       div.appendChild(urlWrap);
@@ -1513,7 +1510,7 @@ function _renderBackupConfig(body){
       const userWrap=document.createElement('div');userWrap.className='fr';
       userWrap.innerHTML=`<label for="kopia-user-${si}">Username <span class="opt-span">(optional)</span></label>
         <input class="fc" id="kopia-user-${si}" type="text" placeholder="admin"
-          value="${esc2(slot.kopiaUser)}">`;
+          value="${esc(slot.kopiaUser)}">`;
       div.appendChild(userWrap);
 
       const passWrap=document.createElement('div');passWrap.className='fr';
@@ -1525,7 +1522,7 @@ function _renderBackupConfig(body){
       const hrefWrap=document.createElement('div');hrefWrap.className='fr';
       hrefWrap.innerHTML=`<label for="kopia-href-${si}">Click URL <span class="opt-span">(optional)</span></label>
         <input class="fc" id="kopia-href-${si}" type="text" placeholder="http://kopia:51515"
-          value="${esc2(slot.kopiaHref)}">`;
+          value="${esc(slot.kopiaHref)}">`;
       div.appendChild(hrefWrap);
 
       const srcWrap=document.createElement('div');srcWrap.className='fr';srcWrap.id=`kopia-src-wrap-${si}`;
