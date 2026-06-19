@@ -51,7 +51,7 @@ services:
         - CMD
         - wget
         - "-qO-"
-        - http://localhost/api/health
+        - http://localhost/health
       interval: 30s
       timeout: 10s
       retries: 3
