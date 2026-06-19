@@ -1,23 +1,8 @@
-/* Auto-generated widget config form.
-   Renders a widget's declared `fields` into a container using the admin UI's
-   existing styles, and reads the entered values back out. This is parallel to
-   the hand-written per-widget editors and is used only for folder-style
-   widgets; it touches none of the existing editors.
+/* Renders a widget's declared `fields` into a config form and reads values back.
+   Field types: text, secret, number, toggle, select, group.
+   renderWidgetConfigForm(container, fields, config) -> { getValues, validate } */
 
-   Supported field types: text, secret, number, toggle, select, group.
-   Field shape: { key, type, label, optional?, placeholder?, hint?, default?,
-                  options?/optionsFrom? (select), fields?/min?/max? (group),
-                  min?/max?/step? (number), showIf?:{field,equals} }
-
-   renderWidgetConfigForm(container, fields, config) -> controller with:
-     getValues()  current values (secrets left blank are omitted, so the server
-                  keeps the stored value)
-     validate()   array of labels of required fields left empty
-*/
-
-const esc = s => String(s == null ? '' : s)
-  .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-  .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+import { esc } from '/js/utils.js?v=37';
 
 function _labelHtml(field) {
   const tag = field.optional ? ' <span class="opt-span">(optional)</span>' : ' <span class="req">*</span>';
