@@ -9,10 +9,10 @@ import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMob
 const API = '';
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
 
-const WC  = { d: WIDGET_COLS.desktop,  m: WIDGET_COLS.mobile  };
-const WRS = { d: WIDGET_ROWS.desktop,  m: WIDGET_ROWS.mobile  };
+const wCols  = { d: WIDGET_COLS.desktop,  m: WIDGET_COLS.mobile  };
+const wRows = { d: WIDGET_ROWS.desktop,  m: WIDGET_ROWS.mobile  };
 const WH  = { d: WIDGET_HEIGHTS };
-const WK  = { d: WIDGET_COST.desktop,  m: WIDGET_COST.mobile  };
+const wCost  = { d: WIDGET_COST.desktop,  m: WIDGET_COST.mobile  };
 const SLOTS = 24;
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
@@ -20,14 +20,14 @@ const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
 let _mobTsCleanup = null, _mobTeCleanup = null, _mobTmCleanup = null;
 
-const BS  = {};
+const badgeState  = {};
 const BEL = new Map();
 function breg(id, el) { if (!BEL.has(id)) BEL.set(id, new Set()); BEL.get(id).add(el); }
 function bunreg(id, el) { if (BEL.has(id)) BEL.get(id).delete(el); }
 function bupd(id) {
   const els = BEL.get(id); if (!els?.size) return;
   const item = items.find(i => i.id === id);
-  const s = item?.type === 'folder' ? folderBadge(item) : (BS[id]||{});
+  const s = item?.type === 'folder' ? folderBadge(item) : (badgeState[id]||{});
   const hideHealthy = S.server?.hideHealthyBadge !== false;
   const custom   = item?.monitoring?.activity?.custom || {};
   const staticBdg = item?.monitoring?.staticBadge || {};
@@ -104,14 +104,14 @@ function bupd(id) {
 }
 
 function bset(id, type, val) {
-  if (!BS[id]) BS[id] = { health: 0, activity: 0 };
-  BS[id][type] = val; bupd(id);
+  if (!badgeState[id]) badgeState[id] = { health: 0, activity: 0 };
+  badgeState[id][type] = val; bupd(id);
   items.filter(i => i.type === 'folder' && (i.children||[]).includes(id)).forEach(f => bupd(f.id));
 }
 function folderBadge(folder) {
   const children = (folder.children||[]).map(id => items.find(i => i.id === id)).filter(Boolean);
   let actSum = 0, hasHealth = false;
-  for (const c of children) { const s = BS[c.id]||{}; if (s.health) hasHealth = true; if (s.activity > 0) actSum += s.activity; }
+  for (const c of children) { const s = badgeState[c.id]||{}; if (s.health) hasHealth = true; if (s.activity > 0) actSum += s.activity; }
   return { health: hasHealth, activity: actSum };
 }
 
@@ -125,7 +125,7 @@ function paginate() {
   for (const item of items) {
     if (item.dock) continue;
     if (inFolder.has(String(item.id))) continue;
-    const cost = item.type === 'widget' ? WK[pl][item.widgetSize||'medium'] : 1;
+    const cost = item.type === 'widget' ? wCost[pl][item.widgetSize||'medium'] : 1;
     if (used + cost > SLOTS && cur.length) { pages.push([...cur]); cur = []; used = 0; }
     cur.push(item); used += cost;
   }
@@ -156,7 +156,7 @@ function widgetTitle(item) {
 function mkWidget(item) {
   const sz = item.widgetSize||'medium';
   const cell = mk('div');
-  let cls = `wc c${WC.d[sz]}`; if (WRS.d[sz] >= 3) cls += ' r3'; else if (WRS.d[sz] >= 2) cls += ' r2';
+  let cls = `wc c${wCols.d[sz]}`; if (wRows.d[sz] >= 3) cls += ' r3'; else if (wRows.d[sz] >= 2) cls += ' r2';
   cell.className = cls;
   const card = mk('div'); card.className = 'widget';
   if (item.widgetType) card.dataset.wtype = item.widgetType;
@@ -288,14 +288,93 @@ async function pollHealth() {
   try { const d = await (await fetch('/api/health',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) bset(id,'health',v.unhealthy?1:0); } catch {}
 }
 
+function pwStrength(pw) {
+  const dim = 'rgba(255,255,255,.1)';
+  if (!pw) return { score:0, label:'', color:dim, ok:false };
+  if (pw.length < 8) return { score:1, label:'Too short — min 8 characters', color:'#ff453a', ok:false };
+  let score = 1;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  score = Math.min(4, score - 1);
+  const labels = ['Weak','Fair','Good','Strong'];
+  const colors = ['#ff9f0a','#ffd60a','#34c759','#34c759'];
+  return { score: score + 1, label: labels[score], color: colors[score], ok: score >= 1 };
+}
+
+function showSetupPrompt() {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'setup-prompt';
+    ov.innerHTML =
+      '<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title">' +
+        '<p id="setup-title" class="setup-title">Set a dashboard password?</p>' +
+        '<p class="setup-sub">Optional. Without one, anyone who can reach this dashboard can use and configure it. This isn\'t a replacement for a dedicated auth service.</p>' +
+        '<input id="setup-pw" type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" class="setup-pw">' +
+        '<div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div>' +
+        '<div id="setup-hint" class="setup-hint"></div>' +
+        '<div id="setup-err" class="setup-err" role="alert"></div>' +
+        '<div class="setup-btns">' +
+          '<button id="setup-skip" type="button" class="setup-btn setup-btn-skip">Skip</button>' +
+          '<button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>Set</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+
+    const pw   = ov.querySelector('#setup-pw');
+    const bars = ov.querySelectorAll('.pwbar');
+    const hint = ov.querySelector('#setup-hint');
+    const err  = ov.querySelector('#setup-err');
+    const setB = ov.querySelector('#setup-set');
+    const skip = ov.querySelector('#setup-skip');
+    const dim  = 'rgba(255,255,255,.1)';
+
+    pw.addEventListener('input', () => {
+      const { score, label, color, ok } = pwStrength(pw.value);
+      bars.forEach((b, i) => { b.style.background = pw.value && i < score ? color : dim; });
+      hint.textContent = pw.value ? label : '';
+      hint.style.color = color;
+      setB.disabled = !ok;
+    });
+
+    const close = () => { ov.remove(); resolve(); };
+
+    skip.onclick = async () => {
+      skip.disabled = true;
+      try { await fetch('/api/auth/dismiss-setup', { method:'POST', headers:{'Content-Type':'application/json'} }); } catch {}
+      close();
+    };
+
+    async function doSet() {
+      if (!pwStrength(pw.value).ok) return;
+      setB.disabled = true; skip.disabled = true; err.style.display = 'none';
+      try {
+        const r = await fetch('/api/auth/set-password', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ password: pw.value }),
+        });
+        if (!r.ok) throw new Error((await r.json().catch(()=>({}))).error || 'Could not set password.');
+        location.reload();
+      } catch(e) {
+        err.textContent = e.message; err.style.display = 'block';
+        setB.disabled = false; skip.disabled = false;
+      }
+    }
+    setB.onclick = doSet;
+    pw.onkeydown = e => { if (e.key === 'Enter' && !setB.disabled) doSet(); };
+    pw.focus();
+  });
+}
+
 async function boot() {
-  /* Check auth first — redirect to admin login if not authenticated */
+  let authData = null;
   try {
     const authCheck = await fetch('/api/auth/check', { cache:'no-store' });
     if (authCheck.status === 401) { window.location.href = '/admin/'; return; }
-    const authData = await authCheck.json();
+    authData = await authCheck.json();
     if (authData.enabled && !authData.authenticated) { window.location.href = '/admin/'; return; }
-  } catch { /* API down — let boot() handle it below */ }
+  } catch { /* API down — handled below */ }
 
 
 
@@ -318,8 +397,12 @@ async function boot() {
     return;
   }
 
+  if (authData && !authData.setupPrompted && !authData.passwordSet) {
+    await showSetupPrompt();
+  }
+
   /* Shared state object passed to ui.js and spotlight.js */
-  const state = { items, S, CB, BEL, BS, breg, bunreg, bupd, folderBadge, paginate, goTo, pg: 0, _mobTsCleanup, _mobTeCleanup };
+  const state = { items, S, CB, BEL, badgeState, breg, bunreg, bupd, folderBadge, paginate, goTo, pg: 0, _mobTsCleanup, _mobTeCleanup };
   _stateRef = state;
   initUI(state);
   initSpotlight({ getItems: () => items, MOB, CB, iconChain, openFolderDesktop, openFolderMobile });
