@@ -56,6 +56,8 @@ on('POST', '/api/auth/set-password', async(req, res) => {
     cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
     saveConfig(cfg);
     log.audit('password changed', {});
+    const sessionId = crypto.randomBytes(24).toString('hex');
+    setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret));
     json(res, 200, { ok:true });
   } catch(e) { json(res, 400, { error:e.message }); }
 });
@@ -75,3 +77,4 @@ on('POST', '/api/auth/toggle', async(req, res) => {
     json(res, 200, { ok:true });
   } catch(e) { json(res, 400, { error:e.message }); }
 });
+
