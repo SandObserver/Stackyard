@@ -4,7 +4,7 @@
   "description": "Stackyard API — self-hosted homelab dashboard backend",
   "main": "src/server.js",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "start": "node src/server.js"
