@@ -12,168 +12,143 @@
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
   }
 
-  /* Chassis — the NAS front enclosure */
   #root {
     width:100%; height:100%;
     display:flex;
-    flex-direction:column;
-    align-items:stretch;
-    padding:9px 9px 6px;
-    background: linear-gradient(180deg, #343437 0%, #262628 58%, #1f1f21 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.55);
+    padding:12px 11px 10px 12px;
+    gap:10px;
+    background:#2c2d30;
   }
 
-  /* Recessed drive tray the sleds sit inside */
-  #tray {
-    flex:1; min-height:0; width:100%;
+  #left { flex:1; display:flex; flex-direction:column; min-width:0; }
+
+  #well {
+    flex:1; min-height:0;
     border-radius:7px;
-    padding:6px;
-    background: linear-gradient(180deg, #0c0c0e 0%, #141416 100%);
-    box-shadow: inset 0 2px 8px rgba(0,0,0,0.85),
-                inset 0 0 0 1px rgba(0,0,0,0.6),
+    padding:7px 7px 11px;
+    background:#202123;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.7),
+                inset 0 0 0 1px rgba(0,0,0,0.45),
                 inset 0 -1px 0 rgba(255,255,255,0.03);
     display:flex;
   }
-
-  #bays {
-    display:flex;
-    flex:1;
-    width:100%;
-    gap:5px;
-    align-items:stretch;
-    justify-content:center;
-    min-height:0;
-    overflow:visible;
-  }
+  #bays { display:flex; flex:1; width:100%; gap:5px; min-height:0; }
 
   .bay {
-    flex:1 1 0;
-    min-width:0;
-    max-width:clamp(34px, 17vw, 72px);
-    border-radius:8px;
-    background: linear-gradient(180deg, #505052 0%, #424244 100%);
-    border:1px solid rgba(255,255,255,0.10);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.12),
-      0 2px 8px rgba(0,0,0,0.60);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
+    flex:1 1 0; min-width:0;
+    border-radius:4px;
     position:relative;
-    cursor:default;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     overflow:hidden;
+    background:#3a3b3f;
+    cursor:default;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .bay.empty {
+    background:#161719;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4);
   }
   .bay.assigned { cursor:pointer; }
   .bay.assigned:hover,
-  .bay.assigned.touch-active {
-    transform: scale(1.07);
-    background: linear-gradient(180deg, #5e5e60 0%, #505052 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.16),
-      0 8px 22px rgba(0,0,0,0.80),
-      0 0 0 0.5px rgba(255,255,255,0.14);
+  .bay.assigned.touch-active,
+  .bay.assigned.peer-hover {
+    transform: translateY(-2px);
+    background:#45464a;
     z-index:2;
   }
 
-  /* Absolute-positioned elements — same % position on any bay height */
-  .bay-led  { position:absolute; top:13%; left:0; right:0; display:flex; justify-content:center; }
-  .bay-mid  { position:absolute; top:30%; bottom:22%; left:18%; right:18%;
-               display:flex; flex-direction:column; justify-content:space-around; align-items:center; }
-  .bay-hole { position:absolute; top:74%; left:50%; transform:translateX(-50%); }
-  .bay-tick { position:absolute; top:87%; left:20%; right:20%; height:0.5px;
-               background:rgba(255,255,255,0.07); }
-  .bay-label { position:absolute; top:28%; bottom:26%; left:0; right:0;
-               display:flex; align-items:center; justify-content:center;
-               writing-mode:vertical-rl; transform:rotate(180deg);
-               font-size:clamp(8px,5.5vmin,11px); font-weight:600; letter-spacing:0.04em;
-               color:rgba(255,255,255,0.58); white-space:nowrap; overflow:hidden;
-               pointer-events:none; z-index:3; }
-
-  .led {
-    width: clamp(7px, 30%, 14px);
-    aspect-ratio:1;
-    border-radius:50%;
-    background:rgba(90,90,94,0.7);
-    position:relative;
-    transition:background 0.2s, box-shadow 0.2s;
+  .bay-hole {
+    position:absolute; top:64%; left:50%; transform:translate(-50%,-50%);
+    width:clamp(9px,26%,13px); aspect-ratio:1; border-radius:50%;
+    background:#2b2c2f; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.4);
   }
-  .led.green  { background:#008932; box-shadow:0 0 8px 3px rgba(0,137,50,0.70);  }
-  .led.yellow { background:#ffcc00; box-shadow:0 0 8px 3px rgba(255,204,0,0.70); }
-  .led.red    { background:#e9152d; box-shadow:0 0 8px 3px rgba(233,21,45,0.70); }
-  .led.green::after,.led.yellow::after,.led.red::after {
-    content:''; position:absolute;
-    width:36%; height:36%; top:14%; left:16%;
-    border-radius:50%;
-    background:rgba(255,255,255,0.46);
+  .bay-hole::after {
+    content:''; position:absolute; inset:34%; border-radius:50%; background:#46474b;
+  }
+  .bay-handle {
+    position:absolute; top:80%; left:50%; transform:translateX(-50%);
+    width:2px; height:8%; border-radius:1px; background:rgba(0,0,0,0.4);
   }
 
-  .groove {
-    width:0.75px; height:100%;
-    background:rgba(0,0,0,0.42);
-    box-shadow:0.5px 0 0 rgba(255,255,255,0.05);
-  }
-  .grooves-wrap { width:100%; height:100%; display:flex; justify-content:space-around; }
+  #nums { height:13px; flex-shrink:0; display:flex; align-items:center; padding:0 7px; }
+  #nums span { flex:1; text-align:center; font-size:clamp(6px,2vmin,8px); font-weight:500; color:rgba(255,255,255,0.18); }
 
-  .hole {
-    width: clamp(4px, 20%, 10px);
-    aspect-ratio:1;
-    border-radius:50%;
-    background:rgba(0,0,0,0.70);
-    border:0.5px solid rgba(255,255,255,0.07);
-  }
+  #right { flex-shrink:0; display:flex; flex-direction:column; padding:2px 0; }
+  #root.size-small  #right { width:54px; }
+  #root.size-medium #right { width:104px; }
 
-  /* Footer — fixed height, power button and info strip share same space */
-  #footer {
-    width:100%; height:26px; margin-top:4px;
-    flex-shrink:0; position:relative;
-    display:flex; align-items:center; justify-content:center;
+  #status { display:grid; gap:7px 8px; }
+  #root.size-small  #status { grid-template-columns:1fr; }
+  #root.size-medium #status { grid-template-columns:1fr 1fr; }
+
+  .st {
+    display:flex; align-items:center; gap:6px; height:12px;
+    justify-content:flex-end;
+    cursor:default;
+    border-radius:3px;
+    transition: background 0.15s ease;
   }
+  .st.assigned { cursor:pointer; }
+  .st.assigned:hover, .st.assigned.touch-active, .st.assigned.peer-hover { background:rgba(255,255,255,0.06); }
+  .st b {
+    font-size:clamp(7px,2.4vmin,9px); font-weight:600; letter-spacing:0.02em;
+    color:rgba(255,255,255,0.5);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    text-align:right; flex:1; min-width:0;
+  }
+  .st i {
+    width:6px; height:6px; border-radius:50%; flex-shrink:0;
+    background:#4a4b4f; transition: background 0.2s;
+  }
+  .st i.green  { background:#2fd35a; }
+  .st i.yellow { background:#ffcc00; }
+  .st i.red    { background:#ff3b30; }
+
+  #footer { margin-top:auto; padding-top:8px; position:relative; display:flex; align-items:center; justify-content:center; }
   #pwrbtn {
-    position:absolute;
-    width:22px; height:22px;
-    border-radius:4px;
-    background:#222224;
-    border:0.75px solid rgba(255,255,255,0.09);
-    box-shadow:0 2px 4px rgba(0,0,0,0.5);
+    width:21px; height:21px; border-radius:50%;
+    background:#202123;
     display:flex; align-items:center; justify-content:center;
     transition:opacity 0.15s ease;
   }
   #infostrip {
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
-    gap:8px; padding:0 8px;
+    gap:6px; padding:0 4px;
     opacity:0; transition:opacity 0.15s ease;
     pointer-events:none; overflow:hidden;
   }
   #root.info-active #pwrbtn    { opacity:0; pointer-events:none; }
   #root.info-active #infostrip { opacity:1; }
+  .is-label { font-size:10px; font-weight:600; color:rgba(255,255,255,0.82);
+              white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:1; min-width:0; }
+  .is-sep   { width:1px; height:10px; background:rgba(255,255,255,0.15); flex-shrink:0; }
+  .is-temp  { font-size:10px; font-weight:500; color:rgba(255,255,255,0.55); white-space:nowrap; flex-shrink:0; }
 
-  /* Info strip: label · temp only — LED colour shows status */
-  .is-label  { font-size:11px; font-weight:600; color:rgba(255,255,255,0.82);
-               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:1; min-width:0; }
-  .is-sep    { width:1px; height:11px; background:rgba(255,255,255,0.15); flex-shrink:0; }
-  .is-temp   { font-size:11px; font-weight:500; color:rgba(255,255,255,0.55);
-               white-space:nowrap; flex-shrink:0; }
   @media (prefers-reduced-motion: reduce){
-    .bay,.led,#pwrbtn,.info-strip,.is-label,.is-temp{transition:none !important}
+    .bay,.st,.st i,#pwrbtn,#infostrip{transition:none !important}
   }
 </style>
 </head>
 <body>
-<div id="root" role="group" aria-label="Disk health">
-  <div id="tray"><div id="bays"></div></div>
-  <div id="footer">
-    <div id="pwrbtn" aria-hidden="true">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M6 1v3.2" stroke="rgba(255,255,255,0.32)" stroke-width="1.2" stroke-linecap="round"/>
-        <path d="M3.8 2.9A4.3 4.3 0 1 0 8.2 2.9" stroke="rgba(255,255,255,0.32)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-      </svg>
-    </div>
-    <div id="infostrip">
-      <div class="is-label" id="is-label"></div>
-      <div class="is-sep"   id="is-sep1"></div>
-      <div class="is-temp"  id="is-temp"></div>
+<div id="root" class="size-small" role="group" aria-label="Disk health">
+  <div id="left">
+    <div id="well"><div id="bays"></div></div>
+    <div id="nums"></div>
+  </div>
+  <div id="right">
+    <div id="status"></div>
+    <div id="footer">
+      <div id="pwrbtn" aria-hidden="true">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+          <path d="M6 1v3.2" stroke="rgba(255,255,255,0.5)" stroke-width="1.3" stroke-linecap="round"/>
+          <path d="M3.8 2.9A4.3 4.3 0 1 0 8.2 2.9" stroke="rgba(255,255,255,0.5)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div id="infostrip">
+        <div class="is-label" id="is-label"></div>
+        <div class="is-sep"   id="is-sep1"></div>
+        <div class="is-temp"  id="is-temp"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -186,22 +161,23 @@ const size      = params.get('size') || 'small';
 const BAY_COUNT = size === 'medium' ? 10 : 4;
 const isMobile  = params.get('mobile') === '1';
 
+const rootEl = document.getElementById('root');
+rootEl.classList.remove('size-small','size-medium');
+rootEl.classList.add(size === 'medium' ? 'size-medium' : 'size-small');
+
 if (isMobile) {
   const s = document.createElement('style');
   s.textContent = `
-    #root  { padding:10px 8px 6px; }
-    #bays  { gap:4px; }
-    #footer { height:20px; margin-top:5px; }
+    #root { padding:10px 8px 6px; }
+    #bays { gap:4px; }
+    #footer { padding-top:6px; }
     #pwrbtn { width:18px; height:18px; }
-    /* On mobile footer shows label + temp only */
-    #is-status, #is-sep1 { display:none !important; }
-    .is-temp { font-size:10px; }
-    .is-label { font-size:10px; }
+    .is-temp, .is-label { font-size:9px; }
   `;
   document.head.appendChild(s);
 }
 
-const COLOR = { green:'#008932', yellow:'#ffcc00', red:'#e9152d' };
+const COLOR = { green:'#2fd35a', yellow:'#ffcc00', red:'#ff3b30' };
 
 function ledClass(s, hasSmart) {
   if (!hasSmart) return '';
@@ -210,48 +186,35 @@ function ledClass(s, hasSmart) {
   return 'green';
 }
 function statusText(s) {
-  if (s === 0) return { text:'Healthy',   color:COLOR.green  };
-  if (s === 1) return { text:'Warning',   color:COLOR.yellow };
-  if (s === 2) return { text:'Failed',    color:COLOR.red    };
-  if (s === 3) return { text:'Age Alert', color:COLOR.yellow };
-  return { text:'', color:'rgba(255,255,255,.4)' };
+  if (s === 0) return 'Healthy';
+  if (s === 1) return 'Warning';
+  if (s === 2) return 'Failed';
+  if (s === 3) return 'Age Alert';
+  return '';
 }
 
-/* Informative drive label: custom label → capacity → model → device name.
-   "2.0 TB" is far more useful at a glance than "SDA". */
 function fmtCap(c){ if(!c||c<=0) return ''; if(c>=1e12){const t=c/1e12; return (t>=10?Math.round(t):t.toFixed(1))+' TB';} return Math.round(c/1e9)+' GB'; }
-function driveLabel(d) {
-  if (d.device?.label) return d.device.label;
-  if (d.label) return d.label;
-  const cap = fmtCap(d.capacity);
-  if (cap) return cap;
-  if (d.model_name) return d.model_name;
-  return shortName(d);
-}
-/* Short identifier shown on the sled face, e.g. SDE (model names are too long here). */
 function shortName(d) {
   const n = (d.device_name || '').replace(/^\/dev\//, '');
   return n ? n.toUpperCase() : (d.device?.label || d.label || '');
 }
-/* Full identity for the hover strip — the model name, falling back to the short name. */
 function fullName(d) {
   return d.model_name || d.device?.label || shortName(d);
 }
-/* Per-drive Scrutiny link, e.g. <base>/web/device/<device_id>. */
 function deviceHref(d) {
   if (!_href || !d || !d.device_id) return _href || '';
   return _href.replace(/\/+$/, '') + '/web/device/' + encodeURIComponent(d.device_id);
 }
 
-let bayData  = new Array(BAY_COUNT).fill(null);
-let _href    = '';
-let bayEls   = [];
+let bayData   = new Array(BAY_COUNT).fill(null);
+let _href     = '';
+let bayEls    = [];
+let stEls     = [];
 let activeBay = -1;
 
-const rootEl   = document.getElementById('root');
-const isLabel  = document.getElementById('is-label');
-const isTemp   = document.getElementById('is-temp');
-const isSep1   = document.getElementById('is-sep1');
+const isLabel = document.getElementById('is-label');
+const isTemp  = document.getElementById('is-temp');
+const isSep1  = document.getElementById('is-sep1');
 
 function showInfo(i) {
   const d = bayData[i];
@@ -265,82 +228,115 @@ function showInfo(i) {
 }
 function hideInfo() { rootEl.classList.remove('info-active'); }
 
-function buildBays() {
+function build() {
   const baysEl = document.getElementById('bays');
-  baysEl.innerHTML = '';
-  bayEls = [];
+  const numsEl = document.getElementById('nums');
+  const statusEl = document.getElementById('status');
+  baysEl.innerHTML = ''; numsEl.innerHTML = ''; statusEl.innerHTML = '';
+  bayEls = []; stEls = [];
+
   for (let i = 0; i < BAY_COUNT; i++) {
     const bay = document.createElement('div');
     bay.className = 'bay';
-    bay.innerHTML = `
-      <div class="bay-led"><div class="led" id="led-${i}"></div></div>
-      <div class="bay-mid"><div class="grooves-wrap"><div class="groove"></div><div class="groove"></div></div></div>
-      <div class="bay-label" id="bay-label-${i}"></div>
-      <div class="bay-hole"><div class="hole"></div></div>
-      <div class="bay-tick"></div>`;
-    document.getElementById('bays').appendChild(bay);
+    bay.innerHTML = `<div class="bay-hole"></div><div class="bay-handle"></div>`;
+    baysEl.appendChild(bay);
     bayEls.push(bay);
+
+    const num = document.createElement('span');
+    num.textContent = (i + 1);
+    numsEl.appendChild(num);
+
+    const st = document.createElement('div');
+    st.className = 'st';
+    st.innerHTML = `<b id="st-name-${i}"></b><i id="st-led-${i}"></i>`;
+    statusEl.appendChild(st);
+    stEls.push(st);
+
     addEvents(bay, i);
+    addEvents(st, i);
   }
 }
 
-function updateBays() {
-  bayEls.forEach((bay, i) => {
-    const d   = bayData[i];
-    const led = document.getElementById(`led-${i}`);
+function update() {
+  for (let i = 0; i < BAY_COUNT; i++) {
+    const d    = bayData[i];
+    const bay  = bayEls[i];
+    const st   = stEls[i];
+    const led  = document.getElementById(`st-led-${i}`);
+    const name = document.getElementById(`st-name-${i}`);
     if (d) {
-      bay.classList.add('assigned');
+      bay.classList.add('assigned'); bay.classList.remove('empty');
+      st.classList.add('assigned');
+      bay.querySelector('.bay-hole').style.display = '';
+      bay.querySelector('.bay-handle').style.display = '';
       const lc = ledClass(d.device_status ?? 0, d.hasSmart ?? false);
-      led.className = 'led' + (lc ? ' '+lc : '');
-      const st = (d.hasSmart ? statusText(d.device_status ?? 0).text : 'No SMART data') || '';
+      led.className = lc || '';
+      name.textContent = shortName(d);
       const cap = fmtCap(d.capacity);
-      const lblEl = document.getElementById('bay-label-'+i); if (lblEl) lblEl.textContent = shortName(d);
-      bay.setAttribute('role','button'); bay.setAttribute('tabindex','0');
-      bay.setAttribute('aria-label', `Bay ${i+1}: ${shortName(d)}${cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
+      const stTxt = d.hasSmart ? statusText(d.device_status ?? 0) : 'No SMART data';
+      const a11y = `Bay ${i+1}: ${shortName(d)}${cap ? ', '+cap : ''}${stTxt ? ', '+stTxt : ''}`;
+      bay.setAttribute('role','button'); bay.setAttribute('tabindex','0'); bay.setAttribute('aria-label', a11y);
+      st.setAttribute('role','button'); st.setAttribute('tabindex','0'); st.setAttribute('aria-label', a11y);
     } else {
-      bay.classList.remove('assigned');
-      led.className = 'led';
-      const lblEl = document.getElementById('bay-label-'+i); if (lblEl) lblEl.textContent = '';
-      bay.setAttribute('role','img'); bay.removeAttribute('tabindex');
-      bay.setAttribute('aria-label', `Bay ${i+1}: empty`);
+      bay.classList.add('empty'); bay.classList.remove('assigned');
+      st.classList.remove('assigned');
+      bay.querySelector('.bay-hole').style.display = 'none';
+      bay.querySelector('.bay-handle').style.display = 'none';
+      led.className = '';
+      name.textContent = 'DISK ' + (i + 1);
+      bay.setAttribute('role','img'); bay.removeAttribute('tabindex'); bay.setAttribute('aria-label', `Bay ${i+1}: empty`);
+      st.setAttribute('role','img'); st.removeAttribute('tabindex'); st.setAttribute('aria-label', `Bay ${i+1}: empty`);
     }
-  });
+  }
 }
 
-function addEvents(bay, i) {
+function openBay(i) {
+  const d = bayData[i]; if (!d) return;
+  const u = deviceHref(d); if (u) window.open(u,'_blank','noopener,noreferrer');
+}
+
+function addEvents(elm, i) {
   const touch = () => 'ontouchstart' in window;
-  bay.addEventListener('mouseenter', () => { if (!touch() && bayData[i]) showInfo(i); });
-  bay.addEventListener('mouseleave', () => { if (!touch()) hideInfo(); });
-  bay.addEventListener('click',      () => { if (!touch() && bayData[i]) { const u=deviceHref(bayData[i]); if (u) window.open(u,'_blank','noopener,noreferrer'); } });
-  bay.addEventListener('keydown', e => { if ((e.key==='Enter'||e.key===' ') && bayData[i]) { e.preventDefault(); const u=deviceHref(bayData[i]); if (u) window.open(u,'_blank','noopener,noreferrer'); } });
+  elm.addEventListener('mouseenter', () => { if (!touch() && bayData[i]) { showInfo(i); linkPeer(i, true); } });
+  elm.addEventListener('mouseleave', () => { if (!touch()) { hideInfo(); linkPeer(i, false); } });
+  elm.addEventListener('click',      () => { if (!touch()) openBay(i); });
+  elm.addEventListener('keydown', e => { if ((e.key==='Enter'||e.key===' ') && bayData[i]) { e.preventDefault(); openBay(i); } });
   let bsx=0, bsy=0, bmoved=false;
-  bay.addEventListener('touchstart', e => { const t=e.touches[0]; if(t){ bsx=t.clientX; bsy=t.clientY; bmoved=false; } }, { passive:true });
-  bay.addEventListener('touchmove',  e => { const t=e.touches[0]; if(t && (Math.abs(t.clientX-bsx)>8 || Math.abs(t.clientY-bsy)>8)) bmoved=true; }, { passive:true });
-  bay.addEventListener('touchend', e => {
-    if (bmoved) return;                 /* a swipe → let the home pager handle it, no tap */
+  elm.addEventListener('touchstart', e => { const t=e.touches[0]; if(t){ bsx=t.clientX; bsy=t.clientY; bmoved=false; } }, { passive:true });
+  elm.addEventListener('touchmove',  e => { const t=e.touches[0]; if(t && (Math.abs(t.clientX-bsx)>8 || Math.abs(t.clientY-bsy)>8)) bmoved=true; }, { passive:true });
+  elm.addEventListener('touchend', e => {
+    if (bmoved) return;
     e.preventDefault();
     if (!bayData[i]) return;
     if (i === activeBay) {
-      bay.classList.remove('touch-active'); activeBay = -1; hideInfo();
-      const u=deviceHref(bayData[i]); if (u) window.open(u,'_blank','noopener,noreferrer');
+      clearActiveVisual(); activeBay = -1; hideInfo();
+      openBay(i);
     } else {
-      bayEls.forEach((b,j) => { if (j!==i) b.classList.remove('touch-active'); });
-      bay.classList.add('touch-active'); activeBay = i; showInfo(i);
+      clearActiveVisual();
+      bayEls[i].classList.add('touch-active'); stEls[i].classList.add('touch-active');
+      activeBay = i; showInfo(i);
       try { parent.postMessage({ type:'widget-active' }, '*'); } catch (_) {}
     }
   });
 }
 
+function linkPeer(i, on) {
+  if (!bayData[i]) return;
+  bayEls[i].classList.toggle('peer-hover', on);
+  stEls[i].classList.toggle('peer-hover', on);
+}
+function clearActiveVisual() {
+  bayEls.forEach(b => b.classList.remove('touch-active'));
+  stEls.forEach(s => s.classList.remove('touch-active'));
+}
+
 document.addEventListener('touchend', e => {
-  if (!e.target.closest('.bay')) {
-    bayEls.forEach(b => b.classList.remove('touch-active'));
-    activeBay = -1; hideInfo();
+  if (!e.target.closest('.bay') && !e.target.closest('.st')) {
+    clearActiveVisual(); activeBay = -1; hideInfo();
   }
 }, { passive:true });
 
-/* Allow the parent (home screen) to dismiss the active sled when the user
-   taps outside this widget — that tap lands in the parent document, not here. */
-window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideInfo(); };
+window.__clearActive = () => { clearActiveVisual(); activeBay = -1; hideInfo(); };
 window.addEventListener('message', e => { if (e.data && e.data.type === 'widget-clear') window.__clearActive(); }, false);
 
 async function fetchData() {
@@ -353,11 +349,12 @@ async function fetchData() {
     bayData = d.bays.map(b => b || null);
     while (bayData.length < BAY_COUNT) bayData.push(null);
     bayData = bayData.slice(0, BAY_COUNT);
-    updateBays();
+    update();
   } catch {}
 }
 
-buildBays();
+build();
+update();
 fetchData();
 setInterval(fetchData, 60_000);
 </script>
