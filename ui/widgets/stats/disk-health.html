@@ -183,12 +183,15 @@ function shortName(d) {
 }
 function fullName(d) { return d.model_name || d.device?.label || shortName(d); }
 function deviceHref(d) {
-  if (!_href || !d || !d.device_id) return _href || '';
+  if (!_href) return '';
+  if (_provider !== 'scrutiny') return _href;
+  if (!d || !d.device_id) return _href;
   return _href.replace(/\/+$/, '') + '/web/device/' + encodeURIComponent(d.device_id);
 }
 
 let bayData   = new Array(BAY_COUNT).fill(null);
 let _href     = '';
+let _provider = 'scrutiny';
 let bayEls    = [];
 let activeBay = -1;
 
@@ -329,6 +332,7 @@ async function fetchData() {
     const d = await r.json();
     if (!d || d.error || !d.bays) return;
     _href   = d.href || '';
+    _provider = d.provider || 'scrutiny';
     bayData = d.bays.map(b => b || null);
     while (bayData.length < BAY_COUNT) bayData.push(null);
     bayData = bayData.slice(0, BAY_COUNT);

@@ -8,6 +8,13 @@ module.exports = async function (ctx) {
   return systemSummary(ctx);
 };
 
+/* Disk Health dispatch — Scrutiny (per-disk SMART) or TrueNAS (per-pool health). */
+function diskHealth(ctx) {
+  return (ctx.config.diskProvider === 'truenas')
+    ? diskHealthTrueNas(ctx)
+    : diskHealthScrutiny(ctx);
+}
+
 /* System Summary — CPU / RAM / temperature / per-mount disk usage.
    Mount paths come from the widget's disk slots; falls back to the global
    stats.diskMount setting, then '/'. */
@@ -34,9 +41,9 @@ async function systemSummary({ config, settings, metrics }) {
   return { cpu, ram, temp: temps[0] ?? null, temps, disks };
 }
 
-/* Disk Health — maps the widget's configured bays (device_id per bay) onto
-   Scrutiny's SMART summary. */
-async function diskHealth({ config, fetchJSON }) {
+/* Disk Health (Scrutiny) — maps the widget's configured bays (device_id per bay)
+   onto Scrutiny's SMART summary. */
+async function diskHealthScrutiny({ config, fetchJSON }) {
   const url = config.scrutinyUrl;
   if (!url) return { error: 'scrutinyUrl not configured' };
   const bays = config.bays || [];
@@ -68,5 +75,47 @@ async function diskHealth({ config, fetchJSON }) {
     };
   });
 
-  return { bays: result, href: config.scrutinyHref || '' };
+  return { bays: result, href: config.scrutinyHref || '', provider: 'scrutiny' };
+}
+
+/* Disk Health (TrueNAS) — each configured bay holds a ZFS pool name; pools are
+   matched from /api/v2.0/pool. A pool's `healthy` flag is the per-bay status
+   (healthy → 0, unhealthy → 2, the same codes the widget uses for Scrutiny). */
+async function diskHealthTrueNas({ config, fetchJSON }) {
+  const url = config.truenasUrl;
+  const key = config.truenasKey;
+  if (!url) return { error: 'truenasUrl not configured' };
+  if (!key) return { error: 'TrueNAS API key not configured' };
+  const bays = config.bays || [];
+
+  let r;
+  try {
+    const base = url.includes('://') ? url.replace(/\/$/, '') : `http://${url.replace(/\/$/, '')}`;
+    r = await fetchJSON(base + '/api/v2.0/pool', {
+      headers: { Authorization: 'Bearer ' + key }, timeout: 8000,
+    });
+  } catch (e) { return { error: e.message }; }
+
+  if (r.status === 401 || r.status === 403) return { error: 'TrueNAS auth failed — check API key' };
+  if (r.status >= 400) return { error: 'TrueNAS HTTP ' + r.status };
+
+  const byName = {};
+  (Array.isArray(r.data) ? r.data : []).forEach(p => { if (p && p.name) byName[p.name] = p; });
+
+  const result = bays.map(name => {
+    if (!name) return null;
+    const p = byName[name];
+    if (!p) return { device_id: name, device_status: 0, hasSmart: false, error: 'not found' };
+    return {
+      device_id:     name,
+      device_status: p.healthy === true ? 0 : 2,
+      hasSmart:      true,
+      model_name:    name,
+      device_name:   name,
+      temp:          null,
+      capacity:      (p.size != null ? Number(p.size) : null),
+    };
+  });
+
+  return { bays: result, href: config.truenasHref || '', provider: 'truenas' };
 }

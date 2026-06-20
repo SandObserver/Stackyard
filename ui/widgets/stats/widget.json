@@ -2,5 +2,8 @@
   "name": "stats",
   "label": "Stats",
   "sizes": ["small", "medium"],
-  "customEditor": true
+  "customEditor": true,
+  "fields": [
+    { "key": "truenasKey", "type": "secret", "label": "TrueNAS API Key" }
+  ]
 }
