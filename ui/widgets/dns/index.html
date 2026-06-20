@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNS Server</title>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    width:100%; height:100%; overflow:hidden; background:transparent;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+  }
+  .widget {
+    width:100%; height:100%;
+    display:flex; flex-direction:column;
+    padding:16px 16px 14px;
+    position:relative;
+  }
+  .widget.clickable { cursor:pointer; }
+
+  .hero { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
+  .pct  { font-size:clamp(26px,9cqw,36px); font-weight:700; color:#ff5a4d; line-height:1; letter-spacing:-0.02em; }
+  .sub  { font-size:clamp(9px,3cqw,11px); font-weight:600; letter-spacing:0.09em; color:rgba(255,255,255,0.5); text-transform:uppercase; }
+
+  .flow { flex:1; min-height:0; margin-top:13px; position:relative; }
+  .flow svg { width:100%; height:100%; display:block; overflow:visible; }
+  .link { transition: opacity 0.15s ease; }
+
+  .tip {
+    position:absolute; z-index:5;
+    background:rgba(20,20,22,0.96);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border-radius:8px; padding:6px 9px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.55), inset 0 0 0 0.5px rgba(255,255,255,0.1);
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+    opacity:0; transform:translateY(2px); pointer-events:none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  .tip.show { opacity:1; transform:translateY(0); }
+  .tip i { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .tip b { font-size:11px; font-weight:600; color:#fff; }
+  .tip s { font-size:11px; font-weight:500; color:rgba(255,255,255,0.6); text-decoration:none; }
+
+  .msg {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:rgba(255,255,255,0.34); text-align:center; padding:0 16px;
+  }
+
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+</style>
+</head>
+<body>
+<div class="widget" id="widget" role="group" aria-label="DNS filtering">
+  <div class="hero">
+    <div class="pct" id="pct">—</div>
+    <div class="sub">Queries Blocked</div>
+  </div>
+  <div class="flow" id="flow">
+    <svg id="svg" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div class="tip" id="tip"></div>
+    <div class="msg" id="msg" style="display:none"></div>
+  </div>
+  <div class="sr-only" id="sr" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+const TICK_MS = 30000;
+const params = new URLSearchParams(location.search);
+const id   = params.get('id')   || '';
+const size = params.get('size') || 'medium';
+const API  = '/api';
+const NS   = 'http://www.w3.org/2000/svg';
+
+let _href = '';
+let _provider = 'adguard';
+let _last = null;
+
+const widgetEl = document.getElementById('widget');
+const pctEl = document.getElementById('pct');
+const svgEl = document.getElementById('svg');
+const tipEl = document.getElementById('tip');
+const msgEl = document.getElementById('msg');
+const srEl  = document.getElementById('sr');
+
+function fmt(n) {
+  if (n==null||isNaN(n)) return '—';
+  if (n>=1_000_000) return (n/1_000_000).toFixed(2).replace(/\.?0+$/,'')+'M';
+  if (n>=1_000)     return (n/1_000).toFixed(1).replace(/\.0$/,'')+'k';
+  return n.toLocaleString();
+}
+
+async function boot() {
+  let cfg = null;
+  try {
+    const r = await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
+    if (r.ok) cfg = await r.json();
+  } catch {}
+  _href = cfg?.widgetConfig?.dnsHref || '';
+  _provider = cfg?.widgetConfig?.provider || 'adguard';
+  if (_href) {
+    widgetEl.classList.add('clickable');
+    widgetEl.addEventListener('click', () => window.open(_href,'_blank','noopener,noreferrer'));
+  }
+  tick();
+  setInterval(tick, TICK_MS);
+  addEventListener('resize', () => { if (_last) render(_last); });
+}
+
+function setMsg(t) { msgEl.textContent = t; msgEl.style.display = ''; svgEl.style.display='none'; }
+function clearMsg() { msgEl.style.display = 'none'; svgEl.style.display=''; }
+
+async function tick() {
+  try {
+    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=stats`);
+    if (!r.ok) {
+      const d = await r.json().catch(()=>({}));
+      setMsg(r.status===503?'Not configured':r.status===401?'Auth error':
+             r.status===502?'Unreachable':d.error||('Error '+r.status));
+      return;
+    }
+    const d = await r.json();
+    if (d && d.error) { setMsg(d.error); return; }
+    clearMsg();
+    apply(d);
+  } catch { setMsg('Unreachable'); }
+}
+
+function apply(d) {
+  const total   = +d.num_dns_queries || 0;
+  const blocked = (+d.num_blocked_filtering || 0)
+                + (+d.num_replaced_safebrowsing || 0)
+                + (+d.num_replaced_parental || 0);
+  const cached  = +d.num_cached || 0;
+  const allowed = Math.max(0, total - blocked - cached);
+  const pct = total > 0 ? Math.round(blocked / total * 100) : 0;
+
+  pctEl.textContent = pct + '%';
+
+  const model = { total, allowed, cached, blocked, pct };
+  _last = model;
+  render(model);
+
+  srEl.textContent = `${pct}% of ${fmt(total)} queries blocked. `
+    + `Allowed ${fmt(allowed)}, cached ${fmt(cached)}, blocked ${fmt(blocked)}.`;
+}
+
+function constLink(x0,c0,x1,c1,t) {
+  const h=t/2, cx0=x0+(x1-x0)*0.5, cx1=x0+(x1-x0)*0.5;
+  return `M${x0},${c0-h} C${cx0},${c0-h} ${cx1},${c1-h} ${x1},${c1-h} `
+       + `L${x1},${c1+h} C${cx1},${c1+h} ${cx0},${c0+h} ${x0},${c0+h} Z`;
+}
+
+function render(m) {
+  const flow = document.getElementById('flow');
+  const W = 240, H = 120;
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const sum = m.allowed + m.cached + m.blocked || 1;
+  const segs = [
+    { key:'allowed', label:'Allowed', value:m.allowed, color:'#34c759' },
+    { key:'cached',  label:'Cached',  value:m.cached,  color:'#0a84ff' },
+    { key:'blocked', label:'Blocked', value:m.blocked, color:'#ff453a' },
+  ].filter(s => s.value > 0);
+
+  if (!segs.length) { svgEl.innerHTML=''; return; }
+
+  const nodeW = 9, pad = 2;
+  const nX = pad, nX2 = nX + nodeW;
+  const outX = W - pad - nodeW, outX2 = W - pad;
+
+  const t = segs.map(s => Math.max(2, s.value / sum * H));
+  const tScale = H / t.reduce((a,b)=>a+b,0);
+  const tt = t.map(v => v * tScale);
+
+  let fy = 0; const fc = tt.map(th => { const c=fy+th/2; fy+=th; return c; });
+  const outGap = segs.length > 1 ? 8 : 0;
+  const totalR = tt.reduce((a,b)=>a+b,0) + (segs.length-1)*outGap;
+  const rScale = (H - (segs.length-1)*outGap) / tt.reduce((a,b)=>a+b,0);
+  const rt = tt.map(v => v * rScale);
+  let ry = (H - (rt.reduce((a,b)=>a+b,0) + (segs.length-1)*outGap)) / 2;
+  const rc = rt.map(th => { const c=ry+th/2; ry+=th+outGap; return c; });
+
+  const meta = {};
+  let links = '', nodes = '';
+  segs.forEach((s,i) => {
+    links += `<path class="link" data-k="${s.key}" d="${constLink(nX2,fc[i],outX,rc[i],Math.min(tt[i],rt[i]))}" fill="${s.color}" opacity="0.9"/>`;
+    nodes += `<rect x="${outX}" y="${rc[i]-rt[i]/2}" width="${nodeW}" height="${rt[i]}" rx="2.5" fill="${s.color}"/>`;
+    meta[s.key] = { label:s.label, value:s.value, color:s.color, cy:rc[i] };
+  });
+  nodes = `<rect x="${nX}" y="0" width="${nodeW}" height="${H}" rx="3" fill="rgba(255,255,255,0.9)"/>` + nodes;
+
+  svgEl.innerHTML = links + nodes;
+
+  svgEl.querySelectorAll('.link').forEach(p => {
+    const onEnter = () => {
+      const mm = meta[p.dataset.k];
+      svgEl.querySelectorAll('.link').forEach(q => q.style.opacity = q===p ? '1' : '0.3');
+      tipEl.innerHTML = `<i style="background:${mm.color}"></i><b>${mm.label}</b><s>${fmt(mm.value)}</s>`;
+      tipEl.classList.add('show');
+      const fh = document.getElementById('flow').clientHeight;
+      tipEl.style.top = Math.max(0, Math.min(fh - tipEl.offsetHeight, (mm.cy / H * fh) - tipEl.offsetHeight/2)) + 'px';
+      tipEl.style.right = '4px'; tipEl.style.left = 'auto';
+    };
+    const onLeave = () => {
+      svgEl.querySelectorAll('.link').forEach(q => q.style.opacity = '0.9');
+      tipEl.classList.remove('show');
+    };
+    p.style.cursor = _href ? 'pointer' : 'default';
+    p.addEventListener('mouseenter', onEnter);
+    p.addEventListener('mouseleave', onLeave);
+    p.addEventListener('touchstart', e => { onEnter(); }, { passive:true });
+  });
+}
+
+document.addEventListener('touchend', e => {
+  if (!e.target.closest('.link')) {
+    svgEl.querySelectorAll('.link').forEach(q => q.style.opacity = '0.9');
+    tipEl.classList.remove('show');
+  }
+}, { passive:true });
+
+boot();
+</script>
+</body>
+</html>
