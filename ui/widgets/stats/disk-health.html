@@ -12,153 +12,136 @@
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
   }
 
-  #root {
+  #root { width:100%; height:100%; position:relative; }
+
+  #shell {
     width:100%; height:100%;
-    display:flex;
-    padding:11px 10px 9px 11px;
-    gap:8px;
-    background:#2c2d30;
+    border-radius:20px;
+    background:#3a3b3e;
+    padding:7px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
+  }
+  #panel {
+    width:100%; height:100%;
+    border-radius:15px;
+    background:#343539;
+    padding:11px;
+    display:flex; gap:9px;
     position:relative;
   }
 
   #left { flex:1; display:flex; flex-direction:column; min-width:0; }
 
-  #well {
+  #bays {
     flex:1; min-height:0;
-    border-radius:7px;
-    padding:8px 6px 10px;
-    background:#202123;
-    box-shadow: inset 0 2px 6px rgba(0,0,0,0.7),
-                inset 0 0 0 1px rgba(0,0,0,0.45),
-                inset 0 -1px 0 rgba(255,255,255,0.03);
-    display:flex;
+    display:flex; gap:3px;
+    border-radius:6px; padding:3px;
+    background:#0d0d0e;
+    box-shadow:0 0 0 2px #0d0d0e;
   }
-  #bays { display:flex; flex:1; width:100%; gap:5px; min-height:0; align-items:flex-end; }
+  #root.size-medium #bays { gap:2px; }
 
   .bay {
     flex:1 1 0; min-width:0;
-    height:100%;
     border-radius:4px;
     position:relative;
     overflow:hidden;
-    background:#3a3b3f;
+    background:#363739;
     cursor:default;
-    transition: transform 0.18s cubic-bezier(.34,1.3,.64,1), background 0.18s ease;
+    display:flex;
+    transform-origin:center;
+    transition: transform 0.2s cubic-bezier(.34,1.2,.64,1), box-shadow 0.2s ease, background 0.2s ease;
   }
-  .bay.empty {
-    background:#161719;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4);
-  }
+  .bay.empty { background:#262729; }
   .bay.assigned { cursor:pointer; }
   .bay.assigned:hover,
-  .bay.assigned.touch-active,
-  .bay.assigned.peer-hover {
-    transform: translateY(-9px);
-    background:#4a4b50;
-    z-index:2;
+  .bay.assigned.touch-active {
+    transform: scale(1.08);
+    background:#404145;
+    z-index:3;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06);
   }
 
-  .bay-hole {
-    position:absolute; top:64%; left:50%; transform:translate(-50%,-50%);
-    width:clamp(9px,26%,13px); aspect-ratio:1; border-radius:50%;
-    background:#2b2c2f; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.4);
-  }
-  .bay-hole::after {
-    content:''; position:absolute; inset:34%; border-radius:50%; background:#46474b;
-  }
-  .bay-handle {
-    position:absolute; top:80%; left:50%; transform:translateX(-50%);
-    width:2px; height:8%; border-radius:1px; background:rgba(0,0,0,0.4);
-  }
-
-  #nums { height:13px; flex-shrink:0; display:flex; align-items:center; padding:0 7px; }
-  #nums span { flex:1; text-align:center; font-size:clamp(6px,2vmin,8px); font-weight:500; color:rgba(255,255,255,0.18); }
-
-  #right { flex-shrink:0; display:flex; flex-direction:column; padding:2px 0; }
-  #root.size-small  #right { width:44px; }
-  #root.size-medium #right { width:96px; }
-
-  #status { display:grid; gap:7px 8px; }
-  #root.size-small  #status { grid-template-columns:1fr; }
-  #root.size-medium #status { grid-template-columns:1fr 1fr; }
-
-  .st {
-    display:flex; align-items:center; gap:6px; height:12px;
-    justify-content:flex-end;
-    cursor:default;
-    border-radius:3px;
-    transition: background 0.15s ease;
-  }
-  .st.assigned { cursor:pointer; }
-  .st.assigned:hover, .st.assigned.touch-active, .st.assigned.peer-hover { background:rgba(255,255,255,0.06); }
-  .st b {
-    font-size:clamp(7px,2.4vmin,9px); font-weight:600; letter-spacing:0.02em;
-    color:rgba(255,255,255,0.5);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    text-align:right; flex:1; min-width:0;
-  }
-  .st i {
-    width:6px; height:6px; border-radius:50%; flex-shrink:0;
-    background:#4a4b4f; transition: background 0.2s;
-  }
-  .st i.green  { background:#2fd35a; }
-  .st i.yellow { background:#ffcc00; }
-  .st i.red    { background:#ff3b30; }
-
-  #footer { margin-top:auto; padding-top:8px; display:flex; align-items:center; justify-content:center; }
-  #pwrbtn {
-    width:21px; height:21px; border-radius:50%;
-    background:#202123;
+  .bay-name {
+    flex:1; min-height:0;
     display:flex; align-items:center; justify-content:center;
+    writing-mode:vertical-rl; transform:rotate(180deg);
+    font-size:clamp(8px,3.6vmin,11px); font-weight:600; letter-spacing:0.06em;
+    color:rgba(255,255,255,0.4);
+    white-space:nowrap; overflow:hidden; pointer-events:none;
   }
+  #root.size-medium .bay-name { font-size:clamp(7px,2.4vmin,10px); letter-spacing:0.02em; }
 
-  #infostrip {
-    position:absolute; left:8px; right:8px; bottom:8px;
-    height:26px; border-radius:8px;
-    background:rgba(20,20,22,0.94);
-    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
-    display:flex; align-items:center; gap:8px; padding:0 11px;
-    box-shadow:0 4px 14px rgba(0,0,0,0.5), inset 0 0 0 0.5px rgba(255,255,255,0.08);
-    opacity:0; transform:translateY(4px); pointer-events:none;
-    transition:opacity 0.15s ease, transform 0.15s ease;
-    z-index:5;
+  #nums { height:13px; flex-shrink:0; display:flex; align-items:center; padding:2px 4px 0; }
+  #nums span { flex:1; text-align:center; font-size:clamp(6px,2vmin,8px); font-weight:500; color:rgba(255,255,255,0.28); }
+
+  #right { width:24px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:7px; padding-top:1px; }
+  #pwrbtn {
+    width:18px; height:18px; border-radius:50%;
+    background:#2a2b2d;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    flex-shrink:0;
   }
-  #root.info-active #infostrip { opacity:1; transform:translateY(0); }
-  .is-led { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:#4a4b4f; }
-  .is-led.green { background:#2fd35a; } .is-led.yellow { background:#ffcc00; } .is-led.red { background:#ff3b30; }
-  .is-label { font-size:12px; font-weight:600; color:#fff;
-              white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
-  .is-sep   { width:1px; height:13px; background:rgba(255,255,255,0.2); flex-shrink:0; }
-  .is-temp  { font-size:12px; font-weight:500; color:rgba(255,255,255,0.7); white-space:nowrap; flex-shrink:0; }
+  #usb {
+    width:12px; height:18px; border-radius:3px;
+    background:#0d0d0f; position:relative; flex-shrink:0;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  #usb::before {
+    content:''; position:absolute; top:2px; bottom:2px; left:3px;
+    width:3.5px; border-radius:2px; background:#2f8fe6;
+  }
+  #dots { margin-top:auto; display:flex; flex-direction:column; align-items:center; gap:11px; padding-bottom:2px; }
+  #root.size-medium #dots { gap:5px; }
+  #dots i { width:7px; height:7px; border-radius:50%; background:#3f4042; transition: background 0.2s; }
+  #dots i.green { background:#22c55e; } #dots i.yellow { background:#ffcc00; } #dots i.red { background:#ff3b30; }
+
+  #tip {
+    position:absolute; z-index:20;
+    background:rgba(20,20,22,0.96);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border-radius:8px; padding:7px 10px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.55), inset 0 0 0 0.5px rgba(255,255,255,0.1);
+    display:flex; flex-direction:column; gap:3px;
+    max-width:150px; pointer-events:none;
+    opacity:0; transform:translateY(2px);
+    transition: opacity 0.13s ease, transform 0.13s ease;
+  }
+  #root.tip-active #tip { opacity:1; transform:translateY(0); }
+  #tip .t1 { display:flex; align-items:center; gap:6px; }
+  #tip .t1 i { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:#3f4042; }
+  #tip .t1 i.green { background:#22c55e; } #tip .t1 i.yellow { background:#ffcc00; } #tip .t1 i.red { background:#ff3b30; }
+  #tip .nm { font-size:12px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #tip .meta { font-size:11px; font-weight:500; color:rgba(255,255,255,0.62); white-space:nowrap; padding-left:13px; }
 
   @media (prefers-reduced-motion: reduce){
-    .bay,.st,.st i,#pwrbtn,#infostrip{transition:none !important}
+    .bay,#dots i,#tip{transition:none !important}
   }
 </style>
 </head>
 <body>
 <div id="root" class="size-small" role="group" aria-label="Disk health">
-  <div id="left">
-    <div id="well"><div id="bays"></div></div>
-    <div id="nums"></div>
-  </div>
-  <div id="right">
-    <div id="status"></div>
-    <div id="footer">
+  <div id="shell"><div id="panel">
+    <div id="left">
+      <div id="bays"></div>
+      <div id="nums"></div>
+    </div>
+    <div id="right">
       <div id="pwrbtn" aria-hidden="true">
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-          <path d="M6 1v3.2" stroke="rgba(255,255,255,0.5)" stroke-width="1.3" stroke-linecap="round"/>
-          <path d="M3.8 2.9A4.3 4.3 0 1 0 8.2 2.9" stroke="rgba(255,255,255,0.5)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+          <path d="M6 1v3.2" stroke="rgba(255,255,255,0.6)" stroke-width="1.3" stroke-linecap="round"/>
+          <path d="M3.8 2.9A4.3 4.3 0 1 0 8.2 2.9" stroke="rgba(255,255,255,0.6)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
         </svg>
       </div>
+      <div id="usb" aria-hidden="true"></div>
+      <div id="dots"></div>
     </div>
-  </div>
-  <div id="infostrip" role="status" aria-live="polite">
-    <div class="is-led"   id="is-led"></div>
-    <div class="is-label" id="is-label"></div>
-    <div class="is-sep"   id="is-sep1"></div>
-    <div class="is-temp"  id="is-temp"></div>
-  </div>
+    <div id="tip" role="status" aria-live="polite">
+      <div class="t1"><i id="tip-led"></i><span class="nm" id="tip-name"></span></div>
+      <div class="meta" id="tip-meta"></div>
+    </div>
+  </div></div>
 </div>
 
 <script>
@@ -175,18 +158,9 @@ rootEl.classList.add(size === 'medium' ? 'size-medium' : 'size-small');
 
 if (isMobile) {
   const s = document.createElement('style');
-  s.textContent = `
-    #root { padding:10px 8px 6px; }
-    #bays { gap:4px; }
-    #footer { padding-top:6px; }
-    #pwrbtn { width:18px; height:18px; }
-    #infostrip { height:24px; }
-    .is-temp, .is-label { font-size:11px; }
-  `;
+  s.textContent = `#panel { padding:9px; } #right { width:22px; }`;
   document.head.appendChild(s);
 }
-
-const COLOR = { green:'#2fd35a', yellow:'#ffcc00', red:'#ff3b30' };
 
 function ledClass(s, hasSmart) {
   if (!hasSmart) return '';
@@ -194,22 +168,20 @@ function ledClass(s, hasSmart) {
   if (s === 1 || s === 3) return 'yellow';
   return 'green';
 }
-function statusText(s) {
+function statusText(s, hasSmart) {
+  if (!hasSmart) return 'No SMART data';
   if (s === 0) return 'Healthy';
   if (s === 1) return 'Warning';
   if (s === 2) return 'Failed';
   if (s === 3) return 'Age Alert';
   return '';
 }
-
 function fmtCap(c){ if(!c||c<=0) return ''; if(c>=1e12){const t=c/1e12; return (t>=10?Math.round(t):t.toFixed(1))+' TB';} return Math.round(c/1e9)+' GB'; }
 function shortName(d) {
   const n = (d.device_name || '').replace(/^\/dev\//, '');
   return n ? n.toUpperCase() : (d.device?.label || d.label || '');
 }
-function fullName(d) {
-  return d.model_name || d.device?.label || shortName(d);
-}
+function fullName(d) { return d.model_name || d.device?.label || shortName(d); }
 function deviceHref(d) {
   if (!_href || !d || !d.device_id) return _href || '';
   return _href.replace(/\/+$/, '') + '/web/device/' + encodeURIComponent(d.device_id);
@@ -218,39 +190,57 @@ function deviceHref(d) {
 let bayData   = new Array(BAY_COUNT).fill(null);
 let _href     = '';
 let bayEls    = [];
-let stEls     = [];
 let activeBay = -1;
 
-const isLed   = document.getElementById('is-led');
-const isLabel = document.getElementById('is-label');
-const isTemp  = document.getElementById('is-temp');
-const isSep1  = document.getElementById('is-sep1');
+const tipEl   = document.getElementById('tip');
+const tipLed  = document.getElementById('tip-led');
+const tipName = document.getElementById('tip-name');
+const tipMeta = document.getElementById('tip-meta');
 
-function showInfo(i) {
+function showTip(i) {
   const d = bayData[i];
   if (!d) return;
-  const lbl  = fullName(d);
-  const temp = d.temp != null ? d.temp + '°C' : '';
-  const lc   = ledClass(d.device_status ?? 0, d.hasSmart ?? false);
-  isLed.className = 'is-led' + (lc ? ' ' + lc : '');
-  isLabel.textContent  = lbl;
-  isTemp.textContent   = temp;
-  isSep1.style.display = (lbl && temp) ? '' : 'none';
-  rootEl.classList.add('info-active');
+  const lc = ledClass(d.device_status ?? 0, d.hasSmart ?? false);
+  tipLed.className = lc || '';
+  tipName.textContent = fullName(d);
+  const parts = [];
+  const cap = fmtCap(d.capacity);
+  if (cap) parts.push(cap);
+  parts.push(statusText(d.device_status ?? 0, d.hasSmart ?? false));
+  if (d.temp != null) parts.push(d.temp + '°C');
+  tipMeta.textContent = parts.filter(Boolean).join(' · ');
+  rootEl.classList.add('tip-active');
+  positionTip(i);
 }
-function hideInfo() { rootEl.classList.remove('info-active'); }
+function hideTip() { rootEl.classList.remove('tip-active'); }
+
+function positionTip(i) {
+  const bay = bayEls[i];
+  const rootRect = rootEl.getBoundingClientRect();
+  const bayRect  = bay.getBoundingClientRect();
+  tipEl.style.left = '0px'; tipEl.style.top = '0px';
+  const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+  const bayCx = (bayRect.left - rootRect.left) + bayRect.width / 2;
+  let left = bayCx - tw / 2;
+  left = Math.max(4, Math.min(left, rootRect.width - tw - 4));
+  let top = (bayRect.top - rootRect.top) - th - 6;
+  if (top < 4) top = (bayRect.bottom - rootRect.top) + 6;
+  if (top + th > rootRect.height - 4) top = rootRect.height - th - 8;
+  top = Math.max(4, top);
+  tipEl.style.left = Math.round(left) + 'px';
+  tipEl.style.top  = Math.round(top) + 'px';
+}
 
 function build() {
   const baysEl = document.getElementById('bays');
   const numsEl = document.getElementById('nums');
-  const statusEl = document.getElementById('status');
-  baysEl.innerHTML = ''; numsEl.innerHTML = ''; statusEl.innerHTML = '';
-  bayEls = []; stEls = [];
-
+  const dotsEl = document.getElementById('dots');
+  baysEl.innerHTML = ''; numsEl.innerHTML = ''; dotsEl.innerHTML = '';
+  bayEls = [];
   for (let i = 0; i < BAY_COUNT; i++) {
     const bay = document.createElement('div');
     bay.className = 'bay';
-    bay.innerHTML = `<div class="bay-hole"></div><div class="bay-handle"></div>`;
+    bay.innerHTML = `<div class="bay-name" id="nm-${i}"></div>`;
     baysEl.appendChild(bay);
     bayEls.push(bay);
 
@@ -258,46 +248,35 @@ function build() {
     num.textContent = (i + 1);
     numsEl.appendChild(num);
 
-    const st = document.createElement('div');
-    st.className = 'st';
-    st.innerHTML = `<b id="st-name-${i}"></b><i id="st-led-${i}"></i>`;
-    statusEl.appendChild(st);
-    stEls.push(st);
+    const dot = document.createElement('i');
+    dot.id = `dot-${i}`;
+    dotsEl.appendChild(dot);
 
     addEvents(bay, i);
-    addEvents(st, i);
   }
 }
 
 function update() {
   for (let i = 0; i < BAY_COUNT; i++) {
-    const d    = bayData[i];
-    const bay  = bayEls[i];
-    const st   = stEls[i];
-    const led  = document.getElementById(`st-led-${i}`);
-    const name = document.getElementById(`st-name-${i}`);
+    const d   = bayData[i];
+    const bay = bayEls[i];
+    const nm  = document.getElementById(`nm-${i}`);
+    const dot = document.getElementById(`dot-${i}`);
     if (d) {
       bay.classList.add('assigned'); bay.classList.remove('empty');
-      st.classList.add('assigned');
-      bay.querySelector('.bay-hole').style.display = '';
-      bay.querySelector('.bay-handle').style.display = '';
       const lc = ledClass(d.device_status ?? 0, d.hasSmart ?? false);
-      led.className = lc || '';
-      name.textContent = shortName(d);
+      dot.className = lc || '';
+      nm.textContent = shortName(d);
       const cap = fmtCap(d.capacity);
-      const stTxt = d.hasSmart ? statusText(d.device_status ?? 0) : 'No SMART data';
-      const a11y = `Bay ${i+1}: ${shortName(d)}${cap ? ', '+cap : ''}${stTxt ? ', '+stTxt : ''}`;
-      bay.setAttribute('role','button'); bay.setAttribute('tabindex','0'); bay.setAttribute('aria-label', a11y);
-      st.setAttribute('role','button'); st.setAttribute('tabindex','0'); st.setAttribute('aria-label', a11y);
+      const st  = statusText(d.device_status ?? 0, d.hasSmart ?? false);
+      bay.setAttribute('role','button'); bay.setAttribute('tabindex','0');
+      bay.setAttribute('aria-label', `Bay ${i+1}: ${shortName(d)}${cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
     } else {
       bay.classList.add('empty'); bay.classList.remove('assigned');
-      st.classList.remove('assigned');
-      bay.querySelector('.bay-hole').style.display = 'none';
-      bay.querySelector('.bay-handle').style.display = 'none';
-      led.className = '';
-      name.textContent = 'DISK ' + (i + 1);
-      bay.setAttribute('role','img'); bay.removeAttribute('tabindex'); bay.setAttribute('aria-label', `Bay ${i+1}: empty`);
-      st.setAttribute('role','img'); st.removeAttribute('tabindex'); st.setAttribute('aria-label', `Bay ${i+1}: empty`);
+      dot.className = '';
+      nm.textContent = '';
+      bay.setAttribute('role','img'); bay.removeAttribute('tabindex');
+      bay.setAttribute('aria-label', `Bay ${i+1}: empty`);
     }
   }
 }
@@ -307,48 +286,40 @@ function openBay(i) {
   const u = deviceHref(d); if (u) window.open(u,'_blank','noopener,noreferrer');
 }
 
-function addEvents(elm, i) {
+function addEvents(bay, i) {
   const touch = () => 'ontouchstart' in window;
-  elm.addEventListener('mouseenter', () => { if (!touch() && bayData[i]) { showInfo(i); linkPeer(i, true); } });
-  elm.addEventListener('mouseleave', () => { if (!touch()) { hideInfo(); linkPeer(i, false); } });
-  elm.addEventListener('click',      () => { if (!touch()) openBay(i); });
-  elm.addEventListener('keydown', e => { if ((e.key==='Enter'||e.key===' ') && bayData[i]) { e.preventDefault(); openBay(i); } });
+  bay.addEventListener('mouseenter', () => { if (!touch() && bayData[i]) showTip(i); });
+  bay.addEventListener('mouseleave', () => { if (!touch()) hideTip(); });
+  bay.addEventListener('click',      () => { if (!touch()) openBay(i); });
+  bay.addEventListener('keydown', e => { if ((e.key==='Enter'||e.key===' ') && bayData[i]) { e.preventDefault(); openBay(i); } });
+  bay.addEventListener('focus', () => { if (bayData[i]) showTip(i); });
+  bay.addEventListener('blur',  () => hideTip());
   let bsx=0, bsy=0, bmoved=false;
-  elm.addEventListener('touchstart', e => { const t=e.touches[0]; if(t){ bsx=t.clientX; bsy=t.clientY; bmoved=false; } }, { passive:true });
-  elm.addEventListener('touchmove',  e => { const t=e.touches[0]; if(t && (Math.abs(t.clientX-bsx)>8 || Math.abs(t.clientY-bsy)>8)) bmoved=true; }, { passive:true });
-  elm.addEventListener('touchend', e => {
+  bay.addEventListener('touchstart', e => { const t=e.touches[0]; if(t){ bsx=t.clientX; bsy=t.clientY; bmoved=false; } }, { passive:true });
+  bay.addEventListener('touchmove',  e => { const t=e.touches[0]; if(t && (Math.abs(t.clientX-bsx)>8 || Math.abs(t.clientY-bsy)>8)) bmoved=true; }, { passive:true });
+  bay.addEventListener('touchend', e => {
     if (bmoved) return;
     e.preventDefault();
     if (!bayData[i]) return;
     if (i === activeBay) {
-      clearActiveVisual(); activeBay = -1; hideInfo();
+      bay.classList.remove('touch-active'); activeBay = -1; hideTip();
       openBay(i);
     } else {
-      clearActiveVisual();
-      bayEls[i].classList.add('touch-active'); stEls[i].classList.add('touch-active');
-      activeBay = i; showInfo(i);
+      bayEls.forEach((b,j) => { if (j!==i) b.classList.remove('touch-active'); });
+      bay.classList.add('touch-active'); activeBay = i; showTip(i);
       try { parent.postMessage({ type:'widget-active' }, '*'); } catch (_) {}
     }
   });
 }
 
-function linkPeer(i, on) {
-  if (!bayData[i]) return;
-  bayEls[i].classList.toggle('peer-hover', on);
-  stEls[i].classList.toggle('peer-hover', on);
-}
-function clearActiveVisual() {
-  bayEls.forEach(b => b.classList.remove('touch-active'));
-  stEls.forEach(s => s.classList.remove('touch-active'));
-}
-
 document.addEventListener('touchend', e => {
-  if (!e.target.closest('.bay') && !e.target.closest('.st')) {
-    clearActiveVisual(); activeBay = -1; hideInfo();
+  if (!e.target.closest('.bay')) {
+    bayEls.forEach(b => b.classList.remove('touch-active'));
+    activeBay = -1; hideTip();
   }
 }, { passive:true });
 
-window.__clearActive = () => { clearActiveVisual(); activeBay = -1; hideInfo(); };
+window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
 window.addEventListener('message', e => { if (e.data && e.data.type === 'widget-clear') window.__clearActive(); }, false);
 
 async function fetchData() {
