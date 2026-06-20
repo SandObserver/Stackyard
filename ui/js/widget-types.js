@@ -2,7 +2,7 @@ export const WIDGET_TYPES = {
   stats:   { label:'Stats',         sizes:['small','medium'],        src:(id,item,opts)=>{
     const sub = item?.widgetConfig?.widgetSubType || 'system-summary';
     const size = encodeURIComponent(item?.widgetSize||'medium');
-    if (sub === 'disk-health') return `/widgets/stats/disk-health.html?v=26&id=${encodeURIComponent(id)}&size=${size}${opts?.mobile?'&mobile=1':''}`;
+    if (sub === 'disk-health') return `/widgets/stats/disk-health.html?v=28&id=${encodeURIComponent(id)}&size=${size}${opts?.mobile?'&mobile=1':''}`;
     return `/widgets/stats/system-stats.html?v=4&id=${encodeURIComponent(id)}`;
   }},
   connections:{ label:'Connections', sizes:['small','medium'],
