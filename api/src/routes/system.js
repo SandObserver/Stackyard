@@ -73,6 +73,30 @@ on('GET', '/api/scrutiny-proxy', async(req, res) => {
   } catch(e) { json(res, 502, { error: e.message }); }
 });
 
+on('GET', '/api/truenas-proxy', async(req, res) => {
+  const u   = new URL(req.url, 'http://x');
+  const raw = u.searchParams.get('url') || '';
+  const key = u.searchParams.get('key') || '';
+  if (!raw) return json(res, 400, { error:'url param required' });
+  if (!key) return json(res, 400, { error:'API key required' });
+  try {
+    const base    = raw.includes('://') ? raw.replace(/\/$/, '') : `http://${raw.replace(/\/$/,'')}`;
+    const ssrfErr = await strictCheckSsrf(base);
+    if (ssrfErr) return json(res, 403, { error: ssrfErr });
+    const r = await fetchJSON(base + '/api/v2.0/pool', {
+      headers: { Authorization: 'Bearer ' + key }, timeout: 8000,
+    });
+    if (r.status === 401 || r.status === 403) return json(res, 401, { error:'TrueNAS auth failed — check API key' });
+    if (r.status >= 400) return json(res, 502, { error:'TrueNAS HTTP ' + r.status });
+    const pools = (Array.isArray(r.data) ? r.data : []).map(p => ({
+      name:     p.name,
+      healthy:  p.healthy === true,
+      capacity: (p.size != null ? Number(p.size) : null),
+    }));
+    json(res, 200, { pools });
+  } catch(e) { json(res, 502, { error: e.message }); }
+});
+
 on('GET', '/api/scrutiny-devices/:id', async(req, res) => {
   const cfg = loadConfig();
   const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
