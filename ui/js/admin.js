@@ -484,7 +484,7 @@ function closeModal(){
   eid=null;
   /* Reset widget state so stale values don't bleed into the next modal open */
   _wtype='custom';_wsize='medium';_wslots=[];_wnet={enabled:false,url:'',provider:'myspeed'};
-  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wbackupCfg={};_wstatsSubType='system-summary';_wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]};_iframeOpts={};
+  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wbackupCfg={};_wstatsSubType='system-summary';_wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};_iframeOpts={};
 }
 
 function buildTypeSwitch(item){
@@ -520,7 +520,7 @@ const STAT_TYPES  = ['cpu','ram','temp','disk'];
 const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk' };
 
 /* State for current widget config while modal is open */
-let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wgithubCfg={}, _wclockCfg={}, _wbackupCfg={}, _wstatsSubType='system-summary', _wdiskCfg={scrutinyUrl:'',scrutinyHref:'',bays:[]}, _iframeOpts={};
+let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wgithubCfg={}, _wclockCfg={}, _wbackupCfg={}, _wstatsSubType='system-summary', _wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]}, _iframeOpts={};
 /* Auto-generated config form (folder-style widgets driven by the registry). */
 let _wAutoCfg={}, _autoForm=null, _autoFormType=null;
 
@@ -539,8 +539,12 @@ function buildWidgetForm(body,item){
   _wstatsSubType = wc.widgetSubType || 'system-summary';
   if (_wstatsSubType === 'disk-health') {
     _wdiskCfg = {
+      diskProvider: wc.diskProvider || 'scrutiny',
       scrutinyUrl:  wc.scrutinyUrl  || '',
       scrutinyHref: wc.scrutinyHref || '',
+      truenasUrl:   wc.truenasUrl   || '',
+      truenasKeySet: !!wc.truenasKeySet,
+      truenasHref:  wc.truenasHref  || '',
       bays:         Array.isArray(wc.bays) ? [...wc.bays] : [],
     };
   }
@@ -707,98 +711,142 @@ function _renderStatsBody(body){
     while(_wdiskCfg.bays.length < bayCount) _wdiskCfg.bays.push(null);
     _wdiskCfg.bays = _wdiskCfg.bays.slice(0, bayCount);
 
-    /* Scrutiny URL + inline fetch button */
-    const urlRow=document.createElement('div');urlRow.className='fr';
-    urlRow.innerHTML=`<label for="dh-url">Scrutiny URL</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input class="fc" id="dh-url" type="text" placeholder="scrutiny:8080"
-          value="${esc(_wdiskCfg.scrutinyUrl||'')}" style="flex:1;margin:0">
-        <button type="button" id="dh-load" class="btn bg sm" style="flex-shrink:0;white-space:nowrap">Fetch Drives</button>
-      </div>`;
-    body.appendChild(urlRow);
+    /* Provider toggle */
+    const provRow=document.createElement('div');provRow.className='fr';
+    provRow.innerHTML=`<label for="dh-prov">Source</label>
+      <select class="fc" id="dh-prov">
+        <option value="scrutiny">Scrutiny (per-disk SMART)</option>
+        <option value="truenas">TrueNAS (per-pool health)</option>
+      </select>`;
+    body.appendChild(provRow);
+    const provSel=provRow.querySelector('#dh-prov');
+    provSel.value=_wdiskCfg.diskProvider||'scrutiny';
 
-    /* Status message — sits right under URL row */
+    /* Provider-specific field area + status message */
+    const fieldArea=document.createElement('div');body.appendChild(fieldArea);
     const dhMsg=document.createElement('div');dhMsg.id='dh-msg';dhMsg.className='hint';
     dhMsg.style.marginTop='-4px';body.appendChild(dhMsg);
-
-    /* Scrutiny link-out href */
-    const hrefRow=document.createElement('div');hrefRow.className='fr';
-    hrefRow.innerHTML=`<label for="dh-href">Link URL <span style="opacity:.45;font-weight:400">(optional)</span></label>
-      <input class="fc" id="dh-href" type="text" placeholder="https://your-server:8080"
-        value="${esc(_wdiskCfg.scrutinyHref||'')}">`;
-    body.appendChild(hrefRow);
 
     /* Bay assignment section */
     const bayHd=document.createElement('div');bayHd.className='stl';
     bayHd.style.cssText='margin-top:14px;margin-bottom:8px';
     bayHd.textContent=`Bays (${bayCount})`;body.appendChild(bayHd);
-
-    /* Bay rows container */
     const bayRows=document.createElement('div');bayRows.id='dh-bay-rows';body.appendChild(bayRows);
 
-    /* Available devices cache */
-    let _devices=[];
+    /* Available items cache: {value,label,capacity} for whichever provider loaded */
+    let _items=[];
 
     function renderBayRows(){
       bayRows.innerHTML='';
       for(let i=0;i<bayCount;i++){
         const row=document.createElement('div');
         row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;';
-
         const lbl=document.createElement('label');
         lbl.style.cssText='min-width:44px;font-size:12px;opacity:.6;flex-shrink:0;';
         lbl.textContent='Bay '+(i+1);
-
         const sel=document.createElement('select');
         sel.className='fc';sel.style.flex='1';sel.dataset.bay=i;
-        sel.id='dh-bay-'+i; lbl.setAttribute('for', sel.id); sel.setAttribute('aria-label','Bay '+(i+1)+' drive');
-
+        sel.id='dh-bay-'+i; lbl.setAttribute('for', sel.id); sel.setAttribute('aria-label','Bay '+(i+1));
         const emptyOpt=document.createElement('option');
         emptyOpt.value='';emptyOpt.textContent='— Empty —';
         sel.appendChild(emptyOpt);
-
-        _devices.forEach(dev=>{
+        _items.forEach(it=>{
           const opt=document.createElement('option');
-          opt.value=dev.device_id;
-          const cap=dev.capacity
-            ?(dev.capacity>=1e12?(dev.capacity/1e12).toFixed(1)+' TB':(dev.capacity/1e9).toFixed(0)+' GB')
+          opt.value=it.value;
+          const cap=it.capacity
+            ?(it.capacity>=1e12?(it.capacity/1e12).toFixed(1)+' TB':(it.capacity/1e9).toFixed(0)+' GB')
             :'';
-          opt.textContent=(dev.model_name||dev.device_name)+(cap?' — '+cap:'');
+          opt.textContent=it.label+(cap?' — '+cap:'');
           sel.appendChild(opt);
         });
-
-        sel.value=_wdiskCfg.bays[i]||'';
+        /* keep current assignment even if items not yet loaded */
+        const cur=_wdiskCfg.bays[i]||'';
+        if(cur && !_items.some(it=>it.value===cur)){
+          const opt=document.createElement('option');opt.value=cur;opt.textContent=cur;sel.appendChild(opt);
+        }
+        sel.value=cur;
         sel.onchange=()=>{ _wdiskCfg.bays[i]=sel.value||null; };
-
         row.append(lbl,sel);bayRows.appendChild(row);
       }
     }
 
-    const loadBtn=document.getElementById('dh-load');
-    loadBtn.onclick=async()=>{
+    async function loadScrutiny(){
       const url=document.getElementById('dh-url')?.value?.trim();
       if(!url){dhMsg.textContent='Enter a Scrutiny URL first.';dhMsg.style.color='#e9152d';return;}
       _wdiskCfg.scrutinyUrl=url;
-      loadBtn.disabled=true;loadBtn.textContent='Fetching…';dhMsg.textContent='';
+      const btn=document.getElementById('dh-load');
+      btn.disabled=true;btn.textContent='Fetching…';dhMsg.textContent='';
       try{
         const r=await fetch(`/api/scrutiny-proxy?url=${encodeURIComponent(url)}`);
         if(!r.ok) throw new Error('HTTP '+r.status);
         const d=await r.json();
-        _devices=d.devices||[];
-        if(!_devices.length){dhMsg.textContent='No SMART-enabled drives found.';dhMsg.style.color='#ffcc00';}
-        else{dhMsg.textContent=_devices.length+' drive(s) found.';dhMsg.style.color='#008932';}
+        _items=(d.devices||[]).map(dev=>({value:dev.device_id,label:(dev.model_name||dev.device_name),capacity:dev.capacity}));
+        if(!_items.length){dhMsg.textContent='No SMART-enabled drives found.';dhMsg.style.color='#ffcc00';}
+        else{dhMsg.textContent=_items.length+' drive(s) found.';dhMsg.style.color='#008932';}
         renderBayRows();
-      }catch(e){
-        dhMsg.textContent='Failed to reach Scrutiny: '+e.message;dhMsg.style.color='#e9152d';
-      }finally{
-        loadBtn.disabled=false;loadBtn.textContent='Fetch Drives';
-      }
-    };
+      }catch(e){ dhMsg.textContent='Failed to reach Scrutiny: '+e.message;dhMsg.style.color='#e9152d'; }
+      finally{ btn.disabled=false;btn.textContent='Fetch Drives'; }
+    }
 
-    /* Render empty bay rows immediately */
-    renderBayRows();
-    /* Auto-fetch if URL already configured */
-    if(_wdiskCfg.scrutinyUrl) loadBtn.click();
+    async function loadTrueNas(){
+      const url=document.getElementById('dh-url')?.value?.trim();
+      const key=document.getElementById('dh-key')?.value?.trim()||(_wdiskCfg.truenasKeySet?'__keep__':'');
+      if(!url){dhMsg.textContent='Enter a TrueNAS URL first.';dhMsg.style.color='#e9152d';return;}
+      if(!key){dhMsg.textContent='Enter an API key first.';dhMsg.style.color='#e9152d';return;}
+      _wdiskCfg.truenasUrl=url;
+      const btn=document.getElementById('dh-load');
+      btn.disabled=true;btn.textContent='Fetching…';dhMsg.textContent='';
+      try{
+        if(key==='__keep__'){
+          /* Key already saved; pools can only be listed with the live key, so ask for it. */
+          dhMsg.textContent='Re-enter the API key to fetch pools.';dhMsg.style.color='#ffcc00';
+          return;
+        }
+        const r=await fetch(`/api/truenas-proxy?url=${encodeURIComponent(url)}&key=${encodeURIComponent(key)}`);
+        const d=await r.json().catch(()=>({}));
+        if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+        _items=(d.pools||[]).map(p=>({value:p.name,label:p.name+(p.healthy?'':' (unhealthy)'),capacity:p.capacity}));
+        if(!_items.length){dhMsg.textContent='No pools found.';dhMsg.style.color='#ffcc00';}
+        else{dhMsg.textContent=_items.length+' pool(s) found.';dhMsg.style.color='#008932';}
+        renderBayRows();
+      }catch(e){ dhMsg.textContent='Failed to reach TrueNAS: '+e.message;dhMsg.style.color='#e9152d'; }
+      finally{ btn.disabled=false;btn.textContent='Fetch Pools'; }
+    }
+
+    function renderFields(){
+      const prov=_wdiskCfg.diskProvider;
+      _items=[];
+      if(prov==='truenas'){
+        fieldArea.innerHTML=`
+          <div class="fr"><label for="dh-url">TrueNAS URL</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="fc" id="dh-url" type="text" placeholder="truenas:443" value="${esc(_wdiskCfg.truenasUrl||'')}" style="flex:1;margin:0">
+              <button type="button" id="dh-load" class="btn bg sm" style="flex-shrink:0;white-space:nowrap">Fetch Pools</button>
+            </div></div>
+          <div class="fr"><label for="dh-key">API Key</label>
+            <input class="fc" id="dh-key" type="password" placeholder="${_wdiskCfg.truenasKeySet?'•••••• (saved — re-enter to change)':'paste API key'}" value=""></div>
+          <div class="fr"><label for="dh-href">Link URL <span style="opacity:.45;font-weight:400">(optional)</span></label>
+            <input class="fc" id="dh-href" type="text" placeholder="https://truenas/ui/storage" value="${esc(_wdiskCfg.truenasHref||'')}"></div>`;
+        fieldArea.querySelector('#dh-load').onclick=loadTrueNas;
+      }else{
+        fieldArea.innerHTML=`
+          <div class="fr"><label for="dh-url">Scrutiny URL</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="fc" id="dh-url" type="text" placeholder="scrutiny:8080" value="${esc(_wdiskCfg.scrutinyUrl||'')}" style="flex:1;margin:0">
+              <button type="button" id="dh-load" class="btn bg sm" style="flex-shrink:0;white-space:nowrap">Fetch Drives</button>
+            </div></div>
+          <div class="fr"><label for="dh-href">Link URL <span style="opacity:.45;font-weight:400">(optional)</span></label>
+            <input class="fc" id="dh-href" type="text" placeholder="https://your-server:8080" value="${esc(_wdiskCfg.scrutinyHref||'')}"></div>`;
+        fieldArea.querySelector('#dh-load').onclick=loadScrutiny;
+      }
+      renderBayRows();
+    }
+
+    provSel.onchange=()=>{ _wdiskCfg.diskProvider=provSel.value; dhMsg.textContent=''; renderFields(); };
+
+    renderFields();
+    /* Auto-fetch on open if Scrutiny URL already configured (TrueNAS needs the key re-entered). */
+    if(_wdiskCfg.diskProvider!=='truenas' && _wdiskCfg.scrutinyUrl){ const b=document.getElementById('dh-load'); if(b) b.click(); }
     return;
   }
 
@@ -2491,17 +2539,28 @@ async function doSave(orig){
         delete netToSave.myspeedPassSet;
 
         if (_wstatsSubType === 'disk-health') {
-          /* Read final URL/href from DOM in case user didn't click Load */
-          _wdiskCfg.scrutinyUrl  = document.getElementById('dh-url')?.value?.trim()  || _wdiskCfg.scrutinyUrl;
-          _wdiskCfg.scrutinyHref = document.getElementById('dh-href')?.value?.trim() || _wdiskCfg.scrutinyHref;
-          if (!_wdiskCfg.scrutinyUrl) { toast('Scrutiny URL is required','err'); return; }
+          const prov = (document.getElementById('dh-prov')?.value) || _wdiskCfg.diskProvider || 'scrutiny';
+          const dhUrl  = document.getElementById('dh-url')?.value?.trim()  || '';
+          const dhHref = document.getElementById('dh-href')?.value?.trim() || '';
+          const wcfg = { widgetSubType:'disk-health', diskProvider:prov, bays:_wdiskCfg.bays };
+
+          if (prov === 'truenas') {
+            const u = dhUrl || _wdiskCfg.truenasUrl;
+            if (!u) { toast('TrueNAS URL is required','err'); return; }
+            wcfg.truenasUrl  = u;
+            wcfg.truenasHref = dhHref || undefined;
+            /* Send the key only if newly entered; otherwise the server re-merges the stored one. */
+            const k = document.getElementById('dh-key')?.value?.trim();
+            if (k) wcfg.truenasKey = k;
+          } else {
+            const u = dhUrl || _wdiskCfg.scrutinyUrl;
+            if (!u) { toast('Scrutiny URL is required','err'); return; }
+            wcfg.scrutinyUrl  = u;
+            wcfg.scrutinyHref = dhHref || undefined;
+          }
+
           item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'stats',
-            label:wlabel,widgetSize:_wsize,widgetConfig:{
-              widgetSubType:'disk-health',
-              scrutinyUrl:  _wdiskCfg.scrutinyUrl,
-              scrutinyHref: _wdiskCfg.scrutinyHref||undefined,
-              bays:         _wdiskCfg.bays,
-            }};
+            label:wlabel,widgetSize:_wsize,widgetConfig:wcfg};
         } else {
           item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'stats',
             label:wlabel, widgetSize:_wsize,widgetConfig:{widgetSubType:_wstatsSubType,slots,network:netToSave}};
