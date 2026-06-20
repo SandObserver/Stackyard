@@ -17,32 +17,20 @@
   .mode-dark  { background: #1c1c1e; }
   .mode-light { background: #ffffff; }
 
-  .face { position: relative; }
-
-  .date-layer {
-    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
-    pointer-events: none;
-  }
-  .date-layer text {
+  .face { display: block; }
+  .face text {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
     font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
   }
-  .mode-dark  .date-layer text { fill: rgba(255,255,255,0.5); }
-  .mode-light .date-layer text { fill: rgba(0,0,0,0.45); }
-
-  .disc {
-    position: absolute; left: 50%; top: 50%;
-    transform-origin: 50% 50%;
-    will-change: transform;
-  }
-  .disc svg { display: block; overflow: visible; }
+  .disc-group { will-change: transform; }
+  .disc-group circle { mix-blend-mode: multiply; }
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
 </head>
 <body>
 <div class="widget mode-dark" id="widget" role="img" aria-label="Clock">
-  <div class="face" id="face" aria-hidden="true"></div>
+  <svg class="face" id="face" aria-hidden="true"></svg>
 </div>
 <script>
 const id  = new URLSearchParams(location.search).get('id') || '';
@@ -57,13 +45,19 @@ function _a11yLabel(now){
 }
 
 const _reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const COLORS = {
-  dark:  { hour:'#ff2d2d', minute:'#ffe400', second:'#0a96ff', tick:'rgba(255,255,255,0.95)', dot:'#111', op:0.7  },
-  light: { hour:'#ff2d4d', minute:'#ffe400', second:'#00b8e6', tick:'rgba(0,0,0,0.6)',         dot:'#222', op:0.62 },
+
+const DISC = {
+  hour:   { color:'#18B4F0', r:0.30 },
+  minute: { color:'#FC1878', r:0.345 },
+  second: { color:'#FC9C00', r:0.255 },
+};
+const DIAL = {
+  light: { bg:'#ffffff', fill:'#ffffff', date:'rgba(0,0,0,0.4)',  tick:'#ffffff', dot:'#1a1a1a' },
+  dark:  { bg:'#1c1c1e', fill:'#ececee', date:'rgba(0,0,0,0.42)', tick:'#ffffff', dot:'#1a1a1a' },
 };
 
 let _mode='dark', _timezone='', _showDate=true;
-let _discs=null, _dateText=null, _rafId=null, _running=false, _sz=0;
+let _groups=null, _dateText=null, _rafId=null, _running=false, _vb=0;
 
 function _now(){
   return _timezone
@@ -71,78 +65,63 @@ function _now(){
     : new Date();
 }
 
+function el(tag, attrs){
+  const n=document.createElementNS(NS,tag);
+  for(const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+
 function buildShell(){
   const w=document.getElementById('widget');
   const face=document.getElementById('face');
   w.className='widget mode-'+_mode;
-  face.innerHTML='';
 
   const ww=w.clientWidth||220, wh=w.clientHeight||150;
-  _sz=Math.max(40, Math.min(ww-24, wh-24));
-  face.style.width=_sz+'px';
-  face.style.height=_sz+'px';
+  const sz=Math.max(40, Math.min(ww-24, wh-24));
+  _vb=200;
+  face.setAttribute('width', sz);
+  face.setAttribute('height', sz);
+  face.setAttribute('viewBox', `0 0 ${_vb} ${_vb}`);
+  while(face.firstChild) face.removeChild(face.firstChild);
 
-  const col=COLORS[_mode];
+  const V=_vb, cx=V/2, cy=V/2;
+  const dial=DIAL[_mode];
 
-  const dateSvg=document.createElementNS(NS,'svg');
-  dateSvg.setAttribute('class','date-layer');
-  dateSvg.setAttribute('viewBox',`0 0 ${_sz} ${_sz}`);
-  const txt=document.createElementNS(NS,'text');
-  txt.setAttribute('x',_sz/2);
-  txt.setAttribute('y',_sz-Math.round(_sz*0.07));
-  txt.setAttribute('text-anchor','middle');
-  txt.setAttribute('font-size',Math.max(10, Math.round(_sz*0.075)));
-  dateSvg.appendChild(txt);
-  dateSvg.style.display=_showDate?'':'none';
-  face.appendChild(dateSvg);
-  _dateText=txt;
-
-  const rHour=_sz*0.36, rMin=_sz*0.3, rSec=_sz*0.245, dist=_sz*0.175;
-  const specs=[
-    { key:'hour',   r:rHour, color:col.hour   },
-    { key:'minute', r:rMin,  color:col.minute },
-    { key:'second', r:rSec,  color:col.second },
-  ];
-
-  _discs={};
-  for(const sp of specs){
-    const wrap=document.createElement('div');
-    wrap.className='disc';
-    const box=(sp.r+dist)*2;
-    const svg=document.createElementNS(NS,'svg');
-    svg.setAttribute('width',box); svg.setAttribute('height',box);
-    svg.setAttribute('viewBox',`${-box/2} ${-box/2} ${box} ${box}`);
-    const c=document.createElementNS(NS,'circle');
-    c.setAttribute('cx',0); c.setAttribute('cy',-dist); c.setAttribute('r',sp.r);
-    c.setAttribute('fill',sp.color); c.setAttribute('fill-opacity',col.op);
-    const tickLen=Math.max(6, _sz*0.058), tw=Math.max(2, _sz*0.016);
-    const ln=document.createElementNS(NS,'line');
-    ln.setAttribute('x1',0); ln.setAttribute('y1',-dist-sp.r+tickLen);
-    ln.setAttribute('x2',0); ln.setAttribute('y2',-dist-sp.r);
-    ln.setAttribute('stroke',col.tick); ln.setAttribute('stroke-width',tw); ln.setAttribute('stroke-linecap','round');
-    svg.append(c, ln);
-    wrap.appendChild(svg);
-    wrap.style.marginLeft=(-box/2)+'px';
-    wrap.style.marginTop=(-box/2)+'px';
-    face.appendChild(wrap);
-    _discs[sp.key]=wrap;
+  if(_mode==='dark'){
+    face.appendChild(el('circle',{ cx, cy, r:V*0.49, fill:dial.fill }));
+  } else {
+    face.appendChild(el('rect',{ x:0, y:0, width:V, height:V, fill:dial.fill }));
   }
 
-  const dot=document.createElement('div');
-  const dotR=Math.max(3, _sz*0.026);
-  dot.style.cssText=`position:absolute;left:50%;top:50%;width:${dotR*2}px;height:${dotR*2}px;`+
-    `margin-left:${-dotR}px;margin-top:${-dotR}px;border-radius:50%;background:${col.dot};`;
-  face.appendChild(dot);
-}
+  if(_showDate){
+    _dateText=el('text',{ x:cx, y:V-V*0.085, 'text-anchor':'middle',
+      'font-size':V*0.072, fill:dial.date });
+    face.appendChild(_dateText);
+  } else { _dateText=null; }
 
-function _rotate(el, deg){ el.style.transform=`rotate(${deg}deg)`; }
+  const dist=V*0.085;
+  _groups={};
+  for(const key of ['minute','hour','second']){
+    const d=DISC[key];
+    const g=el('g',{ class:'disc-group', transform:`rotate(0 ${cx} ${cy})` });
+    g.appendChild(el('circle',{ cx, cy:cy-dist, r:V*d.r, fill:d.color, 'fill-opacity':0.9 }));
+    const rOuter=cy-dist-V*d.r, tickLen=V*0.05, tw=V*0.014;
+    g.appendChild(el('line',{ x1:cx, y1:rOuter+tickLen, x2:cx, y2:rOuter,
+      stroke:dial.tick, 'stroke-width':tw, 'stroke-linecap':'round' }));
+    face.appendChild(g);
+    _groups[key]=g;
+  }
+
+  face.appendChild(el('circle',{ cx, cy, r:V*0.022, fill:dial.dot }));
+}
 
 function render(smoothSeconds){
   const now=_now();
   const h=now.getHours(), m=now.getMinutes(), s=now.getSeconds(), ms=now.getMilliseconds();
-  _rotate(_discs.hour,   ((h%12)+m/60)*30);
-  _rotate(_discs.minute, (m+s/60)*6);
-  _rotate(_discs.second, (s + (smoothSeconds ? ms/1000 : 0))*6);
+  const cx=_vb/2, cy=_vb/2;
+  _groups.hour.setAttribute('transform',   `rotate(${((h%12)+m/60)*30} ${cx} ${cy})`);
+  _groups.minute.setAttribute('transform', `rotate(${(m+s/60)*6} ${cx} ${cy})`);
+  _groups.second.setAttribute('transform', `rotate(${(s+(smoothSeconds?ms/1000:0))*6} ${cx} ${cy})`);
 
   document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now));
   if(_showDate && _dateText){
@@ -157,14 +136,12 @@ function _loop(){
   render(true);
   _rafId=requestAnimationFrame(_loop);
 }
-
 let _stepId=null;
 function _step(){
   if(!_running) return;
   render(false);
   _stepId=setTimeout(_step, 1000 - (_now().getMilliseconds()));
 }
-
 function start(){
   if(_running) return;
   _running=true;
