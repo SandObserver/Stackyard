@@ -149,7 +149,7 @@ function mkIcon(item) {
 }
 
 function widgetTitle(item) {
-  const names = { stats:'System stats', connections:'Connections', map:'Connections', adguard:'AdGuard activity', github:'GitHub', clock:'Clock', duplicati:'Backup status', custom:'Widget' };
+  const names = { stats:'System stats', connections:'Connections', map:'Connections', dns:'DNS Server', github:'GitHub', clock:'Clock', duplicati:'Backup status', custom:'Widget' };
   if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || 'Disk health';
   return item.label || names[item.widgetType] || 'Widget';
 }
