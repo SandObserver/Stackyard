@@ -5,12 +5,15 @@
   "fields": [
     { "key": "provider", "type": "select", "variant": "pills", "label": "Provider",
       "options": [
-        { "value": "adguard", "label": "AdGuard Home" },
-        { "value": "pihole",  "label": "Pi-hole" }
+        { "value": "adguard",    "label": "AdGuard Home" },
+        { "value": "pihole",     "label": "Pi-hole" },
+        { "value": "technitium", "label": "Technitium" },
+        { "value": "nextdns",    "label": "NextDNS" }
       ],
-      "hint": "Which DNS sinkhole this widget reads from." },
+      "hint": "Which DNS service this widget reads from." },
 
     { "key": "dnsUrl",  "type": "text", "label": "Server URL", "placeholder": "dns-host:80",
+      "showIf": { "field": "provider", "in": ["adguard", "pihole", "technitium"] },
       "hint": "Container name and port, or a full URL." },
     { "key": "dnsHref", "type": "text", "label": "Click URL", "optional": true,
       "hint": "Where clicking the widget opens. Leave blank to disable." },
@@ -22,6 +25,17 @@
 
     { "key": "dnsPiholePassword", "type": "secret", "label": "Pi-hole Password", "optional": true,
       "showIf": { "field": "provider", "equals": "pihole" },
-      "hint": "Leave blank if your Pi-hole has no password set." }
+      "hint": "Leave blank if your Pi-hole has no password set." },
+
+    { "key": "dnsTechnitiumToken", "type": "secret", "label": "API Token",
+      "showIf": { "field": "provider", "equals": "technitium" },
+      "hint": "Technitium API token (Administration → Sessions → Create Token)." },
+
+    { "key": "dnsNextdnsApiKey", "type": "secret", "label": "API Key",
+      "showIf": { "field": "provider", "equals": "nextdns" },
+      "hint": "From my.nextdns.io → Account → API." },
+    { "key": "dnsNextdnsProfile", "type": "text", "label": "Profile ID", "placeholder": "abc123",
+      "showIf": { "field": "provider", "equals": "nextdns" },
+      "hint": "The profile/configuration ID (the short ID in your NextDNS setup)." }
   ]
 }

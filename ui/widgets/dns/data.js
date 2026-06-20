@@ -1,24 +1,31 @@
 /* DNS Server widget data function.
 
-   Supports two providers, selected by widgetConfig.provider:
-     - "adguard" (default): AdGuard Home  GET /control/stats  (basic auth)
-     - "pihole":            Pi-hole v6    session login + /api/stats/summary + /api/history
+   Supports four providers, selected by widgetConfig.provider:
+     - "adguard" (default): AdGuard Home  GET /control/stats           (basic auth)
+     - "pihole":            Pi-hole v6    session login + summary/history
+     - "technitium":        Technitium    GET /api/dashboard/stats/get (token)
+     - "nextdns":           NextDNS       cloud analytics API          (api key + profile)
 
-   Both are normalized into AdGuard's /control/stats shape so the widget HTML
+   All are normalized into AdGuard's /control/stats shape so the widget HTML
    renders them identically:
      num_dns_queries, num_blocked_filtering, num_replaced_safebrowsing,
-     num_replaced_parental, and the per-hour arrays dns_queries / blocked_filtering.
+     num_replaced_parental, num_cached, and the per-hour arrays
+     dns_queries / blocked_filtering.
 
    Errors are returned as { error } — the widget front-end displays d.error. */
 
 module.exports = async function (ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
+  const provider = config.provider || 'adguard';
+
+  if (provider === 'nextdns') return nextDns(config, fetchJSON);
+
   const base = normalizeBase(config.dnsUrl);
   if (!base) return { error: 'Server URL not configured' };
 
-  return (config.provider === 'pihole')
-    ? piHole(base, config, fetchJSON)
-    : adGuard(base, config, fetchJSON);
+  if (provider === 'pihole')     return piHole(base, config, fetchJSON);
+  if (provider === 'technitium') return technitium(base, config, fetchJSON);
+  return adGuard(base, config, fetchJSON);
 };
 
 /* ── AdGuard Home ── */
@@ -97,4 +104,53 @@ async function piHole(base, config, fetchJSON) {
   if (sid) { try { await fetchJSON(base + '/api/auth', { method: 'DELETE', headers, timeout: 5000 }); } catch {} }
 
   return out;
+}
+
+/* ── Technitium ── */
+async function technitium(base, config, fetchJSON) {
+  if (!config.dnsTechnitiumToken) return { error: 'API token not configured' };
+  const url = base + '/api/dashboard/stats/get'
+    + '?token=' + encodeURIComponent(config.dnsTechnitiumToken)
+    + '&type=LastDay&utc=true';
+  let r;
+  try { r = await fetchJSON(url, { timeout: 8000 }); }
+  catch (e) { return { error: e.message }; }
+  if (r.status >= 400) return { error: 'Technitium HTTP ' + r.status };
+  /* Technitium wraps stats under response.stats and reports status as a string. */
+  if (r.data && r.data.status && r.data.status !== 'ok') {
+    return { error: 'Technitium: ' + (r.data.errorMessage || r.data.status) };
+  }
+  const s = (r.data && (r.data.stats || (r.data.response && r.data.response.stats))) || r.data || {};
+  return {
+    num_dns_queries:       +s.totalQueries || 0,
+    num_blocked_filtering: (+s.totalBlocked || 0) + (+s.totalDropped || 0),
+    num_cached:            +s.totalCached || 0,
+  };
+}
+
+/* ── NextDNS ── */
+async function nextDns(config, fetchJSON) {
+  if (!config.dnsNextdnsApiKey) return { error: 'API key not configured' };
+  if (!config.dnsNextdnsProfile) return { error: 'Profile ID not configured' };
+  const url = 'https://api.nextdns.io/profiles/'
+    + encodeURIComponent(config.dnsNextdnsProfile) + '/analytics/status';
+  let r;
+  try { r = await fetchJSON(url, { headers: { 'X-Api-Key': config.dnsNextdnsApiKey }, timeout: 8000 }); }
+  catch (e) { return { error: e.message }; }
+  if (r.status === 401 || r.status === 403) return { error: 'NextDNS auth failed — check API key' };
+  if (r.status === 404) return { error: 'NextDNS profile not found' };
+  if (r.status >= 400) return { error: 'NextDNS HTTP ' + r.status };
+
+  const rows = (r.data && Array.isArray(r.data.data)) ? r.data.data : [];
+  let blocked = 0, allowed = 0;
+  for (const row of rows) {
+    const q = +row.queries || 0;
+    if (row.status === 'blocked') blocked += q;
+    else allowed += q; /* 'allowed' and 'default' both count as allowed */
+  }
+  /* NextDNS has no cache breakdown; total = allowed + blocked, no Cached stream. */
+  return {
+    num_dns_queries:       allowed + blocked,
+    num_blocked_filtering: blocked,
+  };
 }
