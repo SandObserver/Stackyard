@@ -11,7 +11,7 @@
   .widget{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;
     padding:16px 18px 16px;position:relative;border-radius:inherit}
   .widget.clickable{cursor:pointer}
-  .ico{width:74%;max-width:120px;aspect-ratio:1/1;display:block;margin:-6px 0 0 -8px}
+  .ico{width:80%;max-width:132px;aspect-ratio:1/1;display:block;margin:-8px 0 0 -6px;overflow:visible}
   .meta{display:flex;flex-direction:column;gap:1px}
   .cond{font-size:14px;font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .temp{font-size:42px;font-weight:700;line-height:1;letter-spacing:-0.01em;color:#f0852a}
@@ -88,19 +88,19 @@ const CLIP='<defs><clipPath id="below"><rect x="0" y="40" width="100" height="60
 
 function buildIcon(cond,day){
   const orb=day?'sun':'moon';
-  const CW=92,SUNW=70;
+  const CW=96,SUNW=74;
   switch(cond){
-    case 'clear':     return place(orb,76,22,14);
-    case 'few':       return place(orb,SUNW,46,2)+place('cloud',CW,6,22);
-    case 'scattered': return place('cloud',96,12,22);
-    case 'broken':    return placeCloud(86,30,0,'#f0f0f0',0.96)+place('cloud',82,4,24);
-    case 'shower':    return CLIP+`<g clip-path="url(#below)">${placeIndividual('rain',56,22,44,'wx-drop')}</g>`+place('cloud',CW,8,4);
-    case 'rain':      return CLIP+place(orb,SUNW,48,0)+`<g clip-path="url(#below)">${placeIndividual('rain',54,20,46,'wx-drop')}</g>`+place('cloud',CW,8,14);
-    case 'thunder':   return place('cloud',CW,8,4)+`<g class="wx-bolt">${place('bolt',34,42,44)}</g>`;
-    case 'snow':      return CLIP+place(orb,SUNW,48,0)+`<g clip-path="url(#below)">${placeIndividual('snow',62,16,46,'wx-flake')}</g>`+place('cloud',CW,8,12);
+    case 'clear':     return place(orb,84,30,12);
+    case 'few':       return place(orb,SUNW,40,0)+place('cloud',CW,2,22);
+    case 'scattered': return place('cloud',98,8,20);
+    case 'broken':    return placeCloud(80,40,0,'#f0f0f0',0.96)+place('cloud',88,0,24);
+    case 'shower':    return CLIP+`<g clip-path="url(#below)">${placeIndividual('rain',60,18,46,'wx-drop')}</g>`+place('cloud',CW,2,4);
+    case 'rain':      return CLIP+place(orb,SUNW,42,0)+`<g clip-path="url(#below)">${placeIndividual('rain',58,16,48,'wx-drop')}</g>`+place('cloud',CW,2,14);
+    case 'thunder':   return place('cloud',CW,2,4)+`<g class="wx-bolt">${place('bolt',36,40,46)}</g>`;
+    case 'snow':      return CLIP+place(orb,SUNW,42,0)+`<g clip-path="url(#below)">${placeIndividual('snow',64,14,48,'wx-flake')}</g>`+place('cloud',CW,2,12);
     case 'mist':      return mistSVG(day);
   }
-  return place('cloud',96,12,22);
+  return place('cloud',98,8,20);
 }
 
 /* WMO weather code -> {cond, label} */
@@ -122,12 +122,21 @@ function mapCode(code){
 /* temperature -> color, warm(amber)->cold(blue). Works in C or F by converting to C. */
 function tempColor(temp,units){
   const c = units==='f' ? (temp-32)*5/9 : temp;
-  /* Map -5..35C onto a hue sweep cold->warm. Interpolating hue (not RGB) keeps
-     mid temperatures clean (teal/green/amber) instead of muddy brown. */
-  const t=Math.max(0,Math.min(1,(c+5)/40));
-  const hue = 210 - 210*t;        /* 210 (blue) -> 0 (red/orange) */
-  const sat = 70;                  /* vivid but not neon */
-  const light = 52;                /* readable on both light and dark cards */
+  /* Piecewise hue so mild temps read amber/orange, not green:
+     very cold -> blue, cool -> cyan/teal, then jump warm side to amber->red.
+     Green band (~90-140deg) is skipped entirely. */
+  let hue;
+  if(c<=10){
+    /* -10..10C : blue(210) -> teal(180) */
+    const t=Math.max(0,Math.min(1,(c+10)/20));
+    hue = 210 - 30*t;
+  } else {
+    /* 10..35C : amber(45) -> red(8), warm side, no green */
+    const t=Math.max(0,Math.min(1,(c-10)/25));
+    hue = 45 - 37*t;
+  }
+  const sat = c<=10 ? 65 : 80;
+  const light = 52;
   return `hsl(${Math.round(hue)},${sat}%,${light}%)`;
 }
 
