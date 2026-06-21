@@ -88,48 +88,47 @@ const CLIP='<defs><clipPath id="below"><rect x="0" y="40" width="100" height="60
 
 function buildIcon(cond,day){
   const orb=day?'sun':'moon';
-  const CW=86,SUNW=62;
+  const CW=92,SUNW=70;
   switch(cond){
-    case 'clear':     return place(orb,72,14,14);
-    case 'few':       return place(orb,SUNW,38,4)+place('cloud',CW,0,22);
-    case 'scattered': return place('cloud',90,5,22);
-    case 'broken':    return placeCloud(78,24,2,'#f0f0f0',0.96)+place('cloud',74,0,28);
-    case 'shower':    return CLIP+`<g clip-path="url(#below)">${placeIndividual('rain',54,16,44,'wx-drop')}</g>`+place('cloud',CW,2,4);
-    case 'rain':      return CLIP+place(orb,SUNW,40,0)+`<g clip-path="url(#below)">${placeIndividual('rain',52,14,46,'wx-drop')}</g>`+place('cloud',CW,2,14);
-    case 'thunder':   return place('cloud',CW,2,4)+`<g class="wx-bolt">${place('bolt',32,36,44)}</g>`;
-    case 'snow':      return CLIP+place(orb,SUNW,40,0)+`<g clip-path="url(#below)">${placeIndividual('snow',60,10,46,'wx-flake')}</g>`+place('cloud',CW,2,12);
+    case 'clear':     return place(orb,76,22,14);
+    case 'few':       return place(orb,SUNW,46,2)+place('cloud',CW,6,22);
+    case 'scattered': return place('cloud',96,12,22);
+    case 'broken':    return placeCloud(86,30,0,'#f0f0f0',0.96)+place('cloud',82,4,24);
+    case 'shower':    return CLIP+`<g clip-path="url(#below)">${placeIndividual('rain',56,22,44,'wx-drop')}</g>`+place('cloud',CW,8,4);
+    case 'rain':      return CLIP+place(orb,SUNW,48,0)+`<g clip-path="url(#below)">${placeIndividual('rain',54,20,46,'wx-drop')}</g>`+place('cloud',CW,8,14);
+    case 'thunder':   return place('cloud',CW,8,4)+`<g class="wx-bolt">${place('bolt',34,42,44)}</g>`;
+    case 'snow':      return CLIP+place(orb,SUNW,48,0)+`<g clip-path="url(#below)">${placeIndividual('snow',62,16,46,'wx-flake')}</g>`+place('cloud',CW,8,12);
     case 'mist':      return mistSVG(day);
   }
-  return place('cloud',90,5,22);
+  return place('cloud',96,12,22);
 }
 
 /* WMO weather code -> {cond, label} */
 function mapCode(code){
-  if(code===0) return {cond:'clear',label:'Clear Sky'};
-  if(code===1) return {cond:'few',label:'Few Clouds'};
-  if(code===2) return {cond:'scattered',label:'Scattered Clouds'};
-  if(code===3) return {cond:'broken',label:'Broken Clouds'};
-  if(code===45||code===48) return {cond:'mist',label:'Mist'};
-  if(code>=51&&code<=57) return {cond:'shower',label:'Shower Rain'};
+  if(code===0) return {cond:'clear',label:'Clear'};
+  if(code===1) return {cond:'few',label:'Mostly Clear'};
+  if(code===2) return {cond:'scattered',label:'Partly Cloudy'};
+  if(code===3) return {cond:'broken',label:'Cloudy'};
+  if(code===45||code===48) return {cond:'mist',label:'Fog'};
+  if(code>=51&&code<=57) return {cond:'shower',label:'Drizzle'};
   if(code>=61&&code<=67) return {cond:'rain',label:'Rain'};
-  if((code>=80&&code<=82)) return {cond:'shower',label:'Shower Rain'};
+  if(code>=80&&code<=82) return {cond:'shower',label:'Showers'};
   if(code>=71&&code<=77) return {cond:'snow',label:'Snow'};
-  if(code>=85&&code<=86) return {cond:'snow',label:'Snow'};
+  if(code>=85&&code<=86) return {cond:'snow',label:'Snow Showers'};
   if(code>=95) return {cond:'thunder',label:'Thunderstorm'};
-  return {cond:'broken',label:'Clouds'};
+  return {cond:'broken',label:'Cloudy'};
 }
 
 /* temperature -> color, warm(amber)->cold(blue). Works in C or F by converting to C. */
 function tempColor(temp,units){
   const c = units==='f' ? (temp-32)*5/9 : temp;
-  /* clamp 0..30C; <=0 deep blue, ~15 neutral amber-grey, >=30 warm orange */
-  const t=Math.max(0,Math.min(1,(c-0)/30));
-  /* interpolate cold #2f8fe6 -> warm #f5921e through a mid */
-  const cold=[47,143,230], warm=[245,146,30];
-  const r=Math.round(cold[0]+(warm[0]-cold[0])*t);
-  const g=Math.round(cold[1]+(warm[1]-cold[1])*t);
-  const b=Math.round(cold[2]+(warm[2]-cold[2])*t);
-  return `rgb(${r},${g},${b})`;
+  /* Map -5..35C onto a hue sweep cold->warm. Interpolating hue (not RGB) keeps
+     mid temperatures clean (teal/green/amber) instead of muddy brown. */
+  const t=Math.max(0,Math.min(1,(c+5)/40));
+  const hue = 210 - 210*t;        /* 210 (blue) -> 0 (red/orange) */
+  const sat = 70;                  /* vivid but not neon */
+  const light = 52;                /* readable on both light and dark cards */
+  return `hsl(${Math.round(hue)},${sat}%,${light}%)`;
 }
 
 function render(d){
@@ -143,11 +142,19 @@ function render(d){
 
   icoEl.innerHTML=buildIcon(m.cond,day);
   condEl.textContent=m.label;
+  const unitSym = d.units==='f' ? '°F' : '°C';
   tempEl.innerHTML=d.temp+'&deg;';
   /* set colors directly on the elements so nothing can override them */
   tempEl.style.color=tempColor(d.temp,d.units);
   condEl.style.color = day ? '#333333' : '#e7e7e7';
-  srEl.textContent=`${m.label}, ${d.temp} degrees${d.usedFeels?' feels-like':''}${d.city?', '+d.city:''}`;
+
+  /* HIG: full detail available on hover + to screen readers */
+  const loc = d.city || 'Current location';
+  const tempDesc = `${d.temp}${unitSym}${d.usedFeels?' (feels like)':''}`;
+  const summary = `${loc} — ${m.label}, ${tempDesc}`;
+  widgetEl.setAttribute('title', summary);
+  widgetEl.setAttribute('aria-label', summary);
+  srEl.textContent = summary;
 }
 
 function setMsg(t){msgEl.textContent=t;msgEl.style.display='';icoEl.style.visibility='hidden';condEl.style.visibility='hidden';tempEl.style.visibility='hidden';}
