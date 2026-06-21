@@ -8,21 +8,20 @@
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   html,body{width:100%;height:100%;overflow:hidden;background:transparent;
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif}
-  .widget{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;
-    padding:16px 18px 16px;position:relative;border-radius:inherit}
+  .widget{width:100%;height:100%;position:relative;border-radius:inherit}
   .widget.clickable{cursor:pointer}
-  .ico{width:80%;max-width:132px;aspect-ratio:1/1;display:block;margin:-8px 0 0 -6px;overflow:visible}
-  .meta{display:flex;flex-direction:column;gap:1px}
+  .ico{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:62%;max-width:110px;aspect-ratio:1/1;display:block;overflow:visible}
+  .meta{position:absolute;left:18px;right:18px;bottom:14px;display:flex;flex-direction:column;gap:2px}
   .cond{font-size:14px;font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .temp{font-size:42px;font-weight:700;line-height:1;letter-spacing:-0.01em;color:#f0852a}
   .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:11px;color:rgba(140,140,140,0.9);text-align:center;padding:0 16px}
-  @keyframes wxdrop{0%{transform:translateY(-14px);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateY(20px);opacity:0}}
-  .wx-drop{animation:wxdrop 1.1s linear infinite;animation-delay:calc(var(--i)*-0.37s);transform-origin:center}
-  @keyframes wxflake{0%{transform:translateY(-12px) rotate(0)}10%{opacity:1}90%{opacity:1}100%{transform:translateY(20px) rotate(50deg)}}
-  .wx-flake{animation:wxflake 3s linear infinite;animation-delay:calc(var(--i)*-1s);transform-origin:center;opacity:1}
-  @keyframes wxbolt{0%,90%,100%{opacity:0.12}91%{opacity:1}93%{opacity:0.25}95%{opacity:1}98%{opacity:0.2}}
-  .wx-bolt{animation:wxbolt 3s ease-in-out infinite}
+  @keyframes wxdrop{0%{transform:translateY(-6px);opacity:0}25%{opacity:1}75%{opacity:1}100%{transform:translateY(14px);opacity:0}}
+  .wx-drop{animation:wxdrop 0.9s linear infinite;animation-delay:calc(var(--i)*-0.28s);transform-origin:center}
+  @keyframes wxflake{0%{transform:translate(-1.5px,-6px) rotate(0);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translate(1.5px,14px) rotate(40deg);opacity:0}}
+  .wx-flake{animation:wxflake 2.7s linear infinite;animation-delay:calc(var(--i)*-0.9s);transform-origin:center}
+  @keyframes wxbolt{0%,66%,100%{opacity:0.9}70%{opacity:1}73%{opacity:0.4}76%{opacity:1}80%{opacity:0.85}}
+  .wx-bolt{animation:wxbolt 2.5s ease-in-out infinite}
   @keyframes wxmist{0%,100%{transform:translateX(-3px)}50%{transform:translateX(4px)}}
   .wx-mist{animation:wxmist 5s ease-in-out infinite;animation-delay:calc(var(--i)*0.5s)}
   @media(prefers-reduced-motion:reduce){.wx-drop,.wx-flake,.wx-bolt,.wx-mist{animation:none;opacity:1}}
@@ -84,23 +83,23 @@ function mistSVG(day){
   const rows=[[10,28,86],[8,42,80],[14,56,90],[10,70,84]];
   return rows.map((r,i)=>`<line class="wx-mist" style="--i:${i}" x1="${r[0]}" y1="${r[1]}" x2="${r[2]}" y2="${r[1]}" stroke="${c}" stroke-width="6" stroke-linecap="round" opacity="0.7"/>`).join('');
 }
-const CLIP='<defs><clipPath id="below"><rect x="0" y="40" width="100" height="60"/></clipPath></defs>';
+const CLIP='<defs><clipPath id="below"><rect x="0" y="46" width="100" height="34"/></clipPath></defs>';
 
 function buildIcon(cond,day){
   const orb=day?'sun':'moon';
   const CW=96,SUNW=74;
   switch(cond){
-    case 'clear':     return place(orb,84,30,12);
-    case 'few':       return place(orb,SUNW,40,0)+place('cloud',CW,2,22);
-    case 'scattered': return place('cloud',98,8,20);
-    case 'broken':    return placeCloud(80,40,0,'#f0f0f0',0.96)+place('cloud',88,0,24);
-    case 'shower':    return CLIP+`<g clip-path="url(#below)">${placeIndividual('rain',60,18,46,'wx-drop')}</g>`+place('cloud',CW,2,4);
-    case 'rain':      return CLIP+place(orb,SUNW,42,0)+`<g clip-path="url(#below)">${placeIndividual('rain',58,16,48,'wx-drop')}</g>`+place('cloud',CW,2,14);
-    case 'thunder':   return place('cloud',CW,2,4)+`<g class="wx-bolt">${place('bolt',36,40,46)}</g>`;
-    case 'snow':      return CLIP+place(orb,SUNW,42,0)+`<g clip-path="url(#below)">${placeIndividual('snow',64,14,48,'wx-flake')}</g>`+place('cloud',CW,2,12);
+    case 'clear':     return place(orb,84,8,8);
+    case 'few':       return place(orb,SUNW,40,-2)+place('cloud',CW,2,18);
+    case 'scattered': return place('cloud',96,2,14);
+    case 'broken':    return placeCloud(78,36,6,'#f0f0f0',0.96)+place('cloud',88,0,20);
+    case 'shower':    return CLIP+`<g clip-path="url(#below)">${placeIndividual('rain',54,20,46,'wx-drop')}</g>`+place('cloud',CW,2,0);
+    case 'rain':      return CLIP+place(orb,SUNW,42,-2)+`<g clip-path="url(#below)">${placeIndividual('rain',52,18,48,'wx-drop')}</g>`+place('cloud',CW,2,2);
+    case 'thunder':   return `<g class="wx-bolt">${place('bolt',36,42,38)}</g>`+place('cloud',CW,2,0);
+    case 'snow':      return CLIP+place(orb,SUNW,42,-2)+`<g clip-path="url(#below)">${placeIndividual('snow',60,16,56,'wx-flake')}</g>`+place('cloud',CW,2,2);
     case 'mist':      return mistSVG(day);
   }
-  return place('cloud',98,8,20);
+  return place('cloud',96,2,14);
 }
 
 /* WMO weather code -> {cond, label} */
