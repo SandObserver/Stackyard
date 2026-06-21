@@ -9,12 +9,12 @@
   html,body{width:100%;height:100%;overflow:hidden;background:transparent;
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif}
   .widget{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;
-    padding:16px 18px 16px;position:relative}
+    padding:16px 18px 16px;position:relative;border-radius:inherit}
   .widget.clickable{cursor:pointer}
   .ico{width:74%;max-width:120px;aspect-ratio:1/1;display:block;margin:-6px 0 0 -8px}
   .meta{display:flex;flex-direction:column;gap:1px}
-  .cond{font-size:14px;font-weight:600;color:var(--cond,#333);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .temp{font-size:34px;font-weight:700;line-height:1;letter-spacing:-0.01em;color:var(--temp,#f0852a)}
+  .cond{font-size:14px;font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .temp{font-size:42px;font-weight:700;line-height:1;letter-spacing:-0.01em;color:#f0852a}
   .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:11px;color:rgba(140,140,140,0.9);text-align:center;padding:0 16px}
   @keyframes wxdrop{0%{transform:translateY(-14px);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateY(20px);opacity:0}}
@@ -68,6 +68,17 @@ function placeIndividual(name,W,px,py,cls){
   const parts=e.paths.map(([f,o,d],i)=>`<g class="${cls}" style="--i:${i}"><path fill="${f}" opacity="${o}" transform="translate(${-e.x0},${-e.y0})" d="${d}"/></g>`).join('');
   return `<g transform="translate(${px},${py}) scale(${sc})">${parts}</g>`;
 }
+/* Cloud with an overridden fill/opacity — used for the lighter back cloud so it
+   reads bigger and whiter behind the front cloud. */
+function placeCloud(W,px,py,fill,op){
+  const e=EL.cloud;const sc=W/e.w;
+  const inner=e.paths.map(([f,o,d])=>{
+    /* only recolor the two main translucent body layers; keep highlight bits */
+    const isBody = (f==='#a2a2a2'||f==='#bebebe');
+    return `<path fill="${isBody?fill:f}" opacity="${isBody?op:o}" d="${d}"/>`;
+  }).join('');
+  return `<g transform="translate(${px},${py}) scale(${sc})"><g transform="translate(${-e.x0},${-e.y0})">${inner}</g></g>`;
+}
 function mistSVG(day){
   const c=day?'#a2a2a2':'#bcbcbc';
   const rows=[[10,28,86],[8,42,80],[14,56,90],[10,70,84]];
@@ -82,7 +93,7 @@ function buildIcon(cond,day){
     case 'clear':     return place(orb,72,14,14);
     case 'few':       return place(orb,SUNW,38,4)+place('cloud',CW,0,22);
     case 'scattered': return place('cloud',90,5,22);
-    case 'broken':    return place('cloud',60,-2,12)+place('cloud',84,10,26);
+    case 'broken':    return placeCloud(78,24,2,'#f0f0f0',0.96)+place('cloud',74,0,28);
     case 'shower':    return CLIP+`<g clip-path="url(#below)">${placeIndividual('rain',54,16,44,'wx-drop')}</g>`+place('cloud',CW,2,4);
     case 'rain':      return CLIP+place(orb,SUNW,40,0)+`<g clip-path="url(#below)">${placeIndividual('rain',52,14,46,'wx-drop')}</g>`+place('cloud',CW,2,14);
     case 'thunder':   return place('cloud',CW,2,4)+`<g class="wx-bolt">${place('bolt',32,36,44)}</g>`;
@@ -121,22 +132,22 @@ function tempColor(temp,units){
   return `rgb(${r},${g},${b})`;
 }
 
-function isDarkTheme(){
-  /* iframe inherits theme via prefers-color-scheme or a parent class signal */
-  try{ if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches) return true; }catch(e){}
-  return false;
-}
-
 function render(d){
   const m=mapCode(d.code);
-  const dark=isDarkTheme();
   const day=d.isDay!==false;
+  /* The widget paints its OWN background based on the weather region's day/night,
+     not the dashboard theme: light card by day, dark card by night. */
+  const bg = day ? '#ffffff' : '#242424';
+  document.body.style.background = bg;
+  widgetEl.style.background = bg;
+
   icoEl.innerHTML=buildIcon(m.cond,day);
   condEl.textContent=m.label;
   tempEl.innerHTML=d.temp+'&deg;';
-  document.documentElement.style.setProperty('--temp',tempColor(d.temp,d.units));
-  document.documentElement.style.setProperty('--cond',dark?'#e7e7e7':'#333');
-  srEl.textContent=`${m.label}, ${d.temp} degrees${d.city?', '+d.city:''}`;
+  /* set colors directly on the elements so nothing can override them */
+  tempEl.style.color=tempColor(d.temp,d.units);
+  condEl.style.color = day ? '#333333' : '#e7e7e7';
+  srEl.textContent=`${m.label}, ${d.temp} degrees${d.usedFeels?' feels-like':''}${d.city?', '+d.city:''}`;
 }
 
 function setMsg(t){msgEl.textContent=t;msgEl.style.display='';icoEl.style.visibility='hidden';condEl.style.visibility='hidden';tempEl.style.visibility='hidden';}
@@ -148,7 +159,6 @@ async function boot(){
   const href=cfg&&cfg.widgetConfig&&cfg.widgetConfig.href;
   if(href){widgetEl.classList.add('clickable');widgetEl.addEventListener('click',()=>window.open(href,'_blank','noopener,noreferrer'));}
   tick();setInterval(tick,TICK_MS);
-  try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(_last)render(_last);});}catch(e){}
 }
 let _last=null;
 async function tick(){

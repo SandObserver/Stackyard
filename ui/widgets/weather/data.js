@@ -21,31 +21,38 @@ module.exports = async function (ctx) {
 
   const url = 'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}`
-    + `&current_weather=true&daily=sunrise,sunset&temperature_unit=${tempUnit}`
+    + '&current=temperature_2m,apparent_temperature,weather_code,is_day'
+    + `&daily=sunrise,sunset&temperature_unit=${tempUnit}`
     + '&timezone=auto&forecast_days=1';
 
   let r;
   try { r = await fetchJSON(url, { timeout: 8000 }); }
   catch (e) { return { error: e.message }; }
-  if (r.status >= 400 || !r.data || !r.data.current_weather) {
+  if (r.status >= 400 || !r.data || !r.data.current) {
     return { error: 'Weather unavailable (' + r.status + ')' };
   }
 
-  const cw = r.data.current_weather;
-  let isDay = cw.is_day === 1 || cw.is_day === true;
-  /* current_weather.is_day is provided by Open-Meteo; fall back to sunrise/sunset. */
-  if (cw.is_day == null && r.data.daily && r.data.daily.sunrise) {
-    const now = new Date(cw.time).getTime();
+  const cur = r.data.current;
+  let isDay = cur.is_day === 1 || cur.is_day === true;
+  /* is_day is provided by Open-Meteo; fall back to sunrise/sunset if absent. */
+  if (cur.is_day == null && r.data.daily && r.data.daily.sunrise) {
+    const now = new Date(cur.time).getTime();
     const sr = new Date(r.data.daily.sunrise[0]).getTime();
     const ss = new Date(r.data.daily.sunset[0]).getTime();
     isDay = now >= sr && now < ss;
   }
 
+  const useFeels = config.feelsLike === true || config.feelsLike === 'true';
+  const real  = cur.temperature_2m;
+  const feels = cur.apparent_temperature != null ? cur.apparent_temperature : real;
+  const shown = useFeels ? feels : real;
+
   return {
-    temp:  Math.round(cw.temperature),
-    units: units,
-    code:  cw.weathercode,
-    isDay: isDay,
-    city:  config.city || '',
+    temp:      Math.round(shown),
+    usedFeels: useFeels,
+    units:     units,
+    code:      cur.weather_code,
+    isDay:     isDay,
+    city:      config.city || '',
   };
 };
