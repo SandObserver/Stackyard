@@ -1,0 +1,6 @@
+{
+  "name": "weather",
+  "label": "Weather",
+  "sizes": ["small"],
+  "customEditor": true
+}
