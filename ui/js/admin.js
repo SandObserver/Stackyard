@@ -760,6 +760,7 @@ function _renderWeatherConfig(body){
     finally{ btn.disabled=false;btn.textContent='Search'; }
   }
   searchRow.querySelector('#wx-search').onclick=doSearch;
+}
 
 function _renderStatsConfig(body){
   /* ── Sub-type pill: System Summary | Disk Health ── */
