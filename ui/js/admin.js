@@ -213,7 +213,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const mt=document.createElement('div');mt.className='rmt';
   if(item.type==='widget'){
     const wt=item.widgetType||'custom';
-    const wtLabel=wt==='stats'?'Stats':(wt==='connections'||wt==='map')?'Connections':wt==='dns'?'DNS Server':wt==='github'?'GitHub':wt==='clock'?'Clock':wt==='backup'?'Backup':'Custom';
+    const wtLabel=wt==='stats'?'Stats':(wt==='connections'||wt==='map')?'Connections':wt==='dns'?'DNS Server':wt==='weather'?'Weather':wt==='github'?'GitHub':wt==='clock'?'Clock':wt==='backup'?'Backup':'Custom';
     mt.textContent=`${wtLabel} widget · ${item.widgetSize||'medium'}`;
   }
   else if(item.type==='folder')mt.textContent=`${(item.children||[]).length} apps`;
@@ -484,7 +484,7 @@ function closeModal(){
   eid=null;
   /* Reset widget state so stale values don't bleed into the next modal open */
   _wtype='custom';_wsize='medium';_wslots=[];_wnet={enabled:false,url:'',provider:'myspeed'};
-  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wbackupCfg={};_wstatsSubType='system-summary';_wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};_iframeOpts={};
+  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wbackupCfg={};_wstatsSubType='system-summary';_wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};_iframeOpts={};_wweatherCfg={city:'',lat:'',lon:'',units:'c',href:''};
 }
 
 function buildTypeSwitch(item){
@@ -520,7 +520,7 @@ const STAT_TYPES  = ['cpu','ram','temp','disk'];
 const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk' };
 
 /* State for current widget config while modal is open */
-let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wgithubCfg={}, _wclockCfg={}, _wbackupCfg={}, _wstatsSubType='system-summary', _wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]}, _iframeOpts={};
+let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wgithubCfg={}, _wclockCfg={}, _wbackupCfg={}, _wstatsSubType='system-summary', _wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]}, _iframeOpts={}, _wweatherCfg={city:'',lat:'',lon:'',units:'c',href:''};
 /* Auto-generated config form (folder-style widgets driven by the registry). */
 let _wAutoCfg={}, _autoForm=null, _autoFormType=null;
 
@@ -537,6 +537,13 @@ function buildWidgetForm(body,item){
   _wslots = (wc.slots || [{type:'cpu'},{type:'ram'},{type:'disk',primary:'/',secondary:''}]);
   while(_wslots.length < 3) _wslots.push({type:'cpu'});
   _wstatsSubType = wc.widgetSubType || 'system-summary';
+  _wweatherCfg = {
+    city:  wc.city  || '',
+    lat:   wc.lat   != null ? wc.lat : '',
+    lon:   wc.lon   != null ? wc.lon : '',
+    units: wc.units === 'f' ? 'f' : 'c',
+    href:  wc.href  || '',
+  };
   if (_wstatsSubType === 'disk-health') {
     _wdiskCfg = {
       diskProvider: wc.diskProvider || 'scrutiny',
@@ -677,8 +684,82 @@ function _renderWidgetForm(body){
   else if(_wtype==='stats')        _renderStatsConfig(body);
   else if(_wtype==='connections') _renderConnectionsConfig(body);
   else if(_wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderBackupConfig(d); }
+  else if(_wtype==='weather')     _renderWeatherConfig(body);
   else                        _renderCustomConfig(body);
 }
+
+function _renderWeatherConfig(body){
+  /* City search → resolve to lat/long via the geocoding proxy, confirm the match. */
+  const searchRow=document.createElement('div');searchRow.className='fr';
+  searchRow.innerHTML=`<label for="wx-city">City</label>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input class="fc" id="wx-city" type="text" placeholder="e.g. Ottawa" value="${esc(_wweatherCfg.city||'')}" style="flex:1;margin:0">
+      <button type="button" id="wx-search" class="btn bg sm" style="flex-shrink:0;white-space:nowrap">Search</button>
+    </div>`;
+  body.appendChild(searchRow);
+
+  const resWrap=document.createElement('div');resWrap.className='fr';resWrap.style.display='none';
+  resWrap.innerHTML=`<label for="wx-result">Match</label><select class="fc" id="wx-result"></select>`;
+  body.appendChild(resWrap);
+
+  const msg=document.createElement('div');msg.id='wx-msg';msg.className='hint';msg.style.marginTop='-4px';body.appendChild(msg);
+  if(_wweatherCfg.lat!==''&&_wweatherCfg.lat!=null){ msg.textContent='Current: '+(_wweatherCfg.city||(_wweatherCfg.lat+', '+_wweatherCfg.lon)); msg.style.color='#008932'; }
+
+  /* Units toggle */
+  const unitRow=document.createElement('div');unitRow.className='fr';
+  const unitLbl=document.createElement('label');unitLbl.textContent='Units';unitLbl.setAttribute('for','wx-units');
+  const unitPills=document.createElement('div');unitPills.className='wtype-row';unitPills.style.marginTop='2px';
+  [['c','°C'],['f','°F']].forEach(([v,l])=>{
+    const b=document.createElement('button');b.type='button';b.className='wchip'+(v===(_wweatherCfg.units||'c')?' on':'');b.textContent=l;
+    b.onclick=()=>{ _wweatherCfg.units=v; unitPills.querySelectorAll('.wchip').forEach(x=>x.classList.toggle('on',x===b)); };
+    unitPills.appendChild(b);
+  });
+  unitRow.append(unitLbl,unitPills);body.appendChild(unitRow);
+
+  /* Optional click-through href */
+  const hrefRow=document.createElement('div');hrefRow.className='fr';
+  hrefRow.innerHTML=`<label for="wx-href">Link URL <span style="opacity:.45;font-weight:400">(optional)</span></label>
+    <input class="fc" id="wx-href" type="text" placeholder="https://..." value="${esc(_wweatherCfg.href||'')}">`;
+  body.appendChild(hrefRow);
+  hrefRow.querySelector('#wx-href').oninput=e=>{ _wweatherCfg.href=e.target.value.trim(); };
+
+  const resultSel=resWrap.querySelector('#wx-result');
+  resultSel.onchange=()=>{
+    const o=resultSel.selectedOptions[0]; if(!o||!o.value) return;
+    const p=JSON.parse(o.value);
+    _wweatherCfg.city=p.label; _wweatherCfg.lat=p.lat; _wweatherCfg.lon=p.lon;
+    msg.textContent='Selected: '+p.label; msg.style.color='#008932';
+  };
+
+  async function doSearch(){
+    const q=document.getElementById('wx-city').value.trim();
+    if(!q){ msg.textContent='Enter a city name.'; msg.style.color='#e9152d'; return; }
+    const btn=document.getElementById('wx-search');
+    btn.disabled=true;btn.textContent='…';msg.textContent='';
+    try{
+      const r=await fetch(`/api/geocode-proxy?q=${encodeURIComponent(q)}`);
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+      const results=d.results||[];
+      if(!results.length){ msg.textContent='No matches found.'; msg.style.color='#ffcc00'; resWrap.style.display='none'; return; }
+      resultSel.innerHTML='';
+      results.forEach(p=>{
+        const label=[p.name,p.admin1,p.country].filter(Boolean).join(', ');
+        const opt=document.createElement('option');
+        opt.value=JSON.stringify({label,lat:p.lat,lon:p.lon});
+        opt.textContent=label;
+        resultSel.appendChild(opt);
+      });
+      resWrap.style.display='';
+      /* auto-select first match */
+      _wweatherCfg.city=JSON.parse(resultSel.value).label;
+      _wweatherCfg.lat=JSON.parse(resultSel.value).lat;
+      _wweatherCfg.lon=JSON.parse(resultSel.value).lon;
+      msg.textContent=results.length+' match(es) — pick one.'; msg.style.color='#008932';
+    }catch(e){ msg.textContent='Search failed: '+e.message; msg.style.color='#e9152d'; }
+    finally{ btn.disabled=false;btn.textContent='Search'; }
+  }
+  searchRow.querySelector('#wx-search').onclick=doSearch;
 
 function _renderStatsConfig(body){
   /* ── Sub-type pill: System Summary | Disk Health ── */
@@ -2391,12 +2472,21 @@ async function doSave(orig){
     if(ctype==='widget'){
       /* Generate clean IDs: only letters, digits and underscores */
       const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'widget';
-      const wlabel=_wlabel.trim()||(_wtype==='stats'?(_wstatsSubType==='disk-health'?'Disk Health':'System Summary'):_wtype==='connections'?'Connections':_wtype==='dns'?'DNS Server':_wtype==='github'?'GitHub':_wtype==='clock'?'Clock':_wtype==='backup'?'Backup':'Widget');
+      const wlabel=_wlabel.trim()||(_wtype==='stats'?(_wstatsSubType==='disk-health'?'Disk Health':'System Summary'):_wtype==='connections'?'Connections':_wtype==='dns'?'DNS Server':_wtype==='weather'?'Weather':_wtype==='github'?'GitHub':_wtype==='clock'?'Clock':_wtype==='backup'?'Backup':'Widget');
       if(_autoForm && _autoFormType===_wtype && _widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
         const missing=_autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
         item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:_wtype,
           label:wlabel,widgetSize:_wsize,widgetConfig:_autoForm.getValues()};
+      }
+      else if(_wtype==='weather'){
+        const city=document.getElementById('wx-city')?.value?.trim()||_wweatherCfg.city;
+        if(_wweatherCfg.lat===''||_wweatherCfg.lat==null){ toast('Search and select a city first','err'); return; }
+        const wcfg={ city:_wweatherCfg.city||city, lat:_wweatherCfg.lat, lon:_wweatherCfg.lon, units:_wweatherCfg.units||'c' };
+        const href=document.getElementById('wx-href')?.value?.trim();
+        if(href) wcfg.href=href;
+        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'weather',
+          label:wlabel,widgetSize:'small',widgetConfig:wcfg};
       }
       else if(_wtype==='custom'){
         const url=document.getElementById('f-url')?.value?.trim();
