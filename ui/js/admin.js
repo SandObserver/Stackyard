@@ -542,6 +542,7 @@ function buildWidgetForm(body,item){
     lat:   wc.lat   != null ? wc.lat : '',
     lon:   wc.lon   != null ? wc.lon : '',
     units: wc.units === 'f' ? 'f' : 'c',
+    feelsLike: wc.feelsLike === true,
     href:  wc.href  || '',
   };
   if (_wstatsSubType === 'disk-health') {
@@ -715,6 +716,17 @@ function _renderWeatherConfig(body){
     unitPills.appendChild(b);
   });
   unitRow.append(unitLbl,unitPills);body.appendChild(unitRow);
+
+  /* Feels-like toggle */
+  const flRow=document.createElement('div');flRow.className='fr';
+  const flLbl=document.createElement('label');flLbl.textContent='Temperature';flLbl.setAttribute('for','wx-feels');
+  const flPills=document.createElement('div');flPills.className='wtype-row';flPills.style.marginTop='2px';
+  [[false,'Actual'],[true,'Feels like']].forEach(([v,l])=>{
+    const b=document.createElement('button');b.type='button';b.className='wchip'+(v===!!_wweatherCfg.feelsLike?' on':'');b.textContent=l;
+    b.onclick=()=>{ _wweatherCfg.feelsLike=v; flPills.querySelectorAll('.wchip').forEach(x=>x.classList.toggle('on',x===b)); };
+    flPills.appendChild(b);
+  });
+  flRow.append(flLbl,flPills);body.appendChild(flRow);
 
   /* Optional click-through href */
   const hrefRow=document.createElement('div');hrefRow.className='fr';
@@ -2484,6 +2496,7 @@ async function doSave(orig){
         const city=document.getElementById('wx-city')?.value?.trim()||_wweatherCfg.city;
         if(_wweatherCfg.lat===''||_wweatherCfg.lat==null){ toast('Search and select a city first','err'); return; }
         const wcfg={ city:_wweatherCfg.city||city, lat:_wweatherCfg.lat, lon:_wweatherCfg.lon, units:_wweatherCfg.units||'c' };
+        if(_wweatherCfg.feelsLike) wcfg.feelsLike=true;
         const href=document.getElementById('wx-href')?.value?.trim();
         if(href) wcfg.href=href;
         item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'weather',
