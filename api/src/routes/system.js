@@ -51,6 +51,23 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: wc });
 });
 
+on('GET', '/api/geocode-proxy', async(req, res) => {
+  const u    = new URL(req.url, 'http://x');
+  const name = (u.searchParams.get('q') || '').trim();
+  if (!name) return json(res, 400, { error: 'q param required' });
+  try {
+    const url = 'https://geocoding-api.open-meteo.com/v1/search'
+      + `?name=${encodeURIComponent(name)}&count=5&language=en&format=json`;
+    const r = await fetchJSON(url, { timeout: 8000 });
+    if (r.status >= 400) return json(res, 502, { error: 'Geocoding HTTP ' + r.status });
+    const results = ((r.data && r.data.results) || []).map(p => ({
+      name: p.name, country: p.country, admin1: p.admin1,
+      lat: p.latitude, lon: p.longitude,
+    }));
+    json(res, 200, { results });
+  } catch(e) { json(res, 502, { error: e.message }); }
+});
+
 on('GET', '/api/scrutiny-proxy', async(req, res) => {
   const u    = new URL(req.url, 'http://x');
   const raw  = u.searchParams.get('url') || '';
