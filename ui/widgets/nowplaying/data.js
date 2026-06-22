@@ -60,7 +60,7 @@ async function jellyfinLike(ctx, provider) {
     if (t === 'Episode') {
       subtitle = np.SeriesName || '';
       if (np.ParentIndexNumber != null && np.IndexNumber != null)
-        subtitle = (np.SeriesName ? np.SeriesName + ' ยท ' : '') + `S${np.ParentIndexNumber}E${np.IndexNumber}`;
+        subtitle = (np.SeriesName ? np.SeriesName + ' · ' : '') + `S${np.ParentIndexNumber}E${np.IndexNumber}`;
     } else if (t === 'Audio') {
       subtitle = np.AlbumArtist || np.Album || '';
     }

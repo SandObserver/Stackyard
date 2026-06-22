@@ -1,0 +1,34 @@
+{
+  "name": "nowplaying",
+  "label": "Now Playing",
+  "sizes": ["small"],
+  "fields": [
+    {
+      "key": "provider",
+      "type": "select",
+      "variant": "pills",
+      "label": "Media server",
+      "options": [
+        { "value": "plex", "label": "Plex" },
+        { "value": "jellyfin", "label": "Jellyfin" },
+        { "value": "emby", "label": "Emby" },
+        { "value": "navidrome", "label": "Navidrome" }
+      ]
+    },
+
+    { "key": "tautulliUrl", "type": "text", "label": "Tautulli URL", "placeholder": "http://host:8181", "hint": "Plex now-playing comes from Tautulli running alongside Plex.", "showIf": { "field": "provider", "equals": "plex" } },
+    { "key": "tautulliKey", "type": "secret", "label": "Tautulli API key", "showIf": { "field": "provider", "equals": "plex" } },
+
+    { "key": "jellyfinUrl", "type": "text", "label": "Jellyfin URL", "placeholder": "http://host:8096", "showIf": { "field": "provider", "equals": "jellyfin" } },
+    { "key": "jellyfinKey", "type": "secret", "label": "Jellyfin API key", "showIf": { "field": "provider", "equals": "jellyfin" } },
+
+    { "key": "embyUrl", "type": "text", "label": "Emby URL", "placeholder": "http://host:8096", "showIf": { "field": "provider", "equals": "emby" } },
+    { "key": "embyKey", "type": "secret", "label": "Emby API key", "showIf": { "field": "provider", "equals": "emby" } },
+
+    { "key": "navidromeUrl", "type": "text", "label": "Navidrome URL", "placeholder": "http://host:4533", "showIf": { "field": "provider", "equals": "navidrome" } },
+    { "key": "navidromeUser", "type": "text", "label": "Username", "showIf": { "field": "provider", "equals": "navidrome" } },
+    { "key": "navidromePassword", "type": "secret", "label": "Password", "showIf": { "field": "provider", "equals": "navidrome" } },
+
+    { "key": "href", "type": "text", "label": "Click URL (optional)", "placeholder": "https://…", "hint": "Opens when the widget is clicked.", "optional": true }
+  ]
+}
