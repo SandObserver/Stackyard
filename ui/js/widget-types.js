@@ -17,6 +17,7 @@ export const WIDGET_TYPES = {
     }},
   dns: { label:'DNS Server',       sizes:['small','medium'],        src:(id,item)=>`/widgets/dns/index.html?v=1&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
   weather: { label:'Weather',      sizes:['small'],                 src:(id,item)=>`/widgets/weather/index.html?v=5&id=${encodeURIComponent(id)}&size=small` },
+  nowplaying: { label:'Now Playing', sizes:['small'],               src:(id,item)=>`/widgets/nowplaying/index.html?v=1&id=${encodeURIComponent(id)}&size=small` },
   github:  { label:'GitHub',        sizes:['small','medium','large','xlarge'],src:(id,item)=>{
     const view=item?.widgetConfig?.githubView||'prs';
     const file=view==='contributions'?'github/contributions':'github/pullrequests';

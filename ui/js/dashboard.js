@@ -1,10 +1,10 @@
 /* dashboard.js — boot, state, badge system, desktop layout, navigation, background, polling */
 
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=37';
+import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=38';
 import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=37';
 import { initSpotlight } from '/js/spotlight.js?v=36';
-import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=37';
+import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=38';
 
 const API = '';
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
@@ -149,7 +149,7 @@ function mkIcon(item) {
 }
 
 function widgetTitle(item) {
-  const names = { stats:'System stats', connections:'Connections', map:'Connections', dns:'DNS Server', weather:'Weather', github:'GitHub', clock:'Clock', duplicati:'Backup status', custom:'Widget' };
+  const names = { stats:'System stats', connections:'Connections', map:'Connections', dns:'DNS Server', weather:'Weather', nowplaying:'Now Playing', github:'GitHub', clock:'Clock', duplicati:'Backup status', custom:'Widget' };
   if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || 'Disk health';
   return item.label || names[item.widgetType] || 'Widget';
 }
