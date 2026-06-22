@@ -6,12 +6,12 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0d1117",
-  "theme_color": "#0d1117",
+  "background_color": "#1c1c1e",
+  "theme_color": "#58c0cd",
   "icons": [
     {
       "src": "/icons/favicon.png",
-      "sizes": "2538x2538",
+      "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any maskable"
     }
