@@ -2,7 +2,7 @@
 
    Config (server-side, secrets included):
      provider          : 'plex' | 'jellyfin' | 'emby' | 'navidrome'
-     tautulliUrl/Key   : Plex sessions come from Tautulli (Plex's own API is counts-only)
+     plexUrl/Token     : Plex Media Server /status/sessions (X-Plex-Token); no Tautulli needed
      jellyfinUrl/Key   : Jellyfin /Sessions
      embyUrl/Key       : Emby /Sessions (same shape as Jellyfin)
      navidromeUrl/User/Password : Subsonic getNowPlaying. Progress + play/paused come from the
@@ -18,25 +18,27 @@ const crypto = require('crypto');
 
 const MAX = 5;
 
-async function tautulli(ctx) {
-  const base = ctx.normalizeBase(ctx.config.tautulliUrl);
-  const key = ctx.config.tautulliKey;
-  if (!base || !key) throw new Error('Tautulli URL and API key required');
-  const url = `${base}/api/v2?apikey=${encodeURIComponent(key)}&cmd=get_activity`;
-  const r = await ctx.fetchJSON(url, { timeout: 8000 });
-  if (r.status === 401 || r.status === 403) throw new Error('Tautulli auth failed');
-  if (r.status >= 400) throw new Error('Tautulli HTTP ' + r.status);
-  const list = (r.data && r.data.response && r.data.response.data && r.data.response.data.sessions) || [];
-  return list.map(s => {
-    const type = s.media_type;
-    let title = s.title || '', subtitle = '';
-    if (type === 'episode') subtitle = s.grandparent_title || '';
-    else if (type === 'track') subtitle = s.grandparent_title || s.original_title || '';
-    else if (type === 'movie') title = s.full_title || s.title || '';
-    let progress = null;
-    if (s.progress_percent != null && s.progress_percent !== '') progress = Math.min(1, Math.max(0, (+s.progress_percent) / 100));
-    else { const dur = +s.duration || 0, off = +s.view_offset || 0; if (dur > 0) progress = Math.min(1, off / dur); }
-    return { title, subtitle, progress, state: s.state === 'paused' ? 'paused' : 'playing', type: type || '' };
+async function plex(ctx) {
+  const base = ctx.normalizeBase(ctx.config.plexUrl);
+  const token = ctx.config.plexToken;
+  if (!base || !token) throw new Error('Plex URL and token required');
+  // Plex returns XML unless JSON is requested; token may be header or query
+  const r = await ctx.fetchJSON(`${base}/status/sessions`, {
+    headers: { 'Accept': 'application/json', 'X-Plex-Token': token }, timeout: 8000
+  });
+  if (r.status === 401 || r.status === 403) throw new Error('Plex auth failed (check token)');
+  if (r.status >= 400) throw new Error('Plex HTTP ' + r.status);
+  let list = (r.data && r.data.MediaContainer && r.data.MediaContainer.Metadata) || [];
+  if (!Array.isArray(list)) list = [list];
+  return list.map(m => {
+    const type = (m.type || '').toLowerCase();
+    let title = m.title || '', subtitle = '';
+    if (type === 'episode') subtitle = m.grandparentTitle || '';
+    else if (type === 'track') subtitle = m.grandparentTitle || m.parentTitle || '';
+    const dur = +m.duration || 0, off = +m.viewOffset || 0;     // milliseconds
+    const progress = dur > 0 ? Math.min(1, Math.max(0, off / dur)) : null;
+    const pstate = (m.Player && m.Player.state) || 'playing';   // playing | paused | buffering
+    return { title, subtitle, progress, state: pstate === 'paused' ? 'paused' : 'playing', type };
   });
 }
 
@@ -96,7 +98,7 @@ module.exports = async function (ctx) {
   const provider = ctx.config.provider || '';
   try {
     let sessions;
-    if (provider === 'plex') sessions = await tautulli(ctx);
+    if (provider === 'plex') sessions = await plex(ctx);
     else if (provider === 'jellyfin' || provider === 'emby') sessions = await jellyfinLike(ctx, provider);
     else if (provider === 'navidrome') sessions = await navidrome(ctx);
     else return { provider, sessions: [], error: 'No media server configured' };
