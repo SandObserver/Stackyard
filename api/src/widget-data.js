@@ -1,9 +1,10 @@
 const path = require('path');
-const { on, json } = require('./router');
+const { on, json, readBody, checkOrigin } = require('./router');
 const { loadConfig } = require('./config');
 const { fetchJSON, parsePrometheus } = require('./proxy');
 const { cpuPercent, ramPercent, cpuTemp, diskStats } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
+const { preserveWidgetSecrets } = require('./widget-secrets');
 const log = require('./log');
 
 /* Normalize a user-entered base URL the same way the existing hand-written data
@@ -148,6 +149,31 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
     json(res, out.status, out.body);
   } catch (e) {
     log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: e.message });
+    json(res, 502, { error: e.message });
+  }
+});
+
+/* Config-time "Fetch" for select fields declared with optionsFrom (e.g. the
+   Books list picker). Mirrors the backup widget's fetch endpoints: the admin UI
+   posts the in-progress config (URL + secret, or omits the secret to reuse the
+   saved one), keyed by widget id ('__preview__' before first save). Reuses the
+   widget's own data.js via the named endpoint, so no per-widget backend code. */
+on('POST', '/api/widget-options/:id', async (req, res) => {
+  if (!checkOrigin(req, res)) return;
+  let body;
+  try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: 'invalid body' }); }
+  const entry = getRegistry()[body.widgetType];
+  if (!entry || !entry.hasDataFn) return json(res, 400, { error: 'unknown widget type' });
+
+  const item = { type: 'widget', id: req.params.id, widgetType: body.widgetType, widgetConfig: body.widgetConfig || {} };
+  const saved = (loadConfig().items || []).find(i => i.id === req.params.id && i.type === 'widget');
+  if (saved) preserveWidgetSecrets(item, saved, entry); /* restore a secret the form left blank */
+
+  try {
+    const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams());
+    json(res, out.status, out.body);
+  } catch (e) {
+    log.error('widget-options failed', { widget: body.widgetType, error: e.message });
     json(res, 502, { error: e.message });
   }
 });
