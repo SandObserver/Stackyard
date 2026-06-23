@@ -1,6 +1,6 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
 import { clr as rc, esc } from '/js/utils.js?v=37';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=1';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=2';
 
 /* Admin UI — Stackyard Dashboard */
 const API = '';
@@ -213,7 +213,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const mt=document.createElement('div');mt.className='rmt';
   if(item.type==='widget'){
     const wt=item.widgetType||'custom';
-    const wtLabel=wt==='stats'?'Stats':(wt==='connections'||wt==='map')?'Connections':wt==='dns'?'DNS Server':wt==='weather'?'Weather':wt==='nowplaying'?'Now Playing':wt==='github'?'GitHub':wt==='clock'?'Clock':wt==='backup'?'Backup':'Custom';
+    const wtLabel=wt==='stats'?'Stats':(wt==='connections'||wt==='map')?'Connections':wt==='dns'?'DNS Server':wt==='weather'?'Weather':wt==='nowplaying'?'Now Playing':wt==='books'?'Books':wt==='github'?'GitHub':wt==='clock'?'Clock':wt==='backup'?'Backup':'Custom';
     mt.textContent=`${wtLabel} widget · ${item.widgetSize||'medium'}`;
   }
   else if(item.type==='folder')mt.textContent=`${(item.children||[]).length} apps`;
@@ -679,7 +679,8 @@ function _renderWidgetForm(body){
     const cfgDiv=document.createElement('div');cfgDiv.className='div';body.appendChild(cfgDiv);
   if(_widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
     const d=document.createElement('div'); body.appendChild(d);
-    _autoForm=renderWidgetConfigForm(d, _widgetReg[_wtype].fields||[], _wAutoCfg);
+    const _wid=(eid!==null&&items[eid]&&items[eid].id)?items[eid].id:null;
+    _autoForm=renderWidgetConfigForm(d, _widgetReg[_wtype].fields||[], _wAutoCfg, { widgetId:_wid, widgetType:_wtype });
     _autoFormType=_wtype;
   }
   else if(_wtype==='stats')        _renderStatsConfig(body);
@@ -2485,7 +2486,7 @@ async function doSave(orig){
     if(ctype==='widget'){
       /* Generate clean IDs: only letters, digits and underscores */
       const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'widget';
-      const wlabel=_wlabel.trim()||(_wtype==='stats'?(_wstatsSubType==='disk-health'?'Disk Health':'System Summary'):_wtype==='connections'?'Connections':_wtype==='dns'?'DNS Server':_wtype==='weather'?'Weather':_wtype==='nowplaying'?'Now Playing':_wtype==='github'?'GitHub':_wtype==='clock'?'Clock':_wtype==='backup'?'Backup':'Widget');
+      const wlabel=_wlabel.trim()||(_wtype==='stats'?(_wstatsSubType==='disk-health'?'Disk Health':'System Summary'):_wtype==='connections'?'Connections':_wtype==='dns'?'DNS Server':_wtype==='weather'?'Weather':_wtype==='nowplaying'?'Now Playing':_wtype==='books'?'Books':_wtype==='github'?'GitHub':_wtype==='clock'?'Clock':_wtype==='backup'?'Backup':'Widget');
       if(_autoForm && _autoFormType===_wtype && _widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
         const missing=_autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }

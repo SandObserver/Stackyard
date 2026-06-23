@@ -75,19 +75,49 @@ function _toggle(field, value) {
   return { el: row, get, control: input, liveValue: () => input.checked };
 }
 
-function _select(field, value) {
+function _select(field, value, ctx) {
   const row = document.createElement('div'); row.className = 'fr';
-  const cur = value != null ? value : field.default;
-  const opts = Array.isArray(field.options) ? field.options : [];
-  const optsHtml = opts.map(o =>
-    `<option value="${esc(o.value)}"${String(o.value) === String(cur) ? ' selected' : ''}>${esc(o.label)}</option>`
-  ).join('');
-  row.innerHTML = _labelHtml(field) +
-    `<select class="fc">${optsHtml}</select>` +
-    (field.hint ? `<div class="hint">${esc(field.hint)}</div>` : '');
-  const sel = row.querySelector('select');
-  /* optionsFrom (populate from a data endpoint) is a Phase-later refinement;
-     a static options list covers the current cases. */
+  let opts = Array.isArray(field.options) ? field.options.slice() : [];
+  let chosen = value != null ? String(value) : (field.default != null ? String(field.default) : '');
+  row.innerHTML = _labelHtml(field);
+  const line = document.createElement('div'); line.style.cssText = 'display:flex;gap:8px;align-items:center';
+  const sel = document.createElement('select'); sel.className = 'fc'; sel.style.flex = '1'; sel.style.minWidth = '0';
+  line.appendChild(sel); row.appendChild(line);
+
+  function paint() {
+    let html = opts.map(o => `<option value="${esc(o.value)}"${String(o.value) === chosen ? ' selected' : ''}>${esc(o.label != null ? o.label : o.value)}</option>`).join('');
+    if (chosen && !opts.some(o => String(o.value) === chosen)) html = `<option value="${esc(chosen)}" selected>${esc(chosen)}</option>` + html;
+    if (field.optional) html = `<option value="">\u2014</option>` + html;
+    sel.innerHTML = html || `<option value="">\u2014</option>`;
+  }
+  paint();
+
+  if (field.optionsFrom) {
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn bg sm'; btn.textContent = 'Fetch';
+    btn.style.flexShrink = '0'; btn.style.whiteSpace = 'nowrap'; line.appendChild(btn);
+    const status = document.createElement('div'); status.className = 'hint'; status.style.marginTop = '4px'; row.appendChild(status);
+    if (field.hint) status.textContent = field.hint;
+    btn.addEventListener('click', async () => {
+      const cfg = ctx && ctx.getValues ? ctx.getValues() : {};
+      const wid = (ctx && ctx.widgetId) || '__preview__';
+      status.textContent = 'Fetching\u2026'; btn.disabled = true;
+      try {
+        const r = await fetch(`/api/widget-options/${encodeURIComponent(wid)}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ widgetType: ctx && ctx.widgetType, endpoint: field.optionsFrom, widgetConfig: cfg }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+        opts = Array.isArray(d.options) ? d.options : [];
+        chosen = sel.value || chosen; paint();
+        status.textContent = opts.length ? `Loaded ${opts.length} list${opts.length > 1 ? 's' : ''}` : 'No lists found';
+      } catch (e) { status.textContent = 'Fetch failed: ' + e.message; }
+      finally { btn.disabled = false; }
+    });
+  } else if (field.hint) {
+    const h = document.createElement('div'); h.className = 'hint'; h.textContent = field.hint; row.appendChild(h);
+  }
+
   const get = () => [field.key, sel.value];
   return { el: row, get, control: sel, liveValue: () => sel.value };
 }
@@ -218,27 +248,28 @@ function _group(field, rows) {
 }
 
 /* Build a non-group field. */
-function _buildSimple(field, config) {
+function _buildSimple(field, config, ctx) {
   const value = config[field.key];
   switch (field.type) {
     case 'secret': return _secret(field, config[field.key + 'Set'] === true);
     case 'number': return _number(field, value);
     case 'toggle': return _toggle(field, value);
-    case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value);
+    case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value, ctx);
     case 'multiselect': return _multiselect(field, value);
     case 'text':
     default:       return _textLike(field, value, 'text');
   }
 }
 
-export function renderWidgetConfigForm(container, fields, config = {}) {
+export function renderWidgetConfigForm(container, fields, config = {}, opts = {}) {
   container.innerHTML = '';
   const built = [];          /* { field, el, get, liveValue } */
   const liveByKey = {};
+  const ctx = { widgetId: (opts && opts.widgetId) || null, widgetType: (opts && opts.widgetType) || null, getValues: null };
 
   for (const f of fields) {
     if (!f || !f.key) continue;
-    const b = f.type === 'group' ? _group(f, config[f.key]) : _buildSimple(f, config);
+    const b = f.type === 'group' ? _group(f, config[f.key]) : _buildSimple(f, config, ctx);
     b.field = f;
     container.appendChild(b.el);
     built.push(b);
@@ -263,7 +294,7 @@ export function renderWidgetConfigForm(container, fields, config = {}) {
 
   function visible(b) { return b.el.style.display !== 'none'; }
 
-  return {
+  const api = {
     root: container,
     getValues() {
       const out = {};
@@ -286,4 +317,6 @@ export function renderWidgetConfigForm(container, fields, config = {}) {
       return missing;
     },
   };
+  ctx.getValues = api.getValues; /* lets optionsFrom Fetch read the in-progress config */
+  return api;
 }
