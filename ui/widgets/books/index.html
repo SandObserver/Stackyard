@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Books</title>
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:transparent;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+
+  .card{position:relative;width:100%;height:100%;border-radius:inherit;
+    overflow:hidden;padding:14px;display:flex;flex-direction:column}
+  .card.clickable{cursor:pointer}
+  .card.clickable:focus-visible{outline:2px solid #5ab0ff;outline-offset:-3px}
+
+  .head{display:flex;justify-content:space-between;align-items:center;flex:none}
+  .head .lbl{font-size:11px;font-weight:500;color:#7a7a7a;letter-spacing:.05em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .head svg{width:13px;height:13px;color:#5a5a5a;flex:none}
+
+  .shelf{flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;
+    gap:2px;padding-bottom:9px;margin-top:6px;perspective:520px}
+  .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#6a6a6a;font-size:11px}
+
+  .bk{flex-shrink:0;border-top-left-radius:2px;border-top-right-radius:2px;position:relative;
+    display:flex;align-items:center;justify-content:center;border:.5px solid rgba(0,0,0,.25);
+    border-top:1px solid rgba(255,255,255,.18);transform-origin:center bottom;
+    transition:transform .18s cubic-bezier(.22,.7,.3,1),box-shadow .18s,filter .18s;will-change:transform}
+  .bk::after{content:"";position:absolute;right:0;top:0;bottom:0;width:1.5px;background:rgba(255,250,240,.22)}
+  .bk:focus{outline:none}
+  .bk.up{transform:translateZ(16px) translateY(-5px);z-index:5;
+    box-shadow:-3px 6px 14px rgba(0,0,0,.55);filter:brightness(1.08)}
+
+  .spine{writing-mode:vertical-rl;text-orientation:mixed;font-size:8px;letter-spacing:.4px;
+    line-height:1;font-weight:600;white-space:nowrap;overflow:hidden;max-height:84%;
+    text-overflow:ellipsis;pointer-events:none}
+  .ribbon{position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:6px;height:11px;
+    clip-path:polygon(0 0,100% 0,100% 55%,50% 100%,0 55%);background:#C9A227;pointer-events:none}
+  .deco{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:60%;
+    display:flex;flex-direction:column;gap:2px;pointer-events:none}
+  .deco span{display:block;height:1px;background:rgba(255,255,255,.32)}
+
+  .ledge{position:absolute;left:0;right:0;bottom:0;height:7px;background:#4a3018}
+  .ledge-top{position:absolute;left:0;right:0;bottom:7px;height:1.5px;background:#6b4a28}
+
+  .info{position:absolute;left:0;right:0;top:0;padding:9px 12px 10px;
+    background:linear-gradient(180deg,rgba(18,18,18,.97),rgba(18,18,18,.86));
+    border-bottom:.5px solid rgba(255,255,255,.06);
+    opacity:0;transform:translateY(-4px);transition:opacity .16s,transform .16s;pointer-events:none}
+  .info.show{opacity:1;transform:translateY(0)}
+  .info .t{font-size:11px;font-weight:600;color:#f0f0f0;line-height:1.25;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .info .a{font-size:10px;color:#9a9a9a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .info .p{font-size:9px;font-weight:600;letter-spacing:.03em;color:#7fb0ff;margin-top:3px}
+  .info .p.done{color:#5ec98a}.info .p.none{color:#8a8a8a}
+
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+  @media(prefers-reduced-motion:reduce){
+    .bk,.info{transition:none!important}
+    .bk.up{transform:translateY(-3px)!important}
+  }
+</style>
+</head>
+<body>
+<div class="card" id="card" role="group" aria-label="Books">
+  <div class="head">
+    <span class="lbl" id="lbl">READING</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z"/></svg>
+  </div>
+  <div class="shelf" id="shelf">
+    <div class="ledge-top"></div><div class="ledge"></div>
+  </div>
+  <div class="info" id="info" aria-hidden="true">
+    <div class="t" id="i-t"></div><div class="a" id="i-a"></div><div class="p" id="i-p"></div>
+  </div>
+  <span class="sr" id="sr" aria-live="polite"></span>
+</div>
+<script>
+  const API='/api';
+  const id=new URLSearchParams(location.search).get('id')||'';
+  const POLL_MS=300000;
+  const PALETTE=['#8E8E93','#008575','#956D51','#484848','#008198','#A16A00','#C55300'];
+  const SRC_LABEL={recently:'RECENTLY ADDED',unread:'ON DECK',list:'READING'};
+
+  const card=document.getElementById('card'), shelf=document.getElementById('shelf'), lbl=document.getElementById('lbl');
+  const info=document.getElementById('info'), iT=document.getElementById('i-t'), iA=document.getElementById('i-a'), iP=document.getElementById('i-p'), sr=document.getElementById('sr');
+  let href='';
+
+  function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  function lum(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return 0.3;const n=parseInt(m[1],16);
+    const r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;return 0.2126*r+0.7152*g+0.0722*b;}
+  function progressText(b){
+    if(b.finished) return ['Finished','done'];
+    if(b.progress!=null) return [Math.round(b.progress*100)+'% read','reading'];
+    return ['Unread','none'];
+  }
+  function showInfo(b){
+    iT.textContent=b.title||''; iA.textContent=b.author||'';
+    const [txt,cls]=progressText(b); iP.textContent=txt; iP.className='p '+(cls==='done'?'done':cls==='none'?'none':'');
+    info.classList.add('show'); info.setAttribute('aria-hidden','false');
+    sr.textContent=(b.title||'')+(b.author?' by '+b.author:'')+', '+txt;
+  }
+  function hideInfo(){ info.classList.remove('show'); info.setAttribute('aria-hidden','true'); }
+
+  function render(books){
+    shelf.querySelectorAll('.bk,.empty').forEach(n=>n.remove());
+    if(!books.length){ const e=document.createElement('div'); e.className='empty'; e.textContent='No books'; shelf.appendChild(e); return; }
+    const tallestIdx=books.reduce((mi,b,i,a)=>(b._h>a[mi]._h?i:mi),0);
+    const ledgeTop=shelf.querySelector('.ledge-top');
+    books.forEach((b,i)=>{
+      const el=document.createElement('div'); el.className='bk';
+      el.style.width=b._w+'px'; el.style.height=b._h+'px'; el.style.background=b._color;
+      const dark = lum(b._color) > 0.62;
+      const sp=document.createElement('span'); sp.className='spine';
+      sp.style.color = dark ? 'rgba(20,20,20,.9)' : 'rgba(255,255,255,.85)';
+      sp.textContent=(b.title||'').toUpperCase();
+      if(i===tallestIdx){ const rb=document.createElement('div'); rb.className='ribbon'; el.appendChild(rb); }
+      if(b._w>=17){ const d=document.createElement('div'); d.className='deco'; d.innerHTML='<span></span><span></span>'; el.appendChild(d); }
+      el.appendChild(sp);
+      el.tabIndex=0; el.setAttribute('role','listitem');
+      const [ptxt]=progressText(b);
+      el.setAttribute('aria-label',(b.title||'Untitled')+(b.author?' by '+b.author:'')+', '+ptxt);
+      const on=()=>{ el.classList.add('up'); showInfo(b); };
+      const off=()=>{ el.classList.remove('up'); hideInfo(); };
+      el.addEventListener('mouseenter',on); el.addEventListener('mouseleave',off);
+      el.addEventListener('focus',on); el.addEventListener('blur',off);
+      shelf.insertBefore(el, ledgeTop);
+    });
+  }
+
+  function decorate(books){
+    return books.map((b,i)=>{
+      const h=hash((b.title||'')+'|'+i);
+      return Object.assign({}, b, {
+        _w: 13 + (h % 7),
+        _h: 48 + (h % 31),
+        _color: b.color || PALETTE[(h>>4) % PALETTE.length],
+      });
+    });
+  }
+
+  async function tick(){
+    try{
+      const r=await fetch(`${API}/widget-data/${encodeURIComponent(id)}`);
+      const d=await r.json().catch(()=>({}));
+      lbl.textContent = SRC_LABEL[d.source] || 'READING';
+      render(decorate(Array.isArray(d.books)?d.books:[]));
+    }catch(e){ render([]); }
+  }
+  async function boot(){
+    try{
+      const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
+      if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
+    }catch(e){}
+    if(href){
+      card.classList.add('clickable'); card.setAttribute('role','link'); card.tabIndex=0;
+      const go=()=>window.open(href,'_blank','noopener,noreferrer');
+      card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head')) go(); });
+      card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
+    }
+    await tick(); setInterval(tick,POLL_MS);
+  }
+  boot();
+</script>
+</body>
+</html>

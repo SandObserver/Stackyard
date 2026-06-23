@@ -1,0 +1,35 @@
+{
+  "name": "books",
+  "label": "Books",
+  "sizes": ["small"],
+  "fields": [
+    { "key": "provider", "type": "select", "variant": "pills", "label": "Service",
+      "options": [
+        { "value": "audiobookshelf", "label": "Audiobookshelf" },
+        { "value": "komga", "label": "Komga" },
+        { "value": "kavita", "label": "Kavita" }
+      ] },
+
+    { "key": "absUrl", "type": "text", "label": "Audiobookshelf URL", "placeholder": "http://host:13378", "showIf": { "field": "provider", "equals": "audiobookshelf" } },
+    { "key": "absKey", "type": "secret", "label": "API key", "hint": "Settings \u2192 API Keys (v2.26+), or your account token.", "showIf": { "field": "provider", "equals": "audiobookshelf" } },
+
+    { "key": "komgaUrl", "type": "text", "label": "Komga URL", "placeholder": "http://host:25600", "showIf": { "field": "provider", "equals": "komga" } },
+    { "key": "komgaKey", "type": "secret", "label": "API key", "hint": "Account Settings \u2192 API Keys.", "showIf": { "field": "provider", "equals": "komga" } },
+
+    { "key": "kavitaUrl", "type": "text", "label": "Kavita URL", "placeholder": "http://host:5000", "showIf": { "field": "provider", "equals": "kavita" } },
+    { "key": "kavitaKey", "type": "secret", "label": "API key", "hint": "User Settings \u2192 3rd Party Clients.", "showIf": { "field": "provider", "equals": "kavita" } },
+
+    { "key": "source", "type": "select", "variant": "pills", "label": "Show",
+      "options": [
+        { "value": "recently", "label": "Recently Added" },
+        { "value": "unread", "label": "Unread / On-deck" },
+        { "value": "list", "label": "Custom List" }
+      ] },
+
+    { "key": "listId", "type": "select", "label": "List", "optional": true, "optionsFrom": "lists",
+      "hint": "Enter the URL + key above, then click Fetch to load your collections / reading lists.",
+      "showIf": { "field": "source", "equals": "list" } },
+
+    { "key": "href", "type": "text", "label": "Click URL (optional)", "placeholder": "https://\u2026", "hint": "Opens when the widget is clicked.", "optional": true }
+  ]
+}
