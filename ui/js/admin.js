@@ -643,9 +643,7 @@ function _renderWidgetForm(body){
   nameInp.className='fc';nameInp.id='f-wlabel';nameInp.type='text';
   nameInp.placeholder='My Widget';nameInp.value=_wlabel;
   nameInp.oninput=e=>{_wlabel=e.target.value;};
-  const nameHint=document.createElement('div');nameHint.className='hint';
-  nameHint.textContent='Shown as the item label in the dashboard list.';
-  nameDiv.append(nameLbl,nameInp,nameHint);
+  nameDiv.append(nameLbl,nameInp);
   body.appendChild(nameDiv);
 
   const typeDiv=document.createElement('div');typeDiv.className='fr';
@@ -1257,7 +1255,7 @@ function _renderMapConfig(body){
 
   const hd=document.createElement('div');hd.className='stl';hd.textContent='Map services';body.appendChild(hd);
   const intro=document.createElement('div');intro.className='hint';intro.style.margin='-2px 0 12px';
-  intro.textContent='Add a card per service. Multiple of the same type are fine.';
+  intro.textContent='Add a card per service.';
   body.appendChild(intro);
 
   const list=document.createElement('div');body.appendChild(list);
@@ -1358,7 +1356,7 @@ function _renderCustomConfig(body){
         ${['','no-referrer','no-referrer-when-downgrade','origin','origin-when-cross-origin','same-origin','strict-origin','strict-origin-when-cross-origin','unsafe-url']
           .map(v=>`<option value="${v}" ${(o.referrerPolicy||'')===v?'selected':''}>${v||'Default'}</option>`).join('')}
       </select>
-      <div class="hint">What address info the embedded page is told you came from. Leave Default unless the page needs it.</div>
+      <div class="hint">Leave Default unless the page needs it.</div>
     </div>
     <div class="fr">
       <label for="if-allow">Allow (feature policy)</label>
@@ -1372,7 +1370,7 @@ function _renderCustomConfig(body){
     <div class="fr">
       <label for="if-refresh">Refresh interval <span style="opacity:.45;font-weight:400">(ms, optional)</span></label>
       <input class="fc" id="if-refresh" type="number" min="250" step="250" placeholder="e.g. 2000" value="${o.refreshInterval||''}">
-      <div class="hint">Reload the widget every N milliseconds (1000 = 1s). Leave empty to never auto-reload.</div>
+      <div class="hint">Leave empty to never auto-reload.</div>
     </div>`;
   toggle.onclick=()=>{const open=panel.classList.toggle('d-none')===false;toggle.setAttribute('aria-expanded',String(open));toggle.classList.toggle('open',open);};
   /* Live-bind into _iframeOpts */
@@ -1533,7 +1531,7 @@ function _renderBackupConfig(body){
     w.innerHTML=`<label for="bak-name-${si}">Display name <span class="opt-span">(optional)</span></label>
       <input class="fc" id="bak-name-${si}" type="text" placeholder="Shown on the card"
         value="${esc(slot.customName||'')}">
-      <div class="hint">Overrides the backup name on the widget — handy for Kopia's long path names.</div>`;
+      <div class="hint">Overrides the backup name on the widget.</div>`;
     div.appendChild(w);
   }
 
@@ -1916,7 +1914,7 @@ function buildAppForm(body,item){
         <label>Label text <span class="req">*</span></label>
         <input class="fc" id="f-static-label" type="text" maxlength="10" placeholder="e.g. Backup"
           value="${esc(staticBadge.label||'')}">
-        <div class="hint">Max 8 characters. Shown as a permanent badge, independent of any API.</div>
+        <div class="hint">Max 8 characters.</div>
       </div>
       <div class="fr fr-mb0">
         <label>Badge color</label>
@@ -2005,7 +2003,7 @@ function buildAppForm(body,item){
         <div class="tdsc">Skip TLS verification for this app's URLs</div></div>
       <label class="tog"><input type="checkbox" id="f-skip-tls" ${skipTls?'checked':''}><div class="tr"></div></label>
     </div>
-    <div class="hint" style="margin-top:6px">Only enable this if the app uses a self-signed or internal certificate and you trust the connection. Skipping verification means the connection cannot be validated — do not enable this for apps exposed to untrusted networks.</div>`;
+    <div class="hint" style="margin-top:6px">Only enable for trusted self-signed or internal certificates. Skipping verification is insecure and should only be done if you fully understand the risks.</div>`;
   body.appendChild(secTls);
 
   /* Wire events */
