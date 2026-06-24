@@ -647,6 +647,8 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 .dot { position:relative; }
 .dot::after { content:''; position:absolute; inset:-11px; }
 
+@media (pointer:coarse) { .ctrl { width:44px; height:44px; } }
+
 /* Increased-contrast mode (HIG: provide higher contrast when Increase Contrast is on) */
 @media (prefers-contrast: more) {
   :root {

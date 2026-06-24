@@ -132,9 +132,36 @@
       max-height:200px;overflow-y:auto}
     .iprs.open{display:block}
     .ipr{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background var(--t)}
+    button.ipr{width:100%;border:0;background:none;color:inherit;font:inherit;text-align:left}
     .ipr:hover{background:var(--bd)}
     .ipr img{width:24px;height:24px;object-fit:contain}
     .ipr span{font-size:13px}
+    .fp-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+      display:flex;align-items:center;justify-content:center;padding:24px}
+    .fp-box{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);width:100%;max-width:380px;
+      box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+    .fp-hdr{padding:16px 20px;border-bottom:1px solid var(--bd);font-weight:600;font-size:15px}
+    .fp-list{padding:8px;max-height:60vh;overflow-y:auto}
+    .fp-row{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:44px;
+      padding:10px 12px;border:0;background:none;color:var(--tx);font:inherit;font-size:14px;text-align:left;
+      border-radius:var(--rs);cursor:pointer;transition:background var(--t)}
+    .fp-row:hover{background:var(--sf2)}
+    .fp-row.cur{font-weight:600}
+    .fp-row.muted{color:var(--dm)}
+    .fp-row.accent{color:var(--ac)}
+    .fp-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fp-ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;color:#fff;font-weight:700}
+    .fp-ic img{width:20px;height:20px;object-fit:contain}
+    .fp-chk{margin-left:auto;color:var(--ac);font-size:14px}
+    .fp-empty{padding:14px;color:var(--dm);font-size:13px}
+    .fp-foot{padding:12px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end}
+    .fp-add{display:flex;align-items:center;gap:8px;width:calc(100% - 8px);min-height:44px;
+      padding:6px 12px 6px 36px;margin-left:8px;border:0;border-left:2px solid var(--bd);
+      border-radius:0 var(--rs) var(--rs) 0;background:rgba(255,255,255,.01);color:var(--ac);
+      font:inherit;font-size:13px;text-align:left;cursor:pointer}
+    .fp-add:hover{background:var(--sf2)}
+    @media (pointer:coarse){.ic{min-width:44px;min-height:44px}}
     /* Color */
     .cols{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
     .co{width:30px;height:30px;border-radius:50%;border:none;position:relative;
@@ -291,7 +318,7 @@
 /* Visible keyboard focus for all interactive elements */
 .btn:focus-visible,.mx:focus-visible,.lh:focus-visible,.tsw button:focus-visible,
 .seg button:focus-visible,.wchip:focus-visible,.co:focus-visible,.bi:focus-visible,
-.ipr:focus-visible,a:focus-visible,select:focus-visible,
+.ipr:focus-visible,.fp-row:focus-visible,.fp-add:focus-visible,a:focus-visible,select:focus-visible,
 label.btn:focus-within{outline:2px solid var(--ac2);outline-offset:2px}
 /* Toggle focus shows on the visible track */
 .tog input:focus-visible + .tr{outline:2px solid var(--ac2);outline-offset:2px}
