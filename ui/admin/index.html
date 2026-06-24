@@ -74,11 +74,11 @@
         <div class="fr">
           <label for="srv-ip">Host IP</label>
           <input class="fc" id="srv-ip" type="text" placeholder="e.g. 192.168.1.100">
-          <div class="hint">LAN IP of your server. Used to allow your server's IP in badge URLs and SSRF protection.</div>
+          <div class="hint">Used to allow your server's IP in badge URLs and SSRF protection.</div>
         </div>
         <div class="trow">
           <div><div class="tlbl">Docker health checks</div>
-            <div class="tdsc">Shows red badge when a container is down</div></div>
+            <div class="tdsc">Shows red badge when a container is unhealthy.</div></div>
           <label class="tog"><input type="checkbox" id="srv-docker-en" aria-label="Docker health checks"><div class="tr"></div></label>
         </div>
         <div class="sub" id="srv-docker-sub">
@@ -200,5 +200,5 @@
   </div>
 </div>
 
-<script type="module" src="/js/admin.js?v=44"></script>
+<script type="module" src="/js/admin.js?v=45"></script>
 </body></html>
