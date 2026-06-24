@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Dashboard Settings</title>
-  <link rel="stylesheet" href="/css/admin.css?v=17">
+  <link rel="stylesheet" href="/css/tokens.css?v=1">
+  <link rel="stylesheet" href="/css/admin.css?v=18">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=1">
 </head>
 <body>
@@ -27,12 +28,12 @@
       </div>
       <div class="card-body card-body-display" id="body-display">
         <div class="trow">
-          <div><div class="tlbl">App titles — Desktop</div></div>
-          <label class="tog"><input type="checkbox" id="set-lbl-d" aria-label="App titles — Desktop"><div class="tr"></div></label>
+          <div><div class="tlbl">App titles (Desktop)</div></div>
+          <label class="tog"><input type="checkbox" id="set-lbl-d" aria-label="App titles (Desktop)"><div class="tr"></div></label>
         </div>
         <div class="trow trow-bb">
-          <div><div class="tlbl">App titles — iOS</div></div>
-          <label class="tog"><input type="checkbox" id="set-lbl-m" aria-label="App titles — iOS"><div class="tr"></div></label>
+          <div><div class="tlbl">App titles (iOS)</div></div>
+          <label class="tog"><input type="checkbox" id="set-lbl-m" aria-label="App titles (iOS)"><div class="tr"></div></label>
         </div>
         <div class="fr pt12 mb0-fr">
           <label for="bg-type">Wallpaper source</label>
@@ -85,7 +86,7 @@
           <div class="fr mb0-fr">
             <label for="srv-socket">Socket URL</label>
             <input class="fc" id="srv-socket" type="text" placeholder="http://socket-proxy:2375">
-            <div class="hint">Use the URL of a <strong>socket proxy</strong> container for least-privilege access.<br><span style="color:var(--rd)">⚠ No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly — only do this on a private, trusted network you fully control.</span></div>
+            <div class="hint">Use the URL of a <strong>socket proxy</strong> container for least-privilege access.<br><span style="color:var(--rd)">⚠ No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. Only do this on a private, trusted network you fully control.</span></div>
           </div>
         </div>
         <div class="trow" id="srv-hide-healthy-row" style="display:none">
@@ -177,7 +178,7 @@
   </div>
 </div>
 
-<!-- Set-password overlay — shown in Security settings when no password is set yet -->
+<!-- Set-password overlay: shown in Security settings when no password is set yet -->
 <div id="setpw-screen" class="setpw-screen">
   <div class="setpw-wrap">
     <div class="setpw-card">
@@ -200,5 +201,5 @@
   </div>
 </div>
 
-<script type="module" src="/js/admin.js?v=45"></script>
+<script type="module" src="/js/admin.js?v=46"></script>
 </body></html>
