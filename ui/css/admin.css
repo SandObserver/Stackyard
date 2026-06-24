@@ -1,8 +1,8 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
       --bg:#0f1117;--sf:#1a1d27;--sf2:#22263a;--bd:#2e3250;
-      --ac:#4f6ef7;--ac2:#6b84ff;--rd:#e7124d;--gn:#00a86b;
-      --tx:#e8eaf6;--dm:#7b82a8;--r:14px;--rs:10px;--t:.18s ease}
+      --ac:var(--sy-blue);--ac2:var(--sy-blue-2);--rd:var(--sy-red);--gn:var(--sy-green);
+      --tx:#e8eaf6;--dm:#7b82a8;--r:var(--sy-radius-lg);--rs:var(--sy-radius-md);--t:.18s ease}
     html,body{min-height:100vh;background:var(--bg);color:var(--tx);
       font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
       font-size:14px;-webkit-font-smoothing:antialiased}

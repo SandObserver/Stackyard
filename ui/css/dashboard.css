@@ -18,8 +18,8 @@
       --text-shadow-hvy:  0 1px 6px rgba(0,0,0,.70);
       --bounce-spring:    cubic-bezier(.34,1.56,.64,1);
       --page-ease:        cubic-bezier(.77,0,.175,1);
-      --badge-red:        rgb(231,18,77);
-      --badge-blue:       rgb(30,110,244);
+      --badge-red:        var(--sy-red);
+      --badge-blue:       var(--sy-blue-badge);
     }
 
     /* ── Reset ── */
