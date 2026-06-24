@@ -191,7 +191,7 @@ function buildDesktop() {
   const dk = document.getElementById('dock'); dk.innerHTML = '';
   dock.forEach(item => dk.appendChild(mkDock(item)));
   const ct = document.getElementById('ctrls'); ct.innerHTML = '';
-  const al = mk('a', { href: '/admin/' }); al.className = 'ctrl'; al.title = 'Settings'; al.textContent = '⚙';
+  const al = mk('a', { href: '/admin/' }); al.className = 'ctrl'; al.title = 'Settings'; al.setAttribute('aria-label','Settings'); al.textContent = '⚙';
   ct.append(al);
 }
 

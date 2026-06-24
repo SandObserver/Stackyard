@@ -167,6 +167,31 @@ async function resolveIconFull(raw){
   return '';
 }
 
+function trapFocus(box){
+  const sel='button:not([disabled]),[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
+  return e=>{
+    if(e.key!=='Tab')return;
+    const f=[...box.querySelectorAll(sel)];if(!f.length)return;
+    const first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  };
+}
+function moveRow(item,dir,{folderId=null,childIdx=null}={}){
+  if(folderId!=null){
+    const f=items.find(i=>i.id===folderId);if(!f)return;
+    const ch=f.children||[];const j=childIdx+dir;if(j<0||j>=ch.length)return;
+    [ch[childIdx],ch[j]]=[ch[j],ch[childIdx]];
+  }else{
+    const inF=new Set(items.filter(i=>i.type==='folder').flatMap(ff=>ff.children||[]));
+    const top=items.filter(it=>it.type==='folder'||!inF.has(it.id));
+    const p=top.indexOf(item);const nb=top[p+dir];if(!nb)return;
+    const a=items.indexOf(item),b=items.indexOf(nb);
+    [items[a],items[b]]=[items[b],items[a]];
+  }
+  save();
+}
+
 function clearDragClasses(target){
   const rows=target?[target]:document.querySelectorAll('.row');
   rows.forEach(r=>{r.classList.remove('drag-above','drag-below','drag-into','drag-over');});
@@ -176,6 +201,15 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const row=document.createElement('div');row.className='row';
   if(indent)row.style.cssText='padding-left:28px;background:rgba(255,255,255,.02);border-left:2px solid var(--bd);margin-left:8px;border-radius:0 var(--rs) var(--rs) 0;';
   row.draggable=true;
+  let canUp=false,canDown=false;
+  if(folderId!=null){
+    const cf=items.find(i=>i.id===folderId);const n=(cf?.children||[]).length;
+    canUp=childIdx>0;canDown=childIdx<n-1;
+  }else{
+    const inF=new Set(items.filter(i=>i.type==='folder').flatMap(ff=>ff.children||[]));
+    const top=items.filter(it=>it.type==='folder'||!inF.has(it.id));
+    const p=top.indexOf(item);canUp=p>0;canDown=p<top.length-1;
+  }
   /* Drag handle */
   const handle=document.createElement('div');handle.className='rord';handle.textContent='⠿';
   /* Icon */
@@ -195,6 +229,9 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   if(item.type==='folder'){
     const collapsed=collapsedFolders.has(item.id);
     nm.style.cssText='display:flex;align-items:center;gap:6px;cursor:pointer;';
+    nm.setAttribute('role','button');nm.setAttribute('tabindex','0');
+    nm.setAttribute('aria-expanded',String(!collapsed));
+    nm.setAttribute('aria-label',(collapsed?'Expand':'Collapse')+' folder '+item.label);
     const chevron=document.createElement('span');
     chevron.style.cssText='font-size:10px;color:var(--dm);transition:transform .15s;flex-shrink:0;';
     chevron.textContent='▼';
@@ -207,6 +244,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
       else{collapsedFolders.add(item.id);}
       render();
     };
+    nm.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nm.onclick(e);}};
   }else{
     nm.textContent=item.label||item.id;
   }
@@ -228,6 +266,10 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   if(item.monitoring?.activity?.enabled||item.badge?.enabled)pb.innerHTML+='<span class="pill p-bg">Badge</span>';
   /* Actions */
   const ac=document.createElement('div');ac.className='ract';
+  const mkMove=(dir,can)=>{const b=document.createElement('button');b.className='btn bg sm ic';
+    const lbl=dir<0?'Move up':'Move down';b.title=lbl;b.setAttribute('aria-label',lbl+': '+(item.label||item.id||'item'));
+    b.textContent=dir<0?'↑':'↓';b.disabled=!can;b.onclick=()=>moveRow(item,dir,{folderId,childIdx});return b;};
+  ac.append(mkMove(-1,canUp),mkMove(1,canDown));
   if(item.type!=='folder'){
     const dup=document.createElement('button');dup.className='btn bg sm ic';dup.title='Duplicate';dup.textContent='⊙';
     dup.onclick=()=>{const c=JSON.parse(JSON.stringify(item));c.id=c.id+'_'+Date.now();
@@ -376,10 +418,7 @@ function render(){
       /* "Add app to folder" button at end of children (only when expanded) */
       if(!collapsedFolders.has(item.id)){
       /* "Add app to folder" button at end of children */
-      const addRow=document.createElement('div');
-      addRow.style.cssText='padding:6px 12px 6px 36px;display:flex;align-items:center;gap:8px;'+
-        'color:var(--ac);font-size:13px;cursor:pointer;border-left:2px solid var(--bd);margin-left:8px;'+
-        'border-radius:0 var(--rs) var(--rs) 0;background:rgba(255,255,255,.01);';
+      const addRow=document.createElement('button');addRow.type='button';addRow.className='fp-add';
       addRow.innerHTML='<span>+</span> Add app to this folder';
       addRow.onclick=()=>openFolderPicker(null,item.id);
       l.appendChild(addRow);
@@ -2104,8 +2143,8 @@ function showIPRes(list, rawInput){
   const rs=document.getElementById('iprs');if(!rs)return;rs.innerHTML='';
   /* Show CDN matches */
   list.forEach(ic=>{
-    const r=document.createElement('div');r.className='ipr';
-    const img=document.createElement('img');img.src=ic.svgUrl;img.onerror=()=>{img.src=ic.pngUrl;};
+    const r=document.createElement('button');r.type='button';r.className='ipr';
+    const img=document.createElement('img');img.alt='';img.src=ic.svgUrl;img.onerror=()=>{img.src=ic.pngUrl;};
     const sp=document.createElement('span');sp.textContent=ic.name;r.append(img,sp);
     r.onclick=()=>{siurl=ic.svgUrl;document.getElementById('ip-in').value=ic.svgUrl;updPrev();rs.classList.remove('open');};
     rs.appendChild(r);
@@ -2115,8 +2154,8 @@ function showIPRes(list, rawInput){
     const val=rawInput.trim();
     const srcs=iconChain(val);
     if(!srcs.length){rs.classList.remove('open');return;}
-    const r=document.createElement('div');r.className='ipr';
-    const img=document.createElement('img');
+    const r=document.createElement('button');r.type='button';r.className='ipr';
+    const img=document.createElement('img');img.alt='';
     img.style.cssText='width:24px;height:24px;object-fit:contain;';
     let step=0;
     img.src=srcs[0];
@@ -2354,130 +2393,82 @@ function renderBadgeList(nums,existingOnly,query=''){
 }
 
 function openFolderPicker(appId,targetFolderId=null){
+  const trigger=document.activeElement;
   const folders=items.filter(i=>i.type==='folder');
-  /* Find current folder */
   const currentFolder=folders.find(f=>(f.children||[]).includes(appId));
   const appItem=items.find(i=>i.id===appId);
   const appName=appItem?.label||appId;
 
-  /* Build a small modal-like popover */
-  const existing=document.getElementById('folder-picker-ov');
-  if(existing)existing.remove();
+  document.getElementById('folder-picker-ov')?.remove();
 
-  const ov=document.createElement('div');ov.id='folder-picker-ov';
-  ov.style.cssText='position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);'+
-    'backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;';
+  const ov=document.createElement('div');ov.id='folder-picker-ov';ov.className='fp-ov';
+  const box=document.createElement('div');box.className='fp-box';
+  box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-labelledby','fp-hdr');
 
-  const box=document.createElement('div');
-  box.style.cssText='background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);'+
-    'width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;';
+  const hdr=document.createElement('div');hdr.className='fp-hdr';hdr.id='fp-hdr';
+  hdr.textContent=appId?`Move "${appName}" to folder`:'Add app to folder';
 
-  const hdr=document.createElement('div');
-  hdr.style.cssText='padding:16px 20px;border-bottom:1px solid var(--bd);font-weight:600;font-size:15px;';
-  hdr.textContent=appId?`Move "${appName}" to folder`:`Add app to folder`;
+  const list=document.createElement('div');list.className='fp-list';
 
-  const list=document.createElement('div');list.style.cssText='padding:8px;';
+  const close=()=>{document.removeEventListener('keydown',onKey);ov.remove();if(trigger&&trigger.focus)trigger.focus();};
+  const trap=trapFocus(box);
+  const onKey=e=>{if(e.key==='Escape'){e.preventDefault();close();}else trap(e);};
 
-  /* "No folder" option */
-  const none=document.createElement('div');
-  none.style.cssText='padding:10px 12px;border-radius:var(--rs);cursor:pointer;font-size:14px;'+
-    'color:var(--dm);display:flex;align-items:center;justify-content:space-between;'+
-    'transition:background var(--t);';
-  none.textContent='No folder';
-  if(!currentFolder){none.style.fontWeight='600';none.style.color='var(--tx)';}
-  none.onmouseover=()=>none.style.background='var(--sf2)';
-  none.onmouseout=()=>none.style.background='';
-  none.onclick=()=>{
-    /* Remove from all folders */
-    items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==appId);});
-    save();ov.remove();
-  };
-  list.appendChild(none);
+  const rowBtn=(cls,onAct)=>{const b=document.createElement('button');b.type='button';
+    b.className='fp-row'+(cls?' '+cls:'');b.onclick=onAct;return b;};
 
-  /* Existing folders */
-  folders.forEach(f=>{
-    const row=document.createElement('div');
-    row.style.cssText='padding:10px 12px;border-radius:var(--rs);cursor:pointer;font-size:14px;'+
-      'display:flex;align-items:center;justify-content:space-between;transition:background var(--t);';
-    row.onmouseover=()=>row.style.background='var(--sf2)';
-    row.onmouseout=()=>row.style.background='';
-    const nm=document.createElement('span');nm.textContent='📁 '+f.label;
-    const check=document.createElement('span');
-    check.style.cssText='color:var(--ac);font-size:14px;';
-    if(currentFolder?.id===f.id)check.textContent='✓';
-    row.append(nm,check);
-    row.onclick=()=>{
-      /* Remove from all folders first */
-      items.forEach(ff=>{if(ff.type==='folder')ff.children=(ff.children||[]).filter(id=>id!==appId);});
-      /* Add to selected folder */
-      if(!f.children)f.children=[];
-      if(!f.children.includes(appId))f.children.push(appId);
-      save();ov.remove();
-    };
-    list.appendChild(row);
-  });
-
-  /* Create new folder */
-  const divider=document.createElement('div');divider.className='div';divider.style.margin='4px 8px';
-  list.appendChild(divider);
-  const newRow=document.createElement('div');
-  newRow.style.cssText='padding:10px 12px;border-radius:var(--rs);cursor:pointer;font-size:14px;'+
-    'color:var(--ac);transition:background var(--t);';
-  newRow.textContent='+ Create new folder';
-  newRow.onmouseover=()=>newRow.style.background='var(--sf2)';
-  newRow.onmouseout=()=>newRow.style.background='';
-  newRow.onclick=()=>{
-    const name=prompt('Folder name:');
-    if(!name?.trim())return;
-    const folderId='folder_'+Date.now();
-    items.push({id:folderId,type:'folder',label:name.trim(),children:[appId]});
-    /* Remove from any existing folder */
-    items.forEach(f=>{if(f.type==='folder'&&f.id!==folderId)f.children=(f.children||[]).filter(id=>id!==appId);});
-    save();ov.remove();
-  };
-  list.appendChild(newRow);
-
-  const footer=document.createElement('div');
-  footer.style.cssText='padding:12px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;';
-  const cancel=document.createElement('button');cancel.className='btn bg sm';cancel.textContent='Cancel';
-  cancel.onclick=()=>ov.remove();
-  footer.appendChild(cancel);
-
-  /* If called with a target folder, auto-highlight it */
   if(targetFolderId){
     const tf=folders.find(f=>f.id===targetFolderId);
-    if(tf){
-      /* Show app picker instead: list all non-folder, non-dock apps not already in this folder */
-      list.innerHTML='';
-      const available=items.filter(i=>i.type==='app'&&!i.dock&&!(tf.children||[]).includes(i.id));
-      if(!available.length){
-        const em=document.createElement('div');em.style.cssText='padding:14px;color:var(--dm);font-size:13px;';
-        em.textContent='All apps are already in this folder.';list.appendChild(em);
-      }
-      available.forEach(app=>{
-        const row=document.createElement('div');
-        row.style.cssText='padding:10px 12px;border-radius:var(--rs);cursor:pointer;font-size:14px;'+
-          'display:flex;align-items:center;gap:10px;transition:background var(--t);';
-        row.onmouseover=()=>row.style.background='var(--sf2)';
-        row.onmouseout=()=>row.style.background='';
-        const ri=document.createElement('div');ri.style.cssText='width:32px;height:32px;border-radius:8px;'+
-          'background:'+rc(app.color)+';display:flex;align-items:center;justify-content:center;flex-shrink:0;';
-        if(app.iconUrl){const img=document.createElement('img');img.src=resolveIcon(app.iconUrl);
-          img.style.cssText='width:20px;height:20px;object-fit:contain;';ri.appendChild(img);}
-        else ri.textContent=(app.label||'?')[0];
-        const nm2=document.createElement('span');nm2.textContent=app.label||app.id;
-        row.append(ri,nm2);
-        row.onclick=()=>{
-          items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==app.id);});
-          if(!tf.children)tf.children=[];tf.children.push(app.id);
-          save();ov.remove();
-        };
-        list.appendChild(row);
-      });
+    const available=tf?items.filter(i=>i.type==='app'&&!i.dock&&!(tf.children||[]).includes(i.id)):[];
+    if(!available.length){
+      const em=document.createElement('div');em.className='fp-empty';
+      em.textContent='All apps are already in this folder.';list.appendChild(em);
     }
+    available.forEach(app=>{
+      const b=rowBtn('',()=>{
+        items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==app.id);});
+        if(!tf.children)tf.children=[];tf.children.push(app.id);save();close();});
+      const ri=document.createElement('span');ri.className='fp-ic';ri.style.background=rc(app.color);
+      if(app.iconUrl){const img=document.createElement('img');img.alt='';img.src=resolveIcon(app.iconUrl);ri.appendChild(img);}
+      else ri.textContent=(app.label||'?')[0];
+      const nm=document.createElement('span');nm.className='fp-nm';nm.textContent=app.label||app.id;
+      b.append(ri,nm);list.appendChild(b);
+    });
+  }else{
+    const none=rowBtn(currentFolder?'muted':'cur',()=>{
+      items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==appId);});
+      save();close();});
+    const ns=document.createElement('span');ns.textContent='No folder';none.append(ns);list.appendChild(none);
+
+    folders.forEach(f=>{
+      const cur=currentFolder?.id===f.id;
+      const b=rowBtn(cur?'cur':'',()=>{
+        items.forEach(ff=>{if(ff.type==='folder')ff.children=(ff.children||[]).filter(id=>id!==appId);});
+        if(!f.children)f.children=[];if(!f.children.includes(appId))f.children.push(appId);save();close();});
+      const nm=document.createElement('span');nm.textContent='📁 '+f.label;
+      const chk=document.createElement('span');chk.className='fp-chk';if(cur)chk.textContent='✓';
+      b.append(nm,chk);list.appendChild(b);
+    });
+
+    const divider=document.createElement('div');divider.className='div';divider.style.margin='4px 8px';list.appendChild(divider);
+
+    const nr=rowBtn('accent',()=>{
+      const name=prompt('Folder name:');if(!name?.trim())return;
+      const fid='folder_'+Date.now();
+      items.push({id:fid,type:'folder',label:name.trim(),children:[appId]});
+      items.forEach(f=>{if(f.type==='folder'&&f.id!==fid)f.children=(f.children||[]).filter(id=>id!==appId);});
+      save();close();});
+    const nrs=document.createElement('span');nrs.textContent='+ Create new folder';nr.append(nrs);list.appendChild(nr);
   }
-  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+
+  const footer=document.createElement('div');footer.className='fp-foot';
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='btn bg sm';
+  cancel.textContent='Cancel';cancel.onclick=close;footer.appendChild(cancel);
+
+  ov.onclick=e=>{if(e.target===ov)close();};
+  document.addEventListener('keydown',onKey);
   box.append(hdr,list,footer);ov.appendChild(box);document.body.appendChild(ov);
+  (list.querySelector('button')||cancel).focus();
 }
 
 async function doSave(orig){
