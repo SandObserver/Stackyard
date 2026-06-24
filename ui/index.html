@@ -22,12 +22,13 @@
   <link rel="icon" type="image/png" href="/icons/favicon.png">
 
   <title>Stackyard</title>
-  <link rel="stylesheet" href="/css/dashboard.css?v=38">
+  <link rel="stylesheet" href="/css/dashboard.css?v=39">
 </head>
 <body>
+<h1 class="visually-hidden">Stackyard</h1>
 <div id="clock"></div>
 <div id="ctrls"></div>
-<div id="pages" role="group" aria-label="Home screen pages"></div>
+<div id="pages" role="main" aria-label="Home screen"></div>
 <div id="dots"></div>
 <div id="mob-search-pill">
   <div class="msp-search">
@@ -36,7 +37,7 @@
   </div>
   <div class="msp-dots"></div>
 </div>
-<div id="dock" role="group" aria-label="Dock"></div>
+<nav id="dock" aria-label="Dock"></nav>
 <div id="spot" role="dialog" aria-modal="true" aria-label="Search" aria-hidden="true">
   <div id="spot-cancel-mob"><button id="spot-cancel-mob-btn" type="button" aria-label="Close search"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="2" y1="2" x2="12" y2="12" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
   <div id="sres-live" class="visually-hidden" aria-live="polite"></div>
@@ -49,5 +50,5 @@
     </div>
   </div>
 </div>
-<script type="module" src="/js/dashboard.js?v=40"></script>
+<script type="module" src="/js/dashboard.js?v=41"></script>
 </body></html>
