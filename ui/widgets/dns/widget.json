@@ -9,8 +9,8 @@
         { "value": "pihole",     "label": "Pi-hole" },
         { "value": "technitium", "label": "Technitium" },
         { "value": "nextdns",    "label": "NextDNS" }
-      ],
-      "hint": "Which DNS service this widget reads from." },
+      ]
+    },
 
     { "key": "dnsUrl",  "type": "text", "label": "Server URL", "placeholder": "dns-host:80",
       "showIf": { "field": "provider", "in": ["adguard", "pihole", "technitium"] },
