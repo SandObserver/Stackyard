@@ -16,7 +16,7 @@
       ]
     },
 
-    { "key": "plexUrl", "type": "text", "label": "Plex server URL", "placeholder": "http://host:32400", "hint": "Your Plex Media Server (default port 32400) — not Tautulli.", "showIf": { "field": "provider", "equals": "plex" } },
+    { "key": "plexUrl", "type": "text", "label": "Plex server URL", "placeholder": "http://host:32400", "hint": "Your Plex Media Server (default port 32400).", "showIf": { "field": "provider", "equals": "plex" } },
     { "key": "plexToken", "type": "secret", "label": "Plex token (X-Plex-Token)", "showIf": { "field": "provider", "equals": "plex" } },
 
     { "key": "jellyfinUrl", "type": "text", "label": "Jellyfin URL", "placeholder": "http://host:8096", "showIf": { "field": "provider", "equals": "jellyfin" } },
