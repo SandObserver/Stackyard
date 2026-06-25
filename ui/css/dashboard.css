@@ -183,6 +183,7 @@
     .badge.red  { background:var(--badge-red) }
     .badge.blue { background:var(--badge-blue) }
     .badge.green { background:#00a050 }
+    .badge.stale { opacity:.55; outline:1.5px dashed rgba(255,255,255,.92); outline-offset:1px }
     /* Desktop: restore compact badge size */
     body:not(.is-mob) .badge {
       top:-7px; right:-7px;
