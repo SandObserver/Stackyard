@@ -21,6 +21,7 @@ let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
 let _mobTsCleanup = null, _mobTeCleanup = null, _mobTmCleanup = null;
 
 const badgeState  = {};
+let _badgeFails = 0, _healthFails = 0, badgesStale = false, healthStale = false;
 const BEL = new Map();
 function breg(id, el) { if (!BEL.has(id)) BEL.set(id, new Set()); BEL.get(id).add(el); }
 function bunreg(id, el) { if (BEL.has(id)) BEL.get(id).delete(el); }
@@ -89,6 +90,11 @@ function bupd(id) {
   else if(s.activity>0) aria=(s.activity>99?'99+':String(s.activity))+(custom.unit?' '+custom.unit:'')+' pending';
   else if(staticBdg.enabled && staticBdg.label) aria=staticBdg.label;
   else if(cls.includes('green')) aria='Status: healthy';
+
+  if((s.activity>0 && badgesStale) || ((s.health || cls.includes('green')) && healthStale)){
+    cls+=' stale';
+    aria=(aria?aria+' ':'')+'(may be out of date)';
+  }
 
   els.forEach(el=>{
     el.className=cls; el.textContent=txt;
@@ -281,11 +287,14 @@ async function applyBg() {
   } catch {}
 }
 
+function refreshBadges() { for (const id of BEL.keys()) bupd(id); }
 async function pollBadges() {
-  try { const d = await (await fetch('/api/badges',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) bset(id,'activity',v.value||0); } catch {}
+  try { const d = await (await fetch('/api/badges',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) bset(id,'activity',v.value||0); _badgeFails=0; if(badgesStale){badgesStale=false;refreshBadges();} }
+  catch { if(++_badgeFails>=2 && !badgesStale){badgesStale=true;refreshBadges();} }
 }
 async function pollHealth() {
-  try { const d = await (await fetch('/api/health',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) bset(id,'health',v.unhealthy?1:0); } catch {}
+  try { const d = await (await fetch('/api/health',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) bset(id,'health',v.unhealthy?1:0); _healthFails=0; if(healthStale){healthStale=false;refreshBadges();} }
+  catch { if(++_healthFails>=2 && !healthStale){healthStale=true;refreshBadges();} }
 }
 
 function pwStrength(pw) {
