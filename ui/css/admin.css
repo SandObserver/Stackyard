@@ -162,6 +162,14 @@
       font:inherit;font-size:13px;text-align:left;cursor:pointer}
     .fp-add:hover{background:var(--sf2)}
     @media (pointer:coarse){.ic{min-width:44px;min-height:44px}}
+    .al-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+    .al-filter #al-search{flex:1;min-width:180px}
+    .al-chips{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{padding:7px 12px;border:1px solid var(--bd);background:var(--sf2);color:var(--dm);
+      border-radius:999px;font:inherit;font-size:13px;cursor:pointer;transition:background var(--t),color var(--t),border-color var(--t)}
+    .chip:hover{color:var(--tx)}
+    .chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+    @media (pointer:coarse){.chip{min-height:44px}.al-filter #al-search{min-height:44px}}
     /* Color */
     .cols{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
     .co{width:30px;height:30px;border-radius:50%;border:none;position:relative;
@@ -318,7 +326,7 @@
 /* Visible keyboard focus for all interactive elements */
 .btn:focus-visible,.mx:focus-visible,.lh:focus-visible,.tsw button:focus-visible,
 .seg button:focus-visible,.wchip:focus-visible,.co:focus-visible,.bi:focus-visible,
-.ipr:focus-visible,.fp-row:focus-visible,.fp-add:focus-visible,a:focus-visible,select:focus-visible,
+.ipr:focus-visible,.fp-row:focus-visible,.fp-add:focus-visible,.chip:focus-visible,a:focus-visible,select:focus-visible,
 label.btn:focus-within{outline:2px solid var(--ac2);outline-offset:2px}
 /* Toggle focus shows on the visible track */
 .tog input:focus-visible + .tr{outline:2px solid var(--ac2);outline-offset:2px}
