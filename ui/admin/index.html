@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Dashboard Settings</title>
   <link rel="stylesheet" href="/css/tokens.css?v=1">
-  <link rel="stylesheet" href="/css/admin.css?v=18">
+  <link rel="stylesheet" href="/css/admin.css?v=19">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=1">
 </head>
 <body>
@@ -129,6 +129,15 @@
         <h2>Apps &amp; Widgets</h2><span class="sp"></span><span class="lh-chevron" aria-hidden="true">▼</span>
       </div>
       <div class="card-body open" id="body-apps">
+        <div class="al-filter" id="al-filter" style="display:none">
+          <input id="al-search" type="search" class="fc" placeholder="Search apps and widgets" aria-label="Search apps and widgets">
+          <div class="al-chips" role="group" aria-label="Filter by type">
+            <button type="button" class="chip on" data-flt="all" aria-pressed="true">All</button>
+            <button type="button" class="chip" data-flt="app" aria-pressed="false">Apps</button>
+            <button type="button" class="chip" data-flt="folder" aria-pressed="false">Folders</button>
+            <button type="button" class="chip" data-flt="widget" aria-pressed="false">Widgets</button>
+          </div>
+        </div>
         <div id="al"></div>
       </div>
     </div>
@@ -201,5 +210,5 @@
   </div>
 </div>
 
-<script type="module" src="/js/admin.js?v=46"></script>
+<script type="module" src="/js/admin.js?v=47"></script>
 </body></html>
