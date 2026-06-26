@@ -7,8 +7,8 @@ const API = '';
 let items=[],eid=null,saving=false,_settings={},_widgetReg={};
 const collapsedFolders=new Set(); /* tracks which folder ids are collapsed */
 let ctype='app',siurl='',scol='dark',spaths=[],fnums=[];
+let _flt={q:'',type:'all'};
 
-/* Returns true when dark (#1c1c1e) text gives better contrast than white against hex bg */
 let tt;
 const toast=(m,t='ok')=>{const e=document.getElementById('toast');e.textContent=m;
   e.className=`show ${t}`;clearTimeout(tt);tt=setTimeout(()=>e.className='',3000);};
@@ -191,7 +191,8 @@ function clearDragClasses(target){
 function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const row=document.createElement('div');row.className='row';
   if(indent)row.style.cssText='padding-left:28px;background:rgba(255,255,255,.02);border-left:2px solid var(--bd);margin-left:8px;border-radius:0 var(--rs) var(--rs) 0;';
-  row.draggable=true;
+  const _filtering=!!(_flt.q||_flt.type!=='all');
+  row.draggable=!_filtering;
   let canUp=false,canDown=false;
   if(folderId!=null){
     const cf=items.find(i=>i.id===folderId);const n=(cf?.children||[]).length;
@@ -203,6 +204,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   }
   /* Drag handle */
   const handle=document.createElement('div');handle.className='rord';handle.textContent='⠿';
+  if(_filtering)handle.style.visibility='hidden';
   /* Icon */
   const ico=document.createElement('div');ico.className='rico';ico.style.background=rc(item.color);
   if(item.iconUrl){
@@ -260,7 +262,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const mkMove=(dir,can)=>{const b=document.createElement('button');b.className='btn bg sm ic';
     const lbl=dir<0?'Move up':'Move down';b.title=lbl;b.setAttribute('aria-label',lbl+': '+(item.label||item.id||'item'));
     b.textContent=dir<0?'↑':'↓';b.disabled=!can;b.onclick=()=>moveRow(item,dir,{folderId,childIdx});return b;};
-  ac.append(mkMove(-1,canUp),mkMove(1,canDown));
+  if(!_filtering) ac.append(mkMove(-1,canUp),mkMove(1,canDown));
   if(item.type!=='folder'){
     const dup=document.createElement('button');dup.className='btn bg sm ic';dup.title='Duplicate';dup.textContent='⊙';
     dup.onclick=()=>{const c=JSON.parse(JSON.stringify(item));c.id=c.id+'_'+Date.now();
@@ -386,35 +388,48 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
 
 function render(){
   const l=document.getElementById('al');
+  const bar=document.getElementById('al-filter');
+  if(bar){
+    if(items.length>=6) bar.style.display='';
+    else { bar.style.display='none'; if(_flt.q||_flt.type!=='all'){_flt={q:'',type:'all'};_syncFilterUI();} }
+  }
   if(!items.length){
     l.innerHTML='<div class="empty"><p class="empty-msg">No apps yet. Click + Add.</p></div>';
     return;
   }
   l.innerHTML='';
-  /* IDs in folders — skip them in the top-level pass */
+  if(_flt.q||_flt.type!=='all'){
+    const q=_flt.q.toLowerCase();
+    const matches=items.filter(it=>{
+      if(_flt.type!=='all'&&it.type!==_flt.type)return false;
+      if(q){ const hay=((it.label||'')+' '+(it.href||'')+' '+(it.widgetType||'')).toLowerCase(); if(!hay.includes(q))return false; }
+      return true;
+    });
+    if(!matches.length){ l.innerHTML='<div class="empty"><p class="empty-msg">No matches.</p></div>'; return; }
+    matches.forEach(item=>l.appendChild(mkRow(item,items.indexOf(item))));
+    return;
+  }
   const inFolder=new Set(items.filter(i=>i.type==='folder').flatMap(f=>f.children||[]));
   items.forEach((item,idx)=>{
-    if(item.type!=='folder'&&inFolder.has(item.id))return; /* rendered under folder */
+    if(item.type!=='folder'&&inFolder.has(item.id))return;
     l.appendChild(mkRow(item,idx));
-    /* If folder, render children underneath (unless collapsed) */
-    if(item.type==='folder'){
-      if(!collapsedFolders.has(item.id)){
-        (item.children||[]).forEach((childId,ci)=>{
-          const childItem=items.find(i=>i.id===childId);
-          if(!childItem)return;
-          const childIdx=items.indexOf(childItem);
-          l.appendChild(mkRow(childItem,childIdx,{indent:true,childIdx:ci,folderId:item.id}));
-        });
-      }
-      /* "Add app to folder" button at end of children (only when expanded) */
-      if(!collapsedFolders.has(item.id)){
-      /* "Add app to folder" button at end of children */
+    if(item.type==='folder'&&!collapsedFolders.has(item.id)){
+      (item.children||[]).forEach((childId,ci)=>{
+        const childItem=items.find(i=>i.id===childId);
+        if(!childItem)return;
+        l.appendChild(mkRow(childItem,items.indexOf(childItem),{indent:true,childIdx:ci,folderId:item.id}));
+      });
       const addRow=document.createElement('button');addRow.type='button';addRow.className='fp-add';
       addRow.innerHTML='<span>+</span> Add app to this folder';
       addRow.onclick=()=>openFolderPicker(null,item.id);
       l.appendChild(addRow);
-      }
     }
+  });
+}
+function _syncFilterUI(){
+  const s=document.getElementById('al-search'); if(s)s.value=_flt.q;
+  document.querySelectorAll('#al-filter .chip').forEach(c=>{
+    const on=c.dataset.flt===_flt.type; c.classList.toggle('on',on); c.setAttribute('aria-pressed',String(on));
   });
 }
 
@@ -498,6 +513,13 @@ function _modalKeydown(e){
   else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
 }
 document.getElementById('mcls').onclick=closeModal;
+{
+  const s=document.getElementById('al-search');
+  if(s)s.addEventListener('input',()=>{_flt.q=s.value.trim();render();});
+  document.querySelectorAll('#al-filter .chip').forEach(c=>{
+    c.addEventListener('click',()=>{_flt.type=c.dataset.flt;_syncFilterUI();render();});
+  });
+}
 document.getElementById('mcan').onclick=closeModal;
 /* Use pointerdown/pointerup instead of click to prevent iOS Safari ghost taps
    from dismissing the modal when tapping non-interactive content inside it.
