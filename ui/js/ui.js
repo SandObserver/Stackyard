@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=36';
-import { widgetSrc, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
+import { widgetSrc, WIDGET_DESIGN, WIDGET_TYPES } from '/js/widget-types.js?v=39';
 import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=37';
 
 let _state = null;
@@ -358,9 +358,8 @@ export function buildMobile() {
   const pages = packMobile(gridItems);
 
   function widgetTitle(item) {
-    const names = { stats:'System stats', connections:'Connections', map:'Connections', dns:'DNS Server', weather:'Weather', nowplaying:'Now Playing', books:'Books', github:'GitHub', clock:'Clock', duplicati:'Backup status', custom:'Widget' };
     if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || 'Disk health';
-    return item.label || names[item.widgetType] || 'Widget';
+    return item.label || WIDGET_TYPES[item.widgetType]?.label || 'Widget';
   }
 
   function mIcon(item) {
