@@ -4,7 +4,7 @@ import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.j
 import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=39';
 import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=37';
 import { initSpotlight } from '/js/spotlight.js?v=36';
-import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=39';
+import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=40';
 
 const API = '';
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
@@ -155,9 +155,8 @@ function mkIcon(item) {
 }
 
 function widgetTitle(item) {
-  const names = { stats:'System stats', connections:'Connections', map:'Connections', dns:'DNS Server', weather:'Weather', nowplaying:'Now Playing', books:'Books', github:'GitHub', clock:'Clock', duplicati:'Backup status', custom:'Widget' };
   if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || 'Disk health';
-  return item.label || names[item.widgetType] || 'Widget';
+  return item.label || WIDGET_TYPES[item.widgetType]?.label || 'Widget';
 }
 function mkWidget(item) {
   const sz = item.widgetSize||'medium';
