@@ -463,7 +463,7 @@ function openModal(idx){
   const seg=document.getElementById('ev-seg');
   if(seg){ seg.style.display=isEdit?'none':''; }
   if(!isEdit){
-    document.querySelectorAll('.seg-tab').forEach(t=>{
+    document.querySelectorAll('.type-pill').forEach(t=>{
       t.classList.toggle('active',t.dataset.ctype===ctype);
     });
   }
@@ -501,11 +501,11 @@ function _modalKeydown(e){
   if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
   else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
 }
-/* ══ Seg tabs for add-new ══ */
-document.querySelectorAll('.seg-tab').forEach(tab=>{
+/* ══ Type pill tabs for add-new ══ */
+document.querySelectorAll('.type-pill').forEach(tab=>{
   tab.addEventListener('click',()=>{
     ctype=tab.dataset.ctype;
-    document.querySelectorAll('.seg-tab').forEach(t=>t.classList.toggle('active',t===tab));
+    document.querySelectorAll('.type-pill').forEach(t=>t.classList.toggle('active',t===tab));
     const body=document.getElementById('ev-body');
     body.innerHTML='';
     if(ctype==='widget') buildWidgetForm(body,null);
@@ -2768,10 +2768,9 @@ function loadSettings(c){
   if(typeEl){
     typeEl.value=bg.type||'unsplash';
     showBgFields(bg.type||'unsplash');
-    /* refresh custom dropdown label */
     const btn=document.getElementById('bg-type-btn');
     const labels={'unsplash':'Unsplash','url':'Image URL','color':'Solid color'};
-    if(btn) btn.firstChild.textContent=labels[typeEl.value]||typeEl.value;
+    if(btn){const tn=btn.childNodes[0];if(tn&&tn.nodeType===3)tn.textContent=labels[typeEl.value]||typeEl.value;}
     document.querySelectorAll('#bg-type-list li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===typeEl.value)));
   }
   /* Unsplash API key — fetch whether one is configured via dedicated endpoint
@@ -2794,14 +2793,26 @@ function loadSettings(c){
   const colorEl=document.getElementById('bg-color');if(colorEl)colorEl.value=bg.color||'';
   const brEl=document.getElementById('bg-br');
   const brVal=document.getElementById('bg-br-val');
+  function updateSliderFill(el){
+    if(!el)return;
+    const min=parseFloat(el.min)||0.1, max=parseFloat(el.max)||1.0;
+    const pct=((parseFloat(el.value)-min)/(max-min))*100;
+    el.style.background=`linear-gradient(to right, var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
+  }
   if(brEl){brEl.value=bg.brightness??0.62;if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);
-    brEl.addEventListener('input',()=>{if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);});}
+    updateSliderFill(brEl);
+    brEl.addEventListener('input',()=>{updateSliderFill(brEl);if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);});}
   document.getElementById('bg-save').addEventListener('click',saveWallpaper);
-  /* Apply wallpaper bg to body */
+  /* Apply wallpaper bg to outer wrapper and body so it shows behind the panel */
   const _bg=s.background||{};
-  if(_bg.type==='color'&&_bg.color) document.body.style.background=_bg.color;
-  else if(_bg.type==='url'&&_bg.url) document.body.style.background=`url(${_bg.url}) center/cover no-repeat`;
-  else document.body.style.background='';
+  const _applyBg=el=>{
+    if(!el)return;
+    if(_bg.type==='color'&&_bg.color){el.style.background=_bg.color;}
+    else if(_bg.type==='url'&&_bg.url){el.style.background=`url(${_bg.url}) center/cover no-repeat fixed`;}
+    else{el.style.background='';}
+  };
+  _applyBg(document.querySelector('.adm-outer'));
+  _applyBg(document.body);
 
   /* Populate General inline-edit value spans */
   const _sv=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'—';};
@@ -3125,11 +3136,12 @@ function initBgType(){
   function setVal(val){
     hidden.value=val;
     const labels={'unsplash':'Unsplash','url':'Image URL','color':'Solid color'};
-    btn.firstChild.textContent=labels[val]||val;
+    /* Update only the text node, preserve the SVG chevron */
+    const textNode=btn.childNodes[0];
+    if(textNode&&textNode.nodeType===3) textNode.textContent=labels[val]||val;
     list.querySelectorAll('li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===val)));
     list.hidden=true;
     showBgFields(val);
-    /* also hide/show bgcol-hint */
     const hint=document.getElementById('bgcol-hint');
     if(hint) hint.style.display=val==='unsplash'?'':'none';
   }
