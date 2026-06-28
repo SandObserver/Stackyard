@@ -248,15 +248,6 @@ function syncMobPages() {
   }
 }
 
-function buildClock() {
-  const c = document.getElementById('clock');
-  const D = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const tick = () => { const n = new Date(); let h = n.getHours(); const m = String(n.getMinutes()).padStart(2,'0'), ap = h>=12?'PM':'AM'; h = h%12||12; c.textContent = `${D[n.getDay()]}, ${M[n.getMonth()]} ${n.getDate()}   ${h}:${m} ${ap}`; };
-  tick();
-  return tick; /* caller holds interval ref for visibility-based suspend/resume */
-}
-
 function sanitizeCssUrl(u) { return String(u||'').replace(/['"\(\)]/g,''); }
 async function applyBg() {
   const root = document.documentElement;
@@ -415,13 +406,11 @@ async function boot() {
   initUI(state);
   initSpotlight({ getItems: () => items, MOB, CB, iconChain, openFolderDesktop, openFolderMobile });
 
-  let _clockTick = null; /* set in desktop branch; used by visibility handler */
-
   if (MOB) {
     document.body.classList.add('is-mob');
     requestAnimationFrame(() => requestAnimationFrame(() => { buildMobile(); syncMobPages(); }));
   } else {
-    _clockTick = buildClock(); buildDesktop();
+    buildDesktop();
     document.addEventListener('keydown', e => {
       if (document.getElementById('spot').classList.contains('on')) return;
       if (e.key === 'ArrowRight') goTo(pg+1);
@@ -455,13 +444,10 @@ async function boot() {
       if (landscape) {
         /* Switch to desktop layout for landscape */
         document.body.classList.remove('is-mob');
-        if (!_clockTick) { _clockTick = buildClock(); if (_clockTimer == null) _clockTimer = setInterval(_clockTick, 10_000); }
-        _clockTick();
         buildDesktop();
       } else {
         /* Restore mobile layout for portrait */
         document.body.classList.add('is-mob');
-        if (_clockTimer) { clearInterval(_clockTimer); _clockTimer = null; _clockTick = null; }
         if (_mobTmCleanup) document.removeEventListener('touchmove', _mobTmCleanup, { passive: true });
         buildMobile();
         syncMobPages();
@@ -471,12 +457,11 @@ async function boot() {
   window.addEventListener('resize', _rebuild, { passive: true });
   window.addEventListener('orientationchange', _rebuild, { passive: true });
 
-  let _badgeTimer, _healthTimer, _clockTimer, _configTimer;
+  let _badgeTimer, _healthTimer, _configTimer;
 
   const startPolling = () => {
     _badgeTimer  = setInterval(pollBadges,  20_000);
     _healthTimer = setInterval(pollHealth,  30_000);
-    _clockTimer  = _clockTick ? setInterval(_clockTick, 10_000) : null;
     _configTimer = setInterval(async () => {
       try {
         const res = await fetch('/api/config', { cache:'no-store' });
@@ -491,7 +476,6 @@ async function boot() {
   const stopPolling = () => {
     clearInterval(_badgeTimer);
     clearInterval(_healthTimer);
-    clearInterval(_clockTimer);
     clearInterval(_configTimer);
   };
 
@@ -499,7 +483,6 @@ async function boot() {
     if (document.hidden) {
       stopPolling();
     } else {
-      if (_clockTick) _clockTick(); /* update clock immediately on resume */
       pollBadges(); pollHealth();
       startPolling();
     }
