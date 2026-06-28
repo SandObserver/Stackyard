@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Stackyard Settings</title>
   <link rel="stylesheet" href="/css/tokens.css?v=1">
-  <link rel="stylesheet" href="/css/admin.css?v=21">
+  <link rel="stylesheet" href="/css/admin.css?v=22">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=1">
 </head>
 <body>
 
-<div class="adm-wrap">
+<div class="adm-outer">
 <div class="adm">
 
   <!-- ── Sidebar ── -->
@@ -46,7 +46,7 @@
     </ul>
   </nav>
 
-  <!-- ── Content ── -->
+  <!-- ── Content pane ── -->
   <div class="cp">
 
     <!-- General -->
@@ -62,26 +62,20 @@
         <div class="row ie-row" id="ie-title">
           <span class="rl">Title</span>
           <span class="rv" id="ie-title-v">Stackyard</span>
-          <button class="pe" type="button" aria-label="Edit title">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
+          <button class="pe" type="button" aria-label="Edit title">&#9998;</button>
         </div>
         <div class="row ie-row" id="ie-desc">
           <span class="rl">Description</span>
           <span class="rv" id="ie-desc-v">—</span>
-          <button class="pe" type="button" aria-label="Edit description">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
+          <button class="pe" type="button" aria-label="Edit description">&#9998;</button>
         </div>
         <div class="row ie-row" id="ie-ip">
           <span class="rl">Host IP</span>
           <span class="rv" id="ie-ip-v">—</span>
-          <button class="pe" type="button" aria-label="Edit host IP">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
+          <button class="pe" type="button" aria-label="Edit host IP">&#9998;</button>
         </div>
-        <div class="row-hint">Used to allow your server's IP in badge URLs and SSRF protection.</div>
       </div>
+      <p class="grp-tip">Used to allow your server's IP in badge URLs and SSRF protection.</p>
 
       <div class="grp-hdr">Monitoring</div>
       <div class="grp">
@@ -96,12 +90,10 @@
         <div class="row ie-row" id="ie-socket" style="display:none">
           <span class="rl">Socket URL</span>
           <span class="rv" id="ie-socket-v">—</span>
-          <button class="pe" type="button" aria-label="Edit socket URL">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
+          <button class="pe" type="button" aria-label="Edit socket URL">&#9998;</button>
         </div>
-        <div class="row-hint" id="socket-hint" style="display:none">Use the URL of a <strong>socket proxy</strong> container for least-privilege access. No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. <span style="color:var(--rd)">Only do this on a private, trusted network you fully control.</span></div>
       </div>
+      <p class="grp-tip" id="socket-hint" style="display:none">Use the URL of a <strong>socket proxy</strong> container for least-privilege access. No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. <span class="tip-danger">Only do this on a private, trusted network you fully control.</span></p>
 
       <div class="grp-hdr">Security</div>
       <div class="grp">
@@ -112,12 +104,10 @@
         <div class="row ie-row" id="ie-pw" style="display:none">
           <span class="rl">Password</span>
           <span class="rv" id="ie-pw-v">—</span>
-          <button class="pe" type="button" aria-label="Edit password">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
+          <button class="pe" type="button" aria-label="Edit password">&#9998;</button>
         </div>
-        <div class="row-hint" id="pw-hint-static" style="display:none">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</div>
       </div>
+      <p class="grp-tip" id="pw-hint-static" style="display:none">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p>
 
       <div class="grp-hdr">Backup</div>
       <div class="grp">
@@ -160,86 +150,107 @@
       <div class="grp">
         <div class="row">
           <span class="rl">Source</span>
-          <div class="row-select">
-            <select id="bg-type" class="inline-sel" aria-label="Wallpaper source">
-              <option value="unsplash">Unsplash</option>
-              <option value="url">Image URL</option>
-              <option value="color">Solid color</option>
-            </select>
-          </div>
+          <select id="bg-type" class="row-sel" aria-label="Wallpaper source">
+            <option value="unsplash">Unsplash</option>
+            <option value="url">Image URL</option>
+            <option value="color">Solid color</option>
+          </select>
         </div>
         <div id="bg-unsplash-fields">
           <div class="row ie-row" id="ie-apikey">
             <span class="rl">Unsplash API Key</span>
             <span class="rv" id="ie-apikey-v">Not set</span>
-            <button class="pe" type="button" aria-label="Edit Unsplash API key">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
+            <button class="pe" type="button" aria-label="Edit Unsplash API key">&#9998;</button>
           </div>
           <div class="row ie-row" id="ie-bgcol">
             <span class="rl">Collection ID</span>
             <span class="rv" id="ie-bgcol-v">—</span>
-            <button class="pe" type="button" aria-label="Edit collection ID">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
+            <button class="pe" type="button" aria-label="Edit collection ID">&#9998;</button>
           </div>
-          <div class="row-hint">Leave Collection ID blank for random.</div>
         </div>
         <div id="bg-url-fields" class="d-none">
           <div class="row ie-row" id="ie-bgurl">
             <span class="rl">Image URL</span>
             <span class="rv" id="ie-bgurl-v">—</span>
-            <button class="pe" type="button" aria-label="Edit image URL">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
+            <button class="pe" type="button" aria-label="Edit image URL">&#9998;</button>
           </div>
         </div>
         <div id="bg-color-fields" class="d-none">
           <div class="row ie-row" id="ie-bgcolor">
             <span class="rl">Color</span>
             <span class="rv" id="ie-bgcolor-v">—</span>
-            <button class="pe" type="button" aria-label="Edit background color">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
+            <button class="pe" type="button" aria-label="Edit color">&#9998;</button>
           </div>
         </div>
         <div class="row" id="bg-brightness-row">
           <span class="rl">Brightness</span>
           <div class="slider-wrap">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="si" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-            <input type="range" id="bg-br" min="0.1" max="1.0" step="0.01" class="adm-range" aria-label="Brightness">
+            <div class="range-track"><input type="range" id="bg-br" min="0.1" max="1.0" step="0.01" class="adm-range" aria-label="Brightness"></div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="si" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           </div>
         </div>
       </div>
+      <p class="grp-tip" id="bgcol-hint">Leave Collection ID blank for random.</p>
     </section>
 
-    <!-- Dashboard -->
+    <!-- Dashboard — list view -->
     <section class="sec" id="sec-dashboard" hidden>
-      <div class="sec-hdr">
-        <h1 class="sec-title">Dashboard</h1>
-        <div class="sec-hdr-actions">
-          <button class="btn bp sm" id="btn-add" type="button">+Add</button>
-          <button class="btn save-btn-green sm" id="dash-save" type="button">Save</button>
+      <div id="dash-list-view">
+        <div class="sec-hdr">
+          <h1 class="sec-title">Dashboard</h1>
+          <div class="sec-hdr-actions">
+            <button class="btn bp sm" id="btn-add" type="button">+Add</button>
+            <button class="btn save-btn-green sm" id="dash-save" type="button">Save</button>
+          </div>
         </div>
-      </div>
-      <div class="al-filter" id="al-filter" style="display:none">
-        <input id="al-search" type="search" class="al-search" placeholder="Search" aria-label="Search apps and widgets">
-        <div class="al-chips" role="group" aria-label="Filter by type">
-          <button type="button" class="chip on" data-flt="all" aria-pressed="true">All</button>
-          <button type="button" class="chip" data-flt="app" aria-pressed="false">Apps</button>
-          <button type="button" class="chip" data-flt="widget" aria-pressed="false">Widgets</button>
-          <button type="button" class="chip" data-flt="folder" aria-pressed="false">Folders</button>
+        <div class="al-filter" id="al-filter" style="display:none">
+          <input id="al-search" type="search" class="al-search" placeholder="Search" aria-label="Search">
+          <div class="al-chips" role="group" aria-label="Filter by type">
+            <button type="button" class="chip on" data-flt="all" aria-pressed="true">All</button>
+            <button type="button" class="chip" data-flt="app" aria-pressed="false">Apps</button>
+            <button type="button" class="chip" data-flt="widget" aria-pressed="false">Widgets</button>
+            <button type="button" class="chip" data-flt="folder" aria-pressed="false">Folders</button>
+          </div>
         </div>
+        <div class="grp" id="al-grp" style="display:none"><div id="al"></div></div>
       </div>
-      <div id="al"></div>
+
+      <!-- Edit / Add view — pushed in place of list -->
+      <div id="dash-edit-view" style="display:none">
+        <div class="sec-hdr">
+          <h1 class="sec-title" id="ev-title">General</h1>
+          <div class="sec-hdr-actions">
+            <button class="btn bd-btn sm d-none" id="ev-delete" type="button">Delete</button>
+            <button class="btn save-btn-green sm" id="ev-save" type="button">Save</button>
+          </div>
+        </div>
+        <!-- Add New segmented control (only shown when adding) -->
+        <div class="add-new-seg" id="ev-seg" style="display:none">
+          <div class="grp-hdr">Add New</div>
+          <div class="seg-tabs" role="tablist" aria-label="Item type">
+            <button class="seg-tab active" data-ctype="app" role="tab" type="button">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+              <span>App</span>
+            </button>
+            <button class="seg-tab" data-ctype="widget" role="tab" type="button">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+              <span>Widget</span>
+            </button>
+            <button class="seg-tab" data-ctype="folder" role="tab" type="button">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span>Folder</span>
+            </button>
+          </div>
+        </div>
+        <!-- Form body rendered here by JS -->
+        <div id="ev-body"></div>
+      </div>
     </section>
 
     <!-- About -->
     <section class="sec" id="sec-about" hidden>
-      <div class="sec-hdr">
-        <h1 class="sec-title">About</h1>
-      </div>
+      <div class="sec-hdr"><h1 class="sec-title">About</h1></div>
       <div class="about-hero">
         <div class="about-ic-wrap">
           <svg width="64" height="64" viewBox="0 0 894 894" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -278,11 +289,12 @@
       </div>
     </section>
 
-  </div><!-- .adm -->
-</div><!-- .adm-wrap -->
+  </div><!-- .cp -->
+</div><!-- .adm -->
+</div><!-- .adm-outer -->
 
-<!-- Modal -->
-<div id="ov">
+<!-- Modal kept in DOM — JS references it but never opens it -->
+<div id="ov" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
     <div class="mh"><h2 id="mt">Add</h2><button class="mx" id="mcls" type="button" aria-label="Close">×</button></div>
     <div id="type-sw"></div>
@@ -294,29 +306,25 @@
   </div>
 </div>
 
-<!-- Hidden inputs moved into rows by JS -->
-<input class="row-inp-tpl" id="srv-ip"       type="text"     style="display:none" autocomplete="off">
-<input class="row-inp-tpl" id="srv-socket"    type="text"     style="display:none" autocomplete="off">
-<input class="row-inp-tpl" id="sec-pw"        type="password" style="display:none" autocomplete="new-password">
-<input class="row-inp-tpl" id="bg-apikey"     type="text"     style="display:none" autocomplete="off">
-<input class="row-inp-tpl" id="bg-col"        type="text"     style="display:none" autocomplete="off">
-<input class="row-inp-tpl" id="bg-url"        type="url"      style="display:none" autocomplete="off">
-<input class="row-inp-tpl" id="bg-color"      type="text"     style="display:none" autocomplete="off">
+<!-- Hidden inputs mounted into ie-rows by JS -->
+<input id="srv-ip"    type="text"     class="row-inp-tpl" style="display:none" autocomplete="off">
+<input id="srv-socket" type="text"    class="row-inp-tpl" style="display:none" autocomplete="off">
+<input id="sec-pw"    type="password" class="row-inp-tpl" style="display:none" autocomplete="new-password">
+<input id="bg-apikey" type="text"     class="row-inp-tpl" style="display:none" autocomplete="off">
+<input id="bg-col"    type="text"     class="row-inp-tpl" style="display:none" autocomplete="off">
+<input id="bg-url"    type="url"      class="row-inp-tpl" style="display:none" autocomplete="off">
+<input id="bg-color"  type="text"     class="row-inp-tpl" style="display:none" autocomplete="off">
 <div id="sec-pw-bars" class="pw-bars" style="display:none"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
 <div id="sec-pw-hint" class="pw-hint" style="display:none"></div>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
-<!-- Login overlay -->
+<!-- Login -->
 <div id="login-screen" class="login-screen">
   <div class="login-wrap">
     <div class="login-header">
       <div class="login-icon">
-        <svg width="42" height="42" viewBox="0 0 894 894" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#2681cf" d="M434 100c7.75-5.47 18.9-5.17 26.57.32C492.12 124.76 523.17 149.86 554.55 174.54 583.49 197.18 611.9 220.53 641.07 242.88c6.5 5.77 13.71 10.67 20.32 16.32l.55.29c.11-19.64.08-39.28 0-58.92 1.15-6 6.87-10.63 13-10.41 19.05-.04 38.11-.01 57.16-.03 6 .19 11.48 4.94 12.65 10.73.22 41.46-.18 82.92.41 124.38l.74.7c19.84 16.07 40.01 31.74 60.02 47.59 6.29 5.03 12.86 9.73 18.71 15.27 4.09 3.69 5.76 10.24 2.87 15.13-1.8 3.03-4.66 6.37-8.51 6.22-24.07.37-48.14-.18-72.21.46-.02 42.26-.18 84.52.13 126.78-.44 23.33.29 46.67-.16 70.01-.03 55.69.01 111.39-.03 167.07-1.49 7.91-6.67 14.89-13.43 19.16-8.4 4.52-18.13 3.75-27.33 3.71H173.01c-9.22-.07-17.8-5.68-22.74-13.27-2.76-3.93-3.77-8.65-4.88-13.22.6-16.48.13-32.81.28-48.51.11-104-.09-207.48.03-311.51H76.99c-7.45.35-14.18-7.25-12.77-14.63.64-4.37 3.96-7.64 7.28-10.24C185.01 296.78 298.59 207.04 411.98 117.06 419.21 111.23 426.45 105.41 434 100z"/>
-          <path fill="#90c7f1" d="M442.29 208.33c6.79-2.03 13.86.97 19.1 5.32 64.13 49.89 128.4 99.59 192.53 149.48 3.56 2.47 6.52 5.88 8.02 9.81 2.23 5.31 1.47 11.18 1.37 16.82v304.01c.13 11.77-11 21.76-22.54 21.47H251.03c-10.86.19-21-9.59-20.72-20.46-.02-102-.02-204.01-.04-306 .01-5.27-.45-10.86 2-15.74 1.9-4.5 5.81-7.6 9.58-10.48 13.15-10.56 26.55-20.82 39.95-31.08C326.13 296.12 370.73 261.81 415.04 227.13c6.18-4.87 12.5-9.57 18.7-14.44 2.53-1.99 5.41-3.57 8.55-4.36z"/>
-          <path fill="#2681cf" d="M271.37 374.5c1.49-.51 3.07-.62 4.64-.68 112.31-.04 224.62-.01 336.94-.05 4.36.02 9.23-.49 12.93 2.33 3.91 2.58 5.54 7.39 5.55 11.9-.03 21.35.05 42.71-.04 64.06.01 6.64-5.69 12.43-12.38 12.3-113.01.16-226.03.09-339.04.11-3.88-.08-8.06.14-11.5-1.98-4.25-2.53-5.96-7.75-5.99-12.46-.03-20.68-.02-41.36-.01-62.04-.42-5.86 3.12-11.77 6.9-13.49zM272.17 485.11c1.24-.38 2.52-.58 3.82-.59 113.99-.03 227.98 0 341.97-.02 4.53-.13 9.25 2.04 11.52 5.98 2.22 3.74 1.97 8.25 1.96 12.44-.02 17.64.01 35.29-.01 52.93.06 3.74.56 7.7-1.09 11.2-1.8 4.43-6.45 7.51-11.23 7.45-112.68.03-225.36.05-338.04-.08-4-.1-8.37.57-11.95-1.67-4.52-2.55-6.73-7.93-6.55-12.96-.09-21-.04-42-.1-63 .1-5.7 4.44-10.55 9.83-11.93zM271.41 595.61c1.48-.57 3.07-.67 4.64-.71 109.65-.06 219.3-.06 328.95-.06 5.36.09 10.76-.09 16.11.54 5.67.9 9.97 5.97 10.2 11.44.23 20.98.1 41.97.14 62.95.1 3.5-.25 7.2-2.3 10.18-2.08 3.49-6.27 5.12-10.17 5.3-112.32.01-224.65.02-336.98.01-2.97-.04-5.95.17-8.91-.17-6.15-1.03-10.87-7.15-10.59-13.33-.03-21.34-.02-42.69-.02-64.03-.25-5.56 3.8-10.54 8.91-12.36z"/>
-        </svg>
+        <svg width="42" height="42" viewBox="0 0 894 894" xmlns="http://www.w3.org/2000/svg"><path fill="#2681cf" d="M434 100c7.75-5.47 18.9-5.17 26.57.32C492.12 124.76 523.17 149.86 554.55 174.54 583.49 197.18 611.9 220.53 641.07 242.88c6.5 5.77 13.71 10.67 20.32 16.32l.55.29c.11-19.64.08-39.28 0-58.92 1.15-6 6.87-10.63 13-10.41 19.05-.04 38.11-.01 57.16-.03 6 .19 11.48 4.94 12.65 10.73.22 41.46-.18 82.92.41 124.38l.74.7c19.84 16.07 40.01 31.74 60.02 47.59 6.29 5.03 12.86 9.73 18.71 15.27 4.09 3.69 5.76 10.24 2.87 15.13-1.8 3.03-4.66 6.37-8.51 6.22-24.07.37-48.14-.18-72.21.46-.02 42.26-.18 84.52.13 126.78-.44 23.33.29 46.67-.16 70.01-.03 55.69.01 111.39-.03 167.07-1.49 7.91-6.67 14.89-13.43 19.16-8.4 4.52-18.13 3.75-27.33 3.71H173.01c-9.22-.07-17.8-5.68-22.74-13.27-2.76-3.93-3.77-8.65-4.88-13.22.6-16.48.13-32.81.28-48.51.11-104-.09-207.48.03-311.51H76.99c-7.45.35-14.18-7.25-12.77-14.63.64-4.37 3.96-7.64 7.28-10.24C185.01 296.78 298.59 207.04 411.98 117.06 419.21 111.23 426.45 105.41 434 100z"/><path fill="#90c7f1" d="M442.29 208.33c6.79-2.03 13.86.97 19.1 5.32 64.13 49.89 128.4 99.59 192.53 149.48 3.56 2.47 6.52 5.88 8.02 9.81 2.23 5.31 1.47 11.18 1.37 16.82v304.01c.13 11.77-11 21.76-22.54 21.47H251.03c-10.86.19-21-9.59-20.72-20.46-.02-102-.02-204.01-.04-306 .01-5.27-.45-10.86 2-15.74 1.9-4.5 5.81-7.6 9.58-10.48 13.15-10.56 26.55-20.82 39.95-31.08C326.13 296.12 370.73 261.81 415.04 227.13c6.18-4.87 12.5-9.57 18.7-14.44 2.53-1.99 5.41-3.57 8.55-4.36z"/><path fill="#2681cf" d="M271.37 374.5c1.49-.51 3.07-.62 4.64-.68 112.31-.04 224.62-.01 336.94-.05 4.36.02 9.23-.49 12.93 2.33 3.91 2.58 5.54 7.39 5.55 11.9-.03 21.35.05 42.71-.04 64.06.01 6.64-5.69 12.43-12.38 12.3-113.01.16-226.03.09-339.04.11-3.88-.08-8.06.14-11.5-1.98-4.25-2.53-5.96-7.75-5.99-12.46-.03-20.68-.02-41.36-.01-62.04-.42-5.86 3.12-11.77 6.9-13.49zM272.17 485.11c1.24-.38 2.52-.58 3.82-.59 113.99-.03 227.98 0 341.97-.02 4.53-.13 9.25 2.04 11.52 5.98 2.22 3.74 1.97 8.25 1.96 12.44-.02 17.64.01 35.29-.01 52.93.06 3.74.56 7.7-1.09 11.2-1.8 4.43-6.45 7.51-11.23 7.45-112.68.03-225.36.05-338.04-.08-4-.1-8.37.57-11.95-1.67-4.52-2.55-6.73-7.93-6.55-12.96-.09-21-.04-42-.1-63 .1-5.7 4.44-10.55 9.83-11.93zM271.41 595.61c1.48-.57 3.07-.67 4.64-.71 109.65-.06 219.3-.06 328.95-.06 5.36.09 10.76-.09 16.11.54 5.67.9 9.97 5.97 10.2 11.44.23 20.98.1 41.97.14 62.95.1 3.5-.25 7.2-2.3 10.18-2.08 3.49-6.27 5.12-10.17 5.3-112.32.01-224.65.02-336.98.01-2.97-.04-5.95.17-8.91-.17-6.15-1.03-10.87-7.15-10.59-13.33-.03-21.34-.02-42.69-.02-64.03-.25-5.56 3.8-10.54 8.91-12.36z"/></svg>
       </div>
       <div class="login-title">Stackyard</div>
       <div class="login-sub">Sign in to continue</div>
@@ -328,17 +336,15 @@
 </div>
 
 <div id="setpw-screen" class="setpw-screen">
-  <div class="setpw-wrap">
-    <div class="setpw-card">
-      <div class="setpw-title">Set a password</div>
-      <div class="setpw-desc">Choose a strong password for your dashboard.</div>
-      <input id="setpw-input" type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" class="setpw-input">
-      <div id="setpw-bars" class="setpw-bars"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
-      <div id="setpw-hint" class="setpw-hint"></div>
-      <div id="setpw-err" class="setpw-err" role="alert"></div>
-      <button id="setpw-btn" type="button" class="setpw-btn">Set password</button>
-    </div>
-  </div>
+  <div class="setpw-wrap"><div class="setpw-card">
+    <div class="setpw-title">Set a password</div>
+    <div class="setpw-desc">Choose a strong password for your dashboard.</div>
+    <input id="setpw-input" type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" class="setpw-input">
+    <div id="setpw-bars" class="setpw-bars"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
+    <div id="setpw-hint" class="setpw-hint"></div>
+    <div id="setpw-err" class="setpw-err" role="alert"></div>
+    <button id="setpw-btn" type="button" class="setpw-btn">Set password</button>
+  </div></div>
 </div>
 
 <script type="module" src="/js/admin.js?v=50"></script>
