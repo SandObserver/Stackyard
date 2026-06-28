@@ -248,16 +248,6 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     const ed=document.createElement('button');ed.className='btn bg sm';ed.textContent='Edit';ed.onclick=()=>openModal(idx);
     ac.append(ed);
   }
-  const dl=document.createElement('button');dl.className='btn bd-btn sm ic';dl.title='Delete';dl.textContent='×';
-  dl.onclick=()=>{
-    if(item.type==='folder'){if(!confirm(`Delete folder "${item.label}"? Apps inside will not be deleted.`))return;}
-    else{if(!confirm(`Remove "${item.label||item.id}"?`))return;}
-    /* Remove from any folder */
-    items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==item.id);});
-    items.splice(idx,1);
-    save().catch(()=>{});
-  };
-  ac.appendChild(dl);
   row.append(handle,ico,inf,pb,ac);
   /* ── Unified drag ──
      Drag data formats:
@@ -2775,8 +2765,15 @@ function loadSettings(c){
   if(lm){lm.checked=s.showLabels?.ios===true;lm.addEventListener('change',saveLabels);}
   const bg=s.background||{type:'unsplash',brightness:0.62};
   const typeEl=document.getElementById('bg-type');
-  if(typeEl){typeEl.value=bg.type||'unsplash';showBgFields(bg.type||'unsplash');
-    typeEl.addEventListener('change',()=>showBgFields(typeEl.value));}
+  if(typeEl){
+    typeEl.value=bg.type||'unsplash';
+    showBgFields(bg.type||'unsplash');
+    /* refresh custom dropdown label */
+    const btn=document.getElementById('bg-type-btn');
+    const labels={'unsplash':'Unsplash','url':'Image URL','color':'Solid color'};
+    if(btn) btn.firstChild.textContent=labels[typeEl.value]||typeEl.value;
+    document.querySelectorAll('#bg-type-list li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===typeEl.value)));
+  }
   /* Unsplash API key — fetch whether one is configured via dedicated endpoint
      (the key itself is never included in /api/config to avoid exposure) */
   const apiEl=(document.getElementById('bg-apikey-inp')||document.getElementById('bg-apikey'));
@@ -3120,9 +3117,32 @@ function initDockerToggle(){
 
 /* ══ Wallpaper source toggle ══ */
 function initBgType(){
-  const sel=document.getElementById('bg-type');
-  if(!sel)return;
-  sel.addEventListener('change',()=>showBgFields(sel.value));
+  const btn=document.getElementById('bg-type-btn');
+  const list=document.getElementById('bg-type-list');
+  const hidden=document.getElementById('bg-type');
+  if(!btn||!list||!hidden) return;
+
+  function setVal(val){
+    hidden.value=val;
+    const labels={'unsplash':'Unsplash','url':'Image URL','color':'Solid color'};
+    btn.firstChild.textContent=labels[val]||val;
+    list.querySelectorAll('li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===val)));
+    list.hidden=true;
+    showBgFields(val);
+    /* also hide/show bgcol-hint */
+    const hint=document.getElementById('bgcol-hint');
+    if(hint) hint.style.display=val==='unsplash'?'':'none';
+  }
+
+  btn.addEventListener('click',e=>{e.stopPropagation();list.hidden=!list.hidden;});
+  list.querySelectorAll('li').forEach(li=>{
+    li.addEventListener('click',()=>setVal(li.dataset.val));
+  });
+  document.addEventListener('click',()=>{list.hidden=true;});
+
+  /* sync to loadSettings value */
+  const observer=new MutationObserver(()=>{});
+  setVal(hidden.value||'unsplash');
 }
 
 /* ══ Dashboard Save ══ */
