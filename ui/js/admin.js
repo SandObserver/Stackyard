@@ -359,12 +359,14 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
 function render(){
   const l=document.getElementById('al');
   const bar=document.getElementById('al-filter');
+  const grp=document.getElementById('al-grp');
   if(bar){
     if(items.length>=6) bar.style.display='';
     else { bar.style.display='none'; if(_flt.q||_flt.type!=='all'){_flt={q:'',type:'all'};_syncFilterUI();} }
   }
+  if(grp) grp.style.display=items.length?'':'none';
   if(!items.length){
-    l.innerHTML='<div class="empty"><p class="empty-msg">No apps yet. Click + Add.</p></div>';
+    l.innerHTML='<div class="empty"><p class="empty-msg">No apps yet. Click +Add.</p></div>';
     return;
   }
   l.innerHTML='';
@@ -430,14 +432,25 @@ function _ensureFieldObserver(){
   _a11yObs=new MutationObserver(()=>_a11yFields(document.querySelector('#ov .modal')));
   _a11yObs.observe(mb,{childList:true,subtree:true});
 }
+/* ══ Push navigation: replace modal with in-pane edit view ══ */
+function showListView(){
+  document.getElementById('dash-list-view').style.display='';
+  document.getElementById('dash-edit-view').style.display='none';
+}
+function showEditView(){
+  document.getElementById('dash-list-view').style.display='none';
+  document.getElementById('dash-edit-view').style.display='';
+  document.getElementById('cp')?.scrollTo?.(0,0);
+  document.querySelector('.cp')?.scrollTo?.(0,0);
+}
+
 function openModal(idx){
   eid=idx??null;
   const item=idx!=null?JSON.parse(JSON.stringify(items[idx])):null;
-  document.getElementById('mt').textContent=idx!=null?'Edit':'Add';
   ctype=item?.type||'app';
   siurl=item?.iconUrl||'';
   scol=item?.color||'dark';
-  _customUrl=item?.url||'';  /* preserve existing custom widget URL */
+  _customUrl=item?.url||'';
   _iframeOpts=item?.iframe?{...item.iframe}:{};
   fnums=[];spaths=[];
   if(item?.monitoring?.activity?.extract){
@@ -447,19 +460,44 @@ function openModal(idx){
     const ex=Array.isArray(item.badge.extract)?item.badge.extract:[item.badge.extract];
     spaths=ex.map(e=>typeof e==='string'?e:e.path).filter(Boolean);
   }
-  buildTypeSwitch(item);
-  buildFormBody(item);
-  const ov=document.getElementById('ov');
-  _modalPrevFocus=document.activeElement;
-  ov.classList.add('open');
-  ov.setAttribute('aria-hidden','false');
-  _ensureFieldObserver();
-  _a11yFields(ov.querySelector('.modal'));
-  document.addEventListener('keydown',_modalKeydown,true);
-  /* Focus the first usable control inside the modal */
-  const first=ov.querySelector('input:not([type=hidden]),select,textarea,button:not(.mx)');
-  if(first) setTimeout(()=>{ try{ first.focus(); }catch{} },0);
-  document.getElementById('msave').onclick=()=>doSave(item);
+
+  /* Header */
+  const isEdit=idx!=null;
+  document.getElementById('ev-title').textContent='General';
+  const delBtn=document.getElementById('ev-delete');
+  const saveBtn=document.getElementById('ev-save');
+  if(delBtn){ delBtn.classList.toggle('d-none',!isEdit); delBtn.onclick=()=>_evDelete(item,idx); }
+  if(saveBtn){ saveBtn.onclick=()=>doSave(item); }
+
+  /* Segmented control — only for add */
+  const seg=document.getElementById('ev-seg');
+  if(seg){ seg.style.display=isEdit?'none':''; }
+  if(!isEdit){
+    document.querySelectorAll('.seg-tab').forEach(t=>{
+      t.classList.toggle('active',t.dataset.ctype===ctype);
+    });
+  }
+
+  /* Body */
+  const body=document.getElementById('ev-body');
+  body.innerHTML='';
+  if(ctype==='widget') buildWidgetForm(body,item);
+  else if(ctype==='folder') buildFolderForm(body,item);
+  else buildAppForm(body,item);
+
+  showEditView();
+  /* focus first input */
+  setTimeout(()=>{ try{ body.querySelector('input,select,textarea')?.focus(); }catch{} },50);
+}
+
+function _evDelete(item,idx){
+  if(!item)return;
+  if(item.type==='folder'){if(!confirm(`Delete folder "${item.label}"? Apps inside will not be deleted.`))return;}
+  else{if(!confirm(`Remove "${item.label||item.id}"?`))return;}
+  items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==item.id);});
+  items.splice(idx,1);
+  save().catch(()=>{});
+  showListView();
 }
 let _modalPrevFocus=null;
 function _modalKeydown(e){
@@ -473,7 +511,20 @@ function _modalKeydown(e){
   if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
   else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
 }
-document.getElementById('mcls').onclick=closeModal;
+/* ══ Seg tabs for add-new ══ */
+document.querySelectorAll('.seg-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    ctype=tab.dataset.ctype;
+    document.querySelectorAll('.seg-tab').forEach(t=>t.classList.toggle('active',t===tab));
+    const body=document.getElementById('ev-body');
+    body.innerHTML='';
+    if(ctype==='widget') buildWidgetForm(body,null);
+    else if(ctype==='folder') buildFolderForm(body,null);
+    else buildAppForm(body,null);
+  });
+});
+
+/* ══ al-filter wiring ══ */
 {
   const s=document.getElementById('al-search');
   if(s)s.addEventListener('input',()=>{_flt.q=s.value.trim();render();});
@@ -481,21 +532,28 @@ document.getElementById('mcls').onclick=closeModal;
     c.addEventListener('click',()=>{_flt.type=c.dataset.flt;_syncFilterUI();render();});
   });
 }
-document.getElementById('mcan').onclick=closeModal;
-/* Use pointerdown/pointerup instead of click to prevent iOS Safari ghost taps
-   from dismissing the modal when tapping non-interactive content inside it.
-   Only close if the gesture both started and ended on the backdrop itself. */
-let _ovDownTarget=null;
-document.getElementById('ov').addEventListener('pointerdown',e=>{_ovDownTarget=e.target;});
-document.getElementById('ov').addEventListener('pointerup',e=>{const ov=document.getElementById('ov');if(_ovDownTarget===ov&&e.target===ov)closeModal();_ovDownTarget=null;});
+
+/* ══ Export/Import ══ */
+document.getElementById('btn-exp').onclick=async()=>{
+  try{
+    const a=document.createElement('a');
+    a.href=API+'/api/config/export';
+    a.download='stackyard-config.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  }catch(e){toast('Export failed: '+e.message,'err');}
+};
+document.getElementById('imp').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{const d=JSON.parse(await f.text());if(!d.items)throw new Error('Invalid');
+    items=d.items;await save();toast('Imported');}
+  catch(e){toast('Import failed: '+e.message,'err');}
+  e.target.value='';
+};
+
+document.getElementById('btn-add').onclick=()=>openModal(null);
 function closeModal(){
-  const ov=document.getElementById('ov');
-  ov.classList.remove('open');
-  ov.setAttribute('aria-hidden','true');
-  document.removeEventListener('keydown',_modalKeydown,true);
-  if(_modalPrevFocus&&_modalPrevFocus.focus){ try{ _modalPrevFocus.focus(); }catch{} _modalPrevFocus=null; }
+  showListView();
   eid=null;
-  /* Reset widget state so stale values don't bleed into the next modal open */
   _wtype='custom';_wsize='medium';_wslots=[];_wnet={enabled:false,url:'',provider:'myspeed'};
   _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wbackupCfg={};_wstatsSubType='system-summary';_wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};_iframeOpts={};_wweatherCfg={city:'',lat:'',lon:'',units:'c',href:''};
 }
@@ -2742,6 +2800,12 @@ function loadSettings(c){
   if(brEl){brEl.value=bg.brightness??0.62;if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);
     brEl.addEventListener('input',()=>{if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);});}
   document.getElementById('bg-save').addEventListener('click',saveWallpaper);
+  /* Apply wallpaper bg to body */
+  const _bg=s.background||{};
+  if(_bg.type==='color'&&_bg.color) document.body.style.background=_bg.color;
+  else if(_bg.type==='url'&&_bg.url) document.body.style.background=`url(${_bg.url}) center/cover no-repeat`;
+  else document.body.style.background='';
+
   /* Populate General inline-edit value spans */
   const _sv=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'—';};
   _sv('ie-title-v',s.title||'Stackyard');
@@ -3084,9 +3148,7 @@ document.getElementById('imp').onchange=async e=>{
 
 document.getElementById('btn-add').onclick=()=>openModal(null);
 
-/* ══ Populate General value spans from loaded settings ══ */
-const _origLoadSettings=loadSettings;
-
+/* ══ Bottom init ══ */
 initNav();
 initAllInlineEdits();
 initVersion();
