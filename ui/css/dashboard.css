@@ -65,7 +65,7 @@
       -webkit-align-items:center; align-items:center;
       -webkit-justify-content:start; justify-content:start;
       overflow:hidden;
-      /* Vertical padding: top clears the clock bar, bottom clears the dock.
+      /* Vertical padding: top clears the controls bar, bottom clears the dock.
          clamp scales gracefully on taller/shorter screens. */
       padding:clamp(44px,4vh,70px) 270px clamp(110px,10vh,160px);
     }
@@ -189,14 +189,6 @@
       top:-7px; right:-7px;
       min-width:20px; height:20px; padding:0 5px;
       font-size:0.6875rem; font-weight:700;
-    }
-
-    /* ── Clock ── */
-    #clock {
-      position:fixed; top:14px; left:max(44px,calc((100vw - 1500px)/2)); z-index:200;
-      color:var(--label-color); font-size:0.8125rem;
-      text-shadow:var(--text-shadow-hvy);
-      pointer-events:none; -webkit-user-select:none; user-select:none;
     }
 
     /* ── Top-right controls ── */
