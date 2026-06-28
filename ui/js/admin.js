@@ -19,38 +19,7 @@ const ap=async(p,b)=>{const r=await fetch(API+p,{method:'POST',headers:{'Content
 const COLLAPSE_KEY='admin_collapsed';
 function loadCollapsed(){try{return JSON.parse(localStorage.getItem(COLLAPSE_KEY)||'{}');}catch{return{};}}
 function saveCollapsed(s){localStorage.setItem(COLLAPSE_KEY,JSON.stringify(s));}
-function initCards(){
-  const state=loadCollapsed();
-  document.querySelectorAll('.lh').forEach(lh=>{
-    const id=lh.id.replace('lh-','');
-    const body=document.getElementById('body-'+id);
-    if(!body)return;
-    /* card-body-server has display:flex in CSS which overrides display:none from .card-body.
-       For that card we manage visibility via inline style instead of class toggling. */
-    const useInlineDisplay=body.classList.contains('card-body-server');
-    const defaultOpen=(id==='apps');
-    const isOpen=state[id]!==undefined?state[id]:defaultOpen;
-    if(useInlineDisplay){
-      body.style.display=isOpen?'flex':'none';
-      if(isOpen) lh.classList.add('open');
-    } else {
-      if(isOpen){lh.classList.add('open');body.classList.add('open');}
-    }
-    lh.setAttribute('aria-expanded', String(isOpen));
-    const toggle=()=>{
-      const open=lh.classList.toggle('open');
-      if(useInlineDisplay){
-        body.style.display=open?'flex':'none';
-      } else {
-        body.classList.toggle('open',open);
-      }
-      lh.setAttribute('aria-expanded', String(open));
-      const s=loadCollapsed();s[id]=open;saveCollapsed(s);
-    };
-    lh.addEventListener('click',toggle);
-    lh.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
-  });
-}
+function initCards(){}
 
 async function checkAuth() {
   try {
@@ -190,7 +159,7 @@ function clearDragClasses(target){
 }
 
 function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
-  const row=document.createElement('div');row.className='row';
+  const row=document.createElement('div');row.className='row drow';
   if(indent)row.style.cssText='padding-left:28px;background:rgba(255,255,255,.02);border-left:2px solid var(--bd);margin-left:8px;border-radius:0 var(--rs) var(--rs) 0;';
   const _filtering=!!(_flt.q||_flt.type!=='all');
   row.draggable=!_filtering;
@@ -2761,11 +2730,17 @@ function loadSettings(c){
     typeEl.addEventListener('change',()=>showBgFields(typeEl.value));}
   /* Unsplash API key — fetch whether one is configured via dedicated endpoint
      (the key itself is never included in /api/config to avoid exposure) */
-  const apiEl=document.getElementById('bg-apikey');
+  const apiEl=(document.getElementById('bg-apikey-inp')||document.getElementById('bg-apikey'));
   if(apiEl){
     apiEl.placeholder='●●●●●●●●●● (configured)';
     ag('/api/settings/unsplash-key').then(d=>{
-      if(!d.configured)apiEl.placeholder='Paste your Unsplash API key';
+      const vEl=document.getElementById('ie-apikey-v');
+      if(!d.configured){
+        apiEl.placeholder='Paste your Unsplash API key';
+        if(vEl)vEl.textContent='Not set';
+      }else{
+        if(vEl)vEl.textContent='Configured';
+      }
     }).catch(()=>{});
   }
   const colEl=document.getElementById('bg-col');if(colEl)colEl.value=bg.collection||'';
@@ -2776,6 +2751,25 @@ function loadSettings(c){
   if(brEl){brEl.value=bg.brightness??0.62;if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);
     brEl.addEventListener('input',()=>{if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);});}
   document.getElementById('bg-save').addEventListener('click',saveWallpaper);
+  /* Populate General inline-edit value spans */
+  const _sv=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'—';};
+  _sv('ie-title-v',s.title||'Stackyard');
+  _sv('ie-desc-v',s.description||'Stackyard · self-hosted homelab dashboard');
+  _sv('ie-ip-v',s.server?.hostIp);
+  _sv('ie-socket-v',s.server?.socketProxyUrl);
+  _sv('ie-pw-v',undefined); /* set below after auth check */
+  /* Sync hidden input values used by save */
+  const _si=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+  _si('srv-ip',s.server?.hostIp||'');
+  _si('srv-socket',s.server?.socketProxyUrl||'');
+  /* Appearance */
+  _sv('ie-bgcol-v',s.background?.collection||'—');
+  _si('bg-col-inp',s.background?.collection||'');
+  _si('bg-url-inp',s.background?.url||'');
+  _si('bg-color-inp',s.background?.color||'');
+  if(s.background?.url)_sv('ie-bgurl-v',s.background.url);
+  if(s.background?.color)_sv('ie-bgcolor-v',s.background.color);
+
   const ipEl=document.getElementById('srv-ip');if(ipEl)ipEl.value=s.server?.hostIp||'';
   const dockerEnEl=document.getElementById('srv-docker-en');
   const dockerSubEl=document.getElementById('srv-docker-sub');
@@ -2793,11 +2787,15 @@ function loadSettings(c){
   }
   if(dockerEnEl){
     dockerEnEl.checked=!!(s.server?.socketProxyUrl);
-    if(dockerSubEl)dockerSubEl.classList.toggle('open',dockerEnEl.checked);
-    if(hideHealthyRowEl)hideHealthyRowEl.style.display=dockerEnEl.checked?'':'none';
+    const applyDocker=v=>{
+      if(dockerSubEl)dockerSubEl.classList.toggle('open',v);
+      if(hideHealthyRowEl)hideHealthyRowEl.style.display=v?'':'none';
+      const socketRow=document.getElementById('ie-socket');
+      if(socketRow)socketRow.style.display=v?'':'none';
+    };
+    applyDocker(dockerEnEl.checked);
     dockerEnEl.addEventListener('change',()=>{
-      if(dockerSubEl)dockerSubEl.classList.toggle('open',dockerEnEl.checked);
-      if(hideHealthyRowEl)hideHealthyRowEl.style.display=dockerEnEl.checked?'':'none';
+      applyDocker(dockerEnEl.checked);
       applyGlobalHealthState(dockerEnEl.checked);
     });
   }
@@ -2830,10 +2828,11 @@ function loadSettings(c){
   ag('/api/auth/check').then(d=>{
     if(secEnEl){
       secEnEl.checked=!!(d.enabled);
-      if(d.enabled&&secSubEl)openSecSub();
+      const pwRow=document.getElementById('ie-pw');
+      if(pwRow)pwRow.style.display=d.enabled?'':'none';
     }
-    const secPw=document.getElementById('sec-pw');
-    if(secPw)secPw.placeholder=d.passwordSet?'●●●●●●●●●● (configured)':'New password (min 8 characters)';
+    const pwValEl=document.getElementById('ie-pw-v');
+    if(pwValEl)pwValEl.textContent=d.passwordSet?'Configured':'Not set';
     const secLogout=document.getElementById('sec-logout');
     if(secLogout&&d.enabled)secLogout.style.display='';
     secLogout?.addEventListener('click',async()=>{
@@ -2865,17 +2864,17 @@ async function saveWallpaper(){
     const br=parseFloat(document.getElementById('bg-br')?.value||'0.62');
     const bg={type,brightness:br};
     if(type==='unsplash'){
-      bg.collection=document.getElementById('bg-col')?.value?.trim()||'';
+      bg.collection=(document.getElementById('bg-col-inp')||document.getElementById('bg-col'))?.value?.trim()||'';
     }
-    else if(type==='url'){bg.url=document.getElementById('bg-url')?.value?.trim()||'';}
-    else if(type==='color'){bg.color=document.getElementById('bg-color')?.value?.trim()||'';}
+    else if(type==='url'){bg.url=(document.getElementById('bg-url-inp')||document.getElementById('bg-url'))?.value?.trim()||'';}
+    else if(type==='color'){bg.color=(document.getElementById('bg-color-inp')||document.getElementById('bg-color'))?.value?.trim()||'';}
     /* Save main config first */
     const c=await ag('/api/config');c.settings=c.settings||{};c.settings.background=bg;
     await ap('/api/config',c);
     /* Save Unsplash key separately AFTER main config — the GET /api/config strips the key,
        so saving it before would cause the subsequent config write to overwrite it with nothing */
     if(type==='unsplash'){
-      const keyVal=document.getElementById('bg-apikey')?.value?.trim()||'';
+      const keyVal=(document.getElementById('bg-apikey-inp')||document.getElementById('bg-apikey'))?.value?.trim()||'';
       if(keyVal) await ap('/api/settings/unsplash-key',{apiKey:keyVal});
     }
     toast('Wallpaper saved');
@@ -2886,6 +2885,11 @@ async function saveServer(){
     const c=await ag('/api/config');c.settings=c.settings||{};
     const dockerEnabled=document.getElementById('srv-docker-en')?.checked||false;
     const socketUrl=document.getElementById('srv-socket')?.value?.trim()||'';
+    /* Title / description from inline-edit value spans (committed on blur) */
+    const titleV=document.getElementById('ie-title-v')?.textContent?.trim()||'';
+    const descV=document.getElementById('ie-desc-v')?.textContent?.trim()||'';
+    if(titleV&&titleV!=='—') c.settings.title=titleV;
+    if(descV&&descV!=='—') c.settings.description=descV;
     c.settings.server={
       ...c.settings.server,
       hostIp:document.getElementById('srv-ip')?.value?.trim()||'',
@@ -2912,8 +2916,181 @@ async function saveServer(){
   }catch(e){toast('Save failed: '+e.message,'err');}
 }
 
+/* ══ Nav ══ */
+function initNav(){
+  const links=document.querySelectorAll('.nl');
+  const STORE='admin_sec';
+  const stored=localStorage.getItem(STORE)||'general';
+  function show(id){
+    document.querySelectorAll('.sec').forEach(s=>{s.hidden=s.id!=='sec-'+id;});
+    links.forEach(l=>l.classList.toggle('active',l.dataset.sec===id));
+    localStorage.setItem(STORE,id);
+  }
+  links.forEach(l=>l.addEventListener('click',()=>show(l.dataset.sec)));
+  show(stored);
+}
+
+/* ══ Inline edit rows ══
+   Each .ie-row has: .rl (label), .rv (value span), .pe (pencil btn).
+   On pencil click: hide .rv and .pe, insert <input> in place, focus it.
+   On blur/Enter: restore value span with new text, remove input. */
+function initInlineEdit(rowId,inputId,{type='text',placeholder='',onCommit}={}){
+  const row=document.getElementById(rowId);
+  const inp=document.getElementById(inputId);
+  if(!row||!inp) return;
+  const valEl=row.querySelector('.rv');
+  const pen=row.querySelector('.pe');
+  if(!valEl||!pen) return;
+
+  /* Move input into row */
+  inp.type=type;
+  inp.placeholder=placeholder;
+  inp.className='row-inp';
+  inp.style.display='';
+  inp.style.cssText='';
+  row.insertBefore(inp,pen);
+
+  function open(){
+    if(row.classList.contains('editing')) return;
+    row.classList.add('editing');
+    inp.value=valEl.textContent==='—'?'':valEl.textContent;
+    inp.focus();inp.select?.();
+  }
+  function commit(){
+    if(!row.classList.contains('editing')) return;
+    row.classList.remove('editing');
+    const v=inp.value.trim();
+    valEl.textContent=v||'—';
+    onCommit?.(v);
+  }
+
+  pen.addEventListener('click',open);
+  inp.addEventListener('blur',commit);
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();commit();}
+    if(e.key==='Escape'){e.preventDefault();row.classList.remove('editing');}
+  });
+}
+
+function initAllInlineEdits(){
+  initInlineEdit('ie-title','ie-input',{placeholder:'Stackyard',
+    onCommit(v){document.getElementById('ie-title-v').textContent=v||'Stackyard';}});
+
+  /* desc uses a second input — create one */
+  const descInp=document.createElement('input');descInp.id='ie-desc-input';document.body.appendChild(descInp);
+  initInlineEdit('ie-desc','ie-desc-input',{placeholder:'Stackyard · self-hosted homelab dashboard'});
+
+  initInlineEdit('ie-ip','srv-ip',{placeholder:'192.168.1.100'});
+  initInlineEdit('ie-socket','srv-socket',{placeholder:'tcp://socket-proxy:2375'});
+
+  /* Password inline edit with strength meter */
+  initInlineEdit('ie-pw','sec-pw',{type:'password',placeholder:'New password (min 8 chars)',
+    onCommit(){
+      const bars=document.getElementById('sec-pw-bars');
+      const hint=document.getElementById('sec-pw-hint');
+      if(bars) bars.style.display='none';
+      if(hint) hint.style.display='none';
+    }});
+  const pwInp=document.getElementById('sec-pw');
+  if(pwInp){
+    pwInp.addEventListener('input',()=>{
+      const bars=document.getElementById('sec-pw-bars');
+      const hint=document.getElementById('sec-pw-hint');
+      if(bars){bars.style.display='flex';}
+      if(hint){hint.style.display='block';}
+      wirePasswordStrength('sec-pw','sec-pw-bars','sec-pw-hint');
+    },{once:true});
+  }
+
+  /* Appearance inline edits */
+  const apiInp=document.createElement('input');apiInp.id='bg-apikey-inp';document.body.appendChild(apiInp);
+  initInlineEdit('ie-apikey','bg-apikey-inp',{placeholder:'Paste your Unsplash API key'});
+
+  const colInp=document.createElement('input');colInp.id='bg-col-inp';document.body.appendChild(colInp);
+  initInlineEdit('ie-bgcol','bg-col-inp',{placeholder:'AGVpqBZnzUE'});
+
+  const urlInp=document.createElement('input');urlInp.id='bg-url-inp';urlInp.type='url';document.body.appendChild(urlInp);
+  initInlineEdit('ie-bgurl','bg-url-inp',{placeholder:'https://example.com/photo.jpg'});
+
+  const colorInp=document.createElement('input');colorInp.id='bg-color-inp';document.body.appendChild(colorInp);
+  initInlineEdit('ie-bgcolor','bg-color-inp',{placeholder:'#0d1117'});
+}
+
+/* ══ Version display ══ */
+async function initVersion(){
+  try{
+    const d=await ag('/api/version');
+    const v=d.current||d.version||'';
+    if(v){
+      const vEl=document.getElementById('sidebar-version');
+      const aEl=document.getElementById('about-version');
+      if(vEl)vEl.textContent=v;
+      if(aEl)aEl.textContent='Version '+v;
+      if(d.updateAvailable){
+        const dot=document.getElementById('about-update-dot');
+        if(dot)dot.style.display='flex';
+      }
+    }
+  }catch{}
+}
+
+/* ══ Password Protection toggle shows/hides password row ══ */
+function initSecToggle(){
+  const en=document.getElementById('sec-en');
+  const pwRow=document.getElementById('ie-pw');
+  if(!en||!pwRow)return;
+  function apply(on){pwRow.style.display=on?'':'none';}
+  apply(en.checked);
+  en.addEventListener('change',()=>apply(en.checked));
+}
+
+/* ══ Docker toggle shows/hides socket + hide-healthy rows ══ */
+function initDockerToggle(){
+  const en=document.getElementById('srv-docker-en');
+  const hideRow=document.getElementById('srv-hide-healthy-row');
+  const socketRow=document.getElementById('ie-socket');
+  if(!en)return;
+  function apply(on){
+    if(hideRow)hideRow.style.display=on?'':'none';
+    if(socketRow)socketRow.style.display=on?'':'none';
+  }
+  apply(en.checked);
+  en.addEventListener('change',()=>apply(en.checked));
+}
+
+/* ══ Wallpaper source toggle ══ */
+function initBgType(){
+  const sel=document.getElementById('bg-type');
+  if(!sel)return;
+  sel.addEventListener('change',()=>showBgFields(sel.value));
+}
+
+/* ══ Dashboard Save ══ */
+const dashSaveEl=document.getElementById('dash-save');
+if(dashSaveEl)dashSaveEl.onclick=()=>save();
+
+/* ══ Export/Import ══ */
+document.getElementById('btn-exp').onclick=()=>{location.href=API+'/api/config/export';};
+document.getElementById('imp').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{const d=JSON.parse(await f.text());if(!d.items)throw new Error('Invalid');
+    items=d.items;await save();toast('Imported');}
+  catch(e){toast('Import failed: '+e.message,'err');}
+  e.target.value='';
+};
+
 document.getElementById('btn-add').onclick=()=>openModal(null);
-initCards();
+
+/* ══ Populate General value spans from loaded settings ══ */
+const _origLoadSettings=loadSettings;
+
+initNav();
+initAllInlineEdits();
+initVersion();
+initSecToggle();
+initDockerToggle();
+initBgType();
+
 checkAuth().then(ok => {
   if (!ok) return;
   load().catch(e=>{
