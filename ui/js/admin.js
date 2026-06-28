@@ -403,15 +403,6 @@ function _syncFilterUI(){
   });
 }
 
-document.getElementById('btn-exp').onclick=()=>{location.href=API+'/api/config/export';};
-document.getElementById('imp').onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!d.items)throw new Error('Invalid');
-    items=d.items;await save();toast('Imported');}
-  catch(e){toast('Import failed: '+e.message,'err');}
-  e.target.value='';
-};
-
 /* ══ MODAL ══ */
 /* Associate dynamically-built modal fields with their labels and give every
    toggle an accessible name from its row text. Idempotent; safe to re-run. */
@@ -2792,6 +2783,8 @@ function loadSettings(c){
       if(hideHealthyRowEl)hideHealthyRowEl.style.display=v?'':'none';
       const socketRow=document.getElementById('ie-socket');
       if(socketRow)socketRow.style.display=v?'':'none';
+      const socketHint=document.getElementById('socket-hint');
+      if(socketHint)socketHint.style.display=v?'':'none';
     };
     applyDocker(dockerEnEl.checked);
     dockerEnEl.addEventListener('change',()=>{
@@ -2829,12 +2822,14 @@ function loadSettings(c){
     if(secEnEl){
       secEnEl.checked=!!(d.enabled);
       const pwRow=document.getElementById('ie-pw');
+      const pwHint=document.getElementById('pw-hint-static');
       if(pwRow)pwRow.style.display=d.enabled?'':'none';
+      if(pwHint)pwHint.style.display=d.enabled?'':'none';
     }
     const pwValEl=document.getElementById('ie-pw-v');
     if(pwValEl)pwValEl.textContent=d.passwordSet?'Configured':'Not set';
     const secLogout=document.getElementById('sec-logout');
-    if(secLogout&&d.enabled)secLogout.style.display='';
+    if(secLogout&&d.enabled){secLogout.classList.remove('d-none');}
     secLogout?.addEventListener('click',async()=>{
       await ap('/api/auth/logout',{}).catch(()=>{});
       location.reload();
@@ -2909,9 +2904,6 @@ async function saveServer(){
       if(pwEl){pwEl.value='';pwEl.placeholder='●●●●●●●●●● (configured)';}
     }
     await ap('/api/auth/toggle',{enabled});
-    const secLogout=document.getElementById('sec-logout');
-    if(secLogout)secLogout.style.display=enabled?'':'none';
-
     toast('Saved');
   }catch(e){toast('Save failed: '+e.message,'err');}
 }
@@ -3038,8 +3030,12 @@ async function initVersion(){
 function initSecToggle(){
   const en=document.getElementById('sec-en');
   const pwRow=document.getElementById('ie-pw');
-  if(!en||!pwRow)return;
-  function apply(on){pwRow.style.display=on?'':'none';}
+  const pwHint=document.getElementById('pw-hint-static');
+  if(!en)return;
+  function apply(on){
+    if(pwRow)pwRow.style.display=on?'':'none';
+    if(pwHint)pwHint.style.display=on?'':'none';
+  }
   apply(en.checked);
   en.addEventListener('change',()=>apply(en.checked));
 }
@@ -3070,7 +3066,14 @@ const dashSaveEl=document.getElementById('dash-save');
 if(dashSaveEl)dashSaveEl.onclick=()=>save();
 
 /* ══ Export/Import ══ */
-document.getElementById('btn-exp').onclick=()=>{location.href=API+'/api/config/export';};
+document.getElementById('btn-exp').onclick=async()=>{
+  try{
+    const a=document.createElement('a');
+    a.href=API+'/api/config/export';
+    a.download='stackyard-config.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  }catch(e){toast('Export failed: '+e.message,'err');}
+};
 document.getElementById('imp').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d.items)throw new Error('Invalid');
