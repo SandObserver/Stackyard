@@ -61,7 +61,7 @@ function showLoginScreen() {
 function pwStrength(pw) {
   const dim = 'rgba(255,255,255,.1)';
   if (!pw) return { score:0, label:'', color:dim, ok:false };
-  if (pw.length < 8) return { score:1, label:'Too short — min 8 characters', color:'#ff453a', ok:false };
+  if (pw.length < 8) return { score:1, label:'Too short, min 8 characters', color:'#ff453a', ok:false };
   let score = 1; /* starts at 1 once length >= 8 */
   if (pw.length >= 12) score++;
   if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
@@ -433,6 +433,10 @@ const TYPE_ICONS={
   folder:'<rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"/><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"/><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"/><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"/>'
 };
 const TYPE_LABELS={app:'App',widget:'Widget',folder:'Folder'};
+
+/* Edit (square-pen) and select (up/down) glyphs traced from the PSD. */
+const PE_SVG='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
+const CHEV_SVG='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
 let _evItem=null,_evIsEdit=false;
 
@@ -839,7 +843,7 @@ function _renderWeatherConfig(body){
       _wweatherCfg.city=JSON.parse(resultSel.value).label;
       _wweatherCfg.lat=JSON.parse(resultSel.value).lat;
       _wweatherCfg.lon=JSON.parse(resultSel.value).lon;
-      msg.textContent=results.length+' match(es) — pick one.'; msg.style.color='#008932';
+      msg.textContent=results.length+' match(es), pick one.'; msg.style.color='#008932';
     }catch(e){ msg.textContent='Search failed: '+e.message; msg.style.color='#e9152d'; }
     finally{ btn.disabled=false;btn.textContent='Search'; }
   }
@@ -914,7 +918,7 @@ function _renderStatsBody(body){
         sel.className='fc';sel.style.flex='1';sel.dataset.bay=i;
         sel.id='dh-bay-'+i; lbl.setAttribute('for', sel.id); sel.setAttribute('aria-label','Bay '+(i+1));
         const emptyOpt=document.createElement('option');
-        emptyOpt.value='';emptyOpt.textContent='— Empty —';
+        emptyOpt.value='';emptyOpt.textContent='Empty';
         sel.appendChild(emptyOpt);
         _items.forEach(it=>{
           const opt=document.createElement('option');
@@ -922,7 +926,7 @@ function _renderStatsBody(body){
           const cap=it.capacity
             ?(it.capacity>=1e12?(it.capacity/1e12).toFixed(1)+' TB':(it.capacity/1e9).toFixed(0)+' GB')
             :'';
-          opt.textContent=it.label+(cap?' — '+cap:'');
+          opt.textContent=it.label+(cap?' - '+cap:'');
           sel.appendChild(opt);
         });
         /* keep current assignment even if items not yet loaded */
@@ -990,7 +994,7 @@ function _renderStatsBody(body){
               <button type="button" id="dh-load" class="btn bg sm" style="flex-shrink:0;white-space:nowrap">Fetch Pools</button>
             </div></div>
           <div class="fr"><label for="dh-key">API Key</label>
-            <input class="fc" id="dh-key" type="password" placeholder="${_wdiskCfg.truenasKeySet?'•••••• (saved — re-enter to change)':'paste API key'}" value=""></div>
+            <input class="fc" id="dh-key" type="password" placeholder="${_wdiskCfg.truenasKeySet?'•••••• (saved, re-enter to change)':'paste API key'}" value=""></div>
           <div class="fr"><label for="dh-href">Link URL <span style="opacity:.45;font-weight:400">(optional)</span></label>
             <input class="fc" id="dh-href" type="text" placeholder="https://truenas/ui/storage" value="${esc(_wdiskCfg.truenasHref||'')}"></div>`;
         fieldArea.querySelector('#dh-load').onclick=loadTrueNas;
@@ -1087,10 +1091,10 @@ function _renderStatsBody(body){
     body.appendChild(card);
   });
 
-  /* ── Slot 4 — Network Speed ── */
+  /* ── Slot 4: Network Speed ── */
   const netCard=document.createElement('div');netCard.className='slot-card';
   const netHdr=document.createElement('div');netHdr.className='slot-hd';
-  const netLbl=document.createElement('div');netLbl.className='slot-lbl';netLbl.textContent='Slot 4 — Network Speed';
+  const netLbl=document.createElement('div');netLbl.className='slot-lbl';netLbl.textContent='Slot 4: Network Speed';
   const netTog=document.createElement('label');netTog.className='tog';
   const netCb=document.createElement('input');netCb.type='checkbox';netCb.checked=_wnet.enabled;
   const netTr=document.createElement('div');netTr.className='tr';
@@ -1142,7 +1146,7 @@ function _renderStatsBody(body){
   passRow.style.display=isMySpeed?'':'none';
   passRow.innerHTML=`<label>Password <span style="opacity:.45;font-weight:400">(optional)</span></label>
     <input class="fc" id="net-pass" type="password"
-      placeholder="${_wnet.myspeedPassSet?'••••••••  (saved — leave blank to keep)':'Leave blank if no password set'}"
+      placeholder="${_wnet.myspeedPassSet?'••••••••  (saved, leave blank to keep)':'Leave blank if no password set'}"
       autocomplete="new-password">
     <div class="hint">Only required if you set a password in MySpeed settings.</div>`;
   netSub.appendChild(passRow);
@@ -1174,7 +1178,7 @@ function _mkTempFields(idx){
   df.innerHTML=`<div class="fr fr-mb0">
     <label>Thermal zone <span class="opt-span">(default: 0)</span></label>
     <input class="fc slot-temp-zone zone-input" type="number" min="0" max="20" value="${zone}">
-    <div class="hint">Zone 0 is correct for most systems. Only change this if the temperature shown is wrong — check <code>/sys/class/thermal/</code> on your host to find the right zone number.</div></div>`;
+    <div class="hint">Zone 0 is correct for most systems. Only change this if the temperature shown is wrong. Check <code>/sys/class/thermal/</code> on your host to find the right zone number.</div></div>`;
   df.querySelector('.slot-temp-zone').oninput=e=>{
     _wslots[idx].thermalZone=parseInt(e.target.value,10)||0;
   };
@@ -1339,7 +1343,7 @@ function _renderMapConfig(body){
     list.innerHTML='';
     if(!_wmapCfg.services.length){
       const empty=document.createElement('div');empty.className='hint';empty.style.cssText='padding:10px 0 14px;opacity:.7;';
-      empty.textContent='No services yet — add one below.';
+      empty.textContent='No services yet. Add one below.';
       list.appendChild(empty);
     }
     _wmapCfg.services.forEach((svc,i)=>list.appendChild(card(svc,i)));
@@ -1496,7 +1500,7 @@ function _customDrop(container, opt){
   const labelFor=v=>{ const it=items.find(i=>String(i.value)===String(v)); return it?it.label:null; };
   const setText=()=>{
     const t=labelFor(curVal);
-    btn.textContent = opt.disabled ? (opt.placeholder||'—') : (t!=null?t:(opt.placeholder||'— none —'));
+    btn.textContent = opt.disabled ? (opt.placeholder||'') : (t!=null?t:(opt.placeholder||'None'));
     btn.value = (opt.disabled || curVal==null) ? '' : String(curVal);
   };
   setText();
@@ -1577,7 +1581,7 @@ function _renderBackupConfig(body){
     const label = isFirst ? `Set as default ${PLABEL(prov)} instance`
                           : `Use default ${PLABEL(prov)} settings`;
     const desc  = isFirst ? `Other ${PLABEL(prov)} instances can reuse this connection.`
-                          : `Reuse the default ${PLABEL(prov)} container — turn off to set its own.`;
+                          : `Reuse the default ${PLABEL(prov)} container. Turn off to set its own.`;
     const row=document.createElement('div'); row.className='trow';
     row.innerHTML=`<div><div class="tlbl">${label}</div><div class="tdsc">${desc}</div></div>
       <label class="tog"><input type="checkbox" id="bak-def-${si}" ${slot.useDefault!==false?'checked':''}
@@ -1661,7 +1665,7 @@ function _renderBackupConfig(body){
       const passWrap=document.createElement('div');passWrap.className='fr';
       passWrap.innerHTML=`<label for="dup-pass-${si}">Password <span class="opt-span">(${(slot.dupPassSet||slot.dupPass)?'saved':'optional'})</span></label>
         <input class="fc" id="dup-pass-${si}" type="password" autocomplete="new-password"
-          placeholder="${(slot.dupPassSet||slot.dupPass)?'\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf  (saved — leave blank to keep)':'Enter if required'}">`;
+          placeholder="${(slot.dupPassSet||slot.dupPass)?'\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf  (saved, leave blank to keep)':'Enter if required'}">`;
       div.appendChild(passWrap);
 
       const hrefWrap=document.createElement('div');hrefWrap.className='fr';
@@ -1730,7 +1734,7 @@ function _renderBackupConfig(body){
       const passWrap=document.createElement('div');passWrap.className='fr';
       passWrap.innerHTML=`<label for="kopia-pass-${si}">Password <span class="opt-span">(${(slot.kopiaPassSet||slot.kopiaPass)?'saved':'optional'})</span></label>
         <input class="fc" id="kopia-pass-${si}" type="password" autocomplete="new-password"
-          placeholder="${(slot.kopiaPassSet||slot.kopiaPass)?'\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf  (saved — leave blank to keep)':'Enter if required'}">`;
+          placeholder="${(slot.kopiaPassSet||slot.kopiaPass)?'\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf  (saved, leave blank to keep)':'Enter if required'}">`;
       div.appendChild(passWrap);
 
       const hrefWrap=document.createElement('div');hrefWrap.className='fr';
@@ -1785,11 +1789,11 @@ function _renderBackupConfig(body){
     if(!slot.dupJobList.length){
       const saved = slot.jobId ? (slot.customName || slot.jobId) : '';
       _customDrop(container,{idBase:`dup-job-${si}`,label:'Job',items:[],value:'',
-        placeholder: saved ? `${saved} — fetch to change` : '— fetch jobs first —', disabled:true});
+        placeholder: saved ? `${saved}, fetch to change` : 'Fetch jobs first', disabled:true});
       return;
     }
-    const items=[{value:'',label:'— none —'}].concat(slot.dupJobList.map(j=>({value:String(j.id),label:j.name})));
-    _customDrop(container,{idBase:`dup-job-${si}`,label:'Job',items,value:slot.jobId||'',placeholder:'— none —',
+    const items=[{value:'',label:'None'}].concat(slot.dupJobList.map(j=>({value:String(j.id),label:j.name})));
+    _customDrop(container,{idBase:`dup-job-${si}`,label:'Job',items,value:slot.jobId||'',placeholder:'None',
       onChange:v=>{ slot.jobId=v||null; }});
   }
 
@@ -1798,11 +1802,11 @@ function _renderBackupConfig(body){
     if(!slot.kopiaSrcList.length){
       const saved = slot.jobId ? (slot.customName || slot.jobId) : '';
       _customDrop(container,{idBase:`kopia-src-${si}`,label:'Source',items:[],value:'',
-        placeholder: saved ? `${saved} — fetch to change` : '— fetch sources first —', disabled:true});
+        placeholder: saved ? `${saved}, fetch to change` : 'Fetch sources first', disabled:true});
       return;
     }
-    const items=[{value:'',label:'— none —'}].concat(slot.kopiaSrcList.map(src=>({value:src.id,label:src.name})));
-    _customDrop(container,{idBase:`kopia-src-${si}`,label:'Source',items,value:slot.jobId||'',placeholder:'— none —',
+    const items=[{value:'',label:'None'}].concat(slot.kopiaSrcList.map(src=>({value:src.id,label:src.name})));
+    _customDrop(container,{idBase:`kopia-src-${si}`,label:'Source',items,value:slot.jobId||'',placeholder:'None',
       onChange:v=>{ slot.jobId=v||null; }});
   }
 
@@ -1828,16 +1832,16 @@ function buildFolderForm(body,item){
     <div class="grp">
       <div class="row ie-row" id="ie-fname">
         <span class="rl">Folder Name</span>
-        <span class="rv">${esc(item?.label||'')||'—'}</span>
+        <span class="rv${item?.label?'':' is-ph'}">${esc(item?.label||'My Folder')}</span>
         <input id="f-fname" type="text" value="${esc(item?.label||'')}" style="display:none">
-        <button class="pe" type="button" aria-label="Edit folder name">&#9998;</button>
+        <button class="pe" type="button" aria-label="Edit folder name">${PE_SVG}</button>
       </div>
       <div class="row">
         <span class="rl">Add Apps</span>
         <div class="row-dd" id="folder-apps-dd">
           <button class="row-dd-btn" id="folder-apps-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
             <span id="folder-apps-label">Select apps</span>
-            <svg class="dd-chev dd-chev2" width="10" height="14" viewBox="0 0 10 14" fill="currentColor" aria-hidden="true"><path d="M5 0l4 5H1z"/><path d="M5 14l4-5H1z"/></svg>
+            ${CHEV_SVG}
           </button>
           <ul class="row-dd-list checklist" id="folder-apps-list" role="listbox" aria-multiselectable="true" aria-label="Apps in this folder" hidden>${opts}</ul>
         </div>
@@ -1879,289 +1883,227 @@ function _wireFolderApps(){
   sync();
 }
 
+/* ── Reusable color control (PSD: swatch row + Hue/Saturation/Brightness + Color Code).
+   Operates in hex, resolves named CSS colors, calls onChange(hex) on any change.
+   Used by the Icon, Fixed Label and Live Activity sections and the Widget slots. ── */
+const CC_SWATCHES=['#1c1c1e','#8e8e93','#f2f2f7','#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'];
+const _ccIco={
+  hueLo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
+  hueHi:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
+  satLo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/></svg>',
+  satHi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
+  brLo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 5V3M12 21v-2M5 12H3M21 12h-2M6.5 6.5 5.4 5.4M18.6 18.6l-1.1-1.1M17.5 6.5l1.1-1.1M5.4 18.6l1.1-1.1"/></svg>',
+  brHi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="5"/><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4"/></svg>',
+};
+function _hsvToRgb(h,s,v){ s/=100;v/=100; const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c; let r,g,b; h%=360; if(h<0)h+=360;
+  if(h<60)[r,g,b]=[c,x,0];else if(h<120)[r,g,b]=[x,c,0];else if(h<180)[r,g,b]=[0,c,x];else if(h<240)[r,g,b]=[0,x,c];else if(h<300)[r,g,b]=[x,0,c];else[r,g,b]=[c,0,x];
+  return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)]; }
+function _hsvToHex(h,s,v){ return '#'+_hsvToRgb(h,s,v).map(n=>n.toString(16).padStart(2,'0')).join(''); }
+function _cssToHex(str){ try{ const c=document.createElement('canvas').getContext('2d'); c.fillStyle='#000'; c.fillStyle=str; const v=c.fillStyle;
+  if(/^#[0-9a-f]{6}$/i.test(v))return v;
+  const m=v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  return m?'#'+[m[1],m[2],m[3]].map(n=>(+n).toString(16).padStart(2,'0')).join(''):null; }catch{return null;} }
+function _hexToHsv(hex){ const h6=_cssToHex(hex); if(!h6)return null;
+  const r=parseInt(h6.slice(1,3),16)/255,g=parseInt(h6.slice(3,5),16)/255,b=parseInt(h6.slice(5,7),16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0;
+  if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
+  return {h:Math.round(h),s:Math.round(mx?d/mx*100:0),v:Math.round(mx*100)}; }
+
+function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semantic=false}={}){
+  const isSem=v=>v==='dark'||v==='light';
+  const init=_hexToHsv(isSem(value)?'#0289ff':value)||{h:212,s:99,v:100};
+  const swatches = semantic
+    ? `<button type="button" class="cc-swatch cc-sem" data-v="dark" style="background:#1c1c1e" title="Dark (theme)" aria-label="Dark"></button>
+       <button type="button" class="cc-swatch cc-sem" data-v="light" style="background:#f2f2f7" title="Light (theme)" aria-label="Light"></button>
+       <button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
+       ${['#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'].map(h=>`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`).join('')}`
+    : `<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
+       ${CC_SWATCHES.map(h=>`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`).join('')}`;
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`
+    <div class="row cc-row"><span class="rl">Color</span><div class="cc-sw">${swatches}</div></div>
+    <div class="row hsb-row cc-tune"><span class="rl">Hue</span><div class="hsb-track"><span class="hsb-ico">${_ccIco.hueLo}</span><input type="range" class="hsb-range hsb-hue" id="${idPrefix}-h" min="0" max="360" value="${init.h}" aria-label="Hue"><span class="hsb-ico">${_ccIco.hueHi}</span></div></div>
+    <div class="row hsb-row cc-tune"><span class="rl">Saturation</span><div class="hsb-track"><span class="hsb-ico">${_ccIco.satLo}</span><input type="range" class="hsb-range" id="${idPrefix}-s" min="0" max="100" value="${init.s}" aria-label="Saturation"><span class="hsb-ico">${_ccIco.satHi}</span></div></div>
+    <div class="row hsb-row cc-tune"><span class="rl">Brightness</span><div class="hsb-track"><span class="hsb-ico">${_ccIco.brLo}</span><input type="range" class="hsb-range" id="${idPrefix}-v" min="0" max="100" value="${init.v}" aria-label="Brightness"><span class="hsb-ico">${_ccIco.brHi}</span></div></div>
+    <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">Color Code</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" style="display:none"><button class="pe" type="button" aria-label="Edit color code">${PE_SVG}</button></div>`;
+  const rows=[...wrap.children]; rows.forEach(r=>container.appendChild(r));
+  const q=sel=>container.querySelector(sel);
+  const hEl=q(`#${idPrefix}-h`),sEl=q(`#${idPrefix}-s`),vEl=q(`#${idPrefix}-v`);
+  const codeRv=q(`#${idPrefix}-code-row .rv`);
+  const tune=rows.filter(r=>r.classList.contains('cc-tune'));
+  const hidden=document.createElement('input'); hidden.type='hidden'; hidden.id=`${idPrefix}-val`; container.appendChild(hidden);
+  let mode=isSem(value)?value:'color';
+  const curHex=()=>_hsvToHex(+hEl.value,+sEl.value,+vEl.value);
+  const _rgb=h=>{const x=_cssToHex(h);return x?[parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)]:null;};
+  const _near=(a,b)=>{const ra=_rgb(a),rb=_rgb(b);return ra&&rb&&ra.every((n,i)=>Math.abs(n-rb[i])<=3);};
+  function paint(){
+    const h=+hEl.value,s=+sEl.value,v=+vEl.value,hex=curHex();
+    sEl.style.background=`linear-gradient(90deg, ${_hsvToHex(h,0,v)}, ${_hsvToHex(h,100,v)})`;
+    vEl.style.background=`linear-gradient(90deg, #000, ${_hsvToHex(h,100,100)})`;
+    let matched=null;
+    container.querySelectorAll('.cc-swatch').forEach(b=>{
+      let on=false;
+      if(mode==='dark'||mode==='light') on=(b.dataset.v===mode);
+      else on=(b.dataset.v!=='custom'&&!b.classList.contains('cc-sem')&&_near(b.dataset.v,hex));
+      b.classList.toggle('on',on); if(on)matched=b;
+    });
+    const rb=container.querySelector('.cc-rainbow'); if(rb)rb.classList.toggle('on',mode==='color'&&!matched);
+    tune.forEach(r=>r.classList.toggle('cc-dim',mode!=='color'));
+    if(!codeRv.closest('.editing')){
+      codeRv.textContent = mode==='color'?hex:(mode==='dark'?'Dark':'Light');
+      codeRv.classList.remove('is-ph');
+    }
+    hidden.value = mode==='color'?hex:mode;
+  }
+  const commit=()=>{ paint(); onChange?.(hidden.value); };
+  [hEl,sEl,vEl].forEach(el=>el.addEventListener('input',()=>{ mode='color'; commit(); }));
+  container.querySelectorAll('.cc-swatch').forEach(b=>b.addEventListener('click',()=>{
+    if(b.dataset.v==='dark'||b.dataset.v==='light'){ mode=b.dataset.v; commit(); return; }
+    mode='color';
+    if(b.dataset.v!=='custom'){ const hv=_hexToHsv(b.dataset.v); if(hv){hEl.value=hv.h;sEl.value=hv.s;vEl.value=hv.v;} }
+    commit();
+  }));
+  initInlineEdit(`${idPrefix}-code-row`,`${idPrefix}-hex`,{placeholder:'#rrggbb or any CSS color',onCommit(val){
+    const hv=_hexToHsv(val); if(hv){ mode='color'; hEl.value=hv.h; sEl.value=hv.s; vEl.value=hv.v; } commit();
+  }});
+  paint();
+  return { getValue:()=>hidden.value };
+}
+
 function buildAppForm(body,item){
   const docks=items.filter(i=>i.type==='app'&&i.dock&&i.id!==item?.id).length;
   const dockFull=docks>=4;
   const mon=item?.monitoring||{};
   const hc=mon.healthcheck||{enabled:!!(item?.container||item?.ping),container:item?.container||'',pingUrl:item?.ping||''};
   const act=mon.activity||{enabled:!!(item?.badge?.enabled),url:item?.badge?.url||'',interval:item?.badge?.interval||30};
+  const actCustom=mon.activity?.custom||{};
+  const staticBadge=mon.staticBadge||{};
+  const hasStatic=!!staticBadge.enabled;
+  const isPing=!!hc.pingUrl;
   const skipTls=!!(item?.skipTlsVerify);
 
-  const secBasic=document.createElement('div');secBasic.className='sec';
-  secBasic.innerHTML=`<div class="stl">App</div>
-    <div class="fr"><label>Name <span class="req">*</span></label>
-      <input class="fc" id="f-lbl" placeholder="My App" value="${esc(item?.label||'')}"></div>
-    <div class="fr"><label>URL <span class="req">*</span></label>
-      <input class="fc" id="f-href" type="url" placeholder="https://app.example.com" value="${esc(item?.href||'')}"></div>
-    <div class="div"></div>
-    <div class="stl" style="margin-top:4px">Icon</div>
-    <div class="fr">
-      <div class="ipw" id="ipw">
-        <div class="ipsw">
-          <div class="ipv" id="ipv" style="background:${rc(scol)}">
-            ${siurl?`<img src="${esc(resolveIcon(siurl))}" alt="" id="ipv-img">`
-                   :`<span>${(item?.label||'?')[0]?.toUpperCase()||'?'}</span>`}
-          </div>
-          <input class="fc" id="ip-in" type="text" placeholder="Name (e.g. radarr) or full URL"
-            autocomplete="off" value="${esc(siurl)}" class="icon-url-input">
-          <button type="button" class="btn bg sm upload-label" id="ip-upload-lbl" title="Upload icon from your computer">↑ Upload</button>
-          <input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden">
-        </div>
-        <div class="iprs" id="iprs"></div>
-        <div class="hint">Type a name to search, paste a full URL, or upload your own .svg / .png.</div>
-      </div>
-    </div>
-    <div class="div"></div>
-    <div class="stl" style="margin-top:4px">Background color</div>
-    <div class="fr">
-      <div class="cols">
-        <div class="co co-dark ${scol==='dark'?'on':''}" data-v="dark" title="Dark"></div>
-        <div class="co co-light ${scol==='light'?'on':''}" data-v="light" title="Light"></div>
-        <button type="button" class="co co-custom" id="co-custom" title="Custom colour" aria-label="Custom colour" aria-expanded="false"></button>
-      </div>
-      <div class="cols" style="margin-top:8px">
-        ${['#FF3B30','#FFCC00','#34C759','#007AFF','#8E8E93']
-          .map(h=>`<div class="co ${String(scol).toLowerCase()===h.toLowerCase()?'on':''}" data-v="${h}" style="background:${h}" title="${h}"></div>`).join('')}
-      </div>
-      <div class="co-picker d-none" id="co-picker">
-        <div class="cpk-row"><span class="cpk-lbl">Hue</span><input type="range" id="cpk-h" min="0" max="360" value="220" class="cpk-slider cpk-hue" aria-label="Hue"></div>
-        <div class="cpk-row"><span class="cpk-lbl">Sat</span><input type="range" id="cpk-s" min="0" max="100" value="60" class="cpk-slider" aria-label="Saturation"></div>
-        <div class="cpk-row"><span class="cpk-lbl">Light</span><input type="range" id="cpk-l" min="0" max="100" value="50" class="cpk-slider" aria-label="Lightness"></div>
-      </div>
-      <input class="fc" id="co-hex" type="text" placeholder="#rrggbb or any CSS color"
-        value="${scol!=='dark'&&scol!=='light'?esc(scol):''}">
-    </div>
-    <div class="div"></div>
-    <div class="stl" style="margin-top:4px">Dock</div>
-    <div class="trow trow-noborder">
-      <div><div class="tlbl">Show in dock bar</div>
-        <div class="tdsc">${dockFull&&!item?.dock?'Dock full (4/4) — remove an app first':'Max 4 apps'}</div></div>
-      <label class="tog${dockFull&&!item?.dock?' tog-disabled':''}">
-        <input type="checkbox" id="f-dock" ${item?.dock?'checked':''} ${dockFull&&!item?.dock?'disabled':''}>
-        <div class="tr"></div></label>
-    </div>`;
-  body.appendChild(secBasic);
-
-  const divider4=document.createElement('div');divider4.className='div';body.appendChild(divider4);
-
-  /* ── Health & Activity section ── */
-  const secMon=document.createElement('div');secMon.className='sec';
-  const actCustom=item?.monitoring?.activity?.custom||{};
-  const staticBadge=item?.monitoring?.staticBadge||{};
-  const hasActCustom=!!(actCustom.color||actCustom.unit);
-  const hasStatic=!!(staticBadge.enabled);
-  /* Badge colors shared by admin pickers and dashboard rendering */
-  const BADGE_COLORS={blue:'#1e6ef4',green:'#008932',yellow:'#ffcc00',red:'#e9152d',gray:'#636366'};
-  /* Build named .co swatches + hex field — same pattern as icon background color UI */
-  function colorPickerHtml(field,saved){
-    const isHex=saved&&!BADGE_COLORS[saved];
-    const swatches=Object.keys(BADGE_COLORS).map(name=>{
-      const on=saved===name||(!saved&&name==='blue');
-      return '<div class="co co-badge-'+name+(on?' on':'')+'" data-field="'+field+'" data-v="'+name+'" title="'+name[0].toUpperCase()+name.slice(1)+'"></div>';
-    }).join('');
-    return '<div class="cols cols-badge" data-field="'+field+'">'+swatches+'</div>'
-      +'<input class="fc" id="'+field+'-hex" type="text" placeholder="#rrggbb or any CSS color" value="'+(isHex?esc(saved):'')+'">';
-  }
-  secMon.innerHTML=`<div class="stl">Health &amp; Activity</div>
-    <div class="trow">
-      <div><div class="tlbl">Health check</div>
-        <div class="tdsc">Red badge when down</div></div>
-      <label class="tog"><input type="checkbox" id="hc-en" ${hc.enabled?'checked':''}><div class="tr"></div></label>
-    </div>
-    <div class="sub ${hc.enabled?'open':''}" id="hc-sub">
-      <div class="hc-type-row">
-        <label class="hc-type-label">
-          <input type="radio" name="hc-type" id="hc-type-con" ${!hc.pingUrl?'checked':''}> Container
-        </label>
-        <label class="hc-type-label">
-          <input type="radio" name="hc-type" id="hc-type-ping" ${hc.pingUrl?'checked':''}> Ping URL
-        </label>
-      </div>
-      <div id="hc-con-row" class="hc-con-row${hc.pingUrl?' hidden':''}">
-        <input class="fc" id="hc-con" placeholder="container-name" value="${esc(hc.container||'')}">
-      </div>
-      <div id="hc-ping-row" class="hc-ping-row${hc.pingUrl?' active':''}">
-        <div class="fr-inline">
-          <input class="fc" id="hc-ping" type="url" placeholder="http://your-server-ip:port" value="${esc(hc.pingUrl||'')}">
-          <button type="button" class="btn bg sm" id="hc-ping-test">Test →</button>
-        </div>
-        <div id="hc-ping-status" class="hint hc-ping-status"></div>
-      </div>
-    </div>
-    <div class="trow" style="margin-top:2px">
-      <div><div class="tlbl">Fixed label badge</div>
-        <div class="tdsc">Always-on static text badge</div></div>
-      <label class="tog"><input type="checkbox" id="static-en" ${hasStatic?'checked':''}><div class="tr"></div></label>
-    </div>
-    <div class="sub ${hasStatic?'open':''}" id="static-sub">
-      <div class="fr">
-        <label>Label text <span class="req">*</span></label>
-        <input class="fc" id="f-static-label" type="text" maxlength="10" placeholder="e.g. Backup"
-          value="${esc(staticBadge.label||'')}">
-        <div class="hint">Max 8 characters.</div>
-      </div>
-      <div class="fr fr-mb0">
-        <label>Badge color</label>
-        ${colorPickerHtml('static-col',staticBadge.color||'blue')}
-      </div>
-    </div>
-    <div class="trow act-trow">
-      <div><div class="tlbl">Activity badge</div>
-        <div class="tdsc">Live number from an API</div></div>
-      <label class="tog"><input type="checkbox" id="act-en" ${act.enabled?'checked':''}><div class="tr"></div></label>
-    </div>
-    <div class="sub ${act.enabled?'open':''}" id="act-sub">
-      <div class="fr">
-        <label>API URL <span class="req">*</span></label>
-        <div class="fr-inline">
-          <input class="fc" id="f-burl" type="url" placeholder="http://container-name:8181/api/v2"
-            value="${esc(act.url||'')}">
-          <button type="button" class="btn bg sm badge-fetch-btn" id="bfetch">Fetch</button>
-        </div>
-        <div class="hint badge-hint" id="bst">${spaths.length?'Saved: '+spaths.join(' + ')+' · Click Fetch to refresh':''}</div>
-      </div>
-      <div class="fr${spaths.length?'':' bprow-hidden'}" id="bprow">
-        <label>Select value</label>
-        <div class="badge-path-wrap">
-          <svg class="badge-search-icon" width="13" height="13" viewBox="0 0 16 16" fill="none">
-            <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.6"/>
-            <line x1="10.1" y1="10.1" x2="13.5" y2="13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <input class="fc badge-path-input" id="bsearch" type="text" placeholder="Filter…" autocomplete="off">
-        </div>
-        <div class="blist" id="blist"></div>
-      </div>
-      <div class="${spaths.length?'':'bprow-hidden'}" id="auth-row-wrap">
-        <div class="trow" style="padding-top:10px;border-top:1px solid var(--bd)">
-          <div><div class="tlbl">Authentication</div>
-            <div class="tdsc">API key or token required</div></div>
-          <label class="tog"><input type="checkbox" id="auth-en" ${(act.params||act.headers)?'checked':''}><div class="tr"></div></label>
-        </div>
-        <div class="sub ${(act.params||act.headers)?'open':''}" id="auth-sub">
-          <div class="fr">
-            <label>Add to URL <span class="opt-span">(query params)</span></label>
-            <textarea class="fc" id="f-bpar" rows="2"
-              placeholder="apikey=abc123&#10;cmd=get_activity">${act.params?Object.entries(act.params).map(([k,v])=>`${k}=${v}`).join('\n'):''}</textarea>
-            <div class="hint">One key=value per line. Added to the URL as <code>?key=value</code>.</div>
-          </div>
-          <div class="fr fr-mb0">
-            <label>Add to header</label>
-            <textarea class="fc" id="f-bhdr" rows="2"
-              placeholder="X-Api-Key=your-key">${act.headers?Object.entries(act.headers).map(([k,v])=>`${k}=${v}`).join('\n'):''}</textarea>
-            <div class="hint">One key=value per line. Sent as an HTTP request header.</div>
-          </div>
-        </div>
-      </div>
-      <div class="trow${spaths.length?'':' bprow-hidden'}" id="poll-row" style="padding-top:8px;border-top:1px solid var(--bd)">
-        <div><div class="tlbl">Poll every</div></div>
-        <div class="irow">
-          <input class="fc" id="f-bint" type="number" min="10" max="3600" value="${act.interval||30}">
-          <span>seconds</span>
-        </div>
-      </div>
-      <div class="bmore-toggle${hasActCustom?' open':''}" id="bmore-toggle" style="margin-top:12px">
-        <button type="button" class="btn bg sm bmore-btn" id="bmore-btn">
-          ${hasActCustom?'▾ More options':'▸ More options'}
-        </button>
-      </div>
-      <div class="sub${hasActCustom?' open':''}" id="bmore-sub" style="margin-top:8px">
-        <div class="fr">
-          <label>Badge color</label>
-          ${colorPickerHtml('act-col',actCustom.color||'blue')}
-        </div>
-        <div class="fr fr-mb0">
-          <label>Unit <span class="opt-span">(appended after number)</span></label>
-          <input class="fc" id="bcust-unit" type="text" maxlength="8" placeholder="e.g. GB" value="${esc(actCustom.unit||'')}">
-        </div>
-      </div>
-    </div>`;
-  body.appendChild(secMon);
-
-
-  /* Issue #4: TLS in its own section */
-  const dividerTls=document.createElement('div');dividerTls.className='div';body.appendChild(dividerTls);
-  const secTls=document.createElement('div');secTls.className='sec';
-  secTls.innerHTML=`<div class="stl">Security</div>
-    <div class="trow trow-noborder">
-      <div><div class="tlbl">Allow self-signed certificate</div>
-        <div class="tdsc">Skip TLS verification for this app's URLs</div></div>
-      <label class="tog"><input type="checkbox" id="f-skip-tls" ${skipTls?'checked':''}><div class="tr"></div></label>
-    </div>
-    <div class="hint" style="margin-top:6px">Only enable for trusted self-signed or internal certificates. Skipping verification is insecure and should only be done if you fully understand the risks.</div>`;
-  body.appendChild(secTls);
-
-  /* Wire events */
-  wireIcon();wireColor();
-  /* Trigger full fallback-aware preview immediately after form is in DOM */
-  if(siurl)updPrev();
-  /* Apply global health-check enabled state to this modal */
-  const _globalHealthOn=!!(document.getElementById('srv-docker-en')?.checked);
-  const hcEnEl=document.getElementById('hc-en');
-  if(hcEnEl){
-    hcEnEl.disabled=!_globalHealthOn;
-    const hcTrow=hcEnEl.closest('.trow');
-    if(hcTrow){
-      hcTrow.style.opacity=_globalHealthOn?'':'0.45';
-      if(!_globalHealthOn){
-        const hcDesc=hcTrow.querySelector('.tdsc');
-        if(hcDesc&&!hcDesc.dataset.origText){hcDesc.dataset.origText=hcDesc.textContent;hcDesc.textContent='Enable Docker health checks in Server settings';}
-      }
-    }
-    /* Issue #2: also dim+block the sub-panel (container name / ping URL fields) */
-    const hcSub=document.getElementById('hc-sub');
-    if(hcSub&&!_globalHealthOn){
-      hcSub.style.opacity='0.45';
-      hcSub.style.pointerEvents='none';
-    }
-  }
-  document.getElementById('hc-en').onchange=e=>{
-    if(!_globalHealthOn)return;
-    document.getElementById('hc-sub').classList.toggle('open',e.target.checked);
+  /* inline-edit row helper */
+  const ier=(rowId,label,inpId,val,ph,type='text')=>{
+    const has=val!=null&&val!=='';
+    return `<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span>`
+      +`<span class="rv${has?'':' is-ph'}">${has?esc(val):esc(ph)}</span>`
+      +`<input id="${inpId}" type="${type}" value="${esc(val||'')}" style="display:none">`
+      +`<button class="pe" type="button" aria-label="Edit ${label}">${PE_SVG}</button></div>`;
   };
-  document.querySelectorAll('input[name="hc-type"]').forEach(r=>r.onchange=()=>{
-    const p=document.getElementById('hc-type-ping')?.checked;
-    document.getElementById('hc-con-row').classList.toggle('hidden', p);
-    document.getElementById('hc-ping-row').classList.toggle('active', p);
-  });
-  document.getElementById('hc-ping-test').onclick=testPing;
-  document.getElementById('act-en').onchange=e=>document.getElementById('act-sub').classList.toggle('open',e.target.checked);
-  document.getElementById('bfetch').onclick=fetchBadge;
-  document.getElementById('auth-en').onchange=e=>document.getElementById('auth-sub').classList.toggle('open',e.target.checked);
-  document.getElementById('act-sub').addEventListener('input', e=>{
-    if(e.target.id==='bsearch') renderBadgeList(fnums, false, e.target.value);
-  });
-  /* Issue #8: on load show saved paths in blist only, no duplicate in #bst */
-  if(spaths.length){
-    ['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));
-    renderBadgeList([],true); /* show saved path chips without the repeated hint text */
+  const tog=(id,on,extra='')=>`<label class="tog${extra}"><input type="checkbox" id="${id}" ${on?'checked':''}><div class="tr"></div></label>`;
+
+  body.innerHTML=`
+    <div class="grp">
+      ${ier('ie-name','Name','f-lbl',item?.label,'My App')}
+      ${ier('ie-url','URL','f-href',item?.href,'https://app.example.com','url')}
+    </div>
+
+    <p class="grp-hdr">Icon</p>
+    <div class="grp" id="ipw">
+      <div class="row icon-src-row">
+        <span class="icon-prev" id="ipv" style="background:${rc(scol)}">${siurl?`<img src="${esc(resolveIcon(siurl))}" alt="" id="ipv-img">`:`<span>${(item?.label||'?')[0]?.toUpperCase()||'?'}</span>`}</span>
+        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="Name or full URL" value="${esc(siurl)}">
+        <button type="button" class="row-btn" id="ip-upload-lbl">Upload</button>
+        <input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0">
+      </div>
+      <div class="iprs" id="iprs"></div>
+      <div id="icon-color-slot"></div>
+    </div>
+
+    <div class="grp">
+      <div class="row"><span class="rl">Show in Dock</span>${tog('f-dock',!!item?.dock,(dockFull&&!item?.dock)?' tog-disabled':'')}</div>
+    </div>
+    ${dockFull&&!item?.dock?'<p class="grp-tip">Dock full (4/4). Remove an app first.</p>':''}
+
+    <p class="grp-hdr">Badge</p>
+    <div class="grp">
+      <div class="row"><span class="rl">Health Check</span>${tog('hc-en',hc.enabled)}</div>
+      <div id="hc-sub" ${hc.enabled?'':'hidden'}>
+        <div class="row"><span class="rl">Type</span><div class="segr">
+          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing?'':'checked'}><span class="segr-dot"></span><span>Container</span></label>
+          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${isPing?'checked':''}><span class="segr-dot"></span><span>Ping</span></label>
+        </div></div>
+        <div id="hc-con-row" ${isPing?'hidden':''}>${ier('ie-hc-con','Container','hc-con',hc.container,'container-name')}</div>
+        <div id="hc-ping-row" ${isPing?'':'hidden'}>
+          ${ier('ie-hc-ping','Ping URL','hc-ping',hc.pingUrl,'http://your-server-ip:port','url')}
+          <div class="row"><span class="rl"></span><span id="hc-ping-status" class="row-status"></span><button type="button" class="row-btn" id="hc-ping-test">Test</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="row"><span class="rl">Fixed Label</span>${tog('static-en',hasStatic)}</div>
+      <div id="static-sub" ${hasStatic?'':'hidden'}>
+        ${ier('ie-static-label','Label Text','f-static-label',staticBadge.label,'e.g. Backup')}
+        <div id="static-color-slot"></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="row"><span class="rl">Live Activity</span>${tog('act-en',act.enabled)}</div>
+      <div id="act-sub" ${act.enabled?'':'hidden'}>
+        ${ier('ie-burl','API URL','f-burl',act.url,'http://container-name:port/api/v2','url')}
+        <div class="row"><span class="rl"></span><span id="bst" class="row-status">${spaths.length?'Saved: '+esc(spaths.join(' + ')):''}</span><button type="button" class="row-btn" id="bfetch">Fetch</button></div>
+        <div id="bprow" class="${spaths.length?'':'bprow-hidden'}">
+          <div class="row"><span class="rl">Value</span></div>
+          <div class="bval-box"><input class="bval-search" id="bsearch" type="text" placeholder="Filter values" autocomplete="off"><div class="blist" id="blist"></div></div>
+        </div>
+        <div id="auth-row-wrap">
+          <div class="row"><span class="rl">Authentication</span>${tog('auth-en',!!(act.params||act.headers))}</div>
+          <div id="auth-sub" ${(act.params||act.headers)?'':'hidden'}>
+            <div class="row ta-row"><span class="rl">Add to URL<br><span class="rl-sub">(query params)</span></span><textarea class="ta-field" id="f-bpar" placeholder="One key=value per line.&#10;Added to the URL as ?key=value.">${act.params?Object.entries(act.params).map(([k,v])=>k+'='+v).join('\n'):''}</textarea></div>
+            <div class="row ta-row"><span class="rl">Add to Header</span><textarea class="ta-field" id="f-bhdr" placeholder="One key=value per line.&#10;Sent as an HTTP request header.">${act.headers?Object.entries(act.headers).map(([k,v])=>k+'='+v).join('\n'):''}</textarea></div>
+          </div>
+        </div>
+        <div id="act-color-slot"></div>
+        ${ier('ie-bunit','Unit','bcust-unit',actCustom.unit,'e.g. GB')}
+        <div id="poll-row"><div class="row"><span class="rl">Poll</span><div class="poll-inline">every <input id="f-bint" type="number" min="10" max="3600" value="${act.interval||30}"> seconds</div></div></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="row"><span class="rl">Allow self-signed certificate</span>${tog('f-skip-tls',skipTls)}</div>
+    </div>
+    <p class="grp-tip">Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks.</p>`;
+
+  /* Inline-edit rows */
+  initInlineEdit('ie-name','f-lbl',{placeholder:'My App',onCommit(){updPrev();}});
+  initInlineEdit('ie-url','f-href',{placeholder:'https://app.example.com'});
+  initInlineEdit('ie-hc-con','hc-con',{placeholder:'container-name'});
+  initInlineEdit('ie-hc-ping','hc-ping',{placeholder:'http://your-server-ip:port'});
+  initInlineEdit('ie-static-label','f-static-label',{placeholder:'e.g. Backup'});
+  initInlineEdit('ie-burl','f-burl',{placeholder:'http://container-name:port/api/v2'});
+  initInlineEdit('ie-bunit','bcust-unit',{placeholder:'e.g. GB'});
+
+  /* Color controls */
+  renderColorControl(document.getElementById('icon-color-slot'),{value:scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){scol=v;const pv=document.getElementById('ipv');if(pv)pv.style.background=rc(scol);}});
+  renderColorControl(document.getElementById('static-color-slot'),{value:staticBadge.color||'#0289ff',idPrefix:'static-col'});
+  renderColorControl(document.getElementById('act-color-slot'),{value:actCustom.color||'#0289ff',idPrefix:'act-col'});
+
+  /* Icon search/upload */
+  wireIcon();
+  if(siurl)updPrev();
+
+  /* Health check enable state honours the global Docker toggle */
+  const globalHealthOn=!!(document.getElementById('srv-docker-en')?.checked);
+  const hcEn=document.getElementById('hc-en');
+  if(hcEn){
+    hcEn.disabled=!globalHealthOn;
+    if(!globalHealthOn){const sub=document.getElementById('hc-sub');if(sub){sub.style.opacity='0.45';sub.style.pointerEvents='none';}}
   }
-  /* Static badge toggle */
-  document.getElementById('static-en')?.addEventListener('change',e=>{
-    document.getElementById('static-sub')?.classList.toggle('open',e.target.checked);
-  });
-  /* More options toggle */
-  document.getElementById('bmore-btn')?.addEventListener('click',()=>{
-    const sub=document.getElementById('bmore-sub');
-    const btn=document.getElementById('bmore-btn');
-    const open=sub?.classList.toggle('open');
-    if(btn)btn.textContent=open?'▾ More options':'▸ More options';
-  });
-  /* Badge color pickers — same .co + hex-field wiring as icon background color */
-  function wireBadgeColorPicker(field){
-    const hexEl=document.getElementById(field+'-hex');
-    document.querySelectorAll('.co[data-field="'+field+'"]').forEach(sw=>{
-      sw.addEventListener('click',()=>{
-        document.querySelectorAll('.co[data-field="'+field+'"]').forEach(s=>s.classList.remove('on'));
-        sw.classList.add('on');
-        if(hexEl)hexEl.value='';
-      });
-    });
-    if(hexEl)hexEl.addEventListener('input',()=>{
-      document.querySelectorAll('.co[data-field="'+field+'"]').forEach(s=>s.classList.remove('on'));
-    });
-  }
-  wireBadgeColorPicker('act-col');
-  wireBadgeColorPicker('static-col');
+  const showHide=(id,on)=>{const el=document.getElementById(id);if(el)el.hidden=!on;};
+  hcEn?.addEventListener('change',e=>{if(globalHealthOn)showHide('hc-sub',e.target.checked);});
+  document.querySelectorAll('input[name="hc-type"]').forEach(r=>r.addEventListener('change',()=>{
+    const ping=document.getElementById('hc-type-ping')?.checked;
+    showHide('hc-con-row',!ping); showHide('hc-ping-row',ping);
+  }));
+  document.getElementById('hc-ping-test')?.addEventListener('click',testPing);
+  document.getElementById('static-en')?.addEventListener('change',e=>showHide('static-sub',e.target.checked));
+  document.getElementById('act-en')?.addEventListener('change',e=>showHide('act-sub',e.target.checked));
+  document.getElementById('auth-en')?.addEventListener('change',e=>showHide('auth-sub',e.target.checked));
+  document.getElementById('bfetch')?.addEventListener('click',fetchBadge);
+  document.getElementById('bsearch')?.addEventListener('input',e=>renderBadgeList(fnums,false,e.target.value));
+  if(spaths.length){['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));renderBadgeList([],true);}
 }
 
 function wireIcon(){
@@ -2395,7 +2337,7 @@ async function fetchBadge(){
     fnums=r.numbers||[];
     if(st){
       st.style.cssText='margin-top:4px;color:#34c759';
-      if(!fnums.length) st.textContent='✓ Connected — no numeric values found';
+      if(!fnums.length) st.textContent='✓ Connected, no numeric values found';
       else st.textContent=`✓ Found ${fnums.length} value${fnums.length!==1?'s':''}`;
     }
     ['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));
@@ -2407,7 +2349,7 @@ async function fetchBadge(){
       const isAuth=msg.includes('401')||msg.includes('403')||msg.includes('Unauthori')||msg.includes('Forbidden');
       if(isNetwork){
         st.style.cssText='margin-top:4px;color:#ff9f0a';
-        st.textContent="Can't reach this address from Docker. Try using the container name — e.g. http://container-name:8181/api/v2";
+        st.textContent="Can't reach this address from Docker. Try using the container name, e.g. http://container-name:8181/api/v2";
       }else if(isAuth){
         st.style.cssText='margin-top:4px;color:#ff9f0a';
         st.textContent='Authentication required. Enable the Authentication toggle below and add your API key.';
@@ -2775,25 +2717,18 @@ async function doSave(orig){
       const actInt=Math.min(3600,Math.max(10,parseInt(document.getElementById('f-bint')?.value||'30',10)));
       const actParams=parseKV(document.getElementById('f-bpar')?.value||'');
       const actHeaders=parseKV(document.getElementById('f-bhdr')?.value||'');
-      /* Activity badge custom display */
-      const actHexInput=document.getElementById('act-col-hex')?.value?.trim()||'';
-      const actSwatchOn=document.querySelector('.co[data-field="act-col"].on');
-      const actNamedCol=actSwatchOn?.dataset.v||'blue';
-      /* Hex field takes priority over named swatch */
-      const actColor=actHexInput||actNamedCol;
+      /* Activity badge custom display (color from the color control) */
+      const actColor=document.getElementById('act-col-val')?.value||'#0289ff';
       const custUnit=document.getElementById('bcust-unit')?.value?.trim()||'';
-      /* Always write customObj when color is non-default or unit is set; use undefined to omit from JSON */
-      const customObj=(actColor&&actColor!=='blue')||custUnit?{
-        color:actColor&&actColor!=='blue'?actColor:undefined,
+      const DEFCOL='#0289ff';
+      const customObj=(actColor&&actColor!==DEFCOL)||custUnit?{
+        color:actColor&&actColor!==DEFCOL?actColor:undefined,
         unit:custUnit||undefined,
       }:undefined;
       /* Static (fixed label) badge */
       const staticEn=document.getElementById('static-en')?.checked||false;
       const staticLabel=document.getElementById('f-static-label')?.value?.trim()||'';
-      const staticHexInput=document.getElementById('static-col-hex')?.value?.trim()||'';
-      const staticSwatchOn=document.querySelector('.co[data-field="static-col"].on');
-      const staticNamedCol=staticSwatchOn?.dataset.v||'blue';
-      const staticColor=staticHexInput||staticNamedCol;
+      const staticColor=document.getElementById('static-col-val')?.value||'#0289ff';
       const staticBadgeObj=staticEn&&staticLabel?{enabled:true,label:staticLabel.slice(0,10),color:staticColor||'blue'}:undefined;
       const finalIcon=siurl;
       item={
@@ -2876,24 +2811,26 @@ function loadSettings(c){
   _applyBg(document.querySelector('.adm-outer'));
   _applyBg(document.body);
 
-  /* Populate General inline-edit value spans */
-  const _sv=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'—';};
-  _sv('ie-title-v',s.title||'Stackyard');
-  _sv('ie-desc-v',s.description||'Stackyard · self-hosted homelab dashboard');
-  _sv('ie-ip-v',s.server?.hostIp);
-  _sv('ie-socket-v',s.server?.socketProxyUrl);
-  _sv('ie-pw-v',undefined); /* set below after auth check */
+  /* Populate General inline-edit value spans (empty → greyed placeholder, no dash) */
+  const _sv=(id,v,ph='')=>{const el=document.getElementById(id);if(!el)return;
+    if(v){el.textContent=v;el.classList.remove('is-ph');}
+    else{el.textContent=ph;el.classList.add('is-ph');}};
+  _sv('ie-title-v',s.title||'Stackyard','Stackyard');
+  _sv('ie-desc-v',s.description||'Stackyard · self-hosted homelab dashboard','Stackyard · self-hosted homelab dashboard');
+  _sv('ie-ip-v',s.server?.hostIp,'192.168.1.100');
+  _sv('ie-socket-v',s.server?.socketProxyUrl,'tcp://socket-proxy:2375');
+  _sv('ie-pw-v','','Not set'); /* set below after auth check */
   /* Sync hidden input values used by save */
   const _si=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
   _si('srv-ip',s.server?.hostIp||'');
   _si('srv-socket',s.server?.socketProxyUrl||'');
   /* Appearance */
-  _sv('ie-bgcol-v',s.background?.collection||'—');
+  _sv('ie-bgcol-v',s.background?.collection,'Collection ID');
   _si('bg-col-inp',s.background?.collection||'');
   _si('bg-url-inp',s.background?.url||'');
   _si('bg-color-inp',s.background?.color||'');
-  if(s.background?.url)_sv('ie-bgurl-v',s.background.url);
-  if(s.background?.color)_sv('ie-bgcolor-v',s.background.color);
+  _sv('ie-bgurl-v',s.background?.url,'Image URL');
+  _sv('ie-bgcolor-v',s.background?.color,'#rrggbb or any CSS color');
 
   const ipEl=document.getElementById('srv-ip');if(ipEl)ipEl.value=s.server?.hostIp||'';
   const dockerEnEl=document.getElementById('srv-docker-en');
@@ -3014,11 +2951,14 @@ async function saveServer(){
     const c=await ag('/api/config');c.settings=c.settings||{};
     const dockerEnabled=document.getElementById('srv-docker-en')?.checked||false;
     const socketUrl=document.getElementById('srv-socket')?.value?.trim()||'';
-    /* Title / description from inline-edit value spans (committed on blur) */
-    const titleV=document.getElementById('ie-title-v')?.textContent?.trim()||'';
-    const descV=document.getElementById('ie-desc-v')?.textContent?.trim()||'';
-    if(titleV&&titleV!=='—') c.settings.title=titleV;
-    if(descV&&descV!=='—') c.settings.description=descV;
+    /* Title / description from inline-edit value spans (committed on blur).
+       A greyed placeholder (.is-ph) means empty, so it is not saved. */
+    const titleEl=document.getElementById('ie-title-v');
+    const descEl=document.getElementById('ie-desc-v');
+    const titleV=titleEl&&!titleEl.classList.contains('is-ph')?titleEl.textContent.trim():'';
+    const descV=descEl&&!descEl.classList.contains('is-ph')?descEl.textContent.trim():'';
+    if(titleV) c.settings.title=titleV;
+    if(descV) c.settings.description=descV;
     c.settings.server={
       ...c.settings.server,
       hostIp:document.getElementById('srv-ip')?.value?.trim()||'',
@@ -3079,14 +3019,15 @@ function initInlineEdit(rowId,inputId,{type='text',placeholder='',onCommit}={}){
   function open(){
     if(row.classList.contains('editing')) return;
     row.classList.add('editing');
-    inp.value=valEl.textContent==='—'?'':valEl.textContent;
+    inp.value=valEl.classList.contains('is-ph')?'':valEl.textContent;
     inp.focus();inp.select?.();
   }
   function commit(){
     if(!row.classList.contains('editing')) return;
     row.classList.remove('editing');
     const v=inp.value.trim();
-    valEl.textContent=v||'—';
+    if(v){ valEl.textContent=v; valEl.classList.remove('is-ph'); }
+    else { valEl.textContent=placeholder||''; valEl.classList.add('is-ph'); }
     onCommit?.(v);
   }
 
@@ -3253,7 +3194,7 @@ initBgType();
 checkAuth().then(ok => {
   if (!ok) return;
   load().catch(e=>{
-    toast('Could not load config — is the API container running? ('+e.message+')','err');
+    toast('Could not load config. Is the API container running? ('+e.message+')','err');
     const al=document.getElementById('al');
     if(al){
       al.innerHTML='<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">'+
