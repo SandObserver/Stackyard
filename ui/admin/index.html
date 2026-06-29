@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Stackyard Settings</title>
   <link rel="stylesheet" href="/css/tokens.css?v=1">
-  <link rel="stylesheet" href="/css/admin.css?v=24">
+  <link rel="stylesheet" href="/css/admin.css?v=25">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=1">
 </head>
 <body>
@@ -57,9 +57,9 @@
         </div>
       </div>
       <div class="grp">
-        <div class="row ie-row" id="ie-title"><span class="rl">Title</span><span class="rv" id="ie-title-v">Stackyard</span><button class="pe" type="button" aria-label="Edit title">&#9998;</button></div>
-        <div class="row ie-row" id="ie-desc"><span class="rl">Description</span><span class="rv" id="ie-desc-v">—</span><button class="pe" type="button" aria-label="Edit description">&#9998;</button></div>
-        <div class="row ie-row" id="ie-ip"><span class="rl">Host IP</span><span class="rv" id="ie-ip-v">—</span><button class="pe" type="button" aria-label="Edit host IP">&#9998;</button></div>
+        <div class="row ie-row" id="ie-title"><span class="rl">Title</span><span class="rv" id="ie-title-v">Stackyard</span><button class="pe" type="button" aria-label="Edit title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
+        <div class="row ie-row" id="ie-desc"><span class="rl">Description</span><span class="rv is-ph" id="ie-desc-v">Stackyard · self-hosted homelab dashboard</span><button class="pe" type="button" aria-label="Edit description"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
+        <div class="row ie-row" id="ie-ip"><span class="rl">Host IP</span><span class="rv is-ph" id="ie-ip-v">192.168.1.100</span><button class="pe" type="button" aria-label="Edit host IP"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
       </div>
       <p class="grp-tip">Used to allow your server's IP in badge URLs and SSRF protection.</p>
 
@@ -67,14 +67,14 @@
       <div class="grp">
         <div class="row"><span class="rl">Docker Container Health Checks</span><label class="tog" aria-label="Docker Container Health Checks"><input type="checkbox" id="srv-docker-en"><div class="tr"></div></label></div>
         <div class="row" id="srv-hide-healthy-row" style="display:none"><span class="rl">Hide Healthy Badge</span><label class="tog" aria-label="Hide Healthy Badge"><input type="checkbox" id="srv-hide-healthy"><div class="tr"></div></label></div>
-        <div class="row ie-row" id="ie-socket" style="display:none"><span class="rl">Socket URL</span><span class="rv" id="ie-socket-v">—</span><button class="pe" type="button" aria-label="Edit socket URL">&#9998;</button></div>
+        <div class="row ie-row" id="ie-socket" style="display:none"><span class="rl">Socket URL</span><span class="rv is-ph" id="ie-socket-v">tcp://socket-proxy:2375</span><button class="pe" type="button" aria-label="Edit socket URL"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
       </div>
       <p class="grp-tip" id="socket-hint" style="display:none">Use the URL of a <strong>socket proxy</strong> container for least-privilege access. No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. <span class="tip-danger">Only do this on a private, trusted network you fully control.</span></p>
 
       <div class="grp-hdr">Security</div>
       <div class="grp">
         <div class="row"><span class="rl">Password Protection</span><label class="tog" aria-label="Password Protection"><input type="checkbox" id="sec-en"><div class="tr"></div></label></div>
-        <div class="row ie-row" id="ie-pw" style="display:none"><span class="rl">Password</span><span class="rv" id="ie-pw-v">—</span><button class="pe" type="button" aria-label="Edit password">&#9998;</button></div>
+        <div class="row ie-row" id="ie-pw" style="display:none"><span class="rl">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button" aria-label="Edit password"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
       </div>
       <p class="grp-tip" id="pw-hint-static" style="display:none">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p>
 
@@ -101,7 +101,7 @@
         <div class="row">
           <span class="rl">Source</span>
           <div class="row-dd" id="bg-type-dd">
-            <button class="row-dd-btn" type="button" id="bg-type-btn" aria-haspopup="listbox">Unsplash<svg class="dd-chev" width="10" height="6" viewBox="0 0 10 6" fill="currentColor" aria-hidden="true"><path d="M0 0l5 6 5-6z"/></svg></button>
+            <button class="row-dd-btn" type="button" id="bg-type-btn" aria-haspopup="listbox">Unsplash<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg></button>
             <ul class="row-dd-list" id="bg-type-list" role="listbox" aria-label="Wallpaper source" hidden>
               <li role="option" data-val="unsplash" aria-selected="true">Unsplash</li>
               <li role="option" data-val="url" aria-selected="false">Image URL</li>
@@ -111,14 +111,14 @@
           <input type="hidden" id="bg-type" value="unsplash">
         </div>
         <div id="bg-unsplash-fields">
-          <div class="row ie-row" id="ie-apikey"><span class="rl">Unsplash API Key</span><span class="rv" id="ie-apikey-v">Not set</span><button class="pe" type="button" aria-label="Edit Unsplash API key">&#9998;</button></div>
-          <div class="row ie-row" id="ie-bgcol"><span class="rl">Collection ID</span><span class="rv" id="ie-bgcol-v">—</span><button class="pe" type="button" aria-label="Edit collection ID">&#9998;</button></div>
+          <div class="row ie-row" id="ie-apikey"><span class="rl">Unsplash API Key</span><span class="rv" id="ie-apikey-v">Not set</span><button class="pe" type="button" aria-label="Edit Unsplash API key"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
+          <div class="row ie-row" id="ie-bgcol"><span class="rl">Collection ID</span><span class="rv is-ph" id="ie-bgcol-v">Collection ID</span><button class="pe" type="button" aria-label="Edit collection ID"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
         </div>
         <div id="bg-url-fields" class="d-none">
-          <div class="row ie-row" id="ie-bgurl"><span class="rl">Image URL</span><span class="rv" id="ie-bgurl-v">—</span><button class="pe" type="button" aria-label="Edit image URL">&#9998;</button></div>
+          <div class="row ie-row" id="ie-bgurl"><span class="rl">Image URL</span><span class="rv is-ph" id="ie-bgurl-v">Image URL</span><button class="pe" type="button" aria-label="Edit image URL"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
         </div>
         <div id="bg-color-fields" class="d-none">
-          <div class="row ie-row" id="ie-bgcolor"><span class="rl">Color</span><span class="rv" id="ie-bgcolor-v">—</span><button class="pe" type="button" aria-label="Edit color">&#9998;</button></div>
+          <div class="row ie-row" id="ie-bgcolor"><span class="rl">Color</span><span class="rv is-ph" id="ie-bgcolor-v">#rrggbb or any CSS color</span><button class="pe" type="button" aria-label="Edit color"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
         </div>
         <div class="row" id="bg-brightness-row">
           <span class="rl">Brightness</span>
@@ -197,7 +197,7 @@
 </div><!-- .adm -->
 </div><!-- .adm-outer -->
 
-<!-- Modal kept dormant in DOM — JS references it -->
+<!-- Modal kept dormant in DOM (JS references it); removed in cleanup unit. -->
 <div id="ov" aria-hidden="true" style="display:none">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
     <div class="mh"><h2 id="mt">Add</h2><button class="mx" id="mcls" type="button" aria-label="Close">×</button></div>
@@ -242,6 +242,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=52"></script>
+<script type="module" src="/js/admin.js?v=53"></script>
 </body>
 </html>
