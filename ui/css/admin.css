@@ -1,4 +1,4 @@
-/* admin.css v24 */
+/* admin.css v25 */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg-outer:#1c1c24;
@@ -9,6 +9,7 @@
   --bd-inner:#3a3a44;
   --ac:#027aff;
   --ac2:#4a9eff;
+  --ok:#35c759;
   --rd:var(--sy-red);
   --gn:var(--sy-green);
   --tx:#f2f2f7;
@@ -64,6 +65,7 @@ body{background:var(--bg-outer)}
 .row-link:hover{background:rgba(255,255,255,.04)}
 .rl{flex:1;font-size:14px;color:var(--tx);font-weight:400}
 .rv{font-size:14px;color:var(--dm);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.rv.is-ph{color:#6e6e73}
 .ie-row.editing .rv,.ie-row.editing .pe{display:none}
 .ie-row .row-inp{display:none;flex:1;background:transparent;border:none;color:var(--tx);font-size:14px;font-family:inherit;text-align:right;padding:0;min-width:0;outline:none}
 .ie-row.editing .row-inp{display:block}
@@ -77,7 +79,7 @@ body{background:var(--bg-outer)}
 .row-dd{position:relative;flex-shrink:0}
 .row-dd-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--dm);font-size:14px;font-family:inherit;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color var(--t)}
 .row-dd-btn:hover{color:var(--tx)}
-.dd-chev{opacity:.5;flex-shrink:0}
+.dd-chev{flex-shrink:0;width:22px;height:22px;padding:3px;border-radius:6px;background:rgba(120,120,128,.22);color:var(--tx)}
 .row-dd-list{position:absolute;top:calc(100% + 4px);right:0;background:#1c1c24;border:1px solid var(--bd);border-radius:var(--rs);list-style:none;min-width:140px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;padding:4px 0}
 .row-dd-list[hidden]{display:none}
 .row-dd-list.checklist{max-height:240px;overflow-y:auto;min-width:200px}
@@ -137,6 +139,59 @@ body{background:var(--bg-outer)}
 .tile-cap{font-size:12px;font-weight:500;color:var(--dm);transition:color var(--t)}
 .tile-opt.on .tile-cap{color:var(--tx)}
 .tile-opt:hover .tile-cap{color:var(--tx)}
+
+/* ── Color control: swatch row + HSB sliders + code (PSD Icon/Label/Activity) ── */
+.cc-row{padding-top:13px;padding-bottom:13px}
+.cc-sw{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.cc-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:none;padding:0;outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--t);flex-shrink:0}
+.cc-swatch.on{outline-color:#fff}
+.cc-rainbow{background:conic-gradient(from 90deg,#ff3b30,#ffcd00,#35c759,#0289ff,#cb30df,#ff3b30)}
+.hsb-row{min-height:46px}
+.hsb-track{display:flex;align-items:center;gap:10px;margin-left:auto;flex:1;max-width:330px}
+.hsb-ico{width:17px;height:17px;color:var(--dm);flex-shrink:0;display:flex}
+.hsb-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;border-radius:3px;cursor:pointer;outline:none}
+.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+.hsb-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;border:none;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+.hsb-hue{background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+
+/* ── Segmented radio row (Container/Ping, Disk Health/System Summary) ── */
+.segr{display:flex;gap:24px;margin-left:auto;align-items:center}
+.segr-opt{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--dm)}
+.segr-opt input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.segr-dot{width:18px;height:18px;border-radius:50%;border:2px solid #6e6e73;flex-shrink:0;position:relative;transition:border-color var(--t)}
+.segr-opt input:checked+.segr-dot{border-color:var(--ok)}
+.segr-opt input:checked+.segr-dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--ok)}
+.segr-opt:has(input:checked) span{color:var(--tx)}
+
+/* ── In-row trailing button + status (Upload/Test/Fetch) ── */
+.row-btn{background:rgba(120,120,128,.24);border:none;color:var(--tx);font-size:13px;font-weight:500;font-family:inherit;padding:6px 13px;border-radius:7px;cursor:pointer;flex-shrink:0;transition:background var(--t)}
+.row-btn:hover{background:rgba(120,120,128,.36)}
+.row-status{font-size:13px;margin-right:8px;color:var(--dm)}
+.row-status.ok{color:var(--ok)}
+.row-status.err{color:#ff453a}
+
+/* ── Textarea row (Add to URL / Add to Header) ── */
+.ta-row{align-items:flex-start;padding-top:13px;padding-bottom:13px}
+.ta-row .rl{padding-top:9px;white-space:normal;line-height:1.3}
+.ta-field{margin-left:auto;flex:1;max-width:330px;background:rgba(120,120,128,.16);border:none;border-radius:9px;color:var(--tx);font-family:inherit;font-size:13px;padding:10px 12px;resize:vertical;min-height:60px;outline:none;line-height:1.5}
+.ta-field::placeholder{color:#6e6e73}
+.cc-dim{opacity:.4;pointer-events:none}
+.cc-sem{position:relative}
+/* App form: icon source row, poll, value list */
+.icon-src-row{gap:12px}
+.icon-prev{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden}
+.icon-prev img{width:100%;height:100%;object-fit:contain}
+.icon-srch{flex:1;min-width:0;background:none;border:none;color:var(--tx);font-size:14px;text-align:right;outline:none;font-family:inherit}
+.icon-srch::placeholder{color:#6e6e73}
+.iprs{display:none}
+.iprs.open{display:block;padding:2px 16px 10px}
+.poll-inline{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--dm);font-size:14px}
+.poll-inline input{width:64px;background:rgba(120,120,128,.16);border:none;border-radius:7px;color:var(--tx);font-family:inherit;font-size:14px;padding:5px 8px;text-align:center;outline:none}
+.rl-sub{color:#6e6e73;font-size:12px;font-weight:400}
+.bval-box{padding:0 16px 12px}
+.bval-search{width:100%;background:rgba(120,120,128,.16);border:none;border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px;padding:8px 11px;outline:none;margin-bottom:8px}
+.bval-search::placeholder{color:#6e6e73}
+.bprow-hidden{display:none}
 
 /* About */
 .about-hero{display:flex;flex-direction:column;align-items:center;padding:16px 0 24px}
@@ -348,6 +403,15 @@ textarea.fc{resize:vertical;min-height:72px}
 /* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */
 #ev-body{padding:4px 0 24px}
 #ev-body .sec{padding:0;margin-bottom:0}
+/* Form card rhythm (PSD): comfortable gap between stacked cards; headers/tips
+   sit within the gap, tips hug the card above. */
+#ev-body .grp{margin-bottom:0}
+#ev-body .grp + .grp{margin-top:44px}
+#ev-body .grp-hdr{margin-top:36px;padding-top:0}
+#ev-body .grp-hdr:first-child{margin-top:0}
+#ev-body .grp-hdr + .grp{margin-top:0}
+#ev-body .grp-tip + .grp{margin-top:44px}
+#ev-body .grp-tip + .grp-hdr{margin-top:36px}
 #ev-body .stl{padding:16px 0 6px;margin-bottom:8px;border-bottom:1px solid var(--bd-inner);font-size:11px}
 #ev-body .fr{margin-bottom:14px}
 #ev-body .fr label{font-size:13px;color:var(--dm);margin-bottom:6px}
