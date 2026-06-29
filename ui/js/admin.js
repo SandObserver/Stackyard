@@ -234,16 +234,8 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     b.textContent=dir<0?'↑':'↓';b.disabled=!can;b.onclick=()=>moveRow(item,dir,{folderId,childIdx});return b;};
   if(!_filtering) ac.append(mkMove(-1,canUp),mkMove(1,canDown));
   if(item.type!=='folder'){
-    const dup=document.createElement('button');dup.className='btn bg sm ic';dup.title='Duplicate';dup.textContent='⊙';
-    dup.onclick=()=>{const c=JSON.parse(JSON.stringify(item));c.id=c.id+'_'+Date.now();
-      if(folderId){/* insert into same folder */
-        const f=items.find(i=>i.id===folderId);
-        if(f){f.children=f.children||[];f.children.splice(childIdx+1,0,c.id);items.push(c);}
-      }else{items.splice(idx+1,0,c);}save();};
-    const fl=document.createElement('button');fl.className='btn bg sm ic';fl.title='Move to folder';fl.textContent='📁';
-    fl.onclick=()=>openFolderPicker(item.id);
     const ed=document.createElement('button');ed.className='btn bg sm';ed.textContent='Edit';ed.onclick=()=>openModal(idx);
-    ac.append(dup,fl,ed);
+    ac.append(ed);
   }else{
     const ed=document.createElement('button');ed.className='btn bg sm';ed.textContent='Edit';ed.onclick=()=>openModal(idx);
     ac.append(ed);
@@ -434,6 +426,53 @@ function showEditView(){
   document.querySelector('.cp')?.scrollTo?.(0,0);
 }
 
+/* Item-type glyphs traced from the PSD (24x24, currentColor). */
+const TYPE_ICONS={
+  app:'<rect x="7" y="7" width="10" height="10" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/>',
+  widget:'<rect x="3.5" y="6.5" width="17" height="11" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7.2" cy="10.2" r="1.5" fill="currentColor"/><line x1="5.6" y1="13.4" x2="17.4" y2="13.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.6" y1="15.2" x2="17.4" y2="15.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  folder:'<rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"/><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"/><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"/><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"/>'
+};
+const TYPE_LABELS={app:'App',widget:'Widget',folder:'Folder'};
+
+let _evItem=null,_evIsEdit=false;
+
+/* Add New type selector — single card row, label left, three PSD tiles right. */
+function buildAddNewCard(){
+  const grp=document.createElement('div');
+  grp.className='grp';
+  const row=document.createElement('div');
+  row.className='row tile-row';
+  row.innerHTML='<span class="rl">Add New</span>';
+  const grpTiles=document.createElement('div');
+  grpTiles.className='tile-grp';
+  ['app','widget','folder'].forEach(t=>{
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='tile-opt'+(t===ctype?' on':'');
+    b.dataset.ctype=t;
+    b.setAttribute('aria-pressed',String(t===ctype));
+    b.setAttribute('aria-label','Add '+TYPE_LABELS[t]);
+    b.innerHTML=`<span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${TYPE_ICONS[t]}</svg></span><span class="tile-cap">${TYPE_LABELS[t]}</span>`;
+    b.onclick=()=>{ if(ctype===t)return; ctype=t; _renderEditBody(); };
+    grpTiles.appendChild(b);
+  });
+  row.appendChild(grpTiles);
+  grp.appendChild(row);
+  return grp;
+}
+
+/* Render the push edit body: builder fills #ev-body, then the Add New card
+   is prepended (add-mode only) so it survives the builders' innerHTML reset. */
+function _renderEditBody(){
+  const body=document.getElementById('ev-body');
+  body.innerHTML='';
+  if(ctype==='widget') buildWidgetForm(body,_evItem);
+  else if(ctype==='folder') buildFolderForm(body,_evItem);
+  else buildAppForm(body,_evItem);
+  if(!_evIsEdit) body.insertBefore(buildAddNewCard(),body.firstChild);
+  setTimeout(()=>{ try{ body.querySelector('input,select,textarea')?.focus(); }catch{} },50);
+}
+
 function openModal(idx){
   eid=idx??null;
   const item=idx!=null?JSON.parse(JSON.stringify(items[idx])):null;
@@ -459,25 +498,11 @@ function openModal(idx){
   if(delBtn){ delBtn.classList.toggle('d-none',!isEdit); delBtn.onclick=()=>_evDelete(item,idx); }
   if(saveBtn){ saveBtn.onclick=()=>doSave(item); }
 
-  /* Segmented control — only for add */
-  const seg=document.getElementById('ev-seg');
-  if(seg){ seg.style.display=isEdit?'none':''; }
-  if(!isEdit){
-    document.querySelectorAll('.type-pill').forEach(t=>{
-      t.classList.toggle('active',t.dataset.ctype===ctype);
-    });
-  }
-
-  /* Body */
-  const body=document.getElementById('ev-body');
-  body.innerHTML='';
-  if(ctype==='widget') buildWidgetForm(body,item);
-  else if(ctype==='folder') buildFolderForm(body,item);
-  else buildAppForm(body,item);
+  /* Body — Add New selector card renders inside (add-mode only) */
+  _evItem=item; _evIsEdit=isEdit;
+  _renderEditBody();
 
   showEditView();
-  /* focus first input */
-  setTimeout(()=>{ try{ body.querySelector('input,select,textarea')?.focus(); }catch{} },50);
 }
 
 function _evDelete(item,idx){
@@ -501,19 +526,6 @@ function _modalKeydown(e){
   if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
   else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
 }
-/* ══ Type pill tabs for add-new ══ */
-document.querySelectorAll('.type-pill').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    ctype=tab.dataset.ctype;
-    document.querySelectorAll('.type-pill').forEach(t=>t.classList.toggle('active',t===tab));
-    const body=document.getElementById('ev-body');
-    body.innerHTML='';
-    if(ctype==='widget') buildWidgetForm(body,null);
-    else if(ctype==='folder') buildFolderForm(body,null);
-    else buildAppForm(body,null);
-  });
-});
-
 /* ══ al-filter wiring ══ */
 {
   const s=document.getElementById('al-search');
@@ -1801,20 +1813,70 @@ function _renderBackupConfig(body){
   }
 }
 
+/* Folder form — settings-row system (PSD: add_new_folder).
+   Folder Name = inline-edit row; Add Apps = tap-to-toggle checklist dropdown. */
 function buildFolderForm(body,item){
-  const nonDockApps=items.filter(i=>i.type==='app'&&!i.dock);
   const children=item?.children||[];
+  const apps=items.filter(i=>i.type==='app'&&!i.dock);
+  /* In edit mode, surface current children even if they'd otherwise be filtered. */
+  children.forEach(cid=>{ if(!apps.some(a=>a.id===cid)){ const a=items.find(i=>i.id===cid); if(a) apps.push(a); } });
+
+  const opts=apps.map(a=>`<li role="option" data-val="${esc(a.id)}" aria-selected="${children.includes(a.id)?'true':'false'}">${esc(a.label||a.id)}</li>`).join('')
+    || '<li class="row-dd-empty" aria-disabled="true">No apps available</li>';
+
   body.innerHTML=`
-    <div class="fr"><label>Folder name <span class="req">*</span></label>
-      <input class="fc" id="f-fname" placeholder="My Folder" value="${esc(item?.label||'')}"></div>
-    <div class="fr fr-mb0">
-      <label>Apps in this folder</label>
-      <select class="fc" id="folder-app-select" multiple size="${Math.min(Math.max(nonDockApps.length,3),8)}" style="height:auto;padding:4px 0">
-        ${nonDockApps.map(a=>`<option value="${esc(a.id)}" ${children.includes(a.id)?'selected':''}
-          style="padding:7px 12px;cursor:pointer">${esc(a.label||a.id)}</option>`).join('')}
-      </select>
-      <div class="hint">Hold <kbd style="font-size:10px;padding:1px 4px;border:1px solid var(--bd);border-radius:3px">⌘</kbd> / <kbd style="font-size:10px;padding:1px 4px;border:1px solid var(--bd);border-radius:3px">Ctrl</kbd> to select multiple apps.</div>
-    </div>`;
+    <div class="grp">
+      <div class="row ie-row" id="ie-fname">
+        <span class="rl">Folder Name</span>
+        <span class="rv">${esc(item?.label||'')||'—'}</span>
+        <input id="f-fname" type="text" value="${esc(item?.label||'')}" style="display:none">
+        <button class="pe" type="button" aria-label="Edit folder name">&#9998;</button>
+      </div>
+      <div class="row">
+        <span class="rl">Add Apps</span>
+        <div class="row-dd" id="folder-apps-dd">
+          <button class="row-dd-btn" id="folder-apps-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span id="folder-apps-label">Select apps</span>
+            <svg class="dd-chev dd-chev2" width="10" height="14" viewBox="0 0 10 14" fill="currentColor" aria-hidden="true"><path d="M5 0l4 5H1z"/><path d="M5 14l4-5H1z"/></svg>
+          </button>
+          <ul class="row-dd-list checklist" id="folder-apps-list" role="listbox" aria-multiselectable="true" aria-label="Apps in this folder" hidden>${opts}</ul>
+        </div>
+      </div>
+    </div>
+    <p class="grp-tip">Tap to add or remove apps from this folder.</p>`;
+
+  initInlineEdit('ie-fname','f-fname',{placeholder:'My Folder'});
+  _wireFolderApps();
+}
+
+/* Multi-select checklist: tap toggles aria-selected, list stays open. */
+function _wireFolderApps(){
+  const dd=document.getElementById('folder-apps-dd');
+  const btn=document.getElementById('folder-apps-btn');
+  const list=document.getElementById('folder-apps-list');
+  const label=document.getElementById('folder-apps-label');
+  if(!dd||!btn||!list||!label) return;
+  const sync=()=>{
+    const sel=[...list.querySelectorAll('li[aria-selected="true"]')];
+    label.textContent = sel.length===0 ? 'Select apps'
+      : sel.length===1 ? sel[0].textContent
+      : sel.length+' selected';
+  };
+  const close=()=>{ list.hidden=true; btn.setAttribute('aria-expanded','false'); };
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const open=list.hidden;
+    if(open){ list.hidden=false; btn.setAttribute('aria-expanded','true'); }
+    else close();
+  });
+  list.addEventListener('click',e=>{
+    const li=e.target.closest('li[role="option"]');
+    if(!li) return;
+    li.setAttribute('aria-selected', li.getAttribute('aria-selected')==='true'?'false':'true');
+    sync();
+  });
+  document.addEventListener('click',e=>{ if(!dd.contains(e.target)) close(); });
+  sync();
 }
 
 function buildAppForm(body,item){
@@ -2687,7 +2749,7 @@ async function doSave(orig){
       if(!label){toast('Name required','err');return;}
       const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'folder';
       /* Prevent adding an app to multiple folders — remove it from any existing folder first */
-      const children=[...document.querySelectorAll('#folder-app-select option:checked')].map(o=>o.value);
+      const children=[...document.querySelectorAll('#folder-apps-list li[aria-selected="true"]')].map(li=>li.dataset.val);
       if(!orig){
         children.forEach(cid=>{
           items.forEach(it=>{
