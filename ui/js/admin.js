@@ -1933,6 +1933,7 @@ function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semanti
   const tune=rows.filter(r=>r.classList.contains('cc-tune'));
   const hidden=document.createElement('input'); hidden.type='hidden'; hidden.id=`${idPrefix}-val`; container.appendChild(hidden);
   let mode=isSem(value)?value:'color';
+  let showTune=false;
   const curHex=()=>_hsvToHex(+hEl.value,+sEl.value,+vEl.value);
   const _rgb=h=>{const x=_cssToHex(h);return x?[parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)]:null;};
   const _near=(a,b)=>{const ra=_rgb(a),rb=_rgb(b);return ra&&rb&&ra.every((n,i)=>Math.abs(n-rb[i])<=3);};
@@ -1944,11 +1945,11 @@ function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semanti
     container.querySelectorAll('.cc-swatch').forEach(b=>{
       let on=false;
       if(mode==='dark'||mode==='light') on=(b.dataset.v===mode);
-      else on=(b.dataset.v!=='custom'&&!b.classList.contains('cc-sem')&&_near(b.dataset.v,hex));
+      else if(!showTune) on=(b.dataset.v!=='custom'&&!b.classList.contains('cc-sem')&&_near(b.dataset.v,hex));
       b.classList.toggle('on',on); if(on)matched=b;
     });
-    const rb=container.querySelector('.cc-rainbow'); if(rb)rb.classList.toggle('on',mode==='color'&&!matched);
-    tune.forEach(r=>r.classList.toggle('cc-dim',mode!=='color'));
+    const rb=container.querySelector('.cc-rainbow'); if(rb)rb.classList.toggle('on',mode==='color'&&showTune);
+    tune.forEach(r=>r.style.display=showTune?'':'none');
     if(!codeRv.closest('.editing')){
       codeRv.textContent = mode==='color'?hex:(mode==='dark'?'Dark':'Light');
       codeRv.classList.remove('is-ph');
@@ -1956,16 +1957,21 @@ function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semanti
     hidden.value = mode==='color'?hex:mode;
   }
   const commit=()=>{ paint(); onChange?.(hidden.value); };
-  [hEl,sEl,vEl].forEach(el=>el.addEventListener('input',()=>{ mode='color'; commit(); }));
+  [hEl,sEl,vEl].forEach(el=>el.addEventListener('input',()=>{ mode='color'; showTune=true; commit(); }));
   container.querySelectorAll('.cc-swatch').forEach(b=>b.addEventListener('click',()=>{
-    if(b.dataset.v==='dark'||b.dataset.v==='light'){ mode=b.dataset.v; commit(); return; }
-    mode='color';
-    if(b.dataset.v!=='custom'){ const hv=_hexToHsv(b.dataset.v); if(hv){hEl.value=hv.h;sEl.value=hv.s;vEl.value=hv.v;} }
+    if(b.dataset.v==='dark'||b.dataset.v==='light'){ mode=b.dataset.v; showTune=false; commit(); return; }
+    if(b.dataset.v==='custom'){ mode='color'; showTune=true; commit(); return; }
+    mode='color'; showTune=false;
+    const hv=_hexToHsv(b.dataset.v); if(hv){hEl.value=hv.h;sEl.value=hv.s;vEl.value=hv.v;}
     commit();
   }));
   initInlineEdit(`${idPrefix}-code-row`,`${idPrefix}-hex`,{placeholder:'#rrggbb or any CSS color',onCommit(val){
-    const hv=_hexToHsv(val); if(hv){ mode='color'; hEl.value=hv.h; sEl.value=hv.s; vEl.value=hv.v; } commit();
+    const hv=_hexToHsv(val); if(hv){ mode='color'; showTune=true; hEl.value=hv.h; sEl.value=hv.s; vEl.value=hv.v; } commit();
   }});
+  if(mode==='color'){
+    const presets=[...container.querySelectorAll('.cc-swatch')].filter(b=>b.dataset.v!=='custom'&&!b.classList.contains('cc-sem')).map(b=>b.dataset.v);
+    showTune=!presets.some(pv=>_near(pv,value));
+  }
   paint();
   return { getValue:()=>hidden.value };
 }
