@@ -1,8 +1,9 @@
-/* admin.css v23 */
+/* admin.css v24 */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg-outer:#1c1c24;
   --sb:#292938;
+  --pane:#292933;
   --cp:#2f2f38;
   --bd:#4e4f56;
   --bd-inner:#3a3a44;
@@ -17,7 +18,8 @@
   --t:.15s ease;
   --sbw:308px;
 }
-html,body{min-height:100vh;background:var(--bg-outer);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+html,body{min-height:100vh;color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+body{background:var(--bg-outer)}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
 .adm-outer{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:44px 0}
@@ -38,7 +40,7 @@ html,body{min-height:100vh;background:var(--bg-outer);color:var(--tx);font-famil
 .ni{flex-shrink:0;opacity:.6}
 
 /* ── Content pane ── */
-.cp{flex:1;min-width:0;background:var(--cp);overflow-y:auto}
+.cp{flex:1;min-width:0;background:var(--pane);overflow-y:auto}
 
 /* ── Section ── */
 .sec{padding:20px 24px 48px}
@@ -78,15 +80,17 @@ html,body{min-height:100vh;background:var(--bg-outer);color:var(--tx);font-famil
 .dd-chev{opacity:.5;flex-shrink:0}
 .row-dd-list{position:absolute;top:calc(100% + 4px);right:0;background:#1c1c24;border:1px solid var(--bd);border-radius:var(--rs);list-style:none;min-width:140px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;padding:4px 0}
 .row-dd-list[hidden]{display:none}
+.row-dd-list.checklist{max-height:240px;overflow-y:auto;min-width:200px}
+.row-dd-empty{padding:10px 16px;font-size:14px;color:var(--dm);cursor:default}
 .row-dd-list li{padding:10px 16px;font-size:14px;color:var(--tx);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:10px}
 .row-dd-list li:hover{background:rgba(255,255,255,.08)}
 .row-dd-list li[aria-selected="true"]::before{content:'✓';color:var(--ac);font-weight:700;width:14px;flex-shrink:0;font-size:13px}
 .row-dd-list li[aria-selected="false"]::before{content:'';width:14px;flex-shrink:0}
 
 /* ── Slider — wider with JS-driven blue fill ── */
-.slider-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.slider-wrap{display:flex;align-items:center;gap:8px;flex:1;max-width:340px}
 .si{color:var(--dm);flex-shrink:0}
-.adm-range{width:220px;height:4px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right, var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:2px;cursor:pointer;outline:none}
+.adm-range{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right, var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:2px;cursor:pointer;outline:none}
 .adm-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 .adm-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;border:none;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 
@@ -123,13 +127,16 @@ html,body{min-height:100vh;background:var(--bg-outer);color:var(--tx);font-famil
 .fp-add{width:100%;background:none;border:none;border-radius:var(--rs);color:var(--ac2);padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;text-align:left;font-family:inherit}
 .fp-add:hover{background:rgba(255,255,255,.04)}
 
-/* ── Type pills (Add New selector) ── */
-.type-pills{display:flex;gap:8px;margin-bottom:14px}
-.type-pill{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 16px;border-radius:var(--rs);border:1px solid var(--bd-inner);background:rgba(255,255,255,.04);color:var(--dm);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all var(--t);min-width:90px}
-.type-pill:hover{color:var(--tx);background:rgba(255,255,255,.08)}
-.type-pill.active{background:rgba(2,122,255,.22);border-color:var(--ac);color:var(--ac)}
-.type-pill svg{opacity:.55}
-.type-pill.active svg{opacity:1}
+/* ── Tile-group row (Add New selector, Widget Size selector) ── */
+.tile-row{align-items:flex-start;padding-top:16px;padding-bottom:16px}
+.tile-row .rl{padding-top:6px}
+.tile-grp{display:flex;gap:18px;margin-left:auto}
+.tile-opt{display:flex;flex-direction:column;align-items:center;gap:7px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit}
+.tile-ico{width:54px;height:54px;border-radius:12px;background:#7c7c81;display:flex;align-items:center;justify-content:center;color:#fff;outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--t)}
+.tile-opt.on .tile-ico{outline-color:var(--ac)}
+.tile-cap{font-size:12px;font-weight:500;color:var(--dm);transition:color var(--t)}
+.tile-opt.on .tile-cap{color:var(--tx)}
+.tile-opt:hover .tile-cap{color:var(--tx)}
 
 /* About */
 .about-hero{display:flex;flex-direction:column;align-items:center;padding:16px 0 24px}
@@ -337,3 +344,15 @@ textarea.fc{resize:vertical;min-height:72px}
 /* Legacy */
 .range-full{width:100%;accent-color:var(--ac);cursor:pointer}
 .br-val{color:var(--dm)}
+
+/* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */
+#ev-body{padding:4px 0 24px}
+#ev-body .sec{padding:0;margin-bottom:0}
+#ev-body .stl{padding:16px 0 6px;margin-bottom:8px;border-bottom:1px solid var(--bd-inner);font-size:11px}
+#ev-body .fr{margin-bottom:14px}
+#ev-body .fr label{font-size:13px;color:var(--dm);margin-bottom:6px}
+#ev-body .fc{background:rgba(255,255,255,.06);border:1px solid var(--bd-inner);border-radius:var(--rs);padding:12px 14px;font-size:14px}
+#ev-body .div{margin:20px 0;background:var(--bd-inner)}
+#ev-body .trow{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+#ev-body .slot-card{background:rgba(255,255,255,.04);border:1px solid var(--bd-inner);border-radius:var(--r);padding:16px}
+#ev-body .hint{font-size:12px;color:var(--dm)}
