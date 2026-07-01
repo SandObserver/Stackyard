@@ -1,6 +1,6 @@
 {
   "name": "stackyard-api",
-  "version": "0.1.0",
+  "version": "0.2.11",
   "description": "Stackyard API — self-hosted homelab dashboard backend",
   "main": "src/server.js",
   "engines": {
