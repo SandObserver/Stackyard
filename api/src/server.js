@@ -16,6 +16,7 @@ http.createServer(dispatch).listen(PORT, () => {
   const { CONFIG_PATH, ICONS_PATH } = require('./config');
   const { getRegistry } = require('./widgets');
   const pkg = require('../package.json');
+  const version = process.env.APP_VERSION || pkg.version;
   const widgets = Object.keys(getRegistry());
   const W = 47;
   const bar = c => c + '─'.repeat(W) + (c === '┌' ? '┐' : '┘');
@@ -25,7 +26,7 @@ http.createServer(dispatch).listen(PORT, () => {
     '',
     '  ' + bar('┌'),
     '  ' + mid('STACKYARD'),
-    '  ' + mid('self-hosted dashboard · v' + pkg.version),
+    '  ' + mid('self-hosted dashboard · v' + version),
     '  ' + bar('└'),
     `  ➜  Web UI:    http://localhost:${PORT}`,
     `  ➜  Config:    ${CONFIG_PATH}`,
@@ -35,5 +36,4 @@ http.createServer(dispatch).listen(PORT, () => {
     '',
   ];
   console.log(lines.join('\n'));
-  log.info('started', { port:PORT, version:pkg.version, config:CONFIG_PATH, icons:ICONS_PATH, node:process.version });
 });
