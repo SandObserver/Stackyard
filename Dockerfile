@@ -30,6 +30,11 @@ COPY supervisord.conf /etc/supervisor/conf.d/stackyard.conf
 
 WORKDIR /app
 
+# Version baked from the release tag by CI (docker/metadata-action → build-arg).
+# Placed late so version-only rebuilds don't bust earlier layers.
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 EXPOSE 80
 
 # Healthcheck runs through Nginx → Node, covering both processes.
