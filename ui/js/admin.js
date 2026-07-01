@@ -1,7 +1,7 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { clr as rc, esc } from '/js/utils.js?v=37';
+import { clr as rc, esc } from '/js/utils.js?v=38';
 import { WIDGET_TYPES } from '/js/widget-types.js?v=39';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=3';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=4';
 
 /* Admin UI — Stackyard Dashboard */
 const API = '';
@@ -97,6 +97,32 @@ async function load(){
   items.filter(i=>i.type==='folder').forEach(f=>collapsedFolders.add(f.id));
   render();
   loadSettings(c);
+  applyBg();
+}
+
+/* Wallpaper behind the settings panel — mirrors the dashboard's background settings. */
+function _sanitizeCssUrl(u){ return String(u||'').replace(/['"\\()]/g,''); }
+async function applyBg(){
+  const root=document.documentElement;
+  try{
+    const bg=(_settings&&_settings.background)||{};
+    if(bg.type==='color'&&bg.color){
+      root.style.setProperty('--bg-image','none');
+      root.style.setProperty('--bg-color',String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g,''));
+      root.style.setProperty('--bg-brightness','1');
+    }else if(bg.type==='url'&&bg.url){
+      root.style.setProperty('--bg-image',`url('${_sanitizeCssUrl(bg.url)}')`);
+      root.style.setProperty('--bg-color','#0d1117');
+      root.style.setProperty('--bg-brightness',String(bg.brightness??0.62));
+    }else if(bg.type==='unsplash'){
+      const r=await fetch('/api/wallpaper',{cache:'no-store'}); const d=await r.json();
+      if(d.url){ const img=new Image(); img.onload=()=>{
+        root.style.setProperty('--bg-image',`url('${_sanitizeCssUrl(d.url)}')`);
+        root.style.setProperty('--bg-color','#0d1117');
+        root.style.setProperty('--bg-brightness',String(bg.brightness??0.62));
+      }; img.src=d.url; }
+    }
+  }catch{}
 }
 async function save(){
   if(saving)return;saving=true;
@@ -218,6 +244,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     mt.textContent=`${wtLabel} widget · ${item.widgetSize||'medium'}`;
   }
   else if(item.type==='folder')mt.textContent=`${(item.children||[]).length} apps`;
+  else if(item.system==='settings')mt.textContent='Opens settings';
   else mt.textContent=item.href||'';
   inf.append(nm,mt);
   /* Pills */
@@ -227,15 +254,21 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   if(item.type==='folder')pb.innerHTML+='<span class="pill p-fl">Folder</span>';
   if(item.monitoring?.healthcheck?.enabled||item.container)pb.innerHTML+='<span class="pill p-hl">Health</span>';
   if(item.monitoring?.activity?.enabled||item.badge?.enabled)pb.innerHTML+='<span class="pill p-bg">Badge</span>';
+  if(item.system==='settings')pb.innerHTML+='<span class="pill p-sy">System</span>';
+  if(item.hidden)pb.innerHTML+='<span class="pill p-hd">Hidden</span>';
   /* Actions */
   const ac=document.createElement('div');ac.className='ract';
   const mkMove=(dir,can)=>{const b=document.createElement('button');b.className='btn bg sm ic';
     const lbl=dir<0?'Move up':'Move down';b.title=lbl;b.setAttribute('aria-label',lbl+': '+(item.label||item.id||'item'));
     b.textContent=dir<0?'↑':'↓';b.disabled=!can;b.onclick=()=>moveRow(item,dir,{folderId,childIdx});return b;};
   if(!_filtering) ac.append(mkMove(-1,canUp),mkMove(1,canDown));
-  if(item.type!=='folder'){
-    const ed=document.createElement('button');ed.className='btn bg sm';ed.textContent='Edit';ed.onclick=()=>openModal(idx);
-    ac.append(ed);
+  if(item.system==='settings'){
+    const hb=document.createElement('button');hb.className='btn bg sm';
+    hb.textContent=item.hidden?'Show':'Hide';
+    const lbl=(item.hidden?'Show':'Hide')+' Settings on dashboard';
+    hb.title=lbl;hb.setAttribute('aria-label',lbl);
+    hb.onclick=()=>{ item.hidden=!item.hidden; save(); render(); };
+    ac.append(hb);
   }else{
     const ed=document.createElement('button');ed.className='btn bg sm';ed.textContent='Edit';ed.onclick=()=>openModal(idx);
     ac.append(ed);
@@ -871,7 +904,7 @@ function _renderStatsBody(body){
       const hrefVal=isTn?(_wdiskCfg.truenasHref||''):(_wdiskCfg.scrutinyHref||'');
       const hrefPh=isTn?'https://truenas/ui/storage':'https://your-server:8080';
       fieldArea.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="dh-url-row"><span class="rl">${isTn?'TrueNAS':'Scrutiny'} URL</span><span class="rv${urlVal?'':' is-ph'}">${urlVal?esc(urlVal):esc(urlPh)}</span><input id="dh-url" type="text" value="${esc(urlVal)}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
-      if(isTn) fieldArea.insertAdjacentHTML('beforeend', `<div class="row"><span class="rl">API Key</span><input id="dh-key" class="icon-srch" type="password" autocomplete="new-password" placeholder="${_wdiskCfg.truenasKeySet?'Saved, re-enter to change':'paste API key'}"></div>`);
+      if(isTn) _secretRow(fieldArea,{rowId:'dh-key-row',inpId:'dh-key',label:'API Key',isSet:_wdiskCfg.truenasKeySet});
       const fr=document.createElement('div'); fr.className='row'; fr.innerHTML='<span class="rl"></span>';
       dhStatus=document.createElement('span'); dhStatus.className='row-status'; dhStatus.id='dh-msg'; fr.appendChild(dhStatus);
       const fbtn=document.createElement('button'); fbtn.type='button'; fbtn.className='row-btn'; fbtn.id='dh-load'; fbtn.textContent=isTn?'Fetch Pools':'Fetch Drives'; fr.appendChild(fbtn);
@@ -934,7 +967,6 @@ function _renderStatsBody(body){
         <label class="segr-opt"><input type="radio" name="net-prov" value="speedtest-tracker" ${prov==='speedtest-tracker'?'checked':''}><span class="segr-dot"></span><span>Speedtest Tracker</span></label>
       </div></div>
       <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${_wnet.url?'':' is-ph'}">${_wnet.url?esc(_wnet.url):(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${esc(_wnet.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${PE_SVG}</button></div>
-      <div class="row" id="net-pass-row" ${prov==='myspeed'?'':'hidden'}><span class="rl">Password <span class="opt-span">(optional)</span></span><input id="net-pass" class="icon-srch" type="password" autocomplete="new-password" placeholder="${_wnet.myspeedPassSet?'Enter to replace':'Leave blank if none'}"></div>
     </div>`;
   const netEn=netCard.querySelector('#net-en'), netSub=netCard.querySelector('#net-sub');
   netEn.onchange=()=>{ _wnet.enabled=netEn.checked; netSub.hidden=!netEn.checked; };
@@ -944,6 +976,7 @@ function _renderStatsBody(body){
     const uv=netCard.querySelector('#net-url-row .rv'); if(uv&&uv.classList.contains('is-ph'))uv.textContent=(r.value==='myspeed'?'myspeed:5216':'your-server:8850');
   }));
   initInlineEdit('net-url-row','net-url',{placeholder:(prov==='myspeed'?'myspeed:5216':'your-server:8850'),onCommit(v){_wnet.url=v;}});
+  _secretRow(netSub,{rowId:'net-pass-row',inpId:'net-pass',label:'Password',opt:true,isSet:_wnet.myspeedPassSet,hidden:(prov!=='myspeed')});
 }
 
 function _mkDiskFields(idx){
@@ -998,14 +1031,12 @@ function _renderVpnConfig(body){
   const cCard=document.createElement('div'); cCard.className='grp'; body.appendChild(cCard);
   if(svc==='gluetun'){
     cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Control Server URL <span class="req">*</span></span><span class="rv${_wvpnCfg.url?'':' is-ph'}">${_wvpnCfg.url?esc(_wvpnCfg.url):'http://gluetun:8000'}</span><input id="vpn-url" type="text" value="${esc(_wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
-    cCard.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">API Key <span class="opt-span">(optional)</span></span><input id="vpn-apikey" class="icon-srch" type="password" autocomplete="new-password" placeholder="${_wvpnCfg.apiKeySet?'Stored, re-enter to change':'only if auth required'}"></div>`);
     initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://gluetun:8000',onCommit(v){_wvpnCfg.url=v;}});
-    cCard.querySelector('#vpn-apikey').oninput=e=>{_wvpnCfg.apiKey=e.target.value;};
+    _secretRow(cCard,{rowId:'vpn-apikey-row',inpId:'vpn-apikey',label:'API Key',opt:true,isSet:_wvpnCfg.apiKeySet,onInput(v){_wvpnCfg.apiKey=v;}});
   } else {
     cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Management API URL <span class="req">*</span></span><span class="rv${_wvpnCfg.url?'':' is-ph'}">${_wvpnCfg.url?esc(_wvpnCfg.url):'http://netbird:33073'}</span><input id="vpn-url" type="text" value="${esc(_wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
-    cCard.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Access Token (PAT) <span class="req">*</span></span><input id="vpn-token" class="icon-srch" type="password" autocomplete="new-password" placeholder="${_wvpnCfg.tokenSet?'Stored, re-enter to change':'nbp_...'}"></div>`);
     initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://netbird:33073',onCommit(v){_wvpnCfg.url=v;}});
-    cCard.querySelector('#vpn-token').oninput=e=>{_wvpnCfg.token=e.target.value;};
+    _secretRow(cCard,{rowId:'vpn-token-row',inpId:'vpn-token',label:'Access Token (PAT)',req:true,isSet:_wvpnCfg.tokenSet,onInput(v){_wvpnCfg.token=v;}});
   }
   cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-href-row"><span class="rl">Click URL <span class="opt-span">(optional)</span></span><span class="rv${_wvpnCfg.href?'':' is-ph'}">${_wvpnCfg.href?esc(_wvpnCfg.href):'http://your-server:8000'}</span><input id="vpn-href" type="text" value="${esc(_wvpnCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit click URL">${PE_SVG}</button></div>`);
   initInlineEdit('vpn-href-row','vpn-href',{placeholder:'http://your-server:8000',onCommit(v){_wvpnCfg.href=v;}});
@@ -1052,9 +1083,8 @@ function _renderMapConfig(body){
     card.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${nid}"><span class="rl">Display Name</span><span class="rv${svc.name?'':' is-ph'}">${svc.name?esc(svc.name):esc(meta.label||'Name')}</span><input id="${nid}-i" type="text" value="${esc(svc.name||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${PE_SVG}</button></div>`);
 
     (meta.fields||[]).forEach(fld=>{
-      const saved=fld.secret&&svc[fld.key+'Set'];
       if(fld.secret){
-        card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">${esc(fld.label)}</span><input class="icon-srch" type="password" autocomplete="new-password" placeholder="${saved?'Saved, leave blank to keep':esc(fld.ph||'')}" data-k="${esc(fld.key)}"></div>`);
+        _secretRow(card,{rowId:`mapsec-${svc.id}-${fld.key}-row`,inpId:`mapsec-${svc.id}-${fld.key}`,label:esc(fld.label),isSet:!!svc[fld.key+'Set'],onInput(v){svc[fld.key]=v;}});
       } else {
         const rid=`mapf-${svc.id}-${fld.key}`;
         card.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${rid}"><span class="rl">${esc(fld.label)}</span><span class="rv${svc[fld.key]?'':' is-ph'}">${svc[fld.key]?esc(svc[fld.key]):esc(fld.ph||'')}</span><input id="${rid}-i" type="text" value="${esc(svc[fld.key]||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit ${esc(fld.label)}">${PE_SVG}</button></div>`);
@@ -1071,8 +1101,8 @@ function _renderMapConfig(body){
     initInlineEdit(nid,`${nid}-i`,{placeholder:meta.label||'Name',onCommit(v){svc.name=v;renderList();}});
     initInlineEdit(aid,`${aid}-i`,{placeholder:meta.adminPh||'https://...',onCommit(v){svc.adminUrl=v;}});
     (meta.fields||[]).forEach(fld=>{
-      if(fld.secret){ const inp=card.querySelector(`input[data-k="${fld.key}"]`); if(inp)inp.oninput=e=>{svc[fld.key]=e.target.value;}; }
-      else initInlineEdit(`mapf-${svc.id}-${fld.key}`,`mapf-${svc.id}-${fld.key}-i`,{placeholder:fld.ph||'',onCommit(v){svc[fld.key]=v;}});
+      if(fld.secret) return;
+      initInlineEdit(`mapf-${svc.id}-${fld.key}`,`mapf-${svc.id}-${fld.key}-i`,{placeholder:fld.ph||'',onCommit(v){svc[fld.key]=v;}});
     });
   }
 
@@ -1322,7 +1352,7 @@ function _renderBackupConfig(body){
     if(prov==='duplicati'){
       const urlRid=ieRow(card,{id:`dup-url-${si}`,label:'URL',req:true,value:slot.dupUrl,ph:'http://duplicati:8200'});
       const fbtn=fetchRow(card,{id:`dup-fetch-${si}`,label:'Fetch Jobs'});
-      card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Password <span class="opt-span">(${(slot.dupPassSet||slot.dupPass)?'saved':'optional'})</span></span><input id="dup-pass-${si}" class="icon-srch" type="password" autocomplete="new-password" placeholder="${(slot.dupPassSet||slot.dupPass)?'Saved, leave blank to keep':'Enter if required'}"></div>`);
+      _secretRow(card,{rowId:`dup-pass-row-${si}`,inpId:`dup-pass-${si}`,label:'Password',opt:true,isSet:!!(slot.dupPassSet||slot.dupPass)});
       const hrefRid=ieRow(card,{id:`dup-href-${si}`,label:'Click URL',opt:true,value:slot.dupHref,ph:'http://duplicati:8200'});
       const pollRid=ieRow(card,{id:`dup-poll-${si}`,label:'Poll Interval (sec)',value:slot.dupPollSec,ph:'60',type:'number'});
       const jobWrap=document.createElement('div'); jobWrap.id=`dup-job-wrap-${si}`; card.appendChild(jobWrap); renderJobDrop(si, jobWrap);
@@ -1354,7 +1384,7 @@ function _renderBackupConfig(body){
       const urlRid=ieRow(card,{id:`kopia-url-${si}`,label:'URL',req:true,value:slot.kopiaUrl,ph:'http://kopia:51515'});
       const fbtn=fetchRow(card,{id:`kopia-fetch-${si}`,label:'Fetch Sources'});
       const userRid=ieRow(card,{id:`kopia-user-${si}`,label:'Username',opt:true,value:slot.kopiaUser,ph:'admin'});
-      card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Password <span class="opt-span">(${(slot.kopiaPassSet||slot.kopiaPass)?'saved':'optional'})</span></span><input id="kopia-pass-${si}" class="icon-srch" type="password" autocomplete="new-password" placeholder="${(slot.kopiaPassSet||slot.kopiaPass)?'Saved, leave blank to keep':'Enter if required'}"></div>`);
+      _secretRow(card,{rowId:`kopia-pass-row-${si}`,inpId:`kopia-pass-${si}`,label:'Password',opt:true,isSet:!!(slot.kopiaPassSet||slot.kopiaPass)});
       const hrefRid=ieRow(card,{id:`kopia-href-${si}`,label:'Click URL',opt:true,value:slot.kopiaHref,ph:'http://kopia:51515'});
       const srcWrap=document.createElement('div'); srcWrap.id=`kopia-src-wrap-${si}`; card.appendChild(srcWrap); renderSrcDrop(si, srcWrap);
       addNameField(card, si);
@@ -2630,6 +2660,21 @@ function initInlineEdit(rowId,inputId,{type='text',placeholder='',onCommit}={}){
   });
 }
 
+/* Secret inline-edit row: shows Configured/Not set, edits via a password field,
+   never renders the plaintext back. Input keeps its id/value for the save path. */
+function _secretRow(host, {rowId, inpId, label, req, opt, isSet, hidden, onInput}){
+  const disp = isSet ? 'Configured' : 'Not set';
+  host.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="${rowId}"${hidden?' hidden':''}><span class="rl">${label}${req?' <span class="req">*</span>':''}${opt?' <span class="opt-span">(optional)</span>':''}</span><span class="rv${isSet?'':' is-ph'}">${disp}</span><input id="${inpId}" type="password" autocomplete="new-password" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${PE_SVG}</button></div>`);
+  const row=document.getElementById(rowId), rv=row.querySelector('.rv'), inp=document.getElementById(inpId), pe=row.querySelector('.pe');
+  const open=()=>{ row.classList.add('editing'); inp.style.display='block'; inp.focus(); };
+  const commit=()=>{ row.classList.remove('editing'); inp.style.display='none'; const has=!!inp.value; rv.textContent=has?'New value set':disp; rv.classList.toggle('is-ph',!(has||isSet)); };
+  pe.addEventListener('click',open); rv.addEventListener('click',open);
+  inp.addEventListener('blur',commit);
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();inp.blur();} });
+  if(onInput) inp.addEventListener('input',()=>onInput(inp.value));
+  return row;
+}
+
 function initAllInlineEdits(){
   initInlineEdit('ie-title','ie-input',{placeholder:'Stackyard',
     onCommit(v){document.getElementById('ie-title-v').textContent=v||'Stackyard';}});
@@ -2678,15 +2723,19 @@ function initAllInlineEdits(){
 async function initVersion(){
   try{
     const d=await ag('/api/version');
-    const v=d.current||d.version||'';
+    const v=(d.current||d.version||'').replace(/^v/i,'');
     if(v){
       const vEl=document.getElementById('sidebar-version');
       const aEl=document.getElementById('about-version');
-      if(vEl)vEl.textContent=v;
-      if(aEl)aEl.textContent='Version '+v;
+      if(vEl)vEl.textContent='v'+v;
+      if(aEl)aEl.textContent='Version v'+v;
       if(d.updateAvailable){
         const dot=document.getElementById('about-update-dot');
         if(dot)dot.style.display='flex';
+        if(aEl&&d.latest){
+          const lv=String(d.latest).replace(/^v/i,'');
+          aEl.innerHTML='Version v'+esc(v)+' &middot; <a href="https://github.com/SandObserver/stackyard/releases/latest" target="_blank" rel="noopener" class="upd-link">Update to v'+esc(lv)+'</a>';
+        }
       }
     }
   }catch{}

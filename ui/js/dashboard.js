@@ -2,9 +2,9 @@
 
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
 import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=39';
-import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=37';
+import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=38';
 import { initSpotlight } from '/js/spotlight.js?v=36';
-import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=40';
+import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=41';
 
 const API = '';
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
@@ -130,6 +130,7 @@ function paginate() {
   const pages = []; let cur = [], used = 0;
   for (const item of items) {
     if (item.dock) continue;
+    if (item.hidden) continue;
     if (inFolder.has(String(item.id))) continue;
     const cost = item.type === 'widget' ? wCost[pl][item.widgetSize||'medium'] : 1;
     if (used + cost > SLOTS && cur.length) { pages.push([...cur]); cur = []; used = 0; }
@@ -143,7 +144,9 @@ function mkIcon(item) {
   if (item.type === 'folder') return mkFolder(item);
   const showLabel = S.showLabels?.desktop !== false;
   const iw = showLabel ? 72 : 78, isz = showLabel ? 50 : 56;
-  const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
+  const a = item.system === 'settings'
+    ? mk('a', { href: '/admin/' })
+    : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'icon';
   a.setAttribute('aria-label', item.label||item.id);
   a.appendChild(mkWrap(item, iw, 16, isz, 'iwrap'));
@@ -175,14 +178,16 @@ function mkWidget(item) {
 }
 
 function mkDock(item) {
-  const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
+  const a = item.system === 'settings'
+    ? mk('a', { href: '/admin/' })
+    : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'di'; a.setAttribute('aria-label', item.label||item.id);
   a.appendChild(mkWrap(item, 78, 15, 50, 'dwrap')); return a;
 }
 
 function buildDesktop() {
   BEL.clear();
-  const dock = items.filter(i => i.type === 'app' && i.dock).slice(0,4);
+  const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0,4);
   const pages = paginate(); totalPages = pages.length;
   const strip = document.getElementById('pages'); strip.innerHTML = '';
   pages.forEach(pageItems => {
@@ -196,8 +201,6 @@ function buildDesktop() {
   const dk = document.getElementById('dock'); dk.innerHTML = '';
   dock.forEach(item => dk.appendChild(mkDock(item)));
   const ct = document.getElementById('ctrls'); ct.innerHTML = '';
-  const al = mk('a', { href: '/admin/' }); al.className = 'ctrl'; al.title = 'Settings'; al.setAttribute('aria-label','Settings'); al.textContent = '⚙';
-  ct.append(al);
 }
 
 function goTo(n, dotEls) {
