@@ -2230,16 +2230,6 @@ function loadSettings(c){
     updateSliderFill(brEl);
     brEl.addEventListener('input',()=>{updateSliderFill(brEl);if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);});}
   document.getElementById('bg-save').addEventListener('click',saveWallpaper);
-  /* Apply wallpaper bg to outer wrapper and body so it shows behind the panel */
-  const _bg=s.background||{};
-  const _applyBg=el=>{
-    if(!el)return;
-    if(_bg.type==='color'&&_bg.color){el.style.background=_bg.color;}
-    else if(_bg.type==='url'&&_bg.url){el.style.background=`url(${_bg.url}) center/cover no-repeat fixed`;}
-    else{el.style.background='';}
-  };
-  _applyBg(document.querySelector('.adm-outer'));
-  _applyBg(document.body);
 
   /* Populate General inline-edit value spans (empty → greyed placeholder, no dash) */
   const _sv=(id,v,ph='')=>{const el=document.getElementById(id);if(!el)return;
