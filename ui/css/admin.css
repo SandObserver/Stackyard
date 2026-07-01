@@ -49,6 +49,8 @@ body{background:var(--bg-outer)}
 .sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
 .sec-title{font-size:20px;font-weight:700;letter-spacing:-.02em;flex:1}
 .sec-hdr-actions{display:flex;gap:6px}
+.ev-back{display:flex;align-items:center;gap:3px;background:none;border:none;color:var(--ac2);font-size:15px;font-family:inherit;cursor:pointer;padding:4px 6px 4px 0;flex-shrink:0}
+.ev-back:hover{opacity:.8}
 
 /* ── Groups ── */
 .grp{background:var(--cp);border-radius:var(--r);overflow:visible;margin-bottom:4px;border:1px solid var(--bd-inner)}
@@ -64,11 +66,10 @@ body{background:var(--bg-outer)}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:rgba(255,255,255,.04)}
 .rl{flex:1;font-size:14px;color:var(--tx);font-weight:400}
-.rv{flex:1;min-width:0;font-size:14px;color:var(--dm);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv{flex:2;min-width:0;font-size:14px;color:var(--dm);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rv.is-ph{color:#6e6e73}
 .ie-row.editing .rv,.ie-row.editing .pe{display:none}
-.ie-row.editing .rl{flex:0 1 auto;min-width:0}
-.ie-row .row-inp{display:none;flex:1;background:transparent;border:none;color:var(--tx);font-size:14px;font-family:inherit;text-align:right;padding:0;min-width:0;outline:none}
+.ie-row .row-inp{display:none;flex:2;background:transparent;border:none;color:var(--tx);font-size:14px;font-family:inherit;text-align:right;padding:0;min-width:0;outline:none}
 .ie-row.editing .row-inp{display:block}
 .ie-row.editing{background:rgba(255,255,255,.03)}
 .pe{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--dm);cursor:pointer;flex-shrink:0;font-size:14px;transition:color var(--t),background var(--t)}
@@ -193,6 +194,19 @@ body{background:var(--bg-outer)}
 .bval-search{width:100%;background:rgba(120,120,128,.16);border:none;border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px;padding:8px 11px;outline:none;margin-bottom:8px}
 .bval-search::placeholder{color:#6e6e73}
 .bprow-hidden{display:none}
+/* Settings-row native select (Widget Type, slot Resource) */
+.sel-wrap{margin-left:auto;display:flex;align-items:center;gap:6px;position:relative}
+.row-sel{appearance:none;-webkit-appearance:none;background:none;border:none;color:var(--dm);font-family:inherit;font-size:14px;text-align:right;text-align-last:right;padding:0 2px 0 0;outline:none;cursor:pointer;max-width:260px;text-overflow:ellipsis}
+.row-sel option{background:#2f2f38;color:var(--tx)}
+.sel-wrap .dd-chev{pointer-events:none}
+/* Left-aligned tile group (Size) */
+.tile-grp-left{margin-left:0;margin-right:auto}
+/* Widget config-form: in-card hints, repeatable-group header/add */
+.grp-tip.in-card{margin:0;padding:7px 16px 12px;font-size:12px}
+.grp-hdr-row{display:flex;align-items:center;justify-content:space-between}
+.grp-hdr-rm{background:none;border:none;color:#ff453a;font-size:13px;font-family:inherit;cursor:pointer;padding:2px 4px}
+.grp-hdr-rm:disabled{color:#6e6e73;cursor:default}
+.wcf-add-row{display:flex;align-items:center;width:100%;min-height:52px;padding:0 16px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:14px}
 
 /* About */
 .about-hero{display:flex;flex-direction:column;align-items:center;padding:16px 0 24px}
