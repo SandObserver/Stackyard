@@ -1,6 +1,6 @@
 const path = require('path');
 const { on, json, readBody, checkOrigin } = require('../router');
-const { loadConfig, saveConfig } = require('../config');
+const { loadConfig, saveConfig, ensureSystemItems } = require('../config');
 const log = require('../log');
 const { scrubConfigSecrets, preserveConfigSecrets, MAP_SVC_SECRETS } = require('../widget-secrets');
 
@@ -47,7 +47,7 @@ function scrubSecrets(cfg) {
 }
 
 on('GET', '/api/config', (_, res) => {
-  json(res, 200, scrubSecrets(loadConfig()));
+  json(res, 200, ensureSystemItems(scrubSecrets(loadConfig())));
 });
 
 on('GET', '/api/settings/unsplash-key', (_, res) => {
@@ -141,6 +141,7 @@ on('POST', '/api/config', async(req, res) => {
         }
       });
     }
+    ensureSystemItems(data);
     saveConfig(data);
     log.audit('config saved', {});
     json(res, 200, { ok:true });
