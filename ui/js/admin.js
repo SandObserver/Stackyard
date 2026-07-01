@@ -1,7 +1,7 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { clr as rc, esc } from '/js/utils.js?v=38';
+import { clr as rc, esc } from '/js/utils.js?v=39';
 import { WIDGET_TYPES } from '/js/widget-types.js?v=39';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=4';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 
 /* Admin UI — Stackyard Dashboard */
 const API = '';
@@ -423,30 +423,6 @@ function _syncFilterUI(){
 /* ══ MODAL ══ */
 /* Associate dynamically-built modal fields with their labels and give every
    toggle an accessible name from its row text. Idempotent; safe to re-run. */
-function _a11yFields(root){
-  if(!root)return;
-  root.querySelectorAll('.tog input[type=checkbox]').forEach(inp=>{
-    if(inp.getAttribute('aria-label'))return;
-    const row=inp.closest('.trow')||inp.closest('.fr')||(inp.parentElement&&inp.parentElement.parentElement);
-    const lbl=row&&row.querySelector('.tlbl');
-    if(lbl&&lbl.textContent.trim()) inp.setAttribute('aria-label',lbl.textContent.trim());
-  });
-  let uid=0;
-  root.querySelectorAll('.fr').forEach(fr=>{
-    const lbl=fr.querySelector('label');
-    const ctl=fr.querySelector('input:not([type=hidden]),select,textarea');
-    if(!lbl||!ctl||lbl.getAttribute('for')||ctl.getAttribute('aria-label'))return;
-    if(!ctl.id) ctl.id='fld-'+Date.now().toString(36)+'-'+(uid++);
-    lbl.setAttribute('for',ctl.id);
-  });
-}
-let _a11yObs=null;
-function _ensureFieldObserver(){
-  if(_a11yObs)return;
-  const mb=document.getElementById('mb'); if(!mb)return;
-  _a11yObs=new MutationObserver(()=>_a11yFields(document.querySelector('#ov .modal')));
-  _a11yObs.observe(mb,{childList:true,subtree:true});
-}
 /* ══ Push navigation: replace modal with in-pane edit view ══ */
 function showListView(){
   document.getElementById('dash-list-view').style.display='';
@@ -561,18 +537,6 @@ function _evDelete(item,idx){
   save().catch(()=>{});
   showListView();
 }
-let _modalPrevFocus=null;
-function _modalKeydown(e){
-  const ov=document.getElementById('ov');
-  if(!ov.classList.contains('open'))return;
-  if(e.key==='Escape'){ e.preventDefault(); closeModal(); return; }
-  if(e.key!=='Tab')return;
-  const f=[...ov.querySelectorAll('a[href],button:not([disabled]),input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el=>el.offsetParent!==null);
-  if(!f.length)return;
-  const first=f[0],last=f[f.length-1];
-  if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
-  else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
-}
 /* ══ al-filter wiring ══ */
 {
   const s=document.getElementById('al-search');
@@ -607,30 +571,7 @@ function closeModal(){
   _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wbackupCfg={};_wstatsSubType='system-summary';_wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};_iframeOpts={};_wweatherCfg={city:'',lat:'',lon:'',units:'c',href:''};
 }
 
-function buildTypeSwitch(item){
-  const container=document.getElementById('type-sw');
-  if(eid!==null){container.innerHTML='';container.className='';return;}
-  container.className='active';
-  const sw=document.createElement('div');sw.className='tsw';
-  ['app','widget','folder'].forEach(t=>{
-    const b=document.createElement('button');b.type='button';
-    b.textContent=t==='app'?'App':t==='widget'?'Widget':'Folder';
-    if(t===ctype)b.classList.add('on');
-    b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
-      if(ctype===t)return;ctype=t;
-      sw.querySelectorAll('button').forEach(btn=>btn.classList.toggle('on',btn===b));
-      buildFormBody(null);});
-    sw.appendChild(b);
-  });
-  container.innerHTML='';container.appendChild(sw);
-}
 
-function buildFormBody(item){
-  const body=document.getElementById('mb');body.innerHTML='';
-  if(ctype==='widget')buildWidgetForm(body,item);
-  else if(ctype==='folder')buildFolderForm(body,item);
-  else buildAppForm(body,item);
-}
 
 /* Allowed sizes come from the widget registry (folder-driven). 'custom' is the only built-in type. */
 const CUSTOM_SIZES = ['small','medium','large','xlarge'];
@@ -979,31 +920,7 @@ function _renderStatsBody(body){
   _secretRow(netSub,{rowId:'net-pass-row',inpId:'net-pass',label:'Password',opt:true,isSet:_wnet.myspeedPassSet,hidden:(prov!=='myspeed')});
 }
 
-function _mkDiskFields(idx){
-  const df=document.createElement('div');df.className='slot-subfields disk-fields';df.style.marginTop='10px';
-  df.innerHTML=`<div class="fr"><label>Primary mount path</label>
-    <input class="fc slot-disk-primary" type="text" placeholder="/" value="${esc(_wslots[idx]?.primary||'/')}">
-    <div class="hint">e.g. / for root SSD</div></div>
-    <div class="fr fr-mb0"><label>Secondary mount path <span class="opt-span">(optional)</span></label>
-    <input class="fc slot-disk-secondary" type="text" placeholder="/mnt/data" value="${esc(_wslots[idx]?.secondary||'')}">
-    <div class="hint">e.g. /mnt/data for HDD</div></div>`;
-  df.querySelector('.slot-disk-primary').oninput=e=>{_wslots[idx].primary=e.target.value.trim();};
-  df.querySelector('.slot-disk-secondary').oninput=e=>{_wslots[idx].secondary=e.target.value.trim();};
-  return df;
-}
 
-function _mkTempFields(idx){
-  const df=document.createElement('div');df.className='slot-subfields temp-fields';df.style.marginTop='10px';
-  const zone=Number.isInteger(_wslots[idx]?.thermalZone)?_wslots[idx].thermalZone:0;
-  df.innerHTML=`<div class="fr fr-mb0">
-    <label>Thermal zone <span class="opt-span">(default: 0)</span></label>
-    <input class="fc slot-temp-zone zone-input" type="number" min="0" max="20" value="${zone}">
-    <div class="hint">Zone 0 is correct for most systems. Only change this if the temperature shown is wrong. Check <code>/sys/class/thermal/</code> on your host to find the right zone number.</div></div>`;
-  df.querySelector('.slot-temp-zone').oninput=e=>{
-    _wslots[idx].thermalZone=parseInt(e.target.value,10)||0;
-  };
-  return df;
-}
 
 function _renderConnectionsConfig(body){
   if(_wconnView==='vpn') return _renderVpnConfig(body);
@@ -1050,15 +967,6 @@ const _MAP_SVC={
   plausible:{label:'Plausible',adminPh:'http://your-server:8000',color:'#5E5CE6',fields:[{key:'url',label:'Plausible URL',ph:'plausible:8000'},{key:'siteId',label:'Site ID (domain)',ph:'example.com'},{key:'apiKey',label:'Stats API key',ph:'Bearer key',secret:true}]},
   umami:{label:'Umami',adminPh:'http://your-server:3000',color:'#64D2FF',fields:[{key:'url',label:'Umami URL',ph:'umami:3000'},{key:'websiteId',label:'Website ID',ph:'8dc7\u2026 (UUID)'},{key:'username',label:'Username',ph:'admin'},{key:'password',label:'Password',ph:'\u2022\u2022\u2022\u2022\u2022\u2022',secret:true}]},
 };
-function _mapSvcColorRow(svc){
-  const COLORS=['#30D158','#0A84FF','#5E5CE6','#BF5AF2','#FF375F','#FF453A','#FF9F0A','#FFD60A','#40C8E0','#66D4CF'];
-  const fr=document.createElement('div');fr.className='fr fr-mb0';fr.innerHTML='<label>Map colour</label>';
-  const sw=document.createElement('div');sw.style.cssText='display:flex;gap:9px;flex-wrap:wrap;';
-  if(!svc.color)svc.color=(_MAP_SVC[svc.type]||{}).color||'#30D158';
-  const paint=(b,hex,on)=>{b.style.border='2px solid '+(on?'#fff':'transparent');b.style.boxShadow='0 0 0 1px rgba(255,255,255,.15)'+(on?(',0 0 8px '+hex):'');};
-  COLORS.forEach(hex=>{const b=document.createElement('button');b.type='button';b.setAttribute('data-hex',hex);b.setAttribute('aria-label','Colour '+hex);b.setAttribute('aria-pressed',String(svc.color===hex));b.style.cssText='width:26px;height:26px;border-radius:50%;cursor:pointer;background:'+hex+';';paint(b,hex,svc.color===hex);b.onclick=()=>{svc.color=hex;sw.querySelectorAll('button').forEach(x=>{const hh=x.getAttribute('data-hex');paint(x,hh,hh===hex);x.setAttribute('aria-pressed',String(hh===hex));});};sw.appendChild(b);});
-  fr.appendChild(sw);return fr;
-}
 
 function _renderMapConfig(body){
   if(!Array.isArray(_wmapCfg.services)) _wmapCfg.services=[];
@@ -1214,41 +1122,6 @@ if(!window.__ddOutsideBound){
   window.__ddOutsideBound=true;
   document.addEventListener('click',e=>{ if(!e.target.closest('.dd')) _ddCloseAll(); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') _ddCloseAll(); });
-}
-function _customDrop(container, opt){
-  container.innerHTML='';
-  let curVal = opt.value;
-  const items = opt.items||[];
-  if(opt.label){ const lbl=document.createElement('label'); lbl.id=opt.idBase+'-lbl'; lbl.textContent=opt.label; container.appendChild(lbl); }
-  const wrap=document.createElement('div'); wrap.className='dd';
-  const btn=document.createElement('button'); btn.type='button'; btn.className='fc dd-btn'; btn.id=opt.idBase;
-  btn.setAttribute('aria-haspopup','listbox'); btn.setAttribute('aria-expanded','false');
-  if(opt.label) btn.setAttribute('aria-labelledby', opt.idBase+'-lbl '+opt.idBase);
-  const labelFor=v=>{ const it=items.find(i=>String(i.value)===String(v)); return it?it.label:null; };
-  const setText=()=>{
-    const t=labelFor(curVal);
-    btn.textContent = opt.disabled ? (opt.placeholder||'') : (t!=null?t:(opt.placeholder||'None'));
-    btn.value = (opt.disabled || curVal==null) ? '' : String(curVal);
-  };
-  setText();
-  if(opt.disabled){ btn.disabled=true; wrap.appendChild(btn); container.appendChild(wrap); return; }
-  const list=document.createElement('div'); list.className='dd-list d-none'; list.setAttribute('role','listbox');
-  if(opt.label) list.setAttribute('aria-label', opt.label);
-  function render(){
-    list.innerHTML='';
-    items.forEach(it=>{
-      const sel=String(it.value)===String(curVal);
-      const o=document.createElement('div'); o.className='dd-opt'+(sel?' sel':'');
-      o.setAttribute('role','option'); o.setAttribute('aria-selected',String(sel)); o.tabIndex=-1;
-      o.textContent=it.label;
-      o.onclick=ev=>{ ev.stopPropagation(); curVal=it.value; setText(); close(); render(); opt.onChange&&opt.onChange(it.value); };
-      list.appendChild(o);
-    });
-  }
-  function open(){ render(); _ddCloseAll(list); list.classList.remove('d-none'); btn.setAttribute('aria-expanded','true'); }
-  function close(){ list.classList.add('d-none'); btn.setAttribute('aria-expanded','false'); }
-  btn.onclick=ev=>{ ev.stopPropagation(); list.classList.contains('d-none')?open():close(); };
-  wrap.append(btn,list); container.appendChild(wrap);
 }
 
 function _renderBackupConfig(body){
@@ -1837,69 +1710,6 @@ function updPrev(){
 }
 
 /* HSL <-> hex helpers for the custom slider picker */
-function _hslToHex(h,s,l){
-  s/=100;l/=100;
-  const a=s*Math.min(l,1-l);
-  const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,Math.min(9-k,1)));return Math.round(255*c);};
-  const to=v=>v.toString(16).padStart(2,'0');
-  return '#'+to(f(0))+to(f(8))+to(f(4));
-}
-function _hexToHsl(hex){
-  const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex||'');
-  if(!m)return null;
-  let r=parseInt(m[1],16)/255,g=parseInt(m[2],16)/255,b=parseInt(m[3],16)/255;
-  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;
-  if(mx===mn){h=s=0;}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);
-    switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;}h/=6;}
-  return {h:Math.round(h*360),s:Math.round(s*100),l:Math.round(l*100)};
-}
-function _cpkSync(){
-  const H=document.getElementById('cpk-h'),S=document.getElementById('cpk-s'),L=document.getElementById('cpk-l');
-  if(!H)return;
-  const hv=+H.value,sv=+S.value,lv=+L.value;
-  S.style.background=`linear-gradient(90deg, ${_hslToHex(hv,0,lv)}, ${_hslToHex(hv,100,lv)})`;
-  L.style.background=`linear-gradient(90deg, #000, ${_hslToHex(hv,sv,50)}, #fff)`;
-}
-function setColor(v){
-  scol=v;
-  /* Only touch icon-background swatches (no data-field = not a badge picker) */
-  document.querySelectorAll('.co[data-v]:not([data-field])').forEach(el=>el.classList.toggle('on',el.dataset.v===v));
-  const hex=document.getElementById('co-hex');
-  if(hex)hex.value=v==='dark'?'':v==='light'?'':v;
-  const cc=document.getElementById('co-custom');
-  if(cc)cc.style.setProperty('--cc', rc(v));
-  updPrev();
-}
-function wireColor(){
-  document.querySelectorAll('.co[data-v]:not([data-field])').forEach(o=>{o.onclick=()=>setColor(o.dataset.v);});
-  const hex=document.getElementById('co-hex');
-  if(hex)hex.oninput=e=>{
-    const v=e.target.value.trim();
-    if(!v)return;
-    scol=v;
-    const cc=document.getElementById('co-custom'); if(cc)cc.style.setProperty('--cc', rc(v));
-    const hsl=_hexToHsl(rc(v));
-    if(hsl){const H=document.getElementById('cpk-h');if(H){H.value=hsl.h;document.getElementById('cpk-s').value=hsl.s;document.getElementById('cpk-l').value=hsl.l;_cpkSync();}}
-    updPrev();
-  };
-  /* Custom HSL slider picker — range inputs fire reliably (the native <input type=color> did not) */
-  const cc=document.getElementById('co-custom'), pk=document.getElementById('co-picker');
-  if(cc&&pk){
-    cc.onclick=()=>{
-      const open=pk.classList.toggle('d-none')===false;
-      cc.setAttribute('aria-expanded',String(open));
-      if(open){const hsl=_hexToHsl(rc(scol))||{h:220,s:60,l:50};
-        document.getElementById('cpk-h').value=hsl.h;document.getElementById('cpk-s').value=hsl.s;document.getElementById('cpk-l').value=hsl.l;_cpkSync();}
-    };
-    const onSlide=()=>{
-      const h=+document.getElementById('cpk-h').value,s=+document.getElementById('cpk-s').value,l=+document.getElementById('cpk-l').value;
-      _cpkSync();
-      setColor(_hslToHex(h,s,l));
-    };
-    ['cpk-h','cpk-s','cpk-l'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',onSlide);});
-  }
-  setColor(scol);
-}
 
 async function testPing(){
   const url=document.getElementById('hc-ping')?.value?.trim();
