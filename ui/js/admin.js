@@ -95,6 +95,7 @@ async function load(){
   try{ const wr=await ag('/api/widgets'); _widgetReg={}; (wr.widgets||[]).forEach(w=>{ _widgetReg[w.name]=w; }); }catch{ _widgetReg={}; }
   /* All folders start collapsed — user can expand by clicking */
   items.filter(i=>i.type==='folder').forEach(f=>collapsedFolders.add(f.id));
+  document.body.classList.add('authed');
   render();
   loadSettings(c);
   applyBg();
@@ -2415,7 +2416,7 @@ async function saveServer(){
 
 /* ══ Nav ══ */
 function initNav(){
-  const links=document.querySelectorAll('.nl');
+  const links=document.querySelectorAll('.nl, .mtab');
   const STORE='admin_sec';
   const stored=localStorage.getItem(STORE)||'general';
   function show(id){
