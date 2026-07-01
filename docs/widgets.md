@@ -49,15 +49,19 @@ Describes the config form the admin UI renders automatically.
 }
 ```
 
+The admin UI renders this as an iOS-style settings form: grouped cards with the label on the left and the value/control on the right. Fields are grouped into cards automatically.
+
 ### Field types
 
 | type | description |
 |---|---|
-| `text` | Plain text input |
-| `secret` | Masked input, stored encrypted at rest |
-| `select` | Dropdown or pill picker (`"variant": "pills"`) |
-| `toggle` | Boolean on/off |
-| `number` | Numeric input |
+| `text` | Inline-edit row (tap the pencil to edit) |
+| `secret` | Inline-edit row for a masked value, stored encrypted at rest. Shows "Configured" once set and never renders the value back |
+| `select` | Radio selector when `"variant": "pills"`, otherwise a dropdown. With `optionsFrom` it gains a Fetch button to load options |
+| `multiselect` | Checklist dropdown for choosing multiple values |
+| `toggle` | Boolean on/off switch |
+| `number` | Numeric inline-edit row |
+| `group` | A repeatable set of sub-fields, rendered as titled cards with Add / Remove. Provide the sub-fields under a nested `"fields"` array |
 
 ### Field options
 
