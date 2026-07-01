@@ -4,7 +4,7 @@ const log = require('../log');
 const pkg = require('../../package.json');
 
 /* Installed container version, baked in at build time from api/package.json. */
-const CURRENT = pkg.version || '0.0.0';
+const CURRENT = process.env.APP_VERSION || pkg.version || '0.0.0';
 const REPO = 'SandObserver/stackyard';
 const CACHE_MS = 60 * 60 * 1000; /* re-check the latest release at most hourly */
 
