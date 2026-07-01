@@ -1,106 +1,109 @@
-/* Renders a widget's declared `fields` into a config form and reads values back.
-   Field types: text, secret, number, toggle, select, group.
-   renderWidgetConfigForm(container, fields, config) -> { getValues, validate } */
+/* Renders a widget's declared `fields` into a settings-row config form and reads
+   values back. Field types: text, secret, number, toggle, select, pills, multiselect, group.
+   renderWidgetConfigForm(container, fields, config) -> { getValues, validate }
+   Each builder returns { el, get, control, liveValue }; the public API is unchanged. */
 
 import { esc } from '/js/utils.js?v=37';
 
-function _labelHtml(field) {
-  const tag = field.optional ? ' <span class="opt-span">(optional)</span>' : ' <span class="req">*</span>';
-  return `<label>${esc(field.label)}${tag}</label>`;
-}
+const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
+const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
-/* ── Simple field builders. Each returns { el, get, control } where get()
-   yields [key, value] (or null to omit), and control is the live input. ── */
+function _tag(field){ return field.optional ? ' <span class="opt-span">(optional)</span>' : ' <span class="req">*</span>'; }
 
-function _textLike(field, value, inputType) {
-  const row = document.createElement('div'); row.className = 'fr';
-  row.innerHTML = _labelHtml(field) +
-    `<input class="fc" type="${inputType}" autocomplete="off"` +
-    (field.placeholder ? ` placeholder="${esc(field.placeholder)}"` : '') +
-    ` value="${esc(value != null ? value : (field.default != null ? field.default : ''))}">` +
-    (field.hint ? `<div class="hint">${esc(field.hint)}</div>` : '');
-  const input = row.querySelector('input');
+/* ── Inline-edit row (text / number). Value lives in the hidden input. ── */
+function _ieRow(field, value, inputType) {
+  const has = value != null && value !== '';
+  const ph = field.placeholder || '';
+  const row = document.createElement('div'); row.className = 'row ie-row';
+  row.innerHTML =
+    `<span class="rl">${esc(field.label)}${_tag(field)}</span>` +
+    `<span class="rv${has ? '' : ' is-ph'}">${esc(has ? value : ph)}</span>` +
+    `<input class="row-inp" type="${inputType}" autocomplete="off" value="${esc(has ? value : (field.default != null ? field.default : ''))}" style="display:none">` +
+    `<button class="pe" type="button" aria-label="Edit ${esc(field.label)}">${PE}</button>`;
+  const rv = row.querySelector('.rv'), inp = row.querySelector('.row-inp'), pe = row.querySelector('.pe');
+  function open() { row.classList.add('editing'); inp.style.display = 'block'; inp.focus(); inp.select?.(); }
+  function commit() {
+    row.classList.remove('editing'); inp.style.display = 'none';
+    const v = inp.value.trim();
+    if (v) { rv.textContent = v; rv.classList.remove('is-ph'); } else { rv.textContent = ph; rv.classList.add('is-ph'); }
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  pe.addEventListener('click', open); rv.addEventListener('click', open);
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
   const get = () => {
-    const v = input.value.trim();
-    return v === '' ? null : [field.key, v];
-  };
-  return { el: row, get, control: input, liveValue: () => input.value };
-}
-
-function _number(field, value) {
-  const row = document.createElement('div'); row.className = 'fr';
-  const attrs = ['min', 'max', 'step'].filter(a => field[a] != null).map(a => `${a}="${esc(field[a])}"`).join(' ');
-  row.innerHTML = _labelHtml(field) +
-    `<input class="fc" type="number" ${attrs}` +
-    (field.placeholder ? ` placeholder="${esc(field.placeholder)}"` : '') +
-    ` value="${esc(value != null ? value : (field.default != null ? field.default : ''))}">` +
-    (field.hint ? `<div class="hint">${esc(field.hint)}</div>` : '');
-  const input = row.querySelector('input');
-  const get = () => {
-    const v = input.value.trim();
+    const v = inp.value.trim();
     if (v === '') return null;
-    const n = Number(v);
-    return isNaN(n) ? null : [field.key, n];
+    if (inputType === 'number') { const n = Number(v); return isNaN(n) ? null : [field.key, n]; }
+    return [field.key, v];
   };
-  return { el: row, get, control: input, liveValue: () => input.value };
+  if (field.hint) { const w = document.createElement('div'); w.appendChild(row); const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; w.appendChild(h); return { el: w, get, control: inp, liveValue: () => inp.value }; }
+  return { el: row, get, control: inp, liveValue: () => inp.value };
 }
 
+/* ── Secret: shows Configured / Not set, edit reveals a password input. Blank = keep. ── */
 function _secret(field, isSet) {
-  const row = document.createElement('div'); row.className = 'fr';
-  const placeholder = isSet ? '••••••••  (saved — leave blank to keep)' : (field.placeholder || '');
-  const hint = isSet
-    ? 'A value is saved. Enter a new one to replace it, or leave blank to keep it.'
-    : (field.hint || '');
-  row.innerHTML = _labelHtml(field) +
-    `<input class="fc" type="password" autocomplete="new-password" placeholder="${esc(placeholder)}">` +
-    (hint ? `<div class="hint">${esc(hint)}</div>` : '');
-  const input = row.querySelector('input');
-  /* Blank → omit, so the server preserves the stored secret. */
-  const get = () => {
-    const v = input.value.trim();
-    return v === '' ? null : [field.key, v];
-  };
-  return { el: row, get, control: input, liveValue: () => input.value };
+  const row = document.createElement('div'); row.className = 'row ie-row';
+  const display = isSet ? 'Configured' : 'Not set';
+  row.innerHTML =
+    `<span class="rl">${esc(field.label)}${_tag(field)}</span>` +
+    `<span class="rv is-ph">${display}</span>` +
+    `<input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? 'Enter new value to replace' : esc(field.placeholder || '')}" style="display:none">` +
+    `<button class="pe" type="button" aria-label="Edit ${esc(field.label)}">${PE}</button>`;
+  const rv = row.querySelector('.rv'), inp = row.querySelector('.row-inp'), pe = row.querySelector('.pe');
+  const open = () => { row.classList.add('editing'); inp.style.display = 'block'; inp.focus(); };
+  const commit = () => { row.classList.remove('editing'); inp.style.display = 'none'; rv.textContent = inp.value ? 'New value set' : display; inp.dispatchEvent(new Event('change', { bubbles: true })); };
+  pe.addEventListener('click', open); rv.addEventListener('click', open);
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
+  const get = () => { const v = inp.value.trim(); return v === '' ? null : [field.key, v]; };
+  const hint = isSet ? 'A value is saved. Enter a new one to replace it, or leave blank to keep it.' : field.hint;
+  if (hint) { const w = document.createElement('div'); w.appendChild(row); const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = hint; w.appendChild(h); return { el: w, get, control: inp, liveValue: () => inp.value }; }
+  return { el: row, get, control: inp, liveValue: () => inp.value };
 }
 
+/* ── Toggle row. ── */
 function _toggle(field, value) {
   const on = value != null ? !!value : !!field.default;
-  const row = document.createElement('div'); row.className = 'trow';
+  const row = document.createElement('div'); row.className = 'row';
   row.innerHTML =
-    `<div><div class="tlbl">${esc(field.label)}</div>` +
-    (field.hint ? `<div class="tdsc">${esc(field.hint)}</div>` : '') + `</div>` +
+    `<span class="rl">${esc(field.label)}</span>` +
     `<label class="tog"><input type="checkbox"${on ? ' checked' : ''} aria-label="${esc(field.label)}"><div class="tr"></div></label>`;
   const input = row.querySelector('input');
   const get = () => [field.key, input.checked];
+  if (field.hint) { const w = document.createElement('div'); w.appendChild(row); const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; w.appendChild(h); return { el: w, get, control: input, liveValue: () => input.checked }; }
   return { el: row, get, control: input, liveValue: () => input.checked };
 }
 
+/* ── Select: settings-row native dropdown with the PSD chevron; optional Fetch. ── */
 function _select(field, value, ctx) {
-  const row = document.createElement('div'); row.className = 'fr';
+  const wrap = document.createElement('div');
+  const row = document.createElement('div'); row.className = 'row';
   let opts = Array.isArray(field.options) ? field.options.slice() : [];
   let chosen = value != null ? String(value) : (field.default != null ? String(field.default) : '');
-  row.innerHTML = _labelHtml(field);
-  const line = document.createElement('div'); line.style.cssText = 'display:flex;gap:8px;align-items:center';
-  const sel = document.createElement('select'); sel.className = 'fc'; sel.style.flex = '1'; sel.style.minWidth = '0';
-  line.appendChild(sel); row.appendChild(line);
+  row.innerHTML = `<span class="rl">${esc(field.label)}${_tag(field)}</span>`;
+  const selWrap = document.createElement('div'); selWrap.className = 'sel-wrap';
+  const sel = document.createElement('select'); sel.className = 'row-sel';
+  selWrap.appendChild(sel); selWrap.insertAdjacentHTML('beforeend', CHEV);
+  row.appendChild(selWrap); wrap.appendChild(row);
 
   function paint() {
     let html = opts.map(o => `<option value="${esc(o.value)}"${String(o.value) === chosen ? ' selected' : ''}>${esc(o.label != null ? o.label : o.value)}</option>`).join('');
     if (chosen && !opts.some(o => String(o.value) === chosen)) html = `<option value="${esc(chosen)}" selected>${esc(chosen)}</option>` + html;
-    if (field.optional) html = `<option value="">\u2014</option>` + html;
-    sel.innerHTML = html || `<option value="">\u2014</option>`;
+    if (field.optional) html = `<option value="">None</option>` + html;
+    sel.innerHTML = html || `<option value="">None</option>`;
   }
   paint();
 
   if (field.optionsFrom) {
-    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn bg sm'; btn.textContent = 'Fetch';
-    btn.style.flexShrink = '0'; btn.style.whiteSpace = 'nowrap'; line.appendChild(btn);
-    const status = document.createElement('div'); status.className = 'hint'; status.style.marginTop = '4px'; row.appendChild(status);
-    if (field.hint) status.textContent = field.hint;
+    const fr = document.createElement('div'); fr.className = 'row';
+    const status = document.createElement('span'); status.className = 'row-status'; status.textContent = field.hint || '';
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'row-btn'; btn.textContent = 'Fetch';
+    fr.innerHTML = '<span class="rl"></span>'; fr.appendChild(status); fr.appendChild(btn); wrap.appendChild(fr);
     btn.addEventListener('click', async () => {
       const cfg = ctx && ctx.getValues ? ctx.getValues() : {};
       const wid = (ctx && ctx.widgetId) || '__preview__';
-      status.textContent = 'Fetching\u2026'; btn.disabled = true;
+      status.textContent = 'Fetching...'; status.className = 'row-status'; btn.disabled = true;
       try {
         const r = await fetch(`/api/widget-options/${encodeURIComponent(wid)}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -110,80 +113,65 @@ function _select(field, value, ctx) {
         if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
         opts = Array.isArray(d.options) ? d.options : [];
         chosen = sel.value || chosen; paint();
-        status.textContent = opts.length ? `Loaded ${opts.length} list${opts.length > 1 ? 's' : ''}` : 'No lists found';
-      } catch (e) { status.textContent = 'Fetch failed: ' + e.message; }
+        status.textContent = opts.length ? `Loaded ${opts.length} option${opts.length > 1 ? 's' : ''}` : 'No options found';
+        status.className = 'row-status ok';
+      } catch (e) { status.textContent = 'Fetch failed: ' + e.message; status.className = 'row-status err'; }
       finally { btn.disabled = false; }
     });
   } else if (field.hint) {
-    const h = document.createElement('div'); h.className = 'hint'; h.textContent = field.hint; row.appendChild(h);
+    const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; wrap.appendChild(h);
   }
 
   const get = () => [field.key, sel.value];
-  return { el: row, get, control: sel, liveValue: () => sel.value };
+  return { el: wrap, get, control: sel, liveValue: () => sel.value };
 }
 
-/* Segmented pill control (variant:"pills") — same look as the widget size picker.
-   Dispatches 'change' on click so the showIf wiring re-evaluates. */
+/* ── Pills → radio group (PSD green-dot radios). ── */
 function _pills(field, value) {
-  const row = document.createElement('div'); row.className = 'fr';
+  const wrap = document.createElement('div');
+  const row = document.createElement('div'); row.className = 'row';
   const opts = Array.isArray(field.options) ? field.options : [];
   let sel = value != null ? value : (field.default != null ? field.default : (opts[0] ? opts[0].value : ''));
-  row.innerHTML = _labelHtml(field) + (field.hint ? `<div class="hint">${esc(field.hint)}</div>` : '');
-  const group = document.createElement('div');
-  group.className = 'wtype-row'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', field.label);
-  opts.forEach(o => {
-    const b = document.createElement('button'); b.type = 'button';
-    const on = String(o.value) === String(sel);
-    b.className = 'wchip' + (on ? ' on' : ''); b.textContent = o.label;
-    b.setAttribute('aria-pressed', String(on));
-    b.addEventListener('click', () => {
-      sel = o.value;
-      group.querySelectorAll('.wchip').forEach(c => { const a = c === b; c.classList.toggle('on', a); c.setAttribute('aria-pressed', String(a)); });
-      group.dispatchEvent(new Event('change'));
-    });
-    group.appendChild(b);
-  });
-  const hint = row.querySelector('.hint');
-  if (hint) row.insertBefore(group, hint); else row.appendChild(group);
+  const name = 'wcf-' + field.key + '-' + Math.random().toString(36).slice(2, 7);
+  row.innerHTML = `<span class="rl">${esc(field.label)}</span>` +
+    `<div class="segr" role="group" aria-label="${esc(field.label)}">` +
+    opts.map(o => `<label class="segr-opt"><input type="radio" name="${name}" value="${esc(o.value)}"${String(o.value) === String(sel) ? ' checked' : ''}><span class="segr-dot"></span><span>${esc(o.label)}</span></label>`).join('') +
+    `</div>`;
+  wrap.appendChild(row);
+  const group = row.querySelector('.segr');
+  group.querySelectorAll('input').forEach(r => r.addEventListener('change', () => { if (r.checked) { sel = r.value; group.dispatchEvent(new Event('change')); } }));
+  if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; wrap.appendChild(h); }
   const get = () => [field.key, sel];
-  return { el: row, get, control: group, liveValue: () => sel };
+  return { el: wrap, get, control: group, liveValue: () => sel };
 }
 
-/* ── Multi-select: like pills, but each chip toggles independently and the
-   value is the array of selected option values (in declared order). ── */
-
+/* ── Multi-select → checklist dropdown (tap to toggle), value is array in declared order. ── */
 function _multiselect(field, value) {
-  const row = document.createElement('div'); row.className = 'fr';
+  const wrap = document.createElement('div');
+  const row = document.createElement('div'); row.className = 'row';
   const opts = Array.isArray(field.options) ? field.options : [];
-  const cur = new Set(
-    Array.isArray(value) ? value.map(String)
-    : (Array.isArray(field.default) ? field.default.map(String) : [])
-  );
-  row.innerHTML = _labelHtml(field) + (field.hint ? `<div class="hint">${esc(field.hint)}</div>` : '');
-  const group = document.createElement('div');
-  group.className = 'wtype-row'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', field.label);
-  opts.forEach(o => {
-    const b = document.createElement('button'); b.type = 'button';
-    const on = cur.has(String(o.value));
-    b.className = 'wchip' + (on ? ' on' : ''); b.textContent = o.label;
-    b.setAttribute('aria-pressed', String(on));
-    b.addEventListener('click', () => {
-      const nowOn = !b.classList.contains('on');
-      b.classList.toggle('on', nowOn); b.setAttribute('aria-pressed', String(nowOn));
-      if (nowOn) cur.add(String(o.value)); else cur.delete(String(o.value));
-      group.dispatchEvent(new Event('change'));
-    });
-    group.appendChild(b);
-  });
-  const hint = row.querySelector('.hint');
-  if (hint) row.insertBefore(group, hint); else row.appendChild(group);
+  const cur = new Set(Array.isArray(value) ? value.map(String) : (Array.isArray(field.default) ? field.default.map(String) : []));
+  const summary = () => cur.size === 0 ? 'None selected' : cur.size + ' selected';
+  row.innerHTML = `<span class="rl">${esc(field.label)}</span>` +
+    `<div class="row-dd"><button class="row-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ms-sum">${summary()}</span>${CHEV}</button>` +
+    `<ul class="row-dd-list checklist" role="listbox" aria-multiselectable="true" hidden>` +
+    opts.map(o => `<li role="option" data-val="${esc(o.value)}" aria-selected="${cur.has(String(o.value))}">${esc(o.label)}</li>`).join('') +
+    `</ul></div>`;
+  wrap.appendChild(row);
+  const btn = row.querySelector('.row-dd-btn'), list = row.querySelector('.row-dd-list'), sumEl = row.querySelector('.ms-sum');
+  btn.addEventListener('click', () => { const open = list.hidden; list.hidden = !open; btn.setAttribute('aria-expanded', String(open)); });
+  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => {
+    const v = li.dataset.val, on = li.getAttribute('aria-selected') !== 'true';
+    li.setAttribute('aria-selected', String(on)); if (on) cur.add(v); else cur.delete(v);
+    sumEl.textContent = summary(); wrap.dispatchEvent(new Event('change'));
+  }));
+  document.addEventListener('click', e => { if (!row.contains(e.target)) { list.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
+  if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; wrap.appendChild(h); }
   const get = () => [field.key, opts.map(o => String(o.value)).filter(v => cur.has(v))];
-  return { el: row, get, control: group, liveValue: () => [...cur] };
+  return { el: wrap, get, control: wrap, liveValue: () => [...cur] };
 }
 
-/* ── Repeatable group: a stack of removable rows, each holding the group's
-   sub-fields, with an Add button bounded by min/max. ── */
-
+/* ── Repeatable group: each entry is its own card with a header + remove. ── */
 function _group(field, rows) {
   const min = field.min != null ? field.min : 0;
   const max = field.max != null ? field.max : 99;
@@ -191,32 +179,31 @@ function _group(field, rows) {
   let data = Array.isArray(rows) ? rows.map(r => Object.assign({}, r)) : [];
   while (data.length < min) data.push({});
 
-  const wrap = document.createElement('div'); wrap.className = 'wcf-group';
-  const head = document.createElement('div'); head.className = 'stl'; head.textContent = field.label;
-  wrap.appendChild(head);
-  if (field.hint) { const h = document.createElement('div'); h.className = 'hint'; h.style.marginBottom = '10px'; h.textContent = field.hint; wrap.appendChild(h); }
+  const wrap = document.createElement('div');
   const rowsHost = document.createElement('div'); wrap.appendChild(rowsHost);
+  const addWrap = document.createElement('div'); addWrap.className = 'grp';
   const addBtn = document.createElement('button');
-  addBtn.type = 'button'; addBtn.className = 'wcf-add'; addBtn.textContent = '+ Add ' + field.label;
-  wrap.appendChild(addBtn);
+  addBtn.type = 'button'; addBtn.className = 'wcf-add-row';
+  addBtn.innerHTML = `<span class="rl" style="color:var(--ac2)">+ Add ${esc(field.label)}</span>`;
+  addWrap.appendChild(addBtn); wrap.appendChild(addWrap);
 
   let rowGetters = [];
 
   function render() {
     rowsHost.innerHTML = ''; rowGetters = [];
     data.forEach((rowData, idx) => {
-      const card = document.createElement('div'); card.className = 'wcf-row';
-      const bar = document.createElement('div'); bar.className = 'wcf-row-bar';
-      bar.innerHTML = `<span class="wcf-row-title">${esc(field.label)} ${idx + 1}</span>`;
+      const hdr = document.createElement('p'); hdr.className = 'grp-hdr grp-hdr-row';
+      hdr.innerHTML = `<span>${esc(field.label)} ${idx + 1}</span>`;
       const rm = document.createElement('button');
-      rm.type = 'button'; rm.className = 'wcf-remove'; rm.textContent = 'Remove';
+      rm.type = 'button'; rm.className = 'grp-hdr-rm'; rm.textContent = 'Remove';
       rm.disabled = data.length <= min;
       rm.onclick = () => { captureCurrent(); data.splice(idx, 1); render(); };
-      bar.appendChild(rm); card.appendChild(bar);
+      hdr.appendChild(rm); rowsHost.appendChild(hdr);
 
+      const card = document.createElement('div'); card.className = 'grp';
       const subGetters = [];
       for (const sf of subFields) {
-        if (sf.type === 'group') continue; /* nested groups not allowed */
+        if (sf.type === 'group') continue;
         const built = _buildSimple(sf, rowData);
         card.appendChild(built.el);
         subGetters.push({ key: sf.key, get: built.get });
@@ -224,11 +211,9 @@ function _group(field, rows) {
       rowsHost.appendChild(card);
       rowGetters.push(subGetters);
     });
-    addBtn.style.display = data.length >= max ? 'none' : '';
+    addBtn.parentElement.style.display = data.length >= max ? 'none' : '';
   }
 
-  /* Pull current DOM values back into `data` before structural changes so edits
-     aren't lost on add/remove. */
   function captureCurrent() {
     data = rowGetters.map(getters => {
       const obj = {};
@@ -240,43 +225,47 @@ function _group(field, rows) {
   addBtn.onclick = () => { captureCurrent(); data.push({}); render(); };
   render();
 
-  const get = () => {
-    captureCurrent();
-    return [field.key, data];
-  };
-  return { el: wrap, get, control: null, liveValue: () => null };
+  const get = () => { captureCurrent(); return [field.key, data]; };
+  return { el: wrap, get, control: null, liveValue: () => null, isGroup: true };
 }
 
-/* Build a non-group field. */
 function _buildSimple(field, config, ctx) {
   const value = config[field.key];
   switch (field.type) {
     case 'secret': return _secret(field, config[field.key + 'Set'] === true);
-    case 'number': return _number(field, value);
+    case 'number': return _ieRow(field, value, 'number');
     case 'toggle': return _toggle(field, value);
     case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value, ctx);
     case 'multiselect': return _multiselect(field, value);
     case 'text':
-    default:       return _textLike(field, value, 'text');
+    default:       return _ieRow(field, value, 'text');
   }
 }
 
 export function renderWidgetConfigForm(container, fields, config = {}, opts = {}) {
   container.innerHTML = '';
-  const built = [];          /* { field, el, get, liveValue } */
+  const built = [];
   const liveByKey = {};
   const ctx = { widgetId: (opts && opts.widgetId) || null, widgetType: (opts && opts.widgetType) || null, getValues: null };
 
+  /* Group consecutive simple fields into a card; group fields render as their own cards. */
+  let card = null;
+  const flush = () => { card = null; };
   for (const f of fields) {
     if (!f || !f.key) continue;
-    const b = f.type === 'group' ? _group(f, config[f.key]) : _buildSimple(f, config, ctx);
-    b.field = f;
-    container.appendChild(b.el);
+    if (f.type === 'group') {
+      flush();
+      const b = _group(f, config[f.key]); b.field = f;
+      container.appendChild(b.el); built.push(b);
+      continue;
+    }
+    const b = _buildSimple(f, config, ctx); b.field = f;
+    if (!card) { card = document.createElement('div'); card.className = 'grp'; container.appendChild(card); }
+    card.appendChild(b.el);
     built.push(b);
     if (b.liveValue) liveByKey[f.key] = b.liveValue;
   }
 
-  /* showIf: live show/hide a field based on another top-level field's value. */
   function applyShowIf() {
     for (const b of built) {
       const cond = b.field.showIf;
@@ -288,7 +277,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
   }
   for (const b of built) {
     if (b.control) b.control.addEventListener('change', applyShowIf);
-    if (b.control && b.control.tagName === 'INPUT' && b.control.type === 'text') b.control.addEventListener('input', applyShowIf);
+    if (b.control && b.control.tagName === 'INPUT' && (b.control.type === 'text' || b.control.type === 'number')) b.control.addEventListener('input', applyShowIf);
   }
   applyShowIf();
 
@@ -299,7 +288,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
     getValues() {
       const out = {};
       for (const b of built) {
-        if (b.field.showIf && !visible(b)) continue; /* hidden fields don't contribute */
+        if (b.field.showIf && !visible(b)) continue;
         const kv = b.get();
         if (kv && kv[1] !== undefined) out[kv[0]] = kv[1];
       }
@@ -310,13 +299,13 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
       for (const b of built) {
         if (b.field.optional || b.field.type === 'toggle' || b.field.type === 'group') continue;
         if (b.field.showIf && !visible(b)) continue;
-        if (b.field.type === 'secret') continue; /* blank secret = keep existing */
+        if (b.field.type === 'secret') continue;
         const kv = b.get();
         if (!kv || kv[1] === '' || kv[1] == null) missing.push(b.field.label);
       }
       return missing;
     },
   };
-  ctx.getValues = api.getValues; /* lets optionsFrom Fetch read the in-progress config */
+  ctx.getValues = api.getValues;
   return api;
 }
