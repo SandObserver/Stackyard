@@ -5,6 +5,20 @@ import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 
 /* Admin UI — Stackyard Dashboard */
 const API = '';
+
+/* Mobile layout switch. Uses the SAME rule as the dashboard's MOB flag
+   (viewport <=768px OR a phone user-agent) so the admin and dashboard always
+   agree on when to show the mobile UI. Driven via a class rather than a bare
+   media query, because some phones report a wider CSS viewport. */
+function _syncMobile(){
+  const m = window.matchMedia('(max-width:768px)').matches
+    || /iPhone|iPod|Android/i.test(navigator.userAgent);
+  document.documentElement.classList.toggle('is-mobile', m);
+}
+_syncMobile();
+window.addEventListener('resize', _syncMobile);
+window.addEventListener('orientationchange', _syncMobile);
+
 let items=[],eid=null,saving=false,_settings={},_widgetReg={};
 const collapsedFolders=new Set(); /* tracks which folder ids are collapsed */
 let ctype='app',siurl='',scol='dark',spaths=[],fnums=[];
