@@ -1,7 +1,7 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
 import { clr as rc, esc } from '/js/utils.js?v=37';
 import { WIDGET_TYPES } from '/js/widget-types.js?v=39';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=2';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=3';
 
 /* Admin UI — Stackyard Dashboard */
 const API = '';
@@ -434,6 +434,14 @@ const TYPE_ICONS={
 };
 const TYPE_LABELS={app:'App',widget:'Widget',folder:'Folder'};
 
+/* Widget size glyphs (content-cards of increasing aspect/line-count), traced from the PSD. */
+const SIZE_ICONS={
+  small:'<rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="9.7" r="1" fill="currentColor"/><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  medium:'<rect x="4" y="8" width="16" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="7.6" cy="11.4" r="1.1" fill="currentColor"/><line x1="10.2" y1="11.4" x2="16.5" y2="11.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="7" y1="14.3" x2="16.5" y2="14.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+  large:'<rect x="6" y="5.5" width="12" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><line x1="8" y1="12.6" x2="16" y2="12.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="14.8" x2="16" y2="14.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="17" x2="13" y2="17" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+  xlarge:'<rect x="7" y="3.5" width="10" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="7" r="1.1" fill="currentColor"/><line x1="9" y1="10.5" x2="15" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="12.7" x2="15" y2="12.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="14.9" x2="15" y2="14.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="17.1" x2="13" y2="17.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+};
+
 /* Edit (square-pen) and select (up/down) glyphs traced from the PSD. */
 const PE_SVG='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV_SVG='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -501,6 +509,8 @@ function openModal(idx){
   const saveBtn=document.getElementById('ev-save');
   if(delBtn){ delBtn.classList.toggle('d-none',!isEdit); delBtn.onclick=()=>_evDelete(item,idx); }
   if(saveBtn){ saveBtn.onclick=()=>doSave(item); }
+  const backBtn=document.getElementById('ev-back');
+  if(backBtn) backBtn.onclick=()=>closeModal();
 
   /* Body — Add New selector card renders inside (add-mode only) */
   _evItem=item; _evIsEdit=isEdit;
@@ -675,81 +685,39 @@ function _renderWidgetForm(body){
   _autoForm=null;
   body.innerHTML='';
 
-    const nameDiv=document.createElement('div');nameDiv.className='fr';
-  const nameLbl=document.createElement('label');nameLbl.textContent='Name';
-  const nameInp=document.createElement('input');
-  nameInp.className='fc';nameInp.id='f-wlabel';nameInp.type='text';
-  nameInp.placeholder='My Widget';nameInp.value=_wlabel;
-  nameInp.oninput=e=>{_wlabel=e.target.value;};
-  nameDiv.append(nameLbl,nameInp);
-  body.appendChild(nameDiv);
-
-  const typeDiv=document.createElement('div');typeDiv.className='fr';
-  typeDiv.innerHTML='<label>Widget Type</label>';
-  const typeSel=document.createElement('select');typeSel.className='fc';typeSel.id='f-wtype';
-  [...Object.values(_widgetReg).map(w=>[w.name,w.label]), ['custom','Custom']]
-    .sort((a,b)=>a[1].localeCompare(b[1])).forEach(([t,label])=>{
-      const o=document.createElement('option');o.value=t;o.textContent=label;
-      if(t===_wtype) o.selected=true;
-      typeSel.appendChild(o);
-    });
+  /* ── Shell: Name + Widget Type, then Size tiles (settings-row, PSD) ── */
+  const typeList=[...Object.values(_widgetReg).map(w=>[w.name,w.label]), ['custom','Custom']].sort((a,b)=>a[1].localeCompare(b[1]));
+  const typeOpts=typeList.map(([t,label])=>`<option value="${t}"${t===_wtype?' selected':''}>${esc(label)}</option>`).join('');
+  const shell=document.createElement('div'); shell.className='grp';
+  shell.innerHTML=`
+    <div class="row ie-row" id="ie-wname"><span class="rl">Name</span><span class="rv${_wlabel?'':' is-ph'}">${_wlabel?esc(_wlabel):'My Widget'}</span><input id="f-wlabel" type="text" value="${esc(_wlabel)}" style="display:none"><button class="pe" type="button" aria-label="Edit name">${PE_SVG}</button></div>
+    <div class="row"><span class="rl">Widget Type</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="Widget type">${typeOpts}</select>${CHEV_SVG}</div></div>`;
+  body.appendChild(shell);
+  initInlineEdit('ie-wname','f-wlabel',{placeholder:'My Widget',onCommit(v){_wlabel=v;}});
+  const typeSel=shell.querySelector('#f-wtype');
   typeSel.onchange=()=>{ _wtype=typeSel.value; _wsize=widgetSizes(_wtype)[0]; _renderWidgetForm(body); };
-  typeDiv.appendChild(typeSel);
-  body.appendChild(typeDiv);
 
-  /* GitHub view is now a field in the registry auto-editor (githubView). */
-
-  /* Clock style is now a field in the registry auto-editor (clockStyle). */
-
-  /* Connections view chips (Map / VPN) — like github's view switch */
+  /* Connections view (Map / VPN) as a radio group */
   if(_wtype==='connections'){
-    const cvDiv=document.createElement('div');cvDiv.className='fr';
-    cvDiv.innerHTML='<label>View</label>';
-    const cvRow=document.createElement('div');cvRow.className='wtype-row';
-    cvRow.setAttribute('role','group');cvRow.setAttribute('aria-label','Connections view');
-    [['map','Map'],['vpn','VPN']].forEach(([v,l])=>{
-      const b=document.createElement('button');b.type='button';
-      b.className='wchip'+(v===_wconnView?' on':'');
-      b.setAttribute('aria-pressed',String(v===_wconnView));
-      b.textContent=l;
-      b.onclick=()=>{ _wconnView=v; if(v==='map')_wsize='medium'; _renderWidgetForm(body); };
-      cvRow.appendChild(b);
-    });
-    cvDiv.appendChild(cvRow);body.appendChild(cvDiv);
+    const vcard=document.createElement('div'); vcard.className='grp';
+    vcard.innerHTML=`<div class="row"><span class="rl">View</span><div class="segr">
+      <label class="segr-opt"><input type="radio" name="wconn-view" value="map" ${_wconnView==='map'?'checked':''}><span class="segr-dot"></span><span>Map</span></label>
+      <label class="segr-opt"><input type="radio" name="wconn-view" value="vpn" ${_wconnView==='vpn'?'checked':''}><span class="segr-dot"></span><span>VPN</span></label>
+    </div></div>`;
+    body.appendChild(vcard);
+    vcard.querySelectorAll('input[name="wconn-view"]').forEach(r=>r.addEventListener('change',()=>{ _wconnView=r.value; if(r.value==='map')_wsize='medium'; _renderWidgetForm(body); }));
   }
 
-    const sizeDiv=document.createElement('div');sizeDiv.className='fr';
-  sizeDiv.innerHTML='<label>Size</label>';
-  const sizeRow=document.createElement('div');sizeRow.className='wtype-row';sizeRow.setAttribute('role','group');sizeRow.setAttribute('aria-label','Widget size');
-  /* Only render sizes this widget actually supports (no greyed-out chips).
-     Contributions view further restricts github to small/medium. */
+  /* Size tiles */
   const _ghContrib=(_wtype==='github'&&(_wAutoCfg.githubView||'prs')==='contributions');
   let _sizeOpts=widgetSizes(_wtype).filter(s=>!(_ghContrib&&(s==='large'||s==='xlarge')));
   if(_wtype==='connections') _sizeOpts = (_wconnView==='map') ? ['medium'] : ['small','medium'];
   if(!_sizeOpts.includes(_wsize)) _wsize=_sizeOpts.includes('medium')?'medium':_sizeOpts[0];
-  _sizeOpts.forEach(s=>{
-    const b=document.createElement('button');b.type='button';
-    b.className='wchip'+(s===_wsize?' on':'');b.textContent=SIZE_LABELS[s];
-    b.setAttribute('aria-pressed',String(s===_wsize));
-    b.onclick=()=>{
-      _wsize=s;
-      sizeRow.querySelectorAll('.wchip').forEach(c=>{c.classList.toggle('on',c===b);c.setAttribute('aria-pressed',String(c===b));});
-      /* Re-norm backup slots when size changes so slot count matches */
-      if(_wtype==='backup'){
-        _wbackupCfg.slots=_normBackupSlots(_wbackupCfg.slots, s);
-        const cfgBody=body.querySelector('#bak-cfg-body');
-        if(cfgBody){ cfgBody.innerHTML=''; _renderBackupConfig(cfgBody); }
-      }
-      /* Re-render disk-health bay rows when size changes */
-      if(_wtype==='stats'&&_wstatsSubType==='disk-health'){
-        const cfgBody=body.querySelector('#stats-cfg-body');
-        if(cfgBody){ cfgBody.innerHTML=''; _renderStatsBody(cfgBody); }
-      }
-    };
-    sizeRow.appendChild(b);
-  });
-  sizeDiv.appendChild(sizeRow);
-  body.appendChild(sizeDiv);
+  const sizeHdr=document.createElement('p'); sizeHdr.className='grp-hdr'; sizeHdr.textContent='Size'; body.appendChild(sizeHdr);
+  const scard=document.createElement('div'); scard.className='grp';
+  scard.innerHTML=`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s=>`<button type="button" class="tile-opt${s===_wsize?' on':''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${SIZE_ICONS[s]||SIZE_ICONS.medium}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`).join('')}</div></div>`;
+  body.appendChild(scard);
+  scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ _wsize=b.dataset.size; if(_wtype==='backup'){_wbackupCfg.slots=_normBackupSlots(_wbackupCfg.slots,_wsize);} _renderWidgetForm(body); }));
 
     const cfgDiv=document.createElement('div');cfgDiv.className='div';body.appendChild(cfgDiv);
   if(_widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
@@ -766,108 +734,61 @@ function _renderWidgetForm(body){
 }
 
 function _renderWeatherConfig(body){
-  /* City search → resolve to lat/long via the geocoding proxy, confirm the match. */
-  const searchRow=document.createElement('div');searchRow.className='fr';
-  searchRow.innerHTML=`<label for="wx-city">City</label>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input class="fc" id="wx-city" type="text" placeholder="e.g. Ottawa" value="${esc(_wweatherCfg.city||'')}" style="flex:1;margin:0">
-      <button type="button" id="wx-search" class="btn bg sm" style="flex-shrink:0;white-space:nowrap">Search</button>
-    </div>`;
-  body.appendChild(searchRow);
-
-  const resWrap=document.createElement('div');resWrap.className='fr';resWrap.style.display='none';
-  resWrap.innerHTML=`<label for="wx-result">Match</label><select class="fc" id="wx-result"></select>`;
-  body.appendChild(resWrap);
-
-  const msg=document.createElement('div');msg.id='wx-msg';msg.className='hint';msg.style.marginTop='-4px';body.appendChild(msg);
-  if(_wweatherCfg.lat!==''&&_wweatherCfg.lat!=null){ msg.textContent='Current: '+(_wweatherCfg.city||(_wweatherCfg.lat+', '+_wweatherCfg.lon)); msg.style.color='#008932'; }
-
-  /* Units toggle */
-  const unitRow=document.createElement('div');unitRow.className='fr';
-  const unitLbl=document.createElement('label');unitLbl.textContent='Units';unitLbl.setAttribute('for','wx-units');
-  const unitPills=document.createElement('div');unitPills.className='wtype-row';unitPills.style.marginTop='2px';
-  [['c','°C'],['f','°F']].forEach(([v,l])=>{
-    const b=document.createElement('button');b.type='button';b.className='wchip'+(v===(_wweatherCfg.units||'c')?' on':'');b.textContent=l;
-    b.onclick=()=>{ _wweatherCfg.units=v; unitPills.querySelectorAll('.wchip').forEach(x=>x.classList.toggle('on',x===b)); };
-    unitPills.appendChild(b);
-  });
-  unitRow.append(unitLbl,unitPills);body.appendChild(unitRow);
-
-  /* Feels-like toggle */
-  const flRow=document.createElement('div');flRow.className='fr';
-  const flLbl=document.createElement('label');flLbl.textContent='Temperature';flLbl.setAttribute('for','wx-feels');
-  const flPills=document.createElement('div');flPills.className='wtype-row';flPills.style.marginTop='2px';
-  [[false,'Actual'],[true,'Feels like']].forEach(([v,l])=>{
-    const b=document.createElement('button');b.type='button';b.className='wchip'+(v===!!_wweatherCfg.feelsLike?' on':'');b.textContent=l;
-    b.onclick=()=>{ _wweatherCfg.feelsLike=v; flPills.querySelectorAll('.wchip').forEach(x=>x.classList.toggle('on',x===b)); };
-    flPills.appendChild(b);
-  });
-  flRow.append(flLbl,flPills);body.appendChild(flRow);
-
-  /* Optional click-through href */
-  const hrefRow=document.createElement('div');hrefRow.className='fr';
-  hrefRow.innerHTML=`<label for="wx-href">Link URL <span style="opacity:.45;font-weight:400">(optional)</span></label>
-    <input class="fc" id="wx-href" type="text" placeholder="https://..." value="${esc(_wweatherCfg.href||'')}">`;
-  body.appendChild(hrefRow);
-  hrefRow.querySelector('#wx-href').oninput=e=>{ _wweatherCfg.href=e.target.value.trim(); };
-
-  const resultSel=resWrap.querySelector('#wx-result');
-  resultSel.onchange=()=>{
-    const o=resultSel.selectedOptions[0]; if(!o||!o.value) return;
-    const p=JSON.parse(o.value);
-    _wweatherCfg.city=p.label; _wweatherCfg.lat=p.lat; _wweatherCfg.lon=p.lon;
-    msg.textContent='Selected: '+p.label; msg.style.color='#008932';
-  };
-
+  const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
+  card.innerHTML=`
+    <div class="row"><span class="rl">City</span><input id="wx-city" class="icon-srch" type="text" placeholder="e.g. Ottawa" value="${esc(_wweatherCfg.city||'')}"></div>
+    <div class="row" id="wx-match-row" hidden><span class="rl">Match</span><div class="sel-wrap"><select class="row-sel" id="wx-result" aria-label="Match"></select>${CHEV_SVG}</div></div>
+    <div class="row"><span class="rl"></span><span class="row-status" id="wx-msg"></span><button type="button" class="row-btn" id="wx-search">Search</button></div>
+    <div class="row"><span class="rl">Units</span><div class="segr">
+      <label class="segr-opt"><input type="radio" name="wx-units" value="c" ${(_wweatherCfg.units||'c')==='c'?'checked':''}><span class="segr-dot"></span><span>&deg;C</span></label>
+      <label class="segr-opt"><input type="radio" name="wx-units" value="f" ${_wweatherCfg.units==='f'?'checked':''}><span class="segr-dot"></span><span>&deg;F</span></label>
+    </div></div>
+    <div class="row"><span class="rl">Temperature</span><div class="segr">
+      <label class="segr-opt"><input type="radio" name="wx-feels" value="actual" ${!_wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Actual</span></label>
+      <label class="segr-opt"><input type="radio" name="wx-feels" value="feels" ${_wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Feels like</span></label>
+    </div></div>
+    <div class="row ie-row" id="wx-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${_wweatherCfg.href?'':' is-ph'}">${_wweatherCfg.href?esc(_wweatherCfg.href):'https://...'}</span><input id="wx-href" type="text" value="${esc(_wweatherCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${PE_SVG}</button></div>`;
+  const msg=card.querySelector('#wx-msg'), matchRow=card.querySelector('#wx-match-row'), resultSel=card.querySelector('#wx-result');
+  if(_wweatherCfg.lat!==''&&_wweatherCfg.lat!=null){ msg.textContent='Current: '+(_wweatherCfg.city||(_wweatherCfg.lat+', '+_wweatherCfg.lon)); msg.className='row-status ok'; }
+  card.querySelectorAll('input[name="wx-units"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)_wweatherCfg.units=r.value; }));
+  card.querySelectorAll('input[name="wx-feels"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)_wweatherCfg.feelsLike=(r.value==='feels'); }));
+  resultSel.onchange=()=>{ const o=resultSel.selectedOptions[0]; if(!o||!o.value)return; const pp=JSON.parse(o.value); _wweatherCfg.city=pp.label;_wweatherCfg.lat=pp.lat;_wweatherCfg.lon=pp.lon; msg.textContent='Selected: '+pp.label; msg.className='row-status ok'; };
+  initInlineEdit('wx-href-row','wx-href',{placeholder:'https://...',onCommit(v){_wweatherCfg.href=v;}});
   async function doSearch(){
-    const q=document.getElementById('wx-city').value.trim();
-    if(!q){ msg.textContent='Enter a city name.'; msg.style.color='#e9152d'; return; }
-    const btn=document.getElementById('wx-search');
-    btn.disabled=true;btn.textContent='…';msg.textContent='';
+    const q=card.querySelector('#wx-city').value.trim();
+    if(!q){ msg.textContent='Enter a city name.'; msg.className='row-status err'; return; }
+    const btn=card.querySelector('#wx-search'); btn.disabled=true; btn.textContent='...'; msg.textContent=''; msg.className='row-status';
     try{
       const r=await fetch(`/api/geocode-proxy?q=${encodeURIComponent(q)}`);
       const d=await r.json().catch(()=>({}));
       if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
       const results=d.results||[];
-      if(!results.length){ msg.textContent='No matches found.'; msg.style.color='#ffcc00'; resWrap.style.display='none'; return; }
+      if(!results.length){ msg.textContent='No matches found.'; msg.className='row-status err'; matchRow.hidden=true; return; }
       resultSel.innerHTML='';
-      results.forEach(p=>{
-        const label=[p.name,p.admin1,p.country].filter(Boolean).join(', ');
-        const opt=document.createElement('option');
-        opt.value=JSON.stringify({label,lat:p.lat,lon:p.lon});
-        opt.textContent=label;
-        resultSel.appendChild(opt);
-      });
-      resWrap.style.display='';
-      /* auto-select first match */
-      _wweatherCfg.city=JSON.parse(resultSel.value).label;
-      _wweatherCfg.lat=JSON.parse(resultSel.value).lat;
-      _wweatherCfg.lon=JSON.parse(resultSel.value).lon;
-      msg.textContent=results.length+' match(es), pick one.'; msg.style.color='#008932';
-    }catch(e){ msg.textContent='Search failed: '+e.message; msg.style.color='#e9152d'; }
-    finally{ btn.disabled=false;btn.textContent='Search'; }
+      results.forEach(pp=>{ const label=[pp.name,pp.admin1,pp.country].filter(Boolean).join(', '); const opt=document.createElement('option'); opt.value=JSON.stringify({label,lat:pp.lat,lon:pp.lon}); opt.textContent=label; resultSel.appendChild(opt); });
+      matchRow.hidden=false;
+      const f=JSON.parse(resultSel.value); _wweatherCfg.city=f.label; _wweatherCfg.lat=f.lat; _wweatherCfg.lon=f.lon;
+      msg.textContent=results.length+' match(es), pick one'; msg.className='row-status ok';
+    }catch(e){ msg.textContent='Search failed: '+e.message; msg.className='row-status err'; }
+    finally{ btn.disabled=false; btn.textContent='Search'; }
   }
-  searchRow.querySelector('#wx-search').onclick=doSearch;
+  card.querySelector('#wx-search').onclick=doSearch;
 }
 
 function _renderStatsConfig(body){
-  /* ── Sub-type pill: System Summary | Disk Health ── */
-  const subRow=document.createElement('div');subRow.className='fr';
-  const subLbl=document.createElement('label');subLbl.textContent='Stats Type';
-  const subPills=document.createElement('div');subPills.className='wtype-row';subPills.style.marginTop='2px';
-  [['system-summary','System Summary'],['disk-health','Disk Health']].forEach(([v,lbl])=>{
-    const b=document.createElement('button');b.type='button';b.className='wchip'+(v===_wstatsSubType?' on':'');
-    b.textContent=lbl;
-    b.onclick=()=>{
-      _wstatsSubType=v;
-      subPills.querySelectorAll('.wchip').forEach(x=>x.classList.toggle('on',x===b));
-
-      const cfg=body.querySelector('#stats-cfg-body');
-      if(cfg){cfg.innerHTML='';_renderStatsBody(cfg);}
-    };
-    subPills.appendChild(b);
-  });
-  subRow.append(subLbl,subPills);body.appendChild(subRow);
+  /* ── Type: System Summary | Disk Health (radio) ── */
+  const subRow=document.createElement('div'); subRow.className='grp';
+  subRow.innerHTML=`<div class="row"><span class="rl">Type</span><div class="segr">
+    <label class="segr-opt"><input type="radio" name="stats-sub" value="disk-health" ${_wstatsSubType==='disk-health'?'checked':''}><span class="segr-dot"></span><span>Disk Health</span></label>
+    <label class="segr-opt"><input type="radio" name="stats-sub" value="system-summary" ${_wstatsSubType==='system-summary'?'checked':''}><span class="segr-dot"></span><span>System Summary</span></label>
+  </div></div>`;
+  body.appendChild(subRow);
+  subRow.querySelectorAll('input[name="stats-sub"]').forEach(r=>r.addEventListener('change',()=>{
+    if(!r.checked)return;
+    _wstatsSubType=r.value;
+    const cfg=body.querySelector('#stats-cfg-body');
+    if(cfg){cfg.innerHTML='';_renderStatsBody(cfg);}
+  }));
 
   const cfgBody=document.createElement('div');cfgBody.id='stats-cfg-body';body.appendChild(cfgBody);
   _renderStatsBody(cfgBody);
@@ -876,287 +797,153 @@ function _renderStatsConfig(body){
 function _renderStatsBody(body){
   if(_wstatsSubType==='disk-health'){
     const bayCount = _wsize==='medium' ? 10 : 4;
-
-    /* Ensure bays array is the right length */
     while(_wdiskCfg.bays.length < bayCount) _wdiskCfg.bays.push(null);
     _wdiskCfg.bays = _wdiskCfg.bays.slice(0, bayCount);
 
-    /* Provider toggle */
-    const provRow=document.createElement('div');provRow.className='fr';
-    provRow.innerHTML=`<label for="dh-prov">Source</label>
-      <select class="fc" id="dh-prov">
-        <option value="scrutiny">Scrutiny (per-disk SMART)</option>
-        <option value="truenas">TrueNAS (per-pool health)</option>
-      </select>`;
-    body.appendChild(provRow);
+    const prov0=_wdiskCfg.diskProvider||'scrutiny';
+    const srcCard=document.createElement('div'); srcCard.className='grp'; body.appendChild(srcCard);
+    const provRow=document.createElement('div'); provRow.className='row';
+    provRow.innerHTML=`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="dh-prov" aria-label="Source"><option value="scrutiny"${prov0==='scrutiny'?' selected':''}>Scrutiny</option><option value="truenas"${prov0==='truenas'?' selected':''}>TrueNAS</option></select>${CHEV_SVG}</div>`;
+    srcCard.appendChild(provRow);
     const provSel=provRow.querySelector('#dh-prov');
-    provSel.value=_wdiskCfg.diskProvider||'scrutiny';
+    const fieldArea=document.createElement('div'); srcCard.appendChild(fieldArea);
 
-    /* Provider-specific field area + status message */
-    const fieldArea=document.createElement('div');body.appendChild(fieldArea);
-    const dhMsg=document.createElement('div');dhMsg.id='dh-msg';dhMsg.className='hint';
-    dhMsg.style.marginTop='-4px';body.appendChild(dhMsg);
+    let _items=[]; let dhStatus=null;
 
-    /* Bay assignment section */
-    const bayHd=document.createElement('div');bayHd.className='stl';
-    bayHd.style.cssText='margin-top:14px;margin-bottom:8px';
-    bayHd.textContent=`Bays (${bayCount})`;body.appendChild(bayHd);
-    const bayRows=document.createElement('div');bayRows.id='dh-bay-rows';body.appendChild(bayRows);
+    const bayHdr=document.createElement('p'); bayHdr.className='grp-hdr'; bayHdr.textContent=`Bays (${bayCount})`; body.appendChild(bayHdr);
+    const bayCard=document.createElement('div'); bayCard.className='grp'; body.appendChild(bayCard);
 
-    /* Available items cache: {value,label,capacity} for whichever provider loaded */
-    let _items=[];
-
+    function fmtCap(c){ return c?(c>=1e12?(c/1e12).toFixed(1)+' TB':(c/1e9).toFixed(0)+' GB'):''; }
     function renderBayRows(){
-      bayRows.innerHTML='';
+      bayCard.innerHTML='';
       for(let i=0;i<bayCount;i++){
-        const row=document.createElement('div');
-        row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;';
-        const lbl=document.createElement('label');
-        lbl.style.cssText='min-width:44px;font-size:12px;opacity:.6;flex-shrink:0;';
-        lbl.textContent='Bay '+(i+1);
-        const sel=document.createElement('select');
-        sel.className='fc';sel.style.flex='1';sel.dataset.bay=i;
-        sel.id='dh-bay-'+i; lbl.setAttribute('for', sel.id); sel.setAttribute('aria-label','Bay '+(i+1));
-        const emptyOpt=document.createElement('option');
-        emptyOpt.value='';emptyOpt.textContent='Empty';
-        sel.appendChild(emptyOpt);
-        _items.forEach(it=>{
-          const opt=document.createElement('option');
-          opt.value=it.value;
-          const cap=it.capacity
-            ?(it.capacity>=1e12?(it.capacity/1e12).toFixed(1)+' TB':(it.capacity/1e9).toFixed(0)+' GB')
-            :'';
-          opt.textContent=it.label+(cap?' - '+cap:'');
-          sel.appendChild(opt);
-        });
-        /* keep current assignment even if items not yet loaded */
         const cur=_wdiskCfg.bays[i]||'';
-        if(cur && !_items.some(it=>it.value===cur)){
-          const opt=document.createElement('option');opt.value=cur;opt.textContent=cur;sel.appendChild(opt);
-        }
-        sel.value=cur;
+        let opts='<option value="">Empty</option>';
+        _items.forEach(it=>{ const cap=fmtCap(it.capacity); opts+=`<option value="${esc(it.value)}"${it.value===cur?' selected':''}>${esc(it.label)}${cap?' - '+cap:''}</option>`; });
+        if(cur && !_items.some(it=>it.value===cur)) opts+=`<option value="${esc(cur)}" selected>${esc(cur)}</option>`;
+        const row=document.createElement('div'); row.className='row';
+        row.innerHTML=`<span class="rl">Bay ${i+1}</span><div class="sel-wrap"><select class="row-sel" id="dh-bay-${i}" aria-label="Bay ${i+1}">${opts}</select>${CHEV_SVG}</div>`;
+        const sel=row.querySelector('select'); sel.value=cur;
         sel.onchange=()=>{ _wdiskCfg.bays[i]=sel.value||null; };
-        row.append(lbl,sel);bayRows.appendChild(row);
+        bayCard.appendChild(row);
       }
     }
 
-    async function loadScrutiny(){
+    async function loadScrutiny(btn){
       const url=document.getElementById('dh-url')?.value?.trim();
-      if(!url){dhMsg.textContent='Enter a Scrutiny URL first.';dhMsg.style.color='#e9152d';return;}
+      if(!url){ if(dhStatus){dhStatus.textContent='Enter a Scrutiny URL first.';dhStatus.className='row-status err';} return; }
       _wdiskCfg.scrutinyUrl=url;
-      const btn=document.getElementById('dh-load');
-      btn.disabled=true;btn.textContent='Fetching…';dhMsg.textContent='';
+      btn.disabled=true; btn.textContent='Fetching...'; if(dhStatus){dhStatus.textContent='';dhStatus.className='row-status';}
       try{
         const r=await fetch(`/api/scrutiny-proxy?url=${encodeURIComponent(url)}`);
         if(!r.ok) throw new Error('HTTP '+r.status);
         const d=await r.json();
         _items=(d.devices||[]).map(dev=>({value:dev.device_id,label:(dev.model_name||dev.device_name),capacity:dev.capacity}));
-        if(!_items.length){dhMsg.textContent='No SMART-enabled drives found.';dhMsg.style.color='#ffcc00';}
-        else{dhMsg.textContent=_items.length+' drive(s) found.';dhMsg.style.color='#008932';}
+        if(dhStatus){ dhStatus.textContent=_items.length?(_items.length+' drive(s) found'):'No SMART drives found'; dhStatus.className='row-status '+(_items.length?'ok':'err'); }
         renderBayRows();
-      }catch(e){ dhMsg.textContent='Failed to reach Scrutiny: '+e.message;dhMsg.style.color='#e9152d'; }
-      finally{ btn.disabled=false;btn.textContent='Fetch Drives'; }
+      }catch(e){ if(dhStatus){dhStatus.textContent='Failed to reach Scrutiny: '+e.message;dhStatus.className='row-status err';} }
+      finally{ btn.disabled=false; btn.textContent='Fetch Drives'; }
     }
-
-    async function loadTrueNas(){
+    async function loadTrueNas(btn){
       const url=document.getElementById('dh-url')?.value?.trim();
       const key=document.getElementById('dh-key')?.value?.trim()||(_wdiskCfg.truenasKeySet?'__keep__':'');
-      if(!url){dhMsg.textContent='Enter a TrueNAS URL first.';dhMsg.style.color='#e9152d';return;}
-      if(!key){dhMsg.textContent='Enter an API key first.';dhMsg.style.color='#e9152d';return;}
+      if(!url){ if(dhStatus){dhStatus.textContent='Enter a TrueNAS URL first.';dhStatus.className='row-status err';} return; }
+      if(!key){ if(dhStatus){dhStatus.textContent='Enter an API key first.';dhStatus.className='row-status err';} return; }
       _wdiskCfg.truenasUrl=url;
-      const btn=document.getElementById('dh-load');
-      btn.disabled=true;btn.textContent='Fetching…';dhMsg.textContent='';
+      btn.disabled=true; btn.textContent='Fetching...'; if(dhStatus){dhStatus.textContent='';dhStatus.className='row-status';}
       try{
-        if(key==='__keep__'){
-          /* Key already saved; pools can only be listed with the live key, so ask for it. */
-          dhMsg.textContent='Re-enter the API key to fetch pools.';dhMsg.style.color='#ffcc00';
-          return;
-        }
+        if(key==='__keep__'){ if(dhStatus){dhStatus.textContent='Re-enter the API key to fetch pools.';dhStatus.className='row-status err';} return; }
         const r=await fetch(`/api/truenas-proxy?url=${encodeURIComponent(url)}&key=${encodeURIComponent(key)}`);
         const d=await r.json().catch(()=>({}));
         if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
-        _items=(d.pools||[]).map(p=>({value:p.name,label:p.name+(p.healthy?'':' (unhealthy)'),capacity:p.capacity}));
-        if(!_items.length){dhMsg.textContent='No pools found.';dhMsg.style.color='#ffcc00';}
-        else{dhMsg.textContent=_items.length+' pool(s) found.';dhMsg.style.color='#008932';}
+        _items=(d.pools||[]).map(pl=>({value:pl.name,label:pl.name+(pl.healthy?'':' (unhealthy)'),capacity:pl.capacity}));
+        if(dhStatus){ dhStatus.textContent=_items.length?(_items.length+' pool(s) found'):'No pools found'; dhStatus.className='row-status '+(_items.length?'ok':'err'); }
         renderBayRows();
-      }catch(e){ dhMsg.textContent='Failed to reach TrueNAS: '+e.message;dhMsg.style.color='#e9152d'; }
-      finally{ btn.disabled=false;btn.textContent='Fetch Pools'; }
+      }catch(e){ if(dhStatus){dhStatus.textContent='Failed to reach TrueNAS: '+e.message;dhStatus.className='row-status err';} }
+      finally{ btn.disabled=false; btn.textContent='Fetch Pools'; }
     }
 
     function renderFields(){
-      const prov=_wdiskCfg.diskProvider;
-      _items=[];
-      if(prov==='truenas'){
-        fieldArea.innerHTML=`
-          <div class="fr"><label for="dh-url">TrueNAS URL</label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input class="fc" id="dh-url" type="text" placeholder="truenas:443" value="${esc(_wdiskCfg.truenasUrl||'')}" style="flex:1;margin:0">
-              <button type="button" id="dh-load" class="btn bg sm" style="flex-shrink:0;white-space:nowrap">Fetch Pools</button>
-            </div></div>
-          <div class="fr"><label for="dh-key">API Key</label>
-            <input class="fc" id="dh-key" type="password" placeholder="${_wdiskCfg.truenasKeySet?'•••••• (saved, re-enter to change)':'paste API key'}" value=""></div>
-          <div class="fr"><label for="dh-href">Link URL <span style="opacity:.45;font-weight:400">(optional)</span></label>
-            <input class="fc" id="dh-href" type="text" placeholder="https://truenas/ui/storage" value="${esc(_wdiskCfg.truenasHref||'')}"></div>`;
-        fieldArea.querySelector('#dh-load').onclick=loadTrueNas;
-      }else{
-        fieldArea.innerHTML=`
-          <div class="fr"><label for="dh-url">Scrutiny URL</label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input class="fc" id="dh-url" type="text" placeholder="scrutiny:8080" value="${esc(_wdiskCfg.scrutinyUrl||'')}" style="flex:1;margin:0">
-              <button type="button" id="dh-load" class="btn bg sm" style="flex-shrink:0;white-space:nowrap">Fetch Drives</button>
-            </div></div>
-          <div class="fr"><label for="dh-href">Link URL <span style="opacity:.45;font-weight:400">(optional)</span></label>
-            <input class="fc" id="dh-href" type="text" placeholder="https://your-server:8080" value="${esc(_wdiskCfg.scrutinyHref||'')}"></div>`;
-        fieldArea.querySelector('#dh-load').onclick=loadScrutiny;
-      }
+      const prov=_wdiskCfg.diskProvider; _items=[]; fieldArea.innerHTML='';
+      const isTn=prov==='truenas';
+      const urlVal=isTn?(_wdiskCfg.truenasUrl||''):(_wdiskCfg.scrutinyUrl||'');
+      const urlPh=isTn?'truenas:443':'scrutiny:8080';
+      const hrefVal=isTn?(_wdiskCfg.truenasHref||''):(_wdiskCfg.scrutinyHref||'');
+      const hrefPh=isTn?'https://truenas/ui/storage':'https://your-server:8080';
+      fieldArea.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="dh-url-row"><span class="rl">${isTn?'TrueNAS':'Scrutiny'} URL</span><span class="rv${urlVal?'':' is-ph'}">${urlVal?esc(urlVal):esc(urlPh)}</span><input id="dh-url" type="text" value="${esc(urlVal)}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
+      if(isTn) fieldArea.insertAdjacentHTML('beforeend', `<div class="row"><span class="rl">API Key</span><input id="dh-key" class="icon-srch" type="password" autocomplete="new-password" placeholder="${_wdiskCfg.truenasKeySet?'Saved, re-enter to change':'paste API key'}"></div>`);
+      const fr=document.createElement('div'); fr.className='row'; fr.innerHTML='<span class="rl"></span>';
+      dhStatus=document.createElement('span'); dhStatus.className='row-status'; dhStatus.id='dh-msg'; fr.appendChild(dhStatus);
+      const fbtn=document.createElement('button'); fbtn.type='button'; fbtn.className='row-btn'; fbtn.id='dh-load'; fbtn.textContent=isTn?'Fetch Pools':'Fetch Drives'; fr.appendChild(fbtn);
+      fieldArea.appendChild(fr);
+      fbtn.onclick=()=> isTn?loadTrueNas(fbtn):loadScrutiny(fbtn);
+      fieldArea.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="dh-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${hrefVal?'':' is-ph'}">${hrefVal?esc(hrefVal):esc(hrefPh)}</span><input id="dh-href" type="text" value="${esc(hrefVal)}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${PE_SVG}</button></div>`);
+      initInlineEdit('dh-url-row','dh-url',{placeholder:urlPh,onCommit(v){ if(_wdiskCfg.diskProvider==='truenas')_wdiskCfg.truenasUrl=v; else _wdiskCfg.scrutinyUrl=v; }});
+      initInlineEdit('dh-href-row','dh-href',{placeholder:hrefPh,onCommit(v){ if(_wdiskCfg.diskProvider==='truenas')_wdiskCfg.truenasHref=v; else _wdiskCfg.scrutinyHref=v; }});
       renderBayRows();
     }
 
-    provSel.onchange=()=>{ _wdiskCfg.diskProvider=provSel.value; dhMsg.textContent=''; renderFields(); };
-
+    provSel.onchange=()=>{ _wdiskCfg.diskProvider=provSel.value; renderFields(); };
     renderFields();
-    /* Auto-fetch on open if Scrutiny URL already configured (TrueNAS needs the key re-entered). */
     if(_wdiskCfg.diskProvider!=='truenas' && _wdiskCfg.scrutinyUrl){ const b=document.getElementById('dh-load'); if(b) b.click(); }
     return;
   }
 
-  /* ── System Summary ── */
-  const hd=document.createElement('div');hd.className='stl';hd.textContent='Slot Configuration';body.appendChild(hd);
-  const hint=document.createElement('div');hint.className='hint';hint.style.marginBottom='12px';
-  hint.textContent='Configure up to 3 stat slots. Each slot shows a live value and chart.';body.appendChild(hint);
+  /* ── System Summary: 3 stat slots + network slot (settings-row, PSD) ── */
+  const RES_LABELS={cpu:'CPU',ram:'RAM',temp:'Temperature',disk:'Disk Mount'};
+  const SLOT_DEFS=['#ff2d55','#30d158','#00c0e8'];
+
+  function fillSlot(card, idx){
+    const slot=_wslots[idx]||{type:'cpu'};
+    const resOpts=STAT_TYPES.map(t=>`<option value="${t}"${slot.type===t?' selected':''}>${RES_LABELS[t]}</option>`).join('');
+    const res=document.createElement('div'); res.className='row';
+    res.innerHTML=`<span class="rl">Resource</span><div class="sel-wrap"><select class="row-sel" aria-label="Resource">${resOpts}</select>${CHEV_SVG}</div>`;
+    card.appendChild(res);
+    res.querySelector('select').onchange=function(){ const t=this.value; _wslots[idx]={type:t}; if(t==='disk'){_wslots[idx].primary='/';_wslots[idx].secondary='';} if(t==='temp'){_wslots[idx].thermalZone=0;} card.innerHTML=''; fillSlot(card, idx); };
+
+    if(slot.type==='disk'){
+      card.insertAdjacentHTML('beforeend',
+        `<div class="row ie-row" id="slot${idx}-pri"><span class="rl">First Mount Path</span><span class="rv${slot.primary?'':' is-ph'}">${esc(slot.primary||'/')}</span><input id="slot${idx}-pri-i" type="text" value="${esc(slot.primary||'/')}" style="display:none"><button class="pe" type="button" aria-label="Edit first mount path">${PE_SVG}</button></div>`
+       +`<div class="row ie-row" id="slot${idx}-sec"><span class="rl">Second Mount Path <span class="opt-span">(optional)</span></span><span class="rv${slot.secondary?'':' is-ph'}">${slot.secondary?esc(slot.secondary):'/mnt/data'}</span><input id="slot${idx}-sec-i" type="text" value="${esc(slot.secondary||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit second mount path">${PE_SVG}</button></div>`);
+      initInlineEdit(`slot${idx}-pri`,`slot${idx}-pri-i`,{placeholder:'/',onCommit(v){_wslots[idx].primary=v;}});
+      initInlineEdit(`slot${idx}-sec`,`slot${idx}-sec-i`,{placeholder:'/mnt/data',onCommit(v){_wslots[idx].secondary=v;}});
+    } else if(slot.type==='temp'){
+      const z=Number.isInteger(slot.thermalZone)?slot.thermalZone:0;
+      card.insertAdjacentHTML('beforeend',
+        `<div class="row ie-row" id="slot${idx}-tz"><span class="rl">Thermal Zone</span><span class="rv">${z}</span><input id="slot${idx}-tz-i" type="number" min="0" max="20" value="${z}" style="display:none"><button class="pe" type="button" aria-label="Edit thermal zone">${PE_SVG}</button></div>`);
+      const tip=document.createElement('p'); tip.className='grp-tip in-card'; tip.textContent='Zone 0 is correct for most systems. Only change it if the temperature shown is wrong.'; card.appendChild(tip);
+      initInlineEdit(`slot${idx}-tz`,`slot${idx}-tz-i`,{onCommit(v){_wslots[idx].thermalZone=parseInt(v,10)||0;}});
+    }
+    renderColorControl(card,{value:slot.color||SLOT_DEFS[idx]||'#0289ff',idPrefix:`slotcol${idx}`,onChange(v){_wslots[idx].color=v;}});
+  }
 
   _wslots.slice(0,3).forEach((slot,idx)=>{
-    const card=document.createElement('div');card.className='slot-card';
-    const hdr=document.createElement('div');hdr.className='slot-hd';
-    const lbl=document.createElement('div');lbl.className='slot-lbl';lbl.textContent='Slot '+(idx+1);
-    hdr.appendChild(lbl);card.appendChild(hdr);
-
-    const seg=document.createElement('div');seg.className='seg';seg.setAttribute('role','group');seg.setAttribute('aria-label','Stat type');
-    STAT_TYPES.forEach(t=>{
-      const b=document.createElement('button');b.type='button';b.textContent=STAT_LABELS[t];
-      b.classList.toggle('on',slot.type===t);
-      b.onclick=()=>{
-        _wslots[idx]={type:t};
-        if(t==='disk'){_wslots[idx].primary='/';_wslots[idx].secondary='';}
-        if(t==='temp'){_wslots[idx].thermalZone=0;}
-        seg.querySelectorAll('button').forEach(btn=>btn.classList.toggle('on',btn===b));
-        const existing=card.querySelector('.slot-subfields');
-        if(existing)existing.remove();
-        if(t==='disk')card.appendChild(_mkDiskFields(idx));
-        else if(t==='temp')card.appendChild(_mkTempFields(idx));
-      };
-      seg.appendChild(b);
-    });
-    card.appendChild(seg);
-
-    if(slot.type==='disk') card.appendChild(_mkDiskFields(idx));
-    else if(slot.type==='temp') card.appendChild(_mkTempFields(idx));
-
-    const SLOT_DEFS=['#ff2d55','#30d158','#00c0e8'];
-    const SLOT_OPTS=[
-      {v:'red',   hex:'#ff3838',lbl:'Red'},
-      {v:'yellow',hex:'#ffcc00',lbl:'Yellow'},
-      {v:'green', hex:'#30d158',lbl:'Green'},
-      {v:'pink',  hex:'#ff2d55',lbl:'Pink'},
-      {v:'cyan',  hex:'#00c0e8',lbl:'Cyan'},
-      {v:'blue',  hex:'#0088ff',lbl:'Blue'},
-      {v:'gray',  hex:'#f2f2f7',lbl:'Gray'},
-    ];
-    const savedSlotColor=slot.color||SLOT_DEFS[idx]||'';
-    const slotColorDiv=document.createElement('div');slotColorDiv.className='fr fr-mb0 slot-color-row';
-    const slotLblEl=document.createElement('label');slotLblEl.textContent='Color';slotLblEl.setAttribute('for','slot-hex-'+idx);
-    const colsDiv=document.createElement('div');colsDiv.className='cols';
-    SLOT_OPTS.forEach(({v,hex,lbl})=>{
-      const sw=document.createElement('div');
-      sw.className='co co-slot-'+v+(savedSlotColor===hex||savedSlotColor===v?' on':'');
-      sw.dataset.v=hex;sw.title=lbl;
-      sw.addEventListener('click',()=>{
-        colsDiv.querySelectorAll('.co').forEach(s=>s.classList.remove('on'));
-        sw.classList.add('on');
-        hexInp.value='';
-        _wslots[idx].color=hex;
-      });
-      colsDiv.appendChild(sw);
-    });
-    const hexInp=document.createElement('input');
-    hexInp.className='fc';hexInp.type='text';hexInp.placeholder='#rrggbb';hexInp.id='slot-hex-'+idx;hexInp.setAttribute('aria-label','Custom colour hex');
-    const isCustomSlotColor=savedSlotColor&&!SLOT_OPTS.find(o=>o.hex===savedSlotColor||o.v===savedSlotColor);
-    hexInp.value=isCustomSlotColor?savedSlotColor:'';
-    hexInp.addEventListener('input',()=>{
-      colsDiv.querySelectorAll('.co').forEach(s=>s.classList.remove('on'));
-      _wslots[idx].color=hexInp.value.trim()||SLOT_DEFS[idx];
-    });
-    slotColorDiv.append(slotLblEl,colsDiv,hexInp);
-    card.appendChild(slotColorDiv);
-    body.appendChild(card);
+    const hdr=document.createElement('p'); hdr.className='grp-hdr'; hdr.textContent='Slot '+(idx+1); body.appendChild(hdr);
+    const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
+    fillSlot(card, idx);
   });
 
-  /* ── Slot 4: Network Speed ── */
-  const netCard=document.createElement('div');netCard.className='slot-card';
-  const netHdr=document.createElement('div');netHdr.className='slot-hd';
-  const netLbl=document.createElement('div');netLbl.className='slot-lbl';netLbl.textContent='Slot 4: Network Speed';
-  const netTog=document.createElement('label');netTog.className='tog';
-  const netCb=document.createElement('input');netCb.type='checkbox';netCb.checked=_wnet.enabled;
-  const netTr=document.createElement('div');netTr.className='tr';
-  netTog.append(netCb,netTr);netHdr.append(netLbl,netTog);netCard.appendChild(netHdr);
-
-  const netSub=document.createElement('div');netSub.className='sub'+((_wnet.enabled)?' open':'');
-
-  /* Provider pill */
-  const provRow=document.createElement('div');provRow.className='fr';
-  const provLbl=document.createElement('label');provLbl.textContent='Provider';
-  const provPills=document.createElement('div');provPills.className='chips';
-  [['myspeed','MySpeed'],['speedtest-tracker','Speedtest Tracker']].forEach(([v,lbl])=>{
-    const b=document.createElement('button');b.type='button';
-    b.className='wchip'+((_wnet.provider||'myspeed')===v?' on':'');
-    b.textContent=lbl;
-    b.onclick=()=>{
-      _wnet.provider=v;
-      provPills.querySelectorAll('.wchip').forEach(x=>x.classList.toggle('on',x===b));
-      /* Show/hide password field */
-      const pf=netSub.querySelector('#net-pass-row');
-      if(pf) pf.style.display=v==='myspeed'?'':'none';
-    };
-    provPills.appendChild(b);
-  });
-  provRow.append(provLbl,provPills);netSub.appendChild(provRow);
-
-  /* URL field */
-  const urlRow=document.createElement('div');urlRow.className='fr';
-  const isMySpeed=(_wnet.provider||'myspeed')==='myspeed';
-  urlRow.innerHTML=`<label>Service URL</label>
-    <input class="fc" id="net-url" type="text"
-      placeholder="${isMySpeed?'myspeed:5216':'your-server:8850'}"
-      value="${esc(_wnet.url||'')}">
-    <div class="hint">Container name/IP and port of your speed tracking service.</div>`;
-  netSub.appendChild(urlRow);
-
-  /* Update placeholder when provider switches */
-  provPills.querySelectorAll('.wchip').forEach(b=>{
-    const orig=b.onclick;
-    b.onclick=()=>{
-      orig?.call(b);
-      const inp=netSub.querySelector('#net-url');
-      if(inp) inp.placeholder=(_wnet.provider==='myspeed')?'myspeed:5216':'your-server:8850';
-    };
-  });
-
-  /* MySpeed password field */
-  const passRow=document.createElement('div');passRow.className='fr';passRow.id='net-pass-row';
-  passRow.style.display=isMySpeed?'':'none';
-  passRow.innerHTML=`<label>Password <span style="opacity:.45;font-weight:400">(optional)</span></label>
-    <input class="fc" id="net-pass" type="password"
-      placeholder="${_wnet.myspeedPassSet?'••••••••  (saved, leave blank to keep)':'Leave blank if no password set'}"
-      autocomplete="new-password">
-    <div class="hint">Only required if you set a password in MySpeed settings.</div>`;
-  netSub.appendChild(passRow);
-
-  netCb.onchange=()=>{
-    _wnet.enabled=netCb.checked;
-    netSub.classList.toggle('open',netCb.checked);
-  };
-  netCard.appendChild(netSub);
-  body.appendChild(netCard);
+  /* Slot 4: Network Speed */
+  const prov=_wnet.provider||'myspeed';
+  const netCard=document.createElement('div'); netCard.className='grp'; body.appendChild(netCard);
+  netCard.innerHTML=`
+    <div class="row"><span class="rl">Network Speed</span><label class="tog"><input type="checkbox" id="net-en" ${_wnet.enabled?'checked':''}><div class="tr"></div></label></div>
+    <div id="net-sub" ${_wnet.enabled?'':'hidden'}>
+      <div class="row"><span class="rl">Provider</span><div class="segr">
+        <label class="segr-opt"><input type="radio" name="net-prov" value="myspeed" ${prov==='myspeed'?'checked':''}><span class="segr-dot"></span><span>MySpeed</span></label>
+        <label class="segr-opt"><input type="radio" name="net-prov" value="speedtest-tracker" ${prov==='speedtest-tracker'?'checked':''}><span class="segr-dot"></span><span>Speedtest Tracker</span></label>
+      </div></div>
+      <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${_wnet.url?'':' is-ph'}">${_wnet.url?esc(_wnet.url):(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${esc(_wnet.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${PE_SVG}</button></div>
+      <div class="row" id="net-pass-row" ${prov==='myspeed'?'':'hidden'}><span class="rl">Password <span class="opt-span">(optional)</span></span><input id="net-pass" class="icon-srch" type="password" autocomplete="new-password" placeholder="${_wnet.myspeedPassSet?'Enter to replace':'Leave blank if none'}"></div>
+    </div>`;
+  const netEn=netCard.querySelector('#net-en'), netSub=netCard.querySelector('#net-sub');
+  netEn.onchange=()=>{ _wnet.enabled=netEn.checked; netSub.hidden=!netEn.checked; };
+  netCard.querySelectorAll('input[name="net-prov"]').forEach(r=>r.addEventListener('change',()=>{
+    if(!r.checked)return; _wnet.provider=r.value;
+    const pr=netCard.querySelector('#net-pass-row'); if(pr)pr.hidden=(r.value!=='myspeed');
+    const uv=netCard.querySelector('#net-url-row .rv'); if(uv&&uv.classList.contains('is-ph'))uv.textContent=(r.value==='myspeed'?'myspeed:5216':'your-server:8850');
+  }));
+  initInlineEdit('net-url-row','net-url',{placeholder:(prov==='myspeed'?'myspeed:5216':'your-server:8850'),onCommit(v){_wnet.url=v;}});
 }
 
 function _mkDiskFields(idx){
@@ -1192,81 +979,36 @@ function _renderConnectionsConfig(body){
 
 /* VPN view config — single tunnel, VPN services only (Gluetun / NetBird). */
 function _renderVpnConfig(body){
-  const hd=document.createElement('div');hd.className='stl';hd.textContent='VPN Configuration';body.appendChild(hd);
+  const svc=_wvpnCfg.service||'gluetun';
+  const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
+  card.innerHTML=`
+    <div class="row"><span class="rl">Service</span><div class="segr">
+      <label class="segr-opt"><input type="radio" name="vpn-svc" value="gluetun" ${svc==='gluetun'?'checked':''}><span class="segr-dot"></span><span>Gluetun</span></label>
+      <label class="segr-opt"><input type="radio" name="vpn-svc" value="netbird" ${svc==='netbird'?'checked':''}><span class="segr-dot"></span><span>NetBird</span></label>
+    </div></div>
+    <div class="row ie-row" id="vpn-name-row"><span class="rl">Display Name <span class="opt-span">(optional)</span></span><span class="rv${_wvpnCfg.name?'':' is-ph'}">${_wvpnCfg.name?esc(_wvpnCfg.name):(svc==='gluetun'?'VPN':'Mesh')}</span><input id="vpn-name" type="text" value="${esc(_wvpnCfg.name||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${PE_SVG}</button></div>`;
+  card.querySelectorAll('input[name="vpn-svc"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked){_wvpnCfg.service=r.value; _renderWidgetForm(body);} }));
+  initInlineEdit('vpn-name-row','vpn-name',{placeholder:(svc==='gluetun'?'VPN':'Mesh'),onCommit(v){_wvpnCfg.name=v;}});
 
-  const svcDiv=document.createElement('div');svcDiv.className='fr';
-  svcDiv.innerHTML='<label>Service</label>';
-  const svcRow=document.createElement('div');svcRow.className='wtype-row';
-  svcRow.setAttribute('role','group');svcRow.setAttribute('aria-label','VPN service');
-  [['gluetun','Gluetun'],['netbird','NetBird']].forEach(([v,l])=>{
-    const b=document.createElement('button');b.type='button';
-    b.className='wchip'+(v===_wvpnCfg.service?' on':'');
-    b.setAttribute('aria-pressed',String(v===_wvpnCfg.service));
-    b.textContent=l;
-    b.onclick=()=>{ _wvpnCfg.service=v; _renderWidgetForm(body); };
-    svcRow.appendChild(b);
-  });
-  svcDiv.appendChild(svcRow);body.appendChild(svcDiv);
+  const colHdr=document.createElement('p'); colHdr.className='grp-hdr'; colHdr.textContent='Dot Color'; body.appendChild(colHdr);
+  const colCard=document.createElement('div'); colCard.className='grp'; body.appendChild(colCard);
+  if(!_wvpnCfg.color)_wvpnCfg.color='#30d158';
+  renderColorControl(colCard,{value:_wvpnCfg.color,idPrefix:'vpncol',onChange(v){_wvpnCfg.color=v;}});
 
-  const nm=document.createElement('div');nm.className='fr';
-  nm.innerHTML=`<label>Display name <span class="opt-span">(optional)</span></label>
-    <input class="fc" id="vpn-name" type="text" placeholder="${_wvpnCfg.service==='gluetun'?'VPN':'Mesh'}" value="${esc(_wvpnCfg.name||'')}">
-    <div class="hint">Overrides the title shown on the card.</div>`;
-  nm.querySelector('#vpn-name').oninput=e=>{_wvpnCfg.name=e.target.value;};
-  body.appendChild(nm);
-
-  const col=document.createElement('div');col.className='fr';
-  col.innerHTML='<label>Dot colour</label>';
-  const sw=document.createElement('div');sw.style.cssText='display:flex;gap:10px;flex-wrap:wrap;';
-  const COLORS=['#30D158','#0A84FF','#5E5CE6','#BF5AF2','#FF375F','#FF453A','#FF9F0A','#FFD60A','#40C8E0','#66D4CF'];
-  if(!_wvpnCfg.color) _wvpnCfg.color='#30D158';
-  const paint=(b,hex,on)=>{b.style.border='2px solid '+(on?'#fff':'transparent');b.style.boxShadow='0 0 0 1px rgba(255,255,255,.15)'+(on?(',0 0 8px '+hex):'');};
-  COLORS.forEach(hex=>{
-    const b=document.createElement('button');b.type='button';b.setAttribute('data-hex',hex);
-    b.setAttribute('aria-label','Colour '+hex);b.setAttribute('aria-pressed',String(_wvpnCfg.color===hex));
-    b.style.cssText='width:24px;height:24px;border-radius:50%;cursor:pointer;background:'+hex+';';
-    paint(b,hex,_wvpnCfg.color===hex);
-    b.onclick=()=>{_wvpnCfg.color=hex;sw.querySelectorAll('button').forEach(x=>{const h=x.getAttribute('data-hex');paint(x,h,h===hex);x.setAttribute('aria-pressed',String(h===hex));});};
-    sw.appendChild(b);
-  });
-  col.appendChild(sw);body.appendChild(col);
-
-  if(_wvpnCfg.service==='gluetun'){
-    const u=document.createElement('div');u.className='fr';
-    u.innerHTML=`<label>Control server URL <span class="req">*</span></label>
-      <input class="fc" id="vpn-url" type="text" placeholder="http://gluetun:8000" value="${esc(_wvpnCfg.url||'')}">
-`;
-    u.querySelector('#vpn-url').oninput=e=>{_wvpnCfg.url=e.target.value.trim();};
-    body.appendChild(u);
-
-    const k=document.createElement('div');k.className='fr fr-mb0';
-    k.innerHTML=`<label>API key <span class="opt-span">(optional)</span></label>
-      <input class="fc" id="vpn-apikey" type="password" autocomplete="new-password" placeholder="${_wvpnCfg.apiKeySet?'•••••••• (stored)':'only if control server requires auth'}">
-      <div class="hint">Only if the control server requires auth.</div>`;
-    k.querySelector('#vpn-apikey').oninput=e=>{_wvpnCfg.apiKey=e.target.value;};
-    body.appendChild(k);
+  const cCard=document.createElement('div'); cCard.className='grp'; body.appendChild(cCard);
+  if(svc==='gluetun'){
+    cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Control Server URL <span class="req">*</span></span><span class="rv${_wvpnCfg.url?'':' is-ph'}">${_wvpnCfg.url?esc(_wvpnCfg.url):'http://gluetun:8000'}</span><input id="vpn-url" type="text" value="${esc(_wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
+    cCard.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">API Key <span class="opt-span">(optional)</span></span><input id="vpn-apikey" class="icon-srch" type="password" autocomplete="new-password" placeholder="${_wvpnCfg.apiKeySet?'Stored, re-enter to change':'only if auth required'}"></div>`);
+    initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://gluetun:8000',onCommit(v){_wvpnCfg.url=v;}});
+    cCard.querySelector('#vpn-apikey').oninput=e=>{_wvpnCfg.apiKey=e.target.value;};
   } else {
-    const u=document.createElement('div');u.className='fr';
-    u.innerHTML=`<label>Management API URL <span class="req">*</span></label>
-      <input class="fc" id="vpn-url" type="text" placeholder="http://netbird:33073" value="${esc(_wvpnCfg.url||'')}">
-      <div class="hint">The /api path is added automatically.</div>`;
-    u.querySelector('#vpn-url').oninput=e=>{_wvpnCfg.url=e.target.value.trim();};
-    body.appendChild(u);
-
-    const t=document.createElement('div');t.className='fr fr-mb0';
-    t.innerHTML=`<label>Access token (PAT) <span class="req">*</span></label>
-      <input class="fc" id="vpn-token" type="password" autocomplete="new-password" placeholder="${_wvpnCfg.tokenSet?'•••••••• (stored)':'nbp_...'}">
-`;
-    t.querySelector('#vpn-token').oninput=e=>{_wvpnCfg.token=e.target.value;};
-    body.appendChild(t);
+    cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Management API URL <span class="req">*</span></span><span class="rv${_wvpnCfg.url?'':' is-ph'}">${_wvpnCfg.url?esc(_wvpnCfg.url):'http://netbird:33073'}</span><input id="vpn-url" type="text" value="${esc(_wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
+    cCard.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Access Token (PAT) <span class="req">*</span></span><input id="vpn-token" class="icon-srch" type="password" autocomplete="new-password" placeholder="${_wvpnCfg.tokenSet?'Stored, re-enter to change':'nbp_...'}"></div>`);
+    initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://netbird:33073',onCommit(v){_wvpnCfg.url=v;}});
+    cCard.querySelector('#vpn-token').oninput=e=>{_wvpnCfg.token=e.target.value;};
   }
-
-  const h=document.createElement('div');h.className='fr fr-mb0';h.style.marginTop='14px';
-  h.innerHTML=`<label>Click URL <span class="opt-span">(optional)</span></label>
-    <input class="fc" id="vpn-href" type="url" placeholder="http://your-server:8000" value="${esc(_wvpnCfg.href||'')}">
-    <div class="hint">Opens when you tap the widget.</div>`;
-  h.querySelector('#vpn-href').oninput=e=>{_wvpnCfg.href=e.target.value.trim();};
-  body.appendChild(h);
+  cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-href-row"><span class="rl">Click URL <span class="opt-span">(optional)</span></span><span class="rv${_wvpnCfg.href?'':' is-ph'}">${_wvpnCfg.href?esc(_wvpnCfg.href):'http://your-server:8000'}</span><input id="vpn-href" type="text" value="${esc(_wvpnCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit click URL">${PE_SVG}</button></div>`);
+  initInlineEdit('vpn-href-row','vpn-href',{placeholder:'http://your-server:8000',onCommit(v){_wvpnCfg.href=v;}});
 }
 
 function _newSvcId(){return 'svc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
@@ -1289,137 +1031,92 @@ function _mapSvcColorRow(svc){
 
 function _renderMapConfig(body){
   if(!Array.isArray(_wmapCfg.services)) _wmapCfg.services=[];
-  _wmapCfg.services.forEach(s=>{if(!s.id)s.id=_newSvcId();});
+  _wmapCfg.services.forEach(sv=>{ if(!sv.id)sv.id=_newSvcId(); });
 
-  const hd=document.createElement('div');hd.className='stl';hd.textContent='Map services';body.appendChild(hd);
-  const intro=document.createElement('div');intro.className='hint';intro.style.margin='-2px 0 12px';
-  intro.textContent='Add a card per service.';
-  body.appendChild(intro);
+  const listHost=document.createElement('div'); body.appendChild(listHost);
 
-  const list=document.createElement('div');body.appendChild(list);
-
-  function card(svc,i){
+  function buildCard(svc,i){
     const meta=_MAP_SVC[svc.type]||_MAP_SVC.gluetun;
-    const c=document.createElement('div');c.className='slot-card';c.style.position='relative';
+    const hdr=document.createElement('p'); hdr.className='grp-hdr grp-hdr-row';
+    hdr.innerHTML=`<span>${esc(svc.name||meta.label||('Service '+(i+1)))}</span>`;
+    const rm=document.createElement('button'); rm.type='button'; rm.className='grp-hdr-rm'; rm.textContent='Remove';
+    rm.onclick=()=>{ _wmapCfg.services.splice(i,1); renderList(); };
+    hdr.appendChild(rm); listHost.appendChild(hdr);
 
-    const del=document.createElement('button');del.type='button';del.setAttribute('aria-label','Remove service');
-    del.style.cssText='position:absolute;top:8px;right:8px;width:32px;height:32px;border:none;background:none;cursor:pointer;color:var(--dm);font-size:20px;line-height:1;border-radius:8px;';
-    del.textContent='\u00d7';
-    del.onclick=()=>{_wmapCfg.services.splice(i,1);renderList();};
-    c.appendChild(del);
+    const card=document.createElement('div'); card.className='grp'; listHost.appendChild(card);
+    const typeOpts=Object.keys(_MAP_SVC).map(k=>`<option value="${k}"${k===svc.type?' selected':''}>${esc(_MAP_SVC[k].label)}</option>`).join('');
+    card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Service</span><div class="sel-wrap"><select class="row-sel" aria-label="Service type">${typeOpts}</select>${CHEV_SVG}</div></div>`);
+    card.querySelector('select').onchange=function(){ svc.type=this.value; svc.color=(_MAP_SVC[this.value]||{}).color||svc.color; renderList(); };
 
-    const typeWrap=document.createElement('div');typeWrap.className='fr';typeWrap.style.marginRight='36px';
-    _customDrop(typeWrap,{idBase:'map-svc-type-'+svc.id,label:'Service',value:svc.type,
-      items:Object.keys(_MAP_SVC).map(k=>({value:k,label:_MAP_SVC[k].label})),
-      onChange:v=>{svc.type=v; svc.color=(_MAP_SVC[v]||{}).color||svc.color; renderList();}});
-    c.appendChild(typeWrap);
-
-    const nm=document.createElement('div');nm.className='fr';
-    nm.innerHTML='<label>Display name</label><input class="fc" type="text" placeholder="'+esc(meta.label)+'" value="'+esc(svc.name||'')+'">';
-    nm.querySelector('input').oninput=e=>{svc.name=e.target.value;};
-    c.appendChild(nm);
+    const nid=`map-name-${svc.id}`;
+    card.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${nid}"><span class="rl">Display Name</span><span class="rv${svc.name?'':' is-ph'}">${svc.name?esc(svc.name):esc(meta.label||'Name')}</span><input id="${nid}-i" type="text" value="${esc(svc.name||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${PE_SVG}</button></div>`);
 
     (meta.fields||[]).forEach(fld=>{
-      const fr=document.createElement('div');fr.className='fr';
       const saved=fld.secret&&svc[fld.key+'Set'];
-      const ph=saved?'\u2022\u2022\u2022\u2022\u2022\u2022 saved':fld.ph;
-      const hint=saved?'Leave blank to keep the saved value.':(fld.key==='url'?'Reachable from the server, e.g. container:port.':'');
-      fr.innerHTML='<label>'+esc(fld.label)+'</label><input class="fc" type="text" placeholder="'+esc(ph)+'" value="'+esc(svc[fld.key]||'')+'">'+(hint?'<div class="hint">'+esc(hint)+'</div>':'');
-      fr.querySelector('input').oninput=e=>{svc[fld.key]=e.target.value.trim();};
-      c.appendChild(fr);
+      if(fld.secret){
+        card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">${esc(fld.label)}</span><input class="icon-srch" type="password" autocomplete="new-password" placeholder="${saved?'Saved, leave blank to keep':esc(fld.ph||'')}" data-k="${esc(fld.key)}"></div>`);
+      } else {
+        const rid=`mapf-${svc.id}-${fld.key}`;
+        card.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${rid}"><span class="rl">${esc(fld.label)}</span><span class="rv${svc[fld.key]?'':' is-ph'}">${svc[fld.key]?esc(svc[fld.key]):esc(fld.ph||'')}</span><input id="${rid}-i" type="text" value="${esc(svc[fld.key]||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit ${esc(fld.label)}">${PE_SVG}</button></div>`);
+      }
     });
 
-    const ad=document.createElement('div');ad.className='fr';
-    ad.innerHTML='<label>Admin UI URL <span class="opt-span">(optional)</span></label><input class="fc" type="url" placeholder="'+esc(meta.adminPh)+'" value="'+esc(svc.adminUrl||'')+'"><div class="hint">Opens when you click this service in the legend.</div>';
-    ad.querySelector('input').oninput=e=>{svc.adminUrl=e.target.value.trim();};
-    c.appendChild(ad);
+    const aid=`map-admin-${svc.id}`;
+    card.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${aid}"><span class="rl">Admin UI URL <span class="opt-span">(optional)</span></span><span class="rv${svc.adminUrl?'':' is-ph'}">${svc.adminUrl?esc(svc.adminUrl):esc(meta.adminPh||'https://...')}</span><input id="${aid}-i" type="text" value="${esc(svc.adminUrl||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit admin URL">${PE_SVG}</button></div>`);
 
-    c.appendChild(_mapSvcColorRow(svc));
-    return c;
+    if(!svc.color)svc.color=(_MAP_SVC[svc.type]||{}).color||'#30d158';
+    renderColorControl(card,{value:svc.color,idPrefix:`mapcol-${svc.id}`,onChange(v){svc.color=v;}});
+
+    /* wire inline-edit rows now that the card is in the document */
+    initInlineEdit(nid,`${nid}-i`,{placeholder:meta.label||'Name',onCommit(v){svc.name=v;renderList();}});
+    initInlineEdit(aid,`${aid}-i`,{placeholder:meta.adminPh||'https://...',onCommit(v){svc.adminUrl=v;}});
+    (meta.fields||[]).forEach(fld=>{
+      if(fld.secret){ const inp=card.querySelector(`input[data-k="${fld.key}"]`); if(inp)inp.oninput=e=>{svc[fld.key]=e.target.value;}; }
+      else initInlineEdit(`mapf-${svc.id}-${fld.key}`,`mapf-${svc.id}-${fld.key}-i`,{placeholder:fld.ph||'',onCommit(v){svc[fld.key]=v;}});
+    });
   }
 
   function renderList(){
     _wmapCfg.services.sort((a,b)=>String(a.name||'').toLowerCase().localeCompare(String(b.name||'').toLowerCase()));
-    list.innerHTML='';
+    listHost.innerHTML='';
     if(!_wmapCfg.services.length){
-      const empty=document.createElement('div');empty.className='hint';empty.style.cssText='padding:10px 0 14px;opacity:.7;';
-      empty.textContent='No services yet. Add one below.';
-      list.appendChild(empty);
+      const empty=document.createElement('p'); empty.className='grp-tip'; empty.textContent='No services yet. Add one below.'; listHost.appendChild(empty);
     }
-    _wmapCfg.services.forEach((svc,i)=>list.appendChild(card(svc,i)));
+    _wmapCfg.services.forEach((svc,i)=>buildCard(svc,i));
   }
   renderList();
 
-  const add=document.createElement('button');add.type='button';
-  add.style.cssText='width:100%;border:1px dashed var(--bd);background:none;color:var(--ac2);border-radius:var(--rs);padding:11px;min-height:44px;font-weight:600;font-size:14px;cursor:pointer;';
-  add.textContent='+ Add service';
-  add.onclick=()=>{_wmapCfg.services.push({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'#30D158',token:'',enabled:true});renderList();};
-  body.appendChild(add);
+  const addCard=document.createElement('div'); addCard.className='grp'; body.appendChild(addCard);
+  const add=document.createElement('button'); add.type='button'; add.className='wcf-add-row';
+  add.innerHTML='<span class="rl" style="color:var(--ac2)">+ Add Service</span>';
+  add.onclick=()=>{ _wmapCfg.services.push({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'#30d158',token:'',enabled:true}); renderList(); };
+  addCard.appendChild(add);
 
-  const div1=document.createElement('div');div1.className='div';div1.style.margin='14px 0';body.appendChild(div1);
-
-  const lRow=document.createElement('div');lRow.className='trow';
-  lRow.innerHTML='<div><div class="tlbl">Show legend</div><div class="tdsc">Service key along the bottom of the map</div></div>'+
-    '<label class="tog"><input type="checkbox" '+((_wmapCfg.showLegend!==false)?'checked':'')+'><div class="tr"></div></label>';
-  lRow.querySelector('input').onchange=e=>{_wmapCfg.showLegend=e.target.checked;};
-  body.appendChild(lRow);
+  const legCard=document.createElement('div'); legCard.className='grp'; body.appendChild(legCard);
+  legCard.innerHTML=`<div class="row"><span class="rl">Show Legend</span><label class="tog"><input type="checkbox" id="map-legend" ${_wmapCfg.showLegend!==false?'checked':''}><div class="tr"></div></label></div>`;
+  legCard.querySelector('#map-legend').onchange=e=>{ _wmapCfg.showLegend=e.target.checked; };
+  const legTip=document.createElement('p'); legTip.className='grp-tip'; legTip.textContent='Service key along the bottom of the map.'; body.appendChild(legTip);
 }
 
 function _renderCustomConfig(body){
-  const fr=document.createElement('div');fr.className='fr';fr.style.marginBottom='0';
-  const lbl=document.createElement('label');
-  lbl.innerHTML='Iframe URL <span class="req">*</span>';
-  const inp=document.createElement('input');
-  inp.className='fc';inp.id='f-url';inp.type='url';
-  inp.placeholder='https://app.example.com/widget.html';
-  inp.value=esc(_customUrl||'');
-  inp.oninput=e=>{ _customUrl=e.target.value; };
-  const hint=document.createElement('div');hint.className='hint';
-  hint.textContent='The URL will be embedded as an iframe in the dashboard.';
-  fr.append(lbl,inp,hint);
-  body.appendChild(fr);
+  const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
+  card.innerHTML=`<div class="row ie-row" id="cust-url-row"><span class="rl">Iframe URL <span class="req">*</span></span><span class="rv${_customUrl?'':' is-ph'}">${_customUrl?esc(_customUrl):'https://app.example.com/widget.html'}</span><input id="f-url" type="url" value="${esc(_customUrl||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit iframe URL">${PE_SVG}</button></div>`;
+  const tip=document.createElement('p'); tip.className='grp-tip'; tip.textContent='The URL will be embedded as an iframe in the dashboard.'; body.appendChild(tip);
+  initInlineEdit('cust-url-row','f-url',{placeholder:'https://app.example.com/widget.html',onCommit(v){_customUrl=v;}});
 
-  /* ── Advanced (iframe) settings — collapsed by default to keep the form clean ── */
   const o=_iframeOpts||{};
-  const adv=document.createElement('div');adv.className='adv-wrap';
-  const toggle=document.createElement('button');
-  toggle.type='button';toggle.className='adv-toggle';
-  toggle.setAttribute('aria-expanded','false');
-  toggle.innerHTML='<span>Advanced</span><span class="adv-chev">▾</span>';
-  const panel=document.createElement('div');panel.className='adv-panel d-none';
-  panel.innerHTML=`
-    <div class="fr">
-      <label for="if-referrer">Referrer policy</label>
-      <select class="fc" id="if-referrer">
-        ${['','no-referrer','no-referrer-when-downgrade','origin','origin-when-cross-origin','same-origin','strict-origin','strict-origin-when-cross-origin','unsafe-url']
-          .map(v=>`<option value="${v}" ${(o.referrerPolicy||'')===v?'selected':''}>${v||'Default'}</option>`).join('')}
-      </select>
-      <div class="hint">Leave Default unless the page needs it.</div>
-    </div>
-    <div class="fr">
-      <label for="if-allow">Allow (feature policy)</label>
-      <input class="fc" id="if-allow" type="text" placeholder="autoplay; fullscreen; gamepad" value="${esc(o.allow||'')}">
-      <div class="hint">Browser features the embedded page may use, separated by semicolons.</div>
-    </div>
-    <div class="trow trow-noborder">
-      <div><div class="tlbl">Allow fullscreen</div><div class="tdsc">Let the embedded page enter fullscreen</div></div>
-      <label class="tog"><input type="checkbox" id="if-fs" ${o.allowFullscreen!==false?'checked':''}><div class="tr"></div></label>
-    </div>
-    <div class="fr">
-      <label for="if-refresh">Refresh interval <span style="opacity:.45;font-weight:400">(ms, optional)</span></label>
-      <input class="fc" id="if-refresh" type="number" min="250" step="250" placeholder="e.g. 2000" value="${o.refreshInterval||''}">
-      <div class="hint">Leave empty to never auto-reload.</div>
-    </div>`;
-  toggle.onclick=()=>{const open=panel.classList.toggle('d-none')===false;toggle.setAttribute('aria-expanded',String(open));toggle.classList.toggle('open',open);};
-  /* Live-bind into _iframeOpts */
-  panel.addEventListener('input',()=>{
-    _iframeOpts.referrerPolicy=panel.querySelector('#if-referrer').value||undefined;
-    _iframeOpts.allow=panel.querySelector('#if-allow').value.trim()||undefined;
-    _iframeOpts.allowFullscreen=panel.querySelector('#if-fs').checked;
-    const ri=parseInt(panel.querySelector('#if-refresh').value,10);
-    _iframeOpts.refreshInterval=(ri&&ri>=250)?ri:undefined;
-  });
-  adv.append(toggle,panel);body.appendChild(adv);
+  const advHdr=document.createElement('p'); advHdr.className='grp-hdr'; advHdr.textContent='Advanced'; body.appendChild(advHdr);
+  const adv=document.createElement('div'); adv.className='grp'; body.appendChild(adv);
+  const refOpts=['','no-referrer','no-referrer-when-downgrade','origin','origin-when-cross-origin','same-origin','strict-origin','strict-origin-when-cross-origin','unsafe-url'].map(v=>`<option value="${v}" ${(o.referrerPolicy||'')===v?'selected':''}>${v||'Default'}</option>`).join('');
+  adv.innerHTML=`
+    <div class="row"><span class="rl">Referrer Policy</span><div class="sel-wrap"><select class="row-sel" id="if-referrer" aria-label="Referrer policy">${refOpts}</select>${CHEV_SVG}</div></div>
+    <div class="row ie-row" id="if-allow-row"><span class="rl">Allow (feature policy)</span><span class="rv${o.allow?'':' is-ph'}">${o.allow?esc(o.allow):'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${esc(o.allow||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit allow">${PE_SVG}</button></div>
+    <div class="row"><span class="rl">Allow Fullscreen</span><label class="tog"><input type="checkbox" id="if-fs" ${o.allowFullscreen!==false?'checked':''}><div class="tr"></div></label></div>
+    <div class="row ie-row" id="if-refresh-row"><span class="rl">Refresh Interval <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval?'':' is-ph'}">${o.refreshInterval?o.refreshInterval:'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval||''}" style="display:none"><button class="pe" type="button" aria-label="Edit refresh interval">${PE_SVG}</button></div>`;
+  const sync=()=>{ _iframeOpts.referrerPolicy=adv.querySelector('#if-referrer').value||undefined; _iframeOpts.allow=adv.querySelector('#if-allow').value.trim()||undefined; _iframeOpts.allowFullscreen=adv.querySelector('#if-fs').checked; const ri=parseInt(adv.querySelector('#if-refresh').value,10); _iframeOpts.refreshInterval=(ri&&ri>=250)?ri:undefined; };
+  adv.querySelector('#if-referrer').onchange=sync; adv.querySelector('#if-fs').onchange=sync;
+  initInlineEdit('if-allow-row','if-allow',{placeholder:'autoplay; fullscreen',onCommit(){sync();}});
+  initInlineEdit('if-refresh-row','if-refresh',{placeholder:'e.g. 2000',onCommit(){sync();}});
 }
 
 function _normBackupSlots(saved, size) {
@@ -1528,18 +1225,14 @@ function _renderBackupConfig(body){
   const slotCount = _wsize === 'small' ? 1 : 3;
   const SLOT_NAMES = ['First','Second','Third'];
   const slots = _wbackupCfg.slots;
-  const PLABEL = p => p==='duplicati' ? 'Duplicati' : 'Kopia';
-  const firstProvIdx = prov => slots.findIndex(s => s.provider===prov);
-  /* The provider's default is active only if its first instance opts to be the default. */
-  const defaultActive = prov => { const f=firstProvIdx(prov); return f>=0 && slots[f].useDefault!==false; };
-  /* A later instance uses the default iff the default is active AND it hasn't opted out. */
+  const PLABEL = pr => pr==='duplicati' ? 'Duplicati' : 'Kopia';
+  const firstProvIdx = pr => slots.findIndex(sl => sl.provider===pr);
+  const defaultActive = pr => { const f=firstProvIdx(pr); return f>=0 && slots[f].useDefault!==false; };
   const usesDefault = si => {
     const slot=slots[si]; if(!slot.provider) return false;
     const f=firstProvIdx(slot.provider);
     return si!==f && defaultActive(slot.provider) && slot.useDefault!==false;
   };
-  /* Capture current DOM values into slot state (so a re-render from a toggle
-     doesn't discard what the user just typed). */
   function flushDom(){
     const g = id => document.getElementById(id);
     slots.forEach((slot,si)=>{
@@ -1550,7 +1243,7 @@ function _renderBackupConfig(body){
       if(slot.provider==='duplicati'){
         const u=g(`dup-url-${si}`);  if(u) slot.dupUrl=u.value.trim()||slot.dupUrl;
         const h=g(`dup-href-${si}`); if(h) slot.dupHref=h.value.trim();
-        const p=g(`dup-poll-${si}`); if(p) slot.dupPollSec=Math.max(10,parseInt(p.value||'60',10));
+        const pl=g(`dup-poll-${si}`); if(pl) slot.dupPollSec=Math.max(10,parseInt(pl.value||'60',10));
         const pw=g(`dup-pass-${si}`); if(pw&&pw.value.trim()) slot.dupPass=pw.value.trim();
       } else if(slot.provider==='kopia'){
         const u=g(`kopia-url-${si}`);  if(u) slot.kopiaUrl=u.value.trim()||slot.kopiaUrl;
@@ -1560,261 +1253,159 @@ function _renderBackupConfig(body){
       }
     });
   }
-  /* Scoped re-render — body IS the #bak-cfg-body sub-container, never the whole form. */
-  const rerender = () => { flushDom(); body.innerHTML=''; _renderBackupConfig(body); };
+  const rerender = () => { flushDom(); body.innerHTML=''; render(); };
 
-  function addNameField(div, si){
+  function ieRow(host,{id,label,req,opt,value,ph,type}){
+    const rid=id+'-row';
+    const tag=(req?' <span class="req">*</span>':'')+(opt?' <span class="opt-span">(optional)</span>':'');
+    host.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${rid}"><span class="rl">${esc(label)}${tag}</span><span class="rv${value?'':' is-ph'}">${value?esc(value):esc(ph||'')}</span><input id="${id}" type="${type||'text'}" value="${esc(value==null?'':value)}" style="display:none"><button class="pe" type="button" aria-label="Edit ${esc(label)}">${PE_SVG}</button></div>`);
+    return rid;
+  }
+  function addNameField(host, si){
     const slot=slots[si];
-    const w=document.createElement('div'); w.className='fr';
-    w.innerHTML=`<label for="bak-name-${si}">Display name <span class="opt-span">(optional)</span></label>
-      <input class="fc" id="bak-name-${si}" type="text" placeholder="Shown on the card"
-        value="${esc(slot.customName||'')}">
-      <div class="hint">Overrides the backup name on the widget.</div>`;
-    div.appendChild(w);
+    const rid=ieRow(host,{id:`bak-name-${si}`,label:'Display Name',opt:true,value:slot.customName||'',ph:'Shown on the card'});
+    initInlineEdit(rid,`bak-name-${si}`,{placeholder:'Shown on the card',onCommit(v){slot.customName=v;}});
+  }
+  function addDefaultToggle(host, si){
+    const slot=slots[si]; const prov=slot.provider; const isFirst=si===firstProvIdx(prov);
+    const label=isFirst?`Set as default ${PLABEL(prov)} instance`:`Use default ${PLABEL(prov)} settings`;
+    const desc =isFirst?`Other ${PLABEL(prov)} instances can reuse this connection.`:`Reuse the default ${PLABEL(prov)} container. Turn off to set its own.`;
+    host.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">${label}</span><label class="tog"><input type="checkbox" id="bak-def-${si}" ${slot.useDefault!==false?'checked':''} aria-label="${label}"><div class="tr"></div></label></div>`);
+    const tip=document.createElement('p'); tip.className='grp-tip in-card'; tip.textContent=desc; host.appendChild(tip);
+    host.querySelector(`#bak-def-${si}`).onchange=e=>{ slot.useDefault=e.target.checked; rerender(); };
+  }
+  function fetchRow(host,{id,label}){
+    const fr=document.createElement('div'); fr.className='row'; fr.innerHTML='<span class="rl"></span>';
+    const btn=document.createElement('button'); btn.type='button'; btn.className='row-btn'; btn.id=id; btn.textContent=label;
+    fr.appendChild(btn); host.appendChild(fr); return btn;
   }
 
-  /* iOS-style toggle row controlling whether this instance is / uses the default */
-  function addDefaultToggle(div, si){
-    const slot=slots[si];
-    const prov=slot.provider;
-    const isFirst = si===firstProvIdx(prov);
-    const label = isFirst ? `Set as default ${PLABEL(prov)} instance`
-                          : `Use default ${PLABEL(prov)} settings`;
-    const desc  = isFirst ? `Other ${PLABEL(prov)} instances can reuse this connection.`
-                          : `Reuse the default ${PLABEL(prov)} container. Turn off to set its own.`;
-    const row=document.createElement('div'); row.className='trow';
-    row.innerHTML=`<div><div class="tlbl">${label}</div><div class="tdsc">${desc}</div></div>
-      <label class="tog"><input type="checkbox" id="bak-def-${si}" ${slot.useDefault!==false?'checked':''}
-        aria-label="${label}"><div class="tr"></div></label>`;
-    row.querySelector('input').onchange=e=>{ slot.useDefault=e.target.checked; rerender(); };
-    div.appendChild(row);
-  }
-
-  function buildSlotSection(si) {
-    const slot = slots[si];
-    const wrap = document.createElement('div'); wrap.className='bak-slot';
-
-    const hd = document.createElement('div'); hd.className='stl';
-    hd.textContent = slotCount>1 ? SLOT_NAMES[si] + ' Instance' : 'Instance';
-    wrap.appendChild(hd);
-
-    const pillDiv = document.createElement('div'); pillDiv.className='fr';
-    const row = document.createElement('div'); row.className='wtype-row';
-    row.setAttribute('role','group'); row.setAttribute('aria-label','Backup provider');
-    const dupBtn = document.createElement('button'); dupBtn.type='button';
-    dupBtn.className='wchip'+(slot.provider==='duplicati'?' on':'');
-    dupBtn.setAttribute('aria-pressed',String(slot.provider==='duplicati'));
-    dupBtn.textContent='Duplicati';
-    const kopiaBtn = document.createElement('button'); kopiaBtn.type='button';
-    kopiaBtn.className='wchip'+(slot.provider==='kopia'?' on':'');
-    kopiaBtn.setAttribute('aria-pressed',String(slot.provider==='kopia'));
-    kopiaBtn.textContent='Kopia';
-    [dupBtn, kopiaBtn].forEach(btn => {
-      btn.onclick = () => {
-        const val = btn===dupBtn ? 'duplicati' : 'kopia';
-        slot.provider = slot.provider===val ? null : val;
-        slot.jobId = null;
-        if(slot.provider) slot.useDefault = true;   /* default on when (re)selecting */
-        rerender();
-      };
-      row.appendChild(btn);
-    });
-    pillDiv.appendChild(row); wrap.appendChild(pillDiv);
-
-    if (slot.provider) {
-      /* Show the default toggle only when sharing is meaningful (more than one slot) */
-      if (slotCount>1) addDefaultToggle(wrap, si);
-      wrap.appendChild(buildConnSection(si));
+  function renderJobDrop(si, container){
+    const slot=slots[si]; container.innerHTML='';
+    const row=document.createElement('div'); row.className='row';
+    if(!slot.dupJobList.length){
+      const saved=slot.jobId?(slot.customName||slot.jobId):'';
+      row.innerHTML=`<span class="rl">Job</span><div class="sel-wrap"><select class="row-sel" id="dup-job-${si}" aria-label="Job" disabled><option>${saved?esc(saved)+', fetch to change':'Fetch jobs first'}</option></select>${CHEV_SVG}</div>`;
+    } else {
+      const opts=['<option value="">None</option>'].concat(slot.dupJobList.map(j=>`<option value="${esc(String(j.id))}"${String(j.id)===String(slot.jobId||'')?' selected':''}>${esc(j.name)}</option>`)).join('');
+      row.innerHTML=`<span class="rl">Job</span><div class="sel-wrap"><select class="row-sel" id="dup-job-${si}" aria-label="Job">${opts}</select>${CHEV_SVG}</div>`;
     }
-    return wrap;
+    container.appendChild(row);
+    const sel=row.querySelector('select'); if(!sel.disabled) sel.onchange=()=>{ slot.jobId=sel.value||null; };
+  }
+  function renderSrcDrop(si, container){
+    const slot=slots[si]; container.innerHTML='';
+    const row=document.createElement('div'); row.className='row';
+    if(!slot.kopiaSrcList.length){
+      const saved=slot.jobId?(slot.customName||slot.jobId):'';
+      row.innerHTML=`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="kopia-src-${si}" aria-label="Source" disabled><option>${saved?esc(saved)+', fetch to change':'Fetch sources first'}</option></select>${CHEV_SVG}</div>`;
+    } else {
+      const opts=['<option value="">None</option>'].concat(slot.kopiaSrcList.map(src=>`<option value="${esc(src.id)}"${String(src.id)===String(slot.jobId||'')?' selected':''}>${esc(src.name)}</option>`)).join('');
+      row.innerHTML=`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="kopia-src-${si}" aria-label="Source">${opts}</select>${CHEV_SVG}</div>`;
+    }
+    container.appendChild(row);
+    const sel=row.querySelector('select'); if(!sel.disabled) sel.onchange=()=>{ slot.jobId=sel.value||null; };
   }
 
-  function buildConnSection(si) {
-    const slot = slots[si];
-    const prov = slot.provider;
-    const div  = document.createElement('div'); div.className='bak-slot-conn';
-
-    /* Secondary instance reusing the default container: just picker + name */
-    if (usesDefault(si)) {
+  function buildConnSection(card, si){
+    const slot=slots[si]; const prov=slot.provider;
+    if(usesDefault(si)){
       const fIdx=firstProvIdx(prov);
-      const note=document.createElement('div'); note.className='hint';
-      note.style.cssText='margin-bottom:8px;font-style:italic;color:var(--dm)';
-      note.textContent=`Uses the ${PLABEL(prov)} container from ${SLOT_NAMES[fIdx]} Instance.`;
-      div.appendChild(note);
-      const wrap=document.createElement('div');wrap.className='fr';
-      wrap.id=`${prov==='duplicati'?'dup-job':'kopia-src'}-wrap-${si}`;
-      div.appendChild(wrap);
+      const note=document.createElement('p'); note.className='grp-tip in-card'; note.textContent=`Uses the ${PLABEL(prov)} container from ${SLOT_NAMES[fIdx]} Instance.`; card.appendChild(note);
+      const wrap=document.createElement('div'); wrap.id=`${prov==='duplicati'?'dup-job':'kopia-src'}-wrap-${si}`; card.appendChild(wrap);
       prov==='duplicati' ? renderJobDrop(si,wrap) : renderSrcDrop(si,wrap);
-      addNameField(div, si);
-      return div;
+      addNameField(card, si);
+      return;
     }
-
-    /* whether this slot's connection should propagate to default-using peers */
     const shared = slotCount>1 && si===firstProvIdx(prov) && defaultActive(prov);
 
-    if (prov === 'duplicati') {
-      const urlWrap=document.createElement('div');urlWrap.className='fr';
-      urlWrap.innerHTML=`<label for="dup-url-${si}">URL <span class="req">*</span></label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input class="fc" id="dup-url-${si}" type="text" placeholder="http://duplicati:8200"
-            value="${esc(slot.dupUrl)}" style="flex:1;min-width:0">
-          <button type="button" class="btn bg sm" id="dup-fetch-${si}" style="flex-shrink:0;white-space:nowrap">Fetch Jobs</button>
-        </div>`;
-      div.appendChild(urlWrap);
-
-      const passWrap=document.createElement('div');passWrap.className='fr';
-      passWrap.innerHTML=`<label for="dup-pass-${si}">Password <span class="opt-span">(${(slot.dupPassSet||slot.dupPass)?'saved':'optional'})</span></label>
-        <input class="fc" id="dup-pass-${si}" type="password" autocomplete="new-password"
-          placeholder="${(slot.dupPassSet||slot.dupPass)?'\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf  (saved, leave blank to keep)':'Enter if required'}">`;
-      div.appendChild(passWrap);
-
-      const hrefWrap=document.createElement('div');hrefWrap.className='fr';
-      hrefWrap.innerHTML=`<label for="dup-href-${si}">Click URL <span class="opt-span">(optional)</span></label>
-        <input class="fc" id="dup-href-${si}" type="text" placeholder="http://duplicati:8200"
-          value="${esc(slot.dupHref)}">`;
-      div.appendChild(hrefWrap);
-
-      const pollWrap=document.createElement('div');pollWrap.className='fr';
-      pollWrap.innerHTML=`<label for="dup-poll-${si}">Poll interval <span class="opt-span">(sec)</span></label>
-        <input class="fc" id="dup-poll-${si}" type="number" min="10" max="3600"
-          value="${esc(slot.dupPollSec)}" style="width:90px">`;
-      div.appendChild(pollWrap);
-
-      const jobWrap=document.createElement('div');jobWrap.className='fr';jobWrap.id=`dup-job-wrap-${si}`;
-      div.appendChild(jobWrap);
-      renderJobDrop(si, jobWrap);
-      addNameField(div, si);
-
-      div.querySelector(`#dup-fetch-${si}`).onclick = async function(){
+    if(prov==='duplicati'){
+      const urlRid=ieRow(card,{id:`dup-url-${si}`,label:'URL',req:true,value:slot.dupUrl,ph:'http://duplicati:8200'});
+      const fbtn=fetchRow(card,{id:`dup-fetch-${si}`,label:'Fetch Jobs'});
+      card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Password <span class="opt-span">(${(slot.dupPassSet||slot.dupPass)?'saved':'optional'})</span></span><input id="dup-pass-${si}" class="icon-srch" type="password" autocomplete="new-password" placeholder="${(slot.dupPassSet||slot.dupPass)?'Saved, leave blank to keep':'Enter if required'}"></div>`);
+      const hrefRid=ieRow(card,{id:`dup-href-${si}`,label:'Click URL',opt:true,value:slot.dupHref,ph:'http://duplicati:8200'});
+      const pollRid=ieRow(card,{id:`dup-poll-${si}`,label:'Poll Interval (sec)',value:slot.dupPollSec,ph:'60',type:'number'});
+      const jobWrap=document.createElement('div'); jobWrap.id=`dup-job-wrap-${si}`; card.appendChild(jobWrap); renderJobDrop(si, jobWrap);
+      addNameField(card, si);
+      initInlineEdit(urlRid,`dup-url-${si}`,{placeholder:'http://duplicati:8200',onCommit(v){slot.dupUrl=v;}});
+      initInlineEdit(hrefRid,`dup-href-${si}`,{placeholder:'http://duplicati:8200',onCommit(v){slot.dupHref=v;}});
+      initInlineEdit(pollRid,`dup-poll-${si}`,{placeholder:'60',onCommit(v){slot.dupPollSec=Math.max(10,parseInt(v||'60',10));}});
+      fbtn.onclick = async function(){
         const btn=this;
-        const url=(div.querySelector(`#dup-url-${si}`)?.value||'').trim();
-        const pass=(div.querySelector(`#dup-pass-${si}`)?.value||'').trim();
+        const url=(document.getElementById(`dup-url-${si}`)?.value||'').trim();
+        const pass=(document.getElementById(`dup-pass-${si}`)?.value||'').trim();
         if(!url){toast('Enter a Duplicati URL first','err');return;}
-        btn.disabled=true; btn.textContent='Fetching…';
-        try {
+        btn.disabled=true; btn.textContent='Fetching...';
+        try{
           slot.dupUrl=url;
-          const b={url};
-          if(pass) b.password=pass;
-          else if(slot.dupPassSet) b.useStoredPass=true;
+          const b={url}; if(pass) b.password=pass; else if(slot.dupPassSet) b.useStoredPass=true;
           const wid=(eid!==null&&items[eid]?.id)?items[eid].id:'__preview__';
-          const r=await fetch(`/api/duplicati-jobs/${encodeURIComponent(wid)}`,{
-            method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b),
-          });
+          const r=await fetch(`/api/duplicati-jobs/${encodeURIComponent(wid)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
           if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.status);}
-          const data = await r.json();
-          slot.dupJobList = Array.isArray(data) ? data : (Array.isArray(data?.jobs) ? data.jobs : []);
-          slots.forEach((s,j)=>{
-            if(j!==si && s.provider==='duplicati' && (shared && usesDefault(j) || s.dupUrl===url)){
-              s.dupJobList=slot.dupJobList;
-              const w=document.getElementById(`dup-job-wrap-${j}`); if(w) renderJobDrop(j,w);
-            }
-          });
-          const jw = document.getElementById(`dup-job-wrap-${si}`); if(jw) renderJobDrop(si, jw);
+          const data=await r.json();
+          slot.dupJobList=Array.isArray(data)?data:(Array.isArray(data?.jobs)?data.jobs:[]);
+          slots.forEach((sl,j)=>{ if(j!==si && sl.provider==='duplicati' && (shared && usesDefault(j) || sl.dupUrl===url)){ sl.dupJobList=slot.dupJobList; const w=document.getElementById(`dup-job-wrap-${j}`); if(w) renderJobDrop(j,w); } });
+          const jw=document.getElementById(`dup-job-wrap-${si}`); if(jw) renderJobDrop(si, jw);
           toast(slot.dupJobList.length?`Loaded ${slot.dupJobList.length} job${slot.dupJobList.length>1?'s':''}`:'No backup jobs found', slot.dupJobList.length?'ok':'err');
-        } catch(e){toast('Fetch failed: '+e.message,'err');}
+        }catch(e){toast('Fetch failed: '+e.message,'err');}
         finally{btn.disabled=false; btn.textContent='Fetch Jobs';}
       };
-
     } else {
-      const urlWrap=document.createElement('div');urlWrap.className='fr';
-      urlWrap.innerHTML=`<label for="kopia-url-${si}">URL <span class="req">*</span></label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input class="fc" id="kopia-url-${si}" type="text" placeholder="http://kopia:51515"
-            value="${esc(slot.kopiaUrl)}" style="flex:1;min-width:0">
-          <button type="button" class="btn bg sm" id="kopia-fetch-${si}" style="flex-shrink:0;white-space:nowrap">Fetch Sources</button>
-        </div>`;
-      div.appendChild(urlWrap);
-
-      const userWrap=document.createElement('div');userWrap.className='fr';
-      userWrap.innerHTML=`<label for="kopia-user-${si}">Username <span class="opt-span">(optional)</span></label>
-        <input class="fc" id="kopia-user-${si}" type="text" placeholder="admin"
-          value="${esc(slot.kopiaUser)}">`;
-      div.appendChild(userWrap);
-
-      const passWrap=document.createElement('div');passWrap.className='fr';
-      passWrap.innerHTML=`<label for="kopia-pass-${si}">Password <span class="opt-span">(${(slot.kopiaPassSet||slot.kopiaPass)?'saved':'optional'})</span></label>
-        <input class="fc" id="kopia-pass-${si}" type="password" autocomplete="new-password"
-          placeholder="${(slot.kopiaPassSet||slot.kopiaPass)?'\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf\u25cf  (saved, leave blank to keep)':'Enter if required'}">`;
-      div.appendChild(passWrap);
-
-      const hrefWrap=document.createElement('div');hrefWrap.className='fr';
-      hrefWrap.innerHTML=`<label for="kopia-href-${si}">Click URL <span class="opt-span">(optional)</span></label>
-        <input class="fc" id="kopia-href-${si}" type="text" placeholder="http://kopia:51515"
-          value="${esc(slot.kopiaHref)}">`;
-      div.appendChild(hrefWrap);
-
-      const srcWrap=document.createElement('div');srcWrap.className='fr';srcWrap.id=`kopia-src-wrap-${si}`;
-      div.appendChild(srcWrap);
-      renderSrcDrop(si, srcWrap);
-      addNameField(div, si);
-
-      div.querySelector(`#kopia-fetch-${si}`).onclick = async function(){
+      const urlRid=ieRow(card,{id:`kopia-url-${si}`,label:'URL',req:true,value:slot.kopiaUrl,ph:'http://kopia:51515'});
+      const fbtn=fetchRow(card,{id:`kopia-fetch-${si}`,label:'Fetch Sources'});
+      const userRid=ieRow(card,{id:`kopia-user-${si}`,label:'Username',opt:true,value:slot.kopiaUser,ph:'admin'});
+      card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Password <span class="opt-span">(${(slot.kopiaPassSet||slot.kopiaPass)?'saved':'optional'})</span></span><input id="kopia-pass-${si}" class="icon-srch" type="password" autocomplete="new-password" placeholder="${(slot.kopiaPassSet||slot.kopiaPass)?'Saved, leave blank to keep':'Enter if required'}"></div>`);
+      const hrefRid=ieRow(card,{id:`kopia-href-${si}`,label:'Click URL',opt:true,value:slot.kopiaHref,ph:'http://kopia:51515'});
+      const srcWrap=document.createElement('div'); srcWrap.id=`kopia-src-wrap-${si}`; card.appendChild(srcWrap); renderSrcDrop(si, srcWrap);
+      addNameField(card, si);
+      initInlineEdit(urlRid,`kopia-url-${si}`,{placeholder:'http://kopia:51515',onCommit(v){slot.kopiaUrl=v;}});
+      initInlineEdit(userRid,`kopia-user-${si}`,{placeholder:'admin',onCommit(v){slot.kopiaUser=v;}});
+      initInlineEdit(hrefRid,`kopia-href-${si}`,{placeholder:'http://kopia:51515',onCommit(v){slot.kopiaHref=v;}});
+      fbtn.onclick = async function(){
         const btn=this;
-        const url=(div.querySelector(`#kopia-url-${si}`)?.value||'').trim();
-        const user=(div.querySelector(`#kopia-user-${si}`)?.value||'').trim();
-        const pass=(div.querySelector(`#kopia-pass-${si}`)?.value||'').trim();
+        const url=(document.getElementById(`kopia-url-${si}`)?.value||'').trim();
+        const user=(document.getElementById(`kopia-user-${si}`)?.value||'').trim();
+        const pass=(document.getElementById(`kopia-pass-${si}`)?.value||'').trim();
         if(!url){toast('Enter a Kopia URL first','err');return;}
-        btn.disabled=true; btn.textContent='Fetching…';
-        try {
-          slot.kopiaUrl=url;
-          slot.kopiaUser=user||slot.kopiaUser;
-          const b={url};
-          if(user)b.username=user;
-          if(pass)b.password=pass;
-          else if(slot.kopiaPassSet)b.useStoredPass=true;
+        btn.disabled=true; btn.textContent='Fetching...';
+        try{
+          slot.kopiaUrl=url; slot.kopiaUser=user||slot.kopiaUser;
+          const b={url}; if(user)b.username=user; if(pass)b.password=pass; else if(slot.kopiaPassSet)b.useStoredPass=true;
           const wid=(eid!==null&&items[eid]?.id)?items[eid].id:'__preview__';
-          const r=await fetch(`/api/kopia-sources/${encodeURIComponent(wid)}`,{
-            method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b),
-          });
+          const r=await fetch(`/api/kopia-sources/${encodeURIComponent(wid)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
           if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.status);}
-          const srcs = await r.json();
-          slot.kopiaSrcList = Array.isArray(srcs) ? srcs : (Array.isArray(srcs?.sources) ? srcs.sources : []);
-          slots.forEach((s,j)=>{
-            if(j!==si && s.provider==='kopia' && (shared && usesDefault(j) || s.kopiaUrl===url)){
-              s.kopiaSrcList=slot.kopiaSrcList;
-              const w=document.getElementById(`kopia-src-wrap-${j}`); if(w) renderSrcDrop(j,w);
-            }
-          });
-          const sw = document.getElementById(`kopia-src-wrap-${si}`); if(sw) renderSrcDrop(si, sw);
+          const srcs=await r.json();
+          slot.kopiaSrcList=Array.isArray(srcs)?srcs:(Array.isArray(srcs?.sources)?srcs.sources:[]);
+          slots.forEach((sl,j)=>{ if(j!==si && sl.provider==='kopia' && (shared && usesDefault(j) || sl.kopiaUrl===url)){ sl.kopiaSrcList=slot.kopiaSrcList; const w=document.getElementById(`kopia-src-wrap-${j}`); if(w) renderSrcDrop(j,w); } });
+          const sw=document.getElementById(`kopia-src-wrap-${si}`); if(sw) renderSrcDrop(si, sw);
           toast(slot.kopiaSrcList.length?`Loaded ${slot.kopiaSrcList.length} source${slot.kopiaSrcList.length>1?'s':''}`:'No sources found', slot.kopiaSrcList.length?'ok':'err');
-        } catch(e){toast('Fetch failed: '+e.message,'err');}
+        }catch(e){toast('Fetch failed: '+e.message,'err');}
         finally{btn.disabled=false; btn.textContent='Fetch Sources';}
       };
     }
-    return div;
   }
 
-  function renderJobDrop(si, container) {
+  function buildSlotSection(si){
     const slot=slots[si];
-    if(!slot.dupJobList.length){
-      const saved = slot.jobId ? (slot.customName || slot.jobId) : '';
-      _customDrop(container,{idBase:`dup-job-${si}`,label:'Job',items:[],value:'',
-        placeholder: saved ? `${saved}, fetch to change` : 'Fetch jobs first', disabled:true});
-      return;
+    const hdr=document.createElement('p'); hdr.className='grp-hdr'; hdr.textContent= slotCount>1 ? SLOT_NAMES[si]+' Instance' : 'Instance'; body.appendChild(hdr);
+    const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
+    const prov=slot.provider||'';
+    card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Provider</span><div class="segr">
+      <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="" ${!prov?'checked':''}><span class="segr-dot"></span><span>None</span></label>
+      <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="duplicati" ${prov==='duplicati'?'checked':''}><span class="segr-dot"></span><span>Duplicati</span></label>
+      <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="kopia" ${prov==='kopia'?'checked':''}><span class="segr-dot"></span><span>Kopia</span></label>
+    </div></div>`);
+    card.querySelectorAll(`input[name="bak-prov-${si}"]`).forEach(r=>r.addEventListener('change',()=>{ if(!r.checked)return; slot.provider=r.value||null; slot.jobId=null; if(slot.provider)slot.useDefault=true; rerender(); }));
+    if(slot.provider){
+      if(slotCount>1) addDefaultToggle(card, si);
+      buildConnSection(card, si);
     }
-    const items=[{value:'',label:'None'}].concat(slot.dupJobList.map(j=>({value:String(j.id),label:j.name})));
-    _customDrop(container,{idBase:`dup-job-${si}`,label:'Job',items,value:slot.jobId||'',placeholder:'None',
-      onChange:v=>{ slot.jobId=v||null; }});
   }
 
-  function renderSrcDrop(si, container) {
-    const slot=slots[si];
-    if(!slot.kopiaSrcList.length){
-      const saved = slot.jobId ? (slot.customName || slot.jobId) : '';
-      _customDrop(container,{idBase:`kopia-src-${si}`,label:'Source',items:[],value:'',
-        placeholder: saved ? `${saved}, fetch to change` : 'Fetch sources first', disabled:true});
-      return;
-    }
-    const items=[{value:'',label:'None'}].concat(slot.kopiaSrcList.map(src=>({value:src.id,label:src.name})));
-    _customDrop(container,{idBase:`kopia-src-${si}`,label:'Source',items,value:slot.jobId||'',placeholder:'None',
-      onChange:v=>{ slot.jobId=v||null; }});
+  function render(){
+    for(let si=0; si<slotCount; si++) buildSlotSection(si);
   }
-
-  /* ── Render all slots ── */
-  for (let si=0; si<slotCount; si++) {
-    if (si > 0) { const d=document.createElement('div');d.className='div';body.appendChild(d); }
-    body.appendChild(buildSlotSection(si));
-  }
+  render();
 }
 
 /* Folder form — settings-row system (PSD: add_new_folder).
@@ -2641,20 +2232,12 @@ async function doSave(orig){
           label:wlabel,widgetSize:_wsize,widgetConfig:{slots:savableSlots}};
 
       }else{
-        /* stats — collect final disk field values from DOM */
-        const slots=_wslots.slice(0,3).map((s,i)=>{
-          const card=document.querySelectorAll('.slot-card')[i];
+        /* stats — slot values are kept live in _wslots by the row commit handlers */
+        const slots=_wslots.slice(0,3).map((s)=>{
           const slotColor=s.color||undefined;
-          if(s.type==='disk'){
-            const pri=card?.querySelector('.slot-disk-primary')?.value?.trim()||s.primary||'/';
-            const sec=card?.querySelector('.slot-disk-secondary')?.value?.trim()||s.secondary||'';
-            return{type:'disk',primary:pri,secondary:sec||undefined,color:slotColor};
-          }
-          if(s.type==='temp'){
-            const zone=parseInt(card?.querySelector('.slot-temp-zone')?.value||'0',10)||0;
-            return{type:'temp',thermalZone:zone,color:slotColor};
-          }
-          return{type:s.type,color:slotColor};
+          if(s.type==='disk') return {type:'disk',primary:s.primary||'/',secondary:s.secondary||undefined,color:slotColor};
+          if(s.type==='temp') return {type:'temp',thermalZone:Number.isInteger(s.thermalZone)?s.thermalZone:0,color:slotColor};
+          return {type:s.type,color:slotColor};
         });
         _wnet.url      = document.getElementById('net-url')?.value?.trim()||'';
         _wnet.provider = _wnet.provider || 'myspeed';
@@ -2887,10 +2470,17 @@ function loadSettings(c){
       wirePasswordStrength('sec-pw','sec-pw-bars','sec-pw-hint');
     }
   }
+  const secLogout=document.getElementById('sec-logout');
+  const syncLogout=()=>{ if(secLogout) secLogout.classList.toggle('d-none', !secEnEl?.checked); };
+  secLogout?.addEventListener('click',async()=>{
+    await ap('/api/auth/logout',{}).catch(()=>{});
+    location.reload();
+  });
   if(secEnEl&&secSubEl){
     secEnEl.addEventListener('change',()=>{
       if(secEnEl.checked)openSecSub();
       else secSubEl.classList.remove('open');
+      syncLogout();
     });
   }
 
@@ -2905,12 +2495,7 @@ function loadSettings(c){
     }
     const pwValEl=document.getElementById('ie-pw-v');
     if(pwValEl)pwValEl.textContent=d.passwordSet?'Configured':'Not set';
-    const secLogout=document.getElementById('sec-logout');
-    if(secLogout&&d.enabled){secLogout.classList.remove('d-none');}
-    secLogout?.addEventListener('click',async()=>{
-      await ap('/api/auth/logout',{}).catch(()=>{});
-      location.reload();
-    });
+    syncLogout();
   }).catch(()=>{
     /* Auth check failed — toggle still works, just without pre-loaded state */
   });
