@@ -321,7 +321,7 @@ export function buildMobile() {
   const maxIsz = Math.round(74*sc);
   const isz = Math.round(Math.min(cw*.90, rh*.80, maxIsz));
   const ir = Math.round(isz*.225), im = Math.round(isz*.64);
-  const dock = items().filter(i => i.type === 'app' && i.dock).slice(0,4);
+  const dock = items().filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0,4);
   /* ── Mobile layout: single-pass true 4×6 grid bin-packing ──
      Replaces the previous two-system approach (paginate() cost model +
      buildMobile row-flow with ensureSpace overflow), which disagreed and
@@ -341,7 +341,7 @@ export function buildMobile() {
     :  [4, 2]);
 
   const inFolder = new Set(items().filter(i => i.type === 'folder').flatMap(f => f.children || []).map(String));
-  const gridItems = items().filter(i => !i.dock && !inFolder.has(String(i.id)));
+  const gridItems = items().filter(i => !i.dock && !i.hidden && !inFolder.has(String(i.id)));
 
   /* First-fit, row-major packer → pages, each a list of {item,c,r,w,h}. */
   function packMobile(list) {
@@ -365,7 +365,9 @@ export function buildMobile() {
   function mIcon(item) {
     const eff = showLabel ? Math.round(isz * .82) : isz;
     const er = Math.round(eff * .225), em = Math.round(eff * .64);
-    const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
+    const a = item.system === 'settings'
+      ? mk('a', { href: '/admin/' })
+      : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
     a.className = 'dyn-mob-icon';
     a.setAttribute('aria-label', item.label || item.id);
     css(a, { '--cw': '100%', '--rh': rh2 + 'px' });
