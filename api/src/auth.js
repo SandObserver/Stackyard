@@ -106,7 +106,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [k, v] of _rateBuckets)   if (now - v.first > 3_600_000)     _rateBuckets.delete(k);
   for (const [k, v] of _loginAttempts) if (now - v.first > LOGIN_WINDOW_MS) _loginAttempts.delete(k);
-}, 600_000);
+}, 600_000).unref();
 
 function isAuthenticated(req) {
   const cfg = loadConfig();
@@ -133,7 +133,7 @@ function hasValidSession(req) {
 
 module.exports = {
   crypto, getOrCreateSecret, hashPassword, verifyPassword,
-  makeToken, parseCookies, setSessionCookie, clearSessionCookie,
+  makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie,
   checkRateLimit, recordFailedAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
   log,
 };
