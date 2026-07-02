@@ -67,9 +67,15 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     `width:${dw}px;height:${dh}px;transform-origin:top left;opacity:0;transition:opacity .12s ease;`;
   clip.appendChild(ifr); card.appendChild(clip);
 
-  /* Optional auto-refresh: reload the iframe on an interval */
+  /* Optional auto-refresh. A random initial offset (0..interval) plus per-cycle
+     jitter (±15%) staggers reloads so a dashboard full of widgets doesn't hit
+     every backing service on the same tick (thundering herd against small hosts
+     like a Pi-hole on a Raspberry Pi). */
   if (o.refreshInterval && o.refreshInterval >= 250) {
-    setInterval(() => { ifr.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now(); }, o.refreshInterval);
+    const base = o.refreshInterval;
+    const reload = () => { ifr.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now(); };
+    const jit = () => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
+    let h = setTimeout(function tick() { reload(); h = setTimeout(tick, jit()); }, Math.round(Math.random() * base));
   }
 
   /* On mobile, an iframe swallows touches so the home pager never sees a swipe that
