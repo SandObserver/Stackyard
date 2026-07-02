@@ -7,17 +7,42 @@ const ICONS_PATH  = process.env.ICONS_PATH  || '/icons';
 let _cfgCache = null, _cfgCacheAt = 0;
 const CONFIG_TTL_MS = 5000;
 
+/* Current on-disk config shape. Bump when a release changes the shape in a way
+   older configs need transforming for, and add a matching step in migrate(). */
+const SCHEMA_VERSION = 1;
+
+/* Walk an old config forward to the current shape. Idempotent: a no-op when the
+   config is already current, so it is safe to run on every read and write.
+   A config with no _schemaVersion is treated as version 1 (the baseline shape),
+   which is correct for every config predating this field. Future breaking
+   changes add ordered steps, e.g. `if (v < 2) { ...transform...; v = 2; }`. */
+function migrate(cfg) {
+  if (!cfg || typeof cfg !== 'object') return cfg;
+  let v = typeof cfg._schemaVersion === 'number' ? cfg._schemaVersion : 1;
+  /* migration steps go here, in order */
+  cfg._schemaVersion = SCHEMA_VERSION;
+  return cfg;
+}
+
 function loadConfig() {
   const now = Date.now();
   if (_cfgCache && (now - _cfgCacheAt) < CONFIG_TTL_MS) return _cfgCache;
   try {
-    _cfgCache = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-    _cfgCacheAt = now;
-    return _cfgCache;
-  } catch { return { items:[], settings:{} }; }
+    const parsed = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    const before = parsed._schemaVersion;
+    migrate(parsed);
+    _cfgCache = parsed; _cfgCacheAt = now;
+    /* Persist once if a version bump actually changed the file, so an upgraded
+       install migrates on disk even if the user never saves. Never let a failed
+       write (e.g. read-only volume) break reads — the migrated copy is already
+       cached in memory and will re-migrate next load. */
+    if (parsed._schemaVersion !== before) { try { saveConfig(parsed); } catch {} }
+    return parsed;
+  } catch { return migrate({ items:[], settings:{} }); }
 }
 
 function saveConfig(data) {
+  if (data && typeof data === 'object') data._schemaVersion = SCHEMA_VERSION;
   fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive:true });
   const tmp = CONFIG_PATH + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
@@ -38,4 +63,4 @@ function ensureSystemItems(cfg) {
   return cfg;
 }
 
-module.exports = { CONFIG_PATH, ICONS_PATH, loadConfig, saveConfig, ensureSystemItems };
+module.exports = { CONFIG_PATH, ICONS_PATH, SCHEMA_VERSION, loadConfig, saveConfig, ensureSystemItems, migrate };
