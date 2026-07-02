@@ -2,8 +2,9 @@ import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.j
 import { clr as rc, esc } from '/js/utils.js?v=40';
 import { WIDGET_TYPES } from '/js/widget-types.js?v=39';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
-import { API, toast, ag, ap, PE_SVG, initInlineEdit, _secretRow } from '/js/admin-shared.js?v=1';
+import { API, toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, _secretRow } from '/js/admin-shared.js?v=2';
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
+import { checkAuth, pwStrength, wirePasswordStrength } from '/js/admin-auth.js?v=1';
 
 /* Admin UI — Stackyard Dashboard */
 
@@ -29,71 +30,6 @@ const COLLAPSE_KEY='admin_collapsed';
 function loadCollapsed(){try{return JSON.parse(localStorage.getItem(COLLAPSE_KEY)||'{}');}catch{return{};}}
 function saveCollapsed(s){localStorage.setItem(COLLAPSE_KEY,JSON.stringify(s));}
 function initCards(){}
-
-async function checkAuth() {
-  try {
-    const d = await ag('/api/auth/check');
-    if (!d.enabled || d.authenticated) return true;
-    showLoginScreen();
-    return false;
-  } catch(e) {
-    /* 401 means auth is enabled and we're not logged in */
-    if (e.status === 401) { showLoginScreen(); return false; }
-    return true; /* any other error — let load() handle it */
-  }
-}
-
-function showLoginScreen() {
-  const s   = document.getElementById('login-screen');
-  const btn = document.getElementById('login-btn');
-  const pw  = document.getElementById('login-pw');
-  const err = document.getElementById('login-err');
-  if (s) s.style.display = 'flex';
-
-  async function doLogin() {
-    if (btn) btn.disabled = true;
-    if (err) err.style.display = 'none';
-    try {
-      await ap('/api/auth/login', { password: pw?.value||'' });
-      if (s) s.style.display = 'none';
-      load();
-    } catch(e) {
-      if (err) { err.textContent = e.message||'Incorrect password.'; err.style.display = 'block'; }
-      if (pw) { pw.value = ''; pw.focus(); }
-    } finally { if (btn) btn.disabled = false; }
-  }
-
-  if (btn) btn.onclick = doLogin;
-  if (pw) { pw.focus(); pw.onkeydown = e => { if (e.key === 'Enter') doLogin(); }; }
-}
-
-function pwStrength(pw) {
-  const dim = 'rgba(255,255,255,.1)';
-  if (!pw) return { score:0, label:'', color:dim, ok:false };
-  if (pw.length < 8) return { score:1, label:'Too short, min 8 characters', color:'#ff453a', ok:false };
-  let score = 1; /* starts at 1 once length >= 8 */
-  if (pw.length >= 12) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  score = Math.min(4, score - 1); /* 1..5 → 0..4 */
-  const labels = ['Weak','Fair','Good','Strong'];
-  const colors = ['#ff9f0a','#ffd60a','#34c759','#34c759'];
-  return { score: score + 1, label: labels[score], color: colors[score], ok: score >= 1 };
-}
-
-function wirePasswordStrength(inputId, barsId, hintId) {
-  const inp  = document.getElementById(inputId);
-  const bars = document.getElementById(barsId)?.querySelectorAll('.pwbar');
-  const hint = document.getElementById(hintId);
-  if (!inp || !bars?.length) return;
-  const dim = 'rgba(255,255,255,.1)';
-  inp.addEventListener('input', () => {
-    const { score, label, color, ok } = pwStrength(inp.value);
-    bars.forEach((b, i) => { b.style.background = inp.value && i < score ? color : dim; });
-    if (hint) { hint.textContent = inp.value ? label : ''; hint.style.color = color; }
-  });
-}
 
 async function load(){
   await loadLocalIcons();
@@ -462,7 +398,6 @@ const SIZE_ICONS={
 };
 
 /* Edit (square-pen) and select (up/down) glyphs traced from the PSD. */
-const CHEV_SVG='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
 let _evItem=null,_evIsEdit=false;
 
@@ -2491,7 +2426,7 @@ initSecToggle();
 initDockerToggle();
 initBgType();
 
-checkAuth().then(ok => {
+checkAuth(load).then(ok => {
   if (!ok) return;
   load().catch(e=>{
     toast('Could not load config. Is the API container running? ('+e.message+')','err');
