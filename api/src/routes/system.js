@@ -74,9 +74,9 @@ on('GET', '/api/scrutiny-proxy', async(req, res) => {
   if (!raw) return json(res, 400, { error:'url param required' });
   try {
     const base    = raw.includes('://') ? raw.replace(/\/$/, '') : `http://${raw.replace(/\/$/,'')}`;
-    const ssrfErr = await strictCheckSsrf(base);
-    if (ssrfErr) return json(res, 403, { error: ssrfErr });
-    const r       = await fetchJSON(base + '/api/summary', { timeout: 8000 });
+    const guard = await strictCheckSsrf(base);
+    if (guard.error) return json(res, 403, { error: guard.error });
+    const r       = await fetchJSON(base + '/api/summary', { timeout: 8000, pinIp: guard.ip });
     const summary = r.data?.data?.summary || {};
     const devices = Object.values(summary)
       .filter(e => e.device?.smart_support?.available === true && e.smart)
@@ -98,10 +98,10 @@ on('GET', '/api/truenas-proxy', async(req, res) => {
   if (!key) return json(res, 400, { error:'API key required' });
   try {
     const base    = raw.includes('://') ? raw.replace(/\/$/, '') : `http://${raw.replace(/\/$/,'')}`;
-    const ssrfErr = await strictCheckSsrf(base);
-    if (ssrfErr) return json(res, 403, { error: ssrfErr });
+    const guard = await strictCheckSsrf(base);
+    if (guard.error) return json(res, 403, { error: guard.error });
     const r = await fetchJSON(base + '/api/v2.0/pool', {
-      headers: { Authorization: 'Bearer ' + key }, timeout: 8000,
+      headers: { Authorization: 'Bearer ' + key }, timeout: 8000, pinIp: guard.ip,
     });
     if (r.status === 401 || r.status === 403) return json(res, 401, { error:'TrueNAS auth failed — check API key' });
     if (r.status >= 400) return json(res, 502, { error:'TrueNAS HTTP ' + r.status });
