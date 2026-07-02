@@ -62,38 +62,37 @@ function parseXml(xml) {
   return { [rootTag]: root };
 }
 
-async function checkSsrf(rawUrl) {
-  let u; try { u = new URL(rawUrl); } catch { return 'Invalid URL'; }
+/* Resolves the hostname once and applies the private-IP policy to that exact
+   resolution. Returns { error } when blocked, or { ip } with the validated
+   address when it should be pinned for the subsequent request (closing the
+   DNS-rebind TOCTOU gap — the IP that passed the check is the IP we connect to).
+   ip is null for dotless Docker names and host-IP matches, which are trusted and
+   connect by hostname. */
+async function guardSsrf(rawUrl) {
+  let u; try { u = new URL(rawUrl); } catch { return { error:'Invalid URL', ip:null }; }
   const h = u.hostname;
-  if (!h.includes('.')) return null; /* Docker service names — always safe */
+  if (!h.includes('.')) return { error:null, ip:null }; /* Docker service names — safe on internal networks */
   const hostIp = getHostIp();
-  if (hostIp && h === hostIp) return null;
-  if (!ALLOW_PRIVATE_IPS && (PRIVATE_IP_RE.test(h) || h === 'localhost')) return `Blocked: ${h} is a private address.`;
-  try {
-    const { address } = await dns.lookup(h);
-    if (!ALLOW_PRIVATE_IPS && PRIVATE_IP_RE.test(address)) return `Blocked: ${h} resolves to private IP ${address}.`;
-  } catch { return `Blocked: ${h} could not be resolved.`; }
-  return null;
+  if (hostIp && h === hostIp) return { error:null, ip:null };
+  if (!ALLOW_PRIVATE_IPS && (PRIVATE_IP_RE.test(h) || h === 'localhost')) return { error:`Blocked: ${h} is a private address.`, ip:null };
+  let address;
+  try { ({ address } = await dns.lookup(h)); }
+  catch { return { error:`Blocked: ${h} could not be resolved.`, ip:null }; }
+  if (!ALLOW_PRIVATE_IPS && PRIVATE_IP_RE.test(address)) return { error:`Blocked: ${h} resolves to private IP ${address}.`, ip:null };
+  return { error:null, ip:address };
 }
 
-/* Stricter variant for user-submitted URLs (admin UI ping/fetch buttons).
-   Dotless hostnames are allowed as Docker container names on internal networks. */
-async function strictCheckSsrf(rawUrl) {
-  let u; try { u = new URL(rawUrl); } catch { return 'Invalid URL'; }
-  const h = u.hostname;
-  if (!h.includes('.')) return null; /* Docker container names — safe on internal networks */
-  const hostIp = getHostIp();
-  if (hostIp && h === hostIp) return null;
-  if (!ALLOW_PRIVATE_IPS && (PRIVATE_IP_RE.test(h) || h === 'localhost')) return `Blocked: ${h} is a private address.`;
-  try {
-    const { address } = await dns.lookup(h);
-    if (!ALLOW_PRIVATE_IPS && PRIVATE_IP_RE.test(address)) return `Blocked: ${h} resolves to private IP ${address}.`;
-  } catch { return `Blocked: ${h} could not be resolved.`; }
-  return null;
-}
+/* Both variants share one implementation. Kept as separate names for call-site
+   clarity (checkSsrf: internal callers, strictCheckSsrf: user-submitted URLs). */
+const checkSsrf = guardSsrf;
+const strictCheckSsrf = guardSsrf;
 
 /* opts.skipTls — explicit per-call override (true/false).
-   If omitted, falls back to shouldSkipTls() for internal callers. */
+   If omitted, falls back to shouldSkipTls() for internal callers.
+   opts.pinIp — connect to this exact IP instead of re-resolving the hostname.
+   Used to carry the IP validated by guardSsrf through to the request, so a DNS
+   rebind between check and connect cannot redirect us to a private address. The
+   Host header and TLS servername stay set to the original hostname. */
 function fetchJSON(raw, opts = {}) {
   return new Promise((resolve, reject) => {
     raw = rewriteUrl(raw); /* remap host IP → container name if portMap is configured */
@@ -104,9 +103,12 @@ function fetchJSON(raw, opts = {}) {
     const bodyBuf = opts.body ? Buffer.from(opts.body) : null;
     const hdrs = Object.assign({}, opts.headers || {});
     if (bodyBuf) hdrs['Content-Length'] = bodyBuf.length;
+    const pin = opts.pinIp && opts.pinIp !== u.hostname ? opts.pinIp : null;
+    if (pin) hdrs['Host'] = u.host;
     const req = lib.request({
-      hostname: u.hostname, port, path: u.pathname + u.search,
+      hostname: pin || u.hostname, port, path: u.pathname + u.search,
       method: opts.method || 'GET', headers: hdrs,
+      servername: pin ? u.hostname : undefined, /* keep SNI + cert validation on the real hostname */
       timeout: opts.timeout || 8000,
       rejectUnauthorized: !skipTls,
       maxRedirects: 0, /* redirects disabled — target could resolve to private IP */
@@ -154,14 +156,18 @@ function statusDesc(code) {
 }
 
 /* skipTls — explicit per-call override (true/false).
-   If omitted, falls back to shouldSkipTls() for internal callers. */
-function pingUrl(raw, ms = 6000, skipTls) {
+   If omitted, falls back to shouldSkipTls() for internal callers.
+   pinIp — connect to this exact IP (from guardSsrf) instead of re-resolving,
+   with Host header and TLS servername kept on the original hostname. */
+function pingUrl(raw, ms = 6000, skipTls, pinIp) {
   return new Promise(resolve => {
     let u; try { u = new URL(raw); } catch { return resolve({ ok:false, status:0, error:'Invalid URL' }); }
     const lib  = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const skip = skipTls != null ? skipTls : shouldSkipTls(u.hostname, loadConfig());
-    const opts = { hostname:u.hostname, port, path:u.pathname||'/', timeout:ms, rejectUnauthorized:!skip };
+    const pin  = pinIp && pinIp !== u.hostname ? pinIp : null;
+    const opts = { hostname:pin||u.hostname, port, path:u.pathname||'/', timeout:ms, rejectUnauthorized:!skip };
+    if (pin) { opts.headers = { Host: u.host }; opts.servername = u.hostname; }
 
     function tryGet() {
       const req = lib.request({ ...opts, method:'GET' }, res => {
@@ -184,4 +190,4 @@ function pingUrl(raw, ms = 6000, skipTls) {
   });
 }
 
-module.exports = { fetchJSON, pingUrl, checkSsrf, strictCheckSsrf, rewriteUrl, getHostIp, shouldSkipTls, parsePrometheus, PRIVATE_IP_RE };
+module.exports = { fetchJSON, pingUrl, guardSsrf, checkSsrf, strictCheckSsrf, rewriteUrl, getHostIp, shouldSkipTls, parsePrometheus, PRIVATE_IP_RE };
