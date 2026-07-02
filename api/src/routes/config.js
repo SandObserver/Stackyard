@@ -1,6 +1,6 @@
 const path = require('path');
 const { on, json, readBody, checkOrigin } = require('../router');
-const { loadConfig, saveConfig, ensureSystemItems } = require('../config');
+const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');
 const { scrubConfigSecrets, preserveConfigSecrets, MAP_SVC_SECRETS } = require('../widget-secrets');
 
@@ -141,6 +141,7 @@ on('POST', '/api/config', async(req, res) => {
         }
       });
     }
+    migrate(data); /* upgrade old imported/restored configs; no-op for normal saves */
     ensureSystemItems(data);
     saveConfig(data);
     log.audit('config saved', {});
