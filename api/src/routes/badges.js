@@ -87,9 +87,9 @@ on('POST', '/api/ping', async(req, res) => {
     if (limited) return json(res, 429, { ok:false, error:limited });
     const { url, skipTls=false } = JSON.parse(await readBody(req));
     if (!url) return json(res, 400, { ok:false, error:'url required' });
-    const ssrfErr = await strictCheckSsrf(url);
-    if (ssrfErr) return json(res, 403, { ok:false, error:ssrfErr });
-    json(res, 200, await pingUrl(url, 6000, skipTls === true));
+    const guard = await strictCheckSsrf(url);
+    if (guard.error) return json(res, 403, { ok:false, error:guard.error });
+    json(res, 200, await pingUrl(url, 6000, skipTls === true, guard.ip));
   } catch(e) { json(res, 200, { ok:false, status:0, error:e.message }); }
 });
 
@@ -125,10 +125,10 @@ on('POST', '/api/badge-proxy', async(req, res) => {
     if (limited) return json(res, 429, { error:limited });
     const { url, headers={}, params={}, skipTls=false } = JSON.parse(await readBody(req));
     if (!url) return json(res, 400, { error:'url required' });
-    const ssrfErr = await strictCheckSsrf(url);
-    if (ssrfErr) return json(res, 403, { error:ssrfErr });
+    const guard = await strictCheckSsrf(url);
+    if (guard.error) return json(res, 403, { error:guard.error });
     const fullUrl = Object.keys(params).length ? url + (url.includes('?') ? '&' : '?') + new URLSearchParams(params) : url;
-    const r = await fetchJSON(fullUrl, { headers, timeout:8000, skipTls: skipTls === true });
+    const r = await fetchJSON(fullUrl, { headers, timeout:8000, skipTls: skipTls === true, pinIp: guard.ip });
     json(res, 200, { status:r.status, data:r.data, numbers:collectNumbers(r.data) });
   } catch(e) { json(res, 502, { error:e.message }); }
 });
