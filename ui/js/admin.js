@@ -1,5 +1,5 @@
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { clr as rc, esc } from '/js/utils.js?v=39';
+import { clr as rc, esc } from '/js/utils.js?v=40';
 import { WIDGET_TYPES } from '/js/widget-types.js?v=39';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 
