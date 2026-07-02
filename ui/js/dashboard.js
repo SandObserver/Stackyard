@@ -2,7 +2,7 @@
 
 import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
 import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=39';
-import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=39';
+import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=40';
 import { initSpotlight } from '/js/spotlight.js?v=36';
 import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=43';
 
@@ -460,26 +460,37 @@ async function boot() {
   window.addEventListener('resize', _rebuild, { passive: true });
   window.addEventListener('orientationchange', _rebuild, { passive: true });
 
-  let _badgeTimer, _healthTimer, _configTimer;
+  /* Jittered scheduling: a random initial offset spreads the first tick across
+     the interval so multiple open clients don't hit the API on the same wall-clock
+     tick, and per-cycle jitter (±15%) keeps them from re-synchronizing over time. */
+  let _pollTimers = [];
+  const _jit = base => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
+  const _repeat = (fn, base) => {
+    let h;
+    const tick = async () => { try { await fn(); } catch {} h = setTimeout(tick, _jit(base)); };
+    h = setTimeout(tick, Math.round(Math.random() * base));
+    _pollTimers.push(() => clearTimeout(h));
+  };
+
+  const pollConfig = async () => {
+    try {
+      const res = await fetch('/api/config', { cache:'no-store' });
+      if (!res.ok) return;
+      const c = await res.json();
+      const fp = s => JSON.stringify(s?.items?.map(i=>i.id+'|'+i.label+'|'+i.href)) + JSON.stringify(s?.settings);
+      if (fp(c) !== fp({ items, settings: S })) location.reload();
+    } catch {}
+  };
 
   const startPolling = () => {
-    _badgeTimer  = setInterval(pollBadges,  20_000);
-    _healthTimer = setInterval(pollHealth,  30_000);
-    _configTimer = setInterval(async () => {
-      try {
-        const res = await fetch('/api/config', { cache:'no-store' });
-        if (!res.ok) return;
-        const c = await res.json();
-        const fp = s => JSON.stringify(s?.items?.map(i=>i.id+'|'+i.label+'|'+i.href)) + JSON.stringify(s?.settings);
-        if (fp(c) !== fp({ items, settings: S })) location.reload();
-      } catch {}
-    }, 15_000);
+    _repeat(pollBadges, 20_000);
+    _repeat(pollHealth, 30_000);
+    _repeat(pollConfig, 15_000);
   };
 
   const stopPolling = () => {
-    clearInterval(_badgeTimer);
-    clearInterval(_healthTimer);
-    clearInterval(_configTimer);
+    _pollTimers.forEach(clear => clear());
+    _pollTimers = [];
   };
 
   document.addEventListener('visibilitychange', () => {
