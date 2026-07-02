@@ -5,6 +5,7 @@ import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 import { API, toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, _secretRow } from '/js/admin-shared.js?v=2';
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
 import { checkAuth, pwStrength, wirePasswordStrength } from '/js/admin-auth.js?v=1';
+import { state } from '/js/admin-state.js?v=1';
 
 /* Admin UI — Stackyard Dashboard */
 
@@ -21,9 +22,7 @@ _syncMobile();
 window.addEventListener('resize', _syncMobile);
 window.addEventListener('orientationchange', _syncMobile);
 
-let items=[],eid=null,saving=false,_settings={},_widgetReg={};
 const collapsedFolders=new Set(); /* tracks which folder ids are collapsed */
-let ctype='app',siurl='',scol='dark',spaths=[],fnums=[];
 let _flt={q:'',type:'all'};
 
 const COLLAPSE_KEY='admin_collapsed';
@@ -34,12 +33,12 @@ function initCards(){}
 async function load(){
   await loadLocalIcons();
   const c=await ag('/api/config');
-  items=c.items||[];
-  _settings=c.settings||{};
+  state.items=c.items||[];
+  state._settings=c.settings||{};
   /* Folder-style widgets: registry drives their auto-generated config editor. */
-  try{ const wr=await ag('/api/widgets'); _widgetReg={}; (wr.widgets||[]).forEach(w=>{ _widgetReg[w.name]=w; }); }catch{ _widgetReg={}; }
+  try{ const wr=await ag('/api/widgets'); state._widgetReg={}; (wr.widgets||[]).forEach(w=>{ state._widgetReg[w.name]=w; }); }catch{ state._widgetReg={}; }
   /* All folders start collapsed — user can expand by clicking */
-  items.filter(i=>i.type==='folder').forEach(f=>collapsedFolders.add(f.id));
+  state.items.filter(i=>i.type==='folder').forEach(f=>collapsedFolders.add(f.id));
   document.body.classList.add('authed');
   render();
   loadSettings(c);
@@ -51,7 +50,7 @@ function _sanitizeCssUrl(u){ return String(u||'').replace(/['"\\()]/g,''); }
 async function applyBg(){
   const root=document.documentElement;
   try{
-    const bg=(_settings&&_settings.background)||{};
+    const bg=(state._settings&&state._settings.background)||{};
     if(bg.type==='color'&&bg.color){
       root.style.setProperty('--bg-image','none');
       root.style.setProperty('--bg-color',String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g,''));
@@ -71,10 +70,10 @@ async function applyBg(){
   }catch{}
 }
 async function save(){
-  if(saving)return;saving=true;
-  try{const full=await ag('/api/config');full.items=items;await ap('/api/config',full);toast('Saved');}
+  if(state.saving)return;state.saving=true;
+  try{const full=await ag('/api/config');full.items=state.items;await ap('/api/config',full);toast('Saved');}
   catch(e){toast('Save failed: '+e.message,'err');}
-  saving=false;render();
+  state.saving=false;render();
 }
 
 /* resolveIconFull: admin-only async icon probe for live preview.
@@ -112,15 +111,15 @@ function trapFocus(box){
 }
 function moveRow(item,dir,{folderId=null,childIdx=null}={}){
   if(folderId!=null){
-    const f=items.find(i=>i.id===folderId);if(!f)return;
+    const f=state.items.find(i=>i.id===folderId);if(!f)return;
     const ch=f.children||[];const j=childIdx+dir;if(j<0||j>=ch.length)return;
     [ch[childIdx],ch[j]]=[ch[j],ch[childIdx]];
   }else{
-    const inF=new Set(items.filter(i=>i.type==='folder').flatMap(ff=>ff.children||[]));
-    const top=items.filter(it=>it.type==='folder'||!inF.has(it.id));
+    const inF=new Set(state.items.filter(i=>i.type==='folder').flatMap(ff=>ff.children||[]));
+    const top=state.items.filter(it=>it.type==='folder'||!inF.has(it.id));
     const p=top.indexOf(item);const nb=top[p+dir];if(!nb)return;
-    const a=items.indexOf(item),b=items.indexOf(nb);
-    [items[a],items[b]]=[items[b],items[a]];
+    const a=state.items.indexOf(item),b=state.items.indexOf(nb);
+    [state.items[a],state.items[b]]=[state.items[b],state.items[a]];
   }
   save();
 }
@@ -137,11 +136,11 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   row.draggable=!_filtering;
   let canUp=false,canDown=false;
   if(folderId!=null){
-    const cf=items.find(i=>i.id===folderId);const n=(cf?.children||[]).length;
+    const cf=state.items.find(i=>i.id===folderId);const n=(cf?.children||[]).length;
     canUp=childIdx>0;canDown=childIdx<n-1;
   }else{
-    const inF=new Set(items.filter(i=>i.type==='folder').flatMap(ff=>ff.children||[]));
-    const top=items.filter(it=>it.type==='folder'||!inF.has(it.id));
+    const inF=new Set(state.items.filter(i=>i.type==='folder').flatMap(ff=>ff.children||[]));
+    const top=state.items.filter(it=>it.type==='folder'||!inF.has(it.id));
     const p=top.indexOf(item);canUp=p>0;canDown=p<top.length-1;
   }
   /* Drag handle */
@@ -163,7 +162,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const nm=document.createElement('div');nm.className='rnm';
   if(item.type==='folder'){
     const collapsed=collapsedFolders.has(item.id);
-    nm.style.cssText='display:flex;align-items:center;gap:6px;cursor:pointer;';
+    nm.style.cssText='display:flex;align-state.items:center;gap:6px;cursor:pointer;';
     nm.setAttribute('role','button');nm.setAttribute('tabindex','0');
     nm.setAttribute('aria-expanded',String(!collapsed));
     nm.setAttribute('aria-label',(collapsed?'Expand':'Collapse')+' folder '+item.label);
@@ -265,11 +264,11 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     let srcItem,srcFolder=null,srcFolderObj=null;
     if(raw.startsWith('child:')){
       const[,sfId,sItemId]=raw.split(':');
-      srcFolderObj=items.find(i=>i.id===sfId);
-      srcItem=items.find(i=>i.id===sItemId);
+      srcFolderObj=state.items.find(i=>i.id===sfId);
+      srcItem=state.items.find(i=>i.id===sItemId);
       srcFolder=sfId;
     }else if(raw.startsWith('top:')){
-      srcItem=items.find(i=>i.id===raw.slice(4));
+      srcItem=state.items.find(i=>i.id===raw.slice(4));
     }
     if(!srcItem)return;
 
@@ -277,40 +276,40 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     if(srcFolder&&srcFolderObj){
       srcFolderObj.children=(srcFolderObj.children||[]).filter(id=>id!==srcItem.id);
     }else{
-      const si=items.indexOf(srcItem);
-      if(si>=0)items.splice(si,1);
+      const si=state.items.indexOf(srcItem);
+      if(si>=0)state.items.splice(si,1);
     }
 
     /* Insert at target location */
     if(indent){
       /* Drop on a child row → insert into same folder at this position */
-      /* Re-find folder after possible items mutation */
-      const tf=items.find(i=>i.id===folderId);
-      if(!tf){items.push(srcItem);save();return;}
+      /* Re-find folder after possible state.items mutation */
+      const tf=state.items.find(i=>i.id===folderId);
+      if(!tf){state.items.push(srcItem);save();return;}
       /* Remove from this folder if already in it (reorder) */
       tf.children=(tf.children||[]).filter(id=>id!==srcItem.id);
-      /* If srcItem is not in items yet (was top-level), it's still there */
-      if(!items.find(i=>i.id===srcItem.id))items.push(srcItem);
+      /* If srcItem is not in state.items yet (was top-level), it's still there */
+      if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
       /* Insert at childIdx position */
       tf.children.splice(childIdx,0,srcItem.id);
     }else if(item.type==='folder'){
       /* Drop ON a folder row → add to end of that folder */
-      if(!items.find(i=>i.id===srcItem.id))items.push(srcItem);
-      const tf=items.find(i=>i.id===item.id);
+      if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
+      const tf=state.items.find(i=>i.id===item.id);
       if(tf){tf.children=(tf.children||[]).filter(id=>id!==srcItem.id);tf.children.push(srcItem.id);}
     }else{
       /* Drop on a top-level row → insert before it, remove from any folder */
-      items.filter(f=>f.type==='folder').forEach(f=>{
+      state.items.filter(f=>f.type==='folder').forEach(f=>{
         f.children=(f.children||[]).filter(id=>id!==srcItem.id);
       });
-      if(!items.find(i=>i.id===srcItem.id))items.push(srcItem);
+      if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
       /* Remove srcItem from its current position */
-      const si2=items.indexOf(srcItem);
-      if(si2>=0)items.splice(si2,1);
+      const si2=state.items.indexOf(srcItem);
+      if(si2>=0)state.items.splice(si2,1);
       /* Insert above or below target based on mouse position */
-      const ti2=items.indexOf(item);
+      const ti2=state.items.indexOf(item);
       const insertAt=dropAbove?ti2:ti2+1;
-      items.splice(Math.max(0,insertAt),0,srcItem);
+      state.items.splice(Math.max(0,insertAt),0,srcItem);
     }
     save();
   });
@@ -322,35 +321,35 @@ function render(){
   const bar=document.getElementById('al-filter');
   const grp=document.getElementById('al-grp');
   if(bar){
-    if(items.length>=6) bar.style.display='';
+    if(state.items.length>=6) bar.style.display='';
     else { bar.style.display='none'; if(_flt.q||_flt.type!=='all'){_flt={q:'',type:'all'};_syncFilterUI();} }
   }
-  if(grp) grp.style.display=items.length?'':'none';
-  if(!items.length){
+  if(grp) grp.style.display=state.items.length?'':'none';
+  if(!state.items.length){
     l.innerHTML='<div class="empty"><p class="empty-msg">No apps yet. Click +Add.</p></div>';
     return;
   }
   l.innerHTML='';
   if(_flt.q||_flt.type!=='all'){
     const q=_flt.q.toLowerCase();
-    const matches=items.filter(it=>{
+    const matches=state.items.filter(it=>{
       if(_flt.type!=='all'&&it.type!==_flt.type)return false;
       if(q){ const hay=((it.label||'')+' '+(it.href||'')+' '+(it.widgetType||'')).toLowerCase(); if(!hay.includes(q))return false; }
       return true;
     });
     if(!matches.length){ l.innerHTML='<div class="empty"><p class="empty-msg">No matches.</p></div>'; return; }
-    matches.forEach(item=>l.appendChild(mkRow(item,items.indexOf(item))));
+    matches.forEach(item=>l.appendChild(mkRow(item,state.items.indexOf(item))));
     return;
   }
-  const inFolder=new Set(items.filter(i=>i.type==='folder').flatMap(f=>f.children||[]));
-  items.forEach((item,idx)=>{
+  const inFolder=new Set(state.items.filter(i=>i.type==='folder').flatMap(f=>f.children||[]));
+  state.items.forEach((item,idx)=>{
     if(item.type!=='folder'&&inFolder.has(item.id))return;
     l.appendChild(mkRow(item,idx));
     if(item.type==='folder'&&!collapsedFolders.has(item.id)){
       (item.children||[]).forEach((childId,ci)=>{
-        const childItem=items.find(i=>i.id===childId);
+        const childItem=state.items.find(i=>i.id===childId);
         if(!childItem)return;
-        l.appendChild(mkRow(childItem,items.indexOf(childItem),{indent:true,childIdx:ci,folderId:item.id}));
+        l.appendChild(mkRow(childItem,state.items.indexOf(childItem),{indent:true,childIdx:ci,folderId:item.id}));
       });
       const addRow=document.createElement('button');addRow.type='button';addRow.className='fp-add';
       addRow.innerHTML='<span>+</span> Add app to this folder';
@@ -399,7 +398,6 @@ const SIZE_ICONS={
 
 /* Edit (square-pen) and select (up/down) glyphs traced from the PSD. */
 
-let _evItem=null,_evIsEdit=false;
 
 /* Add New type selector — single card row, label left, three PSD tiles right. */
 function buildAddNewCard(){
@@ -413,12 +411,12 @@ function buildAddNewCard(){
   ['app','widget','folder'].forEach(t=>{
     const b=document.createElement('button');
     b.type='button';
-    b.className='tile-opt'+(t===ctype?' on':'');
+    b.className='tile-opt'+(t===state.ctype?' on':'');
     b.dataset.ctype=t;
-    b.setAttribute('aria-pressed',String(t===ctype));
+    b.setAttribute('aria-pressed',String(t===state.ctype));
     b.setAttribute('aria-label','Add '+TYPE_LABELS[t]);
     b.innerHTML=`<span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${TYPE_ICONS[t]}</svg></span><span class="tile-cap">${TYPE_LABELS[t]}</span>`;
-    b.onclick=()=>{ if(ctype===t)return; ctype=t; _renderEditBody(); };
+    b.onclick=()=>{ if(state.ctype===t)return; state.ctype=t; _renderEditBody(); };
     grpTiles.appendChild(b);
   });
   row.appendChild(grpTiles);
@@ -431,28 +429,28 @@ function buildAddNewCard(){
 function _renderEditBody(){
   const body=document.getElementById('ev-body');
   body.innerHTML='';
-  if(ctype==='widget') buildWidgetForm(body,_evItem);
-  else if(ctype==='folder') buildFolderForm(body,_evItem);
-  else buildAppForm(body,_evItem);
-  if(!_evIsEdit) body.insertBefore(buildAddNewCard(),body.firstChild);
+  if(state.ctype==='widget') buildWidgetForm(body,state._evItem);
+  else if(state.ctype==='folder') buildFolderForm(body,state._evItem);
+  else buildAppForm(body,state._evItem);
+  if(!state._evIsEdit) body.insertBefore(buildAddNewCard(),body.firstChild);
   setTimeout(()=>{ try{ body.querySelector('input,select,textarea')?.focus(); }catch{} },50);
 }
 
 function openModal(idx){
-  eid=idx??null;
-  const item=idx!=null?JSON.parse(JSON.stringify(items[idx])):null;
-  ctype=item?.type||'app';
-  siurl=item?.iconUrl||'';
-  scol=item?.color||'dark';
-  _customUrl=item?.url||'';
-  _iframeOpts=item?.iframe?{...item.iframe}:{};
-  fnums=[];spaths=[];
+  state.eid=idx??null;
+  const item=idx!=null?JSON.parse(JSON.stringify(state.items[idx])):null;
+  state.ctype=item?.type||'app';
+  state.siurl=item?.iconUrl||'';
+  state.scol=item?.color||'dark';
+  state._customUrl=item?.url||'';
+  state._iframeOpts=item?.iframe?{...item.iframe}:{};
+  state.fnums=[];state.spaths=[];
   if(item?.monitoring?.activity?.extract){
     const ex=Array.isArray(item.monitoring.activity.extract)?item.monitoring.activity.extract:[item.monitoring.activity.extract];
-    spaths=ex.map(e=>typeof e==='string'?e:e.path).filter(Boolean);
+    state.spaths=ex.map(e=>typeof e==='string'?e:e.path).filter(Boolean);
   }else if(item?.badge?.extract){
     const ex=Array.isArray(item.badge.extract)?item.badge.extract:[item.badge.extract];
-    spaths=ex.map(e=>typeof e==='string'?e:e.path).filter(Boolean);
+    state.spaths=ex.map(e=>typeof e==='string'?e:e.path).filter(Boolean);
   }
 
   /* Header */
@@ -466,7 +464,7 @@ function openModal(idx){
   if(backBtn) backBtn.onclick=()=>closeModal();
 
   /* Body — Add New selector card renders inside (add-mode only) */
-  _evItem=item; _evIsEdit=isEdit;
+  state._evItem=item; state._evIsEdit=isEdit;
   _renderEditBody();
 
   showEditView();
@@ -476,8 +474,8 @@ function _evDelete(item,idx){
   if(!item)return;
   if(item.type==='folder'){if(!confirm(`Delete folder "${item.label}"? Apps inside will not be deleted.`))return;}
   else{if(!confirm(`Remove "${item.label||item.id}"?`))return;}
-  items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==item.id);});
-  items.splice(idx,1);
+  state.items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==item.id);});
+  state.items.splice(idx,1);
   save().catch(()=>{});
   showListView();
 }
@@ -502,7 +500,7 @@ document.getElementById('btn-exp').onclick=async()=>{
 document.getElementById('imp').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d.items)throw new Error('Invalid');
-    items=d.items;await save();toast('Imported');}
+    state.items=d.items;await save();toast('Imported');}
   catch(e){toast('Import failed: '+e.message,'err');}
   e.target.value='';
 };
@@ -510,39 +508,37 @@ document.getElementById('imp').onchange=async e=>{
 document.getElementById('btn-add').onclick=()=>openModal(null);
 function closeModal(){
   showListView();
-  eid=null;
-  _wtype='custom';_wsize='medium';_wslots=[];_wnet={enabled:false,url:'',provider:'myspeed'};
-  _wmapCfg={};_wconnView='map';_wvpnCfg={};_customUrl='';_wlabel='';_wgithubCfg={};_wclockCfg={};_wbackupCfg={};_wstatsSubType='system-summary';_wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};_iframeOpts={};_wweatherCfg={city:'',lat:'',lon:'',units:'c',href:''};
+  state.eid=null;
+  state._wtype='custom';state._wsize='medium';state._wslots=[];state._wnet={enabled:false,url:'',provider:'myspeed'};
+  state._wmapCfg={};state._wconnView='map';state._wvpnCfg={};state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._wbackupCfg={};state._wstatsSubType='system-summary';state._wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};state._iframeOpts={};state._wweatherCfg={city:'',lat:'',lon:'',units:'c',href:''};
 }
 
 
 
 /* Allowed sizes come from the widget registry (folder-driven). 'custom' is the only built-in type. */
 const CUSTOM_SIZES = ['small','medium','large','xlarge'];
-function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (_widgetReg[type]?.sizes || ['medium']); }
+function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (state._widgetReg[type]?.sizes || ['medium']); }
 const SIZE_LABELS = { small:'Small', medium:'Medium', large:'Large', xlarge:'Extra Large' };
 const STAT_TYPES  = ['cpu','ram','temp','disk'];
 const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk' };
 
 /* State for current widget config while modal is open */
-let _wtype='custom', _wsize='medium', _wslots=[], _wnet={enabled:false,url:'',provider:'myspeed'}, _wmapCfg={}, _wconnView='map', _wvpnCfg={}, _customUrl='', _wlabel='', _wgithubCfg={}, _wclockCfg={}, _wbackupCfg={}, _wstatsSubType='system-summary', _wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]}, _iframeOpts={}, _wweatherCfg={city:'',lat:'',lon:'',units:'c',href:''};
 /* Auto-generated config form (folder-style widgets driven by the registry). */
-let _wAutoCfg={}, _autoForm=null, _autoFormType=null;
 
 function buildWidgetForm(body,item){
   const wt0 = item?.widgetType || 'custom';
   const wt = (wt0==='map') ? 'connections' : wt0;  /* legacy map widgets migrate to connections */
   const ws = item?.widgetSize || 'medium';
   const wc = item?.widgetConfig || {};
-  _wtype = wt; _wsize = ws;
-  _wlabel = item?.label || '';
+  state._wtype = wt; state._wsize = ws;
+  state._wlabel = item?.label || '';
   /* Snapshot of stored config for the auto-generated editor (registry widgets). */
-  _wAutoCfg = Object.assign({}, wc);
+  state._wAutoCfg = Object.assign({}, wc);
   /* Restore slots */
-  _wslots = (wc.slots || [{type:'cpu'},{type:'ram'},{type:'disk',primary:'/',secondary:''}]);
-  while(_wslots.length < 3) _wslots.push({type:'cpu'});
-  _wstatsSubType = wc.widgetSubType || 'system-summary';
-  _wweatherCfg = {
+  state._wslots = (wc.slots || [{type:'cpu'},{type:'ram'},{type:'disk',primary:'/',secondary:''}]);
+  while(state._wslots.length < 3) state._wslots.push({type:'cpu'});
+  state._wstatsSubType = wc.widgetSubType || 'system-summary';
+  state._wweatherCfg = {
     city:  wc.city  || '',
     lat:   wc.lat   != null ? wc.lat : '',
     lon:   wc.lon   != null ? wc.lon : '',
@@ -550,8 +546,8 @@ function buildWidgetForm(body,item){
     feelsLike: wc.feelsLike === true,
     href:  wc.href  || '',
   };
-  if (_wstatsSubType === 'disk-health') {
-    _wdiskCfg = {
+  if (state._wstatsSubType === 'disk-health') {
+    state._wdiskCfg = {
       diskProvider: wc.diskProvider || 'scrutiny',
       scrutinyUrl:  wc.scrutinyUrl  || '',
       scrutinyHref: wc.scrutinyHref || '',
@@ -561,13 +557,13 @@ function buildWidgetForm(body,item){
       bays:         Array.isArray(wc.bays) ? [...wc.bays] : [],
     };
   }
-  _wnet = wc.network ? {
+  state._wnet = wc.network ? {
     enabled:  wc.network.enabled  || false,
     url:      wc.network.url      || '',
     provider: wc.network.provider || 'myspeed',
     myspeedPassSet: wc.network.myspeedPassSet || false,
   } : {enabled:false,url:'',provider:'myspeed'};
-  _wmapCfg = {
+  state._wmapCfg = {
     showLegend: wc.showLegend !== false,
     services: Array.isArray(wc.services) ? wc.services.map(s=>Object.assign({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'',token:'',enabled:true}, s)) : (function(){
       const a=[];
@@ -577,8 +573,8 @@ function buildWidgetForm(body,item){
     })(),
   };
   /* Connections widget: which view, and the VPN-view config (single tunnel). */
-  _wconnView = wc.view || 'map';
-  _wvpnCfg = {
+  state._wconnView = wc.view || 'map';
+  state._wvpnCfg = {
     service:   wc.vpn?.service   || 'gluetun',   /* gluetun | netbird */
     url:       wc.vpn?.url        || '',
     apiKeySet: wc.vpn?.apiKeySet  || false,       /* gluetun control-server API key (optional) */
@@ -589,89 +585,89 @@ function buildWidgetForm(body,item){
     href:      wc.vpn?.href       || '',
     color:     wc.vpn?.color      || '#30D158',
   };
-  _wbackupCfg = {
+  state._wbackupCfg = {
     /* Per-slot useDefault: first instance of a provider is its default; later
        instances use that default unless turned off (then they get their own container). */
-    slots: _normBackupSlots(wc.slots, _wsize),
+    slots: _normBackupSlots(wc.slots, state._wsize),
   };
   _renderWidgetForm(body);
 }
 
 function _renderWidgetForm(body){
   /* Re-render of the same registry widget (e.g. size change): keep typed values. */
-  if(_autoForm && _autoFormType===_wtype){ _wAutoCfg=Object.assign({}, _wAutoCfg, _autoForm.getValues()); }
-  _autoForm=null;
+  if(state._autoForm && state._autoFormType===state._wtype){ state._wAutoCfg=Object.assign({}, state._wAutoCfg, state._autoForm.getValues()); }
+  state._autoForm=null;
   body.innerHTML='';
 
   /* ── Shell: Name + Widget Type, then Size tiles (settings-row, PSD) ── */
-  const typeList=[...Object.values(_widgetReg).map(w=>[w.name,w.label]), ['custom','Custom']].sort((a,b)=>a[1].localeCompare(b[1]));
-  const typeOpts=typeList.map(([t,label])=>`<option value="${t}"${t===_wtype?' selected':''}>${esc(label)}</option>`).join('');
+  const typeList=[...Object.values(state._widgetReg).map(w=>[w.name,w.label]), ['custom','Custom']].sort((a,b)=>a[1].localeCompare(b[1]));
+  const typeOpts=typeList.map(([t,label])=>`<option value="${t}"${t===state._wtype?' selected':''}>${esc(label)}</option>`).join('');
   const shell=document.createElement('div'); shell.className='grp';
   shell.innerHTML=`
-    <div class="row ie-row" id="ie-wname"><span class="rl">Name</span><span class="rv${_wlabel?'':' is-ph'}">${_wlabel?esc(_wlabel):'My Widget'}</span><input id="f-wlabel" type="text" value="${esc(_wlabel)}" style="display:none"><button class="pe" type="button" aria-label="Edit name">${PE_SVG}</button></div>
+    <div class="row ie-row" id="ie-wname"><span class="rl">Name</span><span class="rv${state._wlabel?'':' is-ph'}">${state._wlabel?esc(state._wlabel):'My Widget'}</span><input id="f-wlabel" type="text" value="${esc(state._wlabel)}" style="display:none"><button class="pe" type="button" aria-label="Edit name">${PE_SVG}</button></div>
     <div class="row"><span class="rl">Widget Type</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="Widget type">${typeOpts}</select>${CHEV_SVG}</div></div>`;
   body.appendChild(shell);
-  initInlineEdit('ie-wname','f-wlabel',{placeholder:'My Widget',onCommit(v){_wlabel=v;}});
+  initInlineEdit('ie-wname','f-wlabel',{placeholder:'My Widget',onCommit(v){state._wlabel=v;}});
   const typeSel=shell.querySelector('#f-wtype');
-  typeSel.onchange=()=>{ _wtype=typeSel.value; _wsize=widgetSizes(_wtype)[0]; _renderWidgetForm(body); };
+  typeSel.onchange=()=>{ state._wtype=typeSel.value; state._wsize=widgetSizes(state._wtype)[0]; _renderWidgetForm(body); };
 
   /* Connections view (Map / VPN) as a radio group */
-  if(_wtype==='connections'){
+  if(state._wtype==='connections'){
     const vcard=document.createElement('div'); vcard.className='grp';
     vcard.innerHTML=`<div class="row"><span class="rl">View</span><div class="segr">
-      <label class="segr-opt"><input type="radio" name="wconn-view" value="map" ${_wconnView==='map'?'checked':''}><span class="segr-dot"></span><span>Map</span></label>
-      <label class="segr-opt"><input type="radio" name="wconn-view" value="vpn" ${_wconnView==='vpn'?'checked':''}><span class="segr-dot"></span><span>VPN</span></label>
+      <label class="segr-opt"><input type="radio" name="wconn-view" value="map" ${state._wconnView==='map'?'checked':''}><span class="segr-dot"></span><span>Map</span></label>
+      <label class="segr-opt"><input type="radio" name="wconn-view" value="vpn" ${state._wconnView==='vpn'?'checked':''}><span class="segr-dot"></span><span>VPN</span></label>
     </div></div>`;
     body.appendChild(vcard);
-    vcard.querySelectorAll('input[name="wconn-view"]').forEach(r=>r.addEventListener('change',()=>{ _wconnView=r.value; if(r.value==='map')_wsize='medium'; _renderWidgetForm(body); }));
+    vcard.querySelectorAll('input[name="wconn-view"]').forEach(r=>r.addEventListener('change',()=>{ state._wconnView=r.value; if(r.value==='map')state._wsize='medium'; _renderWidgetForm(body); }));
   }
 
   /* Size tiles */
-  const _ghContrib=(_wtype==='github'&&(_wAutoCfg.githubView||'prs')==='contributions');
-  let _sizeOpts=widgetSizes(_wtype).filter(s=>!(_ghContrib&&(s==='large'||s==='xlarge')));
-  if(_wtype==='connections') _sizeOpts = (_wconnView==='map') ? ['medium'] : ['small','medium'];
-  if(!_sizeOpts.includes(_wsize)) _wsize=_sizeOpts.includes('medium')?'medium':_sizeOpts[0];
+  const _ghContrib=(state._wtype==='github'&&(state._wAutoCfg.githubView||'prs')==='contributions');
+  let _sizeOpts=widgetSizes(state._wtype).filter(s=>!(_ghContrib&&(s==='large'||s==='xlarge')));
+  if(state._wtype==='connections') _sizeOpts = (state._wconnView==='map') ? ['medium'] : ['small','medium'];
+  if(!_sizeOpts.includes(state._wsize)) state._wsize=_sizeOpts.includes('medium')?'medium':_sizeOpts[0];
   const sizeHdr=document.createElement('p'); sizeHdr.className='grp-hdr'; sizeHdr.textContent='Size'; body.appendChild(sizeHdr);
   const scard=document.createElement('div'); scard.className='grp';
-  scard.innerHTML=`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s=>`<button type="button" class="tile-opt${s===_wsize?' on':''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${SIZE_ICONS[s]||SIZE_ICONS.medium}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`).join('')}</div></div>`;
+  scard.innerHTML=`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s=>`<button type="button" class="tile-opt${s===state._wsize?' on':''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${SIZE_ICONS[s]||SIZE_ICONS.medium}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`).join('')}</div></div>`;
   body.appendChild(scard);
-  scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ _wsize=b.dataset.size; if(_wtype==='backup'){_wbackupCfg.slots=_normBackupSlots(_wbackupCfg.slots,_wsize);} _renderWidgetForm(body); }));
+  scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; if(state._wtype==='backup'){state._wbackupCfg.slots=_normBackupSlots(state._wbackupCfg.slots,state._wsize);} _renderWidgetForm(body); }));
 
     const cfgDiv=document.createElement('div');cfgDiv.className='div';body.appendChild(cfgDiv);
-  if(_widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
+  if(state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
     const d=document.createElement('div'); body.appendChild(d);
-    const _wid=(eid!==null&&items[eid]&&items[eid].id)?items[eid].id:null;
-    _autoForm=renderWidgetConfigForm(d, _widgetReg[_wtype].fields||[], _wAutoCfg, { widgetId:_wid, widgetType:_wtype });
-    _autoFormType=_wtype;
+    const _wid=(state.eid!==null&&state.items[state.eid]&&state.items[state.eid].id)?state.items[state.eid].id:null;
+    state._autoForm=renderWidgetConfigForm(d, state._widgetReg[state._wtype].fields||[], state._wAutoCfg, { widgetId:_wid, widgetType:state._wtype });
+    state._autoFormType=state._wtype;
   }
-  else if(_wtype==='stats')        _renderStatsConfig(body);
-  else if(_wtype==='connections') _renderConnectionsConfig(body);
-  else if(_wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderBackupConfig(d); }
-  else if(_wtype==='weather')     _renderWeatherConfig(body);
+  else if(state._wtype==='stats')        _renderStatsConfig(body);
+  else if(state._wtype==='connections') _renderConnectionsConfig(body);
+  else if(state._wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderBackupConfig(d); }
+  else if(state._wtype==='weather')     _renderWeatherConfig(body);
   else                        _renderCustomConfig(body);
 }
 
 function _renderWeatherConfig(body){
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
   card.innerHTML=`
-    <div class="row"><span class="rl">City</span><input id="wx-city" class="icon-srch" type="text" placeholder="e.g. Ottawa" value="${esc(_wweatherCfg.city||'')}"></div>
+    <div class="row"><span class="rl">City</span><input id="wx-city" class="icon-srch" type="text" placeholder="e.g. Ottawa" value="${esc(state._wweatherCfg.city||'')}"></div>
     <div class="row" id="wx-match-row" hidden><span class="rl">Match</span><div class="sel-wrap"><select class="row-sel" id="wx-result" aria-label="Match"></select>${CHEV_SVG}</div></div>
     <div class="row"><span class="rl"></span><span class="row-status" id="wx-msg"></span><button type="button" class="row-btn" id="wx-search">Search</button></div>
     <div class="row"><span class="rl">Units</span><div class="segr">
-      <label class="segr-opt"><input type="radio" name="wx-units" value="c" ${(_wweatherCfg.units||'c')==='c'?'checked':''}><span class="segr-dot"></span><span>&deg;C</span></label>
-      <label class="segr-opt"><input type="radio" name="wx-units" value="f" ${_wweatherCfg.units==='f'?'checked':''}><span class="segr-dot"></span><span>&deg;F</span></label>
+      <label class="segr-opt"><input type="radio" name="wx-units" value="c" ${(state._wweatherCfg.units||'c')==='c'?'checked':''}><span class="segr-dot"></span><span>&deg;C</span></label>
+      <label class="segr-opt"><input type="radio" name="wx-units" value="f" ${state._wweatherCfg.units==='f'?'checked':''}><span class="segr-dot"></span><span>&deg;F</span></label>
     </div></div>
     <div class="row"><span class="rl">Temperature</span><div class="segr">
-      <label class="segr-opt"><input type="radio" name="wx-feels" value="actual" ${!_wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Actual</span></label>
-      <label class="segr-opt"><input type="radio" name="wx-feels" value="feels" ${_wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Feels like</span></label>
+      <label class="segr-opt"><input type="radio" name="wx-feels" value="actual" ${!state._wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Actual</span></label>
+      <label class="segr-opt"><input type="radio" name="wx-feels" value="feels" ${state._wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Feels like</span></label>
     </div></div>
-    <div class="row ie-row" id="wx-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${_wweatherCfg.href?'':' is-ph'}">${_wweatherCfg.href?esc(_wweatherCfg.href):'https://...'}</span><input id="wx-href" type="text" value="${esc(_wweatherCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${PE_SVG}</button></div>`;
+    <div class="row ie-row" id="wx-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${state._wweatherCfg.href?'':' is-ph'}">${state._wweatherCfg.href?esc(state._wweatherCfg.href):'https://...'}</span><input id="wx-href" type="text" value="${esc(state._wweatherCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${PE_SVG}</button></div>`;
   const msg=card.querySelector('#wx-msg'), matchRow=card.querySelector('#wx-match-row'), resultSel=card.querySelector('#wx-result');
-  if(_wweatherCfg.lat!==''&&_wweatherCfg.lat!=null){ msg.textContent='Current: '+(_wweatherCfg.city||(_wweatherCfg.lat+', '+_wweatherCfg.lon)); msg.className='row-status ok'; }
-  card.querySelectorAll('input[name="wx-units"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)_wweatherCfg.units=r.value; }));
-  card.querySelectorAll('input[name="wx-feels"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)_wweatherCfg.feelsLike=(r.value==='feels'); }));
-  resultSel.onchange=()=>{ const o=resultSel.selectedOptions[0]; if(!o||!o.value)return; const pp=JSON.parse(o.value); _wweatherCfg.city=pp.label;_wweatherCfg.lat=pp.lat;_wweatherCfg.lon=pp.lon; msg.textContent='Selected: '+pp.label; msg.className='row-status ok'; };
-  initInlineEdit('wx-href-row','wx-href',{placeholder:'https://...',onCommit(v){_wweatherCfg.href=v;}});
+  if(state._wweatherCfg.lat!==''&&state._wweatherCfg.lat!=null){ msg.textContent='Current: '+(state._wweatherCfg.city||(state._wweatherCfg.lat+', '+state._wweatherCfg.lon)); msg.className='row-status ok'; }
+  card.querySelectorAll('input[name="wx-units"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)state._wweatherCfg.units=r.value; }));
+  card.querySelectorAll('input[name="wx-feels"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)state._wweatherCfg.feelsLike=(r.value==='feels'); }));
+  resultSel.onchange=()=>{ const o=resultSel.selectedOptions[0]; if(!o||!o.value)return; const pp=JSON.parse(o.value); state._wweatherCfg.city=pp.label;state._wweatherCfg.lat=pp.lat;state._wweatherCfg.lon=pp.lon; msg.textContent='Selected: '+pp.label; msg.className='row-status ok'; };
+  initInlineEdit('wx-href-row','wx-href',{placeholder:'https://...',onCommit(v){state._wweatherCfg.href=v;}});
   async function doSearch(){
     const q=card.querySelector('#wx-city').value.trim();
     if(!q){ msg.textContent='Enter a city name.'; msg.className='row-status err'; return; }
@@ -685,7 +681,7 @@ function _renderWeatherConfig(body){
       resultSel.innerHTML='';
       results.forEach(pp=>{ const label=[pp.name,pp.admin1,pp.country].filter(Boolean).join(', '); const opt=document.createElement('option'); opt.value=JSON.stringify({label,lat:pp.lat,lon:pp.lon}); opt.textContent=label; resultSel.appendChild(opt); });
       matchRow.hidden=false;
-      const f=JSON.parse(resultSel.value); _wweatherCfg.city=f.label; _wweatherCfg.lat=f.lat; _wweatherCfg.lon=f.lon;
+      const f=JSON.parse(resultSel.value); state._wweatherCfg.city=f.label; state._wweatherCfg.lat=f.lat; state._wweatherCfg.lon=f.lon;
       msg.textContent=results.length+' match(es), pick one'; msg.className='row-status ok';
     }catch(e){ msg.textContent='Search failed: '+e.message; msg.className='row-status err'; }
     finally{ btn.disabled=false; btn.textContent='Search'; }
@@ -697,13 +693,13 @@ function _renderStatsConfig(body){
   /* ── Type: System Summary | Disk Health (radio) ── */
   const subRow=document.createElement('div'); subRow.className='grp';
   subRow.innerHTML=`<div class="row"><span class="rl">Type</span><div class="segr">
-    <label class="segr-opt"><input type="radio" name="stats-sub" value="disk-health" ${_wstatsSubType==='disk-health'?'checked':''}><span class="segr-dot"></span><span>Disk Health</span></label>
-    <label class="segr-opt"><input type="radio" name="stats-sub" value="system-summary" ${_wstatsSubType==='system-summary'?'checked':''}><span class="segr-dot"></span><span>System Summary</span></label>
+    <label class="segr-opt"><input type="radio" name="stats-sub" value="disk-health" ${state._wstatsSubType==='disk-health'?'checked':''}><span class="segr-dot"></span><span>Disk Health</span></label>
+    <label class="segr-opt"><input type="radio" name="stats-sub" value="system-summary" ${state._wstatsSubType==='system-summary'?'checked':''}><span class="segr-dot"></span><span>System Summary</span></label>
   </div></div>`;
   body.appendChild(subRow);
   subRow.querySelectorAll('input[name="stats-sub"]').forEach(r=>r.addEventListener('change',()=>{
     if(!r.checked)return;
-    _wstatsSubType=r.value;
+    state._wstatsSubType=r.value;
     const cfg=body.querySelector('#stats-cfg-body');
     if(cfg){cfg.innerHTML='';_renderStatsBody(cfg);}
   }));
@@ -713,12 +709,12 @@ function _renderStatsConfig(body){
 }
 
 function _renderStatsBody(body){
-  if(_wstatsSubType==='disk-health'){
-    const bayCount = _wsize==='medium' ? 10 : 4;
-    while(_wdiskCfg.bays.length < bayCount) _wdiskCfg.bays.push(null);
-    _wdiskCfg.bays = _wdiskCfg.bays.slice(0, bayCount);
+  if(state._wstatsSubType==='disk-health'){
+    const bayCount = state._wsize==='medium' ? 10 : 4;
+    while(state._wdiskCfg.bays.length < bayCount) state._wdiskCfg.bays.push(null);
+    state._wdiskCfg.bays = state._wdiskCfg.bays.slice(0, bayCount);
 
-    const prov0=_wdiskCfg.diskProvider||'scrutiny';
+    const prov0=state._wdiskCfg.diskProvider||'scrutiny';
     const srcCard=document.createElement('div'); srcCard.className='grp'; body.appendChild(srcCard);
     const provRow=document.createElement('div'); provRow.className='row';
     provRow.innerHTML=`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="dh-prov" aria-label="Source"><option value="scrutiny"${prov0==='scrutiny'?' selected':''}>Scrutiny</option><option value="truenas"${prov0==='truenas'?' selected':''}>TrueNAS</option></select>${CHEV_SVG}</div>`;
@@ -735,14 +731,14 @@ function _renderStatsBody(body){
     function renderBayRows(){
       bayCard.innerHTML='';
       for(let i=0;i<bayCount;i++){
-        const cur=_wdiskCfg.bays[i]||'';
+        const cur=state._wdiskCfg.bays[i]||'';
         let opts='<option value="">Empty</option>';
         _items.forEach(it=>{ const cap=fmtCap(it.capacity); opts+=`<option value="${esc(it.value)}"${it.value===cur?' selected':''}>${esc(it.label)}${cap?' - '+cap:''}</option>`; });
         if(cur && !_items.some(it=>it.value===cur)) opts+=`<option value="${esc(cur)}" selected>${esc(cur)}</option>`;
         const row=document.createElement('div'); row.className='row';
         row.innerHTML=`<span class="rl">Bay ${i+1}</span><div class="sel-wrap"><select class="row-sel" id="dh-bay-${i}" aria-label="Bay ${i+1}">${opts}</select>${CHEV_SVG}</div>`;
         const sel=row.querySelector('select'); sel.value=cur;
-        sel.onchange=()=>{ _wdiskCfg.bays[i]=sel.value||null; };
+        sel.onchange=()=>{ state._wdiskCfg.bays[i]=sel.value||null; };
         bayCard.appendChild(row);
       }
     }
@@ -750,7 +746,7 @@ function _renderStatsBody(body){
     async function loadScrutiny(btn){
       const url=document.getElementById('dh-url')?.value?.trim();
       if(!url){ if(dhStatus){dhStatus.textContent='Enter a Scrutiny URL first.';dhStatus.className='row-status err';} return; }
-      _wdiskCfg.scrutinyUrl=url;
+      state._wdiskCfg.scrutinyUrl=url;
       btn.disabled=true; btn.textContent='Fetching...'; if(dhStatus){dhStatus.textContent='';dhStatus.className='row-status';}
       try{
         const r=await fetch(`/api/scrutiny-proxy?url=${encodeURIComponent(url)}`);
@@ -764,10 +760,10 @@ function _renderStatsBody(body){
     }
     async function loadTrueNas(btn){
       const url=document.getElementById('dh-url')?.value?.trim();
-      const key=document.getElementById('dh-key')?.value?.trim()||(_wdiskCfg.truenasKeySet?'__keep__':'');
+      const key=document.getElementById('dh-key')?.value?.trim()||(state._wdiskCfg.truenasKeySet?'__keep__':'');
       if(!url){ if(dhStatus){dhStatus.textContent='Enter a TrueNAS URL first.';dhStatus.className='row-status err';} return; }
       if(!key){ if(dhStatus){dhStatus.textContent='Enter an API key first.';dhStatus.className='row-status err';} return; }
-      _wdiskCfg.truenasUrl=url;
+      state._wdiskCfg.truenasUrl=url;
       btn.disabled=true; btn.textContent='Fetching...'; if(dhStatus){dhStatus.textContent='';dhStatus.className='row-status';}
       try{
         if(key==='__keep__'){ if(dhStatus){dhStatus.textContent='Re-enter the API key to fetch pools.';dhStatus.className='row-status err';} return; }
@@ -782,28 +778,28 @@ function _renderStatsBody(body){
     }
 
     function renderFields(){
-      const prov=_wdiskCfg.diskProvider; _items=[]; fieldArea.innerHTML='';
+      const prov=state._wdiskCfg.diskProvider; _items=[]; fieldArea.innerHTML='';
       const isTn=prov==='truenas';
-      const urlVal=isTn?(_wdiskCfg.truenasUrl||''):(_wdiskCfg.scrutinyUrl||'');
+      const urlVal=isTn?(state._wdiskCfg.truenasUrl||''):(state._wdiskCfg.scrutinyUrl||'');
       const urlPh=isTn?'truenas:443':'scrutiny:8080';
-      const hrefVal=isTn?(_wdiskCfg.truenasHref||''):(_wdiskCfg.scrutinyHref||'');
+      const hrefVal=isTn?(state._wdiskCfg.truenasHref||''):(state._wdiskCfg.scrutinyHref||'');
       const hrefPh=isTn?'https://truenas/ui/storage':'https://your-server:8080';
       fieldArea.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="dh-url-row"><span class="rl">${isTn?'TrueNAS':'Scrutiny'} URL</span><span class="rv${urlVal?'':' is-ph'}">${urlVal?esc(urlVal):esc(urlPh)}</span><input id="dh-url" type="text" value="${esc(urlVal)}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
-      if(isTn) _secretRow(fieldArea,{rowId:'dh-key-row',inpId:'dh-key',label:'API Key',isSet:_wdiskCfg.truenasKeySet});
+      if(isTn) _secretRow(fieldArea,{rowId:'dh-key-row',inpId:'dh-key',label:'API Key',isSet:state._wdiskCfg.truenasKeySet});
       const fr=document.createElement('div'); fr.className='row'; fr.innerHTML='<span class="rl"></span>';
       dhStatus=document.createElement('span'); dhStatus.className='row-status'; dhStatus.id='dh-msg'; fr.appendChild(dhStatus);
       const fbtn=document.createElement('button'); fbtn.type='button'; fbtn.className='row-btn'; fbtn.id='dh-load'; fbtn.textContent=isTn?'Fetch Pools':'Fetch Drives'; fr.appendChild(fbtn);
       fieldArea.appendChild(fr);
       fbtn.onclick=()=> isTn?loadTrueNas(fbtn):loadScrutiny(fbtn);
       fieldArea.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="dh-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${hrefVal?'':' is-ph'}">${hrefVal?esc(hrefVal):esc(hrefPh)}</span><input id="dh-href" type="text" value="${esc(hrefVal)}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${PE_SVG}</button></div>`);
-      initInlineEdit('dh-url-row','dh-url',{placeholder:urlPh,onCommit(v){ if(_wdiskCfg.diskProvider==='truenas')_wdiskCfg.truenasUrl=v; else _wdiskCfg.scrutinyUrl=v; }});
-      initInlineEdit('dh-href-row','dh-href',{placeholder:hrefPh,onCommit(v){ if(_wdiskCfg.diskProvider==='truenas')_wdiskCfg.truenasHref=v; else _wdiskCfg.scrutinyHref=v; }});
+      initInlineEdit('dh-url-row','dh-url',{placeholder:urlPh,onCommit(v){ if(state._wdiskCfg.diskProvider==='truenas')state._wdiskCfg.truenasUrl=v; else state._wdiskCfg.scrutinyUrl=v; }});
+      initInlineEdit('dh-href-row','dh-href',{placeholder:hrefPh,onCommit(v){ if(state._wdiskCfg.diskProvider==='truenas')state._wdiskCfg.truenasHref=v; else state._wdiskCfg.scrutinyHref=v; }});
       renderBayRows();
     }
 
-    provSel.onchange=()=>{ _wdiskCfg.diskProvider=provSel.value; renderFields(); };
+    provSel.onchange=()=>{ state._wdiskCfg.diskProvider=provSel.value; renderFields(); };
     renderFields();
-    if(_wdiskCfg.diskProvider!=='truenas' && _wdiskCfg.scrutinyUrl){ const b=document.getElementById('dh-load'); if(b) b.click(); }
+    if(state._wdiskCfg.diskProvider!=='truenas' && state._wdiskCfg.scrutinyUrl){ const b=document.getElementById('dh-load'); if(b) b.click(); }
     return;
   }
 
@@ -812,95 +808,95 @@ function _renderStatsBody(body){
   const SLOT_DEFS=['#ff2d55','#30d158','#00c0e8'];
 
   function fillSlot(card, idx){
-    const slot=_wslots[idx]||{type:'cpu'};
+    const slot=state._wslots[idx]||{type:'cpu'};
     const resOpts=STAT_TYPES.map(t=>`<option value="${t}"${slot.type===t?' selected':''}>${RES_LABELS[t]}</option>`).join('');
     const res=document.createElement('div'); res.className='row';
     res.innerHTML=`<span class="rl">Resource</span><div class="sel-wrap"><select class="row-sel" aria-label="Resource">${resOpts}</select>${CHEV_SVG}</div>`;
     card.appendChild(res);
-    res.querySelector('select').onchange=function(){ const t=this.value; _wslots[idx]={type:t}; if(t==='disk'){_wslots[idx].primary='/';_wslots[idx].secondary='';} if(t==='temp'){_wslots[idx].thermalZone=0;} card.innerHTML=''; fillSlot(card, idx); };
+    res.querySelector('select').onchange=function(){ const t=this.value; state._wslots[idx]={type:t}; if(t==='disk'){state._wslots[idx].primary='/';state._wslots[idx].secondary='';} if(t==='temp'){state._wslots[idx].thermalZone=0;} card.innerHTML=''; fillSlot(card, idx); };
 
     if(slot.type==='disk'){
       card.insertAdjacentHTML('beforeend',
         `<div class="row ie-row" id="slot${idx}-pri"><span class="rl">First Mount Path</span><span class="rv${slot.primary?'':' is-ph'}">${esc(slot.primary||'/')}</span><input id="slot${idx}-pri-i" type="text" value="${esc(slot.primary||'/')}" style="display:none"><button class="pe" type="button" aria-label="Edit first mount path">${PE_SVG}</button></div>`
        +`<div class="row ie-row" id="slot${idx}-sec"><span class="rl">Second Mount Path <span class="opt-span">(optional)</span></span><span class="rv${slot.secondary?'':' is-ph'}">${slot.secondary?esc(slot.secondary):'/mnt/data'}</span><input id="slot${idx}-sec-i" type="text" value="${esc(slot.secondary||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit second mount path">${PE_SVG}</button></div>`);
-      initInlineEdit(`slot${idx}-pri`,`slot${idx}-pri-i`,{placeholder:'/',onCommit(v){_wslots[idx].primary=v;}});
-      initInlineEdit(`slot${idx}-sec`,`slot${idx}-sec-i`,{placeholder:'/mnt/data',onCommit(v){_wslots[idx].secondary=v;}});
+      initInlineEdit(`slot${idx}-pri`,`slot${idx}-pri-i`,{placeholder:'/',onCommit(v){state._wslots[idx].primary=v;}});
+      initInlineEdit(`slot${idx}-sec`,`slot${idx}-sec-i`,{placeholder:'/mnt/data',onCommit(v){state._wslots[idx].secondary=v;}});
     } else if(slot.type==='temp'){
       const z=Number.isInteger(slot.thermalZone)?slot.thermalZone:0;
       card.insertAdjacentHTML('beforeend',
         `<div class="row ie-row" id="slot${idx}-tz"><span class="rl">Thermal Zone</span><span class="rv">${z}</span><input id="slot${idx}-tz-i" type="number" min="0" max="20" value="${z}" style="display:none"><button class="pe" type="button" aria-label="Edit thermal zone">${PE_SVG}</button></div>`);
       const tip=document.createElement('p'); tip.className='grp-tip in-card'; tip.textContent='Zone 0 is correct for most systems. Only change it if the temperature shown is wrong.'; card.appendChild(tip);
-      initInlineEdit(`slot${idx}-tz`,`slot${idx}-tz-i`,{onCommit(v){_wslots[idx].thermalZone=parseInt(v,10)||0;}});
+      initInlineEdit(`slot${idx}-tz`,`slot${idx}-tz-i`,{onCommit(v){state._wslots[idx].thermalZone=parseInt(v,10)||0;}});
     }
-    renderColorControl(card,{value:slot.color||SLOT_DEFS[idx]||'#0289ff',idPrefix:`slotcol${idx}`,onChange(v){_wslots[idx].color=v;}});
+    renderColorControl(card,{value:slot.color||SLOT_DEFS[idx]||'#0289ff',idPrefix:`slotcol${idx}`,onChange(v){state._wslots[idx].color=v;}});
   }
 
-  _wslots.slice(0,3).forEach((slot,idx)=>{
+  state._wslots.slice(0,3).forEach((slot,idx)=>{
     const hdr=document.createElement('p'); hdr.className='grp-hdr'; hdr.textContent='Slot '+(idx+1); body.appendChild(hdr);
     const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
     fillSlot(card, idx);
   });
 
   /* Slot 4: Network Speed */
-  const prov=_wnet.provider||'myspeed';
+  const prov=state._wnet.provider||'myspeed';
   const netCard=document.createElement('div'); netCard.className='grp'; body.appendChild(netCard);
   netCard.innerHTML=`
-    <div class="row"><span class="rl">Network Speed</span><label class="tog"><input type="checkbox" id="net-en" ${_wnet.enabled?'checked':''}><div class="tr"></div></label></div>
-    <div id="net-sub" ${_wnet.enabled?'':'hidden'}>
+    <div class="row"><span class="rl">Network Speed</span><label class="tog"><input type="checkbox" id="net-en" ${state._wnet.enabled?'checked':''}><div class="tr"></div></label></div>
+    <div id="net-sub" ${state._wnet.enabled?'':'hidden'}>
       <div class="row"><span class="rl">Provider</span><div class="segr">
         <label class="segr-opt"><input type="radio" name="net-prov" value="myspeed" ${prov==='myspeed'?'checked':''}><span class="segr-dot"></span><span>MySpeed</span></label>
         <label class="segr-opt"><input type="radio" name="net-prov" value="speedtest-tracker" ${prov==='speedtest-tracker'?'checked':''}><span class="segr-dot"></span><span>Speedtest Tracker</span></label>
       </div></div>
-      <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${_wnet.url?'':' is-ph'}">${_wnet.url?esc(_wnet.url):(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${esc(_wnet.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${PE_SVG}</button></div>
+      <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${state._wnet.url?'':' is-ph'}">${state._wnet.url?esc(state._wnet.url):(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${esc(state._wnet.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${PE_SVG}</button></div>
     </div>`;
   const netEn=netCard.querySelector('#net-en'), netSub=netCard.querySelector('#net-sub');
-  netEn.onchange=()=>{ _wnet.enabled=netEn.checked; netSub.hidden=!netEn.checked; };
+  netEn.onchange=()=>{ state._wnet.enabled=netEn.checked; netSub.hidden=!netEn.checked; };
   netCard.querySelectorAll('input[name="net-prov"]').forEach(r=>r.addEventListener('change',()=>{
-    if(!r.checked)return; _wnet.provider=r.value;
+    if(!r.checked)return; state._wnet.provider=r.value;
     const pr=netCard.querySelector('#net-pass-row'); if(pr)pr.hidden=(r.value!=='myspeed');
     const uv=netCard.querySelector('#net-url-row .rv'); if(uv&&uv.classList.contains('is-ph'))uv.textContent=(r.value==='myspeed'?'myspeed:5216':'your-server:8850');
   }));
-  initInlineEdit('net-url-row','net-url',{placeholder:(prov==='myspeed'?'myspeed:5216':'your-server:8850'),onCommit(v){_wnet.url=v;}});
-  _secretRow(netSub,{rowId:'net-pass-row',inpId:'net-pass',label:'Password',opt:true,isSet:_wnet.myspeedPassSet,hidden:(prov!=='myspeed')});
+  initInlineEdit('net-url-row','net-url',{placeholder:(prov==='myspeed'?'myspeed:5216':'your-server:8850'),onCommit(v){state._wnet.url=v;}});
+  _secretRow(netSub,{rowId:'net-pass-row',inpId:'net-pass',label:'Password',opt:true,isSet:state._wnet.myspeedPassSet,hidden:(prov!=='myspeed')});
 }
 
 
 
 function _renderConnectionsConfig(body){
-  if(_wconnView==='vpn') return _renderVpnConfig(body);
+  if(state._wconnView==='vpn') return _renderVpnConfig(body);
   return _renderMapConfig(body);
 }
 
 /* VPN view config — single tunnel, VPN services only (Gluetun / NetBird). */
 function _renderVpnConfig(body){
-  const svc=_wvpnCfg.service||'gluetun';
+  const svc=state._wvpnCfg.service||'gluetun';
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
   card.innerHTML=`
     <div class="row"><span class="rl">Service</span><div class="segr">
       <label class="segr-opt"><input type="radio" name="vpn-svc" value="gluetun" ${svc==='gluetun'?'checked':''}><span class="segr-dot"></span><span>Gluetun</span></label>
       <label class="segr-opt"><input type="radio" name="vpn-svc" value="netbird" ${svc==='netbird'?'checked':''}><span class="segr-dot"></span><span>NetBird</span></label>
     </div></div>
-    <div class="row ie-row" id="vpn-name-row"><span class="rl">Display Name <span class="opt-span">(optional)</span></span><span class="rv${_wvpnCfg.name?'':' is-ph'}">${_wvpnCfg.name?esc(_wvpnCfg.name):(svc==='gluetun'?'VPN':'Mesh')}</span><input id="vpn-name" type="text" value="${esc(_wvpnCfg.name||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${PE_SVG}</button></div>`;
-  card.querySelectorAll('input[name="vpn-svc"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked){_wvpnCfg.service=r.value; _renderWidgetForm(body);} }));
-  initInlineEdit('vpn-name-row','vpn-name',{placeholder:(svc==='gluetun'?'VPN':'Mesh'),onCommit(v){_wvpnCfg.name=v;}});
+    <div class="row ie-row" id="vpn-name-row"><span class="rl">Display Name <span class="opt-span">(optional)</span></span><span class="rv${state._wvpnCfg.name?'':' is-ph'}">${state._wvpnCfg.name?esc(state._wvpnCfg.name):(svc==='gluetun'?'VPN':'Mesh')}</span><input id="vpn-name" type="text" value="${esc(state._wvpnCfg.name||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${PE_SVG}</button></div>`;
+  card.querySelectorAll('input[name="vpn-svc"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked){state._wvpnCfg.service=r.value; _renderWidgetForm(body);} }));
+  initInlineEdit('vpn-name-row','vpn-name',{placeholder:(svc==='gluetun'?'VPN':'Mesh'),onCommit(v){state._wvpnCfg.name=v;}});
 
   const colHdr=document.createElement('p'); colHdr.className='grp-hdr'; colHdr.textContent='Dot Color'; body.appendChild(colHdr);
   const colCard=document.createElement('div'); colCard.className='grp'; body.appendChild(colCard);
-  if(!_wvpnCfg.color)_wvpnCfg.color='#30d158';
-  renderColorControl(colCard,{value:_wvpnCfg.color,idPrefix:'vpncol',onChange(v){_wvpnCfg.color=v;}});
+  if(!state._wvpnCfg.color)state._wvpnCfg.color='#30d158';
+  renderColorControl(colCard,{value:state._wvpnCfg.color,idPrefix:'vpncol',onChange(v){state._wvpnCfg.color=v;}});
 
   const cCard=document.createElement('div'); cCard.className='grp'; body.appendChild(cCard);
   if(svc==='gluetun'){
-    cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Control Server URL <span class="req">*</span></span><span class="rv${_wvpnCfg.url?'':' is-ph'}">${_wvpnCfg.url?esc(_wvpnCfg.url):'http://gluetun:8000'}</span><input id="vpn-url" type="text" value="${esc(_wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
-    initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://gluetun:8000',onCommit(v){_wvpnCfg.url=v;}});
-    _secretRow(cCard,{rowId:'vpn-apikey-row',inpId:'vpn-apikey',label:'API Key',opt:true,isSet:_wvpnCfg.apiKeySet,onInput(v){_wvpnCfg.apiKey=v;}});
+    cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Control Server URL <span class="req">*</span></span><span class="rv${state._wvpnCfg.url?'':' is-ph'}">${state._wvpnCfg.url?esc(state._wvpnCfg.url):'http://gluetun:8000'}</span><input id="vpn-url" type="text" value="${esc(state._wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
+    initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://gluetun:8000',onCommit(v){state._wvpnCfg.url=v;}});
+    _secretRow(cCard,{rowId:'vpn-apikey-row',inpId:'vpn-apikey',label:'API Key',opt:true,isSet:state._wvpnCfg.apiKeySet,onInput(v){state._wvpnCfg.apiKey=v;}});
   } else {
-    cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Management API URL <span class="req">*</span></span><span class="rv${_wvpnCfg.url?'':' is-ph'}">${_wvpnCfg.url?esc(_wvpnCfg.url):'http://netbird:33073'}</span><input id="vpn-url" type="text" value="${esc(_wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
-    initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://netbird:33073',onCommit(v){_wvpnCfg.url=v;}});
-    _secretRow(cCard,{rowId:'vpn-token-row',inpId:'vpn-token',label:'Access Token (PAT)',req:true,isSet:_wvpnCfg.tokenSet,onInput(v){_wvpnCfg.token=v;}});
+    cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Management API URL <span class="req">*</span></span><span class="rv${state._wvpnCfg.url?'':' is-ph'}">${state._wvpnCfg.url?esc(state._wvpnCfg.url):'http://netbird:33073'}</span><input id="vpn-url" type="text" value="${esc(state._wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
+    initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://netbird:33073',onCommit(v){state._wvpnCfg.url=v;}});
+    _secretRow(cCard,{rowId:'vpn-token-row',inpId:'vpn-token',label:'Access Token (PAT)',req:true,isSet:state._wvpnCfg.tokenSet,onInput(v){state._wvpnCfg.token=v;}});
   }
-  cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-href-row"><span class="rl">Click URL <span class="opt-span">(optional)</span></span><span class="rv${_wvpnCfg.href?'':' is-ph'}">${_wvpnCfg.href?esc(_wvpnCfg.href):'http://your-server:8000'}</span><input id="vpn-href" type="text" value="${esc(_wvpnCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit click URL">${PE_SVG}</button></div>`);
-  initInlineEdit('vpn-href-row','vpn-href',{placeholder:'http://your-server:8000',onCommit(v){_wvpnCfg.href=v;}});
+  cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-href-row"><span class="rl">Click URL <span class="opt-span">(optional)</span></span><span class="rv${state._wvpnCfg.href?'':' is-ph'}">${state._wvpnCfg.href?esc(state._wvpnCfg.href):'http://your-server:8000'}</span><input id="vpn-href" type="text" value="${esc(state._wvpnCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit click URL">${PE_SVG}</button></div>`);
+  initInlineEdit('vpn-href-row','vpn-href',{placeholder:'http://your-server:8000',onCommit(v){state._wvpnCfg.href=v;}});
 }
 
 function _newSvcId(){return 'svc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
@@ -913,8 +909,8 @@ const _MAP_SVC={
 };
 
 function _renderMapConfig(body){
-  if(!Array.isArray(_wmapCfg.services)) _wmapCfg.services=[];
-  _wmapCfg.services.forEach(sv=>{ if(!sv.id)sv.id=_newSvcId(); });
+  if(!Array.isArray(state._wmapCfg.services)) state._wmapCfg.services=[];
+  state._wmapCfg.services.forEach(sv=>{ if(!sv.id)sv.id=_newSvcId(); });
 
   const listHost=document.createElement('div'); body.appendChild(listHost);
 
@@ -923,7 +919,7 @@ function _renderMapConfig(body){
     const hdr=document.createElement('p'); hdr.className='grp-hdr grp-hdr-row';
     hdr.innerHTML=`<span>${esc(svc.name||meta.label||('Service '+(i+1)))}</span>`;
     const rm=document.createElement('button'); rm.type='button'; rm.className='grp-hdr-rm'; rm.textContent='Remove';
-    rm.onclick=()=>{ _wmapCfg.services.splice(i,1); renderList(); };
+    rm.onclick=()=>{ state._wmapCfg.services.splice(i,1); renderList(); };
     hdr.appendChild(rm); listHost.appendChild(hdr);
 
     const card=document.createElement('div'); card.className='grp'; listHost.appendChild(card);
@@ -959,34 +955,34 @@ function _renderMapConfig(body){
   }
 
   function renderList(){
-    _wmapCfg.services.sort((a,b)=>String(a.name||'').toLowerCase().localeCompare(String(b.name||'').toLowerCase()));
+    state._wmapCfg.services.sort((a,b)=>String(a.name||'').toLowerCase().localeCompare(String(b.name||'').toLowerCase()));
     listHost.innerHTML='';
-    if(!_wmapCfg.services.length){
+    if(!state._wmapCfg.services.length){
       const empty=document.createElement('p'); empty.className='grp-tip'; empty.textContent='No services yet. Add one below.'; listHost.appendChild(empty);
     }
-    _wmapCfg.services.forEach((svc,i)=>buildCard(svc,i));
+    state._wmapCfg.services.forEach((svc,i)=>buildCard(svc,i));
   }
   renderList();
 
   const addCard=document.createElement('div'); addCard.className='grp'; body.appendChild(addCard);
   const add=document.createElement('button'); add.type='button'; add.className='wcf-add-row';
   add.innerHTML='<span class="rl" style="color:var(--ac2)">+ Add Service</span>';
-  add.onclick=()=>{ _wmapCfg.services.push({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'#30d158',token:'',enabled:true}); renderList(); };
+  add.onclick=()=>{ state._wmapCfg.services.push({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'#30d158',token:'',enabled:true}); renderList(); };
   addCard.appendChild(add);
 
   const legCard=document.createElement('div'); legCard.className='grp'; body.appendChild(legCard);
-  legCard.innerHTML=`<div class="row"><span class="rl">Show Legend</span><label class="tog"><input type="checkbox" id="map-legend" ${_wmapCfg.showLegend!==false?'checked':''}><div class="tr"></div></label></div>`;
-  legCard.querySelector('#map-legend').onchange=e=>{ _wmapCfg.showLegend=e.target.checked; };
+  legCard.innerHTML=`<div class="row"><span class="rl">Show Legend</span><label class="tog"><input type="checkbox" id="map-legend" ${state._wmapCfg.showLegend!==false?'checked':''}><div class="tr"></div></label></div>`;
+  legCard.querySelector('#map-legend').onchange=e=>{ state._wmapCfg.showLegend=e.target.checked; };
   const legTip=document.createElement('p'); legTip.className='grp-tip'; legTip.textContent='Service key along the bottom of the map.'; body.appendChild(legTip);
 }
 
 function _renderCustomConfig(body){
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-  card.innerHTML=`<div class="row ie-row" id="cust-url-row"><span class="rl">Iframe URL <span class="req">*</span></span><span class="rv${_customUrl?'':' is-ph'}">${_customUrl?esc(_customUrl):'https://app.example.com/widget.html'}</span><input id="f-url" type="url" value="${esc(_customUrl||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit iframe URL">${PE_SVG}</button></div>`;
+  card.innerHTML=`<div class="row ie-row" id="cust-url-row"><span class="rl">Iframe URL <span class="req">*</span></span><span class="rv${state._customUrl?'':' is-ph'}">${state._customUrl?esc(state._customUrl):'https://app.example.com/widget.html'}</span><input id="f-url" type="url" value="${esc(state._customUrl||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit iframe URL">${PE_SVG}</button></div>`;
   const tip=document.createElement('p'); tip.className='grp-tip'; tip.textContent='The URL will be embedded as an iframe in the dashboard.'; body.appendChild(tip);
-  initInlineEdit('cust-url-row','f-url',{placeholder:'https://app.example.com/widget.html',onCommit(v){_customUrl=v;}});
+  initInlineEdit('cust-url-row','f-url',{placeholder:'https://app.example.com/widget.html',onCommit(v){state._customUrl=v;}});
 
-  const o=_iframeOpts||{};
+  const o=state._iframeOpts||{};
   const advHdr=document.createElement('p'); advHdr.className='grp-hdr'; advHdr.textContent='Advanced'; body.appendChild(advHdr);
   const adv=document.createElement('div'); adv.className='grp'; body.appendChild(adv);
   const refOpts=['','no-referrer','no-referrer-when-downgrade','origin','origin-when-cross-origin','same-origin','strict-origin','strict-origin-when-cross-origin','unsafe-url'].map(v=>`<option value="${v}" ${(o.referrerPolicy||'')===v?'selected':''}>${v||'Default'}</option>`).join('');
@@ -995,7 +991,7 @@ function _renderCustomConfig(body){
     <div class="row ie-row" id="if-allow-row"><span class="rl">Allow (feature policy)</span><span class="rv${o.allow?'':' is-ph'}">${o.allow?esc(o.allow):'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${esc(o.allow||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit allow">${PE_SVG}</button></div>
     <div class="row"><span class="rl">Allow Fullscreen</span><label class="tog"><input type="checkbox" id="if-fs" ${o.allowFullscreen!==false?'checked':''}><div class="tr"></div></label></div>
     <div class="row ie-row" id="if-refresh-row"><span class="rl">Refresh Interval <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval?'':' is-ph'}">${o.refreshInterval?o.refreshInterval:'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval||''}" style="display:none"><button class="pe" type="button" aria-label="Edit refresh interval">${PE_SVG}</button></div>`;
-  const sync=()=>{ _iframeOpts.referrerPolicy=adv.querySelector('#if-referrer').value||undefined; _iframeOpts.allow=adv.querySelector('#if-allow').value.trim()||undefined; _iframeOpts.allowFullscreen=adv.querySelector('#if-fs').checked; const ri=parseInt(adv.querySelector('#if-refresh').value,10); _iframeOpts.refreshInterval=(ri&&ri>=250)?ri:undefined; };
+  const sync=()=>{ state._iframeOpts.referrerPolicy=adv.querySelector('#if-referrer').value||undefined; state._iframeOpts.allow=adv.querySelector('#if-allow').value.trim()||undefined; state._iframeOpts.allowFullscreen=adv.querySelector('#if-fs').checked; const ri=parseInt(adv.querySelector('#if-refresh').value,10); state._iframeOpts.refreshInterval=(ri&&ri>=250)?ri:undefined; };
   adv.querySelector('#if-referrer').onchange=sync; adv.querySelector('#if-fs').onchange=sync;
   initInlineEdit('if-allow-row','if-allow',{placeholder:'autoplay; fullscreen',onCommit(){sync();}});
   initInlineEdit('if-refresh-row','if-refresh',{placeholder:'e.g. 2000',onCommit(){sync();}});
@@ -1036,7 +1032,7 @@ function _normBackupSlots(saved, size) {
 
 /* Auto-fill connection from first same-provider slot that has a URL */
 function _autofillSlot(si, provider) {
-  const slots = _wbackupCfg.slots;
+  const slots = state._wbackupCfg.slots;
   const first = slots.findIndex((s,i) => i!==si && s.provider===provider &&
     (provider==='duplicati' ? s.dupUrl : s.kopiaUrl));
   if (first === -1) return;
@@ -1069,9 +1065,9 @@ if(!window.__ddOutsideBound){
 }
 
 function _renderBackupConfig(body){
-  const slotCount = _wsize === 'small' ? 1 : 3;
+  const slotCount = state._wsize === 'small' ? 1 : 3;
   const SLOT_NAMES = ['First','Second','Third'];
-  const slots = _wbackupCfg.slots;
+  const slots = state._wbackupCfg.slots;
   const PLABEL = pr => pr==='duplicati' ? 'Duplicati' : 'Kopia';
   const firstProvIdx = pr => slots.findIndex(sl => sl.provider===pr);
   const defaultActive = pr => { const f=firstProvIdx(pr); return f>=0 && slots[f].useDefault!==false; };
@@ -1186,7 +1182,7 @@ function _renderBackupConfig(body){
         try{
           slot.dupUrl=url;
           const b={url}; if(pass) b.password=pass; else if(slot.dupPassSet) b.useStoredPass=true;
-          const wid=(eid!==null&&items[eid]?.id)?items[eid].id:'__preview__';
+          const wid=(state.eid!==null&&state.items[state.eid]?.id)?state.items[state.eid].id:'__preview__';
           const r=await fetch(`/api/duplicati-jobs/${encodeURIComponent(wid)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
           if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.status);}
           const data=await r.json();
@@ -1218,7 +1214,7 @@ function _renderBackupConfig(body){
         try{
           slot.kopiaUrl=url; slot.kopiaUser=user||slot.kopiaUser;
           const b={url}; if(user)b.username=user; if(pass)b.password=pass; else if(slot.kopiaPassSet)b.useStoredPass=true;
-          const wid=(eid!==null&&items[eid]?.id)?items[eid].id:'__preview__';
+          const wid=(state.eid!==null&&state.items[state.eid]?.id)?state.items[state.eid].id:'__preview__';
           const r=await fetch(`/api/kopia-sources/${encodeURIComponent(wid)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
           if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.status);}
           const srcs=await r.json();
@@ -1259,9 +1255,9 @@ function _renderBackupConfig(body){
    Folder Name = inline-edit row; Add Apps = tap-to-toggle checklist dropdown. */
 function buildFolderForm(body,item){
   const children=item?.children||[];
-  const apps=items.filter(i=>i.type==='app'&&!i.dock);
+  const apps=state.items.filter(i=>i.type==='app'&&!i.dock);
   /* In edit mode, surface current children even if they'd otherwise be filtered. */
-  children.forEach(cid=>{ if(!apps.some(a=>a.id===cid)){ const a=items.find(i=>i.id===cid); if(a) apps.push(a); } });
+  children.forEach(cid=>{ if(!apps.some(a=>a.id===cid)){ const a=state.items.find(i=>i.id===cid); if(a) apps.push(a); } });
 
   const opts=apps.map(a=>`<li role="option" data-val="${esc(a.id)}" aria-selected="${children.includes(a.id)?'true':'false'}">${esc(a.label||a.id)}</li>`).join('')
     || '<li class="row-dd-empty" aria-disabled="true">No apps available</li>';
@@ -1323,7 +1319,7 @@ function _wireFolderApps(){
 
 
 function buildAppForm(body,item){
-  const docks=items.filter(i=>i.type==='app'&&i.dock&&i.id!==item?.id).length;
+  const docks=state.items.filter(i=>i.type==='app'&&i.dock&&i.id!==item?.id).length;
   const dockFull=docks>=4;
   const mon=item?.monitoring||{};
   const hc=mon.healthcheck||{enabled:!!(item?.container||item?.ping),container:item?.container||'',pingUrl:item?.ping||''};
@@ -1353,8 +1349,8 @@ function buildAppForm(body,item){
     <p class="grp-hdr">Icon</p>
     <div class="grp" id="ipw">
       <div class="row icon-src-row">
-        <span class="icon-prev" id="ipv" style="background:${rc(scol)}">${siurl?`<img src="${esc(resolveIcon(siurl))}" alt="" id="ipv-img">`:`<span>${(item?.label||'?')[0]?.toUpperCase()||'?'}</span>`}</span>
-        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="Name or full URL" value="${esc(siurl)}">
+        <span class="icon-prev" id="ipv" style="background:${rc(state.scol)}">${state.siurl?`<img src="${esc(resolveIcon(state.siurl))}" alt="" id="ipv-img">`:`<span>${(item?.label||'?')[0]?.toUpperCase()||'?'}</span>`}</span>
+        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="Name or full URL" value="${esc(state.siurl)}">
         <button type="button" class="row-btn" id="ip-upload-lbl">Upload</button>
         <input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0">
       </div>
@@ -1395,8 +1391,8 @@ function buildAppForm(body,item){
       <div class="row"><span class="rl">Live Activity</span>${tog('act-en',act.enabled)}</div>
       <div id="act-sub" ${act.enabled?'':'hidden'}>
         ${ier('ie-burl','API URL','f-burl',act.url,'http://container-name:port/api/v2','url')}
-        <div class="row"><span class="rl"></span><span id="bst" class="row-status">${spaths.length?'Saved: '+esc(spaths.join(' + ')):''}</span><button type="button" class="row-btn" id="bfetch">Fetch</button></div>
-        <div id="bprow" class="${spaths.length?'':'bprow-hidden'}">
+        <div class="row"><span class="rl"></span><span id="bst" class="row-status">${state.spaths.length?'Saved: '+esc(state.spaths.join(' + ')):''}</span><button type="button" class="row-btn" id="bfetch">Fetch</button></div>
+        <div id="bprow" class="${state.spaths.length?'':'bprow-hidden'}">
           <div class="row"><span class="rl">Value</span></div>
           <div class="bval-box"><input class="bval-search" id="bsearch" type="text" placeholder="Filter values" autocomplete="off"><div class="blist" id="blist"></div></div>
         </div>
@@ -1428,13 +1424,13 @@ function buildAppForm(body,item){
   initInlineEdit('ie-bunit','bcust-unit',{placeholder:'e.g. GB'});
 
   /* Color controls */
-  renderColorControl(document.getElementById('icon-color-slot'),{value:scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){scol=v;const pv=document.getElementById('ipv');if(pv)pv.style.background=rc(scol);}});
+  renderColorControl(document.getElementById('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){state.scol=v;const pv=document.getElementById('ipv');if(pv)pv.style.background=rc(state.scol);}});
   renderColorControl(document.getElementById('static-color-slot'),{value:staticBadge.color||'#0289ff',idPrefix:'static-col'});
   renderColorControl(document.getElementById('act-color-slot'),{value:actCustom.color||'#0289ff',idPrefix:'act-col'});
 
   /* Icon search/upload */
   wireIcon();
-  if(siurl)updPrev();
+  if(state.siurl)updPrev();
 
   /* Health check enable state honours the global Docker toggle */
   const globalHealthOn=!!(document.getElementById('srv-docker-en')?.checked);
@@ -1454,8 +1450,8 @@ function buildAppForm(body,item){
   document.getElementById('act-en')?.addEventListener('change',e=>showHide('act-sub',e.target.checked));
   document.getElementById('auth-en')?.addEventListener('change',e=>showHide('auth-sub',e.target.checked));
   document.getElementById('bfetch')?.addEventListener('click',fetchBadge);
-  document.getElementById('bsearch')?.addEventListener('input',e=>renderBadgeList(fnums,false,e.target.value));
-  if(spaths.length){['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));renderBadgeList([],true);}
+  document.getElementById('bsearch')?.addEventListener('input',e=>renderBadgeList(state.fnums,false,e.target.value));
+  if(state.spaths.length){['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));renderBadgeList([],true);}
 }
 
 function wireIcon(){
@@ -1465,10 +1461,10 @@ function wireIcon(){
   inp.oninput=()=>{
     const v=inp.value.trim();
     /* Full URL — use directly */
-    if(v.startsWith('http://')||v.startsWith('https://')){siurl=v;updPrev();rs.classList.remove('open');return;}
+    if(v.startsWith('http://')||v.startsWith('https://')){state.siurl=v;updPrev();rs.classList.remove('open');return;}
     /* Shorthand like "radarr.svg" or "radarr" — resolve and preview immediately */
     if(v&&!v.includes('/')){
-      siurl=v;updPrev();
+      state.siurl=v;updPrev();
       /* Also search CDN */
       clearTimeout(t);
       t=setTimeout(async()=>{
@@ -1503,7 +1499,7 @@ function wireIcon(){
         if(!r.ok)throw new Error(d.error||'Upload failed');
         /* Refresh local icon manifest so resolveIcon sees the new file */
         await loadLocalIcons();
-        siurl=d.filename;
+        state.siurl=d.filename;
         const ipIn=document.getElementById('ip-in');
         if(ipIn)ipIn.value=d.filename;
         updPrev();
@@ -1522,7 +1518,7 @@ function showIPRes(list, rawInput){
     const r=document.createElement('button');r.type='button';r.className='ipr';
     const img=document.createElement('img');img.alt='';img.src=ic.svgUrl;img.onerror=()=>{img.src=ic.pngUrl;};
     const sp=document.createElement('span');sp.textContent=ic.name;r.append(img,sp);
-    r.onclick=()=>{siurl=ic.svgUrl;document.getElementById('ip-in').value=ic.svgUrl;updPrev();rs.classList.remove('open');};
+    r.onclick=()=>{state.siurl=ic.svgUrl;document.getElementById('ip-in').value=ic.svgUrl;updPrev();rs.classList.remove('open');};
     rs.appendChild(r);
   });
   /* If no CDN matches but input looks like a filename, offer to use it as local/CDN icon */
@@ -1537,7 +1533,7 @@ function showIPRes(list, rawInput){
     img.src=srcs[0];
     img.onerror=()=>{step++;if(step<srcs.length)img.src=srcs[step];else{img.onerror=null;img.src='';img.style.display='none';}};
     const sp=document.createElement('span');sp.textContent=val;r.append(img,sp);
-    r.onclick=()=>{siurl=val;document.getElementById('ip-in').value=val;updPrev();rs.classList.remove('open');};
+    r.onclick=()=>{state.siurl=val;document.getElementById('ip-in').value=val;updPrev();rs.classList.remove('open');};
     rs.appendChild(r);
   }
   if(rs.children.length)rs.classList.add('open');
@@ -1545,9 +1541,9 @@ function showIPRes(list, rawInput){
 }
 function updPrev(){
   const p=document.getElementById('ipv');if(!p)return;
-  p.style.background=rc(scol);
-  if(!siurl){const l=document.getElementById('f-lbl')?.value||'?';p.innerHTML=`<span>${l[0]?.toUpperCase()||'?'}</span>`;return;}
-  const fallbacks=iconChain(siurl);
+  p.style.background=rc(state.scol);
+  if(!state.siurl){const l=document.getElementById('f-lbl')?.value||'?';p.innerHTML=`<span>${l[0]?.toUpperCase()||'?'}</span>`;return;}
+  const fallbacks=iconChain(state.siurl);
   if(!fallbacks.length){const l=document.getElementById('f-lbl')?.value||'?';p.innerHTML=`<span>${l[0]?.toUpperCase()||'?'}</span>`;return;}
   let step=0;
   const img=document.createElement('img');
@@ -1580,7 +1576,7 @@ function collectNums(obj,path='',out=[]){
   if(typeof obj==='number'){out.push({path:path||'(root)',value:obj});return out;}
   if(Array.isArray(obj)){
     const countPath=path?`${path}.$count`:'$count';
-    out.push({path:countPath,value:obj.length,label:`Total count (${obj.length} items)`});
+    out.push({path:countPath,value:obj.length,label:`Total count (${obj.length} state.items)`});
     const sample=obj.find(i=>i&&typeof i==='object'&&!Array.isArray(i));
     if(sample){
       const seen={};
@@ -1623,14 +1619,14 @@ async function fetchBadge(){
     const headers=parseKV(document.getElementById('f-bhdr')?.value||'');
     const skipTls=document.getElementById('f-skip-tls')?.checked||false;
     const r=await ap('/api/badge-proxy',{url,params,headers,skipTls});
-    fnums=r.numbers||[];
+    state.fnums=r.numbers||[];
     if(st){
       st.style.cssText='margin-top:4px;color:#34c759';
-      if(!fnums.length) st.textContent='✓ Connected, no numeric values found';
-      else st.textContent=`✓ Found ${fnums.length} value${fnums.length!==1?'s':''}`;
+      if(!state.fnums.length) st.textContent='✓ Connected, no numeric values found';
+      else st.textContent=`✓ Found ${state.fnums.length} value${state.fnums.length!==1?'s':''}`;
     }
     ['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));
-    if(fnums.length) renderBadgeList(fnums,false);
+    if(state.fnums.length) renderBadgeList(state.fnums,false);
   }catch(e){
     if(st){
       const msg=e.message||'';
@@ -1662,11 +1658,11 @@ function renderBadgeList(nums,existingOnly,query=''){
   const list=document.getElementById('blist');if(!list)return;list.innerHTML='';
   if(existingOnly&&!nums.length){
     /* Issue #8: saved paths already shown in #bst hint — don't repeat here */
-    if(spaths.length){
-      spaths.forEach(p=>{
+    if(state.spaths.length){
+      state.spaths.forEach(p=>{
         const it=document.createElement('div');it.className='bi on';
         it.innerHTML=`<div class="bck"></div><div class="binfo"><div class="blabel">${esc(p)}</div><div class="bpath">${esc(p)}</div></div>`;
-        it.onclick=()=>{const i=spaths.indexOf(p);if(i>=0){spaths.splice(i,1);it.classList.remove('on');}else{spaths.push(p);it.classList.add('on');}};
+        it.onclick=()=>{const i=state.spaths.indexOf(p);if(i>=0){state.spaths.splice(i,1);it.classList.remove('on');}else{state.spaths.push(p);it.classList.add('on');}};
         list.appendChild(it);
       });
     }
@@ -1689,10 +1685,10 @@ function renderBadgeList(nums,existingOnly,query=''){
   const direct=filtered.filter(n=>!n.computed);
   const computed=filtered.filter(n=>n.computed);
   const addItem=({path,value,label})=>{
-    const it=document.createElement('div');it.className='bi'+(spaths.includes(path)?' on':'');
+    const it=document.createElement('div');it.className='bi'+(state.spaths.includes(path)?' on':'');
     const displayLabel=label||path;
     it.innerHTML=`<div class="bck"></div><div class="binfo"><div class="blabel">${esc(displayLabel)}</div><div class="bpath">${esc(path)}</div></div><div class="bval">${value}</div>`;
-    it.onclick=()=>{const i=spaths.indexOf(path);if(i>=0){spaths.splice(i,1);it.classList.remove('on');}else{spaths.push(path);it.classList.add('on');}};
+    it.onclick=()=>{const i=state.spaths.indexOf(path);if(i>=0){state.spaths.splice(i,1);it.classList.remove('on');}else{state.spaths.push(path);it.classList.add('on');}};
     list.appendChild(it);
   };
   if(direct.length){
@@ -1707,9 +1703,9 @@ function renderBadgeList(nums,existingOnly,query=''){
 
 function openFolderPicker(appId,targetFolderId=null){
   const trigger=document.activeElement;
-  const folders=items.filter(i=>i.type==='folder');
+  const folders=state.items.filter(i=>i.type==='folder');
   const currentFolder=folders.find(f=>(f.children||[]).includes(appId));
-  const appItem=items.find(i=>i.id===appId);
+  const appItem=state.items.find(i=>i.id===appId);
   const appName=appItem?.label||appId;
 
   document.getElementById('folder-picker-ov')?.remove();
@@ -1732,14 +1728,14 @@ function openFolderPicker(appId,targetFolderId=null){
 
   if(targetFolderId){
     const tf=folders.find(f=>f.id===targetFolderId);
-    const available=tf?items.filter(i=>i.type==='app'&&!i.dock&&!(tf.children||[]).includes(i.id)):[];
+    const available=tf?state.items.filter(i=>i.type==='app'&&!i.dock&&!(tf.children||[]).includes(i.id)):[];
     if(!available.length){
       const em=document.createElement('div');em.className='fp-empty';
       em.textContent='All apps are already in this folder.';list.appendChild(em);
     }
     available.forEach(app=>{
       const b=rowBtn('',()=>{
-        items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==app.id);});
+        state.items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==app.id);});
         if(!tf.children)tf.children=[];tf.children.push(app.id);save();close();});
       const ri=document.createElement('span');ri.className='fp-ic';ri.style.background=rc(app.color);
       if(app.iconUrl){const img=document.createElement('img');img.alt='';img.src=resolveIcon(app.iconUrl);ri.appendChild(img);}
@@ -1749,14 +1745,14 @@ function openFolderPicker(appId,targetFolderId=null){
     });
   }else{
     const none=rowBtn(currentFolder?'muted':'cur',()=>{
-      items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==appId);});
+      state.items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==appId);});
       save();close();});
     const ns=document.createElement('span');ns.textContent='No folder';none.append(ns);list.appendChild(none);
 
     folders.forEach(f=>{
       const cur=currentFolder?.id===f.id;
       const b=rowBtn(cur?'cur':'',()=>{
-        items.forEach(ff=>{if(ff.type==='folder')ff.children=(ff.children||[]).filter(id=>id!==appId);});
+        state.items.forEach(ff=>{if(ff.type==='folder')ff.children=(ff.children||[]).filter(id=>id!==appId);});
         if(!f.children)f.children=[];if(!f.children.includes(appId))f.children.push(appId);save();close();});
       const nm=document.createElement('span');nm.textContent='📁 '+f.label;
       const chk=document.createElement('span');chk.className='fp-chk';if(cur)chk.textContent='✓';
@@ -1768,8 +1764,8 @@ function openFolderPicker(appId,targetFolderId=null){
     const nr=rowBtn('accent',()=>{
       const name=prompt('Folder name:');if(!name?.trim())return;
       const fid='folder_'+Date.now();
-      items.push({id:fid,type:'folder',label:name.trim(),children:[appId]});
-      items.forEach(f=>{if(f.type==='folder'&&f.id!==fid)f.children=(f.children||[]).filter(id=>id!==appId);});
+      state.items.push({id:fid,type:'folder',label:name.trim(),children:[appId]});
+      state.items.forEach(f=>{if(f.type==='folder'&&f.id!==fid)f.children=(f.children||[]).filter(id=>id!==appId);});
       save();close();});
     const nrs=document.createElement('span');nrs.textContent='+ Create new folder';nr.append(nrs);list.appendChild(nr);
   }
@@ -1787,74 +1783,74 @@ function openFolderPicker(appId,targetFolderId=null){
 async function doSave(orig){
   try{
     let item;
-    if(ctype==='widget'){
+    if(state.ctype==='widget'){
       /* Generate clean IDs: only letters, digits and underscores */
       const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'widget';
-      const wlabel=_wlabel.trim()||(_wtype==='stats'?(_wstatsSubType==='disk-health'?'Disk Health':'System Summary'):WIDGET_TYPES[_wtype]?.label||'Widget');
-      if(_autoForm && _autoFormType===_wtype && _widgetReg[_wtype] && !_widgetReg[_wtype].customEditor){
-        const missing=_autoForm.validate();
+      const wlabel=state._wlabel.trim()||(state._wtype==='stats'?(state._wstatsSubType==='disk-health'?'Disk Health':'System Summary'):WIDGET_TYPES[state._wtype]?.label||'Widget');
+      if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
+        const missing=state._autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
-        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:_wtype,
-          label:wlabel,widgetSize:_wsize,widgetConfig:_autoForm.getValues()};
+        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:state._wtype,
+          label:wlabel,widgetSize:state._wsize,widgetConfig:state._autoForm.getValues()};
       }
-      else if(_wtype==='weather'){
-        const city=document.getElementById('wx-city')?.value?.trim()||_wweatherCfg.city;
-        if(_wweatherCfg.lat===''||_wweatherCfg.lat==null){ toast('Search and select a city first','err'); return; }
-        const wcfg={ city:_wweatherCfg.city||city, lat:_wweatherCfg.lat, lon:_wweatherCfg.lon, units:_wweatherCfg.units||'c' };
-        if(_wweatherCfg.feelsLike) wcfg.feelsLike=true;
+      else if(state._wtype==='weather'){
+        const city=document.getElementById('wx-city')?.value?.trim()||state._wweatherCfg.city;
+        if(state._wweatherCfg.lat===''||state._wweatherCfg.lat==null){ toast('Search and select a city first','err'); return; }
+        const wcfg={ city:state._wweatherCfg.city||city, lat:state._wweatherCfg.lat, lon:state._wweatherCfg.lon, units:state._wweatherCfg.units||'c' };
+        if(state._wweatherCfg.feelsLike) wcfg.feelsLike=true;
         const href=document.getElementById('wx-href')?.value?.trim();
         if(href) wcfg.href=href;
         item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'weather',
           label:wlabel,widgetSize:'small',widgetConfig:wcfg};
       }
-      else if(_wtype==='custom'){
+      else if(state._wtype==='custom'){
         const url=document.getElementById('f-url')?.value?.trim();
         if(!url){toast('URL required','err');return;}
         const ifo={};
-        if(_iframeOpts.referrerPolicy) ifo.referrerPolicy=_iframeOpts.referrerPolicy;
-        if(_iframeOpts.allow) ifo.allow=_iframeOpts.allow;
-        if(_iframeOpts.allowFullscreen===false) ifo.allowFullscreen=false;
-        if(_iframeOpts.refreshInterval) ifo.refreshInterval=_iframeOpts.refreshInterval;
+        if(state._iframeOpts.referrerPolicy) ifo.referrerPolicy=state._iframeOpts.referrerPolicy;
+        if(state._iframeOpts.allow) ifo.allow=state._iframeOpts.allow;
+        if(state._iframeOpts.allowFullscreen===false) ifo.allowFullscreen=false;
+        if(state._iframeOpts.refreshInterval) ifo.refreshInterval=state._iframeOpts.refreshInterval;
         item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'custom',
-          label:wlabel, widgetSize:_wsize,url};
+          label:wlabel, widgetSize:state._wsize,url};
         if(Object.keys(ifo).length) item.iframe=ifo;
-      }else if(_wtype==='connections'){
-        if(_wconnView==='vpn'){
+      }else if(state._wtype==='connections'){
+        if(state._wconnView==='vpn'){
           const url=(document.getElementById('vpn-url')?.value||'').trim();
           if(!url){toast('Connection URL is required','err');return;}
-          const vpn={ service:_wvpnCfg.service||'gluetun', url };
-          vpn.color=_wvpnCfg.color||'#30D158';
+          const vpn={ service:state._wvpnCfg.service||'gluetun', url };
+          vpn.color=state._wvpnCfg.color||'#30D158';
           const nm=(document.getElementById('vpn-name')?.value||'').trim();
-          if(nm) vpn.name=nm; else if(_wvpnCfg.name) vpn.name=_wvpnCfg.name;
+          if(nm) vpn.name=nm; else if(state._wvpnCfg.name) vpn.name=state._wvpnCfg.name;
           const hf=(document.getElementById('vpn-href')?.value||'').trim();
-          if(hf) vpn.href=hf; else if(_wvpnCfg.href) vpn.href=_wvpnCfg.href;
+          if(hf) vpn.href=hf; else if(state._wvpnCfg.href) vpn.href=state._wvpnCfg.href;
           if(vpn.service==='gluetun'){
             const k=(document.getElementById('vpn-apikey')?.value||'').trim();
             /* Only send a new key if typed; otherwise flag that one is stored so
                the server preserves it (POST /api/config merge) and the UI shows it. */
             if(k){ vpn.apiKey=k; vpn.apiKeySet=true; }
-            else if(_wvpnCfg.apiKeySet){ vpn.apiKeySet=true; }
+            else if(state._wvpnCfg.apiKeySet){ vpn.apiKeySet=true; }
           }else{
             const tk=(document.getElementById('vpn-token')?.value||'').trim();
             if(tk){ vpn.token=tk; vpn.tokenSet=true; }
-            else if(_wvpnCfg.tokenSet){ vpn.tokenSet=true; }
+            else if(state._wvpnCfg.tokenSet){ vpn.tokenSet=true; }
             else { toast('NetBird access token is required','err'); return; }
           }
           item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'connections',
-            label:wlabel, widgetSize:_wsize, widgetConfig:{ view:'vpn', vpn }};
+            label:wlabel, widgetSize:state._wsize, widgetConfig:{ view:'vpn', vpn }};
         } else {
           const SVC_PLAIN=['siteId','websiteId','username'], SVC_SECRET=['token','apiKey','password'];
-          const services=(_wmapCfg.services||[]).filter(s=>s && s.type && (s.url||'').trim())
+          const services=(state._wmapCfg.services||[]).filter(s=>s && s.type && (s.url||'').trim())
             .map(s=>{const o={id:s.id,type:s.type,name:(s.name||'').trim(),url:s.url.trim(),adminUrl:(s.adminUrl||'').trim(),color:s.color||'',enabled:true};
               SVC_PLAIN.forEach(k=>{ if((s[k]||'').trim()) o[k]=s[k].trim(); });
               SVC_SECRET.forEach(k=>{ if((s[k]||'').trim()) o[k]=s[k].trim(); }); /* blank → server keeps saved */
               return o;});
           item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'connections',
-            label:wlabel, widgetSize:'medium',widgetConfig:{ view:'map', services, showLegend:_wmapCfg.showLegend!==false }};
+            label:wlabel, widgetSize:'medium',widgetConfig:{ view:'map', services, showLegend:state._wmapCfg.showLegend!==false }};
         }
-      }else if(_wtype==='backup'){
-        /* Flush current DOM values into slot state before saving */
-        _wbackupCfg.slots.forEach((slot,si) => {
+      }else if(state._wtype==='backup'){
+        /* Flush current DOM values into slot state before state.saving */
+        state._wbackupCfg.slots.forEach((slot,si) => {
           slot.customName = (document.getElementById(`bak-name-${si}`)?.value||'').trim();
           const defEl = document.getElementById(`bak-def-${si}`);
           if (defEl) slot.useDefault = defEl.checked;
@@ -1879,13 +1875,13 @@ async function doSave(orig){
         });
         /* Copy the default instance's connection to every same-provider slot that
            uses the default, so the runtime resolves each slot directly. */
-        if(_wsize!=='small'){
+        if(state._wsize!=='small'){
           const propagate=(prov)=>{
-            const fi=_wbackupCfg.slots.findIndex(s=>s.provider===prov);
+            const fi=state._wbackupCfg.slots.findIndex(s=>s.provider===prov);
             if(fi<0) return;
-            const def=_wbackupCfg.slots[fi];
+            const def=state._wbackupCfg.slots[fi];
             if(def.useDefault===false) return;   /* default instance opted out → no sharing */
-            _wbackupCfg.slots.forEach((t,j)=>{
+            state._wbackupCfg.slots.forEach((t,j)=>{
               if(j===fi || t.provider!==prov || t.useDefault===false) return;
               if(prov==='duplicati'){
                 t.dupUrl=def.dupUrl; t.dupHref=def.dupHref; t.dupPollSec=def.dupPollSec;
@@ -1899,12 +1895,12 @@ async function doSave(orig){
           propagate('duplicati'); propagate('kopia');
         }
         /* Validate (after propagation, every provider slot has a URL) */
-        for(const [si,slot] of _wbackupCfg.slots.entries()){
+        for(const [si,slot] of state._wbackupCfg.slots.entries()){
           if(slot.provider==='duplicati'&&!slot.dupUrl){toast(`URL required for ${['First','Second','Third'][si]||''} Duplicati instance`,'err');return;}
           if(slot.provider==='kopia'&&!slot.kopiaUrl){toast(`URL required for ${['First','Second','Third'][si]||''} Kopia instance`,'err');return;}
         }
-        /* Strip runtime-only fields before saving */
-        const savableSlots = _wbackupCfg.slots.map(s=>({
+        /* Strip runtime-only fields before state.saving */
+        const savableSlots = state._wbackupCfg.slots.map(s=>({
           provider:    s.provider,
           jobId:       s.jobId    ||null,
           customName:  s.customName||undefined,
@@ -1921,32 +1917,32 @@ async function doSave(orig){
           kopiaPass:   s.kopiaPass||undefined,
         }));
         item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'backup',
-          label:wlabel,widgetSize:_wsize,widgetConfig:{slots:savableSlots}};
+          label:wlabel,widgetSize:state._wsize,widgetConfig:{slots:savableSlots}};
 
       }else{
-        /* stats — slot values are kept live in _wslots by the row commit handlers */
-        const slots=_wslots.slice(0,3).map((s)=>{
+        /* stats — slot values are kept live in state._wslots by the row commit handlers */
+        const slots=state._wslots.slice(0,3).map((s)=>{
           const slotColor=s.color||undefined;
           if(s.type==='disk') return {type:'disk',primary:s.primary||'/',secondary:s.secondary||undefined,color:slotColor};
           if(s.type==='temp') return {type:'temp',thermalZone:Number.isInteger(s.thermalZone)?s.thermalZone:0,color:slotColor};
           return {type:s.type,color:slotColor};
         });
-        _wnet.url      = document.getElementById('net-url')?.value?.trim()||'';
-        _wnet.provider = _wnet.provider || 'myspeed';
+        state._wnet.url      = document.getElementById('net-url')?.value?.trim()||'';
+        state._wnet.provider = state._wnet.provider || 'myspeed';
         const newPass  = document.getElementById('net-pass')?.value||'';
-        if (newPass) _wnet.myspeedPass = newPass;
+        if (newPass) state._wnet.myspeedPass = newPass;
         /* strip passSet flag from saved config — only real pass is stored */
-        const netToSave = {..._wnet};
+        const netToSave = {...state._wnet};
         delete netToSave.myspeedPassSet;
 
-        if (_wstatsSubType === 'disk-health') {
-          const prov = (document.getElementById('dh-prov')?.value) || _wdiskCfg.diskProvider || 'scrutiny';
+        if (state._wstatsSubType === 'disk-health') {
+          const prov = (document.getElementById('dh-prov')?.value) || state._wdiskCfg.diskProvider || 'scrutiny';
           const dhUrl  = document.getElementById('dh-url')?.value?.trim()  || '';
           const dhHref = document.getElementById('dh-href')?.value?.trim() || '';
-          const wcfg = { widgetSubType:'disk-health', diskProvider:prov, bays:_wdiskCfg.bays };
+          const wcfg = { widgetSubType:'disk-health', diskProvider:prov, bays:state._wdiskCfg.bays };
 
           if (prov === 'truenas') {
-            const u = dhUrl || _wdiskCfg.truenasUrl;
+            const u = dhUrl || state._wdiskCfg.truenasUrl;
             if (!u) { toast('TrueNAS URL is required','err'); return; }
             wcfg.truenasUrl  = u;
             wcfg.truenasHref = dhHref || undefined;
@@ -1954,20 +1950,20 @@ async function doSave(orig){
             const k = document.getElementById('dh-key')?.value?.trim();
             if (k) wcfg.truenasKey = k;
           } else {
-            const u = dhUrl || _wdiskCfg.scrutinyUrl;
+            const u = dhUrl || state._wdiskCfg.scrutinyUrl;
             if (!u) { toast('Scrutiny URL is required','err'); return; }
             wcfg.scrutinyUrl  = u;
             wcfg.scrutinyHref = dhHref || undefined;
           }
 
           item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'stats',
-            label:wlabel,widgetSize:_wsize,widgetConfig:wcfg};
+            label:wlabel,widgetSize:state._wsize,widgetConfig:wcfg};
         } else {
           item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'stats',
-            label:wlabel, widgetSize:_wsize,widgetConfig:{widgetSubType:_wstatsSubType,slots,network:netToSave}};
+            label:wlabel, widgetSize:state._wsize,widgetConfig:{widgetSubType:state._wstatsSubType,slots,network:netToSave}};
         }
       }
-    }else if(ctype==='folder'){
+    }else if(state.ctype==='folder'){
       const label=document.getElementById('f-fname')?.value?.trim();
       if(!label){toast('Name required','err');return;}
       const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'folder';
@@ -1975,7 +1971,7 @@ async function doSave(orig){
       const children=[...document.querySelectorAll('#folder-apps-list li[aria-selected="true"]')].map(li=>li.dataset.val);
       if(!orig){
         children.forEach(cid=>{
-          items.forEach(it=>{
+          state.items.forEach(it=>{
             if(it.type==='folder'&&it.children?.includes(cid))
               it.children=it.children.filter(x=>x!==cid);
           });
@@ -2011,11 +2007,11 @@ async function doSave(orig){
       const staticLabel=document.getElementById('f-static-label')?.value?.trim()||'';
       const staticColor=document.getElementById('static-col-val')?.value||'#0289ff';
       const staticBadgeObj=staticEn&&staticLabel?{enabled:true,label:staticLabel.slice(0,10),color:staticColor||'blue'}:undefined;
-      const finalIcon=siurl;
+      const finalIcon=state.siurl;
       item={
         id:orig?.id||cleanId(label)+'_'+Date.now(),
         type:'app',label,href,
-        iconUrl:finalIcon,color:scol||'dark',
+        iconUrl:finalIcon,color:state.scol||'dark',
         dock:document.getElementById('f-dock')?.checked||false,
         skipTlsVerify:skipTlsVerify||undefined,
         monitoring:{
@@ -2023,15 +2019,15 @@ async function doSave(orig){
           activity:{enabled:actEn&&!!actUrl,url:actUrl,
             params:Object.keys(actParams).length?actParams:undefined,
             headers:Object.keys(actHeaders).length?actHeaders:undefined,
-            extract:spaths.length===1?spaths[0]:spaths.length>1?spaths.map(p=>({path:p})):undefined,
+            extract:state.spaths.length===1?state.spaths[0]:state.spaths.length>1?state.spaths.map(p=>({path:p})):undefined,
             interval:Math.max(10,actInt),
             custom:customObj},
           staticBadge:staticBadgeObj,
         },
       };
     }
-    if(eid!==null)items[eid]=item;else items.push(item);
-    await save();closeModal();toast(eid!==null?'Updated':'Added');
+    if(state.eid!==null)state.items[state.eid]=item;else state.items.push(item);
+    await save();closeModal();toast(state.eid!==null?'Updated':'Added');
   }catch(e){toast('Error: '+e.message,'err');}
 }
 
@@ -2211,7 +2207,7 @@ async function saveWallpaper(){
     const c=await ag('/api/config');c.settings=c.settings||{};c.settings.background=bg;
     await ap('/api/config',c);
     /* Save Unsplash key separately AFTER main config — the GET /api/config strips the key,
-       so saving it before would cause the subsequent config write to overwrite it with nothing */
+       so state.saving it before would cause the subsequent config write to overwrite it with nothing */
     if(type==='unsplash'){
       const keyVal=(document.getElementById('bg-apikey-inp')||document.getElementById('bg-apikey'))?.value?.trim()||'';
       if(keyVal) await ap('/api/settings/unsplash-key',{apiKey:keyVal});
@@ -2411,7 +2407,7 @@ document.getElementById('btn-exp').onclick=async()=>{
 document.getElementById('imp').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d.items)throw new Error('Invalid');
-    items=d.items;await save();toast('Imported');}
+    state.items=d.items;await save();toast('Imported');}
   catch(e){toast('Import failed: '+e.message,'err');}
   e.target.value='';
 };
