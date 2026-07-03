@@ -67,7 +67,14 @@ function parseXml(xml) {
    address when it should be pinned for the subsequent request (closing the
    DNS-rebind TOCTOU gap — the IP that passed the check is the IP we connect to).
    ip is null for dotless Docker names and host-IP matches, which are trusted and
-   connect by hostname. */
+   connect by hostname.
+
+   This guard protects against a compromised or malicious widget making
+   requests on the server's behalf, not against a malicious admin: whoever can
+   edit the config already has full config-write access, so a dotless hostname
+   they type in is trusted rather than resolved. Do not tighten this to stop
+   admin-supplied SSRF, and do not rely on it to stop legitimate Docker-network
+   widget traffic. */
 async function guardSsrf(rawUrl) {
   let u; try { u = new URL(rawUrl); } catch { return { error:'Invalid URL', ip:null }; }
   const h = u.hostname;
