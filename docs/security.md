@@ -27,6 +27,8 @@ resolved IP to close DNS-rebind gaps. Dotless hostnames (such as Docker containe
 
 This guard limits what a compromised or malicious widget can access. It does not protect against an admin, who can already configure widgets to connect anywhere.
 
+Setting `ALLOW_PRIVATE_IPS=true` disables this guard entirely, so private, loopback and link-local targets are no longer blocked. Most homelab installs need it on because the services they link to live on private IPs; it is opt-in for that reason.
+
 ## Authentication
 
 - Passwords are hashed with scrypt and a per-password salt.
