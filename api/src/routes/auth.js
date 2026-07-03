@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { on, json, readBody, checkOrigin, getIp } = require('../router');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
-const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, checkRateLimit, recordFailedAttempt, clearAttempts, isAuthenticated, hasValidSession } = require('../auth');
+const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, checkRateLimit, recordFailedAttempt, clearAttempts, isAuthenticated, hasValidSession } = require('../auth');
 
 on('GET', '/api/auth/check', (req, res) => {
   const cfg = loadConfig();
@@ -30,14 +30,14 @@ on('POST', '/api/auth/login', async(req, res) => {
     log.audit('login success', { ip });
     const secret = getOrCreateSecret();
     const sessionId = crypto.randomBytes(24).toString('hex');
-    setSessionCookie(res, makeToken(sessionId, secret));
+    setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
     json(res, 200, { ok:true });
   } catch(e) { json(res, 400, { error:e.message }); }
 });
 
 on('POST', '/api/auth/logout', (req, res) => {
   log.audit('logout', { ip: getIp(req) });
-  clearSessionCookie(res);
+  clearSessionCookie(res, isSecureRequest(req));
   json(res, 200, { ok:true });
 });
 
@@ -60,7 +60,7 @@ on('POST', '/api/auth/set-password', async(req, res) => {
     saveConfig(cfg);
     log.audit('password changed', {});
     const sessionId = crypto.randomBytes(24).toString('hex');
-    setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret));
+    setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret), isSecureRequest(req));
     json(res, 200, { ok:true });
   } catch(e) { json(res, 400, { error:e.message }); }
 });
