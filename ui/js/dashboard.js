@@ -1,10 +1,11 @@
 /* dashboard.js — boot, state, badge system, desktop layout, navigation, background, polling */
 
-import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=39';
-import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=40';
-import { initSpotlight } from '/js/spotlight.js?v=36';
-import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=43';
+import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
+import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
+import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=92153ac7';
+import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
+import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
+import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
 
 const API = '';
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
@@ -32,80 +33,18 @@ function bupd(id) {
   const hideHealthy = S.server?.hideHealthyBadge !== false;
   const custom   = item?.monitoring?.activity?.custom || {};
   const staticBdg = item?.monitoring?.staticBadge || {};
+  const hasHC = !!(item?.monitoring?.healthcheck?.enabled||item?.container||item?.ping);
 
-  /* Named-color → hex for all badge types */
-  const NAMED={blue:'#1e6ef4',green:'#008932',yellow:'#ffcc00',red:'#e9152d',gray:'#636366'};
-
-  /* WCAG contrast: use dark text (#1c1c1e) only when it gives higher contrast ratio than white.
-     ratioW = 1.05/(L+0.05)  [white on bg]
-     ratioD = (L+0.05)/0.0617 [bg on near-black; LD(#1c1c1e)≈0.0117, LD+0.05=0.0617] */
-  function needsDark(hex){
-    try{
-      const h=hex.replace(/^#/,'');
-      if(h.length!==6)return false;
-      const [r,g,b]=[0,2,4].map(i=>{const v=parseInt(h.slice(i,i+2),16)/255;return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
-      const L=0.2126*r+0.7152*g+0.0722*b;
-      return (L+0.05)/0.0617 > 1.05/(L+0.05);
-    }catch{return false;}
-  }
-
-  /* Resolve a named color key or raw hex to a hex string */
-  function resolveColor(c){ return c?(NAMED[c]||c):''; }
-
-  /* Priority: unhealthy (1) > activity (2) > fixed-label (3) > healthy-dot (4)
-     Each higher-priority signal overrides lower ones. */
-  let cls, txt, bg='';
-
-  if(s.health){
-    /* 1 — unhealthy */
-    cls='badge on red'; txt='!';
-
-  } else if(s.activity > 0){
-    /* 2 — activity badge */
-    cls='badge on blue';
-    txt=s.activity>99?'99+':String(s.activity);
-    if(custom.unit) txt+=' '+custom.unit.slice(0,8);
-    bg=resolveColor(custom.color);
-
-  } else if(staticBdg.enabled && staticBdg.label){
-    /* 3 — fixed label badge */
-    cls='badge on blue';
-    txt=staticBdg.label.slice(0,10);
-    bg=resolveColor(staticBdg.color);
-
-  } else {
-    /* 4 — healthy green dot: show when hideHealthy is OFF and the app has a health check.
-       Show as soon as health check is configured — switches to red immediately if unhealthy. */
-    const hasHC=!!(item?.monitoring?.healthcheck?.enabled||item?.container||item?.ping);
-    if(!hideHealthy && hasHC){
-      cls='badge on green'; txt='';
-    } else {
-      cls='badge'; txt='';
-    }
-  }
-
-  /* Accessible status text so meaning isn't carried by color alone (HIG: don't rely on color) */
-  let aria='';
-  if(s.health) aria='Status: needs attention';
-  else if(s.activity>0) aria=(s.activity>99?'99+':String(s.activity))+(custom.unit?' '+custom.unit:'')+' pending';
-  else if(staticBdg.enabled && staticBdg.label) aria=staticBdg.label;
-  else if(cls.includes('green')) aria='Status: healthy';
-
-  if((s.activity>0 && badgesStale) || ((s.health || cls.includes('green')) && healthStale)){
-    cls+=' stale';
-    aria=(aria?aria+' ':'')+'(may be out of date)';
-  }
+  const { cls, txt, bg, aria, color } = computeBadgeVisual({
+    health: s.health, activity: s.activity, custom, staticBdg, hasHC, hideHealthy, badgesStale, healthStale,
+  });
 
   els.forEach(el=>{
     el.className=cls; el.textContent=txt;
     if(aria){ el.setAttribute('role','status'); el.setAttribute('aria-label',aria); }
     else { el.removeAttribute('role'); el.removeAttribute('aria-label'); }
-    /* Custom background (overrides the class-based color for activity/label badges) */
     el.style.background=bg;
-    /* Auto dark text: use WCAG luminance check on the resolved hex.
-       Falls back to class-based color (blue/red/green) when bg is empty. */
-    const effectiveBg=bg||(cls.includes('red')?NAMED.red:cls.includes('green')?NAMED.green:cls.includes('blue')?NAMED.blue:'');
-    el.style.color=effectiveBg&&needsDark(effectiveBg)?'#1c1c1e':'';
+    el.style.color=color;
   });
 }
 
