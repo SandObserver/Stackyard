@@ -1,93 +1,157 @@
 const crypto = require('crypto');
-const { on, json, readBody, checkOrigin, getIp } = require('../router');
-const { loadConfig, saveConfig } = require('../config');
-const log = require('../log');
-const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, checkRateLimit, recordFailedAttempt, clearAttempts, isAuthenticated, hasValidSession } = require('../auth');
+const { loadConfig, saveConfig } = require('./config');
+const log = require('./log');
 
-on('GET', '/api/auth/check', (req, res) => {
+function getOrCreateSecret() {
   const cfg = loadConfig();
-  json(res, 200, {
-    enabled: !!(cfg.settings?.auth?.enabled),
-    authenticated: isAuthenticated(req),
-    passwordSet: !!(cfg.settings?.auth?.passwordHash),
-    setupPrompted: !!(cfg.settings?.auth?.setupPrompted),
-  });
-});
-
-on('POST', '/api/auth/login', async(req, res) => {
-  const ip = getIp(req);
-  try {
-    const { password = '' } = JSON.parse(await readBody(req));
-    const cfg = loadConfig();
-    if (!cfg.settings?.auth?.enabled) return json(res, 200, { ok:true }); /* auth off — always pass */
-    const limitErr = checkRateLimit(ip);
-    if (limitErr) { log.audit('login blocked', { ip, reason:'rate_limit' }); return json(res, 429, { error:limitErr }); }
-    const hash = cfg.settings.auth.passwordHash;
-    if (!hash) return json(res, 401, { error:'No password set. Enable auth and set a password in Admin → Server.' });
-    const ok = await verifyPassword(password, hash);
-    if (!ok) { recordFailedAttempt(ip); log.audit('login failed', { ip }); return json(res, 401, { error:'Incorrect password.' }); }
-    clearAttempts(ip);
-    log.audit('login success', { ip });
-    const secret = getOrCreateSecret();
-    const sessionId = crypto.randomBytes(24).toString('hex');
-    setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
-    json(res, 200, { ok:true });
-  } catch(e) { json(res, 400, { error:e.message }); }
-});
-
-on('POST', '/api/auth/logout', (req, res) => {
-  log.audit('logout', { ip: getIp(req) });
-  clearSessionCookie(res, isSecureRequest(req));
-  json(res, 200, { ok:true });
-});
-
-on('POST', '/api/auth/set-password', async(req, res) => {
-  if (!checkOrigin(req, res)) return;
-  try {
-    const cfg = loadConfig();
-    const hasPassword = !!cfg.settings?.auth?.passwordHash;
-    if (hasPassword && !hasValidSession(req)) {
-      return json(res, 401, { error:'Authentication required to change the existing password.' });
-    }
-    const { password = '' } = JSON.parse(await readBody(req));
-    if (!password || password.length < 8) return json(res, 400, { error:'Password must be at least 8 characters.' });
-    cfg.settings = cfg.settings || {};
-    cfg.settings.auth = cfg.settings.auth || {};
-    cfg.settings.auth.passwordHash = await hashPassword(password);
-    cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
-    cfg.settings.auth.enabled = true;
-    cfg.settings.auth.setupPrompted = true;
-    saveConfig(cfg);
-    log.audit('password changed', {});
-    const sessionId = crypto.randomBytes(24).toString('hex');
-    setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret), isSecureRequest(req));
-    json(res, 200, { ok:true });
-  } catch(e) { json(res, 400, { error:e.message }); }
-});
-
-on('POST', '/api/auth/dismiss-setup', (req, res) => {
-  if (!checkOrigin(req, res)) return;
-  const cfg = loadConfig();
+  if (cfg.settings?.auth?.secret) return cfg.settings.auth.secret;
+  const secret = crypto.randomBytes(32).toString('hex');
   cfg.settings = cfg.settings || {};
   cfg.settings.auth = cfg.settings.auth || {};
-  cfg.settings.auth.setupPrompted = true;
+  cfg.settings.auth.secret = secret;
   saveConfig(cfg);
-  json(res, 200, { ok:true });
-});
+  return secret;
+}
 
-on('POST', '/api/auth/toggle', async(req, res) => {
-  if (!checkOrigin(req, res)) return;
-  try {
-    const { enabled } = JSON.parse(await readBody(req));
-    const cfg = loadConfig();
-    cfg.settings = cfg.settings || {};
-    cfg.settings.auth = cfg.settings.auth || {};
-    cfg.settings.auth.enabled = !!enabled;
-    if (enabled && !cfg.settings.auth.secret)
-      cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
-    saveConfig(cfg);
-    log.audit('auth toggled', { enabled: !!enabled });
-    json(res, 200, { ok:true });
-  } catch(e) { json(res, 400, { error:e.message }); }
-});
+async function hashPassword(password) {
+  return new Promise((resolve, reject) => {
+    const salt = crypto.randomBytes(16).toString('hex');
+    crypto.scrypt(password, salt, 64, (err, key) => {
+      if (err) reject(err);
+      else resolve(`${salt}:${key.toString('hex')}`);
+    });
+  });
+}
 
+async function verifyPassword(password, hash) {
+  return new Promise((resolve, reject) => {
+    const [salt, key] = hash.split(':');
+    if (!salt || !key) return resolve(false);
+    crypto.scrypt(password, salt, 64, (err, derived) => {
+      if (err) reject(err);
+      else resolve(crypto.timingSafeEqual(Buffer.from(key, 'hex'), derived));
+    });
+  });
+}
+
+function makeToken(sessionId, secret) {
+  const sig = crypto.createHmac('sha256', secret).update(sessionId).digest('hex');
+  return `${sessionId}.${sig}`;
+}
+
+function verifyToken(token, secret) {
+  const dot = token.lastIndexOf('.');
+  if (dot === -1) return null;
+  const sessionId = token.slice(0, dot), sig = token.slice(dot + 1);
+  if (sig.length !== 64 || !/^[0-9a-f]+$/.test(sig)) return null;
+  const expected = crypto.createHmac('sha256', secret).update(sessionId).digest('hex');
+  if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) return null;
+  return sessionId;
+}
+
+function parseCookies(req) {
+  const header = req.headers.cookie || '';
+  const out = {};
+  for (const part of header.split(';')) {
+    const [k, ...v] = part.trim().split('=');
+    if (k) out[k.trim()] = decodeURIComponent(v.join('='));
+  }
+  return out;
+}
+
+const TRUST_PROXY = process.env.TRUST_PROXY === 'true';
+
+/* Secure requires HTTPS, which most homelab installs don't have on their LAN
+   (e.g. http://192.168.x.x:8700). Setting it unconditionally would make the
+   browser silently refuse to store or send the cookie, breaking login with no
+   visible error. Treat the request as secure if the socket itself is TLS, or
+   if TRUST_PROXY is on and a fronting proxy says it terminated TLS. */
+function isSecureRequest(req) {
+  if (req.socket?.encrypted) return true;
+  if (TRUST_PROXY) {
+    const proto = req.headers['x-forwarded-proto'];
+    if (proto && proto.split(',')[0].trim().toLowerCase() === 'https') return true;
+  }
+  return false;
+}
+
+function setSessionCookie(res, token, secure) {
+  const flag = secure ? ' Secure;' : '';
+  res.setHeader('Set-Cookie', `ds=${token}; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=2592000`);
+}
+
+function clearSessionCookie(res, secure) {
+  const flag = secure ? ' Secure;' : '';
+  res.setHeader('Set-Cookie', `ds=; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=0`);
+}
+
+const _loginAttempts = new Map();
+const LOGIN_MAX = 5, LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const rec = _loginAttempts.get(ip) || { count:0, first:now };
+  if (now - rec.first > LOGIN_WINDOW_MS) { _loginAttempts.delete(ip); return null; }
+  if (rec.count >= LOGIN_MAX) {
+    const remaining = Math.ceil((LOGIN_WINDOW_MS - (now - rec.first)) / 60000);
+    return `Too many attempts. Try again in ${remaining} minute${remaining!==1?'s':''}.`;
+  }
+  return null;
+}
+
+function recordFailedAttempt(ip) {
+  const now = Date.now();
+  const rec = _loginAttempts.get(ip) || { count:0, first:now };
+  _loginAttempts.set(ip, { count: rec.count + 1, first: rec.first });
+}
+
+function clearAttempts(ip) { _loginAttempts.delete(ip); }
+
+const _rateBuckets = new Map();
+function rateLimit(ip, key, max, windowMs) {
+  const bkey = `${ip}:${key}`;
+  const now  = Date.now();
+  const rec  = _rateBuckets.get(bkey) || { count:0, first:now };
+  if (now - rec.first > windowMs) { _rateBuckets.set(bkey, { count:1, first:now }); return null; }
+  if (rec.count >= max) {
+    const remaining = Math.ceil((windowMs - (now - rec.first)) / 1000);
+    return `Rate limit exceeded. Try again in ${remaining}s.`;
+  }
+  _rateBuckets.set(bkey, { count: rec.count + 1, first: rec.first });
+  return null;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of _rateBuckets)   if (now - v.first > 3_600_000)     _rateBuckets.delete(k);
+  for (const [k, v] of _loginAttempts) if (now - v.first > LOGIN_WINDOW_MS) _loginAttempts.delete(k);
+}, 600_000).unref();
+
+function isAuthenticated(req) {
+  const cfg = loadConfig();
+  if (!cfg.settings?.auth?.enabled) return true;
+  const token = parseCookies(req).ds;
+  if (!token) return false;
+  const secret = cfg.settings.auth.secret;
+  if (!secret) return false;
+  return !!verifyToken(token, secret);
+}
+
+/* Like isAuthenticated, but does NOT return true just because auth is disabled.
+   Verifies an actual valid session cookie against the signing secret. Used to
+   gate sensitive operations (e.g. changing an existing password) that must not
+   be possible from an unauthenticated request even when auth is turned off. */
+function hasValidSession(req) {
+  const cfg = loadConfig();
+  const secret = cfg.settings?.auth?.secret;
+  if (!secret) return false;
+  const token = parseCookies(req).ds;
+  if (!token) return false;
+  return !!verifyToken(token, secret);
+}
+
+module.exports = {
+  crypto, getOrCreateSecret, hashPassword, verifyPassword,
+  makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
+  checkRateLimit, recordFailedAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
+  log,
+};
