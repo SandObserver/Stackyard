@@ -36,4 +36,11 @@ http.createServer(dispatch).listen(PORT, () => {
     '',
   ];
   console.log(lines.join('\n'));
+
+  /* IP rate-limiting and the cookie Secure flag trust X-Forwarded-* when this is
+     on. That is only safe behind a proxy you control; if it is set without one,
+     clients can spoof those headers. Flagged once at boot so a misconfiguration
+     is visible. */
+  if (process.env.TRUST_PROXY === 'true')
+    log.warn('TRUST_PROXY is enabled: X-Forwarded-For / X-Forwarded-Proto are trusted. Only safe behind a reverse proxy you control.');
 });

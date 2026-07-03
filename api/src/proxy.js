@@ -5,6 +5,10 @@ const { loadConfig } = require('./config');
 
 const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.|::1$|fc[0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.))/i;
 const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
+/* Setting this true disables SSRF filtering entirely: private, loopback and
+   link-local targets are no longer blocked. Most homelab setups need it on
+   because the services they link to are on private IPs, but it removes the
+   guard, so it is opt-in. */
 const ALLOW_PRIVATE_IPS = process.env.ALLOW_PRIVATE_IPS === 'true';
 
 function getHostIp() {
