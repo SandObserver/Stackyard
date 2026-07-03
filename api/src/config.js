@@ -1,5 +1,6 @@
 const fs   = require('fs');
 const path = require('path');
+const log  = require('./log');
 
 const CONFIG_PATH = process.env.CONFIG_PATH || '/data/apps.json';
 const ICONS_PATH  = process.env.ICONS_PATH  || '/icons';
@@ -27,8 +28,17 @@ function migrate(cfg) {
 function loadConfig() {
   const now = Date.now();
   if (_cfgCache && (now - _cfgCacheAt) < CONFIG_TTL_MS) return _cfgCache;
+
+  let raw;
   try {
-    const parsed = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    raw = fs.readFileSync(CONFIG_PATH, 'utf8');
+  } catch (e) {
+    if (e.code !== 'ENOENT') log.warn('config file unreadable, starting with a blank config', { path: CONFIG_PATH, error: e.message });
+    return migrate({ items:[], settings:{} });
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
     const before = parsed._schemaVersion;
     migrate(parsed);
     _cfgCache = parsed; _cfgCacheAt = now;
@@ -38,7 +48,13 @@ function loadConfig() {
        cached in memory and will re-migrate next load. */
     if (parsed._schemaVersion !== before) { try { saveConfig(parsed); } catch {} }
     return parsed;
-  } catch { return migrate({ items:[], settings:{} }); }
+  } catch (e) {
+    /* Bad JSON, e.g. a manual edit gone wrong. Preserve the broken file
+       instead of letting the next save overwrite it, then start fresh. */
+    log.warn('config file corrupt, backing up and starting with a blank config', { path: CONFIG_PATH, error: e.message });
+    try { fs.writeFileSync(CONFIG_PATH + '.corrupt', raw, 'utf8'); } catch {}
+    return migrate({ items:[], settings:{} });
+  }
 }
 
 function saveConfig(data) {
