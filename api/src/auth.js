@@ -59,12 +59,30 @@ function parseCookies(req) {
   return out;
 }
 
-function setSessionCookie(res, token) {
-  res.setHeader('Set-Cookie', `ds=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`);
+const TRUST_PROXY = process.env.TRUST_PROXY === 'true';
+
+/* Secure requires HTTPS, which most homelab installs don't have on their LAN
+   (e.g. http://192.168.x.x:8700). Setting it unconditionally would make the
+   browser silently refuse to store or send the cookie, breaking login with no
+   visible error. Treat the request as secure if the socket itself is TLS, or
+   if TRUST_PROXY is on and a fronting proxy says it terminated TLS. */
+function isSecureRequest(req) {
+  if (req.socket?.encrypted) return true;
+  if (TRUST_PROXY) {
+    const proto = req.headers['x-forwarded-proto'];
+    if (proto && proto.split(',')[0].trim().toLowerCase() === 'https') return true;
+  }
+  return false;
 }
 
-function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', 'ds=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0');
+function setSessionCookie(res, token, secure) {
+  const flag = secure ? ' Secure;' : '';
+  res.setHeader('Set-Cookie', `ds=${token}; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=2592000`);
+}
+
+function clearSessionCookie(res, secure) {
+  const flag = secure ? ' Secure;' : '';
+  res.setHeader('Set-Cookie', `ds=; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=0`);
 }
 
 const _loginAttempts = new Map();
@@ -133,7 +151,7 @@ function hasValidSession(req) {
 
 module.exports = {
   crypto, getOrCreateSecret, hashPassword, verifyPassword,
-  makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie,
+  makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
   checkRateLimit, recordFailedAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
   log,
 };
