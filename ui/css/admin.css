@@ -1,4 +1,4 @@
-/* admin.css v32 */
+/* admin.css v33 */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg-outer:#1c1c24;
@@ -14,8 +14,8 @@
   --gn:var(--sy-green);
   --tx:#f2f2f7;
   --dm:#8b8b8f;
-  --r:14px;
-  --rs:10px;
+  --r:var(--sy-radius-lg);
+  --rs:var(--sy-radius-md);
   --t:.15s ease;
   --sbw:308px;
 }
