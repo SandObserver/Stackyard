@@ -90,9 +90,11 @@ export default async function(ctx, config) {
 
 | method | description |
 |---|---|
-| `ctx.fetchJSON(url, opts)` | Fetch and parse JSON. Returns `{ status, data }` on success or throws. Respects the app's TLS skip setting. |
+| `ctx.fetchJSON(url, opts)` | Fetch a URL and parse the response. JSON is returned as-is; Prometheus text and XML are auto-parsed. Returns `{ status, data }` on success or throws. Respects the app's TLS skip setting. |
 | `ctx.fetch(url, opts)` | Raw fetch, same TLS handling. |
 | `ctx.config` | The widget's saved config object (same as the `config` argument). |
+
+For XML responses, `data` is a nested object keyed by the root tag. Attributes and child elements both become keys; a tag that repeats becomes an array, a tag that appears once stays a single object, and an element with only text becomes that text. Numeric-looking values become numbers only when they convert exactly, so IDs like `007` and versions like `1.10` stay strings. For example, Plex `/status/sessions` parses to `{ MediaContainer: { size: 2, Metadata: [ { title, duration, Player: { state } } ] } }`, the same shape its JSON response has.
 
 If `widget.json` uses `optionsFrom`, your function also handles config-time list fetching:
 
