@@ -19,6 +19,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Rewrite cache-busting versions
+        run: node scripts/bump-cache-busting.js
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
