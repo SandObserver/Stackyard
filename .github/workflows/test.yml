@@ -18,6 +18,10 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Run tests
+      - name: Run backend tests
         run: npm test
         working-directory: api
+
+      - name: Run frontend tests
+        run: node --test
+        working-directory: ui/test
