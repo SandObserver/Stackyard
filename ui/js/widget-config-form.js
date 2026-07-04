@@ -3,7 +3,7 @@
    renderWidgetConfigForm(container, fields, config) -> { getValues, validate }
    Each builder returns { el, get, control, liveValue }; the public API is unchanged. */
 
-import { esc } from '/js/utils.js?v=40';
+import { esc } from '/js/utils.js?v=92153ac7';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -266,13 +266,16 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
     if (b.liveValue) liveByKey[f.key] = b.liveValue;
   }
 
+  function condMatch(cond, cur) {
+    if (Array.isArray(cond.in)) return cond.in.map(String).includes(String(cur));
+    if (typeof cur === 'boolean') return cur === !!cond.equals;
+    return String(cur) === String(cond.equals);
+  }
   function applyShowIf() {
     for (const b of built) {
       const cond = b.field.showIf;
       if (!cond || !(cond.field in liveByKey)) continue;
-      const cur = liveByKey[cond.field]();
-      const match = (typeof cur === 'boolean') ? (cur === !!cond.equals) : (String(cur) === String(cond.equals));
-      b.el.style.display = match ? '' : 'none';
+      b.el.style.display = condMatch(cond, liveByKey[cond.field]()) ? '' : 'none';
     }
   }
   for (const b of built) {
