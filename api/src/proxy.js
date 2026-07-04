@@ -202,6 +202,8 @@ function fetchJSON(raw, opts = {}) {
   return new Promise((resolve, reject) => {
     raw = rewriteUrl(raw); /* remap host IP → container name if portMap is configured */
     let u; try { u = new URL(raw); } catch(e) { return reject(e); }
+    let settled = false, deadline = null;
+    const done = (fn, arg) => { if (settled) return; settled = true; if (deadline) clearTimeout(deadline); fn(arg); };
     const lib  = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const skipTls = opts.skipTls != null ? opts.skipTls : shouldSkipTls(u.hostname, loadConfig());
@@ -220,29 +222,36 @@ function fetchJSON(raw, opts = {}) {
     }, res => {
       if (res.statusCode >= 300 && res.statusCode < 400) {
         res.resume();
-        return reject(new Error(`Redirect blocked (${res.statusCode}) — use the final URL directly`));
+        return done(reject, new Error(`Redirect blocked (${res.statusCode}) — use the final URL directly`));
       }
       const bufs = []; let total = 0;
       res.on('data', c => {
         total += c.length;
-        if (total > FETCH_SIZE_LIMIT) { req.destroy(); return reject(new Error('Response too large')); }
+        if (total > FETCH_SIZE_LIMIT) { req.destroy(); return done(reject, new Error('Response too large')); }
         bufs.push(c);
       });
       res.on('end', () => {
         const body = Buffer.concat(bufs).toString('utf8');
         const ct   = (res.headers['content-type'] || '').toLowerCase();
-        try { resolve({ status: res.statusCode, data: JSON.parse(body) }); }
+        try { done(resolve, { status: res.statusCode, data: JSON.parse(body) }); }
         catch {
           if ((ct.includes('text/plain') || ct.includes('openmetrics')) && body.includes('# TYPE'))
-            resolve({ status: res.statusCode, data: parsePrometheus(body) });
+            done(resolve, { status: res.statusCode, data: parsePrometheus(body) });
           else if (ct.includes('xml') || body.trimStart().startsWith('<'))
-            resolve({ status: res.statusCode, data: parseXml(body) });
-          else resolve({ status: res.statusCode, data: body });
+            done(resolve, { status: res.statusCode, data: parseXml(body) });
+          else done(resolve, { status: res.statusCode, data: body });
         }
       });
     });
-    req.on('timeout', () => { req.destroy(); reject(new Error('Timed out')); });
-    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); done(reject, new Error('Timed out')); });
+    req.on('error', e => done(reject, e));
+    /* Hard overall deadline: the socket-level timeout above does not reliably
+       bound a stalled DNS lookup, TCP connect or TLS handshake, so a stuck
+       upstream could outlive the gateway's read timeout and surface as a 504.
+       This timer destroys the request at the deadline regardless of phase, so a
+       stall degrades to a normal error instead. */
+    deadline = setTimeout(() => { req.destroy(); done(reject, new Error('Timed out')); }, opts.timeout || 8000);
+    if (deadline.unref) deadline.unref();
     if (bodyBuf) req.write(bodyBuf);
     req.end();
   });
