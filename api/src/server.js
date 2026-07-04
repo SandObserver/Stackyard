@@ -35,7 +35,8 @@ http.createServer(dispatch).listen(PORT, () => {
     `  ➜  Node:      ${process.version}`,
     '',
   ];
-  console.log(lines.join('\n'));
+  try { const ll = require('./config').loadConfig().settings.logLevel; if (ll) log.setLevel(ll); } catch {}
+  log.print(lines.join('\n'));
 
   /* IP rate-limiting and the cookie Secure flag trust X-Forwarded-* when this is
      on. That is only safe behind a proxy you control; if it is set without one,
