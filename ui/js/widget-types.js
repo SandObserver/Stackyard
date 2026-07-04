@@ -13,7 +13,7 @@ export const WIDGET_TYPES = {
       const view=item?.widgetConfig?.view||'map';
       const size=encodeURIComponent(item?.widgetSize||'medium');
       if(view==='vpn') return `/widgets/connections/connections-vpn.html?v=6&id=${encodeURIComponent(id)}&size=${size}`;
-      return `/widgets/connections/connections-map.html?v=11&id=${encodeURIComponent(id)}`;
+      return `/widgets/connections/connections-map.html?v=12&id=${encodeURIComponent(id)}`;
     }},
   dns: { label:'DNS Server',       sizes:['small','medium'],        src:(id,item)=>`/widgets/dns/index.html?v=1&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
   weather: { label:'Weather',      sizes:['small'],                 src:(id,item)=>`/widgets/weather/index.html?v=5&id=${encodeURIComponent(id)}&size=small` },

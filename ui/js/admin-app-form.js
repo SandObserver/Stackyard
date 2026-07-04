@@ -2,11 +2,11 @@
    Builds the app edit form (icon picker, badge picker) and the folder form.
    Reads and writes shared state; exports buildAppForm, buildFolderForm, and
    parseKV (used by the save path). */
-import { clr as rc, esc } from '/js/utils.js?v=40';
-import { resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { state } from '/js/admin-state.js?v=1';
-import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=2';
-import { renderColorControl } from '/js/admin-color-control.js?v=1';
+import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
+import { resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
+import { state } from '/js/admin-state.js?v=e7eb56f7';
+import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
+import { renderColorControl } from '/js/admin-color-control.js?v=255efb55';
 
 /* Folder form — settings-row system (PSD: add_new_folder).
    Folder Name = inline-edit row; Add Apps = tap-to-toggle checklist dropdown. */
@@ -328,42 +328,6 @@ async function testPing(){
 }
 
 export const parseKV=t=>{const r={};for(const l of t.split('\n')){const i=l.indexOf('=');if(i<1)continue;r[l.slice(0,i).trim()]=l.slice(i+1).trim();}return r;};
-function collectNums(obj,path='',out=[]){
-  if(obj==null)return out;
-  if(typeof obj==='number'){out.push({path:path||'(root)',value:obj});return out;}
-  if(Array.isArray(obj)){
-    const countPath=path?`${path}.$count`:'$count';
-    out.push({path:countPath,value:obj.length,label:`Total count (${obj.length} state.items)`});
-    const sample=obj.find(i=>i&&typeof i==='object'&&!Array.isArray(i));
-    if(sample){
-      const seen={};
-      for(const[field,val]of Object.entries(sample)){
-        if(typeof val==='boolean'){
-          for(const bval of[true,false]){
-            const n=obj.filter(i=>i&&i[field]===bval).length;
-            if(n>0){const p=`${path?path+'.':''}filter(${field}==${bval}).count`;
-              if(!seen[p]){seen[p]=1;out.push({path:p,value:n,label:`${field} = ${bval}`,computed:true});}}
-          }
-        }else if(typeof val==='string'&&val.length<32){
-          const distinct=[...new Set(obj.map(i=>i&&i[field]).filter(v=>typeof v==='string'))];
-          for(const dval of distinct.slice(0,8)){
-            const n=obj.filter(i=>i&&i[field]===dval).length;
-            const p=`${path?path+'.':''}filter(${field}==${dval}).count`;
-            if(!seen[p]){seen[p]=1;out.push({path:p,value:n,label:`${field} = "${dval}"`,computed:true});}
-          }
-        }else if(typeof val==='number'){
-          const total=obj.reduce((s,i)=>s+(typeof i?.[field]==='number'?i[field]:0),0);
-          const p=`${path?path+'.':''}sum(${field})`;
-          if(!seen[p]){seen[p]=1;out.push({path:p,value:total,label:`Sum of ${field}`,computed:true});}
-        }
-      }
-    }
-    obj.slice(0,5).forEach((v,i)=>collectNums(v,path?`${path}[${i}]`:`[${i}]`,out));
-    return out;
-  }
-  if(typeof obj==='object'){for(const[k,v]of Object.entries(obj))collectNums(v,path?`${path}.${k}`:k,out);}
-  return out;
-}
 async function fetchBadge(){
   const url=document.getElementById('f-burl')?.value?.trim();
   const st=document.getElementById('bst');
