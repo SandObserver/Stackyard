@@ -1,14 +1,14 @@
-import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=36';
-import { clr as rc, esc } from '/js/utils.js?v=40';
-import { WIDGET_TYPES } from '/js/widget-types.js?v=39';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
-import { API, toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, _secretRow } from '/js/admin-shared.js?v=2';
-import { renderColorControl } from '/js/admin-color-control.js?v=1';
-import { checkAuth, pwStrength, wirePasswordStrength } from '/js/admin-auth.js?v=1';
-import { state } from '/js/admin-state.js?v=1';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=1';
-import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=1';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=1';
+import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
+import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
+import { WIDGET_TYPES } from '/js/widget-types.js?v=63bf4388';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=1679b8c5';
+import { API, toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, _secretRow } from '/js/admin-shared.js?v=6f21b1b8';
+import { renderColorControl } from '/js/admin-color-control.js?v=255efb55';
+import { checkAuth, pwStrength, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
+import { state } from '/js/admin-state.js?v=e7eb56f7';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
+import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=c3d495f0';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
 
 /* Admin UI — Stackyard Dashboard */
 
@@ -982,6 +982,26 @@ function initBgType(){
   setVal(hidden.value||'unsplash');
 }
 
+/* ══ Logging level toggle ══ */
+function initLogLevel(){
+  const btn=document.getElementById('log-level-btn');
+  const list=document.getElementById('log-level-list');
+  const hidden=document.getElementById('log-level');
+  if(!btn||!list||!hidden) return;
+  const labels={debug:'Debug',info:'Info',error:'Errors'};
+  function setVal(val){
+    hidden.value=val;
+    const textNode=btn.childNodes[0];
+    if(textNode&&textNode.nodeType===3) textNode.textContent=labels[val]||val;
+    list.querySelectorAll('li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===val)));
+    list.hidden=true;
+  }
+  btn.addEventListener('click',e=>{e.stopPropagation();list.hidden=!list.hidden;});
+  list.querySelectorAll('li').forEach(li=>li.addEventListener('click',()=>setVal(li.dataset.val)));
+  document.addEventListener('click',()=>{list.hidden=true;});
+  setVal(hidden.value||'info');
+}
+
 /* ══ Dashboard Save ══ */
 const dashSaveEl=document.getElementById('dash-save');
 if(dashSaveEl)dashSaveEl.onclick=()=>save();
@@ -1012,6 +1032,7 @@ initVersion();
 initSecToggle();
 initDockerToggle();
 initBgType();
+initLogLevel();
 
 checkAuth(load).then(ok => {
   if (!ok) return;

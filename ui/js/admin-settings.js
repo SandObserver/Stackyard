@@ -2,9 +2,9 @@
    General / Appearance / Security settings: loads values into the settings
    screen and persists changes. Exports loadSettings (called on config load)
    and showBgFields (called by the background-type toggle). */
-import { state } from '/js/admin-state.js?v=1';
-import { toast, ag, ap } from '/js/admin-shared.js?v=2';
-import { wirePasswordStrength, pwStrength } from '/js/admin-auth.js?v=1';
+import { state } from '/js/admin-state.js?v=e7eb56f7';
+import { toast, ag, ap } from '/js/admin-shared.js?v=6f21b1b8';
+import { wirePasswordStrength, pwStrength } from '/js/admin-auth.js?v=8cd76ea3';
 
 export function loadSettings(c){
   const s=c.settings||{};
@@ -21,6 +21,14 @@ export function loadSettings(c){
     const labels={'unsplash':'Unsplash','url':'Image URL','color':'Solid color'};
     if(btn){const tn=btn.childNodes[0];if(tn&&tn.nodeType===3)tn.textContent=labels[typeEl.value]||typeEl.value;}
     document.querySelectorAll('#bg-type-list li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===typeEl.value)));
+  }
+  const llEl=document.getElementById('log-level');
+  if(llEl){
+    llEl.value=s.logLevel||'info';
+    const llBtn=document.getElementById('log-level-btn');
+    const llLabels={debug:'Debug',info:'Info',error:'Errors'};
+    if(llBtn){const tn=llBtn.childNodes[0];if(tn&&tn.nodeType===3)tn.textContent=llLabels[llEl.value]||llEl.value;}
+    document.querySelectorAll('#log-level-list li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===llEl.value)));
   }
   /* Unsplash API key — fetch whether one is configured via dedicated endpoint
      (the key itself is never included in /api/config to avoid exposure) */
@@ -209,6 +217,7 @@ async function saveServer(){
       socketProxyUrl:dockerEnabled?socketUrl:'',
       hideHealthyBadge:document.getElementById('srv-hide-healthy')?.checked!==false,
     };
+    c.settings.logLevel=document.getElementById('log-level')?.value||'info';
     await ap('/api/config',c);
 
     /* Handle password and auth toggle */
