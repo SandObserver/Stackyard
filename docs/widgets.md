@@ -239,6 +239,53 @@ fit their card, so a size looks identical on every device.
 Match the existing look: transparent background, the system font stack, and a
 dark palette.
 
+## Toolbox (optional)
+
+Importing the toolbox is never required (a widget can fetch and draw entirely on
+its own), but it bundles the repeatedly-useful frontend pieces so you don't
+re-derive them. Import what you need from `/js/widget-toolbox.js`:
+
+```js
+import { poll, fetchData, sparkline } from '/js/widget-toolbox.js?v=1';
+```
+
+Keep the `?v=1`; the release cache-buster maintains that version for you, like
+other `/js/` imports.
+
+**Data**
+
+- `widgetId()` returns this widget's id (read from the iframe URL).
+- `fetchData(endpoint?)` GETs `/api/widget-data/<id>` (optionally `?endpoint=`) and returns the parsed JSON, throwing on a non-OK response.
+- `getConfig()` GETs this widget's secret-free config.
+
+**State / lifecycle**
+
+`poll(opts)` runs the fetch-and-render loop for you and handles loading, empty,
+stale, and error states so a single failed poll never blanks a working widget.
+It replaces the hand-written loop from the frontend example above:
+
+```js
+poll({
+  render: data => { root.textContent = `${data.items.length} items`; },
+  isEmpty: data => data.items.length === 0,
+  interval: 30000,
+});
+```
+
+A successful, non-empty result calls `render`. An empty result shows `emptyText`.
+A failure keeps the last good render in place; only after `staleAfter` (default
+2) consecutive failures does it surface `errorText` with how long ago the last
+success was. `sinceLabel(ts)` gives that "3m ago" label if you want it yourself.
+
+**Visuals** (self-contained inline SVG/DOM, no extra CSS)
+
+- `sparkline(values, opts?)` returns an `<svg>` area+line chart element.
+- `barFill(percent, opts?)` returns a track+fill bar element.
+- `smoothPath(points)` returns a smoothed SVG path string through `[[x,y], ...]`.
+
+More chart types are added to the toolbox over time, so check it before building
+a new visual by hand.
+
 ## Cache-busting
 
 When you change your widget's frontend files, bump the `?v=N` in that widget's
