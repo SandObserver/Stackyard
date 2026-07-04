@@ -13,9 +13,15 @@
      sparkline(values, opts?)        an <svg> area+line chart element
      barFill(percent, opts?)         a track+fill bar element
 
+   STATE  (graceful loading / empty / stale / error, self-contained)
+     sinceLabel(ts)                  relative "3m ago" label from a timestamp
+     poll(opts)                      fetch+render loop that keeps the last good
+                                     render on a transient failure
+
    Heavier visuals (heatmap grid, dotted world map, disk bay layout) are lifted
    into this toolbox as the widgets that own them are converted, so they can be
-   verified identical to the originals.
+   verified identical to the originals. More chart types are added here over
+   time rather than re-derived per widget.
 */
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -131,4 +137,83 @@ export function barFill(percent, opts = {}) {
     `background:${opts.color || '#0a84ff'};transition:width .4s ease`;
   track.appendChild(fill);
   return track;
+}
+
+/* ── State / lifecycle ── */
+
+/* Relative "updated" label from a timestamp (ms since epoch). */
+export function sinceLabel(ts) {
+  if (!ts) return '';
+  const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if (s < 45) return 'just now';
+  const m = Math.round(s / 60);
+  if (m < 60) return m + 'm ago';
+  const h = Math.round(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.round(h / 24) + 'd ago';
+}
+
+/* A muted, centered status message overlaid on the widget, matching the
+   existing empty/error look. Self-contained inline styles. */
+function _overlay(root) {
+  if (getComputedStyle(root).position === 'static') root.style.position = 'relative';
+  const el = document.createElement('div');
+  el.style.cssText = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center;' +
+    'text-align:center;padding:0 16px;font-size:11px;line-height:1.35;color:rgba(150,150,150,0.92);pointer-events:none';
+  root.appendChild(el);
+  return {
+    show(msg, dim) { el.textContent = msg; el.style.background = dim ? 'rgba(20,20,22,0.55)' : 'transparent'; el.style.display = 'flex'; },
+    hide() { el.style.display = 'none'; },
+  };
+}
+
+/* Fetch an endpoint on a timer and render it, handling the loading / empty /
+   stale / error lifecycle so a single failed poll never blanks a working
+   widget. A successful, non-empty result calls render(data). A successful but
+   empty result shows emptyText. A failure keeps the last good render in place;
+   only after `staleAfter` consecutive failures does it surface errorText (with
+   how long ago the last success was), dimming the stale content behind it. A
+   widget that has never loaded shows errorText immediately.
+
+   opts: {
+     render,                 (data) => void  draw a successful, non-empty result
+     endpoint,               optional data endpoint name for fetchData
+     fetch,                  optional async () => data (defaults to fetchData(endpoint))
+     isEmpty,                optional (data) => bool  a successful but empty result
+     interval = 30000,       poll period in ms
+     staleAfter = 2,         consecutive failures tolerated before showing the error
+     root = document.body,   element the status message overlays
+     loadingText, emptyText, errorText
+   }
+   Returns { stop }.
+*/
+export function poll(opts = {}) {
+  const interval = opts.interval || 30000;
+  const staleAfter = opts.staleAfter != null ? opts.staleAfter : 2;
+  const isEmpty = opts.isEmpty || (() => false);
+  const doFetch = opts.fetch || (() => fetchData(opts.endpoint));
+  const ov = _overlay(opts.root || document.body);
+  let lastOk = 0, fails = 0, everOk = false, stopped = false;
+
+  async function tick() {
+    if (stopped) return;
+    try {
+      const data = await doFetch();
+      if (stopped) return;
+      fails = 0; lastOk = Date.now(); everOk = true;
+      if (isEmpty(data)) ov.show(opts.emptyText || 'No data', false);
+      else { ov.hide(); opts.render && opts.render(data); }
+    } catch (e) {
+      if (stopped) return;
+      fails++;
+      if (!everOk) ov.show(opts.errorText || 'Unavailable', false);
+      else if (fails >= staleAfter) ov.show((opts.errorText || 'Unavailable') + (lastOk ? ' · ' + sinceLabel(lastOk) : ''), true);
+      /* within tolerance: leave the last good render untouched */
+    }
+  }
+
+  ov.show(opts.loadingText || 'Loading', false);
+  tick();
+  const timer = setInterval(tick, interval);
+  return { stop() { stopped = true; clearInterval(timer); } };
 }
