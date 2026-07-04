@@ -1,15 +1,16 @@
-/* Structured JSON logger. This is a leaf module: it imports nothing app-level,
-   so it can be used everywhere without risking a circular dependency. The
-   active level is not read from config here; boot and the config-save handler
-   push it in via setLevel(), keeping the dependency one-directional.
+/* logfmt logger: prints "<time> <LVL> msg=<msg> key=value ..." for readable
+   container logs. Leaf module (imports nothing app-level) so it can be used
+   everywhere without a circular dependency; the active level is pushed in via
+   setLevel() by boot and the config-save handler, not read from config here.
 
-   Levels, low to high: debug, info, warn, error. A level is dropped when it
+   Levels low to high: debug, info, warn, error. A level is dropped when it
    ranks below the active threshold. `audit` records security-relevant events
-   and always emits regardless of the threshold. The three user-facing choices
-   map as: debug = everything, info = info and above, error = warnings + errors. */
+   and always emits. User-facing choices map as: debug = everything,
+   info = info and above, error = warnings + errors. */
 
 const RANK = { debug: 10, info: 20, warn: 30, error: 40 };
 const THRESHOLD = { debug: 10, info: 20, warn: 30, error: 30, errors: 30 };
+const ABBR = { debug: 'DBG', info: 'INF', warn: 'WRN', error: 'ERR', audit: 'AUD' };
 
 let _threshold = THRESHOLD.info;
 function _apply(name) {
@@ -19,9 +20,8 @@ function _apply(name) {
 }
 _apply(process.env.LOG_LEVEL);
 
-/* Pull an Error's useful fields out (they are non-enumerable, so a plain
-   JSON.stringify of an Error yields {}). Handles both a bare Error passed as
-   data and an Error nested under a data property (e.g. { error: err }). */
+/* Errors are non-enumerable, so JSON.stringify(err) is "{}". Pull out the
+   useful fields, for a bare Error passed as data or one nested under a key. */
 function _fields(data) {
   if (data instanceof Error) return { error: { message: data.message, stack: data.stack } };
   const out = {};
@@ -30,10 +30,18 @@ function _fields(data) {
   return out;
 }
 
+/* Scalars print bare (count=9); objects and arrays print as JSON (widgets=[...]). */
+function _val(v) {
+  if (v === null || v === undefined) return '';
+  return typeof v === 'object' ? JSON.stringify(v) : String(v);
+}
+
 function _emit(level, msg, data) {
   const rank = RANK[level];
   if (rank != null && rank < _threshold) return; /* audit has no rank → never filtered */
-  process.stdout.write(JSON.stringify({ time: new Date().toISOString(), level, msg, ..._fields(data) }) + '\n');
+  let line = `${new Date().toISOString()} ${ABBR[level] || level.toUpperCase()} msg=${msg}`;
+  for (const [k, v] of Object.entries(_fields(data))) line += ` ${k}=${_val(v)}`;
+  process.stdout.write(line + '\n');
 }
 
 const log = {
