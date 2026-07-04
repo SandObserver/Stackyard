@@ -61,10 +61,23 @@
 
       <div class="grp-hdr">Monitoring</div>
       <div class="grp">
+        <div class="row">
+          <span class="rl">Logging Level</span>
+          <div class="row-dd" id="log-level-dd">
+            <button class="row-dd-btn" type="button" id="log-level-btn" aria-haspopup="listbox">Info<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg></button>
+            <ul class="row-dd-list" id="log-level-list" role="listbox" aria-label="Logging level" hidden>
+              <li role="option" data-val="debug" aria-selected="false">Debug</li>
+              <li role="option" data-val="info" aria-selected="true">Info</li>
+              <li role="option" data-val="error" aria-selected="false">Errors</li>
+            </ul>
+          </div>
+          <input type="hidden" id="log-level" value="info">
+        </div>
         <div class="row"><span class="rl">Docker Container Health Checks</span><label class="tog" aria-label="Docker Container Health Checks"><input type="checkbox" id="srv-docker-en"><div class="tr"></div></label></div>
         <div class="row" id="srv-hide-healthy-row" style="display:none"><span class="rl">Hide Healthy Badge</span><label class="tog" aria-label="Hide Healthy Badge"><input type="checkbox" id="srv-hide-healthy"><div class="tr"></div></label></div>
         <div class="row ie-row" id="ie-socket" style="display:none"><span class="rl">Socket URL</span><span class="rv is-ph" id="ie-socket-v">tcp://socket-proxy:2375</span><button class="pe" type="button" aria-label="Edit socket URL"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
       </div>
+      <p class="grp-tip">Errors shows warnings and errors only. Security events are always logged.</p>
       <p class="grp-tip" id="socket-hint" style="display:none">Use the URL of a <strong>socket proxy</strong> container for least-privilege access. No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. <span class="tip-danger">Only do this on a private, trusted network you fully control.</span></p>
 
       <div class="grp-hdr">Security</div>
