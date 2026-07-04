@@ -146,7 +146,7 @@
     const dt=D.dots;
     const pulse=reduce?1:(0.82+0.18*Math.sin((now-t0)/1500));
     // base grid: uniform dim dots (drawn first)
-    ctx.fillStyle='rgba(228,228,236,0.16)';
+    ctx.fillStyle='rgba(228,228,236,0.24)';
     for(let k=0;k<dt.length;k+=3){
       if(active[dt[k]+','+dt[k+1]])continue;
       const x=offX+(dt[k]+0.5)*sx, y=offY+(dt[k+1]+0.5)*sy;
