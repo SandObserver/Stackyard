@@ -79,7 +79,8 @@
   </div>
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
-<script>
+<script type="module">
+  import { poll } from '/js/widget-toolbox.js?v=1';
   const API='/api';
   const id=new URLSearchParams(location.search).get('id')||'';
   const POLL_MS=300000;
@@ -143,14 +144,6 @@
     });
   }
 
-  async function tick(){
-    try{
-      const r=await fetch(`${API}/widget-data/${encodeURIComponent(id)}`);
-      const d=await r.json().catch(()=>({}));
-      lbl.textContent = SRC_LABEL[d.source] || 'READING';
-      render(decorate(Array.isArray(d.books)?d.books:[]));
-    }catch(e){ render([]); }
-  }
   async function boot(){
     try{
       const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
@@ -162,7 +155,7 @@
       card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head')) go(); });
       card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
     }
-    await tick(); setInterval(tick,POLL_MS);
+    poll({ interval:POLL_MS, render:d=>{ lbl.textContent=SRC_LABEL[d.source]||'READING'; render(decorate(Array.isArray(d.books)?d.books:[])); } });
   }
   boot();
 </script>
