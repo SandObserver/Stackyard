@@ -3,7 +3,7 @@
 <p align="center"><b>A self-hosted homelab dashboard you actually want to look at.</b></p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/SandObserver/stackyard"></a>
+  <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/License-Apache_2.0-blue"></a>
   <a href="https://github.com/SandObserver/stackyard/pkgs/container/stackyard"><img alt="Container" src="https://img.shields.io/badge/ghcr.io-stackyard-2496ED?logo=docker&logoColor=white"></a>
 </p>
 
