@@ -175,11 +175,19 @@ function _overlay(root) {
    how long ago the last success was), dimming the stale content behind it. A
    widget that has never loaded shows errorText immediately.
 
+   Widgets with their own error display (e.g. specific "Bad token" / "Not
+   configured" messages) can pass onError instead. When present, poll shows no
+   overlay and calls onError({ error, everOk, stale, since }) on each failure,
+   leaving the widget to decide what to show and whether to keep the last render.
+   The usual pattern is: show error.message when there is nothing good to keep
+   (`!everOk || stale`), otherwise do nothing so the last render stays.
+
    opts: {
      render,                 (data) => void  draw a successful, non-empty result
      endpoint,               optional data endpoint name for fetchData
      fetch,                  optional async () => data (defaults to fetchData(endpoint))
      isEmpty,                optional (data) => bool  a successful but empty result
+     onError,                optional (info) => void  render your own error UI
      interval = 30000,       poll period in ms
      staleAfter = 2,         consecutive failures tolerated before showing the error
      root = document.body,   element the status message overlays
@@ -192,7 +200,8 @@ export function poll(opts = {}) {
   const staleAfter = opts.staleAfter != null ? opts.staleAfter : 2;
   const isEmpty = opts.isEmpty || (() => false);
   const doFetch = opts.fetch || (() => fetchData(opts.endpoint));
-  const ov = _overlay(opts.root || document.body);
+  const custom = typeof opts.onError === 'function'; /* widget draws its own error UI */
+  const ov = custom ? null : _overlay(opts.root || document.body);
   let lastOk = 0, fails = 0, everOk = false, stopped = false;
 
   async function tick() {
@@ -201,18 +210,20 @@ export function poll(opts = {}) {
       const data = await doFetch();
       if (stopped) return;
       fails = 0; lastOk = Date.now(); everOk = true;
-      if (isEmpty(data)) ov.show(opts.emptyText || 'No data', false);
-      else { ov.hide(); opts.render && opts.render(data); }
+      if (!custom && isEmpty(data)) ov.show(opts.emptyText || 'No data', false);
+      else { if (ov) ov.hide(); opts.render && opts.render(data); }
     } catch (e) {
       if (stopped) return;
       fails++;
-      if (!everOk) ov.show(opts.errorText || 'Unavailable', false);
-      else if (fails >= staleAfter) ov.show((opts.errorText || 'Unavailable') + (lastOk ? ' · ' + sinceLabel(lastOk) : ''), true);
+      const stale = fails >= staleAfter;
+      if (custom) opts.onError({ error: e, everOk, stale, since: lastOk ? sinceLabel(lastOk) : '' });
+      else if (!everOk) ov.show(opts.errorText || 'Unavailable', false);
+      else if (stale) ov.show((opts.errorText || 'Unavailable') + (lastOk ? ' · ' + sinceLabel(lastOk) : ''), true);
       /* within tolerance: leave the last good render untouched */
     }
   }
 
-  ov.show(opts.loadingText || 'Loading', false);
+  if (ov) ov.show(opts.loadingText || 'Loading', false);
   tick();
   const timer = setInterval(tick, interval);
   return { stop() { stopped = true; clearInterval(timer); } };
