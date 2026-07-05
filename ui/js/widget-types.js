@@ -16,7 +16,7 @@ export const WIDGET_TYPES = {
       return `/widgets/connections/connections-map.html?v=12&id=${encodeURIComponent(id)}`;
     }},
   dns: { label:'DNS Server',       sizes:['small','medium'],        src:(id,item)=>`/widgets/dns/index.html?v=1&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
-  weather: { label:'Weather',      sizes:['small'],                 src:(id,item)=>`/widgets/weather/index.html?v=5&id=${encodeURIComponent(id)}&size=small` },
+  weather: { label:'Weather',      sizes:['small'],                 src:(id,item)=>`/widgets/weather/index.html?v=6&id=${encodeURIComponent(id)}&size=small` },
   nowplaying: { label:'Now Playing', sizes:['small'],               src:(id,item)=>`/widgets/nowplaying/index.html?v=2&id=${encodeURIComponent(id)}&size=small` },
   books:   { label:'Books',          sizes:['small'],                 src:(id,item)=>`/widgets/books/index.html?v=1&id=${encodeURIComponent(id)}&size=small` },
   github:  { label:'GitHub',        sizes:['small','medium','large','xlarge'],src:(id,item)=>{
