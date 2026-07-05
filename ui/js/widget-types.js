@@ -22,7 +22,7 @@ export const WIDGET_TYPES = {
   github:  { label:'GitHub',        sizes:['small','medium','large','xlarge'],src:(id,item)=>{
     const view=item?.widgetConfig?.githubView||'prs';
     const file=view==='contributions'?'github/contributions':'github/pullrequests';
-    return `/widgets/${file}.html?v=5&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}`;
+    return `/widgets/${file}.html?v=6&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}`;
   }},
   clock:   { label:'Clock',          sizes:['small'],                 src:(id,item)=>{
     const style=item?.widgetConfig?.clockStyle||'digital';
