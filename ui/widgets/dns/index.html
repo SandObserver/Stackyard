@@ -63,7 +63,8 @@
   <div class="sr-only" id="sr" role="status" aria-live="polite"></div>
 </div>
 
-<script>
+<script type="module">
+import { poll } from '/js/widget-toolbox.js?v=1';
 const TICK_MS = 30000;
 const params = new URLSearchParams(location.search);
 const id   = params.get('id')   || '';
@@ -101,28 +102,25 @@ async function boot() {
     widgetEl.classList.add('clickable');
     widgetEl.addEventListener('click', () => window.open(_href,'_blank','noopener,noreferrer'));
   }
-  tick();
-  setInterval(tick, TICK_MS);
+  poll({ fetch:gfetch, interval:TICK_MS,
+    render:d=>{ clearMsg(); apply(d); },
+    onError:({error,everOk,stale})=>{ if(!everOk||stale) setMsg(error.message||'Unreachable'); } });
   addEventListener('resize', () => { if (_last) render(_last); });
 }
 
 function setMsg(t) { msgEl.textContent = t; msgEl.style.display = ''; svgEl.style.display='none'; }
 function clearMsg() { msgEl.style.display = 'none'; svgEl.style.display=''; }
 
-async function tick() {
-  try {
-    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=stats`);
-    if (!r.ok) {
-      const d = await r.json().catch(()=>({}));
-      setMsg(r.status===503?'Not configured':r.status===401?'Auth error':
-             r.status===502?'Unreachable':d.error||('Error '+r.status));
-      return;
-    }
-    const d = await r.json();
-    if (d && d.error) { setMsg(d.error); return; }
-    clearMsg();
-    apply(d);
-  } catch { setMsg('Unreachable'); }
+async function gfetch() {
+  let r; try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=stats`); } catch { throw new Error('Unreachable'); }
+  if (!r.ok) {
+    const d = await r.json().catch(()=>({}));
+    throw new Error(r.status===503?'Not configured':r.status===401?'Auth error':
+                    r.status===502?'Unreachable':d.error||('Error '+r.status));
+  }
+  const d = await r.json();
+  if (d && d.error) throw new Error(d.error);
+  return d;
 }
 
 function apply(d) {
