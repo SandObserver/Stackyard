@@ -54,10 +54,23 @@ export async function initI18n(code) {
   const el = document.documentElement;
   el.setAttribute('lang', current);
   el.setAttribute('dir', dirFor(current));
+  if (typeof document !== 'undefined' && document.querySelectorAll) translateDOM(document);
   return current;
 }
 
 export function getLang() { return current; }
+
+/* Translate static markup in place. Elements opt in with attributes:
+     data-i18n="key"       -> sets textContent
+     data-i18n-ph="key"    -> sets the placeholder attribute
+     data-i18n-al="key"    -> sets the aria-label attribute
+   Safe to re-run; call it after rendering dynamically-inserted markup too. */
+export function translateDOM(root) {
+  root = root || document;
+  root.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  root.querySelectorAll('[data-i18n-ph]').forEach(el => { el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph'))); });
+  root.querySelectorAll('[data-i18n-al]').forEach(el => { el.setAttribute('aria-label', t(el.getAttribute('data-i18n-al'))); });
+}
 
 /* Translate a dotted key, falling back to English then to the key itself.
    Interpolates {name} placeholders from the optional vars object. */
