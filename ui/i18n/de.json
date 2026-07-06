@@ -1,0 +1,65 @@
+{
+  "_meta": { "name": "Deutsch", "dir": "ltr" },
+  "nav": {
+    "general": "Allgemein",
+    "appearance": "Erscheinungsbild",
+    "dashboard": "Dashboard",
+    "about": "Über"
+  },
+  "common": {
+    "save": "Speichern",
+    "import": "Import",
+    "export": "Export",
+    "add": "+Hinzufügen",
+    "back": "Zurück",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "language": "Sprache"
+  },
+  "general": {
+    "title": "Titel",
+    "description": "Beschreibung",
+    "hostIp": "Host-IP",
+    "hostIpTip": "Wird verwendet, um die IP deines Servers in Badge-URLs zuzulassen und für den SSRF-Schutz.",
+    "monitoring": "Überwachung",
+    "loggingLevel": "Logging-Stufe",
+    "dockerHealth": "Docker-Container-Zustandsprüfungen",
+    "hideHealthy": "Badge für gesunden Status ausblenden",
+    "socketUrl": "Socket-URL",
+    "loggingTip": "\"Fehler\" zeigt nur Warnungen und Fehler an. Sicherheitsereignisse werden immer protokolliert.",
+    "socketTip": "Verwende die URL eines <strong>Proxy Socket</strong>-Containers für einen Zugriff mit minimalen Rechten. Kein Proxy vorhanden? Du kannst auch direkt <code>unix:///var/run/docker.sock</code> eingeben. <span class=\"tip-danger\">Tu dies nur in einem privaten, vertrauenswürdigen Netzwerk, das vollständig unter deiner Kontrolle steht.</span>",
+    "security": "Sicherheit",
+    "passwordProtection": "Passwortschutz",
+    "password": "Passwort",
+    "passwordTip": "Leer lassen, um das bestehende Passwort beizubehalten. Mindestens 8 Zeichen. Für stärkeren Schutz solltest du das Dashboard hinter einem <strong>Authentication Proxy</strong> platzieren. Dieses integrierte Passwort ist nur eine leichte Absicherung, keine vollständige Authentifizierungsebene.",
+    "backup": "Sicherung",
+    "importExport": "Import / Export",
+    "signOut": "Abmelden"
+  },
+  "appearance": {
+    "appTitle": "App-Titel",
+    "showTitleDesktop": "App-Titel auf Desktop anzeigen",
+    "showTitleMobile": "App-Titel auf Mobilgeräten anzeigen",
+    "wallpaper": "Hintergrundbild",
+    "source": "Quelle",
+    "unsplashKey": "Unsplash API key",
+    "collectionId": "Collection ID",
+    "imageUrl": "Bild-URL",
+    "color": "Farbe",
+    "brightness": "Helligkeit",
+    "collectionTip": "Collection ID leer lassen für ein zufälliges Bild."
+  },
+  "about": {
+    "documentation": "Dokumentation",
+    "reportIssue": "Problem melden",
+    "sourceCode": "Quellcode",
+    "support": "Support"
+  },
+  "dashboard": {
+    "searchPh": "Suchen",
+    "filterAll": "Alle",
+    "filterApps": "Apps",
+    "filterWidgets": "Widgets",
+    "filterFolders": "Ordner"
+  }
+}
