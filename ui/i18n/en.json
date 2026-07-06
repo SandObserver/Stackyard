@@ -10,7 +10,40 @@
     "save": "Save",
     "import": "Import",
     "export": "Export",
+    "add": "+Add",
+    "back": "Back",
     "cancel": "Cancel",
     "language": "Language"
+  },
+  "general": {
+    "title": "Title",
+    "description": "Description",
+    "hostIp": "Host IP",
+    "hostIpTip": "Used to allow your server's IP in badge URLs and SSRF protection.",
+    "monitoring": "Monitoring",
+    "loggingLevel": "Logging Level",
+    "dockerHealth": "Docker Container Health Checks",
+    "hideHealthy": "Hide Healthy Badge",
+    "socketUrl": "Socket URL",
+    "loggingTip": "Errors shows warnings and errors only. Security events are always logged.",
+    "security": "Security",
+    "passwordProtection": "Password Protection",
+    "password": "Password",
+    "backup": "Backup",
+    "importExport": "Import / Export",
+    "signOut": "Sign out"
+  },
+  "appearance": {
+    "appTitle": "App Title",
+    "showTitleDesktop": "Show App Title On Desktop",
+    "showTitleMobile": "Show App Title On Mobile",
+    "wallpaper": "Wallpaper",
+    "source": "Source",
+    "unsplashKey": "Unsplash API Key",
+    "collectionId": "Collection ID",
+    "imageUrl": "Image URL",
+    "color": "Color",
+    "brightness": "Brightness",
+    "collectionTip": "Leave Collection ID blank for random."
   }
 }
