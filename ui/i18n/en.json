@@ -1,0 +1,16 @@
+{
+  "_meta": { "name": "English", "dir": "ltr" },
+  "nav": {
+    "general": "General",
+    "appearance": "Appearance",
+    "dashboard": "Dashboard",
+    "about": "About"
+  },
+  "common": {
+    "save": "Save",
+    "import": "Import",
+    "export": "Export",
+    "cancel": "Cancel",
+    "language": "Language"
+  }
+}
