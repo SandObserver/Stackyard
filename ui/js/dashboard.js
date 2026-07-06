@@ -4,6 +4,7 @@ import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.j
 import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
 import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
+import { initI18n } from '/js/i18n.js?v=1';
 import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
 
@@ -325,6 +326,7 @@ async function boot() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
     items = c.items||[]; S = c.settings||{};
+    await initI18n(S.language || 'en');
   } catch(e) { console.error('[boot]', e); configFailed = true; }
 
   await loadLocalIcons();
