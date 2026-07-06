@@ -816,7 +816,7 @@ async function doSave(orig){
       /* Static (fixed label) badge */
       const staticEn=document.getElementById('static-en')?.checked||false;
       const staticLabel=document.getElementById('f-static-label')?.value?.trim()||'';
-      const staticColor=document.getElementById('static-col-val')?.value||'#0289ff';
+      const staticColor=document.getElementById('static-col-val')?.value||'#1e6ef4';
       const staticBadgeObj=staticEn&&staticLabel?{enabled:true,label:staticLabel.slice(0,10),color:staticColor||'blue'}:undefined;
       const finalIcon=state.siurl;
       item={
