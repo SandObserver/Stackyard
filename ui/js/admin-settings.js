@@ -30,6 +30,14 @@ export function loadSettings(c){
     if(llBtn){const tn=llBtn.childNodes[0];if(tn&&tn.nodeType===3)tn.textContent=llLabels[llEl.value]||llEl.value;}
     document.querySelectorAll('#log-level-list li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===llEl.value)));
   }
+  const langEl=document.getElementById('lang-sel');
+  if(langEl){
+    langEl.value=s.language||'en';
+    const laBtn=document.getElementById('lang-btn');
+    const laLi=document.querySelector(`#lang-list li[data-val="${langEl.value}"]`);
+    if(laBtn){const tn=laBtn.childNodes[0];if(tn&&tn.nodeType===3)tn.textContent=(laLi?laLi.textContent:langEl.value);}
+    document.querySelectorAll('#lang-list li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===langEl.value)));
+  }
   /* Unsplash API key — fetch whether one is configured via dedicated endpoint
      (the key itself is never included in /api/config to avoid exposure) */
   const apiEl=(document.getElementById('bg-apikey-inp')||document.getElementById('bg-apikey'));
@@ -218,6 +226,7 @@ async function saveServer(){
       hideHealthyBadge:document.getElementById('srv-hide-healthy')?.checked!==false,
     };
     c.settings.logLevel=document.getElementById('log-level')?.value||'info';
+    c.settings.language=document.getElementById('lang-sel')?.value||'en';
     await ap('/api/config',c);
 
     /* Handle password and auth toggle */
