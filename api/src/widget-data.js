@@ -5,6 +5,7 @@ const { fetchJSON, parsePrometheus } = require('./proxy');
 const { cpuPercent, ramPercent, cpuTemp, diskStats } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
+const { dispatchProvider } = require('./provider-dispatch');
 const log = require('./log');
 
 /* Normalize a user-entered base URL the same way the existing hand-written data
@@ -60,7 +61,7 @@ function buildAuth(authDecl, wc) {
    primitives the built-in complex widgets use, so an author writing a data
    function reuses them instead of re-deriving them. */
 function dataFnContext(wc, endpoint, searchParams) {
-  return {
+  const ctx = {
     config:   wc,                 /* full widgetConfig, including secrets (server-side only) */
     settings: loadConfig().settings || {}, /* global non-secret config (e.g. stats.diskMount, networkInterface) — server-side only */
     endpoint: endpoint,
@@ -72,6 +73,10 @@ function dataFnContext(wc, endpoint, searchParams) {
     buildAuth,
     log,
   };
+  /* Provider dispatch for multi-provider widgets, bound to this ctx so callers
+     write ctx.dispatchProvider(handlers, opts). */
+  ctx.dispatchProvider = (handlers, opts) => dispatchProvider(ctx, handlers, opts);
+  return ctx;
 }
 
 /* Run a widget's data function. The module ships inside the widget folder and
