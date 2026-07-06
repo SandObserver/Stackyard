@@ -73,12 +73,13 @@ on('POST', '/api/config', async(req, res) => {
     if (!Array.isArray(data.items)) return json(res, 400, { error:'items must be an array' });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error:'every item needs a non-empty id and type' });
-    const KNOWN_SETTINGS = new Set(['background', 'stats', 'server', 'auth', 'theme', 'layout', 'search', 'greeting', 'logLevel']);
+    const KNOWN_SETTINGS = new Set(['background', 'stats', 'server', 'auth', 'theme', 'layout', 'search', 'greeting', 'logLevel', 'language']);
     if (data.settings && typeof data.settings === 'object') {
       for (const key of Object.keys(data.settings)) {
         if (!KNOWN_SETTINGS.has(key)) delete data.settings[key];
       }
       if (data.settings.logLevel && !['debug', 'info', 'error'].includes(data.settings.logLevel)) delete data.settings.logLevel;
+      if (data.settings.language && !/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(data.settings.language)) delete data.settings.language;
     }
     const existing = loadConfig();
     if (existing.settings?.background?.apiKey && !data.settings?.background?.apiKey) {
