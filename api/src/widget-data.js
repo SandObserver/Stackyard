@@ -2,7 +2,7 @@ const path = require('path');
 const { on, json, readBody, checkOrigin } = require('./router');
 const { loadConfig } = require('./config');
 const { fetchJSON, parsePrometheus } = require('./proxy');
-const { cpuPercent, ramPercent, cpuTemp, diskStats } = require('./metrics');
+const { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
 const { dispatchProvider } = require('./provider-dispatch');
@@ -68,7 +68,7 @@ function dataFnContext(wc, endpoint, searchParams) {
     params:   searchParams,       /* URLSearchParams for any extra query params */
     fetchJSON,                    /* the safe fetcher (TLS, redirects, size limits, parsing) */
     parsePrometheus,
-    metrics:  { cpuPercent, ramPercent, cpuTemp, diskStats },
+    metrics:  { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds },
     normalizeBase,
     buildAuth,
     log,
