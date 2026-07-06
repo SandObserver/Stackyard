@@ -4,6 +4,10 @@
 import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=1';
 
 const CC_SWATCHES=['#1c1c1e','#8e8e93','#f2f2f7','#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'];
+/* Badge color picker uses the standard Stackyard badge blue (#1e6ef4, the
+   --sy-blue-badge token) instead of the general control blue, so a blue badge
+   matches folder badges and keeps white text. */
+export const BADGE_SWATCHES=['#1c1c1e','#8e8e93','#f2f2f7','#ff393c','#ffcd00','#35c759','#1e6ef4','#cb30df'];
 const _ccIco={
   hueLo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
   hueHi:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
@@ -26,7 +30,7 @@ function _hexToHsv(hex){ const h6=_cssToHex(hex); if(!h6)return null;
   if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
   return {h:Math.round(h),s:Math.round(mx?d/mx*100:0),v:Math.round(mx*100)}; }
 
-export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semantic=false}={}){
+export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semantic=false,swatchColors=CC_SWATCHES}={}){
   const isSem=v=>v==='dark'||v==='light';
   const init=_hexToHsv(isSem(value)?'#0289ff':value)||{h:212,s:99,v:100};
   const swatches = semantic
@@ -35,7 +39,7 @@ export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,
        <button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
        ${['#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'].map(h=>`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`).join('')}`
     : `<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
-       ${CC_SWATCHES.map(h=>`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`).join('')}`;
+       ${swatchColors.map(h=>`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`).join('')}`;
   const wrap=document.createElement('div');
   wrap.innerHTML=`
     <div class="row cc-row"><span class="rl">Color</span><div class="cc-sw">${swatches}</div></div>
