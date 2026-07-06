@@ -4,7 +4,7 @@ function readCpuStat() {
   const line = fs.readFileSync('/proc/stat', 'utf8').split('\n')[0];
   const [, user, nice, sys, idle, iowait, irq, softirq, steal] = line.split(/\s+/).map(Number);
   const total = user + nice + sys + idle + iowait + irq + softirq + steal;
-  return { total, busy: total - idle - iowait };
+  return { total, busy: total - idle - iowait, iowait };
 }
 
 async function cpuPercent() {
@@ -13,6 +13,34 @@ async function cpuPercent() {
   const b = readCpuStat();
   const dt = b.total - a.total;
   return dt > 0 ? Math.min(100, ((b.busy - a.busy) / dt) * 100) : 0;
+}
+
+/* IO wait as a percentage of total CPU time over a short sampling window, the
+   same delta approach as cpuPercent (both counters are cumulative). */
+async function cpuIoWait() {
+  const a = readCpuStat();
+  await new Promise(r => setTimeout(r, 500));
+  const b = readCpuStat();
+  const dt = b.total - a.total;
+  return dt > 0 ? Math.min(100, Math.max(0, ((b.iowait - a.iowait) / dt) * 100)) : 0;
+}
+
+/* Total number of processes/threads, from the 4th field of /proc/loadavg
+   ("runnable/total"); returns the total. */
+function procCount() {
+  try {
+    const f = fs.readFileSync('/proc/loadavg', 'utf8').trim().split(/\s+/);
+    const total = (f[3] || '').split('/')[1];
+    return parseInt(total, 10) || 0;
+  } catch { return 0; }
+}
+
+/* System uptime in whole seconds, from the first field of /proc/uptime. */
+function uptimeSeconds() {
+  try {
+    const v = parseFloat(fs.readFileSync('/proc/uptime', 'utf8').split(/\s+/)[0]);
+    return Number.isFinite(v) ? Math.floor(v) : 0;
+  } catch { return 0; }
 }
 
 function ramPercent() {
@@ -38,4 +66,4 @@ function diskStats(mountPoint) {
   } catch { return { usedPct: 0, totalGb: 0 }; }
 }
 
-module.exports = { cpuPercent, ramPercent, cpuTemp, diskStats };
+module.exports = { cpuPercent, cpuIoWait, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds };
