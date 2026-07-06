@@ -428,3 +428,18 @@ html.is-mobile body.authed .mtabbar{
 html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;color:var(--dm);font-size:12px;font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
 html.is-mobile .mtab .ni{width:31px;height:31px;flex-shrink:0}
 html.is-mobile .mtab.active{color:var(--ac2)}
+
+/* ─────────────── RTL foundation ───────────────
+   Flexbox rows reverse automatically under dir="rtl"; these cover the pieces
+   that don't: right-aligned values, absolutely-positioned menus, the sidebar
+   divider, and directional chevrons. Refine against real translated content. */
+[dir="rtl"] .rv,
+[dir="rtl"] .ie-row .row-inp { text-align: left; }
+[dir="rtl"] .nl { text-align: right; }
+[dir="rtl"] .sb { border-right: none; border-left: 1px solid var(--bd-inner); }
+[dir="rtl"] .row-dd-list { right: auto; left: 0; }
+[dir="rtl"] #toast { right: auto; left: 24px; }
+[dir="rtl"] .m-back svg,
+[dir="rtl"] .ev-back svg { transform: scaleX(-1); }
+[dir="rtl"] .grp-tip,
+[dir="rtl"] .sec-title { text-align: right; }
