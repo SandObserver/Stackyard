@@ -90,14 +90,14 @@
         <div class="row ie-row" id="ie-socket" style="display:none"><span class="rl" data-i18n="general.socketUrl">Socket URL</span><span class="rv is-ph" id="ie-socket-v">tcp://socket-proxy:2375</span><button class="pe" type="button" aria-label="Edit socket URL"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
       </div>
       <p class="grp-tip" data-i18n="general.loggingTip">Errors shows warnings and errors only. Security events are always logged.</p>
-      <p class="grp-tip" id="socket-hint" style="display:none">Use the URL of a <strong>socket proxy</strong> container for least-privilege access. No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. <span class="tip-danger">Only do this on a private, trusted network you fully control.</span></p>
+      <p class="grp-tip" id="socket-hint" style="display:none" data-i18n-html="general.socketTip">Use the URL of a <strong>socket proxy</strong> container for least-privilege access. No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. <span class="tip-danger">Only do this on a private, trusted network you fully control.</span></p>
 
       <div class="grp-hdr" data-i18n="general.security">Security</div>
       <div class="grp">
         <div class="row"><span class="rl" data-i18n="general.passwordProtection">Password Protection</span><label class="tog" aria-label="Password Protection"><input type="checkbox" id="sec-en"><div class="tr"></div></label></div>
         <div class="row ie-row" id="ie-pw" style="display:none"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button" aria-label="Edit password"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
       </div>
-      <p class="grp-tip" id="pw-hint-static" style="display:none">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p>
+      <p class="grp-tip" id="pw-hint-static" style="display:none" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p>
 
       <div class="grp-hdr" data-i18n="general.backup">Backup</div>
       <div class="grp">
@@ -159,17 +159,17 @@
         <div class="sec-hdr">
           <a class="m-back" href="/" aria-label="Back to dashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.dashboard">Dashboard</h1>
           <div class="sec-hdr-actions">
-            <button class="btn bp sm" id="btn-add" type="button">+Add</button>
-            <button class="btn save-btn-green sm" id="dash-save" type="button">Save</button>
+            <button class="btn bp sm" id="btn-add" type="button" data-i18n="common.add">+Add</button>
+            <button class="btn save-btn-green sm" id="dash-save" type="button" data-i18n="common.save">Save</button>
           </div>
         </div>
         <div class="al-filter" id="al-filter" style="display:none">
-          <input id="al-search" type="search" class="al-search" placeholder="Search" aria-label="Search">
+          <input id="al-search" type="search" class="al-search" placeholder="Search" aria-label="Search" data-i18n-ph="dashboard.searchPh">
           <div class="al-chips" role="group" aria-label="Filter by type">
-            <button type="button" class="chip on" data-flt="all" aria-pressed="true">All</button>
-            <button type="button" class="chip" data-flt="app" aria-pressed="false">Apps</button>
-            <button type="button" class="chip" data-flt="widget" aria-pressed="false">Widgets</button>
-            <button type="button" class="chip" data-flt="folder" aria-pressed="false">Folders</button>
+            <button type="button" class="chip on" data-flt="all" aria-pressed="true" data-i18n="dashboard.filterAll">All</button>
+            <button type="button" class="chip" data-flt="app" aria-pressed="false" data-i18n="dashboard.filterApps">Apps</button>
+            <button type="button" class="chip" data-flt="widget" aria-pressed="false" data-i18n="dashboard.filterWidgets">Widgets</button>
+            <button type="button" class="chip" data-flt="folder" aria-pressed="false" data-i18n="dashboard.filterFolders">Folders</button>
           </div>
         </div>
         <div class="grp" id="al-grp" style="display:none"><div id="al"></div></div>
@@ -180,12 +180,12 @@
         <div class="sec-hdr">
           <button class="ev-back" id="ev-back" type="button" aria-label="Back to dashboard list">
             <svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"/></svg>
-            Back
+            <span data-i18n="common.back">Back</span>
           </button>
           <h1 class="sec-title" id="ev-title">General</h1>
           <div class="sec-hdr-actions">
-            <button class="btn bd-btn sm d-none" id="ev-delete" type="button">Delete</button>
-            <button class="btn save-btn-green sm" id="ev-save" type="button">Save</button>
+            <button class="btn bd-btn sm d-none" id="ev-delete" type="button" data-i18n="common.delete">Delete</button>
+            <button class="btn save-btn-green sm" id="ev-save" type="button" data-i18n="common.save">Save</button>
           </div>
         </div>
         <!-- Add New selector + form render here -->
@@ -210,10 +210,10 @@
         <div class="about-ver" id="about-version">Version</div>
       </div>
       <div class="grp">
-        <a class="row row-link" href="https://github.com/SandObserver/stackyard#readme" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="rl">Documentation</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-        <a class="row row-link" href="https://github.com/SandObserver/stackyard/issues" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="rl">Report an issue</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-        <a class="row row-link" href="https://github.com/SandObserver/stackyard/tree/main" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg><span class="rl">Source code</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-        <a class="row row-link" href="https://github.com/SandObserver/stackyard/blob/main/docs/support.md" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="#e7124d" stroke="none" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="rl">Support</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+        <a class="row row-link" href="https://github.com/SandObserver/stackyard#readme" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="rl" data-i18n="about.documentation">Documentation</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+        <a class="row row-link" href="https://github.com/SandObserver/stackyard/issues" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="rl" data-i18n="about.reportIssue">Report an issue</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+        <a class="row row-link" href="https://github.com/SandObserver/stackyard/tree/main" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg><span class="rl" data-i18n="about.sourceCode">Source code</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+        <a class="row row-link" href="https://github.com/SandObserver/stackyard/blob/main/docs/support.md" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="#e7124d" stroke="none" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="rl" data-i18n="about.support">Support</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
       </div>
     </section>
 
