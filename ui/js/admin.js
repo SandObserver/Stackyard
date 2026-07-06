@@ -8,6 +8,7 @@ import { checkAuth, pwStrength, wirePasswordStrength } from '/js/admin-auth.js?v
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
 import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=c3d495f0';
+import { LANGUAGES, initI18n } from '/js/i18n.js?v=1';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
 
 /* Admin UI — Stackyard Dashboard */
@@ -45,6 +46,7 @@ async function load(){
   document.body.classList.add('authed');
   render();
   loadSettings(c);
+  initI18n(c.settings?.language || 'en');
   applyBg();
 }
 
@@ -1002,6 +1004,26 @@ function initLogLevel(){
   setVal(hidden.value||'info');
 }
 
+/* ══ Language selector ══ */
+function initLanguage(){
+  const btn=document.getElementById('lang-btn');
+  const list=document.getElementById('lang-list');
+  const hidden=document.getElementById('lang-sel');
+  if(!btn||!list||!hidden) return;
+  const names=Object.fromEntries(LANGUAGES.map(l=>[l.code,l.name]));
+  list.innerHTML=LANGUAGES.map(l=>`<li role="option" data-val="${l.code}" aria-selected="false">${l.name}</li>`).join('');
+  function setVal(val){
+    hidden.value=val;
+    const tn=btn.childNodes[0]; if(tn&&tn.nodeType===3) tn.textContent=names[val]||val;
+    list.querySelectorAll('li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===val)));
+    list.hidden=true;
+  }
+  btn.addEventListener('click',e=>{e.stopPropagation();list.hidden=!list.hidden;});
+  list.querySelectorAll('li').forEach(li=>li.addEventListener('click',()=>setVal(li.dataset.val)));
+  document.addEventListener('click',()=>{list.hidden=true;});
+  setVal(hidden.value||'en');
+}
+
 /* ══ Dashboard Save ══ */
 const dashSaveEl=document.getElementById('dash-save');
 if(dashSaveEl)dashSaveEl.onclick=()=>save();
@@ -1033,6 +1055,7 @@ initSecToggle();
 initDockerToggle();
 initBgType();
 initLogLevel();
+initLanguage();
 
 checkAuth(load).then(ok => {
   if (!ok) return;
