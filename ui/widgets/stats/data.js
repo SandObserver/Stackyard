@@ -34,12 +34,17 @@ async function systemSummary({ config, settings, metrics }) {
   const disks = [...mounts].map(m => ({ mount: m, ...metrics.diskStats(m) }));
   const ram   = metrics.ramPercent();
 
+  /* IO wait costs a second sampling window, so only measure it when a slot asks for it. */
+  const iowait = slots.some(s => s.type === 'iowait') ? await metrics.cpuIoWait() : null;
+  const procs  = metrics.procCount();
+  const uptime = metrics.uptimeSeconds();
+
   const zones = new Set([0]);
   for (const s of slots) if (s.type === 'temp' && Number.isInteger(s.thermalZone)) zones.add(s.thermalZone);
   const temps = {};
   for (const z of zones) { const t = metrics.cpuTemp(z); if (t !== null) temps[z] = t; }
 
-  return { cpu, ram, temp: temps[0] ?? null, temps, disks };
+  return { cpu, ram, temp: temps[0] ?? null, temps, disks, iowait, procs, uptime };
 }
 
 /* Disk Health (Scrutiny) — maps the widget's configured bays (device_id per bay)
