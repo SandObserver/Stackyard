@@ -11,6 +11,8 @@
    VISUALS  (self-contained inline SVG/DOM — no extra CSS needed)
      smoothPath(points)              smooth SVG path string through [[x,y],...]
      sparkline(values, opts?)        an <svg> area+line chart element
+     deviationBars(values, opts?)    an <svg> bar chart, bars above the series
+                                     mean highlighted, with a mean baseline
      barFill(percent, opts?)         a track+fill bar element
 
    STATE  (graceful loading / empty / stale / error, self-contained)
@@ -123,10 +125,60 @@ export function sparkline(values, opts = {}) {
   return svg;
 }
 
+/* Bar chart from a series, with bars at or above the series mean highlighted in
+   `accent` and the rest in `color`, plus a dashed mean baseline. Good for "value
+   vs its own average" (e.g. process count). Self-contained <svg> scaling to its
+   container. opts: { width=200, height=60, color='#0a84ff', accent='#ff9f0a',
+   meanColor='rgba(255,255,255,0.35)', gap=2, radius=1, max=auto } */
+export function deviationBars(values, opts = {}) {
+  const W = opts.width || 200, H = opts.height || 60;
+  const color = opts.color || '#0a84ff';
+  const accent = opts.accent || '#ff9f0a';
+  const meanColor = opts.meanColor || 'rgba(255,255,255,0.35)';
+  const gap = opts.gap != null ? opts.gap : 2;
+  const radius = opts.radius != null ? opts.radius : 1;
+
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.style.width = '100%'; svg.style.height = '100%'; svg.style.display = 'block'; svg.style.overflow = 'visible';
+
+  const data = Array.isArray(values) ? values.filter(v => typeof v === 'number') : [];
+  if (!data.length) return svg;
+
+  const mean = data.reduce((a, b) => a + b, 0) / data.length;
+  const yMax = opts.max != null ? opts.max : Math.max(...data, mean, 1) * 1.15;
+  const n = data.length;
+  const step = W / n;
+  const bw = Math.max(1, step - gap);
+  const yOf = v => H - (v / yMax) * H;
+
+  data.forEach((v, i) => {
+    const h = Math.max(0, (v / yMax) * H);
+    const rect = document.createElementNS(NS, 'rect');
+    rect.setAttribute('x', String(_r(i * step + gap / 2)));
+    rect.setAttribute('y', String(_r(H - h)));
+    rect.setAttribute('width', String(_r(bw)));
+    rect.setAttribute('height', String(_r(h)));
+    if (radius) rect.setAttribute('rx', String(radius));
+    rect.setAttribute('fill', v >= mean ? accent : color);
+    svg.appendChild(rect);
+  });
+
+  const line = document.createElementNS(NS, 'line');
+  const my = _r(yOf(mean));
+  line.setAttribute('x1', '0'); line.setAttribute('y1', String(my));
+  line.setAttribute('x2', String(W)); line.setAttribute('y2', String(my));
+  line.setAttribute('stroke', meanColor); line.setAttribute('stroke-width', '1');
+  line.setAttribute('stroke-dasharray', '3 3');
+  svg.appendChild(line);
+
+  return svg;
+}
+
 /* A horizontal track with a proportional fill, self-contained via inline styles.
    opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 } */
-export function barFill(percent, opts = {}) {
-  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+export function barFill(percent, opts = {}) {  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
   const h = opts.height != null ? opts.height : 6;
   const radius = opts.radius != null ? opts.radius : 3;
   const track = document.createElement('div');
