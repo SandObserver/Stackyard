@@ -20,8 +20,8 @@ const SIZE_ICONS={
 const CUSTOM_SIZES = ['small','medium','large','xlarge'];
 function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (state._widgetReg[type]?.sizes || ['medium']); }
 const SIZE_LABELS = { small:'Small', medium:'Medium', large:'Large', xlarge:'Extra Large' };
-const STAT_TYPES  = ['cpu','ram','temp','disk'];
-const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk' };
+const STAT_TYPES  = ['cpu','ram','temp','disk','iowait','procs'];
+const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk', iowait:'IO Wait', procs:'Processes' };
 
 /* State for current widget config while modal is open */
 /* Auto-generated config form (folder-style widgets driven by the registry). */
@@ -60,10 +60,11 @@ export function buildWidgetForm(body,item){
   }
   state._wnet = wc.network ? {
     enabled:  wc.network.enabled  || false,
+    mode:     wc.network.mode     || 'speed',
     url:      wc.network.url      || '',
     provider: wc.network.provider || 'myspeed',
     myspeedPassSet: wc.network.myspeedPassSet || false,
-  } : {enabled:false,url:'',provider:'myspeed'};
+  } : {enabled:false,mode:'speed',url:'',provider:'myspeed'};
   state._wmapCfg = {
     showLegend: wc.showLegend !== false,
     services: Array.isArray(wc.services) ? wc.services.map(s=>Object.assign({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'',token:'',enabled:true}, s)) : (function(){
@@ -305,7 +306,7 @@ function _renderStatsBody(body){
   }
 
   /* ── System Summary: 3 stat slots + network slot (settings-row, PSD) ── */
-  const RES_LABELS={cpu:'CPU',ram:'RAM',temp:'Temperature',disk:'Disk Mount'};
+  const RES_LABELS={cpu:'CPU',ram:'RAM',temp:'Temperature',disk:'Disk Mount',iowait:'IO Wait',procs:'Processes'};
   const SLOT_DEFS=['#ff2d55','#30d158','#00c0e8'];
 
   function fillSlot(card, idx){
@@ -338,27 +339,44 @@ function _renderStatsBody(body){
     fillSlot(card, idx);
   });
 
-  /* Slot 4: Network Speed */
+  /* Slot 4: Network (Speed / Throughput / Uptime) */
   const prov=state._wnet.provider||'myspeed';
+  const mode=state._wnet.mode||'speed';
   const netCard=document.createElement('div'); netCard.className='grp'; body.appendChild(netCard);
   netCard.innerHTML=`
-    <div class="row"><span class="rl">Network Speed</span><label class="tog"><input type="checkbox" id="net-en" ${state._wnet.enabled?'checked':''}><div class="tr"></div></label></div>
+    <div class="row"><span class="rl">Network</span><label class="tog"><input type="checkbox" id="net-en" ${state._wnet.enabled?'checked':''}><div class="tr"></div></label></div>
     <div id="net-sub" ${state._wnet.enabled?'':'hidden'}>
-      <div class="row"><span class="rl">Provider</span><div class="segr">
-        <label class="segr-opt"><input type="radio" name="net-prov" value="myspeed" ${prov==='myspeed'?'checked':''}><span class="segr-dot"></span><span>MySpeed</span></label>
-        <label class="segr-opt"><input type="radio" name="net-prov" value="speedtest-tracker" ${prov==='speedtest-tracker'?'checked':''}><span class="segr-dot"></span><span>Speedtest Tracker</span></label>
+      <div class="row"><span class="rl">Show</span><div class="segr">
+        <label class="segr-opt"><input type="radio" name="net-mode" value="speed" ${mode==='speed'?'checked':''}><span class="segr-dot"></span><span>Speed</span></label>
+        <label class="segr-opt"><input type="radio" name="net-mode" value="throughput" ${mode==='throughput'?'checked':''}><span class="segr-dot"></span><span>Throughput</span></label>
+        <label class="segr-opt"><input type="radio" name="net-mode" value="uptime" ${mode==='uptime'?'checked':''}><span class="segr-dot"></span><span>Uptime</span></label>
       </div></div>
-      <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${state._wnet.url?'':' is-ph'}">${state._wnet.url?esc(state._wnet.url):(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${esc(state._wnet.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${PE_SVG}</button></div>
+      <div id="net-speed-fields" ${mode==='speed'?'':'hidden'}>
+        <div class="row"><span class="rl">Provider</span><div class="segr">
+          <label class="segr-opt"><input type="radio" name="net-prov" value="myspeed" ${prov==='myspeed'?'checked':''}><span class="segr-dot"></span><span>MySpeed</span></label>
+          <label class="segr-opt"><input type="radio" name="net-prov" value="speedtest-tracker" ${prov==='speedtest-tracker'?'checked':''}><span class="segr-dot"></span><span>Speedtest Tracker</span></label>
+        </div></div>
+        <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${state._wnet.url?'':' is-ph'}">${state._wnet.url?esc(state._wnet.url):(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${esc(state._wnet.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${PE_SVG}</button></div>
+      </div>
+      <p class="grp-tip in-card" id="net-mode-tip" ${mode==='speed'?'hidden':''}>${mode==='throughput'?'Live interface throughput (RX/TX) from the container\u2019s network interface.':'System uptime.'}</p>
     </div>`;
   const netEn=netCard.querySelector('#net-en'), netSub=netCard.querySelector('#net-sub');
+  const netSpeedFields=netCard.querySelector('#net-speed-fields'), netModeTip=netCard.querySelector('#net-mode-tip');
   netEn.onchange=()=>{ state._wnet.enabled=netEn.checked; netSub.hidden=!netEn.checked; };
+  netCard.querySelectorAll('input[name="net-mode"]').forEach(r=>r.addEventListener('change',()=>{
+    if(!r.checked)return; state._wnet.mode=r.value;
+    const isSpeed=r.value==='speed';
+    netSpeedFields.hidden=!isSpeed;
+    netModeTip.hidden=isSpeed;
+    netModeTip.textContent=r.value==='throughput'?'Live interface throughput (RX/TX) from the container\u2019s network interface.':'System uptime.';
+  }));
   netCard.querySelectorAll('input[name="net-prov"]').forEach(r=>r.addEventListener('change',()=>{
     if(!r.checked)return; state._wnet.provider=r.value;
     const pr=netCard.querySelector('#net-pass-row'); if(pr)pr.hidden=(r.value!=='myspeed');
     const uv=netCard.querySelector('#net-url-row .rv'); if(uv&&uv.classList.contains('is-ph'))uv.textContent=(r.value==='myspeed'?'myspeed:5216':'your-server:8850');
   }));
   initInlineEdit('net-url-row','net-url',{placeholder:(prov==='myspeed'?'myspeed:5216':'your-server:8850'),onCommit(v){state._wnet.url=v;}});
-  _secretRow(netSub,{rowId:'net-pass-row',inpId:'net-pass',label:'Password',opt:true,isSet:state._wnet.myspeedPassSet,hidden:(prov!=='myspeed')});
+  _secretRow(netSpeedFields,{rowId:'net-pass-row',inpId:'net-pass',label:'Password',opt:true,isSet:state._wnet.myspeedPassSet,hidden:(prov!=='myspeed')});
 }
 
 
