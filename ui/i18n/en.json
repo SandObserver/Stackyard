@@ -13,6 +13,7 @@
     "add": "+Add",
     "back": "Back",
     "cancel": "Cancel",
+    "delete": "Delete",
     "language": "Language"
   },
   "general": {
@@ -26,9 +27,11 @@
     "hideHealthy": "Hide Healthy Badge",
     "socketUrl": "Socket URL",
     "loggingTip": "Errors shows warnings and errors only. Security events are always logged.",
+    "socketTip": "Use the URL of a <strong>socket proxy</strong> container for least-privilege access. No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. <span class=\"tip-danger\">Only do this on a private, trusted network you fully control.</span>",
     "security": "Security",
     "passwordProtection": "Password Protection",
     "password": "Password",
+    "passwordTip": "Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.",
     "backup": "Backup",
     "importExport": "Import / Export",
     "signOut": "Sign out"
@@ -45,5 +48,18 @@
     "color": "Color",
     "brightness": "Brightness",
     "collectionTip": "Leave Collection ID blank for random."
+  },
+  "about": {
+    "documentation": "Documentation",
+    "reportIssue": "Report an issue",
+    "sourceCode": "Source code",
+    "support": "Support"
+  },
+  "dashboard": {
+    "searchPh": "Search",
+    "filterAll": "All",
+    "filterApps": "Apps",
+    "filterWidgets": "Widgets",
+    "filterFolders": "Folders"
   }
 }
