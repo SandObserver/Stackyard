@@ -6,7 +6,7 @@ import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
 import { resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
-import { renderColorControl } from '/js/admin-color-control.js?v=255efb55';
+import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
 
 /* Folder form — settings-row system (PSD: add_new_folder).
    Folder Name = inline-edit row; Add Apps = tap-to-toggle checklist dropdown. */
@@ -182,8 +182,8 @@ export function buildAppForm(body,item){
 
   /* Color controls */
   renderColorControl(document.getElementById('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){state.scol=v;const pv=document.getElementById('ipv');if(pv)pv.style.background=rc(state.scol);}});
-  renderColorControl(document.getElementById('static-color-slot'),{value:staticBadge.color||'#0289ff',idPrefix:'static-col'});
-  renderColorControl(document.getElementById('act-color-slot'),{value:actCustom.color||'#0289ff',idPrefix:'act-col'});
+  renderColorControl(document.getElementById('static-color-slot'),{value:staticBadge.color||'#1e6ef4',idPrefix:'static-col',swatchColors:BADGE_SWATCHES});
+  renderColorControl(document.getElementById('act-color-slot'),{value:actCustom.color||'#1e6ef4',idPrefix:'act-col',swatchColors:BADGE_SWATCHES});
 
   /* Icon search/upload */
   wireIcon();
