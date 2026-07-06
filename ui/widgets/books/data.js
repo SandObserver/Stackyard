@@ -179,11 +179,13 @@ async function kavitaLists(ctx) {
 module.exports = async (ctx) => {
   const provider = (ctx.config && ctx.config.provider) || 'audiobookshelf';
   const wantLists = ctx.endpoint === 'lists';
-  try {
-    if (provider === 'komga')  return wantLists ? await komgaLists(ctx)  : await komga(ctx);
-    if (provider === 'kavita') return wantLists ? await kavitaLists(ctx) : await kavita(ctx);
-    return wantLists ? await absLists(ctx) : await abs(ctx);
-  } catch (e) {
-    return wantLists ? { options: [], error: e.message } : { provider, books: [], error: e.message };
-  }
+  return ctx.dispatchProvider({
+    audiobookshelf: c => wantLists ? absLists(c)    : abs(c),
+    komga:          c => wantLists ? komgaLists(c)  : komga(c),
+    kavita:         c => wantLists ? kavitaLists(c) : kavita(c),
+  }, {
+    default: 'audiobookshelf',
+    onError: e => wantLists ? { options: [], error: e.message }
+                            : { provider, books: [], error: e.message },
+  });
 };
