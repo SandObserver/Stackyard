@@ -54,6 +54,11 @@
   .bc-0 { background: var(--sc0, #ff2d55); }
   .bc-1 { background: var(--sc1, #30d158); }
   .bc-2 { background: var(--sc2, #00c0e8); }
+  /* Process-count deviation chart: bars above the mean highlighted, dashed mean line */
+  .bar-fill.dev-hi { background: #ff9f0a; }
+  .dev-mean { position: absolute; left: 0; right: 0; height: 1px; pointer-events: none;
+    background: repeating-linear-gradient(to right, rgba(255,255,255,0.45) 0,
+      rgba(255,255,255,0.45) 3px, transparent 3px, transparent 6px); }
 
   /* Disk bar track */
   .disk-bars   { display: flex; flex-direction: column; gap: 4px; }
@@ -78,6 +83,7 @@
 <script>
 const TICK_MS  = 10000;
 const SPEED_MS = 60000;
+const THROUGHPUT_MS = 3000;
 const id       = new URLSearchParams(location.search).get('id') || '';
 const API      = '/api';
 
@@ -103,10 +109,13 @@ async function boot() {
 
   buildShell();
   await tickStats();
-  if (cfg.widgetConfig?.network?.enabled) tickSpeed();
+  const net = cfg.widgetConfig?.network || {};
+  const netMode = net.mode || 'speed';
+  if (net.enabled && netMode === 'speed')      { tickSpeed();      setInterval(tickSpeed, SPEED_MS); }
+  if (net.enabled && netMode === 'throughput') { tickThroughput(); setInterval(tickThroughput, THROUGHPUT_MS); }
+  /* Uptime mode needs no extra poll — it updates from tickStats/applyStats. */
 
   setInterval(tickStats, TICK_MS);
-  if (cfg.widgetConfig?.network?.enabled) setInterval(tickSpeed, SPEED_MS);
 }
 
 /* ── Build static HTML shell based on config ── */
@@ -137,13 +146,13 @@ function buildShell() {
     });
     /* Network slot — left value only, no chart */
     if (net.enabled) {
-      left.appendChild(mkNetValueEl());
+      left.appendChild(mkNetValueEl(net));
     }
     w.append(left, right);
   } else {
     /* Small: stacked text rows */
     slots.forEach((slot, i) => w.appendChild(mkSmallRow(slot, i)));
-    if (net.enabled) w.appendChild(mkSmallNetRow());
+    if (net.enabled) w.appendChild(mkSmallNetRow(net));
   }
 
   /* Initialize history arrays immediately so applyStats never hits undefined.vals */
@@ -173,6 +182,9 @@ function mkValueEl(slot, i) {
       <span class="disk-num" id="disk-total-${i}">—</span><span class="disk-unit">GB</span>
     </div>
     ${slot.secondary ? `<div class="disk-sub" id="disk-sec-${i}">— / —</div>` : ''}`;
+  } else if (slot.type === 'iowait' || slot.type === 'procs') {
+    const unit = slot.type === 'iowait' ? '%' : '';
+    d.innerHTML = `<div class="v" id="pct-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`;
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
     d.innerHTML = `<div class="v c-${slot.type}" id="pct-${i}">—${unit}</div>`;
@@ -182,13 +194,16 @@ function mkValueEl(slot, i) {
 
 function mkChartEl(slot, i) {
   const d = document.createElement('div'); d.className = 'chart-section';
-  const lbl = { cpu:'CPU', ram:'RAM', temp:'TEMP', disk:'DISK' }[slot.type] || slot.type.toUpperCase();
+  const lbl = { cpu:'CPU', ram:'RAM', temp:'TEMP', disk:'DISK', iowait:'IO WAIT', procs:'PROCS' }[slot.type] || slot.type.toUpperCase();
   if (slot.type === 'disk') {
     d.innerHTML = `<div class="chart-lbl">${lbl}</div>
       <div class="disk-bars">
         <div class="disk-track"><div class="disk-fill" id="disk-bar-p-${i}"></div></div>
         ${slot.secondary ? `<div class="disk-track secondary"><div class="disk-fill" id="disk-bar-s-${i}"></div></div>` : ''}
       </div>`;
+  } else if (slot.type === 'procs') {
+    d.innerHTML = `<div class="chart-lbl">${lbl}</div>
+      <div class="spark-wrap"><div class="spark" id="spark-${i}"></div><div class="dev-mean" id="dev-mean-${i}" style="display:none"></div></div>`;
   } else {
     d.innerHTML = `<div class="chart-lbl">${lbl}</div>
       <div class="spark-wrap"><div class="spark" id="spark-${i}"></div></div>`;
@@ -196,12 +211,19 @@ function mkChartEl(slot, i) {
   return d;
 }
 
-function mkNetValueEl() {
-  const d = document.createElement('div'); d.id = 'net-val';
-  d.innerHTML = `<div class="net-row">
+function netRowHtml(net) {
+  if ((net.mode || 'speed') === 'uptime') {
+    return `<div class="net-row"><div class="net-item">Uptime <span id="net-uptime">—</span></div></div>`;
+  }
+  return `<div class="net-row">
     <div class="net-item">↓ <span id="net-dn">—</span></div>
     <div class="net-item">↑ <span id="net-up">—</span></div>
   </div>`;
+}
+
+function mkNetValueEl(net) {
+  const d = document.createElement('div'); d.id = 'net-val';
+  d.innerHTML = netRowHtml(net);
   return d;
 }
 
@@ -214,6 +236,9 @@ function mkSmallRow(slot, i) {
       <span class="disk-sep">/</span>
       <span class="disk-num" id="small-disk-total-${i}">—</span><span class="disk-unit">GB</span>
     </div>`;
+  } else if (slot.type === 'iowait' || slot.type === 'procs') {
+    const unit = slot.type === 'iowait' ? '%' : '';
+    d.innerHTML = `<div class="v" id="small-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`;
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
     d.innerHTML = `<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`;
@@ -221,12 +246,9 @@ function mkSmallRow(slot, i) {
   return d;
 }
 
-function mkSmallNetRow() {
+function mkSmallNetRow(net) {
   const d = document.createElement('div'); d.className = 'slot-row';
-  d.innerHTML = `<div class="net-row">
-    <div class="net-item">↓ <span id="net-dn">—</span></div>
-    <div class="net-item">↑ <span id="net-up">—</span></div>
-  </div>`;
+  d.innerHTML = netRowHtml(net);
   return d;
 }
 
@@ -249,6 +271,31 @@ function buildSpark(id, hist, colorCls) {
   });
 }
 
+/* ── Deviation bars (process count) ── bars above the running mean highlighted,
+   with a dashed mean baseline. Same bar DOM as the sparkline so it matches. */
+function buildDevBars(id, hist, colorCls) {
+  const el = document.getElementById(id); if (!el) return;
+  el.innerHTML = '';
+  const nums = hist.filter(v => v !== null && typeof v === 'number');
+  const mean = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+  const max  = Math.max(mean, ...nums, 1) * 1.15;
+  hist.forEach((v, i) => {
+    const accent = (i + 1) % 5 === 0;
+    const slot = document.createElement('div'); slot.className = 'bar-slot';
+    slot.style.cssText = `width:1px;min-width:1px;${accent ? 'margin-right:1px;' : ''}`;
+    const bg = document.createElement('div'); bg.className = 'bar-bg'; slot.appendChild(bg);
+    if (v !== null) {
+      const fill = document.createElement('div');
+      fill.className = 'bar-fill ' + (v >= mean ? 'dev-hi' : colorCls);
+      fill.style.height = Math.max(2, (v / max) * 100) + '%';
+      slot.appendChild(fill);
+    }
+    el.appendChild(slot);
+  });
+  const line = document.getElementById(id.replace('spark-', 'dev-mean-'));
+  if (line) { line.style.display = 'block'; line.style.bottom = ((mean / max) * 100) + '%'; }
+}
+
 /* ── Update DOM from stats ── */
 function applyStats(data) {
   const wc    = cfg.widgetConfig || {};
@@ -266,6 +313,8 @@ function applyStats(data) {
     let val = null;
     if (slot.type === 'cpu')  val = data.cpu  ?? null;
     if (slot.type === 'ram')  val = data.ram  ?? null;
+    if (slot.type === 'iowait') val = data.iowait ?? null;
+    if (slot.type === 'procs')  val = data.procs  ?? null;
     if (slot.type === 'temp') {
       /* Each temp slot has its own thermalZone — read the right zone from data.temps */
       const zone = Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0;
@@ -288,11 +337,13 @@ function applyStats(data) {
           const bs = document.getElementById(`disk-bar-s-${i}`); if (bs) bs.style.width = sd.usedPct + '%';
         }
       } else if (val !== null) {
-        const unit = slot.type === 'temp' ? '°' : '%';
-        const el = document.getElementById(`pct-${i}`); if (el) el.textContent = (slot.type === 'temp' ? val.toFixed(1) : Math.round(val)) + unit;
+        const unit = slot.type === 'temp' ? '°' : (slot.type === 'procs' ? '' : '%');
+        const disp = slot.type === 'temp' ? val.toFixed(1) : Math.round(val);
+        const el = document.getElementById(`pct-${i}`); if (el) el.textContent = disp + unit;
         const h = history[i].vals; h.push(val); h.shift();
         const colorCls = 'bc-'+i;
-        buildSpark(`spark-${i}`, h, colorCls);
+        if (slot.type === 'procs') buildDevBars(`spark-${i}`, h, colorCls);
+        else buildSpark(`spark-${i}`, h, colorCls);
       }
     } else {
       /* Small size */
@@ -305,12 +356,18 @@ function applyStats(data) {
           if (t) t.textContent = Math.round(pd.totalGb); /* GB suffix is in the HTML */
         }
       } else if (val !== null) {
-        const unit = slot.type === 'temp' ? '°' : '%';
+        const unit = slot.type === 'temp' ? '°' : (slot.type === 'procs' ? '' : '%');
         const el = document.getElementById(`small-${i}`);
         if (el) el.textContent = (slot.type === 'temp' ? val.toFixed(1) : Math.round(val)) + unit;
       }
     }
   });
+
+  /* Slot 4 in Uptime mode reads from the same system poll. */
+  const netCfg = cfg.widgetConfig?.network || {};
+  if (netCfg.enabled && (netCfg.mode || 'speed') === 'uptime') {
+    const el = document.getElementById('net-uptime'); if (el) el.textContent = fmtUptime(data.uptime);
+  }
 
   /* Screen-reader summary of the headline metrics (HIG: expose key values) */
   const sum = document.getElementById('sr-sum');
@@ -338,6 +395,36 @@ async function tickStats() {
 function fmtMbps(v) {
   if (v == null || isNaN(v)) return 'No data';
   return v >= 1000 ? (v/1000).toFixed(1)+' Gbps' : Math.round(v)+' Mbps';
+}
+
+/* Bytes/second → human rate for the RX/TX throughput mode. */
+function fmtRate(bytesPerSec) {
+  const v = Number(bytesPerSec);
+  if (v == null || isNaN(v)) return '—';
+  if (v >= 1024*1024*1024) return (v/(1024*1024*1024)).toFixed(1)+' GB/s';
+  if (v >= 1024*1024)       return (v/(1024*1024)).toFixed(1)+' MB/s';
+  if (v >= 1024)            return (v/1024).toFixed(0)+' KB/s';
+  return Math.round(v)+' B/s';
+}
+
+/* Whole seconds → compact uptime label (e.g. "3d 4h", "5h 12m", "8m"). */
+function fmtUptime(sec) {
+  sec = Math.max(0, Math.floor(Number(sec) || 0));
+  const d = Math.floor(sec/86400), h = Math.floor((sec%86400)/3600), m = Math.floor((sec%3600)/60);
+  if (d) return `${d}d ${h}h`;
+  if (h) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+async function tickThroughput() {
+  try {
+    const r = await fetch(`${API}/network-stats`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d) return;
+    const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtRate(d.rx);
+    const up = document.getElementById('net-up'); if (up) up.textContent = fmtRate(d.tx);
+  } catch {}
 }
 
 async function tickSpeed() {
