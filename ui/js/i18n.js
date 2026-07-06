@@ -5,11 +5,14 @@
    by hand or by any external tool; nothing here depends on one. */
 
 /* Languages offered in the admin selector. `dir` flips the document for
-   right-to-left scripts. Persian ships once ui/i18n/fa.json and the RTL styling
-   pass land (kept commented so the selector only lists locales that render). */
+   right-to-left scripts. */
 export const LANGUAGES = [
   { code: 'en', name: 'English', dir: 'ltr' },
-  // { code: 'fa', name: 'فارسی', dir: 'rtl' },
+  { code: 'fa', name: 'فارسی', dir: 'rtl' },
+  { code: 'zh-Hans', name: '简体中文', dir: 'ltr' },
+  { code: 'es', name: 'Español', dir: 'ltr' },
+  { code: 'de', name: 'Deutsch', dir: 'ltr' },
+  { code: 'fr', name: 'Français', dir: 'ltr' },
 ];
 
 /* Fallback direction lookup for any RTL locale not explicitly listed above. */
