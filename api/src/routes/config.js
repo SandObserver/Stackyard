@@ -73,11 +73,12 @@ on('POST', '/api/config', async(req, res) => {
     if (!Array.isArray(data.items)) return json(res, 400, { error:'items must be an array' });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error:'every item needs a non-empty id and type' });
-    const KNOWN_SETTINGS = new Set(['background', 'stats', 'server', 'auth', 'theme', 'layout', 'search', 'greeting']);
+    const KNOWN_SETTINGS = new Set(['background', 'stats', 'server', 'auth', 'theme', 'layout', 'search', 'greeting', 'logLevel']);
     if (data.settings && typeof data.settings === 'object') {
       for (const key of Object.keys(data.settings)) {
         if (!KNOWN_SETTINGS.has(key)) delete data.settings[key];
       }
+      if (data.settings.logLevel && !['debug', 'info', 'error'].includes(data.settings.logLevel)) delete data.settings.logLevel;
     }
     const existing = loadConfig();
     if (existing.settings?.background?.apiKey && !data.settings?.background?.apiKey) {
@@ -144,6 +145,7 @@ on('POST', '/api/config', async(req, res) => {
     migrate(data); /* upgrade old imported/restored configs; no-op for normal saves */
     ensureSystemItems(data);
     saveConfig(data);
+    if (data.settings) log.setLevel(data.settings.logLevel);
     log.audit('config saved', {});
     json(res, 200, { ok:true });
   } catch(e) { json(res, 400, { error:e.message }); }
