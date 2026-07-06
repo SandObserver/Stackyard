@@ -10,9 +10,10 @@ module.exports = async function (ctx) {
 
 /* Disk Health dispatch — Scrutiny (per-disk SMART) or TrueNAS (per-pool health). */
 function diskHealth(ctx) {
-  return (ctx.config.diskProvider === 'truenas')
-    ? diskHealthTrueNas(ctx)
-    : diskHealthScrutiny(ctx);
+  return ctx.dispatchProvider({
+    scrutiny: diskHealthScrutiny,
+    truenas:  diskHealthTrueNas,
+  }, { field: 'diskProvider', default: 'scrutiny' });
 }
 
 /* System Summary — CPU / RAM / temperature / per-mount disk usage.
