@@ -8,7 +8,7 @@ import { checkAuth, pwStrength, wirePasswordStrength } from '/js/admin-auth.js?v
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
 import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=c3d495f0';
-import { LANGUAGES, initI18n } from '/js/i18n.js?v=1';
+import { LANGUAGES, initI18n, translateText } from '/js/i18n.js?v=1';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
 
 /* Admin UI — Stackyard Dashboard */
@@ -432,6 +432,7 @@ function _renderEditBody(){
   else if(state.ctype==='folder') buildFolderForm(body,state._evItem);
   else buildAppForm(body,state._evItem);
   if(!state._evIsEdit) body.insertBefore(buildAddNewCard(),body.firstChild);
+  translateText(body);
   setTimeout(()=>{ try{ body.querySelector('input,select,textarea')?.focus(); }catch{} },50);
 }
 
