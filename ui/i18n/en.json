@@ -116,5 +116,19 @@
     "poll": "Poll",
     "allowSelfSigned": "Allow self-signed certificate",
     "selfSignedTip": "Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks."
+  },
+  "home": {
+    "search": "Search",
+    "searchPh": "Search…",
+    "homeScreen": "Home screen",
+    "dock": "Dock",
+    "searchDialog": "Search",
+    "closeSearch": "Close search",
+    "searchInput": "Search apps and folders",
+    "noResults": "No results",
+    "appsAndFolders": "Apps & Folders",
+    "searchResults": "Search results",
+    "result": "result",
+    "results": "results"
   }
 }
