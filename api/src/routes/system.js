@@ -1,4 +1,3 @@
-const http = require('http');
 const fs = require('fs');
 const { on, json } = require('../router');
 const { loadConfig } = require('../config');

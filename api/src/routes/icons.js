@@ -1,5 +1,3 @@
-const http = require('http');
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { on, json, checkOrigin, getIp } = require('../router');
@@ -102,8 +100,8 @@ on('POST', '/api/icons/upload', async(req, res) => {
         .replace(/(javascript|behavior|vbscript)\s*:/gi, '');
       let svg = fileData.toString('utf8');
       svg = svg.replace(/<\?[\s\S]*?\?>/g, '').replace(/<!--[\s\S]*?-->/g, '').replace(/<!DOCTYPE[^>]*>/gi, '');
-      svg = svg.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (m, open, body, cl) => open + scrubCss(body) + cl);
-      svg = svg.replace(/<(\/?)\s*([a-zA-Z][a-zA-Z0-9:]*)([\s\S]*?)(\/?)?>/g, (match, close, tag, attrs, selfClose) => {
+      svg = svg.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (_m, open, body, cl) => open + scrubCss(body) + cl);
+      svg = svg.replace(/<(\/?)\s*([a-zA-Z][a-zA-Z0-9:]*)([\s\S]*?)(\/?)?>/g, (_match, close, tag, attrs, selfClose) => {
         const localTag = tag.split(':').pop().toLowerCase();
         if (!SAFE_ELEMENTS_LC.has(localTag)) return '';
         const safeAttrs = attrs.replace(/\s([a-zA-Z:_][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))/g, (m, name, dq, sq, uq) => {

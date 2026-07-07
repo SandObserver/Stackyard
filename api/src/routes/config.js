@@ -1,4 +1,3 @@
-const path = require('path');
 const { on, json, readBody, checkOrigin } = require('../router');
 const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');

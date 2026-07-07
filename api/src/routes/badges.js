@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const { on, json, readBody, getIp } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchJSON, pingUrl, strictCheckSsrf, rewriteUrl } = require('../proxy');
