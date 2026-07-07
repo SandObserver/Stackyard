@@ -5,6 +5,7 @@
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { toast, ag, ap } from '/js/admin-shared.js?v=6f21b1b8';
 import { wirePasswordStrength, pwStrength } from '/js/admin-auth.js?v=8cd76ea3';
+import { t } from '/js/i18n.js?v=1';
 
 export function loadSettings(c){
   const s=c.settings||{};
@@ -182,7 +183,7 @@ export function showBgFields(type){
 async function saveLabels(){
   const c=await ag('/api/config');c.settings=c.settings||{};
   c.settings.showLabels={desktop:document.getElementById('set-lbl-d')?.checked!==false,ios:document.getElementById('set-lbl-m')?.checked||false};
-  await ap('/api/config',c);toast('Saved');
+  await ap('/api/config',c);toast(t('toast.saved'));
 }
 async function saveWallpaper(){
   try{
@@ -203,8 +204,8 @@ async function saveWallpaper(){
       const keyVal=(document.getElementById('bg-apikey-inp')||document.getElementById('bg-apikey'))?.value?.trim()||'';
       if(keyVal) await ap('/api/settings/unsplash-key',{apiKey:keyVal});
     }
-    toast('Wallpaper saved');
-  }catch(e){toast('Save failed: '+e.message,'err');}
+    toast(t('toast.wallpaperSaved'));
+  }catch(e){toast(t('toast.saveFailed',{err:e.message}),'err');}
 }
 async function saveServer(){
   try{
@@ -236,13 +237,13 @@ async function saveServer(){
     const enabled=document.getElementById('sec-en')?.checked||false;
     if(pw){
       const {ok,label}=pwStrength(pw);
-      if(!ok){toast('Password too weak: '+label,'err');return;}
+      if(!ok){toast(t('toast.pwWeak',{label}),'err');return;}
       await ap('/api/auth/set-password',{password:pw});
       const pwEl=document.getElementById('sec-pw');
       if(pwEl){pwEl.value='';pwEl.placeholder='●●●●●●●●●● (configured)';}
     }
     await ap('/api/auth/toggle',{enabled});
-    toast('Saved');
+    toast(t('toast.saved'));
     if(langChanged) location.reload();
-  }catch(e){toast('Save failed: '+e.message,'err');}
+  }catch(e){toast(t('toast.saveFailed',{err:e.message}),'err');}
 }
