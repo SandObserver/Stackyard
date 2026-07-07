@@ -61,5 +61,93 @@
     "filterApps": "Aplicaciones",
     "filterWidgets": "Widgets",
     "filterFolders": "Carpetas"
+  },
+  "type": {
+    "addNew": "Añadir nuevo",
+    "app": "Aplicación",
+    "widget": "Widget",
+    "folder": "Carpeta"
+  },
+  "folder": {
+    "name": "Nombre de la carpeta",
+    "addApps": "Añadir aplicaciones",
+    "selectApps": "Selecciona aplicaciones",
+    "noApps": "No hay aplicaciones disponibles",
+    "tip": "Toca para añadir o quitar aplicaciones de esta carpeta.",
+    "namePh": "Mi carpeta",
+    "addAppToFolder": "Añadir aplicación a esta carpeta"
+  },
+  "app": {
+    "name": "Nombre",
+    "url": "URL",
+    "namePh": "Mi aplicación",
+    "urlPh": "https://app.example.com",
+    "icon": "Icono",
+    "upload": "Subir",
+    "iconPh": "Nombre o URL completa",
+    "showInDock": "Mostrar en el Dock",
+    "dockFull": "Dock lleno (4/4). Elimina una aplicación primero.",
+    "badge": "Insignia",
+    "healthCheck": "Comprobación de estado",
+    "type": "Tipo",
+    "container": "Contenedor",
+    "ping": "Ping",
+    "pingUrl": "Ping URL",
+    "containerPh": "container-name",
+    "pingUrlPh": "http://your-server-ip:port",
+    "test": "Probar",
+    "fixedLabel": "Etiqueta fija",
+    "labelText": "Texto de la etiqueta",
+    "labelPh": "p. ej. Backup",
+    "liveActivity": "Actividad en vivo",
+    "apiUrl": "API URL",
+    "apiUrlPh": "http://container-name:port/api/v2",
+    "fetch": "Obtener",
+    "value": "Valor",
+    "filterValues": "Filtrar valores",
+    "authentication": "Autenticación",
+    "addToHeader": "Añadir al Header",
+    "paramsPh": "Un key=value por línea.\nSe añade a la URL como ?key=value.",
+    "headersPh": "Un key=value por línea.\nSe envía como un Header de la solicitud HTTP.",
+    "unit": "Unidad",
+    "unitPh": "p. ej. GB",
+    "poll": "Poll",
+    "allowSelfSigned": "Permitir certificado autofirmado",
+    "selfSignedTip": "Omite la verificación TLS para las URL de esta aplicación. Omitir la verificación es inseguro y solo debe hacerse si comprendes completamente los riesgos."
+  },
+  "home": {
+    "search": "Buscar",
+    "searchPh": "Buscar…",
+    "homeScreen": "Pantalla de inicio",
+    "dock": "Dock",
+    "searchDialog": "Buscar",
+    "closeSearch": "Cerrar búsqueda",
+    "searchInput": "Buscar aplicaciones y carpetas",
+    "noResults": "Sin resultados",
+    "appsAndFolders": "Aplicaciones y carpetas",
+    "searchResults": "Resultados de la búsqueda",
+    "result": "resultado",
+    "results": "resultados"
+  },
+  "toast": {
+    "saved": "Guardado",
+    "saveFailed": "Error al guardar: {err}",
+    "wallpaperSaved": "Fondo de pantalla guardado",
+    "imported": "Importado",
+    "importFailed": "Error al importar: {err}",
+    "exportFailed": "Error al exportar: {err}",
+    "importNoChange": "Nada que importar — el archivo coincide con tu configuración actual.",
+    "pwWeak": "Contraseña demasiado débil: {label}"
+  },
+  "confirm": {
+    "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",
+    "remove": "¿Eliminar \"{name}\"?"
+  },
+  "list": {
+    "empty": "Aún no hay aplicaciones. Haz clic en +Añadir.",
+    "noMatches": "Sin coincidencias."
+  },
+  "import": {
+    "confirm": "¿Importar {n} elementos?\n\n{added} añadidos, {updated} actualizados, {deleted} eliminados."
   }
 }

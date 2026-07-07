@@ -61,5 +61,93 @@
     "filterApps": "برنامه‌ها",
     "filterWidgets": "ابزارک‌ها",
     "filterFolders": "پوشه‌ها"
+  },
+  "type": {
+    "addNew": "افزودن جدید",
+    "app": "برنامه",
+    "widget": "ابزارک",
+    "folder": "پوشه"
+  },
+  "folder": {
+    "name": "نام پوشه",
+    "addApps": "افزودن برنامه‌ها",
+    "selectApps": "انتخاب برنامه‌ها",
+    "noApps": "هیچ برنامه‌ای موجود نیست",
+    "tip": "برای افزودن یا حذف برنامه از این پوشه ضربه بزنید.",
+    "namePh": "پوشه من",
+    "addAppToFolder": "افزودن برنامه به این پوشه"
+  },
+  "app": {
+    "name": "نام",
+    "url": "URL",
+    "namePh": "برنامه من",
+    "urlPh": "https://app.example.com",
+    "icon": "آیکون",
+    "upload": "بارگذاری",
+    "iconPh": "نام یا URL کامل",
+    "showInDock": "نمایش در Dock",
+    "dockFull": "Dock پر است (4/4). ابتدا یک برنامه را حذف کنید.",
+    "badge": "نشان",
+    "healthCheck": "بررسی سلامت",
+    "type": "نوع",
+    "container": "کانتینر",
+    "ping": "Ping",
+    "pingUrl": "Ping URL",
+    "containerPh": "container-name",
+    "pingUrlPh": "http://your-server-ip:port",
+    "test": "تست",
+    "fixedLabel": "برچسب ثابت",
+    "labelText": "متن برچسب",
+    "labelPh": "مثلاً Backup",
+    "liveActivity": "فعالیت زنده",
+    "apiUrl": "API URL",
+    "apiUrlPh": "http://container-name:port/api/v2",
+    "fetch": "دریافت",
+    "value": "مقدار",
+    "filterValues": "فیلتر مقادیر",
+    "authentication": "احراز هویت",
+    "addToHeader": "افزودن به Header",
+    "paramsPh": "هر خط یک key=value.\nبه URL به‌صورت ?key=value اضافه می‌شود.",
+    "headersPh": "هر خط یک key=value.\nبه‌عنوان یک HTTP request header ارسال می‌شود.",
+    "unit": "واحد",
+    "unitPh": "مثلاً GB",
+    "poll": "Poll",
+    "allowSelfSigned": "مجاز بودن گواهی self-signed",
+    "selfSignedTip": "صرف‌نظر کردن از تأیید TLS برای آدرس‌های این برنامه. این کار ناامن است و فقط زمانی باید انجام شود که ریسک‌های آن را کاملاً درک کرده‌اید."
+  },
+  "home": {
+    "search": "جستجو",
+    "searchPh": "جستجو…",
+    "homeScreen": "صفحه اصلی",
+    "dock": "Dock",
+    "searchDialog": "جستجو",
+    "closeSearch": "بستن جستجو",
+    "searchInput": "جستجوی برنامه‌ها و پوشه‌ها",
+    "noResults": "نتیجه‌ای یافت نشد",
+    "appsAndFolders": "برنامه‌ها و پوشه‌ها",
+    "searchResults": "نتایج جستجو",
+    "result": "نتیجه",
+    "results": "نتیجه"
+  },
+  "toast": {
+    "saved": "ذخیره شد",
+    "saveFailed": "ذخیره ناموفق بود: {err}",
+    "wallpaperSaved": "تصویر زمینه ذخیره شد",
+    "imported": "وارد شد",
+    "importFailed": "Import ناموفق بود: {err}",
+    "exportFailed": "Export ناموفق بود: {err}",
+    "importNoChange": "چیزی برای Import نیست — فایل با تنظیمات فعلی شما مطابقت دارد.",
+    "pwWeak": "رمز عبور ضعیف است: {label}"
+  },
+  "confirm": {
+    "deleteFolder": "پوشه «{name}» حذف شود؟ برنامه‌های داخل آن حذف نخواهند شد.",
+    "remove": "«{name}» حذف شود؟"
+  },
+  "list": {
+    "empty": "هنوز برنامه‌ای وجود ندارد. روی +افزودن کلیک کنید.",
+    "noMatches": "نتیجه‌ای یافت نشد."
+  },
+  "import": {
+    "confirm": "{n} مورد Import شود؟\n\n{added} افزوده شد، {updated} به‌روزرسانی شد، {deleted} حذف شد."
   }
 }

@@ -61,5 +61,93 @@
     "filterApps": "Apps",
     "filterWidgets": "Widgets",
     "filterFolders": "Ordner"
+  },
+  "type": {
+    "addNew": "Neu hinzufügen",
+    "app": "App",
+    "widget": "Widget",
+    "folder": "Ordner"
+  },
+  "folder": {
+    "name": "Ordnername",
+    "addApps": "Apps hinzufügen",
+    "selectApps": "Apps auswählen",
+    "noApps": "Keine Apps verfügbar",
+    "tip": "Tippen, um Apps in diesem Ordner hinzuzufügen oder zu entfernen.",
+    "namePh": "Mein Ordner",
+    "addAppToFolder": "App zu diesem Ordner hinzufügen"
+  },
+  "app": {
+    "name": "Name",
+    "url": "URL",
+    "namePh": "Meine App",
+    "urlPh": "https://app.example.com",
+    "icon": "Symbol",
+    "upload": "Hochladen",
+    "iconPh": "Name oder vollständige URL",
+    "showInDock": "Im Dock anzeigen",
+    "dockFull": "Dock voll (4/4). Entferne zuerst eine App.",
+    "badge": "Badge",
+    "healthCheck": "Zustandsprüfung",
+    "type": "Typ",
+    "container": "Container",
+    "ping": "Ping",
+    "pingUrl": "Ping-URL",
+    "containerPh": "container-name",
+    "pingUrlPh": "http://your-server-ip:port",
+    "test": "Testen",
+    "fixedLabel": "Feste Beschriftung",
+    "labelText": "Beschriftungstext",
+    "labelPh": "z. B. Backup",
+    "liveActivity": "Live-Aktivität",
+    "apiUrl": "API-URL",
+    "apiUrlPh": "http://container-name:port/api/v2",
+    "fetch": "Abrufen",
+    "value": "Wert",
+    "filterValues": "Werte filtern",
+    "authentication": "Authentifizierung",
+    "addToHeader": "Zum Header hinzufügen",
+    "paramsPh": "Ein key=value pro Zeile.\nWird der URL als ?key=value hinzugefügt.",
+    "headersPh": "Ein key=value pro Zeile.\nWird als HTTP-Request-Header gesendet.",
+    "unit": "Einheit",
+    "unitPh": "z. B. GB",
+    "poll": "Poll",
+    "allowSelfSigned": "Selbstsigniertes Zertifikat zulassen",
+    "selfSignedTip": "Überspringt die TLS-Prüfung für die URLs dieser App. Das Überspringen der Prüfung ist unsicher und sollte nur erfolgen, wenn du die Risiken vollständig verstehst."
+  },
+  "home": {
+    "search": "Suchen",
+    "searchPh": "Suchen…",
+    "homeScreen": "Startbildschirm",
+    "dock": "Dock",
+    "searchDialog": "Suchen",
+    "closeSearch": "Suche schließen",
+    "searchInput": "Apps und Ordner durchsuchen",
+    "noResults": "Keine Ergebnisse",
+    "appsAndFolders": "Apps & Ordner",
+    "searchResults": "Suchergebnisse",
+    "result": "Ergebnis",
+    "results": "Ergebnisse"
+  },
+  "toast": {
+    "saved": "Gespeichert",
+    "saveFailed": "Speichern fehlgeschlagen: {err}",
+    "wallpaperSaved": "Hintergrundbild gespeichert",
+    "imported": "Importiert",
+    "importFailed": "Import fehlgeschlagen: {err}",
+    "exportFailed": "Export fehlgeschlagen: {err}",
+    "importNoChange": "Nichts zu importieren — die Datei stimmt mit deiner aktuellen Konfiguration überein.",
+    "pwWeak": "Passwort zu schwach: {label}"
+  },
+  "confirm": {
+    "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",
+    "remove": "„{name}“ entfernen?"
+  },
+  "list": {
+    "empty": "Noch keine Apps. Klicke auf +Hinzufügen.",
+    "noMatches": "Keine Treffer."
+  },
+  "import": {
+    "confirm": "{n} Elemente importieren?\n\n{added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht."
   }
 }

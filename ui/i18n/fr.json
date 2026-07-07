@@ -61,5 +61,93 @@
     "filterApps": "Applications",
     "filterWidgets": "Widgets",
     "filterFolders": "Dossiers"
+  },
+  "type": {
+    "addNew": "Ajouter",
+    "app": "Application",
+    "widget": "Widget",
+    "folder": "Dossier"
+  },
+  "folder": {
+    "name": "Nom du dossier",
+    "addApps": "Ajouter des applications",
+    "selectApps": "Sélectionner des applications",
+    "noApps": "Aucune application disponible",
+    "tip": "Appuyez pour ajouter ou retirer des applications de ce dossier.",
+    "namePh": "Mon dossier",
+    "addAppToFolder": "Ajouter une application à ce dossier"
+  },
+  "app": {
+    "name": "Nom",
+    "url": "URL",
+    "namePh": "Mon application",
+    "urlPh": "https://app.example.com",
+    "icon": "Icône",
+    "upload": "Téléverser",
+    "iconPh": "Nom ou URL complète",
+    "showInDock": "Afficher dans le Dock",
+    "dockFull": "Dock plein (4/4). Retirez d'abord une application.",
+    "badge": "Badge",
+    "healthCheck": "Vérification de l'état",
+    "type": "Type",
+    "container": "Conteneur",
+    "ping": "Ping",
+    "pingUrl": "Ping URL",
+    "containerPh": "container-name",
+    "pingUrlPh": "http://your-server-ip:port",
+    "test": "Tester",
+    "fixedLabel": "Libellé fixe",
+    "labelText": "Texte du libellé",
+    "labelPh": "p. ex. Backup",
+    "liveActivity": "Activité en direct",
+    "apiUrl": "API URL",
+    "apiUrlPh": "http://container-name:port/api/v2",
+    "fetch": "Récupérer",
+    "value": "Valeur",
+    "filterValues": "Filtrer les valeurs",
+    "authentication": "Authentification",
+    "addToHeader": "Ajouter au Header",
+    "paramsPh": "Un key=value par ligne.\nAjouté à l'URL sous la forme ?key=value.",
+    "headersPh": "Un key=value par ligne.\nEnvoyé comme Header de requête HTTP.",
+    "unit": "Unité",
+    "unitPh": "p. ex. GB",
+    "poll": "Poll",
+    "allowSelfSigned": "Autoriser un certificat auto-signé",
+    "selfSignedTip": "Ignore la vérification TLS pour les URL de cette application. Ignorer la vérification n'est pas sûr et ne doit être fait que si vous comprenez pleinement les risques."
+  },
+  "home": {
+    "search": "Rechercher",
+    "searchPh": "Rechercher…",
+    "homeScreen": "Écran d'accueil",
+    "dock": "Dock",
+    "searchDialog": "Rechercher",
+    "closeSearch": "Fermer la recherche",
+    "searchInput": "Rechercher des applications et des dossiers",
+    "noResults": "Aucun résultat",
+    "appsAndFolders": "Applications et dossiers",
+    "searchResults": "Résultats de recherche",
+    "result": "résultat",
+    "results": "résultats"
+  },
+  "toast": {
+    "saved": "Enregistré",
+    "saveFailed": "Échec de l'enregistrement : {err}",
+    "wallpaperSaved": "Fond d'écran enregistré",
+    "imported": "Importé",
+    "importFailed": "Échec de l'import : {err}",
+    "exportFailed": "Échec de l'export : {err}",
+    "importNoChange": "Rien à importer — le fichier correspond à votre configuration actuelle.",
+    "pwWeak": "Mot de passe trop faible : {label}"
+  },
+  "confirm": {
+    "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",
+    "remove": "Supprimer « {name} » ?"
+  },
+  "list": {
+    "empty": "Aucune application pour le moment. Cliquez sur +Ajouter.",
+    "noMatches": "Aucune correspondance."
+  },
+  "import": {
+    "confirm": "Importer {n} éléments ?\n\n{added} ajoutés, {updated} mis à jour, {deleted} supprimés."
   }
 }

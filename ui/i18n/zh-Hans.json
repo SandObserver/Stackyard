@@ -61,5 +61,93 @@
     "filterApps": "应用",
     "filterWidgets": "小组件",
     "filterFolders": "文件夹"
+  },
+  "type": {
+    "addNew": "新建",
+    "app": "应用",
+    "widget": "小组件",
+    "folder": "文件夹"
+  },
+  "folder": {
+    "name": "文件夹名称",
+    "addApps": "添加应用",
+    "selectApps": "选择应用",
+    "noApps": "没有可用的应用",
+    "tip": "点击以在此文件夹中添加或移除应用。",
+    "namePh": "我的文件夹",
+    "addAppToFolder": "将应用添加到此文件夹"
+  },
+  "app": {
+    "name": "名称",
+    "url": "URL",
+    "namePh": "我的应用",
+    "urlPh": "https://app.example.com",
+    "icon": "图标",
+    "upload": "上传",
+    "iconPh": "名称或完整 URL",
+    "showInDock": "在 Dock 中显示",
+    "dockFull": "Dock 已满 (4/4)。请先移除一个应用。",
+    "badge": "徽章",
+    "healthCheck": "健康检查",
+    "type": "类型",
+    "container": "容器",
+    "ping": "Ping",
+    "pingUrl": "Ping URL",
+    "containerPh": "container-name",
+    "pingUrlPh": "http://your-server-ip:port",
+    "test": "测试",
+    "fixedLabel": "固定标签",
+    "labelText": "标签文本",
+    "labelPh": "例如 Backup",
+    "liveActivity": "实时活动",
+    "apiUrl": "API URL",
+    "apiUrlPh": "http://container-name:port/api/v2",
+    "fetch": "获取",
+    "value": "值",
+    "filterValues": "过滤值",
+    "authentication": "身份验证",
+    "addToHeader": "添加到 Header",
+    "paramsPh": "每行一个 key=value。\n将以 ?key=value 的形式添加到 URL。",
+    "headersPh": "每行一个 key=value。\n将作为 HTTP 请求 Header 发送。",
+    "unit": "单位",
+    "unitPh": "例如 GB",
+    "poll": "Poll",
+    "allowSelfSigned": "允许自签名证书",
+    "selfSignedTip": "跳过此应用 URL 的 TLS 验证。跳过验证并不安全，仅在您完全了解风险的情况下才应这样做。"
+  },
+  "home": {
+    "search": "搜索",
+    "searchPh": "搜索…",
+    "homeScreen": "主屏幕",
+    "dock": "Dock",
+    "searchDialog": "搜索",
+    "closeSearch": "关闭搜索",
+    "searchInput": "搜索应用和文件夹",
+    "noResults": "没有结果",
+    "appsAndFolders": "应用与文件夹",
+    "searchResults": "搜索结果",
+    "result": "个结果",
+    "results": "个结果"
+  },
+  "toast": {
+    "saved": "已保存",
+    "saveFailed": "保存失败：{err}",
+    "wallpaperSaved": "壁纸已保存",
+    "imported": "已导入",
+    "importFailed": "Import 失败：{err}",
+    "exportFailed": "Export 失败：{err}",
+    "importNoChange": "没有可导入的内容 — 该文件与您当前的配置一致。",
+    "pwWeak": "密码强度不足：{label}"
+  },
+  "confirm": {
+    "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",
+    "remove": "删除“{name}”？"
+  },
+  "list": {
+    "empty": "还没有应用。点击 +添加。",
+    "noMatches": "没有匹配项。"
+  },
+  "import": {
+    "confirm": "导入 {n} 个项目？\n\n新增 {added} 个，更新 {updated} 个，删除 {deleted} 个。"
   }
 }
