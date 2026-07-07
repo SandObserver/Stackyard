@@ -8,7 +8,7 @@ import { checkAuth, pwStrength, wirePasswordStrength } from '/js/admin-auth.js?v
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
 import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=c3d495f0';
-import { LANGUAGES, initI18n, translateText } from '/js/i18n.js?v=1';
+import { LANGUAGES, initI18n, translateText, t } from '/js/i18n.js?v=1';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
 
 /* Admin UI — Stackyard Dashboard */
@@ -39,6 +39,7 @@ async function load(){
   const c=await ag('/api/config');
   state.items=c.items||[];
   state._settings=c.settings||{};
+  await initI18n(c.settings?.language || 'en');
   /* Folder-style widgets: registry drives their auto-generated config editor. */
   try{ const wr=await ag('/api/widgets'); state._widgetReg={}; (wr.widgets||[]).forEach(w=>{ state._widgetReg[w.name]=w; }); }catch{ state._widgetReg={}; }
   /* All folders start collapsed — user can expand by clicking */
@@ -46,7 +47,6 @@ async function load(){
   document.body.classList.add('authed');
   render();
   loadSettings(c);
-  initI18n(c.settings?.language || 'en');
   applyBg();
 }
 
@@ -331,7 +331,7 @@ function render(){
   }
   if(grp) grp.style.display=state.items.length?'':'none';
   if(!state.items.length){
-    l.innerHTML='<div class="empty"><p class="empty-msg">No apps yet. Click +Add.</p></div>';
+    l.innerHTML='<div class="empty"><p class="empty-msg">'+t('list.empty')+'</p></div>';
     return;
   }
   l.innerHTML='';
@@ -342,7 +342,7 @@ function render(){
       if(q){ const hay=((it.label||'')+' '+(it.href||'')+' '+(it.widgetType||'')).toLowerCase(); if(!hay.includes(q))return false; }
       return true;
     });
-    if(!matches.length){ l.innerHTML='<div class="empty"><p class="empty-msg">No matches.</p></div>'; return; }
+    if(!matches.length){ l.innerHTML='<div class="empty"><p class="empty-msg">'+t('list.noMatches')+'</p></div>'; return; }
     matches.forEach(item=>l.appendChild(mkRow(item,state.items.indexOf(item))));
     return;
   }
@@ -357,7 +357,7 @@ function render(){
         l.appendChild(mkRow(childItem,state.items.indexOf(childItem),{indent:true,childIdx:ci,folderId:item.id}));
       });
       const addRow=document.createElement('button');addRow.type='button';addRow.className='fp-add';
-      addRow.innerHTML='<span>+</span> Add app to this folder';
+      addRow.innerHTML='<span>+</span> '+t('folder.addAppToFolder');
       addRow.onclick=()=>openFolderPicker(null,item.id);
       l.appendChild(addRow);
     }
@@ -472,8 +472,8 @@ function openModal(idx){
 
 function _evDelete(item,idx){
   if(!item)return;
-  if(item.type==='folder'){if(!confirm(`Delete folder "${item.label}"? Apps inside will not be deleted.`))return;}
-  else{if(!confirm(`Remove "${item.label||item.id}"?`))return;}
+  if(item.type==='folder'){if(!confirm(t('confirm.deleteFolder',{name:item.label})))return;}
+  else{if(!confirm(t('confirm.remove',{name:item.label||item.id})))return;}
   state.items.forEach(f=>{if(f.type==='folder')f.children=(f.children||[]).filter(id=>id!==item.id);});
   state.items.splice(idx,1);
   save().catch(()=>{});
@@ -488,22 +488,7 @@ function _evDelete(item,idx){
   });
 }
 
-/* ══ Export/Import ══ */
-document.getElementById('btn-exp').onclick=async()=>{
-  try{
-    const a=document.createElement('a');
-    a.href=API+'/api/config/export';
-    a.download='stackyard-config.json';
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-  }catch(e){toast('Export failed: '+e.message,'err');}
-};
-document.getElementById('imp').onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!d.items)throw new Error('Invalid');
-    state.items=d.items;await save();toast('Imported');}
-  catch(e){toast('Import failed: '+e.message,'err');}
-  e.target.value='';
-};
+
 
 document.getElementById('btn-add').onclick=()=>openModal(null);
 function closeModal(){
@@ -1036,13 +1021,24 @@ document.getElementById('btn-exp').onclick=async()=>{
     a.href=API+'/api/config/export';
     a.download='stackyard-config.json';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-  }catch(e){toast('Export failed: '+e.message,'err');}
+  }catch(e){toast(t('toast.exportFailed',{err:e.message}),'err');}
 };
 document.getElementById('imp').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!d.items)throw new Error('Invalid');
-    state.items=d.items;await save();toast('Imported');}
-  catch(e){toast('Import failed: '+e.message,'err');}
+  try{
+    const d=JSON.parse(await f.text());
+    if(!d||!Array.isArray(d.items))throw new Error('Invalid');
+    /* Diff incoming vs current by id, so the user sees what an import changes. */
+    const cur=new Map(state.items.map(i=>[i.id,i]));
+    const inc=new Map(d.items.map(i=>[i.id,i]));
+    let added=0,updated=0,deleted=0;
+    for(const [id,it] of inc){ if(!cur.has(id)) added++; else if(JSON.stringify(cur.get(id))!==JSON.stringify(it)) updated++; }
+    for(const id of cur.keys()){ if(!inc.has(id)) deleted++; }
+    if(added+updated+deleted===0){ toast(t('toast.importNoChange')); e.target.value=''; return; }
+    if(!confirm(t('import.confirm',{n:d.items.length,added,updated,deleted}))){ e.target.value=''; return; }
+    state.items=d.items;await save();toast(t('toast.imported'));
+  }
+  catch(e){toast(t('toast.importFailed',{err:e.message}),'err');}
   e.target.value='';
 };
 
