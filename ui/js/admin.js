@@ -1,10 +1,8 @@
-import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
+import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
 import { WIDGET_TYPES } from '/js/widget-types.js?v=63bf4388';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=1679b8c5';
-import { API, toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, _secretRow } from '/js/admin-shared.js?v=6f21b1b8';
-import { renderColorControl } from '/js/admin-color-control.js?v=255efb55';
-import { checkAuth, pwStrength, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
+import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
+import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
 import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=c3d495f0';
@@ -28,11 +26,6 @@ window.addEventListener('orientationchange', _syncMobile);
 
 const collapsedFolders=new Set(); /* tracks which folder ids are collapsed */
 let _flt={q:'',type:'all'};
-
-const COLLAPSE_KEY='admin_collapsed';
-function loadCollapsed(){try{return JSON.parse(localStorage.getItem(COLLAPSE_KEY)||'{}');}catch{return{};}}
-function saveCollapsed(s){localStorage.setItem(COLLAPSE_KEY,JSON.stringify(s));}
-function initCards(){}
 
 async function load(){
   await loadLocalIcons();
@@ -79,29 +72,6 @@ async function save(){
   try{const full=await ag('/api/config');full.items=state.items;await ap('/api/config',full);toast('Saved');}
   catch(e){toast('Save failed: '+e.message,'err');}
   state.saving=false;render();
-}
-
-/* resolveIconFull: admin-only async icon probe for live preview.
-   resolveIcon and iconChain are imported from /js/icons.js. */
-async function resolveIconFull(raw){
-  if(!raw)return '';
-  raw=raw.trim();
-  if(raw.startsWith('http://')||raw.startsWith('https://'))return raw;
-  const filename=raw.split('/').pop();
-  const dot=filename.lastIndexOf('.');
-  const name=dot>0?filename.slice(0,dot):filename;
-  const ext=dot>0?filename.slice(dot+1).toLowerCase():'svg';
-  const candidates=[];
-  if(LOCAL_ICONS.has(filename))candidates.push(`${ICON_BASE}/${name}.${ext}`);
-  candidates.push(`https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/${name}.svg`);
-  candidates.push(`https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/${name}.png`);
-  for(const url of candidates){
-    try{
-      const ok=await new Promise(res=>{const i=new Image();i.onload=()=>res(true);i.onerror=()=>res(false);i.src=url;});
-      if(ok)return url;
-    }catch{}
-  }
-  return '';
 }
 
 function trapFocus(box){
@@ -965,8 +935,6 @@ function initBgType(){
   });
   document.addEventListener('click',()=>{list.hidden=true;});
 
-  /* sync to loadSettings value */
-  const observer=new MutationObserver(()=>{});
   setVal(hidden.value||'unsplash');
 }
 

@@ -1,6 +1,6 @@
 import { iconChain } from '/js/icons.js?v=36';
 import { widgetSrc, WIDGET_DESIGN, WIDGET_TYPES } from '/js/widget-types.js?v=39';
-import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=40';
+import { mk, clr, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=40';
 
 let _state = null;
 export function initUI(state) { _state = state; }
@@ -11,7 +11,6 @@ const breg     = (...a) => _state.breg(...a);
 const bunreg   = (...a) => _state.bunreg(...a);
 const bupd     = (...a) => _state.bupd(...a);
 const BEL      = () => _state.BEL;
-const paginate = () => _state.paginate();
 const goTo     = (...a) => _state.goTo(...a);
 const CB       = () => _state.CB;
 const st       = () => _state;
@@ -22,7 +21,7 @@ const mkWrap   = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg)
    document, so the parent must tell the widgets to reset. */
 function clearMobWidgets(exceptWin){
   document.querySelectorAll('.mob-widget-card iframe, .widget iframe').forEach(ifr => {
-    try { const w = ifr.contentWindow; if (w && w !== exceptWin && w.__clearActive) w.__clearActive(); } catch (e) {}
+    try { const w = ifr.contentWindow; if (w && w !== exceptWin && w.__clearActive) w.__clearActive(); } catch {}
   });
 }
 if (!window.__wActiveMsgBound){
@@ -128,14 +127,6 @@ export function openFolderDesktop(folder) {
     ov.remove(); folderOverlay = null;
     if (_prevFocus && _prevFocus.focus) _prevFocus.focus();
   }
-  function trapDesk(e) {
-    if (e.key !== 'Tab') return;
-    const f = ov.querySelectorAll('a[href],button:not([disabled])');
-    if (!f.length) return;
-    const first = f[0], last = f[f.length-1];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-  }
   ov.onclick = e => { if (e.target === ov) closeDesk(); };
   const escDesk = e => { if (e.key === 'Escape') { closeDesk(); document.removeEventListener('keydown', escDesk); } };
   document.addEventListener('keydown', escDesk);
@@ -196,7 +187,7 @@ export function mFolder(item, cw, rh, isz, ir, im, sc) {
 }
 
 let folderOverlayMob = null;
-export function openFolderMobile(folder, isz, ir, im, sc) {
+export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   if (folderOverlayMob) { folderOverlayMob.remove(); folderOverlayMob = null; }
   const children = (folder.children||[]).map(id => items().find(i => i.id === id)).filter(Boolean);
   const showLabel = S().showLabels?.ios === true;

@@ -59,15 +59,14 @@ export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,
   const _rgb=h=>{const x=_cssToHex(h);return x?[parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)]:null;};
   const _near=(a,b)=>{const ra=_rgb(a),rb=_rgb(b);return ra&&rb&&ra.every((n,i)=>Math.abs(n-rb[i])<=3);};
   function paint(){
-    const h=+hEl.value,s=+sEl.value,v=+vEl.value,hex=curHex();
+    const h=+hEl.value,v=+vEl.value,hex=curHex();
     sEl.style.background=`linear-gradient(90deg, ${_hsvToHex(h,0,v)}, ${_hsvToHex(h,100,v)})`;
     vEl.style.background=`linear-gradient(90deg, #000, ${_hsvToHex(h,100,100)})`;
-    let matched=null;
     container.querySelectorAll('.cc-swatch').forEach(b=>{
       let on=false;
       if(mode==='dark'||mode==='light') on=(b.dataset.v===mode);
       else if(!showTune) on=(b.dataset.v!=='custom'&&!b.classList.contains('cc-sem')&&_near(b.dataset.v,hex));
-      b.classList.toggle('on',on); if(on)matched=b;
+      b.classList.toggle('on',on);
     });
     const rb=container.querySelector('.cc-rainbow'); if(rb)rb.classList.toggle('on',mode==='color'&&showTune);
     tune.forEach(r=>r.style.display=showTune?'':'none');

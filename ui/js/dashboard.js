@@ -1,14 +1,13 @@
 /* dashboard.js — boot, state, badge system, desktop layout, navigation, background, polling */
 
-import { LOCAL_ICONS, loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
+import { loadLocalIcons, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
-import { mk, clr, fb, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=92153ac7';
+import { mk, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { initI18n } from '/js/i18n.js?v=1';
-import { initUI, mkMiniIcon, mkFolder, openFolderDesktop, mFolder, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
 
-const API = '';
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
 
 const wCols  = { d: WIDGET_COLS.desktop,  m: WIDGET_COLS.mobile  };
@@ -20,7 +19,7 @@ const SLOTS = 24;
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
 let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
-let _mobTsCleanup = null, _mobTeCleanup = null, _mobTmCleanup = null;
+const _mobTsCleanup = null, _mobTeCleanup = null, _mobTmCleanup = null;
 
 const badgeState  = {};
 let _badgeFails = 0, _healthFails = 0, badgesStale = false, healthStale = false;
@@ -191,7 +190,7 @@ function syncMobPages() {
   }
 }
 
-function sanitizeCssUrl(u) { return String(u||'').replace(/['"\(\)]/g,''); }
+function sanitizeCssUrl(u) { return String(u||'').replace(/['"()]/g,''); }
 async function applyBg() {
   const root = document.documentElement;
   try {

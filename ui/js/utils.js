@@ -77,7 +77,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     const base = o.refreshInterval;
     const reload = () => { ifr.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now(); };
     const jit = () => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
-    let h = setTimeout(function tick() { reload(); h = setTimeout(tick, jit()); }, Math.round(Math.random() * base));
+    setTimeout(function tick() { reload(); setTimeout(tick, jit()); }, Math.round(Math.random() * base));
   }
 
   /* On mobile, an iframe swallows touches so the home pager never sees a swipe that
@@ -87,7 +87,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
      screen, and a tap on non-interactive widget area opens the widget's link. */
   if (mobile) {
     const attach = () => {
-      let doc; try { doc = ifr.contentDocument; } catch (e) { return; }
+      let doc; try { doc = ifr.contentDocument; } catch { return; }
       if (!doc || doc.__wgesture) return;
       doc.__wgesture = true;
       let sx = 0, sy = 0, moved = false;
@@ -108,7 +108,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
       }, { passive:true });
     };
     ifr.addEventListener('load', attach);
-    try { if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') attach(); } catch (e) {}
+    try { if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') attach(); } catch {}
   }
 
   const fit = () => {

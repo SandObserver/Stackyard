@@ -62,7 +62,7 @@ export function wirePasswordStrength(inputId, barsId, hintId) {
   if (!inp || !bars?.length) return;
   const dim = 'rgba(255,255,255,.1)';
   inp.addEventListener('input', () => {
-    const { score, label, color, ok } = pwStrength(inp.value);
+    const { score, label, color } = pwStrength(inp.value);
     bars.forEach((b, i) => { b.style.background = inp.value && i < score ? color : dim; });
     if (hint) { hint.textContent = inp.value ? label : ''; hint.style.color = color; }
   });

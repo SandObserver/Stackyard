@@ -21,7 +21,6 @@ const CUSTOM_SIZES = ['small','medium','large','xlarge'];
 function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (state._widgetReg[type]?.sizes || ['medium']); }
 const SIZE_LABELS = { small:'Small', medium:'Medium', large:'Large', xlarge:'Extra Large' };
 const STAT_TYPES  = ['cpu','ram','temp','disk','iowait','procs'];
-const STAT_LABELS = { cpu:'CPU', ram:'RAM', temp:'Temp', disk:'Disk', iowait:'IO Wait', procs:'Processes' };
 
 /* State for current widget config while modal is open */
 /* Auto-generated config form (folder-style widgets driven by the registry). */
@@ -333,7 +332,7 @@ function _renderStatsBody(body){
     renderColorControl(card,{value:slot.color||SLOT_DEFS[idx]||'#0289ff',idPrefix:`slotcol${idx}`,onChange(v){state._wslots[idx].color=v;}});
   }
 
-  state._wslots.slice(0,3).forEach((slot,idx)=>{
+  state._wslots.slice(0,3).forEach((_slot,idx)=>{
     const hdr=document.createElement('p'); hdr.className='grp-hdr'; hdr.textContent='Slot '+(idx+1); body.appendChild(hdr);
     const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
     fillSlot(card, idx);
@@ -693,11 +692,10 @@ function _renderBackupConfig(body){
       initInlineEdit(hrefRid,`dup-href-${si}`,{placeholder:'http://duplicati:8200',onCommit(v){slot.dupHref=v;}});
       initInlineEdit(pollRid,`dup-poll-${si}`,{placeholder:'60',onCommit(v){slot.dupPollSec=Math.max(10,parseInt(v||'60',10));}});
       fbtn.onclick = async function(){
-        const btn=this;
         const url=(document.getElementById(`dup-url-${si}`)?.value||'').trim();
         const pass=(document.getElementById(`dup-pass-${si}`)?.value||'').trim();
         if(!url){toast('Enter a Duplicati URL first','err');return;}
-        btn.disabled=true; btn.textContent='Fetching...';
+        this.disabled=true; this.textContent='Fetching...';
         try{
           slot.dupUrl=url;
           const b={url}; if(pass) b.password=pass; else if(slot.dupPassSet) b.useStoredPass=true;
@@ -710,7 +708,7 @@ function _renderBackupConfig(body){
           const jw=document.getElementById(`dup-job-wrap-${si}`); if(jw) renderJobDrop(si, jw);
           toast(slot.dupJobList.length?`Loaded ${slot.dupJobList.length} job${slot.dupJobList.length>1?'s':''}`:'No backup jobs found', slot.dupJobList.length?'ok':'err');
         }catch(e){toast('Fetch failed: '+e.message,'err');}
-        finally{btn.disabled=false; btn.textContent='Fetch Jobs';}
+        finally{this.disabled=false; this.textContent='Fetch Jobs';}
       };
     } else {
       const urlRid=ieRow(card,{id:`kopia-url-${si}`,label:'URL',req:true,value:slot.kopiaUrl,ph:'http://kopia:51515'});
@@ -724,12 +722,11 @@ function _renderBackupConfig(body){
       initInlineEdit(userRid,`kopia-user-${si}`,{placeholder:'admin',onCommit(v){slot.kopiaUser=v;}});
       initInlineEdit(hrefRid,`kopia-href-${si}`,{placeholder:'http://kopia:51515',onCommit(v){slot.kopiaHref=v;}});
       fbtn.onclick = async function(){
-        const btn=this;
         const url=(document.getElementById(`kopia-url-${si}`)?.value||'').trim();
         const user=(document.getElementById(`kopia-user-${si}`)?.value||'').trim();
         const pass=(document.getElementById(`kopia-pass-${si}`)?.value||'').trim();
         if(!url){toast('Enter a Kopia URL first','err');return;}
-        btn.disabled=true; btn.textContent='Fetching...';
+        this.disabled=true; this.textContent='Fetching...';
         try{
           slot.kopiaUrl=url; slot.kopiaUser=user||slot.kopiaUser;
           const b={url}; if(user)b.username=user; if(pass)b.password=pass; else if(slot.kopiaPassSet)b.useStoredPass=true;
@@ -742,7 +739,7 @@ function _renderBackupConfig(body){
           const sw=document.getElementById(`kopia-src-wrap-${si}`); if(sw) renderSrcDrop(si, sw);
           toast(slot.kopiaSrcList.length?`Loaded ${slot.kopiaSrcList.length} source${slot.kopiaSrcList.length>1?'s':''}`:'No sources found', slot.kopiaSrcList.length?'ok':'err');
         }catch(e){toast('Fetch failed: '+e.message,'err');}
-        finally{btn.disabled=false; btn.textContent='Fetch Sources';}
+        finally{this.disabled=false; this.textContent='Fetch Sources';}
       };
     }
   }

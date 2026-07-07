@@ -10,7 +10,7 @@ export function needsDark(hex) {
     if (h.length !== 6) return false;
     const [r, g, b] = [0, 2, 4].map(i => {
       const v = parseInt(h.slice(i, i + 2), 16) / 255;
-      return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
     });
     const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
     return (L + 0.05) / 0.0617 > 1.05 / (L + 0.05);

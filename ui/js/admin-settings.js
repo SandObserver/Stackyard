@@ -2,7 +2,6 @@
    General / Appearance / Security settings: loads values into the settings
    screen and persists changes. Exports loadSettings (called on config load)
    and showBgFields (called by the background-type toggle). */
-import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { toast, ag, ap } from '/js/admin-shared.js?v=6f21b1b8';
 import { wirePasswordStrength, pwStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { t } from '/js/i18n.js?v=1';
