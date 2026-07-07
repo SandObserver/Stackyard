@@ -1,0 +1,65 @@
+{
+  "_meta": { "name": "Français", "dir": "ltr" },
+  "nav": {
+    "general": "Général",
+    "appearance": "Apparence",
+    "dashboard": "Tableau de bord",
+    "about": "À propos"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "import": "Import",
+    "export": "Export",
+    "add": "+Ajouter",
+    "back": "Retour",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "language": "Langue"
+  },
+  "general": {
+    "title": "Titre",
+    "description": "Description",
+    "hostIp": "IP de l'hôte",
+    "hostIpTip": "Utilisée pour autoriser l'IP de votre serveur dans les URL des badges et pour la protection contre les attaques SSRF.",
+    "monitoring": "Surveillance",
+    "loggingLevel": "Niveau de Logging",
+    "dockerHealth": "Vérifications de l'état des conteneurs Docker",
+    "hideHealthy": "Masquer le badge d'état sain",
+    "socketUrl": "URL du socket",
+    "loggingTip": "\"Erreurs\" n'affiche que les avertissements et les erreurs. Les événements de sécurité sont toujours enregistrés.",
+    "socketTip": "Utilisez l'URL d'un conteneur <strong>Proxy Socket</strong> pour un accès à privilèges minimaux. Pas de proxy ? Vous pouvez saisir directement <code>unix:///var/run/docker.sock</code>. <span class=\"tip-danger\">Ne faites cela que sur un réseau privé et de confiance que vous contrôlez entièrement.</span>",
+    "security": "Sécurité",
+    "passwordProtection": "Protection par mot de passe",
+    "password": "Mot de passe",
+    "passwordTip": "Laissez vide pour conserver le mot de passe actuel. 8 caractères minimum. Pour une protection renforcée, envisagez de placer le tableau de bord derrière un <strong>Authentication Proxy</strong>. Ce mot de passe intégré est une barrière légère, pas une couche d'authentification complète.",
+    "backup": "Sauvegarde",
+    "importExport": "Import / Export",
+    "signOut": "Se déconnecter"
+  },
+  "appearance": {
+    "appTitle": "Titre de l'application",
+    "showTitleDesktop": "Afficher le titre de l'application sur ordinateur",
+    "showTitleMobile": "Afficher le titre de l'application sur mobile",
+    "wallpaper": "Fond d'écran",
+    "source": "Source",
+    "unsplashKey": "Unsplash API key",
+    "collectionId": "Collection ID",
+    "imageUrl": "URL de l'image",
+    "color": "Couleur",
+    "brightness": "Luminosité",
+    "collectionTip": "Laissez le Collection ID vide pour un résultat aléatoire."
+  },
+  "about": {
+    "documentation": "Documentation",
+    "reportIssue": "Signaler un problème",
+    "sourceCode": "Code source",
+    "support": "Assistance"
+  },
+  "dashboard": {
+    "searchPh": "Rechercher",
+    "filterAll": "Tous",
+    "filterApps": "Applications",
+    "filterWidgets": "Widgets",
+    "filterFolders": "Dossiers"
+  }
+}

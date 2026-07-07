@@ -1,0 +1,65 @@
+{
+  "_meta": { "name": "简体中文", "dir": "ltr" },
+  "nav": {
+    "general": "通用",
+    "appearance": "外观",
+    "dashboard": "仪表盘",
+    "about": "关于"
+  },
+  "common": {
+    "save": "保存",
+    "import": "Import",
+    "export": "Export",
+    "add": "+添加",
+    "back": "返回",
+    "cancel": "取消",
+    "delete": "删除",
+    "language": "语言"
+  },
+  "general": {
+    "title": "标题",
+    "description": "描述",
+    "hostIp": "主机 IP",
+    "hostIpTip": "用于在徽章链接中允许您服务器的 IP，并提供 SSRF 保护。",
+    "monitoring": "监控",
+    "loggingLevel": "Logging 级别",
+    "dockerHealth": "Docker 容器健康检查",
+    "hideHealthy": "隐藏健康徽章",
+    "socketUrl": "Socket 地址",
+    "loggingTip": "“错误”级别仅显示警告和错误。安全事件始终会被记录。",
+    "socketTip": "为实现最小权限访问，请使用 <strong>Proxy Socket</strong> 容器的地址。没有代理？您也可以直接输入 <code>unix:///var/run/docker.sock</code>。<span class=\"tip-danger\">请仅在您完全掌控的私有可信网络中执行此操作。</span>",
+    "security": "安全",
+    "passwordProtection": "密码保护",
+    "password": "密码",
+    "passwordTip": "留空以保留现有密码。至少 8 个字符。若需更强的保护，建议将仪表盘置于 <strong>Authentication Proxy</strong> 之后。此内置密码只是一道简单的门槛，并非完整的身份验证层。",
+    "backup": "备份",
+    "importExport": "Import / Export",
+    "signOut": "退出登录"
+  },
+  "appearance": {
+    "appTitle": "应用标题",
+    "showTitleDesktop": "在桌面端显示应用标题",
+    "showTitleMobile": "在移动端显示应用标题",
+    "wallpaper": "壁纸",
+    "source": "来源",
+    "unsplashKey": "Unsplash API key",
+    "collectionId": "Collection ID",
+    "imageUrl": "图片地址",
+    "color": "颜色",
+    "brightness": "亮度",
+    "collectionTip": "将 Collection ID 留空以随机显示。"
+  },
+  "about": {
+    "documentation": "文档",
+    "reportIssue": "报告问题",
+    "sourceCode": "源代码",
+    "support": "支持"
+  },
+  "dashboard": {
+    "searchPh": "搜索",
+    "filterAll": "全部",
+    "filterApps": "应用",
+    "filterWidgets": "小组件",
+    "filterFolders": "文件夹"
+  }
+}

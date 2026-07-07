@@ -1,0 +1,65 @@
+{
+  "_meta": { "name": "فارسی", "dir": "rtl" },
+  "nav": {
+    "general": "عمومی",
+    "appearance": "ظاهری",
+    "dashboard": "داشبورد",
+    "about": "درباره"
+  },
+  "common": {
+    "save": "ذخیره",
+    "import": "Import",
+    "export": "Export",
+    "add": "+افزودن",
+    "back": "بازگشت",
+    "cancel": "لغو",
+    "delete": "حذف",
+    "language": "زبان"
+  },
+  "general": {
+    "title": "عنوان",
+    "description": "توضیحات",
+    "hostIp": "IP میزبان",
+    "hostIpTip": "برای مجاز کردن IP سرور شما در بخش تنظیمات وضعیت و محافظت در برابر SSRF استفاده می‌شود.",
+    "monitoring": "نظارت",
+    "loggingLevel": "سطح Logging",
+    "dockerHealth": "بررسی سلامت کانتینرهای داکر",
+    "hideHealthy": "پنهان کردن وضعیت سلامت",
+    "socketUrl": "آدرس سوکت",
+    "loggingTip": "حالت خطاها فقط هشدارها و خطاها را نمایش می‌دهد. رویدادهای امنیتی همیشه ثبت می‌شوند.",
+    "socketTip": "برای دسترسی با کمترین امتیاز، از آدرس یک کانتینر <strong>Proxy Socket</strong> استفاده کنید. پراکسی ندارید؟ می‌توانید مستقیماً <code>unix:///var/run/docker.sock</code> را وارد کنید. <span class=\"tip-danger\">این کار را فقط در یک شبکه خصوصی و مورد اعتماد که کاملاً تحت کنترل شماست انجام دهید.</span>",
+    "security": "امنیت",
+    "passwordProtection": "محافظت با رمز عبور",
+    "password": "رمز عبور",
+    "passwordTip": "برای حفظ رمز عبور فعلی، این قسمت را خالی بگذارید. حداقل ۸ کاراکتر. برای محافظت قوی‌تر، قرار دادن داشبورد پشت یک <strong>Authentication Proxy</strong> را در نظر بگیرید. این رمز عبور داخلی یک محافظ سبک است، نه یک لایه کامل احراز هویت.",
+    "backup": "پشتیبان‌گیری",
+    "importExport": "وارد کردن / خروجی گرفتن",
+    "signOut": "خروج از حساب"
+  },
+  "appearance": {
+    "appTitle": "عنوان برنامه",
+    "showTitleDesktop": "نمایش عنوان برنامه در دسکتاپ",
+    "showTitleMobile": "نمایش عنوان برنامه در موبایل",
+    "wallpaper": "تصویر زمینه",
+    "source": "منبع",
+    "unsplashKey": "Unsplash API key",
+    "collectionId": "Collection ID",
+    "imageUrl": "آدرس تصویر",
+    "color": "رنگ",
+    "brightness": "روشنایی",
+    "collectionTip": "برای تصاویر تصادفی، Collection ID را خالی بگذارید."
+  },
+  "about": {
+    "documentation": "مستندات",
+    "reportIssue": "گزارش مشکل",
+    "sourceCode": "کد منبع",
+    "support": "پشتیبانی"
+  },
+  "dashboard": {
+    "searchPh": "جستجو",
+    "filterAll": "همه",
+    "filterApps": "برنامه‌ها",
+    "filterWidgets": "ابزارک‌ها",
+    "filterFolders": "پوشه‌ها"
+  }
+}

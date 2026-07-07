@@ -1,0 +1,65 @@
+{
+  "_meta": { "name": "Español", "dir": "ltr" },
+  "nav": {
+    "general": "General",
+    "appearance": "Apariencia",
+    "dashboard": "Panel",
+    "about": "Acerca de"
+  },
+  "common": {
+    "save": "Guardar",
+    "import": "Import",
+    "export": "Export",
+    "add": "+Añadir",
+    "back": "Atrás",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "language": "Idioma"
+  },
+  "general": {
+    "title": "Título",
+    "description": "Descripción",
+    "hostIp": "IP del host",
+    "hostIpTip": "Se usa para permitir la IP de tu servidor en las URL de las insignias y en la protección contra SSRF.",
+    "monitoring": "Monitorización",
+    "loggingLevel": "Nivel de Logging",
+    "dockerHealth": "Comprobaciones de estado de contenedores Docker",
+    "hideHealthy": "Ocultar insignia de estado saludable",
+    "socketUrl": "URL del socket",
+    "loggingTip": "\"Errores\" muestra solo advertencias y errores. Los eventos de seguridad siempre se registran.",
+    "socketTip": "Usa la URL de un contenedor <strong>Proxy Socket</strong> para un acceso con mínimo privilegio. ¿No tienes proxy? Puedes introducir directamente <code>unix:///var/run/docker.sock</code>. <span class=\"tip-danger\">Haz esto solo en una red privada y de confianza que controles por completo.</span>",
+    "security": "Seguridad",
+    "passwordProtection": "Protección con contraseña",
+    "password": "Contraseña",
+    "passwordTip": "Déjalo en blanco para mantener la contraseña actual. Mínimo 8 caracteres. Para una protección más sólida, considera colocar el panel detrás de un <strong>Authentication Proxy</strong>. Esta contraseña integrada es una barrera ligera, no una capa de autenticación completa.",
+    "backup": "Copia de seguridad",
+    "importExport": "Import / Export",
+    "signOut": "Cerrar sesión"
+  },
+  "appearance": {
+    "appTitle": "Título de la aplicación",
+    "showTitleDesktop": "Mostrar título de la app en escritorio",
+    "showTitleMobile": "Mostrar título de la app en móvil",
+    "wallpaper": "Fondo de pantalla",
+    "source": "Origen",
+    "unsplashKey": "Unsplash API key",
+    "collectionId": "Collection ID",
+    "imageUrl": "URL de la imagen",
+    "color": "Color",
+    "brightness": "Brillo",
+    "collectionTip": "Deja el Collection ID en blanco para elegir una imagen aleatoria."
+  },
+  "about": {
+    "documentation": "Documentación",
+    "reportIssue": "Reportar un problema",
+    "sourceCode": "Código fuente",
+    "support": "Soporte"
+  },
+  "dashboard": {
+    "searchPh": "Buscar",
+    "filterAll": "Todos",
+    "filterApps": "Aplicaciones",
+    "filterWidgets": "Widgets",
+    "filterFolders": "Carpetas"
+  }
+}
