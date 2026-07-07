@@ -1,4 +1,5 @@
 import { mk, clr } from '/js/utils.js';
+import { t } from '/js/i18n.js?v=1';
 
 export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop, openFolderMobile }) {
   const ov        = document.getElementById('spot');
@@ -14,7 +15,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
   inp.setAttribute('aria-controls','sres');
   inp.setAttribute('aria-expanded','false');
   res.setAttribute('role','listbox');
-  res.setAttribute('aria-label','Search results');
+  res.setAttribute('aria-label',t('home.searchResults'));
 
   const render = q => {
     res.innerHTML = '';
@@ -25,14 +26,14 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     if (!cur.length) {
       const e = mk('div');
       e.style.cssText = 'padding:24px;text-align:center;color:rgba(255,255,255,.35);font-size:14px';
-      e.textContent = 'No results';
+      e.textContent = t('home.noResults');
       res.appendChild(e);
-      if (live) live.textContent = 'No results';
+      if (live) live.textContent = t('home.noResults');
       inp.setAttribute('aria-activedescendant', '');
       return;
     }
     const f = document.createDocumentFragment();
-    const hdr = mk('div'); hdr.className = 'sr-section'; hdr.textContent = 'Apps & Folders'; f.appendChild(hdr);
+    const hdr = mk('div'); hdr.className = 'sr-section'; hdr.textContent = t('home.appsAndFolders'); f.appendChild(hdr);
     cur.forEach((app, i) => {
       const isFolder = app.type === 'folder';
       const a = mk('a', { href: app.href||'#', target: isFolder ? '_self' : '_blank', rel: 'noreferrer noopener' });
@@ -82,7 +83,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
       tx.append(nm, ht); a.append(ic, tx, ar); f.appendChild(a);
     });
     res.appendChild(f);
-    if (live) live.textContent = cur.length + (cur.length === 1 ? ' result' : ' results');
+    if (live) live.textContent = cur.length + ' ' + (cur.length === 1 ? t('home.result') : t('home.results'));
     inp.setAttribute('aria-expanded', 'true');
     inp.setAttribute('aria-activedescendant', cur.length ? 'sr-opt-0' : '');
   };
