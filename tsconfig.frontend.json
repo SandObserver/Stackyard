@@ -1,0 +1,130 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "module": "esnext",
+    "target": "es2022",
+    "moduleResolution": "bundler",
+    "strict": false,
+    "skipLibCheck": true,
+    "lib": [
+      "es2022",
+      "dom",
+      "dom.iterable"
+    ],
+    "paths": {
+      "/js/admin-app-form.js": [
+        "./ui/js/admin-app-form.js"
+      ],
+      "/js/admin-app-form.js?v=*": [
+        "./ui/js/admin-app-form.js"
+      ],
+      "/js/admin-auth.js": [
+        "./ui/js/admin-auth.js"
+      ],
+      "/js/admin-auth.js?v=*": [
+        "./ui/js/admin-auth.js"
+      ],
+      "/js/admin-color-control.js": [
+        "./ui/js/admin-color-control.js"
+      ],
+      "/js/admin-color-control.js?v=*": [
+        "./ui/js/admin-color-control.js"
+      ],
+      "/js/admin-settings.js": [
+        "./ui/js/admin-settings.js"
+      ],
+      "/js/admin-settings.js?v=*": [
+        "./ui/js/admin-settings.js"
+      ],
+      "/js/admin-shared.js": [
+        "./ui/js/admin-shared.js"
+      ],
+      "/js/admin-shared.js?v=*": [
+        "./ui/js/admin-shared.js"
+      ],
+      "/js/admin-state.js": [
+        "./ui/js/admin-state.js"
+      ],
+      "/js/admin-state.js?v=*": [
+        "./ui/js/admin-state.js"
+      ],
+      "/js/admin-widget-form.js": [
+        "./ui/js/admin-widget-form.js"
+      ],
+      "/js/admin-widget-form.js?v=*": [
+        "./ui/js/admin-widget-form.js"
+      ],
+      "/js/admin.js": [
+        "./ui/js/admin.js"
+      ],
+      "/js/admin.js?v=*": [
+        "./ui/js/admin.js"
+      ],
+      "/js/badge-logic.js": [
+        "./ui/js/badge-logic.js"
+      ],
+      "/js/badge-logic.js?v=*": [
+        "./ui/js/badge-logic.js"
+      ],
+      "/js/dashboard.js": [
+        "./ui/js/dashboard.js"
+      ],
+      "/js/dashboard.js?v=*": [
+        "./ui/js/dashboard.js"
+      ],
+      "/js/i18n.js": [
+        "./ui/js/i18n.js"
+      ],
+      "/js/i18n.js?v=*": [
+        "./ui/js/i18n.js"
+      ],
+      "/js/icons.js": [
+        "./ui/js/icons.js"
+      ],
+      "/js/icons.js?v=*": [
+        "./ui/js/icons.js"
+      ],
+      "/js/spotlight.js": [
+        "./ui/js/spotlight.js"
+      ],
+      "/js/spotlight.js?v=*": [
+        "./ui/js/spotlight.js"
+      ],
+      "/js/ui.js": [
+        "./ui/js/ui.js"
+      ],
+      "/js/ui.js?v=*": [
+        "./ui/js/ui.js"
+      ],
+      "/js/utils.js": [
+        "./ui/js/utils.js"
+      ],
+      "/js/utils.js?v=*": [
+        "./ui/js/utils.js"
+      ],
+      "/js/widget-config-form.js": [
+        "./ui/js/widget-config-form.js"
+      ],
+      "/js/widget-config-form.js?v=*": [
+        "./ui/js/widget-config-form.js"
+      ],
+      "/js/widget-toolbox.js": [
+        "./ui/js/widget-toolbox.js"
+      ],
+      "/js/widget-toolbox.js?v=*": [
+        "./ui/js/widget-toolbox.js"
+      ],
+      "/js/widget-types.js": [
+        "./ui/js/widget-types.js"
+      ],
+      "/js/widget-types.js?v=*": [
+        "./ui/js/widget-types.js"
+      ]
+    }
+  },
+  "include": [
+    "ui/js/**/*.js"
+  ]
+}
