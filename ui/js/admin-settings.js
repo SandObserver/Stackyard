@@ -209,6 +209,7 @@ async function saveWallpaper(){
 async function saveServer(){
   try{
     const c=await ag('/api/config');c.settings=c.settings||{};
+    const prevLang=c.settings.language||'en';
     const dockerEnabled=document.getElementById('srv-docker-en')?.checked||false;
     const socketUrl=document.getElementById('srv-socket')?.value?.trim()||'';
     /* Title / description from inline-edit value spans (committed on blur).
@@ -227,6 +228,7 @@ async function saveServer(){
     };
     c.settings.logLevel=document.getElementById('log-level')?.value||'info';
     c.settings.language=document.getElementById('lang-sel')?.value||'en';
+    const langChanged=c.settings.language!==prevLang;
     await ap('/api/config',c);
 
     /* Handle password and auth toggle */
@@ -241,5 +243,6 @@ async function saveServer(){
     }
     await ap('/api/auth/toggle',{enabled});
     toast('Saved');
+    if(langChanged) location.reload();
   }catch(e){toast('Save failed: '+e.message,'err');}
 }
