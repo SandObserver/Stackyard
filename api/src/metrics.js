@@ -54,7 +54,7 @@ function cpuTemp(zone = 0) {
   try {
     const raw = fs.readFileSync(`/sys/class/thermal/thermal_zone${zone}/temp`, 'utf8').trim();
     const val = parseInt(raw, 10);
-    return isNaN(val) ? null : parseFloat((val / 1000).toFixed(1));
+    return Number.isNaN(val) ? null : parseFloat((val / 1000).toFixed(1));
   } catch { return null; }
 }
 

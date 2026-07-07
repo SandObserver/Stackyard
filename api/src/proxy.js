@@ -39,7 +39,7 @@ function parsePrometheus(text) {
     const t = line.trim();
     if (!t || t[0] === '#') continue;
     const m = t.match(/^([a-zA-Z_:][a-zA-Z0-9_:{}=",./ -]*?)\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/);
-    if (m) { const v = parseFloat(m[2]); if (!isNaN(v)) out[m[1].trim()] = v; }
+    if (m) { const v = parseFloat(m[2]); if (!Number.isNaN(v)) out[m[1].trim()] = v; }
   }
   return out;
 }
@@ -218,7 +218,6 @@ function fetchJSON(raw, opts = {}) {
       servername: pin ? u.hostname : undefined, /* keep SNI + cert validation on the real hostname */
       timeout: opts.timeout || 8000,
       rejectUnauthorized: !skipTls,
-      maxRedirects: 0, /* redirects disabled — target could resolve to private IP */
     }, res => {
       if (res.statusCode >= 300 && res.statusCode < 400) {
         res.resume();
