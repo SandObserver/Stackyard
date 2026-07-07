@@ -1,5 +1,3 @@
-const http = require('http');
-const path = require('path');
 const { on, json, readBody, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchJSON } = require('../proxy');
@@ -96,13 +94,12 @@ function dupParseDate(v) {
     return new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:${ss}Z`).getTime();
   }
   const d = new Date(s);
-  return isNaN(d) ? 0 : d.getTime();
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
 }
 
 function dupDeriveStatus(job, serverState) {
   const id        = dupId(job);
   const meta      = dupMeta(job);
-  const schedule  = dupSchedule(job);
   const tasks     = serverState?.ActiveTask;
   const proposed  = serverState?.ProposedSchedule || [];
 
