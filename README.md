@@ -60,8 +60,7 @@ to look at than everything at once.
 - Live activity badges from any API endpoint, configured in the UI.
 - Health badges that appear only on problems.
 - Full configuration from the admin UI, with config import and export.
-- Custom wallpaper and appearance settings.
-- Optional password protection.
+- Available in English, Persian, Chinese, Spanish, German, and French.
 
 ## Getting started
 
