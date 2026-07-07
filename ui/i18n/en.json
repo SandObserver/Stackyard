@@ -77,7 +77,8 @@
     "selectApps": "Select apps",
     "noApps": "No apps available",
     "tip": "Tap to add or remove apps from this folder.",
-    "namePh": "My Folder"
+    "namePh": "My Folder",
+    "addAppToFolder": "Add app to this folder"
   },
   "app": {
     "name": "Name",
@@ -130,5 +131,26 @@
     "searchResults": "Search results",
     "result": "result",
     "results": "results"
+  },
+  "toast": {
+    "saved": "Saved",
+    "saveFailed": "Save failed: {err}",
+    "wallpaperSaved": "Wallpaper saved",
+    "imported": "Imported",
+    "importFailed": "Import failed: {err}",
+    "exportFailed": "Export failed: {err}",
+    "importNoChange": "Nothing to import — the file matches your current config.",
+    "pwWeak": "Password too weak: {label}"
+  },
+  "confirm": {
+    "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",
+    "remove": "Remove \"{name}\"?"
+  },
+  "list": {
+    "empty": "No apps yet. Click +Add.",
+    "noMatches": "No matches."
+  },
+  "import": {
+    "confirm": "Import {n} items?\n\n{added} added, {updated} updated, {deleted} deleted."
   }
 }
