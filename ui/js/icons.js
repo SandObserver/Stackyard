@@ -1,3 +1,4 @@
+// @ts-check
 /* SECURITY INVARIANT:
    The URLs produced here (resolveIcon / iconChain) must only ever be assigned
    to an <img src=...>. User-uploaded SVGs are served from /icons/ and an SVG

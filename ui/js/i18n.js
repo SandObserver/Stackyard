@@ -1,3 +1,4 @@
+// @ts-check
 /* Minimal i18n runtime. Catalogs are plain JSON at /i18n/<code>.json; English
    is the source and the fallback. No build step and no runtime dependency — the
    app only ever fetches JSON. Adding a language is two steps: add an entry to
