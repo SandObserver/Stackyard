@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "English", "dir": "ltr" },
+  "_meta": {
+    "name": "English",
+    "dir": "ltr"
+  },
   "nav": {
     "general": "General",
     "appearance": "Appearance",
@@ -61,5 +64,57 @@
     "filterApps": "Apps",
     "filterWidgets": "Widgets",
     "filterFolders": "Folders"
+  },
+  "type": {
+    "addNew": "Add New",
+    "app": "App",
+    "widget": "Widget",
+    "folder": "Folder"
+  },
+  "folder": {
+    "name": "Folder Name",
+    "addApps": "Add Apps",
+    "selectApps": "Select apps",
+    "noApps": "No apps available",
+    "tip": "Tap to add or remove apps from this folder.",
+    "namePh": "My Folder"
+  },
+  "app": {
+    "name": "Name",
+    "url": "URL",
+    "namePh": "My App",
+    "urlPh": "https://app.example.com",
+    "icon": "Icon",
+    "upload": "Upload",
+    "iconPh": "Name or full URL",
+    "showInDock": "Show in Dock",
+    "dockFull": "Dock full (4/4). Remove an app first.",
+    "badge": "Badge",
+    "healthCheck": "Health Check",
+    "type": "Type",
+    "container": "Container",
+    "ping": "Ping",
+    "pingUrl": "Ping URL",
+    "containerPh": "container-name",
+    "pingUrlPh": "http://your-server-ip:port",
+    "test": "Test",
+    "fixedLabel": "Fixed Label",
+    "labelText": "Label Text",
+    "labelPh": "e.g. Backup",
+    "liveActivity": "Live Activity",
+    "apiUrl": "API URL",
+    "apiUrlPh": "http://container-name:port/api/v2",
+    "fetch": "Fetch",
+    "value": "Value",
+    "filterValues": "Filter values",
+    "authentication": "Authentication",
+    "addToHeader": "Add to Header",
+    "paramsPh": "One key=value per line.\nAdded to the URL as ?key=value.",
+    "headersPh": "One key=value per line.\nSent as an HTTP request header.",
+    "unit": "Unit",
+    "unitPh": "e.g. GB",
+    "poll": "Poll",
+    "allowSelfSigned": "Allow self-signed certificate",
+    "selfSignedTip": "Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks."
   }
 }
