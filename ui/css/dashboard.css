@@ -700,3 +700,9 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 .setup-btn-skip { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
 .setup-btn-set  { background: #0a84ff; border-color: #0a84ff; color: #fff; }
 .setup-btn-set:disabled { opacity: .4; cursor: default; }
+
+/* ── RTL foundation (dashboard) ── the grid and dock are symmetric and the
+   search bar is flexbox (auto-reversing); these cover the rest. Refine with
+   real translated content in view. */
+[dir="rtl"] #sin { text-align: right; }
+[dir="rtl"] #spot-cancel-mob { right: auto; left: 16px; }
