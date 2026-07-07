@@ -38,7 +38,7 @@ while (filesChangedThisPass !== 0) {
   filesChangedThisPass = 0;
   for (const file of files) {
     const original = fs.readFileSync(file, 'utf8');
-    const updated = original.replace(REF_RE, (match, quote, assetPath) => `${quote}${assetPath}?v=${hashFor(assetPath)}`);
+    const updated = original.replace(REF_RE, (_match, quote, assetPath) => `${quote}${assetPath}?v=${hashFor(assetPath)}`);
     if (updated !== original) {
       fs.writeFileSync(file, updated, 'utf8');
       filesChangedThisPass++;
