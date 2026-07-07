@@ -19,7 +19,6 @@ const SCHEMA_VERSION = 1;
    changes add ordered steps, e.g. `if (v < 2) { ...transform...; v = 2; }`. */
 function migrate(cfg) {
   if (!cfg || typeof cfg !== 'object') return cfg;
-  let v = typeof cfg._schemaVersion === 'number' ? cfg._schemaVersion : 1;
   /* migration steps go here, in order */
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;

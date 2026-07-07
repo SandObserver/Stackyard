@@ -132,7 +132,7 @@ function getRegistry() {
 /* The browser-facing shape: everything the dashboard and admin UI need to draw
    the type picker, the config editor, and the widget iframe — and nothing the
    backend keeps to itself (the "data" routing block stays server-side). */
-function _publicEntry(name, e) {
+function _publicEntry(_name, e) {
   const m = e.manifest;
   return {
     name:         m.name,
