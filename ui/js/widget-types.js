@@ -4,7 +4,7 @@ export const WIDGET_TYPES = {
     const sub = item?.widgetConfig?.widgetSubType || 'system-summary';
     const size = encodeURIComponent(item?.widgetSize||'medium');
     if (sub === 'disk-health') return `/widgets/stats/disk-health.html?v=30&id=${encodeURIComponent(id)}&size=${size}${opts?.mobile?'&mobile=1':''}`;
-    return `/widgets/stats/system-stats.html?v=4&id=${encodeURIComponent(id)}`;
+    return `/widgets/stats/system-stats.html?v=5&id=${encodeURIComponent(id)}`;
   }},
   connections:{ label:'Connections', sizes:['small','medium'],
     /* Two views (like github): 'map' (dot-matrix world map, medium only) and
