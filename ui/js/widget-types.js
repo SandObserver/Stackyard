@@ -27,7 +27,7 @@ export const WIDGET_TYPES = {
   }},
   clock:   { label:'Clock',          sizes:['small'],                 src:(id,item)=>{
     const style=item?.widgetConfig?.clockStyle||'digital';
-    return `/widgets/clock/${style}.html?v=5&id=${encodeURIComponent(id)}`;
+    return `/widgets/clock/${style}.html?v=6&id=${encodeURIComponent(id)}`;
   }},
   backup:  { label:'Backup',     sizes:['small','medium'],        src:(id,item,opts)=>`/widgets/backup/backup.html?v=14&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}${opts?.mobile?'&mobile=1':''}` },
   custom:  { label:'Custom',        sizes:['small','medium','large','xlarge'],src:(_,item)=>item?.url||'' },
