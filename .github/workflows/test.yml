@@ -25,3 +25,15 @@ jobs:
       - name: Run frontend tests
         run: node --test
         working-directory: ui/test
+
+      - name: Install dev tooling
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck (backend)
+        run: npm run typecheck
+
+      - name: Typecheck (frontend, opt-in files)
+        run: npm run typecheck:ui
