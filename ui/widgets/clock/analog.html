@@ -60,9 +60,14 @@ let _mode='dark', _timezone='', _showDate=true;
 let _groups=null, _dateText=null, _rafId=null, _running=false, _vb=0;
 
 function _now(){
-  return _timezone
-    ? new Date(new Date().toLocaleString('en-US', { timeZone: _timezone }))
-    : new Date();
+  if(!_timezone) return new Date();
+  /* toLocaleString drops milliseconds, which would freeze the smooth second
+     hand at whole seconds. Restore them from the real clock (timezone offsets
+     are never sub-second, so ms is identical in any zone). */
+  const d = new Date();
+  const shifted = new Date(d.toLocaleString('en-US', { timeZone: _timezone }));
+  shifted.setMilliseconds(d.getMilliseconds());
+  return shifted;
 }
 
 function el(tag, attrs){
