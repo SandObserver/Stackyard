@@ -271,14 +271,19 @@ function buildSpark(id, hist, colorCls) {
   });
 }
 
-/* ── Deviation bars (process count) ── bars above the running mean highlighted,
-   with a dashed mean baseline. Same bar DOM as the sparkline so it matches. */
+/* ── Deviation bars (process count) ── scaled to the window's own spread so
+   small moves in a large, stable count stay visible; a near-flat window reads
+   calm rather than jumpy. Bars above the mean are highlighted; dashed line marks
+   the mean. Same bar DOM as the sparkline so it matches. */
 function buildDevBars(id, hist, colorCls) {
   const el = document.getElementById(id); if (!el) return;
   el.innerHTML = '';
   const nums = hist.filter(v => v !== null && typeof v === 'number');
   const mean = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
-  const max  = Math.max(mean, ...nums, 1) * 1.15;
+  const lo = nums.length ? Math.min(...nums) : 0;
+  const hi = nums.length ? Math.max(...nums) : 0;
+  const span = Math.max(hi - lo, 1);
+  const pos = v => 12 + ((v - lo) / span) * 88;
   hist.forEach((v, i) => {
     const accent = (i + 1) % 5 === 0;
     const slot = document.createElement('div'); slot.className = 'bar-slot';
@@ -286,14 +291,14 @@ function buildDevBars(id, hist, colorCls) {
     const bg = document.createElement('div'); bg.className = 'bar-bg'; slot.appendChild(bg);
     if (v !== null) {
       const fill = document.createElement('div');
-      fill.className = 'bar-fill ' + (v >= mean ? 'dev-hi' : colorCls);
-      fill.style.height = Math.max(2, (v / max) * 100) + '%';
+      fill.className = 'bar-fill ' + (v > mean ? 'dev-hi' : colorCls);
+      fill.style.height = pos(v) + '%';
       slot.appendChild(fill);
     }
     el.appendChild(slot);
   });
   const line = document.getElementById(id.replace('spark-', 'dev-mean-'));
-  if (line) { line.style.display = 'block'; line.style.bottom = ((mean / max) * 100) + '%'; }
+  if (line) { line.style.display = 'block'; line.style.bottom = pos(mean) + '%'; }
 }
 
 /* ── Update DOM from stats ── */
