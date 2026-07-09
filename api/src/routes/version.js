@@ -8,6 +8,7 @@ const CURRENT = process.env.APP_VERSION || pkg.version || '0.0.0';
 const REPO = 'SandObserver/stackyard';
 const CACHE_MS = 60 * 60 * 1000; /* re-check the latest release at most hourly */
 
+/** @type {{ at: number, latest: string|null }} */
 let _cache = { at: 0, latest: null };
 
 function parseVer(v) { return String(v || '').replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0); }
