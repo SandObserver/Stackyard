@@ -9,7 +9,12 @@
     "resolveJsonModule": true,
     "strict": false,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "strictNullChecks": true
   },
-  "include": ["api/src/**/*.js"]
+  "include": [
+    "api/src/**/*.js"
+  ]
 }
