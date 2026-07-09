@@ -125,3 +125,23 @@ test('a cross-origin write is rejected by the origin check', async () => {
   });
   assert.equal(r.status, 403);
 });
+
+/* Config-mutating auth paths, kept last so they don't disturb the tests above
+   (set-password rotates the signing secret, invalidating validCookie). */
+test('dismiss-setup records the flag for an authenticated same-origin request', async () => {
+  const r = await req('POST', '/api/auth/dismiss-setup', { cookie: validCookie });
+  assert.equal(r.status, 200);
+  const check = await req('GET', '/api/auth/check');
+  assert.equal(check.body.setupPrompted, true);
+});
+
+test('set-password rejects a too-short password', async () => {
+  const r = await req('POST', '/api/auth/set-password', { cookie: validCookie, body: { password: 'short' } });
+  assert.equal(r.status, 400);
+});
+
+test('set-password succeeds for an authenticated session and issues a new cookie', async () => {
+  const r = await req('POST', '/api/auth/set-password', { cookie: validCookie, body: { password: 'a-long-enough-password' } });
+  assert.equal(r.status, 200);
+  assert.match(String(r.headers['set-cookie'] || ''), /ds=.+/);
+});
