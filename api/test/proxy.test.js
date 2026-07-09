@@ -117,3 +117,35 @@ test('parseXml ignores declaration, comments and DOCTYPE, and is safe on junk', 
   assert.deepEqual(parseXml(''), {});
   assert.deepEqual(parseXml(null), {});
 });
+
+/* ── guardSsrf DNS resolution: the DNS-rebind defense. A hostname is resolved
+   once and the validated IP is returned to be pinned for the connection; a name
+   that resolves to a private address is blocked even though the name itself
+   looks public (which a stale re-resolution could otherwise exploit). ── */
+const dns = require('node:dns').promises;
+
+test('guardSsrf resolves a public hostname and returns the IP to pin', async (t) => {
+  t.mock.method(dns, 'lookup', async () => ({ address: '93.184.216.34', family: 4 }));
+  assert.deepEqual(await guardSsrf('http://example.com/path'), { error: null, ip: '93.184.216.34' });
+});
+
+test('guardSsrf blocks a public-looking name that resolves to a private IP', async (t) => {
+  t.mock.method(dns, 'lookup', async () => ({ address: '192.168.1.50', family: 4 }));
+  const r = await guardSsrf('http://sneaky.example.com/');
+  assert.equal(r.ip, null);
+  assert.match(r.error, /private IP/);
+});
+
+test('guardSsrf blocks a name that resolves to the link-local metadata IP', async (t) => {
+  t.mock.method(dns, 'lookup', async () => ({ address: '169.254.169.254', family: 4 }));
+  const r = await guardSsrf('http://rebind.example.com/');
+  assert.equal(r.ip, null);
+  assert.match(r.error, /private IP/);
+});
+
+test('guardSsrf blocks when the hostname cannot be resolved', async (t) => {
+  t.mock.method(dns, 'lookup', async () => { throw new Error('ENOTFOUND'); });
+  const r = await guardSsrf('http://nxdomain.example.com/');
+  assert.equal(r.ip, null);
+  assert.match(r.error, /could not be resolved/);
+});
