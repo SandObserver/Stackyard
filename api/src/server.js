@@ -1,7 +1,7 @@
 const http = require('http');
 const log  = require('./log');
 
-const _port = parseInt(process.env.PORT, 10);
+const _port = parseInt(process.env.PORT ?? '', 10);
 if (process.env.PORT !== undefined && (Number.isNaN(_port) || _port < 1 || _port > 65535))
   throw new Error(`Invalid PORT env var: "${process.env.PORT}"`);
 const PORT = Number.isNaN(_port) ? 3000 : _port;

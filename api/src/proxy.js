@@ -112,10 +112,11 @@ function _xmlValue(node) {
    declaration, processing instructions and DOCTYPE. It is a pragmatic reader
    for well-formed API responses, not a validating parser; node and depth caps
    bound pathological input. */
+/** @typedef {{ tag: string, attrs: Record<string,string>, children: XmlNode[], text: string }} XmlNode */
 function parseXml(xml) {
   if (typeof xml !== 'string') return {};
   const MAX_NODES = 5000, MAX_DEPTH = 60;
-  const root = { tag: '#doc', attrs: {}, children: [], text: '' };
+  const root = /** @type {XmlNode} */ ({ tag: '#doc', attrs: {}, children: [], text: '' });
   const stack = [root];
   const top = () => stack[stack.length - 1];
   const len = xml.length;
@@ -145,7 +146,7 @@ function parseXml(xml) {
     if (selfClose) raw = raw.slice(0, -1).trim();
     const sp = raw.search(/\s/);
     const name = sp === -1 ? raw : raw.slice(0, sp);
-    const node = { tag: name, attrs: {}, children: [], text: '' };
+    const node = /** @type {XmlNode} */ ({ tag: name, attrs: {}, children: [], text: '' });
     if (sp !== -1) {
       for (const m of raw.slice(sp + 1).matchAll(/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g))
         node.attrs[m[1]] = _xmlDecode(m[2] !== undefined ? m[2] : m[3]);
@@ -219,9 +220,10 @@ function fetchJSON(raw, opts = {}) {
       timeout: opts.timeout || 8000,
       rejectUnauthorized: !skipTls,
     }, res => {
-      if (res.statusCode >= 300 && res.statusCode < 400) {
+      const sc = res.statusCode ?? 0;
+      if (sc >= 300 && sc < 400) {
         res.resume();
-        return done(reject, new Error(`Redirect blocked (${res.statusCode}) — use the final URL directly`));
+        return done(reject, new Error(`Redirect blocked (${sc}) — use the final URL directly`));
       }
       const bufs = []; let total = 0;
       res.on('data', c => {
@@ -285,7 +287,8 @@ function pingUrl(raw, ms = 6000, skipTls, pinIp) {
     function tryGet() {
       const req = lib.request({ ...opts, method:'GET' }, res => {
         res.resume();
-        resolve({ ok:res.statusCode < 500, status:res.statusCode, desc:statusDesc(res.statusCode) });
+        const sc = res.statusCode ?? 0;
+        resolve({ ok:sc < 500, status:sc, desc:statusDesc(sc) });
       });
       req.on('timeout', () => { req.destroy(); resolve({ ok:false, status:0, error:'Timed out' }); });
       req.on('error',   e => resolve({ ok:false, status:0, error:e.message }));
@@ -294,8 +297,9 @@ function pingUrl(raw, ms = 6000, skipTls, pinIp) {
 
     const req = lib.request({ ...opts, method:'HEAD' }, res => {
       res.resume();
-      if (res.statusCode === 405) return tryGet();
-      resolve({ ok:res.statusCode < 500, status:res.statusCode, desc:statusDesc(res.statusCode) });
+      const sc = res.statusCode ?? 0;
+      if (sc === 405) return tryGet();
+      resolve({ ok:sc < 500, status:sc, desc:statusDesc(sc) });
     });
     req.on('timeout', () => { req.destroy(); resolve({ ok:false, status:0, error:'Timed out' }); });
     req.on('error',   e => resolve({ ok:false, status:0, error:e.message }));
