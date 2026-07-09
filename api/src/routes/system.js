@@ -30,7 +30,7 @@ function _updateNetCache() {
 }
 
 _updateNetCache();
-setInterval(_updateNetCache, 2000);
+setInterval(_updateNetCache, 2000).unref();
 
 on('GET', '/api/network-stats', (_, res) => {
   json(res, 200, _netCache);
