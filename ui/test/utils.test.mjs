@@ -8,7 +8,7 @@ import { register } from 'node:module';
    here (rather than via --import) keeps it working under the test runner's
    per-file child processes. */
 register('./js-root-hooks.mjs', import.meta.url);
-const { clr, esc } = await import('../js/utils.js');
+const { clr, esc, sanitizeCssUrl } = await import('../js/utils.js');
 
 test('clr maps the sentinel color names to concrete hex', () => {
   assert.equal(clr('dark'), '#1C1C1E');
@@ -39,4 +39,16 @@ test('esc coerces null and undefined to empty string', () => {
   assert.equal(esc(null), '');
   assert.equal(esc(undefined), '');
   assert.equal(esc(0), '0');
+});
+
+test('sanitizeCssUrl strips characters that could break out of url(...)', () => {
+  assert.equal(sanitizeCssUrl(`a'b"c`), 'abc');
+  assert.equal(sanitizeCssUrl('a(b)c'), 'abc');
+  assert.equal(sanitizeCssUrl('a\\b'), 'ab');
+});
+
+test('sanitizeCssUrl leaves a normal URL intact and coerces empties', () => {
+  assert.equal(sanitizeCssUrl('https://host/path/img.png?v=2'), 'https://host/path/img.png?v=2');
+  assert.equal(sanitizeCssUrl(null), '');
+  assert.equal(sanitizeCssUrl(undefined), '');
 });
