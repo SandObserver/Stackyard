@@ -34,7 +34,7 @@ function _ieRow(field, value, inputType) {
   const get = () => {
     const v = inp.value.trim();
     if (v === '') return null;
-    if (inputType === 'number') { const n = Number(v); return isNaN(n) ? null : [field.key, n]; }
+    if (inputType === 'number') { const n = Number(v); return Number.isNaN(n) ? null : [field.key, n]; }
     return [field.key, v];
   };
   if (field.hint) { const w = document.createElement('div'); w.appendChild(row); const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; w.appendChild(h); return { el: w, get, control: inp, liveValue: () => inp.value }; }
@@ -237,7 +237,6 @@ function _buildSimple(field, config, ctx) {
     case 'toggle': return _toggle(field, value);
     case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value, ctx);
     case 'multiselect': return _multiselect(field, value);
-    case 'text':
     default:       return _ieRow(field, value, 'text');
   }
 }
