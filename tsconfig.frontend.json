@@ -32,6 +32,18 @@
       "/js/admin-color-control.js?v=*": [
         "./ui/js/admin-color-control.js"
       ],
+      "/js/admin-logic.js": [
+        "./ui/js/admin-logic.js"
+      ],
+      "/js/admin-logic.js?v=*": [
+        "./ui/js/admin-logic.js"
+      ],
+      "/js/admin-save-logic.js": [
+        "./ui/js/admin-save-logic.js"
+      ],
+      "/js/admin-save-logic.js?v=*": [
+        "./ui/js/admin-save-logic.js"
+      ],
       "/js/admin-settings.js": [
         "./ui/js/admin-settings.js"
       ],
