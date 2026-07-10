@@ -6,7 +6,7 @@ const routes = [];
 function on(m, p, h) {
   if (p === '*') { routes.push({ m, p, re:null, names:[], h }); return; }
   const names = [];
-  const re = new RegExp('^' + p.replace(/:([^/]+)/g, (_, n) => { names.push(n); return '([^/]+)'; }) + '(?:/|$)');
+  const re = new RegExp('^' + p.replace(/:([^/]+)/g, (_, n) => { names.push(n); return '([^/]+)'; }) + '/?$');
   routes.push({ m, p, re, names, h });
 }
 
