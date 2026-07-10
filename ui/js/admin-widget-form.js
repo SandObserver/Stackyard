@@ -7,6 +7,7 @@ import { toast, PE_SVG, CHEV_SVG, _secretRow, initInlineEdit } from '/js/admin-s
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 import { esc } from '/js/utils.js?v=40';
+import { normBackupSlots } from '/js/admin-logic.js?v=1';
 
 /* Widget size glyphs (content-cards of increasing aspect/line-count), traced from the PSD. */
 const SIZE_ICONS={
@@ -89,7 +90,7 @@ export function buildWidgetForm(body,item){
   state._wbackupCfg = {
     /* Per-slot useDefault: first instance of a provider is its default; later
        instances use that default unless turned off (then they get their own container). */
-    slots: _normBackupSlots(wc.slots, state._wsize),
+    slots: normBackupSlots(wc.slots, state._wsize),
   };
   _renderWidgetForm(body);
 }
@@ -132,7 +133,7 @@ function _renderWidgetForm(body){
   const scard=document.createElement('div'); scard.className='grp';
   scard.innerHTML=`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s=>`<button type="button" class="tile-opt${s===state._wsize?' on':''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${SIZE_ICONS[s]||SIZE_ICONS.medium}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`).join('')}</div></div>`;
   body.appendChild(scard);
-  scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; if(state._wtype==='backup'){state._wbackupCfg.slots=_normBackupSlots(state._wbackupCfg.slots,state._wsize);} _renderWidgetForm(body); }));
+  scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; if(state._wtype==='backup'){state._wbackupCfg.slots=normBackupSlots(state._wbackupCfg.slots,state._wsize);} _renderWidgetForm(body); }));
 
     const cfgDiv=document.createElement('div');cfgDiv.className='div';body.appendChild(cfgDiv);
   if(state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
@@ -379,7 +380,6 @@ function _renderStatsBody(body){
 }
 
 
-
 function _renderConnectionsConfig(body){
   if(state._wconnView==='vpn') return _renderVpnConfig(body);
   return _renderMapConfig(body);
@@ -515,38 +515,6 @@ function _renderCustomConfig(body){
   initInlineEdit('if-refresh-row','if-refresh',{placeholder:'e.g. 2000',onCommit(){sync();}});
 }
 
-function _normBackupSlots(saved, size) {
-  const count = size === 'small' ? 1 : 3;
-  const arr = Array.isArray(saved) ? saved : [];
-  /* First slot index per provider (the "default instance") */
-  const firstIdx = {};
-  arr.forEach((s,k)=>{ if(s?.provider && firstIdx[s.provider]===undefined) firstIdx[s.provider]=k; });
-  const inferUseDefault = (i) => {
-    const s = arr[i]; if(!s?.provider) return true;
-    if(s.useDefault!==undefined) return s.useDefault!==false;     /* explicit */
-    const fi = firstIdx[s.provider];
-    if(i===fi) return true;                                       /* the default instance itself */
-    const key = s.provider==='duplicati' ? 'dupUrl' : 'kopiaUrl';
-    const myUrl=(s[key]||'').trim(), fUrl=(arr[fi]?.[key]||'').trim();
-    return !myUrl || myUrl===fUrl;   /* same/blank URL → used the default; different → independent */
-  };
-  return Array.from({length: count}, (_, i) => ({
-    provider:    arr[i]?.provider    || null,
-    jobId:       arr[i]?.jobId       || null,
-    customName:  arr[i]?.customName  || '',
-    useDefault:  inferUseDefault(i),
-    dupUrl:      arr[i]?.dupUrl      || '',
-    dupPassSet:  arr[i]?.dupPassSet  || false,
-    dupHref:     arr[i]?.dupHref     || '',
-    dupPollSec:  arr[i]?.dupPollSec  || 60,
-    dupJobList:  [],
-    kopiaUrl:    arr[i]?.kopiaUrl    || '',
-    kopiaUser:   arr[i]?.kopiaUser   || '',
-    kopiaPassSet:arr[i]?.kopiaPassSet|| false,
-    kopiaHref:   arr[i]?.kopiaHref   || '',
-    kopiaSrcList:[],
-  }));
-}
 
 /* Auto-fill connection from first same-provider slot that has a URL */
 function _autofillSlot(si, provider) {

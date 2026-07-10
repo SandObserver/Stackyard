@@ -1,5 +1,7 @@
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
-import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
+import { clr as rc, esc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
+import { reorderItems } from '/js/admin-logic.js?v=1';
+import { cleanId, buildStatsSlots, buildMapServices, finalizeBackupSlots, buildAppItem } from '/js/admin-save-logic.js?v=1';
 import { WIDGET_TYPES } from '/js/widget-types.js?v=63bf4388';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
@@ -44,7 +46,6 @@ async function load(){
 }
 
 /* Wallpaper behind the settings panel — mirrors the dashboard's background settings. */
-function _sanitizeCssUrl(u){ return String(u||'').replace(/['"\\()]/g,''); }
 async function applyBg(){
   const root=document.documentElement;
   try{
@@ -54,13 +55,13 @@ async function applyBg(){
       root.style.setProperty('--bg-color',String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g,''));
       root.style.setProperty('--bg-brightness','1');
     }else if(bg.type==='url'&&bg.url){
-      root.style.setProperty('--bg-image',`url('${_sanitizeCssUrl(bg.url)}')`);
+      root.style.setProperty('--bg-image',`url('${sanitizeCssUrl(bg.url)}')`);
       root.style.setProperty('--bg-color','#0d1117');
       root.style.setProperty('--bg-brightness',String(bg.brightness??0.62));
     }else if(bg.type==='unsplash'){
       const r=await fetch('/api/wallpaper',{cache:'no-store'}); const d=await r.json();
       if(d.url){ const img=new Image(); img.onload=()=>{
-        root.style.setProperty('--bg-image',`url('${_sanitizeCssUrl(d.url)}')`);
+        root.style.setProperty('--bg-image',`url('${sanitizeCssUrl(d.url)}')`);
         root.style.setProperty('--bg-color','#0d1117');
         root.style.setProperty('--bg-brightness',String(bg.brightness??0.62));
       }; img.src=d.url; }
@@ -84,19 +85,8 @@ function trapFocus(box){
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
   };
 }
-function moveRow(item,dir,{folderId=null,childIdx=null}={}){
-  if(folderId!=null){
-    const f=state.items.find(i=>i.id===folderId);if(!f)return;
-    const ch=f.children||[];const j=childIdx+dir;if(j<0||j>=ch.length)return;
-    [ch[childIdx],ch[j]]=[ch[j],ch[childIdx]];
-  }else{
-    const inF=new Set(state.items.filter(i=>i.type==='folder').flatMap(ff=>ff.children||[]));
-    const top=state.items.filter(it=>it.type==='folder'||!inF.has(it.id));
-    const p=top.indexOf(item);const nb=top[p+dir];if(!nb)return;
-    const a=state.items.indexOf(item),b=state.items.indexOf(nb);
-    [state.items[a],state.items[b]]=[state.items[b],state.items[a]];
-  }
-  save();
+function moveRow(item,dir,opts={}){
+  if(reorderItems(state.items,item,dir,opts)) save();
 }
 
 function clearDragClasses(target){
@@ -554,12 +544,11 @@ async function doSave(orig){
     let item;
     if(state.ctype==='widget'){
       /* Generate clean IDs: only letters, digits and underscores */
-      const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'widget';
       const wlabel=state._wlabel.trim()||(state._wtype==='stats'?(state._wstatsSubType==='disk-health'?'Disk Health':'System Summary'):WIDGET_TYPES[state._wtype]?.label||'Widget');
       if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
         const missing=state._autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
-        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:state._wtype,
+        item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:state._wtype,
           label:wlabel,widgetSize:state._wsize,widgetConfig:state._autoForm.getValues()};
       }
       else if(state._wtype==='weather'){
@@ -569,7 +558,7 @@ async function doSave(orig){
         if(state._wweatherCfg.feelsLike) wcfg.feelsLike=true;
         const href=document.getElementById('wx-href')?.value?.trim();
         if(href) wcfg.href=href;
-        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'weather',
+        item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'weather',
           label:wlabel,widgetSize:'small',widgetConfig:wcfg};
       }
       else if(state._wtype==='custom'){
@@ -580,7 +569,7 @@ async function doSave(orig){
         if(state._iframeOpts.allow) ifo.allow=state._iframeOpts.allow;
         if(state._iframeOpts.allowFullscreen===false) ifo.allowFullscreen=false;
         if(state._iframeOpts.refreshInterval) ifo.refreshInterval=state._iframeOpts.refreshInterval;
-        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'custom',
+        item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'custom',
           label:wlabel, widgetSize:state._wsize,url};
         if(Object.keys(ifo).length) item.iframe=ifo;
       }else if(state._wtype==='connections'){
@@ -605,16 +594,11 @@ async function doSave(orig){
             else if(state._wvpnCfg.tokenSet){ vpn.tokenSet=true; }
             else { toast('NetBird access token is required','err'); return; }
           }
-          item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'connections',
+          item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'connections',
             label:wlabel, widgetSize:state._wsize, widgetConfig:{ view:'vpn', vpn }};
         } else {
-          const SVC_PLAIN=['siteId','websiteId','username'], SVC_SECRET=['token','apiKey','password'];
-          const services=(state._wmapCfg.services||[]).filter(s=>s && s.type && (s.url||'').trim())
-            .map(s=>{const o={id:s.id,type:s.type,name:(s.name||'').trim(),url:s.url.trim(),adminUrl:(s.adminUrl||'').trim(),color:s.color||'',enabled:true};
-              SVC_PLAIN.forEach(k=>{ if((s[k]||'').trim()) o[k]=s[k].trim(); });
-              SVC_SECRET.forEach(k=>{ if((s[k]||'').trim()) o[k]=s[k].trim(); }); /* blank → server keeps saved */
-              return o;});
-          item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'connections',
+          const services=buildMapServices(state._wmapCfg.services);
+          item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'connections',
             label:wlabel, widgetSize:'medium',widgetConfig:{ view:'map', services, showLegend:state._wmapCfg.showLegend!==false }};
         }
       }else if(state._wtype==='backup'){
@@ -642,60 +626,14 @@ async function doSave(orig){
             if(p) slot.kopiaPass=p;
           }
         });
-        /* Copy the default instance's connection to every same-provider slot that
-           uses the default, so the runtime resolves each slot directly. */
-        if(state._wsize!=='small'){
-          const propagate=(prov)=>{
-            const fi=state._wbackupCfg.slots.findIndex(s=>s.provider===prov);
-            if(fi<0) return;
-            const def=state._wbackupCfg.slots[fi];
-            if(def.useDefault===false) return;   /* default instance opted out → no sharing */
-            state._wbackupCfg.slots.forEach((t,j)=>{
-              if(j===fi || t.provider!==prov || t.useDefault===false) return;
-              if(prov==='duplicati'){
-                t.dupUrl=def.dupUrl; t.dupHref=def.dupHref; t.dupPollSec=def.dupPollSec;
-                if(def.dupPass)t.dupPass=def.dupPass; t.dupPassSet=def.dupPassSet;
-              } else {
-                t.kopiaUrl=def.kopiaUrl; t.kopiaUser=def.kopiaUser; t.kopiaHref=def.kopiaHref;
-                if(def.kopiaPass)t.kopiaPass=def.kopiaPass; t.kopiaPassSet=def.kopiaPassSet;
-              }
-            });
-          };
-          propagate('duplicati'); propagate('kopia');
-        }
-        /* Validate (after propagation, every provider slot has a URL) */
-        for(const [si,slot] of state._wbackupCfg.slots.entries()){
-          if(slot.provider==='duplicati'&&!slot.dupUrl){toast(`URL required for ${['First','Second','Third'][si]||''} Duplicati instance`,'err');return;}
-          if(slot.provider==='kopia'&&!slot.kopiaUrl){toast(`URL required for ${['First','Second','Third'][si]||''} Kopia instance`,'err');return;}
-        }
-        /* Strip runtime-only fields before state.saving */
-        const savableSlots = state._wbackupCfg.slots.map(s=>({
-          provider:    s.provider,
-          jobId:       s.jobId    ||null,
-          customName:  s.customName||undefined,
-          useDefault:  s.provider ? (s.useDefault!==false) : undefined,
-          dupUrl:      s.dupUrl   ||undefined,
-          dupPassSet:  s.dupPassSet||undefined,
-          dupHref:     s.dupHref  ||undefined,
-          dupPollSec:  s.dupPollSec!==60?s.dupPollSec:undefined,
-          dupPass:     s.dupPass  ||undefined,
-          kopiaUrl:    s.kopiaUrl ||undefined,
-          kopiaUser:   s.kopiaUser||undefined,
-          kopiaPassSet:s.kopiaPassSet||undefined,
-          kopiaHref:   s.kopiaHref||undefined,
-          kopiaPass:   s.kopiaPass||undefined,
-        }));
-        item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'backup',
-          label:wlabel,widgetSize:state._wsize,widgetConfig:{slots:savableSlots}};
+        const _bk = finalizeBackupSlots(state._wbackupCfg.slots, state._wsize);
+        if(_bk.error){ toast(_bk.error,'err'); return; }
+        item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'backup',
+          label:wlabel,widgetSize:state._wsize,widgetConfig:{slots:_bk.savableSlots}};
 
       }else{
         /* stats — slot values are kept live in state._wslots by the row commit handlers */
-        const slots=state._wslots.slice(0,3).map((s)=>{
-          const slotColor=s.color||undefined;
-          if(s.type==='disk') return {type:'disk',primary:s.primary||'/',secondary:s.secondary||undefined,color:slotColor};
-          if(s.type==='temp') return {type:'temp',thermalZone:Number.isInteger(s.thermalZone)?s.thermalZone:0,color:slotColor};
-          return {type:s.type,color:slotColor};
-        });
+        const slots=buildStatsSlots(state._wslots);
         state._wnet.url      = document.getElementById('net-url')?.value?.trim()||'';
         state._wnet.provider = state._wnet.provider || 'myspeed';
         const newPass  = document.getElementById('net-pass')?.value||'';
@@ -725,17 +663,16 @@ async function doSave(orig){
             wcfg.scrutinyHref = dhHref || undefined;
           }
 
-          item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'stats',
+          item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'stats',
             label:wlabel,widgetSize:state._wsize,widgetConfig:wcfg};
         } else {
-          item={id:orig?.id||cleanId(wlabel)+'_'+Date.now(),type:'widget',widgetType:'stats',
+          item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'stats',
             label:wlabel, widgetSize:state._wsize,widgetConfig:{widgetSubType:state._wstatsSubType,slots,network:netToSave}};
         }
       }
     }else if(state.ctype==='folder'){
       const label=document.getElementById('f-fname')?.value?.trim();
       if(!label){toast('Name required','err');return;}
-      const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'folder';
       /* Prevent adding an app to multiple folders — remove it from any existing folder first */
       const children=[...document.querySelectorAll('#folder-apps-list li[aria-selected="true"]')].map(li=>li.dataset.val);
       if(!orig){
@@ -746,54 +683,32 @@ async function doSave(orig){
           });
         });
       }
-      item={id:orig?.id||cleanId(label)+'_'+Date.now(),type:'folder',label,children};
+      item={id:orig?.id||cleanId(label,'folder')+'_'+Date.now(),type:'folder',label,children};
     }else{
-      const label=document.getElementById('f-lbl')?.value?.trim();
-      const href=document.getElementById('f-href')?.value?.trim();
-      if(!label){toast('Name required','err');return;}
-      if(!href){toast('URL required','err');return;}
-      const cleanId=s=>s.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'app';
-      const hcEn=document.getElementById('hc-en')?.checked;
       const isPing=document.getElementById('hc-type-ping')?.checked;
-      const hcCon=isPing?'':(document.getElementById('hc-con')?.value?.trim()||'');
-      const hcPing=isPing?(document.getElementById('hc-ping')?.value?.trim()||''):'';
-      const skipTlsVerify=document.getElementById('f-skip-tls')?.checked||false;
-      const actEn=document.getElementById('act-en')?.checked;
-      const actUrl=document.getElementById('f-burl')?.value?.trim()||'';
-      const actInt=Math.min(3600,Math.max(10,parseInt(document.getElementById('f-bint')?.value||'30',10)));
-      const actParams=parseKV(document.getElementById('f-bpar')?.value||'');
-      const actHeaders=parseKV(document.getElementById('f-bhdr')?.value||'');
-      /* Activity badge custom display (color from the color control) */
-      const actColor=document.getElementById('act-col-val')?.value||'#0289ff';
-      const custUnit=document.getElementById('bcust-unit')?.value?.trim()||'';
-      const DEFCOL='#0289ff';
-      const customObj=(actColor&&actColor!==DEFCOL)||custUnit?{
-        color:actColor&&actColor!==DEFCOL?actColor:undefined,
-        unit:custUnit||undefined,
-      }:undefined;
-      /* Static (fixed label) badge */
-      const staticEn=document.getElementById('static-en')?.checked||false;
-      const staticLabel=document.getElementById('f-static-label')?.value?.trim()||'';
-      const staticColor=document.getElementById('static-col-val')?.value||'#1e6ef4';
-      const staticBadgeObj=staticEn&&staticLabel?{enabled:true,label:staticLabel.slice(0,10),color:staticColor||'blue'}:undefined;
-      const finalIcon=state.siurl;
-      item={
-        id:orig?.id||cleanId(label)+'_'+Date.now(),
-        type:'app',label,href,
-        iconUrl:finalIcon,color:state.scol||'dark',
-        dock:document.getElementById('f-dock')?.checked||false,
-        skipTlsVerify:skipTlsVerify||undefined,
-        monitoring:{
-          healthcheck:{enabled:hcEn&&(!!hcCon||!!hcPing),container:hcCon,pingUrl:hcPing},
-          activity:{enabled:actEn&&!!actUrl,url:actUrl,
-            params:Object.keys(actParams).length?actParams:undefined,
-            headers:Object.keys(actHeaders).length?actHeaders:undefined,
-            extract:state.spaths.length===1?state.spaths[0]:state.spaths.length>1?state.spaths.map(p=>({path:p})):undefined,
-            interval:Math.max(10,actInt),
-            custom:customObj},
-          staticBadge:staticBadgeObj,
-        },
+      const v={
+        label: document.getElementById('f-lbl')?.value?.trim(),
+        href:  document.getElementById('f-href')?.value?.trim(),
+        hcEn:  document.getElementById('hc-en')?.checked,
+        hcCon: isPing?'':(document.getElementById('hc-con')?.value?.trim()||''),
+        hcPing:isPing?(document.getElementById('hc-ping')?.value?.trim()||''):'',
+        skipTlsVerify: document.getElementById('f-skip-tls')?.checked||false,
+        actEn:   document.getElementById('act-en')?.checked,
+        actUrl:  document.getElementById('f-burl')?.value?.trim()||'',
+        actInt:  Math.min(3600,Math.max(10,parseInt(document.getElementById('f-bint')?.value||'30',10))),
+        actParams:  parseKV(document.getElementById('f-bpar')?.value||''),
+        actHeaders: parseKV(document.getElementById('f-bhdr')?.value||''),
+        actColor: document.getElementById('act-col-val')?.value||'#0289ff',
+        custUnit: document.getElementById('bcust-unit')?.value?.trim()||'',
+        staticEn:    document.getElementById('static-en')?.checked||false,
+        staticLabel: document.getElementById('f-static-label')?.value?.trim()||'',
+        staticColor: document.getElementById('static-col-val')?.value||'#1e6ef4',
+        dock: document.getElementById('f-dock')?.checked||false,
+        iconUrl: state.siurl, scol: state.scol, spaths: state.spaths,
       };
+      const res=buildAppItem(v,orig);
+      if(res.error){toast(res.error,'err');return;}
+      item=res.item;
     }
     if(state.eid!==null)state.items[state.eid]=item;else state.items.push(item);
     await save();closeModal();toast(state.eid!==null?'Updated':'Added');

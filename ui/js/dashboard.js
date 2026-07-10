@@ -2,7 +2,7 @@
 
 import { loadLocalIcons, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
-import { mk, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=92153ac7';
+import { mk, mkWrap as _mkWrap, mountScaledWidget, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { initI18n } from '/js/i18n.js?v=1';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
@@ -190,7 +190,6 @@ function syncMobPages() {
   }
 }
 
-function sanitizeCssUrl(u) { return String(u||'').replace(/['"()]/g,''); }
 async function applyBg() {
   const root = document.documentElement;
   try {

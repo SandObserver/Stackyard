@@ -4,6 +4,9 @@ export const mk  = (t, a={}) => { const e = document.createElement(t); Object.as
 export const clr = c => (!c||c==='dark') ? '#1C1C1E' : c==='light' ? '#F2F2F7' : c;
 export const fb  = (l, sz) => { const e = mk('span'); e.className = 'fb'; e.style.fontSize = Math.round(sz*.32)+'px'; e.textContent = (l||'?')[0].toUpperCase(); return e; };
 export const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+/* Strip quotes, parens and backslashes so a user URL can't break out of a CSS
+   url('...') wrapper. Shared by the dashboard and admin background setters. */
+export const sanitizeCssUrl = u => String(u || '').replace(/['"\\()]/g, '');
 
 /* mkWrap: icon wrapper div used by both dashboard and ui.
    breg is passed in to avoid circular imports (it lives in dashboard state). */
