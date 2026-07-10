@@ -126,6 +126,39 @@ test('a cross-origin write is rejected by the origin check', async () => {
   assert.equal(r.status, 403);
 });
 
+/* Config import/export route. */
+test('POST /api/config rejects items that are not an array', async () => {
+  const r = await req('POST', '/api/config', { cookie: validCookie, body: { items: 'nope' } });
+  assert.equal(r.status, 400);
+});
+
+test('POST /api/config rejects an item missing id or type', async () => {
+  const r = await req('POST', '/api/config', { cookie: validCookie, body: { items: [{ type: 'app' }] } });
+  assert.equal(r.status, 400);
+});
+
+test('GET /api/config/export is downloadable and free of secrets', async () => {
+  const r = await req('GET', '/api/config/export', { cookie: validCookie });
+  assert.equal(r.status, 200);
+  assert.match(String(r.headers['content-disposition'] || ''), /attachment/);
+  assert.equal(r.body.settings?.auth?.secret, undefined);
+  assert.equal(r.body.settings?.auth?.passwordHash, undefined);
+});
+
+test('POST /api/config drops unknown settings and preserves the stored auth secret', async () => {
+  const r = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [], settings: { theme: 'dark', bogusKey: 1, logLevel: 'loud' } },
+  });
+  assert.equal(r.status, 200);
+  // the existing secret was re-merged, so the session still authenticates
+  assert.equal((await req('GET', '/api/config', { cookie: validCookie })).status, 200);
+  const exp = await req('GET', '/api/config/export', { cookie: validCookie });
+  assert.equal(exp.body.settings.bogusKey, undefined);   // unknown key stripped
+  assert.equal(exp.body.settings.logLevel, undefined);   // invalid level stripped
+  assert.equal(exp.body.settings.theme, 'dark');         // known key kept
+});
+
 /* Config-mutating auth paths, kept last so they don't disturb the tests above
    (set-password rotates the signing secret, invalidating validCookie). */
 test('dismiss-setup records the flag for an authenticated same-origin request', async () => {
