@@ -30,6 +30,7 @@ export const WIDGET_TYPES = {
     return `/widgets/clock/${style}.html?v=6&id=${encodeURIComponent(id)}`;
   }},
   backup:  { label:'Backup',     sizes:['small','medium'],        src:(id,item,opts)=>`/widgets/backup/backup.html?v=14&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'small')}${opts?.mobile?'&mobile=1':''}` },
+  'dashboard-switch': { label:'Dashboard Switch', sizes:['small','medium'], src:(id,item)=>`/widgets/dashboard-switch/index.html?v=1&id=${encodeURIComponent(id)}&size=${encodeURIComponent(item?.widgetSize||'medium')}` },
   custom:  { label:'Custom',        sizes:['small','medium','large','xlarge'],src:(_,item)=>item?.url||'' },
 };
 
