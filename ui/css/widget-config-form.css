@@ -68,3 +68,8 @@
 /* Space the repeatable group away from adjacent single-field cards. */
 .grp + .wcf-group,
 .wcf-group + .grp { margin-top: 28px; }
+
+/* Repeatable-group internal rhythm: entry headers, the Add button, the section tip. */
+.wcf-group .grp-hdr { margin-top: 16px; }
+.wcf-group .grp-hdr:first-child { margin-top: 2px; }
+.wcf-group > .grp { margin-top: 10px; }

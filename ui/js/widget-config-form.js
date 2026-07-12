@@ -189,6 +189,7 @@ function _group(field, rows, size) {
   addBtn.type = 'button'; addBtn.className = 'wcf-add-row';
   addBtn.innerHTML = `<span class="rl" style="color:var(--ac2)">+ Add ${esc(field.label)}</span>`;
   addWrap.appendChild(addBtn); wrap.appendChild(addWrap);
+  if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip'; h.textContent = field.hint; wrap.appendChild(h); }
 
   let rowGetters = [];
 
