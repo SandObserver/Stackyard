@@ -1,0 +1,43 @@
+{
+  "name": "dashboard-switch",
+  "label": "Dashboard Switch",
+  "sizes": ["small", "medium"],
+  "fields": [
+    {
+      "key": "keychains",
+      "type": "group",
+      "label": "Keychain",
+      "min": 1,
+      "max": 5,
+      "fields": [
+        { "key": "name", "type": "text", "label": "Name", "placeholder": "e.g. Living Room", "optional": true },
+        { "key": "url", "type": "text", "label": "Dashboard URL", "placeholder": "http://host:port" },
+        { "key": "color", "type": "select", "label": "Fob colour", "optional": true,
+          "hint": "Leave on Auto to pick a colour from the URL.",
+          "options": [
+            { "value": "", "label": "Auto" },
+            { "value": "teal", "label": "Teal" },
+            { "value": "cyan", "label": "Cyan" },
+            { "value": "orange", "label": "Orange" },
+            { "value": "pink", "label": "Pink" },
+            { "value": "purple", "label": "Purple" },
+            { "value": "green", "label": "Green" },
+            { "value": "yellow", "label": "Yellow" },
+            { "value": "blue", "label": "Blue" }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "openIn",
+      "type": "select",
+      "variant": "pills",
+      "label": "Open in",
+      "default": "same",
+      "options": [
+        { "value": "same", "label": "Same tab" },
+        { "value": "new", "label": "New tab" }
+      ]
+    }
+  ]
+}
