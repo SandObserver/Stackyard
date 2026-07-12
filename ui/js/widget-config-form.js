@@ -172,12 +172,15 @@ function _multiselect(field, value) {
 }
 
 /* ── Repeatable group: each entry is its own card with a header + remove. ── */
-function _group(field, rows) {
+function _group(field, rows, size) {
   const min = field.min != null ? field.min : 0;
-  const max = field.max != null ? field.max : 99;
+  const max = (field.maxBySize && size && field.maxBySize[size] != null)
+    ? field.maxBySize[size]
+    : (field.max != null ? field.max : 99);
   const subFields = Array.isArray(field.fields) ? field.fields : [];
   let data = Array.isArray(rows) ? rows.map(r => Object.assign({}, r)) : [];
   while (data.length < min) data.push({});
+  if (data.length > max) data.length = max;
 
   const wrap = document.createElement('div');
   const rowsHost = document.createElement('div'); wrap.appendChild(rowsHost);
@@ -254,7 +257,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
     if (!f || !f.key) continue;
     if (f.type === 'group') {
       flush();
-      const b = _group(f, config[f.key]); b.field = f;
+      const b = _group(f, config[f.key], opts && opts.size); b.field = f;
       container.appendChild(b.el); built.push(b);
       continue;
     }

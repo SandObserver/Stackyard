@@ -139,7 +139,7 @@ function _renderWidgetForm(body){
   if(state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
     const d=document.createElement('div'); body.appendChild(d);
     const _wid=(state.eid!==null&&state.items[state.eid]&&state.items[state.eid].id)?state.items[state.eid].id:null;
-    state._autoForm=renderWidgetConfigForm(d, state._widgetReg[state._wtype].fields||[], state._wAutoCfg, { widgetId:_wid, widgetType:state._wtype });
+    state._autoForm=renderWidgetConfigForm(d, state._widgetReg[state._wtype].fields||[], state._wAutoCfg, { widgetId:_wid, widgetType:state._wtype, size:state._wsize });
     state._autoFormType=state._wtype;
   }
   else if(state._wtype==='stats')        _renderStatsConfig(body);
