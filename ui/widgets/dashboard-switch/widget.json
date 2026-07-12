@@ -4,11 +4,23 @@
   "sizes": ["small", "medium"],
   "fields": [
     {
+      "key": "openIn",
+      "type": "select",
+      "variant": "pills",
+      "label": "Open in",
+      "default": "same",
+      "options": [
+        { "value": "same", "label": "Same tab" },
+        { "value": "new", "label": "New tab" }
+      ]
+    },
+    {
       "key": "keychains",
       "type": "group",
       "label": "Keychain",
       "min": 1,
       "max": 5,
+      "maxBySize": { "small": 2, "medium": 5 },
       "fields": [
         { "key": "name", "type": "text", "label": "Name", "placeholder": "e.g. Living Room", "optional": true },
         { "key": "url", "type": "text", "label": "Dashboard URL", "placeholder": "http://host:port" },
@@ -26,17 +38,6 @@
             { "value": "blue", "label": "Blue" }
           ]
         }
-      ]
-    },
-    {
-      "key": "openIn",
-      "type": "select",
-      "variant": "pills",
-      "label": "Open in",
-      "default": "same",
-      "options": [
-        { "value": "same", "label": "Same tab" },
-        { "value": "new", "label": "New tab" }
       ]
     }
   ]

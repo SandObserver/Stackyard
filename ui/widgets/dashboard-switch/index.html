@@ -6,7 +6,7 @@
 <title>Dashboard Switch</title>
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;overflow:hidden;background:transparent;
+  html,body{width:100%;height:100%;overflow:hidden;background:#1c1c1e;
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color:#e8e8ea}
   #root{width:100%;height:100%}
   svg{display:block;width:100%;height:100%}
@@ -49,9 +49,9 @@
   const padX = size === 'small' ? 16 : 18;
 
   /* Vertical layout (identical at both sizes; both canvases are 170 tall). */
-  const NAME_Y = 15, RAIL_T = 36, RAIL_B = 66;
-  const BODY_CY = 48, BODY_R = 13, TAB_TOP = 59, TAB_BOT = 66;
-  const RC = 72, RING_R = 9, PIVOT_Y = RC + RING_R, KH = 62;
+  const NAME_Y = 19, RAIL_T = 41, RAIL_B = 71;
+  const BODY_CY = 54, BODY_R = 13, TAB_TOP = 65, TAB_BOT = 72;
+  const RC = 78, RING_R = 9, PIVOT_Y = RC + RING_R, KH = 60;
 
   function arcPath(cx, cy, r, a0, a1) {
     const p = a => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)];
@@ -145,6 +145,16 @@
     });
 
     root.appendChild(svg);
+
+    /* Trim labels that overflow their cell, so long names or host fallbacks don't collide. */
+    const maxLabelW = innerW / slots.length - 6;
+    labels.querySelectorAll('text').forEach((t, i) => {
+      let nm = slots[i].name;
+      while (nm.length > 1 && t.getComputedTextLength() > maxLabelW) {
+        nm = nm.slice(0, -1);
+        t.textContent = `${nm}\u2026`;
+      }
+    });
   }
 
   function currentHref() {
