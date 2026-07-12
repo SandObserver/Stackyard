@@ -4,17 +4,6 @@
   "sizes": ["small", "medium"],
   "fields": [
     {
-      "key": "openIn",
-      "type": "select",
-      "variant": "pills",
-      "label": "Open in",
-      "default": "same",
-      "options": [
-        { "value": "same", "label": "Same tab" },
-        { "value": "new", "label": "New tab" }
-      ]
-    },
-    {
       "key": "keychains",
       "type": "group",
       "label": "Keychain",
@@ -38,6 +27,17 @@
             { "value": "blue", "label": "Blue" }
           ]
         }
+      ]
+    },
+    {
+      "key": "openIn",
+      "type": "select",
+      "variant": "pills",
+      "label": "Open in",
+      "default": "same",
+      "options": [
+        { "value": "same", "label": "Same tab" },
+        { "value": "new", "label": "New tab" }
       ]
     }
   ]

@@ -182,7 +182,7 @@ function _group(field, rows, size) {
   while (data.length < min) data.push({});
   if (data.length > max) data.length = max;
 
-  const wrap = document.createElement('div');
+  const wrap = document.createElement('div'); wrap.className = 'wcf-group';
   const rowsHost = document.createElement('div'); wrap.appendChild(rowsHost);
   const addWrap = document.createElement('div'); addWrap.className = 'grp';
   const addBtn = document.createElement('button');

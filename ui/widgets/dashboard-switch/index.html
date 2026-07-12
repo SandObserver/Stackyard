@@ -17,11 +17,13 @@
   .kc:hover,.kc:focus-visible,.kc.cur{transform:scale(1.07)}
   .kc:hover,.kc:focus-visible{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
   .kc:focus{outline:none}
+  .kc .focus{opacity:0}
+  .kc:focus-visible .focus{opacity:1}
   .key{transform-box:view-box}
   .kc:hover .key,.kc:focus-visible .key,.kc.cur .key{
     animation-name:sway;animation-timing-function:cubic-bezier(.33,.68,.36,1);animation-fill-mode:both}
   @keyframes sway{0%{transform:rotate(0)}35%{transform:rotate(var(--amp))}70%{transform:rotate(calc(var(--amp) * -0.35))}100%{transform:rotate(0)}}
-  @media (prefers-reduced-motion:reduce){.kc .key{animation:none!important}}
+  @media (prefers-reduced-motion:reduce){.kc{transition:none}.kc .key{animation:none!important}}
 </style>
 </head>
 <body>
@@ -32,7 +34,6 @@
   const NS = 'http://www.w3.org/2000/svg';
   const ART = '/widgets/dashboard-switch/art/';
   const AV = '1';
-  /* Per-asset natural size and bow-hole position (fraction of w/h), measured from the art. */
   const META = {
     'silver-key-a':{w:64,h:150,hx:0.490,hy:0.098},'gold-key-solid':{w:65,h:150,hx:0.489,hy:0.090},
     'black-key-a':{w:65,h:150,hx:0.491,hy:0.105},'black-key-round':{w:64,h:150,hx:0.493,hy:0.108},
@@ -42,16 +43,17 @@
     'strap-blue':{w:35,h:150,hx:0.500,hy:0.110},'tag-dog-gray':{w:66,h:150,hx:0.491,hy:0.108},
   };
 
-  const id = new URLSearchParams(location.search).get('id') || '';
-  const size = new URLSearchParams(location.search).get('size') === 'small' ? 'small' : 'medium';
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id') || '';
+  const size = params.get('size') === 'small' ? 'small' : 'medium';
   const W = size === 'small' ? 170 : 360;
   const H = 170;
   const padX = size === 'small' ? 16 : 18;
 
-  /* Vertical layout (identical at both sizes; both canvases are 170 tall). */
-  const NAME_Y = 19, RAIL_T = 41, RAIL_B = 71;
-  const BODY_CY = 54, BODY_R = 13, TAB_TOP = 65, TAB_BOT = 72;
-  const RC = 78, RING_R = 9, PIVOT_Y = RC + RING_R, KH = 60;
+  const NAME_Y = 24, RAIL_T = 45, RAIL_B = 75;
+  const BODY_CY = 58, BODY_R = 13, TAB_TOP = 69, TAB_BOT = 76;
+  const RC = 82, RING_R = 9, PIVOT_Y = RC + RING_R, KH = 64;
+  const AMP = ['2.0deg', '2.4deg', '1.7deg'], DUR = ['1.0s', '1.1s', '0.95s'];
 
   function arcPath(cx, cy, r, a0, a1) {
     const p = a => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)];
@@ -59,16 +61,15 @@
     const large = ((a1 - a0) % 360 + 360) % 360 > 180 ? 1 : 0;
     return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
   }
+  const ringPair = (cx, a0, a1) =>
+    `<path d="${arcPath(cx, RC, RING_R, a0, a1)}" fill="none" stroke="#d3d7de" stroke-width="2.4" stroke-linecap="round"/>` +
+    `<path d="${arcPath(cx, RC, RING_R - 1.5, a0, a1)}" fill="none" stroke="#868a90" stroke-width="0.7"/>`;
   const fullRing = cx =>
     `<circle cx="${cx}" cy="${RC}" r="${RING_R}" fill="none" stroke="#d3d7de" stroke-width="2.4"/>` +
     `<circle cx="${cx}" cy="${RC}" r="${RING_R - 1.5}" fill="none" stroke="#868a90" stroke-width="0.7"/>`;
-  const frontArc = cx =>
-    `<path d="${arcPath(cx, RC, RING_R, 90, 250)}" fill="none" stroke="#dfe3ea" stroke-width="2.4" stroke-linecap="round"/>` +
-    `<path d="${arcPath(cx, RC, RING_R - 1.5, 90, 250)}" fill="none" stroke="#868a90" stroke-width="0.7"/>`;
 
-  const AMP = ['2.0deg', '2.4deg', '1.7deg'];
-  const DUR = ['1.0s', '1.1s', '0.95s'];
-
+  /* Keys thread the ring's bottom wire and fan out; the front-left arc is redrawn
+     over the bows so the ring reads as woven through the holes. */
   function keyMarkup(cx, ids) {
     const m = ids.length;
     return ids.map((eid, k) => {
@@ -110,21 +111,9 @@
     }
 
     const innerW = W - 2 * padX;
+    const cellW = innerW / slots.length;
     const cxs = slots.map((_, i) => padX + innerW * (i + 0.5) / slots.length);
 
-    /* Labels first, so a hovered keychain paints over its own name. */
-    const labels = document.createElementNS(NS, 'g');
-    slots.forEach((s, i) => {
-      const t = document.createElementNS(NS, 'text');
-      t.setAttribute('x', cxs[i].toFixed(1)); t.setAttribute('y', NAME_Y);
-      t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('class', s.isCurrent ? 'nm cur' : 'nm');
-      t.textContent = s.name;
-      labels.appendChild(t);
-    });
-    svg.appendChild(labels);
-
-    /* Keychains over the labels. */
     slots.forEach((s, i) => {
       const cx = cxs[i];
       const a = document.createElementNS(NS, 'a');
@@ -136,19 +125,31 @@
       else { a.setAttribute('target', '_top'); }
       if (s.isCurrent) a.setAttribute('aria-current', 'page');
       a.innerHTML =
+        `<rect class="focus" x="${(cx - cellW / 2 + 2).toFixed(1)}" y="4" width="${(cellW - 4).toFixed(1)}" height="${H - 8}" rx="12" fill="none" stroke="#5ab0ff" stroke-width="2"/>` +
         fullRing(cx) +
         `<rect x="${cx - 3.2}" y="${TAB_TOP}" width="6.4" height="${TAB_BOT - TAB_TOP}" rx="3.2" fill="${s.colorHex}"/>` +
         `<circle cx="${cx}" cy="${BODY_CY}" r="${BODY_R}" fill="${s.colorHex}"/>` +
         keyMarkup(cx, s.keys.concat(s.extras)) +
-        frontArc(cx);
+        ringPair(cx, 90, 250);
+
+      const title = document.createElementNS(NS, 'title');
+      title.textContent = s.name;
+      a.appendChild(title);
+
+      const label = document.createElementNS(NS, 'text');
+      label.setAttribute('x', cx.toFixed(1)); label.setAttribute('y', NAME_Y);
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('class', s.isCurrent ? 'nm cur' : 'nm');
+      label.textContent = s.name;
+      a.appendChild(label);
       svg.appendChild(a);
     });
 
     root.appendChild(svg);
 
-    /* Trim labels that overflow their cell, so long names or host fallbacks don't collide. */
-    const maxLabelW = innerW / slots.length - 6;
-    labels.querySelectorAll('text').forEach((t, i) => {
+    /* Trim labels that overflow their cell; the full name stays in the tooltip and aria-label. */
+    const maxLabelW = cellW - 6;
+    svg.querySelectorAll('text.nm').forEach((t, i) => {
       let nm = slots[i].name;
       while (nm.length > 1 && t.getComputedTextLength() > maxLabelW) {
         nm = nm.slice(0, -1);

@@ -64,3 +64,7 @@
 @media (prefers-reduced-motion: reduce) {
   .wcf-add, .wcf-remove { transition: none; }
 }
+
+/* Space the repeatable group away from adjacent single-field cards. */
+.grp + .wcf-group,
+.wcf-group + .grp { margin-top: 28px; }
