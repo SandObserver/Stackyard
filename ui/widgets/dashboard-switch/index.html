@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Switch</title>
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:transparent;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color:#e8e8ea}
+  #root{width:100%;height:100%}
+  svg{display:block;width:100%;height:100%}
+  .nm{fill:#d6d6db;font-size:11px;font-weight:500}
+  .nm.cur{fill:#fff}
+  .empty{fill:#7a7a7a;font-size:12px}
+  .kc{cursor:pointer;transition:transform .14s ease;transform-box:fill-box;transform-origin:50% 60%;-webkit-tap-highlight-color:transparent}
+  .kc:hover,.kc:focus-visible,.kc.cur{transform:scale(1.07)}
+  .kc:hover,.kc:focus-visible{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+  .kc:focus{outline:none}
+  .key{transform-box:view-box}
+  .kc:hover .key,.kc:focus-visible .key,.kc.cur .key{
+    animation-name:sway;animation-timing-function:cubic-bezier(.33,.68,.36,1);animation-fill-mode:both}
+  @keyframes sway{0%{transform:rotate(0)}35%{transform:rotate(var(--amp))}70%{transform:rotate(calc(var(--amp) * -0.35))}100%{transform:rotate(0)}}
+  @media (prefers-reduced-motion:reduce){.kc .key{animation:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
+  import { buildModel } from '/js/dashboard-switch-model.js?v=1';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const ART = '/widgets/dashboard-switch/art/';
+  const AV = '1';
+  /* Per-asset natural size and bow-hole position (fraction of w/h), measured from the art. */
+  const META = {
+    'silver-key-a':{w:64,h:150,hx:0.490,hy:0.098},'gold-key-solid':{w:65,h:150,hx:0.489,hy:0.090},
+    'black-key-a':{w:65,h:150,hx:0.491,hy:0.105},'black-key-round':{w:64,h:150,hx:0.493,hy:0.108},
+    'skeleton-brass':{w:57,h:150,hx:0.490,hy:0.140},'silver-key-d':{w:66,h:150,hx:0.490,hy:0.103},
+    'gold-key-open':{w:66,h:150,hx:0.496,hy:0.112},'tag-rect-silver':{w:58,h:150,hx:0.483,hy:0.083},
+    'tag-long-black':{w:68,h:150,hx:0.495,hy:0.110},'ring-disc':{w:84,h:150,hx:0.501,hy:0.204},
+    'strap-blue':{w:35,h:150,hx:0.500,hy:0.110},'tag-dog-gray':{w:66,h:150,hx:0.491,hy:0.108},
+  };
+
+  const id = new URLSearchParams(location.search).get('id') || '';
+  const size = new URLSearchParams(location.search).get('size') === 'small' ? 'small' : 'medium';
+  const W = size === 'small' ? 170 : 360;
+  const H = 170;
+  const padX = size === 'small' ? 16 : 18;
+
+  /* Vertical layout (identical at both sizes; both canvases are 170 tall). */
+  const NAME_Y = 15, RAIL_T = 36, RAIL_B = 66;
+  const BODY_CY = 48, BODY_R = 13, TAB_TOP = 59, TAB_BOT = 66;
+  const RC = 72, RING_R = 9, PIVOT_Y = RC + RING_R, KH = 62;
+
+  function arcPath(cx, cy, r, a0, a1) {
+    const p = a => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)];
+    const [x0, y0] = p(a0), [x1, y1] = p(a1);
+    const large = ((a1 - a0) % 360 + 360) % 360 > 180 ? 1 : 0;
+    return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  }
+  const fullRing = cx =>
+    `<circle cx="${cx}" cy="${RC}" r="${RING_R}" fill="none" stroke="#d3d7de" stroke-width="2.4"/>` +
+    `<circle cx="${cx}" cy="${RC}" r="${RING_R - 1.5}" fill="none" stroke="#868a90" stroke-width="0.7"/>`;
+  const frontArc = cx =>
+    `<path d="${arcPath(cx, RC, RING_R, 90, 250)}" fill="none" stroke="#dfe3ea" stroke-width="2.4" stroke-linecap="round"/>` +
+    `<path d="${arcPath(cx, RC, RING_R - 1.5, 90, 250)}" fill="none" stroke="#868a90" stroke-width="0.7"/>`;
+
+  const AMP = ['2.0deg', '2.4deg', '1.7deg'];
+  const DUR = ['1.0s', '1.1s', '0.95s'];
+
+  function keyMarkup(cx, ids) {
+    const m = ids.length;
+    return ids.map((eid, k) => {
+      const a = META[eid]; if (!a) return '';
+      const sc = KH / a.h;
+      const tx = cx - a.hx * a.w * sc;
+      const ty = PIVOT_Y - a.hy * a.h * sc;
+      const fan = (k - (m - 1) / 2) * 10;
+      const style = `transform-origin:${cx}px ${PIVOT_Y}px;--amp:${AMP[k % 3]};animation-duration:${DUR[k % 3]};animation-delay:${k * 45}ms`;
+      return `<g class="key" style="${style}"><g filter="url(#ds-sh)">` +
+        `<image href="${ART}${eid}.png?v=${AV}" width="${a.w}" height="${a.h}" filter="url(#ds-rim)" ` +
+        `transform="rotate(${fan.toFixed(1)} ${cx} ${PIVOT_Y}) translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${sc.toFixed(4)})"/></g></g>`;
+    }).join('');
+  }
+
+  function render(model) {
+    const root = document.getElementById('root');
+    root.textContent = '';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('role', 'group');
+    svg.setAttribute('aria-label', 'Dashboard switcher');
+    svg.innerHTML =
+      '<defs>' +
+      '<filter id="ds-rim" x="-25%" y="-25%" width="150%" height="150%">' +
+      '<feMorphology in="SourceAlpha" operator="dilate" radius="0.55" result="d"/>' +
+      '<feFlood flood-color="#d7dbe1" flood-opacity="0.85"/><feComposite in2="d" operator="in" result="r"/>' +
+      '<feMerge><feMergeNode in="r"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '<filter id="ds-sh"><feDropShadow dx="0.5" dy="1" stdDeviation="0.5" flood-color="#000" flood-opacity="0.5"/></filter>' +
+      '</defs>' +
+      `<rect x="8" y="${RAIL_T}" width="${W - 16}" height="${RAIL_B - RAIL_T}" rx="${(RAIL_B - RAIL_T) / 2}" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.10)" stroke-width="1"/>`;
+
+    const slots = model.slots;
+    if (!slots.length) {
+      const t = document.createElementNS(NS, 'text');
+      t.setAttribute('x', W / 2); t.setAttribute('y', H / 2); t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('class', 'empty'); t.textContent = 'Add a dashboard in settings';
+      svg.appendChild(t); root.appendChild(svg); return;
+    }
+
+    const innerW = W - 2 * padX;
+    const cxs = slots.map((_, i) => padX + innerW * (i + 0.5) / slots.length);
+
+    /* Labels first, so a hovered keychain paints over its own name. */
+    const labels = document.createElementNS(NS, 'g');
+    slots.forEach((s, i) => {
+      const t = document.createElementNS(NS, 'text');
+      t.setAttribute('x', cxs[i].toFixed(1)); t.setAttribute('y', NAME_Y);
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('class', s.isCurrent ? 'nm cur' : 'nm');
+      t.textContent = s.name;
+      labels.appendChild(t);
+    });
+    svg.appendChild(labels);
+
+    /* Keychains over the labels. */
+    slots.forEach((s, i) => {
+      const cx = cxs[i];
+      const a = document.createElementNS(NS, 'a');
+      a.setAttribute('class', s.isCurrent ? 'kc cur' : 'kc');
+      a.setAttribute('tabindex', '0');
+      a.setAttribute('aria-label', `Switch to ${s.name}`);
+      a.setAttributeNS(null, 'href', s.href);
+      if (model.openIn === 'new') { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer'); }
+      else { a.setAttribute('target', '_top'); }
+      if (s.isCurrent) a.setAttribute('aria-current', 'page');
+      a.innerHTML =
+        fullRing(cx) +
+        `<rect x="${cx - 3.2}" y="${TAB_TOP}" width="6.4" height="${TAB_BOT - TAB_TOP}" rx="3.2" fill="${s.colorHex}"/>` +
+        `<circle cx="${cx}" cy="${BODY_CY}" r="${BODY_R}" fill="${s.colorHex}"/>` +
+        keyMarkup(cx, s.keys.concat(s.extras)) +
+        frontArc(cx);
+      svg.appendChild(a);
+    });
+
+    root.appendChild(svg);
+  }
+
+  function currentHref() {
+    try { return window.top.location.href; } catch { return document.referrer || ''; }
+  }
+
+  async function load() {
+    try {
+      const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`, { cache: 'no-store' });
+      const data = await r.json();
+      render(buildModel(data.widgetConfig || {}, { size, currentHref: currentHref() }));
+    } catch {
+      render({ slots: [], openIn: 'same' });
+    }
+  }
+  load();
+</script>
+</body>
+</html>
