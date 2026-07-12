@@ -104,12 +104,13 @@ These keys can go on any field:
 | `label` | Shown to the user (required). |
 | `placeholder` | Greyed hint shown in an empty `text`/`number`/`secret` row. |
 | `default` | Value used when none is saved yet. |
-| `hint` | Short help text shown under the field. |
+| `hint` | Short help text. Shown under the field, except on a `group`, where it renders at the bottom of the whole section. |
 | `optional` | If `true`, the field is not required to save. |
 | `showIf` | Show the field only when another field matches: `{ "field": "provider", "equals": "adguard" }`, or match several with `{ "field": "provider", "in": ["adguard", "pihole"] }`. |
 | `optionsFrom` | For `select`: the name of a data endpoint that returns the option list at config time (see below). |
 | `variant` | For `select`: `"pills"` renders a radio group instead of a dropdown. |
 | `min` / `max` | For `group`: the fewest and most entries allowed. |
+| `maxBySize` | For `group`: a per-size cap, e.g. `{ "small": 2, "medium": 5 }`. Overrides `max` for the selected widget size; falls back to `max` for sizes not listed. Extra entries are trimmed when switching to a smaller size. |
 
 ### Loading options from the service (optionsFrom)
 
