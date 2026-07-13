@@ -33,6 +33,10 @@ Setting `ALLOW_PRIVATE_IPS=true` disables this guard entirely, so private, loopb
 
 - Passwords are hashed with scrypt and a per-password salt.
 - Session tokens are HMAC-signed and verified with a constant-time comparison.
+- Session tokens carry a signed issued-at and expire after a fixed lifetime
+  (default 30 days). Override with `SESSION_MAX_AGE_DAYS`. Upgrading to this
+  version invalidates any session issued before it, so existing users log in
+  once more.
 - Login is rate-limited to 5 attempts per IP per 15 minutes.
 - Changing the password rotates the session secret.
 

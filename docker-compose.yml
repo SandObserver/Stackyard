@@ -46,6 +46,8 @@ services:
       # - TRUST_PROXY=true
       # Set to true to allow widget URLs using private/LAN IP addresses
       # - ALLOW_PRIVATE_IPS=true
+      # Session lifetime in days before re-login is required (default 30)
+      # - SESSION_MAX_AGE_DAYS=30
     healthcheck:
       test:
         - CMD

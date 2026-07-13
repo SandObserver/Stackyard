@@ -34,18 +34,36 @@ async function verifyPassword(password, hash) {
   });
 }
 
+/* Server-enforced session lifetime. The signed issued-at inside the token is
+   the real control; the cookie Max-Age below is only a browser hint and is kept
+   in sync with this value. Override with SESSION_MAX_AGE_DAYS. */
+const _maxAgeDays = Number(process.env.SESSION_MAX_AGE_DAYS);
+const SESSION_MAX_AGE_MS = (_maxAgeDays > 0 ? _maxAgeDays : 30) * 24 * 60 * 60 * 1000;
+
+/* Token layout: `${sessionId}.${issuedAt}.${sig}` where sig signs
+   `${sessionId}.${issuedAt}`. issuedAt is ms since epoch. Binding the timestamp
+   into the signature makes it tamper-proof, so verifyToken can enforce a max age
+   without a server-side session store. */
 function makeToken(sessionId, secret) {
-  const sig = crypto.createHmac('sha256', secret).update(sessionId).digest('hex');
-  return `${sessionId}.${sig}`;
+  const iat = Date.now();
+  const payload = `${sessionId}.${iat}`;
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  return `${payload}.${sig}`;
 }
 
 function verifyToken(token, secret) {
-  const dot = token.lastIndexOf('.');
-  if (dot === -1) return null;
-  const sessionId = token.slice(0, dot), sig = token.slice(dot + 1);
+  const dot2 = token.lastIndexOf('.');
+  if (dot2 === -1) return null;
+  const sig  = token.slice(dot2 + 1);
+  const rest = token.slice(0, dot2);
+  const dot1 = rest.lastIndexOf('.');
+  if (dot1 === -1) return null; /* legacy 2-part tokens (no issued-at) are rejected */
+  const sessionId = rest.slice(0, dot1), iat = rest.slice(dot1 + 1);
   if (sig.length !== 64 || !/^[0-9a-f]+$/.test(sig)) return null;
-  const expected = crypto.createHmac('sha256', secret).update(sessionId).digest('hex');
+  if (!/^[0-9]+$/.test(iat)) return null;
+  const expected = crypto.createHmac('sha256', secret).update(rest).digest('hex');
   if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) return null;
+  if (Date.now() - Number(iat) > SESSION_MAX_AGE_MS) return null;
   return sessionId;
 }
 
@@ -77,7 +95,8 @@ function isSecureRequest(req) {
 
 function setSessionCookie(res, token, secure) {
   const flag = secure ? ' Secure;' : '';
-  res.setHeader('Set-Cookie', `ds=${token}; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=2592000`);
+  const maxAge = Math.floor(SESSION_MAX_AGE_MS / 1000);
+  res.setHeader('Set-Cookie', `ds=${token}; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=${maxAge}`);
 }
 
 function clearSessionCookie(res, secure) {
@@ -153,5 +172,6 @@ module.exports = {
   crypto, getOrCreateSecret, hashPassword, verifyPassword,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
   checkRateLimit, recordFailedAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
+  SESSION_MAX_AGE_MS,
   log,
 };
