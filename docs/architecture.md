@@ -42,7 +42,7 @@ The registry and the toolbox handed to each handler are documented in [widgets.m
 
 ## Outbound safety (the proxy)
 
-`src/proxy.js` is the only place the server makes outbound requests, and it is the SSRF boundary. `fetchJSON` resolves the target host and reject private, loopback, and link-local addresses via `PRIVATE_IP_RE`, unless `ALLOW_PRIVATE_IPS` is set. Beyond address checks it disables redirect following, enforces a 4 MB response cap, applies per-request timeouts, and decides TLS verification through `shouldSkipTls`. `rewriteUrl` maps the container host IP back to a container name so links that work in the browser also work from inside the network. Helpers `parsePrometheus` and `parseXml` let widget handlers consume non-JSON upstreams.
+`src/proxy.js` is the only place the server makes outbound requests, and it is the SSRF boundary. Callers run `strictCheckSsrf` first: it resolves the target host and rejects private, loopback, and link-local addresses via `PRIVATE_IP_RE` (unless `ALLOW_PRIVATE_IPS` is set), then hands the resolved IP to `fetchJSON` to pin so the connection cannot be re-pointed after the check. `fetchJSON` itself disables redirect following, enforces a 4 MB response cap, applies per-request timeouts, and decides TLS verification through `shouldSkipTls`. `rewriteUrl` maps the container host IP back to a container name so links that work in the browser also work from inside the network. Helpers `parsePrometheus` and `parseXml` let widget handlers consume non-JSON upstreams.
 
 ## Summary
 

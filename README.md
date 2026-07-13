@@ -24,6 +24,7 @@ Most dashboards are a wall full of numbers and charts. Stackyard is the opposite
 - [Live activity badges](#live-activity-badges)
 - [Security](#security)
 - [Contributing](#contributing)
+- [Changelog](#changelog)
 - [License](#license)
 
 ## Why Stackyard
@@ -141,6 +142,10 @@ Stackyard is built to be careful with your homelab: it never returns stored secr
 ## Contributing
 
 Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md), and [docs/frontend.md](docs/frontend.md) for how the frontend fits together.
+
+## Changelog
+
+Notable changes are listed in [CHANGELOG.md](CHANGELOG.md); per-release notes are on the [GitHub Releases](https://github.com/SandObserver/stackyard/releases) page.
 
 ## License
 
