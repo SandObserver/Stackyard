@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Backup widget instance passwords are now stripped from the config sent to the
+  browser and on export, matching every other widget. They were previously
+  returned in plaintext.
+- Widget secret handling is unified on the manifest-driven path. Widgets now
+  declare their secrets in `widget.json` (including secrets nested one level via
+  a new `object` field type), replacing the per-widget special cases.
 - Sessions now expire after a configurable lifetime (default 30 days, set with
   `SESSION_MAX_AGE_DAYS`). Tokens carry a signed issued-at enforced server-side.
   Existing sessions are invalidated on upgrade, so users log in once more.

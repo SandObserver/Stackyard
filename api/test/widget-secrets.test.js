@@ -85,3 +85,58 @@ test('preserveWidgetSecrets is a no-op for items without widgetConfig', () => {
   assert.doesNotThrow(() => preserveWidgetSecrets(newItem, { widgetConfig: { apiKey: 'x' } }, ENTRY));
   assert.equal(newItem.widgetConfig, undefined);
 });
+
+/* Entry exercising an object field (secret nested one level) and a group whose
+   rows carry ids (so preserve matches by id, not position). */
+const ENTRY2 = {
+  manifest: {
+    fields: [
+      { key: 'network', type: 'object', label: 'Network', fields: [
+        { key: 'pass', type: 'secret', label: 'Password' },
+      ] },
+      { key: 'services', type: 'group', label: 'Services', fields: [
+        { key: 'token', type: 'secret', label: 'Token' },
+      ] },
+    ],
+  },
+};
+
+test('secretSpec collects object secret keys', () => {
+  const spec = secretSpec(ENTRY2);
+  assert.deepEqual(spec.objects, { network: ['pass'] });
+  assert.deepEqual(spec.groups, { services: ['token'] });
+});
+
+test('scrubWidgetSecrets scrubs a secret nested in an object field', () => {
+  const item = { widgetType: 'x', widgetConfig: { network: { pass: 'hunter2', enabled: true } } };
+  scrubWidgetSecrets(item, ENTRY2);
+  assert.equal(item.widgetConfig.network.pass, undefined);
+  assert.equal(item.widgetConfig.network.passSet, true);
+  assert.equal(item.widgetConfig.network.enabled, true);
+});
+
+test('preserveWidgetSecrets restores an object secret omitted by the browser', () => {
+  const oldItem = { widgetConfig: { network: { pass: 'hunter2', enabled: true } } };
+  const newItem = { widgetConfig: { network: { enabled: false } } };
+  preserveWidgetSecrets(newItem, oldItem, ENTRY2);
+  assert.equal(newItem.widgetConfig.network.pass, 'hunter2');
+  assert.equal(newItem.widgetConfig.network.passSet, true);
+  assert.equal(newItem.widgetConfig.network.enabled, false);
+});
+
+test('preserveWidgetSecrets matches group rows by id regardless of order', () => {
+  const oldItem = { widgetConfig: { services: [
+    { id: 'a', token: 'tok-a' },
+    { id: 'b', token: 'tok-b' },
+  ] } };
+  /* Rows reordered and one omits its token; id matching must still restore the
+     right secret to each row rather than lining them up by position. */
+  const newItem = { widgetConfig: { services: [
+    { id: 'b', token: 'tok-b-new' },
+    { id: 'a' },
+  ] } };
+  preserveWidgetSecrets(newItem, oldItem, ENTRY2);
+  assert.equal(newItem.widgetConfig.services[0].token, 'tok-b-new');
+  assert.equal(newItem.widgetConfig.services[1].token, 'tok-a');
+  assert.equal(newItem.widgetConfig.services[1].tokenSet, true);
+});

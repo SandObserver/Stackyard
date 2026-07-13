@@ -2,5 +2,16 @@
   "name": "connections",
   "label": "Connections",
   "sizes": ["small", "medium"],
-  "customEditor": true
+  "customEditor": true,
+  "fields": [
+    { "key": "vpn", "type": "object", "label": "VPN", "fields": [
+      { "key": "apiKey", "type": "secret", "label": "API Key" },
+      { "key": "token", "type": "secret", "label": "Token" }
+    ] },
+    { "key": "services", "type": "group", "label": "Services", "fields": [
+      { "key": "token", "type": "secret", "label": "Token" },
+      { "key": "apiKey", "type": "secret", "label": "API Key" },
+      { "key": "password", "type": "secret", "label": "Password" }
+    ] }
+  ]
 }

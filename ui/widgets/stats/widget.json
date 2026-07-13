@@ -4,6 +4,9 @@
   "sizes": ["small", "medium"],
   "customEditor": true,
   "fields": [
-    { "key": "truenasKey", "type": "secret", "label": "TrueNAS API Key" }
+    { "key": "truenasKey", "type": "secret", "label": "TrueNAS API Key" },
+    { "key": "network", "type": "object", "label": "Network", "fields": [
+      { "key": "myspeedPass", "type": "secret", "label": "MySpeed Password" }
+    ] }
   ]
 }

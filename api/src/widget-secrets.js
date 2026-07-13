@@ -8,15 +8,20 @@ function secretSpec(entry) {
   const fields = (entry && entry.manifest && entry.manifest.fields) || [];
   const topLevel = [];
   const groups = {};
+  const objects = {};
+  const subSecrets = f => f.fields.filter(sf => sf && sf.type === 'secret' && sf.key).map(sf => sf.key);
   for (const f of fields) {
     if (!f || !f.key) continue;
     if (f.type === 'secret') topLevel.push(f.key);
     else if (f.type === 'group' && Array.isArray(f.fields)) {
-      const sub = f.fields.filter(sf => sf && sf.type === 'secret' && sf.key).map(sf => sf.key);
+      const sub = subSecrets(f);
       if (sub.length) groups[f.key] = sub;
+    } else if (f.type === 'object' && Array.isArray(f.fields)) {
+      const sub = subSecrets(f);
+      if (sub.length) objects[f.key] = sub;
     }
   }
-  return { topLevel, groups };
+  return { topLevel, groups, objects };
 }
 
 function _entryFor(item, entry) {
@@ -32,7 +37,7 @@ function scrubWidgetSecrets(item, entry) {
   const e = _entryFor(item, entry);
   if (!e || !item || !item.widgetConfig) return;
   const wc = item.widgetConfig;
-  const { topLevel, groups } = secretSpec(e);
+  const { topLevel, groups, objects } = secretSpec(e);
 
   for (const k of topLevel) {
     if (k in wc) { wc[k + 'Set'] = true; delete wc[k]; }
@@ -46,6 +51,11 @@ function scrubWidgetSecrets(item, entry) {
       return out;
     });
   }
+  for (const [ok, subKeys] of Object.entries(objects)) {
+    const obj = wc[ok];
+    if (!obj || typeof obj !== 'object') continue;
+    for (const sk of subKeys) if (sk in obj) { obj[sk + 'Set'] = true; delete obj[sk]; }
+  }
 }
 
 /* On save, restore any declared secret the browser omitted from the previously
@@ -56,7 +66,7 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
   if (!e || !newItem || !newItem.widgetConfig) return;
   const nwc = newItem.widgetConfig;
   const owc = (oldItem && oldItem.widgetConfig) || {};
-  const { topLevel, groups } = secretSpec(e);
+  const { topLevel, groups, objects } = secretSpec(e);
 
   for (const k of topLevel) {
     if (!(k in nwc) && owc[k] != null) nwc[k] = owc[k];
@@ -67,12 +77,23 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
     const oldRows = Array.isArray(owc[gk]) ? owc[gk] : [];
     nwc[gk].forEach((row, i) => {
       if (!row || typeof row !== 'object') return;
-      const oldRow = oldRows[i] || {};
+      /* Match the previous row by id when the row carries one (so reordering or
+         deleting rows can't misassign a stored secret); fall back to position. */
+      const oldRow = (row.id != null ? oldRows.find(r => r && r.id === row.id) : oldRows[i]) || {};
       for (const sk of subKeys) {
         if (!(sk in row) && oldRow[sk] != null) row[sk] = oldRow[sk];
         if (row[sk] != null) row[sk + 'Set'] = true;
       }
     });
+  }
+  for (const [ok, subKeys] of Object.entries(objects)) {
+    const nObj = nwc[ok];
+    if (!nObj || typeof nObj !== 'object') continue;
+    const oObj = (owc[ok] && typeof owc[ok] === 'object') ? owc[ok] : {};
+    for (const sk of subKeys) {
+      if (!(sk in nObj) && oObj[sk] != null) nObj[sk] = oObj[sk];
+      if (nObj[sk] != null) nObj[sk + 'Set'] = true;
+    }
   }
 }
 
@@ -102,11 +123,8 @@ function preserveConfigSecrets(newCfg, oldCfg) {
   return newCfg;
 }
 
-const MAP_SVC_SECRETS = ['token','apiKey','password'];
-
 module.exports = {
   secretSpec,
   scrubWidgetSecrets, preserveWidgetSecrets,
   scrubConfigSecrets, preserveConfigSecrets,
-  MAP_SVC_SECRETS,
 };
