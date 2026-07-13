@@ -121,8 +121,8 @@ async function fetchDeclarative(decl, wc, endpointName) {
   try { r = await fetchJSON(url, { headers, timeout: 8000, skipTls }); }
   catch (e) { return { status: 502, body: { error: e.message } }; }
 
-  if (r.status === 401) return { status: 401, body: { error: 'Upstream auth failed (401) — check credentials' } };
-  if (r.status === 403) return { status: 403, body: { error: 'Upstream auth failed (403) — check credentials' } };
+  if (r.status === 401) return { status: 401, body: { error: 'Upstream auth failed (401), check credentials' } };
+  if (r.status === 403) return { status: 403, body: { error: 'Upstream auth failed (403), check credentials' } };
   if (r.status >= 500)  return { status: 502, body: { error: 'Upstream HTTP ' + r.status } };
   return { status: 200, body: r.data };
 }

@@ -102,7 +102,7 @@ on('GET', '/api/truenas-proxy', async(req, res) => {
     const r = await fetchJSON(base + '/api/v2.0/pool', {
       headers: { Authorization: 'Bearer ' + key }, timeout: 8000, pinIp: guard.ip,
     });
-    if (r.status === 401 || r.status === 403) return json(res, 401, { error:'TrueNAS auth failed — check API key' });
+    if (r.status === 401 || r.status === 403) return json(res, 401, { error:'TrueNAS auth failed, check API key' });
     if (r.status >= 400) return json(res, 502, { error:'TrueNAS HTTP ' + r.status });
     const pools = (Array.isArray(r.data) ? r.data : []).map(p => ({
       name:     p.name,
@@ -161,7 +161,7 @@ on('GET', '/api/speed-data/:id', async(req, res) => {
       const headers = {};
       if (net.myspeedPass) headers['x-password'] = net.myspeedPass;
       const r = await fetchJSON(base + '/api/speedtests?limit=1', { headers, timeout: 8000 });
-      if (r.status === 401) return json(res, 401, { error:'MySpeed returned 401 — check password' });
+      if (r.status === 401) return json(res, 401, { error:'MySpeed returned 401, check password' });
       const row = Array.isArray(r.data) ? r.data[0] : r.data;
       if (!row) return json(res, 502, { error:'No result from MySpeed' });
       json(res, 200, {
