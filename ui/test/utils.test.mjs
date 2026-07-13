@@ -27,7 +27,11 @@ test('clr passes through any other value unchanged', () => {
 });
 
 test('esc encodes the five HTML-significant characters', () => {
-  assert.equal(esc('<a href="x">&\'y\'</a>'), '&lt;a href=&quot;x&quot;&gt;&amp;\'y\'&lt;/a&gt;');
+  assert.equal(esc('<a href="x">&\'y\'</a>'), '&lt;a href=&quot;x&quot;&gt;&amp;&#39;y&#39;&lt;/a&gt;');
+});
+
+test('esc encodes single quotes so single-quoted attributes stay safe', () => {
+  assert.equal(esc("' onmouseover='alert(1)"), '&#39; onmouseover=&#39;alert(1)');
 });
 
 test('esc encodes ampersand before other entities (no double-encoding)', () => {

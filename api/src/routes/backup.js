@@ -96,7 +96,7 @@ on('POST', '/api/duplicati-jobs/:id', async(req, res) => {
       headers: { 'Authorization': `Bearer ${token}` },
       timeout: 10000,
     });
-    if (r.status === 401) return json(res, 401, { error: 'Authentication failed — check password' });
+    if (r.status === 401) return json(res, 401, { error: 'Authentication failed, check password' });
 
     const jobs = dupList(r.data)
       .map(j => ({ id: dupId(j), name: dupName(j) }))

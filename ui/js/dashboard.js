@@ -19,7 +19,7 @@ const SLOTS = 24;
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
 let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
-const _mobTsCleanup = null, _mobTeCleanup = null, _mobTmCleanup = null;
+const _mobTsCleanup = null, _mobTeCleanup = null;
 
 const badgeState  = {};
 let _badgeFails = 0, _healthFails = 0, badgesStale = false, healthStale = false;
@@ -231,7 +231,7 @@ async function pollHealth() {
 function pwStrength(pw) {
   const dim = 'rgba(255,255,255,.1)';
   if (!pw) return { score:0, label:'', color:dim, ok:false };
-  if (pw.length < 8) return { score:1, label:'Too short — min 8 characters', color:'#ff453a', ok:false };
+  if (pw.length < 8) return { score:1, label:'Too short, min 8 characters', color:'#ff453a', ok:false };
   let score = 1;
   if (pw.length >= 12) score++;
   if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
@@ -390,7 +390,6 @@ async function boot() {
       } else {
         /* Restore mobile layout for portrait */
         document.body.classList.add('is-mob');
-        if (_mobTmCleanup) document.removeEventListener('touchmove', _mobTmCleanup, { passive: true });
         buildMobile();
         syncMobPages();
       }
