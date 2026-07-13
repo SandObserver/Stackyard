@@ -1,4 +1,7 @@
 version: 2
+# Only non-breaking upgrades are proposed automatically: minor and patch.
+# Major bumps (e.g. Node 24 to 26, TypeScript 6 to 7) are ignored and taken by
+# hand when you choose, so you never have to review a breaking change on Dependabot's schedule.
 updates:
   # CI tooling (Biome, TypeScript, @types/node). These are the only npm deps; the runtime has none.
   - package-ecosystem: npm
@@ -9,12 +12,18 @@ updates:
     groups:
       dev-dependencies:
         patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
-  # Base image (node:24-alpine); security and version patches land here.
+  # Base image (node:24-alpine); stays on the 24 line and only takes patch and minor updates.
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Pinned GitHub Actions used by the workflows.
   - package-ecosystem: github-actions
@@ -24,3 +33,6 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
