@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- The Scrutiny and network-speed widget data routes now apply the same SSRF
+  guard and IP pinning as the rest of the proxy, and the two Scrutiny routes
+  share one code path. If you point either widget at a private IP literal,
+  set `ALLOW_PRIVATE_IPS=true` (Docker service names are unaffected).
 - Backup widget instance passwords are now stripped from the config sent to the
   browser and on export, matching every other widget. They were previously
   returned in plaintext.
