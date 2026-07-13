@@ -93,7 +93,8 @@ server, so a typo disables just that widget.
 | `toggle` | On/off switch, stored as a boolean. |
 | `select` | A dropdown by default. Add `"variant": "pills"` to render the options as a radio group instead. With `optionsFrom` it also shows a Fetch button (see below). |
 | `multiselect` | A checklist dropdown; the value is an array of the chosen values. |
-| `group` | A repeatable set of sub-fields, each entry rendered as its own card with Add / Remove. Put the sub-fields in a nested `"fields"` array. Groups cannot be nested. |
+| `group` | A repeatable set of sub-fields, each entry rendered as its own card with Add / Remove. Put the sub-fields in a nested `"fields"` array. Groups cannot be nested inside a group or object. |
+| `object` | A single nested object holding sub-fields in a `"fields"` array. Not rendered by the auto-form; it exists so a `customEditor` widget can still declare secrets that live one level deep (for example `network.password`) so they are scrubbed and preserved like any other secret. |
 
 ### Field options
 

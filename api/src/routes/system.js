@@ -2,7 +2,7 @@ const fs = require('fs');
 const { on, json } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchJSON, strictCheckSsrf } = require('../proxy');
-const { scrubWidgetSecrets, MAP_SVC_SECRETS } = require('../widget-secrets');
+const { scrubWidgetSecrets } = require('../widget-secrets');
 const { getRegistry } = require('../widgets');
 
 let _netCache = { rx:0, tx:0 };
@@ -43,10 +43,6 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   const wc = JSON.parse(JSON.stringify(w.widgetConfig || {}));
   const _entry = getRegistry()[w.widgetType];
   if (_entry) scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
-  if (wc.network) delete wc.network.myspeedPass;
-  if (Array.isArray(wc.slots)) wc.slots.forEach(s => { if(s){ delete s.dupPass; delete s.kopiaPass; } });
-  if (wc.vpn) { delete wc.vpn.apiKey; delete wc.vpn.token; }
-  if (Array.isArray(wc.services)) wc.services.forEach(sv => { if (sv) MAP_SVC_SECRETS.forEach(k => { if (k in sv) { sv[k+'Set'] = true; delete sv[k]; } }); });
   json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: wc });
 });
 

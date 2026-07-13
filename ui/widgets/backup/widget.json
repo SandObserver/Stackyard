@@ -2,5 +2,11 @@
   "name": "backup",
   "label": "Backup",
   "sizes": ["small", "medium"],
-  "customEditor": true
+  "customEditor": true,
+  "fields": [
+    { "key": "slots", "type": "group", "label": "Slots", "fields": [
+      { "key": "dupPass", "type": "secret", "label": "Duplicati Password" },
+      { "key": "kopiaPass", "type": "secret", "label": "Kopia Password" }
+    ] }
+  ]
 }
