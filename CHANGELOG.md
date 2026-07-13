@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+- Sessions now expire after a configurable lifetime (default 30 days, set with
+  `SESSION_MAX_AGE_DAYS`). Tokens carry a signed issued-at enforced server-side.
+  Existing sessions are invalidated on upgrade, so users log in once more.
+- `esc()` now escapes single quotes, closing a latent gap for values placed in
+  single-quoted HTML attributes.
+- Removed a dead touch-cleanup variable in the dashboard, replaced em-dashes in
+  six user-facing strings, and fixed two docs typos.
+
+---
+
 ## [1.0.0] — First public release
 
 Stackyard is a self-hosted homelab dashboard: a calm, launcher-style grid
