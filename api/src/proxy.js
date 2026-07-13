@@ -3,7 +3,7 @@ const https = require('https');
 const dns   = require('dns').promises;
 const { loadConfig } = require('./config');
 
-const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.|::1$|fc[0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.))/i;
+const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.|::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.))/i;
 const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
 /* Setting this true disables SSRF filtering entirely: private, loopback and
    link-local targets are no longer blocked. Most homelab setups need it on
@@ -176,8 +176,13 @@ function parseXml(xml) {
    widget traffic. */
 async function guardSsrf(rawUrl) {
   let u; try { u = new URL(rawUrl); } catch { return { error:'Invalid URL', ip:null }; }
-  const h = u.hostname;
-  if (!h.includes('.')) return { error:null, ip:null }; /* Docker service names — safe on internal networks */
+  /* URL keeps IPv6 literals bracketed (e.g. [fd00::1]); strip so the address
+     itself is what gets range-checked and resolved. */
+  const h = u.hostname.replace(/^\[|\]$/g, '');
+  /* Dotless single-label names are Docker service names, trusted on internal
+     networks. IPv6 literals are also dotless but contain colons, so they must
+     not take this path: they fall through to the private-range check below. */
+  if (!h.includes('.') && !h.includes(':')) return { error:null, ip:null };
   const hostIp = getHostIp();
   if (hostIp && h === hostIp) return { error:null, ip:null };
   if (!ALLOW_PRIVATE_IPS && (PRIVATE_IP_RE.test(h) || h === 'localhost')) return { error:`Blocked: ${h} is a private address.`, ip:null };
@@ -185,12 +190,13 @@ async function guardSsrf(rawUrl) {
   try { ({ address } = await dns.lookup(h)); }
   catch { return { error:`Blocked: ${h} could not be resolved.`, ip:null }; }
   if (!ALLOW_PRIVATE_IPS && PRIVATE_IP_RE.test(address)) return { error:`Blocked: ${h} resolves to private IP ${address}.`, ip:null };
+  /* A literal address cannot be rebound, so there is nothing to pin; connect by
+     the original host and avoid re-serialising an IPv6 literal. */
+  if (h === address) return { error:null, ip:null };
   return { error:null, ip:address };
 }
 
-/* Both variants share one implementation. Kept as separate names for call-site
-   clarity (checkSsrf: internal callers, strictCheckSsrf: user-submitted URLs). */
-const checkSsrf = guardSsrf;
+/* Public name for the guard at call sites that validate a user-submitted URL. */
 const strictCheckSsrf = guardSsrf;
 
 /* opts.skipTls — explicit per-call override (true/false).
@@ -307,4 +313,4 @@ function pingUrl(raw, ms = 6000, skipTls, pinIp) {
   });
 }
 
-module.exports = { fetchJSON, pingUrl, guardSsrf, checkSsrf, strictCheckSsrf, rewriteUrl, getHostIp, shouldSkipTls, parsePrometheus, parseXml, PRIVATE_IP_RE };
+module.exports = { fetchJSON, pingUrl, guardSsrf, strictCheckSsrf, rewriteUrl, getHostIp, shouldSkipTls, parsePrometheus, parseXml, PRIVATE_IP_RE };
