@@ -19,24 +19,34 @@ function scrubCss(css) {
 }
 
 function sanitizeSvg(input) {
-  let svg = String(input)
-    .replace(/<\?[\s\S]*?\?>/g, '').replace(/<!--[\s\S]*?-->/g, '').replace(/<!DOCTYPE[^>]*>/gi, '');
-  svg = svg.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (_m, open, body, cl) => open + scrubCss(body) + cl);
-  svg = svg.replace(/<(\/?)\s*([a-zA-Z][a-zA-Z0-9:]*)([\s\S]*?)(\/?)?>/g, (_match, close, tag, attrs, selfClose) => {
-    const localTag = tag.split(':').pop().toLowerCase();
-    if (!SAFE_ELEMENTS_LC.has(localTag)) return '';
-    const safeAttrs = attrs.replace(/\s([a-zA-Z:_][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))/g, (m, name, dq, sq, uq) => {
-      const lname = name.toLowerCase();
-      if (UNSAFE_ATTR_RE.test(lname)) return '';
-      if (!SAFE_ATTRS_LC.has(lname) && !lname.startsWith('aria-') && !lname.startsWith('data-')) return '';
-      if (lname === 'style') {
-        const q = dq != null ? '"' : (sq != null ? "'" : '"');
-        return ` ${name}=${q}${scrubCss(dq != null ? dq : (sq != null ? sq : (uq || '')))}${q}`;
-      }
-      return m;
+  /* Run the strip passes until the string stops changing. A single pass can
+     leave a reconstructed token behind (e.g. `<scr<script>ipt>` collapses to
+     `<script>`, `<!--<!-- -->` to `<!-- -->`), so repeat to a fixed point.
+     Each pass only removes, so length is non-increasing and this terminates. */
+  let svg = String(input), prev, guard = 0;
+  do {
+    prev = svg;
+    svg = svg
+      .replace(/<\?[\s\S]*?(?:\?>|$)/g, '')
+      .replace(/<!--[\s\S]*?(?:-->|$)/g, '')
+      .replace(/<!DOCTYPE[^>]*(?:>|$)/gi, '');
+    svg = svg.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (_m, open, body, cl) => open + scrubCss(body) + cl);
+    svg = svg.replace(/<(\/?)\s*([a-zA-Z][a-zA-Z0-9:]*)([\s\S]*?)(\/?)?>/g, (_match, close, tag, attrs, selfClose) => {
+      const localTag = tag.split(':').pop().toLowerCase();
+      if (!SAFE_ELEMENTS_LC.has(localTag)) return '';
+      const safeAttrs = attrs.replace(/\s([a-zA-Z:_][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))/g, (m, name, dq, sq, uq) => {
+        const lname = name.toLowerCase();
+        if (UNSAFE_ATTR_RE.test(lname)) return '';
+        if (!SAFE_ATTRS_LC.has(lname) && !lname.startsWith('aria-') && !lname.startsWith('data-')) return '';
+        if (lname === 'style') {
+          const q = dq != null ? '"' : (sq != null ? "'" : '"');
+          return ` ${name}=${q}${scrubCss(dq != null ? dq : (sq != null ? sq : (uq || '')))}${q}`;
+        }
+        return m;
+      });
+      return `<${close}${tag}${safeAttrs}${selfClose || ''}>`;
     });
-    return `<${close}${tag}${safeAttrs}${selfClose || ''}>`;
-  });
+  } while (svg !== prev && ++guard < 50);
   return svg;
 }
 
