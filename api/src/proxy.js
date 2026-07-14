@@ -2,6 +2,7 @@ const http  = require('http');
 const https = require('https');
 const dns   = require('dns').promises;
 const { loadConfig } = require('./config');
+const { PING_MS, FETCH_MS } = require('./timeouts');
 
 const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.|::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.))/i;
 const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
@@ -223,7 +224,7 @@ function fetchJSON(raw, opts = {}) {
       hostname: pin || u.hostname, port, path: u.pathname + u.search,
       method: opts.method || 'GET', headers: hdrs,
       servername: pin ? u.hostname : undefined, /* keep SNI + cert validation on the real hostname */
-      timeout: opts.timeout || 8000,
+      timeout: opts.timeout || FETCH_MS,
       rejectUnauthorized: !skipTls,
     }, res => {
       const sc = res.statusCode ?? 0;
@@ -257,7 +258,7 @@ function fetchJSON(raw, opts = {}) {
        upstream could outlive the gateway's read timeout and surface as a 504.
        This timer destroys the request at the deadline regardless of phase, so a
        stall degrades to a normal error instead. */
-    deadline = setTimeout(() => { req.destroy(); done(reject, new Error('Timed out')); }, opts.timeout || 8000);
+    deadline = setTimeout(() => { req.destroy(); done(reject, new Error('Timed out')); }, opts.timeout || FETCH_MS);
     if (deadline.unref) deadline.unref();
     if (bodyBuf) req.write(bodyBuf);
     req.end();
@@ -280,7 +281,7 @@ function statusDesc(code) {
    If omitted, falls back to shouldSkipTls() for internal callers.
    pinIp — connect to this exact IP (from guardSsrf) instead of re-resolving,
    with Host header and TLS servername kept on the original hostname. */
-function pingUrl(raw, ms = 6000, skipTls, pinIp) {
+function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
   return new Promise(resolve => {
     let u; try { u = new URL(raw); } catch { return resolve({ ok:false, status:0, error:'Invalid URL' }); }
     const lib  = u.protocol === 'https:' ? https : http;

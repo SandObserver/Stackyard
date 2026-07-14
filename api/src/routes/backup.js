@@ -1,6 +1,7 @@
 const { on, json, readBody, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchJSON } = require('../proxy');
+const { BACKUP_MS } = require('../timeouts');
 const { dupList, dupId, dupName, dupMeta, dupSchedule, dupNormalizeBase, dupDeriveStatus, kopiaDeriveStatus, kopiaSourceId } = require('../backup-status');
 
 const _dupTokens = new Map();
@@ -10,7 +11,7 @@ async function dupLogin(base, password) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ Password: password }),
-    timeout: 10000,
+    timeout: BACKUP_MS,
   });
   if (r.status !== 200) throw new Error(`Duplicati login failed: HTTP ${r.status}`);
   const { AccessToken, RefreshNonce } = r.data || {};
@@ -23,7 +24,7 @@ async function dupRefresh(base, refreshNonce) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ RefreshNonce: refreshNonce }),
-    timeout: 10000,
+    timeout: BACKUP_MS,
   });
   if (r.status !== 200) throw new Error(`Duplicati refresh failed: HTTP ${r.status}`);
   const { AccessToken, RefreshNonce } = r.data || {};
@@ -53,14 +54,14 @@ async function dupFetch(widgetId, base, password, path) {
   const token = await dupGetToken(widgetId, base, password);
   const r = await fetchJSON(base + path, {
     headers: { 'Authorization': `Bearer ${token}` },
-    timeout: 10000,
+    timeout: BACKUP_MS,
   });
   if (r.status === 401) {
     _dupTokens.delete(widgetId);
     const token2 = await dupGetToken(widgetId, base, password);
     const r2 = await fetchJSON(base + path, {
       headers: { 'Authorization': `Bearer ${token2}` },
-      timeout: 10000,
+      timeout: BACKUP_MS,
     });
     return r2;
   }
@@ -94,7 +95,7 @@ on('POST', '/api/duplicati-jobs/:id', async(req, res) => {
 
     const r = await fetchJSON(base + '/api/v1/backups', {
       headers: { 'Authorization': `Bearer ${token}` },
-      timeout: 10000,
+      timeout: BACKUP_MS,
     });
     if (r.status === 401) return json(res, 401, { error: 'Authentication failed, check password' });
 
@@ -111,7 +112,7 @@ async function kopiaFetch(url, username, password, path) {
   if (username && password) {
     headers['Authorization'] = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
   }
-  return fetchJSON(url.replace(/\/$/, '') + path, { headers, timeout: 10000 });
+  return fetchJSON(url.replace(/\/$/, '') + path, { headers, timeout: BACKUP_MS });
 }
 
 on('POST', '/api/kopia-sources/:id', async(req, res) => {

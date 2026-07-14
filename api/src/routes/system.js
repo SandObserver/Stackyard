@@ -5,6 +5,7 @@ const { fetchJSON, strictCheckSsrf } = require('../proxy');
 const { scrubWidgetSecrets } = require('../widget-secrets');
 const { getRegistry } = require('../widgets');
 const { normalizeBase } = require('../widget-data');
+const { FETCH_MS } = require('../timeouts');
 const { mapScrutinyDevices } = require('../scrutiny');
 
 /* Normalize, SSRF-guard, fetch a Scrutiny summary and shape its device list.
@@ -14,7 +15,7 @@ async function fetchScrutinyDevices(rawUrl) {
   const base  = normalizeBase(rawUrl);
   const guard = await strictCheckSsrf(base);
   if (guard.error) return { status: 403, error: guard.error };
-  const r = await fetchJSON(base + '/api/summary', { timeout: 8000, pinIp: guard.ip });
+  const r = await fetchJSON(base + '/api/summary', { timeout: FETCH_MS, pinIp: guard.ip });
   return { devices: mapScrutinyDevices(r.data?.data?.summary) };
 }
 
@@ -66,7 +67,7 @@ on('GET', '/api/geocode-proxy', async(req, res) => {
   try {
     const url = 'https://geocoding-api.open-meteo.com/v1/search'
       + `?name=${encodeURIComponent(name)}&count=5&language=en&format=json`;
-    const r = await fetchJSON(url, { timeout: 8000 });
+    const r = await fetchJSON(url, { timeout: FETCH_MS });
     if (r.status >= 400) return json(res, 502, { error: 'Geocoding HTTP ' + r.status });
     const results = ((r.data && r.data.results) || []).map(p => ({
       name: p.name, country: p.country, admin1: p.admin1,
@@ -98,7 +99,7 @@ on('GET', '/api/truenas-proxy', async(req, res) => {
     const guard = await strictCheckSsrf(base);
     if (guard.error) return json(res, 403, { error: guard.error });
     const r = await fetchJSON(base + '/api/v2.0/pool', {
-      headers: { Authorization: 'Bearer ' + key }, timeout: 8000, pinIp: guard.ip,
+      headers: { Authorization: 'Bearer ' + key }, timeout: FETCH_MS, pinIp: guard.ip,
     });
     if (r.status === 401 || r.status === 403) return json(res, 401, { error:'TrueNAS auth failed, check API key' });
     if (r.status >= 400) return json(res, 502, { error:'TrueNAS HTTP ' + r.status });
@@ -138,7 +139,7 @@ on('GET', '/api/speed-data/:id', async(req, res) => {
     const guard = await strictCheckSsrf(base);
     if (guard.error) return json(res, 403, { error: guard.error });
     if (provider === 'speedtest-tracker') {
-      const r = await fetchJSON(base + '/api/speedtest/latest', { timeout: 8000, pinIp: guard.ip });
+      const r = await fetchJSON(base + '/api/speedtest/latest', { timeout: FETCH_MS, pinIp: guard.ip });
       const row = r.data?.data;
       if (!row?.id) return json(res, 502, { error:'No result from Speedtest Tracker' });
       json(res, 200, {
@@ -151,7 +152,7 @@ on('GET', '/api/speed-data/:id', async(req, res) => {
     } else {
       const headers = {};
       if (net.myspeedPass) headers['x-password'] = net.myspeedPass;
-      const r = await fetchJSON(base + '/api/speedtests?limit=1', { headers, timeout: 8000, pinIp: guard.ip });
+      const r = await fetchJSON(base + '/api/speedtests?limit=1', { headers, timeout: FETCH_MS, pinIp: guard.ip });
       if (r.status === 401) return json(res, 401, { error:'MySpeed returned 401, check password' });
       const row = Array.isArray(r.data) ? r.data[0] : r.data;
       if (!row) return json(res, 502, { error:'No result from MySpeed' });

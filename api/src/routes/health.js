@@ -1,6 +1,7 @@
 const { on, json } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchJSON, pingUrl } = require('../proxy');
+const { PING_MS } = require('../timeouts');
 const log = require('../log');
 const SOCKET_PROXY_URL_DEFAULT = process.env.SOCKET_PROXY_URL || '';
 
@@ -43,7 +44,7 @@ on('GET', '/api/health', async(_, res) => {
         result[item.id] = { unhealthy, state:c?.state||'unknown', status:c?.status||'' };
       }
       if (ping) {
-        const r = await pingUrl(ping, 6000, item.skipTlsVerify === true);
+        const r = await pingUrl(ping, PING_MS, item.skipTlsVerify === true);
         if (!r.ok) unhealthy = true;
         result[item.id] = { unhealthy, pingStatus:r.status, pingError:r.error };
       }
