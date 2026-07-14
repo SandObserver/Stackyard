@@ -27,9 +27,9 @@ function sanitizeSvg(input) {
   do {
     prev = svg;
     svg = svg
-      .replace(/<\?[\s\S]*?\?>/g, '')
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .replace(/<!DOCTYPE[^>]*>/gi, '');
+      .replace(/<\?[\s\S]*?(?:\?>|$)/g, '')
+      .replace(/<!--[\s\S]*?(?:-->|$)/g, '')
+      .replace(/<!DOCTYPE[^>]*(?:>|$)/gi, '');
     svg = svg.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (_m, open, body, cl) => open + scrubCss(body) + cl);
     svg = svg.replace(/<(\/?)\s*([a-zA-Z][a-zA-Z0-9:]*)([\s\S]*?)(\/?)?>/g, (_match, close, tag, attrs, selfClose) => {
       const localTag = tag.split(':').pop().toLowerCase();
