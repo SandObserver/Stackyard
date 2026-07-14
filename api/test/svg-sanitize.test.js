@@ -61,3 +61,13 @@ test('aria- and data- attributes are allowed', () => {
   assert.match(out, /aria-label="icon"/);
   assert.match(out, /data-x="1"/);
 });
+
+test('reconstruction via a split tag is stripped (multi-pass)', () => {
+  const out = sanitizeSvg('<svg><scr<script>ipt>alert(1)</scr</script>ipt></svg>');
+  assert.doesNotMatch(out, /<script/i);
+});
+
+test('nested comment reconstruction is fully removed', () => {
+  const out = sanitizeSvg('<svg><!--<!-- -->--><path d="M0 0"/></svg>');
+  assert.doesNotMatch(out, /<!--/);
+});

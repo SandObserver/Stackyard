@@ -296,22 +296,25 @@ function showIPRes(list, rawInput){
   if(rs.children.length)rs.classList.add('open');
   else rs.classList.remove('open');
 }
+function setInitialGlyph(p){
+  const l=document.getElementById('f-lbl')?.value||'?';
+  const s=document.createElement('span');
+  s.textContent=(l[0]||'?').toUpperCase();
+  p.replaceChildren(s);
+}
 function updPrev(){
   const p=document.getElementById('ipv');if(!p)return;
   p.style.background=rc(state.scol);
-  if(!state.siurl){const l=document.getElementById('f-lbl')?.value||'?';p.innerHTML=`<span>${l[0]?.toUpperCase()||'?'}</span>`;return;}
+  if(!state.siurl){setInitialGlyph(p);return;}
   const fallbacks=iconChain(state.siurl);
-  if(!fallbacks.length){const l=document.getElementById('f-lbl')?.value||'?';p.innerHTML=`<span>${l[0]?.toUpperCase()||'?'}</span>`;return;}
+  if(!fallbacks.length){setInitialGlyph(p);return;}
   let step=0;
   const img=document.createElement('img');
   img.style.cssText='width:30px;height:30px;object-fit:contain;';
   img.alt='';
-  img.onerror=()=>{step++;if(step<fallbacks.length){img.src=fallbacks[step];}else{
-    const l=document.getElementById('f-lbl')?.value||'?';
-    p.innerHTML=`<span>${l[0]?.toUpperCase()||'?'}</span>`;
-  }};
+  img.onerror=()=>{step++;if(step<fallbacks.length){img.src=fallbacks[step];}else{setInitialGlyph(p);}};
   img.src=fallbacks[0];
-  p.innerHTML='';p.appendChild(img);
+  p.replaceChildren(img);
 }
 
 /* HSL <-> hex helpers for the custom slider picker */
