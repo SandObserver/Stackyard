@@ -2,6 +2,7 @@ const { on, json, readBody, getIp } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchJSON, pingUrl, strictCheckSsrf, rewriteUrl } = require('../proxy');
 const { rateLimit } = require('../auth');
+const { PING_MS, FETCH_MS } = require('../timeouts');
 const { collectNumbers, computeBadgeValue } = require('../badge-extract');
 
 on('POST', '/api/ping', async(req, res) => {
@@ -13,7 +14,7 @@ on('POST', '/api/ping', async(req, res) => {
     if (!url) return json(res, 400, { ok:false, error:'url required' });
     const guard = await strictCheckSsrf(url);
     if (guard.error) return json(res, 403, { ok:false, error:guard.error });
-    json(res, 200, await pingUrl(url, 6000, skipTls === true, guard.ip));
+    json(res, 200, await pingUrl(url, PING_MS, skipTls === true, guard.ip));
   } catch(e) { json(res, 200, { ok:false, status:0, error:e.message }); }
 });
 
@@ -31,7 +32,7 @@ on('GET', '/api/badges', async(_, res) => {
         const url = src.params && Object.keys(src.params).length
           ? baseUrl + (baseUrl.includes('?') ? '&' : '?') + new URLSearchParams(src.params)
           : baseUrl;
-        const r   = await fetchJSON(url, { headers: src.headers||{}, timeout:6000, skipTls: item.skipTlsVerify === true });
+        const r   = await fetchJSON(url, { headers: src.headers||{}, timeout:PING_MS, skipTls: item.skipTlsVerify === true });
         const badge = item.monitoring?.activity?.enabled ? {
           extract: item.monitoring.activity.extract,
           params:  item.monitoring.activity.params,
@@ -52,7 +53,7 @@ on('POST', '/api/badge-proxy', async(req, res) => {
     const guard = await strictCheckSsrf(url);
     if (guard.error) return json(res, 403, { error:guard.error });
     const fullUrl = Object.keys(params).length ? url + (url.includes('?') ? '&' : '?') + new URLSearchParams(params) : url;
-    const r = await fetchJSON(fullUrl, { headers, timeout:8000, skipTls: skipTls === true, pinIp: guard.ip });
+    const r = await fetchJSON(fullUrl, { headers, timeout:FETCH_MS, skipTls: skipTls === true, pinIp: guard.ip });
     json(res, 200, { status:r.status, data:r.data, numbers:collectNumbers(r.data) });
   } catch(e) { json(res, 502, { error:e.message }); }
 });

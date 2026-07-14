@@ -2,6 +2,7 @@ const path = require('path');
 const { on, json, readBody, checkOrigin } = require('./router');
 const { loadConfig } = require('./config');
 const { fetchJSON, parsePrometheus } = require('./proxy');
+const { FETCH_MS } = require('./timeouts');
 const { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
@@ -118,7 +119,7 @@ async function fetchDeclarative(decl, wc, endpointName) {
   const skipTls = wc.skipTlsVerify === true ? true : undefined;
 
   let r;
-  try { r = await fetchJSON(url, { headers, timeout: 8000, skipTls }); }
+  try { r = await fetchJSON(url, { headers, timeout: FETCH_MS, skipTls }); }
   catch (e) { return { status: 502, body: { error: e.message } }; }
 
   if (r.status === 401) return { status: 401, body: { error: 'Upstream auth failed (401), check credentials' } };

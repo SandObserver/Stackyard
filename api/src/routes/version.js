@@ -1,5 +1,6 @@
 const { on, json } = require('../router');
 const { fetchJSON } = require('../proxy');
+const { PING_MS } = require('../timeouts');
 const log = require('../log');
 const pkg = require('../../package.json');
 
@@ -27,7 +28,7 @@ async function getLatest() {
   try {
     const r = await fetchJSON(`https://api.github.com/repos/${REPO}/releases/latest`, {
       headers: { 'User-Agent': 'stackyard', 'Accept': 'application/vnd.github+json' },
-      timeout: 6000,
+      timeout: PING_MS,
     });
     const tag = r.data && (r.data.tag_name || r.data.name);
     _cache = { at: now, latest: tag ? String(tag).replace(/^v/i, '') : null };
