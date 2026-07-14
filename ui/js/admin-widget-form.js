@@ -1,4 +1,4 @@
-/* Admin UI — widget configuration form.
+/* Admin UI: widget configuration form.
    Builds the widget edit form and its per-type config sections. Reads and
    writes shared widget state on the state object; exports buildWidgetForm,
    called by the edit shell. */
@@ -385,7 +385,7 @@ function _renderConnectionsConfig(body){
   return _renderMapConfig(body);
 }
 
-/* VPN view config — single tunnel, VPN services only (Gluetun / NetBird). */
+/* VPN view config: single tunnel, VPN services only (Gluetun / NetBird). */
 function _renderVpnConfig(body){
   const svc=state._wvpnCfg.service||'gluetun';
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
@@ -538,7 +538,7 @@ function _autofillSlot(si, provider) {
   }
 }
 
-/* Custom dropdown — native <select> popups don't open in some embedded webviews,
+/* Custom dropdown: native <select> popups don't open in some embedded webviews,
    so we render a button + listbox we fully control (same rationale as the colour picker). */
 function _ddCloseAll(except){
   document.querySelectorAll('.dd-list').forEach(l=>{ if(l!==except) l.classList.add('d-none'); });

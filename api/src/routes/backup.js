@@ -45,7 +45,7 @@ async function dupGetToken(widgetId, base, password) {
   _dupTokens.set(widgetId, {
     accessToken:  tokens.accessToken,
     refreshNonce: tokens.refreshNonce,
-    expiresAt:    Date.now() + 4.5 * 60 * 1000, /* 4m30s — 30s before 5m expiry */
+    expiresAt:    Date.now() + 4.5 * 60 * 1000, /* 4m30s, 30s before 5m expiry */
   });
   return tokens.accessToken;
 }
@@ -210,6 +210,6 @@ on('GET', '/api/backup-data/:id', async(req, res) => {
       } catch {}
     }));
 
-    json(res, 200, result);   /* indexed by slot — nulls kept so the widget maps by index */
+    json(res, 200, result);   /* indexed by slot; nulls kept so the widget maps by index */
   } catch(e) { json(res, 502, { error: e.message }); }
 });

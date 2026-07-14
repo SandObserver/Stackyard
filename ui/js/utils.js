@@ -38,7 +38,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
       let step = 0;
       const tryNext = () => { step++; if (step < chain.length) img.src = chain[step]; else img.replaceWith(fb(item.label, sz)); };
       img.onerror = tryNext;
-      /* 403 responses don't trigger onerror — the browser considers them a successful
+      /* 403 responses don't trigger onerror; the browser considers them a successful
          load. Check naturalWidth on load; a broken/blocked image has zero dimensions. */
       img.onload = () => { if (img.naturalWidth === 0) tryNext(); };
       w.appendChild(img);
@@ -54,7 +54,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
 /* Mount a widget iframe at a fixed design resolution and scale it uniformly to
    fill `card`. The iframe's internal viewport is therefore constant regardless
    of the card's on-screen size, so widget content renders identically on every
-   device — no per-size patching. `card` should be aspect-locked to design/design. */
+   device, no per-size patching. `card` should be aspect-locked to design/design. */
 export function mountScaledWidget(card, { src, title, design, iframeOpts, overlayHref, mobile, onSwipe } = {}) {
   const [dw, dh] = design;
   const o = iframeOpts || {};
@@ -86,7 +86,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   /* On mobile, an iframe swallows touches so the home pager never sees a swipe that
      starts on a widget. Rather than overlay the iframe (which would block taps from
      reaching interactive widget content), we listen on the iframe's own document
-     (same-origin) — so interior taps still work, horizontal swipes page the home
+     (same-origin), so interior taps still work, horizontal swipes page the home
      screen, and a tap on non-interactive widget area opens the widget's link. */
   if (mobile) {
     const attach = () => {
@@ -120,7 +120,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     const s = Math.max(w / dw, h / dh);            /* cover; with matched aspect = exact fill */
     const tx = (w - dw * s) / 2, ty = (h - dh * s) / 2;
     ifr.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
-    ifr.style.opacity = '1';            /* reveal only once scaled — avoids the flash of unscaled content on load */
+    ifr.style.opacity = '1';            /* reveal only once scaled, avoids the flash of unscaled content on load */
   };
   if (typeof ResizeObserver !== 'undefined') { new ResizeObserver(fit).observe(card); }
   else { window.addEventListener('resize', fit); }

@@ -1,5 +1,5 @@
 /* Optional widget author toolbox.
-   Importing this is never required — a widget can fetch and draw entirely on its
+   Importing this is never required; a widget can fetch and draw entirely on its
    own. It bundles the small, repeatedly-useful primitives so an author building
    a widget for a new service can reuse them instead of re-deriving them.
 
@@ -8,7 +8,7 @@
      fetchData(endpoint, opts?)      GET the generic data endpoint, parsed JSON
      getConfig()                     GET this widget's (secret-free) config
 
-   VISUALS  (self-contained inline SVG/DOM — no extra CSS needed)
+   VISUALS  (self-contained inline SVG/DOM, no extra CSS needed)
      smoothPath(points)              smooth SVG path string through [[x,y],...]
      sparkline(values, opts?)        an <svg> area+line chart element
      deviationBars(values, opts?)    an <svg> bar chart, bars above the series

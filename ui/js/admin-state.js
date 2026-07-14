@@ -1,5 +1,5 @@
 // @ts-check
-/* Admin UI — shared mutable state.
+/* Admin UI: shared mutable state.
    One object so the admin modules can read and write the same values. Fields
    keep the names they had as module-level variables; only the access changed
    (items -> state.items). List-only state (_flt, collapsedFolders) stays local

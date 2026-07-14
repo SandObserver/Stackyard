@@ -64,7 +64,7 @@ function buildAuth(authDecl, wc) {
 function dataFnContext(wc, endpoint, searchParams) {
   const ctx = {
     config:   wc,                 /* full widgetConfig, including secrets (server-side only) */
-    settings: loadConfig().settings || {}, /* global non-secret config (e.g. stats.diskMount, networkInterface) — server-side only */
+    settings: loadConfig().settings || {}, /* global non-secret config (e.g. stats.diskMount, networkInterface), server-side only */
     endpoint: endpoint,
     params:   searchParams,       /* URLSearchParams for any extra query params */
     fetchJSON,                    /* the safe fetcher (TLS, redirects, size limits, parsing) */

@@ -1,4 +1,4 @@
-/* Admin UI — app and folder forms.
+/* Admin UI: app and folder forms.
    Builds the app edit form (icon picker, badge picker) and the folder form.
    Reads and writes shared state; exports buildAppForm, buildFolderForm, and
    parseKV (used by the save path). */
@@ -8,7 +8,7 @@ import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
 
-/* Folder form — settings-row system (PSD: add_new_folder).
+/* Folder form: settings-row system (PSD: add_new_folder).
    Folder Name = inline-edit row; Add Apps = tap-to-toggle checklist dropdown. */
 export function buildFolderForm(body,item){
   const children=item?.children||[];
@@ -217,9 +217,9 @@ function wireIcon(){
   let t;
   inp.oninput=()=>{
     const v=inp.value.trim();
-    /* Full URL — use directly */
+    /* Full URL, use directly */
     if(v.startsWith('http://')||v.startsWith('https://')){state.siurl=v;updPrev();rs.classList.remove('open');return;}
-    /* Shorthand like "radarr.svg" or "radarr" — resolve and preview immediately */
+    /* Shorthand like "radarr.svg" or "radarr", resolve and preview immediately */
     if(v&&!v.includes('/')){
       state.siurl=v;updPrev();
       /* Also search CDN */
@@ -241,7 +241,7 @@ function wireIcon(){
   /* Upload handler */
   const upInput=document.getElementById('ip-upload');
   const upBtn=document.getElementById('ip-upload-lbl');
-  /* Explicit click handler — more reliable than a <label> wrapping the input,
+  /* Explicit click handler, more reliable than a <label> wrapping the input,
      especially since the button text is swapped during upload. */
   if(upBtn&&upInput){
     upBtn.onclick=()=>upInput.click();
@@ -378,7 +378,7 @@ async function fetchBadge(){
 function renderBadgeList(nums,existingOnly,query=''){
   const list=document.getElementById('blist');if(!list)return;list.innerHTML='';
   if(existingOnly&&!nums.length){
-    /* Issue #8: saved paths already shown in #bst hint — don't repeat here */
+    /* Issue #8: saved paths already shown in #bst hint, don't repeat here */
     if(state.spaths.length){
       state.spaths.forEach(p=>{
         const it=document.createElement('div');it.className='bi on';
