@@ -37,3 +37,6 @@ jobs:
 
       - name: Typecheck (frontend, opt-in files)
         run: npm run typecheck:ui
+
+      - name: Docker build smoke test
+        run: docker build -t stackyard:ci .
