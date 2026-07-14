@@ -1,0 +1,24 @@
+# Render blueprint for the public demo (https://render.com/docs/blueprint-spec).
+# Runs a published release image in demo mode: read-only, bundled sample config,
+# no outbound requests.
+#
+# PORT is pinned to 3000 on purpose. Render injects PORT=10000 into every
+# container; the API reads PORT, and nginx proxies to 127.0.0.1:3000, so leaving
+# Render's value in place would bind the API where nginx is not looking. Nginx
+# itself serves on 80 (EXPOSE 80), which Render detects.
+services:
+  - type: web
+    name: stackyard-demo
+    runtime: image
+    plan: free
+    region: oregon
+    image:
+      url: ghcr.io/sandobserver/stackyard:1.1.0
+    envVars:
+      - key: DEMO_MODE
+        value: "true"
+      - key: PORT
+        value: "3000"
+      - key: TRUST_PROXY
+        value: "true"
+    healthCheckPath: /health
