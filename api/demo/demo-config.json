@@ -1,8 +1,14 @@
 {
   "_schemaVersion": 1,
   "settings": {
-    "background": { "type": "color", "color": "#0e1116" },
-    "auth": { "enabled": false, "setupPrompted": true },
+    "background": {
+      "type": "color",
+      "color": "#0e1116"
+    },
+    "auth": {
+      "enabled": false,
+      "setupPrompted": true
+    },
     "logLevel": "info",
     "language": "en"
   },
@@ -15,8 +21,21 @@
       "widgetSize": "medium",
       "widgetConfig": {
         "widgetSubType": "system-summary",
-        "slots": [{ "type": "cpu" }, { "type": "ram" }, { "type": "disk", "primary": "/" }],
-        "network": { "enabled": false }
+        "slots": [
+          {
+            "type": "cpu"
+          },
+          {
+            "type": "ram"
+          },
+          {
+            "type": "disk",
+            "primary": "/"
+          }
+        ],
+        "network": {
+          "enabled": false
+        }
       }
     },
     {
@@ -25,7 +44,10 @@
       "widgetType": "dns",
       "label": "Pi-hole",
       "widgetSize": "medium",
-      "widgetConfig": { "provider": "pihole", "dnsUrl": "https://dns.example.com" }
+      "widgetConfig": {
+        "provider": "pihole",
+        "dnsUrl": "https://dns.example.com"
+      }
     },
     {
       "id": "w-github",
@@ -85,26 +107,13 @@
       "label": "Backup",
       "widgetSize": "small",
       "widgetConfig": {
-        "slots": [{
-          "provider": "duplicati",
-          "customName": "Offsite Backup",
-          "useDefault": true,
-          "dupUrl": "https://backup.example.com"
-        }]
-      }
-    },
-    {
-      "id": "w-connections",
-      "type": "widget",
-      "widgetType": "connections",
-      "label": "VPN",
-      "widgetSize": "medium",
-      "widgetConfig": {
-        "view": "map",
-        "showLegend": true,
-        "services": [
-          { "id": "svc-wg-home", "type": "gluetun", "name": "Home", "url": "https://vpn.example.com", "adminUrl": "https://vpn.example.com", "color": "#30D158", "enabled": true },
-          { "id": "svc-wg-remote", "type": "conduit", "name": "Remote", "url": "https://relay.example.com", "adminUrl": "https://relay.example.com", "color": "#BF5AF2", "enabled": true }
+        "slots": [
+          {
+            "provider": "duplicati",
+            "customName": "Offsite Backup",
+            "useDefault": true,
+            "dupUrl": "https://backup.example.com"
+          }
         ]
       }
     },
@@ -112,7 +121,10 @@
       "id": "folder-media",
       "type": "folder",
       "label": "Media",
-      "children": ["app-jellyfin", "app-immich"]
+      "children": [
+        "app-jellyfin",
+        "app-immich"
+      ]
     },
     {
       "id": "app-jellyfin",
@@ -121,7 +133,12 @@
       "href": "https://media.example.com",
       "iconUrl": "jellyfin",
       "color": "#7B2FF7",
-      "monitoring": { "activity": { "enabled": true, "interval": 30 } }
+      "monitoring": {
+        "activity": {
+          "enabled": true,
+          "interval": 30
+        }
+      }
     },
     {
       "id": "app-immich",
@@ -138,7 +155,12 @@
       "href": "https://containers.example.com",
       "iconUrl": "portainer",
       "color": "#13BEF9",
-      "monitoring": { "activity": { "enabled": true, "interval": 30 } }
+      "monitoring": {
+        "activity": {
+          "enabled": true,
+          "interval": 30
+        }
+      }
     },
     {
       "id": "app-hass",
@@ -155,7 +177,12 @@
       "href": "https://metrics.example.com",
       "iconUrl": "grafana",
       "color": "#F46800",
-      "monitoring": { "healthcheck": { "enabled": true, "pingUrl": "https://metrics.example.com" } }
+      "monitoring": {
+        "healthcheck": {
+          "enabled": true,
+          "pingUrl": "https://metrics.example.com"
+        }
+      }
     },
     {
       "id": "app-vaultwarden",

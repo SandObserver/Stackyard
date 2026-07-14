@@ -53,7 +53,7 @@ test('demo config carries no secret values, only Set flags', () => {
 
 test('demo config has the expected showcase shape', () => {
   const types = demo.items.reduce((a, i) => { a[i.type] = (a[i.type] || 0) + 1; return a; }, {});
-  assert.equal(types.widget, 8);
+  assert.equal(types.widget, 7);
   assert.equal(types.app, 6);
   assert.equal(types.folder, 1);
   assert.equal(demo.settings.background.color, '#0e1116');
