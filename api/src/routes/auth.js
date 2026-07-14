@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { on, json, readBody, checkOrigin, getIp } = require('../router');
+const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
 const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, checkRateLimit, recordFailedAttempt, clearAttempts, isAuthenticated, hasValidSession } = require('../auth');
@@ -42,6 +43,7 @@ on('POST', '/api/auth/logout', (req, res) => {
 });
 
 on('POST', '/api/auth/set-password', async(req, res) => {
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
   if (!checkOrigin(req, res)) return;
   try {
     const cfg = loadConfig();
@@ -66,6 +68,7 @@ on('POST', '/api/auth/set-password', async(req, res) => {
 });
 
 on('POST', '/api/auth/dismiss-setup', (req, res) => {
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
   if (!checkOrigin(req, res)) return;
   const cfg = loadConfig();
   cfg.settings = cfg.settings || {};
@@ -76,6 +79,7 @@ on('POST', '/api/auth/dismiss-setup', (req, res) => {
 });
 
 on('POST', '/api/auth/toggle', async(req, res) => {
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
   if (!checkOrigin(req, res)) return;
   try {
     const { enabled } = JSON.parse(await readBody(req));

@@ -1,6 +1,7 @@
 const fs   = require('fs');
 const path = require('path');
 const log  = require('./log');
+const { IS_DEMO } = require('./demo');
 
 const CONFIG_PATH = process.env.CONFIG_PATH || '/data/apps.json';
 const ICONS_PATH  = process.env.ICONS_PATH  || '/icons';
@@ -24,7 +25,21 @@ function migrate(cfg) {
   return cfg;
 }
 
+let _demoCfg = null;
+/* In demo mode the config is read from the bundled showcase file and never
+   from disk, so nothing a visitor does can persist. */
+function loadDemoConfig() {
+  if (!_demoCfg) {
+    const raw = fs.readFileSync(path.join(__dirname, '..', 'demo', 'demo-config.json'), 'utf8');
+    _demoCfg = migrate(JSON.parse(raw));
+    ensureSystemItems(_demoCfg);
+  }
+  return _demoCfg;
+}
+
 function loadConfig() {
+  if (IS_DEMO) return loadDemoConfig();
+
   const now = Date.now();
   if (_cfgCache && (now - _cfgCacheAt) < CONFIG_TTL_MS) return _cfgCache;
 

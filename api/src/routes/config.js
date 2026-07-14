@@ -1,4 +1,5 @@
 const { on, json, readBody, checkOrigin } = require('../router');
+const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');
 const { scrubConfigSecrets, preserveConfigSecrets } = require('../widget-secrets');
@@ -24,6 +25,7 @@ on('GET', '/api/settings/unsplash-key', (_, res) => {
 });
 
 on('POST', '/api/settings/unsplash-key', async(req, res) => {
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
   if (!checkOrigin(req, res)) return;
   try {
     const { apiKey='' } = JSON.parse(await readBody(req));
@@ -36,6 +38,7 @@ on('POST', '/api/settings/unsplash-key', async(req, res) => {
 });
 
 on('POST', '/api/config', async(req, res) => {
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
   if (!checkOrigin(req, res)) return;
   try {
     const data = JSON.parse(await readBody(req));
