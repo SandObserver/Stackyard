@@ -266,23 +266,16 @@ body{background:transparent;position:relative;z-index:1}
 .sec-f{margin-bottom:0}
 .req{color:var(--rd);margin-left:2px}
 .opt-label,.opt-span{opacity:.45;font-weight:400}
-select.fc{cursor:pointer}
-textarea.fc{resize:vertical;min-height:72px}
 .hint{font-size:12px;color:var(--dm);margin-top:5px;line-height:1.5}
 .hint strong{color:var(--tx)}
 .hint code{font-family:monospace;font-size:11px}
 .div{height:1px;background:var(--bd-inner);margin:16px 0}
 .divider-h{height:1px;background:var(--bd-inner);margin:12px 0}
-.trow-bb{border-bottom:1px solid var(--bd-inner)}
 .tlbl{font-size:14px;font-weight:500}
 .tdsc{font-size:12px;color:var(--dm);margin-top:2px}
 .sp{flex:1}
 .sub{overflow:hidden;max-height:0;transition:max-height .25s ease;padding-left:4px}
 .sub.open{max-height:2000px}
-.fr-inline{display:flex;gap:8px}
-.fr-inline .btn{flex-shrink:0}
-.fr-mb0{margin-bottom:0}
-.mb0-fr{margin-bottom:0}
 .pt12{padding-top:12px}
 .irow{display:flex;align-items:center;gap:8px}
 

@@ -1,7 +1,7 @@
 /* Styles for the auto-generated widget config form (widget-config-form.js).
    Namespaced .wcf-* so they cannot collide with existing admin rules. Only the
-   repeatable-group affordances need styling — all simple fields reuse the
-   existing .fr/.fc/.stl/.hint/.tog classes. Uses the admin theme variables. */
+   repeatable-group affordances need styling; all simple fields reuse the shared
+   admin settings-row classes. Uses the admin theme variables. */
 
 .wcf-group { margin: 6px 0 4px; }
 
