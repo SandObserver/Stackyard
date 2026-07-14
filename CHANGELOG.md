@@ -2,27 +2,25 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-13
+
 - The Scrutiny and network-speed widget data routes now apply the same SSRF
   guard and IP pinning as the rest of the proxy, and the two Scrutiny routes
   share one code path. If you point either widget at a private IP literal,
   set `ALLOW_PRIVATE_IPS=true` (Docker service names are unaffected).
 - Backup widget instance passwords are now stripped from the config sent to the
-  browser and on export, matching every other widget. They were previously
-  returned in plaintext.
+  browser and on export, matching every other widget.
 - Widget secret handling is unified on the manifest-driven path. Widgets now
-  declare their secrets in `widget.json` (including secrets nested one level via
-  a new `object` field type), replacing the per-widget special cases.
+  declare their secrets in `widget.json`.
 - Sessions now expire after a configurable lifetime (default 30 days, set with
   `SESSION_MAX_AGE_DAYS`). Tokens carry a signed issued-at enforced server-side.
-  Existing sessions are invalidated on upgrade, so users log in once more.
 - `esc()` now escapes single quotes, closing a latent gap for values placed in
   single-quoted HTML attributes.
-- Removed a dead touch-cleanup variable in the dashboard, replaced em-dashes in
-  six user-facing strings, and fixed two docs typos.
+- Removed a dead touch-cleanup variable in the dashboard, fixed two docs typos.
 
 ---
 
-## [1.0.0] — First public release
+## [1.0.0] — First public release - 2026-07-12
 
 Stackyard is a self-hosted homelab dashboard: a calm, launcher-style grid
 of app tiles, folders, and a few useful widgets. Single container, no
