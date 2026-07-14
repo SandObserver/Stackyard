@@ -3,6 +3,8 @@ const { loadConfig } = require('../config');
 const { fetchJSON, pingUrl, strictCheckSsrf, rewriteUrl } = require('../proxy');
 const { rateLimit } = require('../auth');
 const { PING_MS, FETCH_MS } = require('../timeouts');
+const { IS_DEMO } = require('../demo');
+const demoData = require('../demo-data');
 const { collectNumbers, computeBadgeValue } = require('../badge-extract');
 
 on('POST', '/api/ping', async(req, res) => {
@@ -20,6 +22,7 @@ on('POST', '/api/ping', async(req, res) => {
 
 on('GET', '/api/badges', async(_, res) => {
   const cfg = loadConfig(), out = {};
+  if (IS_DEMO) return json(res, 200, demoData.demoBadges(cfg.items));
   await Promise.allSettled(cfg.items
     .filter(i => i.type==='app' && (
       (i.badge?.enabled && i.badge?.url) ||

@@ -2,6 +2,8 @@ const { on, json, readBody, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchJSON } = require('../proxy');
 const { BACKUP_MS } = require('../timeouts');
+const { IS_DEMO } = require('../demo');
+const demoData = require('../demo-data');
 const { dupList, dupId, dupName, dupMeta, dupSchedule, dupNormalizeBase, dupDeriveStatus, kopiaDeriveStatus, kopiaSourceId } = require('../backup-status');
 
 const _dupTokens = new Map();
@@ -150,6 +152,7 @@ on('GET', '/api/backup-data/:id', async(req, res) => {
   if (!w) return json(res, 404, { error: 'widget not found' });
 
   const wc    = w.widgetConfig || {};
+  if (IS_DEMO) return json(res, 200, demoData.demoBackup(wc));
   const slots = Array.isArray(wc.slots) ? wc.slots : [];
 
   const dupGroups   = {};  /* url → {base, pass, slots:[{i,jobId}]} */

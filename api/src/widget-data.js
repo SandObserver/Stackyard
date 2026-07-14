@@ -7,6 +7,8 @@ const { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptime
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
 const { dispatchProvider } = require('./provider-dispatch');
+const { IS_DEMO } = require('./demo');
+const demoData = require('./demo-data');
 const log = require('./log');
 
 /* Normalize a user-entered base URL the same way the existing hand-written data
@@ -69,7 +71,7 @@ function dataFnContext(wc, endpoint, searchParams) {
     params:   searchParams,       /* URLSearchParams for any extra query params */
     fetchJSON,                    /* the safe fetcher (TLS, redirects, size limits, parsing) */
     parsePrometheus,
-    metrics:  { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds },
+    metrics:  IS_DEMO ? demoData.metrics : { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds },
     normalizeBase,
     buildAuth,
     log,
@@ -132,6 +134,12 @@ async function fetchDeclarative(decl, wc, endpointName) {
    widget ships a data.js, otherwise the declarative path. Exported for tests. */
 async function getWidgetData(item, entry, endpointName, searchParams) {
   const wc = item.widgetConfig || {};
+  if (IS_DEMO) {
+    /* Stats runs its real code path against fake metrics; the fetch-based
+       widgets get a canned body since their upstream is unreachable here. */
+    const body = demoData.demoWidgetBody(item.widgetType, endpointName);
+    if (body) return { status: 200, body };
+  }
   if (entry.hasDataFn) {
     const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams));
     return { status: 200, body: result };
