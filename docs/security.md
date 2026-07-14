@@ -40,6 +40,11 @@ Setting `ALLOW_PRIVATE_IPS=true` disables this guard entirely, so private, loopb
 - Login is rate-limited to 5 attempts per IP per 15 minutes.
 - Changing the password rotates the session secret.
 
+Until a password is set, `/api/auth/set-password` accepts the first caller with
+no authentication, so on a shared or untrusted network the first person to reach
+a fresh install can claim the account. Set a password immediately after first
+launch, or keep the install off untrusted networks until you have.
+
 Rate limiting keys on the client IP. Behind a proxy this is only meaningful if
 the proxy passes a real client IP and `TRUST_PROXY` is configured; otherwise all
 requests share one IP.
