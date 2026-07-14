@@ -13,7 +13,7 @@ services:
     plan: free
     region: oregon
     image:
-      url: ghcr.io/sandobserver/stackyard:1.1.0
+      url: ghcr.io/sandobserver/stackyard:1.2.0-rc.1
     envVars:
       - key: DEMO_MODE
         value: "true"
