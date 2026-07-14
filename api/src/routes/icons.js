@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { on, json, checkOrigin, getIp } = require('../router');
+const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, ICONS_PATH } = require('../config');
 const { fetchJSON } = require('../proxy');
 const log = require('../log');
@@ -48,6 +49,7 @@ on('GET', '/api/icons/local', (_, res) => {
 });
 
 on('POST', '/api/icons/upload', async(req, res) => {
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
   if (!checkOrigin(req, res)) return;
   try {
     const ip = getIp(req);

@@ -3,6 +3,7 @@ const https = require('https');
 const dns   = require('dns').promises;
 const { loadConfig } = require('./config');
 const { PING_MS, FETCH_MS } = require('./timeouts');
+const { IS_DEMO } = require('./demo');
 
 const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.|::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.))/i;
 const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
@@ -207,6 +208,7 @@ const strictCheckSsrf = guardSsrf;
    rebind between check and connect cannot redirect us to a private address. The
    Host header and TLS servername stay set to the original hostname. */
 function fetchJSON(raw, opts = {}) {
+  if (IS_DEMO) return Promise.resolve({ status: 503, data: null, error: 'Outbound requests are disabled in demo mode' });
   return new Promise((resolve, reject) => {
     raw = rewriteUrl(raw); /* remap host IP → container name if portMap is configured */
     let u; try { u = new URL(raw); } catch(e) { return reject(e); }
@@ -282,6 +284,7 @@ function statusDesc(code) {
    pinIp: connect to this exact IP (from guardSsrf) instead of re-resolving,
    with Host header and TLS servername kept on the original hostname. */
 function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
+  if (IS_DEMO) return Promise.resolve({ ok: false, status: 0, error: 'Outbound requests are disabled in demo mode' });
   return new Promise(resolve => {
     let u; try { u = new URL(raw); } catch { return resolve({ ok:false, status:0, error:'Invalid URL' }); }
     const lib  = u.protocol === 'https:' ? https : http;
