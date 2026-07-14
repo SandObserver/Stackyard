@@ -165,7 +165,7 @@ function parseXml(xml) {
 /* Resolves the hostname once and applies the private-IP policy to that exact
    resolution. Returns { error } when blocked, or { ip } with the validated
    address when it should be pinned for the subsequent request (closing the
-   DNS-rebind TOCTOU gap — the IP that passed the check is the IP we connect to).
+   DNS-rebind TOCTOU gap: the IP that passed the check is the IP we connect to).
    ip is null for dotless Docker names and host-IP matches, which are trusted and
    connect by hostname.
 
@@ -200,9 +200,9 @@ async function guardSsrf(rawUrl) {
 /* Public name for the guard at call sites that validate a user-submitted URL. */
 const strictCheckSsrf = guardSsrf;
 
-/* opts.skipTls — explicit per-call override (true/false).
+/* opts.skipTls: explicit per-call override (true/false).
    If omitted, falls back to shouldSkipTls() for internal callers.
-   opts.pinIp — connect to this exact IP instead of re-resolving the hostname.
+   opts.pinIp: connect to this exact IP instead of re-resolving the hostname.
    Used to carry the IP validated by guardSsrf through to the request, so a DNS
    rebind between check and connect cannot redirect us to a private address. The
    Host header and TLS servername stay set to the original hostname. */
@@ -230,7 +230,7 @@ function fetchJSON(raw, opts = {}) {
       const sc = res.statusCode ?? 0;
       if (sc >= 300 && sc < 400) {
         res.resume();
-        return done(reject, new Error(`Redirect blocked (${sc}) — use the final URL directly`));
+        return done(reject, new Error(`Redirect blocked (${sc}). Use the final URL directly`));
       }
       const bufs = []; let total = 0;
       res.on('data', c => {
@@ -277,9 +277,9 @@ function statusDesc(code) {
   return `HTTP ${code}`;
 }
 
-/* skipTls — explicit per-call override (true/false).
+/* skipTls: explicit per-call override (true/false).
    If omitted, falls back to shouldSkipTls() for internal callers.
-   pinIp — connect to this exact IP (from guardSsrf) instead of re-resolving,
+   pinIp: connect to this exact IP (from guardSsrf) instead of re-resolving,
    with Host header and TLS servername kept on the original hostname. */
 function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
   return new Promise(resolve => {

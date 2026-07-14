@@ -32,7 +32,7 @@ function _entryFor(item, entry) {
    "<key>Set": true flag so the UI can show that a value is stored. Mutates the
    item, so callers must pass a copy (the read paths already deep-copy config
    before sending it to the browser). Items whose type is not a folder-style
-   widget are left untouched — legacy widgets stay on their existing handling. */
+   widget are left untouched, legacy widgets stay on their existing handling. */
 function scrubWidgetSecrets(item, entry) {
   const e = _entryFor(item, entry);
   if (!e || !item || !item.widgetConfig) return;

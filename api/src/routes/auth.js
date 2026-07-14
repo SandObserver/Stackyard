@@ -19,7 +19,7 @@ on('POST', '/api/auth/login', async(req, res) => {
   try {
     const { password = '' } = JSON.parse(await readBody(req));
     const cfg = loadConfig();
-    if (!cfg.settings?.auth?.enabled) return json(res, 200, { ok:true }); /* auth off — always pass */
+    if (!cfg.settings?.auth?.enabled) return json(res, 200, { ok:true }); /* auth off, always pass */
     const limitErr = checkRateLimit(ip);
     if (limitErr) { log.audit('login blocked', { ip, reason:'rate_limit' }); return json(res, 429, { error:limitErr }); }
     const hash = cfg.settings.auth.passwordHash;

@@ -1,6 +1,6 @@
 /* Defense-in-depth sanitizer for uploaded SVG icons, split out from the icons
    route so it can be unit-tested. The primary XSS control is that uploaded SVGs
-   render only through <img src> (a non-executing context) — see the SECURITY
+   render only through <img src> (a non-executing context). See the SECURITY
    INVARIANT note in ui/js/icons.js. This strips script-capable elements and
    attributes as a second layer. Pure: string in, sanitized string out. */
 

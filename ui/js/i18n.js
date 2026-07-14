@@ -1,6 +1,6 @@
 // @ts-check
 /* Minimal i18n runtime. Catalogs are plain JSON at /i18n/<code>.json; English
-   is the source and the fallback. No build step and no runtime dependency — the
+   is the source and the fallback. No build step and no runtime dependency; the
    app only ever fetches JSON. Adding a language is two steps: add an entry to
    LANGUAGES below and drop in ui/i18n/<code>.json. Translations can be authored
    by hand or by any external tool; nothing here depends on one. */
@@ -26,7 +26,7 @@ export function dirFor(code) {
   return RTL.has(String(code || '').split('-')[0]) ? 'rtl' : 'ltr';
 }
 
-let base = {};    /* en.json, flattened — the fallback for every key */
+let base = {};    /* en.json, flattened: the fallback for every key */
 let active = {};  /* selected locale, flattened; falls back to base per key */
 let current = 'en';
 let revMap = {};  /* English source text -> localized text, for dynamic markup */
@@ -86,7 +86,7 @@ export function translateDOM(root) {
 
 /* Translate dynamically-built markup (e.g. the admin form builders) by matching
    the rendered English text against the catalog. Scoped to label-type elements
-   only — never user-entered values (.rv), inputs, or option lists — so user data
+   only, never user-entered values (.rv), inputs, or option lists, so user data
    is never touched. Call after inserting generated HTML. */
 const TEXT_SELECTORS = '.rl, .grp-hdr, .grp-tip, .row-btn, .row-dd-empty, .tile-cap, .segr-opt span, .rv.is-ph';
 export function translateText(root) {

@@ -1,4 +1,4 @@
-/* Admin UI — authentication.
+/* Admin UI: authentication.
    Login gate and password-strength meter. onLogin is injected by the caller
    (the main module's load()) so this module doesn't depend back on it. */
 import { ag, ap } from '/js/admin-shared.js?v=2';
@@ -12,7 +12,7 @@ export async function checkAuth(onLogin) {
   } catch(e) {
     /* 401 means auth is enabled and we're not logged in */
     if (e.status === 401) { showLoginScreen(onLogin); return false; }
-    return true; /* any other error — let load() handle it */
+    return true; /* any other error, let load() handle it */
   }
 }
 

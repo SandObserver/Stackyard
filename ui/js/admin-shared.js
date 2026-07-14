@@ -1,4 +1,4 @@
-/* Admin UI — shared foundation.
+/* Admin UI: shared foundation.
    Stateless helpers and constants used across the admin modules. No shared
    mutable state lives here; that stays in the main module. */
 

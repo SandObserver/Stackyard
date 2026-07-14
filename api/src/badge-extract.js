@@ -12,7 +12,7 @@ function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 })
   if (typeof obj === 'number') { out.push({ path: path || '(root)', value: obj }); return out; }
   if (Array.isArray(obj)) {
     const countPath = path ? `${path}.$count` : '$count';
-    out.push({ path: countPath, value: obj.length, label: `${path || 'root'} — count` });
+    out.push({ path: countPath, value: obj.length, label: `${path || 'root'} (count)` });
     const sample = obj.find(i => i && typeof i === 'object' && !Array.isArray(i));
     if (sample) {
       const seen = {};

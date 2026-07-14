@@ -387,7 +387,7 @@ export function buildMobile() {
       `flex-shrink:0;border-radius:${wBR}px;overflow:hidden;position:relative;` +
       `border:1px solid rgba(255,255,255,.09);background:${bg};` +
       `-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);`;
-    /* Same URL as desktop (no mobile-only branch) — the fixed design size now
+    /* Same URL as desktop (no mobile-only branch); the fixed design size now
        guarantees identical rendering, so platform-specific widget layouts are unnecessary.
        overlayHref + mobile:true add a transparent layer so swipes page the home screen
        (iframes otherwise swallow the touch) while a tap opens the widget's link. */

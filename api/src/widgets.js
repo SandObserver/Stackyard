@@ -73,7 +73,7 @@ function _validateManifest(name, m) {
 
 /* Scan the widgets directory and build the registry. Each entry records the
    parsed manifest plus whether the folder ships a data function or a custom
-   editor (their presence, not their contents — those are loaded elsewhere).
+   editor (their presence, not their contents, those are loaded elsewhere).
    A missing directory, a non-folder entry, or a folder without widget.json is
    simply skipped: the legacy flat-file widgets coexist untouched, and an empty
    registry is a valid result. A malformed widget.json is skipped with a logged
@@ -94,7 +94,7 @@ function loadRegistry() {
     const name     = ent.name;
     const dir      = path.join(WIDGETS_PATH, name);
     const manPath  = path.join(dir, 'widget.json');
-    if (!fs.existsSync(manPath)) continue; /* not a folder-style widget — skip */
+    if (!fs.existsSync(manPath)) continue; /* not a folder-style widget, skip */
 
     let manifest;
     try {
@@ -130,7 +130,7 @@ function getRegistry() {
 }
 
 /* The browser-facing shape: everything the dashboard and admin UI need to draw
-   the type picker, the config editor, and the widget iframe — and nothing the
+   the type picker, the config editor, and the widget iframe, and nothing the
    backend keeps to itself (the "data" routing block stays server-side). */
 function _publicEntry(_name, e) {
   const m = e.manifest;

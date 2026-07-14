@@ -1,4 +1,4 @@
-/* Admin UI — settings sections.
+/* Admin UI: settings sections.
    General / Appearance / Security settings: loads values into the settings
    screen and persists changes. Exports loadSettings (called on config load)
    and showBgFields (called by the background-type toggle). */
@@ -38,7 +38,7 @@ export function loadSettings(c){
     if(laBtn){const tn=laBtn.childNodes[0];if(tn&&tn.nodeType===3)tn.textContent=(laLi?laLi.textContent:langEl.value);}
     document.querySelectorAll('#lang-list li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===langEl.value)));
   }
-  /* Unsplash API key — fetch whether one is configured via dedicated endpoint
+  /* Unsplash API key: fetch whether one is configured via dedicated endpoint
      (the key itself is never included in /api/config to avoid exposure) */
   const apiEl=(document.getElementById('bg-apikey-inp')||document.getElementById('bg-apikey'));
   if(apiEl){
@@ -125,14 +125,14 @@ export function loadSettings(c){
   if(socketEl)socketEl.value=s.server?.socketProxyUrl||'';
   document.getElementById('srv-save').addEventListener('click',saveServer);
 
-  /* Wire password toggle unconditionally — doesn't depend on auth check */
+  /* Wire password toggle unconditionally, doesn't depend on auth check */
   const secEnEl=document.getElementById('sec-en');
   const secSubEl=document.getElementById('sec-sub');
   const secPwEl=document.getElementById('sec-pw');
   let pwStrengthWired=false;
   function openSecSub(){
     secSubEl.classList.add('open');
-    /* Wire strength meter on first open — avoids Safari input event bug
+    /* Wire strength meter on first open, avoids Safari input event bug
        where listeners on password fields in hidden containers don't fire */
     if(!pwStrengthWired&&secPwEl){
       pwStrengthWired=true;
@@ -166,7 +166,7 @@ export function loadSettings(c){
     if(pwValEl)pwValEl.textContent=d.passwordSet?'Configured':'Not set';
     syncLogout();
   }).catch(()=>{
-    /* Auth check failed — toggle still works, just without pre-loaded state */
+    /* Auth check failed, toggle still works, just without pre-loaded state */
   });
 }
 export function showBgFields(type){
@@ -174,7 +174,7 @@ export function showBgFields(type){
     const el=document.getElementById(`bg-${t}-fields`);
     if(el)el.classList.toggle('d-none', t!==type);
   });
-  /* Brightness dims a wallpaper image — meaningless for a solid colour,
+  /* Brightness dims a wallpaper image, meaningless for a solid colour,
      so it's shown only for the unsplash/url sources. */
   const brRow=document.getElementById('bg-brightness-row');
   if(brRow)brRow.classList.toggle('d-none', type==='color');
@@ -197,7 +197,7 @@ async function saveWallpaper(){
     /* Save main config first */
     const c=await ag('/api/config');c.settings=c.settings||{};c.settings.background=bg;
     await ap('/api/config',c);
-    /* Save Unsplash key separately AFTER main config — the GET /api/config strips the key,
+    /* Save Unsplash key separately AFTER main config; the GET /api/config strips the key,
        so state.saving it before would cause the subsequent config write to overwrite it with nothing */
     if(type==='unsplash'){
       const keyVal=(document.getElementById('bg-apikey-inp')||document.getElementById('bg-apikey'))?.value?.trim()||'';

@@ -11,7 +11,7 @@ import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=
 import { LANGUAGES, initI18n, translateText, t } from '/js/i18n.js?v=1';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
 
-/* Admin UI — Stackyard Dashboard */
+/* Admin UI: Stackyard Dashboard */
 
 /* Mobile layout switch. Uses the SAME rule as the dashboard's MOB flag
    (viewport <=768px OR a phone user-agent) so the admin and dashboard always
@@ -37,7 +37,7 @@ async function load(){
   await initI18n(c.settings?.language || 'en');
   /* Folder-style widgets: registry drives their auto-generated config editor. */
   try{ const wr=await ag('/api/widgets'); state._widgetReg={}; (wr.widgets||[]).forEach(w=>{ state._widgetReg[w.name]=w; }); }catch{ state._widgetReg={}; }
-  /* All folders start collapsed — user can expand by clicking */
+  /* All folders start collapsed, user can expand by clicking */
   state.items.filter(i=>i.type==='folder').forEach(f=>collapsedFolders.add(f.id));
   document.body.classList.add('authed');
   render();
@@ -45,7 +45,7 @@ async function load(){
   applyBg();
 }
 
-/* Wallpaper behind the settings panel — mirrors the dashboard's background settings. */
+/* Wallpaper behind the settings panel; mirrors the dashboard's background settings. */
 async function applyBg(){
   const root=document.documentElement;
   try{
@@ -186,8 +186,8 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   row.append(handle,ico,inf,pb,ac);
   /* ── Unified drag ──
      Drag data formats:
-       "top:itemId"            — top-level item being dragged
-       "child:folderId:itemId" — child item being dragged
+       "top:itemId"            = top-level item being dragged
+       "child:folderId:itemId" = child item being dragged
      Drop targets accept both formats and route accordingly.
   */
   const dragData = indent
@@ -358,7 +358,7 @@ const TYPE_LABELS={app:'App',widget:'Widget',folder:'Folder'};
 /* Edit (square-pen) and select (up/down) glyphs traced from the PSD. */
 
 
-/* Add New type selector — single card row, label left, three PSD tiles right. */
+/* Add New type selector: single card row, label left, three PSD tiles right. */
 function buildAddNewCard(){
   const grp=document.createElement('div');
   grp.className='grp';
@@ -423,7 +423,7 @@ function openModal(idx){
   const backBtn=document.getElementById('ev-back');
   if(backBtn) backBtn.onclick=()=>closeModal();
 
-  /* Body — Add New selector card renders inside (add-mode only) */
+  /* Body: Add New selector card renders inside (add-mode only) */
   state._evItem=item; state._evIsEdit=isEdit;
   _renderEditBody();
 
@@ -607,7 +607,7 @@ async function doSave(orig){
           slot.customName = (document.getElementById(`bak-name-${si}`)?.value||'').trim();
           const defEl = document.getElementById(`bak-def-${si}`);
           if (defEl) slot.useDefault = defEl.checked;
-          /* Only overwrite jobId from an enabled picker — a disabled (un-fetched)
+          /* Only overwrite jobId from an enabled picker; a disabled (un-fetched)
              picker has no value and must not wipe a previously-saved selection. */
           const jv = document.getElementById(`dup-job-${si}`) || document.getElementById(`kopia-src-${si}`);
           if (jv && !jv.disabled) slot.jobId = jv.value || null;
@@ -632,13 +632,13 @@ async function doSave(orig){
           label:wlabel,widgetSize:state._wsize,widgetConfig:{slots:_bk.savableSlots}};
 
       }else{
-        /* stats — slot values are kept live in state._wslots by the row commit handlers */
+        /* stats: slot values are kept live in state._wslots by the row commit handlers */
         const slots=buildStatsSlots(state._wslots);
         state._wnet.url      = document.getElementById('net-url')?.value?.trim()||'';
         state._wnet.provider = state._wnet.provider || 'myspeed';
         const newPass  = document.getElementById('net-pass')?.value||'';
         if (newPass) state._wnet.myspeedPass = newPass;
-        /* strip passSet flag from saved config — only real pass is stored */
+        /* strip passSet flag from saved config, only real pass is stored */
         const netToSave = {...state._wnet};
         delete netToSave.myspeedPassSet;
 
@@ -673,7 +673,7 @@ async function doSave(orig){
     }else if(state.ctype==='folder'){
       const label=document.getElementById('f-fname')?.value?.trim();
       if(!label){toast('Name required','err');return;}
-      /* Prevent adding an app to multiple folders — remove it from any existing folder first */
+      /* Prevent adding an app to multiple folders; remove it from any existing folder first */
       const children=[...document.querySelectorAll('#folder-apps-list li[aria-selected="true"]')].map(li=>li.dataset.val);
       if(!orig){
         children.forEach(cid=>{
@@ -734,7 +734,7 @@ function initAllInlineEdits(){
   initInlineEdit('ie-title','ie-input',{placeholder:'Stackyard',
     onCommit(v){document.getElementById('ie-title-v').textContent=v||'Stackyard';}});
 
-  /* desc uses a second input — create one */
+  /* desc uses a second input, create one */
   const descInp=document.createElement('input');descInp.id='ie-desc-input';document.body.appendChild(descInp);
   initInlineEdit('ie-desc','ie-desc-input',{placeholder:'Stackyard · self-hosted homelab dashboard'});
 

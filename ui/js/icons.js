@@ -5,7 +5,7 @@
    loaded via <img> cannot execute scripts, <style>, or event handlers.
    The upload-time sanitizer in api/src/routes/icons.js is defense-in-depth,
    NOT the primary XSS control. If an icon is ever inlined into the DOM
-   (innerHTML, inline <svg>, object/embed), this assumption breaks — re-evaluate
+   (innerHTML, inline <svg>, object/embed), this assumption breaks; re-evaluate
    SVG sanitization before doing so. */
 export const LOCAL_ICONS = new Set();
 

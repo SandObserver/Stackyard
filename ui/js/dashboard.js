@@ -1,4 +1,4 @@
-/* dashboard.js — boot, state, badge system, desktop layout, navigation, background, polling */
+/* dashboard.js: boot, state, badge system, desktop layout, navigation, background, polling */
 
 import { loadLocalIcons, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
@@ -60,7 +60,7 @@ function folderBadge(folder) {
   return { health: hasHealth, activity: actSum };
 }
 
-/* mkWrap bound to local breg — keeps call sites unchanged */
+/* mkWrap bound to local breg, keeps call sites unchanged */
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
 function paginate() {
@@ -161,7 +161,7 @@ function goTo(n, dotEls) {
 function syncMobPages() {
   const strip = document.getElementById('pages');
   const domCount = strip ? strip.children.length : 0;
-  if (domCount <= totalPages) return; /* no overflow pages — nothing to fix */
+  if (domCount <= totalPages) return; /* no overflow pages, nothing to fix */
   totalPages = domCount;
   /* Rebuild main dots */
   const dots = document.getElementById('dots'); dots.innerHTML = '';
@@ -169,7 +169,7 @@ function syncMobPages() {
     const d = mk('div'); d.className = 'dot'+(i===pg?' on':'');
     d.onclick = () => goTo(i); dots.appendChild(d);
   }
-  /* Rebuild pill dots — keep existing pill node, just add the extra dot */
+  /* Rebuild pill dots, keep existing pill node, just add the extra dot */
   const pillDots = document.querySelector('.msp-dots');
   if (pillDots) {
     /* Add missing dots (there may already be totalPages-1 dots from buildMobile) */
@@ -180,7 +180,7 @@ function syncMobPages() {
     }
     /* Re-sync active state */
     Array.from(pillDots.children).forEach((d, i) => d.classList.toggle('on', i === pg));
-    /* Patch pillBump to drive the full set of dots — wrap original to preserve animation */
+    /* Patch pillBump to drive the full set of dots, wrap original to preserve animation */
     const origBump = CB.mobPillBump;
     CB.mobPillBump = (newPg) => {
       if (origBump) origBump(newPg); /* runs pillPaging animation */
@@ -314,7 +314,7 @@ async function boot() {
     if (authCheck.status === 401) { window.location.href = '/admin/'; return; }
     authData = await authCheck.json();
     if (authData.enabled && !authData.authenticated) { window.location.href = '/admin/'; return; }
-  } catch { /* API down — handled below */ }
+  } catch { /* API down, handled below */ }
 
 
 
@@ -358,7 +358,7 @@ async function boot() {
       if (e.key === 'ArrowRight') goTo(pg+1);
       if (e.key === 'ArrowLeft')  goTo(pg-1);
     });
-    /* Desktop mouse drag — swipe pages with mouse */
+    /* Desktop mouse drag, swipe pages with mouse */
     let _dMx = 0, _dDragging = false;
     document.addEventListener('mousedown', e => { _dMx = e.clientX; _dDragging = false; });
     document.addEventListener('mousemove', e => { if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true; });
@@ -375,7 +375,7 @@ async function boot() {
 
   applyBg();
 
-  /* Rebuild layout on orientation/resize — MOB is parse-time so only fires on mobile.
+  /* Rebuild layout on orientation/resize; MOB is parse-time so only fires on mobile.
      In landscape, switch to desktop layout; in portrait, use mobile layout. */
   let _rt;
   const _rebuild = () => {

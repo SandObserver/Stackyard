@@ -43,7 +43,7 @@ function loadConfig() {
     _cfgCache = parsed; _cfgCacheAt = now;
     /* Persist once if a version bump actually changed the file, so an upgraded
        install migrates on disk even if the user never saves. Never let a failed
-       write (e.g. read-only volume) break reads — the migrated copy is already
+       write (e.g. read-only volume) break reads; the migrated copy is already
        cached in memory and will re-migrate next load. */
     if (parsed._schemaVersion !== before) { try { saveConfig(parsed); } catch {} }
     return parsed;
