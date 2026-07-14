@@ -10,6 +10,7 @@ import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
 import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=c3d495f0';
 import { LANGUAGES, initI18n, translateText, t } from '/js/i18n.js?v=1';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
+import { canJoinFolder, dropTargetKind } from '/js/admin-drag-logic.js?v=1';
 
 /* Admin UI: Stackyard Dashboard */
 
@@ -89,6 +90,21 @@ function moveRow(item,dir,opts={}){
   if(reorderItems(state.items,item,dir,opts)) save();
 }
 
+/* Line-icon glyphs for the admin list. Rendered from constant markup via a
+   template, so no user data reaches innerHTML. */
+const FOLDER_ICON = '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"></rect><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"></circle><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"></circle><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"></circle><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"></circle></svg>';
+const SIZE_ICONS = {
+  small:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9.7" cy="9.7" r="1" fill="currentColor"></circle><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></line></svg>',
+  medium: '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="7.6" cy="11.4" r="1.1" fill="currentColor"></circle><line x1="10.2" y1="11.4" x2="16.5" y2="11.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="7" y1="14.3" x2="16.5" y2="14.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line></svg>',
+  large:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5.5" width="12" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9" cy="9" r="1.2" fill="currentColor"></circle><line x1="8" y1="12.6" x2="16" y2="12.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="8" y1="14.8" x2="16" y2="14.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="8" y1="17" x2="13" y2="17" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line></svg>',
+  xlarge: '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3.5" width="10" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9.7" cy="7" r="1.1" fill="currentColor"></circle><line x1="9" y1="10.5" x2="15" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="12.7" x2="15" y2="12.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="14.9" x2="15" y2="14.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="17.1" x2="13" y2="17.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line></svg>',
+};
+function svgNode(markup){ const t=document.createElement('template'); t.innerHTML=markup; return t.content.firstElementChild; }
+
+/* Type of the row currently being dragged. dataTransfer is not readable during
+   dragover, so we stash it here to decide whether a folder can accept the drop. */
+let _dragType=null;
+
 function clearDragClasses(target){
   const rows=target?[target]:document.querySelectorAll('.row');
   rows.forEach(r=>{r.classList.remove('drag-above','drag-below','drag-into','drag-over');});
@@ -113,21 +129,25 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   if(_filtering)handle.style.visibility='hidden';
   /* Icon */
   const ico=document.createElement('div');ico.className='rico';ico.style.background=rc(item.color);
-  if(item.iconUrl){
+  if(item.type==='folder'){
+    ico.appendChild(svgNode(FOLDER_ICON));
+  }else if(item.type==='widget'){
+    ico.appendChild(svgNode(SIZE_ICONS[item.widgetSize]||SIZE_ICONS.medium));
+  }else if(item.iconUrl){
     const img=document.createElement('img');img.alt=item.label||'';
     img.style.cssText='width:28px;height:28px;object-fit:contain;';
     const fbs=iconChain(item.iconUrl);
     if(fbs.length){
-      let s=0;img.onerror=()=>{s++;if(s<fbs.length)img.src=fbs[s];else{ico.innerHTML='';ico.textContent=(item.label||'?')[0].toUpperCase();}};
+      let s=0;img.onerror=()=>{s++;if(s<fbs.length)img.src=fbs[s];else{ico.textContent=(item.label||'?')[0].toUpperCase();}};
       img.src=fbs[0];ico.appendChild(img);
-    }else{ico.innerHTML='';ico.textContent=(item.label||'?')[0].toUpperCase();}
+    }else{ico.textContent=(item.label||'?')[0].toUpperCase();}
   }else ico.textContent=(item.label||item.id||'?')[0].toUpperCase();
   /* Info */
   const inf=document.createElement('div');inf.className='rinf';
   const nm=document.createElement('div');nm.className='rnm';
   if(item.type==='folder'){
     const collapsed=collapsedFolders.has(item.id);
-    nm.style.cssText='display:flex;align-state.items:center;gap:6px;cursor:pointer;';
+    nm.style.cssText='display:flex;align-items:center;gap:6px;cursor:pointer;';
     nm.setAttribute('role','button');nm.setAttribute('tabindex','0');
     nm.setAttribute('aria-expanded',String(!collapsed));
     nm.setAttribute('aria-label',(collapsed?'Expand':'Collapse')+' folder '+item.label);
@@ -136,7 +156,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     chevron.textContent='▼';
     chevron.style.transform=collapsed?'rotate(-90deg)':'rotate(0deg)';
     chevron.id='chev-'+item.id;
-    nm.append(chevron,document.createTextNode('📁 '+item.label));
+    nm.append(chevron,document.createTextNode(item.label));
     nm.onclick=e=>{
       e.stopPropagation();
       if(collapsedFolders.has(item.id)){collapsedFolders.delete(item.id);}
@@ -197,17 +217,19 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   row.addEventListener('dragstart',e=>{
     e.dataTransfer.effectAllowed='move';
     e.dataTransfer.setData('text/plain',dragData);
+    _dragType=item.type;
     /* Slight delay so browser can capture drag image before dimming */
     requestAnimationFrame(()=>row.classList.add('dragging'));
   });
   row.addEventListener('dragend',()=>{
     row.classList.remove('dragging');
+    _dragType=null;
     clearDragClasses();
   });
   row.addEventListener('dragover',e=>{
     e.preventDefault();e.dataTransfer.dropEffect='move';
     clearDragClasses();
-    if(row.dataset.isFolder){
+    if(row.dataset.isFolder && canJoinFolder(_dragType)){
       row.classList.add('drag-into');
     }else{
       const rect=row.getBoundingClientRect();
@@ -245,34 +267,33 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
       if(si>=0)state.items.splice(si,1);
     }
 
-    /* Insert at target location */
-    if(indent){
+    /* Insert at target location. Only apps may enter a folder; a widget or
+       folder dropped on or inside a folder is placed at the top level instead. */
+    const kind=dropTargetKind({srcType:srcItem.type,targetIsFolder:item.type==='folder',indent});
+    if(kind==='into-folder'&&indent){
       /* Drop on a child row → insert into same folder at this position */
-      /* Re-find folder after possible state.items mutation */
       const tf=state.items.find(i=>i.id===folderId);
       if(!tf){state.items.push(srcItem);save();return;}
-      /* Remove from this folder if already in it (reorder) */
       tf.children=(tf.children||[]).filter(id=>id!==srcItem.id);
-      /* If srcItem is not in state.items yet (was top-level), it's still there */
       if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
-      /* Insert at childIdx position */
       tf.children.splice(childIdx,0,srcItem.id);
-    }else if(item.type==='folder'){
+    }else if(kind==='into-folder'){
       /* Drop ON a folder row → add to end of that folder */
       if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
       const tf=state.items.find(i=>i.id===item.id);
       if(tf){tf.children=(tf.children||[]).filter(id=>id!==srcItem.id);tf.children.push(srcItem.id);}
     }else{
-      /* Drop on a top-level row → insert before it, remove from any folder */
+      /* Top-level move: remove from any folder and insert relative to the target
+         (or, for a drop inside a folder, relative to that folder). */
       state.items.filter(f=>f.type==='folder').forEach(f=>{
         f.children=(f.children||[]).filter(id=>id!==srcItem.id);
       });
       if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
-      /* Remove srcItem from its current position */
       const si2=state.items.indexOf(srcItem);
       if(si2>=0)state.items.splice(si2,1);
-      /* Insert above or below target based on mouse position */
-      const ti2=state.items.indexOf(item);
+      const anchor=indent?state.items.find(i=>i.id===folderId):item;
+      let ti2=state.items.indexOf(anchor);
+      if(ti2<0)ti2=state.items.length;
       const insertAt=dropAbove?ti2:ti2+1;
       state.items.splice(Math.max(0,insertAt),0,srcItem);
     }
@@ -513,7 +534,7 @@ function openFolderPicker(appId,targetFolderId=null){
       const b=rowBtn(cur?'cur':'',()=>{
         state.items.forEach(ff=>{if(ff.type==='folder')ff.children=(ff.children||[]).filter(id=>id!==appId);});
         if(!f.children)f.children=[];if(!f.children.includes(appId))f.children.push(appId);save();close();});
-      const nm=document.createElement('span');nm.textContent='📁 '+f.label;
+      const nm=document.createElement('span');nm.textContent=f.label;
       const chk=document.createElement('span');chk.className='fp-chk';if(cur)chk.textContent='✓';
       b.append(nm,chk);list.appendChild(b);
     });
