@@ -307,16 +307,6 @@ function showSetupPrompt() {
   });
 }
 
-/* Fixed notice for the public demo. Purely informational: the server already
-   refuses writes, this just tells the visitor why. */
-function showDemoBanner() {
-  if (document.getElementById('demo-banner')) return;
-  const b = document.createElement('div');
-  b.id = 'demo-banner';
-  b.textContent = 'Live demo with sample data. Changes are not saved.';
-  document.body.appendChild(b);
-}
-
 async function boot() {
   let authData = null;
   try {
@@ -334,7 +324,6 @@ async function boot() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
     items = c.items||[]; S = c.settings||{};
-    if (c.demo) showDemoBanner();
     await initI18n(S.language || 'en');
   } catch(e) { console.error('[boot]', e); configFailed = true; }
 
