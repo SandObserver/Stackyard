@@ -169,14 +169,16 @@
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
 
-    /* ── Badge — iOS size (used by both; desktop overrides below) ── */
+    /* ── Badge — iOS size, scaled by --sc (desktop overrides below) ── */
     .badge {
-      position:absolute; top:-13px; right:-13px;
-      min-width:43px; height:43px; border-radius:50px; padding:0 10px;
+      position:absolute;
+      top:calc(-7px * var(--sc,1)); right:calc(-7px * var(--sc,1));
+      min-width:calc(24px * var(--sc,1)); height:calc(24px * var(--sc,1));
+      border-radius:50px; padding:0 calc(6px * var(--sc,1));
       display:none;
       -webkit-align-items:center; align-items:center;
       -webkit-justify-content:center; justify-content:center;
-      font-size:1.3125rem; font-weight:800; color:#fff; line-height:1;
+      font-size:calc(13px * var(--sc,1)); font-weight:800; color:#fff; line-height:1;
       z-index:20; pointer-events:none;
     }
     .badge.on  { display:-webkit-flex; display:flex }
@@ -235,7 +237,7 @@
       -webkit-justify-content:center; justify-content:center;
       background:rgba(60,60,67,.72);
       -webkit-backdrop-filter:blur(20px) saturate(160%); backdrop-filter:blur(20px) saturate(160%);
-      border-radius:29px;  /* half of 58px = perfect capsule ends */
+      border-radius:calc(17px * var(--sc,1));  /* half of pillH = capsule ends */
       border:0.5px solid rgba(255,255,255,.10);
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
@@ -248,17 +250,17 @@
       display:-webkit-flex; display:flex;
       -webkit-align-items:center; align-items:center;
       -webkit-justify-content:center; justify-content:center;
-      gap:5px;
+      gap:calc(5px * var(--sc,1));
       position:absolute; inset:0;
       -webkit-transition:opacity .18s ease; transition:opacity .18s ease;
       pointer-events:none;
     }
     #mob-search-pill .msp-icon {
-      font-size:15px; color:rgba(255,255,255,.60); line-height:1;
+      font-size:calc(13px * var(--sc,1)); color:rgba(255,255,255,.60); line-height:1;
       font-style:normal;
     }
     #mob-search-pill .msp-label {
-      font-size:1.375rem; font-weight:400; color:rgba(255,255,255,.80);
+      font-size:calc(15px * var(--sc,1)); font-weight:400; color:rgba(255,255,255,.80);
       white-space:nowrap; letter-spacing:0.01em;
     }
     /* Dots row — shown when paging */
@@ -266,15 +268,15 @@
       display:-webkit-flex; display:flex;
       -webkit-align-items:center; align-items:center;
       -webkit-justify-content:center; justify-content:center;
-      gap:6px;
+      gap:calc(5px * var(--sc,1));
       position:absolute; inset:0;
       opacity:0;
       -webkit-transition:opacity .18s ease; transition:opacity .18s ease;
       pointer-events:none;
     }
-    /* Pill dots — 11px to match JS _pdotSz */
+    /* Pill dots — must match JS _pdotSz/_pdotGap, which size the paging pill */
     #mob-search-pill .msp-dot {
-      width:11px; height:11px; border-radius:50%;
+      width:calc(8px * var(--sc,1)); height:calc(8px * var(--sc,1)); border-radius:50%;
       background:rgba(255,255,255,.38); flex-shrink:0;
       -webkit-transition:background .18s,-webkit-transform .18s; transition:background .18s,transform .18s;
     }
