@@ -1,196 +1,43 @@
 {
   "_schemaVersion": 1,
   "settings": {
-    "background": {
-      "type": "color",
-      "color": "#0e1116"
-    },
-    "auth": {
-      "enabled": false,
-      "setupPrompted": true
-    },
+    "background": { "type": "url", "url": "/demo-wallpaper.jpg", "brightness": 0.4 },
+    "auth": { "enabled": false, "setupPrompted": true },
     "logLevel": "info",
     "language": "en"
   },
   "items": [
-    {
-      "id": "w-stats",
-      "type": "widget",
-      "widgetType": "stats",
-      "label": "System",
-      "widgetSize": "medium",
-      "widgetConfig": {
-        "widgetSubType": "system-summary",
-        "slots": [
-          {
-            "type": "cpu"
-          },
-          {
-            "type": "ram"
-          },
-          {
-            "type": "disk",
-            "primary": "/"
-          }
-        ],
-        "network": {
-          "enabled": false
-        }
-      }
-    },
-    {
-      "id": "w-dns",
-      "type": "widget",
-      "widgetType": "dns",
-      "label": "Pi-hole",
-      "widgetSize": "medium",
-      "widgetConfig": {
-        "provider": "pihole",
-        "dnsUrl": "https://dns.example.com"
-      }
-    },
-    {
-      "id": "w-github",
-      "type": "widget",
-      "widgetType": "github",
-      "label": "GitHub",
-      "widgetSize": "large",
-      "widgetConfig": {
-        "githubView": "contributions",
-        "githubUser": "octocat",
-        "githubHref": "https://github.com/octocat"
-      }
-    },
-    {
-      "id": "w-nowplaying",
-      "type": "widget",
-      "widgetType": "nowplaying",
-      "label": "Now Playing",
-      "widgetSize": "small",
-      "widgetConfig": {
-        "provider": "jellyfin",
-        "jellyfinUrl": "https://media.example.com",
-        "href": "https://media.example.com"
-      }
-    },
-    {
-      "id": "w-weather",
-      "type": "widget",
-      "widgetType": "weather",
-      "label": "Weather",
-      "widgetSize": "small",
-      "widgetConfig": {
-        "city": "San Francisco, California, USA",
-        "lat": 37.7749,
-        "lon": -122.4194,
-        "units": "c",
-        "feelsLike": true
-      }
-    },
-    {
-      "id": "w-clock",
-      "type": "widget",
-      "widgetType": "clock",
-      "label": "Clock",
-      "widgetSize": "small",
-      "widgetConfig": {
-        "clockStyle": "analog",
-        "clockMode": "dark",
-        "clockTimezone": "America/Los_Angeles",
-        "clockShowDate": true
-      }
-    },
-    {
-      "id": "w-backup",
-      "type": "widget",
-      "widgetType": "backup",
-      "label": "Backup",
-      "widgetSize": "small",
-      "widgetConfig": {
-        "slots": [
-          {
-            "provider": "duplicati",
-            "customName": "Offsite Backup",
-            "useDefault": true,
-            "dupUrl": "https://backup.example.com"
-          }
-        ]
-      }
-    },
-    {
-      "id": "folder-media",
-      "type": "folder",
-      "label": "Media",
-      "children": [
-        "app-jellyfin",
-        "app-immich"
-      ]
-    },
-    {
-      "id": "app-jellyfin",
-      "type": "app",
-      "label": "Jellyfin",
-      "href": "https://media.example.com",
-      "iconUrl": "jellyfin",
-      "color": "#7B2FF7",
-      "monitoring": {
-        "activity": {
-          "enabled": true,
-          "interval": 30
-        }
-      }
-    },
-    {
-      "id": "app-immich",
-      "type": "app",
-      "label": "Immich",
-      "href": "https://photos.example.com",
-      "iconUrl": "immich",
-      "color": "#4250A8"
-    },
-    {
-      "id": "app-portainer",
-      "type": "app",
-      "label": "Portainer",
-      "href": "https://containers.example.com",
-      "iconUrl": "portainer",
-      "color": "#13BEF9",
-      "monitoring": {
-        "activity": {
-          "enabled": true,
-          "interval": 30
-        }
-      }
-    },
-    {
-      "id": "app-hass",
-      "type": "app",
-      "label": "Home Assistant",
-      "href": "https://home.example.com",
-      "iconUrl": "home-assistant",
-      "color": "#18BCF2"
-    },
-    {
-      "id": "app-grafana",
-      "type": "app",
-      "label": "Grafana",
-      "href": "https://metrics.example.com",
-      "iconUrl": "grafana",
-      "color": "#F46800",
-      "monitoring": {
-        "healthcheck": {
-          "enabled": true,
-          "pingUrl": "https://metrics.example.com"
-        }
-      }
-    },
-    {
-      "id": "app-vaultwarden",
-      "type": "app",
-      "label": "Vaultwarden",
-      "href": "https://vault.example.com",
-      "iconUrl": "vaultwarden",
-      "color": "#175DDC"
-    }
+    { "id": "w-clock", "type": "widget", "widgetType": "clock", "label": "Clock", "widgetSize": "small",
+      "widgetConfig": { "clockStyle": "analog", "clockMode": "dark", "clockTimezone": "America/Los_Angeles", "clockShowDate": true } },
+    { "id": "w-weather", "type": "widget", "widgetType": "weather", "label": "Weather", "widgetSize": "small",
+      "widgetConfig": { "city": "San Francisco, California, USA", "lat": 37.7749, "lon": -122.4194, "units": "c", "feelsLike": true } },
+    { "id": "w-stats", "type": "widget", "widgetType": "stats", "label": "System", "widgetSize": "medium",
+      "widgetConfig": { "widgetSubType": "system-summary",
+        "slots": [{ "type": "cpu" }, { "type": "ram" }, { "type": "disk", "primary": "/" }],
+        "network": { "enabled": false } } },
+    { "id": "w-dns", "type": "widget", "widgetType": "dns", "label": "Pi-hole", "widgetSize": "small",
+      "widgetConfig": { "provider": "pihole", "dnsUrl": "https://dns.example.com" } },
+    { "id": "w-nowplaying", "type": "widget", "widgetType": "nowplaying", "label": "Now Playing", "widgetSize": "small",
+      "widgetConfig": { "provider": "jellyfin", "jellyfinUrl": "https://media.example.com", "href": "https://media.example.com" } },
+    { "id": "w-backup", "type": "widget", "widgetType": "backup", "label": "Backup", "widgetSize": "small",
+      "widgetConfig": { "slots": [{ "provider": "duplicati", "customName": "Offsite", "jobId": "1", "dupUrl": "https://backup.example.com" }] } },
+
+    { "id": "app-jellyfin", "type": "app", "label": "Jellyfin", "href": "https://media.example.com",
+      "iconUrl": "jellyfin-light", "dock": true, "monitoring": { "activity": { "enabled": true, "interval": 30 } } },
+    { "id": "app-portainer", "type": "app", "label": "Portainer", "href": "https://containers.example.com",
+      "iconUrl": "portainer-light", "dock": true, "monitoring": { "activity": { "enabled": true, "interval": 30 } } },
+    { "id": "app-hass", "type": "app", "label": "Home Assistant", "href": "https://home.example.com",
+      "iconUrl": "home-assistant-light", "dock": true },
+    { "id": "app-vaultwarden", "type": "app", "label": "Vaultwarden", "href": "https://vault.example.com",
+      "iconUrl": "vaultwarden-light", "dock": true },
+
+    { "id": "folder-media", "type": "folder", "label": "Media", "children": ["app-sonarr", "app-radarr"] },
+    { "id": "app-sonarr", "type": "app", "label": "Sonarr", "href": "https://sonarr.example.com", "iconUrl": "sonarr-light" },
+    { "id": "app-radarr", "type": "app", "label": "Radarr", "href": "https://radarr.example.com", "iconUrl": "radarr-light" },
+
+    { "id": "app-immich", "type": "app", "label": "Immich", "href": "https://photos.example.com", "iconUrl": "immich-light" },
+    { "id": "app-grafana", "type": "app", "label": "Grafana", "href": "https://metrics.example.com", "iconUrl": "grafana-light",
+      "monitoring": { "healthcheck": { "enabled": true, "pingUrl": "https://metrics.example.com" } } },
+    { "id": "app-uptimekuma", "type": "app", "label": "Uptime Kuma", "href": "https://status.example.com", "iconUrl": "uptime-kuma-light" }
   ]
 }

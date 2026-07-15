@@ -53,10 +53,14 @@ test('demo config carries no secret values, only Set flags', () => {
 
 test('demo config has the expected showcase shape', () => {
   const types = demo.items.reduce((a, i) => { a[i.type] = (a[i.type] || 0) + 1; return a; }, {});
-  assert.equal(types.widget, 7);
-  assert.equal(types.app, 6);
+  assert.equal(types.widget, 6);
+  assert.equal(types.app, 9);
   assert.equal(types.folder, 1);
-  assert.equal(demo.settings.background.color, '#0e1116');
+  assert.equal(demo.settings.background.url, '/demo-wallpaper.jpg');
+  assert.equal(demo.settings.background.brightness, 0.4);
+  /* Exactly four docked apps, and no custom tile colors (default dark tiles). */
+  assert.equal(demo.items.filter(i => i.dock).length, 4);
+  assert.deepEqual(demo.items.filter(i => i.color), []);
   assert.equal(demo.settings.auth.enabled, false);
   /* Distinct widget types only (no duplicated widget shown twice). */
   const wtypes = demo.items.filter(i => i.type === 'widget').map(i => i.widgetType);
@@ -65,7 +69,7 @@ test('demo config has the expected showcase shape', () => {
 
 test('loadConfig serves the bundled demo config in demo mode', () => {
   const cfg = loadConfig();
-  assert.equal(cfg.settings.background.color, '#0e1116');
+  assert.equal(cfg.settings.background.url, '/demo-wallpaper.jpg');
   assert.ok(cfg.items.some(i => i.id === 'w-stats'));
 });
 
