@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- New: demo mode. Setting `DEMO_MODE=true` serves a read-only sample dashboard
+  with fake widget activity, refuses every write, and makes no outbound
+  requests. Off by default, so existing installs are unaffected.
+- Admin list: folders and widgets now show their own icons, and only apps can be
+  dragged into a folder.
+
 ## [1.1.0] - 2026-07-13
 
 - The Scrutiny and network-speed widget data routes now apply the same SSRF
