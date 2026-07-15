@@ -31,10 +31,14 @@
     background:linear-gradient(180deg,#e6e6e6,#d2d2d2);border-radius:6px;
     border:1px solid rgba(0,0,0,.18);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);
     padding:7px 10px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
-  .title{font-size:12px;font-weight:700;line-height:1.16;color:#222;
-    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-  .sub{flex:none;font-size:9px;font-weight:600;line-height:1.12;color:#4d4d4d;letter-spacing:.02em;
+  .title{font-size:13px;font-weight:700;line-height:1.16;color:#222;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* margin-top:auto seats the meta lines on the sticker's bottom edge, so a
+     one-line title does not leave the card looking half printed. */
+  .sub,.player{flex:none;font-size:9px;font-weight:600;line-height:1.12;letter-spacing:.02em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+  .sub{color:#4d4d4d;margin-top:auto}
+  .player{color:#7a7a7a}
   .idle .title{color:#6f6f6f;font-weight:600}
 
   .window{position:absolute;left:14px;right:14px;top:94px;bottom:14px;
@@ -86,6 +90,7 @@
     <div class="sticker" id="sticker" aria-live="polite">
       <div class="title" id="title">Nothing playing</div>
       <div class="sub" id="sub"></div>
+      <div class="player" id="player"></div>
     </div>
     <div class="window">
       <!-- Strand first: the tape spool paints over its left end, so the join stays
@@ -122,7 +127,7 @@
   const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 
   const wEl=document.getElementById('w'), stage=document.getElementById('stage');
-  const titleEl=document.getElementById('title'), subEl=document.getElementById('sub');
+  const titleEl=document.getElementById('title'), subEl=document.getElementById('sub'), playerEl=document.getElementById('player');
   const tapeEl=document.getElementById('tape'), spinEl=document.getElementById('spin'), reelEl=document.getElementById('reel');
   const prevB=document.getElementById('prev'), nextB=document.getElementById('next'), srEl=document.getElementById('sr');
   const strandEl=document.getElementById('strandpath');
@@ -138,6 +143,7 @@
     if(!s) return 'Nothing playing';
     let t='Now playing: '+(s.title||'');
     if(s.subtitle) t+=', '+s.subtitle;
+    if(s.player) t+=' on '+s.player;
     if(PROVIDER_NAME[provider]) t+=' — '+PROVIDER_NAME[provider];
     if(s.state==='paused') t+=' (paused)';
     return t;
@@ -148,11 +154,11 @@
     const d = s ? tapeSize(s) : TAPE_MIN;
     if(!s){
       wEl.classList.add('idle');
-      titleEl.textContent='Nothing playing'; subEl.textContent='';
+      titleEl.textContent='Nothing playing'; subEl.textContent=''; playerEl.textContent='';
       spinEl.classList.add('paused');
     }else{
       wEl.classList.remove('idle');
-      titleEl.textContent=s.title||''; subEl.textContent=s.subtitle||'';
+      titleEl.textContent=s.title||''; subEl.textContent=s.subtitle||''; playerEl.textContent=s.player||'';
       spinEl.classList.toggle('paused', s.state==='paused');
     }
     tapeEl.style.width=d+'px'; tapeEl.style.height=d+'px';
