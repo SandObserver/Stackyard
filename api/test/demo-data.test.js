@@ -82,3 +82,16 @@ test('backup returns one result per configured slot', () => {
   assert.ok(out[0].lastFinished);
   assert.deepEqual(demoBackup({}), []);
 });
+
+test('books body matches the widget contract', () => {
+  const b = demoWidgetBody('books');
+  assert.equal(b.provider, 'audiobookshelf');
+  assert.ok(b.books.length > 0 && b.books.length <= 8);
+  for (const bk of b.books) {
+    assert.ok(bk.title);
+    assert.ok(bk.author);
+    assert.equal(bk.kind, 'book');
+    assert.ok(bk.progress === null || (bk.progress >= 0 && bk.progress <= 1));
+  }
+  assert.ok(b.books.some(bk => bk.finished));
+});
