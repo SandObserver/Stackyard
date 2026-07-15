@@ -21,13 +21,18 @@ test('dns body carries summary counts and a 24 point chart', () => {
   assert.equal(b.blocked_filtering.length, 24);
 });
 
-test('nowplaying body has one playing session in range', () => {
+test('nowplaying sessions match the widget contract', () => {
   const b = demoWidgetBody('nowplaying');
-  assert.equal(b.sessions.length, 1);
-  const s = b.sessions[0];
-  assert.equal(s.state, 'playing');
-  assert.ok(s.progress >= 0 && s.progress <= 100);
-  assert.ok(s.title);
+  assert.equal(b.sessions.length, 2);
+  for (const s of b.sessions) {
+    assert.ok(s.title);
+    assert.ok(s.player);
+    assert.ok(['playing', 'paused'].includes(s.state));
+    /* 0..1, not 0..100. tapeSize() clamps to 1, so a percentage pins the tape
+       at full and the widget never animates. */
+    assert.ok(s.progress >= 0 && s.progress <= 1, `progress out of range: ${s.progress}`);
+  }
+  assert.ok(b.sessions.some(s => s.state === 'playing'));
 });
 
 test('weather body matches the widget contract', () => {
