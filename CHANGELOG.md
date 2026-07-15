@@ -7,10 +7,17 @@
   requests. Off by default, so existing installs are unaffected.
 - Admin list: folders and widgets now show their own icons, and only apps can be
   dragged into a folder.
+- Now Playing shows the player the session is running on.
 - Fixed the favicon and app icon on demo.
 - Fixed the backup card placeholder shifting on hover, leaving a blank band
   above the last-run line, and clipping the next-run line.
 - Fixed the now-playing strand appearing detached from the tape spool.
+- Fixed the desktop search overlay: an empty band above the first result, a close
+  button stranded in the corner, and no Cancel button.
+- Fixed the mobile search pill and activity badges rendering at double size, and
+  the pill overlapping the last row of widgets.
+- Demo: added a Books widget and a second disk, made the Vaultwarden and Prowlarr
+  tiles readable, and fixed the now-playing tape never winding.
 - Hardened `esc()` and the SVG sanitizer.
 
 ## [1.1.0] - 2026-07-13
