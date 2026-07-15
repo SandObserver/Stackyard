@@ -336,25 +336,22 @@
       padding-bottom:0; box-sizing:border-box;
     }
     /* Results fill from below X button to sbox */
-    #spot #sres {
+    body.is-mob #spot #sres {
       -webkit-flex:1 1 0; flex:1 1 0;
       overflow-y:auto; -webkit-overflow-scrolling:touch;
       padding:170px 0 4px; /* 120px (X top) + 40px (X height) + 10px gap */
       min-height:0;
     }
     /* Search bar pinned to bottom on mobile */
-    #spot #sbox {
+    body.is-mob #spot #sbox {
       -webkit-flex-shrink:0; flex-shrink:0;
       padding:10px 16px 12px; box-sizing:border-box;
     }
-    /* Hide desktop Cancel button on mobile */
-    #spot #spot-cancel { display:none !important; }
-
-    /* ✕ close button — mobile only, shown via JS when spotlight opens */
+    /* ✕ close button, mobile only */
     #spot-cancel-mob {
       display:none; position:fixed; top:120px; right:16px; z-index:1002;
     }
-    #spot.on #spot-cancel-mob { display:block; }
+    body.is-mob #spot.on #spot-cancel-mob { display:block; }
     #spot-cancel-mob-btn {
       width:40px; height:40px; border-radius:50%;
       background:rgba(118,118,128,.50);
@@ -384,7 +381,7 @@
       background:rgba(28,28,32,.92);
       border:1px solid rgba(255,255,255,.14); border-radius:18px;
       box-shadow:0 20px 60px rgba(0,0,0,.60); overflow:hidden;
-      flex-shrink:0; padding:0;
+      flex-shrink:0; padding:0; order:-1;
     }
     /* Results as a separate card below the search bar */
     body:not(.is-mob) #sres {
@@ -396,7 +393,6 @@
       box-shadow:0 20px 60px rgba(0,0,0,.40);
     }
     body:not(.is-mob) #sres:empty { display:none; }
-    body:not(.is-mob) #spot-cancel-mob { display:none; }
     body:not(.is-mob) #spot-cancel { display:-webkit-flex; display:flex; }
 
     /* ── Search bar ── */
@@ -406,7 +402,7 @@
       gap:10px; padding:14px 18px;
       border-bottom:1px solid rgba(255,255,255,.08);
     }
-    #spot .spot-bar {
+    body.is-mob #spot .spot-bar {
       background:rgba(118,118,128,.30);
       border-radius:50px; border-bottom:none;
       padding:22px 22px; gap:14px;
