@@ -58,7 +58,8 @@
           },
           {
             "type": "disk",
-            "primary": "/"
+            "primary": "/",
+            "secondary": "/mnt/media"
           }
         ],
         "network": {
@@ -107,6 +108,19 @@
       }
     },
     {
+      "id": "w-books",
+      "type": "widget",
+      "widgetType": "books",
+      "label": "Books",
+      "widgetSize": "small",
+      "widgetConfig": {
+        "provider": "audiobookshelf",
+        "absUrl": "https://books.example.com",
+        "source": "unread",
+        "href": "https://books.example.com"
+      }
+    },
+    {
       "id": "app-jellyfin",
       "type": "app",
       "label": "Jellyfin",
@@ -148,7 +162,8 @@
       "label": "Vaultwarden",
       "href": "https://vault.example.com",
       "iconUrl": "vaultwarden",
-      "dock": true
+      "dock": true,
+      "color": "light"
     },
     {
       "id": "folder-media",
@@ -257,7 +272,8 @@
       "type": "app",
       "label": "Prowlarr",
       "href": "https://prowlarr.example.com",
-      "iconUrl": "prowlarr"
+      "iconUrl": "prowlarr",
+      "color": "#e66000"
     },
     {
       "id": "app-bazarr",

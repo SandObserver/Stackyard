@@ -12,16 +12,20 @@ default and has no effect on a normal install.
   which the admin UI shows as a toast.
 - **Outbound**: `fetchJSON` and `pingUrl` short-circuit, so the server makes no
   outbound requests at all. Widget activity comes from `api/src/demo-data.js`.
-- **UI**: the dashboard shows a "Live demo with sample data" notice.
 
 Auth is disabled in the demo config and `set-password` is blocked, so the
 instance cannot be claimed.
 
 ## Sample data
 
-`api/src/demo-data.js` generates fake system metrics, DNS counts, a now-playing
-session, weather, a GitHub contribution calendar, backup status, activity badges,
-and one deliberately unhealthy app, so the dashboard looks alive across polls.
+`api/src/demo-data.js` generates fake system metrics, DNS counts, now-playing
+sessions, a reading list, weather, a GitHub contribution calendar, backup status,
+activity badges, and one deliberately unhealthy app, so the dashboard looks alive
+across polls.
+
+Each body must match the shape its widget renders, which is documented at the top
+of that widget's `data.js`. `api/test/demo-data.test.js` pins the ones that are
+easy to get wrong: now-playing `progress` is 0..1, not a percentage.
 
 ## Wallpaper
 
@@ -37,7 +41,12 @@ Image by [StockSnap](https://pixabay.com/users/stocksnap-894430/) from
 `api/test/demo.test.js` fails the build if the demo config contains a host outside
 a small public allowlist, a private IP address, or any secret-shaped value. Keep
 demo apps on placeholder hosts and use icon shorthand names (resolved by the
-public icon CDN) rather than full URLs.
+public icon CDN) rather than full URLs. Shorthands resolve against
+`homarr-labs/dashboard-icons` only; anything from `selfhst/icons` needs a full
+jsdelivr URL.
+
+The same test pins the item counts and the tile colors, so adding a widget or an
+app to the demo means updating it deliberately rather than by accident.
 
 ## Deploying on Render
 

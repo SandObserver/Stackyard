@@ -54,14 +54,15 @@ test('demo config carries no secret values, only Set flags', () => {
 
 test('demo config has the expected showcase shape', () => {
   const types = demo.items.reduce((a, i) => { a[i.type] = (a[i.type] || 0) + 1; return a; }, {});
-  assert.equal(types.widget, 6);
+  assert.equal(types.widget, 7);
   assert.equal(types.app, 17);
   assert.equal(types.folder, 2);
   assert.equal(demo.settings.background.url, '/demo-wallpaper.jpg');
   assert.equal(demo.settings.background.brightness, 0.4);
-  /* Exactly four docked apps, and no custom tile colors (default dark tiles). */
+  /* Exactly four docked apps. Tile colors are opt-in: only the two icons that
+     are unreadable on a dark tile carry one. */
   assert.equal(demo.items.filter(i => i.dock).length, 4);
-  assert.deepEqual(demo.items.filter(i => i.color), []);
+  assert.deepEqual(demo.items.filter(i => i.color).map(i => i.id).sort(), ['app-prowlarr', 'app-vaultwarden']);
   assert.equal(demo.settings.auth.enabled, false);
   /* Distinct widget types only (no duplicated widget shown twice). */
   const wtypes = demo.items.filter(i => i.type === 'widget').map(i => i.widgetType);
