@@ -23,6 +23,15 @@ instance cannot be claimed.
 session, weather, a GitHub contribution calendar, backup status, activity badges,
 and one deliberately unhealthy app, so the dashboard looks alive across polls.
 
+## Wallpaper
+
+The demo ships `ui/demo-wallpaper.jpg`, served same-origin from the nginx root at
+`/demo-wallpaper.jpg`. Keeping it local avoids an outbound request and stays
+within the `img-src` CSP, which does not allow arbitrary remote image hosts.
+
+Image by [StockSnap](https://pixabay.com/users/stocksnap-894430/) from
+[Pixabay](https://pixabay.com/), used under the Pixabay Content License.
+
 ## Safety
 
 `api/test/demo.test.js` fails the build if the demo config contains a host outside
@@ -35,9 +44,11 @@ public icon CDN) rather than full URLs.
 `render.yaml` runs a published release image with `DEMO_MODE=true`. Pin
 `image.url` to a release tag so the demo only moves when you update it.
 
-Note the pinned `PORT=3000`: Render injects `PORT=10000`, the API reads `PORT`,
-and nginx proxies to `127.0.0.1:3000`, so the value must be overridden. Nginx
-serves on 80, which Render detects.
+Set `PORT=80`. Render routes traffic to whatever `PORT` says, and nginx is the
+process serving the dashboard on 80. The API is unaffected: `supervisord.conf`
+pins `PORT=3000` for the API process, and nginx proxies to `127.0.0.1:3000`.
+Pointing `PORT` at 3000 sends visitors to the API instead of nginx, which answers
+every page with `{"error":"Not found"}`.
 
 To put it on a subdomain, add the domain in Render, then create a CNAME at your
 DNS provider pointing to the service's `onrender.com` hostname. On the free plan
