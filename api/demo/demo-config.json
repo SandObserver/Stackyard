@@ -199,6 +199,72 @@
       "label": "Uptime Kuma",
       "href": "https://status.example.com",
       "iconUrl": "uptime-kuma"
+    },
+    {
+      "id": "app-nextcloud",
+      "type": "app",
+      "label": "Nextcloud",
+      "href": "https://cloud.example.com",
+      "iconUrl": "nextcloud"
+    },
+    {
+      "id": "app-paperless",
+      "type": "app",
+      "label": "Paperless",
+      "href": "https://docs.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/paperless-ngx-light.svg"
+    },
+    {
+      "id": "app-gitea",
+      "type": "app",
+      "label": "Gitea",
+      "href": "https://git.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/gitea-light.svg"
+    },
+    {
+      "id": "app-pihole",
+      "type": "app",
+      "label": "Pi-hole",
+      "href": "https://dns.example.com",
+      "iconUrl": "pi-hole"
+    },
+    {
+      "id": "app-npm",
+      "type": "app",
+      "label": "Proxy Manager",
+      "href": "https://proxy.example.com",
+      "iconUrl": "npm"
+    },
+    {
+      "id": "folder-downloads",
+      "type": "folder",
+      "label": "Downloads",
+      "children": [
+        "app-qbittorrent",
+        "app-prowlarr",
+        "app-bazarr"
+      ]
+    },
+    {
+      "id": "app-qbittorrent",
+      "type": "app",
+      "label": "qBittorrent",
+      "href": "https://dl.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/qbittorrent-light.svg"
+    },
+    {
+      "id": "app-prowlarr",
+      "type": "app",
+      "label": "Prowlarr",
+      "href": "https://prowlarr.example.com",
+      "iconUrl": "prowlarr"
+    },
+    {
+      "id": "app-bazarr",
+      "type": "app",
+      "label": "Bazarr",
+      "href": "https://bazarr.example.com",
+      "iconUrl": "bazarr-dark"
     }
   ]
 }
