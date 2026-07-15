@@ -55,8 +55,8 @@ test('demo config carries no secret values, only Set flags', () => {
 test('demo config has the expected showcase shape', () => {
   const types = demo.items.reduce((a, i) => { a[i.type] = (a[i.type] || 0) + 1; return a; }, {});
   assert.equal(types.widget, 6);
-  assert.equal(types.app, 9);
-  assert.equal(types.folder, 1);
+  assert.equal(types.app, 17);
+  assert.equal(types.folder, 2);
   assert.equal(demo.settings.background.url, '/demo-wallpaper.jpg');
   assert.equal(demo.settings.background.brightness, 0.4);
   /* Exactly four docked apps, and no custom tile colors (default dark tiles). */

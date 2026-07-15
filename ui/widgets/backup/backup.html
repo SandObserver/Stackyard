@@ -39,19 +39,21 @@
   }
   .card-back canvas {
     position: absolute; top: 0; left: 0; right: 0;
-    width: 100%; height: calc(100% - 64px);
+    width: 100%; height: 100%;
     display: block;
   }
 
   .card-name-zone {
     position: absolute; bottom: 0; left: 0; right: 0;
-    height: 64px; padding: 4px 7px 8px;
+    padding: 4px 7px 8px;
     display: flex; flex-direction: column; justify-content: flex-end;
+    /* Opaque strip in the card's own colour (set inline on .card-back), so the
+       placeholder can run full height behind it without showing through text. */
+    background: inherit;
   }
   .card-back-meta {
     font-size: 6.5px; font-weight: 500; opacity: 0.85; line-height: 1.45;
-    max-height: 22px; overflow: hidden; flex-shrink: 0; margin-bottom: 2px;
-    white-space: nowrap; text-overflow: ellipsis;
+    flex-shrink: 0; margin-bottom: 2px;
   }
   .card-back-name {
     font-size: 7px; font-weight: 700; line-height: 1.18; word-break: break-word;
@@ -84,7 +86,7 @@
   }
   .card-front canvas {
     position: absolute; top: 0; left: 0; right: 0;
-    width: 100%; height: calc(100% - 28px);
+    width: 100%; height: 100%;
     display: block;
   }
   .card-wrap:hover .card-front,
@@ -92,7 +94,8 @@
 
   .card-front-name-zone {
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 0 7px 8px;
+    padding: 4px 7px 8px;
+    background: #f0f0f0;
   }
   .card-front-name {
     font-size: 7px; font-weight: 700; color: #1c1c1e;
