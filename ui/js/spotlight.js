@@ -103,9 +103,6 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
   }
   if (barEl) barEl.addEventListener('touchend', e => { e.preventDefault(); inp.focus(); if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length); }, { passive: false });
 
-  const xBtn = document.getElementById('spot-cancel-mob');
-  if (MOB && xBtn) xBtn.style.cssText = 'display:block;position:fixed;top:120px;right:16px;z-index:1002;';
-
   function _applyKbLayout() {
     if (!MOB) return;
     const vvH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -125,7 +122,6 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     ov.classList.add('on');
     ov.setAttribute('aria-hidden', 'false');
     ov.addEventListener('keydown', trap);
-    if (MOB) res.style.paddingTop = '170px';
     inp.value = ch || '';
     render(inp.value);
     if (MOB && window.visualViewport) {
