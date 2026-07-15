@@ -6,3 +6,7 @@
 __MACOSX/
 *.log
 data/apps.json
+
+# Dev-only tooling (see package.json); never shipped in the image.
+node_modules/
+package-lock.json
