@@ -707,14 +707,3 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
    real translated content in view. */
 [dir="rtl"] #sin { text-align: right; }
 [dir="rtl"] #spot-cancel-mob { right: auto; left: 16px; }
-
-/* ── Demo banner ── */
-#demo-banner{
-  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;
-  padding:8px 16px;border-radius:999px;
-  background:rgba(0,0,0,.55);backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,.14);
-  color:rgba(255,255,255,.86);font-size:13px;line-height:1;
-  pointer-events:none;white-space:nowrap;
-}
-@media (max-width:520px){#demo-banner{font-size:12px;padding:7px 12px;bottom:12px}}

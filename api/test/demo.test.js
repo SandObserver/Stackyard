@@ -16,7 +16,8 @@ const demo = JSON.parse(demoRaw);
    real or private host, fails the build. The check is an allowlist so the repo
    never has to name the hosts it is trying to keep out. */
 function hostAllowed(host) {
-  return host === 'example.com' || host.endsWith('.example.com') || host === 'github.com';
+  return host === 'example.com' || host.endsWith('.example.com')
+    || host === 'github.com' || host === 'cdn.jsdelivr.net';
 }
 
 const URL_RE = /https?:\/\/([^/"'\s)]+)/gi;

@@ -17,9 +17,7 @@ function scrubSecrets(cfg) {
 }
 
 on('GET', '/api/config', (_, res) => {
-  const cfg = ensureSystemItems(scrubSecrets(loadConfig()));
-  if (IS_DEMO) cfg.demo = true;
-  json(res, 200, cfg);
+  json(res, 200, ensureSystemItems(scrubSecrets(loadConfig())));
 });
 
 on('GET', '/api/settings/unsplash-key', (_, res) => {
