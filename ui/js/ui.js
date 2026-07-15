@@ -1,6 +1,7 @@
 import { iconChain } from '/js/icons.js?v=36';
 import { widgetSrc, WIDGET_DESIGN, WIDGET_TYPES } from '/js/widget-types.js?v=39';
 import { mk, clr, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=40';
+import { mobileMetrics } from '/js/mobile-metrics.js?v=1';
 
 let _state = null;
 export function initUI(state) { _state = state; }
@@ -305,10 +306,9 @@ export { folderOverlayMob };
 
 export function buildMobile() {
   st().BEL.clear();
-  const vw = innerWidth, vh = innerHeight, sc = vw/393;
-  const sm = Math.round(18*sc), sb = Math.round(48*sc), safe = Math.round(34*sc);
-  const dh = Math.round(108*sc), dz = Math.round(36*sc);
-  const avail = vh-sb-safe-dh-dz, rh = avail/6, cw = (vw-sm*2)/4;
+  const vw = innerWidth, vh = innerHeight;
+  const { sc, sm, sb, safe, dh, pillH, pillGap, dz, avail, rh, cw } = mobileMetrics(vw, vh);
+  document.body.style.setProperty('--sc', String(sc));
   const maxIsz = Math.round(74*sc);
   const isz = Math.round(Math.min(cw*.90, rh*.80, maxIsz));
   const ir = Math.round(isz*.225), im = Math.round(isz*.64);
@@ -437,10 +437,10 @@ export function buildMobile() {
     a.appendChild(mkWrap(item, dockIconSz, dockIr, dockIm, '')); dk.appendChild(a);
   });
 
-  const pillSearchW = 158, pillH = 58;
-  const _pdotSz = 11, _pdotGap = 6, _pdotPad = 22;
+  const pillSearchW = Math.round(96*sc);
+  const _pdotSz = Math.round(8*sc), _pdotGap = Math.round(5*sc), _pdotPad = Math.round(14*sc);
   const pillDotsW = pages.length * (_pdotSz + _pdotGap) - _pdotGap + _pdotPad * 2;
-  const pillBottom = safe + dh + 10;
+  const pillBottom = safe + dh + pillGap;
   const pill = document.getElementById('mob-search-pill');
   pill.style.cssText = `position:fixed;left:50%;bottom:${pillBottom}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:-webkit-flex;display:flex;z-index:500;`;
 
