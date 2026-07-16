@@ -5,9 +5,12 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/License-Apache_2.0-blue"></a>
   <a href="https://github.com/SandObserver/stackyard/pkgs/container/stackyard"><img alt="Container" src="https://img.shields.io/badge/ghcr.io-stackyard-2496ED?logo=docker&logoColor=white"></a>
+  <a href="https://stackyard-demo.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/demo-live-58c0cd"></a>
 </p>
 
 <p align="center"><img src="docs/screenshot.png" width="85%" alt="Stackyard dashboard"></p>
+
+<p align="center">Try it: <b><a href="https://stackyard-demo.onrender.com">stackyard-demo.onrender.com</a></b><br>
 
 Most dashboards are a wall full of numbers and charts. Stackyard is the opposite: a calm, launcher-style grid of app tiles, folders, and a small number of
 *genuinely useful* widgets, running in a single container with no external services or dependencies. It is built to be glanced at a hundred times a day without ever feeling cluttered.
