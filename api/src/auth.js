@@ -1,6 +1,5 @@
 const crypto = require('crypto');
 const { loadConfig, saveConfig } = require('./config');
-const log = require('./log');
 
 function getOrCreateSecret() {
   const cfg = loadConfig();
@@ -169,9 +168,8 @@ function hasValidSession(req) {
 }
 
 module.exports = {
-  crypto, getOrCreateSecret, hashPassword, verifyPassword,
+  getOrCreateSecret, hashPassword, verifyPassword,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
   checkRateLimit, recordFailedAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
   SESSION_MAX_AGE_MS,
-  log,
 };
