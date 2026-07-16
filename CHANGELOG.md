@@ -2,15 +2,16 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-15
+
 - New: demo mode. Setting `DEMO_MODE=true` serves a read-only sample dashboard
   with fake widget activity, refuses every write, and makes no outbound
   requests. Off by default, so existing installs are unaffected.
-- Admin list: folders and widgets now show their own icons, and only apps can be
+- Admin list folders and widgets now show their own icons, and only apps can be
   dragged into a folder.
 - Now Playing shows the player the session is running on.
 - Dock icons now have a name for screen readers, and icons show their name on
   hover when their label is hidden.
-- Fixed the favicon and app icon on demo.
 - Fixed the backup card placeholder shifting on hover, leaving a blank band
   above the last-run line, and clipping the next-run line.
 - Fixed the now-playing strand appearing detached from the tape spool.
@@ -19,8 +20,6 @@
 - Fixed the mobile search pill and activity badges rendering at double size, and
   the pill overlapping the last row of widgets.
 - Fixed mobile search results rendering at double size.
-- Demo: added a Books widget and a second disk, made the Vaultwarden and Prowlarr
-  tiles readable, and fixed the now-playing tape never winding.
 - Hardened `esc()` and the SVG sanitizer.
 
 ## [1.1.0] - 2026-07-13
