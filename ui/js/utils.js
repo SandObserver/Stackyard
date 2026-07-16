@@ -3,40 +3,10 @@ import { iconChain } from '/js/icons.js?v=36';
 export const mk  = (t, a={}) => { const e = document.createElement(t); Object.assign(e, a); return e; };
 export const clr = c => (!c||c==='dark') ? '#1C1C1E' : c==='light' ? '#F2F2F7' : c;
 export const fb  = (l, sz) => { const e = mk('span'); e.className = 'fb'; e.style.fontSize = Math.round(sz*.32)+'px'; e.textContent = (l||'?')[0].toUpperCase(); return e; };
-export const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+/* esc lives in html.js with the template primitives; re-exported here so the
+   existing importers of utils.esc keep working. */
+export { esc } from '/js/html.js?v=1';
 
-/* Escape-by-default HTML building. esc() is opt-in, so every interpolation has
-   to be remembered individually; html`` inverts that, making the safe path the
-   one you get by doing nothing. Interpolated values are escaped unless wrapped
-   in raw(), which is a single greppable token for auditing every place the
-   default is bypassed.
-
-   Nested html`` results and arrays of them pass through unescaped, so lists need
-   no manual join and no raw() escape hatch:
-     html`<ul>${items.map(i => html`<li>${i.label}</li>`)}</ul>`
-
-   Assigning the result to innerHTML works directly: the DOM stringifies it. */
-class RawHtml {
-  constructor(v) { this.value = String(v); }
-  toString() { return this.value; }
-}
-
-export const raw = v => new RawHtml(v);
-
-/* null/undefined/false render as nothing so `${cond && html`...`}` and
-   `${maybe ?? ''}` behave. Everything else is escaped, including numbers. */
-const interpolate = v => {
-  if (v instanceof RawHtml) return v.value;
-  if (Array.isArray(v)) return v.map(interpolate).join('');
-  if (v == null || v === false) return '';
-  return esc(v);
-};
-
-export function html(strings, ...values) {
-  let out = strings[0];
-  for (let i = 0; i < values.length; i++) out += interpolate(values[i]) + strings[i + 1];
-  return new RawHtml(out);
-}
 /* Strip quotes, parens and backslashes so a user URL can't break out of a CSS
    url('...') wrapper. Shared by the dashboard and admin background setters. */
 export const sanitizeCssUrl = u => String(u || '').replace(/['"\\()]/g, '');

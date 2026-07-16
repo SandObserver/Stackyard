@@ -107,6 +107,12 @@
       "/js/dashboard.js?v=*": [
         "./ui/js/dashboard.js"
       ],
+      "/js/html.js": [
+        "./ui/js/html.js"
+      ],
+      "/js/html.js?v=*": [
+        "./ui/js/html.js"
+      ],
       "/js/i18n.js": [
         "./ui/js/i18n.js"
       ],

@@ -1,7 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { dirFor, t, getLang, LANGUAGES } from '../js/i18n.js';
+import { register } from 'node:module';
+
+/* i18n.js imports html.js by its served path ('/js/html.js?v=...'), which Node
+   cannot resolve from disk. Register the mapping hook in THIS process, then load
+   i18n.js dynamically so the hook is active when its imports resolve. Same
+   reasoning as utils.test.mjs. */
+register('./js-root-hooks.mjs', import.meta.url);
+const { dirFor, t, getLang, LANGUAGES } = await import('../js/i18n.js');
 
 test('dirFor returns the listed direction for known locales', () => {
   assert.equal(dirFor('en'), 'ltr');

@@ -2,6 +2,7 @@
    Operates in hex, resolves named CSS colors, calls onChange(hex) on any change.
    Used by the Icon, Fixed Label and Live Activity sections and the Widget slots. */
 import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=1';
+import { html, raw, setHtml } from '/js/html.js?v=1';
 
 const CC_SWATCHES=['#1c1c1e','#8e8e93','#f2f2f7','#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'];
 /* Badge color picker uses the standard Stackyard badge blue (#1e6ef4, the
@@ -33,20 +34,26 @@ function _hexToHsv(hex){ const h6=_cssToHex(hex); if(!h6)return null;
 export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semantic=false,swatchColors=CC_SWATCHES}={}){
   const isSem=v=>v==='dark'||v==='light';
   const init=_hexToHsv(isSem(value)?'#0289ff':value)||{h:212,s:99,v:100};
+  const swatch = h => html`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`;
   const swatches = semantic
-    ? `<button type="button" class="cc-swatch cc-sem" data-v="dark" style="background:#1c1c1e" title="Dark (theme)" aria-label="Dark"></button>
+    ? html`<button type="button" class="cc-swatch cc-sem" data-v="dark" style="background:#1c1c1e" title="Dark (theme)" aria-label="Dark"></button>
        <button type="button" class="cc-swatch cc-sem" data-v="light" style="background:#f2f2f7" title="Light (theme)" aria-label="Light"></button>
        <button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
-       ${['#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'].map(h=>`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`).join('')}`
-    : `<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
-       ${swatchColors.map(h=>`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`).join('')}`;
+       ${['#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'].map(swatch)}`
+    : html`<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
+       ${swatchColors.map(swatch)}`;
   const wrap=document.createElement('div');
-  wrap.innerHTML=`
+  /* _ccIco and PE_SVG are authored SVG constants in this repo, so they are the
+     one thing here that is deliberately not escaped. Everything interpolated
+     from outside (idPrefix, the HSB values) is escaped by html``. */
+  const slider = (label, cls, id, max, val, lo, hi) => html`
+    <div class="row hsb-row cc-tune"><span class="rl">${label}</span><div class="hsb-track"><span class="hsb-ico">${raw(lo)}</span><input type="range" class="${cls}" id="${id}" min="0" max="${max}" value="${val}" aria-label="${label}"><span class="hsb-ico">${raw(hi)}</span></div></div>`;
+  setHtml(wrap, html`
     <div class="row cc-row"><span class="rl">Color</span><div class="cc-sw">${swatches}</div></div>
-    <div class="row hsb-row cc-tune"><span class="rl">Hue</span><div class="hsb-track"><span class="hsb-ico">${_ccIco.hueLo}</span><input type="range" class="hsb-range hsb-hue" id="${idPrefix}-h" min="0" max="360" value="${init.h}" aria-label="Hue"><span class="hsb-ico">${_ccIco.hueHi}</span></div></div>
-    <div class="row hsb-row cc-tune"><span class="rl">Saturation</span><div class="hsb-track"><span class="hsb-ico">${_ccIco.satLo}</span><input type="range" class="hsb-range" id="${idPrefix}-s" min="0" max="100" value="${init.s}" aria-label="Saturation"><span class="hsb-ico">${_ccIco.satHi}</span></div></div>
-    <div class="row hsb-row cc-tune"><span class="rl">Brightness</span><div class="hsb-track"><span class="hsb-ico">${_ccIco.brLo}</span><input type="range" class="hsb-range" id="${idPrefix}-v" min="0" max="100" value="${init.v}" aria-label="Brightness"><span class="hsb-ico">${_ccIco.brHi}</span></div></div>
-    <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">Color Code</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" style="display:none"><button class="pe" type="button" aria-label="Edit color code">${PE_SVG}</button></div>`;
+    ${slider('Hue', 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
+    ${slider('Saturation', 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
+    ${slider('Brightness', 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
+    <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">Color Code</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" style="display:none"><button class="pe" type="button" aria-label="Edit color code">${raw(PE_SVG)}</button></div>`);
   const rows=[...wrap.children]; rows.forEach(r=>container.appendChild(r));
   const q=sel=>container.querySelector(sel);
   const hEl=q(`#${idPrefix}-h`),sEl=q(`#${idPrefix}-s`),vEl=q(`#${idPrefix}-v`);
