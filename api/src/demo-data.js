@@ -46,7 +46,7 @@ function githubCalendar() {
 let _cal = null;
 
 /* ── Widget data bodies (return null to fall through to real code) ── */
-function demoWidgetBody(widgetType, endpoint) {
+function demoWidgetBody(widgetType) {
   switch (widgetType) {
     case 'dns': {
       const total = Math.round(wave(600, 46000, 52000));

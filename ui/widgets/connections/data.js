@@ -40,7 +40,7 @@ function mapRawGet(base, path, headers){
   return new Promise((resolve, reject) => {
     let u; try { u = new URL(path, base); } catch(e){ return reject(e); }
     const lib  = u.protocol === 'https:' ? https : http;
-    const port = u.port ? parseInt(u.port) : (u.protocol === 'https:' ? 443 : 80);
+    const port = u.port ? parseInt(u.port, 10) : (u.protocol === 'https:' ? 443 : 80);
     const r2 = lib.get({ hostname:u.hostname, port, path:u.pathname + u.search, timeout:8000, headers:headers||{} }, rs => {
       const chunks = []; rs.on('data', c => chunks.push(c));
       rs.on('end', () => resolve({ status:rs.statusCode, body:Buffer.concat(chunks).toString('utf8') }));
@@ -53,11 +53,14 @@ function mapRawGet(base, path, headers){
 function parseConduitText(raw){
   const regions = {}; let limit = 0, connected = 0, live = 0;
   String(raw).split('\n').forEach(line => {
-    let m;
-    if ((m = line.match(/^conduit_region_connected_clients\{region="([A-Z]{2})",scope="common"\}\s+([\d.eE+]+)/))) { const v = Math.round(parseFloat(m[2])); if (v > 0) regions[m[1]] = v; }
-    else if ((m = line.match(/^conduit_max_common_clients\s+([\d.eE+]+)/))) limit = parseFloat(m[1]);
-    else if ((m = line.match(/^conduit_connected_clients\s+([\d.eE+]+)/))) connected = parseFloat(m[1]);
-    else if ((m = line.match(/^conduit_is_live\s+([\d.eE+]+)/))) live = parseFloat(m[1]);
+    let m = line.match(/^conduit_region_connected_clients\{region="([A-Z]{2})",scope="common"\}\s+([\d.eE+]+)/);
+    if (m) { const v = Math.round(parseFloat(m[2])); if (v > 0) regions[m[1]] = v; return; }
+    m = line.match(/^conduit_max_common_clients\s+([\d.eE+]+)/);
+    if (m) { limit = parseFloat(m[1]); return; }
+    m = line.match(/^conduit_connected_clients\s+([\d.eE+]+)/);
+    if (m) { connected = parseFloat(m[1]); return; }
+    m = line.match(/^conduit_is_live\s+([\d.eE+]+)/);
+    if (m) live = parseFloat(m[1]);
   });
   return { regions, limit, connected, live };
 }
@@ -98,11 +101,11 @@ async function vpnView(config, fetchJSON) {
           let s = await fetchJSON(base + '/v1/vpn/status', { headers, timeout:6000 });
           if (s.status === 404) s = await fetchJSON(base + '/v1/openvpn/status', { headers, timeout:6000 });
           if (s.status < 400 && s.data && s.data.status) out.status = s.data.status;
-        } catch(e) { /* ignore — publicip already decided */ }
+        } catch { /* ignore: publicip already decided */ }
         out.connected = !!out.ip || out.status === 'running';
       }
     } else {
-      let base = normBase(vpn.url).replace(/\/+$/,'');
+      const base = normBase(vpn.url).replace(/\/+$/,'');
       if (!base) throw new Error('No management API URL configured');
       const apiBase = /\/api$/.test(base) ? base : base + '/api';
       const headers = { 'Authorization': `Token ${vpn.token || ''}`, 'Accept':'application/json' };
