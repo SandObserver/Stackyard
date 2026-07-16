@@ -140,7 +140,7 @@ This is the part that replaces a pile of one-off widgets. Instead of writing a w
 
 ## Security
 
-Stackyard is built to be careful with your homelab: it never returns stored secrets to the browser, guards outbound widget requests against SSRF, pins resolved IPs, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
+Stackyard is built to be careful with your homelab: it never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the IP it resolved, and bounds every upstream call so one slow service cannot hang the dashboard. The SSRF guard covers those URL-checking endpoints rather than routine widget polling, because an admin with config access can already point a widget anywhere; [docs/security.md](docs/security.md) explains the reasoning. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
 
 ## Contributing
 
