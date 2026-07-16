@@ -1,11 +1,11 @@
 {
   "name": "stackyard-dev",
   "private": true,
-  "description": "Dev-only tooling (lint + typecheck). Not shipped: the Docker image copies only api/ and ui/, never the repo root.",
+  "description": "Dev-only tooling (lint, backend typecheck, frontend path resolution). Not shipped: the Docker image copies only api/ and ui/, never the repo root.",
   "scripts": {
     "lint": "biome lint .",
     "typecheck": "tsc -p tsconfig.json",
-    "typecheck:ui": "tsc -p tsconfig.frontend.json"
+    "paths:ui": "tsc -p tsconfig.frontend.json"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.3",

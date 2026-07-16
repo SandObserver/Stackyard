@@ -1,3 +1,12 @@
+/* Not a typecheck. checkJs is off, so this project only resolves the cache-busted
+   import specifiers (/js/foo.js?v=hash) back to real files, for editor
+   jump-to-definition and to catch an import that points at nothing. Running it
+   in CI is what makes a missing paths entry a build failure rather than a
+   silently broken editor.
+
+   Every file needs two entries, plain and ?v=*, because TypeScript allows at
+   most one wildcard per pattern (TS5061), so the two forms cannot be globbed
+   into one. Add both when you add a module under ui/js. */
 {
   "compilerOptions": {
     "allowJs": true,
@@ -31,6 +40,12 @@
       ],
       "/js/admin-color-control.js?v=*": [
         "./ui/js/admin-color-control.js"
+      ],
+      "/js/admin-drag-logic.js": [
+        "./ui/js/admin-drag-logic.js"
+      ],
+      "/js/admin-drag-logic.js?v=*": [
+        "./ui/js/admin-drag-logic.js"
       ],
       "/js/admin-logic.js": [
         "./ui/js/admin-logic.js"
@@ -80,6 +95,12 @@
       "/js/badge-logic.js?v=*": [
         "./ui/js/badge-logic.js"
       ],
+      "/js/dashboard-switch-model.js": [
+        "./ui/js/dashboard-switch-model.js"
+      ],
+      "/js/dashboard-switch-model.js?v=*": [
+        "./ui/js/dashboard-switch-model.js"
+      ],
       "/js/dashboard.js": [
         "./ui/js/dashboard.js"
       ],
@@ -97,6 +118,12 @@
       ],
       "/js/icons.js?v=*": [
         "./ui/js/icons.js"
+      ],
+      "/js/mobile-metrics.js": [
+        "./ui/js/mobile-metrics.js"
+      ],
+      "/js/mobile-metrics.js?v=*": [
+        "./ui/js/mobile-metrics.js"
       ],
       "/js/spotlight.js": [
         "./ui/js/spotlight.js"
