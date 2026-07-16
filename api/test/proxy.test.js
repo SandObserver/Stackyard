@@ -5,7 +5,7 @@ process.env.CONFIG_PATH = '/tmp/stackyard-proxy-test-nonexistent.json';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
-const { guardSsrf, fetchJSON, PRIVATE_IP_RE, parsePrometheus, parseXml } = require('../src/proxy');
+const { guardSsrf, fetchJSON, getHostIp, shouldSkipTls, PRIVATE_IP_RE, parsePrometheus, parseXml } = require('../src/proxy');
 
 test('PRIVATE_IP_RE classifies private ranges as private', () => {
   for (const ip of ['10.0.0.1', '172.16.5.4', '172.31.0.1', '192.168.1.1', '127.0.0.1', '169.254.1.1', '::1'])
@@ -148,4 +148,21 @@ test('guardSsrf blocks when the hostname cannot be resolved', async (t) => {
   const r = await guardSsrf('http://nxdomain.example.com/');
   assert.equal(r.ip, null);
   assert.match(r.error, /could not be resolved/);
+});
+
+test('shouldSkipTls returns false unless skipTlsVerify is explicitly true', () => {
+  for (const cfg of [{ settings: {} }, { settings: { server: {} } }, { settings: { server: { skipTlsVerify: 'true' } } }])
+    assert.equal(shouldSkipTls('nas', cfg), false);
+});
+
+test('shouldSkipTls only bypasses internal hostnames when enabled', () => {
+  const cfg = { settings: { server: { skipTlsVerify: true } } };
+  for (const h of ['nas', 'socket-proxy', 'localhost', '192.168.1.10', '10.0.0.5', '127.0.0.1'])
+    assert.equal(shouldSkipTls(h, cfg), true, `${h} should skip`);
+  for (const h of ['example.com', 'api.github.com', '8.8.8.8'])
+    assert.equal(shouldSkipTls(h, cfg), false, `${h} should not skip`);
+});
+
+test('getHostIp returns an empty string when no config file exists', () => {
+  assert.equal(getHostIp(), '');
 });

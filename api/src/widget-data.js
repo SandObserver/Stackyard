@@ -137,7 +137,7 @@ async function getWidgetData(item, entry, endpointName, searchParams) {
   if (IS_DEMO) {
     /* Stats runs its real code path against fake metrics; the fetch-based
        widgets get a canned body since their upstream is unreachable here. */
-    const body = demoData.demoWidgetBody(item.widgetType, endpointName);
+    const body = demoData.demoWidgetBody(item.widgetType);
     if (body) return { status: 200, body };
   }
   if (entry.hasDataFn) {

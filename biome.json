@@ -1,11 +1,12 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
-  "files": { "includes": ["api/src/**/*.js", "ui/js/**/*.js", "scripts/**/*.js"] },
+  "files": { "includes": ["api/src/**/*.js", "ui/js/**/*.js", "ui/widgets/**/*.js", "scripts/**/*.js"] },
   "formatter": { "enabled": false },
   "linter": {
     "enabled": true,
     "rules": {
       "preset": "recommended",
+      "correctness": { "noUndeclaredVariables": "error" },
       "style": { "useTemplate": "off", "useNodejsImportProtocol": "off" },
       "complexity": { "useOptionalChain": "off", "useLiteralKeys": "off", "useArrowFunction": "off" },
       "suspicious": { "useIterableCallbackReturn": "off" }
