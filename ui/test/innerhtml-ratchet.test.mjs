@@ -26,8 +26,7 @@ const BUDGET = {
   'admin-widget-form.js': 21,
   'widget-config-form.js': 10,
   'admin.js': 9,
-  'admin-app-form.js': 4,
-  'dashboard.js': 2,
+  'admin-app-form.js': 2,
 };
 
 /* setHtml's own write. It is the single sanctioned innerHTML in the codebase and

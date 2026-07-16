@@ -4,6 +4,7 @@ import { loadLocalIcons, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
 import { mk, mkWrap as _mkWrap, mountScaledWidget, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
+import { html, setHtml } from '/js/html.js?v=1';
 import { initI18n } from '/js/i18n.js?v=1';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
@@ -248,19 +249,7 @@ function showSetupPrompt() {
   return new Promise(resolve => {
     const ov = document.createElement('div');
     ov.className = 'setup-prompt';
-    ov.innerHTML =
-      '<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title">' +
-        '<p id="setup-title" class="setup-title">Set a dashboard password?</p>' +
-        '<p class="setup-sub">Optional. Without one, anyone who can reach this dashboard can use and configure it. This isn\'t a replacement for a dedicated auth service.</p>' +
-        '<input id="setup-pw" type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" class="setup-pw">' +
-        '<div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div>' +
-        '<div id="setup-hint" class="setup-hint"></div>' +
-        '<div id="setup-err" class="setup-err" role="alert"></div>' +
-        '<div class="setup-btns">' +
-          '<button id="setup-skip" type="button" class="setup-btn setup-btn-skip">Skip</button>' +
-          '<button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>Set</button>' +
-        '</div>' +
-      '</div>';
+    setHtml(ov, html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">Set a dashboard password?</p><p class="setup-sub">Optional. Without one, anyone who can reach this dashboard can use and configure it. This isn't a replacement for a dedicated auth service.</p><input id="setup-pw" type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">Skip</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>Set</button></div></div>`);
     document.body.appendChild(ov);
 
     const pw   = ov.querySelector('#setup-pw');
@@ -333,7 +322,7 @@ async function boot() {
   if (configFailed) {
     const msg = document.createElement('div');
     msg.className = 'api-error-screen';
-    msg.innerHTML = '<p class="api-error-title">Could not connect to dashboard API</p><p class="api-error-sub">Make sure the API container is running</p><button class="api-error-btn" onclick="location.reload()">Retry</button>';
+    setHtml(msg, html`<p class="api-error-title">Could not connect to dashboard API</p><p class="api-error-sub">Make sure the API container is running</p><button class="api-error-btn" onclick="location.reload()">Retry</button>`);
     document.body.appendChild(msg);
     document.body.classList.add('ready');
     return;

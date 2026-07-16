@@ -3,6 +3,7 @@
    Reads and writes shared state; exports buildAppForm, buildFolderForm, and
    parseKV (used by the save path). */
 import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
+import { html, setHtml } from '/js/html.js?v=1';
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { isDockBlocked, DOCK_MAX } from '/js/admin-logic.js?v=1';
@@ -384,7 +385,7 @@ function renderBadgeList(nums,existingOnly,query=''){
     if(state.spaths.length){
       state.spaths.forEach(p=>{
         const it=document.createElement('div');it.className='bi on';
-        it.innerHTML=`<div class="bck"></div><div class="binfo"><div class="blabel">${esc(p)}</div><div class="bpath">${esc(p)}</div></div>`;
+        setHtml(it, html`<div class="bck"></div><div class="binfo"><div class="blabel">${p}</div><div class="bpath">${p}</div></div>`);
         it.onclick=()=>{const i=state.spaths.indexOf(p);if(i>=0){state.spaths.splice(i,1);it.classList.remove('on');}else{state.spaths.push(p);it.classList.add('on');}};
         list.appendChild(it);
       });
@@ -410,7 +411,10 @@ function renderBadgeList(nums,existingOnly,query=''){
   const addItem=({path,value,label})=>{
     const it=document.createElement('div');it.className='bi'+(state.spaths.includes(path)?' on':'');
     const displayLabel=label||path;
-    it.innerHTML=`<div class="bck"></div><div class="binfo"><div class="blabel">${esc(displayLabel)}</div><div class="bpath">${esc(path)}</div></div><div class="bval">${value}</div>`;
+    /* value comes back from a remote service via collectNumbers, which only ever
+       emits numbers. It was interpolated unescaped on that basis; html`` no
+       longer requires that invariant to hold. */
+    setHtml(it, html`<div class="bck"></div><div class="binfo"><div class="blabel">${displayLabel}</div><div class="bpath">${path}</div></div><div class="bval">${value}</div>`);
     it.onclick=()=>{const i=state.spaths.indexOf(path);if(i>=0){state.spaths.splice(i,1);it.classList.remove('on');}else{state.spaths.push(path);it.classList.add('on');}};
     list.appendChild(it);
   };
