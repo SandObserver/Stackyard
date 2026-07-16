@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Removed unused `crypto` and `log` re-exports from `auth.js`.
+
 - Fixed uploading a custom app icon failing with an error and never applying
   the icon. The file was saved but the form never picked it up.
 - Icon uploads now check that a .png or .ico really is an image, and reject an
