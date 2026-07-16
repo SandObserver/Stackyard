@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Fixed uploading a custom app icon failing with an error and never applying
+  the icon. The file was saved but the form never picked it up.
+
 ## [1.2.0] - 2026-07-15
 
 - New: demo mode. Setting `DEMO_MODE=true` serves a read-only sample dashboard
