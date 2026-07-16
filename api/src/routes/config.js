@@ -5,6 +5,8 @@ const log = require('../log');
 const { scrubConfigSecrets, preserveConfigSecrets } = require('../widget-secrets');
 const { applyBackupSlotDonors } = require('../backup-secrets');
 
+const DOCK_MAX = 4;
+
 function scrubSecrets(cfg) {
   const safe = JSON.parse(JSON.stringify(cfg));
   scrubConfigSecrets(safe);
@@ -45,6 +47,11 @@ on('POST', '/api/config', async(req, res) => {
     if (!Array.isArray(data.items)) return json(res, 400, { error:'items must be an array' });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error:'every item needs a non-empty id and type' });
+    /* The dashboard renders at most DOCK_MAX dock apps, so a config holding more
+       would silently lose the extras. Mirrors DOCK_MAX in ui/js/admin-logic.js;
+       the two cannot share a module across the CJS/ESM split without a build step. */
+    if (data.items.filter(i => i.type === 'app' && i.dock).length > DOCK_MAX)
+      return json(res, 400, { error:`at most ${DOCK_MAX} apps can be shown in the dock` });
     const KNOWN_SETTINGS = new Set(['background', 'stats', 'server', 'auth', 'theme', 'layout', 'search', 'greeting', 'logLevel', 'language']);
     if (data.settings && typeof data.settings === 'object') {
       for (const key of Object.keys(data.settings)) {
