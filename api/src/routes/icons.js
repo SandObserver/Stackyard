@@ -7,6 +7,7 @@ const { fetchJSON } = require('../proxy');
 const log = require('../log');
 const { rateLimit } = require('../auth');
 const { sanitizeSvg } = require('../svg-sanitize');
+const { sniffIconType } = require('../icon-sniff');
 
 on('GET', '/api/wallpaper', async(_, res) => {
   const cfg = loadConfig(), bg = cfg.settings?.background || {};
@@ -67,7 +68,7 @@ on('POST', '/api/icons/upload', async(req, res) => {
       req.on('error', reject);
     });
     const delim = Buffer.from('--' + boundary), CRLFCRLF = Buffer.from('\r\n\r\n');
-    let filename = '', fileData = null, searchFrom = 0;
+    let filename = '', fileData = null, searchFrom = 0, fileParts = 0;
     while (true) {
       const delimPos = buf.indexOf(delim, searchFrom);
       if (delimPos === -1) break;
@@ -81,14 +82,17 @@ on('POST', '/api/icons/upload', async(req, res) => {
       const nextDelim  = buf.indexOf(Buffer.from('\r\n--' + boundary), bodyStart);
       const bodyEnd    = nextDelim === -1 ? buf.length : nextDelim;
       const fnMatch    = headerStr.match(/filename="([^"]+)"/i);
-      if (fnMatch) { filename = path.basename(fnMatch[1]); fileData = buf.slice(bodyStart, bodyEnd); }
+      if (fnMatch) { fileParts++; filename = path.basename(fnMatch[1]); fileData = buf.slice(bodyStart, bodyEnd); }
       searchFrom = bodyEnd + 2;
     }
     if (!filename || !fileData?.length)       return json(res, 400, { error:'no file found in upload' });
+    if (fileParts > 1)                        return json(res, 400, { error:'only one file per upload' });
     if (!/\.(svg|png|ico)$/i.test(filename))  return json(res, 400, { error:'only .svg, .png, .ico files allowed' });
     if (fileData.length > 2*1024*1024)        return json(res, 400, { error:'file too large (max 2 MB)' });
     if (/\.svg$/i.test(filename)) {
       fileData = Buffer.from(sanitizeSvg(fileData.toString('utf8')), 'utf8');
+    } else if (!sniffIconType(fileData)) {
+      return json(res, 400, { error:'file is not a valid PNG or ICO image' });
     }
     fs.mkdirSync(ICONS_PATH, { recursive:true });
     fs.writeFileSync(path.join(ICONS_PATH, filename), fileData);
