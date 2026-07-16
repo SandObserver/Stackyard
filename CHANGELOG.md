@@ -18,6 +18,7 @@
   button stranded in the corner, and no Cancel button.
 - Fixed the mobile search pill and activity badges rendering at double size, and
   the pill overlapping the last row of widgets.
+- Fixed mobile search results rendering at double size.
 - Demo: added a Books widget and a second disk, made the Vaultwarden and Prowlarr
   tiles readable, and fixed the now-playing tape never winding.
 - Hardened `esc()` and the SVG sanitizer.

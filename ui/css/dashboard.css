@@ -436,13 +436,15 @@
     }
 
     /* ── Mobile result rows — only apply on mobile ── */
-    body.is-mob #sres .sr { padding:16px 20px; gap:20px; }
+    body.is-mob #sres .sr { padding:calc(10px * var(--sc,1)) calc(14px * var(--sc,1)); gap:calc(12px * var(--sc,1)); }
     body.is-mob #sres .sr + .sr { border-top:0.5px solid rgba(255,255,255,.10); }
     body.is-mob #sres .sr-section { display:none; }
-    body.is-mob #sres .srn { font-size:1.625rem !important; font-weight:500; }
-    body.is-mob #sres .srh { display:none !important; }
-    body.is-mob #sres .sri { width:88px !important; height:88px !important; border-radius:20px; flex-shrink:0; }
-    body.is-mob #sres .sri img, body.is-mob #sres .sri .sri-img { width:60px !important; height:60px !important; }
+    body.is-mob #sres .srn { font-size:calc(17px * var(--sc,1)); font-weight:500; }
+    body.is-mob #sres .srh { display:none; }
+    body.is-mob #sres .sra { display:none; }
+    body.is-mob #sres .sri { width:calc(44px * var(--sc,1)); height:calc(44px * var(--sc,1)); border-radius:calc(10px * var(--sc,1)); }
+    /* !important: beats the equally-important #sres .sri img rule below. */
+    body.is-mob #sres .sri img, body.is-mob #sres .sri .sri-img { width:calc(30px * var(--sc,1)) !important; height:calc(30px * var(--sc,1)) !important; }
 
     /* ── Spotlight result rows ── */
     .sr-section {
@@ -467,7 +469,11 @@
     .sri img, .sri .sri-img { width:28px; height:28px; object-fit:contain }
     #sres .sri img, #sres .sri .sri-img { width:34px !important; height:34px !important; }
     .srn { font-size:1.0625rem; font-weight:400; color:rgba(255,255,255,.92) }
-    .srh { font-size:0.8125rem; color:rgba(255,255,255,.38); margin-top:1px }
+    .srh {
+      font-size:0.8125rem; color:rgba(255,255,255,.38); margin-top:1px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .sra { margin-left:auto; color:rgba(255,255,255,.25); font-size:0.8125rem }
 
     /* ── Folder overlay — mobile ── */
     .folder-overlay-mobile {

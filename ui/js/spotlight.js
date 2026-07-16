@@ -55,12 +55,11 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
       a.addEventListener('touchend', e => { e.preventDefault(); doOpen(); });
       a.onclick = doOpen;
 
-      const _sz = MOB ? 88 : 44, _img = MOB ? 60 : 28, _r = MOB ? 20 : 12;
       const ic = mk('div'); ic.className = 'sri';
-      ic.style.cssText = `width:${_sz}px;height:${_sz}px;border-radius:${_r}px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:${clr(app.color)};`;
+      ic.style.background = clr(app.color);
       if (app.iconUrl) {
         const img = mk('img', { alt: '', loading: 'lazy' });
-        img.style.cssText = `width:${_img}px;height:${_img}px;object-fit:contain;`;
+        img.setAttribute('aria-hidden', 'true');
         const srcs = iconChain(app.iconUrl);
         if (srcs.length) img.src = srcs[0];
         let step = 0;
@@ -68,18 +67,15 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
         ic.appendChild(img);
       } else {
         ic.textContent = (app.label||app.id)[0].toUpperCase();
-        ic.style.cssText += 'color:#fff;font-weight:600';
+        ic.style.color = '#fff'; ic.style.fontWeight = '600';
       }
 
       const tx = mk('div'); tx.style.cssText = 'flex:1;min-width:0;';
       const nm = mk('div'); nm.className = 'srn'; nm.textContent = app.label||app.id;
-      nm.style.cssText = MOB ? 'font-size:26px;font-weight:500;color:rgba(255,255,255,.92);' : 'font-size:17px;font-weight:400;color:rgba(255,255,255,.92);';
       const ht = mk('div'); ht.className = 'srh';
       ht.textContent = (app.href||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
-      ht.style.cssText = MOB ? 'display:none;' : 'font-size:13px;color:rgba(255,255,255,.38);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-      const ar = mk('span');
-      ar.style.cssText = MOB ? 'display:none;' : 'margin-left:auto;color:rgba(255,255,255,.25);font-size:13px';
-      if (!MOB) ar.textContent = '↗';
+      const ar = mk('span'); ar.className = 'sra'; ar.textContent = '↗';
+      ar.setAttribute('aria-hidden', 'true');
       tx.append(nm, ht); a.append(ic, tx, ar); f.appendChild(a);
     });
     res.appendChild(f);
