@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Fixed Test Connection, and per-app health check pings, reporting on a
+  different target than the widget actually fetches. When a host-IP port map is
+  configured, a ping now follows the same mapping the fetch does, so it can no
+  longer pass while the widget fails, or the reverse.
+
 - Internal: `proxy.js` now exposes a single outbound boundary.
   `fetchChecked`/`pingChecked` for URLs that arrive in a request, and
   `fetchUnchecked`/`pingUnchecked` for URLs from config or hardcoded constants.
