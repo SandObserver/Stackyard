@@ -14,6 +14,8 @@
   Docker Container Health Checks are off in General.
 - Toggles now show a focus ring when reached by keyboard, and an unavailable
   toggle is announced with its reason instead of being skipped.
+- Saving a config with more than four dock apps is now rejected instead of
+  quietly dropping the extras.
 
 ## [1.2.0] - 2026-07-15
 

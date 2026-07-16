@@ -184,6 +184,27 @@ test('GET /api/config/export omits _rev', async () => {
   assert.equal(r.body._rev, undefined);
 });
 
+test('POST /api/config rejects more docked apps than the dock can render', async () => {
+  const dock = n => Array.from({ length: n }, (_, k) => ({ id: `d${k}`, type: 'app', dock: true }));
+  const ok = await req('POST', '/api/config', { cookie: validCookie, body: { items: dock(4), settings: {} } });
+  assert.equal(ok.status, 200);
+
+  const tooMany = await req('POST', '/api/config', { cookie: validCookie, body: { items: dock(5), settings: {} } });
+  assert.equal(tooMany.status, 400);
+  assert.match(tooMany.body.error, /dock/);
+});
+
+test('POST /api/config does not count undocked apps, widgets or folders toward the dock', async () => {
+  const items = [
+    ...Array.from({ length: 4 }, (_, k) => ({ id: `d${k}`, type: 'app', dock: true })),
+    { id: 'x', type: 'app', dock: false },
+    { id: 'w', type: 'widget', dock: true },
+    { id: 'f', type: 'folder', dock: true },
+  ];
+  const r = await req('POST', '/api/config', { cookie: validCookie, body: { items, settings: {} } });
+  assert.equal(r.status, 200);
+});
+
 /* Config-mutating auth paths, kept last so they don't disturb the tests above
    (set-password rotates the signing secret, invalidating validCookie). */
 test('dismiss-setup records the flag for an authenticated same-origin request', async () => {
