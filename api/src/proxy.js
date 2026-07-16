@@ -163,7 +163,10 @@ function parseXml(xml) {
   return docEl ? { [docEl.tag]: _xmlValue(docEl) } : {};
 }
 
-/* Resolves the hostname once and applies the private-IP policy to that exact
+/* Private: reach this through fetchChecked/pingChecked, which guarantee the url
+   passed here is the url that gets connected to.
+
+   Resolves the hostname once and applies the private-IP policy to that exact
    resolution. Returns { error } when blocked, or { ip } with the validated
    address when it should be pinned for the subsequent request (closing the
    DNS-rebind TOCTOU gap: the IP that passed the check is the IP we connect to).
@@ -185,6 +188,11 @@ async function guardSsrf(rawUrl) {
      networks. IPv6 literals are also dotless but contain colons, so they must
      not take this path: they fall through to the private-range check below. */
   if (!h.includes('.') && !h.includes(':')) return { error:null, ip:null };
+  /* The Docker host's own IP is trusted. Callers guard post-rewrite, so a
+     mapped host-IP url has already become a dotless container name and returned
+     above; this branch is what remains for a host-IP port with no portMap entry,
+     which connects to the host directly. It is a trust policy, not a workaround
+     for the rewrite. */
   const hostIp = getHostIp();
   if (hostIp && h === hostIp) return { error:null, ip:null };
   if (!ALLOW_PRIVATE_IPS && (PRIVATE_IP_RE.test(h) || h === 'localhost')) return { error:`Blocked: ${h} is a private address.`, ip:null };
@@ -198,19 +206,18 @@ async function guardSsrf(rawUrl) {
   return { error:null, ip:address };
 }
 
-/* Public name for the guard at call sites that validate a user-submitted URL. */
-const strictCheckSsrf = guardSsrf;
-
 /* opts.skipTls: explicit per-call override (true/false).
    If omitted, falls back to shouldSkipTls() for internal callers.
    opts.pinIp: connect to this exact IP instead of re-resolving the hostname.
    Used to carry the IP validated by guardSsrf through to the request, so a DNS
    rebind between check and connect cannot redirect us to a private address. The
-   Host header and TLS servername stay set to the original hostname. */
+   Host header and TLS servername stay set to the original hostname.
+
+   Private to this module: it does not rewrite or guard, it just connects. Reach
+   it through fetchChecked/fetchUnchecked, which own the full pipeline. */
 function fetchJSON(raw, opts = {}) {
   if (IS_DEMO) return Promise.resolve({ status: 503, data: null, error: 'Outbound requests are disabled in demo mode' });
   return new Promise((resolve, reject) => {
-    raw = rewriteUrl(raw); /* remap host IP → container name if portMap is configured */
     let u; try { u = new URL(raw); } catch(e) { return reject(e); }
     let settled = false, deadline = null;
     const done = (fn, arg) => { if (settled) return; settled = true; if (deadline) clearTimeout(deadline); fn(arg); };
@@ -317,4 +324,69 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
   });
 }
 
-module.exports = { fetchJSON, pingUrl, guardSsrf, strictCheckSsrf, rewriteUrl, getHostIp, shouldSkipTls, parsePrometheus, parseXml, PRIVATE_IP_RE };
+/* ── The outbound boundary ──────────────────────────────────────────────────
+
+   These are the only supported ways to make an outbound request. fetchJSON,
+   pingUrl and guardSsrf are private to this module (see _internals, which is
+   exported for tests only, never for routes).
+
+   Every caller must choose one, and the choice is about where the URL came from:
+
+     fetchChecked   the URL arrived in the HTTP request (a body field, a ?url=
+                    param). Untrusted, so it is SSRF-guarded.
+     fetchUnchecked the URL came from saved config, or is a hardcoded constant.
+                    Not guarded. Whoever writes config already has config-write
+                    access, so guarding it protects nothing while breaking the
+                    private-IP homelab targets that are the normal case.
+
+   The loud name is deliberate: fetchUnchecked in a new route should make a
+   reviewer stop and ask. There is no unclassified fetch to reach for by accident.
+
+   fetchChecked owns the whole pipeline: rewrite, guard the REWRITTEN url, then
+   connect to it. Callers never touch the intermediate URL, so the url that gets
+   checked cannot drift away from the url that gets connected to. That drift was
+   possible when the rewrite lived inside fetchJSON, i.e. after the guard had
+   already passed on a different string. Keep the guard downstream of every URL
+   transformation: if a future rewrite step is added, put it above the guard. */
+
+class SsrfBlockedError extends Error {
+  /* Carries the status a route should return, so a plain
+     `catch(e) { json(res, e.status || 502, ...) }` keeps the 403. */
+  constructor(reason) { super(reason); this.name = 'SsrfBlockedError'; this.status = 403; }
+}
+
+async function fetchChecked(url, opts = {}) {
+  /* Short-circuit before guardSsrf: its dns.lookup would be an outbound request,
+     and demo mode promises none. */
+  if (IS_DEMO) return fetchJSON(url, opts);
+  const target = rewriteUrl(url);
+  const guard  = await guardSsrf(target);
+  if (guard.error) throw new SsrfBlockedError(guard.error);
+  return fetchJSON(target, { ...opts, pinIp: guard.ip });
+}
+
+function fetchUnchecked(url, opts = {}) {
+  return fetchJSON(rewriteUrl(url), opts);
+}
+
+/* Ping deliberately does not rewrite: it reports on the URL as typed. That makes
+   it diverge from what fetchChecked would actually connect to when a portMap
+   entry applies. That is a real bug, but a pre-existing one, kept here so this
+   refactor changes no behaviour. Fixed separately. */
+function pingUnchecked(url, ms, skipTls) {
+  return pingUrl(url, ms, skipTls);
+}
+
+async function pingChecked(url, ms, skipTls) {
+  if (IS_DEMO) return pingUrl(url, ms, skipTls);
+  const guard = await guardSsrf(url);
+  if (guard.error) throw new SsrfBlockedError(guard.error);
+  return pingUrl(url, ms, skipTls, guard.ip);
+}
+
+module.exports = {
+  fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError,
+  rewriteUrl, getHostIp, shouldSkipTls, parsePrometheus, parseXml, PRIVATE_IP_RE,
+  /* Tests only. Routes must use the boundary above. */
+  _internals: { fetchJSON, pingUrl, guardSsrf },
+};

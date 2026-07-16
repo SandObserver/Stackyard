@@ -5,7 +5,7 @@
    These are characterization tests: they pin down what rewriteUrl and guardSsrf
    do *today*, including the interaction between them, so that moving the guard
    relative to the rewrite is a change we can see rather than one we discover in
-   production. Do not "fix" an assertion here to make a refactor pass — if one of
+   production. Do not "fix" an assertion here to make a refactor pass. If one of
    these fails, the behaviour changed and that is the thing to look at. */
 const os = require('node:os');
 const path = require('node:path');
@@ -22,7 +22,8 @@ fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { rewriteUrl, guardSsrf } = require('../src/proxy');
+const { rewriteUrl, _internals } = require('../src/proxy');
+const { guardSsrf } = _internals;
 
 /* ── rewriteUrl ─────────────────────────────────────────────────────────── */
 
@@ -57,8 +58,8 @@ test('rewriteUrl preserves the query string', () => {
 /* ── guardSsrf against the host IP ──────────────────────────────────────── */
 
 test('guardSsrf allows the configured host IP without pinning', async () => {
-  /* Unpinned is load-bearing: fetchJSON rewrites this host to a container name
-     after the guard runs, and a pinned IP would defeat that rewrite. */
+  /* Reached only for a host-IP port with no portMap entry: a mapped one has
+     already been rewritten to a container name before the guard runs. */
   assert.deepEqual(await guardSsrf('http://192.168.1.50:8096/'), { error: null, ip: null });
 });
 
@@ -74,16 +75,12 @@ test('guardSsrf still blocks a private address that is not the host IP', async (
 
 /* ── the interaction: guard sees the pre-rewrite URL ────────────────────── */
 
-test('the URL guardSsrf checks is not the URL rewriteUrl produces', async () => {
-  /* Documents the current ordering. The guard passes on the host-IP form while
-     the connection is actually made to the rewritten container name. Today this
-     is safe only because the host-IP branch returns ip:null, letting the later
-     rewrite take effect. Whoever changes this ordering should expect this test
-     to need rewriting, deliberately. */
+test('rewriting changes the host, so the guard must run after it', async () => {
+  /* The reason the pipeline is ordered rewrite → guard → connect. Guarding the
+     raw form would check a host that is not the one connected to. */
   const raw = 'http://192.168.1.50:8096/api/summary';
-  const guard = await guardSsrf(raw);
-  assert.equal(guard.error, null);
   assert.notEqual(rewriteUrl(raw), raw);
+  assert.equal((await guardSsrf(raw)).error, null);
 });
 
 test('guarding the rewritten URL also passes, via the dotless-name branch', async () => {

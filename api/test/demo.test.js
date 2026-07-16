@@ -7,7 +7,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { loadConfig } = require('../src/config');
-const { fetchJSON, pingUrl } = require('../src/proxy');
+const { _internals } = require('../src/proxy');
+const { fetchJSON, pingUrl } = _internals;
 
 const demoRaw = fs.readFileSync(path.join(__dirname, '..', 'demo', 'demo-config.json'), 'utf8');
 const demo = JSON.parse(demoRaw);

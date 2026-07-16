@@ -3,7 +3,7 @@ const path = require('path');
 const { on, json, checkOrigin, getIp } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, ICONS_PATH } = require('../config');
-const { fetchJSON } = require('../proxy');
+const { fetchUnchecked } = require('../proxy');
 const log = require('../log');
 const { rateLimit } = require('../auth');
 const { sanitizeSvg } = require('../svg-sanitize');
@@ -15,7 +15,7 @@ on('GET', '/api/wallpaper', async(_, res) => {
   try {
     const p = new URLSearchParams({ orientation:'landscape', content_filter:'high', client_id:bg.apiKey||'' });
     if (bg.collection) p.set('collections', bg.collection);
-    const r   = await fetchJSON(`https://api.unsplash.com/photos/random?${p}`);
+    const r   = await fetchUnchecked(`https://api.unsplash.com/photos/random?${p}`);
     const raw = r.data?.urls?.raw;
     if (!raw) return json(res, 200, { url:null, error: r.data?.errors?.[0] || 'No image returned' });
     json(res, 200, { url:`${raw}&w=2800&h=1800&q=85&fm=jpg&fit=crop&crop=entropy` });
@@ -30,7 +30,7 @@ on('GET', '/api/icons/search', async(req, res) => {
   if (!q) return json(res, 200, { results:[] });
   try {
     if (!_iconCache || (Date.now() - _iconCacheAt) > ICON_CACHE_TTL) {
-      const r = await fetchJSON('https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@main/metadata/icons.json');
+      const r = await fetchUnchecked('https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@main/metadata/icons.json');
       _iconCache = Array.isArray(r.data) ? r.data : []; _iconCacheAt = Date.now();
     }
     json(res, 200, { results:_iconCache
