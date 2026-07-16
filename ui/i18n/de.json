@@ -89,6 +89,7 @@
     "dockFull": "Dock voll (4/4). Entferne zuerst eine App.",
     "badge": "Badge",
     "healthCheck": "Zustandsprüfung",
+    "healthGlobalOff": "Aktiviere Docker-Container-Zustandsprüfungen unter Allgemein und richte sie ein, um dies zu verwenden.",
     "type": "Typ",
     "container": "Container",
     "ping": "Ping",

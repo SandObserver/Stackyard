@@ -92,6 +92,7 @@
     "dockFull": "Dock full (4/4). Remove an app first.",
     "badge": "Badge",
     "healthCheck": "Health Check",
+    "healthGlobalOff": "Turn on Docker Container Health Checks in General, then configure it, to use this.",
     "type": "Type",
     "container": "Container",
     "ping": "Ping",
