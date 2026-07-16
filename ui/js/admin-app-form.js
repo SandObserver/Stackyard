@@ -3,7 +3,7 @@
    Reads and writes shared state; exports buildAppForm, buildFolderForm, and
    parseKV (used by the save path). */
 import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
-import { resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
+import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
