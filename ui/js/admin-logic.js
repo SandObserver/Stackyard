@@ -1,7 +1,20 @@
 // @ts-check
 /* Pure logic extracted from the admin UI so it can be unit-tested without a DOM:
-   backup-slot normalization (with default-instance inference) and dashboard-item
-   reordering. Both operate on plain data and touch no DOM or module state. */
+   backup-slot normalization (with default-instance inference), dashboard-item
+   reordering, and the dock-capacity check. All operate on plain data and touch
+   no DOM or module state. */
+
+/* The dock renders at most four apps (dashboard.js slices to DOCK_MAX), so the
+   Show in Dock toggle is unavailable once four others are in. An app already in
+   the dock is never blocked, since it holds one of the four slots itself. */
+export const DOCK_MAX = 4;
+
+export function isDockBlocked(items, editing) {
+  if (editing?.dock) return false;
+  const docked = (Array.isArray(items) ? items : [])
+    .filter(i => i?.type === 'app' && i.dock && i.id !== editing?.id).length;
+  return docked >= DOCK_MAX;
+}
 
 /* Normalize a widget's saved backup slots to the fixed count for its size,
    filling defaults and inferring per-slot useDefault: a slot uses the default

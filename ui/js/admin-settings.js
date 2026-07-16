@@ -96,15 +96,6 @@ export function loadSettings(c){
   const socketEl=document.getElementById('srv-socket');
   const hideHealthyRowEl=document.getElementById('srv-hide-healthy-row');
   const hideHealthyEl=document.getElementById('srv-hide-healthy');
-  /* Reflect global Docker health state onto per-app hc-en if the modal is open */
-  function applyGlobalHealthState(enabled){
-    const hcEnEl=document.getElementById('hc-en');
-    if(!hcEnEl)return;
-    hcEnEl.disabled=!enabled;
-    const trow=hcEnEl.closest('.trow');
-    if(trow)trow.style.opacity=enabled?'':'0.45';
-    if(!enabled)document.getElementById('hc-sub')?.classList.remove('open');
-  }
   if(dockerEnEl){
     dockerEnEl.checked=!!(s.server?.socketProxyUrl);
     const applyDocker=v=>{
@@ -116,10 +107,7 @@ export function loadSettings(c){
       if(socketHint)socketHint.style.display=v?'':'none';
     };
     applyDocker(dockerEnEl.checked);
-    dockerEnEl.addEventListener('change',()=>{
-      applyDocker(dockerEnEl.checked);
-      applyGlobalHealthState(dockerEnEl.checked);
-    });
+    dockerEnEl.addEventListener('change',()=>applyDocker(dockerEnEl.checked));
   }
   if(hideHealthyEl)hideHealthyEl.checked=s.server?.hideHealthyBadge!==false;
   if(socketEl)socketEl.value=s.server?.socketProxyUrl||'';

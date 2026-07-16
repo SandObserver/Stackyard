@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normBackupSlots, reorderItems } from '../js/admin-logic.js';
+import { normBackupSlots, reorderItems, isDockBlocked } from '../js/admin-logic.js';
 
 test('normBackupSlots returns one slot for small and three otherwise', () => {
   assert.equal(normBackupSlots([], 'small').length, 1);
@@ -60,4 +60,36 @@ test('reorderItems reorders a child within its folder', () => {
   assert.deepEqual(items[0].children, ['y', 'x', 'z']);
   assert.equal(reorderItems(items, null, -1, { folderId: 'f', childIdx: 0 }), false); // out of bounds
   assert.equal(reorderItems(items, null, 1, { folderId: 'missing', childIdx: 0 }), false);
+});
+
+test('isDockBlocked blocks a new app once the dock is full', () => {
+  const items = [1, 2, 3, 4].map(n => ({ id: `a${n}`, type: 'app', dock: true }));
+  assert.equal(isDockBlocked(items, { id: 'new', type: 'app' }), true);
+  assert.equal(isDockBlocked(items.slice(0, 3), { id: 'new', type: 'app' }), false);
+});
+
+test('isDockBlocked never blocks an app already in the dock', () => {
+  const items = [1, 2, 3, 4].map(n => ({ id: `a${n}`, type: 'app', dock: true }));
+  assert.equal(isDockBlocked(items, items[0]), false);
+});
+
+test('isDockBlocked excludes the edited app from the count', () => {
+  // four docked, one of them is the app being edited and is being un-docked
+  const items = [1, 2, 3, 4].map(n => ({ id: `a${n}`, type: 'app', dock: true }));
+  assert.equal(isDockBlocked(items, { id: 'a1', type: 'app', dock: false }), false);
+});
+
+test('isDockBlocked only counts docked apps, not widgets or folders', () => {
+  const items = [
+    ...[1, 2, 3].map(n => ({ id: `a${n}`, type: 'app', dock: true })),
+    { id: 'w1', type: 'widget', dock: true },
+    { id: 'f1', type: 'folder', dock: true },
+    { id: 'a9', type: 'app', dock: false },
+  ];
+  assert.equal(isDockBlocked(items, { id: 'new', type: 'app' }), false);
+});
+
+test('isDockBlocked tolerates junk input', () => {
+  assert.equal(isDockBlocked(null, null), false);
+  assert.equal(isDockBlocked([null, undefined, {}], { id: 'new' }), false);
 });

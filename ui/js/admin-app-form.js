@@ -5,7 +5,8 @@
 import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
-import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
+import { isDockBlocked, DOCK_MAX } from '/js/admin-logic.js?v=1';
+import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, setTogDisabled } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
 
 /* Folder form: settings-row system (PSD: add_new_folder).
@@ -76,8 +77,9 @@ function _wireFolderApps(){
 
 
 export function buildAppForm(body,item){
-  const docks=state.items.filter(i=>i.type==='app'&&i.dock&&i.id!==item?.id).length;
-  const dockFull=docks>=4;
+  const dockBlocked=isDockBlocked(state.items,item);
+  /* Per-app health checks only run when the global Docker toggle in General is on. */
+  const globalHealthOn=!!(document.getElementById('srv-docker-en')?.checked);
   const mon=item?.monitoring||{};
   const hc=mon.healthcheck||{enabled:!!(item?.container||item?.ping),container:item?.container||'',pingUrl:item?.ping||''};
   const act=mon.activity||{enabled:!!(item?.badge?.enabled),url:item?.badge?.url||'',interval:item?.badge?.interval||30};
@@ -95,7 +97,7 @@ export function buildAppForm(body,item){
       +`<input id="${inpId}" type="${type}" value="${esc(val||'')}" style="display:none">`
       +`<button class="pe" type="button" aria-label="Edit ${label}">${PE_SVG}</button></div>`;
   };
-  const tog=(id,on,extra='')=>`<label class="tog${extra}"><input type="checkbox" id="${id}" ${on?'checked':''}><div class="tr"></div></label>`;
+  const tog=(id,on)=>`<label class="tog"><input type="checkbox" id="${id}" ${on?'checked':''}><div class="tr"></div></label>`;
 
   body.innerHTML=`
     <div class="grp">
@@ -116,14 +118,14 @@ export function buildAppForm(body,item){
     </div>
 
     <div class="grp">
-      <div class="row"><span class="rl">Show in Dock</span>${tog('f-dock',!!item?.dock,(dockFull&&!item?.dock)?' tog-disabled':'')}</div>
+      <div class="row"><span class="rl">Show in Dock</span>${tog('f-dock',!!item?.dock)}</div>
     </div>
-    ${dockFull&&!item?.dock?'<p class="grp-tip">Dock full (4/4). Remove an app first.</p>':''}
+    ${dockBlocked?`<p class="grp-tip" id="dock-full-tip">Dock full (${DOCK_MAX}/${DOCK_MAX}). Remove an app first.</p>`:''}
 
     <p class="grp-hdr">Badge</p>
     <div class="grp">
       <div class="row"><span class="rl">Health Check</span>${tog('hc-en',hc.enabled)}</div>
-      <div id="hc-sub" ${hc.enabled?'':'hidden'}>
+      <div id="hc-sub" ${hc.enabled&&globalHealthOn?'':'hidden'}>
         <div class="row"><span class="rl">Type</span><div class="segr">
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing?'':'checked'}><span class="segr-dot"></span><span>Container</span></label>
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${isPing?'checked':''}><span class="segr-dot"></span><span>Ping</span></label>
@@ -135,6 +137,7 @@ export function buildAppForm(body,item){
         </div>
       </div>
     </div>
+    ${globalHealthOn?'':'<p class="grp-tip" id="hc-off-tip">Turn on Docker Container Health Checks in General, then configure it, to use this.</p>'}
 
     <div class="grp">
       <div class="row"><span class="rl">Fixed Label</span>${tog('static-en',hasStatic)}</div>
@@ -189,13 +192,9 @@ export function buildAppForm(body,item){
   wireIcon();
   if(state.siurl)updPrev();
 
-  /* Health check enable state honours the global Docker toggle */
-  const globalHealthOn=!!(document.getElementById('srv-docker-en')?.checked);
+  setTogDisabled(document.getElementById('f-dock'),dockBlocked,'dock-full-tip');
   const hcEn=document.getElementById('hc-en');
-  if(hcEn){
-    hcEn.disabled=!globalHealthOn;
-    if(!globalHealthOn){const sub=document.getElementById('hc-sub');if(sub){sub.style.opacity='0.45';sub.style.pointerEvents='none';}}
-  }
+  setTogDisabled(hcEn,!globalHealthOn,'hc-off-tip');
   const showHide=(id,on)=>{const el=document.getElementById(id);if(el)el.hidden=!on;};
   hcEn?.addEventListener('change',e=>{if(globalHealthOn)showHide('hc-sub',e.target.checked);});
   document.querySelectorAll('input[name="hc-type"]').forEach(r=>r.addEventListener('change',()=>{
