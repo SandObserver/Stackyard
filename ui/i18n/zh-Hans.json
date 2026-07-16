@@ -89,6 +89,7 @@
     "dockFull": "Dock 已满 (4/4)。请先移除一个应用。",
     "badge": "徽章",
     "healthCheck": "健康检查",
+    "healthGlobalOff": "请先在通用中开启 Docker 容器健康检查并完成配置后再使用。",
     "type": "类型",
     "container": "容器",
     "ping": "Ping",

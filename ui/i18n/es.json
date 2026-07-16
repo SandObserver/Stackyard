@@ -89,6 +89,7 @@
     "dockFull": "Dock lleno (4/4). Elimina una aplicación primero.",
     "badge": "Insignia",
     "healthCheck": "Comprobación de estado",
+    "healthGlobalOff": "Activa las Comprobaciones de estado de contenedores Docker en General y configúralas para usar esto.",
     "type": "Tipo",
     "container": "Contenedor",
     "ping": "Ping",
