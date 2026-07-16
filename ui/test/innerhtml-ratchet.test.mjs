@@ -5,50 +5,64 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /* Raw `el.innerHTML = ` string-building is safe only while every interpolation
-   remembers esc(). html`` from utils.js removes that requirement, but the
-   existing files predate it and are migrated one at a time.
+   remembers esc(). setHtml() + html`` from utils.js remove that requirement, but
+   the existing files predate them and are migrated one at a time.
 
-   This is a ratchet, not a ban. Each file's remaining assignments are capped at
-   the count below. The counts may only ever go down: migrate a file, lower its
+   This is a ratchet, not a ban. Each file's remaining writes are capped at the
+   count below. The counts may only ever go down: migrate a file, lower its
    number, and once it hits zero delete the entry so the file can never regress.
    A file not listed here must have none at all, which is what stops the pattern
    coming back in new code.
 
-   Reads (`if (el.innerHTML)`) are not matched and are not the concern; only
-   assignments write markup. */
+   Two things are deliberately not counted:
+
+   Reads (`if (el.innerHTML)`) do not write markup.
+
+   Clears (`el.innerHTML = ''`) interpolate nothing, so there is no value to
+   escape and no way for them to be unsafe. Counting them would inflate the
+   budgets and push pointless churn through rendering code. 28 of the 76 raw
+   assignments in this codebase are clears; only the other 48 are real. */
 const BUDGET = {
-  'admin-widget-form.js': 31,
-  'widget-config-form.js': 12,
-  'admin.js': 11,
-  'dashboard.js': 7,
-  'admin-app-form.js': 6,
-  'ui.js': 4,
-  'spotlight.js': 3,
-  'i18n.js': 1,
-  'admin-color-control.js': 1,
+  'admin-widget-form.js': 21,
+  'widget-config-form.js': 10,
+  'admin.js': 9,
+  'admin-app-form.js': 4,
+  'dashboard.js': 2,
 };
 
+/* setHtml's own write. It is the single sanctioned innerHTML in the codebase and
+   the reason every other file can be held to zero. */
+const IMPLEMENTATION = 'html.js';
+
 const jsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../js');
-const ASSIGN = /\.innerHTML\s*=(?!=)/g;
+const ASSIGN = /\.innerHTML\s*=(?!=)\s*/g;
+const CLEAR = /^(?:''|""|``)\s*[;,)]/;
+
+function countWrites(src) {
+  let n = 0;
+  for (const m of src.matchAll(ASSIGN)) {
+    if (!CLEAR.test(src.slice(m.index + m[0].length))) n++;
+  }
+  return n;
+}
 
 const counts = Object.fromEntries(
-  fs.readdirSync(jsDir).filter(f => f.endsWith('.js')).map(f => {
-    const src = fs.readFileSync(path.join(jsDir, f), 'utf8');
-    return [f, (src.match(ASSIGN) || []).length];
-  }).filter(([, n]) => n > 0),
+  fs.readdirSync(jsDir).filter(f => f.endsWith('.js') && f !== IMPLEMENTATION)
+    .map(f => [f, countWrites(fs.readFileSync(path.join(jsDir, f), 'utf8'))])
+    .filter(([, n]) => n > 0),
 );
 
-test('no unlisted file assigns innerHTML directly', () => {
+test('no unlisted file writes markup through innerHTML', () => {
   const unlisted = Object.keys(counts).filter(f => !(f in BUDGET));
   assert.deepEqual(unlisted, [],
-    `Use html\`\` from utils.js instead of assigning innerHTML: ${unlisted.join(', ')}`);
+    `Use setHtml(el, html\`...\`) from utils.js instead: ${unlisted.join(', ')}`);
 });
 
 test('no file exceeds its innerHTML budget', () => {
   const over = Object.entries(counts)
     .filter(([f, n]) => f in BUDGET && n > BUDGET[f])
     .map(([f, n]) => `${f}: ${n} > ${BUDGET[f]}`);
-  assert.deepEqual(over, [], `innerHTML budget exceeded. Use html\`\` instead:\n${over.join('\n')}`);
+  assert.deepEqual(over, [], `innerHTML budget exceeded. Use setHtml(el, html\`...\`):\n${over.join('\n')}`);
 });
 
 test('the budget has no stale entries', () => {

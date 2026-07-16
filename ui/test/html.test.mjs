@@ -1,12 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { register } from 'node:module';
-
-/* utils.js imports a peer by its served path ('/js/icons.js?v=...'), which Node
-   cannot resolve from disk. See utils.test.mjs for why the hook is registered
-   here rather than via --import. */
-register('./js-root-hooks.mjs', import.meta.url);
-const { html, raw, esc } = await import('../js/utils.js');
+/* html.js is dependency-free, so unlike utils.js it needs no resolve hook. */
+import { html, raw, esc, setHtml } from '../js/html.js';
 
 const s = v => String(v);
 
@@ -77,4 +72,33 @@ test('html and esc agree on what escaping means', () => {
 
 test('raw() accepts a nested html result unchanged', () => {
   assert.equal(s(html`${raw(html`<b>${'&'}</b>`)}`), '<b>&amp;</b>');
+});
+
+/* ── setHtml ─────────────────────────────────────────────────────────────── */
+
+test('setHtml writes an html`` result to the element', () => {
+  const el = { innerHTML: null };
+  setHtml(el, html`<p>${'a&b'}</p>`);
+  assert.equal(el.innerHTML, '<p>a&amp;b</p>');
+});
+
+test('setHtml refuses a plain string', () => {
+  /* The guarantee: an unescaped value cannot reach innerHTML through setHtml,
+     even if a caller passes user input straight in. */
+  const el = { innerHTML: null };
+  assert.throws(() => setHtml(el, '<img src=x onerror=alert(1)>'), TypeError);
+  assert.equal(el.innerHTML, null, 'nothing must be written on rejection');
+});
+
+test('setHtml refuses values that merely stringify to markup', () => {
+  const el = { innerHTML: null };
+  assert.throws(() => setHtml(el, { toString: () => '<b>x</b>' }), TypeError);
+  assert.throws(() => setHtml(el, ['<b>x</b>']), TypeError);
+  assert.throws(() => setHtml(el, null), TypeError);
+});
+
+test('setHtml accepts an explicit raw() opt-out', () => {
+  const el = { innerHTML: null };
+  setHtml(el, raw('<b>trusted</b>'));
+  assert.equal(el.innerHTML, '<b>trusted</b>');
 });

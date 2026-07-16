@@ -2,11 +2,13 @@
 
 ## [Unreleased]
 
-- Internal: added an escape-by-default `html` tagged template to `ui/js/utils.js`.
-  Interpolated values are escaped unless wrapped in `raw()`, so markup building
-  no longer depends on remembering `esc()` at every site. Existing files are
-  migrated separately, held by a test that caps remaining direct `innerHTML`
-  assignments per file and blocks new ones.
+- Internal: added an escape-by-default `html` tagged template plus `setHtml()`,
+  in a dependency-free `ui/js/html.js`. Interpolated values are escaped unless
+  wrapped in `raw()`, and `setHtml()` rejects plain strings, so writing markup no
+  longer depends on remembering `esc()` at every site. `esc` moved there and is
+  re-exported from `utils.js`, so its importers are unaffected. `i18n.js` and
+  `admin-color-control.js` are migrated; the rest follow, held by a test that
+  caps remaining direct `innerHTML` writes per file and blocks new ones.
 
 - Fixed Test Connection, and per-app health check pings, reporting on a
   different target than the widget actually fetches. When a host-IP port map is
