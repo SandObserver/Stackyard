@@ -8,6 +8,8 @@
 - Admin list: folders and widgets now show their own icons, and only apps can be
   dragged into a folder.
 - Now Playing shows the player the session is running on.
+- Dock icons now have a name for screen readers, and icons show their name on
+  hover when their label is hidden.
 - Fixed the favicon and app icon on demo.
 - Fixed the backup card placeholder shifting on hover, leaving a blank band
   above the last-run line, and clipping the next-run line.

@@ -69,6 +69,7 @@ export function mkFolder(item) {
   const a = mk('a'); a.className = 'icon'; a.style.cursor = 'pointer';
   a.href = '#'; a.setAttribute('role','button');
   a.setAttribute('aria-label', (item.label||'Folder') + ' folder');
+  if (!showLabel) a.title = item.label || 'Folder';
   a.onclick = e => { e.preventDefault(); openFolderDesktop(item); };
   const box = mk('div');
   box.className = 'dyn-folder-box';
@@ -110,6 +111,7 @@ export function openFolderDesktop(folder) {
     const a = mk('a', { href:child.href, target:'_blank', rel:'noreferrer noopener' });
     a.className = 'folder-icon-link'; a.style.width = iw+'px';
     a.setAttribute('aria-label', child.label||child.id);
+    if (!showLabel) a.title = child.label || child.id;
     a.onclick = () => { closeDesk(); };
     a.appendChild(mkWrap(child, iw, 16, isz, 'iwrap'));
     if (showLabel) {
@@ -434,6 +436,9 @@ export function buildMobile() {
   dock.forEach(item => {
     const a = mk('a', { href:item.href, target:'_blank', rel:'noreferrer noopener' });
     a.className = 'dyn-dock-icon';
+    const nm = item.label || item.id;
+    a.setAttribute('aria-label', nm);
+    a.title = nm;                 /* dock icons never show a label */
     a.appendChild(mkWrap(item, dockIconSz, dockIr, dockIm, '')); dk.appendChild(a);
   });
 
