@@ -25,6 +25,26 @@ export const ap = async (p, b) => {
   return r.json();
 };
 
+/* Mark a .tog toggle unavailable without removing it from the accessibility
+   tree. A native `disabled` control is skipped by screen readers, so the user
+   is never told why it will not turn on; aria-disabled keeps it focusable and
+   announced, and describedById points at the note giving the reason. Activation
+   is blocked here instead, since aria-disabled carries no behaviour of its own. */
+export function setTogDisabled(input, disabled, describedById) {
+  if (!input) return;
+  input.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+  input.closest('.tog')?.classList.toggle('tog-disabled', disabled);
+  if (describedById) {
+    if (disabled) input.setAttribute('aria-describedby', describedById);
+    else input.removeAttribute('aria-describedby');
+  }
+  if (input.dataset.togGuard) return;
+  input.dataset.togGuard = '1';
+  const blocked = () => input.getAttribute('aria-disabled') === 'true';
+  input.addEventListener('click', e => { if (blocked()) e.preventDefault(); });
+  input.addEventListener('keydown', e => { if (blocked() && (e.key === ' ' || e.key === 'Enter')) e.preventDefault(); });
+}
+
 /* Pencil/edit icon used by inline-edit rows. */
 export const PE_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 

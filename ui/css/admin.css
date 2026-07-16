@@ -229,6 +229,11 @@ body{background:transparent;position:relative;z-index:1}
 .tog input:checked+.tr{background:var(--gn)}
 .tr::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .tog input:checked+.tr::after{transform:translateX(18px)}
+.tog input:focus-visible+.tr{outline:2px solid var(--ac);outline-offset:3px}
+/* Unavailable toggle: still focusable and announced, so it needs a real focus
+   ring and a not-allowed cursor rather than pointer-events:none. */
+.tog-disabled{opacity:.45;cursor:not-allowed}
+.tog-disabled input{cursor:not-allowed}
 
 /* ── Buttons ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:15px;font-weight:600;min-height:36px;cursor:pointer;border:none;text-decoration:none;transition:background var(--t),opacity var(--t);white-space:nowrap;font-family:inherit}
@@ -258,9 +263,6 @@ body{background:transparent;position:relative;z-index:1}
 #toast.show{opacity:1;transform:translateY(0)}
 #toast.ok{border-left:3px solid var(--gn)}
 #toast.err{border-left:3px solid var(--rd)}
-
-/* ── Modal (dormant) ── */
-#ov{display:none}
 
 /* ── Form fields inside ev-body ── */
 .sec-f{margin-bottom:0}

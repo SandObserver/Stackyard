@@ -8,6 +8,12 @@
   upload carrying more than one file instead of silently keeping the last.
 - Saving from two admin tabs at once no longer silently discards one of the
   saves. The stale save now reports a conflict and asks you to reload.
+- Fixed Show in Dock staying usable when the dock was already full, which saved
+  the app as docked and then silently dropped it from the dashboard.
+- The per-app Health Check toggle is now clearly unavailable, and says why, when
+  Docker Container Health Checks are off in General.
+- Toggles now show a focus ring when reached by keyboard, and an unavailable
+  toggle is announced with its reason instead of being skipped.
 
 ## [1.2.0] - 2026-07-15
 
