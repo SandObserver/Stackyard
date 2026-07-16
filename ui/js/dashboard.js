@@ -88,6 +88,7 @@ function mkIcon(item) {
     : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'icon';
   a.setAttribute('aria-label', item.label||item.id);
+  if (!showLabel) a.title = item.label||item.id;
   a.appendChild(mkWrap(item, iw, 16, isz, 'iwrap'));
   if (showLabel) {
     const l = mk('div'); l.className = 'ilabel'; l.style.width = (iw+12)+'px';
