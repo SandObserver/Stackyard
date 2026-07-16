@@ -159,6 +159,31 @@ test('POST /api/config drops unknown settings and preserves the stored auth secr
   assert.equal(exp.body.settings.theme, 'dark');         // known key kept
 });
 
+test('POST /api/config rejects a stale _rev with 409', async () => {
+  const read = await req('GET', '/api/config', { cookie: validCookie });
+  const stale = read.body._rev;
+  assert.equal(typeof stale, 'number');
+
+  const ok = await req('POST', '/api/config', { cookie: validCookie, body: { items: [], settings: {}, _rev: stale } });
+  assert.equal(ok.status, 200);
+
+  // same rev again: disk has moved on, so this is the second tab saving over the first
+  const conflict = await req('POST', '/api/config', { cookie: validCookie, body: { items: [], settings: {}, _rev: stale } });
+  assert.equal(conflict.status, 409);
+  assert.match(conflict.body.error, /changed somewhere else/);
+});
+
+test('POST /api/config without a _rev overwrites regardless', async () => {
+  const r = await req('POST', '/api/config', { cookie: validCookie, body: { items: [], settings: {} } });
+  assert.equal(r.status, 200);
+});
+
+test('GET /api/config/export omits _rev', async () => {
+  const r = await req('GET', '/api/config/export', { cookie: validCookie });
+  assert.equal(r.status, 200);
+  assert.equal(r.body._rev, undefined);
+});
+
 /* Config-mutating auth paths, kept last so they don't disturb the tests above
    (set-password rotates the signing secret, invalidating validCookie). */
 test('dismiss-setup records the flag for an authenticated same-origin request', async () => {

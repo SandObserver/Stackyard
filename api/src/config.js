@@ -71,8 +71,14 @@ function loadConfig() {
   }
 }
 
+/* Every write bumps _rev. POST /api/config compares the _rev a client read
+   against the one on disk and rejects a stale write, so two admin tabs saving
+   over each other surfaces as a 409 instead of silently dropping one of them. */
 function saveConfig(data) {
-  if (data && typeof data === 'object') data._schemaVersion = SCHEMA_VERSION;
+  if (data && typeof data === 'object') {
+    data._schemaVersion = SCHEMA_VERSION;
+    data._rev = (Number(data._rev) || 0) + 1;
+  }
   fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive:true });
   const tmp = CONFIG_PATH + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');

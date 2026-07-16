@@ -54,6 +54,11 @@ on('POST', '/api/config', async(req, res) => {
       if (data.settings.language && !/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(data.settings.language)) delete data.settings.language;
     }
     const existing = loadConfig();
+    /* Stale-write check. A client that sends no _rev (a script, or a config
+       restored from a file) is trusted and overwrites, so this only guards the
+       read-modify-write the admin UI does. */
+    if (data._rev != null && Number(data._rev) !== (Number(existing._rev) || 0))
+      return json(res, 409, { error:'This config was changed somewhere else. Reload the page and try again.' });
     if (existing.settings?.background?.apiKey && !data.settings?.background?.apiKey) {
       data.settings = data.settings || {};
       data.settings.background = data.settings.background || {};
@@ -82,7 +87,9 @@ on('POST', '/api/config', async(req, res) => {
 });
 
 on('GET', '/api/config/export', (_, res) => {
-  const d = JSON.stringify(scrubSecrets(loadConfig()), null, 2);
+  const safe = scrubSecrets(loadConfig());
+  delete safe._rev; /* a rev only means something against this install's disk */
+  const d = JSON.stringify(safe, null, 2);
   res.writeHead(200, { 'Content-Type':'application/json', 'Content-Disposition':'attachment; filename="dashboard-apps.json"', 'Content-Length':Buffer.byteLength(d) });
   res.end(d);
 });

@@ -6,6 +6,8 @@
   the icon. The file was saved but the form never picked it up.
 - Icon uploads now check that a .png or .ico really is an image, and reject an
   upload carrying more than one file instead of silently keeping the last.
+- Saving from two admin tabs at once no longer silently discards one of the
+  saves. The stale save now reports a conflict and asks you to reload.
 
 ## [1.2.0] - 2026-07-15
 
