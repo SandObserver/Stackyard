@@ -44,14 +44,18 @@ The registry and the toolbox handed to each handler are documented in [widgets.m
 
 `src/proxy.js` is the only place the server makes outbound requests, and it is the SSRF boundary.
 
-Whether a caller runs `strictCheckSsrf` depends on where the URL came from, not on which route it is:
+It exposes exactly two ways out, and every caller picks one by asking where the URL came from:
 
-- **URLs that arrive in the request** — a body field or a `?url=` param, as in `/api/ping`, `/api/badge-proxy`, `/api/truenas-proxy` and `/api/scrutiny-proxy` — are guarded.
-- **URLs read from saved config** — badge and activity sources, declarative widget data, backup targets — are not guarded. Anyone who can write those URLs already has config-write access, so the guard would not stop anything it could not already do. It would only block the legitimate private-IP homelab targets that are the normal case.
+- `fetchChecked` / `pingChecked`: **the URL arrived in the HTTP request** (a body field or a `?url=` param, as in `/api/ping`, `/api/badge-proxy`, `/api/truenas-proxy`, `/api/scrutiny-proxy`). Untrusted, so it is SSRF-guarded.
+- `fetchUnchecked` / `pingUnchecked`: **the URL came from saved config or is a hardcoded constant** (badge and activity sources, declarative widget data, backup targets, the Unsplash/jsdelivr/GitHub endpoints). Not guarded. Anyone who can write those URLs already has config-write access, so the guard would not stop anything it could not already do. It would only block the legitimate private-IP homelab targets that are the normal case.
 
-Do not "fix" the second group by adding the guard: that breaks normal installs. Do not drop it from the first.
+Do not "fix" the second group by adding the guard: that breaks normal installs. Do not drop it from the first. The blunt name is the point: `fetchUnchecked` in a new route should make a reviewer ask why.
 
-`strictCheckSsrf` resolves the target host and rejects private, loopback, and link-local addresses via `PRIVATE_IP_RE` (unless `ALLOW_PRIVATE_IPS` is set), then hands the resolved IP to `fetchJSON` to pin so the connection cannot be re-pointed after the check. `fetchJSON` itself disables redirect following, enforces a 4 MB response cap, applies per-request timeouts, and decides TLS verification through `shouldSkipTls`. `rewriteUrl` maps the container host IP back to a container name so links that work in the browser also work from inside the network. Helpers `parsePrometheus` and `parseXml` let widget handlers consume non-JSON upstreams.
+`fetchJSON`, `pingUrl` and `guardSsrf` are private to `proxy.js` (reachable as `_internals` for tests only), so there is no unclassified fetch to reach for by accident.
+
+Each of the four owns the whole pipeline: **rewrite, then guard the rewritten URL, then connect to it.** Callers never handle the intermediate URL, so the URL that is checked cannot drift away from the URL that is connected to. Keep the guard downstream of every URL transformation: if a rewrite step is ever added, it goes above the guard.
+
+The guard resolves the target host and rejects private, loopback, and link-local addresses via `PRIVATE_IP_RE` (unless `ALLOW_PRIVATE_IPS` is set), then pins the resolved IP so the connection cannot be re-pointed after the check. A blocked request throws `SsrfBlockedError`, which carries `status: 403` so a route's `catch` can forward it. `fetchJSON` itself disables redirect following, enforces a 4 MB response cap, applies per-request timeouts, and decides TLS verification through `shouldSkipTls`. `rewriteUrl` maps the container host IP back to a container name so links that work in the browser also work from inside the network. Helpers `parsePrometheus` and `parseXml` let widget handlers consume non-JSON upstreams.
 
 ## Summary
 

@@ -1,6 +1,6 @@
 const { on, json, readBody, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
-const { fetchJSON } = require('../proxy');
+const { fetchUnchecked } = require('../proxy');
 const { BACKUP_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
@@ -9,7 +9,7 @@ const { dupList, dupId, dupName, dupMeta, dupSchedule, dupNormalizeBase, dupDeri
 const _dupTokens = new Map();
 
 async function dupLogin(base, password) {
-  const r = await fetchJSON(base + '/api/v1/auth/login', {
+  const r = await fetchUnchecked(base + '/api/v1/auth/login', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ Password: password }),
@@ -22,7 +22,7 @@ async function dupLogin(base, password) {
 }
 
 async function dupRefresh(base, refreshNonce) {
-  const r = await fetchJSON(base + '/api/v1/auth/refresh', {
+  const r = await fetchUnchecked(base + '/api/v1/auth/refresh', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ RefreshNonce: refreshNonce }),
@@ -54,14 +54,14 @@ async function dupGetToken(widgetId, base, password) {
 
 async function dupFetch(widgetId, base, password, path) {
   const token = await dupGetToken(widgetId, base, password);
-  const r = await fetchJSON(base + path, {
+  const r = await fetchUnchecked(base + path, {
     headers: { 'Authorization': `Bearer ${token}` },
     timeout: BACKUP_MS,
   });
   if (r.status === 401) {
     _dupTokens.delete(widgetId);
     const token2 = await dupGetToken(widgetId, base, password);
-    const r2 = await fetchJSON(base + path, {
+    const r2 = await fetchUnchecked(base + path, {
       headers: { 'Authorization': `Bearer ${token2}` },
       timeout: BACKUP_MS,
     });
@@ -95,7 +95,7 @@ on('POST', '/api/duplicati-jobs/:id', async(req, res) => {
     _dupTokens.delete(tokenKey); /* always fresh for admin fetch */
     const token = await dupGetToken(tokenKey, base, password);
 
-    const r = await fetchJSON(base + '/api/v1/backups', {
+    const r = await fetchUnchecked(base + '/api/v1/backups', {
       headers: { 'Authorization': `Bearer ${token}` },
       timeout: BACKUP_MS,
     });
@@ -114,7 +114,7 @@ async function kopiaFetch(url, username, password, path) {
   if (username && password) {
     headers['Authorization'] = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
   }
-  return fetchJSON(url.replace(/\/$/, '') + path, { headers, timeout: BACKUP_MS });
+  return fetchUnchecked(url.replace(/\/$/, '') + path, { headers, timeout: BACKUP_MS });
 }
 
 on('POST', '/api/kopia-sources/:id', async(req, res) => {

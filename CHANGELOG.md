@@ -2,8 +2,17 @@
 
 ## [Unreleased]
 
+- Internal: `proxy.js` now exposes a single outbound boundary.
+  `fetchChecked`/`pingChecked` for URLs that arrive in a request, and
+  `fetchUnchecked`/`pingUnchecked` for URLs from config or hardcoded constants.
+  `fetchJSON`, `pingUrl` and `guardSsrf` are no longer reachable from routes.
+  The SSRF guard now runs after host rewriting rather than before, so the URL
+  that gets checked is always the URL that gets connected to.
+- Behaviour change, host-IP `portMap` only: a mapped target is now SSRF-checked.
+  Mapping to a container name (the intended use) is unaffected; mapping to a
+  private IP now needs `ALLOW_PRIVATE_IPS=true`. `portMap` has no UI and is
+  hand-edited, so this is expected to affect nobody.
 - Removed unused `crypto` and `log` re-exports from `auth.js`.
-
 - Fixed uploading a custom app icon failing with an error and never applying
   the icon. The file was saved but the form never picked it up.
 - Icon uploads now check that a .png or .ico really is an image, and reject an

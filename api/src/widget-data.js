@@ -1,7 +1,7 @@
 const path = require('path');
 const { on, json, readBody, checkOrigin } = require('./router');
 const { loadConfig } = require('./config');
-const { fetchJSON, parsePrometheus } = require('./proxy');
+const { fetchUnchecked, parsePrometheus } = require('./proxy');
 const { FETCH_MS } = require('./timeouts');
 const { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
@@ -13,8 +13,8 @@ const log = require('./log');
 
 /* Normalize a user-entered base URL the same way the existing hand-written data
    routes do (e.g. AdGuard): add http:// when no scheme is given, and strip any
-   trailing slashes. Host-IP → container-name rewriting is applied later inside
-   fetchJSON, so it is intentionally not repeated here. */
+   trailing slashes. Host-IP → container-name rewriting is applied later by the
+   fetch boundary, so it is intentionally not repeated here. */
 function normalizeBase(raw) {
   if (!raw) return '';
   const s = String(raw).trim();
@@ -69,7 +69,10 @@ function dataFnContext(wc, endpoint, searchParams) {
     settings: loadConfig().settings || {}, /* global non-secret config (e.g. stats.diskMount, networkInterface), server-side only */
     endpoint: endpoint,
     params:   searchParams,       /* URLSearchParams for any extra query params */
-    fetchJSON,                    /* the safe fetcher (TLS, redirects, size limits, parsing) */
+    /* Named fetchJSON because widget data.js files destructure it; bound to the
+       unchecked fetcher. Widget code ships in the image and its URLs come from
+       config, so it is config-provenance and deliberately not SSRF-guarded. */
+    fetchJSON: fetchUnchecked,
     parsePrometheus,
     metrics:  IS_DEMO ? demoData.metrics : { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds },
     normalizeBase,
@@ -121,7 +124,7 @@ async function fetchDeclarative(decl, wc, endpointName) {
   const skipTls = wc.skipTlsVerify === true ? true : undefined;
 
   let r;
-  try { r = await fetchJSON(url, { headers, timeout: FETCH_MS, skipTls }); }
+  try { r = await fetchUnchecked(url, { headers, timeout: FETCH_MS, skipTls }); }
   catch (e) { return { status: 502, body: { error: e.message } }; }
 
   if (r.status === 401) return { status: 401, body: { error: 'Upstream auth failed (401), check credentials' } };

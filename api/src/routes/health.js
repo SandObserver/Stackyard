@@ -1,6 +1,6 @@
 const { on, json } = require('../router');
 const { loadConfig } = require('../config');
-const { fetchJSON, pingUrl } = require('../proxy');
+const { fetchUnchecked, pingUnchecked } = require('../proxy');
 const { PING_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
@@ -12,7 +12,7 @@ async function fetchContainerHealth() {
   const socketUrl = cfg.settings?.server?.socketProxyUrl || SOCKET_PROXY_URL_DEFAULT;
   if (!socketUrl) return {};
   try {
-    const r = await fetchJSON(`${socketUrl}/containers/json?all=true`);
+    const r = await fetchUnchecked(`${socketUrl}/containers/json?all=true`);
     if (!Array.isArray(r.data)) return {};
     const out = {};
     for (const c of r.data) {
@@ -47,7 +47,7 @@ on('GET', '/api/health', async(_, res) => {
         result[item.id] = { unhealthy, state:c?.state||'unknown', status:c?.status||'' };
       }
       if (ping) {
-        const r = await pingUrl(ping, PING_MS, item.skipTlsVerify === true);
+        const r = await pingUnchecked(ping, PING_MS, item.skipTlsVerify === true);
         if (!r.ok) unhealthy = true;
         result[item.id] = { unhealthy, pingStatus:r.status, pingError:r.error };
       }

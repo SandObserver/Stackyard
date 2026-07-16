@@ -5,7 +5,10 @@ process.env.CONFIG_PATH = '/tmp/stackyard-proxy-test-nonexistent.json';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
-const { guardSsrf, fetchJSON, getHostIp, shouldSkipTls, PRIVATE_IP_RE, parsePrometheus, parseXml } = require('../src/proxy');
+const { getHostIp, shouldSkipTls, PRIVATE_IP_RE, parsePrometheus, parseXml, _internals } = require('../src/proxy');
+/* guardSsrf/fetchJSON are private to proxy.js: routes go through the
+   fetchChecked/fetchUnchecked boundary. Tests reach the primitives directly. */
+const { guardSsrf, fetchJSON } = _internals;
 
 test('PRIVATE_IP_RE classifies private ranges as private', () => {
   for (const ip of ['10.0.0.1', '172.16.5.4', '172.31.0.1', '192.168.1.1', '127.0.0.1', '169.254.1.1', '::1'])

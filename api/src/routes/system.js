@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { on, json } = require('../router');
 const { loadConfig } = require('../config');
-const { fetchJSON, strictCheckSsrf } = require('../proxy');
+const { fetchChecked, fetchUnchecked } = require('../proxy');
 const { scrubWidgetSecrets } = require('../widget-secrets');
 const { getRegistry } = require('../widgets');
 const { normalizeBase } = require('../widget-data');
@@ -12,11 +12,14 @@ const { mapScrutinyDevices } = require('../scrutiny');
    Shared by the query-URL and config-URL routes so both apply the same guard
    and produce the same result. Returns { devices } or { status, error }. */
 async function fetchScrutinyDevices(rawUrl) {
-  const base  = normalizeBase(rawUrl);
-  const guard = await strictCheckSsrf(base);
-  if (guard.error) return { status: 403, error: guard.error };
-  const r = await fetchJSON(base + '/api/summary', { timeout: FETCH_MS, pinIp: guard.ip });
-  return { devices: mapScrutinyDevices(r.data?.data?.summary) };
+  const base = normalizeBase(rawUrl);
+  try {
+    const r = await fetchChecked(base + '/api/summary', { timeout: FETCH_MS });
+    return { devices: mapScrutinyDevices(r.data?.data?.summary) };
+  } catch (e) {
+    if (e.status === 403) return { status: 403, error: e.message };
+    throw e;
+  }
 }
 
 let _netCache = { rx:0, tx:0 };
@@ -67,14 +70,14 @@ on('GET', '/api/geocode-proxy', async(req, res) => {
   try {
     const url = 'https://geocoding-api.open-meteo.com/v1/search'
       + `?name=${encodeURIComponent(name)}&count=5&language=en&format=json`;
-    const r = await fetchJSON(url, { timeout: FETCH_MS });
+    const r = await fetchUnchecked(url, { timeout: FETCH_MS });
     if (r.status >= 400) return json(res, 502, { error: 'Geocoding HTTP ' + r.status });
     const results = ((r.data && r.data.results) || []).map(p => ({
       name: p.name, country: p.country, admin1: p.admin1,
       lat: p.latitude, lon: p.longitude,
     }));
     json(res, 200, { results });
-  } catch(e) { json(res, 502, { error: e.message }); }
+  } catch(e) { json(res, e.status || 502, { error: e.message }); }
 });
 
 on('GET', '/api/scrutiny-proxy', async(req, res) => {
@@ -85,7 +88,7 @@ on('GET', '/api/scrutiny-proxy', async(req, res) => {
     const out = await fetchScrutinyDevices(raw);
     if (out.error) return json(res, out.status, { error: out.error });
     json(res, 200, { devices: out.devices });
-  } catch(e) { json(res, 502, { error: e.message }); }
+  } catch(e) { json(res, e.status || 502, { error: e.message }); }
 });
 
 on('GET', '/api/truenas-proxy', async(req, res) => {
@@ -95,11 +98,9 @@ on('GET', '/api/truenas-proxy', async(req, res) => {
   if (!raw) return json(res, 400, { error:'url param required' });
   if (!key) return json(res, 400, { error:'API key required' });
   try {
-    const base  = normalizeBase(raw);
-    const guard = await strictCheckSsrf(base);
-    if (guard.error) return json(res, 403, { error: guard.error });
-    const r = await fetchJSON(base + '/api/v2.0/pool', {
-      headers: { Authorization: 'Bearer ' + key }, timeout: FETCH_MS, pinIp: guard.ip,
+    const base = normalizeBase(raw);
+    const r = await fetchChecked(base + '/api/v2.0/pool', {
+      headers: { Authorization: 'Bearer ' + key }, timeout: FETCH_MS,
     });
     if (r.status === 401 || r.status === 403) return json(res, 401, { error:'TrueNAS auth failed, check API key' });
     if (r.status >= 400) return json(res, 502, { error:'TrueNAS HTTP ' + r.status });
@@ -109,7 +110,7 @@ on('GET', '/api/truenas-proxy', async(req, res) => {
       capacity: (p.size != null ? Number(p.size) : null),
     }));
     json(res, 200, { pools });
-  } catch(e) { json(res, 502, { error: e.message }); }
+  } catch(e) { json(res, e.status || 502, { error: e.message }); }
 });
 
 on('GET', '/api/scrutiny-devices/:id', async(req, res) => {
@@ -122,7 +123,7 @@ on('GET', '/api/scrutiny-devices/:id', async(req, res) => {
     const out = await fetchScrutinyDevices(url);
     if (out.error) return json(res, out.status, { error: out.error });
     json(res, 200, { devices: out.devices });
-  } catch(e) { json(res, 502, { error: e.message }); }
+  } catch(e) { json(res, e.status || 502, { error: e.message }); }
 });
 
 on('GET', '/api/speed-data/:id', async(req, res) => {
@@ -136,10 +137,8 @@ on('GET', '/api/speed-data/:id', async(req, res) => {
   const base     = normalizeBase(net.url);
 
   try {
-    const guard = await strictCheckSsrf(base);
-    if (guard.error) return json(res, 403, { error: guard.error });
     if (provider === 'speedtest-tracker') {
-      const r = await fetchJSON(base + '/api/speedtest/latest', { timeout: FETCH_MS, pinIp: guard.ip });
+      const r = await fetchChecked(base + '/api/speedtest/latest', { timeout: FETCH_MS });
       const row = r.data?.data;
       if (!row?.id) return json(res, 502, { error:'No result from Speedtest Tracker' });
       json(res, 200, {
@@ -152,7 +151,7 @@ on('GET', '/api/speed-data/:id', async(req, res) => {
     } else {
       const headers = {};
       if (net.myspeedPass) headers['x-password'] = net.myspeedPass;
-      const r = await fetchJSON(base + '/api/speedtests?limit=1', { headers, timeout: FETCH_MS, pinIp: guard.ip });
+      const r = await fetchChecked(base + '/api/speedtests?limit=1', { headers, timeout: FETCH_MS });
       if (r.status === 401) return json(res, 401, { error:'MySpeed returned 401, check password' });
       const row = Array.isArray(r.data) ? r.data[0] : r.data;
       if (!row) return json(res, 502, { error:'No result from MySpeed' });
@@ -164,6 +163,6 @@ on('GET', '/api/speed-data/:id', async(req, res) => {
         ts:       row.created,
       });
     }
-  } catch(e) { json(res, 502, { error:e.message }); }
+  } catch(e) { json(res, e.status || 502, { error:e.message }); }
 });
 
