@@ -39,3 +39,20 @@ test('saveConfig always writes the current schema version', () => {
   const onDisk = JSON.parse(fs.readFileSync(TMP, 'utf8'));
   assert.equal(onDisk._schemaVersion, SCHEMA_VERSION);
 });
+
+test('saveConfig bumps _rev on every write', () => {
+  const cfg = { items: [], settings: {} };
+  saveConfig(cfg);
+  assert.equal(cfg._rev, 1);
+  saveConfig(cfg);
+  assert.equal(cfg._rev, 2);
+  assert.equal(loadConfig()._rev, 2);
+});
+
+test('saveConfig treats a missing or junk _rev as zero', () => {
+  for (const bad of [undefined, null, 'abc', {}]) {
+    const cfg = { items: [], settings: {}, _rev: bad };
+    saveConfig(cfg);
+    assert.equal(cfg._rev, 1);
+  }
+});
