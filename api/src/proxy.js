@@ -342,9 +342,10 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
    The loud name is deliberate: fetchUnchecked in a new route should make a
    reviewer stop and ask. There is no unclassified fetch to reach for by accident.
 
-   fetchChecked owns the whole pipeline: rewrite, guard the REWRITTEN url, then
+   All four own the whole pipeline: rewrite, guard the REWRITTEN url, then
    connect to it. Callers never touch the intermediate URL, so the url that gets
-   checked cannot drift away from the url that gets connected to. That drift was
+   checked cannot drift away from the url that gets connected to, and a ping
+   reports on the same target the matching fetch would use. That drift was
    possible when the rewrite lived inside fetchJSON, i.e. after the guard had
    already passed on a different string. Keep the guard downstream of every URL
    transformation: if a future rewrite step is added, put it above the guard. */
@@ -369,19 +370,16 @@ function fetchUnchecked(url, opts = {}) {
   return fetchJSON(rewriteUrl(url), opts);
 }
 
-/* Ping deliberately does not rewrite: it reports on the URL as typed. That makes
-   it diverge from what fetchChecked would actually connect to when a portMap
-   entry applies. That is a real bug, but a pre-existing one, kept here so this
-   refactor changes no behaviour. Fixed separately. */
 function pingUnchecked(url, ms, skipTls) {
-  return pingUrl(url, ms, skipTls);
+  return pingUrl(rewriteUrl(url), ms, skipTls);
 }
 
 async function pingChecked(url, ms, skipTls) {
   if (IS_DEMO) return pingUrl(url, ms, skipTls);
-  const guard = await guardSsrf(url);
+  const target = rewriteUrl(url);
+  const guard  = await guardSsrf(target);
   if (guard.error) throw new SsrfBlockedError(guard.error);
-  return pingUrl(url, ms, skipTls, guard.ip);
+  return pingUrl(target, ms, skipTls, guard.ip);
 }
 
 module.exports = {

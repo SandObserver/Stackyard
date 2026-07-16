@@ -53,7 +53,7 @@ Do not "fix" the second group by adding the guard: that breaks normal installs. 
 
 `fetchJSON`, `pingUrl` and `guardSsrf` are private to `proxy.js` (reachable as `_internals` for tests only), so there is no unclassified fetch to reach for by accident.
 
-Each of the four owns the whole pipeline: **rewrite, then guard the rewritten URL, then connect to it.** Callers never handle the intermediate URL, so the URL that is checked cannot drift away from the URL that is connected to. Keep the guard downstream of every URL transformation: if a rewrite step is ever added, it goes above the guard.
+Each of the four owns the whole pipeline: **rewrite, then guard the rewritten URL, then connect to it.** A ping therefore reports on the same target the matching fetch would use. Callers never handle the intermediate URL, so the URL that is checked cannot drift away from the URL that is connected to. Keep the guard downstream of every URL transformation: if a rewrite step is ever added, it goes above the guard.
 
 The guard resolves the target host and rejects private, loopback, and link-local addresses via `PRIVATE_IP_RE` (unless `ALLOW_PRIVATE_IPS` is set), then pins the resolved IP so the connection cannot be re-pointed after the check. A blocked request throws `SsrfBlockedError`, which carries `status: 403` so a route's `catch` can forward it. `fetchJSON` itself disables redirect following, enforces a 4 MB response cap, applies per-request timeouts, and decides TLS verification through `shouldSkipTls`. `rewriteUrl` maps the container host IP back to a container name so links that work in the browser also work from inside the network. Helpers `parsePrometheus` and `parseXml` let widget handlers consume non-JSON upstreams.
 
