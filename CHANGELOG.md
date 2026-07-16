@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Internal: added an escape-by-default `html` tagged template to `ui/js/utils.js`.
+  Interpolated values are escaped unless wrapped in `raw()`, so markup building
+  no longer depends on remembering `esc()` at every site. Existing files are
+  migrated separately, held by a test that caps remaining direct `innerHTML`
+  assignments per file and blocks new ones.
+
 - Fixed Test Connection, and per-app health check pings, reporting on a
   different target than the widget actually fetches. When a host-IP port map is
   configured, a ping now follows the same mapping the fetch does, so it can no
