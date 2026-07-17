@@ -24,7 +24,6 @@ import { fileURLToPath } from 'node:url';
    assignments in this codebase are clears; only the other 48 are real. */
 const BUDGET = {
   'admin-widget-form.js': 21,
-  'admin.js': 16,
   'admin-app-form.js': 2,
 };
 

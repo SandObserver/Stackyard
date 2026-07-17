@@ -12,6 +12,8 @@
 - Internal: the innerHTML ratchet now also counts `+=` appends, which it missed
   entirely. No behaviour change; it closes a gap that let unescaped markup be
   appended in a file the test reported as clean.
+- Internal: migrated `admin.js` to `setHtml`/`html`, including seven `+=` pill
+  appends that now build in one write.
 - Internal: migrated the widget config form rows to `setHtml`/`html`.
 - Internal: migrated `dashboard.js` and the badge value list in `admin-app-form.js`
   to `setHtml`/`html`. Badge values returned by a remote service are now escaped
