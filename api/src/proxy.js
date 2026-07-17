@@ -385,6 +385,5 @@ async function pingChecked(url, ms, skipTls) {
 module.exports = {
   fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError,
   rewriteUrl, getHostIp, shouldSkipTls, parsePrometheus, parseXml, PRIVATE_IP_RE,
-  /* Tests only. Routes must use the boundary above. */
   _internals: { fetchJSON, pingUrl, guardSsrf },
 };

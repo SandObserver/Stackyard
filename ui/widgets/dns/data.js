@@ -12,7 +12,7 @@
      num_replaced_parental, num_cached, and the per-hour arrays
      dns_queries / blocked_filtering.
 
-   Errors are returned as { error } — the widget front-end displays d.error. */
+   Errors are returned as { error }; the widget front-end displays d.error. */
 
 module.exports = async function (ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
@@ -28,7 +28,6 @@ module.exports = async function (ctx) {
   return adGuard(base, config, fetchJSON);
 };
 
-/* ── AdGuard Home ── */
 async function adGuard(base, config, fetchJSON) {
   const headers = {};
   /* Only attach Authorization when a credential is set (matches prior behavior). */
@@ -44,7 +43,6 @@ async function adGuard(base, config, fetchJSON) {
   return r.data; /* already in the shape the widget reads */
 }
 
-/* ── Pi-hole v6 ── */
 async function piHole(base, config, fetchJSON) {
   /* v6 uses session auth: POST /api/auth { password } -> session.sid, sent as
      the X-FTL-SID header. If no password is set, the API responds unauthenticated. */
@@ -97,7 +95,7 @@ async function piHole(base, config, fetchJSON) {
       out.dns_queries      = hours.map(hr => byHour.get(hr).total);
       out.blocked_filtering = hours.map(hr => byHour.get(hr).blocked);
     }
-  } catch { /* chart is optional — summary numbers already returned */ }
+  } catch { /* chart is optional; summary numbers already returned */ }
 
   /* Release the session. Pi-hole v6 caps concurrent API sessions, and polling
      every interval would otherwise pile up sessions until it locks us out. */
@@ -106,7 +104,6 @@ async function piHole(base, config, fetchJSON) {
   return out;
 }
 
-/* ── Technitium ── */
 async function technitium(base, config, fetchJSON) {
   if (!config.dnsTechnitiumToken) return { error: 'API token not configured' };
   const url = base + '/api/dashboard/stats/get'
@@ -128,7 +125,6 @@ async function technitium(base, config, fetchJSON) {
   };
 }
 
-/* ── NextDNS ── */
 async function nextDns(config, fetchJSON) {
   if (!config.dnsNextdnsApiKey) return { error: 'API key not configured' };
   if (!config.dnsNextdnsProfile) return { error: 'Profile ID not configured' };

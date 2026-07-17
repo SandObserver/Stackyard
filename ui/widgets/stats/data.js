@@ -8,7 +8,7 @@ module.exports = async function (ctx) {
   return systemSummary(ctx);
 };
 
-/* Disk Health dispatch — Scrutiny (per-disk SMART) or TrueNAS (per-pool health). */
+/* Disk Health dispatch: Scrutiny (per-disk SMART) or TrueNAS (per-pool health). */
 function diskHealth(ctx) {
   return ctx.dispatchProvider({
     scrutiny: diskHealthScrutiny,
@@ -16,7 +16,7 @@ function diskHealth(ctx) {
   }, { field: 'diskProvider', default: 'scrutiny' });
 }
 
-/* System Summary — CPU / RAM / temperature / per-mount disk usage.
+/* System Summary: CPU / RAM / temperature / per-mount disk usage.
    Mount paths come from the widget's disk slots; falls back to the global
    stats.diskMount setting, then '/'. */
 async function systemSummary({ config, settings, metrics }) {
@@ -47,7 +47,7 @@ async function systemSummary({ config, settings, metrics }) {
   return { cpu, ram, temp: temps[0] ?? null, temps, disks, iowait, procs, uptime };
 }
 
-/* Disk Health (Scrutiny) — maps the widget's configured bays (device_id per bay)
+/* Disk Health (Scrutiny): maps the widget's configured bays (device_id per bay)
    onto Scrutiny's SMART summary. */
 async function diskHealthScrutiny({ config, fetchJSON }) {
   const url = config.scrutinyUrl;
@@ -84,7 +84,7 @@ async function diskHealthScrutiny({ config, fetchJSON }) {
   return { bays: result, href: config.scrutinyHref || '', provider: 'scrutiny' };
 }
 
-/* Disk Health (TrueNAS) — each configured bay holds a ZFS pool name; pools are
+/* Disk Health (TrueNAS): each configured bay holds a ZFS pool name; pools are
    matched from /api/v2.0/pool. A pool's `healthy` flag is the per-bay status
    (healthy → 0, unhealthy → 2, the same codes the widget uses for Scrutiny). */
 async function diskHealthTrueNas({ config, fetchJSON }) {

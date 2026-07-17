@@ -14,7 +14,7 @@ module.exports = async function ({ config, fetchJSON }) {
   return pullRequests(token, username, config, fetchJSON);
 };
 
-/* Contribution calendar via GraphQL — needs a classic PAT with read:user, or a
+/* Contribution calendar via GraphQL: needs a classic PAT with read:user, or a
    fine-grained PAT with "User contributions" read access. Private-repo
    contributions only appear with the correct token scope. */
 async function contributions(token, username, fetchJSON) {

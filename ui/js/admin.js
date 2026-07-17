@@ -37,9 +37,7 @@ async function load(){
   state.items=c.items||[];
   state._settings=c.settings||{};
   await initI18n(c.settings?.language || 'en');
-  /* Folder-style widgets: registry drives their auto-generated config editor. */
   try{ const wr=await ag('/api/widgets'); state._widgetReg={}; (wr.widgets||[]).forEach(w=>{ state._widgetReg[w.name]=w; }); }catch{ state._widgetReg={}; }
-  /* All folders start collapsed, user can expand by clicking */
   state.items.filter(i=>i.type==='folder').forEach(f=>collapsedFolders.add(f.id));
   document.body.classList.add('authed');
   render();
@@ -47,7 +45,6 @@ async function load(){
   applyBg();
 }
 
-/* Wallpaper behind the settings panel; mirrors the dashboard's background settings. */
 async function applyBg(){
   const root=document.documentElement;
   try{
@@ -91,8 +88,7 @@ function moveRow(item,dir,opts={}){
   if(reorderItems(state.items,item,dir,opts)) save();
 }
 
-/* Line-icon glyphs for the admin list. Rendered from constant markup via a
-   template, so no user data reaches innerHTML. */
+/* Constant markup only; no user data reaches these. */
 const FOLDER_ICON = '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"></rect><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"></circle><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"></circle><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"></circle><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"></circle></svg>';
 const SIZE_ICONS = {
   small:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9.7" cy="9.7" r="1" fill="currentColor"></circle><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></line></svg>',
@@ -125,10 +121,8 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     const top=state.items.filter(it=>it.type==='folder'||!inF.has(it.id));
     const p=top.indexOf(item);canUp=p>0;canDown=p<top.length-1;
   }
-  /* Drag handle */
   const handle=document.createElement('div');handle.className='rord';handle.textContent='⠿';
   if(_filtering)handle.style.visibility='hidden';
-  /* Icon */
   const ico=document.createElement('div');ico.className='rico';ico.style.background=rc(item.color);
   if(item.type==='folder'){
     ico.appendChild(svgNode(FOLDER_ICON));
@@ -143,7 +137,6 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
       img.src=fbs[0];ico.appendChild(img);
     }else{ico.textContent=(item.label||'?')[0].toUpperCase();}
   }else ico.textContent=(item.label||item.id||'?')[0].toUpperCase();
-  /* Info */
   const inf=document.createElement('div');inf.className='rinf';
   const nm=document.createElement('div');nm.className='rnm';
   if(item.type==='folder'){
@@ -178,7 +171,6 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   else if(item.system==='settings')mt.textContent='Opens settings';
   else mt.textContent=item.href||'';
   inf.append(nm,mt);
-  /* Pills */
   const pb=document.createElement('div');pb.className='rpills';
   const pills=[];
   if(item.dock)pills.push(html`<span class="pill p-dk">Dock</span>`);
@@ -189,7 +181,6 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   if(item.system==='settings')pills.push(html`<span class="pill p-sy">System</span>`);
   if(item.hidden)pills.push(html`<span class="pill p-hd">Hidden</span>`);
   setHtml(pb, html`${pills}`);
-  /* Actions */
   const ac=document.createElement('div');ac.className='ract';
   const mkMove=(dir,can)=>{const b=document.createElement('button');b.className='btn bg sm ic';
     const lbl=dir<0?'Move up':'Move down';b.title=lbl;b.setAttribute('aria-label',lbl+': '+(item.label||item.id||'item'));
@@ -250,7 +241,6 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     const raw=e.dataTransfer.getData('text/plain');
     if(!raw||raw===dragData)return;
 
-    /* Parse source */
     let srcItem,srcFolder=null,srcFolderObj=null;
     if(raw.startsWith('child:')){
       const[,sfId,sItemId]=raw.split(':');
@@ -262,7 +252,6 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     }
     if(!srcItem)return;
 
-    /* Remove from source location */
     if(srcFolder&&srcFolderObj){
       srcFolderObj.children=(srcFolderObj.children||[]).filter(id=>id!==srcItem.id);
     }else{
@@ -270,18 +259,15 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
       if(si>=0)state.items.splice(si,1);
     }
 
-    /* Insert at target location. Only apps may enter a folder; a widget or
-       folder dropped on or inside a folder is placed at the top level instead. */
+    /* Only apps may enter a folder; anything else dropped on one goes top level. */
     const kind=dropTargetKind({srcType:srcItem.type,targetIsFolder:item.type==='folder',indent});
     if(kind==='into-folder'&&indent){
-      /* Drop on a child row → insert into same folder at this position */
       const tf=state.items.find(i=>i.id===folderId);
       if(!tf){state.items.push(srcItem);save();return;}
       tf.children=(tf.children||[]).filter(id=>id!==srcItem.id);
       if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
       tf.children.splice(childIdx,0,srcItem.id);
     }else if(kind==='into-folder'){
-      /* Drop ON a folder row → add to end of that folder */
       if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
       const tf=state.items.find(i=>i.id===item.id);
       if(tf){tf.children=(tf.children||[]).filter(id=>id!==srcItem.id);tf.children.push(srcItem.id);}
@@ -354,10 +340,8 @@ function _syncFilterUI(){
   });
 }
 
-/* ══ MODAL ══ */
 /* Associate dynamically-built modal fields with their labels and give every
    toggle an accessible name from its row text. Idempotent; safe to re-run. */
-/* ══ Push navigation: replace modal with in-pane edit view ══ */
 function showListView(){
   document.getElementById('dash-list-view').style.display='';
   document.getElementById('dash-edit-view').style.display='none';
@@ -369,7 +353,6 @@ function showEditView(){
   document.querySelector('.cp')?.scrollTo?.(0,0);
 }
 
-/* Item-type glyphs traced from the PSD (24x24, currentColor). */
 const TYPE_ICONS={
   app:'<rect x="7" y="7" width="10" height="10" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/>',
   widget:'<rect x="3.5" y="6.5" width="17" height="11" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7.2" cy="10.2" r="1.5" fill="currentColor"/><line x1="5.6" y1="13.4" x2="17.4" y2="13.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.6" y1="15.2" x2="17.4" y2="15.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
@@ -379,10 +362,8 @@ const TYPE_LABELS={app:'App',widget:'Widget',folder:'Folder'};
 
 
 
-/* Edit (square-pen) and select (up/down) glyphs traced from the PSD. */
 
 
-/* Add New type selector: single card row, label left, three PSD tiles right. */
 function buildAddNewCard(){
   const grp=document.createElement('div');
   grp.className='grp';
@@ -407,8 +388,7 @@ function buildAddNewCard(){
   return grp;
 }
 
-/* Render the push edit body: builder fills #ev-body, then the Add New card
-   is prepended (add-mode only) so it survives the builders' innerHTML reset. */
+/* Add New card is prepended after the builder runs, so the builder's reset can't wipe it. */
 function _renderEditBody(){
   const body=document.getElementById('ev-body');
   body.innerHTML='';
@@ -437,7 +417,6 @@ function openModal(idx){
     state.spaths=ex.map(e=>typeof e==='string'?e:e.path).filter(Boolean);
   }
 
-  /* Header */
   const isEdit=idx!=null;
   document.getElementById('ev-title').textContent='General';
   const delBtn=document.getElementById('ev-delete');
@@ -447,7 +426,6 @@ function openModal(idx){
   const backBtn=document.getElementById('ev-back');
   if(backBtn) backBtn.onclick=()=>closeModal();
 
-  /* Body: Add New selector card renders inside (add-mode only) */
   state._evItem=item; state._evIsEdit=isEdit;
   _renderEditBody();
 
@@ -463,7 +441,6 @@ function _evDelete(item,idx){
   save().catch(()=>{});
   showListView();
 }
-/* ══ al-filter wiring ══ */
 {
   const s=document.getElementById('al-search');
   if(s)s.addEventListener('input',()=>{_flt.q=s.value.trim();render();});
@@ -567,7 +544,6 @@ async function doSave(orig){
   try{
     let item;
     if(state.ctype==='widget'){
-      /* Generate clean IDs: only letters, digits and underscores */
       const wlabel=state._wlabel.trim()||(state._wtype==='stats'?(state._wstatsSubType==='disk-health'?'Disk Health':'System Summary'):WIDGET_TYPES[state._wtype]?.label||'Widget');
       if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
         const missing=state._autoForm.validate();
@@ -608,8 +584,7 @@ async function doSave(orig){
           if(hf) vpn.href=hf; else if(state._wvpnCfg.href) vpn.href=state._wvpnCfg.href;
           if(vpn.service==='gluetun'){
             const k=(document.getElementById('vpn-apikey')?.value||'').trim();
-            /* Only send a new key if typed; otherwise flag that one is stored so
-               the server preserves it (POST /api/config merge) and the UI shows it. */
+            /* Send a key only if typed; otherwise flag it stored so the server keeps it. */
             if(k){ vpn.apiKey=k; vpn.apiKeySet=true; }
             else if(state._wvpnCfg.apiKeySet){ vpn.apiKeySet=true; }
           }else{
@@ -626,7 +601,6 @@ async function doSave(orig){
             label:wlabel, widgetSize:'medium',widgetConfig:{ view:'map', services, showLegend:state._wmapCfg.showLegend!==false }};
         }
       }else if(state._wtype==='backup'){
-        /* Flush current DOM values into slot state before state.saving */
         state._wbackupCfg.slots.forEach((slot,si) => {
           slot.customName = (document.getElementById(`bak-name-${si}`)?.value||'').trim();
           const defEl = document.getElementById(`bak-def-${si}`);
@@ -656,13 +630,11 @@ async function doSave(orig){
           label:wlabel,widgetSize:state._wsize,widgetConfig:{slots:_bk.savableSlots}};
 
       }else{
-        /* stats: slot values are kept live in state._wslots by the row commit handlers */
         const slots=buildStatsSlots(state._wslots);
         state._wnet.url      = document.getElementById('net-url')?.value?.trim()||'';
         state._wnet.provider = state._wnet.provider || 'myspeed';
         const newPass  = document.getElementById('net-pass')?.value||'';
         if (newPass) state._wnet.myspeedPass = newPass;
-        /* strip passSet flag from saved config, only real pass is stored */
         const netToSave = {...state._wnet};
         delete netToSave.myspeedPassSet;
 
@@ -677,7 +649,6 @@ async function doSave(orig){
             if (!u) { toast('TrueNAS URL is required','err'); return; }
             wcfg.truenasUrl  = u;
             wcfg.truenasHref = dhHref || undefined;
-            /* Send the key only if newly entered; otherwise the server re-merges the stored one. */
             const k = document.getElementById('dh-key')?.value?.trim();
             if (k) wcfg.truenasKey = k;
           } else {
@@ -739,7 +710,6 @@ async function doSave(orig){
   }catch(e){toast('Error: '+e.message,'err');}
 }
 
-/* ══ Nav ══ */
 function initNav(){
   const links=document.querySelectorAll('.nl, .mtab');
   const STORE='admin_sec';
@@ -758,14 +728,12 @@ function initAllInlineEdits(){
   initInlineEdit('ie-title','ie-input',{placeholder:'Stackyard',
     onCommit(v){document.getElementById('ie-title-v').textContent=v||'Stackyard';}});
 
-  /* desc uses a second input, create one */
   const descInp=document.createElement('input');descInp.id='ie-desc-input';document.body.appendChild(descInp);
   initInlineEdit('ie-desc','ie-desc-input',{placeholder:'Stackyard · self-hosted homelab dashboard'});
 
   initInlineEdit('ie-ip','srv-ip',{placeholder:'192.168.1.100'});
   initInlineEdit('ie-socket','srv-socket',{placeholder:'tcp://socket-proxy:2375'});
 
-  /* Password inline edit with strength meter */
   initInlineEdit('ie-pw','sec-pw',{type:'password',placeholder:'New password (min 8 chars)',
     onCommit(){
       const bars=document.getElementById('sec-pw-bars');
@@ -784,7 +752,6 @@ function initAllInlineEdits(){
     },{once:true});
   }
 
-  /* Appearance inline edits */
   const apiInp=document.createElement('input');apiInp.id='bg-apikey-inp';document.body.appendChild(apiInp);
   initInlineEdit('ie-apikey','bg-apikey-inp',{placeholder:'Paste your Unsplash API key'});
 
@@ -798,7 +765,6 @@ function initAllInlineEdits(){
   initInlineEdit('ie-bgcolor','bg-color-inp',{placeholder:'#0d1117'});
 }
 
-/* ══ Version display ══ */
 async function initVersion(){
   try{
     const d=await ag('/api/version');
@@ -820,7 +786,6 @@ async function initVersion(){
   }catch{}
 }
 
-/* ══ Password Protection toggle shows/hides password row ══ */
 function initSecToggle(){
   const en=document.getElementById('sec-en');
   const pwRow=document.getElementById('ie-pw');
@@ -834,7 +799,6 @@ function initSecToggle(){
   en.addEventListener('change',()=>apply(en.checked));
 }
 
-/* ══ Docker toggle shows/hides socket + hide-healthy rows ══ */
 function initDockerToggle(){
   const en=document.getElementById('srv-docker-en');
   const hideRow=document.getElementById('srv-hide-healthy-row');
@@ -848,7 +812,6 @@ function initDockerToggle(){
   en.addEventListener('change',()=>apply(en.checked));
 }
 
-/* ══ Wallpaper source toggle ══ */
 function initBgType(){
   const btn=document.getElementById('bg-type-btn');
   const list=document.getElementById('bg-type-list');
@@ -877,7 +840,6 @@ function initBgType(){
   setVal(hidden.value||'unsplash');
 }
 
-/* ══ Logging level toggle ══ */
 function initLogLevel(){
   const btn=document.getElementById('log-level-btn');
   const list=document.getElementById('log-level-list');
@@ -897,7 +859,6 @@ function initLogLevel(){
   setVal(hidden.value||'info');
 }
 
-/* ══ Language selector ══ */
 function initLanguage(){
   const btn=document.getElementById('lang-btn');
   const list=document.getElementById('lang-list');
@@ -917,11 +878,9 @@ function initLanguage(){
   setVal(hidden.value||'en');
 }
 
-/* ══ Dashboard Save ══ */
 const dashSaveEl=document.getElementById('dash-save');
 if(dashSaveEl)dashSaveEl.onclick=()=>save();
 
-/* ══ Export/Import ══ */
 document.getElementById('btn-exp').onclick=async()=>{
   try{
     const a=document.createElement('a');
@@ -935,7 +894,6 @@ document.getElementById('imp').onchange=async e=>{
   try{
     const d=JSON.parse(await f.text());
     if(!d||!Array.isArray(d.items))throw new Error('Invalid');
-    /* Diff incoming vs current by id, so the user sees what an import changes. */
     const cur=new Map(state.items.map(i=>[i.id,i]));
     const inc=new Map(d.items.map(i=>[i.id,i]));
     let added=0,updated=0,deleted=0;
@@ -951,7 +909,6 @@ document.getElementById('imp').onchange=async e=>{
 
 document.getElementById('btn-add').onclick=()=>openModal(null);
 
-/* ══ Bottom init ══ */
 initNav();
 initAllInlineEdits();
 initVersion();

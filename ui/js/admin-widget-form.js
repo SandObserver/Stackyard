@@ -9,7 +9,6 @@ import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { normBackupSlots } from '/js/admin-logic.js?v=1';
 
-/* Widget size glyphs (content-cards of increasing aspect/line-count), traced from the PSD. */
 const SIZE_ICONS={
   small:'<rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="9.7" r="1" fill="currentColor"/><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
   medium:'<rect x="4" y="8" width="16" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="7.6" cy="11.4" r="1.1" fill="currentColor"/><line x1="10.2" y1="11.4" x2="16.5" y2="11.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="7" y1="14.3" x2="16.5" y2="14.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
@@ -17,14 +16,11 @@ const SIZE_ICONS={
   xlarge:'<rect x="7" y="3.5" width="10" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="7" r="1.1" fill="currentColor"/><line x1="9" y1="10.5" x2="15" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="12.7" x2="15" y2="12.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="14.9" x2="15" y2="14.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="17.1" x2="13" y2="17.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
 };
 
-/* Allowed sizes come from the widget registry (folder-driven). 'custom' is the only built-in type. */
 const CUSTOM_SIZES = ['small','medium','large','xlarge'];
 function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (state._widgetReg[type]?.sizes || ['medium']); }
 const SIZE_LABELS = { small:'Small', medium:'Medium', large:'Large', xlarge:'Extra Large' };
 const STAT_TYPES  = ['cpu','ram','temp','disk','iowait','procs'];
 
-/* Row builders shared by the per-type sections. Each returns the appended
-   element so callers can wire it up. */
 function appendRow(host, tpl, cls='row'){
   const el=document.createElement('div'); el.className=cls;
   setHtml(el, tpl); host.appendChild(el); return el;
@@ -35,8 +31,6 @@ function appendIeRow(host,{rowId,label,req,opt,value,ph,inpId,type}){
   host.appendChild(el); return el;
 }
 
-/* State for current widget config while modal is open */
-/* Auto-generated config form (folder-style widgets driven by the registry). */
 
 export function buildWidgetForm(body,item){
   const wt0 = item?.widgetType || 'custom';
@@ -45,9 +39,7 @@ export function buildWidgetForm(body,item){
   const wc = item?.widgetConfig || {};
   state._wtype = wt; state._wsize = ws;
   state._wlabel = item?.label || '';
-  /* Snapshot of stored config for the auto-generated editor (registry widgets). */
   state._wAutoCfg = Object.assign({}, wc);
-  /* Restore slots */
   state._wslots = (wc.slots || [{type:'cpu'},{type:'ram'},{type:'disk',primary:'/',secondary:''}]);
   while(state._wslots.length < 3) state._wslots.push({type:'cpu'});
   state._wstatsSubType = wc.widgetSubType || 'system-summary';
@@ -86,7 +78,6 @@ export function buildWidgetForm(body,item){
       return a;
     })(),
   };
-  /* Connections widget: which view, and the VPN-view config (single tunnel). */
   state._wconnView = wc.view || 'map';
   state._wvpnCfg = {
     service:   wc.vpn?.service   || 'gluetun',   /* gluetun | netbird */
@@ -113,7 +104,6 @@ function _renderWidgetForm(body){
   state._autoForm=null;
   body.innerHTML='';
 
-  /* ── Shell: Name + Widget Type, then Size tiles (settings-row, PSD) ── */
   const typeList=[...Object.values(state._widgetReg).map(w=>[w.name,w.label]), ['custom','Custom']].sort((a,b)=>a[1].localeCompare(b[1]));
   const typeOpts=typeList.map(([t,label])=>html`<option value="${t}"${t===state._wtype?' selected':''}>${label}</option>`);
   const shell=document.createElement('div'); shell.className='grp';
@@ -125,7 +115,6 @@ function _renderWidgetForm(body){
   const typeSel=shell.querySelector('#f-wtype');
   typeSel.onchange=()=>{ state._wtype=typeSel.value; state._wsize=widgetSizes(state._wtype)[0]; _renderWidgetForm(body); };
 
-  /* Connections view (Map / VPN) as a radio group */
   if(state._wtype==='connections'){
     const vcard=document.createElement('div'); vcard.className='grp';
     setHtml(vcard, html`<div class="row"><span class="rl">View</span><div class="segr">
@@ -136,7 +125,6 @@ function _renderWidgetForm(body){
     vcard.querySelectorAll('input[name="wconn-view"]').forEach(r=>r.addEventListener('change',()=>{ state._wconnView=r.value; if(r.value==='map')state._wsize='medium'; _renderWidgetForm(body); }));
   }
 
-  /* Size tiles */
   const _ghContrib=(state._wtype==='github'&&(state._wAutoCfg.githubView||'prs')==='contributions');
   let _sizeOpts=widgetSizes(state._wtype).filter(s=>!(_ghContrib&&(s==='large'||s==='xlarge')));
   if(state._wtype==='connections') _sizeOpts = (state._wconnView==='map') ? ['medium'] : ['small','medium'];
@@ -204,7 +192,6 @@ function _renderWeatherConfig(body){
 }
 
 function _renderStatsConfig(body){
-  /* ── Type: System Summary | Disk Health (radio) ── */
   const subRow=document.createElement('div'); subRow.className='grp';
   setHtml(subRow, html`<div class="row"><span class="rl">Type</span><div class="segr">
     <label class="segr-opt"><input type="radio" name="stats-sub" value="disk-health" ${state._wstatsSubType==='disk-health'?'checked':''}><span class="segr-dot"></span><span>Disk Health</span></label>
@@ -312,7 +299,6 @@ function _renderStatsBody(body){
     return;
   }
 
-  /* ── System Summary: 3 stat slots + network slot (settings-row, PSD) ── */
   const RES_LABELS={cpu:'CPU',ram:'RAM',temp:'Temperature',disk:'Disk Mount',iowait:'IO Wait',procs:'Processes'};
   const SLOT_DEFS=['#ff2d55','#30d158','#00c0e8'];
 
@@ -344,7 +330,6 @@ function _renderStatsBody(body){
     fillSlot(card, idx);
   });
 
-  /* Slot 4: Network (Speed / Throughput / Uptime) */
   const prov=state._wnet.provider||'myspeed';
   const mode=state._wnet.mode||'speed';
   const netCard=document.createElement('div'); netCard.className='grp'; body.appendChild(netCard);
@@ -390,7 +375,6 @@ function _renderConnectionsConfig(body){
   return _renderMapConfig(body);
 }
 
-/* VPN view config: single tunnel, VPN services only (Gluetun / NetBird). */
 function _renderVpnConfig(body){
   const svc=state._wvpnCfg.service||'gluetun';
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
@@ -521,7 +505,6 @@ function _renderCustomConfig(body){
 }
 
 
-/* Auto-fill connection from first same-provider slot that has a URL */
 function _autofillSlot(si, provider) {
   const slots = state._wbackupCfg.slots;
   const first = slots.findIndex((s,i) => i!==si && s.provider===provider &&
