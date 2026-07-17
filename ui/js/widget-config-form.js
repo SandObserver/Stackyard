@@ -10,7 +10,6 @@ const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill
 
 function _tag(field){ return field.optional ? html` <span class="opt-span">(optional)</span>` : html` <span class="req">*</span>`; }
 
-/* ── Inline-edit row (text / number). Value lives in the hidden input. ── */
 function _ieRow(field, value, inputType) {
   const has = value != null && value !== '';
   const ph = field.placeholder || '';
@@ -54,7 +53,6 @@ function _secret(field, isSet) {
   return { el: row, get, control: inp, liveValue: () => inp.value };
 }
 
-/* ── Toggle row. ── */
 function _toggle(field, value) {
   const on = value != null ? !!value : !!field.default;
   const row = document.createElement('div'); row.className = 'row';
@@ -65,7 +63,6 @@ function _toggle(field, value) {
   return { el: row, get, control: input, liveValue: () => input.checked };
 }
 
-/* ── Select: settings-row native dropdown with the PSD chevron; optional Fetch. ── */
 function _select(field, value, ctx) {
   const wrap = document.createElement('div');
   const row = document.createElement('div'); row.className = 'row';
@@ -117,7 +114,6 @@ function _select(field, value, ctx) {
   return { el: wrap, get, control: sel, liveValue: () => sel.value };
 }
 
-/* ── Pills → radio group (PSD green-dot radios). ── */
 function _pills(field, value) {
   const wrap = document.createElement('div');
   const row = document.createElement('div'); row.className = 'row';
@@ -155,7 +151,6 @@ function _multiselect(field, value) {
   return { el: wrap, get, control: wrap, liveValue: () => [...cur] };
 }
 
-/* ── Repeatable group: each entry is its own card with a header + remove. ── */
 function _group(field, rows, size) {
   const min = field.min != null ? field.min : 0;
   const max = (field.maxBySize && size && field.maxBySize[size] != null)

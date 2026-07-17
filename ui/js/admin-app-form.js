@@ -15,7 +15,6 @@ import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v
 export function buildFolderForm(body,item){
   const children=item?.children||[];
   const apps=state.items.filter(i=>i.type==='app'&&!i.dock);
-  /* In edit mode, surface current children even if they'd otherwise be filtered. */
   children.forEach(cid=>{ if(!apps.some(a=>a.id===cid)){ const a=state.items.find(i=>i.id===cid); if(a) apps.push(a); } });
 
   const opts=apps.length
@@ -47,7 +46,6 @@ export function buildFolderForm(body,item){
   _wireFolderApps();
 }
 
-/* Multi-select checklist: tap toggles aria-selected, list stays open. */
 function _wireFolderApps(){
   const dd=document.getElementById('folder-apps-dd');
   const btn=document.getElementById('folder-apps-btn');
@@ -91,7 +89,6 @@ export function buildAppForm(body,item){
   const isPing=!!hc.pingUrl;
   const skipTls=!!(item?.skipTlsVerify);
 
-  /* inline-edit row helper */
   const ier=(rowId,label,inpId,val,ph,type='text')=>{
     const has=val!=null&&val!=='';
     return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has?'':' is-ph'}">${has?val:ph}</span><input id="${inpId}" type="${type}" value="${val||''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button></div>`;
@@ -173,7 +170,6 @@ export function buildAppForm(body,item){
     </div>
     <p class="grp-tip">Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks.</p>`);
 
-  /* Inline-edit rows */
   initInlineEdit('ie-name','f-lbl',{placeholder:'My App',onCommit(){updPrev();}});
   initInlineEdit('ie-url','f-href',{placeholder:'https://app.example.com'});
   initInlineEdit('ie-hc-con','hc-con',{placeholder:'container-name'});
@@ -182,12 +178,10 @@ export function buildAppForm(body,item){
   initInlineEdit('ie-burl','f-burl',{placeholder:'http://container-name:port/api/v2'});
   initInlineEdit('ie-bunit','bcust-unit',{placeholder:'e.g. GB'});
 
-  /* Color controls */
   renderColorControl(document.getElementById('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){state.scol=v;const pv=document.getElementById('ipv');if(pv)pv.style.background=rc(state.scol);}});
   renderColorControl(document.getElementById('static-color-slot'),{value:staticBadge.color||'#1e6ef4',idPrefix:'static-col',swatchColors:BADGE_SWATCHES});
   renderColorControl(document.getElementById('act-color-slot'),{value:actCustom.color||'#1e6ef4',idPrefix:'act-col',swatchColors:BADGE_SWATCHES});
 
-  /* Icon search/upload */
   wireIcon();
   if(state.siurl)updPrev();
 
@@ -215,12 +209,9 @@ function wireIcon(){
   let t;
   inp.oninput=()=>{
     const v=inp.value.trim();
-    /* Full URL, use directly */
     if(v.startsWith('http://')||v.startsWith('https://')){state.siurl=v;updPrev();rs.classList.remove('open');return;}
-    /* Shorthand like "radarr.svg" or "radarr", resolve and preview immediately */
     if(v&&!v.includes('/')){
       state.siurl=v;updPrev();
-      /* Also search CDN */
       clearTimeout(t);
       t=setTimeout(async()=>{
         const q=v.replace(/\.(svg|png)$/i,'');
@@ -236,7 +227,6 @@ function wireIcon(){
     },300);
   };
 
-  /* Upload handler */
   const upInput=document.getElementById('ip-upload');
   const upBtn=document.getElementById('ip-upload-lbl');
   /* Explicit click handler, more reliable than a <label> wrapping the input,
@@ -252,7 +242,6 @@ function wireIcon(){
         const r=await fetch('/api/icons/upload',{method:'POST',body:form});
         const d=await r.json();
         if(!r.ok)throw new Error(d.error||'Upload failed');
-        /* Refresh local icon manifest so resolveIcon sees the new file */
         await loadLocalIcons();
         state.siurl=d.filename;
         const ipIn=document.getElementById('ip-in');
@@ -268,7 +257,6 @@ function wireIcon(){
 }
 function showIPRes(list, rawInput){
   const rs=document.getElementById('iprs');if(!rs)return;rs.innerHTML='';
-  /* Show CDN matches */
   list.forEach(ic=>{
     const r=document.createElement('button');r.type='button';r.className='ipr';
     const img=document.createElement('img');img.alt='';img.src=ic.svgUrl;img.onerror=()=>{img.src=ic.pngUrl;};
@@ -276,7 +264,6 @@ function showIPRes(list, rawInput){
     r.onclick=()=>{state.siurl=ic.svgUrl;document.getElementById('ip-in').value=ic.svgUrl;updPrev();rs.classList.remove('open');};
     rs.appendChild(r);
   });
-  /* If no CDN matches but input looks like a filename, offer to use it as local/CDN icon */
   if(!list.length&&rawInput&&!rawInput.includes('/')){
     const val=rawInput.trim();
     const srcs=iconChain(val);
@@ -315,7 +302,6 @@ function updPrev(){
   p.replaceChildren(img);
 }
 
-/* HSL <-> hex helpers for the custom slider picker */
 
 async function testPing(){
   const url=document.getElementById('hc-ping')?.value?.trim();
@@ -360,7 +346,6 @@ async function fetchBadge(){
       }else if(isAuth){
         st.style.cssText='margin-top:4px;color:#ff9f0a';
         st.textContent='Authentication required. Enable the Authentication toggle below and add your API key.';
-        /* Auto-toggle auth on as a hint */
         const authCb=document.getElementById('auth-en');
         const authSub=document.getElementById('auth-sub');
         if(authCb&&!authCb.checked){

@@ -61,7 +61,6 @@ function folderBadge(folder) {
   return { health: hasHealth, activity: actSum };
 }
 
-/* mkWrap bound to local breg, keeps call sites unchanged */
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
 function paginate() {
@@ -166,22 +165,18 @@ function syncMobPages() {
   const domCount = strip ? strip.children.length : 0;
   if (domCount <= totalPages) return; /* no overflow pages, nothing to fix */
   totalPages = domCount;
-  /* Rebuild main dots */
   const dots = document.getElementById('dots'); dots.innerHTML = '';
   for (let i = 0; i < domCount; i++) {
     const d = mk('div'); d.className = 'dot'+(i===pg?' on':'');
     d.onclick = () => goTo(i); dots.appendChild(d);
   }
-  /* Rebuild pill dots, keep existing pill node, just add the extra dot */
   const pillDots = document.querySelector('.msp-dots');
   if (pillDots) {
-    /* Add missing dots (there may already be totalPages-1 dots from buildMobile) */
     while (pillDots.children.length < domCount) {
       const d = document.createElement('div');
       d.className = 'msp-dot';
       pillDots.appendChild(d);
     }
-    /* Re-sync active state */
     Array.from(pillDots.children).forEach((d, i) => d.classList.toggle('on', i === pg));
     /* Patch pillBump to drive the full set of dots, wrap original to preserve animation */
     const origBump = CB.mobPillBump;
@@ -333,7 +328,6 @@ async function boot() {
     await showSetupPrompt();
   }
 
-  /* Shared state object passed to ui.js and spotlight.js */
   const state = { items, S, CB, BEL, badgeState, breg, bunreg, bupd, folderBadge, paginate, goTo, pg: 0, _mobTsCleanup, _mobTeCleanup };
   _stateRef = state;
   initUI(state);
@@ -349,7 +343,6 @@ async function boot() {
       if (e.key === 'ArrowRight') goTo(pg+1);
       if (e.key === 'ArrowLeft')  goTo(pg-1);
     });
-    /* Desktop mouse drag, swipe pages with mouse */
     let _dMx = 0, _dDragging = false;
     document.addEventListener('mousedown', e => { _dMx = e.clientX; _dDragging = false; });
     document.addEventListener('mousemove', e => { if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true; });
@@ -375,11 +368,9 @@ async function boot() {
       if (!MOB) return;
       const landscape = innerWidth > innerHeight;
       if (landscape) {
-        /* Switch to desktop layout for landscape */
         document.body.classList.remove('is-mob');
         buildDesktop();
       } else {
-        /* Restore mobile layout for portrait */
         document.body.classList.add('is-mob');
         buildMobile();
         syncMobPages();

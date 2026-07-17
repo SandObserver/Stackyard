@@ -1,4 +1,4 @@
-/* Weather widget data function — Open-Meteo (keyless).
+/* Weather widget data function: Open-Meteo (keyless).
 
    Config:
      city      : display name (resolved to lat/long in the editor)

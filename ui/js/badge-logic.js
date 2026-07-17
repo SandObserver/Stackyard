@@ -1,4 +1,3 @@
-/* Named-color → hex for all badge types */
 export const NAMED = { blue:'#1e6ef4', green:'#008932', yellow:'#ffcc00', red:'#e9152d', gray:'#636366' };
 
 /* WCAG contrast: use dark text (#1c1c1e) only when it gives higher contrast ratio than white.
@@ -17,7 +16,6 @@ export function needsDark(hex) {
   } catch { return false; }
 }
 
-/* Resolve a named color key or raw hex to a hex string */
 export function resolveColor(c) { return c ? (NAMED[c] || c) : ''; }
 
 /* Priority: unhealthy (1) > activity (2) > fixed-label (3) > healthy-dot (4).

@@ -69,7 +69,6 @@ export function loadSettings(c){
     brEl.addEventListener('input',()=>{updateSliderFill(brEl);if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);});}
   document.getElementById('bg-save').addEventListener('click',saveWallpaper);
 
-  /* Populate General inline-edit value spans (empty → greyed placeholder, no dash) */
   const _sv=(id,v,ph='')=>{const el=document.getElementById(id);if(!el)return;
     if(v){el.textContent=v;el.classList.remove('is-ph');}
     else{el.textContent=ph;el.classList.add('is-ph');}};
@@ -78,11 +77,9 @@ export function loadSettings(c){
   _sv('ie-ip-v',s.server?.hostIp,'192.168.1.100');
   _sv('ie-socket-v',s.server?.socketProxyUrl,'tcp://socket-proxy:2375');
   _sv('ie-pw-v','','Not set'); /* set below after auth check */
-  /* Sync hidden input values used by save */
   const _si=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
   _si('srv-ip',s.server?.hostIp||'');
   _si('srv-socket',s.server?.socketProxyUrl||'');
-  /* Appearance */
   _sv('ie-bgcol-v',s.background?.collection,'Collection ID');
   _si('bg-col-inp',s.background?.collection||'');
   _si('bg-url-inp',s.background?.url||'');
@@ -113,7 +110,6 @@ export function loadSettings(c){
   if(socketEl)socketEl.value=s.server?.socketProxyUrl||'';
   document.getElementById('srv-save').addEventListener('click',saveServer);
 
-  /* Wire password toggle unconditionally, doesn't depend on auth check */
   const secEnEl=document.getElementById('sec-en');
   const secSubEl=document.getElementById('sec-sub');
   const secPwEl=document.getElementById('sec-pw');
@@ -141,7 +137,6 @@ export function loadSettings(c){
     });
   }
 
-  /* Load auth state from server and apply */
   ag('/api/auth/check').then(d=>{
     if(secEnEl){
       secEnEl.checked=!!(d.enabled);
@@ -154,7 +149,6 @@ export function loadSettings(c){
     if(pwValEl)pwValEl.textContent=d.passwordSet?'Configured':'Not set';
     syncLogout();
   }).catch(()=>{
-    /* Auth check failed, toggle still works, just without pre-loaded state */
   });
 }
 export function showBgFields(type){
@@ -182,7 +176,6 @@ async function saveWallpaper(){
     }
     else if(type==='url'){bg.url=(document.getElementById('bg-url-inp')||document.getElementById('bg-url'))?.value?.trim()||'';}
     else if(type==='color'){bg.color=(document.getElementById('bg-color-inp')||document.getElementById('bg-color'))?.value?.trim()||'';}
-    /* Save main config first */
     const c=await ag('/api/config');c.settings=c.settings||{};c.settings.background=bg;
     await ap('/api/config',c);
     /* Save Unsplash key separately AFTER main config; the GET /api/config strips the key,
@@ -219,7 +212,6 @@ async function saveServer(){
     const langChanged=c.settings.language!==prevLang;
     await ap('/api/config',c);
 
-    /* Handle password and auth toggle */
     const pw=document.getElementById('sec-pw')?.value||'';
     const enabled=document.getElementById('sec-en')?.checked||false;
     if(pw){

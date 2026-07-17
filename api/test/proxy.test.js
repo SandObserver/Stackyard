@@ -1,5 +1,5 @@
 /* Point config at a nonexistent path so loadConfig falls back to an empty
-   config (no host IP, no port map) — keeps these tests hermetic. */
+   config (no host IP, no port map), which keeps these tests hermetic. */
 process.env.CONFIG_PATH = '/tmp/stackyard-proxy-test-nonexistent.json';
 
 const { test } = require('node:test');
@@ -55,7 +55,7 @@ test('fetchJSON pins the IP and preserves the Host header', async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const port = server.address().port;
   try {
-    /* The hostname is never resolved — we connect straight to the pinned IP. */
+    /* The hostname is never resolved; we connect straight to the pinned IP. */
     const r = await fetchJSON(`http://pinned.example:${port}/x`, { pinIp: '127.0.0.1', timeout: 3000 });
     assert.equal(r.status, 200);
     assert.deepEqual(r.data, { ok: true });

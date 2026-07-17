@@ -35,7 +35,7 @@ function mapServices(wc){
   return out;
 }
 
-/* Raw GET — Conduit exposes Prometheus-style text that needs the unparsed body. */
+/* Raw GET: Conduit exposes Prometheus-style text that needs the unparsed body. */
 function mapRawGet(base, path, headers){
   return new Promise((resolve, reject) => {
     let u; try { u = new URL(path, base); } catch(e){ return reject(e); }

@@ -29,7 +29,6 @@
 const NS = 'http://www.w3.org/2000/svg';
 const _params = new URLSearchParams(location.search);
 
-/* ── Data ── */
 
 export function widgetId() { return _params.get('id') || ''; }
 
@@ -53,7 +52,6 @@ export async function getConfig() {
   return r.json();
 }
 
-/* ── Visuals ── */
 
 const _r = n => Math.round(n * 100) / 100;
 
@@ -191,7 +189,6 @@ export function barFill(percent, opts = {}) {  const pct = Math.max(0, Math.min(
   return track;
 }
 
-/* ── State / lifecycle ── */
 
 /* Relative "updated" label from a timestamp (ms since epoch). */
 export function sinceLabel(ts) {

@@ -31,7 +31,6 @@ export const KEY_STYLES = [
   { id: 'skeleton-brass', metal: 'brass' },
 ];
 
-/* Non-key danglers (tags, discs, straps). At most one is added per keychain. */
 export const EXTRA_STYLES = [
   'ring-disc',
   'tag-dog-gray',
@@ -40,7 +39,6 @@ export const EXTRA_STYLES = [
   'strap-blue',
 ];
 
-/* How often a keychain also carries a non-key dangler (deterministic draw). */
 const EXTRA_CHANCE = 0.45;
 
 /* FNV-1a 32-bit. Stable across Node and browsers (integer math only). */
@@ -104,7 +102,6 @@ function pathOf(url) {
   try { const u = new URL(url); return u.pathname === '/' ? '' : u.pathname; } catch { return ''; }
 }
 
-/* A readable name fallback when a keychain has no explicit name. */
 function hostLabel(url) {
   try { return new URL(url).host; } catch { return url; }
 }

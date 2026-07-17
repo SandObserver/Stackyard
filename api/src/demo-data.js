@@ -11,7 +11,6 @@ function wave(periodSec, min, max, phase = 0) {
 }
 const round = (v, d = 0) => { const f = 10 ** d; return Math.round(v * f) / f; };
 
-/* ── Metrics (System stats widget) ── */
 const metrics = {
   cpuPercent: () => round(wave(40, 8, 46)),
   cpuIoWait:  () => round(wave(55, 0.2, 2.4, 1), 1),
@@ -22,7 +21,6 @@ const metrics = {
   uptimeSeconds: () => 1_512_540 + Math.floor(Date.now() / 1000) % 86400,
 };
 
-/* ── GitHub contribution calendar (seeded, stable) ── */
 function githubCalendar() {
   const COLORS = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
   let seed = 1337, total = 0;
@@ -45,7 +43,6 @@ function githubCalendar() {
 }
 let _cal = null;
 
-/* ── Widget data bodies (return null to fall through to real code) ── */
 function demoWidgetBody(widgetType) {
   switch (widgetType) {
     case 'dns': {
@@ -82,7 +79,6 @@ function demoWidgetBody(widgetType) {
   }
 }
 
-/* ── Badges (activity) and health ── */
 function demoBadges(items) {
   const preset = { 'app-jellyfin': 2, 'app-portainer': 12 };
   const out = {};
@@ -99,7 +95,6 @@ function demoHealth(items) {
   return out;
 }
 
-/* ── Backup slots ── */
 function demoBackup(wc) {
   const slots = Array.isArray(wc?.slots) ? wc.slots : [];
   const now = Date.now();
