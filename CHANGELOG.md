@@ -9,15 +9,14 @@
   re-exported from `utils.js`, so its importers are unaffected. `i18n.js` and
   `admin-color-control.js` are migrated; the rest follow, held by a test that
   caps remaining direct `innerHTML` writes per file and blocks new ones.
+- Internal: migrated the widget config form rows to `setHtml`/`html`.
 - Internal: migrated `dashboard.js` and the badge value list in `admin-app-form.js`
   to `setHtml`/`html`. Badge values returned by a remote service are now escaped
   on render rather than relying on the API only ever emitting numbers.
-
 - Fixed Test Connection, and per-app health check pings, reporting on a
   different target than the widget actually fetches. When a host-IP port map is
   configured, a ping now follows the same mapping the fetch does, so it can no
   longer pass while the widget fails, or the reverse.
-
 - Internal: `proxy.js` now exposes a single outbound boundary.
   `fetchChecked`/`pingChecked` for URLs that arrive in a request, and
   `fetchUnchecked`/`pingUnchecked` for URLs from config or hardcoded constants.

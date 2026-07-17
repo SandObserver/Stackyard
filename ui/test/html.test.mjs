@@ -102,3 +102,13 @@ test('setHtml accepts an explicit raw() opt-out', () => {
   setHtml(el, raw('<b>trusted</b>'));
   assert.equal(el.innerHTML, '<b>trusted</b>');
 });
+
+test('a boolean in an attribute needs String(), because false renders as nothing', () => {
+  /* `false` renders as nothing so `${cond && html`...`}` works, which makes
+     `aria-selected="${set.has(x)}"` silently produce aria-selected="" where a
+     plain template literal produced "false". Attributes that carry a boolean
+     must stringify it. This bit the multiselect row during migration. */
+  assert.equal(String(html`<li aria-selected="${false}">`), '<li aria-selected="">');
+  assert.equal(String(html`<li aria-selected="${String(false)}">`), '<li aria-selected="false">');
+  assert.equal(String(html`<li aria-selected="${true}">`), '<li aria-selected="true">');
+});
