@@ -4,28 +4,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* Raw `el.innerHTML = ` string-building is safe only while every interpolation
-   remembers esc(). setHtml() + html`` from utils.js remove that requirement, but
-   the existing files predate them and are migrated one at a time.
-
-   This is a ratchet, not a ban. Each file's remaining writes are capped at the
-   count below. The counts may only ever go down: migrate a file, lower its
-   number, and once it hits zero delete the entry so the file can never regress.
-   A file not listed here must have none at all, which is what stops the pattern
-   coming back in new code.
+/* Raw `el.innerHTML = ` and `el.insertAdjacentHTML(...)` string-building is
+   safe only while every interpolation remembers esc(). setHtml() + html`` from
+   utils.js remove that requirement. The migration is complete, so the budget is
+   empty: any file that writes markup outside setHtml fails here.
 
    Two things are deliberately not counted:
 
    Reads (`if (el.innerHTML)`) do not write markup.
 
    Clears (`el.innerHTML = ''`) interpolate nothing, so there is no value to
-   escape and no way for them to be unsafe. Counting them would inflate the
-   budgets and push pointless churn through rendering code. 28 of the 76 raw
-   assignments in this codebase are clears; only the other 48 are real. */
-const BUDGET = {
-  'admin-widget-form.js': 21,
-  'admin-app-form.js': 2,
-};
+   escape and no way for them to be unsafe. */
+const BUDGET = {};
 
 /* setHtml's own write. It is the single sanctioned innerHTML in the codebase and
    the reason every other file can be held to zero. */
@@ -36,6 +26,9 @@ const jsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../js'
    unsafe, but was invisible here until admin.js turned out to use it seven
    times. Only the plain form can be a clear: `+= ''` writes nothing anyway. */
 const ASSIGN = /\.innerHTML\s*(\+?)=(?!=)\s*/g;
+/* insertAdjacentHTML writes markup exactly like an innerHTML assignment and was
+   invisible to the earlier ASSIGN-only regex; 15 call sites hid behind it. */
+const INSERT = /\.insertAdjacentHTML\s*\(/g;
 const CLEAR = /^(?:''|""|``)\s*[;,)]/;
 
 function countWrites(src) {
@@ -44,6 +37,7 @@ function countWrites(src) {
     const isPlain = m[1] === '';
     if (!(isPlain && CLEAR.test(src.slice(m.index + m[0].length)))) n++;
   }
+  n += (src.match(INSERT) || []).length;
   return n;
 }
 

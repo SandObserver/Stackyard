@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Internal: completed the `setHtml`/`html` migration. `admin-widget-form.js`,
+  the remaining `admin-app-form.js` forms, `_secretRow`, and the widget config
+  form chevron are migrated, and the ratchet test now also counts
+  `insertAdjacentHTML` with an empty budget, so no file can write markup outside
+  `setHtml` again.
 - Internal: added an escape-by-default `html` tagged template plus `setHtml()`,
   in a dependency-free `ui/js/html.js`. Interpolated values are escaped unless
   wrapped in `raw()`, and `setHtml()` rejects plain strings, so writing markup no

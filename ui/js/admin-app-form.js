@@ -2,8 +2,8 @@
    Builds the app edit form (icon picker, badge picker) and the folder form.
    Reads and writes shared state; exports buildAppForm, buildFolderForm, and
    parseKV (used by the save path). */
-import { clr as rc, esc } from '/js/utils.js?v=92153ac7';
-import { html, setHtml } from '/js/html.js?v=1';
+import { clr as rc } from '/js/utils.js?v=92153ac7';
+import { html, raw, setHtml } from '/js/html.js?v=1';
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { isDockBlocked, DOCK_MAX } from '/js/admin-logic.js?v=1';
@@ -18,29 +18,30 @@ export function buildFolderForm(body,item){
   /* In edit mode, surface current children even if they'd otherwise be filtered. */
   children.forEach(cid=>{ if(!apps.some(a=>a.id===cid)){ const a=state.items.find(i=>i.id===cid); if(a) apps.push(a); } });
 
-  const opts=apps.map(a=>`<li role="option" data-val="${esc(a.id)}" aria-selected="${children.includes(a.id)?'true':'false'}">${esc(a.label||a.id)}</li>`).join('')
-    || '<li class="row-dd-empty" aria-disabled="true">No apps available</li>';
+  const opts=apps.length
+    ? apps.map(a=>html`<li role="option" data-val="${a.id}" aria-selected="${children.includes(a.id)?'true':'false'}">${a.label||a.id}</li>`)
+    : html`<li class="row-dd-empty" aria-disabled="true">No apps available</li>`;
 
-  body.innerHTML=`
+  setHtml(body, html`
     <div class="grp">
       <div class="row ie-row" id="ie-fname">
         <span class="rl">Folder Name</span>
-        <span class="rv${item?.label?'':' is-ph'}">${esc(item?.label||'My Folder')}</span>
-        <input id="f-fname" type="text" value="${esc(item?.label||'')}" style="display:none">
-        <button class="pe" type="button" aria-label="Edit folder name">${PE_SVG}</button>
+        <span class="rv${item?.label?'':' is-ph'}">${item?.label||'My Folder'}</span>
+        <input id="f-fname" type="text" value="${item?.label||''}" style="display:none">
+        <button class="pe" type="button" aria-label="Edit folder name">${raw(PE_SVG)}</button>
       </div>
       <div class="row">
         <span class="rl">Add Apps</span>
         <div class="row-dd" id="folder-apps-dd">
           <button class="row-dd-btn" id="folder-apps-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
             <span id="folder-apps-label">Select apps</span>
-            ${CHEV_SVG}
+            ${raw(CHEV_SVG)}
           </button>
           <ul class="row-dd-list checklist" id="folder-apps-list" role="listbox" aria-multiselectable="true" aria-label="Apps in this folder" hidden>${opts}</ul>
         </div>
       </div>
     </div>
-    <p class="grp-tip">Tap to add or remove apps from this folder.</p>`;
+    <p class="grp-tip">Tap to add or remove apps from this folder.</p>`);
 
   initInlineEdit('ie-fname','f-fname',{placeholder:'My Folder'});
   _wireFolderApps();
@@ -93,14 +94,11 @@ export function buildAppForm(body,item){
   /* inline-edit row helper */
   const ier=(rowId,label,inpId,val,ph,type='text')=>{
     const has=val!=null&&val!=='';
-    return `<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span>`
-      +`<span class="rv${has?'':' is-ph'}">${has?esc(val):esc(ph)}</span>`
-      +`<input id="${inpId}" type="${type}" value="${esc(val||'')}" style="display:none">`
-      +`<button class="pe" type="button" aria-label="Edit ${label}">${PE_SVG}</button></div>`;
+    return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has?'':' is-ph'}">${has?val:ph}</span><input id="${inpId}" type="${type}" value="${val||''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button></div>`;
   };
-  const tog=(id,on)=>`<label class="tog"><input type="checkbox" id="${id}" ${on?'checked':''}><div class="tr"></div></label>`;
+  const tog=(id,on)=>html`<label class="tog"><input type="checkbox" id="${id}" ${on?'checked':''}><div class="tr"></div></label>`;
 
-  body.innerHTML=`
+  setHtml(body, html`
     <div class="grp">
       ${ier('ie-name','Name','f-lbl',item?.label,'My App')}
       ${ier('ie-url','URL','f-href',item?.href,'https://app.example.com','url')}
@@ -109,8 +107,8 @@ export function buildAppForm(body,item){
     <p class="grp-hdr">Icon</p>
     <div class="grp" id="ipw">
       <div class="row icon-src-row">
-        <span class="icon-prev" id="ipv" style="background:${rc(state.scol)}">${state.siurl?`<img src="${esc(resolveIcon(state.siurl))}" alt="" id="ipv-img">`:`<span>${(item?.label||'?')[0]?.toUpperCase()||'?'}</span>`}</span>
-        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="Name or full URL" value="${esc(state.siurl)}">
+        <span class="icon-prev" id="ipv" style="background:${rc(state.scol)}">${state.siurl?html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">`:html`<span>${(item?.label||'?')[0]?.toUpperCase()||'?'}</span>`}</span>
+        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="Name or full URL" value="${state.siurl}">
         <button type="button" class="row-btn" id="ip-upload-lbl">Upload</button>
         <input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0">
       </div>
@@ -121,7 +119,7 @@ export function buildAppForm(body,item){
     <div class="grp">
       <div class="row"><span class="rl">Show in Dock</span>${tog('f-dock',!!item?.dock)}</div>
     </div>
-    ${dockBlocked?`<p class="grp-tip" id="dock-full-tip">Dock full (${DOCK_MAX}/${DOCK_MAX}). Remove an app first.</p>`:''}
+    ${dockBlocked?html`<p class="grp-tip" id="dock-full-tip">Dock full (${DOCK_MAX}/${DOCK_MAX}). Remove an app first.</p>`:''}
 
     <p class="grp-hdr">Badge</p>
     <div class="grp">
@@ -138,7 +136,7 @@ export function buildAppForm(body,item){
         </div>
       </div>
     </div>
-    ${globalHealthOn?'':'<p class="grp-tip" id="hc-off-tip">Turn on Docker Container Health Checks in General, then configure it, to use this.</p>'}
+    ${globalHealthOn?'':html`<p class="grp-tip" id="hc-off-tip">Turn on Docker Container Health Checks in General, then configure it, to use this.</p>`}
 
     <div class="grp">
       <div class="row"><span class="rl">Fixed Label</span>${tog('static-en',hasStatic)}</div>
@@ -152,7 +150,7 @@ export function buildAppForm(body,item){
       <div class="row"><span class="rl">Live Activity</span>${tog('act-en',act.enabled)}</div>
       <div id="act-sub" ${act.enabled?'':'hidden'}>
         ${ier('ie-burl','API URL','f-burl',act.url,'http://container-name:port/api/v2','url')}
-        <div class="row"><span class="rl"></span><span id="bst" class="row-status">${state.spaths.length?'Saved: '+esc(state.spaths.join(' + ')):''}</span><button type="button" class="row-btn" id="bfetch">Fetch</button></div>
+        <div class="row"><span class="rl"></span><span id="bst" class="row-status">${state.spaths.length?'Saved: '+state.spaths.join(' + '):''}</span><button type="button" class="row-btn" id="bfetch">Fetch</button></div>
         <div id="bprow" class="${state.spaths.length?'':'bprow-hidden'}">
           <div class="row"><span class="rl">Value</span></div>
           <div class="bval-box"><input class="bval-search" id="bsearch" type="text" placeholder="Filter values" autocomplete="off"><div class="blist" id="blist"></div></div>
@@ -173,7 +171,7 @@ export function buildAppForm(body,item){
     <div class="grp">
       <div class="row"><span class="rl">Allow self-signed certificate</span>${tog('f-skip-tls',skipTls)}</div>
     </div>
-    <p class="grp-tip">Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks.</p>`;
+    <p class="grp-tip">Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks.</p>`);
 
   /* Inline-edit rows */
   initInlineEdit('ie-name','f-lbl',{placeholder:'My App',onCommit(){updPrev();}});

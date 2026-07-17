@@ -74,7 +74,8 @@ function _select(field, value, ctx) {
   setHtml(row, html`<span class="rl">${field.label}${_tag(field)}</span>`);
   const selWrap = document.createElement('div'); selWrap.className = 'sel-wrap';
   const sel = document.createElement('select'); sel.className = 'row-sel';
-  selWrap.appendChild(sel); selWrap.insertAdjacentHTML('beforeend', CHEV);
+  selWrap.appendChild(sel);
+  const chevT = document.createElement('template'); setHtml(chevT, raw(CHEV)); selWrap.appendChild(chevT.content.firstElementChild);
   row.appendChild(selWrap); wrap.appendChild(row);
 
   function paint() {
