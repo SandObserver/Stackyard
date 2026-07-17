@@ -123,6 +123,7 @@ function mkDock(item) {
     ? mk('a', { href: '/admin/' })
     : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'di'; a.setAttribute('aria-label', item.label||item.id);
+  a.title = item.label||item.id;
   a.appendChild(mkWrap(item, 78, 15, 50, 'dwrap')); return a;
 }
 

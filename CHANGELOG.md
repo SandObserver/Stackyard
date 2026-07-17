@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Dock icons now show the app name on hover. They never render a label, so
+  without a `title` there was nothing to show.
 - Internal: removed the unused custom dropdown helper and its CSS, left over
   from the admin form rewrite, and dropped `export` from five symbols only used
   inside their own module.
