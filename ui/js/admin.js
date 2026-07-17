@@ -1,5 +1,6 @@
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
-import { clr as rc, esc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
+import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
+import { html, raw, setHtml } from '/js/html.js?v=1';
 import { reorderItems } from '/js/admin-logic.js?v=1';
 import { cleanId, buildStatsSlots, buildMapServices, finalizeBackupSlots, buildAppItem } from '/js/admin-save-logic.js?v=1';
 import { WIDGET_TYPES } from '/js/widget-types.js?v=63bf4388';
@@ -99,7 +100,7 @@ const SIZE_ICONS = {
   large:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5.5" width="12" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9" cy="9" r="1.2" fill="currentColor"></circle><line x1="8" y1="12.6" x2="16" y2="12.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="8" y1="14.8" x2="16" y2="14.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="8" y1="17" x2="13" y2="17" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line></svg>',
   xlarge: '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3.5" width="10" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9.7" cy="7" r="1.1" fill="currentColor"></circle><line x1="9" y1="10.5" x2="15" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="12.7" x2="15" y2="12.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="14.9" x2="15" y2="14.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="17.1" x2="13" y2="17.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line></svg>',
 };
-function svgNode(markup){ const t=document.createElement('template'); t.innerHTML=markup; return t.content.firstElementChild; }
+function svgNode(markup){ const t=document.createElement('template'); setHtml(t, raw(markup)); return t.content.firstElementChild; }
 
 /* Type of the row currently being dragged. dataTransfer is not readable during
    dragover, so we stash it here to decide whether a folder can accept the drop. */
@@ -179,13 +180,15 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   inf.append(nm,mt);
   /* Pills */
   const pb=document.createElement('div');pb.className='rpills';
-  if(item.dock)pb.innerHTML+='<span class="pill p-dk">Dock</span>';
-  if(item.type==='widget')pb.innerHTML+='<span class="pill p-wg">Widget</span>';
-  if(item.type==='folder')pb.innerHTML+='<span class="pill p-fl">Folder</span>';
-  if(item.monitoring?.healthcheck?.enabled||item.container)pb.innerHTML+='<span class="pill p-hl">Health</span>';
-  if(item.monitoring?.activity?.enabled||item.badge?.enabled)pb.innerHTML+='<span class="pill p-bg">Badge</span>';
-  if(item.system==='settings')pb.innerHTML+='<span class="pill p-sy">System</span>';
-  if(item.hidden)pb.innerHTML+='<span class="pill p-hd">Hidden</span>';
+  const pills=[];
+  if(item.dock)pills.push(html`<span class="pill p-dk">Dock</span>`);
+  if(item.type==='widget')pills.push(html`<span class="pill p-wg">Widget</span>`);
+  if(item.type==='folder')pills.push(html`<span class="pill p-fl">Folder</span>`);
+  if(item.monitoring?.healthcheck?.enabled||item.container)pills.push(html`<span class="pill p-hl">Health</span>`);
+  if(item.monitoring?.activity?.enabled||item.badge?.enabled)pills.push(html`<span class="pill p-bg">Badge</span>`);
+  if(item.system==='settings')pills.push(html`<span class="pill p-sy">System</span>`);
+  if(item.hidden)pills.push(html`<span class="pill p-hd">Hidden</span>`);
+  setHtml(pb, html`${pills}`);
   /* Actions */
   const ac=document.createElement('div');ac.className='ract';
   const mkMove=(dir,can)=>{const b=document.createElement('button');b.className='btn bg sm ic';
@@ -312,7 +315,7 @@ function render(){
   }
   if(grp) grp.style.display=state.items.length?'':'none';
   if(!state.items.length){
-    l.innerHTML='<div class="empty"><p class="empty-msg">'+t('list.empty')+'</p></div>';
+    setHtml(l, html`<div class="empty"><p class="empty-msg">${raw(t('list.empty'))}</p></div>`);
     return;
   }
   l.innerHTML='';
@@ -323,7 +326,7 @@ function render(){
       if(q){ const hay=((it.label||'')+' '+(it.href||'')+' '+(it.widgetType||'')).toLowerCase(); if(!hay.includes(q))return false; }
       return true;
     });
-    if(!matches.length){ l.innerHTML='<div class="empty"><p class="empty-msg">'+t('list.noMatches')+'</p></div>'; return; }
+    if(!matches.length){ setHtml(l, html`<div class="empty"><p class="empty-msg">${raw(t('list.noMatches'))}</p></div>`); return; }
     matches.forEach(item=>l.appendChild(mkRow(item,state.items.indexOf(item))));
     return;
   }
@@ -338,7 +341,7 @@ function render(){
         l.appendChild(mkRow(childItem,state.items.indexOf(childItem),{indent:true,childIdx:ci,folderId:item.id}));
       });
       const addRow=document.createElement('button');addRow.type='button';addRow.className='fp-add';
-      addRow.innerHTML='<span>+</span> '+t('folder.addAppToFolder');
+      setHtml(addRow, html`<span>+</span> ${raw(t('folder.addAppToFolder'))}`);
       addRow.onclick=()=>openFolderPicker(null,item.id);
       l.appendChild(addRow);
     }
@@ -385,7 +388,7 @@ function buildAddNewCard(){
   grp.className='grp';
   const row=document.createElement('div');
   row.className='row tile-row';
-  row.innerHTML='<span class="rl">Add New</span>';
+  setHtml(row, html`<span class="rl">Add New</span>`);
   const grpTiles=document.createElement('div');
   grpTiles.className='tile-grp';
   ['app','widget','folder'].forEach(t=>{
@@ -395,7 +398,7 @@ function buildAddNewCard(){
     b.dataset.ctype=t;
     b.setAttribute('aria-pressed',String(t===state.ctype));
     b.setAttribute('aria-label','Add '+TYPE_LABELS[t]);
-    b.innerHTML=`<span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${TYPE_ICONS[t]}</svg></span><span class="tile-cap">${TYPE_LABELS[t]}</span>`;
+    setHtml(b, html`<span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(TYPE_ICONS[t])}</svg></span><span class="tile-cap">${TYPE_LABELS[t]}</span>`);
     b.onclick=()=>{ if(state.ctype===t)return; state.ctype=t; _renderEditBody(); };
     grpTiles.appendChild(b);
   });
@@ -810,7 +813,7 @@ async function initVersion(){
         if(dot)dot.style.display='flex';
         if(aEl&&d.latest){
           const lv=String(d.latest).replace(/^v/i,'');
-          aEl.innerHTML='Version v'+esc(v)+' &middot; <a href="https://github.com/SandObserver/stackyard/releases/latest" target="_blank" rel="noopener" class="upd-link">Update to v'+esc(lv)+'</a>';
+          setHtml(aEl, html`Version v${v} &middot; <a href="https://github.com/SandObserver/stackyard/releases/latest" target="_blank" rel="noopener" class="upd-link">Update to v${lv}</a>`);
         }
       }
     }
@@ -901,7 +904,7 @@ function initLanguage(){
   const hidden=document.getElementById('lang-sel');
   if(!btn||!list||!hidden) return;
   const names=Object.fromEntries(LANGUAGES.map(l=>[l.code,l.name]));
-  list.innerHTML=LANGUAGES.map(l=>`<li role="option" data-val="${l.code}" aria-selected="false">${l.name}</li>`).join('');
+  setHtml(list, html`${LANGUAGES.map(l=>html`<li role="option" data-val="${l.code}" aria-selected="false">${l.name}</li>`)}`);
   function setVal(val){
     hidden.value=val;
     const tn=btn.childNodes[0]; if(tn&&tn.nodeType===3) tn.textContent=names[val]||val;
@@ -964,11 +967,7 @@ checkAuth(load).then(ok => {
     toast('Could not load config. Is the API container running? ('+e.message+')','err');
     const al=document.getElementById('al');
     if(al){
-      al.innerHTML='<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">'+
-        'Failed to load dashboard config.<br><br>'+
-        '<button onclick="location.reload()" style="padding:8px 20px;border-radius:16px;'+
-        'background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);'+
-        'color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">Retry</button></div>';
+      setHtml(al, html`<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">Failed to load dashboard config.<br><br><button onclick="location.reload()" style="padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">Retry</button></div>`);
     }
   });
 });
