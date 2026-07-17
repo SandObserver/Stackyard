@@ -3,23 +3,19 @@
    renderWidgetConfigForm(container, fields, config) -> { getValues, validate }
    Each builder returns { el, get, control, liveValue }; the public API is unchanged. */
 
-import { esc } from '/js/utils.js?v=92153ac7';
+import { html, raw, setHtml } from '/js/html.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
-function _tag(field){ return field.optional ? ' <span class="opt-span">(optional)</span>' : ' <span class="req">*</span>'; }
+function _tag(field){ return field.optional ? html` <span class="opt-span">(optional)</span>` : html` <span class="req">*</span>`; }
 
 /* ── Inline-edit row (text / number). Value lives in the hidden input. ── */
 function _ieRow(field, value, inputType) {
   const has = value != null && value !== '';
   const ph = field.placeholder || '';
   const row = document.createElement('div'); row.className = 'row ie-row';
-  row.innerHTML =
-    `<span class="rl">${esc(field.label)}${_tag(field)}</span>` +
-    `<span class="rv${has ? '' : ' is-ph'}">${esc(has ? value : ph)}</span>` +
-    `<input class="row-inp" type="${inputType}" autocomplete="off" value="${esc(has ? value : (field.default != null ? field.default : ''))}" style="display:none">` +
-    `<button class="pe" type="button" aria-label="Edit ${esc(field.label)}">${PE}</button>`;
+  setHtml(row, html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp" type="${inputType}" autocomplete="off" value="${has ? value : (field.default != null ? field.default : '')}" style="display:none"><button class="pe" type="button" aria-label="Edit ${field.label}">${raw(PE)}</button>`);
   const rv = row.querySelector('.rv'), inp = row.querySelector('.row-inp'), pe = row.querySelector('.pe');
   function open() { row.classList.add('editing'); inp.style.display = 'block'; inp.focus(); inp.select?.(); }
   function commit() {
@@ -45,11 +41,7 @@ function _ieRow(field, value, inputType) {
 function _secret(field, isSet) {
   const row = document.createElement('div'); row.className = 'row ie-row';
   const display = isSet ? 'Configured' : 'Not set';
-  row.innerHTML =
-    `<span class="rl">${esc(field.label)}${_tag(field)}</span>` +
-    `<span class="rv is-ph">${display}</span>` +
-    `<input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? 'Enter new value to replace' : esc(field.placeholder || '')}" style="display:none">` +
-    `<button class="pe" type="button" aria-label="Edit ${esc(field.label)}">${PE}</button>`;
+  setHtml(row, html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? 'Enter new value to replace' : (field.placeholder || '')}" style="display:none"><button class="pe" type="button" aria-label="Edit ${field.label}">${raw(PE)}</button>`);
   const rv = row.querySelector('.rv'), inp = row.querySelector('.row-inp'), pe = row.querySelector('.pe');
   const open = () => { row.classList.add('editing'); inp.style.display = 'block'; inp.focus(); };
   const commit = () => { row.classList.remove('editing'); inp.style.display = 'none'; rv.textContent = inp.value ? 'New value set' : display; inp.dispatchEvent(new Event('change', { bubbles: true })); };
@@ -66,9 +58,7 @@ function _secret(field, isSet) {
 function _toggle(field, value) {
   const on = value != null ? !!value : !!field.default;
   const row = document.createElement('div'); row.className = 'row';
-  row.innerHTML =
-    `<span class="rl">${esc(field.label)}</span>` +
-    `<label class="tog"><input type="checkbox"${on ? ' checked' : ''} aria-label="${esc(field.label)}"><div class="tr"></div></label>`;
+  setHtml(row, html`<span class="rl">${field.label}</span><label class="tog"><input type="checkbox"${on ? ' checked' : ''} aria-label="${field.label}"><div class="tr"></div></label>`);
   const input = row.querySelector('input');
   const get = () => [field.key, input.checked];
   if (field.hint) { const w = document.createElement('div'); w.appendChild(row); const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; w.appendChild(h); return { el: w, get, control: input, liveValue: () => input.checked }; }
@@ -81,17 +71,17 @@ function _select(field, value, ctx) {
   const row = document.createElement('div'); row.className = 'row';
   let opts = Array.isArray(field.options) ? field.options.slice() : [];
   let chosen = value != null ? String(value) : (field.default != null ? String(field.default) : '');
-  row.innerHTML = `<span class="rl">${esc(field.label)}${_tag(field)}</span>`;
+  setHtml(row, html`<span class="rl">${field.label}${_tag(field)}</span>`);
   const selWrap = document.createElement('div'); selWrap.className = 'sel-wrap';
   const sel = document.createElement('select'); sel.className = 'row-sel';
   selWrap.appendChild(sel); selWrap.insertAdjacentHTML('beforeend', CHEV);
   row.appendChild(selWrap); wrap.appendChild(row);
 
   function paint() {
-    let html = opts.map(o => `<option value="${esc(o.value)}"${String(o.value) === chosen ? ' selected' : ''}>${esc(o.label != null ? o.label : o.value)}</option>`).join('');
-    if (chosen && !opts.some(o => String(o.value) === chosen)) html = `<option value="${esc(chosen)}" selected>${esc(chosen)}</option>` + html;
-    if (field.optional) html = `<option value="">None</option>` + html;
-    sel.innerHTML = html || `<option value="">None</option>`;
+    const items = opts.map(o => html`<option value="${o.value}"${String(o.value) === chosen ? ' selected' : ''}>${o.label != null ? o.label : o.value}</option>`);
+    if (chosen && !opts.some(o => String(o.value) === chosen)) items.unshift(html`<option value="${chosen}" selected>${chosen}</option>`);
+    if (field.optional) items.unshift(html`<option value="">None</option>`);
+    setHtml(sel, items.length ? html`${items}` : html`<option value="">None</option>`);
   }
   paint();
 
@@ -99,7 +89,7 @@ function _select(field, value, ctx) {
     const fr = document.createElement('div'); fr.className = 'row';
     const status = document.createElement('span'); status.className = 'row-status'; status.textContent = field.hint || '';
     const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'row-btn'; btn.textContent = 'Fetch';
-    fr.innerHTML = '<span class="rl"></span>'; fr.appendChild(status); fr.appendChild(btn); wrap.appendChild(fr);
+    setHtml(fr, html`<span class="rl"></span>`); fr.appendChild(status); fr.appendChild(btn); wrap.appendChild(fr);
     btn.addEventListener('click', async () => {
       const cfg = ctx && ctx.getValues ? ctx.getValues() : {};
       const wid = (ctx && ctx.widgetId) || '__preview__';
@@ -133,10 +123,7 @@ function _pills(field, value) {
   const opts = Array.isArray(field.options) ? field.options : [];
   let sel = value != null ? value : (field.default != null ? field.default : (opts[0] ? opts[0].value : ''));
   const name = 'wcf-' + field.key + '-' + Math.random().toString(36).slice(2, 7);
-  row.innerHTML = `<span class="rl">${esc(field.label)}</span>` +
-    `<div class="segr" role="group" aria-label="${esc(field.label)}">` +
-    opts.map(o => `<label class="segr-opt"><input type="radio" name="${name}" value="${esc(o.value)}"${String(o.value) === String(sel) ? ' checked' : ''}><span class="segr-dot"></span><span>${esc(o.label)}</span></label>`).join('') +
-    `</div>`;
+  setHtml(row, html`<span class="rl">${field.label}</span><div class="segr" role="group" aria-label="${field.label}">${opts.map(o => html`<label class="segr-opt"><input type="radio" name="${name}" value="${o.value}"${String(o.value) === String(sel) ? ' checked' : ''}><span class="segr-dot"></span><span>${o.label}</span></label>`)}</div>`);
   wrap.appendChild(row);
   const group = row.querySelector('.segr');
   group.querySelectorAll('input').forEach(r => r.addEventListener('change', () => { if (r.checked) { sel = r.value; group.dispatchEvent(new Event('change')); } }));
@@ -152,11 +139,7 @@ function _multiselect(field, value) {
   const opts = Array.isArray(field.options) ? field.options : [];
   const cur = new Set(Array.isArray(value) ? value.map(String) : (Array.isArray(field.default) ? field.default.map(String) : []));
   const summary = () => cur.size === 0 ? 'None selected' : cur.size + ' selected';
-  row.innerHTML = `<span class="rl">${esc(field.label)}</span>` +
-    `<div class="row-dd"><button class="row-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ms-sum">${summary()}</span>${CHEV}</button>` +
-    `<ul class="row-dd-list checklist" role="listbox" aria-multiselectable="true" hidden>` +
-    opts.map(o => `<li role="option" data-val="${esc(o.value)}" aria-selected="${cur.has(String(o.value))}">${esc(o.label)}</li>`).join('') +
-    `</ul></div>`;
+  setHtml(row, html`<span class="rl">${field.label}</span><div class="row-dd"><button class="row-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ms-sum">${summary()}</span>${raw(CHEV)}</button><ul class="row-dd-list checklist" role="listbox" aria-multiselectable="true" hidden>${opts.map(o => html`<li role="option" data-val="${o.value}" aria-selected="${String(cur.has(String(o.value)))}">${o.label}</li>`)}</ul></div>`);
   wrap.appendChild(row);
   const btn = row.querySelector('.row-dd-btn'), list = row.querySelector('.row-dd-list'), sumEl = row.querySelector('.ms-sum');
   btn.addEventListener('click', () => { const open = list.hidden; list.hidden = !open; btn.setAttribute('aria-expanded', String(open)); });
@@ -187,7 +170,7 @@ function _group(field, rows, size) {
   const addWrap = document.createElement('div'); addWrap.className = 'grp';
   const addBtn = document.createElement('button');
   addBtn.type = 'button'; addBtn.className = 'wcf-add-row';
-  addBtn.innerHTML = `<span class="rl" style="color:var(--ac2)">+ Add ${esc(field.label)}</span>`;
+  setHtml(addBtn, html`<span class="rl" style="color:var(--ac2)">+ Add ${field.label}</span>`);
   addWrap.appendChild(addBtn); wrap.appendChild(addWrap);
   if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip'; h.textContent = field.hint; wrap.appendChild(h); }
 
@@ -197,7 +180,7 @@ function _group(field, rows, size) {
     rowsHost.innerHTML = ''; rowGetters = [];
     data.forEach((rowData, idx) => {
       const hdr = document.createElement('p'); hdr.className = 'grp-hdr grp-hdr-row';
-      hdr.innerHTML = `<span>${esc(field.label)} ${idx + 1}</span>`;
+      setHtml(hdr, html`<span>${field.label} ${idx + 1}</span>`);
       const rm = document.createElement('button');
       rm.type = 'button'; rm.className = 'grp-hdr-rm'; rm.textContent = 'Remove';
       rm.disabled = data.length <= min;
