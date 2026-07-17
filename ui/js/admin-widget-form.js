@@ -6,7 +6,7 @@ import { state } from '/js/admin-state.js?v=1';
 import { toast, PE_SVG, CHEV_SVG, _secretRow, initInlineEdit } from '/js/admin-shared.js?v=2';
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
-import { esc } from '/js/utils.js?v=40';
+import { html, raw, setHtml } from '/js/html.js?v=1';
 import { normBackupSlots } from '/js/admin-logic.js?v=1';
 
 /* Widget size glyphs (content-cards of increasing aspect/line-count), traced from the PSD. */
@@ -22,6 +22,18 @@ const CUSTOM_SIZES = ['small','medium','large','xlarge'];
 function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (state._widgetReg[type]?.sizes || ['medium']); }
 const SIZE_LABELS = { small:'Small', medium:'Medium', large:'Large', xlarge:'Extra Large' };
 const STAT_TYPES  = ['cpu','ram','temp','disk','iowait','procs'];
+
+/* Row builders shared by the per-type sections. Each returns the appended
+   element so callers can wire it up. */
+function appendRow(host, tpl, cls='row'){
+  const el=document.createElement('div'); el.className=cls;
+  setHtml(el, tpl); host.appendChild(el); return el;
+}
+function appendIeRow(host,{rowId,label,req,opt,value,ph,inpId,type}){
+  const el=document.createElement('div'); el.className='row ie-row'; el.id=rowId;
+  setHtml(el, html`<span class="rl">${label}${req?html` <span class="req">*</span>`:''}${opt?html` <span class="opt-span">(optional)</span>`:''}</span><span class="rv${value?'':' is-ph'}">${value?value:ph||''}</span><input id="${inpId}" type="${type||'text'}" value="${value==null?'':value}" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button>`);
+  host.appendChild(el); return el;
+}
 
 /* State for current widget config while modal is open */
 /* Auto-generated config form (folder-style widgets driven by the registry). */
@@ -103,11 +115,11 @@ function _renderWidgetForm(body){
 
   /* ── Shell: Name + Widget Type, then Size tiles (settings-row, PSD) ── */
   const typeList=[...Object.values(state._widgetReg).map(w=>[w.name,w.label]), ['custom','Custom']].sort((a,b)=>a[1].localeCompare(b[1]));
-  const typeOpts=typeList.map(([t,label])=>`<option value="${t}"${t===state._wtype?' selected':''}>${esc(label)}</option>`).join('');
+  const typeOpts=typeList.map(([t,label])=>html`<option value="${t}"${t===state._wtype?' selected':''}>${label}</option>`);
   const shell=document.createElement('div'); shell.className='grp';
-  shell.innerHTML=`
-    <div class="row ie-row" id="ie-wname"><span class="rl">Name</span><span class="rv${state._wlabel?'':' is-ph'}">${state._wlabel?esc(state._wlabel):'My Widget'}</span><input id="f-wlabel" type="text" value="${esc(state._wlabel)}" style="display:none"><button class="pe" type="button" aria-label="Edit name">${PE_SVG}</button></div>
-    <div class="row"><span class="rl">Widget Type</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="Widget type">${typeOpts}</select>${CHEV_SVG}</div></div>`;
+  setHtml(shell, html`
+    <div class="row ie-row" id="ie-wname"><span class="rl">Name</span><span class="rv${state._wlabel?'':' is-ph'}">${state._wlabel?state._wlabel:'My Widget'}</span><input id="f-wlabel" type="text" value="${state._wlabel}" style="display:none"><button class="pe" type="button" aria-label="Edit name">${raw(PE_SVG)}</button></div>
+    <div class="row"><span class="rl">Widget Type</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="Widget type">${typeOpts}</select>${raw(CHEV_SVG)}</div></div>`);
   body.appendChild(shell);
   initInlineEdit('ie-wname','f-wlabel',{placeholder:'My Widget',onCommit(v){state._wlabel=v;}});
   const typeSel=shell.querySelector('#f-wtype');
@@ -116,10 +128,10 @@ function _renderWidgetForm(body){
   /* Connections view (Map / VPN) as a radio group */
   if(state._wtype==='connections'){
     const vcard=document.createElement('div'); vcard.className='grp';
-    vcard.innerHTML=`<div class="row"><span class="rl">View</span><div class="segr">
+    setHtml(vcard, html`<div class="row"><span class="rl">View</span><div class="segr">
       <label class="segr-opt"><input type="radio" name="wconn-view" value="map" ${state._wconnView==='map'?'checked':''}><span class="segr-dot"></span><span>Map</span></label>
       <label class="segr-opt"><input type="radio" name="wconn-view" value="vpn" ${state._wconnView==='vpn'?'checked':''}><span class="segr-dot"></span><span>VPN</span></label>
-    </div></div>`;
+    </div></div>`);
     body.appendChild(vcard);
     vcard.querySelectorAll('input[name="wconn-view"]').forEach(r=>r.addEventListener('change',()=>{ state._wconnView=r.value; if(r.value==='map')state._wsize='medium'; _renderWidgetForm(body); }));
   }
@@ -131,7 +143,7 @@ function _renderWidgetForm(body){
   if(!_sizeOpts.includes(state._wsize)) state._wsize=_sizeOpts.includes('medium')?'medium':_sizeOpts[0];
   const sizeHdr=document.createElement('p'); sizeHdr.className='grp-hdr'; sizeHdr.textContent='Size'; body.appendChild(sizeHdr);
   const scard=document.createElement('div'); scard.className='grp';
-  scard.innerHTML=`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s=>`<button type="button" class="tile-opt${s===state._wsize?' on':''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${SIZE_ICONS[s]||SIZE_ICONS.medium}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`).join('')}</div></div>`;
+  setHtml(scard, html`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s=>html`<button type="button" class="tile-opt${s===state._wsize?' on':''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s]||SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`)}</div></div>`);
   body.appendChild(scard);
   scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; if(state._wtype==='backup'){state._wbackupCfg.slots=normBackupSlots(state._wbackupCfg.slots,state._wsize);} _renderWidgetForm(body); }));
 
@@ -151,9 +163,9 @@ function _renderWidgetForm(body){
 
 function _renderWeatherConfig(body){
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-  card.innerHTML=`
-    <div class="row"><span class="rl">City</span><input id="wx-city" class="icon-srch" type="text" placeholder="e.g. Ottawa" value="${esc(state._wweatherCfg.city||'')}"></div>
-    <div class="row" id="wx-match-row" hidden><span class="rl">Match</span><div class="sel-wrap"><select class="row-sel" id="wx-result" aria-label="Match"></select>${CHEV_SVG}</div></div>
+  setHtml(card, html`
+    <div class="row"><span class="rl">City</span><input id="wx-city" class="icon-srch" type="text" placeholder="e.g. Ottawa" value="${state._wweatherCfg.city||''}"></div>
+    <div class="row" id="wx-match-row" hidden><span class="rl">Match</span><div class="sel-wrap"><select class="row-sel" id="wx-result" aria-label="Match"></select>${raw(CHEV_SVG)}</div></div>
     <div class="row"><span class="rl"></span><span class="row-status" id="wx-msg"></span><button type="button" class="row-btn" id="wx-search">Search</button></div>
     <div class="row"><span class="rl">Units</span><div class="segr">
       <label class="segr-opt"><input type="radio" name="wx-units" value="c" ${(state._wweatherCfg.units||'c')==='c'?'checked':''}><span class="segr-dot"></span><span>&deg;C</span></label>
@@ -163,7 +175,7 @@ function _renderWeatherConfig(body){
       <label class="segr-opt"><input type="radio" name="wx-feels" value="actual" ${!state._wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Actual</span></label>
       <label class="segr-opt"><input type="radio" name="wx-feels" value="feels" ${state._wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Feels like</span></label>
     </div></div>
-    <div class="row ie-row" id="wx-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${state._wweatherCfg.href?'':' is-ph'}">${state._wweatherCfg.href?esc(state._wweatherCfg.href):'https://...'}</span><input id="wx-href" type="text" value="${esc(state._wweatherCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${PE_SVG}</button></div>`;
+    <div class="row ie-row" id="wx-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${state._wweatherCfg.href?'':' is-ph'}">${state._wweatherCfg.href?state._wweatherCfg.href:'https://...'}</span><input id="wx-href" type="text" value="${state._wweatherCfg.href||''}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${raw(PE_SVG)}</button></div>`);
   const msg=card.querySelector('#wx-msg'), matchRow=card.querySelector('#wx-match-row'), resultSel=card.querySelector('#wx-result');
   if(state._wweatherCfg.lat!==''&&state._wweatherCfg.lat!=null){ msg.textContent='Current: '+(state._wweatherCfg.city||(state._wweatherCfg.lat+', '+state._wweatherCfg.lon)); msg.className='row-status ok'; }
   card.querySelectorAll('input[name="wx-units"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)state._wweatherCfg.units=r.value; }));
@@ -194,10 +206,10 @@ function _renderWeatherConfig(body){
 function _renderStatsConfig(body){
   /* ── Type: System Summary | Disk Health (radio) ── */
   const subRow=document.createElement('div'); subRow.className='grp';
-  subRow.innerHTML=`<div class="row"><span class="rl">Type</span><div class="segr">
+  setHtml(subRow, html`<div class="row"><span class="rl">Type</span><div class="segr">
     <label class="segr-opt"><input type="radio" name="stats-sub" value="disk-health" ${state._wstatsSubType==='disk-health'?'checked':''}><span class="segr-dot"></span><span>Disk Health</span></label>
     <label class="segr-opt"><input type="radio" name="stats-sub" value="system-summary" ${state._wstatsSubType==='system-summary'?'checked':''}><span class="segr-dot"></span><span>System Summary</span></label>
-  </div></div>`;
+  </div></div>`);
   body.appendChild(subRow);
   subRow.querySelectorAll('input[name="stats-sub"]').forEach(r=>r.addEventListener('change',()=>{
     if(!r.checked)return;
@@ -218,9 +230,7 @@ function _renderStatsBody(body){
 
     const prov0=state._wdiskCfg.diskProvider||'scrutiny';
     const srcCard=document.createElement('div'); srcCard.className='grp'; body.appendChild(srcCard);
-    const provRow=document.createElement('div'); provRow.className='row';
-    provRow.innerHTML=`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="dh-prov" aria-label="Source"><option value="scrutiny"${prov0==='scrutiny'?' selected':''}>Scrutiny</option><option value="truenas"${prov0==='truenas'?' selected':''}>TrueNAS</option></select>${CHEV_SVG}</div>`;
-    srcCard.appendChild(provRow);
+    const provRow=appendRow(srcCard, html`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="dh-prov" aria-label="Source"><option value="scrutiny"${prov0==='scrutiny'?' selected':''}>Scrutiny</option><option value="truenas"${prov0==='truenas'?' selected':''}>TrueNAS</option></select>${raw(CHEV_SVG)}</div>`);
     const provSel=provRow.querySelector('#dh-prov');
     const fieldArea=document.createElement('div'); srcCard.appendChild(fieldArea);
 
@@ -234,14 +244,12 @@ function _renderStatsBody(body){
       bayCard.innerHTML='';
       for(let i=0;i<bayCount;i++){
         const cur=state._wdiskCfg.bays[i]||'';
-        let opts='<option value="">Empty</option>';
-        _items.forEach(it=>{ const cap=fmtCap(it.capacity); opts+=`<option value="${esc(it.value)}"${it.value===cur?' selected':''}>${esc(it.label)}${cap?' - '+cap:''}</option>`; });
-        if(cur && !_items.some(it=>it.value===cur)) opts+=`<option value="${esc(cur)}" selected>${esc(cur)}</option>`;
-        const row=document.createElement('div'); row.className='row';
-        row.innerHTML=`<span class="rl">Bay ${i+1}</span><div class="sel-wrap"><select class="row-sel" id="dh-bay-${i}" aria-label="Bay ${i+1}">${opts}</select>${CHEV_SVG}</div>`;
+        const opts=[html`<option value="">Empty</option>`];
+        _items.forEach(it=>{ const cap=fmtCap(it.capacity); opts.push(html`<option value="${it.value}"${it.value===cur?' selected':''}>${it.label}${cap?' - '+cap:''}</option>`); });
+        if(cur && !_items.some(it=>it.value===cur)) opts.push(html`<option value="${cur}" selected>${cur}</option>`);
+        const row=appendRow(bayCard, html`<span class="rl">Bay ${i+1}</span><div class="sel-wrap"><select class="row-sel" id="dh-bay-${i}" aria-label="Bay ${i+1}">${opts}</select>${raw(CHEV_SVG)}</div>`);
         const sel=row.querySelector('select'); sel.value=cur;
         sel.onchange=()=>{ state._wdiskCfg.bays[i]=sel.value||null; };
-        bayCard.appendChild(row);
       }
     }
 
@@ -286,14 +294,13 @@ function _renderStatsBody(body){
       const urlPh=isTn?'truenas:443':'scrutiny:8080';
       const hrefVal=isTn?(state._wdiskCfg.truenasHref||''):(state._wdiskCfg.scrutinyHref||'');
       const hrefPh=isTn?'https://truenas/ui/storage':'https://your-server:8080';
-      fieldArea.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="dh-url-row"><span class="rl">${isTn?'TrueNAS':'Scrutiny'} URL</span><span class="rv${urlVal?'':' is-ph'}">${urlVal?esc(urlVal):esc(urlPh)}</span><input id="dh-url" type="text" value="${esc(urlVal)}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
+      appendIeRow(fieldArea,{rowId:'dh-url-row',label:(isTn?'TrueNAS':'Scrutiny')+' URL',value:urlVal,ph:urlPh,inpId:'dh-url'});
       if(isTn) _secretRow(fieldArea,{rowId:'dh-key-row',inpId:'dh-key',label:'API Key',isSet:state._wdiskCfg.truenasKeySet});
-      const fr=document.createElement('div'); fr.className='row'; fr.innerHTML='<span class="rl"></span>';
+      const fr=appendRow(fieldArea, html`<span class="rl"></span>`);
       dhStatus=document.createElement('span'); dhStatus.className='row-status'; dhStatus.id='dh-msg'; fr.appendChild(dhStatus);
       const fbtn=document.createElement('button'); fbtn.type='button'; fbtn.className='row-btn'; fbtn.id='dh-load'; fbtn.textContent=isTn?'Fetch Pools':'Fetch Drives'; fr.appendChild(fbtn);
-      fieldArea.appendChild(fr);
       fbtn.onclick=()=> isTn?loadTrueNas(fbtn):loadScrutiny(fbtn);
-      fieldArea.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="dh-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${hrefVal?'':' is-ph'}">${hrefVal?esc(hrefVal):esc(hrefPh)}</span><input id="dh-href" type="text" value="${esc(hrefVal)}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${PE_SVG}</button></div>`);
+      appendIeRow(fieldArea,{rowId:'dh-href-row',label:'Link URL',opt:true,value:hrefVal,ph:hrefPh,inpId:'dh-href'});
       initInlineEdit('dh-url-row','dh-url',{placeholder:urlPh,onCommit(v){ if(state._wdiskCfg.diskProvider==='truenas')state._wdiskCfg.truenasUrl=v; else state._wdiskCfg.scrutinyUrl=v; }});
       initInlineEdit('dh-href-row','dh-href',{placeholder:hrefPh,onCommit(v){ if(state._wdiskCfg.diskProvider==='truenas')state._wdiskCfg.truenasHref=v; else state._wdiskCfg.scrutinyHref=v; }});
       renderBayRows();
@@ -311,22 +318,20 @@ function _renderStatsBody(body){
 
   function fillSlot(card, idx){
     const slot=state._wslots[idx]||{type:'cpu'};
-    const resOpts=STAT_TYPES.map(t=>`<option value="${t}"${slot.type===t?' selected':''}>${RES_LABELS[t]}</option>`).join('');
-    const res=document.createElement('div'); res.className='row';
-    res.innerHTML=`<span class="rl">Resource</span><div class="sel-wrap"><select class="row-sel" aria-label="Resource">${resOpts}</select>${CHEV_SVG}</div>`;
-    card.appendChild(res);
+    const resOpts=STAT_TYPES.map(t=>html`<option value="${t}"${slot.type===t?' selected':''}>${RES_LABELS[t]}</option>`);
+    const res=appendRow(card, html`<span class="rl">Resource</span><div class="sel-wrap"><select class="row-sel" aria-label="Resource">${resOpts}</select>${raw(CHEV_SVG)}</div>`);
     res.querySelector('select').onchange=function(){ const t=this.value; state._wslots[idx]={type:t}; if(t==='disk'){state._wslots[idx].primary='/';state._wslots[idx].secondary='';} if(t==='temp'){state._wslots[idx].thermalZone=0;} card.innerHTML=''; fillSlot(card, idx); };
 
     if(slot.type==='disk'){
-      card.insertAdjacentHTML('beforeend',
-        `<div class="row ie-row" id="slot${idx}-pri"><span class="rl">First Mount Path</span><span class="rv${slot.primary?'':' is-ph'}">${esc(slot.primary||'/')}</span><input id="slot${idx}-pri-i" type="text" value="${esc(slot.primary||'/')}" style="display:none"><button class="pe" type="button" aria-label="Edit first mount path">${PE_SVG}</button></div>`
-       +`<div class="row ie-row" id="slot${idx}-sec"><span class="rl">Second Mount Path <span class="opt-span">(optional)</span></span><span class="rv${slot.secondary?'':' is-ph'}">${slot.secondary?esc(slot.secondary):'/mnt/data'}</span><input id="slot${idx}-sec-i" type="text" value="${esc(slot.secondary||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit second mount path">${PE_SVG}</button></div>`);
+      appendIeRow(card,{rowId:`slot${idx}-pri`,label:'First Mount Path',value:slot.primary||'/',ph:'/',inpId:`slot${idx}-pri-i`});
+      appendIeRow(card,{rowId:`slot${idx}-sec`,label:'Second Mount Path',opt:true,value:slot.secondary||'',ph:'/mnt/data',inpId:`slot${idx}-sec-i`});
       initInlineEdit(`slot${idx}-pri`,`slot${idx}-pri-i`,{placeholder:'/',onCommit(v){state._wslots[idx].primary=v;}});
       initInlineEdit(`slot${idx}-sec`,`slot${idx}-sec-i`,{placeholder:'/mnt/data',onCommit(v){state._wslots[idx].secondary=v;}});
     } else if(slot.type==='temp'){
       const z=Number.isInteger(slot.thermalZone)?slot.thermalZone:0;
-      card.insertAdjacentHTML('beforeend',
-        `<div class="row ie-row" id="slot${idx}-tz"><span class="rl">Thermal Zone</span><span class="rv">${z}</span><input id="slot${idx}-tz-i" type="number" min="0" max="20" value="${z}" style="display:none"><button class="pe" type="button" aria-label="Edit thermal zone">${PE_SVG}</button></div>`);
+      const tz=document.createElement('div'); tz.className='row ie-row'; tz.id=`slot${idx}-tz`;
+      setHtml(tz, html`<span class="rl">Thermal Zone</span><span class="rv">${z}</span><input id="slot${idx}-tz-i" type="number" min="0" max="20" value="${z}" style="display:none"><button class="pe" type="button" aria-label="Edit thermal zone">${raw(PE_SVG)}</button>`);
+      card.appendChild(tz);
       const tip=document.createElement('p'); tip.className='grp-tip in-card'; tip.textContent='Zone 0 is correct for most systems. Only change it if the temperature shown is wrong.'; card.appendChild(tip);
       initInlineEdit(`slot${idx}-tz`,`slot${idx}-tz-i`,{onCommit(v){state._wslots[idx].thermalZone=parseInt(v,10)||0;}});
     }
@@ -343,7 +348,7 @@ function _renderStatsBody(body){
   const prov=state._wnet.provider||'myspeed';
   const mode=state._wnet.mode||'speed';
   const netCard=document.createElement('div'); netCard.className='grp'; body.appendChild(netCard);
-  netCard.innerHTML=`
+  setHtml(netCard, html`
     <div class="row"><span class="rl">Network</span><label class="tog"><input type="checkbox" id="net-en" ${state._wnet.enabled?'checked':''}><div class="tr"></div></label></div>
     <div id="net-sub" ${state._wnet.enabled?'':'hidden'}>
       <div class="row"><span class="rl">Show</span><div class="segr">
@@ -356,10 +361,10 @@ function _renderStatsBody(body){
           <label class="segr-opt"><input type="radio" name="net-prov" value="myspeed" ${prov==='myspeed'?'checked':''}><span class="segr-dot"></span><span>MySpeed</span></label>
           <label class="segr-opt"><input type="radio" name="net-prov" value="speedtest-tracker" ${prov==='speedtest-tracker'?'checked':''}><span class="segr-dot"></span><span>Speedtest Tracker</span></label>
         </div></div>
-        <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${state._wnet.url?'':' is-ph'}">${state._wnet.url?esc(state._wnet.url):(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${esc(state._wnet.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${PE_SVG}</button></div>
+        <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${state._wnet.url?'':' is-ph'}">${state._wnet.url?state._wnet.url:(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${state._wnet.url||''}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${raw(PE_SVG)}</button></div>
       </div>
       <p class="grp-tip in-card" id="net-mode-tip" ${mode==='speed'?'hidden':''}>${mode==='throughput'?'Live interface throughput (RX/TX) from the container\u2019s network interface.':'System uptime.'}</p>
-    </div>`;
+    </div>`);
   const netEn=netCard.querySelector('#net-en'), netSub=netCard.querySelector('#net-sub');
   const netSpeedFields=netCard.querySelector('#net-speed-fields'), netModeTip=netCard.querySelector('#net-mode-tip');
   netEn.onchange=()=>{ state._wnet.enabled=netEn.checked; netSub.hidden=!netEn.checked; };
@@ -389,12 +394,12 @@ function _renderConnectionsConfig(body){
 function _renderVpnConfig(body){
   const svc=state._wvpnCfg.service||'gluetun';
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-  card.innerHTML=`
+  setHtml(card, html`
     <div class="row"><span class="rl">Service</span><div class="segr">
       <label class="segr-opt"><input type="radio" name="vpn-svc" value="gluetun" ${svc==='gluetun'?'checked':''}><span class="segr-dot"></span><span>Gluetun</span></label>
       <label class="segr-opt"><input type="radio" name="vpn-svc" value="netbird" ${svc==='netbird'?'checked':''}><span class="segr-dot"></span><span>NetBird</span></label>
     </div></div>
-    <div class="row ie-row" id="vpn-name-row"><span class="rl">Display Name <span class="opt-span">(optional)</span></span><span class="rv${state._wvpnCfg.name?'':' is-ph'}">${state._wvpnCfg.name?esc(state._wvpnCfg.name):(svc==='gluetun'?'VPN':'Mesh')}</span><input id="vpn-name" type="text" value="${esc(state._wvpnCfg.name||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${PE_SVG}</button></div>`;
+    <div class="row ie-row" id="vpn-name-row"><span class="rl">Display Name <span class="opt-span">(optional)</span></span><span class="rv${state._wvpnCfg.name?'':' is-ph'}">${state._wvpnCfg.name?state._wvpnCfg.name:(svc==='gluetun'?'VPN':'Mesh')}</span><input id="vpn-name" type="text" value="${state._wvpnCfg.name||''}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${raw(PE_SVG)}</button></div>`);
   card.querySelectorAll('input[name="vpn-svc"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked){state._wvpnCfg.service=r.value; _renderWidgetForm(body);} }));
   initInlineEdit('vpn-name-row','vpn-name',{placeholder:(svc==='gluetun'?'VPN':'Mesh'),onCommit(v){state._wvpnCfg.name=v;}});
 
@@ -405,15 +410,15 @@ function _renderVpnConfig(body){
 
   const cCard=document.createElement('div'); cCard.className='grp'; body.appendChild(cCard);
   if(svc==='gluetun'){
-    cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Control Server URL <span class="req">*</span></span><span class="rv${state._wvpnCfg.url?'':' is-ph'}">${state._wvpnCfg.url?esc(state._wvpnCfg.url):'http://gluetun:8000'}</span><input id="vpn-url" type="text" value="${esc(state._wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
+    appendIeRow(cCard,{rowId:'vpn-url-row',label:'Control Server URL',req:true,value:state._wvpnCfg.url||'',ph:'http://gluetun:8000',inpId:'vpn-url'});
     initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://gluetun:8000',onCommit(v){state._wvpnCfg.url=v;}});
     _secretRow(cCard,{rowId:'vpn-apikey-row',inpId:'vpn-apikey',label:'API Key',opt:true,isSet:state._wvpnCfg.apiKeySet,onInput(v){state._wvpnCfg.apiKey=v;}});
   } else {
-    cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-url-row"><span class="rl">Management API URL <span class="req">*</span></span><span class="rv${state._wvpnCfg.url?'':' is-ph'}">${state._wvpnCfg.url?esc(state._wvpnCfg.url):'http://netbird:33073'}</span><input id="vpn-url" type="text" value="${esc(state._wvpnCfg.url||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit URL">${PE_SVG}</button></div>`);
+    appendIeRow(cCard,{rowId:'vpn-url-row',label:'Management API URL',req:true,value:state._wvpnCfg.url||'',ph:'http://netbird:33073',inpId:'vpn-url'});
     initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://netbird:33073',onCommit(v){state._wvpnCfg.url=v;}});
     _secretRow(cCard,{rowId:'vpn-token-row',inpId:'vpn-token',label:'Access Token (PAT)',req:true,isSet:state._wvpnCfg.tokenSet,onInput(v){state._wvpnCfg.token=v;}});
   }
-  cCard.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="vpn-href-row"><span class="rl">Click URL <span class="opt-span">(optional)</span></span><span class="rv${state._wvpnCfg.href?'':' is-ph'}">${state._wvpnCfg.href?esc(state._wvpnCfg.href):'http://your-server:8000'}</span><input id="vpn-href" type="text" value="${esc(state._wvpnCfg.href||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit click URL">${PE_SVG}</button></div>`);
+  appendIeRow(cCard,{rowId:'vpn-href-row',label:'Click URL',opt:true,value:state._wvpnCfg.href||'',ph:'http://your-server:8000',inpId:'vpn-href'});
   initInlineEdit('vpn-href-row','vpn-href',{placeholder:'http://your-server:8000',onCommit(v){state._wvpnCfg.href=v;}});
 }
 
@@ -435,30 +440,30 @@ function _renderMapConfig(body){
   function buildCard(svc,i){
     const meta=_MAP_SVC[svc.type]||_MAP_SVC.gluetun;
     const hdr=document.createElement('p'); hdr.className='grp-hdr grp-hdr-row';
-    hdr.innerHTML=`<span>${esc(svc.name||meta.label||('Service '+(i+1)))}</span>`;
+    setHtml(hdr, html`<span>${svc.name||meta.label||('Service '+(i+1))}</span>`);
     const rm=document.createElement('button'); rm.type='button'; rm.className='grp-hdr-rm'; rm.textContent='Remove';
     rm.onclick=()=>{ state._wmapCfg.services.splice(i,1); renderList(); };
     hdr.appendChild(rm); listHost.appendChild(hdr);
 
     const card=document.createElement('div'); card.className='grp'; listHost.appendChild(card);
-    const typeOpts=Object.keys(_MAP_SVC).map(k=>`<option value="${k}"${k===svc.type?' selected':''}>${esc(_MAP_SVC[k].label)}</option>`).join('');
-    card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Service</span><div class="sel-wrap"><select class="row-sel" aria-label="Service type">${typeOpts}</select>${CHEV_SVG}</div></div>`);
-    card.querySelector('select').onchange=function(){ svc.type=this.value; svc.color=(_MAP_SVC[this.value]||{}).color||svc.color; renderList(); };
+    const typeOpts=Object.keys(_MAP_SVC).map(k=>html`<option value="${k}"${k===svc.type?' selected':''}>${_MAP_SVC[k].label}</option>`);
+    const typeRow=appendRow(card, html`<span class="rl">Service</span><div class="sel-wrap"><select class="row-sel" aria-label="Service type">${typeOpts}</select>${raw(CHEV_SVG)}</div>`);
+    typeRow.querySelector('select').onchange=function(){ svc.type=this.value; svc.color=(_MAP_SVC[this.value]||{}).color||svc.color; renderList(); };
 
     const nid=`map-name-${svc.id}`;
-    card.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${nid}"><span class="rl">Display Name</span><span class="rv${svc.name?'':' is-ph'}">${svc.name?esc(svc.name):esc(meta.label||'Name')}</span><input id="${nid}-i" type="text" value="${esc(svc.name||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${PE_SVG}</button></div>`);
+    appendIeRow(card,{rowId:nid,label:'Display Name',value:svc.name||'',ph:meta.label||'Name',inpId:`${nid}-i`});
 
     (meta.fields||[]).forEach(fld=>{
       if(fld.secret){
-        _secretRow(card,{rowId:`mapsec-${svc.id}-${fld.key}-row`,inpId:`mapsec-${svc.id}-${fld.key}`,label:esc(fld.label),isSet:!!svc[fld.key+'Set'],onInput(v){svc[fld.key]=v;}});
+        _secretRow(card,{rowId:`mapsec-${svc.id}-${fld.key}-row`,inpId:`mapsec-${svc.id}-${fld.key}`,label:fld.label,isSet:!!svc[fld.key+'Set'],onInput(v){svc[fld.key]=v;}});
       } else {
         const rid=`mapf-${svc.id}-${fld.key}`;
-        card.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${rid}"><span class="rl">${esc(fld.label)}</span><span class="rv${svc[fld.key]?'':' is-ph'}">${svc[fld.key]?esc(svc[fld.key]):esc(fld.ph||'')}</span><input id="${rid}-i" type="text" value="${esc(svc[fld.key]||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit ${esc(fld.label)}">${PE_SVG}</button></div>`);
+        appendIeRow(card,{rowId:rid,label:fld.label,value:svc[fld.key]||'',ph:fld.ph||'',inpId:`${rid}-i`});
       }
     });
 
     const aid=`map-admin-${svc.id}`;
-    card.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${aid}"><span class="rl">Admin UI URL <span class="opt-span">(optional)</span></span><span class="rv${svc.adminUrl?'':' is-ph'}">${svc.adminUrl?esc(svc.adminUrl):esc(meta.adminPh||'https://...')}</span><input id="${aid}-i" type="text" value="${esc(svc.adminUrl||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit admin URL">${PE_SVG}</button></div>`);
+    appendIeRow(card,{rowId:aid,label:'Admin UI URL',opt:true,value:svc.adminUrl||'',ph:meta.adminPh||'https://...',inpId:`${aid}-i`});
 
     if(!svc.color)svc.color=(_MAP_SVC[svc.type]||{}).color||'#30d158';
     renderColorControl(card,{value:svc.color,idPrefix:`mapcol-${svc.id}`,onChange(v){svc.color=v;}});
@@ -484,31 +489,31 @@ function _renderMapConfig(body){
 
   const addCard=document.createElement('div'); addCard.className='grp'; body.appendChild(addCard);
   const add=document.createElement('button'); add.type='button'; add.className='wcf-add-row';
-  add.innerHTML='<span class="rl" style="color:var(--ac2)">+ Add Service</span>';
+  setHtml(add, html`<span class="rl" style="color:var(--ac2)">+ Add Service</span>`);
   add.onclick=()=>{ state._wmapCfg.services.push({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'#30d158',token:'',enabled:true}); renderList(); };
   addCard.appendChild(add);
 
   const legCard=document.createElement('div'); legCard.className='grp'; body.appendChild(legCard);
-  legCard.innerHTML=`<div class="row"><span class="rl">Show Legend</span><label class="tog"><input type="checkbox" id="map-legend" ${state._wmapCfg.showLegend!==false?'checked':''}><div class="tr"></div></label></div>`;
+  setHtml(legCard, html`<div class="row"><span class="rl">Show Legend</span><label class="tog"><input type="checkbox" id="map-legend" ${state._wmapCfg.showLegend!==false?'checked':''}><div class="tr"></div></label></div>`);
   legCard.querySelector('#map-legend').onchange=e=>{ state._wmapCfg.showLegend=e.target.checked; };
   const legTip=document.createElement('p'); legTip.className='grp-tip'; legTip.textContent='Service key along the bottom of the map.'; body.appendChild(legTip);
 }
 
 function _renderCustomConfig(body){
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-  card.innerHTML=`<div class="row ie-row" id="cust-url-row"><span class="rl">Iframe URL <span class="req">*</span></span><span class="rv${state._customUrl?'':' is-ph'}">${state._customUrl?esc(state._customUrl):'https://app.example.com/widget.html'}</span><input id="f-url" type="url" value="${esc(state._customUrl||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit iframe URL">${PE_SVG}</button></div>`;
+  setHtml(card, html`<div class="row ie-row" id="cust-url-row"><span class="rl">Iframe URL <span class="req">*</span></span><span class="rv${state._customUrl?'':' is-ph'}">${state._customUrl?state._customUrl:'https://app.example.com/widget.html'}</span><input id="f-url" type="url" value="${state._customUrl||''}" style="display:none"><button class="pe" type="button" aria-label="Edit iframe URL">${raw(PE_SVG)}</button></div>`);
   const tip=document.createElement('p'); tip.className='grp-tip'; tip.textContent='The URL will be embedded as an iframe in the dashboard.'; body.appendChild(tip);
   initInlineEdit('cust-url-row','f-url',{placeholder:'https://app.example.com/widget.html',onCommit(v){state._customUrl=v;}});
 
   const o=state._iframeOpts||{};
   const advHdr=document.createElement('p'); advHdr.className='grp-hdr'; advHdr.textContent='Advanced'; body.appendChild(advHdr);
   const adv=document.createElement('div'); adv.className='grp'; body.appendChild(adv);
-  const refOpts=['','no-referrer','no-referrer-when-downgrade','origin','origin-when-cross-origin','same-origin','strict-origin','strict-origin-when-cross-origin','unsafe-url'].map(v=>`<option value="${v}" ${(o.referrerPolicy||'')===v?'selected':''}>${v||'Default'}</option>`).join('');
-  adv.innerHTML=`
-    <div class="row"><span class="rl">Referrer Policy</span><div class="sel-wrap"><select class="row-sel" id="if-referrer" aria-label="Referrer policy">${refOpts}</select>${CHEV_SVG}</div></div>
-    <div class="row ie-row" id="if-allow-row"><span class="rl">Allow (feature policy)</span><span class="rv${o.allow?'':' is-ph'}">${o.allow?esc(o.allow):'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${esc(o.allow||'')}" style="display:none"><button class="pe" type="button" aria-label="Edit allow">${PE_SVG}</button></div>
+  const refOpts=['','no-referrer','no-referrer-when-downgrade','origin','origin-when-cross-origin','same-origin','strict-origin','strict-origin-when-cross-origin','unsafe-url'].map(v=>html`<option value="${v}" ${(o.referrerPolicy||'')===v?'selected':''}>${v||'Default'}</option>`);
+  setHtml(adv, html`
+    <div class="row"><span class="rl">Referrer Policy</span><div class="sel-wrap"><select class="row-sel" id="if-referrer" aria-label="Referrer policy">${refOpts}</select>${raw(CHEV_SVG)}</div></div>
+    <div class="row ie-row" id="if-allow-row"><span class="rl">Allow (feature policy)</span><span class="rv${o.allow?'':' is-ph'}">${o.allow?o.allow:'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${o.allow||''}" style="display:none"><button class="pe" type="button" aria-label="Edit allow">${raw(PE_SVG)}</button></div>
     <div class="row"><span class="rl">Allow Fullscreen</span><label class="tog"><input type="checkbox" id="if-fs" ${o.allowFullscreen!==false?'checked':''}><div class="tr"></div></label></div>
-    <div class="row ie-row" id="if-refresh-row"><span class="rl">Refresh Interval <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval?'':' is-ph'}">${o.refreshInterval?o.refreshInterval:'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval||''}" style="display:none"><button class="pe" type="button" aria-label="Edit refresh interval">${PE_SVG}</button></div>`;
+    <div class="row ie-row" id="if-refresh-row"><span class="rl">Refresh Interval <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval?'':' is-ph'}">${o.refreshInterval?o.refreshInterval:'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval||''}" style="display:none"><button class="pe" type="button" aria-label="Edit refresh interval">${raw(PE_SVG)}</button></div>`);
   const sync=()=>{ state._iframeOpts.referrerPolicy=adv.querySelector('#if-referrer').value||undefined; state._iframeOpts.allow=adv.querySelector('#if-allow').value.trim()||undefined; state._iframeOpts.allowFullscreen=adv.querySelector('#if-fs').checked; const ri=parseInt(adv.querySelector('#if-refresh').value,10); state._iframeOpts.refreshInterval=(ri&&ri>=250)?ri:undefined; };
   adv.querySelector('#if-referrer').onchange=sync; adv.querySelector('#if-fs').onchange=sync;
   initInlineEdit('if-allow-row','if-allow',{placeholder:'autoplay; fullscreen',onCommit(){sync();}});
@@ -586,8 +591,7 @@ function _renderBackupConfig(body){
 
   function ieRow(host,{id,label,req,opt,value,ph,type}){
     const rid=id+'-row';
-    const tag=(req?' <span class="req">*</span>':'')+(opt?' <span class="opt-span">(optional)</span>':'');
-    host.insertAdjacentHTML('beforeend',`<div class="row ie-row" id="${rid}"><span class="rl">${esc(label)}${tag}</span><span class="rv${value?'':' is-ph'}">${value?esc(value):esc(ph||'')}</span><input id="${id}" type="${type||'text'}" value="${esc(value==null?'':value)}" style="display:none"><button class="pe" type="button" aria-label="Edit ${esc(label)}">${PE_SVG}</button></div>`);
+    appendIeRow(host,{rowId:rid,label,req,opt,value,ph,inpId:id,type});
     return rid;
   }
   function addNameField(host, si){
@@ -599,41 +603,37 @@ function _renderBackupConfig(body){
     const slot=slots[si]; const prov=slot.provider; const isFirst=si===firstProvIdx(prov);
     const label=isFirst?`Set as default ${PLABEL(prov)} instance`:`Use default ${PLABEL(prov)} settings`;
     const desc =isFirst?`Other ${PLABEL(prov)} instances can reuse this connection.`:`Reuse the default ${PLABEL(prov)} container. Turn off to set its own.`;
-    host.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">${label}</span><label class="tog"><input type="checkbox" id="bak-def-${si}" ${slot.useDefault!==false?'checked':''} aria-label="${label}"><div class="tr"></div></label></div>`);
+    appendRow(host, html`<span class="rl">${label}</span><label class="tog"><input type="checkbox" id="bak-def-${si}" ${slot.useDefault!==false?'checked':''} aria-label="${label}"><div class="tr"></div></label>`);
     const tip=document.createElement('p'); tip.className='grp-tip in-card'; tip.textContent=desc; host.appendChild(tip);
     host.querySelector(`#bak-def-${si}`).onchange=e=>{ slot.useDefault=e.target.checked; rerender(); };
   }
   function fetchRow(host,{id,label}){
-    const fr=document.createElement('div'); fr.className='row'; fr.innerHTML='<span class="rl"></span>';
+    const fr=appendRow(host, html`<span class="rl"></span>`);
     const btn=document.createElement('button'); btn.type='button'; btn.className='row-btn'; btn.id=id; btn.textContent=label;
-    fr.appendChild(btn); host.appendChild(fr); return btn;
+    fr.appendChild(btn); return btn;
   }
 
   function renderJobDrop(si, container){
     const slot=slots[si]; container.innerHTML='';
-    const row=document.createElement('div'); row.className='row';
     if(!slot.dupJobList.length){
       const saved=slot.jobId?(slot.customName||slot.jobId):'';
-      row.innerHTML=`<span class="rl">Job</span><div class="sel-wrap"><select class="row-sel" id="dup-job-${si}" aria-label="Job" disabled><option>${saved?esc(saved)+', fetch to change':'Fetch jobs first'}</option></select>${CHEV_SVG}</div>`;
-    } else {
-      const opts=['<option value="">None</option>'].concat(slot.dupJobList.map(j=>`<option value="${esc(String(j.id))}"${String(j.id)===String(slot.jobId||'')?' selected':''}>${esc(j.name)}</option>`)).join('');
-      row.innerHTML=`<span class="rl">Job</span><div class="sel-wrap"><select class="row-sel" id="dup-job-${si}" aria-label="Job">${opts}</select>${CHEV_SVG}</div>`;
+      appendRow(container, html`<span class="rl">Job</span><div class="sel-wrap"><select class="row-sel" id="dup-job-${si}" aria-label="Job" disabled><option>${saved?saved+', fetch to change':'Fetch jobs first'}</option></select>${raw(CHEV_SVG)}</div>`);
+      return;
     }
-    container.appendChild(row);
-    const sel=row.querySelector('select'); if(!sel.disabled) sel.onchange=()=>{ slot.jobId=sel.value||null; };
+    const opts=[html`<option value="">None</option>`, ...slot.dupJobList.map(j=>html`<option value="${String(j.id)}"${String(j.id)===String(slot.jobId||'')?' selected':''}>${j.name}</option>`)];
+    const row=appendRow(container, html`<span class="rl">Job</span><div class="sel-wrap"><select class="row-sel" id="dup-job-${si}" aria-label="Job">${opts}</select>${raw(CHEV_SVG)}</div>`);
+    const sel=row.querySelector('select'); sel.onchange=()=>{ slot.jobId=sel.value||null; };
   }
   function renderSrcDrop(si, container){
     const slot=slots[si]; container.innerHTML='';
-    const row=document.createElement('div'); row.className='row';
     if(!slot.kopiaSrcList.length){
       const saved=slot.jobId?(slot.customName||slot.jobId):'';
-      row.innerHTML=`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="kopia-src-${si}" aria-label="Source" disabled><option>${saved?esc(saved)+', fetch to change':'Fetch sources first'}</option></select>${CHEV_SVG}</div>`;
-    } else {
-      const opts=['<option value="">None</option>'].concat(slot.kopiaSrcList.map(src=>`<option value="${esc(src.id)}"${String(src.id)===String(slot.jobId||'')?' selected':''}>${esc(src.name)}</option>`)).join('');
-      row.innerHTML=`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="kopia-src-${si}" aria-label="Source">${opts}</select>${CHEV_SVG}</div>`;
+      appendRow(container, html`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="kopia-src-${si}" aria-label="Source" disabled><option>${saved?saved+', fetch to change':'Fetch sources first'}</option></select>${raw(CHEV_SVG)}</div>`);
+      return;
     }
-    container.appendChild(row);
-    const sel=row.querySelector('select'); if(!sel.disabled) sel.onchange=()=>{ slot.jobId=sel.value||null; };
+    const opts=[html`<option value="">None</option>`, ...slot.kopiaSrcList.map(src=>html`<option value="${src.id}"${String(src.id)===String(slot.jobId||'')?' selected':''}>${src.name}</option>`)];
+    const row=appendRow(container, html`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="kopia-src-${si}" aria-label="Source">${opts}</select>${raw(CHEV_SVG)}</div>`);
+    const sel=row.querySelector('select'); sel.onchange=()=>{ slot.jobId=sel.value||null; };
   }
 
   function buildConnSection(card, si){
@@ -717,11 +717,11 @@ function _renderBackupConfig(body){
     const hdr=document.createElement('p'); hdr.className='grp-hdr'; hdr.textContent= slotCount>1 ? SLOT_NAMES[si]+' Instance' : 'Instance'; body.appendChild(hdr);
     const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
     const prov=slot.provider||'';
-    card.insertAdjacentHTML('beforeend',`<div class="row"><span class="rl">Provider</span><div class="segr">
+    appendRow(card, html`<span class="rl">Provider</span><div class="segr">
       <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="" ${!prov?'checked':''}><span class="segr-dot"></span><span>None</span></label>
       <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="duplicati" ${prov==='duplicati'?'checked':''}><span class="segr-dot"></span><span>Duplicati</span></label>
       <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="kopia" ${prov==='kopia'?'checked':''}><span class="segr-dot"></span><span>Kopia</span></label>
-    </div></div>`);
+    </div>`);
     card.querySelectorAll(`input[name="bak-prov-${si}"]`).forEach(r=>r.addEventListener('change',()=>{ if(!r.checked)return; slot.provider=r.value||null; slot.jobId=null; if(slot.provider)slot.useDefault=true; rerender(); }));
     if(slot.provider){
       if(slotCount>1) addDefaultToggle(card, si);

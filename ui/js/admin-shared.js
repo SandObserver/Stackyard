@@ -1,6 +1,7 @@
 /* Admin UI: shared foundation.
    Stateless helpers and constants used across the admin modules. No shared
    mutable state lives here; that stays in the main module. */
+import { html, raw, setHtml } from '/js/html.js?v=1';
 
 export const API = '';
 
@@ -94,8 +95,10 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
    never renders the plaintext back. Input keeps its id/value for the save path. */
 export function _secretRow(host, { rowId, inpId, label, req, opt, isSet, hidden, onInput }) {
   const disp = isSet ? 'Configured' : 'Not set';
-  host.insertAdjacentHTML('beforeend', `<div class="row ie-row" id="${rowId}"${hidden ? ' hidden' : ''}><span class="rl">${label}${req ? ' <span class="req">*</span>' : ''}${opt ? ' <span class="opt-span">(optional)</span>' : ''}</span><span class="rv${isSet ? '' : ' is-ph'}">${disp}</span><input id="${inpId}" type="password" autocomplete="new-password" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${PE_SVG}</button></div>`);
-  const row = document.getElementById(rowId), rv = row.querySelector('.rv'), inp = document.getElementById(inpId), pe = row.querySelector('.pe');
+  const row = document.createElement('div'); row.className = 'row ie-row'; row.id = rowId; row.hidden = !!hidden;
+  setHtml(row, html`<span class="rl">${label}${req ? html` <span class="req">*</span>` : ''}${opt ? html` <span class="opt-span">(optional)</span>` : ''}</span><span class="rv${isSet ? '' : ' is-ph'}">${disp}</span><input id="${inpId}" type="password" autocomplete="new-password" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button>`);
+  host.appendChild(row);
+  const rv = row.querySelector('.rv'), inp = document.getElementById(inpId), pe = row.querySelector('.pe');
   const open = () => { row.classList.add('editing'); inp.style.display = 'block'; inp.focus(); };
   const commit = () => { row.classList.remove('editing'); inp.style.display = 'none'; const has = !!inp.value; rv.textContent = has ? 'New value set' : disp; rv.classList.toggle('is-ph', !(has || isSet)); };
   pe.addEventListener('click', open); rv.addEventListener('click', open);
