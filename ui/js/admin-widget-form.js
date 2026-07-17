@@ -543,18 +543,6 @@ function _autofillSlot(si, provider) {
   }
 }
 
-/* Custom dropdown: native <select> popups don't open in some embedded webviews,
-   so we render a button + listbox we fully control (same rationale as the colour picker). */
-function _ddCloseAll(except){
-  document.querySelectorAll('.dd-list').forEach(l=>{ if(l!==except) l.classList.add('d-none'); });
-  document.querySelectorAll('.dd-btn[aria-expanded="true"]').forEach(b=>{ if(!except||b.nextElementSibling!==except) b.setAttribute('aria-expanded','false'); });
-}
-if(!window.__ddOutsideBound){
-  window.__ddOutsideBound=true;
-  document.addEventListener('click',e=>{ if(!e.target.closest('.dd')) _ddCloseAll(); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape') _ddCloseAll(); });
-}
-
 function _renderBackupConfig(body){
   const slotCount = state._wsize === 'small' ? 1 : 3;
   const SLOT_NAMES = ['First','Second','Third'];

@@ -36,7 +36,7 @@ function css(el, props) {
   return el;
 }
 
-export function mkMiniIcon(child, pointerEvents) {
+function mkMiniIcon(child, pointerEvents) {
   const bg = mk('div');
   bg.className = 'folder-mini-bg';
   bg.style.background = clr(child.color);
@@ -136,7 +136,7 @@ export function openFolderDesktop(folder) {
   outer.append(title, box); ov.appendChild(outer); document.body.appendChild(ov); folderOverlay = ov;
 }
 
-export function mFolder(item, cw, rh, isz, ir, im, sc) {
+function mFolder(item, cw, rh, isz, ir, im, sc) {
   const showLabel = S().showLabels?.ios === true;
   const eff = showLabel ? Math.round(isz*.85) : isz;
   const a = document.createElement('button'); a.type = 'button';
@@ -304,7 +304,6 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   document.body.appendChild(ov); folderOverlayMob = ov;
 }
 
-export { folderOverlayMob };
 
 export function buildMobile() {
   st().BEL.clear();

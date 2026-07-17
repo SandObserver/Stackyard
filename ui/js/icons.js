@@ -7,7 +7,7 @@
    NOT the primary XSS control. If an icon is ever inlined into the DOM
    (innerHTML, inline <svg>, object/embed), this assumption breaks; re-evaluate
    SVG sanitization before doing so. */
-export const LOCAL_ICONS = new Set();
+const LOCAL_ICONS = new Set();
 
 export async function loadLocalIcons() {
   try {

@@ -314,12 +314,6 @@ body{background:transparent;position:relative;z-index:1}
 /* ── Widget ── */
 .slot-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .slot-lbl{font-size:13px;font-weight:600;color:var(--tx)}
-.dd{position:relative}
-.dd-btn{text-align:left;cursor:pointer;padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b8b8f'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-.dd-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#1c1c24;border:1px solid var(--bd);border-radius:var(--rs);z-index:100;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)}
-.dd-opt{padding:10px 14px;cursor:pointer;font-size:14px;color:var(--tx);transition:background var(--t)}
-.dd-opt:hover,.dd-opt.sel{background:rgba(255,255,255,.06)}
-.dd-opt.sel{color:var(--ac);font-weight:600}
 .bak-slot{margin-bottom:12px}
 .bak-slot-conn{padding-left:4px;margin-top:8px}
 .adv-wrap{margin-top:12px}

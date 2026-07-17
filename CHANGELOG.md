@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Internal: removed the unused custom dropdown helper and its CSS, left over
+  from the admin form rewrite, and dropped `export` from five symbols only used
+  inside their own module.
 - Internal: completed the `setHtml`/`html` migration. `admin-widget-form.js`,
   the remaining `admin-app-form.js` forms, `_secretRow`, and the widget config
   form chevron are migrated, and the ratchet test now also counts

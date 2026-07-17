@@ -78,7 +78,7 @@ export function getLang() { return current; }
      data-i18n-ph="key"    -> sets the placeholder attribute
      data-i18n-al="key"    -> sets the aria-label attribute
    Safe to re-run; call it after rendering dynamically-inserted markup too. */
-export function translateDOM(root) {
+function translateDOM(root) {
   root = root || document;
   root.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
   root.querySelectorAll('[data-i18n-html]').forEach(el => { setHtml(el, raw(t(el.getAttribute('data-i18n-html')))); });
