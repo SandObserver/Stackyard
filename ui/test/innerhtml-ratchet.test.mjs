@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
    assignments in this codebase are clears; only the other 48 are real. */
 const BUDGET = {
   'admin-widget-form.js': 21,
-  'admin.js': 9,
+  'admin.js': 16,
   'admin-app-form.js': 2,
 };
 
@@ -33,13 +33,17 @@ const BUDGET = {
 const IMPLEMENTATION = 'html.js';
 
 const jsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../js');
-const ASSIGN = /\.innerHTML\s*=(?!=)\s*/g;
+/* Matches `= ` and `+= `. The compound form appends markup and is exactly as
+   unsafe, but was invisible here until admin.js turned out to use it seven
+   times. Only the plain form can be a clear: `+= ''` writes nothing anyway. */
+const ASSIGN = /\.innerHTML\s*(\+?)=(?!=)\s*/g;
 const CLEAR = /^(?:''|""|``)\s*[;,)]/;
 
 function countWrites(src) {
   let n = 0;
   for (const m of src.matchAll(ASSIGN)) {
-    if (!CLEAR.test(src.slice(m.index + m[0].length))) n++;
+    const isPlain = m[1] === '';
+    if (!(isPlain && CLEAR.test(src.slice(m.index + m[0].length)))) n++;
   }
   return n;
 }

@@ -9,6 +9,9 @@
   re-exported from `utils.js`, so its importers are unaffected. `i18n.js` and
   `admin-color-control.js` are migrated; the rest follow, held by a test that
   caps remaining direct `innerHTML` writes per file and blocks new ones.
+- Internal: the innerHTML ratchet now also counts `+=` appends, which it missed
+  entirely. No behaviour change; it closes a gap that let unescaped markup be
+  appended in a file the test reported as clean.
 - Internal: migrated the widget config form rows to `setHtml`/`html`.
 - Internal: migrated `dashboard.js` and the badge value list in `admin-app-form.js`
   to `setHtml`/`html`. Badge values returned by a remote service are now escaped
