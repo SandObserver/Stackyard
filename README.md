@@ -12,13 +12,12 @@
 
 <p align="center">Try it: <b><a href="https://stackyard-demo.onrender.com">stackyard-demo.onrender.com</a></b><br>
 
-Most dashboards are a wall full of numbers and charts. Stackyard is the opposite: a calm, launcher-style grid of app tiles, folders, and a small number of
-*genuinely useful* widgets, running in a single container with no external services or dependencies. It is built to be glanced at a hundred times a day without ever feeling cluttered.
+Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a calm, launcher-style grid of app tiles, folders, and a small number of
+*genuinely useful* widgets, running in a single container with no external services or dependencies. Built to be glanced at a hundred times a day without feeling cluttered.
 
 ## Contents
 
 - [Why Stackyard](#why-stackyard)
-- [Features](#features)
 - [Getting started](#getting-started)
 - [Building from source](#building-from-source)
 - [Configuring](#configuring)
@@ -32,25 +31,14 @@ Most dashboards are a wall full of numbers and charts. Stackyard is the opposite
 
 ## Why Stackyard
 
-**Design**
-
-- **Attention goes where it's needed, not everywhere at once.** A calm grid, no charts or counters. Health badges only appear when something's wrong; a working system looks calm, not busy.
+- **Attention goes where it's needed, not everywhere at once.** A calm grid, no charts or counters. Health badges only appear when something's wrong.
 - **A glance should tell you more than a number would.** Widgets are small visuals, not readouts.
-
-**How it works**
-
-- **Anything can be a badge.** If a service has an API, point Stackyard at it, pick a value from the response, and show it as a [live activity badges](#live-activity-badges). No custom widget, no code.
-- **Configured by clicking, not by editing files.** Everything is set up in the web UI.
+- **Anything can be a badge.** Point Stackyard at any API, pick a value from the response, and show it as a [live activity badge](#live-activity-badges). No custom widget, no code.
+- **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
 - **No dependencies.** Review it once and stop worrying about the supply chain.
 
-## Features
-
-- Launcher-style grid of app links, folders, and widgets, with a mobile layout.
-- A small but growing set of visual widgets (see [Widgets](#widgets)).
-- Live activity badges from any API endpoint, configured in the UI.
-- Health badges that appear only on problems.
-- Full configuration from the admin UI, with config import and export.
-- Available in English, Persian, Chinese, Spanish, German, and French.
+Launcher-style grid of app links, folders, and widgets, with a mobile layout.
+Available in English, Persian, Chinese, Spanish, German, and French.
 
 ## Getting started
 
@@ -87,10 +75,9 @@ docker run -d \
   ghcr.io/sandobserver/stackyard:latest
 ```
 
-Then open `http://localhost:8700` and set things up from the admin app on the dashboard (or go to `/admin`). Your config and uploaded icons persist in `./data` and
-`./icons`.
+Then open `http://localhost:8700` and set things up from the admin app on the dashboard (or go to `/admin`). Config and uploaded icons persist in `./data` and `./icons`.
 
-The [`docker-compose.yml`](docker-compose.yml) in the repo is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access (for stats and reaching services by host IP), and Docker health checks.
+The [`docker-compose.yml`](docker-compose.yml) in the repo is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access, and Docker health checks.
 
 ## Building from source
 
@@ -100,9 +87,7 @@ cd stackyard
 docker build -t stackyard:local .
 ```
 
-Then run `stackyard:local` the same way as above (with `docker run`, or by setting `image: stackyard:local` in the compose file). CI builds and publishes the multi-arch image on tagged releases.
-
-For working on the code without Docker, see [CONTRIBUTING.md](CONTRIBUTING.md).
+Then run `stackyard:local` the same way as above. For working on the code without Docker, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Configuring
 
@@ -115,11 +100,11 @@ Everything is configured in the admin UI (`/admin`), split into a few sections:
 
 ## Icons
 
-App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set (served over a CDN), so most services get a good icon with no effort. You can also upload your own; custom icons are stored in `./icons`.
+App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set, served over a CDN. You can also upload your own; custom icons are stored in `./icons`.
 
 ## Widgets
 
-Each widget is small and visual by design. Current widgets and the services they integrate with:
+Current widgets and the services they integrate with:
 
 - **Clock**
 - **Now Playing** (a VHS tape that turns and fills as media plays): Plex, Jellyfin, Emby, Navidrome
@@ -132,19 +117,19 @@ Each widget is small and visual by design. Current widgets and the services they
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
 
-Adding a widget is meant to be easy and self-contained: a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md). Shared helpers for fetching, drawing, and graceful failure live in `ui/js/widget-toolbox.js`.
+Adding one is a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md).
 
 ## Live activity badges
 
-This is the part that replaces a pile of one-off widgets. Instead of writing a widget to surface one number from a service, you point Stackyard at any API endpoint, and it shows you the values in the response. Pick the one you care about (say, pending requests in a media server, or items in a queue), and it becomes a small badge on that tile. Any service with an API becomes a first-class part of your dashboard, without code.
+Instead of writing a widget to surface one number, point Stackyard at any API endpoint and it lists the values in the response. Pick the one you care about (pending requests in a media server, items in a queue) and it becomes a small badge on that tile. Any service with an API, without code.
 
 ## Security
 
-Stackyard is built to be careful with your homelab: it never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the IP it resolved, and bounds every upstream call so one slow service cannot hang the dashboard. The SSRF guard covers those URL-checking endpoints rather than routine widget polling, because an admin with config access can already point a widget anywhere; [docs/security.md](docs/security.md) explains the reasoning. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
+Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
 
 ## Contributing
 
-Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md), and [docs/frontend.md](docs/frontend.md) for how the frontend fits together.
+Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/frontend.md](docs/frontend.md).
 
 ## Changelog
 

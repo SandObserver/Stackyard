@@ -1,29 +1,13 @@
 # Adding a widget
 
 A widget is a self-contained folder under `ui/widgets/<name>/`. The backend
-discovers it automatically and the admin config form is generated from a
-manifest, so adding one is mostly a matter of dropping in a folder. The only
-file you touch outside your folder is a single entry in the widget type
+discovers it automatically and the admin config form is generated from the
+manifest. The only edit outside your folder is one entry in the widget type
 registry (step 1).
 
-## How it fits together
-
-Before the individual files, here is the whole loop, so the pieces have names:
-
-1. You create a folder with three files: a manifest, a data function, and a
-   frontend page.
-2. The admin UI reads your **manifest** (`widget.json`) and renders a config
-   form from it. When the user fills it in and saves, their answers become the
-   widget's stored **config**.
-3. When the widget is placed on a dashboard, the backend runs your **data
-   function** (`data.js`) with that config and serves whatever it returns as
-   JSON at `/api/widget-data/<id>`.
-4. Your **frontend** (`index.html`) runs in a sandboxed iframe. It fetches that
-   JSON itself and draws the widget.
-
-So the manifest drives configuration, `data.js` runs server-side and talks to
-the outside service, and `index.html` runs in the browser and only ever talks
-to your own API.
+The manifest drives the config form; `data.js` runs server-side and talks to the
+outside service; `index.html` runs in a sandboxed iframe and only ever fetches
+your own API.
 
 ## Folder structure
 
@@ -58,7 +42,7 @@ mywidget: {
 
 ## 2. The manifest (widget.json)
 
-Describes the config form the admin renders automatically.
+Describes the config form the admin renders.
 
 ```json
 {
@@ -78,10 +62,9 @@ Describes the config form the admin renders automatically.
 }
 ```
 
-`name` must match the folder name. The form is rendered as grouped settings
-cards with the label on the left and the control on the right. An invalid
-manifest is skipped at startup with a logged reason rather than crashing the
-server, so a typo disables just that widget.
+`name` must match the folder name. An invalid manifest is skipped at startup with
+a logged reason rather than crashing the server, so a typo disables just that
+widget.
 
 ### Field types
 
@@ -115,16 +98,15 @@ These keys can go on any field:
 
 ### Loading options from the service (optionsFrom)
 
-When a `select` can only be filled in after the user enters a URL and key (for
-example, "pick one of your lists"), give it `"optionsFrom": "<endpoint>"`
-instead of static `options`. The form then shows a **Fetch** button. Pressing
-it calls your `data.js` with `ctx.endpoint` set to that name, and your function
-returns `{ options: [ { value, label }, ... ] }`.
+When a `select` can only be filled in after the user enters a URL and key, give
+it `"optionsFrom": "<endpoint>"` instead of static `options`. The form shows a
+**Fetch** button, which calls your `data.js` with `ctx.endpoint` set to that
+name; return `{ options: [ { value, label }, ... ] }`.
 
 ## 3. Providing data (data.js)
 
-`data.js` runs on the backend (Node, CommonJS). Export a single async function.
-It receives one `ctx` argument; the saved config is on `ctx.config`.
+Runs on the backend (Node, CommonJS). Export a single async function taking
+`ctx`; the saved config is on `ctx.config`.
 
 ```js
 module.exports = async function (ctx) {
@@ -137,9 +119,9 @@ module.exports = async function (ctx) {
 };
 ```
 
-Whatever object you return is served as-is at `/api/widget-data/<id>` for your
-frontend to fetch. Keep upstream calls behind `ctx.fetchJSON` so they inherit
-the SSRF guard, IP pinning, size limit, and the app's TLS-skip setting.
+What you return is served as-is at `/api/widget-data/<id>`. Keep upstream calls
+behind `ctx.fetchJSON` so they inherit the SSRF guard, IP pinning, size limit,
+and the app's TLS-skip setting.
 
 ### ctx reference
 
@@ -156,14 +138,10 @@ the SSRF guard, IP pinning, size limit, and the app's TLS-skip setting.
 | `ctx.metrics` | Host metrics for stats-style widgets: `{ cpuPercent, ramPercent, cpuTemp, diskStats }`. |
 | `ctx.log` | The structured logger. |
 
-For XML responses, `ctx.fetchJSON` returns `data` as a nested object keyed by
-the root tag: attributes and child elements both become keys, a repeated tag
-becomes an array, a tag that appears once stays a single object, and a
-text-only element becomes that text. Numeric values are converted only when
-they round-trip exactly, so IDs like `007` and versions like `1.10` stay
-strings. For example, Plex `/status/sessions` parses to
-`{ MediaContainer: { size: 2, Metadata: [ { title, duration, Player: { state } } ] } }`,
-the same shape its JSON response has.
+For XML responses, `ctx.fetchJSON` returns `data` keyed by the root tag:
+attributes and child elements both become keys, a repeated tag becomes an array,
+and a text-only element becomes that text. Numbers are converted only when they
+round-trip exactly, so `007` and `1.10` stay strings.
 
 If your `select` uses `optionsFrom`, handle that path in the same function:
 
@@ -178,17 +156,12 @@ module.exports = async function (ctx) {
 };
 ```
 
-For simple services, a widget can instead declare a `data` block (base URL key,
-auth type, and named endpoints) in the manifest and skip `data.js` entirely.
-None of the built-in widgets use this yet, so `data.js` is the documented path.
-
 ## 4. The frontend (index.html)
 
-A self-contained page that runs in a sandboxed iframe scaled to the widget's
-design resolution. It reads its `id` from the query string, fetches its own
-data, and draws it. Keep everything inline; there is no shared widget
-stylesheet, and the frontend must not make external network calls (all data
-comes through your own API).
+Runs in a sandboxed iframe scaled to the widget's design resolution. Reads its
+`id` from the query string, fetches its own data, and draws it. Keep everything
+inline; there is no shared widget stylesheet, and the frontend must not make
+external network calls.
 
 ```html
 <!DOCTYPE html>
@@ -228,8 +201,7 @@ at `/api/widget-config/<id>`.
 
 ### Design canvas sizes
 
-Widgets always render at these fixed pixel sizes and are scaled uniformly to
-fit their card, so a size looks identical on every device.
+Widgets render at these fixed sizes and are scaled uniformly to fit their card.
 
 | size | canvas |
 |---|---|
@@ -238,21 +210,18 @@ fit their card, so a size looks identical on every device.
 | large | 360 × 360 |
 | xlarge | 360 × 540 |
 
-Match the existing look: transparent background, the system font stack, and a
-dark palette.
+Match the existing look: transparent background, system font stack, dark palette.
 
 ## Toolbox (optional)
 
-Importing the toolbox is never required (a widget can fetch and draw entirely on
-its own), but it bundles the repeatedly-useful frontend pieces so you don't
-re-derive them. Import what you need from `/js/widget-toolbox.js`:
+Never required, but it bundles the repeatedly-useful frontend pieces. Import
+what you need from `/js/widget-toolbox.js`:
 
 ```js
 import { poll, fetchData, sparkline } from '/js/widget-toolbox.js?v=1';
 ```
 
-Keep the `?v=1`; the release cache-buster maintains that version for you, like
-other `/js/` imports.
+Keep the `?v=1`; the release cache-buster maintains it, like other `/js/` imports.
 
 **Data**
 
@@ -262,9 +231,9 @@ other `/js/` imports.
 
 **State / lifecycle**
 
-`poll(opts)` runs the fetch-and-render loop for you and handles loading, empty,
-stale, and error states so a single failed poll never blanks a working widget.
-It replaces the hand-written loop from the frontend example above:
+`poll(opts)` runs the fetch-and-render loop and handles loading, empty, stale,
+and error states, so a single failed poll never blanks a working widget. It
+replaces the hand-written loop in the example above:
 
 ```js
 poll({
@@ -274,10 +243,9 @@ poll({
 });
 ```
 
-A successful, non-empty result calls `render`. An empty result shows `emptyText`.
 A failure keeps the last good render in place; only after `staleAfter` (default
 2) consecutive failures does it surface `errorText` with how long ago the last
-success was. `sinceLabel(ts)` gives that "3m ago" label if you want it yourself.
+success was. `sinceLabel(ts)` gives that "3m ago" label on its own.
 
 **Visuals** (self-contained inline SVG/DOM, no extra CSS)
 
@@ -285,15 +253,13 @@ success was. `sinceLabel(ts)` gives that "3m ago" label if you want it yourself.
 - `barFill(percent, opts?)` returns a track+fill bar element.
 - `smoothPath(points)` returns a smoothed SVG path string through `[[x,y], ...]`.
 
-More chart types are added to the toolbox over time, so check it before building
-a new visual by hand.
+Check the toolbox before building a new visual by hand.
 
 ## Cache-busting
 
 When you change your widget's frontend files, bump the `?v=N` in that widget's
-`src` in `widget-types.js` so browsers fetch the new version instead of a cached
-one. This bump is manual: the release cache-buster rewrites `?v=` tags on
-`/css/` and `/js/` imports automatically, but not on `/widgets/` entry URLs.
+`src` in `widget-types.js`. This one is manual: the release cache-buster rewrites
+`?v=` on `/css/` and `/js/` imports, but not on `/widgets/` entry URLs.
 
 ## Checklist
 
