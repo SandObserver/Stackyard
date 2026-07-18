@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Badge header and URL parameter rows: aligned the field spacing with the rest
+  of the form, and marked credentials with a labelled "Secret" checkbox.
+
 - Admin badge color picker: the last swatch could be clipped at the right edge
   on narrow screens. The swatch row now wraps instead of overflowing.
 
