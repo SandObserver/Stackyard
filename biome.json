@@ -1,6 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
-  "files": { "includes": ["api/src/**/*.js", "ui/js/**/*.js", "ui/widgets/**/*.js", "scripts/**/*.js"] },
+  "files": { "includes": ["api/src/**/*.js", "ui/js/**/*.js", "ui/widgets/**/*.js", "scripts/**/*.js", "docs/widget-template/**/*.js"] },
   "formatter": { "enabled": false },
   "linter": {
     "enabled": true,

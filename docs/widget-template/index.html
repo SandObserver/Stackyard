@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box }
+    html,body { width:100%; height:100%; overflow:hidden; background:transparent;
+      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; color:#e8e8ea }
+    #root { width:100%; height:100%; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:4px }
+    .n { font-size:34px; font-weight:600; letter-spacing:-0.5px }
+    .l { font-size:12px; color:#8e8e93 }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import { poll } from '/js/widget-toolbox.js?v=1';
+
+    const root = document.getElementById('root');
+
+    poll({
+      render: data => {
+        root.replaceChildren();
+        const n = document.createElement('div');
+        n.className = 'n';
+        n.textContent = String(data.total);
+        const l = document.createElement('div');
+        l.className = 'l';
+        l.textContent = data.total === 1 ? 'item' : 'items';
+        root.append(n, l);
+      },
+      isEmpty: data => !data.items?.length,
+      emptyText: 'Nothing here',
+      interval: 30000,
+    });
+  </script>
+</body>
+</html>

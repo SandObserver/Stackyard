@@ -150,4 +150,4 @@ on('GET', '/api/widgets', (_, res) => {
   json(res, 200, { widgets: list });
 });
 
-module.exports = { getRegistry, loadRegistry, WIDGETS_PATH };
+module.exports = { getRegistry, loadRegistry, validateManifest: _validateManifest, WIDGETS_PATH };

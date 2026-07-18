@@ -9,6 +9,9 @@ The manifest drives the config form; `data.js` runs server-side and talks to the
 outside service; `index.html` runs in a sandboxed iframe and only ever fetches
 your own API.
 
+Copy [widget-template/](widget-template/) to `ui/widgets/<name>/` for a working
+starting point.
+
 ## Folder structure
 
 ```
@@ -262,6 +265,10 @@ When you change your widget's frontend files, bump the `?v=N` in that widget's
 `?v=` on `/css/` and `/js/` imports, but not on `/widgets/` entry URLs.
 
 ## Checklist
+
+Manifests are validated in CI, so a schema mistake fails the PR rather than
+silently disabling the widget at runtime. Run the same check locally with
+`cd api && node --test`.
 
 - [ ] `ui/widgets/<name>/widget.json` with `name` (matching the folder), `label`, `sizes`, and `fields`
 - [ ] `ui/widgets/<name>/data.js` exporting `module.exports = async (ctx) => ...`

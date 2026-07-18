@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Internal: widget manifests are validated in CI against the same validator the
+  server uses at startup, so a schema mistake fails the PR instead of silently
+  disabling the widget at runtime. Added `docs/widget-template/`, a working
+  widget to copy from, covered by that check and by lint.
 - Dock icons now show the app name on hover. They never render a label, so
   without a `title` there was nothing to show.
 - Internal: removed the unused custom dropdown helper and its CSS, left over
