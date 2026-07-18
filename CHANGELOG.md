@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Live activity badge headers and URL parameters can each be marked as a
+  credential. Credential values are stored server-side, shown as "Configured"
+  and never sent back to the browser or included in a config export. Existing
+  headers and parameters are migrated to the new form and default to
+  non-credential, so nothing changes until you mark them. Fixes a case where an
+  API key typed into a badge header was returned in plaintext by the config API.
+
 - The folder app picker and widget multi-select dropdowns can now be operated
   from the keyboard (arrows, Home/End, Enter/Space, Escape). They were
   mouse-only.

@@ -1,7 +1,7 @@
 /* Admin UI: app and folder forms.
    Builds the app edit form (icon picker, badge picker) and the folder form.
    Reads and writes shared state; exports buildAppForm, buildFolderForm, and
-   parseKV (used by the save path). */
+   serializeKvRows (used by the save path). */
 import { clr as rc } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
@@ -144,9 +144,11 @@ export function buildAppForm(body,item){
         </div>
         <div id="auth-row-wrap">
           <div class="row"><span class="rl">Authentication</span>${tog('auth-en',!!(act.params||act.headers))}</div>
-          <div id="auth-sub" ${(act.params||act.headers)?'':'hidden'}>
-            <div class="row ta-row"><span class="rl">Add to URL<br><span class="rl-sub">(query params)</span></span><textarea class="ta-field" id="f-bpar" placeholder="One key=value per line.&#10;Added to the URL as ?key=value.">${act.params?Object.entries(act.params).map(([k,v])=>k+'='+v).join('\n'):''}</textarea></div>
-            <div class="row ta-row"><span class="rl">Add to Header</span><textarea class="ta-field" id="f-bhdr" placeholder="One key=value per line.&#10;Sent as an HTTP request header.">${act.headers?Object.entries(act.headers).map(([k,v])=>k+'='+v).join('\n'):''}</textarea></div>
+          <div id="auth-sub" ${(act.params?.length||act.headers?.length)?'':'hidden'}>
+            <div class="row kv-hdr"><span class="rl">Add to URL <span class="rl-sub">(query params)</span></span></div>
+            <div id="bpar-rows" class="kv-rows"></div>
+            <div class="row kv-hdr"><span class="rl">Add to Header</span></div>
+            <div id="bhdr-rows" class="kv-rows"></div>
           </div>
         </div>
         <div id="act-color-slot"></div>
@@ -171,6 +173,11 @@ export function buildAppForm(body,item){
   renderColorControl(document.getElementById('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){state.scol=v;const pv=document.getElementById('ipv');if(pv)pv.style.background=rc(state.scol);}});
   renderColorControl(document.getElementById('static-color-slot'),{value:staticBadge.color||'#1e6ef4',idPrefix:'static-col',swatchColors:BADGE_SWATCHES});
   renderColorControl(document.getElementById('act-color-slot'),{value:actCustom.color||'#1e6ef4',idPrefix:'act-col',swatchColors:BADGE_SWATCHES});
+
+  state._bpar = normKvRows(act.params);
+  state._bhdr = normKvRows(act.headers);
+  renderKvRows(document.getElementById('bpar-rows'), state._bpar, 'key=value');
+  renderKvRows(document.getElementById('bhdr-rows'), state._bhdr, 'X-Api-Key=…');
 
   wireIcon();
   if(state.siurl)updPrev();
@@ -304,7 +311,59 @@ async function testPing(){
   catch(e){st.textContent='✗ '+e.message;}
 }
 
-export const parseKV=t=>{const r={};for(const l of t.split('\n')){const i=l.indexOf('=');if(i<1)continue;r[l.slice(0,i).trim()]=l.slice(i+1).trim();}return r;};
+/* Badge/param entries are { key, value, secret } rows. A secret row that was
+   stored shows value as "" with valueSet:true, so the field renders a
+   "Configured" placeholder and an empty value means "keep the stored one". */
+function normKvRows(v){
+  if(Array.isArray(v)) return v.map(r=>({key:r.key||'',value:r.value!=null?r.value:'',secret:!!r.secret,valueSet:!!r.valueSet}));
+  if(v&&typeof v==='object') return Object.entries(v).map(([key,value])=>({key,value:String(value),secret:false,valueSet:false}));
+  return [];
+}
+
+/* Serialize live rows for save. A secret row left untouched (empty value but
+   valueSet) is sent with no value so the server keeps the stored one. Blank
+   rows (no key) are dropped. */
+export function serializeKvRows(rows){
+  const out=[];
+  for(const r of rows||[]){
+    const key=(r.key||'').trim();
+    if(!key) continue;
+    const row={key,secret:!!r.secret};
+    if(r.value!=='' ) row.value=r.value;
+    else if(r.valueSet) row.valueSet=true;
+    else row.value='';
+    out.push(row);
+  }
+  return out;
+}
+
+function renderKvRows(host, rows, ph){
+  if(!host) return;
+  host.replaceChildren();
+  rows.forEach(row=>host.appendChild(kvRowEl(host,rows,row,ph)));
+  const add=document.createElement('button');
+  add.type='button'; add.className='kv-add';
+  setHtml(add, html`<span>+ Add</span>`);
+  add.onclick=()=>{ rows.push({key:'',value:'',secret:false,valueSet:false}); renderKvRows(host,rows,ph); };
+  host.appendChild(add);
+}
+
+function kvRowEl(host, rows, row, ph){
+  const el=document.createElement('div'); el.className='kv-row';
+  const valPh = row.secret&&row.valueSet&&row.value==='' ? 'Configured' : (ph.split('=')[1]||'value');
+  setHtml(el, html`
+    <input class="kv-k" type="text" placeholder="Key" value="${row.key}" aria-label="Header key">
+    <input class="kv-v" type="${row.secret?'password':'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="Header value">
+    <label class="kv-cred" title="Store as a credential (hidden after saving)"><input type="checkbox" ${row.secret?'checked':''} aria-label="Credential"><span class="kv-lock">🔒</span></label>
+    <button class="kv-del" type="button" aria-label="Remove">✕</button>`);
+  const kEl=el.querySelector('.kv-k'), vEl=el.querySelector('.kv-v'), cEl=el.querySelector('.kv-cred input'), dEl=el.querySelector('.kv-del');
+  kEl.oninput=()=>{ row.key=kEl.value; };
+  vEl.oninput=()=>{ row.value=vEl.value; row.valueSet=false; };
+  cEl.onchange=()=>{ row.secret=cEl.checked; vEl.type=cEl.checked?'password':'text'; };
+  dEl.onclick=()=>{ const idx=rows.indexOf(row); if(idx>=0)rows.splice(idx,1); renderKvRows(host,rows,ph); };
+  return el;
+}
+
 async function fetchBadge(){
   const url=document.getElementById('f-burl')?.value?.trim();
   const st=document.getElementById('bst');
@@ -313,10 +372,10 @@ async function fetchBadge(){
   const btn=document.getElementById('bfetch');
   if(btn)btn.disabled=true;
   try{
-    const params=parseKV(document.getElementById('f-bpar')?.value||'');
-    const headers=parseKV(document.getElementById('f-bhdr')?.value||'');
+    const params=serializeKvRows(state._bpar);
+    const headers=serializeKvRows(state._bhdr);
     const skipTls=document.getElementById('f-skip-tls')?.checked||false;
-    const r=await ap('/api/badge-proxy',{url,params,headers,skipTls});
+    const r=await ap('/api/badge-proxy',{url,params,headers,skipTls,itemId:state.eid!==null?state.items[state.eid]?.id:undefined});
     state.fnums=r.numbers||[];
     if(st){
       st.style.cssText='margin-top:4px;color:#34c759';

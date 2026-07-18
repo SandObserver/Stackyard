@@ -2,6 +2,7 @@ const fs   = require('fs');
 const path = require('path');
 const log  = require('./log');
 const { IS_DEMO } = require('./demo');
+const { migrateItemBadgeHeaders } = require('./badge-headers');
 
 const CONFIG_PATH = process.env.CONFIG_PATH || '/data/apps.json';
 const ICONS_PATH  = process.env.ICONS_PATH  || '/icons';
@@ -11,7 +12,7 @@ const CONFIG_TTL_MS = 5000;
 
 /* Current on-disk config shape. Bump when a release changes the shape in a way
    older configs need transforming for, and add a matching step in migrate(). */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 /* Walk an old config forward to the current shape. Idempotent: a no-op when the
    config is already current, so it is safe to run on every read and write.
@@ -20,6 +21,13 @@ const SCHEMA_VERSION = 1;
    changes add ordered steps, e.g. `if (v < 2) { ...transform...; v = 2; }`. */
 function migrate(cfg) {
   if (!cfg || typeof cfg !== 'object') return cfg;
+  let v = Number(cfg._schemaVersion) || 1;
+  if (v < 2) {
+    if (Array.isArray(cfg.items)) {
+      for (const item of cfg.items) if (item && item.type === 'app') migrateItemBadgeHeaders(item);
+    }
+    v = 2;
+  }
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;
 }

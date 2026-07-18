@@ -8,7 +8,7 @@ import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
-import { buildAppForm, buildFolderForm, parseKV } from '/js/admin-app-form.js?v=c3d495f0';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=c3d495f0';
 import { LANGUAGES, initI18n, translateText, t } from '/js/i18n.js?v=1';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
 import { canJoinFolder, dropTargetKind } from '/js/admin-drag-logic.js?v=1';
@@ -692,8 +692,8 @@ async function doSave(orig){
         actEn:   document.getElementById('act-en')?.checked,
         actUrl:  document.getElementById('f-burl')?.value?.trim()||'',
         actInt:  Math.min(3600,Math.max(10,parseInt(document.getElementById('f-bint')?.value||'30',10))),
-        actParams:  parseKV(document.getElementById('f-bpar')?.value||''),
-        actHeaders: parseKV(document.getElementById('f-bhdr')?.value||''),
+        actParams:  serializeKvRows(state._bpar),
+        actHeaders: serializeKvRows(state._bhdr),
         actColor: document.getElementById('act-col-val')?.value||'#0289ff',
         custUnit: document.getElementById('bcust-unit')?.value?.trim()||'',
         staticEn:    document.getElementById('static-en')?.checked||false,
