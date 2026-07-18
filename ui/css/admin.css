@@ -151,7 +151,7 @@ body{background:transparent;position:relative;z-index:1}
 
 /* ── Color control: swatch row + HSB sliders + code (PSD Icon/Label/Activity) ── */
 .cc-row{padding-top:13px;padding-bottom:13px}
-.cc-sw{display:flex;gap:10px;margin-left:auto;flex:2;max-width:none;justify-content:space-between}
+.cc-sw{display:flex;gap:10px;margin-left:auto;flex:2;max-width:none;justify-content:space-between;flex-wrap:wrap;row-gap:10px}
 .cc-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:none;padding:0;outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--t);flex-shrink:0}
 .cc-swatch.on{outline-color:#fff}
 .cc-rainbow{background:conic-gradient(from 90deg,#ff3b30,#ffcd00,#35c759,#0289ff,#cb30df,#ff3b30)}
