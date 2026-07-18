@@ -4,6 +4,7 @@
    Each builder returns { el, get, control, liveValue }; the public API is unchanged. */
 
 import { html, raw, setHtml } from '/js/html.js?v=1';
+import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -138,14 +139,13 @@ function _multiselect(field, value) {
   const summary = () => cur.size === 0 ? 'None selected' : cur.size + ' selected';
   setHtml(row, html`<span class="rl">${field.label}</span><div class="row-dd"><button class="row-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ms-sum">${summary()}</span>${raw(CHEV)}</button><ul class="row-dd-list checklist" role="listbox" aria-multiselectable="true" hidden>${opts.map(o => html`<li role="option" data-val="${o.value}" aria-selected="${String(cur.has(String(o.value)))}">${o.label}</li>`)}</ul></div>`);
   wrap.appendChild(row);
+  const dd = row.querySelector('.row-dd');
   const btn = row.querySelector('.row-dd-btn'), list = row.querySelector('.row-dd-list'), sumEl = row.querySelector('.ms-sum');
-  btn.addEventListener('click', () => { const open = list.hidden; list.hidden = !open; btn.setAttribute('aria-expanded', String(open)); });
-  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => {
+  wireChecklist(dd, btn, list, li => {
     const v = li.dataset.val, on = li.getAttribute('aria-selected') !== 'true';
     li.setAttribute('aria-selected', String(on)); if (on) cur.add(v); else cur.delete(v);
     sumEl.textContent = summary(); wrap.dispatchEvent(new Event('change'));
-  }));
-  document.addEventListener('click', e => { if (!row.contains(e.target)) { list.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
+  });
   if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; wrap.appendChild(h); }
   const get = () => [field.key, opts.map(o => String(o.value)).filter(v => cur.has(v))];
   return { el: wrap, get, control: wrap, liveValue: () => [...cur] };

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- The folder app picker and widget multi-select dropdowns can now be operated
+  from the keyboard (arrows, Home/End, Enter/Space, Escape). They were
+  mouse-only.
+- Inline-edit rows now open from the value text, not just the pencil, and the
+  pencil's tap target is larger.
 - Internal: widget manifests are validated in CI against the same validator the
   server uses at startup, so a schema mistake fails the PR instead of silently
   disabling the widget at runtime. Added `docs/widget-template/`, a working

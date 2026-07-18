@@ -7,7 +7,7 @@ import { html, raw, setHtml } from '/js/html.js?v=1';
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { isDockBlocked, DOCK_MAX } from '/js/admin-logic.js?v=1';
-import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, setTogDisabled } from '/js/admin-shared.js?v=6f21b1b8';
+import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, setTogDisabled, wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
 
 /* Folder form: settings-row system (PSD: add_new_folder).
@@ -58,20 +58,10 @@ function _wireFolderApps(){
       : sel.length===1 ? sel[0].textContent
       : sel.length+' selected';
   };
-  const close=()=>{ list.hidden=true; btn.setAttribute('aria-expanded','false'); };
-  btn.addEventListener('click',e=>{
-    e.stopPropagation();
-    const open=list.hidden;
-    if(open){ list.hidden=false; btn.setAttribute('aria-expanded','true'); }
-    else close();
-  });
-  list.addEventListener('click',e=>{
-    const li=e.target.closest('li[role="option"]');
-    if(!li) return;
+  wireChecklist(dd,btn,list,li=>{
     li.setAttribute('aria-selected', li.getAttribute('aria-selected')==='true'?'false':'true');
     sync();
   });
-  document.addEventListener('click',e=>{ if(!dd.contains(e.target)) close(); });
   sync();
 }
 

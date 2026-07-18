@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normBackupSlots, reorderItems, isDockBlocked } from '../js/admin-logic.js';
+import { normBackupSlots, reorderItems, isDockBlocked, nextActiveIndex } from '../js/admin-logic.js';
 
 test('normBackupSlots returns one slot for small and three otherwise', () => {
   assert.equal(normBackupSlots([], 'small').length, 1);
@@ -92,4 +92,29 @@ test('isDockBlocked only counts docked apps, not widgets or folders', () => {
 test('isDockBlocked tolerates junk input', () => {
   assert.equal(isDockBlocked(null, null), false);
   assert.equal(isDockBlocked([null, undefined, {}], { id: 'new' }), false);
+});
+
+test('nextActiveIndex moves the active option and clamps at both ends', () => {
+  assert.equal(nextActiveIndex('ArrowDown', 0, 3), 1);
+  assert.equal(nextActiveIndex('ArrowUp', 2, 3), 1);
+  assert.equal(nextActiveIndex('ArrowDown', 2, 3), 2, 'clamps, does not wrap');
+  assert.equal(nextActiveIndex('ArrowUp', 0, 3), 0, 'clamps, does not wrap');
+  assert.equal(nextActiveIndex('Home', 2, 3), 0);
+  assert.equal(nextActiveIndex('End', 0, 3), 2);
+});
+
+test('nextActiveIndex ignores keys that do not move the active option', () => {
+  for (const k of ['Enter', ' ', 'Escape', 'Tab', 'a']) {
+    assert.equal(nextActiveIndex(k, 1, 3), null, k);
+  }
+});
+
+test('nextActiveIndex handles an empty list', () => {
+  assert.equal(nextActiveIndex('ArrowDown', -1, 0), null);
+  assert.equal(nextActiveIndex('Home', -1, 0), null);
+});
+
+test('nextActiveIndex recovers from an out-of-range active index', () => {
+  assert.equal(nextActiveIndex('ArrowDown', 99, 3), 2);
+  assert.equal(nextActiveIndex('ArrowUp', -5, 3), 0);
 });

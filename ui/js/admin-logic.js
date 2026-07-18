@@ -4,6 +4,21 @@
    reordering, and the dock-capacity check. All operate on plain data and touch
    no DOM or module state. */
 
+/* Where a listbox keypress moves the active option. Returns the new index, or
+   null for keys that do not move it. Clamps rather than wraps, matching the
+   WAI-ARIA listbox pattern. */
+export function nextActiveIndex(key, active, len) {
+  if (len <= 0) return null;
+  const clamp = i => Math.max(0, Math.min(i, len - 1));
+  switch (key) {
+    case 'ArrowDown': return clamp(active + 1);
+    case 'ArrowUp':   return clamp(active - 1);
+    case 'Home':      return 0;
+    case 'End':       return len - 1;
+    default:          return null;
+  }
+}
+
 /* The dock renders at most four apps (dashboard.js slices to DOCK_MAX), so the
    Show in Dock toggle is unavailable once four others are in. An app already in
    the dock is never blocked, since it holds one of the four slots itself. */
