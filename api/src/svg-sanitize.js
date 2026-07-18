@@ -8,7 +8,11 @@ const SAFE_ELEMENTS = new Set(['svg','g','path','circle','ellipse','rect','line'
 const SAFE_ATTRS    = new Set(['viewBox','xmlns','width','height','fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','opacity','fill-opacity','stroke-opacity','transform','d','cx','cy','r','rx','ry','x','y','x1','y1','x2','y2','points','offset','stop-color','stop-opacity','gradientUnits','gradientTransform','patternUnits','patternTransform','clip-path','mask','id','class','style','preserveAspectRatio','text-anchor','font-size','font-family','font-weight']);
 const SAFE_ELEMENTS_LC = new Set([...SAFE_ELEMENTS].map(s => s.toLowerCase()));
 const SAFE_ATTRS_LC    = new Set([...SAFE_ATTRS].map(s => s.toLowerCase()));
-const UNSAFE_ATTR_RE = /^(on\w|href|xlink:href|src|action|formaction|data)$/i;
+const UNSAFE_ATTR_RE = /^(href|xlink:href|src|action|formaction|data)$/i;
+/* Any on* attribute is an event handler (onload, onerror, onclick, ...). The
+   earlier `on\w` matched only 3-char names and never fired; the allowlist below
+   already stripped these, but this makes the blocklist mean what it says. */
+const EVENT_ATTR_RE = /^on/i;
 
 function scrubCss(css) {
   return css
@@ -36,7 +40,7 @@ function sanitizeSvg(input) {
       if (!SAFE_ELEMENTS_LC.has(localTag)) return '';
       const safeAttrs = attrs.replace(/\s([a-zA-Z:_][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))/g, (m, name, dq, sq, uq) => {
         const lname = name.toLowerCase();
-        if (UNSAFE_ATTR_RE.test(lname)) return '';
+        if (UNSAFE_ATTR_RE.test(lname) || EVENT_ATTR_RE.test(lname)) return '';
         if (!SAFE_ATTRS_LC.has(lname) && !lname.startsWith('aria-') && !lname.startsWith('data-')) return '';
         if (lname === 'style') {
           const q = dq != null ? '"' : (sq != null ? "'" : '"');
