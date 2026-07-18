@@ -71,10 +71,12 @@ body{background:transparent;position:relative;z-index:1}
 .rv{flex:2;min-width:0;font-size:14px;color:var(--dm);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rv.is-ph{color:#6e6e73}
 .ie-row.editing .rv,.ie-row.editing .pe{display:none}
+.ie-row .rv{cursor:pointer}
 .ie-row .row-inp{display:none;flex:2;background:transparent;border:none;color:var(--tx);font-size:14px;font-family:inherit;text-align:right;padding:0;min-width:0;outline:none}
 .ie-row.editing .row-inp{display:block}
 .ie-row.editing{background:rgba(255,255,255,.03)}
-.pe{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--dm);cursor:pointer;flex-shrink:0;font-size:14px;transition:color var(--t),background var(--t)}
+.pe{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--dm);cursor:pointer;flex-shrink:0;font-size:14px;transition:color var(--t),background var(--t);position:relative}
+.pe::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px}
 .pe:hover{color:var(--tx);background:rgba(255,255,255,.08)}
 .row-btns{display:flex;gap:6px;flex-shrink:0}
 .signout-row{margin-top:12px;display:flex;justify-content:flex-start}
@@ -89,7 +91,8 @@ body{background:transparent;position:relative;z-index:1}
 .row-dd-list.checklist{max-height:240px;overflow-y:auto;min-width:200px}
 .row-dd-empty{padding:10px 16px;font-size:14px;color:var(--dm);cursor:default}
 .row-dd-list li{padding:10px 16px;font-size:14px;color:var(--tx);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:10px}
-.row-dd-list li:hover{background:rgba(255,255,255,.08)}
+.row-dd-list li:hover,.row-dd-list li.kb-active{background:rgba(255,255,255,.08)}
+.row-dd-list li:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
 .row-dd-list li[aria-selected="true"]::before{content:'✓';color:var(--ac);font-weight:700;width:14px;flex-shrink:0;font-size:13px}
 .row-dd-list li[aria-selected="false"]::before{content:'';width:14px;flex-shrink:0}
 

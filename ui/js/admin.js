@@ -122,6 +122,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     const p=top.indexOf(item);canUp=p>0;canDown=p<top.length-1;
   }
   const handle=document.createElement('div');handle.className='rord';handle.textContent='⠿';
+  handle.setAttribute('aria-hidden','true');
   if(_filtering)handle.style.visibility='hidden';
   const ico=document.createElement('div');ico.className='rico';ico.style.background=rc(item.color);
   if(item.type==='folder'){

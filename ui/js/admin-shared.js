@@ -2,6 +2,7 @@
    Stateless helpers and constants used across the admin modules. No shared
    mutable state lives here; that stays in the main module. */
 import { html, raw, setHtml } from '/js/html.js?v=1';
+import { nextActiveIndex } from '/js/admin-logic.js?v=1';
 
 export const API = '';
 
@@ -81,11 +82,75 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
   }
 
   pen.addEventListener('click', open);
+  /* Secret rows already open from the value text; match that so the target is
+     the whole value, not just a 28px pencil. */
+  valEl.addEventListener('click', open);
   inp.addEventListener('blur', commit);
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); commit(); }
     if (e.key === 'Escape') { e.preventDefault(); row.classList.remove('editing'); }
   });
+}
+
+/* Keyboard and focus behaviour for a `.row-dd` checklist (button + role=listbox).
+   The caller owns the markup and what a toggle means; this adds the listbox
+   interaction WAI-ARIA expects: roving tabindex, arrows, Home/End, Enter/Space,
+   Escape, and outside-click close. onToggle(li) runs for an activated option. */
+export function wireChecklist(dd, btn, list, onToggle) {
+  const opts = () => [...list.querySelectorAll('li[role="option"]')];
+  let active = -1;
+
+  const setActive = i => {
+    const o = opts();
+    if (!o.length || i == null) return;
+    active = i;
+    o.forEach((li, n) => {
+      li.tabIndex = n === active ? 0 : -1;
+      li.classList.toggle('kb-active', n === active);
+    });
+    o[active].focus();
+  };
+  const open = () => {
+    list.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    const o = opts();
+    const first = o.findIndex(li => li.getAttribute('aria-selected') === 'true');
+    setActive(first >= 0 ? first : 0);
+  };
+  const close = ({ focusBtn = false } = {}) => {
+    list.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    opts().forEach(li => li.classList.remove('kb-active'));
+    if (focusBtn) btn.focus();
+  };
+  const toggle = li => { onToggle(li); };
+
+  btn.addEventListener('click', e => { e.stopPropagation(); if (list.hidden) open(); else close(); });
+  btn.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (list.hidden) open(); }
+  });
+
+  list.addEventListener('click', e => {
+    const li = e.target.closest('li[role="option"]');
+    if (li) toggle(li);
+  });
+  list.addEventListener('keydown', e => {
+    const o = opts();
+    if (!o.length) return;
+    const moved = nextActiveIndex(e.key, active, o.length);
+    if (moved != null) { e.preventDefault(); setActive(moved); return; }
+    switch (e.key) {
+      case ' ':
+      case 'Enter':  e.preventDefault(); if (o[active]) toggle(o[active]); break;
+      case 'Escape': e.preventDefault(); close({ focusBtn: true }); break;
+      case 'Tab':    close(); break;
+      default: break;
+    }
+  });
+
+  document.addEventListener('click', e => { if (!dd.contains(e.target)) close(); });
+  opts().forEach(li => { li.tabIndex = -1; });
+  return { close };
 }
 
 /* Secret inline-edit row: shows Configured/Not set, edits via a password field,
