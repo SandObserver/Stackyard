@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Weather widget: the bottom of the rain and shower drops was clipped. The
+  precipitation clip only needs to mask the top edge where it meets the cloud,
+  so it now extends to the bottom of the icon.
+
 - Internal: the uploaded-SVG sanitizer's event-handler blocklist matched only
   three-character attribute names, so `onload`/`onerror` and the like were never
   caught by it. The allowlist already stripped them, so this was not a live hole,
