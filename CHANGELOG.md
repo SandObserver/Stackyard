@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- The SSRF guard now blocks IPv4-in-IPv6 forms of private targets that the
+  previous range check missed: hex-tailed IPv4-mapped literals (e.g.
+  `::ffff:7f00:1` for 127.0.0.1) and the NAT64 well-known prefix. These affect
+  the URL-checking endpoints in the admin UI. IPv6 literal targets now connect
+  correctly (the bracketed form was passed to the socket unstripped).
+
 - Security headers (X-Content-Type-Options, Referrer-Policy, Permissions-Policy,
   X-Frame-Options, Content-Security-Policy) are now sent on every response.
   nginx does not inherit server-level headers into a location that sets its own,
