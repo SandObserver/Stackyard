@@ -105,7 +105,7 @@
 
 ---
 
-## [1.0.0] — First public release - 2026-07-12
+## [1.0.0] - First public release - 2026-07-12
 
 Stackyard is a self-hosted homelab dashboard: a calm, launcher-style grid
 of app tiles, folders, and a few useful widgets. Single container, no
@@ -120,7 +120,7 @@ runtime dependencies.
 - SSRF-guarded requests, DNS-rebind protection, non-root container,
   multi-arch images (amd64/arm64), optional password protection
 
-Serves plain HTTP — built for a trusted LAN, not public exposure. See
+Serves plain HTTP, built for a trusted LAN, not public exposure. See
 [`docs/security.md`](docs/security.md) before exposing it further.
 
 ---
