@@ -9,9 +9,10 @@ test('script elements are removed', () => {
 });
 
 test('event-handler attributes are stripped', () => {
-  const out = sanitizeSvg('<svg onload="evil()"><rect onclick="x()" width="10"/></svg>');
+  const out = sanitizeSvg('<svg onload="evil()"><rect onclick="x()" onanimationstart="y()" width="10"/></svg>');
   assert.doesNotMatch(out, /onload/i);
   assert.doesNotMatch(out, /onclick/i);
+  assert.doesNotMatch(out, /onanimationstart/i);
   assert.match(out, /width="10"/);
 });
 

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Internal: the uploaded-SVG sanitizer's event-handler blocklist matched only
+  three-character attribute names, so `onload`/`onerror` and the like were never
+  caught by it. The allowlist already stripped them, so this was not a live hole,
+  but the blocklist now matches any `on*` attribute as intended.
+
 - The SSRF guard now blocks IPv4-in-IPv6 forms of private targets that the
   previous range check missed: hex-tailed IPv4-mapped literals (e.g.
   `::ffff:7f00:1` for 127.0.0.1) and the NAT64 well-known prefix. These affect
