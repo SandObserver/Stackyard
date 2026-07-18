@@ -354,7 +354,7 @@ function kvRowEl(host, rows, row, ph){
   setHtml(el, html`
     <input class="kv-k" type="text" placeholder="Key" value="${row.key}" aria-label="Header key">
     <input class="kv-v" type="${row.secret?'password':'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="Header value">
-    <label class="kv-cred" title="Store as a credential (hidden after saving)"><input type="checkbox" ${row.secret?'checked':''} aria-label="Credential"><span class="kv-lock">🔒</span></label>
+    <label class="kv-cred" title="Store this value as a credential: hidden after saving and never exported"><input type="checkbox" ${row.secret?'checked':''} aria-label="Secret"><span class="kv-box"></span><span class="kv-cred-lbl">Secret</span></label>
     <button class="kv-del" type="button" aria-label="Remove">✕</button>`);
   const kEl=el.querySelector('.kv-k'), vEl=el.querySelector('.kv-v'), cEl=el.querySelector('.kv-cred input'), dEl=el.querySelector('.kv-del');
   kEl.oninput=()=>{ row.key=kEl.value; };
