@@ -18,6 +18,7 @@ RUN apk add --no-cache nginx supervisor && \
 
 # Copy Nginx config — Alpine nginx reads from http.d/
 COPY nginx/dashboard.conf /etc/nginx/http.d/dashboard.conf
+COPY nginx/security-headers.conf /etc/nginx/http.d/security-headers.conf
 
 # Copy UI static files
 COPY ui/ /usr/share/nginx/html/

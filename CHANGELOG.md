@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Security headers (X-Content-Type-Options, Referrer-Policy, Permissions-Policy,
+  X-Frame-Options, Content-Security-Policy) are now sent on every response.
+  nginx does not inherit server-level headers into a location that sets its own,
+  so locations that set a Cache-Control header (including /icons/, the only path
+  serving uploaded content) were silently sending none. The shared set now lives
+  in nginx/security-headers.conf and is included per location.
+
 - Live activity badge headers and URL parameters can each be marked as a
   credential. Credential values are stored server-side, shown as "Configured"
   and never sent back to the browser or included in a config export. Existing
