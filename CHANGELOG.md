@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Admin badge color picker: the last swatch could be clipped at the right edge
+  on narrow screens. The swatch row now wraps instead of overflowing.
+
 - Weather widget: the bottom of the rain and shower drops was clipped. The
   precipitation clip only needs to mask the top edge where it meets the cloud,
   so it now extends to the bottom of the icon.
