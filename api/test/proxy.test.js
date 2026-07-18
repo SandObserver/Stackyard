@@ -5,7 +5,7 @@ process.env.CONFIG_PATH = '/tmp/stackyard-proxy-test-nonexistent.json';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
-const { getHostIp, shouldSkipTls, PRIVATE_IP_RE, parsePrometheus, parseXml, _internals } = require('../src/proxy');
+const { getHostIp, shouldSkipTls, PRIVATE_IP_RE, isPrivateAddress, embeddedIPv4, parsePrometheus, parseXml, _internals } = require('../src/proxy');
 /* guardSsrf/fetchJSON are private to proxy.js: routes go through the
    fetchChecked/fetchUnchecked boundary. Tests reach the primitives directly. */
 const { guardSsrf, fetchJSON } = _internals;
@@ -18,6 +18,42 @@ test('PRIVATE_IP_RE classifies private ranges as private', () => {
 test('PRIVATE_IP_RE treats public addresses as public', () => {
   for (const ip of ['8.8.8.8', '1.1.1.1', '172.15.0.1', '172.32.0.1', '93.184.216.34'])
     assert.ok(!PRIVATE_IP_RE.test(ip), `${ip} should be public`);
+});
+
+test('embeddedIPv4 extracts the IPv4 from IPv4-in-IPv6 wrappers', () => {
+  assert.equal(embeddedIPv4('::ffff:7f00:1'), '127.0.0.1');
+  assert.equal(embeddedIPv4('::ffff:a9fe:a9fe'), '169.254.169.254');
+  assert.equal(embeddedIPv4('64:ff9b::7f00:1'), '127.0.0.1');
+  assert.equal(embeddedIPv4('::ffff:127.0.0.1'), '127.0.0.1');
+  assert.equal(embeddedIPv4('::ffff:0808:0808'), '8.8.8.8');
+  assert.equal(embeddedIPv4('2001:db8::1'), null);
+});
+
+test('isPrivateAddress blocks hex-form IPv4-mapped and NAT64 private targets', () => {
+  for (const a of ['::ffff:7f00:1', '::ffff:a00:1', '::ffff:a9fe:a9fe', '64:ff9b::7f00:1', '::ffff:127.0.0.1'])
+    assert.ok(isPrivateAddress(a), `${a} should be private`);
+});
+
+test('isPrivateAddress refuses an IPv4-in-IPv6 wrapper it cannot parse', () => {
+  assert.ok(isPrivateAddress('::ffff:nonsense'));
+  assert.ok(isPrivateAddress('64:ff9b::zz'));
+});
+
+test('isPrivateAddress leaves public addresses public', () => {
+  for (const a of ['8.8.8.8', '::ffff:8.8.8.8', '::ffff:0808:0808', '2001:db8::1', '93.184.216.34'])
+    assert.ok(!isPrivateAddress(a), `${a} should be public`);
+});
+
+test('isPrivateAddress agrees with PRIVATE_IP_RE on plain addresses', () => {
+  for (const a of ['10.0.0.1', '127.0.0.1', '192.168.1.1', '::1', 'fd00::1'])
+    assert.ok(isPrivateAddress(a), `${a} should be private`);
+});
+
+test('guardSsrf blocks IPv4-mapped and NAT64 loopback/metadata literals', async () => {
+  for (const u of ['http://[::ffff:7f00:1]/', 'http://[::ffff:a9fe:a9fe]/', 'http://[64:ff9b::7f00:1]/', 'http://[::1]/']) {
+    const r = await guardSsrf(u);
+    assert.match(r.error || '', /private address/, `${u} should be blocked`);
+  }
 });
 
 test('guardSsrf allows dotless Docker service names without pinning', async () => {

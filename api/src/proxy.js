@@ -1,11 +1,49 @@
 const http  = require('http');
 const https = require('https');
+const net   = require('net');
 const dns   = require('dns').promises;
 const { loadConfig } = require('./config');
 const { PING_MS, FETCH_MS } = require('./timeouts');
 const { IS_DEMO } = require('./demo');
 
 const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.|::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.))/i;
+
+/* Extract the embedded IPv4 from an IPv4-in-IPv6 address as dotted-decimal, or
+   null if there is none. Covers the two forms that wrap an IPv4 target in an
+   IPv6 literal, in either hex or dotted tail:
+     ::ffff:0:0/96   IPv4-mapped   (::ffff:7f00:1  and  ::ffff:127.0.0.1)
+     64:ff9b::/96    NAT64 well-known
+   PRIVATE_IP_RE only matches the dotted-tail spelling of the mapped form, so
+   without this a hex-tailed literal like ::ffff:7f00:1 (127.0.0.1) or
+   64:ff9b::a9fe:a9fe (169.254.169.254 metadata) slips past the range check. */
+function embeddedIPv4(addr) {
+  if (typeof addr !== 'string') return null;
+  const s = addr.toLowerCase();
+  const m = s.match(/^(?:::ffff:|64:ff9b::)([0-9a-f.:]+)$/);
+  if (!m) return null;
+  const tail = m[1];
+  if (tail.includes('.')) return net.isIPv4(tail) ? tail : null;
+  const parts = tail.split(':');
+  if (parts.length !== 2) return null;
+  const hi = parseInt(parts[0], 16), lo = parseInt(parts[1], 16);
+  if (!Number.isInteger(hi) || !Number.isInteger(lo) || hi > 0xffff || lo > 0xffff) return null;
+  return `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`;
+}
+
+/* True when an address is private, loopback, link-local, or an IPv4-in-IPv6
+   wrapper around one. The wrapper prefixes are blocked outright even when the
+   embedded address looks public: nothing legitimate targets a homelab service
+   through ::ffff: or NAT64, so allowing them only widens the SSRF surface. */
+function isPrivateAddress(addr) {
+  if (typeof addr !== 'string' || !addr) return false;
+  const s = addr.toLowerCase();
+  if (s.startsWith('::ffff:') || s.startsWith('64:ff9b::')) {
+    const v4 = embeddedIPv4(s);
+    if (v4) return PRIVATE_IP_RE.test(v4);
+    return true; /* wrapper prefix with a tail we can't parse: refuse */
+  }
+  return PRIVATE_IP_RE.test(s);
+}
 const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
 /* Setting this true disables SSRF filtering entirely: private, loopback and
    link-local targets are no longer blocked. Most homelab setups need it on
@@ -195,11 +233,11 @@ async function guardSsrf(rawUrl) {
      for the rewrite. */
   const hostIp = getHostIp();
   if (hostIp && h === hostIp) return { error:null, ip:null };
-  if (!ALLOW_PRIVATE_IPS && (PRIVATE_IP_RE.test(h) || h === 'localhost')) return { error:`Blocked: ${h} is a private address.`, ip:null };
+  if (!ALLOW_PRIVATE_IPS && (isPrivateAddress(h) || h === 'localhost')) return { error:`Blocked: ${h} is a private address.`, ip:null };
   let address;
   try { ({ address } = await dns.lookup(h)); }
   catch { return { error:`Blocked: ${h} could not be resolved.`, ip:null }; }
-  if (!ALLOW_PRIVATE_IPS && PRIVATE_IP_RE.test(address)) return { error:`Blocked: ${h} resolves to private IP ${address}.`, ip:null };
+  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(address)) return { error:`Blocked: ${h} resolves to private IP ${address}.`, ip:null };
   /* A literal address cannot be rebound, so there is nothing to pin; connect by
      the original host and avoid re-serialising an IPv6 literal. */
   if (h === address) return { error:null, ip:null };
@@ -229,8 +267,12 @@ function fetchJSON(raw, opts = {}) {
     if (bodyBuf) hdrs['Content-Length'] = bodyBuf.length;
     const pin = opts.pinIp && opts.pinIp !== u.hostname ? opts.pinIp : null;
     if (pin) hdrs['Host'] = u.host;
+    /* http.request wants a bare IPv6 address, not the bracketed form URL keeps
+       (hostname is "[::1]"); brackets here fail to resolve. Host header and SNI
+       stay on the original bracketed hostname. */
+    const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
     const req = lib.request({
-      hostname: pin || u.hostname, port, path: u.pathname + u.search,
+      hostname: connectHost, port, path: u.pathname + u.search,
       method: opts.method || 'GET', headers: hdrs,
       servername: pin ? u.hostname : undefined, /* keep SNI + cert validation on the real hostname */
       timeout: opts.timeout || FETCH_MS,
@@ -298,7 +340,8 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const skip = skipTls != null ? skipTls : shouldSkipTls(u.hostname, loadConfig());
     const pin  = pinIp && pinIp !== u.hostname ? pinIp : null;
-    const opts = { hostname:pin||u.hostname, port, path:u.pathname||'/', timeout:ms, rejectUnauthorized:!skip };
+    const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
+    const opts = { hostname:connectHost, port, path:u.pathname||'/', timeout:ms, rejectUnauthorized:!skip };
     if (pin) { opts.headers = { Host: u.host }; opts.servername = u.hostname; }
 
     function tryGet() {
@@ -385,5 +428,6 @@ async function pingChecked(url, ms, skipTls) {
 module.exports = {
   fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError,
   rewriteUrl, getHostIp, shouldSkipTls, parsePrometheus, parseXml, PRIVATE_IP_RE,
+  isPrivateAddress, embeddedIPv4,
   _internals: { fetchJSON, pingUrl, guardSsrf },
 };
