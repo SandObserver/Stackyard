@@ -111,13 +111,13 @@ test('buildAppItem enables healthcheck and activity from their fields', () => {
   const { item } = buildAppItem({
     label: 'A', href: 'http://x', hcEn: true, hcCon: 'nginx',
     actEn: true, actUrl: 'http://api', actInt: 45,
-    actParams: { a: '1' }, actHeaders: {}, spaths: ['stats.total'],
+    actParams: [{ key: 'a', value: '1', secret: false }], actHeaders: [], spaths: ['stats.total'],
   }, null);
   assert.equal(item.monitoring.healthcheck.enabled, true);
   assert.equal(item.monitoring.healthcheck.container, 'nginx');
   assert.equal(item.monitoring.activity.enabled, true);
   assert.equal(item.monitoring.activity.interval, 45);
-  assert.deepEqual(item.monitoring.activity.params, { a: '1' });
+  assert.deepEqual(item.monitoring.activity.params, [{ key: 'a', value: '1', secret: false }]);
   assert.equal(item.monitoring.activity.headers, undefined); // empty -> omitted
   assert.equal(item.monitoring.activity.extract, 'stats.total');
 });

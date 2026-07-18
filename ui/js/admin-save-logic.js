@@ -112,8 +112,8 @@ export function buildAppItem(v, orig) {
       healthcheck: { enabled: v.hcEn && (!!v.hcCon || !!v.hcPing), container: v.hcCon, pingUrl: v.hcPing },
       activity: {
         enabled: v.actEn && !!v.actUrl, url: v.actUrl,
-        params:  Object.keys(v.actParams || {}).length ? v.actParams : undefined,
-        headers: Object.keys(v.actHeaders || {}).length ? v.actHeaders : undefined,
+        params:  v.actParams?.length ? v.actParams : undefined,
+        headers: v.actHeaders?.length ? v.actHeaders : undefined,
         extract: spaths.length === 1 ? spaths[0] : spaths.length > 1 ? spaths.map(p => ({ path: p })) : undefined,
         interval: Math.max(10, v.actInt),
         custom: customObj,
