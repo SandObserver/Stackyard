@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const {
   makeToken, verifyToken, hashPassword, verifyPassword,
-  parseCookies, rateLimit, checkRateLimit, recordFailedAttempt, clearAttempts,
+  parseCookies, rateLimit, checkRateLimit, registerLoginAttempt, clearAttempts,
   SESSION_MAX_AGE_MS,
 } = require('../src/auth');
 
@@ -90,10 +90,11 @@ test('rateLimit allows up to the max then blocks', () => {
   assert.ok(rateLimit(ip, 'k', 3, 60_000), '4th call should be blocked');
 });
 
-test('login attempts lock out after the limit and reset on clear', () => {
+test('registerLoginAttempt allows the limit then blocks, and reset on clear', () => {
   const ip = '203.0.113.2';
-  for (let i = 0; i < 5; i++) recordFailedAttempt(ip);
-  assert.ok(checkRateLimit(ip), 'should be locked out after 5 attempts');
+  for (let i = 0; i < 5; i++) assert.equal(registerLoginAttempt(ip), null, `attempt ${i + 1} should be allowed`);
+  assert.ok(registerLoginAttempt(ip), '6th attempt should be blocked');
+  assert.ok(checkRateLimit(ip), 'should read as locked out');
   clearAttempts(ip);
   assert.equal(checkRateLimit(ip), null, 'clearAttempts should reset the lockout');
 });

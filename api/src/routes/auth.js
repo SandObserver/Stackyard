@@ -3,7 +3,7 @@ const { on, json, readBody, checkOrigin, getIp } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
-const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, checkRateLimit, recordFailedAttempt, clearAttempts, isAuthenticated, hasValidSession } = require('../auth');
+const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession } = require('../auth');
 
 on('GET', '/api/auth/check', (req, res) => {
   const cfg = loadConfig();
@@ -21,12 +21,12 @@ on('POST', '/api/auth/login', async(req, res) => {
     const { password = '' } = JSON.parse(await readBody(req));
     const cfg = loadConfig();
     if (!cfg.settings?.auth?.enabled) return json(res, 200, { ok:true }); /* auth off, always pass */
-    const limitErr = checkRateLimit(ip);
-    if (limitErr) { log.audit('login blocked', { ip, reason:'rate_limit' }); return json(res, 429, { error:limitErr }); }
     const hash = cfg.settings.auth.passwordHash;
     if (!hash) return json(res, 401, { error:'No password set. Enable auth and set a password in Admin → Server.' });
+    const limitErr = registerLoginAttempt(ip);
+    if (limitErr) { log.audit('login blocked', { ip, reason:'rate_limit' }); return json(res, 429, { error:limitErr }); }
     const ok = await verifyPassword(password, hash);
-    if (!ok) { recordFailedAttempt(ip); log.audit('login failed', { ip }); return json(res, 401, { error:'Incorrect password.' }); }
+    if (!ok) { log.audit('login failed', { ip }); return json(res, 401, { error:'Incorrect password.' }); }
     clearAttempts(ip);
     log.audit('login success', { ip });
     const secret = getOrCreateSecret();

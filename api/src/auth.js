@@ -117,10 +117,18 @@ function checkRateLimit(ip) {
   return null;
 }
 
-function recordFailedAttempt(ip) {
+/* Atomically check the login limit and count this attempt in one synchronous
+   step, with no await in between, so a burst of concurrent logins cannot all
+   clear the check before any of them is counted (the check-then-increment race).
+   Returns a limit message if already at the cap without counting, otherwise
+   records the attempt and returns null. The caller clears the count on success. */
+function registerLoginAttempt(ip) {
+  const err = checkRateLimit(ip);
+  if (err) return err;
   const now = Date.now();
   const rec = _loginAttempts.get(ip) || { count:0, first:now };
   _loginAttempts.set(ip, { count: rec.count + 1, first: rec.first });
+  return null;
 }
 
 function clearAttempts(ip) { _loginAttempts.delete(ip); }
@@ -170,6 +178,6 @@ function hasValidSession(req) {
 module.exports = {
   getOrCreateSecret, hashPassword, verifyPassword,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
-  checkRateLimit, recordFailedAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
+  checkRateLimit, registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
   SESSION_MAX_AGE_MS,
 };
