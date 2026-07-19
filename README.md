@@ -110,7 +110,7 @@ Current widgets and the services they integrate with:
 - **Now Playing**: Plex, Jellyfin, Emby, Navidrome
 - **Weather**: Open-Meteo (no API key required)
 - **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
-- **GitHub**: contribution graph and open pull requests
+- **GitHub**: contribution graph and pull requests
 - **Books**: Audiobookshelf, Komga, Kavita
 - **System stats**: CPU, memory, disk usage, network speed (SpeedTest Tracker, MySpeed), RX/TX throughput, and uptime.
 - **Disk health**: TrueNAS, Scrutiny
