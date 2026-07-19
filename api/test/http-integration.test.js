@@ -17,7 +17,7 @@ require('../src/routes');       // registers auth/config/health/badges/... + OPT
 require('../src/widget-data');  // registers /api/widget-data/:id (pulls in widgets)
 const { dispatch, on } = require('../src/router');
 const { saveConfig } = require('../src/config');
-const { hashPassword, makeToken } = require('../src/auth');
+const { hashPassword, makeToken, clearAttempts } = require('../src/auth');
 
 /* Routes that fail on purpose, to prove the router turns a handler error into a
    500 instead of crashing the process. */
@@ -89,6 +89,21 @@ test('login with the correct password returns 200 and a session cookie', async (
   const setCookie = String(r.headers['set-cookie'] || '');
   assert.match(setCookie, /ds=.+/);
   assert.match(setCookie, /HttpOnly/);
+});
+
+test('a concurrent burst of wrong passwords is capped, not all let through', async () => {
+  // The bug this guards against: a parallel burst all clears the rate check
+  // before any attempt is counted, so every one runs. With the atomic check,
+  // at most the limit (5) reach the password check; the rest are blocked.
+  const results = await Promise.all(
+    Array.from({ length: 15 }, () => req('POST', '/api/auth/login', { body: { password: 'wrong' } })),
+  );
+  const got401 = results.filter(r => r.status === 401).length;
+  const got429 = results.filter(r => r.status === 429).length;
+  assert.ok(got401 <= 5, `at most 5 attempts should reach the password check, got ${got401}`);
+  assert.equal(got401 + got429, 15);
+  assert.ok(got429 >= 10, 'the rest should be rate-limited');
+  clearAttempts('127.0.0.1'); // reset so later login tests start clean
 });
 
 test('a valid session cookie grants access to a protected route', async () => {
