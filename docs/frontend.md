@@ -16,6 +16,8 @@ See [widgets.md](./widgets.md).
 
 `dashboard.js` polls `/api/badges` and `/api/health` and paints tiles through an id-to-elements registry. Appearance is one pure function, `computeBadgeVisual` in `badge-logic.js`.
 
+Each of these is a single batch request: the server fetches every configured badge (or health target) concurrently, each bounded by `PING_MS`, and returns one combined object only after all of them settle. So a slow or unreachable upstream holds back the whole batch until it times out, delaying the refresh of the other tiles by up to `PING_MS`. This is bounded and fine at homelab scale; if a dashboard ever grows large enough that one dead upstream's delay is a problem, the batch would need to stream per-tile results instead.
+
 ## Cache busting
 
 `?v=` on `/css/` and `/js/` URLs is a content hash rewritten at release by `scripts/bump-cache-busting.js`; do not edit it. `?v=` on `/widgets/` URLs in `widget-types.js` is manual: bump it when you change a widget's own files.
