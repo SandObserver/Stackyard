@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fixed: parallel login attempts are now correctly rate-limited.
+
 ## [1.3.0] - 2026-07-18
 
 - Badge header and URL parameter rows: aligned the field spacing with the rest
