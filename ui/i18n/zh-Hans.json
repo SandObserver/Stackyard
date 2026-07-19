@@ -27,7 +27,7 @@
     "hideHealthy": "隐藏健康徽章",
     "socketUrl": "Socket 地址",
     "loggingTip": "“错误”级别仅显示警告和错误。安全事件始终会被记录。",
-    "socketTip": "为实现最小权限访问，请使用 <strong>Proxy Socket</strong> 容器的地址。没有代理？您也可以直接输入 <code>unix:///var/run/docker.sock</code>。<span class=\"tip-danger\">请仅在您完全掌控的私有可信网络中执行此操作。</span>",
+    "socketTip": "为实现最小权限访问，请使用 <strong>Proxy Socket</strong> 容器的地址。",
     "security": "安全",
     "passwordProtection": "密码保护",
     "password": "密码",

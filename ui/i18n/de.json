@@ -27,7 +27,7 @@
     "hideHealthy": "Badge für gesunden Status ausblenden",
     "socketUrl": "Socket-URL",
     "loggingTip": "\"Fehler\" zeigt nur Warnungen und Fehler an. Sicherheitsereignisse werden immer protokolliert.",
-    "socketTip": "Verwende die URL eines <strong>Proxy Socket</strong>-Containers für einen Zugriff mit minimalen Rechten. Kein Proxy vorhanden? Du kannst auch direkt <code>unix:///var/run/docker.sock</code> eingeben. <span class=\"tip-danger\">Tu dies nur in einem privaten, vertrauenswürdigen Netzwerk, das vollständig unter deiner Kontrolle steht.</span>",
+    "socketTip": "Verwende die URL eines <strong>Proxy Socket</strong>-Containers für einen Zugriff mit minimalen Rechten.",
     "security": "Sicherheit",
     "passwordProtection": "Passwortschutz",
     "password": "Passwort",

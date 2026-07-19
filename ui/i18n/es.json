@@ -27,7 +27,7 @@
     "hideHealthy": "Ocultar insignia de estado saludable",
     "socketUrl": "URL del socket",
     "loggingTip": "\"Errores\" muestra solo advertencias y errores. Los eventos de seguridad siempre se registran.",
-    "socketTip": "Usa la URL de un contenedor <strong>Proxy Socket</strong> para un acceso con mínimo privilegio. ¿No tienes proxy? Puedes introducir directamente <code>unix:///var/run/docker.sock</code>. <span class=\"tip-danger\">Haz esto solo en una red privada y de confianza que controles por completo.</span>",
+    "socketTip": "Usa la URL de un contenedor <strong>Proxy Socket</strong> para un acceso con mínimo privilegio.",
     "security": "Seguridad",
     "passwordProtection": "Protección con contraseña",
     "password": "Contraseña",
