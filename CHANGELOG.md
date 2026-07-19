@@ -2,7 +2,28 @@
 
 ## [Unreleased]
 
-- Fixed: parallel login attempts are now correctly rate-limited.
+- Fixed: a config file that parses but has the wrong shape (for example `items`
+  is not a list) no longer crashes the server. It is backed up to a timestamped
+  file and replaced with a blank config, the same as an unparseable file.
+
+- Fixed: an unexpected error in a request handler now returns a 500 for that
+  request instead of taking the whole server down.
+
+- Fixed: parallel login attempts are now correctly rate-limited. The limit was
+  checked before the password verification and only counted afterward, so a
+  burst of concurrent attempts could all pass the check before any was counted.
+
+- Fixed: the speed test view now works with a MySpeed or Speedtest Tracker
+  server on a private IP address.
+
+- Fixed: corrected the Docker socket hint, which suggested entering
+  `unix:///var/run/docker.sock` directly even though that is not supported. It
+  now points to a socket proxy URL.
+
+- Internal: the Conduit map fetch goes through the shared fetcher, gaining its
+  request deadline and size cap instead of using its own http/https code. Widget
+  data functions can now pass `{ raw: true }` to `ctx.fetchJSON` to get the
+  untouched response body for a custom parser.
 
 ## [1.3.0] - 2026-07-18
 
