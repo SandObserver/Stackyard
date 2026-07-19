@@ -3,14 +3,16 @@
 <p align="center"><b>A self-hosted homelab dashboard you actually want to look at.</b></p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/License-Apache_2.0-blue"></a>
   <a href="https://github.com/SandObserver/stackyard/pkgs/container/stackyard"><img alt="Container" src="https://img.shields.io/badge/ghcr.io-stackyard-2496ED?logo=docker&logoColor=white"></a>
-  <a href="https://stackyard-demo.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/demo-live-58c0cd"></a>
+  <a href="https://github.com/SandObserver/stackyard/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/SandObserver/stackyard"></a>
+  <a href="https://github.com/SandObserver/stackyard/pkgs/container/stackyard"><img alt="Tests Status" src="https://github.com/SandObserver/stackyard/actions/workflows/test.yml/badge.svg"></a>
 </p>
 
 <p align="center"><img src="docs/screenshot.png" width="85%" alt="Stackyard dashboard"></p>
 
+
 <p align="center">Try it: <b><a href="https://stackyard-demo.onrender.com">stackyard-demo.onrender.com</a></b><br>
+<sub><i>Note: The first demo visit may take up to a minute due to Render's free-tier cold start.</i></sub>
 
 Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a calm, launcher-style grid of app tiles, folders, and a small number of
 *genuinely useful* widgets, running in a single container with no external services or dependencies. Built to be glanced at a hundred times a day without feeling cluttered.
