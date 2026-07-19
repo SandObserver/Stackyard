@@ -82,3 +82,49 @@ test('an unterminated processing instruction is stripped', () => {
   const out = sanitizeSvg('<svg></svg><?php echo 1');
   assert.doesNotMatch(out, /<\?/);
 });
+
+test('namespace-prefixed dangerous elements are stripped', () => {
+  const out = sanitizeSvg('<svg><svg:script>alert(1)</svg:script><path d="M0 0"/></svg>');
+  assert.doesNotMatch(out, /<svg:script/i);
+  assert.doesNotMatch(out, /<script/i);
+  assert.match(out, /<path d="M0 0"/);
+});
+
+test('element and attribute matching is case-insensitive', () => {
+  const out = sanitizeSvg('<svg ONLOAD="x()"><ScRiPt>alert(1)</ScRiPt><PATH D="M0 0"/></svg>');
+  assert.doesNotMatch(out, /onload/i);
+  assert.doesNotMatch(out, /<script/i);
+  assert.match(out, /<PATH D="M0 0"/);
+});
+
+test('unquoted event-handler attributes are stripped', () => {
+  const out = sanitizeSvg('<svg><rect onclick=alert(1) width="5"/></svg>');
+  assert.doesNotMatch(out, /onclick/i);
+  assert.match(out, /width="5"/);
+});
+
+test('CSS expression() is scrubbed from a style body', () => {
+  const out = sanitizeSvg('<svg><style>.a{width:expression(alert(1))}</style></svg>');
+  assert.doesNotMatch(out, /expression/i);
+});
+
+test('legacy script protocols are scrubbed from CSS', () => {
+  const out = sanitizeSvg('<svg><style>.a{behavior:url(x.htc)}</style><rect style="x:vbscript:msgbox(1)"/></svg>');
+  assert.doesNotMatch(out, /behavior/i);
+  assert.doesNotMatch(out, /vbscript/i);
+});
+
+test('legitimate url(#id) references are preserved', () => {
+  const attr = sanitizeSvg('<rect style="fill:url(#grad)"/>');
+  assert.match(attr, /url\(#grad\)/);
+  const grad = sanitizeSvg('<svg><defs><linearGradient id="g"><stop offset="0" stop-color="#000"/></linearGradient></defs><rect fill="url(#g)"/></svg>');
+  assert.match(grad, /fill="url\(#g\)"/);
+  assert.match(grad, /<linearGradient id="g"/);
+});
+
+test('SMIL animation elements are stripped', () => {
+  const out = sanitizeSvg('<svg><animate attributeName="x"/><set attributeName="y"/><path d="M0 0"/></svg>');
+  assert.doesNotMatch(out, /<animate/i);
+  assert.doesNotMatch(out, /<set/i);
+  assert.match(out, /<path d="M0 0"/);
+});
