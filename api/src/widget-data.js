@@ -1,7 +1,8 @@
 const path = require('path');
 const { on, json, readBody, checkOrigin } = require('./router');
 const { loadConfig } = require('./config');
-const { fetchUnchecked, parsePrometheus } = require('./proxy');
+const { fetchUnchecked } = require('./proxy');
+const { parsePrometheus } = require('./parse-prometheus');
 const { FETCH_MS } = require('./timeouts');
 const { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
