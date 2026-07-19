@@ -149,3 +149,21 @@ test('shouldSkipTls only bypasses internal hostnames when enabled', () => {
 test('getHostIp returns an empty string when no config file exists', () => {
   assert.equal(getHostIp(), '');
 });
+
+test('fetchJSON returns the untouched body with opts.raw, and auto-parses without it', async () => {
+  const metrics = '# TYPE conduit_connected_clients gauge\nconduit_connected_clients 5\n';
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(metrics);
+  });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const port = server.address().port;
+  try {
+    const parsed = await fetchJSON(`http://127.0.0.1:${port}/metrics`, { timeout: 3000 });
+    assert.notEqual(typeof parsed.data, 'string'); // auto-parsed into an object
+    const raw = await fetchJSON(`http://127.0.0.1:${port}/metrics`, { raw: true, timeout: 3000 });
+    assert.equal(raw.data, metrics);               // returned untouched
+  } finally {
+    server.close();
+  }
+});

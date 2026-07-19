@@ -165,6 +165,7 @@ function fetchJSON(raw, opts = {}) {
       });
       res.on('end', () => {
         const body = Buffer.concat(bufs).toString('utf8');
+        if (opts.raw) return done(resolve, { status: res.statusCode, data: body });
         const ct   = (res.headers['content-type'] || '').toLowerCase();
         try { done(resolve, { status: res.statusCode, data: JSON.parse(body) }); }
         catch {
