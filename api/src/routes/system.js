@@ -113,43 +113,4 @@ on('GET', '/api/truenas-proxy', async(req, res) => {
   } catch(e) { json(res, e.status || 502, { error: e.message }); }
 });
 
-on('GET', '/api/speed-data/:id', async(req, res) => {
-  const cfg = loadConfig();
-  const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
-  if (!w) return json(res, 404, { error:'widget not found' });
-  const net = w.widgetConfig?.network;
-  if (!net?.enabled || !net?.url) return json(res, 503, { error:'network slot not configured' });
-
-  const provider = net.provider || 'myspeed';
-  const base     = normalizeBase(net.url);
-
-  try {
-    if (provider === 'speedtest-tracker') {
-      const r = await fetchChecked(base + '/api/speedtest/latest', { timeout: FETCH_MS });
-      const row = r.data?.data;
-      if (!row?.id) return json(res, 502, { error:'No result from Speedtest Tracker' });
-      json(res, 200, {
-        download: row.download,
-        upload:   row.upload,
-        ping:     row.ping,
-        failed:   row.failed || false,
-        ts:       row.created_at,
-      });
-    } else {
-      const headers = {};
-      if (net.myspeedPass) headers['x-password'] = net.myspeedPass;
-      const r = await fetchChecked(base + '/api/speedtests?limit=1', { headers, timeout: FETCH_MS });
-      if (r.status === 401) return json(res, 401, { error:'MySpeed returned 401, check password' });
-      const row = Array.isArray(r.data) ? r.data[0] : r.data;
-      if (!row) return json(res, 502, { error:'No result from MySpeed' });
-      json(res, 200, {
-        download: row.download,
-        upload:   row.upload,
-        ping:     row.ping,
-        failed:   false,
-        ts:       row.created,
-      });
-    }
-  } catch(e) { json(res, e.status || 502, { error:e.message }); }
-});
 
