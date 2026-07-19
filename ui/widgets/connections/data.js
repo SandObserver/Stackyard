@@ -4,9 +4,6 @@
    Self-contained: carries its own helpers so it doesn't depend on routes.js.
    Returns a result object (errors are reported inside it, never thrown). */
 
-const http  = require('http');
-const https = require('https');
-
 const COUNTRY_TO_ISO2 = {
   'united states':'US','united states of america':'US','usa':'US','canada':'CA','mexico':'MX',
   'united kingdom':'GB','uk':'GB','ireland':'IE','netherlands':'NL','germany':'DE','france':'FR',
@@ -36,20 +33,6 @@ function mapServices(wc){
 }
 
 /* Raw GET: Conduit exposes Prometheus-style text that needs the unparsed body. */
-function mapRawGet(base, path, headers){
-  return new Promise((resolve, reject) => {
-    let u; try { u = new URL(path, base); } catch(e){ return reject(e); }
-    const lib  = u.protocol === 'https:' ? https : http;
-    const port = u.port ? parseInt(u.port, 10) : (u.protocol === 'https:' ? 443 : 80);
-    const r2 = lib.get({ hostname:u.hostname, port, path:u.pathname + u.search, timeout:8000, headers:headers||{} }, rs => {
-      const chunks = []; rs.on('data', c => chunks.push(c));
-      rs.on('end', () => resolve({ status:rs.statusCode, body:Buffer.concat(chunks).toString('utf8') }));
-    });
-    r2.on('timeout', () => { r2.destroy(); reject(new Error('Timed out')); });
-    r2.on('error', reject);
-  });
-}
-
 function parseConduitText(raw){
   const regions = {}; let limit = 0, connected = 0, live = 0;
   String(raw).split('\n').forEach(line => {
@@ -144,9 +127,9 @@ async function mapView(config, fetchJSON) {
       color: s.color || MAP_DEFAULT_COLOR[s.type] || '#AF52DE', adminUrl: s.adminUrl || '' };
     try {
       if (s.type === 'conduit') {
-        const r = await mapRawGet(base, '/metrics');
+        const r = await fetchJSON(new URL('/metrics', base).href, { raw: true });
         if (r.status >= 400) throw new Error('HTTP ' + r.status);
-        Object.assign(o, { kind:'regions' }, parseConduitText(r.body));
+        Object.assign(o, { kind:'regions' }, parseConduitText(r.data));
       } else if (s.type === 'gluetun') {
         const r = await fetchJSON(base + '/v1/publicip/ip', { headers: s.apiKey ? { 'X-API-Key': s.apiKey } : {} });
         if (r.status === 401) throw new Error('Auth required — set the API key');

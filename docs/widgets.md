@@ -134,7 +134,7 @@ and the app's TLS-skip setting.
 | `ctx.settings` | Global non-secret dashboard settings. |
 | `ctx.endpoint` | The endpoint name, set when serving `optionsFrom` or a multi-view widget; otherwise the default. |
 | `ctx.params` | Extra query parameters from the request, as a `URLSearchParams`. |
-| `ctx.fetchJSON(url, opts)` | Fetch a URL and parse the body. JSON is returned as-is; Prometheus text and XML are auto-parsed. Returns `{ status, data }` or throws. Respects the app's TLS-skip setting. |
+| `ctx.fetchJSON(url, opts)` | Fetch a URL and parse the body. JSON is returned as-is; Prometheus text and XML are auto-parsed. Pass `{ raw: true }` to get the untouched text body instead, for a custom parser. Returns `{ status, data }` or throws. Respects the app's TLS-skip setting. |
 | `ctx.parsePrometheus(text)` | Parse a Prometheus metrics body into an object. |
 | `ctx.normalizeBase(raw)` | Tidy a user-entered base URL (add scheme, drop trailing slash). |
 | `ctx.buildAuth(decl, config)` | Build auth headers/params from a declared auth block. |
