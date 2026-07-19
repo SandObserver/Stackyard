@@ -30,7 +30,7 @@
     "hideHealthy": "Hide Healthy Badge",
     "socketUrl": "Socket URL",
     "loggingTip": "Errors shows warnings and errors only. Security events are always logged.",
-    "socketTip": "Use the URL of a <strong>socket proxy</strong> container for least-privilege access. No proxy? You can enter <code>unix:///var/run/docker.sock</code> directly. <span class=\"tip-danger\">Only do this on a private, trusted network you fully control.</span>",
+    "socketTip": "Use the URL of a <strong>socket proxy</strong> container for least-privilege access.",
     "security": "Security",
     "passwordProtection": "Password Protection",
     "password": "Password",
