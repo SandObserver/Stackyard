@@ -65,5 +65,9 @@ needed, sets `no-new-privileges`, and runs the API as a non-root user.
 
 ## Config file
 
-A config file that fails to parse is copied to `apps.json.corrupt` and the app
-starts with an empty config rather than overwriting the broken file. If your dashboards disappear after startup, check for `apps.json.corrupt` before making changes.
+A config file that fails to parse, or that parses but has the wrong shape (for
+example `items` is missing or is not a list), is copied to a timestamped
+`apps.json.corrupt-<timestamp>` file and the app starts with an empty config
+rather than overwriting the broken file. Each distinct breakage keeps its own
+backup, so an earlier one is never overwritten. If your dashboards disappear
+after startup, check for an `apps.json.corrupt-*` file before making changes.

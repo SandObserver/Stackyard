@@ -44,6 +44,32 @@ function loadDemoConfig() {
   return _demoCfg;
 }
 
+/* A parsed config must be a plain object whose items, when present, is an array;
+   items is what consumers iterate, so a wrong-typed one is the crash vector.
+   Returns the config with items/settings defaulted, or null when the shape is
+   unusable, in which case the caller treats the file like an unparseable one.
+   A missing items/settings is repaired rather than rejected, so a valid but
+   minimal config (e.g. settings only) is kept instead of backed up and blanked. */
+function _normalizeShape(parsed) {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  if (parsed.items !== undefined && !Array.isArray(parsed.items)) return null;
+  if (!Array.isArray(parsed.items)) parsed.items = [];
+  if (!parsed.settings || typeof parsed.settings !== 'object' || Array.isArray(parsed.settings)) parsed.settings = {};
+  return parsed;
+}
+
+/* Preserve a broken config file for inspection. The name is timestamped so a
+   later, different corruption cannot overwrite an earlier backup (wx never
+   overwrites), and the same broken content is backed up only once so a
+   persistently broken file is not copied on every read. */
+let _lastCorruptRaw = null;
+function _backupCorrupt(raw) {
+  if (raw === _lastCorruptRaw) return;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  try { fs.writeFileSync(`${CONFIG_PATH}.corrupt-${stamp}`, raw, { encoding:'utf8', flag:'wx' }); } catch {}
+  _lastCorruptRaw = raw;
+}
+
 function loadConfig() {
   if (IS_DEMO) return loadDemoConfig();
 
@@ -58,24 +84,36 @@ function loadConfig() {
     return migrate({ items:[], settings:{} });
   }
 
+  let parsed;
   try {
-    const parsed = JSON.parse(raw);
-    const before = parsed._schemaVersion;
-    migrate(parsed);
-    _cfgCache = parsed; _cfgCacheAt = now;
-    /* Persist once if a version bump actually changed the file, so an upgraded
-       install migrates on disk even if the user never saves. Never let a failed
-       write (e.g. read-only volume) break reads; the migrated copy is already
-       cached in memory and will re-migrate next load. */
-    if (parsed._schemaVersion !== before) { try { saveConfig(parsed); } catch {} }
-    return parsed;
+    parsed = JSON.parse(raw);
   } catch (e) {
     /* Bad JSON, e.g. a manual edit gone wrong. Preserve the broken file
        instead of letting the next save overwrite it, then start fresh. */
     log.warn('config file corrupt, backing up and starting with a blank config', { path: CONFIG_PATH, error: e.message });
-    try { fs.writeFileSync(CONFIG_PATH + '.corrupt', raw, 'utf8'); } catch {}
+    _backupCorrupt(raw);
     return migrate({ items:[], settings:{} });
   }
+
+  const shaped = _normalizeShape(parsed);
+  if (!shaped) {
+    /* Valid JSON but the wrong shape (e.g. items is not an array). Treated like
+       an unparseable file so a bad manual edit cannot crash a consumer that
+       iterates items, rather than silently caching a shape that throws. */
+    log.warn('config file has the wrong shape, backing up and starting with a blank config', { path: CONFIG_PATH });
+    _backupCorrupt(raw);
+    return migrate({ items:[], settings:{} });
+  }
+
+  const before = shaped._schemaVersion;
+  migrate(shaped);
+  _cfgCache = shaped; _cfgCacheAt = now;
+  /* Persist once if a version bump actually changed the file, so an upgraded
+     install migrates on disk even if the user never saves. Never let a failed
+     write (e.g. read-only volume) break reads; the migrated copy is already
+     cached in memory and will re-migrate next load. */
+  if (shaped._schemaVersion !== before) { try { saveConfig(shaped); } catch {} }
+  return shaped;
 }
 
 /* Every write bumps _rev. POST /api/config compares the _rev a client read
