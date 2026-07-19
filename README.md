@@ -107,12 +107,12 @@ App icons resolve automatically by name from the community [dashboard-icons](htt
 Current widgets and the services they integrate with:
 
 - **Clock**
-- **Now Playing** (a VHS tape that turns and fills as media plays): Plex, Jellyfin, Emby, Navidrome
+- **Now Playing**: Plex, Jellyfin, Emby, Navidrome
 - **Weather**: Open-Meteo (no API key required)
-- **DNS** (a Sankey view of query filtering): AdGuard, Pi-hole, Technitium, NextDNS
+- **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
 - **GitHub**: contribution graph and open pull requests
 - **Books**: Audiobookshelf, Komga, Kavita
-- **System stats** (CPU, memory, disk, network): SpeedTest Tracker, MySpeed
+- **System stats**: CPU, memory, disk usage, network speed (SpeedTest Tracker, MySpeed), RX/TX throughput, and uptime.
 - **Disk health**: TrueNAS, Scrutiny
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
