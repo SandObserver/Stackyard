@@ -8,6 +8,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { scrubConfigSecrets, preserveConfigSecrets } = require('../src/widget-secrets');
 const { applyBackupSlotDonors } = require('../src/backup-secrets');
+const { scrubAllSecrets, preserveAllSecrets } = require('../src/config-secrets');
 
 function sampleConfig() {
   return { items: [
@@ -82,4 +83,40 @@ test('donor copy fills a new backup slot pointing at an existing instance', () =
   applyBackupSlotDonors(incoming.items[0].widgetConfig.slots);
   assert.equal(incoming.items[0].widgetConfig.slots[2].dupPass, 'DUP');
   assert.equal(incoming.items[0].widgetConfig.slots[2].dupPassSet, true);
+});
+
+/* An app item carrying a secret badge header, so the facade tests exercise the
+   badge system alongside the widget and backup systems in one pass. */
+function badgeApp() {
+  return { id: 'a1', type: 'app', name: 'A', url: 'http://x', badge: { headers: [
+    { key: 'Authorization', value: 'BADGESECRET', secret: true },
+    { key: 'X-Env', value: 'prod', secret: false },
+  ] } };
+}
+
+test('scrubAllSecrets runs the widget and badge scrubbers in one pass', () => {
+  const cfg = sampleConfig();
+  cfg.items.push(badgeApp());
+  const copy = JSON.parse(JSON.stringify(cfg));
+  scrubAllSecrets(copy);
+  assert.deepEqual(anySecretLeft(copy), []);
+  const app = copy.items.find(i => i.id === 'a1');
+  assert.equal(app.badge.headers[0].value, undefined);
+  assert.equal(app.badge.headers[0].secret, true);
+  assert.equal(app.badge.headers[0].valueSet, true);
+  assert.equal(app.badge.headers[1].value, 'prod');
+});
+
+test('preserveAllSecrets restores widget, badge and backup-donor secrets in one call', () => {
+  const existing = sampleConfig();
+  existing.items.push(badgeApp());
+  const incoming = JSON.parse(JSON.stringify(existing));
+  scrubAllSecrets(incoming);
+  incoming.items[0].widgetConfig.slots.push({ provider: 'duplicati', dupUrl: 'http://d:8200' });
+  preserveAllSecrets(incoming, existing);
+  assert.equal(incoming.items[1].widgetConfig.truenasKey, 'TRUENAS');
+  const app = incoming.items.find(i => i.id === 'a1');
+  assert.equal(app.badge.headers[0].value, 'BADGESECRET');
+  assert.equal(app.badge.headers[0].valueSet, undefined);
+  assert.equal(incoming.items[0].widgetConfig.slots[2].dupPass, 'DUP');
 });

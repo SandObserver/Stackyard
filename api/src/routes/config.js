@@ -2,18 +2,13 @@ const { on, json, readBody, checkOrigin } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');
-const { scrubConfigSecrets, preserveConfigSecrets } = require('../widget-secrets');
-const { scrubItemBadgeSecrets, preserveItemBadgeSecrets } = require('../badge-headers');
-const { applyBackupSlotDonors } = require('../backup-secrets');
+const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 
 const DOCK_MAX = 4;
 
 function scrubSecrets(cfg) {
   const safe = JSON.parse(JSON.stringify(cfg));
-  scrubConfigSecrets(safe);
-  if (Array.isArray(safe.items)) {
-    for (const item of safe.items) if (item && item.type === 'app') scrubItemBadgeSecrets(item);
-  }
+  scrubAllSecrets(safe);
   if (safe.settings?.background?.apiKey) delete safe.settings.background.apiKey;
   if (safe.settings?.auth) {
     delete safe.settings.auth.secret;
@@ -81,20 +76,7 @@ on('POST', '/api/config', async(req, res) => {
       if (existing.settings.auth.secret) data.settings.auth.secret = existing.settings.auth.secret;
       if (existing.settings.auth.passwordHash) data.settings.auth.passwordHash = existing.settings.auth.passwordHash;
     }
-    preserveConfigSecrets(data, existing);
-    if (Array.isArray(data.items)) {
-      for (const item of data.items) {
-        if (item?.type !== 'app') continue;
-        const prev = existing.items?.find(e => e && e.id === item.id);
-        preserveItemBadgeSecrets(item, prev);
-      }
-    }
-    if (Array.isArray(data.items)) {
-      for (const item of data.items) {
-        if (item?.type === 'widget' && item.widgetType === 'backup')
-          applyBackupSlotDonors(item.widgetConfig?.slots);
-      }
-    }
+    preserveAllSecrets(data, existing);
     migrate(data); /* upgrade old imported/restored configs; no-op for normal saves */
     ensureSystemItems(data);
     saveConfig(data);
