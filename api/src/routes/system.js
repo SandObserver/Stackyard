@@ -113,19 +113,6 @@ on('GET', '/api/truenas-proxy', async(req, res) => {
   } catch(e) { json(res, e.status || 502, { error: e.message }); }
 });
 
-on('GET', '/api/scrutiny-devices/:id', async(req, res) => {
-  const cfg = loadConfig();
-  const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
-  if (!w) return json(res, 404, { error:'widget not found' });
-  const url = w.widgetConfig?.scrutinyUrl;
-  if (!url) return json(res, 400, { error:'scrutinyUrl not configured' });
-  try {
-    const out = await fetchScrutinyDevices(url);
-    if (out.error) return json(res, out.status, { error: out.error });
-    json(res, 200, { devices: out.devices });
-  } catch(e) { json(res, e.status || 502, { error: e.message }); }
-});
-
 on('GET', '/api/speed-data/:id', async(req, res) => {
   const cfg = loadConfig();
   const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
