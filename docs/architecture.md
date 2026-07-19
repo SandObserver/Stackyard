@@ -20,6 +20,7 @@ Every request goes through `dispatch` in `src/router.js`, which:
 1. Parses the URL and sets CORS preflight headers.
 2. Enforces auth. Every path except `/health`, `/api/auth/login`, and `/api/auth/check` requires a valid session; otherwise it returns 401.
 3. Matches the method and path against the route table, extracts any `:param` values, and calls the handler.
+4. Wraps the handler call in an error boundary: anything a handler throws or rejects with becomes a logged 500 for that one request instead of taking the whole process down.
 
 `router.js` also exports the shared helpers handlers rely on: `json`, `readBody`, `checkOrigin`, and `getIp` (honors `X-Forwarded-For` only when `TRUST_PROXY` is set).
 

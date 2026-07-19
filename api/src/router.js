@@ -1,4 +1,5 @@
 const { isAuthenticated } = require('./auth');
+const log = require('./log');
 
 const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check']);
 
@@ -10,7 +11,15 @@ function on(m, p, h) {
   routes.push({ m, p, re, names, h });
 }
 
+/* Any error a handler throws or rejects with is caught here and turned into a
+   500 for that one request, instead of propagating to the server and taking the
+   whole process down. dispatch stays synchronous for http.createServer while
+   route() is free to run async handlers. */
 function dispatch(req, res) {
+  Promise.resolve().then(() => route(req, res)).catch(err => onError(req, res, err));
+}
+
+function route(req, res) {
   const u      = new URL(req.url, 'http://x');
   const method = req.method.toUpperCase();
   setPreflightHeaders(res);
@@ -29,6 +38,12 @@ function dispatch(req, res) {
     return r.h(req, res, u);
   }
   json(res, 404, { error:'Not found' });
+}
+
+function onError(req, res, err) {
+  log.error('request handler failed', { method: req.method, url: req.url, error: err?.message });
+  if (res.headersSent) { try { res.end(); } catch {} return; }
+  try { json(res, 500, { error:'Internal server error' }); } catch {}
 }
 
 function setPreflightHeaders(res) {
