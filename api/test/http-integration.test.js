@@ -15,9 +15,14 @@ const http = require('node:http');
 
 require('../src/routes');       // registers auth/config/health/badges/... + OPTIONS
 require('../src/widget-data');  // registers /api/widget-data/:id (pulls in widgets)
-const { dispatch } = require('../src/router');
+const { dispatch, on } = require('../src/router');
 const { saveConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
+
+/* Routes that fail on purpose, to prove the router turns a handler error into a
+   500 instead of crashing the process. */
+on('GET', '/api/_boom_sync', () => { throw new Error('sync boom'); });
+on('GET', '/api/_boom_async', async () => { throw new Error('async boom'); });
 
 const SECRET = 'a'.repeat(64);
 let server, base, validCookie;
@@ -203,6 +208,21 @@ test('POST /api/config does not count undocked apps, widgets or folders toward t
   ];
   const r = await req('POST', '/api/config', { cookie: validCookie, body: { items, settings: {} } });
   assert.equal(r.status, 200);
+});
+
+/* Router error boundary. */
+test('a synchronous throw in a handler returns 500 without crashing the server', async () => {
+  const r = await req('GET', '/api/_boom_sync', { cookie: validCookie });
+  assert.equal(r.status, 500);
+  assert.equal(r.body.error, 'Internal server error');
+  assert.equal((await req('GET', '/health')).status, 200); // process still serving
+});
+
+test('an async rejection in a handler returns 500 without crashing the server', async () => {
+  const r = await req('GET', '/api/_boom_async', { cookie: validCookie });
+  assert.equal(r.status, 500);
+  assert.equal(r.body.error, 'Internal server error');
+  assert.equal((await req('GET', '/health')).status, 200);
 });
 
 /* Config-mutating auth paths, kept last so they don't disturb the tests above
