@@ -434,10 +434,10 @@ async function tickThroughput() {
 
 async function tickSpeed() {
   try {
-    const r = await fetch(`${API}/speed-data/${encodeURIComponent(id)}`);
+    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=speed`);
     if (!r.ok) return;
     const d = await r.json();
-    if (!d) return;
+    if (!d || d.error || d.download == null) return;
     const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtMbps(d.download);
     const up = document.getElementById('net-up'); if (up) up.textContent = fmtMbps(d.upload);
   } catch {}

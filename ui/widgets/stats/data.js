@@ -1,10 +1,12 @@
-/* Stats widget data function. Two endpoints:
+/* Stats widget data function. Endpoints:
      endpoint=system        → live host metrics for the System Summary view
      endpoint=disk-health   → SMART data from Scrutiny for the Disk Health view
+     endpoint=speed         → speed test results (MySpeed / Speedtest Tracker)
    Returns { error } on failure (never throws). */
 
 module.exports = async function (ctx) {
   if (ctx.endpoint === 'disk-health') return diskHealth(ctx);
+  if (ctx.endpoint === 'speed')       return speed(ctx);
   return systemSummary(ctx);
 };
 
@@ -124,4 +126,30 @@ async function diskHealthTrueNas({ config, fetchJSON }) {
   });
 
   return { bays: result, href: config.truenasHref || '', provider: 'truenas' };
+}
+
+/* Speed test results for the network slot: MySpeed or Speedtest Tracker. The
+   provider lives in the nested network slot (config.network.provider), so this
+   branches directly rather than via ctx.dispatchProvider, which reads a
+   top-level field. Returns { download, upload, ping, failed, ts } or { error }. */
+async function speed({ config, fetchJSON, normalizeBase }) {
+  const net = config.network;
+  if (!net?.enabled || !net?.url) return { error: 'network slot not configured' };
+  const base = normalizeBase(net.url);
+
+  try {
+    if ((net.provider || 'myspeed') === 'speedtest-tracker') {
+      const r = await fetchJSON(base + '/api/speedtest/latest', { timeout: 8000 });
+      const row = r.data?.data;
+      if (!row?.id) return { error: 'No result from Speedtest Tracker' };
+      return { download: row.download, upload: row.upload, ping: row.ping, failed: row.failed || false, ts: row.created_at };
+    }
+    const headers = {};
+    if (net.myspeedPass) headers['x-password'] = net.myspeedPass;
+    const r = await fetchJSON(base + '/api/speedtests?limit=1', { headers, timeout: 8000 });
+    if (r.status === 401) return { error: 'MySpeed returned 401, check password' };
+    const row = Array.isArray(r.data) ? r.data[0] : r.data;
+    if (!row) return { error: 'No result from MySpeed' };
+    return { download: row.download, upload: row.upload, ping: row.ping, failed: false, ts: row.created };
+  } catch (e) { return { error: e.message }; }
 }
