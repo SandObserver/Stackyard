@@ -8,6 +8,7 @@ const log = require('../log');
 const { rateLimit } = require('../auth');
 const { sanitizeSvg } = require('../svg-sanitize');
 const { sniffIconType } = require('../icon-sniff');
+const { parseMultipartFile } = require('../parse-multipart');
 
 on('GET', '/api/wallpaper', async(_, res) => {
   const cfg = loadConfig(), bg = cfg.settings?.background || {};
@@ -67,24 +68,8 @@ on('POST', '/api/icons/upload', async(req, res) => {
       req.on('end',  () => resolve(Buffer.concat(chunks)));
       req.on('error', reject);
     });
-    const delim = Buffer.from('--' + boundary), CRLFCRLF = Buffer.from('\r\n\r\n');
-    let filename = '', fileData = null, searchFrom = 0, fileParts = 0;
-    while (true) {
-      const delimPos = buf.indexOf(delim, searchFrom);
-      if (delimPos === -1) break;
-      const afterDelim = delimPos + delim.length;
-      if (buf[afterDelim] === 0x2d && buf[afterDelim+1] === 0x2d) break;
-      const headerStart = afterDelim + (buf[afterDelim] === 0x0d ? 2 : 0);
-      const headerEnd   = buf.indexOf(CRLFCRLF, headerStart);
-      if (headerEnd === -1) break;
-      const headerStr  = buf.slice(headerStart, headerEnd).toString('latin1');
-      const bodyStart  = headerEnd + 4;
-      const nextDelim  = buf.indexOf(Buffer.from('\r\n--' + boundary), bodyStart);
-      const bodyEnd    = nextDelim === -1 ? buf.length : nextDelim;
-      const fnMatch    = headerStr.match(/filename="([^"]+)"/i);
-      if (fnMatch) { fileParts++; filename = path.basename(fnMatch[1]); fileData = buf.slice(bodyStart, bodyEnd); }
-      searchFrom = bodyEnd + 2;
-    }
+    const { filename, data, fileParts } = parseMultipartFile(buf, boundary);
+    let fileData = data;
     if (!filename || !fileData?.length)       return json(res, 400, { error:'no file found in upload' });
     if (fileParts > 1)                        return json(res, 400, { error:'only one file per upload' });
     if (!/\.(svg|png|ico)$/i.test(filename))  return json(res, 400, { error:'only .svg, .png, .ico files allowed' });
