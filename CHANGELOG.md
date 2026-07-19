@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-18
+
 - Badge header and URL parameter rows: aligned the field spacing with the rest
   of the form, and marked credentials with a labelled "Secret" checkbox.
 
