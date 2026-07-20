@@ -2,40 +2,40 @@
 
 ## [Unreleased]
 
-- Fixed: the widget config preview (the "Fetch" button on a widget's option
-  pickers, `/api/widget-options`) now routes the URL you enter through the SSRF
-  guard, matching the backup discovery fix. A URL typed into any widget's
-  preview form can no longer be used to reach private or loopback addresses.
-  Saved widgets are unaffected. If the guard is active and the target is on a
-  private IP, set `ALLOW_PRIVATE_IPS=true`.
+## [1.3.1] - 2026-07-20
 
-- Fixed: backup job and source discovery (the "list jobs" and "list sources"
-  buttons for Duplicati and Kopia) now routes the URL you enter through the SSRF
-  guard, so it cannot be used to reach private or loopback addresses. Saved
-  widgets are unaffected. If the guard is active and your backup server is on a
-  private IP, set `ALLOW_PRIVATE_IPS=true` to discover its jobs.
+### Security
 
-- Fixed: the SSRF guard now blocks `http://localhost` by name, matching how it
-  already blocked the `127.0.0.1` and `::1` loopback literals. Dotless Docker
-  service names stay allowed.
+- Backup job and source discovery (the "list jobs" and "list sources" buttons
+  for Duplicati and Kopia) now routes the URL you enter through the SSRF guard,
+  so it cannot be used to reach private or loopback addresses. Saved widgets are
+  unaffected. If the guard is active and your backup server is on a private IP,
+  set `ALLOW_PRIVATE_IPS=true` to discover its jobs.
+- The widget config preview (the "Fetch" button on a widget's option pickers)
+  now routes the URL you enter through the SSRF guard the same way. A URL typed
+  into any widget's preview form can no longer reach private or loopback
+  addresses.
+- The SSRF guard now blocks `http://localhost` by name, matching how it already
+  blocked the `127.0.0.1` and `::1` loopback literals. Dotless Docker service
+  names stay allowed.
+- Parallel login attempts are now rate-limited correctly. The limit was checked
+  before password verification and only counted afterward, so a burst of
+  concurrent attempts could all pass the check before any was counted.
 
-- Fixed: a config file that parses but has the wrong shape (for example `items`
-  is not a list) no longer crashes the server. It is backed up to a timestamped
-  file and replaced with a blank config, the same as an unparseable file.
+### Fixed
 
-- Fixed: an unexpected error in a request handler now returns a 500 for that
-  request instead of taking the whole server down.
-
-- Fixed: parallel login attempts are now correctly rate-limited. The limit was
-  checked before the password verification and only counted afterward, so a
-  burst of concurrent attempts could all pass the check before any was counted.
-
-- Fixed: the speed test view now works with a MySpeed or Speedtest Tracker
-  server on a private IP address.
-
-- Fixed: corrected the Docker socket hint, which suggested entering
+- A config file that parses but has the wrong shape (for example `items` is not
+  a list) no longer crashes the server. It is backed up to a timestamped file
+  and replaced with a blank config, the same as an unparseable file.
+- An unexpected error in a request handler now returns a 500 for that request
+  instead of taking the whole server down.
+- The speed test view now works with a MySpeed or Speedtest Tracker server on a
+  private IP address.
+- Corrected the Docker socket hint, which suggested entering
   `unix:///var/run/docker.sock` directly even though that is not supported. It
   now points to a socket proxy URL.
+
+### Changed
 
 - Internal: the Conduit map fetch goes through the shared fetcher, gaining its
   request deadline and size cap instead of using its own http/https code. Widget
@@ -182,7 +182,7 @@
 
 ---
 
-## [1.0.0] - First public release - 2026-07-12
+## [1.0.0] - 2026-07-12
 
 Stackyard is a self-hosted homelab dashboard: a calm, launcher-style grid
 of app tiles, folders, and a few useful widgets. Single container, no
@@ -219,3 +219,10 @@ Everything before 1.0.0 was iterative development, condensed here:
   import preview
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
+
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/SandObserver/stackyard/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/SandObserver/stackyard/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/SandObserver/stackyard/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/SandObserver/stackyard/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/SandObserver/stackyard/releases/tag/v1.0.0
