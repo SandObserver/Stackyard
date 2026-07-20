@@ -1,6 +1,6 @@
 const { on, json, readBody, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
-const { fetchUnchecked } = require('../proxy');
+const { fetchChecked, fetchUnchecked, SsrfBlockedError } = require('../proxy');
 const { BACKUP_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
@@ -8,8 +8,8 @@ const { dupList, dupId, dupName, dupMeta, dupSchedule, dupNormalizeBase, dupDeri
 
 const _dupTokens = new Map();
 
-async function dupLogin(base, password) {
-  const r = await fetchUnchecked(base + '/api/v1/auth/login', {
+async function dupLogin(base, password, fetch) {
+  const r = await fetch(base + '/api/v1/auth/login', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ Password: password }),
@@ -21,8 +21,8 @@ async function dupLogin(base, password) {
   return { accessToken: AccessToken, refreshNonce: RefreshNonce };
 }
 
-async function dupRefresh(base, refreshNonce) {
-  const r = await fetchUnchecked(base + '/api/v1/auth/refresh', {
+async function dupRefresh(base, refreshNonce, fetch) {
+  const r = await fetch(base + '/api/v1/auth/refresh', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ RefreshNonce: refreshNonce }),
@@ -34,15 +34,15 @@ async function dupRefresh(base, refreshNonce) {
   return { accessToken: AccessToken, refreshNonce: RefreshNonce };
 }
 
-async function dupGetToken(widgetId, base, password) {
+async function dupGetToken(widgetId, base, password, fetch) {
   const cached = _dupTokens.get(widgetId);
   if (cached && cached.expiresAt > Date.now() + 30000) return cached.accessToken;
   let tokens;
   if (cached?.refreshNonce) {
-    try { tokens = await dupRefresh(base, cached.refreshNonce); }
-    catch { tokens = await dupLogin(base, password); }
+    try { tokens = await dupRefresh(base, cached.refreshNonce, fetch); }
+    catch { tokens = await dupLogin(base, password, fetch); }
   } else {
-    tokens = await dupLogin(base, password);
+    tokens = await dupLogin(base, password, fetch);
   }
   _dupTokens.set(widgetId, {
     accessToken:  tokens.accessToken,
@@ -52,16 +52,16 @@ async function dupGetToken(widgetId, base, password) {
   return tokens.accessToken;
 }
 
-async function dupFetch(widgetId, base, password, path) {
-  const token = await dupGetToken(widgetId, base, password);
-  const r = await fetchUnchecked(base + path, {
+async function dupFetch(widgetId, base, password, path, fetch) {
+  const token = await dupGetToken(widgetId, base, password, fetch);
+  const r = await fetch(base + path, {
     headers: { 'Authorization': `Bearer ${token}` },
     timeout: BACKUP_MS,
   });
   if (r.status === 401) {
     _dupTokens.delete(widgetId);
-    const token2 = await dupGetToken(widgetId, base, password);
-    const r2 = await fetchUnchecked(base + path, {
+    const token2 = await dupGetToken(widgetId, base, password, fetch);
+    const r2 = await fetch(base + path, {
       headers: { 'Authorization': `Bearer ${token2}` },
       timeout: BACKUP_MS,
     });
@@ -93,9 +93,9 @@ on('POST', '/api/duplicati-jobs/:id', async(req, res) => {
 
     const tokenKey = req.params.id + '_jobs_fetch';
     _dupTokens.delete(tokenKey); /* always fresh for admin fetch */
-    const token = await dupGetToken(tokenKey, base, password);
+    const token = await dupGetToken(tokenKey, base, password, fetchChecked);
 
-    const r = await fetchUnchecked(base + '/api/v1/backups', {
+    const r = await fetchChecked(base + '/api/v1/backups', {
       headers: { 'Authorization': `Bearer ${token}` },
       timeout: BACKUP_MS,
     });
@@ -106,18 +106,22 @@ on('POST', '/api/duplicati-jobs/:id', async(req, res) => {
       .filter(j => j.id !== '');
 
     json(res, 200, jobs);
-  } catch(e) { json(res, 502, { error: e.message }); }
+  } catch(e) {
+    if (e instanceof SsrfBlockedError) return json(res, e.status, { error: e.message });
+    json(res, 502, { error: e.message });
+  }
 });
 
-async function kopiaFetch(url, username, password, path) {
+async function kopiaFetch(url, username, password, path, fetch) {
   const headers = {};
   if (username && password) {
     headers['Authorization'] = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
   }
-  return fetchUnchecked(url.replace(/\/$/, '') + path, { headers, timeout: BACKUP_MS });
+  return fetch(url.replace(/\/$/, '') + path, { headers, timeout: BACKUP_MS });
 }
 
 on('POST', '/api/kopia-sources/:id', async(req, res) => {
+  if (!checkOrigin(req, res)) return;
   let body = {};
   try { body = JSON.parse(await readBody(req)); } catch {}
 
@@ -134,7 +138,7 @@ on('POST', '/api/kopia-sources/:id', async(req, res) => {
   if (!url) return json(res, 400, { error: 'URL required' });
 
   try {
-    const r = await kopiaFetch(url, username, password, '/api/v1/sources');
+    const r = await kopiaFetch(url, username, password, '/api/v1/sources', fetchChecked);
     if (r.status === 401) return json(res, 401, { error: 'Kopia authentication failed' });
     if (r.status !== 200) return json(res, 502, { error: `Kopia returned HTTP ${r.status}` });
 
@@ -143,7 +147,10 @@ on('POST', '/api/kopia-sources/:id', async(req, res) => {
       name: s.source.path,
     }));
     json(res, 200, sources);
-  } catch(e) { json(res, 502, { error: e.message }); }
+  } catch(e) {
+    if (e instanceof SsrfBlockedError) return json(res, e.status, { error: e.message });
+    json(res, 502, { error: e.message });
+  }
 });
 
 on('GET', '/api/backup-data/:id', async(req, res) => {
@@ -177,8 +184,8 @@ on('GET', '/api/backup-data/:id', async(req, res) => {
     await Promise.all(Object.values(dupGroups).map(async ({base, pass, slots: gs}) => {
       try {
         const [stateR, backupsR] = await Promise.all([
-          dupFetch(req.params.id, base, pass, '/api/v1/serverstate'),
-          dupFetch(req.params.id, base, pass, '/api/v1/backups'),
+          dupFetch(req.params.id, base, pass, '/api/v1/serverstate', fetchUnchecked),
+          dupFetch(req.params.id, base, pass, '/api/v1/backups', fetchUnchecked),
         ]);
         if (stateR.status === 401 || backupsR.status === 401) return;
         const serverState = stateR.data || {};
@@ -200,7 +207,7 @@ on('GET', '/api/backup-data/:id', async(req, res) => {
 
     await Promise.all(Object.values(kopiaGroups).map(async ({url, user, pass, slots: gs}) => {
       try {
-        const r = await kopiaFetch(url, user, pass, '/api/v1/sources');
+        const r = await kopiaFetch(url, user, pass, '/api/v1/sources', fetchUnchecked);
         if (r.status !== 200) return;
         const allSources = r.data?.sources||[];
         gs.forEach(({i, jobId, customName}) => {

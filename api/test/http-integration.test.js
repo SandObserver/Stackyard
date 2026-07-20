@@ -240,6 +240,34 @@ test('an async rejection in a handler returns 500 without crashing the server', 
   assert.equal((await req('GET', '/health')).status, 200);
 });
 
+/* Backup discovery endpoints take the target URL from the request body, so they
+   must route it through the SSRF-guarded fetch: a private/loopback target is
+   blocked with 403 rather than reached. */
+test('POST /api/duplicati-jobs blocks a private target URL', async () => {
+  const r = await req('POST', '/api/duplicati-jobs/x', {
+    cookie: validCookie, body: { url: 'http://127.0.0.1:1/', password: 'x' },
+  });
+  assert.equal(r.status, 403);
+  assert.match(String(r.body?.error), /private address/);
+});
+
+test('POST /api/kopia-sources blocks a private target URL', async () => {
+  const r = await req('POST', '/api/kopia-sources/x', {
+    cookie: validCookie, body: { url: 'http://127.0.0.1:1/' },
+  });
+  assert.equal(r.status, 403);
+  assert.match(String(r.body?.error), /private address/);
+});
+
+test('POST /api/kopia-sources rejects a cross-origin write', async () => {
+  const r = await req('POST', '/api/kopia-sources/x', {
+    cookie: validCookie, body: { url: 'http://example.com/' },
+    origin: 'http://evil.example', host: '127.0.0.1:1',
+  });
+  assert.equal(r.status, 403);
+  assert.match(String(r.body?.error), /origin mismatch/);
+});
+
 /* Config-mutating auth paths, kept last so they don't disturb the tests above
    (set-password rotates the signing secret, invalidating validCookie). */
 test('dismiss-setup records the flag for an authenticated same-origin request', async () => {
