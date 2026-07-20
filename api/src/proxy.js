@@ -96,6 +96,9 @@ async function guardSsrf(rawUrl) {
   /* URL keeps IPv6 literals bracketed (e.g. [fd00::1]); strip so the address
      itself is what gets range-checked and resolved. */
   const h = u.hostname.replace(/^\[|\]$/g, '');
+  /* localhost is dotless and would pass the service-name allowance below, so
+     block it here first. */
+  if (!ALLOW_PRIVATE_IPS && h === 'localhost') return { error:`Blocked: ${h} is a private address.`, ip:null };
   /* Dotless single-label names are Docker service names, trusted on internal
      networks. IPv6 literals are also dotless but contain colons, so they must
      not take this path: they fall through to the private-range check below. */
@@ -107,7 +110,7 @@ async function guardSsrf(rawUrl) {
      for the rewrite. */
   const hostIp = getHostIp();
   if (hostIp && h === hostIp) return { error:null, ip:null };
-  if (!ALLOW_PRIVATE_IPS && (isPrivateAddress(h) || h === 'localhost')) return { error:`Blocked: ${h} is a private address.`, ip:null };
+  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(h)) return { error:`Blocked: ${h} is a private address.`, ip:null };
   let address;
   try { ({ address } = await dns.lookup(h)); }
   catch { return { error:`Blocked: ${h} could not be resolved.`, ip:null }; }
