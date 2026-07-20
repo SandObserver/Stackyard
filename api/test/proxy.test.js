@@ -72,6 +72,12 @@ test('guardSsrf blocks loopback literal', async () => {
   assert.equal(r.ip, null);
 });
 
+test('guardSsrf blocks localhost by name, not just the loopback literal', async () => {
+  const r = await guardSsrf('http://localhost:3000/');
+  assert.ok(r.error, 'localhost must not pass the dotless service-name allowance');
+  assert.equal(r.ip, null);
+});
+
 test('guardSsrf rejects an invalid URL', async () => {
   const r = await guardSsrf('not a url');
   assert.equal(r.error, 'Invalid URL');

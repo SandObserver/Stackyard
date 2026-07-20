@@ -8,6 +8,10 @@
   widgets are unaffected. If the guard is active and your backup server is on a
   private IP, set `ALLOW_PRIVATE_IPS=true` to discover its jobs.
 
+- Fixed: the SSRF guard now blocks `http://localhost` by name, matching how it
+  already blocked the `127.0.0.1` and `::1` loopback literals. Dotless Docker
+  service names stay allowed.
+
 - Fixed: a config file that parses but has the wrong shape (for example `items`
   is not a list) no longer crashes the server. It is backed up to a timestamped
   file and replaced with a blank config, the same as an unparseable file.
