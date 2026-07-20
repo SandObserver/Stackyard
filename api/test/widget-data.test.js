@@ -6,6 +6,7 @@ process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-wd
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { buildAuth, normalizeBase, fetchDeclarative } = require('../src/widget-data');
+const { fetchChecked } = require('../src/proxy');
 
 test('buildAuth returns empty auth for none/undefined declarations', () => {
   assert.deepEqual(buildAuth(null, {}), { headers: {}, query: '' });
@@ -58,4 +59,19 @@ test('fetchDeclarative validates the endpoint before any request', async () => {
   const unknown = await fetchDeclarative(decl, wc, 'nope');
   assert.equal(unknown.status, 400);
   assert.match(unknown.body.error, /unknown endpoint/);
+});
+
+test('fetchDeclarative fetches through the injected fetcher', async () => {
+  const calls = [];
+  const stub = async (url) => { calls.push(url); return { status: 200, data: { ok: true } }; };
+  const out = await fetchDeclarative({ url: 'apiUrl', endpoints: { stats: '/s' } }, { apiUrl: 'http://host' }, 'stats', stub);
+  assert.equal(out.status, 200);
+  assert.deepEqual(out.body, { ok: true });
+  assert.deepEqual(calls, ['http://host/s']);
+});
+
+test('fetchDeclarative through the guarded fetcher blocks a private preview URL', async () => {
+  const out = await fetchDeclarative({ url: 'apiUrl' }, { apiUrl: 'http://127.0.0.1:1' }, '', fetchChecked);
+  assert.equal(out.status, 403);
+  assert.match(out.body.error, /private address/);
 });

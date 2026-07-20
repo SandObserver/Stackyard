@@ -1,7 +1,7 @@
 const path = require('path');
 const { on, json, readBody, checkOrigin } = require('./router');
 const { loadConfig } = require('./config');
-const { fetchUnchecked } = require('./proxy');
+const { fetchChecked, fetchUnchecked, SsrfBlockedError } = require('./proxy');
 const { parsePrometheus } = require('./parse-prometheus');
 const { FETCH_MS } = require('./timeouts');
 const { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds } = require('./metrics');
@@ -64,16 +64,17 @@ function buildAuth(authDecl, wc) {
 /* The toolbox handed to a widget's data.js. These are the same server-side
    primitives the built-in complex widgets use, so an author writing a data
    function reuses them instead of re-deriving them. */
-function dataFnContext(wc, endpoint, searchParams) {
+function dataFnContext(wc, endpoint, searchParams, fetch) {
   const ctx = {
     config:   wc,                 /* full widgetConfig, including secrets (server-side only) */
     settings: loadConfig().settings || {}, /* global non-secret config (e.g. stats.diskMount, networkInterface), server-side only */
     endpoint: endpoint,
     params:   searchParams,       /* URLSearchParams for any extra query params */
-    /* Named fetchJSON because widget data.js files destructure it; bound to the
-       unchecked fetcher. Widget code ships in the image and its URLs come from
-       config, so it is config-provenance and deliberately not SSRF-guarded. */
-    fetchJSON: fetchUnchecked,
+    /* Named fetchJSON because widget data.js files destructure it. The caller
+       supplies the fetcher to match the URL's provenance: fetchUnchecked for a
+       saved-config widget (widget-data), fetchChecked for a request-supplied
+       preview config (widget-options). */
+    fetchJSON: fetch,
     parsePrometheus,
     metrics:  IS_DEMO ? demoData.metrics : { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds },
     normalizeBase,
@@ -101,7 +102,7 @@ async function runDataFn(name, ctx) {
 /* Resolve a declarative widget's data into { status, body }.
    Returns upstream JSON on success; surfaces auth failures and upstream errors
    with statuses the widget front-ends already understand. */
-async function fetchDeclarative(decl, wc, endpointName) {
+async function fetchDeclarative(decl, wc, endpointName, fetch) {
   if (!decl) return { status: 503, body: { error: 'widget declares no data source' } };
 
   const base = normalizeBase(wc[decl.url]);
@@ -125,8 +126,11 @@ async function fetchDeclarative(decl, wc, endpointName) {
   const skipTls = wc.skipTlsVerify === true ? true : undefined;
 
   let r;
-  try { r = await fetchUnchecked(url, { headers, timeout: FETCH_MS, skipTls }); }
-  catch (e) { return { status: 502, body: { error: e.message } }; }
+  try { r = await fetch(url, { headers, timeout: FETCH_MS, skipTls }); }
+  catch (e) {
+    if (e instanceof SsrfBlockedError) return { status: e.status, body: { error: e.message } };
+    return { status: 502, body: { error: e.message } };
+  }
 
   if (r.status === 401) return { status: 401, body: { error: 'Upstream auth failed (401), check credentials' } };
   if (r.status === 403) return { status: 403, body: { error: 'Upstream auth failed (403), check credentials' } };
@@ -136,7 +140,7 @@ async function fetchDeclarative(decl, wc, endpointName) {
 
 /* Core: resolve a widget's data, choosing the data-function path when the
    widget ships a data.js, otherwise the declarative path. Exported for tests. */
-async function getWidgetData(item, entry, endpointName, searchParams) {
+async function getWidgetData(item, entry, endpointName, searchParams, fetch) {
   const wc = item.widgetConfig || {};
   if (IS_DEMO) {
     /* Stats runs its real code path against fake metrics; the fetch-based
@@ -145,10 +149,10 @@ async function getWidgetData(item, entry, endpointName, searchParams) {
     if (body) return { status: 200, body };
   }
   if (entry.hasDataFn) {
-    const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams));
+    const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch));
     return { status: 200, body: result };
   }
-  return fetchDeclarative(entry.manifest.data, wc, endpointName);
+  return fetchDeclarative(entry.manifest.data, wc, endpointName, fetch);
 }
 
 on('GET', '/api/widget-data/:id', async (req, res) => {
@@ -163,7 +167,7 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
   const endpointName = u.searchParams.get('endpoint') || '';
 
   try {
-    const out = await getWidgetData(item, entry, endpointName, u.searchParams);
+    const out = await getWidgetData(item, entry, endpointName, u.searchParams, fetchUnchecked);
     json(res, out.status, out.body);
   } catch (e) {
     log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: e.message });
@@ -188,9 +192,10 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   if (saved) preserveWidgetSecrets(item, saved, entry); /* restore a secret the form left blank */
 
   try {
-    const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams());
+    const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams(), fetchChecked);
     json(res, out.status, out.body);
   } catch (e) {
+    if (e instanceof SsrfBlockedError) return json(res, e.status, { error: e.message });
     log.error('widget-options failed', { widget: body.widgetType, error: e.message });
     json(res, 502, { error: e.message });
   }

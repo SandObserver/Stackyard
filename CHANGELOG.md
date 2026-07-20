@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Fixed: the widget config preview (the "Fetch" button on a widget's option
+  pickers, `/api/widget-options`) now routes the URL you enter through the SSRF
+  guard, matching the backup discovery fix. A URL typed into any widget's
+  preview form can no longer be used to reach private or loopback addresses.
+  Saved widgets are unaffected. If the guard is active and the target is on a
+  private IP, set `ALLOW_PRIVATE_IPS=true`.
+
 - Fixed: backup job and source discovery (the "list jobs" and "list sources"
   buttons for Duplicati and Kopia) now routes the URL you enter through the SSRF
   guard, so it cannot be used to reach private or loopback addresses. Saved
