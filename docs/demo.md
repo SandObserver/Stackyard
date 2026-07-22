@@ -24,7 +24,10 @@ activity badges, and one deliberately unhealthy app, so the dashboard looks aliv
 across polls.
 
 Each body must match the shape its widget renders, which is documented at the top
-of that widget's `data.js`. `api/test/demo-data.test.js` pins the ones that are
+of that widget's `data.js`. A new fetching widget adds an arm to the
+`demoWidgetBody` switch there; a widget whose demo body should drift across polls
+returns a function of the current time (as now-playing and weather do) rather than
+a fixed object. `api/test/demo-data.test.js` pins the ones that are
 easy to get wrong: now-playing `progress` is 0..1, not a percentage.
 
 ## Wallpaper
