@@ -60,7 +60,6 @@ body{background:transparent;position:relative;z-index:1}
 .grp-tip{font-size:12px;color:var(--dm);padding:6px 2px 14px;line-height:1.55}
 .grp-tip strong{color:rgba(242,242,247,.65)}
 .grp-tip code{font-family:monospace;font-size:11px}
-.tip-danger{color:var(--rd)}
 
 /* ── Rows ── */
 .row{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:52px;border-bottom:1px solid var(--bd-inner)}
@@ -200,7 +199,6 @@ body{background:transparent;position:relative;z-index:1}
 .kv-del{flex-shrink:0;background:none;border:none;color:var(--dm);cursor:pointer;font-size:14px;padding:4px;border-radius:6px}
 .kv-del:hover{color:var(--tx)}
 .kv-add{background:none;border:none;color:var(--ac2);cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
-.cc-dim{opacity:.4;pointer-events:none}
 .cc-sem{position:relative}
 /* App form: icon source row, poll, value list */
 .icon-src-row{gap:12px}
@@ -284,21 +282,15 @@ body{background:transparent;position:relative;z-index:1}
 #toast.err{border-left:3px solid var(--rd)}
 
 /* ── Form fields inside ev-body ── */
-.sec-f{margin-bottom:0}
 .req{color:var(--rd);margin-left:2px}
-.opt-label,.opt-span{opacity:.45;font-weight:400}
+.opt-span{opacity:.45;font-weight:400}
 .hint{font-size:12px;color:var(--dm);margin-top:5px;line-height:1.5}
 .hint strong{color:var(--tx)}
 .hint code{font-family:monospace;font-size:11px}
 .div{height:1px;background:var(--bd-inner);margin:16px 0}
-.divider-h{height:1px;background:var(--bd-inner);margin:12px 0}
-.tlbl{font-size:14px;font-weight:500}
-.tdsc{font-size:12px;color:var(--dm);margin-top:2px}
 .sp{flex:1}
 .sub{overflow:hidden;max-height:0;transition:max-height .25s ease;padding-left:4px}
 .sub.open{max-height:2000px}
-.pt12{padding-top:12px}
-.irow{display:flex;align-items:center;gap:8px}
 
 /* ── Folder picker ── */
 .fp-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px}
@@ -319,35 +311,19 @@ body{background:transparent;position:relative;z-index:1}
 
 /* ── Icon picker ── */
 .ipw{position:relative}
-.ipsw{display:flex;gap:8px;align-items:flex-start}
 .ipv{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0}
 .iprs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#1c1c24;border:1px solid var(--bd);border-radius:var(--rs);max-height:180px;overflow-y:auto;display:none;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .iprs.open{display:block}
 .ipr{display:flex;align-items:center;gap:10px;padding:8px 12px;background:none;border:none;width:100%;text-align:left;cursor:pointer;color:var(--tx);font-size:13px;font-family:inherit;transition:background var(--t)}
 .ipr:hover{background:rgba(255,255,255,.06)}
 .ipr img{width:24px;height:24px;object-fit:contain}
-.upload-label{white-space:nowrap;flex-shrink:0}
 
 /* ── Color picker ── */
 
 /* ── Widget ── */
-.slot-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.slot-lbl{font-size:13px;font-weight:600;color:var(--tx)}
-.bak-slot{margin-bottom:12px}
-.bak-slot-conn{padding-left:4px;margin-top:8px}
-.adv-wrap{margin-top:12px}
-.adv-toggle{background:none;border:none;color:var(--ac2);font-size:13px;font-weight:600;cursor:pointer;padding:4px 0;font-family:inherit}
-.adv-chev{margin-left:4px;font-size:11px}
-.adv-panel{margin-top:10px}
-.hc-type-row{display:flex;gap:16px;padding:8px 0 10px}
-.hc-type-label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
-.hc-type-label input{accent-color:var(--ac)}
 .hc-con-row,.hc-ping-row{padding:8px 0}
 .hc-con-row.hidden,.hc-ping-row:not(.active){display:none}
 .hc-ping-status{min-height:16px}
-.badge-path-wrap{position:relative}
-.badge-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--dm);pointer-events:none}
-.badge-path-input{padding-left:30px!important}
 .blist{max-height:200px;overflow-y:auto;border:1px solid var(--bd-inner);border-radius:var(--rs);margin-top:6px;background:rgba(255,255,255,.04)}
 .bi{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;transition:background var(--t);border-bottom:1px solid rgba(255,255,255,.04)}
 .bi:last-child{border-bottom:none}
@@ -361,9 +337,6 @@ body{background:transparent;position:relative;z-index:1}
 .bval{font-size:13px;font-weight:600;color:var(--ac2);flex-shrink:0}
 .bsep{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dm);padding:6px 12px 2px}
 .bprow-hidden{display:none!important}
-.badge-fetch-btn{white-space:nowrap;flex-shrink:0}
-.badge-hint{font-size:12px;color:var(--dm);margin-top:4px;min-height:16px}
-.cols-badge{margin-bottom:4px}
 
 /* ── Auth overlays ── */
 .login-screen{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
@@ -391,9 +364,6 @@ body{background:transparent;position:relative;z-index:1}
 .setpw-err{color:var(--rd);font-size:13px;display:none}
 .setpw-btn{background:var(--ac);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;padding:13px;cursor:pointer;transition:background var(--t)}
 .setpw-btn:hover{background:var(--ac2)}
-/* Legacy */
-.range-full{width:100%;accent-color:var(--ac);cursor:pointer}
-.br-val{color:var(--dm)}
 
 /* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */
 #ev-body{padding:4px 0 24px}
