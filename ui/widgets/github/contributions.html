@@ -29,7 +29,9 @@
 <div class="widget" id="widget">
   <div class="msg" id="msg">Loading…</div>
 </div>
-<script>
+<script type="module">
+import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
+
 const TICK_MS = 300000;
 const id      = new URLSearchParams(location.search).get('id')      || '';
 const size    = new URLSearchParams(location.search).get('size')    || 'small';
@@ -55,24 +57,23 @@ async function boot() {
   const w = document.getElementById('widget');
   if (_href) {
     w.classList.add('clickable');
-    w.addEventListener('click', () => window.open(_href,'_blank','noopener,noreferrer'));
+    w.addEventListener('click', () => openUrl(_href));
   }
-  await tick();
-  setInterval(tick, TICK_MS);
+  poll({ fetch: fetchGraph, interval: TICK_MS, render,
+    onError: ({ error, everOk, stale }) => { if (!everOk || stale) showMsg(error.message); } });
 }
 
-async function tick() {
-  try {
-    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=data`);
-    if (!r.ok) {
-      const d = await r.json().catch(()=>({}));
-      showMsg(r.status===503?'Not configured':r.status===401?'Bad token':d.error||('Error '+r.status));
-      return;
-    }
-    const d = await r.json();
-    if (d && d.error) { showMsg(d.error); return; }
-    render(d);
-  } catch { showMsg('Unreachable'); }
+async function fetchGraph() {
+  let r;
+  try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=data`); }
+  catch { throw new Error('Unreachable'); }
+  if (!r.ok) {
+    const d = await r.json().catch(()=>({}));
+    throw new Error(r.status===503?'Not configured':r.status===401?'Bad token':d.error||('Error '+r.status));
+  }
+  const d = await r.json();
+  if (d && d.error) throw new Error(d.error);
+  return d;
 }
 
 function render(data) {

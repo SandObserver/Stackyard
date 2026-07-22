@@ -61,7 +61,9 @@
 </head>
 <body>
 <div class="widget" id="widget" role="group" aria-label="GitHub pull requests"></div>
-<script>
+<script type="module">
+import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
+
 const TICK_MS = 60000;
 const id      = new URLSearchParams(location.search).get('id')      || '';
 const size    = new URLSearchParams(location.search).get('size')    || 'medium';
@@ -115,8 +117,8 @@ async function boot() {
   } catch {}
   if (!cfg) cfg = { widgetConfig:{} };
   buildShell();
-  await tick();
-  setInterval(tick, TICK_MS);
+  poll({ fetch: fetchPrs, interval: TICK_MS, render,
+    onError: ({ error, everOk, stale }) => { if (!everOk || stale) showError(error.message); } });
 }
 
 function buildShell() {
@@ -161,18 +163,17 @@ function buildShell() {
   }
 }
 
-async function tick() {
-  try {
-    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=data`);
-    if (!r.ok) {
-      const d = await r.json().catch(()=>({}));
-      showError(r.status===503?'Not configured':r.status===401?'Bad token':d.error||('Error '+r.status));
-      return;
-    }
-    const d = await r.json();
-    if (d && d.error) { showError(d.error); return; }
-    render(d);
-  } catch { showError('Unreachable'); }
+async function fetchPrs() {
+  let r;
+  try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=data`); }
+  catch { throw new Error('Unreachable'); }
+  if (!r.ok) {
+    const d = await r.json().catch(()=>({}));
+    throw new Error(r.status===503?'Not configured':r.status===401?'Bad token':d.error||('Error '+r.status));
+  }
+  const d = await r.json();
+  if (d && d.error) throw new Error(d.error);
+  return d;
 }
 
 function render(data) {
@@ -194,7 +195,7 @@ function render(data) {
       body.style.cursor = 'pointer';
       body.setAttribute('role','link'); body.setAttribute('tabindex','0');
       body.setAttribute('aria-label', `${total} pull requests ${label} — view all`);
-      const go = () => window.open(data.allUrl, '_blank', 'noopener,noreferrer');
+      const go = () => openUrl(data.allUrl);
       body.onclick = go;
       body.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } };
     }
@@ -211,7 +212,7 @@ function render(data) {
     hdr.style.cursor = 'pointer';
     hdr.setAttribute('role','link'); hdr.setAttribute('tabindex','0');
     hdr.setAttribute('aria-label', `${total} pull requests ${label} — view all`);
-    const go = () => window.open(data.allUrl, '_blank', 'noopener,noreferrer');
+    const go = () => openUrl(data.allUrl);
     hdr.onclick = go;
     hdr.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } };
   }
@@ -236,7 +237,7 @@ function render(data) {
     item.setAttribute('aria-label', `${pr.repo} #${pr.number}: ${pr.title}`);
     if (pr.url) {
       item.setAttribute('role','link'); item.setAttribute('tabindex','0');
-      const go = () => window.open(pr.url,'_blank','noopener,noreferrer');
+      const go = () => openUrl(pr.url);
       item.addEventListener('click', go);
       item.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } });
     } else { item.setAttribute('role','listitem'); }
