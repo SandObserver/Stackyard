@@ -264,7 +264,7 @@ function _renderStatsBody(body){
       btn.disabled=true; btn.textContent='Fetching...'; if(dhStatus){dhStatus.textContent='';dhStatus.className='row-status';}
       try{
         if(key==='__keep__'){ if(dhStatus){dhStatus.textContent='Re-enter the API key to fetch pools.';dhStatus.className='row-status err';} return; }
-        const r=await fetch(`/api/truenas-proxy?url=${encodeURIComponent(url)}&key=${encodeURIComponent(key)}`);
+        const r=await fetch('/api/truenas-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,key})});
         const d=await r.json().catch(()=>({}));
         if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
         _items=(d.pools||[]).map(pl=>({value:pl.name,label:pl.name+(pl.healthy?'':' (unhealthy)'),capacity:pl.capacity}));
