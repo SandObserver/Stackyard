@@ -84,8 +84,8 @@ function _validateManifest(name, m) {
 }
 
 /* Scan the widgets directory and build the registry. Each entry records the
-   parsed manifest plus whether the folder ships a data function or a custom
-   editor (their presence, not their contents, those are loaded elsewhere).
+   parsed manifest, whether the folder ships a data function, and whether the
+   manifest opts out of the auto-form.
    A missing directory, a non-folder entry, or a folder without widget.json is
    simply skipped: the legacy flat-file widgets coexist untouched, and an empty
    registry is a valid result. A malformed widget.json is skipped with a logged
@@ -125,7 +125,7 @@ function loadRegistry() {
     reg[name] = {
       manifest,
       hasDataFn:    fs.existsSync(path.join(dir, 'data.js')),
-      customEditor: fs.existsSync(path.join(dir, 'config.js')) || manifest.customEditor === true,
+      customEditor: manifest.customEditor === true,
     };
   }
 
