@@ -7,6 +7,7 @@ import { html, raw, setHtml } from '/js/html.js?v=1';
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { isDockBlocked, DOCK_MAX } from '/js/admin-logic.js?v=1';
+import { t } from '/js/i18n.js?v=1';
 import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, setTogDisabled, wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
 
@@ -106,7 +107,7 @@ export function buildAppForm(body,item){
     <div class="grp">
       <div class="row"><span class="rl">Show in Dock</span>${tog('f-dock',!!item?.dock)}</div>
     </div>
-    ${dockBlocked?html`<p class="grp-tip" id="dock-full-tip">Dock full (${DOCK_MAX}/${DOCK_MAX}). Remove an app first.</p>`:''}
+    ${dockBlocked?html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull',{max:DOCK_MAX})}</p>`:''}
 
     <p class="grp-hdr">Badge</p>
     <div class="grp">

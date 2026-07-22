@@ -86,7 +86,7 @@
     "upload": "Subir",
     "iconPh": "Nombre o URL completa",
     "showInDock": "Mostrar en el Dock",
-    "dockFull": "Dock lleno (4/4). Elimina una aplicación primero.",
+    "dockFull": "Dock lleno ({max}/{max}). Elimina una aplicación primero.",
     "badge": "Insignia",
     "healthCheck": "Comprobación de estado",
     "healthGlobalOff": "Activa las Comprobaciones de estado de contenedores Docker en General y configúralas para usar esto.",
