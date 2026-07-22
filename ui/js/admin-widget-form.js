@@ -33,8 +33,7 @@ function appendIeRow(host,{rowId,label,req,opt,value,ph,inpId,type}){
 
 
 export function buildWidgetForm(body,item){
-  const wt0 = item?.widgetType || 'custom';
-  const wt = (wt0==='map') ? 'connections' : wt0;  /* legacy map widgets migrate to connections */
+  const wt = item?.widgetType || 'custom';
   const ws = item?.widgetSize || 'medium';
   const wc = item?.widgetConfig || {};
   state._wtype = wt; state._wsize = ws;

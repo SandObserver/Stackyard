@@ -29,3 +29,9 @@ test('the conduit map service fetches /metrics raw and parses region data', asyn
   assert.equal(svc.connected, 12);
   assert.equal(svc.live, 1);
 });
+
+test('the map view reads only the services array', async () => {
+  const fetchJSON = async () => { throw new Error('should not fetch'); };
+  const r = await dataFn({ endpoint: 'map', config: { conduit: { url: 'http://conduit.local:8080' } }, fetchJSON });
+  assert.deepEqual(r.services, []);
+});
