@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { on, json } = require('../router');
+const { on, json, readBody, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchChecked, fetchUnchecked } = require('../proxy');
 const { scrubWidgetSecrets } = require('../widget-secrets');
@@ -91,10 +91,14 @@ on('GET', '/api/scrutiny-proxy', async(req, res) => {
   } catch(e) { json(res, e.status || 502, { error: e.message }); }
 });
 
-on('GET', '/api/truenas-proxy', async(req, res) => {
-  const u   = new URL(req.url, 'http://x');
-  const raw = u.searchParams.get('url') || '';
-  const key = u.searchParams.get('key') || '';
+/* POST rather than GET: the API key would otherwise land in the nginx access
+   log and the browser's history. */
+on('POST', '/api/truenas-proxy', async(req, res) => {
+  if (!checkOrigin(req, res)) return;
+  let body;
+  try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: 'invalid body' }); }
+  const raw = (body.url || '').trim();
+  const key = (body.key || '').trim();
   if (!raw) return json(res, 400, { error:'url param required' });
   if (!key) return json(res, 400, { error:'API key required' });
   try {

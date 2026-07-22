@@ -268,6 +268,29 @@ test('POST /api/kopia-sources rejects a cross-origin write', async () => {
   assert.match(String(r.body?.error), /origin mismatch/);
 });
 
+test('POST /api/truenas-proxy blocks a private target URL', async () => {
+  const r = await req('POST', '/api/truenas-proxy', {
+    cookie: validCookie, body: { url: 'http://127.0.0.1:1/', key: 'x' },
+  });
+  assert.equal(r.status, 403);
+  assert.match(String(r.body?.error), /private address/);
+});
+
+test('POST /api/truenas-proxy rejects a cross-origin write', async () => {
+  const r = await req('POST', '/api/truenas-proxy', {
+    cookie: validCookie, body: { url: 'http://example.com/', key: 'x' },
+    origin: 'http://evil.example', host: '127.0.0.1:1',
+  });
+  assert.equal(r.status, 403);
+  assert.match(String(r.body?.error), /origin mismatch/);
+});
+
+/* The key must not be passable in a query string, where nginx would log it. */
+test('GET /api/truenas-proxy is not routed', async () => {
+  const r = await req('GET', '/api/truenas-proxy?url=http://example.com/&key=secret', { cookie: validCookie });
+  assert.equal(r.status, 404);
+});
+
 /* Config-mutating auth paths, kept last so they don't disturb the tests above
    (set-password rotates the signing secret, invalidating validCookie). */
 test('dismiss-setup records the flag for an authenticated same-origin request', async () => {

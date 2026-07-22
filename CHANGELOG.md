@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- TrueNAS API key is no longer sent in a URL query string when fetching pools.
+
 ### Fixed
 
 - Widgets no longer show a stale cached version after an update. Each widget's
