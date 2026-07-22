@@ -378,17 +378,14 @@ export function buildMobile() {
     const sz = item.widgetSize || 'medium';
     const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
     const wtype = item.widgetType || '', wsub = item.widgetConfig?.widgetSubType || '';
-    const bg = wtype === 'duplicati'                        ? 'rgba(0,0,0,.08)'
-             : wtype === 'github'                           ? 'rgba(0,0,0,.25)'
-             : wtype === 'stats' && wsub === 'disk-health'  ? 'rgba(18,18,20,0.82)'
-             : 'rgba(0,0,0,.30)';
     card.className = 'mob-widget-card';
+    if (wtype) card.dataset.wtype = wtype;
+    if (wsub) card.dataset.wsubtype = wsub;
     /* Aspect-lock to the family design and fit within the grid cell (centered).
-       Same aspect on desktop and mobile → identical rendering. */
+       Same aspect as desktop, so the widget itself renders identically. The card
+       material comes from dashboard.css; only size-derived values are set here. */
     card.style.cssText = `aspect-ratio:${design[0]}/${design[1]};width:100%;max-width:100%;max-height:100%;` +
-      `flex-shrink:0;border-radius:${wBR}px;overflow:hidden;position:relative;` +
-      `border:1px solid rgba(255,255,255,.09);background:${bg};` +
-      `-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);`;
+      `flex-shrink:0;border-radius:${wBR}px;overflow:hidden;position:relative;`;
     /* Same URL as desktop (no mobile-only branch); the fixed design size now
        guarantees identical rendering, so platform-specific widget layouts are unnecessary.
        overlayHref + mobile:true add a transparent layer so swipes page the home screen
