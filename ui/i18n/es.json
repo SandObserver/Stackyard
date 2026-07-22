@@ -108,8 +108,6 @@
     "filterValues": "Filtrar valores",
     "authentication": "Autenticación",
     "addToHeader": "Añadir al Header",
-    "paramsPh": "Un key=value por línea.\nSe añade a la URL como ?key=value.",
-    "headersPh": "Un key=value por línea.\nSe envía como un Header de la solicitud HTTP.",
     "unit": "Unidad",
     "unitPh": "p. ej. GB",
     "poll": "Poll",

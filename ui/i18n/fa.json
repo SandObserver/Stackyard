@@ -108,8 +108,6 @@
     "filterValues": "فیلتر مقادیر",
     "authentication": "احراز هویت",
     "addToHeader": "افزودن به Header",
-    "paramsPh": "هر خط یک key=value.\nبه URL به‌صورت ?key=value اضافه می‌شود.",
-    "headersPh": "هر خط یک key=value.\nبه‌عنوان یک HTTP request header ارسال می‌شود.",
     "unit": "واحد",
     "unitPh": "مثلاً GB",
     "poll": "Poll",
