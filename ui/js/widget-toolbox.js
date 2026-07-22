@@ -197,7 +197,8 @@ function _overlay(root) {
      fetch,                  optional async () => data (defaults to fetchData(endpoint))
      isEmpty,                optional (data) => bool  a successful but empty result
      onError,                optional (info) => void  render your own error UI
-     interval = 30000,       poll period in ms
+     interval = 30000,       poll period in ms, or (data) => ms to vary it
+                             with the last successful result
      staleAfter = 2,         consecutive failures tolerated before showing the error
      root = document.body,   element the status message overlays
      loadingText, emptyText, errorText
@@ -205,20 +206,20 @@ function _overlay(root) {
    Returns { stop }.
 */
 export function poll(opts = {}) {
-  const interval = opts.interval || 30000;
+  const intervalFor = d => (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000;
   const staleAfter = opts.staleAfter != null ? opts.staleAfter : 2;
   const isEmpty = opts.isEmpty || (() => false);
   const doFetch = opts.fetch || (() => fetchData(opts.endpoint));
   const custom = typeof opts.onError === 'function'; /* widget draws its own error UI */
   const ov = custom ? null : _overlay(opts.root || document.body);
-  let lastOk = 0, fails = 0, everOk = false, stopped = false;
+  let lastOk = 0, fails = 0, everOk = false, stopped = false, lastData = null, timer = null;
 
   async function tick() {
     if (stopped) return;
     try {
       const data = await doFetch();
       if (stopped) return;
-      fails = 0; lastOk = Date.now(); everOk = true;
+      fails = 0; lastOk = Date.now(); everOk = true; lastData = data;
       if (!custom && isEmpty(data)) ov.show(opts.emptyText || 'No data', false);
       else { if (ov) ov.hide(); opts.render && opts.render(data); }
     } catch (e) {
@@ -232,8 +233,15 @@ export function poll(opts = {}) {
     }
   }
 
+  /* setTimeout rather than setInterval so a variable interval takes effect from
+     the next tick, and so a slow fetch cannot overlap with the following one. */
+  async function loop() {
+    await tick();
+    if (stopped) return;
+    timer = setTimeout(loop, intervalFor(lastData));
+  }
+
   if (ov) ov.show(opts.loadingText || 'Loading', false);
-  tick();
-  const timer = setInterval(tick, interval);
-  return { stop() { stopped = true; clearInterval(timer); } };
+  loop();
+  return { stop() { stopped = true; clearTimeout(timer); } };
 }

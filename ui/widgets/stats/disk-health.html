@@ -144,7 +144,8 @@
   </div></div>
 </div>
 
-<script>
+<script type="module">
+import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
 const API       = '/api';
 const params    = new URLSearchParams(location.search);
 const id        = params.get('id') || '';
@@ -286,7 +287,7 @@ function update() {
 
 function openBay(i) {
   const d = bayData[i]; if (!d) return;
-  const u = deviceHref(d); if (u) window.open(u,'_blank','noopener,noreferrer');
+  const u = deviceHref(d); if (u) openUrl(u);
 }
 
 function addEvents(bay, i) {
@@ -325,25 +326,26 @@ document.addEventListener('touchend', e => {
 window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
 window.addEventListener('message', e => { if (e.data && e.data.type === 'widget-clear') window.__clearActive(); }, false);
 
-async function fetchData() {
-  try {
-    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=disk-health`);
-    if (!r.ok) return;
-    const d = await r.json();
-    if (!d || d.error || !d.bays) return;
-    _href   = d.href || '';
-    _provider = d.provider || 'scrutiny';
-    bayData = d.bays.map(b => b || null);
-    while (bayData.length < BAY_COUNT) bayData.push(null);
-    bayData = bayData.slice(0, BAY_COUNT);
-    update();
-  } catch {}
+async function fetchBays() {
+  const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=disk-health`);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (!d || d.error || !d.bays) throw new Error(d?.error || 'no bay data');
+  return d;
+}
+
+function applyBays(d) {
+  _href   = d.href || '';
+  _provider = d.provider || 'scrutiny';
+  bayData = d.bays.map(b => b || null);
+  while (bayData.length < BAY_COUNT) bayData.push(null);
+  bayData = bayData.slice(0, BAY_COUNT);
+  update();
 }
 
 build();
 update();
-fetchData();
-setInterval(fetchData, 60_000);
+poll({ fetch: fetchBays, interval: 60_000, render: applyBays, onError: () => {} });
 </script>
 </body>
 </html>

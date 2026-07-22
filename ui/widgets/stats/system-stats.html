@@ -80,7 +80,8 @@
 <body>
 <p id="sr-sum" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:-1px;"></p>
 <div class="widget" id="widget" aria-hidden="true"></div>
-<script>
+<script type="module">
+import { poll } from '/js/widget-toolbox.js?v=1';
 const TICK_MS  = 10000;
 const SPEED_MS = 60000;
 const THROUGHPUT_MS = 3000;
@@ -108,14 +109,16 @@ async function boot() {
   if (document.documentElement.clientHeight >= 180) document.body.classList.add('narrow');
 
   buildShell();
-  await tickStats();
   const net = cfg.widgetConfig?.network || {};
   const netMode = net.mode || 'speed';
-  if (net.enabled && netMode === 'speed')      { tickSpeed();      setInterval(tickSpeed, SPEED_MS); }
-  if (net.enabled && netMode === 'throughput') { tickThroughput(); setInterval(tickThroughput, THROUGHPUT_MS); }
-  /* Uptime mode needs no extra poll — it updates from tickStats/applyStats. */
+  /* Uptime mode needs no extra poll, it updates from the stats loop. */
+  if (net.enabled && netMode === 'speed')
+    poll({ fetch: fetchSpeed, interval: SPEED_MS, render: applySpeed, onError: () => {} });
+  if (net.enabled && netMode === 'throughput')
+    poll({ fetch: fetchThroughput, interval: THROUGHPUT_MS, render: applyThroughput, onError: () => {} });
 
-  setInterval(tickStats, TICK_MS);
+  poll({ fetch: fetchStats, interval: TICK_MS,
+    render: d => { stats = d; applyStats(stats); }, onError: () => {} });
 }
 
 /* ── Build static HTML shell based on config ── */
@@ -387,14 +390,12 @@ function applyStats(data) {
 }
 
 /* ── Fetch and apply ── */
-async function tickStats() {
-  try {
-    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=system`);
-    if (!r.ok) return;
-    stats = await r.json();
-    if (stats && stats.error) return;
-    applyStats(stats);
-  } catch {}
+async function fetchStats() {
+  const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=system`);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (d && d.error) throw new Error(d.error);
+  return d;
 }
 
 function fmtMbps(v) {
@@ -421,26 +422,30 @@ function fmtUptime(sec) {
   return `${m}m`;
 }
 
-async function tickThroughput() {
-  try {
-    const r = await fetch(`${API}/network-stats`, { cache: 'no-store' });
-    if (!r.ok) return;
-    const d = await r.json();
-    if (!d) return;
-    const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtRate(d.rx);
-    const up = document.getElementById('net-up'); if (up) up.textContent = fmtRate(d.tx);
-  } catch {}
+async function fetchThroughput() {
+  const r = await fetch(`${API}/network-stats`, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (!d) throw new Error('no throughput data');
+  return d;
 }
 
-async function tickSpeed() {
-  try {
-    const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=speed`);
-    if (!r.ok) return;
-    const d = await r.json();
-    if (!d || d.error || d.download == null) return;
-    const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtMbps(d.download);
-    const up = document.getElementById('net-up'); if (up) up.textContent = fmtMbps(d.upload);
-  } catch {}
+function applyThroughput(d) {
+  const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtRate(d.rx);
+  const up = document.getElementById('net-up'); if (up) up.textContent = fmtRate(d.tx);
+}
+
+async function fetchSpeed() {
+  const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=speed`);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (!d || d.error || d.download == null) throw new Error(d?.error || 'no speed data');
+  return d;
+}
+
+function applySpeed(d) {
+  const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtMbps(d.download);
+  const up = document.getElementById('net-up'); if (up) up.textContent = fmtMbps(d.upload);
 }
 
 boot();
