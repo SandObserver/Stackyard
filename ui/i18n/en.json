@@ -89,7 +89,7 @@
     "upload": "Upload",
     "iconPh": "Name or full URL",
     "showInDock": "Show in Dock",
-    "dockFull": "Dock full (4/4). Remove an app first.",
+    "dockFull": "Dock full ({max}/{max}). Remove an app first.",
     "badge": "Badge",
     "healthCheck": "Health Check",
     "healthGlobalOff": "Turn on Docker Container Health Checks in General, then configure it, to use this.",

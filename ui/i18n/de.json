@@ -86,7 +86,7 @@
     "upload": "Hochladen",
     "iconPh": "Name oder vollständige URL",
     "showInDock": "Im Dock anzeigen",
-    "dockFull": "Dock voll (4/4). Entferne zuerst eine App.",
+    "dockFull": "Dock voll ({max}/{max}). Entferne zuerst eine App.",
     "badge": "Badge",
     "healthCheck": "Zustandsprüfung",
     "healthGlobalOff": "Aktiviere Docker-Container-Zustandsprüfungen unter Allgemein und richte sie ein, um dies zu verwenden.",
