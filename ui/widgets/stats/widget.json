@@ -3,6 +3,12 @@
   "label": "Stats",
   "sizes": ["small", "medium"],
   "customEditor": true,
+  "viewField": "widgetSubType",
+  "defaultView": "system-summary",
+  "views": {
+    "system-summary": { "label": "System Summary", "src": "system-stats.html" },
+    "disk-health":    { "label": "Disk Health",    "src": "disk-health.html" }
+  },
   "fields": [
     { "key": "truenasKey", "type": "secret", "label": "TrueNAS API Key" },
     { "key": "network", "type": "object", "label": "Network", "fields": [

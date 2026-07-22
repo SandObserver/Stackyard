@@ -1,7 +1,7 @@
 /* dashboard.js: boot, state, badge system, desktop layout, navigation, background, polling */
 
 import { loadLocalIcons, iconChain } from '/js/icons.js?v=bdd2c9eb';
-import { WIDGET_TYPES, WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
+import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
 import { mk, mkWrap as _mkWrap, mountScaledWidget, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { html, setHtml } from '/js/html.js?v=1';
@@ -20,6 +20,7 @@ const SLOTS = 24;
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
 let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
+let widgetReg = {};
 const _mobTsCleanup = null, _mobTeCleanup = null;
 
 const badgeState  = {};
@@ -99,7 +100,7 @@ function mkIcon(item) {
 
 function widgetTitle(item) {
   if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || 'Disk health';
-  return item.label || WIDGET_TYPES[item.widgetType]?.label || 'Widget';
+  return item.label || widgetReg[item.widgetType]?.label || 'Widget';
 }
 function mkWidget(item) {
   const sz = item.widgetSize||'medium';
@@ -113,7 +114,7 @@ function mkWidget(item) {
   /* Definite height (matches the family box aspect, which equals the design aspect),
      so the grid row sizes predictably and `.wc{align-items:stretch}` won't override it. */
   card.style.height = WH.d[sz] + 'px';
-  mountScaledWidget(card, { src: widgetSrc(item), title: widgetTitle(item), design, iframeOpts: item.iframe });
+  mountScaledWidget(card, { src: widgetSrc(item, widgetReg), title: widgetTitle(item), design, iframeOpts: item.iframe });
   cell.appendChild(card); return cell;
 }
 
@@ -328,7 +329,14 @@ async function boot() {
     await showSetupPrompt();
   }
 
-  const state = { items, S, CB, BEL, badgeState, breg, bunreg, bupd, folderBadge, paginate, goTo, pg: 0, _mobTsCleanup, _mobTeCleanup };
+  /* Widget entry files and their views come from the manifests, served here.
+     The dashboard reads this to build each widget's iframe URL. */
+  try {
+    const wr = await (await fetch('/api/widgets', { cache:'no-store' })).json();
+    widgetReg = Object.fromEntries((wr.widgets||[]).map(w => [w.name, w]));
+  } catch { widgetReg = {}; }
+
+  const state = { items, S, CB, BEL, badgeState, breg, bunreg, bupd, folderBadge, paginate, goTo, pg: 0, _mobTsCleanup, _mobTeCleanup, widgetReg };
   _stateRef = state;
   initUI(state);
   initSpotlight({ getItems: () => items, MOB, CB, iconChain, openFolderDesktop, openFolderMobile });

@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=36';
-import { widgetSrc, WIDGET_DESIGN, WIDGET_TYPES } from '/js/widget-types.js?v=39';
+import { widgetSrc, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
 import { mk, clr, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=40';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=1';
 
@@ -15,6 +15,7 @@ const BEL      = () => _state.BEL;
 const goTo     = (...a) => _state.goTo(...a);
 const CB       = () => _state.CB;
 const st       = () => _state;
+const widgetReg = () => _state?.widgetReg || {};
 const mkWrap   = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
 /* Dismiss any "active" interior state (e.g. a tapped disk-health sled) on mobile.
@@ -351,7 +352,7 @@ export function buildMobile() {
 
   function widgetTitle(item) {
     if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || 'Disk health';
-    return item.label || WIDGET_TYPES[item.widgetType]?.label || 'Widget';
+    return item.label || widgetReg()[item.widgetType]?.label || 'Widget';
   }
 
   function mIcon(item) {
@@ -393,7 +394,7 @@ export function buildMobile() {
        overlayHref + mobile:true add a transparent layer so swipes page the home screen
        (iframes otherwise swallow the touch) while a tap opens the widget's link. */
     const overlayHref = item.url || item.href || item.widgetConfig?.scrutinyHref || item.widgetConfig?.linkUrl || null;
-    mountScaledWidget(card, { src: widgetSrc(item, { mobile: true }), title: widgetTitle(item), design, iframeOpts: item.iframe, overlayHref, mobile: true,
+    mountScaledWidget(card, { src: widgetSrc(item, widgetReg(), { mobile: true }), title: widgetTitle(item), design, iframeOpts: item.iframe, overlayHref, mobile: true,
       onSwipe: dir => goTo(st().pg + dir) });
     return card;
   }

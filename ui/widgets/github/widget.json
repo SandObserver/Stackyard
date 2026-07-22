@@ -2,6 +2,12 @@
   "name": "github",
   "label": "GitHub",
   "sizes": ["small", "medium", "large", "xlarge"],
+  "viewField": "githubView",
+  "defaultView": "prs",
+  "views": {
+    "prs":           { "label": "Pull Requests", "src": "pullrequests.html" },
+    "contributions": { "label": "Contributions", "src": "contributions.html" }
+  },
   "fields": [
     { "key": "githubView", "type": "select", "variant": "pills", "label": "View",
       "options": [

@@ -61,11 +61,23 @@ function _validateManifest(name, m) {
   }
 
   if (m.views !== undefined) {
-    if (typeof m.views !== 'object' || !Object.keys(m.views).length) errs.push('"views" must be a non-empty object');
+    if (typeof m.views !== 'object' || Array.isArray(m.views) || !Object.keys(m.views).length) errs.push('"views" must be a non-empty object');
     else for (const [vk, v] of Object.entries(m.views)) {
       if (!v || typeof v !== 'object') { errs.push(`view "${vk}" must be an object`); continue; }
-      if (typeof v.label !== 'string' || !v.label) errs.push(`view "${vk}" needs a "label"`);
-      if (typeof v.src !== 'string' || !v.src)     errs.push(`view "${vk}" needs an entry file "src"`);
+      if (typeof v.src !== 'string' || !v.src) errs.push(`view "${vk}" needs an entry file "src"`);
+      if (v.label !== undefined && (typeof v.label !== 'string' || !v.label)) errs.push(`view "${vk}" "label" must be a non-empty string`);
+    }
+  }
+
+  if (m.viewField !== undefined || m.defaultView !== undefined) {
+    const hasViews = m.views && typeof m.views === 'object' && !Array.isArray(m.views);
+    if (!hasViews) errs.push('"viewField"/"defaultView" require a "views" block');
+    else {
+      if (m.viewField !== undefined && (typeof m.viewField !== 'string' || !m.viewField)) errs.push('"viewField" must be a non-empty string');
+      if (m.defaultView !== undefined) {
+        if (typeof m.defaultView !== 'string' || !m.defaultView) errs.push('"defaultView" must be a non-empty string');
+        else if (!(m.defaultView in m.views)) errs.push(`"defaultView" ("${m.defaultView}") is not a declared view`);
+      }
     }
   }
   return { errors: errs };
@@ -140,6 +152,9 @@ function _publicEntry(_name, e) {
     sizes:        m.sizes,
     fields:       m.fields || [],
     views:        m.views || null,
+    viewField:    m.viewField || null,
+    defaultView:  m.defaultView || null,
+    entryVersions: m.entryVersions || null,
     customEditor: e.customEditor,
   };
 }

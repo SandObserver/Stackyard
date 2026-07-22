@@ -1,13 +1,14 @@
 # Adding a widget
 
-A widget is a self-contained folder under `ui/widgets/<name>/`. The backend
-discovers it automatically and the admin config form is generated from the
-manifest. The only edit outside your folder is one entry in the widget type
-registry (step 1).
+A widget is a self-contained folder under `ui/widgets/<name>/`. Everything the
+dashboard needs lives in that folder, so adding a widget touches no file outside
+it. The backend discovers the folder automatically, builds the admin config form
+from the manifest, and serves the manifest to the dashboard, which builds the
+widget's iframe URL from it.
 
-The manifest drives the config form; `data.js` runs server-side and talks to the
-outside service; `index.html` runs in a sandboxed iframe and only ever fetches
-your own API.
+The manifest drives the config form and the view routing; `data.js` runs
+server-side and talks to the outside service; `index.html` runs in a sandboxed
+iframe and only ever fetches your own API.
 
 Copy [widget-template/](widget-template/) to `ui/widgets/<name>/` for a working
 starting point.
@@ -21,31 +22,12 @@ ui/widgets/mywidget/
   index.html     frontend page that renders it
 ```
 
-## 1. Register the widget type
+## 1. The manifest (widget.json)
 
-This is the one edit outside your folder. Add an entry to `WIDGET_TYPES` in
-`ui/js/widget-types.js`:
-
-```js
-mywidget: {
-  label: 'My Widget',
-  sizes: ['small', 'medium'],
-  src: (id, item) => `/widgets/mywidget/index.html?v=1&id=${encodeURIComponent(id)}`,
-},
-```
-
-- `label` is the single source of truth for the name shown in the admin list,
-  the type picker, and as the default widget name if the user saves without
-  entering one.
-- `sizes` is the set of card sizes the widget offers, and must be a subset of
-  the `sizes` in your manifest.
-- `src` returns the iframe URL. It must pass `id` through (your frontend reads
-  it) and carries a `?v=N` cache tag you bump yourself when you change the
-  widget's frontend files. See Cache-busting at the end.
-
-## 2. The manifest (widget.json)
-
-Describes the config form the admin renders.
+Describes the widget: its `label`, the card `sizes` it offers, the config form,
+and, for a multi-view widget, its views. `label` is the name shown in the admin
+list and the type picker, and the default widget name when the user saves
+without entering one. `sizes` is the set of card sizes offered.
 
 ```json
 {
@@ -68,6 +50,29 @@ Describes the config form the admin renders.
 `name` must match the folder name. An invalid manifest is skipped at startup with
 a logged reason rather than crashing the server, so a typo disables just that
 widget.
+
+### Views (multiple looks)
+
+A widget can ship more than one frontend file and let the user pick between them
+(the GitHub widget's Pull Requests and Contributions, the clock's Digital and
+Analog). Declare each view and its entry file, the config field that holds the
+choice, and the default:
+
+```json
+{
+  "viewField": "clockStyle",
+  "defaultView": "digital",
+  "views": {
+    "digital": { "label": "Digital", "src": "digital.html" },
+    "analog":  { "label": "Analog",  "src": "analog.html" }
+  }
+}
+```
+
+`viewField` names a field the user sets (commonly a `select`), whose value is
+matched against the `views` keys to choose the entry file. With no `views` block
+the entry file is `index.html`. A single-view widget whose file is not
+`index.html` still declares it as one view, with no `viewField`.
 
 ### Field types
 
@@ -106,7 +111,7 @@ it `"optionsFrom": "<endpoint>"` instead of static `options`. The form shows a
 **Fetch** button, which calls your `data.js` with `ctx.endpoint` set to that
 name; return `{ options: [ { value, label }, ... ] }`.
 
-## 3. Providing data (data.js)
+## 2. Providing data (data.js)
 
 Runs on the backend (Node, CommonJS). Export a single async function taking
 `ctx`; the saved config is on `ctx.config`.
@@ -159,7 +164,7 @@ module.exports = async function (ctx) {
 };
 ```
 
-## 4. The frontend (index.html)
+## 3. The frontend (index.html)
 
 Runs in a sandboxed iframe scaled to the widget's design resolution. Reads its
 `id` from the query string, fetches its own data, and draws it. Keep everything
@@ -260,9 +265,9 @@ Check the toolbox before building a new visual by hand.
 
 ## Cache-busting
 
-When you change your widget's frontend files, bump the `?v=N` in that widget's
-`src` in `widget-types.js`. This one is manual: the release cache-buster rewrites
-`?v=` on `/css/` and `/js/` imports, but not on `/widgets/` entry URLs.
+Nothing to do by hand. The release build hashes each widget entry file by content
+and stamps the cache version into the manifest, the same way it version-stamps
+`/css/` and `/js/` imports.
 
 ## Checklist
 
@@ -273,5 +278,4 @@ silently disabling the widget at runtime. Run the same check locally with
 - [ ] `ui/widgets/<name>/widget.json` with `name` (matching the folder), `label`, `sizes`, and `fields`
 - [ ] `ui/widgets/<name>/data.js` exporting `module.exports = async (ctx) => ...`
 - [ ] `ui/widgets/<name>/index.html` that reads `?id=` and fetches `/api/widget-data/<id>`
-- [ ] One entry added to `WIDGET_TYPES` in `ui/js/widget-types.js`
-- [ ] Bumped the `?v=N` in your widget's `src` when its frontend files change
+- [ ] For a multi-view widget: a `views` block with `viewField` and `defaultView`
