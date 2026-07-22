@@ -117,7 +117,8 @@
 </head>
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
-<script>
+<script type="module">
+import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
 const id   = new URLSearchParams(location.search).get('id')   || '';
 const size = new URLSearchParams(location.search).get('size') || 'small';
 const API  = '/api';
@@ -142,7 +143,7 @@ function statusColor(s) {
   return null;
 }
 
-let _cfg={}, _pollTimer=null, _pollSec=60, _href='', _jobSlots=[], _hrefs=[];
+let _cfg={}, _pollSec=60, _href='', _jobSlots=[], _hrefs=[];
 
 function parseDate(v) {
   if(!v) return null;
@@ -371,16 +372,12 @@ async function boot() {
   const firstSlot = rawSlots.find(s=>s?.provider);
   _pollSec = Math.max(10, parseInt(firstSlot?.dupPollSec || 60, 10));
   buildShell();
-  await tick();
-  schedulePoll();
+  /* Backup jobs are slow-moving, but a running job is worth watching closely,
+     so the gap shrinks to 5s while any slot reports running. */
+  poll({ fetch: fetchJobs, render: apply, interval: d => (d?.some(j=>j&&j.status==='running') ? 5 : _pollSec) * 1000,
+    onError: ({ error, everOk, stale }) => { if (!everOk || stale) applyError(error.body || { error: error.message }); } });
 }
 
-function openUrl(u){
-  if(!u) return;
-  try { const a=document.createElement('a'); a.href=u; a.target='_blank'; a.rel='noopener noreferrer';
-        document.body.appendChild(a); a.click(); a.remove(); }
-  catch(_){ window.open(u,'_blank','noopener,noreferrer'); }
-}
 function buildShell() {
   const w = document.getElementById('widget');
   w.innerHTML = '';
@@ -547,19 +544,16 @@ function buildShell() {
 
 }
 
-async function tick() {
-  try {
-    const r=await fetch(`${API}/backup-data/${encodeURIComponent(id)}`);
-    if(!r.ok){applyError(await r.json().catch(()=>({})));return;}
-    const data=await r.json();
-    apply(data);
-    schedulePoll(data.some(j=>j&&j.status==='running')?5:_pollSec);
-  } catch(e){applyError({error:e.message});}
-}
-
-function schedulePoll(sec) {
-  clearTimeout(_pollTimer);
-  _pollTimer=setTimeout(async()=>{await tick();},(sec??_pollSec)*1000);
+async function fetchJobs() {
+  let r;
+  try { r=await fetch(`${API}/backup-data/${encodeURIComponent(id)}`); }
+  catch(e){ throw new Error(e.message); }
+  if(!r.ok){
+    const e=new Error('HTTP '+r.status);
+    e.body=await r.json().catch(()=>({}));
+    throw e;
+  }
+  return r.json();
 }
 
 function apply(jobs) {

@@ -117,7 +117,8 @@
   </div>
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
-<script>
+<script type="module">
+import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
   const API='/api';
   const id=new URLSearchParams(location.search).get('id')||'';
   const TICK_MS=10000;
@@ -188,19 +189,21 @@
   prevB.addEventListener('click',e=>{e.stopPropagation();nav(-1);});
   nextB.addEventListener('click',e=>{e.stopPropagation();nav(1);});
 
-  function openHref(){ if(href) window.open(href,'_blank','noopener,noreferrer'); }
+  function openHref(){ if(href) openUrl(href); }
 
-  async function tick(){
-    try{
-      const r=await fetch(`${API}/widget-data/${encodeURIComponent(id)}`);
-      const d=await r.json().catch(()=>({}));
-      provider=d.provider||provider;
-      const next=Array.isArray(d.sessions)?d.sessions:[];
-      const changed=JSON.stringify(next)!==JSON.stringify(sessions);
-      sessions=next;
-      if(idx>=sessions.length) idx=0;
-      paint(changed);
-    }catch(e){ sessions=[]; paint(false); }
+  async function npFetch(){
+    let r;
+    try{ r=await fetch(`${API}/widget-data/${encodeURIComponent(id)}`); }
+    catch{ throw new Error('unreachable'); }
+    return r.json().catch(()=>({}));
+  }
+  function apply(d){
+    provider=d.provider||provider;
+    const next=Array.isArray(d.sessions)?d.sessions:[];
+    const changed=JSON.stringify(next)!==JSON.stringify(sessions);
+    sessions=next;
+    if(idx>=sessions.length) idx=0;
+    paint(changed);
   }
   async function boot(){
     try{
@@ -214,7 +217,8 @@
       wEl.addEventListener('click',openHref);
       wEl.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openHref(); } });
     }
-    await tick(); setInterval(tick,TICK_MS);
+    poll({ fetch:npFetch, interval:TICK_MS, render:apply,
+      onError:({everOk})=>{ if(!everOk){ sessions=[]; paint(false); } } });
   }
   boot();
 </script>

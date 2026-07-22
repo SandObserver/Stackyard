@@ -64,7 +64,7 @@
 </div>
 
 <script type="module">
-import { poll } from '/js/widget-toolbox.js?v=1';
+import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
 const TICK_MS = 30000;
 const params = new URLSearchParams(location.search);
 const id   = params.get('id')   || '';
@@ -100,7 +100,7 @@ async function boot() {
   _provider = cfg?.widgetConfig?.provider || 'adguard';
   if (_href) {
     widgetEl.classList.add('clickable');
-    widgetEl.addEventListener('click', () => window.open(_href,'_blank','noopener,noreferrer'));
+    widgetEl.addEventListener('click', () => openUrl(_href));
   }
   poll({ fetch:gfetch, interval:TICK_MS,
     render:d=>{ clearMsg(); apply(d); },

@@ -80,7 +80,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll } from '/js/widget-toolbox.js?v=1';
+  import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
   const API='/api';
   const id=new URLSearchParams(location.search).get('id')||'';
   const POLL_MS=300000;
@@ -151,7 +151,7 @@
     }catch(e){}
     if(href){
       card.classList.add('clickable'); card.setAttribute('role','link'); card.tabIndex=0;
-      const go=()=>window.open(href,'_blank','noopener,noreferrer');
+      const go=()=>openUrl(href);
       card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head')) go(); });
       card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
     }
