@@ -91,23 +91,29 @@
     }
     .widget iframe { display:block; border:0; width:100% }
 
+    /* The mobile home screen builds its own card element, but the glass material
+       is the same one. Sizing stays inline there because it derives from the
+       widget family's design box. */
+    .mob-widget-card {
+      border:1px solid var(--glass-border); background:var(--glass-bg);
+      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    }
+
     /* ── Per-widget-type transparency ── */
-    .widget[data-wtype="duplicati"] {
-      background: rgba(0,0,0,.08);
-      -webkit-backdrop-filter: blur(24px) saturate(140%);
-              backdrop-filter: blur(24px) saturate(140%);
-    }
-    .widget[data-wtype="github"] {
+    .widget[data-wtype="github"],
+    .mob-widget-card[data-wtype="github"] {
       background: rgba(0,0,0,.25);
       -webkit-backdrop-filter: blur(22px) saturate(140%);
               backdrop-filter: blur(22px) saturate(140%);
     }
-    .widget[data-wtype="books"] {
+    .widget[data-wtype="books"],
+    .mob-widget-card[data-wtype="books"] {
       background: rgba(0,0,0,.25);
       -webkit-backdrop-filter: blur(22px) saturate(140%);
               backdrop-filter: blur(22px) saturate(140%);
     }
-    .widget[data-wtype="stats"][data-wsubtype="disk-health"] {
+    .widget[data-wtype="stats"][data-wsubtype="disk-health"],
+    .mob-widget-card[data-wtype="stats"][data-wsubtype="disk-health"] {
       background: rgba(18,18,20,0.82);
       -webkit-backdrop-filter: blur(20px) saturate(120%);
               backdrop-filter: blur(20px) saturate(120%);
