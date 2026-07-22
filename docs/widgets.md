@@ -269,6 +269,12 @@ A failure keeps the last good render in place; only after `staleAfter` (default
 2) consecutive failures does it surface `errorText` with how long ago the last
 success was. `sinceLabel(ts)` gives that "3m ago" label on its own.
 
+**Links**
+
+- `openUrl(href)` opens a link in a new tab. Use this rather than `window.open`,
+  which the widget sandbox can block; it clicks a real anchor and only falls back
+  to `window.open` if that throws.
+
 **Visuals** (self-contained inline SVG/DOM, no extra CSS)
 
 - `sparkline(values, opts?)` returns an `<svg>` area+line chart element.
