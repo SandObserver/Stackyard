@@ -3,7 +3,6 @@ import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { reorderItems } from '/js/admin-logic.js?v=1';
 import { cleanId, buildStatsSlots, buildMapServices, finalizeBackupSlots, buildAppItem } from '/js/admin-save-logic.js?v=1';
-import { WIDGET_TYPES } from '/js/widget-types.js?v=63bf4388';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
@@ -165,7 +164,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const mt=document.createElement('div');mt.className='rmt';
   if(item.type==='widget'){
     const wt=item.widgetType||'custom';
-    const wtLabel=WIDGET_TYPES[wt]?.label||'Custom';
+    const wtLabel=state._widgetReg?.[wt]?.label||'Custom';
     mt.textContent=`${wtLabel} widget · ${item.widgetSize||'medium'}`;
   }
   else if(item.type==='folder')mt.textContent=`${(item.children||[]).length} apps`;
@@ -545,7 +544,7 @@ async function doSave(orig){
   try{
     let item;
     if(state.ctype==='widget'){
-      const wlabel=state._wlabel.trim()||(state._wtype==='stats'?(state._wstatsSubType==='disk-health'?'Disk Health':'System Summary'):WIDGET_TYPES[state._wtype]?.label||'Widget');
+      const wlabel=state._wlabel.trim()||(state._wtype==='stats'?(state._wstatsSubType==='disk-health'?'Disk Health':'System Summary'):state._widgetReg?.[state._wtype]?.label||'Widget');
       if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
         const missing=state._autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }

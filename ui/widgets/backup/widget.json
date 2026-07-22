@@ -3,6 +3,9 @@
   "label": "Backup",
   "sizes": ["small", "medium"],
   "customEditor": true,
+  "views": {
+    "main": { "src": "backup.html" }
+  },
   "fields": [
     { "key": "slots", "type": "group", "label": "Slots", "fields": [
       { "key": "dupPass", "type": "secret", "label": "Duplicati Password" },

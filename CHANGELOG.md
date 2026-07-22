@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Widgets no longer show a stale cached version after an update. Each widget's
+  frontend files are now cache-busted automatically from their content, the same
+  way the rest of the interface already was.
+
 ## [1.3.1] - 2026-07-20
 
 ### Security

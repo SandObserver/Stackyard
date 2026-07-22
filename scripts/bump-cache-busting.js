@@ -48,3 +48,40 @@ while (filesChangedThisPass !== 0) {
 }
 
 console.log(`bump-cache-busting: stable after ${pass} pass(es), ${totalChangedFiles} file write(s)`);
+
+/* Widget iframe entry files are referenced indirectly: the dashboard builds each
+   URL from the manifest, not from a literal string in code, so the pass above
+   cannot reach them. Stamp each widget's entry files by content hash into its
+   manifest under `entryVersions` instead, so the dashboard cache-busts them
+   without a hand-maintained number. Entry files are the manifest's view srcs,
+   or index.html when the widget declares no views. */
+const WIDGETS_DIR = path.join(UI_DIR, 'widgets');
+
+function stampWidgetManifests() {
+  let dirents;
+  try { dirents = fs.readdirSync(WIDGETS_DIR, { withFileTypes: true }); }
+  catch { return; }
+  let stamped = 0;
+  for (const ent of dirents) {
+    if (!ent.isDirectory()) continue;
+    const dir = path.join(WIDGETS_DIR, ent.name);
+    const manPath = path.join(dir, 'widget.json');
+    if (!fs.existsSync(manPath)) continue;
+    const manifest = JSON.parse(fs.readFileSync(manPath, 'utf8'));
+    const files = manifest.views
+      ? [...new Set(Object.values(manifest.views).map(v => v.src))]
+      : ['index.html'];
+    const versions = {};
+    for (const file of files) {
+      const full = path.join(dir, file);
+      if (!fs.existsSync(full)) throw new Error(`Widget "${ent.name}" references a missing entry file: ${file}`);
+      versions[file] = crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 8);
+    }
+    manifest.entryVersions = versions;
+    fs.writeFileSync(manPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+    stamped++;
+  }
+  console.log(`bump-cache-busting: stamped ${stamped} widget manifest(s)`);
+}
+
+stampWidgetManifests();

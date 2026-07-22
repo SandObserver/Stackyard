@@ -3,6 +3,12 @@
   "label": "Connections",
   "sizes": ["small", "medium"],
   "customEditor": true,
+  "viewField": "view",
+  "defaultView": "map",
+  "views": {
+    "map": { "label": "Map", "src": "connections-map.html" },
+    "vpn": { "label": "VPN", "src": "connections-vpn.html" }
+  },
   "fields": [
     { "key": "vpn", "type": "object", "label": "VPN", "fields": [
       { "key": "apiKey", "type": "secret", "label": "API Key" },

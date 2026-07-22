@@ -2,6 +2,12 @@
   "name": "clock",
   "label": "Clock",
   "sizes": ["small"],
+  "viewField": "clockStyle",
+  "defaultView": "digital",
+  "views": {
+    "digital": { "label": "Digital", "src": "digital.html" },
+    "analog":  { "label": "Analog",  "src": "analog.html" }
+  },
   "fields": [
     { "key": "clockStyle", "type": "select", "variant": "pills", "label": "Style",
       "options": [
