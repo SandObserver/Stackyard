@@ -19,6 +19,7 @@ starting point.
 ui/widgets/mywidget/
   widget.json    manifest: the config form, label, and sizes
   data.js        backend function that fetches/produces the widget's data
+                 (omit it if the widget renders entirely in the browser)
   index.html     frontend page that renders it
 ```
 
@@ -111,6 +112,18 @@ it `"optionsFrom": "<endpoint>"` instead of static `options`. The form shows a
 **Fetch** button, which calls your `data.js` with `ctx.endpoint` set to that
 name; return `{ options: [ { value, label }, ... ] }`.
 
+### customEditor (deprecated)
+
+Four of the shipped widgets set `"customEditor": true` in their manifest, which
+tells the admin UI to skip the auto-form and use a hand-written editor kept in
+`ui/js/admin-widget-form.js` instead. It dates from before the auto-form covered
+groups, conditional fields and fetched options.
+
+Do not use it in a new widget. Those four are being converted to the auto-form,
+and the key is removed once the last one lands. If the auto-form cannot express
+what your widget needs, that is a gap worth filling in the form itself; open an
+issue rather than reaching for this.
+
 ## 2. Providing data (data.js)
 
 Runs on the backend (Node, CommonJS). Export a single async function taking
@@ -143,7 +156,8 @@ and the app's TLS-skip setting.
 | `ctx.parsePrometheus(text)` | Parse a Prometheus metrics body into an object. |
 | `ctx.normalizeBase(raw)` | Tidy a user-entered base URL (add scheme, drop trailing slash). |
 | `ctx.buildAuth(decl, config)` | Build auth headers/params from a declared auth block. |
-| `ctx.metrics` | Host metrics for stats-style widgets: `{ cpuPercent, ramPercent, cpuTemp, diskStats }`. |
+| `ctx.metrics` | Host metrics for stats-style widgets: `{ cpuPercent, cpuIoWait, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds }`. Each is a function. `cpuPercent()` and `cpuIoWait()` are async; the rest return directly. `cpuTemp(zone)` defaults to zone 0, `diskStats(mountPoint)` takes a mount path. |
+| `ctx.dispatchProvider(handlers, opts)` | Run the handler for the provider the user picked, for a widget that supports several backends. `handlers` is `{ providerKey: async (ctx) => result }`. `opts.field` is the config field holding the key (default `provider`), `opts.default` the key to fall back to, `opts.onError(err, ctx)` an optional wrapper turning a thrown handler error into the widget's own error shape. |
 | `ctx.log` | The structured logger. |
 
 For XML responses, `ctx.fetchJSON` returns `data` keyed by the root tag:
@@ -276,6 +290,6 @@ silently disabling the widget at runtime. Run the same check locally with
 `cd api && node --test`.
 
 - [ ] `ui/widgets/<name>/widget.json` with `name` (matching the folder), `label`, `sizes`, and `fields`
-- [ ] `ui/widgets/<name>/data.js` exporting `module.exports = async (ctx) => ...`
+- [ ] `ui/widgets/<name>/data.js` exporting `module.exports = async (ctx) => ...`, for a widget that fetches. A widget that renders entirely in the browser (the clock, the dashboard switch) ships no `data.js` and never calls `/api/widget-data/`.
 - [ ] `ui/widgets/<name>/index.html` that reads `?id=` and fetches `/api/widget-data/<id>`
 - [ ] For a multi-view widget: a `views` block with `viewField` and `defaultView`
