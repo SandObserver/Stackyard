@@ -23,15 +23,6 @@ const normBase   = u => u ? (u.includes('://') ? u : `http://${u}`) : '';
 const MAP_DEFAULT_COLOR = { conduit:'#AF52DE', gluetun:'#30D158', netbird:'#FF9F0A', plausible:'#5E5CE6', umami:'#64D2FF' };
 const mapNormBase = u => (u && u.includes('://')) ? u : ('http://' + u);
 
-/* Services array; falls back to synthesizing one from legacy single-instance config. */
-function mapServices(wc){
-  if (Array.isArray(wc.services) && wc.services.length) return wc.services;
-  const out = [];
-  if (wc.conduit?.url) out.push({ id:'conduit', type:'conduit', name:wc.conduit.name||'Conduit', color:wc.conduit.color||MAP_DEFAULT_COLOR.conduit, url:wc.conduit.url, adminUrl:wc.conduit.adminUrl||'', enabled:wc.conduit.enabled!==false });
-  if (wc.gluetun?.url) out.push({ id:'gluetun', type:'gluetun', name:wc.gluetun.name||'Gluetun', color:wc.gluetun.color||MAP_DEFAULT_COLOR.gluetun, url:wc.gluetun.url, adminUrl:wc.gluetun.adminUrl||'', enabled:wc.gluetun.enabled!==false });
-  return out;
-}
-
 /* Raw GET: Conduit exposes Prometheus-style text that needs the unparsed body. */
 function parseConduitText(raw){
   const regions = {}; let limit = 0, connected = 0, live = 0;
@@ -119,7 +110,7 @@ async function vpnView(config, fetchJSON) {
 /* ── Map view ── */
 async function mapView(config, fetchJSON) {
   const wc = config || {};
-  const services = mapServices(wc).filter(s => s && s.enabled !== false && s.url);
+  const services = (Array.isArray(wc.services) ? wc.services : []).filter(s => s && s.enabled !== false && s.url);
   const results = await Promise.all(services.map(async (s, idx) => {
     const base = mapNormBase(s.url);
     const o = { id: s.id || (s.type + '-' + idx), type: s.type,
