@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   control used elsewhere in the admin interface.
 - Widget settings can declare an `object` field, rendered as its own card of
   nested settings.
+- Widget settings can declare the same key more than once with different labels,
+  each shown by a `showIf` condition.
 
 ### Changed
 

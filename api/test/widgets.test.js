@@ -84,3 +84,48 @@ test('validateManifest still rejects an unknown field type', () => {
   assert.equal(errs.length, 1);
   assert.match(errs[0], /unknown type "colour"/);
 });
+
+/* ── Repeated sibling keys ──────────────────────────────────────────────── */
+
+const cond = v => ({ field: 'type', equals: v });
+
+test('validateManifest accepts a repeated key when every declaration is conditional', () => {
+  assert.deepEqual(errsFor([
+    { key: 'type', type: 'select', label: 'Service', options: [{ value: 'a', label: 'A' }] },
+    { key: 'url', type: 'text', label: 'Metrics URL', showIf: cond('a') },
+    { key: 'url', type: 'text', label: 'Management API URL', showIf: cond('b') },
+  ]), []);
+});
+
+test('validateManifest rejects a repeated key when one declaration is unconditional', () => {
+  const errs = errsFor([
+    { key: 'url', type: 'text', label: 'Metrics URL', showIf: cond('a') },
+    { key: 'url', type: 'text', label: 'URL' },
+  ]);
+  assert.equal(errs.length, 1);
+  assert.match(errs[0], /"url" is declared more than once/);
+});
+
+test('validateManifest reports a repeated key once, not once per declaration', () => {
+  const errs = errsFor([
+    { key: 'url', type: 'text', label: 'A' },
+    { key: 'url', type: 'text', label: 'B' },
+    { key: 'url', type: 'text', label: 'C' },
+  ]);
+  assert.equal(errs.length, 1);
+});
+
+test('validateManifest applies the rule inside a group and inside an object', () => {
+  const bad = [{ key: 'url', type: 'text', label: 'A' }, { key: 'url', type: 'text', label: 'B' }];
+  const good = [{ key: 'url', type: 'text', label: 'A', showIf: cond('a') }, { key: 'url', type: 'text', label: 'B', showIf: cond('b') }];
+  assert.match(errsFor([{ key: 'svcs', type: 'group', label: 'Services', fields: bad }])[0], /svcs: key "url"/);
+  assert.match(errsFor([{ key: 'vpn', type: 'object', label: 'VPN', fields: bad }])[0], /vpn: key "url"/);
+  assert.deepEqual(errsFor([{ key: 'svcs', type: 'group', label: 'Services', fields: good }]), []);
+});
+
+test('a key repeated across different levels is not a conflict', () => {
+  assert.deepEqual(errsFor([
+    { key: 'url', type: 'text', label: 'URL' },
+    { key: 'vpn', type: 'object', label: 'VPN', fields: [{ key: 'url', type: 'text', label: 'URL' }] },
+  ]), []);
+});

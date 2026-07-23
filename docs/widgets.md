@@ -108,6 +108,24 @@ These keys can go on any field:
 | `min` / `max` | For `group`: the fewest and most entries allowed. |
 | `maxBySize` | For `group`: a per-size cap, e.g. `{ "small": 2, "medium": 5 }`. Overrides `max` for the selected widget size; falls back to `max` for sizes not listed. Extra entries are trimmed when switching to a smaller size. |
 
+### Varying a field by another field's value
+
+Two sibling fields may share a `key`, so the same saved value can be asked for
+differently depending on another field. Give each declaration a `showIf`:
+
+```json
+{ "key": "url", "type": "text", "label": "Metrics URL", "placeholder": "conduit:9090",
+  "showIf": { "field": "type", "equals": "conduit" } },
+{ "key": "url", "type": "text", "label": "Management API URL", "placeholder": "netbird:33073",
+  "showIf": { "field": "type", "equals": "netbird" } }
+```
+
+Hidden fields are skipped when values are read back, so only the visible one is
+saved. A repeated key without a `showIf` on every declaration is rejected by the
+validator, because two visible fields writing one key would silently leave the
+last one to win. The validator does not check that the conditions are mutually
+exclusive; that is on you.
+
 ### Nested settings (object)
 
 Use `object` when a widget already stores part of its config one level deep and

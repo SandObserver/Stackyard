@@ -13,6 +13,29 @@ const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'color',
 
 let _registry = null;
 
+/* Two sibling fields may share a key so that one label and placeholder can be
+   swapped for another, for example a URL that is named differently per service
+   type. Only one may be visible at a time, or the last one read silently wins,
+   so every declaration of a repeated key has to carry a "showIf". */
+function _validateSiblingKeys(fields, where) {
+  const errs = [];
+  const counts = {};
+  for (const f of fields) {
+    if (!f || typeof f.key !== 'string' || !f.key) continue;
+    counts[f.key] = (counts[f.key] || 0) + 1;
+  }
+  const reported = new Set();
+  for (const f of fields) {
+    if (!f || typeof f.key !== 'string' || !f.key) continue;
+    if (counts[f.key] < 2 || reported.has(f.key)) continue;
+    if (fields.some(o => o && o.key === f.key && !o.showIf)) {
+      errs.push(`${where}: key "${f.key}" is declared more than once, so every declaration needs a "showIf"`);
+      reported.add(f.key);
+    }
+  }
+  return errs;
+}
+
 /* Validate one field declaration. Recurses into group sub-fields. Returns an
    array of human-readable problems (empty = valid). Kept permissive: unknown
    extra keys are allowed so the format can grow without breaking older widgets. */
@@ -27,7 +50,10 @@ function _validateField(f, where, depth = 0) {
   if (f.type === 'group' || f.type === 'object') {
     if (depth > 0) { errs.push(`${where}: ${f.type} "${f.key}" cannot be nested inside another group or object`); }
     else if (!Array.isArray(f.fields) || !f.fields.length) errs.push(`${where}: ${f.type} "${f.key}" needs a non-empty "fields" array`);
-    else f.fields.forEach((sf, i) => errs.push(..._validateField(sf, `${where}.${f.key}[${i}]`, depth + 1)));
+    else {
+      f.fields.forEach((sf, i) => errs.push(..._validateField(sf, `${where}.${f.key}[${i}]`, depth + 1)));
+      errs.push(..._validateSiblingKeys(f.fields, `${where}.${f.key}`));
+    }
   }
   return errs;
 }
@@ -44,7 +70,10 @@ function _validateManifest(name, m) {
 
   if (m.fields !== undefined) {
     if (!Array.isArray(m.fields)) errs.push('"fields" must be an array');
-    else m.fields.forEach((f, i) => errs.push(..._validateField(f, `fields[${i}]`)));
+    else {
+      m.fields.forEach((f, i) => errs.push(..._validateField(f, `fields[${i}]`)));
+      errs.push(..._validateSiblingKeys(m.fields, 'fields'));
+    }
   }
 
   if (m.views !== undefined) {
