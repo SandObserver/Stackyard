@@ -10,7 +10,6 @@ const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets'
 
 const VALID_SIZES      = new Set(['small', 'medium', 'large', 'xlarge']);
 const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'select', 'multiselect', 'group', 'object']);
-const VALID_AUTHTYPES  = new Set(['none', 'basic', 'bearer', 'header', 'query']);
 
 let _registry = null;
 
@@ -46,18 +45,6 @@ function _validateManifest(name, m) {
   if (m.fields !== undefined) {
     if (!Array.isArray(m.fields)) errs.push('"fields" must be an array');
     else m.fields.forEach((f, i) => errs.push(..._validateField(f, `fields[${i}]`)));
-  }
-
-  if (m.data !== undefined) {
-    if (typeof m.data !== 'object') errs.push('"data" must be an object');
-    else {
-      const a = m.data.auth;
-      if (a !== undefined) {
-        if (typeof a !== 'object' || !VALID_AUTHTYPES.has(a.type)) errs.push(`"data.auth.type" must be one of: ${[...VALID_AUTHTYPES].join(', ')}`);
-      }
-      if (m.data.endpoints !== undefined && typeof m.data.endpoints !== 'object')
-        errs.push('"data.endpoints" must be an object of name → path');
-    }
   }
 
   if (m.views !== undefined) {
@@ -143,7 +130,7 @@ function getRegistry() {
 
 /* The browser-facing shape: everything the dashboard and admin UI need to draw
    the type picker, the config editor, and the widget iframe, and nothing the
-   backend keeps to itself (the "data" routing block stays server-side). */
+   backend keeps to itself. */
 function _publicEntry(_name, e) {
   const m = e.manifest;
   return {

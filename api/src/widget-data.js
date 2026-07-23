@@ -3,7 +3,6 @@ const { on, json, readBody, checkOrigin } = require('./router');
 const { loadConfig } = require('./config');
 const { fetchChecked, fetchUnchecked, SsrfBlockedError } = require('./proxy');
 const { parsePrometheus } = require('./parse-prometheus');
-const { FETCH_MS } = require('./timeouts');
 const { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
@@ -24,43 +23,6 @@ function normalizeBase(raw) {
 }
 
 /* Fill {field} placeholders in an auth value template from the widget config. */
-function _fill(template, wc) {
-  return String(template || '').replace(/\{(\w+)\}/g, (_, k) => (wc[k] != null ? wc[k] : ''));
-}
-
-/* Build request auth from the declaration's auth block + the widget's stored
-   config (which holds the secret values, server-side only). Returns the headers
-   to send and an optional query-string fragment to append to the URL.
-   Mirrors the existing routes' habit of only attaching credentials when present. */
-function buildAuth(authDecl, wc) {
-  const headers = {};
-  let query = '';
-  if (!authDecl || authDecl.type === 'none' || !authDecl.type) return { headers, query };
-
-  switch (authDecl.type) {
-    case 'basic': {
-      const user = wc[authDecl.user] || '';
-      const pass = wc[authDecl.pass] || '';
-      if (user || pass) headers['Authorization'] = 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
-      break;
-    }
-    case 'bearer': {
-      const token = wc[authDecl.token] || '';
-      if (token) headers['Authorization'] = 'Bearer ' + token;
-      break;
-    }
-    case 'header': {
-      if (authDecl.name) headers[authDecl.name] = _fill(authDecl.value, wc);
-      break;
-    }
-    case 'query': {
-      if (authDecl.name) query = encodeURIComponent(authDecl.name) + '=' + encodeURIComponent(_fill(authDecl.value, wc));
-      break;
-    }
-  }
-  return { headers, query };
-}
-
 /* The toolbox handed to a widget's data.js. These are the same server-side
    primitives the built-in complex widgets use, so an author writing a data
    function reuses them instead of re-deriving them. */
@@ -78,7 +40,6 @@ function dataFnContext(wc, endpoint, searchParams, fetch) {
     parsePrometheus,
     metrics:  IS_DEMO ? demoData.metrics : { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds },
     normalizeBase,
-    buildAuth,
     log,
   };
   /* Provider dispatch for multi-provider widgets, bound to this ctx so callers
@@ -99,47 +60,8 @@ async function runDataFn(name, ctx) {
   return await fn(ctx);
 }
 
-/* Resolve a declarative widget's data into { status, body }.
-   Returns upstream JSON on success; surfaces auth failures and upstream errors
-   with statuses the widget front-ends already understand. */
-async function fetchDeclarative(decl, wc, endpointName, fetch) {
-  if (!decl) return { status: 503, body: { error: 'widget declares no data source' } };
-
-  const base = normalizeBase(wc[decl.url]);
-  if (!base) return { status: 503, body: { error: 'URL not configured' } };
-
-  const endpoints = decl.endpoints || {};
-  let epPath = '';
-  if (Object.keys(endpoints).length) {
-    if (!endpointName) return { status: 400, body: { error: 'missing ?endpoint=' } };
-    if (!(endpointName in endpoints)) return { status: 400, body: { error: `unknown endpoint "${endpointName}"` } };
-    epPath = endpoints[endpointName] || '';
-    if (epPath && !epPath.startsWith('/')) epPath = '/' + epPath;
-  }
-
-  const { headers, query } = buildAuth(decl.auth, wc);
-  let url = base + epPath;
-  if (query) url += (url.includes('?') ? '&' : '?') + query;
-
-  /* Match AdGuard's behavior: honor an explicit per-widget TLS-skip if set,
-     otherwise let fetchJSON fall back to its own host-based heuristic. */
-  const skipTls = wc.skipTlsVerify === true ? true : undefined;
-
-  let r;
-  try { r = await fetch(url, { headers, timeout: FETCH_MS, skipTls }); }
-  catch (e) {
-    if (e instanceof SsrfBlockedError) return { status: e.status, body: { error: e.message } };
-    return { status: 502, body: { error: e.message } };
-  }
-
-  if (r.status === 401) return { status: 401, body: { error: 'Upstream auth failed (401), check credentials' } };
-  if (r.status === 403) return { status: 403, body: { error: 'Upstream auth failed (403), check credentials' } };
-  if (r.status >= 500)  return { status: 502, body: { error: 'Upstream HTTP ' + r.status } };
-  return { status: 200, body: r.data };
-}
-
-/* Core: resolve a widget's data, choosing the data-function path when the
-   widget ships a data.js, otherwise the declarative path. Exported for tests. */
+/* Core: resolve a widget's data by running its data.js. A widget with no data.js
+   is client-only and has no server data source. Exported for tests. */
 async function getWidgetData(item, entry, endpointName, searchParams, fetch) {
   const wc = item.widgetConfig || {};
   if (IS_DEMO) {
@@ -148,11 +70,9 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch) {
     const body = demoData.demoWidgetBody(item.widgetType);
     if (body) return { status: 200, body };
   }
-  if (entry.hasDataFn) {
-    const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch));
-    return { status: 200, body: result };
-  }
-  return fetchDeclarative(entry.manifest.data, wc, endpointName, fetch);
+  if (!entry.hasDataFn) return { status: 503, body: { error: 'widget declares no data source' } };
+  const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch));
+  return { status: 200, body: result };
 }
 
 on('GET', '/api/widget-data/:id', async (req, res) => {
@@ -201,4 +121,4 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   }
 });
 
-module.exports = { getWidgetData, fetchDeclarative, buildAuth, normalizeBase, dataFnContext };
+module.exports = { getWidgetData, normalizeBase, dataFnContext };

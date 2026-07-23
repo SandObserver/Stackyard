@@ -18,7 +18,7 @@ const WIDGETS_DIR = path.join(__dirname, '..', '..', 'ui', 'widgets');
    the manifests inside the release image; it must never appear in a committed
    one, which the separate test below enforces. */
 const KNOWN_KEYS = new Set([
-  'name', 'label', 'sizes', 'fields', 'data',
+  'name', 'label', 'sizes', 'fields',
   'views', 'viewField', 'defaultView', 'customEditor', 'entryVersions',
 ]);
 

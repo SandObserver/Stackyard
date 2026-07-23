@@ -155,7 +155,6 @@ and the app's TLS-skip setting.
 | `ctx.fetchJSON(url, opts)` | Fetch a URL and parse the body. JSON is returned as-is; Prometheus text and XML are auto-parsed. Pass `{ raw: true }` to get the untouched text body instead, for a custom parser. Returns `{ status, data }` or throws. Respects the app's TLS-skip setting. |
 | `ctx.parsePrometheus(text)` | Parse a Prometheus metrics body into an object. |
 | `ctx.normalizeBase(raw)` | Tidy a user-entered base URL (add scheme, drop trailing slash). |
-| `ctx.buildAuth(decl, config)` | Build auth headers/params from a declared auth block. |
 | `ctx.metrics` | Host metrics for stats-style widgets: `{ cpuPercent, cpuIoWait, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds }`. Each is a function. `cpuPercent()` and `cpuIoWait()` are async; the rest return directly. `cpuTemp(zone)` defaults to zone 0, `diskStats(mountPoint)` takes a mount path. |
 | `ctx.dispatchProvider(handlers, opts)` | Run the handler for the provider the user picked, for a widget that supports several backends. `handlers` is `{ providerKey: async (ctx) => result }`. `opts.field` is the config field holding the key (default `provider`), `opts.default` the key to fall back to, `opts.onError(err, ctx)` an optional wrapper turning a thrown handler error into the widget's own error shape. |
 | `ctx.log` | The structured logger. |
