@@ -1,5 +1,6 @@
 /* Renders a widget's declared `fields` into a settings-row config form and reads
-   values back. Field types: text, secret, number, toggle, color, select, pills, multiselect, group.
+   values back. Field types: text, secret, number, toggle, color, select, pills,
+   multiselect, group, object.
    renderWidgetConfigForm(container, fields, config) -> { getValues, validate }
    Each builder returns { el, get, control, liveValue }.
 
@@ -15,12 +16,15 @@
 
    Group rows get the same treatment: `showIf` is evaluated per row against that
    row's own values, and a sub-field's `optionsFrom` fetch names its row so the
-   data function can read the values that row was filled in with. */
+   data function can read the values that row was filled in with.
+
+   An `object` renders one nested card and saves its sub-fields one level deep.
+   Like a group row, its `showIf` conditions read its own sub-fields. */
 
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
-import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches } from '/js/admin-logic.js?v=1';
+import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches, requiredFieldMissing } from '/js/admin-logic.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -196,6 +200,18 @@ function _color(field, value) {
 
 function _visible(b) { return b.el.style.display !== 'none'; }
 
+/* Labels of the required fields in one set of siblings that were left empty.
+   Types that always read back a value, and secrets (blank means keep), never
+   count as missing. */
+function _missingIn(built) {
+  const out = [];
+  for (const b of built) {
+    if (b.field.showIf && !_visible(b)) continue;
+    if (requiredFieldMissing(b.field, b.get())) out.push(b.field.label);
+  }
+  return out;
+}
+
 /* Wire `showIf` across one set of sibling fields: the top-level form, or the
    sub-fields of a single group row. Each row is independent, so a row's
    condition reads that row's own values. */
@@ -214,6 +230,35 @@ function _wireShowIf(built) {
     if (b.control && b.control.tagName === 'INPUT' && (b.control.type === 'text' || b.control.type === 'number')) b.control.addEventListener('input', apply);
   }
   apply();
+}
+
+/* One nested object: a section header plus a card of sub-fields, read back as a
+   single nested value. Sub-fields of type group or object are skipped; the
+   manifest validator already rejects them. */
+function _object(field, value, ctx) {
+  const cfg = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const wrap = document.createElement('div');
+  const hdr = document.createElement('p'); hdr.className = 'grp-hdr'; hdr.textContent = field.label;
+  wrap.appendChild(hdr);
+  const card = document.createElement('div'); card.className = 'grp'; wrap.appendChild(card);
+
+  const subCtx = {
+    widgetId:   ctx && ctx.widgetId,
+    widgetType: ctx && ctx.widgetType,
+    getDraft:   () => (ctx && ctx.getDraft ? ctx.getDraft() : {}),
+  };
+  const built = [];
+  for (const sf of Array.isArray(field.fields) ? field.fields : []) {
+    if (sf.type === 'group' || sf.type === 'object') continue;
+    const b = _buildSimple(sf, cfg, subCtx); b.field = sf;
+    card.appendChild(b.el);
+    built.push(b);
+  }
+  _wireShowIf(built);
+  if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip'; h.textContent = field.hint; wrap.appendChild(h); }
+
+  const get = () => [field.key, collectFieldValues(built.map(b => ({ field: b.field, visible: _visible(b), kv: b.get() })))];
+  return { el: wrap, get, control: null, liveValue: () => null, missing: () => _missingIn(built) };
 }
 
 function _group(field, rows, size, ctx) {
@@ -306,9 +351,12 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
   const flush = () => { card = null; };
   for (const f of fields) {
     if (!f || !f.key) continue;
-    if (f.type === 'group') {
+    if (f.type === 'group' || f.type === 'object') {
       flush();
-      const b = _group(f, config[f.key], opts && opts.size, ctx); b.field = f;
+      const b = f.type === 'group'
+        ? _group(f, config[f.key], opts && opts.size, ctx)
+        : _object(f, config[f.key], ctx);
+      b.field = f;
       container.appendChild(b.el); built.push(b);
       continue;
     }
@@ -326,13 +374,9 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
       return collectFieldValues(built.map(b => ({ field: b.field, visible: _visible(b), kv: b.get() })), readOpts);
     },
     validate() {
-      const missing = [];
+      const missing = _missingIn(built);
       for (const b of built) {
-        if (b.field.optional || b.field.transient || b.field.type === 'toggle' || b.field.type === 'color' || b.field.type === 'group') continue;
-        if (b.field.showIf && !_visible(b)) continue;
-        if (b.field.type === 'secret') continue;
-        const kv = b.get();
-        if (!kv || kv[1] === '' || kv[1] == null) missing.push(b.field.label);
+        if (b.missing && (!b.field.showIf || _visible(b))) missing.push(...b.missing());
       }
       return missing;
     },

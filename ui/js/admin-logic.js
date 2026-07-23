@@ -31,6 +31,15 @@ export function showIfMatches(cond, current) {
   return String(current) === String(cond.equals);
 }
 
+/* Whether a required field was left empty. Types that always read back a value
+   never count, and a blank secret means "keep the stored one" rather than empty. */
+const _ALWAYS_FILLED = new Set(['toggle', 'color', 'group', 'object', 'secret']);
+export function requiredFieldMissing(field, kv) {
+  if (field.optional || field.transient) return false;
+  if (_ALWAYS_FILLED.has(field.type)) return false;
+  return !kv || kv[1] === '' || kv[1] == null;
+}
+
 /* Assemble the config object from what each field read back. `reads` is one
    entry per field: { field, visible, kv }, where kv is [key, value] plus an
    optional third element of extra keys the field carries. Hidden fields are

@@ -87,7 +87,7 @@ the entry file is `index.html`. A single-view widget whose file is not
 | `select` | A dropdown by default. Add `"variant": "pills"` to render the options as a radio group instead. With `optionsFrom` it also shows a Fetch button (see below). |
 | `multiselect` | A checklist dropdown; the value is an array of the chosen values. |
 | `group` | A repeatable set of sub-fields, each entry rendered as its own card with Add / Remove. Put the sub-fields in a nested `"fields"` array. Groups cannot be nested inside a group or object. |
-| `object` | A single nested object holding sub-fields in a `"fields"` array. Not rendered by the auto-form; it exists so a `customEditor` widget can still declare secrets that live one level deep (for example `network.password`) so they are scrubbed and preserved like any other secret. |
+| `object` | A single nested set of sub-fields in a `"fields"` array, saved one level deep (for example `network.password`). Rendered as its own card. Objects cannot be nested inside a group or another object. |
 
 ### Field options
 
@@ -107,6 +107,22 @@ These keys can go on any field:
 | `variant` | For `select`: `"pills"` renders a radio group instead of a dropdown. |
 | `min` / `max` | For `group`: the fewest and most entries allowed. |
 | `maxBySize` | For `group`: a per-size cap, e.g. `{ "small": 2, "medium": 5 }`. Overrides `max` for the selected widget size; falls back to `max` for sizes not listed. Extra entries are trimmed when switching to a smaller size. |
+
+### Nested settings (object)
+
+Use `object` when a widget already stores part of its config one level deep and
+you do not want to flatten it:
+
+```json
+{ "key": "vpn", "type": "object", "label": "Connection", "fields": [
+  { "key": "url", "type": "text", "label": "Control server URL" },
+  { "key": "apiKey", "type": "secret", "label": "API key", "optional": true }
+] }
+```
+
+That saves `{ "vpn": { "url": "...", "apiKey": "..." } }`. A sub-field's `showIf`
+names a sibling inside the same object, and its secrets are scrubbed and
+preserved exactly like top-level ones.
 
 ### Loading options from the service (optionsFrom)
 
