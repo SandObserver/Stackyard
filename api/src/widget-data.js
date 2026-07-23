@@ -26,11 +26,26 @@ function normalizeBase(raw) {
 /* The toolbox handed to a widget's data.js. These are the same server-side
    primitives the built-in complex widgets use, so an author writing a data
    function reuses them instead of re-deriving them. */
-function dataFnContext(wc, endpoint, searchParams, fetch) {
+/* Resolve the group row an options fetch came from. Request-supplied, so the
+   shape is checked rather than trusted. */
+function resolveRow(wc, row) {
+  if (!row || typeof row.key !== 'string' || !Number.isInteger(row.index) || row.index < 0) return null;
+  if (!Object.hasOwn(wc, row.key)) return null;
+  const rows = wc[row.key];
+  if (!Array.isArray(rows)) return null;
+  const r = rows[row.index];
+  return r && typeof r === 'object' && !Array.isArray(r) ? r : null;
+}
+
+function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
   const ctx = {
     config:   wc,                 /* full widgetConfig, including secrets (server-side only) */
     settings: loadConfig().settings || {}, /* global non-secret config (e.g. stats.diskMount, networkInterface), server-side only */
     endpoint: endpoint,
+    /* Set only for an optionsFrom fetch from inside a group: the row's own
+       values, so a per-row picker reads the URL and key that row was given.
+       The full config still travels so secrets are preserved as usual. */
+    row:      resolveRow(wc, row),
     params:   searchParams,       /* URLSearchParams for any extra query params */
     /* Named fetchJSON because widget data.js files destructure it. The caller
        supplies the fetcher to match the URL's provenance: fetchUnchecked for a
@@ -62,7 +77,7 @@ async function runDataFn(name, ctx) {
 
 /* Core: resolve a widget's data by running its data.js. A widget with no data.js
    is client-only and has no server data source. Exported for tests. */
-async function getWidgetData(item, entry, endpointName, searchParams, fetch) {
+async function getWidgetData(item, entry, endpointName, searchParams, fetch, row = null) {
   const wc = item.widgetConfig || {};
   if (IS_DEMO) {
     /* Stats runs its real code path against fake metrics; the fetch-based
@@ -71,7 +86,7 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch) {
     if (body) return { status: 200, body };
   }
   if (!entry.hasDataFn) return { status: 503, body: { error: 'widget declares no data source' } };
-  const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch));
+  const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row));
   return { status: 200, body: result };
 }
 
@@ -112,7 +127,7 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   if (saved) preserveWidgetSecrets(item, saved, entry); /* restore a secret the form left blank */
 
   try {
-    const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams(), fetchChecked);
+    const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams(), fetchChecked, body.row);
     json(res, out.status, out.body);
   } catch (e) {
     if (e instanceof SsrfBlockedError) return json(res, e.status, { error: e.message });
@@ -121,4 +136,4 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   }
 });
 
-module.exports = { getWidgetData, normalizeBase, dataFnContext };
+module.exports = { getWidgetData, normalizeBase, dataFnContext, resolveRow };

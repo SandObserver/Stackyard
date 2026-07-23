@@ -21,6 +21,16 @@ export function applyOptionSet(carried, option, carryKeys) {
   return out;
 }
 
+/* Whether a field's `showIf` condition is met by the current value of the field
+   it names. `in` matches any of several values, `equals` matches one; a boolean
+   control is compared as a boolean so `false` is a real match rather than an
+   empty value. */
+export function showIfMatches(cond, current) {
+  if (Array.isArray(cond.in)) return cond.in.map(String).includes(String(current));
+  if (typeof current === 'boolean') return current === !!cond.equals;
+  return String(current) === String(cond.equals);
+}
+
 /* Assemble the config object from what each field read back. `reads` is one
    entry per field: { field, visible, kv }, where kv is [key, value] plus an
    optional third element of extra keys the field carries. Hidden fields are

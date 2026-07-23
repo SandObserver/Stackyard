@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seedCarried, applyOptionSet, collectFieldValues } from '../js/admin-logic.js';
+import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches } from '../js/admin-logic.js';
 
 test('seedCarried takes only the declared keys that are present', () => {
   assert.deepEqual(seedCarried({ city: 'Ottawa', lat: 45.4, lon: -75.7 }, ['lat', 'lon']), { lat: 45.4, lon: -75.7 });
@@ -62,4 +62,21 @@ test('collectFieldValues skips a field hidden by showIf', () => {
 test('collectFieldValues omits a field that read back undefined', () => {
   assert.deepEqual(collectFieldValues([{ field: { key: 'a' }, visible: true, kv: ['a', undefined] }]), {});
   assert.deepEqual(collectFieldValues([{ field: { key: 'a' }, visible: true, kv: null }]), {});
+});
+
+test('showIfMatches compares a single value as a string', () => {
+  assert.equal(showIfMatches({ equals: 'kopia' }, 'kopia'), true);
+  assert.equal(showIfMatches({ equals: 'kopia' }, 'duplicati'), false);
+  assert.equal(showIfMatches({ equals: 2 }, '2'), true);
+});
+
+test('showIfMatches accepts any of an in list', () => {
+  assert.equal(showIfMatches({ in: ['adguard', 'pihole'] }, 'pihole'), true);
+  assert.equal(showIfMatches({ in: ['adguard', 'pihole'] }, 'blocky'), false);
+});
+
+test('showIfMatches treats a checkbox value as a boolean', () => {
+  assert.equal(showIfMatches({ equals: false }, false), true);
+  assert.equal(showIfMatches({ equals: true }, false), false);
+  assert.equal(showIfMatches({ equals: true }, true), true);
 });

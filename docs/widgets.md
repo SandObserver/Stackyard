@@ -99,9 +99,9 @@ These keys can go on any field:
 | `default` | Value used when none is saved yet. |
 | `hint` | Short help text. Shown under the field, except on a `group`, where it renders at the bottom of the whole section. |
 | `optional` | If `true`, the field is not required to save. |
-| `transient` | If `true`, the field is rendered and sent to an `optionsFrom` fetch but is left out of the saved config. Use it for a search box whose text only feeds a picker. |
+| `transient` | If `true`, the field is rendered and sent to an `optionsFrom` fetch but is left out of the saved config. Use it for a search box whose text only feeds a picker. Top-level fields only. |
 | `carries` | For `select` with `optionsFrom`: extra config keys this picker writes, supplied by the chosen option's `set` block. |
-| `showIf` | Show the field only when another field matches: `{ "field": "provider", "equals": "adguard" }`, or match several with `{ "field": "provider", "in": ["adguard", "pihole"] }`. |
+| `showIf` | Show the field only when another field matches: `{ "field": "provider", "equals": "adguard" }`, or match several with `{ "field": "provider", "in": ["adguard", "pihole"] }`. Inside a `group`, the named field is the one in the same row. |
 | `optionsFrom` | For `select`: the name of a data endpoint that returns the option list at config time (see below). |
 | `variant` | For `select`: `"pills"` renders a radio group instead of a dropdown. |
 | `min` / `max` | For `group`: the fewest and most entries allowed. |
@@ -131,6 +131,21 @@ return { options: [{ value: 'Ottawa, Ontario, Canada', label: 'Ottawa, Ontario, 
 Saving picks up `city`, `lat` and `lon`. Values already saved under the carried
 keys are kept when the widget is edited without touching the picker, so the
 coordinates survive a change to an unrelated field.
+
+A `select` inside a `group` can use `optionsFrom` too. Each row fetches on its
+own, and `ctx.row` holds that row's values so the picker reads the URL and key
+the row was filled in with:
+
+```js
+if (ctx.endpoint === 'jobs') {
+  const slot = ctx.row || {};
+  const r = await ctx.fetchJSON(`${ctx.normalizeBase(slot.url)}/api/jobs`, { /* ... */ });
+  return { options: r.data.map(j => ({ value: j.id, label: j.name })) };
+}
+```
+
+`ctx.config` still holds the whole widget config, so secrets in the row are
+preserved the same way they are for a top-level field.
 
 ### customEditor (deprecated)
 
@@ -171,6 +186,7 @@ and the app's TLS-skip setting.
 | `ctx.config` | The widget's saved config, including any secrets (server-side only). |
 | `ctx.settings` | Global non-secret dashboard settings. |
 | `ctx.endpoint` | The endpoint name, set when serving `optionsFrom` or a multi-view widget; otherwise the default. |
+| `ctx.row` | For an `optionsFrom` fetch from a field inside a `group`, that row's values. `null` otherwise. |
 | `ctx.params` | Extra query parameters from the request, as a `URLSearchParams`. |
 | `ctx.fetchJSON(url, opts)` | Fetch a URL and parse the body. JSON is returned as-is; Prometheus text and XML are auto-parsed. Pass `{ raw: true }` to get the untouched text body instead, for a custom parser. Returns `{ status, data }` or throws. Respects the app's TLS-skip setting. |
 | `ctx.parsePrometheus(text)` | Parse a Prometheus metrics body into an object. |

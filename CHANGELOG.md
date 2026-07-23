@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Widget settings rows in a repeating section now show and hide independently,
+  and a dropdown in one can load its options from the service that row points at.
 - Weather widget now uses the standard widget settings form. Location is set by
   typing a city, pressing Fetch and picking a match; "feels like" is a toggle.
 

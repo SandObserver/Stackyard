@@ -10,11 +10,16 @@
    A `select` with `optionsFrom` may also own keys it does not name: it declares
    them in `carries`, and each fetched option supplies them in a `set` block.
    Values for those keys are seeded from the saved config so they survive an edit
-   in which the picker is not touched. */
+   in which the picker is not touched. `transient` applies to top-level fields
+   only; a group's rows are always saved whole.
+
+   Group rows get the same treatment: `showIf` is evaluated per row against that
+   row's own values, and a sub-field's `optionsFrom` fetch names its row so the
+   data function can read the values that row was filled in with. */
 
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
-import { seedCarried, applyOptionSet, collectFieldValues } from '/js/admin-logic.js?v=1';
+import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches } from '/js/admin-logic.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -116,7 +121,7 @@ function _select(field, value, ctx, config = {}) {
       try {
         const r = await fetch(`/api/widget-options/${encodeURIComponent(wid)}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ widgetType: ctx && ctx.widgetType, endpoint: field.optionsFrom, widgetConfig: cfg }),
+          body: JSON.stringify({ widgetType: ctx && ctx.widgetType, endpoint: field.optionsFrom, widgetConfig: cfg, row: (ctx && ctx.row) || undefined }),
         });
         const d = await r.json().catch(() => ({}));
         if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
@@ -171,7 +176,29 @@ function _multiselect(field, value) {
   return { el: wrap, get, control: wrap, liveValue: () => [...cur] };
 }
 
-function _group(field, rows, size) {
+function _visible(b) { return b.el.style.display !== 'none'; }
+
+/* Wire `showIf` across one set of sibling fields: the top-level form, or the
+   sub-fields of a single group row. Each row is independent, so a row's
+   condition reads that row's own values. */
+function _wireShowIf(built) {
+  const liveByKey = {};
+  for (const b of built) if (b.liveValue) liveByKey[b.field.key] = b.liveValue;
+  const apply = () => {
+    for (const b of built) {
+      const cond = b.field.showIf;
+      if (!cond || !(cond.field in liveByKey)) continue;
+      b.el.style.display = showIfMatches(cond, liveByKey[cond.field]()) ? '' : 'none';
+    }
+  };
+  for (const b of built) {
+    if (b.control) b.control.addEventListener('change', apply);
+    if (b.control && b.control.tagName === 'INPUT' && (b.control.type === 'text' || b.control.type === 'number')) b.control.addEventListener('input', apply);
+  }
+  apply();
+}
+
+function _group(field, rows, size, ctx) {
   const min = field.min != null ? field.min : 0;
   const max = (field.maxBySize && size && field.maxBySize[size] != null)
     ? field.maxBySize[size]
@@ -190,10 +217,10 @@ function _group(field, rows, size) {
   addWrap.appendChild(addBtn); wrap.appendChild(addWrap);
   if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip'; h.textContent = field.hint; wrap.appendChild(h); }
 
-  let rowGetters = [];
+  let rowBuilt = [];
 
   function render() {
-    rowsHost.innerHTML = ''; rowGetters = [];
+    rowsHost.innerHTML = ''; rowBuilt = [];
     data.forEach((rowData, idx) => {
       const hdr = document.createElement('p'); hdr.className = 'grp-hdr grp-hdr-row';
       setHtml(hdr, html`<span>${field.label} ${idx + 1}</span>`);
@@ -204,25 +231,31 @@ function _group(field, rows, size) {
       hdr.appendChild(rm); rowsHost.appendChild(hdr);
 
       const card = document.createElement('div'); card.className = 'grp';
-      const subGetters = [];
+      /* getDraft is read through the parent ctx rather than copied, because the
+         form assigns it only once every field is built. */
+      const rowCtx = {
+        widgetId:   ctx && ctx.widgetId,
+        widgetType: ctx && ctx.widgetType,
+        row:        { key: field.key, index: idx },
+        getDraft:   () => (ctx && ctx.getDraft ? ctx.getDraft() : {}),
+      };
+      const built = [];
       for (const sf of subFields) {
-        if (sf.type === 'group') continue;
-        const built = _buildSimple(sf, rowData);
-        card.appendChild(built.el);
-        subGetters.push({ key: sf.key, get: built.get });
+        if (sf.type === 'group' || sf.type === 'object') continue;
+        const b = _buildSimple(sf, rowData, rowCtx); b.field = sf;
+        card.appendChild(b.el);
+        built.push(b);
       }
+      _wireShowIf(built);
       rowsHost.appendChild(card);
-      rowGetters.push(subGetters);
+      rowBuilt.push(built);
     });
     addBtn.parentElement.style.display = data.length >= max ? 'none' : '';
   }
 
   function captureCurrent() {
-    data = rowGetters.map(getters => {
-      const obj = {};
-      for (const g of getters) { const kv = g.get(); if (kv && kv[1] !== undefined) obj[kv[0]] = kv[1]; }
-      return obj;
-    });
+    data = rowBuilt.map(built =>
+      collectFieldValues(built.map(b => ({ field: b.field, visible: _visible(b), kv: b.get() }))));
   }
 
   addBtn.onclick = () => { captureCurrent(); data.push({}); render(); };
@@ -247,7 +280,6 @@ function _buildSimple(field, config, ctx) {
 export function renderWidgetConfigForm(container, fields, config = {}, opts = {}) {
   container.innerHTML = '';
   const built = [];
-  const liveByKey = {};
   const ctx = { widgetId: (opts && opts.widgetId) || null, widgetType: (opts && opts.widgetType) || null, getDraft: null };
 
   /* Group consecutive simple fields into a card; group fields render as their own cards. */
@@ -257,7 +289,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
     if (!f || !f.key) continue;
     if (f.type === 'group') {
       flush();
-      const b = _group(f, config[f.key], opts && opts.size); b.field = f;
+      const b = _group(f, config[f.key], opts && opts.size, ctx); b.field = f;
       container.appendChild(b.el); built.push(b);
       continue;
     }
@@ -265,39 +297,20 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
     if (!card) { card = document.createElement('div'); card.className = 'grp'; container.appendChild(card); }
     card.appendChild(b.el);
     built.push(b);
-    if (b.liveValue) liveByKey[f.key] = b.liveValue;
   }
 
-  function condMatch(cond, cur) {
-    if (Array.isArray(cond.in)) return cond.in.map(String).includes(String(cur));
-    if (typeof cur === 'boolean') return cur === !!cond.equals;
-    return String(cur) === String(cond.equals);
-  }
-  function applyShowIf() {
-    for (const b of built) {
-      const cond = b.field.showIf;
-      if (!cond || !(cond.field in liveByKey)) continue;
-      b.el.style.display = condMatch(cond, liveByKey[cond.field]()) ? '' : 'none';
-    }
-  }
-  for (const b of built) {
-    if (b.control) b.control.addEventListener('change', applyShowIf);
-    if (b.control && b.control.tagName === 'INPUT' && (b.control.type === 'text' || b.control.type === 'number')) b.control.addEventListener('input', applyShowIf);
-  }
-  applyShowIf();
-
-  function visible(b) { return b.el.style.display !== 'none'; }
+  _wireShowIf(built);
 
   const api = {
     root: container,
     getValues(readOpts = {}) {
-      return collectFieldValues(built.map(b => ({ field: b.field, visible: visible(b), kv: b.get() })), readOpts);
+      return collectFieldValues(built.map(b => ({ field: b.field, visible: _visible(b), kv: b.get() })), readOpts);
     },
     validate() {
       const missing = [];
       for (const b of built) {
         if (b.field.optional || b.field.transient || b.field.type === 'toggle' || b.field.type === 'group') continue;
-        if (b.field.showIf && !visible(b)) continue;
+        if (b.field.showIf && !_visible(b)) continue;
         if (b.field.type === 'secret') continue;
         const kv = b.get();
         if (!kv || kv[1] === '' || kv[1] == null) missing.push(b.field.label);
