@@ -35,9 +35,8 @@ State is a single JSON file loaded and saved through `src/config.js`. On read, s
 Each widget iframe fetches its own data from `GET /api/widget-data/:id`. The handler in `src/widget-data.js`:
 
 1. Looks up the configured item by id and its type in the widget registry.
-2. Builds request auth with `buildAuth`, combining the widget declaration's auth block with the secret values held in the item's server-side config.
-3. Runs the widget's data handler. Widgets that support more than one backend provider select the handler through `dispatchProvider` in `src/provider-dispatch.js`, keyed off a config field, with a default handler when the field is empty or unknown.
-4. The handler fetches upstream through `fetchJSON` and returns a normalized result, which is sent back to the iframe as JSON.
+2. Runs the widget's data handler, giving it the item's server-side config including the secret values scrubbed from the browser's copy. Widgets that support more than one backend provider select the handler through `dispatchProvider` in `src/provider-dispatch.js`, keyed off a config field, with a default handler when the field is empty or unknown.
+3. The handler fetches upstream through `fetchJSON` and returns a normalized result, which is sent back to the iframe as JSON.
 
 The registry and the toolbox handed to each handler are documented in [widgets.md](./widgets.md).
 
@@ -48,7 +47,7 @@ The registry and the toolbox handed to each handler are documented in [widgets.m
 It exposes exactly two ways out, and every caller picks one by asking where the URL came from:
 
 - `fetchChecked` / `pingChecked`: **the URL arrived in the HTTP request** (a body field or a `?url=` param, as in `/api/ping`, `/api/badge-proxy`, `/api/truenas-proxy`, `/api/scrutiny-proxy`). Untrusted, so it is SSRF-guarded.
-- `fetchUnchecked` / `pingUnchecked`: **the URL came from saved config or is a hardcoded constant** (badge and activity sources, declarative widget data, backup targets, the Unsplash/jsdelivr/GitHub endpoints). Not guarded. Anyone who can write those URLs already has config-write access, so the guard would not stop anything it could not already do. It would only block the legitimate private-IP homelab targets that are the normal case.
+- `fetchUnchecked` / `pingUnchecked`: **the URL came from saved config or is a hardcoded constant** (badge and activity sources, widget data, backup targets, the Unsplash/jsdelivr/GitHub endpoints). Not guarded. Anyone who can write those URLs already has config-write access, so the guard would not stop anything it could not already do. It would only block the legitimate private-IP homelab targets that are the normal case.
 
 Do not "fix" the second group by adding the guard: that breaks normal installs. Do not drop it from the first. The blunt name is the point: `fetchUnchecked` in a new route should make a reviewer ask why.
 
@@ -65,7 +64,6 @@ browser
   -> Nginx            static files, or proxy /api and /health
   -> router.dispatch  auth gate, route match, shared helpers
   -> route handler    e.g. /api/widget-data/:id
-       -> buildAuth          declaration + stored secrets
        -> dispatchProvider   pick the provider handler (multi-provider widgets)
        -> proxy.fetchJSON    SSRF guard, no redirects, size + time limits
   -> JSON back to the iframe, rendered at a fixed design size (see frontend.md)
