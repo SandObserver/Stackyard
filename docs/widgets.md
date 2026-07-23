@@ -274,6 +274,12 @@ success was. `sinceLabel(ts)` gives that "3m ago" label on its own.
   which the widget sandbox can block; it clicks a real anchor and only falls back
   to `window.open` if that throws.
 
+**Markup**
+
+- `esc(value)` HTML-escapes a value for `innerHTML`. Use it for anything that
+  came from config or from upstream, rather than writing an escape helper per
+  widget.
+
 **Visuals** (self-contained inline SVG/DOM, no extra CSS)
 
 - `sparkline(values, opts?)` returns an `<svg>` area+line chart element.

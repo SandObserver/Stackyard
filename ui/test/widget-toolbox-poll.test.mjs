@@ -1,7 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { register } from 'node:module';
 
-/* widget-toolbox reads location.search at module load for widgetId(). */
+/* widget-toolbox imports a peer by its served path ('/js/html.js?v=...') and
+   reads location.search at module load, so map the path and stub location
+   before loading it. */
+register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
 const { poll } = await import('../js/widget-toolbox.js');
 
@@ -69,4 +73,9 @@ test('stop halts further fetches', async () => {
   const atStop = calls;
   await tick(30);
   assert.equal(calls, atStop, 'no fetches after stop');
+});
+
+test('esc is re-exported and escapes single quotes', async () => {
+  const { esc } = await import('../js/widget-toolbox.js');
+  assert.equal(esc(`<a href='x'>&"`), '&lt;a href=&#39;x&#39;&gt;&amp;&quot;');
 });
