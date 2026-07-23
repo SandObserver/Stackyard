@@ -1,6 +1,7 @@
 /* Reusable color control (swatch row + Hue/Saturation/Brightness + Color Code).
    Operates in hex, resolves named CSS colors, calls onChange(hex) on any change.
-   Used by the Icon, Fixed Label and Live Activity sections and the Widget slots. */
+   Used by the Icon, Fixed Label and Live Activity sections, the Widget slots,
+   and the auto-form's `color` field type. */
 import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=1';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 
@@ -31,7 +32,7 @@ function _hexToHsv(hex){ const h6=_cssToHex(hex); if(!h6)return null;
   if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
   return {h:Math.round(h),s:Math.round(mx?d/mx*100:0),v:Math.round(mx*100)}; }
 
-export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semantic=false,swatchColors=CC_SWATCHES}={}){
+export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semantic=false,swatchColors=CC_SWATCHES,label='Color'}={}){
   const isSem=v=>v==='dark'||v==='light';
   const init=_hexToHsv(isSem(value)?'#0289ff':value)||{h:212,s:99,v:100};
   const swatch = h => html`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`;
@@ -49,7 +50,7 @@ export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,
   const slider = (label, cls, id, max, val, lo, hi) => html`
     <div class="row hsb-row cc-tune"><span class="rl">${label}</span><div class="hsb-track"><span class="hsb-ico">${raw(lo)}</span><input type="range" class="${cls}" id="${id}" min="0" max="${max}" value="${val}" aria-label="${label}"><span class="hsb-ico">${raw(hi)}</span></div></div>`;
   setHtml(wrap, html`
-    <div class="row cc-row"><span class="rl">Color</span><div class="cc-sw">${swatches}</div></div>
+    <div class="row cc-row"><span class="rl">${label}</span><div class="cc-sw">${swatches}</div></div>
     ${slider('Hue', 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
     ${slider('Saturation', 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
     ${slider('Brightness', 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
@@ -92,7 +93,7 @@ export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,
     const hv=_hexToHsv(b.dataset.v); if(hv){hEl.value=hv.h;sEl.value=hv.s;vEl.value=hv.v;}
     commit();
   }));
-  initInlineEdit(`${idPrefix}-code-row`,`${idPrefix}-hex`,{placeholder:'#rrggbb or any CSS color',onCommit(val){
+  initInlineEdit(`${idPrefix}-code-row`,`${idPrefix}-hex`,{root:container,placeholder:'#rrggbb or any CSS color',onCommit(val){
     const hv=_hexToHsv(val); if(hv){ mode='color'; showTune=true; hEl.value=hv.h; sEl.value=hv.s; vEl.value=hv.v; } commit();
   }});
   if(mode==='color'){
