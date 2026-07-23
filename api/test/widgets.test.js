@@ -150,3 +150,25 @@ test('validateManifest rejects an empty or non-array view size list', () => {
   assert.match(withViews({ a: { src: 'a.html', sizes: [] } })[0], /non-empty array/);
   assert.match(withViews({ a: { src: 'a.html', sizes: 'medium' } })[0], /non-empty array/);
 });
+
+/* ── Picklist ───────────────────────────────────────────────────────────── */
+
+test('validateManifest accepts a picklist with a fixed count', () => {
+  assert.deepEqual(errsFor([{ key: 'bays', type: 'picklist', label: 'Bay', optionsFrom: 'devices', count: 4 }]), []);
+});
+
+test('validateManifest accepts a picklist counted by size', () => {
+  assert.deepEqual(errsFor([{ key: 'bays', type: 'picklist', label: 'Bay', optionsFrom: 'devices', countBySize: { small: 4, medium: 10 } }]), []);
+});
+
+test('validateManifest rejects a picklist with no count', () => {
+  const errs = errsFor([{ key: 'bays', type: 'picklist', label: 'Bay', optionsFrom: 'devices' }]);
+  assert.equal(errs.length, 1);
+  assert.match(errs[0], /needs "count" or "countBySize"/);
+});
+
+test('validateManifest rejects a picklist with no option source', () => {
+  const errs = errsFor([{ key: 'bays', type: 'picklist', label: 'Bay', count: 4 }]);
+  assert.equal(errs.length, 1);
+  assert.match(errs[0], /needs "options" or "optionsFrom"/);
+});

@@ -9,7 +9,7 @@ const log = require('./log');
 const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets';
 
 const VALID_SIZES      = new Set(['small', 'medium', 'large', 'xlarge']);
-const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'color', 'select', 'multiselect', 'group', 'object']);
+const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'color', 'select', 'multiselect', 'picklist', 'group', 'object']);
 
 let _registry = null;
 
@@ -45,8 +45,10 @@ function _validateField(f, where, depth = 0) {
   if (typeof f.key !== 'string' || !f.key) errs.push(`${where}: field needs a non-empty "key"`);
   if (!VALID_FIELDTYPES.has(f.type))        errs.push(`${where}: field "${f.key}" has unknown type "${f.type}"`);
   if (typeof f.label !== 'string' || !f.label) errs.push(`${where}: field "${f.key}" needs a "label"`);
-  if ((f.type === 'select' || f.type === 'multiselect') && !Array.isArray(f.options) && typeof f.optionsFrom !== 'string')
+  if ((f.type === 'select' || f.type === 'multiselect' || f.type === 'picklist') && !Array.isArray(f.options) && typeof f.optionsFrom !== 'string')
     errs.push(`${where}: ${f.type} "${f.key}" needs "options" or "optionsFrom"`);
+  if (f.type === 'picklist' && f.count === undefined && f.countBySize === undefined)
+    errs.push(`${where}: picklist "${f.key}" needs "count" or "countBySize"`);
   if (f.type === 'group' || f.type === 'object') {
     if (depth > 0) { errs.push(`${where}: ${f.type} "${f.key}" cannot be nested inside another group or object`); }
     else if (!Array.isArray(f.fields) || !f.fields.length) errs.push(`${where}: ${f.type} "${f.key}" needs a non-empty "fields" array`);

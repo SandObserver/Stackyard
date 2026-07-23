@@ -1,6 +1,6 @@
 /* Renders a widget's declared `fields` into a settings-row config form and reads
    values back. Field types: text, secret, number, toggle, color, select, pills,
-   multiselect, group, object.
+   multiselect, picklist, group, object.
    renderWidgetConfigForm(container, fields, config) -> { getValues, validate }
    Each builder returns { el, get, control, liveValue }.
 
@@ -85,6 +85,83 @@ function _toggle(field, value) {
   return { el: row, get, control: input, liveValue: () => input.checked };
 }
 
+/* One /api/widget-options request. Shared by the select and picklist builders
+   so both send the same draft config and row reference. */
+async function _fetchOptions(field, ctx) {
+  const cfg = ctx && ctx.getDraft ? ctx.getDraft() : {};
+  const wid = (ctx && ctx.widgetId) || '__preview__';
+  const r = await fetch(`/api/widget-options/${encodeURIComponent(wid)}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ widgetType: ctx && ctx.widgetType, endpoint: field.optionsFrom, widgetConfig: cfg, row: (ctx && ctx.row) || undefined }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+  return Array.isArray(d.options) ? d.options : [];
+}
+
+/* A fixed-length list of picks from one shared option list: one Fetch fills
+   every row. Saves an array of scalars, one per row, null where unset, so a
+   widget that already stores a plain array does not have to change shape. */
+function _picklist(field, value, ctx, size) {
+  const count = (field.countBySize && size && field.countBySize[size] != null)
+    ? field.countBySize[size]
+    : (field.count != null ? field.count : 1);
+  const rowLabel = field.rowLabel || field.label;
+  const chosen = Array.isArray(value) ? value.slice(0, count) : [];
+  while (chosen.length < count) chosen.push(null);
+
+  const wrap = document.createElement('div'); wrap.className = 'wcf-group';
+  const hdr = document.createElement('p'); hdr.className = 'grp-hdr'; hdr.textContent = field.label;
+  wrap.appendChild(hdr);
+  const card = document.createElement('div'); card.className = 'grp'; wrap.appendChild(card);
+
+  const fr = document.createElement('div'); fr.className = 'row';
+  const status = document.createElement('span'); status.className = 'row-status'; status.textContent = field.hint || '';
+  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'row-btn'; btn.textContent = field.fetchLabel || 'Fetch';
+  setHtml(fr, html`<span class="rl"></span>`); fr.appendChild(status); fr.appendChild(btn); card.appendChild(fr);
+
+  let opts = Array.isArray(field.options) ? field.options.slice() : [];
+  const sels = [];
+  for (let i = 0; i < count; i++) {
+    const row = document.createElement('div'); row.className = 'row';
+    setHtml(row, html`<span class="rl">${rowLabel} ${i + 1}</span>`);
+    const selWrap = document.createElement('div'); selWrap.className = 'sel-wrap';
+    const sel = document.createElement('select'); sel.className = 'row-sel';
+    sel.setAttribute('aria-label', `${rowLabel} ${i + 1}`);
+    selWrap.appendChild(sel);
+    const chevT = document.createElement('template'); setHtml(chevT, raw(CHEV)); selWrap.appendChild(chevT.content.firstElementChild);
+    row.appendChild(selWrap); card.appendChild(row);
+    sels.push(sel);
+  }
+
+  function paint() {
+    sels.forEach((sel, i) => {
+      const cur = sel.value || (chosen[i] != null ? String(chosen[i]) : '');
+      const items = opts.map(o => html`<option value="${o.value}"${String(o.value) === cur ? ' selected' : ''}>${o.label != null ? o.label : o.value}</option>`);
+      if (cur && !opts.some(o => String(o.value) === cur)) items.unshift(html`<option value="${cur}" selected>${cur}</option>`);
+      items.unshift(html`<option value=""${cur ? '' : ' selected'}>Empty</option>`);
+      setHtml(sel, html`${items}`);
+    });
+  }
+  paint();
+
+  if (field.optionsFrom) {
+    btn.addEventListener('click', async () => {
+      status.textContent = 'Fetching...'; status.className = 'row-status'; btn.disabled = true;
+      try {
+        opts = await _fetchOptions(field, ctx);
+        paint();
+        status.textContent = opts.length ? `Loaded ${opts.length} option${opts.length > 1 ? 's' : ''}` : 'No options found';
+        status.className = 'row-status ok';
+      } catch (e) { status.textContent = 'Fetch failed: ' + e.message; status.className = 'row-status err'; }
+      finally { btn.disabled = false; }
+    });
+  } else { btn.style.display = 'none'; }
+
+  const get = () => [field.key, sels.map(s => s.value || null)];
+  return { el: wrap, get, control: null, liveValue: () => null };
+}
+
 function _select(field, value, ctx, config = {}) {
   const wrap = document.createElement('div');
   const row = document.createElement('div'); row.className = 'row';
@@ -121,17 +198,9 @@ function _select(field, value, ctx, config = {}) {
     const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'row-btn'; btn.textContent = 'Fetch';
     setHtml(fr, html`<span class="rl"></span>`); fr.appendChild(status); fr.appendChild(btn); wrap.appendChild(fr);
     btn.addEventListener('click', async () => {
-      const cfg = ctx && ctx.getDraft ? ctx.getDraft() : {};
-      const wid = (ctx && ctx.widgetId) || '__preview__';
       status.textContent = 'Fetching...'; status.className = 'row-status'; btn.disabled = true;
       try {
-        const r = await fetch(`/api/widget-options/${encodeURIComponent(wid)}`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ widgetType: ctx && ctx.widgetType, endpoint: field.optionsFrom, widgetConfig: cfg, row: (ctx && ctx.row) || undefined }),
-        });
-        const d = await r.json().catch(() => ({}));
-        if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
-        opts = Array.isArray(d.options) ? d.options : [];
+        opts = await _fetchOptions(field, ctx);
         chosen = sel.value || chosen; paint(); syncCarried();
         status.textContent = opts.length ? `Loaded ${opts.length} option${opts.length > 1 ? 's' : ''}` : 'No options found';
         status.className = 'row-status ok';
@@ -285,6 +354,8 @@ function _group(field, rows, size, ctx) {
   addBtn.type = 'button'; addBtn.className = 'wcf-add-row';
   setHtml(addBtn, html`<span class="rl" style="color:var(--ac2)">+ Add ${field.label}</span>`);
   addWrap.appendChild(addBtn); wrap.appendChild(addWrap);
+  const fixed = min === max;
+  if (fixed) addWrap.style.display = 'none';
   if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip'; h.textContent = field.hint; wrap.appendChild(h); }
 
   let rowBuilt = [];
@@ -297,6 +368,7 @@ function _group(field, rows, size, ctx) {
       const rm = document.createElement('button');
       rm.type = 'button'; rm.className = 'grp-hdr-rm'; rm.textContent = 'Remove';
       rm.disabled = data.length <= min;
+      if (fixed) rm.style.display = 'none';
       rm.onclick = () => { captureCurrent(); data.splice(idx, 1); render(); };
       hdr.appendChild(rm); rowsHost.appendChild(hdr);
 
@@ -320,7 +392,7 @@ function _group(field, rows, size, ctx) {
       rowsHost.appendChild(card);
       rowBuilt.push(built);
     });
-    addBtn.parentElement.style.display = data.length >= max ? 'none' : '';
+    if (!fixed) addBtn.parentElement.style.display = data.length >= max ? 'none' : '';
   }
 
   function captureCurrent() {
@@ -345,6 +417,7 @@ function _buildSimple(field, config, ctx) {
     case 'color':  return _color(field, value);
     case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value, ctx, config);
     case 'multiselect': return _multiselect(field, value);
+    case 'picklist': return _picklist(field, value, ctx, ctx && ctx.size);
     default:       return _ieRow(field, value, 'text');
   }
 }
@@ -352,7 +425,7 @@ function _buildSimple(field, config, ctx) {
 export function renderWidgetConfigForm(container, fields, config = {}, opts = {}) {
   container.innerHTML = '';
   const built = [];
-  const ctx = { widgetId: (opts && opts.widgetId) || null, widgetType: (opts && opts.widgetType) || null, getDraft: null };
+  const ctx = { widgetId: (opts && opts.widgetId) || null, widgetType: (opts && opts.widgetType) || null, size: (opts && opts.size) || null, getDraft: null };
   const notify = key => { if (typeof opts.onChange === 'function') opts.onChange(key); };
 
   /* Group consecutive simple fields into a card; group fields render as their own cards. */
