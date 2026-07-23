@@ -2,7 +2,7 @@ import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb'
 import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { reorderItems } from '/js/admin-logic.js?v=1';
-import { cleanId, buildStatsSlots, finalizeBackupSlots, buildAppItem } from '/js/admin-save-logic.js?v=1';
+import { cleanId, finalizeBackupSlots, buildAppItem } from '/js/admin-save-logic.js?v=1';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
@@ -455,8 +455,8 @@ document.getElementById('btn-add').onclick=()=>openModal(null);
 function closeModal(){
   showListView();
   state.eid=null;
-  state._wtype='custom';state._wsize='medium';state._wslots=[];state._wnet={enabled:false,url:'',provider:'myspeed'};
-  state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._wbackupCfg={};state._wstatsSubType='system-summary';state._wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};state._iframeOpts={};
+  state._wtype='custom';state._wsize='medium';
+  state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._wbackupCfg={};state._iframeOpts={};
 }
 
 
@@ -544,7 +544,7 @@ async function doSave(orig){
   try{
     let item;
     if(state.ctype==='widget'){
-      const wlabel=state._wlabel.trim()||(state._wtype==='stats'?(state._wstatsSubType==='disk-health'?'Disk Health':'System Summary'):state._widgetReg?.[state._wtype]?.label||'Widget');
+      const wlabel=state._wlabel.trim()||state._widgetReg?.[state._wtype]?.label||'Widget';
       if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
         const missing=state._autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
@@ -591,41 +591,6 @@ async function doSave(orig){
         item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'backup',
           label:wlabel,widgetSize:state._wsize,widgetConfig:{slots:_bk.savableSlots}};
 
-      }else{
-        const slots=buildStatsSlots(state._wslots);
-        state._wnet.url      = document.getElementById('net-url')?.value?.trim()||'';
-        state._wnet.provider = state._wnet.provider || 'myspeed';
-        const newPass  = document.getElementById('net-pass')?.value||'';
-        if (newPass) state._wnet.myspeedPass = newPass;
-        const netToSave = {...state._wnet};
-        delete netToSave.myspeedPassSet;
-
-        if (state._wstatsSubType === 'disk-health') {
-          const prov = (document.getElementById('dh-prov')?.value) || state._wdiskCfg.diskProvider || 'scrutiny';
-          const dhUrl  = document.getElementById('dh-url')?.value?.trim()  || '';
-          const dhHref = document.getElementById('dh-href')?.value?.trim() || '';
-          const wcfg = { widgetSubType:'disk-health', diskProvider:prov, bays:state._wdiskCfg.bays };
-
-          if (prov === 'truenas') {
-            const u = dhUrl || state._wdiskCfg.truenasUrl;
-            if (!u) { toast('TrueNAS URL is required','err'); return; }
-            wcfg.truenasUrl  = u;
-            wcfg.truenasHref = dhHref || undefined;
-            const k = document.getElementById('dh-key')?.value?.trim();
-            if (k) wcfg.truenasKey = k;
-          } else {
-            const u = dhUrl || state._wdiskCfg.scrutinyUrl;
-            if (!u) { toast('Scrutiny URL is required','err'); return; }
-            wcfg.scrutinyUrl  = u;
-            wcfg.scrutinyHref = dhHref || undefined;
-          }
-
-          item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'stats',
-            label:wlabel,widgetSize:state._wsize,widgetConfig:wcfg};
-        } else {
-          item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'stats',
-            label:wlabel, widgetSize:state._wsize,widgetConfig:{widgetSubType:state._wstatsSubType,slots,network:netToSave}};
-        }
       }
     }else if(state.ctype==='folder'){
       const label=document.getElementById('f-fname')?.value?.trim();

@@ -2,13 +2,55 @@
      endpoint=system        → live host metrics for the System Summary view
      endpoint=disk-health   → SMART data from Scrutiny for the Disk Health view
      endpoint=speed         → speed test results (MySpeed / Speedtest Tracker)
+     endpoint=devices       → drives or pools offered to the bay pickers
    Returns { error } on failure (never throws). */
 
 module.exports = async function (ctx) {
+  if (ctx.endpoint === 'devices')     return diskDevices(ctx);
   if (ctx.endpoint === 'disk-health') return diskHealth(ctx);
   if (ctx.endpoint === 'speed')       return speed(ctx);
   return systemSummary(ctx);
 };
+
+const diskBase = u => (u.includes('://') ? u : `http://${u}`).replace(/\/$/, '');
+
+/* Config-time picker: one option per drive or pool, shared by every bay row. */
+function diskDevices(ctx) {
+  return ctx.dispatchProvider({
+    scrutiny: scrutinyDeviceOptions,
+    truenas:  truenasPoolOptions,
+  }, { field: 'diskProvider', default: 'scrutiny' });
+}
+
+async function scrutinyDeviceOptions({ config, fetchJSON }) {
+  if (!config.scrutinyUrl) return { error: 'Enter the Scrutiny URL first.' };
+  let r;
+  try { r = await fetchJSON(diskBase(config.scrutinyUrl) + '/api/summary', { timeout: 8000 }); }
+  catch (e) { return { error: e.message }; }
+  if (r.status >= 400) return { error: 'Scrutiny HTTP ' + r.status };
+  const summary = r.data?.data?.summary || {};
+  const options = Object.values(summary)
+    .filter(e => e.device?.device_id)
+    .map(e => ({ value: e.device.device_id, label: e.device.model_name || e.device.device_name || e.device.device_id }));
+  return { options };
+}
+
+async function truenasPoolOptions({ config, fetchJSON }) {
+  if (!config.truenasUrl) return { error: 'Enter the TrueNAS URL first.' };
+  if (!config.truenasKey) return { error: 'Enter the TrueNAS API key first.' };
+  let r;
+  try {
+    r = await fetchJSON(diskBase(config.truenasUrl) + '/api/v2.0/pool', {
+      headers: { Authorization: 'Bearer ' + config.truenasKey }, timeout: 8000,
+    });
+  } catch (e) { return { error: e.message }; }
+  if (r.status === 401 || r.status === 403) return { error: 'TrueNAS auth failed, check API key' };
+  if (r.status >= 400) return { error: 'TrueNAS HTTP ' + r.status };
+  const options = (Array.isArray(r.data) ? r.data : [])
+    .filter(p => p && p.name)
+    .map(p => ({ value: p.name, label: p.name }));
+  return { options };
+}
 
 /* Disk Health dispatch: Scrutiny (per-disk SMART) or TrueNAS (per-pool health). */
 function diskHealth(ctx) {
@@ -104,7 +146,7 @@ async function diskHealthTrueNas({ config, fetchJSON }) {
     });
   } catch (e) { return { error: e.message }; }
 
-  if (r.status === 401 || r.status === 403) return { error: 'TrueNAS auth failed — check API key' };
+  if (r.status === 401 || r.status === 403) return { error: 'TrueNAS auth failed, check API key' };
   if (r.status >= 400) return { error: 'TrueNAS HTTP ' + r.status };
 
   const byName = {};

@@ -2,7 +2,6 @@
   "name": "stats",
   "label": "Stats",
   "sizes": ["small", "medium"],
-  "customEditor": true,
   "viewField": "widgetSubType",
   "defaultView": "system-summary",
   "views": {
@@ -10,9 +9,79 @@
     "disk-health":    { "label": "Disk Health",    "src": "disk-health.html" }
   },
   "fields": [
-    { "key": "truenasKey", "type": "secret", "label": "TrueNAS API Key" },
-    { "key": "network", "type": "object", "label": "Network", "fields": [
-      { "key": "myspeedPass", "type": "secret", "label": "MySpeed Password" }
-    ] }
+    { "key": "widgetSubType", "type": "select", "variant": "pills", "label": "View", "default": "system-summary",
+      "options": [
+        { "value": "system-summary", "label": "System Summary" },
+        { "value": "disk-health",    "label": "Disk Health" }
+      ] },
+
+    { "key": "slots", "type": "group", "label": "Slot", "min": 3, "max": 3,
+      "showIf": { "field": "widgetSubType", "equals": "system-summary" },
+      "fields": [
+        { "key": "type", "type": "select", "label": "Resource", "default": "cpu",
+          "options": [
+            { "value": "cpu",    "label": "CPU" },
+            { "value": "ram",    "label": "RAM" },
+            { "value": "temp",   "label": "Temperature" },
+            { "value": "disk",   "label": "Disk Mount" },
+            { "value": "iowait", "label": "IO Wait" },
+            { "value": "procs",  "label": "Processes" }
+          ] },
+        { "key": "primary", "type": "text", "label": "First Mount Path", "default": "/", "placeholder": "/",
+          "showIf": { "field": "type", "equals": "disk" } },
+        { "key": "secondary", "type": "text", "label": "Second Mount Path", "placeholder": "/mnt/data", "optional": true,
+          "showIf": { "field": "type", "equals": "disk" } },
+        { "key": "thermalZone", "type": "number", "label": "Thermal Zone", "default": 0,
+          "showIf": { "field": "type", "equals": "temp" } },
+        { "key": "color", "type": "color", "label": "Color", "default": "#0289ff" }
+      ] },
+
+    { "key": "network", "type": "object", "label": "Network",
+      "showIf": { "field": "widgetSubType", "equals": "system-summary" },
+      "fields": [
+        { "key": "enabled", "type": "toggle", "label": "Show Network Row", "default": false },
+        { "key": "mode", "type": "select", "variant": "pills", "label": "Mode", "default": "speed",
+          "showIf": { "field": "enabled", "equals": true },
+          "options": [
+            { "value": "speed",      "label": "Speed" },
+            { "value": "throughput", "label": "Throughput" },
+            { "value": "uptime",     "label": "Uptime" }
+          ] },
+        { "key": "provider", "type": "select", "variant": "pills", "label": "Provider", "default": "myspeed",
+          "showIf": { "field": "mode", "equals": "speed" },
+          "options": [
+            { "value": "myspeed",           "label": "MySpeed" },
+            { "value": "speedtest-tracker", "label": "Speedtest Tracker" }
+          ] },
+        { "key": "url", "type": "text", "label": "Service URL", "placeholder": "myspeed:5216",
+          "showIf": { "field": "mode", "equals": "speed" } },
+        { "key": "myspeedPass", "type": "secret", "label": "MySpeed Password", "optional": true,
+          "showIf": { "field": "provider", "equals": "myspeed" } }
+      ] },
+
+    { "key": "diskProvider", "type": "select", "label": "Source", "default": "scrutiny",
+      "showIf": { "field": "widgetSubType", "equals": "disk-health" },
+      "options": [
+        { "value": "scrutiny", "label": "Scrutiny" },
+        { "value": "truenas",  "label": "TrueNAS" }
+      ] },
+
+    { "key": "scrutinyUrl", "type": "text", "label": "Scrutiny URL", "placeholder": "scrutiny:8080",
+      "showIf": { "field": "diskProvider", "equals": "scrutiny" } },
+    { "key": "scrutinyHref", "type": "text", "label": "Click URL", "placeholder": "http://your-server:8080", "optional": true,
+      "showIf": { "field": "diskProvider", "equals": "scrutiny" } },
+
+    { "key": "truenasUrl", "type": "text", "label": "TrueNAS URL", "placeholder": "truenas.local",
+      "showIf": { "field": "diskProvider", "equals": "truenas" } },
+    { "key": "truenasKey", "type": "secret", "label": "TrueNAS API Key",
+      "showIf": { "field": "diskProvider", "equals": "truenas" } },
+    { "key": "truenasHref", "type": "text", "label": "Click URL", "placeholder": "http://truenas.local", "optional": true,
+      "showIf": { "field": "diskProvider", "equals": "truenas" } },
+
+    { "key": "bays", "type": "picklist", "label": "Bays", "rowLabel": "Bay",
+      "optionsFrom": "devices", "fetchLabel": "Fetch Drives",
+      "countBySize": { "small": 4, "medium": 10 },
+      "showIf": { "field": "widgetSubType", "equals": "disk-health" },
+      "hint": "Enter the URL above, then load the list and assign each bay." }
   ]
 }

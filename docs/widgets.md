@@ -217,7 +217,7 @@ preserved the same way they are for a top-level field.
 
 ### customEditor (deprecated)
 
-Two of the shipped widgets set `"customEditor": true` in their manifest, which
+One shipped widget sets `"customEditor": true` in their manifest, which
 tells the admin UI to skip the auto-form and use a hand-written editor kept in
 `ui/js/admin-widget-form.js` instead. It dates from before the auto-form covered
 groups, conditional fields and fetched options.

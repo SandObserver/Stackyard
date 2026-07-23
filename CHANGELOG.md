@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Stats widget now uses the standard widget settings form. Disk bays are filled
+  from one Fetch Drives call, and the network row is its own settings card.
+
 - Connections widget now uses the standard widget settings form. Each service
   is a settings card, and the fields shown follow the service type.
 
@@ -30,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   typing a city, pressing Fetch and picking a match; "feels like" is a toggle.
 
 ### Removed
+
+- `GET /api/scrutiny-proxy` and `POST /api/truenas-proxy`. Drive and pool lists
+  now come from the widget's own data function.
 
 - `GET /api/geocode-proxy`. City search now runs through the widget's own data
   function.

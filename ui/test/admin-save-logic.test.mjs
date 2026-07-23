@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanId, buildStatsSlots, finalizeBackupSlots, buildAppItem } from '../js/admin-save-logic.js';
+import { cleanId, finalizeBackupSlots, buildAppItem } from '../js/admin-save-logic.js';
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
   assert.equal(cleanId('My App!'), 'My_App');
@@ -12,24 +12,6 @@ test('cleanId falls back when nothing usable remains', () => {
   assert.equal(cleanId(''), 'item');
   assert.equal(cleanId('', 'widget'), 'widget');
   assert.equal(cleanId('!!!', 'folder'), 'folder');
-});
-
-test('buildStatsSlots caps at three and shapes disk/temp/other', () => {
-  const out = buildStatsSlots([
-    { type: 'disk', primary: '/mnt', secondary: '/home', color: 'red' },
-    { type: 'temp', thermalZone: 2 },
-    { type: 'cpu' },
-    { type: 'ram' },
-  ]);
-  assert.equal(out.length, 3);
-  assert.deepEqual(out[0], { type: 'disk', primary: '/mnt', secondary: '/home', color: 'red' });
-  assert.deepEqual(out[1], { type: 'temp', thermalZone: 2, color: undefined });
-  assert.deepEqual(out[2], { type: 'cpu', color: undefined });
-});
-
-test('buildStatsSlots defaults disk mount and normalizes a bad thermal zone', () => {
-  assert.deepEqual(buildStatsSlots([{ type: 'disk' }])[0], { type: 'disk', primary: '/', secondary: undefined, color: undefined });
-  assert.equal(buildStatsSlots([{ type: 'temp', thermalZone: 'x' }])[0].thermalZone, 0);
 });
 
 test('finalizeBackupSlots propagates the default instance connection to sharing slots', () => {
