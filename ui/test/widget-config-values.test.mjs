@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches } from '../js/admin-logic.js';
+import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches, requiredFieldMissing } from '../js/admin-logic.js';
 
 test('seedCarried takes only the declared keys that are present', () => {
   assert.deepEqual(seedCarried({ city: 'Ottawa', lat: 45.4, lon: -75.7 }, ['lat', 'lon']), { lat: 45.4, lon: -75.7 });
@@ -79,4 +79,26 @@ test('showIfMatches treats a checkbox value as a boolean', () => {
   assert.equal(showIfMatches({ equals: false }, false), true);
   assert.equal(showIfMatches({ equals: true }, false), false);
   assert.equal(showIfMatches({ equals: true }, true), true);
+});
+
+test('requiredFieldMissing flags an empty required field', () => {
+  assert.equal(requiredFieldMissing({ key: 'url', type: 'text', label: 'URL' }, ['url', '']), true);
+  assert.equal(requiredFieldMissing({ key: 'url', type: 'text', label: 'URL' }, ['url', null]), true);
+  assert.equal(requiredFieldMissing({ key: 'url', type: 'text', label: 'URL' }, null), true);
+  assert.equal(requiredFieldMissing({ key: 'url', type: 'text', label: 'URL' }, ['url', 'x']), false);
+});
+
+test('requiredFieldMissing ignores optional and transient fields', () => {
+  assert.equal(requiredFieldMissing({ key: 'a', type: 'text', optional: true }, ['a', '']), false);
+  assert.equal(requiredFieldMissing({ key: 'a', type: 'text', transient: true }, ['a', '']), false);
+});
+
+test('requiredFieldMissing ignores types that always read back a value', () => {
+  for (const type of ['toggle', 'color', 'group', 'object', 'secret'])
+    assert.equal(requiredFieldMissing({ key: 'a', type }, ['a', '']), false, type);
+});
+
+test('requiredFieldMissing treats a false toggle and a zero as filled', () => {
+  assert.equal(requiredFieldMissing({ key: 'a', type: 'toggle' }, ['a', false]), false);
+  assert.equal(requiredFieldMissing({ key: 'a', type: 'number' }, ['a', 0]), false);
 });

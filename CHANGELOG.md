@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Widget settings can declare a `color` field, rendered with the same colour
   control used elsewhere in the admin interface.
+- Widget settings can declare an `object` field, rendered as its own card of
+  nested settings.
 
 ### Changed
 
