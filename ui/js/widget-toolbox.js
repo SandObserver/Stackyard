@@ -9,6 +9,7 @@
      getConfig()                     GET this widget's (secret-free) config
      openUrl(href)                   open a link in a new tab from inside the
                                      sandboxed widget iframe
+     esc(value)                      HTML-escape a value for innerHTML
 
    VISUALS  (self-contained inline SVG/DOM, no extra CSS needed)
      smoothPath(points)              smooth SVG path string through [[x,y],...]
@@ -25,6 +26,11 @@
    verified identical to the originals. More chart types are added here over
    time rather than re-derived per widget.
 */
+
+import { esc } from '/js/html.js?v=1';
+
+/* Re-exported so a widget frontend needs only this one import. */
+export { esc };
 
 const NS = 'http://www.w3.org/2000/svg';
 const _params = new URLSearchParams(location.search);
