@@ -129,3 +129,24 @@ test('a key repeated across different levels is not a conflict', () => {
     { key: 'vpn', type: 'object', label: 'VPN', fields: [{ key: 'url', type: 'text', label: 'URL' }] },
   ]), []);
 });
+
+/* ── Per-view sizes ─────────────────────────────────────────────────────── */
+
+const withViews = views => widgets.validateManifest('w', {
+  name: 'w', label: 'W', sizes: ['small', 'medium'], viewField: 'view', views,
+}).errors;
+
+test('validateManifest accepts a view that narrows the size list', () => {
+  assert.deepEqual(withViews({ a: { src: 'a.html', sizes: ['medium'] }, b: { src: 'b.html' } }), []);
+});
+
+test('validateManifest rejects a view size the widget does not offer', () => {
+  const errs = withViews({ a: { src: 'a.html', sizes: ['large'] } });
+  assert.equal(errs.length, 1);
+  assert.match(errs[0], /size "large" is not one of/);
+});
+
+test('validateManifest rejects an empty or non-array view size list', () => {
+  assert.match(withViews({ a: { src: 'a.html', sizes: [] } })[0], /non-empty array/);
+  assert.match(withViews({ a: { src: 'a.html', sizes: 'medium' } })[0], /non-empty array/);
+});

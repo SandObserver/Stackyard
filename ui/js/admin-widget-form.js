@@ -7,7 +7,7 @@ import { toast, PE_SVG, CHEV_SVG, _secretRow, initInlineEdit } from '/js/admin-s
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 import { html, raw, setHtml } from '/js/html.js?v=1';
-import { normBackupSlots } from '/js/admin-logic.js?v=1';
+import { normBackupSlots, sizesForView } from '/js/admin-logic.js?v=1';
 
 const SIZE_ICONS={
   small:'<rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="9.7" r="1" fill="currentColor"/><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
@@ -60,27 +60,6 @@ export function buildWidgetForm(body,item){
     provider: wc.network.provider || 'myspeed',
     myspeedPassSet: wc.network.myspeedPassSet || false,
   } : {enabled:false,mode:'speed',url:'',provider:'myspeed'};
-  state._wmapCfg = {
-    showLegend: wc.showLegend !== false,
-    services: Array.isArray(wc.services) ? wc.services.map(s=>Object.assign({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'',token:'',enabled:true}, s)) : (function(){
-      const a=[];
-      if(wc.conduit && (wc.conduit.url||wc.conduit.enabled)) a.push({id:_newSvcId(),type:'conduit',name:wc.conduit.name||'Conduit',url:wc.conduit.url||'',adminUrl:wc.conduit.adminUrl||'',color:wc.conduit.color||'#AF52DE',token:'',enabled:wc.conduit.enabled!==false});
-      if(wc.gluetun && (wc.gluetun.url||wc.gluetun.enabled)) a.push({id:_newSvcId(),type:'gluetun',name:wc.gluetun.name||'Gluetun',url:wc.gluetun.url||'',adminUrl:wc.gluetun.adminUrl||'',color:wc.gluetun.color||'#30D158',token:'',enabled:wc.gluetun.enabled!==false});
-      return a;
-    })(),
-  };
-  state._wconnView = wc.view || 'map';
-  state._wvpnCfg = {
-    service:   wc.vpn?.service   || 'gluetun',   /* gluetun | netbird */
-    url:       wc.vpn?.url        || '',
-    apiKeySet: wc.vpn?.apiKeySet  || false,       /* gluetun control-server API key (optional) */
-    user:      wc.vpn?.user       || '',          /* gluetun basic-auth user (optional) */
-    passSet:   wc.vpn?.passSet    || false,
-    tokenSet:  wc.vpn?.tokenSet   || false,        /* netbird PAT */
-    name:      wc.vpn?.name       || '',
-    href:      wc.vpn?.href       || '',
-    color:     wc.vpn?.color      || '#30D158',
-  };
   state._wbackupCfg = {
     /* Per-slot useDefault: first instance of a provider is its default; later
        instances use that default unless turned off (then they get their own container). */
@@ -106,19 +85,7 @@ function _renderWidgetForm(body){
   const typeSel=shell.querySelector('#f-wtype');
   typeSel.onchange=()=>{ state._wtype=typeSel.value; state._wsize=widgetSizes(state._wtype)[0]; _renderWidgetForm(body); };
 
-  if(state._wtype==='connections'){
-    const vcard=document.createElement('div'); vcard.className='grp';
-    setHtml(vcard, html`<div class="row"><span class="rl">View</span><div class="segr">
-      <label class="segr-opt"><input type="radio" name="wconn-view" value="map" ${state._wconnView==='map'?'checked':''}><span class="segr-dot"></span><span>Map</span></label>
-      <label class="segr-opt"><input type="radio" name="wconn-view" value="vpn" ${state._wconnView==='vpn'?'checked':''}><span class="segr-dot"></span><span>VPN</span></label>
-    </div></div>`);
-    body.appendChild(vcard);
-    vcard.querySelectorAll('input[name="wconn-view"]').forEach(r=>r.addEventListener('change',()=>{ state._wconnView=r.value; if(r.value==='map')state._wsize='medium'; _renderWidgetForm(body); }));
-  }
-
-  const _ghContrib=(state._wtype==='github'&&(state._wAutoCfg.githubView||'prs')==='contributions');
-  let _sizeOpts=widgetSizes(state._wtype).filter(s=>!(_ghContrib&&(s==='large'||s==='xlarge')));
-  if(state._wtype==='connections') _sizeOpts = (state._wconnView==='map') ? ['medium'] : ['small','medium'];
+  const _sizeOpts=sizesForView(widgetSizes(state._wtype), state._widgetReg[state._wtype], state._wAutoCfg);
   if(!_sizeOpts.includes(state._wsize)) state._wsize=_sizeOpts.includes('medium')?'medium':_sizeOpts[0];
   const sizeHdr=document.createElement('p'); sizeHdr.className='grp-hdr'; sizeHdr.textContent='Size'; body.appendChild(sizeHdr);
   const scard=document.createElement('div'); scard.className='grp';
@@ -130,11 +97,16 @@ function _renderWidgetForm(body){
   if(state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
     const d=document.createElement('div'); body.appendChild(d);
     const _wid=(state.eid!==null&&state.items[state.eid]&&state.items[state.eid].id)?state.items[state.eid].id:null;
-    state._autoForm=renderWidgetConfigForm(d, state._widgetReg[state._wtype].fields||[], state._wAutoCfg, { widgetId:_wid, widgetType:state._wtype, size:state._wsize });
+    const _vf=state._widgetReg[state._wtype].viewField;
+    state._autoForm=renderWidgetConfigForm(d, state._widgetReg[state._wtype].fields||[], state._wAutoCfg, {
+      widgetId:_wid, widgetType:state._wtype, size:state._wsize,
+      /* A view switch can change which sizes are offered, and the tiles are
+         drawn above this form, so the whole form is redrawn. */
+      onChange(key){ if(_vf&&key===_vf) _renderWidgetForm(body); },
+    });
     state._autoFormType=state._wtype;
   }
   else if(state._wtype==='stats')        _renderStatsConfig(body);
-  else if(state._wtype==='connections') _renderConnectionsConfig(body);
   else if(state._wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderBackupConfig(d); }
   else                        _renderCustomConfig(body);
 }
@@ -317,119 +289,6 @@ function _renderStatsBody(body){
   _secretRow(netSpeedFields,{rowId:'net-pass-row',inpId:'net-pass',label:'Password',opt:true,isSet:state._wnet.myspeedPassSet,hidden:(prov!=='myspeed')});
 }
 
-
-function _renderConnectionsConfig(body){
-  if(state._wconnView==='vpn') return _renderVpnConfig(body);
-  return _renderMapConfig(body);
-}
-
-function _renderVpnConfig(body){
-  const svc=state._wvpnCfg.service||'gluetun';
-  const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-  setHtml(card, html`
-    <div class="row"><span class="rl">Service</span><div class="segr">
-      <label class="segr-opt"><input type="radio" name="vpn-svc" value="gluetun" ${svc==='gluetun'?'checked':''}><span class="segr-dot"></span><span>Gluetun</span></label>
-      <label class="segr-opt"><input type="radio" name="vpn-svc" value="netbird" ${svc==='netbird'?'checked':''}><span class="segr-dot"></span><span>NetBird</span></label>
-    </div></div>
-    <div class="row ie-row" id="vpn-name-row"><span class="rl">Display Name <span class="opt-span">(optional)</span></span><span class="rv${state._wvpnCfg.name?'':' is-ph'}">${state._wvpnCfg.name?state._wvpnCfg.name:(svc==='gluetun'?'VPN':'Mesh')}</span><input id="vpn-name" type="text" value="${state._wvpnCfg.name||''}" style="display:none"><button class="pe" type="button" aria-label="Edit display name">${raw(PE_SVG)}</button></div>`);
-  card.querySelectorAll('input[name="vpn-svc"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked){state._wvpnCfg.service=r.value; _renderWidgetForm(body);} }));
-  initInlineEdit('vpn-name-row','vpn-name',{placeholder:(svc==='gluetun'?'VPN':'Mesh'),onCommit(v){state._wvpnCfg.name=v;}});
-
-  const colHdr=document.createElement('p'); colHdr.className='grp-hdr'; colHdr.textContent='Dot Color'; body.appendChild(colHdr);
-  const colCard=document.createElement('div'); colCard.className='grp'; body.appendChild(colCard);
-  if(!state._wvpnCfg.color)state._wvpnCfg.color='#30d158';
-  renderColorControl(colCard,{value:state._wvpnCfg.color,idPrefix:'vpncol',onChange(v){state._wvpnCfg.color=v;}});
-
-  const cCard=document.createElement('div'); cCard.className='grp'; body.appendChild(cCard);
-  if(svc==='gluetun'){
-    appendIeRow(cCard,{rowId:'vpn-url-row',label:'Control Server URL',req:true,value:state._wvpnCfg.url||'',ph:'http://gluetun:8000',inpId:'vpn-url'});
-    initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://gluetun:8000',onCommit(v){state._wvpnCfg.url=v;}});
-    _secretRow(cCard,{rowId:'vpn-apikey-row',inpId:'vpn-apikey',label:'API Key',opt:true,isSet:state._wvpnCfg.apiKeySet,onInput(v){state._wvpnCfg.apiKey=v;}});
-  } else {
-    appendIeRow(cCard,{rowId:'vpn-url-row',label:'Management API URL',req:true,value:state._wvpnCfg.url||'',ph:'http://netbird:33073',inpId:'vpn-url'});
-    initInlineEdit('vpn-url-row','vpn-url',{placeholder:'http://netbird:33073',onCommit(v){state._wvpnCfg.url=v;}});
-    _secretRow(cCard,{rowId:'vpn-token-row',inpId:'vpn-token',label:'Access Token (PAT)',req:true,isSet:state._wvpnCfg.tokenSet,onInput(v){state._wvpnCfg.token=v;}});
-  }
-  appendIeRow(cCard,{rowId:'vpn-href-row',label:'Click URL',opt:true,value:state._wvpnCfg.href||'',ph:'http://your-server:8000',inpId:'vpn-href'});
-  initInlineEdit('vpn-href-row','vpn-href',{placeholder:'http://your-server:8000',onCommit(v){state._wvpnCfg.href=v;}});
-}
-
-function _newSvcId(){return 'svc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-const _MAP_SVC={
-  gluetun:{label:'Gluetun',adminPh:'http://your-server:3002',color:'#30D158',fields:[{key:'url',label:'Control server URL',ph:'gluetun:8000'}]},
-  conduit:{label:'Conduit',adminPh:'http://your-server:9093',color:'#AF52DE',fields:[{key:'url',label:'Metrics URL',ph:'conduit:9090'}]},
-  netbird:{label:'NetBird',adminPh:'http://your-server:33073',color:'#FF9F0A',fields:[{key:'url',label:'Management API URL',ph:'netbird:33073'},{key:'token',label:'Access token',ph:'NetBird PAT',secret:true}]},
-  plausible:{label:'Plausible',adminPh:'http://your-server:8000',color:'#5E5CE6',fields:[{key:'url',label:'Plausible URL',ph:'plausible:8000'},{key:'siteId',label:'Site ID (domain)',ph:'example.com'},{key:'apiKey',label:'Stats API key',ph:'Bearer key',secret:true}]},
-  umami:{label:'Umami',adminPh:'http://your-server:3000',color:'#64D2FF',fields:[{key:'url',label:'Umami URL',ph:'umami:3000'},{key:'websiteId',label:'Website ID',ph:'8dc7\u2026 (UUID)'},{key:'username',label:'Username',ph:'admin'},{key:'password',label:'Password',ph:'\u2022\u2022\u2022\u2022\u2022\u2022',secret:true}]},
-};
-
-function _renderMapConfig(body){
-  if(!Array.isArray(state._wmapCfg.services)) state._wmapCfg.services=[];
-  state._wmapCfg.services.forEach(sv=>{ if(!sv.id)sv.id=_newSvcId(); });
-
-  const listHost=document.createElement('div'); body.appendChild(listHost);
-
-  function buildCard(svc,i){
-    const meta=_MAP_SVC[svc.type]||_MAP_SVC.gluetun;
-    const hdr=document.createElement('p'); hdr.className='grp-hdr grp-hdr-row';
-    setHtml(hdr, html`<span>${svc.name||meta.label||('Service '+(i+1))}</span>`);
-    const rm=document.createElement('button'); rm.type='button'; rm.className='grp-hdr-rm'; rm.textContent='Remove';
-    rm.onclick=()=>{ state._wmapCfg.services.splice(i,1); renderList(); };
-    hdr.appendChild(rm); listHost.appendChild(hdr);
-
-    const card=document.createElement('div'); card.className='grp'; listHost.appendChild(card);
-    const typeOpts=Object.keys(_MAP_SVC).map(k=>html`<option value="${k}"${k===svc.type?' selected':''}>${_MAP_SVC[k].label}</option>`);
-    const typeRow=appendRow(card, html`<span class="rl">Service</span><div class="sel-wrap"><select class="row-sel" aria-label="Service type">${typeOpts}</select>${raw(CHEV_SVG)}</div>`);
-    typeRow.querySelector('select').onchange=function(){ svc.type=this.value; svc.color=(_MAP_SVC[this.value]||{}).color||svc.color; renderList(); };
-
-    const nid=`map-name-${svc.id}`;
-    appendIeRow(card,{rowId:nid,label:'Display Name',value:svc.name||'',ph:meta.label||'Name',inpId:`${nid}-i`});
-
-    (meta.fields||[]).forEach(fld=>{
-      if(fld.secret){
-        _secretRow(card,{rowId:`mapsec-${svc.id}-${fld.key}-row`,inpId:`mapsec-${svc.id}-${fld.key}`,label:fld.label,isSet:!!svc[fld.key+'Set'],onInput(v){svc[fld.key]=v;}});
-      } else {
-        const rid=`mapf-${svc.id}-${fld.key}`;
-        appendIeRow(card,{rowId:rid,label:fld.label,value:svc[fld.key]||'',ph:fld.ph||'',inpId:`${rid}-i`});
-      }
-    });
-
-    const aid=`map-admin-${svc.id}`;
-    appendIeRow(card,{rowId:aid,label:'Admin UI URL',opt:true,value:svc.adminUrl||'',ph:meta.adminPh||'https://...',inpId:`${aid}-i`});
-
-    if(!svc.color)svc.color=(_MAP_SVC[svc.type]||{}).color||'#30d158';
-    renderColorControl(card,{value:svc.color,idPrefix:`mapcol-${svc.id}`,onChange(v){svc.color=v;}});
-
-    /* wire inline-edit rows now that the card is in the document */
-    initInlineEdit(nid,`${nid}-i`,{placeholder:meta.label||'Name',onCommit(v){svc.name=v;renderList();}});
-    initInlineEdit(aid,`${aid}-i`,{placeholder:meta.adminPh||'https://...',onCommit(v){svc.adminUrl=v;}});
-    (meta.fields||[]).forEach(fld=>{
-      if(fld.secret) return;
-      initInlineEdit(`mapf-${svc.id}-${fld.key}`,`mapf-${svc.id}-${fld.key}-i`,{placeholder:fld.ph||'',onCommit(v){svc[fld.key]=v;}});
-    });
-  }
-
-  function renderList(){
-    state._wmapCfg.services.sort((a,b)=>String(a.name||'').toLowerCase().localeCompare(String(b.name||'').toLowerCase()));
-    listHost.innerHTML='';
-    if(!state._wmapCfg.services.length){
-      const empty=document.createElement('p'); empty.className='grp-tip'; empty.textContent='No services yet. Add one below.'; listHost.appendChild(empty);
-    }
-    state._wmapCfg.services.forEach((svc,i)=>buildCard(svc,i));
-  }
-  renderList();
-
-  const addCard=document.createElement('div'); addCard.className='grp'; body.appendChild(addCard);
-  const add=document.createElement('button'); add.type='button'; add.className='wcf-add-row';
-  setHtml(add, html`<span class="rl" style="color:var(--ac2)">+ Add Service</span>`);
-  add.onclick=()=>{ state._wmapCfg.services.push({id:_newSvcId(),type:'gluetun',name:'',url:'',adminUrl:'',color:'#30d158',token:'',enabled:true}); renderList(); };
-  addCard.appendChild(add);
-
-  const legCard=document.createElement('div'); legCard.className='grp'; body.appendChild(legCard);
-  setHtml(legCard, html`<div class="row"><span class="rl">Show Legend</span><label class="tog"><input type="checkbox" id="map-legend" ${state._wmapCfg.showLegend!==false?'checked':''}><div class="tr"></div></label></div>`);
-  legCard.querySelector('#map-legend').onchange=e=>{ state._wmapCfg.showLegend=e.target.checked; };
-  const legTip=document.createElement('p'); legTip.className='grp-tip'; legTip.textContent='Service key along the bottom of the map.'; body.appendChild(legTip);
-}
 
 function _renderCustomConfig(body){
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);

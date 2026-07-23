@@ -21,6 +21,18 @@ export function applyOptionSet(carried, option, carryKeys) {
   return out;
 }
 
+/* Narrow a widget's size list to the sizes its current view declares. A view
+   with no `sizes`, or one whose sizes are all unavailable, leaves the list
+   alone. */
+export function sizesForView(allSizes, reg, config) {
+  if (!reg || !reg.views || !reg.viewField) return allSizes;
+  const view = (config && config[reg.viewField]) || reg.defaultView;
+  const sizes = reg.views[view] && reg.views[view].sizes;
+  if (!Array.isArray(sizes) || !sizes.length) return allSizes;
+  const narrowed = allSizes.filter(s => sizes.includes(s));
+  return narrowed.length ? narrowed : allSizes;
+}
+
 /* Whether a field's `showIf` condition is met by the current value of the field
    it names. `in` matches any of several values, `equals` matches one; a boolean
    control is compared as a boolean so `false` is a real match rather than an
