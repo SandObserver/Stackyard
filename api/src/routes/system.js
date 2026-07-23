@@ -1,26 +1,8 @@
 const fs = require('fs');
-const { on, json, readBody, checkOrigin } = require('../router');
+const { on, json } = require('../router');
 const { loadConfig } = require('../config');
-const { fetchChecked } = require('../proxy');
 const { scrubWidgetSecrets } = require('../widget-secrets');
 const { getRegistry } = require('../widgets');
-const { normalizeBase } = require('../widget-data');
-const { FETCH_MS } = require('../timeouts');
-const { mapScrutinyDevices } = require('../scrutiny');
-
-/* Normalize, SSRF-guard, fetch a Scrutiny summary and shape its device list.
-   Shared by the query-URL and config-URL routes so both apply the same guard
-   and produce the same result. Returns { devices } or { status, error }. */
-async function fetchScrutinyDevices(rawUrl) {
-  const base = normalizeBase(rawUrl);
-  try {
-    const r = await fetchChecked(base + '/api/summary', { timeout: FETCH_MS });
-    return { devices: mapScrutinyDevices(r.data?.data?.summary) };
-  } catch (e) {
-    if (e.status === 403) return { status: 403, error: e.message };
-    throw e;
-  }
-}
 
 let _netCache = { rx:0, tx:0 };
 let _netPrev  = null;
@@ -62,42 +44,4 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   if (_entry) scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
   json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: wc });
 });
-
-on('GET', '/api/scrutiny-proxy', async(req, res) => {
-  const u   = new URL(req.url, 'http://x');
-  const raw = u.searchParams.get('url') || '';
-  if (!raw) return json(res, 400, { error:'url param required' });
-  try {
-    const out = await fetchScrutinyDevices(raw);
-    if (out.error) return json(res, out.status, { error: out.error });
-    json(res, 200, { devices: out.devices });
-  } catch(e) { json(res, e.status || 502, { error: e.message }); }
-});
-
-/* POST rather than GET: the API key would otherwise land in the nginx access
-   log and the browser's history. */
-on('POST', '/api/truenas-proxy', async(req, res) => {
-  if (!checkOrigin(req, res)) return;
-  let body;
-  try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: 'invalid body' }); }
-  const raw = (body.url || '').trim();
-  const key = (body.key || '').trim();
-  if (!raw) return json(res, 400, { error:'url param required' });
-  if (!key) return json(res, 400, { error:'API key required' });
-  try {
-    const base = normalizeBase(raw);
-    const r = await fetchChecked(base + '/api/v2.0/pool', {
-      headers: { Authorization: 'Bearer ' + key }, timeout: FETCH_MS,
-    });
-    if (r.status === 401 || r.status === 403) return json(res, 401, { error:'TrueNAS auth failed, check API key' });
-    if (r.status >= 400) return json(res, 502, { error:'TrueNAS HTTP ' + r.status });
-    const pools = (Array.isArray(r.data) ? r.data : []).map(p => ({
-      name:     p.name,
-      healthy:  p.healthy === true,
-      capacity: (p.size != null ? Number(p.size) : null),
-    }));
-    json(res, 200, { pools });
-  } catch(e) { json(res, e.status || 502, { error: e.message }); }
-});
-
 

@@ -4,7 +4,6 @@
    called by the edit shell. */
 import { state } from '/js/admin-state.js?v=1';
 import { toast, PE_SVG, CHEV_SVG, _secretRow, initInlineEdit } from '/js/admin-shared.js?v=2';
-import { renderColorControl } from '/js/admin-color-control.js?v=1';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { normBackupSlots, sizesForView } from '/js/admin-logic.js?v=1';
@@ -19,7 +18,6 @@ const SIZE_ICONS={
 const CUSTOM_SIZES = ['small','medium','large','xlarge'];
 function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (state._widgetReg[type]?.sizes || ['medium']); }
 const SIZE_LABELS = { small:'Small', medium:'Medium', large:'Large', xlarge:'Extra Large' };
-const STAT_TYPES  = ['cpu','ram','temp','disk','iowait','procs'];
 
 function appendRow(host, tpl, cls='row'){
   const el=document.createElement('div'); el.className=cls;
@@ -39,27 +37,6 @@ export function buildWidgetForm(body,item){
   state._wtype = wt; state._wsize = ws;
   state._wlabel = item?.label || '';
   state._wAutoCfg = Object.assign({}, wc);
-  state._wslots = (wc.slots || [{type:'cpu'},{type:'ram'},{type:'disk',primary:'/',secondary:''}]);
-  while(state._wslots.length < 3) state._wslots.push({type:'cpu'});
-  state._wstatsSubType = wc.widgetSubType || 'system-summary';
-  if (state._wstatsSubType === 'disk-health') {
-    state._wdiskCfg = {
-      diskProvider: wc.diskProvider || 'scrutiny',
-      scrutinyUrl:  wc.scrutinyUrl  || '',
-      scrutinyHref: wc.scrutinyHref || '',
-      truenasUrl:   wc.truenasUrl   || '',
-      truenasKeySet: !!wc.truenasKeySet,
-      truenasHref:  wc.truenasHref  || '',
-      bays:         Array.isArray(wc.bays) ? [...wc.bays] : [],
-    };
-  }
-  state._wnet = wc.network ? {
-    enabled:  wc.network.enabled  || false,
-    mode:     wc.network.mode     || 'speed',
-    url:      wc.network.url      || '',
-    provider: wc.network.provider || 'myspeed',
-    myspeedPassSet: wc.network.myspeedPassSet || false,
-  } : {enabled:false,mode:'speed',url:'',provider:'myspeed'};
   state._wbackupCfg = {
     /* Per-slot useDefault: first instance of a provider is its default; later
        instances use that default unless turned off (then they get their own container). */
@@ -106,189 +83,9 @@ function _renderWidgetForm(body){
     });
     state._autoFormType=state._wtype;
   }
-  else if(state._wtype==='stats')        _renderStatsConfig(body);
   else if(state._wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderBackupConfig(d); }
   else                        _renderCustomConfig(body);
 }
-
-function _renderStatsConfig(body){
-  const subRow=document.createElement('div'); subRow.className='grp';
-  setHtml(subRow, html`<div class="row"><span class="rl">Type</span><div class="segr">
-    <label class="segr-opt"><input type="radio" name="stats-sub" value="disk-health" ${state._wstatsSubType==='disk-health'?'checked':''}><span class="segr-dot"></span><span>Disk Health</span></label>
-    <label class="segr-opt"><input type="radio" name="stats-sub" value="system-summary" ${state._wstatsSubType==='system-summary'?'checked':''}><span class="segr-dot"></span><span>System Summary</span></label>
-  </div></div>`);
-  body.appendChild(subRow);
-  subRow.querySelectorAll('input[name="stats-sub"]').forEach(r=>r.addEventListener('change',()=>{
-    if(!r.checked)return;
-    state._wstatsSubType=r.value;
-    const cfg=body.querySelector('#stats-cfg-body');
-    if(cfg){cfg.innerHTML='';_renderStatsBody(cfg);}
-  }));
-
-  const cfgBody=document.createElement('div');cfgBody.id='stats-cfg-body';body.appendChild(cfgBody);
-  _renderStatsBody(cfgBody);
-}
-
-function _renderStatsBody(body){
-  if(state._wstatsSubType==='disk-health'){
-    const bayCount = state._wsize==='medium' ? 10 : 4;
-    while(state._wdiskCfg.bays.length < bayCount) state._wdiskCfg.bays.push(null);
-    state._wdiskCfg.bays = state._wdiskCfg.bays.slice(0, bayCount);
-
-    const prov0=state._wdiskCfg.diskProvider||'scrutiny';
-    const srcCard=document.createElement('div'); srcCard.className='grp'; body.appendChild(srcCard);
-    const provRow=appendRow(srcCard, html`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="dh-prov" aria-label="Source"><option value="scrutiny"${prov0==='scrutiny'?' selected':''}>Scrutiny</option><option value="truenas"${prov0==='truenas'?' selected':''}>TrueNAS</option></select>${raw(CHEV_SVG)}</div>`);
-    const provSel=provRow.querySelector('#dh-prov');
-    const fieldArea=document.createElement('div'); srcCard.appendChild(fieldArea);
-
-    let _items=[]; let dhStatus=null;
-
-    const bayHdr=document.createElement('p'); bayHdr.className='grp-hdr'; bayHdr.textContent=`Bays (${bayCount})`; body.appendChild(bayHdr);
-    const bayCard=document.createElement('div'); bayCard.className='grp'; body.appendChild(bayCard);
-
-    function fmtCap(c){ return c?(c>=1e12?(c/1e12).toFixed(1)+' TB':(c/1e9).toFixed(0)+' GB'):''; }
-    function renderBayRows(){
-      bayCard.innerHTML='';
-      for(let i=0;i<bayCount;i++){
-        const cur=state._wdiskCfg.bays[i]||'';
-        const opts=[html`<option value="">Empty</option>`];
-        _items.forEach(it=>{ const cap=fmtCap(it.capacity); opts.push(html`<option value="${it.value}"${it.value===cur?' selected':''}>${it.label}${cap?' - '+cap:''}</option>`); });
-        if(cur && !_items.some(it=>it.value===cur)) opts.push(html`<option value="${cur}" selected>${cur}</option>`);
-        const row=appendRow(bayCard, html`<span class="rl">Bay ${i+1}</span><div class="sel-wrap"><select class="row-sel" id="dh-bay-${i}" aria-label="Bay ${i+1}">${opts}</select>${raw(CHEV_SVG)}</div>`);
-        const sel=row.querySelector('select'); sel.value=cur;
-        sel.onchange=()=>{ state._wdiskCfg.bays[i]=sel.value||null; };
-      }
-    }
-
-    async function loadScrutiny(btn){
-      const url=document.getElementById('dh-url')?.value?.trim();
-      if(!url){ if(dhStatus){dhStatus.textContent='Enter a Scrutiny URL first.';dhStatus.className='row-status err';} return; }
-      state._wdiskCfg.scrutinyUrl=url;
-      btn.disabled=true; btn.textContent='Fetching...'; if(dhStatus){dhStatus.textContent='';dhStatus.className='row-status';}
-      try{
-        const r=await fetch(`/api/scrutiny-proxy?url=${encodeURIComponent(url)}`);
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        const d=await r.json();
-        _items=(d.devices||[]).map(dev=>({value:dev.device_id,label:(dev.model_name||dev.device_name),capacity:dev.capacity}));
-        if(dhStatus){ dhStatus.textContent=_items.length?(_items.length+' drive(s) found'):'No SMART drives found'; dhStatus.className='row-status '+(_items.length?'ok':'err'); }
-        renderBayRows();
-      }catch(e){ if(dhStatus){dhStatus.textContent='Failed to reach Scrutiny: '+e.message;dhStatus.className='row-status err';} }
-      finally{ btn.disabled=false; btn.textContent='Fetch Drives'; }
-    }
-    async function loadTrueNas(btn){
-      const url=document.getElementById('dh-url')?.value?.trim();
-      const key=document.getElementById('dh-key')?.value?.trim()||(state._wdiskCfg.truenasKeySet?'__keep__':'');
-      if(!url){ if(dhStatus){dhStatus.textContent='Enter a TrueNAS URL first.';dhStatus.className='row-status err';} return; }
-      if(!key){ if(dhStatus){dhStatus.textContent='Enter an API key first.';dhStatus.className='row-status err';} return; }
-      state._wdiskCfg.truenasUrl=url;
-      btn.disabled=true; btn.textContent='Fetching...'; if(dhStatus){dhStatus.textContent='';dhStatus.className='row-status';}
-      try{
-        if(key==='__keep__'){ if(dhStatus){dhStatus.textContent='Re-enter the API key to fetch pools.';dhStatus.className='row-status err';} return; }
-        const r=await fetch('/api/truenas-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,key})});
-        const d=await r.json().catch(()=>({}));
-        if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
-        _items=(d.pools||[]).map(pl=>({value:pl.name,label:pl.name+(pl.healthy?'':' (unhealthy)'),capacity:pl.capacity}));
-        if(dhStatus){ dhStatus.textContent=_items.length?(_items.length+' pool(s) found'):'No pools found'; dhStatus.className='row-status '+(_items.length?'ok':'err'); }
-        renderBayRows();
-      }catch(e){ if(dhStatus){dhStatus.textContent='Failed to reach TrueNAS: '+e.message;dhStatus.className='row-status err';} }
-      finally{ btn.disabled=false; btn.textContent='Fetch Pools'; }
-    }
-
-    function renderFields(){
-      const prov=state._wdiskCfg.diskProvider; _items=[]; fieldArea.innerHTML='';
-      const isTn=prov==='truenas';
-      const urlVal=isTn?(state._wdiskCfg.truenasUrl||''):(state._wdiskCfg.scrutinyUrl||'');
-      const urlPh=isTn?'truenas:443':'scrutiny:8080';
-      const hrefVal=isTn?(state._wdiskCfg.truenasHref||''):(state._wdiskCfg.scrutinyHref||'');
-      const hrefPh=isTn?'https://truenas/ui/storage':'https://your-server:8080';
-      appendIeRow(fieldArea,{rowId:'dh-url-row',label:(isTn?'TrueNAS':'Scrutiny')+' URL',value:urlVal,ph:urlPh,inpId:'dh-url'});
-      if(isTn) _secretRow(fieldArea,{rowId:'dh-key-row',inpId:'dh-key',label:'API Key',isSet:state._wdiskCfg.truenasKeySet});
-      const fr=appendRow(fieldArea, html`<span class="rl"></span>`);
-      dhStatus=document.createElement('span'); dhStatus.className='row-status'; dhStatus.id='dh-msg'; fr.appendChild(dhStatus);
-      const fbtn=document.createElement('button'); fbtn.type='button'; fbtn.className='row-btn'; fbtn.id='dh-load'; fbtn.textContent=isTn?'Fetch Pools':'Fetch Drives'; fr.appendChild(fbtn);
-      fbtn.onclick=()=> isTn?loadTrueNas(fbtn):loadScrutiny(fbtn);
-      appendIeRow(fieldArea,{rowId:'dh-href-row',label:'Link URL',opt:true,value:hrefVal,ph:hrefPh,inpId:'dh-href'});
-      initInlineEdit('dh-url-row','dh-url',{placeholder:urlPh,onCommit(v){ if(state._wdiskCfg.diskProvider==='truenas')state._wdiskCfg.truenasUrl=v; else state._wdiskCfg.scrutinyUrl=v; }});
-      initInlineEdit('dh-href-row','dh-href',{placeholder:hrefPh,onCommit(v){ if(state._wdiskCfg.diskProvider==='truenas')state._wdiskCfg.truenasHref=v; else state._wdiskCfg.scrutinyHref=v; }});
-      renderBayRows();
-    }
-
-    provSel.onchange=()=>{ state._wdiskCfg.diskProvider=provSel.value; renderFields(); };
-    renderFields();
-    if(state._wdiskCfg.diskProvider!=='truenas' && state._wdiskCfg.scrutinyUrl){ const b=document.getElementById('dh-load'); if(b) b.click(); }
-    return;
-  }
-
-  const RES_LABELS={cpu:'CPU',ram:'RAM',temp:'Temperature',disk:'Disk Mount',iowait:'IO Wait',procs:'Processes'};
-  const SLOT_DEFS=['#ff2d55','#30d158','#00c0e8'];
-
-  function fillSlot(card, idx){
-    const slot=state._wslots[idx]||{type:'cpu'};
-    const resOpts=STAT_TYPES.map(t=>html`<option value="${t}"${slot.type===t?' selected':''}>${RES_LABELS[t]}</option>`);
-    const res=appendRow(card, html`<span class="rl">Resource</span><div class="sel-wrap"><select class="row-sel" aria-label="Resource">${resOpts}</select>${raw(CHEV_SVG)}</div>`);
-    res.querySelector('select').onchange=function(){ const t=this.value; state._wslots[idx]={type:t}; if(t==='disk'){state._wslots[idx].primary='/';state._wslots[idx].secondary='';} if(t==='temp'){state._wslots[idx].thermalZone=0;} card.innerHTML=''; fillSlot(card, idx); };
-
-    if(slot.type==='disk'){
-      appendIeRow(card,{rowId:`slot${idx}-pri`,label:'First Mount Path',value:slot.primary||'/',ph:'/',inpId:`slot${idx}-pri-i`});
-      appendIeRow(card,{rowId:`slot${idx}-sec`,label:'Second Mount Path',opt:true,value:slot.secondary||'',ph:'/mnt/data',inpId:`slot${idx}-sec-i`});
-      initInlineEdit(`slot${idx}-pri`,`slot${idx}-pri-i`,{placeholder:'/',onCommit(v){state._wslots[idx].primary=v;}});
-      initInlineEdit(`slot${idx}-sec`,`slot${idx}-sec-i`,{placeholder:'/mnt/data',onCommit(v){state._wslots[idx].secondary=v;}});
-    } else if(slot.type==='temp'){
-      const z=Number.isInteger(slot.thermalZone)?slot.thermalZone:0;
-      const tz=document.createElement('div'); tz.className='row ie-row'; tz.id=`slot${idx}-tz`;
-      setHtml(tz, html`<span class="rl">Thermal Zone</span><span class="rv">${z}</span><input id="slot${idx}-tz-i" type="number" min="0" max="20" value="${z}" style="display:none"><button class="pe" type="button" aria-label="Edit thermal zone">${raw(PE_SVG)}</button>`);
-      card.appendChild(tz);
-      const tip=document.createElement('p'); tip.className='grp-tip in-card'; tip.textContent='Zone 0 is correct for most systems. Only change it if the temperature shown is wrong.'; card.appendChild(tip);
-      initInlineEdit(`slot${idx}-tz`,`slot${idx}-tz-i`,{onCommit(v){state._wslots[idx].thermalZone=parseInt(v,10)||0;}});
-    }
-    renderColorControl(card,{value:slot.color||SLOT_DEFS[idx]||'#0289ff',idPrefix:`slotcol${idx}`,onChange(v){state._wslots[idx].color=v;}});
-  }
-
-  state._wslots.slice(0,3).forEach((_slot,idx)=>{
-    const hdr=document.createElement('p'); hdr.className='grp-hdr'; hdr.textContent='Slot '+(idx+1); body.appendChild(hdr);
-    const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-    fillSlot(card, idx);
-  });
-
-  const prov=state._wnet.provider||'myspeed';
-  const mode=state._wnet.mode||'speed';
-  const netCard=document.createElement('div'); netCard.className='grp'; body.appendChild(netCard);
-  setHtml(netCard, html`
-    <div class="row"><span class="rl">Network</span><label class="tog"><input type="checkbox" id="net-en" ${state._wnet.enabled?'checked':''}><div class="tr"></div></label></div>
-    <div id="net-sub" ${state._wnet.enabled?'':'hidden'}>
-      <div class="row"><span class="rl">Show</span><div class="segr">
-        <label class="segr-opt"><input type="radio" name="net-mode" value="speed" ${mode==='speed'?'checked':''}><span class="segr-dot"></span><span>Speed</span></label>
-        <label class="segr-opt"><input type="radio" name="net-mode" value="throughput" ${mode==='throughput'?'checked':''}><span class="segr-dot"></span><span>Throughput</span></label>
-        <label class="segr-opt"><input type="radio" name="net-mode" value="uptime" ${mode==='uptime'?'checked':''}><span class="segr-dot"></span><span>Uptime</span></label>
-      </div></div>
-      <div id="net-speed-fields" ${mode==='speed'?'':'hidden'}>
-        <div class="row"><span class="rl">Provider</span><div class="segr">
-          <label class="segr-opt"><input type="radio" name="net-prov" value="myspeed" ${prov==='myspeed'?'checked':''}><span class="segr-dot"></span><span>MySpeed</span></label>
-          <label class="segr-opt"><input type="radio" name="net-prov" value="speedtest-tracker" ${prov==='speedtest-tracker'?'checked':''}><span class="segr-dot"></span><span>Speedtest Tracker</span></label>
-        </div></div>
-        <div class="row ie-row" id="net-url-row"><span class="rl">Service URL</span><span class="rv${state._wnet.url?'':' is-ph'}">${state._wnet.url?state._wnet.url:(prov==='myspeed'?'myspeed:5216':'your-server:8850')}</span><input id="net-url" type="text" value="${state._wnet.url||''}" style="display:none"><button class="pe" type="button" aria-label="Edit service URL">${raw(PE_SVG)}</button></div>
-      </div>
-      <p class="grp-tip in-card" id="net-mode-tip" ${mode==='speed'?'hidden':''}>${mode==='throughput'?'Live interface throughput (RX/TX) from the container\u2019s network interface.':'System uptime.'}</p>
-    </div>`);
-  const netEn=netCard.querySelector('#net-en'), netSub=netCard.querySelector('#net-sub');
-  const netSpeedFields=netCard.querySelector('#net-speed-fields'), netModeTip=netCard.querySelector('#net-mode-tip');
-  netEn.onchange=()=>{ state._wnet.enabled=netEn.checked; netSub.hidden=!netEn.checked; };
-  netCard.querySelectorAll('input[name="net-mode"]').forEach(r=>r.addEventListener('change',()=>{
-    if(!r.checked)return; state._wnet.mode=r.value;
-    const isSpeed=r.value==='speed';
-    netSpeedFields.hidden=!isSpeed;
-    netModeTip.hidden=isSpeed;
-    netModeTip.textContent=r.value==='throughput'?'Live interface throughput (RX/TX) from the container\u2019s network interface.':'System uptime.';
-  }));
-  netCard.querySelectorAll('input[name="net-prov"]').forEach(r=>r.addEventListener('change',()=>{
-    if(!r.checked)return; state._wnet.provider=r.value;
-    const pr=netCard.querySelector('#net-pass-row'); if(pr)pr.hidden=(r.value!=='myspeed');
-    const uv=netCard.querySelector('#net-url-row .rv'); if(uv&&uv.classList.contains('is-ph'))uv.textContent=(r.value==='myspeed'?'myspeed:5216':'your-server:8850');
-  }));
-  initInlineEdit('net-url-row','net-url',{placeholder:(prov==='myspeed'?'myspeed:5216':'your-server:8850'),onCommit(v){state._wnet.url=v;}});
-  _secretRow(netSpeedFields,{rowId:'net-pass-row',inpId:'net-pass',label:'Password',opt:true,isSet:state._wnet.myspeedPassSet,hidden:(prov!=='myspeed')});
-}
-
 
 function _renderCustomConfig(body){
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
@@ -309,28 +106,6 @@ function _renderCustomConfig(body){
   adv.querySelector('#if-referrer').onchange=sync; adv.querySelector('#if-fs').onchange=sync;
   initInlineEdit('if-allow-row','if-allow',{placeholder:'autoplay; fullscreen',onCommit(){sync();}});
   initInlineEdit('if-refresh-row','if-refresh',{placeholder:'e.g. 2000',onCommit(){sync();}});
-}
-
-
-function _autofillSlot(si, provider) {
-  const slots = state._wbackupCfg.slots;
-  const first = slots.findIndex((s,i) => i!==si && s.provider===provider &&
-    (provider==='duplicati' ? s.dupUrl : s.kopiaUrl));
-  if (first === -1) return;
-  const src = slots[first];
-  if (provider === 'duplicati') {
-    if (!slots[si].dupUrl)     slots[si].dupUrl     = src.dupUrl;
-    if (!slots[si].dupPassSet) slots[si].dupPassSet  = src.dupPassSet;
-    if (!slots[si].dupHref)    slots[si].dupHref     = src.dupHref;
-    slots[si].dupPollSec  = src.dupPollSec;
-    slots[si].dupJobList  = src.dupJobList;
-  } else {
-    if (!slots[si].kopiaUrl)  slots[si].kopiaUrl  = src.kopiaUrl;
-    if (!slots[si].kopiaUser) slots[si].kopiaUser = src.kopiaUser;
-    if (!slots[si].kopiaPassSet) slots[si].kopiaPassSet = src.kopiaPassSet;
-    if (!slots[si].kopiaHref) slots[si].kopiaHref = src.kopiaHref;
-    slots[si].kopiaSrcList = src.kopiaSrcList;
-  }
 }
 
 function _renderBackupConfig(body){

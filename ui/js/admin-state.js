@@ -23,15 +23,11 @@ export const state = {
 
   _wtype: 'custom',
   _wsize: 'medium',
-  _wslots: [],
-  _wnet: { enabled: false, url: '', provider: 'myspeed' },
   _customUrl: '',
   _wlabel: '',
   _wgithubCfg: {},
   _wclockCfg: {},
   _wbackupCfg: {},
-  _wstatsSubType: 'system-summary',
-  _wdiskCfg: { diskProvider: 'scrutiny', scrutinyUrl: '', scrutinyHref: '', truenasUrl: '', truenasKeySet: false, truenasHref: '', bays: [] },
   _iframeOpts: {},
 
   _wAutoCfg: {},

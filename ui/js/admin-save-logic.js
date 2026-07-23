@@ -10,17 +10,6 @@ export function cleanId(label, fallback = 'item') {
   return String(label || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || fallback;
 }
 
-/* Map the first three stats slots to their saved shape (disk/temp carry extra
-   fields; everything else is just type + optional color). */
-export function buildStatsSlots(wslots) {
-  return (wslots || []).slice(0, 3).map((s) => {
-    const color = s.color || undefined;
-    if (s.type === 'disk') return { type: 'disk', primary: s.primary || '/', secondary: s.secondary || undefined, color };
-    if (s.type === 'temp') return { type: 'temp', thermalZone: Number.isInteger(s.thermalZone) ? s.thermalZone : 0, color };
-    return { type: s.type, color };
-  });
-}
-
 /* Finalize backup slots for saving: for non-small widgets, copy the default
    instance's connection onto every same-provider slot that uses the default;
    then validate every provider slot has a URL; then strip runtime-only fields.
