@@ -1,5 +1,5 @@
 /* Renders a widget's declared `fields` into a settings-row config form and reads
-   values back. Field types: text, secret, number, toggle, select, pills, multiselect, group.
+   values back. Field types: text, secret, number, toggle, color, select, pills, multiselect, group.
    renderWidgetConfigForm(container, fields, config) -> { getValues, validate }
    Each builder returns { el, get, control, liveValue }.
 
@@ -19,6 +19,7 @@
 
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
+import { renderColorControl } from '/js/admin-color-control.js?v=1';
 import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches } from '/js/admin-logic.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
@@ -176,6 +177,23 @@ function _multiselect(field, value) {
   return { el: wrap, get, control: wrap, liveValue: () => [...cur] };
 }
 
+/* Wraps the shared swatch + HSB control. The wrapper is needed so `showIf` has
+   one element to hide; the control itself appends several rows. */
+function _color(field, value) {
+  const wrap = document.createElement('div');
+  /* The control builds its own id-based selectors, so the key is reduced to
+     characters that are safe in one. */
+  const idPrefix = 'wcf-' + String(field.key).replace(/[^a-zA-Z0-9_-]/g, '') + '-' + Math.random().toString(36).slice(2, 7);
+  const initial = value != null && value !== '' ? String(value) : (field.default != null ? String(field.default) : '#0289ff');
+  const ctl = renderColorControl(wrap, {
+    value: initial, idPrefix, label: field.label,
+    onChange: () => wrap.dispatchEvent(new Event('change')),
+  });
+  if (field.hint) { const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; wrap.appendChild(h); }
+  const get = () => [field.key, ctl.getValue()];
+  return { el: wrap, get, control: wrap, liveValue: () => ctl.getValue() };
+}
+
 function _visible(b) { return b.el.style.display !== 'none'; }
 
 /* Wire `showIf` across one set of sibling fields: the top-level form, or the
@@ -271,6 +289,7 @@ function _buildSimple(field, config, ctx) {
     case 'secret': return _secret(field, config[field.key + 'Set'] === true);
     case 'number': return _ieRow(field, value, 'number');
     case 'toggle': return _toggle(field, value);
+    case 'color':  return _color(field, value);
     case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value, ctx, config);
     case 'multiselect': return _multiselect(field, value);
     default:       return _ieRow(field, value, 'text');
@@ -309,7 +328,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
     validate() {
       const missing = [];
       for (const b of built) {
-        if (b.field.optional || b.field.transient || b.field.type === 'toggle' || b.field.type === 'group') continue;
+        if (b.field.optional || b.field.transient || b.field.type === 'toggle' || b.field.type === 'color' || b.field.type === 'group') continue;
         if (b.field.showIf && !_visible(b)) continue;
         if (b.field.type === 'secret') continue;
         const kv = b.get();

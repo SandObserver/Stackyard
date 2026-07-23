@@ -83,6 +83,7 @@ the entry file is `index.html`. A single-view widget whose file is not
 | `number` | Inline-edit row that stores a number. |
 | `secret` | Inline-edit row for a masked value. Shows `Configured` once set. The saved value is kept server-side and never sent back to the browser, so to change it the user re-enters it; leaving it blank keeps the existing value. |
 | `toggle` | On/off switch, stored as a boolean. |
+| `color` | The swatch and hue/saturation/brightness control used elsewhere in the admin UI. Saves a `#rrggbb` string. |
 | `select` | A dropdown by default. Add `"variant": "pills"` to render the options as a radio group instead. With `optionsFrom` it also shows a Fetch button (see below). |
 | `multiselect` | A checklist dropdown; the value is an array of the chosen values. |
 | `group` | A repeatable set of sub-fields, each entry rendered as its own card with Add / Remove. Put the sub-fields in a nested `"fields"` array. Groups cannot be nested inside a group or object. |

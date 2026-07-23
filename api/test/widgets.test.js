@@ -63,3 +63,24 @@ test('loadRegistry returns an empty registry when the directory is unreadable', 
   t.mock.method(fs, 'readdirSync', () => { throw new Error('ENOENT'); });
   assert.deepEqual(widgets.loadRegistry(), {});
 });
+
+/* ── Field type validation ──────────────────────────────────────────────── */
+
+const base = { name: 'w', label: 'W', sizes: ['small'] };
+const errsFor = fields => widgets.validateManifest('w', Object.assign({}, base, { fields })).errors;
+
+test('validateManifest accepts a color field', () => {
+  assert.deepEqual(errsFor([{ key: 'tint', type: 'color', label: 'Tint' }]), []);
+});
+
+test('validateManifest accepts a color field inside a group', () => {
+  assert.deepEqual(errsFor([
+    { key: 'slots', type: 'group', label: 'Slots', fields: [{ key: 'tint', type: 'color', label: 'Tint' }] },
+  ]), []);
+});
+
+test('validateManifest still rejects an unknown field type', () => {
+  const errs = errsFor([{ key: 'tint', type: 'colour', label: 'Tint' }]);
+  assert.equal(errs.length, 1);
+  assert.match(errs[0], /unknown type "colour"/);
+});

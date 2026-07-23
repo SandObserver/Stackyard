@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Widget settings can declare a `color` field, rendered with the same colour
+  control used elsewhere in the admin interface.
+
 ### Changed
 
 - Widget settings rows in a repeating section now show and hide independently,

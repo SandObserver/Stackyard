@@ -9,7 +9,7 @@ const log = require('./log');
 const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets';
 
 const VALID_SIZES      = new Set(['small', 'medium', 'large', 'xlarge']);
-const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'select', 'multiselect', 'group', 'object']);
+const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'color', 'select', 'multiselect', 'group', 'object']);
 
 let _registry = null;
 

@@ -51,9 +51,12 @@ export const PE_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="non
 export const CHEV_SVG='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
 /* Inline-edit row: click the pencil to reveal an input, commit on blur/Enter. */
-export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = '', onCommit } = {}) {
-  const row = document.getElementById(rowId);
-  const inp = document.getElementById(inputId);
+/* `root` lets a caller wire a subtree that is not in the document yet; it
+   defaults to the document, which is where every id-based caller looks. */
+export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = '', onCommit, root = document } = {}) {
+  const byId = id => (root === document ? document.getElementById(id) : root.querySelector('#' + CSS.escape(id)));
+  const row = byId(rowId);
+  const inp = byId(inputId);
   if (!row || !inp) return;
   const valEl = row.querySelector('.rv');
   const pen = row.querySelector('.pe');
