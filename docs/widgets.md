@@ -87,6 +87,7 @@ the entry file is `index.html`. A single-view widget whose file is not
 | `select` | A dropdown by default. Add `"variant": "pills"` to render the options as a radio group instead. With `optionsFrom` it also shows a Fetch button (see below). |
 | `multiselect` | A checklist dropdown; the value is an array of the chosen values. |
 | `group` | A repeatable set of sub-fields, each entry rendered as its own card with Add / Remove. Put the sub-fields in a nested `"fields"` array. Groups cannot be nested inside a group or object. |
+| `picklist` | A fixed number of dropdowns filled from one shared fetch. Saves an array of scalars, one per row, `null` where unset. Needs `count` or `countBySize`, plus `options` or `optionsFrom`. `rowLabel` names the rows, defaulting to `label`. |
 | `object` | A single nested set of sub-fields in a `"fields"` array, saved one level deep (for example `network.password`). Rendered as its own card. Objects cannot be nested inside a group or another object. |
 
 ### Field options
@@ -140,6 +141,23 @@ size:
 
 Each entry must be a subset of the widget's top-level `sizes`. A view without
 `sizes` offers all of them. The size tiles redraw when the `viewField` changes.
+
+### A fixed list of picks (picklist)
+
+For a widget that stores a plain array of ids, one per physical slot, and fills
+them all from one call:
+
+```json
+{ "key": "bays", "type": "picklist", "label": "Bays", "rowLabel": "Bay",
+  "optionsFrom": "devices", "countBySize": { "small": 4, "medium": 10 } }
+```
+
+One Fetch button loads the options once and every row shares them, rather than
+each row fetching for itself. The saved value is `["sda-abc", null, ...]`, always
+`count` entries long.
+
+A `group` whose `min` equals its `max` is fixed-length too: it renders that many
+rows with no Add or Remove.
 
 ### Nested settings (object)
 

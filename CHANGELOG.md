@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widget settings can declare the same key more than once with different labels,
   each shown by a `showIf` condition.
 - A widget view can limit which sizes it offers.
+- Widget settings can declare a `picklist` field: a fixed number of dropdowns
+  filled from a single fetch.
 
 ### Changed
 
