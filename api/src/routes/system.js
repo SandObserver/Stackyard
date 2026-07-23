@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { on, json, readBody, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
-const { fetchChecked, fetchUnchecked } = require('../proxy');
+const { fetchChecked } = require('../proxy');
 const { scrubWidgetSecrets } = require('../widget-secrets');
 const { getRegistry } = require('../widgets');
 const { normalizeBase } = require('../widget-data');
@@ -61,23 +61,6 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   const _entry = getRegistry()[w.widgetType];
   if (_entry) scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
   json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: wc });
-});
-
-on('GET', '/api/geocode-proxy', async(req, res) => {
-  const u    = new URL(req.url, 'http://x');
-  const name = (u.searchParams.get('q') || '').trim();
-  if (!name) return json(res, 400, { error: 'q param required' });
-  try {
-    const url = 'https://geocoding-api.open-meteo.com/v1/search'
-      + `?name=${encodeURIComponent(name)}&count=5&language=en&format=json`;
-    const r = await fetchUnchecked(url, { timeout: FETCH_MS });
-    if (r.status >= 400) return json(res, 502, { error: 'Geocoding HTTP ' + r.status });
-    const results = ((r.data && r.data.results) || []).map(p => ({
-      name: p.name, country: p.country, admin1: p.admin1,
-      lat: p.latitude, lon: p.longitude,
-    }));
-    json(res, 200, { results });
-  } catch(e) { json(res, e.status || 502, { error: e.message }); }
 });
 
 on('GET', '/api/scrutiny-proxy', async(req, res) => {

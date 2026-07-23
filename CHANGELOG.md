@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Weather widget now uses the standard widget settings form. Location is set by
+  typing a city, pressing Fetch and picking a match; "feels like" is a toggle.
+
+### Removed
+
+- `GET /api/geocode-proxy`. City search now runs through the widget's own data
+  function.
+
 ### Security
 
 - TrueNAS API key is no longer sent in a URL query string when fetching pools.

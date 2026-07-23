@@ -99,6 +99,8 @@ These keys can go on any field:
 | `default` | Value used when none is saved yet. |
 | `hint` | Short help text. Shown under the field, except on a `group`, where it renders at the bottom of the whole section. |
 | `optional` | If `true`, the field is not required to save. |
+| `transient` | If `true`, the field is rendered and sent to an `optionsFrom` fetch but is left out of the saved config. Use it for a search box whose text only feeds a picker. |
+| `carries` | For `select` with `optionsFrom`: extra config keys this picker writes, supplied by the chosen option's `set` block. |
 | `showIf` | Show the field only when another field matches: `{ "field": "provider", "equals": "adguard" }`, or match several with `{ "field": "provider", "in": ["adguard", "pihole"] }`. |
 | `optionsFrom` | For `select`: the name of a data endpoint that returns the option list at config time (see below). |
 | `variant` | For `select`: `"pills"` renders a radio group instead of a dropdown. |
@@ -112,9 +114,27 @@ it `"optionsFrom": "<endpoint>"` instead of static `options`. The form shows a
 **Fetch** button, which calls your `data.js` with `ctx.endpoint` set to that
 name; return `{ options: [ { value, label }, ... ] }`.
 
+The fetch is sent the form's current values, including any field marked
+`transient`, so a search box can supply the query without being saved.
+
+An option can also write keys other than the field's own. List them in the
+field's `carries` and return them in the option's `set`:
+
+```json
+{ "key": "city", "type": "select", "optionsFrom": "geocode", "carries": ["lat", "lon"] }
+```
+
+```js
+return { options: [{ value: 'Ottawa, Ontario, Canada', label: 'Ottawa, Ontario, Canada', set: { lat: 45.42, lon: -75.7 } }] };
+```
+
+Saving picks up `city`, `lat` and `lon`. Values already saved under the carried
+keys are kept when the widget is edited without touching the picker, so the
+coordinates survive a change to an unrelated field.
+
 ### customEditor (deprecated)
 
-Four of the shipped widgets set `"customEditor": true` in their manifest, which
+Three of the shipped widgets set `"customEditor": true` in their manifest, which
 tells the admin UI to skip the auto-form and use a hand-written editor kept in
 `ui/js/admin-widget-form.js` instead. It dates from before the auto-form covered
 groups, conditional fields and fetched options.

@@ -456,7 +456,7 @@ function closeModal(){
   showListView();
   state.eid=null;
   state._wtype='custom';state._wsize='medium';state._wslots=[];state._wnet={enabled:false,url:'',provider:'myspeed'};
-  state._wmapCfg={};state._wconnView='map';state._wvpnCfg={};state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._wbackupCfg={};state._wstatsSubType='system-summary';state._wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};state._iframeOpts={};state._wweatherCfg={city:'',lat:'',lon:'',units:'c',href:''};
+  state._wmapCfg={};state._wconnView='map';state._wvpnCfg={};state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._wbackupCfg={};state._wstatsSubType='system-summary';state._wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};state._iframeOpts={};
 }
 
 
@@ -550,16 +550,6 @@ async function doSave(orig){
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
         item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:state._wtype,
           label:wlabel,widgetSize:state._wsize,widgetConfig:state._autoForm.getValues()};
-      }
-      else if(state._wtype==='weather'){
-        const city=document.getElementById('wx-city')?.value?.trim()||state._wweatherCfg.city;
-        if(state._wweatherCfg.lat===''||state._wweatherCfg.lat==null){ toast('Search and select a city first','err'); return; }
-        const wcfg={ city:state._wweatherCfg.city||city, lat:state._wweatherCfg.lat, lon:state._wweatherCfg.lon, units:state._wweatherCfg.units||'c' };
-        if(state._wweatherCfg.feelsLike) wcfg.feelsLike=true;
-        const href=document.getElementById('wx-href')?.value?.trim();
-        if(href) wcfg.href=href;
-        item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'weather',
-          label:wlabel,widgetSize:'small',widgetConfig:wcfg};
       }
       else if(state._wtype==='custom'){
         const url=document.getElementById('f-url')?.value?.trim();

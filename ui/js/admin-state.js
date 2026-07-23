@@ -36,7 +36,6 @@ export const state = {
   _wstatsSubType: 'system-summary',
   _wdiskCfg: { diskProvider: 'scrutiny', scrutinyUrl: '', scrutinyHref: '', truenasUrl: '', truenasKeySet: false, truenasHref: '', bays: [] },
   _iframeOpts: {},
-  _wweatherCfg: { city: '', lat: '', lon: '', units: 'c', href: '' },
 
   _wAutoCfg: {},
   _autoForm: null,

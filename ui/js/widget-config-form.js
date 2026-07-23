@@ -1,10 +1,20 @@
 /* Renders a widget's declared `fields` into a settings-row config form and reads
    values back. Field types: text, secret, number, toggle, select, pills, multiselect, group.
    renderWidgetConfigForm(container, fields, config) -> { getValues, validate }
-   Each builder returns { el, get, control, liveValue }; the public API is unchanged. */
+   Each builder returns { el, get, control, liveValue }.
+
+   A field marked `transient` is rendered and sent to optionsFrom fetches but is
+   left out of the saved config, for search boxes whose text is only an input to
+   a picker.
+
+   A `select` with `optionsFrom` may also own keys it does not name: it declares
+   them in `carries`, and each fetched option supplies them in a `set` block.
+   Values for those keys are seeded from the saved config so they survive an edit
+   in which the picker is not touched. */
 
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
+import { seedCarried, applyOptionSet, collectFieldValues } from '/js/admin-logic.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -64,10 +74,12 @@ function _toggle(field, value) {
   return { el: row, get, control: input, liveValue: () => input.checked };
 }
 
-function _select(field, value, ctx) {
+function _select(field, value, ctx, config = {}) {
   const wrap = document.createElement('div');
   const row = document.createElement('div'); row.className = 'row';
   let opts = Array.isArray(field.options) ? field.options.slice() : [];
+  const carryKeys = Array.isArray(field.carries) ? field.carries : [];
+  let carried = seedCarried(config, carryKeys);
   let chosen = value != null ? String(value) : (field.default != null ? String(field.default) : '');
   setHtml(row, html`<span class="rl">${field.label}${_tag(field)}</span>`);
   const selWrap = document.createElement('div'); selWrap.className = 'sel-wrap';
@@ -84,13 +96,21 @@ function _select(field, value, ctx) {
   }
   paint();
 
+  /* Adopt the chosen option's `set` block; an option without one leaves the
+     seeded values in place. */
+  function syncCarried() {
+    if (!carryKeys.length) return;
+    carried = applyOptionSet(carried, opts.find(x => String(x.value) === sel.value), carryKeys);
+  }
+  sel.addEventListener('change', syncCarried);
+
   if (field.optionsFrom) {
     const fr = document.createElement('div'); fr.className = 'row';
     const status = document.createElement('span'); status.className = 'row-status'; status.textContent = field.hint || '';
     const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'row-btn'; btn.textContent = 'Fetch';
     setHtml(fr, html`<span class="rl"></span>`); fr.appendChild(status); fr.appendChild(btn); wrap.appendChild(fr);
     btn.addEventListener('click', async () => {
-      const cfg = ctx && ctx.getValues ? ctx.getValues() : {};
+      const cfg = ctx && ctx.getDraft ? ctx.getDraft() : {};
       const wid = (ctx && ctx.widgetId) || '__preview__';
       status.textContent = 'Fetching...'; status.className = 'row-status'; btn.disabled = true;
       try {
@@ -101,7 +121,7 @@ function _select(field, value, ctx) {
         const d = await r.json().catch(() => ({}));
         if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
         opts = Array.isArray(d.options) ? d.options : [];
-        chosen = sel.value || chosen; paint();
+        chosen = sel.value || chosen; paint(); syncCarried();
         status.textContent = opts.length ? `Loaded ${opts.length} option${opts.length > 1 ? 's' : ''}` : 'No options found';
         status.className = 'row-status ok';
       } catch (e) { status.textContent = 'Fetch failed: ' + e.message; status.className = 'row-status err'; }
@@ -111,7 +131,7 @@ function _select(field, value, ctx) {
     const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = field.hint; wrap.appendChild(h);
   }
 
-  const get = () => [field.key, sel.value];
+  const get = () => [field.key, sel.value, carryKeys.length ? carried : null];
   return { el: wrap, get, control: sel, liveValue: () => sel.value };
 }
 
@@ -218,7 +238,7 @@ function _buildSimple(field, config, ctx) {
     case 'secret': return _secret(field, config[field.key + 'Set'] === true);
     case 'number': return _ieRow(field, value, 'number');
     case 'toggle': return _toggle(field, value);
-    case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value, ctx);
+    case 'select': return field.variant === 'pills' ? _pills(field, value) : _select(field, value, ctx, config);
     case 'multiselect': return _multiselect(field, value);
     default:       return _ieRow(field, value, 'text');
   }
@@ -228,7 +248,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
   container.innerHTML = '';
   const built = [];
   const liveByKey = {};
-  const ctx = { widgetId: (opts && opts.widgetId) || null, widgetType: (opts && opts.widgetType) || null, getValues: null };
+  const ctx = { widgetId: (opts && opts.widgetId) || null, widgetType: (opts && opts.widgetType) || null, getDraft: null };
 
   /* Group consecutive simple fields into a card; group fields render as their own cards. */
   let card = null;
@@ -270,19 +290,13 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
 
   const api = {
     root: container,
-    getValues() {
-      const out = {};
-      for (const b of built) {
-        if (b.field.showIf && !visible(b)) continue;
-        const kv = b.get();
-        if (kv && kv[1] !== undefined) out[kv[0]] = kv[1];
-      }
-      return out;
+    getValues(readOpts = {}) {
+      return collectFieldValues(built.map(b => ({ field: b.field, visible: visible(b), kv: b.get() })), readOpts);
     },
     validate() {
       const missing = [];
       for (const b of built) {
-        if (b.field.optional || b.field.type === 'toggle' || b.field.type === 'group') continue;
+        if (b.field.optional || b.field.transient || b.field.type === 'toggle' || b.field.type === 'group') continue;
         if (b.field.showIf && !visible(b)) continue;
         if (b.field.type === 'secret') continue;
         const kv = b.get();
@@ -291,6 +305,6 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
       return missing;
     },
   };
-  ctx.getValues = api.getValues;
+  ctx.getDraft = () => api.getValues({ includeTransient: true });
   return api;
 }

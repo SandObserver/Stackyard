@@ -42,14 +42,6 @@ export function buildWidgetForm(body,item){
   state._wslots = (wc.slots || [{type:'cpu'},{type:'ram'},{type:'disk',primary:'/',secondary:''}]);
   while(state._wslots.length < 3) state._wslots.push({type:'cpu'});
   state._wstatsSubType = wc.widgetSubType || 'system-summary';
-  state._wweatherCfg = {
-    city:  wc.city  || '',
-    lat:   wc.lat   != null ? wc.lat : '',
-    lon:   wc.lon   != null ? wc.lon : '',
-    units: wc.units === 'f' ? 'f' : 'c',
-    feelsLike: wc.feelsLike === true,
-    href:  wc.href  || '',
-  };
   if (state._wstatsSubType === 'disk-health') {
     state._wdiskCfg = {
       diskProvider: wc.diskProvider || 'scrutiny',
@@ -144,50 +136,7 @@ function _renderWidgetForm(body){
   else if(state._wtype==='stats')        _renderStatsConfig(body);
   else if(state._wtype==='connections') _renderConnectionsConfig(body);
   else if(state._wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderBackupConfig(d); }
-  else if(state._wtype==='weather')     _renderWeatherConfig(body);
   else                        _renderCustomConfig(body);
-}
-
-function _renderWeatherConfig(body){
-  const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-  setHtml(card, html`
-    <div class="row"><span class="rl">City</span><input id="wx-city" class="icon-srch" type="text" placeholder="e.g. Ottawa" value="${state._wweatherCfg.city||''}"></div>
-    <div class="row" id="wx-match-row" hidden><span class="rl">Match</span><div class="sel-wrap"><select class="row-sel" id="wx-result" aria-label="Match"></select>${raw(CHEV_SVG)}</div></div>
-    <div class="row"><span class="rl"></span><span class="row-status" id="wx-msg"></span><button type="button" class="row-btn" id="wx-search">Search</button></div>
-    <div class="row"><span class="rl">Units</span><div class="segr">
-      <label class="segr-opt"><input type="radio" name="wx-units" value="c" ${(state._wweatherCfg.units||'c')==='c'?'checked':''}><span class="segr-dot"></span><span>&deg;C</span></label>
-      <label class="segr-opt"><input type="radio" name="wx-units" value="f" ${state._wweatherCfg.units==='f'?'checked':''}><span class="segr-dot"></span><span>&deg;F</span></label>
-    </div></div>
-    <div class="row"><span class="rl">Temperature</span><div class="segr">
-      <label class="segr-opt"><input type="radio" name="wx-feels" value="actual" ${!state._wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Actual</span></label>
-      <label class="segr-opt"><input type="radio" name="wx-feels" value="feels" ${state._wweatherCfg.feelsLike?'checked':''}><span class="segr-dot"></span><span>Feels like</span></label>
-    </div></div>
-    <div class="row ie-row" id="wx-href-row"><span class="rl">Link URL <span class="opt-span">(optional)</span></span><span class="rv${state._wweatherCfg.href?'':' is-ph'}">${state._wweatherCfg.href?state._wweatherCfg.href:'https://...'}</span><input id="wx-href" type="text" value="${state._wweatherCfg.href||''}" style="display:none"><button class="pe" type="button" aria-label="Edit link URL">${raw(PE_SVG)}</button></div>`);
-  const msg=card.querySelector('#wx-msg'), matchRow=card.querySelector('#wx-match-row'), resultSel=card.querySelector('#wx-result');
-  if(state._wweatherCfg.lat!==''&&state._wweatherCfg.lat!=null){ msg.textContent='Current: '+(state._wweatherCfg.city||(state._wweatherCfg.lat+', '+state._wweatherCfg.lon)); msg.className='row-status ok'; }
-  card.querySelectorAll('input[name="wx-units"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)state._wweatherCfg.units=r.value; }));
-  card.querySelectorAll('input[name="wx-feels"]').forEach(r=>r.addEventListener('change',()=>{ if(r.checked)state._wweatherCfg.feelsLike=(r.value==='feels'); }));
-  resultSel.onchange=()=>{ const o=resultSel.selectedOptions[0]; if(!o||!o.value)return; const pp=JSON.parse(o.value); state._wweatherCfg.city=pp.label;state._wweatherCfg.lat=pp.lat;state._wweatherCfg.lon=pp.lon; msg.textContent='Selected: '+pp.label; msg.className='row-status ok'; };
-  initInlineEdit('wx-href-row','wx-href',{placeholder:'https://...',onCommit(v){state._wweatherCfg.href=v;}});
-  async function doSearch(){
-    const q=card.querySelector('#wx-city').value.trim();
-    if(!q){ msg.textContent='Enter a city name.'; msg.className='row-status err'; return; }
-    const btn=card.querySelector('#wx-search'); btn.disabled=true; btn.textContent='...'; msg.textContent=''; msg.className='row-status';
-    try{
-      const r=await fetch(`/api/geocode-proxy?q=${encodeURIComponent(q)}`);
-      const d=await r.json().catch(()=>({}));
-      if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
-      const results=d.results||[];
-      if(!results.length){ msg.textContent='No matches found.'; msg.className='row-status err'; matchRow.hidden=true; return; }
-      resultSel.innerHTML='';
-      results.forEach(pp=>{ const label=[pp.name,pp.admin1,pp.country].filter(Boolean).join(', '); const opt=document.createElement('option'); opt.value=JSON.stringify({label,lat:pp.lat,lon:pp.lon}); opt.textContent=label; resultSel.appendChild(opt); });
-      matchRow.hidden=false;
-      const f=JSON.parse(resultSel.value); state._wweatherCfg.city=f.label; state._wweatherCfg.lat=f.lat; state._wweatherCfg.lon=f.lon;
-      msg.textContent=results.length+' match(es), pick one'; msg.className='row-status ok';
-    }catch(e){ msg.textContent='Search failed: '+e.message; msg.className='row-status err'; }
-    finally{ btn.disabled=false; btn.textContent='Search'; }
-  }
-  card.querySelector('#wx-search').onclick=doSearch;
 }
 
 function _renderStatsConfig(body){
