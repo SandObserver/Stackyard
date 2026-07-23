@@ -1,8 +1,43 @@
 // @ts-check
 /* Pure logic extracted from the admin UI so it can be unit-tested without a DOM:
    backup-slot normalization (with default-instance inference), dashboard-item
-   reordering, and the dock-capacity check. All operate on plain data and touch
-   no DOM or module state. */
+   reordering, the dock-capacity check, and the widget config form's value
+   collection. All operate on plain data and touch no DOM or module state. */
+
+/* Seed the extra keys a picker owns from an already-saved config, so editing a
+   widget without touching the picker does not drop them. */
+export function seedCarried(config, carryKeys) {
+  const out = {};
+  for (const k of carryKeys || []) if (config && config[k] !== undefined) out[k] = config[k];
+  return out;
+}
+
+/* Fold a chosen option's `set` block into the carried values. An option with no
+   `set`, or one naming keys the field did not declare, leaves them unchanged. */
+export function applyOptionSet(carried, option, carryKeys) {
+  const out = Object.assign({}, carried);
+  if (!option || !option.set) return out;
+  for (const k of carryKeys || []) if (option.set[k] !== undefined) out[k] = option.set[k];
+  return out;
+}
+
+/* Assemble the config object from what each field read back. `reads` is one
+   entry per field: { field, visible, kv }, where kv is [key, value] plus an
+   optional third element of extra keys the field carries. Hidden fields are
+   skipped, and transient fields are skipped unless the caller wants the draft
+   that feeds an options fetch. */
+export function collectFieldValues(reads, { includeTransient = false } = {}) {
+  const out = {};
+  for (const r of reads) {
+    const f = r.field;
+    if (f.showIf && r.visible === false) continue;
+    if (f.transient && !includeTransient) continue;
+    const kv = r.kv;
+    if (kv && kv[1] !== undefined) out[kv[0]] = kv[1];
+    if (kv && kv[2]) Object.assign(out, kv[2]);
+  }
+  return out;
+}
 
 /* Where a listbox keypress moves the active option. Returns the new index, or
    null for keys that do not move it. Clamps rather than wraps, matching the

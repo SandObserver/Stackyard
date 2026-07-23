@@ -6,12 +6,33 @@
      units     : 'c' (default) or 'f'
      href      : optional click-through URL
 
+   ?endpoint=geocode returns { options:[{value,label,set:{lat,lon}}] } for the
+   config-time location picker, using config.cityQuery as the search text.
+
    Returns the normalized shape the widget HTML renders:
      { temp, units, code, isDay, condition, city }
    code is the WMO weather code; the front-end maps it to an icon + label. */
 
+async function geocode(ctx) {
+  const q = String(ctx.config.cityQuery || ctx.config.city || '').trim();
+  if (!q) return { error: 'Enter a city name to search.' };
+  const url = 'https://geocoding-api.open-meteo.com/v1/search'
+    + `?name=${encodeURIComponent(q)}&count=5&language=en&format=json`;
+  let r;
+  try { r = await ctx.fetchJSON(url, { timeout: 8000 }); }
+  catch (e) { return { error: e.message }; }
+  if (r.status >= 400) return { error: 'Geocoding HTTP ' + r.status };
+  const options = ((r.data && r.data.results) || []).map(p => ({
+    value: [p.name, p.admin1, p.country].filter(Boolean).join(', '),
+    label: [p.name, p.admin1, p.country].filter(Boolean).join(', '),
+    set: { lat: p.latitude, lon: p.longitude },
+  }));
+  return { options };
+}
+
 module.exports = async function (ctx) {
   const { config, fetchJSON } = ctx;
+  if (ctx.endpoint === 'geocode') return await geocode(ctx);
   const lat = config.lat, lon = config.lon;
   if (lat == null || lon == null || lat === '' || lon === '') {
     return { error: 'Location not set' };
