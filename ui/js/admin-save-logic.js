@@ -21,21 +21,6 @@ export function buildStatsSlots(wslots) {
   });
 }
 
-/* Keep only fully-specified connection-map services (type + non-blank url) and
-   normalize them; blank secret fields are omitted so the server keeps the saved
-   value on merge. */
-export function buildMapServices(services) {
-  const PLAIN = ['siteId', 'websiteId', 'username'], SECRET = ['token', 'apiKey', 'password'];
-  return (services || [])
-    .filter(s => s && s.type && (s.url || '').trim())
-    .map(s => {
-      const o = { id: s.id, type: s.type, name: (s.name || '').trim(), url: s.url.trim(), adminUrl: (s.adminUrl || '').trim(), color: s.color || '', enabled: true };
-      PLAIN.forEach(k => { if ((s[k] || '').trim()) o[k] = s[k].trim(); });
-      SECRET.forEach(k => { if ((s[k] || '').trim()) o[k] = s[k].trim(); });
-      return o;
-    });
-}
-
 /* Finalize backup slots for saving: for non-small widgets, copy the default
    instance's connection onto every same-provider slot that uses the default;
    then validate every provider slot has a URL; then strip runtime-only fields.

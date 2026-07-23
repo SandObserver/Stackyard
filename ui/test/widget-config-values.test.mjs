@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches, requiredFieldMissing } from '../js/admin-logic.js';
+import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches, requiredFieldMissing, sizesForView } from '../js/admin-logic.js';
 
 test('seedCarried takes only the declared keys that are present', () => {
   assert.deepEqual(seedCarried({ city: 'Ottawa', lat: 45.4, lon: -75.7 }, ['lat', 'lon']), { lat: 45.4, lon: -75.7 });
@@ -101,4 +101,32 @@ test('requiredFieldMissing ignores types that always read back a value', () => {
 test('requiredFieldMissing treats a false toggle and a zero as filled', () => {
   assert.equal(requiredFieldMissing({ key: 'a', type: 'toggle' }, ['a', false]), false);
   assert.equal(requiredFieldMissing({ key: 'a', type: 'number' }, ['a', 0]), false);
+});
+
+const REG = {
+  viewField: 'view', defaultView: 'map',
+  views: { map: { src: 'm.html', sizes: ['medium'] }, vpn: { src: 'v.html' } },
+};
+const ALL = ['small', 'medium'];
+
+test('sizesForView narrows to the sizes the current view declares', () => {
+  assert.deepEqual(sizesForView(ALL, REG, { view: 'map' }), ['medium']);
+});
+
+test('sizesForView leaves the list alone for a view with no sizes', () => {
+  assert.deepEqual(sizesForView(ALL, REG, { view: 'vpn' }), ALL);
+});
+
+test('sizesForView falls back to the default view', () => {
+  assert.deepEqual(sizesForView(ALL, REG, {}), ['medium']);
+});
+
+test('sizesForView leaves the list alone without a views block', () => {
+  assert.deepEqual(sizesForView(ALL, { viewField: 'view' }, { view: 'map' }), ALL);
+  assert.deepEqual(sizesForView(ALL, null, {}), ALL);
+});
+
+test('sizesForView ignores a view whose sizes the widget does not offer', () => {
+  const reg = { viewField: 'view', defaultView: 'a', views: { a: { src: 'a.html', sizes: ['xlarge'] } } };
+  assert.deepEqual(sizesForView(ALL, reg, { view: 'a' }), ALL);
 });

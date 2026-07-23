@@ -15,8 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nested settings.
 - Widget settings can declare the same key more than once with different labels,
   each shown by a `showIf` condition.
+- A widget view can limit which sizes it offers.
 
 ### Changed
+
+- Connections widget now uses the standard widget settings form. Each service
+  is a settings card, and the fields shown follow the service type.
 
 - Widget settings rows in a repeating section now show and hide independently,
   and a dropdown in one can load its options from the service that row points at.
@@ -33,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TrueNAS API key is no longer sent in a URL query string when fetching pools.
 
 ### Fixed
+
+- Saving a widget with a required password or key left blank is now refused
+  instead of saving an unusable widget.
 
 - Widgets no longer show a stale cached version after an update. Each widget's
   frontend files are now cache-busted automatically from their content, the same

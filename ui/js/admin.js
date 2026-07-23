@@ -2,7 +2,7 @@ import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb'
 import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { reorderItems } from '/js/admin-logic.js?v=1';
-import { cleanId, buildStatsSlots, buildMapServices, finalizeBackupSlots, buildAppItem } from '/js/admin-save-logic.js?v=1';
+import { cleanId, buildStatsSlots, finalizeBackupSlots, buildAppItem } from '/js/admin-save-logic.js?v=1';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
@@ -456,7 +456,7 @@ function closeModal(){
   showListView();
   state.eid=null;
   state._wtype='custom';state._wsize='medium';state._wslots=[];state._wnet={enabled:false,url:'',provider:'myspeed'};
-  state._wmapCfg={};state._wconnView='map';state._wvpnCfg={};state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._wbackupCfg={};state._wstatsSubType='system-summary';state._wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};state._iframeOpts={};
+  state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._wbackupCfg={};state._wstatsSubType='system-summary';state._wdiskCfg={diskProvider:'scrutiny',scrutinyUrl:'',scrutinyHref:'',truenasUrl:'',truenasKeySet:false,truenasHref:'',bays:[]};state._iframeOpts={};
 }
 
 
@@ -562,34 +562,6 @@ async function doSave(orig){
         item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'custom',
           label:wlabel, widgetSize:state._wsize,url};
         if(Object.keys(ifo).length) item.iframe=ifo;
-      }else if(state._wtype==='connections'){
-        if(state._wconnView==='vpn'){
-          const url=(document.getElementById('vpn-url')?.value||'').trim();
-          if(!url){toast('Connection URL is required','err');return;}
-          const vpn={ service:state._wvpnCfg.service||'gluetun', url };
-          vpn.color=state._wvpnCfg.color||'#30D158';
-          const nm=(document.getElementById('vpn-name')?.value||'').trim();
-          if(nm) vpn.name=nm; else if(state._wvpnCfg.name) vpn.name=state._wvpnCfg.name;
-          const hf=(document.getElementById('vpn-href')?.value||'').trim();
-          if(hf) vpn.href=hf; else if(state._wvpnCfg.href) vpn.href=state._wvpnCfg.href;
-          if(vpn.service==='gluetun'){
-            const k=(document.getElementById('vpn-apikey')?.value||'').trim();
-            /* Send a key only if typed; otherwise flag it stored so the server keeps it. */
-            if(k){ vpn.apiKey=k; vpn.apiKeySet=true; }
-            else if(state._wvpnCfg.apiKeySet){ vpn.apiKeySet=true; }
-          }else{
-            const tk=(document.getElementById('vpn-token')?.value||'').trim();
-            if(tk){ vpn.token=tk; vpn.tokenSet=true; }
-            else if(state._wvpnCfg.tokenSet){ vpn.tokenSet=true; }
-            else { toast('NetBird access token is required','err'); return; }
-          }
-          item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'connections',
-            label:wlabel, widgetSize:state._wsize, widgetConfig:{ view:'vpn', vpn }};
-        } else {
-          const services=buildMapServices(state._wmapCfg.services);
-          item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'connections',
-            label:wlabel, widgetSize:'medium',widgetConfig:{ view:'map', services, showLegend:state._wmapCfg.showLegend!==false }};
-        }
       }else if(state._wtype==='backup'){
         state._wbackupCfg.slots.forEach((slot,si) => {
           slot.customName = (document.getElementById(`bak-name-${si}`)?.value||'').trim();

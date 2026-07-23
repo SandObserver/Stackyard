@@ -99,7 +99,7 @@ These keys can go on any field:
 | `placeholder` | Greyed hint shown in an empty `text`/`number`/`secret` row. |
 | `default` | Value used when none is saved yet. |
 | `hint` | Short help text. Shown under the field, except on a `group`, where it renders at the bottom of the whole section. |
-| `optional` | If `true`, the field is not required to save. |
+| `optional` | If `true`, the field is not required to save. A required `secret` is only reported as missing when nothing is stored yet, since a blank input means "keep the stored value". |
 | `transient` | If `true`, the field is rendered and sent to an `optionsFrom` fetch but is left out of the saved config. Use it for a search box whose text only feeds a picker. Top-level fields only. |
 | `carries` | For `select` with `optionsFrom`: extra config keys this picker writes, supplied by the chosen option's `set` block. |
 | `showIf` | Show the field only when another field matches: `{ "field": "provider", "equals": "adguard" }`, or match several with `{ "field": "provider", "in": ["adguard", "pihole"] }`. Inside a `group`, the named field is the one in the same row. |
@@ -125,6 +125,21 @@ saved. A repeated key without a `showIf` on every declaration is rejected by the
 validator, because two visible fields writing one key would silently leave the
 last one to win. The validator does not check that the conditions are mutually
 exclusive; that is on you.
+
+### Limiting sizes per view
+
+A view can narrow the widget's own `sizes`, for a layout that only works at one
+size:
+
+```json
+"views": {
+  "map": { "label": "Map", "src": "connections-map.html", "sizes": ["medium"] },
+  "vpn": { "label": "VPN", "src": "connections-vpn.html" }
+}
+```
+
+Each entry must be a subset of the widget's top-level `sizes`. A view without
+`sizes` offers all of them. The size tiles redraw when the `viewField` changes.
 
 ### Nested settings (object)
 
@@ -184,7 +199,7 @@ preserved the same way they are for a top-level field.
 
 ### customEditor (deprecated)
 
-Three of the shipped widgets set `"customEditor": true` in their manifest, which
+Two of the shipped widgets set `"customEditor": true` in their manifest, which
 tells the admin UI to skip the auto-form and use a hand-written editor kept in
 `ui/js/admin-widget-form.js` instead. It dates from before the auto-form covered
 groups, conditional fields and fetched options.

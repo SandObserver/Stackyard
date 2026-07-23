@@ -70,8 +70,9 @@ function _secret(field, isSet) {
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
   const get = () => { const v = inp.value.trim(); return v === '' ? null : [field.key, v]; };
   const hint = isSet ? 'A value is saved. Enter a new one to replace it, or leave blank to keep it.' : field.hint;
-  if (hint) { const w = document.createElement('div'); w.appendChild(row); const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = hint; w.appendChild(h); return { el: w, get, control: inp, liveValue: () => inp.value }; }
-  return { el: row, get, control: inp, liveValue: () => inp.value };
+  const api = { get, control: inp, liveValue: () => inp.value, hasStored: () => isSet };
+  if (hint) { const w = document.createElement('div'); w.appendChild(row); const h = document.createElement('p'); h.className = 'grp-tip in-card'; h.textContent = hint; w.appendChild(h); return { el: w, ...api }; }
+  return { el: row, ...api };
 }
 
 function _toggle(field, value) {
@@ -207,6 +208,12 @@ function _missingIn(built) {
   const out = [];
   for (const b of built) {
     if (b.field.showIf && !_visible(b)) continue;
+    if (b.field.type === 'secret' && !b.field.optional) {
+      /* Blank means "keep the stored value", so only a blank with nothing
+         stored is missing. */
+      if (!b.get() && !b.hasStored()) out.push(b.field.label);
+      continue;
+    }
     if (requiredFieldMissing(b.field, b.get())) out.push(b.field.label);
   }
   return out;
@@ -325,7 +332,8 @@ function _group(field, rows, size, ctx) {
   render();
 
   const get = () => { captureCurrent(); return [field.key, data]; };
-  return { el: wrap, get, control: null, liveValue: () => null, isGroup: true };
+  const missing = () => rowBuilt.flatMap((built, i) => _missingIn(built).map(l => `${l} (${field.label} ${i + 1})`));
+  return { el: wrap, get, control: null, liveValue: () => null, isGroup: true, missing };
 }
 
 function _buildSimple(field, config, ctx) {
@@ -345,6 +353,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
   container.innerHTML = '';
   const built = [];
   const ctx = { widgetId: (opts && opts.widgetId) || null, widgetType: (opts && opts.widgetType) || null, getDraft: null };
+  const notify = key => { if (typeof opts.onChange === 'function') opts.onChange(key); };
 
   /* Group consecutive simple fields into a card; group fields render as their own cards. */
   let card = null;
@@ -363,6 +372,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
     const b = _buildSimple(f, config, ctx); b.field = f;
     if (!card) { card = document.createElement('div'); card.className = 'grp'; container.appendChild(card); }
     card.appendChild(b.el);
+    if (b.control) b.control.addEventListener('change', () => notify(f.key));
     built.push(b);
   }
 

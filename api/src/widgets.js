@@ -82,6 +82,12 @@ function _validateManifest(name, m) {
       if (!v || typeof v !== 'object') { errs.push(`view "${vk}" must be an object`); continue; }
       if (typeof v.src !== 'string' || !v.src) errs.push(`view "${vk}" needs an entry file "src"`);
       if (v.label !== undefined && (typeof v.label !== 'string' || !v.label)) errs.push(`view "${vk}" "label" must be a non-empty string`);
+      if (v.sizes !== undefined) {
+        if (!Array.isArray(v.sizes) || !v.sizes.length) errs.push(`view "${vk}" "sizes" must be a non-empty array`);
+        else if (Array.isArray(m.sizes)) {
+          v.sizes.forEach(sz => { if (!m.sizes.includes(sz)) errs.push(`view "${vk}" size "${sz}" is not one of the widget's own sizes`); });
+        }
+      }
     }
   }
 

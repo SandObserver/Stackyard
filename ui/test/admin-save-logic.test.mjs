@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanId, buildStatsSlots, buildMapServices, finalizeBackupSlots, buildAppItem } from '../js/admin-save-logic.js';
+import { cleanId, buildStatsSlots, finalizeBackupSlots, buildAppItem } from '../js/admin-save-logic.js';
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
   assert.equal(cleanId('My App!'), 'My_App');
@@ -30,23 +30,6 @@ test('buildStatsSlots caps at three and shapes disk/temp/other', () => {
 test('buildStatsSlots defaults disk mount and normalizes a bad thermal zone', () => {
   assert.deepEqual(buildStatsSlots([{ type: 'disk' }])[0], { type: 'disk', primary: '/', secondary: undefined, color: undefined });
   assert.equal(buildStatsSlots([{ type: 'temp', thermalZone: 'x' }])[0].thermalZone, 0);
-});
-
-test('buildMapServices drops services without a type or url and normalizes the rest', () => {
-  const out = buildMapServices([
-    { id: 'a', type: 'gluetun', name: '  VPN ', url: ' http://x ', adminUrl: ' http://admin ' },
-    { id: 'b', type: '', url: 'http://y' },
-    { id: 'c', url: 'http://z' },
-  ]);
-  assert.equal(out.length, 1);
-  assert.deepEqual(out[0], { id: 'a', type: 'gluetun', name: 'VPN', url: 'http://x', adminUrl: 'http://admin', color: '', enabled: true });
-});
-
-test('buildMapServices includes non-blank plain/secret fields and omits blank ones', () => {
-  const [withSecret] = buildMapServices([{ id: 'a', type: 'umami', url: 'http://x', websiteId: 'w1', apiKey: 'k1', password: '  ' }]);
-  assert.equal(withSecret.websiteId, 'w1');
-  assert.equal(withSecret.apiKey, 'k1');
-  assert.equal('password' in withSecret, false);
 });
 
 test('finalizeBackupSlots propagates the default instance connection to sharing slots', () => {
