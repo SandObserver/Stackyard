@@ -59,7 +59,13 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
 export function mountScaledWidget(card, { src, title, design, iframeOpts, overlayHref, mobile, onSwipe } = {}) {
   const [dw, dh] = design;
   const o = iframeOpts || {};
-  if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+  /* The card must be a positioned ancestor for the absolutely-positioned iframe
+     below, or the iframe escapes to the nearest positioned element up the tree
+     and paints at the page origin. The shipped cards set this in CSS (desktop)
+     or inline (mobile); this is a fallback for any other caller. Set directly
+     rather than reading getComputedStyle, which returns an unresolved value for
+     a not-yet-laid-out card and would skip the assignment. */
+  if (!card.style.position) card.style.position = 'relative';
   card.style.overflow = 'hidden';
   const clip = mk('div');
   clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
