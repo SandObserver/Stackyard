@@ -19,7 +19,7 @@ const WIDGETS_DIR = path.join(__dirname, '..', '..', 'ui', 'widgets');
    one, which the separate test below enforces. */
 const KNOWN_KEYS = new Set([
   'name', 'label', 'sizes', 'fields',
-  'views', 'viewField', 'defaultView', 'customEditor', 'entryVersions',
+  'views', 'viewField', 'defaultView', 'entryVersions',
 ]);
 
 function unknownKeys(manifest) {

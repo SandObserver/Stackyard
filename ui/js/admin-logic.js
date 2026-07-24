@@ -1,8 +1,8 @@
 // @ts-check
 /* Pure logic extracted from the admin UI so it can be unit-tested without a DOM:
-   backup-slot normalization (with default-instance inference), dashboard-item
-   reordering, the dock-capacity check, and the widget config form's value
-   collection. All operate on plain data and touch no DOM or module state. */
+   dashboard-item reordering, the dock-capacity check, and the widget config
+   form's value collection. All operate on plain data and touch no DOM or module
+   state. */
 
 /* Seed the extra keys a picker owns from an already-saved config, so editing a
    widget without touching the picker does not drop them. */
@@ -97,40 +97,17 @@ export function isDockBlocked(items, editing) {
   return docked >= DOCK_MAX;
 }
 
-/* Normalize a widget's saved backup slots to the fixed count for its size,
-   filling defaults and inferring per-slot useDefault: a slot uses the default
-   instance when it is the first slot for its provider, or shares (or blanks) the
-   default's URL; a different URL marks it independent. */
-export function normBackupSlots(saved, size) {
-  const count = size === 'small' ? 1 : 3;
-  const arr = Array.isArray(saved) ? saved : [];
-  const firstIdx = {};
-  arr.forEach((s, k) => { if (s?.provider && firstIdx[s.provider] === undefined) firstIdx[s.provider] = k; });
-  const inferUseDefault = (i) => {
-    const s = arr[i]; if (!s?.provider) return true;
-    if (s.useDefault !== undefined) return s.useDefault !== false;
-    const fi = firstIdx[s.provider];
-    if (i === fi) return true;
-    const key = s.provider === 'duplicati' ? 'dupUrl' : 'kopiaUrl';
-    const myUrl = (s[key] || '').trim(), fUrl = (arr[fi]?.[key] || '').trim();
-    return !myUrl || myUrl === fUrl;
-  };
-  return Array.from({ length: count }, (_, i) => ({
-    provider:     arr[i]?.provider    || null,
-    jobId:        arr[i]?.jobId       || null,
-    customName:   arr[i]?.customName  || '',
-    useDefault:   inferUseDefault(i),
-    dupUrl:       arr[i]?.dupUrl      || '',
-    dupPassSet:   arr[i]?.dupPassSet  || false,
-    dupHref:      arr[i]?.dupHref     || '',
-    dupPollSec:   arr[i]?.dupPollSec  || 60,
-    dupJobList:   [],
-    kopiaUrl:     arr[i]?.kopiaUrl    || '',
-    kopiaUser:    arr[i]?.kopiaUser   || '',
-    kopiaPassSet: arr[i]?.kopiaPassSet || false,
-    kopiaHref:    arr[i]?.kopiaHref   || '',
-    kopiaSrcList: [],
-  }));
+/* Row-count bounds for a group field at the selected widget size. countBySize
+   pins both bounds together, so a per-size fixed count cannot be declared
+   inconsistently; it wins over min/max/maxBySize when it names that size. */
+export function groupBounds(field, size) {
+  const fixed = (field.countBySize && size && field.countBySize[size] != null) ? field.countBySize[size] : null;
+  if (fixed != null) return { min: fixed, max: fixed };
+  const min = field.min != null ? field.min : 0;
+  const max = (field.maxBySize && size && field.maxBySize[size] != null)
+    ? field.maxBySize[size]
+    : (field.max != null ? field.max : 99);
+  return { min, max };
 }
 
 /* Move an item one step within the dashboard order, mutating `items` in place.

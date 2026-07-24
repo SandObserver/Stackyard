@@ -27,7 +27,6 @@ export const state = {
   _wlabel: '',
   _wgithubCfg: {},
   _wclockCfg: {},
-  _wbackupCfg: {},
   _iframeOpts: {},
 
   _wAutoCfg: {},

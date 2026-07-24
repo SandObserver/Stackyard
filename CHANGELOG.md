@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A widget view can limit which sizes it offers.
 - Widget settings can declare a `picklist` field: a fixed number of dropdowns
   filled from a single fetch.
+- Widget settings can declare a repeating section with a fixed number of rows
+  per widget size.
 
 ### Changed
 
@@ -31,11 +33,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and a dropdown in one can load its options from the service that row points at.
 - Weather widget now uses the standard widget settings form. Location is set by
   typing a city, pressing Fetch and picking a match; "feels like" is a toggle.
+- Backup widget now uses the standard widget settings form. Each slot carries
+  its own URL and password.
+  A slot that previously reused another slot's connection keeps working, but a
+  new slot for an instance already configured elsewhere needs its URL and
+  password entered again.
 
 ### Removed
 
 - `GET /api/scrutiny-proxy` and `POST /api/truenas-proxy`. Drive and pool lists
   now come from the widget's own data function.
+
+- `GET /api/backup-data`, `POST /api/duplicati-jobs` and `POST /api/kopia-sources`.
+  Backup status and job lists now come from the widget's own data function.
+
+- The `customEditor` manifest key, now that every widget uses the standard
+  settings form.
 
 - `GET /api/geocode-proxy`. City search now runs through the widget's own data
   function.
@@ -48,6 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Saving a widget with a required password or key left blank is now refused
   instead of saving an unusable widget.
+
+- Fetching options in a widget's settings on the public demo no longer returns
+  the demo's sample data instead of a real result.
 
 - Widgets no longer show a stale cached version after an update. Each widget's
   frontend files are now cache-busted automatically from their content, the same

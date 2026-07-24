@@ -3,10 +3,10 @@
    writes shared widget state on the state object; exports buildWidgetForm,
    called by the edit shell. */
 import { state } from '/js/admin-state.js?v=1';
-import { toast, PE_SVG, CHEV_SVG, _secretRow, initInlineEdit } from '/js/admin-shared.js?v=2';
+import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=2';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 import { html, raw, setHtml } from '/js/html.js?v=1';
-import { normBackupSlots, sizesForView } from '/js/admin-logic.js?v=1';
+import { sizesForView } from '/js/admin-logic.js?v=1';
 
 const SIZE_ICONS={
   small:'<rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="9.7" r="1" fill="currentColor"/><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
@@ -19,17 +19,6 @@ const CUSTOM_SIZES = ['small','medium','large','xlarge'];
 function widgetSizes(type){ return type==='custom' ? CUSTOM_SIZES : (state._widgetReg[type]?.sizes || ['medium']); }
 const SIZE_LABELS = { small:'Small', medium:'Medium', large:'Large', xlarge:'Extra Large' };
 
-function appendRow(host, tpl, cls='row'){
-  const el=document.createElement('div'); el.className=cls;
-  setHtml(el, tpl); host.appendChild(el); return el;
-}
-function appendIeRow(host,{rowId,label,req,opt,value,ph,inpId,type}){
-  const el=document.createElement('div'); el.className='row ie-row'; el.id=rowId;
-  setHtml(el, html`<span class="rl">${label}${req?html` <span class="req">*</span>`:''}${opt?html` <span class="opt-span">(optional)</span>`:''}</span><span class="rv${value?'':' is-ph'}">${value?value:ph||''}</span><input id="${inpId}" type="${type||'text'}" value="${value==null?'':value}" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button>`);
-  host.appendChild(el); return el;
-}
-
-
 export function buildWidgetForm(body,item){
   const wt = item?.widgetType || 'custom';
   const ws = item?.widgetSize || 'medium';
@@ -37,11 +26,6 @@ export function buildWidgetForm(body,item){
   state._wtype = wt; state._wsize = ws;
   state._wlabel = item?.label || '';
   state._wAutoCfg = Object.assign({}, wc);
-  state._wbackupCfg = {
-    /* Per-slot useDefault: first instance of a provider is its default; later
-       instances use that default unless turned off (then they get their own container). */
-    slots: normBackupSlots(wc.slots, state._wsize),
-  };
   _renderWidgetForm(body);
 }
 
@@ -68,10 +52,10 @@ function _renderWidgetForm(body){
   const scard=document.createElement('div'); scard.className='grp';
   setHtml(scard, html`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s=>html`<button type="button" class="tile-opt${s===state._wsize?' on':''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s]||SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`)}</div></div>`);
   body.appendChild(scard);
-  scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; if(state._wtype==='backup'){state._wbackupCfg.slots=normBackupSlots(state._wbackupCfg.slots,state._wsize);} _renderWidgetForm(body); }));
+  scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; _renderWidgetForm(body); }));
 
     const cfgDiv=document.createElement('div');cfgDiv.className='div';body.appendChild(cfgDiv);
-  if(state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
+  if(state._widgetReg[state._wtype]){
     const d=document.createElement('div'); body.appendChild(d);
     const _wid=(state.eid!==null&&state.items[state.eid]&&state.items[state.eid].id)?state.items[state.eid].id:null;
     const _vf=state._widgetReg[state._wtype].viewField;
@@ -83,8 +67,7 @@ function _renderWidgetForm(body){
     });
     state._autoFormType=state._wtype;
   }
-  else if(state._wtype==='backup'){ const d=document.createElement('div');d.id='bak-cfg-body';body.appendChild(d);_renderBackupConfig(d); }
-  else                        _renderCustomConfig(body);
+  else _renderCustomConfig(body);
 }
 
 function _renderCustomConfig(body){
@@ -106,184 +89,4 @@ function _renderCustomConfig(body){
   adv.querySelector('#if-referrer').onchange=sync; adv.querySelector('#if-fs').onchange=sync;
   initInlineEdit('if-allow-row','if-allow',{placeholder:'autoplay; fullscreen',onCommit(){sync();}});
   initInlineEdit('if-refresh-row','if-refresh',{placeholder:'e.g. 2000',onCommit(){sync();}});
-}
-
-function _renderBackupConfig(body){
-  const slotCount = state._wsize === 'small' ? 1 : 3;
-  const SLOT_NAMES = ['First','Second','Third'];
-  const slots = state._wbackupCfg.slots;
-  const PLABEL = pr => pr==='duplicati' ? 'Duplicati' : 'Kopia';
-  const firstProvIdx = pr => slots.findIndex(sl => sl.provider===pr);
-  const defaultActive = pr => { const f=firstProvIdx(pr); return f>=0 && slots[f].useDefault!==false; };
-  const usesDefault = si => {
-    const slot=slots[si]; if(!slot.provider) return false;
-    const f=firstProvIdx(slot.provider);
-    return si!==f && defaultActive(slot.provider) && slot.useDefault!==false;
-  };
-  function flushDom(){
-    const g = id => document.getElementById(id);
-    slots.forEach((slot,si)=>{
-      const nm=g(`bak-name-${si}`); if(nm) slot.customName=nm.value.trim();
-      const defEl=g(`bak-def-${si}`); if(defEl) slot.useDefault=defEl.checked;
-      const jv=g(`dup-job-${si}`)||g(`kopia-src-${si}`);
-      if(jv&&!jv.disabled) slot.jobId=jv.value||null;
-      if(slot.provider==='duplicati'){
-        const u=g(`dup-url-${si}`);  if(u) slot.dupUrl=u.value.trim()||slot.dupUrl;
-        const h=g(`dup-href-${si}`); if(h) slot.dupHref=h.value.trim();
-        const pl=g(`dup-poll-${si}`); if(pl) slot.dupPollSec=Math.max(10,parseInt(pl.value||'60',10));
-        const pw=g(`dup-pass-${si}`); if(pw&&pw.value.trim()) slot.dupPass=pw.value.trim();
-      } else if(slot.provider==='kopia'){
-        const u=g(`kopia-url-${si}`);  if(u) slot.kopiaUrl=u.value.trim()||slot.kopiaUrl;
-        const us=g(`kopia-user-${si}`); if(us) slot.kopiaUser=us.value.trim()||slot.kopiaUser;
-        const h=g(`kopia-href-${si}`); if(h) slot.kopiaHref=h.value.trim();
-        const pw=g(`kopia-pass-${si}`); if(pw&&pw.value.trim()) slot.kopiaPass=pw.value.trim();
-      }
-    });
-  }
-  const rerender = () => { flushDom(); body.innerHTML=''; render(); };
-
-  function ieRow(host,{id,label,req,opt,value,ph,type}){
-    const rid=id+'-row';
-    appendIeRow(host,{rowId:rid,label,req,opt,value,ph,inpId:id,type});
-    return rid;
-  }
-  function addNameField(host, si){
-    const slot=slots[si];
-    const rid=ieRow(host,{id:`bak-name-${si}`,label:'Display Name',opt:true,value:slot.customName||'',ph:'Shown on the card'});
-    initInlineEdit(rid,`bak-name-${si}`,{placeholder:'Shown on the card',onCommit(v){slot.customName=v;}});
-  }
-  function addDefaultToggle(host, si){
-    const slot=slots[si]; const prov=slot.provider; const isFirst=si===firstProvIdx(prov);
-    const label=isFirst?`Set as default ${PLABEL(prov)} instance`:`Use default ${PLABEL(prov)} settings`;
-    const desc =isFirst?`Other ${PLABEL(prov)} instances can reuse this connection.`:`Reuse the default ${PLABEL(prov)} container. Turn off to set its own.`;
-    appendRow(host, html`<span class="rl">${label}</span><label class="tog"><input type="checkbox" id="bak-def-${si}" ${slot.useDefault!==false?'checked':''} aria-label="${label}"><div class="tr"></div></label>`);
-    const tip=document.createElement('p'); tip.className='grp-tip in-card'; tip.textContent=desc; host.appendChild(tip);
-    host.querySelector(`#bak-def-${si}`).onchange=e=>{ slot.useDefault=e.target.checked; rerender(); };
-  }
-  function fetchRow(host,{id,label}){
-    const fr=appendRow(host, html`<span class="rl"></span>`);
-    const btn=document.createElement('button'); btn.type='button'; btn.className='row-btn'; btn.id=id; btn.textContent=label;
-    fr.appendChild(btn); return btn;
-  }
-
-  function renderJobDrop(si, container){
-    const slot=slots[si]; container.innerHTML='';
-    if(!slot.dupJobList.length){
-      const saved=slot.jobId?(slot.customName||slot.jobId):'';
-      appendRow(container, html`<span class="rl">Job</span><div class="sel-wrap"><select class="row-sel" id="dup-job-${si}" aria-label="Job" disabled><option>${saved?saved+', fetch to change':'Fetch jobs first'}</option></select>${raw(CHEV_SVG)}</div>`);
-      return;
-    }
-    const opts=[html`<option value="">None</option>`, ...slot.dupJobList.map(j=>html`<option value="${String(j.id)}"${String(j.id)===String(slot.jobId||'')?' selected':''}>${j.name}</option>`)];
-    const row=appendRow(container, html`<span class="rl">Job</span><div class="sel-wrap"><select class="row-sel" id="dup-job-${si}" aria-label="Job">${opts}</select>${raw(CHEV_SVG)}</div>`);
-    const sel=row.querySelector('select'); sel.onchange=()=>{ slot.jobId=sel.value||null; };
-  }
-  function renderSrcDrop(si, container){
-    const slot=slots[si]; container.innerHTML='';
-    if(!slot.kopiaSrcList.length){
-      const saved=slot.jobId?(slot.customName||slot.jobId):'';
-      appendRow(container, html`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="kopia-src-${si}" aria-label="Source" disabled><option>${saved?saved+', fetch to change':'Fetch sources first'}</option></select>${raw(CHEV_SVG)}</div>`);
-      return;
-    }
-    const opts=[html`<option value="">None</option>`, ...slot.kopiaSrcList.map(src=>html`<option value="${src.id}"${String(src.id)===String(slot.jobId||'')?' selected':''}>${src.name}</option>`)];
-    const row=appendRow(container, html`<span class="rl">Source</span><div class="sel-wrap"><select class="row-sel" id="kopia-src-${si}" aria-label="Source">${opts}</select>${raw(CHEV_SVG)}</div>`);
-    const sel=row.querySelector('select'); sel.onchange=()=>{ slot.jobId=sel.value||null; };
-  }
-
-  function buildConnSection(card, si){
-    const slot=slots[si]; const prov=slot.provider;
-    if(usesDefault(si)){
-      const fIdx=firstProvIdx(prov);
-      const note=document.createElement('p'); note.className='grp-tip in-card'; note.textContent=`Uses the ${PLABEL(prov)} container from ${SLOT_NAMES[fIdx]} Instance.`; card.appendChild(note);
-      const wrap=document.createElement('div'); wrap.id=`${prov==='duplicati'?'dup-job':'kopia-src'}-wrap-${si}`; card.appendChild(wrap);
-      prov==='duplicati' ? renderJobDrop(si,wrap) : renderSrcDrop(si,wrap);
-      addNameField(card, si);
-      return;
-    }
-    const shared = slotCount>1 && si===firstProvIdx(prov) && defaultActive(prov);
-
-    if(prov==='duplicati'){
-      const urlRid=ieRow(card,{id:`dup-url-${si}`,label:'URL',req:true,value:slot.dupUrl,ph:'http://duplicati:8200'});
-      const fbtn=fetchRow(card,{id:`dup-fetch-${si}`,label:'Fetch Jobs'});
-      _secretRow(card,{rowId:`dup-pass-row-${si}`,inpId:`dup-pass-${si}`,label:'Password',opt:true,isSet:!!(slot.dupPassSet||slot.dupPass)});
-      const hrefRid=ieRow(card,{id:`dup-href-${si}`,label:'Click URL',opt:true,value:slot.dupHref,ph:'http://duplicati:8200'});
-      const pollRid=ieRow(card,{id:`dup-poll-${si}`,label:'Poll Interval (sec)',value:slot.dupPollSec,ph:'60',type:'number'});
-      const jobWrap=document.createElement('div'); jobWrap.id=`dup-job-wrap-${si}`; card.appendChild(jobWrap); renderJobDrop(si, jobWrap);
-      addNameField(card, si);
-      initInlineEdit(urlRid,`dup-url-${si}`,{placeholder:'http://duplicati:8200',onCommit(v){slot.dupUrl=v;}});
-      initInlineEdit(hrefRid,`dup-href-${si}`,{placeholder:'http://duplicati:8200',onCommit(v){slot.dupHref=v;}});
-      initInlineEdit(pollRid,`dup-poll-${si}`,{placeholder:'60',onCommit(v){slot.dupPollSec=Math.max(10,parseInt(v||'60',10));}});
-      fbtn.onclick = async function(){
-        const url=(document.getElementById(`dup-url-${si}`)?.value||'').trim();
-        const pass=(document.getElementById(`dup-pass-${si}`)?.value||'').trim();
-        if(!url){toast('Enter a Duplicati URL first','err');return;}
-        this.disabled=true; this.textContent='Fetching...';
-        try{
-          slot.dupUrl=url;
-          const b={url}; if(pass) b.password=pass; else if(slot.dupPassSet) b.useStoredPass=true;
-          const wid=(state.eid!==null&&state.items[state.eid]?.id)?state.items[state.eid].id:'__preview__';
-          const r=await fetch(`/api/duplicati-jobs/${encodeURIComponent(wid)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
-          if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.status);}
-          const data=await r.json();
-          slot.dupJobList=Array.isArray(data)?data:(Array.isArray(data?.jobs)?data.jobs:[]);
-          slots.forEach((sl,j)=>{ if(j!==si && sl.provider==='duplicati' && (shared && usesDefault(j) || sl.dupUrl===url)){ sl.dupJobList=slot.dupJobList; const w=document.getElementById(`dup-job-wrap-${j}`); if(w) renderJobDrop(j,w); } });
-          const jw=document.getElementById(`dup-job-wrap-${si}`); if(jw) renderJobDrop(si, jw);
-          toast(slot.dupJobList.length?`Loaded ${slot.dupJobList.length} job${slot.dupJobList.length>1?'s':''}`:'No backup jobs found', slot.dupJobList.length?'ok':'err');
-        }catch(e){toast('Fetch failed: '+e.message,'err');}
-        finally{this.disabled=false; this.textContent='Fetch Jobs';}
-      };
-    } else {
-      const urlRid=ieRow(card,{id:`kopia-url-${si}`,label:'URL',req:true,value:slot.kopiaUrl,ph:'http://kopia:51515'});
-      const fbtn=fetchRow(card,{id:`kopia-fetch-${si}`,label:'Fetch Sources'});
-      const userRid=ieRow(card,{id:`kopia-user-${si}`,label:'Username',opt:true,value:slot.kopiaUser,ph:'admin'});
-      _secretRow(card,{rowId:`kopia-pass-row-${si}`,inpId:`kopia-pass-${si}`,label:'Password',opt:true,isSet:!!(slot.kopiaPassSet||slot.kopiaPass)});
-      const hrefRid=ieRow(card,{id:`kopia-href-${si}`,label:'Click URL',opt:true,value:slot.kopiaHref,ph:'http://kopia:51515'});
-      const srcWrap=document.createElement('div'); srcWrap.id=`kopia-src-wrap-${si}`; card.appendChild(srcWrap); renderSrcDrop(si, srcWrap);
-      addNameField(card, si);
-      initInlineEdit(urlRid,`kopia-url-${si}`,{placeholder:'http://kopia:51515',onCommit(v){slot.kopiaUrl=v;}});
-      initInlineEdit(userRid,`kopia-user-${si}`,{placeholder:'admin',onCommit(v){slot.kopiaUser=v;}});
-      initInlineEdit(hrefRid,`kopia-href-${si}`,{placeholder:'http://kopia:51515',onCommit(v){slot.kopiaHref=v;}});
-      fbtn.onclick = async function(){
-        const url=(document.getElementById(`kopia-url-${si}`)?.value||'').trim();
-        const user=(document.getElementById(`kopia-user-${si}`)?.value||'').trim();
-        const pass=(document.getElementById(`kopia-pass-${si}`)?.value||'').trim();
-        if(!url){toast('Enter a Kopia URL first','err');return;}
-        this.disabled=true; this.textContent='Fetching...';
-        try{
-          slot.kopiaUrl=url; slot.kopiaUser=user||slot.kopiaUser;
-          const b={url}; if(user)b.username=user; if(pass)b.password=pass; else if(slot.kopiaPassSet)b.useStoredPass=true;
-          const wid=(state.eid!==null&&state.items[state.eid]?.id)?state.items[state.eid].id:'__preview__';
-          const r=await fetch(`/api/kopia-sources/${encodeURIComponent(wid)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
-          if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.status);}
-          const srcs=await r.json();
-          slot.kopiaSrcList=Array.isArray(srcs)?srcs:(Array.isArray(srcs?.sources)?srcs.sources:[]);
-          slots.forEach((sl,j)=>{ if(j!==si && sl.provider==='kopia' && (shared && usesDefault(j) || sl.kopiaUrl===url)){ sl.kopiaSrcList=slot.kopiaSrcList; const w=document.getElementById(`kopia-src-wrap-${j}`); if(w) renderSrcDrop(j,w); } });
-          const sw=document.getElementById(`kopia-src-wrap-${si}`); if(sw) renderSrcDrop(si, sw);
-          toast(slot.kopiaSrcList.length?`Loaded ${slot.kopiaSrcList.length} source${slot.kopiaSrcList.length>1?'s':''}`:'No sources found', slot.kopiaSrcList.length?'ok':'err');
-        }catch(e){toast('Fetch failed: '+e.message,'err');}
-        finally{this.disabled=false; this.textContent='Fetch Sources';}
-      };
-    }
-  }
-
-  function buildSlotSection(si){
-    const slot=slots[si];
-    const hdr=document.createElement('p'); hdr.className='grp-hdr'; hdr.textContent= slotCount>1 ? SLOT_NAMES[si]+' Instance' : 'Instance'; body.appendChild(hdr);
-    const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-    const prov=slot.provider||'';
-    appendRow(card, html`<span class="rl">Provider</span><div class="segr">
-      <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="" ${!prov?'checked':''}><span class="segr-dot"></span><span>None</span></label>
-      <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="duplicati" ${prov==='duplicati'?'checked':''}><span class="segr-dot"></span><span>Duplicati</span></label>
-      <label class="segr-opt"><input type="radio" name="bak-prov-${si}" value="kopia" ${prov==='kopia'?'checked':''}><span class="segr-dot"></span><span>Kopia</span></label>
-    </div>`);
-    card.querySelectorAll(`input[name="bak-prov-${si}"]`).forEach(r=>r.addEventListener('change',()=>{ if(!r.checked)return; slot.provider=r.value||null; slot.jobId=null; if(slot.provider)slot.useDefault=true; rerender(); }));
-    if(slot.provider){
-      if(slotCount>1) addDefaultToggle(card, si);
-      buildConnSection(card, si);
-    }
-  }
-
-  function render(){
-    for(let si=0; si<slotCount; si++) buildSlotSection(si);
-  }
-  render();
 }

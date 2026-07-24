@@ -1,43 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normBackupSlots, reorderItems, isDockBlocked, nextActiveIndex } from '../js/admin-logic.js';
-
-test('normBackupSlots returns one slot for small and three otherwise', () => {
-  assert.equal(normBackupSlots([], 'small').length, 1);
-  assert.equal(normBackupSlots([], 'medium').length, 3);
-  assert.equal(normBackupSlots(undefined, 'large').length, 3);
-});
-
-test('normBackupSlots fills defaults for empty input', () => {
-  const [s] = normBackupSlots([], 'small');
-  assert.equal(s.provider, null);
-  assert.equal(s.useDefault, true);
-  assert.equal(s.dupPollSec, 60);
-  assert.deepEqual(s.dupJobList, []);
-});
-
-test('normBackupSlots marks the first slot of a provider as default', () => {
-  const saved = [
-    { provider: 'duplicati', dupUrl: 'http://d1' },
-    { provider: 'duplicati', dupUrl: 'http://d1' }, // same URL as the default
-    { provider: 'duplicati', dupUrl: 'http://d2' }, // different URL -> independent
-  ];
-  const out = normBackupSlots(saved, 'medium').map(s => s.useDefault);
-  assert.deepEqual(out, [true, true, false]);
-});
-
-test('normBackupSlots honors an explicit useDefault flag', () => {
-  assert.equal(normBackupSlots([{ provider: 'kopia', useDefault: false, kopiaUrl: 'x' }], 'small')[0].useDefault, false);
-  assert.equal(normBackupSlots([{ provider: 'kopia', useDefault: true }], 'small')[0].useDefault, true);
-});
-
-test('normBackupSlots treats a provider-less slot as default and preserves fields', () => {
-  const [s] = normBackupSlots([{ jobId: 'j1', customName: 'Nightly', dupPollSec: 30 }], 'small');
-  assert.equal(s.useDefault, true);
-  assert.equal(s.jobId, 'j1');
-  assert.equal(s.customName, 'Nightly');
-  assert.equal(s.dupPollSec, 30);
-});
+import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds } from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
@@ -117,4 +80,25 @@ test('nextActiveIndex handles an empty list', () => {
 test('nextActiveIndex recovers from an out-of-range active index', () => {
   assert.equal(nextActiveIndex('ArrowDown', 99, 3), 2);
   assert.equal(nextActiveIndex('ArrowUp', -5, 3), 0);
+});
+
+test('groupBounds defaults to an open-ended list', () => {
+  assert.deepEqual(groupBounds({}, 'medium'), { min: 0, max: 99 });
+  assert.deepEqual(groupBounds({ min: 1, max: 5 }, 'medium'), { min: 1, max: 5 });
+});
+
+test('groupBounds applies maxBySize and falls back to max for unlisted sizes', () => {
+  const f = { min: 1, max: 5, maxBySize: { small: 2 } };
+  assert.deepEqual(groupBounds(f, 'small'), { min: 1, max: 2 });
+  assert.deepEqual(groupBounds(f, 'medium'), { min: 1, max: 5 });
+});
+
+test('groupBounds pins both bounds from countBySize and outranks min/max', () => {
+  const f = { min: 1, max: 9, maxBySize: { medium: 7 }, countBySize: { small: 1, medium: 3 } };
+  assert.deepEqual(groupBounds(f, 'small'), { min: 1, max: 1 });
+  assert.deepEqual(groupBounds(f, 'medium'), { min: 3, max: 3 });
+});
+
+test('groupBounds ignores countBySize for a size it does not name', () => {
+  assert.deepEqual(groupBounds({ min: 1, max: 4, countBySize: { small: 1 } }, 'large'), { min: 1, max: 4 });
 });

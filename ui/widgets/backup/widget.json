@@ -2,14 +2,45 @@
   "name": "backup",
   "label": "Backup",
   "sizes": ["small", "medium"],
-  "customEditor": true,
   "views": {
     "main": { "src": "backup.html" }
   },
   "fields": [
-    { "key": "slots", "type": "group", "label": "Slots", "fields": [
-      { "key": "dupPass", "type": "secret", "label": "Duplicati Password" },
-      { "key": "kopiaPass", "type": "secret", "label": "Kopia Password" }
-    ] }
+    { "key": "slots", "type": "group", "label": "Slot", "countBySize": { "small": 1, "medium": 3 },
+      "fields": [
+        { "key": "provider", "type": "select", "variant": "pills", "label": "Provider", "default": "",
+          "options": [
+            { "value": "",           "label": "None" },
+            { "value": "duplicati",  "label": "Duplicati" },
+            { "value": "kopia",      "label": "Kopia" }
+          ] },
+
+        { "key": "dupUrl", "type": "text", "label": "URL", "placeholder": "http://duplicati:8200",
+          "showIf": { "field": "provider", "equals": "duplicati" } },
+        { "key": "dupPass", "type": "secret", "label": "Password", "optional": true,
+          "showIf": { "field": "provider", "equals": "duplicati" } },
+        { "key": "jobId", "type": "select", "label": "Job", "optional": true,
+          "optionsFrom": "duplicati-jobs", "hint": "Enter the URL and password above, then load the jobs.",
+          "showIf": { "field": "provider", "equals": "duplicati" } },
+        { "key": "dupHref", "type": "text", "label": "Click URL", "placeholder": "http://duplicati:8200", "optional": true,
+          "showIf": { "field": "provider", "equals": "duplicati" } },
+        { "key": "dupPollSec", "type": "number", "label": "Poll Interval (sec)", "default": 60,
+          "showIf": { "field": "provider", "equals": "duplicati" } },
+
+        { "key": "kopiaUrl", "type": "text", "label": "URL", "placeholder": "http://kopia:51515",
+          "showIf": { "field": "provider", "equals": "kopia" } },
+        { "key": "kopiaUser", "type": "text", "label": "Username", "placeholder": "admin", "optional": true,
+          "showIf": { "field": "provider", "equals": "kopia" } },
+        { "key": "kopiaPass", "type": "secret", "label": "Password", "optional": true,
+          "showIf": { "field": "provider", "equals": "kopia" } },
+        { "key": "jobId", "type": "select", "label": "Source", "optional": true,
+          "optionsFrom": "kopia-sources", "hint": "Enter the URL and credentials above, then load the sources.",
+          "showIf": { "field": "provider", "equals": "kopia" } },
+        { "key": "kopiaHref", "type": "text", "label": "Click URL", "placeholder": "http://kopia:51515", "optional": true,
+          "showIf": { "field": "provider", "equals": "kopia" } },
+
+        { "key": "customName", "type": "text", "label": "Display Name", "placeholder": "Shown on the card", "optional": true,
+          "showIf": { "field": "provider", "in": ["duplicati", "kopia"] } }
+      ] }
   ]
 }

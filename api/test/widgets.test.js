@@ -32,7 +32,6 @@ test('loadRegistry includes a valid manifest and records its data function', (t)
   const reg = widgets.loadRegistry();
   assert.ok(reg.good, 'valid widget should be registered');
   assert.equal(reg.good.hasDataFn, true);
-  assert.equal(reg.good.customEditor, false);
   assert.deepEqual(reg.good.manifest.sizes, ['small', 'medium']);
 });
 

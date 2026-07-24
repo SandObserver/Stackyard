@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanId, finalizeBackupSlots, buildAppItem } from '../js/admin-save-logic.js';
+import { cleanId, buildAppItem } from '../js/admin-save-logic.js';
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
   assert.equal(cleanId('My App!'), 'My_App');
@@ -12,41 +12,6 @@ test('cleanId falls back when nothing usable remains', () => {
   assert.equal(cleanId(''), 'item');
   assert.equal(cleanId('', 'widget'), 'widget');
   assert.equal(cleanId('!!!', 'folder'), 'folder');
-});
-
-test('finalizeBackupSlots propagates the default instance connection to sharing slots', () => {
-  const slots = [
-    { provider: 'duplicati', useDefault: true, dupUrl: 'http://d', dupHref: 'h', dupPollSec: 30, dupPassSet: true },
-    { provider: 'duplicati', useDefault: true, dupUrl: '', dupHref: '', dupPollSec: 60 },
-  ];
-  const res = finalizeBackupSlots(slots, 'medium');
-  assert.equal(res.error, undefined);
-  assert.equal(slots[1].dupUrl, 'http://d');
-  assert.equal(res.savableSlots[1].dupUrl, 'http://d');
-});
-
-test('finalizeBackupSlots does not propagate when the default opts out', () => {
-  const slots = [
-    { provider: 'duplicati', useDefault: false, dupUrl: 'http://d' },
-    { provider: 'duplicati', useDefault: true, dupUrl: 'http://other' },
-  ];
-  finalizeBackupSlots(slots, 'medium');
-  assert.equal(slots[1].dupUrl, 'http://other'); // untouched
-});
-
-test('finalizeBackupSlots rejects a provider slot with no URL', () => {
-  const res = finalizeBackupSlots([{ provider: 'duplicati', useDefault: true, dupUrl: '' }], 'small');
-  assert.match(res.error, /URL required for First Duplicati instance/);
-});
-
-test('finalizeBackupSlots strips runtime-only and default fields for saving', () => {
-  const [s] = finalizeBackupSlots([{ provider: 'duplicati', dupUrl: 'http://d', dupPollSec: 60, customName: '' }], 'small').savableSlots;
-  assert.equal(s.dupPollSec, undefined); // 60 is the default -> omitted
-  assert.equal(s.customName, undefined);
-  assert.equal(s.useDefault, true);
-  const [empty] = finalizeBackupSlots([{ provider: null }], 'small').savableSlots;
-  assert.equal(empty.useDefault, undefined);
-  assert.equal(empty.jobId, null);
 });
 
 test('buildAppItem validates name and url', () => {

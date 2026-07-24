@@ -10,57 +10,6 @@ export function cleanId(label, fallback = 'item') {
   return String(label || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || fallback;
 }
 
-/* Finalize backup slots for saving: for non-small widgets, copy the default
-   instance's connection onto every same-provider slot that uses the default;
-   then validate every provider slot has a URL; then strip runtime-only fields.
-   Mutates `slots` (the propagation) to match the previous inline behavior, and
-   returns either { error } or { savableSlots }. */
-export function finalizeBackupSlots(slots, size) {
-  if (size !== 'small') {
-    const propagate = (prov) => {
-      const fi = slots.findIndex(s => s.provider === prov);
-      if (fi < 0) return;
-      const def = slots[fi];
-      if (def.useDefault === false) return;
-      slots.forEach((t, j) => {
-        if (j === fi || t.provider !== prov || t.useDefault === false) return;
-        if (prov === 'duplicati') {
-          t.dupUrl = def.dupUrl; t.dupHref = def.dupHref; t.dupPollSec = def.dupPollSec;
-          if (def.dupPass) t.dupPass = def.dupPass; t.dupPassSet = def.dupPassSet;
-        } else {
-          t.kopiaUrl = def.kopiaUrl; t.kopiaUser = def.kopiaUser; t.kopiaHref = def.kopiaHref;
-          if (def.kopiaPass) t.kopiaPass = def.kopiaPass; t.kopiaPassSet = def.kopiaPassSet;
-        }
-      });
-    };
-    propagate('duplicati'); propagate('kopia');
-  }
-
-  const ord = ['First', 'Second', 'Third'];
-  for (const [si, slot] of slots.entries()) {
-    if (slot.provider === 'duplicati' && !slot.dupUrl) return { error: `URL required for ${ord[si] || ''} Duplicati instance` };
-    if (slot.provider === 'kopia' && !slot.kopiaUrl) return { error: `URL required for ${ord[si] || ''} Kopia instance` };
-  }
-
-  const savableSlots = slots.map(s => ({
-    provider:     s.provider,
-    jobId:        s.jobId || null,
-    customName:   s.customName || undefined,
-    useDefault:   s.provider ? (s.useDefault !== false) : undefined,
-    dupUrl:       s.dupUrl || undefined,
-    dupPassSet:   s.dupPassSet || undefined,
-    dupHref:      s.dupHref || undefined,
-    dupPollSec:   s.dupPollSec !== 60 ? s.dupPollSec : undefined,
-    dupPass:      s.dupPass || undefined,
-    kopiaUrl:     s.kopiaUrl || undefined,
-    kopiaUser:    s.kopiaUser || undefined,
-    kopiaPassSet: s.kopiaPassSet || undefined,
-    kopiaHref:    s.kopiaHref || undefined,
-    kopiaPass:    s.kopiaPass || undefined,
-  }));
-  return { savableSlots };
-}
-
 /* Assemble an app item from already-read form values (v). Validates name/url,
    builds the monitoring block (healthcheck + activity badge), the custom badge
    display, and the static badge. Returns { error } or { item }. */

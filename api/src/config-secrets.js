@@ -7,7 +7,6 @@
 
 const { scrubConfigSecrets, preserveConfigSecrets } = require('./widget-secrets');
 const { scrubItemBadgeSecrets, preserveItemBadgeSecrets } = require('./badge-headers');
-const { applyBackupSlotDonors } = require('./backup-secrets');
 
 function scrubAllSecrets(cfg) {
   scrubConfigSecrets(cfg);
@@ -24,10 +23,6 @@ function preserveAllSecrets(newCfg, oldCfg) {
       if (item?.type !== 'app') continue;
       const prev = oldCfg?.items?.find(e => e && e.id === item.id);
       preserveItemBadgeSecrets(item, prev);
-    }
-    for (const item of newCfg.items) {
-      if (item?.type === 'widget' && item.widgetType === 'backup')
-        applyBackupSlotDonors(item.widgetConfig?.slots);
     }
   }
   return newCfg;
