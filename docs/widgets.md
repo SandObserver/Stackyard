@@ -108,6 +108,7 @@ These keys can go on any field:
 | `variant` | For `select`: `"pills"` renders a radio group instead of a dropdown. |
 | `min` / `max` | For `group`: the fewest and most entries allowed. |
 | `maxBySize` | For `group`: a per-size cap, e.g. `{ "small": 2, "medium": 5 }`. Overrides `max` for the selected widget size; falls back to `max` for sizes not listed. Extra entries are trimmed when switching to a smaller size. |
+| `countBySize` | For `group`: a per-size fixed row count, e.g. `{ "small": 1, "medium": 3 }`. The section always shows exactly that many rows, with no Add or Remove. Overrides `min`, `max` and `maxBySize` for the sizes it names. |
 
 ### Varying a field by another field's value
 
@@ -214,18 +215,6 @@ if (ctx.endpoint === 'jobs') {
 
 `ctx.config` still holds the whole widget config, so secrets in the row are
 preserved the same way they are for a top-level field.
-
-### customEditor (deprecated)
-
-One shipped widget sets `"customEditor": true` in their manifest, which
-tells the admin UI to skip the auto-form and use a hand-written editor kept in
-`ui/js/admin-widget-form.js` instead. It dates from before the auto-form covered
-groups, conditional fields and fetched options.
-
-Do not use it in a new widget. Those four are being converted to the auto-form,
-and the key is removed once the last one lands. If the auto-form cannot express
-what your widget needs, that is a gap worth filling in the form itself; open an
-issue rather than reaching for this.
 
 ## 2. Providing data (data.js)
 

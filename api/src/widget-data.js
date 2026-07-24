@@ -77,12 +77,15 @@ async function runDataFn(name, ctx) {
 
 /* Core: resolve a widget's data by running its data.js. A widget with no data.js
    is client-only and has no server data source. Exported for tests. */
-async function getWidgetData(item, entry, endpointName, searchParams, fetch, row = null) {
+async function getWidgetData(item, entry, endpointName, searchParams, fetch, row = null, isOptions = false) {
   const wc = item.widgetConfig || {};
-  if (IS_DEMO) {
+  /* Only the dashboard's own data gets a canned body. An optionsFrom fetch has
+     to run the real code path, because a demo visitor opening the widget editor
+     should see the upstream fail rather than a list of fabricated options. */
+  if (IS_DEMO && !isOptions) {
     /* Stats runs its real code path against fake metrics; the fetch-based
        widgets get a canned body since their upstream is unreachable here. */
-    const body = demoData.demoWidgetBody(item.widgetType);
+    const body = demoData.demoWidgetBody(item.widgetType, wc);
     if (body) return { status: 200, body };
   }
   if (!entry.hasDataFn) return { status: 503, body: { error: 'widget declares no data source' } };
@@ -127,7 +130,7 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   if (saved) preserveWidgetSecrets(item, saved, entry); /* restore a secret the form left blank */
 
   try {
-    const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams(), fetchChecked, body.row);
+    const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams(), fetchChecked, body.row, true);
     json(res, out.status, out.body);
   } catch (e) {
     if (e instanceof SsrfBlockedError) return json(res, e.status, { error: e.message });

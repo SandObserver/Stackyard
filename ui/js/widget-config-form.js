@@ -24,7 +24,7 @@
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
-import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches, requiredFieldMissing } from '/js/admin-logic.js?v=1';
+import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches, requiredFieldMissing, groupBounds } from '/js/admin-logic.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -338,10 +338,7 @@ function _object(field, value, ctx) {
 }
 
 function _group(field, rows, size, ctx) {
-  const min = field.min != null ? field.min : 0;
-  const max = (field.maxBySize && size && field.maxBySize[size] != null)
-    ? field.maxBySize[size]
-    : (field.max != null ? field.max : 99);
+  const { min, max } = groupBounds(field, size);
   const subFields = Array.isArray(field.fields) ? field.fields : [];
   let data = Array.isArray(rows) ? rows.map(r => Object.assign({}, r)) : [];
   while (data.length < min) data.push({});

@@ -9,6 +9,20 @@ const _tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-http-'));
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
 
+/* One throwaway widget, so the request-body-URL path (/api/widget-options) has
+   something to dispatch to. Its data function fetches whatever URL the request
+   supplied, which is what the SSRF guard has to intercept. */
+const _fx = path.join(_tmp, 'widgets', 'fixture');
+fs.mkdirSync(_fx, { recursive: true });
+fs.writeFileSync(path.join(_fx, 'widget.json'), JSON.stringify({
+  name: 'fixture', label: 'Fixture', sizes: ['medium'],
+  views: { main: { src: 'index.html' } },
+  fields: [{ key: 'url', type: 'text', label: 'URL' }],
+}));
+fs.writeFileSync(path.join(_fx, 'index.html'), '');
+fs.writeFileSync(path.join(_fx, 'data.js'),
+  'module.exports = async ctx => ctx.fetchJSON(ctx.config.url, {});\n');
+
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
@@ -240,32 +254,33 @@ test('an async rejection in a handler returns 500 without crashing the server', 
   assert.equal((await req('GET', '/health')).status, 200);
 });
 
-/* Backup discovery endpoints take the target URL from the request body, so they
-   must route it through the SSRF-guarded fetch: a private/loopback target is
-   blocked with 403 rather than reached. */
-test('POST /api/duplicati-jobs blocks a private target URL', async () => {
-  const r = await req('POST', '/api/duplicati-jobs/x', {
-    cookie: validCookie, body: { url: 'http://127.0.0.1:1/', password: 'x' },
+/* An options fetch takes its target URL from the request body, so it must route
+   through the SSRF-guarded fetch: a private/loopback target is blocked with 403
+   rather than reached. */
+test('POST /api/widget-options blocks a private target URL', async () => {
+  const r = await req('POST', '/api/widget-options/x', {
+    cookie: validCookie,
+    body: { widgetType: 'fixture', endpoint: 'any', widgetConfig: { url: 'http://127.0.0.1:1/' } },
   });
   assert.equal(r.status, 403);
   assert.match(String(r.body?.error), /private address/);
 });
 
-test('POST /api/kopia-sources blocks a private target URL', async () => {
-  const r = await req('POST', '/api/kopia-sources/x', {
-    cookie: validCookie, body: { url: 'http://127.0.0.1:1/' },
-  });
-  assert.equal(r.status, 403);
-  assert.match(String(r.body?.error), /private address/);
-});
-
-test('POST /api/kopia-sources rejects a cross-origin write', async () => {
-  const r = await req('POST', '/api/kopia-sources/x', {
-    cookie: validCookie, body: { url: 'http://example.com/' },
+test('POST /api/widget-options rejects a cross-origin write', async () => {
+  const r = await req('POST', '/api/widget-options/x', {
+    cookie: validCookie,
+    body: { widgetType: 'fixture', endpoint: 'any', widgetConfig: { url: 'http://example.com/' } },
     origin: 'http://evil.example', host: '127.0.0.1:1',
   });
   assert.equal(r.status, 403);
   assert.match(String(r.body?.error), /origin mismatch/);
+});
+
+test('POST /api/widget-options refuses an unknown widget type', async () => {
+  const r = await req('POST', '/api/widget-options/x', {
+    cookie: validCookie, body: { widgetType: 'nope', endpoint: 'any', widgetConfig: {} },
+  });
+  assert.equal(r.status, 400);
 });
 
 test('GET /api/truenas-proxy is not routed', async () => {

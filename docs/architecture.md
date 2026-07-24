@@ -24,7 +24,7 @@ Every request goes through `dispatch` in `src/router.js`, which:
 
 `router.js` also exports the shared helpers handlers rely on: `json`, `readBody`, `checkOrigin`, and `getIp` (honors `X-Forwarded-For` only when `TRUST_PROXY` is set).
 
-Route handlers live in `src/routes/`: auth, config, health, badges, system, icons, backup, and version. The widget data route is registered separately by `widget-data.js`.
+Route handlers live in `src/routes/`: auth, config, health, badges, system, icons, and version. The widget data route is registered separately by `widget-data.js`.
 
 ## Config
 
@@ -47,7 +47,7 @@ The registry and the toolbox handed to each handler are documented in [widgets.m
 It exposes exactly two ways out, and every caller picks one by asking where the URL came from:
 
 - `fetchChecked` / `pingChecked`: **the URL arrived in the HTTP request** (a body field or a `?url=` param, as in `/api/ping`, `/api/badge-proxy`, `/api/truenas-proxy`, `/api/scrutiny-proxy`). Untrusted, so it is SSRF-guarded.
-- `fetchUnchecked` / `pingUnchecked`: **the URL came from saved config or is a hardcoded constant** (badge and activity sources, widget data, backup targets, the Unsplash/jsdelivr/GitHub endpoints). Not guarded. Anyone who can write those URLs already has config-write access, so the guard would not stop anything it could not already do. It would only block the legitimate private-IP homelab targets that are the normal case.
+- `fetchUnchecked` / `pingUnchecked`: **the URL came from saved config or is a hardcoded constant** (badge and activity sources, widget data, the Unsplash/jsdelivr/GitHub endpoints). Not guarded. Anyone who can write those URLs already has config-write access, so the guard would not stop anything it could not already do. It would only block the legitimate private-IP homelab targets that are the normal case.
 
 Do not "fix" the second group by adding the guard: that breaks normal installs. Do not drop it from the first. The blunt name is the point: `fetchUnchecked` in a new route should make a reviewer ask why.
 

@@ -148,8 +148,7 @@ function loadRegistry() {
 
     reg[name] = {
       manifest,
-      hasDataFn:    fs.existsSync(path.join(dir, 'data.js')),
-      customEditor: manifest.customEditor === true,
+      hasDataFn: fs.existsSync(path.join(dir, 'data.js')),
     };
   }
 
@@ -179,7 +178,6 @@ function _publicEntry(_name, e) {
     viewField:    m.viewField || null,
     defaultView:  m.defaultView || null,
     entryVersions: m.entryVersions || null,
-    customEditor: e.customEditor,
   };
 }
 

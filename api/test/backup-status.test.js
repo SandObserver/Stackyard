@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const b = require('../src/backup-status');
+const path = require('node:path');
+const b = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'backup', 'backup-status.js'));
 
 test('dupList extracts the backup array from various response shapes', () => {
   assert.deepEqual(b.dupList([1, 2]), [1, 2]);

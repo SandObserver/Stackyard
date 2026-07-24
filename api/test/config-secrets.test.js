@@ -7,7 +7,6 @@ process.env.CONFIG_PATH = '/tmp/stackyard-config-secrets-test-nonexistent.json';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { scrubConfigSecrets, preserveConfigSecrets } = require('../src/widget-secrets');
-const { applyBackupSlotDonors } = require('../src/backup-secrets');
 const { scrubAllSecrets, preserveAllSecrets } = require('../src/config-secrets');
 
 function sampleConfig() {
@@ -72,21 +71,8 @@ test('a newly submitted secret survives instead of being overwritten by the old 
   assert.equal(incoming.items[1].widgetConfig.truenasKey, 'NEWKEY');
 });
 
-test('donor copy fills a new backup slot pointing at an existing instance', () => {
-  const existing = sampleConfig();
-  const incoming = JSON.parse(JSON.stringify(existing));
-  scrubConfigSecrets(incoming);
-  /* User adds a second duplicati slot for the same instance without retyping the
-     password. It arrives with the url but no password even after preserve. */
-  incoming.items[0].widgetConfig.slots.push({ provider: 'duplicati', dupUrl: 'http://d:8200' });
-  preserveConfigSecrets(incoming, existing);
-  applyBackupSlotDonors(incoming.items[0].widgetConfig.slots);
-  assert.equal(incoming.items[0].widgetConfig.slots[2].dupPass, 'DUP');
-  assert.equal(incoming.items[0].widgetConfig.slots[2].dupPassSet, true);
-});
-
 /* An app item carrying a secret badge header, so the facade tests exercise the
-   badge system alongside the widget and backup systems in one pass. */
+   badge system alongside the widget system in one pass. */
 function badgeApp() {
   return { id: 'a1', type: 'app', name: 'A', url: 'http://x', badge: { headers: [
     { key: 'Authorization', value: 'BADGESECRET', secret: true },
@@ -107,16 +93,15 @@ test('scrubAllSecrets runs the widget and badge scrubbers in one pass', () => {
   assert.equal(app.badge.headers[1].value, 'prod');
 });
 
-test('preserveAllSecrets restores widget, badge and backup-donor secrets in one call', () => {
+test('preserveAllSecrets restores widget and badge secrets in one call', () => {
   const existing = sampleConfig();
   existing.items.push(badgeApp());
   const incoming = JSON.parse(JSON.stringify(existing));
   scrubAllSecrets(incoming);
-  incoming.items[0].widgetConfig.slots.push({ provider: 'duplicati', dupUrl: 'http://d:8200' });
   preserveAllSecrets(incoming, existing);
   assert.equal(incoming.items[1].widgetConfig.truenasKey, 'TRUENAS');
   const app = incoming.items.find(i => i.id === 'a1');
   assert.equal(app.badge.headers[0].value, 'BADGESECRET');
   assert.equal(app.badge.headers[0].valueSet, undefined);
-  assert.equal(incoming.items[0].widgetConfig.slots[2].dupPass, 'DUP');
+  assert.equal(incoming.items[0].widgetConfig.slots[0].dupPass, 'DUP');
 });

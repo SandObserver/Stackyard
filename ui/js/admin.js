@@ -2,7 +2,7 @@ import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb'
 import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { reorderItems } from '/js/admin-logic.js?v=1';
-import { cleanId, finalizeBackupSlots, buildAppItem } from '/js/admin-save-logic.js?v=1';
+import { cleanId, buildAppItem } from '/js/admin-save-logic.js?v=1';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
@@ -456,7 +456,7 @@ function closeModal(){
   showListView();
   state.eid=null;
   state._wtype='custom';state._wsize='medium';
-  state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._wbackupCfg={};state._iframeOpts={};
+  state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._iframeOpts={};
 }
 
 
@@ -545,7 +545,7 @@ async function doSave(orig){
     let item;
     if(state.ctype==='widget'){
       const wlabel=state._wlabel.trim()||state._widgetReg?.[state._wtype]?.label||'Widget';
-      if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype] && !state._widgetReg[state._wtype].customEditor){
+      if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype]){
         const missing=state._autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
         item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:state._wtype,
@@ -562,35 +562,6 @@ async function doSave(orig){
         item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'custom',
           label:wlabel, widgetSize:state._wsize,url};
         if(Object.keys(ifo).length) item.iframe=ifo;
-      }else if(state._wtype==='backup'){
-        state._wbackupCfg.slots.forEach((slot,si) => {
-          slot.customName = (document.getElementById(`bak-name-${si}`)?.value||'').trim();
-          const defEl = document.getElementById(`bak-def-${si}`);
-          if (defEl) slot.useDefault = defEl.checked;
-          /* Only overwrite jobId from an enabled picker; a disabled (un-fetched)
-             picker has no value and must not wipe a previously-saved selection. */
-          const jv = document.getElementById(`dup-job-${si}`) || document.getElementById(`kopia-src-${si}`);
-          if (jv && !jv.disabled) slot.jobId = jv.value || null;
-          if(slot.provider==='duplicati'){
-            slot.dupUrl    = (document.getElementById(`dup-url-${si}`)?.value||'').trim() || slot.dupUrl;
-            slot.dupHref   = (document.getElementById(`dup-href-${si}`)?.value||'').trim();
-            const pollEl   = document.getElementById(`dup-poll-${si}`);
-            if(pollEl) slot.dupPollSec = Math.max(10,parseInt(pollEl.value||'60',10));
-            const p=(document.getElementById(`dup-pass-${si}`)?.value||'').trim();
-            if(p) slot.dupPass=p;
-          } else if(slot.provider==='kopia'){
-            slot.kopiaUrl  = (document.getElementById(`kopia-url-${si}`)?.value||'').trim() || slot.kopiaUrl;
-            slot.kopiaUser = (document.getElementById(`kopia-user-${si}`)?.value||'').trim() || slot.kopiaUser;
-            slot.kopiaHref = (document.getElementById(`kopia-href-${si}`)?.value||'').trim();
-            const p=(document.getElementById(`kopia-pass-${si}`)?.value||'').trim();
-            if(p) slot.kopiaPass=p;
-          }
-        });
-        const _bk = finalizeBackupSlots(state._wbackupCfg.slots, state._wsize);
-        if(_bk.error){ toast(_bk.error,'err'); return; }
-        item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'backup',
-          label:wlabel,widgetSize:state._wsize,widgetConfig:{slots:_bk.savableSlots}};
-
       }
     }else if(state.ctype==='folder'){
       const label=document.getElementById('f-fname')?.value?.trim();

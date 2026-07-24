@@ -546,7 +546,7 @@ function buildShell() {
 
 async function fetchJobs() {
   let r;
-  try { r=await fetch(`${API}/backup-data/${encodeURIComponent(id)}`); }
+  try { r=await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=slots`); }
   catch(e){ throw new Error(e.message); }
   if(!r.ok){
     const e=new Error('HTTP '+r.status);

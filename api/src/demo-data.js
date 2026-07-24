@@ -43,8 +43,10 @@ function githubCalendar() {
 }
 let _cal = null;
 
-function demoWidgetBody(widgetType) {
+function demoWidgetBody(widgetType, wc) {
   switch (widgetType) {
+    case 'backup':
+      return demoBackup(wc);
     case 'dns': {
       const total = Math.round(wave(600, 46000, 52000));
       const blocked = Math.round(total * 0.19);
