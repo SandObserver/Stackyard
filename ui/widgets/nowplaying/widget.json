@@ -29,6 +29,6 @@
     { "key": "navidromeUser", "type": "text", "label": "Username", "showIf": { "field": "provider", "equals": "navidrome" } },
     { "key": "navidromePassword", "type": "secret", "label": "Password", "showIf": { "field": "provider", "equals": "navidrome" } },
 
-    { "key": "href", "type": "text", "label": "Click URL (optional)", "placeholder": "https://…", "hint": "Opens when the widget is clicked.", "optional": true }
+    { "key": "href", "type": "text", "label": "Click URL (optional)", "placeholder": "https://…", "optional": true }
   ]
 }

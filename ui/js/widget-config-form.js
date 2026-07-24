@@ -24,7 +24,7 @@
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
-import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches, requiredFieldMissing, groupBounds } from '/js/admin-logic.js?v=1';
+import { seedCarried, applyOptionSet, collectFieldValues, requiredFieldMissing, groupBounds, visibleFieldKeys } from '/js/admin-logic.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -294,11 +294,13 @@ function _missingIn(built) {
 function _wireShowIf(built) {
   const liveByKey = {};
   for (const b of built) if (b.liveValue) liveByKey[b.field.key] = b.liveValue;
+  const fields = built.map(b => b.field);
+  const readValue = key => (liveByKey[key] ? liveByKey[key]() : undefined);
   const apply = () => {
+    const shown = visibleFieldKeys(fields, readValue);
     for (const b of built) {
-      const cond = b.field.showIf;
-      if (!cond || !(cond.field in liveByKey)) continue;
-      b.el.style.display = showIfMatches(cond, liveByKey[cond.field]()) ? '' : 'none';
+      if (!b.field.showIf) continue;
+      b.el.style.display = shown.has(b.field.key) ? '' : 'none';
     }
   };
   for (const b of built) {

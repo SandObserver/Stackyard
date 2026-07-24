@@ -31,6 +31,6 @@
       "hint": "Enter the URL + key above, then click Fetch to load your collections / reading lists.",
       "showIf": { "field": "source", "equals": "list" } },
 
-    { "key": "href", "type": "text", "label": "Click URL (optional)", "placeholder": "https://\u2026", "hint": "Opens when the widget is clicked.", "optional": true }
+    { "key": "href", "type": "text", "label": "Click URL (optional)", "placeholder": "https://\u2026", "optional": true }
   ]
 }
