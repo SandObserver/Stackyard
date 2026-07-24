@@ -2,6 +2,7 @@
   "name": "dns",
   "label": "DNS Server",
   "sizes": ["small", "medium"],
+  "card": "translucent",
   "fields": [
     { "key": "provider", "type": "select", "variant": "pills", "label": "Provider",
       "options": [

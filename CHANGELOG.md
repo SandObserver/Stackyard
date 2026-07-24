@@ -16,12 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widget settings can declare the same key more than once with different labels,
   each shown by a `showIf` condition.
 - A widget view can limit which sizes it offers.
+- A widget can choose its card background: `dark`, `light` or `translucent`,
+  set for the whole widget or per view.
 - Widget settings can declare a `picklist` field: a fixed number of dropdowns
   filled from a single fetch.
 - Widget settings can declare a repeating section with a fixed number of rows
   per widget size.
 
 ### Changed
+
+- Books, Connections (Map), Dashboard Switch and Stats (System Summary) now use
+  a solid dark card. Backup, Connections (VPN), DNS and GitHub use a translucent
+  one.
 
 - Stats widget now uses the standard widget settings form. Disk bays are filled
   from one Fetch Drives call, and the network row is its own settings card.

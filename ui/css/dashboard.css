@@ -99,24 +99,25 @@
       -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
     }
 
-    /* ── Per-widget-type transparency ── */
-    .widget[data-wtype="github"],
-    .mob-widget-card[data-wtype="github"] {
+    /* ── Card backgrounds ──
+       A widget picks one of these by name in its manifest, so no widget is named
+       here. A widget that paints its own interior declares nothing and keeps the
+       default glass behind it. */
+    .widget[data-card="dark"],
+    .mob-widget-card[data-card="dark"] {
+      background: #1c1c1e;
+      -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
+    .widget[data-card="light"],
+    .mob-widget-card[data-card="light"] {
+      background: #ffffff; border-color: rgba(0,0,0,.12);
+      -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
+    .widget[data-card="translucent"],
+    .mob-widget-card[data-card="translucent"] {
       background: rgba(0,0,0,.25);
       -webkit-backdrop-filter: blur(22px) saturate(140%);
               backdrop-filter: blur(22px) saturate(140%);
-    }
-    .widget[data-wtype="books"],
-    .mob-widget-card[data-wtype="books"] {
-      background: rgba(0,0,0,.25);
-      -webkit-backdrop-filter: blur(22px) saturate(140%);
-              backdrop-filter: blur(22px) saturate(140%);
-    }
-    .widget[data-wtype="stats"][data-wsubtype="disk-health"],
-    .mob-widget-card[data-wtype="stats"][data-wsubtype="disk-health"] {
-      background: rgba(18,18,20,0.82);
-      -webkit-backdrop-filter: blur(20px) saturate(120%);
-              backdrop-filter: blur(20px) saturate(120%);
     }
     .icon {
       height:152px;
@@ -668,6 +669,11 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   .srn  { color:#fff; }
   .srh, .sr-section { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
+  /* A translucent card cannot honour a contrast request and stay translucent, so
+     it densifies to the value the default card uses in this mode. Opaque presets
+     already meet it and keep their colour. */
+  .widget[data-card="translucent"], .mob-widget-card[data-card="translucent"] { background:rgba(0,0,0,.62); }
+  .widget[data-card="light"], .mob-widget-card[data-card="light"] { border-color:rgba(0,0,0,.45); }
   .dot { background:rgba(255,255,255,.75); }
   .badge { box-shadow:0 0 0 1.5px rgba(0,0,0,.85); }
 }

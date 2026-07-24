@@ -5,8 +5,8 @@
   "viewField": "view",
   "defaultView": "map",
   "views": {
-    "map": { "label": "Map", "src": "connections-map.html", "sizes": ["medium"] },
-    "vpn": { "label": "VPN", "src": "connections-vpn.html", "sizes": ["small", "medium"] }
+    "map": { "label": "Map", "src": "connections-map.html", "sizes": ["medium"], "card": "dark" },
+    "vpn": { "label": "VPN", "src": "connections-vpn.html", "sizes": ["small", "medium"], "card": "translucent" }
   },
   "fields": [
     { "key": "view", "type": "select", "variant": "pills", "label": "View", "default": "map",
