@@ -310,6 +310,35 @@ module.exports = async function (ctx) {
 };
 ```
 
+### Demo mode (demo.js)
+
+The public demo has no reachable services, so a widget can ship a `demo.js`
+beside its `data.js` returning an invented body. It is optional, and it is only
+required when the dashboard runs with `DEMO_MODE=true`, so it costs a normal
+install nothing.
+
+```js
+module.exports = function (ctx) {
+  const { wave, round } = ctx.demo;
+  return { items: [{ name: 'Example' }], total: Math.round(wave(600, 8, 20)) };
+};
+```
+
+It receives the same `ctx` as `data.js`, plus `ctx.demo` holding `wave` and
+`round`. `wave(periodSec, min, max, phase)` is a clock-driven oscillation, so
+numbers built with it drift between polls and every widget on the demo moves
+together. Structural data that should not reshuffle, like a calendar grid, is
+better built once and cached in a module-level variable.
+
+A widget with no `demo.js` runs its real `data.js` on the demo. That is the right
+choice when the data does not come from an unreachable service: the stats widget
+has none, because `ctx.metrics` already returns invented host figures and the
+real code path then gets exercised.
+
+Only the widget's own polling gets a demo body. A config-time `optionsFrom`
+fetch always runs the real code, so a visitor pressing Fetch in the settings sees
+it fail rather than a list of options that do not exist.
+
 ## 3. The frontend (index.html)
 
 Runs in a sandboxed iframe scaled to the widget's design resolution. Reads its

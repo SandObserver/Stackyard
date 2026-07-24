@@ -154,6 +154,7 @@ function loadRegistry() {
     reg[name] = {
       manifest,
       hasDataFn: fs.existsSync(path.join(dir, 'data.js')),
+      hasDemoFn: fs.existsSync(path.join(dir, 'demo.js')),
     };
   }
 

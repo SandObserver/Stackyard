@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A widget view can limit which sizes it offers.
 - A widget can choose its card background: `dark`, `light` or `translucent`,
   set for the whole widget or per view.
+- A widget can ship a `demo.js` supplying the body it shows in demo mode.
 - Widget settings can declare a `picklist` field: a fixed number of dropdowns
   filled from a single fetch.
 - Widget settings can declare a repeating section with a fixed number of rows

@@ -11,24 +11,27 @@ default and has no effect on a normal install.
   set-password, auth toggle, dismiss-setup) returns 403 with a short message,
   which the admin UI shows as a toast.
 - **Outbound**: `fetchJSON` and `pingUrl` short-circuit, so the server makes no
-  outbound requests at all. Widget activity comes from `api/src/demo-data.js`.
+  outbound requests at all. Widget activity comes from each widget's `demo.js`.
 
 Auth is disabled in the demo config and `set-password` is blocked, so the
 instance cannot be claimed.
 
 ## Sample data
 
-`api/src/demo-data.js` generates fake system metrics, DNS counts, now-playing
-sessions, a reading list, weather, a GitHub contribution calendar, backup status,
-activity badges, and one deliberately unhealthy app, so the dashboard looks alive
-across polls.
+Each widget supplies its own invented body from a `demo.js` in its folder, run
+in place of `data.js` when the dashboard is in demo mode. The body must match the
+shape that widget renders, documented at the top of its `data.js`. See
+[widgets.md](widgets.md) for the contract.
 
-Each body must match the shape its widget renders, which is documented at the top
-of that widget's `data.js`. A new fetching widget adds an arm to the
-`demoWidgetBody` switch there; a widget whose demo body should drift across polls
-returns a function of the current time (as now-playing and weather do) rather than
-a fixed object. `api/test/demo-data.test.js` pins the ones that are
-easy to get wrong: now-playing `progress` is 0..1, not a percentage.
+`api/src/demo-data.js` keeps only what is not tied to one widget: the `wave` and
+`round` drift helpers every `demo.js` shares through `ctx.demo`, fake host metrics
+handed to the stats widget through `ctx.metrics`, activity badges, and one
+deliberately unhealthy app. It names no widgets, so adding a widget never touches
+it.
+
+`api/test/widget-demo.test.js` pins the bodies that are easy to get wrong:
+now-playing `progress` is 0..1, not a percentage, and the GitHub calendar must be
+stable across calls rather than reshuffling on every poll.
 
 ## Wallpaper
 
