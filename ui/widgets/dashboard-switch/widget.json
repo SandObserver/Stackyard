@@ -2,6 +2,7 @@
   "name": "dashboard-switch",
   "label": "Dashboard Switch",
   "sizes": ["small", "medium"],
+  "card": "dark",
   "fields": [
     {
       "key": "keychains",

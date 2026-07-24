@@ -75,6 +75,46 @@ matched against the `views` keys to choose the entry file. With no `views` block
 the entry file is `index.html`. A single-view widget whose file is not
 `index.html` still declares it as one view, with no `viewField`.
 
+### Card background
+
+The card behind the widget is glass by default: dark, semi-transparent, blurred,
+so the wallpaper reads through. A widget that wants a different card names one of
+three backgrounds:
+
+| `card` | what it looks like |
+| --- | --- |
+| `dark` | Solid dark, `#1c1c1e`. Nothing shows through. |
+| `light` | Solid white. Nothing shows through. |
+| `translucent` | Darker than the default but more transparent, with a stronger blur. |
+
+```json
+{ "card": "dark" }
+```
+
+A `card` inside a `views` entry overrides the widget-level one for that view, so
+one view can be solid while another stays translucent:
+
+```json
+{
+  "views": {
+    "map": { "src": "map.html", "card": "dark" },
+    "vpn": { "src": "vpn.html", "card": "translucent" }
+  }
+}
+```
+
+Declaring nothing keeps the default glass, which is what a widget wants when it
+paints its own interior. The weather widget does this: it fills its own body with
+white by day and dark by night, following the weather region rather than the
+dashboard, which no fixed choice here could express.
+
+An unknown name is rejected and the widget is skipped, the same as any other
+invalid manifest.
+
+Under the operating system's increased-contrast setting, `translucent` becomes as
+dense as the default card, since a contrast request outranks a transparency
+preference. Solid backgrounds already meet it and keep their colour.
+
 ### Field types
 
 | type | control the user sees |

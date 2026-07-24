@@ -1,7 +1,7 @@
 /* dashboard.js: boot, state, badge system, desktop layout, navigation, background, polling */
 
 import { loadLocalIcons, iconChain } from '/js/icons.js?v=bdd2c9eb';
-import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc } from '/js/widget-types.js?v=63bf4388';
+import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc, cardPreset } from '/js/widget-types.js?v=63bf4388';
 import { mk, mkWrap as _mkWrap, mountScaledWidget, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { html, setHtml } from '/js/html.js?v=1';
@@ -109,6 +109,8 @@ function mkWidget(item) {
   cell.className = cls;
   const card = mk('div'); card.className = 'widget';
   if (item.widgetType) card.dataset.wtype = item.widgetType;
+  const preset = cardPreset(item, widgetReg);
+  if (preset) card.dataset.card = preset;
   if (item.widgetConfig?.widgetSubType) card.dataset.wsubtype = item.widgetConfig.widgetSubType;
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
   /* Definite height (matches the family box aspect, which equals the design aspect),

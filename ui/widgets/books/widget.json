@@ -2,6 +2,7 @@
   "name": "books",
   "label": "Books",
   "sizes": ["small"],
+  "card": "dark",
   "fields": [
     { "key": "provider", "type": "select", "variant": "pills", "label": "Service",
       "options": [

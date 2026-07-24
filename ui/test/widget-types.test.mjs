@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS,
-  WIDGET_ROWS, WIDGET_COST, widgetSrc,
+  WIDGET_ROWS, WIDGET_COST, widgetSrc, cardPreset,
 } from '../js/widget-types.js';
 
 /* Stand-in for the /api/widgets registry, keyed by widget name. Mirrors the
@@ -86,4 +86,58 @@ test('the geometry tables cover the same set of sizes', () => {
   for (const table of [WIDGET_HEIGHTS, WIDGET_COLS.desktop, WIDGET_COLS.mobile, WIDGET_ROWS.desktop, WIDGET_COST.desktop]) {
     assert.deepEqual(Object.keys(table).sort(), sizes);
   }
+});
+
+/* Registry shaped like the shipped manifests: a whole-widget card, a per-view
+   card, and a widget that declares none. */
+const CARD_REG = {
+  books: { sizes: ['small'], card: 'dark' },
+  stats: {
+    sizes: ['small'], viewField: 'widgetSubType', defaultView: 'system-summary',
+    views: { 'system-summary': { src: 'a.html', card: 'dark' }, 'disk-health': { src: 'b.html' } },
+  },
+  connections: {
+    sizes: ['medium'], viewField: 'view', defaultView: 'map',
+    views: { map: { src: 'm.html', card: 'dark' }, vpn: { src: 'v.html', card: 'translucent' } },
+  },
+  weather: { sizes: ['small'] },
+  odd: { sizes: ['small'], card: 'chartreuse' },
+  mixed: {
+    sizes: ['small'], viewField: 'v', defaultView: 'a', card: 'translucent',
+    views: { a: { src: 'a.html' }, b: { src: 'b.html', card: 'dark' } },
+  },
+};
+
+test('cardPreset reads a whole-widget card', () => {
+  assert.equal(cardPreset({ widgetType: 'books' }, CARD_REG), 'dark');
+});
+
+test('cardPreset returns empty for a widget that declares none', () => {
+  assert.equal(cardPreset({ widgetType: 'weather' }, CARD_REG), '');
+});
+
+test('cardPreset picks the selected view\'s card', () => {
+  const item = t => ({ widgetType: 'connections', widgetConfig: { view: t } });
+  assert.equal(cardPreset(item('map'), CARD_REG), 'dark');
+  assert.equal(cardPreset(item('vpn'), CARD_REG), 'translucent');
+});
+
+test('cardPreset falls back to the default view when none is chosen', () => {
+  assert.equal(cardPreset({ widgetType: 'connections' }, CARD_REG), 'dark');
+});
+
+test('a view without a card does not inherit one from a sibling view', () => {
+  const item = { widgetType: 'stats', widgetConfig: { widgetSubType: 'disk-health' } };
+  assert.equal(cardPreset(item, CARD_REG), '');
+});
+
+test('a view without a card keeps the widget-level one', () => {
+  assert.equal(cardPreset({ widgetType: 'mixed', widgetConfig: { v: 'a' } }, CARD_REG), 'translucent');
+  assert.equal(cardPreset({ widgetType: 'mixed', widgetConfig: { v: 'b' } }, CARD_REG), 'dark');
+});
+
+test('cardPreset ignores an unknown name and an unknown widget', () => {
+  assert.equal(cardPreset({ widgetType: 'odd' }, CARD_REG), '');
+  assert.equal(cardPreset({ widgetType: 'nope' }, CARD_REG), '');
+  assert.equal(cardPreset({}, CARD_REG), '');
 });

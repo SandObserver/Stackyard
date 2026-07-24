@@ -9,6 +9,7 @@ const log = require('./log');
 const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets';
 
 const VALID_SIZES      = new Set(['small', 'medium', 'large', 'xlarge']);
+const VALID_CARDS      = new Set(['dark', 'light', 'translucent']);
 const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'color', 'select', 'multiselect', 'picklist', 'group', 'object']);
 
 let _registry = null;
@@ -70,6 +71,9 @@ function _validateManifest(name, m) {
   if (!Array.isArray(m.sizes) || !m.sizes.length) errs.push('"sizes" must be a non-empty array');
   else m.sizes.forEach(s => { if (!VALID_SIZES.has(s)) errs.push(`unknown size "${s}"`); });
 
+  if (m.card !== undefined && !VALID_CARDS.has(m.card))
+    errs.push(`unknown card "${m.card}"`);
+
   if (m.fields !== undefined) {
     if (!Array.isArray(m.fields)) errs.push('"fields" must be an array');
     else {
@@ -84,6 +88,7 @@ function _validateManifest(name, m) {
       if (!v || typeof v !== 'object') { errs.push(`view "${vk}" must be an object`); continue; }
       if (typeof v.src !== 'string' || !v.src) errs.push(`view "${vk}" needs an entry file "src"`);
       if (v.label !== undefined && (typeof v.label !== 'string' || !v.label)) errs.push(`view "${vk}" "label" must be a non-empty string`);
+      if (v.card !== undefined && !VALID_CARDS.has(v.card)) errs.push(`view "${vk}" has unknown card "${v.card}"`);
       if (v.sizes !== undefined) {
         if (!Array.isArray(v.sizes) || !v.sizes.length) errs.push(`view "${vk}" "sizes" must be a non-empty array`);
         else if (Array.isArray(m.sizes)) {
@@ -173,6 +178,7 @@ function _publicEntry(_name, e) {
     name:         m.name,
     label:        m.label,
     sizes:        m.sizes,
+    card:         m.card || null,
     fields:       m.fields || [],
     views:        m.views || null,
     viewField:    m.viewField || null,

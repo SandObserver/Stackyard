@@ -171,3 +171,12 @@ test('validateManifest rejects a picklist with no option source', () => {
   assert.equal(errs.length, 1);
   assert.match(errs[0], /needs "options" or "optionsFrom"/);
 });
+
+test('a manifest card must be one of the known names, at either level', () => {
+  const base = { name: 'w', label: 'W', sizes: ['small'] };
+  assert.deepEqual(widgets.validateManifest('w', { ...base, card: 'dark' }).errors, []);
+  assert.match(widgets.validateManifest('w', { ...base, card: 'chartreuse' }).errors.join(), /unknown card/);
+  const withView = c => ({ ...base, views: { a: { src: 'a.html', card: c } } });
+  assert.deepEqual(widgets.validateManifest('w', withView('translucent')).errors, []);
+  assert.match(widgets.validateManifest('w', withView('nope')).errors.join(), /unknown card/);
+});

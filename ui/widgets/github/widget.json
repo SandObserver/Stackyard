@@ -2,6 +2,7 @@
   "name": "github",
   "label": "GitHub",
   "sizes": ["small", "medium", "large", "xlarge"],
+  "card": "translucent",
   "viewField": "githubView",
   "defaultView": "prs",
   "views": {

@@ -2,6 +2,7 @@
   "name": "backup",
   "label": "Backup",
   "sizes": ["small", "medium"],
+  "card": "translucent",
   "views": {
     "main": { "src": "backup.html" }
   },

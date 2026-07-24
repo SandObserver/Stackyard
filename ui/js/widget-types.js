@@ -19,6 +19,26 @@ export const WIDGET_COST    = { desktop:{small:1,medium:2,large:4,xlarge:6}, mob
    from `entryVersions`, hashed from file content at release, so no version is
    maintained by hand. The `custom` (paste-a-URL) type has no folder, is absent
    from the registry, and falls back to the item's own url. */
+/* Which card background a widget asks for, or '' for the default glass. Resolved
+   the same way as the view file: a `card` inside the selected view wins over the
+   manifest's top-level one, so a widget can style one view differently. Returns
+   '' for an unknown name; the server validator is what rejects those. */
+export const CARD_PRESETS = ['dark', 'light', 'translucent'];
+
+export function cardPreset(item, reg) {
+  const entry = item?.widgetType ? reg?.[item.widgetType] : null;
+  if (!entry) return '';
+  let card = entry.card || '';
+  const views = entry.views;
+  if (views) {
+    const keys = Object.keys(views);
+    const sel = (entry.viewField && item?.widgetConfig?.[entry.viewField]) || entry.defaultView || keys[0];
+    const view = views[sel] || views[keys[0]];
+    if (view && view.card) card = view.card;
+  }
+  return CARD_PRESETS.includes(card) ? card : '';
+}
+
 export function widgetSrc(item, reg, opts) {
   const type = item?.widgetType;
   const entry = type ? reg?.[type] : null;

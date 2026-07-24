@@ -5,7 +5,7 @@
   "viewField": "widgetSubType",
   "defaultView": "system-summary",
   "views": {
-    "system-summary": { "label": "System Summary", "src": "system-stats.html" },
+    "system-summary": { "label": "System Summary", "src": "system-stats.html", "card": "dark" },
     "disk-health":    { "label": "Disk Health",    "src": "disk-health.html" }
   },
   "fields": [

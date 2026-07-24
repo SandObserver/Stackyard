@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=36';
-import { widgetSrc, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
+import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
 import { mk, clr, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=40';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=1';
 
@@ -380,6 +380,8 @@ export function buildMobile() {
     const wtype = item.widgetType || '', wsub = item.widgetConfig?.widgetSubType || '';
     card.className = 'mob-widget-card';
     if (wtype) card.dataset.wtype = wtype;
+    const preset = cardPreset(item, _state.widgetReg);
+    if (preset) card.dataset.card = preset;
     if (wsub) card.dataset.wsubtype = wsub;
     /* Aspect-lock to the family design and fit within the grid cell (centered).
        Same aspect as desktop, so the widget itself renders identically. The card
