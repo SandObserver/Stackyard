@@ -66,6 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Widgets no longer render outside their card in the top-left of the dashboard.
+
 - Widget settings fields no longer appear when the field that controls them is
   itself hidden. Turning off the Stats network row now hides its provider and
   URL fields, and the disk-source fields no longer show under System Summary.
