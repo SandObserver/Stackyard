@@ -118,7 +118,7 @@ async function boot() {
     poll({ fetch: fetchThroughput, interval: THROUGHPUT_MS, render: applyThroughput, onError: () => {} });
 
   poll({ fetch: fetchStats, interval: TICK_MS,
-    render: d => { stats = d; applyStats(stats); }, onError: () => {} });
+    render: d => { stats = d; applyStats(stats); } });
 }
 
 /* ── Build static HTML shell based on config ── */

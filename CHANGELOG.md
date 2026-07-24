@@ -66,6 +66,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The System Summary, Disk Health and Connections (Map) widgets now show a
+  loading and error state when their data source is unavailable, instead of
+  appearing empty.
+
 - Widgets no longer render outside their card in the top-left of the dashboard.
 
 - Widget settings fields no longer appear when the field that controls them is
