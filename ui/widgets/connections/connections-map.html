@@ -224,8 +224,7 @@ import { poll, openUrl, esc } from '/js/widget-toolbox.js?v=1';
   new ResizeObserver(redraw).observe(cv);
   redraw();
   poll({ fetch:mapFetch, interval:60000,
-    render:d=>{ computeLayers(d); redraw(); },
-    onError:()=>{} });
+    render:d=>{ computeLayers(d); redraw(); } });
 
 })();
 </script>

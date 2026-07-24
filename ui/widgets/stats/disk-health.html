@@ -345,7 +345,7 @@ function applyBays(d) {
 
 build();
 update();
-poll({ fetch: fetchBays, interval: 60_000, render: applyBays, onError: () => {} });
+poll({ fetch: fetchBays, interval: 60_000, render: applyBays });
 </script>
 </body>
 </html>
