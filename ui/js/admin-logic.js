@@ -43,6 +43,37 @@ export function showIfMatches(cond, current) {
   return String(current) === String(cond.equals);
 }
 
+/* Which fields in one set of siblings are visible, following showIf chains so a
+   field is hidden when its controlling field is hidden, not only when the
+   condition fails against a raw value. `fields` is the sibling list in order;
+   `readValue(key)` returns a field's current value. Returns a Set of visible keys.
+
+   Without the chain check, a field whose controller is hidden still reads that
+   controller's default and can show itself: e.g. a Provider row conditioned on
+   Mode == "speed" appears even when the Mode row is hidden by an off toggle,
+   because Mode still holds "speed" underneath. */
+export function visibleFieldKeys(fields, readValue) {
+  const byKey = new Map(fields.map(f => [f.key, f]));
+  const memo = new Map();
+  const isShown = key => {
+    if (memo.has(key)) return memo.get(key);
+    memo.set(key, false); /* guard against a cycle in malformed manifests */
+    const f = byKey.get(key);
+    let ok = true;
+    if (f && f.showIf) {
+      const dep = f.showIf.field;
+      ok = byKey.has(dep)
+        ? isShown(dep) && showIfMatches(f.showIf, readValue(dep))
+        : showIfMatches(f.showIf, readValue(dep));
+    }
+    memo.set(key, ok);
+    return ok;
+  };
+  const out = new Set();
+  for (const f of fields) if (f.key != null && isShown(f.key)) out.add(f.key);
+  return out;
+}
+
 /* Whether a required field was left empty. Types that always read back a value
    never count, and a blank secret means "keep the stored one" rather than empty. */
 const _ALWAYS_FILLED = new Set(['toggle', 'color', 'group', 'object', 'secret']);

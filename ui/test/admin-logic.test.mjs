@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds } from '../js/admin-logic.js';
+import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys } from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
@@ -101,4 +101,59 @@ test('groupBounds pins both bounds from countBySize and outranks min/max', () =>
 
 test('groupBounds ignores countBySize for a size it does not name', () => {
   assert.deepEqual(groupBounds({ min: 1, max: 4, countBySize: { small: 1 } }, 'large'), { min: 1, max: 4 });
+});
+
+test('visibleFieldKeys hides a field whose controlling field is hidden', () => {
+  /* network toggle off: mode is hidden, so provider and url (keyed on mode)
+     must also be hidden even though mode still holds its default. */
+  const fields = [
+    { key: 'enabled' },
+    { key: 'mode', showIf: { field: 'enabled', equals: true } },
+    { key: 'provider', showIf: { field: 'mode', equals: 'speed' } },
+    { key: 'url', showIf: { field: 'mode', equals: 'speed' } },
+  ];
+  const vals = { enabled: false, mode: 'speed', provider: 'myspeed', url: 'x' };
+  const shown = visibleFieldKeys(fields, k => vals[k]);
+  assert.deepEqual([...shown], ['enabled']);
+});
+
+test('visibleFieldKeys shows the chain once the toggle is on', () => {
+  const fields = [
+    { key: 'enabled' },
+    { key: 'mode', showIf: { field: 'enabled', equals: true } },
+    { key: 'provider', showIf: { field: 'mode', equals: 'speed' } },
+  ];
+  const vals = { enabled: true, mode: 'speed', provider: 'myspeed' };
+  const shown = visibleFieldKeys(fields, k => vals[k]);
+  assert.deepEqual([...shown].sort(), ['enabled', 'mode', 'provider']);
+});
+
+test('visibleFieldKeys does not leak a field across a hidden branch default', () => {
+  /* diskProvider defaults to scrutiny but is hidden under the system-summary
+     view, so scrutinyUrl (keyed on diskProvider) must stay hidden. */
+  const fields = [
+    { key: 'widgetSubType' },
+    { key: 'diskProvider', default: 'scrutiny', showIf: { field: 'widgetSubType', equals: 'disk-health' } },
+    { key: 'scrutinyUrl', showIf: { field: 'diskProvider', equals: 'scrutiny' } },
+  ];
+  const vals = { widgetSubType: 'system-summary', diskProvider: 'scrutiny', scrutinyUrl: '' };
+  const shown = visibleFieldKeys(fields, k => vals[k]);
+  assert.deepEqual([...shown], ['widgetSubType']);
+});
+
+test('visibleFieldKeys evaluates a condition on a field outside the sibling set directly', () => {
+  /* dep is not among the siblings (e.g. a parent-level key): fall back to the
+     raw condition rather than treating it as hidden. */
+  const fields = [{ key: 'a', showIf: { field: 'outside', equals: 'yes' } }];
+  assert.deepEqual([...visibleFieldKeys(fields, () => 'yes')], ['a']);
+  assert.deepEqual([...visibleFieldKeys(fields, () => 'no')], []);
+});
+
+test('visibleFieldKeys shows unconditional fields and tolerates a cycle', () => {
+  assert.deepEqual([...visibleFieldKeys([{ key: 'x' }, { key: 'y' }], () => undefined)], ['x', 'y']);
+  const cyc = [
+    { key: 'a', showIf: { field: 'b', equals: 1 } },
+    { key: 'b', showIf: { field: 'a', equals: 1 } },
+  ];
+  assert.doesNotThrow(() => visibleFieldKeys(cyc, () => 1));
 });

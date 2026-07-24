@@ -19,6 +19,6 @@
     { "key": "feelsLike", "type": "toggle", "label": "Show feels like", "default": false },
 
     { "key": "href", "type": "text", "label": "Link URL", "placeholder": "https://\u2026",
-      "hint": "Opens when the widget is clicked.", "optional": true }
+      "optional": true }
   ]
 }
