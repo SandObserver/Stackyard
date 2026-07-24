@@ -54,6 +54,9 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     fetchJSON: fetch,
     parsePrometheus,
     metrics:  IS_DEMO ? demoData.metrics : { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds },
+    /* Only set in demo mode, where a widget's demo.js uses it to drift its
+       invented numbers on the same clock as every other widget's. */
+    demo:     IS_DEMO ? demoData.helpers : null,
     normalizeBase,
     log,
   };
@@ -67,11 +70,21 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
    is part of the image (trusted maintainer/author code, not runtime input),
    the same trust model as the built-in routes it replaces. */
 async function runDataFn(name, ctx) {
-  const fnPath = path.join(WIDGETS_PATH, name, 'data.js');
+  return runWidgetModule(name, 'data.js', ctx);
+}
+
+/* Same contract as data.js, but only reached in demo mode, so the file is never
+   required on a normal install. */
+function runDemoFn(name, ctx) {
+  return runWidgetModule(name, 'demo.js', ctx);
+}
+
+async function runWidgetModule(name, file, ctx) {
+  const fnPath = path.join(WIDGETS_PATH, name, file);
   let fn;
   try { fn = require(fnPath); }
-  catch (e) { throw new Error('data function failed to load: ' + e.message); }
-  if (typeof fn !== 'function') throw new Error('data.js must export an async function');
+  catch (e) { throw new Error(`${file} failed to load: ` + e.message); }
+  if (typeof fn !== 'function') throw new Error(`${file} must export a function`);
   return await fn(ctx);
 }
 
@@ -82,10 +95,11 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch, row
   /* Only the dashboard's own data gets a canned body. An optionsFrom fetch has
      to run the real code path, because a demo visitor opening the widget editor
      should see the upstream fail rather than a list of fabricated options. */
-  if (IS_DEMO && !isOptions) {
-    /* Stats runs its real code path against fake metrics; the fetch-based
-       widgets get a canned body since their upstream is unreachable here. */
-    const body = demoData.demoWidgetBody(item.widgetType, wc);
+  if (IS_DEMO && !isOptions && entry.hasDemoFn) {
+    /* A widget whose upstream is unreachable here ships a demo.js returning an
+       invented body. One without it (stats) runs its real code path, because
+       ctx.metrics already hands it fake numbers. */
+    const body = await runDemoFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row));
     if (body) return { status: 200, body };
   }
   if (!entry.hasDataFn) return { status: 503, body: { error: 'widget declares no data source' } };
