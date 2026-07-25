@@ -1,4 +1,4 @@
-const { on, json, readBody, getIp } = require('../router');
+const { on, json, readBody, getIp, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchChecked, fetchUnchecked, pingChecked } = require('../proxy');
 const { rateLimit } = require('../auth');
@@ -9,6 +9,7 @@ const { collectNumbers, computeBadgeValue } = require('../badge-extract');
 const { requestParts, toRows, preserveItemBadgeSecrets, rowsToObject } = require('../badge-headers');
 
 on('POST', '/api/ping', async(req, res) => {
+  if (!checkOrigin(req, res)) return;
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'ping', 30, 60_000);
@@ -50,6 +51,7 @@ on('GET', '/api/badges', async(_, res) => {
 });
 
 on('POST', '/api/badge-proxy', async(req, res) => {
+  if (!checkOrigin(req, res)) return;
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'badge-proxy', 60, 60_000);
