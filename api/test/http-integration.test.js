@@ -160,6 +160,18 @@ test('a cross-origin write is rejected by the origin check', async () => {
   assert.equal(r.status, 403);
 });
 
+test('cross-origin login, logout, ping and badge-proxy are rejected', async () => {
+  const evil = { origin: 'http://evil.example', host: '127.0.0.1:1' };
+  const login = await req('POST', '/api/auth/login', { body: { password: 'correct-horse' }, ...evil });
+  assert.equal(login.status, 403);
+  const logout = await req('POST', '/api/auth/logout', { cookie: validCookie, ...evil });
+  assert.equal(logout.status, 403);
+  const ping = await req('POST', '/api/ping', { cookie: validCookie, body: { url: 'http://x' }, ...evil });
+  assert.equal(ping.status, 403);
+  const badge = await req('POST', '/api/badge-proxy', { cookie: validCookie, body: { url: 'http://x' }, ...evil });
+  assert.equal(badge.status, 403);
+});
+
 /* Config import/export route. */
 test('POST /api/config rejects items that are not an array', async () => {
   const r = await req('POST', '/api/config', { cookie: validCookie, body: { items: 'nope' } });

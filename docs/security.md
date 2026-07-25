@@ -38,6 +38,8 @@ Setting `ALLOW_PRIVATE_IPS=true` disables this guard entirely, so private, loopb
   version invalidates any session issued before it, so existing users log in
   once more.
 - Login is rate-limited to 5 attempts per IP per 15 minutes.
+  Rate-limit counters are held in memory, so a restart clears them and they are
+  not shared across replicas. Run a single instance behind any proxy.
 - Changing the password rotates the session secret.
 
 Until a password is set, `/api/auth/set-password` accepts the first caller with

@@ -16,6 +16,7 @@ on('GET', '/api/auth/check', (req, res) => {
 });
 
 on('POST', '/api/auth/login', async(req, res) => {
+  if (!checkOrigin(req, res)) return;
   const ip = getIp(req);
   try {
     const { password = '' } = JSON.parse(await readBody(req));
@@ -37,6 +38,7 @@ on('POST', '/api/auth/login', async(req, res) => {
 });
 
 on('POST', '/api/auth/logout', (req, res) => {
+  if (!checkOrigin(req, res)) return;
   log.audit('logout', { ip: getIp(req) });
   clearSessionCookie(res, isSecureRequest(req));
   json(res, 200, { ok:true });
