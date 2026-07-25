@@ -13,8 +13,7 @@ function wave(periodSec, min, max, phase = 0) {
 const round = (v, d = 0) => { const f = 10 ** d; return Math.round(v * f) / f; };
 
 const metrics = {
-  cpuPercent: () => round(wave(40, 8, 46)),
-  cpuIoWait:  () => round(wave(55, 0.2, 2.4, 1), 1),
+  cpuSample:  () => ({ cpu: round(wave(40, 8, 46)), iowait: round(wave(55, 0.2, 2.4, 1), 1) }),
   ramPercent: () => round(wave(90, 54, 68)),
   diskStats:  (mount) => ({ usedPct: mount === '/' ? 61.4 : 78.2, totalGb: mount === '/' ? 467 : 1863 }),
   cpuTemp:    () => round(wave(70, 44, 53, 2)),

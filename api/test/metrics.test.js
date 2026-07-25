@@ -48,3 +48,24 @@ test('uptimeSeconds returns 0 when the value is not finite', (t) => {
   t.mock.method(fs, 'readFileSync', () => 'x y\n');
   assert.equal(metrics.uptimeSeconds(), 0);
 });
+
+test('computeCpu derives busy and iowait percentages from two snapshots', () => {
+  const a = { total: 1000, busy: 200, iowait: 50 };
+  const b = { total: 1200, busy: 300, iowait: 70 };
+  const r = metrics.computeCpu(a, b);
+  assert.equal(r.cpu, 50);      // (300-200)/(1200-1000) = 50%
+  assert.equal(r.iowait, 10);   // (70-50)/(1200-1000) = 10%
+});
+
+test('computeCpu returns zeros when no time elapsed', () => {
+  const s = { total: 1000, busy: 200, iowait: 50 };
+  assert.deepEqual(metrics.computeCpu(s, s), { cpu: 0, iowait: 0 });
+});
+
+test('computeCpu clamps to the 0-100 range', () => {
+  const a = { total: 0, busy: 0, iowait: 0 };
+  const b = { total: 100, busy: 500, iowait: -20 };
+  const r = metrics.computeCpu(a, b);
+  assert.equal(r.cpu, 100);
+  assert.equal(r.iowait, 0);
+});

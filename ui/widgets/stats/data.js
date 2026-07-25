@@ -74,12 +74,11 @@ async function systemSummary({ config, settings, metrics }) {
   }
   if (!mounts.size) mounts.add(settings?.stats?.diskMount || '/');
 
-  const cpu   = await metrics.cpuPercent();
+  const { cpu, iowait: iowaitPct } = await metrics.cpuSample();
   const disks = [...mounts].map(m => ({ mount: m, ...metrics.diskStats(m) }));
   const ram   = metrics.ramPercent();
 
-  /* IO wait costs a second sampling window, so only measure it when a slot asks for it. */
-  const iowait = slots.some(s => s.type === 'iowait') ? await metrics.cpuIoWait() : null;
+  const iowait = slots.some(s => s.type === 'iowait') ? iowaitPct : null;
   const procs  = metrics.procCount();
   const uptime = metrics.uptimeSeconds();
 

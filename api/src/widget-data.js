@@ -3,7 +3,7 @@ const { on, json, readBody, checkOrigin } = require('./router');
 const { loadConfig } = require('./config');
 const { fetchChecked, fetchUnchecked, SsrfBlockedError } = require('./proxy');
 const { parsePrometheus } = require('./parse-prometheus');
-const { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds } = require('./metrics');
+const { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
 const { dispatchProvider } = require('./provider-dispatch');
@@ -53,7 +53,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
        preview config (widget-options). */
     fetchJSON: fetch,
     parsePrometheus,
-    metrics:  IS_DEMO ? demoData.metrics : { cpuPercent, ramPercent, cpuTemp, diskStats, cpuIoWait, procCount, uptimeSeconds },
+    metrics:  IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
     /* Only set in demo mode, where a widget's demo.js uses it to drift its
        invented numbers on the same clock as every other widget's. */
     demo:     IS_DEMO ? demoData.helpers : null,

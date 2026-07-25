@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- System stats now sample CPU once per refresh instead of twice, removing about
+  a second of delay when the IO wait row is shown.
 - Books, Connections (Map), Dashboard Switch and Stats (System Summary) now use
   a solid dark card. Backup, Connections (VPN), DNS and GitHub use a translucent
   one.
