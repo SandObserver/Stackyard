@@ -7,22 +7,24 @@ function readCpuStat() {
   return { total, busy: total - idle - iowait, iowait };
 }
 
-async function cpuPercent() {
-  const a = readCpuStat();
-  await new Promise(r => setTimeout(r, 500));
-  const b = readCpuStat();
+/* Busy and iowait as percentages of total CPU time between two /proc/stat
+   snapshots (both counters are cumulative). Pure, so the derivation is tested
+   without the sampling delay. */
+function computeCpu(a, b) {
   const dt = b.total - a.total;
-  return dt > 0 ? Math.min(100, ((b.busy - a.busy) / dt) * 100) : 0;
+  if (dt <= 0) return { cpu: 0, iowait: 0 };
+  return {
+    cpu: Math.min(100, ((b.busy - a.busy) / dt) * 100),
+    iowait: Math.min(100, Math.max(0, ((b.iowait - a.iowait) / dt) * 100)),
+  };
 }
 
-/* IO wait as a percentage of total CPU time over a short sampling window, the
-   same delta approach as cpuPercent (both counters are cumulative). */
-async function cpuIoWait() {
+/* One sampling window yields both busy% and iowait%, so a widget needing both
+   pays a single delay instead of two. */
+async function cpuSample() {
   const a = readCpuStat();
   await new Promise(r => setTimeout(r, 500));
-  const b = readCpuStat();
-  const dt = b.total - a.total;
-  return dt > 0 ? Math.min(100, Math.max(0, ((b.iowait - a.iowait) / dt) * 100)) : 0;
+  return computeCpu(a, readCpuStat());
 }
 
 /* Total number of processes/threads, from the 4th field of /proc/loadavg
@@ -66,4 +68,4 @@ function diskStats(mountPoint) {
   } catch { return { usedPct: 0, totalGb: 0 }; }
 }
 
-module.exports = { cpuPercent, cpuIoWait, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds };
+module.exports = { cpuSample, computeCpu, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds };
