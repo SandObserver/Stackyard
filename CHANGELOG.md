@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Reorder items on touch devices by dragging the handle in the dashboard list;
+  drop onto a folder to move an item into it.
 - Widget settings can declare a `color` field, rendered with the same colour
   control used elsewhere in the admin interface.
 - Widget settings can declare an `object` field, rendered as its own card of
@@ -65,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TrueNAS API key is no longer sent in a URL query string when fetching pools.
 
 ### Fixed
+
+- Folder rows now show the drop highlight while an app is dragged onto them.
 
 - The System Summary, Disk Health and Connections (Map) widgets now show a
   loading and error state when their data source is unavailable, instead of

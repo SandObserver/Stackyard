@@ -407,6 +407,12 @@ html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:cente
 html.is-mobile .mtab .ni{width:31px;height:31px;flex-shrink:0}
 html.is-mobile .mtab.active{color:var(--ac2)}
 
+/* Touch reorder: the handle is the drag zone, so it needs a real touch target
+   and touch-action:none so starting a drag on it never scrolls the list. */
+html.is-mobile .row.drow{grid-template-columns:44px 48px 1fr auto auto}
+html.is-mobile .rord{touch-action:none;width:44px;align-self:stretch;font-size:20px;opacity:.65}
+.drag-ghost{position:fixed;z-index:1000;pointer-events:none;opacity:.92;border:1px solid var(--bd-inner);background:var(--card);box-shadow:0 10px 30px rgba(0,0,0,.55)}
+
 /* ─────────────── RTL foundation ───────────────
    Flexbox rows reverse automatically under dir="rtl"; these cover the pieces
    that don't: right-aligned values, absolutely-positioned menus, the sidebar
