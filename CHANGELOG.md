@@ -104,6 +104,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admin dashboard uses the sidebar layout on landscape phone instead of a
   stretched mobile column.
 
+- Dashboard grid is no longer vertically compressed in Safari on iPhone; it now
+  fills the screen the same as the installed app.
+
 ## [1.3.1] - 2026-07-20
 
 ### Security

@@ -18,6 +18,21 @@ const st       = () => _state;
 const widgetReg = () => _state?.widgetReg || {};
 const mkWrap   = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
+/* Real safe-area insets in px. Standalone reports the status bar and home
+   indicator; Safari, which already excludes its toolbars from innerHeight,
+   reports 0. Needs viewport-fit=cover in the page meta to be non-zero. */
+function readSafeInsets() {
+  const p = mk('div');
+  p.style.cssText = 'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;'
+    + 'padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);';
+  document.body.appendChild(p);
+  const cs = getComputedStyle(p);
+  const top = parseFloat(cs.paddingTop) || 0;
+  const bottom = parseFloat(cs.paddingBottom) || 0;
+  p.remove();
+  return { top, bottom };
+}
+
 /* Dismiss any "active" interior state (e.g. a tapped disk-health sled) on mobile.
    Widgets expose window.__clearActive; taps outside a widget land in the parent
    document, so the parent must tell the widgets to reset. */
@@ -309,7 +324,8 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
 export function buildMobile() {
   st().BEL.clear();
   const vw = innerWidth, vh = innerHeight;
-  const { sc, sm, sb, safe, dh, pillH, pillGap, dz, avail, rh, cw } = mobileMetrics(vw, vh);
+  const { top: insetTop, bottom: insetBottom } = readSafeInsets();
+  const { sc, sm, sb, safe, dh, pillH, pillGap, dz, avail, rh, cw } = mobileMetrics(vw, vh, insetTop, insetBottom);
   document.body.style.setProperty('--sc', String(sc));
   const maxIsz = Math.round(74*sc);
   const isz = Math.round(Math.min(cw*.90, rh*.80, maxIsz));
