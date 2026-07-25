@@ -95,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   frontend files are now cache-busted automatically from their content, the same
   way the rest of the interface already was.
 
+- Dashboard grid no longer overflows and clips to the left on landscape phone
+  and portrait tablet.
+
 ## [1.3.1] - 2026-07-20
 
 ### Security
