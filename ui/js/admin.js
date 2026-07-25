@@ -10,7 +10,7 @@ import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
 import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=c3d495f0';
 import { LANGUAGES, initI18n, translateText, t } from '/js/i18n.js?v=1';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
-import { canJoinFolder, dropTargetKind } from '/js/admin-drag-logic.js?v=1';
+import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=1';
 
 /* Admin UI: Stackyard Dashboard */
 
@@ -111,6 +111,9 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   if(indent)row.style.cssText='padding-left:28px;background:rgba(255,255,255,.02);border-left:2px solid var(--bd);margin-left:8px;border-radius:0 var(--rs) var(--rs) 0;';
   const _filtering=!!(_flt.q||_flt.type!=='all');
   row.draggable=!_filtering;
+  row.dataset.itemId=item.id;
+  if(item.type==='folder')row.dataset.isFolder='1';
+  if(indent){row.dataset.indent='1';row.dataset.folderId=folderId;row.dataset.childIdx=String(childIdx);}
   let canUp=false,canDown=false;
   if(folderId!=null){
     const cf=state.items.find(i=>i.id===folderId);const n=(cf?.children||[]).length;
@@ -239,56 +242,120 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     const dropAbove=row.classList.contains('drag-above');
     clearDragClasses();
     const raw=e.dataTransfer.getData('text/plain');
-    if(!raw||raw===dragData)return;
-
-    let srcItem,srcFolder=null,srcFolderObj=null;
-    if(raw.startsWith('child:')){
-      const[,sfId,sItemId]=raw.split(':');
-      srcFolderObj=state.items.find(i=>i.id===sfId);
-      srcItem=state.items.find(i=>i.id===sItemId);
-      srcFolder=sfId;
-    }else if(raw.startsWith('top:')){
-      srcItem=state.items.find(i=>i.id===raw.slice(4));
-    }
-    if(!srcItem)return;
-
-    if(srcFolder&&srcFolderObj){
-      srcFolderObj.children=(srcFolderObj.children||[]).filter(id=>id!==srcItem.id);
-    }else{
-      const si=state.items.indexOf(srcItem);
-      if(si>=0)state.items.splice(si,1);
-    }
-
-    /* Only apps may enter a folder; anything else dropped on one goes top level. */
-    const kind=dropTargetKind({srcType:srcItem.type,targetIsFolder:item.type==='folder',indent});
-    if(kind==='into-folder'&&indent){
-      const tf=state.items.find(i=>i.id===folderId);
-      if(!tf){state.items.push(srcItem);save();return;}
-      tf.children=(tf.children||[]).filter(id=>id!==srcItem.id);
-      if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
-      tf.children.splice(childIdx,0,srcItem.id);
-    }else if(kind==='into-folder'){
-      if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
-      const tf=state.items.find(i=>i.id===item.id);
-      if(tf){tf.children=(tf.children||[]).filter(id=>id!==srcItem.id);tf.children.push(srcItem.id);}
-    }else{
-      /* Top-level move: remove from any folder and insert relative to the target
-         (or, for a drop inside a folder, relative to that folder). */
-      state.items.filter(f=>f.type==='folder').forEach(f=>{
-        f.children=(f.children||[]).filter(id=>id!==srcItem.id);
-      });
-      if(!state.items.find(i=>i.id===srcItem.id))state.items.push(srcItem);
-      const si2=state.items.indexOf(srcItem);
-      if(si2>=0)state.items.splice(si2,1);
-      const anchor=indent?state.items.find(i=>i.id===folderId):item;
-      let ti2=state.items.indexOf(anchor);
-      if(ti2<0)ti2=state.items.length;
-      const insertAt=dropAbove?ti2:ti2+1;
-      state.items.splice(Math.max(0,insertAt),0,srcItem);
-    }
-    save();
+    if(!raw)return;
+    const drop=parseDragData(raw);
+    if(!drop)return;
+    if(applyDrop(state.items,{...drop,targetId:item.id,targetFolderId:folderId,targetIsFolder:item.type==='folder',indent,childIdx,dropAbove}))save();
   });
+
+  if(document.documentElement.classList.contains('is-mobile')) wireTouchDrag(row,handle,{indent,folderId});
   return row;
+}
+
+/* Drag data formats: "top:itemId" or "child:folderId:itemId". Returns
+   { srcId, srcFolderId } or null. */
+function parseDragData(raw){
+  if(raw.startsWith('child:')){const[,sfId,sItemId]=raw.split(':');return{srcId:sItemId,srcFolderId:sfId};}
+  if(raw.startsWith('top:'))return{srcId:raw.slice(4),srcFolderId:null};
+  return null;
+}
+
+/* Touch/pen reorder. Native HTML5 drag does not fire from touch on iOS Safari,
+   so on the mobile layout the drag handle drives a pointer-based path that
+   commits through the same applyDrop as desktop. The handle carries
+   touch-action:none (see admin.css) so starting on it never scrolls the list;
+   the rest of the row scrolls normally. */
+function wireTouchDrag(row,handle,{indent,folderId}){
+  handle.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse')return;
+    if(row.draggable===false)return; /* hidden while filtering */
+    e.preventDefault();
+    const srcId=row.dataset.itemId;
+    const startRect=row.getBoundingClientRect();
+    const ghost=row.cloneNode(true);
+    ghost.className='row drow drag-ghost';
+    ghost.style.width=startRect.width+'px';
+    ghost.style.left=startRect.left+'px';
+    ghost.style.top=startRect.top+'px';
+    document.body.appendChild(ghost);
+    row.classList.add('dragging');
+    handle.setPointerCapture(e.pointerId);
+    const offY=e.clientY-startRect.top;
+    let hovered=null,dropAbove=false,scrollTimer=null;
+    const scroller=scrollParent(row);
+
+    const place=(x,y)=>{
+      ghost.style.top=(y-offY)+'px';
+      ghost.style.left=startRect.left+'px';
+      clearDragClasses();
+      hovered=null;
+      const under=document.elementFromPoint(x,y);
+      const tr=under&&under.closest('.drow');
+      if(!tr||tr===row||tr===ghost)return;
+      hovered=tr;
+      if(tr.dataset.isFolder&&canJoinFolder(itemType(srcId))){
+        tr.classList.add('drag-into');
+      }else{
+        const r=tr.getBoundingClientRect();
+        dropAbove=y<r.top+r.height/2;
+        tr.classList.add(dropAbove?'drag-above':'drag-below');
+      }
+    };
+    const autoscroll=y=>{
+      if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;}
+      const rect=scroller===document.scrollingElement
+        ?{top:0,bottom:window.innerHeight}
+        :scroller.getBoundingClientRect();
+      const M=52;
+      const up=y<rect.top+M,dn=y>rect.bottom-M;
+      if(!up&&!dn)return;
+      scrollTimer=setInterval(()=>{scrollByPx(scroller,up?-12:12);},16);
+    };
+    const move=ev=>{place(ev.clientX,ev.clientY);autoscroll(ev.clientY);};
+    const end=()=>{
+      handle.removeEventListener('pointermove',move);
+      handle.removeEventListener('pointerup',up);
+      handle.removeEventListener('pointercancel',cancel);
+      if(scrollTimer)clearInterval(scrollTimer);
+      ghost.remove();row.classList.remove('dragging');clearDragClasses();
+    };
+    const up=()=>{
+      const tr=hovered;end();
+      if(!tr)return;
+      const into=tr.dataset.isFolder&&canJoinFolder(itemType(srcId));
+      const drop=applyDrop(state.items,{
+        srcId,
+        srcFolderId:indent?folderId:null,
+        targetId:tr.dataset.itemId,
+        targetFolderId:tr.dataset.folderId||null,
+        targetIsFolder:!!tr.dataset.isFolder,
+        indent:!!tr.dataset.indent,
+        childIdx:tr.dataset.childIdx!=null?Number(tr.dataset.childIdx):null,
+        dropAbove:into?false:dropAbove,
+      });
+      if(drop)save();
+    };
+    const cancel=()=>end();
+    handle.addEventListener('pointermove',move);
+    handle.addEventListener('pointerup',up);
+    handle.addEventListener('pointercancel',cancel);
+  });
+}
+
+/* Type of an item by id, for the folder-join rule during a touch drag. */
+function itemType(id){return state.items.find(i=>i.id===id)?.type||null;}
+
+/* Nearest scrollable ancestor, else the document scroller. */
+function scrollParent(el){
+  for(let p=el.parentElement;p;p=p.parentElement){
+    const oy=getComputedStyle(p).overflowY;
+    if((oy==='auto'||oy==='scroll')&&p.scrollHeight>p.clientHeight)return p;
+  }
+  return document.scrollingElement||document.documentElement;
+}
+function scrollByPx(scroller,dy){
+  if(scroller===document.scrollingElement)window.scrollBy(0,dy);
+  else scroller.scrollTop+=dy;
 }
 
 function render(){
