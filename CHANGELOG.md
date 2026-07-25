@@ -98,6 +98,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard grid no longer overflows and clips to the left on landscape phone
   and portrait tablet.
 
+- Admin dashboard list no longer truncates item names to a single character on
+  phones; status tags wrap below the name.
+
 ## [1.3.1] - 2026-07-20
 
 ### Security

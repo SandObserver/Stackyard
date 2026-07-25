@@ -409,8 +409,21 @@ html.is-mobile .mtab.active{color:var(--ac2)}
 
 /* Touch reorder: the handle is the drag zone, so it needs a real touch target
    and touch-action:none so starting a drag on it never scrolls the list. */
-html.is-mobile .row.drow{grid-template-columns:44px 48px 1fr auto auto}
-html.is-mobile .rord{touch-action:none;width:44px;align-self:stretch;font-size:20px;opacity:.65}
+/* Two-row layout: the name (in .rinf) takes the full width of its column, and
+   the status pills drop to the row below it. On a phone the single-row track
+   otherwise starved the name column down to one character. Handle and actions
+   span both rows. */
+html.is-mobile .row.drow{
+  grid-template-columns:44px 48px 1fr auto;
+  grid-template-areas:"handle icon info actions" "handle icon pills actions";
+  row-gap:6px;
+}
+html.is-mobile .rord{grid-area:handle}
+html.is-mobile .rico{grid-area:icon}
+html.is-mobile .rinf{grid-area:info;align-self:center}
+html.is-mobile .rpills{grid-area:pills;align-self:center}
+html.is-mobile .ract{grid-area:actions}
+html.is-mobile .rord{touch-action:none;width:44px;align-self:stretch;font-size:15px;opacity:.55}
 .drag-ghost{position:fixed;z-index:1000;pointer-events:none;opacity:.92;border:1px solid var(--bd-inner);background:var(--card);box-shadow:0 10px 30px rgba(0,0,0,.55)}
 
 /* ─────────────── RTL foundation ───────────────
