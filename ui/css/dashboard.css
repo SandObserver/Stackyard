@@ -66,8 +66,11 @@
       -webkit-justify-content:start; justify-content:start;
       overflow:hidden;
       /* Vertical padding: top clears the controls bar, bottom clears the dock.
+         Horizontal padding is fluid so the self-limiting .grid still fits on
+         narrow-wide viewports (landscape phone, portrait tablet) instead of
+         overflowing the content box and being clipped left.
          clamp scales gracefully on taller/shorter screens. */
-      padding:clamp(44px,4vh,70px) 270px clamp(110px,10vh,160px);
+      padding:clamp(44px,4vh,70px) clamp(16px,4vw,270px) clamp(110px,10vh,160px);
     }
     .grid {
       display:grid; grid-template-columns:repeat(6,1fr);
