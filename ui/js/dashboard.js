@@ -389,6 +389,7 @@ async function boot() {
   };
   window.addEventListener('resize', _rebuild, { passive: true });
   window.addEventListener('orientationchange', _rebuild, { passive: true });
+  window.visualViewport?.addEventListener('resize', _rebuild, { passive: true });
 
   /* Jittered scheduling: a random initial offset spreads the first tick across
      the interval so multiple open clients don't hit the API on the same wall-clock

@@ -27,7 +27,7 @@
 
     /* ── Root ── */
     html {
-      width:100vw; height:100vh; overflow:hidden;
+      width:100vw; height:100vh; height:100dvh; overflow:hidden;
       background: var(--bg-color, #0d1117);
       font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;
       -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
@@ -40,7 +40,7 @@
       -webkit-transform:translateZ(0); transform:translateZ(0);
     }
     body {
-      background:transparent; width:100vw; height:100vh;
+      background:transparent; width:100vw; height:100vh; height:100dvh;
       overflow:hidden; position:relative; z-index:1;
     }
     /* ── Boot loading veil — fades out once boot() finishes ── */
@@ -59,7 +59,7 @@
       transition:transform .44s var(--page-ease);
     }
     .page {
-      -webkit-flex:0 0 100vw; flex:0 0 100vw; width:100vw; height:100vh;
+      -webkit-flex:0 0 100vw; flex:0 0 100vw; width:100vw; height:100vh; height:100dvh;
       display:-webkit-flex; display:flex;
       -webkit-flex-direction:column; flex-direction:column;
       -webkit-align-items:center; align-items:center;

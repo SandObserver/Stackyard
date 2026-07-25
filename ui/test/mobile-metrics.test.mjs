@@ -42,6 +42,27 @@ test('avail shrinks as the reserve grows', () => {
   assert.ok(m.avail > 0);
 });
 
+test('safe-area insets set the top and bottom reserves', () => {
+  const m = mobileMetrics(393, 852, 59, 34);
+  assert.equal(m.sb, 59);
+  assert.equal(m.safe, 34);
+});
+
+test('reserves fall back to a scaled minimum when insets are zero', () => {
+  const m = mobileMetrics(393, 695, 0, 0);
+  assert.equal(m.sb, 18);
+  assert.equal(m.safe, 8);
+  const m2 = mobileMetrics(786, 695, 0, 0);
+  assert.equal(m2.sb, 36);
+  assert.equal(m2.safe, 16);
+});
+
+test('a smaller inset than the minimum does not shrink the reserve', () => {
+  const m = mobileMetrics(393, 852, 4, 2);
+  assert.equal(m.sb, 18);
+  assert.equal(m.safe, 8);
+});
+
 test('cw fits four columns inside the side margins', () => {
   const m = mobileMetrics(393, 852);
   assert.equal(m.cw * 4 + m.sm * 2, 393);
