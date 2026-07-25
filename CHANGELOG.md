@@ -68,6 +68,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TrueNAS API key is no longer sent in a URL query string when fetching pools.
 
+- Reject cross-origin POSTs to `/api/auth/login`, `/api/auth/logout`,
+  `/api/ping` and `/api/badge-proxy`, matching the other write routes.
+
 ### Fixed
 
 - Folder rows now show the drop highlight while an app is dragged onto them.
@@ -91,11 +94,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widgets no longer show a stale cached version after an update. Each widget's
   frontend files are now cache-busted automatically from their content, the same
   way the rest of the interface already was.
-
-### Security
-
-- Reject cross-origin POSTs to `/api/auth/login`, `/api/auth/logout`,
-  `/api/ping` and `/api/badge-proxy`, matching the other write routes.
 
 ## [1.3.1] - 2026-07-20
 
