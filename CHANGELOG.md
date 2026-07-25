@@ -101,6 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admin dashboard list no longer truncates item names to a single character on
   phones; status tags wrap below the name.
 
+- Admin dashboard uses the sidebar layout on landscape phone instead of a
+  stretched mobile column.
+
 ## [1.3.1] - 2026-07-20
 
 ### Security

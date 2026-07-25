@@ -14,13 +14,15 @@ import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=1';
 
 /* Admin UI: Stackyard Dashboard */
 
-/* Mobile layout switch. Uses the SAME rule as the dashboard's MOB flag
-   (viewport <=768px OR a phone user-agent) so the admin and dashboard always
-   agree on when to show the mobile UI. Driven via a class rather than a bare
-   media query, because some phones report a wider CSS viewport. */
+/* Mobile layout switch. A narrow viewport is always mobile; a phone user-agent
+   is mobile only in portrait, so landscape phone falls back to the desktop
+   sidebar+content layout instead of stretching the mobile column across a wide,
+   short viewport. Driven via a class rather than a bare media query, because
+   some phones report a wider CSS viewport. */
 function _syncMobile(){
+  const portrait = window.matchMedia('(orientation:portrait)').matches;
   const m = window.matchMedia('(max-width:768px)').matches
-    || /iPhone|iPod|Android/i.test(navigator.userAgent);
+    || (portrait && /iPhone|iPod|Android/i.test(navigator.userAgent));
   document.documentElement.classList.toggle('is-mobile', m);
 }
 _syncMobile();
