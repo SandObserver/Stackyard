@@ -134,7 +134,7 @@ function saveConfig(data) {
 /* The Settings app is a permanent, non-deletable default item. It behaves like
    any app on the dashboard (movable, foldable, hideable) but is never removed
    or edited. We guarantee its presence on every read and write. */
-const SYSTEM_SETTINGS_ITEM = { id:'settings', type:'app', system:'settings', label:'Settings', dock:false, color:'#3b4250' };
+const SYSTEM_SETTINGS_ITEM = { id:'settings', type:'app', system:'settings', label:'Settings', dock:false, color:'#027eae' };
 function ensureSystemItems(cfg) {
   if (!cfg || typeof cfg !== 'object') return cfg;
   if (!Array.isArray(cfg.items)) cfg.items = [];

@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TrueNAS disk health reports a clear message on TrueNAS 26, which removed the
   REST API the widget uses; TrueNAS 25.x and earlier are unaffected.
 
+- Settings app icon uses a blue background.
+
 ### Removed
 
 - `GET /api/scrutiny-proxy` and `POST /api/truenas-proxy`. Drive and pool lists
