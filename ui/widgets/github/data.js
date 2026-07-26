@@ -64,7 +64,7 @@ async function pullRequests(token, username, config, fetchJSON) {
   });
   const qualifier = qualifiers.join(' ');
   const q   = encodeURIComponent(`is:open is:pr ${qualifier}`);
-  const url = `https://api.github.com/search/issues?q=${q}&sort=updated&order=desc&per_page=20`;
+  const url = `https://api.github.com/search/issues?q=${q}&advanced_search=true&sort=updated&order=desc&per_page=20`;
 
   let r;
   try {

@@ -171,7 +171,7 @@ async function kavitaLists(ctx) {
   const key = ctx.config.kavitaKey;
   if (!base || !key) throw new Error('Kavita URL and API key required');
   const tok = await kavitaToken(ctx, base, key);
-  const r = await jget(ctx, base, `/api/ReadingList/lists`, { Authorization: 'Bearer ' + tok });
+  const r = await jpost(ctx, base, `/api/ReadingList/lists?PageNumber=1&PageSize=100&includePromoted=true`, { Authorization: 'Bearer ' + tok });
   const arr = Array.isArray(r.data) ? r.data : ((r.data && r.data.content) || []);
   return { options: arr.filter(l => l && l.id).map(l => ({ value: String(l.id), label: l.title || l.name || 'Reading list' })) };
 }

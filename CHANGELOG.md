@@ -50,6 +50,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new slot for an instance already configured elsewhere needs its URL and
   password entered again.
 
+- GitHub widget opts into GitHub's advanced issue search, now the default for
+  the pull-request search API.
+
+- Jellyfin and Emby now-playing authenticate with a request header instead of
+  the `api_key` query parameter, which Jellyfin has deprecated.
+
+- TrueNAS disk health reports a clear message on TrueNAS 26, which removed the
+  REST API the widget uses; TrueNAS 25.x and earlier are unaffected.
+
 ### Removed
 
 - `GET /api/scrutiny-proxy` and `POST /api/truenas-proxy`. Drive and pool lists
@@ -115,6 +124,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Folder preview icons are uniform squares on phones and tablets regardless of
   icon shape.
+
+- Kavita reading-list picker works again; its list endpoint requires POST.
 
 ## [1.3.1] - 2026-07-20
 

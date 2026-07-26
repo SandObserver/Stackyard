@@ -45,6 +45,7 @@ async function truenasPoolOptions({ config, fetchJSON }) {
     });
   } catch (e) { return { error: e.message }; }
   if (r.status === 401 || r.status === 403) return { error: 'TrueNAS auth failed, check API key' };
+  if (r.status === 404) return { error: 'TrueNAS REST API not found (removed in v26; supported on 25.x, or use Scrutiny)' };
   if (r.status >= 400) return { error: 'TrueNAS HTTP ' + r.status };
   const options = (Array.isArray(r.data) ? r.data : [])
     .filter(p => p && p.name)
@@ -146,6 +147,7 @@ async function diskHealthTrueNas({ config, fetchJSON }) {
   } catch (e) { return { error: e.message }; }
 
   if (r.status === 401 || r.status === 403) return { error: 'TrueNAS auth failed, check API key' };
+  if (r.status === 404) return { error: 'TrueNAS REST API not found (removed in v26; supported on 25.x, or use Scrutiny)' };
   if (r.status >= 400) return { error: 'TrueNAS HTTP ' + r.status };
 
   const byName = {};
