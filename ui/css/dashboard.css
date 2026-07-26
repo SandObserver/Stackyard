@@ -585,7 +585,7 @@
     .dyn-mob-label  { font-weight:500; color:rgba(255,255,255,.88); text-align:center; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-label { font-weight:500; color:rgba(255,255,255,.90); text-align:center; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-wrap  { position:absolute; inset:0; pointer-events:none; border-radius:var(--br); background:rgba(120,130,160,.35); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:var(--gap); padding:var(--pad); overflow:hidden; -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); box-shadow:inset 1px 1px 0 rgba(255,255,255,.22),inset -1px -1px 0 rgba(0,0,0,.12); }
-    .dyn-fold-cell  { display:flex; align-items:center; justify-content:center; z-index:1; pointer-events:none; }
+    .dyn-fold-cell  { display:flex; align-items:center; justify-content:center; z-index:1; pointer-events:none; min-width:0; min-height:0; }
     .dyn-fold-sheen { position:absolute; inset:0; pointer-events:none; z-index:2; border-radius:inherit; background:linear-gradient(135deg,rgba(255,255,255,.12) 0%,transparent 55%); }
     .dyn-clip       { overflow:hidden; flex-shrink:0; width:var(--gw); height:var(--gh); }
     .dyn-strip      { display:flex; height:var(--gh); will-change:transform; transition:transform .3s cubic-bezier(.4,0,.2,1); -webkit-transition:transform .3s cubic-bezier(.4,0,.2,1); }
