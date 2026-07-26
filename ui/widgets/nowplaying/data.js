@@ -49,8 +49,13 @@ async function jellyfinLike(ctx, provider) {
   const key = provider === 'emby' ? ctx.config.embyKey : ctx.config.jellyfinKey;
   const name = provider === 'emby' ? 'Emby' : 'Jellyfin';
   if (!base || !key) throw new Error(name + ' URL and API key required');
-  const url = `${base}/Sessions?api_key=${encodeURIComponent(key)}`;
-  const r = await ctx.fetchJSON(url, { timeout: 8000 });
+  /* Header auth works on current and older servers. Jellyfin deprecated the
+     api_key query param (removal targeted for 10.13); Emby keeps its own token
+     header. */
+  const authHeaders = provider === 'emby'
+    ? { 'X-Emby-Token': key }
+    : { 'Authorization': `MediaBrowser Token="${key}"` };
+  const r = await ctx.fetchJSON(`${base}/Sessions`, { headers: authHeaders, timeout: 8000 });
   if (r.status === 401 || r.status === 403) throw new Error(name + ' auth failed');
   if (r.status >= 400) throw new Error(name + ' HTTP ' + r.status);
   const list = Array.isArray(r.data) ? r.data : [];
