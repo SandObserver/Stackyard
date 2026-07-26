@@ -15,7 +15,22 @@ const wCols  = { d: WIDGET_COLS.desktop,  m: WIDGET_COLS.mobile  };
 const wRows = { d: WIDGET_ROWS.desktop,  m: WIDGET_ROWS.mobile  };
 const WH  = { d: WIDGET_HEIGHTS };
 const wCost  = { d: WIDGET_COST.desktop,  m: WIDGET_COST.mobile  };
-const SLOTS = 24;
+
+/* Desktop pagination sizing. DCOLS is the .grid column count; ROW_UNIT is the
+   base widget row height and ROW_GAP the grid row-gap, both from dashboard.css.
+   The page-padding bounds below mirror the .page clamp()s in dashboard.css and
+   must move together with them. */
+const DCOLS = 6;
+const ROW_UNIT = WIDGET_HEIGHTS.small;
+const ROW_GAP = 30;
+
+function desktopSlots() {
+  const ih = innerHeight;
+  const top = Math.min(70, Math.max(44, ih * 0.04));
+  const bottom = Math.min(160, Math.max(110, ih * 0.10));
+  const rows = Math.max(1, Math.min(4, Math.floor((ih - top - bottom + ROW_GAP) / (ROW_UNIT + ROW_GAP))));
+  return DCOLS * rows;
+}
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
@@ -65,15 +80,16 @@ function folderBadge(folder) {
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
 function paginate() {
-  const pl = MOB ? 'm' : 'd';
+  const pl = 'd';
   const inFolder = new Set(items.filter(i => i.type === 'folder').flatMap(f => f.children||[]).map(String));
+  const budget = desktopSlots();
   const pages = []; let cur = [], used = 0;
   for (const item of items) {
     if (item.dock) continue;
     if (item.hidden) continue;
     if (inFolder.has(String(item.id))) continue;
     const cost = item.type === 'widget' ? wCost[pl][item.widgetSize||'medium'] : 1;
-    if (used + cost > SLOTS && cur.length) { pages.push([...cur]); cur = []; used = 0; }
+    if (used + cost > budget && cur.length) { pages.push([...cur]); cur = []; used = 0; }
     cur.push(item); used += cost;
   }
   if (cur.length) pages.push(cur);
