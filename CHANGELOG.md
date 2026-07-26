@@ -110,6 +110,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard grid no longer runs behind the dock on short viewports such as iPad
   landscape; pages fit the available height.
 
+- Admin dashboard drag handle is narrower on phones, leaving more room for item
+  names.
+
 ## [1.3.1] - 2026-07-20
 
 ### Security
