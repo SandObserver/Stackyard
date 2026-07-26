@@ -113,6 +113,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admin dashboard drag handle is narrower on phones, leaving more room for item
   names.
 
+- Folder preview icons are uniform squares on phones and tablets regardless of
+  icon shape.
+
 ## [1.3.1] - 2026-07-20
 
 ### Security
