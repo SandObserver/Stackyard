@@ -21,6 +21,8 @@ test('PRIVATE_IP_RE treats public addresses as public', () => {
 });
 
 test('embeddedIPv4 extracts the IPv4 from IPv4-in-IPv6 wrappers', () => {
+  assert.equal(embeddedIPv4('::7f00:1'), '127.0.0.1');
+  assert.equal(embeddedIPv4('::127.0.0.1'), '127.0.0.1');
   assert.equal(embeddedIPv4('::ffff:7f00:1'), '127.0.0.1');
   assert.equal(embeddedIPv4('::ffff:a9fe:a9fe'), '169.254.169.254');
   assert.equal(embeddedIPv4('64:ff9b::7f00:1'), '127.0.0.1');
@@ -29,8 +31,8 @@ test('embeddedIPv4 extracts the IPv4 from IPv4-in-IPv6 wrappers', () => {
   assert.equal(embeddedIPv4('2001:db8::1'), null);
 });
 
-test('isPrivateAddress blocks hex-form IPv4-mapped and NAT64 private targets', () => {
-  for (const a of ['::ffff:7f00:1', '::ffff:a00:1', '::ffff:a9fe:a9fe', '64:ff9b::7f00:1', '::ffff:127.0.0.1'])
+test('isPrivateAddress blocks hex-form IPv4-compatible, IPv4-mapped and NAT64 private targets', () => {
+  for (const a of ['::7f00:1', '::127.0.0.1', '::ffff:7f00:1', '::ffff:a00:1', '::ffff:a9fe:a9fe', '64:ff9b::7f00:1', '::ffff:127.0.0.1'])
     assert.ok(isPrivateAddress(a), `${a} should be private`);
 });
 
@@ -50,7 +52,7 @@ test('isPrivateAddress agrees with PRIVATE_IP_RE on plain addresses', () => {
 });
 
 test('guardSsrf blocks IPv4-mapped and NAT64 loopback/metadata literals', async () => {
-  for (const u of ['http://[::ffff:7f00:1]/', 'http://[::ffff:a9fe:a9fe]/', 'http://[64:ff9b::7f00:1]/', 'http://[::1]/']) {
+  for (const u of ['http://[::7f00:1]/', 'http://[::127.0.0.1]/', 'http://[::ffff:7f00:1]/', 'http://[::ffff:a9fe:a9fe]/', 'http://[64:ff9b::7f00:1]/', 'http://[::1]/']) {
     const r = await guardSsrf(u);
     assert.match(r.error || '', /private address/, `${u} should be blocked`);
   }

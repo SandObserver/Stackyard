@@ -11,17 +11,19 @@ const { parsePrometheus } = require('./parse-prometheus');
 const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.|::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.))/i;
 
 /* Extract the embedded IPv4 from an IPv4-in-IPv6 address as dotted-decimal, or
-   null if there is none. Covers the two forms that wrap an IPv4 target in an
+   null if there is none. Covers the three forms that wrap an IPv4 target in an
    IPv6 literal, in either hex or dotted tail:
-     ::ffff:0:0/96   IPv4-mapped   (::ffff:7f00:1  and  ::ffff:127.0.0.1)
+     ::/96           IPv4-compatible (::7f00:1     and  ::127.0.0.1)
+     ::ffff:0:0/96   IPv4-mapped     (::ffff:7f00:1 and  ::ffff:127.0.0.1)
      64:ff9b::/96    NAT64 well-known
-   PRIVATE_IP_RE only matches the dotted-tail spelling of the mapped form, so
-   without this a hex-tailed literal like ::ffff:7f00:1 (127.0.0.1) or
-   64:ff9b::a9fe:a9fe (169.254.169.254 metadata) slips past the range check. */
+   PRIVATE_IP_RE only matches the dotted-tail spelling of an IPv4 address, so
+   without this a hex-tailed literal like ::7f00:1 (127.0.0.1),
+   ::ffff:7f00:1 (127.0.0.1), or 64:ff9b::a9fe:a9fe (169.254.169.254 metadata)
+   slips past the range check. */
 function embeddedIPv4(addr) {
   if (typeof addr !== 'string') return null;
   const s = addr.toLowerCase();
-  const m = s.match(/^(?:::ffff:|64:ff9b::)([0-9a-f.:]+)$/);
+  const m = s.match(/^(?:::ffff:|64:ff9b::|::)([0-9a-f.:]+)$/);
   if (!m) return null;
   const tail = m[1];
   if (tail.includes('.')) return net.isIPv4(tail) ? tail : null;
@@ -33,9 +35,10 @@ function embeddedIPv4(addr) {
 }
 
 /* True when an address is private, loopback, link-local, or an IPv4-in-IPv6
-   wrapper around one. The wrapper prefixes are blocked outright even when the
-   embedded address looks public: nothing legitimate targets a homelab service
-   through ::ffff: or NAT64, so allowing them only widens the SSRF surface. */
+   wrapper around one. For ::ffff: and NAT64 wrappers the embedded IPv4 is
+   decoded and range-checked, and a tail that cannot be parsed is refused.
+   IPv4-compatible ::/96 literals are decoded the same way, then fall through
+   to the normal IPv6 range check when no embedded IPv4 is present. */
 function isPrivateAddress(addr) {
   if (typeof addr !== 'string' || !addr) return false;
   const s = addr.toLowerCase();
@@ -43,6 +46,10 @@ function isPrivateAddress(addr) {
     const v4 = embeddedIPv4(s);
     if (v4) return PRIVATE_IP_RE.test(v4);
     return true; /* wrapper prefix with a tail we can't parse: refuse */
+  }
+  if (s.startsWith('::')) {
+    const v4 = embeddedIPv4(s);
+    if (v4) return PRIVATE_IP_RE.test(v4);
   }
   return PRIVATE_IP_RE.test(s);
 }
