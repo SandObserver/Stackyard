@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- SSRF filter now blocks IPv4-compatible IPv6 literals (`::/96`).
+
 ## [1.4.0] - 2026-07-26
 
 ### Added
