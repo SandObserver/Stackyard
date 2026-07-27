@@ -55,6 +55,78 @@ test('preserves binary bodies that contain CRLF up to the next boundary', () => 
   assert.equal(r.fileParts, 1);
 });
 
+/* ── Malformed, truncated and adversarial bodies ── */
+
+test('returns an empty result for junk, empty input and a wrong boundary', () => {
+  for (const buf of [Buffer.alloc(0), Buffer.from('not multipart at all', 'latin1')]) {
+    const r = parseMultipartFile(buf, B);
+    assert.equal(r.fileParts, 0);
+    assert.equal(r.data, null);
+  }
+  const r = parseMultipartFile(build([{ name:'icon', filename:'x.svg', body:'<svg/>' }]), 'OTHER');
+  assert.equal(r.fileParts, 0);
+});
+
+test('ignores a part whose headers are never terminated', () => {
+  const buf = Buffer.from(`--${B}\r\nContent-Disposition: form-data; name="icon"; filename="x.svg"\r\n`, 'latin1');
+  const r = parseMultipartFile(buf, B);
+  assert.equal(r.fileParts, 0);
+  assert.equal(r.filename, '');
+});
+
+test('reads a truncated final part up to the end of the buffer', () => {
+  const buf = Buffer.from(`--${B}\r\nContent-Disposition: form-data; name="icon"; filename="x.svg"\r\n\r\n<svg/>`, 'latin1');
+  const r = parseMultipartFile(buf, B);
+  assert.equal(r.fileParts, 1);
+  assert.equal(r.data.toString('utf8'), '<svg/>');
+});
+
+test('accepts an empty file body', () => {
+  const r = parseMultipartFile(build([{ name:'icon', filename:'empty.svg', body:'' }]), B);
+  assert.equal(r.fileParts, 1);
+  assert.equal(r.filename, 'empty.svg');
+  assert.equal(r.data.length, 0);
+});
+
+test('treats a part with an empty filename as a non-file field', () => {
+  const r = parseMultipartFile(build([{ name:'icon', filename:'', body:'x' }]), B);
+  assert.equal(r.fileParts, 0);
+  assert.equal(r.filename, '');
+});
+
+test('matches the filename parameter case-insensitively', () => {
+  const buf = Buffer.from(`--${B}\r\nContent-Disposition: form-data; name="i"; FileName="up.svg"\r\n\r\nx\r\n--${B}--\r\n`, 'latin1');
+  assert.equal(parseMultipartFile(buf, B).filename, 'up.svg');
+});
+
+test('strips absolute, backslash and traversal-only filenames', () => {
+  for (const [given, want] of [['/etc/shadow', 'shadow'], ['a/b/c.svg', 'c.svg'], ['..', '..'], ['./x.svg', 'x.svg']]) {
+    assert.equal(parseMultipartFile(build([{ name:'i', filename:given, body:'x' }]), B).filename, want, given);
+  }
+});
+
+test('does not split a body that merely contains the boundary text mid-line', () => {
+  const r = parseMultipartFile(build([{ name:'i', filename:'x.svg', body:`prefix--${B}suffix` }]), B);
+  assert.equal(r.fileParts, 1);
+  assert.equal(r.data.toString('utf8'), `prefix--${B}suffix`);
+});
+
+test('skips a preamble before the first boundary', () => {
+  const buf = Buffer.concat([
+    Buffer.from('preamble text\r\n', 'latin1'),
+    build([{ name:'i', filename:'x.svg', body:'<svg/>' }]),
+  ]);
+  const r = parseMultipartFile(buf, B);
+  assert.equal(r.fileParts, 1);
+  assert.equal(r.data.toString('utf8'), '<svg/>');
+});
+
+test('keeps NUL bytes and high bytes in the filename basename intact', () => {
+  const r = parseMultipartFile(build([{ name:'i', filename:'логотип.svg', body:'x' }]), B);
+  assert.equal(r.fileParts, 1);
+  assert.ok(r.filename.endsWith('.svg'));
+});
+
 test('stops at the closing terminator without consuming trailing bytes', () => {
   const buf = Buffer.concat([
     build([{ name:'icon', filename:'x.svg', body:'<svg/>' }]),
