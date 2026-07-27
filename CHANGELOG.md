@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - SSRF filter now blocks IPv4-compatible IPv6 literals (`::/96`).
 
+### Fixed
+
+- XML data sources no longer mis-read a single element named after a built-in
+  object property (such as `toString`) as a repeated element.
+
 ## [1.4.0] - 2026-07-26
 
 ### Added

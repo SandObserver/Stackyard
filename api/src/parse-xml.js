@@ -51,7 +51,7 @@ function _xmlValue(node) {
   if (text !== '') obj['#text'] = _xmlCoerce(text);
   for (const c of node.children) {
     const v = _xmlValue(c);
-    if (c.tag in obj) { if (Array.isArray(obj[c.tag])) obj[c.tag].push(v); else obj[c.tag] = [obj[c.tag], v]; }
+    if (Object.hasOwn(obj, c.tag)) { if (Array.isArray(obj[c.tag])) obj[c.tag].push(v); else obj[c.tag] = [obj[c.tag], v]; }
     else obj[c.tag] = v;
   }
   return obj;
