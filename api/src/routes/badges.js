@@ -1,25 +1,26 @@
 const { on, json, readBody, getIp, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
-const { fetchChecked, fetchUnchecked, pingChecked } = require('../proxy');
+const { fetchChecked, fetchUnchecked, pingChecked, statusDesc } = require('../proxy');
 const { rateLimit } = require('../auth');
 const { PING_MS, FETCH_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const { collectNumbers, computeBadgeValue } = require('../badge-extract');
 const { requestParts, toRows, preserveItemBadgeSecrets, rowsToObject } = require('../badge-headers');
+const { fail, KIND, errorBody } = require('../api-error');
 
 on('POST', '/api/ping', async(req, res) => {
   if (!checkOrigin(req, res)) return;
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'ping', 30, 60_000);
-    if (limited) return json(res, 429, { ok:false, error:limited });
+    if (limited) return json(res, 429, { ok:false, error:limited, kind: KIND.BLOCKED });
     const { url, skipTls=false } = JSON.parse(await readBody(req));
-    if (!url) return json(res, 400, { ok:false, error:'url required' });
+    if (!url) return json(res, 400, { ok:false, error:'url required', kind: KIND.INVALID });
     json(res, 200, await pingChecked(url, PING_MS, skipTls === true));
   } catch(e) {
-    if (e.status === 403) return json(res, 403, { ok:false, error:e.message });
-    json(res, 200, { ok:false, status:0, error:e.message });
+    if (e.status === 403) return fail(res, e, { extra:{ ok:false } });
+    json(res, 200, Object.assign({ ok:false, status:0 }, errorBody(e)));
   }
 });
 
@@ -45,7 +46,7 @@ on('GET', '/api/badges', async(_, res) => {
           params:  item.monitoring.activity.params,
         } : item.badge;
         out[item.id] = { value: computeBadgeValue(r.data, badge), raw:r.data };
-      } catch(e) { out[item.id] = { value:0, error:e.message }; }
+      } catch(e) { out[item.id] = Object.assign({ value:0 }, errorBody(e)); }
     }));
   json(res, 200, out);
 });
@@ -55,10 +56,10 @@ on('POST', '/api/badge-proxy', async(req, res) => {
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'badge-proxy', 60, 60_000);
-    if (limited) return json(res, 429, { error:limited });
+    if (limited) return json(res, 429, { error:limited, kind: KIND.BLOCKED });
     const body = JSON.parse(await readBody(req));
     const { url, itemId, skipTls=false } = body;
-    if (!url) return json(res, 400, { error:'url required' });
+    if (!url) return json(res, 400, { error:'url required', kind: KIND.INVALID });
     /* Rows the user did not retype arrive as secret rows without a value. Fill
        them from the stored item so a test after reload uses the real credential,
        without ever sending it to the browser. */
@@ -77,7 +78,20 @@ on('POST', '/api/badge-proxy', async(req, res) => {
     const params = rowsToObject(paramRows);
     const fullUrl = Object.keys(params).length ? url + (url.includes('?') ? '&' : '?') + new URLSearchParams(params) : url;
     const r = await fetchChecked(fullUrl, { headers, timeout:FETCH_MS, skipTls: skipTls === true });
+    /* fetchJSON resolves on a 4xx/5xx rather than rejecting, so an upstream that
+       answered "401 Unauthorised" used to come back here as a plain 200 with an
+       error body attached. The admin UI could not tell that apart from success:
+       it reported "Connected, no numeric values found" and never offered to
+       enable authentication, which is the case its auth branch exists for.
+       Report it as a failure, with the upstream's status as data. */
+    if (r.status >= 400) {
+      return json(res, 502, {
+        error: `The service answered ${statusDesc(r.status)} (HTTP ${r.status}).`,
+        kind:  KIND.UPSTREAM,
+        detail: { status: r.status },
+      });
+    }
     json(res, 200, { status:r.status, data:r.data, numbers:collectNumbers(r.data) });
-  } catch(e) { json(res, e.status || 502, { error:e.message }); }
+  } catch(e) { fail(res, e, { status:502 }); }
 });
 

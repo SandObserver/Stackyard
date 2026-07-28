@@ -11,8 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - SSRF filter now blocks IPv4-compatible IPv6 literals (`::/96`).
 
+### Added
+
+- API error responses now carry a machine-readable `kind` (and, where useful, a
+  small `detail` object) alongside the existing `error` message. See
+  [docs/api-errors.md](docs/api-errors.md).
+
 ### Fixed
 
+- Testing a badge URL against a service that replies `401` or `403` is now
+  reported as a failure and offers to enable authentication. It previously
+  reported success with no values found.
+- Testing a badge URL no longer tells you to add an API key when it was your own
+  admin session that expired.
+- Testing a badge URL against an address blocked by the outbound guard now shows
+  the reason instead of a bare error.
 - XML data sources no longer mis-read a single element named after a built-in
   object property (such as `toString`) as a repeated element.
 

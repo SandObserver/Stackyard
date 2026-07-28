@@ -311,7 +311,7 @@ async function pingChecked(url, ms, skipTls) {
 }
 
 module.exports = {
-  fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError,
+  fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError, statusDesc,
   rewriteUrl, getHostIp, shouldSkipTls, PRIVATE_IP_RE,
   isPrivateAddress, embeddedIPv4,
   _internals: { fetchJSON, pingUrl, guardSsrf },

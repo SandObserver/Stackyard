@@ -10,6 +10,7 @@ import { isDockBlocked, DOCK_MAX } from '/js/admin-logic.js?v=1';
 import { t } from '/js/i18n.js?v=1';
 import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, setTogDisabled, wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=1';
 
 /* Folder form: settings-row system (PSD: add_new_folder).
    Folder Name = inline-edit row; Add Apps = tap-to-toggle checklist dropdown. */
@@ -386,25 +387,19 @@ async function fetchBadge(){
     ['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));
     if(state.fnums.length) renderBadgeList(state.fnums,false);
   }catch(e){
+    /* Branch on the error's `kind`, not on words inside its message. See
+       ui/js/admin-error.js and docs/api-errors.md. */
+    const advice=badgeErrorAdvice(e);
     if(st){
-      const msg=e.message||'';
-      const isNetwork=msg.includes('ECONNREFUSED')||msg.includes('ENOTFOUND')||msg.includes('ETIMEDOUT')||msg.includes('fetch')||msg.includes('network')||msg.includes('502')||msg.includes('503');
-      const isAuth=msg.includes('401')||msg.includes('403')||msg.includes('Unauthori')||msg.includes('Forbidden');
-      if(isNetwork){
-        st.style.cssText='margin-top:4px;color:#ff9f0a';
-        st.textContent="Can't reach this address from Docker. Try using the container name, e.g. http://container-name:8181/api/v2";
-      }else if(isAuth){
-        st.style.cssText='margin-top:4px;color:#ff9f0a';
-        st.textContent='Authentication required. Enable the Authentication toggle below and add your API key.';
-        const authCb=document.getElementById('auth-en');
-        const authSub=document.getElementById('auth-sub');
-        if(authCb&&!authCb.checked){
-          authCb.checked=true;
-          if(authSub)authSub.classList.add('open');
-        }
-      }else{
-        st.style.cssText='margin-top:4px;color:#ff453a';
-        st.textContent='✗ '+msg;
+      st.style.cssText='margin-top:4px;color:'+(advice.tone===TONE.WARN?'#ff9f0a':'#ff453a');
+      st.textContent=advice.tone===TONE.WARN?advice.message:'✗ '+advice.message;
+    }
+    if(advice.openAuth){
+      const authCb=document.getElementById('auth-en');
+      const authSub=document.getElementById('auth-sub');
+      if(authCb&&!authCb.checked){
+        authCb.checked=true;
+        if(authSub)authSub.classList.add('open');
       }
     }
   }finally{

@@ -3,6 +3,7 @@ const { on, json, readBody, checkOrigin, getIp } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
+const { fail, KIND } = require('../api-error');
 const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession } = require('../auth');
 
 on('GET', '/api/auth/check', (req, res) => {
@@ -23,18 +24,18 @@ on('POST', '/api/auth/login', async(req, res) => {
     const cfg = loadConfig();
     if (!cfg.settings?.auth?.enabled) return json(res, 200, { ok:true }); /* auth off, always pass */
     const hash = cfg.settings.auth.passwordHash;
-    if (!hash) return json(res, 401, { error:'No password set. Enable auth and set a password in Admin → Server.' });
+    if (!hash) return json(res, 401, { error:'No password set. Enable auth and set a password in Admin → Server.', kind: KIND.AUTH });
     const limitErr = registerLoginAttempt(ip);
-    if (limitErr) { log.audit('login blocked', { ip, reason:'rate_limit' }); return json(res, 429, { error:limitErr }); }
+    if (limitErr) { log.audit('login blocked', { ip, reason:'rate_limit' }); return json(res, 429, { error:limitErr, kind: KIND.AUTH }); }
     const ok = await verifyPassword(password, hash);
-    if (!ok) { log.audit('login failed', { ip }); return json(res, 401, { error:'Incorrect password.' }); }
+    if (!ok) { log.audit('login failed', { ip }); return json(res, 401, { error:'Incorrect password.', kind: KIND.AUTH }); }
     clearAttempts(ip);
     log.audit('login success', { ip });
     const secret = getOrCreateSecret();
     const sessionId = crypto.randomBytes(24).toString('hex');
     setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
     json(res, 200, { ok:true });
-  } catch(e) { json(res, 400, { error:e.message }); }
+  } catch(e) { fail(res, e, { status:400 }); }
 });
 
 on('POST', '/api/auth/logout', (req, res) => {
@@ -45,16 +46,16 @@ on('POST', '/api/auth/logout', (req, res) => {
 });
 
 on('POST', '/api/auth/set-password', async(req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
     const cfg = loadConfig();
     const hasPassword = !!cfg.settings?.auth?.passwordHash;
     if (hasPassword && !hasValidSession(req)) {
-      return json(res, 401, { error:'Authentication required to change the existing password.' });
+      return json(res, 401, { error:'Authentication required to change the existing password.', kind: KIND.AUTH });
     }
     const { password = '' } = JSON.parse(await readBody(req));
-    if (!password || password.length < 8) return json(res, 400, { error:'Password must be at least 8 characters.' });
+    if (!password || password.length < 8) return json(res, 400, { error:'Password must be at least 8 characters.', kind: KIND.INVALID });
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
     cfg.settings.auth.passwordHash = await hashPassword(password);
@@ -66,11 +67,11 @@ on('POST', '/api/auth/set-password', async(req, res) => {
     const sessionId = crypto.randomBytes(24).toString('hex');
     setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret), isSecureRequest(req));
     json(res, 200, { ok:true });
-  } catch(e) { json(res, 400, { error:e.message }); }
+  } catch(e) { fail(res, e, { status:400 }); }
 });
 
 on('POST', '/api/auth/dismiss-setup', (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   const cfg = loadConfig();
   cfg.settings = cfg.settings || {};
@@ -81,7 +82,7 @@ on('POST', '/api/auth/dismiss-setup', (req, res) => {
 });
 
 on('POST', '/api/auth/toggle', async(req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
     const { enabled } = JSON.parse(await readBody(req));
@@ -94,6 +95,6 @@ on('POST', '/api/auth/toggle', async(req, res) => {
     saveConfig(cfg);
     log.audit('auth toggled', { enabled: !!enabled });
     json(res, 200, { ok:true });
-  } catch(e) { json(res, 400, { error:e.message }); }
+  } catch(e) { fail(res, e, { status:400 }); }
 });
 

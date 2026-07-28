@@ -25,7 +25,7 @@ function route(req, res) {
   setPreflightHeaders(res);
 
   if (method !== 'OPTIONS' && !PUBLIC_PATHS.has(u.pathname)) {
-    if (!isAuthenticated(req)) return json(res, 401, { error:'Unauthorised', auth:true });
+    if (!isAuthenticated(req)) return json(res, 401, { error:'Unauthorised', auth:true, kind:'auth' });
   }
 
   for (const r of routes) {
@@ -37,13 +37,13 @@ function route(req, res) {
     r.names.forEach((n, i) => { req.params[n] = decodeURIComponent(match[i + 1] || ''); });
     return r.h(req, res, u);
   }
-  json(res, 404, { error:'Not found' });
+  json(res, 404, { error:'Not found', kind:'invalid' });
 }
 
 function onError(req, res, err) {
   log.error('request handler failed', { method: req.method, url: req.url, error: err?.message });
   if (res.headersSent) { try { res.end(); } catch {} return; }
-  try { json(res, 500, { error:'Internal server error' }); } catch {}
+  try { json(res, 500, { error:'Internal server error', kind:'internal' }); } catch {}
 }
 
 function setPreflightHeaders(res) {
@@ -83,7 +83,7 @@ function checkOrigin(req, res) {
     const serverHost = req.headers['host'];
     if (originHost === serverHost) return true;
   } catch {}
-  json(res, 403, { error:'Forbidden: origin mismatch' });
+  json(res, 403, { error:'Forbidden: origin mismatch', kind:'invalid' });
   return false;
 }
 

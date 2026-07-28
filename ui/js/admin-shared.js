@@ -12,17 +12,34 @@ export const toast = (m, t = 'ok') => {
   e.className = `show ${t}`; clearTimeout(tt); tt = setTimeout(() => e.className = '', 3000);
 };
 
-/* Fetch helpers. Throw a tagged 401 so callers can redirect to login. */
+/* Fetch helpers. Throw a tagged 401 so callers can redirect to login.
+
+   The API sends { error, kind, detail? } on failure (docs/api-errors.md). Carry
+   `kind` and `detail` onto the thrown Error so callers branch on data instead of
+   reading the message text. `ag` now also reads the body on a non-401 failure,
+   so its message is the server's sentence rather than a bare 'HTTP 500'; every
+   caller only displays it. */
+function tagged(status, body) {
+  const e = new Error((body && body.error) || 'HTTP ' + status);
+  e.status = status;
+  if (body && typeof body.kind === 'string') e.kind = body.kind;
+  if (body && body.detail && typeof body.detail === 'object') e.detail = body.detail;
+  return e;
+}
 export const ag = async p => {
   const r = await fetch(API + p, { cache:'no-store' });
-  if (r.status === 401) { const e = new Error('Unauthorised'); e.status = 401; throw e; }
-  if (!r.ok) throw new Error('HTTP ' + r.status);
+  if (!r.ok) {
+    const d = r.status === 401 ? null : await r.json().catch(() => null);
+    throw tagged(r.status, d || (r.status === 401 ? { error:'Unauthorised', kind:'auth' } : null));
+  }
   return r.json();
 };
 export const ap = async (p, b) => {
   const r = await fetch(API + p, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(b) });
-  if (r.status === 401) { const e = new Error('Unauthorised'); e.status = 401; throw e; }
-  if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || 'HTTP ' + r.status); }
+  if (!r.ok) {
+    const d = await r.json().catch(() => null);
+    throw tagged(r.status, d || (r.status === 401 ? { error:'Unauthorised', kind:'auth' } : null));
+  }
   return r.json();
 };
 
