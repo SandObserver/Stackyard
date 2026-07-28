@@ -2,6 +2,7 @@ const { on, json, readBody, checkOrigin } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');
+const { fail, KIND } = require('../api-error');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 
 const DOCK_MAX = 4;
@@ -26,7 +27,7 @@ on('GET', '/api/settings/unsplash-key', (_, res) => {
 });
 
 on('POST', '/api/settings/unsplash-key', async(req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
     const { apiKey='' } = JSON.parse(await readBody(req));
@@ -35,22 +36,22 @@ on('POST', '/api/settings/unsplash-key', async(req, res) => {
     if (apiKey.trim()) cfg.settings.background.apiKey = apiKey.trim();
     else delete cfg.settings.background.apiKey;
     saveConfig(cfg); json(res, 200, { ok:true });
-  } catch(e) { json(res, 400, { error:e.message }); }
+  } catch(e) { fail(res, e, { status:400 }); }
 });
 
 on('POST', '/api/config', async(req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
     const data = JSON.parse(await readBody(req));
-    if (!Array.isArray(data.items)) return json(res, 400, { error:'items must be an array' });
+    if (!Array.isArray(data.items)) return json(res, 400, { error:'items must be an array', kind: KIND.INVALID });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
-    if (bad) return json(res, 400, { error:'every item needs a non-empty id and type' });
+    if (bad) return json(res, 400, { error:'every item needs a non-empty id and type', kind: KIND.INVALID });
     /* The dashboard renders at most DOCK_MAX dock apps, so a config holding more
        would silently lose the extras. Mirrors DOCK_MAX in ui/js/admin-logic.js;
        the two cannot share a module across the CJS/ESM split without a build step. */
     if (data.items.filter(i => i.type === 'app' && i.dock).length > DOCK_MAX)
-      return json(res, 400, { error:`at most ${DOCK_MAX} apps can be shown in the dock` });
+      return json(res, 400, { error:`at most ${DOCK_MAX} apps can be shown in the dock`, kind: KIND.INVALID });
     const KNOWN_SETTINGS = new Set(['background', 'stats', 'server', 'auth', 'theme', 'layout', 'search', 'greeting', 'logLevel', 'language']);
     if (data.settings && typeof data.settings === 'object') {
       for (const key of Object.keys(data.settings)) {
@@ -64,7 +65,7 @@ on('POST', '/api/config', async(req, res) => {
        restored from a file) is trusted and overwrites, so this only guards the
        read-modify-write the admin UI does. */
     if (data._rev != null && Number(data._rev) !== (Number(existing._rev) || 0))
-      return json(res, 409, { error:'This config was changed somewhere else. Reload the page and try again.' });
+      return json(res, 409, { error:'This config was changed somewhere else. Reload the page and try again.', kind: KIND.INVALID });
     if (existing.settings?.background?.apiKey && !data.settings?.background?.apiKey) {
       data.settings = data.settings || {};
       data.settings.background = data.settings.background || {};
@@ -83,7 +84,7 @@ on('POST', '/api/config', async(req, res) => {
     if (data.settings) log.setLevel(data.settings.logLevel);
     log.audit('config saved', {});
     json(res, 200, { ok:true });
-  } catch(e) { json(res, 400, { error:e.message }); }
+  } catch(e) { fail(res, e, { status:400 }); }
 });
 
 on('GET', '/api/config/export', (_, res) => {

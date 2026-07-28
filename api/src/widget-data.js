@@ -10,6 +10,7 @@ const { dispatchProvider } = require('./provider-dispatch');
 const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
 const log = require('./log');
+const { fail, KIND } = require('./api-error');
 
 /* Normalize a user-entered base URL the same way the existing hand-written data
    routes do (e.g. AdGuard): add http:// when no scheme is given, and strip any
@@ -102,7 +103,7 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch, row
     const body = await runDemoFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row));
     if (body) return { status: 200, body };
   }
-  if (!entry.hasDataFn) return { status: 503, body: { error: 'widget declares no data source' } };
+  if (!entry.hasDataFn) return { status: 503, body: { error: 'widget declares no data source', kind: KIND.INVALID } };
   const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row));
   return { status: 200, body: result };
 }
@@ -110,10 +111,10 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch, row
 on('GET', '/api/widget-data/:id', async (req, res) => {
   const cfg = loadConfig();
   const item = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
-  if (!item) return json(res, 404, { error: 'widget not found' });
+  if (!item) return json(res, 404, { error: 'widget not found', kind: KIND.INVALID });
 
   const entry = getRegistry()[item.widgetType];
-  if (!entry) return json(res, 404, { error: 'unknown widget type' });
+  if (!entry) return json(res, 404, { error: 'unknown widget type', kind: KIND.INVALID });
 
   const u = new URL(req.url, 'http://x');
   const endpointName = u.searchParams.get('endpoint') || '';
@@ -123,7 +124,7 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
     json(res, out.status, out.body);
   } catch (e) {
     log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: e.message });
-    json(res, 502, { error: e.message });
+    fail(res, e, { status: 502 });
   }
 });
 
@@ -135,9 +136,9 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
 on('POST', '/api/widget-options/:id', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   let body;
-  try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: 'invalid body' }); }
+  try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: 'invalid body', kind: KIND.INVALID }); }
   const entry = getRegistry()[body.widgetType];
-  if (!entry || !entry.hasDataFn) return json(res, 400, { error: 'unknown widget type' });
+  if (!entry || !entry.hasDataFn) return json(res, 400, { error: 'unknown widget type', kind: KIND.INVALID });
 
   const item = { type: 'widget', id: req.params.id, widgetType: body.widgetType, widgetConfig: body.widgetConfig || {} };
   const saved = (loadConfig().items || []).find(i => i.id === req.params.id && i.type === 'widget');
@@ -147,9 +148,9 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
     const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams(), fetchChecked, body.row, true);
     json(res, out.status, out.body);
   } catch (e) {
-    if (e instanceof SsrfBlockedError) return json(res, e.status, { error: e.message });
+    if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });
     log.error('widget-options failed', { widget: body.widgetType, error: e.message });
-    json(res, 502, { error: e.message });
+    fail(res, e, { status: 502 });
   }
 });
 

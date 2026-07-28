@@ -47,6 +47,12 @@
       "/js/admin-drag-logic.js?v=*": [
         "./ui/js/admin-drag-logic.js"
       ],
+      "/js/admin-error.js": [
+        "./ui/js/admin-error.js"
+      ],
+      "/js/admin-error.js?v=*": [
+        "./ui/js/admin-error.js"
+      ],
       "/js/admin-logic.js": [
         "./ui/js/admin-logic.js"
       ],
