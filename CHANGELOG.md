@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Unticking the Secret box on a badge or activity header no longer returns the
+  stored credential to the browser. Unticking now clears the stored value, and
+  the field shows that a new value is needed.
 - SSRF filter now blocks IPv4-compatible IPv6 literals (`::/96`).
 
 ### Added

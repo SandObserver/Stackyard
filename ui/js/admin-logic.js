@@ -119,6 +119,19 @@ export function nextActiveIndex(key, active, len) {
 /* The dock renders at most four apps (dashboard.js slices to DOCK_MAX), so the
    Show in Dock toggle is unavailable once four others are in. An app already in
    the dock is never blocked, since it holds one of the four slots itself. */
+/* Whether unticking the Secret box on a credential row must clear the stored
+   value. True only for a row whose value is held on the server and not shown in
+   the form (value blank, valueSet true).
+
+   The server will not refill a row that arrives as non-secret, because that
+   would move the stored credential into a row it sends to the browser in full.
+   So unticking always means the value is gone after the next save; clearing
+   valueSet makes the form send an explicit blank and lets the field show that a
+   value is now needed, rather than the user finding out after saving. */
+export function clearsStoredSecret(row, checked) {
+  return !checked && !!row && row.valueSet === true && row.value === '';
+}
+
 export const DOCK_MAX = 4;
 
 export function isDockBlocked(items, editing) {

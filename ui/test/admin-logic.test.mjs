@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys } from '../js/admin-logic.js';
+import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret } from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
@@ -156,4 +156,32 @@ test('visibleFieldKeys shows unconditional fields and tolerates a cycle', () => 
     { key: 'b', showIf: { field: 'a', equals: 1 } },
   ];
   assert.doesNotThrow(() => visibleFieldKeys(cyc, () => 1));
+});
+
+/* ── clearsStoredSecret (P11-1) ───────────────────────────────────────────── */
+
+/* Unticking Secret used to leave valueSet:true on the row, so the form kept
+   sending "keep the stored value" for a row the server now treats as public.
+   Paired with the server refusing to refill a non-secret row, this is what makes
+   unticking mean "clear it" on both sides instead of "reveal it". */
+
+test('unticking Secret on a stored credential clears it', () => {
+  assert.equal(clearsStoredSecret({ value: '', valueSet: true, secret: true }, false), true);
+});
+
+test('ticking Secret on never clears anything', () => {
+  assert.equal(clearsStoredSecret({ value: '', valueSet: true, secret: false }, true), false);
+});
+
+test('unticking a row the user has typed into leaves the typed value alone', () => {
+  assert.equal(clearsStoredSecret({ value: 'typed', valueSet: false, secret: true }, false), false);
+});
+
+test('unticking an empty row with nothing stored is a no-op', () => {
+  assert.equal(clearsStoredSecret({ value: '', valueSet: false, secret: true }, false), false);
+});
+
+test('clearsStoredSecret tolerates a missing row', () => {
+  assert.equal(clearsStoredSecret(null, false), false);
+  assert.equal(clearsStoredSecret(undefined, false), false);
 });
