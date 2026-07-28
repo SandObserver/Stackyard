@@ -6,7 +6,7 @@ import { clr as rc } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
-import { isDockBlocked, DOCK_MAX } from '/js/admin-logic.js?v=1';
+import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=1';
 import { t } from '/js/i18n.js?v=1';
 import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, setTogDisabled, wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
@@ -350,18 +350,33 @@ function renderKvRows(host, rows, ph){
   host.appendChild(add);
 }
 
+const defaultValuePlaceholder = ph => ph.split('=')[1]||'value';
+
 function kvRowEl(host, rows, row, ph){
   const el=document.createElement('div'); el.className='kv-row';
-  const valPh = row.secret&&row.valueSet&&row.value==='' ? 'Configured' : (ph.split('=')[1]||'value');
+  const valPh = row.secret&&row.valueSet&&row.value==='' ? 'Configured' : defaultValuePlaceholder(ph);
   setHtml(el, html`
     <input class="kv-k" type="text" placeholder="Key" value="${row.key}" aria-label="Header key">
     <input class="kv-v" type="${row.secret?'password':'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="Header value">
-    <label class="kv-cred" title="Store this value as a credential: hidden after saving and never exported"><input type="checkbox" ${row.secret?'checked':''} aria-label="Secret"><span class="kv-box"></span><span class="kv-cred-lbl">Secret</span></label>
+    <label class="kv-cred" title="Store this value as a credential: hidden after saving and never exported. Unticking clears the stored value."><input type="checkbox" ${row.secret?'checked':''} aria-label="Secret"><span class="kv-box"></span><span class="kv-cred-lbl">Secret</span></label>
     <button class="kv-del" type="button" aria-label="Remove">✕</button>`);
   const kEl=el.querySelector('.kv-k'), vEl=el.querySelector('.kv-v'), cEl=el.querySelector('.kv-cred input'), dEl=el.querySelector('.kv-del');
   kEl.oninput=()=>{ row.key=kEl.value; };
   vEl.oninput=()=>{ row.value=vEl.value; row.valueSet=false; };
-  cEl.onchange=()=>{ row.secret=cEl.checked; vEl.type=cEl.checked?'password':'text'; };
+  cEl.onchange=()=>{
+    row.secret=cEl.checked;
+    vEl.type=cEl.checked?'password':'text';
+    /* Unticking Secret cannot reveal the stored value: the server refuses to
+       refill a non-secret row, so the credential is cleared on save. Clear
+       valueSet here too, so the row is sent as an explicit blank rather than as
+       "keep what you have", and show the user the field now needs a value
+       instead of letting them discover it blank after saving. */
+    if(clearsStoredSecret(row,cEl.checked)){
+      row.valueSet=false;
+      vEl.value='';
+      vEl.placeholder=defaultValuePlaceholder(ph);
+    }
+  };
   dEl.onclick=()=>{ const idx=rows.indexOf(row); if(idx>=0)rows.splice(idx,1); renderKvRows(host,rows,ph); };
   return el;
 }

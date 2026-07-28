@@ -54,21 +54,33 @@ function scrubRows(rows) {
   });
 }
 
-/* Restore values the browser dropped. A secret row is sent without its value; a
-   row toggled from secret to non-secret is also sent without one. In both cases
-   restore from the stored row with the same key, so a working credential is
-   never silently blanked. A row whose key has no stored match (new row, or a
-   renamed one) stays blank and must be retyped, which is the safe default: it
-   never leaks an unrelated stored value into a different key. Mutates and
-   returns newRows. */
+/* Restore values the browser dropped. A secret row is sent without its value, so
+   it is refilled from the stored row with the same key and a working credential
+   is never silently blanked.
+
+   A row arriving as non-secret is NOT refilled, even when a stored value exists
+   for that key. Refilling it would move a stored secret into a row that
+   scrubRows sends to the browser in full, so unticking the Secret box and saving
+   would hand back the credential in plaintext, in GET /api/config and in the
+   config export. Unticking therefore clears the stored value and the credential
+   has to be retyped. That is the documented guarantee in docs/security.md: a
+   value stored as secret never leaves the server.
+
+   A row whose key has no stored match (new row, or a renamed one) also stays
+   blank, which is the same safe default: it never leaks an unrelated stored
+   value into a different key. Mutates and returns newRows. */
 function preserveRows(newRows, oldRows) {
   const nrows = toRows(newRows);
   const orows = toRows(oldRows);
   for (const r of nrows) {
     const needsValue = r.value == null || r.value === '';
     if (needsValue) {
-      const donor = orows.find(o => o.key === r.key && o.value != null && o.value !== '');
+      /* Only a row still marked secret may be refilled. */
+      const donor = r.secret
+        ? orows.find(o => o.key === r.key && o.value != null && o.value !== '')
+        : null;
       if (donor) r.value = donor.value;
+      else if (!r.secret) r.value = '';
     }
     delete r.valueSet;
   }

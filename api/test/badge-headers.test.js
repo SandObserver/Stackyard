@@ -65,12 +65,53 @@ test('preserve takes a retyped value over the stored one', () => {
   assert.equal(incoming.badge.headers[0].value, 'NEW');
 });
 
-test('preserve keeps the value when a secret is unchecked without a retype', () => {
+/* Replaces 'preserve keeps the value when a secret is unchecked without a
+   retype', which asserted the opposite. Restoring into a non-secret row moved
+   the stored credential into a row that scrubRows sends to the browser in full,
+   so unticking the Secret box and saving handed it back in plaintext. */
+test('preserve clears the value when a secret row arrives as non-secret', () => {
   const stored = { badge: { headers: [{ key: 'X-Api-Key', value: 'REAL', secret: true }] } };
   const incoming = { badge: { headers: [{ key: 'X-Api-Key', secret: false }] } };
   preserveItemBadgeSecrets(incoming, stored);
-  assert.equal(incoming.badge.headers[0].value, 'REAL');
+  assert.equal(incoming.badge.headers[0].value, '');
   assert.equal(incoming.badge.headers[0].secret, false);
+});
+
+test('a stored secret cannot be read back by unticking Secret', () => {
+  /* The full round trip, which is what the finding actually was. */
+  const stored = { badge: { headers: [{ key: 'X-Api-Key', value: 'SUPER-SECRET', secret: true }] } };
+
+  const masked = JSON.parse(JSON.stringify(stored));
+  scrubItemBadgeSecrets(masked);
+  assert.equal(masked.badge.headers[0].value, undefined, 'the browser never sees the value');
+
+  const incoming = { badge: { headers: [{ key: 'X-Api-Key', secret: false }] } };
+  preserveItemBadgeSecrets(incoming, stored);
+  scrubItemBadgeSecrets(incoming);
+  const out = JSON.stringify(incoming);
+  assert.ok(!out.includes('SUPER-SECRET'), `the stored secret came back: ${out}`);
+});
+
+test('preserve still refills a row that is left marked secret', () => {
+  const stored = { badge: { headers: [{ key: 'X-Api-Key', value: 'REAL', secret: true }] } };
+  const incoming = { badge: { headers: [{ key: 'X-Api-Key', secret: true, valueSet: true }] } };
+  preserveItemBadgeSecrets(incoming, stored);
+  assert.equal(incoming.badge.headers[0].value, 'REAL', 'an untouched credential must survive a save');
+  assert.ok(!('valueSet' in incoming.badge.headers[0]));
+});
+
+test('a retyped non-secret value is kept as sent', () => {
+  const stored = { badge: { headers: [{ key: 'X-Api-Key', value: 'REAL', secret: true }] } };
+  const incoming = { badge: { headers: [{ key: 'X-Api-Key', secret: false, value: 'plain' }] } };
+  preserveItemBadgeSecrets(incoming, stored);
+  assert.equal(incoming.badge.headers[0].value, 'plain');
+});
+
+test('an ordinary non-secret row is unaffected', () => {
+  const stored = { badge: { params: [{ key: 'mode', value: 'full', secret: false }] } };
+  const incoming = { badge: { params: [{ key: 'mode', value: 'short', secret: false }] } };
+  preserveItemBadgeSecrets(incoming, stored);
+  assert.equal(incoming.badge.params[0].value, 'short');
 });
 
 test('preserve does not leak a stored value into a new unrelated key', () => {
