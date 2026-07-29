@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Testing a badge or fetching widget options no longer reuses a stored
+  credential when the configuration has been changed, so a stored secret cannot
+  be sent to a different destination. Re-enter the credential to test edited
+  settings.
+- Widget frontends no longer build markup by concatenation, so a value from an
+  upstream service or an imported config cannot inject markup into a widget
+  iframe. Widget colours are validated and assigned as CSS properties rather
+  than written into a style string.
 - Unticking the Secret box on a badge or activity header no longer returns the
   stored credential to the browser. Unticking now clears the stored value, and
   the field shows that a new value is needed.

@@ -25,6 +25,7 @@ import { html, raw, setHtml } from '/js/html.js?v=1';
 import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
 import { renderColorControl } from '/js/admin-color-control.js?v=1';
 import { seedCarried, applyOptionSet, collectFieldValues, requiredFieldMissing, groupBounds, visibleFieldKeys } from '/js/admin-logic.js?v=1';
+import { optionsErrorText } from '/js/admin-error.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -95,7 +96,15 @@ async function _fetchOptions(field, ctx) {
     body: JSON.stringify({ widgetType: ctx && ctx.widgetType, endpoint: field.optionsFrom, widgetConfig: cfg, row: (ctx && ctx.row) || undefined }),
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+  if (!r.ok || d.error) {
+    /* Carry the structured fields so the caller can branch on `kind` rather than
+       reading the message. See docs/api-errors.md. */
+    const err = new Error(d.error || ('HTTP ' + r.status));
+    err.status = r.status;
+    if (typeof d.kind === 'string') err.kind = d.kind;
+    if (d.detail && typeof d.detail === 'object') err.detail = d.detail;
+    throw err;
+  }
   return Array.isArray(d.options) ? d.options : [];
 }
 
@@ -153,7 +162,7 @@ function _picklist(field, value, ctx, size) {
         paint();
         status.textContent = opts.length ? `Loaded ${opts.length} option${opts.length > 1 ? 's' : ''}` : 'No options found';
         status.className = 'row-status ok';
-      } catch (e) { status.textContent = 'Fetch failed: ' + e.message; status.className = 'row-status err'; }
+      } catch (e) { status.textContent = optionsErrorText(e); status.className = 'row-status err'; }
       finally { btn.disabled = false; }
     });
   } else { btn.style.display = 'none'; }
@@ -204,7 +213,7 @@ function _select(field, value, ctx, config = {}) {
         chosen = sel.value || chosen; paint(); syncCarried();
         status.textContent = opts.length ? `Loaded ${opts.length} option${opts.length > 1 ? 's' : ''}` : 'No options found';
         status.className = 'row-status ok';
-      } catch (e) { status.textContent = 'Fetch failed: ' + e.message; status.className = 'row-status err'; }
+      } catch (e) { status.textContent = optionsErrorText(e); status.className = 'row-status err'; }
       finally { btn.disabled = false; }
     });
   } else if (field.hint) {
