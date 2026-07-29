@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { loadConfig, saveConfig } = require('./config');
+const log = require('./log');
 
 function getOrCreateSecret() {
   const cfg = loadConfig();
@@ -12,23 +13,48 @@ function getOrCreateSecret() {
   return secret;
 }
 
+const SCRYPT_KEYLEN = 64;
+/* hashPassword produces `<32 hex chars>:<128 hex chars>`. Both halves are
+   checked before use: Buffer.from(x, 'hex') silently drops anything that is not
+   a hex pair, so a malformed stored hash yields a short buffer and
+   timingSafeEqual throws on the length mismatch. That throw happens inside the
+   scrypt callback, on a later tick, where the surrounding Promise cannot see it,
+   so it escaped as an uncaughtException and killed the process. A damaged hash
+   must fail the login, not take the server down. */
+const SALT_RE = /^[0-9a-f]+$/i;
+const KEY_RE = new RegExp(`^[0-9a-f]{${SCRYPT_KEYLEN * 2}}$`, 'i');
+
 async function hashPassword(password) {
   return new Promise((resolve, reject) => {
     const salt = crypto.randomBytes(16).toString('hex');
-    crypto.scrypt(password, salt, 64, (err, key) => {
+    crypto.scrypt(password, salt, SCRYPT_KEYLEN, (err, key) => {
       if (err) reject(err);
       else resolve(`${salt}:${key.toString('hex')}`);
     });
   });
 }
 
+/* True only when `password` matches the stored hash. Resolves false for any hash
+   this function cannot verify; it never rejects on a malformed one, and never
+   throws asynchronously. */
 async function verifyPassword(password, hash) {
   return new Promise((resolve, reject) => {
-    const [salt, key] = hash.split(':');
+    const [salt, key] = String(hash ?? '').split(':');
     if (!salt || !key) return resolve(false);
-    crypto.scrypt(password, salt, 64, (err, derived) => {
-      if (err) reject(err);
-      else resolve(crypto.timingSafeEqual(Buffer.from(key, 'hex'), derived));
+    if (!SALT_RE.test(salt) || !KEY_RE.test(key)) {
+      /* Logged because the effect is a lockout: the stored password can no
+         longer authenticate anyone, and the reason is not otherwise visible. */
+      log.error('stored password hash is malformed, login cannot succeed', { reason: 'bad_hash_format' });
+      return resolve(false);
+    }
+    const expected = Buffer.from(key, 'hex');
+    crypto.scrypt(password, salt, SCRYPT_KEYLEN, (err, derived) => {
+      if (err) return reject(err);
+      /* Belt and braces. The checks above make a length mismatch unreachable,
+         but this callback runs where a throw is uncatchable, so nothing in it is
+         left unguarded. */
+      try { resolve(crypto.timingSafeEqual(expected, derived)); }
+      catch (e) { reject(e); }
     });
   });
 }

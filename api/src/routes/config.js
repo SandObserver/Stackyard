@@ -71,11 +71,19 @@ on('POST', '/api/config', async(req, res) => {
       data.settings.background = data.settings.background || {};
       data.settings.background.apiKey = existing.settings.background.apiKey;
     }
+    /* settings.auth is owned entirely by the /api/auth/* routes, which is where
+       the admin UI changes it. Nothing a config write supplies is kept.
+
+       Merging field by field, as this did, left a gap: the merge only ran when
+       auth already existed, so before a password was ever set an unauthenticated
+       caller could write settings.auth outright. A hand-made passwordHash then
+       locked the install, or crashed it, since verifyPassword did not validate
+       what it was given. Taking the block wholesale closes both, and closes any
+       field added to it later without this line being revisited. */
+    if (data.settings) delete data.settings.auth;
     if (existing.settings?.auth) {
       data.settings = data.settings || {};
-      data.settings.auth = data.settings.auth || {};
-      if (existing.settings.auth.secret) data.settings.auth.secret = existing.settings.auth.secret;
-      if (existing.settings.auth.passwordHash) data.settings.auth.passwordHash = existing.settings.auth.passwordHash;
+      data.settings.auth = JSON.parse(JSON.stringify(existing.settings.auth));
     }
     preserveAllSecrets(data, existing);
     migrate(data); /* upgrade old imported/restored configs; no-op for normal saves */
