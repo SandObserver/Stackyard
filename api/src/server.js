@@ -6,6 +6,22 @@ if (process.env.PORT !== undefined && (Number.isNaN(_port) || _port < 1 || _port
   throw new Error(`Invalid PORT env var: "${process.env.PORT}"`);
 const PORT = Number.isNaN(_port) ? 3000 : _port;
 
+/* Last resort. A throw that escapes to here has already skipped every handler,
+   so the process is going to end either way; the point is that it ends with a
+   log line saying why, and with a non-zero status supervisord can act on.
+   Without this, a crash inside an async callback took the API down silently and
+   the container stayed up around it. Not a substitute for handling errors where
+   they happen. */
+function fatal(kind) {
+  return err => {
+    try { log.error('fatal: ' + kind, { error: (err && err.message) || String(err), stack: err && err.stack }); }
+    catch { /* logging must not mask the original failure */ }
+    process.exit(1);
+  };
+}
+process.on('uncaughtException', fatal('uncaughtException'));
+process.on('unhandledRejection', fatal('unhandledRejection'));
+
 require('./routes');
 require('./widgets');
 require('./widget-data');

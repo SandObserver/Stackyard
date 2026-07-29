@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- A malformed stored password hash no longer crashes the API. It now fails the
+  login and logs the reason.
+- Authentication settings can no longer be written through a config save or an
+  imported config. They are changed only from Admin, so a config upload cannot
+  set or replace the password before one exists.
 - Testing a badge or fetching widget options no longer reuses a stored
   credential when the configuration has been changed, so a stored secret cannot
   be sent to a different destination. Re-enter the credential to test edited
