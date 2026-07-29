@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Widget pages can no longer be framed by other sites. `X-Frame-Options` is
+  cleared on them so the dashboard can embed them, and nothing had replaced it.
+  Every page now states its framing policy in the Content-Security-Policy header.
 - A widget whose definition cannot be loaded no longer has its settings sent to
   the browser or written to a config export. Without the definition there is no
   way to tell which fields hold credentials, so nothing is sent. The settings

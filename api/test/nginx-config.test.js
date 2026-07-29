@@ -75,3 +75,56 @@ test('the Dockerfile ships every nginx config file', () => {
       `nginx/${f} is not copied into the image, so the include would fail at runtime`);
   }
 });
+
+/* ── frame-ancestors (P14-2) ──────────────────────────────────────────────── */
+
+/* /widgets/ deliberately clears X-Frame-Options so the dashboard can embed
+   widgets, but nothing replaced it, so widget pages could be framed by any
+   origin. They are the only pages allowed inline script, and they have clickable
+   elements, so the exposure is clickjacking. The session cookie is
+   SameSite=Strict, so a foreign frame carries no credentials.
+
+   Every policy states frame-ancestors now, not only the one that was missing it.
+   X-Frame-Options already enforced the same thing on the others, but it is
+   obsolete and unspecified, so a location that omits it in future would
+   otherwise have no framing policy at all. That is exactly how this gap
+   appeared. */
+
+function policyFor(location) {
+  const at = dashboard.indexOf(`location ${location} {`);
+  assert.ok(at !== -1, `location ${location} not found`);
+  const block = dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  const m = block.match(/add_header Content-Security-Policy "([^"]+)"/);
+  assert.ok(m, `${location} has no inline Content-Security-Policy`);
+  return m[1];
+}
+
+test('widget pages restrict who may frame them', () => {
+  assert.match(policyFor('^~ /widgets/'), /frame-ancestors 'self'/);
+});
+
+test('widgets still clear X-Frame-Options, so frame-ancestors is the only guard', () => {
+  const at = dashboard.indexOf('location ^~ /widgets/ {');
+  const block = dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  assert.match(block, /add_header X-Frame-Options "" always;/,
+    'if this stops being cleared, the dashboard cannot embed widgets');
+});
+
+test('admin refuses framing entirely, matching its X-Frame-Options DENY', () => {
+  assert.match(policyFor('^~ /admin'), /frame-ancestors 'none'/);
+  const at = dashboard.indexOf('location ^~ /admin {');
+  const block = dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  assert.match(block, /X-Frame-Options "DENY"/, 'the two headers must not disagree');
+});
+
+test('the default policy restricts framing to same origin', () => {
+  assert.match(policy, /frame-ancestors 'self'/);
+});
+
+test('every policy in the config states a frame-ancestors', () => {
+  const all = [...dashboard.matchAll(/add_header Content-Security-Policy "([^"]+)"/g)].map(m => m[1]);
+  all.push(policy);
+  for (const p of all) {
+    assert.match(p, /frame-ancestors /, `a policy without frame-ancestors: ${p.slice(0, 60)}...`);
+  }
+});
