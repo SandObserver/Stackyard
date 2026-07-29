@@ -6,6 +6,7 @@ const { parsePrometheus } = require('./parse-prometheus');
 const { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
+const { widgetConfigMatchesSaved, RETYPE_MESSAGE } = require('./secret-scope');
 const { dispatchProvider } = require('./provider-dispatch');
 const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
@@ -142,13 +143,21 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
 
   const item = { type: 'widget', id: req.params.id, widgetType: body.widgetType, widgetConfig: body.widgetConfig || {} };
   const saved = (loadConfig().items || []).find(i => i.id === req.params.id && i.type === 'widget');
-  if (saved) preserveWidgetSecrets(item, saved, entry); /* restore a secret the form left blank */
+  /* Restore a secret the form left blank, but only when the rest of the posted
+     config is identical to what is saved. Otherwise the request chooses the
+     destination while the server supplies the credential, which would send a
+     stored secret wherever the caller asked. See secret-scope.js. */
+  const scoped = !!saved && widgetConfigMatchesSaved(item.widgetConfig, saved.widgetConfig, entry);
+  if (scoped) preserveWidgetSecrets(item, saved, entry);
 
   try {
     const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams(), fetchChecked, body.row, true);
     json(res, out.status, out.body);
   } catch (e) {
     if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });
+    /* A failure right after declining to restore is very likely the missing
+       credential, so say so rather than surfacing an upstream 401. */
+    if (!scoped && saved) return fail(res, e, { status: 502, kind: KIND.INVALID, error: RETYPE_MESSAGE });
     log.error('widget-options failed', { widget: body.widgetType, error: e.message });
     fail(res, e, { status: 502 });
   }

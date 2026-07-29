@@ -82,3 +82,22 @@ test('an unknown future kind degrades instead of crashing an older frontend', ()
   assert.equal(a.tone, TONE.ERROR);
   assert.equal(a.message, 'Too many requests.');
 });
+
+/* ── optionsErrorText (P11-2) ─────────────────────────────────────────────── */
+
+test('the retype instruction is shown on its own, without a failure prefix', async () => {
+  const { optionsErrorText } = await import('../js/admin-error.js');
+  const msg = 'This configuration has changed since it was saved, so the stored credential was not used. Enter the credential to test these settings.';
+  assert.equal(optionsErrorText({ kind: KIND.INVALID, message: msg }), msg);
+});
+
+test('any other failure keeps the Fetch failed prefix', async () => {
+  const { optionsErrorText } = await import('../js/admin-error.js');
+  assert.equal(optionsErrorText({ kind: KIND.NETWORK, message: 'boom' }), 'Fetch failed: boom');
+  assert.equal(optionsErrorText(new Error('boom')), 'Fetch failed: boom');
+});
+
+test('optionsErrorText tolerates an error with no message', async () => {
+  const { optionsErrorText } = await import('../js/admin-error.js');
+  assert.equal(optionsErrorText({ kind: KIND.INVALID }), 'Fetch failed: Request failed.');
+});

@@ -8,6 +8,7 @@ const demoData = require('../demo-data');
 const { collectNumbers, computeBadgeValue } = require('../badge-extract');
 const { requestParts, toRows, preserveItemBadgeSecrets, rowsToObject } = require('../badge-headers');
 const { fail, KIND, errorBody } = require('../api-error');
+const { badgeRequestMatchesSaved, RETYPE_MESSAGE } = require('../secret-scope');
 
 on('POST', '/api/ping', async(req, res) => {
   if (!checkOrigin(req, res)) return;
@@ -62,16 +63,26 @@ on('POST', '/api/badge-proxy', async(req, res) => {
     if (!url) return json(res, 400, { error:'url required', kind: KIND.INVALID });
     /* Rows the user did not retype arrive as secret rows without a value. Fill
        them from the stored item so a test after reload uses the real credential,
-       without ever sending it to the browser. */
+       without ever sending it to the browser.
+
+       Only when the request targets exactly the saved destination with exactly
+       the saved non-secret rows. Otherwise the request picks the URL while the
+       server picks the credential, and a stored secret would be delivered
+       wherever the caller asked. See secret-scope.js. */
     let headerRows = toRows(body.headers);
     let paramRows = toRows(body.params);
+    let declined = false;
     if (itemId) {
       const stored = loadConfig().items?.find(i => i && i.id === itemId);
       if (stored) {
         const oldSrc = stored.monitoring?.activity?.enabled ? stored.monitoring.activity : stored.badge;
-        const shim = { badge: { headers: headerRows, params: paramRows } };
-        preserveItemBadgeSecrets(shim, { badge: { headers: oldSrc?.headers, params: oldSrc?.params } });
-        headerRows = shim.badge.headers; paramRows = shim.badge.params;
+        if (badgeRequestMatchesSaved({ url, headers: headerRows, params: paramRows }, oldSrc)) {
+          const shim = { badge: { headers: headerRows, params: paramRows } };
+          preserveItemBadgeSecrets(shim, { badge: { headers: oldSrc?.headers, params: oldSrc?.params } });
+          headerRows = shim.badge.headers; paramRows = shim.badge.params;
+        } else {
+          declined = true;
+        }
       }
     }
     const headers = rowsToObject(headerRows);
@@ -85,6 +96,11 @@ on('POST', '/api/badge-proxy', async(req, res) => {
        enable authentication, which is the case its auth branch exists for.
        Report it as a failure, with the upstream's status as data. */
     if (r.status >= 400) {
+      /* A 401/403 straight after declining to restore is almost certainly the
+         missing credential, not a wrong key. Say which it is. */
+      if (declined && (r.status === 401 || r.status === 403)) {
+        return json(res, 502, { error: RETYPE_MESSAGE, kind: KIND.INVALID });
+      }
       return json(res, 502, {
         error: `The service answered ${statusDesc(r.status)} (HTTP ${r.status}).`,
         kind:  KIND.UPSTREAM,

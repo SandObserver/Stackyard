@@ -85,3 +85,15 @@ export function badgeErrorAdvice(e) {
     sessionExpired: false,
   };
 }
+
+/* Status text for a failed config-time "Fetch".
+
+   The server declines to reuse a stored credential when the posted config no
+   longer matches the saved one, and says so in the message. That is an
+   instruction, not a failure report, so it is shown on its own rather than
+   under a "Fetch failed:" prefix. */
+export function optionsErrorText(e) {
+  const { kind, message } = readError(e);
+  if (kind === KIND.INVALID && message) return message;
+  return 'Fetch failed: ' + (message || 'Request failed.');
+}
