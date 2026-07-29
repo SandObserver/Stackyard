@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Uploaded SVG icons are sanitized by rebuilding them from an allowlist rather
+  than by removing known-bad patterns, so markup the sanitizer cannot parse is
+  dropped instead of passed through. An event handler written with a `/`
+  separator, such as `<path/onload=...>`, previously survived.
 - The outbound guard now blocks carrier-grade NAT, multicast, reserved and
   broadcast addresses, IETF protocol assignment and benchmarking ranges, and
   IPv6 multicast. The full list of covered ranges is in
