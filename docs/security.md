@@ -22,8 +22,33 @@ request carries `X-Forwarded-Proto: https`.
 
 ## SSRF guard
 
-The proxy blocks requests to private and loopback addresses and pins the
-resolved IP to close DNS-rebind gaps. Dotless hostnames (such as Docker container names) are trusted and are not filtered.
+The proxy blocks requests to the address ranges below and pins the
+resolved IP to close DNS-rebind gaps. Dotless hostnames (such as Docker container names) are trusted and are not filtered. Only `http` and `https` URLs are fetched.
+
+Two kinds of range are blocked, for the same reason: those that reach something
+internal, and those that are not routable destinations at all.
+
+| Range | Why |
+|---|---|
+| `0.0.0.0/8` | this network (RFC 1122) |
+| `10.0.0.0/8` | private (RFC 1918) |
+| `100.64.0.0/10` | carrier-grade NAT (RFC 6598) |
+| `127.0.0.0/8` | loopback (RFC 1122) |
+| `169.254.0.0/16` | link-local, includes cloud metadata (RFC 3927) |
+| `172.16.0.0/12` | private (RFC 1918) |
+| `192.0.0.0/24` | IETF protocol assignments (RFC 6890) |
+| `192.168.0.0/16` | private (RFC 1918) |
+| `198.18.0.0/15` | benchmarking (RFC 2544) |
+| `224.0.0.0/4` | multicast (RFC 5771) |
+| `240.0.0.0/4` | reserved, includes the `255.255.255.255` broadcast address (RFC 1112) |
+| `::1`, `::` | IPv6 loopback and unspecified |
+| `fc00::/7` | IPv6 unique local |
+| `fe80::/10` | IPv6 link-local |
+| `ff00::/8` | IPv6 multicast |
+
+An IPv4 address wrapped in an IPv6 literal is decoded and checked against the
+same table, covering the `::/96`, `::ffff:0:0/96` and `64:ff9b::/96` forms in
+both hex and dotted spellings.
 
 This guard limits what a compromised or malicious widget can access. It does not protect against an admin, who can already configure widgets to connect anywhere.
 

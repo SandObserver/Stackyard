@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- The outbound guard now blocks carrier-grade NAT, multicast, reserved and
+  broadcast addresses, IETF protocol assignment and benchmarking ranges, and
+  IPv6 multicast. The full list of covered ranges is in
+  [docs/security.md](docs/security.md).
 - Widget pages can no longer be framed by other sites. `X-Frame-Options` is
   cleared on them so the dashboard can embed them, and nothing had replaced it.
   Every page now states its framing policy in the Content-Security-Policy header.

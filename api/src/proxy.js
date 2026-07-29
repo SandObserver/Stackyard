@@ -8,7 +8,68 @@ const { IS_DEMO } = require('./demo');
 const { parseXml } = require('./parse-xml');
 const { parsePrometheus } = require('./parse-prometheus');
 
-const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.|::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|0\.))/i;
+/* Addresses that are never a legitimate outbound target.
+
+   Two kinds, treated the same because the consequence is the same: ranges that
+   reach something internal (private, loopback, link-local, carrier NAT), and
+   ranges that are not routable destinations at all (multicast, reserved,
+   broadcast), which are useful mainly for confusing a filter or a network stack.
+
+   Written as CIDRs compared numerically rather than as one regular expression.
+   The regular expression this replaces listed the IPv4 ranges twice, once alone
+   and once inside its ::ffff: branch, so every addition had to be made in two
+   places and got harder to read each time. Ranges were missed as a result. Each
+   line below can be checked against its RFC on its own.
+
+   To add a range: add a line. Nothing else needs to change.
+
+   Also documented in docs/security.md, since operators need to know what the
+   guard covers before deciding whether they need ALLOW_PRIVATE_IPS. */
+/** @type {Array<[string, number, string]>} */
+const BLOCKED_IPV4 = [
+  ['0.0.0.0',      8,  'this network (RFC 1122)'],
+  ['10.0.0.0',     8,  'private (RFC 1918)'],
+  ['100.64.0.0',   10, 'carrier-grade NAT (RFC 6598)'],
+  ['127.0.0.0',    8,  'loopback (RFC 1122)'],
+  ['169.254.0.0',  16, 'link-local, includes cloud metadata (RFC 3927)'],
+  ['172.16.0.0',   12, 'private (RFC 1918)'],
+  ['192.0.0.0',    24, 'IETF protocol assignments (RFC 6890)'],
+  ['192.168.0.0',  16, 'private (RFC 1918)'],
+  ['198.18.0.0',   15, 'benchmarking (RFC 2544)'],
+  ['224.0.0.0',    4,  'multicast (RFC 5771)'],
+  ['240.0.0.0',    4,  'reserved, includes 255.255.255.255 broadcast (RFC 1112)'],
+];
+
+/* IPv6 equivalents. A regular expression is still the clearest form here: these
+   are prefix matches on the first group, with no arithmetic involved.
+     ::1   loopback          ::    unspecified
+     fc/fd unique local      fe8-b link-local        ff00::/8 multicast
+   ff00::/8 needs all four hex digits: a group written 'ff' is 0x00ff, which is
+   not multicast, while 0xff02 can only be written 'ff02'. */
+const BLOCKED_IPV6_RE = /^(::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|ff[0-9a-f]{2}:)/i;
+
+/** @param {string} addr @returns {number|null} */
+function ipv4ToInt(addr) {
+  if (!net.isIPv4(addr)) return null;
+  const p = addr.split('.');
+  return ((+p[0] << 24) >>> 0) + (+p[1] << 16) + (+p[2] << 8) + +p[3];
+}
+
+/* Precomputed once. The third column is documentation and is not used here; it
+   is what the table in docs/security.md is checked against. */
+const _blockedV4 = BLOCKED_IPV4.map(([base, bits]) => ({
+  /* A /0 would need a 32-bit shift, which JavaScript treats as a no-op. No entry
+     uses one, and the guard keeps it that way. */
+  mask: bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0,
+  base: ipv4ToInt(base),
+}));
+
+/** @param {string} addr @returns {boolean} */
+function isBlockedIPv4(addr) {
+  const n = ipv4ToInt(addr);
+  if (n === null) return false;
+  return _blockedV4.some(r => (n & r.mask) >>> 0 === r.base);
+}
 
 /* Extract the embedded IPv4 from an IPv4-in-IPv6 address as dotted-decimal, or
    null if there is none. Covers the three forms that wrap an IPv4 target in an
@@ -16,8 +77,8 @@ const PRIVATE_IP_RE = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.25
      ::/96           IPv4-compatible (::7f00:1     and  ::127.0.0.1)
      ::ffff:0:0/96   IPv4-mapped     (::ffff:7f00:1 and  ::ffff:127.0.0.1)
      64:ff9b::/96    NAT64 well-known
-   PRIVATE_IP_RE only matches the dotted-tail spelling of an IPv4 address, so
-   without this a hex-tailed literal like ::7f00:1 (127.0.0.1),
+   The IPv4 range check only understands dotted-decimal, so without this a
+   hex-tailed literal like ::7f00:1 (127.0.0.1),
    ::ffff:7f00:1 (127.0.0.1), or 64:ff9b::a9fe:a9fe (169.254.169.254 metadata)
    slips past the range check. */
 function embeddedIPv4(addr) {
@@ -44,14 +105,14 @@ function isPrivateAddress(addr) {
   const s = addr.toLowerCase();
   if (s.startsWith('::ffff:') || s.startsWith('64:ff9b::')) {
     const v4 = embeddedIPv4(s);
-    if (v4) return PRIVATE_IP_RE.test(v4);
+    if (v4) return isBlockedIPv4(v4);
     return true; /* wrapper prefix with a tail we can't parse: refuse */
   }
   if (s.startsWith('::')) {
     const v4 = embeddedIPv4(s);
-    if (v4) return PRIVATE_IP_RE.test(v4);
+    if (v4) return isBlockedIPv4(v4);
   }
-  return PRIVATE_IP_RE.test(s);
+  return isBlockedIPv4(s) || BLOCKED_IPV6_RE.test(s);
 }
 const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
 /* Setting this true disables SSRF filtering entirely: private, loopback and
@@ -68,7 +129,7 @@ function getHostIp() {
    Only bypasses for private IPs, localhost, and Docker service names. */
 function shouldSkipTls(hostname, cfg) {
   if (cfg.settings?.server?.skipTlsVerify !== true) return false;
-  return !hostname.includes('.') || PRIVATE_IP_RE.test(hostname) || hostname === 'localhost';
+  return !hostname.includes('.') || isPrivateAddress(hostname) || hostname === 'localhost';
 }
 
 function rewriteUrl(raw) {
@@ -343,7 +404,7 @@ async function pingChecked(url, ms, skipTls) {
 module.exports = {
   fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError, statusDesc,
   urlPolicyError, ALLOWED_PROTOCOLS,
-  rewriteUrl, getHostIp, shouldSkipTls, PRIVATE_IP_RE,
-  isPrivateAddress, embeddedIPv4,
+  rewriteUrl, getHostIp, shouldSkipTls,
+  isPrivateAddress, isBlockedIPv4, embeddedIPv4, BLOCKED_IPV4,
   _internals: { fetchJSON, pingUrl, guardSsrf },
 };
