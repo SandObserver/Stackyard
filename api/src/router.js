@@ -67,13 +67,36 @@ function readBody(req) {
   });
 }
 
-const TRUST_PROXY = process.env.TRUST_PROXY === 'true';
+/* The client address, used for rate limiting and audit records.
+
+   Read from X-Real-IP, and only when the request arrived over loopback. Our own
+   nginx is the only thing that reaches this port in the shipped container, and it
+   sets that header unconditionally, so a client-supplied value cannot survive.
+   The loopback check is what makes that reasoning safe rather than assumed: a
+   request arriving from anywhere else is treated as unproxied and identified by
+   its socket address.
+
+   This replaces a TRUST_PROXY flag that read X-Forwarded-For and took the first
+   entry. Neither half worked. nginx never set X-Forwarded-For, so with the flag
+   off every request looked like 127.0.0.1 and rate limiting was one shared bucket
+   for all clients; with it on, a client-supplied header passed straight through
+   and the first entry is the one the client chooses, so the limiter could be
+   bypassed by rotating it. The flag was most dangerous in exactly the position an
+   operator would turn it on for.
+
+   No header chain is parsed here. When Stackyard sits behind another reverse
+   proxy, nginx resolves the real client itself from TRUSTED_PROXY (see
+   docker-entrypoint.sh), so $remote_addr and therefore X-Real-IP are already
+   correct by the time the request arrives. */
+const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+
 function getIp(req) {
-  if (TRUST_PROXY) {
-    const fwd = req.headers['x-forwarded-for'];
-    if (fwd) return fwd.split(',').map(s => s.trim()).filter(Boolean)[0];
+  const peer = req.socket?.remoteAddress || '';
+  if (LOOPBACK.has(peer)) {
+    const real = req.headers['x-real-ip'];
+    if (typeof real === 'string' && real.trim()) return real.trim();
   }
-  return req.socket?.remoteAddress || 'unknown';
+  return peer || 'unknown';
 }
 function checkOrigin(req, res) {
   const origin = req.headers['origin'];

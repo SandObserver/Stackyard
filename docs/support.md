@@ -45,6 +45,13 @@ front of the app; see [security.md](security.md).
 
 Logins are rate-limited to 5 attempts per IP per 15 minutes.
 
+### One person's failed logins lock everyone out
+
+Behind another reverse proxy, Stackyard's nginx sees that proxy as the client, so
+every request through it shares one rate-limit bucket. Set `TRUSTED_PROXY` to
+where the proxy is, for example `TRUSTED_PROXY=172.18.0.0/16`; see
+[security.md](security.md).
+
 ### A widget shows "Blocked: ... is a private address"
 
 The proxy blocks private and loopback addresses by default as an SSRF safeguard.

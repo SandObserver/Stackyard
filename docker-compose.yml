@@ -44,6 +44,10 @@ services:
       # - SOCKET_PROXY_URL=http://socket-proxy:2375
       # Set to true if behind a reverse proxy (Nginx Proxy Manager, Traefik, etc.)
       # - TRUST_PROXY=true
+      # Where your reverse proxy is, if you have one in front (Nginx Proxy
+      # Manager, Caddy, Traefik). Without this, every request through it counts
+      # as one client for rate limiting. See docs/security.md.
+      # - TRUSTED_PROXY=172.18.0.0/16
       # Set to true to allow widget URLs using private/LAN IP addresses
       # - ALLOW_PRIVATE_IPS=true
       # Session lifetime in days before re-login is required (default 30)
