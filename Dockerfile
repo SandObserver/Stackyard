@@ -20,6 +20,9 @@ RUN apk add --no-cache nginx supervisor && \
 COPY nginx/dashboard.conf /etc/nginx/http.d/dashboard.conf
 COPY nginx/security-headers.conf /etc/nginx/http.d/security-headers.conf
 COPY nginx/csp-default.conf /etc/nginx/http.d/csp-default.conf
+# Replaced at container start by docker-entrypoint.sh; present here so the
+# config is valid at build time.
+COPY nginx/realip.conf /etc/nginx/http.d/realip.conf
 
 # Copy UI static files
 COPY ui/ /usr/share/nginx/html/
@@ -46,4 +49,14 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
 # supervisord runs as root so it can bind port 80 (nginx) and spawn processes.
 # It drops the API process to the unprivileged 'node' user (see supervisord.conf).
 # nginx drops its worker processes to the 'nginx' user automatically.
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh && \
+    # Proves the config parses in the image that ships, which also proves nginx
+    # was built with the realip module the entrypoint depends on. A missing
+    # module fails the build here rather than at a user's container start.
+    printf 'set_real_ip_from 127.0.0.1;\nreal_ip_header X-Forwarded-For;\nreal_ip_recursive on;\n' > /etc/nginx/http.d/realip.conf && \
+    nginx -t && \
+    printf '# Placeholder, replaced at container start by docker-entrypoint.sh.\n' > /etc/nginx/http.d/realip.conf
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/stackyard.conf"]

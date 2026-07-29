@@ -72,9 +72,27 @@ no authentication, so on a shared or untrusted network the first person to reach
 a fresh install can claim the account. Set a password immediately after first
 launch, or keep the install off untrusted networks until you have.
 
-Rate limiting keys on the client IP. Behind a proxy this is only meaningful if
-the proxy passes a real client IP and `TRUST_PROXY` is configured; otherwise all
-requests share one IP.
+Rate limiting keys on the client IP, which the app reads from the `X-Real-IP`
+header nginx sets. nginx overwrites that header on every request, so a client
+cannot supply its own.
+
+If you put Stackyard behind another reverse proxy (Nginx Proxy Manager, Caddy,
+Traefik), set `TRUSTED_PROXY` to where that proxy is:
+
+```
+TRUSTED_PROXY=172.18.0.0/16
+TRUSTED_PROXY="172.18.0.0/16 10.0.0.5"    # several, space or comma separated
+```
+
+Without it, Stackyard's own nginx sees the front proxy as the client, so every
+request through it counts as the same client and rate limiting becomes one
+shared bucket. With it, nginx resolves the real client from the forwarding
+headers your proxy already sends, so no extra configuration is needed on the
+proxy side.
+
+`TRUSTED_PROXY` and `TRUST_PROXY` are separate: the first is about which client
+an address belongs to, the second about whether to believe a request that claims
+it arrived over HTTPS.
 
 ## Secrets
 

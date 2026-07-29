@@ -1,0 +1,173 @@
+/* Regression tests for P16-1: the client IP was never actually known.
+
+   nginx set X-Real-IP on /api/. The app read X-Forwarded-For, which nginx never
+   set. They were never talking about the same header, and both settings were
+   wrong:
+
+     TRUST_PROXY off  every request looked like 127.0.0.1, so rate limiting was
+                      one shared bucket for all clients and five failed logins
+                      from anyone locked out everyone
+     TRUST_PROXY on   a client-supplied X-Forwarded-For passed straight through,
+                      and the app took the first entry, which the client chooses,
+                      so the limiter was bypassable by rotating the header
+
+   The second is worse, and it was the setting an operator would turn on
+   specifically to make rate limiting work.
+
+   The app reads X-Real-IP now, and only for a request arriving over loopback,
+   which is where nginx sits. nginx overwrites that header unconditionally, so a
+   client-supplied value cannot survive. No header chain is parsed in the app at
+   all: when Stackyard is behind another reverse proxy, nginx resolves the real
+   client itself from TRUSTED_PROXY, so the header is already correct. */
+
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+
+const { getIp } = require('../src/router');
+
+const req = (headers, remoteAddress) => ({ headers, socket: { remoteAddress } });
+
+/* ── getIp ────────────────────────────────────────────────────────────────── */
+
+test('the address nginx reports is used', () => {
+  assert.equal(getIp(req({ 'x-real-ip': '203.0.113.9' }, '127.0.0.1')), '203.0.113.9');
+});
+
+test('loopback is recognised in every spelling nginx may use', () => {
+  for (const peer of ['127.0.0.1', '::1', '::ffff:127.0.0.1']) {
+    assert.equal(getIp(req({ 'x-real-ip': '203.0.113.9' }, peer)), '203.0.113.9', `peer ${peer}`);
+  }
+});
+
+/* The bypass. A header from a non-loopback peer is not ours, so it is ignored. */
+test('a header from a non-loopback peer is ignored', () => {
+  assert.equal(getIp(req({ 'x-real-ip': '9.9.9.9' }, '192.168.1.50')), '192.168.1.50');
+  assert.equal(getIp(req({ 'x-real-ip': '9.9.9.9' }, '203.0.113.4')), '203.0.113.4');
+});
+
+test('X-Forwarded-For is never read, whoever sends it', () => {
+  assert.equal(getIp(req({ 'x-forwarded-for': '9.9.9.9' }, '127.0.0.1')), '127.0.0.1');
+  assert.equal(getIp(req({ 'x-forwarded-for': '9.9.9.9, 8.8.8.8' }, '127.0.0.1')), '127.0.0.1');
+  /* Both present: X-Real-IP is the one nginx controls, so it wins. */
+  assert.equal(getIp(req({ 'x-real-ip': '203.0.113.9', 'x-forwarded-for': '9.9.9.9' }, '127.0.0.1')), '203.0.113.9');
+});
+
+test('an absent or empty header falls back to the socket address', () => {
+  assert.equal(getIp(req({}, '127.0.0.1')), '127.0.0.1');
+  assert.equal(getIp(req({ 'x-real-ip': '' }, '127.0.0.1')), '127.0.0.1');
+  assert.equal(getIp(req({ 'x-real-ip': '   ' }, '127.0.0.1')), '127.0.0.1');
+});
+
+test('a repeated header, which arrives as an array, is not trusted as a string', () => {
+  /* Node gives an array for a duplicated header. Reading array[0] would let a
+     client that sent its own copy alongside nginx's decide the outcome. */
+  assert.equal(getIp(req({ 'x-real-ip': ['9.9.9.9', '203.0.113.9'] }, '127.0.0.1')), '127.0.0.1');
+});
+
+test('surrounding whitespace is trimmed', () => {
+  assert.equal(getIp(req({ 'x-real-ip': ' 203.0.113.9 ' }, '127.0.0.1')), '203.0.113.9');
+});
+
+test('an unknown peer with no header is reported as unknown', () => {
+  assert.equal(getIp({ headers: {}, socket: {} }), 'unknown');
+  assert.equal(getIp({ headers: {} }), 'unknown');
+});
+
+/* ── the generated nginx config ───────────────────────────────────────────── */
+
+/* The entrypoint renders the trusted-proxy config from TRUSTED_PROXY. Running
+   the real script matters here: the alternative is asserting on a copy of its
+   logic, which would pass while the shipped script was broken. */
+function render(env) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-realip-'));
+  const out = path.join(dir, 'realip.conf');
+  const stubDir = path.join(dir, 'bin');
+  fs.mkdirSync(stubDir);
+  /* The script runs `nginx -t` before exec'ing; there is no nginx here. */
+  fs.writeFileSync(path.join(stubDir, 'nginx'), '#!/bin/sh\nexit 0\n');
+  fs.chmodSync(path.join(stubDir, 'nginx'), 0o755);
+
+  execFileSync('sh', [path.join(__dirname, '../../docker-entrypoint.sh'), 'true'], {
+    env: { PATH: `${stubDir}:${process.env.PATH}`, REALIP_CONF: out, ...env },
+  });
+  return fs.readFileSync(out, 'utf8');
+}
+
+test('with no proxy configured, nothing is trusted', () => {
+  const conf = render({});
+  assert.doesNotMatch(conf, /set_real_ip_from/);
+  assert.doesNotMatch(conf, /real_ip_header/);
+});
+
+test('one proxy address produces one trust entry', () => {
+  const conf = render({ TRUSTED_PROXY: '172.18.0.0/16' });
+  assert.match(conf, /^set_real_ip_from 172\.18\.0\.0\/16;$/m);
+  assert.match(conf, /^real_ip_header X-Forwarded-For;$/m);
+  assert.match(conf, /^real_ip_recursive on;$/m);
+});
+
+test('several addresses are accepted, space or comma separated', () => {
+  for (const value of ['172.18.0.0/16 10.0.0.5', '172.18.0.0/16,10.0.0.5', '172.18.0.0/16, 10.0.0.5']) {
+    const conf = render({ TRUSTED_PROXY: value });
+    assert.match(conf, /set_real_ip_from 172\.18\.0\.0\/16;/, value);
+    assert.match(conf, /set_real_ip_from 10\.0\.0\.5;/, value);
+    assert.equal((conf.match(/set_real_ip_from/g) || []).length, 2, value);
+  }
+});
+
+test('an IPv6 proxy address is passed through', () => {
+  assert.match(render({ TRUSTED_PROXY: 'fd00::/8' }), /set_real_ip_from fd00::\/8;/);
+});
+
+test('the generated file says it is generated', () => {
+  assert.match(render({}), /^# Generated by docker-entrypoint\.sh/);
+});
+
+test('the entrypoint refuses to start when nginx rejects the config', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-realip-bad-'));
+  const stubDir = path.join(dir, 'bin');
+  fs.mkdirSync(stubDir);
+  fs.writeFileSync(path.join(stubDir, 'nginx'), '#!/bin/sh\necho "bad config" >&2\nexit 1\n');
+  fs.chmodSync(path.join(stubDir, 'nginx'), 0o755);
+
+  assert.throws(() => execFileSync('sh', [path.join(__dirname, '../../docker-entrypoint.sh'), 'true'], {
+    env: { PATH: `${stubDir}:${process.env.PATH}`, REALIP_CONF: path.join(dir, 'realip.conf') },
+    stdio: 'pipe',
+  }), /bad config|Command failed/);
+});
+
+/* ── the nginx config that consumes it ────────────────────────────────────── */
+
+const dashboard = fs.readFileSync(path.join(__dirname, '../../nginx/dashboard.conf'), 'utf8');
+
+test('the generated config is included at server level', () => {
+  assert.match(dashboard, /include \/etc\/nginx\/http\.d\/realip\.conf;/);
+});
+
+test('both forwarding headers are set on the API proxy', () => {
+  const at = dashboard.indexOf('location /api/ {');
+  const block = dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  assert.match(block, /proxy_set_header X-Real-IP \$remote_addr;/);
+  assert.match(block, /proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;/);
+});
+
+/* This nginx never terminates TLS, so $scheme is always http here. Setting
+   X-Forwarded-Proto would overwrite the https a front proxy sent and silently
+   drop the Secure flag from the session cookie. */
+test('X-Forwarded-Proto is left alone', () => {
+  assert.doesNotMatch(dashboard, /proxy_set_header X-Forwarded-Proto/);
+});
+
+test('the Dockerfile ships the entrypoint and the placeholder config', () => {
+  const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
+  assert.match(dockerfile, /COPY docker-entrypoint\.sh \/docker-entrypoint\.sh/);
+  assert.match(dockerfile, /ENTRYPOINT \["\/docker-entrypoint\.sh"\]/);
+  assert.match(dockerfile, /COPY nginx\/realip\.conf/);
+  /* Proves the shipped nginx has the realip module the entrypoint depends on:
+     a missing module fails the image build rather than a user's start. */
+  assert.match(dockerfile, /nginx -t/);
+});

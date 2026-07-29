@@ -51,12 +51,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `TRUSTED_PROXY` names where a front reverse proxy is (Nginx Proxy Manager,
+  Caddy, Traefik), so Stackyard sees real client addresses through it. Without
+  it, every request arriving through such a proxy counts as one client for rate
+  limiting. See [docs/security.md](docs/security.md).
 - API error responses now carry a machine-readable `kind` (and, where useful, a
   small `detail` object) alongside the existing `error` message. See
   [docs/api-errors.md](docs/api-errors.md).
 
 ### Fixed
 
+- Rate limiting is now per client rather than shared. The app read a header nginx
+  never set, so every request looked like it came from the same address and five
+  failed logins from anyone locked out everyone. With `TRUST_PROXY=true` the
+  header was also client-supplied, so the limit could be bypassed entirely.
 - Authentication can no longer be switched on without a password, which locked
   the install with no way back in. An install already in that state now behaves
   as if authentication were off, so Admin is reachable and a password can be

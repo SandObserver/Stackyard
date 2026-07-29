@@ -59,5 +59,7 @@ http.createServer(dispatch).listen(PORT, () => {
      clients can spoof those headers. Flagged once at boot so a misconfiguration
      is visible. */
   if (process.env.TRUST_PROXY === 'true')
-    log.warn('TRUST_PROXY is enabled: X-Forwarded-For / X-Forwarded-Proto are trusted. Only safe behind a reverse proxy you control.');
+    log.warn('TRUST_PROXY is enabled: X-Forwarded-Proto is trusted, so a request claiming https gets a Secure session cookie. Only safe behind a reverse proxy you control.');
+  if (process.env.TRUST_PROXY === 'true' && !process.env.TRUSTED_PROXY)
+    log.warn('TRUST_PROXY is set but TRUSTED_PROXY is not: rate limiting counts every request through the front proxy as one client. Set TRUSTED_PROXY to the proxy address.');
 });
