@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- A widget whose definition cannot be loaded no longer has its settings sent to
+  the browser or written to a config export. Without the definition there is no
+  way to tell which fields hold credentials, so nothing is sent. The settings
+  are kept on the server and are restored untouched when the dashboard is saved,
+  and Admin explains why they cannot be shown.
 - Outbound requests are restricted to `http` and `https`. A URL with another
   scheme, or with no host, was previously accepted and sent as an HTTP request,
   which could reach the server's own localhost.

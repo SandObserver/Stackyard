@@ -141,6 +141,22 @@ export function authEnableBlocked({ enabled, passwordSet, newPassword }) {
   return !!enabled && !passwordSet && !(newPassword || '').length;
 }
 
+/* Which config editor a widget item should get.
+
+   'registry'    the manifest is loaded, render its fields
+   'custom'      a user-defined iframe widget, render the URL editor
+   'unavailable' a registry widget whose manifest is not loaded
+
+   The third used to fall through to the custom iframe editor, which is
+   misleading: it is not a custom widget, its manifest is simply missing. The
+   server also withholds its stored config in that state, because without a
+   manifest it cannot tell which fields are secret, so there is nothing to edit
+   and showing empty fields would look like the settings had been lost. */
+export function widgetConfigMode(type, reg) {
+  if (reg && reg[type]) return 'registry';
+  return type === 'custom' ? 'custom' : 'unavailable';
+}
+
 export const DOCK_MAX = 4;
 
 export function isDockBlocked(items, editing) {

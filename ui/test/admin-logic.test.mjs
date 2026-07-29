@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked } from '../js/admin-logic.js';
+import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked, widgetConfigMode } from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
@@ -210,4 +210,29 @@ test('disabling auth is never blocked', () => {
 
 test('authEnableBlocked tolerates a missing password field', () => {
   assert.equal(authEnableBlocked({ enabled: true, passwordSet: false }), true);
+});
+
+/* ── widgetConfigMode (P6-1) ──────────────────────────────────────────────── */
+
+/* A registry widget whose manifest is not loaded used to fall through to the
+   custom iframe editor, which is misleading: it is not a custom widget. The
+   server also withholds its stored config in that state, so there is nothing to
+   edit and empty fields would look like lost settings. */
+
+test('a widget with a loaded manifest gets the registry form', () => {
+  assert.equal(widgetConfigMode('books', { books: {} }), 'registry');
+});
+
+test('a custom iframe widget gets the custom form', () => {
+  assert.equal(widgetConfigMode('custom', { books: {} }), 'custom');
+});
+
+test('a widget whose manifest is missing is unavailable, not custom', () => {
+  assert.equal(widgetConfigMode('books', {}), 'unavailable');
+  assert.equal(widgetConfigMode('no-such-widget', { books: {} }), 'unavailable');
+});
+
+test('widgetConfigMode tolerates a missing registry', () => {
+  assert.equal(widgetConfigMode('books', null), 'unavailable');
+  assert.equal(widgetConfigMode('custom', null), 'custom');
 });
