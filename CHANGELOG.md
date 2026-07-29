@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Log values are quoted and escaped, so a value containing a newline can no
+  longer forge a second log line, and values containing spaces or `=` no longer
+  split into several fields. Values that need no quoting print as before.
 - Uploaded SVG icons are sanitized by rebuilding them from an allowlist rather
   than by removing known-bad patterns, so markup the sanitizer cannot parse is
   dropped instead of passed through. An event handler written with a `/`
