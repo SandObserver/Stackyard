@@ -136,7 +136,8 @@
     "importFailed": "Import 失败：{err}",
     "exportFailed": "Export 失败：{err}",
     "importNoChange": "没有可导入的内容 — 该文件与您当前的配置一致。",
-    "pwWeak": "密码强度不足：{label}"
+    "pwWeak": "密码强度不足：{label}",
+    "authNeedsPassword": "启用身份验证前请先设置密码。"
   },
   "confirm": {
     "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",

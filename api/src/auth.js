@@ -178,9 +178,27 @@ setInterval(() => {
   for (const [k, v] of _loginAttempts) if (now - v.first > LOGIN_WINDOW_MS) _loginAttempts.delete(k);
 }, 600_000).unref();
 
+/* Whether authentication is actually in force.
+
+   Auth switched on with no password stored is not a stricter state, it is an
+   unusable one: every login is refused because there is nothing to check
+   against, while every other route is gated. That locked the install with no way
+   back in over HTTP, since setting a password and switching auth off both sit
+   behind the gate. /api/auth/toggle now refuses to create that state, and this
+   treats an install already in it as switched off, so the admin is reachable
+   and the password can be set. It resolves itself the moment one is: nothing is
+   rewritten on disk, the stored flag is simply not honoured on its own.
+
+   This is not a bypass. A password hash is what a session is verified against;
+   with none stored there is no credential to present and no session to forge. */
+function authActive(cfg) {
+  const auth = cfg?.settings?.auth;
+  return !!(auth?.enabled && auth?.passwordHash);
+}
+
 function isAuthenticated(req) {
   const cfg = loadConfig();
-  if (!cfg.settings?.auth?.enabled) return true;
+  if (!authActive(cfg)) return true;
   const token = parseCookies(req).ds;
   if (!token) return false;
   const secret = cfg.settings.auth.secret;
@@ -202,7 +220,7 @@ function hasValidSession(req) {
 }
 
 module.exports = {
-  getOrCreateSecret, hashPassword, verifyPassword,
+  getOrCreateSecret, hashPassword, verifyPassword, authActive,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
   checkRateLimit, registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
   SESSION_MAX_AGE_MS,

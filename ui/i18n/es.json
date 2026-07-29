@@ -136,7 +136,8 @@
     "importFailed": "Error al importar: {err}",
     "exportFailed": "Error al exportar: {err}",
     "importNoChange": "Nada que importar — el archivo coincide con tu configuración actual.",
-    "pwWeak": "Contraseña demasiado débil: {label}"
+    "pwWeak": "Contraseña demasiado débil: {label}",
+    "authNeedsPassword": "Establece una contraseña antes de activar la autenticación."
   },
   "confirm": {
     "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",

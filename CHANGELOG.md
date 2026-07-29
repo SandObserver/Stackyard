@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Authentication can no longer be switched on without a password, which locked
+  the install with no way back in. An install already in that state now behaves
+  as if authentication were off, so Admin is reachable and a password can be
+  set.
 - Testing a badge URL against a service that replies `401` or `403` is now
   reported as a failure and offers to enable authentication. It previously
   reported success with no values found.

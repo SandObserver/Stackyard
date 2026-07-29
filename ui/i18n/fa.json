@@ -136,7 +136,8 @@
     "importFailed": "Import ناموفق بود: {err}",
     "exportFailed": "Export ناموفق بود: {err}",
     "importNoChange": "چیزی برای Import نیست — فایل با تنظیمات فعلی شما مطابقت دارد.",
-    "pwWeak": "رمز عبور ضعیف است: {label}"
+    "pwWeak": "رمز عبور ضعیف است: {label}",
+    "authNeedsPassword": "پیش از فعال‌سازی احراز هویت، یک گذرواژه تعیین کنید."
   },
   "confirm": {
     "deleteFolder": "پوشه «{name}» حذف شود؟ برنامه‌های داخل آن حذف نخواهند شد.",

@@ -5,6 +5,12 @@
 import { toast, ag, ap } from '/js/admin-shared.js?v=6f21b1b8';
 import { wirePasswordStrength, pwStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { t } from '/js/i18n.js?v=1';
+import { authEnableBlocked } from '/js/admin-logic.js?v=1';
+
+/* Mirrors the server's rule: auth cannot be switched on with no password behind
+   it. Module scope because it is seeded where the settings panel initialises and
+   read where it saves, which are separate functions. */
+let _passwordSet=false;
 
 export function loadSettings(c){
   const s=c.settings||{};
@@ -138,7 +144,11 @@ export function loadSettings(c){
   }
 
   ag('/api/auth/check').then(d=>{
+    _passwordSet=!!d.passwordSet;
     if(secEnEl){
+      /* d.enabled is the effective state. An install saved as enabled with no
+         password behaves as off, and is reported as off, so the toggle matches
+         what the server actually does. */
       secEnEl.checked=!!(d.enabled);
       const pwRow=document.getElementById('ie-pw');
       const pwHint=document.getElementById('pw-hint-static');
@@ -214,10 +224,15 @@ async function saveServer(){
 
     const pw=document.getElementById('sec-pw')?.value||'';
     const enabled=document.getElementById('sec-en')?.checked||false;
+    if(authEnableBlocked({enabled,passwordSet:_passwordSet,newPassword:pw})){
+      toast(t('toast.authNeedsPassword'),'err');
+      return;
+    }
     if(pw){
       const {ok,label}=pwStrength(pw);
       if(!ok){toast(t('toast.pwWeak',{label}),'err');return;}
       await ap('/api/auth/set-password',{password:pw});
+      _passwordSet=true;
       const pwEl=document.getElementById('sec-pw');
       if(pwEl){pwEl.value='';pwEl.placeholder='●●●●●●●●●● (configured)';}
     }

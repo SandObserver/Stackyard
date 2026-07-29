@@ -136,7 +136,8 @@
     "importFailed": "Échec de l'import : {err}",
     "exportFailed": "Échec de l'export : {err}",
     "importNoChange": "Rien à importer — le fichier correspond à votre configuration actuelle.",
-    "pwWeak": "Mot de passe trop faible : {label}"
+    "pwWeak": "Mot de passe trop faible : {label}",
+    "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification."
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",

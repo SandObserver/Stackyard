@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret } from '../js/admin-logic.js';
+import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked } from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
@@ -184,4 +184,30 @@ test('unticking an empty row with nothing stored is a no-op', () => {
 test('clearsStoredSecret tolerates a missing row', () => {
   assert.equal(clearsStoredSecret(null, false), false);
   assert.equal(clearsStoredSecret(undefined, false), false);
+});
+
+/* ── authEnableBlocked (P2-2) ─────────────────────────────────────────────── */
+
+/* Mirrors the server's refusal so the user is told before the save runs. Auth
+   switched on with no password locks the install: every login is refused
+   because there is nothing to check against, while everything else is gated. */
+
+test('enabling auth with no password and none typed is blocked', () => {
+  assert.equal(authEnableBlocked({ enabled: true, passwordSet: false, newPassword: '' }), true);
+});
+
+test('enabling auth is allowed when a password is already set', () => {
+  assert.equal(authEnableBlocked({ enabled: true, passwordSet: true, newPassword: '' }), false);
+});
+
+test('enabling auth is allowed when a password is being set in the same save', () => {
+  assert.equal(authEnableBlocked({ enabled: true, passwordSet: false, newPassword: 'correct-horse' }), false);
+});
+
+test('disabling auth is never blocked', () => {
+  assert.equal(authEnableBlocked({ enabled: false, passwordSet: false, newPassword: '' }), false);
+});
+
+test('authEnableBlocked tolerates a missing password field', () => {
+  assert.equal(authEnableBlocked({ enabled: true, passwordSet: false }), true);
 });

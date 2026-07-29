@@ -136,7 +136,8 @@
     "importFailed": "Import fehlgeschlagen: {err}",
     "exportFailed": "Export fehlgeschlagen: {err}",
     "importNoChange": "Nichts zu importieren — die Datei stimmt mit deiner aktuellen Konfiguration überein.",
-    "pwWeak": "Passwort zu schwach: {label}"
+    "pwWeak": "Passwort zu schwach: {label}",
+    "authNeedsPassword": "Legen Sie ein Passwort fest, bevor Sie die Authentifizierung aktivieren."
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",

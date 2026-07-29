@@ -4,12 +4,15 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession } = require('../auth');
+const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession, authActive } = require('../auth');
 
 on('GET', '/api/auth/check', (req, res) => {
   const cfg = loadConfig();
   json(res, 200, {
-    enabled: !!(cfg.settings?.auth?.enabled),
+    /* The effective state, not the stored flag. Auth on with no password is
+       reported as off because that is how it behaves; showing it as on would put
+       a toggle in the admin UI that does not match what the server does. */
+    enabled: authActive(cfg),
     authenticated: isAuthenticated(req),
     passwordSet: !!(cfg.settings?.auth?.passwordHash),
     setupPrompted: !!(cfg.settings?.auth?.setupPrompted),
@@ -22,9 +25,8 @@ on('POST', '/api/auth/login', async(req, res) => {
   try {
     const { password = '' } = JSON.parse(await readBody(req));
     const cfg = loadConfig();
-    if (!cfg.settings?.auth?.enabled) return json(res, 200, { ok:true }); /* auth off, always pass */
+    if (!authActive(cfg)) return json(res, 200, { ok:true }); /* auth off, always pass */
     const hash = cfg.settings.auth.passwordHash;
-    if (!hash) return json(res, 401, { error:'No password set. Enable auth and set a password in Admin → Server.', kind: KIND.AUTH });
     const limitErr = registerLoginAttempt(ip);
     if (limitErr) { log.audit('login blocked', { ip, reason:'rate_limit' }); return json(res, 429, { error:limitErr, kind: KIND.AUTH }); }
     const ok = await verifyPassword(password, hash);
@@ -89,6 +91,13 @@ on('POST', '/api/auth/toggle', async(req, res) => {
     const cfg = loadConfig();
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
+    /* Switching auth on with no password stored locks the install: every login
+       is refused because there is nothing to check against, and setting a
+       password is itself behind the gate. Refuse instead of creating that
+       state. */
+    if (enabled && !cfg.settings.auth.passwordHash) {
+      return json(res, 400, { error:'Set a password before turning authentication on.', kind: KIND.INVALID });
+    }
     cfg.settings.auth.enabled = !!enabled;
     if (enabled && !cfg.settings.auth.secret)
       cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
