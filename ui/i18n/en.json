@@ -139,7 +139,8 @@
     "importFailed": "Import failed: {err}",
     "exportFailed": "Export failed: {err}",
     "importNoChange": "Nothing to import — the file matches your current config.",
-    "pwWeak": "Password too weak: {label}"
+    "pwWeak": "Password too weak: {label}",
+    "authNeedsPassword": "Set a password before turning authentication on."
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",

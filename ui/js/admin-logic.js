@@ -132,6 +132,15 @@ export function clearsStoredSecret(row, checked) {
   return !checked && !!row && row.valueSet === true && row.value === '';
 }
 
+/* Whether a "save" in Admin would try to switch authentication on with no
+   password behind it. The server refuses that, because auth with no stored
+   password refuses every login while gating everything else, which locks the
+   install. Checked here too so the user is told before the save runs rather
+   than by a failure toast afterwards. */
+export function authEnableBlocked({ enabled, passwordSet, newPassword }) {
+  return !!enabled && !passwordSet && !(newPassword || '').length;
+}
+
 export const DOCK_MAX = 4;
 
 export function isDockBlocked(items, editing) {
