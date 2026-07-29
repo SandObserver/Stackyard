@@ -98,8 +98,34 @@ function rewriteUrl(raw) {
    they type in is trusted rather than resolved. Do not tighten this to stop
    admin-supplied SSRF, and do not rely on it to stop legitimate Docker-network
    widget traffic. */
+/* Only http and https are ever fetched.
+
+   The transport below picks the https module for 'https:' and the plain http
+   module for everything else, so an unrecognised scheme did not fail, it became
+   an HTTP request. Combined with an empty hostname, which Node's http module
+   resolves to localhost, that made file:///etc/passwd a request to localhost,
+   defeating the localhost block in guardSsrf a few lines above.
+
+   Checked in guardSsrf and again where the connection is opened. The second
+   check is not redundant: fetchUnchecked and pingUnchecked skip the guard by
+   design, and they carry URLs from saved config, which can arrive by import. */
+const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
+
+/** @param {URL} u @returns {string|null} */
+function urlPolicyError(u) {
+  if (!ALLOWED_PROTOCOLS.has(u.protocol)) {
+    return `Blocked: only http and https URLs are allowed (got ${u.protocol.replace(':', '')}).`;
+  }
+  if (!u.hostname) return 'Blocked: URL has no host.';
+  return null;
+}
+
 async function guardSsrf(rawUrl) {
   let u; try { u = new URL(rawUrl); } catch { return { error:'Invalid URL', ip:null }; }
+  /* Scheme and host first. An empty hostname would otherwise pass the dotless
+     service-name allowance below and then connect to localhost. */
+  const policy = urlPolicyError(u);
+  if (policy) return { error: policy, ip: null };
   /* URL keeps IPv6 literals bracketed (e.g. [fd00::1]); strip so the address
      itself is what gets range-checked and resolved. */
   const h = u.hostname.replace(/^\[|\]$/g, '');
@@ -141,6 +167,8 @@ function fetchJSON(raw, opts = {}) {
   if (IS_DEMO) return Promise.resolve({ status: 503, data: null, error: 'Outbound requests are disabled in demo mode' });
   return new Promise((resolve, reject) => {
     let u; try { u = new URL(raw); } catch(e) { return reject(e); }
+    const policy = urlPolicyError(u);
+    if (policy) return reject(Object.assign(new Error(policy), { kind: 'blocked', status: 403 }));
     let settled = false, deadline = null;
     const done = (fn, arg) => { if (settled) return; settled = true; if (deadline) clearTimeout(deadline); fn(arg); };
     const lib  = u.protocol === 'https:' ? https : http;
@@ -221,6 +249,8 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
   if (IS_DEMO) return Promise.resolve({ ok: false, status: 0, error: 'Outbound requests are disabled in demo mode' });
   return new Promise(resolve => {
     let u; try { u = new URL(raw); } catch { return resolve({ ok:false, status:0, error:'Invalid URL' }); }
+    const policy = urlPolicyError(u);
+    if (policy) return resolve({ ok:false, status:0, error:policy });
     const lib  = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const skip = skipTls != null ? skipTls : shouldSkipTls(u.hostname, loadConfig());
@@ -312,6 +342,7 @@ async function pingChecked(url, ms, skipTls) {
 
 module.exports = {
   fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError, statusDesc,
+  urlPolicyError, ALLOWED_PROTOCOLS,
   rewriteUrl, getHostIp, shouldSkipTls, PRIVATE_IP_RE,
   isPrivateAddress, embeddedIPv4,
   _internals: { fetchJSON, pingUrl, guardSsrf },

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Outbound requests are restricted to `http` and `https`. A URL with another
+  scheme, or with no host, was previously accepted and sent as an HTTP request,
+  which could reach the server's own localhost.
 - A malformed stored password hash no longer crashes the API. It now fails the
   login and logs the reason.
 - Authentication settings can no longer be written through a config save or an
