@@ -5,19 +5,21 @@ process.env.CONFIG_PATH = '/tmp/stackyard-proxy-test-nonexistent.json';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
-const { getHostIp, shouldSkipTls, PRIVATE_IP_RE, isPrivateAddress, embeddedIPv4, _internals } = require('../src/proxy');
+const { getHostIp, shouldSkipTls, isPrivateAddress, embeddedIPv4, _internals } = require('../src/proxy');
 /* guardSsrf/fetchJSON are private to proxy.js: routes go through the
    fetchChecked/fetchUnchecked boundary. Tests reach the primitives directly. */
 const { guardSsrf, fetchJSON } = _internals;
 
-test('PRIVATE_IP_RE classifies private ranges as private', () => {
+/* The full range table, including the boundaries of every entry, is in
+   blocked-ranges.test.js. These two keep the original coverage in place. */
+test('isPrivateAddress classifies private ranges as private', () => {
   for (const ip of ['10.0.0.1', '172.16.5.4', '172.31.0.1', '192.168.1.1', '127.0.0.1', '169.254.1.1', '::1'])
-    assert.ok(PRIVATE_IP_RE.test(ip), `${ip} should be private`);
+    assert.ok(isPrivateAddress(ip), `${ip} should be private`);
 });
 
-test('PRIVATE_IP_RE treats public addresses as public', () => {
+test('isPrivateAddress treats public addresses as public', () => {
   for (const ip of ['8.8.8.8', '1.1.1.1', '172.15.0.1', '172.32.0.1', '93.184.216.34'])
-    assert.ok(!PRIVATE_IP_RE.test(ip), `${ip} should be public`);
+    assert.ok(!isPrivateAddress(ip), `${ip} should be public`);
 });
 
 test('embeddedIPv4 extracts the IPv4 from IPv4-in-IPv6 wrappers', () => {
