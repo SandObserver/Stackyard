@@ -97,6 +97,41 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
   }
 }
 
+/* A widget whose manifest is not loaded.
+
+   The manifest is what says which config fields are secret. Without it the
+   server cannot tell, and the previous behaviour was to send the config
+   untouched, so an API key went to the browser and into the config export in
+   plain text. The default is inverted here: not recognised means withhold.
+
+   Three ways a widget ends up unknown, and the third is why this matters:
+     its manifest failed validation, so widgets.js skipped it
+     the widget folder was removed or renamed, leaving an orphan config item
+     WIDGETS_PATH is wrong, in which case the registry loads empty and every
+       widget is unknown at once
+
+   Withholding is only safe because preserveConfigSecrets puts the stored config
+   back on save. Without that, the first save from Admin would write the empty
+   config it was given and destroy the widget's settings. The two belong
+   together; changing one without the other trades a leak for data loss. */
+const WITHHELD_FLAG = 'widgetConfigWithheld';
+
+function withholdWidgetConfig(item) {
+  item.widgetConfig = {};
+  item[WITHHELD_FLAG] = true;
+}
+
+/* Undo the withholding on the way back in. The browser was given nothing, so
+   whatever it returns for this widget is discarded in favour of what is stored.
+   A widget with no stored counterpart is new, so there is nothing to protect and
+   what was sent is kept. */
+function restoreWithheldConfig(newItem, oldItem) {
+  delete newItem[WITHHELD_FLAG];
+  if (oldItem && oldItem.widgetConfig) {
+    newItem.widgetConfig = JSON.parse(JSON.stringify(oldItem.widgetConfig));
+  }
+}
+
 /* Config-level convenience wrappers for the routes that handle the whole config.
    Each only acts on folder-style widgets (those present in the registry), so it
    is a no-op while no widgets have been converted, and never disturbs legacy
@@ -105,7 +140,10 @@ function scrubConfigSecrets(cfgCopy) {
   const reg = getRegistry();
   if (Array.isArray(cfgCopy.items)) {
     for (const item of cfgCopy.items) {
-      if (item && item.type === 'widget' && reg[item.widgetType]) scrubWidgetSecrets(item, reg[item.widgetType]);
+      if (!item || item.type !== 'widget') continue;
+      const entry = reg[item.widgetType];
+      if (entry) scrubWidgetSecrets(item, entry);
+      else withholdWidgetConfig(item);
     }
   }
   return cfgCopy;
@@ -113,18 +151,25 @@ function scrubConfigSecrets(cfgCopy) {
 
 function preserveConfigSecrets(newCfg, oldCfg) {
   const reg = getRegistry();
-  if (Array.isArray(newCfg.items) && Array.isArray(oldCfg && oldCfg.items)) {
+  if (Array.isArray(newCfg.items)) {
+    const oldItems = Array.isArray(oldCfg && oldCfg.items) ? oldCfg.items : [];
     for (const item of newCfg.items) {
-      if (!item || item.type !== 'widget' || !reg[item.widgetType]) continue;
-      const prev = oldCfg.items.find(e => e && e.id === item.id);
-      preserveWidgetSecrets(item, prev, reg[item.widgetType]);
+      if (!item || item.type !== 'widget') continue;
+      const prev = oldItems.find(e => e && e.id === item.id);
+      const entry = reg[item.widgetType];
+      /* Always dropped, not just on the unknown path: a widget whose manifest
+         loads again between the read and the save would otherwise carry the
+         marker into stored config. It is a transport flag, never persisted. */
+      delete item[WITHHELD_FLAG];
+      if (entry) preserveWidgetSecrets(item, prev, entry);
+      else restoreWithheldConfig(item, prev);
     }
   }
   return newCfg;
 }
 
 module.exports = {
-  secretSpec,
+  secretSpec, WITHHELD_FLAG, withholdWidgetConfig, restoreWithheldConfig,
   scrubWidgetSecrets, preserveWidgetSecrets,
   scrubConfigSecrets, preserveConfigSecrets,
 };

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { on, json } = require('../router');
 const { loadConfig } = require('../config');
-const { scrubWidgetSecrets } = require('../widget-secrets');
+const { scrubWidgetSecrets, WITHHELD_FLAG } = require('../widget-secrets');
 const { getRegistry } = require('../widgets');
 
 let _netCache = { rx:0, tx:0 };
@@ -39,9 +39,14 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   const cfg = loadConfig();
   const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
   if (!w) return json(res, 404, { error:'widget not found' });
-  const wc = JSON.parse(JSON.stringify(w.widgetConfig || {}));
   const _entry = getRegistry()[w.widgetType];
-  if (_entry) scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
+  /* Same rule as the config read: with no manifest there is no way to tell which
+     fields are secret, so nothing is sent. See widget-secrets.js. */
+  if (!_entry) {
+    return json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: {}, [WITHHELD_FLAG]: true });
+  }
+  const wc = JSON.parse(JSON.stringify(w.widgetConfig || {}));
+  scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
   json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: wc });
 });
 

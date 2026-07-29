@@ -6,7 +6,7 @@ import { state } from '/js/admin-state.js?v=1';
 import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=2';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 import { html, raw, setHtml } from '/js/html.js?v=1';
-import { sizesForView } from '/js/admin-logic.js?v=1';
+import { sizesForView, widgetConfigMode } from '/js/admin-logic.js?v=1';
 
 const SIZE_ICONS={
   small:'<rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="9.7" r="1" fill="currentColor"/><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
@@ -55,7 +55,8 @@ function _renderWidgetForm(body){
   scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; _renderWidgetForm(body); }));
 
     const cfgDiv=document.createElement('div');cfgDiv.className='div';body.appendChild(cfgDiv);
-  if(state._widgetReg[state._wtype]){
+  const _mode=widgetConfigMode(state._wtype, state._widgetReg);
+  if(_mode==='registry'){
     const d=document.createElement('div'); body.appendChild(d);
     const _wid=(state.eid!==null&&state.items[state.eid]&&state.items[state.eid].id)?state.items[state.eid].id:null;
     const _vf=state._widgetReg[state._wtype].viewField;
@@ -67,7 +68,19 @@ function _renderWidgetForm(body){
     });
     state._autoFormType=state._wtype;
   }
+  else if(_mode==='unavailable') _renderUnavailableConfig(body);
   else _renderCustomConfig(body);
+}
+
+/* A registry widget whose manifest did not load. Its stored settings are held on
+   the server, not sent here, so there is nothing to render and nothing has been
+   lost; saving the dashboard leaves them untouched. */
+function _renderUnavailableConfig(body){
+  const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
+  setHtml(card, html`<div class="row"><span class="rl">Settings unavailable</span></div>`);
+  const tip=document.createElement('p'); tip.className='grp-tip';
+  tip.textContent=`This widget's definition (${state._wtype}) could not be loaded, so its settings cannot be shown or edited. They are kept on the server and are not affected by saving. Check the server log for a widget registry warning.`;
+  body.appendChild(tip);
 }
 
 function _renderCustomConfig(body){
