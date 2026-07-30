@@ -101,6 +101,25 @@ to the browser. A populated field is reported as set without returning its
 value. Secrets are preserved on save when the browser submits the config
 without them.
 
+### Password hashing
+
+Passwords are hashed with scrypt and stored in the modular PHC string format, so
+each hash records the parameters it was made with:
+
+```
+$scrypt$ln=14,r=8,p=5$<salt>$<key>
+```
+
+The default is the 16 MiB row from OWASP's scrypt table: `N=2^14`, `r=8`, `p=5`.
+Memory is the constraint that matters on small hardware, so the row chosen keeps
+the same 16 MiB footprint as earlier versions while raising the work factor.
+
+`PASSWORD_HASH_MEMORY` selects a different row if your hardware can afford more:
+`8mib`, `16mib` (default), `32mib`, `64mib` or `128mib`. Only whole rows, so the
+parameters cannot be set to an unbalanced combination. Changing it is safe at any
+time: every hash records what produced it, so existing passwords keep working, and
+one made with a lower work factor is rewritten the next time it is used to log in.
+
 Secrets are stored in `apps.json` in plain text on the data volume. Protect the data volume with appropriate filesystem permissions and backups.
 
 ## Container

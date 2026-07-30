@@ -4,7 +4,8 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession, authActive } = require('../auth');
+const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession, authActive,
+  needsRehash } = require('../auth');
 
 on('GET', '/api/auth/check', (req, res) => {
   const cfg = loadConfig();
@@ -33,6 +34,22 @@ on('POST', '/api/auth/login', async(req, res) => {
     if (!ok) { log.audit('login failed', { ip }); return json(res, 401, { error:'Incorrect password.', kind: KIND.AUTH }); }
     clearAttempts(ip);
     log.audit('login success', { ip });
+    /* A successful login is the only moment the plaintext is known, so it is the
+       only chance to move an old hash to the current format and work factor.
+       Failure here must not fail the login: the password is correct either way,
+       and the old hash still verifies. */
+    if (needsRehash(hash)) {
+      try {
+        const fresh = loadConfig();
+        if (fresh.settings?.auth?.passwordHash === hash) {
+          fresh.settings.auth.passwordHash = await hashPassword(password);
+          saveConfig(fresh);
+          log.info('password hash upgraded to the current format', {});
+        }
+      } catch (e) {
+        log.warn('could not upgrade the stored password hash', { error: e.message });
+      }
+    }
     const secret = getOrCreateSecret();
     const sessionId = crypto.randomBytes(24).toString('hex');
     setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));

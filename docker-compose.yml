@@ -48,6 +48,9 @@ services:
       # Manager, Caddy, Traefik). Without this, every request through it counts
       # as one client for rate limiting. See docs/security.md.
       # - TRUSTED_PROXY=172.18.0.0/16
+      # Memory used per password hash. Default 16mib suits small hardware;
+      # raise it if you can. See docs/security.md.
+      # - PASSWORD_HASH_MEMORY=64mib
       # Set to true to allow widget URLs using private/LAN IP addresses
       # - ALLOW_PRIVATE_IPS=true
       # Session lifetime in days before re-login is required (default 30)
