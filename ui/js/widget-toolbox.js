@@ -28,6 +28,7 @@
 */
 
 import { esc } from '/js/html.js?v=1';
+import { isSafeLinkUrl } from '/js/link-url.js?v=1';
 
 /* Re-exported so a widget frontend needs only this one import. */
 export { esc };
@@ -55,6 +56,10 @@ export async function fetchData(endpoint, opts = {}) {
    fall back to window.open only if that throws. */
 export function openUrl(href) {
   if (!href) return;
+  /* Widgets pass URLs from their own config, which can arrive by import. A
+     javascript: or data: URL clicked from a widget would run in the dashboard's
+     origin. See link-url.js. */
+  if (!isSafeLinkUrl(href)) return;
   try {
     const a = document.createElement('a');
     a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';

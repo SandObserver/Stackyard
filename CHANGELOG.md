@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- App and widget links using a script-bearing scheme (`javascript:`, `data:`,
+  `vbscript:`, `blob:`, `filesystem:`) are refused when saving and ignored when
+  rendering, so such a link cannot run in the dashboard. Protocol handlers like
+  `ssh://`, `vnc://` and `rdp://` keep working. A link already stored, or one
+  arriving in an imported config, is left blank rather than repaired.
+- Messages between the dashboard and its widgets are checked against the page
+  origin, and are addressed to it rather than to any parent.
 - Log values are quoted and escaped, so a value containing a newline can no
   longer forge a second log line, and values containing spaces or `=` no longer
   split into several fields. Values that need no quoting print as before.

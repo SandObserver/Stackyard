@@ -3,6 +3,7 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
+const { firstUnsafeLink } = require('../link-url');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 
 const DOCK_MAX = 4;
@@ -47,6 +48,19 @@ on('POST', '/api/config', async(req, res) => {
     if (!Array.isArray(data.items)) return json(res, 400, { error:'items must be an array', kind: KIND.INVALID });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error:'every item needs a non-empty id and type', kind: KIND.INVALID });
+    /* A link is rendered into an <a href>, so a javascript: or data: URL would
+       execute in the dashboard's own origin when the tile is clicked. Rejected
+       rather than blanked, so the person saving finds out. The browser blanks
+       one already stored; see ui/js/link-url.js. */
+    for (const item of data.items) {
+      const unsafe = firstUnsafeLink(item);
+      if (unsafe) {
+        return json(res, 400, {
+          error: `${item.id}: ${unsafe.field} must not use the ${unsafe.value.split(':')[0].trim().toLowerCase()} scheme`,
+          kind: KIND.INVALID,
+        });
+      }
+    }
     /* The dashboard renders at most DOCK_MAX dock apps, so a config holding more
        would silently lose the extras. Mirrors DOCK_MAX in ui/js/admin-logic.js;
        the two cannot share a module across the CJS/ESM split without a build step. */

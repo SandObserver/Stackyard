@@ -43,7 +43,13 @@ function clearMobWidgets(exceptWin){
 }
 if (!window.__wActiveMsgBound){
   window.__wActiveMsgBound = true;
-  window.addEventListener('message', e => { if (e.data && e.data.type === 'widget-active') clearMobWidgets(e.source); });
+  window.addEventListener('message', e => {
+    /* Widgets are same-origin iframes, so a message from anywhere else is not
+       part of this protocol. Without the check any window holding a handle on
+       the dashboard could drive it. */
+    if (e.origin !== window.location.origin) return;
+    if (e.data && e.data.type === 'widget-active') clearMobWidgets(e.source);
+  });
 }
 
 /* css(): set multiple CSS custom properties on an element at once */

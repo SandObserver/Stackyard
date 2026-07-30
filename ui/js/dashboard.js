@@ -6,6 +6,7 @@ import { mk, mkWrap as _mkWrap, mountScaledWidget, sanitizeCssUrl } from '/js/ut
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { html, setHtml } from '/js/html.js?v=1';
 import { initI18n } from '/js/i18n.js?v=1';
+import { sanitizeItemLinks } from '/js/link-url.js?v=1';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
 
@@ -328,7 +329,10 @@ async function boot() {
     const res = await fetch('/api/config', { cache:'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
-    items = c.items||[]; S = c.settings||{};
+    /* Blank any unsafe link before anything renders it. Saving rejects these, but
+       a config written before that existed, or one arriving by import, still
+       reaches here. See ui/js/link-url.js. */
+    items = sanitizeItemLinks(c.items||[]); S = c.settings||{};
     await initI18n(S.language || 'en');
   } catch(e) { console.error('[boot]', e); configFailed = true; }
 
@@ -424,6 +428,7 @@ async function boot() {
       const res = await fetch('/api/config', { cache:'no-store' });
       if (!res.ok) return;
       const c = await res.json();
+      sanitizeItemLinks(c.items||[]);
       const fp = s => JSON.stringify(s?.items?.map(i=>i.id+'|'+i.label+'|'+i.href)) + JSON.stringify(s?.settings);
       if (fp(c) !== fp({ items, settings: S })) location.reload();
     } catch {}

@@ -131,6 +131,12 @@
       "/js/icons.js?v=*": [
         "./ui/js/icons.js"
       ],
+      "/js/link-url.js": [
+        "./ui/js/link-url.js"
+      ],
+      "/js/link-url.js?v=*": [
+        "./ui/js/link-url.js"
+      ],
       "/js/mobile-metrics.js": [
         "./ui/js/mobile-metrics.js"
       ],

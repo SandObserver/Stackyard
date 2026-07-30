@@ -311,7 +311,8 @@ function addEvents(bay, i) {
     } else {
       bayEls.forEach((b,j) => { if (j!==i) b.classList.remove('touch-active'); });
       bay.classList.add('touch-active'); activeBay = i; showTip(i);
-      try { parent.postMessage({ type:'widget-active' }, '*'); } catch (_) {}
+      /* Addressed to our own origin, not '*': the parent is always the dashboard. */
+      try { parent.postMessage({ type:'widget-active' }, window.location.origin); } catch (_) {}
     }
   });
 }
@@ -324,7 +325,10 @@ document.addEventListener('touchend', e => {
 }, { passive:true });
 
 window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
-window.addEventListener('message', e => { if (e.data && e.data.type === 'widget-clear') window.__clearActive(); }, false);
+window.addEventListener('message', e => {
+  if (e.origin !== window.location.origin) return;
+  if (e.data && e.data.type === 'widget-clear') window.__clearActive();
+}, false);
 
 async function fetchBays() {
   const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=disk-health`);
