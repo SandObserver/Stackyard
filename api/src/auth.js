@@ -13,50 +13,179 @@ function getOrCreateSecret() {
   return secret;
 }
 
-const SCRYPT_KEYLEN = 64;
-/* hashPassword produces `<32 hex chars>:<128 hex chars>`. Both halves are
-   checked before use: Buffer.from(x, 'hex') silently drops anything that is not
-   a hex pair, so a malformed stored hash yields a short buffer and
-   timingSafeEqual throws on the length mismatch. That throw happens inside the
-   scrypt callback, on a later tick, where the surrounding Promise cannot see it,
-   so it escaped as an uncaughtException and killed the process. A damaged hash
-   must fail the login, not take the server down. */
-const SALT_RE = /^[0-9a-f]+$/i;
-const KEY_RE = new RegExp(`^[0-9a-f]{${SCRYPT_KEYLEN * 2}}$`, 'i');
+/* Password hashing.
 
-async function hashPassword(password) {
-  return new Promise((resolve, reject) => {
-    const salt = crypto.randomBytes(16).toString('hex');
-    crypto.scrypt(password, salt, SCRYPT_KEYLEN, (err, key) => {
-      if (err) reject(err);
-      else resolve(`${salt}:${key.toString('hex')}`);
-    });
+   The stored hash records the algorithm and its parameters, in the modular PHC
+   string format that OWASP's Password Storage Cheat Sheet points to:
+
+     $scrypt$ln=14,r=8,p=5$<base64 salt>$<base64 key>
+
+   It used to be `<hex salt>:<hex key>` with the parameters left implicit, which
+   meant they could never be changed: raising the cost would derive a different
+   key from every stored salt, so every existing password would stop verifying
+   and every install would lock out. Recording them is what makes the cost
+   adjustable at all, which is the point of a work factor.
+
+   Legacy hashes are still verified, using the parameters they were created with,
+   and are rewritten in the new format the next time that password is used. See
+   needsRehash.
+
+   Choice of parameters. OWASP prefers Argon2id, which node:crypto does not
+   provide and which would mean a dependency the project does not allow, so
+   scrypt is the recommendation to follow. Its five listed settings trade RAM for
+   parallelism and are described as providing a similar level of defence; their
+   work factors are close but not identical, spanning about 1.6x:
+
+     N=2^17 (128 MiB) r=8 p=1
+     N=2^16  (64 MiB) r=8 p=2
+     N=2^15  (32 MiB) r=8 p=3
+     N=2^14  (16 MiB) r=8 p=5   <- default here
+     N=2^13   (8 MiB) r=8 p=10
+
+   The default is the 16 MiB row. Stackyard runs on small hardware, and memory is
+   the constraint that fails outright rather than merely being slow: 128 MiB per
+   login attempt is untenable on a 512 MB board. 16 MiB is what the previous
+   parameters already used, so the footprint is unchanged while the work factor
+   rises fivefold. It also stays inside node:crypto's default 32 MiB maxmem, so
+   nothing has to be raised.
+
+   PASSWORD_HASH_MEMORY selects a different row for anyone on hardware that can
+   afford more. Only whole rows, so the pair cannot be set to an unbalanced
+   combination, and changing it is safe precisely because each hash records what
+   made it. */
+
+const SCRYPT_KEYLEN = 64;
+const SALT_BYTES = 16;
+
+/* Keyed by memory cost, which is the number an operator actually reasons about. */
+const HASH_PROFILES = Object.freeze({
+  '8mib':   { ln: 13, r: 8, p: 10 },
+  '16mib':  { ln: 14, r: 8, p: 5 },
+  '32mib':  { ln: 15, r: 8, p: 3 },
+  '64mib':  { ln: 16, r: 8, p: 2 },
+  '128mib': { ln: 17, r: 8, p: 1 },
+});
+const DEFAULT_PROFILE = '16mib';
+
+/* scrypt needs roughly 128 * N * r bytes; node:crypto refuses above maxmem, whose
+   default is 32 MiB. Asking for a little over the requirement keeps the larger
+   profiles working without disabling the guard. */
+const _maxmemFor = ({ ln, r }) => Math.max(33554432, 128 * (2 ** ln) * r * 2);
+
+function _activeProfile() {
+  const want = String(process.env.PASSWORD_HASH_MEMORY || DEFAULT_PROFILE).toLowerCase();
+  const chosen = HASH_PROFILES[want];
+  if (chosen) return chosen;
+  log.warn('PASSWORD_HASH_MEMORY is not a recognised setting, using the default', {
+    value: want, allowed: Object.keys(HASH_PROFILES).join(','), using: DEFAULT_PROFILE,
   });
+  return HASH_PROFILES[DEFAULT_PROFILE];
 }
 
-/* True only when `password` matches the stored hash. Resolves false for any hash
-   this function cannot verify; it never rejects on a malformed one, and never
-   throws asynchronously. */
+/* PHC uses base64 without padding. */
+const _b64 = buf => buf.toString('base64').replace(/=+$/, '');
+const _unb64 = str => Buffer.from(str, 'base64');
+
+const _scrypt = (password, salt, params) => new Promise((resolve, reject) => {
+  const { ln, r, p } = params;
+  crypto.scrypt(password, salt, SCRYPT_KEYLEN,
+    { N: 2 ** ln, r, p, maxmem: _maxmemFor(params) },
+    (err, key) => (err ? reject(err) : resolve(key)));
+});
+
+/** Produce a PHC-format hash using the active profile.
+    @param {string} password @returns {Promise<string>} */
+async function hashPassword(password) {
+  const params = _activeProfile();
+  const salt = crypto.randomBytes(SALT_BYTES);
+  const key = await _scrypt(password, salt, params);
+  return `$scrypt$ln=${params.ln},r=${params.r},p=${params.p}$${_b64(salt)}$${_b64(key)}`;
+}
+
+/* The format before this change: two hex fields, scrypt with node's defaults
+   (N=2^14, r=8, p=1) and a 64-byte key. */
+const LEGACY_RE = /^([0-9a-f]+):([0-9a-f]{128})$/i;
+const LEGACY_PARAMS = Object.freeze({ ln: 14, r: 8, p: 1 });
+
+const PHC_RE = /^\$scrypt\$ln=(\d{1,2}),r=(\d{1,3}),p=(\d{1,3})\$([A-Za-z0-9+/]+)\$([A-Za-z0-9+/]+)$/;
+
+/* Guard rails on parsed parameters, so a hand-edited or corrupted hash cannot
+   ask for an allocation that takes the process down instead of failing a login.
+   ln=20 with r=8 is already 1 GiB. */
+const LN_MAX = 20;
+const R_MAX = 32;
+const P_MAX = 64;
+
+/** Parse a stored hash into what is needed to verify it.
+    @param {unknown} stored
+    @returns {{ params:{ln:number,r:number,p:number}, salt:Buffer, key:Buffer, legacy:boolean }|null} */
+function parseHash(stored) {
+  const str = typeof stored === 'string' ? stored : '';
+
+  const phc = PHC_RE.exec(str);
+  if (phc) {
+    const ln = Number(phc[1]);
+    const r = Number(phc[2]);
+    const p = Number(phc[3]);
+    if (ln < 1 || ln > LN_MAX || r < 1 || r > R_MAX || p < 1 || p > P_MAX) return null;
+    const salt = _unb64(phc[4]);
+    const key = _unb64(phc[5]);
+    if (!salt.length || key.length !== SCRYPT_KEYLEN) return null;
+    return { params: { ln, r, p }, salt, key, legacy: false };
+  }
+
+  const legacy = LEGACY_RE.exec(str);
+  if (legacy) {
+    /* The salt was fed to scrypt as the hex string itself, not as decoded
+       bytes, so it has to be passed the same way to reproduce the key. */
+    return {
+      params: LEGACY_PARAMS,
+      salt: Buffer.from(legacy[1], 'utf8'),
+      key: Buffer.from(legacy[2], 'hex'),
+      legacy: true,
+    };
+  }
+
+  return null;
+}
+
+/** True when `password` matches the stored hash. Resolves false for any hash this
+    function cannot verify; never rejects on a malformed one, and never throws
+    asynchronously, because a damaged hash must fail the login rather than take
+    the server down.
+    @param {string} password @param {unknown} hash @returns {Promise<boolean>} */
 async function verifyPassword(password, hash) {
-  return new Promise((resolve, reject) => {
-    const [salt, key] = String(hash ?? '').split(':');
-    if (!salt || !key) return resolve(false);
-    if (!SALT_RE.test(salt) || !KEY_RE.test(key)) {
-      /* Logged because the effect is a lockout: the stored password can no
-         longer authenticate anyone, and the reason is not otherwise visible. */
-      log.error('stored password hash is malformed, login cannot succeed', { reason: 'bad_hash_format' });
-      return resolve(false);
-    }
-    const expected = Buffer.from(key, 'hex');
-    crypto.scrypt(password, salt, SCRYPT_KEYLEN, (err, derived) => {
-      if (err) return reject(err);
-      /* Belt and braces. The checks above make a length mismatch unreachable,
-         but this callback runs where a throw is uncatchable, so nothing in it is
-         left unguarded. */
-      try { resolve(crypto.timingSafeEqual(expected, derived)); }
-      catch (e) { reject(e); }
-    });
-  });
+  const parsed = parseHash(hash);
+  if (!parsed) {
+    /* Logged because the effect is a lockout: the stored password can no longer
+       authenticate anyone, and the reason is not otherwise visible. */
+    if (hash) log.error('stored password hash is malformed, login cannot succeed', { reason: 'bad_hash_format' });
+    return false;
+  }
+  let derived;
+  try {
+    derived = await _scrypt(password, parsed.salt, parsed.params);
+  } catch (e) {
+    log.error('password verification failed', { error: e.message });
+    return false;
+  }
+  /* The length check in parseHash makes a mismatch unreachable, but this is the
+     comparison that used to throw where nothing could catch it. */
+  try { return crypto.timingSafeEqual(parsed.key, derived); }
+  catch { return false; }
+}
+
+/** True when a verified hash should be rewritten: it is in the old format, or it
+    was made with weaker parameters than the active profile. Callers rewrite it
+    after a successful login, which is the only moment the password is known.
+    @param {unknown} hash @returns {boolean} */
+function needsRehash(hash) {
+  const parsed = parseHash(hash);
+  if (!parsed) return false;              /* unverifiable; nothing to carry over */
+  if (parsed.legacy) return true;
+  const want = _activeProfile();
+  const work = ({ ln, r, p }) => (2 ** ln) * r * p;
+  return work(parsed.params) < work(want);
 }
 
 /* Server-enforced session lifetime. The signed issued-at inside the token is
@@ -220,7 +349,8 @@ function hasValidSession(req) {
 }
 
 module.exports = {
-  getOrCreateSecret, hashPassword, verifyPassword, authActive,
+  getOrCreateSecret, hashPassword, verifyPassword, authActive, needsRehash,
+  HASH_PROFILES, DEFAULT_PROFILE, parseHash,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
   checkRateLimit, registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
   SESSION_MAX_AGE_MS,

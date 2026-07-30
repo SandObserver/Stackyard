@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Passwords are hashed with a five times higher work factor, and the stored hash
+  now records the parameters it was made with, so the cost can be raised in
+  future without invalidating existing passwords. Memory use per hash is
+  unchanged at 16 MiB. An existing password is upgraded the next time it is used
+  to log in. `PASSWORD_HASH_MEMORY` selects a heavier setting on hardware that
+  can afford it; see [docs/security.md](docs/security.md).
 - API responses and the PWA manifest are now compressed, which they were not
   before, and compressed responses carry `Vary: Accept-Encoding` so a cache in
   front cannot serve a compressed body to a client that did not ask for one.
