@@ -8,17 +8,25 @@
 
    Enforced at both moments: on save, so an unsafe value is never stored, and on
    render, so a config written before this existed or arriving by import cannot
-   fire either. Two copies of the rule exist because those moments are in
-   different module systems; the parity test below is what keeps them equal. */
+   fire either.
+
+   Both use the same file. It began as two copies with a test asserting they
+   agreed, which detects drift rather than preventing it; the server requires the
+   browser's module directly now, so there is one definition. That only works if
+   the file stays free of anything only a browser has, which is what loading it
+   here proves. */
 
 const path = require('node:path');
+const fs = require('node:fs');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { pathToFileURL } = require('node:url');
 
-const { isSafeLinkUrl, firstUnsafeLink, UNSAFE_LINK_SCHEMES, LINK_FIELDS, WIDGET_LINK_FIELDS } = require('../src/link-url');
+/* Required, not imported: this is the same file the browser loads, and the point
+   of the test is that the server can load it. */
+const shared = require('../../ui/js/link-url.js');
+const { isSafeLinkUrl, firstUnsafeLink, UNSAFE_LINK_SCHEMES, LINK_FIELDS, WIDGET_LINK_FIELDS, sanitizeItemLinks } = shared;
 
-const loadUi = () => import(pathToFileURL(path.join(__dirname, '../../ui/js/link-url.js')).href);
+
 
 /* ── what must be refused ─────────────────────────────────────────────────── */
 
@@ -93,26 +101,39 @@ test('a clean item reports nothing', () => {
   assert.equal(firstUnsafeLink(null), null);
 });
 
-/* ── the browser copy ─────────────────────────────────────────────────────── */
+/* ── the module is loadable outside a browser ─────────────────────────────── */
 
-test('the two copies of the rule list the same schemes', async () => {
-  const ui = await loadUi();
-  assert.deepEqual([...ui.UNSAFE_LINK_SCHEMES].sort(), [...UNSAFE_LINK_SCHEMES].sort());
-  assert.deepEqual([...ui.LINK_FIELDS].sort(), [...LINK_FIELDS].sort());
-  assert.deepEqual([...ui.WIDGET_LINK_FIELDS].sort(), [...WIDGET_LINK_FIELDS].sort());
-});
-
-test('the two copies agree on every case tested here', async () => {
-  const ui = await loadUi();
-  const corpus = [...UNSAFE, 'https://example.com', '/relative', 'ssh://h', 'mailto:a@b', '', null, undefined, 0, {},
-                  '/go?to=javascript:x', '#javascript:x', 'j a v a s c r i p t:alert(1)'];
-  for (const v of corpus) {
-    assert.equal(ui.isSafeLinkUrl(v), isSafeLinkUrl(v), `disagreement on ${JSON.stringify(v)}`);
+/* The property that lets one file serve both: no DOM, no window, no imports. If
+   any appear, this file stops loading in Node and the test fails rather than the
+   API failing to start. */
+test('the shared rule loads on the server and exports what both sides need', () => {
+  for (const name of ['isSafeLinkUrl', 'firstUnsafeLink', 'sanitizeItemLinks']) {
+    assert.equal(typeof shared[name], 'function', `${name} should be exported`);
+  }
+  for (const name of ['UNSAFE_LINK_SCHEMES', 'LINK_FIELDS', 'WIDGET_LINK_FIELDS']) {
+    assert.ok(Array.isArray(shared[name]), `${name} should be exported`);
   }
 });
 
-test('sanitizeItemLinks blanks an unsafe link and leaves the rest alone', async () => {
-  const { sanitizeItemLinks } = await loadUi();
+test('the shared rule references nothing only a browser provides', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../../ui/js/link-url.js'), 'utf8');
+  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const forbidden of [/\bwindow\b/, /\bdocument\b/, /\blocation\b/, /^\s*import\s/m]) {
+    assert.doesNotMatch(body, forbidden, `the shared rule must not use ${forbidden}`);
+  }
+});
+
+test('the Dockerfile puts the shared rule where the server can require it', () => {
+  const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
+  /* The image mirrors the repository layout, so the same relative path resolves
+     in both. If either line changes without the other, the API cannot start. */
+  assert.match(dockerfile, /COPY --chown=node:node api\/ \/app\/api\//);
+  assert.match(dockerfile, /COPY --chown=node:node ui\/js\/link-url\.js \/app\/ui\/js\/link-url\.js/);
+  const supervisord = fs.readFileSync(path.join(__dirname, '../../supervisord.conf'), 'utf8');
+  assert.match(supervisord, /command=node \/app\/api\/src\/server\.js/);
+});
+
+test('sanitizeItemLinks blanks an unsafe link and leaves the rest alone', () => {
   const items = [
     { id: 'a', href: 'javascript:alert(1)' },
     { id: 'b', href: 'https://example.com' },
@@ -128,15 +149,13 @@ test('sanitizeItemLinks blanks an unsafe link and leaves the rest alone', async 
   assert.equal(items[3].widgetConfig.other, 'kept', 'unrelated config must not be touched');
 });
 
-test('sanitizeItemLinks does not invent fields that were absent', async () => {
-  const { sanitizeItemLinks } = await loadUi();
+test('sanitizeItemLinks does not invent fields that were absent', () => {
   const items = [{ id: 'a', type: 'app' }];
   sanitizeItemLinks(items);
   assert.deepEqual(items[0], { id: 'a', type: 'app' });
 });
 
-test('sanitizeItemLinks tolerates junk', async () => {
-  const { sanitizeItemLinks } = await loadUi();
+test('sanitizeItemLinks tolerates junk', () => {
   assert.doesNotThrow(() => sanitizeItemLinks([null, undefined, 'x', 5, {}]));
   assert.doesNotThrow(() => sanitizeItemLinks(null));
 });

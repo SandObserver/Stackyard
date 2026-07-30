@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The container now mirrors the repository layout, with the API at `/app/api`
+  instead of `/app`. Rules the browser and the server both enforce can then live
+  in one file rather than being duplicated.
+
 ### Security
 
 - App and widget links using a script-bearing scheme (`javascript:`, `data:`,

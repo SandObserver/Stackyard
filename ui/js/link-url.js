@@ -12,10 +12,17 @@
    own origin when the link is clicked. `rel="noopener noreferrer"` does nothing
    about those; the scheme has to be rejected.
 
-   Same list on the server, in api/src/link-url.js. A test asserts the two agree,
-   because they are enforced at different moments: on save, so a bad value cannot
-   be stored, and on render, so a config written before this existed or arriving
-   by import cannot fire either. */
+   This is the only copy of the rule. The server requires this file directly
+   (Node has supported require() of an ES module since 22.12, and the image runs
+   24), so there is one definition to change rather than two to keep in step.
+
+   It is enforced at two moments: on save, so a bad value cannot be stored, and on
+   render, so a config written before this existed or arriving by import cannot
+   fire either.
+
+   Because the server loads it, this file must stay free of anything only a
+   browser has: no DOM, no window, no imports. api/test/link-url.test.js checks
+   that by loading it in Node. */
 
 export const UNSAFE_LINK_SCHEMES = Object.freeze([
   'javascript', /* executes in our origin */
@@ -78,4 +85,21 @@ export function sanitizeItemLinks(items) {
     }
   }
   return items;
+}
+
+/** The first unsafe link on an item, or null. Used by the server to reject a save
+    with a message naming the field, rather than silently blanking it.
+    @param {any} item @returns {{ field:string, value:string }|null} */
+export function firstUnsafeLink(item) {
+  if (!item || typeof item !== 'object') return null;
+  for (const f of LINK_FIELDS) {
+    if (f in item && !isSafeLinkUrl(item[f])) return { field: f, value: String(item[f]) };
+  }
+  const wc = item.widgetConfig;
+  if (wc && typeof wc === 'object') {
+    for (const f of WIDGET_LINK_FIELDS) {
+      if (f in wc && !isSafeLinkUrl(wc[f])) return { field: `widgetConfig.${f}`, value: String(wc[f]) };
+    }
+  }
+  return null;
 }
