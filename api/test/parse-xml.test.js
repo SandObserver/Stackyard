@@ -139,3 +139,68 @@ test('parseXml ignores declaration, comments and DOCTYPE, and is safe on junk', 
   assert.deepEqual(parseXml(''), {});
   assert.deepEqual(parseXml(null), {});
 });
+
+/* ── P4-2: a '>' inside a quoted attribute value ──────────────────────────────
+   The tag scanner was indexOf('>'), which took the first one anywhere, while the
+   attribute matcher below it already understood quoting. So <a t="x>y"> ended the
+   tag in the middle of the attribute: the element lost its attributes, its text
+   became the leftover markup, and the damage ran on into its siblings.
+
+   Only '<' and '&' have to be escaped inside an attribute value, so a raw '>'
+   there is valid XML, and feeds do emit it, typically in an episode title or a
+   search string. */
+
+test('a > inside a double-quoted attribute does not end the tag', () => {
+  assert.deepEqual(parseXml('<r><a t="a>b">1</a></r>'), { r: { a: { t: 'a>b', '#text': 1 } } });
+});
+
+test('a > inside a single-quoted attribute does not end the tag', () => {
+  assert.deepEqual(parseXml("<r><a t='a>b'>1</a></r>"), { r: { a: { t: 'a>b', '#text': 1 } } });
+});
+
+test('both quote styles are handled in one tag', () => {
+  assert.deepEqual(parseXml(`<r><a t="a>b" u='c>d'>1</a></r>`), { r: { a: { t: 'a>b', u: 'c>d', '#text': 1 } } });
+});
+
+test('a quote of the other kind inside a value is just a character', () => {
+  assert.deepEqual(parseXml(`<r><a t="it's">1</a></r>`), { r: { a: { t: "it's", '#text': 1 } } });
+  assert.deepEqual(parseXml(`<r><a t='say "hi"'>1</a></r>`), { r: { a: { t: 'say "hi"', '#text': 1 } } });
+});
+
+/* The shape this actually breaks in practice: the mangled element used to
+   swallow its following sibling. */
+test('a feed-like document keeps its structure', () => {
+  const xml = '<rss><item><enclosure url="http://h/f?a=1" title="S01>E02"/><title>ok</title></item></rss>';
+  assert.deepEqual(parseXml(xml), {
+    rss: { item: { enclosure: { url: 'http://h/f?a=1', title: 'S01>E02' }, title: 'ok' } },
+  });
+});
+
+test('a > in element text is unaffected', () => {
+  assert.deepEqual(parseXml('<r><a>2 &gt; 1</a></r>'), { r: { a: '2 > 1' } });
+});
+
+test('an encoded > in an attribute still works', () => {
+  assert.deepEqual(parseXml('<r><a t="a&gt;b">1</a></r>'), { r: { a: { t: 'a>b', '#text': 1 } } });
+});
+
+test('a > inside a doctype system identifier does not end it early', () => {
+  assert.deepEqual(parseXml('<!DOCTYPE r SYSTEM "a>b"><r><a>1</a></r>'), { r: { a: 1 } });
+});
+
+/* An unterminated quote ends the document, which is what an unterminated tag
+   already did. It must not throw or loop. */
+test('an unterminated attribute quote ends the document safely', () => {
+  assert.doesNotThrow(() => parseXml('<r><a t="oops</r>'));
+  assert.doesNotThrow(() => parseXml("<r><a t='oops"));
+  assert.doesNotThrow(() => parseXml('<r><a t="'));
+});
+
+test('a closing tag is unaffected by quote tracking', () => {
+  assert.deepEqual(parseXml('<r><a t="x>y">1</a><b>2</b></r>'), { r: { a: { t: 'x>y', '#text': 1 }, b: 2 } });
+});
+
+test('several attributes each containing > all survive', () => {
+  const out = parseXml('<r><a p="1>2" q="3>4" s="5>6">t</a></r>');
+  assert.deepEqual(out, { r: { a: { p: '1>2', q: '3>4', s: '5>6', '#text': 't' } } });
+});
