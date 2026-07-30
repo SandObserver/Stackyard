@@ -130,10 +130,35 @@ export function loadSettings(c){
     }
   }
   const secLogout=document.getElementById('sec-logout');
-  const syncLogout=()=>{ if(secLogout) secLogout.classList.toggle('d-none', !secEnEl?.checked); };
+  const secRevoke=document.getElementById('sec-revoke');
+  const secRevokeRow=document.getElementById('sec-revoke-row');
+  const revokeTip=document.getElementById('revoke-tip');
+  /* Both controls only mean anything while auth is on; the revoke one also needs
+     a password to exist, since that is what makes a session possible. */
+  const syncLogout=()=>{
+    const on=!!secEnEl?.checked;
+    if(secLogout) secLogout.classList.toggle('d-none', !on);
+    const canRevoke=on&&_passwordSet;
+    if(secRevokeRow) secRevokeRow.style.display=canRevoke?'':'none';
+    if(revokeTip) revokeTip.style.display=canRevoke?'':'none';
+  };
   secLogout?.addEventListener('click',async()=>{
     await ap('/api/auth/logout',{}).catch(()=>{});
     location.reload();
+  });
+  secRevoke?.addEventListener('click',async()=>{
+    if(!confirm(t('confirm.revokeSessions'))) return;
+    secRevoke.disabled=true;
+    try{
+      /* The server reissues this browser's cookie in the same response, so the
+         page stays signed in while every other device does not. */
+      await ap('/api/auth/revoke-sessions',{});
+      toast(t('toast.sessionsRevoked'),'ok');
+    }catch(e){
+      toast(e.message||t('toast.saveFailed'),'err');
+    }finally{
+      secRevoke.disabled=false;
+    }
   });
   if(secEnEl&&secSubEl){
     secEnEl.addEventListener('change',()=>{
