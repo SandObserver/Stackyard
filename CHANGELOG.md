@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Translated strings that are allowed to contain markup are now limited to
+  `<strong>`, `<em>`, `<code>` and `<br>` with no attributes, instead of being
+  inserted unrestricted. Three other translated strings no longer bypass escaping
+  at all.
 - App and widget links using a script-bearing scheme (`javascript:`, `data:`,
   `vbscript:`, `blob:`, `filesystem:`) are refused when saving and ignored when
   rendering, so such a link cannot run in the dashboard. Protocol handlers like

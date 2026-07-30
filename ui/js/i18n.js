@@ -5,7 +5,8 @@
    LANGUAGES below and drop in ui/i18n/<code>.json. Translations can be authored
    by hand or by any external tool; nothing here depends on one. */
 
-import { setHtml, raw } from '/js/html.js?v=1';
+import { setHtml } from '/js/html.js?v=1';
+import { i18nMarkup } from '/js/i18n-markup.js?v=1';
 
 /* Languages offered in the admin selector. `dir` flips the document for
    right-to-left scripts. Persian ships once ui/i18n/fa.json and the RTL styling
@@ -75,13 +76,15 @@ export function getLang() { return current; }
 
 /* Translate static markup in place. Elements opt in with attributes:
      data-i18n="key"       -> sets textContent
+     data-i18n-html="key"  -> sets markup, limited to the tags i18n-markup.js allows
      data-i18n-ph="key"    -> sets the placeholder attribute
      data-i18n-al="key"    -> sets the aria-label attribute
    Safe to re-run; call it after rendering dynamically-inserted markup too. */
 function translateDOM(root) {
   root = root || document;
   root.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
-  root.querySelectorAll('[data-i18n-html]').forEach(el => { setHtml(el, raw(t(el.getAttribute('data-i18n-html')))); });
+  /* Only the small tag subset in i18n-markup.js, never arbitrary markup. */
+  root.querySelectorAll('[data-i18n-html]').forEach(el => { setHtml(el, i18nMarkup(t(el.getAttribute('data-i18n-html')))); });
   root.querySelectorAll('[data-i18n-ph]').forEach(el => { el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph'))); });
   root.querySelectorAll('[data-i18n-al]').forEach(el => { el.setAttribute('aria-label', t(el.getAttribute('data-i18n-al'))); });
 }

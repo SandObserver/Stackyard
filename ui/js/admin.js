@@ -370,7 +370,7 @@ function render(){
   }
   if(grp) grp.style.display=state.items.length?'':'none';
   if(!state.items.length){
-    setHtml(l, html`<div class="empty"><p class="empty-msg">${raw(t('list.empty'))}</p></div>`);
+    setHtml(l, html`<div class="empty"><p class="empty-msg">${t('list.empty')}</p></div>`);
     return;
   }
   l.innerHTML='';
@@ -381,7 +381,7 @@ function render(){
       if(q){ const hay=((it.label||'')+' '+(it.href||'')+' '+(it.widgetType||'')).toLowerCase(); if(!hay.includes(q))return false; }
       return true;
     });
-    if(!matches.length){ setHtml(l, html`<div class="empty"><p class="empty-msg">${raw(t('list.noMatches'))}</p></div>`); return; }
+    if(!matches.length){ setHtml(l, html`<div class="empty"><p class="empty-msg">${t('list.noMatches')}</p></div>`); return; }
     matches.forEach(item=>l.appendChild(mkRow(item,state.items.indexOf(item))));
     return;
   }
@@ -396,7 +396,7 @@ function render(){
         l.appendChild(mkRow(childItem,state.items.indexOf(childItem),{indent:true,childIdx:ci,folderId:item.id}));
       });
       const addRow=document.createElement('button');addRow.type='button';addRow.className='fp-add';
-      setHtml(addRow, html`<span>+</span> ${raw(t('folder.addAppToFolder'))}`);
+      setHtml(addRow, html`<span>+</span> ${t('folder.addAppToFolder')}`);
       addRow.onclick=()=>openFolderPicker(null,item.id);
       l.appendChild(addRow);
     }

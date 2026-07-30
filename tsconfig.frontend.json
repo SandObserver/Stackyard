@@ -119,6 +119,12 @@
       "/js/html.js?v=*": [
         "./ui/js/html.js"
       ],
+      "/js/i18n-markup.js": [
+        "./ui/js/i18n-markup.js"
+      ],
+      "/js/i18n-markup.js?v=*": [
+        "./ui/js/i18n-markup.js"
+      ],
       "/js/i18n.js": [
         "./ui/js/i18n.js"
       ],
