@@ -9,12 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- API responses and the PWA manifest are now compressed, which they were not
+  before, and compressed responses carry `Vary: Accept-Encoding` so a cache in
+  front cannot serve a compressed body to a client that did not ask for one.
 - The container now mirrors the repository layout, with the API at `/app/api`
   instead of `/app`. Rules the browser and the server both enforce can then live
   in one file rather than being duplicated.
 
 ### Security
 
+- nginx no longer reports its version in the `Server` header or on error pages.
 - Translated strings that are allowed to contain markup are now limited to
   `<strong>`, `<em>`, `<code>` and `<br>` with no attributes, instead of being
   inserted unrestricted. Three other translated strings no longer bypass escaping
