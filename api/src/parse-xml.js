@@ -67,6 +67,34 @@ function _xmlValue(node) {
    for well-formed API responses, not a validating parser; node and depth caps
    bound pathological input. */
 /** @typedef {{ tag: string, attrs: Record<string,string>, children: XmlNode[], text: string }} XmlNode */
+/* The '>' that ends a tag, ignoring any inside a quoted attribute value.
+
+   This used to be indexOf('>'), which took the first one anywhere, so
+   <a t="x>y"> ended the tag in the middle of the attribute. The element lost its
+   attributes, its text became the leftover markup, and the damage ran into its
+   siblings. Only '<' and '&' have to be escaped inside an attribute value, so a
+   raw '>' there is valid XML and feeds do emit it, typically in an episode title
+   or a search string.
+
+   The attribute matcher below already understood quoting; the scanner did not.
+   This makes the two agree.
+
+   An unterminated quote returns -1, so the document ends there, which is the
+   same thing an unterminated tag already did.
+
+   @param {string} xml @param {number} from index just past the '<'
+   @param {number} len @returns {number} index of the closing '>', or -1 */
+function _tagEnd(xml, from, len) {
+  let quote = '';
+  for (let k = from; k < len; k++) {
+    const c = xml[k];
+    if (quote) { if (c === quote) quote = ''; continue; }
+    if (c === '"' || c === "'") { quote = c; continue; }
+    if (c === '>') return k;
+  }
+  return -1;
+}
+
 function parseXml(xml) {
   if (typeof xml !== 'string') return {};
   const MAX_NODES = 5000, MAX_DEPTH = 60;
@@ -84,9 +112,10 @@ function parseXml(xml) {
     if (xml.startsWith('<!--', lt))       { const e = xml.indexOf('-->', lt + 4);  i = e === -1 ? len : e + 3; continue; }
     if (xml.startsWith('<![CDATA[', lt))  { const e = xml.indexOf(']]>', lt + 9);  top().text += xml.slice(lt + 9, e === -1 ? len : e); i = e === -1 ? len : e + 3; continue; }
     if (xml.startsWith('<?', lt))         { const e = xml.indexOf('?>', lt + 2);   i = e === -1 ? len : e + 2; continue; }
-    if (xml.startsWith('<!', lt))         { const e = xml.indexOf('>', lt + 2);    i = e === -1 ? len : e + 1; continue; }
+    /* A doctype may quote a system identifier, which can contain '>'. */
+    if (xml.startsWith('<!', lt))         { const e = _tagEnd(xml, lt + 2, len);   i = e === -1 ? len : e + 1; continue; }
 
-    const gt = xml.indexOf('>', lt);
+    const gt = _tagEnd(xml, lt + 1, len);
     if (gt === -1) break;
     let raw = xml.slice(lt + 1, gt).trim();
 
