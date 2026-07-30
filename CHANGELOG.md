@@ -96,6 +96,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   contains a `>`, which is valid and appears in feeds, typically in episode
   titles. The element previously lost its attributes and absorbed the element
   after it.
+- A cookie containing a stray `%` no longer breaks the dashboard. Any such cookie
+  on the domain, not only Stackyard's own, previously caused every request to fail
+  with a server error.
+- A malformed URL now returns a bad-request response instead of a server error.
 - Rate limiting is now per client rather than shared. The app read a header nginx
   never set, so every request looked like it came from the same address and five
   failed logins from anyone locked out everyone. With `TRUST_PROXY=true` the
