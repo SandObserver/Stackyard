@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { loadConfig, saveConfig } = require('./config');
+const { decodeOrRaw } = require('./percent-decode');
 const log = require('./log');
 
 /* Invalidate every outstanding session.
@@ -247,12 +248,18 @@ function verifyToken(token, secret) {
   return sessionId;
 }
 
+/* A cookie value that will not percent-decode is kept as sent rather than
+   rejected. decodeURIComponent throws on an invalid escape, so a stray '%' in
+   any cookie on the domain, not only ours, used to turn every authenticated
+   request into a 500. An unrelated cookie is not this application's business,
+   and the session token is hex and dots, so it never needs decoding to be
+   recognised. */
 function parseCookies(req) {
   const header = req.headers.cookie || '';
   const out = {};
   for (const part of header.split(';')) {
     const [k, ...v] = part.trim().split('=');
-    if (k) out[k.trim()] = decodeURIComponent(v.join('='));
+    if (k) out[k.trim()] = decodeOrRaw(v.join('='));
   }
   return out;
 }
