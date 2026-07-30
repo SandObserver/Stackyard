@@ -29,6 +29,9 @@
     "loggingTip": "\"Erreurs\" n'affiche que les avertissements et les erreurs. Les événements de sécurité sont toujours enregistrés.",
     "socketTip": "Utilisez l'URL d'un conteneur <strong>Proxy Socket</strong> pour un accès à privilèges minimaux.",
     "security": "Sécurité",
+    "signOutEverywhereTip": "Déconnecte tous les navigateurs et appareils, y compris celui-ci. Utile si une session a pu rester ouverte ou être compromise. Votre mot de passe ne change pas.",
+    "signOutEverywhereBtn": "Tout déconnecter",
+    "signOutEverywhere": "Déconnecter tous les appareils",
     "passwordProtection": "Protection par mot de passe",
     "password": "Mot de passe",
     "passwordTip": "Laissez vide pour conserver le mot de passe actuel. 8 caractères minimum. Pour une protection renforcée, envisagez de placer le tableau de bord derrière un <strong>Authentication Proxy</strong>. Ce mot de passe intégré est une barrière légère, pas une couche d'authentification complète.",
@@ -137,10 +140,12 @@
     "exportFailed": "Échec de l'export : {err}",
     "importNoChange": "Rien à importer — le fichier correspond à votre configuration actuelle.",
     "pwWeak": "Mot de passe trop faible : {label}",
+    "sessionsRevoked": "Tous les appareils ont été déconnectés.",
     "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification."
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",
+    "revokeSessions": "Déconnecter tous les appareils, y compris celui-ci ?",
     "remove": "Supprimer « {name} » ?"
   },
   "list": {

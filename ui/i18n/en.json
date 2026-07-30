@@ -32,6 +32,9 @@
     "loggingTip": "Errors shows warnings and errors only. Security events are always logged.",
     "socketTip": "Use the URL of a <strong>socket proxy</strong> container for least-privilege access.",
     "security": "Security",
+    "signOutEverywhereTip": "Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.",
+    "signOutEverywhereBtn": "Sign out all",
+    "signOutEverywhere": "Sign out all devices",
     "passwordProtection": "Password Protection",
     "password": "Password",
     "passwordTip": "Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.",
@@ -140,10 +143,12 @@
     "exportFailed": "Export failed: {err}",
     "importNoChange": "Nothing to import — the file matches your current config.",
     "pwWeak": "Password too weak: {label}",
+    "sessionsRevoked": "All devices signed out.",
     "authNeedsPassword": "Set a password before turning authentication on."
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",
+    "revokeSessions": "Sign out all devices, including this one?",
     "remove": "Remove \"{name}\"?"
   },
   "list": {

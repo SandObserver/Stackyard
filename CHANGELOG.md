@@ -78,6 +78,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sign out all devices** in Admin → General → Security signs out every browser
+  and device without changing your password. Previously the only way to do this
+  was to change the password, which rotates the same session secret as a side
+  effect.
 - `TRUSTED_PROXY` names where a front reverse proxy is (Nginx Proxy Manager,
   Caddy, Traefik), so Stackyard sees real client addresses through it. Without
   it, every request arriving through such a proxy counts as one client for rate

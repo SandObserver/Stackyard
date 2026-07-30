@@ -65,7 +65,12 @@ Setting `ALLOW_PRIVATE_IPS=true` disables this guard entirely, so private, loopb
 - Login is rate-limited to 5 attempts per IP per 15 minutes.
   Rate-limit counters are held in memory, so a restart clears them and they are
   not shared across replicas. Run a single instance behind any proxy.
-- Changing the password rotates the session secret.
+- Changing the password rotates the session secret, which signs out every other
+  browser and device.
+- **Sign out all devices** in Admin → General → Security does the same without
+  changing the password. Use it if a session may have been left open or
+  compromised. It signs out the browser you are using too, then hands that
+  browser a fresh session so you stay signed in where you clicked it.
 
 Until a password is set, `/api/auth/set-password` accepts the first caller with
 no authentication, so on a shared or untrusted network the first person to reach

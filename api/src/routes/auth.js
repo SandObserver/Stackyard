@@ -4,7 +4,7 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { getOrCreateSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession, authActive,
+const { getOrCreateSecret, rotateSessionSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession, authActive,
   needsRehash } = require('../auth');
 
 on('GET', '/api/auth/check', (req, res) => {
@@ -78,6 +78,9 @@ on('POST', '/api/auth/set-password', async(req, res) => {
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
     cfg.settings.auth.passwordHash = await hashPassword(password);
+    /* Rotating the secret is what signs other devices out; see
+       rotateSessionSecret. Done inline here because this handler is already
+       writing the same block. */
     cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
     cfg.settings.auth.enabled = true;
     cfg.settings.auth.setupPrompted = true;
@@ -87,6 +90,28 @@ on('POST', '/api/auth/set-password', async(req, res) => {
     setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret), isSecureRequest(req));
     json(res, 200, { ok:true });
   } catch(e) { fail(res, e, { status:400 }); }
+});
+
+/* Sign out every device, including this one, without changing the password.
+   Before this the only way to do it was to change the password, since that
+   rotates the same secret as a side effect. */
+on('POST', '/api/auth/revoke-sessions', (req, res) => {
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+  if (!checkOrigin(req, res)) return;
+  const cfg = loadConfig();
+  /* Nothing to revoke when auth is not in force: there are no sessions to
+     invalidate, and rotating would only churn the stored secret. */
+  if (!authActive(cfg)) {
+    return json(res, 400, { error:'Authentication is not enabled, so there are no sessions to sign out.', kind: KIND.INVALID });
+  }
+  const secret = rotateSessionSecret();
+  log.audit('sessions revoked', { ip: getIp(req) });
+  /* The caller's own token was signed with the old secret and is now invalid, so
+     replace it in this response. Without this the person who pressed the button
+     is the one signed out. */
+  const sessionId = crypto.randomBytes(24).toString('hex');
+  setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
+  json(res, 200, { ok:true });
 });
 
 on('POST', '/api/auth/dismiss-setup', (req, res) => {

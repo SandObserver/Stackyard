@@ -2,6 +2,32 @@ const crypto = require('crypto');
 const { loadConfig, saveConfig } = require('./config');
 const log = require('./log');
 
+/* Invalidate every outstanding session.
+
+   Rotating the signing secret is what does it: a token's signature is checked
+   against this value, so replacing it makes every token that already exists
+   unverifiable at once. There is deliberately no second mechanism, such as a
+   stored cutoff timestamp, because that would mean two ways for a session to
+   die, two places to look when one behaves unexpectedly, and a config read on
+   every authenticated request in a path that currently needs none.
+
+   The caller's own session dies too, which is unavoidable and correct. Every
+   caller must therefore issue a fresh cookie in the same response, or the person
+   who pressed the button is the one logged out. Returns the new secret so they
+   can.
+
+   Already used implicitly by a password change, which is why "log out
+   everywhere" existed before this only as a side effect of changing your
+   password. */
+function rotateSessionSecret() {
+  const cfg = loadConfig();
+  cfg.settings = cfg.settings || {};
+  cfg.settings.auth = cfg.settings.auth || {};
+  cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
+  saveConfig(cfg);
+  return cfg.settings.auth.secret;
+}
+
 function getOrCreateSecret() {
   const cfg = loadConfig();
   if (cfg.settings?.auth?.secret) return cfg.settings.auth.secret;
@@ -349,7 +375,7 @@ function hasValidSession(req) {
 }
 
 module.exports = {
-  getOrCreateSecret, hashPassword, verifyPassword, authActive, needsRehash,
+  getOrCreateSecret, rotateSessionSecret, hashPassword, verifyPassword, authActive, needsRehash,
   HASH_PROFILES, DEFAULT_PROFILE, parseHash,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
   checkRateLimit, registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
