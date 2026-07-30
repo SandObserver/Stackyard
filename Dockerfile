@@ -28,12 +28,19 @@ COPY nginx/realip.conf /etc/nginx/http.d/realip.conf
 COPY ui/ /usr/share/nginx/html/
 
 # Copy API source, owned by the node user
-COPY --chown=node:node api/ /app/
+# The image mirrors the repository layout: api/ and ui/ keep their names and their
+# position relative to each other. Rules that both the browser and the server
+# enforce can then live in one file and be reached by the same relative path in
+# both places, rather than being copied and kept in step by hand.
+COPY --chown=node:node api/ /app/api/
+# Only the shared modules from ui/, not the whole UI: nginx serves that from the
+# web root above. See ui/js/link-url.js.
+COPY --chown=node:node ui/js/link-url.js /app/ui/js/link-url.js
 
 # Copy supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/stackyard.conf
 
-WORKDIR /app
+WORKDIR /app/api
 
 # Version baked from the release tag by CI (docker/metadata-action → build-arg).
 # Placed late so version-only rebuilds don't bust earlier layers.

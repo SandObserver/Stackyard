@@ -3,7 +3,10 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { firstUnsafeLink } = require('../link-url');
+/* The one definition of the rule, shared with the browser rather than copied.
+   See ui/js/link-url.js; the Dockerfile places this file where the same relative
+   path resolves inside the image. */
+const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 
 const DOCK_MAX = 4;
