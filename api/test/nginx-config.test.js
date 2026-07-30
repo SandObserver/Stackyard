@@ -128,3 +128,53 @@ test('every policy in the config states a frame-ancestors', () => {
     assert.match(p, /frame-ancestors /, `a policy without frame-ancestors: ${p.slice(0, 60)}...`);
   }
 });
+
+/* ── P16-5 and P16-6: version disclosure and compression ──────────────────── */
+
+test('the nginx version is not advertised', () => {
+  assert.match(dashboard, /^\s*server_tokens off;$/m,
+    'without this, every response carries Server: nginx/x.y.z and error pages print the version');
+});
+
+/* The API was not compressed at all: gzip_types listed text, CSS, JavaScript and
+   SVG, and nothing JSON. */
+test('JSON responses are compressed', () => {
+  assert.match(dashboard, /^\s*application\/json$/m);
+  assert.match(dashboard, /^\s*application\/manifest\+json$/m, 'the PWA manifest is JSON too');
+});
+
+/* Which MIME type nginx reports for .js depends on the build's mime.types, and
+   the move to the RFC 9239 name is still open upstream. Listing one of them would
+   silently stop compressing the frontend on a build that reports the other. */
+test('both JavaScript MIME types are listed', () => {
+  assert.match(dashboard, /^\s*text\/javascript$/m);
+  assert.match(dashboard, /^\s*application\/javascript$/m);
+});
+
+/* nginx compresses text/html whenever gzip is on, and warns about a duplicate if
+   it is also listed. */
+test('text/html is not listed in gzip_types', () => {
+  const block = dashboard.slice(dashboard.indexOf('gzip_types'), dashboard.indexOf(';', dashboard.indexOf('gzip_types')));
+  assert.ok(!/\btext\/html\b/.test(block), 'nginx warns about this as a duplicate');
+});
+
+/* Correctness rather than tidying: without Vary, a shared cache in front can
+   serve a gzipped body to a client that did not ask for one. */
+test('compressed responses vary on Accept-Encoding', () => {
+  assert.match(dashboard, /^\s*gzip_vary on;$/m);
+});
+
+test('responses to proxied requests are compressed too', () => {
+  assert.match(dashboard, /^\s*gzip_proxied \w+;$/m);
+});
+
+test('every type listed for compression is a plausible MIME type', () => {
+  const at = dashboard.indexOf('gzip_types');
+  const block = dashboard.slice(at + 'gzip_types'.length, dashboard.indexOf(';', at));
+  const types = block.split(/\s+/).filter(Boolean);
+  assert.ok(types.length >= 8, `expected the full list, found ${types.length}`);
+  for (const t of types) {
+    assert.match(t, /^[a-z]+\/[a-z0-9.+-]+$/, `${t} does not look like a MIME type`);
+  }
+  assert.equal(new Set(types).size, types.length, 'a type is listed twice');
+});
