@@ -1,5 +1,6 @@
 const { isAuthenticated } = require('./auth');
 const log = require('./log');
+const { tryDecode } = require('./percent-decode');
 
 const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check']);
 
@@ -34,7 +35,16 @@ function route(req, res) {
     const match = u.pathname.match(r.re);
     if (!match) continue;
     req.params = {};
-    r.names.forEach((n, i) => { req.params[n] = decodeURIComponent(match[i + 1] || ''); });
+    /* A parameter that will not percent-decode is a bad request, not a server
+       fault: decodeURIComponent throws on an invalid escape, so /api/x/% used to
+       answer 500. */
+    let bad = null;
+    for (let i = 0; i < r.names.length; i++) {
+      const decoded = tryDecode(match[i + 1] || '');
+      if (decoded === null) { bad = r.names[i]; break; }
+      req.params[r.names[i]] = decoded;
+    }
+    if (bad) return json(res, 400, { error: `Malformed value for ${bad} in the URL`, kind: 'invalid' });
     return r.h(req, res, u);
   }
   json(res, 404, { error:'Not found', kind:'invalid' });
