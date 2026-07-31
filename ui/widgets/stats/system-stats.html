@@ -81,7 +81,7 @@
 <p id="sr-sum" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:-1px;"></p>
 <div class="widget" id="widget" aria-hidden="true"></div>
 <script type="module">
-import { poll } from '/js/widget-toolbox.js?v=1';
+import { poll, html, setHtml } from '/js/widget-toolbox.js?v=1';
 const TICK_MS  = 10000;
 const SPEED_MS = 60000;
 const THROUGHPUT_MS = 3000;
@@ -179,18 +179,20 @@ function mkValueEl(slot, i) {
   const d = document.createElement('div');
   d.id = `val-${i}`;
   if (slot.type === 'disk') {
-    d.innerHTML = `<div class="disk-line">
+    setHtml(d, html`<div class="disk-line">
       <span class="disk-num" id="disk-used-${i}">—</span><span class="disk-unit">GB</span>
       <span class="disk-sep">/</span>
       <span class="disk-num" id="disk-total-${i}">—</span><span class="disk-unit">GB</span>
     </div>
-    ${slot.secondary ? `<div class="disk-sub" id="disk-sec-${i}">— / —</div>` : ''}`;
+    ${slot.secondary ? html`<div class="disk-sub" id="disk-sec-${i}">— / —</div>` : ''}`);
   } else if (slot.type === 'iowait' || slot.type === 'procs') {
     const unit = slot.type === 'iowait' ? '%' : '';
-    d.innerHTML = `<div class="v" id="pct-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`;
+    setHtml(d, html`<div class="v" id="pct-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`);
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
-    d.innerHTML = `<div class="v c-${slot.type}" id="pct-${i}">—${unit}</div>`;
+    /* slot.type reaches a class attribute here, the same untrusted value as the
+       label fallback in mkChartEl. */
+    setHtml(d, html`<div class="v c-${slot.type}" id="pct-${i}">—${unit}</div>`);
   }
   return d;
 }
@@ -198,27 +200,29 @@ function mkValueEl(slot, i) {
 function mkChartEl(slot, i) {
   const d = document.createElement('div'); d.className = 'chart-section';
   const lbl = { cpu:'CPU', ram:'RAM', temp:'TEMP', disk:'DISK', iowait:'IO WAIT', procs:'PROCS' }[slot.type] || slot.type.toUpperCase();
+  /* lbl falls back to slot.type for an unknown type, and slot.type comes from
+     config, which can arrive by import. html`` escapes it. */
   if (slot.type === 'disk') {
-    d.innerHTML = `<div class="chart-lbl">${lbl}</div>
+    setHtml(d, html`<div class="chart-lbl">${lbl}</div>
       <div class="disk-bars">
         <div class="disk-track"><div class="disk-fill" id="disk-bar-p-${i}"></div></div>
-        ${slot.secondary ? `<div class="disk-track secondary"><div class="disk-fill" id="disk-bar-s-${i}"></div></div>` : ''}
-      </div>`;
+        ${slot.secondary ? html`<div class="disk-track secondary"><div class="disk-fill" id="disk-bar-s-${i}"></div></div>` : ''}
+      </div>`);
   } else if (slot.type === 'procs') {
-    d.innerHTML = `<div class="chart-lbl">${lbl}</div>
-      <div class="spark-wrap"><div class="spark" id="spark-${i}"></div><div class="dev-mean" id="dev-mean-${i}" style="display:none"></div></div>`;
+    setHtml(d, html`<div class="chart-lbl">${lbl}</div>
+      <div class="spark-wrap"><div class="spark" id="spark-${i}"></div><div class="dev-mean" id="dev-mean-${i}" style="display:none"></div></div>`);
   } else {
-    d.innerHTML = `<div class="chart-lbl">${lbl}</div>
-      <div class="spark-wrap"><div class="spark" id="spark-${i}"></div></div>`;
+    setHtml(d, html`<div class="chart-lbl">${lbl}</div>
+      <div class="spark-wrap"><div class="spark" id="spark-${i}"></div></div>`);
   }
   return d;
 }
 
 function netRowHtml(net) {
   if ((net.mode || 'speed') === 'uptime') {
-    return `<div class="net-row"><div class="net-item">Uptime <span id="net-uptime">—</span></div></div>`;
+    return html`<div class="net-row"><div class="net-item">Uptime <span id="net-uptime">—</span></div></div>`;
   }
-  return `<div class="net-row">
+  return html`<div class="net-row">
     <div class="net-item">↓ <span id="net-dn">—</span></div>
     <div class="net-item">↑ <span id="net-up">—</span></div>
   </div>`;
@@ -226,7 +230,7 @@ function netRowHtml(net) {
 
 function mkNetValueEl(net) {
   const d = document.createElement('div'); d.id = 'net-val';
-  d.innerHTML = netRowHtml(net);
+  setHtml(d, netRowHtml(net));
   return d;
 }
 
@@ -234,24 +238,24 @@ function mkSmallRow(slot, i) {
   const d = document.createElement('div'); d.className = 'slot-row';
   if (slot.type === 'disk') {
     /* Disk: show used/total in cyan like medium left column */
-    d.innerHTML = `<div class="disk-line">
+    setHtml(d, html`<div class="disk-line">
       <span class="disk-num" id="small-disk-used-${i}">—</span><span class="disk-unit">GB</span>
       <span class="disk-sep">/</span>
       <span class="disk-num" id="small-disk-total-${i}">—</span><span class="disk-unit">GB</span>
-    </div>`;
+    </div>`);
   } else if (slot.type === 'iowait' || slot.type === 'procs') {
     const unit = slot.type === 'iowait' ? '%' : '';
-    d.innerHTML = `<div class="v" id="small-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`;
+    setHtml(d, html`<div class="v" id="small-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`);
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
-    d.innerHTML = `<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`;
+    setHtml(d, html`<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`);
   }
   return d;
 }
 
 function mkSmallNetRow(net) {
   const d = document.createElement('div'); d.className = 'slot-row';
-  d.innerHTML = netRowHtml(net);
+  setHtml(d, netRowHtml(net));
   return d;
 }
 

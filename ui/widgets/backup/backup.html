@@ -118,7 +118,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
+import { poll, openUrl, html, setHtml } from '/js/widget-toolbox.js?v=1';
 const id   = new URLSearchParams(location.search).get('id')   || '';
 const size = new URLSearchParams(location.search).get('size') || 'small';
 const API  = '/api';
@@ -623,7 +623,9 @@ function applyError(err) {
     if(front){ front.style.setProperty('--status-color',NAMED.red); front.setAttribute('role','img'); front.setAttribute('aria-label', `Backup error: ${err?.error||'Unreachable'}`); }
     if(back) back.setAttribute('aria-hidden','true');
     if(bname) bname.textContent='Error';
-    if(bmeta) bmeta.innerHTML=(err?.error||'Unreachable')+'<br>&nbsp;';
+    /* err.error is the API's error string, which can carry upstream-derived
+       text. html`` escapes the interpolation; the <br> stays literal. */
+    if(bmeta) setHtml(bmeta, html`${err?.error||'Unreachable'}<br>&nbsp;`);
     if(fname) fname.textContent='Error';
   });
 }
