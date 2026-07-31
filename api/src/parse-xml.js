@@ -65,7 +65,19 @@ function _xmlValue(node) {
    repeated elements, text content, CDATA, entities, comments, the XML
    declaration, processing instructions and DOCTYPE. It is a pragmatic reader
    for well-formed API responses, not a validating parser; node and depth caps
-   bound pathological input. */
+   bound pathological input.
+
+   When a cap is reached the parse stops and what was read is returned, with
+   '#truncated': true set on the result. Without that flag a 3000-item feed and a
+   2499-item feed were indistinguishable to the caller, so a badge or widget
+   showed a number that was simply wrong and looked fine. The key starts with '#'
+   like '#text', which no XML tag name may do, so it cannot collide with an
+   element.
+
+   MAX_NODES counts nodes, not items, and deliberately so: the cap exists to bound
+   memory and work, and nodes are what consume them. A feed whose items are two
+   nodes each therefore stops at about 2499 items, which is sooner than the
+   constant suggests. */
 /** @typedef {{ tag: string, attrs: Record<string,string>, children: XmlNode[], text: string }} XmlNode */
 /* The '>' that ends a tag, ignoring any inside a quoted attribute value.
 
@@ -102,7 +114,7 @@ function parseXml(xml) {
   const stack = [root];
   const top = () => stack[stack.length - 1];
   const len = xml.length;
-  let i = 0, nodes = 0;
+  let i = 0, nodes = 0, truncated = false;
 
   while (i < len) {
     const lt = xml.indexOf('<', i);
@@ -134,14 +146,21 @@ function parseXml(xml) {
       for (const m of raw.slice(sp + 1).matchAll(/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g))
         node.attrs[m[1]] = _xmlDecode(m[2] !== undefined ? m[2] : m[3]);
     }
-    if (++nodes > MAX_NODES) break;
+    if (++nodes > MAX_NODES) { truncated = true; break; }
     top().children.push(node);
-    if (!selfClose && stack.length < MAX_DEPTH) stack.push(node);
+    /* Past the depth cap the element is kept but nothing nested inside it is, so
+       that is a truncation too. */
+    if (!selfClose) {
+      if (stack.length < MAX_DEPTH) stack.push(node);
+      else truncated = true;
+    }
     i = gt + 1;
   }
 
   const docEl = root.children.find(c => c.tag);
-  return docEl ? { [docEl.tag]: _xmlValue(docEl) } : {};
+  const out = docEl ? { [docEl.tag]: _xmlValue(docEl) } : {};
+  if (truncated) out['#truncated'] = true;
+  return out;
 }
 
 module.exports = { parseXml };
