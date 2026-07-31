@@ -27,11 +27,29 @@
    time rather than re-derived per widget.
 */
 
-import { esc } from '/js/html.js?v=1';
+import { esc, html, setHtml } from '/js/html.js?v=1';
 import { isSafeLinkUrl } from '/js/link-url.js?v=1';
 
 /* Re-exported so a widget frontend needs only this one import. */
-export { esc };
+export { esc, html, setHtml };
+
+/* CSS colours cannot be made safe by escaping: nothing in a CSS value needs a
+   quote or an angle bracket to do damage, so `red; background-image: url(...)`
+   survives esc() intact and still parses as a second declaration. There is no
+   general-purpose CSS escape (CSS.escape handles identifiers and selectors, not
+   property values), so the value is validated instead of transformed, and
+   rejected rather than repaired.
+
+   Assign the result through a specific CSSOM property (el.style.backgroundColor,
+   not el.style.background or a concatenated style string). The browser's own
+   parser then refuses anything that is not a single valid colour, and a trailing
+   declaration cannot ride along. Both together: the pattern makes the intent
+   readable and catches a bad value early, the CSSOM assignment holds if the
+   pattern is later loosened. */
+const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\))$/i;
+export function safeColor(value, fallback) {
+  return COLOR_RE.test(String(value ?? '').trim()) ? String(value).trim() : fallback;
+}
 
 const NS = 'http://www.w3.org/2000/svg';
 const _params = new URLSearchParams(location.search);
