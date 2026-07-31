@@ -92,6 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A badge whose stored headers contain one damaged entry now keeps the rest,
+  including its credential. The whole set was previously discarded and the
+  request went out unauthenticated, which reported as an authentication problem
+  and pointed at a credential that was stored correctly.
 - XML data sources no longer mis-read an element when one of its attributes
   contains a `>`, which is valid and appears in feeds, typically in episode
   titles. The element previously lost its attributes and absorbed the element

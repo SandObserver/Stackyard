@@ -6,7 +6,8 @@ const { PING_MS, FETCH_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const { collectNumbers, computeBadgeValue } = require('../badge-extract');
-const { requestParts, toRows, preserveItemBadgeSecrets, rowsToObject } = require('../badge-headers');
+const { requestParts, toRows, preserveItemBadgeSecrets, rowsToObject, droppedRowCount } = require('../badge-headers');
+const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
 const { badgeRequestMatchesSaved, RETYPE_MESSAGE } = require('../secret-scope');
 
@@ -36,6 +37,13 @@ on('GET', '/api/badges', async(_, res) => {
     .map(async item => {
       try {
         const src = item.monitoring?.activity?.enabled ? item.monitoring.activity : item.badge;
+        /* A stored row that is not a { key, value, secret } entry is skipped
+           rather than failing the badge, so say which item is damaged. Silence
+           here is what made this misleading: the request went out without its
+           credential and the service answered as it would to any stranger. */
+        const dropped = droppedRowCount(item?.monitoring?.activity?.enabled ? item.monitoring.activity?.headers : item?.badge?.headers)
+                      + droppedRowCount(item?.monitoring?.activity?.enabled ? item.monitoring.activity?.params : item?.badge?.params);
+        if (dropped) log.warn('badge config has entries that are not valid rows, skipping them', { item: item.id, dropped });
         const { headers, params } = requestParts(item);
         const baseUrl = src.url;
         const url = Object.keys(params).length
