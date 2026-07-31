@@ -8,6 +8,7 @@ const { fail, KIND } = require('../api-error');
    path resolves inside the image. */
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
+const { firstMalformedRow } = require('../badge-headers');
 
 const DOCK_MAX = 4;
 
@@ -56,6 +57,16 @@ on('POST', '/api/config', async(req, res) => {
        rather than blanked, so the person saving finds out. The browser blanks
        one already stored; see ui/js/link-url.js. */
     for (const item of data.items) {
+      /* Damaged rows are tolerated on read, because that runs on stored config
+         and refusing would break a badge over one bad entry. They are refused on
+         write, so they cannot get stored in the first place. */
+      const badRow = firstMalformedRow(item);
+      if (badRow) {
+        return json(res, 400, {
+          error: `${item.id}: ${badRow.field}[${badRow.index}] is not a { key, value, secret } entry`,
+          kind: KIND.INVALID,
+        });
+      }
       const unsafe = firstUnsafeLink(item);
       if (unsafe) {
         return json(res, 400, {

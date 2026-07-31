@@ -10,17 +10,67 @@
 
 const SUBKEYS = ['headers', 'params'];
 
-function isRowArray(v) {
-  return Array.isArray(v) && v.every(r => r && typeof r === 'object' && typeof r.key === 'string');
+/** A single well-formed row. @param {any} r */
+function isRow(r) {
+  return !!r && typeof r === 'object' && !Array.isArray(r) && typeof r.key === 'string';
 }
 
-/* Old shape ({ key: value }) -> rows. Unknown/empty -> []. */
+/** Already in the row shape, so the migration has nothing to do.
+    @param {any} v */
+function isRowArray(v) {
+  return Array.isArray(v) && v.every(isRow);
+}
+
+/* Old shape ({ key: value }) -> rows. Unknown/empty -> [].
+
+   An array is rows. It used to have to look like rows, with every element valid,
+   and a single bad one sent the whole array to the legacy-object branch below:
+   the indices became header names and each row stringified, so the request went
+   out with a header called "0" whose value was "[object Object]" and without the
+   real credential. The badge then reported whatever the service says to an
+   unauthenticated caller, which reads as "authentication required" and points
+   the user at a credential that was stored correctly all along.
+
+   Asking whether an array looks enough like rows is what produced that. An array
+   and a plain object are different shapes; the legacy branch was only ever meant
+   for objects. Elements that are not rows are skipped, because this runs on
+   stored config and refusing would break a badge over one damaged entry.
+   validateRows rejects them on the way in instead, so this stays a fallback for
+   config that was hand-edited or imported. */
 function toRows(v) {
-  if (isRowArray(v)) return v;
+  if (Array.isArray(v)) {
+    /* Returned as-is when nothing needs dropping, so the common path neither
+       allocates nor breaks callers that rely on getting the same array back. */
+    return v.every(isRow) ? v : v.filter(isRow);
+  }
   if (v && typeof v === 'object') {
     return Object.entries(v).map(([key, value]) => ({ key, value: String(value), secret: false }));
   }
   return [];
+}
+
+/** How many entries toRows would discard. Lets a caller report the damage
+    rather than silently working with less than it was given.
+    @param {any} v @returns {number} */
+function droppedRowCount(v) {
+  return Array.isArray(v) ? v.length - v.filter(isRow).length : 0;
+}
+
+/** The first badge or activity row on an item that is not well-formed, or null.
+    Used to reject a save naming the field, so damaged rows cannot be stored.
+    @param {any} item @returns {{ field:string, index:number }|null} */
+function firstMalformedRow(item) {
+  if (!item || typeof item !== 'object') return null;
+  for (const [block, label] of [[item.badge, 'badge'], [item.monitoring?.activity, 'monitoring.activity']]) {
+    if (!block || typeof block !== 'object') continue;
+    for (const sub of SUBKEYS) {
+      const v = block[sub];
+      if (!Array.isArray(v)) continue;   /* the legacy object shape is still accepted */
+      const at = v.findIndex(r => !isRow(r));
+      if (at !== -1) return { field: `${label}.${sub}`, index: at };
+    }
+  }
+  return null;
 }
 
 /* Rows -> plain { key: value } for the outbound request. Skips rows with a
@@ -123,7 +173,7 @@ function migrateItemBadgeHeaders(item) {
 }
 
 module.exports = {
-  toRows, rowsToObject, requestParts,
+  toRows, isRow, droppedRowCount, firstMalformedRow, rowsToObject, requestParts,
   scrubRows, preserveRows,
   scrubItemBadgeSecrets, preserveItemBadgeSecrets,
   migrateItemBadgeHeaders,

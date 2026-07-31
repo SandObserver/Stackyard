@@ -206,3 +206,49 @@ test('a config save is rejected when an item carries an unsafe link', async () =
     await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
   }
 });
+
+/* Damaged rows are refused on save, so they cannot reach stored config. See
+   P4-4 in badge-headers.test.js for why the read path tolerates them instead. */
+test('a config save is rejected when a badge row is malformed', async () => {
+  const os = require('node:os');
+  const fs = require('node:fs');
+  const http = require('node:http');
+  process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-rows-')), 'apps.json');
+
+  require('../src/routes');
+  const { dispatch } = require('../src/router');
+  const { saveConfig, loadConfig } = require('../src/config');
+  saveConfig({ items: [], settings: {} });
+
+  const server = http.createServer(dispatch);
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+
+  const post = body => new Promise((resolve, reject) => {
+    const data = JSON.stringify(body);
+    const u = new URL(base + '/api/config');
+    const r = http.request({
+      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+    }, res => {
+      let b = '';
+      res.on('data', c => { b += c; });
+      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
+    });
+    r.on('error', reject);
+    r.end(data);
+  });
+
+  try {
+    const bad = await post({ items: [{ id: 'a1', type: 'app', badge: { headers: [{ key: 'A', value: '1' }, null] } }], settings: {} });
+    assert.equal(bad.status, 400);
+    assert.match(bad.body.error, /a1/);
+    assert.match(bad.body.error, /badge\.headers\[1\]/);
+    assert.equal(loadConfig().items.find(i => i.id === 'a1'), undefined, 'nothing may be stored');
+
+    const ok = await post({ items: [{ id: 'a2', type: 'app', badge: { headers: [{ key: 'A', value: '1', secret: false }] } }], settings: {} });
+    assert.equal(ok.status, 200, 'a clean item must still save');
+  } finally {
+    await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
+  }
+});
