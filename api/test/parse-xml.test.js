@@ -204,3 +204,66 @@ test('several attributes each containing > all survive', () => {
   const out = parseXml('<r><a p="1>2" q="3>4" s="5>6">t</a></r>');
   assert.deepEqual(out, { r: { a: { p: '1>2', q: '3>4', s: '5>6', '#text': 't' } } });
 });
+
+/* ── P4-5: truncation was silent ─────────────────────────────────────────────
+   The parser stops at MAX_NODES and returns what it read, and said nothing about
+   it. A 3000-item feed and a 2499-item feed were indistinguishable to the caller,
+   so a badge or widget showed a number that was simply wrong and looked fine.
+
+   MAX_NODES counts nodes, not items, deliberately: the cap bounds memory and
+   work, and nodes are what consume them. A feed whose items are two nodes each
+   therefore stops at about 2499 items, sooner than the constant suggests. That is
+   not an off-by-one; exactly 5000 nodes are kept. */
+
+const _feed = n => '<rss><channel>'
+  + Array.from({ length: n }, (_, i) => `<item><title>T${i}</title></item>`).join('')
+  + '</channel></rss>';
+
+test('a document within the caps is not flagged', () => {
+  assert.equal(parseXml('<r><a>1</a></r>')['#truncated'], undefined);
+  assert.equal(parseXml(_feed(100))['#truncated'], undefined);
+});
+
+test('a document over the node cap is flagged', () => {
+  const out = parseXml(_feed(4000));
+  assert.equal(out['#truncated'], true);
+  assert.ok(out.rss.channel.item.length < 4000, 'and is genuinely short');
+});
+
+/* The boundary, pinned exactly, so a change to the cap or the counting shows up
+   here rather than in someone's badge. */
+test('the cap keeps exactly as many nodes as it says', () => {
+  /* rss + channel + n*(item + title) nodes. 5000 nodes is 2499 whole items. */
+  assert.equal(parseXml(_feed(2499))['#truncated'], undefined, '5000 nodes exactly should fit');
+  assert.equal(parseXml(_feed(2499)).rss.channel.item.length, 2499);
+  assert.equal(parseXml(_feed(2500))['#truncated'], true, 'one node over should be flagged');
+  assert.equal(parseXml(_feed(2500)).rss.channel.item.length, 2499);
+});
+
+/* Past the depth cap an element is kept but nothing nested inside it is, which
+   loses data just as the node cap does. */
+test('exceeding the depth cap is flagged too', () => {
+  const deep = '<r>' + '<a>'.repeat(80) + 'x' + '</a>'.repeat(80) + '</r>';
+  assert.equal(parseXml(deep)['#truncated'], true);
+  const shallow = '<r>' + '<a>'.repeat(10) + 'x' + '</a>'.repeat(10) + '</r>';
+  assert.equal(parseXml(shallow)['#truncated'], undefined);
+});
+
+/* '#' cannot start an XML name, so the flag can never be mistaken for an element,
+   which is why it matches the existing '#text' convention. */
+test('the flag cannot collide with an element name', () => {
+  const out = parseXml('<r><truncated>no</truncated></r>');
+  assert.equal(out['#truncated'], undefined);
+  assert.equal(out.r.truncated, 'no');
+});
+
+test('the flag sits beside the root, not inside it', () => {
+  const out = parseXml(_feed(4000));
+  assert.ok('#truncated' in out);
+  assert.ok(!('#truncated' in out.rss), 'nesting it would collide with document content');
+});
+
+test('an empty or unparseable document is not flagged', () => {
+  assert.equal(parseXml('')['#truncated'], undefined);
+  assert.equal(parseXml('not xml at all')['#truncated'], undefined);
+});

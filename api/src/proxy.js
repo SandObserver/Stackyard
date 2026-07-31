@@ -6,6 +6,7 @@ const { loadConfig } = require('./config');
 const { PING_MS, FETCH_MS } = require('./timeouts');
 const { IS_DEMO } = require('./demo');
 const { parseXml } = require('./parse-xml');
+const log = require('./log');
 const { parsePrometheus } = require('./parse-prometheus');
 
 /* Addresses that are never a legitimate outbound target.
@@ -270,8 +271,18 @@ function fetchJSON(raw, opts = {}) {
         catch {
           if ((ct.includes('text/plain') || ct.includes('openmetrics')) && body.includes('# TYPE'))
             done(resolve, { status: res.statusCode, data: parsePrometheus(body) });
-          else if (ct.includes('xml') || body.trimStart().startsWith('<'))
-            done(resolve, { status: res.statusCode, data: parseXml(body) });
+          else if (ct.includes('xml') || body.trimStart().startsWith('<')) {
+            const parsed = parseXml(body);
+            /* The response was larger than the parser's caps, so what follows is
+               a partial view of it. Logged because the operator is the only one
+               who can act on it, by narrowing the feed. */
+            if (parsed['#truncated']) {
+              /* Origin and path only. A URL may carry an API key in its query
+                 string, and userinfo in its authority; URL.origin excludes both. */
+              log.warn('XML response was too large to read in full', { url: u.origin + u.pathname, bytes: body.length });
+            }
+            done(resolve, { status: res.statusCode, data: parsed });
+          }
           else done(resolve, { status: res.statusCode, data: body });
         }
       });
