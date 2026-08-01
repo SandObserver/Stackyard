@@ -2,7 +2,7 @@
 
 import { loadLocalIcons, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc, cardPreset } from '/js/widget-types.js?v=63bf4388';
-import { mk, mkWrap as _mkWrap, mountScaledWidget, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
+import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { html, setHtml } from '/js/html.js?v=1';
 import { initI18n } from '/js/i18n.js?v=1';
@@ -151,6 +151,9 @@ function mkDock(item) {
 }
 
 function buildDesktop() {
+  /* Before the DOM is replaced: stop the observers and reload timers the
+     previous widgets started, which the DOM removal does not touch. */
+  teardownWidgets();
   BEL.clear();
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0,4);
   const pages = paginate(); totalPages = pages.length;
@@ -396,11 +399,18 @@ async function boot() {
   /* Rebuild layout on orientation/resize; MOB is parse-time so only fires on mobile.
      In landscape, switch to desktop layout; in portrait, use mobile layout. */
   let _rt;
+  /* The layout only depends on orientation, so a rebuild is only worth doing
+     when that changes. It used to run on any viewport change, and on a phone the
+     keyboard opening resizes the visual viewport: tapping the search box rebuilt
+     the entire dashboard. Starts null so the first pass still runs. */
+  let _wasLandscape = null;
   const _rebuild = () => {
     clearTimeout(_rt);
     _rt = setTimeout(() => {
       if (!MOB) return;
       const landscape = innerWidth > innerHeight;
+      if (landscape === _wasLandscape) return;
+      _wasLandscape = landscape;
       if (landscape) {
         document.body.classList.remove('is-mob');
         buildDesktop();
