@@ -52,6 +52,19 @@ on('POST', '/api/config', async(req, res) => {
     if (!Array.isArray(data.items)) return json(res, 400, { error:'items must be an array', kind: KIND.INVALID });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error:'every item needs a non-empty id and type', kind: KIND.INVALID });
+    /* Everything downstream looks an item up with find(i => i.id === x), which
+       returns the first match, so a second item sharing an id is unreachable:
+       its badge, its widget config, its health entry and its folder membership
+       all resolve to the first one instead. Refused rather than repaired,
+       because renaming an id would silently change what folder children point
+       at and move things around the dashboard. */
+    const seen = new Set();
+    for (const item of data.items) {
+      if (seen.has(item.id)) {
+        return json(res, 400, { error:`duplicate item id: ${item.id}`, kind: KIND.INVALID });
+      }
+      seen.add(item.id);
+    }
     /* A link is rendered into an <a href>, so a javascript: or data: URL would
        execute in the dashboard's own origin when the tile is clicked. Rejected
        rather than blanked, so the person saving finds out. The browser blanks

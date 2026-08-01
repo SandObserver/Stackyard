@@ -2,7 +2,7 @@ import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb'
 import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { reorderItems } from '/js/admin-logic.js?v=1';
-import { cleanId, buildAppItem } from '/js/admin-save-logic.js?v=1';
+import { newItemId, buildAppItem } from '/js/admin-save-logic.js?v=1';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
@@ -592,7 +592,7 @@ function openFolderPicker(appId,targetFolderId=null){
 
     const nr=rowBtn('accent',()=>{
       const name=prompt('Folder name:');if(!name?.trim())return;
-      const fid='folder_'+Date.now();
+      const fid=newItemId('folder','folder',state.items.map(i=>i.id));
       state.items.push({id:fid,type:'folder',label:name.trim(),children:[appId]});
       state.items.forEach(f=>{if(f.type==='folder'&&f.id!==fid)f.children=(f.children||[]).filter(id=>id!==appId);});
       save();close();});
@@ -617,7 +617,7 @@ async function doSave(orig){
       if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype]){
         const missing=state._autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
-        item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:state._wtype,
+        item={id:orig?.id||newItemId(wlabel,'widget',state.items.map(i=>i.id)),type:'widget',widgetType:state._wtype,
           label:wlabel,widgetSize:state._wsize,widgetConfig:state._autoForm.getValues()};
       }
       else if(state._wtype==='custom'){
@@ -628,7 +628,7 @@ async function doSave(orig){
         if(state._iframeOpts.allow) ifo.allow=state._iframeOpts.allow;
         if(state._iframeOpts.allowFullscreen===false) ifo.allowFullscreen=false;
         if(state._iframeOpts.refreshInterval) ifo.refreshInterval=state._iframeOpts.refreshInterval;
-        item={id:orig?.id||cleanId(wlabel,'widget')+'_'+Date.now(),type:'widget',widgetType:'custom',
+        item={id:orig?.id||newItemId(wlabel,'widget',state.items.map(i=>i.id)),type:'widget',widgetType:'custom',
           label:wlabel, widgetSize:state._wsize,url};
         if(Object.keys(ifo).length) item.iframe=ifo;
       }
@@ -645,7 +645,7 @@ async function doSave(orig){
           });
         });
       }
-      item={id:orig?.id||cleanId(label,'folder')+'_'+Date.now(),type:'folder',label,children};
+      item={id:orig?.id||newItemId(label,'folder',state.items.map(i=>i.id)),type:'folder',label,children};
     }else{
       const isPing=document.getElementById('hc-type-ping')?.checked;
       const v={
@@ -668,7 +668,7 @@ async function doSave(orig){
         dock: document.getElementById('f-dock')?.checked||false,
         iconUrl: state.siurl, scol: state.scol, spaths: state.spaths,
       };
-      const res=buildAppItem(v,orig);
+      const res=buildAppItem(v,orig,state.items.map(i=>i.id));
       if(res.error){toast(res.error,'err');return;}
       item=res.item;
     }
