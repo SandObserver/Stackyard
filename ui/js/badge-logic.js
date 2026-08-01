@@ -21,7 +21,53 @@ export function resolveColor(c) { return c ? (NAMED[c] || c) : ''; }
 /* Priority: unhealthy (1) > activity (2) > fixed-label (3) > healthy-dot (4).
    Each higher-priority signal overrides lower ones. Pure function: takes the
    badge state and item-derived flags, returns the visual state to apply. */
-export function computeBadgeVisual({ health, activity, custom = {}, staticBdg = {}, hasHC, hideHealthy, badgesStale, healthStale }) {
+/* Why a tile is red, as one short line for its hover text.
+
+   /api/health returns `unhealthy` plus whatever detail explains it: `state` and
+   `status` from Docker, `pingStatus` and `pingError` from the URL check. Only
+   `unhealthy` was ever used, so a red dot said nothing about the cause. An item
+   configured with both checks also lost its container detail on the way out; see
+   routes/health.js.
+
+   Docker's own `status` is preferred over `state` because it is the more useful
+   of the two: "Exited (1) 2 hours ago" rather than "exited". Both checks failing
+   produces both reasons, since either can be the one that matters.
+
+   Long values are truncated: an upstream error can run to hundreds of characters
+   and a tooltip that leaves the screen is worse than no tooltip.
+
+   English here, like the aria strings above it. Localising this file is
+   fix/localise-dashboard-strings. */
+const REASON_MAX = 90;
+
+const _clip = (s, n) => {
+  const t = String(s ?? '').trim();
+  return t.length > n ? t.slice(0, n - 1) + '\u2026' : t;
+};
+
+export function healthReason(detail) {
+  if (!detail || typeof detail !== 'object') return '';
+  const parts = [];
+
+  /* 'running' is the healthy state; only report a container that is not.
+     'unknown' is the server's sentinel for a container it could not find at all,
+     which is a different problem from one that is stopped. */
+  if (detail.state === 'unknown') {
+    parts.push('Container not found');
+  } else if (detail.state && detail.state !== 'running') {
+    parts.push(_clip(detail.status || `Container ${detail.state}`, REASON_MAX));
+  } else if (detail.status && /unhealthy/i.test(detail.status)) {
+    /* Running, but Docker's own healthcheck is failing. */
+    parts.push(_clip(detail.status, REASON_MAX));
+  }
+
+  if (detail.pingError) parts.push(_clip(`Ping failed: ${detail.pingError}`, REASON_MAX));
+  else if (detail.pingStatus >= 400) parts.push(`Ping returned ${detail.pingStatus}`);
+
+  return parts.join(' \u2022 ');
+}
+
+export function computeBadgeVisual({ health, activity, custom = {}, staticBdg = {}, hasHC, hideHealthy, badgesStale, healthStale, healthDetail }) {
   let cls, txt, bg = '';
 
   if (health) {
@@ -57,10 +103,15 @@ export function computeBadgeVisual({ health, activity, custom = {}, staticBdg = 
     aria = (aria ? aria + ' ' : '') + '(may be out of date)';
   }
 
+  /* Hover text, and appended to the label so it is not sight-only. Only when
+     something is actually wrong: a tooltip on a healthy tile is noise. */
+  const reason = health ? healthReason(healthDetail) : '';
+  if (reason) aria = aria + ': ' + reason;
+
   /* Auto dark text: WCAG luminance check on the resolved hex. Falls back to
      class-based color (blue/red/green) when bg is empty. */
   const effectiveBg = bg || (cls.includes('red') ? NAMED.red : cls.includes('green') ? NAMED.green : cls.includes('blue') ? NAMED.blue : '');
   const color = effectiveBg && needsDark(effectiveBg) ? '#1c1c1e' : '';
 
-  return { cls, txt, bg, aria, color };
+  return { cls, txt, bg, aria, color, title: reason };
 }

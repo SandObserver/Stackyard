@@ -39,18 +39,27 @@ on('GET', '/api/health', async(_, res) => {
       const mon   = item.monitoring?.healthcheck || {};
       const cName = mon.container || item.container || '';
       const ping  = mon.pingUrl   || item.ping    || '';
+      /* Built up rather than replaced. An item with both a container and a
+         ping used to lose the container's state and status entirely, because
+         the ping's result overwrote the entry. `unhealthy` was right either
+         way, being carried in the local below, but the detail behind it was
+         thrown away, which is what the tile needs to say why it is red. */
       let unhealthy = false;
+      const detail = {};
       if (cName) {
         const norm = cName.toLowerCase().replace(/[\s_]+/g,'-');
         const c    = containers[cName] || containers[norm];
         unhealthy  = !c || c.unhealthy;
-        result[item.id] = { unhealthy, state:c?.state||'unknown', status:c?.status||'' };
+        detail.state  = c?.state  || 'unknown';
+        detail.status = c?.status || '';
       }
       if (ping) {
         const r = await pingUnchecked(ping, PING_MS, item.skipTlsVerify === true);
         if (!r.ok) unhealthy = true;
-        result[item.id] = { unhealthy, pingStatus:r.status, pingError:r.error };
+        detail.pingStatus = r.status;
+        detail.pingError  = r.error;
       }
+      result[item.id] = { unhealthy, ...detail };
     }));
   json(res, 200, result);
 });
