@@ -92,6 +92,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Typing an icon name in any capitalisation now finds it. `MySpeed` and
+  `Home Assistant` previously showed nothing, because the icon catalogue names
+  every file in lowercase with hyphens. The suggestion shows the corrected name
+  before you pick it.
+- An uploaded icon whose file has an uppercase extension, such as `LOGO.SVG`, now
+  appears. Its name is also escaped properly, so characters like `+` and `&` no
+  longer break the link.
 - The Retry button on the "could not connect" screen now works. It did nothing
   when clicked, because the page's security policy refuses handlers written into
   the markup. The same applied to the Retry button on the Admin page.

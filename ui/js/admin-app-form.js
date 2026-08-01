@@ -4,7 +4,7 @@
    serializeKvRows (used by the save path). */
 import { clr as rc } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
-import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
+import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=bdd2c9eb';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=1';
 import { t } from '/js/i18n.js?v=1';
@@ -264,7 +264,12 @@ function showIPRes(list, rawInput){
     rs.appendChild(r);
   });
   if(!list.length&&rawInput&&!rawInput.includes('/')){
-    const val=rawInput.trim();
+    /* Nothing matched, so offer what was typed. The catalogue names every file
+       in lowercase with hyphens, so "MySpeed" is offered as "myspeed": the icon
+       exists, it is simply spelled differently. Shown corrected rather than
+       corrected silently, so the value that gets saved is the one on screen. */
+    const val=cdnIconName(rawInput);
+    if(!val){rs.classList.remove('open');return;}
     const srcs=iconChain(val);
     if(!srcs.length){rs.classList.remove('open');return;}
     const r=document.createElement('button');r.type='button';r.className='ipr';
