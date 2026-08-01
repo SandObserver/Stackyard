@@ -2,7 +2,7 @@ import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb'
 import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { reorderItems } from '/js/admin-logic.js?v=1';
-import { newItemId, buildAppItem } from '/js/admin-save-logic.js?v=1';
+import { newItemId, buildAppItem, upsertItem, claimFolderChildren } from '/js/admin-save-logic.js?v=1';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
@@ -470,8 +470,9 @@ function _renderEditBody(){
 }
 
 function openModal(idx){
-  state.eid=idx??null;
-  const item=idx!=null?JSON.parse(JSON.stringify(state.items[idx])):null;
+  const editing=idx!=null?state.items[idx]:null;
+  state.eid=editing?.id??null;
+  const item=editing?JSON.parse(JSON.stringify(editing)):null;
   state.ctype=item?.type||'app';
   state.siurl=item?.iconUrl||'';
   state.scol=item?.color||'dark';
@@ -635,16 +636,11 @@ async function doSave(orig){
     }else if(state.ctype==='folder'){
       const label=document.getElementById('f-fname')?.value?.trim();
       if(!label){toast('Name required','err');return;}
-      /* Prevent adding an app to multiple folders; remove it from any existing folder first */
+      /* An app belongs to one folder. This ran only when creating a folder, so
+         editing an existing one and ticking an app already filed elsewhere left
+         it in both, and the dashboard rendered it twice. */
       const children=[...document.querySelectorAll('#folder-apps-list li[aria-selected="true"]')].map(li=>li.dataset.val);
-      if(!orig){
-        children.forEach(cid=>{
-          state.items.forEach(it=>{
-            if(it.type==='folder'&&it.children?.includes(cid))
-              it.children=it.children.filter(x=>x!==cid);
-          });
-        });
-      }
+      claimFolderChildren(state.items,orig?.id,children);
       item={id:orig?.id||newItemId(label,'folder',state.items.map(i=>i.id)),type:'folder',label,children};
     }else{
       const isPing=document.getElementById('hc-type-ping')?.checked;
@@ -672,8 +668,12 @@ async function doSave(orig){
       if(res.error){toast(res.error,'err');return;}
       item=res.item;
     }
-    if(state.eid!==null)state.items[state.eid]=item;else state.items.push(item);
-    await save();closeModal();toast(state.eid!==null?'Updated':'Added');
+    /* Replace by id, not by position. An item that has moved is still found, and
+       one that has genuinely gone is appended rather than dropped: the edit is
+       real work, and losing it to a bookkeeping mismatch is worse than leaving
+       an entry the user can see and remove. */
+    const { replaced }=upsertItem(state.items,state.eid,item);
+    await save();closeModal();toast(replaced?'Updated':'Added');
   }catch(e){toast('Error: '+e.message,'err');}
 }
 

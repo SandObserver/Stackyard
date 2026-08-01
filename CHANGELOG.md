@@ -92,6 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Adding an app to a folder while editing that folder now removes it from any
+  folder it was already in, so it no longer appears in two places at once.
+- Editing an item that has since moved no longer fails the save with an
+  unhelpful error.
 - Two items can no longer end up sharing an id, which made the second one
   unreachable: its badge, settings and folder membership all resolved to the
   first. New ids cannot collide, and a config containing duplicates is refused

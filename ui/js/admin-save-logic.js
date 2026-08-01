@@ -41,6 +41,52 @@ export function newItemId(label, fallback = 'item', taken = []) {
 /* Assemble an app item from already-read form values (v). Validates name/url,
    builds the monitoring block (healthcheck + activity badge), the custom badge
    display, and the static badge. Returns { error } or { item }. */
+/** Put `item` where the item with `id` currently is, or append it.
+
+    The edit target used to be an array index. That went stale the moment items
+    moved: writing past the end grew the array with holes, JSON turned those into
+    nulls, and the server rejected the whole save with a message about missing
+    ids, losing the user's edit.
+
+    A missing id appends rather than throws. The edit is real work, and losing it
+    to a bookkeeping mismatch is worse than leaving an entry the user can see and
+    remove.
+
+    Mutates and returns `items`, and reports whether it replaced or appended so
+    the caller can say "Updated" or "Added" truthfully.
+
+    @param {any[]} items @param {string|null} id @param {any} item
+    @returns {{ items: any[], replaced: boolean }} */
+export function upsertItem(items, id, item) {
+  const list = Array.isArray(items) ? items : [];
+  const at = id == null ? -1 : list.findIndex(i => i && i.id === id);
+  if (at !== -1) list[at] = item;
+  else list.push(item);
+  return { items: list, replaced: at !== -1 };
+}
+
+/** Remove `childIds` from every folder except `folderId`.
+
+    An app belongs to one folder. This ran only when creating a folder, so
+    editing an existing one and ticking an app already filed elsewhere left it in
+    both, and the dashboard rendered it twice.
+
+    Mutates and returns `items`.
+
+    @param {any[]} items @param {string|null|undefined} folderId
+    @param {Iterable<string>} childIds @returns {any[]} */
+export function claimFolderChildren(items, folderId, childIds) {
+  const list = Array.isArray(items) ? items : [];
+  const claimed = new Set(childIds || []);
+  if (!claimed.size) return list;
+  for (const it of list) {
+    if (!it || it.type !== 'folder' || it.id === folderId) continue;
+    if (!Array.isArray(it.children)) continue;
+    it.children = it.children.filter(id => !claimed.has(id));
+  }
+  return list;
+}
+
 /** @param {any} v @param {any} [orig] @param {Iterable<string>} [takenIds] */
 export function buildAppItem(v, orig, takenIds = []) {
   if (!v.label) return { error: 'Name required' };

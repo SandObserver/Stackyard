@@ -7,6 +7,11 @@
 
 export const state = {
   items: [],
+  /* The id of the item being edited, or null when adding. Was an array index,
+     which went stale the moment items moved: writing at a position past the end
+     grew the array with holes, JSON turned those into nulls, and the server
+     rejected the whole save with a message about missing ids. An id cannot drift
+     the way a position can. */
   eid: null,
   saving: false,
   _settings: {},
