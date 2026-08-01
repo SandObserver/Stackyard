@@ -157,6 +157,31 @@ export function widgetConfigMode(type, reg) {
   return type === 'custom' ? 'custom' : 'unavailable';
 }
 
+/** Which admin section to show, given a requested id and the sections present.
+
+    The admin page must always show exactly one section. show() hides every
+    section that is not the requested one, so a request naming a section that no
+    longer exists hid all of them and left the page blank, with no active nav
+    link and nothing on screen to suggest what happened. The stored value came
+    straight from localStorage, so anyone whose browser held a section name from
+    an older version got that after upgrading, and only clearing site data fixed
+    it.
+
+    `|| 'general'` covered a missing value but not a stale one, which is the case
+    that actually occurs.
+
+    Falls back to the first available section rather than a hard-coded name, so
+    renaming or reordering the sections cannot reintroduce this.
+
+    @param {string|null|undefined} requested
+    @param {string[]} available in document order
+    @returns {string|null} null only when there are no sections at all */
+export function resolveAdminSection(requested, available) {
+  const list = Array.isArray(available) ? available.filter(s => typeof s === 'string' && s) : [];
+  if (!list.length) return null;
+  return list.includes(String(requested ?? '')) ? String(requested) : list[0];
+}
+
 export const DOCK_MAX = 4;
 
 export function isDockBlocked(items, editing) {

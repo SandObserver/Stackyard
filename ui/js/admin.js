@@ -1,7 +1,7 @@
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
 import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { html, raw, setHtml } from '/js/html.js?v=1';
-import { reorderItems } from '/js/admin-logic.js?v=1';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=1';
 import { newItemId, buildAppItem, upsertItem, claimFolderChildren } from '/js/admin-save-logic.js?v=1';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
@@ -680,14 +680,21 @@ async function doSave(orig){
 function initNav(){
   const links=document.querySelectorAll('.nl, .mtab');
   const STORE='admin_sec';
-  const stored=localStorage.getItem(STORE)||'general';
-  function show(id){
+  const sections=[...document.querySelectorAll('.sec')].map(s=>s.id.replace(/^sec-/,''));
+
+  /* Resolved inside show(), not just where the stored value is read, so no
+     caller can leave the page with nothing visible. A link with a typo'd
+     data-sec would do exactly what a stale stored value did. */
+  function show(requested){
+    const id=resolveAdminSection(requested,sections);
+    if(id===null) return;
+    if(id!==requested) console.warn('admin: unknown section',requested,'- showing',id);
     document.querySelectorAll('.sec').forEach(s=>{s.hidden=s.id!=='sec-'+id;});
     links.forEach(l=>l.classList.toggle('active',l.dataset.sec===id));
     localStorage.setItem(STORE,id);
   }
   links.forEach(l=>l.addEventListener('click',()=>show(l.dataset.sec)));
-  show(stored);
+  show(localStorage.getItem(STORE));
 }
 
 

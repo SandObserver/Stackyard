@@ -92,6 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The Admin page no longer opens blank when the browser remembers a section from
+  an older version. It falls back to the first section instead.
 - Adding an app to a folder while editing that folder now removes it from any
   folder it was already in, so it no longer appears in two places at once.
 - Editing an item that has since moved no longer fails the save with an

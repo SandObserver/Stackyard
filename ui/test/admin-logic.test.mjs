@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked, widgetConfigMode } from '../js/admin-logic.js';
+import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked, widgetConfigMode, resolveAdminSection } from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
@@ -235,4 +235,57 @@ test('a widget whose manifest is missing is unavailable, not custom', () => {
 test('widgetConfigMode tolerates a missing registry', () => {
   assert.equal(widgetConfigMode('books', null), 'unavailable');
   assert.equal(widgetConfigMode('custom', null), 'custom');
+});
+
+/* ── P10-3: a stale stored section blanked the admin page ────────────────────
+   show() hides every section that is not the requested one, so a request naming
+   a section that no longer exists hid all of them: an empty page, no active nav
+   link, and nothing on screen to suggest what happened. The stored value came
+   straight from localStorage, so anyone whose browser held a section name from
+   an older version got that after upgrading, and only clearing site data fixed
+   it. The `|| 'general'` fallback covered a missing value but not a stale one,
+   which is the case that actually occurs. */
+
+const SECTIONS = ['general', 'appearance', 'dashboard', 'about'];
+
+test('a known section is used as asked', () => {
+  for (const s of SECTIONS) assert.equal(resolveAdminSection(s, SECTIONS), s);
+});
+
+test('a section that no longer exists falls back rather than showing nothing', () => {
+  assert.equal(resolveAdminSection('widgets', SECTIONS), 'general');
+  assert.equal(resolveAdminSection('sec-pw', SECTIONS), 'general', 'a partial id is not a section either');
+});
+
+test('a missing stored value falls back', () => {
+  for (const v of [null, undefined, '']) assert.equal(resolveAdminSection(v, SECTIONS), 'general');
+});
+
+test('junk falls back rather than throwing', () => {
+  for (const v of [0, {}, [], true, 'general ']) {
+    assert.doesNotThrow(() => resolveAdminSection(v, SECTIONS));
+    assert.equal(resolveAdminSection(v, SECTIONS), 'general', `for ${JSON.stringify(v)}`);
+  }
+});
+
+/* The fallback is the first section present, not a hard-coded name, so renaming
+   or reordering the sections cannot reintroduce this. */
+test('the fallback follows the sections that exist', () => {
+  assert.equal(resolveAdminSection('nope', ['appearance', 'general']), 'appearance');
+  assert.equal(resolveAdminSection('nope', ['solo']), 'solo');
+});
+
+test('the result is always one of the sections given', () => {
+  for (const requested of ['general', 'gone', '', null, 'about']) {
+    const got = resolveAdminSection(requested, SECTIONS);
+    assert.ok(SECTIONS.includes(got), `${JSON.stringify(requested)} resolved to ${got}`);
+  }
+});
+
+/* Only when the page genuinely has no sections, where show() has nothing to do
+   and returns without touching anything. */
+test('no sections at all resolves to null', () => {
+  assert.equal(resolveAdminSection('general', []), null);
+  assert.equal(resolveAdminSection('general', null), null);
+  assert.equal(resolveAdminSection('general', [null, '']), null, 'empty entries do not count');
 });
