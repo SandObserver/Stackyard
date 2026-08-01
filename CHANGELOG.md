@@ -92,6 +92,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Network speed in the system widget was reported from the wrong columns of
+  `/proc/net/dev` once an interface had carried about 10 MB, showing packets per
+  second in place of bytes. It also picked the wrong interface when the
+  configured name was a prefix of another, and showed a large negative figure for
+  one sample after an interface restarted.
+- Memory use no longer reports 100% on kernels and container setups that do not
+  provide `MemAvailable`.
+- CPU use no longer reports a blank or nonsensical figure when `/proc/stat`
+  cannot be read as expected.
 - Hovering an app tile with a red status badge now shows why, such as
   `Exited (1) 2 hours ago` or `Ping failed: connect ECONNREFUSED`. An app
   configured with both a container name and a URL check also previously lost its
