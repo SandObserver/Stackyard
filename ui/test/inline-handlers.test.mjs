@@ -32,14 +32,54 @@ const FILES = sources('.');
 
 /* Matches an attribute in markup, not a property assignment. `el.onclick = fn`
    is ordinary JavaScript and works fine; `onclick="..."` inside a string or a
-   template is what the CSP refuses. Comments are stripped first, since a comment
-   explaining this rule would otherwise trip it. */
+   template is what the CSP refuses. */
 const INLINE_ATTR = /\son[a-z]+\s*=\s*["'][^"']/gi;
 
-const stripComments = src => src
-  .replace(/\/\*[\s\S]*?\*\//g, '')
-  .replace(/^\s*\/\/.*$/gm, '')
-  .replace(/<!--[\s\S]*?-->/g, '');
+/* Comment spans, as [start, end) offsets.
+
+   The obvious approach is to delete the comments and search what is left, but
+   that is the shape of an incomplete sanitizer: one pass over `<!--...-->`
+   leaves the opener of an unterminated comment behind, so a handler after it
+   could be missed. Nothing here is sanitizing untrusted input, but the weakness
+   is real for a checker, and a checker that can quietly miss things is worse
+   than none.
+
+   Finding the spans instead means nothing is rewritten, an unterminated comment
+   simply runs to the end of the file as a browser or a parser would treat it,
+   and a match can be reported at its true line number.
+
+   Deliberately not a full tokenizer: `//` inside a string or a regular
+   expression is read as a comment here. That errs towards ignoring a match, and
+   the retry-button assertions below pin the two real call sites, so a miss in
+   this scan cannot let the actual bug back in unnoticed. */
+function commentSpans(src) {
+  const spans = [];
+  const push = (open, close, keepOpen) => {
+    let i = 0;
+    while ((i = src.indexOf(open, i)) !== -1) {
+      const end = close ? src.indexOf(close, i + open.length) : -1;
+      const stop = end === -1 ? src.length : end + close.length;
+      spans.push([i, stop]);
+      i = stop;
+      if (keepOpen && end === -1) break;
+    }
+  };
+  push('/*', '*/', true);
+  push('<!--', '-->', true);
+
+  /* Line comments end at the newline, so they never run away. */
+  let i = 0;
+  while ((i = src.indexOf('//', i)) !== -1) {
+    const nl = src.indexOf('\n', i);
+    spans.push([i, nl === -1 ? src.length : nl]);
+    i = nl === -1 ? src.length : nl;
+  }
+  return spans;
+}
+
+const inComment = (spans, at) => spans.some(([a, b]) => at >= a && at < b);
+
+const lineOf = (src, at) => src.slice(0, at).split('\n').length;
 
 test('the source tree has files to check', () => {
   assert.ok(FILES.length > 20, `only found ${FILES.length} files`);
@@ -48,14 +88,40 @@ test('the source tree has files to check', () => {
 test('no markup carries an inline event handler', () => {
   const found = [];
   for (const f of FILES) {
-    const src = stripComments(fs.readFileSync(path.join(root, f), 'utf8'));
+    const src = fs.readFileSync(path.join(root, f), 'utf8');
+    const spans = commentSpans(src);
     for (const m of src.matchAll(INLINE_ATTR)) {
-      /* Report enough context to find it. */
-      const line = src.slice(0, m.index).split('\n').length;
-      found.push(`${f}:${line} ${m[0].trim()}`);
+      if (inComment(spans, m.index)) continue;
+      found.push(`${f}:${lineOf(src, m.index)} ${m[0].trim()}`);
     }
   }
   assert.deepEqual(found, [], `inline handlers are refused by the CSP:\n${found.join('\n')}`);
+});
+
+/* The scan is only worth anything if it would catch the bug it exists for. */
+test('the scan finds an inline handler in code and ignores one in a comment', () => {
+  const real = '<button onclick="location.reload()">Retry</button>';
+  const spans = commentSpans(real);
+  const hits = [...real.matchAll(INLINE_ATTR)].filter(m => !inComment(spans, m.index));
+  assert.equal(hits.length, 1, 'a real inline handler must be found');
+
+  const commented = '/* written as onclick="x" once */\nconst a = 1;';
+  const cSpans = commentSpans(commented);
+  assert.equal([...commented.matchAll(INLINE_ATTR)].filter(m => !inComment(cSpans, m.index)).length, 0);
+});
+
+/* The case that made deleting comments the wrong approach: an unterminated one
+   used to leave its opener behind, so a later handler could slip through. */
+test('an unterminated comment does not hide or reveal a handler', () => {
+  const src = '<!-- a --> <!-- b\n<button onclick="x">';
+  const spans = commentSpans(src);
+  const hits = [...src.matchAll(INLINE_ATTR)].filter(m => !inComment(spans, m.index));
+  assert.equal(hits.length, 0, 'everything after an unterminated opener is comment');
+
+  const closed = '<!-- a --> <button onclick="x">';
+  const cSpans = commentSpans(closed);
+  assert.equal([...closed.matchAll(INLINE_ATTR)].filter(m => !inComment(cSpans, m.index)).length, 1,
+    'and a closed comment does not swallow what follows it');
 });
 
 /* The buttons themselves still exist and are still wired, just not inline. */
