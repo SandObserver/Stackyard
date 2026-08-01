@@ -898,7 +898,10 @@ checkAuth(load).then(ok => {
     toast('Could not load config. Is the API container running? ('+e.message+')','err');
     const al=document.getElementById('al');
     if(al){
-      setHtml(al, html`<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">Failed to load dashboard config.<br><br><button onclick="location.reload()" style="padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">Retry</button></div>`);
+      /* See dashboard.js: an inline onclick is blocked by the CSP, so the
+         button did nothing. */
+      setHtml(al, html`<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">Failed to load dashboard config.<br><br><button class="retry-btn" type="button" style="padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">Retry</button></div>`);
+      al.querySelector('.retry-btn')?.addEventListener('click', () => location.reload());
     }
   });
 });

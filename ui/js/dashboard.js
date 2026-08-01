@@ -352,7 +352,12 @@ async function boot() {
   if (configFailed) {
     const msg = document.createElement('div');
     msg.className = 'api-error-screen';
-    setHtml(msg, html`<p class="api-error-title">Could not connect to dashboard API</p><p class="api-error-sub">Make sure the API container is running</p><button class="api-error-btn" onclick="location.reload()">Retry</button>`);
+    setHtml(msg, html`<p class="api-error-title">Could not connect to dashboard API</p><p class="api-error-sub">Make sure the API container is running</p><button class="api-error-btn" type="button">Retry</button>`);
+    /* Attached here rather than written as onclick="" in the markup: the page's
+       CSP allows script only from a file, so an inline handler is refused and
+       the button silently did nothing. Someone whose dashboard was already
+       broken clicked the one obvious remedy and got no response. */
+    msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
     document.body.appendChild(msg);
     document.body.classList.add('ready');
     return;
