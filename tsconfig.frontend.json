@@ -101,6 +101,12 @@
       "/js/badge-logic.js?v=*": [
         "./ui/js/badge-logic.js"
       ],
+      "/js/dashboard-logic.js": [
+        "./ui/js/dashboard-logic.js"
+      ],
+      "/js/dashboard-logic.js?v=*": [
+        "./ui/js/dashboard-logic.js"
+      ],
       "/js/dashboard-switch-model.js": [
         "./ui/js/dashboard-switch-model.js"
       ],

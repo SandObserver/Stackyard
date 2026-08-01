@@ -92,6 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An open dashboard now picks up every settings change. It previously noticed
+  only a renamed or relinked app, so changing an icon, colour, dock pin, hidden
+  flag or badge left other open dashboards showing the old version until they
+  were reloaded by hand.
 - Widgets no longer keep polling their services after the dashboard rebuilds. On
   a phone the dashboard also rebuilt whenever the keyboard opened, so a session
   could accumulate dozens of hidden widgets all still fetching. It now rebuilds
