@@ -92,6 +92,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An install running a release candidate is now told when the matching stable
+  release is out. The comparison read `1.5.0-rc.1` as newer than `1.5.0`, so such
+  installs reported themselves up to date indefinitely.
+- A failed update check is no longer repeated on every request, which could use up
+  the hourly GitHub allowance on installs that cannot reach it.
 - Network speed in the system widget was reported from the wrong columns of
   `/proc/net/dev` once an interface had carried about 10 MB, showing packets per
   second in place of bytes. It also picked the wrong interface when the
