@@ -92,6 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Widgets no longer keep polling their services after the dashboard rebuilds. On
+  a phone the dashboard also rebuilt whenever the keyboard opened, so a session
+  could accumulate dozens of hidden widgets all still fetching. It now rebuilds
+  only when the orientation actually changes.
 - The Admin page no longer opens blank when the browser remembers a section from
   an older version. It falls back to the first section instead.
 - Adding an app to a folder while editing that folder now removes it from any

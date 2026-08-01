@@ -52,6 +52,30 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
 }
 
 
+/* Live widget mounts, so a rebuild can switch off what it is about to discard.
+
+   mountScaledWidget starts things that outlive the DOM it creates: a
+   ResizeObserver on the card, a setTimeout chain reloading the iframe, and touch
+   listeners on the iframe's document. Dropping the card removed the iframe but
+   none of those, so every rebuild stranded one observer and one reload timer per
+   widget, and the timers went on fetching from the backing services forever.
+
+   That compounded because a rebuild is cheap to trigger: on a phone, opening the
+   keyboard resizes the visual viewport, which was enough. A dashboard left open
+   accumulated dozens of invisible widgets all still polling.
+
+   Held here rather than at the call sites because both build paths already share
+   one entry point, and asking each caller to remember what it mounted is the
+   bookkeeping that drifts. */
+const _mounts = new Set();
+
+/** Stop everything the mounted widgets started. Called by a rebuild before it
+    replaces the DOM; safe to call when nothing is mounted. */
+export function teardownWidgets() {
+  for (const stop of _mounts) { try { stop(); } catch { /* one failure must not strand the rest */ } }
+  _mounts.clear();
+}
+
 /* Mount a widget iframe at a fixed design resolution and scale it uniformly to
    fill `card`. The iframe's internal viewport is therefore constant regardless
    of the card's on-screen size, so widget content renders identically on every
@@ -83,11 +107,16 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
      jitter (±15%) staggers reloads so a dashboard full of widgets doesn't hit
      every backing service on the same tick (thundering herd against small hosts
      like a Pi-hole on a Raspberry Pi). */
+  /* Everything that outlives the DOM is registered here so teardown can undo it. */
+  const cleanups = [];
   if (o.refreshInterval && o.refreshInterval >= 250) {
     const base = o.refreshInterval;
     const reload = () => { ifr.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now(); };
     const jit = () => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
-    setTimeout(function tick() { reload(); setTimeout(tick, jit()); }, Math.round(Math.random() * base));
+    /* The handle is reassigned every tick, so the cleanup reads the current one
+       rather than capturing the first. */
+    let timer = setTimeout(function tick() { reload(); timer = setTimeout(tick, jit()); }, Math.round(Math.random() * base));
+    cleanups.push(() => clearTimeout(timer));
   }
 
   /* On mobile, an iframe swallows touches so the home pager never sees a swipe that
@@ -118,6 +147,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
       }, { passive:true });
     };
     ifr.addEventListener('load', attach);
+    cleanups.push(() => ifr.removeEventListener('load', attach));
     try { if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') attach(); } catch {}
   }
 
@@ -129,8 +159,24 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     ifr.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
     ifr.style.opacity = '1';            /* reveal only once scaled, avoids the flash of unscaled content on load */
   };
-  if (typeof ResizeObserver !== 'undefined') { new ResizeObserver(fit).observe(card); }
-  else { window.addEventListener('resize', fit); }
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(fit);
+    ro.observe(card);
+    cleanups.push(() => ro.disconnect());
+  } else {
+    window.addEventListener('resize', fit);
+    cleanups.push(() => window.removeEventListener('resize', fit));
+  }
   requestAnimationFrame(fit); fit();
+
+  /* The iframe goes with its card, so teardown only releases what would outlive
+     it. Blanking src stops an in-flight load completing against a document
+     nobody will see. */
+  const stop = () => {
+    for (const fn of cleanups) { try { fn(); } catch { /* keep going */ } }
+    cleanups.length = 0;
+    try { ifr.src = 'about:blank'; } catch { /* already detached */ }
+  };
+  _mounts.add(stop);
   return ifr;
 }

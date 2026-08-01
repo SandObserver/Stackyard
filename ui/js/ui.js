@@ -1,6 +1,6 @@
 import { iconChain } from '/js/icons.js?v=36';
 import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
-import { mk, clr, mkWrap as _mkWrap, mountScaledWidget } from '/js/utils.js?v=40';
+import { mk, clr, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets } from '/js/utils.js?v=40';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=1';
 
 let _state = null;
@@ -328,6 +328,9 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
 
 
 export function buildMobile() {
+  /* See buildDesktop: the previous widgets' observers and timers outlive their
+     DOM, so they are stopped before it is replaced. */
+  teardownWidgets();
   st().BEL.clear();
   const vw = innerWidth, vh = innerHeight;
   const { top: insetTop, bottom: insetBottom } = readSafeInsets();
