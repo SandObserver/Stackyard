@@ -92,6 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Hovering an app tile with a red status badge now shows why, such as
+  `Exited (1) 2 hours ago` or `Ping failed: connect ECONNREFUSED`. An app
+  configured with both a container name and a URL check also previously lost its
+  container detail, so only the URL check could be reported.
 - A badge whose stored headers contain one damaged entry now keeps the rest,
   including its credential. The whole set was previously discarded and the
   request went out unauthenticated, which reported as an authentication problem

@@ -53,8 +53,9 @@ function bupd(id) {
   const staticBdg = item?.monitoring?.staticBadge || {};
   const hasHC = !!(item?.monitoring?.healthcheck?.enabled||item?.container||item?.ping);
 
-  const { cls, txt, bg, aria, color } = computeBadgeVisual({
+  const { cls, txt, bg, aria, color, title } = computeBadgeVisual({
     health: s.health, activity: s.activity, custom, staticBdg, hasHC, hideHealthy, badgesStale, healthStale,
+    healthDetail: s.healthDetail,
   });
 
   els.forEach(el=>{
@@ -63,6 +64,9 @@ function bupd(id) {
     else { el.removeAttribute('role'); el.removeAttribute('aria-label'); }
     el.style.background=bg;
     el.style.color=color;
+    /* Assigned, not interpolated: title is text, so an upstream error string
+       cannot become markup. */
+    if(title) el.title=title; else el.removeAttribute('title');
   });
 }
 
@@ -242,7 +246,7 @@ async function pollBadges() {
   catch { if(++_badgeFails>=2 && !badgesStale){badgesStale=true;refreshBadges();} }
 }
 async function pollHealth() {
-  try { const d = await (await fetch('/api/health',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) bset(id,'health',v.unhealthy?1:0); _healthFails=0; if(healthStale){healthStale=false;refreshBadges();} }
+  try { const d = await (await fetch('/api/health',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) { bset(id,'healthDetail',v); bset(id,'health',v.unhealthy?1:0); } _healthFails=0; if(healthStale){healthStale=false;refreshBadges();} }
   catch { if(++_healthFails>=2 && !healthStale){healthStale=true;refreshBadges();} }
 }
 
