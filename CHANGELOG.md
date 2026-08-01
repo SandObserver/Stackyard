@@ -92,6 +92,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The Retry button on the "could not connect" screen now works. It did nothing
+  when clicked, because the page's security policy refuses handlers written into
+  the markup. The same applied to the Retry button on the Admin page.
 - An open dashboard now picks up every settings change. It previously noticed
   only a renamed or relinked app, so changing an icon, colour, dock pin, hidden
   flag or badge left other open dashboards showing the old version until they
