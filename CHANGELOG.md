@@ -92,6 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Two items can no longer end up sharing an id, which made the second one
+  unreachable: its badge, settings and folder membership all resolved to the
+  first. New ids cannot collide, and a config containing duplicates is refused
+  with the id named.
 - An install running a release candidate is now told when the matching stable
   release is out. The comparison read `1.5.0-rc.1` as newer than `1.5.0`, so such
   installs reported themselves up to date indefinitely.

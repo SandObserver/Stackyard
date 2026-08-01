@@ -252,3 +252,67 @@ test('a config save is rejected when a badge row is malformed', async () => {
     await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
   }
 });
+
+/* Everything downstream looks an item up with find(i => i.id === x), which
+   returns the first match, so a second item sharing an id is unreachable by its
+   own id. Refused on save rather than repaired: renaming would silently change
+   what folder children point at. See P5-5. */
+test('a config save is rejected when two items share an id', async () => {
+  const os = require('node:os');
+  const fs = require('node:fs');
+  const http = require('node:http');
+  process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-dup-')), 'apps.json');
+
+  require('../src/routes');
+  const { dispatch } = require('../src/router');
+  const { saveConfig, loadConfig } = require('../src/config');
+  saveConfig({ items: [], settings: {} });
+
+  const server = http.createServer(dispatch);
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+
+  const post = body => new Promise((resolve, reject) => {
+    const data = JSON.stringify(body);
+    const u = new URL(base + '/api/config');
+    const r = http.request({
+      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+    }, res => {
+      let b = '';
+      res.on('data', c => { b += c; });
+      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
+    });
+    r.on('error', reject);
+    r.end(data);
+  });
+
+  try {
+    const bad = await post({ items: [
+      { id: 'dup', type: 'app', name: 'First' },
+      { id: 'dup', type: 'app', name: 'Second' },
+    ], settings: {} });
+    assert.equal(bad.status, 400);
+    assert.match(bad.body.error, /duplicate item id: dup/);
+    assert.equal(loadConfig().items.filter(i => i.id === 'dup').length, 0, 'nothing may be stored');
+
+    /* Different types, same id, is still a collision: the lookup does not care. */
+    const mixed = await post({ items: [
+      { id: 'same', type: 'app', name: 'A' },
+      { id: 'same', type: 'folder', label: 'B' },
+    ], settings: {} });
+    assert.equal(mixed.status, 400);
+
+    const ok = await post({ items: [
+      { id: 'one', type: 'app', name: 'A' },
+      { id: 'two', type: 'app', name: 'B' },
+    ], settings: {} });
+    assert.equal(ok.status, 200, 'distinct ids must still save');
+    /* Counted by id, not by type: ensureSystemItems adds a `settings` app. */
+    const ids = loadConfig().items.map(i => i.id);
+    assert.ok(ids.includes('one') && ids.includes('two'));
+    assert.equal(new Set(ids).size, ids.length, 'the stored config has no duplicates');
+  } finally {
+    await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
+  }
+});
