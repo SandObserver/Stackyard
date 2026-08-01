@@ -9,6 +9,7 @@ import { initI18n } from '/js/i18n.js?v=1';
 import { sanitizeItemLinks } from '/js/link-url.js?v=1';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
+import { configChanged } from '/js/dashboard-logic.js?v=1';
 
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
 
@@ -36,6 +37,9 @@ function desktopSlots() {
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
 let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
+/* The config revision this page was built from. The server bumps it on every
+   write, so comparing it is an exact answer to "has anything changed". */
+let _rev = null;
 let widgetReg = {};
 const _mobTsCleanup = null, _mobTeCleanup = null;
 
@@ -339,7 +343,7 @@ async function boot() {
     /* Blank any unsafe link before anything renders it. Saving rejects these, but
        a config written before that existed, or one arriving by import, still
        reaches here. See ui/js/link-url.js. */
-    items = sanitizeItemLinks(c.items||[]); S = c.settings||{};
+    items = sanitizeItemLinks(c.items||[]); S = c.settings||{}; _rev = c._rev ?? null;
     await initI18n(S.language || 'en');
   } catch(e) { console.error('[boot]', e); configFailed = true; }
 
@@ -443,8 +447,7 @@ async function boot() {
       if (!res.ok) return;
       const c = await res.json();
       sanitizeItemLinks(c.items||[]);
-      const fp = s => JSON.stringify(s?.items?.map(i=>i.id+'|'+i.label+'|'+i.href)) + JSON.stringify(s?.settings);
-      if (fp(c) !== fp({ items, settings: S })) location.reload();
+      if (configChanged({ items, settings: S, _rev }, c)) location.reload();
     } catch {}
   };
 
