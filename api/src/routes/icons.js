@@ -11,6 +11,57 @@ const { fail, KIND, errorBody } = require('../api-error');
    limit is the larger of the two because the request also contains boundaries
    and headers, so cutting it off at exactly the file limit would reject a file
    that is within it. */
+/* A safe, unused filename for an upload.
+
+   Two problems with using the submitted name directly.
+
+   It overwrote silently. Uploading logo.svg twice replaced the first, and the
+   replaced icon is still referenced by whichever apps use it, so a tile's
+   picture changed without anyone touching that app. Nothing warned, and there
+   was no way back. Refusing the upload instead would punish a common and
+   innocent case, since a great many icons are called logo.svg; a free name is
+   found instead, and the response already returns the filename so the form shows
+   what was actually saved.
+
+   The name is also tidied. path.basename strips a Unix path, but on Linux it
+   does not treat a backslash as a separator, so a Windows-style name arrived as
+   the literal "..\..\etc\passwd.svg". That cannot escape the icons directory,
+   which is what matters, but it makes for a confusing file to find later.
+
+   @param {string} dir @param {string} raw @returns {string} */
+function safeIconName(dir, raw) {
+  const ext = path.extname(String(raw).split(/[\\/]/).pop() || '').toLowerCase();
+  /* Split on separators of either kind and keep the last part, which is what
+     path.basename does for a Unix path and does not do for a Windows one, since
+     on Linux a backslash is an ordinary character. */
+  const lastPart = String(raw).split(/[\\/]/).pop() || '';
+  const stem = lastPart.slice(0, lastPart.length - path.extname(lastPart).length)
+    /* Control characters, and the characters that are awkward in a URL or on a
+       filesystem. Everything else, including spaces and non-Latin scripts, is
+       kept: the name is the user's and is percent-encoded when used.
+
+       A scan rather than a character-class range, because a control character
+       inside a regular expression is almost always a mistake and the lint rule
+       that says so is worth keeping. */
+    .split('').filter(ch => {
+      const code = ch.charCodeAt(0);
+      return code > 0x1f && code !== 0x7f && !'<>:"|?*'.includes(ch);
+    }).join('')
+    .replace(/^\.+/, '')                 /* no leading dots: not hidden, not '..' */
+    .trim()
+    .slice(0, 100)                       /* filesystems cap the whole name */
+    || 'icon';
+
+  let candidate = `${stem}${ext}`;
+  /* Bounded: a directory holding thousands of icons of one name is not a case
+     worth serving, and an unbounded loop here would be a way to spend the
+     server's time. */
+  for (let n = 2; n <= 999 && fs.existsSync(path.join(dir, candidate)); n++) {
+    candidate = `${stem}-${n}${ext}`;
+  }
+  return candidate;
+}
+
 const ICON_MAX_BYTES = 2 * 1024 * 1024;
 const ICON_STREAM_MAX_BYTES = Math.round(ICON_MAX_BYTES * 1.25);
 const { rateLimit } = require('../auth');
@@ -93,9 +144,16 @@ on('POST', '/api/icons/upload', async(req, res) => {
       return json(res, 400, { error:'file is not a valid PNG or ICO image', kind: KIND.INVALID });
     }
     fs.mkdirSync(ICONS_PATH, { recursive:true });
-    fs.writeFileSync(path.join(ICONS_PATH, filename), fileData);
-    log.audit('icon uploaded', { filename });
-    json(res, 200, { ok:true, filename });
+    /* Never the submitted name directly: see safeIconName. The response carries
+       the name that was used, which the admin form already displays. */
+    const saved = safeIconName(ICONS_PATH, filename);
+    fs.writeFileSync(path.join(ICONS_PATH, saved), fileData);
+    log.audit('icon uploaded', { filename: saved });
+    json(res, 200, { ok:true, filename: saved });
   } catch(e) { fail(res, e, { status:500 }); }
 });
 
+
+
+/* Exported for tests; the routes above register themselves on require. */
+module.exports = { safeIconName };
