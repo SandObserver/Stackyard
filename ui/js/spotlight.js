@@ -1,4 +1,4 @@
-import { mk, clr } from '/js/utils.js';
+import { mk, clr } from '/js/utils.js?v=1';
 import { t } from '/js/i18n.js?v=1';
 
 export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop, openFolderMobile }) {
