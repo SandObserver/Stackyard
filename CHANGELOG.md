@@ -95,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A health check against a service that is reachable but hung now gives up on
+  time. It took twice its allowed time, which delayed the whole health response
+  because those checks run together.
 - Uploading an icon between 1 and 2 MB no longer fails with a generic error page.
   nginx was applying its own 1 MB default, below the 2 MB the upload form offers,
   so it refused the request before Stackyard could say why.

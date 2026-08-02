@@ -225,14 +225,50 @@ async function guardSsrf(rawUrl) {
 
    Private to this module: it does not rewrite or guard, it just connects. Reach
    it through fetchChecked/fetchUnchecked, which own the full pipeline. */
+/* One overall deadline for an outbound request, shared by fetchJSON and pingUrl.
+
+   Node's socket-level `timeout` is an inactivity timer on the socket, and it does
+   not reliably bound a stalled DNS lookup, TCP connect or TLS handshake. Without
+   a second timer covering the whole attempt, a request against a host that
+   accepts the connection and then goes silent runs past its budget: measured at
+   4 seconds against a 2 second budget, because the phase timer and the socket
+   timer each ran in turn.
+
+   fetchJSON had this. pingUrl did not, so health checks against a hung service
+   took twice as long as they should to report it, and those pings run in
+   parallel, so the whole health response was held up rather than one tile.
+
+   Written once because two copies of a timing rule is exactly how the two came
+   to differ. Returns a settle function: the first caller to settle wins, the
+   timer is cleared, and later events are ignored.
+
+   @param {number} ms @param {() => void} onExpire
+   @returns {{ settle: (fn: Function, arg?: any) => void, expired: () => boolean }} */
+function withDeadline(ms, onExpire) {
+  let settled = false;
+  const timer = setTimeout(() => { if (!settled) onExpire(); }, ms);
+  /* Unref'd so a pending request never holds the process open at shutdown. */
+  if (timer.unref) timer.unref();
+  return {
+    settle(fn, arg) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(arg);
+    },
+    expired: () => settled,
+  };
+}
+
 function fetchJSON(raw, opts = {}) {
   if (IS_DEMO) return Promise.resolve({ status: 503, data: null, error: 'Outbound requests are disabled in demo mode' });
   return new Promise((resolve, reject) => {
     let u; try { u = new URL(raw); } catch(e) { return reject(e); }
     const policy = urlPolicyError(u);
     if (policy) return reject(Object.assign(new Error(policy), { kind: 'blocked', status: 403 }));
-    let settled = false, deadline = null;
-    const done = (fn, arg) => { if (settled) return; settled = true; if (deadline) clearTimeout(deadline); fn(arg); };
+    /* Assigned below, once `req` exists for the deadline to destroy. */
+    let dl = null;
+    const done = (fn, arg) => dl.settle(fn, arg);
     const lib  = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const skipTls = opts.skipTls != null ? opts.skipTls : shouldSkipTls(u.hostname, loadConfig());
@@ -287,15 +323,16 @@ function fetchJSON(raw, opts = {}) {
         }
       });
     });
+    /* Armed here rather than earlier because it destroys `req`, which does not
+       exist until now. See withDeadline: it bounds the whole attempt regardless
+       of which phase is stalled, so a stuck upstream degrades to a normal error
+       rather than outliving the gateway's read timeout and surfacing as a 504. */
+    dl = withDeadline(opts.timeout || FETCH_MS, () => {
+      req.destroy();
+      done(reject, new Error('Timed out'));
+    });
     req.on('timeout', () => { req.destroy(); done(reject, new Error('Timed out')); });
     req.on('error', e => done(reject, e));
-    /* Hard overall deadline: the socket-level timeout above does not reliably
-       bound a stalled DNS lookup, TCP connect or TLS handshake, so a stuck
-       upstream could outlive the gateway's read timeout and surface as a 504.
-       This timer destroys the request at the deadline regardless of phase, so a
-       stall degrades to a normal error instead. */
-    deadline = setTimeout(() => { req.destroy(); done(reject, new Error('Timed out')); }, opts.timeout || FETCH_MS);
-    if (deadline.unref) deadline.unref();
     if (bodyBuf) req.write(bodyBuf);
     req.end();
   });
@@ -331,26 +368,33 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
     const opts = { hostname:connectHost, port, path:u.pathname||'/', timeout:ms, rejectUnauthorized:!skip };
     if (pin) { opts.headers = { Host: u.host }; opts.servername = u.hostname; }
 
-    function tryGet() {
-      const req = lib.request({ ...opts, method:'GET' }, res => {
-        res.resume();
-        const sc = res.statusCode ?? 0;
-        resolve({ ok:sc < 500, status:sc, desc:statusDesc(sc) });
-      });
-      req.on('timeout', () => { req.destroy(); resolve({ ok:false, status:0, error:'Timed out' }); });
-      req.on('error',   e => resolve({ ok:false, status:0, error:e.message }));
-      req.end();
-    }
-
-    const req = lib.request({ ...opts, method:'HEAD' }, res => {
-      res.resume();
-      const sc = res.statusCode ?? 0;
-      if (sc === 405) return tryGet();
-      resolve({ ok:sc < 500, status:sc, desc:statusDesc(sc) });
+    /* One deadline for the whole ping, not one per request. A HEAD answered with
+       405 is retried as GET, so a per-request timer would let a stalled host
+       take the budget twice over. `current` is whichever request is in flight,
+       so expiry destroys the right one. */
+    let current = null;
+    const dl = withDeadline(ms, () => {
+      if (current) current.destroy();
+      dl.settle(resolve, { ok:false, status:0, error:'Timed out' });
     });
-    req.on('timeout', () => { req.destroy(); resolve({ ok:false, status:0, error:'Timed out' }); });
-    req.on('error',   e => resolve({ ok:false, status:0, error:e.message }));
-    req.end();
+
+    const send = (method, onResponse) => {
+      const req = lib.request({ ...opts, method }, res => {
+        res.resume();
+        if (dl.expired()) return;
+        onResponse(res.statusCode ?? 0);
+      });
+      current = req;
+      req.on('timeout', () => { req.destroy(); dl.settle(resolve, { ok:false, status:0, error:'Timed out' }); });
+      req.on('error',   e => dl.settle(resolve, { ok:false, status:0, error:e.message }));
+      req.end();
+    };
+
+    send('HEAD', sc => {
+      /* Some servers refuse HEAD; the retry shares the same overall budget. */
+      if (sc === 405) return send('GET', gsc => dl.settle(resolve, { ok:gsc < 500, status:gsc, desc:statusDesc(gsc) }));
+      dl.settle(resolve, { ok:sc < 500, status:sc, desc:statusDesc(sc) });
+    });
   });
 }
 
