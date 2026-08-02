@@ -67,7 +67,28 @@ function json(res, status, data) {
   res.end(b);
 }
 
-const BODY_LIMIT = 4 * 1024 * 1024;
+/* The largest request body the API will read.
+
+   A body is held in memory before it is parsed, so this is a memory limit as
+   much as a size limit, and Stackyard is expected to run on hardware with 512 MB
+   or less. The value is therefore the smallest one that comfortably fits real
+   use, not the largest one that seems harmless.
+
+   Measured against a config of realistic items: an app entry with monitoring, a
+   badge and a container is about 540 bytes, so
+
+     20 apps   ~10 KB
+     100 apps  ~52 KB
+     300 apps  ~155 KB
+
+   300 apps is already an unusual dashboard, so 2 MB is roughly thirteen times
+   the largest configuration anyone is likely to have. The headroom is deliberate:
+   it covers a bigger setup than measured here, and it covers the measurement
+   itself being unrepresentative.
+
+   This was 4 MB, which had no stated reason and was the largest of three limits
+   that disagreed with each other. */
+const BODY_LIMIT = 2 * 1024 * 1024;
 function readBody(req) {
   return new Promise((res, rej) => {
     const c = []; let total = 0;
@@ -120,4 +141,5 @@ function checkOrigin(req, res) {
   return false;
 }
 
-module.exports = { on, dispatch, json, readBody, setPreflightHeaders, checkOrigin, getIp };
+module.exports = {
+  BODY_LIMIT, on, dispatch, json, readBody, setPreflightHeaders, checkOrigin, getIp };

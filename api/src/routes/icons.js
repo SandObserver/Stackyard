@@ -6,6 +6,13 @@ const { loadConfig, ICONS_PATH } = require('../config');
 const { fetchUnchecked } = require('../proxy');
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
+
+/* The icon itself, and the whole multipart request that carries it. The stream
+   limit is the larger of the two because the request also contains boundaries
+   and headers, so cutting it off at exactly the file limit would reject a file
+   that is within it. */
+const ICON_MAX_BYTES = 2 * 1024 * 1024;
+const ICON_STREAM_MAX_BYTES = Math.round(ICON_MAX_BYTES * 1.25);
 const { rateLimit } = require('../auth');
 const { sanitizeSvg } = require('../svg-sanitize');
 const { sniffIconType } = require('../icon-sniff');
@@ -65,7 +72,7 @@ on('POST', '/api/icons/upload', async(req, res) => {
     const boundary = bMatch[1] || bMatch[2];
     const buf = await new Promise((resolve, reject) => {
       const chunks = []; let total = 0;
-      req.on('data', c => { total += c.length; if (total > 2.5*1024*1024) { req.destroy(); return reject(new Error('file too large (max 2 MB)')); } chunks.push(c); });
+      req.on('data', c => { total += c.length; if (total > ICON_STREAM_MAX_BYTES) { req.destroy(); return reject(new Error('file too large (max 2 MB)')); } chunks.push(c); });
       req.on('end',  () => resolve(Buffer.concat(chunks)));
       req.on('error', reject);
     });
@@ -74,7 +81,12 @@ on('POST', '/api/icons/upload', async(req, res) => {
     if (!filename || !fileData?.length)       return json(res, 400, { error:'no file found in upload', kind: KIND.INVALID });
     if (fileParts > 1)                        return json(res, 400, { error:'only one file per upload', kind: KIND.INVALID });
     if (!/\.(svg|png|ico)$/i.test(filename))  return json(res, 400, { error:'only .svg, .png, .ico files allowed', kind: KIND.INVALID });
-    if (fileData.length > 2*1024*1024)        return json(res, 400, { error:'file too large (max 2 MB)', kind: KIND.INVALID });
+    /* Every icon shipped with Stackyard is under 34 KB, and most are under 9 KB,
+       so 2 MB is generous by a wide margin. It is kept there rather than
+       tightened because the cost of being wrong is asymmetric: a rejected icon
+       is a support question, while the memory saved by a lower cap is
+       negligible at these sizes. See BODY_LIMIT in router.js. */
+    if (fileData.length > ICON_MAX_BYTES)     return json(res, 400, { error:'file too large (max 2 MB)', kind: KIND.INVALID });
     if (/\.svg$/i.test(filename)) {
       fileData = Buffer.from(sanitizeSvg(fileData.toString('utf8')), 'utf8');
     } else if (!sniffIconType(fileData)) {

@@ -178,3 +178,70 @@ test('every type listed for compression is a plausible MIME type', () => {
   }
   assert.equal(new Set(types).size, types.length, 'a type is listed twice');
 });
+
+/* ── P16-2: nginx was the strictest limit, invisibly ─────────────────────────
+   client_max_body_size was unset, so nginx used its 1 MB default while the API
+   allowed 2 MB for an icon upload. An icon between the two was refused by nginx
+   with a generic 413 page, although the upload form offers 2 MB. The component
+   that knows what the limit means was never the one enforcing it.
+
+   The ordering is the property worth pinning: nginx must stay above every limit
+   the API enforces, or it silently becomes the real one again. */
+
+const { BODY_LIMIT } = require('../src/router');
+
+/* nginx accepts 3m, 512k and so on. */
+function nginxSize(text, directive) {
+  const m = new RegExp('^\\s*' + directive + '\\s+(\\d+)([kmg]?)\\s*;', 'im').exec(text);
+  if (!m) return null;
+  const mult = { '': 1, k: 1024, m: 1024 * 1024, g: 1024 * 1024 * 1024 }[m[2].toLowerCase()];
+  return Number(m[1]) * mult;
+}
+
+test('nginx sets a body size limit at all', () => {
+  const limit = nginxSize(dashboard, 'client_max_body_size');
+  assert.ok(limit, 'unset means nginx quietly applies its own 1 MB default');
+});
+
+test('nginx allows at least as much as the API does', () => {
+  const nginxLimit = nginxSize(dashboard, 'client_max_body_size');
+  const iconLimit = 2 * 1024 * 1024;   /* ICON_MAX_BYTES in routes/icons.js */
+
+  assert.ok(nginxLimit >= BODY_LIMIT,
+    `nginx allows ${nginxLimit} but the API accepts bodies up to ${BODY_LIMIT}`);
+  assert.ok(nginxLimit >= iconLimit,
+    `nginx allows ${nginxLimit} but icon uploads may be ${iconLimit}`);
+});
+
+/* Headroom, not a blank cheque: a body is buffered before it is forwarded, and
+   this runs on hardware with 512 MB or less. */
+test('the limits stay within reach of each other', () => {
+  const nginxLimit = nginxSize(dashboard, 'client_max_body_size');
+  assert.ok(nginxLimit <= BODY_LIMIT * 4,
+    `nginx allows ${nginxLimit}, far above the API's ${BODY_LIMIT}; buffering that costs memory`);
+});
+
+/* The measurement the API limit is derived from. If a config item grows enough
+   for this to fail, the limit needs revisiting rather than the test relaxing. */
+test('the API limit leaves real configurations far inside it', () => {
+  const app = {
+    id: 'radarr_m9x2p4', type: 'app', label: 'Radarr', href: 'https://radarr.example.lan:7878',
+    iconUrl: 'radarr', color: 'dark', dock: false,
+    monitoring: {
+      healthcheck: { enabled: true },
+      activity: {
+        enabled: true, url: 'https://radarr.example.lan:7878/api/v3/queue', interval: 30,
+        headers: [{ key: 'X-Api-Key', value: '0'.repeat(32), secret: true }], params: [],
+      },
+    },
+    badge: { enabled: true, url: 'https://radarr.example.lan:7878/api/v3/queue', interval: 30 },
+    container: 'radarr', ping: 'https://radarr.example.lan:7878',
+  };
+  const big = JSON.stringify({
+    items: Array.from({ length: 300 }, (_, i) => ({ ...app, id: `app${i}` })),
+    settings: { background: {}, server: {} }, _rev: 12,
+  });
+
+  assert.ok(big.length < BODY_LIMIT / 4,
+    `a 300-app config is ${big.length} bytes against a ${BODY_LIMIT} limit; the headroom has gone`);
+});
