@@ -52,6 +52,19 @@ every request through it shares one rate-limit bucket. Set `TRUSTED_PROXY` to
 where the proxy is, for example `TRUSTED_PROXY=172.18.0.0/16`; see
 [security.md](security.md).
 
+### An upload or a save is rejected as too large
+
+Stackyard limits request sizes so a single request cannot consume the memory of
+a small machine:
+
+| What | Limit | Why |
+|---|---|---|
+| Icon upload | 2 MB | every icon shipped with Stackyard is under 34 KB |
+| Config save | 2 MB | a 300-app dashboard is about 155 KB |
+
+nginx allows 3 MB, deliberately above both, so the API is always the component
+that refuses an oversized request and can say what the limit is.
+
 ### A widget shows "Blocked: ... is a private address"
 
 The proxy blocks private and loopback addresses by default as an SSRF safeguard.

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The largest accepted config save is now 2 MB rather than 4 MB. A dashboard with
+  300 apps is about 155 KB, so this is ample, and a request body is held in memory
+  while it is read.
 - Passwords are hashed with a five times higher work factor, and the stored hash
   now records the parameters it was made with, so the cost can be raised in
   future without invalidating existing passwords. Memory use per hash is
@@ -92,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Uploading an icon between 1 and 2 MB no longer fails with a generic error page.
+  nginx was applying its own 1 MB default, below the 2 MB the upload form offers,
+  so it refused the request before Stackyard could say why.
 - A Connections service with no address configured now says so, instead of
   failing with a DNS error for a host called "undefined".
 - Typing an icon name in any capitalisation now finds it. `MySpeed` and
