@@ -95,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Uploading an icon with a name already in use no longer replaces the existing
+  file, which changed the picture on any app still using it. The upload is saved
+  under a free name and the form shows which name was used.
 - The polling endpoints are now rate limited, so a dashboard stuck reloading
   cannot flood the services it monitors. The limits are far above normal use: a
   single open tab uses about a twentieth of the allowance.
