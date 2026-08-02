@@ -26,6 +26,9 @@ jobs:
         run: node --test
         working-directory: ui/test
 
+      - name: Check asset cache-busting
+        run: node scripts/bump-cache-busting.js --check
+
       - name: Install dev tooling
         run: npm install
 

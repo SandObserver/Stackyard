@@ -1,0 +1,91 @@
+/* Regression tests for P17-9: an unstamped asset reference stayed unstamped.
+
+   Browsers cache JavaScript and CSS, so each reference carries a ?v= stamp that
+   changes with the file's contents. The script that maintains those stamps only
+   matched references that already had one, so a reference written without one
+   was invisible to it and never became cache-busted. A browser then kept serving
+   that file from cache after an upgrade while every other file was refreshed,
+   leaving a page running mixed versions, which is an awkward thing to diagnose.
+
+   One reference was in that state: spotlight.js imported utils.js unstamped.
+
+   Fixing the reference alone would leave the tool unable to see the problem it
+   exists to prevent, so the pattern accepts a missing stamp and `--check` fails
+   on one. This test is the same rule, so a failure is visible from the test suite
+   rather than only from the build. */
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/* Matches the pattern in scripts/bump-cache-busting.js, with the stamp optional
+   so an unstamped reference is found rather than skipped. */
+const REF = /(["'])(\/(?:css|js)\/[a-zA-Z0-9_.-]+\.(?:css|js))(\?v=[0-9a-zA-Z]+)?/g;
+
+function sources(dir, out = []) {
+  for (const e of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+    const rel = path.join(dir, e.name);
+    if (e.isDirectory()) { if (e.name !== 'test' && e.name !== 'node_modules') sources(rel, out); }
+    else if (/\.(js|html)$/.test(e.name)) out.push(rel);
+  }
+  return out;
+}
+
+const FILES = sources('.');
+
+function references() {
+  const all = [];
+  for (const f of FILES) {
+    const src = fs.readFileSync(path.join(root, f), 'utf8');
+    REF.lastIndex = 0;
+    let m;
+    while ((m = REF.exec(src))) all.push({ file: f, asset: m[2], stamp: m[3] || null });
+  }
+  return all;
+}
+
+test('the scan finds the references it should', () => {
+  const refs = references();
+  assert.ok(refs.length > 50, `only found ${refs.length} asset references`);
+});
+
+/* The finding. */
+test('every asset reference carries a version stamp', () => {
+  const missing = references().filter(r => !r.stamp).map(r => `${r.file} -> ${r.asset}`);
+  assert.deepEqual(missing, [],
+    `these will never cache-bust:\n${missing.join('\n')}\nAdd ?v=1; the build keeps it current.`);
+});
+
+test('every referenced asset exists', () => {
+  const broken = references()
+    .filter(r => !fs.existsSync(path.join(root, r.asset.slice(1))))
+    .map(r => `${r.file} -> ${r.asset}`);
+  assert.deepEqual(broken, [], `references to files that are not there:\n${broken.join('\n')}`);
+});
+
+/* The script is what keeps the stamps current, so it has to be able to see a
+   reference that lacks one. Its pattern making the stamp optional is the fix;
+   requiring it again is the bug. */
+test('the build script can see an unstamped reference', () => {
+  const script = fs.readFileSync(path.resolve(root, '../scripts/bump-cache-busting.js'), 'utf8');
+  const line = /const REF_RE = (\/.*\/g);/.exec(script);
+  assert.ok(line, 'REF_RE not found in the script');
+
+  /* Evaluated as written rather than reconstructed, so this tests the pattern
+     the script actually uses. */
+  const pattern = (0, eval)(line[1]);
+  for (const sample of ['import { x } from "/js/utils.js"', 'import { x } from "/js/utils.js?v=abc12345"']) {
+    pattern.lastIndex = 0;
+    assert.ok(pattern.test(sample), `the script would skip: ${sample}`);
+  }
+});
+
+test('the check is wired into CI', () => {
+  const workflow = fs.readFileSync(path.resolve(root, '../.github/workflows/test.yml'), 'utf8');
+  assert.match(workflow, /bump-cache-busting\.js --check/,
+    'without this the check only runs when someone remembers to');
+});
