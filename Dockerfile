@@ -36,6 +36,14 @@ COPY --chown=node:node api/ /app/api/
 # Only the shared modules from ui/, not the whole UI: nginx serves that from the
 # web root above. See ui/js/link-url.js.
 COPY --chown=node:node ui/js/link-url.js /app/ui/js/link-url.js
+# The supervisord event listener that exits the container when a program cannot
+# be started. See scripts/exit-on-fatal.py.
+COPY scripts/exit-on-fatal.py /app/scripts/exit-on-fatal.py
+# supervisor is a Python program, so apk pulls python3 in with it. Asserted
+# rather than assumed: if that ever stops being true the image fails to build,
+# instead of shipping a listener that cannot start and leaving the very failure
+# it exists to catch undetected.
+RUN /usr/bin/python3 -c "import ast,sys; ast.parse(open('/app/scripts/exit-on-fatal.py').read())"
 
 # Copy supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/stackyard.conf

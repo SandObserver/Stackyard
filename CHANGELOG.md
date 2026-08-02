@@ -95,6 +95,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The container now exits and restarts when the API cannot be started, instead of
+  staying up with a dead API inside it. Docker marked it unhealthy, but an
+  unhealthy container is not restarted, so the dashboard stayed down until
+  someone noticed.
 - Uploading an icon with a name already in use no longer replaces the existing
   file, which changed the picture on any app still using it. The upload is saved
   under a free name and the form shows which name was used.
