@@ -92,6 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A Connections service with no address configured now says so, instead of
+  failing with a DNS error for a host called "undefined".
 - Typing an icon name in any capitalisation now finds it. `MySpeed` and
   `Home Assistant` previously showed nothing, because the icon catalogue names
   every file in lowercase with hyphens. The suggestion shows the corrected name

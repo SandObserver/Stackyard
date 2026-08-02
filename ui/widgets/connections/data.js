@@ -18,10 +18,24 @@ const COUNTRY_TO_ISO2 = {
   'serbia':'RS','croatia':'HR','slovakia':'SK','slovenia':'SI',
 };
 const nameToIso2 = name => name ? (COUNTRY_TO_ISO2[String(name).trim().toLowerCase()] || '') : '';
-const normBase   = u => u ? (u.includes('://') ? u : `http://${u}`) : '';
+/* A configured address as a fetchable base URL, or '' when there is nothing
+   usable. Callers check for '' and report that rather than attempting a request.
+
+   The map path used to have its own copy of this that omitted the guard, so a
+   service with no address fetched http://undefined: a real DNS lookup for a host
+   called "undefined", failing after a timeout with "getaddrinfo ENOTFOUND
+   undefined". The widget looked like it had a network fault when a field was
+   simply empty. Two copies of one rule is how they came to disagree.
+
+   Whitespace is trimmed, since a field containing only spaces is as empty as one
+   containing nothing, and http://%20%20 fails just as obscurely. */
+const normBase   = u => {
+  const v = String(u ?? '').trim();
+  if (!v) return '';
+  return v.includes('://') ? v : `http://${v}`;
+};
 
 const MAP_DEFAULT_COLOR = { conduit:'#AF52DE', gluetun:'#30D158', netbird:'#FF9F0A', plausible:'#5E5CE6', umami:'#64D2FF' };
-const mapNormBase = u => (u && u.includes('://')) ? u : ('http://' + u);
 
 /* Raw GET: Conduit exposes Prometheus-style text that needs the unparsed body. */
 function parseConduitText(raw){
@@ -39,7 +53,7 @@ function parseConduitText(raw){
   return { regions, limit, connected, live };
 }
 
-module.exports = async function ({ config, endpoint, fetchJSON }) {
+const run = async function ({ config, endpoint, fetchJSON }) {
   if (endpoint === 'vpn') return vpnView(config, fetchJSON);
   return mapView(config, fetchJSON);
 };
@@ -112,11 +126,14 @@ async function mapView(config, fetchJSON) {
   const wc = config || {};
   const services = (Array.isArray(wc.services) ? wc.services : []).filter(s => s && s.enabled !== false && s.url);
   const results = await Promise.all(services.map(async (s, idx) => {
-    const base = mapNormBase(s.url);
+    const base = normBase(s.url);
     const o = { id: s.id || (s.type + '-' + idx), type: s.type,
       name: s.name || (s.type.charAt(0).toUpperCase() + s.type.slice(1)),
       color: s.color || MAP_DEFAULT_COLOR[s.type] || '#AF52DE', adminUrl: s.adminUrl || '' };
     try {
+      /* Same as the VPN path above: say the address is missing rather than
+         letting a doomed request report itself as a network fault. */
+      if (!base) throw new Error('No URL configured');
       if (s.type === 'conduit') {
         const r = await fetchJSON(new URL('/metrics', base).href, { raw: true });
         if (r.status >= 400) throw new Error('HTTP ' + r.status);
@@ -166,3 +183,8 @@ async function mapView(config, fetchJSON) {
   }));
   return { services: results, meta: { showLegend: wc.showLegend !== false } };
 }
+
+module.exports = run;
+/* Exported for tests. normBase decides whether a request is attempted at all,
+   and it used to have a second copy that behaved differently. */
+module.exports.normBase = normBase;
