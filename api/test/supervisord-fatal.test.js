@@ -122,3 +122,35 @@ test('the listener only acts on FATAL', () => {
      take the container down every time a program blipped. */
   assert.match(listener, /RESULT 2\\nOK/);
 });
+
+/* ── the script reaches the build context ────────────────────────────────────
+   The first attempt at this failed CI: .dockerignore excluded `scripts`, so the
+   file was never in the build context and COPY could not find it. A bare
+   directory name prunes the directory, and a re-include of a file inside a
+   pruned directory has no effect, so the glob form is required. */
+
+test('the listener is not excluded from the build context', () => {
+  const ignore = read('.dockerignore');
+  assert.match(ignore, /^!scripts\/exit-on-fatal\.py$/m,
+    'without this the COPY fails: the file is not in the build context');
+  assert.match(ignore, /^scripts\/\*\*$/m,
+    'a bare `scripts` prunes the directory and the re-include is ignored');
+  assert.doesNotMatch(ignore, /^scripts$/m,
+    'the bare form would silently defeat the exception above it');
+});
+
+test('the exception comes after the exclusion it overrides', () => {
+  /* Docker applies every pattern in order and the last match wins. */
+  const lines = read('.dockerignore').split('\n').map(l => l.trim());
+  const excluded = lines.indexOf('scripts/**');
+  const included = lines.indexOf('!scripts/exit-on-fatal.py');
+  assert.ok(excluded !== -1 && included !== -1);
+  assert.ok(included > excluded, 'the exception must come last or it has no effect');
+});
+
+test('the rest of scripts/ is still kept out of the image', () => {
+  const ignore = read('.dockerignore');
+  const exceptions = ignore.split('\n').filter(l => l.trim().startsWith('!scripts/'));
+  assert.deepEqual(exceptions.map(l => l.trim()), ['!scripts/exit-on-fatal.py'],
+    'build tooling has no place in the image');
+});
