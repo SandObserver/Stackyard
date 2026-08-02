@@ -95,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The polling endpoints are now rate limited, so a dashboard stuck reloading
+  cannot flood the services it monitors. The limits are far above normal use: a
+  single open tab uses about a twentieth of the allowance.
 - A health check against a service that is reachable but hung now gives up on
   time. It took twice its allowed time, which delayed the whole health response
   because those checks run together.

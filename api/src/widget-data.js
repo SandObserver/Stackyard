@@ -1,5 +1,5 @@
 const path = require('path');
-const { on, json, readBody, checkOrigin } = require('./router');
+const { on, json, readBody, checkOrigin, getIp } = require('./router');
 const { loadConfig } = require('./config');
 const { fetchChecked, fetchUnchecked, SsrfBlockedError } = require('./proxy');
 const { parsePrometheus } = require('./parse-prometheus');
@@ -12,6 +12,8 @@ const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
 const log = require('./log');
 const { fail, KIND } = require('./api-error');
+const { rateLimit } = require('./auth');
+const LIMITS = require('./poll-limits');
 
 /* Normalize a user-entered base URL the same way the existing hand-written data
    routes do (e.g. AdGuard): add http:// when no scheme is given, and strip any
@@ -110,6 +112,10 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch, row
 }
 
 on('GET', '/api/widget-data/:id', async (req, res) => {
+  /* Counted per widget id, since that is what maps to one upstream service.
+     See poll-limits.js. */
+  const limited = rateLimit(getIp(req), `widget-data:${req.params.id}`, LIMITS.WIDGET_DATA.max, LIMITS.WIDGET_DATA.windowMs);
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
   const cfg = loadConfig();
   const item = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
   if (!item) return json(res, 404, { error: 'widget not found', kind: KIND.INVALID });
@@ -136,6 +142,10 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
    widget's own data.js via the named endpoint, so no per-widget backend code. */
 on('POST', '/api/widget-options/:id', async (req, res) => {
   if (!checkOrigin(req, res)) return;
+  /* Admin only and never polled, so a low ceiling is ample. See
+     poll-limits.js. */
+  const limited = rateLimit(getIp(req), 'widget-options', LIMITS.WIDGET_OPTIONS.max, LIMITS.WIDGET_OPTIONS.windowMs);
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
   let body;
   try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: 'invalid body', kind: KIND.INVALID }); }
   const entry = getRegistry()[body.widgetType];
