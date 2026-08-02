@@ -38,4 +38,34 @@ REALIP_CONF="${REALIP_CONF:-/etc/nginx/http.d/realip.conf}"
 # Fail fast and loudly rather than starting with a config nginx will reject.
 nginx -t
 
-exec "$@"
+# supervisord always exits 0 on SIGTERM, including the SIGTERM that
+# scripts/exit-on-fatal.py sends when a program can no longer be started. The
+# marker carries that failure out as the container's exit code, so a dead API
+# reads as a failure rather than a normal shutdown and `restart: on-failure`
+# behaves the same as `unless-stopped` here.
+MARKER="${SUPERVISOR_FATAL_MARKER:-/tmp/stackyard-fatal}"
+rm -f "$MARKER"
+
+# Run in the background rather than exec, so this script survives to read the
+# marker afterwards. That means signals no longer reach supervisord on their
+# own, and without forwarding a `docker stop` would kill this shell and leave
+# supervisord running until the kill timeout, with nothing shut down cleanly.
+"$@" &
+child=$!
+trap 'kill -TERM "$child" 2>/dev/null' TERM INT
+
+# `wait` returns early when a signal is handled, so wait again for the real exit.
+wait "$child"
+status=$?
+if [ "$status" -gt 128 ]; then
+  wait "$child" 2>/dev/null
+  status=$?
+fi
+
+if [ -f "$MARKER" ]; then
+  echo "stackyard: $(cat "$MARKER") could not be started; exiting so the container is restarted" >&2
+  rm -f "$MARKER"
+  exit 1
+fi
+
+exit "$status"
