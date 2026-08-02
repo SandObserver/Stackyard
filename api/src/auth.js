@@ -386,5 +386,8 @@ module.exports = {
   HASH_PROFILES, DEFAULT_PROFILE, parseHash,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
   checkRateLimit, registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
+  /* Tests exercise limits in sequence within one process, so each needs a clean
+     window; there is no other way to reach the buckets. */
+  _resetRateLimits: () => _rateBuckets.clear(),
   SESSION_MAX_AGE_MS,
 };

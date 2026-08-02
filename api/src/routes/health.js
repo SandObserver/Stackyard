@@ -1,4 +1,7 @@
-const { on, json } = require('../router');
+const { on, json, getIp } = require('../router');
+const { rateLimit } = require('../auth');
+const { KIND } = require('../api-error');
+const LIMITS = require('../poll-limits');
 const { loadConfig } = require('../config');
 const { fetchUnchecked, pingUnchecked } = require('../proxy');
 const { PING_MS } = require('../timeouts');
@@ -29,7 +32,10 @@ async function fetchContainerHealth() {
 
 on('GET', '/health', (_, res) => json(res, 200, { ok:true }));
 
-on('GET', '/api/health', async(_, res) => {
+on('GET', '/api/health', async(req, res) => {
+  /* Each call pings every configured service. See poll-limits.js. */
+  const limited = rateLimit(getIp(req), 'health', LIMITS.HEALTH.max, LIMITS.HEALTH.windowMs);
+  if (limited) return json(res, 429, { error:limited, kind: KIND.BLOCKED });
   if (IS_DEMO) { const cfg = loadConfig(); return json(res, 200, demoData.demoHealth(cfg.items)); }
   const containers = await fetchContainerHealth();
   const cfg = loadConfig(), result = {};

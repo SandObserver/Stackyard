@@ -2,6 +2,7 @@ const { on, json, readBody, getIp, checkOrigin } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchChecked, fetchUnchecked, pingChecked, statusDesc } = require('../proxy');
 const { rateLimit } = require('../auth');
+const LIMITS = require('../poll-limits');
 const { PING_MS, FETCH_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
@@ -26,7 +27,11 @@ on('POST', '/api/ping', async(req, res) => {
   }
 });
 
-on('GET', '/api/badges', async(_, res) => {
+on('GET', '/api/badges', async(req, res) => {
+  /* Every call here fans out to the user's own services, so the ceiling bounds
+     outbound traffic rather than work done here. See poll-limits.js. */
+  const limited = rateLimit(getIp(req), 'badges', LIMITS.BADGES.max, LIMITS.BADGES.windowMs);
+  if (limited) return json(res, 429, { error:limited, kind: KIND.BLOCKED });
   const cfg = loadConfig(), out = {};
   if (IS_DEMO) return json(res, 200, demoData.demoBadges(cfg.items));
   await Promise.allSettled(cfg.items
