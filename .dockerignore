@@ -3,7 +3,8 @@
 node_modules
 api/test
 ui/test
-scripts
+scripts/**
+!scripts/exit-on-fatal.py
 *.md
 docs
 .dockerignore
