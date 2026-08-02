@@ -95,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Installing Stackyard to a home screen now uses a properly padded icon, so
+  Android no longer crops the edges off it, and the browser's status bar matches
+  the dashboard instead of showing a teal band above it.
 - The container now exits and restarts when the API cannot be started, instead of
   staying up with a dead API inside it. Docker marked it unhealthy, but an
   unhealthy container is not restarted, so the dashboard stayed down until
