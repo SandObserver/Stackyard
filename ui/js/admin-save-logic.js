@@ -10,6 +10,31 @@ export function cleanId(label, fallback = 'item') {
   return String(label || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || fallback;
 }
 
+/* Randomness for an id suffix.
+
+   Was Math.random().toString(36).slice(2, 6): four base-36 characters, about 1.7
+   million values. That sounds ample and is not, because the question is not
+   whether two ids collide but whether any pair among many does. At 200 ids in a
+   single millisecond the chance of some pair matching is around 2%, which is why
+   the test asserting distinctness failed intermittently rather than never.
+
+   crypto.getRandomValues where available, which is every browser this runs in
+   and Node since 19. The fallback keeps the function usable anywhere else; it is
+   weaker, and the collision loop in newItemId is what actually guarantees
+   uniqueness in either case.
+
+   Not a security boundary: an id is not secret and not a token. This is only
+   about not colliding. */
+export function randomSuffix() {
+  const c = globalThis.crypto;
+  if (c && typeof c.getRandomValues === 'function') {
+    const buf = new Uint32Array(2);
+    c.getRandomValues(buf);
+    return buf[0].toString(36) + buf[1].toString(36);
+  }
+  return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 8);
+}
+
 /** A new item id.
 
    It used to be `cleanId(label) + '_' + Date.now()`, so two items created in the
@@ -28,7 +53,7 @@ export function newItemId(label, fallback = 'item', taken = []) {
   const stem = cleanId(label, fallback);
   const used = taken instanceof Set ? taken : new Set(taken);
   for (let attempt = 0; attempt < 50; attempt++) {
-    const id = `${stem}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const id = `${stem}_${Date.now().toString(36)}${randomSuffix()}`;
     if (!used.has(id)) return id;
   }
   /* Unreachable in practice; a counter is still better than returning a

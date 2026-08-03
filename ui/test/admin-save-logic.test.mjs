@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanId, buildAppItem, newItemId, upsertItem, claimFolderChildren } from '../js/admin-save-logic.js';
+import { cleanId, buildAppItem, newItemId, upsertItem, claimFolderChildren, randomSuffix } from '../js/admin-save-logic.js';
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
   assert.equal(cleanId('My App!'), 'My_App');
@@ -79,20 +79,44 @@ test('an id is built from the label', () => {
   assert.match(newItemId('!!!', 'folder'), /^folder_/);
 });
 
-test('two ids made in the same millisecond differ', () => {
-  /* The exact case the old scheme could not handle. */
-  const ids = new Set();
-  for (let i = 0; i < 200; i++) ids.add(newItemId('App', 'app'));
-  assert.equal(ids.size, 200, 'every generated id should be distinct');
-});
+/* The case the old scheme could not handle: ids were `label_` plus Date.now(),
+   so two items created in the same millisecond took the same one.
 
-test('an id already in use is never returned', () => {
+   Written the way every caller uses it, passing the ids already in the config.
+   That is what makes uniqueness a guarantee rather than a probability, and an
+   earlier version of this test omitted it and asserted the guarantee anyway. It
+   passed almost always and failed about one run in fifty, which is worse than
+   either passing or failing. */
+test('an id is never one already in the config', () => {
   const taken = new Set();
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 200; i++) {
     const id = newItemId('App', 'app', taken);
-    assert.ok(!taken.has(id), `returned an id already taken: ${id}`);
+    assert.ok(!taken.has(id), `returned an id already in use: ${id}`);
     taken.add(id);
   }
+  assert.equal(taken.size, 200);
+});
+
+/* Without a taken set there is no guarantee, only randomness, so this asserts
+   what the randomness is for: that a collision is rare enough that the loop
+   above almost never has to do anything.
+
+   The suffix is tested directly rather than through whole ids. An id also
+   carries a timestamp, which advances during a long loop and supplies entropy
+   the suffix did not, so a whole-id test passes even with a weak suffix and
+   fails only occasionally. That is precisely the intermittent failure this is
+   replacing: it is the suffix that has to carry the randomness, so that is what
+   is measured. */
+test('the random suffix does not collide', () => {
+  const seen = new Set();
+  for (let i = 0; i < 20_000; i++) seen.add(randomSuffix());
+  assert.equal(seen.size, 20_000, `${20_000 - seen.size} collisions in 20000 suffixes`);
+});
+
+test('a whole id carries that suffix', () => {
+  const id = newItemId('App', 'app');
+  assert.match(id, /^App_[a-z0-9]+$/);
+  assert.ok(id.length > 'App_'.length + 12, `too little entropy in ${id}`);
 });
 
 test('taken ids may be given as an array or a set', () => {
