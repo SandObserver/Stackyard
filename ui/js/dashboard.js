@@ -5,7 +5,7 @@ import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, w
 import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { html, setHtml } from '/js/html.js?v=1';
-import { initI18n } from '/js/i18n.js?v=1';
+import { initI18n, t } from '/js/i18n.js?v=1';
 import { sanitizeItemLinks } from '/js/link-url.js?v=1';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
@@ -155,6 +155,31 @@ function mkDock(item) {
   a.appendChild(mkWrap(item, 78, 15, 50, 'dwrap')); return a;
 }
 
+/* One page dot.
+
+   A real <button>, not a styled div. A div is not a control: Tab skips it, a
+   screen reader announces nothing, and Enter and Space do nothing, so paging
+   was reachable by pointer only and a keyboard user could not leave page one.
+   Reaching for role="button" and tabindex instead means reimplementing by hand
+   what the element already does, and the key handling is the part that gets
+   forgotten.
+
+   aria-current tells a screen reader which page is showing, which the `on`
+   class conveys by appearance alone. The label counts from one, since that is
+   how the pages read on screen.
+
+   @param {number} i @param {number} total @param {number} current
+   @param {(i:number)=>void} go */
+function mkDot(i, total, current, go) {
+  const d = mk('button');
+  d.type = 'button';
+  d.className = 'dot' + (i === current ? ' on' : '');
+  d.setAttribute('aria-label', t('home.goToPage', { page: i + 1, total }));
+  if (i === current) d.setAttribute('aria-current', 'true');
+  d.onclick = () => go(i);
+  return d;
+}
+
 function buildDesktop() {
   /* Before the DOM is replaced: stop the observers and reload timers the
      previous widgets started, which the DOM removal does not touch. */
@@ -170,7 +195,7 @@ function buildDesktop() {
     p.appendChild(g); strip.appendChild(p);
   });
   const dots = document.getElementById('dots'); dots.innerHTML = '';
-  pages.forEach((_, i) => { const d = mk('div'); d.className = 'dot'+(i===0?' on':''); d.onclick = () => goTo(i); dots.appendChild(d); });
+  pages.forEach((_, i) => dots.appendChild(mkDot(i, pages.length, 0, goTo)));
   const dk = document.getElementById('dock'); dk.innerHTML = '';
   dock.forEach(item => dk.appendChild(mkDock(item)));
   const ct = document.getElementById('ctrls'); ct.innerHTML = '';
@@ -186,7 +211,13 @@ function goTo(n, dotEls) {
   strip.style.transform = strip.style.webkitTransform = t;
   strip.style.willChange = 'transform';
   strip.addEventListener('transitionend', () => { strip.style.willChange = 'auto'; }, { once: true });
-  (dotEls ?? document.querySelectorAll('.dot')).forEach((d, i) => d.classList.toggle('on', i === pg));
+  (dotEls ?? document.querySelectorAll('.dot')).forEach((d, i) => {
+    d.classList.toggle('on', i === pg);
+    /* Kept in step with the class, or a screen reader keeps announcing the page
+       the dashboard was on when it loaded. */
+    if (i === pg) d.setAttribute('aria-current', 'true');
+    else d.removeAttribute('aria-current');
+  });
   if (MOB && CB.mobPillBump) CB.mobPillBump(pg);
 }
 
@@ -198,10 +229,7 @@ function syncMobPages() {
   if (domCount <= totalPages) return; /* no overflow pages, nothing to fix */
   totalPages = domCount;
   const dots = document.getElementById('dots'); dots.innerHTML = '';
-  for (let i = 0; i < domCount; i++) {
-    const d = mk('div'); d.className = 'dot'+(i===pg?' on':'');
-    d.onclick = () => goTo(i); dots.appendChild(d);
-  }
+  for (let i = 0; i < domCount; i++) dots.appendChild(mkDot(i, domCount, pg, goTo));
   const pillDots = document.querySelector('.msp-dots');
   if (pillDots) {
     while (pillDots.children.length < domCount) {

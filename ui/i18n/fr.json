@@ -126,6 +126,8 @@
     "closeSearch": "Fermer la recherche",
     "searchInput": "Rechercher des applications et des dossiers",
     "noResults": "Aucun résultat",
+    "pagination": "Pages du tableau de bord",
+    "goToPage": "Aller à la page {page} sur {total}",
     "appsAndFolders": "Applications et dossiers",
     "searchResults": "Résultats de recherche",
     "result": "résultat",

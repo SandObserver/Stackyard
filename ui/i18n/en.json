@@ -129,6 +129,8 @@
     "closeSearch": "Close search",
     "searchInput": "Search apps and folders",
     "noResults": "No results",
+    "pagination": "Dashboard pages",
+    "goToPage": "Go to page {page} of {total}",
     "appsAndFolders": "Apps & Folders",
     "searchResults": "Search results",
     "result": "result",

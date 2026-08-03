@@ -236,6 +236,9 @@
       -webkit-transition:background .2s,-webkit-transform .2s,width .25s,opacity .25s;
       transition:background .2s,transform .2s,width .25s,opacity .25s;
       cursor:pointer; flex-shrink:0;
+      /* A dot is a <button> so that Tab reaches it and Enter and Space work.
+         These reset what a button brings with it; the appearance is unchanged. */
+      padding:0; border:0; -webkit-appearance:none; appearance:none;
     }
     .dot.on { background:#fff; -webkit-transform:scale(1.25); transform:scale(1.25) }
 
