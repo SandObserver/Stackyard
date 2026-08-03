@@ -275,7 +275,11 @@ test('POST /api/widget-options blocks a private target URL', async () => {
     body: { widgetType: 'fixture', endpoint: 'any', widgetConfig: { url: 'http://127.0.0.1:1/' } },
   });
   assert.equal(r.status, 403);
-  assert.match(String(r.body?.error), /private address/);
+  /* The message no longer names the address. "Blocked: 192.168.1.5 is a private
+     address." told the caller what it had just probed, which is the disclosure
+     this route exists to prevent. `kind` is what the UI branches on. */
+  assert.equal(r.body?.kind, 'blocked');
+  assert.doesNotMatch(String(r.body?.error), /\d+\.\d+\.\d+\.\d+/, 'must not echo the address back');
 });
 
 test('POST /api/widget-options rejects a cross-origin write', async () => {

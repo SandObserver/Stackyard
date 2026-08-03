@@ -18,6 +18,24 @@ what this contract exists to replace.
 The backend side lives in `api/src/api-error.js`, the frontend side in
 `ui/js/admin-error.js`, and `api/test/api-error.test.js` asserts the two agree.
 
+## What the message says
+
+The `error` string is composed from the `kind`, never taken from the underlying
+error. An operating system message names what failed, `connect ECONNREFUSED
+172.17.0.2:8181` or `ENOENT ... open '/data/apps.json'`, and that is an internal
+address, hostname or server path being rendered in a browser.
+
+Composing fails closed: nothing from the original is present unless it was put
+there deliberately. Filtering the message instead would fail open, since anything
+the filter did not recognise would pass through.
+
+The full message is logged on every failure, which is where an operator should
+look for it.
+
+A route may pass an explicit `error` when the text is one the code chose and can
+vouch for, such as `Set a password before turning authentication on.` Such a
+message must not name a host, an address or a path.
+
 ## Kinds
 
 `kind` is a closed set. Adding one is a deliberate contract change and needs a

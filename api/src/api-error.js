@@ -25,6 +25,7 @@
      3. Omit the field entirely rather than sending {}. */
 
 const { json } = require('./router');
+const log = require('./log');
 
 const KIND = Object.freeze({
   NETWORK:  'network',   /* could not reach the target at all */
@@ -107,11 +108,55 @@ function classify(e) {
    have a shaped body (`{ ok:false, ... }`) can merge the fields in. */
 /* @param {any} e
    @param {{ kind?: string, detail?: Record<string, unknown>, error?: string }} [overrides] */
+/* What the browser is told, chosen by kind rather than taken from the error.
+
+   The message an operating system produces names the thing that failed:
+
+     connect ECONNREFUSED 172.17.0.2:8181
+     getaddrinfo ENOTFOUND nas.internal.lan
+     ENOENT: no such file or directory, open '/data/apps.json'
+
+   Internal addresses, hostnames and server paths, sent to a browser and rendered
+   on screen. These routes need a session, so the audience is normally the
+   operator, but a screenshot in a support thread or an extension reading the
+   page is enough to carry it further.
+
+   Built from the kind rather than filtered from the original. Removing patterns
+   from a message is fail-open: whatever the filter does not recognise gets
+   through, and a hostname in an unexpected position is exactly what it would
+   miss. Composing a message means nothing from the original is present unless it
+   was deliberately put there.
+
+   The precise message is not lost, it moves: every caller logs it. That is where
+   an operator should be looking for it, and it is not rendered in a browser.
+
+   `detail` is unaffected. It carries only server-derived values, a status code
+   or an errno, never anything that identifies a host; see the rules in
+   docs/api-errors.md. */
+const SAFE_MESSAGES = Object.freeze({
+  [KIND.NETWORK]:  'Could not reach the service.',
+  [KIND.TIMEOUT]:  'The service did not respond in time.',
+  [KIND.BLOCKED]:  'The request was blocked.',
+  [KIND.AUTH]:     'Unauthorised.',
+  [KIND.UPSTREAM]: 'The service returned an error.',
+  [KIND.INVALID]:  'The request was not valid.',
+  [KIND.INTERNAL]: 'Something went wrong.',
+});
+
+/** @param {string} kind @returns {string} */
+function safeMessage(kind) {
+  return SAFE_MESSAGES[kind] || SAFE_MESSAGES[KIND.INTERNAL];
+}
+
 function errorBody(e, overrides = {}) {
   const { kind, detail } = classify(e);
+  const finalKind = overrides.kind || kind;
   const body = {
-    error: overrides.error != null ? overrides.error : (e && e.message) || 'Request failed',
-    kind:  overrides.kind || kind,
+    /* An explicit override is a message the code chose and can vouch for, such
+       as "Set a password before turning authentication on." Anything not
+       overridden comes from the kind, never from e.message. */
+    error: overrides.error != null ? overrides.error : safeMessage(finalKind),
+    kind:  finalKind,
   };
   const d = overrides.detail || detail;
   if (d && Object.keys(d).length) body.detail = d;
@@ -128,7 +173,17 @@ function errorBody(e, overrides = {}) {
 function fail(res, e, opts = {}) {
   const { status = 502, kind, detail, error, extra } = opts;
   const code = (e && e.status) || status;
-  json(res, code, Object.assign({}, extra, errorBody(e, { kind, detail, error })));
+  const body = errorBody(e, { kind, detail, error });
+
+  /* Logged here rather than at each call site. The response no longer carries
+     the original message, so this is the only remaining record of what actually
+     failed, and leaving it to every caller to remember would guarantee some of
+     them did not. */
+  if (e && e.message && e.message !== body.error) {
+    log.error('request failed', { kind: body.kind, status: code, error: e.message });
+  }
+
+  json(res, code, Object.assign({}, extra, body));
 }
 
-module.exports = { KIND, KINDS, ApiError, classify, errorBody, fail };
+module.exports = { KIND, KINDS, ApiError, classify, errorBody, safeMessage, SAFE_MESSAGES, fail };
