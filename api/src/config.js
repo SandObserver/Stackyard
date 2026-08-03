@@ -124,10 +124,54 @@ function saveConfig(data) {
     data._schemaVersion = SCHEMA_VERSION;
     data._rev = (Number(data._rev) || 0) + 1;
   }
-  fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive:true });
+  const dir = path.dirname(CONFIG_PATH);
+  fs.mkdirSync(dir, { recursive:true });
   const tmp = CONFIG_PATH + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tmp, CONFIG_PATH);
+
+  /* Write, flush, rename, flush the directory.
+
+     The temp-and-rename alone only guarantees that no reader sees a half-written
+     file. It does not guarantee the contents reach the disk: a write lands in
+     the operating system's cache and is flushed some time later, so a power cut
+     in that window can leave the rename applied and the contents lost, giving an
+     empty or truncated config. That is not a remote scenario on the hardware
+     this targets, where a Pi on an SD card is routinely unplugged rather than
+     shut down.
+
+     The second flush is on the directory, not the file: a rename changes the
+     directory entry, and that entry needs to reach the disk too or the file can
+     revert to its old name after a crash.
+
+     Config saves happen when someone edits settings, not on a timer, so the cost
+     of waiting for the disk falls on a deliberate action. */
+  let fd;
+  try {
+    fd = fs.openSync(tmp, 'w');
+    fs.writeFileSync(fd, JSON.stringify(data, null, 2), 'utf8');
+    fs.fsyncSync(fd);
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+
+  try {
+    fs.renameSync(tmp, CONFIG_PATH);
+  } catch (e) {
+    /* Otherwise a failed save leaves a temp file behind for good. */
+    try { fs.unlinkSync(tmp); } catch { /* nothing more to do */ }
+    throw e;
+  }
+
+  try {
+    const dirFd = fs.openSync(dir, 'r');
+    try { fs.fsyncSync(dirFd); } finally { fs.closeSync(dirFd); }
+  } catch {
+    /* Some filesystems refuse to fsync a directory. The file's own contents are
+       already durable by this point, so this is the weaker half of the
+       guarantee and not worth failing the save over. */
+  }
+
+  /* Only now: the cache used to be updated even when the write threw, leaving
+     the app showing changes that were never saved. */
   _cfgCache = data; _cfgCacheAt = Date.now();
 }
 

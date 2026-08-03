@@ -95,6 +95,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Saving settings now waits for the data to reach the disk, so pulling the power
+  shortly afterwards can no longer leave an empty or truncated configuration.
+- A save that fails no longer leaves the dashboard showing changes that were
+  never written.
 - Installing Stackyard to a home screen now uses a properly padded icon, so
   Android no longer crops the edges off it, and the browser's status bar matches
   the dashboard instead of showing a teal band above it.
