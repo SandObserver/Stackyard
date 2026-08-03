@@ -126,6 +126,8 @@
     "closeSearch": "关闭搜索",
     "searchInput": "搜索应用和文件夹",
     "noResults": "没有结果",
+    "pagination": "仪表板页面",
+    "goToPage": "转到第 {page} 页，共 {total} 页",
     "appsAndFolders": "应用与文件夹",
     "searchResults": "搜索结果",
     "result": "个结果",

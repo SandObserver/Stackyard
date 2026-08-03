@@ -126,6 +126,8 @@
     "closeSearch": "Cerrar búsqueda",
     "searchInput": "Buscar aplicaciones y carpetas",
     "noResults": "Sin resultados",
+    "pagination": "Páginas del panel",
+    "goToPage": "Ir a la página {page} de {total}",
     "appsAndFolders": "Aplicaciones y carpetas",
     "searchResults": "Resultados de la búsqueda",
     "result": "resultado",

@@ -98,6 +98,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The page dots at the bottom of the dashboard can now be reached with Tab and
+  activated with Enter or Space, and a screen reader announces which page each
+  one goes to and which is showing. Paging previously worked by pointer only.
 - Keyboard focus now stays inside an open folder or the first-run password
   prompt. Pressing Tab moved out of them into the dashboard behind, which is
   hidden but still reachable. Escape closes a folder on mobile, and closing any

@@ -126,6 +126,8 @@
     "closeSearch": "Suche schließen",
     "searchInput": "Apps und Ordner durchsuchen",
     "noResults": "Keine Ergebnisse",
+    "pagination": "Dashboard-Seiten",
+    "goToPage": "Zu Seite {page} von {total}",
     "appsAndFolders": "Apps & Ordner",
     "searchResults": "Suchergebnisse",
     "result": "Ergebnis",
