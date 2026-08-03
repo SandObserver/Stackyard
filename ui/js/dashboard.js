@@ -10,6 +10,7 @@ import { sanitizeItemLinks } from '/js/link-url.js?v=1';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
 import { configChanged } from '/js/dashboard-logic.js?v=1';
+import { trapFocus } from '/js/dialog.js?v=1';
 
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
 
@@ -295,7 +296,15 @@ function showSetupPrompt() {
       setB.disabled = !ok;
     });
 
-    const close = () => { ov.remove(); resolve(); };
+    /* This dialog had no keyboard handling at all: Tab moved out of it into the
+       dashboard behind, and Escape did nothing. It is shown on first run, so it
+       is the first thing a keyboard user meets.
+
+       Escape is not wired to close: the choice is deliberate, and dismissing it
+       by accident silently means "no password". Skip is the way out, and the
+       trap puts focus on the password field so it is reachable. */
+    let releaseTrap = trapFocus(ov, { closeOnEscape: false, initialFocus: pw });
+    const close = () => { if (releaseTrap) { releaseTrap(); releaseTrap = null; } ov.remove(); resolve(); };
 
     skip.onclick = async () => {
       skip.disabled = true;

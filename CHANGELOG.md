@@ -98,6 +98,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keyboard focus now stays inside an open folder or the first-run password
+  prompt. Pressing Tab moved out of them into the dashboard behind, which is
+  hidden but still reachable. Escape closes a folder on mobile, and closing any
+  of them returns focus to whatever opened it.
 - Saving settings now waits for the data to reach the disk, so pulling the power
   shortly afterwards can no longer leave an empty or truncated configuration.
 - A save that fails no longer leaves the dashboard showing changes that were
