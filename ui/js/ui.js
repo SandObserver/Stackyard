@@ -1,6 +1,7 @@
 import { iconChain } from '/js/icons.js?v=36';
 import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
 import { mk, clr, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets } from '/js/utils.js?v=40';
+import { trapFocus } from '/js/dialog.js?v=1';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=1';
 
 let _state = null;
@@ -122,6 +123,7 @@ export function openFolderDesktop(folder) {
   ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
   ov.setAttribute('aria-label', (folder.label||'Folder') + ' folder');
   const _prevFocus = document.activeElement;
+  let releaseDeskTrap = null;
   const outer = mk('div'); outer.className = 'folder-outer';
   const title = mk('div'); title.className = 'folder-title-desktop'; title.textContent = folder.label||'Folder';
   const box = mk('div'); box.className = 'folder-box-desktop';
@@ -149,6 +151,7 @@ export function openFolderDesktop(folder) {
   function closeDesk() {
     registeredBadges.forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
     document.removeEventListener('keydown', escDesk);
+    if (releaseDeskTrap) { releaseDeskTrap(); releaseDeskTrap = null; }
     ov.remove(); folderOverlay = null;
     if (_prevFocus && _prevFocus.focus) _prevFocus.focus();
   }
@@ -156,6 +159,11 @@ export function openFolderDesktop(folder) {
   const escDesk = e => { if (e.key === 'Escape') { closeDesk(); document.removeEventListener('keydown', escDesk); } };
   document.addEventListener('keydown', escDesk);
   outer.append(title, box); ov.appendChild(outer); document.body.appendChild(ov); folderOverlay = ov;
+  /* Escape and focus restoration were already here; the Tab trap was not, so
+     tabbing out of an open folder moved through the dashboard behind it, which
+     is still focusable while being visually covered. Attached after the overlay
+     is in the document, since the trap focuses its first link. */
+  releaseDeskTrap = trapFocus(ov, { closeOnEscape: false, onClose: closeDesk });
 }
 
 function mFolder(item, cw, rh, isz, ir, im, sc) {
@@ -223,8 +231,13 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
   ov.setAttribute('aria-label', (folder.label||'Folder') + ' folder');
 
+  let releaseMobTrap = null;
   function closeMob() {
     ov.querySelectorAll('.badge').forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
+    /* Releases the trap and returns focus to the folder button that opened it.
+       This overlay had neither, so a keyboard user could tab straight out of it
+       into the dashboard behind, and Escape did nothing. */
+    if (releaseMobTrap) { releaseMobTrap(); releaseMobTrap = null; }
     ov.remove(); folderOverlayMob = null;
   }
 
@@ -324,6 +337,10 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
     if (t.clientX < rb.left || t.clientX > rb.right || t.clientY < rb.top || t.clientY > rb.bottom) { e.preventDefault(); e.stopPropagation(); closeMob(); }
   }, { passive:false });
   document.body.appendChild(ov); folderOverlayMob = ov;
+  /* After the overlay is in the document, since the trap focuses its first
+     control. Escape is handled here rather than on document, so it cannot
+     outlive the overlay. */
+  releaseMobTrap = trapFocus(ov, { onClose: closeMob });
 }
 
 

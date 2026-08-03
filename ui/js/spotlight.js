@@ -1,4 +1,5 @@
 import { mk, clr } from '/js/utils.js?v=1';
+import { wrapTab } from '/js/dialog.js?v=1';
 import { t } from '/js/i18n.js?v=1';
 
 export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop, openFolderMobile }) {
@@ -105,14 +106,10 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     ov.style.bottom = Math.max(0, window.innerHeight - vvH) + 'px';
   }
 
-  function trap(e) {
-    if (e.key !== 'Tab') return;
-    const f = [inp, ...ov.querySelectorAll('button:not([disabled]),a[href]')].filter(el => el && el.offsetParent !== null);
-    if (!f.length) return;
-    const first = f[0], last = f[f.length - 1];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-  }
+  /* Was written inline here against these elements, which left nothing for the
+     folder overlay or the setup prompt to reuse. See dialog.js. Escape and focus
+     restoration stay in this file's own open/close, which already had them. */
+  const trap = e => { wrapTab(e, ov); };
   function open(ch) {
     lastFocused = document.activeElement;
     ov.classList.add('on');
