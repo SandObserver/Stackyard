@@ -77,10 +77,14 @@ test('ApiError carries kind, status and detail', () => {
 
 /* ── errorBody ────────────────────────────────────────────────────────────── */
 
-test('errorBody keeps the human-readable error string alongside the kind', () => {
+/* Replaces 'errorBody keeps the human-readable error string alongside the kind'.
+   That string named an internal address, which is the disclosure this now
+   prevents: the message is composed from the kind, and the original goes to the
+   log. */
+test('errorBody replaces the original message with one chosen by kind', () => {
   const e = Object.assign(new Error('connect ECONNREFUSED 1.2.3.4:80'), { code: 'ECONNREFUSED' });
   assert.deepEqual(errorBody(e), {
-    error: 'connect ECONNREFUSED 1.2.3.4:80',
+    error: 'Could not reach the service.',
     kind: KIND.NETWORK,
     detail: { code: 'ECONNREFUSED' },
   });

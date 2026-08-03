@@ -354,6 +354,30 @@ function statusDesc(code) {
    If omitted, falls back to shouldSkipTls() for internal callers.
    pinIp: connect to this exact IP (from guardSsrf) instead of re-resolving,
    with Host header and TLS servername kept on the original hostname. */
+/* What a failed ping tells the browser.
+
+   Composed from the error code rather than taken from the message, for the same
+   reason as errorBody in api-error.js: filtering a message is fail-open, since
+   whatever the filter does not recognise passes through, and a hostname in an
+   unexpected position is exactly what it would miss. */
+const PING_ERRORS = Object.freeze({
+  ECONNREFUSED: 'Connection refused.',
+  ENOTFOUND:    'Host not found.',
+  EAI_AGAIN:    'Host not found.',
+  EHOSTUNREACH: 'Host unreachable.',
+  ENETUNREACH:  'Network unreachable.',
+  ECONNRESET:   'The connection was reset.',
+  EPROTO:       'The service did not speak HTTP.',
+  DEPTH_ZERO_SELF_SIGNED_CERT:      'The certificate is not trusted.',
+  UNABLE_TO_VERIFY_LEAF_SIGNATURE:  'The certificate is not trusted.',
+  CERT_HAS_EXPIRED:                 'The certificate has expired.',
+});
+
+/** @param {any} e @returns {string} */
+function pingErrorText(e) {
+  return PING_ERRORS[e && e.code] || 'Could not reach the service.';
+}
+
 function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
   if (IS_DEMO) return Promise.resolve({ ok: false, status: 0, error: 'Outbound requests are disabled in demo mode' });
   return new Promise(resolve => {
@@ -386,7 +410,14 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
       });
       current = req;
       req.on('timeout', () => { req.destroy(); dl.settle(resolve, { ok:false, status:0, error:'Timed out' }); });
-      req.on('error',   e => dl.settle(resolve, { ok:false, status:0, error:e.message }));
+      /* The message names what failed, "connect ECONNREFUSED 172.17.0.2:8181",
+         and this result is returned to the browser as-is by /api/ping. The code
+         is kept, since it is what distinguishes a refusal from a DNS failure and
+         carries no address; the message is not. The full text is logged. */
+      req.on('error',   (/** @type {any} */ e) => {
+        log.warn('ping failed', { url: `${opts.protocol}//${opts.hostname}${opts.path || ''}`, error: e.message });
+        dl.settle(resolve, { ok:false, status:0, error: pingErrorText(e), code: e.code });
+      });
       req.end();
     };
 

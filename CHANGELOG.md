@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Error messages shown in the browser no longer include internal addresses,
+  hostnames or server file paths. The full message is written to the container
+  log instead.
 - nginx no longer reports its version in the `Server` header or on error pages.
 - Translated strings that are allowed to contain markup are now limited to
   `<strong>`, `<em>`, `<code>` and `<br>` with no attributes, instead of being
