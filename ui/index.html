@@ -30,6 +30,10 @@
 <div id="ctrls"></div>
 <main id="pages" aria-label="Home screen" data-i18n-al="home.homeScreen"></main>
 <div id="dots" role="group" aria-label="Dashboard pages" data-i18n-al="home.pagination"></div>
+<!-- Announces the page after a change. Paging is user-initiated and was silent,
+     which matters more now the dots are reachable by keyboard: a control that
+     can be operated but whose effect is never announced. -->
+<div id="page-live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
 <div id="mob-search-pill">
   <div class="msp-search">
     <span class="msp-icon"><svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/><line x1="7.9" y1="7.9" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
