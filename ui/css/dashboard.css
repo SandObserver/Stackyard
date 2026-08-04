@@ -365,7 +365,9 @@
     }
     /* ✕ close button, mobile only */
     #spot-cancel-mob {
-      display:none; position:fixed; top:120px; right:16px; z-index:1002;
+      /* inset-inline-end, not right: the close button belongs at the end of the
+         line, which is the left in Persian. */
+      display:none; position:fixed; top:120px; inset-inline-end:16px; z-index:1002;
     }
     body.is-mob #spot.on #spot-cancel-mob { display:block; }
     #spot-cancel-mob-btn {
@@ -487,7 +489,7 @@
       font-size:0.8125rem; color:rgba(255,255,255,.38); margin-top:1px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .sra { margin-left:auto; color:rgba(255,255,255,.25); font-size:0.8125rem }
+    .sra { margin-inline-start:auto; color:rgba(255,255,255,.25); font-size:0.8125rem }
 
     /* ── Folder overlay — mobile ── */
     .folder-overlay-mobile {
@@ -498,7 +500,7 @@
     }
     .folder-title-mobile {
       font-weight:700; color:#fff;
-      text-align:left; line-height:1.05;
+      text-align:start; line-height:1.05;
       text-shadow:0 1px 6px rgba(0,0,0,.45);
       -webkit-user-select:none; user-select:none;
     }
@@ -722,8 +724,13 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 .setup-btn-set  { background: #0a84ff; border-color: #0a84ff; color: #fff; }
 .setup-btn-set:disabled { opacity: .4; cursor: default; }
 
-/* ── RTL foundation (dashboard) ── the grid and dock are symmetric and the
-   search bar is flexbox (auto-reversing); these cover the rest. Refine with
-   real translated content in view. */
-[dir="rtl"] #sin { text-align: right; }
-[dir="rtl"] #spot-cancel-mob { right: auto; left: 16px; }
+/* ── RTL ──
+   The grid and dock are symmetric, and flexbox rows reverse on their own. What
+   remains uses logical properties, so it follows the text direction without an
+   override: `text-align: start` is left in English and right in Persian, and
+   `inset-inline-end` is the end of the line rather than a fixed side.
+
+   The override block that used to be here listed the cases someone had noticed,
+   which is a list that can only ever be incomplete: any new rule with
+   `margin-left` in it needed a matching entry, and forgetting meant Persian
+   quietly looked wrong. Logical properties remove the need for the list. */

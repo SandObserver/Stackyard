@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The layout now follows the text direction by itself, so Persian mirrors
+  correctly without a list of per-element exceptions that had to be kept up to
+  date by hand.
 - The largest accepted config save is now 2 MB rather than 4 MB. A dashboard with
   300 apps is about 155 KB, so this is ample, and a request body is held in memory
   while it is read.
