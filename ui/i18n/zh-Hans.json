@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "简体中文", "dir": "ltr" },
+  "_meta": {
+    "name": "简体中文",
+    "dir": "ltr"
+  },
   "nav": {
     "general": "通用",
     "appearance": "外观",
@@ -132,7 +135,10 @@
     "appsAndFolders": "应用与文件夹",
     "searchResults": "搜索结果",
     "result": "个结果",
-    "results": "个结果"
+    "results": "个结果",
+    "apiDownTitle": "无法连接到仪表板 API",
+    "apiDownSub": "请确认 API 容器正在运行",
+    "retry": "重试"
   },
   "toast": {
     "saved": "已保存",
@@ -157,5 +163,24 @@
   },
   "import": {
     "confirm": "导入 {n} 个项目？\n\n新增 {added} 个，更新 {updated} 个，删除 {deleted} 个。"
+  },
+  "status": {
+    "needsAttention": "状态：需要处理",
+    "healthy": "状态：正常",
+    "pending": "{count} 项待处理",
+    "stale": "（可能已过时）",
+    "containerNotFound": "未找到容器",
+    "containerState": "容器 {state}",
+    "pingFailed": "Ping 失败：{error}",
+    "pingReturned": "Ping 返回 {status}",
+    "diskHealth": "磁盘健康"
+  },
+  "setup": {
+    "title": "要设置仪表板密码吗？",
+    "sub": "可选。若不设置，任何能访问此仪表板的人都可以使用和配置它。这不能替代专门的身份验证服务。",
+    "newPassword": "新密码",
+    "skip": "跳过",
+    "set": "设置",
+    "failed": "无法设置密码。"
   }
 }

@@ -61,6 +61,9 @@ function bupd(id) {
   const { cls, txt, bg, aria, color, title } = computeBadgeVisual({
     health: s.health, activity: s.activity, custom, staticBdg, hasHC, hideHealthy, badgesStale, healthStale,
     healthDetail: s.healthDetail,
+    /* badge-logic.js stays free of imports so it can be tested directly; the
+       translator is handed in instead. */
+    translate: t,
   });
 
   els.forEach(el=>{
@@ -125,7 +128,7 @@ function mkIcon(item) {
 }
 
 function widgetTitle(item) {
-  if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || 'Disk health';
+  if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || t('status.diskHealth');
   return item.label || widgetReg[item.widgetType]?.label || 'Widget';
 }
 function mkWidget(item) {
@@ -332,7 +335,7 @@ function showSetupPrompt() {
   return new Promise(resolve => {
     const ov = document.createElement('div');
     ov.className = 'setup-prompt';
-    setHtml(ov, html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">Set a dashboard password?</p><p class="setup-sub">Optional. Without one, anyone who can reach this dashboard can use and configure it. This isn't a replacement for a dedicated auth service.</p><input id="setup-pw" type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">Skip</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>Set</button></div></div>`);
+    setHtml(ov, html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`);
     document.body.appendChild(ov);
 
     const pw   = ov.querySelector('#setup-pw');
@@ -375,7 +378,7 @@ function showSetupPrompt() {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ password: pw.value }),
         });
-        if (!r.ok) throw new Error((await r.json().catch(()=>({}))).error || 'Could not set password.');
+        if (!r.ok) throw new Error((await r.json().catch(()=>({}))).error || t('setup.failed'));
         location.reload();
       } catch(e) {
         err.textContent = e.message; err.style.display = 'block';
@@ -416,7 +419,7 @@ async function boot() {
   if (configFailed) {
     const msg = document.createElement('div');
     msg.className = 'api-error-screen';
-    setHtml(msg, html`<p class="api-error-title">Could not connect to dashboard API</p><p class="api-error-sub">Make sure the API container is running</p><button class="api-error-btn" type="button">Retry</button>`);
+    setHtml(msg, html`<p class="api-error-title">${t('home.apiDownTitle')}</p><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`);
     /* Attached here rather than written as onclick="" in the markup: the page's
        CSP allows script only from a file, so an inline handler is refused and
        the button silently did nothing. Someone whose dashboard was already

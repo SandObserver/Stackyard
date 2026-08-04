@@ -135,7 +135,10 @@
     "appsAndFolders": "Apps & Folders",
     "searchResults": "Search results",
     "result": "result",
-    "results": "results"
+    "results": "results",
+    "apiDownTitle": "Could not connect to dashboard API",
+    "apiDownSub": "Make sure the API container is running",
+    "retry": "Retry"
   },
   "toast": {
     "saved": "Saved",
@@ -160,5 +163,24 @@
   },
   "import": {
     "confirm": "Import {n} items?\n\n{added} added, {updated} updated, {deleted} deleted."
+  },
+  "status": {
+    "needsAttention": "Status: needs attention",
+    "healthy": "Status: healthy",
+    "pending": "{count} pending",
+    "stale": "(may be out of date)",
+    "containerNotFound": "Container not found",
+    "containerState": "Container {state}",
+    "pingFailed": "Ping failed: {error}",
+    "pingReturned": "Ping returned {status}",
+    "diskHealth": "Disk health"
+  },
+  "setup": {
+    "title": "Set a dashboard password?",
+    "sub": "Optional. Without one, anyone who can reach this dashboard can use and configure it. This isn't a replacement for a dedicated auth service.",
+    "newPassword": "New password",
+    "skip": "Skip",
+    "set": "Set",
+    "failed": "Could not set password."
   }
 }

@@ -1,6 +1,7 @@
 import { iconChain } from '/js/icons.js?v=36';
 import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
 import { mk, clr, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets } from '/js/utils.js?v=40';
+import { t } from '/js/i18n.js?v=1';
 import { trapFocus } from '/js/dialog.js?v=1';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=1';
 
@@ -393,7 +394,7 @@ export function buildMobile() {
   const pages = packMobile(gridItems);
 
   function widgetTitle(item) {
-    if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || 'Disk health';
+    if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || t('status.diskHealth');
     return item.label || widgetReg()[item.widgetType]?.label || 'Widget';
   }
 
