@@ -182,5 +182,11 @@
     "skip": "跳过",
     "set": "设置",
     "failed": "无法设置密码。"
+  },
+  "widget": {
+    "loading": "加载中",
+    "unavailable": "不可用",
+    "noData": "无数据",
+    "justNow": "刚刚"
   }
 }

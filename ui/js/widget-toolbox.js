@@ -180,15 +180,55 @@ export function barFill(percent, opts = {}) {  const pct = Math.max(0, Math.min(
 
 
 /* Relative "updated" label from a timestamp (ms since epoch). */
+/* Widget status text, translated.
+
+   A widget is an iframe and does not load the i18n module, so nothing in here
+   knew which language was selected and every widget showed English inside an
+   otherwise translated dashboard. The language arrives on the iframe URL and the
+   strings are fetched from the same locale file the parent already has, so the
+   request comes from cache.
+
+   Loaded once per widget, and the labels fall back to English until it arrives,
+   which is the first render at most. */
+const _lang = new URLSearchParams(location.search).get('lang') || 'en';
+let _strings = null;
+
+async function _loadStrings() {
+  if (_lang === 'en') return;
+  try {
+    const r = await fetch(`/i18n/${encodeURIComponent(_lang)}.json`, { cache: 'force-cache' });
+    if (r.ok) _strings = (await r.json())?.widget || null;
+  } catch { /* English is a usable answer */ }
+}
+_loadStrings();
+
+/** @param {string} key @param {string} fallback */
+function _t(key, fallback) {
+  return (_strings && _strings[key]) || fallback;
+}
+
+/** How long ago something happened, in the widget's language.
+
+   Intl.RelativeTimeFormat is the browser's own, and it knows how every locale
+   forms these. Writing six variants by hand would be inventing grammar, and the
+   plural rules alone differ between the languages shipped here.
+
+   @param {number} ts @returns {string} */
 export function sinceLabel(ts) {
   if (!ts) return '';
   const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
-  if (s < 45) return 'just now';
-  const m = Math.round(s / 60);
-  if (m < 60) return m + 'm ago';
-  const h = Math.round(m / 60);
-  if (h < 24) return h + 'h ago';
-  return Math.round(h / 24) + 'd ago';
+  if (s < 45) return _t('justNow', 'just now');
+
+  const [value, unit] = s < 3600 ? [Math.round(s / 60), 'minute']
+    : s < 86400 ? [Math.round(s / 3600), 'hour']
+    : [Math.round(s / 86400), 'day'];
+
+  try {
+    return new Intl.RelativeTimeFormat(_lang, { numeric: 'auto', style: 'short' }).format(-value, unit);
+  } catch {
+    /* An unknown locale tag, or a browser without it. */
+    return `${value}${unit[0]} ago`;
+  }
 }
 
 /* A muted, centered status message overlaid on the widget, matching the
@@ -249,15 +289,15 @@ export function poll(opts = {}) {
       const data = await doFetch();
       if (stopped) return;
       fails = 0; lastOk = Date.now(); everOk = true; lastData = data;
-      if (!custom && isEmpty(data)) ov.show(opts.emptyText || 'No data', false);
+      if (!custom && isEmpty(data)) ov.show(opts.emptyText || _t('noData', 'No data'), false);
       else { if (ov) ov.hide(); opts.render && opts.render(data); }
     } catch (e) {
       if (stopped) return;
       fails++;
       const stale = fails >= staleAfter;
       if (custom) opts.onError({ error: e, everOk, stale, since: lastOk ? sinceLabel(lastOk) : '' });
-      else if (!everOk) ov.show(opts.errorText || 'Unavailable', false);
-      else if (stale) ov.show((opts.errorText || 'Unavailable') + (lastOk ? ' · ' + sinceLabel(lastOk) : ''), true);
+      else if (!everOk) ov.show(opts.errorText || _t('unavailable', 'Unavailable'), false);
+      else if (stale) ov.show((opts.errorText || _t('unavailable', 'Unavailable')) + (lastOk ? ' · ' + sinceLabel(lastOk) : ''), true);
       /* within tolerance: leave the last good render untouched */
     }
   }
@@ -270,7 +310,7 @@ export function poll(opts = {}) {
     timer = setTimeout(loop, intervalFor(lastData));
   }
 
-  if (ov) ov.show(opts.loadingText || 'Loading', false);
+  if (ov) ov.show(opts.loadingText || _t('loading', 'Loading'), false);
   loop();
   return { stop() { stopped = true; clearTimeout(timer); } };
 }

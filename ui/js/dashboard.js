@@ -5,7 +5,7 @@ import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, w
 import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { html, setHtml } from '/js/html.js?v=1';
-import { initI18n, t } from '/js/i18n.js?v=1';
+import { initI18n, t, currentLang } from '/js/i18n.js?v=1';
 import { sanitizeItemLinks } from '/js/link-url.js?v=1';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
@@ -145,7 +145,7 @@ function mkWidget(item) {
   /* Definite height (matches the family box aspect, which equals the design aspect),
      so the grid row sizes predictably and `.wc{align-items:stretch}` won't override it. */
   card.style.height = WH.d[sz] + 'px';
-  mountScaledWidget(card, { src: widgetSrc(item, widgetReg), title: widgetTitle(item), design, iframeOpts: item.iframe });
+  mountScaledWidget(card, { src: widgetSrc(item, widgetReg, { lang: currentLang() }), title: widgetTitle(item), design, iframeOpts: item.iframe });
   cell.appendChild(card); return cell;
 }
 

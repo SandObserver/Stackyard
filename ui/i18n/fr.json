@@ -182,5 +182,11 @@
     "skip": "Ignorer",
     "set": "Définir",
     "failed": "Impossible de définir le mot de passe."
+  },
+  "widget": {
+    "loading": "Chargement",
+    "unavailable": "Indisponible",
+    "noData": "Aucune donnée",
+    "justNow": "à l’instant"
   }
 }

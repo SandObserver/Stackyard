@@ -101,6 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Widget status text is now translated. "Loading", "Unavailable", "No data" and
+  the "5m ago" timestamps were always English, so a translated dashboard still
+  showed English inside every widget.
 - Dashboard text that was always English is now translated: the status a screen
   reader announces, the reason a tile is red, the "could not connect" screen and
   the first-run password prompt.

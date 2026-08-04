@@ -32,6 +32,10 @@ export function dirFor(code) {
 let base = {};    /* en.json, flattened: the fallback for every key */
 let active = {};  /* selected locale, flattened; falls back to base per key */
 let current = 'en';
+
+/** The locale in use. Widgets are iframes that do not load this module, so the
+    dashboard reads it here and passes it on their URL. */
+export const currentLang = () => current;
 let revMap = {};  /* English source text -> localized text, for dynamic markup */
 
 function flatten(obj, prefix, out) {

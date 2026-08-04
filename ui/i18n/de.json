@@ -182,5 +182,11 @@
     "skip": "Überspringen",
     "set": "Festlegen",
     "failed": "Passwort konnte nicht festgelegt werden."
+  },
+  "widget": {
+    "loading": "Wird geladen",
+    "unavailable": "Nicht verfügbar",
+    "noData": "Keine Daten",
+    "justNow": "gerade eben"
   }
 }
