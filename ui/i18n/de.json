@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Deutsch", "dir": "ltr" },
+  "_meta": {
+    "name": "Deutsch",
+    "dir": "ltr"
+  },
   "nav": {
     "general": "Allgemein",
     "appearance": "Erscheinungsbild",
@@ -132,7 +135,10 @@
     "appsAndFolders": "Apps & Ordner",
     "searchResults": "Suchergebnisse",
     "result": "Ergebnis",
-    "results": "Ergebnisse"
+    "results": "Ergebnisse",
+    "apiDownTitle": "Keine Verbindung zur Dashboard-API",
+    "apiDownSub": "Stellen Sie sicher, dass der API-Container läuft",
+    "retry": "Erneut versuchen"
   },
   "toast": {
     "saved": "Gespeichert",
@@ -157,5 +163,24 @@
   },
   "import": {
     "confirm": "{n} Elemente importieren?\n\n{added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht."
+  },
+  "status": {
+    "needsAttention": "Status: benötigt Aufmerksamkeit",
+    "healthy": "Status: in Ordnung",
+    "pending": "{count} ausstehend",
+    "stale": "(möglicherweise veraltet)",
+    "containerNotFound": "Container nicht gefunden",
+    "containerState": "Container {state}",
+    "pingFailed": "Ping fehlgeschlagen: {error}",
+    "pingReturned": "Ping ergab {status}",
+    "diskHealth": "Laufwerkszustand"
+  },
+  "setup": {
+    "title": "Dashboard-Passwort festlegen?",
+    "sub": "Optional. Ohne Passwort kann jeder, der dieses Dashboard erreicht, es benutzen und konfigurieren. Dies ersetzt keinen eigenen Authentifizierungsdienst.",
+    "newPassword": "Neues Passwort",
+    "skip": "Überspringen",
+    "set": "Festlegen",
+    "failed": "Passwort konnte nicht festgelegt werden."
   }
 }

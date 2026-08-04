@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "فارسی", "dir": "rtl" },
+  "_meta": {
+    "name": "فارسی",
+    "dir": "rtl"
+  },
   "nav": {
     "general": "عمومی",
     "appearance": "ظاهری",
@@ -132,7 +135,10 @@
     "appsAndFolders": "برنامه‌ها و پوشه‌ها",
     "searchResults": "نتایج جستجو",
     "result": "نتیجه",
-    "results": "نتیجه"
+    "results": "نتیجه",
+    "apiDownTitle": "اتصال به API داشبورد ممکن نشد",
+    "apiDownSub": "مطمئن شوید کانتینر API در حال اجراست",
+    "retry": "تلاش دوباره"
   },
   "toast": {
     "saved": "ذخیره شد",
@@ -157,5 +163,24 @@
   },
   "import": {
     "confirm": "{n} مورد Import شود؟\n\n{added} افزوده شد، {updated} به‌روزرسانی شد، {deleted} حذف شد."
+  },
+  "status": {
+    "needsAttention": "وضعیت: نیاز به رسیدگی",
+    "healthy": "وضعیت: سالم",
+    "pending": "{count} در انتظار",
+    "stale": "(ممکن است قدیمی باشد)",
+    "containerNotFound": "کانتینر پیدا نشد",
+    "containerState": "کانتینر {state}",
+    "pingFailed": "پینگ ناموفق: {error}",
+    "pingReturned": "پینگ {status} برگرداند",
+    "diskHealth": "سلامت دیسک"
+  },
+  "setup": {
+    "title": "گذرواژه‌ای برای داشبورد تنظیم شود؟",
+    "sub": "اختیاری. بدون آن، هر کسی که به این داشبورد دسترسی داشته باشد می‌تواند از آن استفاده کند و آن را پیکربندی کند. این جایگزین یک سرویس احراز هویت اختصاصی نیست.",
+    "newPassword": "گذرواژه جدید",
+    "skip": "رد کردن",
+    "set": "تنظیم",
+    "failed": "تنظیم گذرواژه ممکن نشد."
   }
 }

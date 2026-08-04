@@ -98,6 +98,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dashboard text that was always English is now translated: the status a screen
+  reader announces, the reason a tile is red, the "could not connect" screen and
+  the first-run password prompt.
 - Changing dashboard page is now announced to a screen reader, so pressing a
   page dot, swiping or using the arrow keys says which page you moved to.
 - The Settings page now honours the system's reduced motion, reduced

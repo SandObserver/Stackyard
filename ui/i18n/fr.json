@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Français", "dir": "ltr" },
+  "_meta": {
+    "name": "Français",
+    "dir": "ltr"
+  },
   "nav": {
     "general": "Général",
     "appearance": "Apparence",
@@ -132,7 +135,10 @@
     "appsAndFolders": "Applications et dossiers",
     "searchResults": "Résultats de recherche",
     "result": "résultat",
-    "results": "résultats"
+    "results": "résultats",
+    "apiDownTitle": "Connexion à l’API du tableau de bord impossible",
+    "apiDownSub": "Vérifiez que le conteneur de l’API est démarré",
+    "retry": "Réessayer"
   },
   "toast": {
     "saved": "Enregistré",
@@ -157,5 +163,24 @@
   },
   "import": {
     "confirm": "Importer {n} éléments ?\n\n{added} ajoutés, {updated} mis à jour, {deleted} supprimés."
+  },
+  "status": {
+    "needsAttention": "État : nécessite une intervention",
+    "healthy": "État : normal",
+    "pending": "{count} en attente",
+    "stale": "(peut-être obsolète)",
+    "containerNotFound": "Conteneur introuvable",
+    "containerState": "Conteneur {state}",
+    "pingFailed": "Échec du ping : {error}",
+    "pingReturned": "Le ping a renvoyé {status}",
+    "diskHealth": "État du disque"
+  },
+  "setup": {
+    "title": "Définir un mot de passe pour le tableau de bord ?",
+    "sub": "Facultatif. Sans mot de passe, quiconque peut accéder à ce tableau de bord peut l’utiliser et le configurer. Ceci ne remplace pas un service d’authentification dédié.",
+    "newPassword": "Nouveau mot de passe",
+    "skip": "Ignorer",
+    "set": "Définir",
+    "failed": "Impossible de définir le mot de passe."
   }
 }

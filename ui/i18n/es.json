@@ -1,5 +1,8 @@
 {
-  "_meta": { "name": "Español", "dir": "ltr" },
+  "_meta": {
+    "name": "Español",
+    "dir": "ltr"
+  },
   "nav": {
     "general": "General",
     "appearance": "Apariencia",
@@ -132,7 +135,10 @@
     "appsAndFolders": "Aplicaciones y carpetas",
     "searchResults": "Resultados de la búsqueda",
     "result": "resultado",
-    "results": "resultados"
+    "results": "resultados",
+    "apiDownTitle": "No se pudo conectar con la API del panel",
+    "apiDownSub": "Comprueba que el contenedor de la API esté en ejecución",
+    "retry": "Reintentar"
   },
   "toast": {
     "saved": "Guardado",
@@ -157,5 +163,24 @@
   },
   "import": {
     "confirm": "¿Importar {n} elementos?\n\n{added} añadidos, {updated} actualizados, {deleted} eliminados."
+  },
+  "status": {
+    "needsAttention": "Estado: necesita atención",
+    "healthy": "Estado: correcto",
+    "pending": "{count} pendientes",
+    "stale": "(puede estar desactualizado)",
+    "containerNotFound": "Contenedor no encontrado",
+    "containerState": "Contenedor {state}",
+    "pingFailed": "Ping fallido: {error}",
+    "pingReturned": "El ping devolvió {status}",
+    "diskHealth": "Estado del disco"
+  },
+  "setup": {
+    "title": "¿Establecer una contraseña del panel?",
+    "sub": "Opcional. Sin ella, cualquiera que pueda acceder a este panel podrá usarlo y configurarlo. Esto no sustituye a un servicio de autenticación dedicado.",
+    "newPassword": "Nueva contraseña",
+    "skip": "Omitir",
+    "set": "Establecer",
+    "failed": "No se pudo establecer la contraseña."
   }
 }
