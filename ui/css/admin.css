@@ -441,3 +441,38 @@ html.is-mobile .rord{touch-action:none;width:28px;align-self:stretch;font-size:1
 [dir="rtl"] .ev-back svg { transform: scaleX(-1); }
 [dir="rtl"] .grp-tip,
 [dir="rtl"] .sec-title { text-align: right; }
+
+/* ── Increased contrast ──────────────────────────────────────────────────────
+   The dashboard honoured prefers-contrast and this page did not. Its block
+   could not simply be shared: it overrides tokens defined in dashboard.css, so
+   here it would be writing to variables that do not exist. These are this
+   page's own tokens, raised against its own background.
+
+   Values are measured, not eyeballed. Against --pane #292933:
+
+     --dm  #8b8b8f  4.24  as shipped, just under the 4.5 WCAG asks for body text
+     --dm  #b8b8bd  7.28  in this mode
+     --bd  #4e4f56  1.77  as shipped, under the 3.0 for a UI border
+     --bd  #8a8b94  4.25  in this mode
+
+   Worth noting the dim text sits slightly under the minimum by default. Raising
+   that for everyone is a visual decision rather than a fix, so it is left alone
+   here and only raised for someone who has asked for more contrast. */
+@media (prefers-contrast: more) {
+  :root {
+    --dm:#b8b8bd;
+    --bd:#8a8b94;
+    --bd-inner:#6e6f78;
+    --tx:#ffffff;
+  }
+  /* A focus ring is the one thing that must never be subtle in this mode. The
+     custom controls draw their own, so they are named rather than relying on a
+     generic rule that would miss them. */
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible,
+  .row-dd-list li:focus-visible,
+  .kv-cred input:focus-visible+.kv-box,
+  .tog input:focus-visible+.tr {
+    outline-width:3px;
+  }
+}

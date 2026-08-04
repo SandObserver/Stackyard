@@ -98,6 +98,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The Settings page now honours the system's reduced motion, reduced
+  transparency and increased contrast settings. Only the dashboard did, so
+  turning one on appeared to work until you opened Settings.
 - The page dots at the bottom of the dashboard can now be reached with Tab and
   activated with Enter or Space, and a screen reader announces which page each
   one goes to and which is showing. Paging previously worked by pointer only.
