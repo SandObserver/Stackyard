@@ -201,9 +201,36 @@ function buildDesktop() {
   const ct = document.getElementById('ctrls'); ct.innerHTML = '';
 }
 
+/* Say which page is showing.
+
+   A live region is read out when its contents change, so a screen reader user
+   hears the result of paging. Without it the grid swapped silently: the dots
+   became reachable by keyboard, and pressing one appeared to do nothing.
+
+   Polite rather than assertive: the user asked for this, so it should follow
+   what they are doing rather than interrupt it. aria-atomic on the element means
+   the whole message is read rather than only the part that changed.
+
+   Deliberately not used for health changes. Those are polled rather than
+   user-initiated, so announcing them would have a screen reader talk over
+   whatever someone is doing whenever a service flaps. The reason a tile is red
+   is in its hover text instead.
+
+   @param {number} index @param {number} total */
+function announcePage(index, total) {
+  const live = document.getElementById('page-live');
+  if (!live) return;
+  live.textContent = t('home.pageAnnounce', { page: index + 1, total });
+}
+
 function goTo(n, dotEls) {
   const total = dotEls ? dotEls.length : totalPages;
+  const was = pg;
   pg = Math.max(0, Math.min(total-1, n));
+  /* Every page change goes through here, so this is the one place that needs to
+     say so. Only on an actual change: repeating the same page would have a
+     screen reader announce it again on every click. */
+  if (pg !== was) announcePage(pg, total);
   /* Keep stateRef.pg in sync so mobile swipe handler always has the correct current page */
   if (_stateRef) _stateRef.pg = pg;
   const strip = document.getElementById('pages');

@@ -98,6 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Changing dashboard page is now announced to a screen reader, so pressing a
+  page dot, swiping or using the arrow keys says which page you moved to.
 - The Settings page now honours the system's reduced motion, reduced
   transparency and increased contrast settings. Only the dashboard did, so
   turning one on appeared to work until you opened Settings.

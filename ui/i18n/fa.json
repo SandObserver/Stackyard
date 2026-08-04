@@ -127,6 +127,7 @@
     "searchInput": "جستجوی برنامه‌ها و پوشه‌ها",
     "noResults": "نتیجه‌ای یافت نشد",
     "pagination": "صفحه‌های داشبورد",
+    "pageAnnounce": "صفحه {page} از {total}",
     "goToPage": "رفتن به صفحه {page} از {total}",
     "appsAndFolders": "برنامه‌ها و پوشه‌ها",
     "searchResults": "نتایج جستجو",

@@ -461,12 +461,11 @@ export function buildMobile() {
     strip.appendChild(p);
   });
 
+  /* The desktop dots are hidden on mobile, which shows its own pill dots below.
+     They used to be built here anyway, into a display:none container and pushed
+     into an array nothing read, so they were unreachable markup that still had
+     to be kept in step. Cleared rather than filled. */
   const dw = document.getElementById('dots'); dw.style.cssText = 'display:none'; dw.innerHTML = '';
-  const de = [];
-  for (let i = 0; i < pages.length; i++) {
-    const d = mk('div'); d.className = 'dot' + (i === 0 ? ' on' : '');
-    d.onclick = () => goTo(i); dw.appendChild(d); de.push(d);
-  }
 
   const dk = document.getElementById('dock'); dk.className = 'mdock';
   const dockW = vw - Math.round(18*sc);
