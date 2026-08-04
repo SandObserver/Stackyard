@@ -1,7 +1,7 @@
 import { iconChain } from '/js/icons.js?v=36';
 import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
 import { mk, clr, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets } from '/js/utils.js?v=40';
-import { t } from '/js/i18n.js?v=1';
+import { t, currentLang } from '/js/i18n.js?v=1';
 import { trapFocus } from '/js/dialog.js?v=1';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=1';
 
@@ -436,7 +436,7 @@ export function buildMobile() {
        overlayHref + mobile:true add a transparent layer so swipes page the home screen
        (iframes otherwise swallow the touch) while a tap opens the widget's link. */
     const overlayHref = item.url || item.href || item.widgetConfig?.scrutinyHref || item.widgetConfig?.linkUrl || null;
-    mountScaledWidget(card, { src: widgetSrc(item, widgetReg(), { mobile: true }), title: widgetTitle(item), design, iframeOpts: item.iframe, overlayHref, mobile: true,
+    mountScaledWidget(card, { src: widgetSrc(item, widgetReg(), { mobile: true, lang: currentLang() }), title: widgetTitle(item), design, iframeOpts: item.iframe, overlayHref, mobile: true,
       onSwipe: dir => goTo(st().pg + dir) });
     return card;
   }

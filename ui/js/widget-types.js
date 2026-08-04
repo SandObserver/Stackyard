@@ -58,5 +58,12 @@ export function widgetSrc(item, reg, opts) {
   parts.push('id=' + encodeURIComponent(item?.id ?? ''));
   parts.push('size=' + encodeURIComponent(item?.widgetSize || entry.sizes?.[0] || 'medium'));
   if (opts?.mobile) parts.push('mobile=1');
+  /* A widget is an iframe and does not load the i18n module, so nothing inside
+     it knows which language is selected. Passing it here means the toolbox can
+     fetch the same locale file the parent already has, which comes from cache.
+
+     The alternative was passing the translated strings themselves, which would
+     lengthen the URL with every new string, and the URL is also the cache key. */
+  if (opts?.lang) parts.push('lang=' + encodeURIComponent(opts.lang));
   return `/widgets/${type}/${file}?${parts.join('&')}`;
 }

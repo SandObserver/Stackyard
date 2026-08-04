@@ -182,5 +182,11 @@
     "skip": "Skip",
     "set": "Set",
     "failed": "Could not set password."
+  },
+  "widget": {
+    "loading": "Loading",
+    "unavailable": "Unavailable",
+    "noData": "No data",
+    "justNow": "just now"
   }
 }

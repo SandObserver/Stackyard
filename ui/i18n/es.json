@@ -182,5 +182,11 @@
     "skip": "Omitir",
     "set": "Establecer",
     "failed": "No se pudo establecer la contraseña."
+  },
+  "widget": {
+    "loading": "Cargando",
+    "unavailable": "No disponible",
+    "noData": "Sin datos",
+    "justNow": "ahora mismo"
   }
 }
