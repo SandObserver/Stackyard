@@ -603,20 +603,17 @@
 
 /* Reduced-motion / reduced-transparency: strip backdrop-filter blur effects
    for users who prefer it and on older Safari/iOS where blur is expensive. */
+/* The general rules for both preferences now live in tokens.css, which every
+   page loads. What remains here is what only means something on the dashboard:
+   the tokens this file defines, and selectors for its own elements. */
+
 /* Reduced transparency → drop blur/material (legibility), keep motion as-is */
 @media (prefers-reduced-transparency: reduce) {
   :root { --glass-blur: none; --dock-blur: none; }
-  * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
 
 /* Reduced motion → neutralize slides, springs, and lift transforms (HIG: honor Reduce Motion) */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    -webkit-transition-duration: .01ms !important; transition-duration: .01ms !important;
-    -webkit-animation-duration: .01ms !important;  animation-duration: .01ms !important;
-    -webkit-animation-iteration-count: 1 !important; animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-  }
   #pages { -webkit-transition: none !important; transition: none !important; }
   .icon:hover .iwrap, .folder-icon-link:hover .iwrap, .di:hover .dwrap,
   .dot.on { -webkit-transform: none !important; transform: none !important; }

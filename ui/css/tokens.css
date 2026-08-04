@@ -7,3 +7,34 @@
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
 }
+
+/* ── Accessibility preferences ───────────────────────────────────────────────
+   Here rather than in dashboard.css because both pages load this file and only
+   the dashboard loaded that one. Someone with reduced motion turned on got a
+   calm dashboard and a Settings page that still slid and sprang, which is worse
+   than being consistently wrong: the setting appears to work until you open
+   Settings.
+
+   Only the rules that apply to any page live here. Selectors naming dashboard
+   elements stay in dashboard.css, as do overrides of tokens that file defines,
+   since overriding them here would be writing to variables that do not exist on
+   the Admin page. */
+
+/* Reduced motion: neutralise transitions and animations everywhere. Not zero,
+   because a duration of exactly 0 skips the transitionend event some code waits
+   on; .01ms is effectively instant and still fires. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    -webkit-transition-duration: .01ms !important; transition-duration: .01ms !important;
+    -webkit-animation-duration: .01ms !important;  animation-duration: .01ms !important;
+    -webkit-animation-iteration-count: 1 !important; animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced transparency: drop the blur, keep the motion. A translucent panel over
+   busy content is what makes text hard to read, and the blur is the expensive
+   part on older hardware. */
+@media (prefers-reduced-transparency: reduce) {
+  * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}
