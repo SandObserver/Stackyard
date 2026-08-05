@@ -88,3 +88,29 @@ test('guarding the rewritten URL also passes, via the dotless-name branch', asyn
      dotless Docker name, which the guard already trusts. */
   assert.deepEqual(await guardSsrf(rewriteUrl('http://192.168.1.50:8096/')), { error: null, ip: null });
 });
+
+/* ── the service-name allowance must not swallow an IPv6 literal ─────────── */
+
+/* An IPv6 literal is dotless, so it reaches the guard looking like a Docker
+   service name and is separated from one only by its colons. That exclusion is
+   now shared with the TLS-skip check (see internal-host.test.js), so it needs
+   coverage here too: relaxing it would open the SSRF guard, not just weaken
+   certificate verification. */
+test('guardSsrf blocks a private IPv6 literal rather than trusting it as a service name', async () => {
+  for (const url of ['http://[fd00::1]/', 'http://[::1]/', 'http://[fe80::1]/']) {
+    const r = await guardSsrf(url);
+    assert.match(String(r.error), /private address/, url);
+    assert.equal(r.ip, null, url);
+  }
+});
+
+test('guardSsrf blocks an IPv4-in-IPv6 wrapper around a loopback address', async () => {
+  const r = await guardSsrf('http://[::ffff:127.0.0.1]/');
+  assert.match(String(r.error), /private address/);
+});
+
+/* The other half: a real dotless name still passes, so the exclusion above is
+   narrow rather than a blanket refusal of short hostnames. */
+test('guardSsrf still trusts an ordinary dotless container name', async () => {
+  assert.deepEqual(await guardSsrf('http://jellyfin:8096/'), { error: null, ip: null });
+});
