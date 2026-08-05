@@ -59,7 +59,11 @@ on('GET', '/api/badges', async(req, res) => {
           extract: item.monitoring.activity.extract,
           params:  item.monitoring.activity.params,
         } : item.badge;
-        out[item.id] = { value: computeBadgeValue(r.data, badge), raw:r.data };
+        /* The extracted number only. This used to carry `raw: r.data`, the whole
+           upstream body, per item, on a poll that runs every 20 seconds per tab
+           and accepts bodies up to FETCH_SIZE_LIMIT. Nothing read it. The admin
+           field picker needs the body and gets it from /api/badge-proxy. */
+        out[item.id] = { value: computeBadgeValue(r.data, badge) };
       } catch(e) { out[item.id] = Object.assign({ value:0 }, errorBody(e)); }
     }));
   json(res, 200, out);

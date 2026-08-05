@@ -124,6 +124,15 @@ test('badge-proxy still succeeds on a 200', async () => {
   assert.ok(Array.isArray(r.body.numbers));
 });
 
+/* The counterpart to /api/badges no longer sending the body (P4-3): this is the
+   endpoint the admin field picker uses, and it is the one that must keep it. */
+test('badge-proxy still returns the upstream body for the field picker', async () => {
+  upstreamStatus = 200; upstreamBody = '{"count":3,"nested":{"other":9}}';
+  const r = await post('/api/badge-proxy', { url: upstreamBase });
+  assert.deepEqual(r.body.data, { count: 3, nested: { other: 9 } });
+  assert.ok(r.body.numbers.some(n => n.path === 'count' && n.value === 3));
+});
+
 test('badge-proxy tags an unreachable target as a network failure', async () => {
   const dead = await new Promise(res => {
     const s = http.createServer(() => {});
