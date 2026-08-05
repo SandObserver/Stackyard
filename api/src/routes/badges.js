@@ -32,7 +32,7 @@ on('GET', '/api/badges', async(req, res) => {
      outbound traffic rather than work done here. See poll-limits.js. */
   const limited = rateLimit(getIp(req), 'badges', LIMITS.BADGES.max, LIMITS.BADGES.windowMs);
   if (limited) return json(res, 429, { error:limited, kind: KIND.BLOCKED });
-  const cfg = loadConfig(), out = {};
+  const cfg = loadConfig(), out = Object.create(null);
   if (IS_DEMO) return json(res, 200, demoData.demoBadges(cfg.items));
   await Promise.allSettled(cfg.items
     .filter(i => i.type==='app' && (

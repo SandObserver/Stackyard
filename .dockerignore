@@ -2,6 +2,7 @@
 .github
 node_modules
 api/test
+api/test-support
 ui/test
 scripts/**
 !scripts/exit-on-fatal.py

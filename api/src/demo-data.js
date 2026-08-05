@@ -22,15 +22,15 @@ const metrics = {
 };
 
 function demoBadges(items) {
-  const preset = { 'app-jellyfin': 2, 'app-portainer': 12 };
-  const out = {};
+  const preset = Object.assign(Object.create(null), { 'app-jellyfin': 2, 'app-portainer': 12 });
+  const out = Object.create(null);
   for (const i of items || []) {
     if (i?.type === 'app' && i.monitoring?.activity?.enabled) out[i.id] = { value: preset[i.id] ?? 1 };
   }
   return out;
 }
 function demoHealth(items) {
-  const out = {};
+  const out = Object.create(null);
   for (const i of items || []) {
     if (i?.type === 'app' && i.monitoring?.healthcheck?.enabled) out[i.id] = { unhealthy: i.id === 'app-grafana' };
   }

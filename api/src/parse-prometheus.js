@@ -1,5 +1,8 @@
+/* Null prototype: metric names come from the upstream body, and the name
+   pattern below admits "__proto__", which on an ordinary object literal takes
+   the assignment as a prototype write and silently discards the sample. */
 function parsePrometheus(text) {
-  const out = {};
+  const out = Object.create(null);
   for (const line of text.split('\n')) {
     const t = line.trim();
     if (!t || t[0] === '#') continue;

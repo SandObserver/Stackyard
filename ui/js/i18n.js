@@ -29,14 +29,16 @@ export function dirFor(code) {
   return RTL.has(String(code || '').split('-')[0]) ? 'rtl' : 'ltr';
 }
 
-let base = {};    /* en.json, flattened: the fallback for every key */
-let active = {};  /* selected locale, flattened; falls back to base per key */
+/* Null prototype on all three: `t` and the reverse map are keyed by catalog
+   key and by English source text, so an inherited member must not answer. */
+let base = Object.create(null);    /* en.json, flattened: the fallback for every key */
+let active = Object.create(null);  /* selected locale, flattened; falls back to base per key */
 let current = 'en';
 
 /** The locale in use. Widgets are iframes that do not load this module, so the
     dashboard reads it here and passes it on their URL. */
 export const currentLang = () => current;
-let revMap = {};  /* English source text -> localized text, for dynamic markup */
+let revMap = Object.create(null);  /* English source text -> localized text, for dynamic markup */
 
 function flatten(obj, prefix, out) {
   for (const k of Object.keys(obj || {})) {
@@ -52,7 +54,7 @@ async function fetchCatalog(code) {
   try {
     const r = await fetch(`/i18n/${code}.json`, { cache: 'no-store' });
     if (!r.ok) return null;
-    return flatten(await r.json(), '', {});
+    return flatten(await r.json(), '', Object.create(null));
   } catch { return null; }
 }
 
@@ -60,11 +62,11 @@ async function fetchCatalog(code) {
    Falls back to English if the requested catalog is missing or fails to load. */
 export async function initI18n(code) {
   code = code || 'en';
-  base = (await fetchCatalog('en')) || {};
+  base = (await fetchCatalog('en')) || Object.create(null);
   const loaded = code === 'en' ? base : await fetchCatalog(code);
   active = loaded || base;
   current = (loaded && code !== 'en') ? code : 'en';
-  revMap = {};
+  revMap = Object.create(null);
   for (const k of Object.keys(base)) {
     const en = base[k];
     if (typeof en === 'string' && en) revMap[en] = (typeof active[k] === 'string' && active[k]) ? active[k] : en;

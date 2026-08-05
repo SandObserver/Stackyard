@@ -41,10 +41,12 @@ let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
 /* The config revision this page was built from. The server bumps it on every
    write, so comparing it is an exact answer to "has anything changed". */
 let _rev = null;
-let widgetReg = {};
+/* Null prototype throughout: keyed by widget type and by item id, both of
+   which come from config, so an inherited property must never answer a miss. */
+let widgetReg = Object.create(null);
 const _mobTsCleanup = null, _mobTeCleanup = null;
 
-const badgeState  = {};
+const badgeState  = Object.create(null);
 let _badgeFails = 0, _healthFails = 0, badgesStale = false, healthStale = false;
 const BEL = new Map();
 function breg(id, el) { if (!BEL.has(id)) BEL.set(id, new Set()); BEL.get(id).add(el); }
@@ -438,8 +440,9 @@ async function boot() {
      The dashboard reads this to build each widget's iframe URL. */
   try {
     const wr = await (await fetch('/api/widgets', { cache:'no-store' })).json();
-    widgetReg = Object.fromEntries((wr.widgets||[]).map(w => [w.name, w]));
-  } catch { widgetReg = {}; }
+    widgetReg = Object.create(null);
+    for (const w of wr.widgets || []) if (w && w.name) widgetReg[w.name] = w;
+  } catch { widgetReg = Object.create(null); }
 
   const state = { items, S, CB, BEL, badgeState, breg, bunreg, bupd, folderBadge, paginate, goTo, pg: 0, _mobTsCleanup, _mobTeCleanup, widgetReg };
   _stateRef = state;

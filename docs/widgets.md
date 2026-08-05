@@ -297,6 +297,14 @@ attributes and child elements both become keys, a repeated tag becomes an array,
 and a text-only element becomes that text. Numbers are converted only when they
 round-trip exactly, so `007` and `1.10` stay strings.
 
+Parsed XML and Prometheus objects have a null prototype, because their keys are
+names taken verbatim from the response. Read them with property access,
+`Object.keys`, spread and `JSON.stringify` as usual, but call `Object.hasOwn(o,
+k)` rather than `o.hasOwnProperty(k)`, which they do not inherit. The gain is
+that a feed emitting a field called `__proto__`, `constructor` or `toString`
+yields an ordinary key holding the real value instead of silently vanishing or
+resolving to something from `Object.prototype`.
+
 If your `select` uses `optionsFrom`, handle that path in the same function:
 
 ```js

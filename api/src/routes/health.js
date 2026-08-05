@@ -13,11 +13,16 @@ const SOCKET_PROXY_URL_DEFAULT = process.env.SOCKET_PROXY_URL || '';
 async function fetchContainerHealth() {
   const cfg = loadConfig();
   const socketUrl = cfg.settings?.server?.socketProxyUrl || SOCKET_PROXY_URL_DEFAULT;
-  if (!socketUrl) return {};
+  if (!socketUrl) return Object.create(null);
   try {
     const r = await fetchUnchecked(`${socketUrl}/containers/json?all=true`);
-    if (!Array.isArray(r.data)) return {};
-    const out = {};
+    if (!Array.isArray(r.data)) return Object.create(null);
+    /* Null prototype: keyed by container names from the socket proxy and looked
+       up by the name stored on an item. On an ordinary object an item whose
+       container is called "constructor" or "toString" matched an inherited
+       value, `unhealthy` read as undefined, and a container that does not exist
+       reported healthy. */
+    const out = Object.create(null);
     for (const c of r.data) {
       for (const name of (c.Names||[])) {
         const clean = name.replace(/^\//,'');
@@ -27,7 +32,7 @@ async function fetchContainerHealth() {
       }
     }
     return out;
-  } catch(e) { log.error('container health fetch failed', { error:e.message }); return {}; }
+  } catch(e) { log.error('container health fetch failed', { error:e.message }); return Object.create(null); }
 }
 
 on('GET', '/health', (_, res) => json(res, 200, { ok:true }));
@@ -38,7 +43,7 @@ on('GET', '/api/health', async(req, res) => {
   if (limited) return json(res, 429, { error:limited, kind: KIND.BLOCKED });
   if (IS_DEMO) { const cfg = loadConfig(); return json(res, 200, demoData.demoHealth(cfg.items)); }
   const containers = await fetchContainerHealth();
-  const cfg = loadConfig(), result = {};
+  const cfg = loadConfig(), result = Object.create(null);
   await Promise.allSettled(cfg.items
     .filter(i => i.type==='app' && (i.container||i.ping||i.monitoring?.healthcheck?.enabled))
     .map(async item => {

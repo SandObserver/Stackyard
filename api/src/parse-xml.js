@@ -33,20 +33,26 @@ function _xmlCoerce(raw) {
    becomes an array, a tag that appears once stays a single value; an element
    with only text collapses to that (coerced) text; element text alongside
    attributes/children is kept under "#text". On the rare attribute/child name
-   collision the child element wins. */
+   collision the child element wins.
+
+   Every object here has a null prototype, because its keys are tag and
+   attribute names taken verbatim from the feed. On an ordinary object literal a
+   child element called "__proto__" does not become a key at all: the assignment
+   replaces the object's prototype, the element disappears, and every later
+   property read on that node resolves against feed-supplied data instead. */
 function _xmlValue(node) {
   const attrKeys = Object.keys(node.attrs);
   const text = _xmlDecode(node.text).trim();
 
   if (node.children.length === 0) {
     if (attrKeys.length === 0) return text === '' ? '' : _xmlCoerce(text);
-    const obj = {};
+    const obj = Object.create(null);
     for (const k of attrKeys) obj[k] = _xmlCoerce(node.attrs[k]);
     if (text !== '') obj['#text'] = _xmlCoerce(text);
     return obj;
   }
 
-  const obj = {};
+  const obj = Object.create(null);
   for (const k of attrKeys) obj[k] = _xmlCoerce(node.attrs[k]);
   if (text !== '') obj['#text'] = _xmlCoerce(text);
   for (const c of node.children) {
@@ -108,9 +114,9 @@ function _tagEnd(xml, from, len) {
 }
 
 function parseXml(xml) {
-  if (typeof xml !== 'string') return {};
+  if (typeof xml !== 'string') return Object.create(null);
   const MAX_NODES = 5000, MAX_DEPTH = 60;
-  const root = /** @type {XmlNode} */ ({ tag: '#doc', attrs: {}, children: [], text: '' });
+  const root = /** @type {XmlNode} */ ({ tag: '#doc', attrs: Object.create(null), children: [], text: '' });
   const stack = [root];
   const top = () => stack[stack.length - 1];
   const len = xml.length;
@@ -141,7 +147,7 @@ function parseXml(xml) {
     if (selfClose) raw = raw.slice(0, -1).trim();
     const sp = raw.search(/\s/);
     const name = sp === -1 ? raw : raw.slice(0, sp);
-    const node = /** @type {XmlNode} */ ({ tag: name, attrs: {}, children: [], text: '' });
+    const node = /** @type {XmlNode} */ ({ tag: name, attrs: Object.create(null), children: [], text: '' });
     if (sp !== -1) {
       for (const m of raw.slice(sp + 1).matchAll(/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g))
         node.attrs[m[1]] = _xmlDecode(m[2] !== undefined ? m[2] : m[3]);
@@ -158,7 +164,8 @@ function parseXml(xml) {
   }
 
   const docEl = root.children.find(c => c.tag);
-  const out = docEl ? { [docEl.tag]: _xmlValue(docEl) } : {};
+  const out = Object.create(null);
+  if (docEl) out[docEl.tag] = _xmlValue(docEl);
   if (truncated) out['#truncated'] = true;
   return out;
 }

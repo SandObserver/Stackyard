@@ -256,7 +256,8 @@ function verifyToken(token, secret) {
    recognised. */
 function parseCookies(req) {
   const header = req.headers.cookie || '';
-  const out = {};
+  /* Null prototype: the keys are cookie names straight off the request. */
+  const out = Object.create(null);
   for (const part of header.split(';')) {
     const [k, ...v] = part.trim().split('=');
     if (k) out[k.trim()] = decodeOrRaw(v.join('='));

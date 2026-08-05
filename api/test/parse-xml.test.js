@@ -1,6 +1,13 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { parseXml } = require('../src/parse-xml');
+const { parseXml: _parseXml } = require('../src/parse-xml');
+const { plain } = require('../test-support/plain');
+
+/* parseXml builds null-prototype objects on purpose, because its keys are tag
+   and attribute names from the feed. assert/strict compares prototypes, so
+   every result is copied onto an ordinary one before it is compared and the
+   expectations below stay readable object literals. */
+const parseXml = xml => plain(_parseXml(xml));
 
 /* ── parseXml: general nested shape, matching the JSON shape widgets already read ── */
 
@@ -61,12 +68,23 @@ test('parseXml still arrays a repeated tag named after an inherited member', () 
     { r: { toString: ['a', 'b'] } });
 });
 
-/* A `__proto__` tag or attribute is dropped rather than stored: the assignment
-   reaches the prototype setter instead of creating an own key. Nothing leaks
-   into Object.prototype, so this is a lossy read of a name no API emits. */
-test('parseXml drops a __proto__ tag or attribute without polluting the prototype', () => {
-  assert.deepEqual(Object.keys(parseXml('<r><__proto__>x</__proto__></r>').r), []);
-  assert.deepEqual(parseXml('<r __proto__="x" a="1"/>'), { r: { a: 1 } });
+/* A `__proto__` tag or attribute is kept as an ordinary key. On a plain object
+   literal it was not: the assignment reached the prototype setter, the element
+   vanished, and every later property read on that node resolved against
+   feed-supplied data. Read the values with a descriptor, since `p.r.__proto__`
+   would ask for the prototype rather than the key. */
+test('parseXml keeps a __proto__ tag or attribute without polluting the prototype', () => {
+  const own = (o, k) => Object.getOwnPropertyDescriptor(o, k)?.value;
+
+  const tag = parseXml('<r><__proto__>x</__proto__></r>');
+  assert.deepEqual(Object.keys(tag.r), ['__proto__']);
+  assert.equal(own(tag.r, '__proto__'), 'x');
+
+  const attr = parseXml('<r __proto__="x" a="1"/>');
+  assert.deepEqual(Object.keys(attr.r).sort(), ['__proto__', 'a']);
+  assert.equal(own(attr.r, '__proto__'), 'x');
+  assert.equal(attr.r.a, 1);
+
   assert.equal({}.x, undefined);
   assert.equal(Object.prototype.x, undefined);
 });

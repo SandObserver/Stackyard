@@ -38,7 +38,7 @@ async function load(){
   state.items=c.items||[];
   state._settings=c.settings||{};
   await initI18n(c.settings?.language || 'en');
-  try{ const wr=await ag('/api/widgets'); state._widgetReg={}; (wr.widgets||[]).forEach(w=>{ state._widgetReg[w.name]=w; }); }catch{ state._widgetReg={}; }
+  try{ const wr=await ag('/api/widgets'); state._widgetReg=Object.create(null); (wr.widgets||[]).forEach(w=>{ state._widgetReg[w.name]=w; }); }catch{ state._widgetReg=Object.create(null); }
   state.items.filter(i=>i.type==='folder').forEach(f=>collapsedFolders.add(f.id));
   document.body.classList.add('authed');
   render();
