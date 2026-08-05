@@ -131,15 +131,45 @@ test('the raised colours meet the contrast they are raised for', () => {
     return (hi + 0.05) / (lo + 0.05);
   };
 
-  const block = admin.slice(admin.indexOf('@media (prefers-contrast: more)'));
-  const valueOf = token => (new RegExp(`${token}:\\s*(#[0-9a-f]{6})`, 'i').exec(block) || [])[1];
-  const pane = (/--pane:\s*(#[0-9a-f]{6})/i.exec(admin) || [])[1];
-  assert.ok(pane, 'the panel background is not a plain hex any more');
+  /* Tokens point at other tokens now, so measuring means resolving the chain the
+     browser would. Declarations outside a contrast block are the base; those
+     inside it, from either file, are layered on top; then var() is followed to a
+     hex. This is what the page actually computes in increased-contrast mode. */
+  const contrastBlock = src => {
+    const i = src.indexOf('@media (prefers-contrast: more)');
+    return i === -1 ? '' : src.slice(i, src.indexOf('\n}', i));
+  };
+  const declarations = src => {
+    const out = new Map();
+    for (const m of src.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)) out.set(m[1], m[2].trim());
+    return out;
+  };
+  const withoutContrast = src => src.replace(/@media \(prefers-contrast: more\)[\s\S]*?\n}/g, '');
 
-  assert.ok(ratio(valueOf('--dm'), pane) >= 4.5,
-    `dim text is ${ratio(valueOf('--dm'), pane).toFixed(2)}, below the 4.5 for body text`);
-  assert.ok(ratio(valueOf('--bd'), pane) >= 3,
-    `borders are ${ratio(valueOf('--bd'), pane).toFixed(2)}, below the 3.0 for a UI border`);
+  const map = new Map([
+    ...declarations(withoutContrast(tokens)),
+    ...declarations(withoutContrast(admin)),
+    ...declarations(contrastBlock(tokens)),
+    ...declarations(contrastBlock(admin)),
+  ]);
+  const resolve = (name, seen = new Set()) => {
+    if (seen.has(name)) return null;
+    seen.add(name);
+    const v = map.get(name);
+    if (!v) return null;
+    if (/^#[0-9a-f]{6}$/i.test(v)) return v;
+    const ref = /^var\(\s*(--[\w-]+)/.exec(v);
+    return ref ? resolve(ref[1], seen) : null;
+  };
+
+  const pane = resolve('--pane');
+  assert.ok(pane, 'the panel background does not resolve to a hex');
+  for (const [token, min, what] of [['--dm', 4.5, 'body text'], ['--bd', 3, 'a UI border']]) {
+    const value = resolve(token);
+    assert.ok(value, `${token} does not resolve to a hex`);
+    const got = ratio(value, pane);
+    assert.ok(got >= min, `${token} is ${got.toFixed(2)} against ${pane}, below the ${min} for ${what}`);
+  }
 });
 
 /* The custom controls draw their own focus ring, so a generic rule would miss

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The accent colour is now teal, and the interface uses Apple's system colours
   throughout. Increased-contrast mode moves the whole palette to Apple's
   higher-contrast values rather than only a few pieces of it.
-- Browser support is now stated: Safari and iOS Safari 15.4 and newer, and
+- Browser support is now stated: Safari and iOS Safari 16.2 and newer, and
   current Chrome, Edge and Firefox. See
   [docs/frontend.md](docs/frontend.md).
 - Widget manifests are checked more strictly: a `showIf` must name one of the

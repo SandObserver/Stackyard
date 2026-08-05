@@ -71,8 +71,8 @@ test('the accent is teal, through the role and not a literal', () => {
    swaps the palette wholesale and a missing -hi would resolve to nothing. */
 test('every palette hue has an increased-contrast partner', () => {
   const tokens = read('tokens.css');
-  const hues = [...tokens.matchAll(/--sy-([a-z]+):\s*#/g)].map(m => m[1]);
-  assert.ok(hues.length >= 12, `expected the full palette, found ${hues.length}`);
+  const hues = [...tokens.matchAll(/--sy-([a-z]+\d?):\s*#/g)].map(m => m[1]);
+  assert.ok(hues.length >= 18, `expected the twelve hues and six greys, found ${hues.length}`);
   for (const h of hues) {
     assert.match(tokens, new RegExp(`--sy-${h}-hi:\\s*#`), `--sy-${h} has no -hi partner`);
   }
@@ -81,7 +81,7 @@ test('every palette hue has an increased-contrast partner', () => {
 test('increased contrast moves the palette to the -hi values', () => {
   const tokens = read('tokens.css');
   const block = tokens.slice(tokens.indexOf('@media (prefers-contrast: more)'));
-  for (const h of ['red', 'green', 'teal', 'blue']) {
+  for (const h of ['red', 'green', 'teal', 'blue', 'gray', 'gray6']) {
     assert.match(block, new RegExp(`--sy-${h}:\\s*var\\(--sy-${h}-hi\\)`), `${h} is not raised`);
   }
 });

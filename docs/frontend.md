@@ -9,7 +9,7 @@ The admin writes the whole config with `POST /api/config`; the dashboard reads i
 
 ## Browser support
 
-Safari and iOS Safari 15.4 and newer, and current Chrome, Edge and Firefox.
+Safari and iOS Safari 16.2 and newer, and current Chrome, Edge and Firefox. 16.2 is where `color-mix()` lands, which the admin's category chips derive their tints from.
 
 There is no build step and no autoprefixer, so every vendor prefix is written by hand. The support floor, the list of prefixes that are still needed and the reason each one stays are at the top of `ui/css/tokens.css`; `ui/test/vendor-prefix-ratchet.test.mjs` fails on any prefix outside that list. Note that "an unprefixed property sits beside it" is not a reason to remove one: `-webkit-backdrop-filter` is paired everywhere and still required.
 
@@ -17,7 +17,7 @@ There is no build step and no autoprefixer, so every vendor prefix is written by
 
 `ui/css/tokens.css` holds two layers. A palette names Apple's system colours by hue (`--sy-teal`, `--sy-red`), each with a `-hi` partner carrying Apple's increased-contrast value; the `prefers-contrast: more` block swaps the whole palette to the `-hi` set. On top, roles name what a colour is for (`--accent`, `--danger`, `--success`) and point at a hue, so changing the accent is one line.
 
-Only dark values are defined: there is no light mode anywhere in the app.
+Dark values only.
 
 Rules should name a role. A colour written as a literal outside `tokens.css` fails `ui/test/css-tokens.test.mjs`, which also checks that every `var()` names a token that exists. Page-specific surfaces and greys are not part of the system palette and live in that page's own `:root`.
 
