@@ -30,8 +30,6 @@ export const state = {
   _wsize: 'medium',
   _customUrl: '',
   _wlabel: '',
-  _wgithubCfg: {},
-  _wclockCfg: {},
   _iframeOpts: {},
 
   _wAutoCfg: {},
