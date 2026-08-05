@@ -227,6 +227,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - XML data sources no longer mis-read a single element named after a built-in
   object property (such as `toString`) as a repeated element.
 
+### Removed
+
+- The API no longer sends CORS preflight headers or answers `OPTIONS`. It has
+  always been same-origin only, and the headers it sent could never permit a
+  cross-origin request.
+
 ## [1.4.0] - 2026-07-26
 
 ### Added

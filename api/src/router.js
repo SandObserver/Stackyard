@@ -23,9 +23,8 @@ function dispatch(req, res) {
 function route(req, res) {
   const u      = new URL(req.url, 'http://x');
   const method = req.method.toUpperCase();
-  setPreflightHeaders(res);
 
-  if (method !== 'OPTIONS' && !PUBLIC_PATHS.has(u.pathname)) {
+  if (!PUBLIC_PATHS.has(u.pathname)) {
     if (!isAuthenticated(req)) return json(res, 401, { error:'Unauthorised', auth:true, kind:'auth' });
   }
 
@@ -54,11 +53,6 @@ function onError(req, res, err) {
   log.error('request handler failed', { method: req.method, url: req.url, error: err?.message });
   if (res.headersSent) { try { res.end(); } catch {} return; }
   try { json(res, 500, { error:'Internal server error', kind:'internal' }); } catch {}
-}
-
-function setPreflightHeaders(res) {
-  res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers','Content-Type');
 }
 
 function json(res, status, data) {
@@ -142,4 +136,4 @@ function checkOrigin(req, res) {
 }
 
 module.exports = {
-  BODY_LIMIT, on, dispatch, json, readBody, setPreflightHeaders, checkOrigin, getIp };
+  BODY_LIMIT, on, dispatch, json, readBody, checkOrigin, getIp };
