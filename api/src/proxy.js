@@ -115,6 +115,30 @@ function isPrivateAddress(addr) {
   }
   return isBlockedIPv4(s) || BLOCKED_IPV6_RE.test(s);
 }
+/* Is this response a Prometheus metrics body?
+
+   Two ways, because the exposition format has a registered content type but not
+   every exporter sends it.
+
+   The first is definitive: OpenMetrics, or the versioned text form
+   `text/plain; version=0.0.4`, is metrics by declaration and nothing else uses
+   those. The second is the original heuristic, a bare text/plain carrying a
+   `# TYPE` comment.
+
+   The versioned branch is what was missing. `# HELP` and `# TYPE` are both
+   optional in the exposition format, so an exporter that omits them while
+   correctly declaring its content type fell through and came back as a raw
+   string, where an XML body in the same position is recognised by content.
+
+   Deliberately not sniffed from the body the way XML is. A '<' at the start of
+   a document is unambiguous; a metric line is not. "Version 1.2" in a plain-text
+   response matches the metric grammar exactly, so sniffing would turn ordinary
+   text into { Version: 1.2 }. */
+function looksLikeMetrics(ct, body) {
+  if (ct.includes('openmetrics') || /(^|;)\s*version=0\.0\.\d/.test(ct)) return true;
+  return ct.includes('text/plain') && body.includes('# TYPE');
+}
+
 const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
 /* Setting this true disables SSRF filtering entirely: private, loopback and
    link-local targets are no longer blocked. Most homelab setups need it on
@@ -330,7 +354,7 @@ function fetchJSON(raw, opts = {}) {
         const ct   = (res.headers['content-type'] || '').toLowerCase();
         try { done(resolve, { status: res.statusCode, data: JSON.parse(body) }); }
         catch {
-          if ((ct.includes('text/plain') || ct.includes('openmetrics')) && body.includes('# TYPE'))
+          if (looksLikeMetrics(ct, body))
             done(resolve, { status: res.statusCode, data: parsePrometheus(body) });
           else if (ct.includes('xml') || body.trimStart().startsWith('<')) {
             const parsed = parseXml(body);
@@ -514,7 +538,7 @@ async function pingChecked(url, ms, skipTls) {
 
 module.exports = {
   fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError, statusDesc,
-  urlPolicyError, ALLOWED_PROTOCOLS,
+  urlPolicyError, ALLOWED_PROTOCOLS, looksLikeMetrics,
   rewriteUrl, getHostIp, shouldSkipTls, isInternalHost, isDockerServiceName, bareHost,
   isPrivateAddress, isBlockedIPv4, embeddedIPv4, BLOCKED_IPV4,
   _internals: { fetchJSON, pingUrl, guardSsrf },
