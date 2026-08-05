@@ -3,6 +3,26 @@ const { loadConfig, saveConfig } = require('./config');
 const { decodeOrRaw } = require('./percent-decode');
 const log = require('./log');
 
+/* The two random values the session system mints. Both were written inline at
+   four and three call sites respectively, so the strength and encoding of the
+   key that signs every session was defined in four places and a change to
+   either had to be made in all of them.
+
+   SECRET_BYTES is the signing key for the session HMAC. SESSION_ID_BYTES is the
+   per-session identifier carried inside the token; it is not a credential on
+   its own, since the signature is what a token is verified by. */
+const SECRET_BYTES = 32, SESSION_ID_BYTES = 24;
+const newSessionSecret = () => crypto.randomBytes(SECRET_BYTES).toString('hex');
+const newSessionId     = () => crypto.randomBytes(SESSION_ID_BYTES).toString('hex');
+
+/* settings.auth, created if it is not there yet. Mutates and returns the block
+   so a caller can write to it directly. */
+function _authBlock(cfg) {
+  cfg.settings = cfg.settings || {};
+  cfg.settings.auth = cfg.settings.auth || {};
+  return cfg.settings.auth;
+}
+
 /* Invalidate every outstanding session.
 
    Rotating the signing secret is what does it: a token's signature is checked
@@ -22,22 +42,21 @@ const log = require('./log');
    password. */
 function rotateSessionSecret() {
   const cfg = loadConfig();
-  cfg.settings = cfg.settings || {};
-  cfg.settings.auth = cfg.settings.auth || {};
-  cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
+  const auth = _authBlock(cfg);
+  auth.secret = newSessionSecret();
   saveConfig(cfg);
-  return cfg.settings.auth.secret;
+  return auth.secret;
 }
 
+/* The same, except an existing secret is kept. Rotating here would sign out
+   every device each time the server needed the key. */
 function getOrCreateSecret() {
   const cfg = loadConfig();
   if (cfg.settings?.auth?.secret) return cfg.settings.auth.secret;
-  const secret = crypto.randomBytes(32).toString('hex');
-  cfg.settings = cfg.settings || {};
-  cfg.settings.auth = cfg.settings.auth || {};
-  cfg.settings.auth.secret = secret;
+  const auth = _authBlock(cfg);
+  auth.secret = newSessionSecret();
   saveConfig(cfg);
-  return secret;
+  return auth.secret;
 }
 
 /* Password hashing.
@@ -292,9 +311,22 @@ function clearSessionCookie(res, secure) {
   res.setHeader('Set-Cookie', `ds=; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=0`);
 }
 
+/* Two fixed-window limiters, deliberately still separate.
+
+   They share an algorithm but not a surface: the login limiter is keyed by IP
+   alone, reports its wait in whole minutes, and is cleared outright on a
+   successful login, while rateLimit is keyed by ip:key, reports seconds, and
+   has nothing to clear. Merging them means one implementation taking a message
+   formatter and a reset hook, on the path that locks a person out of their own
+   dashboard. Worth doing, but on its own branch with the lockout behaviour
+   pinned first, not folded into a tidy-up. */
 const _loginAttempts = new Map();
 const LOGIN_MAX = 5, LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
+/* Internal, and not exported: this is the read-only half of a pair whose whole
+   point is that the check and the increment happen together. A caller reaching
+   for it on its own reintroduces the check-then-increment race described on
+   registerLoginAttempt below. Use registerLoginAttempt. */
 function checkRateLimit(ip) {
   const now = Date.now();
   const rec = _loginAttempts.get(ip) || { count:0, first:now };
@@ -383,10 +415,10 @@ function hasValidSession(req) {
 }
 
 module.exports = {
-  getOrCreateSecret, rotateSessionSecret, hashPassword, verifyPassword, authActive, needsRehash,
+  getOrCreateSecret, rotateSessionSecret, newSessionSecret, newSessionId, hashPassword, verifyPassword, authActive, needsRehash,
   HASH_PROFILES, DEFAULT_PROFILE, parseHash,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
-  checkRateLimit, registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
+  registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
   /* Tests exercise limits in sequence within one process, so each needs a clean
      window; there is no other way to reach the buckets. */
   _resetRateLimits: () => _rateBuckets.clear(),
