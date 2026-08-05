@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Widget manifests are checked more strictly: a `showIf` must name one of the
+  field's own siblings and carry a condition, and `viewField` must name a
+  declared field whose options match the declared views.
+  A third-party widget breaking either rule no longer loads; the container log
+  names the problem. All bundled widgets already comply.
 - The layout now follows the text direction by itself, so Persian mirrors
   correctly without a list of per-element exceptions that had to be kept up to
   date by hand.
