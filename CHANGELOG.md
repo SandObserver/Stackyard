@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Browser support is now stated: Safari and iOS Safari 15.4 and newer, and
+  current Chrome, Edge and Firefox. See
+  [docs/frontend.md](docs/frontend.md).
 - Widget manifests are checked more strictly: a `showIf` must name one of the
   field's own siblings and carry a condition, and `viewField` must name a
   declared field whose options match the declared views.
