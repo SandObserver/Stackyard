@@ -235,6 +235,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Badge polling no longer sends a copy of each service's full response to the
+  browser alongside the extracted number, so the dashboard's most frequent
+  request stays small whatever the service returns.
 - The API no longer sends CORS preflight headers or answers `OPTIONS`. It has
   always been same-origin only, and the headers it sent could never permit a
   cross-origin request.
