@@ -13,6 +13,8 @@ test('a views block with viewField and defaultView is valid', () => {
   const { errors } = validateManifest('w', {
     ...base, viewField: 'mode', defaultView: 'a',
     views: { a: { src: 'a.html' }, b: { label: 'B', src: 'b.html' } },
+    /* viewField has to name a field the form renders, offering the view keys. */
+    fields: [{ key: 'mode', type: 'select', label: 'Mode', options: ['a', 'b'] }],
   });
   assert.deepEqual(errors, []);
 });

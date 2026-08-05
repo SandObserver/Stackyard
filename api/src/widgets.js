@@ -37,6 +37,41 @@ function _validateSiblingKeys(fields, where) {
   return errs;
 }
 
+/* Validate a field's "showIf". Shape only; whether it names a real sibling is
+   checked by _validateShowIfTargets, which needs the whole sibling list.
+
+   Nothing checked this before, and the ways it fails are all silent. A showIf
+   whose "field" names nothing resolves to undefined in visibleFieldKeys, so the
+   condition is never met and the field is hidden for good, which looks like a
+   missing feature rather than a typo. A showIf that is not an object at all
+   (showIf: true) also satisfies the repeated-key rule below while carrying no
+   condition, so both declarations of that key end up permanently hidden. */
+function _validateShowIf(f, where) {
+  if (f.showIf === undefined) return [];
+  const s = f.showIf;
+  if (!s || typeof s !== 'object' || Array.isArray(s)) return [`${where}: field "${f.key}" has a "showIf" that is not an object`];
+  const errs = [];
+  if (typeof s.field !== 'string' || !s.field) errs.push(`${where}: field "${f.key}" needs a non-empty "showIf.field"`);
+  if (s.equals === undefined && s.in === undefined) errs.push(`${where}: field "${f.key}" "showIf" needs "equals" or "in"`);
+  if (s.in !== undefined && (!Array.isArray(s.in) || !s.in.length)) errs.push(`${where}: field "${f.key}" "showIf.in" must be a non-empty array`);
+  return errs;
+}
+
+/* Every showIf must name one of its own siblings. Conditions are resolved
+   within a sibling set, so a group sub-field cannot depend on a top-level one
+   and naming it would hide the sub-field for good. */
+function _validateShowIfTargets(fields, where) {
+  const keys = new Set(fields.filter(f => f && typeof f.key === 'string' && f.key).map(f => f.key));
+  const errs = [];
+  for (const f of fields) {
+    const dep = f && f.showIf && typeof f.showIf === 'object' ? f.showIf.field : undefined;
+    if (typeof dep !== 'string' || !dep) continue;
+    if (!keys.has(dep)) errs.push(`${where}: field "${f.key}" has a "showIf" on "${dep}", which is not one of its sibling fields`);
+    else if (dep === f.key) errs.push(`${where}: field "${f.key}" has a "showIf" on itself`);
+  }
+  return errs;
+}
+
 /* Validate one field declaration. Recurses into group sub-fields. Returns an
    array of human-readable problems (empty = valid). Kept permissive: unknown
    extra keys are allowed so the format can grow without breaking older widgets. */
@@ -44,6 +79,7 @@ function _validateField(f, where, depth = 0) {
   const errs = [];
   if (!f || typeof f !== 'object') { errs.push(`${where}: field must be an object`); return errs; }
   if (typeof f.key !== 'string' || !f.key) errs.push(`${where}: field needs a non-empty "key"`);
+  errs.push(..._validateShowIf(f, where));
   if (!VALID_FIELDTYPES.has(f.type))        errs.push(`${where}: field "${f.key}" has unknown type "${f.type}"`);
   if (typeof f.label !== 'string' || !f.label) errs.push(`${where}: field "${f.key}" needs a "label"`);
   if ((f.type === 'select' || f.type === 'multiselect' || f.type === 'picklist') && !Array.isArray(f.options) && typeof f.optionsFrom !== 'string')
@@ -56,7 +92,39 @@ function _validateField(f, where, depth = 0) {
     else {
       f.fields.forEach((sf, i) => errs.push(..._validateField(sf, `${where}.${f.key}[${i}]`, depth + 1)));
       errs.push(..._validateSiblingKeys(f.fields, `${where}.${f.key}`));
+      errs.push(..._validateShowIfTargets(f.fields, `${where}.${f.key}`));
     }
+  }
+  return errs;
+}
+
+/* An option's stored value, for the two shapes a select accepts: a bare string,
+   or { value, label }. */
+const _optionValue = o => (o && typeof o === 'object' ? o.value : o);
+
+/* "viewField" names the config key holding the chosen view, so it has to be a
+   field the form actually renders, and the values that field offers have to be
+   the view keys. Neither was checked, and both fail silently: widget-types.js
+   reads widgetConfig[viewField], so a typo makes that permanently undefined and
+   the widget pins to defaultView with the selector doing nothing, while an
+   option with no matching view selects a view that does not exist.
+
+   Only a field declaring "options" is checked against the view keys. One using
+   "optionsFrom" fetches its choices at runtime, so there is nothing to compare
+   here. */
+function _validateViewField(m) {
+  const errs = [];
+  const fields = Array.isArray(m.fields) ? m.fields : [];
+  const field = fields.find(f => f && f.key === m.viewField);
+  if (!field) return [`"viewField" ("${m.viewField}") is not a declared field`];
+  if (!Array.isArray(field.options)) return errs;
+
+  const values = new Set(field.options.map(_optionValue).filter(v => typeof v === 'string'));
+  for (const vk of Object.keys(m.views)) {
+    if (!values.has(vk)) errs.push(`view "${vk}" cannot be selected: "${m.viewField}" offers no option with that value`);
+  }
+  for (const v of values) {
+    if (!Object.hasOwn(m.views, v)) errs.push(`"${m.viewField}" offers "${v}", which is not a declared view`);
   }
   return errs;
 }
@@ -79,6 +147,7 @@ function _validateManifest(name, m) {
     else {
       m.fields.forEach((f, i) => errs.push(..._validateField(f, `fields[${i}]`)));
       errs.push(..._validateSiblingKeys(m.fields, 'fields'));
+      errs.push(..._validateShowIfTargets(m.fields, 'fields'));
     }
   }
 
@@ -103,6 +172,7 @@ function _validateManifest(name, m) {
     if (!hasViews) errs.push('"viewField"/"defaultView" require a "views" block');
     else {
       if (m.viewField !== undefined && (typeof m.viewField !== 'string' || !m.viewField)) errs.push('"viewField" must be a non-empty string');
+      else if (typeof m.viewField === 'string') errs.push(..._validateViewField(m));
       if (m.defaultView !== undefined) {
         if (typeof m.defaultView !== 'string' || !m.defaultView) errs.push('"defaultView" must be a non-empty string');
         else if (!Object.hasOwn(m.views, m.defaultView)) errs.push(`"defaultView" ("${m.defaultView}") is not a declared view`);

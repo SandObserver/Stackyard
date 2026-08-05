@@ -75,6 +75,14 @@ matched against the `views` keys to choose the entry file. With no `views` block
 the entry file is `index.html`. A single-view widget whose file is not
 `index.html` still declares it as one view, with no `viewField`.
 
+`viewField` must name a field the manifest declares, and if that field lists
+`options`, its values and the `views` keys must be the same set. A manifest that
+breaks either rule is rejected, because both failures are otherwise silent: a
+`viewField` matching no field reads as permanently unset, so the widget pins to
+`defaultView` and the selector does nothing, and an option with no matching view
+selects a view that does not exist. A field using `optionsFrom` is not checked
+against the views, since its choices are fetched at runtime.
+
 ### Card background
 
 The card behind the widget is glass by default: dark, semi-transparent, blurred,
@@ -143,7 +151,7 @@ These keys can go on any field:
 | `optional` | If `true`, the field is not required to save. A required `secret` is only reported as missing when nothing is stored yet, since a blank input means "keep the stored value". |
 | `transient` | If `true`, the field is rendered and sent to an `optionsFrom` fetch but is left out of the saved config. Use it for a search box whose text only feeds a picker. Top-level fields only. |
 | `carries` | For `select` with `optionsFrom`: extra config keys this picker writes, supplied by the chosen option's `set` block. |
-| `showIf` | Show the field only when another field matches: `{ "field": "provider", "equals": "adguard" }`, or match several with `{ "field": "provider", "in": ["adguard", "pihole"] }`. Inside a `group`, the named field is the one in the same row. |
+| `showIf` | Show the field only when another field matches: `{ "field": "provider", "equals": "adguard" }`, or match several with `{ "field": "provider", "in": ["adguard", "pihole"] }`. Inside a `group`, the named field is the one in the same row. Must be an object naming one of the field's own siblings, with `equals` or a non-empty `in`; anything else is rejected, since a condition that cannot resolve hides the field for good rather than reporting itself. |
 | `optionsFrom` | For `select`: the name of a data endpoint that returns the option list at config time (see below). |
 | `variant` | For `select`: `"pills"` renders a radio group instead of a dropdown. |
 | `min` / `max` | For `group`: the fewest and most entries allowed. |
