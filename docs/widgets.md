@@ -281,7 +281,7 @@ and the app's TLS-skip setting.
 | property | what it is |
 |---|---|
 | `ctx.config` | The widget's saved config, including any secrets (server-side only). |
-| `ctx.settings` | Global non-secret dashboard settings. |
+| `ctx.settings` | A frozen copy of the dashboard settings shared with widgets. An allowlist, currently `stats` only (so `ctx.settings.stats?.diskMount`). Everything else, including `auth` and `server`, is withheld. To share another key, add it to `SHARED_KEYS` in `api/src/widget-settings.js` and document it here. |
 | `ctx.endpoint` | The endpoint name, set when serving `optionsFrom` or a multi-view widget; otherwise the default. |
 | `ctx.row` | For an `optionsFrom` fetch from a field inside a `group`, that row's values. `null` otherwise. |
 | `ctx.params` | Extra query parameters from the request, as a `URLSearchParams`. |
