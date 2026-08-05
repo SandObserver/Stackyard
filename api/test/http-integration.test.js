@@ -163,10 +163,27 @@ test('a widget type naming an inherited member is unknown, not data-less', async
   }
 });
 
-test('OPTIONS preflight returns 204 with CORS headers', async () => {
+/* P1-3: the CORS preflight was dead code. Access-Control-Allow-Origin was never
+   set anywhere, so no browser could ever accept the response, and the two
+   headers that were set went out on every request rather than only on OPTIONS.
+   Removing them also removes the auth gate's OPTIONS exemption, which was the
+   one wildcard route reachable without a session. */
+test('OPTIONS is no longer specially routed', async () => {
+  const r = await req('OPTIONS', '/api/config', { cookie: validCookie });
+  assert.equal(r.status, 404, 'it must fall through like any other unmatched method');
+});
+
+test('OPTIONS without a session is refused like every other method', async () => {
   const r = await req('OPTIONS', '/api/config');
-  assert.equal(r.status, 204);
-  assert.match(String(r.headers['access-control-allow-methods']), /GET/);
+  assert.equal(r.status, 401);
+});
+
+test('no response carries the dead CORS headers', async () => {
+  for (const [method, path] of [['GET', '/api/config'], ['GET', '/api/health'], ['OPTIONS', '/api/config']]) {
+    const r = await req(method, path, { cookie: validCookie });
+    assert.equal(r.headers['access-control-allow-methods'], undefined, `${method} ${path}`);
+    assert.equal(r.headers['access-control-allow-headers'], undefined, `${method} ${path}`);
+  }
 });
 
 test('a cross-origin write is rejected by the origin check', async () => {
