@@ -112,6 +112,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Prometheus exporters that declare `application/openmetrics-text` or
+  `text/plain; version=0.0.4` but emit no `# TYPE` comments are now parsed
+  instead of arriving as unusable raw text.
 - A service whose container is named `constructor`, `toString` or another
   built-in property name no longer reports healthy when that container does not
   exist.
