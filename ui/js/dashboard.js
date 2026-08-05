@@ -6,6 +6,7 @@ import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssU
 import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
 import { html, setHtml } from '/js/html.js?v=1';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1';
+import { pwStrength } from '/js/password-strength.js?v=1';
 import { sanitizeItemLinks } from '/js/link-url.js?v=1';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
@@ -318,21 +319,6 @@ async function pollHealth() {
   catch { if(++_healthFails>=2 && !healthStale){healthStale=true;refreshBadges();} }
 }
 
-function pwStrength(pw) {
-  const dim = 'rgba(255,255,255,.1)';
-  if (!pw) return { score:0, label:'', color:dim, ok:false };
-  if (pw.length < 8) return { score:1, label:'Too short, min 8 characters', color:'#ff453a', ok:false };
-  let score = 1;
-  if (pw.length >= 12) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  score = Math.min(4, score - 1);
-  const labels = ['Weak','Fair','Good','Strong'];
-  const colors = ['#ff9f0a','#ffd60a','#34c759','#34c759'];
-  return { score: score + 1, label: labels[score], color: colors[score], ok: score >= 1 };
-}
-
 function showSetupPrompt() {
   return new Promise(resolve => {
     const ov = document.createElement('div');
@@ -349,9 +335,9 @@ function showSetupPrompt() {
     const dim  = 'rgba(255,255,255,.1)';
 
     pw.addEventListener('input', () => {
-      const { score, label, color, ok } = pwStrength(pw.value);
+      const { score, labelKey, color, ok } = pwStrength(pw.value);
       bars.forEach((b, i) => { b.style.background = pw.value && i < score ? color : dim; });
-      hint.textContent = pw.value ? label : '';
+      hint.textContent = pw.value && labelKey ? t(labelKey) : '';
       hint.style.color = color;
       setB.disabled = !ok;
     });

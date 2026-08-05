@@ -112,6 +112,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The password strength meter no longer reads "undefined" for the strongest
+  passwords.
+- Password strength labels are now translated. They were always English, so a
+  translated dashboard showed an English word in the first-run prompt and inside
+  the "password too weak" message.
 - Prometheus exporters that declare `application/openmetrics-text` or
   `text/plain; version=0.0.4` but emit no `# TYPE` comments are now parsed
   instead of arriving as unusable raw text.

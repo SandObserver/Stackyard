@@ -183,6 +183,13 @@
     "set": "Establecer",
     "failed": "No se pudo establecer la contraseña."
   },
+  "pwStrength": {
+    "tooShort": "Demasiado corta, mínimo 8 caracteres",
+    "weak": "Débil",
+    "fair": "Aceptable",
+    "good": "Buena",
+    "strong": "Fuerte"
+  },
   "widget": {
     "loading": "Cargando",
     "unavailable": "No disponible",

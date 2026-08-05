@@ -183,6 +183,13 @@
     "set": "Définir",
     "failed": "Impossible de définir le mot de passe."
   },
+  "pwStrength": {
+    "tooShort": "Trop court, 8 caractères minimum",
+    "weak": "Faible",
+    "fair": "Moyen",
+    "good": "Bon",
+    "strong": "Fort"
+  },
   "widget": {
     "loading": "Chargement",
     "unavailable": "Indisponible",

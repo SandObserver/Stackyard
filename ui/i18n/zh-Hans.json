@@ -183,6 +183,13 @@
     "set": "设置",
     "failed": "无法设置密码。"
   },
+  "pwStrength": {
+    "tooShort": "太短，至少 8 个字符",
+    "weak": "弱",
+    "fair": "一般",
+    "good": "良好",
+    "strong": "强"
+  },
   "widget": {
     "loading": "加载中",
     "unavailable": "不可用",

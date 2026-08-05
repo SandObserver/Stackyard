@@ -183,6 +183,13 @@
     "set": "Set",
     "failed": "Could not set password."
   },
+  "pwStrength": {
+    "tooShort": "Too short, min 8 characters",
+    "weak": "Weak",
+    "fair": "Fair",
+    "good": "Good",
+    "strong": "Strong"
+  },
   "widget": {
     "loading": "Loading",
     "unavailable": "Unavailable",
