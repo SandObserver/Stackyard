@@ -15,7 +15,7 @@ export const state = {
   eid: null,
   saving: false,
   _settings: {},
-  _widgetReg: {},
+  _widgetReg: Object.create(null),
 
   ctype: 'app',
   siurl: '',

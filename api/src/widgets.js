@@ -20,7 +20,7 @@ let _registry = null;
    so every declaration of a repeated key has to carry a "showIf". */
 function _validateSiblingKeys(fields, where) {
   const errs = [];
-  const counts = {};
+  const counts = Object.create(null);
   for (const f of fields) {
     if (!f || typeof f.key !== 'string' || !f.key) continue;
     counts[f.key] = (counts[f.key] || 0) + 1;
@@ -105,7 +105,7 @@ function _validateManifest(name, m) {
       if (m.viewField !== undefined && (typeof m.viewField !== 'string' || !m.viewField)) errs.push('"viewField" must be a non-empty string');
       if (m.defaultView !== undefined) {
         if (typeof m.defaultView !== 'string' || !m.defaultView) errs.push('"defaultView" must be a non-empty string');
-        else if (!(m.defaultView in m.views)) errs.push(`"defaultView" ("${m.defaultView}") is not a declared view`);
+        else if (!Object.hasOwn(m.views, m.defaultView)) errs.push(`"defaultView" ("${m.defaultView}") is not a declared view`);
       }
     }
   }
@@ -118,9 +118,14 @@ function _validateManifest(name, m) {
    A missing directory, a non-folder entry, or a folder without widget.json is
    simply skipped: the legacy flat-file widgets coexist untouched, and an empty
    registry is a valid result. A malformed widget.json is skipped with a logged
-   reason rather than crashing the server. */
+   reason rather than crashing the server.
+
+   Null prototype: every caller looks a widget up by the `widgetType` stored in
+   config, so on an ordinary object `widgetType: "constructor"` returned a
+   truthy value that is not a registry entry, and the "unknown widget type"
+   branch never ran. Fixing it here fixes every lookup site at once. */
 function loadRegistry() {
-  const reg = {};
+  const reg = Object.create(null);
   let entries;
   try {
     entries = fs.readdirSync(WIDGETS_PATH, { withFileTypes: true });

@@ -129,3 +129,30 @@ test('a container the proxy does not know about is reported as unknown', async (
   assert.equal(r.unhealthy, true);
   assert.equal(r.state, 'unknown');
 });
+
+/* ── P6-8: the container map answered with inherited properties ──────────────
+   The map was an object literal keyed by container name, and looked up by the
+   name stored on the item. Every such object already carries "constructor",
+   "toString" and the rest, so an item naming one matched a truthy value that is
+   not a container entry: `unhealthy` read as undefined, and a container that
+   does not exist reported healthy. A null-prototype map has nothing to inherit. */
+
+test('an item naming an inherited member as its container is reported as unknown', async () => {
+  containers = [{ Names: ['/myapp'], State: 'running', Status: 'Up 3 days' }];
+  for (const name of ['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__']) {
+    configure({ container: name });
+    const r = (await health()).a1;
+    assert.equal(r.unhealthy, true, `${name} must not report healthy`);
+    assert.equal(r.state, 'unknown', name);
+  }
+});
+
+/* The same name arriving from the socket proxy has to be a usable entry, not a
+   prototype write that silently discards the container. */
+test('a container actually named __proto__ is matched, not discarded', async () => {
+  containers = [{ Names: ['/__proto__'], State: 'exited', Status: 'Exited (1)' }];
+  configure({ container: '__proto__' });
+  const r = (await health()).a1;
+  assert.equal(r.unhealthy, true);
+  assert.equal(r.state, 'exited');
+});

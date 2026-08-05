@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seedCarried, applyOptionSet, collectFieldValues, showIfMatches, requiredFieldMissing, sizesForView } from '../js/admin-logic.js';
+import { seedCarried as _seedCarried, applyOptionSet as _applyOptionSet,
+  collectFieldValues as _collectFieldValues, showIfMatches, requiredFieldMissing, sizesForView } from '../js/admin-logic.js';
+import { plain } from './plain.mjs';
+
+/* All three build null-prototype objects, because their keys are manifest
+   field keys. assert/strict compares prototypes, so the results are copied
+   onto an ordinary one and the expectations stay object literals. */
+const seedCarried = (...a) => plain(_seedCarried(...a));
+const applyOptionSet = (...a) => plain(_applyOptionSet(...a));
+const collectFieldValues = (...a) => plain(_collectFieldValues(...a));
 
 test('seedCarried takes only the declared keys that are present', () => {
   assert.deepEqual(seedCarried({ city: 'Ottawa', lat: 45.4, lon: -75.7 }, ['lat', 'lon']), { lat: 45.4, lon: -75.7 });

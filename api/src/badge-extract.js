@@ -15,7 +15,7 @@ function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 })
     out.push({ path: countPath, value: obj.length, label: `${path || 'root'} (count)` });
     const sample = obj.find(i => i && typeof i === 'object' && !Array.isArray(i));
     if (sample) {
-      const seen = {};
+      const seen = Object.create(null);
       for (const [field, val] of Object.entries(sample)) {
         if (_state.n > MAX_NODES) break;
         if (typeof val === 'boolean') {

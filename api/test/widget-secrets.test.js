@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { secretSpec, scrubWidgetSecrets, preserveWidgetSecrets } = require('../src/widget-secrets');
+const { plain } = require('../test-support/plain');
 
 const ENTRY = {
   manifest: {
@@ -18,7 +19,7 @@ const ENTRY = {
 test('secretSpec collects top-level and group secret keys', () => {
   const spec = secretSpec(ENTRY);
   assert.deepEqual(spec.topLevel, ['apiKey']);
-  assert.deepEqual(spec.groups, { accounts: ['token'] });
+  assert.deepEqual(plain(spec.groups), { accounts: ['token'] });
 });
 
 test('scrubWidgetSecrets replaces a top-level secret with a Set flag', () => {
@@ -103,8 +104,8 @@ const ENTRY2 = {
 
 test('secretSpec collects object secret keys', () => {
   const spec = secretSpec(ENTRY2);
-  assert.deepEqual(spec.objects, { network: ['pass'] });
-  assert.deepEqual(spec.groups, { services: ['token'] });
+  assert.deepEqual(plain(spec.objects), { network: ['pass'] });
+  assert.deepEqual(plain(spec.groups), { services: ['token'] });
 });
 
 test('scrubWidgetSecrets scrubs a secret nested in an object field', () => {
@@ -139,4 +140,43 @@ test('preserveWidgetSecrets matches group rows by id regardless of order', () =>
   assert.equal(newItem.widgetConfig.services[0].token, 'tok-b-new');
   assert.equal(newItem.widgetConfig.services[1].token, 'tok-a');
   assert.equal(newItem.widgetConfig.services[1].tokenSet, true);
+});
+
+/* ── P5-8: membership was tested with `in` ───────────────────────────────────
+   widgetConfig is a plain object read from disk, so `'toString' in wc` is true
+   for a key nobody ever stored. A widget declaring a secret field with such a
+   name therefore had a Set flag written for a value that does not exist, and on
+   save the stored value was never restored because the key looked present. */
+
+const INHERITED_ENTRY = {
+  manifest: {
+    fields: [
+      { key: 'toString', type: 'secret', label: 'Token' },
+      { key: 'accounts', type: 'group', label: 'Accounts', fields: [
+        { key: 'constructor', type: 'secret', label: 'Key' },
+      ] },
+    ],
+  },
+};
+
+test('scrub does not flag an inherited name as a stored secret', () => {
+  const item = { widgetType: 'x', widgetConfig: { host: 'example.com' } };
+  scrubWidgetSecrets(item, INHERITED_ENTRY);
+  assert.equal(item.widgetConfig.toStringSet, undefined, 'nothing was stored under that key');
+  assert.equal(item.widgetConfig.host, 'example.com');
+});
+
+test('preserve restores a secret whose key is an inherited name', () => {
+  const oldItem = { widgetType: 'x', widgetConfig: { toString: 'STORED' } };
+  const newItem = { widgetType: 'x', widgetConfig: { host: 'example.com' } };
+  preserveWidgetSecrets(newItem, oldItem, INHERITED_ENTRY);
+  assert.equal(newItem.widgetConfig.toString, 'STORED', 'the omitted secret must come back');
+  assert.equal(newItem.widgetConfig.toStringSet, true);
+});
+
+test('preserve restores a group-row secret whose key is an inherited name', () => {
+  const oldItem = { widgetType: 'x', widgetConfig: { accounts: [{ id: 1, constructor: 'ROW-SECRET' }] } };
+  const newItem = { widgetType: 'x', widgetConfig: { accounts: [{ id: 1 }] } };
+  preserveWidgetSecrets(newItem, oldItem, INHERITED_ENTRY);
+  assert.equal(newItem.widgetConfig.accounts[0].constructor, 'ROW-SECRET');
 });

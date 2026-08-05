@@ -40,12 +40,13 @@ test('parsePrometheus takes the last value when a series repeats', () => {
   assert.equal(parsePrometheus('a 1\na 2\na 3').a, 3);
 });
 
-/* A metric literally named __proto__ is discarded: the assignment reaches the
-   prototype setter and a primitive write through it is a no-op. Recorded so a
-   future change to the accumulator does not turn this into pollution. */
-test('parsePrometheus drops a __proto__ metric without polluting the prototype', () => {
+/* A metric literally named __proto__ is kept as an ordinary key. On a plain
+   object literal it was silently discarded, because a primitive written through
+   the prototype setter is a no-op. */
+test('parsePrometheus keeps a __proto__ metric without polluting the prototype', () => {
   const out = parsePrometheus('__proto__ 5\nreal 1');
-  assert.deepEqual(Object.keys(out), ['real']);
+  assert.deepEqual(Object.keys(out).sort(), ['__proto__', 'real']);
+  assert.equal(Object.getOwnPropertyDescriptor(out, '__proto__').value, 5);
   assert.equal({}.x, undefined);
   assert.equal(Object.prototype.x, undefined);
 });

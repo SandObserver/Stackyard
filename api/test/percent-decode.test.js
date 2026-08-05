@@ -29,6 +29,7 @@ const http = require('node:http');
 
 const { tryDecode, decodeOrRaw } = require('../src/percent-decode');
 const { parseCookies, hashPassword, makeToken } = require('../src/auth');
+const { plain } = require('../test-support/plain');
 
 /* Values decodeURIComponent throws on. */
 const MALFORMED = ['%', '%z', '%zz', '%2', 'a%', '%%', '%E0%A4%A', 'ok-%-then', '%C0%80'.slice(0, 5)];
@@ -71,7 +72,9 @@ test('both tolerate non-string input', () => {
 
 /* ── cookies ──────────────────────────────────────────────────────────────── */
 
-const cookies = header => parseCookies({ headers: { cookie: header } });
+/* Copied onto an ordinary prototype: parseCookies builds a null-prototype
+   object, since its keys are cookie names off the request. */
+const cookies = header => plain(parseCookies({ headers: { cookie: header } }));
 
 test('a malformed cookie value is kept rather than throwing', () => {
   assert.doesNotThrow(() => cookies('ds=%'));

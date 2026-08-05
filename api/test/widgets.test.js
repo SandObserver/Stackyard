@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const widgets = require('../src/widgets');
+const { plain } = require('../test-support/plain');
 
 function dir(name) { return { name, isDirectory: () => true }; }
 
@@ -54,13 +55,31 @@ test('loadRegistry skips a widget whose name does not match its folder', (t) => 
 
 test('loadRegistry survives invalid JSON without throwing', (t) => {
   mountFs(t, { good: '{ not valid json' });
-  assert.deepEqual(widgets.loadRegistry(), {});
+  assert.deepEqual(plain(widgets.loadRegistry()), {});
+});
+
+/* ── P5-8: the registry answered lookups with inherited properties ──────────
+   Every caller resolves a widget by the `widgetType` stored in config. On an
+   object literal that lookup found "constructor", "toString" and the rest, so a
+   config naming one got a truthy value that is not a registry entry and the
+   "unknown widget type" branch never ran: /api/widget-data answered 503 "widget
+   declares no data source" instead of 404, and widget-secrets treated the item
+   as recognised rather than withholding its config. */
+
+test('the registry does not answer a lookup for an inherited member', (t) => {
+  mountFs(t, { good: JSON.stringify({ name: 'good', label: 'Good', sizes: ['small'] }) });
+  const reg = widgets.loadRegistry();
+  for (const name of ['constructor', 'toString', 'valueOf', 'hasOwnProperty',
+    'isPrototypeOf', 'propertyIsEnumerable', '__proto__']) {
+    assert.equal(reg[name], undefined, name);
+  }
+  assert.ok(reg.good, 'and a real widget still resolves');
 });
 
 test('loadRegistry returns an empty registry when the directory is unreadable', (t) => {
   t.mock.method(process.stdout, 'write', () => true);
   t.mock.method(fs, 'readdirSync', () => { throw new Error('ENOENT'); });
-  assert.deepEqual(widgets.loadRegistry(), {});
+  assert.deepEqual(plain(widgets.loadRegistry()), {});
 });
 
 /* ── Field type validation ──────────────────────────────────────────────── */

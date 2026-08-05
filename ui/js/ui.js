@@ -17,7 +17,7 @@ const BEL      = () => _state.BEL;
 const goTo     = (...a) => _state.goTo(...a);
 const CB       = () => _state.CB;
 const st       = () => _state;
-const widgetReg = () => _state?.widgetReg || {};
+const widgetReg = () => _state?.widgetReg || Object.create(null);
 const mkWrap   = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
 /* Real safe-area insets in px. Standalone reports the status bar and home

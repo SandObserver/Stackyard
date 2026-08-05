@@ -79,7 +79,7 @@ function firstMalformedRow(item) {
    @returns {Record<string,string>} */
 function rowsToObject(rows) {
   /** @type {Record<string,string>} */
-  const out = {};
+  const out = Object.create(null);
   for (const r of toRows(rows)) {
     if (!r.key || r.value == null) continue;
     out[r.key] = r.value;

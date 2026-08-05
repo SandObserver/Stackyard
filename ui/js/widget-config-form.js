@@ -301,7 +301,10 @@ function _missingIn(built) {
    sub-fields of a single group row. Each row is independent, so a row's
    condition reads that row's own values. */
 function _wireShowIf(built) {
-  const liveByKey = {};
+  /* Null prototype: keyed by manifest field key, and a showIf naming
+     "toString" would otherwise resolve to Object.prototype.toString and be
+     called as if it were a field reader. */
+  const liveByKey = Object.create(null);
   for (const b of built) if (b.liveValue) liveByKey[b.field.key] = b.liveValue;
   const fields = built.map(b => b.field);
   const readValue = key => (liveByKey[key] ? liveByKey[key]() : undefined);

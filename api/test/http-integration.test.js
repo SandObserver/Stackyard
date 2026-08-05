@@ -30,7 +30,7 @@ const http = require('node:http');
 require('../src/routes');       // registers auth/config/health/badges/... + OPTIONS
 require('../src/widget-data');  // registers /api/widget-data/:id (pulls in widgets)
 const { dispatch, on } = require('../src/router');
-const { saveConfig } = require('../src/config');
+const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword, makeToken, clearAttempts } = require('../src/auth');
 
 /* Routes that fail on purpose, to prove the router turns a handler error into a
@@ -144,6 +144,23 @@ test('path parameters are extracted and routed', async () => {
   const r = await req('GET', '/api/widget-data/no-such-id', { cookie: validCookie });
   assert.equal(r.status, 404);
   assert.equal(r.body.error, 'widget not found');
+});
+
+/* P5-8: `widgetType` is stored config and is looked up in the registry. On an
+   object literal "constructor" resolved to a truthy value that is not an entry,
+   so the unknown-type branch was skipped and the answer was 503 "declares no
+   data source" rather than 404. */
+test('a widget type naming an inherited member is unknown, not data-less', async () => {
+  const cfg = loadConfig();
+  saveConfig({ ...cfg, items: [...(cfg.items || []),
+    { id: 'proto-w', type: 'widget', widgetType: 'constructor', widgetConfig: {} }] });
+  try {
+    const r = await req('GET', '/api/widget-data/proto-w', { cookie: validCookie });
+    assert.equal(r.status, 404);
+    assert.equal(r.body.error, 'unknown widget type');
+  } finally {
+    saveConfig(cfg);
+  }
 });
 
 test('OPTIONS preflight returns 204 with CORS headers', async () => {

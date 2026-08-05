@@ -7,7 +7,7 @@
 /* Seed the extra keys a picker owns from an already-saved config, so editing a
    widget without touching the picker does not drop them. */
 export function seedCarried(config, carryKeys) {
-  const out = {};
+  const out = Object.create(null);
   for (const k of carryKeys || []) if (config && config[k] !== undefined) out[k] = config[k];
   return out;
 }
@@ -15,7 +15,7 @@ export function seedCarried(config, carryKeys) {
 /* Fold a chosen option's `set` block into the carried values. An option with no
    `set`, or one naming keys the field did not declare, leaves them unchanged. */
 export function applyOptionSet(carried, option, carryKeys) {
-  const out = Object.assign({}, carried);
+  const out = Object.assign(Object.create(null), carried);
   if (!option || !option.set) return out;
   for (const k of carryKeys || []) if (option.set[k] !== undefined) out[k] = option.set[k];
   return out;
@@ -89,7 +89,7 @@ export function requiredFieldMissing(field, kv) {
    skipped, and transient fields are skipped unless the caller wants the draft
    that feeds an options fetch. */
 export function collectFieldValues(reads, { includeTransient = false } = {}) {
-  const out = {};
+  const out = Object.create(null);
   for (const r of reads) {
     const f = r.field;
     if (f.showIf && r.visible === false) continue;

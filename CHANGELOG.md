@@ -101,6 +101,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A service whose container is named `constructor`, `toString` or another
+  built-in property name no longer reports healthy when that container does not
+  exist.
+- A widget whose type is a built-in property name now reports as unknown instead
+  of "declares no data source".
+- XML and Prometheus responses no longer drop a field named `__proto__`, and a
+  field named after a built-in property name reads back its real value.
 - Widget status text is now translated. "Loading", "Unavailable", "No data" and
   the "5m ago" timestamps were always English, so a translated dashboard still
   showed English inside every widget.

@@ -1,10 +1,17 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  toRows, rowsToObject, requestParts,
+  toRows, rowsToObject: _rowsToObject, requestParts: _requestParts,
   scrubItemBadgeSecrets, preserveItemBadgeSecrets, migrateItemBadgeHeaders,
   droppedRowCount, firstMalformedRow,
 } = require('../src/badge-headers');
+const { plain } = require('../test-support/plain');
+
+/* Both build null-prototype objects, because their keys are header and param
+   names from stored config. assert/strict compares prototypes, so the results
+   are copied onto an ordinary one and the expectations stay object literals. */
+const rowsToObject = rows => plain(_rowsToObject(rows));
+const requestParts = item => plain(_requestParts(item));
 
 test('toRows converts the old object shape to non-secret rows', () => {
   assert.deepEqual(

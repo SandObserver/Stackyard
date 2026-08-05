@@ -1,14 +1,17 @@
 const { getRegistry } = require('./widgets');
 
 /* Collect the secret field keys a widget declares, from its manifest fields.
+   Membership below is tested with Object.hasOwn rather than `in`, because the
+   objects searched are widget config from disk and every one of them inherits
+   "constructor", "toString" and the rest, which `in` reports as present.
    Returns top-level secret keys and, for each repeatable group, the secret keys
    that appear inside one row of that group. Groups are not nested (the manifest
    validator forbids it), so one level is sufficient. */
 function secretSpec(entry) {
   const fields = (entry && entry.manifest && entry.manifest.fields) || [];
   const topLevel = [];
-  const groups = {};
-  const objects = {};
+  const groups = Object.create(null);
+  const objects = Object.create(null);
   const subSecrets = f => f.fields.filter(sf => sf && sf.type === 'secret' && sf.key).map(sf => sf.key);
   for (const f of fields) {
     if (!f || !f.key) continue;
@@ -40,21 +43,21 @@ function scrubWidgetSecrets(item, entry) {
   const { topLevel, groups, objects } = secretSpec(e);
 
   for (const k of topLevel) {
-    if (k in wc) { wc[k + 'Set'] = true; delete wc[k]; }
+    if (Object.hasOwn(wc, k)) { wc[k + 'Set'] = true; delete wc[k]; }
   }
   for (const [gk, subKeys] of Object.entries(groups)) {
     if (!Array.isArray(wc[gk])) continue;
     wc[gk] = wc[gk].map(row => {
       if (!row || typeof row !== 'object') return row;
       const out = { ...row };
-      for (const sk of subKeys) if (sk in out) { out[sk + 'Set'] = true; delete out[sk]; }
+      for (const sk of subKeys) if (Object.hasOwn(out, sk)) { out[sk + 'Set'] = true; delete out[sk]; }
       return out;
     });
   }
   for (const [ok, subKeys] of Object.entries(objects)) {
     const obj = wc[ok];
     if (!obj || typeof obj !== 'object') continue;
-    for (const sk of subKeys) if (sk in obj) { obj[sk + 'Set'] = true; delete obj[sk]; }
+    for (const sk of subKeys) if (Object.hasOwn(obj, sk)) { obj[sk + 'Set'] = true; delete obj[sk]; }
   }
 }
 
@@ -69,7 +72,7 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
   const { topLevel, groups, objects } = secretSpec(e);
 
   for (const k of topLevel) {
-    if (!(k in nwc) && owc[k] != null) nwc[k] = owc[k];
+    if (!Object.hasOwn(nwc, k) && owc[k] != null) nwc[k] = owc[k];
     if (nwc[k] != null) nwc[k + 'Set'] = true;
   }
   for (const [gk, subKeys] of Object.entries(groups)) {
@@ -81,7 +84,7 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
          deleting rows can't misassign a stored secret); fall back to position. */
       const oldRow = (row.id != null ? oldRows.find(r => r && r.id === row.id) : oldRows[i]) || {};
       for (const sk of subKeys) {
-        if (!(sk in row) && oldRow[sk] != null) row[sk] = oldRow[sk];
+        if (!Object.hasOwn(row, sk) && oldRow[sk] != null) row[sk] = oldRow[sk];
         if (row[sk] != null) row[sk + 'Set'] = true;
       }
     });
@@ -91,7 +94,7 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
     if (!nObj || typeof nObj !== 'object') continue;
     const oObj = (owc[ok] && typeof owc[ok] === 'object') ? owc[ok] : {};
     for (const sk of subKeys) {
-      if (!(sk in nObj) && oObj[sk] != null) nObj[sk] = oObj[sk];
+      if (!Object.hasOwn(nObj, sk) && oObj[sk] != null) nObj[sk] = oObj[sk];
       if (nObj[sk] != null) nObj[sk + 'Set'] = true;
     }
   }
