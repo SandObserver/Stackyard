@@ -19,9 +19,11 @@
       --page-ease:        cubic-bezier(.77,0,.175,1);
       /* The page behind the wallpaper, and the boot veil that hides the
          unstyled first paint. One colour, written out twice before. */
+      /* Darker than the system greys on purpose: it sits behind the wallpaper
+         and doubles as the veil over the unstyled first paint. */
       --bg-base:          #0d1117;
       /* The opaque card preset a widget can ask for by name. */
-      --card-dark:        #1c1c1e;
+      --card-dark:        var(--sy-gray6);
       --badge-red:        var(--danger);
       --badge-blue:       var(--sy-blue);
     }

@@ -1,7 +1,8 @@
 /* ── Browser support ─────────────────────────────────────────────────────────
-   Safari and iOS Safari 15.4 and newer, and current Chrome, Edge and Firefox.
-   There is no build step and no autoprefixer, so every vendor prefix in this
-   project is hand-written and has to earn its place.
+   Safari and iOS Safari 16.2 and newer, and current Chrome, Edge and Firefox.
+   16.2 is where color-mix() lands, which the chip tints in admin.css derive
+   from. There is no build step and no autoprefixer, so every vendor prefix in
+   this project is hand-written and has to earn its place.
 
    97 prefixes were removed once this floor was written down: the old flexbox
    set (-webkit-flex, -webkit-align-items, -webkit-justify-content and friends),
@@ -13,7 +14,7 @@
    an unprefixed property sits beside them; for the first two that is exactly
    the point.
 
-     -webkit-backdrop-filter     Safari needed the prefix well past 15.4, so the
+     -webkit-backdrop-filter     Safari needed the prefix well past 16.2, so the
                                  glass panels flatten without it.
      -webkit-text-size-adjust    Safari supports only the prefixed form.
      -webkit-line-clamp          With display:-webkit-box and -webkit-box-orient
@@ -30,19 +31,17 @@
    outside it fails rather than accumulating quietly. */
 
 /* ── Palette ─────────────────────────────────────────────────────────────────
-   Apple's system colours. Only the dark values, because the app has no light
-   mode: there is no prefers-color-scheme rule anywhere, both pages render on a
-   dark panel or a wallpaper, and inventing a light theme is not this change.
+   Apple's system colours, dark values. Both pages render on a dark panel or a
+   wallpaper, and no stylesheet declares a prefers-color-scheme rule.
 
    Each hue also has a -hi entry, Apple's increased-contrast value for the same
    colour in dark mode. The prefers-contrast block below swaps the whole palette
    over to them, so every role that points at a hue follows automatically.
 
-   Complete on purpose, including hues nothing currently uses. This is the
-   reference set: picking a colour should be reading this list, not sampling a
-   screenshot. Two of the previous tokens turned out to be values from this same
-   palette under other names, --sy-red being Pink and --sy-blue-badge being Blue,
-   both increased-contrast light. */
+   The full set is defined, including hues no rule currently references, so
+   choosing a colour means reading this list. Two earlier tokens were already
+   values from this palette under other names: --sy-red held Pink and
+   --sy-blue-badge held Blue, both increased-contrast light. */
 :root {
   --sy-red:#FF4245;      --sy-red-hi:#FF6165;
   --sy-orange:#FF9230;   --sy-orange-hi:#FFA056;
@@ -56,6 +55,15 @@
   --sy-purple:#DB34F2;   --sy-purple-hi:#EA8DFF;
   --sy-pink:#FF375F;     --sy-pink-hi:#FF8AC4;
   --sy-brown:#B78A66;    --sy-brown-hi:#DBA679;
+
+  /* systemGray through systemGray6. Every surface, border and dim text in the
+     app comes from these; gray6 is the darkest and gray the lightest. */
+  --sy-gray:#8E8E93;     --sy-gray-hi:#AEAEB2;
+  --sy-gray2:#636366;    --sy-gray2-hi:#7C7C80;
+  --sy-gray3:#48484A;    --sy-gray3-hi:#545456;
+  --sy-gray4:#3A3A3C;    --sy-gray4-hi:#444446;
+  --sy-gray5:#2C2C2E;    --sy-gray5-hi:#363638;
+  --sy-gray6:#1C1C1E;    --sy-gray6-hi:#242426;
 }
 
 /* ── Roles ───────────────────────────────────────────────────────────────────
@@ -126,6 +134,12 @@
     --sy-purple:var(--sy-purple-hi);
     --sy-pink:var(--sy-pink-hi);
     --sy-brown:var(--sy-brown-hi);
+    --sy-gray:var(--sy-gray-hi);
+    --sy-gray2:var(--sy-gray2-hi);
+    --sy-gray3:var(--sy-gray3-hi);
+    --sy-gray4:var(--sy-gray4-hi);
+    --sy-gray5:var(--sy-gray5-hi);
+    --sy-gray6:var(--sy-gray6-hi);
   }
 }
 

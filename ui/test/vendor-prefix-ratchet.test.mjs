@@ -7,18 +7,18 @@ import { fileURLToPath } from 'node:url';
 /* Vendor prefixes are hand-written here: no build step, no autoprefixer. So
    they accumulate, and nothing said which were still doing anything.
 
-   P12-1: there were 177, of which 97 were dead at the support floor now written
-   at the top of tokens.css (Safari and iOS Safari 15.4+, current Chrome, Edge
-   and Firefox). The tempting test, "does an unprefixed equivalent sit beside
+   P12-1: there were 177, of which 97 were dead at the support floor written at the top
+   of tokens.css (Safari and iOS Safari 16.2+, current Chrome, Edge and
+   Firefox). The tempting test, "does an unprefixed equivalent sit beside
    it", is wrong and would have removed -webkit-backdrop-filter, which Safari
-   needed well past 15.4 and which is paired with the unprefixed property in all
+   needed well past 16.2 and which is paired with the unprefixed property in all
    26 places. Membership of this list is a per-property judgement, so the list is
    explicit rather than derived.
 
    Adding a prefix that is not here fails. If it genuinely belongs, add it with
    a reason in tokens.css and a line here. */
 const ALLOWED = new Set([
-  '-webkit-backdrop-filter',      /* Safari needed it well past 15.4 */
+  '-webkit-backdrop-filter',      /* Safari needed it well past 16.2 */
   '-webkit-text-size-adjust',     /* Safari supports only the prefixed form */
   '-webkit-line-clamp',           /* the line-clamp idiom, with the two below */
   '-webkit-box-orient',
