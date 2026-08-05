@@ -183,6 +183,13 @@
     "set": "Festlegen",
     "failed": "Passwort konnte nicht festgelegt werden."
   },
+  "pwStrength": {
+    "tooShort": "Zu kurz, mindestens 8 Zeichen",
+    "weak": "Schwach",
+    "fair": "Mittel",
+    "good": "Gut",
+    "strong": "Stark"
+  },
   "widget": {
     "loading": "Wird geladen",
     "unavailable": "Nicht verfügbar",

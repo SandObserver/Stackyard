@@ -3,7 +3,8 @@
    screen and persists changes. Exports loadSettings (called on config load)
    and showBgFields (called by the background-type toggle). */
 import { toast, ag, ap } from '/js/admin-shared.js?v=6f21b1b8';
-import { wirePasswordStrength, pwStrength } from '/js/admin-auth.js?v=8cd76ea3';
+import { wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
+import { pwStrength } from '/js/password-strength.js?v=1';
 import { t } from '/js/i18n.js?v=1';
 import { authEnableBlocked } from '/js/admin-logic.js?v=1';
 
@@ -254,8 +255,8 @@ async function saveServer(){
       return;
     }
     if(pw){
-      const {ok,label}=pwStrength(pw);
-      if(!ok){toast(t('toast.pwWeak',{label}),'err');return;}
+      const {ok,labelKey}=pwStrength(pw);
+      if(!ok){toast(t('toast.pwWeak',{label:t(labelKey)}),'err');return;}
       await ap('/api/auth/set-password',{password:pw});
       _passwordSet=true;
       const pwEl=document.getElementById('sec-pw');

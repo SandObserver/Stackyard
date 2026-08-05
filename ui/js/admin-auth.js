@@ -2,6 +2,8 @@
    Login gate and password-strength meter. onLogin is injected by the caller
    (the main module's load()) so this module doesn't depend back on it. */
 import { ag, ap } from '/js/admin-shared.js?v=2';
+import { t } from '/js/i18n.js?v=1';
+import { pwStrength } from '/js/password-strength.js?v=1';
 
 export async function checkAuth(onLogin) {
   try {
@@ -40,21 +42,6 @@ function showLoginScreen(onLogin) {
   if (pw) { pw.focus(); pw.onkeydown = e => { if (e.key === 'Enter') doLogin(); }; }
 }
 
-export function pwStrength(pw) {
-  const dim = 'rgba(255,255,255,.1)';
-  if (!pw) return { score:0, label:'', color:dim, ok:false };
-  if (pw.length < 8) return { score:1, label:'Too short, min 8 characters', color:'#ff453a', ok:false };
-  let score = 1; /* starts at 1 once length >= 8 */
-  if (pw.length >= 12) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  score = Math.min(4, score - 1); /* 1..5 → 0..4 */
-  const labels = ['Weak','Fair','Good','Strong'];
-  const colors = ['#ff9f0a','#ffd60a','#34c759','#34c759'];
-  return { score: score + 1, label: labels[score], color: colors[score], ok: score >= 1 };
-}
-
 export function wirePasswordStrength(inputId, barsId, hintId) {
   const inp  = document.getElementById(inputId);
   const bars = document.getElementById(barsId)?.querySelectorAll('.pwbar');
@@ -62,8 +49,8 @@ export function wirePasswordStrength(inputId, barsId, hintId) {
   if (!inp || !bars?.length) return;
   const dim = 'rgba(255,255,255,.1)';
   inp.addEventListener('input', () => {
-    const { score, label, color } = pwStrength(inp.value);
+    const { score, labelKey, color } = pwStrength(inp.value);
     bars.forEach((b, i) => { b.style.background = inp.value && i < score ? color : dim; });
-    if (hint) { hint.textContent = inp.value ? label : ''; hint.style.color = color; }
+    if (hint) { hint.textContent = inp.value && labelKey ? t(labelKey) : ''; hint.style.color = color; }
   });
 }
