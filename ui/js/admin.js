@@ -526,7 +526,7 @@ function closeModal(){
   showListView();
   state.eid=null;
   state._wtype='custom';state._wsize='medium';
-  state._customUrl='';state._wlabel='';state._wgithubCfg={};state._wclockCfg={};state._iframeOpts={};
+  state._customUrl='';state._wlabel='';state._iframeOpts={};
 }
 
 
