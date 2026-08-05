@@ -126,11 +126,39 @@ function getHostIp() {
   try { return loadConfig().settings?.server?.hostIp || ''; } catch { return ''; }
 }
 
+/* A URL's hostname with any IPv6 brackets removed, so the address itself is
+   what gets range-checked. URL keeps IPv6 literals bracketed (e.g. [fd00::1]),
+   and isPrivateAddress does not recognise the bracketed form. */
+const bareHost = hostname => String(hostname ?? '').replace(/^\[|\]$/g, '');
+
+/* A dotless single-label name is a Docker service name, trusted on an internal
+   network. IPv6 literals are dotless too but contain colons, which is what
+   separates the two, and localhost is dotless but is a loopback address rather
+   than a service name, so both callers must decide it for themselves.
+
+   One definition, because there were two and they disagreed. guardSsrf had the
+   colon exclusion; the TLS-skip check was a bare `!hostname.includes('.')`, so
+   a public address like [2001:4860:4860::8888] took this path and had its
+   certificate left unverified.
+
+   Expects a bare host, so run bareHost first. */
+const isDockerServiceName = h => !!h && h !== 'localhost' && !h.includes('.') && !h.includes(':');
+
+/* Is this host on the internal network: loopback, a private address, or a
+   Docker service name. The verdict a caller draws from that differs, so only
+   the classification is shared: guardSsrf lets a service name through and
+   blocks loopback, while the TLS-skip check treats both as internal. */
+function isInternalHost(hostname) {
+  const h = bareHost(hostname);
+  if (!h) return false;
+  return h === 'localhost' || isDockerServiceName(h) || isPrivateAddress(h);
+}
+
 /* Fallback TLS-skip check for internal callers without per-app config.
    Only bypasses for private IPs, localhost, and Docker service names. */
 function shouldSkipTls(hostname, cfg) {
   if (cfg.settings?.server?.skipTlsVerify !== true) return false;
-  return !hostname.includes('.') || isPrivateAddress(hostname) || hostname === 'localhost';
+  return isInternalHost(hostname);
 }
 
 function rewriteUrl(raw) {
@@ -188,16 +216,13 @@ async function guardSsrf(rawUrl) {
      service-name allowance below and then connect to localhost. */
   const policy = urlPolicyError(u);
   if (policy) return { error: policy, ip: null };
-  /* URL keeps IPv6 literals bracketed (e.g. [fd00::1]); strip so the address
-     itself is what gets range-checked and resolved. */
-  const h = u.hostname.replace(/^\[|\]$/g, '');
-  /* localhost is dotless and would pass the service-name allowance below, so
-     block it here first. */
+  const h = bareHost(u.hostname);
+  /* localhost is a loopback address, not a service name, so block it before the
+     service-name allowance below. */
   if (!ALLOW_PRIVATE_IPS && h === 'localhost') return { error:`Blocked: ${h} is a private address.`, ip:null };
-  /* Dotless single-label names are Docker service names, trusted on internal
-     networks. IPv6 literals are also dotless but contain colons, so they must
-     not take this path: they fall through to the private-range check below. */
-  if (!h.includes('.') && !h.includes(':')) return { error:null, ip:null };
+  /* Docker service names are trusted on internal networks. An IPv6 literal is
+     excluded by isDockerServiceName and falls through to the range check. */
+  if (isDockerServiceName(h)) return { error:null, ip:null };
   /* The Docker host's own IP is trusted. Callers guard post-rewrite, so a
      mapped host-IP url has already become a dotless container name and returned
      above; this branch is what remains for a host-IP port with no portMap entry,
@@ -490,7 +515,7 @@ async function pingChecked(url, ms, skipTls) {
 module.exports = {
   fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError, statusDesc,
   urlPolicyError, ALLOWED_PROTOCOLS,
-  rewriteUrl, getHostIp, shouldSkipTls,
+  rewriteUrl, getHostIp, shouldSkipTls, isInternalHost, isDockerServiceName, bareHost,
   isPrivateAddress, isBlockedIPv4, embeddedIPv4, BLOCKED_IPV4,
   _internals: { fetchJSON, pingUrl, guardSsrf },
 };

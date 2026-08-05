@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- TLS verification is no longer skipped for a public IPv6 address when "skip TLS
+  verification" is on. Only private addresses, loopback and Docker service names
+  bypass it, as documented.
 - A widget's data function is now given only the dashboard settings shared with
   widgets, as a frozen copy, instead of the whole settings object. It previously
   received the session signing key and the password hash, and could modify them.
