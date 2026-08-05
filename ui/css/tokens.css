@@ -1,3 +1,34 @@
+/* ── Browser support ─────────────────────────────────────────────────────────
+   Safari and iOS Safari 15.4 and newer, and current Chrome, Edge and Firefox.
+   There is no build step and no autoprefixer, so every vendor prefix in this
+   project is hand-written and has to earn its place.
+
+   97 prefixes were removed once this floor was written down: the old flexbox
+   set (-webkit-flex, -webkit-align-items, -webkit-justify-content and friends),
+   -webkit-transform, -webkit-transition, -webkit-animation-*, all of which have
+   been unprefixed everywhere for a decade, and -webkit-overflow-scrolling,
+   which iOS has ignored since version 13.
+
+   These are the ones that stay, and why. Do not remove them on the grounds that
+   an unprefixed property sits beside them; for the first two that is exactly
+   the point.
+
+     -webkit-backdrop-filter     Safari needed the prefix well past 15.4, so the
+                                 glass panels flatten without it.
+     -webkit-text-size-adjust    Safari supports only the prefixed form.
+     -webkit-line-clamp          With display:-webkit-box and -webkit-box-orient
+     -webkit-box-orient          this is still the only portable way to clamp
+     display:-webkit-box         text to a number of lines.
+     -webkit-tap-highlight-color WebKit-only, no standard equivalent exists.
+     -webkit-font-smoothing      Non-standard, as is -moz-osx-font-smoothing.
+     -webkit-appearance          Required inside ::-webkit-slider-thumb.
+     ::-webkit-slider-thumb      Pseudo-elements with no standard equivalent, as
+     ::-moz-range-thumb          is the Firefox counterpart.
+     -webkit-user-select         Safari only dropped the prefix at 17.
+
+   ui/test/vendor-prefix-ratchet.test.mjs holds this list, so adding a prefix
+   outside it fails rather than accumulating quietly. */
+
 :root {
   --sy-red:#e7124d;
   --sy-blue:#4f6ef7;
@@ -25,9 +56,9 @@
    on; .01ms is effectively instant and still fires. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    -webkit-transition-duration: .01ms !important; transition-duration: .01ms !important;
-    -webkit-animation-duration: .01ms !important;  animation-duration: .01ms !important;
-    -webkit-animation-iteration-count: 1 !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
 }

@@ -7,6 +7,12 @@ Static files, no build step. Plain ES modules loaded with `?v=` cache tags. Two 
 
 The admin writes the whole config with `POST /api/config`; the dashboard reads it on load, polls it, and reloads on change.
 
+## Browser support
+
+Safari and iOS Safari 15.4 and newer, and current Chrome, Edge and Firefox.
+
+There is no build step and no autoprefixer, so every vendor prefix is written by hand. The support floor, the list of prefixes that are still needed and the reason each one stays are at the top of `ui/css/tokens.css`; `ui/test/vendor-prefix-ratchet.test.mjs` fails on any prefix outside that list. Note that "an unprefixed property sits beside it" is not a reason to remove one: `-webkit-backdrop-filter` is paired everywhere and still required.
+
 ## Widgets are iframes
 
 Every widget tile is a sandboxed `<iframe>` whose URL comes from `WIDGET_TYPES` in `widget-types.js`. The dashboard passes only URL, size, and title; the widget fetches its own data from `/api/widget-data/<id>` and is rendered at a fixed design size scaled to the tile. So widgets are isolated and drop-in: a new one is a folder plus one registry entry, with no dashboard changes.
