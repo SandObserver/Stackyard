@@ -29,12 +29,50 @@
    ui/test/vendor-prefix-ratchet.test.mjs holds this list, so adding a prefix
    outside it fails rather than accumulating quietly. */
 
+/* ── Palette ─────────────────────────────────────────────────────────────────
+   Apple's system colours. Only the dark values, because the app has no light
+   mode: there is no prefers-color-scheme rule anywhere, both pages render on a
+   dark panel or a wallpaper, and inventing a light theme is not this change.
+
+   Each hue also has a -hi entry, Apple's increased-contrast value for the same
+   colour in dark mode. The prefers-contrast block below swaps the whole palette
+   over to them, so every role that points at a hue follows automatically.
+
+   Complete on purpose, including hues nothing currently uses. This is the
+   reference set: picking a colour should be reading this list, not sampling a
+   screenshot. Two of the previous tokens turned out to be values from this same
+   palette under other names, --sy-red being Pink and --sy-blue-badge being Blue,
+   both increased-contrast light. */
 :root {
-  --sy-red:#e7124d;
-  --sy-blue:#4f6ef7;
-  --sy-blue-2:#6b84ff;
-  --sy-blue-badge:#1e6ef4;
-  --sy-green:#00a86b;
+  --sy-red:#FF4245;      --sy-red-hi:#FF6165;
+  --sy-orange:#FF9230;   --sy-orange-hi:#FFA056;
+  --sy-yellow:#FFD600;   --sy-yellow-hi:#FEDF43;
+  --sy-green:#30D158;    --sy-green-hi:#4AD968;
+  --sy-mint:#00DAC3;     --sy-mint-hi:#54DFCB;
+  --sy-teal:#00D2E0;     --sy-teal-hi:#3BDDEC;
+  --sy-cyan:#3CCFFE;     --sy-cyan-hi:#6DD9FF;
+  --sy-blue:#0091FF;     --sy-blue-hi:#5CB8FF;
+  --sy-indigo:#6D7CFF;   --sy-indigo-hi:#A7AAFF;
+  --sy-purple:#DB34F2;   --sy-purple-hi:#EA8DFF;
+  --sy-pink:#FF375F;     --sy-pink-hi:#FF8AC4;
+  --sy-brown:#B78A66;    --sy-brown-hi:#DBA679;
+}
+
+/* ── Roles ───────────────────────────────────────────────────────────────────
+   What a colour is for, pointing at what it is. A rule should name the role, so
+   changing the accent is one line here rather than a hunt through two
+   stylesheets, which is what it used to be: the accent was written as #027aff in
+   admin.css and #0a84ff in dashboard.css, two different blues for one job.
+
+   --accent-strong is the lighter accent, used both for accent-coloured text on
+   a dark panel and as the hover fill under an accent button. It is the palette's
+   own increased-contrast teal rather than a shade invented here. */
+:root {
+  --accent:        var(--sy-teal);
+  --accent-strong: var(--sy-teal-hi);
+  --danger:        var(--sy-red);
+  --success:       var(--sy-green);
+
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
 }
@@ -69,3 +107,46 @@
 @media (prefers-reduced-transparency: reduce) {
   * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
+
+/* Increased contrast: move the whole palette to Apple's increased-contrast dark
+   values. Every role points at a hue, so raising the hues raises the roles, and
+   each page's own surface and border tokens are raised in its own file where the
+   measurements against that page's background live. */
+@media (prefers-contrast: more) {
+  :root {
+    --sy-red:var(--sy-red-hi);
+    --sy-orange:var(--sy-orange-hi);
+    --sy-yellow:var(--sy-yellow-hi);
+    --sy-green:var(--sy-green-hi);
+    --sy-mint:var(--sy-mint-hi);
+    --sy-teal:var(--sy-teal-hi);
+    --sy-cyan:var(--sy-cyan-hi);
+    --sy-blue:var(--sy-blue-hi);
+    --sy-indigo:var(--sy-indigo-hi);
+    --sy-purple:var(--sy-purple-hi);
+    --sy-pink:var(--sy-pink-hi);
+    --sy-brown:var(--sy-brown-hi);
+  }
+}
+
+/* ── Rules both pages need ───────────────────────────────────────────────────
+   These were written out in full in admin.css and again in dashboard.css. The
+   wallpaper layer was the same ten declarations in both, so a change to how the
+   background image is drawn had to be made twice or the two pages drifted. Both
+   pages load this file, so here is the one place they can share. */
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0 }
+
+/* The wallpaper. Fixed behind everything, brightness driven by the setting, and
+   promoted to its own layer so scrolling does not repaint it. */
+html::before {
+  content:''; position:fixed; inset:0; z-index:0;
+  background-image:var(--bg-image,none);
+  background-size:cover; background-position:center;
+  pointer-events:none;
+  filter:brightness(var(--bg-brightness,1));
+  transform:translateZ(0);
+}
+
+/* Sits above the wallpaper. Each page adds its own sizing. */
+body { background:transparent; position:relative; z-index:1 }

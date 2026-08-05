@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The accent colour is now teal, and the interface uses Apple's system colours
+  throughout. Increased-contrast mode moves the whole palette to Apple's
+  higher-contrast values rather than only a few pieces of it.
 - Browser support is now stated: Safari and iOS Safari 15.4 and newer, and
   current Chrome, Edge and Firefox. See
   [docs/frontend.md](docs/frontend.md).
@@ -115,6 +118,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The mobile back button and the drag preview in Settings now draw their
+  background instead of appearing transparent.
 - The password strength meter no longer reads "undefined" for the strongest
   passwords.
 - Password strength labels are now translated. They were always English, so a
