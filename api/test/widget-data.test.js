@@ -6,6 +6,7 @@ process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-wd
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { normalizeBase, dataFnContext, resolveRow } = require('../src/widget-data');
+const { saveConfig } = require('../src/config');
 
 test('normalizeBase adds a scheme, trims, and strips trailing slashes', () => {
   assert.equal(normalizeBase('host:8080'), 'http://host:8080');
@@ -63,4 +64,24 @@ test('dataFnContext exposes the resolved row and null without one', () => {
   const wc = { slots: [{ url: 'a' }, { url: 'b' }] };
   assert.deepEqual(dataFnContext(wc, 'jobs', new URLSearchParams(), async () => {}, { key: 'slots', index: 0 }).row, { url: 'a' });
   assert.equal(dataFnContext(wc, '', new URLSearchParams(), async () => {}).row, null);
+});
+
+/* P5-3, P5-4: what a data function is actually handed. widget-settings.test.js
+   covers the filter itself; this pins the wiring, since the leak was in how ctx
+   was built and not in any rule. */
+test('the ctx a data function receives carries no secret settings', () => {
+  saveConfig({
+    items: [],
+    settings: {
+      auth: { enabled: true, secret: 'SIGNING-KEY', passwordHash: 'HASHED' },
+      server: { hostIp: '192.168.1.10', socketProxyUrl: 'http://socket:2375' },
+      stats: { diskMount: '/mnt/media' },
+    },
+  });
+  const ctx = dataFnContext({}, '', new URLSearchParams(), async () => {});
+  assert.equal(ctx.settings.stats.diskMount, '/mnt/media', 'the shared key must still arrive');
+  assert.equal(ctx.settings.auth, undefined);
+  assert.equal(ctx.settings.server, undefined);
+  assert.ok(!JSON.stringify(ctx.settings).includes('SIGNING-KEY'));
+  assert.ok(!JSON.stringify(ctx.settings).includes('HASHED'));
 });

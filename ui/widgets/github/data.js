@@ -1,7 +1,6 @@
 /* GitHub widget data function.
-   The token is shared across the dashboard (settings.githubToken), so it comes
-   from ctx.settings rather than the widget's own config. Returns { error } on
-   any failure so the widget can show a friendly message (never throws). */
+   Returns { error } on any failure so the widget can show a friendly message
+   (never throws). */
 
 module.exports = async function ({ config, fetchJSON }) {
   const token = config.githubToken;

@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- A widget's data function is now given only the dashboard settings shared with
+  widgets, as a frozen copy, instead of the whole settings object. It previously
+  received the session signing key and the password hash, and could modify them.
 - Error messages shown in the browser no longer include internal addresses,
   hostnames or server file paths. The full message is written to the container
   log instead.

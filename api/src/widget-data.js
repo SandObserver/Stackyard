@@ -8,6 +8,7 @@ const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
 const { widgetConfigMatchesSaved, RETYPE_MESSAGE } = require('./secret-scope');
 const { dispatchProvider } = require('./provider-dispatch');
+const { widgetSettings } = require('./widget-settings');
 const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
 const log = require('./log');
@@ -44,7 +45,10 @@ function resolveRow(wc, row) {
 function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
   const ctx = {
     config:   wc,                 /* full widgetConfig, including secrets (server-side only) */
-    settings: loadConfig().settings || {}, /* global non-secret config (e.g. stats.diskMount, networkInterface), server-side only */
+    /* Only the shared non-secret keys, as a frozen copy. See widget-settings.js:
+       the full settings object carries the session signing key and the password
+       hash, and handing over the live object let a data function rewrite them. */
+    settings: widgetSettings(loadConfig().settings),
     endpoint: endpoint,
     /* Set only for an optionsFrom fetch from inside a group: the row's own
        values, so a per-row picker reads the URL and key that row was given.
