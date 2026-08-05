@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const {
   makeToken, verifyToken, hashPassword, verifyPassword,
-  parseCookies, rateLimit, checkRateLimit, registerLoginAttempt, clearAttempts,
+  parseCookies, rateLimit, registerLoginAttempt, clearAttempts,
+  newSessionSecret, newSessionId,
   SESSION_MAX_AGE_MS,
 } = require('../src/auth');
 
@@ -90,11 +91,54 @@ test('rateLimit allows up to the max then blocks', () => {
   assert.ok(rateLimit(ip, 'k', 3, 60_000), '4th call should be blocked');
 });
 
+/* checkRateLimit is deliberately not exported: it is the read-only half of a
+   pair whose point is that the check and the increment happen together, so the
+   lockout is observed through registerLoginAttempt, which is what callers use. */
 test('registerLoginAttempt allows the limit then blocks, and reset on clear', () => {
   const ip = '203.0.113.2';
   for (let i = 0; i < 5; i++) assert.equal(registerLoginAttempt(ip), null, `attempt ${i + 1} should be allowed`);
   assert.ok(registerLoginAttempt(ip), '6th attempt should be blocked');
-  assert.ok(checkRateLimit(ip), 'should read as locked out');
+  assert.ok(registerLoginAttempt(ip), 'and stays blocked without counting further');
   clearAttempts(ip);
-  assert.equal(checkRateLimit(ip), null, 'clearAttempts should reset the lockout');
+  assert.equal(registerLoginAttempt(ip), null, 'clearAttempts should reset the lockout');
+});
+
+/* Being at the cap must not extend the window: a blocked attempt is refused
+   without being counted, which is what lets the lockout expire on schedule. */
+test('a blocked attempt is not itself counted', () => {
+  const ip = '203.0.113.9';
+  for (let i = 0; i < 5; i++) registerLoginAttempt(ip);
+  for (let i = 0; i < 3; i++) assert.ok(registerLoginAttempt(ip), 'still blocked');
+  clearAttempts(ip);
+  for (let i = 0; i < 5; i++) assert.equal(registerLoginAttempt(ip), null, `attempt ${i + 1} allowed again`);
+});
+
+/* ── P2-7, P2-9, P2-10: the session randoms were written inline ──────────────
+   crypto.randomBytes(32).toString('hex') appeared at four call sites and
+   randomBytes(24) at three, so the strength and encoding of the key that signs
+   every session was defined in four places. These pin the shape once, where the
+   definition now lives. */
+
+test('newSessionSecret is 32 bytes of hex', () => {
+  const s = newSessionSecret();
+  assert.match(s, /^[0-9a-f]{64}$/, '32 bytes, hex-encoded');
+});
+
+test('newSessionId is 24 bytes of hex', () => {
+  assert.match(newSessionId(), /^[0-9a-f]{48}$/);
+});
+
+test('neither generator repeats itself', () => {
+  const secrets = new Set(Array.from({ length: 200 }, newSessionSecret));
+  const ids = new Set(Array.from({ length: 200 }, newSessionId));
+  assert.equal(secrets.size, 200);
+  assert.equal(ids.size, 200);
+});
+
+/* getOrCreateSecret and rotateSessionSecret write config, so they are covered
+   in session-secret.test.js against a throwaway CONFIG_PATH. This file points at
+   a fixed path on purpose and must stay read-only. */
+
+test('checkRateLimit is not part of the public surface', () => {
+  assert.equal(require('../src/auth').checkRateLimit, undefined);
 });

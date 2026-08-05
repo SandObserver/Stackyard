@@ -1,10 +1,9 @@
-const crypto = require('crypto');
 const { on, json, readBody, checkOrigin, getIp } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { getOrCreateSecret, rotateSessionSecret, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession, authActive,
+const { getOrCreateSecret, rotateSessionSecret, newSessionSecret, newSessionId, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession, authActive,
   needsRehash } = require('../auth');
 
 on('GET', '/api/auth/check', (req, res) => {
@@ -51,7 +50,7 @@ on('POST', '/api/auth/login', async(req, res) => {
       }
     }
     const secret = getOrCreateSecret();
-    const sessionId = crypto.randomBytes(24).toString('hex');
+    const sessionId = newSessionId();
     setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
     json(res, 200, { ok:true });
   } catch(e) { fail(res, e, { status:400 }); }
@@ -79,14 +78,15 @@ on('POST', '/api/auth/set-password', async(req, res) => {
     cfg.settings.auth = cfg.settings.auth || {};
     cfg.settings.auth.passwordHash = await hashPassword(password);
     /* Rotating the secret is what signs other devices out; see
-       rotateSessionSecret. Done inline here because this handler is already
-       writing the same block. */
-    cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
+       rotateSessionSecret. Assigned here rather than calling it, because this
+       handler already holds the config and saves it once below; calling it
+       would load and write a second time. */
+    cfg.settings.auth.secret = newSessionSecret();
     cfg.settings.auth.enabled = true;
     cfg.settings.auth.setupPrompted = true;
     saveConfig(cfg);
     log.audit('password changed', {});
-    const sessionId = crypto.randomBytes(24).toString('hex');
+    const sessionId = newSessionId();
     setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret), isSecureRequest(req));
     json(res, 200, { ok:true });
   } catch(e) { fail(res, e, { status:400 }); }
@@ -109,7 +109,7 @@ on('POST', '/api/auth/revoke-sessions', (req, res) => {
   /* The caller's own token was signed with the old secret and is now invalid, so
      replace it in this response. Without this the person who pressed the button
      is the one signed out. */
-  const sessionId = crypto.randomBytes(24).toString('hex');
+  const sessionId = newSessionId();
   setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
   json(res, 200, { ok:true });
 });
@@ -142,7 +142,7 @@ on('POST', '/api/auth/toggle', async(req, res) => {
     }
     cfg.settings.auth.enabled = !!enabled;
     if (enabled && !cfg.settings.auth.secret)
-      cfg.settings.auth.secret = crypto.randomBytes(32).toString('hex');
+      cfg.settings.auth.secret = newSessionSecret();
     saveConfig(cfg);
     log.audit('auth toggled', { enabled: !!enabled });
     json(res, 200, { ok:true });
