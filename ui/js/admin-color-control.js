@@ -52,8 +52,22 @@ function _hsvToRgb(h, s, v) {
   return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
 function _hsvToHex(h,s,v){ return '#'+_hsvToRgb(h,s,v).map(n=>n.toString(16).padStart(2,'0')).join(''); }
-function _cssToHex(str){ try{ const c=document.createElement('canvas').getContext('2d'); c.fillStyle='#000'; c.fillStyle=str; const v=c.fillStyle;
-  if(/^#[0-9a-f]{6}$/i.test(v))return v;
+/* Any CSS colour to #rrggbb, lowercase, or null if it cannot be read.
+
+   The canvas is the parser: assigning to fillStyle normalises whatever CSS
+   accepts, which is how a named colour or an rgb() string is resolved without
+   a lookup table. It is also the expensive part, so a value that is already
+   #rrggbb skips it. Every preset and every stored colour in the app is that
+   shape, so in practice the canvas is now built only for input typed by hand.
+
+   Lowercased on the way out because that is what the canvas returned, and
+   callers compare these strings. */
+const _HEX6 = /^#[0-9a-f]{6}$/i;
+function _cssToHex(str){
+  const direct = String(str ?? '').trim();
+  if(_HEX6.test(direct)) return direct.toLowerCase();
+  try{ const c=document.createElement('canvas').getContext('2d'); c.fillStyle='#000'; c.fillStyle=str; const v=c.fillStyle;
+  if(_HEX6.test(v))return v;
   const m=v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
   return m?'#'+[m[1],m[2],m[3]].map(n=>(+n).toString(16).padStart(2,'0')).join(''):null; }catch{return null;} }
 function _hexToHsv(hex){ const h6=_cssToHex(hex); if(!h6)return null;
@@ -61,6 +75,11 @@ function _hexToHsv(hex){ const h6=_cssToHex(hex); if(!h6)return null;
   const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0;
   if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
   return {h:Math.round(h),s:Math.round(mx?d/mx*100:0),v:Math.round(mx*100)}; }
+
+/* Colour conversion, exported for tests only. Same reason proxy.js keeps an
+   _internals: these are pure and worth pinning, but nothing outside this module
+   should build a control's colours by hand. */
+export const _internals = { cssToHex: _cssToHex, hsvToRgb: _hsvToRgb, hexToHsv: _hexToHsv };
 
 export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semantic=false,swatchColors=CC_SWATCHES,label='Color'}={}){
   const isSem=v=>v==='dark'||v==='light';
