@@ -121,6 +121,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Widgets stop polling while the dashboard tab is in the background, and refresh
+  as soon as you return. A backgrounded dashboard was still calling every
+  service behind it, some as often as every ten seconds.
 - Widgets now keep showing their last reading through a brief outage instead of
   blanking, and say how long ago it was fresh. Half of them reported failures in
   a way that bypassed that handling.
