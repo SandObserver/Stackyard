@@ -297,7 +297,9 @@ and the app's TLS-skip setting.
 | `ctx.parsePrometheus(text)` | Parse a Prometheus metrics body into an object. Non-string input gives an empty object rather than throwing, as `ctx.fetchJSON`'s XML parsing does, so handing it an already-parsed body is not fatal. Uncapped: the response size limit already bounds it. |
 | `ctx.normalizeBase(raw)` | Tidy a user-entered base URL (add scheme, drop trailing slash). |
 | `ctx.metrics` | Host metrics for stats-style widgets: `{ cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds }`. Each is a function. `cpuSample()` is async and returns `{ cpu, iowait }` (both percentages) from a single sampling window; the rest return directly. `cpuTemp(zone)` defaults to zone 0, `diskStats(mountPoint)` takes a mount path. These read the host's `/proc` and `/sys`, so they report host-wide usage, not the container's cgroup limits. |
-| `ctx.dispatchProvider(handlers, opts)` | Run the handler for the provider the user picked, for a widget that supports several backends. `handlers` is `{ providerKey: async (ctx) => result }`. `opts.field` is the config field holding the key (default `provider`), `opts.default` the key to fall back to, `opts.onError(err, ctx)` an optional wrapper turning a thrown handler error into the widget's own error shape. |
+| `ctx.dispatchProvider(handlers, opts)` | Run the handler for the provider the user picked, for a widget that supports several backends. `handlers` is `{ providerKey: async (ctx) => result }`. `opts.field` is the config field holding the key (default `provider`), `opts.default` the key to fall back to. `opts.onError(err, ctx)` can turn a thrown handler error into a result, but rarely should: letting it propagate is what puts the failure through the poll lifecycle. |
+| `ctx.fail(message, opts)` | Report a failure. Throws, so it never returns. `message` is shown to the user as written; `opts.kind` is one of `ctx.KIND.*` (default `UPSTREAM`). See "Reporting a failure" below. |
+| `ctx.KIND` | The error kinds, for `ctx.fail`: `AUTH`, `INVALID`, `UPSTREAM`, `NETWORK`, `TIMEOUT`, `BLOCKED`, `INTERNAL`. See [api-errors.md](./api-errors.md). |
 | `ctx.log` | The structured logger. |
 
 For XML responses, `ctx.fetchJSON` returns `data` keyed by the root tag:
@@ -324,6 +326,43 @@ module.exports = async function (ctx) {
   // normal poll path
   return { items: [] };
 };
+```
+
+### Reporting a failure
+
+Throw. Never return an error as data.
+
+```js
+if (!config.apiKey) ctx.fail('API key not configured', { kind: ctx.KIND.INVALID });
+if (r.status === 401) ctx.fail('Auth failed — check the API key', { kind: ctx.KIND.AUTH });
+if (r.status >= 400) ctx.fail('Service HTTP ' + r.status);
+```
+
+A thrown failure becomes a 502, so `fetchData` rejects and the frontend's
+`poll()` treats it as a failure: it counts toward `staleAfter`, keeps the last
+good render in place and reports how long ago the data was fresh. A returned
+`{ error: ... }` arrives as HTTP 200, which `poll()` records as a success, so
+the retry and staleness handling never runs and the widget has to detect the
+error itself.
+
+There is no need to catch what `ctx.fetchJSON` throws. Letting it propagate is
+what classifies it: a refused connection is reported as a network failure, a
+deadline as a timeout, and the outbound guard as blocked, each with the right
+`kind`.
+
+`ctx.fail` rather than `throw new Error` because a thrown message is normally
+replaced with a generic one before it reaches the browser, since an arbitrary
+message may carry a hostname, a path or an upstream response body. `ctx.fail`
+says the message contains only words you chose, so it is sent as written. Do not
+build one by interpolating an upstream response or a caught error; a status code
+is fine.
+
+An error field *inside* a successful result is a different thing and is still
+correct. A widget reporting several services, or several disk bays, marks the
+one that failed and returns the rest:
+
+```js
+return { services: [{ name: 'VPN', error: 'Auth required' }, { name: 'Proxy', connected: true }] };
 ```
 
 ### Demo mode (demo.js)

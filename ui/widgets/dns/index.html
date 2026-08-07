@@ -115,11 +115,12 @@ async function gfetch() {
   let r; try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=stats`); } catch { throw new Error('Unreachable'); }
   if (!r.ok) {
     const d = await r.json().catch(()=>({}));
-    throw new Error(r.status===503?'Not configured':r.status===401?'Auth error':
-                    r.status===502?'Unreachable':d.error||('Error '+r.status));
+    /* Prefer what the server said: data.js reports in the widget's own words
+       ("Pi-hole auth failed — check password"), which beats a status mapping. */
+    throw new Error(d.error || (r.status===503?'Not configured':r.status===401?'Auth error':
+                    r.status===502?'Unreachable':'Error '+r.status));
   }
   const d = await r.json();
-  if (d && d.error) throw new Error(d.error);
   return d;
 }
 

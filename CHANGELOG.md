@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- A widget can no longer forward a raw error message from a service it contacted
+  straight to the browser. Such a message can name an internal address or path,
+  and 17 places did it.
 - TLS verification is no longer skipped for a public IPv6 address when "skip TLS
   verification" is on. Only private addresses, loopback and Docker service names
   bypass it, as documented.
@@ -118,6 +121,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Widgets now keep showing their last reading through a brief outage instead of
+  blanking, and say how long ago it was fresh. Half of them reported failures in
+  a way that bypassed that handling.
+- A widget reporting a problem with its configuration, such as a missing API key
+  or a rejected password, now says so instead of "Something went wrong."
 - The mobile back button and the drag preview in Settings now draw their
   background instead of appearing transparent.
 - The password strength meter no longer reads "undefined" for the strongest

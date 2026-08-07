@@ -177,15 +177,14 @@ async function kavitaLists(ctx) {
 }
 
 module.exports = async (ctx) => {
-  const provider = (ctx.config && ctx.config.provider) || 'audiobookshelf';
   const wantLists = ctx.endpoint === 'lists';
   return ctx.dispatchProvider({
     audiobookshelf: c => wantLists ? absLists(c)    : abs(c),
     komga:          c => wantLists ? komgaLists(c)  : komga(c),
     kavita:         c => wantLists ? kavitaLists(c) : kavita(c),
   }, {
+    /* No onError: a thrown failure propagates, so it is sanitised on the way out
+       and the poll lifecycle sees a failure rather than an empty success. */
     default: 'audiobookshelf',
-    onError: e => wantLists ? { options: [], error: e.message }
-                            : { provider, books: [], error: e.message },
   });
 };

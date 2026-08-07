@@ -8,15 +8,18 @@
                   that isn't registered. Matches the old "fall through to the
                   first provider" behavior.
    opts.onError : (err, ctx) => result. Wraps a thrown handler error into the
-                  widget's own error shape. When omitted, thrown errors are not
-                  caught here and propagate exactly as before, so adopting this
-                  in a widget whose handlers only ever return { error } (rather
-                  than throw) keeps behavior identical. */
+                  widget's own error shape. Rarely wanted: a handler failure
+                  should normally propagate, so it is sanitised on the way out
+                  and the widget's poll lifecycle sees a failure rather than a
+                  successful response carrying an error field. */
 async function dispatchProvider(ctx, handlers, opts = {}) {
   const field = opts.field || 'provider';
   const key = (ctx.config && ctx.config[field]) || opts.default;
   const fn = handlers[key] || (opts.default != null ? handlers[opts.default] : undefined);
-  if (typeof fn !== 'function') return { error: `Unknown ${field}: ${key}` };
+  /* The key comes from the widget's own config, not from an upstream, so it is
+     safe to name. Thrown rather than returned so it reaches the caller as a
+     failure like any other. */
+  if (typeof fn !== 'function') ctx.fail(`Unknown ${field}: ${key}`, { kind: ctx.KIND.INVALID });
   if (!opts.onError) return fn(ctx);
   try { return await fn(ctx); }
   catch (e) { return opts.onError(e, ctx); }

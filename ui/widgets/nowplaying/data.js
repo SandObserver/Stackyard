@@ -109,14 +109,10 @@ async function navidrome(ctx) {
 
 module.exports = async function (ctx) {
   const provider = ctx.config.provider || '';
-  try {
-    let sessions;
-    if (provider === 'plex') sessions = await plex(ctx);
-    else if (provider === 'jellyfin' || provider === 'emby') sessions = await jellyfinLike(ctx, provider);
-    else if (provider === 'navidrome') sessions = await navidrome(ctx);
-    else return { provider, sessions: [], error: 'No media server configured' };
-    return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX) };
-  } catch (e) {
-    return { provider, sessions: [], error: e.message };
-  }
+  let sessions;
+  if (provider === 'plex') sessions = await plex(ctx);
+  else if (provider === 'jellyfin' || provider === 'emby') sessions = await jellyfinLike(ctx, provider);
+  else if (provider === 'navidrome') sessions = await navidrome(ctx);
+  else ctx.fail('No media server configured', { kind: ctx.KIND.INVALID });
+  return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX) };
 };

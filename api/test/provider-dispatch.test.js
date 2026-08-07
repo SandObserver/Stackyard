@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
 const { dispatchProvider } = require('../src/provider-dispatch');
+const { errorParts } = require('../test-support/widget-ctx');
 
 const handlers = {
   a: async ctx => ({ picked: 'a', cfg: ctx.config }),
@@ -33,9 +34,9 @@ test('passes ctx through to the handler', async () => {
   assert.strictEqual(r.cfg, cfg);
 });
 
-test('returns an { error } when no handler matches and no default is given', async () => {
-  const r = await dispatchProvider({ config: { provider: 'zzz' } }, handlers, {});
-  assert.match(r.error, /Unknown provider: zzz/);
+test('fails when no handler matches and no default is given', async () => {
+  const ctx = { config: { provider: 'zzz' }, ...errorParts() };
+  await assert.rejects(dispatchProvider(ctx, handlers, {}), /Unknown provider: zzz/);
 });
 
 test('onError wraps a thrown handler error into the widget error shape', async () => {

@@ -22,12 +22,11 @@ function diskDevices(ctx) {
   }, { field: 'diskProvider', default: 'scrutiny' });
 }
 
-async function scrutinyDeviceOptions({ config, fetchJSON }) {
-  if (!config.scrutinyUrl) return { error: 'Enter the Scrutiny URL first.' };
-  let r;
-  try { r = await fetchJSON(diskBase(config.scrutinyUrl) + '/api/summary', { timeout: 8000 }); }
-  catch (e) { return { error: e.message }; }
-  if (r.status >= 400) return { error: 'Scrutiny HTTP ' + r.status };
+async function scrutinyDeviceOptions(ctx) {
+  const { config, fetchJSON } = ctx;
+  if (!config.scrutinyUrl) ctx.fail('Enter the Scrutiny URL first.', { kind: ctx.KIND.INVALID });
+  const r = await fetchJSON(diskBase(config.scrutinyUrl) + '/api/summary', { timeout: 8000 });
+  if (r.status >= 400) ctx.fail('Scrutiny HTTP ' + r.status);
   const summary = r.data?.data?.summary || {};
   const options = Object.values(summary)
     .filter(e => e.device?.device_id)
@@ -35,18 +34,22 @@ async function scrutinyDeviceOptions({ config, fetchJSON }) {
   return { options };
 }
 
-async function truenasPoolOptions({ config, fetchJSON }) {
-  if (!config.truenasUrl) return { error: 'Enter the TrueNAS URL first.' };
-  if (!config.truenasKey) return { error: 'Enter the TrueNAS API key first.' };
-  let r;
-  try {
-    r = await fetchJSON(diskBase(config.truenasUrl) + '/api/v2.0/pool', {
-      headers: { Authorization: 'Bearer ' + config.truenasKey }, timeout: 8000,
-    });
-  } catch (e) { return { error: e.message }; }
-  if (r.status === 401 || r.status === 403) return { error: 'TrueNAS auth failed, check API key' };
-  if (r.status === 404) return { error: 'TrueNAS REST API not found (removed in v26; supported on 25.x, or use Scrutiny)' };
-  if (r.status >= 400) return { error: 'TrueNAS HTTP ' + r.status };
+/* The three TrueNAS statuses worth naming, checked identically by the pool
+   picker and the disk-health view. */
+function truenasStatus(ctx, r) {
+  if (r.status === 401 || r.status === 403) ctx.fail('TrueNAS auth failed, check API key', { kind: ctx.KIND.AUTH });
+  if (r.status === 404) ctx.fail('TrueNAS REST API not found (removed in v26; supported on 25.x, or use Scrutiny)');
+  if (r.status >= 400) ctx.fail('TrueNAS HTTP ' + r.status);
+}
+
+async function truenasPoolOptions(ctx) {
+  const { config, fetchJSON } = ctx;
+  if (!config.truenasUrl) ctx.fail('Enter the TrueNAS URL first.', { kind: ctx.KIND.INVALID });
+  if (!config.truenasKey) ctx.fail('Enter the TrueNAS API key first.', { kind: ctx.KIND.INVALID });
+  const r = await fetchJSON(diskBase(config.truenasUrl) + '/api/v2.0/pool', {
+    headers: { Authorization: 'Bearer ' + config.truenasKey }, timeout: 8000,
+  });
+  truenasStatus(ctx, r);
   const options = (Array.isArray(r.data) ? r.data : [])
     .filter(p => p && p.name)
     .map(p => ({ value: p.name, label: p.name }));
@@ -93,16 +96,14 @@ async function systemSummary({ config, settings, metrics }) {
 
 /* Disk Health (Scrutiny): maps the widget's configured bays (device_id per bay)
    onto Scrutiny's SMART summary. */
-async function diskHealthScrutiny({ config, fetchJSON }) {
+async function diskHealthScrutiny(ctx) {
+  const { config, fetchJSON } = ctx;
   const url = config.scrutinyUrl;
-  if (!url) return { error: 'scrutinyUrl not configured' };
+  if (!url) ctx.fail('scrutinyUrl not configured', { kind: ctx.KIND.INVALID });
   const bays = config.bays || [];
 
-  let r;
-  try {
-    const base = url.includes('://') ? url.replace(/\/$/, '') : `http://${url.replace(/\/$/, '')}`;
-    r = await fetchJSON(base + '/api/summary', { timeout: 8000 });
-  } catch (e) { return { error: e.message }; }
+  const base = url.includes('://') ? url.replace(/\/$/, '') : `http://${url.replace(/\/$/, '')}`;
+  const r = await fetchJSON(base + '/api/summary', { timeout: 8000 });
 
   const summary = r.data?.data?.summary || {};
   const byId = {};
@@ -131,24 +132,19 @@ async function diskHealthScrutiny({ config, fetchJSON }) {
 /* Disk Health (TrueNAS): each configured bay holds a ZFS pool name; pools are
    matched from /api/v2.0/pool. A pool's `healthy` flag is the per-bay status
    (healthy → 0, unhealthy → 2, the same codes the widget uses for Scrutiny). */
-async function diskHealthTrueNas({ config, fetchJSON }) {
+async function diskHealthTrueNas(ctx) {
+  const { config, fetchJSON } = ctx;
   const url = config.truenasUrl;
   const key = config.truenasKey;
-  if (!url) return { error: 'truenasUrl not configured' };
-  if (!key) return { error: 'TrueNAS API key not configured' };
+  if (!url) ctx.fail('truenasUrl not configured', { kind: ctx.KIND.INVALID });
+  if (!key) ctx.fail('TrueNAS API key not configured', { kind: ctx.KIND.INVALID });
   const bays = config.bays || [];
 
-  let r;
-  try {
-    const base = url.includes('://') ? url.replace(/\/$/, '') : `http://${url.replace(/\/$/, '')}`;
-    r = await fetchJSON(base + '/api/v2.0/pool', {
-      headers: { Authorization: 'Bearer ' + key }, timeout: 8000,
-    });
-  } catch (e) { return { error: e.message }; }
-
-  if (r.status === 401 || r.status === 403) return { error: 'TrueNAS auth failed, check API key' };
-  if (r.status === 404) return { error: 'TrueNAS REST API not found (removed in v26; supported on 25.x, or use Scrutiny)' };
-  if (r.status >= 400) return { error: 'TrueNAS HTTP ' + r.status };
+  const base = url.includes('://') ? url.replace(/\/$/, '') : `http://${url.replace(/\/$/, '')}`;
+  const r = await fetchJSON(base + '/api/v2.0/pool', {
+    headers: { Authorization: 'Bearer ' + key }, timeout: 8000,
+  });
+  truenasStatus(ctx, r);
 
   const byName = {};
   (Array.isArray(r.data) ? r.data : []).forEach(p => { if (p && p.name) byName[p.name] = p; });
@@ -175,24 +171,23 @@ async function diskHealthTrueNas({ config, fetchJSON }) {
    provider lives in the nested network slot (config.network.provider), so this
    branches directly rather than via ctx.dispatchProvider, which reads a
    top-level field. Returns { download, upload, ping, failed, ts } or { error }. */
-async function speed({ config, fetchJSON, normalizeBase }) {
+async function speed(ctx) {
+  const { config, fetchJSON, normalizeBase } = ctx;
   const net = config.network;
-  if (!net?.enabled || !net?.url) return { error: 'network slot not configured' };
+  if (!net?.enabled || !net?.url) ctx.fail('network slot not configured', { kind: ctx.KIND.INVALID });
   const base = normalizeBase(net.url);
 
-  try {
-    if ((net.provider || 'myspeed') === 'speedtest-tracker') {
-      const r = await fetchJSON(base + '/api/speedtest/latest', { timeout: 8000 });
-      const row = r.data?.data;
-      if (!row?.id) return { error: 'No result from Speedtest Tracker' };
-      return { download: row.download, upload: row.upload, ping: row.ping, failed: row.failed || false, ts: row.created_at };
-    }
-    const headers = {};
-    if (net.myspeedPass) headers['x-password'] = net.myspeedPass;
-    const r = await fetchJSON(base + '/api/speedtests?limit=1', { headers, timeout: 8000 });
-    if (r.status === 401) return { error: 'MySpeed returned 401, check password' };
-    const row = Array.isArray(r.data) ? r.data[0] : r.data;
-    if (!row) return { error: 'No result from MySpeed' };
-    return { download: row.download, upload: row.upload, ping: row.ping, failed: false, ts: row.created };
-  } catch (e) { return { error: e.message }; }
+  if ((net.provider || 'myspeed') === 'speedtest-tracker') {
+    const r = await fetchJSON(base + '/api/speedtest/latest', { timeout: 8000 });
+    const row = r.data?.data;
+    if (!row?.id) ctx.fail('No result from Speedtest Tracker');
+    return { download: row.download, upload: row.upload, ping: row.ping, failed: row.failed || false, ts: row.created_at };
+  }
+  const headers = {};
+  if (net.myspeedPass) headers['x-password'] = net.myspeedPass;
+  const r = await fetchJSON(base + '/api/speedtests?limit=1', { headers, timeout: 8000 });
+  if (r.status === 401) ctx.fail('MySpeed returned 401, check password', { kind: ctx.KIND.AUTH });
+  const row = Array.isArray(r.data) ? r.data[0] : r.data;
+  if (!row) ctx.fail('No result from MySpeed');
+  return { download: row.download, upload: row.upload, ping: row.ping, failed: false, ts: row.created };
 }

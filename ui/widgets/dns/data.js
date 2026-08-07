@@ -18,56 +18,49 @@ module.exports = async function (ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const provider = config.provider || 'adguard';
 
-  if (provider === 'nextdns') return nextDns(config, fetchJSON);
+  if (provider === 'nextdns') return nextDns(ctx, config, fetchJSON);
 
   const base = normalizeBase(config.dnsUrl);
-  if (!base) return { error: 'Server URL not configured' };
+  if (!base) ctx.fail('Server URL not configured', { kind: ctx.KIND.INVALID });
 
-  if (provider === 'pihole')     return piHole(base, config, fetchJSON);
-  if (provider === 'technitium') return technitium(base, config, fetchJSON);
-  return adGuard(base, config, fetchJSON);
+  if (provider === 'pihole')     return piHole(ctx, base, config, fetchJSON);
+  if (provider === 'technitium') return technitium(ctx, base, config, fetchJSON);
+  return adGuard(ctx, base, config, fetchJSON);
 };
 
-async function adGuard(base, config, fetchJSON) {
+async function adGuard(ctx, base, config, fetchJSON) {
   const headers = {};
   /* Only attach Authorization when a credential is set (matches prior behavior). */
   if (config.dnsUser || config.dnsPass) {
     headers.Authorization = 'Basic ' +
       Buffer.from(`${config.dnsUser || ''}:${config.dnsPass || ''}`).toString('base64');
   }
-  let r;
-  try { r = await fetchJSON(base + '/control/stats', { headers, timeout: 8000 }); }
-  catch (e) { return { error: e.message }; }
-  if (r.status === 401 || r.status === 403) return { error: `AdGuard auth failed (${r.status}) — check credentials` };
-  if (r.status >= 400) return { error: 'AdGuard HTTP ' + r.status };
+  const r = await fetchJSON(base + '/control/stats', { headers, timeout: 8000 });
+  if (r.status === 401 || r.status === 403) ctx.fail(`AdGuard auth failed (${r.status}) — check credentials`, { kind: ctx.KIND.AUTH });
+  if (r.status >= 400) ctx.fail('AdGuard HTTP ' + r.status);
   return r.data; /* already in the shape the widget reads */
 }
 
-async function piHole(base, config, fetchJSON) {
+async function piHole(ctx, base, config, fetchJSON) {
   /* v6 uses session auth: POST /api/auth { password } -> session.sid, sent as
      the X-FTL-SID header. If no password is set, the API responds unauthenticated. */
   let sid = '';
   if (config.dnsPiholePassword) {
-    let a;
-    try {
-      a = await fetchJSON(base + '/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: config.dnsPiholePassword }),
-        timeout: 8000,
-      });
-    } catch (e) { return { error: e.message }; }
+    const a = await fetchJSON(base + '/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: config.dnsPiholePassword }),
+      timeout: 8000,
+    });
     const valid = a.data && a.data.session && a.data.session.valid;
-    if (a.status === 401 || valid === false) return { error: 'Pi-hole auth failed — check password' };
+    if (a.status === 401 || valid === false) ctx.fail('Pi-hole auth failed — check password', { kind: ctx.KIND.AUTH });
     sid = (a.data && a.data.session && a.data.session.sid) || '';
   }
   const headers = sid ? { 'X-FTL-SID': sid } : {};
 
-  let sum;
-  try { sum = await fetchJSON(base + '/api/stats/summary', { headers, timeout: 8000 }); }
-  catch (e) { return { error: e.message }; }
-  if (sum.status === 401) return { error: 'Pi-hole auth failed — set a password' };
-  if (sum.status >= 400 || !sum.data || !sum.data.queries) return { error: 'Pi-hole HTTP ' + sum.status };
+  const sum = await fetchJSON(base + '/api/stats/summary', { headers, timeout: 8000 });
+  if (sum.status === 401) ctx.fail('Pi-hole auth failed — set a password', { kind: ctx.KIND.AUTH });
+  if (sum.status >= 400 || !sum.data || !sum.data.queries) ctx.fail('Pi-hole HTTP ' + sum.status);
 
   const q = sum.data.queries;
   const out = {
@@ -104,18 +97,16 @@ async function piHole(base, config, fetchJSON) {
   return out;
 }
 
-async function technitium(base, config, fetchJSON) {
-  if (!config.dnsTechnitiumToken) return { error: 'API token not configured' };
+async function technitium(ctx, base, config, fetchJSON) {
+  if (!config.dnsTechnitiumToken) ctx.fail('API token not configured', { kind: ctx.KIND.INVALID });
   const url = base + '/api/dashboard/stats/get'
     + '?token=' + encodeURIComponent(config.dnsTechnitiumToken)
     + '&type=LastDay&utc=true';
-  let r;
-  try { r = await fetchJSON(url, { timeout: 8000 }); }
-  catch (e) { return { error: e.message }; }
-  if (r.status >= 400) return { error: 'Technitium HTTP ' + r.status };
+  const r = await fetchJSON(url, { timeout: 8000 });
+  if (r.status >= 400) ctx.fail('Technitium HTTP ' + r.status);
   /* Technitium wraps stats under response.stats and reports status as a string. */
   if (r.data && r.data.status && r.data.status !== 'ok') {
-    return { error: 'Technitium: ' + (r.data.errorMessage || r.data.status) };
+    ctx.fail('Technitium rejected the request — check the API token');
   }
   const s = (r.data && (r.data.stats || (r.data.response && r.data.response.stats))) || r.data || {};
   return {
@@ -125,17 +116,15 @@ async function technitium(base, config, fetchJSON) {
   };
 }
 
-async function nextDns(config, fetchJSON) {
-  if (!config.dnsNextdnsApiKey) return { error: 'API key not configured' };
-  if (!config.dnsNextdnsProfile) return { error: 'Profile ID not configured' };
+async function nextDns(ctx, config, fetchJSON) {
+  if (!config.dnsNextdnsApiKey) ctx.fail('API key not configured', { kind: ctx.KIND.INVALID });
+  if (!config.dnsNextdnsProfile) ctx.fail('Profile ID not configured', { kind: ctx.KIND.INVALID });
   const url = 'https://api.nextdns.io/profiles/'
     + encodeURIComponent(config.dnsNextdnsProfile) + '/analytics/status';
-  let r;
-  try { r = await fetchJSON(url, { headers: { 'X-Api-Key': config.dnsNextdnsApiKey }, timeout: 8000 }); }
-  catch (e) { return { error: e.message }; }
-  if (r.status === 401 || r.status === 403) return { error: 'NextDNS auth failed — check API key' };
-  if (r.status === 404) return { error: 'NextDNS profile not found' };
-  if (r.status >= 400) return { error: 'NextDNS HTTP ' + r.status };
+  const r = await fetchJSON(url, { headers: { 'X-Api-Key': config.dnsNextdnsApiKey }, timeout: 8000 });
+  if (r.status === 401 || r.status === 403) ctx.fail('NextDNS auth failed — check API key', { kind: ctx.KIND.AUTH });
+  if (r.status === 404) ctx.fail('NextDNS profile not found', { kind: ctx.KIND.INVALID });
+  if (r.status >= 400) ctx.fail('NextDNS HTTP ' + r.status);
 
   const rows = (r.data && Array.isArray(r.data.data)) ? r.data.data : [];
   let blocked = 0, allowed = 0;

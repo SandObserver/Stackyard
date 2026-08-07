@@ -36,6 +36,13 @@ A route may pass an explicit `error` when the text is one the code chose and can
 vouch for, such as `Set a password before turning authentication on.` Such a
 message must not name a host, an address or a path.
 
+A widget's `data.js` vouches for a message the same way, from further off, by
+throwing `ctx.fail(message)` rather than a plain `Error`. That is how
+`API key not configured` and `TrueNAS auth failed, check API key` survive: they
+tell someone what to change, where `Something went wrong.` does not. The same
+restriction applies, and a status code is the only thing that should ever be
+interpolated into one. See [widgets.md](./widgets.md#reporting-a-failure).
+
 ## Kinds
 
 `kind` is a closed set. Adding one is a deliberate contract change and needs a

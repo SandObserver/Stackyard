@@ -174,7 +174,6 @@ async function wfetch(){
   let r; try{ r=await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=weather`); }catch{ throw new Error('Unavailable'); }
   if(!r.ok){ const d=await r.json().catch(()=>({})); throw new Error(d.error||('Error '+r.status)); }
   const d=await r.json();
-  if(d&&d.error) throw new Error(d.error);
   return d;
 }
 async function boot(){
