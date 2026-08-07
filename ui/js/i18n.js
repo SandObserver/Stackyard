@@ -5,8 +5,8 @@
    LANGUAGES below and drop in ui/i18n/<code>.json. Translations can be authored
    by hand or by any external tool; nothing here depends on one. */
 
-import { setHtml } from '/js/html.js?v=1';
-import { i18nMarkup } from '/js/i18n-markup.js?v=1';
+import { setHtml } from '/js/html.js?v=ccec347c';
+import { i18nMarkup } from '/js/i18n-markup.js?v=875ccb8e';
 
 /* Languages offered in the admin selector. `dir` flips the document for
    right-to-left scripts. Persian ships once ui/i18n/fa.json and the RTL styling

@@ -1,9 +1,10 @@
 /* Admin UI: authentication.
    Login gate and password-strength meter. onLogin is injected by the caller
    (the main module's load()) so this module doesn't depend back on it. */
-import { ag, ap } from '/js/admin-shared.js?v=2';
-import { t } from '/js/i18n.js?v=1';
-import { pwStrength } from '/js/password-strength.js?v=1';
+import { ag, ap } from '/js/admin-shared.js?v=182410cc';
+import { t } from '/js/i18n.js?v=133a7aac';
+import { pwStrength } from '/js/password-strength.js?v=dab9978e';
+import { el, inp as inpById, qa } from '/js/utils.js?v=17424946';
 
 export async function checkAuth(onLogin) {
   try {
@@ -19,10 +20,10 @@ export async function checkAuth(onLogin) {
 }
 
 function showLoginScreen(onLogin) {
-  const s   = document.getElementById('login-screen');
-  const btn = document.getElementById('login-btn');
-  const pw  = document.getElementById('login-pw');
-  const err = document.getElementById('login-err');
+  const s   = el('login-screen');
+  const btn = inpById('login-btn');
+  const pw  = inpById('login-pw');
+  const err = el('login-err');
   if (s) s.style.display = 'flex';
 
   async function doLogin() {
@@ -43,9 +44,9 @@ function showLoginScreen(onLogin) {
 }
 
 export function wirePasswordStrength(inputId, barsId, hintId) {
-  const inp  = document.getElementById(inputId);
-  const bars = document.getElementById(barsId)?.querySelectorAll('.pwbar');
-  const hint = document.getElementById(hintId);
+  const inp  = inpById(inputId);
+  const bars = qa('.pwbar', el(barsId));
+  const hint = el(hintId);
   if (!inp || !bars?.length) return;
   const dim = 'rgba(255,255,255,.1)';
   inp.addEventListener('input', () => {

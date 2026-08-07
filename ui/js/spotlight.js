@@ -1,13 +1,17 @@
-import { mk, clr } from '/js/utils.js?v=1';
-import { wrapTab } from '/js/dialog.js?v=1';
-import { t } from '/js/i18n.js?v=1';
+import { mk, clr, el, inp as inpById, q, qa } from '/js/utils.js?v=17424946';
+import { wrapTab } from '/js/dialog.js?v=4ff94595';
+import { t } from '/js/i18n.js?v=133a7aac';
+
+/* Attached to the window so a re-open can undo the previous one. Not a
+   standard window property. */
+const _w = /** @type {any} */ (window);
 
 export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop, openFolderMobile }) {
-  const ov        = document.getElementById('spot');
-  const inp       = document.getElementById('sin');
-  const res       = document.getElementById('sres');
-  const cancelBtn = document.getElementById('spot-cancel');
-  const live      = document.getElementById('sres-live');
+  const ov        = el('spot');
+  const inp       = inpById('sin');
+  const res       = el('sres');
+  const cancelBtn = el('spot-cancel');
+  const live      = el('sres-live');
   let si = 0, cur = [];
   let lastFocused = null;
 
@@ -93,7 +97,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
   });
 
   /* Mobile: touch on bar focuses input */
-  const barEl = ov.querySelector('.spot-bar');
+  const barEl = q('.spot-bar', ov);
   if (MOB && barEl) {
     barEl.style.cssText = 'display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:18px;border:none;background:rgba(118,118,128,.30);box-sizing:border-box;';
     inp.style.cssText = 'flex:1;background:transparent;border:0;outline:none;font-size:17px;color:rgba(255,255,255,.92);font-family:inherit;caret-color:#007aff;-webkit-appearance:none;min-height:26px;padding:0;margin:0;';
@@ -120,7 +124,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     if (MOB && window.visualViewport) {
       window.visualViewport.addEventListener('resize', _applyKbLayout);
       window.visualViewport.addEventListener('scroll', _applyKbLayout);
-      window._spotVpCleanup = () => {
+      _w._spotVpCleanup = () => {
         window.visualViewport.removeEventListener('resize', _applyKbLayout);
         window.visualViewport.removeEventListener('scroll', _applyKbLayout);
       };
@@ -140,7 +144,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     inp.setAttribute('aria-expanded', 'false');
     inp.setAttribute('aria-activedescendant', '');
     if (lastFocused && lastFocused.focus) { try { lastFocused.focus(); } catch {} lastFocused = null; }
-    if (window._spotVpCleanup) { window._spotVpCleanup(); window._spotVpCleanup = null; }
+    if (_w._spotVpCleanup) { _w._spotVpCleanup(); _w._spotVpCleanup = null; }
     ov.style.bottom = '';
     setTimeout(() => {
       if (!ov.classList.contains('vis')) ov.classList.remove('on');
@@ -155,7 +159,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     cancelBtn.onclick = close;
     cancelBtn.addEventListener('touchend', e => { e.preventDefault(); close(); }, { passive: false });
   }
-  const mobCancelBtn = document.getElementById('spot-cancel-mob-btn');
+  const mobCancelBtn = el('spot-cancel-mob-btn');
   if (mobCancelBtn) {
     mobCancelBtn.onclick = close;
     mobCancelBtn.addEventListener('touchend', e => { e.preventDefault(); close(); }, { passive: false });
@@ -166,7 +170,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     if (e.key === 'Escape') { close(); return; }
     if (e.key === 'ArrowDown') { si = Math.min(si+1, cur.length-1); upd(); e.preventDefault(); return; }
     if (e.key === 'ArrowUp')   { si = Math.max(si-1, 0);            upd(); e.preventDefault(); return; }
-    if (e.key === 'Enter') { const s = res.querySelectorAll('.sr')[si]; if (s) { s.click(); close(); } }
+    if (e.key === 'Enter') { const s = qa('.sr', res)[si]; if (s) { s.click(); close(); } }
   };
 
   /* Desktop: any printable key opens spotlight */

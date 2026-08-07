@@ -129,7 +129,10 @@ test('both retry buttons attach their handler in code', () => {
   for (const [file, selector] of [['js/dashboard.js', '.api-error-btn'], ['js/admin.js', '.retry-btn']]) {
     const src = fs.readFileSync(path.join(root, file), 'utf8');
     assert.ok(src.includes(selector), `${file} should still render the retry button`);
-    assert.match(src, new RegExp(`querySelector\\('${selector.replace('.', '\\.')}'\\)\\?\\.addEventListener\\('click'`),
+    /* Either the raw lookup or the typed q() helper from utils.js; what matters
+       is that the handler is attached in code rather than as an inline
+       onclick, which the page's CSP forbids. */
+    assert.match(src, new RegExp(`(querySelector\\('${selector.replace('.', '\\.')}'\\)|q\\('${selector.replace('.', '\\.')}',[^)]*\\))\\?\\.addEventListener\\('click'`),
       `${file} should attach the retry handler with addEventListener`);
     assert.match(src, /location\.reload\(\)/, `${file} should still reload`);
   }

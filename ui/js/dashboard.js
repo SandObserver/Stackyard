@@ -1,17 +1,17 @@
 /* dashboard.js: boot, state, badge system, desktop layout, navigation, background, polling */
 
-import { loadLocalIcons, iconChain } from '/js/icons.js?v=bdd2c9eb';
-import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc, cardPreset } from '/js/widget-types.js?v=63bf4388';
-import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
-import { initSpotlight } from '/js/spotlight.js?v=fe2ca419';
-import { html, setHtml } from '/js/html.js?v=1';
-import { initI18n, t, currentLang } from '/js/i18n.js?v=1';
-import { pwStrength } from '/js/password-strength.js?v=1';
-import { sanitizeItemLinks } from '/js/link-url.js?v=1';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=97c62730';
-import { computeBadgeVisual } from '/js/badge-logic.js?v=f9f74262';
-import { configChanged } from '/js/dashboard-logic.js?v=1';
-import { trapFocus } from '/js/dialog.js?v=1';
+import { loadLocalIcons, iconChain } from '/js/icons.js?v=a0ea3e4b';
+import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc, cardPreset } from '/js/widget-types.js?v=13def718';
+import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl, el, q, qi, qa } from '/js/utils.js?v=17424946';
+import { initSpotlight } from '/js/spotlight.js?v=673a88df';
+import { html, setHtml } from '/js/html.js?v=ccec347c';
+import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
+import { pwStrength } from '/js/password-strength.js?v=dab9978e';
+import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=07fd9e2d';
+import { computeBadgeVisual } from '/js/badge-logic.js?v=d278c683';
+import { configChanged } from '/js/dashboard-logic.js?v=640430ba';
+import { trapFocus } from '/js/dialog.js?v=4ff94595';
 
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
 
@@ -193,18 +193,18 @@ function buildDesktop() {
   BEL.clear();
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0,4);
   const pages = paginate(); totalPages = pages.length;
-  const strip = document.getElementById('pages'); strip.innerHTML = '';
+  const strip = el('pages'); strip.innerHTML = '';
   pages.forEach(pageItems => {
     const p = mk('div'); p.className = 'page';
     const g = mk('div'); g.className = 'grid';
     for (const item of pageItems) g.appendChild(item.type === 'widget' ? mkWidget(item) : mkIcon(item));
     p.appendChild(g); strip.appendChild(p);
   });
-  const dots = document.getElementById('dots'); dots.innerHTML = '';
+  const dots = el('dots'); dots.innerHTML = '';
   pages.forEach((_, i) => dots.appendChild(mkDot(i, pages.length, 0, goTo)));
-  const dk = document.getElementById('dock'); dk.innerHTML = '';
+  const dk = el('dock'); dk.innerHTML = '';
   dock.forEach(item => dk.appendChild(mkDock(item)));
-  const ct = document.getElementById('ctrls'); ct.innerHTML = '';
+  const ct = el('ctrls'); ct.innerHTML = '';
 }
 
 /* Say which page is showing.
@@ -224,7 +224,7 @@ function buildDesktop() {
 
    @param {number} index @param {number} total */
 function announcePage(index, total) {
-  const live = document.getElementById('page-live');
+  const live = el('page-live');
   if (!live) return;
   live.textContent = t('home.pageAnnounce', { page: index + 1, total });
 }
@@ -239,7 +239,7 @@ function goTo(n, dotEls) {
   if (pg !== was) announcePage(pg, total);
   /* Keep stateRef.pg in sync so mobile swipe handler always has the correct current page */
   if (_stateRef) _stateRef.pg = pg;
-  const strip = document.getElementById('pages');
+  const strip = el('pages');
   const t = `translateX(-${pg*100}vw)`;
   strip.style.transform = strip.style.webkitTransform = t;
   strip.style.willChange = 'transform';
@@ -257,13 +257,13 @@ function goTo(n, dotEls) {
 /* After buildMobile, DOM may contain more pages than paginate() reported
    (overflow pages created by ensureSpace). Sync totalPages and dots from DOM. */
 function syncMobPages() {
-  const strip = document.getElementById('pages');
+  const strip = el('pages');
   const domCount = strip ? strip.children.length : 0;
   if (domCount <= totalPages) return; /* no overflow pages, nothing to fix */
   totalPages = domCount;
-  const dots = document.getElementById('dots'); dots.innerHTML = '';
+  const dots = el('dots'); dots.innerHTML = '';
   for (let i = 0; i < domCount; i++) dots.appendChild(mkDot(i, domCount, pg, goTo));
-  const pillDots = document.querySelector('.msp-dots');
+  const pillDots = q('.msp-dots');
   if (pillDots) {
     while (pillDots.children.length < domCount) {
       const d = document.createElement('div');
@@ -326,12 +326,12 @@ function showSetupPrompt() {
     setHtml(ov, html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`);
     document.body.appendChild(ov);
 
-    const pw   = ov.querySelector('#setup-pw');
-    const bars = ov.querySelectorAll('.pwbar');
-    const hint = ov.querySelector('#setup-hint');
-    const err  = ov.querySelector('#setup-err');
-    const setB = ov.querySelector('#setup-set');
-    const skip = ov.querySelector('#setup-skip');
+    const pw   = qi('#setup-pw', ov);
+    const bars = qa('.pwbar', ov);
+    const hint = q('#setup-hint', ov);
+    const err  = q('#setup-err', ov);
+    const setB = qi('#setup-set', ov);
+    const skip = qi('#setup-skip', ov);
     const dim  = 'rgba(255,255,255,.1)';
 
     pw.addEventListener('input', () => {
@@ -441,7 +441,7 @@ async function boot() {
   } else {
     buildDesktop();
     document.addEventListener('keydown', e => {
-      if (document.getElementById('spot').classList.contains('on')) return;
+      if (el('spot').classList.contains('on')) return;
       if (e.key === 'ArrowRight') goTo(pg+1);
       if (e.key === 'ArrowLeft')  goTo(pg-1);
     });

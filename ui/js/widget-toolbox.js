@@ -27,8 +27,8 @@
    time rather than re-derived per widget.
 */
 
-import { esc, html, setHtml } from '/js/html.js?v=1';
-import { isSafeLinkUrl } from '/js/link-url.js?v=1';
+import { esc, html, setHtml } from '/js/html.js?v=ccec347c';
+import { isSafeLinkUrl } from '/js/link-url.js?v=19038560';
 
 /* Re-exported so a widget frontend needs only this one import. */
 export { esc, html, setHtml };
@@ -63,7 +63,8 @@ export async function fetchData(endpoint, opts = {}) {
   const r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, { cache: 'no-store', signal: opts.signal });
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
-    const e = new Error(d.error || 'HTTP ' + r.status);
+    /* Carries the HTTP status so a caller can branch on it; see docs/api-errors.md. */
+    const e = /** @type {Error & { status?: number }} */ (new Error(d.error || 'HTTP ' + r.status));
     e.status = r.status;
     throw e;
   }
@@ -88,7 +89,7 @@ export function openUrl(href) {
 export async function getConfig() {
   const id = widgetId();
   const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`, { cache: 'no-store' });
-  if (!r.ok) { const e = new Error('config HTTP ' + r.status); e.status = r.status; throw e; }
+  if (!r.ok) { const e = /** @type {Error & { status?: number }} */ (new Error('config HTTP ' + r.status)); e.status = r.status; throw e; }
   return r.json();
 }
 
@@ -224,7 +225,7 @@ export function sinceLabel(ts) {
     : [Math.round(s / 86400), 'day'];
 
   try {
-    return new Intl.RelativeTimeFormat(_lang, { numeric: 'auto', style: 'short' }).format(-value, unit);
+    return new Intl.RelativeTimeFormat(_lang, { numeric: 'auto', style: 'short' }).format(-value, /** @type {Intl.RelativeTimeFormatUnit} */ (unit));
   } catch {
     /* An unknown locale tag, or a browser without it. */
     return `${value}${unit[0]} ago`;

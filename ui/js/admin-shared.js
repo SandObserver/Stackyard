@@ -1,14 +1,15 @@
 /* Admin UI: shared foundation.
    Stateless helpers and constants used across the admin modules. No shared
    mutable state lives here; that stays in the main module. */
-import { html, raw, setHtml } from '/js/html.js?v=1';
-import { nextActiveIndex } from '/js/admin-logic.js?v=1';
+import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
+import { nextActiveIndex } from '/js/admin-logic.js?v=056a11e9';
+import { el, qa, inp as inpById, q } from '/js/utils.js?v=17424946';
 
 export const API = '';
 
 let tt;
 export const toast = (m, t = 'ok') => {
-  const e = document.getElementById('toast'); e.textContent = m;
+  const e = el('toast'); e.textContent = m;
   e.className = `show ${t}`; clearTimeout(tt); tt = setTimeout(() => e.className = '', 3000);
 };
 
@@ -19,8 +20,13 @@ export const toast = (m, t = 'ok') => {
    reading the message text. `ag` now also reads the body on a non-401 failure,
    so its message is the server's sentence rather than a bare 'HTTP 500'; every
    caller only displays it. */
+/** An error carrying the API's structured fields. `kind` is the machine-readable
+    classification the backend sends alongside the message; see docs/api-errors.md.
+    @typedef {Error & { status?: number, kind?: string, detail?: Record<string, unknown> }} ApiError */
+
+/** @param {number} status @param {any} body @returns {ApiError} */
 function tagged(status, body) {
-  const e = new Error((body && body.error) || 'HTTP ' + status);
+  const e = /** @type {ApiError} */ (new Error((body && body.error) || 'HTTP ' + status));
   e.status = status;
   if (body && typeof body.kind === 'string') e.kind = body.kind;
   if (body && body.detail && typeof body.detail === 'object') e.detail = body.detail;
@@ -70,13 +76,16 @@ export const CHEV_SVG='<svg class="dd-chev" width="22" height="22" viewBox="0 0 
 /* Inline-edit row: click the pencil to reveal an input, commit on blur/Enter. */
 /* `root` lets a caller wire a subtree that is not in the document yet; it
    defaults to the document, which is where every id-based caller looks. */
+/** @param {string} rowId @param {string} inputId
+    @param {{ type?: string, placeholder?: string,
+              onCommit?: (value: string) => void, root?: ParentNode }} [opts] */
 export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = '', onCommit, root = document } = {}) {
-  const byId = id => (root === document ? document.getElementById(id) : root.querySelector('#' + CSS.escape(id)));
+  const byId = id => (root === document ? el(id) : root.querySelector('#' + CSS.escape(id)));
   const row = byId(rowId);
-  const inp = byId(inputId);
+  const inp = /** @type {HTMLInputElement} */ (byId(inputId));
   if (!row || !inp) return;
-  const valEl = row.querySelector('.rv');
-  const pen = row.querySelector('.pe');
+  const valEl = q('.rv', row);
+  const pen = q('.pe', row);
   if (!valEl || !pen) return;
 
   inp.type = type;
@@ -106,7 +115,7 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
      the whole value, not just a 28px pencil. */
   valEl.addEventListener('click', open);
   inp.addEventListener('blur', commit);
-  inp.addEventListener('keydown', e => {
+  inp.addEventListener('keydown', /** @param {KeyboardEvent} e */ e => {
     if (e.key === 'Enter') { e.preventDefault(); commit(); }
     if (e.key === 'Escape') { e.preventDefault(); row.classList.remove('editing'); }
   });
@@ -117,7 +126,7 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
    interaction WAI-ARIA expects: roving tabindex, arrows, Home/End, Enter/Space,
    Escape, and outside-click close. onToggle(li) runs for an activated option. */
 export function wireChecklist(dd, btn, list, onToggle) {
-  const opts = () => [...list.querySelectorAll('li[role="option"]')];
+  const opts = () => qa('li[role="option"]', list);
   let active = -1;
 
   const setActive = i => {
@@ -180,7 +189,7 @@ export function _secretRow(host, { rowId, inpId, label, req, opt, isSet, hidden,
   const row = document.createElement('div'); row.className = 'row ie-row'; row.id = rowId; row.hidden = !!hidden;
   setHtml(row, html`<span class="rl">${label}${req ? html` <span class="req">*</span>` : ''}${opt ? html` <span class="opt-span">(optional)</span>` : ''}</span><span class="rv${isSet ? '' : ' is-ph'}">${disp}</span><input id="${inpId}" type="password" autocomplete="new-password" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button>`);
   host.appendChild(row);
-  const rv = row.querySelector('.rv'), inp = document.getElementById(inpId), pe = row.querySelector('.pe');
+  const rv = q('.rv', row), inp = inpById(inpId), pe = q('.pe', row);
   const open = () => { row.classList.add('editing'); inp.style.display = 'block'; inp.focus(); };
   const commit = () => { row.classList.remove('editing'); inp.style.display = 'none'; const has = !!inp.value; rv.textContent = has ? 'New value set' : disp; rv.classList.toggle('is-ph', !(has || isSet)); };
   pe.addEventListener('click', open); rv.addEventListener('click', open);

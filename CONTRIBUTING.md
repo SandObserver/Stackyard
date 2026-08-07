@@ -14,7 +14,14 @@ The frontend is static; edit files under `ui/` and reload. The API has tests (No
 
 ```
 cd api && node --test
+cd ui/test && node --test
+npm install && npm run lint && npm run typecheck && npm run typecheck:ui
 ```
+
+`npm run typecheck:ui` typechecks every module under `ui/js` from its JSDoc, with
+no build step and nothing emitted. It has to stay clean. A new module needs two
+entries in `tsconfig.frontend.json`, the plain path and the `?v=*` form, because
+TypeScript allows one wildcard per pattern.
 
 `?v=` cache-busting hashes are recomputed at build time; don't edit them by hand.
 

@@ -55,7 +55,7 @@ test('the shared action runs every check the project has', () => {
     'node --test',                               /* frontend */
     'npm run lint',
     'npm run typecheck',
-    'npm run paths:ui',
+    'npm run typecheck:ui',
     'bump-cache-busting.js --check',
     'docker build',
   ]) {

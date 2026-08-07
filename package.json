@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "biome lint .",
     "typecheck": "tsc -p tsconfig.json",
-    "paths:ui": "tsc -p tsconfig.frontend.json"
+    "typecheck:ui": "tsc -p tsconfig.frontend.json"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.6",
