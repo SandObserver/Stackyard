@@ -7,10 +7,10 @@
    relative to the rewrite is a change we can see rather than one we discover in
    production. Do not "fix" an assertion here to make a refactor pass. If one of
    these fails, the behaviour changed and that is the thing to look at. */
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-rewrite-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const dir = tmpDir('rewrite');
 process.env.CONFIG_PATH = path.join(dir, 'apps.json');
 fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({
   items: [],

@@ -13,22 +13,22 @@
    literal "..\\..\\etc\\passwd.svg". That could never escape the icons directory,
    which is the part that matters, but it made for a confusing file to find. */
 
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
 
 /* Set before anything under src/ is required: ICONS_PATH and CONFIG_PATH are
    read once when those modules load. */
-const uploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-upload-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const uploadDir = tmpDir('upload');
 process.env.ICONS_PATH = uploadDir;
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-upcfg-')), 'apps.json');
+process.env.CONFIG_PATH = path.join(tmpDir('upcfg'), 'apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { safeIconName } = require('../src/routes/icons.js');
 
-const dir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'sy-icons-'));
+const dir = () => tmpDir('icons');
 const touch = (d, name) => fs.writeFileSync(path.join(d, name), 'x');
 
 /* ── not overwriting ──────────────────────────────────────────────────────── */

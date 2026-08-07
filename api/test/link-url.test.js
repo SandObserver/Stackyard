@@ -15,6 +15,7 @@
    browser's module directly now, so there is one definition. That only works if
    the file stays free of anything only a browser has, which is what loading it
    here proves. */
+const { tmpDir, tmpPath } = require('../test-support/tmp');
 
 const path = require('node:path');
 const fs = require('node:fs');
@@ -163,10 +164,9 @@ test('sanitizeItemLinks tolerates junk', () => {
 /* ── the save path ────────────────────────────────────────────────────────── */
 
 test('a config save is rejected when an item carries an unsafe link', async () => {
-  const os = require('node:os');
-  const fs = require('node:fs');
+    const fs = require('node:fs');
   const http = require('node:http');
-  process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-link-')), 'apps.json');
+  process.env.CONFIG_PATH = path.join(tmpDir('link'), 'apps.json');
 
   require('../src/routes');
   const { dispatch } = require('../src/router');
@@ -213,7 +213,7 @@ test('a config save is rejected when a badge row is malformed', async () => {
   const os = require('node:os');
   const fs = require('node:fs');
   const http = require('node:http');
-  process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-rows-')), 'apps.json');
+  process.env.CONFIG_PATH = path.join(tmpDir('rows'), 'apps.json');
 
   require('../src/routes');
   const { dispatch } = require('../src/router');
@@ -261,7 +261,7 @@ test('a config save is rejected when two items share an id', async () => {
   const os = require('node:os');
   const fs = require('node:fs');
   const http = require('node:http');
-  process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-dup-')), 'apps.json');
+  process.env.CONFIG_PATH = path.join(tmpDir('dup'), 'apps.json');
 
   require('../src/routes');
   const { dispatch } = require('../src/router');

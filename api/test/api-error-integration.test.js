@@ -5,12 +5,12 @@
    file deliberately runs with the guard on, and the flag is read once at module
    load, so the two cannot share a process. */
 
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
 
 process.env.ALLOW_PRIVATE_IPS = 'true';
-const _tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-apierr-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const _tmp = tmpDir('apierr');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
 fs.mkdirSync(process.env.WIDGETS_PATH, { recursive: true });

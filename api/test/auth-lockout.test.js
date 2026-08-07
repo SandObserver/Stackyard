@@ -13,11 +13,10 @@
    not honoured on its own, and starts being honoured again the moment a password
    exists. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
-const _tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-lockout-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const _tmp = tmpDir('lockout');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 
 const { test, before, after, beforeEach } = require('node:test');

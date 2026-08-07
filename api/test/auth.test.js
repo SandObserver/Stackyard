@@ -1,4 +1,5 @@
-process.env.CONFIG_PATH = '/tmp/stackyard-auth-test-nonexistent.json';
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = tmpPath('apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

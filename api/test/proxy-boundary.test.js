@@ -4,7 +4,9 @@
    Point config at a nonexistent path so loadConfig falls back to an empty config
    (no host IP, no port map) and ALLOW_PRIVATE_IPS stays off, so 127.0.0.1 is a
    private address the guard is expected to block. */
-process.env.CONFIG_PATH = '/tmp/stackyard-boundary-test-nonexistent.json';
+const path = require('node:path');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = tmpPath('apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

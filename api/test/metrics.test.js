@@ -1,6 +1,6 @@
+const fs = require('node:fs');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
 const metrics = require('../src/metrics');
 
 test('ramPercent computes used percentage from meminfo', (t) => {

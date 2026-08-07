@@ -12,10 +12,10 @@
    Pi-hole password", so WidgetError carries a message its author vouched for.
    ctx.fail is how a data.js throws one. */
 
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-werr-')), 'apps.json');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('werr'), 'apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

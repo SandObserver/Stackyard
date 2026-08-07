@@ -1,6 +1,8 @@
 /* Point config at a nonexistent path so loadConfig falls back to an empty
    config (no host IP, no port map), which keeps these tests hermetic. */
-process.env.CONFIG_PATH = '/tmp/stackyard-proxy-test-nonexistent.json';
+const path = require('node:path');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = tmpPath('apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

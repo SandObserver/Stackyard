@@ -1,9 +1,10 @@
-const os = require('node:os');
-const path = require('node:path');
 const fs = require('node:fs');
 
-/* Use a real temp file so loadConfig/saveConfig persistence can be exercised. */
-const TMP = path.join(os.tmpdir(), `stackyard-config-test-${process.pid}.json`);
+/* Use a real temp file so loadConfig/saveConfig persistence can be exercised.
+   The pid used to keep concurrent runs apart, but the file still outlived the
+   process; tmpPath gives a fresh one that is removed on exit. */
+const { tmpPath } = require('../test-support/tmp');
+const TMP = tmpPath('apps.json', 'config');
 process.env.CONFIG_PATH = TMP;
 
 const { test, after } = require('node:test');

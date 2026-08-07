@@ -21,12 +21,11 @@
    Legacy hashes must keep verifying, and must be rewritten on the next
    successful login, or they would sit in the old format forever. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 const crypto = require('node:crypto');
 
-const _tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-hash-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const _tmp = tmpDir('hash');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 
 const { test, before, after, beforeEach } = require('node:test');

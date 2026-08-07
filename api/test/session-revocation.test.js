@@ -15,11 +15,10 @@
    has to reissue its cookie in the same response, or the person who pressed the
    button is the one signed out. That is the property most of these tests check. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-revoke-')), 'apps.json');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('revoke'), 'apps.json');
 
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');

@@ -7,13 +7,12 @@
 
    Needs ALLOW_PRIVATE_IPS so the stubs are reachable, hence its own process. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
 process.env.ALLOW_PRIVATE_IPS = 'true';
 process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
-const _tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-scope-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const _tmp = tmpDir('scope');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 
 const { test, before, after } = require('node:test');

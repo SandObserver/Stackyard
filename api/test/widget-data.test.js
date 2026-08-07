@@ -1,7 +1,6 @@
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-wd-')), 'apps.json');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('wd'), 'apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
