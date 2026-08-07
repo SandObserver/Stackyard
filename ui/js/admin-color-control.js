@@ -18,9 +18,39 @@ const _ccIco={
   brLo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 5V3M12 21v-2M5 12H3M21 12h-2M6.5 6.5 5.4 5.4M18.6 18.6l-1.1-1.1M17.5 6.5l1.1-1.1M5.4 18.6l1.1-1.1"/></svg>',
   brHi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="5"/><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4"/></svg>',
 };
-function _hsvToRgb(h,s,v){ s/=100;v/=100; const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c; let r,g,b; h%=360; if(h<0)h+=360;
-  if(h<60)[r,g,b]=[c,x,0];else if(h<120)[r,g,b]=[x,c,0];else if(h<180)[r,g,b]=[0,c,x];else if(h<240)[r,g,b]=[0,x,c];else if(h<300)[r,g,b]=[x,0,c];else[r,g,b]=[c,0,x];
-  return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)]; }
+/* HSV to RGB, the standard chroma construction. `c` is the chroma, `x` the
+   second-largest channel, `m` the amount every channel is lifted by so the
+   brightest one lands on `v`. The sextant of the colour wheel `h` falls in
+   decides which channel takes which.
+
+   The hue is normalised first. It used to be normalised after `x` was computed,
+   so a negative hue mixed a wrapped sextant with an unwrapped `x` and could
+   produce a negative channel: h=-30 gave [255, 0, -127], which formats as the
+   invalid "#ff00-7f". Not reachable today, since the slider is bounded and
+   _hexToHsv already returns 0..360, but only by luck of the callers.
+
+   @param {number} h 0..360 @param {number} s 0..100 @param {number} v 0..100
+   @returns {[number, number, number]} each 0..255 */
+function _hsvToRgb(h, s, v) {
+  h %= 360;
+  if (h < 0) h += 360;
+  s /= 100;
+  v /= 100;
+
+  const c = v * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = v - c;
+
+  let r, g, b;
+  if      (h <  60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else              [r, g, b] = [c, 0, x];
+
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
 function _hsvToHex(h,s,v){ return '#'+_hsvToRgb(h,s,v).map(n=>n.toString(16).padStart(2,'0')).join(''); }
 function _cssToHex(str){ try{ const c=document.createElement('canvas').getContext('2d'); c.fillStyle='#000'; c.fillStyle=str; const v=c.fillStyle;
   if(/^#[0-9a-f]{6}$/i.test(v))return v;

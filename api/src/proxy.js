@@ -422,9 +422,17 @@ const PING_ERRORS = Object.freeze({
   CERT_HAS_EXPIRED:                 'The certificate has expired.',
 });
 
-/** @param {any} e @returns {string} */
+/* Node puts the socket or TLS failure on `err.code`. Typed `unknown` because
+   anything can be thrown, so the shape is checked rather than assumed. */
+/** @param {unknown} e @returns {string|undefined} */
+const errCode = e => (e && typeof e === 'object' && 'code' in e && typeof e.code === 'string' ? e.code : undefined);
+
+/** @param {unknown} e @returns {string} */
+const errMessage = e => (e instanceof Error ? e.message : String(e));
+
+/** @param {unknown} e @returns {string} */
 function pingErrorText(e) {
-  return PING_ERRORS[e && e.code] || 'Could not reach the service.';
+  return PING_ERRORS[errCode(e) ?? ''] || 'Could not reach the service.';
 }
 
 function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
@@ -463,9 +471,15 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
          and this result is returned to the browser as-is by /api/ping. The code
          is kept, since it is what distinguishes a refusal from a DNS failure and
          carries no address; the message is not. The full text is logged. */
-      req.on('error',   (/** @type {any} */ e) => {
-        log.warn('ping failed', { url: `${opts.protocol}//${opts.hostname}${opts.path || ''}`, error: e.message });
-        dl.settle(resolve, { ok:false, status:0, error: pingErrorText(e), code: e.code });
+      req.on('error',   (/** @type {unknown} */ e) => {
+        /* Built from the parsed URL, not from `opts`: request options carry no
+           protocol, so this used to log "undefined//host/path", and no port,
+           so two services on one host were indistinguishable. `u.origin` is
+           scheme, host and port, and excludes any credentials in the
+           authority; the query string is left off because it can carry an API
+           key. */
+        log.warn('ping failed', { url: u.origin + (opts.path || ''), error: errMessage(e) });
+        dl.settle(resolve, { ok:false, status:0, error: pingErrorText(e), code: errCode(e) });
       });
       req.end();
     };

@@ -143,8 +143,8 @@ function classify(e) {
 
 /* Build the response body. Kept separate from sending it so routes that already
    have a shaped body (`{ ok:false, ... }`) can merge the fields in. */
-/* @param {any} e
-   @param {{ kind?: string, detail?: Record<string, unknown>, error?: string }} [overrides] */
+/** @param {unknown} e
+    @param {{ kind?: string, detail?: Record<string, unknown>, error?: string }} [overrides] */
 /* What the browser is told, chosen by kind rather than taken from the error.
 
    The message an operating system produces names the thing that failed:
@@ -206,21 +206,24 @@ function errorBody(e, overrides = {}) {
 /* Send a classified error. `status` is the fallback; an error carrying its own
    `status` (SsrfBlockedError's 403) keeps it, which preserves the behaviour of
    the `json(res, e.status || 502, ...)` idiom this replaces. */
-/* @param {import('http').ServerResponse} res
-   @param {any} e
-   @param {{ status?: number, kind?: string, detail?: Record<string, unknown>,
-             error?: string, extra?: Record<string, unknown> }} [opts] */
+/** @param {import('http').ServerResponse} res
+    @param {unknown} e
+    @param {{ status?: number, kind?: string, detail?: Record<string, unknown>,
+              error?: string, extra?: Record<string, unknown> }} [opts] */
 function fail(res, e, opts = {}) {
   const { status = 502, kind, detail, error, extra } = opts;
-  const code = (e && e.status) || status;
+  /* Anything can be thrown, so the shape is checked rather than assumed. */
+  const thrown = /** @type {{ status?: unknown, message?: unknown }} */ (
+    e && typeof e === 'object' ? e : {});
+  const code = (typeof thrown.status === 'number' && thrown.status) || status;
   const body = errorBody(e, { kind, detail, error });
 
   /* Logged here rather than at each call site. The response no longer carries
      the original message, so this is the only remaining record of what actually
      failed, and leaving it to every caller to remember would guarantee some of
      them did not. */
-  if (e && e.message && e.message !== body.error) {
-    log.error('request failed', { kind: body.kind, status: code, error: e.message });
+  if (typeof thrown.message === 'string' && thrown.message && thrown.message !== body.error) {
+    log.error('request failed', { kind: body.kind, status: code, error: thrown.message });
   }
 
   json(res, code, Object.assign({}, extra, body));
