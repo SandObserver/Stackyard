@@ -38,7 +38,6 @@ let current = 'en';
 /** The locale in use. Widgets are iframes that do not load this module, so the
     dashboard reads it here and passes it on their URL. */
 export const currentLang = () => current;
-let revMap = Object.create(null);  /* English source text -> localized text, for dynamic markup */
 
 function flatten(obj, prefix, out) {
   for (const k of Object.keys(obj || {})) {
@@ -66,11 +65,6 @@ export async function initI18n(code) {
   const loaded = code === 'en' ? base : await fetchCatalog(code);
   active = loaded || base;
   current = (loaded && code !== 'en') ? code : 'en';
-  revMap = Object.create(null);
-  for (const k of Object.keys(base)) {
-    const en = base[k];
-    if (typeof en === 'string' && en) revMap[en] = (typeof active[k] === 'string' && active[k]) ? active[k] : en;
-  }
   const el = document.documentElement;
   el.setAttribute('lang', current);
   el.setAttribute('dir', dirFor(current));
@@ -93,26 +87,6 @@ function translateDOM(root) {
   root.querySelectorAll('[data-i18n-html]').forEach(el => { setHtml(el, i18nMarkup(t(el.getAttribute('data-i18n-html')))); });
   root.querySelectorAll('[data-i18n-ph]').forEach(el => { el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph'))); });
   root.querySelectorAll('[data-i18n-al]').forEach(el => { el.setAttribute('aria-label', t(el.getAttribute('data-i18n-al'))); });
-}
-
-/* Translate dynamically-built markup (e.g. the admin form builders) by matching
-   the rendered English text against the catalog. Scoped to label-type elements
-   only, never user-entered values (.rv), inputs, or option lists, so user data
-   is never touched. Call after inserting generated HTML. */
-const TEXT_SELECTORS = '.rl, .grp-hdr, .grp-tip, .row-btn, .row-dd-empty, .tile-cap, .segr-opt span, .rv.is-ph';
-export function translateText(root) {
-  root = root || document;
-  root.querySelectorAll(TEXT_SELECTORS).forEach(el => {
-    if (el.children.length) return;                    /* pure text nodes only */
-    const en = el.textContent.trim();
-    const to = revMap[en];
-    if (to != null && to !== en) el.textContent = to;
-  });
-  root.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
-    const ph = el.getAttribute('placeholder');
-    const to = revMap[ph];
-    if (to != null && to !== ph) el.setAttribute('placeholder', to);
-  });
 }
 
 /* Translate a dotted key, falling back to English then to the key itself.

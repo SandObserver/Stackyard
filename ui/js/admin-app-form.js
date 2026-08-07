@@ -21,30 +21,30 @@ export function buildFolderForm(body,item){
 
   const opts=apps.length
     ? apps.map(a=>html`<li role="option" data-val="${a.id}" aria-selected="${children.includes(a.id)?'true':'false'}">${a.label||a.id}</li>`)
-    : html`<li class="row-dd-empty" aria-disabled="true">No apps available</li>`;
+    : html`<li class="row-dd-empty" aria-disabled="true">${t('folder.noApps')}</li>`;
 
   setHtml(body, html`
     <div class="grp">
       <div class="row ie-row" id="ie-fname">
-        <span class="rl">Folder Name</span>
-        <span class="rv${item?.label?'':' is-ph'}">${item?.label||'My Folder'}</span>
+        <span class="rl">${t('folder.name')}</span>
+        <span class="rv${item?.label?'':' is-ph'}">${item?.label||t('folder.namePh')}</span>
         <input id="f-fname" type="text" value="${item?.label||''}" style="display:none">
         <button class="pe" type="button" aria-label="Edit folder name">${raw(PE_SVG)}</button>
       </div>
       <div class="row">
-        <span class="rl">Add Apps</span>
+        <span class="rl">${t('folder.addApps')}</span>
         <div class="row-dd" id="folder-apps-dd">
           <button class="row-dd-btn" id="folder-apps-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-            <span id="folder-apps-label">Select apps</span>
+            <span id="folder-apps-label">${t('folder.selectApps')}</span>
             ${raw(CHEV_SVG)}
           </button>
           <ul class="row-dd-list checklist" id="folder-apps-list" role="listbox" aria-multiselectable="true" aria-label="Apps in this folder" hidden>${opts}</ul>
         </div>
       </div>
     </div>
-    <p class="grp-tip">Tap to add or remove apps from this folder.</p>`);
+    <p class="grp-tip">${t('folder.tip')}</p>`);
 
-  initInlineEdit('ie-fname','f-fname',{placeholder:'My Folder'});
+  initInlineEdit('ie-fname','f-fname',{placeholder:t('folder.namePh')});
   _wireFolderApps();
 }
 
@@ -56,7 +56,7 @@ function _wireFolderApps(){
   if(!dd||!btn||!list||!label) return;
   const sync=()=>{
     const sel=[...list.querySelectorAll('li[aria-selected="true"]')];
-    label.textContent = sel.length===0 ? 'Select apps'
+    label.textContent = sel.length===0 ? t('folder.selectApps')
       : sel.length===1 ? sel[0].textContent
       : sel.length+' selected';
   };
@@ -89,16 +89,16 @@ export function buildAppForm(body,item){
 
   setHtml(body, html`
     <div class="grp">
-      ${ier('ie-name','Name','f-lbl',item?.label,'My App')}
-      ${ier('ie-url','URL','f-href',item?.href,'https://app.example.com','url')}
+      ${ier('ie-name',t('app.name'),'f-lbl',item?.label,t('app.namePh'))}
+      ${ier('ie-url',t('app.url'),'f-href',item?.href,t('app.urlPh'),'url')}
     </div>
 
-    <p class="grp-hdr">Icon</p>
+    <p class="grp-hdr">${t('app.icon')}</p>
     <div class="grp" id="ipw">
       <div class="row icon-src-row">
         <span class="icon-prev" id="ipv" style="background:${rc(state.scol)}">${state.siurl?html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">`:html`<span>${(item?.label||'?')[0]?.toUpperCase()||'?'}</span>`}</span>
-        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="Name or full URL" value="${state.siurl}">
-        <button type="button" class="row-btn" id="ip-upload-lbl">Upload</button>
+        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="${t('app.iconPh')}" value="${state.siurl}">
+        <button type="button" class="row-btn" id="ip-upload-lbl">${t('app.upload')}</button>
         <input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0">
       </div>
       <div class="iprs" id="iprs"></div>
@@ -106,71 +106,71 @@ export function buildAppForm(body,item){
     </div>
 
     <div class="grp">
-      <div class="row"><span class="rl">Show in Dock</span>${tog('f-dock',!!item?.dock)}</div>
+      <div class="row"><span class="rl">${t('app.showInDock')}</span>${tog('f-dock',!!item?.dock)}</div>
     </div>
     ${dockBlocked?html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull',{max:DOCK_MAX})}</p>`:''}
 
-    <p class="grp-hdr">Badge</p>
+    <p class="grp-hdr">${t('app.badge')}</p>
     <div class="grp">
-      <div class="row"><span class="rl">Health Check</span>${tog('hc-en',hc.enabled)}</div>
+      <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en',hc.enabled)}</div>
       <div id="hc-sub" ${hc.enabled&&globalHealthOn?'':'hidden'}>
-        <div class="row"><span class="rl">Type</span><div class="segr">
-          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing?'':'checked'}><span class="segr-dot"></span><span>Container</span></label>
-          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${isPing?'checked':''}><span class="segr-dot"></span><span>Ping</span></label>
+        <div class="row"><span class="rl">${t('app.type')}</span><div class="segr">
+          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing?'':'checked'}><span class="segr-dot"></span><span>${t('app.container')}</span></label>
+          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${isPing?'checked':''}><span class="segr-dot"></span><span>${t('app.ping')}</span></label>
         </div></div>
-        <div id="hc-con-row" ${isPing?'hidden':''}>${ier('ie-hc-con','Container','hc-con',hc.container,'container-name')}</div>
+        <div id="hc-con-row" ${isPing?'hidden':''}>${ier('ie-hc-con',t('app.container'),'hc-con',hc.container,t('app.containerPh'))}</div>
         <div id="hc-ping-row" ${isPing?'':'hidden'}>
-          ${ier('ie-hc-ping','Ping URL','hc-ping',hc.pingUrl,'http://your-server-ip:port','url')}
-          <div class="row"><span class="rl"></span><span id="hc-ping-status" class="row-status"></span><button type="button" class="row-btn" id="hc-ping-test">Test</button></div>
+          ${ier('ie-hc-ping',t('app.pingUrl'),'hc-ping',hc.pingUrl,t('app.pingUrlPh'),'url')}
+          <div class="row"><span class="rl"></span><span id="hc-ping-status" class="row-status"></span><button type="button" class="row-btn" id="hc-ping-test">${t('app.test')}</button></div>
         </div>
       </div>
     </div>
-    ${globalHealthOn?'':html`<p class="grp-tip" id="hc-off-tip">Turn on Docker Container Health Checks in General, then configure it, to use this.</p>`}
+    ${globalHealthOn?'':html`<p class="grp-tip" id="hc-off-tip">${t('app.healthGlobalOff')}</p>`}
 
     <div class="grp">
-      <div class="row"><span class="rl">Fixed Label</span>${tog('static-en',hasStatic)}</div>
+      <div class="row"><span class="rl">${t('app.fixedLabel')}</span>${tog('static-en',hasStatic)}</div>
       <div id="static-sub" ${hasStatic?'':'hidden'}>
-        ${ier('ie-static-label','Label Text','f-static-label',staticBadge.label,'e.g. Backup')}
+        ${ier('ie-static-label',t('app.labelText'),'f-static-label',staticBadge.label,t('app.labelPh'))}
         <div id="static-color-slot"></div>
       </div>
     </div>
 
     <div class="grp">
-      <div class="row"><span class="rl">Live Activity</span>${tog('act-en',act.enabled)}</div>
+      <div class="row"><span class="rl">${t('app.liveActivity')}</span>${tog('act-en',act.enabled)}</div>
       <div id="act-sub" ${act.enabled?'':'hidden'}>
-        ${ier('ie-burl','API URL','f-burl',act.url,'http://container-name:port/api/v2','url')}
-        <div class="row"><span class="rl"></span><span id="bst" class="row-status">${state.spaths.length?'Saved: '+state.spaths.join(' + '):''}</span><button type="button" class="row-btn" id="bfetch">Fetch</button></div>
+        ${ier('ie-burl',t('app.apiUrl'),'f-burl',act.url,t('app.apiUrlPh'),'url')}
+        <div class="row"><span class="rl"></span><span id="bst" class="row-status">${state.spaths.length?'Saved: '+state.spaths.join(' + '):''}</span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
         <div id="bprow" class="${state.spaths.length?'':'bprow-hidden'}">
-          <div class="row"><span class="rl">Value</span></div>
-          <div class="bval-box"><input class="bval-search" id="bsearch" type="text" placeholder="Filter values" autocomplete="off"><div class="blist" id="blist"></div></div>
+          <div class="row"><span class="rl">${t('app.value')}</span></div>
+          <div class="bval-box"><input class="bval-search" id="bsearch" type="text" placeholder="${t('app.filterValues')}" autocomplete="off"><div class="blist" id="blist"></div></div>
         </div>
         <div id="auth-row-wrap">
-          <div class="row"><span class="rl">Authentication</span>${tog('auth-en',!!(act.params||act.headers))}</div>
+          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en',!!(act.params||act.headers))}</div>
           <div id="auth-sub" ${(act.params?.length||act.headers?.length)?'':'hidden'}>
             <div class="row kv-hdr"><span class="rl">Add to URL <span class="rl-sub">(query params)</span></span></div>
             <div id="bpar-rows" class="kv-rows"></div>
-            <div class="row kv-hdr"><span class="rl">Add to Header</span></div>
+            <div class="row kv-hdr"><span class="rl">${t('app.addToHeader')}</span></div>
             <div id="bhdr-rows" class="kv-rows"></div>
           </div>
         </div>
         <div id="act-color-slot"></div>
-        ${ier('ie-bunit','Unit','bcust-unit',actCustom.unit,'e.g. GB')}
-        <div id="poll-row"><div class="row"><span class="rl">Poll</span><div class="poll-inline">every <input id="f-bint" type="number" min="10" max="3600" value="${act.interval||30}"> seconds</div></div></div>
+        ${ier('ie-bunit',t('app.unit'),'bcust-unit',actCustom.unit,t('app.unitPh'))}
+        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">every <input id="f-bint" type="number" min="10" max="3600" value="${act.interval||30}"> seconds</div></div></div>
       </div>
     </div>
 
     <div class="grp">
-      <div class="row"><span class="rl">Allow self-signed certificate</span>${tog('f-skip-tls',skipTls)}</div>
+      <div class="row"><span class="rl">${t('app.allowSelfSigned')}</span>${tog('f-skip-tls',skipTls)}</div>
     </div>
-    <p class="grp-tip">Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks.</p>`);
+    <p class="grp-tip">${t('app.selfSignedTip')}</p>`);
 
-  initInlineEdit('ie-name','f-lbl',{placeholder:'My App',onCommit(){updPrev();}});
-  initInlineEdit('ie-url','f-href',{placeholder:'https://app.example.com'});
-  initInlineEdit('ie-hc-con','hc-con',{placeholder:'container-name'});
-  initInlineEdit('ie-hc-ping','hc-ping',{placeholder:'http://your-server-ip:port'});
-  initInlineEdit('ie-static-label','f-static-label',{placeholder:'e.g. Backup'});
-  initInlineEdit('ie-burl','f-burl',{placeholder:'http://container-name:port/api/v2'});
-  initInlineEdit('ie-bunit','bcust-unit',{placeholder:'e.g. GB'});
+  initInlineEdit('ie-name','f-lbl',{placeholder:t('app.namePh'),onCommit(){updPrev();}});
+  initInlineEdit('ie-url','f-href',{placeholder:t('app.urlPh')});
+  initInlineEdit('ie-hc-con','hc-con',{placeholder:t('app.containerPh')});
+  initInlineEdit('ie-hc-ping','hc-ping',{placeholder:t('app.pingUrlPh')});
+  initInlineEdit('ie-static-label','f-static-label',{placeholder:t('app.labelPh')});
+  initInlineEdit('ie-burl','f-burl',{placeholder:t('app.apiUrlPh')});
+  initInlineEdit('ie-bunit','bcust-unit',{placeholder:t('app.unitPh')});
 
   renderColorControl(document.getElementById('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){state.scol=v;const pv=document.getElementById('ipv');if(pv)pv.style.background=rc(state.scol);}});
   renderColorControl(document.getElementById('static-color-slot'),{value:staticBadge.color||'#1e6ef4',idPrefix:'static-col',swatchColors:BADGE_SWATCHES});
@@ -451,7 +451,7 @@ function renderBadgeList(nums,existingOnly,query=''){
   if(!filtered.length){
     const e=document.createElement('div');
     e.style.cssText='padding:8px 12px;font-size:13px;color:var(--dm)';
-    e.textContent='No matches.';
+    e.textContent=t('list.noMatches');
     list.appendChild(e);return;
   }
   const direct=filtered.filter(n=>!n.computed);

@@ -8,7 +8,7 @@ import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
 import { state } from '/js/admin-state.js?v=e7eb56f7';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
 import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=c3d495f0';
-import { LANGUAGES, initI18n, translateText, t } from '/js/i18n.js?v=1';
+import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=1';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
 import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=1';
 
@@ -179,8 +179,8 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   const pb=document.createElement('div');pb.className='rpills';
   const pills=[];
   if(item.dock)pills.push(html`<span class="pill p-dk">Dock</span>`);
-  if(item.type==='widget')pills.push(html`<span class="pill p-wg">Widget</span>`);
-  if(item.type==='folder')pills.push(html`<span class="pill p-fl">Folder</span>`);
+  if(item.type==='widget')pills.push(html`<span class="pill p-wg">${t('type.widget')}</span>`);
+  if(item.type==='folder')pills.push(html`<span class="pill p-fl">${t('type.folder')}</span>`);
   if(item.monitoring?.healthcheck?.enabled||item.container)pills.push(html`<span class="pill p-hl">Health</span>`);
   if(item.monitoring?.activity?.enabled||item.badge?.enabled)pills.push(html`<span class="pill p-bg">Badge</span>`);
   if(item.system==='settings')pills.push(html`<span class="pill p-sy">System</span>`);
@@ -427,7 +427,7 @@ const TYPE_ICONS={
   widget:'<rect x="3.5" y="6.5" width="17" height="11" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7.2" cy="10.2" r="1.5" fill="currentColor"/><line x1="5.6" y1="13.4" x2="17.4" y2="13.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.6" y1="15.2" x2="17.4" y2="15.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
   folder:'<rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"/><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"/><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"/><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"/>'
 };
-const TYPE_LABELS={app:'App',widget:'Widget',folder:'Folder'};
+const TYPE_LABELS={app:t('type.app'),widget:t('type.widget'),folder:t('type.folder')};
 
 
 
@@ -438,7 +438,7 @@ function buildAddNewCard(){
   grp.className='grp';
   const row=document.createElement('div');
   row.className='row tile-row';
-  setHtml(row, html`<span class="rl">Add New</span>`);
+  setHtml(row, html`<span class="rl">${t('type.addNew')}</span>`);
   const grpTiles=document.createElement('div');
   grpTiles.className='tile-grp';
   ['app','widget','folder'].forEach(t=>{
@@ -465,7 +465,6 @@ function _renderEditBody(){
   else if(state.ctype==='folder') buildFolderForm(body,state._evItem);
   else buildAppForm(body,state._evItem);
   if(!state._evIsEdit) body.insertBefore(buildAddNewCard(),body.firstChild);
-  translateText(body);
   setTimeout(()=>{ try{ body.querySelector('input,select,textarea')?.focus(); }catch{} },50);
 }
 
@@ -614,7 +613,7 @@ async function doSave(orig){
   try{
     let item;
     if(state.ctype==='widget'){
-      const wlabel=state._wlabel.trim()||state._widgetReg?.[state._wtype]?.label||'Widget';
+      const wlabel=state._wlabel.trim()||state._widgetReg?.[state._wtype]?.label||t('type.widget');
       if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype]){
         const missing=state._autoForm.validate();
         if(missing.length){ toast(missing[0]+' is required','err'); return; }
