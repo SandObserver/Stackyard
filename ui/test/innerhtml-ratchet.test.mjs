@@ -6,8 +6,20 @@ import { fileURLToPath } from 'node:url';
 
 /* Raw `el.innerHTML = ` and `el.insertAdjacentHTML(...)` string-building is
    safe only while every interpolation remembers esc(). setHtml() + html`` from
-   utils.js remove that requirement. The migration is complete, so the budget is
-   empty: any file that writes markup outside setHtml fails here.
+   utils.js remove that requirement.
+
+   Two directories are scanned. ui/js is fully migrated, so its budget is empty
+   and any write there fails.
+
+   ui/widgets was outside the scan entirely (P8-1, P14-3): 3,660 lines where an
+   upstream value could be interpolated into markup with nothing to catch it.
+   The four sites that actually took upstream data were fixed in Wave 1
+   (P14-1); the 16 below are static strings and computed numbers, so they are
+   safe as written and are recorded as a budget rather than migrated. What the
+   budget buys is the next write, not these. widget-toolbox.js re-exports esc,
+   html and setHtml, so a widget has the safe path available.
+
+   Lower a number when you migrate one. Never raise one.
 
    Two things are deliberately not counted:
 
@@ -15,13 +27,24 @@ import { fileURLToPath } from 'node:url';
 
    Clears (`el.innerHTML = ''`) interpolate nothing, so there is no value to
    escape and no way for them to be unsafe. */
-const BUDGET = {};
+const BUDGET = {
+  'widgets/backup/backup.html':                 3,
+  'widgets/books/index.html':                   1,
+  'widgets/connections/connections-vpn.html':   1,
+  'widgets/dashboard-switch/index.html':        2,
+  'widgets/dns/index.html':                     2,
+  'widgets/github/pullrequests.html':           4,
+  'widgets/stats/disk-health.html':             1,
+  'widgets/weather/index.html':                 2,
+};
 
 /* setHtml's own write. It is the single sanctioned innerHTML in the codebase and
    the reason every other file can be held to zero. */
 const IMPLEMENTATION = 'html.js';
 
-const jsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../js');
+const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const jsDir = path.join(uiDir, 'js');
+const widgetsDir = path.join(uiDir, 'widgets');
 /* Matches `= ` and `+= `. The compound form appends markup and is exactly as
    unsafe, but was invisible here until admin.js turned out to use it seven
    times. Only the plain form can be a clear: `+= ''` writes nothing anyway. */
@@ -41,9 +64,34 @@ function countWrites(src) {
   return n;
 }
 
+/* Widget markup lives in the .html entry files, and a widget may also ship a
+   frontend .js, so both are read. Keyed by a path relative to ui/ because two
+   widgets can have an index.html and a bare filename would collide. */
+function widgetFiles() {
+  const out = [];
+  let dirs;
+  try { dirs = fs.readdirSync(widgetsDir, { withFileTypes: true }); } catch { return out; }
+  for (const d of dirs) {
+    if (!d.isDirectory()) continue;
+    for (const f of fs.readdirSync(path.join(widgetsDir, d.name))) {
+      if (f.endsWith('.html') || f.endsWith('.js')) {
+        out.push([`widgets/${d.name}/${f}`, path.join(widgetsDir, d.name, f)]);
+      }
+    }
+  }
+  return out;
+}
+
+const scanned = [
+  ...fs.readdirSync(jsDir)
+    .filter(f => f.endsWith('.js') && f !== IMPLEMENTATION)
+    .map(f => [f, path.join(jsDir, f)]),
+  ...widgetFiles(),
+];
+
 const counts = Object.fromEntries(
-  fs.readdirSync(jsDir).filter(f => f.endsWith('.js') && f !== IMPLEMENTATION)
-    .map(f => [f, countWrites(fs.readFileSync(path.join(jsDir, f), 'utf8'))])
+  scanned
+    .map(([key, full]) => [key, countWrites(fs.readFileSync(full, 'utf8'))])
     .filter(([, n]) => n > 0),
 );
 
