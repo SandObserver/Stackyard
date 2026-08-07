@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'weather', 'data.js'));
+const { errorParts } = require('../test-support/widget-ctx');
 
 function ctxFor(config, endpoint, reply) {
   const calls = [];
@@ -12,6 +13,7 @@ function ctxFor(config, endpoint, reply) {
       config,
       endpoint,
       fetchJSON: async (url) => { calls.push(url); return reply; },
+      ...errorParts(),
     },
   };
 }
@@ -41,16 +43,13 @@ test('geocode falls back to the saved city when the search box is empty', async 
 
 test('geocode reports a missing search term instead of calling out', async () => {
   const { ctx, calls } = ctxFor({}, 'geocode', GEO);
-  const r = await dataFn(ctx);
-  assert.equal(r.options, undefined);
-  assert.match(r.error, /city name/i);
+  await assert.rejects(dataFn(ctx), /city name/i);
   assert.equal(calls.length, 0);
 });
 
 test('geocode surfaces an upstream error status', async () => {
   const { ctx } = ctxFor({ cityQuery: 'Ottawa' }, 'geocode', { status: 503, data: null });
-  const r = await dataFn(ctx);
-  assert.equal(r.error, 'Geocoding HTTP 503');
+  await assert.rejects(dataFn(ctx), /Geocoding HTTP 503/);
 });
 
 test('geocode tolerates a response with no results', async () => {
@@ -61,8 +60,7 @@ test('geocode tolerates a response with no results', async () => {
 
 test('the default endpoint still reports an unset location', async () => {
   const { ctx, calls } = ctxFor({ city: 'Ottawa' }, '', GEO);
-  const r = await dataFn(ctx);
-  assert.equal(r.error, 'Location not set');
+  await assert.rejects(dataFn(ctx), /Location not set/);
   assert.equal(calls.length, 0);
 });
 

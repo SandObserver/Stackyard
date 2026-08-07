@@ -15,13 +15,11 @@
 
 async function geocode(ctx) {
   const q = String(ctx.config.cityQuery || ctx.config.city || '').trim();
-  if (!q) return { error: 'Enter a city name to search.' };
+  if (!q) ctx.fail('Enter a city name to search.', { kind: ctx.KIND.INVALID });
   const url = 'https://geocoding-api.open-meteo.com/v1/search'
     + `?name=${encodeURIComponent(q)}&count=5&language=en&format=json`;
-  let r;
-  try { r = await ctx.fetchJSON(url, { timeout: 8000 }); }
-  catch (e) { return { error: e.message }; }
-  if (r.status >= 400) return { error: 'Geocoding HTTP ' + r.status };
+  const r = await ctx.fetchJSON(url, { timeout: 8000 });
+  if (r.status >= 400) ctx.fail('Geocoding HTTP ' + r.status);
   const options = ((r.data && r.data.results) || []).map(p => ({
     value: [p.name, p.admin1, p.country].filter(Boolean).join(', '),
     label: [p.name, p.admin1, p.country].filter(Boolean).join(', '),
@@ -34,9 +32,7 @@ module.exports = async function (ctx) {
   const { config, fetchJSON } = ctx;
   if (ctx.endpoint === 'geocode') return await geocode(ctx);
   const lat = config.lat, lon = config.lon;
-  if (lat == null || lon == null || lat === '' || lon === '') {
-    return { error: 'Location not set' };
-  }
+  if (lat == null || lon == null || lat === '' || lon === '') ctx.fail('Location not set', { kind: ctx.KIND.INVALID });
   const units = config.units === 'f' ? 'f' : 'c';
   const tempUnit = units === 'f' ? 'fahrenheit' : 'celsius';
 
@@ -46,11 +42,9 @@ module.exports = async function (ctx) {
     + `&daily=sunrise,sunset&temperature_unit=${tempUnit}`
     + '&timezone=auto&forecast_days=1';
 
-  let r;
-  try { r = await fetchJSON(url, { timeout: 8000 }); }
-  catch (e) { return { error: e.message }; }
+  const r = await fetchJSON(url, { timeout: 8000 });
   if (r.status >= 400 || !r.data || !r.data.current) {
-    return { error: 'Weather unavailable (' + r.status + ')' };
+    ctx.fail('Weather unavailable (' + r.status + ')');
   }
 
   const cur = r.data.current;

@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { normalizeBase } = require('../src/widget-data');
+const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'stats', 'data.js'));
 
@@ -15,6 +16,7 @@ function ctxFor(network, response) {
       config: { network },
       normalizeBase,
       fetchJSON: async (url, opts) => { calls.push({ url, opts }); return response; },
+      ...errorParts(),
     },
     calls,
   };
@@ -51,7 +53,7 @@ test('myspeed surfaces a 401 as a credentials error', async () => {
     { enabled: true, url: 'http://ms:5216', provider: 'myspeed' },
     { status: 401, data: null },
   );
-  assert.deepEqual(await dataFn(ctx), { error: 'MySpeed returned 401, check password' });
+  await assert.rejects(dataFn(ctx), /MySpeed returned 401, check password/);
 });
 
 test('myspeed reports an empty result', async () => {
@@ -59,7 +61,7 @@ test('myspeed reports an empty result', async () => {
     { enabled: true, url: 'http://ms:5216', provider: 'myspeed' },
     { status: 200, data: [] },
   );
-  assert.deepEqual(await dataFn(ctx), { error: 'No result from MySpeed' });
+  await assert.rejects(dataFn(ctx), /No result from MySpeed/);
 });
 
 test('speedtest-tracker returns the latest row shaped for the widget', async () => {
@@ -76,25 +78,25 @@ test('speedtest-tracker reports a missing result', async () => {
     { enabled: true, url: 'http://stt', provider: 'speedtest-tracker' },
     { status: 200, data: { data: null } },
   );
-  assert.deepEqual(await dataFn(ctx), { error: 'No result from Speedtest Tracker' });
+  await assert.rejects(dataFn(ctx), /No result from Speedtest Tracker/);
 });
 
-test('an unconfigured network slot returns an error without fetching', async () => {
+test('an unconfigured network slot fails without fetching', async () => {
   const off = ctxFor({ enabled: false, url: 'http://ms' }, { status: 200, data: [] });
-  assert.deepEqual(await dataFn(off.ctx), { error: 'network slot not configured' });
+  await assert.rejects(dataFn(off.ctx), /network slot not configured/);
   assert.equal(off.calls.length, 0);
 
   const noUrl = ctxFor({ enabled: true }, { status: 200, data: [] });
-  assert.deepEqual(await dataFn(noUrl.ctx), { error: 'network slot not configured' });
+  await assert.rejects(dataFn(noUrl.ctx), /network slot not configured/);
   assert.equal(noUrl.calls.length, 0);
 });
 
-test('a thrown fetch becomes an error result', async () => {
+test('a thrown fetch propagates rather than becoming a successful result', async () => {
   const ctx = {
     endpoint: 'speed',
     config: { network: { enabled: true, url: 'http://ms', provider: 'myspeed' } },
     normalizeBase,
     fetchJSON: async () => { throw new Error('connect ECONNREFUSED'); },
   };
-  assert.deepEqual(await dataFn(ctx), { error: 'connect ECONNREFUSED' });
+  await assert.rejects(dataFn(ctx), /connect ECONNREFUSED/);
 });

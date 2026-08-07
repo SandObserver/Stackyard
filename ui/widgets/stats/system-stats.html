@@ -398,7 +398,6 @@ async function fetchStats() {
   const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=system`);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const d = await r.json();
-  if (d && d.error) throw new Error(d.error);
   return d;
 }
 
@@ -443,7 +442,7 @@ async function fetchSpeed() {
   const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=speed`);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const d = await r.json();
-  if (!d || d.error || d.download == null) throw new Error(d?.error || 'no speed data');
+  if (!d || d.download == null) throw new Error('no speed data');
   return d;
 }
 

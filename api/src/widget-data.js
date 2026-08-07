@@ -12,7 +12,7 @@ const { widgetSettings } = require('./widget-settings');
 const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
 const log = require('./log');
-const { fail, KIND } = require('./api-error');
+const { fail, KIND, WidgetError } = require('./api-error');
 const { rateLimit } = require('./auth');
 const LIMITS = require('./poll-limits');
 
@@ -66,6 +66,11 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
        invented numbers on the same clock as every other widget's. */
     demo:     IS_DEMO ? demoData.helpers : null,
     normalizeBase,
+    /* Throw this to report a failure in the widget author's own words. A plain
+       Error is sanitised to a generic message, which is right for a caught
+       exception and wrong for "Set a Pi-hole password". See api-error.js. */
+    fail: (message, opts) => { throw new WidgetError(message, opts); },
+    KIND,
     log,
   };
   /* Provider dispatch for multi-provider widgets, bound to this ctx so callers

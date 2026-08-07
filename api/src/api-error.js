@@ -70,6 +70,43 @@ class ApiError extends Error {
   }
 }
 
+/* An error whose message is meant for the person reading the widget.
+
+   The default is that a thrown message never reaches the browser: errorBody
+   substitutes safeMessage(kind), because an arbitrary message may carry a
+   hostname, a path or an upstream body. That is right for anything inferred
+   from a caught exception and wrong for a sentence the widget author wrote,
+   such as "Set a Pi-hole password" or "TrueNAS auth failed, check API key".
+   Those are the messages that tell someone how to fix their configuration, and
+   losing them to "Something went wrong." is a worse failure than the leak the
+   rule exists to prevent.
+
+   So this is the opt-in: throwing it says the message contains nothing but
+   words the author chose. Never build one by interpolating an upstream
+   response, a URL or an error from a fetch. Interpolating a status code is
+   fine, since that is a number the server read.
+
+   Marked with a field rather than by instanceof: a widget's data.js is loaded
+   with require() from the widgets directory, and comparing constructors across
+   that boundary is the kind of thing that works until someone changes how the
+   module is loaded. */
+class WidgetError extends Error {
+  /* @param {string} message  shown to the user verbatim
+     @param {{ kind?: string, detail?: Record<string, unknown> }} [opts] */
+  constructor(message, opts = {}) {
+    super(message);
+    this.name = 'WidgetError';
+    this.vouchedMessage = message;
+    this.kind = opts.kind || KIND.UPSTREAM;
+    if (opts.detail) this.detail = opts.detail;
+  }
+}
+
+/* True for anything carrying a message its author vouched for, however it was
+   constructed. */
+const hasVouchedMessage = e =>
+  !!e && typeof e === 'object' && typeof e.vouchedMessage === 'string' && e.vouchedMessage !== '';
+
 /* Best-effort classification of an arbitrary thrown value.
 
    Order matters: an explicit `kind` on the error always wins, so a route or a
@@ -153,9 +190,12 @@ function errorBody(e, overrides = {}) {
   const finalKind = overrides.kind || kind;
   const body = {
     /* An explicit override is a message the code chose and can vouch for, such
-       as "Set a password before turning authentication on." Anything not
-       overridden comes from the kind, never from e.message. */
-    error: overrides.error != null ? overrides.error : safeMessage(finalKind),
+       as "Set a password before turning authentication on." A WidgetError
+       carries the same guarantee from further away, written by whoever wrote
+       the widget. Anything else comes from the kind, never from e.message. */
+    error: overrides.error != null ? overrides.error
+         : hasVouchedMessage(e)    ? e.vouchedMessage
+         : safeMessage(finalKind),
     kind:  finalKind,
   };
   const d = overrides.detail || detail;
@@ -186,4 +226,4 @@ function fail(res, e, opts = {}) {
   json(res, code, Object.assign({}, extra, body));
 }
 
-module.exports = { KIND, KINDS, ApiError, classify, errorBody, safeMessage, SAFE_MESSAGES, fail };
+module.exports = { KIND, KINDS, ApiError, WidgetError, hasVouchedMessage, classify, errorBody, safeMessage, SAFE_MESSAGES, fail };

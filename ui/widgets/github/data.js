@@ -2,21 +2,22 @@
    Returns { error } on any failure so the widget can show a friendly message
    (never throws). */
 
-module.exports = async function ({ config, fetchJSON }) {
+module.exports = async function (ctx) {
+  const { config, fetchJSON } = ctx;
   const token = config.githubToken;
-  if (!token) return { error: 'GitHub token not configured' };
+  if (!token) ctx.fail('GitHub token not configured', { kind: ctx.KIND.INVALID });
 
   const username = config.githubUser;
-  if (!username) return { error: 'GitHub username not configured' };
+  if (!username) ctx.fail('GitHub username not configured', { kind: ctx.KIND.INVALID });
 
-  if (config.githubView === 'contributions') return contributions(token, username, fetchJSON);
-  return pullRequests(token, username, config, fetchJSON);
+  if (config.githubView === 'contributions') return contributions(ctx, token, username, fetchJSON);
+  return pullRequests(ctx, token, username, config, fetchJSON);
 };
 
 /* Contribution calendar via GraphQL: needs a classic PAT with read:user, or a
    fine-grained PAT with "User contributions" read access. Private-repo
    contributions only appear with the correct token scope. */
-async function contributions(token, username, fetchJSON) {
+async function contributions(ctx, token, username, fetchJSON) {
   const query = `query($login: String!) {
     user(login: $login) {
       contributionsCollection {
@@ -27,29 +28,26 @@ async function contributions(token, username, fetchJSON) {
       }
     }
   }`;
-  let r;
-  try {
-    r = await fetchJSON('https://api.github.com/graphql', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'stackyard-dashboard/1.0',
-      },
-      body: JSON.stringify({ query, variables: { login: username } }),
-      timeout: 10000,
-    });
-  } catch (e) { return { error: e.message }; }
+  const r = await fetchJSON('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'stackyard-dashboard/1.0',
+    },
+    body: JSON.stringify({ query, variables: { login: username } }),
+    timeout: 10000,
+  });
 
-  if (r.status === 401) return { error: 'Invalid GitHub token' };
-  if (r.data && r.data.errors) return { error: r.data.errors[0]?.message || 'GraphQL error' };
+  if (r.status === 401) ctx.fail('Invalid GitHub token', { kind: ctx.KIND.AUTH });
+  if (r.data && r.data.errors) ctx.fail('GitHub rejected the query — check the token scopes');
 
   const cal = r.data?.data?.user?.contributionsCollection?.contributionCalendar || {};
   return { view: 'contributions', weeks: cal.weeks || [], totalContributions: cal.totalContributions || 0 };
 }
 
 /* Open pull requests via the search API. Multiple filters are OR-ed together. */
-async function pullRequests(token, username, config, fetchJSON) {
+async function pullRequests(ctx, token, username, config, fetchJSON) {
   const raw = (Array.isArray(config.githubPrFilters) && config.githubPrFilters.length)
     ? config.githubPrFilters
     : [config.githubPrFilter || 'created'];
@@ -65,21 +63,18 @@ async function pullRequests(token, username, config, fetchJSON) {
   const q   = encodeURIComponent(`is:open is:pr ${qualifier}`);
   const url = `https://api.github.com/search/issues?q=${q}&advanced_search=true&sort=updated&order=desc&per_page=20`;
 
-  let r;
-  try {
-    r = await fetchJSON(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'stackyard-dashboard/1.0',
-      },
-      timeout: 10000,
-    });
-  } catch (e) { return { error: e.message }; }
+  const r = await fetchJSON(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'stackyard-dashboard/1.0',
+    },
+    timeout: 10000,
+  });
 
-  if (r.status === 401) return { error: 'Invalid GitHub token' };
-  if (r.status === 422) return { error: 'Invalid search query — check username' };
+  if (r.status === 401) ctx.fail('Invalid GitHub token', { kind: ctx.KIND.AUTH });
+  if (r.status === 422) ctx.fail('Invalid search query — check username', { kind: ctx.KIND.INVALID });
 
   const items = (r.data?.items || []).map(pr => {
     const m = (pr.repository_url || '').match(/repos\/(.+)$/);

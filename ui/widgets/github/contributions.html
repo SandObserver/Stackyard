@@ -69,10 +69,9 @@ async function fetchGraph() {
   catch { throw new Error('Unreachable'); }
   if (!r.ok) {
     const d = await r.json().catch(()=>({}));
-    throw new Error(r.status===503?'Not configured':r.status===401?'Bad token':d.error||('Error '+r.status));
+    throw new Error(d.error || (r.status===503?'Not configured':r.status===401?'Bad token':'Error '+r.status));
   }
   const d = await r.json();
-  if (d && d.error) throw new Error(d.error);
   return d;
 }
 
