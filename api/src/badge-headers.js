@@ -10,13 +10,13 @@
 
 const SUBKEYS = ['headers', 'params'];
 
-/** A single well-formed row. @param {any} r */
+/** A single well-formed row. @param {unknown} r @returns {boolean} */
 function isRow(r) {
-  return !!r && typeof r === 'object' && !Array.isArray(r) && typeof r.key === 'string';
+  return !!r && typeof r === 'object' && !Array.isArray(r) && typeof (/** @type {{key?:unknown}} */ (r)).key === 'string';
 }
 
 /** Already in the row shape, so the migration has nothing to do.
-    @param {any} v */
+    @param {unknown} v @returns {boolean} */
 function isRowArray(v) {
   return Array.isArray(v) && v.every(isRow);
 }
@@ -51,17 +51,18 @@ function toRows(v) {
 
 /** How many entries toRows would discard. Lets a caller report the damage
     rather than silently working with less than it was given.
-    @param {any} v @returns {number} */
+    @param {unknown} v @returns {number} */
 function droppedRowCount(v) {
   return Array.isArray(v) ? v.length - v.filter(isRow).length : 0;
 }
 
 /** The first badge or activity row on an item that is not well-formed, or null.
     Used to reject a save naming the field, so damaged rows cannot be stored.
-    @param {any} item @returns {{ field:string, index:number }|null} */
+    @param {unknown} item @returns {{ field:string, index:number }|null} */
 function firstMalformedRow(item) {
   if (!item || typeof item !== 'object') return null;
-  for (const [block, label] of [[item.badge, 'badge'], [item.monitoring?.activity, 'monitoring.activity']]) {
+  const it = /** @type {{ badge?: any, monitoring?: { activity?: any } }} */ (item);
+  for (const [block, label] of [[it.badge, 'badge'], [it.monitoring?.activity, 'monitoring.activity']]) {
     if (!block || typeof block !== 'object') continue;
     for (const sub of SUBKEYS) {
       const v = block[sub];
