@@ -50,7 +50,7 @@ test('t falls back to the key itself when nothing is loaded', () => {
 
 /* P8-8/P11-7: the catalogs were object literals, so `active[key]` found
    "constructor", "toString" and the rest. t() returned the inherited function
-   instead of the key, and translateText wrote its source into the DOM. */
+   instead of the key, and that value was written into the DOM. */
 test('t returns the key itself for a key named after an inherited member', () => {
   for (const key of ['constructor', 'toString', 'valueOf', 'hasOwnProperty',
     'isPrototypeOf', 'propertyIsEnumerable', '__proto__']) {

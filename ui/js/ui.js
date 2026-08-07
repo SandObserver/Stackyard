@@ -92,8 +92,8 @@ export function mkFolder(item) {
   const iw = showLabel ? 72 : 78;
   const a = mk('a'); a.className = 'icon'; a.style.cursor = 'pointer';
   a.href = '#'; a.setAttribute('role','button');
-  a.setAttribute('aria-label', (item.label||'Folder') + ' folder');
-  if (!showLabel) a.title = item.label || 'Folder';
+  a.setAttribute('aria-label', (item.label||t('type.folder')) + ' folder');
+  if (!showLabel) a.title = item.label || t('type.folder');
   a.onclick = e => { e.preventDefault(); openFolderDesktop(item); };
   const box = mk('div');
   box.className = 'dyn-folder-box';
@@ -110,7 +110,7 @@ export function mkFolder(item) {
   a.appendChild(box);
   if (showLabel) {
     const l = mk('div'); l.className = 'ilabel'; l.style.width = (iw+12)+'px';
-    l.textContent = item.label||'Folder'; a.appendChild(l);
+    l.textContent = item.label||t('type.folder'); a.appendChild(l);
   }
   return a;
 }
@@ -122,11 +122,11 @@ export function openFolderDesktop(folder) {
   const showLabel = S().showLabels?.desktop !== false;
   const ov = mk('div'); ov.className = 'folder-overlay';
   ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
-  ov.setAttribute('aria-label', (folder.label||'Folder') + ' folder');
+  ov.setAttribute('aria-label', (folder.label||t('type.folder')) + ' folder');
   const _prevFocus = document.activeElement;
   let releaseDeskTrap = null;
   const outer = mk('div'); outer.className = 'folder-outer';
-  const title = mk('div'); title.className = 'folder-title-desktop'; title.textContent = folder.label||'Folder';
+  const title = mk('div'); title.className = 'folder-title-desktop'; title.textContent = folder.label||t('type.folder');
   const box = mk('div'); box.className = 'folder-box-desktop';
   const iw = showLabel ? 72 : 78, isz = showLabel ? 50 : 56;
   const grid = mk('div');
@@ -172,7 +172,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   const eff = showLabel ? Math.round(isz*.85) : isz;
   const a = document.createElement('button'); a.type = 'button';
   a.className = 'dyn-mob-btn';
-  a.setAttribute('aria-label', (item.label||'Folder') + ' folder');
+  a.setAttribute('aria-label', (item.label||t('type.folder')) + ' folder');
   css(a, { '--rh': rh + 'px' });
   let _opening = false;
   function _openFolder() {
@@ -215,7 +215,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   if (showLabel) {
     const l = mk('div'); l.className = 'dyn-fold-label';
     css(l, { '--lfs': Math.max(9,Math.round(9*sc))+'px', '--lw': (cw-4)+'px' });
-    l.textContent = item.label||'Folder'; a.appendChild(l);
+    l.textContent = item.label||t('type.folder'); a.appendChild(l);
   }
   return a;
 }
@@ -230,7 +230,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   const vw = innerWidth, vh = innerHeight;
   const ov = mk('div'); ov.className = 'folder-overlay-mobile';
   ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
-  ov.setAttribute('aria-label', (folder.label||'Folder') + ' folder');
+  ov.setAttribute('aria-label', (folder.label||t('type.folder')) + ' folder');
 
   let releaseMobTrap = null;
   function closeMob() {
@@ -262,7 +262,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
 
   const titleEl = mk('div'); titleEl.className = 'folder-title-mobile dyn-title-mob';
   css(titleEl, { '--tfs': titleFs+'px', 'left': titleLeft+'px', 'width': (boxW-padH)+'px', 'top': (boxTop-titleRendH-titleGap+Math.round(8*ptScale))+'px' });
-  titleEl.textContent = folder.label||'Folder';
+  titleEl.textContent = folder.label||t('type.folder');
 
   const box = mk('div');
   box.className = 'folder-box-mobile dyn-box-mob';
@@ -395,7 +395,7 @@ export function buildMobile() {
 
   function widgetTitle(item) {
     if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || t('status.diskHealth');
-    return item.label || widgetReg()[item.widgetType]?.label || 'Widget';
+    return item.label || widgetReg()[item.widgetType]?.label || t('type.widget');
   }
 
   function mIcon(item) {

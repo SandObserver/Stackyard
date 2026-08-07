@@ -132,7 +132,7 @@ function mkIcon(item) {
 
 function widgetTitle(item) {
   if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || t('status.diskHealth');
-  return item.label || widgetReg[item.widgetType]?.label || 'Widget';
+  return item.label || widgetReg[item.widgetType]?.label || t('type.widget');
 }
 function mkWidget(item) {
   const sz = item.widgetSize||'medium';
