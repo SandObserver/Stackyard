@@ -68,8 +68,14 @@ const stripComments = s => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"\
 const src = files.map(f => stripComments(fs.readFileSync(f, 'utf8'))).join('\n');
 
 /* A key is referenced if its full dotted name appears as a string literal. That
-   covers t('a.b'), data-i18n="a.b", and a key held in a variable or an array. */
-const referenced = new Set(keys.filter(k => new RegExp(`['"\`]${k.replace(/\./g, '\\.')}['"\`]`).test(src)));
+   covers t('a.b'), data-i18n="a.b", and a key held in a variable or an array.
+
+   Matched by substring rather than by a regex built from the key. Building one
+   means escaping the key first, and escaping only the dot, as this did, is the
+   kind of half-sanitisation that is right until a key contains a character the
+   escape missed. There is nothing to escape in a plain includes(). */
+const quoted = k => [`'${k}'`, `"${k}"`, `\`${k}\``];
+const referenced = new Set(keys.filter(k => quoted(k).some(q => src.includes(q))));
 
 /* The widget toolbox loads the widget block and looks up bare names inside it,
    so widget.loading is written as _t('loading', 'Loading'). */
