@@ -2,10 +2,10 @@
    against a temp config, and exercises it over real HTTP. Env must be set
    before the app modules are required, since config/widget paths are read at
    load time. */
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
-const _tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-http-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const _tmp = tmpDir('http');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
 

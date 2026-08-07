@@ -6,11 +6,10 @@
    single log warning. Its own process because WIDGETS_PATH is read once when
    api/src/widgets.js loads. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
-process.env.WIDGETS_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-nowidgets-')), 'missing');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.WIDGETS_PATH = path.join(tmpDir('nowidgets'), 'missing');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

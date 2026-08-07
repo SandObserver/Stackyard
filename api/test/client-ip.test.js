@@ -19,11 +19,11 @@
    client-supplied value cannot survive. No header chain is parsed in the app at
    all: when Stackyard is behind another reverse proxy, nginx resolves the real
    client itself from TRUSTED_PROXY, so the header is already correct. */
+const { tmpDir, tmpPath } = require('../test-support/tmp');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
@@ -83,7 +83,7 @@ test('an unknown peer with no header is reported as unknown', () => {
    the real script matters here: the alternative is asserting on a copy of its
    logic, which would pass while the shipped script was broken. */
 function render(env) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-realip-'));
+  const dir = tmpDir('realip');
   const out = path.join(dir, 'realip.conf');
   const stubDir = path.join(dir, 'bin');
   fs.mkdirSync(stubDir);
@@ -128,7 +128,7 @@ test('the generated file says it is generated', () => {
 });
 
 test('the entrypoint refuses to start when nginx rejects the config', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-realip-bad-'));
+  const dir = tmpDir('realip-bad');
   const stubDir = path.join(dir, 'bin');
   fs.mkdirSync(stubDir);
   fs.writeFileSync(path.join(stubDir, 'nginx'), '#!/bin/sh\necho "bad config" >&2\nexit 1\n');

@@ -2,7 +2,8 @@ const path = require('node:path');
 /* Load the real shipped manifests so this exercises the actual field
    declarations, not a fixture. */
 process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
-process.env.CONFIG_PATH = '/tmp/stackyard-config-secrets-test-nonexistent.json';
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = tmpPath('apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

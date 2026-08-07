@@ -16,11 +16,11 @@
    what survives a power cut, so these tests pin the calls that provide it and
    the behaviour around them. */
 
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-durability-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const dir = tmpDir('durability');
 process.env.CONFIG_PATH = path.join(dir, 'apps.json');
 
 const { test, beforeEach } = require('node:test');

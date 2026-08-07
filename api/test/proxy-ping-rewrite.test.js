@@ -13,10 +13,10 @@
    and that result is returned to the browser as-is by /api/ping, which disclosed
    internal hostnames. The log is where the detail lives now, so that is where a
    test looking for it belongs. */
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-ping-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const dir = tmpDir('ping');
 process.env.CONFIG_PATH = path.join(dir, 'apps.json');
 fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({
   items: [],

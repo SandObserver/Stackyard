@@ -13,11 +13,10 @@
    ten devices behind one address; see poll-limits.js. Ordinary use never comes
    near them, which the last test here pins. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-polllimit-')), 'apps.json');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('polllimit'), 'apps.json');
 process.env.ALLOW_PRIVATE_IPS = 'true';
 
 const { test, before, after, beforeEach } = require('node:test');

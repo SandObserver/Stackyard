@@ -9,11 +9,10 @@
    checks, so nothing looked broken. What was lost is the reason behind a red
    tile, which is now its hover text; see healthReason in ui/js/badge-logic.js. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-health-')), 'apps.json');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('health'), 'apps.json');
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');

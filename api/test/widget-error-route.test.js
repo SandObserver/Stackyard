@@ -8,11 +8,11 @@
    Its own file because WIDGETS_PATH and CONFIG_PATH are read when their modules
    load, so both have to be set before anything is required. */
 
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-werr-route-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const root = tmpDir('werr-route');
 const widgetsDir = path.join(root, 'widgets');
 
 /* Two widgets: one reporting in its own words, one letting a plain Error out. */

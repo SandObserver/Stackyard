@@ -14,11 +14,10 @@
 
    Fixing only the crash would have left the injection open, so both are here. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
-const _tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-auth-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const _tmp = tmpDir('auth');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 
 const { test, before, after, beforeEach } = require('node:test');

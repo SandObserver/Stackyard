@@ -17,11 +17,10 @@
    value is carried through, while a route parameter that will not decode is a bad
    request and answers 400. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-decode-')), 'apps.json');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('decode'), 'apps.json');
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');

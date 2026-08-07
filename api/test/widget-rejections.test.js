@@ -13,11 +13,11 @@
    The reasons travel with the registry now. They are kept beside it rather than
    in it, so a lookup by widgetType can never resolve to a rejected widget. */
 
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-reject-'));
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+const root = tmpDir('reject');
 const widgetsDir = path.join(root, 'widgets');
 
 function writeWidget(name, manifest) {

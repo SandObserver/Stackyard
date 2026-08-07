@@ -12,11 +12,10 @@
    production code purely so a test can reach it is worse than testing the rule
    directly. */
 
-const os = require('node:os');
 const path = require('node:path');
-const fs = require('node:fs');
 
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-ver-')), 'apps.json');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('ver'), 'apps.json');
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');

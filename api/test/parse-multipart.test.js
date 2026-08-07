@@ -1,3 +1,4 @@
+const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { parseMultipartFile } = require('../src/parse-multipart');

@@ -16,6 +16,7 @@
    Checked in two places on purpose. fetchUnchecked and pingUnchecked skip the
    guard by design and carry URLs from saved config, which can arrive by import,
    so the rule also sits where the connection is opened. */
+const path = require('node:path');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

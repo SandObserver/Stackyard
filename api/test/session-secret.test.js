@@ -10,11 +10,11 @@
    call sites, so the strength and encoding of the key that signs every session
    was defined in four places. */
 
-const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
 
-process.env.CONFIG_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sy-secret-')), 'apps.json');
+const { tmpDir, tmpPath } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('secret'), 'apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
