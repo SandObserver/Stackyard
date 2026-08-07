@@ -22,7 +22,7 @@
    and no event handler to strip. If a future string needs one, that is a
    deliberate decision to make here, not a gap to widen accidentally. */
 
-import { esc, raw } from '/js/html.js?v=1';
+import { esc, raw } from '/js/html.js?v=ccec347c';
 
 export const ALLOWED_TAGS = Object.freeze(['strong', 'em', 'code', 'br']);
 /* br is void: it never has a closing tag and never wraps anything. */

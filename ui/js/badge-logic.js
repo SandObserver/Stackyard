@@ -1,3 +1,4 @@
+// @ts-check
 /* Text is translated through an injected `translate`, not by importing the i18n
    module.
 
@@ -100,6 +101,16 @@ export function healthReason(detail, translate) {
   return parts.join(' \u2022 ');
 }
 
+/** The badge an item should show, as class, text and background colour.
+    @param {{
+      health?: boolean, activity?: number,
+      custom?: { unit?: string, color?: string },
+      staticBdg?: { enabled?: boolean, label?: string, color?: string },
+      hasHC?: boolean, hideHealthy?: boolean,
+      badgesStale?: boolean, healthStale?: boolean,
+      healthDetail?: Record<string, unknown>,
+      translate?: (key: string, vars?: Record<string, unknown>) => string,
+    }} opts */
 export function computeBadgeVisual({ health, activity, custom = {}, staticBdg = {}, hasHC, hideHealthy, badgesStale, healthStale, healthDetail, translate }) {
   const tr = typeof translate === 'function' ? translate : ((k, v) => _fallback(k, v));
   let cls, txt, bg = '';

@@ -2,15 +2,15 @@
    Builds the app edit form (icon picker, badge picker) and the folder form.
    Reads and writes shared state; exports buildAppForm, buildFolderForm, and
    serializeKvRows (used by the save path). */
-import { clr as rc } from '/js/utils.js?v=92153ac7';
-import { html, raw, setHtml } from '/js/html.js?v=1';
-import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=bdd2c9eb';
-import { state } from '/js/admin-state.js?v=e7eb56f7';
-import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=1';
-import { t } from '/js/i18n.js?v=1';
-import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, setTogDisabled, wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
-import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=255efb55';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=1';
+import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=17424946';
+import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
+import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=a0ea3e4b';
+import { state } from '/js/admin-state.js?v=3f9ad806';
+import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=056a11e9';
+import { t } from '/js/i18n.js?v=133a7aac';
+import { toast, ag, ap, PE_SVG, CHEV_SVG, initInlineEdit, setTogDisabled, wireChecklist } from '/js/admin-shared.js?v=182410cc';
+import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=601fe763';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=af729113';
 
 /* Folder form: settings-row system (PSD: add_new_folder).
    Folder Name = inline-edit row; Add Apps = tap-to-toggle checklist dropdown. */
@@ -49,13 +49,13 @@ export function buildFolderForm(body,item){
 }
 
 function _wireFolderApps(){
-  const dd=document.getElementById('folder-apps-dd');
-  const btn=document.getElementById('folder-apps-btn');
-  const list=document.getElementById('folder-apps-list');
-  const label=document.getElementById('folder-apps-label');
+  const dd=el('folder-apps-dd');
+  const btn=inpById('folder-apps-btn');
+  const list=el('folder-apps-list');
+  const label=el('folder-apps-label');
   if(!dd||!btn||!list||!label) return;
   const sync=()=>{
-    const sel=[...list.querySelectorAll('li[aria-selected="true"]')];
+    const sel=qa('li[aria-selected="true"]', list);
     label.textContent = sel.length===0 ? t('folder.selectApps')
       : sel.length===1 ? sel[0].textContent
       : sel.length+' selected';
@@ -71,7 +71,7 @@ function _wireFolderApps(){
 export function buildAppForm(body,item){
   const dockBlocked=isDockBlocked(state.items,item);
   /* Per-app health checks only run when the global Docker toggle in General is on. */
-  const globalHealthOn=!!(document.getElementById('srv-docker-en')?.checked);
+  const globalHealthOn=!!(inpById('srv-docker-en')?.checked);
   const mon=item?.monitoring||{};
   const hc=mon.healthcheck||{enabled:!!(item?.container||item?.ping),container:item?.container||'',pingUrl:item?.ping||''};
   const act=mon.activity||{enabled:!!(item?.badge?.enabled),url:item?.badge?.url||'',interval:item?.badge?.interval||30};
@@ -172,38 +172,38 @@ export function buildAppForm(body,item){
   initInlineEdit('ie-burl','f-burl',{placeholder:t('app.apiUrlPh')});
   initInlineEdit('ie-bunit','bcust-unit',{placeholder:t('app.unitPh')});
 
-  renderColorControl(document.getElementById('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){state.scol=v;const pv=document.getElementById('ipv');if(pv)pv.style.background=rc(state.scol);}});
-  renderColorControl(document.getElementById('static-color-slot'),{value:staticBadge.color||'#1e6ef4',idPrefix:'static-col',swatchColors:BADGE_SWATCHES});
-  renderColorControl(document.getElementById('act-color-slot'),{value:actCustom.color||'#1e6ef4',idPrefix:'act-col',swatchColors:BADGE_SWATCHES});
+  renderColorControl(el('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){state.scol=v;const pv=el('ipv');if(pv)pv.style.background=rc(state.scol);}});
+  renderColorControl(el('static-color-slot'),{value:staticBadge.color||'#1e6ef4',idPrefix:'static-col',swatchColors:BADGE_SWATCHES});
+  renderColorControl(el('act-color-slot'),{value:actCustom.color||'#1e6ef4',idPrefix:'act-col',swatchColors:BADGE_SWATCHES});
 
   state._bpar = normKvRows(act.params);
   state._bhdr = normKvRows(act.headers);
-  renderKvRows(document.getElementById('bpar-rows'), state._bpar, 'key=value');
-  renderKvRows(document.getElementById('bhdr-rows'), state._bhdr, 'X-Api-Key=…');
+  renderKvRows(el('bpar-rows'), state._bpar, 'key=value');
+  renderKvRows(el('bhdr-rows'), state._bhdr, 'X-Api-Key=…');
 
   wireIcon();
   if(state.siurl)updPrev();
 
-  setTogDisabled(document.getElementById('f-dock'),dockBlocked,'dock-full-tip');
-  const hcEn=document.getElementById('hc-en');
+  setTogDisabled(el('f-dock'),dockBlocked,'dock-full-tip');
+  const hcEn=el('hc-en');
   setTogDisabled(hcEn,!globalHealthOn,'hc-off-tip');
-  const showHide=(id,on)=>{const el=document.getElementById(id);if(el)el.hidden=!on;};
-  hcEn?.addEventListener('change',e=>{if(globalHealthOn)showHide('hc-sub',e.target.checked);});
+  const showHide=(id,on)=>{const node=el(id);if(node)node.hidden=!on;};
+  hcEn?.addEventListener('change',e=>{if(globalHealthOn)showHide('hc-sub',tgt(e).checked);});
   document.querySelectorAll('input[name="hc-type"]').forEach(r=>r.addEventListener('change',()=>{
-    const ping=document.getElementById('hc-type-ping')?.checked;
+    const ping=inpById('hc-type-ping')?.checked;
     showHide('hc-con-row',!ping); showHide('hc-ping-row',ping);
   }));
-  document.getElementById('hc-ping-test')?.addEventListener('click',testPing);
-  document.getElementById('static-en')?.addEventListener('change',e=>showHide('static-sub',e.target.checked));
-  document.getElementById('act-en')?.addEventListener('change',e=>showHide('act-sub',e.target.checked));
-  document.getElementById('auth-en')?.addEventListener('change',e=>showHide('auth-sub',e.target.checked));
-  document.getElementById('bfetch')?.addEventListener('click',fetchBadge);
-  document.getElementById('bsearch')?.addEventListener('input',e=>renderBadgeList(state.fnums,false,e.target.value));
-  if(state.spaths.length){['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));renderBadgeList([],true);}
+  el('hc-ping-test')?.addEventListener('click',testPing);
+  el('static-en')?.addEventListener('change',e=>showHide('static-sub',tgt(e).checked));
+  el('act-en')?.addEventListener('change',e=>showHide('act-sub',tgt(e).checked));
+  el('auth-en')?.addEventListener('change',e=>showHide('auth-sub',tgt(e).checked));
+  el('bfetch')?.addEventListener('click',fetchBadge);
+  el('bsearch')?.addEventListener('input',e=>renderBadgeList(state.fnums,false,tgt(e).value));
+  if(state.spaths.length){['bprow','auth-row-wrap','poll-row'].forEach(id=>el(id)?.classList.remove('bprow-hidden'));renderBadgeList([],true);}
 }
 
 function wireIcon(){
-  const inp=document.getElementById('ip-in'),rs=document.getElementById('iprs');
+  const inp=inpById('ip-in'),rs=el('iprs');
   if(!inp)return;
   let t;
   inp.oninput=()=>{
@@ -226,8 +226,8 @@ function wireIcon(){
     },300);
   };
 
-  const upInput=document.getElementById('ip-upload');
-  const upBtn=document.getElementById('ip-upload-lbl');
+  const upInput=inpById('ip-upload');
+  const upBtn=el('ip-upload-lbl');
   /* Explicit click handler, more reliable than a <label> wrapping the input,
      especially since the button text is swapped during upload. */
   if(upBtn&&upInput){
@@ -243,7 +243,7 @@ function wireIcon(){
         if(!r.ok)throw new Error(d.error||'Upload failed');
         await loadLocalIcons();
         state.siurl=d.filename;
-        const ipIn=document.getElementById('ip-in');
+        const ipIn=inpById('ip-in');
         if(ipIn)ipIn.value=d.filename;
         updPrev();
         toast(`Uploaded ${d.filename}`);
@@ -252,15 +252,15 @@ function wireIcon(){
     };
   }
 
-  document.addEventListener('click',e=>{if(!document.getElementById('ipw')?.contains(e.target))rs?.classList.remove('open');});
+  document.addEventListener('click',e=>{if(!el('ipw')?.contains(/** @type {Node} */ (e.target)))rs?.classList.remove('open');});
 }
 function showIPRes(list, rawInput){
-  const rs=document.getElementById('iprs');if(!rs)return;rs.innerHTML='';
+  const rs=el('iprs');if(!rs)return;rs.innerHTML='';
   list.forEach(ic=>{
     const r=document.createElement('button');r.type='button';r.className='ipr';
     const img=document.createElement('img');img.alt='';img.src=ic.svgUrl;img.onerror=()=>{img.src=ic.pngUrl;};
     const sp=document.createElement('span');sp.textContent=ic.name;r.append(img,sp);
-    r.onclick=()=>{state.siurl=ic.svgUrl;document.getElementById('ip-in').value=ic.svgUrl;updPrev();rs.classList.remove('open');};
+    r.onclick=()=>{state.siurl=ic.svgUrl;inpById('ip-in').value=ic.svgUrl;updPrev();rs.classList.remove('open');};
     rs.appendChild(r);
   });
   if(!list.length&&rawInput&&!rawInput.includes('/')){
@@ -279,20 +279,20 @@ function showIPRes(list, rawInput){
     img.src=srcs[0];
     img.onerror=()=>{step++;if(step<srcs.length)img.src=srcs[step];else{img.onerror=null;img.src='';img.style.display='none';}};
     const sp=document.createElement('span');sp.textContent=val;r.append(img,sp);
-    r.onclick=()=>{state.siurl=val;document.getElementById('ip-in').value=val;updPrev();rs.classList.remove('open');};
+    r.onclick=()=>{state.siurl=val;inpById('ip-in').value=val;updPrev();rs.classList.remove('open');};
     rs.appendChild(r);
   }
   if(rs.children.length)rs.classList.add('open');
   else rs.classList.remove('open');
 }
 function setInitialGlyph(p){
-  const l=document.getElementById('f-lbl')?.value||'?';
+  const l=inpById('f-lbl')?.value||'?';
   const s=document.createElement('span');
   s.textContent=(l[0]||'?').toUpperCase();
   p.replaceChildren(s);
 }
 function updPrev(){
-  const p=document.getElementById('ipv');if(!p)return;
+  const p=el('ipv');if(!p)return;
   p.style.background=rc(state.scol);
   if(!state.siurl){setInitialGlyph(p);return;}
   const fallbacks=iconChain(state.siurl);
@@ -308,11 +308,11 @@ function updPrev(){
 
 
 async function testPing(){
-  const url=document.getElementById('hc-ping')?.value?.trim();
-  const st=document.getElementById('hc-ping-status');
+  const url=inpById('hc-ping')?.value?.trim();
+  const st=el('hc-ping-status');
   if(!url){st.textContent='Enter a URL first.';return;}
   st.textContent='Testing…';
-  const skipTls=document.getElementById('f-skip-tls')?.checked||false;
+  const skipTls=inpById('f-skip-tls')?.checked||false;
   try{const r=await ap('/api/ping',{url,skipTls});
     st.textContent=r.ok?`✓ Reachable (${r.status})`:`✗ HTTP ${r.status}`;}
   catch(e){st.textContent='✗ '+e.message;}
@@ -365,7 +365,7 @@ function kvRowEl(host, rows, row, ph){
     <input class="kv-v" type="${row.secret?'password':'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="Header value">
     <label class="kv-cred" title="Store this value as a credential: hidden after saving and never exported. Unticking clears the stored value."><input type="checkbox" ${row.secret?'checked':''} aria-label="Secret"><span class="kv-box"></span><span class="kv-cred-lbl">Secret</span></label>
     <button class="kv-del" type="button" aria-label="Remove">✕</button>`);
-  const kEl=el.querySelector('.kv-k'), vEl=el.querySelector('.kv-v'), cEl=el.querySelector('.kv-cred input'), dEl=el.querySelector('.kv-del');
+  const kEl=qi('.kv-k', el), vEl=qi('.kv-v', el), cEl=qi('.kv-cred input', el), dEl=qSel('.kv-del', el);
   kEl.oninput=()=>{ row.key=kEl.value; };
   vEl.oninput=()=>{ row.value=vEl.value; row.valueSet=false; };
   cEl.onchange=()=>{
@@ -387,16 +387,16 @@ function kvRowEl(host, rows, row, ph){
 }
 
 async function fetchBadge(){
-  const url=document.getElementById('f-burl')?.value?.trim();
-  const st=document.getElementById('bst');
+  const url=inpById('f-burl')?.value?.trim();
+  const st=el('bst');
   if(!url){if(st)st.style.cssText='margin-top:4px;color:var(--dm)';if(st)st.textContent='Enter a URL first.';return;}
   if(st){st.style.cssText='margin-top:4px;color:var(--dm)';st.textContent='Fetching…';}
-  const btn=document.getElementById('bfetch');
+  const btn=inpById('bfetch');
   if(btn)btn.disabled=true;
   try{
     const params=serializeKvRows(state._bpar);
     const headers=serializeKvRows(state._bhdr);
-    const skipTls=document.getElementById('f-skip-tls')?.checked||false;
+    const skipTls=inpById('f-skip-tls')?.checked||false;
     const r=await ap('/api/badge-proxy',{url,params,headers,skipTls,itemId:state.eid!==null?state.items[state.eid]?.id:undefined});
     state.fnums=r.numbers||[];
     if(st){
@@ -404,7 +404,7 @@ async function fetchBadge(){
       if(!state.fnums.length) st.textContent='✓ Connected, no numeric values found';
       else st.textContent=`✓ Found ${state.fnums.length} value${state.fnums.length!==1?'s':''}`;
     }
-    ['bprow','auth-row-wrap','poll-row'].forEach(id=>document.getElementById(id)?.classList.remove('bprow-hidden'));
+    ['bprow','auth-row-wrap','poll-row'].forEach(id=>el(id)?.classList.remove('bprow-hidden'));
     if(state.fnums.length) renderBadgeList(state.fnums,false);
   }catch(e){
     /* Branch on the error's `kind`, not on words inside its message. See
@@ -415,8 +415,8 @@ async function fetchBadge(){
       st.textContent=advice.tone===TONE.WARN?advice.message:'✗ '+advice.message;
     }
     if(advice.openAuth){
-      const authCb=document.getElementById('auth-en');
-      const authSub=document.getElementById('auth-sub');
+      const authCb=inpById('auth-en');
+      const authSub=el('auth-sub');
       if(authCb&&!authCb.checked){
         authCb.checked=true;
         if(authSub)authSub.classList.add('open');
@@ -427,7 +427,7 @@ async function fetchBadge(){
   }
 }
 function renderBadgeList(nums,existingOnly,query=''){
-  const list=document.getElementById('blist');if(!list)return;list.innerHTML='';
+  const list=el('blist');if(!list)return;list.innerHTML='';
   if(existingOnly&&!nums.length){
     /* Issue #8: saved paths already shown in #bst hint, don't repeat here */
     if(state.spaths.length){

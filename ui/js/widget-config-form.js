@@ -21,11 +21,12 @@
    An `object` renders one nested card and saves its sub-fields one level deep.
    Like a group row, its `showIf` conditions read its own sub-fields. */
 
-import { html, raw, setHtml } from '/js/html.js?v=1';
-import { wireChecklist } from '/js/admin-shared.js?v=6f21b1b8';
-import { renderColorControl } from '/js/admin-color-control.js?v=1';
-import { seedCarried, applyOptionSet, collectFieldValues, requiredFieldMissing, groupBounds, visibleFieldKeys } from '/js/admin-logic.js?v=1';
-import { optionsErrorText } from '/js/admin-error.js?v=1';
+import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
+import { wireChecklist } from '/js/admin-shared.js?v=182410cc';
+import { renderColorControl } from '/js/admin-color-control.js?v=601fe763';
+import { seedCarried, applyOptionSet, collectFieldValues, requiredFieldMissing, groupBounds, visibleFieldKeys } from '/js/admin-logic.js?v=056a11e9';
+import { optionsErrorText } from '/js/admin-error.js?v=af729113';
+import { qi } from '/js/utils.js?v=1';
 
 const PE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 const CHEV='<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
@@ -37,7 +38,7 @@ function _ieRow(field, value, inputType) {
   const ph = field.placeholder || '';
   const row = document.createElement('div'); row.className = 'row ie-row';
   setHtml(row, html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp" type="${inputType}" autocomplete="off" value="${has ? value : (field.default != null ? field.default : '')}" style="display:none"><button class="pe" type="button" aria-label="Edit ${field.label}">${raw(PE)}</button>`);
-  const rv = row.querySelector('.rv'), inp = row.querySelector('.row-inp'), pe = row.querySelector('.pe');
+  const rv = row.querySelector('.rv'), inp = qi('.row-inp', row), pe = row.querySelector('.pe');
   function open() { row.classList.add('editing'); inp.style.display = 'block'; inp.focus(); inp.select?.(); }
   function commit() {
     row.classList.remove('editing'); inp.style.display = 'none';
@@ -63,7 +64,7 @@ function _secret(field, isSet) {
   const row = document.createElement('div'); row.className = 'row ie-row';
   const display = isSet ? 'Configured' : 'Not set';
   setHtml(row, html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? 'Enter new value to replace' : (field.placeholder || '')}" style="display:none"><button class="pe" type="button" aria-label="Edit ${field.label}">${raw(PE)}</button>`);
-  const rv = row.querySelector('.rv'), inp = row.querySelector('.row-inp'), pe = row.querySelector('.pe');
+  const rv = row.querySelector('.rv'), inp = qi('.row-inp', row), pe = row.querySelector('.pe');
   const open = () => { row.classList.add('editing'); inp.style.display = 'block'; inp.focus(); };
   const commit = () => { row.classList.remove('editing'); inp.style.display = 'none'; rv.textContent = inp.value ? 'New value set' : display; inp.dispatchEvent(new Event('change', { bubbles: true })); };
   pe.addEventListener('click', open); rv.addEventListener('click', open);
@@ -99,7 +100,7 @@ async function _fetchOptions(field, ctx) {
   if (!r.ok || d.error) {
     /* Carry the structured fields so the caller can branch on `kind` rather than
        reading the message. See docs/api-errors.md. */
-    const err = new Error(d.error || ('HTTP ' + r.status));
+    const err = /** @type {Error & { status?: number, kind?: string, detail?: Record<string, unknown> }} */ (new Error(d.error || ('HTTP ' + r.status)));
     err.status = r.status;
     if (typeof d.kind === 'string') err.kind = d.kind;
     if (d.detail && typeof d.detail === 'object') err.detail = d.detail;

@@ -53,9 +53,9 @@ runs:
       shell: bash
       run: npm run typecheck
 
-    - name: Resolve frontend import paths
+    - name: Typecheck (frontend)
       shell: bash
-      run: npm run paths:ui
+      run: npm run typecheck:ui
 
     # Only on the test path. A release runs the real build right after this, so
     # building twice would just double a slow multi-platform step.

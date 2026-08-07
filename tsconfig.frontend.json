@@ -1,16 +1,21 @@
-/* Not a typecheck. checkJs is off, so this project only resolves the cache-busted
-   import specifiers (/js/foo.js?v=hash) back to real files, for editor
-   jump-to-definition and to catch an import that points at nothing. Running it
-   in CI is what makes a missing paths entry a build failure rather than a
+/* A real typecheck of the frontend. checkJs is on, so every module under ui/js
+   is checked against its JSDoc and against the DOM lib, and this project is
+   also what resolves the cache-busted import specifiers (/js/foo.js?v=hash)
+   back to real files. A missing paths entry is a build failure rather than a
    silently broken editor.
 
    Every file needs two entries, plain and ?v=*, because TypeScript allows at
    most one wildcard per pattern (TS5061), so the two forms cannot be globbed
-   into one. Add both when you add a module under ui/js. */
+   into one. Add both when you add a module under ui/js.
+
+   strict stays off deliberately. The value here is the errors that are real
+   bugs (a name used before it is defined, a misspelled identifier, a property
+   that does not exist on the type), not exhaustive null-tracking through
+   hand-written DOM code. */
 {
   "compilerOptions": {
     "allowJs": true,
-    "checkJs": false,
+    "checkJs": true,
     "noEmit": true,
     "module": "esnext",
     "target": "es2022",
@@ -160,6 +165,12 @@
       ],
       "/js/mobile-metrics.js?v=*": [
         "./ui/js/mobile-metrics.js"
+      ],
+      "/js/password-strength.js": [
+        "./ui/js/password-strength.js"
+      ],
+      "/js/password-strength.js?v=*": [
+        "./ui/js/password-strength.js"
       ],
       "/js/spotlight.js": [
         "./ui/js/spotlight.js"

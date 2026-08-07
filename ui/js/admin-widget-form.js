@@ -2,12 +2,13 @@
    Builds the widget edit form and its per-type config sections. Reads and
    writes shared widget state on the state object; exports buildWidgetForm,
    called by the edit shell. */
-import { state } from '/js/admin-state.js?v=1';
-import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=2';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
-import { html, raw, setHtml } from '/js/html.js?v=1';
-import { sizesForView, widgetConfigMode } from '/js/admin-logic.js?v=1';
-import { t } from '/js/i18n.js?v=1';
+import { state } from '/js/admin-state.js?v=3f9ad806';
+import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=db00a87b';
+import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
+import { sizesForView, widgetConfigMode } from '/js/admin-logic.js?v=056a11e9';
+import { t } from '/js/i18n.js?v=133a7aac';
+import { q, qi, qa } from '/js/utils.js?v=1';
 
 const SIZE_ICONS={
   small:'<rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="9.7" r="1" fill="currentColor"/><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
@@ -44,7 +45,7 @@ function _renderWidgetForm(body){
     <div class="row"><span class="rl">Widget Type</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="Widget type">${typeOpts}</select>${raw(CHEV_SVG)}</div></div>`);
   body.appendChild(shell);
   initInlineEdit('ie-wname','f-wlabel',{placeholder:'My Widget',onCommit(v){state._wlabel=v;}});
-  const typeSel=shell.querySelector('#f-wtype');
+  const typeSel=qi('#f-wtype', shell);
   typeSel.onchange=()=>{ state._wtype=typeSel.value; state._wsize=widgetSizes(state._wtype)[0]; _renderWidgetForm(body); };
 
   const _sizeOpts=sizesForView(widgetSizes(state._wtype), state._widgetReg[state._wtype], state._wAutoCfg);
@@ -53,7 +54,7 @@ function _renderWidgetForm(body){
   const scard=document.createElement('div'); scard.className='grp';
   setHtml(scard, html`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s=>html`<button type="button" class="tile-opt${s===state._wsize?' on':''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s]||SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`)}</div></div>`);
   body.appendChild(scard);
-  scard.querySelectorAll('.tile-opt').forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; _renderWidgetForm(body); }));
+  qa('.tile-opt', scard).forEach(b=>b.addEventListener('click',()=>{ state._wsize=b.dataset.size; _renderWidgetForm(body); }));
 
     const cfgDiv=document.createElement('div');cfgDiv.className='div';body.appendChild(cfgDiv);
   const _mode=widgetConfigMode(state._wtype, state._widgetReg);
@@ -116,8 +117,8 @@ function _renderCustomConfig(body){
     <div class="row ie-row" id="if-allow-row"><span class="rl">Allow (feature policy)</span><span class="rv${o.allow?'':' is-ph'}">${o.allow?o.allow:'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${o.allow||''}" style="display:none"><button class="pe" type="button" aria-label="Edit allow">${raw(PE_SVG)}</button></div>
     <div class="row"><span class="rl">Allow Fullscreen</span><label class="tog"><input type="checkbox" id="if-fs" ${o.allowFullscreen!==false?'checked':''}><div class="tr"></div></label></div>
     <div class="row ie-row" id="if-refresh-row"><span class="rl">Refresh Interval <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval?'':' is-ph'}">${o.refreshInterval?o.refreshInterval:'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval||''}" style="display:none"><button class="pe" type="button" aria-label="Edit refresh interval">${raw(PE_SVG)}</button></div>`);
-  const sync=()=>{ state._iframeOpts.referrerPolicy=adv.querySelector('#if-referrer').value||undefined; state._iframeOpts.allow=adv.querySelector('#if-allow').value.trim()||undefined; state._iframeOpts.allowFullscreen=adv.querySelector('#if-fs').checked; const ri=parseInt(adv.querySelector('#if-refresh').value,10); state._iframeOpts.refreshInterval=(ri&&ri>=250)?ri:undefined; };
-  adv.querySelector('#if-referrer').onchange=sync; adv.querySelector('#if-fs').onchange=sync;
+  const sync=()=>{ state._iframeOpts.referrerPolicy=qi('#if-referrer', adv).value||undefined; state._iframeOpts.allow=qi('#if-allow', adv).value.trim()||undefined; state._iframeOpts.allowFullscreen=qi('#if-fs', adv).checked; const ri=parseInt(qi('#if-refresh', adv).value,10); state._iframeOpts.refreshInterval=(ri&&ri>=250)?ri:undefined; };
+  q('#if-referrer', adv).onchange=sync; q('#if-fs', adv).onchange=sync;
   initInlineEdit('if-allow-row','if-allow',{placeholder:'autoplay; fullscreen',onCommit(){sync();}});
   initInlineEdit('if-refresh-row','if-refresh',{placeholder:'e.g. 2000',onCommit(){sync();}});
 }

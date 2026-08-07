@@ -2,8 +2,9 @@
    Operates in hex, resolves named CSS colors, calls onChange(hex) on any change.
    Used by the Icon, Fixed Label and Live Activity sections, the Widget slots,
    and the auto-form's `color` field type. */
-import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=1';
-import { html, raw, setHtml } from '/js/html.js?v=1';
+import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
+import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
+import { qa, q } from '/js/utils.js?v=1';
 
 const CC_SWATCHES=['#1c1c1e','#8e8e93','#f2f2f7','#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'];
 /* Badge color picker uses the standard Stackyard badge blue (#1e6ef4, the
@@ -66,7 +67,11 @@ const _HEX6 = /^#[0-9a-f]{6}$/i;
 function _cssToHex(str){
   const direct = String(str ?? '').trim();
   if(_HEX6.test(direct)) return direct.toLowerCase();
-  try{ const c=document.createElement('canvas').getContext('2d'); c.fillStyle='#000'; c.fillStyle=str; const v=c.fillStyle;
+  try{ const c=/** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'));
+  c.fillStyle='#000'; c.fillStyle=str;
+  /* fillStyle reads back as string | CanvasGradient | CanvasPattern, but only
+     a string was ever assigned, so only a string comes back. */
+  const v=String(c.fillStyle);
   if(_HEX6.test(v))return v;
   const m=v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
   return m?'#'+[m[1],m[2],m[3]].map(n=>(+n).toString(16).padStart(2,'0')).join(''):null; }catch{return null;} }
@@ -81,6 +86,10 @@ function _hexToHsv(hex){ const h6=_cssToHex(hex); if(!h6)return null;
    should build a control's colours by hand. */
 export const _internals = { cssToHex: _cssToHex, hsvToRgb: _hsvToRgb, hexToHsv: _hexToHsv };
 
+/** @param {HTMLElement} container
+    @param {{ value?: string, idPrefix?: string,
+              onChange?: (value: string) => void, semantic?: boolean,
+              swatchColors?: string[], label?: string }} [opts] */
 export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,semantic=false,swatchColors=CC_SWATCHES,label='Color'}={}){
   const isSem=v=>v==='dark'||v==='light';
   const init=_hexToHsv(isSem(value)?'#0289ff':value)||{h:212,s:99,v:100};
@@ -104,10 +113,12 @@ export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,
     ${slider('Saturation', 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
     ${slider('Brightness', 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
     <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">Color Code</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" style="display:none"><button class="pe" type="button" aria-label="Edit color code">${raw(PE_SVG)}</button></div>`);
-  const rows=[...wrap.children]; rows.forEach(r=>container.appendChild(r));
-  const q=sel=>container.querySelector(sel);
-  const hEl=q(`#${idPrefix}-h`),sEl=q(`#${idPrefix}-s`),vEl=q(`#${idPrefix}-v`);
-  const codeRv=q(`#${idPrefix}-code-row .rv`);
+  const rows=/** @type {HTMLElement[]} */ ([...wrap.children]); rows.forEach(r=>container.appendChild(r));
+  /* Scoped to this control's container; named locally so the module-level q
+     helper stays available under its own name. */
+  const qLocal=sel=>/** @type {HTMLInputElement} */(container.querySelector(sel));
+  const hEl=qLocal(`#${idPrefix}-h`),sEl=qLocal(`#${idPrefix}-s`),vEl=qLocal(`#${idPrefix}-v`);
+  const codeRv=qLocal(`#${idPrefix}-code-row .rv`);
   const tune=rows.filter(r=>r.classList.contains('cc-tune'));
   const hidden=document.createElement('input'); hidden.type='hidden'; hidden.id=`${idPrefix}-val`; container.appendChild(hidden);
   let mode=isSem(value)?value:'color';
@@ -119,13 +130,13 @@ export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,
     const h=+hEl.value,v=+vEl.value,hex=curHex();
     sEl.style.background=`linear-gradient(90deg, ${_hsvToHex(h,0,v)}, ${_hsvToHex(h,100,v)})`;
     vEl.style.background=`linear-gradient(90deg, #000, ${_hsvToHex(h,100,100)})`;
-    container.querySelectorAll('.cc-swatch').forEach(b=>{
+    qa('.cc-swatch', container).forEach(b=>{
       let on=false;
       if(mode==='dark'||mode==='light') on=(b.dataset.v===mode);
       else if(!showTune) on=(b.dataset.v!=='custom'&&!b.classList.contains('cc-sem')&&_near(b.dataset.v,hex));
       b.classList.toggle('on',on);
     });
-    const rb=container.querySelector('.cc-rainbow'); if(rb)rb.classList.toggle('on',mode==='color'&&showTune);
+    const rb=q('.cc-rainbow', container); if(rb)rb.classList.toggle('on',mode==='color'&&showTune);
     tune.forEach(r=>r.style.display=showTune?'':'none');
     if(!codeRv.closest('.editing')){
       codeRv.textContent = mode==='color'?hex:(mode==='dark'?'Dark':'Light');
@@ -135,18 +146,18 @@ export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,
   }
   const commit=()=>{ paint(); onChange?.(hidden.value); };
   [hEl,sEl,vEl].forEach(el=>el.addEventListener('input',()=>{ mode='color'; showTune=true; commit(); }));
-  container.querySelectorAll('.cc-swatch').forEach(b=>b.addEventListener('click',()=>{
+  qa('.cc-swatch', container).forEach(b=>b.addEventListener('click',()=>{
     if(b.dataset.v==='dark'||b.dataset.v==='light'){ mode=b.dataset.v; showTune=false; commit(); return; }
     if(b.dataset.v==='custom'){ mode='color'; showTune=true; commit(); return; }
     mode='color'; showTune=false;
-    const hv=_hexToHsv(b.dataset.v); if(hv){hEl.value=hv.h;sEl.value=hv.s;vEl.value=hv.v;}
+    const hv=_hexToHsv(b.dataset.v); if(hv){hEl.value=String(hv.h);sEl.value=String(hv.s);vEl.value=String(hv.v);}
     commit();
   }));
   initInlineEdit(`${idPrefix}-code-row`,`${idPrefix}-hex`,{root:container,placeholder:'#rrggbb or any CSS color',onCommit(val){
-    const hv=_hexToHsv(val); if(hv){ mode='color'; showTune=true; hEl.value=hv.h; sEl.value=hv.s; vEl.value=hv.v; } commit();
+    const hv=_hexToHsv(val); if(hv){ mode='color'; showTune=true; hEl.value=String(hv.h); sEl.value=String(hv.s); vEl.value=String(hv.v); } commit();
   }});
   if(mode==='color'){
-    const presets=[...container.querySelectorAll('.cc-swatch')].filter(b=>b.dataset.v!=='custom'&&!b.classList.contains('cc-sem')).map(b=>b.dataset.v);
+    const presets=qa('.cc-swatch', container).filter(b=>b.dataset.v!=='custom'&&!b.classList.contains('cc-sem')).map(b=>b.dataset.v);
     showTune=!presets.some(pv=>_near(pv,value));
   }
   paint();

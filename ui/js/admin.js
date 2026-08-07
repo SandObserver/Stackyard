@@ -1,16 +1,16 @@
-import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=bdd2c9eb';
-import { clr as rc, sanitizeCssUrl } from '/js/utils.js?v=92153ac7';
-import { html, raw, setHtml } from '/js/html.js?v=1';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=1';
-import { newItemId, buildAppItem, upsertItem, claimFolderChildren } from '/js/admin-save-logic.js?v=1';
-import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=6f21b1b8';
-import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=8cd76ea3';
-import { state } from '/js/admin-state.js?v=e7eb56f7';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=21070bc4';
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=c3d495f0';
-import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=1';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=146d5567';
-import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=1';
+import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=a0ea3e4b';
+import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt } from '/js/utils.js?v=17424946';
+import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=056a11e9';
+import { newItemId, buildAppItem, upsertItem, claimFolderChildren } from '/js/admin-save-logic.js?v=77cac1d1';
+import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
+import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
+import { state } from '/js/admin-state.js?v=3f9ad806';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=653071f0';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=b46e5b19';
+import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=133a7aac';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=c2d82934';
+import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
 
 /* Admin UI: Stackyard Dashboard */
 
@@ -79,7 +79,7 @@ function trapFocus(box){
   const sel='button:not([disabled]),[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
   return e=>{
     if(e.key!=='Tab')return;
-    const f=[...box.querySelectorAll(sel)];if(!f.length)return;
+    const f=qa(sel, box);if(!f.length)return;
     const first=f[0],last=f[f.length-1];
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
@@ -104,7 +104,7 @@ function svgNode(markup){ const t=document.createElement('template'); setHtml(t,
 let _dragType=null;
 
 function clearDragClasses(target){
-  const rows=target?[target]:document.querySelectorAll('.row');
+  const rows=target?[target]:qa('.row');
   rows.forEach(r=>{r.classList.remove('drag-above','drag-below','drag-into','drag-over');});
 }
 
@@ -162,7 +162,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
       else{collapsedFolders.add(item.id);}
       render();
     };
-    nm.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nm.onclick(e);}};
+    nm.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nm.onclick(/** @type {any} */ (e));}};
   }else{
     nm.textContent=item.label||item.id;
   }
@@ -236,7 +236,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     }
   });
   row.addEventListener('dragleave',e=>{
-    if(!e.relatedTarget||!row.contains(e.relatedTarget))clearDragClasses(row);
+    if(!e.relatedTarget||!row.contains(/** @type {Node} */ (e.relatedTarget)))clearDragClasses(row);
   });
 
   row.addEventListener('drop',e=>{
@@ -291,8 +291,8 @@ function wireTouchDrag(row,handle,{indent,folderId}){
       ghost.style.left=startRect.left+'px';
       clearDragClasses();
       hovered=null;
-      const under=document.elementFromPoint(x,y);
-      const tr=under&&under.closest('.drow');
+      const under=/** @type {HTMLElement} */ (document.elementFromPoint(x,y));
+      const tr=/** @type {HTMLElement} */ (under&&under.closest('.drow'));
       if(!tr||tr===row||tr===ghost)return;
       hovered=tr;
       if(tr.dataset.isFolder&&canJoinFolder(itemType(srcId))){
@@ -361,9 +361,9 @@ function scrollByPx(scroller,dy){
 }
 
 function render(){
-  const l=document.getElementById('al');
-  const bar=document.getElementById('al-filter');
-  const grp=document.getElementById('al-grp');
+  const l=el('al');
+  const bar=el('al-filter');
+  const grp=el('al-grp');
   if(bar){
     if(state.items.length>=6) bar.style.display='';
     else { bar.style.display='none'; if(_flt.q||_flt.type!=='all'){_flt={q:'',type:'all'};_syncFilterUI();} }
@@ -403,8 +403,8 @@ function render(){
   });
 }
 function _syncFilterUI(){
-  const s=document.getElementById('al-search'); if(s)s.value=_flt.q;
-  document.querySelectorAll('#al-filter .chip').forEach(c=>{
+  const s=inp('al-search'); if(s)s.value=_flt.q;
+  qa('#al-filter .chip').forEach(c=>{
     const on=c.dataset.flt===_flt.type; c.classList.toggle('on',on); c.setAttribute('aria-pressed',String(on));
   });
 }
@@ -412,14 +412,14 @@ function _syncFilterUI(){
 /* Associate dynamically-built modal fields with their labels and give every
    toggle an accessible name from its row text. Idempotent; safe to re-run. */
 function showListView(){
-  document.getElementById('dash-list-view').style.display='';
-  document.getElementById('dash-edit-view').style.display='none';
+  el('dash-list-view').style.display='';
+  el('dash-edit-view').style.display='none';
 }
 function showEditView(){
-  document.getElementById('dash-list-view').style.display='none';
-  document.getElementById('dash-edit-view').style.display='';
-  document.getElementById('cp')?.scrollTo?.(0,0);
-  document.querySelector('.cp')?.scrollTo?.(0,0);
+  el('dash-list-view').style.display='none';
+  el('dash-edit-view').style.display='';
+  el('cp')?.scrollTo?.(0,0);
+  q('.cp')?.scrollTo?.(0,0);
 }
 
 const TYPE_ICONS={
@@ -459,13 +459,13 @@ function buildAddNewCard(){
 
 /* Add New card is prepended after the builder runs, so the builder's reset can't wipe it. */
 function _renderEditBody(){
-  const body=document.getElementById('ev-body');
+  const body=el('ev-body');
   body.innerHTML='';
   if(state.ctype==='widget') buildWidgetForm(body,state._evItem);
   else if(state.ctype==='folder') buildFolderForm(body,state._evItem);
   else buildAppForm(body,state._evItem);
   if(!state._evIsEdit) body.insertBefore(buildAddNewCard(),body.firstChild);
-  setTimeout(()=>{ try{ body.querySelector('input,select,textarea')?.focus(); }catch{} },50);
+  setTimeout(()=>{ try{ q('input,select,textarea', body)?.focus(); }catch{} },50);
 }
 
 function openModal(idx){
@@ -487,12 +487,12 @@ function openModal(idx){
   }
 
   const isEdit=idx!=null;
-  document.getElementById('ev-title').textContent='General';
-  const delBtn=document.getElementById('ev-delete');
-  const saveBtn=document.getElementById('ev-save');
+  el('ev-title').textContent='General';
+  const delBtn=el('ev-delete');
+  const saveBtn=el('ev-save');
   if(delBtn){ delBtn.classList.toggle('d-none',!isEdit); delBtn.onclick=()=>_evDelete(item,idx); }
   if(saveBtn){ saveBtn.onclick=()=>doSave(item); }
-  const backBtn=document.getElementById('ev-back');
+  const backBtn=el('ev-back');
   if(backBtn) backBtn.onclick=()=>closeModal();
 
   state._evItem=item; state._evIsEdit=isEdit;
@@ -511,16 +511,16 @@ function _evDelete(item,idx){
   showListView();
 }
 {
-  const s=document.getElementById('al-search');
+  const s=inp('al-search');
   if(s)s.addEventListener('input',()=>{_flt.q=s.value.trim();render();});
-  document.querySelectorAll('#al-filter .chip').forEach(c=>{
+  qa('#al-filter .chip').forEach(c=>{
     c.addEventListener('click',()=>{_flt.type=c.dataset.flt;_syncFilterUI();render();});
   });
 }
 
 
 
-document.getElementById('btn-add').onclick=()=>openModal(null);
+el('btn-add').onclick=()=>openModal(null);
 function closeModal(){
   showListView();
   state.eid=null;
@@ -531,13 +531,13 @@ function closeModal(){
 
 
 function openFolderPicker(appId,targetFolderId=null){
-  const trigger=document.activeElement;
+  const trigger=/** @type {HTMLElement} */ (document.activeElement);
   const folders=state.items.filter(i=>i.type==='folder');
   const currentFolder=folders.find(f=>(f.children||[]).includes(appId));
   const appItem=state.items.find(i=>i.id===appId);
   const appName=appItem?.label||appId;
 
-  document.getElementById('folder-picker-ov')?.remove();
+  el('folder-picker-ov')?.remove();
 
   const ov=document.createElement('div');ov.id='folder-picker-ov';ov.className='fp-ov';
   const box=document.createElement('div');box.className='fp-box';
@@ -606,12 +606,13 @@ function openFolderPicker(appId,targetFolderId=null){
   ov.onclick=e=>{if(e.target===ov)close();};
   document.addEventListener('keydown',onKey);
   box.append(hdr,list,footer);ov.appendChild(box);document.body.appendChild(ov);
-  (list.querySelector('button')||cancel).focus();
+  (q('button', list)||cancel).focus();
 }
 
 async function doSave(orig){
   try{
-    let item;
+    /** @type {Record<string, any>} */
+  let item;
     if(state.ctype==='widget'){
       const wlabel=state._wlabel.trim()||state._widgetReg?.[state._wtype]?.label||t('type.widget');
       if(state._autoForm && state._autoFormType===state._wtype && state._widgetReg[state._wtype]){
@@ -621,7 +622,7 @@ async function doSave(orig){
           label:wlabel,widgetSize:state._wsize,widgetConfig:state._autoForm.getValues()};
       }
       else if(state._wtype==='custom'){
-        const url=document.getElementById('f-url')?.value?.trim();
+        const url=inp('f-url')?.value?.trim();
         if(!url){toast('URL required','err');return;}
         const ifo={};
         if(state._iframeOpts.referrerPolicy) ifo.referrerPolicy=state._iframeOpts.referrerPolicy;
@@ -633,34 +634,34 @@ async function doSave(orig){
         if(Object.keys(ifo).length) item.iframe=ifo;
       }
     }else if(state.ctype==='folder'){
-      const label=document.getElementById('f-fname')?.value?.trim();
+      const label=inp('f-fname')?.value?.trim();
       if(!label){toast('Name required','err');return;}
       /* An app belongs to one folder. This ran only when creating a folder, so
          editing an existing one and ticking an app already filed elsewhere left
          it in both, and the dashboard rendered it twice. */
-      const children=[...document.querySelectorAll('#folder-apps-list li[aria-selected="true"]')].map(li=>li.dataset.val);
+      const children=qa('#folder-apps-list li[aria-selected="true"]', document).map(li=>li.dataset.val);
       claimFolderChildren(state.items,orig?.id,children);
       item={id:orig?.id||newItemId(label,'folder',state.items.map(i=>i.id)),type:'folder',label,children};
     }else{
-      const isPing=document.getElementById('hc-type-ping')?.checked;
+      const isPing=inp('hc-type-ping')?.checked;
       const v={
-        label: document.getElementById('f-lbl')?.value?.trim(),
-        href:  document.getElementById('f-href')?.value?.trim(),
-        hcEn:  document.getElementById('hc-en')?.checked,
-        hcCon: isPing?'':(document.getElementById('hc-con')?.value?.trim()||''),
-        hcPing:isPing?(document.getElementById('hc-ping')?.value?.trim()||''):'',
-        skipTlsVerify: document.getElementById('f-skip-tls')?.checked||false,
-        actEn:   document.getElementById('act-en')?.checked,
-        actUrl:  document.getElementById('f-burl')?.value?.trim()||'',
-        actInt:  Math.min(3600,Math.max(10,parseInt(document.getElementById('f-bint')?.value||'30',10))),
+        label: inp('f-lbl')?.value?.trim(),
+        href:  inp('f-href')?.value?.trim(),
+        hcEn:  inp('hc-en')?.checked,
+        hcCon: isPing?'':(inp('hc-con')?.value?.trim()||''),
+        hcPing:isPing?(inp('hc-ping')?.value?.trim()||''):'',
+        skipTlsVerify: inp('f-skip-tls')?.checked||false,
+        actEn:   inp('act-en')?.checked,
+        actUrl:  inp('f-burl')?.value?.trim()||'',
+        actInt:  Math.min(3600,Math.max(10,parseInt(inp('f-bint')?.value||'30',10))),
         actParams:  serializeKvRows(state._bpar),
         actHeaders: serializeKvRows(state._bhdr),
-        actColor: document.getElementById('act-col-val')?.value||'#0289ff',
-        custUnit: document.getElementById('bcust-unit')?.value?.trim()||'',
-        staticEn:    document.getElementById('static-en')?.checked||false,
-        staticLabel: document.getElementById('f-static-label')?.value?.trim()||'',
-        staticColor: document.getElementById('static-col-val')?.value||'#1e6ef4',
-        dock: document.getElementById('f-dock')?.checked||false,
+        actColor: inp('act-col-val')?.value||'#0289ff',
+        custUnit: inp('bcust-unit')?.value?.trim()||'',
+        staticEn:    inp('static-en')?.checked||false,
+        staticLabel: inp('f-static-label')?.value?.trim()||'',
+        staticColor: inp('static-col-val')?.value||'#1e6ef4',
+        dock: inp('f-dock')?.checked||false,
         iconUrl: state.siurl, scol: state.scol, spaths: state.spaths,
       };
       const res=buildAppItem(v,orig,state.items.map(i=>i.id));
@@ -677,9 +678,9 @@ async function doSave(orig){
 }
 
 function initNav(){
-  const links=document.querySelectorAll('.nl, .mtab');
+  const links=qa('.nl, .mtab');
   const STORE='admin_sec';
-  const sections=[...document.querySelectorAll('.sec')].map(s=>s.id.replace(/^sec-/,''));
+  const sections=qa('.sec', document).map(s=>s.id.replace(/^sec-/,''));
 
   /* Resolved inside show(), not just where the stored value is read, so no
      caller can leave the page with nothing visible. A link with a typo'd
@@ -688,7 +689,7 @@ function initNav(){
     const id=resolveAdminSection(requested,sections);
     if(id===null) return;
     if(id!==requested) console.warn('admin: unknown section',requested,'- showing',id);
-    document.querySelectorAll('.sec').forEach(s=>{s.hidden=s.id!=='sec-'+id;});
+    qa('.sec', document).forEach(s=>{s.hidden=s.id!=='sec-'+id;});
     links.forEach(l=>l.classList.toggle('active',l.dataset.sec===id));
     localStorage.setItem(STORE,id);
   }
@@ -699,7 +700,7 @@ function initNav(){
 
 function initAllInlineEdits(){
   initInlineEdit('ie-title','ie-input',{placeholder:'Stackyard',
-    onCommit(v){document.getElementById('ie-title-v').textContent=v||'Stackyard';}});
+    onCommit(v){el('ie-title-v').textContent=v||'Stackyard';}});
 
   const descInp=document.createElement('input');descInp.id='ie-desc-input';document.body.appendChild(descInp);
   initInlineEdit('ie-desc','ie-desc-input',{placeholder:'Stackyard · self-hosted homelab dashboard'});
@@ -709,16 +710,16 @@ function initAllInlineEdits(){
 
   initInlineEdit('ie-pw','sec-pw',{type:'password',placeholder:'New password (min 8 chars)',
     onCommit(){
-      const bars=document.getElementById('sec-pw-bars');
-      const hint=document.getElementById('sec-pw-hint');
+      const bars=el('sec-pw-bars');
+      const hint=el('sec-pw-hint');
       if(bars) bars.style.display='none';
       if(hint) hint.style.display='none';
     }});
-  const pwInp=document.getElementById('sec-pw');
+  const pwInp=el('sec-pw');
   if(pwInp){
     pwInp.addEventListener('input',()=>{
-      const bars=document.getElementById('sec-pw-bars');
-      const hint=document.getElementById('sec-pw-hint');
+      const bars=el('sec-pw-bars');
+      const hint=el('sec-pw-hint');
       if(bars){bars.style.display='flex';}
       if(hint){hint.style.display='block';}
       wirePasswordStrength('sec-pw','sec-pw-bars','sec-pw-hint');
@@ -743,12 +744,12 @@ async function initVersion(){
     const d=await ag('/api/version');
     const v=(d.current||d.version||'').replace(/^v/i,'');
     if(v){
-      const vEl=document.getElementById('sidebar-version');
-      const aEl=document.getElementById('about-version');
+      const vEl=el('sidebar-version');
+      const aEl=el('about-version');
       if(vEl)vEl.textContent='v'+v;
       if(aEl)aEl.textContent='Version v'+v;
       if(d.updateAvailable){
-        const dot=document.getElementById('about-update-dot');
+        const dot=el('about-update-dot');
         if(dot)dot.style.display='flex';
         if(aEl&&d.latest){
           const lv=String(d.latest).replace(/^v/i,'');
@@ -760,9 +761,9 @@ async function initVersion(){
 }
 
 function initSecToggle(){
-  const en=document.getElementById('sec-en');
-  const pwRow=document.getElementById('ie-pw');
-  const pwHint=document.getElementById('pw-hint-static');
+  const en=inp('sec-en');
+  const pwRow=el('ie-pw');
+  const pwHint=el('pw-hint-static');
   if(!en)return;
   function apply(on){
     if(pwRow)pwRow.style.display=on?'':'none';
@@ -773,9 +774,9 @@ function initSecToggle(){
 }
 
 function initDockerToggle(){
-  const en=document.getElementById('srv-docker-en');
-  const hideRow=document.getElementById('srv-hide-healthy-row');
-  const socketRow=document.getElementById('ie-socket');
+  const en=inp('srv-docker-en');
+  const hideRow=el('srv-hide-healthy-row');
+  const socketRow=el('ie-socket');
   if(!en)return;
   function apply(on){
     if(hideRow)hideRow.style.display=on?'':'none';
@@ -786,9 +787,9 @@ function initDockerToggle(){
 }
 
 function initBgType(){
-  const btn=document.getElementById('bg-type-btn');
-  const list=document.getElementById('bg-type-list');
-  const hidden=document.getElementById('bg-type');
+  const btn=el('bg-type-btn');
+  const list=el('bg-type-list');
+  const hidden=inp('bg-type');
   if(!btn||!list||!hidden) return;
 
   function setVal(val){
@@ -800,7 +801,7 @@ function initBgType(){
     list.querySelectorAll('li').forEach(li=>li.setAttribute('aria-selected',String(li.dataset.val===val)));
     list.hidden=true;
     showBgFields(val);
-    const hint=document.getElementById('bgcol-hint');
+    const hint=el('bgcol-hint');
     if(hint) hint.style.display=val==='unsplash'?'':'none';
   }
 
@@ -814,9 +815,9 @@ function initBgType(){
 }
 
 function initLogLevel(){
-  const btn=document.getElementById('log-level-btn');
-  const list=document.getElementById('log-level-list');
-  const hidden=document.getElementById('log-level');
+  const btn=el('log-level-btn');
+  const list=el('log-level-list');
+  const hidden=inp('log-level');
   if(!btn||!list||!hidden) return;
   const labels={debug:'Debug',info:'Info',error:'Errors'};
   function setVal(val){
@@ -833,9 +834,9 @@ function initLogLevel(){
 }
 
 function initLanguage(){
-  const btn=document.getElementById('lang-btn');
-  const list=document.getElementById('lang-list');
-  const hidden=document.getElementById('lang-sel');
+  const btn=el('lang-btn');
+  const list=el('lang-list');
+  const hidden=inp('lang-sel');
   if(!btn||!list||!hidden) return;
   const names=Object.fromEntries(LANGUAGES.map(l=>[l.code,l.name]));
   setHtml(list, html`${LANGUAGES.map(l=>html`<li role="option" data-val="${l.code}" aria-selected="false">${l.name}</li>`)}`);
@@ -851,10 +852,10 @@ function initLanguage(){
   setVal(hidden.value||'en');
 }
 
-const dashSaveEl=document.getElementById('dash-save');
+const dashSaveEl=el('dash-save');
 if(dashSaveEl)dashSaveEl.onclick=()=>save();
 
-document.getElementById('btn-exp').onclick=async()=>{
+el('btn-exp').onclick=async()=>{
   try{
     const a=document.createElement('a');
     a.href=API+'/api/config/export';
@@ -862,8 +863,8 @@ document.getElementById('btn-exp').onclick=async()=>{
     document.body.appendChild(a);a.click();document.body.removeChild(a);
   }catch(e){toast(t('toast.exportFailed',{err:e.message}),'err');}
 };
-document.getElementById('imp').onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
+el('imp').onchange=async e=>{
+  const f=tgt(e).files[0];if(!f)return;
   try{
     const d=JSON.parse(await f.text());
     if(!d||!Array.isArray(d.items))throw new Error('Invalid');
@@ -872,15 +873,15 @@ document.getElementById('imp').onchange=async e=>{
     let added=0,updated=0,deleted=0;
     for(const [id,it] of inc){ if(!cur.has(id)) added++; else if(JSON.stringify(cur.get(id))!==JSON.stringify(it)) updated++; }
     for(const id of cur.keys()){ if(!inc.has(id)) deleted++; }
-    if(added+updated+deleted===0){ toast(t('toast.importNoChange')); e.target.value=''; return; }
-    if(!confirm(t('import.confirm',{n:d.items.length,added,updated,deleted}))){ e.target.value=''; return; }
+    if(added+updated+deleted===0){ toast(t('toast.importNoChange')); tgt(e).value=''; return; }
+    if(!confirm(t('import.confirm',{n:d.items.length,added,updated,deleted}))){ tgt(e).value=''; return; }
     state.items=d.items;await save();toast(t('toast.imported'));
   }
   catch(e){toast(t('toast.importFailed',{err:e.message}),'err');}
-  e.target.value='';
+  tgt(e).value='';
 };
 
-document.getElementById('btn-add').onclick=()=>openModal(null);
+el('btn-add').onclick=()=>openModal(null);
 
 initNav();
 initAllInlineEdits();
@@ -895,12 +896,12 @@ checkAuth(load).then(ok => {
   if (!ok) return;
   load().catch(e=>{
     toast('Could not load config. Is the API container running? ('+e.message+')','err');
-    const al=document.getElementById('al');
+    const al=el('al');
     if(al){
       /* See dashboard.js: an inline onclick is blocked by the CSP, so the
          button did nothing. */
       setHtml(al, html`<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">Failed to load dashboard config.<br><br><button class="retry-btn" type="button" style="padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">Retry</button></div>`);
-      al.querySelector('.retry-btn')?.addEventListener('click', () => location.reload());
+      q('.retry-btn', al)?.addEventListener('click', () => location.reload());
     }
   });
 });

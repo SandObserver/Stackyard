@@ -1,9 +1,9 @@
-import { iconChain } from '/js/icons.js?v=36';
-import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=39';
-import { mk, clr, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets } from '/js/utils.js?v=40';
-import { t, currentLang } from '/js/i18n.js?v=1';
-import { trapFocus } from '/js/dialog.js?v=1';
-import { mobileMetrics } from '/js/mobile-metrics.js?v=1';
+import { iconChain } from '/js/icons.js?v=a0ea3e4b';
+import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=13def718';
+import { mk, clr, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, el, q, qa } from '/js/utils.js?v=17424946';
+import { t, currentLang } from '/js/i18n.js?v=133a7aac';
+import { trapFocus } from '/js/dialog.js?v=4ff94595';
+import { mobileMetrics } from '/js/mobile-metrics.js?v=b32c23b3';
 
 let _state = null;
 export function initUI(state) { _state = state; }
@@ -39,12 +39,15 @@ function readSafeInsets() {
    Widgets expose window.__clearActive; taps outside a widget land in the parent
    document, so the parent must tell the widgets to reset. */
 function clearMobWidgets(exceptWin){
-  document.querySelectorAll('.mob-widget-card iframe, .widget iframe').forEach(ifr => {
-    try { const w = ifr.contentWindow; if (w && w !== exceptWin && w.__clearActive) w.__clearActive(); } catch {}
+  qa('.mob-widget-card iframe, .widget iframe').forEach(ifr => {
+    try { const w = /** @type {HTMLIFrameElement} */ (ifr).contentWindow; if (w && w !== exceptWin && /** @type {any} */ (w).__clearActive) /** @type {any} */ (w).__clearActive(); } catch {}
   });
 }
-if (!window.__wActiveMsgBound){
-  window.__wActiveMsgBound = true;
+/* A module-level guard on the window, so a second import of this module does
+   not bind the listener twice. Not a standard window property. */
+const _win = /** @type {any} */ (window);
+if (!_win.__wActiveMsgBound){
+  _win.__wActiveMsgBound = true;
   window.addEventListener('message', e => {
     /* Widgets are same-origin iframes, so a message from anywhere else is not
        part of this protocol. Without the check any window holding a handle on
@@ -123,7 +126,7 @@ export function openFolderDesktop(folder) {
   const ov = mk('div'); ov.className = 'folder-overlay';
   ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
   ov.setAttribute('aria-label', (folder.label||t('type.folder')) + ' folder');
-  const _prevFocus = document.activeElement;
+  const _prevFocus = /** @type {HTMLElement} */ (document.activeElement);
   let releaseDeskTrap = null;
   const outer = mk('div'); outer.className = 'folder-outer';
   const title = mk('div'); title.className = 'folder-title-desktop'; title.textContent = folder.label||t('type.folder');
@@ -148,7 +151,7 @@ export function openFolderDesktop(folder) {
   box.appendChild(grid);
   const registeredBadges = [];
   children.forEach(c => bupd(c.id));
-  grid.querySelectorAll('.badge').forEach(el => registeredBadges.push(el));
+  qa('.badge', grid).forEach(el => registeredBadges.push(el));
   function closeDesk() {
     registeredBadges.forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
     document.removeEventListener('keydown', escDesk);
@@ -234,7 +237,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
 
   let releaseMobTrap = null;
   function closeMob() {
-    ov.querySelectorAll('.badge').forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
+    qa('.badge', ov).forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
     /* Releases the trap and returns focus to the folder button that opened it.
        This overlay had neither, so a keyboard user could tab straight out of it
        into the dashboard behind, and Escape did nothing. */
@@ -363,7 +366,7 @@ export function buildMobile() {
      buildMobile row-flow with ensureSpace overflow), which disagreed and
      could strand half-rows / push a widget that fits onto a new page.
      Footprints in grid cells: icon/folder 1×1, small 2×2, medium 4×2, large 4×4, xlarge 4×6. */
-  const strip = document.getElementById('pages'); strip.innerHTML = '';
+  const strip = el('pages'); strip.innerHTML = '';
   const COLS = 4, ROWS = 6;
   const gap = Math.round(sm * 0.5);
   const rh2 = (avail - gap * (ROWS - 1)) / ROWS;   /* exact row height incl. gaps */
@@ -466,9 +469,9 @@ export function buildMobile() {
      They used to be built here anyway, into a display:none container and pushed
      into an array nothing read, so they were unreachable markup that still had
      to be kept in step. Cleared rather than filled. */
-  const dw = document.getElementById('dots'); dw.style.cssText = 'display:none'; dw.innerHTML = '';
+  const dw = el('dots'); dw.style.cssText = 'display:none'; dw.innerHTML = '';
 
-  const dk = document.getElementById('dock'); dk.className = 'mdock';
+  const dk = el('dock'); dk.className = 'mdock';
   const dockW = vw - Math.round(18*sc);
   const dockIconSz = Math.round(Math.min(isz, (dockW-Math.round(28*sc))/4*0.85));
   const dockIr = Math.round(dockIconSz*.225), dockIm = Math.round(dockIconSz*.64);
@@ -487,11 +490,11 @@ export function buildMobile() {
   const _pdotSz = Math.round(8*sc), _pdotGap = Math.round(5*sc), _pdotPad = Math.round(14*sc);
   const pillDotsW = pages.length * (_pdotSz + _pdotGap) - _pdotGap + _pdotPad * 2;
   const pillBottom = safe + dh + pillGap;
-  const pill = document.getElementById('mob-search-pill');
+  const pill = el('mob-search-pill');
   pill.style.cssText = `position:fixed;left:50%;bottom:${pillBottom}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:-webkit-flex;display:flex;z-index:500;`;
 
-  const pillNew = pill.cloneNode(true);
-  const pillNewDots = pillNew.querySelector('.msp-dots'); pillNewDots.innerHTML = '';
+  const pillNew = /** @type {HTMLElement} */ (pill.cloneNode(true));
+  const pillNewDots = q('.msp-dots', pillNew); pillNewDots.innerHTML = '';
   const pillDotEls = pages.map((_, i) => {
     const d = document.createElement('div');
     d.className = 'msp-dot' + (i === 0 ? ' on' : '');
@@ -512,8 +515,8 @@ export function buildMobile() {
   CB().mobPillBump = pillBump;
 
   const { _mobTsCleanup, _mobTeCleanup } = st();
-  if (_mobTsCleanup) document.removeEventListener('touchstart', _mobTsCleanup, { passive:true });
-  if (_mobTeCleanup) document.removeEventListener('touchend',   _mobTeCleanup, { passive:true });
+  if (_mobTsCleanup) document.removeEventListener('touchstart', _mobTsCleanup);
+  if (_mobTeCleanup) document.removeEventListener('touchend',   _mobTeCleanup);
   let tx = 0, txOpenedWithFolder = false;
   st()._mobTsCleanup = e => { tx = e.touches[0].clientX; txOpenedWithFolder = !!folderOverlayMob; };
   st()._mobTeCleanup = e => {
