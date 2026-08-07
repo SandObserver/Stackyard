@@ -19,13 +19,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # Runs every check the Tests workflow runs, then stamps the cache-busting
+      # versions, so a tag cannot publish a tree that would fail CI. A tag used
+      # to go straight from checkout to push: no tests, no lint, no typecheck,
+      # and a mutating stamp pass whose output nothing verified.
+      #
+      # Failing here leaves the tag in place with nothing published. Fix main,
+      # delete the tag, tag again.
+      - name: Run project checks
+        uses: ./.github/actions/checks
         with:
-          node-version: '24'
-
-      - name: Rewrite cache-busting versions
-        run: node scripts/bump-cache-busting.js
+          mode: release
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

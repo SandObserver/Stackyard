@@ -84,8 +84,18 @@ test('the build script can see an unstamped reference', () => {
   }
 });
 
+/* The checks moved into a composite action so the release build runs the same
+   set as a pull request; see .github/actions/checks. Asserted there rather than
+   in test.yml, which now just calls it. */
 test('the check is wired into CI', () => {
-  const workflow = fs.readFileSync(path.resolve(root, '../.github/workflows/test.yml'), 'utf8');
-  assert.match(workflow, /bump-cache-busting\.js --check/,
+  const action = fs.readFileSync(path.resolve(root, '../.github/actions/checks/action.yml'), 'utf8');
+  assert.match(action, /bump-cache-busting\.js --check/,
     'without this the check only runs when someone remembers to');
+});
+
+test('the workflows call the shared checks rather than listing their own', () => {
+  for (const name of ['test.yml', 'release.yml']) {
+    const workflow = fs.readFileSync(path.resolve(root, `../.github/workflows/${name}`), 'utf8');
+    assert.match(workflow, /uses: \.\/\.github\/actions\/checks/, `${name} bypasses the shared checks`);
+  }
 });
