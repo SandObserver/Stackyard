@@ -272,7 +272,10 @@ function _overlay(root) {
      root = document.body,   element the status message overlays
      loadingText, emptyText, errorText
    }
-   Returns { stop }.
+   Returns { stop }, which also detaches the visibility listener.
+
+   Polling stops while the tab is hidden and resumes with an immediate fetch on
+   return, so a backgrounded dashboard stops calling the services behind it.
 */
 export function poll(opts = {}) {
   const intervalFor = d => (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000;
@@ -282,6 +285,7 @@ export function poll(opts = {}) {
   const custom = typeof opts.onError === 'function'; /* widget draws its own error UI */
   const ov = custom ? null : _overlay(opts.root || document.body);
   let lastOk = 0, fails = 0, everOk = false, stopped = false, lastData = null, timer = null;
+  let paused = false;
 
   async function tick() {
     if (stopped) return;
@@ -302,15 +306,54 @@ export function poll(opts = {}) {
     }
   }
 
+  const isHidden = () => typeof document !== 'undefined' && document.hidden === true;
+
   /* setTimeout rather than setInterval so a variable interval takes effect from
      the next tick, and so a slow fetch cannot overlap with the following one. */
   async function loop() {
     await tick();
     if (stopped) return;
+    /* Nothing is scheduled while hidden. Each widget is its own document with
+       its own timer, and most ticks reach the user's own service through the
+       API, so a backgrounded tab otherwise keeps polling Plex or Pi-hole
+       indefinitely. Browsers throttle background timers to about a minute,
+       which softens this but does not stop it. The dashboard already pauses its
+       own badge, health and config polls; this is the widgets' half. */
+    if (isHidden()) { paused = true; return; }
     timer = setTimeout(loop, intervalFor(lastData));
   }
 
+  /* Both directions are handled here rather than only at the next tick. A
+     widget on a ten-minute interval is almost always sitting on an armed timer
+     when the tab hides, so waiting for the tick to notice would leave that
+     timer to fire in the background: the pause would work only for whichever
+     widget happened to be mid-cycle. */
+  function onVisibility() {
+    if (stopped) return;
+    if (isHidden()) {
+      clearTimeout(timer);
+      timer = null;
+      paused = true;
+      return;
+    }
+    /* Fetch straight away rather than waiting out the remaining interval, so
+       the first thing seen on return is current. Matches the dashboard. */
+    if (!paused) return;
+    paused = false;
+    loop();
+  }
+  /* Guarded because poll() is unit-tested outside a browser, where there is no
+     document; without one there is nothing to hide, so the loop just runs. */
+  const canObserve = typeof document !== 'undefined' && typeof document.addEventListener === 'function';
+  if (canObserve) document.addEventListener('visibilitychange', onVisibility);
+
   if (ov) ov.show(opts.loadingText || _t('loading', 'Loading'), false);
   loop();
-  return { stop() { stopped = true; clearTimeout(timer); } };
+  return {
+    stop() {
+      stopped = true;
+      clearTimeout(timer);
+      if (canObserve) document.removeEventListener('visibilitychange', onVisibility);
+    },
+  };
 }
