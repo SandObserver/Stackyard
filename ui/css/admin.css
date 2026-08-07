@@ -80,6 +80,9 @@ html{background:var(--bg-color,var(--bg-outer))}
 .grp{background:var(--cp);border-radius:var(--r);overflow:visible;margin-bottom:4px;border:1px solid var(--bd-inner)}
 .grp-hdr{font-size:12px;font-weight:500;color:var(--dm);padding:16px 0 5px;letter-spacing:.01em}
 .grp-tip{font-size:12px;color:var(--dm);padding:6px 2px 14px;line-height:1.55}
+/* Why a widget was refused, one validator message per line. Indented as a list rather than run together, since a manifest can fail several rules at once. */
+.cfg-reject-list{list-style:disc;padding-inline-start:20px;margin-block-start:-8px}
+.cfg-reject-list li{margin-block-end:4px}
 .grp-tip strong{color:rgba(242,242,247,.65)}
 .grp-tip code{font-family:monospace;font-size:11px}
 

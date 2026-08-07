@@ -195,5 +195,9 @@
     "unavailable": "No disponible",
     "noData": "Sin datos",
     "justNow": "ahora mismo"
+  },
+  "widgetCfg": {
+    "unavailable": "Ajustes no disponibles",
+    "unavailableTip": "No se pudo cargar la definición de este widget ({type}), por lo que sus ajustes no se pueden mostrar ni editar. Se conservan en el servidor y no se ven afectados al guardar."
   }
 }

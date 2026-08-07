@@ -195,5 +195,9 @@
     "unavailable": "Unavailable",
     "noData": "No data",
     "justNow": "just now"
+  },
+  "widgetCfg": {
+    "unavailable": "Settings unavailable",
+    "unavailableTip": "This widget's definition ({type}) could not be loaded, so its settings cannot be shown or edited. They are kept on the server and are not affected by saving."
   }
 }
