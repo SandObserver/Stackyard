@@ -13,33 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # The checks live in a composite action so the release build runs exactly
+      # the same set and the two cannot drift. See .github/actions/checks.
+      - name: Run project checks
+        uses: ./.github/actions/checks
         with:
-          node-version: '24'
-
-      - name: Run backend tests
-        run: npm test
-        working-directory: api
-
-      - name: Run frontend tests
-        run: node --test
-        working-directory: ui/test
-
-      - name: Check asset cache-busting
-        run: node scripts/bump-cache-busting.js --check
-
-      - name: Install dev tooling
-        run: npm install
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck (backend)
-        run: npm run typecheck
-
-      - name: Resolve frontend import paths
-        run: npm run paths:ui
-
-      - name: Docker build smoke test
-        run: docker build -t stackyard:ci .
+          mode: test

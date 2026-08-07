@@ -1,0 +1,86 @@
+name: Project checks
+description: >
+  Every check that decides whether the tree is releasable. One definition, used
+  by the Tests workflow and by the release build, so the two cannot drift and a
+  tag cannot publish something the checks never saw.
+
+inputs:
+  mode:
+    description: >
+      "test" is the pull-request and main path: verify the committed tree and
+      smoke-build the image.
+
+      "release" adds the cache-busting stamp pass a release needs, after the
+      tests rather than before. Stamping writes entryVersions into each widget
+      manifest, and widget-manifests.test.js asserts that field is never
+      committed, so the suite has to run on the committed tree. The stamp pass
+      then runs, and is checked for convergence. No smoke build in this mode:
+      the real multi-platform build follows immediately.
+    required: false
+    default: test
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Check asset cache-busting
+      shell: bash
+      run: node scripts/bump-cache-busting.js --check
+
+    - name: Run backend tests
+      shell: bash
+      working-directory: api
+      run: npm test
+
+    - name: Run frontend tests
+      shell: bash
+      working-directory: ui/test
+      run: node --test
+
+    - name: Install dev tooling
+      shell: bash
+      run: npm install
+
+    - name: Lint
+      shell: bash
+      run: npm run lint
+
+    - name: Typecheck (backend)
+      shell: bash
+      run: npm run typecheck
+
+    - name: Resolve frontend import paths
+      shell: bash
+      run: npm run paths:ui
+
+    # Only on the test path. A release runs the real build right after this, so
+    # building twice would just double a slow multi-platform step.
+    - name: Docker build smoke test
+      if: inputs.mode == 'test'
+      shell: bash
+      run: docker build -t stackyard:ci .
+
+    # Release only, and last: this rewrites files. --check above proves every
+    # asset reference carries a stamp, but not that the stamp is current, so
+    # this pass is what makes the shipped stamps correct.
+    - name: Stamp asset cache-busting
+      if: inputs.mode == 'release'
+      shell: bash
+      run: node scripts/bump-cache-busting.js
+
+    # Stamping has to be reproducible, or the image would differ from a rebuild
+    # of the same tag. A second pass over stamped files must change nothing.
+    - name: Verify stamping is settled
+      if: inputs.mode == 'release'
+      shell: bash
+      run: |
+        node scripts/bump-cache-busting.js
+        if ! git diff --quiet; then
+          echo "::error::Cache-busting stamps did not converge; a second pass still changed files."
+          git --no-pager diff --stat
+          exit 1
+        fi
