@@ -195,5 +195,9 @@
     "unavailable": "Indisponible",
     "noData": "Aucune donnée",
     "justNow": "à l’instant"
+  },
+  "widgetCfg": {
+    "unavailable": "Réglages indisponibles",
+    "unavailableTip": "La définition de ce widget ({type}) n'a pas pu être chargée, ses réglages ne peuvent donc pas être affichés ni modifiés. Ils sont conservés sur le serveur et ne sont pas affectés par l'enregistrement."
   }
 }

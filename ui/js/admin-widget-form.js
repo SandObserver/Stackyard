@@ -7,6 +7,7 @@ import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=2';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=5';
 import { html, raw, setHtml } from '/js/html.js?v=1';
 import { sizesForView, widgetConfigMode } from '/js/admin-logic.js?v=1';
+import { t } from '/js/i18n.js?v=1';
 
 const SIZE_ICONS={
   small:'<rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="9.7" r="1" fill="currentColor"/><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
@@ -77,10 +78,27 @@ function _renderWidgetForm(body){
    lost; saving the dashboard leaves them untouched. */
 function _renderUnavailableConfig(body){
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
-  setHtml(card, html`<div class="row"><span class="rl">Settings unavailable</span></div>`);
+  setHtml(card, html`<div class="row"><span class="rl">${t('widgetCfg.unavailable')}</span></div>`);
   const tip=document.createElement('p'); tip.className='grp-tip';
-  tip.textContent=`This widget's definition (${state._wtype}) could not be loaded, so its settings cannot be shown or edited. They are kept on the server and are not affected by saving. Check the server log for a widget registry warning.`;
+  tip.textContent=t('widgetCfg.unavailableTip',{type:state._wtype});
   body.appendChild(tip);
+
+  /* Why it was refused, when the server said. It knows the reason at load time
+     and used to keep it in the container log, which is the last place a
+     self-hoster looks and the first place they cannot reach from the UI. A
+     rejected widget is usually one typo in widget.json. */
+  const why=(state._widgetRejected||[]).find(r=>r&&r.name===state._wtype);
+  if(why&&Array.isArray(why.errors)&&why.errors.length){
+    const list=document.createElement('ul'); list.className='grp-tip cfg-reject-list';
+    for(const e of why.errors){
+      const li=document.createElement('li');
+      /* textContent, not markup: the text is a validator message, but it is
+         built from names inside the manifest. */
+      li.textContent=e;
+      list.appendChild(li);
+    }
+    body.appendChild(list);
+  }
 }
 
 function _renderCustomConfig(body){

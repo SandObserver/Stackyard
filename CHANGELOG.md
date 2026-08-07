@@ -121,6 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- When a widget's definition cannot be loaded, Settings now says why, listing
+  what is wrong with its `widget.json` instead of pointing at the container log.
 - Widgets stop polling while the dashboard tab is in the background, and refresh
   as soon as you return. A backgrounded dashboard was still calling every
   service behind it, some as often as every ten seconds.

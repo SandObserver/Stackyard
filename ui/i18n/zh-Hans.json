@@ -195,5 +195,9 @@
     "unavailable": "不可用",
     "noData": "无数据",
     "justNow": "刚刚"
+  },
+  "widgetCfg": {
+    "unavailable": "设置不可用",
+    "unavailableTip": "无法加载此小组件（{type}）的定义，因此无法显示或编辑其设置。设置保留在服务器上，保存时不会受到影响。"
   }
 }

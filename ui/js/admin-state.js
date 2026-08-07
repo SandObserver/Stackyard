@@ -16,6 +16,9 @@ export const state = {
   saving: false,
   _settings: {},
   _widgetReg: Object.create(null),
+  /* Widgets the server found but refused, as { name, errors }. Kept so the
+     config editor can say why a widget's settings cannot be shown. */
+  _widgetRejected: [],
 
   ctype: 'app',
   siurl: '',

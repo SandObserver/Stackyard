@@ -13,6 +13,11 @@ const VALID_CARDS      = new Set(['dark', 'light', 'translucent']);
 const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'color', 'select', 'multiselect', 'picklist', 'group', 'object']);
 
 let _registry = null;
+/* Widgets that were found but refused, and why. Kept beside the registry rather
+   than in it, so a lookup by widgetType can never resolve to one: a rejected
+   widget is not a widget. Reset on every load, so a fixed manifest clears its
+   entry. */
+let _rejected = [];
 
 /* Two sibling fields may share a key so that one label and placeholder can be
    swapped for another, for example a URL that is named differently per service
@@ -196,12 +201,14 @@ function _validateManifest(name, m) {
    branch never ran. Fixing it here fixes every lookup site at once. */
 function loadRegistry() {
   const reg = Object.create(null);
+  const rejected = [];
   let entries;
   try {
     entries = fs.readdirSync(WIDGETS_PATH, { withFileTypes: true });
   } catch (e) {
     log.warn('widget registry: directory not readable', { path: WIDGETS_PATH, error: e.message });
     _registry = reg;
+    _rejected = rejected;
     return reg;
   }
 
@@ -217,12 +224,16 @@ function loadRegistry() {
       manifest = JSON.parse(fs.readFileSync(manPath, 'utf8'));
     } catch (e) {
       log.warn('widget registry: invalid JSON, skipped', { widget: name, error: e.message });
+      /* The parser's message names the syntax problem and a character offset,
+         never file content, so it is safe to show an operator. */
+      rejected.push({ name, errors: [`widget.json is not valid JSON: ${e.message}`] });
       continue;
     }
 
     const { errors } = _validateManifest(name, manifest);
     if (errors.length) {
       log.warn('widget registry: invalid manifest, skipped', { widget: name, errors });
+      rejected.push({ name, errors });
       continue;
     }
 
@@ -235,7 +246,15 @@ function loadRegistry() {
 
   log.info('widget registry loaded', { count: Object.keys(reg).length, widgets: Object.keys(reg) });
   _registry = reg;
+  _rejected = rejected;
   return reg;
+}
+
+/* Why each refused widget was refused. Loading the registry fills this, so a
+   caller that has not loaded yet gets the answer rather than an empty list. */
+function getRejected() {
+  if (!_registry) loadRegistry();
+  return _rejected;
 }
 
 /* Lazily built on first use, then cached. Widgets are baked into the image and
@@ -266,7 +285,12 @@ function _publicEntry(_name, e) {
 on('GET', '/api/widgets', (_, res) => {
   const reg  = getRegistry();
   const list = Object.entries(reg).map(([name, e]) => _publicEntry(name, e));
-  json(res, 200, { widgets: list });
+  /* Refused widgets travel alongside, so Admin can say why a widget's settings
+     cannot be shown instead of sending the operator to the container log. The
+     field is additive: a frontend that does not know about it is unaffected.
+     Safe to send, since the errors describe files inside the image and this
+     route is behind the auth gate. */
+  json(res, 200, { widgets: list, rejected: getRejected() });
 });
 
-module.exports = { getRegistry, loadRegistry, validateManifest: _validateManifest, WIDGETS_PATH };
+module.exports = { getRegistry, getRejected, loadRegistry, validateManifest: _validateManifest, WIDGETS_PATH };
