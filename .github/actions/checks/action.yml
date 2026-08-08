@@ -74,13 +74,20 @@ runs:
 
     # Stamping has to be reproducible, or the image would differ from a rebuild
     # of the same tag. A second pass over stamped files must change nothing.
+    #
+    # The comparison is between the two passes, not against the committed tree.
+    # The stamp pass above always changes files, manifests especially, since
+    # entryVersions is never committed; measuring against HEAD would report that
+    # intended work as a failure to converge.
     - name: Verify stamping is settled
       if: inputs.mode == 'release'
       shell: bash
       run: |
+        git diff > "$RUNNER_TEMP/stamped.diff"
         node scripts/bump-cache-busting.js
-        if ! git diff --quiet; then
+        git diff > "$RUNNER_TEMP/settled.diff"
+        if ! diff -q "$RUNNER_TEMP/stamped.diff" "$RUNNER_TEMP/settled.diff" >/dev/null; then
           echo "::error::Cache-busting stamps did not converge; a second pass still changed files."
-          git --no-pager diff --stat
+          diff -u "$RUNNER_TEMP/stamped.diff" "$RUNNER_TEMP/settled.diff" | head -50
           exit 1
         fi
