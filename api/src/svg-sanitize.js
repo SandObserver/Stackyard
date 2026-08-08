@@ -1,21 +1,9 @@
-/* Defense-in-depth sanitizer for uploaded SVG icons, split out from the icons
-   route so it can be unit-tested. The primary XSS control is that uploaded SVGs
-   render only through <img src> (a non-executing context). See the SECURITY
-   INVARIANT note in ui/js/icons.js. This is the second layer. Pure: string in,
-   sanitized string out.
+/* Second layer for uploaded SVG icons; the primary XSS control is that they
+   render only through <img src>. See the security invariant in ui/js/icons.js.
 
-   It works by rebuilding, not by stripping. The input is tokenized, and the
-   output is written fresh from the allowlist: an element or attribute that is
-   not recognised is never copied across, and every value emitted is escaped on
-   the way out.
-
-   That direction matters more than any individual rule. The previous version
-   removed what it recognised as dangerous and passed the rest through, so a
-   construct it failed to parse survived intact. `<path/onload="alert(1)">` was
-   one: browsers accept `/` as an attribute separator, the attribute pattern
-   required whitespace, so it matched nothing and the handler was copied out
-   verbatim. Rebuilding turns that class of bug from a bypass into dropped
-   markup, because anything the tokenizer misreads fails to be emitted. */
+   It rebuilds rather than strips: nothing is copied across unless the allowlist
+   recognises it, so markup the tokenizer misreads is dropped instead of passed
+   through. Do not turn this back into a remove-what-looks-dangerous filter. */
 
 const SAFE_ELEMENTS = new Set(['svg','g','path','circle','ellipse','rect','line','polyline','polygon','text','tspan','defs','linearGradient','radialGradient','stop','clipPath','mask','symbol','use','title','desc','style']);
 const SAFE_ATTRS    = new Set(['viewBox','xmlns','width','height','fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','opacity','fill-opacity','stroke-opacity','transform','d','cx','cy','r','rx','ry','x','y','x1','y1','x2','y2','points','offset','stop-color','stop-opacity','gradientUnits','gradientTransform','patternUnits','patternTransform','clip-path','mask','id','class','style','preserveAspectRatio','text-anchor','font-size','font-family','font-weight']);
@@ -27,8 +15,8 @@ const UNSAFE_ATTR_RE = /^(href|xlink:href|src|action|formaction|data)$/i;
 /* Any on* attribute is an event handler (onload, onerror, onclick, ...). */
 const EVENT_ATTR_RE = /^on/i;
 
-/* Characters that end a tag or attribute name. `/` is here because browsers
-   accept it as a separator, which is what the old pattern missed. */
+/* `/` ends a name because browsers accept it as an attribute separator:
+   <path/onload=...> is one attribute, not part of the tag name. */
 const NAME_END = /[\s/>=]/;
 const WS_OR_SLASH = /[\s/]/;
 
@@ -44,8 +32,7 @@ const escText = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').repl
 const escAttr = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
 /* ── Tokenizer ─────────────────────────────────────────────────────────────
-   Permissive about malformed input and deliberately lossy: it reports what it
-   understood, and anything it did not understand is not reported, so it cannot
+   Deliberately lossy: what it does not understand is not reported, so it cannot
    reach the output. */
 
 /** @param {string} src @param {number} i
@@ -55,8 +42,8 @@ function readAttributes(src, i) {
   const attrs = [];
   let selfClose = false;
   while (i < src.length) {
-    /* Whitespace and slashes both separate attributes. A slash immediately
-       before '>' is the self-closing marker; one anywhere else is a separator. */
+    /* A slash immediately before '>' is the self-closing marker; anywhere else
+       it separates attributes. */
     while (i < src.length && WS_OR_SLASH.test(src[i])) {
       selfClose = src[i] === '/';
       i++;
@@ -83,10 +70,8 @@ function readAttributes(src, i) {
       attrs.push({ name, value: src.slice(j + 1, end) });
       i = end + 1;
     } else {
-      /* An unquoted value runs to whitespace or '>'. A '/' immediately before
-         '>' ends it too: HTML would keep that slash in the value, but in SVG it
-         is the self-closing marker, and swallowing it would turn <rect width=5/>
-         into width="5/" and lose the close. */
+      /* A '/' before '>' ends the value: unlike HTML, in SVG it is the
+         self-closing marker, and swallowing it loses the close. */
       const start = j;
       while (j < src.length && !/[\s>]/.test(src[j]) && !(src[j] === '/' && src[j + 1] === '>')) j++;
       attrs.push({ name, value: src.slice(start, j) });
@@ -96,9 +81,6 @@ function readAttributes(src, i) {
   return { attrs, i, selfClose };
 }
 
-/* Two typedefs rather than one with a 'text'|'css' type: a union discriminant
-   cannot be narrowed away member by member, so the serializer's guards would not
-   tell the checker what it is holding. */
 /** @typedef {{ type:'text', value:string }} SvgTextToken */
 /** @typedef {{ type:'css', value:string }} SvgCssToken */
 /** @typedef {{ type:'open', name:string, attrs:Array<{name:string,value:string}>, selfClose:boolean }} SvgOpenToken */
@@ -116,8 +98,8 @@ function tokenize(src) {
     if (lt > i) out.push({ type: 'text', value: src.slice(i, lt) });
 
     const rest = src.slice(lt, lt + 9);
-    /* Comments, CDATA, DOCTYPE and processing instructions are dropped whole.
-       An unterminated one swallows the remainder, which is the safe direction. */
+    /* Dropped whole. An unterminated one swallows the remainder, which is the
+       safe direction. */
     if (rest.startsWith('<!--')) {
       const end = src.indexOf('-->', lt + 4);
       i = end === -1 ? src.length : end + 3;
@@ -158,9 +140,8 @@ function tokenize(src) {
     out.push({ type: 'open', name, attrs, selfClose });
     i = next;
 
-    /* <style> holds CSS, not markup, so its body is taken raw up to the closing
-       tag exactly as a browser does. Tokenizing it as markup would let a '<'
-       inside a selector or a string derail the parse. */
+    /* Taken raw to the closing tag, as a browser does: tokenizing CSS as markup
+       lets a '<' inside a selector derail the parse. */
     if (name.toLowerCase() === 'style' && !selfClose) {
       const at = src.slice(i).search(/<\/\s*style\b/i);
       const end = at === -1 ? src.length : i + at;
@@ -186,9 +167,8 @@ function sanitizeSvg(input) {
   for (const tok of tokenize(String(input))) {
     if (tok.type === 'text') { out += escText(tok.value); continue; }
 
-    /* CSS is emitted without entity escaping, which would break selectors, so
-       any '<' is removed instead: nothing in valid CSS needs one, and leaving it
-       is what would let markup be reassembled inside a style body. */
+    /* Escaping would break selectors, so '<' is removed instead: it is what
+       would let markup be reassembled inside a style body. */
     if (tok.type === 'css') { out += scrubCss(tok.value).replace(/</g, ''); continue; }
 
     /* Drop any namespace prefix, so <svg:script> is matched as 'script'. */

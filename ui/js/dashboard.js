@@ -20,10 +20,7 @@ const wRows = { d: WIDGET_ROWS.desktop,  m: WIDGET_ROWS.mobile  };
 const WH  = { d: WIDGET_HEIGHTS };
 const wCost  = { d: WIDGET_COST.desktop,  m: WIDGET_COST.mobile  };
 
-/* Desktop pagination sizing. DCOLS is the .grid column count; ROW_UNIT is the
-   base widget row height and ROW_GAP the grid row-gap, both from dashboard.css.
-   The page-padding bounds below mirror the .page clamp()s in dashboard.css and
-   must move together with them. */
+/* Mirrors the .grid and .page values in dashboard.css and must move with them. */
 const DCOLS = 6;
 const ROW_UNIT = WIDGET_HEIGHTS.small;
 const ROW_GAP = 30;
@@ -39,11 +36,11 @@ function desktopSlots() {
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
 let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
-/* The config revision this page was built from. The server bumps it on every
-   write, so comparing it is an exact answer to "has anything changed". */
+/* The server bumps this on every write, so comparing it answers "has anything
+   changed" exactly. */
 let _rev = null;
-/* Null prototype throughout: keyed by widget type and by item id, both of
-   which come from config, so an inherited property must never answer a miss. */
+/* Null prototype: keyed by values from config, so an inherited property must
+   never answer a miss. */
 let widgetReg = Object.create(null);
 const _mobTsCleanup = null, _mobTeCleanup = null;
 
@@ -64,8 +61,6 @@ function bupd(id) {
   const { cls, txt, bg, aria, color, title } = computeBadgeVisual({
     health: s.health, activity: s.activity, custom, staticBdg, hasHC, hideHealthy, badgesStale, healthStale,
     healthDetail: s.healthDetail,
-    /* badge-logic.js stays free of imports so it can be tested directly; the
-       translator is handed in instead. */
     translate: t,
   });
 
@@ -75,8 +70,8 @@ function bupd(id) {
     else { el.removeAttribute('role'); el.removeAttribute('aria-label'); }
     el.style.background=bg;
     el.style.color=color;
-    /* Assigned, not interpolated: title is text, so an upstream error string
-       cannot become markup. */
+    /* Assigned, not interpolated: an upstream error string must not become
+       markup. */
     if(title) el.title=title; else el.removeAttribute('title');
   });
 }
@@ -145,8 +140,8 @@ function mkWidget(item) {
   if (preset) card.dataset.card = preset;
   if (item.widgetConfig?.widgetSubType) card.dataset.wsubtype = item.widgetConfig.widgetSubType;
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
-  /* Definite height (matches the family box aspect, which equals the design aspect),
-     so the grid row sizes predictably and `.wc{align-items:stretch}` won't override it. */
+  /* A definite height, or the grid row sizes unpredictably and
+     `.wc{align-items:stretch}` overrides it. */
   card.style.height = WH.d[sz] + 'px';
   mountScaledWidget(card, { src: widgetSrc(item, widgetReg, { lang: currentLang() }), title: widgetTitle(item), design, iframeOpts: item.iframe });
   cell.appendChild(card); return cell;
@@ -161,18 +156,8 @@ function mkDock(item) {
   a.appendChild(mkWrap(item, 78, 15, 50, 'dwrap')); return a;
 }
 
-/* One page dot.
-
-   A real <button>, not a styled div. A div is not a control: Tab skips it, a
-   screen reader announces nothing, and Enter and Space do nothing, so paging
-   was reachable by pointer only and a keyboard user could not leave page one.
-   Reaching for role="button" and tabindex instead means reimplementing by hand
-   what the element already does, and the key handling is the part that gets
-   forgotten.
-
-   aria-current tells a screen reader which page is showing, which the `on`
-   class conveys by appearance alone. The label counts from one, since that is
-   how the pages read on screen.
+/* A real <button>, not a styled div: a div is skipped by Tab and does nothing on
+   Enter or Space, which left paging reachable by pointer only.
 
    @param {number} i @param {number} total @param {number} current
    @param {(i:number)=>void} go */
@@ -187,8 +172,8 @@ function mkDot(i, total, current, go) {
 }
 
 function buildDesktop() {
-  /* Before the DOM is replaced: stop the observers and reload timers the
-     previous widgets started, which the DOM removal does not touch. */
+  /* Removing the DOM does not stop the observers and timers the previous widgets
+     started. */
   teardownWidgets();
   BEL.clear();
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0,4);
@@ -207,20 +192,9 @@ function buildDesktop() {
   const ct = el('ctrls'); ct.innerHTML = '';
 }
 
-/* Say which page is showing.
-
-   A live region is read out when its contents change, so a screen reader user
-   hears the result of paging. Without it the grid swapped silently: the dots
-   became reachable by keyboard, and pressing one appeared to do nothing.
-
-   Polite rather than assertive: the user asked for this, so it should follow
-   what they are doing rather than interrupt it. aria-atomic on the element means
-   the whole message is read rather than only the part that changed.
-
-   Deliberately not used for health changes. Those are polled rather than
-   user-initiated, so announcing them would have a screen reader talk over
-   whatever someone is doing whenever a service flaps. The reason a tile is red
-   is in its hover text instead.
+/* Announces the current page, since the grid otherwise swaps silently. Polite,
+   and only for user-initiated changes: announcing polled health would talk over
+   whatever someone is doing every time a service flaps.
 
    @param {number} index @param {number} total */
 function announcePage(index, total) {
@@ -233,11 +207,10 @@ function goTo(n, dotEls) {
   const total = dotEls ? dotEls.length : totalPages;
   const was = pg;
   pg = Math.max(0, Math.min(total-1, n));
-  /* Every page change goes through here, so this is the one place that needs to
-     say so. Only on an actual change: repeating the same page would have a
-     screen reader announce it again on every click. */
+  /* Only on an actual change, or a screen reader announces the same page on
+     every click. */
   if (pg !== was) announcePage(pg, total);
-  /* Keep stateRef.pg in sync so mobile swipe handler always has the correct current page */
+  /* The mobile swipe handler reads this. */
   if (_stateRef) _stateRef.pg = pg;
   const strip = el('pages');
   const t = `translateX(-${pg*100}vw)`;
@@ -246,16 +219,16 @@ function goTo(n, dotEls) {
   strip.addEventListener('transitionend', () => { strip.style.willChange = 'auto'; }, { once: true });
   (dotEls ?? document.querySelectorAll('.dot')).forEach((d, i) => {
     d.classList.toggle('on', i === pg);
-    /* Kept in step with the class, or a screen reader keeps announcing the page
-       the dashboard was on when it loaded. */
+    /* In step with the class, or a screen reader keeps announcing the page the
+       dashboard loaded on. */
     if (i === pg) d.setAttribute('aria-current', 'true');
     else d.removeAttribute('aria-current');
   });
   if (MOB && CB.mobPillBump) CB.mobPillBump(pg);
 }
 
-/* After buildMobile, DOM may contain more pages than paginate() reported
-   (overflow pages created by ensureSpace). Sync totalPages and dots from DOM. */
+/* ensureSpace can create overflow pages that paginate() did not report, so the
+   dots are synced from the DOM rather than from its count. */
 function syncMobPages() {
   const strip = el('pages');
   const domCount = strip ? strip.children.length : 0;
@@ -271,11 +244,9 @@ function syncMobPages() {
       pillDots.appendChild(d);
     }
     Array.from(pillDots.children).forEach((d, i) => d.classList.toggle('on', i === pg));
-    /* Patch pillBump to drive the full set of dots, wrap original to preserve animation */
     const origBump = CB.mobPillBump;
     CB.mobPillBump = (newPg) => {
-      if (origBump) origBump(newPg); /* runs pillPaging animation */
-      /* origBump only drives old dot count; fix any extra dots */
+      if (origBump) origBump(newPg); /* runs the pillPaging animation */
       Array.from(pillDots.children).forEach((d, i) => d.classList.toggle('on', i === newPg));
     };
   }
@@ -342,13 +313,8 @@ function showSetupPrompt() {
       setB.disabled = !ok;
     });
 
-    /* This dialog had no keyboard handling at all: Tab moved out of it into the
-       dashboard behind, and Escape did nothing. It is shown on first run, so it
-       is the first thing a keyboard user meets.
-
-       Escape is not wired to close: the choice is deliberate, and dismissing it
-       by accident silently means "no password". Skip is the way out, and the
-       trap puts focus on the password field so it is reachable. */
+    /* Escape deliberately does not close this: dismissing it by accident
+       silently means "no password". Skip is the way out. */
     let releaseTrap = trapFocus(ov, { closeOnEscape: false, initialFocus: pw });
     const close = () => { if (releaseTrap) { releaseTrap(); releaseTrap = null; } ov.remove(); resolve(); };
 
@@ -395,9 +361,8 @@ async function boot() {
     const res = await fetch('/api/config', { cache:'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
-    /* Blank any unsafe link before anything renders it. Saving rejects these, but
-       a config written before that existed, or one arriving by import, still
-       reaches here. See ui/js/link-url.js. */
+    /* Saving rejects these, but a config written before that existed, or one
+       arriving by import, still reaches here. See ui/js/link-url.js. */
     items = sanitizeItemLinks(c.items||[]); S = c.settings||{}; _rev = c._rev ?? null;
     await initI18n(S.language || 'en');
   } catch(e) { console.error('[boot]', e); configFailed = true; }
@@ -408,10 +373,8 @@ async function boot() {
     const msg = document.createElement('div');
     msg.className = 'api-error-screen';
     setHtml(msg, html`<p class="api-error-title">${t('home.apiDownTitle')}</p><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`);
-    /* Attached here rather than written as onclick="" in the markup: the page's
-       CSP allows script only from a file, so an inline handler is refused and
-       the button silently did nothing. Someone whose dashboard was already
-       broken clicked the one obvious remedy and got no response. */
+    /* Not an inline onclick: the page's CSP refuses those, and the button would
+       silently do nothing. */
     msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
     document.body.appendChild(msg);
     document.body.classList.add('ready');
@@ -422,8 +385,6 @@ async function boot() {
     await showSetupPrompt();
   }
 
-  /* Widget entry files and their views come from the manifests, served here.
-     The dashboard reads this to build each widget's iframe URL. */
   try {
     const wr = await (await fetch('/api/widgets', { cache:'no-store' })).json();
     widgetReg = Object.create(null);
@@ -461,13 +422,10 @@ async function boot() {
 
   applyBg();
 
-  /* Rebuild layout on orientation/resize; MOB is parse-time so only fires on mobile.
-     In landscape, switch to desktop layout; in portrait, use mobile layout. */
   let _rt;
-  /* The layout only depends on orientation, so a rebuild is only worth doing
-     when that changes. It used to run on any viewport change, and on a phone the
-     keyboard opening resizes the visual viewport: tapping the search box rebuilt
-     the entire dashboard. Starts null so the first pass still runs. */
+  /* Only on an orientation change. On a phone the keyboard opening resizes the
+     visual viewport, and rebuilding on that meant tapping the search box rebuilt
+     the dashboard. */
   let _wasLandscape = null;
   const _rebuild = () => {
     clearTimeout(_rt);
@@ -490,9 +448,8 @@ async function boot() {
   window.addEventListener('orientationchange', _rebuild, { passive: true });
   window.visualViewport?.addEventListener('resize', _rebuild, { passive: true });
 
-  /* Jittered scheduling: a random initial offset spreads the first tick across
-     the interval so multiple open clients don't hit the API on the same wall-clock
-     tick, and per-cycle jitter (±15%) keeps them from re-synchronizing over time. */
+  /* Jittered so several open clients do not poll on the same tick, and do not
+     re-synchronise over time. */
   let _pollTimers = [];
   const _jit = base => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
   const _repeat = (fn, base) => {

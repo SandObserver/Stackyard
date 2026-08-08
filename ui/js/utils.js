@@ -12,20 +12,12 @@ export { esc } from '/js/html.js?v=ccec347c';
 export const sanitizeCssUrl = u => String(u || '').replace(/['"\\()]/g, '');
 
 /* ── Typed element lookups ───────────────────────────────────────────────────
-   document.getElementById returns HTMLElement, and querySelector returns
-   Element, so reading .value or .checked off either is a type error. That was
-   209 of the 293 errors that stood between this codebase and a type-checked
-   frontend, spread over 201 call sites with nothing central to fix.
-
-   These say what the caller already knows. The cast is JSDoc, which compiles to
-   nothing, so each of these is exactly the expression it replaces and the
-   conversion changes no behaviour at all.
-
    Pick by what you are going to touch: el for anything, inp for a form control,
-   which is where .value, .checked, .disabled and .files live. Neither checks
-   for null, because these lookups are of elements the page itself renders and
-   every existing call site already assumed presence; a missing one is a bug to
-   fix in the markup, not a case to handle here. */
+   which is where .value, .checked, .disabled and .files live. The casts are
+   JSDoc and compile to nothing.
+
+   None of these check for null: they look up elements the page itself renders,
+   so a missing one is a bug in the markup. */
 
 /** @param {string} id @returns {HTMLElement} */
 export const el = id => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -46,8 +38,7 @@ export const qi = (sel, root = document) => /** @type {HTMLInputElement} */ (roo
     @returns {HTMLElement[]} */
 export const qa = (sel, root = document) => /** @type {HTMLElement[]} */ ([...root.querySelectorAll(sel)]);
 
-/** The form control an event came from. event.target is EventTarget, which has
-    no value or checked, and every handler here is bound to a control it owns.
+/** The form control an event came from.
     @param {Event} e @returns {HTMLInputElement} */
 export const tgt = e => /** @type {HTMLInputElement} */ (e.target);
 
@@ -93,20 +84,9 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
 
 
 /* Live widget mounts, so a rebuild can switch off what it is about to discard.
-
-   mountScaledWidget starts things that outlive the DOM it creates: a
-   ResizeObserver on the card, a setTimeout chain reloading the iframe, and touch
-   listeners on the iframe's document. Dropping the card removed the iframe but
-   none of those, so every rebuild stranded one observer and one reload timer per
-   widget, and the timers went on fetching from the backing services forever.
-
-   That compounded because a rebuild is cheap to trigger: on a phone, opening the
-   keyboard resizes the visual viewport, which was enough. A dashboard left open
-   accumulated dozens of invisible widgets all still polling.
-
-   Held here rather than at the call sites because both build paths already share
-   one entry point, and asking each caller to remember what it mounted is the
-   bookkeeping that drifts. */
+   mountScaledWidget starts an observer, a reload timer and touch listeners that
+   all outlive the DOM it creates, and a rebuild is cheap to trigger, so stranded
+   timers keep polling the backing services forever. */
 const _mounts = new Set();
 
 /** Stop everything the mounted widgets started. Called by a rebuild before it
@@ -116,10 +96,9 @@ export function teardownWidgets() {
   _mounts.clear();
 }
 
-/* Mount a widget iframe at a fixed design resolution and scale it uniformly to
-   fill `card`. The iframe's internal viewport is therefore constant regardless
-   of the card's on-screen size, so widget content renders identically on every
-   device, no per-size patching. `card` should be aspect-locked to design/design. */
+/* Mounts the iframe at a fixed design resolution and scales it to fill `card`,
+   so widget content renders identically at every size. `card` must be
+   aspect-locked to the design ratio. */
 /** @param {HTMLElement} card
     @param {{
       src?: string, title?: string, design?: [number, number],
@@ -129,12 +108,9 @@ export function teardownWidgets() {
 export function mountScaledWidget(card, { src, title, design, iframeOpts, overlayHref, mobile, onSwipe } = {}) {
   const [dw, dh] = design;
   const o = iframeOpts || {};
-  /* The card must be a positioned ancestor for the absolutely-positioned iframe
-     below, or the iframe escapes to the nearest positioned element up the tree
-     and paints at the page origin. The shipped cards set this in CSS (desktop)
-     or inline (mobile); this is a fallback for any other caller. Set directly
-     rather than reading getComputedStyle, which returns an unresolved value for
-     a not-yet-laid-out card and would skip the assignment. */
+  /* Without a positioned ancestor the iframe escapes up the tree and paints at
+     the page origin. Set directly rather than through getComputedStyle, which
+     returns an unresolved value for a card that has not been laid out. */
   if (!card.style.position) card.style.position = 'relative';
   card.style.overflow = 'hidden';
   const clip = mk('div');
@@ -149,10 +125,8 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     `width:${dw}px;height:${dh}px;transform-origin:top left;opacity:0;transition:opacity .12s ease;`;
   clip.appendChild(ifr); card.appendChild(clip);
 
-  /* Optional auto-refresh. A random initial offset (0..interval) plus per-cycle
-     jitter (±15%) staggers reloads so a dashboard full of widgets doesn't hit
-     every backing service on the same tick (thundering herd against small hosts
-     like a Pi-hole on a Raspberry Pi). */
+  /* Jittered so a dashboard full of widgets does not reload against every
+     backing service on the same tick. */
   /* Everything that outlives the DOM is registered here so teardown can undo it. */
   const cleanups = [];
   const refreshInterval = Number(o.refreshInterval) || 0;
@@ -166,11 +140,9 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     cleanups.push(() => clearTimeout(timer));
   }
 
-  /* On mobile, an iframe swallows touches so the home pager never sees a swipe that
-     starts on a widget. Rather than overlay the iframe (which would block taps from
-     reaching interactive widget content), we listen on the iframe's own document
-     (same-origin), so interior taps still work, horizontal swipes page the home
-     screen, and a tap on non-interactive widget area opens the widget's link. */
+  /* An iframe swallows touches, so the pager never sees a swipe that starts on a
+     widget. Listening on the iframe's own document keeps interior taps working,
+     which an overlay would block. */
   if (mobile) {
     const attach = () => {
       let doc; try { doc = ifr.contentDocument; } catch { return; }
@@ -216,9 +188,8 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   }
   requestAnimationFrame(fit); fit();
 
-  /* The iframe goes with its card, so teardown only releases what would outlive
-     it. Blanking src stops an in-flight load completing against a document
-     nobody will see. */
+  /* Blanking src stops an in-flight load completing against a document nobody
+     will see. */
   const stop = () => {
     for (const fn of cleanups) { try { fn(); } catch { /* keep going */ } }
     cleanups.length = 0;

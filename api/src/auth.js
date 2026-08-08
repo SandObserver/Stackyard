@@ -3,43 +3,22 @@ const { loadConfig, saveConfig } = require('./config');
 const { decodeOrRaw } = require('./percent-decode');
 const log = require('./log');
 
-/* The two random values the session system mints. Both were written inline at
-   four and three call sites respectively, so the strength and encoding of the
-   key that signs every session was defined in four places and a change to
-   either had to be made in all of them.
-
-   SECRET_BYTES is the signing key for the session HMAC. SESSION_ID_BYTES is the
-   per-session identifier carried inside the token; it is not a credential on
-   its own, since the signature is what a token is verified by. */
+/* SECRET_BYTES is the signing key for the session HMAC. SESSION_ID_BYTES is the
+   identifier inside the token, which is not a credential on its own. */
 const SECRET_BYTES = 32, SESSION_ID_BYTES = 24;
 const newSessionSecret = () => crypto.randomBytes(SECRET_BYTES).toString('hex');
 const newSessionId     = () => crypto.randomBytes(SESSION_ID_BYTES).toString('hex');
 
-/* settings.auth, created if it is not there yet. Mutates and returns the block
-   so a caller can write to it directly. */
+/* Mutates and returns the block, so a caller can write to it directly. */
 function _authBlock(cfg) {
   cfg.settings = cfg.settings || {};
   cfg.settings.auth = cfg.settings.auth || {};
   return cfg.settings.auth;
 }
 
-/* Invalidate every outstanding session.
-
-   Rotating the signing secret is what does it: a token's signature is checked
-   against this value, so replacing it makes every token that already exists
-   unverifiable at once. There is deliberately no second mechanism, such as a
-   stored cutoff timestamp, because that would mean two ways for a session to
-   die, two places to look when one behaves unexpectedly, and a config read on
-   every authenticated request in a path that currently needs none.
-
-   The caller's own session dies too, which is unavoidable and correct. Every
-   caller must therefore issue a fresh cookie in the same response, or the person
-   who pressed the button is the one logged out. Returns the new secret so they
-   can.
-
-   Already used implicitly by a password change, which is why "log out
-   everywhere" existed before this only as a side effect of changing your
-   password. */
+/* Invalidates every outstanding session, including the caller's own, so the
+   caller must issue a fresh cookie in the same response. Returns the new
+   secret so it can. */
 function rotateSessionSecret() {
   const cfg = loadConfig();
   const auth = _authBlock(cfg);
@@ -48,8 +27,8 @@ function rotateSessionSecret() {
   return auth.secret;
 }
 
-/* The same, except an existing secret is kept. Rotating here would sign out
-   every device each time the server needed the key. */
+/* Keeps an existing secret: rotating here would sign out every device each time
+   the server needed the key. */
 function getOrCreateSecret() {
   const cfg = loadConfig();
   if (cfg.settings?.auth?.secret) return cfg.settings.auth.secret;
@@ -59,51 +38,15 @@ function getOrCreateSecret() {
   return auth.secret;
 }
 
-/* Password hashing.
-
-   The stored hash records the algorithm and its parameters, in the modular PHC
-   string format that OWASP's Password Storage Cheat Sheet points to:
-
-     $scrypt$ln=14,r=8,p=5$<base64 salt>$<base64 key>
-
-   It used to be `<hex salt>:<hex key>` with the parameters left implicit, which
-   meant they could never be changed: raising the cost would derive a different
-   key from every stored salt, so every existing password would stop verifying
-   and every install would lock out. Recording them is what makes the cost
-   adjustable at all, which is the point of a work factor.
-
-   Legacy hashes are still verified, using the parameters they were created with,
-   and are rewritten in the new format the next time that password is used. See
-   needsRehash.
-
-   Choice of parameters. OWASP prefers Argon2id, which node:crypto does not
-   provide and which would mean a dependency the project does not allow, so
-   scrypt is the recommendation to follow. Its five listed settings trade RAM for
-   parallelism and are described as providing a similar level of defence; their
-   work factors are close but not identical, spanning about 1.6x:
-
-     N=2^17 (128 MiB) r=8 p=1
-     N=2^16  (64 MiB) r=8 p=2
-     N=2^15  (32 MiB) r=8 p=3
-     N=2^14  (16 MiB) r=8 p=5   <- default here
-     N=2^13   (8 MiB) r=8 p=10
-
-   The default is the 16 MiB row. Stackyard runs on small hardware, and memory is
-   the constraint that fails outright rather than merely being slow: 128 MiB per
-   login attempt is untenable on a 512 MB board. 16 MiB is what the previous
-   parameters already used, so the footprint is unchanged while the work factor
-   rises fivefold. It also stays inside node:crypto's default 32 MiB maxmem, so
-   nothing has to be raised.
-
-   PASSWORD_HASH_MEMORY selects a different row for anyone on hardware that can
-   afford more. Only whole rows, so the pair cannot be set to an unbalanced
-   combination, and changing it is safe precisely because each hash records what
-   made it. */
+/* Password hashing, PHC format: $scrypt$ln=14,r=8,p=5$<b64 salt>$<b64 key>.
+   Each hash records the parameters it was made with, which is what makes the
+   cost adjustable without locking out every existing password. */
 
 const SCRYPT_KEYLEN = 64;
 const SALT_BYTES = 16;
 
-/* Keyed by memory cost, which is the number an operator actually reasons about. */
+/* Whole rows only, so the parameters cannot be set to an unbalanced pair. The
+   default suits a 512 MB board; memory is what fails outright on small hardware. */
 const HASH_PROFILES = Object.freeze({
   '8mib':   { ln: 13, r: 8, p: 10 },
   '16mib':  { ln: 14, r: 8, p: 5 },
@@ -113,9 +56,8 @@ const HASH_PROFILES = Object.freeze({
 });
 const DEFAULT_PROFILE = '16mib';
 
-/* scrypt needs roughly 128 * N * r bytes; node:crypto refuses above maxmem, whose
-   default is 32 MiB. Asking for a little over the requirement keeps the larger
-   profiles working without disabling the guard. */
+/* scrypt needs roughly 128 * N * r bytes and node:crypto refuses above maxmem,
+   which defaults to 32 MiB. */
 const _maxmemFor = ({ ln, r }) => Math.max(33554432, 128 * (2 ** ln) * r * 2);
 
 function _activeProfile() {
@@ -148,16 +90,15 @@ async function hashPassword(password) {
   return `$scrypt$ln=${params.ln},r=${params.r},p=${params.p}$${_b64(salt)}$${_b64(key)}`;
 }
 
-/* The format before this change: two hex fields, scrypt with node's defaults
-   (N=2^14, r=8, p=1) and a 64-byte key. */
+/* The pre-PHC format: two hex fields, scrypt with node's defaults. Still
+   verified, and rewritten on the next successful login. */
 const LEGACY_RE = /^([0-9a-f]+):([0-9a-f]{128})$/i;
 const LEGACY_PARAMS = Object.freeze({ ln: 14, r: 8, p: 1 });
 
 const PHC_RE = /^\$scrypt\$ln=(\d{1,2}),r=(\d{1,3}),p=(\d{1,3})\$([A-Za-z0-9+/]+)\$([A-Za-z0-9+/]+)$/;
 
-/* Guard rails on parsed parameters, so a hand-edited or corrupted hash cannot
-   ask for an allocation that takes the process down instead of failing a login.
-   ln=20 with r=8 is already 1 GiB. */
+/* A corrupted hash must fail the login, not ask for an allocation that takes the
+   process down: ln=20 with r=8 is already 1 GiB. */
 const LN_MAX = 20;
 const R_MAX = 32;
 const P_MAX = 64;
@@ -203,8 +144,7 @@ function parseHash(stored) {
 async function verifyPassword(password, hash) {
   const parsed = parseHash(hash);
   if (!parsed) {
-    /* Logged because the effect is a lockout: the stored password can no longer
-       authenticate anyone, and the reason is not otherwise visible. */
+    /* The effect is a lockout, and the reason is not otherwise visible. */
     if (hash) log.error('stored password hash is malformed, login cannot succeed', { reason: 'bad_hash_format' });
     return false;
   }
@@ -215,8 +155,8 @@ async function verifyPassword(password, hash) {
     log.error('password verification failed', { error: e.message });
     return false;
   }
-  /* The length check in parseHash makes a mismatch unreachable, but this is the
-     comparison that used to throw where nothing could catch it. */
+  /* timingSafeEqual throws on a length mismatch, where nothing else would catch
+     it. */
   try { return crypto.timingSafeEqual(parsed.key, derived); }
   catch { return false; }
 }
@@ -234,16 +174,13 @@ function needsRehash(hash) {
   return work(parsed.params) < work(want);
 }
 
-/* Server-enforced session lifetime. The signed issued-at inside the token is
-   the real control; the cookie Max-Age below is only a browser hint and is kept
-   in sync with this value. Override with SESSION_MAX_AGE_DAYS. */
+/* The signed issued-at inside the token is the real control; the cookie Max-Age
+   is only a browser hint kept in sync with it. */
 const _maxAgeDays = Number(process.env.SESSION_MAX_AGE_DAYS);
 const SESSION_MAX_AGE_MS = (_maxAgeDays > 0 ? _maxAgeDays : 30) * 24 * 60 * 60 * 1000;
 
-/* Token layout: `${sessionId}.${issuedAt}.${sig}` where sig signs
-   `${sessionId}.${issuedAt}`. issuedAt is ms since epoch. Binding the timestamp
-   into the signature makes it tamper-proof, so verifyToken can enforce a max age
-   without a server-side session store. */
+/* `${sessionId}.${issuedAt}.${sig}`, where sig covers the first two. Signing the
+   timestamp is what lets verifyToken enforce a max age with no session store. */
 function makeToken(sessionId, secret) {
   const iat = Date.now();
   const payload = `${sessionId}.${iat}`;
@@ -267,12 +204,8 @@ function verifyToken(token, secret) {
   return sessionId;
 }
 
-/* A cookie value that will not percent-decode is kept as sent rather than
-   rejected. decodeURIComponent throws on an invalid escape, so a stray '%' in
-   any cookie on the domain, not only ours, used to turn every authenticated
-   request into a 500. An unrelated cookie is not this application's business,
-   and the session token is hex and dots, so it never needs decoding to be
-   recognised. */
+/* decodeURIComponent throws on an invalid escape, so a stray '%' in any cookie
+   on the domain, not only ours, would fail every authenticated request. */
 function parseCookies(req) {
   const header = req.headers.cookie || '';
   /* Null prototype: the keys are cookie names straight off the request. */
@@ -286,11 +219,8 @@ function parseCookies(req) {
 
 const TRUST_PROXY = process.env.TRUST_PROXY === 'true';
 
-/* Secure requires HTTPS, which most homelab installs don't have on their LAN
-   (e.g. http://192.168.x.x:8700). Setting it unconditionally would make the
-   browser silently refuse to store or send the cookie, breaking login with no
-   visible error. Treat the request as secure if the socket itself is TLS, or
-   if TRUST_PROXY is on and a fronting proxy says it terminated TLS. */
+/* A Secure cookie set over plain HTTP, which is the normal case on a LAN, is
+   silently dropped by the browser and breaks login with no visible error. */
 function isSecureRequest(req) {
   if (req.socket?.encrypted) return true;
   if (TRUST_PROXY) {
@@ -311,22 +241,14 @@ function clearSessionCookie(res, secure) {
   res.setHeader('Set-Cookie', `ds=; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=0`);
 }
 
-/* Two fixed-window limiters, deliberately still separate.
-
-   They share an algorithm but not a surface: the login limiter is keyed by IP
-   alone, reports its wait in whole minutes, and is cleared outright on a
-   successful login, while rateLimit is keyed by ip:key, reports seconds, and
-   has nothing to clear. Merging them means one implementation taking a message
-   formatter and a reset hook, on the path that locks a person out of their own
-   dashboard. Worth doing, but on its own branch with the lockout behaviour
-   pinned first, not folded into a tidy-up. */
+/* Two fixed-window limiters, deliberately still separate: they share an
+   algorithm but not a surface, and merging them touches the path that can lock
+   someone out of their own dashboard. */
 const _loginAttempts = new Map();
 const LOGIN_MAX = 5, LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
-/* Internal, and not exported: this is the read-only half of a pair whose whole
-   point is that the check and the increment happen together. A caller reaching
-   for it on its own reintroduces the check-then-increment race described on
-   registerLoginAttempt below. Use registerLoginAttempt. */
+/* Not exported: reading the limit without counting the attempt reintroduces the
+   check-then-increment race. Use registerLoginAttempt. */
 function checkRateLimit(ip) {
   const now = Date.now();
   const rec = _loginAttempts.get(ip) || { count:0, first:now };
@@ -338,11 +260,8 @@ function checkRateLimit(ip) {
   return null;
 }
 
-/* Atomically check the login limit and count this attempt in one synchronous
-   step, with no await in between, so a burst of concurrent logins cannot all
-   clear the check before any of them is counted (the check-then-increment race).
-   Returns a limit message if already at the cap without counting, otherwise
-   records the attempt and returns null. The caller clears the count on success. */
+/* Checks and counts in one synchronous step, with no await between, so a burst
+   of concurrent logins cannot all clear the check before any is counted. */
 function registerLoginAttempt(ip) {
   const err = checkRateLimit(ip);
   if (err) return err;
@@ -373,19 +292,10 @@ setInterval(() => {
   for (const [k, v] of _loginAttempts) if (now - v.first > LOGIN_WINDOW_MS) _loginAttempts.delete(k);
 }, 600_000).unref();
 
-/* Whether authentication is actually in force.
-
-   Auth switched on with no password stored is not a stricter state, it is an
-   unusable one: every login is refused because there is nothing to check
-   against, while every other route is gated. That locked the install with no way
-   back in over HTTP, since setting a password and switching auth off both sit
-   behind the gate. /api/auth/toggle now refuses to create that state, and this
-   treats an install already in it as switched off, so the admin is reachable
-   and the password can be set. It resolves itself the moment one is: nothing is
-   rewritten on disk, the stored flag is simply not honoured on its own.
-
-   This is not a bypass. A password hash is what a session is verified against;
-   with none stored there is no credential to present and no session to forge. */
+/* Auth on with no password stored is an unusable state, not a stricter one:
+   every login is refused while every route is gated, which locks the install
+   out. Treating it as off is not a bypass, since with no hash there is no
+   credential to present and no session to forge. */
 function authActive(cfg) {
   const auth = cfg?.settings?.auth;
   return !!(auth?.enabled && auth?.passwordHash);
@@ -401,10 +311,8 @@ function isAuthenticated(req) {
   return !!verifyToken(token, secret);
 }
 
-/* Like isAuthenticated, but does NOT return true just because auth is disabled.
-   Verifies an actual valid session cookie against the signing secret. Used to
-   gate sensitive operations (e.g. changing an existing password) that must not
-   be possible from an unauthenticated request even when auth is turned off. */
+/* Unlike isAuthenticated, requires a real session even when auth is off. For
+   operations such as changing an existing password. */
 function hasValidSession(req) {
   const cfg = loadConfig();
   const secret = cfg.settings?.auth?.secret;
@@ -419,8 +327,7 @@ module.exports = {
   HASH_PROFILES, DEFAULT_PROFILE, parseHash,
   makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
   registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
-  /* Tests exercise limits in sequence within one process, so each needs a clean
-     window; there is no other way to reach the buckets. */
+  /* Tests exercise limits in sequence in one process. */
   _resetRateLimits: () => _rateBuckets.clear(),
   SESSION_MAX_AGE_MS,
 };

@@ -1,8 +1,6 @@
-/* Pure parser for the icon upload's multipart/form-data body, split out from the
-   icons route so the byte-scanning is unit-tested on its own. Buffer in, plain
-   object out: { filename, data, fileParts }. filename is basename-stripped so a
-   part naming a path cannot escape the icons dir. It returns the last file part
-   seen plus a count of how many there were; the route rejects anything but one. */
+/* Buffer in, { filename, data, fileParts } out. filename is basename-stripped so
+   a part naming a path cannot escape the icons directory. fileParts is a count,
+   and the route rejects anything but one. */
 
 const path = require('path');
 

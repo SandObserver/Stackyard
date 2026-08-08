@@ -11,12 +11,8 @@ function _xmlDecode(s) {
   });
 }
 
-/* Turn a text value into a number ONLY when the number round-trips to the exact
-   original text, so genuinely-numeric fields (counts, totals) become numbers the
-   badge picker can find, while IDs with leading zeros ("007"), version-like
-   strings ("1.10"), exponent forms ("1e3") and oversized integers stay strings
-   rather than being silently corrupted. Surrounding whitespace is trimmed before
-   the check, so a padded number still coerces; a blank value stays a string. */
+/* Only when the number round-trips to the original text, so an id with leading
+   zeros, a version like "1.10" or an oversized integer is not corrupted. */
 function _xmlCoerce(raw) {
   const t = raw.trim();
   if (t === '') return raw;
@@ -27,19 +23,13 @@ function _xmlCoerce(raw) {
   return n;
 }
 
-/* Recursively turn a parsed element node into its plain-object value, using a
-   fixed convention so a widget author (or the badge field picker) always knows
-   the shape: attributes and child elements both become keys; a tag that repeats
-   becomes an array, a tag that appears once stays a single value; an element
-   with only text collapses to that (coerced) text; element text alongside
-   attributes/children is kept under "#text". On the rare attribute/child name
-   collision the child element wins.
+/* Attributes and child elements both become keys; a repeated tag becomes an
+   array; an element with only text collapses to that text, and text alongside
+   children is kept under "#text". A child wins a name collision.
 
-   Every object here has a null prototype, because its keys are tag and
-   attribute names taken verbatim from the feed. On an ordinary object literal a
-   child element called "__proto__" does not become a key at all: the assignment
-   replaces the object's prototype, the element disappears, and every later
-   property read on that node resolves against feed-supplied data instead. */
+   Null prototype throughout: the keys are tag names taken verbatim from the
+   feed, and an element called "__proto__" would otherwise replace the object's
+   prototype instead of becoming a key. */
 function _xmlValue(node) {
   const attrKeys = Object.keys(node.attrs);
   const text = _xmlDecode(node.text).trim();
@@ -63,42 +53,18 @@ function _xmlValue(node) {
   return obj;
 }
 
-/* General-purpose XML parser producing a nested object keyed by the root tag,
-   e.g. Plex /status/sessions becomes
-     { MediaContainer: { size: 1, Metadata: [ { title, duration, Player: { state } } ] } }
-   which is the same shape Plex's JSON response has, so the same widget code
-   reads either. Handles attributes (both quote styles), nested elements,
-   repeated elements, text content, CDATA, entities, comments, the XML
-   declaration, processing instructions and DOCTYPE. It is a pragmatic reader
-   for well-formed API responses, not a validating parser; node and depth caps
-   bound pathological input.
+/* A pragmatic reader for well-formed API responses, not a validating parser.
+   Node and depth caps bound pathological input.
 
-   When a cap is reached the parse stops and what was read is returned, with
-   '#truncated': true set on the result. Without that flag a 3000-item feed and a
-   2499-item feed were indistinguishable to the caller, so a badge or widget
-   showed a number that was simply wrong and looked fine. The key starts with '#'
-   like '#text', which no XML tag name may do, so it cannot collide with an
-   element.
-
-   MAX_NODES counts nodes, not items, and deliberately so: the cap exists to bound
-   memory and work, and nodes are what consume them. A feed whose items are two
-   nodes each therefore stops at about 2499 items, which is sooner than the
-   constant suggests. */
+   A capped parse returns what it read with '#truncated': true, or a partial feed
+   is indistinguishable from a complete one and the badge shows a number that is
+   simply wrong. MAX_NODES counts nodes, not items, since nodes are what consume
+   the memory. */
 /** @typedef {{ tag: string, attrs: Record<string,string>, children: XmlNode[], text: string }} XmlNode */
-/* The '>' that ends a tag, ignoring any inside a quoted attribute value.
-
-   This used to be indexOf('>'), which took the first one anywhere, so
-   <a t="x>y"> ended the tag in the middle of the attribute. The element lost its
-   attributes, its text became the leftover markup, and the damage ran into its
-   siblings. Only '<' and '&' have to be escaped inside an attribute value, so a
-   raw '>' there is valid XML and feeds do emit it, typically in an episode title
-   or a search string.
-
-   The attribute matcher below already understood quoting; the scanner did not.
-   This makes the two agree.
-
-   An unterminated quote returns -1, so the document ends there, which is the
-   same thing an unterminated tag already did.
+/* The '>' that ends a tag, ignoring any inside a quoted attribute value. A raw
+   '>' there is valid XML and feeds do emit it, in an episode title for instance;
+   taking the first one anywhere ends the tag mid-attribute and the damage runs
+   into the sibling elements.
 
    @param {string} xml @param {number} from index just past the '<'
    @param {number} len @returns {number} index of the closing '>', or -1 */

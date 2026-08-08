@@ -1,8 +1,6 @@
 // @ts-check
-/* Pure assembly/validation logic lifted out of admin doSave so it can be
-   unit-tested without a DOM. Each function takes plain data (widget state that
-   the form has already collected) and returns plain data; the DOM reads stay in
-   doSave. No DOM, no module state. */
+/* Assembly and validation for the admin save path, kept free of the DOM so it
+   can be tested directly. The DOM reads stay in doSave. */
 
 /* Turn a label into a safe id stem: letters/digits/underscores only, collapsed,
    trimmed, with a type-specific fallback when nothing usable remains. */
@@ -10,21 +8,8 @@ export function cleanId(label, fallback = 'item') {
   return String(label || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || fallback;
 }
 
-/* Randomness for an id suffix.
-
-   Was Math.random().toString(36).slice(2, 6): four base-36 characters, about 1.7
-   million values. That sounds ample and is not, because the question is not
-   whether two ids collide but whether any pair among many does. At 200 ids in a
-   single millisecond the chance of some pair matching is around 2%, which is why
-   the test asserting distinctness failed intermittently rather than never.
-
-   crypto.getRandomValues where available, which is every browser this runs in
-   and Node since 19. The fallback keeps the function usable anywhere else; it is
-   weaker, and the collision loop in newItemId is what actually guarantees
-   uniqueness in either case.
-
-   Not a security boundary: an id is not secret and not a token. This is only
-   about not colliding. */
+/* Not a security boundary: an id is not a token, and the collision loop in
+   newItemId is what guarantees uniqueness. */
 export function randomSuffix() {
   const c = globalThis.crypto;
   if (c && typeof c.getRandomValues === 'function') {
@@ -35,17 +20,9 @@ export function randomSuffix() {
   return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 8);
 }
 
-/** A new item id.
-
-   It used to be `cleanId(label) + '_' + Date.now()`, so two items created in the
-   same millisecond took the same id. That matters more than the odds suggest,
-   because nothing downstream copes: every lookup is find(i => i.id === x), which
-   returns the first match, leaving the second item unreachable by its own id.
-
-   The random suffix removes the timing dependency, and `taken` removes the luck:
-   given the ids already in the config, this cannot return one of them.
-   crypto.randomUUID is not used because the id appears in exported config and in
-   the admin URL, where something readable is worth keeping.
+/** A new item id. Nothing downstream copes with a duplicate: every lookup takes
+   the first match, so the second item is unreachable by its own id. Given
+   `taken`, this cannot return one that already exists.
 
    @param {string} label @param {string} fallback @param {Iterable<string>} [taken]
    @returns {string} */
@@ -63,22 +40,13 @@ export function newItemId(label, fallback = 'item', taken = []) {
   return `${stem}_${n}`;
 }
 
-/* Assemble an app item from already-read form values (v). Validates name/url,
-   builds the monitoring block (healthcheck + activity badge), the custom badge
-   display, and the static badge. Returns { error } or { item }. */
+/* Returns { error } or { item }. */
 /** Put `item` where the item with `id` currently is, or append it.
 
-    The edit target used to be an array index. That went stale the moment items
-    moved: writing past the end grew the array with holes, JSON turned those into
-    nulls, and the server rejected the whole save with a message about missing
-    ids, losing the user's edit.
-
-    A missing id appends rather than throws. The edit is real work, and losing it
-    to a bookkeeping mismatch is worse than leaving an entry the user can see and
-    remove.
-
-    Mutates and returns `items`, and reports whether it replaced or appended so
-    the caller can say "Updated" or "Added" truthfully.
+    Matched by id, never by position: a position goes stale as soon as items
+    move, and writing past the end grows the array with holes that JSON turns
+    into nulls. A missing id appends rather than throwing, so a real edit is not
+    lost to a bookkeeping mismatch.
 
     @param {any[]} items @param {string|null} id @param {any} item
     @returns {{ items: any[], replaced: boolean }} */
@@ -90,13 +58,8 @@ export function upsertItem(items, id, item) {
   return { items: list, replaced: at !== -1 };
 }
 
-/** Remove `childIds` from every folder except `folderId`.
-
-    An app belongs to one folder. This ran only when creating a folder, so
-    editing an existing one and ticking an app already filed elsewhere left it in
-    both, and the dashboard rendered it twice.
-
-    Mutates and returns `items`.
+/** Remove `childIds` from every folder except `folderId`. An app belongs to one
+    folder, or the dashboard renders it twice. Mutates and returns `items`.
 
     @param {any[]} items @param {string|null|undefined} folderId
     @param {Iterable<string>} childIds @returns {any[]} */

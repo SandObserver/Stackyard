@@ -1,15 +1,12 @@
-/* Reusable color control (swatch row + Hue/Saturation/Brightness + Color Code).
-   Operates in hex, resolves named CSS colors, calls onChange(hex) on any change.
-   Used by the Icon, Fixed Label and Live Activity sections, the Widget slots,
-   and the auto-form's `color` field type. */
+/* Reusable colour control: swatch row, HSB sliders and a colour code. Operates in
+   hex, resolves named CSS colours, and calls onChange(hex) on any change. */
 import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { qa, q } from '/js/utils.js?v=1';
 
 const CC_SWATCHES=['#1c1c1e','#8e8e93','#f2f2f7','#ff393c','#ffcd00','#35c759','#0289ff','#cb30df'];
-/* Badge color picker uses the standard Stackyard badge blue (#1e6ef4, the
-   --sy-blue-badge token) instead of the general control blue, so a blue badge
-   matches folder badges and keeps white text. */
+/* Badge blue rather than the general control blue, so a blue badge matches the
+   folder badges and keeps white text. */
 export const BADGE_SWATCHES=['#1c1c1e','#8e8e93','#f2f2f7','#ff393c','#ffcd00','#35c759','#1e6ef4','#cb30df'];
 const _ccIco={
   hueLo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
@@ -19,16 +16,9 @@ const _ccIco={
   brLo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 5V3M12 21v-2M5 12H3M21 12h-2M6.5 6.5 5.4 5.4M18.6 18.6l-1.1-1.1M17.5 6.5l1.1-1.1M5.4 18.6l1.1-1.1"/></svg>',
   brHi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="5"/><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4"/></svg>',
 };
-/* HSV to RGB, the standard chroma construction. `c` is the chroma, `x` the
-   second-largest channel, `m` the amount every channel is lifted by so the
-   brightest one lands on `v`. The sextant of the colour wheel `h` falls in
-   decides which channel takes which.
-
-   The hue is normalised first. It used to be normalised after `x` was computed,
-   so a negative hue mixed a wrapped sextant with an unwrapped `x` and could
-   produce a negative channel: h=-30 gave [255, 0, -127], which formats as the
-   invalid "#ff00-7f". Not reachable today, since the slider is bounded and
-   _hexToHsv already returns 0..360, but only by luck of the callers.
+/* HSV to RGB, the standard chroma construction. The hue must be normalised
+   before `x` is computed, or a negative hue mixes a wrapped sextant with an
+   unwrapped `x` and yields a negative channel.
 
    @param {number} h 0..360 @param {number} s 0..100 @param {number} v 0..100
    @returns {[number, number, number]} each 0..255 */
@@ -53,16 +43,10 @@ function _hsvToRgb(h, s, v) {
   return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
 function _hsvToHex(h,s,v){ return '#'+_hsvToRgb(h,s,v).map(n=>n.toString(16).padStart(2,'0')).join(''); }
-/* Any CSS colour to #rrggbb, lowercase, or null if it cannot be read.
-
-   The canvas is the parser: assigning to fillStyle normalises whatever CSS
-   accepts, which is how a named colour or an rgb() string is resolved without
-   a lookup table. It is also the expensive part, so a value that is already
-   #rrggbb skips it. Every preset and every stored colour in the app is that
-   shape, so in practice the canvas is now built only for input typed by hand.
-
-   Lowercased on the way out because that is what the canvas returned, and
-   callers compare these strings. */
+/* Any CSS colour to lowercase #rrggbb, or null. The canvas is the parser:
+   assigning to fillStyle resolves a named colour or an rgb() string without a
+   lookup table. It is the expensive part, so an already-hex value skips it, and
+   callers compare these strings, so the case must stay stable. */
 const _HEX6 = /^#[0-9a-f]{6}$/i;
 function _cssToHex(str){
   const direct = String(str ?? '').trim();
@@ -81,9 +65,8 @@ function _hexToHsv(hex){ const h6=_cssToHex(hex); if(!h6)return null;
   if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
   return {h:Math.round(h),s:Math.round(mx?d/mx*100:0),v:Math.round(mx*100)}; }
 
-/* Colour conversion, exported for tests only. Same reason proxy.js keeps an
-   _internals: these are pure and worth pinning, but nothing outside this module
-   should build a control's colours by hand. */
+/* Exported for tests only: nothing outside this module should build a control's
+   colours by hand. */
 export const _internals = { cssToHex: _cssToHex, hsvToRgb: _hsvToRgb, hexToHsv: _hexToHsv };
 
 /** @param {HTMLElement} container
@@ -102,9 +85,8 @@ export function renderColorControl(container,{value='#0289ff',idPrefix,onChange,
     : html`<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
        ${swatchColors.map(swatch)}`;
   const wrap=document.createElement('div');
-  /* _ccIco and PE_SVG are authored SVG constants in this repo, so they are the
-     one thing here that is deliberately not escaped. Everything interpolated
-     from outside (idPrefix, the HSB values) is escaped by html``. */
+  /* Authored SVG constants, the one thing here deliberately not escaped.
+     Everything from outside is escaped by html``. */
   const slider = (label, cls, id, max, val, lo, hi) => html`
     <div class="row hsb-row cc-tune"><span class="rl">${label}</span><div class="hsb-track"><span class="hsb-ico">${raw(lo)}</span><input type="range" class="${cls}" id="${id}" min="0" max="${max}" value="${val}" aria-label="${label}"><span class="hsb-ico">${raw(hi)}</span></div></div>`;
   setHtml(wrap, html`

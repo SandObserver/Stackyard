@@ -1,6 +1,5 @@
-/* Admin UI: authentication.
-   Login gate and password-strength meter. onLogin is injected by the caller
-   (the main module's load()) so this module doesn't depend back on it. */
+/* Admin UI: the login gate and password-strength meter. onLogin is injected, so
+   this module does not depend back on the main one. */
 import { ag, ap } from '/js/admin-shared.js?v=182410cc';
 import { t } from '/js/i18n.js?v=133a7aac';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';

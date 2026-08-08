@@ -1,13 +1,6 @@
-/* Turning a structured API error into what the admin UI should do about it.
-
-   The API sends `{ error, kind, detail? }` (see docs/api-errors.md). This module
-   owns the mapping from `kind` to advice. It is deliberately pure: no DOM, no
-   imports, no i18n. That is what lets it be tested from api/test without a
-   browser, which matters because the behaviour it replaces (substring-matching
-   `e.message` for '401' / 'ECONNREFUSED') broke silently and had no test at all.
-
-   Adding a kind here without adding it in api/src/api-error.js, or the reverse,
-   is caught by api/test/api-error.test.js. */
+/* Maps the API's `kind` (see docs/api-errors.md) to what the admin UI should do
+   about it. Deliberately pure, with no DOM and no imports, so it can be tested
+   from api/test. Adding a kind on one side only is caught there. */
 
 export const KIND = Object.freeze({
   NETWORK:  'network',
@@ -23,11 +16,8 @@ export const KIND = Object.freeze({
    "you can fix this", red for "this failed". */
 export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 
-/* Read the classification off a thrown error, defensively.
-
-   An unknown or missing kind degrades to INTERNAL rather than throwing, so an
-   older frontend keeps working against a newer API, and a newer frontend keeps
-   working against an API that has not been redeployed yet. */
+/* An unknown or missing kind degrades to INTERNAL, so either side can be newer
+   than the other. */
 export function readError(e) {
   const kind = e && typeof e.kind === 'string' && Object.values(KIND).includes(e.kind)
     ? e.kind
@@ -36,12 +26,9 @@ export function readError(e) {
   return { kind, detail, message: (e && e.message) || '' };
 }
 
-/* What the badge "Fetch" button should show and do.
-
-   Returns { tone, message, openAuth, sessionExpired }.
-     openAuth        tick the Authentication toggle and open its section
-     sessionExpired  the caller's own Stackyard session died; the page should
-                     send them back to the login screen, not offer an API key */
+/* Returns { tone, message, openAuth, sessionExpired }. sessionExpired means the
+   caller's own Stackyard session died, so the page sends them back to the login
+   screen rather than offering an API key. */
 export function badgeErrorAdvice(e) {
   const { kind, detail, message } = readError(e);
 
@@ -74,10 +61,7 @@ export function badgeErrorAdvice(e) {
     };
   }
 
-  /* BLOCKED carries a reason we wrote ourselves ("Blocked: localhost is a
-     private address."), so it is worth showing verbatim. Previously it fell
-     through to the generic branch because the text contains neither '403' nor
-     'Forbidden'. */
+  /* BLOCKED carries a reason we wrote ourselves, so it is shown verbatim. */
   return {
     tone: TONE.ERROR,
     message: message || 'Request failed.',
@@ -86,12 +70,8 @@ export function badgeErrorAdvice(e) {
   };
 }
 
-/* Status text for a failed config-time "Fetch".
-
-   The server declines to reuse a stored credential when the posted config no
-   longer matches the saved one, and says so in the message. That is an
-   instruction, not a failure report, so it is shown on its own rather than
-   under a "Fetch failed:" prefix. */
+/* The server's "retype the credential" message is an instruction, not a failure
+   report, so it is shown without the "Fetch failed:" prefix. */
 export function optionsErrorText(e) {
   const { kind, message } = readError(e);
   if (kind === KIND.INVALID && message) return message;

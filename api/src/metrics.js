@@ -1,9 +1,7 @@
 const fs = require('fs');
 
-/* The first line of /proc/stat is aggregate CPU time. Fields after softirq were
-   added over time, so a kernel that reports fewer of them yields undefined, and
-   undefined coerces to NaN, which then poisons every arithmetic result. Missing
-   trailing fields count as zero instead. */
+/* Fields after softirq were added over time, and a kernel reporting fewer yields
+   undefined, which becomes NaN and poisons every later result. */
 function readCpuStat() {
   const line = fs.readFileSync('/proc/stat', 'utf8').split('\n')[0];
   const [, ...rest] = line.trim().split(/\s+/);
@@ -15,12 +13,9 @@ function readCpuStat() {
   return { total, busy: total - idle - iowait, iowait };
 }
 
-/* Busy and iowait as percentages of total CPU time between two /proc/stat
-   snapshots (both counters are cumulative). Pure, so the derivation is tested
-   without the sampling delay. */
-/* A percentage, or 0 for anything that is not a usable number. Guarding dt alone
-   is not enough: a NaN in `busy` or `iowait` survives a perfectly good dt and
-   reaches the widget, which is how NaN got out before. */
+/* Both counters are cumulative, so this works on the delta between snapshots. */
+/* Guarding dt alone is not enough: a NaN in the numerator survives a good dt and
+   reaches the widget. */
 const _pct = v => (Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0);
 
 function computeCpu(a, b) {
@@ -60,12 +55,9 @@ function uptimeSeconds() {
   } catch { return 0; }
 }
 
-/* MemAvailable is the kernel's own estimate of what a new workload could claim,
-   and is the right number when present. It is absent on kernels before 3.14 and
-   in some container setups, where the lookup returned 0 and every machine
-   reported 100% memory used. Falling back to free plus reclaimable is what tools
-   like `free` did before MemAvailable existed: less accurate, but not wrong by
-   the whole total. */
+/* MemAvailable is absent before kernel 3.14 and in some container setups, where
+   treating it as 0 reports every machine at 100% used. Free plus reclaimable is
+   what `free` used before it existed. */
 function ramPercent() {
   const text = fs.readFileSync('/proc/meminfo', 'utf8');
   const get  = key => {

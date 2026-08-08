@@ -1,16 +1,7 @@
 // @ts-check
-/* Text is translated through an injected `translate`, not by importing the i18n
-   module.
-
-   This file is pure: no imports, no module state, which is what lets it be
-   tested directly and reused. Importing the loader would tie every caller to it
-   and to whatever it has loaded. The dashboard passes `t`; anything that does
-   not gets readable English, so a missing translate is a degraded label rather
-   than a key on screen.
-
-   These strings were hardcoded English, so a Persian or Chinese user heard
-   English status announcements from a screen reader with no way to see the
-   visual state instead. */
+/* Translated through an injected `translate` rather than by importing i18n: this
+   file has no imports and no module state, which is what lets it be tested
+   directly. A caller that passes none gets readable English. */
 const EN = {
   'status.needsAttention': 'Status: needs attention',
   'status.healthy': 'Status: healthy',
@@ -30,9 +21,8 @@ function _fallback(key, vars) {
 
 export const NAMED = { blue:'#1e6ef4', green:'#008932', yellow:'#ffcc00', red:'#e9152d', gray:'#636366' };
 
-/* WCAG contrast: use dark text (#1c1c1e) only when it gives higher contrast ratio than white.
-   ratioW = 1.05/(L+0.05)  [white on bg]
-   ratioD = (L+0.05)/0.0617 [bg on near-black; LD(#1c1c1e)≈0.0117, LD+0.05=0.0617] */
+/* WCAG contrast: dark text only where it beats white.
+   ratioW = 1.05/(L+0.05), ratioD = (L+0.05)/0.0617 for #1c1c1e. */
 export function needsDark(hex) {
   try {
     const h = hex.replace(/^#/, '');
@@ -48,26 +38,11 @@ export function needsDark(hex) {
 
 export function resolveColor(c) { return c ? (NAMED[c] || c) : ''; }
 
-/* Priority: unhealthy (1) > activity (2) > fixed-label (3) > healthy-dot (4).
-   Each higher-priority signal overrides lower ones. Pure function: takes the
-   badge state and item-derived flags, returns the visual state to apply. */
-/* Why a tile is red, as one short line for its hover text.
-
-   /api/health returns `unhealthy` plus whatever detail explains it: `state` and
-   `status` from Docker, `pingStatus` and `pingError` from the URL check. Only
-   `unhealthy` was ever used, so a red dot said nothing about the cause. An item
-   configured with both checks also lost its container detail on the way out; see
-   routes/health.js.
-
-   Docker's own `status` is preferred over `state` because it is the more useful
-   of the two: "Exited (1) 2 hours ago" rather than "exited". Both checks failing
-   produces both reasons, since either can be the one that matters.
-
-   Long values are truncated: an upstream error can run to hundreds of characters
-   and a tooltip that leaves the screen is worse than no tooltip.
-
-   English here, like the aria strings above it. Localising this file is
-   fix/localise-dashboard-strings. */
+/* Priority: unhealthy > activity > fixed-label > healthy-dot. */
+/* Why a tile is red, as one short line of hover text. Docker's `status` is
+   preferred over `state` because "Exited (1) 2 hours ago" says more than
+   "exited", and both checks failing produces both reasons. Long values are
+   truncated: a tooltip that runs off the screen is worse than none. */
 const REASON_MAX = 90;
 
 const _clip = (s, n) => {
@@ -80,15 +55,12 @@ export function healthReason(detail, translate) {
   if (!detail || typeof detail !== 'object') return '';
   const parts = [];
 
-  /* 'running' is the healthy state; only report a container that is not.
-     'unknown' is the server's sentinel for a container it could not find at all,
-     which is a different problem from one that is stopped. */
+  /* 'unknown' is the server's sentinel for a container it could not find, which
+     is a different problem from one that is stopped. */
   if (detail.state === 'unknown') {
     parts.push(tr('status.containerNotFound'));
   } else if (detail.state && detail.state !== 'running') {
-    /* Docker's own status text is passed through untranslated: it comes from the
-       daemon, and inventing a translation for "Exited (1) 2 hours ago" would be
-       guessing at a string this code does not produce. */
+    /* Passed through untranslated: the text comes from the daemon. */
     parts.push(_clip(detail.status || tr('status.containerState', { state: detail.state }), REASON_MAX));
   } else if (detail.status && /unhealthy/i.test(detail.status)) {
     /* Running, but Docker's own healthcheck is failing. */

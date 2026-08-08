@@ -14,11 +14,8 @@ import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
 
 /* Admin UI: Stackyard Dashboard */
 
-/* Mobile layout switch. A narrow viewport is always mobile; a phone user-agent
-   is mobile only in portrait, so landscape phone falls back to the desktop
-   sidebar+content layout instead of stretching the mobile column across a wide,
-   short viewport. Driven via a class rather than a bare media query, because
-   some phones report a wider CSS viewport. */
+/* A class rather than a bare media query, because some phones report a wider CSS
+   viewport than they have. */
 function _syncMobile(){
   const portrait = window.matchMedia('(orientation:portrait)').matches;
   const m = window.matchMedia('(max-width:768px)').matches
@@ -99,8 +96,8 @@ const SIZE_ICONS = {
 };
 function svgNode(markup){ const t=document.createElement('template'); setHtml(t, raw(markup)); return t.content.firstElementChild; }
 
-/* Type of the row currently being dragged. dataTransfer is not readable during
-   dragover, so we stash it here to decide whether a folder can accept the drop. */
+/* dataTransfer is not readable during dragover, so the type is stashed here to
+   decide whether a folder can accept the drop. */
 let _dragType=null;
 
 function clearDragClasses(target){
@@ -203,12 +200,6 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     ac.append(ed);
   }
   row.append(handle,ico,inf,pb,ac);
-  /* ── Unified drag ──
-     Drag data formats:
-       "top:itemId"            = top-level item being dragged
-       "child:folderId:itemId" = child item being dragged
-     Drop targets accept both formats and route accordingly.
-  */
   const dragData = indent
     ? 'child:'+folderId+':'+item.id
     : 'top:'+item.id;
@@ -262,11 +253,9 @@ function parseDragData(raw){
   return null;
 }
 
-/* Touch/pen reorder. Native HTML5 drag does not fire from touch on iOS Safari,
-   so on the mobile layout the drag handle drives a pointer-based path that
-   commits through the same applyDrop as desktop. The handle carries
-   touch-action:none (see admin.css) so starting on it never scrolls the list;
-   the rest of the row scrolls normally. */
+/* Native HTML5 drag does not fire from touch on iOS Safari, so the handle drives
+   a pointer-based path that commits through the same applyDrop. The handle needs
+   touch-action:none (see admin.css) or starting on it scrolls the list. */
 function wireTouchDrag(row,handle,{indent,folderId}){
   handle.addEventListener('pointerdown',e=>{
     if(e.pointerType==='mouse')return;
@@ -409,8 +398,7 @@ function _syncFilterUI(){
   });
 }
 
-/* Associate dynamically-built modal fields with their labels and give every
-   toggle an accessible name from its row text. Idempotent; safe to re-run. */
+/* Idempotent; safe to re-run. */
 function showListView(){
   el('dash-list-view').style.display='';
   el('dash-edit-view').style.display='none';
@@ -636,9 +624,7 @@ async function doSave(orig){
     }else if(state.ctype==='folder'){
       const label=inp('f-fname')?.value?.trim();
       if(!label){toast('Name required','err');return;}
-      /* An app belongs to one folder. This ran only when creating a folder, so
-         editing an existing one and ticking an app already filed elsewhere left
-         it in both, and the dashboard rendered it twice. */
+      /* An app belongs to one folder, or the dashboard renders it twice. */
       const children=qa('#folder-apps-list li[aria-selected="true"]', document).map(li=>li.dataset.val);
       claimFolderChildren(state.items,orig?.id,children);
       item={id:orig?.id||newItemId(label,'folder',state.items.map(i=>i.id)),type:'folder',label,children};
@@ -668,10 +654,8 @@ async function doSave(orig){
       if(res.error){toast(res.error,'err');return;}
       item=res.item;
     }
-    /* Replace by id, not by position. An item that has moved is still found, and
-       one that has genuinely gone is appended rather than dropped: the edit is
-       real work, and losing it to a bookkeeping mismatch is worse than leaving
-       an entry the user can see and remove. */
+    /* By id, not by position: an item that moved is still found, and one that has
+       gone is appended rather than silently dropping the edit. */
     const { replaced }=upsertItem(state.items,state.eid,item);
     await save();closeModal();toast(replaced?'Updated':'Added');
   }catch(e){toast('Error: '+e.message,'err');}
@@ -682,9 +666,8 @@ function initNav(){
   const STORE='admin_sec';
   const sections=qa('.sec', document).map(s=>s.id.replace(/^sec-/,''));
 
-  /* Resolved inside show(), not just where the stored value is read, so no
-     caller can leave the page with nothing visible. A link with a typo'd
-     data-sec would do exactly what a stale stored value did. */
+  /* Resolved inside show(), so no caller can leave the page with nothing
+     visible. */
   function show(requested){
     const id=resolveAdminSection(requested,sections);
     if(id===null) return;
@@ -898,8 +881,7 @@ checkAuth(load).then(ok => {
     toast('Could not load config. Is the API container running? ('+e.message+')','err');
     const al=el('al');
     if(al){
-      /* See dashboard.js: an inline onclick is blocked by the CSP, so the
-         button did nothing. */
+      /* An inline onclick is blocked by the CSP. */
       setHtml(al, html`<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">Failed to load dashboard config.<br><br><button class="retry-btn" type="button" style="padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">Retry</button></div>`);
       q('.retry-btn', al)?.addEventListener('click', () => location.reload());
     }

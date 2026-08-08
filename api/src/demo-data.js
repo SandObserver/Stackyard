@@ -1,7 +1,5 @@
-/* Synthetic data for demo mode that is not tied to one widget: the drift
-   helpers every widget's demo.js shares, fake host metrics handed to the stats
-   widget through ctx.metrics, and bodies for the app-level badge and health
-   systems. A widget's own invented body lives in its folder, in demo.js. */
+/* Demo data that is not tied to one widget. A widget's own invented body lives
+   in its folder, in demo.js. */
 
 /* Smooth wave in [min,max], period seconds, plus a little noise. */
 function wave(periodSec, min, max, phase = 0) {

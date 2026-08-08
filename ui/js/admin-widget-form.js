@@ -1,7 +1,4 @@
-/* Admin UI: widget configuration form.
-   Builds the widget edit form and its per-type config sections. Reads and
-   writes shared widget state on the state object; exports buildWidgetForm,
-   called by the edit shell. */
+/* Admin UI: the widget edit form and its per-type config sections. */
 import { state } from '/js/admin-state.js?v=3f9ad806';
 import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=db00a87b';
@@ -74,9 +71,8 @@ function _renderWidgetForm(body){
   else _renderCustomConfig(body);
 }
 
-/* A registry widget whose manifest did not load. Its stored settings are held on
-   the server, not sent here, so there is nothing to render and nothing has been
-   lost; saving the dashboard leaves them untouched. */
+/* Its stored settings are held on the server and not sent here, so there is
+   nothing to render and a save leaves them untouched. */
 function _renderUnavailableConfig(body){
   const card=document.createElement('div'); card.className='grp'; body.appendChild(card);
   setHtml(card, html`<div class="row"><span class="rl">${t('widgetCfg.unavailable')}</span></div>`);
@@ -84,10 +80,8 @@ function _renderUnavailableConfig(body){
   tip.textContent=t('widgetCfg.unavailableTip',{type:state._wtype});
   body.appendChild(tip);
 
-  /* Why it was refused, when the server said. It knows the reason at load time
-     and used to keep it in the container log, which is the last place a
-     self-hoster looks and the first place they cannot reach from the UI. A
-     rejected widget is usually one typo in widget.json. */
+  /* The reason, when the server sent one: a rejected widget is usually one typo
+     in widget.json, and the container log is the last place anyone looks. */
   const why=(state._widgetRejected||[]).find(r=>r&&r.name===state._wtype);
   if(why&&Array.isArray(why.errors)&&why.errors.length){
     const list=document.createElement('ul'); list.className='grp-tip cfg-reject-list';

@@ -1,6 +1,4 @@
-/* Admin UI: shared foundation.
-   Stateless helpers and constants used across the admin modules. No shared
-   mutable state lives here; that stays in the main module. */
+/* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { nextActiveIndex } from '/js/admin-logic.js?v=056a11e9';
 import { el, qa, inp as inpById, q } from '/js/utils.js?v=17424946';
@@ -13,13 +11,8 @@ export const toast = (m, t = 'ok') => {
   e.className = `show ${t}`; clearTimeout(tt); tt = setTimeout(() => e.className = '', 3000);
 };
 
-/* Fetch helpers. Throw a tagged 401 so callers can redirect to login.
-
-   The API sends { error, kind, detail? } on failure (docs/api-errors.md). Carry
-   `kind` and `detail` onto the thrown Error so callers branch on data instead of
-   reading the message text. `ag` now also reads the body on a non-401 failure,
-   so its message is the server's sentence rather than a bare 'HTTP 500'; every
-   caller only displays it. */
+/* Throw a tagged 401 so callers can redirect to login, and carry `kind` and
+   `detail` (docs/api-errors.md) so they branch on data, not on message text. */
 /** An error carrying the API's structured fields. `kind` is the machine-readable
     classification the backend sends alongside the message; see docs/api-errors.md.
     @typedef {Error & { status?: number, kind?: string, detail?: Record<string, unknown> }} ApiError */
@@ -49,11 +42,9 @@ export const ap = async (p, b) => {
   return r.json();
 };
 
-/* Mark a .tog toggle unavailable without removing it from the accessibility
-   tree. A native `disabled` control is skipped by screen readers, so the user
-   is never told why it will not turn on; aria-disabled keeps it focusable and
-   announced, and describedById points at the note giving the reason. Activation
-   is blocked here instead, since aria-disabled carries no behaviour of its own. */
+/* A native `disabled` control is skipped by screen readers, so the user is never
+   told why it will not turn on. aria-disabled keeps it announced but carries no
+   behaviour, so activation is blocked here instead. */
 export function setTogDisabled(input, disabled, describedById) {
   if (!input) return;
   input.setAttribute('aria-disabled', disabled ? 'true' : 'false');
@@ -121,10 +112,9 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
   });
 }
 
-/* Keyboard and focus behaviour for a `.row-dd` checklist (button + role=listbox).
-   The caller owns the markup and what a toggle means; this adds the listbox
-   interaction WAI-ARIA expects: roving tabindex, arrows, Home/End, Enter/Space,
-   Escape, and outside-click close. onToggle(li) runs for an activated option. */
+/* The listbox interaction WAI-ARIA expects for a `.row-dd` checklist: roving
+   tabindex, arrows, Home/End, Enter/Space, Escape and outside-click close. The
+   caller owns the markup and what a toggle means. */
 export function wireChecklist(dd, btn, list, onToggle) {
   const opts = () => qa('li[role="option"]', list);
   let active = -1;

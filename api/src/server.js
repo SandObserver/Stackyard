@@ -6,12 +6,8 @@ if (process.env.PORT !== undefined && (Number.isNaN(_port) || _port < 1 || _port
   throw new Error(`Invalid PORT env var: "${process.env.PORT}"`);
 const PORT = Number.isNaN(_port) ? 3000 : _port;
 
-/* Last resort. A throw that escapes to here has already skipped every handler,
-   so the process is going to end either way; the point is that it ends with a
-   log line saying why, and with a non-zero status supervisord can act on.
-   Without this, a crash inside an async callback took the API down silently and
-   the container stayed up around it. Not a substitute for handling errors where
-   they happen. */
+/* Last resort: the process is ending either way, but it must end with a reason
+   logged and a non-zero status supervisord can act on. */
 function fatal(kind) {
   return err => {
     try { log.error('fatal: ' + kind, { error: (err && err.message) || String(err), stack: err && err.stack }); }
@@ -54,10 +50,8 @@ http.createServer(dispatch).listen(PORT, () => {
   try { const ll = require('./config').loadConfig().settings.logLevel; if (ll) log.setLevel(ll); } catch {}
   log.print(lines.join('\n'));
 
-  /* IP rate-limiting and the cookie Secure flag trust X-Forwarded-* when this is
-     on. That is only safe behind a proxy you control; if it is set without one,
-     clients can spoof those headers. Flagged once at boot so a misconfiguration
-     is visible. */
+  /* With this on, clients can spoof X-Forwarded-* unless there really is a proxy
+     in front. Flagged at boot so the misconfiguration is visible. */
   if (process.env.TRUST_PROXY === 'true')
     log.warn('TRUST_PROXY is enabled: X-Forwarded-Proto is trusted, so a request claiming https gets a Secure session cookie. Only safe behind a reverse proxy you control.');
   if (process.env.TRUST_PROXY === 'true' && !process.env.TRUSTED_PROXY)
