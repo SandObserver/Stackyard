@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Admin secondary text, placeholders and control borders now meet WCAG contrast
+  minimums in the default theme.
 - Correct the security documentation: `TRUST_PROXY` affects only the session
   cookie, the client address is trusted only over loopback, and the container's
   process users are set by the image rather than by Compose.
