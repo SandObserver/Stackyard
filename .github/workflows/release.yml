@@ -60,7 +60,10 @@ jobs:
       - name: Choose registries
         id: registries
         env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          # A variable, not a secret: a username is not sensitive, and as a
+          # secret it was masked everywhere in the logs, including in the ghcr
+          # tags, which share the name. Only the token is secret.
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
         run: |
           if [ -n "$DOCKERHUB_USERNAME" ]; then
@@ -83,7 +86,7 @@ jobs:
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # A hyphen in the ref used to decide this. See scripts/is-prerelease.js:

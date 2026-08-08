@@ -3,7 +3,8 @@
 <p align="center"><b>A self-hosted homelab dashboard you actually want to look at.</b></p>
 
 <p align="center">
-  <a href="https://github.com/SandObserver/stackyard/pkgs/container/stackyard"><img alt="Container" src="https://img.shields.io/badge/ghcr.io-stackyard-2496ED?logo=docker&logoColor=white"></a>
+  <a href="https://github.com/SandObserver/stackyard/pkgs/container/stackyard"><img alt="ghcr.io" src="https://img.shields.io/badge/ghcr.io-stackyard-2496ED?logo=github&logoColor=white"></a>
+  <a href="https://hub.docker.com/r/sandobserver/stackyard"><img alt="Docker Hub" src="https://img.shields.io/badge/docker%20hub-stackyard-2496ED?logo=docker&logoColor=white"></a>
   <a href="https://github.com/SandObserver/stackyard/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/SandObserver/stackyard"></a>
   <a href="https://github.com/SandObserver/stackyard/actions/workflows/test.yml"><img alt="Tests Status" src="https://github.com/SandObserver/stackyard/actions/workflows/test.yml/badge.svg"></a>
 </p>
@@ -78,6 +79,8 @@ docker run -d \
 ```
 
 Then open `http://localhost:8700` and set things up from the admin app on the dashboard (or go to `/admin`). Config and uploaded icons persist in `./data` and `./icons`.
+
+The same image is published to Docker Hub as `sandobserver/stackyard`, if you would rather pull from there. Prefer `ghcr.io`: it is the registry the [release signature](docs/security.md#verifying-a-release-image) covers.
 
 The [`docker-compose.yml`](docker-compose.yml) in the repo is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access, and Docker health checks.
 
