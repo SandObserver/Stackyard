@@ -324,11 +324,9 @@ document.addEventListener('touchend', e => {
   }
 }, { passive:true });
 
+/* The dashboard calls this directly when a tap lands outside this widget. See
+   the mobile active state section in docs/widgets.md. */
 window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
-window.addEventListener('message', e => {
-  if (e.origin !== window.location.origin) return;
-  if (e.data && e.data.type === 'widget-clear') window.__clearActive();
-}, false);
 
 async function fetchBays() {
   const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=disk-health`);
