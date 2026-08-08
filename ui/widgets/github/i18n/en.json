@@ -16,5 +16,11 @@
   "githubPrFilters.opt.created": "Created",
   "githubPrFilters.opt.assigned": "Assigned",
   "githubPrFilters.opt.mentioned": "Mentioned",
-  "githubPrFilters.opt.review-requested": "Review requested"
+  "githubPrFilters.opt.review-requested": "Review requested",
+  "ui.prAria": "GitHub pull requests",
+  "ui.unreachable": "Unreachable",
+  "ui.notConfigured": "Not configured",
+  "ui.badToken": "Bad token",
+  "ui.error": "Error",
+  "ui.noPrs": "No pull requests"
 }

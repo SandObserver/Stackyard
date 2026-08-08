@@ -20,5 +20,11 @@
   "navidromeUser.label": "Usuario",
   "navidromePassword.label": "Contraseña",
   "href.label": "URL de clic (opcional)",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.nothingPlaying": "No se reproduce nada",
+  "ui.nowPlayingPrefix": "Reproduciendo:",
+  "ui.onPlayer": "en",
+  "ui.paused": "en pausa",
+  "ui.previous": "Elemento anterior",
+  "ui.next": "Elemento siguiente"
 }

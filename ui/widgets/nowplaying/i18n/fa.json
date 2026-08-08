@@ -20,5 +20,11 @@
   "navidromeUser.label": "نام کاربری",
   "navidromePassword.label": "گذرواژه",
   "href.label": "نشانی کلیک (اختیاری)",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.nothingPlaying": "چیزی پخش نمی‌شود",
+  "ui.nowPlayingPrefix": "در حال پخش:",
+  "ui.onPlayer": "روی",
+  "ui.paused": "مکث",
+  "ui.previous": "مورد قبلی",
+  "ui.next": "مورد بعدی"
 }

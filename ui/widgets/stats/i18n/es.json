@@ -46,5 +46,12 @@
   "bays.label": "Bahías",
   "bays.rowLabel": "Bahía",
   "bays.fetchLabel": "Obtener unidades",
-  "bays.hint": "Introduce arriba la URL, carga la lista y asigna cada bahía."
+  "bays.hint": "Introduce arriba la URL, carga la lista y asigna cada bahía.",
+  "ui.noData": "Sin datos",
+  "ui.diskHealth": "Estado de los discos",
+  "ui.noSmart": "Sin datos SMART",
+  "ui.healthy": "Correcto",
+  "ui.warning": "Aviso",
+  "ui.failed": "Fallido",
+  "ui.ageAlert": "Aviso por antigüedad"
 }

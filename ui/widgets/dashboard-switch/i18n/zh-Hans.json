@@ -18,5 +18,7 @@
   "keychains.color.opt.blue": "蓝色",
   "openIn.label": "打开方式",
   "openIn.opt.same": "当前标签页",
-  "openIn.opt.new": "新标签页"
+  "openIn.opt.new": "新标签页",
+  "ui.switcher": "面板切换器",
+  "ui.empty": "请在设置中添加一个面板"
 }

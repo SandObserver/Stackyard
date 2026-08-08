@@ -30,7 +30,8 @@
   <div class="msg" id="msg">Loading…</div>
 </div>
 <script type="module">
-import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
+import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+await loadStrings();
 
 const TICK_MS = 300000;
 const id      = new URLSearchParams(location.search).get('id')      || '';
@@ -66,10 +67,10 @@ async function boot() {
 async function fetchGraph() {
   let r;
   try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=data`); }
-  catch { throw new Error('Unreachable'); }
+  catch { throw new Error(wt('ui.unreachable','Unreachable')); }
   if (!r.ok) {
     const d = await r.json().catch(()=>({}));
-    throw new Error(d.error || (r.status===503?'Not configured':r.status===401?'Bad token':'Error '+r.status));
+    throw new Error(d.error || (r.status===503?wt('ui.notConfigured','Not configured'):r.status===401?wt('ui.badToken','Bad token'):wt('ui.error','Error')+' '+r.status));
   }
   const d = await r.json();
   return d;

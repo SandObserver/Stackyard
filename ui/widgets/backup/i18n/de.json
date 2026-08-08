@@ -23,5 +23,17 @@
   "slots.kopiaHref.label": "Klick-URL",
   "slots.kopiaHref.placeholder": "http://kopia:51515",
   "slots.customName.label": "Anzeigename",
-  "slots.customName.placeholder": "Wird auf der Karte angezeigt"
+  "slots.customName.placeholder": "Wird auf der Karte angezeigt",
+  "ui.haikus": "Vertraue, aber|prüfe nach.\nSichern oder|bereuen.\nNichts hält|für immer.\nNachtlauf.|Ruhiger Morgen.|Daten leben.\nErst sichern.|Dann löschen.|Besser schlafen.\nLogs grün.|Kaffee warm.|Alles gut.\nHoffnung ist|keine Strategie.\nGut aufbewahren.\nRechne mit|dem Unerwarteten.\nSorgen helfen nicht.|Gute Backups|schon.\nFrüh vorbereiten.|Selten hadern.|Lächeln.",
+  "ui.backupStatus": "Backup-Status",
+  "ui.running": "läuft",
+  "ui.unknown": "unbekannt",
+  "ui.last": "zuletzt",
+  "ui.next": "nächste",
+  "ui.backupError": "Backup-Fehler",
+  "ui.unreachable": "Nicht erreichbar",
+  "ui.error": "Fehler",
+  "ui.runningNow": "Läuft…",
+  "ui.lastCap": "Zuletzt",
+  "ui.nextCap": "Nächste"
 }

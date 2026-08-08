@@ -118,7 +118,9 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, openUrl, html, setHtml } from '/js/widget-toolbox.js?v=1';
+import { poll, openUrl, html, setHtml, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+await loadStrings();
+document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
 const size = new URLSearchParams(location.search).get('size') || 'small';
 const API  = '/api';
@@ -171,19 +173,11 @@ function mkRng(seed) {
   return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/0x100000000; };
 }
 
-const HAIKUS = [
-  ['Trust, but','verify.'],
-  ['Backup or','regret.'],
-  ['Nothing lasts','forever.'],
-  ['Nightly run.','Morning calm.','Data lives.'],
-  ['Backup first.','Delete later.','Sleep better.'],
-  ['Logs green.','Coffee warm.','All good.'],
-  ['Hope is not','a strategy.'],
-  ['Keep it safe.'],
-  ['Expect the','unexpected.'],
-  ['Worries don\'t.','Good backups','do.'],
-  ['Prepare early.','Panic rarely.','Smile.'],
-];
+const HAIKUS = (wt('ui.haikus',
+  'Trust, but|verify.\nBackup or|regret.\nNothing lasts|forever.\nNightly run.|Morning calm.|Data lives.\n'
+  + 'Backup first.|Delete later.|Sleep better.\nLogs green.|Coffee warm.|All good.\nHope is not|a strategy.\n'
+  + 'Keep it safe.\nExpect the|unexpected.\nWorries don\'t.|Good backups|do.\nPrepare early.|Panic rarely.|Smile.')
+).split('\n').map(line => line.split('|'))
 
 /* Safe rounded rect — avoids ctx.roundRect which has iframe bugs in Safari */
 function rrect(ctx, x, y, w, h, r) {
@@ -601,14 +595,14 @@ function applyCard(idx, job) {
   const next = (!running && job.nextRun) ? relTime(job.nextRun) : '';
   if(bmeta) {
     if(running){
-      bmeta.innerHTML=`<svg class="sync-icon" aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg>Running…<br>&nbsp;`;
+      bmeta.innerHTML=`<svg class="sync-icon" aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg>${wt('ui.runningNow','Running…')}<br>&nbsp;`;
     } else {
-      bmeta.innerHTML = next ? `Last ${last}<br>Next ${next}` : `Last ${last}`;
+      bmeta.innerHTML = next ? `${wt('ui.lastCap','Last')} ${last}<br>${wt('ui.nextCap','Next')} ${next}` : `${wt('ui.lastCap','Last')} ${last}`;
     }
   }
   /* Screen-reader summary on the visible face — status is otherwise colour-only */
   front.setAttribute('role','img');
-  front.setAttribute('aria-label', `${job.name||'Backup'}: ${running?'running':(job.status||'unknown')}${last?', last '+last:''}${next?', next '+next:''}`);
+  front.setAttribute('aria-label', `${job.name||wt('widget.label','Backup')}: ${running?wt('ui.running','running'):(job.status||wt('ui.unknown','unknown'))}${last?', '+wt('ui.last','last')+' '+last:''}${next?', '+wt('ui.next','next')+' '+next:''}`);
   back.setAttribute('aria-hidden','true');
 }
 
@@ -620,13 +614,13 @@ function applyError(err) {
     const bmeta = document.getElementById(`back-meta-${idx}`);
     const fname = document.getElementById(`front-name-${idx}`);
     if(back){back.style.background=NAMED.red;back.style.color='#fff';}
-    if(front){ front.style.setProperty('--status-color',NAMED.red); front.setAttribute('role','img'); front.setAttribute('aria-label', `Backup error: ${err?.error||'Unreachable'}`); }
+    if(front){ front.style.setProperty('--status-color',NAMED.red); front.setAttribute('role','img'); front.setAttribute('aria-label', `${wt('ui.backupError','Backup error')}: ${err?.error||wt('ui.unreachable','Unreachable')}`); }
     if(back) back.setAttribute('aria-hidden','true');
-    if(bname) bname.textContent='Error';
+    if(bname) bname.textContent=wt('ui.error','Error');
     /* err.error is the API's error string, which can carry upstream-derived
        text. html`` escapes the interpolation; the <br> stays literal. */
-    if(bmeta) setHtml(bmeta, html`${err?.error||'Unreachable'}<br>&nbsp;`);
-    if(fname) fname.textContent='Error';
+    if(bmeta) setHtml(bmeta, html`${err?.error||wt('ui.unreachable','Unreachable')}<br>&nbsp;`);
+    if(fname) fname.textContent=wt('ui.error','Error');
   });
 }
 

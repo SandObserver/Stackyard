@@ -23,5 +23,17 @@
   "slots.kopiaHref.label": "URL de clic",
   "slots.kopiaHref.placeholder": "http://kopia:51515",
   "slots.customName.label": "Nom affiché",
-  "slots.customName.placeholder": "Affiché sur la carte"
+  "slots.customName.placeholder": "Affiché sur la carte",
+  "ui.haikus": "Faire confiance,|mais vérifier.\nSauvegarder|ou regretter.\nRien ne dure|toujours.\nExécution nocturne.|Matin tranquille.|Les données vivent.\nSauvegarder d’abord.|Supprimer ensuite.|Mieux dormir.\nJournaux au vert.|Café chaud.|Tout va bien.\nL’espoir n’est|pas une stratégie.\nGardez-le en sûreté.\nAttendez-vous|à l’imprévu.\nS’inquiéter n’aide pas.|Les bonnes sauvegardes|si.\nPréparez tôt.|Paniquez peu.|Souriez.",
+  "ui.backupStatus": "État de la sauvegarde",
+  "ui.running": "en cours",
+  "ui.unknown": "inconnu",
+  "ui.last": "dernière",
+  "ui.next": "prochaine",
+  "ui.backupError": "Erreur de sauvegarde",
+  "ui.unreachable": "Injoignable",
+  "ui.error": "Erreur",
+  "ui.runningNow": "En cours…",
+  "ui.lastCap": "Dernière",
+  "ui.nextCap": "Prochaine"
 }

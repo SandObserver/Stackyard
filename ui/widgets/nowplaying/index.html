@@ -118,7 +118,12 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
+import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+await loadStrings();
+document.getElementById('title').textContent = wt('ui.nothingPlaying', 'Nothing playing');
+document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
+document.getElementById('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
+document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next item'));
   const API='/api';
   const id=new URLSearchParams(location.search).get('id')||'';
   const TICK_MS=10000;
@@ -141,12 +146,12 @@ import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
     return TAPE_MIN+(TAPE_MAX-TAPE_MIN)*Math.min(1,Math.max(0,s.progress));
   }
   function describe(s){
-    if(!s) return 'Nothing playing';
-    let t='Now playing: '+(s.title||'');
+    if(!s) return wt('ui.nothingPlaying','Nothing playing');
+    let t=wt('ui.nowPlayingPrefix','Now playing:')+' '+(s.title||'');
     if(s.subtitle) t+=', '+s.subtitle;
-    if(s.player) t+=' on '+s.player;
+    if(s.player) t+=' '+wt('ui.onPlayer','on')+' '+s.player;
     if(PROVIDER_NAME[provider]) t+=' — '+PROVIDER_NAME[provider];
-    if(s.state==='paused') t+=' (paused)';
+    if(s.state==='paused') t+=' ('+wt('ui.paused','paused')+')';
     return t;
   }
   function paint(announce){
@@ -155,7 +160,7 @@ import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
     const d = s ? tapeSize(s) : TAPE_MIN;
     if(!s){
       wEl.classList.add('idle');
-      titleEl.textContent='Nothing playing'; subEl.textContent=''; playerEl.textContent='';
+      titleEl.textContent=wt('ui.nothingPlaying','Nothing playing'); subEl.textContent=''; playerEl.textContent='';
       spinEl.classList.add('paused');
     }else{
       wEl.classList.remove('idle');

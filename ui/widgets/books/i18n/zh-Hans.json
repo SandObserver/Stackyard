@@ -23,5 +23,12 @@
   "listId.label": "列表",
   "listId.hint": "在上方填入地址和密钥，然后点击获取以载入你的合集和阅读列表。",
   "href.label": "点击跳转地址（可选）",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.reading": "正在阅读",
+  "ui.finished": "已读完",
+  "ui.unread": "未读",
+  "ui.percentRead": "已读 {pct}%",
+  "ui.noBooks": "暂无书籍",
+  "ui.untitled": "无标题",
+  "ui.by": "作者"
 }

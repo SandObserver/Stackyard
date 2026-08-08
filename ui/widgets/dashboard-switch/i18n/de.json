@@ -18,5 +18,7 @@
   "keychains.color.opt.blue": "Blau",
   "openIn.label": "Öffnen in",
   "openIn.opt.same": "Gleichem Tab",
-  "openIn.opt.new": "Neuem Tab"
+  "openIn.opt.new": "Neuem Tab",
+  "ui.switcher": "Dashboard-Umschalter",
+  "ui.empty": "Fügen Sie in den Einstellungen ein Dashboard hinzu"
 }

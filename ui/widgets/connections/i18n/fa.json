@@ -53,5 +53,20 @@
   "services.adminUrl.placeholder": "http://your-server:3002",
   "services.color.label": "رنگ نقطه",
   "showLegend.label": "نمایش راهنما",
-  "showLegend.hint": "کلید سرویس‌ها در پایین نقشه."
+  "showLegend.hint": "کلید سرویس‌ها در پایین نقشه.",
+  "ui.vpnStatus": "وضعیت VPN",
+  "ui.unavailable": "در دسترس نیست",
+  "ui.connected": "متصل",
+  "ui.disconnected": "قطع",
+  "ui.secured": "ایمن",
+  "ui.notSecured": "ایمن نیست",
+  "ui.peer": "همتا",
+  "ui.peers": "همتا",
+  "ui.peersLabel": "همتایان",
+  "ui.online": "آنلاین",
+  "ui.mesh": "شبکهٔ مش",
+  "ui.noData": "داده‌ای نیست",
+  "ui.worldMap": "نقشهٔ جهانی اتصال‌ها",
+  "ui.service": "سرویس",
+  "ui.users": "کاربران"
 }

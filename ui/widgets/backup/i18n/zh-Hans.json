@@ -23,5 +23,17 @@
   "slots.kopiaHref.label": "点击跳转地址",
   "slots.kopiaHref.placeholder": "http://kopia:51515",
   "slots.customName.label": "显示名称",
-  "slots.customName.placeholder": "显示在卡片上"
+  "slots.customName.placeholder": "显示在卡片上",
+  "ui.haikus": "信任，|但要验证。\n要么备份，|要么后悔。\n没有什么|能永远留存。\n夜里运行。|清晨安心。|数据仍在。\n先备份。|再删除。|睡得更香。\n日志全绿。|咖啡尚温。|一切安好。\n指望侥幸|算不上策略。\n妥善保存。\n预料|意料之外。\n担心没有用。|好的备份|才有用。\n及早准备。|少些惊慌。|保持微笑。",
+  "ui.backupStatus": "备份状态",
+  "ui.running": "运行中",
+  "ui.unknown": "未知",
+  "ui.last": "上次",
+  "ui.next": "下次",
+  "ui.backupError": "备份出错",
+  "ui.unreachable": "无法连接",
+  "ui.error": "错误",
+  "ui.runningNow": "运行中…",
+  "ui.lastCap": "上次",
+  "ui.nextCap": "下次"
 }

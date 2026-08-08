@@ -18,5 +18,7 @@
   "keychains.color.opt.blue": "آبی",
   "openIn.label": "باز شود در",
   "openIn.opt.same": "همین زبانه",
-  "openIn.opt.new": "زبانهٔ جدید"
+  "openIn.opt.new": "زبانهٔ جدید",
+  "ui.switcher": "تعویض‌کنندهٔ داشبورد",
+  "ui.empty": "در تنظیمات یک داشبورد اضافه کنید"
 }

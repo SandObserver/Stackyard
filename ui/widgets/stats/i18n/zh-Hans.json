@@ -46,5 +46,12 @@
   "bays.label": "硬盘位",
   "bays.rowLabel": "硬盘位",
   "bays.fetchLabel": "获取磁盘",
-  "bays.hint": "在上方填入地址，然后载入列表并为每个硬盘位指定磁盘。"
+  "bays.hint": "在上方填入地址，然后载入列表并为每个硬盘位指定磁盘。",
+  "ui.noData": "暂无数据",
+  "ui.diskHealth": "磁盘健康",
+  "ui.noSmart": "无 SMART 数据",
+  "ui.healthy": "健康",
+  "ui.warning": "警告",
+  "ui.failed": "故障",
+  "ui.ageAlert": "老化提醒"
 }

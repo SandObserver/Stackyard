@@ -16,5 +16,11 @@
   "githubPrFilters.opt.created": "我创建的",
   "githubPrFilters.opt.assigned": "指派给我的",
   "githubPrFilters.opt.mentioned": "提到我的",
-  "githubPrFilters.opt.review-requested": "请求我评审的"
+  "githubPrFilters.opt.review-requested": "请求我评审的",
+  "ui.prAria": "GitHub 拉取请求",
+  "ui.unreachable": "无法连接",
+  "ui.notConfigured": "尚未配置",
+  "ui.badToken": "令牌无效",
+  "ui.error": "错误",
+  "ui.noPrs": "没有拉取请求"
 }

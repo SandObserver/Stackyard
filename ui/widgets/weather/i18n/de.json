@@ -9,5 +9,17 @@
   "units.opt.f": "°F",
   "feelsLike.label": "Gefühlte Temperatur anzeigen",
   "href.label": "Link-URL",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.clear": "Klar",
+  "ui.mostlyClear": "Überwiegend klar",
+  "ui.partlyCloudy": "Teilweise bewölkt",
+  "ui.cloudy": "Bewölkt",
+  "ui.fog": "Nebel",
+  "ui.drizzle": "Nieselregen",
+  "ui.rain": "Regen",
+  "ui.showers": "Schauer",
+  "ui.snow": "Schnee",
+  "ui.snowShowers": "Schneeschauer",
+  "ui.thunderstorm": "Gewitter",
+  "ui.feelsLike": "gefühlt"
 }

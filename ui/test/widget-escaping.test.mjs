@@ -109,7 +109,10 @@ test('the upstream users value is escaped, not concatenated', () => {
 
 test('the backup error text is escaped', () => {
   const src = read(BACKUP);
-  assert.match(src, /setHtml\(bmeta, html`\$\{err\?\.error\|\|'Unreachable'\}/);
+  /* The fallback is a translated string now, so the assertion is on the shape
+     that matters: the upstream error goes through html`` and setHtml, never
+     concatenation. */
+  assert.match(src, /setHtml\(bmeta, html`\$\{err\?\.error\|\|wt\(/);
 });
 
 test('the system-stats label falls back through an escaped interpolation', () => {

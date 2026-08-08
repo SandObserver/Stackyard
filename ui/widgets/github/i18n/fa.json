@@ -16,5 +16,11 @@
   "githubPrFilters.opt.created": "ساخته‌شده",
   "githubPrFilters.opt.assigned": "واگذارشده",
   "githubPrFilters.opt.mentioned": "نام‌برده‌شده",
-  "githubPrFilters.opt.review-requested": "درخواست بازبینی"
+  "githubPrFilters.opt.review-requested": "درخواست بازبینی",
+  "ui.prAria": "درخواست‌های ادغام گیت‌هاب",
+  "ui.unreachable": "در دسترس نیست",
+  "ui.notConfigured": "پیکربندی نشده",
+  "ui.badToken": "توکن نامعتبر",
+  "ui.error": "خطا",
+  "ui.noPrs": "درخواست ادغامی نیست"
 }

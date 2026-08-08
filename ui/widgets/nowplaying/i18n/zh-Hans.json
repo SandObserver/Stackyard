@@ -20,5 +20,11 @@
   "navidromeUser.label": "用户名",
   "navidromePassword.label": "密码",
   "href.label": "点击跳转地址（可选）",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.nothingPlaying": "当前没有播放",
+  "ui.nowPlayingPrefix": "正在播放：",
+  "ui.onPlayer": "于",
+  "ui.paused": "已暂停",
+  "ui.previous": "上一项",
+  "ui.next": "下一项"
 }

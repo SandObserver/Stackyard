@@ -9,5 +9,17 @@
   "units.opt.f": "°F",
   "feelsLike.label": "نمایش دمای محسوس",
   "href.label": "نشانی پیوند",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.clear": "صاف",
+  "ui.mostlyClear": "عمدتاً صاف",
+  "ui.partlyCloudy": "نیمه‌ابری",
+  "ui.cloudy": "ابری",
+  "ui.fog": "مه",
+  "ui.drizzle": "نم‌نم باران",
+  "ui.rain": "باران",
+  "ui.showers": "رگبار",
+  "ui.snow": "برف",
+  "ui.snowShowers": "رگبار برف",
+  "ui.thunderstorm": "رعدوبرق",
+  "ui.feelsLike": "دمای محسوس"
 }

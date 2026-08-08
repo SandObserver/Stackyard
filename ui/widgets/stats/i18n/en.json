@@ -46,5 +46,12 @@
   "bays.label": "Bays",
   "bays.rowLabel": "Bay",
   "bays.fetchLabel": "Fetch Drives",
-  "bays.hint": "Enter the URL above, then load the list and assign each bay."
+  "bays.hint": "Enter the URL above, then load the list and assign each bay.",
+  "ui.noData": "No data",
+  "ui.diskHealth": "Disk health",
+  "ui.noSmart": "No SMART data",
+  "ui.healthy": "Healthy",
+  "ui.warning": "Warning",
+  "ui.failed": "Failed",
+  "ui.ageAlert": "Age Alert"
 }

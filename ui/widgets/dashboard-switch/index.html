@@ -31,7 +31,8 @@
 <body>
 <div id="root"></div>
 <script type="module">
-  import { widgetId, getConfig } from '/js/widget-toolbox.js?v=1';
+  import { widgetId, getConfig, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+  await loadStrings();
   import { buildModel } from '/js/dashboard-switch-model.js?v=1';
 
   const NS = 'http://www.w3.org/2000/svg';
@@ -92,7 +93,7 @@
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     svg.setAttribute('role', 'group');
-    svg.setAttribute('aria-label', 'Dashboard switcher');
+    svg.setAttribute('aria-label', wt('ui.switcher','Dashboard switcher'));
     svg.innerHTML =
       '<defs>' +
       '<filter id="ds-rim" x="-25%" y="-25%" width="150%" height="150%">' +
@@ -107,7 +108,7 @@
     if (!slots.length) {
       const t = document.createElementNS(NS, 'text');
       t.setAttribute('x', W / 2); t.setAttribute('y', H / 2); t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('class', 'empty'); t.textContent = 'Add a dashboard in settings';
+      t.setAttribute('class', 'empty'); t.textContent = wt('ui.empty','Add a dashboard in settings');
       svg.appendChild(t); root.appendChild(svg); return;
     }
 

@@ -46,5 +46,12 @@
   "bays.label": "Baies",
   "bays.rowLabel": "Baie",
   "bays.fetchLabel": "Récupérer les disques",
-  "bays.hint": "Saisissez l’URL ci-dessus, puis chargez la liste et affectez chaque baie."
+  "bays.hint": "Saisissez l’URL ci-dessus, puis chargez la liste et affectez chaque baie.",
+  "ui.noData": "Aucune donnée",
+  "ui.diskHealth": "Santé des disques",
+  "ui.noSmart": "Aucune donnée SMART",
+  "ui.healthy": "Bon état",
+  "ui.warning": "Avertissement",
+  "ui.failed": "En échec",
+  "ui.ageAlert": "Alerte de vieillissement"
 }

@@ -23,5 +23,12 @@
   "listId.label": "Lista",
   "listId.hint": "Introduce arriba la URL y la clave, y pulsa Obtener para cargar tus colecciones y listas de lectura.",
   "href.label": "URL de clic (opcional)",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.reading": "LEYENDO",
+  "ui.finished": "Terminado",
+  "ui.unread": "Sin leer",
+  "ui.percentRead": "{pct} % leído",
+  "ui.noBooks": "No hay libros",
+  "ui.untitled": "Sin título",
+  "ui.by": "de"
 }

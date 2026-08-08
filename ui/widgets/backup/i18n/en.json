@@ -23,5 +23,17 @@
   "slots.kopiaHref.label": "Click URL",
   "slots.kopiaHref.placeholder": "http://kopia:51515",
   "slots.customName.label": "Display Name",
-  "slots.customName.placeholder": "Shown on the card"
+  "slots.customName.placeholder": "Shown on the card",
+  "ui.haikus": "Trust, but|verify.\nBackup or|regret.\nNothing lasts|forever.\nNightly run.|Morning calm.|Data lives.\nBackup first.|Delete later.|Sleep better.\nLogs green.|Coffee warm.|All good.\nHope is not|a strategy.\nKeep it safe.\nExpect the|unexpected.\nWorries don't.|Good backups|do.\nPrepare early.|Panic rarely.|Smile.",
+  "ui.backupStatus": "Backup status",
+  "ui.running": "running",
+  "ui.unknown": "unknown",
+  "ui.last": "last",
+  "ui.next": "next",
+  "ui.backupError": "Backup error",
+  "ui.unreachable": "Unreachable",
+  "ui.error": "Error",
+  "ui.runningNow": "Running…",
+  "ui.lastCap": "Last",
+  "ui.nextCap": "Next"
 }
