@@ -19,7 +19,9 @@
     "delete": "删除",
     "language": "语言",
     "showPassword": "显示密码",
-    "hidePassword": "隐藏密码"
+    "hidePassword": "隐藏密码",
+    "edit": "编辑",
+    "color": "颜色"
   },
   "general": {
     "title": "标题",
@@ -120,7 +122,12 @@
     "unitPh": "例如 GB",
     "poll": "Poll",
     "allowSelfSigned": "允许自签名证书",
-    "selfSignedTip": "跳过此应用 URL 的 TLS 验证。跳过验证并不安全，仅在您完全了解风险的情况下才应这样做。"
+    "selfSignedTip": "跳过此应用 URL 的 TLS 验证。跳过验证并不安全，仅在您完全了解风险的情况下才应这样做。",
+    "dockPill": "程序坞",
+    "healthPill": "健康",
+    "badgePill": "角标",
+    "secret": "机密",
+    "pollInterval": "每 {seconds} 秒"
   },
   "home": {
     "search": "搜索",
@@ -204,6 +211,8 @@
     "unavailable": "设置不可用",
     "unavailableTip": "无法加载此小组件（{type}）的定义，因此无法显示或编辑其设置。设置保留在服务器上，保存时不会受到影响。",
     "refused": "有 {n} 个小组件无法加载，因此未在下方列出。",
-    "refusedPlural": "有 {n} 个小组件无法加载，因此未在下方列出。"
+    "refusedPlural": "有 {n} 个小组件无法加载，因此未在下方列出。",
+    "name": "名称",
+    "type": "小组件类型"
   }
 }

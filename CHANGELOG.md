@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Admin now translates the Dock, Health and Badge pills, the Edit button, the
+  Secret checkbox, the colour and poll-interval labels, the widget Name and
+  Widget Type labels, and the editor's section title. All were English in every
+  language.
+- Persian now translates API URL, Ping, Poll and Add to Header, which were left
+  as English text in the catalogue.
+- The poll interval reads as one sentence in every language instead of wrapping
+  the field in English words.
+- App and widget names in the Settings list now sit beside their icon in
+  Persian instead of aligning to the far side of the row.
+
 ## [1.5.0] - 2026-08-08
 
 ### Added

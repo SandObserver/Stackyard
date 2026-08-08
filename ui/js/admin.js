@@ -175,11 +175,11 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
   inf.append(nm,mt);
   const pb=document.createElement('div');pb.className='rpills';
   const pills=[];
-  if(item.dock)pills.push(html`<span class="pill p-dk">Dock</span>`);
+  if(item.dock)pills.push(html`<span class="pill p-dk">${t('app.dockPill')}</span>`);
   if(item.type==='widget')pills.push(html`<span class="pill p-wg">${t('type.widget')}</span>`);
   if(item.type==='folder')pills.push(html`<span class="pill p-fl">${t('type.folder')}</span>`);
-  if(item.monitoring?.healthcheck?.enabled||item.container)pills.push(html`<span class="pill p-hl">Health</span>`);
-  if(item.monitoring?.activity?.enabled||item.badge?.enabled)pills.push(html`<span class="pill p-bg">Badge</span>`);
+  if(item.monitoring?.healthcheck?.enabled||item.container)pills.push(html`<span class="pill p-hl">${t('app.healthPill')}</span>`);
+  if(item.monitoring?.activity?.enabled||item.badge?.enabled)pills.push(html`<span class="pill p-bg">${t('app.badgePill')}</span>`);
   if(item.system==='settings')pills.push(html`<span class="pill p-sy">System</span>`);
   if(item.hidden)pills.push(html`<span class="pill p-hd">Hidden</span>`);
   setHtml(pb, html`${pills}`);
@@ -196,7 +196,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     hb.onclick=()=>{ item.hidden=!item.hidden; save(); render(); };
     ac.append(hb);
   }else{
-    const ed=document.createElement('button');ed.className='btn bg sm';ed.textContent='Edit';ed.onclick=()=>openModal(idx);
+    const ed=document.createElement('button');ed.className='btn bg sm';ed.textContent=t('common.edit');ed.onclick=()=>openModal(idx);
     ac.append(ed);
   }
   row.append(handle,ico,inf,pb,ac);
@@ -475,7 +475,7 @@ function openModal(idx){
   }
 
   const isEdit=idx!=null;
-  el('ev-title').textContent='General';
+  el('ev-title').textContent=t('nav.general');
   const delBtn=el('ev-delete');
   const saveBtn=el('ev-save');
   if(delBtn){ delBtn.classList.toggle('d-none',!isEdit); delBtn.onclick=()=>_evDelete(item,idx); }

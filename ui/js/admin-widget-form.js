@@ -38,8 +38,8 @@ function _renderWidgetForm(body){
   const typeOpts=typeList.map(([t,label])=>html`<option value="${t}"${t===state._wtype?' selected':''}>${label}</option>`);
   const shell=document.createElement('div'); shell.className='grp';
   setHtml(shell, html`
-    <div class="row ie-row" id="ie-wname"><span class="rl">Name</span><span class="rv${state._wlabel?'':' is-ph'}">${state._wlabel?state._wlabel:'My Widget'}</span><input id="f-wlabel" type="text" value="${state._wlabel}" style="display:none"><button class="pe" type="button" aria-label="Edit name">${raw(PE_SVG)}</button></div>
-    <div class="row"><span class="rl">Widget Type</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="Widget type">${typeOpts}</select>${raw(CHEV_SVG)}</div></div>`);
+    <div class="row ie-row" id="ie-wname"><span class="rl">${t('widgetCfg.name')}</span><span class="rv${state._wlabel?'':' is-ph'}">${state._wlabel?state._wlabel:'My Widget'}</span><input id="f-wlabel" type="text" value="${state._wlabel}" style="display:none"><button class="pe" type="button" aria-label="Edit name">${raw(PE_SVG)}</button></div>
+    <div class="row"><span class="rl">${t('widgetCfg.type')}</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="Widget type">${typeOpts}</select>${raw(CHEV_SVG)}</div></div>`);
   body.appendChild(shell);
   initInlineEdit('ie-wname','f-wlabel',{placeholder:'My Widget',onCommit(v){state._wlabel=v;}});
   const typeSel=qi('#f-wtype', shell);

@@ -19,7 +19,9 @@
     "delete": "Löschen",
     "language": "Sprache",
     "showPassword": "Passwort anzeigen",
-    "hidePassword": "Passwort verbergen"
+    "hidePassword": "Passwort verbergen",
+    "edit": "Bearbeiten",
+    "color": "Farbe"
   },
   "general": {
     "title": "Titel",
@@ -120,7 +122,12 @@
     "unitPh": "z. B. GB",
     "poll": "Poll",
     "allowSelfSigned": "Selbstsigniertes Zertifikat zulassen",
-    "selfSignedTip": "Überspringt die TLS-Prüfung für die URLs dieser App. Das Überspringen der Prüfung ist unsicher und sollte nur erfolgen, wenn du die Risiken vollständig verstehst."
+    "selfSignedTip": "Überspringt die TLS-Prüfung für die URLs dieser App. Das Überspringen der Prüfung ist unsicher und sollte nur erfolgen, wenn du die Risiken vollständig verstehst.",
+    "dockPill": "Dock",
+    "healthPill": "Zustand",
+    "badgePill": "Badge",
+    "secret": "Geheim",
+    "pollInterval": "alle {seconds} Sekunden"
   },
   "home": {
     "search": "Suchen",
@@ -204,6 +211,8 @@
     "unavailable": "Einstellungen nicht verfügbar",
     "unavailableTip": "Die Definition dieses Widgets ({type}) konnte nicht geladen werden, daher können seine Einstellungen nicht angezeigt oder bearbeitet werden. Sie bleiben auf dem Server erhalten und werden durch Speichern nicht verändert.",
     "refused": "{n} Widget konnte nicht geladen werden und wird unten nicht aufgeführt.",
-    "refusedPlural": "{n} Widgets konnten nicht geladen werden und werden unten nicht aufgeführt."
+    "refusedPlural": "{n} Widgets konnten nicht geladen werden und werden unten nicht aufgeführt.",
+    "name": "Name",
+    "type": "Widget-Typ"
   }
 }

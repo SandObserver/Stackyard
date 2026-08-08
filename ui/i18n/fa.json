@@ -19,7 +19,9 @@
     "delete": "حذف",
     "language": "زبان",
     "showPassword": "نمایش گذرواژه",
-    "hidePassword": "پنهان کردن گذرواژه"
+    "hidePassword": "پنهان کردن گذرواژه",
+    "edit": "ویرایش",
+    "color": "رنگ"
   },
   "general": {
     "title": "عنوان",
@@ -100,7 +102,7 @@
     "healthGlobalOff": "برای استفاده از این، بررسی سلامت کانتینرهای داکر را در عمومی روشن و پیکربندی کنید.",
     "type": "نوع",
     "container": "کانتینر",
-    "ping": "Ping",
+    "ping": "پینگ",
     "pingUrl": "Ping URL",
     "containerPh": "container-name",
     "pingUrlPh": "http://your-server-ip:port",
@@ -109,18 +111,23 @@
     "labelText": "متن برچسب",
     "labelPh": "مثلاً Backup",
     "liveActivity": "فعالیت زنده",
-    "apiUrl": "API URL",
+    "apiUrl": "نشانی API",
     "apiUrlPh": "http://container-name:port/api/v2",
     "fetch": "دریافت",
     "value": "مقدار",
     "filterValues": "فیلتر مقادیر",
     "authentication": "احراز هویت",
-    "addToHeader": "افزودن به Header",
+    "addToHeader": "افزودن به سربرگ",
     "unit": "واحد",
     "unitPh": "مثلاً GB",
-    "poll": "Poll",
+    "poll": "بررسی دوره‌ای",
     "allowSelfSigned": "مجاز بودن گواهی self-signed",
-    "selfSignedTip": "صرف‌نظر کردن از تأیید TLS برای آدرس‌های این برنامه. این کار ناامن است و فقط زمانی باید انجام شود که ریسک‌های آن را کاملاً درک کرده‌اید."
+    "selfSignedTip": "صرف‌نظر کردن از تأیید TLS برای آدرس‌های این برنامه. این کار ناامن است و فقط زمانی باید انجام شود که ریسک‌های آن را کاملاً درک کرده‌اید.",
+    "dockPill": "داک",
+    "healthPill": "سلامت",
+    "badgePill": "نشان",
+    "secret": "محرمانه",
+    "pollInterval": "هر {seconds} ثانیه"
   },
   "home": {
     "search": "جستجو",
@@ -204,6 +211,8 @@
     "unavailable": "تنظیمات در دسترس نیست",
     "unavailableTip": "تعریف این ابزارک ({type}) بارگذاری نشد، بنابراین تنظیمات آن قابل نمایش یا ویرایش نیست. این تنظیمات روی سرور نگهداری می‌شوند و ذخیره‌کردن آن‌ها را تغییر نمی‌دهد.",
     "refused": "‏{n} ابزارک بارگذاری نشد، بنابراین در فهرست زیر نیست.",
-    "refusedPlural": "‏{n} ابزارک بارگذاری نشدند، بنابراین در فهرست زیر نیستند."
+    "refusedPlural": "‏{n} ابزارک بارگذاری نشدند، بنابراین در فهرست زیر نیستند.",
+    "name": "نام",
+    "type": "نوع ابزارک"
   }
 }

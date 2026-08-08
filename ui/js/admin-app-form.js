@@ -82,6 +82,12 @@ export function buildAppForm(body,item){
     const has=val!=null&&val!=='';
     return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has?'':' is-ph'}">${has?val:ph}</span><input id="${inpId}" type="${type}" value="${val||''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button></div>`;
   };
+  /* The interval input sits inside the sentence, so the string is split around
+     its placeholder rather than concatenated: word order differs per language,
+     and in Persian the number comes before the unit with the whole line running
+     right to left. */
+  const [pollBefore, pollAfter] = t('app.pollInterval').split('{seconds}');
+
   const tog=(id,on)=>html`<label class="tog"><input type="checkbox" id="${id}" ${on?'checked':''}><div class="tr"></div></label>`;
 
   setHtml(body, html`
@@ -152,7 +158,7 @@ export function buildAppForm(body,item){
         </div>
         <div id="act-color-slot"></div>
         ${ier('ie-bunit',t('app.unit'),'bcust-unit',actCustom.unit,t('app.unitPh'))}
-        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">every <input id="f-bint" type="number" min="10" max="3600" value="${act.interval||30}"> seconds</div></div></div>
+        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" min="10" max="3600" value="${act.interval||30}">${pollAfter}</div></div></div>
       </div>
     </div>
 
@@ -169,9 +175,9 @@ export function buildAppForm(body,item){
   initInlineEdit('ie-burl','f-burl',{placeholder:t('app.apiUrlPh')});
   initInlineEdit('ie-bunit','bcust-unit',{placeholder:t('app.unitPh')});
 
-  renderColorControl(el('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,onChange(v){state.scol=v;const pv=el('ipv');if(pv)pv.style.background=rc(state.scol);}});
-  renderColorControl(el('static-color-slot'),{value:staticBadge.color||'#1e6ef4',idPrefix:'static-col',swatchColors:BADGE_SWATCHES});
-  renderColorControl(el('act-color-slot'),{value:actCustom.color||'#1e6ef4',idPrefix:'act-col',swatchColors:BADGE_SWATCHES});
+  renderColorControl(el('icon-color-slot'),{value:state.scol||'dark',idPrefix:'icon-col',semantic:true,label:t('common.color'),onChange(v){state.scol=v;const pv=el('ipv');if(pv)pv.style.background=rc(state.scol);}});
+  renderColorControl(el('static-color-slot'),{value:staticBadge.color||'#1e6ef4',idPrefix:'static-col',swatchColors:BADGE_SWATCHES,label:t('common.color')});
+  renderColorControl(el('act-color-slot'),{value:actCustom.color||'#1e6ef4',idPrefix:'act-col',swatchColors:BADGE_SWATCHES,label:t('common.color')});
 
   state._bpar = normKvRows(act.params);
   state._bhdr = normKvRows(act.headers);
@@ -357,7 +363,7 @@ function kvRowEl(host, rows, row, ph){
   setHtml(el, html`
     <input class="kv-k" type="text" placeholder="Key" value="${row.key}" aria-label="Header key">
     <input class="kv-v" type="${row.secret?'password':'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="Header value">
-    <label class="kv-cred" title="Store this value as a credential: hidden after saving and never exported. Unticking clears the stored value."><input type="checkbox" ${row.secret?'checked':''} aria-label="Secret"><span class="kv-box"></span><span class="kv-cred-lbl">Secret</span></label>
+    <label class="kv-cred" title="Store this value as a credential: hidden after saving and never exported. Unticking clears the stored value."><input type="checkbox" ${row.secret?'checked':''} aria-label="${t('app.secret')}"><span class="kv-box"></span><span class="kv-cred-lbl">${t('app.secret')}</span></label>
     <button class="kv-del" type="button" aria-label="Remove">✕</button>`);
   const kEl=qi('.kv-k', el), vEl=qi('.kv-v', el), cEl=qi('.kv-cred input', el), dEl=qSel('.kv-del', el);
   kEl.oninput=()=>{ row.key=kEl.value; };
