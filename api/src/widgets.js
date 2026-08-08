@@ -2,6 +2,8 @@ const fs   = require('fs');
 const path = require('path');
 const { on, json } = require('./router');
 const log = require('./log');
+const { translateEntry } = require('./widget-i18n');
+const { loadConfig } = require('./config');
 
 /* In the container the UI is copied to the nginx web root, so the API is pointed
    at that path. */
@@ -213,6 +215,7 @@ function loadRegistry() {
 
     reg[name] = {
       manifest,
+      dir,
       hasDataFn: fs.existsSync(path.join(dir, 'data.js')),
       hasDemoFn: fs.existsSync(path.join(dir, 'demo.js')),
     };
@@ -238,10 +241,14 @@ function getRegistry() {
   return _registry;
 }
 
-/* The browser-facing shape, carrying nothing the backend keeps to itself. */
-function _publicEntry(_name, e) {
+/* The browser-facing shape, carrying nothing the backend keeps to itself.
+
+   Translated here rather than in the browser: this is the one place a manifest
+   becomes browser-facing, and the settings form then receives ordinary strings
+   and needs to know nothing about catalogs. */
+function _publicEntry(name, e, lang) {
   const m = e.manifest;
-  return {
+  return translateEntry({
     name:         m.name,
     label:        m.label,
     sizes:        m.sizes,
@@ -251,12 +258,13 @@ function _publicEntry(_name, e) {
     viewField:    m.viewField || null,
     defaultView:  m.defaultView || null,
     entryVersions: m.entryVersions || null,
-  };
+  }, e.dir, name, lang);
 }
 
 on('GET', '/api/widgets', (_, res) => {
   const reg  = getRegistry();
-  const list = Object.entries(reg).map(([name, e]) => _publicEntry(name, e));
+  const lang = loadConfig().settings?.language || 'en';
+  const list = Object.entries(reg).map(([name, e]) => _publicEntry(name, e, lang));
   /* Safe to send: the errors describe files inside the image, and this route is
      behind the auth gate. */
   json(res, 200, { widgets: list, rejected: getRejected() });

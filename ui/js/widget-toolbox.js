@@ -160,6 +160,40 @@ function _t(key, fallback) {
   return (_strings && _strings[key]) || fallback;
 }
 
+/* A widget's own strings live in its own folder, beside its manifest, and are
+   looked up by the same keys the manifest uses. The widget name comes from the
+   path the iframe was loaded from, so a widget needs no configuration to find
+   its catalog.
+
+   English is the source: its catalog is not fetched, and an untranslated key
+   renders the fallback the caller passed. */
+const _widgetName = (String(location.pathname || '').match(/\/widgets\/([^/]+)\//) || [])[1] || '';
+let _own = null;
+
+/** Load this widget's catalog. Await it before the first render, or early
+    strings paint in English and change under the reader.
+
+    @returns {Promise<void>} */
+export async function loadStrings() {
+  if (!_widgetName || _lang === 'en' || _own) return;
+  try {
+    const r = await fetch(`/widgets/${encodeURIComponent(_widgetName)}/i18n/${encodeURIComponent(_lang)}.json`, { cache: 'force-cache' });
+    if (r.ok) {
+      const parsed = await r.json();
+      if (parsed && typeof parsed === 'object') _own = parsed;
+    }
+  } catch { /* English is a usable answer */ }
+}
+
+/** A string from this widget's own catalog, falling back to the English text
+    passed in.
+
+    @param {string} key @param {string} fallback @returns {string} */
+export function wt(key, fallback) {
+  const v = _own && _own[key];
+  return typeof v === 'string' && v ? v : fallback;
+}
+
 /** How long ago something happened, in the widget's language.
 
    @param {number} ts @returns {string} */
