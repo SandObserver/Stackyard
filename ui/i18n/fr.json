@@ -19,7 +19,9 @@
     "delete": "Supprimer",
     "language": "Langue",
     "showPassword": "Afficher le mot de passe",
-    "hidePassword": "Masquer le mot de passe"
+    "hidePassword": "Masquer le mot de passe",
+    "edit": "Modifier",
+    "color": "Couleur"
   },
   "general": {
     "title": "Titre",
@@ -120,7 +122,12 @@
     "unitPh": "p. ex. GB",
     "poll": "Poll",
     "allowSelfSigned": "Autoriser un certificat auto-signé",
-    "selfSignedTip": "Ignore la vérification TLS pour les URL de cette application. Ignorer la vérification n'est pas sûr et ne doit être fait que si vous comprenez pleinement les risques."
+    "selfSignedTip": "Ignore la vérification TLS pour les URL de cette application. Ignorer la vérification n'est pas sûr et ne doit être fait que si vous comprenez pleinement les risques.",
+    "dockPill": "Dock",
+    "healthPill": "État",
+    "badgePill": "Badge",
+    "secret": "Secret",
+    "pollInterval": "toutes les {seconds} secondes"
   },
   "home": {
     "search": "Rechercher",
@@ -204,6 +211,8 @@
     "unavailable": "Réglages indisponibles",
     "unavailableTip": "La définition de ce widget ({type}) n'a pas pu être chargée, ses réglages ne peuvent donc pas être affichés ni modifiés. Ils sont conservés sur le serveur et ne sont pas affectés par l'enregistrement.",
     "refused": "{n} widget n'a pas pu être chargé et n'apparaît pas dans la liste.",
-    "refusedPlural": "{n} widgets n'ont pas pu être chargés et n'apparaissent pas dans la liste."
+    "refusedPlural": "{n} widgets n'ont pas pu être chargés et n'apparaissent pas dans la liste.",
+    "name": "Nom",
+    "type": "Type de widget"
   }
 }

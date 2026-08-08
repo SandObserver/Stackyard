@@ -19,7 +19,9 @@
     "delete": "Eliminar",
     "language": "Idioma",
     "showPassword": "Mostrar contraseña",
-    "hidePassword": "Ocultar contraseña"
+    "hidePassword": "Ocultar contraseña",
+    "edit": "Editar",
+    "color": "Color"
   },
   "general": {
     "title": "Título",
@@ -120,7 +122,12 @@
     "unitPh": "p. ej. GB",
     "poll": "Poll",
     "allowSelfSigned": "Permitir certificado autofirmado",
-    "selfSignedTip": "Omite la verificación TLS para las URL de esta aplicación. Omitir la verificación es inseguro y solo debe hacerse si comprendes completamente los riesgos."
+    "selfSignedTip": "Omite la verificación TLS para las URL de esta aplicación. Omitir la verificación es inseguro y solo debe hacerse si comprendes completamente los riesgos.",
+    "dockPill": "Dock",
+    "healthPill": "Estado",
+    "badgePill": "Insignia",
+    "secret": "Secreto",
+    "pollInterval": "cada {seconds} segundos"
   },
   "home": {
     "search": "Buscar",
@@ -204,6 +211,8 @@
     "unavailable": "Ajustes no disponibles",
     "unavailableTip": "No se pudo cargar la definición de este widget ({type}), por lo que sus ajustes no se pueden mostrar ni editar. Se conservan en el servidor y no se ven afectados al guardar.",
     "refused": "No se pudo cargar {n} widget, por lo que no aparece en la lista.",
-    "refusedPlural": "No se pudieron cargar {n} widgets, por lo que no aparecen en la lista."
+    "refusedPlural": "No se pudieron cargar {n} widgets, por lo que no aparecen en la lista.",
+    "name": "Nombre",
+    "type": "Tipo de widget"
   }
 }

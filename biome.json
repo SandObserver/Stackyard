@@ -1,15 +1,50 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "files": { "includes": ["api/src/**/*.js", "ui/js/**/*.js", "ui/widgets/**/*.js", "scripts/**/*.js", "docs/widget-template/**/*.js"] },
-  "formatter": { "enabled": false },
+  "files": {
+    "includes": [
+      "api/src/**/*.js",
+      "ui/js/**/*.js",
+      "ui/widgets/**/*.js",
+      "scripts/**/*.js",
+      "docs/widget-template/**/*.js"
+    ]
+  },
+  "formatter": {
+    "enabled": false
+  },
   "linter": {
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "correctness": { "noUndeclaredVariables": "error" },
-      "style": { "useTemplate": "off", "useNodejsImportProtocol": "off" },
-      "complexity": { "useOptionalChain": "off", "useLiteralKeys": "off", "useArrowFunction": "off" },
-      "suspicious": { "useIterableCallbackReturn": "off" }
+      "correctness": {
+        "noUndeclaredVariables": "error"
+      },
+      "style": {
+        "useTemplate": "off",
+        "useNodejsImportProtocol": "off"
+      },
+      "complexity": {
+        "useOptionalChain": "off",
+        "useLiteralKeys": "off",
+        "useArrowFunction": "off"
+      },
+      "suspicious": {
+        "useIterableCallbackReturn": "off"
+      }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "ui/js/**/*.js"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noCommonJs": "error"
+          }
+        }
+      }
+    }
+  ]
 }
