@@ -110,9 +110,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     ov.style.bottom = Math.max(0, window.innerHeight - vvH) + 'px';
   }
 
-  /* Was written inline here against these elements, which left nothing for the
-     folder overlay or the setup prompt to reuse. See dialog.js. Escape and focus
-     restoration stay in this file's own open/close, which already had them. */
+  /* Escape and focus restoration stay in this file's own open/close. */
   const trap = e => { wrapTab(e, ov); };
   function open(ch) {
     lastFocused = document.activeElement;

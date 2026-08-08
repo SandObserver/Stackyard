@@ -1,19 +1,8 @@
 // @ts-check
-/* Keyboard behaviour a dialog needs to be usable and escapable.
-
-   Focus belongs inside an open dialog. Tab at the last control returns to the
-   first, rather than moving into the page behind, which is still there and still
-   focusable while being visually covered. Without that, a keyboard user tabs out
-   of the dialog into controls they cannot see, with nothing on screen saying
-   where they are.
-
-   The search overlay did this correctly; the folder overlay and the setup prompt
-   had none of it. That trap was written inline against its own elements, so
-   there was nothing for the other two to reuse. This is that logic, taken out.
-
-   Escape and focus restoration are included because a trap without them makes
-   things worse rather than better: focus that cannot leave, and no way to close
-   the thing holding it. */
+/* Keyboard behaviour a dialog needs to be usable and escapable. The page behind
+   an overlay is still focusable while covered, so Tab has to wrap inside it.
+   Escape and focus restoration belong with the trap: without them it is focus
+   that cannot leave and no way to close what is holding it. */
 
 /* Focusable in practice. Deliberately narrow: this is for asking what a Tab
    press would reach, not for a general accessibility audit. */
@@ -31,9 +20,8 @@ const FOCUSABLE = [
 export function focusableWithin(root) {
   if (!root || typeof root.querySelectorAll !== 'function') return [];
   return /** @type {HTMLElement[]} */ ([...root.querySelectorAll(FOCUSABLE)]).filter(el => {
-    /* offsetParent is null for a hidden element, which is the cheap way to ask
-       without measuring. It is also null for position:fixed, so that is checked
-       separately rather than treating such an element as hidden. */
+    /* offsetParent is null for a hidden element, and also for position:fixed,
+       which is why that is checked separately. */
     const style = typeof getComputedStyle === 'function' ? getComputedStyle(el) : null;
     if (style && (style.visibility === 'hidden' || style.display === 'none')) return false;
     if (el.offsetParent === null && (!style || style.position !== 'fixed')) return false;
@@ -89,10 +77,8 @@ export function trapFocus(root, opts = {}) {
     if (released) return;
     released = true;
     root.removeEventListener('keydown', /** @type {EventListener} */ (onKeydown));
-    /* Restoring focus is the half people forget: without it, closing a dialog
-       leaves focus on nothing and the next Tab starts from the top of the page.
-       Skipped if the element has since left the document, where focusing it does
-       nothing useful. */
+    /* Without this, closing leaves focus on nothing and the next Tab starts from
+       the top of the page. Skipped if the element has left the document. */
     if (restoreTo && restoreTo.focus && restoreTo.isConnected) {
       try { restoreTo.focus(); } catch { /* not focusable any more */ }
     }

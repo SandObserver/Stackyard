@@ -1,12 +1,8 @@
-/* Pure logic for the Dashboard Switch widget. No DOM, no fetch: given a widget's
-   saved config it returns a render model the frontend draws. Each keychain's
-   hanging elements and (when the user leaves the colour unset) its fob colour
-   are derived deterministically from the dashboard URL, so the same URL always
-   yields the same keychain on every refresh and device. */
+/* Pure render model for the Dashboard Switch widget. Keep it free of the DOM.
+   A keychain's elements, and its colour when the user left it unset, are derived
+   from the dashboard URL, so the same URL always draws the same keychain. */
 
-/* Fob colour palette. `id` is what the admin form and config store; `hex` is
-   what the frontend paints. Labels are colourblind-safe on their own because a
-   keychain is always identified by its visible name too, never colour alone. */
+/* `id` is stored in config; `hex` is what the frontend paints. */
 export const PALETTE = [
   { id: 'teal',   label: 'Teal',   hex: '#14b8c6' },
   { id: 'cyan',   label: 'Cyan',   hex: '#22c1d6' },
@@ -18,9 +14,8 @@ export const PALETTE = [
   { id: 'blue',   label: 'Blue',   hex: '#2f6df4' },
 ];
 
-/* Hanging key styles. Each id maps to an art asset in the widget frontend.
-   `metal` groups visually-similar keys so a keychain can avoid stacking two of
-   the same colour, which reads as an indistinct blob. */
+/* Each id maps to an art asset in the widget frontend. `metal` groups similar
+   keys, so a keychain avoids stacking two that read as one blob. */
 export const KEY_STYLES = [
   { id: 'silver-key-a', metal: 'silver' },
   { id: 'silver-key-d', metal: 'silver' },
@@ -72,11 +67,9 @@ function pickDistinct(rng, catalog, k) {
   return pool.slice(0, Math.min(k, pool.length));
 }
 
-/* Tidy a user-entered dashboard URL into a canonical form used for hashing,
-   matching, and the anchor href. Returns null for anything that is not a usable
-   http(s) URL, so rows without a real target are dropped rather than drawn.
-   Cosmetic differences collapse (case, trailing slash, default port); genuine
-   differences (a different port, a subpath) are preserved. */
+/* The canonical form used for hashing, matching and the href. Cosmetic
+   differences collapse; a different port or subpath is preserved. Null for
+   anything that is not a usable http(s) URL. */
 export function normalizeUrl(raw) {
   if (typeof raw !== 'string') return null;
   const s = raw.trim();
@@ -106,9 +99,8 @@ function hostLabel(url) {
   try { return new URL(url).host; } catch { return url; }
 }
 
-/* Whether a keychain's canonical URL refers to the dashboard currently open.
-   Matches on origin; if the keychain URL carries a real subpath (reverse-proxy
-   setups), the current path must sit under it too. Both args are canonical. */
+/* Matches on origin, and on the subpath too when the keychain URL carries one,
+   as a reverse-proxy setup does. Both arguments must be canonical. */
 export function sameDashboard(slotUrl, currentUrl) {
   if (!slotUrl || !currentUrl) return false;
   if (originOf(slotUrl) !== originOf(currentUrl)) return false;
@@ -118,10 +110,8 @@ export function sameDashboard(slotUrl, currentUrl) {
   return cp === sp || cp.startsWith(`${sp}/`);
 }
 
-/* Derive a keychain's hanging elements from its canonical URL. Guarantees:
-   1 to 3 distinct keys (always at least one real key), plus at most one distinct
-   non-key dangler. Keys and extras come from disjoint catalogs, so no element
-   repeats within a keychain. */
+/* Guarantees 1 to 3 distinct keys and at most one non-key dangler, from disjoint
+   catalogs, so nothing repeats within a keychain. */
 export function deriveComposition(canonicalUrl) {
   const rng = mulberry32(hashString(canonicalUrl));
   const numKeys = 1 + Math.floor(rng() * 3);
@@ -142,9 +132,8 @@ export function deriveComposition(canonicalUrl) {
   return { keys, extras };
 }
 
-/* Derive a fob colour id from the canonical URL, on a stream independent of the
-   composition so colour and elements do not move together. Used only when the
-   user left the colour unset. */
+/* On a stream independent of the composition, so colour and elements do not move
+   together. Only used when the colour is unset. */
 export function deriveColor(canonicalUrl) {
   const rng = mulberry32(hashString(canonicalUrl) ^ 0x9e3779b9);
   return PALETTE[Math.floor(rng() * PALETTE.length)].id;
@@ -154,11 +143,9 @@ function isValidColor(id) {
   return typeof id === 'string' && PALETTE.some(p => p.id === id);
 }
 
-/* Build the render model from saved widget config.
-   config: { keychains: [ { name, url, color }, ... ], openIn?: 'same'|'new' }
+/* config: { keychains: [ { name, url, color }, ... ], openIn?: 'same'|'new' }
    opts:   { size?: 'small'|'medium', currentHref?: string }
-   Returns { size, capacity, openIn, count, slots } where each slot is ready to
-   draw: { name, url, href, color, colorHex, keys, extras, isCurrent }. */
+   Returns { size, capacity, openIn, count, slots }, each slot ready to draw. */
 export function buildModel(config = {}, opts = {}) {
   const size = opts.size === 'small' ? 'small' : 'medium';
   const capacity = size === 'small' ? 2 : 5;

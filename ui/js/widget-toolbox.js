@@ -1,31 +1,5 @@
-/* Optional widget author toolbox.
-   Importing this is never required; a widget can fetch and draw entirely on its
-   own. It bundles the small, repeatedly-useful primitives so an author building
-   a widget for a new service can reuse them instead of re-deriving them.
-
-   DATA
-     widgetId()                      this widget's id (from the iframe URL)
-     fetchData(endpoint, opts?)      GET the generic data endpoint, parsed JSON
-     getConfig()                     GET this widget's (secret-free) config
-     openUrl(href)                   open a link in a new tab from inside the
-                                     sandboxed widget iframe
-     esc(value)                      HTML-escape a value for innerHTML
-
-   VISUALS  (self-contained inline SVG/DOM, no extra CSS needed)
-     smoothPath(points)              smooth SVG path string through [[x,y],...]
-     sparkline(values, opts?)        an <svg> area+line chart element
-     barFill(percent, opts?)         a track+fill bar element
-
-   STATE  (graceful loading / empty / stale / error, self-contained)
-     sinceLabel(ts)                  relative "3m ago" label from a timestamp
-     poll(opts)                      fetch+render loop that keeps the last good
-                                     render on a transient failure
-
-   Heavier visuals (heatmap grid, dotted world map, disk bay layout) are lifted
-   into this toolbox as the widgets that own them are converted, so they can be
-   verified identical to the originals. More chart types are added here over
-   time rather than re-derived per widget.
-*/
+/* Optional toolbox for widget authors: data access, self-contained visuals, and
+   a fetch/render loop. Importing it is never required. */
 
 import { esc, html, setHtml } from '/js/html.js?v=ccec347c';
 import { isSafeLinkUrl } from '/js/link-url.js?v=19038560';
@@ -33,19 +7,10 @@ import { isSafeLinkUrl } from '/js/link-url.js?v=19038560';
 /* Re-exported so a widget frontend needs only this one import. */
 export { esc, html, setHtml };
 
-/* CSS colours cannot be made safe by escaping: nothing in a CSS value needs a
-   quote or an angle bracket to do damage, so `red; background-image: url(...)`
-   survives esc() intact and still parses as a second declaration. There is no
-   general-purpose CSS escape (CSS.escape handles identifiers and selectors, not
-   property values), so the value is validated instead of transformed, and
-   rejected rather than repaired.
-
-   Assign the result through a specific CSSOM property (el.style.backgroundColor,
-   not el.style.background or a concatenated style string). The browser's own
-   parser then refuses anything that is not a single valid colour, and a trailing
-   declaration cannot ride along. Both together: the pattern makes the intent
-   readable and catches a bad value early, the CSSOM assignment holds if the
-   pattern is later loosened. */
+/* Escaping cannot make a CSS value safe: `red; background-image: url(...)`
+   survives esc() and still parses as a second declaration, so the value is
+   validated and rejected rather than repaired. Assign the result through a
+   specific CSSOM property, never a concatenated style string. */
 const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\))$/i;
 export function safeColor(value, fallback) {
   return COLOR_RE.test(String(value ?? '').trim()) ? String(value).trim() : fallback;
@@ -71,13 +36,11 @@ export async function fetchData(endpoint, opts = {}) {
   return r.json();
 }
 
-/* window.open is unreliable from a sandboxed iframe, so click a real anchor and
-   fall back to window.open only if that throws. */
+/* window.open is unreliable from a sandboxed iframe. */
 export function openUrl(href) {
   if (!href) return;
-  /* Widgets pass URLs from their own config, which can arrive by import. A
-     javascript: or data: URL clicked from a widget would run in the dashboard's
-     origin. See link-url.js. */
+  /* A javascript: or data: URL clicked from a widget runs in the dashboard's
+     origin, and widget config can arrive by import. See link-url.js. */
   if (!isSafeLinkUrl(href)) return;
   try {
     const a = document.createElement('a');
@@ -96,8 +59,7 @@ export async function getConfig() {
 
 const _r = n => Math.round(n * 100) / 100;
 
-/* Smooth path through points, lifted unchanged from the AdGuard chart so lines
-   look identical to the existing widgets. points: [[x,y], ...]. */
+/* points: [[x,y], ...] */
 export function smoothPath(points) {
   if (!points || points.length === 0) return '';
   if (points.length === 1) return `M${_r(points[0][0])},${_r(points[0][1])}`;
@@ -112,9 +74,7 @@ export function smoothPath(points) {
   return d;
 }
 
-/* Area + line sparkline as a self-contained <svg> element, scaling to its
-   container (preserveAspectRatio none, like the AdGuard chart).
-   opts: { width=200, height=60, color='#0a84ff', fillOpacity=0.22,
+/* opts: { width=200, height=60, color='#0a84ff', fillOpacity=0.22,
            lineWidth=1.5, smooth=true, max=auto*1.2, gradientId } */
 export function sparkline(values, opts = {}) {
   const W = opts.width || 200, H = opts.height || 60;
@@ -164,8 +124,7 @@ export function sparkline(values, opts = {}) {
   return svg;
 }
 
-/* A horizontal track with a proportional fill, self-contained via inline styles.
-   opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 } */
+/* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 } */
 export function barFill(percent, opts = {}) {  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
   const h = opts.height != null ? opts.height : 6;
   const radius = opts.radius != null ? opts.radius : 3;
@@ -181,16 +140,9 @@ export function barFill(percent, opts = {}) {  const pct = Math.max(0, Math.min(
 
 
 /* Relative "updated" label from a timestamp (ms since epoch). */
-/* Widget status text, translated.
-
-   A widget is an iframe and does not load the i18n module, so nothing in here
-   knew which language was selected and every widget showed English inside an
-   otherwise translated dashboard. The language arrives on the iframe URL and the
-   strings are fetched from the same locale file the parent already has, so the
-   request comes from cache.
-
-   Loaded once per widget, and the labels fall back to English until it arrives,
-   which is the first render at most. */
+/* A widget is an iframe and does not load the i18n module, so the language
+   arrives on the iframe URL and the strings come from the parent's locale file,
+   served from cache. Labels fall back to English until it arrives. */
 const _lang = new URLSearchParams(location.search).get('lang') || 'en';
 let _strings = null;
 
@@ -210,10 +162,6 @@ function _t(key, fallback) {
 
 /** How long ago something happened, in the widget's language.
 
-   Intl.RelativeTimeFormat is the browser's own, and it knows how every locale
-   forms these. Writing six variants by hand would be inventing grammar, and the
-   plural rules alone differ between the languages shipped here.
-
    @param {number} ts @returns {string} */
 export function sinceLabel(ts) {
   if (!ts) return '';
@@ -232,8 +180,7 @@ export function sinceLabel(ts) {
   }
 }
 
-/* A muted, centered status message overlaid on the widget, matching the
-   existing empty/error look. Self-contained inline styles. */
+/* A muted status message overlaid on the widget. */
 function _overlay(root) {
   if (getComputedStyle(root).position === 'static') root.style.position = 'relative';
   const el = document.createElement('div');
@@ -246,20 +193,10 @@ function _overlay(root) {
   };
 }
 
-/* Fetch an endpoint on a timer and render it, handling the loading / empty /
-   stale / error lifecycle so a single failed poll never blanks a working
-   widget. A successful, non-empty result calls render(data). A successful but
-   empty result shows emptyText. A failure keeps the last good render in place;
-   only after `staleAfter` consecutive failures does it surface errorText (with
-   how long ago the last success was), dimming the stale content behind it. A
-   widget that has never loaded shows errorText immediately.
-
-   Widgets with their own error display (e.g. specific "Bad token" / "Not
-   configured" messages) can pass onError instead. When present, poll shows no
-   overlay and calls onError({ error, everOk, stale, since }) on each failure,
-   leaving the widget to decide what to show and whether to keep the last render.
-   The usual pattern is: show error.message when there is nothing good to keep
-   (`!everOk || stale`), otherwise do nothing so the last render stays.
+/* Fetch on a timer and render, keeping the last good render through a transient
+   failure: errorText appears only after `staleAfter` consecutive failures, or at
+   once if the widget has never loaded. Pass onError to draw the error instead,
+   and poll shows no overlay.
 
    opts: {
      render,                 (data) => void  draw a successful, non-empty result
@@ -273,11 +210,8 @@ function _overlay(root) {
      root = document.body,   element the status message overlays
      loadingText, emptyText, errorText
    }
-   Returns { stop }, which also detaches the visibility listener.
-
-   Polling stops while the tab is hidden and resumes with an immediate fetch on
-   return, so a backgrounded dashboard stops calling the services behind it.
-*/
+   Returns { stop }, which also detaches the visibility listener. Polling stops
+   while the tab is hidden and resumes with an immediate fetch. */
 export function poll(opts = {}) {
   const intervalFor = d => (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000;
   const staleAfter = opts.staleAfter != null ? opts.staleAfter : 2;
@@ -309,26 +243,18 @@ export function poll(opts = {}) {
 
   const isHidden = () => typeof document !== 'undefined' && document.hidden === true;
 
-  /* setTimeout rather than setInterval so a variable interval takes effect from
-     the next tick, and so a slow fetch cannot overlap with the following one. */
+  /* setTimeout, not setInterval: a slow fetch must not overlap the next one. */
   async function loop() {
     await tick();
     if (stopped) return;
-    /* Nothing is scheduled while hidden. Each widget is its own document with
-       its own timer, and most ticks reach the user's own service through the
-       API, so a backgrounded tab otherwise keeps polling Plex or Pi-hole
-       indefinitely. Browsers throttle background timers to about a minute,
-       which softens this but does not stop it. The dashboard already pauses its
-       own badge, health and config polls; this is the widgets' half. */
+    /* Nothing is scheduled while hidden: each tick reaches the user's own
+       service, and browser throttling only slows that, it does not stop it. */
     if (isHidden()) { paused = true; return; }
     timer = setTimeout(loop, intervalFor(lastData));
   }
 
-  /* Both directions are handled here rather than only at the next tick. A
-     widget on a ten-minute interval is almost always sitting on an armed timer
-     when the tab hides, so waiting for the tick to notice would leave that
-     timer to fire in the background: the pause would work only for whichever
-     widget happened to be mid-cycle. */
+  /* Handled here rather than at the next tick: a widget on a long interval is
+     usually sitting on an armed timer when the tab hides. */
   function onVisibility() {
     if (stopped) return;
     if (isHidden()) {
@@ -337,14 +263,11 @@ export function poll(opts = {}) {
       paused = true;
       return;
     }
-    /* Fetch straight away rather than waiting out the remaining interval, so
-       the first thing seen on return is current. Matches the dashboard. */
     if (!paused) return;
     paused = false;
     loop();
   }
-  /* Guarded because poll() is unit-tested outside a browser, where there is no
-     document; without one there is nothing to hide, so the loop just runs. */
+  /* poll() is unit-tested outside a browser, where there is no document. */
   const canObserve = typeof document !== 'undefined' && typeof document.addEventListener === 'function';
   if (canObserve) document.addEventListener('visibilitychange', onVisibility);
 

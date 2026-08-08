@@ -1,27 +1,12 @@
 // @ts-check
 /* Password strength scoring, shared by the admin settings form and the
-   dashboard's first-run setup prompt.
-
-   It lived in both, character for character apart from two comments, so the
-   thresholds a password is judged against were defined twice.
-
-   Returns a label *key*, not a display string. The labels used to be hardcoded
-   English, and both callers put them in front of the user: the setup dialog
-   writes one into its hint, and admin-settings interpolates one into
-   t('toast.pwWeak'), which produced a translated sentence ending in an English
-   word. Returning a key keeps this module free of an i18n import, which
-   admin-auth.js (one of its consumers) does not otherwise have. */
+   first-run setup prompt. Returns a label key rather than a display string,
+   which keeps this module free of an i18n import; callers pass it to t(). */
 
 const DIM = 'rgba(255,255,255,.1)';
 
-/* Five bars, so five scores, but four labels: the top two both read as strong.
-
-   The index used to be `Math.min(4, score - 1)` against these four-entry
-   arrays, so a password scoring the maximum indexed past the end and got
-   `undefined` for both. The setup dialog assigns the label straight to
-   `hint.textContent`, which renders the string "undefined", so the strongest
-   possible password was the one that looked broken. Clamping to the last entry
-   is what the four labels were always meant to do. */
+/* Five scores, four labels: the top two both read as strong, so the index must
+   clamp to the last entry rather than run past it. */
 const LABEL_KEYS = ['pwStrength.weak', 'pwStrength.fair', 'pwStrength.good', 'pwStrength.strong'];
 const COLORS     = ['#ff9f0a', '#ffd60a', '#34c759', '#34c759'];
 const BARS = 5;

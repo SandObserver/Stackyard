@@ -1,28 +1,14 @@
 /* Which URLs are safe to put in a link the user can click.
 
-   A denylist, not an allowlist, and the distinction is deliberate. The outbound
-   fetch guard allowlists http and https because the server makes those requests
-   itself, so anything it does not understand is a risk it is taking. A tile link
-   is the opposite: the browser hands the URL to the OS or to a protocol handler,
-   and homelab dashboards legitimately link to ssh://, vnc://, rdp://, smb://,
-   steam:// and whatever else the user has registered. Allowlisting http and
-   https here would break those for no security gain.
+   A denylist on purpose: a tile link is handed to the OS, and a homelab
+   dashboard legitimately links to ssh://, vnc://, rdp:// and whatever else the
+   user has registered. Only the schemes that execute script in our own origin
+   are refused, and rel="noopener noreferrer" does nothing about those.
 
-   What must be refused is the small set of schemes that execute script in our
-   own origin when the link is clicked. `rel="noopener noreferrer"` does nothing
-   about those; the scheme has to be rejected.
+   Enforced on save and again on render, since a config can arrive by import.
 
-   This is the only copy of the rule. The server requires this file directly
-   (Node has supported require() of an ES module since 22.12, and the image runs
-   24), so there is one definition to change rather than two to keep in step.
-
-   It is enforced at two moments: on save, so a bad value cannot be stored, and on
-   render, so a config written before this existed or arriving by import cannot
-   fire either.
-
-   Because the server loads it, this file must stay free of anything only a
-   browser has: no DOM, no window, no imports. api/test/link-url.test.js checks
-   that by loading it in Node. */
+   The server requires this file directly, so it must stay free of anything only
+   a browser has: no DOM, no window, no imports. */
 
 export const UNSAFE_LINK_SCHEMES = Object.freeze([
   'javascript', /* executes in our origin */
@@ -32,12 +18,9 @@ export const UNSAFE_LINK_SCHEMES = Object.freeze([
   'filesystem', /* likewise */
 ]);
 
-/* Browsers discard control characters and whitespace anywhere in the scheme
-   before reading it, so "java\nscript:alert(1)" navigates as javascript:. The
-   same characters are removed here, or the check reads a scheme the browser will
-   not. Written as a scan rather than a character-class range because a control
-   character inside a regular expression is almost always a mistake, and the lint
-   rule that says so is worth keeping. */
+/* Browsers strip control characters and whitespace from the scheme before
+   reading it, so "java\nscript:alert(1)" navigates as javascript:. Strip the
+   same ones, or this reads a scheme the browser will not. */
 const stripBlanks = s => {
   let out = '';
   for (let i = 0; i < s.length; i++) {

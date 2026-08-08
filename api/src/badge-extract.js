@@ -1,10 +1,5 @@
-/* Pure value-extraction logic for activity badges, split out from the badges
-   route so it can be unit-tested. All three functions operate on plain parsed
-   JSON with no I/O:
-     collectNumbers   - walk an arbitrary response and surface numeric paths
-                        (plus array counts and boolean filter counts) for the picker
-     extractPath      - resolve one dot-path (with filter(...) and [i] segments)
-     computeBadgeValue - sum the numbers a badge's extract path(s) resolve to */
+/* Value extraction for activity badges. Plain parsed JSON in, no I/O, so keep it
+   free of the route it serves. */
 
 function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 }) {
   const MAX_DEPTH = 6, MAX_NODES = 256;

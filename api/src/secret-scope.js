@@ -1,33 +1,22 @@
 /* When a stored secret may be attached to a request the caller composed.
 
    Two endpoints let the browser post an in-progress config and have the server
-   fill in a credential it already holds:
+   fill in a credential. Both let the request choose the destination, so
+   restoring on the item id alone turns "can edit config" into "can read every
+   stored credential": point the URL elsewhere, omit the secret, and the server
+   sends the real one there.
 
-     POST /api/widget-options/:id   widget config, secret restored by item id
-     POST /api/badge-proxy          badge URL + rows, secrets restored by itemId
-
-   Both let the request supply the destination while the server supplies the
-   credential. Restoring on the id alone therefore turns "can edit config" into
-   "can read every stored credential": point the URL at a host you control, omit
-   the secret, and the server sends the real one there in plaintext.
-
-   The rule below is deliberately blunt: restore only when every non-secret field
-   is identical to what is saved. Comparing just the fields that look like a
-   destination would be kinder to use and worse to trust, because it needs an
-   implicit assumption about which fields matter, which is the assumption that
-   failed here in the first place. A mismatch is not an error in itself; it only
-   means the caller has to supply the credential with the request.
-
-   Secret values are never compared, since the caller does not have them. The
-   "<key>Set" flags are not compared either: they are presence markers the scrub
-   path adds, not user data. */
+   The rule is deliberately blunt: restore only when every non-secret field is
+   identical to what is saved. Comparing only the fields that look like a
+   destination needs an assumption about which fields matter, which is the
+   assumption that failed here. */
 
 const { secretSpec } = require('./widget-secrets');
 const { toRows } = require('./badge-headers');
 
-/* Order-insensitive structural comparison. Object key order varies between what
-   the browser sends and what was parsed from disk, so a plain JSON.stringify
-   would report a difference that is not one. */
+/* Order-insensitive: key order differs between what the browser sends and what
+   was parsed from disk, so JSON.stringify would report a difference that is not
+   one. */
 function stableEqual(a, b) {
   if (a === b) return true;
   if (a == null || b == null) return a == null && b == null;
@@ -68,9 +57,8 @@ function widgetConfigMatchesSaved(newConfig, savedConfig, entry) {
   return stableEqual(stripWidgetSecrets(newConfig, entry), stripWidgetSecrets(savedConfig, entry));
 }
 
-/* Rows are positional, so a reorder counts as a change. Secret row values are
-   not compared, since the browser never receives them; the key and the secret
-   flag are, so renaming a header or flipping its Secret box is a change. */
+/* Positional, so a reorder is a change. Secret values are not compared, since
+   the browser never receives them; the key and the secret flag are. */
 function rowsMatch(newRows, oldRows) {
   const n = toRows(newRows);
   const o = toRows(oldRows);
@@ -84,9 +72,6 @@ function rowsMatch(newRows, oldRows) {
   });
 }
 
-/* True when a badge test targets exactly the saved destination with exactly the
-   saved non-secret rows. `stored` is the badge or activity block, whichever the
-   caller resolved as active. */
 function badgeRequestMatchesSaved(request, stored) {
   if (!stored) return false;
   if ((request.url || '') !== (stored.url || '')) return false;

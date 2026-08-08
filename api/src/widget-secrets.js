@@ -1,12 +1,8 @@
 const { getRegistry } = require('./widgets');
 
-/* Collect the secret field keys a widget declares, from its manifest fields.
-   Membership below is tested with Object.hasOwn rather than `in`, because the
-   objects searched are widget config from disk and every one of them inherits
-   "constructor", "toString" and the rest, which `in` reports as present.
-   Returns top-level secret keys and, for each repeatable group, the secret keys
-   that appear inside one row of that group. Groups are not nested (the manifest
-   validator forbids it), so one level is sufficient. */
+/* The secret field keys a widget declares, top level and one row deep, which is
+   enough because the validator forbids nested groups. Membership is tested with
+   Object.hasOwn, since config from disk inherits "constructor" and the rest. */
 function secretSpec(entry) {
   const fields = (entry && entry.manifest && entry.manifest.fields) || [];
   const topLevel = [];
@@ -31,11 +27,8 @@ function _entryFor(item, entry) {
   return entry || getRegistry()[item && item.widgetType];
 }
 
-/* Strip declared secrets from one widget item, replacing each with a
-   "<key>Set": true flag so the UI can show that a value is stored. Mutates the
-   item, so callers must pass a copy (the read paths already deep-copy config
-   before sending it to the browser). Items whose type is not a folder-style
-   widget are left untouched, legacy widgets stay on their existing handling. */
+/* Replaces each secret with a "<key>Set" flag. Mutates the item, so callers must
+   pass a copy. */
 function scrubWidgetSecrets(item, entry) {
   const e = _entryFor(item, entry);
   if (!e || !item || !item.widgetConfig) return;
@@ -61,9 +54,7 @@ function scrubWidgetSecrets(item, entry) {
   }
 }
 
-/* On save, restore any declared secret the browser omitted from the previously
-   stored value, and keep the "<key>Set" flag in sync. Group rows are matched by
-   position. Mutates newItem.widgetConfig. Non-folder widgets are left untouched. */
+/* Group rows are matched by position. Mutates newItem.widgetConfig. */
 function preserveWidgetSecrets(newItem, oldItem, entry) {
   const e = _entryFor(newItem, entry);
   if (!e || !newItem || !newItem.widgetConfig) return;
@@ -100,23 +91,12 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
   }
 }
 
-/* A widget whose manifest is not loaded.
+/* The manifest is what says which fields are secret, so a widget without one has
+   its whole config withheld: not recognised means withhold. A wrong WIDGETS_PATH
+   makes every widget unknown at once.
 
-   The manifest is what says which config fields are secret. Without it the
-   server cannot tell, and the previous behaviour was to send the config
-   untouched, so an API key went to the browser and into the config export in
-   plain text. The default is inverted here: not recognised means withhold.
-
-   Three ways a widget ends up unknown, and the third is why this matters:
-     its manifest failed validation, so widgets.js skipped it
-     the widget folder was removed or renamed, leaving an orphan config item
-     WIDGETS_PATH is wrong, in which case the registry loads empty and every
-       widget is unknown at once
-
-   Withholding is only safe because preserveConfigSecrets puts the stored config
-   back on save. Without that, the first save from Admin would write the empty
-   config it was given and destroy the widget's settings. The two belong
-   together; changing one without the other trades a leak for data loss. */
+   Safe only because preserveConfigSecrets puts the stored config back on save.
+   Changing one without the other trades a leak for data loss. */
 const WITHHELD_FLAG = 'widgetConfigWithheld';
 
 function withholdWidgetConfig(item) {
@@ -124,10 +104,8 @@ function withholdWidgetConfig(item) {
   item[WITHHELD_FLAG] = true;
 }
 
-/* Undo the withholding on the way back in. The browser was given nothing, so
-   whatever it returns for this widget is discarded in favour of what is stored.
-   A widget with no stored counterpart is new, so there is nothing to protect and
-   what was sent is kept. */
+/* The browser was given nothing, so whatever it returns is discarded in favour of
+   what is stored. A widget with no stored counterpart is new. */
 function restoreWithheldConfig(newItem, oldItem) {
   delete newItem[WITHHELD_FLAG];
   if (oldItem && oldItem.widgetConfig) {
@@ -135,10 +113,7 @@ function restoreWithheldConfig(newItem, oldItem) {
   }
 }
 
-/* Config-level convenience wrappers for the routes that handle the whole config.
-   Each only acts on folder-style widgets (those present in the registry), so it
-   is a no-op while no widgets have been converted, and never disturbs legacy
-   widgets handled by the existing hand-written logic. */
+/* Whole-config wrappers. Each acts only on widgets present in the registry. */
 function scrubConfigSecrets(cfgCopy) {
   const reg = getRegistry();
   if (Array.isArray(cfgCopy.items)) {
@@ -160,9 +135,8 @@ function preserveConfigSecrets(newCfg, oldCfg) {
       if (!item || item.type !== 'widget') continue;
       const prev = oldItems.find(e => e && e.id === item.id);
       const entry = reg[item.widgetType];
-      /* Always dropped, not just on the unknown path: a widget whose manifest
-         loads again between the read and the save would otherwise carry the
-         marker into stored config. It is a transport flag, never persisted. */
+      /* A transport flag, never persisted: a manifest that loads again between
+         the read and the save would otherwise carry it into stored config. */
       delete item[WITHHELD_FLAG];
       if (entry) preserveWidgetSecrets(item, prev, entry);
       else restoreWithheldConfig(item, prev);

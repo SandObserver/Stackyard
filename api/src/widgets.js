@@ -3,9 +3,8 @@ const path = require('path');
 const { on, json } = require('./router');
 const log = require('./log');
 
-/* Where folder-style widgets live. In the container the UI is copied to the
-   Nginx web root, so the API (running from /app) is pointed at that path. The
-   files are world-readable, so the unprivileged API user can read them. */
+/* In the container the UI is copied to the nginx web root, so the API is pointed
+   at that path. */
 const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets';
 
 const VALID_SIZES      = new Set(['small', 'medium', 'large', 'xlarge']);
@@ -13,16 +12,12 @@ const VALID_CARDS      = new Set(['dark', 'light', 'translucent']);
 const VALID_FIELDTYPES = new Set(['text', 'secret', 'number', 'toggle', 'color', 'select', 'multiselect', 'picklist', 'group', 'object']);
 
 let _registry = null;
-/* Widgets that were found but refused, and why. Kept beside the registry rather
-   than in it, so a lookup by widgetType can never resolve to one: a rejected
-   widget is not a widget. Reset on every load, so a fixed manifest clears its
-   entry. */
+/* Kept beside the registry, never in it: a lookup by widgetType must not resolve
+   to a rejected widget. */
 let _rejected = [];
 
-/* Two sibling fields may share a key so that one label and placeholder can be
-   swapped for another, for example a URL that is named differently per service
-   type. Only one may be visible at a time, or the last one read silently wins,
-   so every declaration of a repeated key has to carry a "showIf". */
+/* Siblings may share a key to swap a label per service type, but only one may be
+   visible at a time or the last one read silently wins. */
 function _validateSiblingKeys(fields, where) {
   const errs = [];
   const counts = Object.create(null);
@@ -42,15 +37,9 @@ function _validateSiblingKeys(fields, where) {
   return errs;
 }
 
-/* Validate a field's "showIf". Shape only; whether it names a real sibling is
-   checked by _validateShowIfTargets, which needs the whole sibling list.
-
-   Nothing checked this before, and the ways it fails are all silent. A showIf
-   whose "field" names nothing resolves to undefined in visibleFieldKeys, so the
-   condition is never met and the field is hidden for good, which looks like a
-   missing feature rather than a typo. A showIf that is not an object at all
-   (showIf: true) also satisfies the repeated-key rule below while carrying no
-   condition, so both declarations of that key end up permanently hidden. */
+/* Shape only; _validateShowIfTargets checks the target, which needs the whole
+   sibling list. Both failures are silent: a condition that can never be met
+   hides the field for good, and looks like a missing feature. */
 function _validateShowIf(f, where) {
   if (f.showIf === undefined) return [];
   const s = f.showIf;
@@ -62,9 +51,8 @@ function _validateShowIf(f, where) {
   return errs;
 }
 
-/* Every showIf must name one of its own siblings. Conditions are resolved
-   within a sibling set, so a group sub-field cannot depend on a top-level one
-   and naming it would hide the sub-field for good. */
+/* Conditions resolve within a sibling set, so naming a field outside it hides
+   the dependant for good. */
 function _validateShowIfTargets(fields, where) {
   const keys = new Set(fields.filter(f => f && typeof f.key === 'string' && f.key).map(f => f.key));
   const errs = [];
@@ -77,9 +65,8 @@ function _validateShowIfTargets(fields, where) {
   return errs;
 }
 
-/* Validate one field declaration. Recurses into group sub-fields. Returns an
-   array of human-readable problems (empty = valid). Kept permissive: unknown
-   extra keys are allowed so the format can grow without breaking older widgets. */
+/* Deliberately permissive about unknown keys, so the manifest format can grow
+   without breaking older widgets. */
 function _validateField(f, where, depth = 0) {
   const errs = [];
   if (!f || typeof f !== 'object') { errs.push(`${where}: field must be an object`); return errs; }
@@ -107,16 +94,9 @@ function _validateField(f, where, depth = 0) {
    or { value, label }. */
 const _optionValue = o => (o && typeof o === 'object' ? o.value : o);
 
-/* "viewField" names the config key holding the chosen view, so it has to be a
-   field the form actually renders, and the values that field offers have to be
-   the view keys. Neither was checked, and both fail silently: widget-types.js
-   reads widgetConfig[viewField], so a typo makes that permanently undefined and
-   the widget pins to defaultView with the selector doing nothing, while an
-   option with no matching view selects a view that does not exist.
-
-   Only a field declaring "options" is checked against the view keys. One using
-   "optionsFrom" fetches its choices at runtime, so there is nothing to compare
-   here. */
+/* A typo in "viewField" fails silently: the widget pins to defaultView and the
+   selector does nothing. Only a field declaring "options" can be checked, since
+   "optionsFrom" fetches its choices at runtime. */
 function _validateViewField(m) {
   const errs = [];
   const fields = Array.isArray(m.fields) ? m.fields : [];
@@ -187,18 +167,12 @@ function _validateManifest(name, m) {
   return { errors: errs };
 }
 
-/* Scan the widgets directory and build the registry. Each entry records the
-   parsed manifest, whether the folder ships a data function, and whether the
-   manifest opts out of the auto-form.
-   A missing directory, a non-folder entry, or a folder without widget.json is
-   simply skipped: the legacy flat-file widgets coexist untouched, and an empty
-   registry is a valid result. A malformed widget.json is skipped with a logged
-   reason rather than crashing the server.
+/* A folder without widget.json is skipped, not refused: the legacy flat-file
+   widgets coexist, and an empty registry is a valid result.
 
-   Null prototype: every caller looks a widget up by the `widgetType` stored in
-   config, so on an ordinary object `widgetType: "constructor"` returned a
-   truthy value that is not a registry entry, and the "unknown widget type"
-   branch never ran. Fixing it here fixes every lookup site at once. */
+   Null prototype, because every caller looks a widget up by a widgetType from
+   config: on an ordinary object, "constructor" answers a miss with something
+   truthy. */
 function loadRegistry() {
   const reg = Object.create(null);
   const rejected = [];
@@ -264,9 +238,7 @@ function getRegistry() {
   return _registry;
 }
 
-/* The browser-facing shape: everything the dashboard and admin UI need to draw
-   the type picker, the config editor, and the widget iframe, and nothing the
-   backend keeps to itself. */
+/* The browser-facing shape, carrying nothing the backend keeps to itself. */
 function _publicEntry(_name, e) {
   const m = e.manifest;
   return {
@@ -285,11 +257,8 @@ function _publicEntry(_name, e) {
 on('GET', '/api/widgets', (_, res) => {
   const reg  = getRegistry();
   const list = Object.entries(reg).map(([name, e]) => _publicEntry(name, e));
-  /* Refused widgets travel alongside, so Admin can say why a widget's settings
-     cannot be shown instead of sending the operator to the container log. The
-     field is additive: a frontend that does not know about it is unaffected.
-     Safe to send, since the errors describe files inside the image and this
-     route is behind the auth gate. */
+  /* Safe to send: the errors describe files inside the image, and this route is
+     behind the auth gate. */
   json(res, 200, { widgets: list, rejected: getRejected() });
 });
 

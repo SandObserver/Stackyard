@@ -20,9 +20,8 @@ const st       = () => _state;
 const widgetReg = () => _state?.widgetReg || Object.create(null);
 const mkWrap   = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
-/* Real safe-area insets in px. Standalone reports the status bar and home
-   indicator; Safari, which already excludes its toolbars from innerHeight,
-   reports 0. Needs viewport-fit=cover in the page meta to be non-zero. */
+/* Zero without viewport-fit=cover in the page meta. Safari reports 0 anyway,
+   since it already excludes its toolbars from innerHeight. */
 function readSafeInsets() {
   const p = mk('div');
   p.style.cssText = 'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;'
@@ -35,9 +34,8 @@ function readSafeInsets() {
   return { top, bottom };
 }
 
-/* Dismiss any "active" interior state (e.g. a tapped disk-health sled) on mobile.
-   Widgets expose window.__clearActive; taps outside a widget land in the parent
-   document, so the parent must tell the widgets to reset. */
+/* A tap outside a widget lands in the parent document, so the parent has to tell
+   the widgets to reset. Widgets expose window.__clearActive. */
 function clearMobWidgets(exceptWin){
   qa('.mob-widget-card iframe, .widget iframe').forEach(ifr => {
     try { const w = /** @type {HTMLIFrameElement} */ (ifr).contentWindow; if (w && w !== exceptWin && /** @type {any} */ (w).__clearActive) /** @type {any} */ (w).__clearActive(); } catch {}
@@ -49,9 +47,8 @@ const _win = /** @type {any} */ (window);
 if (!_win.__wActiveMsgBound){
   _win.__wActiveMsgBound = true;
   window.addEventListener('message', e => {
-    /* Widgets are same-origin iframes, so a message from anywhere else is not
-       part of this protocol. Without the check any window holding a handle on
-       the dashboard could drive it. */
+    /* Widgets are same-origin iframes, so anything else is not part of this
+       protocol and must not be able to drive the dashboard. */
     if (e.origin !== window.location.origin) return;
     if (e.data && e.data.type === 'widget-active') clearMobWidgets(e.source);
   });
@@ -163,10 +160,9 @@ export function openFolderDesktop(folder) {
   const escDesk = e => { if (e.key === 'Escape') { closeDesk(); document.removeEventListener('keydown', escDesk); } };
   document.addEventListener('keydown', escDesk);
   outer.append(title, box); ov.appendChild(outer); document.body.appendChild(ov); folderOverlay = ov;
-  /* Escape and focus restoration were already here; the Tab trap was not, so
-     tabbing out of an open folder moved through the dashboard behind it, which
-     is still focusable while being visually covered. Attached after the overlay
-     is in the document, since the trap focuses its first link. */
+  /* The dashboard behind stays focusable while covered, so the overlay needs a
+     Tab trap. Attached after it is in the document, since the trap focuses its
+     first link. */
   releaseDeskTrap = trapFocus(ov, { closeOnEscape: false, onClose: closeDesk });
 }
 
@@ -238,9 +234,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   let releaseMobTrap = null;
   function closeMob() {
     qa('.badge', ov).forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
-    /* Releases the trap and returns focus to the folder button that opened it.
-       This overlay had neither, so a keyboard user could tab straight out of it
-       into the dashboard behind, and Escape did nothing. */
+    /* Releases the trap and returns focus to the button that opened it. */
     if (releaseMobTrap) { releaseMobTrap(); releaseMobTrap = null; }
     ov.remove(); folderOverlayMob = null;
   }
@@ -342,8 +336,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   }, { passive:false });
   document.body.appendChild(ov); folderOverlayMob = ov;
   /* After the overlay is in the document, since the trap focuses its first
-     control. Escape is handled here rather than on document, so it cannot
-     outlive the overlay. */
+     control. Escape is bound here so it cannot outlive the overlay. */
   releaseMobTrap = trapFocus(ov, { onClose: closeMob });
 }
 
@@ -361,11 +354,9 @@ export function buildMobile() {
   const isz = Math.round(Math.min(cw*.90, rh*.80, maxIsz));
   const ir = Math.round(isz*.225), im = Math.round(isz*.64);
   const dock = items().filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0,4);
-  /* ── Mobile layout: single-pass true 4×6 grid bin-packing ──
-     Replaces the previous two-system approach (paginate() cost model +
-     buildMobile row-flow with ensureSpace overflow), which disagreed and
-     could strand half-rows / push a widget that fits onto a new page.
-     Footprints in grid cells: icon/folder 1×1, small 2×2, medium 4×2, large 4×4, xlarge 4×6. */
+  /* ── Mobile layout: single-pass 4×6 grid bin-packing ──
+     Footprints in cells: icon/folder 1×1, small 2×2, medium 4×2, large 4×4,
+     xlarge 4×6. */
   const strip = el('pages'); strip.innerHTML = '';
   const COLS = 4, ROWS = 6;
   const gap = Math.round(sm * 0.5);
@@ -429,15 +420,12 @@ export function buildMobile() {
     const preset = cardPreset(item, _state.widgetReg);
     if (preset) card.dataset.card = preset;
     if (wsub) card.dataset.wsubtype = wsub;
-    /* Aspect-lock to the family design and fit within the grid cell (centered).
-       Same aspect as desktop, so the widget itself renders identically. The card
-       material comes from dashboard.css; only size-derived values are set here. */
+    /* Same aspect as desktop, so the widget renders identically. Only
+       size-derived values are set here; the card material is in dashboard.css. */
     card.style.cssText = `aspect-ratio:${design[0]}/${design[1]};width:100%;max-width:100%;max-height:100%;` +
       `flex-shrink:0;border-radius:${wBR}px;overflow:hidden;position:relative;`;
-    /* Same URL as desktop (no mobile-only branch); the fixed design size now
-       guarantees identical rendering, so platform-specific widget layouts are unnecessary.
-       overlayHref + mobile:true add a transparent layer so swipes page the home screen
-       (iframes otherwise swallow the touch) while a tap opens the widget's link. */
+    /* overlayHref with mobile:true adds a transparent layer, because an iframe
+       otherwise swallows the touch and the home pager never sees the swipe. */
     const overlayHref = item.url || item.href || item.widgetConfig?.scrutinyHref || item.widgetConfig?.linkUrl || null;
     mountScaledWidget(card, { src: widgetSrc(item, widgetReg(), { mobile: true, lang: currentLang() }), title: widgetTitle(item), design, iframeOpts: item.iframe, overlayHref, mobile: true,
       onSwipe: dir => goTo(st().pg + dir) });
@@ -465,10 +453,8 @@ export function buildMobile() {
     strip.appendChild(p);
   });
 
-  /* The desktop dots are hidden on mobile, which shows its own pill dots below.
-     They used to be built here anyway, into a display:none container and pushed
-     into an array nothing read, so they were unreachable markup that still had
-     to be kept in step. Cleared rather than filled. */
+  /* Cleared, not filled: mobile shows its own pill dots below, and building the
+     desktop ones into a hidden container leaves markup nothing reads. */
   const dw = el('dots'); dw.style.cssText = 'display:none'; dw.innerHTML = '';
 
   const dk = el('dock'); dk.className = 'mdock';

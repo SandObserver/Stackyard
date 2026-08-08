@@ -1,12 +1,8 @@
 // @ts-check
-/* SECURITY INVARIANT:
-   The URLs produced here (resolveIcon / iconChain) must only ever be assigned
-   to an <img src=...>. User-uploaded SVGs are served from /icons/ and an SVG
-   loaded via <img> cannot execute scripts, <style>, or event handlers.
-   The upload-time sanitizer in api/src/routes/icons.js is defense-in-depth,
-   NOT the primary XSS control. If an icon is ever inlined into the DOM
-   (innerHTML, inline <svg>, object/embed), this assumption breaks; re-evaluate
-   SVG sanitization before doing so. */
+/* SECURITY INVARIANT: these URLs may only ever be assigned to an <img src>. A
+   user-uploaded SVG loaded that way cannot execute script; inlined into the DOM
+   it can. The upload-time sanitizer is defence in depth, not the primary
+   control. */
 const LOCAL_ICONS = new Set();
 
 export async function loadLocalIcons() {
@@ -21,18 +17,9 @@ export async function loadLocalIcons() {
   } catch {}
 }
 
-/* The URL for a locally uploaded icon.
-
-   The filename is used exactly as it appears on disk. It used to be taken apart
-   and reassembled with the extension lowercased, so an icon saved as LOGO.SVG
-   was requested as /icons/LOGO.svg: a file that does not exist, and an icon that
-   silently never appeared. Uppercase extensions arrive routinely from Windows
-   and from cameras.
-
-   The filename is also percent-encoded. A space happens to survive because
-   browsers encode it, but a '+' or a '&' changes meaning in a path and would
-   have requested something else entirely. Only the filename is encoded, never
-   the '/icons/' prefix, or the separator would be escaped too. */
+/* The filename is used exactly as it is on disk, uppercase extension included,
+   and percent-encoded because a '+' or '&' changes meaning in a path. Only the
+   filename, never the '/icons/' prefix, or the separator is escaped too. */
 const iconPath = filename => `/icons/${encodeURIComponent(filename)}`;
 
 export function resolveIcon(raw) {
@@ -46,16 +33,9 @@ export function resolveIcon(raw) {
   return LOCAL_ICONS.has(filename) ? iconPath(filename) : '';
 }
 
-/* A typed name as the icon catalogue spells it.
-
-   Every file in the dashboard-icons repository is lowercase and hyphenated, and
-   jsDelivr serves GitHub paths, which are case-sensitive. So a name typed as
-   "MySpeed" or "Home Assistant" produced a 404 while the icon existed all along
-   as myspeed.svg or home-assistant.svg, with no hint of why nothing appeared.
-
-   This applies only to the CDN. A locally uploaded icon is the user's own file
-   and is used exactly as it is on disk; guessing at its spelling could pick the
-   wrong one, and a filesystem may hold two names differing only by case. */
+/* The catalogue is lowercase and hyphenated and its paths are case-sensitive, so
+   "Home Assistant" has to become home-assistant. CDN names only: a local file is
+   the user's own, and a filesystem may hold two names differing by case. */
 export function cdnIconName(name) {
   return String(name || '')
     .trim()

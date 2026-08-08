@@ -12,10 +12,8 @@ function on(m, p, h) {
   routes.push({ m, p, re, names, h });
 }
 
-/* Any error a handler throws or rejects with is caught here and turned into a
-   500 for that one request, instead of propagating to the server and taking the
-   whole process down. dispatch stays synchronous for http.createServer while
-   route() is free to run async handlers. */
+/* A throwing handler must fail its own request, not the process. dispatch stays
+   synchronous for http.createServer while route() runs async handlers. */
 function dispatch(req, res) {
   Promise.resolve().then(() => route(req, res)).catch(err => onError(req, res, err));
 }
@@ -34,9 +32,8 @@ function route(req, res) {
     const match = u.pathname.match(r.re);
     if (!match) continue;
     req.params = {};
-    /* A parameter that will not percent-decode is a bad request, not a server
-       fault: decodeURIComponent throws on an invalid escape, so /api/x/% used to
-       answer 500. */
+    /* decodeURIComponent throws on an invalid escape, which is a bad request,
+       not a server fault. */
     let bad = null;
     for (let i = 0; i < r.names.length; i++) {
       const decoded = tryDecode(match[i + 1] || '');
@@ -61,27 +58,8 @@ function json(res, status, data) {
   res.end(b);
 }
 
-/* The largest request body the API will read.
-
-   A body is held in memory before it is parsed, so this is a memory limit as
-   much as a size limit, and Stackyard is expected to run on hardware with 512 MB
-   or less. The value is therefore the smallest one that comfortably fits real
-   use, not the largest one that seems harmless.
-
-   Measured against a config of realistic items: an app entry with monitoring, a
-   badge and a container is about 540 bytes, so
-
-     20 apps   ~10 KB
-     100 apps  ~52 KB
-     300 apps  ~155 KB
-
-   300 apps is already an unusual dashboard, so 2 MB is roughly thirteen times
-   the largest configuration anyone is likely to have. The headroom is deliberate:
-   it covers a bigger setup than measured here, and it covers the measurement
-   itself being unrepresentative.
-
-   This was 4 MB, which had no stated reason and was the largest of three limits
-   that disagreed with each other. */
+/* Buffered in memory before parsing, so this is a memory limit as much as a size
+   one: a 300-app config is about 155 KB. */
 const BODY_LIMIT = 2 * 1024 * 1024;
 function readBody(req) {
   return new Promise((res, rej) => {
@@ -92,27 +70,12 @@ function readBody(req) {
   });
 }
 
-/* The client address, used for rate limiting and audit records.
+/* The client address, for rate limiting and audit records.
 
-   Read from X-Real-IP, and only when the request arrived over loopback. Our own
-   nginx is the only thing that reaches this port in the shipped container, and it
-   sets that header unconditionally, so a client-supplied value cannot survive.
-   The loopback check is what makes that reasoning safe rather than assumed: a
-   request arriving from anywhere else is treated as unproxied and identified by
-   its socket address.
-
-   This replaces a TRUST_PROXY flag that read X-Forwarded-For and took the first
-   entry. Neither half worked. nginx never set X-Forwarded-For, so with the flag
-   off every request looked like 127.0.0.1 and rate limiting was one shared bucket
-   for all clients; with it on, a client-supplied header passed straight through
-   and the first entry is the one the client chooses, so the limiter could be
-   bypassed by rotating it. The flag was most dangerous in exactly the position an
-   operator would turn it on for.
-
-   No header chain is parsed here. When Stackyard sits behind another reverse
-   proxy, nginx resolves the real client itself from TRUSTED_PROXY (see
-   docker-entrypoint.sh), so $remote_addr and therefore X-Real-IP are already
-   correct by the time the request arrives. */
+   X-Real-IP is trusted only over loopback, where our own nginx is the only thing
+   that can set it; anything else is identified by its socket address. No header
+   chain is parsed: nginx has already resolved the real client from TRUSTED_PROXY
+   (see docker-entrypoint.sh). */
 const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 
 function getIp(req) {

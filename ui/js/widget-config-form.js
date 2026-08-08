@@ -1,25 +1,6 @@
-/* Renders a widget's declared `fields` into a settings-row config form and reads
-   values back. Field types: text, secret, number, toggle, color, select, pills,
-   multiselect, picklist, group, object.
-   renderWidgetConfigForm(container, fields, config) -> { getValues, validate }
-   Each builder returns { el, get, control, liveValue }.
-
-   A field marked `transient` is rendered and sent to optionsFrom fetches but is
-   left out of the saved config, for search boxes whose text is only an input to
-   a picker.
-
-   A `select` with `optionsFrom` may also own keys it does not name: it declares
-   them in `carries`, and each fetched option supplies them in a `set` block.
-   Values for those keys are seeded from the saved config so they survive an edit
-   in which the picker is not touched. `transient` applies to top-level fields
-   only; a group's rows are always saved whole.
-
-   Group rows get the same treatment: `showIf` is evaluated per row against that
-   row's own values, and a sub-field's `optionsFrom` fetch names its row so the
-   data function can read the values that row was filled in with.
-
-   An `object` renders one nested card and saves its sub-fields one level deep.
-   Like a group row, its `showIf` conditions read its own sub-fields. */
+/* Renders a widget's declared `fields` into a config form and reads the values
+   back. Each builder returns { el, get, control, liveValue }. The field types
+   and their manifest options are specified in docs/widgets.md. */
 
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { wireChecklist } from '/js/admin-shared.js?v=182410cc';
@@ -87,8 +68,6 @@ function _toggle(field, value) {
   return { el: row, get, control: input, liveValue: () => input.checked };
 }
 
-/* One /api/widget-options request. Shared by the select and picklist builders
-   so both send the same draft config and row reference. */
 async function _fetchOptions(field, ctx) {
   const cfg = ctx && ctx.getDraft ? ctx.getDraft() : {};
   const wid = (ctx && ctx.widgetId) || '__preview__';
@@ -109,9 +88,8 @@ async function _fetchOptions(field, ctx) {
   return Array.isArray(d.options) ? d.options : [];
 }
 
-/* A fixed-length list of picks from one shared option list: one Fetch fills
-   every row. Saves an array of scalars, one per row, null where unset, so a
-   widget that already stores a plain array does not have to change shape. */
+/* Saves an array of scalars, one per row and null where unset, so a widget that
+   already stores a plain array does not change shape. */
 function _picklist(field, value, ctx, size) {
   const count = (field.countBySize && size && field.countBySize[size] != null)
     ? field.countBySize[size]
@@ -194,8 +172,6 @@ function _select(field, value, ctx, config = {}) {
   }
   paint();
 
-  /* Adopt the chosen option's `set` block; an option without one leaves the
-     seeded values in place. */
   function syncCarried() {
     if (!carryKeys.length) return;
     carried = applyOptionSet(carried, opts.find(x => String(x.value) === sel.value), carryKeys);
@@ -261,12 +237,11 @@ function _multiselect(field, value) {
   return { el: wrap, get, control: wrap, liveValue: () => [...cur] };
 }
 
-/* Wraps the shared swatch + HSB control. The wrapper is needed so `showIf` has
-   one element to hide; the control itself appends several rows. */
+/* The wrapper exists so `showIf` has one element to hide: the control itself
+   appends several rows. */
 function _color(field, value) {
   const wrap = document.createElement('div');
-  /* The control builds its own id-based selectors, so the key is reduced to
-     characters that are safe in one. */
+  /* The control builds id-based selectors from this. */
   const idPrefix = 'wcf-' + String(field.key).replace(/[^a-zA-Z0-9_-]/g, '') + '-' + Math.random().toString(36).slice(2, 7);
   const initial = value != null && value !== '' ? String(value) : (field.default != null ? String(field.default) : '#0289ff');
   const ctl = renderColorControl(wrap, {
@@ -280,9 +255,6 @@ function _color(field, value) {
 
 function _visible(b) { return b.el.style.display !== 'none'; }
 
-/* Labels of the required fields in one set of siblings that were left empty.
-   Types that always read back a value, and secrets (blank means keep), never
-   count as missing. */
 function _missingIn(built) {
   const out = [];
   for (const b of built) {
@@ -298,13 +270,10 @@ function _missingIn(built) {
   return out;
 }
 
-/* Wire `showIf` across one set of sibling fields: the top-level form, or the
-   sub-fields of a single group row. Each row is independent, so a row's
-   condition reads that row's own values. */
+/* Each row is independent, so a row's condition reads that row's own values. */
 function _wireShowIf(built) {
-  /* Null prototype: keyed by manifest field key, and a showIf naming
-     "toString" would otherwise resolve to Object.prototype.toString and be
-     called as if it were a field reader. */
+  /* Null prototype: a showIf naming "toString" would otherwise resolve to
+     Object.prototype.toString and be called as a field reader. */
   const liveByKey = Object.create(null);
   for (const b of built) if (b.liveValue) liveByKey[b.field.key] = b.liveValue;
   const fields = built.map(b => b.field);
@@ -323,9 +292,8 @@ function _wireShowIf(built) {
   apply();
 }
 
-/* One nested object: a section header plus a card of sub-fields, read back as a
-   single nested value. Sub-fields of type group or object are skipped; the
-   manifest validator already rejects them. */
+/* Sub-fields of type group or object are skipped; the manifest validator already
+   rejects them. */
 function _object(field, value, ctx) {
   const cfg = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   const wrap = document.createElement('div');
@@ -385,8 +353,8 @@ function _group(field, rows, size, ctx) {
       hdr.appendChild(rm); rowsHost.appendChild(hdr);
 
       const card = document.createElement('div'); card.className = 'grp';
-      /* getDraft is read through the parent ctx rather than copied, because the
-         form assigns it only once every field is built. */
+      /* Read through ctx rather than copied: the form assigns it only once every
+         field is built. */
       const rowCtx = {
         widgetId:   ctx && ctx.widgetId,
         widgetType: ctx && ctx.widgetType,

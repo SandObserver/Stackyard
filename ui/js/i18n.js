@@ -1,16 +1,12 @@
 // @ts-check
-/* Minimal i18n runtime. Catalogs are plain JSON at /i18n/<code>.json; English
-   is the source and the fallback. No build step and no runtime dependency; the
-   app only ever fetches JSON. Adding a language is two steps: add an entry to
-   LANGUAGES below and drop in ui/i18n/<code>.json. Translations can be authored
-   by hand or by any external tool; nothing here depends on one. */
+/* Catalogs are plain JSON at /i18n/<code>.json, English being the source and the
+   fallback. Adding a language is an entry in LANGUAGES plus the file. */
 
 import { setHtml } from '/js/html.js?v=ccec347c';
 import { i18nMarkup } from '/js/i18n-markup.js?v=875ccb8e';
 
-/* Languages offered in the admin selector. `dir` flips the document for
-   right-to-left scripts. Persian ships once ui/i18n/fa.json and the RTL styling
-   pass land (kept commented so the selector only lists locales that render). */
+/* `dir` flips the document for right-to-left scripts. Only list a locale whose
+   file exists, or the selector offers one that cannot render. */
 export const LANGUAGES = [
   { code: 'en', name: 'English', dir: 'ltr' },
   { code: 'fa', name: 'فارسی', dir: 'rtl' },
@@ -74,12 +70,12 @@ export async function initI18n(code) {
 
 export function getLang() { return current; }
 
-/* Translate static markup in place. Elements opt in with attributes:
-     data-i18n="key"       -> sets textContent
-     data-i18n-html="key"  -> sets markup, limited to the tags i18n-markup.js allows
-     data-i18n-ph="key"    -> sets the placeholder attribute
-     data-i18n-al="key"    -> sets the aria-label attribute
-   Safe to re-run; call it after rendering dynamically-inserted markup too. */
+/* Elements opt in by attribute:
+     data-i18n="key"       -> textContent
+     data-i18n-html="key"  -> markup, limited to the tags i18n-markup.js allows
+     data-i18n-ph="key"    -> placeholder
+     data-i18n-al="key"    -> aria-label
+   Safe to re-run, including after rendering dynamic markup. */
 function translateDOM(root) {
   root = root || document;
   root.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });

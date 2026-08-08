@@ -1,17 +1,10 @@
 // @ts-check
-/* Admin UI: shared mutable state.
-   One object so the admin modules can read and write the same values. Fields
-   keep the names they had as module-level variables; only the access changed
-   (items -> state.items). List-only state (_flt, collapsedFolders) stays local
-   to the list code and is intentionally not here. */
+/* Shared mutable state for the admin modules. List-only state stays local to the
+   list code and deliberately not here. */
 
 export const state = {
   items: [],
-  /* The id of the item being edited, or null when adding. Was an array index,
-     which went stale the moment items moved: writing at a position past the end
-     grew the array with holes, JSON turned those into nulls, and the server
-     rejected the whole save with a message about missing ids. An id cannot drift
-     the way a position can. */
+  /* An id, never a position: a position goes stale as soon as items move. */
   eid: null,
   saving: false,
   _settings: {},

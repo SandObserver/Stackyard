@@ -1,7 +1,4 @@
-/* Admin UI: settings sections.
-   General / Appearance / Security settings: loads values into the settings
-   screen and persists changes. Exports loadSettings (called on config load)
-   and showBgFields (called by the background-type toggle). */
+/* Admin UI: the General, Appearance and Security settings sections. */
 import { toast, ag, ap } from '/js/admin-shared.js?v=182410cc';
 import { wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
@@ -10,8 +7,7 @@ import { authEnableBlocked } from '/js/admin-logic.js?v=056a11e9';
 import { el, inp, q, qa } from '/js/utils.js?v=17424946';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password behind
-   it. Module scope because it is seeded where the settings panel initialises and
-   read where it saves, which are separate functions. */
+   it. */
 let _passwordSet=false;
 
 export function loadSettings(c){
@@ -173,9 +169,8 @@ export function loadSettings(c){
   ag('/api/auth/check').then(d=>{
     _passwordSet=!!d.passwordSet;
     if(secEnEl){
-      /* d.enabled is the effective state. An install saved as enabled with no
-         password behaves as off, and is reported as off, so the toggle matches
-         what the server actually does. */
+      /* The effective state: enabled with no password behaves as off, and the
+         toggle has to match what the server does. */
       secEnEl.checked=!!(d.enabled);
       const pwRow=el('ie-pw');
       const pwHint=el('pw-hint-static');

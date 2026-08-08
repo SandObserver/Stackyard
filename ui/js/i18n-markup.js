@@ -1,26 +1,11 @@
 // @ts-check
-/* The tiny subset of markup a translation may contain.
+/* The subset of markup a translation may contain: these four tags, no attributes
+   at all, everything else escaped. Output is rebuilt rather than filtered, so
+   anything unrecognised becomes visible text.
 
-   Most translated strings are plain text and are written with textContent. A few
-   need emphasis inside a sentence, and splitting those into separate keys is the
-   wrong answer: word order differs between languages, and a translator has to be
-   able to move the emphasis. So `data-i18n-html` exists.
-
-   It used to pass the whole value through raw(), which switches escaping off
-   entirely, so a translation could contain a script tag or an event handler.
-   Locale files are static assets with no runtime mechanism to add one, so the
-   realistic path was a careless or malicious translation contribution rather than
-   an attacker; this is hardening, not a live hole.
-
-   The rule: these four tags, no attributes at all, everything else escaped.
-   Output is rebuilt rather than filtered, the same direction as the SVG
-   sanitizer, so anything unrecognised becomes visible text rather than markup
-   that slipped through.
-
-   No attributes are permitted, which is what keeps this twenty lines instead of
-   two hundred: with no attributes there is no URL to validate, no style to scrub
-   and no event handler to strip. If a future string needs one, that is a
-   deliberate decision to make here, not a gap to widen accidentally. */
+   Permitting no attributes is what keeps this short: no URL to validate, no
+   style to scrub, no event handler to strip. Widening that is a decision to make
+   here, deliberately. */
 
 import { esc, raw } from '/js/html.js?v=ccec347c';
 
@@ -49,9 +34,8 @@ export function sanitizeI18nMarkup(value) {
     const [, closing, rawName, selfClosing] = m;
     const name = rawName.toLowerCase();
 
-    /* Anything not on the list is shown as text, not dropped: a translator who
-       writes <b> should see it in the UI and fix it, rather than silently lose
-       the word inside it. */
+    /* Shown as text, not dropped, so a translator sees the mistake rather than
+       losing the word inside it. */
     if (!ALLOWED_TAGS.includes(name)) { out += esc(m[0]); continue; }
 
     if (VOID_TAGS.includes(name)) {

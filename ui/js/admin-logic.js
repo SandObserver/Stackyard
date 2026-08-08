@@ -1,19 +1,15 @@
 // @ts-check
-/* Pure logic extracted from the admin UI so it can be unit-tested without a DOM:
-   dashboard-item reordering, the dock-capacity check, and the widget config
-   form's value collection. All operate on plain data and touch no DOM or module
-   state. */
+/* Pure logic from the admin UI, kept free of the DOM so it can be tested
+   directly. Keep it that way. */
 
-/* Seed the extra keys a picker owns from an already-saved config, so editing a
-   widget without touching the picker does not drop them. */
+/* So editing a widget without touching the picker does not drop them. */
 export function seedCarried(config, carryKeys) {
   const out = Object.create(null);
   for (const k of carryKeys || []) if (config && config[k] !== undefined) out[k] = config[k];
   return out;
 }
 
-/* Fold a chosen option's `set` block into the carried values. An option with no
-   `set`, or one naming keys the field did not declare, leaves them unchanged. */
+/* An option with no `set`, or one naming undeclared keys, changes nothing. */
 export function applyOptionSet(carried, option, carryKeys) {
   const out = Object.assign(Object.create(null), carried);
   if (!option || !option.set) return out;
@@ -21,9 +17,7 @@ export function applyOptionSet(carried, option, carryKeys) {
   return out;
 }
 
-/* Narrow a widget's size list to the sizes its current view declares. A view
-   with no `sizes`, or one whose sizes are all unavailable, leaves the list
-   alone. */
+/* A view with no `sizes`, or none that are available, leaves the list alone. */
 export function sizesForView(allSizes, reg, config) {
   if (!reg || !reg.views || !reg.viewField) return allSizes;
   const view = (config && config[reg.viewField]) || reg.defaultView;
@@ -33,25 +27,17 @@ export function sizesForView(allSizes, reg, config) {
   return narrowed.length ? narrowed : allSizes;
 }
 
-/* Whether a field's `showIf` condition is met by the current value of the field
-   it names. `in` matches any of several values, `equals` matches one; a boolean
-   control is compared as a boolean so `false` is a real match rather than an
-   empty value. */
+/* A boolean control is compared as a boolean, so `false` is a real match rather
+   than an empty value. */
 export function showIfMatches(cond, current) {
   if (Array.isArray(cond.in)) return cond.in.map(String).includes(String(current));
   if (typeof current === 'boolean') return current === !!cond.equals;
   return String(current) === String(cond.equals);
 }
 
-/* Which fields in one set of siblings are visible, following showIf chains so a
-   field is hidden when its controlling field is hidden, not only when the
-   condition fails against a raw value. `fields` is the sibling list in order;
-   `readValue(key)` returns a field's current value. Returns a Set of visible keys.
-
-   Without the chain check, a field whose controller is hidden still reads that
-   controller's default and can show itself: e.g. a Provider row conditioned on
-   Mode == "speed" appears even when the Mode row is hidden by an off toggle,
-   because Mode still holds "speed" underneath. */
+/* Follows showIf chains, so a field is hidden when its controller is hidden and
+   not only when the condition fails: a hidden controller still holds a value
+   underneath, and its dependants would show themselves against it. */
 export function visibleFieldKeys(fields, readValue) {
   const byKey = new Map(fields.map(f => [f.key, f]));
   const memo = new Map();
@@ -74,8 +60,7 @@ export function visibleFieldKeys(fields, readValue) {
   return out;
 }
 
-/* Whether a required field was left empty. Types that always read back a value
-   never count, and a blank secret means "keep the stored one" rather than empty. */
+/* A blank secret means "keep the stored one" rather than empty. */
 const _ALWAYS_FILLED = new Set(['toggle', 'color', 'group', 'object', 'secret']);
 export function requiredFieldMissing(field, kv) {
   if (field.optional || field.transient) return false;
@@ -83,11 +68,9 @@ export function requiredFieldMissing(field, kv) {
   return !kv || kv[1] === '' || kv[1] == null;
 }
 
-/* Assemble the config object from what each field read back. `reads` is one
-   entry per field: { field, visible, kv }, where kv is [key, value] plus an
-   optional third element of extra keys the field carries. Hidden fields are
-   skipped, and transient fields are skipped unless the caller wants the draft
-   that feeds an options fetch. */
+/* `reads` is one entry per field: { field, visible, kv }, kv being [key, value]
+   plus optional extra keys the field carries. Transient fields are kept only for
+   the draft that feeds an options fetch. */
 export function collectFieldValues(reads, { includeTransient = false } = {}) {
   const out = Object.create(null);
   for (const r of reads) {
@@ -101,9 +84,7 @@ export function collectFieldValues(reads, { includeTransient = false } = {}) {
   return out;
 }
 
-/* Where a listbox keypress moves the active option. Returns the new index, or
-   null for keys that do not move it. Clamps rather than wraps, matching the
-   WAI-ARIA listbox pattern. */
+/* Clamps rather than wraps, matching the WAI-ARIA listbox pattern. */
 export function nextActiveIndex(key, active, len) {
   if (len <= 0) return null;
   const clamp = i => Math.max(0, Math.min(i, len - 1));
@@ -116,42 +97,26 @@ export function nextActiveIndex(key, active, len) {
   }
 }
 
-/* The dock renders at most four apps (dashboard.js slices to DOCK_MAX), so the
-   Show in Dock toggle is unavailable once four others are in. An app already in
-   the dock is never blocked, since it holds one of the four slots itself. */
-/* Whether unticking the Secret box on a credential row must clear the stored
-   value. True only for a row whose value is held on the server and not shown in
-   the form (value blank, valueSet true).
-
-   The server will not refill a row that arrives as non-secret, because that
-   would move the stored credential into a row it sends to the browser in full.
-   So unticking always means the value is gone after the next save; clearing
-   valueSet makes the form send an explicit blank and lets the field show that a
-   value is now needed, rather than the user finding out after saving. */
+/* dashboard.js slices the dock to DOCK_MAX, so the toggle has to refuse beyond
+   it. An app already in the dock holds one of those slots itself. */
+/* The server will not refill a row that arrives as non-secret, since that would
+   move a stored credential into a row it sends to the browser in full. Unticking
+   therefore always loses the value, and the form has to show that before the
+   save rather than after. */
 export function clearsStoredSecret(row, checked) {
   return !checked && !!row && row.valueSet === true && row.value === '';
 }
 
-/* Whether a "save" in Admin would try to switch authentication on with no
-   password behind it. The server refuses that, because auth with no stored
-   password refuses every login while gating everything else, which locks the
-   install. Checked here too so the user is told before the save runs rather
-   than by a failure toast afterwards. */
+/* The server refuses this state, because auth with no stored password locks the
+   install. Checked here so the user is told before the save runs. */
 export function authEnableBlocked({ enabled, passwordSet, newPassword }) {
   return !!enabled && !passwordSet && !(newPassword || '').length;
 }
 
-/* Which config editor a widget item should get.
-
-   'registry'    the manifest is loaded, render its fields
-   'custom'      a user-defined iframe widget, render the URL editor
-   'unavailable' a registry widget whose manifest is not loaded
-
-   The third used to fall through to the custom iframe editor, which is
-   misleading: it is not a custom widget, its manifest is simply missing. The
-   server also withholds its stored config in that state, because without a
-   manifest it cannot tell which fields are secret, so there is nothing to edit
-   and showing empty fields would look like the settings had been lost. */
+/* 'registry' renders the manifest's fields, 'custom' the URL editor, and
+   'unavailable' a registry widget whose manifest is not loaded. The last must not
+   fall through to the custom editor: the server withholds that widget's config,
+   so empty fields would read as settings that had been lost. */
 export function widgetConfigMode(type, reg) {
   if (reg && reg[type]) return 'registry';
   return type === 'custom' ? 'custom' : 'unavailable';
@@ -159,19 +124,10 @@ export function widgetConfigMode(type, reg) {
 
 /** Which admin section to show, given a requested id and the sections present.
 
-    The admin page must always show exactly one section. show() hides every
-    section that is not the requested one, so a request naming a section that no
-    longer exists hid all of them and left the page blank, with no active nav
-    link and nothing on screen to suggest what happened. The stored value came
-    straight from localStorage, so anyone whose browser held a section name from
-    an older version got that after upgrading, and only clearing site data fixed
-    it.
-
-    `|| 'general'` covered a missing value but not a stale one, which is the case
-    that actually occurs.
-
-    Falls back to the first available section rather than a hard-coded name, so
-    renaming or reordering the sections cannot reintroduce this.
+    Exactly one section must always show. The requested id can be stale, since it
+    comes from localStorage and can name a section an older version had, and
+    falling through leaves the page blank. Falls back to the first available
+    section rather than a hard-coded name.
 
     @param {string|null|undefined} requested
     @param {string[]} available in document order
@@ -191,9 +147,8 @@ export function isDockBlocked(items, editing) {
   return docked >= DOCK_MAX;
 }
 
-/* Row-count bounds for a group field at the selected widget size. countBySize
-   pins both bounds together, so a per-size fixed count cannot be declared
-   inconsistently; it wins over min/max/maxBySize when it names that size. */
+/* countBySize pins both bounds together and wins over min/max/maxBySize for the
+   size it names. */
 export function groupBounds(field, size) {
   const fixed = (field.countBySize && size && field.countBySize[size] != null) ? field.countBySize[size] : null;
   if (fixed != null) return { min: fixed, max: fixed };
@@ -204,10 +159,8 @@ export function groupBounds(field, size) {
   return { min, max };
 }
 
-/* Move an item one step within the dashboard order, mutating `items` in place.
-   Reorders a child within its folder when folderId/childIdx are given, otherwise
-   swaps top-level rows (folders plus items not nested in any folder). Returns
-   true when a swap happened, false when the move was out of bounds. */
+/* Mutates `items` in place. Moves a child within its folder when folderId and
+   childIdx are given, otherwise swaps top-level rows. */
 export function reorderItems(items, item, dir, { folderId = null, childIdx = null } = {}) {
   if (folderId != null) {
     const f = items.find(i => i.id === folderId); if (!f) return false;

@@ -1,12 +1,6 @@
-/* Badge and activity "Add to Header" / "Add to URL" entries.
-   Stored as an array of { key, value, secret } rows so each entry can be marked
-   a credential independently. Rows marked secret follow the same scrub-on-read /
-   preserve-on-save contract as widget secret fields: the value never leaves the
-   server, and a save that omits it keeps the stored one.
-
-   The two sub-objects this touches live at:
-     item.badge.{headers,params}
-     item.monitoring.activity.{headers,params} */
+/* Badge and activity header and query rows: { key, value, secret }. A secret row
+   follows the same contract as a widget secret field, so its value never leaves
+   the server and a save that omits it keeps the stored one. */
 
 const SUBKEYS = ['headers', 'params'];
 
@@ -21,22 +15,10 @@ function isRowArray(v) {
   return Array.isArray(v) && v.every(isRow);
 }
 
-/* Old shape ({ key: value }) -> rows. Unknown/empty -> [].
-
-   An array is rows. It used to have to look like rows, with every element valid,
-   and a single bad one sent the whole array to the legacy-object branch below:
-   the indices became header names and each row stringified, so the request went
-   out with a header called "0" whose value was "[object Object]" and without the
-   real credential. The badge then reported whatever the service says to an
-   unauthenticated caller, which reads as "authentication required" and points
-   the user at a credential that was stored correctly all along.
-
-   Asking whether an array looks enough like rows is what produced that. An array
-   and a plain object are different shapes; the legacy branch was only ever meant
-   for objects. Elements that are not rows are skipped, because this runs on
-   stored config and refusing would break a badge over one damaged entry.
-   validateRows rejects them on the way in instead, so this stays a fallback for
-   config that was hand-edited or imported. */
+/* Old shape ({ key: value }) to rows. An array is always rows, however damaged:
+   sending one down the legacy-object branch turns its indices into header names
+   and drops the real credential. Bad elements are skipped rather than refused,
+   since this runs on stored config; validateRows rejects them on the way in. */
 function toRows(v) {
   if (Array.isArray(v)) {
     /* Returned as-is when nothing needs dropping, so the common path neither
@@ -74,8 +56,8 @@ function firstMalformedRow(item) {
   return null;
 }
 
-/* Rows -> plain { key: value } for the outbound request. Skips rows with a
-   blank key or a null value (a scrubbed secret with no stored value).
+/* Skips a blank key or a null value, which is a scrubbed secret with nothing
+   stored.
    @param {any} rows
    @returns {Record<string,string>} */
 function rowsToObject(rows) {
@@ -105,21 +87,12 @@ function scrubRows(rows) {
   });
 }
 
-/* Restore values the browser dropped. A secret row is sent without its value, so
-   it is refilled from the stored row with the same key and a working credential
-   is never silently blanked.
+/* Refills a secret row the browser sent without its value, matching by key.
 
-   A row arriving as non-secret is NOT refilled, even when a stored value exists
-   for that key. Refilling it would move a stored secret into a row that
-   scrubRows sends to the browser in full, so unticking the Secret box and saving
-   would hand back the credential in plaintext, in GET /api/config and in the
-   config export. Unticking therefore clears the stored value and the credential
-   has to be retyped. That is the documented guarantee in docs/security.md: a
-   value stored as secret never leaves the server.
-
-   A row whose key has no stored match (new row, or a renamed one) also stays
-   blank, which is the same safe default: it never leaks an unrelated stored
-   value into a different key. Mutates and returns newRows. */
+   A row arriving as non-secret is never refilled, even when a value is stored
+   for that key: it would move the credential into a row that scrubRows sends to
+   the browser in full. Unticking Secret therefore clears the stored value. See
+   docs/security.md. */
 function preserveRows(newRows, oldRows) {
   const nrows = toRows(newRows);
   const orows = toRows(oldRows);
@@ -159,10 +132,8 @@ function preserveItemBadgeSecrets(newItem, oldItem) {
   if (newItem?.monitoring?.activity) apply(newItem.monitoring.activity, oldBlocks.activity);
 }
 
-/* Migrate an item's badge/activity header+param objects to the row shape.
-   Existing entries default to secret:false: their sensitivity is unknown, and
-   defaulting to non-secret keeps current behaviour exactly. Returns true if it
-   changed anything. */
+/* Existing entries default to secret:false, which keeps current behaviour: their
+   sensitivity is unknown. */
 function migrateItemBadgeHeaders(item) {
   let changed = false;
   eachActivityLike(item, block => {

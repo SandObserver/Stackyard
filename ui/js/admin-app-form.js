@@ -1,7 +1,4 @@
-/* Admin UI: app and folder forms.
-   Builds the app edit form (icon picker, badge picker) and the folder form.
-   Reads and writes shared state; exports buildAppForm, buildFolderForm, and
-   serializeKvRows (used by the save path). */
+/* Admin UI: the app and folder edit forms. Reads and writes shared state. */
 import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=17424946';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=a0ea3e4b';
@@ -264,10 +261,9 @@ function showIPRes(list, rawInput){
     rs.appendChild(r);
   });
   if(!list.length&&rawInput&&!rawInput.includes('/')){
-    /* Nothing matched, so offer what was typed. The catalogue names every file
-       in lowercase with hyphens, so "MySpeed" is offered as "myspeed": the icon
-       exists, it is simply spelled differently. Shown corrected rather than
-       corrected silently, so the value that gets saved is the one on screen. */
+    /* The catalogue is lowercase and hyphenated, so what was typed is offered in
+       that spelling. Shown corrected rather than corrected silently, so what
+       gets saved is what is on screen. */
     const val=cdnIconName(rawInput);
     if(!val){rs.classList.remove('open');return;}
     const srcs=iconChain(val);
@@ -318,18 +314,16 @@ async function testPing(){
   catch(e){st.textContent='✗ '+e.message;}
 }
 
-/* Badge/param entries are { key, value, secret } rows. A secret row that was
-   stored shows value as "" with valueSet:true, so the field renders a
-   "Configured" placeholder and an empty value means "keep the stored one". */
+/* A stored secret row arrives as value:"" with valueSet:true, so an empty value
+   means "keep the stored one". */
 function normKvRows(v){
   if(Array.isArray(v)) return v.map(r=>({key:r.key||'',value:r.value!=null?r.value:'',secret:!!r.secret,valueSet:!!r.valueSet}));
   if(v&&typeof v==='object') return Object.entries(v).map(([key,value])=>({key,value:String(value),secret:false,valueSet:false}));
   return [];
 }
 
-/* Serialize live rows for save. A secret row left untouched (empty value but
-   valueSet) is sent with no value so the server keeps the stored one. Blank
-   rows (no key) are dropped. */
+/* An untouched secret row is sent with no value, so the server keeps the stored
+   one. Rows with no key are dropped. */
 export function serializeKvRows(rows){
   const out=[];
   for(const r of rows||[]){
@@ -371,11 +365,9 @@ function kvRowEl(host, rows, row, ph){
   cEl.onchange=()=>{
     row.secret=cEl.checked;
     vEl.type=cEl.checked?'password':'text';
-    /* Unticking Secret cannot reveal the stored value: the server refuses to
-       refill a non-secret row, so the credential is cleared on save. Clear
-       valueSet here too, so the row is sent as an explicit blank rather than as
-       "keep what you have", and show the user the field now needs a value
-       instead of letting them discover it blank after saving. */
+    /* The server refuses to refill a non-secret row, so unticking clears the
+       credential on save. valueSet is cleared too, or the row would be sent as
+       "keep what you have" and the loss would only show up afterwards. */
     if(clearsStoredSecret(row,cEl.checked)){
       row.valueSet=false;
       vEl.value='';
@@ -459,9 +451,6 @@ function renderBadgeList(nums,existingOnly,query=''){
   const addItem=({path,value,label})=>{
     const it=document.createElement('div');it.className='bi'+(state.spaths.includes(path)?' on':'');
     const displayLabel=label||path;
-    /* value comes back from a remote service via collectNumbers, which only ever
-       emits numbers. It was interpolated unescaped on that basis; html`` no
-       longer requires that invariant to hold. */
     setHtml(it, html`<div class="bck"></div><div class="binfo"><div class="blabel">${displayLabel}</div><div class="bpath">${path}</div></div><div class="bval">${value}</div>`);
     it.onclick=()=>{const i=state.spaths.indexOf(path);if(i>=0){state.spaths.splice(i,1);it.classList.remove('on');}else{state.spaths.push(path);it.classList.add('on');}};
     list.appendChild(it);

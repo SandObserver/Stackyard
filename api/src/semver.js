@@ -1,24 +1,10 @@
-/* Semantic version precedence, per semver.org section 11.
-
-   The old comparison split on '.' and ran parseInt over the parts, so
-   "1.5.0-rc.1" parsed as [1, 5, 0, 1]: parseInt("0-rc") is 0, and the trailing
-   ".1" became a fourth number. The release "1.5.0" therefore compared as older
-   than its own release candidate, and anyone running an rc was told they were up
-   to date forever.
-
-   Implemented rather than approximated because the rules are published and have
-   a defined answer for every input, which makes them cheap to test against. The
-   approximation that only asks "does it have a suffix" gets rc.2 against rc.10
-   wrong, a case the old code happened to get right.
-
-   The rules that matter here:
+/* Semantic version precedence, per semver.org section 11:
      major, minor and patch compare numerically
      a version with no prerelease outranks one with (1.0.0 > 1.0.0-rc.1)
-     otherwise the dot-separated prerelease parts compare left to right:
-       numeric parts compare numerically, so rc.10 > rc.2
-       a numeric part ranks below an alphanumeric one
-       a longer prerelease outranks a shorter one when all else is equal
-     build metadata after '+' is ignored entirely */
+     otherwise prerelease parts compare left to right, numerically where both are
+       numeric, and a numeric part ranks below an alphanumeric one
+     a longer prerelease outranks a shorter one when all else is equal
+     build metadata after '+' is ignored */
 
 /** @typedef {{ nums: number[], pre: string[] }} Parsed */
 

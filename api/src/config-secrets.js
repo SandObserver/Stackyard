@@ -1,9 +1,6 @@
-/* Every item-level secret system that must run over a whole config, in one
-   place. A route handling a full config calls these instead of sequencing each
-   system by hand, so all of them run and a new secret shape is registered here
-   once. Each underlying system keeps its own contract; this only fixes the order.
-   Settings-level secrets (background key, auth) are not item secrets and stay in
-   the config route. */
+/* Every item-level secret system in one place, so a route handling a full config
+   cannot run some of them and miss others. Settings-level secrets are not item
+   secrets and stay in the config route. */
 
 const { scrubConfigSecrets, preserveConfigSecrets } = require('./widget-secrets');
 const { scrubItemBadgeSecrets, preserveItemBadgeSecrets } = require('./badge-headers');

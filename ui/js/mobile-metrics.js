@@ -1,12 +1,9 @@
-/* Mobile layout metrics.
-   Every size derives from sc, so the layout renders at one physical size no
-   matter what page scale the browser reports through innerWidth. Anything
-   sized in raw px here (or in CSS without var(--sc)) breaks that.
+/* Every size derives from sc, so the layout renders at one physical size
+   whatever page scale the browser reports. Anything in raw px here, or in CSS
+   without var(--sc), breaks that.
 
-   insetTop/insetBottom are the real safe-area insets in px. Standalone reports
-   the status bar and home indicator there, so the reserves match those exactly.
-   Safari already excludes its toolbars from vh and reports 0 insets, so the
-   reserves collapse to a small scaled gap instead of subtracting chrome twice. */
+   Safari reports 0 insets because it already excludes its toolbars from vh, so
+   the reserves collapse rather than subtracting chrome twice. */
 
 const BASE_VW = 393;
 
