@@ -26,6 +26,29 @@ Every request goes through `dispatch` in `src/router.js`, which:
 
 Route handlers live in `src/routes/`: auth, config, health, badges, system, icons, and version. The widget data route is registered separately by `widget-data.js`.
 
+## Environment
+
+Everything is optional; the defaults are what the container ships with.
+
+| variable | default | what it does |
+|---|---|---|
+| `CONFIG_PATH` | `/data/apps.json` | Where the config file lives. |
+| `ICONS_PATH` | `/icons` | Where uploaded icons are written. |
+| `WIDGETS_PATH` | `/usr/share/nginx/html/widgets` | Where the widget folders are read from. Point it elsewhere only if you have moved them; a wrong path loads an empty registry, and every widget then reports as unknown. |
+| `PORT` | `3000` | The port the API listens on. nginx proxies to it, so changing it means changing `nginx/dashboard.conf` too. |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`. Settings, General also sets this, and that setting wins from the moment the config loads; the variable is what applies during boot and if no setting is stored. |
+| `APP_VERSION` | the version in `package.json` | What the update check compares against. The release build stamps it, so leave it alone outside a build. |
+| `TRUST_PROXY` | unset | Believe `X-Forwarded-Proto`, so a request through a TLS-terminating proxy gets a `Secure` cookie. Only behind a proxy you control. See [security.md](./security.md#https-and-the-session-cookie). |
+| `TRUSTED_PROXY` | unset | Where a front proxy sits, so nginx can resolve the real client for rate limiting. See [security.md](./security.md#authentication). |
+| `ALLOW_PRIVATE_IPS` | unset | Turn the SSRF guard off, which most homelab installs need. See [security.md](./security.md#ssrf-guard). |
+| `PASSWORD_HASH_MEMORY` | `16mib` | Memory per password hash. See [security.md](./security.md#password-hashing). |
+| `SESSION_MAX_AGE_DAYS` | `30` | Session lifetime before re-login. |
+| `SOCKET_PROXY_URL` | unset | A Docker socket proxy, for container health monitoring. |
+| `DEMO_MODE` | unset | Run as a read-only public showcase. See [demo.md](./demo.md). |
+
+`docker-compose.yml` carries each of these as a commented line, apart from
+`APP_VERSION`, so setting one is usually a matter of uncommenting it.
+
 ## Config
 
 State is a single JSON file loaded and saved through `src/config.js`. On read, secret fields (password hash, stored widget credentials) are scrubbed before the config is sent to the browser. On write, those same fields are re-merged from disk unconditionally, so the client is never trusted to send secrets back and cannot blank them by omission.
