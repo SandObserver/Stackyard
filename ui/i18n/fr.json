@@ -17,7 +17,9 @@
     "back": "Retour",
     "cancel": "Annuler",
     "delete": "Supprimer",
-    "language": "Langue"
+    "language": "Langue",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "general": {
     "title": "Titre",
@@ -40,7 +42,8 @@
     "passwordTip": "Laissez vide pour conserver le mot de passe actuel. 8 caractères minimum. Pour une protection renforcée, envisagez de placer le tableau de bord derrière un <strong>Authentication Proxy</strong>. Ce mot de passe intégré est une barrière légère, pas une couche d'authentification complète.",
     "backup": "Sauvegarde",
     "importExport": "Import / Export",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "confirmPassword": "Confirmer le mot de passe"
   },
   "appearance": {
     "appTitle": "Titre de l'application",
@@ -150,7 +153,8 @@
     "importNoChange": "Rien à importer — le fichier correspond à votre configuration actuelle.",
     "pwWeak": "Mot de passe trop faible : {label}",
     "sessionsRevoked": "Tous les appareils ont été déconnectés.",
-    "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification."
+    "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification.",
+    "pwMismatch": "Les mots de passe ne correspondent pas."
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",
@@ -181,7 +185,9 @@
     "newPassword": "Nouveau mot de passe",
     "skip": "Ignorer",
     "set": "Définir",
-    "failed": "Impossible de définir le mot de passe."
+    "failed": "Impossible de définir le mot de passe.",
+    "confirmPassword": "Confirmer le mot de passe",
+    "mismatch": "Les mots de passe ne correspondent pas."
   },
   "pwStrength": {
     "tooShort": "Trop court, 8 caractères minimum",

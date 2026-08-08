@@ -4,7 +4,7 @@ import { loadLocalIcons, iconChain } from '/js/icons.js?v=a0ea3e4b';
 import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc, cardPreset } from '/js/widget-types.js?v=13def718';
 import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl, el, q, qi, qa } from '/js/utils.js?v=17424946';
 import { initSpotlight } from '/js/spotlight.js?v=673a88df';
-import { html, setHtml } from '/js/html.js?v=ccec347c';
+import { html, setHtml, raw } from '/js/html.js?v=ccec347c';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
 import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
@@ -290,14 +290,18 @@ async function pollHealth() {
   catch { if(++_healthFails>=2 && !healthStale){healthStale=true;refreshBadges();} }
 }
 
+const EYE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+
 function showSetupPrompt() {
   return new Promise(resolve => {
     const ov = document.createElement('div');
     ov.className = 'setup-prompt';
-    setHtml(ov, html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`);
+    setHtml(ov, html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`);
     document.body.appendChild(ov);
 
     const pw   = qi('#setup-pw', ov);
+    const pw2  = qi('#setup-pw2', ov);
+    const rev  = qi('#setup-reveal', ov);
     const bars = qa('.pwbar', ov);
     const hint = q('#setup-hint', ov);
     const err  = q('#setup-err', ov);
@@ -305,13 +309,30 @@ function showSetupPrompt() {
     const skip = qi('#setup-skip', ov);
     const dim  = 'rgba(255,255,255,.1)';
 
-    pw.addEventListener('input', () => {
+    /* A typo here locks the dashboard with no way back in, so the password is
+       confirmed and can be read back before it is set. */
+    const matches = () => pw.value === pw2.value;
+    const sync = () => {
       const { score, labelKey, color, ok } = pwStrength(pw.value);
       bars.forEach((b, i) => { b.style.background = pw.value && i < score ? color : dim; });
       hint.textContent = pw.value && labelKey ? t(labelKey) : '';
       hint.style.color = color;
-      setB.disabled = !ok;
-    });
+      const mismatch = pw2.value !== '' && !matches();
+      err.textContent = mismatch ? t('setup.mismatch') : '';
+      err.style.display = mismatch ? 'block' : 'none';
+      setB.disabled = !ok || !matches() || pw2.value === '';
+    };
+    pw.addEventListener('input', sync);
+    pw2.addEventListener('input', sync);
+
+    rev.onclick = () => {
+      const show = pw.type === 'password';
+      pw.type = pw2.type = show ? 'text' : 'password';
+      rev.setAttribute('aria-pressed', String(show));
+      const label = t(show ? 'common.hidePassword' : 'common.showPassword');
+      rev.setAttribute('aria-label', label);
+      rev.title = label;
+    };
 
     /* Escape deliberately does not close this: dismissing it by accident
        silently means "no password". Skip is the way out. */
@@ -325,7 +346,7 @@ function showSetupPrompt() {
     };
 
     async function doSet() {
-      if (!pwStrength(pw.value).ok) return;
+      if (!pwStrength(pw.value).ok || !matches()) return;
       setB.disabled = true; skip.disabled = true; err.style.display = 'none';
       try {
         const r = await fetch('/api/auth/set-password', {
@@ -340,7 +361,7 @@ function showSetupPrompt() {
       }
     }
     setB.onclick = doSet;
-    pw.onkeydown = e => { if (e.key === 'Enter' && !setB.disabled) doSet(); };
+    pw.onkeydown = pw2.onkeydown = e => { if (e.key === 'Enter' && !setB.disabled) doSet(); };
     pw.focus();
   });
 }

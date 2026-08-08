@@ -17,7 +17,9 @@
     "back": "Back",
     "cancel": "Cancel",
     "delete": "Delete",
-    "language": "Language"
+    "language": "Language",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "general": {
     "title": "Title",
@@ -40,7 +42,8 @@
     "passwordTip": "Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.",
     "backup": "Backup",
     "importExport": "Import / Export",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "confirmPassword": "Confirm password"
   },
   "appearance": {
     "appTitle": "App Title",
@@ -150,7 +153,8 @@
     "importNoChange": "Nothing to import — the file matches your current config.",
     "pwWeak": "Password too weak: {label}",
     "sessionsRevoked": "All devices signed out.",
-    "authNeedsPassword": "Set a password before turning authentication on."
+    "authNeedsPassword": "Set a password before turning authentication on.",
+    "pwMismatch": "Passwords do not match."
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",
@@ -181,7 +185,9 @@
     "newPassword": "New password",
     "skip": "Skip",
     "set": "Set",
-    "failed": "Could not set password."
+    "failed": "Could not set password.",
+    "confirmPassword": "Confirm password",
+    "mismatch": "Passwords do not match."
   },
   "pwStrength": {
     "tooShort": "Too short, min 8 characters",

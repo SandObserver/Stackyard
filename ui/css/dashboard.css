@@ -698,6 +698,15 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   color: #fff; font-size: 15px; font-family: inherit; outline: none;
 }
 .setup-pw:focus { border-color: var(--accent); }
+.setup-field { position: relative; display: flex; align-items: center; }
+.setup-field .setup-pw { padding-inline-end: 44px; }
+.setup-reveal {
+  position: absolute; inset-inline-end: 6px; display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0; border: none; border-radius: 8px;
+  background: none; color: rgba(255,255,255,.55); cursor: pointer;
+}
+.setup-reveal:hover { color: rgba(255,255,255,.9); }
+.setup-reveal[aria-pressed="true"] { color: var(--accent); }
 .setup-bars { display: flex; gap: 4px; }
 .setup-bars .pwbar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); transition: background .15s; }
 .setup-hint { font-size: 12px; min-height: 14px; color: rgba(255,255,255,.5); }
