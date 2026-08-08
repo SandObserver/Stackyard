@@ -8,9 +8,8 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test"
+    "test": "c8 --reporter=text-summary node --test"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {}
 }

@@ -19,10 +19,12 @@ These are the checks CI runs, in the order it runs them. They are defined once,
 in `.github/actions/checks/action.yml`, so the list here is the whole of it:
 
 ```
-node scripts/bump-cache-busting.js --check
-cd api && npm test
-cd ui/test && node --test
 npm install
+node scripts/bump-cache-busting.js --check
+npm run paths:check
+cd api && npm test
+cd api && npx c8 check-coverage --lines 92
+cd ui/test && node --test
 npm run lint
 npm run typecheck
 npm run typecheck:ui

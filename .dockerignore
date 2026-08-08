@@ -3,6 +3,7 @@
 node_modules
 api/test
 api/test-support
+api/coverage
 ui/test
 scripts/**
 !scripts/exit-on-fatal.py

@@ -10,3 +10,6 @@ data/apps.json
 # Dev-only tooling (see package.json); never shipped in the image.
 node_modules/
 package-lock.json
+
+# Coverage output from `npm test` in api/ (c8).
+coverage/
