@@ -234,6 +234,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- The container image no longer ships npm, corepack or yarn. Nothing in it used
+  them, and their bundled dependencies were the only HIGH or CRITICAL findings
+  in the image.
 - A widget can no longer forward a raw error message from a service it contacted
   straight to the browser. Such a message can name an internal address or path,
   and 17 places did it.
