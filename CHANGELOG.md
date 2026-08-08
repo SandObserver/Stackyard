@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the field in English words.
 - App and widget names in the Settings list now sit beside their icon in
   Persian instead of aligning to the far side of the row.
+- German, Spanish, French, Persian and Chinese now translate a further 34
+  strings that were left as English text in their catalogues.
+- The icon preview in the app editor no longer draws the artwork edge to edge.
+- Colour swatches that wrap onto a second row now line up under the row above
+  instead of splitting to opposite edges.
 
 ## [1.5.0] - 2026-08-08
 
