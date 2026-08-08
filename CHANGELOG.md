@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Correct the security documentation: `TRUST_PROXY` affects only the session
+  cookie, the client address is trusted only over loopback, and the container's
+  process users are set by the image rather than by Compose.
 - The accent colour is now teal, and the interface uses Apple's system colours
   throughout. Increased-contrast mode moves the whole palette to Apple's
   higher-contrast values rather than only a few pieces of it.
