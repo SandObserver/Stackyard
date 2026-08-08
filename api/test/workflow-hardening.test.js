@@ -68,8 +68,12 @@ test('the test workflow can only read', () => {
 
 /* Only the release publishes, and only to the package registry. */
 test('no workflow grants a write scope it does not need', () => {
+  /* id-token: write is not a write scope over anything in the repository. It
+     lets the job mint a short-lived OIDC token, which is what cosign exchanges
+     for a Sigstore certificate when it signs the released image. Keyless
+     signing needs it, and it is the reason there is no private key to hold. */
   const allowed = {
-    'workflows/release.yml': ['packages: write'],
+    'workflows/release.yml': ['packages: write', 'id-token: write'],
     'workflows/codeql.yml': ['security-events: write'],
   };
   const bad = [];

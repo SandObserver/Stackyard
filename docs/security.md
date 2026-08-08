@@ -166,6 +166,33 @@ the two processes. It drops the API to the unprivileged `node` user, and nginx
 drops its workers to the `nginx` user. The API, which is the part that parses
 untrusted input, never runs as root.
 
+## Verifying a release image
+
+Every released image is signed with [cosign](https://docs.sigstore.dev/) using
+keyless signing: the signature is bound to the GitHub Actions workflow that
+built it and recorded in Sigstore's public transparency log. There is no key for
+this project to hold, or to lose.
+
+Check an image before running it:
+
+```
+cosign verify ghcr.io/sandobserver/stackyard:1.5.0 \
+  --certificate-identity-regexp '^https://github.com/SandObserver/stackyard/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+Both flags matter. Without them cosign accepts a signature from any identity,
+which proves only that something signed the image.
+
+Each release build also scans the image with Trivy and fails on a HIGH or
+CRITICAL finding that has a fix available, and produces an SPDX SBOM listing
+what is inside it. The SBOM is attached to the build as an artifact, downloadable
+from the run's summary page on GitHub.
+
+Images are published to `ghcr.io/sandobserver/stackyard`. A Docker Hub mirror is
+published alongside it when the project has credentials configured; ghcr.io is
+the one to prefer, and the one the signature above covers.
+
 ## Config file
 
 A config file that fails to parse, or that parses but has the wrong shape (for
