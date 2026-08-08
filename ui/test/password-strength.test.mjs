@@ -9,7 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { pwStrength, MIN_PASSWORD_LENGTH } from '../js/password-strength.js';
+import { pwStrength, MIN_PASSWORD_LENGTH, passwordMismatch } from '../js/password-strength.js';
 
 test('an empty password scores nothing and says nothing', () => {
   const r = pwStrength('');
@@ -122,4 +122,32 @@ test('neither caller redefines the function', async () => {
     assert.ok(!/function pwStrength\s*\(/.test(src), `${file} must import it, not redefine it`);
     assert.match(src, /password-strength\.js/, `${file} must import it`);
   }
+});
+
+/* ── passwordMismatch ─────────────────────────────────────────────────────── */
+
+/* Setting a password rotates the session secret and signs every device out, so
+   an unnoticed typo locks the install with no way back in. */
+
+test('a new password that matches its confirmation is accepted', () => {
+  assert.equal(passwordMismatch('correct-horse', 'correct-horse'), false);
+});
+
+test('a new password that differs from its confirmation is refused', () => {
+  assert.equal(passwordMismatch('correct-horse', 'correct-hors'), true);
+});
+
+test('an empty new password needs no confirmation, meaning keep the current one', () => {
+  assert.equal(passwordMismatch('', ''), false);
+  assert.equal(passwordMismatch('', 'anything'), false);
+});
+
+test('a new password with an empty confirmation is refused', () => {
+  assert.equal(passwordMismatch('correct-horse', ''), true);
+  assert.equal(passwordMismatch('correct-horse', undefined), true);
+});
+
+test('confirmation is compared exactly, including case and trailing space', () => {
+  assert.equal(passwordMismatch('Correct-Horse', 'correct-horse'), true);
+  assert.equal(passwordMismatch('correct-horse', 'correct-horse '), true);
 });

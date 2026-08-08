@@ -42,8 +42,7 @@
     "passwordTip": "Déjalo en blanco para mantener la contraseña actual. Mínimo 8 caracteres. Para una protección más sólida, considera colocar el panel detrás de un <strong>Authentication Proxy</strong>. Esta contraseña integrada es una barrera ligera, no una capa de autenticación completa.",
     "backup": "Copia de seguridad",
     "importExport": "Import / Export",
-    "signOut": "Cerrar sesión",
-    "confirmPassword": "Confirmar contraseña"
+    "signOut": "Cerrar sesión"
   },
   "appearance": {
     "appTitle": "Título de la aplicación",
@@ -153,8 +152,7 @@
     "importNoChange": "Nada que importar — el archivo coincide con tu configuración actual.",
     "pwWeak": "Contraseña demasiado débil: {label}",
     "sessionsRevoked": "Se cerró la sesión en todos los dispositivos.",
-    "authNeedsPassword": "Establece una contraseña antes de activar la autenticación.",
-    "pwMismatch": "Las contraseñas no coinciden."
+    "authNeedsPassword": "Establece una contraseña antes de activar la autenticación."
   },
   "confirm": {
     "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",

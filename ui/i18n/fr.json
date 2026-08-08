@@ -42,8 +42,7 @@
     "passwordTip": "Laissez vide pour conserver le mot de passe actuel. 8 caractères minimum. Pour une protection renforcée, envisagez de placer le tableau de bord derrière un <strong>Authentication Proxy</strong>. Ce mot de passe intégré est une barrière légère, pas une couche d'authentification complète.",
     "backup": "Sauvegarde",
     "importExport": "Import / Export",
-    "signOut": "Se déconnecter",
-    "confirmPassword": "Confirmer le mot de passe"
+    "signOut": "Se déconnecter"
   },
   "appearance": {
     "appTitle": "Titre de l'application",
@@ -153,8 +152,7 @@
     "importNoChange": "Rien à importer — le fichier correspond à votre configuration actuelle.",
     "pwWeak": "Mot de passe trop faible : {label}",
     "sessionsRevoked": "Tous les appareils ont été déconnectés.",
-    "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification.",
-    "pwMismatch": "Les mots de passe ne correspondent pas."
+    "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification."
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",

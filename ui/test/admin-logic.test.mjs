@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked, passwordMismatch, widgetConfigMode, resolveAdminSection, rejectionLines, refusedNoticeKey } from '../js/admin-logic.js';
+import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked, widgetConfigMode, resolveAdminSection, rejectionLines, refusedNoticeKey } from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
@@ -184,34 +184,6 @@ test('unticking an empty row with nothing stored is a no-op', () => {
 test('clearsStoredSecret tolerates a missing row', () => {
   assert.equal(clearsStoredSecret(null, false), false);
   assert.equal(clearsStoredSecret(undefined, false), false);
-});
-
-/* ── passwordMismatch ─────────────────────────────────────────────────────── */
-
-/* Setting a password rotates the session secret and signs every device out, so
-   an unnoticed typo locks the install with no way back in. */
-
-test('a new password that matches its confirmation is accepted', () => {
-  assert.equal(passwordMismatch('correct-horse', 'correct-horse'), false);
-});
-
-test('a new password that differs from its confirmation is refused', () => {
-  assert.equal(passwordMismatch('correct-horse', 'correct-hors'), true);
-});
-
-test('an empty new password needs no confirmation, meaning keep the current one', () => {
-  assert.equal(passwordMismatch('', ''), false);
-  assert.equal(passwordMismatch('', 'anything'), false);
-});
-
-test('a new password with an empty confirmation is refused', () => {
-  assert.equal(passwordMismatch('correct-horse', ''), true);
-  assert.equal(passwordMismatch('correct-horse', undefined), true);
-});
-
-test('confirmation is compared exactly, including case and trailing space', () => {
-  assert.equal(passwordMismatch('Correct-Horse', 'correct-horse'), true);
-  assert.equal(passwordMismatch('correct-horse', 'correct-horse '), true);
 });
 
 /* ── authEnableBlocked (P2-2) ─────────────────────────────────────────────── */

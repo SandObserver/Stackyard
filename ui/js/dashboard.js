@@ -6,7 +6,7 @@ import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssU
 import { initSpotlight } from '/js/spotlight.js?v=673a88df';
 import { html, setHtml, raw } from '/js/html.js?v=ccec347c';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
-import { pwStrength } from '/js/password-strength.js?v=dab9978e';
+import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=dab9978e';
 import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=07fd9e2d';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=d278c683';
@@ -311,16 +311,18 @@ function showSetupPrompt() {
 
     /* A typo here locks the dashboard with no way back in, so the password is
        confirmed and can be read back before it is set. */
-    const matches = () => pw.value === pw2.value;
+    /* Both filled in and equal. passwordMismatch treats an empty new password
+       as "keep the current one", which does not apply on a first run. */
+    const matches = () => pw2.value !== '' && !passwordMismatch(pw.value, pw2.value);
     const sync = () => {
       const { score, labelKey, color, ok } = pwStrength(pw.value);
       bars.forEach((b, i) => { b.style.background = pw.value && i < score ? color : dim; });
       hint.textContent = pw.value && labelKey ? t(labelKey) : '';
       hint.style.color = color;
-      const mismatch = pw2.value !== '' && !matches();
+      const mismatch = pw2.value !== '' && passwordMismatch(pw.value, pw2.value);
       err.textContent = mismatch ? t('setup.mismatch') : '';
       err.style.display = mismatch ? 'block' : 'none';
-      setB.disabled = !ok || !matches() || pw2.value === '';
+      setB.disabled = !ok || !matches();
     };
     pw.addEventListener('input', sync);
     pw2.addEventListener('input', sync);
