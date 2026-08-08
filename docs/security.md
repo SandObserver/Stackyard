@@ -17,13 +17,20 @@ request carries `X-Forwarded-Proto: https`.
   proxy send `X-Forwarded-Proto`. Without this the cookie is sent without
   `Secure`.
 - Only set `TRUST_PROXY=true` when a proxy you control is actually in front of
-  the app. If it is set while the app is reachable directly, a client can spoof
-  `X-Forwarded-Proto` and `X-Forwarded-For`.
+  the app. If it is set while the app is reachable directly, a client can claim
+  `X-Forwarded-Proto: https` and be issued a `Secure` cookie over plain HTTP.
+  `TRUST_PROXY` affects nothing else: the client address is read separately, and
+  `X-Forwarded-For` is not used anywhere.
 
 ## SSRF guard
 
 The proxy blocks requests to the address ranges below and pins the
 resolved IP to close DNS-rebind gaps. Dotless hostnames (such as Docker container names) are trusted and are not filtered. Only `http` and `https` URLs are fetched.
+
+Two names are decided before that allowance: `localhost` is blocked, because it
+is a loopback address rather than a service name, and the Docker host's own IP
+(`settings.server.hostIp`, if you have set one) is trusted, because that is what
+the host-IP port mapping exists to reach.
 
 Two kinds of range are blocked, for the same reason: those that reach something
 internal, and those that are not routable destinations at all.
@@ -77,9 +84,20 @@ no authentication, so on a shared or untrusted network the first person to reach
 a fresh install can claim the account. Set a password immediately after first
 launch, or keep the install off untrusted networks until you have.
 
+Authentication is only in force when a password is stored. Turning it on without
+one is refused, and an install already in that state is treated as switched off,
+because the alternative refuses every login while gating every other route,
+which locks the install with no way back in over HTTP. This is not a bypass: a
+session is verified against the password hash, so with none stored there is no
+credential to present and no session to forge.
+
 Rate limiting keys on the client IP, which the app reads from the `X-Real-IP`
-header nginx sets. nginx overwrites that header on every request, so a client
-cannot supply its own.
+header nginx sets. The header is believed only when the request arrived over
+loopback, which in the shipped container means it came from Stackyard's own
+nginx; nginx overwrites the header on every request, so a client cannot supply
+its own. A request from anywhere else is identified by its socket address, so
+running the API on its own, without the container's nginx in front, is safe by
+default rather than trusting whatever a caller sends.
 
 If you put Stackyard behind another reverse proxy (Nginx Proxy Manager, Caddy,
 Traefik), set `TRUSTED_PROXY` to where that proxy is:
@@ -104,7 +122,18 @@ it arrived over HTTPS.
 Stored secrets (API keys, passwords) are stripped from config before it is sent
 to the browser. A populated field is reported as set without returning its
 value. Secrets are preserved on save when the browser submits the config
-without them.
+without them. A value stored as a secret is never sent back, in the config
+response or in an export.
+
+Two consequences of that guarantee:
+
+- Unticking **Secret** on a header or credential row clears the stored value on
+  the next save, and the credential has to be retyped. Refilling the row would
+  move the stored value into a row that is sent to the browser in full.
+- A widget whose manifest is not loaded has its whole stored config withheld,
+  since without the manifest the server cannot tell which of its fields are
+  secret. The stored config is put back on save, so nothing is lost, but the
+  widget's settings cannot be edited until its manifest loads again.
 
 ### Password hashing
 
@@ -130,7 +159,12 @@ Secrets are stored in `apps.json` in plain text on the data volume. Protect the 
 ## Container
 
 The provided Compose file drops all capabilities, adds back only what is
-needed, sets `no-new-privileges`, and runs the API as a non-root user.
+needed, sets `no-new-privileges`, and bounds memory, process count and log size.
+
+Inside the container, supervisord runs as root so it can bind port 80 and spawn
+the two processes. It drops the API to the unprivileged `node` user, and nginx
+drops its workers to the `nginx` user. The API, which is the part that parses
+untrusted input, never runs as root.
 
 ## Config file
 
