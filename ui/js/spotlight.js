@@ -1,4 +1,4 @@
-import { mk, clr, el, inp as inpById, q, qa } from '/js/utils.js?v=17424946';
+import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=17424946';
 import { wrapTab } from '/js/dialog.js?v=4ff94595';
 import { t } from '/js/i18n.js?v=133a7aac';
 
@@ -76,7 +76,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
       }
 
       const tx = mk('div'); tx.style.cssText = 'flex:1;min-width:0;';
-      const nm = mk('div'); nm.className = 'srn'; nm.textContent = app.label||app.id;
+      const nm = mk('div'); nm.className = 'srn'; setUserText(nm, app.label||app.id);
       const ht = mk('div'); ht.className = 'srh';
       ht.textContent = (app.href||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
       const ar = mk('span'); ar.className = 'sra'; ar.textContent = '↗';

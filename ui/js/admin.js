@@ -1,5 +1,5 @@
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=a0ea3e4b';
-import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt } from '/js/utils.js?v=17424946';
+import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=17424946';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=056a11e9';
 import { newItemId, buildAppItem, upsertItem, claimFolderChildren } from '/js/admin-save-logic.js?v=77cac1d1';
@@ -161,7 +161,7 @@ function mkRow(item,idx,{indent=false,childIdx=null,folderId=null}={}){
     };
     nm.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nm.onclick(/** @type {any} */ (e));}};
   }else{
-    nm.textContent=item.label||item.id;
+    setUserText(nm,item.label||item.id);
   }
   const mt=document.createElement('div');mt.className='rmt';
   if(item.type==='widget'){
@@ -557,7 +557,7 @@ function openFolderPicker(appId,targetFolderId=null){
       const ri=document.createElement('span');ri.className='fp-ic';ri.style.background=rc(app.color);
       if(app.iconUrl){const img=document.createElement('img');img.alt='';img.src=resolveIcon(app.iconUrl);ri.appendChild(img);}
       else ri.textContent=(app.label||'?')[0];
-      const nm=document.createElement('span');nm.className='fp-nm';nm.textContent=app.label||app.id;
+      const nm=document.createElement('span');nm.className='fp-nm';setUserText(nm,app.label||app.id);
       b.append(ri,nm);list.appendChild(b);
     });
   }else{
@@ -571,7 +571,7 @@ function openFolderPicker(appId,targetFolderId=null){
       const b=rowBtn(cur?'cur':'',()=>{
         state.items.forEach(ff=>{if(ff.type==='folder')ff.children=(ff.children||[]).filter(id=>id!==appId);});
         if(!f.children)f.children=[];if(!f.children.includes(appId))f.children.push(appId);save();close();});
-      const nm=document.createElement('span');nm.textContent=f.label;
+      const nm=document.createElement('span');setUserText(nm,f.label);
       const chk=document.createElement('span');chk.className='fp-chk';if(cur)chk.textContent='✓';
       b.append(nm,chk);list.appendChild(b);
     });

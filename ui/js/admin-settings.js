@@ -4,7 +4,7 @@ import { wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
 import { t } from '/js/i18n.js?v=133a7aac';
 import { authEnableBlocked, passwordMismatch } from '/js/admin-logic.js?v=056a11e9';
-import { el, inp, q, qa } from '/js/utils.js?v=17424946';
+import { el, inp, q, qa, setUserText } from '/js/utils.js?v=17424946';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password behind
    it. */
@@ -73,9 +73,11 @@ export function loadSettings(c){
     brEl.addEventListener('input',()=>{updateSliderFill(brEl);if(brVal)brVal.textContent=parseFloat(brEl.value).toFixed(2);});}
   el('bg-save').addEventListener('click',saveWallpaper);
 
+  /* These rows show what the user typed, so each follows its own direction
+     rather than the interface's, and truncates at its own end. */
   const _sv=(id,v,ph='')=>{const node=el(id);if(!node)return;
-    if(v){node.textContent=v;node.classList.remove('is-ph');}
-    else{node.textContent=ph;node.classList.add('is-ph');}};
+    if(v){setUserText(node,v);node.classList.remove('is-ph');}
+    else{setUserText(node,ph);node.classList.add('is-ph');}};
   _sv('ie-title-v',s.title||'Stackyard','Stackyard');
   _sv('ie-desc-v',s.description||'Stackyard · self-hosted homelab dashboard','Stackyard · self-hosted homelab dashboard');
   _sv('ie-ip-v',s.server?.hostIp,'192.168.1.100');

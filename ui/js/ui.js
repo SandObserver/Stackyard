@@ -1,6 +1,6 @@
 import { iconChain } from '/js/icons.js?v=a0ea3e4b';
 import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=13def718';
-import { mk, clr, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, el, q, qa } from '/js/utils.js?v=17424946';
+import { mk, clr, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, el, q, qa, setUserText } from '/js/utils.js?v=17424946';
 import { t, currentLang } from '/js/i18n.js?v=133a7aac';
 import { trapFocus } from '/js/dialog.js?v=4ff94595';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=b32c23b3';
@@ -110,7 +110,7 @@ export function mkFolder(item) {
   a.appendChild(box);
   if (showLabel) {
     const l = mk('div'); l.className = 'ilabel'; l.style.width = (iw+12)+'px';
-    l.textContent = item.label||t('type.folder'); a.appendChild(l);
+    setUserText(l, item.label||t('type.folder')); a.appendChild(l);
   }
   return a;
 }
@@ -126,7 +126,7 @@ export function openFolderDesktop(folder) {
   const _prevFocus = /** @type {HTMLElement} */ (document.activeElement);
   let releaseDeskTrap = null;
   const outer = mk('div'); outer.className = 'folder-outer';
-  const title = mk('div'); title.className = 'folder-title-desktop'; title.textContent = folder.label||t('type.folder');
+  const title = mk('div'); title.className = 'folder-title-desktop'; setUserText(title, folder.label||t('type.folder'));
   const box = mk('div'); box.className = 'folder-box-desktop';
   const iw = showLabel ? 72 : 78, isz = showLabel ? 50 : 56;
   const grid = mk('div');
@@ -141,7 +141,7 @@ export function openFolderDesktop(folder) {
     a.appendChild(mkWrap(child, iw, 16, isz, 'iwrap'));
     if (showLabel) {
       const l = mk('div'); l.className = 'ilabel'; l.style.width = (iw+12)+'px';
-      l.textContent = child.label||child.id; a.appendChild(l);
+      setUserText(l, child.label||child.id); a.appendChild(l);
     }
     grid.appendChild(a);
   });
@@ -214,7 +214,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   if (showLabel) {
     const l = mk('div'); l.className = 'dyn-fold-label';
     css(l, { '--lfs': Math.max(9,Math.round(9*sc))+'px', '--lw': (cw-4)+'px' });
-    l.textContent = item.label||t('type.folder'); a.appendChild(l);
+    setUserText(l, item.label||t('type.folder')); a.appendChild(l);
   }
   return a;
 }
@@ -259,7 +259,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
 
   const titleEl = mk('div'); titleEl.className = 'folder-title-mobile dyn-title-mob';
   css(titleEl, { '--tfs': titleFs+'px', 'left': titleLeft+'px', 'width': (boxW-padH)+'px', 'top': (boxTop-titleRendH-titleGap+Math.round(8*ptScale))+'px' });
-  titleEl.textContent = folder.label||t('type.folder');
+  setUserText(titleEl, folder.label||t('type.folder'));
 
   const box = mk('div');
   box.className = 'folder-box-mobile dyn-box-mob';
@@ -291,7 +291,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
         if (showLabel) {
           const l = mk('div'); l.className = 'dyn-fold-inner-label';
           css(l, { '--lfs': Math.max(11,Math.round(11*ptScale))+'px', '--fiw': folderIconW+'px' });
-          l.textContent = child.label||child.id; a.appendChild(l);
+          setUserText(l, child.label||child.id); a.appendChild(l);
         }
         p.appendChild(a);
       } else { p.appendChild(mk('div')); }
@@ -405,7 +405,7 @@ export function buildMobile() {
     if (showLabel) {
       const l = mk('div'); l.className = 'dyn-mob-label';
       css(l, { '--lfs': Math.max(9, Math.round(9 * sc)) + 'px', '--lw': '100%' });
-      l.textContent = item.label || item.id; a.appendChild(l);
+      setUserText(l, item.label || item.id); a.appendChild(l);
     }
     return a;
   }

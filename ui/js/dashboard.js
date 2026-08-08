@@ -2,7 +2,7 @@
 
 import { loadLocalIcons, iconChain } from '/js/icons.js?v=a0ea3e4b';
 import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc, cardPreset } from '/js/widget-types.js?v=13def718';
-import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl, el, q, qi, qa } from '/js/utils.js?v=17424946';
+import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl, el, q, qi, qa, setUserText } from '/js/utils.js?v=17424946';
 import { initSpotlight } from '/js/spotlight.js?v=673a88df';
 import { html, setHtml, raw } from '/js/html.js?v=ccec347c';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
@@ -120,7 +120,7 @@ function mkIcon(item) {
   a.appendChild(mkWrap(item, iw, 16, isz, 'iwrap'));
   if (showLabel) {
     const l = mk('div'); l.className = 'ilabel'; l.style.width = (iw+12)+'px';
-    l.textContent = item.label||item.id; a.appendChild(l);
+    setUserText(l, item.label||item.id); a.appendChild(l);
   }
   return a;
 }
