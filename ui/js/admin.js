@@ -689,7 +689,7 @@ function initAllInlineEdits(){
   initInlineEdit('ie-desc','ie-desc-input',{placeholder:'Stackyard · self-hosted homelab dashboard'});
 
   initInlineEdit('ie-ip','srv-ip',{placeholder:'192.168.1.100'});
-  initInlineEdit('ie-socket','srv-socket',{placeholder:'tcp://socket-proxy:2375'});
+  initInlineEdit('ie-socket','srv-socket',{placeholder:'http://socket-proxy:2375'});
 
   initInlineEdit('ie-pw','sec-pw',{type:'password',placeholder:'New password (min 8 chars)',
     onCommit(){

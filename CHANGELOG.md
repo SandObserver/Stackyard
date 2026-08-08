@@ -74,6 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A Docker socket URL stored as `tcp://` is corrected to `http://` on upgrade,
+  instead of every app backed by a container reporting unhealthy.
 - When a widget's definition cannot be loaded, Settings now says why, listing
   what is wrong with its `widget.json` instead of pointing at the container log.
 - Widgets stop polling while the dashboard tab is in the background, and refresh
