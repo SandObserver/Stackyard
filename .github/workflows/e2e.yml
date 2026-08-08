@@ -1,13 +1,31 @@
 name: End-to-end
 
-# Its own workflow, not part of the checks every pull request runs. Those finish
-# in under a minute; this downloads two browsers and drives a container, and an
-# end-to-end failure is more often the test than the change.
+# Runs before a merge, not only after one: a browser test that can block a
+# release should be able to block a merge. The whole job is about two minutes
+# with the browsers cached, so it is filtered by path rather than skipped, and a
+# docs or changelog pull request stays on the sub-minute check set.
+#
+# Also on main, which catches anything the filter misses, and on demand.
 on:
+  pull_request:
+    paths:
+      - 'ui/**'
+      - 'api/**'
+      - 'nginx/**'
+      - 'e2e/**'
+      - 'Dockerfile'
+      - 'docker-entrypoint.sh'
+      - 'supervisord.conf'
+      - 'playwright.config.js'
+      - 'package.json'
+      - '.github/workflows/e2e.yml'
   push:
     branches:
       - main
   workflow_dispatch:
+  # Called by the release workflow, so a tag cannot publish an image whose
+  # browser tests fail.
+  workflow_call:
 
 permissions:
   contents: read
