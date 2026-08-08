@@ -25,6 +25,15 @@ async function readConfig(request) {
   return res.json();
 }
 
+/** Find a saved item, failing with what is actually stored rather than
+    "undefined is not truthy", which says nothing about why. */
+function expectItem(cfg, predicate, what) {
+  const found = (cfg.items || []).find(predicate);
+  const summary = (cfg.items || []).map(i => `${i.type}:${i.id}:${JSON.stringify(i.label)}`).join(', ');
+  expect(found, `${what} was not saved. Config holds: [${summary}]`).toBeTruthy();
+  return found;
+}
+
 /** An app item, with only the fields a hand-written fixture needs. */
 function app(id, label, href = `http://example.invalid/${id}`) {
   return { id, type: 'app', label, href, color: 'dark', dock: false };
@@ -66,4 +75,4 @@ function rowByName(page, name) {
   return page.locator('#al .row').filter({ has: page.locator('.rnm', { hasText: name }) });
 }
 
-module.exports = { seedConfig, readConfig, app, openDashboardList, setInlineRow, rowNames, rowByName };
+module.exports = { seedConfig, readConfig, expectItem, app, openDashboardList, setInlineRow, rowNames, rowByName };

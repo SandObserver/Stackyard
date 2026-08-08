@@ -8,7 +8,16 @@
    until it passes and then believed. */
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, readConfig, app, openDashboardList, setInlineRow, rowNames, rowByName } = require('./helpers');
+const {
+  seedConfig,
+  readConfig,
+  expectItem,
+  app,
+  openDashboardList,
+  setInlineRow,
+  rowNames,
+  rowByName,
+} = require('./helpers');
 
 test.beforeEach(async ({ request }) => {
   await seedConfig(request, { items: [app('alpha', 'Alpha'), app('bravo', 'Bravo')] });
@@ -32,8 +41,7 @@ test('adding an app saves it and shows it in the list', async ({ page, request }
   await expect(rowByName(page, 'Charlie')).toBeVisible();
 
   const cfg = await readConfig(request);
-  const saved = cfg.items.find(i => i.label === 'Charlie');
-  expect(saved, 'the app was not persisted').toBeTruthy();
+  const saved = expectItem(cfg, i => i.label === 'Charlie', 'the app');
   expect(saved.type).toBe('app');
   expect(saved.href).toBe('http://charlie.invalid:8080');
 });
@@ -48,8 +56,7 @@ test('editing an app keeps its id and changes only what was edited', async ({ pa
   await expect(rowByName(page, 'Alpha renamed')).toBeVisible();
 
   const cfg = await readConfig(request);
-  const saved = cfg.items.find(i => i.id === 'alpha');
-  expect(saved, 'the item lost its id, which breaks folders and badges').toBeTruthy();
+  const saved = expectItem(cfg, i => i.id === 'alpha', 'the edited item, by its original id,');
   expect(saved.label).toBe('Alpha renamed');
   expect(saved.href).toBe('http://example.invalid/alpha');
   expect(cfg.items.filter(i => i.id === 'alpha')).toHaveLength(1);
@@ -83,7 +90,6 @@ test('adding a widget stores its type', async ({ page, request }) => {
   await page.locator('#ev-save').click();
 
   const cfg = await readConfig(request);
-  const widget = cfg.items.find(i => i.type === 'widget');
-  expect(widget, 'no widget was saved').toBeTruthy();
+  const widget = expectItem(cfg, i => i.type === 'widget', 'the widget');
   expect(widget.widgetType).toBe('clock');
 });
