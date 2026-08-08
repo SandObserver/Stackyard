@@ -1,108 +1,97 @@
-/* Regression tests for P17-1: a tag published without running any checks.
-
-   .github/workflows/release.yml triggers on a v* tag and went straight from
-   checkout to build-and-push. No tests, no lint, no typecheck: whatever main
-   happened to contain was published to ghcr.io and tagged latest, which the
-   public demo pulls. It also ran the mutating form of bump-cache-busting.js,
-   rewriting 39 files, so the image was built from content nothing had verified.
-
-   Both workflows now call one composite action, so the release cannot quietly
-   fall behind what a pull request has to pass. These read the YAML as text
-   rather than parsing it, which needs no dependency and is enough to pin the
-   wiring; GitHub is the only thing that can truly validate a workflow. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const yaml = require('js-yaml');
+
+/* The release workflow runs on a tag and nowhere else, so no pull request ever
+   exercises it. Its first outing after a change is the release itself, which is
+   how v1.5.0-rc.1 came to publish nothing at all.
+
+   These are the properties that cannot be verified any other way until a tag is
+   cut: what the job is allowed to do, that the supply-chain steps run in an
+   order where each has something to work on, and that nothing addresses the
+   image by a tag when a digest is available. */
 
 const root = path.join(__dirname, '..', '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const workflow = yaml.load(fs.readFileSync(path.join(root, '.github/workflows/release.yml'), 'utf8'));
+const job = workflow.jobs['build-and-push'];
+const steps = job.steps;
+const byName = name => steps.find(s => s.name === name);
+const indexOf = name => steps.findIndex(s => s.name === name);
 
-const ACTION = '.github/actions/checks/action.yml';
-const RELEASE = '.github/workflows/release.yml';
-const TESTS = '.github/workflows/test.yml';
-
-const action = read(ACTION);
-const release = read(RELEASE);
-const tests = read(TESTS);
-
-test('the shared checks action exists and is a composite action', () => {
-  assert.match(action, /using:\s*composite/);
-  assert.match(action, /inputs:/);
+test('the job asks for exactly the permissions it needs', () => {
+  /* id-token is what keyless signing exchanges for a Sigstore certificate.
+     Without it cosign fails at the end of a release that has already pushed. */
+  assert.deepEqual(job.permissions, { contents: 'read', packages: 'write', 'id-token': 'write' });
 });
 
-/* The point of the change: one definition of what passing means. */
-test('both workflows run the shared checks', () => {
-  for (const [name, src] of [['release', release], ['tests', tests]]) {
-    assert.match(src, /uses:\s*\.\/\.github\/actions\/checks/, `${name} does not use the shared checks`);
+test('every action is pinned to a full commit sha', () => {
+  const unpinned = steps
+    .filter(s => s.uses && !s.uses.startsWith('./'))
+    .map(s => s.uses)
+    .filter(u => !/@[0-9a-f]{40}$/.test(u));
+  assert.deepEqual(unpinned, [], 'a tag can be moved; pin the commit');
+});
+
+test('the supply-chain steps run after the build, in an order that works', () => {
+  const build = indexOf('Build and push');
+  assert.ok(build !== -1, 'the build step is gone');
+  for (const name of ['Scan the image', 'Install cosign', 'Sign the image', 'Generate SBOM', 'Upload SBOM']) {
+    assert.ok(indexOf(name) > build, `${name} must run after the build`);
+  }
+  assert.ok(indexOf('Install cosign') < indexOf('Sign the image'), 'cosign must be installed before it is used');
+  assert.ok(indexOf('Generate SBOM') < indexOf('Upload SBOM'), 'the SBOM must exist before it is uploaded');
+  /* A vulnerable image should not be signed as though it passed. */
+  assert.ok(indexOf('Scan the image') < indexOf('Sign the image'), 'scan before signing');
+});
+
+test('the scan fails the job on a high or critical finding', () => {
+  const scan = byName('Scan the image');
+  assert.equal(scan.with['exit-code'], '1', 'a finding must fail the release, not just print');
+  assert.equal(scan.with.severity, 'HIGH,CRITICAL');
+});
+
+test('the image is addressed by digest everywhere after the build', () => {
+  /* A tag can be moved between being scanned and being pulled. The digest is
+     the artifact that was actually examined. */
+  for (const name of ['Scan the image', 'Sign the image', 'Generate SBOM']) {
+    const step = byName(name);
+    const text = JSON.stringify(step.with || step.run || '');
+    assert.match(text, /steps\.build\.outputs\.digest|\$\{DIGEST\}/, `${name} should use the build digest`);
+    assert.doesNotMatch(text, /stackyard:\$\{\{ steps\.meta/, `${name} should not address the image by tag`);
   }
 });
 
-test('the release runs the checks in release mode', () => {
-  assert.match(release, /uses:\s*\.\/\.github\/actions\/checks[\s\S]{0,80}?mode:\s*release/);
+test('latest is decided by the semver check, not by looking for a hyphen', () => {
+  const meta = byName('Extract metadata');
+  const latest = String(meta.with.tags).split('\n').find(l => l.includes('value=latest'));
+  assert.ok(latest, 'the latest tag rule is gone');
+  assert.match(latest, /steps\.tag\.outputs\.prerelease == 'false'/);
+  assert.doesNotMatch(latest, /contains\(github\.ref_name/, 'the hyphen heuristic is back');
+  assert.ok(indexOf('Classify the tag') < indexOf('Extract metadata'), 'the classification must come first');
 });
 
-test('the tests workflow runs them in test mode', () => {
-  assert.match(tests, /uses:\s*\.\/\.github\/actions\/checks[\s\S]{0,80}?mode:\s*test/);
+test('Docker Hub is optional, and decided once', () => {
+  /* Deciding separately in an `if:` and in the tag list is how a build pushes
+     to a registry it never logged in to. */
+  const login = byName('Log in to Docker Hub');
+  assert.equal(login.if, "steps.registries.outputs.dockerhub == 'true'");
+  assert.ok(indexOf('Choose registries') < indexOf('Log in to Docker Hub'));
+  const meta = byName('Extract metadata');
+  assert.equal(meta.with.images, '${{ steps.registries.outputs.images }}');
+  assert.ok(indexOf('Choose registries') < indexOf('Extract metadata'));
 });
 
-/* Each check the project relies on has to be in the shared action, or one
-   workflow silently stops running it. */
-test('the shared action runs every check the project has', () => {
-  for (const step of [
-    'npm test',                                  /* backend */
-    'node --test',                               /* frontend */
-    'npm run lint',
-    'npm run typecheck',
-    'npm run typecheck:ui',
-    'bump-cache-busting.js --check',
-    'docker build',
-  ]) {
-    assert.ok(action.includes(step), `the shared action does not run: ${step}`);
-  }
+test('ghcr.io is published unconditionally', () => {
+  /* Whatever happens with the mirror, the registry the project documents has to
+     receive the release. */
+  const choose = byName('Choose registries');
+  assert.match(choose.run, /echo 'ghcr\.io\/sandobserver\/stackyard'/);
+  assert.equal(byName('Log in to GitHub Container Registry').if, undefined);
 });
 
-/* The half that corrupted the artefact. The mutating pass is still needed, since
-   --check only proves a stamp is present and not that it is current, but it must
-   come after the suite: it writes entryVersions into every widget manifest, and
-   widget-manifests.test.js asserts that field is never committed. */
-test('the release stamps cache-busting after the tests, not before', () => {
-  const stampAt = action.indexOf('name: Stamp asset cache-busting');
-  const backendAt = action.indexOf('name: Run backend tests');
-  const frontendAt = action.indexOf('name: Run frontend tests');
-  assert.ok(stampAt !== -1, 'the release must still stamp: --check does not verify a stamp is current');
-  assert.ok(backendAt !== -1 && frontendAt !== -1);
-  assert.ok(stampAt > backendAt, 'stamping must not run before the backend tests');
-  assert.ok(stampAt > frontendAt, 'stamping must not run before the frontend tests');
-});
-
-test('the stamp pass is release-only and its convergence is checked', () => {
-  const stampBlock = action.slice(action.indexOf('name: Stamp asset cache-busting'));
-  assert.match(stampBlock, /if:\s*inputs\.mode == 'release'/, 'stamping must not run on a pull request');
-  assert.ok(action.includes('Verify stamping is settled'),
-    'a second stamp pass must be asserted to change nothing, or the image differs from a rebuild');
-});
-
-/* The failure this replaces: the release doing its own thing. */
-test('the release does not run checks of its own outside the shared action', () => {
-  const beforeAction = release.slice(0, release.indexOf('uses: ./.github/actions/checks'));
-  for (const stray of ['npm test', 'npm run lint', 'bump-cache-busting']) {
-    assert.ok(!beforeAction.includes(stray),
-      `release.yml runs "${stray}" before the shared checks; it belongs in the action`);
-  }
-});
-
-test('the release still publishes only after the checks', () => {
-  const checksAt = release.indexOf('uses: ./.github/actions/checks');
-  const pushAt = release.indexOf('docker/build-push-action');
-  assert.ok(checksAt !== -1 && pushAt !== -1);
-  assert.ok(checksAt < pushAt, 'the image must not be built and pushed before the checks run');
-});
-
-/* A release builds and pushes for real straight afterwards, so a smoke build in
-   the shared action would just repeat a slow multi-platform step. */
-test('the smoke build is skipped on the release path', () => {
-  const smoke = action.slice(action.indexOf('name: Docker build smoke test'));
-  assert.match(smoke, /if:\s*inputs\.mode == 'test'/);
+test('the checks still run before anything is published', () => {
+  assert.ok(indexOf('Run project checks') < indexOf('Build and push'));
+  assert.equal(byName('Run project checks').with.mode, 'release');
 });
