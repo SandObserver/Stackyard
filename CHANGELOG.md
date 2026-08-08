@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-08-08
+
 ### Added
 
 - The widget type list in Admin now says when a widget's definition was refused,
@@ -580,7 +582,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/SandObserver/stackyard/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/SandObserver/stackyard/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/SandObserver/stackyard/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/SandObserver/stackyard/compare/v1.2.0...v1.3.0
