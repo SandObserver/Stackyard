@@ -10,20 +10,43 @@ If a feature seems to need a dependency or a build step, open an issue first.
 
 ## Development
 
-The frontend is static; edit files under `ui/` and reload. The API has tests (Node's built-in runner, no test deps). Run them before opening a PR:
+The frontend is static; edit files under `ui/` and reload. Tests use Node's
+built-in runner, with no test dependencies.
+
+## Before opening a PR
+
+These are the checks CI runs, in the order it runs them. They are defined once,
+in `.github/actions/checks/action.yml`, so the list here is the whole of it:
 
 ```
-cd api && node --test
+node scripts/bump-cache-busting.js --check
+cd api && npm test
 cd ui/test && node --test
-npm install && npm run lint && npm run typecheck && npm run typecheck:ui
+npm install
+npm run lint
+npm run typecheck
+npm run typecheck:ui
+docker build -t stackyard:ci .
 ```
 
-`npm run typecheck:ui` typechecks every module under `ui/js` from its JSDoc, with
-no build step and nothing emitted. It has to stay clean. A new module needs two
-entries in `tsconfig.frontend.json`, the plain path and the `?v=*` form, because
-TypeScript allows one wildcard per pattern.
+The docker build is the slow one and is the least likely to break; the rest take
+seconds. CodeQL also runs on every pull request, and a finding it reports has to
+be resolved before merge.
 
-`?v=` cache-busting hashes are recomputed at build time; don't edit them by hand.
+A few of these are worth knowing about before they fail:
+
+- **`bump-cache-busting.js --check`** verifies that every `/css/` and `/js/`
+  reference carries a `?v=` stamp. Add a stylesheet or a module and reference it
+  without one, and this is what fails. The hashes themselves are recomputed by
+  the release build, so write `?v=1` and leave the real value alone; never edit
+  a stamp by hand.
+- **`npm run typecheck:ui`** typechecks every module under `ui/js` from its
+  JSDoc, with no build step and nothing emitted. It has to stay clean. A new
+  module needs two entries in `tsconfig.frontend.json`, the plain path and the
+  `?v=*` form, because TypeScript allows one wildcard per pattern.
+- **`npm run lint`** is Biome, from `node_modules`. Run it through npm: a bare
+  `npx biome` resolves to an unrelated package that exits 0 without checking
+  anything.
 
 ## More
 
