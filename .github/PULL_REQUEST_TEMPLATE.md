@@ -2,11 +2,9 @@
 What this changes and why.
 
 **Testing**
-How you verified it. For API changes, confirm the suite passes:
-
-```
-cd api && node --test
-```
+How you verified it, and what you added. Run the checks CI runs before opening
+this; they are listed in
+[CONTRIBUTING.md](../blob/main/CONTRIBUTING.md#before-opening-a-pr).
 
 **Checklist**
 - [ ] Stays within the project constraints: one container, no runtime dependencies, no build step (see CONTRIBUTING.md).
