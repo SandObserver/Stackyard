@@ -245,3 +245,23 @@ test('the API limit leaves real configurations far inside it', () => {
   assert.ok(big.length < BODY_LIMIT / 4,
     `a 300-app config is ${big.length} bytes against a ${BODY_LIMIT} limit; the headroom has gone`);
 });
+
+/* The Host nginx forwards decides whether a write is accepted.
+
+   checkOrigin compares the browser's Origin against the Host header. nginx's
+   $host strips the port; a browser's Origin keeps it. Forwarding $host
+   therefore compared "server:8700" against "server" and refused every write on
+   any install reached directly on a mapped port, which is the usual way this is
+   run. A reverse proxy on 443 hid it, having no port to strip.
+
+   Found by the end-to-end suite on its first working run. */
+
+test('the proxied Host keeps its port, or every write is refused', () => {
+  const conf = dashboard;
+  const hostLines = conf.split('\n').filter(l => /proxy_set_header\s+Host\s/.test(l));
+  assert.ok(hostLines.length >= 2, 'the proxied Host header is gone');
+  for (const line of hostLines) {
+    assert.match(line, /\$http_host/, 'use $http_host: $host drops the port and breaks the origin check');
+    assert.doesNotMatch(line, /\$host\b(?!_)/, '$host strips the port');
+  }
+});

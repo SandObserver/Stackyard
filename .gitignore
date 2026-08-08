@@ -13,3 +13,7 @@ package-lock.json
 
 # Coverage output from `npm test` in api/ (c8).
 coverage/
+
+# Playwright output.
+playwright-report/
+test-results/

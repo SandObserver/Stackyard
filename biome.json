@@ -6,7 +6,9 @@
       "ui/js/**/*.js",
       "ui/widgets/**/*.js",
       "scripts/**/*.js",
-      "docs/widget-template/**/*.js"
+      "docs/widget-template/**/*.js",
+      "e2e/**/*.js",
+      "playwright.config.js"
     ]
   },
   "formatter": {
