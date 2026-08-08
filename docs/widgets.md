@@ -437,6 +437,49 @@ external network calls.
 The widget's saved config, if the frontend needs it, is available the same way
 at `/api/widget-config/<id>`.
 
+### What the iframe is given
+
+The dashboard builds the iframe URL, and it carries more than the id:
+
+| parameter | what it is |
+|---|---|
+| `id` | The dashboard item's id. Pass it to `/api/widget-data/<id>` and `/api/widget-config/<id>`. |
+| `size` | The size the user placed this widget at, one of the `sizes` in the manifest. Read it to draw a denser or sparser layout; the canvas is a fixed size per family, so nothing has to be measured. |
+| `mobile` | `1` on the mobile layout, absent otherwise. |
+| `lang` | The selected language code. The toolbox uses it to translate its own status text; read it if the widget has strings of its own. |
+| `v` | The cache version, stamped at release. Nothing to read. |
+
+### What a widget page may load
+
+The widget iframe has a stricter Content-Security-Policy than the dashboard.
+Scripts and styles must be inline or same-origin, `connect-src` is `'self'`, so
+the only host a widget can call is Stackyard itself, and images may come from
+the icon CDN or a `data:` URI. Reach an external service through `data.js`, which
+has the SSRF guard and the app's TLS settings; a widget page cannot reach one
+directly and should not try.
+
+### Mobile active state
+
+A widget with an interior state a tap turns on, such as a selected row, has to
+take part in one small protocol, or two widgets end up active at once and a tap
+on the background leaves the state stuck on.
+
+Post a message when the widget becomes active, and expose a function the
+dashboard calls to reset it:
+
+```js
+/* Addressed to our own origin: the parent is always the dashboard. */
+parent.postMessage({ type: 'widget-active' }, window.location.origin);
+
+window.__clearActive = () => { /* drop the active state, hide any tooltip */ };
+```
+
+The dashboard resets every other widget when it receives that message, and calls
+`__clearActive` directly when a tap lands outside any widget. Resetting is a
+call rather than a message, since the frames are same-origin, so a widget needs
+no `message` listener of its own. If you add one anyway, check `e.origin`
+against `window.location.origin` first.
+
 ### Design canvas sizes
 
 Widgets render at these fixed sizes and are scaled uniformly to fit their card.
