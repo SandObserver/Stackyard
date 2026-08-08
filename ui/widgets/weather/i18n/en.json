@@ -9,5 +9,17 @@
   "units.opt.f": "°F",
   "feelsLike.label": "Show feels like",
   "href.label": "Link URL",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.clear": "Clear",
+  "ui.mostlyClear": "Mostly Clear",
+  "ui.partlyCloudy": "Partly Cloudy",
+  "ui.cloudy": "Cloudy",
+  "ui.fog": "Fog",
+  "ui.drizzle": "Drizzle",
+  "ui.rain": "Rain",
+  "ui.showers": "Showers",
+  "ui.snow": "Snow",
+  "ui.snowShowers": "Snow Showers",
+  "ui.thunderstorm": "Thunderstorm",
+  "ui.feelsLike": "feels like"
 }

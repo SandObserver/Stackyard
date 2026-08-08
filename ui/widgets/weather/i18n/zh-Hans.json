@@ -9,5 +9,17 @@
   "units.opt.f": "°F",
   "feelsLike.label": "显示体感温度",
   "href.label": "链接地址",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.clear": "晴",
+  "ui.mostlyClear": "大致晴朗",
+  "ui.partlyCloudy": "多云间晴",
+  "ui.cloudy": "阴",
+  "ui.fog": "雾",
+  "ui.drizzle": "小雨",
+  "ui.rain": "雨",
+  "ui.showers": "阵雨",
+  "ui.snow": "雪",
+  "ui.snowShowers": "阵雪",
+  "ui.thunderstorm": "雷雨",
+  "ui.feelsLike": "体感"
 }

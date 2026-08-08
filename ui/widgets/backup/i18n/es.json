@@ -23,5 +23,17 @@
   "slots.kopiaHref.label": "URL de clic",
   "slots.kopiaHref.placeholder": "http://kopia:51515",
   "slots.customName.label": "Nombre visible",
-  "slots.customName.placeholder": "Se muestra en la tarjeta"
+  "slots.customName.placeholder": "Se muestra en la tarjeta",
+  "ui.haikus": "Confía, pero|verifica.\nHaz copias|o lamenta.\nNada dura|para siempre.\nCorre de noche.|Mañana en calma.|Los datos viven.\nPrimero copia.|Luego borra.|Duerme mejor.\nRegistros en verde.|Café caliente.|Todo bien.\nLa esperanza no|es una estrategia.\nGuárdalo a salvo.\nEspera lo|inesperado.\nPreocuparse no sirve.|Las buenas copias|sí.\nPrepárate pronto.|Entra en pánico poco.|Sonríe.",
+  "ui.backupStatus": "Estado de la copia",
+  "ui.running": "en curso",
+  "ui.unknown": "desconocido",
+  "ui.last": "última",
+  "ui.next": "siguiente",
+  "ui.backupError": "Error de copia",
+  "ui.unreachable": "Inaccesible",
+  "ui.error": "Error",
+  "ui.runningNow": "En curso…",
+  "ui.lastCap": "Última",
+  "ui.nextCap": "Siguiente"
 }

@@ -23,5 +23,12 @@
   "listId.label": "Liste",
   "listId.hint": "Oben URL und Schlüssel eingeben, dann Abrufen klicken, um Sammlungen und Leselisten zu laden.",
   "href.label": "Klick-URL (optional)",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.reading": "LESE GERADE",
+  "ui.finished": "Gelesen",
+  "ui.unread": "Ungelesen",
+  "ui.percentRead": "{pct} % gelesen",
+  "ui.noBooks": "Keine Bücher",
+  "ui.untitled": "Ohne Titel",
+  "ui.by": "von"
 }

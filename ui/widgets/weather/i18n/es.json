@@ -9,5 +9,17 @@
   "units.opt.f": "°F",
   "feelsLike.label": "Mostrar sensación térmica",
   "href.label": "URL del enlace",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.clear": "Despejado",
+  "ui.mostlyClear": "Mayormente despejado",
+  "ui.partlyCloudy": "Parcialmente nublado",
+  "ui.cloudy": "Nublado",
+  "ui.fog": "Niebla",
+  "ui.drizzle": "Llovizna",
+  "ui.rain": "Lluvia",
+  "ui.showers": "Chubascos",
+  "ui.snow": "Nieve",
+  "ui.snowShowers": "Chubascos de nieve",
+  "ui.thunderstorm": "Tormenta",
+  "ui.feelsLike": "sensación"
 }

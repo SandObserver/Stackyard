@@ -80,7 +80,10 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
+  import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+  await loadStrings();
+  document.getElementById('lbl').textContent = wt('ui.reading', 'READING');
+  document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const API='/api';
   const id=new URLSearchParams(location.search).get('id')||'';
   const POLL_MS=300000;
@@ -95,9 +98,9 @@
   function lum(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return 0.3;const n=parseInt(m[1],16);
     const r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;return 0.2126*r+0.7152*g+0.0722*b;}
   function progressText(b){
-    if(b.finished) return ['Finished','done'];
-    if(b.progress!=null) return [Math.round(b.progress*100)+'% read','reading'];
-    return ['Unread','none'];
+    if(b.finished) return [wt('ui.finished','Finished'),'done'];
+    if(b.progress!=null) return [wt('ui.percentRead','{pct}% read').replace('{pct}',String(Math.round(b.progress*100))),'reading'];
+    return [wt('ui.unread','Unread'),'none'];
   }
   function showInfo(b){
     iT.textContent=b.title||''; iA.textContent=b.author||'';
@@ -109,7 +112,7 @@
 
   function render(books){
     shelf.querySelectorAll('.bk,.empty').forEach(n=>n.remove());
-    if(!books.length){ const e=document.createElement('div'); e.className='empty'; e.textContent='No books'; shelf.appendChild(e); return; }
+    if(!books.length){ const e=document.createElement('div'); e.className='empty'; e.textContent=wt('ui.noBooks','No books'); shelf.appendChild(e); return; }
     const tallestIdx=books.reduce((mi,b,i,a)=>(b._h>a[mi]._h?i:mi),0);
     const ledgeTop=shelf.querySelector('.ledge-top');
     books.forEach((b,i)=>{
@@ -124,7 +127,7 @@
       el.appendChild(sp);
       el.tabIndex=0; el.setAttribute('role','listitem');
       const [ptxt]=progressText(b);
-      el.setAttribute('aria-label',(b.title||'Untitled')+(b.author?' by '+b.author:'')+', '+ptxt);
+      el.setAttribute('aria-label',(b.title||wt('ui.untitled','Untitled'))+(b.author?' '+wt('ui.by','by')+' '+b.author:'')+', '+ptxt);
       const on=()=>{ el.classList.add('up'); showInfo(b); };
       const off=()=>{ el.classList.remove('up'); hideInfo(); };
       el.addEventListener('mouseenter',on); el.addEventListener('mouseleave',off);

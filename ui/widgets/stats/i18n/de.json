@@ -46,5 +46,12 @@
   "bays.label": "Schächte",
   "bays.rowLabel": "Schacht",
   "bays.fetchLabel": "Laufwerke abrufen",
-  "bays.hint": "Oben die URL eingeben, dann die Liste laden und jedem Schacht ein Laufwerk zuweisen."
+  "bays.hint": "Oben die URL eingeben, dann die Liste laden und jedem Schacht ein Laufwerk zuweisen.",
+  "ui.noData": "Keine Daten",
+  "ui.diskHealth": "Laufwerkszustand",
+  "ui.noSmart": "Keine SMART-Daten",
+  "ui.healthy": "In Ordnung",
+  "ui.warning": "Warnung",
+  "ui.failed": "Ausgefallen",
+  "ui.ageAlert": "Alterswarnung"
 }

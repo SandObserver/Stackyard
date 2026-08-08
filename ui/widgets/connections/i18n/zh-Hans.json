@@ -53,5 +53,20 @@
   "services.adminUrl.placeholder": "http://your-server:3002",
   "services.color.label": "圆点颜色",
   "showLegend.label": "显示图例",
-  "showLegend.hint": "地图底部的服务图例。"
+  "showLegend.hint": "地图底部的服务图例。",
+  "ui.vpnStatus": "VPN 状态",
+  "ui.unavailable": "不可用",
+  "ui.connected": "已连接",
+  "ui.disconnected": "已断开",
+  "ui.secured": "已加密",
+  "ui.notSecured": "未加密",
+  "ui.peer": "节点",
+  "ui.peers": "节点",
+  "ui.peersLabel": "节点",
+  "ui.online": "在线",
+  "ui.mesh": "网状网络",
+  "ui.noData": "暂无数据",
+  "ui.worldMap": "全球连接地图",
+  "ui.service": "服务",
+  "ui.users": "用户"
 }

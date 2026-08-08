@@ -60,11 +60,17 @@ let _tickId   = null;
 
 const W = 22, H = 40, S = 3.4, G = 1.8, MID = H / 2, PAD = S;
 
-const _DFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const _MFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+/* Day and month names come from the browser rather than a catalog: it already
+   has every locale's names, in the right order and the right grammatical form,
+   and a hand-kept list of twelve English months could only ever be wrong. */
+const _lang = new URLSearchParams(location.search).get('lang') || 'en';
+const _dateFmt = (() => {
+  try { return new Intl.DateTimeFormat(_lang, { weekday: 'long', month: 'long', day: 'numeric' }); }
+  catch { return new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }); }
+})();
 function _a11yLabel(now){
   const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
-  return `${hh}:${mm}, ${_DFULL[now.getDay()]}, ${_MFULL[now.getMonth()]} ${now.getDate()}`;
+  return `${hh}:${mm}, ${_dateFmt.format(now)}`;
 }
 
 

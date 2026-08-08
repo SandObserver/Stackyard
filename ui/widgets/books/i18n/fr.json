@@ -23,5 +23,12 @@
   "listId.label": "Liste",
   "listId.hint": "Saisissez l’URL et la clé ci-dessus, puis cliquez sur Récupérer pour charger vos collections et listes de lecture.",
   "href.label": "URL de clic (facultatif)",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.reading": "EN COURS",
+  "ui.finished": "Terminé",
+  "ui.unread": "Non lu",
+  "ui.percentRead": "{pct} % lu",
+  "ui.noBooks": "Aucun livre",
+  "ui.untitled": "Sans titre",
+  "ui.by": "de"
 }

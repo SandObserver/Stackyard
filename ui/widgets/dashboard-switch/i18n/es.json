@@ -18,5 +18,7 @@
   "keychains.color.opt.blue": "Azul",
   "openIn.label": "Abrir en",
   "openIn.opt.same": "La misma pestaña",
-  "openIn.opt.new": "Una pestaña nueva"
+  "openIn.opt.new": "Una pestaña nueva",
+  "ui.switcher": "Selector de paneles",
+  "ui.empty": "Añade un panel en los ajustes"
 }

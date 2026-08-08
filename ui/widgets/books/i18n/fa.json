@@ -23,5 +23,12 @@
   "listId.label": "فهرست",
   "listId.hint": "نشانی و کلید را بالا وارد کنید، سپس دریافت را بزنید تا مجموعه‌ها و فهرست‌های خواندن بارگذاری شوند.",
   "href.label": "نشانی کلیک (اختیاری)",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.reading": "در حال خواندن",
+  "ui.finished": "خوانده‌شده",
+  "ui.unread": "خوانده‌نشده",
+  "ui.percentRead": "{pct}٪ خوانده‌شده",
+  "ui.noBooks": "کتابی نیست",
+  "ui.untitled": "بدون عنوان",
+  "ui.by": "نوشتهٔ"
 }

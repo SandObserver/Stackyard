@@ -53,5 +53,20 @@
   "services.adminUrl.placeholder": "http://your-server:3002",
   "services.color.label": "Dot Color",
   "showLegend.label": "Show Legend",
-  "showLegend.hint": "Service key along the bottom of the map."
+  "showLegend.hint": "Service key along the bottom of the map.",
+  "ui.vpnStatus": "VPN status",
+  "ui.unavailable": "Unavailable",
+  "ui.connected": "Connected",
+  "ui.disconnected": "Disconnected",
+  "ui.secured": "Secured",
+  "ui.notSecured": "Not secured",
+  "ui.peer": "peer",
+  "ui.peers": "peers",
+  "ui.peersLabel": "Peers",
+  "ui.online": "online",
+  "ui.mesh": "Mesh",
+  "ui.noData": "No data",
+  "ui.worldMap": "World map of connections",
+  "ui.service": "Service",
+  "ui.users": "Users"
 }

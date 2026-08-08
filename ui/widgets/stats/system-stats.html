@@ -81,7 +81,8 @@
 <p id="sr-sum" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:-1px;"></p>
 <div class="widget" id="widget" aria-hidden="true"></div>
 <script type="module">
-import { poll, html, setHtml } from '/js/widget-toolbox.js?v=1';
+import { poll, html, setHtml, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+await loadStrings();
 const TICK_MS  = 10000;
 const SPEED_MS = 60000;
 const THROUGHPUT_MS = 3000;
@@ -402,7 +403,7 @@ async function fetchStats() {
 }
 
 function fmtMbps(v) {
-  if (v == null || isNaN(v)) return 'No data';
+  if (v == null || isNaN(v)) return wt('ui.noData','No data');
   return v >= 1000 ? (v/1000).toFixed(1)+' Gbps' : Math.round(v)+' Mbps';
 }
 

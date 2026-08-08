@@ -23,5 +23,12 @@
   "listId.label": "List",
   "listId.hint": "Enter the URL + key above, then click Fetch to load your collections / reading lists.",
   "href.label": "Click URL (optional)",
-  "href.placeholder": "https://…"
+  "href.placeholder": "https://…",
+  "ui.reading": "READING",
+  "ui.finished": "Finished",
+  "ui.unread": "Unread",
+  "ui.percentRead": "{pct}% read",
+  "ui.noBooks": "No books",
+  "ui.untitled": "Untitled",
+  "ui.by": "by"
 }
