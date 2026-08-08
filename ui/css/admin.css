@@ -52,7 +52,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .adm{display:flex;width:100%;max-width:1039px;min-height:calc(100vh - 88px);background:var(--sb);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
 
 /* ── Sidebar ── */
-.sb{width:var(--sbw);flex-shrink:0;background:var(--sb);border-inline-end:1px solid var(--bd-inner);display:flex;flex-direction:column;padding:0 10px 24px;position:sticky;top:0;height:100%;min-height:calc(100vh - 88px);overflow-y:auto}
+.sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 24px;position:sticky;top:0;height:100%;min-height:calc(100vh - 88px);overflow-y:auto}
 .sb-brand{display:flex;align-items:center;gap:10px;padding:18px 8px 20px;text-decoration:none;color:inherit}
 .sb-name{font-size:14px;font-weight:700;color:var(--tx)}
 .sb-ver{font-size:11px;color:var(--dm);margin-top:1px}
@@ -64,7 +64,12 @@ html{background:var(--bg-color,var(--bg-outer))}
 .ni{flex-shrink:0;opacity:.6}
 
 /* ── Content pane ── */
-.cp{flex:1;min-width:0;background:var(--pane);overflow-y:auto}
+/* The divider between the navigation and the section belongs to this pane, not
+   to the sidebar. The sidebar is sticky and one viewport tall, so a border on it
+   stopped partway down whenever a section was longer than the screen, most
+   visibly on the dashboard list. This pane is as tall as its content, so the
+   line runs the whole length of whatever is showing. Logical, so it mirrors. */
+.cp{flex:1;min-width:0;background:var(--pane);border-inline-start:1px solid var(--bd-inner);overflow-y:auto}
 
 /* ── Section ── */
 .sec{padding:20px 24px 48px}
@@ -414,7 +419,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 html.is-mobile .adm-outer{padding:0;display:block;min-height:100dvh}
 html.is-mobile .adm{max-width:none;width:100%;min-height:100dvh;border:none;border-radius:0}
 html.is-mobile .sb{display:none}
-html.is-mobile .cp{width:100%}
+/* No sidebar on mobile, so nothing for the divider to divide. */
+html.is-mobile .cp{width:100%;border-inline-start:none}
 html.is-mobile .sec{padding:16px 16px calc(132px + env(safe-area-inset-bottom))}
 html.is-mobile .sec-title{font-size:26px}
 html.is-mobile .sec-hdr{position:sticky;top:0;z-index:20;background:var(--pane);padding:10px 0 10px}

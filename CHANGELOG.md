@@ -82,8 +82,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so its charts and figures read the same way everywhere.
 - App and folder names now keep their own text direction, so an English name in
   a Persian dashboard no longer truncates from the wrong end.
-- Setting a dashboard password now asks for it twice and can be shown while
-  typing, instead of locking the install out on an unnoticed typo.
+- The first-run password prompt now asks for the password twice and can show
+  what you typed, instead of locking the install out on an unnoticed typo.
+- The divider between the Settings navigation and the section beside it now runs
+  the full length of the section instead of stopping one screen down.
 - A Docker socket URL stored as `tcp://` is corrected to `http://` on upgrade,
   instead of every app backed by a container reporting unhealthy.
 - When a widget's definition cannot be loaded, Settings now says why, listing

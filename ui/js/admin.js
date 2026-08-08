@@ -698,7 +698,6 @@ function initAllInlineEdits(){
       if(bars) bars.style.display='none';
       if(hint) hint.style.display='none';
     }});
-  initInlineEdit('ie-pw2','sec-pw2',{type:'password',placeholder:'Re-enter the new password'});
   const pwInp=el('sec-pw');
   if(pwInp){
     pwInp.addEventListener('input',()=>{

@@ -184,8 +184,17 @@ test('admin keeps only the overrides that cannot be logical', () => {
 
 /* ── the logical replacements are actually there ──────────────────────────── */
 
-test('the sidebar divider follows the text direction', () => {
-  assert.match(code('css/admin.css'), /border-inline-end:1px solid var\(--bd-inner\)/);
+test('the divider between the navigation and the section follows the text direction', () => {
+  /* It sits on the content pane rather than the sidebar. The sidebar is sticky
+     and one viewport tall, so a border there stopped partway down a section
+     longer than the screen; the pane is as tall as its content. Still logical,
+     so it moves to the other side in Persian. */
+  const src = code('css/admin.css');
+  assert.match(src, /\.cp\{[^}]*border-inline-start:1px solid var\(--bd-inner\)/);
+  assert.doesNotMatch(src, /\.sb\{[^}]*border-inline-(start|end)/,
+    'the sidebar should no longer carry the divider');
+  assert.match(src, /html\.is-mobile \.cp\{[^}]*border-inline-start:none/,
+    'there is no sidebar on mobile, so no divider either');
 });
 
 test('row values align to the end of the line, not the right', () => {

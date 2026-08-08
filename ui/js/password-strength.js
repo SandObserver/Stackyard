@@ -13,6 +13,21 @@ const BARS = 5;
 
 export const MIN_PASSWORD_LENGTH = 8;
 
+/* Two entries of the same password, compared.
+
+   Only the first-run prompt needs this. Admin writes the typed value back into
+   the row, so the password is on screen until it is saved and a typo is visible
+   there; the prompt shows dots, with revealing them a deliberate act.
+
+   An empty new password means "keep the current one" and needs no
+   confirmation.
+
+   @param {string} newPassword @param {string} confirmation @returns {boolean} */
+export function passwordMismatch(newPassword, confirmation) {
+  const pw = newPassword || '';
+  return pw.length > 0 && pw !== (confirmation || '');
+}
+
 /** Score a password.
     @param {string} pw
     @returns {{ score:number, labelKey:string, color:string, ok:boolean }}
