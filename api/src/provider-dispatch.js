@@ -14,8 +14,11 @@ async function dispatchProvider(ctx, handlers, opts = {}) {
      name. */
   if (typeof fn !== 'function') ctx.fail(`Unknown ${field}: ${key}`, { kind: ctx.KIND.INVALID });
   if (!opts.onError) return fn(ctx);
-  try { return await fn(ctx); }
-  catch (e) { return opts.onError(e, ctx); }
+  try {
+    return await fn(ctx);
+  } catch (e) {
+    return opts.onError(e, ctx);
+  }
 }
 
 module.exports = { dispatchProvider };

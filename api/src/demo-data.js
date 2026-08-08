@@ -4,19 +4,23 @@
 /* Smooth wave in [min,max], period seconds, plus a little noise. */
 function wave(periodSec, min, max, phase = 0) {
   const t = Date.now() / 1000;
-  const mid = (min + max) / 2, amp = (max - min) / 2;
-  const n = (Math.sin(t / 3) * 0.04);
+  const mid = (min + max) / 2,
+    amp = (max - min) / 2;
+  const n = Math.sin(t / 3) * 0.04;
   return mid + amp * Math.sin((t / periodSec) * 2 * Math.PI + phase) + amp * n;
 }
-const round = (v, d = 0) => { const f = 10 ** d; return Math.round(v * f) / f; };
+const round = (v, d = 0) => {
+  const f = 10 ** d;
+  return Math.round(v * f) / f;
+};
 
 const metrics = {
-  cpuSample:  () => ({ cpu: round(wave(40, 8, 46)), iowait: round(wave(55, 0.2, 2.4, 1), 1) }),
+  cpuSample: () => ({ cpu: round(wave(40, 8, 46)), iowait: round(wave(55, 0.2, 2.4, 1), 1) }),
   ramPercent: () => round(wave(90, 54, 68)),
-  diskStats:  (mount) => ({ usedPct: mount === '/' ? 61.4 : 78.2, totalGb: mount === '/' ? 467 : 1863 }),
-  cpuTemp:    () => round(wave(70, 44, 53, 2)),
-  procCount:  () => Math.round(wave(120, 306, 334)),
-  uptimeSeconds: () => 1_512_540 + Math.floor(Date.now() / 1000) % 86400,
+  diskStats: mount => ({ usedPct: mount === '/' ? 61.4 : 78.2, totalGb: mount === '/' ? 467 : 1863 }),
+  cpuTemp: () => round(wave(70, 44, 53, 2)),
+  procCount: () => Math.round(wave(120, 306, 334)),
+  uptimeSeconds: () => 1_512_540 + (Math.floor(Date.now() / 1000) % 86400),
 };
 
 function demoBadges(items) {

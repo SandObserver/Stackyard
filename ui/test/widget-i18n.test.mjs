@@ -96,7 +96,9 @@ test('the English remains as a fallback', () => {
 });
 
 test('a failed locale fetch does not break the widget', () => {
-  assert.match(toolbox, /catch \{ \/\* English is a usable answer \*\/ \}/);
+  /* The catch is empty on purpose; the formatter decides whether the comment
+     sits inside the braces or on its own line. */
+  assert.match(toolbox, /catch\s*\{\s*\/\* English is a usable answer \*\/\s*\}/);
 });
 
 /* ── relative times ───────────────────────────────────────────────────────── */

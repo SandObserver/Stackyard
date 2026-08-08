@@ -2,9 +2,13 @@
    free of the route it serves. */
 
 function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 }) {
-  const MAX_DEPTH = 6, MAX_NODES = 256;
+  const MAX_DEPTH = 6,
+    MAX_NODES = 256;
   if (_state.n++ > MAX_NODES || _depth > MAX_DEPTH || obj == null) return out;
-  if (typeof obj === 'number') { out.push({ path: path || '(root)', value: obj }); return out; }
+  if (typeof obj === 'number') {
+    out.push({ path: path || '(root)', value: obj });
+    return out;
+  }
   if (Array.isArray(obj)) {
     const countPath = path ? `${path}.$count` : '$count';
     out.push({ path: countPath, value: obj.length, label: `${path || 'root'} (count)` });
@@ -18,7 +22,10 @@ function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 })
             const n = obj.filter(i => i && i[field] === bval).length;
             if (n > 0) {
               const p = `${path ? path + '.' : ''}filter(${field}==${bval}).count`;
-              if (!seen[p]) { seen[p] = 1; out.push({ path: p, value: n, label: `${field} == ${bval}` }); }
+              if (!seen[p]) {
+                seen[p] = 1;
+                out.push({ path: p, value: n, label: `${field} == ${bval}` });
+              }
             }
           }
         }
@@ -38,12 +45,15 @@ function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 })
 
 function extractPath(obj, dotPath) {
   const segments = [];
-  let buf = '', depth = 0;
+  let buf = '',
+    depth = 0;
   for (const ch of dotPath) {
     if (ch === '(') depth++;
     else if (ch === ')') depth--;
-    if (ch === '.' && depth === 0) { if (buf) segments.push(buf); buf = ''; }
-    else buf += ch;
+    if (ch === '.' && depth === 0) {
+      if (buf) segments.push(buf);
+      buf = '';
+    } else buf += ch;
   }
   if (buf) segments.push(buf);
 
@@ -60,9 +70,15 @@ function extractPath(obj, dotPath) {
       continue;
     }
     const bare = seg.match(/^\[(\d+)\]$/);
-    if (bare) { cur = Array.isArray(cur) ? cur[+bare[1]] : undefined; continue; }
+    if (bare) {
+      cur = Array.isArray(cur) ? cur[+bare[1]] : undefined;
+      continue;
+    }
     const named = seg.match(/^(\w+)\[(\d+)\]$/);
-    if (named) { cur = Array.isArray(cur[named[1]]) ? cur[named[1]][+named[2]] : undefined; continue; }
+    if (named) {
+      cur = Array.isArray(cur[named[1]]) ? cur[named[1]][+named[2]] : undefined;
+      continue;
+    }
     cur = cur[seg];
   }
   return cur;
@@ -71,9 +87,12 @@ function extractPath(obj, dotPath) {
 function computeBadgeValue(data, badge) {
   if (!badge?.extract) return 0;
   const paths = Array.isArray(badge.extract)
-    ? badge.extract.map(e => typeof e === 'string' ? e : e.path)
+    ? badge.extract.map(e => (typeof e === 'string' ? e : e.path))
     : [typeof badge.extract === 'string' ? badge.extract : badge.extract.path];
-  return paths.reduce((s, p) => { const v = extractPath(data, p); return s + (typeof v === 'number' ? v : 0); }, 0);
+  return paths.reduce((s, p) => {
+    const v = extractPath(data, p);
+    return s + (typeof v === 'number' ? v : 0);
+  }, 0);
 }
 
 module.exports = { collectNumbers, extractPath, computeBadgeValue };

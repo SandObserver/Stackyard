@@ -72,7 +72,10 @@ while (filesChangedThisPass !== 0) {
   for (const file of files) {
     const original = fs.readFileSync(file, 'utf8');
     unstamped.push(...findUnstamped(original, file));
-    const updated = original.replace(REF_RE, (_match, quote, assetPath) => `${quote}${assetPath}?v=${hashFor(assetPath)}`);
+    const updated = original.replace(
+      REF_RE,
+      (_match, quote, assetPath) => `${quote}${assetPath}?v=${hashFor(assetPath)}`,
+    );
     if (updated !== original) {
       if (!CHECK_ONLY) fs.writeFileSync(file, updated, 'utf8');
       filesChangedThisPass++;
@@ -103,8 +106,11 @@ const WIDGETS_DIR = path.join(UI_DIR, 'widgets');
 
 function stampWidgetManifests() {
   let dirents;
-  try { dirents = fs.readdirSync(WIDGETS_DIR, { withFileTypes: true }); }
-  catch { return; }
+  try {
+    dirents = fs.readdirSync(WIDGETS_DIR, { withFileTypes: true });
+  } catch {
+    return;
+  }
   let stamped = 0;
   for (const ent of dirents) {
     if (!ent.isDirectory()) continue;
@@ -112,9 +118,7 @@ function stampWidgetManifests() {
     const manPath = path.join(dir, 'widget.json');
     if (!fs.existsSync(manPath)) continue;
     const manifest = JSON.parse(fs.readFileSync(manPath, 'utf8'));
-    const files = manifest.views
-      ? [...new Set(Object.values(manifest.views).map(v => v.src))]
-      : ['index.html'];
+    const files = manifest.views ? [...new Set(Object.values(manifest.views).map(v => v.src))] : ['index.html'];
     const versions = {};
     for (const file of files) {
       const full = path.join(dir, file);
@@ -125,7 +129,10 @@ function stampWidgetManifests() {
        every manifest on every run, which buries a real change in noise. */
     const current = JSON.stringify(manifest.entryVersions || {});
     if (current === JSON.stringify(versions)) continue;
-    if (CHECK_ONLY) { staleManifests.push(ent.name); continue; }
+    if (CHECK_ONLY) {
+      staleManifests.push(ent.name);
+      continue;
+    }
     manifest.entryVersions = versions;
     fs.writeFileSync(manPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
     stamped++;

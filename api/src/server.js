@@ -1,5 +1,5 @@
 const http = require('http');
-const log  = require('./log');
+const log = require('./log');
 
 const _port = parseInt(process.env.PORT ?? '', 10);
 if (process.env.PORT !== undefined && (Number.isNaN(_port) || _port < 1 || _port > 65535))
@@ -10,8 +10,11 @@ const PORT = Number.isNaN(_port) ? 3000 : _port;
    logged and a non-zero status supervisord can act on. */
 function fatal(kind) {
   return err => {
-    try { log.error('fatal: ' + kind, { error: (err && err.message) || String(err), stack: err && err.stack }); }
-    catch { /* logging must not mask the original failure */ }
+    try {
+      log.error('fatal: ' + kind, { error: (err && err.message) || String(err), stack: err && err.stack });
+    } catch {
+      /* logging must not mask the original failure */
+    }
     process.exit(1);
   };
 }
@@ -47,13 +50,20 @@ http.createServer(dispatch).listen(PORT, () => {
     `  ➜  Node:      ${process.version}`,
     '',
   ];
-  try { const ll = require('./config').loadConfig().settings.logLevel; if (ll) log.setLevel(ll); } catch {}
+  try {
+    const ll = require('./config').loadConfig().settings.logLevel;
+    if (ll) log.setLevel(ll);
+  } catch {}
   log.print(lines.join('\n'));
 
   /* With this on, clients can spoof X-Forwarded-* unless there really is a proxy
      in front. Flagged at boot so the misconfiguration is visible. */
   if (process.env.TRUST_PROXY === 'true')
-    log.warn('TRUST_PROXY is enabled: X-Forwarded-Proto is trusted, so a request claiming https gets a Secure session cookie. Only safe behind a reverse proxy you control.');
+    log.warn(
+      'TRUST_PROXY is enabled: X-Forwarded-Proto is trusted, so a request claiming https gets a Secure session cookie. Only safe behind a reverse proxy you control.',
+    );
   if (process.env.TRUST_PROXY === 'true' && !process.env.TRUSTED_PROXY)
-    log.warn('TRUST_PROXY is set but TRUSTED_PROXY is not: rate limiting counts every request through the front proxy as one client. Set TRUSTED_PROXY to the proxy address.');
+    log.warn(
+      'TRUST_PROXY is set but TRUSTED_PROXY is not: rate limiting counts every request through the front proxy as one client. Set TRUSTED_PROXY to the proxy address.',
+    );
 });

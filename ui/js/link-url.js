@@ -11,11 +11,11 @@
    a browser has: no DOM, no window, no imports. */
 
 export const UNSAFE_LINK_SCHEMES = Object.freeze([
-  'javascript', /* executes in our origin */
-  'data',       /* data:text/html runs script in our origin */
-  'vbscript',   /* legacy equivalent of javascript: */
-  'blob',       /* can reference a document in our origin */
-  'filesystem', /* likewise */
+  'javascript' /* executes in our origin */,
+  'data' /* data:text/html runs script in our origin */,
+  'vbscript' /* legacy equivalent of javascript: */,
+  'blob' /* can reference a document in our origin */,
+  'filesystem' /* likewise */,
 ]);
 
 /* Browsers strip control characters and whitespace from the scheme before
@@ -37,7 +37,7 @@ export function isSafeLinkUrl(value) {
 
   const cleaned = stripBlanks(value);
   const colon = cleaned.indexOf(':');
-  if (colon === -1) return true;   /* relative, no scheme to worry about */
+  if (colon === -1) return true; /* relative, no scheme to worry about */
 
   const scheme = cleaned.slice(0, colon).toLowerCase();
   /* A colon that appears after a path or query separator is not a scheme:

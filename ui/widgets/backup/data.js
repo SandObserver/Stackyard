@@ -3,8 +3,15 @@
    group row and read that row's own URL and password from ctx.row. */
 
 const {
-  dupList, dupId, dupName, dupMeta, dupSchedule, dupNormalizeBase,
-  dupDeriveStatus, kopiaDeriveStatus, kopiaSourceId,
+  dupList,
+  dupId,
+  dupName,
+  dupMeta,
+  dupSchedule,
+  dupNormalizeBase,
+  dupDeriveStatus,
+  kopiaDeriveStatus,
+  kopiaSourceId,
 } = require('./backup-status');
 
 const BACKUP_MS = 10000; /* backup providers respond more slowly than a normal data fetch */
@@ -17,9 +24,9 @@ const _dupTokens = new Map();
 
 async function dupLogin(base, password, fetchJSON) {
   const r = await fetchJSON(base + '/api/v1/auth/login', {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ Password: password }),
+    body: JSON.stringify({ Password: password }),
     timeout: BACKUP_MS,
   });
   if (r.status !== 200) throw new Error(`Duplicati login failed: HTTP ${r.status}`);
@@ -30,9 +37,9 @@ async function dupLogin(base, password, fetchJSON) {
 
 async function dupRefresh(base, refreshNonce, fetchJSON) {
   const r = await fetchJSON(base + '/api/v1/auth/refresh', {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ RefreshNonce: refreshNonce }),
+    body: JSON.stringify({ RefreshNonce: refreshNonce }),
     timeout: BACKUP_MS,
   });
   if (r.status !== 200) throw new Error(`Duplicati refresh failed: HTTP ${r.status}`);
@@ -46,16 +53,19 @@ async function dupGetToken(base, password, fetchJSON) {
   if (cached && cached.password === password && cached.expiresAt > Date.now() + 30000) return cached.accessToken;
   let tokens;
   if (cached && cached.password === password && cached.refreshNonce) {
-    try { tokens = await dupRefresh(base, cached.refreshNonce, fetchJSON); }
-    catch { tokens = await dupLogin(base, password, fetchJSON); }
+    try {
+      tokens = await dupRefresh(base, cached.refreshNonce, fetchJSON);
+    } catch {
+      tokens = await dupLogin(base, password, fetchJSON);
+    }
   } else {
     tokens = await dupLogin(base, password, fetchJSON);
   }
   _dupTokens.set(base, {
-    accessToken:  tokens.accessToken,
+    accessToken: tokens.accessToken,
     refreshNonce: tokens.refreshNonce,
     password,
-    expiresAt:    Date.now() + 4.5 * 60 * 1000, /* 4m30s, 30s before 5m expiry */
+    expiresAt: Date.now() + 4.5 * 60 * 1000 /* 4m30s, 30s before 5m expiry */,
   });
   return tokens.accessToken;
 }
@@ -63,14 +73,14 @@ async function dupGetToken(base, password, fetchJSON) {
 async function dupFetch(base, password, path, fetchJSON) {
   const token = await dupGetToken(base, password, fetchJSON);
   const r = await fetchJSON(base + path, {
-    headers: { 'Authorization': `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}` },
     timeout: BACKUP_MS,
   });
   if (r.status !== 401) return r;
   _dupTokens.delete(base);
   const retry = await dupGetToken(base, password, fetchJSON);
   return fetchJSON(base + path, {
-    headers: { 'Authorization': `Bearer ${retry}` },
+    headers: { Authorization: `Bearer ${retry}` },
     timeout: BACKUP_MS,
   });
 }
@@ -111,7 +121,8 @@ async function kopiaSources(row, fetchJSON) {
    position. */
 async function slots(config, fetchJSON) {
   const list = Array.isArray(config.slots) ? config.slots : [];
-  const dupGroups = {}, kopiaGroups = {};
+  const dupGroups = {},
+    kopiaGroups = {};
 
   list.forEach((s, i) => {
     if (!s?.provider || !s.jobId) return;
@@ -128,48 +139,57 @@ async function slots(config, fetchJSON) {
 
   const result = Array(list.length).fill(null);
 
-  await Promise.all(Object.values(dupGroups).map(async ({ base, pass, slots: gs }) => {
-    try {
-      const [stateR, backupsR] = await Promise.all([
-        dupFetch(base, pass, '/api/v1/serverstate', fetchJSON),
-        dupFetch(base, pass, '/api/v1/backups', fetchJSON),
-      ]);
-      if (stateR.status === 401 || backupsR.status === 401) return;
-      const serverState = stateR.data || {};
-      const backups     = dupList(backupsR.data);
-      const proposed    = {};
-      (serverState.ProposedSchedule || []).forEach(p => { if (p.Item1 && p.Item2) proposed[String(p.Item1)] = p.Item2; });
-      gs.forEach(({ i, jobId, customName }) => {
-        const j = backups.find(b => dupId(b) === jobId);
-        if (!j) return;
-        const id = dupId(j);
-        const meta = dupMeta(j);
-        result[i] = {
-          id, name: customName || dupName(j),
-          status: dupDeriveStatus(j, serverState),
-          lastFinished: meta.LastBackupFinished || meta.LastBackupDate || meta.LastBackupStarted || null,
-          nextRun: proposed[id] || dupSchedule(j)?.Time || null,
-        };
-      });
-    } catch {}
-  }));
+  await Promise.all(
+    Object.values(dupGroups).map(async ({ base, pass, slots: gs }) => {
+      try {
+        const [stateR, backupsR] = await Promise.all([
+          dupFetch(base, pass, '/api/v1/serverstate', fetchJSON),
+          dupFetch(base, pass, '/api/v1/backups', fetchJSON),
+        ]);
+        if (stateR.status === 401 || backupsR.status === 401) return;
+        const serverState = stateR.data || {};
+        const backups = dupList(backupsR.data);
+        const proposed = {};
+        (serverState.ProposedSchedule || []).forEach(p => {
+          if (p.Item1 && p.Item2) proposed[String(p.Item1)] = p.Item2;
+        });
+        gs.forEach(({ i, jobId, customName }) => {
+          const j = backups.find(b => dupId(b) === jobId);
+          if (!j) return;
+          const id = dupId(j);
+          const meta = dupMeta(j);
+          result[i] = {
+            id,
+            name: customName || dupName(j),
+            status: dupDeriveStatus(j, serverState),
+            lastFinished: meta.LastBackupFinished || meta.LastBackupDate || meta.LastBackupStarted || null,
+            nextRun: proposed[id] || dupSchedule(j)?.Time || null,
+          };
+        });
+      } catch {}
+    }),
+  );
 
-  await Promise.all(Object.values(kopiaGroups).map(async ({ url, user, pass, slots: gs }) => {
-    try {
-      const r = await kopiaFetch(url, user, pass, '/api/v1/sources', fetchJSON);
-      if (r.status !== 200) return;
-      const allSources = r.data?.sources || [];
-      gs.forEach(({ i, jobId, customName }) => {
-        const s = allSources.find(src => kopiaSourceId(src.source) === jobId);
-        if (!s) return;
-        result[i] = {
-          id: kopiaSourceId(s.source), name: customName || s.source.path,
-          status: kopiaDeriveStatus(s),
-          lastFinished: s.lastSnapshot?.endTime || null, nextRun: null,
-        };
-      });
-    } catch {}
-  }));
+  await Promise.all(
+    Object.values(kopiaGroups).map(async ({ url, user, pass, slots: gs }) => {
+      try {
+        const r = await kopiaFetch(url, user, pass, '/api/v1/sources', fetchJSON);
+        if (r.status !== 200) return;
+        const allSources = r.data?.sources || [];
+        gs.forEach(({ i, jobId, customName }) => {
+          const s = allSources.find(src => kopiaSourceId(src.source) === jobId);
+          if (!s) return;
+          result[i] = {
+            id: kopiaSourceId(s.source),
+            name: customName || s.source.path,
+            status: kopiaDeriveStatus(s),
+            lastFinished: s.lastSnapshot?.endTime || null,
+            nextRun: null,
+          };
+        });
+      } catch {}
+    }),
+  );
 
   return result;
 }

@@ -19,7 +19,7 @@ function _fallback(key, vars) {
   return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : s;
 }
 
-export const NAMED = { blue:'#1e6ef4', green:'#008932', yellow:'#ffcc00', red:'#e9152d', gray:'#636366' };
+export const NAMED = { blue: '#1e6ef4', green: '#008932', yellow: '#ffcc00', red: '#e9152d', gray: '#636366' };
 
 /* WCAG contrast: dark text only where it beats white.
    ratioW = 1.05/(L+0.05), ratioD = (L+0.05)/0.0617 for #1c1c1e. */
@@ -33,10 +33,14 @@ export function needsDark(hex) {
     });
     const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
     return (L + 0.05) / 0.0617 > 1.05 / (L + 0.05);
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
-export function resolveColor(c) { return c ? (NAMED[c] || c) : ''; }
+export function resolveColor(c) {
+  return c ? NAMED[c] || c : '';
+}
 
 /* Priority: unhealthy > activity > fixed-label > healthy-dot. */
 /* Why a tile is red, as one short line of hover text. Docker's `status` is
@@ -51,7 +55,7 @@ const _clip = (s, n) => {
 };
 
 export function healthReason(detail, translate) {
-  const tr = typeof translate === 'function' ? translate : ((k, v) => _fallback(k, v));
+  const tr = typeof translate === 'function' ? translate : (k, v) => _fallback(k, v);
   if (!detail || typeof detail !== 'object') return '';
   const parts = [];
 
@@ -83,35 +87,50 @@ export function healthReason(detail, translate) {
       healthDetail?: Record<string, unknown>,
       translate?: (key: string, vars?: Record<string, unknown>) => string,
     }} opts */
-export function computeBadgeVisual({ health, activity, custom = {}, staticBdg = {}, hasHC, hideHealthy, badgesStale, healthStale, healthDetail, translate }) {
-  const tr = typeof translate === 'function' ? translate : ((k, v) => _fallback(k, v));
-  let cls, txt, bg = '';
+export function computeBadgeVisual({
+  health,
+  activity,
+  custom = {},
+  staticBdg = {},
+  hasHC,
+  hideHealthy,
+  badgesStale,
+  healthStale,
+  healthDetail,
+  translate,
+}) {
+  const tr = typeof translate === 'function' ? translate : (k, v) => _fallback(k, v);
+  let cls,
+    txt,
+    bg = '';
 
   if (health) {
-    cls = 'badge on red'; txt = '!';
-
+    cls = 'badge on red';
+    txt = '!';
   } else if (activity > 0) {
     cls = 'badge on blue';
     txt = activity > 99 ? '99+' : String(activity);
     if (custom.unit) txt += ' ' + custom.unit.slice(0, 8);
     bg = resolveColor(custom.color);
-
   } else if (staticBdg.enabled && staticBdg.label) {
     cls = 'badge on blue';
     txt = staticBdg.label.slice(0, 10);
     bg = resolveColor(staticBdg.color);
-
   } else if (!hideHealthy && hasHC) {
-    cls = 'badge on green'; txt = '';
-
+    cls = 'badge on green';
+    txt = '';
   } else {
-    cls = 'badge'; txt = '';
+    cls = 'badge';
+    txt = '';
   }
 
   /* Accessible status text so meaning isn't carried by color alone (HIG: don't rely on color) */
   let aria = '';
   if (health) aria = tr('status.needsAttention');
-  else if (activity > 0) aria = tr('status.pending', { count: (activity > 99 ? '99+' : String(activity)) + (custom.unit ? ' ' + custom.unit : '') });
+  else if (activity > 0)
+    aria = tr('status.pending', {
+      count: (activity > 99 ? '99+' : String(activity)) + (custom.unit ? ' ' + custom.unit : ''),
+    });
   else if (staticBdg.enabled && staticBdg.label) aria = staticBdg.label;
   else if (cls.includes('green')) aria = tr('status.healthy');
 
@@ -127,7 +146,9 @@ export function computeBadgeVisual({ health, activity, custom = {}, staticBdg = 
 
   /* Auto dark text: WCAG luminance check on the resolved hex. Falls back to
      class-based color (blue/red/green) when bg is empty. */
-  const effectiveBg = bg || (cls.includes('red') ? NAMED.red : cls.includes('green') ? NAMED.green : cls.includes('blue') ? NAMED.blue : '');
+  const effectiveBg =
+    bg ||
+    (cls.includes('red') ? NAMED.red : cls.includes('green') ? NAMED.green : cls.includes('blue') ? NAMED.blue : '');
   const color = effectiveBg && needsDark(effectiveBg) ? '#1c1c1e' : '';
 
   return { cls, txt, bg, aria, color, title: reason };

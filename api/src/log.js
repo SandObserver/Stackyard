@@ -11,7 +11,10 @@ const ABBR = { debug: 'DBG', info: 'INF', warn: 'WRN', error: 'ERR', audit: 'AUD
 let _threshold = THRESHOLD.info;
 function _apply(name) {
   const r = THRESHOLD[String(name || '').toLowerCase()];
-  if (r != null) { _threshold = r; return true; }
+  if (r != null) {
+    _threshold = r;
+    return true;
+  }
   return false;
 }
 _apply(process.env.LOG_LEVEL);
@@ -51,8 +54,8 @@ function _quote(s) {
     else if (ch === '\n') out += '\\n';
     else if (ch === '\r') out += '\\r';
     else if (ch === '\t') out += '\\t';
-    /* No escape of its own; the \u form keeps the value readable and on one line. */
-    else if (_isControl(code)) out += '\\u' + code.toString(16).padStart(4, '0');
+    /* No escape of its own; the \u form keeps the value readable and on one line. */ else if (_isControl(code))
+      out += '\\u' + code.toString(16).padStart(4, '0');
     else out += ch;
   }
   return out + '"';
@@ -75,13 +78,27 @@ function _emit(level, msg, data) {
 }
 
 const log = {
-  debug (msg, data) { _emit('debug', msg, data); },
-  info  (msg, data) { _emit('info',  msg, data); },
-  warn  (msg, data) { _emit('warn',  msg, data); },
-  error (msg, data) { _emit('error', msg, data); },
-  audit (msg, data) { _emit('audit', msg, data); },
-  print (text) { process.stdout.write(String(text) + '\n'); }, /* unstructured, e.g. the boot banner */
-  setLevel(name) { return _apply(name); },
+  debug(msg, data) {
+    _emit('debug', msg, data);
+  },
+  info(msg, data) {
+    _emit('info', msg, data);
+  },
+  warn(msg, data) {
+    _emit('warn', msg, data);
+  },
+  error(msg, data) {
+    _emit('error', msg, data);
+  },
+  audit(msg, data) {
+    _emit('audit', msg, data);
+  },
+  print(text) {
+    process.stdout.write(String(text) + '\n');
+  } /* unstructured, e.g. the boot banner */,
+  setLevel(name) {
+    return _apply(name);
+  },
 };
 
 module.exports = log;

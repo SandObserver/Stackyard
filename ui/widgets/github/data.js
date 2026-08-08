@@ -31,7 +31,7 @@ async function contributions(ctx, token, username, fetchJSON) {
   const r = await fetchJSON('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
       'User-Agent': 'stackyard-dashboard/1.0',
     },
@@ -48,25 +48,26 @@ async function contributions(ctx, token, username, fetchJSON) {
 
 /* Open pull requests via the search API. Multiple filters are OR-ed together. */
 async function pullRequests(ctx, token, username, config, fetchJSON) {
-  const raw = (Array.isArray(config.githubPrFilters) && config.githubPrFilters.length)
-    ? config.githubPrFilters
-    : [config.githubPrFilter || 'created'];
+  const raw =
+    Array.isArray(config.githubPrFilters) && config.githubPrFilters.length
+      ? config.githubPrFilters
+      : [config.githubPrFilter || 'created'];
   const filterArr = Array.isArray(raw) ? raw : [raw];
 
   const qualifiers = filterArr.map(f => {
-    if (f === 'assigned')         return `assignee:${username}`;
-    if (f === 'mentioned')        return `mentions:${username}`;
+    if (f === 'assigned') return `assignee:${username}`;
+    if (f === 'mentioned') return `mentions:${username}`;
     if (f === 'review-requested') return `review-requested:${username}`;
     return `author:${username}`;
   });
   const qualifier = qualifiers.join(' ');
-  const q   = encodeURIComponent(`is:open is:pr ${qualifier}`);
+  const q = encodeURIComponent(`is:open is:pr ${qualifier}`);
   const url = `https://api.github.com/search/issues?q=${q}&advanced_search=true&sort=updated&order=desc&per_page=20`;
 
   const r = await fetchJSON(url, {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
       'User-Agent': 'stackyard-dashboard/1.0',
     },
@@ -82,10 +83,12 @@ async function pullRequests(ctx, token, username, config, fetchJSON) {
   });
 
   const labelMap = {
-    'created': 'created', 'assigned': 'assigned',
-    'mentioned': 'mentioned', 'review-requested': 'review requested',
+    created: 'created',
+    assigned: 'assigned',
+    mentioned: 'mentioned',
+    'review-requested': 'review requested',
   };
-  const label  = filterArr.map(f => labelMap[f] || f).join(', ');
+  const label = filterArr.map(f => labelMap[f] || f).join(', ');
   const allUrl = `https://github.com/pulls?q=${encodeURIComponent(`is:open is:pr ${qualifier}`)}`;
 
   return { view: 'prs', totalCount: r.data?.total_count ?? items.length, label, allUrl, items };

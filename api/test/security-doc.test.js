@@ -52,7 +52,9 @@ test('the page only warns about headers the code actually reads', () => {
 /* ── the login limit ──────────────────────────────────────────────────────── */
 
 test('the documented login limit is the one in the code', () => {
-  const m = /const LOGIN_MAX = (\d+), LOGIN_WINDOW_MS = (\d+) \* 60 \* 1000/.exec(auth);
+  /* Whitespace-tolerant: the formatter decides how this declaration is laid
+     out, and the numbers are what this test is about. */
+  const m = /LOGIN_MAX\s*=\s*(\d+)[\s,]+LOGIN_WINDOW_MS\s*=\s*(\d+)\s*\*\s*60\s*\*\s*1000/.exec(auth);
   assert.ok(m, 'LOGIN_MAX / LOGIN_WINDOW_MS not found in auth.js');
   const [, max, minutes] = m;
   assert.match(doc, new RegExp(`${max} attempts per IP per ${minutes} minutes`),

@@ -11,17 +11,20 @@ export async function checkAuth(onLogin) {
     if (!d.enabled || d.authenticated) return true;
     showLoginScreen(onLogin);
     return false;
-  } catch(e) {
+  } catch (e) {
     /* 401 means auth is enabled and we're not logged in */
-    if (e.status === 401) { showLoginScreen(onLogin); return false; }
+    if (e.status === 401) {
+      showLoginScreen(onLogin);
+      return false;
+    }
     return true; /* any other error, let load() handle it */
   }
 }
 
 function showLoginScreen(onLogin) {
-  const s   = el('login-screen');
+  const s = el('login-screen');
   const btn = inpById('login-btn');
-  const pw  = inpById('login-pw');
+  const pw = inpById('login-pw');
   const err = el('login-err');
   if (s) s.style.display = 'flex';
 
@@ -29,28 +32,46 @@ function showLoginScreen(onLogin) {
     if (btn) btn.disabled = true;
     if (err) err.style.display = 'none';
     try {
-      await ap('/api/auth/login', { password: pw?.value||'' });
+      await ap('/api/auth/login', { password: pw?.value || '' });
       if (s) s.style.display = 'none';
       onLogin?.();
-    } catch(e) {
-      if (err) { err.textContent = e.message||'Incorrect password.'; err.style.display = 'block'; }
-      if (pw) { pw.value = ''; pw.focus(); }
-    } finally { if (btn) btn.disabled = false; }
+    } catch (e) {
+      if (err) {
+        err.textContent = e.message || 'Incorrect password.';
+        err.style.display = 'block';
+      }
+      if (pw) {
+        pw.value = '';
+        pw.focus();
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }
 
   if (btn) btn.onclick = doLogin;
-  if (pw) { pw.focus(); pw.onkeydown = e => { if (e.key === 'Enter') doLogin(); }; }
+  if (pw) {
+    pw.focus();
+    pw.onkeydown = e => {
+      if (e.key === 'Enter') doLogin();
+    };
+  }
 }
 
 export function wirePasswordStrength(inputId, barsId, hintId) {
-  const inp  = inpById(inputId);
+  const inp = inpById(inputId);
   const bars = qa('.pwbar', el(barsId));
   const hint = el(hintId);
   if (!inp || !bars?.length) return;
   const dim = 'rgba(255,255,255,.1)';
   inp.addEventListener('input', () => {
     const { score, labelKey, color } = pwStrength(inp.value);
-    bars.forEach((b, i) => { b.style.background = inp.value && i < score ? color : dim; });
-    if (hint) { hint.textContent = inp.value && labelKey ? t(labelKey) : ''; hint.style.color = color; }
+    bars.forEach((b, i) => {
+      b.style.background = inp.value && i < score ? color : dim;
+    });
+    if (hint) {
+      hint.textContent = inp.value && labelKey ? t(labelKey) : '';
+      hint.style.color = color;
+    }
   });
 }

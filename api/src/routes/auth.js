@@ -3,8 +3,24 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { getOrCreateSecret, rotateSessionSecret, newSessionSecret, newSessionId, hashPassword, verifyPassword, makeToken, setSessionCookie, clearSessionCookie, isSecureRequest, registerLoginAttempt, clearAttempts, isAuthenticated, hasValidSession, authActive,
-  needsRehash } = require('../auth');
+const {
+  getOrCreateSecret,
+  rotateSessionSecret,
+  newSessionSecret,
+  newSessionId,
+  hashPassword,
+  verifyPassword,
+  makeToken,
+  setSessionCookie,
+  clearSessionCookie,
+  isSecureRequest,
+  registerLoginAttempt,
+  clearAttempts,
+  isAuthenticated,
+  hasValidSession,
+  authActive,
+  needsRehash,
+} = require('../auth');
 
 on('GET', '/api/auth/check', (req, res) => {
   const cfg = loadConfig();
@@ -14,23 +30,29 @@ on('GET', '/api/auth/check', (req, res) => {
        a toggle in the admin UI that does not match what the server does. */
     enabled: authActive(cfg),
     authenticated: isAuthenticated(req),
-    passwordSet: !!(cfg.settings?.auth?.passwordHash),
-    setupPrompted: !!(cfg.settings?.auth?.setupPrompted),
+    passwordSet: !!cfg.settings?.auth?.passwordHash,
+    setupPrompted: !!cfg.settings?.auth?.setupPrompted,
   });
 });
 
-on('POST', '/api/auth/login', async(req, res) => {
+on('POST', '/api/auth/login', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const ip = getIp(req);
   try {
     const { password = '' } = JSON.parse(await readBody(req));
     const cfg = loadConfig();
-    if (!authActive(cfg)) return json(res, 200, { ok:true }); /* auth off, always pass */
+    if (!authActive(cfg)) return json(res, 200, { ok: true }); /* auth off, always pass */
     const hash = cfg.settings.auth.passwordHash;
     const limitErr = registerLoginAttempt(ip);
-    if (limitErr) { log.audit('login blocked', { ip, reason:'rate_limit' }); return json(res, 429, { error:limitErr, kind: KIND.AUTH }); }
+    if (limitErr) {
+      log.audit('login blocked', { ip, reason: 'rate_limit' });
+      return json(res, 429, { error: limitErr, kind: KIND.AUTH });
+    }
     const ok = await verifyPassword(password, hash);
-    if (!ok) { log.audit('login failed', { ip }); return json(res, 401, { error:'Incorrect password.', kind: KIND.AUTH }); }
+    if (!ok) {
+      log.audit('login failed', { ip });
+      return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
+    }
     clearAttempts(ip);
     log.audit('login success', { ip });
     /* A successful login is the only moment the plaintext is known, so it is the
@@ -52,28 +74,31 @@ on('POST', '/api/auth/login', async(req, res) => {
     const secret = getOrCreateSecret();
     const sessionId = newSessionId();
     setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
-    json(res, 200, { ok:true });
-  } catch(e) { fail(res, e, { status:400 }); }
+    json(res, 200, { ok: true });
+  } catch (e) {
+    fail(res, e, { status: 400 });
+  }
 });
 
 on('POST', '/api/auth/logout', (req, res) => {
   if (!checkOrigin(req, res)) return;
   log.audit('logout', { ip: getIp(req) });
   clearSessionCookie(res, isSecureRequest(req));
-  json(res, 200, { ok:true });
+  json(res, 200, { ok: true });
 });
 
-on('POST', '/api/auth/set-password', async(req, res) => {
+on('POST', '/api/auth/set-password', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
     const cfg = loadConfig();
     const hasPassword = !!cfg.settings?.auth?.passwordHash;
     if (hasPassword && !hasValidSession(req)) {
-      return json(res, 401, { error:'Authentication required to change the existing password.', kind: KIND.AUTH });
+      return json(res, 401, { error: 'Authentication required to change the existing password.', kind: KIND.AUTH });
     }
     const { password = '' } = JSON.parse(await readBody(req));
-    if (!password || password.length < 8) return json(res, 400, { error:'Password must be at least 8 characters.', kind: KIND.INVALID });
+    if (!password || password.length < 8)
+      return json(res, 400, { error: 'Password must be at least 8 characters.', kind: KIND.INVALID });
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
     cfg.settings.auth.passwordHash = await hashPassword(password);
@@ -88,8 +113,10 @@ on('POST', '/api/auth/set-password', async(req, res) => {
     log.audit('password changed', {});
     const sessionId = newSessionId();
     setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret), isSecureRequest(req));
-    json(res, 200, { ok:true });
-  } catch(e) { fail(res, e, { status:400 }); }
+    json(res, 200, { ok: true });
+  } catch (e) {
+    fail(res, e, { status: 400 });
+  }
 });
 
 /* Sign out every device, including this one, without changing the password.
@@ -102,7 +129,10 @@ on('POST', '/api/auth/revoke-sessions', (req, res) => {
   /* Nothing to revoke when auth is not in force: there are no sessions to
      invalidate, and rotating would only churn the stored secret. */
   if (!authActive(cfg)) {
-    return json(res, 400, { error:'Authentication is not enabled, so there are no sessions to sign out.', kind: KIND.INVALID });
+    return json(res, 400, {
+      error: 'Authentication is not enabled, so there are no sessions to sign out.',
+      kind: KIND.INVALID,
+    });
   }
   const secret = rotateSessionSecret();
   log.audit('sessions revoked', { ip: getIp(req) });
@@ -111,7 +141,7 @@ on('POST', '/api/auth/revoke-sessions', (req, res) => {
      is the one signed out. */
   const sessionId = newSessionId();
   setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
-  json(res, 200, { ok:true });
+  json(res, 200, { ok: true });
 });
 
 on('POST', '/api/auth/dismiss-setup', (req, res) => {
@@ -122,10 +152,10 @@ on('POST', '/api/auth/dismiss-setup', (req, res) => {
   cfg.settings.auth = cfg.settings.auth || {};
   cfg.settings.auth.setupPrompted = true;
   saveConfig(cfg);
-  json(res, 200, { ok:true });
+  json(res, 200, { ok: true });
 });
 
-on('POST', '/api/auth/toggle', async(req, res) => {
+on('POST', '/api/auth/toggle', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
@@ -138,14 +168,14 @@ on('POST', '/api/auth/toggle', async(req, res) => {
        password is itself behind the gate. Refuse instead of creating that
        state. */
     if (enabled && !cfg.settings.auth.passwordHash) {
-      return json(res, 400, { error:'Set a password before turning authentication on.', kind: KIND.INVALID });
+      return json(res, 400, { error: 'Set a password before turning authentication on.', kind: KIND.INVALID });
     }
     cfg.settings.auth.enabled = !!enabled;
-    if (enabled && !cfg.settings.auth.secret)
-      cfg.settings.auth.secret = newSessionSecret();
+    if (enabled && !cfg.settings.auth.secret) cfg.settings.auth.secret = newSessionSecret();
     saveConfig(cfg);
     log.audit('auth toggled', { enabled: !!enabled });
-    json(res, 200, { ok:true });
-  } catch(e) { fail(res, e, { status:400 }); }
+    json(res, 200, { ok: true });
+  } catch (e) {
+    fail(res, e, { status: 400 });
+  }
 });
-

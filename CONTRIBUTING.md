@@ -26,6 +26,7 @@ cd api && npm test
 cd api && npx c8 check-coverage --lines 92
 cd ui/test && node --test
 npm run lint
+npm run format:check
 npm run typecheck
 npm run typecheck:ui
 docker build -t stackyard:ci .

@@ -1,13 +1,14 @@
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
-const log  = require('./log');
+const log = require('./log');
 const { IS_DEMO } = require('./demo');
 const { migrateItemBadgeHeaders } = require('./badge-headers');
 
 const CONFIG_PATH = process.env.CONFIG_PATH || '/data/apps.json';
-const ICONS_PATH  = process.env.ICONS_PATH  || '/icons';
+const ICONS_PATH = process.env.ICONS_PATH || '/icons';
 
-let _cfgCache = null, _cfgCacheAt = 0;
+let _cfgCache = null,
+  _cfgCacheAt = 0;
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape, and add a matching step in migrate(). */
@@ -75,7 +76,9 @@ let _lastCorruptRaw = null;
 function _backupCorrupt(raw) {
   if (raw === _lastCorruptRaw) return;
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  try { fs.writeFileSync(`${CONFIG_PATH}.corrupt-${stamp}`, raw, { encoding:'utf8', flag:'wx' }); } catch {}
+  try {
+    fs.writeFileSync(`${CONFIG_PATH}.corrupt-${stamp}`, raw, { encoding: 'utf8', flag: 'wx' });
+  } catch {}
   _lastCorruptRaw = raw;
 }
 
@@ -83,14 +86,15 @@ function loadConfig() {
   if (IS_DEMO) return loadDemoConfig();
 
   const now = Date.now();
-  if (_cfgCache && (now - _cfgCacheAt) < CONFIG_TTL_MS) return _cfgCache;
+  if (_cfgCache && now - _cfgCacheAt < CONFIG_TTL_MS) return _cfgCache;
 
   let raw;
   try {
     raw = fs.readFileSync(CONFIG_PATH, 'utf8');
   } catch (e) {
-    if (e.code !== 'ENOENT') log.warn('config file unreadable, starting with a blank config', { path: CONFIG_PATH, error: e.message });
-    return migrate({ items:[], settings:{} });
+    if (e.code !== 'ENOENT')
+      log.warn('config file unreadable, starting with a blank config', { path: CONFIG_PATH, error: e.message });
+    return migrate({ items: [], settings: {} });
   }
 
   let parsed;
@@ -98,9 +102,12 @@ function loadConfig() {
     parsed = JSON.parse(raw);
   } catch (e) {
     /* Preserve it instead of letting the next save overwrite it. */
-    log.warn('config file corrupt, backing up and starting with a blank config', { path: CONFIG_PATH, error: e.message });
+    log.warn('config file corrupt, backing up and starting with a blank config', {
+      path: CONFIG_PATH,
+      error: e.message,
+    });
     _backupCorrupt(raw);
-    return migrate({ items:[], settings:{} });
+    return migrate({ items: [], settings: {} });
   }
 
   const shaped = _normalizeShape(parsed);
@@ -109,15 +116,20 @@ function loadConfig() {
        caching a shape that throws for every consumer. */
     log.warn('config file has the wrong shape, backing up and starting with a blank config', { path: CONFIG_PATH });
     _backupCorrupt(raw);
-    return migrate({ items:[], settings:{} });
+    return migrate({ items: [], settings: {} });
   }
 
   const before = shaped._schemaVersion;
   migrate(shaped);
-  _cfgCache = shaped; _cfgCacheAt = now;
+  _cfgCache = shaped;
+  _cfgCacheAt = now;
   /* A failed write, on a read-only volume for instance, must not break reads: the
      migrated copy is cached and re-migrates next load. */
-  if (shaped._schemaVersion !== before) { try { saveConfig(shaped); } catch {} }
+  if (shaped._schemaVersion !== before) {
+    try {
+      saveConfig(shaped);
+    } catch {}
+  }
   return shaped;
 }
 
@@ -129,7 +141,7 @@ function saveConfig(data) {
     data._rev = (Number(data._rev) || 0) + 1;
   }
   const dir = path.dirname(CONFIG_PATH);
-  fs.mkdirSync(dir, { recursive:true });
+  fs.mkdirSync(dir, { recursive: true });
   const tmp = CONFIG_PATH + '.tmp';
 
   /* Write, flush, rename, flush the directory. Temp-and-rename alone only stops a
@@ -150,13 +162,21 @@ function saveConfig(data) {
     fs.renameSync(tmp, CONFIG_PATH);
   } catch (e) {
     /* Otherwise a failed save leaves a temp file behind for good. */
-    try { fs.unlinkSync(tmp); } catch { /* nothing more to do */ }
+    try {
+      fs.unlinkSync(tmp);
+    } catch {
+      /* nothing more to do */
+    }
     throw e;
   }
 
   try {
     const dirFd = fs.openSync(dir, 'r');
-    try { fs.fsyncSync(dirFd); } finally { fs.closeSync(dirFd); }
+    try {
+      fs.fsyncSync(dirFd);
+    } finally {
+      fs.closeSync(dirFd);
+    }
   } catch {
     /* Some filesystems refuse to fsync a directory. The contents are already
        durable here, so this is not worth failing the save over. */
@@ -164,18 +184,30 @@ function saveConfig(data) {
 
   /* Only after the write succeeded, or the app shows changes that were never
      saved. */
-  _cfgCache = data; _cfgCacheAt = Date.now();
+  _cfgCache = data;
+  _cfgCacheAt = Date.now();
 }
 
 /* A permanent default item: movable and hideable like any app, but never removed
    or edited. Guaranteed present on every read and write. */
-const SYSTEM_SETTINGS_ITEM = { id:'settings', type:'app', system:'settings', label:'Settings', dock:false, color:'#027eae' };
+const SYSTEM_SETTINGS_ITEM = {
+  id: 'settings',
+  type: 'app',
+  system: 'settings',
+  label: 'Settings',
+  dock: false,
+  color: '#027eae',
+};
 function ensureSystemItems(cfg) {
   if (!cfg || typeof cfg !== 'object') return cfg;
   if (!Array.isArray(cfg.items)) cfg.items = [];
   const s = cfg.items.find(i => i && i.system === 'settings');
   if (!s) cfg.items.push({ ...SYSTEM_SETTINGS_ITEM });
-  else { s.type = 'app'; s.system = 'settings'; if (!s.label) s.label = 'Settings'; }
+  else {
+    s.type = 'app';
+    s.system = 'settings';
+    if (!s.label) s.label = 'Settings';
+  }
   return cfg;
 }
 

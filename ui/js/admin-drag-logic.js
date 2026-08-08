@@ -36,18 +36,26 @@ export function applyDrop(items, d) {
 
   if (kind === 'into-folder' && d.indent) {
     const tf = items.find(i => i.id === d.targetFolderId);
-    if (!tf) { items.push(src); return true; }
+    if (!tf) {
+      items.push(src);
+      return true;
+    }
     tf.children = (tf.children || []).filter(id => id !== src.id);
     if (!items.find(i => i.id === src.id)) items.push(src);
     tf.children.splice(d.childIdx, 0, src.id);
   } else if (kind === 'into-folder') {
     if (!items.find(i => i.id === src.id)) items.push(src);
     const tf = items.find(i => i.id === d.targetId);
-    if (tf) { tf.children = (tf.children || []).filter(id => id !== src.id); tf.children.push(src.id); }
+    if (tf) {
+      tf.children = (tf.children || []).filter(id => id !== src.id);
+      tf.children.push(src.id);
+    }
   } else {
-    items.filter(f => f.type === 'folder').forEach(f => {
-      f.children = (f.children || []).filter(id => id !== src.id);
-    });
+    items
+      .filter(f => f.type === 'folder')
+      .forEach(f => {
+        f.children = (f.children || []).filter(id => id !== src.id);
+      });
     if (!items.find(i => i.id === src.id)) items.push(src);
     const si2 = items.indexOf(src);
     if (si2 >= 0) items.splice(si2, 1);

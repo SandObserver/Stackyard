@@ -36,15 +36,28 @@ export function wrapTab(e, root) {
   if (e.key !== 'Tab') return false;
   const f = focusableWithin(root);
   if (!f.length) return false;
-  const first = f[0], last = f[f.length - 1];
+  const first = f[0],
+    last = f[f.length - 1];
   const active = document.activeElement;
 
   /* Focus outside the dialog entirely, which happens when it opens without
      anything focused: pull it back rather than letting Tab continue behind. */
-  if (!root.contains(active)) { e.preventDefault(); first.focus(); return true; }
+  if (!root.contains(active)) {
+    e.preventDefault();
+    first.focus();
+    return true;
+  }
 
-  if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); return true; }
-  if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); return true; }
+  if (e.shiftKey && active === first) {
+    e.preventDefault();
+    last.focus();
+    return true;
+  }
+  if (!e.shiftKey && active === last) {
+    e.preventDefault();
+    first.focus();
+    return true;
+  }
   return false;
 }
 
@@ -80,14 +93,24 @@ export function trapFocus(root, opts = {}) {
     /* Without this, closing leaves focus on nothing and the next Tab starts from
        the top of the page. Skipped if the element has left the document. */
     if (restoreTo && restoreTo.focus && restoreTo.isConnected) {
-      try { restoreTo.focus(); } catch { /* not focusable any more */ }
+      try {
+        restoreTo.focus();
+      } catch {
+        /* not focusable any more */
+      }
     }
   }
 
   root.addEventListener('keydown', /** @type {EventListener} */ (onKeydown));
 
   const target = initialFocus || focusableWithin(root)[0];
-  if (target && target.focus) { try { target.focus(); } catch { /* nothing to focus */ } }
+  if (target && target.focus) {
+    try {
+      target.focus();
+    } catch {
+      /* nothing to focus */
+    }
+  }
 
   return release;
 }

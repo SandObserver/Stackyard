@@ -27,7 +27,7 @@ let _cache = { at: 0, latest: null, checked: false };
 
     @param {{ at:number, checked:boolean }} cache @param {number} now */
 function shouldFetch(cache, now) {
-  return !cache.checked || (now - cache.at) >= CACHE_MS;
+  return !cache.checked || now - cache.at >= CACHE_MS;
 }
 
 async function getLatest() {
@@ -35,7 +35,7 @@ async function getLatest() {
   if (!shouldFetch(_cache, now)) return _cache.latest;
   try {
     const r = await fetchUnchecked(`https://api.github.com/repos/${REPO}/releases/latest`, {
-      headers: { 'User-Agent': 'stackyard', 'Accept': 'application/vnd.github+json' },
+      headers: { 'User-Agent': 'stackyard', Accept: 'application/vnd.github+json' },
       timeout: PING_MS,
     });
     const tag = r.data && (r.data.tag_name || r.data.name);
@@ -48,16 +48,22 @@ async function getLatest() {
 }
 
 on('GET', '/api/version', async (_, res) => {
-  let latest = null, updateAvailable = false;
+  let latest = null,
+    updateAvailable = false;
   try {
     latest = await getLatest();
     if (latest) updateAvailable = isNewer(latest, CURRENT);
-  } catch { /* installed version still returns below */ }
+  } catch {
+    /* installed version still returns below */
+  }
   json(res, 200, { current: CURRENT, latest, updateAvailable });
 });
 
 /* Exported for tests; the route above registers itself on require. */
 module.exports = {
-  shouldFetch, CACHE_MS,
-  _resetCache: () => { _cache = { at: 0, latest: null, checked: false }; },
+  shouldFetch,
+  CACHE_MS,
+  _resetCache: () => {
+    _cache = { at: 0, latest: null, checked: false };
+  },
 };

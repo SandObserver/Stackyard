@@ -44,7 +44,9 @@ function procCount() {
     const f = fs.readFileSync('/proc/loadavg', 'utf8').trim().split(/\s+/);
     const total = (f[3] || '').split('/')[1];
     return parseInt(total, 10) || 0;
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
 /* System uptime in whole seconds, from the first field of /proc/uptime. */
@@ -52,7 +54,9 @@ function uptimeSeconds() {
   try {
     const v = parseFloat(fs.readFileSync('/proc/uptime', 'utf8').split(/\s+/)[0]);
     return Number.isFinite(v) ? Math.floor(v) : 0;
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
 /* MemAvailable is absent before kernel 3.14 and in some container setups, where
@@ -60,7 +64,7 @@ function uptimeSeconds() {
    what `free` used before it existed. */
 function ramPercent() {
   const text = fs.readFileSync('/proc/meminfo', 'utf8');
-  const get  = key => {
+  const get = key => {
     const m = text.match(new RegExp(`^${key}:\\s+(\\d+)`, 'm'));
     return m ? parseInt(m[1], 10) : null;
   };
@@ -82,15 +86,20 @@ function cpuTemp(zone = 0) {
     const raw = fs.readFileSync(`/sys/class/thermal/thermal_zone${zone}/temp`, 'utf8').trim();
     const val = parseInt(raw, 10);
     return Number.isNaN(val) ? null : parseFloat((val / 1000).toFixed(1));
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function diskStats(mountPoint) {
   try {
     const s = fs.statfsSync(mountPoint);
-    const total = s.blocks * s.bsize, avail = s.bavail * s.bsize;
-    return { usedPct: total > 0 ? ((total - avail) / total) * 100 : 0, totalGb: total / (1024 ** 3) };
-  } catch { return { usedPct: 0, totalGb: 0 }; }
+    const total = s.blocks * s.bsize,
+      avail = s.bavail * s.bsize;
+    return { usedPct: total > 0 ? ((total - avail) / total) * 100 : 0, totalGb: total / 1024 ** 3 };
+  } catch {
+    return { usedPct: 0, totalGb: 0 };
+  }
 }
 
 module.exports = { cpuSample, computeCpu, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds };

@@ -4,18 +4,37 @@
    route. */
 
 function dupList(d) {
-  return Array.isArray(d)            ? d
-    : Array.isArray(d?.Items)        ? d.Items
-    : Array.isArray(d?.Data)         ? d.Data
-    : Array.isArray(d?.backups)      ? d.backups
-    : Array.isArray(d?.Backups)      ? d.Backups
-    : [];
+  return Array.isArray(d)
+    ? d
+    : Array.isArray(d?.Items)
+      ? d.Items
+      : Array.isArray(d?.Data)
+        ? d.Data
+        : Array.isArray(d?.backups)
+          ? d.backups
+          : Array.isArray(d?.Backups)
+            ? d.Backups
+            : [];
 }
-function dupCore(j) { return (j && (j.Backup || j.backup)) || j || {}; }
-function dupId(j) { const b = dupCore(j); return String(b.ID ?? b.Id ?? b.id ?? ''); }
-function dupName(j) { const b = dupCore(j); const id = dupId(j); return b.Name || b.name || (id ? `Job ${id}` : 'Backup'); }
-function dupMeta(j) { const b = dupCore(j); return b.Metadata || b.metadata || {}; }
-function dupSchedule(j) { return j.Schedule || j.schedule || dupCore(j).Schedule || null; }
+function dupCore(j) {
+  return (j && (j.Backup || j.backup)) || j || {};
+}
+function dupId(j) {
+  const b = dupCore(j);
+  return String(b.ID ?? b.Id ?? b.id ?? '');
+}
+function dupName(j) {
+  const b = dupCore(j);
+  const id = dupId(j);
+  return b.Name || b.name || (id ? `Job ${id}` : 'Backup');
+}
+function dupMeta(j) {
+  const b = dupCore(j);
+  return b.Metadata || b.metadata || {};
+}
+function dupSchedule(j) {
+  return j.Schedule || j.schedule || dupCore(j).Schedule || null;
+}
 
 function dupNormalizeBase(url) {
   if (!url) throw new Error('Duplicati URL not configured');
@@ -35,9 +54,9 @@ function dupParseDate(v) {
 }
 
 function dupDeriveStatus(job, serverState) {
-  const id       = dupId(job);
-  const meta     = dupMeta(job);
-  const tasks    = serverState?.ActiveTask;
+  const id = dupId(job);
+  const meta = dupMeta(job);
+  const tasks = serverState?.ActiveTask;
   const proposed = serverState?.ProposedSchedule || [];
 
   const isRunning = tasks != null && String(tasks.BackupID || tasks.Item1 || '') === id;
@@ -47,7 +66,7 @@ function dupDeriveStatus(job, serverState) {
 
   const nextEntry = proposed.find(p => String(p.Item1) === id);
   if (nextEntry && nextEntry.Item2) {
-    const nextRun      = new Date(nextEntry.Item2).getTime();
+    const nextRun = new Date(nextEntry.Item2).getTime();
     const lastFinished = dupParseDate(meta.LastBackupFinished || meta.LastBackupDate || '');
     if (Date.now() > nextRun && lastFinished < nextRun) return 'missed';
   }
@@ -78,7 +97,15 @@ function kopiaSourceId(source) {
 }
 
 module.exports = {
-  dupList, dupCore, dupId, dupName, dupMeta, dupSchedule,
-  dupNormalizeBase, dupParseDate, dupDeriveStatus,
-  kopiaDeriveStatus, kopiaSourceId,
+  dupList,
+  dupCore,
+  dupId,
+  dupName,
+  dupMeta,
+  dupSchedule,
+  dupNormalizeBase,
+  dupParseDate,
+  dupDeriveStatus,
+  kopiaDeriveStatus,
+  kopiaSourceId,
 };

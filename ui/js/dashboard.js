@@ -1,8 +1,27 @@
 /* dashboard.js: boot, state, badge system, desktop layout, navigation, background, polling */
 
 import { loadLocalIcons, iconChain } from '/js/icons.js?v=a0ea3e4b';
-import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, WIDGET_COST, widgetSrc, cardPreset } from '/js/widget-types.js?v=13def718';
-import { mk, mkWrap as _mkWrap, mountScaledWidget, teardownWidgets, sanitizeCssUrl, el, q, qi, qa, setUserText } from '/js/utils.js?v=17424946';
+import {
+  WIDGET_HEIGHTS,
+  WIDGET_DESIGN,
+  WIDGET_COLS,
+  WIDGET_ROWS,
+  WIDGET_COST,
+  widgetSrc,
+  cardPreset,
+} from '/js/widget-types.js?v=13def718';
+import {
+  mk,
+  mkWrap as _mkWrap,
+  mountScaledWidget,
+  teardownWidgets,
+  sanitizeCssUrl,
+  el,
+  q,
+  qi,
+  qa,
+  setUserText,
+} from '/js/utils.js?v=17424946';
 import { initSpotlight } from '/js/spotlight.js?v=673a88df';
 import { html, setHtml, raw } from '/js/html.js?v=ccec347c';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
@@ -15,10 +34,10 @@ import { trapFocus } from '/js/dialog.js?v=4ff94595';
 
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
 
-const wCols  = { d: WIDGET_COLS.desktop,  m: WIDGET_COLS.mobile  };
-const wRows = { d: WIDGET_ROWS.desktop,  m: WIDGET_ROWS.mobile  };
-const WH  = { d: WIDGET_HEIGHTS };
-const wCost  = { d: WIDGET_COST.desktop,  m: WIDGET_COST.mobile  };
+const wCols = { d: WIDGET_COLS.desktop, m: WIDGET_COLS.mobile };
+const wRows = { d: WIDGET_ROWS.desktop, m: WIDGET_ROWS.mobile };
+const WH = { d: WIDGET_HEIGHTS };
+const wCost = { d: WIDGET_COST.desktop, m: WIDGET_COST.mobile };
 
 /* Mirrors the .grid and .page values in dashboard.css and must move with them. */
 const DCOLS = 6;
@@ -28,63 +47,97 @@ const ROW_GAP = 30;
 function desktopSlots() {
   const ih = innerHeight;
   const top = Math.min(70, Math.max(44, ih * 0.04));
-  const bottom = Math.min(160, Math.max(110, ih * 0.10));
+  const bottom = Math.min(160, Math.max(110, ih * 0.1));
   const rows = Math.max(1, Math.min(4, Math.floor((ih - top - bottom + ROW_GAP) / (ROW_UNIT + ROW_GAP))));
   return DCOLS * rows;
 }
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
-let items = [], pg = 0, totalPages = 0, S = {}, _stateRef = null;
+let items = [],
+  pg = 0,
+  totalPages = 0,
+  S = {},
+  _stateRef = null;
 /* The server bumps this on every write, so comparing it answers "has anything
    changed" exactly. */
 let _rev = null;
 /* Null prototype: keyed by values from config, so an inherited property must
    never answer a miss. */
 let widgetReg = Object.create(null);
-const _mobTsCleanup = null, _mobTeCleanup = null;
+const _mobTsCleanup = null,
+  _mobTeCleanup = null;
 
-const badgeState  = Object.create(null);
-let _badgeFails = 0, _healthFails = 0, badgesStale = false, healthStale = false;
+const badgeState = Object.create(null);
+let _badgeFails = 0,
+  _healthFails = 0,
+  badgesStale = false,
+  healthStale = false;
 const BEL = new Map();
-function breg(id, el) { if (!BEL.has(id)) BEL.set(id, new Set()); BEL.get(id).add(el); }
-function bunreg(id, el) { if (BEL.has(id)) BEL.get(id).delete(el); }
+function breg(id, el) {
+  if (!BEL.has(id)) BEL.set(id, new Set());
+  BEL.get(id).add(el);
+}
+function bunreg(id, el) {
+  if (BEL.has(id)) BEL.get(id).delete(el);
+}
 function bupd(id) {
-  const els = BEL.get(id); if (!els?.size) return;
+  const els = BEL.get(id);
+  if (!els?.size) return;
   const item = items.find(i => i.id === id);
-  const s = item?.type === 'folder' ? folderBadge(item) : (badgeState[id]||{});
+  const s = item?.type === 'folder' ? folderBadge(item) : badgeState[id] || {};
   const hideHealthy = S.server?.hideHealthyBadge !== false;
-  const custom   = item?.monitoring?.activity?.custom || {};
+  const custom = item?.monitoring?.activity?.custom || {};
   const staticBdg = item?.monitoring?.staticBadge || {};
-  const hasHC = !!(item?.monitoring?.healthcheck?.enabled||item?.container||item?.ping);
+  const hasHC = !!(item?.monitoring?.healthcheck?.enabled || item?.container || item?.ping);
 
   const { cls, txt, bg, aria, color, title } = computeBadgeVisual({
-    health: s.health, activity: s.activity, custom, staticBdg, hasHC, hideHealthy, badgesStale, healthStale,
+    health: s.health,
+    activity: s.activity,
+    custom,
+    staticBdg,
+    hasHC,
+    hideHealthy,
+    badgesStale,
+    healthStale,
     healthDetail: s.healthDetail,
     translate: t,
   });
 
-  els.forEach(el=>{
-    el.className=cls; el.textContent=txt;
-    if(aria){ el.setAttribute('role','status'); el.setAttribute('aria-label',aria); }
-    else { el.removeAttribute('role'); el.removeAttribute('aria-label'); }
-    el.style.background=bg;
-    el.style.color=color;
+  els.forEach(el => {
+    el.className = cls;
+    el.textContent = txt;
+    if (aria) {
+      el.setAttribute('role', 'status');
+      el.setAttribute('aria-label', aria);
+    } else {
+      el.removeAttribute('role');
+      el.removeAttribute('aria-label');
+    }
+    el.style.background = bg;
+    el.style.color = color;
     /* Assigned, not interpolated: an upstream error string must not become
        markup. */
-    if(title) el.title=title; else el.removeAttribute('title');
+    if (title) el.title = title;
+    else el.removeAttribute('title');
   });
 }
 
 function bset(id, type, val) {
   if (!badgeState[id]) badgeState[id] = { health: 0, activity: 0 };
-  badgeState[id][type] = val; bupd(id);
-  items.filter(i => i.type === 'folder' && (i.children||[]).includes(id)).forEach(f => bupd(f.id));
+  badgeState[id][type] = val;
+  bupd(id);
+  items.filter(i => i.type === 'folder' && (i.children || []).includes(id)).forEach(f => bupd(f.id));
 }
 function folderBadge(folder) {
-  const children = (folder.children||[]).map(id => items.find(i => i.id === id)).filter(Boolean);
-  let actSum = 0, hasHealth = false;
-  for (const c of children) { const s = badgeState[c.id]||{}; if (s.health) hasHealth = true; if (s.activity > 0) actSum += s.activity; }
+  const children = (folder.children || []).map(id => items.find(i => i.id === id)).filter(Boolean);
+  let actSum = 0,
+    hasHealth = false;
+  for (const c of children) {
+    const s = badgeState[c.id] || {};
+    if (s.health) hasHealth = true;
+    if (s.activity > 0) actSum += s.activity;
+  }
   return { health: hasHealth, activity: actSum };
 }
 
@@ -92,16 +145,28 @@ const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
 function paginate() {
   const pl = 'd';
-  const inFolder = new Set(items.filter(i => i.type === 'folder').flatMap(f => f.children||[]).map(String));
+  const inFolder = new Set(
+    items
+      .filter(i => i.type === 'folder')
+      .flatMap(f => f.children || [])
+      .map(String),
+  );
   const budget = desktopSlots();
-  const pages = []; let cur = [], used = 0;
+  const pages = [];
+  let cur = [],
+    used = 0;
   for (const item of items) {
     if (item.dock) continue;
     if (item.hidden) continue;
     if (inFolder.has(String(item.id))) continue;
-    const cost = item.type === 'widget' ? wCost[pl][item.widgetSize||'medium'] : 1;
-    if (used + cost > budget && cur.length) { pages.push([...cur]); cur = []; used = 0; }
-    cur.push(item); used += cost;
+    const cost = item.type === 'widget' ? wCost[pl][item.widgetSize || 'medium'] : 1;
+    if (used + cost > budget && cur.length) {
+      pages.push([...cur]);
+      cur = [];
+      used = 0;
+    }
+    cur.push(item);
+    used += cost;
   }
   if (cur.length) pages.push(cur);
   return pages;
@@ -110,31 +175,40 @@ function paginate() {
 function mkIcon(item) {
   if (item.type === 'folder') return mkFolder(item);
   const showLabel = S.showLabels?.desktop !== false;
-  const iw = showLabel ? 72 : 78, isz = showLabel ? 50 : 56;
-  const a = item.system === 'settings'
-    ? mk('a', { href: '/admin/' })
-    : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
+  const iw = showLabel ? 72 : 78,
+    isz = showLabel ? 50 : 56;
+  const a =
+    item.system === 'settings'
+      ? mk('a', { href: '/admin/' })
+      : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'icon';
-  a.setAttribute('aria-label', item.label||item.id);
-  if (!showLabel) a.title = item.label||item.id;
+  a.setAttribute('aria-label', item.label || item.id);
+  if (!showLabel) a.title = item.label || item.id;
   a.appendChild(mkWrap(item, iw, 16, isz, 'iwrap'));
   if (showLabel) {
-    const l = mk('div'); l.className = 'ilabel'; l.style.width = (iw+12)+'px';
-    setUserText(l, item.label||item.id); a.appendChild(l);
+    const l = mk('div');
+    l.className = 'ilabel';
+    l.style.width = iw + 12 + 'px';
+    setUserText(l, item.label || item.id);
+    a.appendChild(l);
   }
   return a;
 }
 
 function widgetTitle(item) {
-  if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health') return item.label || t('status.diskHealth');
+  if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health')
+    return item.label || t('status.diskHealth');
   return item.label || widgetReg[item.widgetType]?.label || t('type.widget');
 }
 function mkWidget(item) {
-  const sz = item.widgetSize||'medium';
+  const sz = item.widgetSize || 'medium';
   const cell = mk('div');
-  let cls = `wc c${wCols.d[sz]}`; if (wRows.d[sz] >= 3) cls += ' r3'; else if (wRows.d[sz] >= 2) cls += ' r2';
+  let cls = `wc c${wCols.d[sz]}`;
+  if (wRows.d[sz] >= 3) cls += ' r3';
+  else if (wRows.d[sz] >= 2) cls += ' r2';
   cell.className = cls;
-  const card = mk('div'); card.className = 'widget';
+  const card = mk('div');
+  card.className = 'widget';
   if (item.widgetType) card.dataset.wtype = item.widgetType;
   const preset = cardPreset(item, widgetReg);
   if (preset) card.dataset.card = preset;
@@ -143,17 +217,26 @@ function mkWidget(item) {
   /* A definite height, or the grid row sizes unpredictably and
      `.wc{align-items:stretch}` overrides it. */
   card.style.height = WH.d[sz] + 'px';
-  mountScaledWidget(card, { src: widgetSrc(item, widgetReg, { lang: currentLang() }), title: widgetTitle(item), design, iframeOpts: item.iframe });
-  cell.appendChild(card); return cell;
+  mountScaledWidget(card, {
+    src: widgetSrc(item, widgetReg, { lang: currentLang() }),
+    title: widgetTitle(item),
+    design,
+    iframeOpts: item.iframe,
+  });
+  cell.appendChild(card);
+  return cell;
 }
 
 function mkDock(item) {
-  const a = item.system === 'settings'
-    ? mk('a', { href: '/admin/' })
-    : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
-  a.className = 'di'; a.setAttribute('aria-label', item.label||item.id);
-  a.title = item.label||item.id;
-  a.appendChild(mkWrap(item, 78, 15, 50, 'dwrap')); return a;
+  const a =
+    item.system === 'settings'
+      ? mk('a', { href: '/admin/' })
+      : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
+  a.className = 'di';
+  a.setAttribute('aria-label', item.label || item.id);
+  a.title = item.label || item.id;
+  a.appendChild(mkWrap(item, 78, 15, 50, 'dwrap'));
+  return a;
 }
 
 /* A real <button>, not a styled div: a div is skipped by Tab and does nothing on
@@ -176,20 +259,28 @@ function buildDesktop() {
      started. */
   teardownWidgets();
   BEL.clear();
-  const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0,4);
-  const pages = paginate(); totalPages = pages.length;
-  const strip = el('pages'); strip.innerHTML = '';
+  const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, 4);
+  const pages = paginate();
+  totalPages = pages.length;
+  const strip = el('pages');
+  strip.innerHTML = '';
   pages.forEach(pageItems => {
-    const p = mk('div'); p.className = 'page';
-    const g = mk('div'); g.className = 'grid';
+    const p = mk('div');
+    p.className = 'page';
+    const g = mk('div');
+    g.className = 'grid';
     for (const item of pageItems) g.appendChild(item.type === 'widget' ? mkWidget(item) : mkIcon(item));
-    p.appendChild(g); strip.appendChild(p);
+    p.appendChild(g);
+    strip.appendChild(p);
   });
-  const dots = el('dots'); dots.innerHTML = '';
+  const dots = el('dots');
+  dots.innerHTML = '';
   pages.forEach((_, i) => dots.appendChild(mkDot(i, pages.length, 0, goTo)));
-  const dk = el('dock'); dk.innerHTML = '';
+  const dk = el('dock');
+  dk.innerHTML = '';
   dock.forEach(item => dk.appendChild(mkDock(item)));
-  const ct = el('ctrls'); ct.innerHTML = '';
+  const ct = el('ctrls');
+  ct.innerHTML = '';
 }
 
 /* Announces the current page, since the grid otherwise swaps silently. Polite,
@@ -206,17 +297,23 @@ function announcePage(index, total) {
 function goTo(n, dotEls) {
   const total = dotEls ? dotEls.length : totalPages;
   const was = pg;
-  pg = Math.max(0, Math.min(total-1, n));
+  pg = Math.max(0, Math.min(total - 1, n));
   /* Only on an actual change, or a screen reader announces the same page on
      every click. */
   if (pg !== was) announcePage(pg, total);
   /* The mobile swipe handler reads this. */
   if (_stateRef) _stateRef.pg = pg;
   const strip = el('pages');
-  const t = `translateX(-${pg*100}vw)`;
+  const t = `translateX(-${pg * 100}vw)`;
   strip.style.transform = strip.style.webkitTransform = t;
   strip.style.willChange = 'transform';
-  strip.addEventListener('transitionend', () => { strip.style.willChange = 'auto'; }, { once: true });
+  strip.addEventListener(
+    'transitionend',
+    () => {
+      strip.style.willChange = 'auto';
+    },
+    { once: true },
+  );
   (dotEls ?? document.querySelectorAll('.dot')).forEach((d, i) => {
     d.classList.toggle('on', i === pg);
     /* In step with the class, or a screen reader keeps announcing the page the
@@ -234,7 +331,8 @@ function syncMobPages() {
   const domCount = strip ? strip.children.length : 0;
   if (domCount <= totalPages) return; /* no overflow pages, nothing to fix */
   totalPages = domCount;
-  const dots = el('dots'); dots.innerHTML = '';
+  const dots = el('dots');
+  dots.innerHTML = '';
   for (let i = 0; i < domCount; i++) dots.appendChild(mkDot(i, domCount, pg, goTo));
   const pillDots = q('.msp-dots');
   if (pillDots) {
@@ -245,7 +343,7 @@ function syncMobPages() {
     }
     Array.from(pillDots.children).forEach((d, i) => d.classList.toggle('on', i === pg));
     const origBump = CB.mobPillBump;
-    CB.mobPillBump = (newPg) => {
+    CB.mobPillBump = newPg => {
       if (origBump) origBump(newPg); /* runs the pillPaging animation */
       Array.from(pillDots.children).forEach((d, i) => d.classList.toggle('on', i === newPg));
     };
@@ -255,24 +353,25 @@ function syncMobPages() {
 async function applyBg() {
   const root = document.documentElement;
   try {
-    const bg = S.background||{};
+    const bg = S.background || {};
     if (bg.type === 'color' && bg.color) {
-      const safeColor = String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g,'');
+      const safeColor = String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g, '');
       root.style.setProperty('--bg-image', 'none');
       root.style.setProperty('--bg-color', safeColor);
       root.style.setProperty('--bg-brightness', '1');
     } else if (bg.type === 'url' && bg.url) {
       root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(bg.url)}')`);
       root.style.setProperty('--bg-color', '#0d1117');
-      root.style.setProperty('--bg-brightness', String(bg.brightness??0.62));
+      root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
     } else if (bg.type === 'unsplash') {
-      const r = await fetch('/api/wallpaper', { cache:'no-store' }); const d = await r.json();
+      const r = await fetch('/api/wallpaper', { cache: 'no-store' });
+      const d = await r.json();
       if (d.url) {
         const img = new Image();
         img.onload = () => {
           root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(d.url)}')`);
           root.style.setProperty('--bg-color', '#0d1117');
-          root.style.setProperty('--bg-brightness', String(bg.brightness??0.62));
+          root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
         };
         img.src = d.url;
       }
@@ -280,34 +379,67 @@ async function applyBg() {
   } catch {}
 }
 
-function refreshBadges() { for (const id of BEL.keys()) bupd(id); }
+function refreshBadges() {
+  for (const id of BEL.keys()) bupd(id);
+}
 async function pollBadges() {
-  try { const d = await (await fetch('/api/badges',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) bset(id,'activity',v.value||0); _badgeFails=0; if(badgesStale){badgesStale=false;refreshBadges();} }
-  catch { if(++_badgeFails>=2 && !badgesStale){badgesStale=true;refreshBadges();} }
+  try {
+    const d = await (await fetch('/api/badges', { cache: 'no-store' })).json();
+    for (const [id, v] of Object.entries(d)) bset(id, 'activity', v.value || 0);
+    _badgeFails = 0;
+    if (badgesStale) {
+      badgesStale = false;
+      refreshBadges();
+    }
+  } catch {
+    if (++_badgeFails >= 2 && !badgesStale) {
+      badgesStale = true;
+      refreshBadges();
+    }
+  }
 }
 async function pollHealth() {
-  try { const d = await (await fetch('/api/health',{cache:'no-store'})).json(); for (const [id,v] of Object.entries(d)) { bset(id,'healthDetail',v); bset(id,'health',v.unhealthy?1:0); } _healthFails=0; if(healthStale){healthStale=false;refreshBadges();} }
-  catch { if(++_healthFails>=2 && !healthStale){healthStale=true;refreshBadges();} }
+  try {
+    const d = await (await fetch('/api/health', { cache: 'no-store' })).json();
+    for (const [id, v] of Object.entries(d)) {
+      bset(id, 'healthDetail', v);
+      bset(id, 'health', v.unhealthy ? 1 : 0);
+    }
+    _healthFails = 0;
+    if (healthStale) {
+      healthStale = false;
+      refreshBadges();
+    }
+  } catch {
+    if (++_healthFails >= 2 && !healthStale) {
+      healthStale = true;
+      refreshBadges();
+    }
+  }
 }
 
-const EYE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE =
+  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
 
 function showSetupPrompt() {
   return new Promise(resolve => {
     const ov = document.createElement('div');
     ov.className = 'setup-prompt';
-    setHtml(ov, html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`);
+    setHtml(
+      ov,
+      html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`,
+    );
     document.body.appendChild(ov);
 
-    const pw   = qi('#setup-pw', ov);
-    const pw2  = qi('#setup-pw2', ov);
-    const rev  = qi('#setup-reveal', ov);
+    const pw = qi('#setup-pw', ov);
+    const pw2 = qi('#setup-pw2', ov);
+    const rev = qi('#setup-reveal', ov);
     const bars = qa('.pwbar', ov);
     const hint = q('#setup-hint', ov);
-    const err  = q('#setup-err', ov);
+    const err = q('#setup-err', ov);
     const setB = qi('#setup-set', ov);
     const skip = qi('#setup-skip', ov);
-    const dim  = 'rgba(255,255,255,.1)';
+    const dim = 'rgba(255,255,255,.1)';
 
     /* A typo here locks the dashboard with no way back in, so the password is
        confirmed and can be read back before it is set. */
@@ -316,7 +448,9 @@ function showSetupPrompt() {
     const matches = () => pw2.value !== '' && !passwordMismatch(pw.value, pw2.value);
     const sync = () => {
       const { score, labelKey, color, ok } = pwStrength(pw.value);
-      bars.forEach((b, i) => { b.style.background = pw.value && i < score ? color : dim; });
+      bars.forEach((b, i) => {
+        b.style.background = pw.value && i < score ? color : dim;
+      });
       hint.textContent = pw.value && labelKey ? t(labelKey) : '';
       hint.style.color = color;
       const mismatch = pw2.value !== '' && passwordMismatch(pw.value, pw2.value);
@@ -339,31 +473,47 @@ function showSetupPrompt() {
     /* Escape deliberately does not close this: dismissing it by accident
        silently means "no password". Skip is the way out. */
     let releaseTrap = trapFocus(ov, { closeOnEscape: false, initialFocus: pw });
-    const close = () => { if (releaseTrap) { releaseTrap(); releaseTrap = null; } ov.remove(); resolve(); };
+    const close = () => {
+      if (releaseTrap) {
+        releaseTrap();
+        releaseTrap = null;
+      }
+      ov.remove();
+      resolve();
+    };
 
     skip.onclick = async () => {
       skip.disabled = true;
-      try { await fetch('/api/auth/dismiss-setup', { method:'POST', headers:{'Content-Type':'application/json'} }); } catch {}
+      try {
+        await fetch('/api/auth/dismiss-setup', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      } catch {}
       close();
     };
 
     async function doSet() {
       if (!pwStrength(pw.value).ok || !matches()) return;
-      setB.disabled = true; skip.disabled = true; err.style.display = 'none';
+      setB.disabled = true;
+      skip.disabled = true;
+      err.style.display = 'none';
       try {
         const r = await fetch('/api/auth/set-password', {
-          method:'POST', headers:{'Content-Type':'application/json'},
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: pw.value }),
         });
-        if (!r.ok) throw new Error((await r.json().catch(()=>({}))).error || t('setup.failed'));
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || t('setup.failed'));
         location.reload();
-      } catch(e) {
-        err.textContent = e.message; err.style.display = 'block';
-        setB.disabled = false; skip.disabled = false;
+      } catch (e) {
+        err.textContent = e.message;
+        err.style.display = 'block';
+        setB.disabled = false;
+        skip.disabled = false;
       }
     }
     setB.onclick = doSet;
-    pw.onkeydown = pw2.onkeydown = e => { if (e.key === 'Enter' && !setB.disabled) doSet(); };
+    pw.onkeydown = pw2.onkeydown = e => {
+      if (e.key === 'Enter' && !setB.disabled) doSet();
+    };
     pw.focus();
   });
 }
@@ -371,31 +521,45 @@ function showSetupPrompt() {
 async function boot() {
   let authData = null;
   try {
-    const authCheck = await fetch('/api/auth/check', { cache:'no-store' });
-    if (authCheck.status === 401) { window.location.href = '/admin/'; return; }
+    const authCheck = await fetch('/api/auth/check', { cache: 'no-store' });
+    if (authCheck.status === 401) {
+      window.location.href = '/admin/';
+      return;
+    }
     authData = await authCheck.json();
-    if (authData.enabled && !authData.authenticated) { window.location.href = '/admin/'; return; }
-  } catch { /* API down, handled below */ }
-
-
+    if (authData.enabled && !authData.authenticated) {
+      window.location.href = '/admin/';
+      return;
+    }
+  } catch {
+    /* API down, handled below */
+  }
 
   let configFailed = false;
   try {
-    const res = await fetch('/api/config', { cache:'no-store' });
+    const res = await fetch('/api/config', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
     /* Saving rejects these, but a config written before that existed, or one
        arriving by import, still reaches here. See ui/js/link-url.js. */
-    items = sanitizeItemLinks(c.items||[]); S = c.settings||{}; _rev = c._rev ?? null;
+    items = sanitizeItemLinks(c.items || []);
+    S = c.settings || {};
+    _rev = c._rev ?? null;
     await initI18n(S.language || 'en');
-  } catch(e) { console.error('[boot]', e); configFailed = true; }
+  } catch (e) {
+    console.error('[boot]', e);
+    configFailed = true;
+  }
 
   await loadLocalIcons();
 
   if (configFailed) {
     const msg = document.createElement('div');
     msg.className = 'api-error-screen';
-    setHtml(msg, html`<p class="api-error-title">${t('home.apiDownTitle')}</p><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`);
+    setHtml(
+      msg,
+      html`<p class="api-error-title">${t('home.apiDownTitle')}</p><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`,
+    );
     /* Not an inline onclick: the page's CSP refuses those, and the button would
        silently do nothing. */
     msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
@@ -409,38 +573,80 @@ async function boot() {
   }
 
   try {
-    const wr = await (await fetch('/api/widgets', { cache:'no-store' })).json();
+    const wr = await (await fetch('/api/widgets', { cache: 'no-store' })).json();
     widgetReg = Object.create(null);
     for (const w of wr.widgets || []) if (w && w.name) widgetReg[w.name] = w;
-  } catch { widgetReg = Object.create(null); }
+  } catch {
+    widgetReg = Object.create(null);
+  }
 
-  const state = { items, S, CB, BEL, badgeState, breg, bunreg, bupd, folderBadge, paginate, goTo, pg: 0, _mobTsCleanup, _mobTeCleanup, widgetReg };
+  const state = {
+    items,
+    S,
+    CB,
+    BEL,
+    badgeState,
+    breg,
+    bunreg,
+    bupd,
+    folderBadge,
+    paginate,
+    goTo,
+    pg: 0,
+    _mobTsCleanup,
+    _mobTeCleanup,
+    widgetReg,
+  };
   _stateRef = state;
   initUI(state);
   initSpotlight({ getItems: () => items, MOB, CB, iconChain, openFolderDesktop, openFolderMobile });
 
   if (MOB) {
     document.body.classList.add('is-mob');
-    requestAnimationFrame(() => requestAnimationFrame(() => { buildMobile(); syncMobPages(); }));
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        buildMobile();
+        syncMobPages();
+      }),
+    );
   } else {
     buildDesktop();
     document.addEventListener('keydown', e => {
       if (el('spot').classList.contains('on')) return;
-      if (e.key === 'ArrowRight') goTo(pg+1);
-      if (e.key === 'ArrowLeft')  goTo(pg-1);
+      if (e.key === 'ArrowRight') goTo(pg + 1);
+      if (e.key === 'ArrowLeft') goTo(pg - 1);
     });
-    let _dMx = 0, _dDragging = false;
-    document.addEventListener('mousedown', e => { _dMx = e.clientX; _dDragging = false; });
-    document.addEventListener('mousemove', e => { if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true; });
-    document.addEventListener('mouseup',   e => {
+    let _dMx = 0,
+      _dDragging = false;
+    document.addEventListener('mousedown', e => {
+      _dMx = e.clientX;
+      _dDragging = false;
+    });
+    document.addEventListener('mousemove', e => {
+      if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true;
+    });
+    document.addEventListener('mouseup', e => {
       if (!_dDragging) return;
       const dx = e.clientX - _dMx;
       if (Math.abs(dx) > 60) goTo(pg + (dx < 0 ? 1 : -1));
       _dDragging = false;
     });
     let _dTx = 0;
-    document.addEventListener('touchstart', e => { _dTx = e.touches[0].clientX; }, { passive: true });
-    document.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - _dTx; if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1)); }, { passive: true });
+    document.addEventListener(
+      'touchstart',
+      e => {
+        _dTx = e.touches[0].clientX;
+      },
+      { passive: true },
+    );
+    document.addEventListener(
+      'touchend',
+      e => {
+        const dx = e.changedTouches[0].clientX - _dTx;
+        if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1));
+      },
+      { passive: true },
+    );
   }
 
   applyBg();
@@ -477,17 +683,22 @@ async function boot() {
   const _jit = base => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
   const _repeat = (fn, base) => {
     let h;
-    const tick = async () => { try { await fn(); } catch {} h = setTimeout(tick, _jit(base)); };
+    const tick = async () => {
+      try {
+        await fn();
+      } catch {}
+      h = setTimeout(tick, _jit(base));
+    };
     h = setTimeout(tick, Math.round(Math.random() * base));
     _pollTimers.push(() => clearTimeout(h));
   };
 
   const pollConfig = async () => {
     try {
-      const res = await fetch('/api/config', { cache:'no-store' });
+      const res = await fetch('/api/config', { cache: 'no-store' });
       if (!res.ok) return;
       const c = await res.json();
-      sanitizeItemLinks(c.items||[]);
+      sanitizeItemLinks(c.items || []);
       if (configChanged({ items, settings: S, _rev }, c)) location.reload();
     } catch {}
   };
@@ -507,12 +718,15 @@ async function boot() {
     if (document.hidden) {
       stopPolling();
     } else {
-      pollBadges(); pollHealth();
+      pollBadges();
+      pollHealth();
       startPolling();
     }
   });
 
-  pollBadges(); pollHealth(); startPolling();
+  pollBadges();
+  pollHealth();
+  startPolling();
 
   document.body.classList.add('ready');
 }

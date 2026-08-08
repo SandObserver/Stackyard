@@ -5,7 +5,11 @@ function _xmlDecode(s) {
   return s.replace(/&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);/g, (m, e) => {
     if (e[0] === '#') {
       const code = e[1] === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-      try { return Number.isFinite(code) ? String.fromCodePoint(code) : m; } catch { return m; }
+      try {
+        return Number.isFinite(code) ? String.fromCodePoint(code) : m;
+      } catch {
+        return m;
+      }
     }
     return { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[e];
   });
@@ -47,8 +51,10 @@ function _xmlValue(node) {
   if (text !== '') obj['#text'] = _xmlCoerce(text);
   for (const c of node.children) {
     const v = _xmlValue(c);
-    if (Object.hasOwn(obj, c.tag)) { if (Array.isArray(obj[c.tag])) obj[c.tag].push(v); else obj[c.tag] = [obj[c.tag], v]; }
-    else obj[c.tag] = v;
+    if (Object.hasOwn(obj, c.tag)) {
+      if (Array.isArray(obj[c.tag])) obj[c.tag].push(v);
+      else obj[c.tag] = [obj[c.tag], v];
+    } else obj[c.tag] = v;
   }
   return obj;
 }
@@ -72,8 +78,14 @@ function _tagEnd(xml, from, len) {
   let quote = '';
   for (let k = from; k < len; k++) {
     const c = xml[k];
-    if (quote) { if (c === quote) quote = ''; continue; }
-    if (c === '"' || c === "'") { quote = c; continue; }
+    if (quote) {
+      if (c === quote) quote = '';
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      quote = c;
+      continue;
+    }
     if (c === '>') return k;
   }
   return -1;
@@ -81,23 +93,46 @@ function _tagEnd(xml, from, len) {
 
 function parseXml(xml) {
   if (typeof xml !== 'string') return Object.create(null);
-  const MAX_NODES = 5000, MAX_DEPTH = 60;
+  const MAX_NODES = 5000,
+    MAX_DEPTH = 60;
   const root = /** @type {XmlNode} */ ({ tag: '#doc', attrs: Object.create(null), children: [], text: '' });
   const stack = [root];
   const top = () => stack[stack.length - 1];
   const len = xml.length;
-  let i = 0, nodes = 0, truncated = false;
+  let i = 0,
+    nodes = 0,
+    truncated = false;
 
   while (i < len) {
     const lt = xml.indexOf('<', i);
-    if (lt === -1) { top().text += xml.slice(i); break; }
+    if (lt === -1) {
+      top().text += xml.slice(i);
+      break;
+    }
     if (lt > i) top().text += xml.slice(i, lt);
 
-    if (xml.startsWith('<!--', lt))       { const e = xml.indexOf('-->', lt + 4);  i = e === -1 ? len : e + 3; continue; }
-    if (xml.startsWith('<![CDATA[', lt))  { const e = xml.indexOf(']]>', lt + 9);  top().text += xml.slice(lt + 9, e === -1 ? len : e); i = e === -1 ? len : e + 3; continue; }
-    if (xml.startsWith('<?', lt))         { const e = xml.indexOf('?>', lt + 2);   i = e === -1 ? len : e + 2; continue; }
+    if (xml.startsWith('<!--', lt)) {
+      const e = xml.indexOf('-->', lt + 4);
+      i = e === -1 ? len : e + 3;
+      continue;
+    }
+    if (xml.startsWith('<![CDATA[', lt)) {
+      const e = xml.indexOf(']]>', lt + 9);
+      top().text += xml.slice(lt + 9, e === -1 ? len : e);
+      i = e === -1 ? len : e + 3;
+      continue;
+    }
+    if (xml.startsWith('<?', lt)) {
+      const e = xml.indexOf('?>', lt + 2);
+      i = e === -1 ? len : e + 2;
+      continue;
+    }
     /* A doctype may quote a system identifier, which can contain '>'. */
-    if (xml.startsWith('<!', lt))         { const e = _tagEnd(xml, lt + 2, len);   i = e === -1 ? len : e + 1; continue; }
+    if (xml.startsWith('<!', lt)) {
+      const e = _tagEnd(xml, lt + 2, len);
+      i = e === -1 ? len : e + 1;
+      continue;
+    }
 
     const gt = _tagEnd(xml, lt + 1, len);
     if (gt === -1) break;
@@ -105,8 +140,13 @@ function parseXml(xml) {
 
     if (raw[0] === '/') {
       const name = raw.slice(1).trim();
-      for (let k = stack.length - 1; k > 0; k--) if (stack[k].tag === name) { stack.length = k; break; }
-      i = gt + 1; continue;
+      for (let k = stack.length - 1; k > 0; k--)
+        if (stack[k].tag === name) {
+          stack.length = k;
+          break;
+        }
+      i = gt + 1;
+      continue;
     }
 
     const selfClose = raw.endsWith('/');
@@ -118,7 +158,10 @@ function parseXml(xml) {
       for (const m of raw.slice(sp + 1).matchAll(/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g))
         node.attrs[m[1]] = _xmlDecode(m[2] !== undefined ? m[2] : m[3]);
     }
-    if (++nodes > MAX_NODES) { truncated = true; break; }
+    if (++nodes > MAX_NODES) {
+      truncated = true;
+      break;
+    }
     top().children.push(node);
     /* Past the depth cap the element is kept but nothing nested inside it is, so
        that is a truncation too. */

@@ -36,21 +36,32 @@ function scrubWidgetSecrets(item, entry) {
   const { topLevel, groups, objects } = secretSpec(e);
 
   for (const k of topLevel) {
-    if (Object.hasOwn(wc, k)) { wc[k + 'Set'] = true; delete wc[k]; }
+    if (Object.hasOwn(wc, k)) {
+      wc[k + 'Set'] = true;
+      delete wc[k];
+    }
   }
   for (const [gk, subKeys] of Object.entries(groups)) {
     if (!Array.isArray(wc[gk])) continue;
     wc[gk] = wc[gk].map(row => {
       if (!row || typeof row !== 'object') return row;
       const out = { ...row };
-      for (const sk of subKeys) if (Object.hasOwn(out, sk)) { out[sk + 'Set'] = true; delete out[sk]; }
+      for (const sk of subKeys)
+        if (Object.hasOwn(out, sk)) {
+          out[sk + 'Set'] = true;
+          delete out[sk];
+        }
       return out;
     });
   }
   for (const [ok, subKeys] of Object.entries(objects)) {
     const obj = wc[ok];
     if (!obj || typeof obj !== 'object') continue;
-    for (const sk of subKeys) if (Object.hasOwn(obj, sk)) { obj[sk + 'Set'] = true; delete obj[sk]; }
+    for (const sk of subKeys)
+      if (Object.hasOwn(obj, sk)) {
+        obj[sk + 'Set'] = true;
+        delete obj[sk];
+      }
   }
 }
 
@@ -83,7 +94,7 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
   for (const [ok, subKeys] of Object.entries(objects)) {
     const nObj = nwc[ok];
     if (!nObj || typeof nObj !== 'object') continue;
-    const oObj = (owc[ok] && typeof owc[ok] === 'object') ? owc[ok] : {};
+    const oObj = owc[ok] && typeof owc[ok] === 'object' ? owc[ok] : {};
     for (const sk of subKeys) {
       if (!Object.hasOwn(nObj, sk) && oObj[sk] != null) nObj[sk] = oObj[sk];
       if (nObj[sk] != null) nObj[sk + 'Set'] = true;
@@ -146,7 +157,12 @@ function preserveConfigSecrets(newCfg, oldCfg) {
 }
 
 module.exports = {
-  secretSpec, WITHHELD_FLAG, withholdWidgetConfig, restoreWithheldConfig,
-  scrubWidgetSecrets, preserveWidgetSecrets,
-  scrubConfigSecrets, preserveConfigSecrets,
+  secretSpec,
+  WITHHELD_FLAG,
+  withholdWidgetConfig,
+  restoreWithheldConfig,
+  scrubWidgetSecrets,
+  preserveWidgetSecrets,
+  scrubConfigSecrets,
+  preserveConfigSecrets,
 };

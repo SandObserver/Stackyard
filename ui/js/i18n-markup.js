@@ -36,18 +36,24 @@ export function sanitizeI18nMarkup(value) {
 
     /* Shown as text, not dropped, so a translator sees the mistake rather than
        losing the word inside it. */
-    if (!ALLOWED_TAGS.includes(name)) { out += esc(m[0]); continue; }
+    if (!ALLOWED_TAGS.includes(name)) {
+      out += esc(m[0]);
+      continue;
+    }
 
     if (VOID_TAGS.includes(name)) {
       /* A closing tag for a void element is meaningless; drop it silently. */
       if (!closing) out += `<${name}>`;
       continue;
     }
-    if (selfClosing) { out += esc(m[0]); continue; }  /* <strong/> is not meaningful */
+    if (selfClosing) {
+      out += esc(m[0]);
+      continue;
+    } /* <strong/> is not meaningful */
 
     if (closing) {
       const at = open.lastIndexOf(name);
-      if (at === -1) continue;               /* closes nothing; drop it */
+      if (at === -1) continue; /* closes nothing; drop it */
       /* Close anything still open inside it, so the output stays well-formed. */
       while (open.length > at) out += `</${open.pop()}>`;
     } else {

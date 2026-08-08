@@ -6,7 +6,9 @@ const SUBKEYS = ['headers', 'params'];
 
 /** A single well-formed row. @param {unknown} r @returns {boolean} */
 function isRow(r) {
-  return !!r && typeof r === 'object' && !Array.isArray(r) && typeof (/** @type {{key?:unknown}} */ (r)).key === 'string';
+  return (
+    !!r && typeof r === 'object' && !Array.isArray(r) && typeof (/** @type {{key?:unknown}} */ (r).key) === 'string'
+  );
 }
 
 /** Already in the row shape, so the migration has nothing to do.
@@ -44,11 +46,14 @@ function droppedRowCount(v) {
 function firstMalformedRow(item) {
   if (!item || typeof item !== 'object') return null;
   const it = /** @type {{ badge?: any, monitoring?: { activity?: any } }} */ (item);
-  for (const [block, label] of [[it.badge, 'badge'], [it.monitoring?.activity, 'monitoring.activity']]) {
+  for (const [block, label] of [
+    [it.badge, 'badge'],
+    [it.monitoring?.activity, 'monitoring.activity'],
+  ]) {
     if (!block || typeof block !== 'object') continue;
     for (const sub of SUBKEYS) {
       const v = block[sub];
-      if (!Array.isArray(v)) continue;   /* the legacy object shape is still accepted */
+      if (!Array.isArray(v)) continue; /* the legacy object shape is still accepted */
       const at = v.findIndex(r => !isRow(r));
       if (at !== -1) return { field: `${label}.${sub}`, index: at };
     }
@@ -100,9 +105,7 @@ function preserveRows(newRows, oldRows) {
     const needsValue = r.value == null || r.value === '';
     if (needsValue) {
       /* Only a row still marked secret may be refilled. */
-      const donor = r.secret
-        ? orows.find(o => o.key === r.key && o.value != null && o.value !== '')
-        : null;
+      const donor = r.secret ? orows.find(o => o.key === r.key && o.value != null && o.value !== '') : null;
       if (donor) r.value = donor.value;
       else if (!r.secret) r.value = '';
     }
@@ -138,15 +141,25 @@ function migrateItemBadgeHeaders(item) {
   let changed = false;
   eachActivityLike(item, block => {
     for (const k of SUBKEYS) {
-      if (block[k] != null && !isRowArray(block[k])) { block[k] = toRows(block[k]); changed = true; }
+      if (block[k] != null && !isRowArray(block[k])) {
+        block[k] = toRows(block[k]);
+        changed = true;
+      }
     }
   });
   return changed;
 }
 
 module.exports = {
-  toRows, isRow, droppedRowCount, firstMalformedRow, rowsToObject, requestParts,
-  scrubRows, preserveRows,
-  scrubItemBadgeSecrets, preserveItemBadgeSecrets,
+  toRows,
+  isRow,
+  droppedRowCount,
+  firstMalformedRow,
+  rowsToObject,
+  requestParts,
+  scrubRows,
+  preserveRows,
+  scrubItemBadgeSecrets,
+  preserveItemBadgeSecrets,
   migrateItemBadgeHeaders,
 };

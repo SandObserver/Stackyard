@@ -63,6 +63,10 @@ runs:
       shell: bash
       run: npm run lint
 
+    - name: Check formatting
+      shell: bash
+      run: npm run format:check
+
     - name: Typecheck (backend)
       shell: bash
       run: npm run typecheck

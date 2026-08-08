@@ -27,8 +27,8 @@ export function dirFor(code) {
 
 /* Null prototype on all three: `t` and the reverse map are keyed by catalog
    key and by English source text, so an inherited member must not answer. */
-let base = Object.create(null);    /* en.json, flattened: the fallback for every key */
-let active = Object.create(null);  /* selected locale, flattened; falls back to base per key */
+let base = Object.create(null); /* en.json, flattened: the fallback for every key */
+let active = Object.create(null); /* selected locale, flattened; falls back to base per key */
 let current = 'en';
 
 /** The locale in use. Widgets are iframes that do not load this module, so the
@@ -50,7 +50,9 @@ async function fetchCatalog(code) {
     const r = await fetch(`/i18n/${code}.json`, { cache: 'no-store' });
     if (!r.ok) return null;
     return flatten(await r.json(), '', Object.create(null));
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /* Load English (fallback) plus the requested locale, then set <html lang/dir>.
@@ -60,7 +62,7 @@ export async function initI18n(code) {
   base = (await fetchCatalog('en')) || Object.create(null);
   const loaded = code === 'en' ? base : await fetchCatalog(code);
   active = loaded || base;
-  current = (loaded && code !== 'en') ? code : 'en';
+  current = loaded && code !== 'en' ? code : 'en';
   const el = document.documentElement;
   el.setAttribute('lang', current);
   el.setAttribute('dir', dirFor(current));
@@ -68,7 +70,9 @@ export async function initI18n(code) {
   return current;
 }
 
-export function getLang() { return current; }
+export function getLang() {
+  return current;
+}
 
 /* Elements opt in by attribute:
      data-i18n="key"       -> textContent
@@ -78,17 +82,25 @@ export function getLang() { return current; }
    Safe to re-run, including after rendering dynamic markup. */
 function translateDOM(root) {
   root = root || document;
-  root.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  root.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
   /* Only the small tag subset in i18n-markup.js, never arbitrary markup. */
-  root.querySelectorAll('[data-i18n-html]').forEach(el => { setHtml(el, i18nMarkup(t(el.getAttribute('data-i18n-html')))); });
-  root.querySelectorAll('[data-i18n-ph]').forEach(el => { el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph'))); });
-  root.querySelectorAll('[data-i18n-al]').forEach(el => { el.setAttribute('aria-label', t(el.getAttribute('data-i18n-al'))); });
+  root.querySelectorAll('[data-i18n-html]').forEach(el => {
+    setHtml(el, i18nMarkup(t(el.getAttribute('data-i18n-html'))));
+  });
+  root.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph')));
+  });
+  root.querySelectorAll('[data-i18n-al]').forEach(el => {
+    el.setAttribute('aria-label', t(el.getAttribute('data-i18n-al')));
+  });
 }
 
 /* Translate a dotted key, falling back to English then to the key itself.
    Interpolates {name} placeholders from the optional vars object. */
 export function t(key, vars) {
-  let s = (active[key] != null) ? active[key] : (base[key] != null ? base[key] : key);
+  let s = active[key] != null ? active[key] : base[key] != null ? base[key] : key;
   if (vars) s = String(s).replace(/\{(\w+)\}/g, (m, k) => (vars[k] != null ? vars[k] : m));
   return s;
 }
