@@ -5,7 +5,12 @@
 /* Turn a label into a safe id stem: letters/digits/underscores only, collapsed,
    trimmed, with a type-specific fallback when nothing usable remains. */
 export function cleanId(label, fallback = 'item') {
-  return String(label || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || fallback;
+  return (
+    String(label || '')
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '') || fallback
+  );
 }
 
 /* Not a security boundary: an id is not a token, and the collision loop in
@@ -78,33 +83,43 @@ export function claimFolderChildren(items, folderId, childIds) {
 /** @param {any} v @param {any} [orig] @param {Iterable<string>} [takenIds] */
 export function buildAppItem(v, orig, takenIds = []) {
   if (!v.label) return { error: 'Name required' };
-  if (!v.href)  return { error: 'URL required' };
+  if (!v.href) return { error: 'URL required' };
   const DEFCOL = '#0289ff';
-  const customObj = (v.actColor && v.actColor !== DEFCOL) || v.custUnit ? {
-    color: v.actColor && v.actColor !== DEFCOL ? v.actColor : undefined,
-    unit:  v.custUnit || undefined,
-  } : undefined;
-  const staticBadgeObj = v.staticEn && v.staticLabel
-    ? { enabled: true, label: v.staticLabel.slice(0, 10), color: v.staticColor || 'blue' }
-    : undefined;
+  const customObj =
+    (v.actColor && v.actColor !== DEFCOL) || v.custUnit
+      ? {
+          color: v.actColor && v.actColor !== DEFCOL ? v.actColor : undefined,
+          unit: v.custUnit || undefined,
+        }
+      : undefined;
+  const staticBadgeObj =
+    v.staticEn && v.staticLabel
+      ? { enabled: true, label: v.staticLabel.slice(0, 10), color: v.staticColor || 'blue' }
+      : undefined;
   const spaths = v.spaths || [];
-  return { item: {
-    id: orig?.id || newItemId(v.label, 'app', takenIds),
-    type: 'app', label: v.label, href: v.href,
-    iconUrl: v.iconUrl, color: v.scol || 'dark',
-    dock: v.dock || false,
-    skipTlsVerify: v.skipTlsVerify || undefined,
-    monitoring: {
-      healthcheck: { enabled: v.hcEn && (!!v.hcCon || !!v.hcPing), container: v.hcCon, pingUrl: v.hcPing },
-      activity: {
-        enabled: v.actEn && !!v.actUrl, url: v.actUrl,
-        params:  v.actParams?.length ? v.actParams : undefined,
-        headers: v.actHeaders?.length ? v.actHeaders : undefined,
-        extract: spaths.length === 1 ? spaths[0] : spaths.length > 1 ? spaths.map(p => ({ path: p })) : undefined,
-        interval: Math.max(10, v.actInt),
-        custom: customObj,
+  return {
+    item: {
+      id: orig?.id || newItemId(v.label, 'app', takenIds),
+      type: 'app',
+      label: v.label,
+      href: v.href,
+      iconUrl: v.iconUrl,
+      color: v.scol || 'dark',
+      dock: v.dock || false,
+      skipTlsVerify: v.skipTlsVerify || undefined,
+      monitoring: {
+        healthcheck: { enabled: v.hcEn && (!!v.hcCon || !!v.hcPing), container: v.hcCon, pingUrl: v.hcPing },
+        activity: {
+          enabled: v.actEn && !!v.actUrl,
+          url: v.actUrl,
+          params: v.actParams?.length ? v.actParams : undefined,
+          headers: v.actHeaders?.length ? v.actHeaders : undefined,
+          extract: spaths.length === 1 ? spaths[0] : spaths.length > 1 ? spaths.map(p => ({ path: p })) : undefined,
+          interval: Math.max(10, v.actInt),
+          custom: customObj,
+        },
+        staticBadge: staticBadgeObj,
       },
-      staticBadge: staticBadgeObj,
     },
-  } };
+  };
 }

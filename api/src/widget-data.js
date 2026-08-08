@@ -38,25 +38,27 @@ function resolveRow(wc, row) {
 
 function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
   const ctx = {
-    config:   wc,                 /* full widgetConfig, including secrets (server-side only) */
+    config: wc /* full widgetConfig, including secrets (server-side only) */,
     /* A frozen copy of the non-secret keys only: the full settings object carries
        the session signing key and the password hash. */
     settings: widgetSettings(loadConfig().settings),
     endpoint: endpoint,
     /* Set only for an optionsFrom fetch inside a group, so a per-row picker reads
        the URL and key that row was given. */
-    row:      resolveRow(wc, row),
-    params:   searchParams,       /* URLSearchParams for any extra query params */
+    row: resolveRow(wc, row),
+    params: searchParams /* URLSearchParams for any extra query params */,
     /* The caller supplies the fetcher to match the URL's provenance: unchecked
        for saved config, checked for a request-supplied preview config. */
     fetchJSON: fetch,
     parsePrometheus,
-    metrics:  IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
-    demo:     IS_DEMO ? demoData.helpers : null,
+    metrics: IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
+    demo: IS_DEMO ? demoData.helpers : null,
     normalizeBase,
     /* Reports a failure in the author's own words. A plain Error is sanitised to
        a generic message instead. See api-error.js. */
-    fail: (message, opts) => { throw new WidgetError(message, opts); },
+    fail: (message, opts) => {
+      throw new WidgetError(message, opts);
+    },
     KIND,
     log,
   };
@@ -78,8 +80,11 @@ function runDemoFn(name, ctx) {
 async function runWidgetModule(name, file, ctx) {
   const fnPath = path.join(WIDGETS_PATH, name, file);
   let fn;
-  try { fn = require(fnPath); }
-  catch (e) { throw new Error(`${file} failed to load: ` + e.message); }
+  try {
+    fn = require(fnPath);
+  } catch (e) {
+    throw new Error(`${file} failed to load: ` + e.message);
+  }
   if (typeof fn !== 'function') throw new Error(`${file} must export a function`);
   return await fn(ctx);
 }
@@ -99,7 +104,12 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch, row
 
 on('GET', '/api/widget-data/:id', async (req, res) => {
   /* Per widget id, which is what maps to one upstream service. */
-  const limited = rateLimit(getIp(req), `widget-data:${req.params.id}`, LIMITS.WIDGET_DATA.max, LIMITS.WIDGET_DATA.windowMs);
+  const limited = rateLimit(
+    getIp(req),
+    `widget-data:${req.params.id}`,
+    LIMITS.WIDGET_DATA.max,
+    LIMITS.WIDGET_DATA.windowMs,
+  );
   if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
   const cfg = loadConfig();
   const item = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
@@ -128,11 +138,20 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   const limited = rateLimit(getIp(req), 'widget-options', LIMITS.WIDGET_OPTIONS.max, LIMITS.WIDGET_OPTIONS.windowMs);
   if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
   let body;
-  try { body = JSON.parse(await readBody(req)); } catch { return json(res, 400, { error: 'invalid body', kind: KIND.INVALID }); }
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch {
+    return json(res, 400, { error: 'invalid body', kind: KIND.INVALID });
+  }
   const entry = getRegistry()[body.widgetType];
   if (!entry || !entry.hasDataFn) return json(res, 400, { error: 'unknown widget type', kind: KIND.INVALID });
 
-  const item = { type: 'widget', id: req.params.id, widgetType: body.widgetType, widgetConfig: body.widgetConfig || {} };
+  const item = {
+    type: 'widget',
+    id: req.params.id,
+    widgetType: body.widgetType,
+    widgetConfig: body.widgetConfig || {},
+  };
   const saved = (loadConfig().items || []).find(i => i.id === req.params.id && i.type === 'widget');
   /* Only restore a blanked secret when the rest of the posted config matches what
      is saved: otherwise the request picks the destination while the server
@@ -141,7 +160,15 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   if (scoped) preserveWidgetSecrets(item, saved, entry);
 
   try {
-    const out = await getWidgetData(item, entry, body.endpoint || '', new URLSearchParams(), fetchChecked, body.row, true);
+    const out = await getWidgetData(
+      item,
+      entry,
+      body.endpoint || '',
+      new URLSearchParams(),
+      fetchChecked,
+      body.row,
+      true,
+    );
     json(res, out.status, out.body);
   } catch (e) {
     if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });

@@ -105,5 +105,7 @@ test('health polling does not announce', () => {
 test('mobile no longer builds dots into a hidden container', () => {
   const ui = read('js/ui.js');
   assert.doesNotMatch(ui, /const de = \[\]/, 'unreachable markup that still had to be kept in step');
-  assert.match(ui, /dw\.style\.cssText = 'display:none'; dw\.innerHTML = ''/, 'the container is still cleared');
+  /* Two statements, whether the formatter puts them on one line or two. */
+  assert.match(ui, /dw\.style\.cssText\s*=\s*'display:none';\s*dw\.innerHTML\s*=\s*''/,
+    'the container is still cleared');
 });

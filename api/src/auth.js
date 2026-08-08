@@ -5,9 +5,10 @@ const log = require('./log');
 
 /* SECRET_BYTES is the signing key for the session HMAC. SESSION_ID_BYTES is the
    identifier inside the token, which is not a credential on its own. */
-const SECRET_BYTES = 32, SESSION_ID_BYTES = 24;
+const SECRET_BYTES = 32,
+  SESSION_ID_BYTES = 24;
 const newSessionSecret = () => crypto.randomBytes(SECRET_BYTES).toString('hex');
-const newSessionId     = () => crypto.randomBytes(SESSION_ID_BYTES).toString('hex');
+const newSessionId = () => crypto.randomBytes(SESSION_ID_BYTES).toString('hex');
 
 /* Mutates and returns the block, so a caller can write to it directly. */
 function _authBlock(cfg) {
@@ -48,24 +49,26 @@ const SALT_BYTES = 16;
 /* Whole rows only, so the parameters cannot be set to an unbalanced pair. The
    default suits a 512 MB board; memory is what fails outright on small hardware. */
 const HASH_PROFILES = Object.freeze({
-  '8mib':   { ln: 13, r: 8, p: 10 },
-  '16mib':  { ln: 14, r: 8, p: 5 },
-  '32mib':  { ln: 15, r: 8, p: 3 },
-  '64mib':  { ln: 16, r: 8, p: 2 },
+  '8mib': { ln: 13, r: 8, p: 10 },
+  '16mib': { ln: 14, r: 8, p: 5 },
+  '32mib': { ln: 15, r: 8, p: 3 },
+  '64mib': { ln: 16, r: 8, p: 2 },
   '128mib': { ln: 17, r: 8, p: 1 },
 });
 const DEFAULT_PROFILE = '16mib';
 
 /* scrypt needs roughly 128 * N * r bytes and node:crypto refuses above maxmem,
    which defaults to 32 MiB. */
-const _maxmemFor = ({ ln, r }) => Math.max(33554432, 128 * (2 ** ln) * r * 2);
+const _maxmemFor = ({ ln, r }) => Math.max(33554432, 128 * 2 ** ln * r * 2);
 
 function _activeProfile() {
   const want = String(process.env.PASSWORD_HASH_MEMORY || DEFAULT_PROFILE).toLowerCase();
   const chosen = HASH_PROFILES[want];
   if (chosen) return chosen;
   log.warn('PASSWORD_HASH_MEMORY is not a recognised setting, using the default', {
-    value: want, allowed: Object.keys(HASH_PROFILES).join(','), using: DEFAULT_PROFILE,
+    value: want,
+    allowed: Object.keys(HASH_PROFILES).join(','),
+    using: DEFAULT_PROFILE,
   });
   return HASH_PROFILES[DEFAULT_PROFILE];
 }
@@ -74,12 +77,13 @@ function _activeProfile() {
 const _b64 = buf => buf.toString('base64').replace(/=+$/, '');
 const _unb64 = str => Buffer.from(str, 'base64');
 
-const _scrypt = (password, salt, params) => new Promise((resolve, reject) => {
-  const { ln, r, p } = params;
-  crypto.scrypt(password, salt, SCRYPT_KEYLEN,
-    { N: 2 ** ln, r, p, maxmem: _maxmemFor(params) },
-    (err, key) => (err ? reject(err) : resolve(key)));
-});
+const _scrypt = (password, salt, params) =>
+  new Promise((resolve, reject) => {
+    const { ln, r, p } = params;
+    crypto.scrypt(password, salt, SCRYPT_KEYLEN, { N: 2 ** ln, r, p, maxmem: _maxmemFor(params) }, (err, key) =>
+      err ? reject(err) : resolve(key),
+    );
+  });
 
 /** Produce a PHC-format hash using the active profile.
     @param {string} password @returns {Promise<string>} */
@@ -157,8 +161,11 @@ async function verifyPassword(password, hash) {
   }
   /* timingSafeEqual throws on a length mismatch, where nothing else would catch
      it. */
-  try { return crypto.timingSafeEqual(parsed.key, derived); }
-  catch { return false; }
+  try {
+    return crypto.timingSafeEqual(parsed.key, derived);
+  } catch {
+    return false;
+  }
 }
 
 /** True when a verified hash should be rewritten: it is in the old format, or it
@@ -167,10 +174,10 @@ async function verifyPassword(password, hash) {
     @param {unknown} hash @returns {boolean} */
 function needsRehash(hash) {
   const parsed = parseHash(hash);
-  if (!parsed) return false;              /* unverifiable; nothing to carry over */
+  if (!parsed) return false; /* unverifiable; nothing to carry over */
   if (parsed.legacy) return true;
   const want = _activeProfile();
-  const work = ({ ln, r, p }) => (2 ** ln) * r * p;
+  const work = ({ ln, r, p }) => 2 ** ln * r * p;
   return work(parsed.params) < work(want);
 }
 
@@ -191,11 +198,12 @@ function makeToken(sessionId, secret) {
 function verifyToken(token, secret) {
   const dot2 = token.lastIndexOf('.');
   if (dot2 === -1) return null;
-  const sig  = token.slice(dot2 + 1);
+  const sig = token.slice(dot2 + 1);
   const rest = token.slice(0, dot2);
   const dot1 = rest.lastIndexOf('.');
   if (dot1 === -1) return null; /* legacy 2-part tokens (no issued-at) are rejected */
-  const sessionId = rest.slice(0, dot1), iat = rest.slice(dot1 + 1);
+  const sessionId = rest.slice(0, dot1),
+    iat = rest.slice(dot1 + 1);
   if (sig.length !== 64 || !/^[0-9a-f]+$/.test(sig)) return null;
   if (!/^[0-9]+$/.test(iat)) return null;
   const expected = crypto.createHmac('sha256', secret).update(rest).digest('hex');
@@ -273,14 +281,18 @@ function hit(store, key, max, windowMs) {
      zero would let one request through. */
   if (max < 1) return windowMs;
   const rec = store.get(key);
-  if (!rec || now - rec.first > windowMs) { store.set(key, { count: 1, first: now }); return null; }
+  if (!rec || now - rec.first > windowMs) {
+    store.set(key, { count: 1, first: now });
+    return null;
+  }
   if (rec.count >= max) return windowMs - (now - rec.first);
   rec.count += 1;
   return null;
 }
 
 const _loginAttempts = new Map();
-const LOGIN_MAX = 5, LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX = 5,
+  LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 /* Reported in whole minutes: a fifteen-minute lockout counted down in seconds
    reads as a stopwatch on a screen someone is already locked out of. */
@@ -291,7 +303,9 @@ function registerLoginAttempt(ip) {
   return `Too many attempts. Try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
 }
 
-function clearAttempts(ip) { _loginAttempts.delete(ip); }
+function clearAttempts(ip) {
+  _loginAttempts.delete(ip);
+}
 
 const _rateBuckets = new Map();
 
@@ -308,7 +322,7 @@ function rateLimit(ip, key, max, windowMs) {
    only clears keys nobody comes back to. */
 setInterval(() => {
   const now = Date.now();
-  for (const [k, v] of _rateBuckets)   if (now - v.first > 3_600_000)     _rateBuckets.delete(k);
+  for (const [k, v] of _rateBuckets) if (now - v.first > 3_600_000) _rateBuckets.delete(k);
   for (const [k, v] of _loginAttempts) if (now - v.first > LOGIN_WINDOW_MS) _loginAttempts.delete(k);
 }, 600_000).unref();
 
@@ -343,10 +357,28 @@ function hasValidSession(req) {
 }
 
 module.exports = {
-  getOrCreateSecret, rotateSessionSecret, newSessionSecret, newSessionId, hashPassword, verifyPassword, authActive, needsRehash,
-  HASH_PROFILES, DEFAULT_PROFILE, parseHash,
-  makeToken, verifyToken, parseCookies, setSessionCookie, clearSessionCookie, isSecureRequest,
-  registerLoginAttempt, clearAttempts, rateLimit, isAuthenticated, hasValidSession,
+  getOrCreateSecret,
+  rotateSessionSecret,
+  newSessionSecret,
+  newSessionId,
+  hashPassword,
+  verifyPassword,
+  authActive,
+  needsRehash,
+  HASH_PROFILES,
+  DEFAULT_PROFILE,
+  parseHash,
+  makeToken,
+  verifyToken,
+  parseCookies,
+  setSessionCookie,
+  clearSessionCookie,
+  isSecureRequest,
+  registerLoginAttempt,
+  clearAttempts,
+  rateLimit,
+  isAuthenticated,
+  hasValidSession,
   /* Tests exercise limits in sequence in one process. */
   _resetRateLimits: () => _rateBuckets.clear(),
   SESSION_MAX_AGE_MS,

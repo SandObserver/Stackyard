@@ -1,7 +1,7 @@
-const http  = require('http');
+const http = require('http');
 const https = require('https');
-const net   = require('net');
-const dns   = require('dns').promises;
+const net = require('net');
+const dns = require('dns').promises;
 const { loadConfig } = require('./config');
 const { PING_MS, FETCH_MS } = require('./timeouts');
 const { IS_DEMO } = require('./demo');
@@ -13,17 +13,17 @@ const { parsePrometheus } = require('./parse-prometheus');
    documentation; docs/security.md is checked against it. */
 /** @type {Array<[string, number, string]>} */
 const BLOCKED_IPV4 = [
-  ['0.0.0.0',      8,  'this network (RFC 1122)'],
-  ['10.0.0.0',     8,  'private (RFC 1918)'],
-  ['100.64.0.0',   10, 'carrier-grade NAT (RFC 6598)'],
-  ['127.0.0.0',    8,  'loopback (RFC 1122)'],
-  ['169.254.0.0',  16, 'link-local, includes cloud metadata (RFC 3927)'],
-  ['172.16.0.0',   12, 'private (RFC 1918)'],
-  ['192.0.0.0',    24, 'IETF protocol assignments (RFC 6890)'],
-  ['192.168.0.0',  16, 'private (RFC 1918)'],
-  ['198.18.0.0',   15, 'benchmarking (RFC 2544)'],
-  ['224.0.0.0',    4,  'multicast (RFC 5771)'],
-  ['240.0.0.0',    4,  'reserved, includes 255.255.255.255 broadcast (RFC 1112)'],
+  ['0.0.0.0', 8, 'this network (RFC 1122)'],
+  ['10.0.0.0', 8, 'private (RFC 1918)'],
+  ['100.64.0.0', 10, 'carrier-grade NAT (RFC 6598)'],
+  ['127.0.0.0', 8, 'loopback (RFC 1122)'],
+  ['169.254.0.0', 16, 'link-local, includes cloud metadata (RFC 3927)'],
+  ['172.16.0.0', 12, 'private (RFC 1918)'],
+  ['192.0.0.0', 24, 'IETF protocol assignments (RFC 6890)'],
+  ['192.168.0.0', 16, 'private (RFC 1918)'],
+  ['198.18.0.0', 15, 'benchmarking (RFC 2544)'],
+  ['224.0.0.0', 4, 'multicast (RFC 5771)'],
+  ['240.0.0.0', 4, 'reserved, includes 255.255.255.255 broadcast (RFC 1112)'],
 ];
 
 /* Loopback, unspecified, unique local, link-local, multicast. ff00::/8 needs
@@ -62,7 +62,8 @@ function embeddedIPv4(addr) {
   if (tail.includes('.')) return net.isIPv4(tail) ? tail : null;
   const parts = tail.split(':');
   if (parts.length !== 2) return null;
-  const hi = parseInt(parts[0], 16), lo = parseInt(parts[1], 16);
+  const hi = parseInt(parts[0], 16),
+    lo = parseInt(parts[1], 16);
   if (!Number.isInteger(hi) || !Number.isInteger(lo) || hi > 0xffff || lo > 0xffff) return null;
   return `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`;
 }
@@ -94,7 +95,11 @@ const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
 const ALLOW_PRIVATE_IPS = process.env.ALLOW_PRIVATE_IPS === 'true';
 
 function getHostIp() {
-  try { return loadConfig().settings?.server?.hostIp || ''; } catch { return ''; }
+  try {
+    return loadConfig().settings?.server?.hostIp || '';
+  } catch {
+    return '';
+  }
 }
 
 /* URL keeps IPv6 literals bracketed, and the range checks do not recognise that
@@ -119,13 +124,19 @@ function shouldSkipTls(hostname, cfg) {
 
 function rewriteUrl(raw) {
   try {
-    const cfg = loadConfig(), hostIp = cfg.settings?.server?.hostIp || '';
+    const cfg = loadConfig(),
+      hostIp = cfg.settings?.server?.hostIp || '';
     if (!hostIp) return raw;
     const u = new URL(raw);
     const m = (cfg.settings?.server?.portMap || {})[u.port];
-    if (u.hostname === hostIp && m) { u.hostname = m.host; u.port = m.port; }
+    if (u.hostname === hostIp && m) {
+      u.hostname = m.host;
+      u.port = m.port;
+    }
     return u.toString();
-  } catch { return raw; }
+  } catch {
+    return raw;
+  }
 }
 
 /* The transport picks the https module for 'https:' and plain http for anything
@@ -144,28 +155,37 @@ function urlPolicyError(u) {
 }
 
 async function guardSsrf(rawUrl) {
-  let u; try { u = new URL(rawUrl); } catch { return { error:'Invalid URL', ip:null }; }
+  let u;
+  try {
+    u = new URL(rawUrl);
+  } catch {
+    return { error: 'Invalid URL', ip: null };
+  }
   /* An empty hostname would otherwise pass the service-name allowance below and
      connect to localhost. */
   const policy = urlPolicyError(u);
   if (policy) return { error: policy, ip: null };
   const h = bareHost(u.hostname);
   /* Loopback, not a service name: block it before the allowance below. */
-  if (!ALLOW_PRIVATE_IPS && h === 'localhost') return { error:`Blocked: ${h} is a private address.`, ip:null };
+  if (!ALLOW_PRIVATE_IPS && h === 'localhost') return { error: `Blocked: ${h} is a private address.`, ip: null };
   /* Trusted on internal networks. */
-  if (isDockerServiceName(h)) return { error:null, ip:null };
+  if (isDockerServiceName(h)) return { error: null, ip: null };
   /* The Docker host's own IP is trusted. A trust policy, not a workaround for
      the rewrite. */
   const hostIp = getHostIp();
-  if (hostIp && h === hostIp) return { error:null, ip:null };
-  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(h)) return { error:`Blocked: ${h} is a private address.`, ip:null };
+  if (hostIp && h === hostIp) return { error: null, ip: null };
+  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(h)) return { error: `Blocked: ${h} is a private address.`, ip: null };
   let address;
-  try { ({ address } = await dns.lookup(h)); }
-  catch { return { error:`Blocked: ${h} could not be resolved.`, ip:null }; }
-  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(address)) return { error:`Blocked: ${h} resolves to private IP ${address}.`, ip:null };
+  try {
+    ({ address } = await dns.lookup(h));
+  } catch {
+    return { error: `Blocked: ${h} could not be resolved.`, ip: null };
+  }
+  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(address))
+    return { error: `Blocked: ${h} resolves to private IP ${address}.`, ip: null };
   /* A literal address cannot be rebound, so there is nothing to pin. */
-  if (h === address) return { error:null, ip:null };
-  return { error:null, ip:address };
+  if (h === address) return { error: null, ip: null };
+  return { error: null, ip: address };
 }
 
 /* One deadline for a whole outbound attempt. Node's socket `timeout` is an
@@ -176,7 +196,9 @@ async function guardSsrf(rawUrl) {
    @returns {{ settle: (fn: Function, arg?: any) => void, expired: () => boolean }} */
 function withDeadline(ms, onExpire) {
   let settled = false;
-  const timer = setTimeout(() => { if (!settled) onExpire(); }, ms);
+  const timer = setTimeout(() => {
+    if (!settled) onExpire();
+  }, ms);
   /* Unref'd so a pending request never holds the process open at shutdown. */
   if (timer.unref) timer.unref();
   return {
@@ -191,15 +213,21 @@ function withDeadline(ms, onExpire) {
 }
 
 function fetchJSON(raw, opts = {}) {
-  if (IS_DEMO) return Promise.resolve({ status: 503, data: null, error: 'Outbound requests are disabled in demo mode' });
+  if (IS_DEMO)
+    return Promise.resolve({ status: 503, data: null, error: 'Outbound requests are disabled in demo mode' });
   return new Promise((resolve, reject) => {
-    let u; try { u = new URL(raw); } catch(e) { return reject(e); }
+    let u;
+    try {
+      u = new URL(raw);
+    } catch (e) {
+      return reject(e);
+    }
     const policy = urlPolicyError(u);
     if (policy) return reject(Object.assign(new Error(policy), { kind: 'blocked', status: 403 }));
     /* Assigned below, once `req` exists for the deadline to destroy. */
     let dl = null;
     const done = (fn, arg) => dl.settle(fn, arg);
-    const lib  = u.protocol === 'https:' ? https : http;
+    const lib = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const skipTls = opts.skipTls != null ? opts.skipTls : shouldSkipTls(u.hostname, loadConfig());
     const bodyBuf = opts.body ? Buffer.from(opts.body) : null;
@@ -211,51 +239,66 @@ function fetchJSON(raw, opts = {}) {
        (hostname is "[::1]"); brackets here fail to resolve. Host header and SNI
        stay on the original bracketed hostname. */
     const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
-    const req = lib.request({
-      hostname: connectHost, port, path: u.pathname + u.search,
-      method: opts.method || 'GET', headers: hdrs,
-      servername: pin ? u.hostname : undefined, /* keep SNI + cert validation on the real hostname */
-      timeout: opts.timeout || FETCH_MS,
-      rejectUnauthorized: !skipTls,
-    }, res => {
-      const sc = res.statusCode ?? 0;
-      if (sc >= 300 && sc < 400) {
-        res.resume();
-        return done(reject, new Error(`Redirect blocked (${sc}). Use the final URL directly`));
-      }
-      const bufs = []; let total = 0;
-      res.on('data', c => {
-        total += c.length;
-        if (total > FETCH_SIZE_LIMIT) { req.destroy(); return done(reject, new Error('Response too large')); }
-        bufs.push(c);
-      });
-      res.on('end', () => {
-        const body = Buffer.concat(bufs).toString('utf8');
-        if (opts.raw) return done(resolve, { status: res.statusCode, data: body });
-        const ct   = (res.headers['content-type'] || '').toLowerCase();
-        try { done(resolve, { status: res.statusCode, data: JSON.parse(body) }); }
-        catch {
-          if (looksLikeMetrics(ct, body))
-            done(resolve, { status: res.statusCode, data: parsePrometheus(body) });
-          else if (ct.includes('xml') || body.trimStart().startsWith('<')) {
-            const parsed = parseXml(body);
-            if (parsed['#truncated']) {
-              /* Origin and path only: a URL can carry an API key in its query
-                 string and credentials in its authority. */
-              log.warn('XML response was too large to read in full', { url: u.origin + u.pathname, bytes: body.length });
-            }
-            done(resolve, { status: res.statusCode, data: parsed });
-          }
-          else done(resolve, { status: res.statusCode, data: body });
+    const req = lib.request(
+      {
+        hostname: connectHost,
+        port,
+        path: u.pathname + u.search,
+        method: opts.method || 'GET',
+        headers: hdrs,
+        servername: pin ? u.hostname : undefined /* keep SNI + cert validation on the real hostname */,
+        timeout: opts.timeout || FETCH_MS,
+        rejectUnauthorized: !skipTls,
+      },
+      res => {
+        const sc = res.statusCode ?? 0;
+        if (sc >= 300 && sc < 400) {
+          res.resume();
+          return done(reject, new Error(`Redirect blocked (${sc}). Use the final URL directly`));
         }
-      });
-    });
+        const bufs = [];
+        let total = 0;
+        res.on('data', c => {
+          total += c.length;
+          if (total > FETCH_SIZE_LIMIT) {
+            req.destroy();
+            return done(reject, new Error('Response too large'));
+          }
+          bufs.push(c);
+        });
+        res.on('end', () => {
+          const body = Buffer.concat(bufs).toString('utf8');
+          if (opts.raw) return done(resolve, { status: res.statusCode, data: body });
+          const ct = (res.headers['content-type'] || '').toLowerCase();
+          try {
+            done(resolve, { status: res.statusCode, data: JSON.parse(body) });
+          } catch {
+            if (looksLikeMetrics(ct, body)) done(resolve, { status: res.statusCode, data: parsePrometheus(body) });
+            else if (ct.includes('xml') || body.trimStart().startsWith('<')) {
+              const parsed = parseXml(body);
+              if (parsed['#truncated']) {
+                /* Origin and path only: a URL can carry an API key in its query
+                 string and credentials in its authority. */
+                log.warn('XML response was too large to read in full', {
+                  url: u.origin + u.pathname,
+                  bytes: body.length,
+                });
+              }
+              done(resolve, { status: res.statusCode, data: parsed });
+            } else done(resolve, { status: res.statusCode, data: body });
+          }
+        });
+      },
+    );
     /* Armed here rather than earlier because it destroys `req`. */
     dl = withDeadline(opts.timeout || FETCH_MS, () => {
       req.destroy();
       done(reject, new Error('Timed out'));
     });
-    req.on('timeout', () => { req.destroy(); done(reject, new Error('Timed out')); });
+    req.on('timeout', () => {
+      req.destroy();
+      done(reject, new Error('Timed out'));
+    });
     req.on('error', e => done(reject, e));
     if (bodyBuf) req.write(bodyBuf);
     req.end();
@@ -263,14 +306,14 @@ function fetchJSON(raw, opts = {}) {
 }
 
 function statusDesc(code) {
-  if (code === 0)   return 'No response';
-  if (code < 400)   return 'OK';
+  if (code === 0) return 'No response';
+  if (code < 400) return 'OK';
   if (code === 401) return 'Unauthorised';
   if (code === 403) return 'Forbidden';
   if (code === 404) return 'Not found (but reachable)';
   if (code === 405) return 'Method not allowed';
   if (code === 407) return 'Proxy auth required';
-  if (code >= 500)  return 'Server error';
+  if (code >= 500) return 'Server error';
   return `HTTP ${code}`;
 }
 
@@ -278,15 +321,15 @@ function statusDesc(code) {
    and could leak internal hostnames. */
 const PING_ERRORS = Object.freeze({
   ECONNREFUSED: 'Connection refused.',
-  ENOTFOUND:    'Host not found.',
-  EAI_AGAIN:    'Host not found.',
+  ENOTFOUND: 'Host not found.',
+  EAI_AGAIN: 'Host not found.',
   EHOSTUNREACH: 'Host unreachable.',
-  ENETUNREACH:  'Network unreachable.',
-  ECONNRESET:   'The connection was reset.',
-  EPROTO:       'The service did not speak HTTP.',
-  DEPTH_ZERO_SELF_SIGNED_CERT:      'The certificate is not trusted.',
-  UNABLE_TO_VERIFY_LEAF_SIGNATURE:  'The certificate is not trusted.',
-  CERT_HAS_EXPIRED:                 'The certificate has expired.',
+  ENETUNREACH: 'Network unreachable.',
+  ECONNRESET: 'The connection was reset.',
+  EPROTO: 'The service did not speak HTTP.',
+  DEPTH_ZERO_SELF_SIGNED_CERT: 'The certificate is not trusted.',
+  UNABLE_TO_VERIFY_LEAF_SIGNATURE: 'The certificate is not trusted.',
+  CERT_HAS_EXPIRED: 'The certificate has expired.',
 });
 
 /** @param {unknown} e @returns {string|undefined} */
@@ -303,23 +346,31 @@ function pingErrorText(e) {
 function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
   if (IS_DEMO) return Promise.resolve({ ok: false, status: 0, error: 'Outbound requests are disabled in demo mode' });
   return new Promise(resolve => {
-    let u; try { u = new URL(raw); } catch { return resolve({ ok:false, status:0, error:'Invalid URL' }); }
+    let u;
+    try {
+      u = new URL(raw);
+    } catch {
+      return resolve({ ok: false, status: 0, error: 'Invalid URL' });
+    }
     const policy = urlPolicyError(u);
-    if (policy) return resolve({ ok:false, status:0, error:policy });
-    const lib  = u.protocol === 'https:' ? https : http;
+    if (policy) return resolve({ ok: false, status: 0, error: policy });
+    const lib = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const skip = skipTls != null ? skipTls : shouldSkipTls(u.hostname, loadConfig());
-    const pin  = pinIp && pinIp !== u.hostname ? pinIp : null;
+    const pin = pinIp && pinIp !== u.hostname ? pinIp : null;
     const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
-    const opts = { hostname:connectHost, port, path:u.pathname||'/', timeout:ms, rejectUnauthorized:!skip };
-    if (pin) { opts.headers = { Host: u.host }; opts.servername = u.hostname; }
+    const opts = { hostname: connectHost, port, path: u.pathname || '/', timeout: ms, rejectUnauthorized: !skip };
+    if (pin) {
+      opts.headers = { Host: u.host };
+      opts.servername = u.hostname;
+    }
 
     /* One deadline for the whole ping: the 405 retry below would otherwise let a
        stalled host take the budget twice over. */
     let current = null;
     const dl = withDeadline(ms, () => {
       if (current) current.destroy();
-      dl.settle(resolve, { ok:false, status:0, error:'Timed out' });
+      dl.settle(resolve, { ok: false, status: 0, error: 'Timed out' });
     });
 
     const send = (method, onResponse) => {
@@ -329,22 +380,26 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
         onResponse(res.statusCode ?? 0);
       });
       current = req;
-      req.on('timeout', () => { req.destroy(); dl.settle(resolve, { ok:false, status:0, error:'Timed out' }); });
+      req.on('timeout', () => {
+        req.destroy();
+        dl.settle(resolve, { ok: false, status: 0, error: 'Timed out' });
+      });
       /* This result reaches the browser as-is. The message names the address it
          failed to reach; the code does not, so only the code is kept. */
-      req.on('error',   (/** @type {unknown} */ e) => {
+      req.on('error', (/** @type {unknown} */ e) => {
         /* u.origin excludes credentials in the authority, and the query string
            is left off because it can carry an API key. */
         log.warn('ping failed', { url: u.origin + (opts.path || ''), error: errMessage(e) });
-        dl.settle(resolve, { ok:false, status:0, error: pingErrorText(e), code: errCode(e) });
+        dl.settle(resolve, { ok: false, status: 0, error: pingErrorText(e), code: errCode(e) });
       });
       req.end();
     };
 
     send('HEAD', sc => {
       /* Some servers refuse HEAD; the retry shares the same overall budget. */
-      if (sc === 405) return send('GET', gsc => dl.settle(resolve, { ok:gsc < 500, status:gsc, desc:statusDesc(gsc) }));
-      dl.settle(resolve, { ok:sc < 500, status:sc, desc:statusDesc(sc) });
+      if (sc === 405)
+        return send('GET', gsc => dl.settle(resolve, { ok: gsc < 500, status: gsc, desc: statusDesc(gsc) }));
+      dl.settle(resolve, { ok: sc < 500, status: sc, desc: statusDesc(sc) });
     });
   });
 }
@@ -358,14 +413,18 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
 
 class SsrfBlockedError extends Error {
   /* Carries the status a route should return, so a generic catch keeps the 403. */
-  constructor(reason) { super(reason); this.name = 'SsrfBlockedError'; this.status = 403; }
+  constructor(reason) {
+    super(reason);
+    this.name = 'SsrfBlockedError';
+    this.status = 403;
+  }
 }
 
 async function fetchChecked(url, opts = {}) {
   /* Before guardSsrf, whose dns.lookup is itself an outbound request. */
   if (IS_DEMO) return fetchJSON(url, opts);
   const target = rewriteUrl(url);
-  const guard  = await guardSsrf(target);
+  const guard = await guardSsrf(target);
   if (guard.error) throw new SsrfBlockedError(guard.error);
   return fetchJSON(target, { ...opts, pinIp: guard.ip });
 }
@@ -381,15 +440,30 @@ function pingUnchecked(url, ms, skipTls) {
 async function pingChecked(url, ms, skipTls) {
   if (IS_DEMO) return pingUrl(url, ms, skipTls);
   const target = rewriteUrl(url);
-  const guard  = await guardSsrf(target);
+  const guard = await guardSsrf(target);
   if (guard.error) throw new SsrfBlockedError(guard.error);
   return pingUrl(target, ms, skipTls, guard.ip);
 }
 
 module.exports = {
-  fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError, statusDesc,
-  urlPolicyError, ALLOWED_PROTOCOLS, looksLikeMetrics,
-  rewriteUrl, getHostIp, shouldSkipTls, isInternalHost, isDockerServiceName, bareHost,
-  isPrivateAddress, isBlockedIPv4, embeddedIPv4, BLOCKED_IPV4,
+  fetchChecked,
+  fetchUnchecked,
+  pingChecked,
+  pingUnchecked,
+  SsrfBlockedError,
+  statusDesc,
+  urlPolicyError,
+  ALLOWED_PROTOCOLS,
+  looksLikeMetrics,
+  rewriteUrl,
+  getHostIp,
+  shouldSkipTls,
+  isInternalHost,
+  isDockerServiceName,
+  bareHost,
+  isPrivateAddress,
+  isBlockedIPv4,
+  embeddedIPv4,
+  BLOCKED_IPV4,
   _internals: { fetchJSON, pingUrl, guardSsrf },
 };

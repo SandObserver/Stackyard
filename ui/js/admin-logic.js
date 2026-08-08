@@ -89,11 +89,16 @@ export function nextActiveIndex(key, active, len) {
   if (len <= 0) return null;
   const clamp = i => Math.max(0, Math.min(i, len - 1));
   switch (key) {
-    case 'ArrowDown': return clamp(active + 1);
-    case 'ArrowUp':   return clamp(active - 1);
-    case 'Home':      return 0;
-    case 'End':       return len - 1;
-    default:          return null;
+    case 'ArrowDown':
+      return clamp(active + 1);
+    case 'ArrowUp':
+      return clamp(active - 1);
+    case 'Home':
+      return 0;
+    case 'End':
+      return len - 1;
+    default:
+      return null;
   }
 }
 
@@ -142,20 +147,24 @@ export const DOCK_MAX = 4;
 
 export function isDockBlocked(items, editing) {
   if (editing?.dock) return false;
-  const docked = (Array.isArray(items) ? items : [])
-    .filter(i => i?.type === 'app' && i.dock && i.id !== editing?.id).length;
+  const docked = (Array.isArray(items) ? items : []).filter(
+    i => i?.type === 'app' && i.dock && i.id !== editing?.id,
+  ).length;
   return docked >= DOCK_MAX;
 }
 
 /* countBySize pins both bounds together and wins over min/max/maxBySize for the
    size it names. */
 export function groupBounds(field, size) {
-  const fixed = (field.countBySize && size && field.countBySize[size] != null) ? field.countBySize[size] : null;
+  const fixed = field.countBySize && size && field.countBySize[size] != null ? field.countBySize[size] : null;
   if (fixed != null) return { min: fixed, max: fixed };
   const min = field.min != null ? field.min : 0;
-  const max = (field.maxBySize && size && field.maxBySize[size] != null)
-    ? field.maxBySize[size]
-    : (field.max != null ? field.max : 99);
+  const max =
+    field.maxBySize && size && field.maxBySize[size] != null
+      ? field.maxBySize[size]
+      : field.max != null
+        ? field.max
+        : 99;
   return { min, max };
 }
 
@@ -163,17 +172,21 @@ export function groupBounds(field, size) {
    childIdx are given, otherwise swaps top-level rows. */
 export function reorderItems(items, item, dir, { folderId = null, childIdx = null } = {}) {
   if (folderId != null) {
-    const f = items.find(i => i.id === folderId); if (!f) return false;
-    const ch = f.children || []; const j = childIdx + dir;
+    const f = items.find(i => i.id === folderId);
+    if (!f) return false;
+    const ch = f.children || [];
+    const j = childIdx + dir;
     if (j < 0 || j >= ch.length) return false;
     [ch[childIdx], ch[j]] = [ch[j], ch[childIdx]];
     return true;
   }
   const inF = new Set(items.filter(i => i.type === 'folder').flatMap(ff => ff.children || []));
   const top = items.filter(it => it.type === 'folder' || !inF.has(it.id));
-  const p = top.indexOf(item); const nb = top[p + dir];
+  const p = top.indexOf(item);
+  const nb = top[p + dir];
   if (!nb) return false;
-  const a = items.indexOf(item), b = items.indexOf(nb);
+  const a = items.indexOf(item),
+    b = items.indexOf(nb);
   [items[a], items[b]] = [items[b], items[a]];
   return true;
 }

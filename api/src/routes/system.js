@@ -4,8 +4,8 @@ const { loadConfig } = require('../config');
 const { scrubWidgetSecrets, WITHHELD_FLAG } = require('../widget-secrets');
 const { getRegistry } = require('../widgets');
 
-let _netCache = { rx:0, tx:0 };
-let _netPrev  = null;
+let _netCache = { rx: 0, tx: 0 };
+let _netPrev = null;
 
 /* One /proc/net/dev line, as bytes received and transmitted.
 
@@ -23,7 +23,7 @@ let _netPrev  = null;
 
    The name is matched exactly, too. `startsWith` meant a request for eth0 could
    match eth0.100, and a request for eth could match eth0. */
-const RX_BYTES = 0;   /* field order after the colon, per the header line */
+const RX_BYTES = 0; /* field order after the colon, per the header line */
 const TX_BYTES = 8;
 
 /** Parse the counters out of /proc/net/dev text. Separate from the file read so
@@ -35,8 +35,13 @@ function parseNetDev(text, iface) {
     const at = line.indexOf(':');
     if (at === -1) continue;
     if (line.slice(0, at).trim() !== iface) continue;
-    const f = line.slice(at + 1).trim().split(/\s+/).map(Number);
-    const rx = f[RX_BYTES], tx = f[TX_BYTES];
+    const f = line
+      .slice(at + 1)
+      .trim()
+      .split(/\s+/)
+      .map(Number);
+    const rx = f[RX_BYTES],
+      tx = f[TX_BYTES];
     if (!Number.isFinite(rx) || !Number.isFinite(tx)) return null;
     return { rx, tx };
   }
@@ -47,13 +52,15 @@ function _sampleNet(iface) {
   try {
     const got = parseNetDev(fs.readFileSync('/proc/net/dev', 'utf8'), iface);
     return got ? { ...got, ts: Date.now() } : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function _updateNetCache() {
-  const cfg   = loadConfig();
+  const cfg = loadConfig();
   const iface = cfg.settings?.stats?.networkInterface || 'eth0';
-  const cur   = _sampleNet(iface);
+  const cur = _sampleNet(iface);
   if (cur && _netPrev) {
     const dt = (cur.ts - _netPrev.ts) / 1000;
     if (dt > 0) {
@@ -63,7 +70,7 @@ function _updateNetCache() {
          not that traffic flowed backwards. Reporting the negative delta showed
          figures like -2499500 until the next sample. Skip the window and start
          again from this reading. */
-      _netCache = (rx >= 0 && tx >= 0) ? { rx, tx } : { rx: 0, tx: 0 };
+      _netCache = rx >= 0 && tx >= 0 ? { rx, tx } : { rx: 0, tx: 0 };
     }
   }
   _netPrev = cur;
@@ -78,8 +85,8 @@ on('GET', '/api/network-stats', (_, res) => {
 
 on('GET', '/api/widget-config/:id', (req, res) => {
   const cfg = loadConfig();
-  const w   = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
-  if (!w) return json(res, 404, { error:'widget not found' });
+  const w = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
+  if (!w) return json(res, 404, { error: 'widget not found' });
   const _entry = getRegistry()[w.widgetType];
   /* Same rule as the config read: with no manifest there is no way to tell which
      fields are secret, so nothing is sent. See widget-secrets.js. */

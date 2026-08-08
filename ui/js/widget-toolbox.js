@@ -19,8 +19,9 @@ export function safeColor(value, fallback) {
 const NS = 'http://www.w3.org/2000/svg';
 const _params = new URLSearchParams(location.search);
 
-
-export function widgetId() { return _params.get('id') || ''; }
+export function widgetId() {
+  return _params.get('id') || '';
+}
 
 export async function fetchData(endpoint, opts = {}) {
   const id = widgetId();
@@ -44,18 +45,27 @@ export function openUrl(href) {
   if (!isSafeLinkUrl(href)) return;
   try {
     const a = document.createElement('a');
-    a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
-    document.body.appendChild(a); a.click(); a.remove();
-  } catch { window.open(href, '_blank', 'noopener,noreferrer'); }
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch {
+    window.open(href, '_blank', 'noopener,noreferrer');
+  }
 }
 
 export async function getConfig() {
   const id = widgetId();
   const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`, { cache: 'no-store' });
-  if (!r.ok) { const e = /** @type {Error & { status?: number }} */ (new Error('config HTTP ' + r.status)); e.status = r.status; throw e; }
+  if (!r.ok) {
+    const e = /** @type {Error & { status?: number }} */ (new Error('config HTTP ' + r.status));
+    e.status = r.status;
+    throw e;
+  }
   return r.json();
 }
-
 
 const _r = n => Math.round(n * 100) / 100;
 
@@ -66,9 +76,14 @@ export function smoothPath(points) {
   const t = 0.35;
   let d = `M${_r(points[0][0])},${_r(points[0][1])}`;
   for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i - 1] || points[i], p1 = points[i], p2 = points[i + 1], p3 = points[i + 2] || points[i + 1];
-    const cp1x = p1[0] + (p2[0] - p0[0]) * t, cp1y = p1[1] + (p2[1] - p0[1]) * t;
-    const cp2x = p2[0] - (p3[0] - p1[0]) * t, cp2y = p2[1] - (p3[1] - p1[1]) * t;
+    const p0 = points[i - 1] || points[i],
+      p1 = points[i],
+      p2 = points[i + 1],
+      p3 = points[i + 2] || points[i + 1];
+    const cp1x = p1[0] + (p2[0] - p0[0]) * t,
+      cp1y = p1[1] + (p2[1] - p0[1]) * t;
+    const cp2x = p2[0] - (p3[0] - p1[0]) * t,
+      cp2y = p2[1] - (p3[1] - p1[1]) * t;
     d += ` C${_r(cp1x)},${_r(cp1y)} ${_r(cp2x)},${_r(cp2y)} ${_r(p2[0])},${_r(p2[1])}`;
   }
   return d;
@@ -77,7 +92,8 @@ export function smoothPath(points) {
 /* opts: { width=200, height=60, color='#0a84ff', fillOpacity=0.22,
            lineWidth=1.5, smooth=true, max=auto*1.2, gradientId } */
 export function sparkline(values, opts = {}) {
-  const W = opts.width || 200, H = opts.height || 60;
+  const W = opts.width || 200,
+    H = opts.height || 60;
   const color = opts.color || '#0a84ff';
   const lineWidth = opts.lineWidth != null ? opts.lineWidth : 1.5;
   const fillOpacity = opts.fillOpacity != null ? opts.fillOpacity : 0.22;
@@ -86,7 +102,10 @@ export function sparkline(values, opts = {}) {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.setAttribute('preserveAspectRatio', 'none');
-  svg.style.width = '100%'; svg.style.height = '100%'; svg.style.display = 'block'; svg.style.overflow = 'visible';
+  svg.style.width = '100%';
+  svg.style.height = '100%';
+  svg.style.display = 'block';
+  svg.style.overflow = 'visible';
 
   const data = Array.isArray(values) ? values.filter(v => typeof v === 'number') : [];
   if (data.length < 2) return svg;
@@ -100,44 +119,59 @@ export function sparkline(values, opts = {}) {
   const linePathStr = smooth ? smoothPath(pts) : 'M' + pts.map(p => `${_r(p[0])},${_r(p[1])}`).join(' L');
   const areaPathStr = linePathStr + ` L${_r(xOf(len - 1))},${H} L${_r(xOf(0))},${H} Z`;
 
-  const gid = opts.gradientId || ('sl_' + Math.random().toString(36).slice(2, 9));
+  const gid = opts.gradientId || 'sl_' + Math.random().toString(36).slice(2, 9);
   const defs = document.createElementNS(NS, 'defs');
   const grad = document.createElementNS(NS, 'linearGradient');
   grad.setAttribute('id', gid);
-  grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0'); grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
+  grad.setAttribute('x1', '0');
+  grad.setAttribute('y1', '0');
+  grad.setAttribute('x2', '0');
+  grad.setAttribute('y2', '1');
   const g0 = document.createElementNS(NS, 'stop');
-  g0.setAttribute('offset', '0%'); g0.setAttribute('stop-color', color); g0.setAttribute('stop-opacity', String(fillOpacity));
+  g0.setAttribute('offset', '0%');
+  g0.setAttribute('stop-color', color);
+  g0.setAttribute('stop-opacity', String(fillOpacity));
   const g1 = document.createElementNS(NS, 'stop');
-  g1.setAttribute('offset', '100%'); g1.setAttribute('stop-color', color); g1.setAttribute('stop-opacity', '0');
-  grad.append(g0, g1); defs.appendChild(grad); svg.appendChild(defs);
+  g1.setAttribute('offset', '100%');
+  g1.setAttribute('stop-color', color);
+  g1.setAttribute('stop-opacity', '0');
+  grad.append(g0, g1);
+  defs.appendChild(grad);
+  svg.appendChild(defs);
 
   const area = document.createElementNS(NS, 'path');
-  area.setAttribute('d', areaPathStr); area.setAttribute('fill', `url(#${gid})`);
+  area.setAttribute('d', areaPathStr);
+  area.setAttribute('fill', `url(#${gid})`);
   svg.appendChild(area);
 
   const line = document.createElementNS(NS, 'path');
-  line.setAttribute('d', linePathStr); line.setAttribute('fill', 'none');
-  line.setAttribute('stroke', color); line.setAttribute('stroke-width', String(lineWidth));
-  line.setAttribute('stroke-linecap', 'round'); line.setAttribute('stroke-linejoin', 'round');
+  line.setAttribute('d', linePathStr);
+  line.setAttribute('fill', 'none');
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width', String(lineWidth));
+  line.setAttribute('stroke-linecap', 'round');
+  line.setAttribute('stroke-linejoin', 'round');
   svg.appendChild(line);
 
   return svg;
 }
 
 /* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 } */
-export function barFill(percent, opts = {}) {  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+export function barFill(percent, opts = {}) {
+  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
   const h = opts.height != null ? opts.height : 6;
   const radius = opts.radius != null ? opts.radius : 3;
   const track = document.createElement('div');
-  track.style.cssText = `position:relative;width:100%;height:${h}px;border-radius:${radius}px;` +
+  track.style.cssText =
+    `position:relative;width:100%;height:${h}px;border-radius:${radius}px;` +
     `background:${opts.track || 'rgba(255,255,255,0.10)'};overflow:hidden`;
   const fill = document.createElement('div');
-  fill.style.cssText = `position:absolute;left:0;top:0;bottom:0;width:${pct}%;border-radius:${radius}px;` +
+  fill.style.cssText =
+    `position:absolute;left:0;top:0;bottom:0;width:${pct}%;border-radius:${radius}px;` +
     `background:${opts.color || '#0a84ff'};transition:width .4s ease`;
   track.appendChild(fill);
   return track;
 }
-
 
 /* Relative "updated" label from a timestamp (ms since epoch). */
 /* A widget is an iframe and does not load the i18n module, so the language
@@ -151,7 +185,9 @@ async function _loadStrings() {
   try {
     const r = await fetch(`/i18n/${encodeURIComponent(_lang)}.json`, { cache: 'force-cache' });
     if (r.ok) _strings = (await r.json())?.widget || null;
-  } catch { /* English is a usable answer */ }
+  } catch {
+    /* English is a usable answer */
+  }
 }
 _loadStrings();
 
@@ -177,12 +213,16 @@ let _own = null;
 export async function loadStrings() {
   if (!_widgetName || _lang === 'en' || _own) return;
   try {
-    const r = await fetch(`/widgets/${encodeURIComponent(_widgetName)}/i18n/${encodeURIComponent(_lang)}.json`, { cache: 'force-cache' });
+    const r = await fetch(`/widgets/${encodeURIComponent(_widgetName)}/i18n/${encodeURIComponent(_lang)}.json`, {
+      cache: 'force-cache',
+    });
     if (r.ok) {
       const parsed = await r.json();
       if (parsed && typeof parsed === 'object') _own = parsed;
     }
-  } catch { /* English is a usable answer */ }
+  } catch {
+    /* English is a usable answer */
+  }
 }
 
 /** A string from this widget's own catalog, falling back to the English text
@@ -202,12 +242,18 @@ export function sinceLabel(ts) {
   const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
   if (s < 45) return _t('justNow', 'just now');
 
-  const [value, unit] = s < 3600 ? [Math.round(s / 60), 'minute']
-    : s < 86400 ? [Math.round(s / 3600), 'hour']
-    : [Math.round(s / 86400), 'day'];
+  const [value, unit] =
+    s < 3600
+      ? [Math.round(s / 60), 'minute']
+      : s < 86400
+        ? [Math.round(s / 3600), 'hour']
+        : [Math.round(s / 86400), 'day'];
 
   try {
-    return new Intl.RelativeTimeFormat(_lang, { numeric: 'auto', style: 'short' }).format(-value, /** @type {Intl.RelativeTimeFormatUnit} */ (unit));
+    return new Intl.RelativeTimeFormat(_lang, { numeric: 'auto', style: 'short' }).format(
+      -value,
+      /** @type {Intl.RelativeTimeFormatUnit} */ (unit),
+    );
   } catch {
     /* An unknown locale tag, or a browser without it. */
     return `${value}${unit[0]} ago`;
@@ -218,12 +264,19 @@ export function sinceLabel(ts) {
 function _overlay(root) {
   if (getComputedStyle(root).position === 'static') root.style.position = 'relative';
   const el = document.createElement('div');
-  el.style.cssText = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center;' +
+  el.style.cssText =
+    'position:absolute;inset:0;display:none;align-items:center;justify-content:center;' +
     'text-align:center;padding:0 16px;font-size:11px;line-height:1.35;color:rgba(150,150,150,0.92);pointer-events:none';
   root.appendChild(el);
   return {
-    show(msg, dim) { el.textContent = msg; el.style.background = dim ? 'rgba(20,20,22,0.55)' : 'transparent'; el.style.display = 'flex'; },
-    hide() { el.style.display = 'none'; },
+    show(msg, dim) {
+      el.textContent = msg;
+      el.style.background = dim ? 'rgba(20,20,22,0.55)' : 'transparent';
+      el.style.display = 'flex';
+    },
+    hide() {
+      el.style.display = 'none';
+    },
   };
 }
 
@@ -253,7 +306,12 @@ export function poll(opts = {}) {
   const doFetch = opts.fetch || (() => fetchData(opts.endpoint));
   const custom = typeof opts.onError === 'function'; /* widget draws its own error UI */
   const ov = custom ? null : _overlay(opts.root || document.body);
-  let lastOk = 0, fails = 0, everOk = false, stopped = false, lastData = null, timer = null;
+  let lastOk = 0,
+    fails = 0,
+    everOk = false,
+    stopped = false,
+    lastData = null,
+    timer = null;
   let paused = false;
 
   async function tick() {
@@ -261,16 +319,26 @@ export function poll(opts = {}) {
     try {
       const data = await doFetch();
       if (stopped) return;
-      fails = 0; lastOk = Date.now(); everOk = true; lastData = data;
+      fails = 0;
+      lastOk = Date.now();
+      everOk = true;
+      lastData = data;
       if (!custom && isEmpty(data)) ov.show(opts.emptyText || _t('noData', 'No data'), false);
-      else { if (ov) ov.hide(); opts.render && opts.render(data); }
+      else {
+        if (ov) ov.hide();
+        opts.render && opts.render(data);
+      }
     } catch (e) {
       if (stopped) return;
       fails++;
       const stale = fails >= staleAfter;
       if (custom) opts.onError({ error: e, everOk, stale, since: lastOk ? sinceLabel(lastOk) : '' });
       else if (!everOk) ov.show(opts.errorText || _t('unavailable', 'Unavailable'), false);
-      else if (stale) ov.show((opts.errorText || _t('unavailable', 'Unavailable')) + (lastOk ? ' · ' + sinceLabel(lastOk) : ''), true);
+      else if (stale)
+        ov.show(
+          (opts.errorText || _t('unavailable', 'Unavailable')) + (lastOk ? ' · ' + sinceLabel(lastOk) : ''),
+          true,
+        );
       /* within tolerance: leave the last good render untouched */
     }
   }
@@ -283,7 +351,10 @@ export function poll(opts = {}) {
     if (stopped) return;
     /* Nothing is scheduled while hidden: each tick reaches the user's own
        service, and browser throttling only slows that, it does not stop it. */
-    if (isHidden()) { paused = true; return; }
+    if (isHidden()) {
+      paused = true;
+      return;
+    }
     timer = setTimeout(loop, intervalFor(lastData));
   }
 

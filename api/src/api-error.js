@@ -7,29 +7,42 @@ const { json } = require('./router');
 const log = require('./log');
 
 const KIND = Object.freeze({
-  NETWORK:  'network',   /* could not reach the target at all */
-  TIMEOUT:  'timeout',   /* reached or dialling, but ran out of time */
-  BLOCKED:  'blocked',   /* our own outbound guard refused the target */
-  AUTH:     'auth',      /* the caller's Stackyard session, not the upstream's */
-  UPSTREAM: 'upstream',  /* we reached it and it answered with an error status */
-  INVALID:  'invalid',   /* the request or its input was malformed */
-  INTERNAL: 'internal',  /* anything we have not classified */
+  NETWORK: 'network' /* could not reach the target at all */,
+  TIMEOUT: 'timeout' /* reached or dialling, but ran out of time */,
+  BLOCKED: 'blocked' /* our own outbound guard refused the target */,
+  AUTH: 'auth' /* the caller's Stackyard session, not the upstream's */,
+  UPSTREAM: 'upstream' /* we reached it and it answered with an error status */,
+  INVALID: 'invalid' /* the request or its input was malformed */,
+  INTERNAL: 'internal' /* anything we have not classified */,
 });
 
 const KINDS = Object.freeze(Object.values(KIND));
 
 /* Socket- and DNS-level failures. Node puts these on `err.code`. */
 const NETWORK_CODES = new Set([
-  'ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ENOTFOUND', 'EAI_AGAIN',
-  'EHOSTUNREACH', 'ENETUNREACH', 'ENETDOWN', 'EPIPE', 'EPROTO', 'EADDRNOTAVAIL',
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'ECONNABORTED',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+  'ENETDOWN',
+  'EPIPE',
+  'EPROTO',
+  'EADDRNOTAVAIL',
 ]);
 
 /* Reported as `network`: the connection did not come up. The precise code goes
    in detail.code. */
 const TLS_CODES = new Set([
-  'CERT_HAS_EXPIRED', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'SELF_SIGNED_CERT_IN_CHAIN',
-  'UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'ERR_TLS_CERT_ALTNAME_INVALID',
-  'CERT_NOT_YET_VALID', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+  'CERT_HAS_EXPIRED',
+  'DEPTH_ZERO_SELF_SIGNED_CERT',
+  'SELF_SIGNED_CERT_IN_CHAIN',
+  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'ERR_TLS_CERT_ALTNAME_INVALID',
+  'CERT_NOT_YET_VALID',
+  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
 ]);
 
 const TIMEOUT_CODES = new Set(['ETIMEDOUT', 'ESOCKETTIMEDOUT', 'UND_ERR_HEADERS_TIMEOUT']);
@@ -86,7 +99,7 @@ function classify(e) {
   if (code) {
     if (TIMEOUT_CODES.has(code)) return { kind: KIND.TIMEOUT, detail: { code } };
     if (NETWORK_CODES.has(code)) return { kind: KIND.NETWORK, detail: { code } };
-    if (TLS_CODES.has(code))     return { kind: KIND.NETWORK, detail: { code } };
+    if (TLS_CODES.has(code)) return { kind: KIND.NETWORK, detail: { code } };
     if (code === 'ERR_INVALID_URL') return { kind: KIND.INVALID, detail: { code } };
   }
 
@@ -107,12 +120,12 @@ function classify(e) {
    names internal addresses and paths, and filtering it is fail-open. The precise
    message is logged instead. */
 const SAFE_MESSAGES = Object.freeze({
-  [KIND.NETWORK]:  'Could not reach the service.',
-  [KIND.TIMEOUT]:  'The service did not respond in time.',
-  [KIND.BLOCKED]:  'The request was blocked.',
-  [KIND.AUTH]:     'Unauthorised.',
+  [KIND.NETWORK]: 'Could not reach the service.',
+  [KIND.TIMEOUT]: 'The service did not respond in time.',
+  [KIND.BLOCKED]: 'The request was blocked.',
+  [KIND.AUTH]: 'Unauthorised.',
   [KIND.UPSTREAM]: 'The service returned an error.',
-  [KIND.INVALID]:  'The request was not valid.',
+  [KIND.INVALID]: 'The request was not valid.',
   [KIND.INTERNAL]: 'Something went wrong.',
 });
 
@@ -127,10 +140,8 @@ function errorBody(e, overrides = {}) {
   const body = {
     /* Only a message the code vouched for. Anything else comes from the kind,
        never from e.message. */
-    error: overrides.error != null ? overrides.error
-         : hasVouchedMessage(e)    ? e.vouchedMessage
-         : safeMessage(finalKind),
-    kind:  finalKind,
+    error: overrides.error != null ? overrides.error : hasVouchedMessage(e) ? e.vouchedMessage : safeMessage(finalKind),
+    kind: finalKind,
   };
   const d = overrides.detail || detail;
   if (d && Object.keys(d).length) body.detail = d;
@@ -145,8 +156,7 @@ function errorBody(e, overrides = {}) {
 function fail(res, e, opts = {}) {
   const { status = 502, kind, detail, error, extra } = opts;
   /* Anything can be thrown, so the shape is checked rather than assumed. */
-  const thrown = /** @type {{ status?: unknown, message?: unknown }} */ (
-    e && typeof e === 'object' ? e : {});
+  const thrown = /** @type {{ status?: unknown, message?: unknown }} */ (e && typeof e === 'object' ? e : {});
   const code = (typeof thrown.status === 'number' && thrown.status) || status;
   const body = errorBody(e, { kind, detail, error });
 
@@ -159,4 +169,15 @@ function fail(res, e, opts = {}) {
   json(res, code, Object.assign({}, extra, body));
 }
 
-module.exports = { KIND, KINDS, ApiError, WidgetError, hasVouchedMessage, classify, errorBody, safeMessage, SAFE_MESSAGES, fail };
+module.exports = {
+  KIND,
+  KINDS,
+  ApiError,
+  WidgetError,
+  hasVouchedMessage,
+  classify,
+  errorBody,
+  safeMessage,
+  SAFE_MESSAGES,
+  fail,
+};

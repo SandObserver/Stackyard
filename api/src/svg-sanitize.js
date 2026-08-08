@@ -5,10 +5,79 @@
    recognises it, so markup the tokenizer misreads is dropped instead of passed
    through. Do not turn this back into a remove-what-looks-dangerous filter. */
 
-const SAFE_ELEMENTS = new Set(['svg','g','path','circle','ellipse','rect','line','polyline','polygon','text','tspan','defs','linearGradient','radialGradient','stop','clipPath','mask','symbol','use','title','desc','style']);
-const SAFE_ATTRS    = new Set(['viewBox','xmlns','width','height','fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','opacity','fill-opacity','stroke-opacity','transform','d','cx','cy','r','rx','ry','x','y','x1','y1','x2','y2','points','offset','stop-color','stop-opacity','gradientUnits','gradientTransform','patternUnits','patternTransform','clip-path','mask','id','class','style','preserveAspectRatio','text-anchor','font-size','font-family','font-weight']);
+const SAFE_ELEMENTS = new Set([
+  'svg',
+  'g',
+  'path',
+  'circle',
+  'ellipse',
+  'rect',
+  'line',
+  'polyline',
+  'polygon',
+  'text',
+  'tspan',
+  'defs',
+  'linearGradient',
+  'radialGradient',
+  'stop',
+  'clipPath',
+  'mask',
+  'symbol',
+  'use',
+  'title',
+  'desc',
+  'style',
+]);
+const SAFE_ATTRS = new Set([
+  'viewBox',
+  'xmlns',
+  'width',
+  'height',
+  'fill',
+  'stroke',
+  'stroke-width',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'stroke-dasharray',
+  'stroke-dashoffset',
+  'opacity',
+  'fill-opacity',
+  'stroke-opacity',
+  'transform',
+  'd',
+  'cx',
+  'cy',
+  'r',
+  'rx',
+  'ry',
+  'x',
+  'y',
+  'x1',
+  'y1',
+  'x2',
+  'y2',
+  'points',
+  'offset',
+  'stop-color',
+  'stop-opacity',
+  'gradientUnits',
+  'gradientTransform',
+  'patternUnits',
+  'patternTransform',
+  'clip-path',
+  'mask',
+  'id',
+  'class',
+  'style',
+  'preserveAspectRatio',
+  'text-anchor',
+  'font-size',
+  'font-family',
+  'font-weight',
+]);
 const SAFE_ELEMENTS_LC = new Set([...SAFE_ELEMENTS].map(s => s.toLowerCase()));
-const SAFE_ATTRS_LC    = new Set([...SAFE_ATTRS].map(s => s.toLowerCase()));
+const SAFE_ATTRS_LC = new Set([...SAFE_ATTRS].map(s => s.toLowerCase()));
 
 /* Attributes that take a URL or a payload, none of which an icon needs. */
 const UNSAFE_ATTR_RE = /^(href|xlink:href|src|action|formaction|data)$/i;
@@ -49,24 +118,37 @@ function readAttributes(src, i) {
       i++;
     }
     if (i >= src.length) break;
-    if (src[i] === '>') { i++; break; }
+    if (src[i] === '>') {
+      i++;
+      break;
+    }
 
     const nameStart = i;
     while (i < src.length && !NAME_END.test(src[i])) i++;
     const name = src.slice(nameStart, i);
-    if (!name) { i++; continue; }   /* nothing consumable here, keep moving */
+    if (!name) {
+      i++;
+      continue;
+    } /* nothing consumable here, keep moving */
     selfClose = false;
 
     let j = i;
     while (j < src.length && /\s/.test(src[j])) j++;
-    if (src[j] !== '=') { attrs.push({ name, value: '' }); continue; }
+    if (src[j] !== '=') {
+      attrs.push({ name, value: '' });
+      continue;
+    }
 
     j++;
     while (j < src.length && /\s/.test(src[j])) j++;
     const q = src[j];
     if (q === '"' || q === "'") {
       const end = src.indexOf(q, j + 1);
-      if (end === -1) { attrs.push({ name, value: src.slice(j + 1) }); i = src.length; break; }
+      if (end === -1) {
+        attrs.push({ name, value: src.slice(j + 1) });
+        i = src.length;
+        break;
+      }
       attrs.push({ name, value: src.slice(j + 1, end) });
       i = end + 1;
     } else {
@@ -94,7 +176,10 @@ function tokenize(src) {
   let i = 0;
   while (i < src.length) {
     const lt = src.indexOf('<', i);
-    if (lt === -1) { out.push({ type: 'text', value: src.slice(i) }); break; }
+    if (lt === -1) {
+      out.push({ type: 'text', value: src.slice(i) });
+      break;
+    }
     if (lt > i) out.push({ type: 'text', value: src.slice(i, lt) });
 
     const rest = src.slice(lt, lt + 9);
@@ -165,17 +250,26 @@ function keepAttr(name) {
 function sanitizeSvg(input) {
   let out = '';
   for (const tok of tokenize(String(input))) {
-    if (tok.type === 'text') { out += escText(tok.value); continue; }
+    if (tok.type === 'text') {
+      out += escText(tok.value);
+      continue;
+    }
 
     /* Escaping would break selectors, so '<' is removed instead: it is what
        would let markup be reassembled inside a style body. */
-    if (tok.type === 'css') { out += scrubCss(tok.value).replace(/</g, ''); continue; }
+    if (tok.type === 'css') {
+      out += scrubCss(tok.value).replace(/</g, '');
+      continue;
+    }
 
     /* Drop any namespace prefix, so <svg:script> is matched as 'script'. */
     const local = tok.name.replace(/^.*:/, '').toLowerCase();
-    if (!SAFE_ELEMENTS_LC.has(local)) continue;   /* dropped, never copied */
+    if (!SAFE_ELEMENTS_LC.has(local)) continue; /* dropped, never copied */
 
-    if (tok.type === 'close') { out += `</${tok.name}>`; continue; }
+    if (tok.type === 'close') {
+      out += `</${tok.name}>`;
+      continue;
+    }
 
     let attrs = '';
     for (const { name, value } of tok.attrs) {

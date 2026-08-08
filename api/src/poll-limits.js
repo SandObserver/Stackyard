@@ -11,9 +11,9 @@ const MINUTE = 60_000;
 module.exports = {
   MINUTE,
   /* 3/min per tab x 10 devices, doubled. */
-  BADGES:  { max: 60,  windowMs: MINUTE },
+  BADGES: { max: 60, windowMs: MINUTE },
   /* 2/min per tab x 10 devices, doubled. */
-  HEALTH:  { max: 40,  windowMs: MINUTE },
+  HEALTH: { max: 40, windowMs: MINUTE },
   /* Per widget id: 2/min x 12 widgets x 10 devices, halved because one id is
      only polled by the tabs showing that widget. */
   WIDGET_DATA: { max: 120, windowMs: MINUTE },

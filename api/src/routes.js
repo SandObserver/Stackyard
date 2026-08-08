@@ -1,4 +1,3 @@
-
 require('./routes/auth');
 require('./routes/config');
 require('./routes/health');

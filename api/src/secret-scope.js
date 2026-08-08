@@ -40,7 +40,10 @@ function stripWidgetSecrets(config, entry) {
   const out = JSON.parse(JSON.stringify(config || {}));
   const drop = (obj, keys) => {
     if (!obj || typeof obj !== 'object') return;
-    for (const k of keys) { delete obj[k]; delete obj[k + 'Set']; }
+    for (const k of keys) {
+      delete obj[k];
+      delete obj[k + 'Set'];
+    }
   };
   drop(out, topLevel);
   for (const [gk, subKeys] of Object.entries(groups)) {
@@ -85,7 +88,10 @@ const RETYPE_MESSAGE =
   'Enter the credential to test these settings.';
 
 module.exports = {
-  stableEqual, stripWidgetSecrets,
-  widgetConfigMatchesSaved, rowsMatch, badgeRequestMatchesSaved,
+  stableEqual,
+  stripWidgetSecrets,
+  widgetConfigMatchesSaved,
+  rowsMatch,
+  badgeRequestMatchesSaved,
   RETYPE_MESSAGE,
 };

@@ -2,14 +2,23 @@
 
 /* Layout geometry, keyed by widget family size (small/medium/large/xlarge), not
    by widget. Shared by every widget; adding a widget never touches this file. */
-export const WIDGET_HEIGHTS = { small:150, medium:150, large:304, xlarge:456 };
+export const WIDGET_HEIGHTS = { small: 150, medium: 150, large: 304, xlarge: 456 };
 /* The fixed design canvas per family, in px. Widgets always render at these
    dimensions and are scaled to fit the card, so a family looks identical on
    every device. */
-export const WIDGET_DESIGN  = { small:[170,170], medium:[360,170], large:[360,360], xlarge:[360,540] };
-export const WIDGET_COLS    = { desktop:{small:1,medium:2,large:2,xlarge:2}, mobile:{small:2,medium:4,large:4,xlarge:4} };
-export const WIDGET_ROWS    = { desktop:{small:0,medium:0,large:2,xlarge:3}, mobile:{small:2,medium:2,large:4,xlarge:6} };
-export const WIDGET_COST    = { desktop:{small:1,medium:2,large:4,xlarge:6}, mobile:{small:4,medium:8,large:16,xlarge:24} };
+export const WIDGET_DESIGN = { small: [170, 170], medium: [360, 170], large: [360, 360], xlarge: [360, 540] };
+export const WIDGET_COLS = {
+  desktop: { small: 1, medium: 2, large: 2, xlarge: 2 },
+  mobile: { small: 2, medium: 4, large: 4, xlarge: 4 },
+};
+export const WIDGET_ROWS = {
+  desktop: { small: 0, medium: 0, large: 2, xlarge: 3 },
+  mobile: { small: 2, medium: 2, large: 4, xlarge: 6 },
+};
+export const WIDGET_COST = {
+  desktop: { small: 1, medium: 2, large: 4, xlarge: 6 },
+  mobile: { small: 4, medium: 8, large: 16, xlarge: 24 },
+};
 
 /* The iframe URL, from the manifest entry in `reg`. A multi-view widget picks
    its file through the manifest's `viewField` and `defaultView`. The cache

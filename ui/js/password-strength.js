@@ -8,7 +8,7 @@ const DIM = 'rgba(255,255,255,.1)';
 /* Five scores, four labels: the top two both read as strong, so the index must
    clamp to the last entry rather than run past it. */
 const LABEL_KEYS = ['pwStrength.weak', 'pwStrength.fair', 'pwStrength.good', 'pwStrength.strong'];
-const COLORS     = ['#ff9f0a', '#ffd60a', '#34c759', '#34c759'];
+const COLORS = ['#ff9f0a', '#ffd60a', '#34c759', '#34c759'];
 const BARS = 5;
 
 export const MIN_PASSWORD_LENGTH = 8;

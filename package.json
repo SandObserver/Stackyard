@@ -3,10 +3,12 @@
   "private": true,
   "description": "Dev-only tooling (lint, backend typecheck, frontend path resolution). Not shipped: the Docker image copies only api/ and ui/, never the repo root.",
   "scripts": {
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "lint": "biome lint .",
+    "paths:check": "node scripts/check-frontend-paths.js",
     "typecheck": "tsc -p tsconfig.json",
-    "typecheck:ui": "tsc -p tsconfig.frontend.json",
-    "paths:check": "node scripts/check-frontend-paths.js"
+    "typecheck:ui": "tsc -p tsconfig.frontend.json"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.6",

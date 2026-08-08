@@ -10,8 +10,11 @@ function tryDecode(value) {
   /* Nothing to decode, and nothing that can fail. Worth the check: this is the
      common case, on every request. */
   if (!str.includes('%')) return str;
-  try { return decodeURIComponent(str); }
-  catch { return null; }
+  try {
+    return decodeURIComponent(str);
+  } catch {
+    return null;
+  }
 }
 
 /** Decode, falling back to the raw value. For inputs where a malformed escape

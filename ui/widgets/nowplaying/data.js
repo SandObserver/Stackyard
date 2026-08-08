@@ -25,7 +25,8 @@ async function plex(ctx) {
   if (!base || !token) throw new Error('Plex URL and token required');
   // Plex returns XML unless JSON is requested; token may be header or query
   const r = await ctx.fetchJSON(`${base}/status/sessions`, {
-    headers: { 'Accept': 'application/json', 'X-Plex-Token': token }, timeout: 8000
+    headers: { Accept: 'application/json', 'X-Plex-Token': token },
+    timeout: 8000,
   });
   if (r.status === 401 || r.status === 403) throw new Error('Plex auth failed (check token)');
   if (r.status >= 400) throw new Error('Plex HTTP ' + r.status);
@@ -33,12 +34,14 @@ async function plex(ctx) {
   if (!Array.isArray(list)) list = [list];
   return list.map(m => {
     const type = (m.type || '').toLowerCase();
-    let title = m.title || '', subtitle = '';
+    let title = m.title || '',
+      subtitle = '';
     if (type === 'episode') subtitle = m.grandparentTitle || '';
     else if (type === 'track') subtitle = m.grandparentTitle || m.parentTitle || '';
-    const dur = +m.duration || 0, off = +m.viewOffset || 0;     // milliseconds
+    const dur = +m.duration || 0,
+      off = +m.viewOffset || 0; // milliseconds
     const progress = dur > 0 ? Math.min(1, Math.max(0, off / dur)) : null;
-    const pstate = (m.Player && m.Player.state) || 'playing';   // playing | paused | buffering
+    const pstate = (m.Player && m.Player.state) || 'playing'; // playing | paused | buffering
     const player = (m.Player && (m.Player.title || m.Player.product)) || '';
     return { title, subtitle, progress, state: pstate === 'paused' ? 'paused' : 'playing', type, player };
   });
@@ -52,9 +55,7 @@ async function jellyfinLike(ctx, provider) {
   /* Header auth works on current and older servers. Jellyfin deprecated the
      api_key query param (removal targeted for 10.13); Emby keeps its own token
      header. */
-  const authHeaders = provider === 'emby'
-    ? { 'X-Emby-Token': key }
-    : { 'Authorization': `MediaBrowser Token="${key}"` };
+  const authHeaders = provider === 'emby' ? { 'X-Emby-Token': key } : { Authorization: `MediaBrowser Token="${key}"` };
   const r = await ctx.fetchJSON(`${base}/Sessions`, { headers: authHeaders, timeout: 8000 });
   if (r.status === 401 || r.status === 403) throw new Error(name + ' auth failed');
   if (r.status >= 400) throw new Error(name + ' HTTP ' + r.status);
@@ -65,7 +66,8 @@ async function jellyfinLike(ctx, provider) {
     if (!np) continue;
     const ps = s.PlayState || {};
     const t = np.Type || '';
-    let title = np.Name || '', subtitle = '';
+    let title = np.Name || '',
+      subtitle = '';
     if (t === 'Episode') {
       subtitle = np.SeriesName || '';
       if (np.ParentIndexNumber != null && np.IndexNumber != null)
@@ -73,9 +75,11 @@ async function jellyfinLike(ctx, provider) {
     } else if (t === 'Audio') {
       subtitle = np.AlbumArtist || np.Album || '';
     }
-    const run = +np.RunTimeTicks || 0, pos = +ps.PositionTicks || 0;
+    const run = +np.RunTimeTicks || 0,
+      pos = +ps.PositionTicks || 0;
     out.push({
-      title, subtitle,
+      title,
+      subtitle,
       progress: run > 0 ? Math.min(1, pos / run) : null,
       state: ps.IsPaused ? 'paused' : 'playing',
       type: t.toLowerCase(),
@@ -87,10 +91,14 @@ async function jellyfinLike(ctx, provider) {
 
 async function navidrome(ctx) {
   const base = ctx.normalizeBase(ctx.config.navidromeUrl);
-  const user = ctx.config.navidromeUser, pass = ctx.config.navidromePassword;
+  const user = ctx.config.navidromeUser,
+    pass = ctx.config.navidromePassword;
   if (!base || !user || !pass) throw new Error('Navidrome URL, username and password required');
   const salt = crypto.randomBytes(6).toString('hex');
-  const token = crypto.createHash('md5').update(pass + salt).digest('hex');
+  const token = crypto
+    .createHash('md5')
+    .update(pass + salt)
+    .digest('hex');
   const url = `${base}/rest/getNowPlaying?u=${encodeURIComponent(user)}&t=${token}&s=${salt}&v=1.16.1&c=stackyard&f=json`;
   const r = await ctx.fetchJSON(url, { timeout: 8000 });
   if (r.status >= 400) throw new Error('Navidrome HTTP ' + r.status);
@@ -99,11 +107,18 @@ async function navidrome(ctx) {
   let entries = (sr && sr.nowPlaying && sr.nowPlaying.entry) || [];
   if (!Array.isArray(entries)) entries = [entries];
   return entries.map(e => {
-    const dur = +e.duration || 0;                                   // Subsonic duration is seconds
-    const pos = e.positionMs != null ? +e.positionMs : null;        // OpenSubsonic playbackReport (Navidrome >= 0.62), ms
-    const progress = (pos != null && dur > 0) ? Math.min(1, Math.max(0, pos / (dur * 1000))) : null;
-    const state = e.state === 'paused' ? 'paused' : 'playing';      // starting/playing -> playing
-    return { title: e.title || '', subtitle: e.artist || e.album || '', progress, state, type: 'track', player: e.playerName || '' };
+    const dur = +e.duration || 0; // Subsonic duration is seconds
+    const pos = e.positionMs != null ? +e.positionMs : null; // OpenSubsonic playbackReport (Navidrome >= 0.62), ms
+    const progress = pos != null && dur > 0 ? Math.min(1, Math.max(0, pos / (dur * 1000))) : null;
+    const state = e.state === 'paused' ? 'paused' : 'playing'; // starting/playing -> playing
+    return {
+      title: e.title || '',
+      subtitle: e.artist || e.album || '',
+      progress,
+      state,
+      type: 'track',
+      player: e.playerName || '',
+    };
   });
 }
 

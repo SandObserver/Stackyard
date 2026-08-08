@@ -4,14 +4,14 @@
 
 /* `id` is stored in config; `hex` is what the frontend paints. */
 export const PALETTE = [
-  { id: 'teal',   label: 'Teal',   hex: '#14b8c6' },
-  { id: 'cyan',   label: 'Cyan',   hex: '#22c1d6' },
+  { id: 'teal', label: 'Teal', hex: '#14b8c6' },
+  { id: 'cyan', label: 'Cyan', hex: '#22c1d6' },
   { id: 'orange', label: 'Orange', hex: '#ef8a2b' },
-  { id: 'pink',   label: 'Pink',   hex: '#f5325b' },
+  { id: 'pink', label: 'Pink', hex: '#f5325b' },
   { id: 'purple', label: 'Purple', hex: '#7c5cff' },
-  { id: 'green',  label: 'Green',  hex: '#2fbf71' },
+  { id: 'green', label: 'Green', hex: '#2fbf71' },
   { id: 'yellow', label: 'Yellow', hex: '#f4c430' },
-  { id: 'blue',   label: 'Blue',   hex: '#2f6df4' },
+  { id: 'blue', label: 'Blue', hex: '#2f6df4' },
 ];
 
 /* Each id maps to an art asset in the widget frontend. `metal` groups similar
@@ -26,13 +26,7 @@ export const KEY_STYLES = [
   { id: 'skeleton-brass', metal: 'brass' },
 ];
 
-export const EXTRA_STYLES = [
-  'ring-disc',
-  'tag-dog-gray',
-  'tag-long-black',
-  'tag-rect-silver',
-  'strap-blue',
-];
+export const EXTRA_STYLES = ['ring-disc', 'tag-dog-gray', 'tag-long-black', 'tag-rect-silver', 'strap-blue'];
 
 const EXTRA_CHANCE = 0.45;
 
@@ -62,7 +56,9 @@ function pickDistinct(rng, catalog, k) {
   const pool = catalog.slice();
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
-    const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    const tmp = pool[i];
+    pool[i] = pool[j];
+    pool[j] = tmp;
   }
   return pool.slice(0, Math.min(k, pool.length));
 }
@@ -76,7 +72,11 @@ export function normalizeUrl(raw) {
   if (!s) return null;
   const withScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(s) ? s : `http://${s}`;
   let u;
-  try { u = new URL(withScheme); } catch { return null; }
+  try {
+    u = new URL(withScheme);
+  } catch {
+    return null;
+  }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
   if (!u.hostname) return null;
   if ((u.protocol === 'http:' && u.port === '80') || (u.protocol === 'https:' && u.port === '443')) u.port = '';
@@ -88,15 +88,29 @@ export function normalizeUrl(raw) {
 }
 
 function originOf(url) {
-  try { const u = new URL(url); return `${u.protocol}//${u.host}`; } catch { return ''; }
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return '';
+  }
 }
 
 function pathOf(url) {
-  try { const u = new URL(url); return u.pathname === '/' ? '' : u.pathname; } catch { return ''; }
+  try {
+    const u = new URL(url);
+    return u.pathname === '/' ? '' : u.pathname;
+  } catch {
+    return '';
+  }
 }
 
 function hostLabel(url) {
-  try { return new URL(url).host; } catch { return url; }
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
 }
 
 /* Matches on origin, and on the subpath too when the keychain URL carries one,
@@ -121,7 +135,10 @@ export function deriveComposition(canonicalUrl) {
   /* First pass: one key per distinct metal, so keys stay visually separable. */
   for (const k of shuffled) {
     if (keys.length >= numKeys) break;
-    if (!metals.has(k.metal)) { keys.push(k.id); metals.add(k.metal); }
+    if (!metals.has(k.metal)) {
+      keys.push(k.id);
+      metals.add(k.metal);
+    }
   }
   /* Fallback only if more keys were asked for than there are metals. */
   for (const k of shuffled) {

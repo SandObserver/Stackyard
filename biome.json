@@ -10,7 +10,10 @@
     ]
   },
   "formatter": {
-    "enabled": false
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
   },
   "linter": {
     "enabled": true,
@@ -35,9 +38,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "ui/js/**/*.js"
-      ],
+      "includes": ["ui/js/**/*.js"],
       "linter": {
         "rules": {
           "style": {
@@ -46,5 +47,13 @@
         }
       }
     }
-  ]
+  ],
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "asNeeded"
+    }
+  }
 }

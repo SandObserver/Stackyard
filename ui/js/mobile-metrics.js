@@ -20,14 +20,26 @@ export function mobileMetrics(vw, vh, insetTop = 0, insetBottom = 0) {
   const dz = pillGap + pillH + Math.round(8 * sc);
   const avail = vh - sb - safe - dh - dz;
   return {
-    sc, sm, sb, safe, dh, pillH, pillGap, dz, avail,
+    sc,
+    sm,
+    sb,
+    safe,
+    dh,
+    pillH,
+    pillGap,
+    dz,
+    avail,
     rh: avail / 6,
     cw: (vw - sm * 2) / 4,
   };
 }
 
 /* Distance from the viewport bottom to the pill's bottom edge. */
-export function pillBottom(m) { return m.safe + m.dh + m.pillGap; }
+export function pillBottom(m) {
+  return m.safe + m.dh + m.pillGap;
+}
 
 /* Distance from the viewport bottom to the first pixel the grid may paint. */
-export function contentBottom(m) { return m.safe + m.dh + m.dz; }
+export function contentBottom(m) {
+  return m.safe + m.dh + m.dz;
+}

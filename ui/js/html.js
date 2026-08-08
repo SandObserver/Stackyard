@@ -7,11 +7,21 @@
    html`` results and arrays of them pass through, so lists need no join:
      html`<ul>${items.map(i => html`<li>${i.label}</li>`)}</ul>` */
 
-export const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+export const esc = s =>
+  String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 class RawHtml {
-  constructor(v) { this.value = String(v); }
-  toString() { return this.value; }
+  constructor(v) {
+    this.value = String(v);
+  }
+  toString() {
+    return this.value;
+  }
 }
 
 export const raw = v => new RawHtml(v);

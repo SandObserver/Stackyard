@@ -3,12 +3,12 @@
    from api/test. Adding a kind on one side only is caught there. */
 
 export const KIND = Object.freeze({
-  NETWORK:  'network',
-  TIMEOUT:  'timeout',
-  BLOCKED:  'blocked',
-  AUTH:     'auth',
+  NETWORK: 'network',
+  TIMEOUT: 'timeout',
+  BLOCKED: 'blocked',
+  AUTH: 'auth',
   UPSTREAM: 'upstream',
-  INVALID:  'invalid',
+  INVALID: 'invalid',
   INTERNAL: 'internal',
 });
 
@@ -19,9 +19,7 @@ export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 /* An unknown or missing kind degrades to INTERNAL, so either side can be newer
    than the other. */
 export function readError(e) {
-  const kind = e && typeof e.kind === 'string' && Object.values(KIND).includes(e.kind)
-    ? e.kind
-    : KIND.INTERNAL;
+  const kind = e && typeof e.kind === 'string' && Object.values(KIND).includes(e.kind) ? e.kind : KIND.INTERNAL;
   const detail = e && e.detail && typeof e.detail === 'object' ? e.detail : null;
   return { kind, detail, message: (e && e.message) || '' };
 }
@@ -55,7 +53,8 @@ export function badgeErrorAdvice(e) {
   if (kind === KIND.NETWORK || kind === KIND.TIMEOUT) {
     return {
       tone: TONE.WARN,
-      message: "Can't reach this address from Docker. Try using the container name, e.g. http://container-name:8181/api/v2",
+      message:
+        "Can't reach this address from Docker. Try using the container name, e.g. http://container-name:8181/api/v2",
       openAuth: false,
       sessionExpired: false,
     };

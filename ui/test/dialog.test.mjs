@@ -336,9 +336,12 @@ test('every dialog releases its trap when it closes', () => {
   /* A trap that outlives its dialog keeps a listener on a removed element and
      never restores focus. */
   const ui = read('js/ui.js');
-  assert.match(ui, /if \(releaseDeskTrap\) \{ releaseDeskTrap\(\); releaseDeskTrap = null; \}/);
-  assert.match(ui, /if \(releaseMobTrap\) \{ releaseMobTrap\(\); releaseMobTrap = null; \}/);
-  assert.match(read('js/dashboard.js'), /if \(releaseTrap\) \{ releaseTrap\(\); releaseTrap = null; \}/);
+  /* Whitespace-tolerant: the formatter chooses whether this sits on one line or
+     three. What matters is that each release is called and then cleared. */
+  const releases = name => new RegExp(`if\\s*\\(${name}\\)\\s*\\{\\s*${name}\\(\\);\\s*${name}\\s*=\\s*null;\\s*\\}`);
+  assert.match(ui, releases('releaseDeskTrap'));
+  assert.match(ui, releases('releaseMobTrap'));
+  assert.match(read('js/dashboard.js'), releases('releaseTrap'));
 });
 
 test('nothing keeps its own copy of the trap', () => {

@@ -7,26 +7,27 @@ import { t } from '/js/i18n.js?v=133a7aac';
 const _w = /** @type {any} */ (window);
 
 export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop, openFolderMobile }) {
-  const ov        = el('spot');
-  const inp       = inpById('sin');
-  const res       = el('sres');
+  const ov = el('spot');
+  const inp = inpById('sin');
+  const res = el('sres');
   const cancelBtn = el('spot-cancel');
-  const live      = el('sres-live');
-  let si = 0, cur = [];
+  const live = el('sres-live');
+  let si = 0,
+    cur = [];
   let lastFocused = null;
 
-  inp.setAttribute('role','combobox');
-  inp.setAttribute('aria-autocomplete','list');
-  inp.setAttribute('aria-controls','sres');
-  inp.setAttribute('aria-expanded','false');
-  res.setAttribute('role','listbox');
-  res.setAttribute('aria-label',t('home.searchResults'));
+  inp.setAttribute('role', 'combobox');
+  inp.setAttribute('aria-autocomplete', 'list');
+  inp.setAttribute('aria-controls', 'sres');
+  inp.setAttribute('aria-expanded', 'false');
+  res.setAttribute('role', 'listbox');
+  res.setAttribute('aria-label', t('home.searchResults'));
 
   const render = q => {
     res.innerHTML = '';
     const apps = getItems().filter(i => i.type === 'app' || i.type === 'folder');
     const qq = q.toLowerCase().trim();
-    cur = qq ? apps.filter(a => (a.label||a.id).toLowerCase().includes(qq)) : apps;
+    cur = qq ? apps.filter(a => (a.label || a.id).toLowerCase().includes(qq)) : apps;
     si = 0;
     if (!cur.length) {
       const e = mk('div');
@@ -38,29 +39,44 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
       return;
     }
     const f = document.createDocumentFragment();
-    const hdr = mk('div'); hdr.className = 'sr-section'; hdr.textContent = t('home.appsAndFolders'); f.appendChild(hdr);
+    const hdr = mk('div');
+    hdr.className = 'sr-section';
+    hdr.textContent = t('home.appsAndFolders');
+    f.appendChild(hdr);
     cur.forEach((app, i) => {
       const isFolder = app.type === 'folder';
-      const a = mk('a', { href: app.href||'#', target: isFolder ? '_self' : '_blank', rel: 'noreferrer noopener' });
+      const a = mk('a', { href: app.href || '#', target: isFolder ? '_self' : '_blank', rel: 'noreferrer noopener' });
       a.className = 'sr' + (i === 0 ? ' sel' : '');
       a.id = 'sr-opt-' + i;
-      a.setAttribute('role','option');
-      a.setAttribute('aria-label', app.label||app.id);
+      a.setAttribute('role', 'option');
+      a.setAttribute('aria-label', app.label || app.id);
       a.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-      a.style.cssText = 'display:flex;align-items:center;gap:18px;padding:14px 20px;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+      a.style.cssText =
+        'display:flex;align-items:center;gap:18px;padding:14px 20px;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;';
       const doOpen = () => {
         close();
         if (isFolder) {
-          if (MOB) openFolderMobile(app, Math.round(60*(innerWidth/393)), Math.round(14*(innerWidth/393)), Math.round(38*(innerWidth/393)), innerWidth/393);
+          if (MOB)
+            openFolderMobile(
+              app,
+              Math.round(60 * (innerWidth / 393)),
+              Math.round(14 * (innerWidth / 393)),
+              Math.round(38 * (innerWidth / 393)),
+              innerWidth / 393,
+            );
           else openFolderDesktop(app);
         } else if (app.href) {
           window.open(app.href, '_blank', 'noreferrer,noopener');
         }
       };
-      a.addEventListener('touchend', e => { e.preventDefault(); doOpen(); });
+      a.addEventListener('touchend', e => {
+        e.preventDefault();
+        doOpen();
+      });
       a.onclick = doOpen;
 
-      const ic = mk('div'); ic.className = 'sri';
+      const ic = mk('div');
+      ic.className = 'sri';
       ic.style.background = clr(app.color);
       if (app.iconUrl) {
         const img = mk('img', { alt: '', loading: 'lazy' });
@@ -68,20 +84,38 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
         const srcs = iconChain(app.iconUrl);
         if (srcs.length) img.src = srcs[0];
         let step = 0;
-        img.onerror = () => { step++; if (step < srcs.length) img.src = srcs[step]; else { ic.innerHTML = ''; ic.textContent = (app.label||app.id)[0].toUpperCase(); ic.style.color = '#fff'; ic.style.fontWeight = '600'; } };
+        img.onerror = () => {
+          step++;
+          if (step < srcs.length) img.src = srcs[step];
+          else {
+            ic.innerHTML = '';
+            ic.textContent = (app.label || app.id)[0].toUpperCase();
+            ic.style.color = '#fff';
+            ic.style.fontWeight = '600';
+          }
+        };
         ic.appendChild(img);
       } else {
-        ic.textContent = (app.label||app.id)[0].toUpperCase();
-        ic.style.color = '#fff'; ic.style.fontWeight = '600';
+        ic.textContent = (app.label || app.id)[0].toUpperCase();
+        ic.style.color = '#fff';
+        ic.style.fontWeight = '600';
       }
 
-      const tx = mk('div'); tx.style.cssText = 'flex:1;min-width:0;';
-      const nm = mk('div'); nm.className = 'srn'; setUserText(nm, app.label||app.id);
-      const ht = mk('div'); ht.className = 'srh';
-      ht.textContent = (app.href||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
-      const ar = mk('span'); ar.className = 'sra'; ar.textContent = '↗';
+      const tx = mk('div');
+      tx.style.cssText = 'flex:1;min-width:0;';
+      const nm = mk('div');
+      nm.className = 'srn';
+      setUserText(nm, app.label || app.id);
+      const ht = mk('div');
+      ht.className = 'srh';
+      ht.textContent = (app.href || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const ar = mk('span');
+      ar.className = 'sra';
+      ar.textContent = '↗';
       ar.setAttribute('aria-hidden', 'true');
-      tx.append(nm, ht); a.append(ic, tx, ar); f.appendChild(a);
+      tx.append(nm, ht);
+      a.append(ic, tx, ar);
+      f.appendChild(a);
     });
     res.appendChild(f);
     if (live) live.textContent = cur.length + ' ' + (cur.length === 1 ? t('home.result') : t('home.results'));
@@ -89,20 +123,35 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     inp.setAttribute('aria-activedescendant', cur.length ? 'sr-opt-0' : '');
   };
 
-  const upd = () => res.querySelectorAll('.sr').forEach((e, i) => {
-    const on = i === si;
-    e.classList.toggle('sel', on);
-    e.setAttribute('aria-selected', on ? 'true' : 'false');
-    if (on) { e.scrollIntoView({ block: 'nearest' }); inp.setAttribute('aria-activedescendant', e.id); }
-  });
+  const upd = () =>
+    res.querySelectorAll('.sr').forEach((e, i) => {
+      const on = i === si;
+      e.classList.toggle('sel', on);
+      e.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) {
+        e.scrollIntoView({ block: 'nearest' });
+        inp.setAttribute('aria-activedescendant', e.id);
+      }
+    });
 
   /* Mobile: touch on bar focuses input */
   const barEl = q('.spot-bar', ov);
   if (MOB && barEl) {
-    barEl.style.cssText = 'display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:18px;border:none;background:rgba(118,118,128,.30);box-sizing:border-box;';
-    inp.style.cssText = 'flex:1;background:transparent;border:0;outline:none;font-size:17px;color:rgba(255,255,255,.92);font-family:inherit;caret-color:#007aff;-webkit-appearance:none;min-height:26px;padding:0;margin:0;';
+    barEl.style.cssText =
+      'display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:18px;border:none;background:rgba(118,118,128,.30);box-sizing:border-box;';
+    inp.style.cssText =
+      'flex:1;background:transparent;border:0;outline:none;font-size:17px;color:rgba(255,255,255,.92);font-family:inherit;caret-color:#007aff;-webkit-appearance:none;min-height:26px;padding:0;margin:0;';
   }
-  if (barEl) barEl.addEventListener('touchend', e => { e.preventDefault(); inp.focus(); if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length); }, { passive: false });
+  if (barEl)
+    barEl.addEventListener(
+      'touchend',
+      e => {
+        e.preventDefault();
+        inp.focus();
+        if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length);
+      },
+      { passive: false },
+    );
 
   function _applyKbLayout() {
     if (!MOB) return;
@@ -111,7 +160,9 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
   }
 
   /* Escape and focus restoration stay in this file's own open/close. */
-  const trap = e => { wrapTab(e, ov); };
+  const trap = e => {
+    wrapTab(e, ov);
+  };
   function open(ch) {
     lastFocused = document.activeElement;
     ov.classList.add('on');
@@ -127,12 +178,20 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
         window.visualViewport.removeEventListener('scroll', _applyKbLayout);
       };
     }
-    if (MOB) { inp.focus(); if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length); }
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      ov.classList.add('vis');
-      _applyKbLayout();
-      if (!MOB) { inp.focus(); if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length); }
-    }));
+    if (MOB) {
+      inp.focus();
+      if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length);
+    }
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        ov.classList.add('vis');
+        _applyKbLayout();
+        if (!MOB) {
+          inp.focus();
+          if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length);
+        }
+      }),
+    );
   }
 
   function close() {
@@ -141,43 +200,102 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     ov.setAttribute('aria-hidden', 'true');
     inp.setAttribute('aria-expanded', 'false');
     inp.setAttribute('aria-activedescendant', '');
-    if (lastFocused && lastFocused.focus) { try { lastFocused.focus(); } catch {} lastFocused = null; }
-    if (_w._spotVpCleanup) { _w._spotVpCleanup(); _w._spotVpCleanup = null; }
+    if (lastFocused && lastFocused.focus) {
+      try {
+        lastFocused.focus();
+      } catch {}
+      lastFocused = null;
+    }
+    if (_w._spotVpCleanup) {
+      _w._spotVpCleanup();
+      _w._spotVpCleanup = null;
+    }
     ov.style.bottom = '';
     setTimeout(() => {
       if (!ov.classList.contains('vis')) ov.classList.remove('on');
-      inp.value = ''; res.innerHTML = ''; inp.blur();
+      inp.value = '';
+      res.innerHTML = '';
+      inp.blur();
     }, 220);
   }
 
-  ov.onclick = e => { if (e.target === ov || e.target === res) close(); };
-  ov.addEventListener('touchend', e => { if (e.target === ov) { e.preventDefault(); close(); } }, { passive: false });
+  ov.onclick = e => {
+    if (e.target === ov || e.target === res) close();
+  };
+  ov.addEventListener(
+    'touchend',
+    e => {
+      if (e.target === ov) {
+        e.preventDefault();
+        close();
+      }
+    },
+    { passive: false },
+  );
 
   if (cancelBtn) {
     cancelBtn.onclick = close;
-    cancelBtn.addEventListener('touchend', e => { e.preventDefault(); close(); }, { passive: false });
+    cancelBtn.addEventListener(
+      'touchend',
+      e => {
+        e.preventDefault();
+        close();
+      },
+      { passive: false },
+    );
   }
   const mobCancelBtn = el('spot-cancel-mob-btn');
   if (mobCancelBtn) {
     mobCancelBtn.onclick = close;
-    mobCancelBtn.addEventListener('touchend', e => { e.preventDefault(); close(); }, { passive: false });
+    mobCancelBtn.addEventListener(
+      'touchend',
+      e => {
+        e.preventDefault();
+        close();
+      },
+      { passive: false },
+    );
   }
 
   inp.oninput = () => render(inp.value);
   inp.onkeydown = e => {
-    if (e.key === 'Escape') { close(); return; }
-    if (e.key === 'ArrowDown') { si = Math.min(si+1, cur.length-1); upd(); e.preventDefault(); return; }
-    if (e.key === 'ArrowUp')   { si = Math.max(si-1, 0);            upd(); e.preventDefault(); return; }
-    if (e.key === 'Enter') { const s = qa('.sr', res)[si]; if (s) { s.click(); close(); } }
+    if (e.key === 'Escape') {
+      close();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      si = Math.min(si + 1, cur.length - 1);
+      upd();
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      si = Math.max(si - 1, 0);
+      upd();
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'Enter') {
+      const s = qa('.sr', res)[si];
+      if (s) {
+        s.click();
+        close();
+      }
+    }
   };
 
   /* Desktop: any printable key opens spotlight */
-  document.addEventListener('keydown', e => {
-    if (ov.classList.contains('on')) return;
-    if (e.key === 'Escape' || e.key.length !== 1 || e.metaKey || e.ctrlKey || e.altKey) return;
-    e.stopImmediatePropagation(); open(e.key);
-  }, true);
+  document.addEventListener(
+    'keydown',
+    e => {
+      if (ov.classList.contains('on')) return;
+      if (e.key === 'Escape' || e.key.length !== 1 || e.metaKey || e.ctrlKey || e.altKey) return;
+      e.stopImmediatePropagation();
+      open(e.key);
+    },
+    true,
+  );
 
-  CB.spotOpen  = open;
+  CB.spotOpen = open;
   CB.spotClose = close;
 }

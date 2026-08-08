@@ -12,72 +12,86 @@ const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
 const { badgeRequestMatchesSaved, RETYPE_MESSAGE } = require('../secret-scope');
 
-on('POST', '/api/ping', async(req, res) => {
+on('POST', '/api/ping', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'ping', 30, 60_000);
-    if (limited) return json(res, 429, { ok:false, error:limited, kind: KIND.BLOCKED });
-    const { url, skipTls=false } = JSON.parse(await readBody(req));
-    if (!url) return json(res, 400, { ok:false, error:'url required', kind: KIND.INVALID });
+    if (limited) return json(res, 429, { ok: false, error: limited, kind: KIND.BLOCKED });
+    const { url, skipTls = false } = JSON.parse(await readBody(req));
+    if (!url) return json(res, 400, { ok: false, error: 'url required', kind: KIND.INVALID });
     json(res, 200, await pingChecked(url, PING_MS, skipTls === true));
-  } catch(e) {
-    if (e.status === 403) return fail(res, e, { extra:{ ok:false } });
-    json(res, 200, Object.assign({ ok:false, status:0 }, errorBody(e)));
+  } catch (e) {
+    if (e.status === 403) return fail(res, e, { extra: { ok: false } });
+    json(res, 200, Object.assign({ ok: false, status: 0 }, errorBody(e)));
   }
 });
 
-on('GET', '/api/badges', async(req, res) => {
+on('GET', '/api/badges', async (req, res) => {
   /* Every call here fans out to the user's own services, so the ceiling bounds
      outbound traffic rather than work done here. See poll-limits.js. */
   const limited = rateLimit(getIp(req), 'badges', LIMITS.BADGES.max, LIMITS.BADGES.windowMs);
-  if (limited) return json(res, 429, { error:limited, kind: KIND.BLOCKED });
-  const cfg = loadConfig(), out = Object.create(null);
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
+  const cfg = loadConfig(),
+    out = Object.create(null);
   if (IS_DEMO) return json(res, 200, demoData.demoBadges(cfg.items));
-  await Promise.allSettled(cfg.items
-    .filter(i => i.type==='app' && (
-      (i.badge?.enabled && i.badge?.url) ||
-      (i.monitoring?.activity?.enabled && i.monitoring?.activity?.url)
-    ))
-    .map(async item => {
-      try {
-        const src = item.monitoring?.activity?.enabled ? item.monitoring.activity : item.badge;
-        /* A stored row that is not a { key, value, secret } entry is skipped
+  await Promise.allSettled(
+    cfg.items
+      .filter(
+        i =>
+          i.type === 'app' &&
+          ((i.badge?.enabled && i.badge?.url) || (i.monitoring?.activity?.enabled && i.monitoring?.activity?.url)),
+      )
+      .map(async item => {
+        try {
+          const src = item.monitoring?.activity?.enabled ? item.monitoring.activity : item.badge;
+          /* A stored row that is not a { key, value, secret } entry is skipped
            rather than failing the badge, so say which item is damaged. Silence
            here is what made this misleading: the request went out without its
            credential and the service answered as it would to any stranger. */
-        const dropped = droppedRowCount(item?.monitoring?.activity?.enabled ? item.monitoring.activity?.headers : item?.badge?.headers)
-                      + droppedRowCount(item?.monitoring?.activity?.enabled ? item.monitoring.activity?.params : item?.badge?.params);
-        if (dropped) log.warn('badge config has entries that are not valid rows, skipping them', { item: item.id, dropped });
-        const { headers, params } = requestParts(item);
-        const baseUrl = src.url;
-        const url = Object.keys(params).length
-          ? baseUrl + (baseUrl.includes('?') ? '&' : '?') + new URLSearchParams(params)
-          : baseUrl;
-        const r   = await fetchUnchecked(url, { headers, timeout:PING_MS, skipTls: item.skipTlsVerify === true });
-        const badge = item.monitoring?.activity?.enabled ? {
-          extract: item.monitoring.activity.extract,
-          params:  item.monitoring.activity.params,
-        } : item.badge;
-        /* The extracted number only. This used to carry `raw: r.data`, the whole
+          const dropped =
+            droppedRowCount(
+              item?.monitoring?.activity?.enabled ? item.monitoring.activity?.headers : item?.badge?.headers,
+            ) +
+            droppedRowCount(
+              item?.monitoring?.activity?.enabled ? item.monitoring.activity?.params : item?.badge?.params,
+            );
+          if (dropped)
+            log.warn('badge config has entries that are not valid rows, skipping them', { item: item.id, dropped });
+          const { headers, params } = requestParts(item);
+          const baseUrl = src.url;
+          const url = Object.keys(params).length
+            ? baseUrl + (baseUrl.includes('?') ? '&' : '?') + new URLSearchParams(params)
+            : baseUrl;
+          const r = await fetchUnchecked(url, { headers, timeout: PING_MS, skipTls: item.skipTlsVerify === true });
+          const badge = item.monitoring?.activity?.enabled
+            ? {
+                extract: item.monitoring.activity.extract,
+                params: item.monitoring.activity.params,
+              }
+            : item.badge;
+          /* The extracted number only. This used to carry `raw: r.data`, the whole
            upstream body, per item, on a poll that runs every 20 seconds per tab
            and accepts bodies up to FETCH_SIZE_LIMIT. Nothing read it. The admin
            field picker needs the body and gets it from /api/badge-proxy. */
-        out[item.id] = { value: computeBadgeValue(r.data, badge) };
-      } catch(e) { out[item.id] = Object.assign({ value:0 }, errorBody(e)); }
-    }));
+          out[item.id] = { value: computeBadgeValue(r.data, badge) };
+        } catch (e) {
+          out[item.id] = Object.assign({ value: 0 }, errorBody(e));
+        }
+      }),
+  );
   json(res, 200, out);
 });
 
-on('POST', '/api/badge-proxy', async(req, res) => {
+on('POST', '/api/badge-proxy', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'badge-proxy', 60, 60_000);
-    if (limited) return json(res, 429, { error:limited, kind: KIND.BLOCKED });
+    if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
     const body = JSON.parse(await readBody(req));
-    const { url, itemId, skipTls=false } = body;
-    if (!url) return json(res, 400, { error:'url required', kind: KIND.INVALID });
+    const { url, itemId, skipTls = false } = body;
+    if (!url) return json(res, 400, { error: 'url required', kind: KIND.INVALID });
     /* Rows the user did not retype arrive as secret rows without a value. Fill
        them from the stored item so a test after reload uses the real credential,
        without ever sending it to the browser.
@@ -96,7 +110,8 @@ on('POST', '/api/badge-proxy', async(req, res) => {
         if (badgeRequestMatchesSaved({ url, headers: headerRows, params: paramRows }, oldSrc)) {
           const shim = { badge: { headers: headerRows, params: paramRows } };
           preserveItemBadgeSecrets(shim, { badge: { headers: oldSrc?.headers, params: oldSrc?.params } });
-          headerRows = shim.badge.headers; paramRows = shim.badge.params;
+          headerRows = shim.badge.headers;
+          paramRows = shim.badge.params;
         } else {
           declined = true;
         }
@@ -104,8 +119,10 @@ on('POST', '/api/badge-proxy', async(req, res) => {
     }
     const headers = rowsToObject(headerRows);
     const params = rowsToObject(paramRows);
-    const fullUrl = Object.keys(params).length ? url + (url.includes('?') ? '&' : '?') + new URLSearchParams(params) : url;
-    const r = await fetchChecked(fullUrl, { headers, timeout:FETCH_MS, skipTls: skipTls === true });
+    const fullUrl = Object.keys(params).length
+      ? url + (url.includes('?') ? '&' : '?') + new URLSearchParams(params)
+      : url;
+    const r = await fetchChecked(fullUrl, { headers, timeout: FETCH_MS, skipTls: skipTls === true });
     /* fetchJSON resolves on a 4xx/5xx rather than rejecting, so an upstream that
        answered "401 Unauthorised" used to come back here as a plain 200 with an
        error body attached. The admin UI could not tell that apart from success:
@@ -120,11 +137,12 @@ on('POST', '/api/badge-proxy', async(req, res) => {
       }
       return json(res, 502, {
         error: `The service answered ${statusDesc(r.status)} (HTTP ${r.status}).`,
-        kind:  KIND.UPSTREAM,
+        kind: KIND.UPSTREAM,
         detail: { status: r.status },
       });
     }
-    json(res, 200, { status:r.status, data:r.data, numbers:collectNumbers(r.data) });
-  } catch(e) { fail(res, e, { status:502 }); }
+    json(res, 200, { status: r.status, data: r.data, numbers: collectNumbers(r.data) });
+  } catch (e) {
+    fail(res, e, { status: 502 });
+  }
 });
-

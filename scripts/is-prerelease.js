@@ -24,7 +24,8 @@
 /* semver.org's own recommended pattern, with an optional leading v for git tag
    style. Note what it rejects: leading zeroes in the core, an empty prerelease
    identifier, a trailing dot. */
-const SEMVER = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+const SEMVER =
+  /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
 /** Parse a tag name. Returns null when it is not a valid version.
 
@@ -34,7 +35,9 @@ function parseTag(ref) {
   const m = SEMVER.exec(String(ref ?? '').trim());
   if (!m) return null;
   return {
-    major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]),
+    major: Number(m[1]),
+    minor: Number(m[2]),
+    patch: Number(m[3]),
     prerelease: m[4] ?? null,
     build: m[5] ?? null,
   };
@@ -46,7 +49,7 @@ function parseTag(ref) {
     @param {unknown} ref @returns {boolean} */
 function isPrerelease(ref) {
   const parsed = parseTag(ref);
-  if (!parsed) return true;              /* unparseable: never treat as stable */
+  if (!parsed) return true; /* unparseable: never treat as stable */
   return parsed.prerelease !== null;
 }
 
