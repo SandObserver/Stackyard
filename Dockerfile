@@ -4,6 +4,27 @@ LABEL org.opencontainers.image.title="Stackyard" \
       org.opencontainers.image.description="Self-hosted homelab dashboard" \
       org.opencontainers.image.source="https://github.com/SandObserver/stackyard"
 
+# Remove the package managers the base image ships with. Nothing here uses
+# them: the API has no dependencies to install, and the container runs nginx,
+# node and python3 only. They are removed rather than tolerated because their
+# own bundled dependencies are the whole of this image's vulnerability surface
+# (tar, brace-expansion, ip-address and undici accounted for every HIGH and
+# CRITICAL the release scan reported), and because a runtime container with a
+# package manager in it hands one to anyone who gets inside.
+#
+# Globbed rather than pinned: the yarn directory carries its version, and a base
+# image bump would silently stop matching an exact path. Verified immediately
+# after, so a rename upstream fails the build instead of quietly shipping them.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/lib/node_modules/corepack \
+           /opt/yarn-* && \
+    rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+          /usr/local/bin/yarn /usr/local/bin/yarnpkg && \
+    if command -v npm || command -v npx || command -v yarn || command -v corepack; then \
+      echo "a package manager survived removal; check the base image layout" >&2; exit 1; \
+    fi && \
+    node -e "process.exit(0)"
+
 # Install Nginx and supervisor
 RUN apk add --no-cache nginx supervisor && \
     # Remove default nginx config from both possible locations
