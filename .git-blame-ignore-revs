@@ -1,0 +1,5 @@
+# Formatting-only commits. Skip them with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Chore: turn on the Biome formatter, configured to the existing style
+4cab2af0283e40487ac226f65a22a3af051c8c37
