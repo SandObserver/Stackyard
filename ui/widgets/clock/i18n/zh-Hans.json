@@ -1,0 +1,15 @@
+{
+  "widget.label": "时钟",
+  "view.digital.label": "数字",
+  "view.analog.label": "指针",
+  "clockStyle.label": "样式",
+  "clockStyle.opt.digital": "数字",
+  "clockStyle.opt.analog": "指针",
+  "clockMode.label": "主题",
+  "clockMode.opt.dark": "深色",
+  "clockMode.opt.light": "浅色",
+  "clockTimezone.label": "时区",
+  "clockTimezone.placeholder": "Asia/Shanghai",
+  "clockTimezone.hint": "IANA 时区名称。留空则使用浏览器本地时间。",
+  "clockShowDate.label": "显示日期"
+}

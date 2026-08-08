@@ -1,0 +1,22 @@
+{
+  "widget.label": "Dashboard-Wechsel",
+  "keychains.label": "Schlüsselbund",
+  "keychains.hint": "Anhängerfarbe auf Automatisch lassen, um sie aus der Dashboard-URL abzuleiten.",
+  "keychains.name.label": "Name",
+  "keychains.name.placeholder": "z. B. Wohnzimmer",
+  "keychains.url.label": "Dashboard-URL",
+  "keychains.url.placeholder": "http://host:port",
+  "keychains.color.label": "Anhängerfarbe",
+  "keychains.color.opt.default": "Automatisch",
+  "keychains.color.opt.teal": "Petrol",
+  "keychains.color.opt.cyan": "Cyan",
+  "keychains.color.opt.orange": "Orange",
+  "keychains.color.opt.pink": "Pink",
+  "keychains.color.opt.purple": "Violett",
+  "keychains.color.opt.green": "Grün",
+  "keychains.color.opt.yellow": "Gelb",
+  "keychains.color.opt.blue": "Blau",
+  "openIn.label": "Öffnen in",
+  "openIn.opt.same": "Gleichem Tab",
+  "openIn.opt.new": "Neuem Tab"
+}

@@ -1,89 +1,313 @@
 {
   "name": "connections",
-  "label": "Connections",
-  "sizes": ["small", "medium"],
+  "label": "widget.label",
+  "sizes": [
+    "small",
+    "medium"
+  ],
   "viewField": "view",
   "defaultView": "map",
   "views": {
-    "map": { "label": "Map", "src": "connections-map.html", "sizes": ["medium"], "card": "dark" },
-    "vpn": { "label": "VPN", "src": "connections-vpn.html", "sizes": ["small", "medium"], "card": "translucent" }
+    "map": {
+      "label": "view.map.label",
+      "src": "connections-map.html",
+      "sizes": [
+        "medium"
+      ],
+      "card": "dark"
+    },
+    "vpn": {
+      "label": "view.vpn.label",
+      "src": "connections-vpn.html",
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "card": "translucent"
+    }
   },
   "fields": [
-    { "key": "view", "type": "select", "variant": "pills", "label": "View", "default": "map",
+    {
+      "key": "view",
+      "type": "select",
+      "variant": "pills",
+      "label": "view.label",
+      "default": "map",
       "options": [
-        { "value": "map", "label": "Map" },
-        { "value": "vpn", "label": "VPN" }
-      ] },
-
-    { "key": "vpn", "type": "object", "label": "Connection",
-      "showIf": { "field": "view", "equals": "vpn" },
+        {
+          "value": "map",
+          "label": "view.opt.map"
+        },
+        {
+          "value": "vpn",
+          "label": "view.opt.vpn"
+        }
+      ]
+    },
+    {
+      "key": "vpn",
+      "type": "object",
+      "label": "vpn.label",
+      "showIf": {
+        "field": "view",
+        "equals": "vpn"
+      },
       "fields": [
-        { "key": "service", "type": "select", "variant": "pills", "label": "Service", "default": "gluetun",
+        {
+          "key": "service",
+          "type": "select",
+          "variant": "pills",
+          "label": "vpn.service.label",
+          "default": "gluetun",
           "options": [
-            { "value": "gluetun", "label": "Gluetun" },
-            { "value": "netbird", "label": "NetBird" }
-          ] },
-        { "key": "name", "type": "text", "label": "Display Name", "placeholder": "VPN", "optional": true },
-
-        { "key": "url", "type": "text", "label": "Control Server URL", "placeholder": "http://gluetun:8000",
-          "showIf": { "field": "service", "equals": "gluetun" } },
-        { "key": "url", "type": "text", "label": "Management API URL", "placeholder": "http://netbird:33073",
-          "showIf": { "field": "service", "equals": "netbird" } },
-
-        { "key": "apiKey", "type": "secret", "label": "API Key", "optional": true,
-          "showIf": { "field": "service", "equals": "gluetun" } },
-        { "key": "token", "type": "secret", "label": "Access Token (PAT)",
-          "showIf": { "field": "service", "equals": "netbird" } },
-
-        { "key": "href", "type": "text", "label": "Click URL", "placeholder": "http://your-server:8000", "optional": true },
-        { "key": "color", "type": "color", "label": "Dot Color", "default": "#30d158" }
-      ] },
-
-    { "key": "services", "type": "group", "label": "Service",
-      "showIf": { "field": "view", "equals": "map" },
+            {
+              "value": "gluetun",
+              "label": "vpn.service.opt.gluetun"
+            },
+            {
+              "value": "netbird",
+              "label": "vpn.service.opt.netbird"
+            }
+          ]
+        },
+        {
+          "key": "name",
+          "type": "text",
+          "label": "vpn.name.label",
+          "placeholder": "vpn.name.placeholder",
+          "optional": true
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "vpn.url.label",
+          "placeholder": "vpn.url.placeholder",
+          "showIf": {
+            "field": "service",
+            "equals": "gluetun"
+          }
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "vpn.url.label.netbird",
+          "placeholder": "vpn.url.placeholder.netbird",
+          "showIf": {
+            "field": "service",
+            "equals": "netbird"
+          }
+        },
+        {
+          "key": "apiKey",
+          "type": "secret",
+          "label": "vpn.apiKey.label",
+          "optional": true,
+          "showIf": {
+            "field": "service",
+            "equals": "gluetun"
+          }
+        },
+        {
+          "key": "token",
+          "type": "secret",
+          "label": "vpn.token.label",
+          "showIf": {
+            "field": "service",
+            "equals": "netbird"
+          }
+        },
+        {
+          "key": "href",
+          "type": "text",
+          "label": "vpn.href.label",
+          "placeholder": "vpn.href.placeholder",
+          "optional": true
+        },
+        {
+          "key": "color",
+          "type": "color",
+          "label": "vpn.color.label",
+          "default": "#30d158"
+        }
+      ]
+    },
+    {
+      "key": "services",
+      "type": "group",
+      "label": "services.label",
+      "showIf": {
+        "field": "view",
+        "equals": "map"
+      },
       "fields": [
-        { "key": "type", "type": "select", "label": "Service", "default": "gluetun",
+        {
+          "key": "type",
+          "type": "select",
+          "label": "services.type.label",
+          "default": "gluetun",
           "options": [
-            { "value": "gluetun",   "label": "Gluetun" },
-            { "value": "conduit",   "label": "Conduit" },
-            { "value": "netbird",   "label": "NetBird" },
-            { "value": "plausible", "label": "Plausible" },
-            { "value": "umami",     "label": "Umami" }
-          ] },
-        { "key": "name", "type": "text", "label": "Display Name", "placeholder": "Name", "optional": true },
-
-        { "key": "url", "type": "text", "label": "Control server URL", "placeholder": "gluetun:8000",
-          "showIf": { "field": "type", "equals": "gluetun" } },
-        { "key": "url", "type": "text", "label": "Metrics URL", "placeholder": "conduit:9090",
-          "showIf": { "field": "type", "equals": "conduit" } },
-        { "key": "url", "type": "text", "label": "Management API URL", "placeholder": "netbird:33073",
-          "showIf": { "field": "type", "equals": "netbird" } },
-        { "key": "url", "type": "text", "label": "Plausible URL", "placeholder": "plausible:8000",
-          "showIf": { "field": "type", "equals": "plausible" } },
-        { "key": "url", "type": "text", "label": "Umami URL", "placeholder": "umami:3000",
-          "showIf": { "field": "type", "equals": "umami" } },
-
-        { "key": "token", "type": "secret", "label": "Access token", "placeholder": "NetBird PAT",
-          "showIf": { "field": "type", "equals": "netbird" } },
-
-        { "key": "siteId", "type": "text", "label": "Site ID (domain)", "placeholder": "example.com",
-          "showIf": { "field": "type", "equals": "plausible" } },
-        { "key": "apiKey", "type": "secret", "label": "Stats API key",
-          "showIf": { "field": "type", "equals": "plausible" } },
-
-        { "key": "websiteId", "type": "text", "label": "Website ID", "placeholder": "8dc7\u2026 (UUID)",
-          "showIf": { "field": "type", "equals": "umami" } },
-        { "key": "username", "type": "text", "label": "Username", "placeholder": "admin",
-          "showIf": { "field": "type", "equals": "umami" } },
-        { "key": "password", "type": "secret", "label": "Password",
-          "showIf": { "field": "type", "equals": "umami" } },
-
-        { "key": "adminUrl", "type": "text", "label": "Admin UI URL", "placeholder": "http://your-server:3002", "optional": true },
-        { "key": "color", "type": "color", "label": "Dot Color", "default": "#30d158" }
-      ] },
-
-    { "key": "showLegend", "type": "toggle", "label": "Show Legend", "default": true,
-      "showIf": { "field": "view", "equals": "map" },
-      "hint": "Service key along the bottom of the map." }
+            {
+              "value": "gluetun",
+              "label": "services.type.opt.gluetun"
+            },
+            {
+              "value": "conduit",
+              "label": "services.type.opt.conduit"
+            },
+            {
+              "value": "netbird",
+              "label": "services.type.opt.netbird"
+            },
+            {
+              "value": "plausible",
+              "label": "services.type.opt.plausible"
+            },
+            {
+              "value": "umami",
+              "label": "services.type.opt.umami"
+            }
+          ]
+        },
+        {
+          "key": "name",
+          "type": "text",
+          "label": "services.name.label",
+          "placeholder": "services.name.placeholder",
+          "optional": true
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "services.url.label",
+          "placeholder": "services.url.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "gluetun"
+          }
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "services.url.label.conduit",
+          "placeholder": "services.url.placeholder.conduit",
+          "showIf": {
+            "field": "type",
+            "equals": "conduit"
+          }
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "services.url.label.netbird",
+          "placeholder": "services.url.placeholder.netbird",
+          "showIf": {
+            "field": "type",
+            "equals": "netbird"
+          }
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "services.url.label.plausible",
+          "placeholder": "services.url.placeholder.plausible",
+          "showIf": {
+            "field": "type",
+            "equals": "plausible"
+          }
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "services.url.label.umami",
+          "placeholder": "services.url.placeholder.umami",
+          "showIf": {
+            "field": "type",
+            "equals": "umami"
+          }
+        },
+        {
+          "key": "token",
+          "type": "secret",
+          "label": "services.token.label",
+          "placeholder": "services.token.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "netbird"
+          }
+        },
+        {
+          "key": "siteId",
+          "type": "text",
+          "label": "services.siteId.label",
+          "placeholder": "services.siteId.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "plausible"
+          }
+        },
+        {
+          "key": "apiKey",
+          "type": "secret",
+          "label": "services.apiKey.label",
+          "showIf": {
+            "field": "type",
+            "equals": "plausible"
+          }
+        },
+        {
+          "key": "websiteId",
+          "type": "text",
+          "label": "services.websiteId.label",
+          "placeholder": "services.websiteId.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "umami"
+          }
+        },
+        {
+          "key": "username",
+          "type": "text",
+          "label": "services.username.label",
+          "placeholder": "services.username.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "umami"
+          }
+        },
+        {
+          "key": "password",
+          "type": "secret",
+          "label": "services.password.label",
+          "showIf": {
+            "field": "type",
+            "equals": "umami"
+          }
+        },
+        {
+          "key": "adminUrl",
+          "type": "text",
+          "label": "services.adminUrl.label",
+          "placeholder": "services.adminUrl.placeholder",
+          "optional": true
+        },
+        {
+          "key": "color",
+          "type": "color",
+          "label": "services.color.label",
+          "default": "#30d158"
+        }
+      ]
+    },
+    {
+      "key": "showLegend",
+      "type": "toggle",
+      "label": "showLegend.label",
+      "default": true,
+      "showIf": {
+        "field": "view",
+        "equals": "map"
+      },
+      "hint": "showLegend.hint"
+    }
   ]
 }

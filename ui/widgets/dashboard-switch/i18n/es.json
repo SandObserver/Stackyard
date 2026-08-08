@@ -1,0 +1,22 @@
+{
+  "widget.label": "Cambio de panel",
+  "keychains.label": "Llavero",
+  "keychains.hint": "Deja el color del llavero en Automático para deducirlo de la URL del panel.",
+  "keychains.name.label": "Nombre",
+  "keychains.name.placeholder": "p. ej. Salón",
+  "keychains.url.label": "URL del panel",
+  "keychains.url.placeholder": "http://host:port",
+  "keychains.color.label": "Color del llavero",
+  "keychains.color.opt.default": "Automático",
+  "keychains.color.opt.teal": "Verde azulado",
+  "keychains.color.opt.cyan": "Cian",
+  "keychains.color.opt.orange": "Naranja",
+  "keychains.color.opt.pink": "Rosa",
+  "keychains.color.opt.purple": "Morado",
+  "keychains.color.opt.green": "Verde",
+  "keychains.color.opt.yellow": "Amarillo",
+  "keychains.color.opt.blue": "Azul",
+  "openIn.label": "Abrir en",
+  "openIn.opt.same": "La misma pestaña",
+  "openIn.opt.new": "Una pestaña nueva"
+}

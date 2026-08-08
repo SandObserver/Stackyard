@@ -1,34 +1,91 @@
 {
   "name": "github",
-  "label": "GitHub",
-  "sizes": ["small", "medium", "large", "xlarge"],
+  "label": "widget.label",
+  "sizes": [
+    "small",
+    "medium",
+    "large",
+    "xlarge"
+  ],
   "card": "translucent",
   "viewField": "githubView",
   "defaultView": "prs",
   "views": {
-    "prs":           { "label": "Pull Requests", "src": "pullrequests.html" },
-    "contributions": { "label": "Contributions", "src": "contributions.html" }
+    "prs": {
+      "label": "view.prs.label",
+      "src": "pullrequests.html"
+    },
+    "contributions": {
+      "label": "view.contributions.label",
+      "src": "contributions.html"
+    }
   },
   "fields": [
-    { "key": "githubView", "type": "select", "variant": "pills", "label": "View",
+    {
+      "key": "githubView",
+      "type": "select",
+      "variant": "pills",
+      "label": "githubView.label",
       "options": [
-        { "value": "prs",           "label": "Pull Requests" },
-        { "value": "contributions", "label": "Contributions" }
-      ] },
-    { "key": "githubUser", "type": "text", "label": "GitHub Username", "placeholder": "octocat" },
-    { "key": "githubToken", "type": "secret", "label": "Personal Access Token",
-      "hint": "Classic PAT with repo + read:user scope (or a fine-grained PAT with the equivalent read access). Used only by this widget." },
-    { "key": "githubHref", "type": "text", "label": "Click URL", "optional": true,
-      "hint": "Where clicking the widget opens. Leave blank to disable." },
-    { "key": "githubPrFilters", "type": "multiselect", "label": "Pull request filters",
-      "default": ["created"],
-      "showIf": { "field": "githubView", "equals": "prs" },
-      "hint": "Which open PRs to show. Multiple filters are combined.",
+        {
+          "value": "prs",
+          "label": "githubView.opt.prs"
+        },
+        {
+          "value": "contributions",
+          "label": "githubView.opt.contributions"
+        }
+      ]
+    },
+    {
+      "key": "githubUser",
+      "type": "text",
+      "label": "githubUser.label",
+      "placeholder": "githubUser.placeholder"
+    },
+    {
+      "key": "githubToken",
+      "type": "secret",
+      "label": "githubToken.label",
+      "hint": "githubToken.hint"
+    },
+    {
+      "key": "githubHref",
+      "type": "text",
+      "label": "githubHref.label",
+      "optional": true,
+      "hint": "githubHref.hint"
+    },
+    {
+      "key": "githubPrFilters",
+      "type": "multiselect",
+      "label": "githubPrFilters.label",
+      "default": [
+        "created"
+      ],
+      "showIf": {
+        "field": "githubView",
+        "equals": "prs"
+      },
+      "hint": "githubPrFilters.hint",
       "options": [
-        { "value": "created",          "label": "Created" },
-        { "value": "assigned",         "label": "Assigned" },
-        { "value": "mentioned",        "label": "Mentioned" },
-        { "value": "review-requested", "label": "Review requested" }
-      ] }
+        {
+          "value": "created",
+          "label": "githubPrFilters.opt.created"
+        },
+        {
+          "value": "assigned",
+          "label": "githubPrFilters.opt.assigned"
+        },
+        {
+          "value": "mentioned",
+          "label": "githubPrFilters.opt.mentioned"
+        },
+        {
+          "value": "review-requested",
+          "label": "githubPrFilters.opt.review-requested"
+        }
+      ]
+    }
   ]
 }

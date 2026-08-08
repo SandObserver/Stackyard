@@ -1,47 +1,169 @@
 {
   "name": "backup",
-  "label": "Backup",
-  "sizes": ["small", "medium"],
+  "label": "widget.label",
+  "sizes": [
+    "small",
+    "medium"
+  ],
   "card": "translucent",
   "views": {
-    "main": { "src": "backup.html" }
+    "main": {
+      "src": "backup.html"
+    }
   },
   "fields": [
-    { "key": "slots", "type": "group", "label": "Slot", "countBySize": { "small": 1, "medium": 3 },
+    {
+      "key": "slots",
+      "type": "group",
+      "label": "slots.label",
+      "countBySize": {
+        "small": 1,
+        "medium": 3
+      },
       "fields": [
-        { "key": "provider", "type": "select", "variant": "pills", "label": "Provider", "default": "",
+        {
+          "key": "provider",
+          "type": "select",
+          "variant": "pills",
+          "label": "slots.provider.label",
+          "default": "",
           "options": [
-            { "value": "",           "label": "None" },
-            { "value": "duplicati",  "label": "Duplicati" },
-            { "value": "kopia",      "label": "Kopia" }
-          ] },
-
-        { "key": "dupUrl", "type": "text", "label": "URL", "placeholder": "http://duplicati:8200",
-          "showIf": { "field": "provider", "equals": "duplicati" } },
-        { "key": "dupPass", "type": "secret", "label": "Password", "optional": true,
-          "showIf": { "field": "provider", "equals": "duplicati" } },
-        { "key": "jobId", "type": "select", "label": "Job", "optional": true,
-          "optionsFrom": "duplicati-jobs", "hint": "Enter the URL and password above, then load the jobs.",
-          "showIf": { "field": "provider", "equals": "duplicati" } },
-        { "key": "dupHref", "type": "text", "label": "Click URL", "placeholder": "http://duplicati:8200", "optional": true,
-          "showIf": { "field": "provider", "equals": "duplicati" } },
-        { "key": "dupPollSec", "type": "number", "label": "Poll Interval (sec)", "default": 60,
-          "showIf": { "field": "provider", "equals": "duplicati" } },
-
-        { "key": "kopiaUrl", "type": "text", "label": "URL", "placeholder": "http://kopia:51515",
-          "showIf": { "field": "provider", "equals": "kopia" } },
-        { "key": "kopiaUser", "type": "text", "label": "Username", "placeholder": "admin", "optional": true,
-          "showIf": { "field": "provider", "equals": "kopia" } },
-        { "key": "kopiaPass", "type": "secret", "label": "Password", "optional": true,
-          "showIf": { "field": "provider", "equals": "kopia" } },
-        { "key": "jobId", "type": "select", "label": "Source", "optional": true,
-          "optionsFrom": "kopia-sources", "hint": "Enter the URL and credentials above, then load the sources.",
-          "showIf": { "field": "provider", "equals": "kopia" } },
-        { "key": "kopiaHref", "type": "text", "label": "Click URL", "placeholder": "http://kopia:51515", "optional": true,
-          "showIf": { "field": "provider", "equals": "kopia" } },
-
-        { "key": "customName", "type": "text", "label": "Display Name", "placeholder": "Shown on the card", "optional": true,
-          "showIf": { "field": "provider", "in": ["duplicati", "kopia"] } }
-      ] }
+            {
+              "value": "",
+              "label": "slots.provider.opt.default"
+            },
+            {
+              "value": "duplicati",
+              "label": "slots.provider.opt.duplicati"
+            },
+            {
+              "value": "kopia",
+              "label": "slots.provider.opt.kopia"
+            }
+          ]
+        },
+        {
+          "key": "dupUrl",
+          "type": "text",
+          "label": "slots.dupUrl.label",
+          "placeholder": "slots.dupUrl.placeholder",
+          "showIf": {
+            "field": "provider",
+            "equals": "duplicati"
+          }
+        },
+        {
+          "key": "dupPass",
+          "type": "secret",
+          "label": "slots.dupPass.label",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "duplicati"
+          }
+        },
+        {
+          "key": "jobId",
+          "type": "select",
+          "label": "slots.jobId.label",
+          "optional": true,
+          "optionsFrom": "duplicati-jobs",
+          "hint": "slots.jobId.hint",
+          "showIf": {
+            "field": "provider",
+            "equals": "duplicati"
+          }
+        },
+        {
+          "key": "dupHref",
+          "type": "text",
+          "label": "slots.dupHref.label",
+          "placeholder": "slots.dupHref.placeholder",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "duplicati"
+          }
+        },
+        {
+          "key": "dupPollSec",
+          "type": "number",
+          "label": "slots.dupPollSec.label",
+          "default": 60,
+          "showIf": {
+            "field": "provider",
+            "equals": "duplicati"
+          }
+        },
+        {
+          "key": "kopiaUrl",
+          "type": "text",
+          "label": "slots.kopiaUrl.label",
+          "placeholder": "slots.kopiaUrl.placeholder",
+          "showIf": {
+            "field": "provider",
+            "equals": "kopia"
+          }
+        },
+        {
+          "key": "kopiaUser",
+          "type": "text",
+          "label": "slots.kopiaUser.label",
+          "placeholder": "slots.kopiaUser.placeholder",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "kopia"
+          }
+        },
+        {
+          "key": "kopiaPass",
+          "type": "secret",
+          "label": "slots.kopiaPass.label",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "kopia"
+          }
+        },
+        {
+          "key": "jobId",
+          "type": "select",
+          "label": "slots.jobId.label.kopia",
+          "optional": true,
+          "optionsFrom": "kopia-sources",
+          "hint": "slots.jobId.hint.kopia",
+          "showIf": {
+            "field": "provider",
+            "equals": "kopia"
+          }
+        },
+        {
+          "key": "kopiaHref",
+          "type": "text",
+          "label": "slots.kopiaHref.label",
+          "placeholder": "slots.kopiaHref.placeholder",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "kopia"
+          }
+        },
+        {
+          "key": "customName",
+          "type": "text",
+          "label": "slots.customName.label",
+          "placeholder": "slots.customName.placeholder",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "in": [
+              "duplicati",
+              "kopia"
+            ]
+          }
+        }
+      ]
+    }
   ]
 }

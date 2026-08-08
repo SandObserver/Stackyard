@@ -1,24 +1,58 @@
 {
   "name": "weather",
-  "label": "Weather",
-  "sizes": ["small"],
+  "label": "widget.label",
+  "sizes": [
+    "small"
+  ],
   "fields": [
-    { "key": "cityQuery", "type": "text", "label": "Search", "placeholder": "e.g. Ottawa",
-      "optional": true, "transient": true },
-
-    { "key": "city", "type": "select", "label": "Location", "optionsFrom": "geocode",
-      "carries": ["lat", "lon"],
-      "hint": "Type a city above, then Fetch and pick the matching place." },
-
-    { "key": "units", "type": "select", "variant": "pills", "label": "Units", "default": "c",
+    {
+      "key": "cityQuery",
+      "type": "text",
+      "label": "cityQuery.label",
+      "placeholder": "cityQuery.placeholder",
+      "optional": true,
+      "transient": true
+    },
+    {
+      "key": "city",
+      "type": "select",
+      "label": "city.label",
+      "optionsFrom": "geocode",
+      "carries": [
+        "lat",
+        "lon"
+      ],
+      "hint": "city.hint"
+    },
+    {
+      "key": "units",
+      "type": "select",
+      "variant": "pills",
+      "label": "units.label",
+      "default": "c",
       "options": [
-        { "value": "c", "label": "\u00b0C" },
-        { "value": "f", "label": "\u00b0F" }
-      ] },
-
-    { "key": "feelsLike", "type": "toggle", "label": "Show feels like", "default": false },
-
-    { "key": "href", "type": "text", "label": "Link URL", "placeholder": "https://\u2026",
-      "optional": true }
+        {
+          "value": "c",
+          "label": "units.opt.c"
+        },
+        {
+          "value": "f",
+          "label": "units.opt.f"
+        }
+      ]
+    },
+    {
+      "key": "feelsLike",
+      "type": "toggle",
+      "label": "feelsLike.label",
+      "default": false
+    },
+    {
+      "key": "href",
+      "type": "text",
+      "label": "href.label",
+      "placeholder": "href.placeholder",
+      "optional": true
+    }
   ]
 }

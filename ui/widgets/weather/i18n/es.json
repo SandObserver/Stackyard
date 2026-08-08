@@ -1,0 +1,13 @@
+{
+  "widget.label": "Tiempo",
+  "cityQuery.label": "Buscar",
+  "cityQuery.placeholder": "p. ej. Ottawa",
+  "city.label": "Ubicación",
+  "city.hint": "Escribe una ciudad arriba, pulsa Obtener y elige el lugar correcto.",
+  "units.label": "Unidades",
+  "units.opt.c": "°C",
+  "units.opt.f": "°F",
+  "feelsLike.label": "Mostrar sensación térmica",
+  "href.label": "URL del enlace",
+  "href.placeholder": "https://…"
+}

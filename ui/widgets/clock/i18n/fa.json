@@ -1,0 +1,15 @@
+{
+  "widget.label": "ساعت",
+  "view.digital.label": "دیجیتال",
+  "view.analog.label": "عقربه‌ای",
+  "clockStyle.label": "سبک",
+  "clockStyle.opt.digital": "دیجیتال",
+  "clockStyle.opt.analog": "عقربه‌ای",
+  "clockMode.label": "پوسته",
+  "clockMode.opt.dark": "تیره",
+  "clockMode.opt.light": "روشن",
+  "clockTimezone.label": "منطقهٔ زمانی",
+  "clockTimezone.placeholder": "Asia/Tehran",
+  "clockTimezone.hint": "نام منطقهٔ زمانی IANA. برای زمان محلی مرورگر خالی بگذارید.",
+  "clockShowDate.label": "نمایش تاریخ"
+}

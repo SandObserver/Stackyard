@@ -1,0 +1,22 @@
+{
+  "widget.label": "Changement de tableau de bord",
+  "keychains.label": "Porte-clés",
+  "keychains.hint": "Laissez la couleur du porte-clés sur Automatique pour la déduire de l’URL du tableau de bord.",
+  "keychains.name.label": "Nom",
+  "keychains.name.placeholder": "ex. Salon",
+  "keychains.url.label": "URL du tableau de bord",
+  "keychains.url.placeholder": "http://host:port",
+  "keychains.color.label": "Couleur du porte-clés",
+  "keychains.color.opt.default": "Automatique",
+  "keychains.color.opt.teal": "Sarcelle",
+  "keychains.color.opt.cyan": "Cyan",
+  "keychains.color.opt.orange": "Orange",
+  "keychains.color.opt.pink": "Rose",
+  "keychains.color.opt.purple": "Violet",
+  "keychains.color.opt.green": "Vert",
+  "keychains.color.opt.yellow": "Jaune",
+  "keychains.color.opt.blue": "Bleu",
+  "openIn.label": "Ouvrir dans",
+  "openIn.opt.same": "Le même onglet",
+  "openIn.opt.new": "Un nouvel onglet"
+}

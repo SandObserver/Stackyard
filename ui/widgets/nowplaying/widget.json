@@ -1,34 +1,126 @@
 {
   "name": "nowplaying",
-  "label": "Now Playing",
-  "sizes": ["small"],
+  "label": "widget.label",
+  "sizes": [
+    "small"
+  ],
   "fields": [
     {
       "key": "provider",
       "type": "select",
       "variant": "pills",
-      "label": "Media server",
+      "label": "provider.label",
       "options": [
-        { "value": "plex", "label": "Plex" },
-        { "value": "jellyfin", "label": "Jellyfin" },
-        { "value": "emby", "label": "Emby" },
-        { "value": "navidrome", "label": "Navidrome" }
+        {
+          "value": "plex",
+          "label": "provider.opt.plex"
+        },
+        {
+          "value": "jellyfin",
+          "label": "provider.opt.jellyfin"
+        },
+        {
+          "value": "emby",
+          "label": "provider.opt.emby"
+        },
+        {
+          "value": "navidrome",
+          "label": "provider.opt.navidrome"
+        }
       ]
     },
-
-    { "key": "plexUrl", "type": "text", "label": "Plex server URL", "placeholder": "http://host:32400", "hint": "Your Plex Media Server (default port 32400).", "showIf": { "field": "provider", "equals": "plex" } },
-    { "key": "plexToken", "type": "secret", "label": "Plex token (X-Plex-Token)", "showIf": { "field": "provider", "equals": "plex" } },
-
-    { "key": "jellyfinUrl", "type": "text", "label": "Jellyfin URL", "placeholder": "http://host:8096", "showIf": { "field": "provider", "equals": "jellyfin" } },
-    { "key": "jellyfinKey", "type": "secret", "label": "Jellyfin API key", "showIf": { "field": "provider", "equals": "jellyfin" } },
-
-    { "key": "embyUrl", "type": "text", "label": "Emby URL", "placeholder": "http://host:8096", "showIf": { "field": "provider", "equals": "emby" } },
-    { "key": "embyKey", "type": "secret", "label": "Emby API key", "showIf": { "field": "provider", "equals": "emby" } },
-
-    { "key": "navidromeUrl", "type": "text", "label": "Navidrome URL", "placeholder": "http://host:4533", "showIf": { "field": "provider", "equals": "navidrome" } },
-    { "key": "navidromeUser", "type": "text", "label": "Username", "showIf": { "field": "provider", "equals": "navidrome" } },
-    { "key": "navidromePassword", "type": "secret", "label": "Password", "showIf": { "field": "provider", "equals": "navidrome" } },
-
-    { "key": "href", "type": "text", "label": "Click URL (optional)", "placeholder": "https://…", "optional": true }
+    {
+      "key": "plexUrl",
+      "type": "text",
+      "label": "plexUrl.label",
+      "placeholder": "plexUrl.placeholder",
+      "hint": "plexUrl.hint",
+      "showIf": {
+        "field": "provider",
+        "equals": "plex"
+      }
+    },
+    {
+      "key": "plexToken",
+      "type": "secret",
+      "label": "plexToken.label",
+      "showIf": {
+        "field": "provider",
+        "equals": "plex"
+      }
+    },
+    {
+      "key": "jellyfinUrl",
+      "type": "text",
+      "label": "jellyfinUrl.label",
+      "placeholder": "jellyfinUrl.placeholder",
+      "showIf": {
+        "field": "provider",
+        "equals": "jellyfin"
+      }
+    },
+    {
+      "key": "jellyfinKey",
+      "type": "secret",
+      "label": "jellyfinKey.label",
+      "showIf": {
+        "field": "provider",
+        "equals": "jellyfin"
+      }
+    },
+    {
+      "key": "embyUrl",
+      "type": "text",
+      "label": "embyUrl.label",
+      "placeholder": "embyUrl.placeholder",
+      "showIf": {
+        "field": "provider",
+        "equals": "emby"
+      }
+    },
+    {
+      "key": "embyKey",
+      "type": "secret",
+      "label": "embyKey.label",
+      "showIf": {
+        "field": "provider",
+        "equals": "emby"
+      }
+    },
+    {
+      "key": "navidromeUrl",
+      "type": "text",
+      "label": "navidromeUrl.label",
+      "placeholder": "navidromeUrl.placeholder",
+      "showIf": {
+        "field": "provider",
+        "equals": "navidrome"
+      }
+    },
+    {
+      "key": "navidromeUser",
+      "type": "text",
+      "label": "navidromeUser.label",
+      "showIf": {
+        "field": "provider",
+        "equals": "navidrome"
+      }
+    },
+    {
+      "key": "navidromePassword",
+      "type": "secret",
+      "label": "navidromePassword.label",
+      "showIf": {
+        "field": "provider",
+        "equals": "navidrome"
+      }
+    },
+    {
+      "key": "href",
+      "type": "text",
+      "label": "href.label",
+      "placeholder": "href.placeholder",
+      "optional": true
+    }
   ]
 }

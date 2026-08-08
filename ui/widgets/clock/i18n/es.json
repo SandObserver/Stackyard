@@ -1,0 +1,15 @@
+{
+  "widget.label": "Reloj",
+  "view.digital.label": "Digital",
+  "view.analog.label": "Analógico",
+  "clockStyle.label": "Estilo",
+  "clockStyle.opt.digital": "Digital",
+  "clockStyle.opt.analog": "Analógico",
+  "clockMode.label": "Tema",
+  "clockMode.opt.dark": "Oscuro",
+  "clockMode.opt.light": "Claro",
+  "clockTimezone.label": "Zona horaria",
+  "clockTimezone.placeholder": "Europe/Madrid",
+  "clockTimezone.hint": "Nombre de zona horaria IANA. Déjalo en blanco para la hora local del navegador.",
+  "clockShowDate.label": "Mostrar la fecha"
+}

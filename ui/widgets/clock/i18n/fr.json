@@ -1,0 +1,15 @@
+{
+  "widget.label": "Horloge",
+  "view.digital.label": "Numérique",
+  "view.analog.label": "Analogique",
+  "clockStyle.label": "Style",
+  "clockStyle.opt.digital": "Numérique",
+  "clockStyle.opt.analog": "Analogique",
+  "clockMode.label": "Thème",
+  "clockMode.opt.dark": "Sombre",
+  "clockMode.opt.light": "Clair",
+  "clockTimezone.label": "Fuseau horaire",
+  "clockTimezone.placeholder": "Europe/Paris",
+  "clockTimezone.hint": "Nom de fuseau horaire IANA. Laisser vide pour l’heure locale du navigateur.",
+  "clockShowDate.label": "Afficher la date"
+}

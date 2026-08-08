@@ -1,0 +1,15 @@
+{
+  "widget.label": "Uhr",
+  "view.digital.label": "Digital",
+  "view.analog.label": "Analog",
+  "clockStyle.label": "Stil",
+  "clockStyle.opt.digital": "Digital",
+  "clockStyle.opt.analog": "Analog",
+  "clockMode.label": "Erscheinungsbild",
+  "clockMode.opt.dark": "Dunkel",
+  "clockMode.opt.light": "Hell",
+  "clockTimezone.label": "Zeitzone",
+  "clockTimezone.placeholder": "Europe/Berlin",
+  "clockTimezone.hint": "IANA-Zeitzonenname. Leer lassen für die lokale Zeit des Browsers.",
+  "clockShowDate.label": "Datum anzeigen"
+}
