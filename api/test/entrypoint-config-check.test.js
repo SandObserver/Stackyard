@@ -36,17 +36,29 @@ function run({ nginxExit = 0, env = {} } = {}) {
   const binDir = path.join(dir, 'bin');
   fs.mkdirSync(binDir);
 
-  fs.writeFileSync(path.join(binDir, 'nginx'),
-    `#!/bin/sh\ncat "${realip}" > "${seen}" 2>/dev/null\nexit ${nginxExit}\n`);
-  fs.chmodSync(path.join(binDir, 'nginx'), 0o755);
+  /* Both stubs read their paths from the environment rather than having them
+     pasted into command text, so no shell command anywhere here is built from a
+     path. The paths are ours, but the temporary directory's root comes from the
+     environment, and that is a shape worth not having in the repository. */
+  const stub = (name, body) => {
+    const p = path.join(binDir, name);
+    fs.writeFileSync(p, `#!/bin/sh\n${body}\n`);
+    fs.chmodSync(p, 0o755);
+    return p;
+  };
+  stub('nginx', `cat "$SY_REALIP" > "$SY_SEEN" 2>/dev/null\nexit ${nginxExit}`);
+  const handoff = stub('handoff', 'touch "$SY_STARTED"');
 
   let status = 0;
   try {
-    execFileSync('sh', [ENTRYPOINT, 'sh', '-c', `touch "${started}"`], {
+    execFileSync('sh', [ENTRYPOINT, handoff], {
       env: {
         PATH: `${binDir}:${process.env.PATH}`,
         REALIP_CONF: realip,
         SUPERVISOR_FATAL_MARKER: path.join(dir, 'fatal'),
+        SY_REALIP: realip,
+        SY_SEEN: seen,
+        SY_STARTED: started,
         ...env,
       },
       stdio: 'pipe',
