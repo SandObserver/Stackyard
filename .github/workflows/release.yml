@@ -9,7 +9,13 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # A tag must not publish an image the browser tests reject. Two minutes, and
+  # the same workflow that runs on pull requests, rather than a copy of it.
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+
   build-and-push:
+    needs: e2e
     runs-on: ubuntu-latest
     permissions:
       contents: read

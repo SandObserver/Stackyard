@@ -95,3 +95,28 @@ test('the checks still run before anything is published', () => {
   assert.ok(indexOf('Run project checks') < indexOf('Build and push'));
   assert.equal(byName('Run project checks').with.mode, 'release');
 });
+
+/* A tag must not publish an image the browser tests reject.
+
+   The end-to-end suite found a bug that made every write fail on a mapped port,
+   and it found it after that code had already shipped in 1.5.0. Running it on
+   pull requests stops the next one merging; gating the release stops one
+   reaching a registry if it slips through anyway. */
+
+test('the release waits for the end-to-end suite', () => {
+  assert.equal(workflow.jobs.e2e?.uses, './.github/workflows/e2e.yml',
+    'the release should call the same e2e workflow, not a copy of it');
+  assert.deepEqual([].concat(job.needs || []), ['e2e'],
+    'publishing must depend on the browser tests');
+});
+
+test('the e2e workflow can be called, and still runs on its own', () => {
+  const e2e = yaml.load(fs.readFileSync(path.join(root, '.github/workflows/e2e.yml'), 'utf8'));
+  /* `on:` parses as true in YAML 1.1, which js-yaml follows. */
+  const triggers = e2e.on || e2e[true];
+  for (const t of ['workflow_call', 'pull_request', 'push', 'workflow_dispatch']) {
+    assert.ok(t in triggers, `the e2e workflow lost its ${t} trigger`);
+  }
+  assert.ok(triggers.pull_request.paths?.length,
+    'the pull request run should be filtered by path, or every docs change pays for it');
+});
