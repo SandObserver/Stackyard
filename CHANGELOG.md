@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Saving settings, logging in and every other write now work when Stackyard is
+  reached directly on a mapped port, such as `http://server:8700`. They were
+  refused as an origin mismatch; only installs behind a reverse proxy on 443
+  were unaffected.
+
 - Admin now translates the Dock, Health and Badge pills, the Edit button, the
   Secret checkbox, the colour and poll-interval labels, the widget Name and
   Widget Type labels, and the editor's section title. All were English in every
