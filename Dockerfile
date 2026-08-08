@@ -30,17 +30,13 @@ RUN apk add --no-cache nginx supervisor && \
     mkdir -p /data /icons && \
     chown -R node:node /data /icons
 
-# supervisor is a Python program and apk brings py3-setuptools in with it, which
-# is where Docker Scout finds CVE-2026-59890 (medium, fixed in setuptools 83,
-# not yet in Alpine 3.24). Nothing here runs pip or setuptools, so it is removed
-# rather than carried. supervisord is exercised immediately after: if it turns
-# out to need pkg_resources, the build fails here instead of the container
-# failing to start.
-RUN apk del --no-scripts py3-setuptools py3-setuptools-pyc && \
-    supervisord --version && \
-    if [ -d /usr/lib/python3*/site-packages/setuptools ]; then \
-      echo "setuptools survived removal" >&2; exit 1; \
-    fi
+# py3-setuptools stays, and cannot be removed: apk refuses, because supervisor
+# depends on it. Docker Scout reports CVE-2026-59890 against it (medium, 6.1,
+# fixed in setuptools 83, which Alpine 3.24 does not carry). Nothing in this
+# image runs pip or setuptools, so it is a library on disk rather than a code
+# path; the release scan gates on HIGH and CRITICAL and does not fail on it.
+# Revisit when Alpine ships 83: `apk del py3-setuptools` is the check, and it
+# printing "not removed due to: supervisor" is why this note exists.
 
 # Copy Nginx config — Alpine nginx reads from http.d/
 COPY nginx/dashboard.conf /etc/nginx/http.d/dashboard.conf
