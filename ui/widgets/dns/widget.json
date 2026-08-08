@@ -1,42 +1,119 @@
 {
   "name": "dns",
-  "label": "DNS Server",
-  "sizes": ["small", "medium"],
+  "label": "widget.label",
+  "sizes": [
+    "small",
+    "medium"
+  ],
   "card": "translucent",
   "fields": [
-    { "key": "provider", "type": "select", "variant": "pills", "label": "Provider",
+    {
+      "key": "provider",
+      "type": "select",
+      "variant": "pills",
+      "label": "provider.label",
       "options": [
-        { "value": "adguard",    "label": "AdGuard Home" },
-        { "value": "pihole",     "label": "Pi-hole" },
-        { "value": "technitium", "label": "Technitium" },
-        { "value": "nextdns",    "label": "NextDNS" }
+        {
+          "value": "adguard",
+          "label": "provider.opt.adguard"
+        },
+        {
+          "value": "pihole",
+          "label": "provider.opt.pihole"
+        },
+        {
+          "value": "technitium",
+          "label": "provider.opt.technitium"
+        },
+        {
+          "value": "nextdns",
+          "label": "provider.opt.nextdns"
+        }
       ]
     },
-
-    { "key": "dnsUrl",  "type": "text", "label": "Server URL", "placeholder": "dns-host:80",
-      "showIf": { "field": "provider", "in": ["adguard", "pihole", "technitium"] },
-      "hint": "Container name and port, or a full URL." },
-    { "key": "dnsHref", "type": "text", "label": "Click URL", "optional": true,
-      "hint": "Where clicking the widget opens. Leave blank to disable." },
-
-    { "key": "dnsUser", "type": "text",   "label": "Username", "optional": true,
-      "showIf": { "field": "provider", "equals": "adguard" } },
-    { "key": "dnsPass", "type": "secret", "label": "Password", "optional": true,
-      "showIf": { "field": "provider", "equals": "adguard" } },
-
-    { "key": "dnsPiholePassword", "type": "secret", "label": "Pi-hole Password", "optional": true,
-      "showIf": { "field": "provider", "equals": "pihole" },
-      "hint": "Leave blank if your Pi-hole has no password set." },
-
-    { "key": "dnsTechnitiumToken", "type": "secret", "label": "API Token",
-      "showIf": { "field": "provider", "equals": "technitium" },
-      "hint": "Technitium API token (Administration → Sessions → Create Token)." },
-
-    { "key": "dnsNextdnsApiKey", "type": "secret", "label": "API Key",
-      "showIf": { "field": "provider", "equals": "nextdns" },
-      "hint": "From my.nextdns.io → Account → API." },
-    { "key": "dnsNextdnsProfile", "type": "text", "label": "Profile ID", "placeholder": "abc123",
-      "showIf": { "field": "provider", "equals": "nextdns" },
-      "hint": "The profile/configuration ID (the short ID in your NextDNS setup)." }
+    {
+      "key": "dnsUrl",
+      "type": "text",
+      "label": "dnsUrl.label",
+      "placeholder": "dnsUrl.placeholder",
+      "showIf": {
+        "field": "provider",
+        "in": [
+          "adguard",
+          "pihole",
+          "technitium"
+        ]
+      },
+      "hint": "dnsUrl.hint"
+    },
+    {
+      "key": "dnsHref",
+      "type": "text",
+      "label": "dnsHref.label",
+      "optional": true,
+      "hint": "dnsHref.hint"
+    },
+    {
+      "key": "dnsUser",
+      "type": "text",
+      "label": "dnsUser.label",
+      "optional": true,
+      "showIf": {
+        "field": "provider",
+        "equals": "adguard"
+      }
+    },
+    {
+      "key": "dnsPass",
+      "type": "secret",
+      "label": "dnsPass.label",
+      "optional": true,
+      "showIf": {
+        "field": "provider",
+        "equals": "adguard"
+      }
+    },
+    {
+      "key": "dnsPiholePassword",
+      "type": "secret",
+      "label": "dnsPiholePassword.label",
+      "optional": true,
+      "showIf": {
+        "field": "provider",
+        "equals": "pihole"
+      },
+      "hint": "dnsPiholePassword.hint"
+    },
+    {
+      "key": "dnsTechnitiumToken",
+      "type": "secret",
+      "label": "dnsTechnitiumToken.label",
+      "showIf": {
+        "field": "provider",
+        "equals": "technitium"
+      },
+      "hint": "dnsTechnitiumToken.hint"
+    },
+    {
+      "key": "dnsNextdnsApiKey",
+      "type": "secret",
+      "label": "dnsNextdnsApiKey.label",
+      "showIf": {
+        "field": "provider",
+        "equals": "nextdns"
+      },
+      "hint": "dnsNextdnsApiKey.hint"
+    },
+    {
+      "key": "dnsNextdnsProfile",
+      "type": "text",
+      "label": "dnsNextdnsProfile.label",
+      "placeholder": "dnsNextdnsProfile.placeholder",
+      "showIf": {
+        "field": "provider",
+        "equals": "nextdns"
+      },
+      "hint": "dnsNextdnsProfile.hint"
+    }
   ]
 }

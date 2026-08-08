@@ -446,7 +446,7 @@ The dashboard builds the iframe URL, and it carries more than the id:
 | `id` | The dashboard item's id. Pass it to `/api/widget-data/<id>` and `/api/widget-config/<id>`. |
 | `size` | The size the user placed this widget at, one of the `sizes` in the manifest. Read it to draw a denser or sparser layout; the canvas is a fixed size per family, so nothing has to be measured. |
 | `mobile` | `1` on the mobile layout, absent otherwise. |
-| `lang` | The selected language code. The toolbox uses it to translate its own status text; read it if the widget has strings of its own. |
+| `lang` | The selected language code. The toolbox uses it for its own status text and for `wt()`, which reads the widget's own catalog at `i18n/<code>.json`. See [i18n.md](./i18n.md). |
 | `v` | The cache version, stamped at release. Nothing to read. |
 
 ### What a widget page may load

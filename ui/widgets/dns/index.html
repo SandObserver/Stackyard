@@ -53,7 +53,7 @@
 <div class="widget" id="widget" role="group" aria-label="DNS filtering">
   <div class="hero">
     <div class="pct" id="pct">—</div>
-    <div class="sub">Queries Blocked</div>
+    <div class="sub" id="sub-label">Queries Blocked</div>
   </div>
   <div class="flow" id="flow">
     <svg id="svg" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true"></svg>
@@ -64,7 +64,12 @@
 </div>
 
 <script type="module">
-import { poll, openUrl } from '/js/widget-toolbox.js?v=1';
+import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+await loadStrings();
+/* Applied after the catalog arrives: these two are in the markup so the widget
+   still reads correctly in English if the fetch fails. */
+document.getElementById('sub-label').textContent = wt('ui.queriesBlocked', 'Queries Blocked');
+document.getElementById('widget').setAttribute('aria-label', wt('ui.aria', 'DNS filtering'));
 const TICK_MS = 30000;
 const params = new URLSearchParams(location.search);
 const id   = params.get('id')   || '';
@@ -139,8 +144,9 @@ function apply(d) {
   _last = model;
   render(model);
 
-  srEl.textContent = `${pct}% of ${fmt(total)} queries blocked. `
-    + `Allowed ${fmt(allowed)}, cached ${fmt(cached)}, blocked ${fmt(blocked)}.`;
+  srEl.textContent = wt('ui.summary', '{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.')
+    .replace('{pct}', String(pct)).replace('{total}', fmt(total))
+    .replace('{allowed}', fmt(allowed)).replace('{cached}', fmt(cached)).replace('{blocked}', fmt(blocked));
 }
 
 function constLink(x0,c0,x1,c1,t) {
@@ -156,9 +162,9 @@ function render(m) {
 
   const sum = m.allowed + m.cached + m.blocked || 1;
   const segs = [
-    { key:'allowed', label:'Allowed', value:m.allowed, color:'#34c759' },
-    { key:'cached',  label:'Cached',  value:m.cached,  color:'#0a84ff' },
-    { key:'blocked', label:'Blocked', value:m.blocked, color:'#ff453a' },
+    { key:'allowed', label:wt('ui.allowed','Allowed'), value:m.allowed, color:'#34c759' },
+    { key:'cached',  label:wt('ui.cached','Cached'),   value:m.cached,  color:'#0a84ff' },
+    { key:'blocked', label:wt('ui.blocked','Blocked'), value:m.blocked, color:'#ff453a' },
   ].filter(s => s.value > 0);
 
   if (!segs.length) { svgEl.innerHTML=''; return; }
