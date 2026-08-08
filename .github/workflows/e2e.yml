@@ -1,0 +1,84 @@
+name: End-to-end
+
+# Its own workflow, not part of the checks every pull request runs. Those finish
+# in under a minute; this downloads two browsers and drives a container, and an
+# end-to-end failure is more often the test than the change.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+
+      - name: Install dev tooling
+        run: npm install
+
+      - name: Cache Playwright browsers
+        id: browsers
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      # The image that ships, so nginx and its headers are part of what is
+      # tested. A bug this project has already had, an inline handler refused by
+      # the Content-Security-Policy, is invisible without them.
+      - name: Build the image
+        run: docker build -t stackyard:e2e .
+
+      - name: Start the container
+        run: |
+          mkdir -p "$RUNNER_TEMP/data" "$RUNNER_TEMP/icons"
+          chmod 777 "$RUNNER_TEMP/data" "$RUNNER_TEMP/icons"
+          docker run -d --name stackyard-e2e \
+            -p 8730:80 \
+            -v "$RUNNER_TEMP/data:/data" \
+            -v "$RUNNER_TEMP/icons:/icons" \
+            stackyard:e2e
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8730/health >/dev/null 2>&1; then echo "up after ${i}s"; exit 0; fi
+            sleep 1
+          done
+          echo "::error::the container never became healthy"
+          docker logs stackyard-e2e
+          exit 1
+
+      - name: Run the specs
+        run: npx playwright test
+        env:
+          BASE_URL: http://127.0.0.1:8730
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs stackyard-e2e
+
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Stop the container
+        if: always()
+        run: docker rm -f stackyard-e2e || true
