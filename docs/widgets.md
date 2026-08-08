@@ -458,6 +458,43 @@ the icon CDN or a `data:` URI. Reach an external service through `data.js`, whic
 has the SSRF guard and the app's TLS settings; a widget page cannot reach one
 directly and should not try.
 
+### Text direction
+
+The dashboard gives the frame its own direction and language when it mounts the
+widget, so a widget folder needs no code for this and must not set `dir` on its
+own `<html>`. In Persian the frame becomes right-to-left and text, flex rows and
+grid columns reverse with it.
+
+Write spacing that sits next to text with the logical properties, so it reverses
+too:
+
+```css
+.flag  { margin-inline-end: 5px }   /* not margin-right */
+.meta  { padding-inline-start: 13px }
+.left  { border-inline-end: 1px solid ... }
+```
+
+`left: 0; right: 0` on an absolutely positioned box is symmetric and needs no
+change, `left: 50%` with a translate is centring, and artwork is artwork:
+mirroring a drawing is usually wrong. The rule is enforced for the properties
+that carry text, in `ui/test/rtl-logical-properties.test.mjs`.
+
+Content that reads the same in every language, such as an IP address, a log
+tail, a chart axis or a keyboard shortcut, can and should pin its own direction.
+Do that on the element, never on the document:
+
+```html
+<div dir="ltr">10.0.0.1</div>
+```
+```css
+.log { direction: ltr }        /* a container, not html or body */
+```
+
+A widget that is direction-independent throughout wraps its content and pins
+the wrapper. `dir` on `<html>` or `<body>`, and `direction` on `html`, `body` or
+`:root`, are refused by the test: those are the document's direction, the
+dashboard sets it, and a widget that overrides it stops following the app.
+
 ### Mobile active state
 
 A widget with an interior state a tap turns on, such as a selected row, has to

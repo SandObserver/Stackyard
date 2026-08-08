@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Widgets now follow the interface text direction, so they mirror in Persian
+  along with the rest of the app.
 - Admin secondary text, placeholders and control borders now meet WCAG contrast
   minimums in the default theme.
 - Correct the security documentation: `TRUST_PROXY` affects only the session
