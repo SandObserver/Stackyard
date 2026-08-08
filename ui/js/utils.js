@@ -7,6 +7,21 @@ export const fb  = (l, sz) => { const e = mk('span'); e.className = 'fb'; e.styl
    existing importers of utils.esc keep working. */
 export { esc } from '/js/html.js?v=ccec347c';
 
+/* A name the user typed, which has its own direction regardless of the
+   interface language. Without dir="auto" an English name inside a Persian
+   dashboard is laid out right-to-left, so an over-long one keeps its tail and
+   loses its head: "Backup and Storage" truncates to "…nd Storage". The
+   attribute makes each name follow its own first strong character, so English
+   names clip at the end and Persian names clip at the start, in either
+   interface language.
+
+   @param {HTMLElement} node @param {string} text @returns {HTMLElement} */
+export const setUserText = (node, text) => {
+  node.textContent = text;
+  node.setAttribute('dir', 'auto');
+  return node;
+};
+
 /* Strip quotes, parens and backslashes so a user URL can't break out of a CSS
    url('...') wrapper. Shared by the dashboard and admin background setters. */
 export const sanitizeCssUrl = u => String(u || '').replace(/['"\\()]/g, '');
