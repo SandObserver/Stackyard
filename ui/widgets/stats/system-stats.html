@@ -79,7 +79,14 @@
 </head>
 <body>
 <p id="sr-sum" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:-1px;"></p>
-<div class="widget" id="widget" aria-hidden="true"></div>
+<!-- dir="ltr" deliberately, and not inherited from the page. This widget is
+     percentages, byte counts and sparklines: content with its own direction
+     rather than text. Mirroring it would move the value column to the right and
+     run the sparklines' time axis right to left, which reads as a bug rather
+     than as a translation. Labels inside are single words and still shape
+     correctly, because bidi resolves a run of Persian inside a left-to-right
+     block. The screen-reader summary above is left to follow the page. -->
+<div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <script type="module">
 import { poll, html, setHtml, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
 await loadStrings();
