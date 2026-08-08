@@ -19,6 +19,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const yaml = require('js-yaml');
 
 const root = path.join(__dirname, '..', '..');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
@@ -31,17 +32,27 @@ const SECTION = '## Before opening a PR';
 
 /* Every step the test path runs, as [command, workingDirectory].
 
+   Parsed as YAML rather than split on text. The previous version keyed off the
+   exact indentation of "- name:" and "run:", so re-indenting the action, or
+   writing a run: as a block scalar, silently produced a shorter list and this
+   file agreed with a document it had stopped comparing.
+
    Release-only steps are skipped: they stamp cache-busting hashes into the tree
    and are the build's job, not a contributor's. */
 function ciCommands() {
-  const steps = action.split(/\n    - name: /).slice(1);
+  const doc = yaml.load(action);
+  const steps = doc?.runs?.steps;
+  assert.ok(Array.isArray(steps), 'the composite action has no runs.steps');
   const out = [];
   for (const step of steps) {
-    if (/if: inputs\.mode == 'release'/.test(step)) continue;
-    const run = /\n      run: (.+)/.exec(step);
-    if (!run) continue;                       /* uses:, not run: */
-    const dir = /\n      working-directory: (.+)/.exec(step);
-    out.push([run[1].trim(), dir ? dir[1].trim() : null]);
+    if (typeof step?.if === 'string' && step.if.includes("inputs.mode == 'release'")) continue;
+    if (typeof step?.run !== 'string') continue;   /* uses:, not run: */
+    /* A multi-line run is a script, not a command a contributor types. The
+       test path has none; if one appears, it needs a decision rather than
+       being folded into one line. */
+    const command = step.run.trim();
+    if (command.includes('\n')) continue;
+    out.push([command, step['working-directory'] || null]);
   }
   return out;
 }
@@ -89,6 +100,22 @@ test('the documented order is the order CI runs them in', () => {
   const positions = ciCommands().map(asTyped).map(c => block.indexOf(c));
   const sorted = [...positions].sort((a, b) => a - b);
   assert.deepEqual(positions, sorted, 'the commands are listed out of order');
+});
+
+/* The reason for parsing rather than pattern-matching: a formatting change must
+   not quietly shrink the list this file compares against. */
+test('the step list survives reformatting of the action', () => {
+  const doc = yaml.load(action);
+  /* Re-emitted with different indentation and line widths, which is what a
+     tidy-up or a different editor produces. */
+  const reformatted = yaml.dump(doc, { indent: 6, lineWidth: 40, quotingType: '"' });
+  const reparsed = yaml.load(reformatted);
+  const commands = steps => steps
+    .filter(st => !(typeof st?.if === 'string' && st.if.includes("inputs.mode == 'release'")))
+    .filter(st => typeof st?.run === 'string' && !st.run.trim().includes('\n'))
+    .map(st => [st.run.trim(), st['working-directory'] || null]);
+  assert.deepEqual(commands(reparsed.runs.steps), ciCommands(),
+    'the same action formatted differently produced a different list');
 });
 
 /* CodeQL blocks a merge like any other check, so a contributor should not meet

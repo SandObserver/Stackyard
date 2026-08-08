@@ -27,23 +27,37 @@ runs:
       with:
         node-version: '24'
 
+    - name: Install dev tooling
+      shell: bash
+      run: npm install
+
     - name: Check asset cache-busting
       shell: bash
       run: node scripts/bump-cache-busting.js --check
+
+    # Both entries per module, plain and cache-busted. See the script's header:
+    # a missing one leaves that module silently unchecked by typecheck:ui.
+    - name: Check frontend path map
+      shell: bash
+      run: npm run paths:check
 
     - name: Run backend tests
       shell: bash
       working-directory: api
       run: npm test
 
+    # Reads the run above. The floor sits a few points under the real figure so
+    # ordinary movement does not fail a PR; raise it when coverage rises, never
+    # to meet a number a change happens to hit.
+    - name: Check backend coverage
+      shell: bash
+      working-directory: api
+      run: npx c8 check-coverage --lines 92
+
     - name: Run frontend tests
       shell: bash
       working-directory: ui/test
       run: node --test
-
-    - name: Install dev tooling
-      shell: bash
-      run: npm install
 
     - name: Lint
       shell: bash
