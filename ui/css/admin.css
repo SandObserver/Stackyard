@@ -184,7 +184,11 @@ html{background:var(--bg-color,var(--bg-outer))}
 
 /* ── Color control: swatch row + HSB sliders + code (PSD Icon/Label/Activity) ── */
 .cc-row{padding-top:13px;padding-bottom:13px}
-.cc-sw{display:flex;gap:10px;margin-inline-start:auto;flex:2;max-width:none;justify-content:space-between;flex-wrap:wrap;row-gap:10px}
+/* Grid rather than a wrapping flex row. space-between on a flex row spreads
+   whatever wraps to the far edges, so on a narrow screen the last two
+   swatches ended up in opposite corners. Fixed-width columns keep a
+   wrapped swatch under the one above it. */
+.cc-sw{display:grid;grid-template-columns:repeat(auto-fit,26px);gap:10px;margin-inline-start:auto;flex:2;max-width:none;justify-content:space-between}
 .cc-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:none;padding:0;outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--t);flex-shrink:0}
 .cc-swatch.on{outline-color:#fff}
 .cc-rainbow{background:conic-gradient(from 90deg,#ff3b30,#ffcd00,#35c759,#0289ff,#cb30df,#ff3b30)}
@@ -237,7 +241,9 @@ html{background:var(--bg-color,var(--bg-outer))}
 /* App form: icon source row, poll, value list */
 .icon-src-row{gap:12px}
 .icon-prev{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden}
-.icon-prev img{width:100%;height:100%;object-fit:contain}
+/* Inset to match the list icon, which draws a 30px image in a 48px tile. At
+   100% the artwork touched the rounded corners of its own background. */
+.icon-prev img{width:62%;height:62%;object-fit:contain}
 .icon-srch{flex:1;min-width:0;background:none;border:none;color:var(--tx);font-size:14px;text-align:end;outline:none;font-family:inherit}
 .icon-srch::placeholder{color:var(--dm)}
 .iprs{display:none}
