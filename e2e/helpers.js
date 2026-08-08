@@ -64,6 +64,21 @@ async function setInlineRow(page, rowId, inputId, value) {
   await input.press('Enter');
 }
 
+/** Click the editor's Save and wait for the write to land.
+
+    Clicking returns as soon as the event is dispatched, so reading the config
+    straight afterwards races the request. Waiting for the response is both
+    deterministic and the assertion: a save that never fires, or comes back non
+    2xx, fails here instead of showing up later as an item that vanished. */
+async function saveEditor(page) {
+  const [response] = await Promise.all([
+    page.waitForResponse(r => r.url().includes('/api/config') && r.request().method() === 'POST'),
+    page.locator('#ev-save').click(),
+  ]);
+  expect(response.status(), `saving returned ${response.status()}: ${await response.text()}`).toBe(200);
+  return response;
+}
+
 /** Names in the dashboard list, in the order they appear. #al is the list the
     admin renders rows into. */
 function rowNames(page) {
@@ -75,4 +90,14 @@ function rowByName(page, name) {
   return page.locator('#al .row').filter({ has: page.locator('.rnm', { hasText: name }) });
 }
 
-module.exports = { seedConfig, readConfig, expectItem, app, openDashboardList, setInlineRow, rowNames, rowByName };
+module.exports = {
+  seedConfig,
+  readConfig,
+  expectItem,
+  saveEditor,
+  app,
+  openDashboardList,
+  setInlineRow,
+  rowNames,
+  rowByName,
+};

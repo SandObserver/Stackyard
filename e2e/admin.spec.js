@@ -12,6 +12,7 @@ const {
   seedConfig,
   readConfig,
   expectItem,
+  saveEditor,
   app,
   openDashboardList,
   setInlineRow,
@@ -36,7 +37,7 @@ test('adding an app saves it and shows it in the list', async ({ page, request }
 
   await setInlineRow(page, 'ie-name', 'f-lbl', 'Charlie');
   await setInlineRow(page, 'ie-url', 'f-href', 'http://charlie.invalid:8080');
-  await page.locator('#ev-save').click();
+  await saveEditor(page);
 
   await expect(rowByName(page, 'Charlie')).toBeVisible();
 
@@ -51,7 +52,7 @@ test('editing an app keeps its id and changes only what was edited', async ({ pa
   await rowByName(page, 'Alpha').getByRole('button', { name: /edit/i }).click();
 
   await setInlineRow(page, 'ie-name', 'f-lbl', 'Alpha renamed');
-  await page.locator('#ev-save').click();
+  await saveEditor(page);
 
   await expect(rowByName(page, 'Alpha renamed')).toBeVisible();
 
@@ -67,7 +68,7 @@ test('a saved change survives a reload', async ({ page }) => {
   await page.locator('#btn-add').click();
   await setInlineRow(page, 'ie-name', 'f-lbl', 'Delta');
   await setInlineRow(page, 'ie-url', 'f-href', 'http://delta.invalid');
-  await page.locator('#ev-save').click();
+  await saveEditor(page);
   await expect(rowByName(page, 'Delta')).toBeVisible();
 
   await page.reload();
@@ -87,7 +88,7 @@ test('adding a widget stores its type', async ({ page, request }) => {
   const typeSelect = page.locator('#f-wtype');
   await typeSelect.waitFor({ state: 'visible' });
   await typeSelect.selectOption('clock');
-  await page.locator('#ev-save').click();
+  await saveEditor(page);
 
   const cfg = await readConfig(request);
   const widget = expectItem(cfg, i => i.type === 'widget', 'the widget');
