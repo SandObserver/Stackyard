@@ -1,31 +1,79 @@
 {
   "name": "dashboard-switch",
-  "label": "Dashboard Switch",
-  "sizes": ["small", "medium"],
+  "label": "widget.label",
+  "sizes": [
+    "small",
+    "medium"
+  ],
   "card": "dark",
   "fields": [
     {
       "key": "keychains",
       "type": "group",
-      "label": "Keychain",
+      "label": "keychains.label",
       "min": 1,
       "max": 5,
-      "maxBySize": { "small": 2, "medium": 5 },
-      "hint": "Leave Fob colour on Auto to derive it from the dashboard URL.",
+      "maxBySize": {
+        "small": 2,
+        "medium": 5
+      },
+      "hint": "keychains.hint",
       "fields": [
-        { "key": "name", "type": "text", "label": "Name", "placeholder": "e.g. Living Room", "optional": true },
-        { "key": "url", "type": "text", "label": "Dashboard URL", "placeholder": "http://host:port" },
-        { "key": "color", "type": "select", "label": "Fob colour", "optional": true,
+        {
+          "key": "name",
+          "type": "text",
+          "label": "keychains.name.label",
+          "placeholder": "keychains.name.placeholder",
+          "optional": true
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "keychains.url.label",
+          "placeholder": "keychains.url.placeholder"
+        },
+        {
+          "key": "color",
+          "type": "select",
+          "label": "keychains.color.label",
+          "optional": true,
           "options": [
-            { "value": "", "label": "Auto" },
-            { "value": "teal", "label": "Teal" },
-            { "value": "cyan", "label": "Cyan" },
-            { "value": "orange", "label": "Orange" },
-            { "value": "pink", "label": "Pink" },
-            { "value": "purple", "label": "Purple" },
-            { "value": "green", "label": "Green" },
-            { "value": "yellow", "label": "Yellow" },
-            { "value": "blue", "label": "Blue" }
+            {
+              "value": "",
+              "label": "keychains.color.opt.default"
+            },
+            {
+              "value": "teal",
+              "label": "keychains.color.opt.teal"
+            },
+            {
+              "value": "cyan",
+              "label": "keychains.color.opt.cyan"
+            },
+            {
+              "value": "orange",
+              "label": "keychains.color.opt.orange"
+            },
+            {
+              "value": "pink",
+              "label": "keychains.color.opt.pink"
+            },
+            {
+              "value": "purple",
+              "label": "keychains.color.opt.purple"
+            },
+            {
+              "value": "green",
+              "label": "keychains.color.opt.green"
+            },
+            {
+              "value": "yellow",
+              "label": "keychains.color.opt.yellow"
+            },
+            {
+              "value": "blue",
+              "label": "keychains.color.opt.blue"
+            }
           ]
         }
       ]
@@ -34,11 +82,17 @@
       "key": "openIn",
       "type": "select",
       "variant": "pills",
-      "label": "Open in",
+      "label": "openIn.label",
       "default": "same",
       "options": [
-        { "value": "same", "label": "Same tab" },
-        { "value": "new", "label": "New tab" }
+        {
+          "value": "same",
+          "label": "openIn.opt.same"
+        },
+        {
+          "value": "new",
+          "label": "openIn.opt.new"
+        }
       ]
     }
   ]

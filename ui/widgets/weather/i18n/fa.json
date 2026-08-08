@@ -1,0 +1,13 @@
+{
+  "widget.label": "آب‌وهوا",
+  "cityQuery.label": "جست‌وجو",
+  "cityQuery.placeholder": "مثلاً تهران",
+  "city.label": "موقعیت",
+  "city.hint": "نام شهری را بالا بنویسید، سپس دریافت را بزنید و مورد درست را انتخاب کنید.",
+  "units.label": "یکاها",
+  "units.opt.c": "°C",
+  "units.opt.f": "°F",
+  "feelsLike.label": "نمایش دمای محسوس",
+  "href.label": "نشانی پیوند",
+  "href.placeholder": "https://…"
+}

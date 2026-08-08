@@ -1,36 +1,129 @@
 {
   "name": "books",
-  "label": "Books",
-  "sizes": ["small"],
+  "label": "widget.label",
+  "sizes": [
+    "small"
+  ],
   "card": "dark",
   "fields": [
-    { "key": "provider", "type": "select", "variant": "pills", "label": "Service",
+    {
+      "key": "provider",
+      "type": "select",
+      "variant": "pills",
+      "label": "provider.label",
       "options": [
-        { "value": "audiobookshelf", "label": "Audiobookshelf" },
-        { "value": "komga", "label": "Komga" },
-        { "value": "kavita", "label": "Kavita" }
-      ] },
-
-    { "key": "absUrl", "type": "text", "label": "Audiobookshelf URL", "placeholder": "http://host:13378", "showIf": { "field": "provider", "equals": "audiobookshelf" } },
-    { "key": "absKey", "type": "secret", "label": "API key", "hint": "Settings \u2192 API Keys (v2.26+), or your account token.", "showIf": { "field": "provider", "equals": "audiobookshelf" } },
-
-    { "key": "komgaUrl", "type": "text", "label": "Komga URL", "placeholder": "http://host:25600", "showIf": { "field": "provider", "equals": "komga" } },
-    { "key": "komgaKey", "type": "secret", "label": "API key", "hint": "Account Settings \u2192 API Keys.", "showIf": { "field": "provider", "equals": "komga" } },
-
-    { "key": "kavitaUrl", "type": "text", "label": "Kavita URL", "placeholder": "http://host:5000", "showIf": { "field": "provider", "equals": "kavita" } },
-    { "key": "kavitaKey", "type": "secret", "label": "API key", "hint": "User Settings \u2192 3rd Party Clients.", "showIf": { "field": "provider", "equals": "kavita" } },
-
-    { "key": "source", "type": "select", "variant": "pills", "label": "Show",
+        {
+          "value": "audiobookshelf",
+          "label": "provider.opt.audiobookshelf"
+        },
+        {
+          "value": "komga",
+          "label": "provider.opt.komga"
+        },
+        {
+          "value": "kavita",
+          "label": "provider.opt.kavita"
+        }
+      ]
+    },
+    {
+      "key": "absUrl",
+      "type": "text",
+      "label": "absUrl.label",
+      "placeholder": "absUrl.placeholder",
+      "showIf": {
+        "field": "provider",
+        "equals": "audiobookshelf"
+      }
+    },
+    {
+      "key": "absKey",
+      "type": "secret",
+      "label": "absKey.label",
+      "hint": "absKey.hint",
+      "showIf": {
+        "field": "provider",
+        "equals": "audiobookshelf"
+      }
+    },
+    {
+      "key": "komgaUrl",
+      "type": "text",
+      "label": "komgaUrl.label",
+      "placeholder": "komgaUrl.placeholder",
+      "showIf": {
+        "field": "provider",
+        "equals": "komga"
+      }
+    },
+    {
+      "key": "komgaKey",
+      "type": "secret",
+      "label": "komgaKey.label",
+      "hint": "komgaKey.hint",
+      "showIf": {
+        "field": "provider",
+        "equals": "komga"
+      }
+    },
+    {
+      "key": "kavitaUrl",
+      "type": "text",
+      "label": "kavitaUrl.label",
+      "placeholder": "kavitaUrl.placeholder",
+      "showIf": {
+        "field": "provider",
+        "equals": "kavita"
+      }
+    },
+    {
+      "key": "kavitaKey",
+      "type": "secret",
+      "label": "kavitaKey.label",
+      "hint": "kavitaKey.hint",
+      "showIf": {
+        "field": "provider",
+        "equals": "kavita"
+      }
+    },
+    {
+      "key": "source",
+      "type": "select",
+      "variant": "pills",
+      "label": "source.label",
       "options": [
-        { "value": "recently", "label": "Recently Added" },
-        { "value": "unread", "label": "Unread / On-deck" },
-        { "value": "list", "label": "Custom List" }
-      ] },
-
-    { "key": "listId", "type": "select", "label": "List", "optional": true, "optionsFrom": "lists",
-      "hint": "Enter the URL + key above, then click Fetch to load your collections / reading lists.",
-      "showIf": { "field": "source", "equals": "list" } },
-
-    { "key": "href", "type": "text", "label": "Click URL (optional)", "placeholder": "https://\u2026", "optional": true }
+        {
+          "value": "recently",
+          "label": "source.opt.recently"
+        },
+        {
+          "value": "unread",
+          "label": "source.opt.unread"
+        },
+        {
+          "value": "list",
+          "label": "source.opt.list"
+        }
+      ]
+    },
+    {
+      "key": "listId",
+      "type": "select",
+      "label": "listId.label",
+      "optional": true,
+      "optionsFrom": "lists",
+      "hint": "listId.hint",
+      "showIf": {
+        "field": "source",
+        "equals": "list"
+      }
+    },
+    {
+      "key": "href",
+      "type": "text",
+      "label": "href.label",
+      "placeholder": "href.placeholder",
+      "optional": true
+    }
   ]
 }

@@ -1,87 +1,294 @@
 {
   "name": "stats",
-  "label": "Stats",
-  "sizes": ["small", "medium"],
+  "label": "widget.label",
+  "sizes": [
+    "small",
+    "medium"
+  ],
   "viewField": "widgetSubType",
   "defaultView": "system-summary",
   "views": {
-    "system-summary": { "label": "System Summary", "src": "system-stats.html", "card": "dark" },
-    "disk-health":    { "label": "Disk Health",    "src": "disk-health.html" }
+    "system-summary": {
+      "label": "view.system-summary.label",
+      "src": "system-stats.html",
+      "card": "dark"
+    },
+    "disk-health": {
+      "label": "view.disk-health.label",
+      "src": "disk-health.html"
+    }
   },
   "fields": [
-    { "key": "widgetSubType", "type": "select", "variant": "pills", "label": "View", "default": "system-summary",
+    {
+      "key": "widgetSubType",
+      "type": "select",
+      "variant": "pills",
+      "label": "widgetSubType.label",
+      "default": "system-summary",
       "options": [
-        { "value": "system-summary", "label": "System Summary" },
-        { "value": "disk-health",    "label": "Disk Health" }
-      ] },
-
-    { "key": "slots", "type": "group", "label": "Slot", "min": 3, "max": 3,
-      "showIf": { "field": "widgetSubType", "equals": "system-summary" },
+        {
+          "value": "system-summary",
+          "label": "widgetSubType.opt.system-summary"
+        },
+        {
+          "value": "disk-health",
+          "label": "widgetSubType.opt.disk-health"
+        }
+      ]
+    },
+    {
+      "key": "slots",
+      "type": "group",
+      "label": "slots.label",
+      "min": 3,
+      "max": 3,
+      "showIf": {
+        "field": "widgetSubType",
+        "equals": "system-summary"
+      },
       "fields": [
-        { "key": "type", "type": "select", "label": "Resource", "default": "cpu",
+        {
+          "key": "type",
+          "type": "select",
+          "label": "slots.type.label",
+          "default": "cpu",
           "options": [
-            { "value": "cpu",    "label": "CPU" },
-            { "value": "ram",    "label": "RAM" },
-            { "value": "temp",   "label": "Temperature" },
-            { "value": "disk",   "label": "Disk Mount" },
-            { "value": "iowait", "label": "IO Wait" },
-            { "value": "procs",  "label": "Processes" }
-          ] },
-        { "key": "primary", "type": "text", "label": "First Mount Path", "default": "/", "placeholder": "/",
-          "showIf": { "field": "type", "equals": "disk" } },
-        { "key": "secondary", "type": "text", "label": "Second Mount Path", "placeholder": "/mnt/data", "optional": true,
-          "showIf": { "field": "type", "equals": "disk" } },
-        { "key": "thermalZone", "type": "number", "label": "Thermal Zone", "default": 0,
-          "showIf": { "field": "type", "equals": "temp" } },
-        { "key": "color", "type": "color", "label": "Color", "default": "#0289ff" }
-      ] },
-
-    { "key": "network", "type": "object", "label": "Network",
-      "showIf": { "field": "widgetSubType", "equals": "system-summary" },
+            {
+              "value": "cpu",
+              "label": "slots.type.opt.cpu"
+            },
+            {
+              "value": "ram",
+              "label": "slots.type.opt.ram"
+            },
+            {
+              "value": "temp",
+              "label": "slots.type.opt.temp"
+            },
+            {
+              "value": "disk",
+              "label": "slots.type.opt.disk"
+            },
+            {
+              "value": "iowait",
+              "label": "slots.type.opt.iowait"
+            },
+            {
+              "value": "procs",
+              "label": "slots.type.opt.procs"
+            }
+          ]
+        },
+        {
+          "key": "primary",
+          "type": "text",
+          "label": "slots.primary.label",
+          "default": "/",
+          "placeholder": "slots.primary.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "disk"
+          }
+        },
+        {
+          "key": "secondary",
+          "type": "text",
+          "label": "slots.secondary.label",
+          "placeholder": "slots.secondary.placeholder",
+          "optional": true,
+          "showIf": {
+            "field": "type",
+            "equals": "disk"
+          }
+        },
+        {
+          "key": "thermalZone",
+          "type": "number",
+          "label": "slots.thermalZone.label",
+          "default": 0,
+          "showIf": {
+            "field": "type",
+            "equals": "temp"
+          }
+        },
+        {
+          "key": "color",
+          "type": "color",
+          "label": "slots.color.label",
+          "default": "#0289ff"
+        }
+      ]
+    },
+    {
+      "key": "network",
+      "type": "object",
+      "label": "network.label",
+      "showIf": {
+        "field": "widgetSubType",
+        "equals": "system-summary"
+      },
       "fields": [
-        { "key": "enabled", "type": "toggle", "label": "Show Network Row", "default": false },
-        { "key": "mode", "type": "select", "variant": "pills", "label": "Mode", "default": "speed",
-          "showIf": { "field": "enabled", "equals": true },
+        {
+          "key": "enabled",
+          "type": "toggle",
+          "label": "network.enabled.label",
+          "default": false
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.mode.label",
+          "default": "speed",
+          "showIf": {
+            "field": "enabled",
+            "equals": true
+          },
           "options": [
-            { "value": "speed",      "label": "Speed" },
-            { "value": "throughput", "label": "Throughput" },
-            { "value": "uptime",     "label": "Uptime" }
-          ] },
-        { "key": "provider", "type": "select", "variant": "pills", "label": "Provider", "default": "myspeed",
-          "showIf": { "field": "mode", "equals": "speed" },
+            {
+              "value": "speed",
+              "label": "network.mode.opt.speed"
+            },
+            {
+              "value": "throughput",
+              "label": "network.mode.opt.throughput"
+            },
+            {
+              "value": "uptime",
+              "label": "network.mode.opt.uptime"
+            }
+          ]
+        },
+        {
+          "key": "provider",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.provider.label",
+          "default": "myspeed",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          },
           "options": [
-            { "value": "myspeed",           "label": "MySpeed" },
-            { "value": "speedtest-tracker", "label": "Speedtest Tracker" }
-          ] },
-        { "key": "url", "type": "text", "label": "Service URL", "placeholder": "myspeed:5216",
-          "showIf": { "field": "mode", "equals": "speed" } },
-        { "key": "myspeedPass", "type": "secret", "label": "MySpeed Password", "optional": true,
-          "showIf": { "field": "provider", "equals": "myspeed" } }
-      ] },
-
-    { "key": "diskProvider", "type": "select", "label": "Source", "default": "scrutiny",
-      "showIf": { "field": "widgetSubType", "equals": "disk-health" },
+            {
+              "value": "myspeed",
+              "label": "network.provider.opt.myspeed"
+            },
+            {
+              "value": "speedtest-tracker",
+              "label": "network.provider.opt.speedtest-tracker"
+            }
+          ]
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "network.url.label",
+          "placeholder": "network.url.placeholder",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          }
+        },
+        {
+          "key": "myspeedPass",
+          "type": "secret",
+          "label": "network.myspeedPass.label",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "myspeed"
+          }
+        }
+      ]
+    },
+    {
+      "key": "diskProvider",
+      "type": "select",
+      "label": "diskProvider.label",
+      "default": "scrutiny",
+      "showIf": {
+        "field": "widgetSubType",
+        "equals": "disk-health"
+      },
       "options": [
-        { "value": "scrutiny", "label": "Scrutiny" },
-        { "value": "truenas",  "label": "TrueNAS" }
-      ] },
-
-    { "key": "scrutinyUrl", "type": "text", "label": "Scrutiny URL", "placeholder": "scrutiny:8080",
-      "showIf": { "field": "diskProvider", "equals": "scrutiny" } },
-    { "key": "scrutinyHref", "type": "text", "label": "Click URL", "placeholder": "http://your-server:8080", "optional": true,
-      "showIf": { "field": "diskProvider", "equals": "scrutiny" } },
-
-    { "key": "truenasUrl", "type": "text", "label": "TrueNAS URL", "placeholder": "truenas.local",
-      "showIf": { "field": "diskProvider", "equals": "truenas" } },
-    { "key": "truenasKey", "type": "secret", "label": "TrueNAS API Key",
-      "showIf": { "field": "diskProvider", "equals": "truenas" } },
-    { "key": "truenasHref", "type": "text", "label": "Click URL", "placeholder": "http://truenas.local", "optional": true,
-      "showIf": { "field": "diskProvider", "equals": "truenas" } },
-
-    { "key": "bays", "type": "picklist", "label": "Bays", "rowLabel": "Bay",
-      "optionsFrom": "devices", "fetchLabel": "Fetch Drives",
-      "countBySize": { "small": 4, "medium": 10 },
-      "showIf": { "field": "widgetSubType", "equals": "disk-health" },
-      "hint": "Enter the URL above, then load the list and assign each bay." }
+        {
+          "value": "scrutiny",
+          "label": "diskProvider.opt.scrutiny"
+        },
+        {
+          "value": "truenas",
+          "label": "diskProvider.opt.truenas"
+        }
+      ]
+    },
+    {
+      "key": "scrutinyUrl",
+      "type": "text",
+      "label": "scrutinyUrl.label",
+      "placeholder": "scrutinyUrl.placeholder",
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "scrutiny"
+      }
+    },
+    {
+      "key": "scrutinyHref",
+      "type": "text",
+      "label": "scrutinyHref.label",
+      "placeholder": "scrutinyHref.placeholder",
+      "optional": true,
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "scrutiny"
+      }
+    },
+    {
+      "key": "truenasUrl",
+      "type": "text",
+      "label": "truenasUrl.label",
+      "placeholder": "truenasUrl.placeholder",
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "truenas"
+      }
+    },
+    {
+      "key": "truenasKey",
+      "type": "secret",
+      "label": "truenasKey.label",
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "truenas"
+      }
+    },
+    {
+      "key": "truenasHref",
+      "type": "text",
+      "label": "truenasHref.label",
+      "placeholder": "truenasHref.placeholder",
+      "optional": true,
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "truenas"
+      }
+    },
+    {
+      "key": "bays",
+      "type": "picklist",
+      "label": "bays.label",
+      "rowLabel": "bays.rowLabel",
+      "optionsFrom": "devices",
+      "fetchLabel": "bays.fetchLabel",
+      "countBySize": {
+        "small": 4,
+        "medium": 10
+      },
+      "showIf": {
+        "field": "widgetSubType",
+        "equals": "disk-health"
+      },
+      "hint": "bays.hint"
+    }
   ]
 }

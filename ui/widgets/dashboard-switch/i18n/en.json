@@ -1,0 +1,22 @@
+{
+  "widget.label": "Dashboard Switch",
+  "keychains.label": "Keychain",
+  "keychains.hint": "Leave Fob colour on Auto to derive it from the dashboard URL.",
+  "keychains.name.label": "Name",
+  "keychains.name.placeholder": "e.g. Living Room",
+  "keychains.url.label": "Dashboard URL",
+  "keychains.url.placeholder": "http://host:port",
+  "keychains.color.label": "Fob colour",
+  "keychains.color.opt.default": "Auto",
+  "keychains.color.opt.teal": "Teal",
+  "keychains.color.opt.cyan": "Cyan",
+  "keychains.color.opt.orange": "Orange",
+  "keychains.color.opt.pink": "Pink",
+  "keychains.color.opt.purple": "Purple",
+  "keychains.color.opt.green": "Green",
+  "keychains.color.opt.yellow": "Yellow",
+  "keychains.color.opt.blue": "Blue",
+  "openIn.label": "Open in",
+  "openIn.opt.same": "Same tab",
+  "openIn.opt.new": "New tab"
+}

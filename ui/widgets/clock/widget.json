@@ -1,27 +1,67 @@
 {
   "name": "clock",
-  "label": "Clock",
-  "sizes": ["small"],
+  "label": "widget.label",
+  "sizes": [
+    "small"
+  ],
   "viewField": "clockStyle",
   "defaultView": "digital",
   "views": {
-    "digital": { "label": "Digital", "src": "digital.html" },
-    "analog":  { "label": "Analog",  "src": "analog.html" }
+    "digital": {
+      "label": "view.digital.label",
+      "src": "digital.html"
+    },
+    "analog": {
+      "label": "view.analog.label",
+      "src": "analog.html"
+    }
   },
   "fields": [
-    { "key": "clockStyle", "type": "select", "variant": "pills", "label": "Style",
+    {
+      "key": "clockStyle",
+      "type": "select",
+      "variant": "pills",
+      "label": "clockStyle.label",
       "options": [
-        { "value": "digital", "label": "Digital" },
-        { "value": "analog",  "label": "Analog" }
-      ] },
-    { "key": "clockMode", "type": "select", "variant": "pills", "label": "Theme",
+        {
+          "value": "digital",
+          "label": "clockStyle.opt.digital"
+        },
+        {
+          "value": "analog",
+          "label": "clockStyle.opt.analog"
+        }
+      ]
+    },
+    {
+      "key": "clockMode",
+      "type": "select",
+      "variant": "pills",
+      "label": "clockMode.label",
       "options": [
-        { "value": "dark",  "label": "Dark" },
-        { "value": "light", "label": "Light" }
-      ] },
-    { "key": "clockTimezone", "type": "text", "label": "Timezone", "optional": true,
-      "placeholder": "America/Toronto",
-      "hint": "IANA timezone name. Leave blank for the browser's local time." },
-    { "key": "clockShowDate", "type": "toggle", "label": "Show date", "default": true }
+        {
+          "value": "dark",
+          "label": "clockMode.opt.dark"
+        },
+        {
+          "value": "light",
+          "label": "clockMode.opt.light"
+        }
+      ]
+    },
+    {
+      "key": "clockTimezone",
+      "type": "text",
+      "label": "clockTimezone.label",
+      "optional": true,
+      "placeholder": "clockTimezone.placeholder",
+      "hint": "clockTimezone.hint"
+    },
+    {
+      "key": "clockShowDate",
+      "type": "toggle",
+      "label": "clockShowDate.label",
+      "default": true
+    }
   ]
 }

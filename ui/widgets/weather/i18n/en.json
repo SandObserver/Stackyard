@@ -1,0 +1,13 @@
+{
+  "widget.label": "Weather",
+  "cityQuery.label": "Search",
+  "cityQuery.placeholder": "e.g. Ottawa",
+  "city.label": "Location",
+  "city.hint": "Type a city above, then Fetch and pick the matching place.",
+  "units.label": "Units",
+  "units.opt.c": "°C",
+  "units.opt.f": "°F",
+  "feelsLike.label": "Show feels like",
+  "href.label": "Link URL",
+  "href.placeholder": "https://…"
+}

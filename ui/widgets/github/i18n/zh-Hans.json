@@ -1,0 +1,20 @@
+{
+  "widget.label": "GitHub",
+  "view.prs.label": "拉取请求",
+  "view.contributions.label": "贡献",
+  "githubView.label": "视图",
+  "githubView.opt.prs": "拉取请求",
+  "githubView.opt.contributions": "贡献",
+  "githubUser.label": "GitHub 用户名",
+  "githubUser.placeholder": "octocat",
+  "githubToken.label": "个人访问令牌",
+  "githubToken.hint": "具有 repo 和 read:user 权限的经典 PAT（或具有同等读取权限的细粒度 PAT）。仅此小组件使用。",
+  "githubHref.label": "点击跳转地址",
+  "githubHref.hint": "点击此小组件后打开的地址。留空则不跳转。",
+  "githubPrFilters.label": "拉取请求筛选",
+  "githubPrFilters.hint": "显示哪些未关闭的拉取请求。多个筛选条件会合并。",
+  "githubPrFilters.opt.created": "我创建的",
+  "githubPrFilters.opt.assigned": "指派给我的",
+  "githubPrFilters.opt.mentioned": "提到我的",
+  "githubPrFilters.opt.review-requested": "请求我评审的"
+}

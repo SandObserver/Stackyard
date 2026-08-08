@@ -1,0 +1,15 @@
+{
+  "widget.label": "Clock",
+  "view.digital.label": "Digital",
+  "view.analog.label": "Analog",
+  "clockStyle.label": "Style",
+  "clockStyle.opt.digital": "Digital",
+  "clockStyle.opt.analog": "Analog",
+  "clockMode.label": "Theme",
+  "clockMode.opt.dark": "Dark",
+  "clockMode.opt.light": "Light",
+  "clockTimezone.label": "Timezone",
+  "clockTimezone.placeholder": "America/Toronto",
+  "clockTimezone.hint": "IANA timezone name. Leave blank for the browser's local time.",
+  "clockShowDate.label": "Show date"
+}

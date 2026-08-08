@@ -1,0 +1,13 @@
+{
+  "widget.label": "Wetter",
+  "cityQuery.label": "Suche",
+  "cityQuery.placeholder": "z. B. Ottawa",
+  "city.label": "Ort",
+  "city.hint": "Oben eine Stadt eingeben, dann Abrufen und den passenden Ort auswählen.",
+  "units.label": "Einheiten",
+  "units.opt.c": "°C",
+  "units.opt.f": "°F",
+  "feelsLike.label": "Gefühlte Temperatur anzeigen",
+  "href.label": "Link-URL",
+  "href.placeholder": "https://…"
+}

@@ -1,0 +1,20 @@
+{
+  "widget.label": "GitHub",
+  "view.prs.label": "Pull requests",
+  "view.contributions.label": "Contributions",
+  "githubView.label": "Vue",
+  "githubView.opt.prs": "Pull requests",
+  "githubView.opt.contributions": "Contributions",
+  "githubUser.label": "Nom d’utilisateur GitHub",
+  "githubUser.placeholder": "octocat",
+  "githubToken.label": "Jeton d’accès personnel",
+  "githubToken.hint": "PAT classique avec les portées repo et read:user (ou un PAT granulaire avec l’accès en lecture équivalent). Utilisé uniquement par ce widget.",
+  "githubHref.label": "URL de clic",
+  "githubHref.hint": "Où mène un clic sur le widget. Laisser vide pour désactiver.",
+  "githubPrFilters.label": "Filtres de pull requests",
+  "githubPrFilters.hint": "Quelles pull requests ouvertes afficher. Plusieurs filtres se combinent.",
+  "githubPrFilters.opt.created": "Créées",
+  "githubPrFilters.opt.assigned": "Assignées",
+  "githubPrFilters.opt.mentioned": "Mentionné",
+  "githubPrFilters.opt.review-requested": "Revue demandée"
+}

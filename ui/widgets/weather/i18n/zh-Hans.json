@@ -1,0 +1,13 @@
+{
+  "widget.label": "天气",
+  "cityQuery.label": "搜索",
+  "cityQuery.placeholder": "例如 Ottawa",
+  "city.label": "位置",
+  "city.hint": "在上方输入城市名，点击获取后选择匹配的地点。",
+  "units.label": "单位",
+  "units.opt.c": "°C",
+  "units.opt.f": "°F",
+  "feelsLike.label": "显示体感温度",
+  "href.label": "链接地址",
+  "href.placeholder": "https://…"
+}

@@ -1,0 +1,20 @@
+{
+  "widget.label": "GitHub",
+  "view.prs.label": "درخواست‌های ادغام",
+  "view.contributions.label": "مشارکت‌ها",
+  "githubView.label": "نما",
+  "githubView.opt.prs": "درخواست‌های ادغام",
+  "githubView.opt.contributions": "مشارکت‌ها",
+  "githubUser.label": "نام کاربری GitHub",
+  "githubUser.placeholder": "octocat",
+  "githubToken.label": "توکن دسترسی شخصی",
+  "githubToken.hint": "توکن کلاسیک با دسترسی repo و read:user (یا توکن دقیق با همان سطح خواندن). فقط همین ابزارک از آن استفاده می‌کند.",
+  "githubHref.label": "نشانی کلیک",
+  "githubHref.hint": "جایی که با کلیک روی ابزارک باز می‌شود. برای غیرفعال کردن خالی بگذارید.",
+  "githubPrFilters.label": "پالایه‌های درخواست ادغام",
+  "githubPrFilters.hint": "کدام درخواست‌های باز نمایش داده شوند. چند پالایه با هم ترکیب می‌شوند.",
+  "githubPrFilters.opt.created": "ساخته‌شده",
+  "githubPrFilters.opt.assigned": "واگذارشده",
+  "githubPrFilters.opt.mentioned": "نام‌برده‌شده",
+  "githubPrFilters.opt.review-requested": "درخواست بازبینی"
+}

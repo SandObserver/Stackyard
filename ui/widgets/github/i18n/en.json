@@ -1,0 +1,20 @@
+{
+  "widget.label": "GitHub",
+  "view.prs.label": "Pull Requests",
+  "view.contributions.label": "Contributions",
+  "githubView.label": "View",
+  "githubView.opt.prs": "Pull Requests",
+  "githubView.opt.contributions": "Contributions",
+  "githubUser.label": "GitHub Username",
+  "githubUser.placeholder": "octocat",
+  "githubToken.label": "Personal Access Token",
+  "githubToken.hint": "Classic PAT with repo + read:user scope (or a fine-grained PAT with the equivalent read access). Used only by this widget.",
+  "githubHref.label": "Click URL",
+  "githubHref.hint": "Where clicking the widget opens. Leave blank to disable.",
+  "githubPrFilters.label": "Pull request filters",
+  "githubPrFilters.hint": "Which open PRs to show. Multiple filters are combined.",
+  "githubPrFilters.opt.created": "Created",
+  "githubPrFilters.opt.assigned": "Assigned",
+  "githubPrFilters.opt.mentioned": "Mentioned",
+  "githubPrFilters.opt.review-requested": "Review requested"
+}

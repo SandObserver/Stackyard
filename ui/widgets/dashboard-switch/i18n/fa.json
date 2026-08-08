@@ -1,0 +1,22 @@
+{
+  "widget.label": "تعویض داشبورد",
+  "keychains.label": "جاکلیدی",
+  "keychains.hint": "رنگ آویز را روی خودکار بگذارید تا از نشانی داشبورد گرفته شود.",
+  "keychains.name.label": "نام",
+  "keychains.name.placeholder": "مثلاً اتاق نشیمن",
+  "keychains.url.label": "نشانی داشبورد",
+  "keychains.url.placeholder": "http://host:port",
+  "keychains.color.label": "رنگ آویز",
+  "keychains.color.opt.default": "خودکار",
+  "keychains.color.opt.teal": "فیروزه‌ای",
+  "keychains.color.opt.cyan": "آبی روشن",
+  "keychains.color.opt.orange": "نارنجی",
+  "keychains.color.opt.pink": "صورتی",
+  "keychains.color.opt.purple": "بنفش",
+  "keychains.color.opt.green": "سبز",
+  "keychains.color.opt.yellow": "زرد",
+  "keychains.color.opt.blue": "آبی",
+  "openIn.label": "باز شود در",
+  "openIn.opt.same": "همین زبانه",
+  "openIn.opt.new": "زبانهٔ جدید"
+}
