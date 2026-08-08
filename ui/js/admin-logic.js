@@ -177,3 +177,33 @@ export function reorderItems(items, item, dir, { folderId = null, childIdx = nul
   [items[a], items[b]] = [items[b], items[a]];
   return true;
 }
+
+/* The reasons a widget was refused, one line per reason, ready to be written as
+   text. Kept here rather than in the form so the two places that show refusals
+   cannot word them differently, and so the shape coming off the API can be
+   checked without a DOM.
+
+   The shape is request-adjacent: it is built by the server from files on disk,
+   but it reaches this code as JSON, so an entry that is not a named widget with
+   at least one string reason is dropped rather than rendered as "undefined".
+
+   `withName` distinguishes the two callers: the editor is already showing one
+   widget, the picker is listing several. */
+export function rejectionLines(rejections, { withName = true } = {}) {
+  if (!Array.isArray(rejections)) return [];
+  const out = [];
+  for (const r of rejections) {
+    if (!r || typeof r.name !== 'string' || !r.name || !Array.isArray(r.errors)) continue;
+    for (const e of r.errors) {
+      if (typeof e !== 'string' || !e.trim()) continue;
+      out.push(withName ? `${r.name}: ${e}` : e);
+    }
+  }
+  return out;
+}
+
+/* Which message the picker shows above those lines. Two keys rather than one
+   with a count, because a language pluralises the sentence, not the number. */
+export function refusedNoticeKey(count) {
+  return count === 1 ? 'widgetCfg.refused' : 'widgetCfg.refusedPlural';
+}

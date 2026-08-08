@@ -198,6 +198,8 @@
   },
   "widgetCfg": {
     "unavailable": "Einstellungen nicht verfügbar",
-    "unavailableTip": "Die Definition dieses Widgets ({type}) konnte nicht geladen werden, daher können seine Einstellungen nicht angezeigt oder bearbeitet werden. Sie bleiben auf dem Server erhalten und werden durch Speichern nicht verändert."
+    "unavailableTip": "Die Definition dieses Widgets ({type}) konnte nicht geladen werden, daher können seine Einstellungen nicht angezeigt oder bearbeitet werden. Sie bleiben auf dem Server erhalten und werden durch Speichern nicht verändert.",
+    "refused": "{n} Widget konnte nicht geladen werden und wird unten nicht aufgeführt.",
+    "refusedPlural": "{n} Widgets konnten nicht geladen werden und werden unten nicht aufgeführt."
   }
 }
