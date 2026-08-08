@@ -80,11 +80,10 @@ test('adding a widget stores its type', async ({ page, request }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();
 
-  /* The editor's type tiles switch what the form renders. */
-  await page
-    .getByRole('button', { name: /^widget$/i })
-    .first()
-    .click();
+  /* The type tiles switch what the form renders. Selected by data-ctype: the
+     accessible name is "Add Widget" and is not translated, so matching on it
+     would break the moment it is. */
+  await page.locator('.tile-opt[data-ctype="widget"]').click();
   const typeSelect = page.locator('#f-wtype');
   await typeSelect.waitFor({ state: 'visible' });
   await typeSelect.selectOption('clock');
