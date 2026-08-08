@@ -17,7 +17,9 @@
     "back": "Zurück",
     "cancel": "Abbrechen",
     "delete": "Löschen",
-    "language": "Sprache"
+    "language": "Sprache",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen"
   },
   "general": {
     "title": "Titel",
@@ -40,7 +42,8 @@
     "passwordTip": "Leer lassen, um das bestehende Passwort beizubehalten. Mindestens 8 Zeichen. Für stärkeren Schutz solltest du das Dashboard hinter einem <strong>Authentication Proxy</strong> platzieren. Dieses integrierte Passwort ist nur eine leichte Absicherung, keine vollständige Authentifizierungsebene.",
     "backup": "Sicherung",
     "importExport": "Import / Export",
-    "signOut": "Abmelden"
+    "signOut": "Abmelden",
+    "confirmPassword": "Passwort bestätigen"
   },
   "appearance": {
     "appTitle": "App-Titel",
@@ -150,7 +153,8 @@
     "importNoChange": "Nichts zu importieren — die Datei stimmt mit deiner aktuellen Konfiguration überein.",
     "pwWeak": "Passwort zu schwach: {label}",
     "sessionsRevoked": "Alle Geräte wurden abgemeldet.",
-    "authNeedsPassword": "Legen Sie ein Passwort fest, bevor Sie die Authentifizierung aktivieren."
+    "authNeedsPassword": "Legen Sie ein Passwort fest, bevor Sie die Authentifizierung aktivieren.",
+    "pwMismatch": "Passwörter stimmen nicht überein."
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",
@@ -181,7 +185,9 @@
     "newPassword": "Neues Passwort",
     "skip": "Überspringen",
     "set": "Festlegen",
-    "failed": "Passwort konnte nicht festgelegt werden."
+    "failed": "Passwort konnte nicht festgelegt werden.",
+    "confirmPassword": "Passwort bestätigen",
+    "mismatch": "Passwörter stimmen nicht überein."
   },
   "pwStrength": {
     "tooShort": "Zu kurz, mindestens 8 Zeichen",

@@ -113,6 +113,14 @@ export function authEnableBlocked({ enabled, passwordSet, newPassword }) {
   return !!enabled && !passwordSet && !(newPassword || '').length;
 }
 
+/* Setting a password rotates the session secret and signs every device out, so
+   a mistyped one locks the install with no way back in. An empty new password
+   means "keep the current one", which needs no confirmation. */
+export function passwordMismatch(newPassword, confirmation) {
+  const pw = newPassword || '';
+  return pw.length > 0 && pw !== (confirmation || '');
+}
+
 /* 'registry' renders the manifest's fields, 'custom' the URL editor, and
    'unavailable' a registry widget whose manifest is not loaded. The last must not
    fall through to the custom editor: the server withholds that widget's config,

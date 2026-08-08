@@ -3,7 +3,7 @@ import { toast, ag, ap } from '/js/admin-shared.js?v=182410cc';
 import { wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
 import { t } from '/js/i18n.js?v=133a7aac';
-import { authEnableBlocked } from '/js/admin-logic.js?v=056a11e9';
+import { authEnableBlocked, passwordMismatch } from '/js/admin-logic.js?v=056a11e9';
 import { el, inp, q, qa } from '/js/utils.js?v=17424946';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password behind
@@ -173,8 +173,10 @@ export function loadSettings(c){
          toggle has to match what the server does. */
       secEnEl.checked=!!(d.enabled);
       const pwRow=el('ie-pw');
+      const pwRow2=el('ie-pw2');
       const pwHint=el('pw-hint-static');
       if(pwRow)pwRow.style.display=d.enabled?'':'none';
+      if(pwRow2)pwRow2.style.display=d.enabled?'':'none';
       if(pwHint)pwHint.style.display=d.enabled?'':'none';
     }
     const pwValEl=el('ie-pw-v');
@@ -253,10 +255,15 @@ async function saveServer(){
     if(pw){
       const {ok,labelKey}=pwStrength(pw);
       if(!ok){toast(t('toast.pwWeak',{label:t(labelKey)}),'err');return;}
+      /* Changing the password rotates the session secret and signs every device
+         out, so a typo here locks the install out. */
+      if(passwordMismatch(pw,inp('sec-pw2')?.value||'')){toast(t('toast.pwMismatch'),'err');return;}
       await ap('/api/auth/set-password',{password:pw});
       _passwordSet=true;
       const pwEl=inp('sec-pw');
       if(pwEl){pwEl.value='';pwEl.placeholder='●●●●●●●●●● (configured)';}
+      const pwEl2=inp('sec-pw2');
+      if(pwEl2){pwEl2.value='';}
     }
     await ap('/api/auth/toggle',{enabled});
     toast(t('toast.saved'));
