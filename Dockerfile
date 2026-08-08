@@ -4,17 +4,10 @@ LABEL org.opencontainers.image.title="Stackyard" \
       org.opencontainers.image.description="Self-hosted homelab dashboard" \
       org.opencontainers.image.source="https://github.com/SandObserver/stackyard"
 
-# Remove the package managers the base image ships with. Nothing here uses
-# them: the API has no dependencies to install, and the container runs nginx,
-# node and python3 only. They are removed rather than tolerated because their
-# own bundled dependencies are the whole of this image's vulnerability surface
-# (tar, brace-expansion, ip-address and undici accounted for every HIGH and
-# CRITICAL the release scan reported), and because a runtime container with a
-# package manager in it hands one to anyone who gets inside.
-#
-# Globbed rather than pinned: the yarn directory carries its version, and a base
-# image bump would silently stop matching an exact path. Verified immediately
-# after, so a rename upstream fails the build instead of quietly shipping them.
+# No package manager in the runtime image: nothing here uses one, and their
+# bundled dependencies were this image's only HIGH and CRITICAL findings. Paths
+# are globbed because the yarn directory carries its version; the check below
+# fails the build if a base image rename makes a glob stop matching.
 RUN rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
            /opt/yarn-* && \

@@ -24,12 +24,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # Runs every check the Tests workflow runs, then stamps the cache-busting
-      # versions, so a tag cannot publish a tree that would fail CI. A tag used
-      # to go straight from checkout to push: no tests, no lint, no typecheck,
-      # and a mutating stamp pass whose output nothing verified.
-      #
-      # Failing here leaves the tag in place with nothing published. Fix main,
+      # Every check the Tests workflow runs, plus the stamp pass, before anything
+      # publishes. On failure the tag stays with nothing published: fix main,
       # delete the tag, tag again.
       - name: Run project checks
         uses: ./.github/actions/checks
@@ -115,14 +111,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      # Everything below addresses the image by digest, not by tag. A tag can be
-      # moved; the digest is the thing that was built, scanned and signed.
-
-      # Scanning happens after the push because the multi-platform image is
-      # assembled by buildx and never exists locally. A finding therefore fails
-      # the release with the image already in the registry: the tag is published
-      # but the run is red, and the recovery is the same as any other failed
-      # release, fix main and cut a new tag.
+      # Everything below addresses the image by digest: a tag can be moved.
+      # The scan runs after the push because a multi-platform image is assembled
+      # by buildx and never exists locally, so a finding fails the release with
+      # the image already in the registry.
       - name: Scan the image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -135,14 +127,8 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      # Keyless: the signature is bound to this workflow's identity through the
-      # OIDC token above, and recorded in the public transparency log. There is
-      # no private key to hold or rotate.
-      #
-      # Verify a release with:
-      #   cosign verify ghcr.io/sandobserver/stackyard:<tag> \
-      #     --certificate-identity-regexp '^https://github.com/SandObserver/stackyard/' \
-      #     --certificate-oidc-issuer https://token.actions.githubusercontent.com
+      # Keyless, so the signature is bound to this workflow's identity and there
+      # is no key to hold. Verification steps: docs/security.md.
       - name: Sign the image
         run: cosign sign --yes "ghcr.io/sandobserver/stackyard@${DIGEST}"
         env:

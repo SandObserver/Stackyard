@@ -86,13 +86,9 @@ runs:
       shell: bash
       run: node scripts/bump-cache-busting.js
 
-    # Stamping has to be reproducible, or the image would differ from a rebuild
-    # of the same tag. A second pass over stamped files must change nothing.
-    #
-    # The comparison is between the two passes, not against the committed tree.
-    # The stamp pass above always changes files, manifests especially, since
-    # entryVersions is never committed; measuring against HEAD would report that
-    # intended work as a failure to converge.
+    # Stamping must be reproducible. The two passes are compared with each other,
+    # not against the committed tree: the stamp pass always changes files, so
+    # measuring against HEAD would read intended work as a failure to converge.
     - name: Verify stamping is settled
       if: inputs.mode == 'release'
       shell: bash
