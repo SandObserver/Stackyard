@@ -30,9 +30,14 @@ function app(id, label, href = `http://example.invalid/${id}`) {
   return { id, type: 'app', label, href, color: 'dark', dock: false };
 }
 
-/** Open Settings and wait for the dashboard list to be populated. */
+/** Open Settings and switch to the Dashboard section.
+
+    Admin has no URL routing: the section is chosen by clicking the sidebar and
+    remembered in localStorage, so a fresh context lands on whichever section is
+    the default rather than the list. */
 async function openDashboardList(page) {
   await page.goto('/admin/');
+  await page.locator('.nl[data-sec="dashboard"]').click();
   await page.locator('#btn-add').waitFor({ state: 'visible' });
 }
 
