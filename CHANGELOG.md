@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The widget type list in Admin now says when a widget's definition was refused,
   and why, instead of leaving it silently absent.
 
+- **Sign out all devices** in Admin → General → Security signs out every browser
+  and device without changing your password. Previously the only way to do this
+  was to change the password, which rotates the same session secret as a side
+  effect.
+- `TRUSTED_PROXY` names where a front reverse proxy is (Nginx Proxy Manager,
+  Caddy, Traefik), so Stackyard sees real client addresses through it. Without
+  it, every request arriving through such a proxy counts as one client for rate
+  limiting. See [docs/security.md](docs/security.md).
+- API error responses now carry a machine-readable `kind` (and, where useful, a
+  small `detail` object) alongside the existing `error` message. See
+  [docs/api-errors.md](docs/api-errors.md).
+
 ### Changed
 
 - Widgets now follow the interface text direction, so they mirror in Persian
@@ -51,85 +63,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of `/app`. Rules the browser and the server both enforce can then live
   in one file rather than being duplicated.
 
-### Security
+### Removed
 
-- A widget can no longer forward a raw error message from a service it contacted
-  straight to the browser. Such a message can name an internal address or path,
-  and 17 places did it.
-- TLS verification is no longer skipped for a public IPv6 address when "skip TLS
-  verification" is on. Only private addresses, loopback and Docker service names
-  bypass it, as documented.
-- A widget's data function is now given only the dashboard settings shared with
-  widgets, as a frozen copy, instead of the whole settings object. It previously
-  received the session signing key and the password hash, and could modify them.
-- Error messages shown in the browser no longer include internal addresses,
-  hostnames or server file paths. The full message is written to the container
-  log instead.
-- nginx no longer reports its version in the `Server` header or on error pages.
-- Translated strings that are allowed to contain markup are now limited to
-  `<strong>`, `<em>`, `<code>` and `<br>` with no attributes, instead of being
-  inserted unrestricted. Three other translated strings no longer bypass escaping
-  at all.
-- App and widget links using a script-bearing scheme (`javascript:`, `data:`,
-  `vbscript:`, `blob:`, `filesystem:`) are refused when saving and ignored when
-  rendering, so such a link cannot run in the dashboard. Protocol handlers like
-  `ssh://`, `vnc://` and `rdp://` keep working. A link already stored, or one
-  arriving in an imported config, is left blank rather than repaired.
-- Messages between the dashboard and its widgets are checked against the page
-  origin, and are addressed to it rather than to any parent.
-- Log values are quoted and escaped, so a value containing a newline can no
-  longer forge a second log line, and values containing spaces or `=` no longer
-  split into several fields. Values that need no quoting print as before.
-- Uploaded SVG icons are sanitized by rebuilding them from an allowlist rather
-  than by removing known-bad patterns, so markup the sanitizer cannot parse is
-  dropped instead of passed through. An event handler written with a `/`
-  separator, such as `<path/onload=...>`, previously survived.
-- The outbound guard now blocks carrier-grade NAT, multicast, reserved and
-  broadcast addresses, IETF protocol assignment and benchmarking ranges, and
-  IPv6 multicast. The full list of covered ranges is in
-  [docs/security.md](docs/security.md).
-- Widget pages can no longer be framed by other sites. `X-Frame-Options` is
-  cleared on them so the dashboard can embed them, and nothing had replaced it.
-  Every page now states its framing policy in the Content-Security-Policy header.
-- A widget whose definition cannot be loaded no longer has its settings sent to
-  the browser or written to a config export. Without the definition there is no
-  way to tell which fields hold credentials, so nothing is sent. The settings
-  are kept on the server and are restored untouched when the dashboard is saved,
-  and Admin explains why they cannot be shown.
-- Outbound requests are restricted to `http` and `https`. A URL with another
-  scheme, or with no host, was previously accepted and sent as an HTTP request,
-  which could reach the server's own localhost.
-- A malformed stored password hash no longer crashes the API. It now fails the
-  login and logs the reason.
-- Authentication settings can no longer be written through a config save or an
-  imported config. They are changed only from Admin, so a config upload cannot
-  set or replace the password before one exists.
-- Testing a badge or fetching widget options no longer reuses a stored
-  credential when the configuration has been changed, so a stored secret cannot
-  be sent to a different destination. Re-enter the credential to test edited
-  settings.
-- Widget frontends no longer build markup by concatenation, so a value from an
-  upstream service or an imported config cannot inject markup into a widget
-  iframe. Widget colours are validated and assigned as CSS properties rather
-  than written into a style string.
-- Unticking the Secret box on a badge or activity header no longer returns the
-  stored credential to the browser. Unticking now clears the stored value, and
-  the field shows that a new value is needed.
-- SSRF filter now blocks IPv4-compatible IPv6 literals (`::/96`).
-
-### Added
-
-- **Sign out all devices** in Admin → General → Security signs out every browser
-  and device without changing your password. Previously the only way to do this
-  was to change the password, which rotates the same session secret as a side
-  effect.
-- `TRUSTED_PROXY` names where a front reverse proxy is (Nginx Proxy Manager,
-  Caddy, Traefik), so Stackyard sees real client addresses through it. Without
-  it, every request arriving through such a proxy counts as one client for rate
-  limiting. See [docs/security.md](docs/security.md).
-- API error responses now carry a machine-readable `kind` (and, where useful, a
-  small `detail` object) alongside the existing `error` message. See
-  [docs/api-errors.md](docs/api-errors.md).
+- Badge polling no longer sends a copy of each service's full response to the
+  browser alongside the extracted number, so the dashboard's most frequent
+  request stays small whatever the service returns.
+- The API no longer sends CORS preflight headers or answers `OPTIONS`. It has
+  always been same-origin only, and the headers it sent could never permit a
+  cross-origin request.
 
 ### Fixed
 
@@ -279,14 +220,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - XML data sources no longer mis-read a single element named after a built-in
   object property (such as `toString`) as a repeated element.
 
-### Removed
+### Security
 
-- Badge polling no longer sends a copy of each service's full response to the
-  browser alongside the extracted number, so the dashboard's most frequent
-  request stays small whatever the service returns.
-- The API no longer sends CORS preflight headers or answers `OPTIONS`. It has
-  always been same-origin only, and the headers it sent could never permit a
-  cross-origin request.
+- A widget can no longer forward a raw error message from a service it contacted
+  straight to the browser. Such a message can name an internal address or path,
+  and 17 places did it.
+- TLS verification is no longer skipped for a public IPv6 address when "skip TLS
+  verification" is on. Only private addresses, loopback and Docker service names
+  bypass it, as documented.
+- A widget's data function is now given only the dashboard settings shared with
+  widgets, as a frozen copy, instead of the whole settings object. It previously
+  received the session signing key and the password hash, and could modify them.
+- Error messages shown in the browser no longer include internal addresses,
+  hostnames or server file paths. The full message is written to the container
+  log instead.
+- nginx no longer reports its version in the `Server` header or on error pages.
+- Translated strings that are allowed to contain markup are now limited to
+  `<strong>`, `<em>`, `<code>` and `<br>` with no attributes, instead of being
+  inserted unrestricted. Three other translated strings no longer bypass escaping
+  at all.
+- App and widget links using a script-bearing scheme (`javascript:`, `data:`,
+  `vbscript:`, `blob:`, `filesystem:`) are refused when saving and ignored when
+  rendering, so such a link cannot run in the dashboard. Protocol handlers like
+  `ssh://`, `vnc://` and `rdp://` keep working. A link already stored, or one
+  arriving in an imported config, is left blank rather than repaired.
+- Messages between the dashboard and its widgets are checked against the page
+  origin, and are addressed to it rather than to any parent.
+- Log values are quoted and escaped, so a value containing a newline can no
+  longer forge a second log line, and values containing spaces or `=` no longer
+  split into several fields. Values that need no quoting print as before.
+- Uploaded SVG icons are sanitized by rebuilding them from an allowlist rather
+  than by removing known-bad patterns, so markup the sanitizer cannot parse is
+  dropped instead of passed through. An event handler written with a `/`
+  separator, such as `<path/onload=...>`, previously survived.
+- The outbound guard now blocks carrier-grade NAT, multicast, reserved and
+  broadcast addresses, IETF protocol assignment and benchmarking ranges, and
+  IPv6 multicast. The full list of covered ranges is in
+  [docs/security.md](docs/security.md).
+- Widget pages can no longer be framed by other sites. `X-Frame-Options` is
+  cleared on them so the dashboard can embed them, and nothing had replaced it.
+  Every page now states its framing policy in the Content-Security-Policy header.
+- A widget whose definition cannot be loaded no longer has its settings sent to
+  the browser or written to a config export. Without the definition there is no
+  way to tell which fields hold credentials, so nothing is sent. The settings
+  are kept on the server and are restored untouched when the dashboard is saved,
+  and Admin explains why they cannot be shown.
+- Outbound requests are restricted to `http` and `https`. A URL with another
+  scheme, or with no host, was previously accepted and sent as an HTTP request,
+  which could reach the server's own localhost.
+- A malformed stored password hash no longer crashes the API. It now fails the
+  login and logs the reason.
+- Authentication settings can no longer be written through a config save or an
+  imported config. They are changed only from Admin, so a config upload cannot
+  set or replace the password before one exists.
+- Testing a badge or fetching widget options no longer reuses a stored
+  credential when the configuration has been changed, so a stored secret cannot
+  be sent to a different destination. Re-enter the credential to test edited
+  settings.
+- Widget frontends no longer build markup by concatenation, so a value from an
+  upstream service or an imported config cannot inject markup into a widget
+  iframe. Widget colours are validated and assigned as CSS properties rather
+  than written into a style string.
+- Unticking the Secret box on a badge or activity header no longer returns the
+  stored credential to the browser. Unticking now clears the stored value, and
+  the field shows that a new value is needed.
+- SSRF filter now blocks IPv4-compatible IPv6 literals (`::/96`).
 
 ## [1.4.0] - 2026-07-26
 
