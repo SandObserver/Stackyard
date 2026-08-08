@@ -5,7 +5,7 @@
   --sb:var(--sy-gray5);
   --pane:var(--sy-gray5);
   --cp:var(--sy-gray4);
-  --bd:var(--sy-gray2);
+  --bd:var(--sy-a11y-border);
   --bd-inner:var(--sy-gray3);
   --ac:var(--accent);
   --ac2:var(--accent-strong);
@@ -13,8 +13,7 @@
   --rd:var(--danger);
   --gn:var(--success);
   --tx:#f2f2f7;
-  --dm:var(--sy-gray);
-  --dm-2:var(--sy-gray2);   /* placeholder and unset-value text */
+  --dm:var(--sy-a11y-dim);
   --r:var(--sy-radius-lg);
   --rs:var(--sy-radius-md);
   --t:.15s ease;
@@ -93,7 +92,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .row-link:hover{background:rgba(255,255,255,.04)}
 .rl{flex:1;font-size:14px;color:var(--tx);font-weight:400}
 .rv{flex:2;min-width:0;font-size:14px;color:var(--dm);text-align:end;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rv.is-ph{color:var(--dm-2)}
+.rv.is-ph{color:var(--dm)}
 .ie-row.editing .rv,.ie-row.editing .pe{display:none}
 .ie-row .rv{cursor:pointer}
 .ie-row .row-inp{display:none;flex:2;background:transparent;border:none;color:var(--tx);font-size:14px;font-family:inherit;text-align:end;padding:0;min-width:0;outline:none}
@@ -191,7 +190,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .segr{display:flex;gap:24px;margin-inline-start:auto;align-items:center}
 .segr-opt{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--dm)}
 .segr-opt input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
-.segr-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--dm-2);flex-shrink:0;position:relative;transition:border-color var(--t)}
+.segr-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--dm);flex-shrink:0;position:relative;transition:border-color var(--t)}
 .segr-opt input:checked+.segr-dot{border-color:var(--ok)}
 .segr-opt input:checked+.segr-dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--ok)}
 .segr-opt:has(input:checked) span{color:var(--tx)}
@@ -211,7 +210,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .kv-row .kv-k{flex:1;min-width:0}
 .kv-row .kv-v{flex:1.4;min-width:0}
 .kv-k,.kv-v{background:rgba(120,120,128,.16);border:none;border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px;padding:9px 11px;outline:none}
-.kv-k::placeholder,.kv-v::placeholder{color:var(--dm-2)}
+.kv-k::placeholder,.kv-v::placeholder{color:var(--dm)}
 .kv-cred{display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;user-select:none}
 .kv-cred input{position:absolute;opacity:0;width:0;height:0}
 .kv-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background var(--t),border-color var(--t)}
@@ -230,15 +229,15 @@ html{background:var(--bg-color,var(--bg-outer))}
 .icon-prev{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden}
 .icon-prev img{width:100%;height:100%;object-fit:contain}
 .icon-srch{flex:1;min-width:0;background:none;border:none;color:var(--tx);font-size:14px;text-align:end;outline:none;font-family:inherit}
-.icon-srch::placeholder{color:var(--dm-2)}
+.icon-srch::placeholder{color:var(--dm)}
 .iprs{display:none}
 .iprs.open{display:block;padding:2px 16px 10px}
 .poll-inline{margin-inline-start:auto;display:flex;align-items:center;gap:8px;color:var(--dm);font-size:14px}
 .poll-inline input{width:64px;background:rgba(120,120,128,.16);border:none;border-radius:7px;color:var(--tx);font-family:inherit;font-size:14px;padding:5px 8px;text-align:center;outline:none}
-.rl-sub{color:var(--dm-2);font-size:12px;font-weight:400}
+.rl-sub{color:var(--dm);font-size:12px;font-weight:400}
 .bval-box{padding:0 16px 12px}
 .bval-search{width:100%;background:rgba(120,120,128,.16);border:none;border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px;padding:8px 11px;outline:none;margin-bottom:8px}
-.bval-search::placeholder{color:var(--dm-2)}
+.bval-search::placeholder{color:var(--dm)}
 .bprow-hidden{display:none}
 /* Settings-row native select (Widget Type, slot Resource) */
 .sel-wrap{margin-inline-start:auto;position:relative;display:flex;align-items:center;justify-content:flex-end;min-width:0}
@@ -252,7 +251,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .grp-tip.in-card{margin:0;padding:7px 16px 12px;font-size:12px}
 .grp-hdr-row{display:flex;align-items:center;justify-content:space-between}
 .grp-hdr-rm{background:none;border:none;color:var(--danger);font-size:13px;font-family:inherit;cursor:pointer;padding:2px 4px}
-.grp-hdr-rm:disabled{color:var(--dm-2);cursor:default}
+.grp-hdr-rm:disabled{color:var(--dm);cursor:default}
 .wcf-add-row{display:flex;align-items:center;width:100%;min-height:52px;padding:0 16px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:14px}
 
 /* About */
@@ -470,29 +469,21 @@ html.is-mobile .rord{touch-action:none;width:28px;align-self:stretch;font-size:1
 [dir="rtl"] .ev-back svg { transform: scaleX(-1); }
 
 /* ── Increased contrast ──────────────────────────────────────────────────────
-   The dashboard honoured prefers-contrast and this page did not. Its block
-   could not simply be shared: it overrides tokens defined in dashboard.css, so
-   here it would be writing to variables that do not exist. These are this
-   page's own tokens, raised against its own background.
+   This page's own tokens, raised against its own background. The dashboard's
+   block cannot be shared: it overrides tokens defined in dashboard.css.
 
-   Values are measured, not eyeballed. The palette in tokens.css already moves
-   to Apple's increased-contrast greys in this mode, which raises the pane from
-   gray5 #2C2C2E to gray5-hi #363638, so these are measured against the raised
-   pane and name a grey two or three steps lighter again.
+   Measured against the raised surfaces, since the palette moves to Apple's
+   increased-contrast greys in this mode and the card goes to gray4-hi #444446.
+   That is why `--dm` is not simply gray-hi here: gray-hi reaches only 4.39 on
+   the raised card, which is below where the default already sits.
 
-     --dm   gray    #8E8E93  4.27  default, just under the 4.5 for body text
-     --dm   gray-hi #AEAEB2  5.45  here
-     --bd   gray2   #636366  2.33  default, under the 3.0 for a UI border
-     --bd   gray-hi #AEAEB2  5.45  here
-     --bd-inner gray2-hi #7C7C80  2.90  here
-
-   Dim text sits slightly under the minimum by default. Raising it for everyone
-   is a visual decision rather than a fix, so it is raised only for someone who
-   has asked for more contrast. */
+     --dm       #B4B4B8   4.70 on the raised card, 5.83 on the raised pane
+     --bd       #B4B4B8   4.70 and 5.83, well past the 3.0 a border needs
+     --bd-inner gray2-hi  2.90, decorative only, see the note on the defaults */
 @media (prefers-contrast: more) {
   :root {
-    --dm:var(--sy-gray);
-    --bd:var(--sy-gray);
+    --dm:#B4B4B8;
+    --bd:#B4B4B8;
     --bd-inner:var(--sy-gray2);
     --tx:#ffffff;
   }
