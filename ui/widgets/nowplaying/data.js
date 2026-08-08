@@ -94,6 +94,12 @@ async function navidrome(ctx) {
   const user = ctx.config.navidromeUser,
     pass = ctx.config.navidromePassword;
   if (!base || !user || !pass) throw new Error('Navidrome URL, username and password required');
+  /* md5(password + salt) is the Subsonic API's authentication token, which
+     Navidrome implements; anything stronger simply fails to authenticate, and
+     the only alternative the protocol offers is sending the password in clear
+     text. Not a password hash at rest, and not a choice open to this widget.
+     CodeQL flags it as js/insufficient-password-hash and the alert is dismissed
+     for that reason; expect it to reappear whenever these lines move. */
   const salt = crypto.randomBytes(6).toString('hex');
   const token = crypto
     .createHash('md5')
