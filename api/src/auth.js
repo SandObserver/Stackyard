@@ -241,51 +241,71 @@ function clearSessionCookie(res, secure) {
   res.setHeader('Set-Cookie', `ds=; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=0`);
 }
 
-/* Two fixed-window limiters, deliberately still separate: they share an
-   algorithm but not a surface, and merging them touches the path that can lock
-   someone out of their own dashboard. */
-const _loginAttempts = new Map();
-const LOGIN_MAX = 5, LOGIN_WINDOW_MS = 15 * 60 * 1000;
+/* ── Fixed-window rate limiting ───────────────────────────────────────────────
 
-/* Not exported: reading the limit without counting the attempt reintroduces the
-   check-then-increment race. Use registerLoginAttempt. */
-function checkRateLimit(ip) {
+   One counter, two surfaces. Login attempts and the polling routes count the
+   same way and differ only in what they key on, how they word the wait, and
+   whether success clears the count, so the arithmetic lives here once. Two
+   copies of a timing rule is how a pair of them comes to disagree.
+
+   The surfaces stay separate on purpose: one is on the path that can lock
+   someone out of their own dashboard, and a reader of either does not want the
+   other's wording in front of them. */
+
+/* Count this hit against `key`, and say how much of the window is left if it is
+   refused.
+
+   Checking and counting are one synchronous step, with no await between, so a
+   burst of concurrent requests cannot all clear the check before any of them is
+   counted. Splitting this into a read and a write is the check-then-increment
+   race, which is why there is no exported way to ask without counting.
+
+   A refused hit is not counted. That is what lets a lockout expire on schedule
+   rather than being extended by the attempts it is refusing.
+
+   @param {Map<string, {count:number, first:number}>} store
+   @param {string} key @param {number} max @param {number} windowMs
+   @returns {number|null} ms remaining while refused, null when allowed */
+function hit(store, key, max, windowMs) {
   const now = Date.now();
-  const rec = _loginAttempts.get(ip) || { count:0, first:now };
-  if (now - rec.first > LOGIN_WINDOW_MS) { _loginAttempts.delete(ip); return null; }
-  if (rec.count >= LOGIN_MAX) {
-    const remaining = Math.ceil((LOGIN_WINDOW_MS - (now - rec.first)) / 60000);
-    return `Too many attempts. Try again in ${remaining} minute${remaining!==1?'s':''}.`;
-  }
+  /* A ceiling below one refuses everything. Worth stating, because the opening
+     of a fresh window counts the hit that opened it, so without this a limit of
+     zero would let one request through. */
+  if (max < 1) return windowMs;
+  const rec = store.get(key);
+  if (!rec || now - rec.first > windowMs) { store.set(key, { count: 1, first: now }); return null; }
+  if (rec.count >= max) return windowMs - (now - rec.first);
+  rec.count += 1;
   return null;
 }
 
-/* Checks and counts in one synchronous step, with no await between, so a burst
-   of concurrent logins cannot all clear the check before any is counted. */
+const _loginAttempts = new Map();
+const LOGIN_MAX = 5, LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+/* Reported in whole minutes: a fifteen-minute lockout counted down in seconds
+   reads as a stopwatch on a screen someone is already locked out of. */
 function registerLoginAttempt(ip) {
-  const err = checkRateLimit(ip);
-  if (err) return err;
-  const now = Date.now();
-  const rec = _loginAttempts.get(ip) || { count:0, first:now };
-  _loginAttempts.set(ip, { count: rec.count + 1, first: rec.first });
-  return null;
+  const left = hit(_loginAttempts, ip, LOGIN_MAX, LOGIN_WINDOW_MS);
+  if (left === null) return null;
+  const minutes = Math.ceil(left / 60000);
+  return `Too many attempts. Try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
 }
 
 function clearAttempts(ip) { _loginAttempts.delete(ip); }
 
 const _rateBuckets = new Map();
+
+/* Keyed by ip and route, so one client hitting a ceiling on one route does not
+   affect its own use of another, or anyone else. Reported in seconds: these
+   windows are a minute, and there is nothing for the caller to do but retry. */
 function rateLimit(ip, key, max, windowMs) {
-  const bkey = `${ip}:${key}`;
-  const now  = Date.now();
-  const rec  = _rateBuckets.get(bkey) || { count:0, first:now };
-  if (now - rec.first > windowMs) { _rateBuckets.set(bkey, { count:1, first:now }); return null; }
-  if (rec.count >= max) {
-    const remaining = Math.ceil((windowMs - (now - rec.first)) / 1000);
-    return `Rate limit exceeded. Try again in ${remaining}s.`;
-  }
-  _rateBuckets.set(bkey, { count: rec.count + 1, first: rec.first });
-  return null;
+  const left = hit(_rateBuckets, `${ip}:${key}`, max, windowMs);
+  if (left === null) return null;
+  return `Rate limit exceeded. Try again in ${Math.ceil(left / 1000)}s.`;
 }
+
+/* A window that has passed is rewritten by the next hit on that key, so this
+   only clears keys nobody comes back to. */
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of _rateBuckets)   if (now - v.first > 3_600_000)     _rateBuckets.delete(k);
