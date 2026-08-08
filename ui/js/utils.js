@@ -111,6 +111,8 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   /* Without a positioned ancestor the iframe escapes up the tree and paints at
      the page origin. Set directly rather than through getComputedStyle, which
      returns an unresolved value for a card that has not been laid out. */
+  /* Everything that outlives the DOM is registered here so teardown can undo it. */
+  const cleanups = [];
   if (!card.style.position) card.style.position = 'relative';
   card.style.overflow = 'hidden';
   const clip = mk('div');
@@ -125,10 +127,25 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     `width:${dw}px;height:${dh}px;transform-origin:top left;opacity:0;transition:opacity .12s ease;`;
   clip.appendChild(ifr); card.appendChild(clip);
 
+  /* A widget page is authored in English and sets no direction of its own, so
+     without this its text stays left-to-right while the rest of the app
+     mirrors. Applied from here rather than by each widget: the frames are
+     same-origin, and a widget folder should need no code to follow the page.
+
+     Reapplied on every load, since a refresh replaces the document. */
+  const applyDir = () => {
+    let doc; try { doc = ifr.contentDocument; } catch { return; }
+    if (!doc || !doc.documentElement) return;
+    const root = document.documentElement;
+    doc.documentElement.setAttribute('dir', root.getAttribute('dir') || 'ltr');
+    doc.documentElement.setAttribute('lang', root.getAttribute('lang') || 'en');
+  };
+  ifr.addEventListener('load', applyDir);
+  cleanups.push(() => ifr.removeEventListener('load', applyDir));
+  try { if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') applyDir(); } catch {}
+
   /* Jittered so a dashboard full of widgets does not reload against every
      backing service on the same tick. */
-  /* Everything that outlives the DOM is registered here so teardown can undo it. */
-  const cleanups = [];
   const refreshInterval = Number(o.refreshInterval) || 0;
   if (refreshInterval >= 250) {
     const base = refreshInterval;

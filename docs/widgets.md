@@ -458,6 +458,27 @@ the icon CDN or a `data:` URI. Reach an external service through `data.js`, whic
 has the SSRF guard and the app's TLS settings; a widget page cannot reach one
 directly and should not try.
 
+### Text direction
+
+The dashboard gives the frame its own direction and language when it mounts the
+widget, so a widget folder needs no code for this and must not set `dir` on its
+own `<html>`. In Persian the frame becomes right-to-left and text, flex rows and
+grid columns reverse with it.
+
+Write spacing that sits next to text with the logical properties, so it reverses
+too:
+
+```css
+.flag  { margin-inline-end: 5px }   /* not margin-right */
+.meta  { padding-inline-start: 13px }
+.left  { border-inline-end: 1px solid ... }
+```
+
+`left: 0; right: 0` on an absolutely positioned box is symmetric and needs no
+change, `left: 50%` with a translate is centring, and artwork is artwork:
+mirroring a drawing is usually wrong. The rule is enforced for the properties
+that carry text, in `ui/test/rtl-logical-properties.test.mjs`.
+
 ### Mobile active state
 
 A widget with an interior state a tap turns on, such as a selected row, has to
