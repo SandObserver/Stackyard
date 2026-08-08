@@ -11,7 +11,20 @@ let _cfgCache = null, _cfgCacheAt = 0;
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape, and add a matching step in migrate(). */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
+
+/* Admin suggested `tcp://socket-proxy:2375` for the Docker socket, and a URL
+   with an unrecognised scheme used to be sent as an HTTP request regardless.
+   Outbound requests are now restricted to http and https, so a stored tcp URL
+   is refused, the container list comes back empty, and every app backed by a
+   container reports unhealthy at once. The address is the same host and port
+   either way, so it is rewritten rather than cleared. */
+function migrateSocketProxyScheme(settings) {
+  const url = settings?.server?.socketProxyUrl;
+  if (typeof url !== 'string' || !/^tcp:\/\//i.test(url)) return false;
+  settings.server.socketProxyUrl = url.replace(/^tcp:\/\//i, 'http://');
+  return true;
+}
 
 /* Idempotent, so it is safe on every read and write. A config with no
    _schemaVersion is version 1. Add ordered steps: `if (v < 2) { ...; v = 2; }`. */
@@ -23,6 +36,11 @@ function migrate(cfg) {
       for (const item of cfg.items) if (item && item.type === 'app') migrateItemBadgeHeaders(item);
     }
     v = 2;
+  }
+  if (v < 3) {
+    if (migrateSocketProxyScheme(cfg.settings))
+      log.warn('Docker socket URL rewritten from tcp to http; the tcp form is no longer accepted');
+    v = 3;
   }
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;

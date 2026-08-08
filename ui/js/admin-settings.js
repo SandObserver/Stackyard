@@ -79,7 +79,7 @@ export function loadSettings(c){
   _sv('ie-title-v',s.title||'Stackyard','Stackyard');
   _sv('ie-desc-v',s.description||'Stackyard · self-hosted homelab dashboard','Stackyard · self-hosted homelab dashboard');
   _sv('ie-ip-v',s.server?.hostIp,'192.168.1.100');
-  _sv('ie-socket-v',s.server?.socketProxyUrl,'tcp://socket-proxy:2375');
+  _sv('ie-socket-v',s.server?.socketProxyUrl,'http://socket-proxy:2375');
   _sv('ie-pw-v','','Not set'); /* set below after auth check */
   const _si=(id,v)=>{const node=inp(id);if(node&&v!=null)node.value=v;};
   _si('srv-ip',s.server?.hostIp||'');
