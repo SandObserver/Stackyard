@@ -479,6 +479,22 @@ change, `left: 50%` with a translate is centring, and artwork is artwork:
 mirroring a drawing is usually wrong. The rule is enforced for the properties
 that carry text, in `ui/test/rtl-logical-properties.test.mjs`.
 
+Content that reads the same in every language, such as an IP address, a log
+tail, a chart axis or a keyboard shortcut, can and should pin its own direction.
+Do that on the element, never on the document:
+
+```html
+<div dir="ltr">10.0.0.1</div>
+```
+```css
+.log { direction: ltr }        /* a container, not html or body */
+```
+
+A widget that is direction-independent throughout wraps its content and pins
+the wrapper. `dir` on `<html>` or `<body>`, and `direction` on `html`, `body` or
+`:root`, are refused by the test: those are the document's direction, the
+dashboard sets it, and a widget that overrides it stops following the app.
+
 ### Mobile active state
 
 A widget with an interior state a tap turns on, such as a selected row, has to
