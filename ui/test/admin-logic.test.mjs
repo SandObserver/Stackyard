@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked, widgetConfigMode, resolveAdminSection } from '../js/admin-logic.js';
+import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked, widgetConfigMode, resolveAdminSection, rejectionLines, refusedNoticeKey } from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
@@ -288,4 +288,58 @@ test('no sections at all resolves to null', () => {
   assert.equal(resolveAdminSection('general', []), null);
   assert.equal(resolveAdminSection('general', null), null);
   assert.equal(resolveAdminSection('general', [null, '']), null, 'empty entries do not count');
+});
+
+/* ── refused widgets ──────────────────────────────────────────────────────── */
+
+/* A widget whose manifest is refused does not appear in the type list, which on
+   its own is indistinguishable from never having installed it. The reasons
+   already travel with /api/widgets; these turn them into lines the picker and
+   the config editor both show, so the two cannot word a refusal differently. */
+
+const REFUSALS = [
+  { name: 'weather', errors: ['viewField "veiw" is not a declared field'] },
+  { name: 'books', errors: ['widget.json is not valid JSON', 'name must match the folder name'] },
+];
+
+test('every reason becomes a line, named for the picker', () => {
+  assert.deepEqual(rejectionLines(REFUSALS), [
+    'weather: viewField "veiw" is not a declared field',
+    'books: widget.json is not valid JSON',
+    'books: name must match the folder name',
+  ]);
+});
+
+/* The editor is already showing one widget, so repeating its name reads as a
+   stutter. */
+test('the name is left off when the caller is showing one widget', () => {
+  assert.deepEqual(rejectionLines([REFUSALS[0]], { withName: false }),
+    ['viewField "veiw" is not a declared field']);
+});
+
+/* The list is JSON off the API. A malformed entry must not render as
+   "undefined: undefined" in front of someone already debugging a manifest. */
+test('an entry that is not a named widget with reasons is dropped', () => {
+  assert.deepEqual(rejectionLines([
+    null,
+    { errors: ['no name'] },
+    { name: '', errors: ['empty name'] },
+    { name: 'x' },
+    { name: 'y', errors: 'not an array' },
+    { name: 'z', errors: [] },
+    { name: 'ok', errors: ['', '   ', 42, 'a real reason'] },
+  ]), ['ok: a real reason']);
+});
+
+test('a missing or non-array list is no lines rather than a throw', () => {
+  for (const v of [undefined, null, {}, 'nope', 0]) {
+    assert.deepEqual(rejectionLines(v), [], `${JSON.stringify(v)} should give no lines`);
+  }
+});
+
+/* Two keys, because a language pluralises the sentence rather than the number. */
+test('the notice key follows the count', () => {
+  assert.equal(refusedNoticeKey(1), 'widgetCfg.refused');
+  assert.equal(refusedNoticeKey(2), 'widgetCfg.refusedPlural');
+  assert.equal(refusedNoticeKey(0), 'widgetCfg.refusedPlural');
 });

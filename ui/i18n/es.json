@@ -198,6 +198,8 @@
   },
   "widgetCfg": {
     "unavailable": "Ajustes no disponibles",
-    "unavailableTip": "No se pudo cargar la definición de este widget ({type}), por lo que sus ajustes no se pueden mostrar ni editar. Se conservan en el servidor y no se ven afectados al guardar."
+    "unavailableTip": "No se pudo cargar la definición de este widget ({type}), por lo que sus ajustes no se pueden mostrar ni editar. Se conservan en el servidor y no se ven afectados al guardar.",
+    "refused": "No se pudo cargar {n} widget, por lo que no aparece en la lista.",
+    "refusedPlural": "No se pudieron cargar {n} widgets, por lo que no aparecen en la lista."
   }
 }

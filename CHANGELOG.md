@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The widget type list in Admin now says when a widget's definition was refused,
+  and why, instead of leaving it silently absent.
+
 ### Changed
 
 - Admin secondary text, placeholders and control borders now meet WCAG contrast

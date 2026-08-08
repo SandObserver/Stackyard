@@ -3,7 +3,7 @@ import { state } from '/js/admin-state.js?v=3f9ad806';
 import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=db00a87b';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
-import { sizesForView, widgetConfigMode } from '/js/admin-logic.js?v=056a11e9';
+import { sizesForView, widgetConfigMode, rejectionLines, refusedNoticeKey } from '/js/admin-logic.js?v=056a11e9';
 import { t } from '/js/i18n.js?v=133a7aac';
 import { q, qi, qa } from '/js/utils.js?v=1';
 
@@ -45,6 +45,16 @@ function _renderWidgetForm(body){
   const typeSel=qi('#f-wtype', shell);
   typeSel.onchange=()=>{ state._wtype=typeSel.value; state._wsize=widgetSizes(state._wtype)[0]; _renderWidgetForm(body); };
 
+  /* A refused widget is absent from the list above, which on its own looks like
+     it was never installed. This is where someone goes looking for it. */
+  const refused=(state._widgetRejected||[]).filter(r=>r&&r.name);
+  if(refused.length){
+    const note=document.createElement('p'); note.className='grp-tip';
+    note.textContent=t(refusedNoticeKey(refused.length),{n:refused.length});
+    body.appendChild(note);
+    appendRejectionReasons(body,refused);
+  }
+
   const _sizeOpts=sizesForView(widgetSizes(state._wtype), state._widgetReg[state._wtype], state._wAutoCfg);
   if(!_sizeOpts.includes(state._wsize)) state._wsize=_sizeOpts.includes('medium')?'medium':_sizeOpts[0];
   const sizeHdr=document.createElement('p'); sizeHdr.className='grp-hdr'; sizeHdr.textContent='Size'; body.appendChild(sizeHdr);
@@ -80,20 +90,29 @@ function _renderUnavailableConfig(body){
   tip.textContent=t('widgetCfg.unavailableTip',{type:state._wtype});
   body.appendChild(tip);
 
-  /* The reason, when the server sent one: a rejected widget is usually one typo
-     in widget.json, and the container log is the last place anyone looks. */
   const why=(state._widgetRejected||[]).find(r=>r&&r.name===state._wtype);
-  if(why&&Array.isArray(why.errors)&&why.errors.length){
-    const list=document.createElement('ul'); list.className='grp-tip cfg-reject-list';
-    for(const e of why.errors){
-      const li=document.createElement('li');
-      /* textContent, not markup: the text is a validator message, but it is
-         built from names inside the manifest. */
-      li.textContent=e;
-      list.appendChild(li);
-    }
-    body.appendChild(list);
+  if(why) appendRejectionReasons(body,[why],{name:false});
+}
+
+/* Why the server refused a widget, as a list. Shared by the two places that
+   show it, so a reason cannot be phrased one way in the picker and another in
+   the editor. A refusal is usually one typo in widget.json, and the container
+   log is the last place a self-hoster looks.
+
+   `withName` is what differs: the editor is already showing one widget, the
+   picker is listing several. */
+function appendRejectionReasons(target, rejections, {name:withName=true}={}){
+  const lines=rejectionLines(rejections,{withName});
+  if(!lines.length) return;
+  const list=document.createElement('ul'); list.className='grp-tip cfg-reject-list';
+  for(const line of lines){
+    const li=document.createElement('li');
+    /* textContent, not markup: a validator message is built from names taken
+       out of the manifest. */
+    li.textContent=line;
+    list.appendChild(li);
   }
+  target.appendChild(list);
 }
 
 function _renderCustomConfig(body){

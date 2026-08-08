@@ -198,6 +198,8 @@
   },
   "widgetCfg": {
     "unavailable": "Settings unavailable",
-    "unavailableTip": "This widget's definition ({type}) could not be loaded, so its settings cannot be shown or edited. They are kept on the server and are not affected by saving."
+    "unavailableTip": "This widget's definition ({type}) could not be loaded, so its settings cannot be shown or edited. They are kept on the server and are not affected by saving.",
+    "refused": "{n} widget could not be loaded, so it is not listed below.",
+    "refusedPlural": "{n} widgets could not be loaded, so they are not listed below."
   }
 }
