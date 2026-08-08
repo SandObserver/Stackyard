@@ -78,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   widget, in all six languages. A widget carries its own translations in its
   folder, so a third-party widget can ship its own.
 - The clock's day and month names now follow the selected language.
+- The System Summary widget keeps its layout left to right in every language,
+  so its charts and figures read the same way everywhere.
 - App and folder names now keep their own text direction, so an English name in
   a Persian dashboard no longer truncates from the wrong end.
 - Setting a dashboard password now asks for it twice and can be shown while
