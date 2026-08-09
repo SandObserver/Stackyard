@@ -152,13 +152,11 @@ function migrateItemBadgeHeaders(item) {
 
 module.exports = {
   toRows,
-  isRow,
   droppedRowCount,
   firstMalformedRow,
   rowsToObject,
   requestParts,
   scrubRows,
-  preserveRows,
   scrubItemBadgeSecrets,
   preserveItemBadgeSecrets,
   migrateItemBadgeHeaders,

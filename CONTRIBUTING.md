@@ -13,6 +13,11 @@ If a feature seems to need a dependency or a build step, open an issue first.
 The frontend is static; edit files under `ui/` and reload. Tests use Node's
 built-in runner, with no test dependencies.
 
+An export whose name starts with `_` exists for the tests and is not part of
+what the module offers: `_internals` for functions reached directly, `_reset*`
+for the hooks that clear state between tests. Anything else exported is API, and
+is exported under the name it is defined with.
+
 ## Before opening a PR
 
 These are the checks CI runs, in the order it runs them. They are defined once,

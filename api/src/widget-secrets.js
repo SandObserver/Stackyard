@@ -159,8 +159,6 @@ function preserveConfigSecrets(newCfg, oldCfg) {
 module.exports = {
   secretSpec,
   WITHHELD_FLAG,
-  withholdWidgetConfig,
-  restoreWithheldConfig,
   scrubWidgetSecrets,
   preserveWidgetSecrets,
   scrubConfigSecrets,
