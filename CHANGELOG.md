@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disk Health, System Stats, Backup, Now Playing and the two Connections views
   now show why a widget failed instead of an HTTP status or a generic message.
 
+- The admin save toast now carries its success or failure as a coloured fill
+  that meets WCAG AA, instead of a thin accent bar on one edge.
+
 ## [1.5.1] - 2026-08-08
 
 ### Fixed
