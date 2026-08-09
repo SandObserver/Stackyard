@@ -316,3 +316,28 @@ test('a config save is rejected when two items share an id', async () => {
     await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
   }
 });
+
+/* ── the Node floor that cross-boundary require depends on ────────────────── */
+
+/* require() of an ES module was behind --experimental-require-module on Node
+   20.x until 20.19.0. Below that, requiring this file throws and routes/config.js
+   fails to load, which takes the whole API down rather than one route. The
+   engines floor is the only place the project states what it runs on, so it has
+   to be at or above the release where that stopped being true. */
+test('the declared Node floor supports requiring an ES module', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+  const declared = String(pkg.engines?.node || '');
+  const m = declared.match(/^>=\s*(\d+)\.(\d+)/);
+  assert.ok(m, `engines.node should be a ">=major.minor" floor, got ${JSON.stringify(declared)}`);
+  const [major, minor] = [Number(m[1]), Number(m[2])];
+  const ok = major > 20 || (major === 20 && minor >= 19);
+  assert.ok(ok, `engines.node is ${declared}; require(esm) needs 20.19 or newer`);
+});
+
+/* The guard above only matters while a server module requires a browser one.
+   If that stops being true, this test is what says the floor can be revisited. */
+test('a src module still requires across the CommonJS/ESM boundary', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'config.js'), 'utf8');
+  assert.match(src, /require\(['"][^'"]*ui\/js\/link-url\.js['"]\)/,
+    'routes/config.js no longer requires the browser module; revisit the engines floor');
+});
