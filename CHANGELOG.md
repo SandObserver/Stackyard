@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The admin save toast now carries its success or failure as a coloured fill
   that meets WCAG AA, instead of a thin accent bar on one edge.
 
+### Security
+
+- The image no longer ships Python setuptools, which arrived as a packaging
+  dependency of supervisor and nothing in the container used.
+
 ## [1.5.1] - 2026-08-08
 
 ### Fixed

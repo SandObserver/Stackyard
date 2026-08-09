@@ -68,3 +68,38 @@ test('the API still declares no runtime dependencies', () => {
   assert.deepEqual(pkg.dependencies ?? {}, {},
     'the API has a runtime dependency, which the image can no longer install');
 });
+
+/* setuptools arrives as an apk dependency of supervisor and is reported against
+   CVE-2026-59890. It is deleted rather than accepted: supervisor has not needed
+   it at runtime since Python 3.8, this image is 3.14, and the Alpine package
+   ships no pkg_resources for anything to import.
+
+   The deletion has to share the RUN that installs supervisor. In a later layer
+   the files would still exist in this one, which is where a scanner reads them
+   from and where the image would still carry them. */
+test('the Dockerfile deletes setuptools', () => {
+  for (const target of [
+    '/usr/lib/python3*/site-packages/setuptools',
+    '/usr/lib/python3*/site-packages/setuptools-*.dist-info',
+    '/usr/lib/python3*/site-packages/_distutils_hack',
+    '/usr/lib/python3*/site-packages/distutils-precedence.pth',
+  ]) {
+    assert.ok(dockerfile.includes(target), `${target} is no longer removed`);
+  }
+});
+
+test('setuptools is removed in the layer that installs supervisor', () => {
+  const run = /RUN apk add --no-cache nginx supervisor[\s\S]*?(?=\n(?:#|[A-Z]+ ))/.exec(dockerfile);
+  assert.ok(run, 'the apk install step has been restructured');
+  assert.match(run[0], /rm -rf \/usr\/lib\/python3\*\/site-packages\/setuptools/,
+    'the deletion moved out of the install layer, so the files survive in it');
+});
+
+/* Deleting the files is only half of it. The build asserts nothing can import
+   setuptools afterwards, and that supervisord, whose apk dependency brought it
+   in, still starts without it. */
+test('the build proves the removal and that supervisord survives it', () => {
+  assert.match(dockerfile, /if python3 -c 'import setuptools' 2>\/dev\/null; then/);
+  assert.match(dockerfile, /setuptools survived removal/);
+  assert.match(dockerfile, /supervisord --version/);
+});

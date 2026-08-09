@@ -28,19 +28,25 @@ RUN apk add --no-cache nginx supervisor && \
     # Owned by the node user (UID 1000, provided by the base image) so the
     # API process can write config and uploaded icons without running as root.
     mkdir -p /data /icons && \
-    chown -R node:node /data /icons
-
-# py3-setuptools stays, and cannot be removed: apk refuses, because supervisor
-# depends on it. Docker Scout reports CVE-2026-59890 against it (medium, 6.1,
-# fixed in setuptools 83). Nothing in this image runs pip or setuptools, so it is
-# a library on disk rather than a code path; the release scan gates on HIGH and
-# CRITICAL and does not fail on it.
-#
-# Checked 2026-08-09: node:24-alpine is Alpine 3.24.1, which carries
-# py3-setuptools 82.0.1-r1. Alpine edge has 83.0.0-r0, so this clears itself when
-# the base image floats onto the next stable Alpine, which is the reason the FROM
-# above is a tag rather than a digest. `apk del py3-setuptools` is the check, and
-# it printing "not removed due to: supervisor" is why this note exists.
+    chown -R node:node /data /icons && \
+    # setuptools comes in as an apk dependency of supervisor, and CVE-2026-59890
+    # is reported against the version Alpine carries. `apk del` refuses it, but
+    # the dependency is packaging metadata rather than a runtime need: supervisor
+    # has not required setuptools on Python 3.8 or newer, this image is 3.14, and
+    # the Alpine package ships no pkg_resources for anything to import. Nothing
+    # here runs pip. So the library is deleted outright rather than carried and
+    # explained. Same layer as the install, or the files survive in this one.
+    rm -rf /usr/lib/python3*/site-packages/setuptools \
+           /usr/lib/python3*/site-packages/setuptools-*.dist-info \
+           /usr/lib/python3*/site-packages/_distutils_hack \
+           /usr/lib/python3*/site-packages/distutils-precedence.pth && \
+    # Both halves proved here: nothing can import it, and supervisord still runs
+    # without it. A path that stops matching after a base image bump would
+    # otherwise delete nothing and say nothing.
+    if python3 -c 'import setuptools' 2>/dev/null; then \
+      echo 'setuptools survived removal'; exit 1; \
+    fi && \
+    supervisord --version
 
 # Copy Nginx config — Alpine nginx reads from http.d/
 COPY nginx/dashboard.conf /etc/nginx/http.d/dashboard.conf
