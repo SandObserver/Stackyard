@@ -184,8 +184,11 @@ cosign verify ghcr.io/sandobserver/stackyard:1.5.0 \
 Both flags matter. Without them cosign accepts a signature from any identity,
 which proves only that something signed the image.
 
-Each release build also scans the image with Trivy and fails on a HIGH or
-CRITICAL finding that has a fix available, and produces an SPDX SBOM listing
+Each release build also scans the image with Trivy before publishing it and
+fails on a HIGH or CRITICAL finding that has a fix available, so a flagged image
+never reaches a registry. The scan covers `linux/amd64`; `linux/arm64` is built
+by emulation and cannot be scanned before it is pushed. The build also produces
+an SPDX SBOM listing
 what is inside it. The SBOM is attached to the build as an artifact, downloadable
 from the run's summary page on GitHub.
 

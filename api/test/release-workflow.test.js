@@ -37,13 +37,34 @@ test('every action is pinned to a full commit sha', () => {
 test('the supply-chain steps run after the build, in an order that works', () => {
   const build = indexOf('Build and push');
   assert.ok(build !== -1, 'the build step is gone');
-  for (const name of ['Scan the image', 'Install cosign', 'Sign the image', 'Generate SBOM', 'Upload SBOM']) {
+  for (const name of ['Install cosign', 'Sign the image', 'Generate SBOM', 'Upload SBOM']) {
     assert.ok(indexOf(name) > build, `${name} must run after the build`);
   }
   assert.ok(indexOf('Install cosign') < indexOf('Sign the image'), 'cosign must be installed before it is used');
   assert.ok(indexOf('Generate SBOM') < indexOf('Upload SBOM'), 'the SBOM must exist before it is uploaded');
-  /* A vulnerable image should not be signed as though it passed. */
-  assert.ok(indexOf('Scan the image') < indexOf('Sign the image'), 'scan before signing');
+});
+
+/* The finding it fails on is a reason not to publish, and a failed job
+   unpublishes nothing: the version tag, the major.minor tag and latest are all
+   at the flagged digest by the time the scan speaks. The gate is a
+   single-platform build the runner can load, and the push builds from its
+   cache, so the two see the same layers. */
+test('the scan gates the push', () => {
+  const gate = indexOf('Build for scanning');
+  assert.ok(gate !== -1, 'the single-platform build the scan reads is gone');
+  assert.ok(gate < indexOf('Scan the image'), 'there is nothing to scan yet');
+  assert.ok(indexOf('Scan the image') < indexOf('Build and push'), 'a scanned image is one that has not shipped');
+
+  const built = byName('Build for scanning');
+  assert.equal(built.with.push, false, 'the gate must not publish what it is gating');
+  assert.equal(built.with.load, true, 'trivy reads it from the local daemon');
+  assert.equal(built.with.platforms, 'linux/amd64', 'only one platform can be loaded on the runner');
+  assert.equal(built.with.tags, byName('Scan the image').with['image-ref'],
+    'the scan must read the image this step just built');
+  assert.match(String(built.with['build-args']), /APP_VERSION=\$\{\{ steps\.meta\.outputs\.version \}\}/,
+    'a different build-arg would build different layers from the ones pushed');
+  assert.match(String(byName('Build and push').with['cache-from']), /type=gha/,
+    'without the shared cache the amd64 image is built twice over');
 });
 
 test('the scan fails the job on a high or critical finding', () => {
@@ -55,7 +76,7 @@ test('the scan fails the job on a high or critical finding', () => {
 test('the image is addressed by digest everywhere after the build', () => {
   /* A tag can be moved between being scanned and being pulled. The digest is
      the artifact that was actually examined. */
-  for (const name of ['Scan the image', 'Sign the image', 'Generate SBOM']) {
+  for (const name of ['Sign the image', 'Generate SBOM']) {
     const step = byName(name);
     const text = JSON.stringify(step.with || step.run || '');
     assert.match(text, /steps\.build\.outputs\.digest|\$\{DIGEST\}/, `${name} should use the build digest`);
