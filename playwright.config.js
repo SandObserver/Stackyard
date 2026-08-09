@@ -1,10 +1,10 @@
 // @ts-check
 /* End-to-end tests, run against the container the release publishes.
 
-   The unit suites cover logic without a DOM. These cover the things only a
-   browser shows: that a form saves what it displays, that a drag reorders and
-   the order survives a reload, that focus stays where it should, and that the
-   interface mirrors in Persian.
+   The unit suites cover logic without a DOM. These cover what only a browser
+   shows: that the admin form saves what it displays, that an edit changes only
+   what was edited, and that a saved change survives a reload. Drag reordering,
+   focus handling and the Persian mirroring are not covered here yet.
 
    Two browsers on purpose. WebKit is not decoration: the documented support
    floor is Safari 16.2, and the last two layout and keyboard problems found by
