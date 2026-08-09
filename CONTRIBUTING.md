@@ -10,8 +10,9 @@ If a feature seems to need a dependency or a build step, open an issue first.
 
 ## Development
 
-The frontend is static; edit files under `ui/` and reload. Tests use Node's
-built-in runner, with no test dependencies.
+The frontend is static; edit files under `ui/` and reload. Unit tests use Node's
+built-in runner and need nothing installed; coverage and the browser tests use
+the dev tooling in the root `package.json`.
 
 An export whose name starts with `_` exists for the tests and is not part of
 what the module offers: `_internals` for functions reached directly, `_reset*`

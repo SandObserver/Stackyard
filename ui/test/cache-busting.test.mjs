@@ -99,3 +99,28 @@ test('the workflows call the shared checks rather than listing their own', () =>
     assert.match(workflow, /uses: \.\/\.github\/actions\/checks/, `${name} bypasses the shared checks`);
   }
 });
+
+/* The documented rule, against the mechanism.
+
+   docs/frontend.md told contributors that the widget `?v=` was manual and to
+   bump it by hand when a widget's files changed. It has not been manual since
+   entryVersions existed: the release hashes each entry file into the manifest
+   and widget-types.js reads it from there. A contributor following the document
+   would have hand-edited a value the build owns.
+
+   Pinned by mechanism rather than by sentence: what must stay true is that no
+   widget URL carries a literal stamp and that the manifest is where the value
+   comes from. */
+test('the widget cache version comes from the manifest, not a hand-written literal', () => {
+  const src = fs.readFileSync(path.join(root, 'js/widget-types.js'), 'utf8');
+  assert.match(src, /entryVersions\?\.\[file\]/, 'widget-types.js no longer reads the manifest hash');
+  const literal = /['"`]\/widgets\/[^'"`]*\?v=\d/.exec(src);
+  assert.equal(literal, null, `a hand-written widget stamp is back: ${literal && literal[0]}`);
+});
+
+test('the frontend guide describes the mechanism that exists', () => {
+  const doc = fs.readFileSync(path.join(root, '..', 'docs', 'frontend.md'), 'utf8');
+  const section = doc.slice(doc.indexOf('## Cache busting'));
+  assert.match(section, /entryVersions/, 'the guide does not mention where the widget hash lives');
+  assert.doesNotMatch(section, /is manual/, 'the guide tells contributors to bump a stamp the build owns');
+});

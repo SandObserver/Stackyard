@@ -34,4 +34,4 @@ Each of these is a single batch request: the server fetches every configured bad
 
 ## Cache busting
 
-`?v=` on `/css/` and `/js/` URLs is a content hash rewritten at release by `scripts/bump-cache-busting.js`; do not edit it. `?v=` on `/widgets/` URLs in `widget-types.js` is manual: bump it when you change a widget's own files.
+`?v=` is a content hash rewritten at release by `scripts/bump-cache-busting.js`; do not edit one by hand. On `/css/` and `/js/` URLs the script rewrites the literal in the source. Widget iframe URLs are built from the manifest rather than written literally, so the script hashes each widget's entry files into `entryVersions` in its `widget.json`, and `widget-types.js` reads the hash from there when it builds the URL.
