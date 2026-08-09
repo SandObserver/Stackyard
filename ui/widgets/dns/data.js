@@ -10,9 +10,7 @@
    renders them identically:
      num_dns_queries, num_blocked_filtering, num_replaced_safebrowsing,
      num_replaced_parental, num_cached, and the per-hour arrays
-     dns_queries / blocked_filtering.
-
-   Errors are returned as { error }; the widget front-end displays d.error. */
+     dns_queries / blocked_filtering. */
 
 module.exports = async function (ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;

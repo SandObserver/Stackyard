@@ -145,12 +145,10 @@
 </div>
 
 <script type="module">
-import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+import { poll, fetchData, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
-const API       = '/api';
 const params    = new URLSearchParams(location.search);
-const id        = params.get('id') || '';
 const size      = params.get('size') || 'small';
 const BAY_COUNT = size === 'medium' ? 10 : 4;
 const isMobile  = params.get('mobile') === '1';
@@ -331,9 +329,7 @@ document.addEventListener('touchend', e => {
 window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
 
 async function fetchBays() {
-  const r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=disk-health`);
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  const d = await r.json();
+  const d = await fetchData('disk-health');
   if (!d || !d.bays) throw new Error('no bay data');
   return d;
 }

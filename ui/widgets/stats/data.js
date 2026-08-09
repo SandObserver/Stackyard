@@ -2,8 +2,7 @@
      endpoint=system        → live host metrics for the System Summary view
      endpoint=disk-health   → SMART data from Scrutiny for the Disk Health view
      endpoint=speed         → speed test results (MySpeed / Speedtest Tracker)
-     endpoint=devices       → drives or pools offered to the bay pickers
-   Returns { error } on failure (never throws). */
+     endpoint=devices       → drives or pools offered to the bay pickers */
 
 module.exports = async function (ctx) {
   if (ctx.endpoint === 'devices') return diskDevices(ctx);
