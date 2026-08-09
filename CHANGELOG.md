@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The Books, Now Playing and Backup widgets now show why they failed, such as a
+  missing API key or a rejected password, instead of a generic error.
+
 ## [1.5.2] - 2026-08-09
 
 ### Changed

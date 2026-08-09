@@ -22,44 +22,44 @@ const BACKUP_MS = 10000; /* backup providers respond more slowly than a normal d
    fresh login instead of reusing a token minted with the old one. */
 const _dupTokens = new Map();
 
-async function dupLogin(base, password, fetchJSON) {
-  const r = await fetchJSON(base + '/api/v1/auth/login', {
+async function dupLogin(base, password, ctx) {
+  const r = await ctx.fetchJSON(base + '/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ Password: password }),
     timeout: BACKUP_MS,
   });
-  if (r.status !== 200) throw new Error(`Duplicati login failed: HTTP ${r.status}`);
+  if (r.status !== 200) ctx.fail(`Duplicati login failed: HTTP ${r.status}`, { kind: ctx.KIND.AUTH });
   const { AccessToken, RefreshNonce } = r.data || {};
-  if (!AccessToken) throw new Error('Duplicati login returned no token');
+  if (!AccessToken) ctx.fail('Duplicati login returned no token');
   return { accessToken: AccessToken, refreshNonce: RefreshNonce };
 }
 
-async function dupRefresh(base, refreshNonce, fetchJSON) {
-  const r = await fetchJSON(base + '/api/v1/auth/refresh', {
+async function dupRefresh(base, refreshNonce, ctx) {
+  const r = await ctx.fetchJSON(base + '/api/v1/auth/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ RefreshNonce: refreshNonce }),
     timeout: BACKUP_MS,
   });
-  if (r.status !== 200) throw new Error(`Duplicati refresh failed: HTTP ${r.status}`);
+  if (r.status !== 200) ctx.fail(`Duplicati refresh failed: HTTP ${r.status}`, { kind: ctx.KIND.AUTH });
   const { AccessToken, RefreshNonce } = r.data || {};
-  if (!AccessToken) throw new Error('Duplicati refresh returned no token');
+  if (!AccessToken) ctx.fail('Duplicati refresh returned no token');
   return { accessToken: AccessToken, refreshNonce: RefreshNonce };
 }
 
-async function dupGetToken(base, password, fetchJSON) {
+async function dupGetToken(base, password, ctx) {
   const cached = _dupTokens.get(base);
   if (cached && cached.password === password && cached.expiresAt > Date.now() + 30000) return cached.accessToken;
   let tokens;
   if (cached && cached.password === password && cached.refreshNonce) {
     try {
-      tokens = await dupRefresh(base, cached.refreshNonce, fetchJSON);
+      tokens = await dupRefresh(base, cached.refreshNonce, ctx);
     } catch {
-      tokens = await dupLogin(base, password, fetchJSON);
+      tokens = await dupLogin(base, password, ctx);
     }
   } else {
-    tokens = await dupLogin(base, password, fetchJSON);
+    tokens = await dupLogin(base, password, ctx);
   }
   _dupTokens.set(base, {
     accessToken: tokens.accessToken,
@@ -70,33 +70,34 @@ async function dupGetToken(base, password, fetchJSON) {
   return tokens.accessToken;
 }
 
-async function dupFetch(base, password, path, fetchJSON) {
-  const token = await dupGetToken(base, password, fetchJSON);
-  const r = await fetchJSON(base + path, {
+async function dupFetch(base, password, path, ctx) {
+  const token = await dupGetToken(base, password, ctx);
+  const r = await ctx.fetchJSON(base + path, {
     headers: { Authorization: `Bearer ${token}` },
     timeout: BACKUP_MS,
   });
   if (r.status !== 401) return r;
   _dupTokens.delete(base);
-  const retry = await dupGetToken(base, password, fetchJSON);
-  return fetchJSON(base + path, {
+  const retry = await dupGetToken(base, password, ctx);
+  return ctx.fetchJSON(base + path, {
     headers: { Authorization: `Bearer ${retry}` },
     timeout: BACKUP_MS,
   });
 }
 
-function kopiaFetch(url, username, password, path, fetchJSON) {
+function kopiaFetch(url, username, password, path, ctx) {
   const headers = {};
   if (username && password) {
     headers['Authorization'] = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
   }
-  return fetchJSON(url.replace(/\/$/, '') + path, { headers, timeout: BACKUP_MS });
+  return ctx.fetchJSON(url.replace(/\/$/, '') + path, { headers, timeout: BACKUP_MS });
 }
 
-async function duplicatiJobs(row, fetchJSON) {
-  const base = dupNormalizeBase((row.dupUrl || '').trim());
-  const r = await dupFetch(base, row.dupPass || '', '/api/v1/backups', fetchJSON);
-  if (r.status === 401) throw new Error('Authentication failed, check password');
+async function duplicatiJobs(row, ctx) {
+  const url = (row.dupUrl || '').trim();
+  if (!url) ctx.fail('Duplicati URL not configured', { kind: ctx.KIND.INVALID });
+  const r = await dupFetch(dupNormalizeBase(url), row.dupPass || '', '/api/v1/backups', ctx);
+  if (r.status === 401) ctx.fail('Authentication failed, check password', { kind: ctx.KIND.AUTH });
   return {
     options: dupList(r.data)
       .map(j => ({ value: dupId(j), label: dupName(j) }))
@@ -104,12 +105,12 @@ async function duplicatiJobs(row, fetchJSON) {
   };
 }
 
-async function kopiaSources(row, fetchJSON) {
+async function kopiaSources(row, ctx) {
   const url = (row.kopiaUrl || '').trim();
-  if (!url) throw new Error('Kopia URL required');
-  const r = await kopiaFetch(url, (row.kopiaUser || '').trim(), row.kopiaPass || '', '/api/v1/sources', fetchJSON);
-  if (r.status === 401) throw new Error('Kopia authentication failed');
-  if (r.status !== 200) throw new Error(`Kopia returned HTTP ${r.status}`);
+  if (!url) ctx.fail('Kopia URL required', { kind: ctx.KIND.INVALID });
+  const r = await kopiaFetch(url, (row.kopiaUser || '').trim(), row.kopiaPass || '', '/api/v1/sources', ctx);
+  if (r.status === 401) ctx.fail('Kopia authentication failed', { kind: ctx.KIND.AUTH });
+  if (r.status !== 200) ctx.fail(`Kopia returned HTTP ${r.status}`);
   return {
     options: (r.data?.sources || []).map(s => ({ value: kopiaSourceId(s.source), label: s.source.path })),
   };
@@ -119,7 +120,7 @@ async function kopiaSources(row, fetchJSON) {
    same container makes one round of upstream calls, then write each answer back
    into the slot's own index. Nulls are kept so the card maps result to slot by
    position. */
-async function slots(config, fetchJSON) {
+async function slots(config, ctx) {
   const list = Array.isArray(config.slots) ? config.slots : [];
   const dupGroups = {},
     kopiaGroups = {};
@@ -143,8 +144,8 @@ async function slots(config, fetchJSON) {
     Object.values(dupGroups).map(async ({ base, pass, slots: gs }) => {
       try {
         const [stateR, backupsR] = await Promise.all([
-          dupFetch(base, pass, '/api/v1/serverstate', fetchJSON),
-          dupFetch(base, pass, '/api/v1/backups', fetchJSON),
+          dupFetch(base, pass, '/api/v1/serverstate', ctx),
+          dupFetch(base, pass, '/api/v1/backups', ctx),
         ]);
         if (stateR.status === 401 || backupsR.status === 401) return;
         const serverState = stateR.data || {};
@@ -166,14 +167,18 @@ async function slots(config, fetchJSON) {
             nextRun: proposed[id] || dupSchedule(j)?.Time || null,
           };
         });
-      } catch {}
+      } catch (e) {
+        /* One unreachable instance leaves its own slots null and the rest of the
+           widget intact, so the failure is logged rather than thrown. */
+        ctx.log.warn('backup: duplicati group failed', { base, error: e.message });
+      }
     }),
   );
 
   await Promise.all(
     Object.values(kopiaGroups).map(async ({ url, user, pass, slots: gs }) => {
       try {
-        const r = await kopiaFetch(url, user, pass, '/api/v1/sources', fetchJSON);
+        const r = await kopiaFetch(url, user, pass, '/api/v1/sources', ctx);
         if (r.status !== 200) return;
         const allSources = r.data?.sources || [];
         gs.forEach(({ i, jobId, customName }) => {
@@ -187,7 +192,9 @@ async function slots(config, fetchJSON) {
             nextRun: null,
           };
         });
-      } catch {}
+      } catch (e) {
+        ctx.log.warn('backup: kopia group failed', { url, error: e.message });
+      }
     }),
   );
 
@@ -195,14 +202,14 @@ async function slots(config, fetchJSON) {
 }
 
 module.exports = async function backupData(ctx) {
-  const { endpoint, config, row, fetchJSON } = ctx;
+  const { endpoint, config, row } = ctx;
   if (endpoint === 'duplicati-jobs') {
-    if (!row) throw new Error('no slot selected');
-    return duplicatiJobs(row, fetchJSON);
+    if (!row) ctx.fail('No slot selected', { kind: ctx.KIND.INVALID });
+    return duplicatiJobs(row, ctx);
   }
   if (endpoint === 'kopia-sources') {
-    if (!row) throw new Error('no slot selected');
-    return kopiaSources(row, fetchJSON);
+    if (!row) ctx.fail('No slot selected', { kind: ctx.KIND.INVALID });
+    return kopiaSources(row, ctx);
   }
-  return slots(config, fetchJSON);
+  return slots(config, ctx);
 };

@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'backup', 'data.js'));
+const { WidgetError, KIND } = require('../src/api-error');
+const log = require('../src/log');
 
 /* Duplicati mints a fresh token per instance, so every fixture answers the login
    route as well as the data route it is asked about. */
@@ -12,6 +14,13 @@ function ctxFor(config, endpoint, routes, row = null) {
     calls,
     ctx: {
       config, endpoint, row,
+      /* The same surface widget-data.js hands a data function: a failure is
+         thrown as a WidgetError so its message reaches the browser intact. */
+      fail: (message, opts) => {
+        throw new WidgetError(message, opts);
+      },
+      KIND,
+      log,
       async fetchJSON(url, opts) {
         calls.push({ url, opts });
         for (const [suffix, reply] of Object.entries(routes)) {
@@ -44,7 +53,7 @@ test('duplicati-jobs rejects a row with no URL', async () => {
 
 test('an options fetch with no resolved row is refused', async () => {
   const { ctx } = ctxFor({}, 'kopia-sources', {});
-  await assert.rejects(() => dataFn(ctx), /no slot selected/);
+  await assert.rejects(() => dataFn(ctx), /No slot selected/i);
 });
 
 test('kopia-sources sends basic auth only when a username is present', async () => {
