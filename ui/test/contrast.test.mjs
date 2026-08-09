@@ -157,3 +157,56 @@ test('the derived greys are declared with their reason', () => {
   const note = tokens.slice(Math.max(0, at - 1200), at);
   assert.match(note, /WCAG/, 'the derived greys need the note saying why they are not Apple values');
 });
+
+/* ── the save toast ───────────────────────────────────────────────────────── */
+
+/* The toast reports success and failure, so its text carries 1.4.3 and its
+   border carries 1.4.11 as the boundary of the thing being shown. The accent
+   cannot be the fill: --gn and --rd behind near-white text measure 2.02 and
+   3.43. The fill is a mix of the accent into the page colour instead, with the
+   accent at full strength on the border, and both halves are computed here from
+   the declaration itself rather than trusted. */
+
+/* color-mix(in srgb, <a> N%, <b>), which is a straight per-channel blend. */
+function mixSrgb(a, b, percent) {
+  const ch = (hex, i) => parseInt(hex.substr(i, 2), 16);
+  const p = percent / 100;
+  const out = [1, 3, 5].map(i => Math.round(ch(a, i) * p + ch(b, i) * (1 - p)));
+  return `#${out.map(v => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/* [class, accent token, mix percentage, page token] read off the stylesheet, so
+   changing the recipe re-measures rather than silently drifting from the note. */
+function toastRules() {
+  const src = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  const re =
+    /#toast\.(ok|err)\{background:color-mix\(in srgb,\s*var\((--[\w-]+)\)\s+(\d+)%,\s*var\((--[\w-]+)\)\);border-color:var\((--[\w-]+)\)\}/g;
+  const rules = [...src.matchAll(re)].map(m => ({
+    cls: m[1], accent: m[2], percent: Number(m[3]), page: m[4], border: m[5],
+  }));
+  assert.equal(rules.length, 2, 'expected an .ok and an .err toast rule in the form the test reads');
+  return rules;
+}
+
+test('the toast reads its own colours from the stylesheet', () => {
+  const rules = toastRules();
+  assert.deepEqual(rules.map(r => r.cls), ['ok', 'err']);
+  for (const r of rules) assert.ok(r.percent > 0 && r.percent < 100, `odd mix percentage: ${r.percent}`);
+});
+
+for (const raised of [false, true]) {
+  test(`the toast clears its thresholds${raised ? ' under increased contrast' : ''}`, () => {
+    const resolve = resolver({ raised });
+    const failures = [];
+    for (const { cls, accent, percent, page, border } of toastRules()) {
+      const fill = mixSrgb(resolve(accent), resolve(page), percent);
+      const text = ratio(resolve('--tx'), fill);
+      if (text < 4.5) failures.push(`.${cls}: text on the fill is ${text.toFixed(2)}, needs 4.5`);
+      /* Against the page, not the fill: it is the edge between the toast and
+         what is behind it that has to be findable. */
+      const edge = ratio(resolve(border), resolve('--bg-outer'));
+      if (edge < 3.0) failures.push(`.${cls}: border against the page is ${edge.toFixed(2)}, needs 3.0`);
+    }
+    assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
+  });
+}
