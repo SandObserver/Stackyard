@@ -134,7 +134,7 @@ Stackyard never returns stored secrets to the browser, guards the URLs you test 
 
 ## Contributing
 
-Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/frontend.md](docs/frontend.md).
+Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/frontend.md](docs/frontend.md). Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Changelog
 
