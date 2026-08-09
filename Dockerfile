@@ -32,11 +32,15 @@ RUN apk add --no-cache nginx supervisor && \
 
 # py3-setuptools stays, and cannot be removed: apk refuses, because supervisor
 # depends on it. Docker Scout reports CVE-2026-59890 against it (medium, 6.1,
-# fixed in setuptools 83, which Alpine 3.24 does not carry). Nothing in this
-# image runs pip or setuptools, so it is a library on disk rather than a code
-# path; the release scan gates on HIGH and CRITICAL and does not fail on it.
-# Revisit when Alpine ships 83: `apk del py3-setuptools` is the check, and it
-# printing "not removed due to: supervisor" is why this note exists.
+# fixed in setuptools 83). Nothing in this image runs pip or setuptools, so it is
+# a library on disk rather than a code path; the release scan gates on HIGH and
+# CRITICAL and does not fail on it.
+#
+# Checked 2026-08-09: node:24-alpine is Alpine 3.24.1, which carries
+# py3-setuptools 82.0.1-r1. Alpine edge has 83.0.0-r0, so this clears itself when
+# the base image floats onto the next stable Alpine, which is the reason the FROM
+# above is a tag rather than a digest. `apk del py3-setuptools` is the check, and
+# it printing "not removed due to: supervisor" is why this note exists.
 
 # Copy Nginx config — Alpine nginx reads from http.d/
 COPY nginx/dashboard.conf /etc/nginx/http.d/dashboard.conf
