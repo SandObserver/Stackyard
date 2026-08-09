@@ -13,7 +13,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { configChanged } from '../js/dashboard-logic.js';
+import { configChanged, landingAfterSetup } from '../js/dashboard-logic.js';
 
 const loaded = {
   _rev: 4,
@@ -95,4 +95,29 @@ test('a missing or unusable response does not reload', () => {
 test('a missing loaded config does not throw', () => {
   assert.doesNotThrow(() => configChanged(null, withRev(5)));
   assert.doesNotThrow(() => configChanged(undefined, { items: [], settings: {} }));
+});
+
+/* Where first-run setup leaves the browser.
+
+   A fresh install is { items: [], settings: {} } and the setup prompt always
+   fires, so before this both paths closed onto a dashboard with nothing on it
+   and no hint of what to do. There are deliberately no placeholder items to
+   land on, so the answer is to send the user where items are added. */
+
+test('a fresh install lands on Admin', () => {
+  assert.equal(landingAfterSetup([]), '/admin');
+});
+
+test('an install that already has items stays where it is', () => {
+  assert.equal(landingAfterSetup([{ id: 'a' }]), null);
+  assert.equal(landingAfterSetup([{ id: 'a' }, { id: 'b' }]), null);
+});
+
+/* The caller passes whatever the config response held. A config that failed to
+   parse, or one whose items is the wrong shape, must not redirect: the empty
+   dashboard is the honest thing to show when the config is not understood. */
+test('anything that is not a list leaves the browser alone', () => {
+  for (const v of [undefined, null, 0, '', 'items', {}, { length: 0 }]) {
+    assert.equal(landingAfterSetup(v), null, `should not redirect on ${JSON.stringify(v)}`);
+  }
 });

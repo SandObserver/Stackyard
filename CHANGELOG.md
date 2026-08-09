@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Finishing first-run setup on an install with nothing on the dashboard now
+  opens Settings, where the first app or widget is added, instead of an empty
+  dashboard.
+
 ### Fixed
 
 - Disk Health, System Stats, Backup, Now Playing and the two Connections views

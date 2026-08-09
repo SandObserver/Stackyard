@@ -29,7 +29,7 @@ import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=dab9978
 import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=07fd9e2d';
 import { computeBadgeVisual } from '/js/badge-logic.js?v=d278c683';
-import { configChanged } from '/js/dashboard-logic.js?v=640430ba';
+import { configChanged, landingAfterSetup } from '/js/dashboard-logic.js?v=640430ba';
 import { trapFocus } from '/js/dialog.js?v=4ff94595';
 
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
@@ -487,6 +487,11 @@ function showSetupPrompt() {
       try {
         await fetch('/api/auth/dismiss-setup', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       } catch {}
+      const to = landingAfterSetup(items);
+      if (to) {
+        location.href = to;
+        return;
+      }
       close();
     };
 
@@ -502,7 +507,11 @@ function showSetupPrompt() {
           body: JSON.stringify({ password: pw.value }),
         });
         if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || t('setup.failed'));
-        location.reload();
+        /* set-password issues the session cookie before it answers, so Admin
+           loads signed in rather than bouncing to the login page. */
+        const to = landingAfterSetup(items);
+        if (to) location.href = to;
+        else location.reload();
       } catch (e) {
         err.textContent = e.message;
         err.style.display = 'block';

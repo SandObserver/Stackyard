@@ -21,3 +21,19 @@ export function configChanged(loaded, fetched) {
 function fingerprint(c) {
   return JSON.stringify(c?.items?.map(i => `${i?.id}|${i?.label}|${i?.href}`)) + JSON.stringify(c?.settings);
 }
+
+/** Where to send the browser once first-run setup is finished.
+
+    A fresh install has no items, and the dashboard is where items are shown, so
+    landing there shows an empty page with nothing to act on. Admin is where the
+    first item gets added, and is the page the user would have to open anyway.
+
+    Only the automatic step after setup. Opening `/` afterwards is not blocked,
+    and an empty dashboard reached deliberately stays empty: there are no
+    placeholder items to delete.
+
+    @param {unknown} items the dashboard items the page was built from
+    @returns {string|null} a path to navigate to, or null to stay put */
+export function landingAfterSetup(items) {
+  return Array.isArray(items) && items.length === 0 ? '/admin' : null;
+}
