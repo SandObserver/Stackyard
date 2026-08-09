@@ -205,3 +205,25 @@ test('no widget reports a user-facing failure with a plain Error', () => {
     `Use ctx.fail(message, { kind }) so the message reaches the browser:\n${offenders.join('\n')}`,
   );
 });
+
+/* One definition of a normalised upstream base URL.
+
+   The stats widget carried three spellings of it: a local diskBase helper and
+   two inline copies, one of which stripped a single trailing slash where
+   ctx.normalizeBase strips several and also trims. Which one a URL met decided
+   whether "http://nas:8080/ " reached the service.
+
+   connections keeps its own normBase, which is a different rule rather than a
+   copy of this one: it leaves a trailing slash in place, and one of its three
+   call sites strips slashes itself because that endpoint needs it. */
+const OWN_BASE_RULE = new Set(['connections']);
+
+test('no widget rebuilds the base-URL normalisation ctx already provides', () => {
+  const offenders = [];
+  for (const [name, p] of dataFiles) {
+    if (OWN_BASE_RULE.has(name)) continue;
+    const src = fs.readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    if (/includes\(':\/\/'\)\s*\?/.test(src)) offenders.push(`${name}: hand-rolled scheme check`);
+  }
+  assert.deepEqual(offenders, [], `Use ctx.normalizeBase:\n${offenders.join('\n')}`);
+});

@@ -11,8 +11,6 @@ module.exports = async function (ctx) {
   return systemSummary(ctx);
 };
 
-const diskBase = u => (u.includes('://') ? u : `http://${u}`).replace(/\/$/, '');
-
 /* Config-time picker: one option per drive or pool, shared by every bay row. */
 function diskDevices(ctx) {
   return ctx.dispatchProvider(
@@ -25,9 +23,9 @@ function diskDevices(ctx) {
 }
 
 async function scrutinyDeviceOptions(ctx) {
-  const { config, fetchJSON } = ctx;
+  const { config, fetchJSON, normalizeBase } = ctx;
   if (!config.scrutinyUrl) ctx.fail('Enter the Scrutiny URL first.', { kind: ctx.KIND.INVALID });
-  const r = await fetchJSON(diskBase(config.scrutinyUrl) + '/api/summary', { timeout: 8000 });
+  const r = await fetchJSON(normalizeBase(config.scrutinyUrl) + '/api/summary', { timeout: 8000 });
   if (r.status >= 400) ctx.fail('Scrutiny HTTP ' + r.status);
   const summary = r.data?.data?.summary || {};
   const options = Object.values(summary)
@@ -48,10 +46,10 @@ function truenasStatus(ctx, r) {
 }
 
 async function truenasPoolOptions(ctx) {
-  const { config, fetchJSON } = ctx;
+  const { config, fetchJSON, normalizeBase } = ctx;
   if (!config.truenasUrl) ctx.fail('Enter the TrueNAS URL first.', { kind: ctx.KIND.INVALID });
   if (!config.truenasKey) ctx.fail('Enter the TrueNAS API key first.', { kind: ctx.KIND.INVALID });
-  const r = await fetchJSON(diskBase(config.truenasUrl) + '/api/v2.0/pool', {
+  const r = await fetchJSON(normalizeBase(config.truenasUrl) + '/api/v2.0/pool', {
     headers: { Authorization: 'Bearer ' + config.truenasKey },
     timeout: 8000,
   });
@@ -109,12 +107,12 @@ async function systemSummary({ config, settings, metrics }) {
 /* Disk Health (Scrutiny): maps the widget's configured bays (device_id per bay)
    onto Scrutiny's SMART summary. */
 async function diskHealthScrutiny(ctx) {
-  const { config, fetchJSON } = ctx;
+  const { config, fetchJSON, normalizeBase } = ctx;
   const url = config.scrutinyUrl;
   if (!url) ctx.fail('scrutinyUrl not configured', { kind: ctx.KIND.INVALID });
   const bays = config.bays || [];
 
-  const base = url.includes('://') ? url.replace(/\/$/, '') : `http://${url.replace(/\/$/, '')}`;
+  const base = normalizeBase(url);
   const r = await fetchJSON(base + '/api/summary', { timeout: 8000 });
 
   const summary = r.data?.data?.summary || {};
@@ -145,14 +143,14 @@ async function diskHealthScrutiny(ctx) {
    matched from /api/v2.0/pool. A pool's `healthy` flag is the per-bay status
    (healthy → 0, unhealthy → 2, the same codes the widget uses for Scrutiny). */
 async function diskHealthTrueNas(ctx) {
-  const { config, fetchJSON } = ctx;
+  const { config, fetchJSON, normalizeBase } = ctx;
   const url = config.truenasUrl;
   const key = config.truenasKey;
   if (!url) ctx.fail('truenasUrl not configured', { kind: ctx.KIND.INVALID });
   if (!key) ctx.fail('TrueNAS API key not configured', { kind: ctx.KIND.INVALID });
   const bays = config.bays || [];
 
-  const base = url.includes('://') ? url.replace(/\/$/, '') : `http://${url.replace(/\/$/, '')}`;
+  const base = normalizeBase(url);
   const r = await fetchJSON(base + '/api/v2.0/pool', {
     headers: { Authorization: 'Bearer ' + key },
     timeout: 8000,
