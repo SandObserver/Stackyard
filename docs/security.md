@@ -2,9 +2,7 @@
 
 ## Network exposure
 
-Stackyard does not terminate TLS and serves traffic over plain HTTP only. While login attempts are rate-limited, the application is **not** designed or hardened for direct exposure to the public internet. Authentication exists primarily to simplify management of multiple local dashboards and should not be relied on as an internet-facing security boundary.
-
-Deploy Stackyard only on a trusted network, or behind a reverse proxy that terminates TLS and provides its own authentication and access controls. Do **not** expose it directly to the internet or make it accessible via port forwarding.
+Stackyard does not terminate TLS and serves traffic over plain HTTP only. Login attempts are rate-limited, but the application is **not** designed or hardened for direct exposure to the public internet: authentication exists to simplify management of multiple local dashboards, and is not an internet-facing security boundary. Deploy it on a trusted network, or behind a reverse proxy that terminates TLS and provides its own authentication and access controls.
 
 
 ## HTTPS and the session cookie
@@ -187,10 +185,10 @@ which proves only that something signed the image.
 Each release build also scans the image with Trivy before publishing it and
 fails on a HIGH or CRITICAL finding that has a fix available, so a flagged image
 never reaches a registry. The scan covers `linux/amd64`; `linux/arm64` is built
-by emulation and cannot be scanned before it is pushed. The build also produces
-an SPDX SBOM listing
-what is inside it. The SBOM is attached to the build as an artifact, downloadable
-from the run's summary page on GitHub.
+by emulation and cannot be scanned before it is pushed.
+
+The build also produces an SPDX SBOM listing what is inside the image, attached
+to the run as an artifact and downloadable from its summary page on GitHub.
 
 Images are published to `ghcr.io/sandobserver/stackyard`. A Docker Hub mirror is
 published alongside it when the project has credentials configured; ghcr.io is
