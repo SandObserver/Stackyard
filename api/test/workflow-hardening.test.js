@@ -136,3 +136,22 @@ test('dependabot watches the actions', () => {
   assert.match(cfg, /package-ecosystem:\s*github-actions/,
     'pinned SHAs need Dependabot to update them');
 });
+
+/* Dependency code runs in these jobs, and the release build publishes what they
+   pass. `npm install` re-resolves every range on each run, so what the checks
+   ran against was never quite what the last run saw. `npm ci` installs the
+   committed lockfile exactly, and fails outright if the two files disagree. */
+test('the lockfile is committed and CI installs from it', () => {
+  const lock = path.join(root, 'package-lock.json');
+  assert.ok(fs.existsSync(lock), 'package-lock.json is missing');
+  assert.ok(!/^\s*package-lock\.json\s*$/m.test(fs.readFileSync(path.join(root, '.gitignore'), 'utf8')),
+    '.gitignore excludes the lockfile, so npm ci has nothing to install from');
+
+  const loose = [];
+  for (const [f, src] of all) {
+    for (const line of src.split('\n')) {
+      if (/run:\s*npm install\b/.test(line)) loose.push(`${f}: ${line.trim()}`);
+    }
+  }
+  assert.deepEqual(loose, [], `Use npm ci so CI installs the lockfile:\n  ${loose.join('\n  ')}`);
+});

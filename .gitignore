@@ -7,9 +7,9 @@ __MACOSX/
 *.log
 data/apps.json
 
-# Dev-only tooling (see package.json); never shipped in the image.
+# Dev-only tooling (see package.json); never shipped in the image. The lockfile
+# is committed: it pins what CI installs before the checks and the release build.
 node_modules/
-package-lock.json
 
 # Coverage output from `npm test` in api/ (c8).
 coverage/

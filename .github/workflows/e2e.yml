@@ -45,7 +45,7 @@ jobs:
           node-version: '24'
 
       - name: Install dev tooling
-        run: npm install
+        run: npm ci
 
       - name: Cache Playwright browsers
         id: browsers
@@ -53,6 +53,10 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          # Any dev-dependency bump changes the key, so fall back to the last
+          # browser set rather than re-downloading all of them; the install step
+          # below fetches whatever that set is missing.
+          restore-keys: playwright-${{ runner.os }}-
 
       - name: Install browsers
         run: npx playwright install --with-deps chromium webkit
