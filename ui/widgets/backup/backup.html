@@ -118,7 +118,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, openUrl, html, setHtml, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -369,7 +369,7 @@ async function boot() {
   /* Backup jobs are slow-moving, but a running job is worth watching closely,
      so the gap shrinks to 5s while any slot reports running. */
   poll({ fetch: fetchJobs, render: apply, interval: d => (d?.some(j=>j&&j.status==='running') ? 5 : _pollSec) * 1000,
-    onError: ({ error, everOk, stale }) => { if (!everOk || stale) applyError(error.body || { error: error.message }); } });
+    onError: ({ error, everOk, stale }) => { if (!everOk || stale) applyError({ error: error.message }); } });
 }
 
 function buildShell() {
@@ -539,15 +539,7 @@ function buildShell() {
 }
 
 async function fetchJobs() {
-  let r;
-  try { r=await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=slots`); }
-  catch(e){ throw new Error(e.message); }
-  if(!r.ok){
-    const e=new Error('HTTP '+r.status);
-    e.body=await r.json().catch(()=>({}));
-    throw e;
-  }
-  return r.json();
+  return fetchData('slots');
 }
 
 function apply(jobs) {

@@ -130,3 +130,26 @@ test('no widget forwards a raw caught message to the browser', () => {
   }
   assert.deepEqual(offenders, [], `Raw caught message sent as data: ${offenders.join(', ')}`);
 });
+
+/* The frontend half of the same rule. A data.js can vouch for "Enter the
+   Scrutiny URL first." and the browser still show "HTTP 503", because a
+   hand-rolled fetch throws on the status and never reads the body. fetchData
+   reads it; a hand-rolled fetch must read `.error` itself. */
+const frontendFiles = fs.readdirSync(WIDGETS, { withFileTypes: true })
+  .filter(d => d.isDirectory())
+  .flatMap(d => fs.readdirSync(path.join(WIDGETS, d.name))
+    .filter(n => n.endsWith('.html'))
+    .map(n => [`${d.name}/${n}`, path.join(WIDGETS, d.name, n)]));
+
+test('every widget frontend shows the message the server vouched for', () => {
+  const offenders = [];
+  for (const [name, p] of frontendFiles) {
+    const src = fs.readFileSync(p, 'utf8');
+    if (!src.includes('/widget-data/') && !/\bfetchData\s*\(/.test(src)) continue;
+    const usesToolbox = /\bfetchData\s*\(/.test(src);
+    const readsError = /\.error\s*\|\||\berror:\s*\w+\.error\b/.test(src);
+    if (!usesToolbox && !readsError) offenders.push(name);
+  }
+  assert.deepEqual(offenders, [],
+    `Widget-data failure reported without the server's message. Use fetchData from widget-toolbox, or read .error off the response body:\n${offenders.join('\n')}`);
+});

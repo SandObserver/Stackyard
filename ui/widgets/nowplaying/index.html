@@ -118,7 +118,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
+import { poll, fetchData, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
 await loadStrings();
 document.getElementById('title').textContent = wt('ui.nothingPlaying', 'Nothing playing');
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
@@ -197,10 +197,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   function openHref(){ if(href) openUrl(href); }
 
   async function npFetch(){
-    let r;
-    try{ r=await fetch(`${API}/widget-data/${encodeURIComponent(id)}`); }
-    catch{ throw new Error('unreachable'); }
-    return r.json().catch(()=>({}));
+    return fetchData();
   }
   function apply(d){
     provider=d.provider||provider;

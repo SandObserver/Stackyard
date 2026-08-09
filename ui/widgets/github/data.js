@@ -1,6 +1,4 @@
-/* GitHub widget data function.
-   Returns { error } on any failure so the widget can show a friendly message
-   (never throws). */
+/* GitHub widget data function. */
 
 module.exports = async function (ctx) {
   const { config, fetchJSON } = ctx;

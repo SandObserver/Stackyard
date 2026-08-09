@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Disk Health, System Stats, Backup, Now Playing and the two Connections views
+  now show why a widget failed instead of an HTTP status or a generic message.
+
 ## [1.5.1] - 2026-08-08
 
 ### Fixed
