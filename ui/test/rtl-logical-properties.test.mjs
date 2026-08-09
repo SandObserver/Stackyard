@@ -215,12 +215,19 @@ test('absolutely positioned elements use the inline end', () => {
   assert.match(code('css/dashboard.css'), /inset-inline-end:16px/, 'the mobile close button');
 });
 
-/* The accent bar sits on the leading edge of a toast, so it moves with the text
-   rather than staying on the screen's left. */
-test('the toast accent bar follows the text direction', () => {
+/* The toast used to carry its success or failure on a bar along one edge, which
+   had to be the inline start so it followed the text. It is a tinted fill with a
+   border on every side now, so there is no leading edge to place, and the way
+   that stays true is that neither rule names a side at all. */
+test('the toast state has no edge that could point the wrong way', () => {
   const src = code('css/admin.css');
-  assert.match(src, /#toast\.ok\{border-inline-start:3px/);
-  assert.match(src, /#toast\.err\{border-inline-start:3px/);
+  const rules = [...src.matchAll(/#toast\.(?:ok|err)\{([^}]*)\}/g)].map(m => m[1]);
+  assert.equal(rules.length, 2, 'expected an .ok and an .err toast rule');
+  for (const body of rules) {
+    assert.doesNotMatch(body, /border-(left|right|inline-start|inline-end)/,
+      `a one-sided toast border is back: ${body}`);
+    assert.match(body, /border-color:/, 'the state should colour the whole border');
+  }
 });
 
 /* ── the project really does ship a right-to-left language ────────────────── */
