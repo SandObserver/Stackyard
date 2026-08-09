@@ -92,14 +92,12 @@ on('POST', '/api/badge-proxy', async (req, res) => {
     const body = JSON.parse(await readBody(req));
     const { url, itemId, skipTls = false } = body;
     if (!url) return json(res, 400, { error: 'url required', kind: KIND.INVALID });
-    /* Rows the user did not retype arrive as secret rows without a value. Fill
-       them from the stored item so a test after reload uses the real credential,
-       without ever sending it to the browser.
+    /* Rows the user did not retype arrive without a value, and are filled from
+       the stored item so a test after reload uses the real credential.
 
        Only when the request targets exactly the saved destination with exactly
-       the saved non-secret rows. Otherwise the request picks the URL while the
-       server picks the credential, and a stored secret would be delivered
-       wherever the caller asked. See secret-scope.js. */
+       the saved non-secret rows, or the caller picks the URL while the server
+       picks the credential. See secret-scope.js. */
     let headerRows = toRows(body.headers);
     let paramRows = toRows(body.params);
     let declined = false;

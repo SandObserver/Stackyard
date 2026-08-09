@@ -9,20 +9,10 @@ let _netPrev = null;
 
 /* One /proc/net/dev line, as bytes received and transmitted.
 
-   The name is separated from its counters by a colon, not by whitespace, and the
-   kernel pads the name to a fixed width. Once the receive counter is wide enough
-   the value runs into the colon:
-
-     eth0: 1234567  890 ...        ->  fields line up
-     eth0:123456789012  890 ...    ->  every field shifts by one
-
-   Splitting on whitespace therefore read packets where it meant bytes, off by
-   roughly a thousand, and that is the normal case rather than an edge case: it
-   happens once an interface has carried about 10 MB. Splitting on the colon
-   first removes the ambiguity.
-
-   The name is matched exactly, too. `startsWith` meant a request for eth0 could
-   match eth0.100, and a request for eth could match eth0. */
+   Split on the colon, not on whitespace: the kernel pads the name to a fixed
+   width, so once the receive counter is wide enough it runs into the colon and
+   every field shifts by one. The interface name is matched exactly, or eth0
+   also matches eth0.100. */
 const RX_BYTES = 0; /* field order after the colon, per the header line */
 const TX_BYTES = 8;
 

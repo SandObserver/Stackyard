@@ -1,25 +1,10 @@
 #!/usr/bin/env node
-/* Does this tag name a stable release, or a candidate?
+/* Does this tag name a stable release, or a candidate? The answer decides
+   whether the build moves `latest`, which is what an unpinned pull gets.
 
-   The answer decides whether the build moves the `latest` tag, which is what an
-   unpinned `docker pull` gets. Getting it wrong in one direction ships a release
-   candidate to everyone who never pinned a version; in the other it leaves
-   `latest` behind on a real release.
-
-   The workflow used to ask whether the ref contained a hyphen. That is right
-   for the tags this project actually cuts, and wrong in two ways that matter:
-
-     v1.5.0+2026-08-08   build metadata, a stable release, but it has a hyphen
-     v1.5                not a version at all, no hyphen, so it moved `latest`
-
-   The second is the dangerous one. A mistyped tag should never be treated as a
-   stable release, so anything that is not a valid semver version is reported as
-   a prerelease: refusing to move `latest` is the safe failure.
-
-   Deliberately not api/src/semver.js. That module compares versions for the
-   update check and is forgiving by design, coercing a malformed part to 0 so a
-   strange version from GitHub cannot break the dashboard. Here, malformed input
-   is the case that has to be caught rather than smoothed over. */
+   Anything that is not valid semver is reported as a prerelease, so a mistyped
+   tag such as `v1.5` cannot move `latest`. Not api/src/semver.js: that one
+   coerces malformed input rather than rejecting it. */
 
 /* semver.org's own recommended pattern, with an optional leading v for git tag
    style. Note what it rejects: leading zeroes in the core, an empty prerelease

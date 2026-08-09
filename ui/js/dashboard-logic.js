@@ -24,13 +24,9 @@ function fingerprint(c) {
 
 /** Where to send the browser once first-run setup is finished.
 
-    A fresh install has no items, and the dashboard is where items are shown, so
-    landing there shows an empty page with nothing to act on. Admin is where the
-    first item gets added, and is the page the user would have to open anyway.
-
-    Only the automatic step after setup. Opening `/` afterwards is not blocked,
-    and an empty dashboard reached deliberately stays empty: there are no
-    placeholder items to delete.
+    A fresh install has no items, so the dashboard has nothing to act on and
+    Admin is where the first one is added. Only the automatic step after setup:
+    opening `/` afterwards is not blocked, and an empty dashboard stays empty.
 
     @param {unknown} items the dashboard items the page was built from
     @returns {string|null} a path to navigate to, or null to stay put */

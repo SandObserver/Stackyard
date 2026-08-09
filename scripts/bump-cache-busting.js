@@ -4,15 +4,10 @@ const path = require('path');
 const crypto = require('crypto');
 
 const UI_DIR = path.join(__dirname, '..', 'ui');
-/* An asset reference, with or without a version stamp.
-
-   The stamp used to be required by this pattern, so a reference written without
-   one was invisible to this script and stayed unstamped forever. A browser then
-   kept serving that file from cache after an upgrade while every other file was
-   refreshed, leaving one page running mixed versions.
-
-   The stamp is optional here, so a new reference is picked up the first time
-   this runs rather than being silently skipped. */
+/* An asset reference, with or without a version stamp. The stamp is optional
+   on purpose: requiring it made a reference written without one invisible to
+   this script, so it stayed unstamped and that one file kept being served from
+   cache after an upgrade. */
 const REF_RE = /(["'])(\/(?:css|js)\/[a-zA-Z0-9_.-]+\.(?:css|js))(\?v=[0-9a-zA-Z]+)?/g;
 
 function listFiles(dir, exts, out = []) {

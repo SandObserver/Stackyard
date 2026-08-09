@@ -1,15 +1,10 @@
 /* When a stored secret may be attached to a request the caller composed.
 
    Two endpoints let the browser post an in-progress config and have the server
-   fill in a credential. Both let the request choose the destination, so
-   restoring on the item id alone turns "can edit config" into "can read every
-   stored credential": point the URL elsewhere, omit the secret, and the server
-   sends the real one there.
-
-   The rule is deliberately blunt: restore only when every non-secret field is
-   identical to what is saved. Comparing only the fields that look like a
-   destination needs an assumption about which fields matter, which is the
-   assumption that failed here. */
+   fill in a credential, and both let the request choose the destination, so
+   matching on the item id alone would send a stored credential anywhere the
+   caller names. Restore only when every non-secret field is identical to what
+   is saved. */
 
 const { secretSpec } = require('./widget-secrets');
 const { toRows } = require('./badge-headers');

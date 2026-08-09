@@ -251,25 +251,17 @@ function clearSessionCookie(res, secure) {
 
 /* ── Fixed-window rate limiting ───────────────────────────────────────────────
 
-   One counter, two surfaces. Login attempts and the polling routes count the
-   same way and differ only in what they key on, how they word the wait, and
-   whether success clears the count, so the arithmetic lives here once. Two
-   copies of a timing rule is how a pair of them comes to disagree.
-
-   The surfaces stay separate on purpose: one is on the path that can lock
-   someone out of their own dashboard, and a reader of either does not want the
-   other's wording in front of them. */
+   One counter, two surfaces. Login attempts and the polling routes differ only
+   in what they key on and how they word the wait, so the arithmetic lives here
+   once and the surfaces stay separate. */
 
 /* Count this hit against `key`, and say how much of the window is left if it is
    refused.
 
-   Checking and counting are one synchronous step, with no await between, so a
-   burst of concurrent requests cannot all clear the check before any of them is
-   counted. Splitting this into a read and a write is the check-then-increment
-   race, which is why there is no exported way to ask without counting.
-
-   A refused hit is not counted. That is what lets a lockout expire on schedule
-   rather than being extended by the attempts it is refusing.
+   Checking and counting are one synchronous step with no await between, or a
+   burst of requests all clears the check before any is counted; there is no
+   exported way to ask without counting. A refused hit is not counted, so a
+   lockout expires on schedule instead of being extended by what it refuses.
 
    @param {Map<string, {count:number, first:number}>} store
    @param {string} key @param {number} max @param {number} windowMs
