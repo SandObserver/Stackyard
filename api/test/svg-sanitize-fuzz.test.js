@@ -1,4 +1,3 @@
-const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { sanitizeSvg } = require('../src/svg-sanitize');
@@ -37,13 +36,50 @@ function mulberry32(a) {
 /* Fragments chosen to collide: tag openers with no closer, separators, quote
    characters, and the payloads the sanitizer exists to remove. */
 const TOKENS = [
-  '<svg', '<path', '<rect', '<g', '<style>', '</style>', '<script', '</script>', '</svg>',
-  '/', '>', '=', ' ', '\t', '\n',
-  'onload=', 'onerror=', 'xlink:href=', 'href=', 'src=', 'style=', 'd=', 'fill=',
-  '"alert(1)"', '"M0 0"', '"x:javascript:y"', "'", '"',
-  '<!--', '-->', '<!', '<?', '?>', '<![CDATA[', ']]>',
-  'url(javascript:x)', '@import url(evil)', 'expression(alert(1))',
-  '&', '&lt;', '&#60;', '<', '#', 'a',
+  '<svg',
+  '<path',
+  '<rect',
+  '<g',
+  '<style>',
+  '</style>',
+  '<script',
+  '</script>',
+  '</svg>',
+  '/',
+  '>',
+  '=',
+  ' ',
+  '\t',
+  '\n',
+  'onload=',
+  'onerror=',
+  'xlink:href=',
+  'href=',
+  'src=',
+  'style=',
+  'd=',
+  'fill=',
+  '"alert(1)"',
+  '"M0 0"',
+  '"x:javascript:y"',
+  "'",
+  '"',
+  '<!--',
+  '-->',
+  '<!',
+  '<?',
+  '?>',
+  '<![CDATA[',
+  ']]>',
+  'url(javascript:x)',
+  '@import url(evil)',
+  'expression(alert(1))',
+  '&',
+  '&lt;',
+  '&#60;',
+  '<',
+  '#',
+  'a',
 ];
 
 const STYLE_BODY = /<style>((?:(?!<\/style>)[\s\S])*)<\/style>/gi;
@@ -78,7 +114,8 @@ function unsafeReason(out) {
     const n = name.toLowerCase();
     if (/^on/.test(n)) return `event handler attribute (${name})`;
     if (/^(href|xlink:href|src|action|formaction|data)$/.test(n)) return `url attribute (${name})`;
-    if (n === 'style' && /(javascript|vbscript|behavior)\s*:/i.test(value)) return 'script protocol in a style attribute';
+    if (n === 'style' && /(javascript|vbscript|behavior)\s*:/i.test(value))
+      return 'script protocol in a style attribute';
   }
 
   STYLE_BODY.lastIndex = 0;
@@ -114,10 +151,11 @@ test('no assembled input produces dangerous output', () => {
 
 test('no byte-level corruption of a real icon produces dangerous output', () => {
   const rnd = mulberry32(SEED ^ 0xffff);
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
-    + '<style>.a{fill:url(#g)}</style>'
-    + '<defs><linearGradient id="g"><stop offset="0" stop-color="#000"/></linearGradient></defs>'
-    + '<path d="M0 0h24v24H0z" fill="#f00"/><g transform="rotate(45)"><use/></g></svg>';
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
+    '<style>.a{fill:url(#g)}</style>' +
+    '<defs><linearGradient id="g"><stop offset="0" stop-color="#000"/></linearGradient></defs>' +
+    '<path d="M0 0h24v24H0z" fill="#f00"/><g transform="rotate(45)"><use/></g></svg>';
   const noise = ['<', '>', '/', '"', "'", '=', ' ', 'onload=x', '<script', '&'];
 
   for (let i = 0; i < ITERATIONS; i++) {
@@ -126,6 +164,10 @@ test('no byte-level corruption of a real icon produces dangerous output', () => 
     const input = svg.slice(0, at) + insert + svg.slice(at);
     const out = sanitizeSvg(input);
     const why = unsafeReason(out);
-    assert.equal(why, null, `${why} survived after inserting ${JSON.stringify(insert)} at ${at}\n  out: ${JSON.stringify(out)}`);
+    assert.equal(
+      why,
+      null,
+      `${why} survived after inserting ${JSON.stringify(insert)} at ${at}\n  out: ${JSON.stringify(out)}`,
+    );
   }
 });

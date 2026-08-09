@@ -2,7 +2,7 @@ const path = require('node:path');
 /* Load the real shipped manifests so this exercises the actual field
    declarations, not a fixture. */
 process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpPath } = require('../test-support/tmp');
 process.env.CONFIG_PATH = tmpPath('apps.json');
 
 const { test } = require('node:test');
@@ -11,23 +11,46 @@ const { scrubConfigSecrets, preserveConfigSecrets } = require('../src/widget-sec
 const { scrubAllSecrets, preserveAllSecrets } = require('../src/config-secrets');
 
 function sampleConfig() {
-  return { items: [
-    { id: 'b1', type: 'widget', widgetType: 'backup', widgetConfig: { slots: [
-      { provider: 'duplicati', dupUrl: 'http://d:8200', dupPass: 'DUP' },
-      { provider: 'kopia', kopiaUrl: 'http://k:51515', kopiaPass: 'KOP' },
-    ] } },
-    { id: 's1', type: 'widget', widgetType: 'stats', widgetConfig: {
-      truenasKey: 'TRUENAS', network: { myspeedPass: 'MYSPEED', enabled: true } } },
-    { id: 'c1', type: 'widget', widgetType: 'connections', widgetConfig: {
-      vpn: { apiKey: 'VPNAPI', token: 'VPNTOK' },
-      services: [{ id: 'x', token: 'SVC' }] } },
-  ] };
+  return {
+    items: [
+      {
+        id: 'b1',
+        type: 'widget',
+        widgetType: 'backup',
+        widgetConfig: {
+          slots: [
+            { provider: 'duplicati', dupUrl: 'http://d:8200', dupPass: 'DUP' },
+            { provider: 'kopia', kopiaUrl: 'http://k:51515', kopiaPass: 'KOP' },
+          ],
+        },
+      },
+      {
+        id: 's1',
+        type: 'widget',
+        widgetType: 'stats',
+        widgetConfig: {
+          truenasKey: 'TRUENAS',
+          network: { myspeedPass: 'MYSPEED', enabled: true },
+        },
+      },
+      {
+        id: 'c1',
+        type: 'widget',
+        widgetType: 'connections',
+        widgetConfig: {
+          vpn: { apiKey: 'VPNAPI', token: 'VPNTOK' },
+          services: [{ id: 'x', token: 'SVC' }],
+        },
+      },
+    ],
+  };
 }
 
 function anySecretLeft(obj) {
   const found = [];
   JSON.stringify(obj, (k, v) => {
-    if (typeof v === 'string' && ['DUP', 'KOP', 'MYSPEED', 'TRUENAS', 'VPNAPI', 'VPNTOK', 'SVC'].includes(v)) found.push(k);
+    if (typeof v === 'string' && ['DUP', 'KOP', 'MYSPEED', 'TRUENAS', 'VPNAPI', 'VPNTOK', 'SVC'].includes(v))
+      found.push(k);
     return v;
   });
   return found;
@@ -75,10 +98,18 @@ test('a newly submitted secret survives instead of being overwritten by the old 
 /* An app item carrying a secret badge header, so the facade tests exercise the
    badge system alongside the widget system in one pass. */
 function badgeApp() {
-  return { id: 'a1', type: 'app', name: 'A', url: 'http://x', badge: { headers: [
-    { key: 'Authorization', value: 'BADGESECRET', secret: true },
-    { key: 'X-Env', value: 'prod', secret: false },
-  ] } };
+  return {
+    id: 'a1',
+    type: 'app',
+    name: 'A',
+    url: 'http://x',
+    badge: {
+      headers: [
+        { key: 'Authorization', value: 'BADGESECRET', secret: true },
+        { key: 'X-Env', value: 'prod', secret: false },
+      ],
+    },
+  };
 }
 
 test('scrubAllSecrets runs the widget and badge scrubbers in one pass', () => {

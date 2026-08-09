@@ -8,7 +8,9 @@
 const { KIND, WidgetError } = require('../src/api-error');
 
 const errorParts = () => ({
-  fail: (message, opts) => { throw new WidgetError(message, opts); },
+  fail: (message, opts) => {
+    throw new WidgetError(message, opts);
+  },
   KIND,
 });
 

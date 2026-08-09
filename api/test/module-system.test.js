@@ -30,7 +30,8 @@ function jsFiles(dir) {
 
 /* A statement, not the word: `import` appears inside strings and comments, and
    a dynamic import() is legal in CommonJS. */
-const ESM_STATEMENT = /^\s*(?:import\s+[\w{*][^\n]*from\s+['"]|import\s+['"]|export\s+(?:default|const|let|var|function|class|\{))/m;
+const ESM_STATEMENT =
+  /^\s*(?:import\s+[\w{*][^\n]*from\s+['"]|import\s+['"]|export\s+(?:default|const|let|var|function|class|\{))/m;
 
 test('no module under api/src uses ESM syntax', () => {
   const offenders = jsFiles(path.join(root, 'api', 'src'))
@@ -42,10 +43,10 @@ test('no module under api/src uses ESM syntax', () => {
 test('the scan would notice ESM if it appeared', () => {
   /* A checker that cannot fail is worse than none. */
   assert.match("import { x } from './y.js';", ESM_STATEMENT);
-  assert.match("export default foo;", ESM_STATEMENT);
-  assert.match("export function bar() {}", ESM_STATEMENT);
+  assert.match('export default foo;', ESM_STATEMENT);
+  assert.match('export function bar() {}', ESM_STATEMENT);
   assert.doesNotMatch("const x = require('./y');", ESM_STATEMENT);
-  assert.doesNotMatch("/* import is mentioned here */", ESM_STATEMENT);
+  assert.doesNotMatch('/* import is mentioned here */', ESM_STATEMENT);
   assert.doesNotMatch("const mod = await import('./y.js');", ESM_STATEMENT);
 });
 
@@ -61,13 +62,17 @@ test('widget data functions are still CommonJS, because the server requires them
   /* If these ever became ESM the API could not load them, and the lint override
      above would have to change with them. */
   const widgets = path.join(root, 'ui', 'widgets');
-  const dataFns = fs.readdirSync(widgets, { withFileTypes: true })
+  const dataFns = fs
+    .readdirSync(widgets, { withFileTypes: true })
     .filter(d => d.isDirectory())
     .map(d => path.join(widgets, d.name, 'data.js'))
     .filter(f => fs.existsSync(f));
   assert.ok(dataFns.length, 'no widget data functions found');
   for (const f of dataFns) {
-    assert.doesNotMatch(fs.readFileSync(f, 'utf8'), ESM_STATEMENT,
-      `${path.relative(root, f)} runs on the server and must stay CommonJS`);
+    assert.doesNotMatch(
+      fs.readFileSync(f, 'utf8'),
+      ESM_STATEMENT,
+      `${path.relative(root, f)} runs on the server and must stay CommonJS`,
+    );
   }
 });

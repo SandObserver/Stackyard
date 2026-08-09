@@ -40,8 +40,7 @@ test('the removal is verified inside the build', () => {
 });
 
 test('node itself is still checked to work afterwards', () => {
-  assert.match(dockerfile, /node -e "process\.exit\(0\)"/,
-    'removing the package managers must not break the runtime');
+  assert.match(dockerfile, /node -e "process\.exit\(0\)"/, 'removing the package managers must not break the runtime');
 });
 
 test('nothing in the image invokes a package manager', () => {
@@ -54,7 +53,8 @@ test('nothing in the image invokes a package manager', () => {
   const INVOKED = /(?:^|[\s;&|(])(npm|npx|yarn|corepack)\b/;
   for (const file of ['Dockerfile', 'docker-entrypoint.sh', 'supervisord.conf']) {
     const src = fs.readFileSync(path.join(root, file), 'utf8');
-    const invocations = src.split('\n')
+    const invocations = src
+      .split('\n')
       .map(l => l.replace(/#.*$/, '').replace(/command -v \w+/g, ''))
       .filter(l => INVOKED.test(l));
     assert.deepEqual(invocations, [], `${file} appears to use a package manager at runtime`);
@@ -65,8 +65,11 @@ test('the API still declares no runtime dependencies', () => {
   /* The removal is only safe while this holds: a dependency would need an
      install step, and the image has nothing to run one with. */
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'api', 'package.json'), 'utf8'));
-  assert.deepEqual(pkg.dependencies ?? {}, {},
-    'the API has a runtime dependency, which the image can no longer install');
+  assert.deepEqual(
+    pkg.dependencies ?? {},
+    {},
+    'the API has a runtime dependency, which the image can no longer install',
+  );
 });
 
 /* setuptools arrives as an apk dependency of supervisor and is reported against
@@ -91,8 +94,11 @@ test('the Dockerfile deletes setuptools', () => {
 test('setuptools is removed in the layer that installs supervisor', () => {
   const run = /RUN apk add --no-cache nginx supervisor[\s\S]*?(?=\n(?:#|[A-Z]+ ))/.exec(dockerfile);
   assert.ok(run, 'the apk install step has been restructured');
-  assert.match(run[0], /rm -rf \/usr\/lib\/python3\*\/site-packages\/setuptools/,
-    'the deletion moved out of the install layer, so the files survive in it');
+  assert.match(
+    run[0],
+    /rm -rf \/usr\/lib\/python3\*\/site-packages\/setuptools/,
+    'the deletion moved out of the install layer, so the files survive in it',
+  );
 });
 
 /* Deleting the files is only half of it. The build asserts nothing can import

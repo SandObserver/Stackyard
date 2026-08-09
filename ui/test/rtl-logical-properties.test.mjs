@@ -47,8 +47,11 @@ function widgetPages() {
 
 /* Only the <style> blocks: the scripts below them mention left and right in
    contexts that have nothing to do with text. */
-const styleBlocks = src => [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
-  .map(m => m[1]).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
+const styleBlocks = src =>
+  [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+    .map(m => m[1])
+    .join('\n')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
 const widgetCss = file => styleBlocks(read(file));
 
 /* Comments are stripped, or a comment explaining this rule would trip it. */
@@ -57,9 +60,12 @@ const code = file => read(file).replace(/\/\*[\s\S]*?\*\//g, '');
 /* ── no physical properties remain ────────────────────────────────────────── */
 
 const PHYSICAL = [
-  /margin-left\s*:/, /margin-right\s*:/,
-  /padding-left\s*:/, /padding-right\s*:/,
-  /border-left\s*:/, /border-right\s*:/,
+  /margin-left\s*:/,
+  /margin-right\s*:/,
+  /padding-left\s*:/,
+  /padding-right\s*:/,
+  /border-left\s*:/,
+  /border-right\s*:/,
   /text-align\s*:\s*(left|right)\b/,
   /text-align-last\s*:\s*(left|right)\b/,
 ];
@@ -89,8 +95,11 @@ test('no widget page spaces text by screen side', () => {
       if (m) offenders.push(`${file}: ${m[0]}`);
     }
   }
-  assert.deepEqual(offenders, [],
-    `These do not flip for Persian. Use the inline-start/end form:\n  ${offenders.join('\n  ')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `These do not flip for Persian. Use the inline-start/end form:\n  ${offenders.join('\n  ')}`,
+  );
 });
 
 /* The conversion above is inert unless something sets the direction, and a
@@ -99,10 +108,12 @@ test('no widget page spaces text by screen side', () => {
    of its own to follow the page. */
 test('the dashboard gives each widget frame the page direction', () => {
   const utils = read('js/utils.js');
-  assert.match(utils, /doc\.documentElement\.setAttribute\('dir'/,
-    'nothing sets the direction inside a widget frame');
-  assert.match(utils, /addEventListener\('load', applyDir\)/,
-    'a reload replaces the document, so this has to run on every load');
+  assert.match(utils, /doc\.documentElement\.setAttribute\('dir'/, 'nothing sets the direction inside a widget frame');
+  assert.match(
+    utils,
+    /addEventListener\('load', applyDir\)/,
+    'a reload replaces the document, so this has to run on every load',
+  );
 });
 
 /* Pinning the direction of a fragment is legitimate and sometimes correct: an
@@ -136,10 +147,13 @@ test('no widget page pins the direction of its own document', () => {
     const how = pinsDocumentDirection(read(file));
     if (how) offenders.push(`${file}: ${how}`);
   }
-  assert.deepEqual(offenders, [],
+  assert.deepEqual(
+    offenders,
+    [],
     `A widget follows the page direction. To pin content that reads the same in
 every language, put dir or direction on a wrapper inside the widget instead:
-  ${offenders.join('\n  ')}`);
+  ${offenders.join('\n  ')}`,
+  );
 });
 
 /* The other half of the same rule: pinning a fragment has to stay possible, or
@@ -171,8 +185,11 @@ test('the document-level forms are all caught', () => {
 /* ── the overrides are gone ───────────────────────────────────────────────── */
 
 test('the dashboard needs no direction overrides at all', () => {
-  assert.doesNotMatch(code('css/dashboard.css'), /\[dir="rtl"\]/,
-    'an override list can only cover what someone noticed');
+  assert.doesNotMatch(
+    code('css/dashboard.css'),
+    /\[dir="rtl"\]/,
+    'an override list can only cover what someone noticed',
+  );
 });
 
 /* Only the chevrons, which no logical property can express. */
@@ -191,10 +208,12 @@ test('the divider between the navigation and the section follows the text direct
      so it moves to the other side in Persian. */
   const src = code('css/admin.css');
   assert.match(src, /\.cp\{[^}]*border-inline-start:1px solid var\(--bd-inner\)/);
-  assert.doesNotMatch(src, /\.sb\{[^}]*border-inline-(start|end)/,
-    'the sidebar should no longer carry the divider');
-  assert.match(src, /html\.is-mobile \.cp\{[^}]*border-inline-start:none/,
-    'there is no sidebar on mobile, so no divider either');
+  assert.doesNotMatch(src, /\.sb\{[^}]*border-inline-(start|end)/, 'the sidebar should no longer carry the divider');
+  assert.match(
+    src,
+    /html\.is-mobile \.cp\{[^}]*border-inline-start:none/,
+    'there is no sidebar on mobile, so no divider either',
+  );
 });
 
 test('row values align to the end of the line, not the right', () => {
@@ -224,8 +243,11 @@ test('the toast state has no edge that could point the wrong way', () => {
   const rules = [...src.matchAll(/#toast\.(?:ok|err)\{([^}]*)\}/g)].map(m => m[1]);
   assert.equal(rules.length, 2, 'expected an .ok and an .err toast rule');
   for (const body of rules) {
-    assert.doesNotMatch(body, /border-(left|right|inline-start|inline-end)/,
-      `a one-sided toast border is back: ${body}`);
+    assert.doesNotMatch(
+      body,
+      /border-(left|right|inline-start|inline-end)/,
+      `a one-sided toast border is back: ${body}`,
+    );
     assert.match(body, /border-color:/, 'the state should colour the whole border');
   }
 });
@@ -233,7 +255,8 @@ test('the toast state has no edge that could point the wrong way', () => {
 /* ── the project really does ship a right-to-left language ────────────────── */
 
 test('a right-to-left locale is shipped, so this is not hypothetical', () => {
-  const rtl = fs.readdirSync(path.join(root, 'i18n'))
+  const rtl = fs
+    .readdirSync(path.join(root, 'i18n'))
     .filter(f => f.endsWith('.json'))
     .filter(f => JSON.parse(read(`i18n/${f}`))._meta?.dir === 'rtl');
   assert.ok(rtl.length > 0, 'no rtl locale found; this work would be speculative');

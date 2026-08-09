@@ -1,4 +1,3 @@
-const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { collectNumbers, extractPath, computeBadgeValue } = require('../src/badge-extract');
@@ -57,7 +56,8 @@ test('collectNumbers emits an array count and boolean filter counts', () => {
 test('collectNumbers is null-safe and bounded', () => {
   assert.deepEqual(collectNumbers(null), []);
   // deep nesting must terminate rather than blow the stack
-  let deep = 0; for (let i = 0; i < 50; i++) deep = { d: deep };
+  let deep = 0;
+  for (let i = 0; i < 50; i++) deep = { d: deep };
   assert.doesNotThrow(() => collectNumbers(deep));
 });
 

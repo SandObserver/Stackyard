@@ -34,7 +34,8 @@ function stateFields(src) {
 
 const fields = stateFields(stateSrc);
 
-const others = fs.readdirSync(jsDir)
+const others = fs
+  .readdirSync(jsDir)
   .filter(f => f.endsWith('.js') && f !== STATE_FILE)
   .map(f => fs.readFileSync(path.join(jsDir, f), 'utf8'))
   .join('\n');
@@ -52,8 +53,11 @@ test('the state object declares the fields this test expects to find', () => {
 
 test('no field is declared and never used', () => {
   const dead = fields.filter(f => !used(f) && !(f in ALLOWED));
-  assert.deepEqual(dead, [],
-    `Declared in ${STATE_FILE} but referenced nowhere else. Remove them, or add to ALLOWED with a reason: ${dead.join(', ')}`);
+  assert.deepEqual(
+    dead,
+    [],
+    `Declared in ${STATE_FILE} but referenced nowhere else. Remove them, or add to ALLOWED with a reason: ${dead.join(', ')}`,
+  );
 });
 
 /* The guard above is a grep, so it is only sound while access stays static.
@@ -61,8 +65,11 @@ test('no field is declared and never used', () => {
    this test would wrongly demand its removal. */
 test('state is not accessed dynamically, which would defeat the check above', () => {
   const dynamic = [...others.matchAll(/\bst(?:ate)?\[[^\]]+\]/g)].map(m => m[0]);
-  assert.deepEqual(dynamic, [],
-    `Dynamic state access found, so the dead-field check is no longer reliable: ${dynamic.join(', ')}`);
+  assert.deepEqual(
+    dynamic,
+    [],
+    `Dynamic state access found, so the dead-field check is no longer reliable: ${dynamic.join(', ')}`,
+  );
 });
 
 /* The two fields the finding named, so a revert is caught by name and not only

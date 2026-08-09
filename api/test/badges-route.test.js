@@ -14,7 +14,7 @@
 const path = require('node:path');
 
 process.env.ALLOW_PRIVATE_IPS = 'true';
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('badges'), 'apps.json');
 
 const { test, before, after } = require('node:test');
@@ -29,7 +29,11 @@ let server, base, upstream, upstreamBase;
 let upstreamBody = {};
 
 const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
-const close = s => new Promise(r => { s.closeAllConnections?.(); s.close(r); });
+const close = s =>
+  new Promise(r => {
+    s.closeAllConnections?.();
+    s.close(r);
+  });
 
 before(async () => {
   upstream = http.createServer((_, res) => {
@@ -40,25 +44,37 @@ before(async () => {
   server = http.createServer(dispatch);
   base = await listen(server);
 });
-after(async () => { await close(server); await close(upstream); });
+after(async () => {
+  await close(server);
+  await close(upstream);
+});
 
 function get(pathname) {
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
-    http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET' }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => resolve(JSON.parse(b)));
-    }).on('error', reject).end();
+    http
+      .request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET' }, res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve(JSON.parse(b)));
+      })
+      .on('error', reject)
+      .end();
   });
 }
 
 function configure(extract) {
   saveConfig({
-    items: [{
-      id: 'a1', type: 'app', name: 'App',
-      badge: { enabled: true, url: `${upstreamBase}/api/counts`, extract },
-    }],
+    items: [
+      {
+        id: 'a1',
+        type: 'app',
+        name: 'App',
+        badge: { enabled: true, url: `${upstreamBase}/api/counts`, extract },
+      },
+    ],
     settings: {},
   });
 }
@@ -95,7 +111,9 @@ test('a large upstream body does not enlarge the response', async () => {
    the dashboard's stale handling depends on. */
 test('an unreachable upstream still answers with a value of zero', async () => {
   saveConfig({
-    items: [{ id: 'a1', type: 'app', name: 'App', badge: { enabled: true, url: 'http://127.0.0.1:1/', extract: 'pending' } }],
+    items: [
+      { id: 'a1', type: 'app', name: 'App', badge: { enabled: true, url: 'http://127.0.0.1:1/', extract: 'pending' } },
+    ],
     settings: {},
   });
   const r = (await get('/api/badges')).a1;

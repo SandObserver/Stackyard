@@ -91,8 +91,11 @@ test('the scan finds the catalog and the source', () => {
    belonged to was deleted and the string left behind. */
 test('every catalog key is referenced by name', () => {
   const unreferenced = keys.filter(k => !referenced.has(k) && !(k in DYNAMIC)).sort();
-  assert.deepEqual(unreferenced, [],
-    `Defined in en.json but named nowhere. Remove them, or add to DYNAMIC with a reason:\n  ${unreferenced.join('\n  ')}`);
+  assert.deepEqual(
+    unreferenced,
+    [],
+    `Defined in en.json but named nowhere. Remove them, or add to DYNAMIC with a reason:\n  ${unreferenced.join('\n  ')}`,
+  );
 });
 
 /* Direction two: this is the one a user sees. t('hom.retry') renders the string
@@ -104,8 +107,11 @@ test('every referenced key exists in the catalog', () => {
 
   const known = new Set(keys);
   const missing = [...named].filter(k => !known.has(k)).sort();
-  assert.deepEqual(missing, [],
-    `Referenced but not in en.json; t() renders the key itself to the user:\n  ${missing.join('\n  ')}`);
+  assert.deepEqual(
+    missing,
+    [],
+    `Referenced but not in en.json; t() renders the key itself to the user:\n  ${missing.join('\n  ')}`,
+  );
 });
 
 /* The mechanism this replaced. Its absence is what makes the two tests above
@@ -113,8 +119,10 @@ test('every referenced key exists in the catalog', () => {
 test('translation by matching English text is gone', () => {
   const i18n = fs.readFileSync(path.join(uiDir, 'js/i18n.js'), 'utf8');
   for (const gone of ['revMap', 'translateText', 'TEXT_SELECTORS']) {
-    assert.ok(!i18n.includes(gone),
-      `${gone} is back. Translating by matching rendered English makes reachability undecidable and breaks silently when the English changes.`);
+    assert.ok(
+      !i18n.includes(gone),
+      `${gone} is back. Translating by matching rendered English makes reachability undecidable and breaks silently when the English changes.`,
+    );
   }
 });
 

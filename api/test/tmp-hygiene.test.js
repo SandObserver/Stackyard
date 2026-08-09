@@ -38,23 +38,32 @@ test('the scan sees the suite', () => {
 
 test('no test creates a temporary directory of its own', () => {
   const offenders = files.filter(f => /mkdtemp/.test(read(f)));
-  assert.deepEqual(offenders, [],
-    `Use tmpDir() from test-support/tmp.js, which removes the directory on exit:\n  ${offenders.join('\n  ')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Use tmpDir() from test-support/tmp.js, which removes the directory on exit:\n  ${offenders.join('\n  ')}`,
+  );
 });
 
 /* The half that actually caused a failure. A fixed path is shared between runs
    and between developers, and is only safe while nothing writes to it. */
 test('no test names a fixed path under /tmp', () => {
   const offenders = files.filter(f => /['"]\/tmp\//.test(read(f)));
-  assert.deepEqual(offenders, [],
-    `A fixed /tmp path persists between runs. Use tmpPath() from test-support/tmp.js:\n  ${offenders.join('\n  ')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `A fixed /tmp path persists between runs. Use tmpPath() from test-support/tmp.js:\n  ${offenders.join('\n  ')}`,
+  );
 });
 
 /* os.tmpdir() joined by hand is the same hazard wearing a portable hat. */
 test('no test builds its own path from os.tmpdir()', () => {
   const offenders = files.filter(f => /os\.tmpdir\(\)/.test(read(f)));
-  assert.deepEqual(offenders, [],
-    `Use tmpDir() or tmpPath() rather than composing a path from os.tmpdir():\n  ${offenders.join('\n  ')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Use tmpDir() or tmpPath() rather than composing a path from os.tmpdir():\n  ${offenders.join('\n  ')}`,
+  );
 });
 
 /* The guarantee rests entirely on the helper removing what it made. */
@@ -70,6 +79,8 @@ test('the helper registers cleanup for every directory it creates', () => {
    the module that reads it. A hook would run far too late. */
 test('cleanup does not depend on a test hook', () => {
   const src = fs.readFileSync(path.join(testDir, HELPER), 'utf8');
-  assert.ok(!/require\('node:test'\)/.test(src),
-    'the helper must not need the test runner; it is used at module scope');
+  assert.ok(
+    !/require\('node:test'\)/.test(src),
+    'the helper must not need the test runner; it is used at module scope',
+  );
 });

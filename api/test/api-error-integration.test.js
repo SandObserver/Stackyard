@@ -9,7 +9,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 process.env.ALLOW_PRIVATE_IPS = 'true';
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const _tmp = tmpDir('apierr');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
@@ -28,7 +28,8 @@ const { KIND } = require('../src/api-error');
 const SECRET = 'b'.repeat(64);
 let server, base, cookie;
 let upstream, upstreamBase;
-let upstreamStatus = 200, upstreamBody = '{"count":3}';
+let upstreamStatus = 200,
+  upstreamBody = '{"count":3}';
 
 before(async () => {
   const passwordHash = await hashPassword('correct-horse');
@@ -49,27 +50,47 @@ before(async () => {
 });
 
 after(async () => {
-  await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
-  await new Promise(r => { upstream.closeAllConnections?.(); upstream.close(r); });
+  await new Promise(r => {
+    server.closeAllConnections?.();
+    server.close(r);
+  });
+  await new Promise(r => {
+    upstream.closeAllConnections?.();
+    upstream.close(r);
+  });
 });
 
 function post(pathname, body, opts = {}) {
   const data = JSON.stringify(body);
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: Object.assign({
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data),
-        Origin: base,
-        Cookie: opts.cookie === null ? '' : (opts.cookie || cookie),
-      }),
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
-    });
+    const r = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: Object.assign({
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(data),
+          Origin: base,
+          Cookie: opts.cookie === null ? '' : opts.cookie || cookie,
+        }),
+      },
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => {
+          let j = null;
+          try {
+            j = JSON.parse(b);
+          } catch {}
+          resolve({ status: res.statusCode, body: j });
+        });
+      },
+    );
     r.on('error', reject);
     r.end(data);
   });
@@ -89,11 +110,29 @@ test('a cross-origin write keeps its 403 and gains a kind', async () => {
   const data = JSON.stringify({ url: upstreamBase });
   const u = new URL(base + '/api/ping');
   const r = await new Promise((resolve, reject) => {
-    const q = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: 'http://evil.example', Cookie: cookie },
-    }, res => { let b = ''; res.on('data', c => { b += c; }); res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(b) })); });
-    q.on('error', reject); q.end(data);
+    const q = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(data),
+          Origin: 'http://evil.example',
+          Cookie: cookie,
+        },
+      },
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(b) }));
+      },
+    );
+    q.on('error', reject);
+    q.end(data);
   });
   assert.equal(r.status, 403);
   assert.equal(r.body.kind, KIND.INVALID);
@@ -102,7 +141,8 @@ test('a cross-origin write keeps its 403 and gains a kind', async () => {
 /* ── badge-proxy ──────────────────────────────────────────────────────────── */
 
 test('badge-proxy reports an upstream 401 as a failure, not a bare success', async () => {
-  upstreamStatus = 401; upstreamBody = '{"detail":"missing token"}';
+  upstreamStatus = 401;
+  upstreamBody = '{"detail":"missing token"}';
   const r = await post('/api/badge-proxy', { url: upstreamBase });
   assert.equal(r.status, 502);
   assert.equal(r.body.kind, KIND.UPSTREAM);
@@ -110,14 +150,16 @@ test('badge-proxy reports an upstream 401 as a failure, not a bare success', asy
 });
 
 test('badge-proxy does not leak the upstream response body into detail', async () => {
-  upstreamStatus = 403; upstreamBody = '{"secret":"hunter2"}';
+  upstreamStatus = 403;
+  upstreamBody = '{"secret":"hunter2"}';
   const r = await post('/api/badge-proxy', { url: upstreamBase });
   assert.deepEqual(Object.keys(r.body.detail), ['status'], 'detail is server-derived only');
   assert.ok(!JSON.stringify(r.body).includes('hunter2'));
 });
 
 test('badge-proxy still succeeds on a 200', async () => {
-  upstreamStatus = 200; upstreamBody = '{"count":3}';
+  upstreamStatus = 200;
+  upstreamBody = '{"count":3}';
   const r = await post('/api/badge-proxy', { url: upstreamBase });
   assert.equal(r.status, 200);
   assert.ok(!('kind' in r.body), 'a success carries no kind');
@@ -127,7 +169,8 @@ test('badge-proxy still succeeds on a 200', async () => {
 /* The counterpart to /api/badges no longer sending the body (P4-3): this is the
    endpoint the admin field picker uses, and it is the one that must keep it. */
 test('badge-proxy still returns the upstream body for the field picker', async () => {
-  upstreamStatus = 200; upstreamBody = '{"count":3,"nested":{"other":9}}';
+  upstreamStatus = 200;
+  upstreamBody = '{"count":3,"nested":{"other":9}}';
   const r = await post('/api/badge-proxy', { url: upstreamBase });
   assert.deepEqual(r.body.data, { count: 3, nested: { other: 9 } });
   assert.ok(r.body.numbers.some(n => n.path === 'count' && n.value === 3));
@@ -136,7 +179,10 @@ test('badge-proxy still returns the upstream body for the field picker', async (
 test('badge-proxy tags an unreachable target as a network failure', async () => {
   const dead = await new Promise(res => {
     const s = http.createServer(() => {});
-    s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); });
+    s.listen(0, '127.0.0.1', () => {
+      const p = s.address().port;
+      s.close(() => res(p));
+    });
   });
   const r = await post('/api/badge-proxy', { url: `http://127.0.0.1:${dead}` });
   assert.equal(r.status, 502);
@@ -155,7 +201,10 @@ test('badge-proxy tags a missing url as invalid', async () => {
 test('ping keeps its ok:false shape and gains a kind', async () => {
   const dead = await new Promise(res => {
     const s = http.createServer(() => {});
-    s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); });
+    s.listen(0, '127.0.0.1', () => {
+      const p = s.address().port;
+      s.close(() => res(p));
+    });
   });
   const r = await post('/api/ping', { url: `http://127.0.0.1:${dead}` });
   assert.equal(r.status, 200);

@@ -62,7 +62,9 @@ test('setUserText sets the text and marks it auto-direction', async () => {
   const calls = [];
   const node = /** @type {any} */ ({
     textContent: '',
-    setAttribute(name, value) { calls.push([name, value]); },
+    setAttribute(name, value) {
+      calls.push([name, value]);
+    },
   });
   const returned = setUserText(node, 'Backup and Storage');
   assert.equal(node.textContent, 'Backup and Storage');

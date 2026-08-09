@@ -55,8 +55,7 @@ test('the current page is marked for a screen reader', () => {
 test('both places that build dots use the one helper', () => {
   const calls = dashboard.match(/mkDot\(/g) || [];
   assert.ok(calls.length >= 3, `expected the definition and two call sites, found ${calls.length}`);
-  assert.doesNotMatch(dashboard, /const d = mk\('div'\); d\.className = 'dot'/,
-    'a call site still builds its own div');
+  assert.doesNotMatch(dashboard, /const d = mk\('div'\); d\.className = 'dot'/, 'a call site still builds its own div');
 });
 
 /* Paging updates the dots in place rather than rebuilding them, so the

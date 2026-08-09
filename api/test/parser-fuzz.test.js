@@ -35,14 +35,67 @@ function rng(seed) {
    on, so random input reaches real code paths instead of bouncing off the
    first character. */
 const TOKENS = [
-  '<', '>', '</', '/>', '<!--', '-->', '<![CDATA[', ']]>', '<?xml', '?>', '<!DOCTYPE',
-  '=', '"', "'", '&', '&amp;', '&#x', '&#', ';', ' ', '\t', '\r\n', '\n', '\0',
-  'a', 'r', 'tag', 'x:y', '__proto__', 'toString', 'constructor', 'valueOf',
-  '0', '42', '-1', '1e999', '.5', 'NaN', 'Infinity', '9007199254740993',
-  '# HELP', '# TYPE', '{', '}', ',', 'metric_a', '{code="200"}',
-  '--BOUND', '--BOUND--', 'Content-Disposition: form-data;', 'name="i"',
-  'filename="x.svg"', 'filename="../../etc/passwd"', ':', '.', '-', '%', '\\',
-  '\u00ff', '\ud83d\ude00', '\ufffd',
+  '<',
+  '>',
+  '</',
+  '/>',
+  '<!--',
+  '-->',
+  '<![CDATA[',
+  ']]>',
+  '<?xml',
+  '?>',
+  '<!DOCTYPE',
+  '=',
+  '"',
+  "'",
+  '&',
+  '&amp;',
+  '&#x',
+  '&#',
+  ';',
+  ' ',
+  '\t',
+  '\r\n',
+  '\n',
+  '\0',
+  'a',
+  'r',
+  'tag',
+  'x:y',
+  '__proto__',
+  'toString',
+  'constructor',
+  'valueOf',
+  '0',
+  '42',
+  '-1',
+  '1e999',
+  '.5',
+  'NaN',
+  'Infinity',
+  '9007199254740993',
+  '# HELP',
+  '# TYPE',
+  '{',
+  '}',
+  ',',
+  'metric_a',
+  '{code="200"}',
+  '--BOUND',
+  '--BOUND--',
+  'Content-Disposition: form-data;',
+  'name="i"',
+  'filename="x.svg"',
+  'filename="../../etc/passwd"',
+  ':',
+  '.',
+  '-',
+  '%',
+  '\\',
+  '\u00ff',
+  '\ud83d\ude00',
+  '\ufffd',
 ];
 
 function generate(rand) {
@@ -65,11 +118,12 @@ function corrupt(rand, source) {
   return bytes.toString('latin1');
 }
 
-const VALID_XML = '<MediaContainer size="2"><Metadata title="A"><Player state="playing"/></Metadata>'
-  + '<Metadata title="B"/><!-- c --><![CDATA[raw]]></MediaContainer>';
+const VALID_XML =
+  '<MediaContainer size="2"><Metadata title="A"><Player state="playing"/></Metadata>' +
+  '<Metadata title="B"/><!-- c --><![CDATA[raw]]></MediaContainer>';
 const VALID_PROM = '# HELP x help\n# TYPE x gauge\nmetric_a 42\nmetric_b{code="200"} 3.5 1650000000\n';
-const VALID_MULTIPART = '--BOUND\r\nContent-Disposition: form-data; name="i"; filename="x.svg"\r\n\r\n'
-  + '<svg/>\r\n--BOUND--\r\n';
+const VALID_MULTIPART =
+  '--BOUND\r\nContent-Disposition: form-data; name="i"; filename="x.svg"\r\n\r\n' + '<svg/>\r\n--BOUND--\r\n';
 
 function inputsFor(valid) {
   const rand = rng(SEED);
@@ -93,7 +147,12 @@ test('parseXml never throws and always returns an object', () => {
   const started = Date.now();
   for (const input of inputsFor(VALID_XML)) {
     let out;
-    assert.doesNotThrow(() => { out = parseXml(input); }, () => `input: ${JSON.stringify(input)}`);
+    assert.doesNotThrow(
+      () => {
+        out = parseXml(input);
+      },
+      () => `input: ${JSON.stringify(input)}`,
+    );
     assert.equal(typeof out, 'object', `input: ${JSON.stringify(input)}`);
     assert.notEqual(out, null, `input: ${JSON.stringify(input)}`);
   }
@@ -105,7 +164,12 @@ test('parsePrometheus never throws and always returns finite numeric values', ()
   const started = Date.now();
   for (const input of inputsFor(VALID_PROM)) {
     let out;
-    assert.doesNotThrow(() => { out = parsePrometheus(input); }, () => `input: ${JSON.stringify(input)}`);
+    assert.doesNotThrow(
+      () => {
+        out = parsePrometheus(input);
+      },
+      () => `input: ${JSON.stringify(input)}`,
+    );
     for (const [key, value] of Object.entries(out)) {
       assert.equal(typeof value, 'number', `key ${key} from ${JSON.stringify(input)}`);
       assert.ok(!Number.isNaN(value), `key ${key} from ${JSON.stringify(input)}`);
@@ -120,7 +184,12 @@ test('parseMultipartFile never throws and reports a consistent result shape', ()
   for (const input of inputsFor(VALID_MULTIPART)) {
     const buf = Buffer.from(input, 'latin1');
     let out;
-    assert.doesNotThrow(() => { out = parseMultipartFile(buf, 'BOUND'); }, () => `input: ${JSON.stringify(input)}`);
+    assert.doesNotThrow(
+      () => {
+        out = parseMultipartFile(buf, 'BOUND');
+      },
+      () => `input: ${JSON.stringify(input)}`,
+    );
     assert.equal(typeof out.filename, 'string', `input: ${JSON.stringify(input)}`);
     assert.ok(out.fileParts >= 0, `input: ${JSON.stringify(input)}`);
     /* A file part was seen, so its bytes must have been captured too. */

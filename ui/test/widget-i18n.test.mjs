@@ -83,7 +83,11 @@ test('English skips the fetch entirely', () => {
 });
 
 test('no status string is hardcoded any more', () => {
-  for (const [key, english] of [['loading', 'Loading'], ['unavailable', 'Unavailable'], ['noData', 'No data']]) {
+  for (const [key, english] of [
+    ['loading', 'Loading'],
+    ['unavailable', 'Unavailable'],
+    ['noData', 'No data'],
+  ]) {
     assert.ok(toolbox.includes(`_t('${key}', '${english}')`), `${english} is not looked up`);
   }
 });

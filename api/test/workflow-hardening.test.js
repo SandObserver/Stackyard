@@ -28,7 +28,9 @@ const root = path.join(__dirname, '..', '..');
 const wfDir = path.join(root, '.github', 'workflows');
 const actionsDir = path.join(root, '.github', 'actions');
 
-const workflows = fs.readdirSync(wfDir).filter(f => f.endsWith('.yml'))
+const workflows = fs
+  .readdirSync(wfDir)
+  .filter(f => f.endsWith('.yml'))
   .map(f => [`workflows/${f}`, fs.readFileSync(path.join(wfDir, f), 'utf8')]);
 
 function compositeActions() {
@@ -52,18 +54,17 @@ test('the scan finds the workflows', () => {
 /* A workflow with no permissions block inherits the repository default, which
    here is write. */
 test('every workflow declares its permissions', () => {
-  const missing = workflows.filter(([, s]) => !/^permissions:/m.test(s) && !/^\s+permissions:/m.test(s))
+  const missing = workflows
+    .filter(([, s]) => !/^permissions:/m.test(s) && !/^\s+permissions:/m.test(s))
     .map(([f]) => f);
-  assert.deepEqual(missing, [],
-    `These inherit the repository default, which is write:\n  ${missing.join('\n  ')}`);
+  assert.deepEqual(missing, [], `These inherit the repository default, which is write:\n  ${missing.join('\n  ')}`);
 });
 
 test('the test workflow can only read', () => {
   const [, src] = workflows.find(([f]) => f.endsWith('test.yml'));
   const block = src.slice(src.indexOf('permissions:'));
   assert.match(block, /contents: read/);
-  assert.ok(!/write/.test(block.split('jobs:')[0]),
-    'the test workflow must not grant any write scope');
+  assert.ok(!/write/.test(block.split('jobs:')[0]), 'the test workflow must not grant any write scope');
 });
 
 /* Only the release publishes, and only to the package registry. */
@@ -98,8 +99,11 @@ test('every third-party action is pinned to a commit', () => {
       if (!/^[0-9a-f]{40}$/.test(rev)) unpinned.push(`${f}: ${ref}`);
     }
   }
-  assert.deepEqual(unpinned, [],
-    `Pin to a full commit SHA with the version in a trailing comment:\n  ${unpinned.join('\n  ')}`);
+  assert.deepEqual(
+    unpinned,
+    [],
+    `Pin to a full commit SHA with the version in a trailing comment:\n  ${unpinned.join('\n  ')}`,
+  );
 });
 
 /* A bare SHA is unreadable, and a reviewer cannot tell v4 from v7. */
@@ -133,8 +137,7 @@ test('checkout does not leave its credentials behind', () => {
    whatever was current the day they were written. */
 test('dependabot watches the actions', () => {
   const cfg = fs.readFileSync(path.join(root, '.github', 'dependabot.yml'), 'utf8');
-  assert.match(cfg, /package-ecosystem:\s*github-actions/,
-    'pinned SHAs need Dependabot to update them');
+  assert.match(cfg, /package-ecosystem:\s*github-actions/, 'pinned SHAs need Dependabot to update them');
 });
 
 /* Dependency code runs in these jobs, and the release build publishes what they
@@ -144,8 +147,10 @@ test('dependabot watches the actions', () => {
 test('the lockfile is committed and CI installs from it', () => {
   const lock = path.join(root, 'package-lock.json');
   assert.ok(fs.existsSync(lock), 'package-lock.json is missing');
-  assert.ok(!/^\s*package-lock\.json\s*$/m.test(fs.readFileSync(path.join(root, '.gitignore'), 'utf8')),
-    '.gitignore excludes the lockfile, so npm ci has nothing to install from');
+  assert.ok(
+    !/^\s*package-lock\.json\s*$/m.test(fs.readFileSync(path.join(root, '.gitignore'), 'utf8')),
+    '.gitignore excludes the lockfile, so npm ci has nothing to install from',
+  );
 
   const loose = [];
   for (const [f, src] of all) {

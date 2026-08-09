@@ -87,7 +87,8 @@ test('an unknown future kind degrades instead of crashing an older frontend', ()
 
 test('the retype instruction is shown on its own, without a failure prefix', async () => {
   const { optionsErrorText } = await import('../js/admin-error.js');
-  const msg = 'This configuration has changed since it was saved, so the stored credential was not used. Enter the credential to test these settings.';
+  const msg =
+    'This configuration has changed since it was saved, so the stored credential was not used. Enter the credential to test these settings.';
   assert.equal(optionsErrorText({ kind: KIND.INVALID, message: msg }), msg);
 });
 

@@ -41,7 +41,10 @@ test('books body matches the widget contract', () => {
     assert.equal(typeof bk.finished, 'boolean');
     assert.ok(bk.progress === null || (bk.progress >= 0 && bk.progress <= 1));
   }
-  assert.ok(b.books.some(bk => bk.finished), 'at least one finished book');
+  assert.ok(
+    b.books.some(bk => bk.finished),
+    'at least one finished book',
+  );
 });
 
 test('weather body matches the widget contract', () => {
@@ -53,7 +56,8 @@ test('weather body matches the widget contract', () => {
 
 test('github calendar is 53 weeks of 7 days and is stable across calls', () => {
   const fn = demoFn('github');
-  const a = fn(ctx()), b = fn(ctx());
+  const a = fn(ctx()),
+    b = fn(ctx());
   assert.equal(a.weeks.length, 53);
   assert.ok(a.weeks.every(w => w.contributionDays.length === 7));
   assert.equal(a.totalContributions, b.totalContributions);

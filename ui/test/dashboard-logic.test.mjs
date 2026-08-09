@@ -41,13 +41,27 @@ test('a bumped revision reloads', () => {
    Admin that other open dashboards used to ignore entirely. */
 test('every kind of edit is noticed, not just name and link', () => {
   const edits = {
-    'icon': c => { c.items[0].iconUrl = '/i/new.png'; },
-    'colour': c => { c.items[0].color = 'blue'; },
-    'dock pin': c => { c.items[0].dock = true; },
-    'hidden flag': c => { c.items[0].hidden = true; },
-    'badge settings': c => { c.items[0].badge = { enabled: true, url: 'https://r/api' }; },
-    'name': c => { c.items[0].label = 'Radarr 4K'; },
-    'link': c => { c.items[0].href = 'https://new'; },
+    icon: c => {
+      c.items[0].iconUrl = '/i/new.png';
+    },
+    colour: c => {
+      c.items[0].color = 'blue';
+    },
+    'dock pin': c => {
+      c.items[0].dock = true;
+    },
+    'hidden flag': c => {
+      c.items[0].hidden = true;
+    },
+    'badge settings': c => {
+      c.items[0].badge = { enabled: true, url: 'https://r/api' };
+    },
+    name: c => {
+      c.items[0].label = 'Radarr 4K';
+    },
+    link: c => {
+      c.items[0].href = 'https://new';
+    },
   };
   for (const [what, edit] of Object.entries(edits)) {
     assert.equal(configChanged(loaded, withRev(5, edit)), true, `a changed ${what} should reload`);

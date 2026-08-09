@@ -27,8 +27,7 @@ const raw = fs.readFileSync(cfgPath, 'utf8');
 const cfg = JSON.parse(raw.replace(/^\s*\/\*[\s\S]*?\*\/\s*/, ''));
 
 test('the frontend project is actually a typecheck', () => {
-  assert.equal(cfg.compilerOptions.checkJs, true,
-    'checkJs off makes this a path resolver, not a typecheck');
+  assert.equal(cfg.compilerOptions.checkJs, true, 'checkJs off makes this a path resolver, not a typecheck');
   assert.equal(cfg.compilerOptions.allowJs, true);
   assert.equal(cfg.compilerOptions.noEmit, true);
 });
@@ -51,8 +50,11 @@ test('every module under ui/js has both path entries', () => {
       else if (paths[key][0] !== `./ui/js/${m}`) missing.push(`${key} points at ${paths[key][0]}`);
     }
   }
-  assert.deepEqual(missing, [],
-    `Add both the plain and the ?v=* form; TypeScript allows one wildcard per pattern:\n  ${missing.join('\n  ')}`);
+  assert.deepEqual(
+    missing,
+    [],
+    `Add both the plain and the ?v=* form; TypeScript allows one wildcard per pattern:\n  ${missing.join('\n  ')}`,
+  );
 });
 
 test('the project covers ui/js', () => {

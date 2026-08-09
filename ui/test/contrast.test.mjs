@@ -45,10 +45,7 @@ const raisedAt = s => s.indexOf('@media (prefers-contrast: more)');
 /* Two resolvers: the default theme, and the one someone gets after asking their
    system for more contrast. The raised block is layered on top of the base. */
 function resolver({ raised }) {
-  const base = new Map([
-    ...declarations(tokens, 0, raisedAt(tokens)),
-    ...declarations(admin, 0, raisedAt(admin)),
-  ]);
+  const base = new Map([...declarations(tokens, 0, raisedAt(tokens)), ...declarations(admin, 0, raisedAt(admin))]);
   if (raised) {
     for (const [k, v] of declarations(tokens, raisedAt(tokens))) base.set(k, v);
     for (const [k, v] of declarations(admin, raisedAt(admin))) base.set(k, v);
@@ -142,8 +139,7 @@ test('increased contrast improves the pairs that are near their threshold', () =
       if (h <= b) worse.push(`${fg} on ${bg}: ${h.toFixed(2)} raised, ${b.toFixed(2)} default`);
     }
   }
-  assert.deepEqual(worse, [],
-    `Increased contrast has to help where it matters:\n  ${worse.join('\n  ')}`);
+  assert.deepEqual(worse, [], `Increased contrast has to help where it matters:\n  ${worse.join('\n  ')}`);
 });
 
 /* The two greys that are not Apple's exist because Apple's neighbours do not
@@ -182,7 +178,11 @@ function toastRules() {
   const re =
     /#toast\.(ok|err)\{background:color-mix\(in srgb,\s*var\((--[\w-]+)\)\s+(\d+)%,\s*var\((--[\w-]+)\)\);border-color:var\((--[\w-]+)\)\}/g;
   const rules = [...src.matchAll(re)].map(m => ({
-    cls: m[1], accent: m[2], percent: Number(m[3]), page: m[4], border: m[5],
+    cls: m[1],
+    accent: m[2],
+    percent: Number(m[3]),
+    page: m[4],
+    border: m[5],
   }));
   assert.equal(rules.length, 2, 'expected an .ok and an .err toast rule in the form the test reads');
   return rules;
@@ -190,7 +190,10 @@ function toastRules() {
 
 test('the toast reads its own colours from the stylesheet', () => {
   const rules = toastRules();
-  assert.deepEqual(rules.map(r => r.cls), ['ok', 'err']);
+  assert.deepEqual(
+    rules.map(r => r.cls),
+    ['ok', 'err'],
+  );
   for (const r of rules) assert.ok(r.percent > 0 && r.percent < 100, `odd mix percentage: ${r.percent}`);
 });
 

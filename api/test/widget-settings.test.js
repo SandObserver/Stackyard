@@ -15,7 +15,12 @@ const { widgetSettings, SHARED_KEYS } = require('../src/widget-settings');
 
 const FULL = () => ({
   auth: { enabled: true, secret: 'SIGNING-KEY', passwordHash: 'scrypt$1$2$3$salt$key' },
-  server: { hostIp: '192.168.1.10', socketProxyUrl: 'http://socket:2375', skipTlsVerify: true, portMap: { 8080: 'app' } },
+  server: {
+    hostIp: '192.168.1.10',
+    socketProxyUrl: 'http://socket:2375',
+    skipTlsVerify: true,
+    portMap: { 8080: 'app' },
+  },
   background: { type: 'url', url: '/wall.jpg' },
   stats: { diskMount: '/mnt/media', networkInterface: 'eth1' },
   logLevel: 'info',
@@ -74,7 +79,9 @@ test('nested objects are frozen too, not just the top level', () => {
 test('a strict-mode write throws', () => {
   'use strict';
   const out = widgetSettings(FULL());
-  assert.throws(() => { out.stats.diskMount = '/etc'; }, TypeError);
+  assert.throws(() => {
+    out.stats.diskMount = '/etc';
+  }, TypeError);
 });
 
 test('a missing, empty or malformed settings object yields an empty result', () => {

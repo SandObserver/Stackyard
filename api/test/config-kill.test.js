@@ -37,7 +37,7 @@ const assert = require('node:assert/strict');
 const { tmpDir } = require('../test-support/tmp');
 
 const LOOP = path.join(__dirname, '..', 'test-support', 'save-loop.js');
-const APPS = 300;                  /* about 155 KB, a large real dashboard */
+const APPS = 300; /* about 155 KB, a large real dashboard */
 const ITERATIONS = 8;
 
 /* Spread across the window where a write is in flight. Fixed rather than
@@ -48,8 +48,11 @@ const DELAYS_MS = [12, 19, 27, 34, 41, 55, 68, 83];
 function runAndKill(configPath, delayMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [LOOP, configPath, String(APPS)], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let ready = false, stderr = '';
-    child.stderr.on('data', c => { stderr += c; });
+    let ready = false,
+      stderr = '';
+    child.stderr.on('data', c => {
+      stderr += c;
+    });
     child.stdout.on('data', c => {
       if (ready || !String(c).includes('ready')) return;
       ready = true;
@@ -102,8 +105,10 @@ test('a config killed mid-write is never left partial', async t => {
     if (leftovers.length) interrupted++;
     for (const f of leftovers) fs.unlinkSync(path.join(dir, f));
 
-    t.diagnostic(`killed after ${delay}ms, generation ${parsed.settings.generation}, `
-      + `${fs.statSync(configPath).size} bytes, ${leftovers.length ? 'mid-write' : 'between writes'}`);
+    t.diagnostic(
+      `killed after ${delay}ms, generation ${parsed.settings.generation}, ` +
+        `${fs.statSync(configPath).size} bytes, ${leftovers.length ? 'mid-write' : 'between writes'}`,
+    );
   }
   t.diagnostic(`${interrupted} of ${ITERATIONS} kills landed inside a write`);
 });
@@ -119,8 +124,7 @@ test('a temp file left by a killed write does not shadow the config', async () =
 
   const leftovers = fs.readdirSync(dir).filter(f => f.endsWith('.tmp'));
   const { parsed } = readConfig(configPath);
-  assert.equal(parsed.items.length, APPS,
-    `the config is not intact, with ${leftovers.length} temp file(s) present`);
+  assert.equal(parsed.items.length, APPS, `the config is not intact, with ${leftovers.length} temp file(s) present`);
 
   /* And loading through the real reader agrees, temp file or not. */
   const previous = process.env.CONFIG_PATH;

@@ -17,7 +17,11 @@ test('a failure within tolerance leaves the last good render in place', async ()
   let call = 0;
   const p = poll({
     interval: 5,
-    fetch: async () => { call++; if (call === 2) throw new Error('blip'); return { call }; },
+    fetch: async () => {
+      call++;
+      if (call === 2) throw new Error('blip');
+      return { call };
+    },
     render: d => rendered.push(d.call),
     onError: info => errors.push(info),
   });
@@ -34,8 +38,11 @@ test('a failure within tolerance leaves the last good render in place', async ()
 test('consecutive failures past staleAfter report stale', async () => {
   const errors = [];
   const p = poll({
-    interval: 5, staleAfter: 2,
-    fetch: async () => { throw new Error('down'); },
+    interval: 5,
+    staleAfter: 2,
+    fetch: async () => {
+      throw new Error('down');
+    },
     onError: info => errors.push(info),
   });
   await tick(40);
@@ -43,13 +50,19 @@ test('consecutive failures past staleAfter report stale', async () => {
 
   assert.equal(errors[0].stale, false);
   assert.equal(errors[0].everOk, false);
-  assert.ok(errors.some(e => e.stale), 'goes stale once past the threshold');
+  assert.ok(
+    errors.some(e => e.stale),
+    'goes stale once past the threshold',
+  );
 });
 
 test('interval can be a function of the last successful result', async () => {
   const seen = [];
   const p = poll({
-    interval: d => { seen.push(d); return 5; },
+    interval: d => {
+      seen.push(d);
+      return 5;
+    },
     fetch: async () => ({ n: seen.length }),
     render: () => {},
     onError: () => {},
@@ -65,8 +78,12 @@ test('stop halts further fetches', async () => {
   let calls = 0;
   const p = poll({
     interval: 5,
-    fetch: async () => { calls++; return {}; },
-    render: () => {}, onError: () => {},
+    fetch: async () => {
+      calls++;
+      return {};
+    },
+    render: () => {},
+    onError: () => {},
   });
   await tick(30);
   p.stop();
@@ -99,7 +116,9 @@ function withDocument(hidden = false) {
   const listeners = [];
   globalThis.document = {
     hidden,
-    addEventListener: (type, fn) => { if (type === 'visibilitychange') listeners.push(fn); },
+    addEventListener: (type, fn) => {
+      if (type === 'visibilitychange') listeners.push(fn);
+    },
     removeEventListener: (type, fn) => {
       const i = listeners.indexOf(fn);
       if (type === 'visibilitychange' && i !== -1) listeners.splice(i, 1);
@@ -107,8 +126,13 @@ function withDocument(hidden = false) {
   };
   return {
     listenerCount: () => listeners.length,
-    setHidden(v) { globalThis.document.hidden = v; listeners.slice().forEach(fn => fn()); },
-    cleanup() { delete globalThis.document; },
+    setHidden(v) {
+      globalThis.document.hidden = v;
+      listeners.slice().forEach(fn => fn());
+    },
+    cleanup() {
+      delete globalThis.document;
+    },
   };
 }
 
@@ -196,16 +220,19 @@ test('repeated visibility changes do not multiply the loop', async () => {
 });
 
 test('a poll started while hidden does not keep polling', async () => {
-  await run(async (dom, start) => {
-    let calls = 0;
-    start({ interval: 5, fetch: async () => ({ n: ++calls }) });
-    await tick(40);
-    assert.equal(calls, 1, 'the first fetch runs, then it waits for visibility');
+  await run(
+    async (dom, start) => {
+      let calls = 0;
+      start({ interval: 5, fetch: async () => ({ n: ++calls }) });
+      await tick(40);
+      assert.equal(calls, 1, 'the first fetch runs, then it waits for visibility');
 
-    dom.setHidden(false);
-    await tick(30);
-    assert.ok(calls > 1, 'and it resumes when shown');
-  }, { hidden: true });
+      dom.setHidden(false);
+      await tick(30);
+      assert.ok(calls > 1, 'and it resumes when shown');
+    },
+    { hidden: true },
+  );
 });
 
 test('stop detaches the visibility listener', async () => {

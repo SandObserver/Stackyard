@@ -16,8 +16,11 @@ const path = require('node:path');
 process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
 
 const {
-  stableEqual, stripWidgetSecrets, widgetConfigMatchesSaved,
-  rowsMatch, badgeRequestMatchesSaved,
+  stableEqual,
+  stripWidgetSecrets,
+  widgetConfigMatchesSaved,
+  rowsMatch,
+  badgeRequestMatchesSaved,
 } = require('../src/secret-scope');
 const { getRegistry } = require('../src/widgets');
 
@@ -136,7 +139,10 @@ test('a changed non-secret param value does not restore', () => {
 });
 
 test('rowsMatch treats a reorder as a change', () => {
-  const a = [{ key: 'a', value: '1', secret: false }, { key: 'b', value: '2', secret: false }];
+  const a = [
+    { key: 'a', value: '1', secret: false },
+    { key: 'b', value: '2', secret: false },
+  ];
   assert.equal(rowsMatch([a[1], a[0]], a), false);
   assert.equal(rowsMatch(a, a), true);
 });

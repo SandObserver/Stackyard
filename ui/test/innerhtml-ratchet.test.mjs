@@ -28,14 +28,14 @@ import { fileURLToPath } from 'node:url';
    Clears (`el.innerHTML = ''`) interpolate nothing, so there is no value to
    escape and no way for them to be unsafe. */
 const BUDGET = {
-  'widgets/backup/backup.html':                 3,
-  'widgets/books/index.html':                   1,
-  'widgets/connections/connections-vpn.html':   1,
-  'widgets/dashboard-switch/index.html':        2,
-  'widgets/dns/index.html':                     2,
-  'widgets/github/pullrequests.html':           4,
-  'widgets/stats/disk-health.html':             1,
-  'widgets/weather/index.html':                 2,
+  'widgets/backup/backup.html': 3,
+  'widgets/books/index.html': 1,
+  'widgets/connections/connections-vpn.html': 1,
+  'widgets/dashboard-switch/index.html': 2,
+  'widgets/dns/index.html': 2,
+  'widgets/github/pullrequests.html': 4,
+  'widgets/stats/disk-health.html': 1,
+  'widgets/weather/index.html': 2,
 };
 
 /* setHtml's own write. It is the single sanctioned innerHTML in the codebase and
@@ -70,7 +70,11 @@ function countWrites(src) {
 function widgetFiles() {
   const out = [];
   let dirs;
-  try { dirs = fs.readdirSync(widgetsDir, { withFileTypes: true }); } catch { return out; }
+  try {
+    dirs = fs.readdirSync(widgetsDir, { withFileTypes: true });
+  } catch {
+    return out;
+  }
   for (const d of dirs) {
     if (!d.isDirectory()) continue;
     for (const f of fs.readdirSync(path.join(widgetsDir, d.name))) {
@@ -83,22 +87,20 @@ function widgetFiles() {
 }
 
 const scanned = [
-  ...fs.readdirSync(jsDir)
+  ...fs
+    .readdirSync(jsDir)
     .filter(f => f.endsWith('.js') && f !== IMPLEMENTATION)
     .map(f => [f, path.join(jsDir, f)]),
   ...widgetFiles(),
 ];
 
 const counts = Object.fromEntries(
-  scanned
-    .map(([key, full]) => [key, countWrites(fs.readFileSync(full, 'utf8'))])
-    .filter(([, n]) => n > 0),
+  scanned.map(([key, full]) => [key, countWrites(fs.readFileSync(full, 'utf8'))]).filter(([, n]) => n > 0),
 );
 
 test('no unlisted file writes markup through innerHTML', () => {
   const unlisted = Object.keys(counts).filter(f => !(f in BUDGET));
-  assert.deepEqual(unlisted, [],
-    `Use setHtml(el, html\`...\`) from utils.js instead: ${unlisted.join(', ')}`);
+  assert.deepEqual(unlisted, [], `Use setHtml(el, html\`...\`) from utils.js instead: ${unlisted.join(', ')}`);
 });
 
 test('no file exceeds its innerHTML budget', () => {
@@ -119,6 +121,5 @@ test('the budget has no stale entries', () => {
 
 test('a fully migrated file is removed from the budget', () => {
   const zeroed = Object.keys(BUDGET).filter(f => !(f in counts));
-  assert.deepEqual(zeroed, [],
-    `Delete these from BUDGET so they can never regress: ${zeroed.join(', ')}`);
+  assert.deepEqual(zeroed, [], `Delete these from BUDGET so they can never regress: ${zeroed.join(', ')}`);
 });

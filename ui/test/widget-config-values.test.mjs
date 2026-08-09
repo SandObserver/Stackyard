@@ -1,7 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seedCarried as _seedCarried, applyOptionSet as _applyOptionSet,
-  collectFieldValues as _collectFieldValues, showIfMatches, requiredFieldMissing, sizesForView } from '../js/admin-logic.js';
+import {
+  seedCarried as _seedCarried,
+  applyOptionSet as _applyOptionSet,
+  collectFieldValues as _collectFieldValues,
+  showIfMatches,
+  requiredFieldMissing,
+  sizesForView,
+} from '../js/admin-logic.js';
 import { plain } from './plain.mjs';
 
 /* All three build null-prototype objects, because their keys are manifest
@@ -51,7 +57,10 @@ const reads = () => [
 
 test('collectFieldValues drops transient fields from the saved config', () => {
   assert.deepEqual(collectFieldValues(reads()), {
-    city: 'Ottawa, Ontario, Canada', lat: 45.4, lon: -75.7, units: 'c',
+    city: 'Ottawa, Ontario, Canada',
+    lat: 45.4,
+    lon: -75.7,
+    units: 'c',
   });
 });
 
@@ -113,7 +122,8 @@ test('requiredFieldMissing treats a false toggle and a zero as filled', () => {
 });
 
 const REG = {
-  viewField: 'view', defaultView: 'map',
+  viewField: 'view',
+  defaultView: 'map',
   views: { map: { src: 'm.html', sizes: ['medium'] }, vpn: { src: 'v.html' } },
 };
 const ALL = ['small', 'medium'];

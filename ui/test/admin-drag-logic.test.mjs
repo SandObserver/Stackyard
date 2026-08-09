@@ -39,31 +39,79 @@ test('an app dropped on a top-level non-folder row reorders', () => {
 
 test('reorder moves a top-level item below the target', () => {
   const items = model();
-  assert.equal(applyDrop(items, { srcId: 'a', srcFolderId: null, targetId: 'b', targetFolderId: null, targetIsFolder: false, indent: false, childIdx: null, dropAbove: false }), true);
+  assert.equal(
+    applyDrop(items, {
+      srcId: 'a',
+      srcFolderId: null,
+      targetId: 'b',
+      targetFolderId: null,
+      targetIsFolder: false,
+      indent: false,
+      childIdx: null,
+      dropAbove: false,
+    }),
+    true,
+  );
   assert.deepEqual(order(items), ['b', 'a', 'f', 'c', 'w']);
 });
 
 test('reorder respects dropAbove', () => {
   const items = model();
-  applyDrop(items, { srcId: 'w', srcFolderId: null, targetId: 'a', targetFolderId: null, targetIsFolder: false, indent: false, childIdx: null, dropAbove: true });
+  applyDrop(items, {
+    srcId: 'w',
+    srcFolderId: null,
+    targetId: 'a',
+    targetFolderId: null,
+    targetIsFolder: false,
+    indent: false,
+    childIdx: null,
+    dropAbove: true,
+  });
   assert.deepEqual(order(items), ['w', 'a', 'b', 'f', 'c']);
 });
 
 test('an app dropped on a folder row joins that folder', () => {
   const items = model();
-  applyDrop(items, { srcId: 'a', srcFolderId: null, targetId: 'f', targetFolderId: null, targetIsFolder: true, indent: false, childIdx: null, dropAbove: false });
+  applyDrop(items, {
+    srcId: 'a',
+    srcFolderId: null,
+    targetId: 'f',
+    targetFolderId: null,
+    targetIsFolder: true,
+    indent: false,
+    childIdx: null,
+    dropAbove: false,
+  });
   assert.deepEqual(folder(items, 'f'), ['c', 'a']);
 });
 
 test('an app dropped on a child row inserts at that index', () => {
   const items = model();
-  applyDrop(items, { srcId: 'a', srcFolderId: null, targetId: 'c', targetFolderId: 'f', targetIsFolder: false, indent: true, childIdx: 0, dropAbove: false });
+  applyDrop(items, {
+    srcId: 'a',
+    srcFolderId: null,
+    targetId: 'c',
+    targetFolderId: 'f',
+    targetIsFolder: false,
+    indent: true,
+    childIdx: 0,
+    dropAbove: false,
+  });
   assert.deepEqual(folder(items, 'f'), ['a', 'c']);
 });
 
 test('a child dragged onto a top-level row leaves its folder', () => {
   const items = model();
-  applyDrop(items, { srcId: 'c', srcFolderId: 'f', targetId: 'b', targetFolderId: null, targetIsFolder: false, indent: false, childIdx: null, dropAbove: false });
+  applyDrop(items, {
+    srcId: 'c',
+    srcFolderId: 'f',
+    targetId: 'b',
+    targetFolderId: null,
+    targetIsFolder: false,
+    indent: false,
+    childIdx: null,
+    dropAbove: false,
+  });
   assert.deepEqual(folder(items, 'f'), []);
   assert.deepEqual(order(items), ['a', 'b', 'c', 'f', 'w']);
 });
@@ -76,20 +124,50 @@ test('a child moves from one folder to another', () => {
     { id: 'g', type: 'folder', children: ['d'] },
     { id: 'd', type: 'app' },
   ];
-  applyDrop(items, { srcId: 'c', srcFolderId: 'f', targetId: 'g', targetFolderId: null, targetIsFolder: true, indent: false, childIdx: null, dropAbove: false });
+  applyDrop(items, {
+    srcId: 'c',
+    srcFolderId: 'f',
+    targetId: 'g',
+    targetFolderId: null,
+    targetIsFolder: true,
+    indent: false,
+    childIdx: null,
+    dropAbove: false,
+  });
   assert.deepEqual(folder(items, 'f'), []);
   assert.deepEqual(folder(items, 'g'), ['d', 'c']);
 });
 
 test('a widget dropped on a folder row reorders, it does not join', () => {
   const items = model();
-  applyDrop(items, { srcId: 'w', srcFolderId: null, targetId: 'f', targetFolderId: null, targetIsFolder: true, indent: false, childIdx: null, dropAbove: false });
+  applyDrop(items, {
+    srcId: 'w',
+    srcFolderId: null,
+    targetId: 'f',
+    targetFolderId: null,
+    targetIsFolder: true,
+    indent: false,
+    childIdx: null,
+    dropAbove: false,
+  });
   assert.deepEqual(folder(items, 'f'), ['c']);
   assert.deepEqual(order(items), ['a', 'b', 'f', 'w', 'c']);
 });
 
 test('dropping an item on itself changes nothing', () => {
   const items = model();
-  assert.equal(applyDrop(items, { srcId: 'a', srcFolderId: null, targetId: 'a', targetFolderId: null, targetIsFolder: false, indent: false, childIdx: null, dropAbove: false }), false);
+  assert.equal(
+    applyDrop(items, {
+      srcId: 'a',
+      srcFolderId: null,
+      targetId: 'a',
+      targetFolderId: null,
+      targetIsFolder: false,
+      indent: false,
+      childIdx: null,
+      dropAbove: false,
+    }),
+    false,
+  );
   assert.deepEqual(order(items), ['a', 'b', 'f', 'c', 'w']);
 });

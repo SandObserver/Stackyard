@@ -165,10 +165,11 @@ test('a name already in catalogue form is unchanged', () => {
 
 test('a mixed-case name reaches the right CDN URL', async () => {
   await withLocalIcons([], () => {
-    assert.equal(iconChain('MySpeed')[0],
-      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/myspeed.svg');
-    assert.equal(iconChain('Home Assistant')[0],
-      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg');
+    assert.equal(iconChain('MySpeed')[0], 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/myspeed.svg');
+    assert.equal(
+      iconChain('Home Assistant')[0],
+      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg',
+    );
   });
 });
 

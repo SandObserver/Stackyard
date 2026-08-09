@@ -11,7 +11,9 @@ test('a bare single-view manifest (no views) is valid', () => {
 
 test('a views block with viewField and defaultView is valid', () => {
   const { errors } = validateManifest('w', {
-    ...base, viewField: 'mode', defaultView: 'a',
+    ...base,
+    viewField: 'mode',
+    defaultView: 'a',
     views: { a: { src: 'a.html' }, b: { label: 'B', src: 'b.html' } },
     /* viewField has to name a field the form renders, offering the view keys. */
     fields: [{ key: 'mode', type: 'select', label: 'Mode', options: ['a', 'b'] }],
@@ -21,25 +23,40 @@ test('a views block with viewField and defaultView is valid', () => {
 
 test('a view without a src is rejected', () => {
   const { errors } = validateManifest('w', { ...base, views: { a: { label: 'A' } } });
-  assert.ok(errors.some(e => /src/.test(e)), errors.join('; '));
+  assert.ok(
+    errors.some(e => /src/.test(e)),
+    errors.join('; '),
+  );
 });
 
 test('an empty views block is rejected', () => {
   const { errors } = validateManifest('w', { ...base, views: {} });
-  assert.ok(errors.some(e => /non-empty/.test(e)), errors.join('; '));
+  assert.ok(
+    errors.some(e => /non-empty/.test(e)),
+    errors.join('; '),
+  );
 });
 
 test('a views array (wrong shape) is rejected', () => {
   const { errors } = validateManifest('w', { ...base, views: [{ src: 'a.html' }] });
-  assert.ok(errors.some(e => /non-empty object/.test(e)), errors.join('; '));
+  assert.ok(
+    errors.some(e => /non-empty object/.test(e)),
+    errors.join('; '),
+  );
 });
 
 test('defaultView must name a declared view', () => {
   const { errors } = validateManifest('w', { ...base, defaultView: 'z', views: { a: { src: 'a.html' } } });
-  assert.ok(errors.some(e => /defaultView/.test(e)), errors.join('; '));
+  assert.ok(
+    errors.some(e => /defaultView/.test(e)),
+    errors.join('; '),
+  );
 });
 
 test('viewField without a views block is rejected', () => {
   const { errors } = validateManifest('w', { ...base, viewField: 'mode' });
-  assert.ok(errors.some(e => /views/.test(e)), errors.join('; '));
+  assert.ok(
+    errors.some(e => /views/.test(e)),
+    errors.join('; '),
+  );
 });

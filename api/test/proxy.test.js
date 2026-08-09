@@ -1,7 +1,6 @@
 /* Point config at a nonexistent path so loadConfig falls back to an empty
    config (no host IP, no port map), which keeps these tests hermetic. */
-const path = require('node:path');
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpPath } = require('../test-support/tmp');
 process.env.CONFIG_PATH = tmpPath('apps.json');
 
 const { test } = require('node:test');
@@ -36,7 +35,15 @@ test('embeddedIPv4 extracts the IPv4 from IPv4-in-IPv6 wrappers', () => {
 });
 
 test('isPrivateAddress blocks hex-form IPv4-compatible, IPv4-mapped and NAT64 private targets', () => {
-  for (const a of ['::7f00:1', '::127.0.0.1', '::ffff:7f00:1', '::ffff:a00:1', '::ffff:a9fe:a9fe', '64:ff9b::7f00:1', '::ffff:127.0.0.1'])
+  for (const a of [
+    '::7f00:1',
+    '::127.0.0.1',
+    '::ffff:7f00:1',
+    '::ffff:a00:1',
+    '::ffff:a9fe:a9fe',
+    '64:ff9b::7f00:1',
+    '::ffff:127.0.0.1',
+  ])
     assert.ok(isPrivateAddress(a), `${a} should be private`);
 });
 
@@ -56,7 +63,14 @@ test('isPrivateAddress agrees with PRIVATE_IP_RE on plain addresses', () => {
 });
 
 test('guardSsrf blocks IPv4-mapped and NAT64 loopback/metadata literals', async () => {
-  for (const u of ['http://[::7f00:1]/', 'http://[::127.0.0.1]/', 'http://[::ffff:7f00:1]/', 'http://[::ffff:a9fe:a9fe]/', 'http://[64:ff9b::7f00:1]/', 'http://[::1]/']) {
+  for (const u of [
+    'http://[::7f00:1]/',
+    'http://[::127.0.0.1]/',
+    'http://[::ffff:7f00:1]/',
+    'http://[::ffff:a9fe:a9fe]/',
+    'http://[64:ff9b::7f00:1]/',
+    'http://[::1]/',
+  ]) {
     const r = await guardSsrf(u);
     assert.match(r.error || '', /private address/, `${u} should be blocked`);
   }
@@ -119,34 +133,40 @@ test('fetchJSON pins the IP and preserves the Host header', async () => {
    looks public (which a stale re-resolution could otherwise exploit). ── */
 const dns = require('node:dns').promises;
 
-test('guardSsrf resolves a public hostname and returns the IP to pin', async (t) => {
+test('guardSsrf resolves a public hostname and returns the IP to pin', async t => {
   t.mock.method(dns, 'lookup', async () => ({ address: '93.184.216.34', family: 4 }));
   assert.deepEqual(await guardSsrf('http://example.com/path'), { error: null, ip: '93.184.216.34' });
 });
 
-test('guardSsrf blocks a public-looking name that resolves to a private IP', async (t) => {
+test('guardSsrf blocks a public-looking name that resolves to a private IP', async t => {
   t.mock.method(dns, 'lookup', async () => ({ address: '192.168.1.50', family: 4 }));
   const r = await guardSsrf('http://sneaky.example.com/');
   assert.equal(r.ip, null);
   assert.match(r.error, /private IP/);
 });
 
-test('guardSsrf blocks a name that resolves to the link-local metadata IP', async (t) => {
+test('guardSsrf blocks a name that resolves to the link-local metadata IP', async t => {
   t.mock.method(dns, 'lookup', async () => ({ address: '169.254.169.254', family: 4 }));
   const r = await guardSsrf('http://rebind.example.com/');
   assert.equal(r.ip, null);
   assert.match(r.error, /private IP/);
 });
 
-test('guardSsrf blocks when the hostname cannot be resolved', async (t) => {
-  t.mock.method(dns, 'lookup', async () => { throw new Error('ENOTFOUND'); });
+test('guardSsrf blocks when the hostname cannot be resolved', async t => {
+  t.mock.method(dns, 'lookup', async () => {
+    throw new Error('ENOTFOUND');
+  });
   const r = await guardSsrf('http://nxdomain.example.com/');
   assert.equal(r.ip, null);
   assert.match(r.error, /could not be resolved/);
 });
 
 test('shouldSkipTls returns false unless skipTlsVerify is explicitly true', () => {
-  for (const cfg of [{ settings: {} }, { settings: { server: {} } }, { settings: { server: { skipTlsVerify: 'true' } } }])
+  for (const cfg of [
+    { settings: {} },
+    { settings: { server: {} } },
+    { settings: { server: { skipTlsVerify: 'true' } } },
+  ])
     assert.equal(shouldSkipTls('nas', cfg), false);
 });
 
@@ -174,7 +194,7 @@ test('fetchJSON returns the untouched body with opts.raw, and auto-parses withou
     const parsed = await fetchJSON(`http://127.0.0.1:${port}/metrics`, { timeout: 3000 });
     assert.notEqual(typeof parsed.data, 'string'); // auto-parsed into an object
     const raw = await fetchJSON(`http://127.0.0.1:${port}/metrics`, { raw: true, timeout: 3000 });
-    assert.equal(raw.data, metrics);               // returned untouched
+    assert.equal(raw.data, metrics); // returned untouched
   } finally {
     server.close();
   }

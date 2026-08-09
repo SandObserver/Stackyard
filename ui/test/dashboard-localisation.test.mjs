@@ -41,8 +41,17 @@ const translatorFor = file => {
 /* ── the strings are translated ───────────────────────────────────────────── */
 
 test('every locale carries the status strings', () => {
-  const needed = ['needsAttention', 'healthy', 'pending', 'stale',
-                  'containerNotFound', 'containerState', 'pingFailed', 'pingReturned', 'diskHealth'];
+  const needed = [
+    'needsAttention',
+    'healthy',
+    'pending',
+    'stale',
+    'containerNotFound',
+    'containerState',
+    'pingFailed',
+    'pingReturned',
+    'diskHealth',
+  ];
   for (const file of locales()) {
     const cat = JSON.parse(read(`i18n/${file}`));
     for (const key of needed) assert.ok(cat.status?.[key], `${file} is missing status.${key}`);
@@ -69,8 +78,12 @@ test('every locale carries the API-unreachable message', () => {
 
 /* A translation that loses a placeholder produces a message with a hole in it. */
 test('no translation drops a placeholder', () => {
-  const withVars = { 'status.pending': ['count'], 'status.containerState': ['state'],
-                     'status.pingFailed': ['error'], 'status.pingReturned': ['status'] };
+  const withVars = {
+    'status.pending': ['count'],
+    'status.containerState': ['state'],
+    'status.pingFailed': ['error'],
+    'status.pingReturned': ['status'],
+  };
   for (const file of locales()) {
     const cat = JSON.parse(read(`i18n/${file}`));
     for (const [key, vars] of Object.entries(withVars)) {
@@ -87,8 +100,7 @@ test('the translations are not all copies of the English', () => {
   const en = JSON.parse(read('i18n/en.json'));
   for (const file of locales().filter(f => f !== 'en.json')) {
     const cat = JSON.parse(read(`i18n/${file}`));
-    const same = ['needsAttention', 'healthy', 'containerNotFound']
-      .filter(k => cat.status[k] === en.status[k]);
+    const same = ['needsAttention', 'healthy', 'containerNotFound'].filter(k => cat.status[k] === en.status[k]);
     assert.equal(same.length, 0, `${file} left ${same.join(', ')} in English`);
   }
 });
@@ -150,7 +162,7 @@ test('the fallback matches the English locale exactly', () => {
   const src = read('js/badge-logic.js');
   const table = src.slice(src.indexOf('const EN = {'), src.indexOf('};', src.indexOf('const EN = {')));
   for (const [key, value] of Object.entries(en.status)) {
-    if (key === 'diskHealth') continue;   /* not used by this module */
+    if (key === 'diskHealth') continue; /* not used by this module */
     assert.ok(table.includes(`'${value}'`), `the fallback disagrees with en.json for status.${key}`);
   }
 });
@@ -171,8 +183,12 @@ test('the dashboard hands the translator in', () => {
 
 test('the first-run prompt and API error are translated', () => {
   const src = read('js/dashboard.js');
-  for (const gone of ['Set a dashboard password?', 'Could not connect to dashboard API',
-                      'Make sure the API container is running', 'Could not set password.']) {
+  for (const gone of [
+    'Set a dashboard password?',
+    'Could not connect to dashboard API',
+    'Make sure the API container is running',
+    'Could not set password.',
+  ]) {
     assert.ok(!src.includes(`>${gone}<`) && !src.includes(`'${gone}'`), `"${gone}" is still hardcoded`);
   }
   for (const key of ['setup.title', 'setup.sub', 'home.apiDownTitle', 'home.retry']) {

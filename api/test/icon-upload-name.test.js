@@ -18,7 +18,7 @@ const fs = require('node:fs');
 
 /* Set before anything under src/ is required: ICONS_PATH and CONFIG_PATH are
    read once when those modules load. */
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const uploadDir = tmpDir('upload');
 process.env.ICONS_PATH = uploadDir;
 process.env.CONFIG_PATH = path.join(tmpDir('upcfg'), 'apps.json');
@@ -148,24 +148,47 @@ before(async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${server.address().port}`;
 });
-after(async () => { await new Promise(r => { server.closeAllConnections?.(); server.close(r); }); });
+after(async () => {
+  await new Promise(r => {
+    server.closeAllConnections?.();
+    server.close(r);
+  });
+});
 
 function upload(filename, contents) {
   const boundary = '----sytest';
   const body = Buffer.from(
     `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\n` +
-    `Content-Type: image/svg+xml\r\n\r\n${contents}\r\n--${boundary}--\r\n`,
+      `Content-Type: image/svg+xml\r\n\r\n${contents}\r\n--${boundary}--\r\n`,
   );
   const u = new URL(base + '/api/icons/upload');
   return new Promise((resolve, reject) => {
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}`, 'Content-Length': body.length, Origin: base },
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
-    });
+    const r = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': body.length,
+          Origin: base,
+        },
+      },
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => {
+          let j = null;
+          try {
+            j = JSON.parse(b);
+          } catch {}
+          resolve({ status: res.statusCode, body: j });
+        });
+      },
+    );
     r.on('error', reject);
     r.end(body);
   });

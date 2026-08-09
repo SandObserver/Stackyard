@@ -1,13 +1,20 @@
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpPath } = require('../test-support/tmp');
 process.env.CONFIG_PATH = tmpPath('apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const {
-  makeToken, verifyToken, hashPassword, verifyPassword,
-  parseCookies, rateLimit, registerLoginAttempt, clearAttempts,
-  newSessionSecret, newSessionId,
+  makeToken,
+  verifyToken,
+  hashPassword,
+  verifyPassword,
+  parseCookies,
+  rateLimit,
+  registerLoginAttempt,
+  clearAttempts,
+  newSessionSecret,
+  newSessionId,
   SESSION_MAX_AGE_MS,
 } = require('../src/auth');
 
@@ -130,7 +137,8 @@ test('the two surfaces agree on where the cap falls', () => {
 });
 
 test('each key is counted on its own', () => {
-  const a = '203.0.113.21', b = '203.0.113.22';
+  const a = '203.0.113.21',
+    b = '203.0.113.22';
   for (let i = 0; i < 3; i++) rateLimit(a, 'k', 3, 60_000);
   assert.ok(rateLimit(a, 'k', 3, 60_000), 'the exhausted key is refused');
   assert.equal(rateLimit(a, 'other', 3, 60_000), null, 'a different route is unaffected');
@@ -139,7 +147,8 @@ test('each key is counted on its own', () => {
   for (let i = 0; i < 5; i++) registerLoginAttempt(a);
   assert.ok(registerLoginAttempt(a), 'the locked-out address is refused');
   assert.equal(registerLoginAttempt(b), null, 'another address can still log in');
-  clearAttempts(a); clearAttempts(b);
+  clearAttempts(a);
+  clearAttempts(b);
 });
 
 /* The window opens on the first hit of a series, and that hit counts. A window
@@ -163,8 +172,11 @@ test('a ceiling below one refuses everything', () => {
 test('the wait is reported in the unit each surface uses', () => {
   const ip = '203.0.113.25';
   for (let i = 0; i < 5; i++) registerLoginAttempt(ip);
-  assert.match(registerLoginAttempt(ip), /Try again in 15 minutes\./,
-    'a fifteen-minute lockout counted in seconds reads as a stopwatch');
+  assert.match(
+    registerLoginAttempt(ip),
+    /Try again in 15 minutes\./,
+    'a fifteen-minute lockout counted in seconds reads as a stopwatch',
+  );
   clearAttempts(ip);
 
   for (let i = 0; i < 2; i++) rateLimit(ip, 'unit', 2, 60_000);
@@ -186,8 +198,11 @@ test('being refused does not push the window out', async () => {
   assert.ok(rateLimit(ip, 'slide', 1, WINDOW), 'still inside the window, still refused');
 
   await new Promise(r => setTimeout(r, WINDOW * 0.8));
-  assert.equal(rateLimit(ip, 'slide', 1, WINDOW), null,
-    'the window is measured from its first hit, not from the last refusal');
+  assert.equal(
+    rateLimit(ip, 'slide', 1, WINDOW),
+    null,
+    'the window is measured from its first hit, not from the last refusal',
+  );
 });
 
 /* One minute left reads as "1 minute", not "1 minutes". */

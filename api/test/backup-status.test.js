@@ -54,7 +54,10 @@ test('dupDeriveStatus resolves running/error/missed/warning/healthy in priority 
 
 test('dupDeriveStatus is not missed when the last backup is newer than the scheduled run', () => {
   const job = { ID: '1', Metadata: { LastBackupFinished: '2025-12-31T00:00:00Z' } };
-  assert.equal(b.dupDeriveStatus(job, { ProposedSchedule: [{ Item1: '1', Item2: '2020-06-01T00:00:00Z' }] }), 'healthy');
+  assert.equal(
+    b.dupDeriveStatus(job, { ProposedSchedule: [{ Item1: '1', Item2: '2020-06-01T00:00:00Z' }] }),
+    'healthy',
+  );
 });
 
 test('kopiaDeriveStatus resolves its status chain', () => {
@@ -66,7 +69,10 @@ test('kopiaDeriveStatus resolves its status chain', () => {
   const stale = new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString();
   assert.equal(b.kopiaDeriveStatus({ status: 'IDLE', lastSnapshot: { endTime: stale } }), 'warning');
   const fresh = new Date(Date.now() - 60 * 1000).toISOString();
-  assert.equal(b.kopiaDeriveStatus({ status: 'IDLE', lastSnapshot: { endTime: fresh, stats: { errorCount: 0 } } }), 'healthy');
+  assert.equal(
+    b.kopiaDeriveStatus({ status: 'IDLE', lastSnapshot: { endTime: fresh, stats: { errorCount: 0 } } }),
+    'healthy',
+  );
 });
 
 test('kopiaSourceId composes host, user and path', () => {

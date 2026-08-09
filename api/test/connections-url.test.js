@@ -59,7 +59,10 @@ test('the string "undefined" never appears in the result', () => {
 /* fetchJSON is passed in, so a call can be observed without any network. */
 function run(config, endpoint = 'map') {
   const requested = [];
-  const fetchJSON = async url => { requested.push(url); return { status: 200, data: {} }; };
+  const fetchJSON = async url => {
+    requested.push(url);
+    return { status: 200, data: {} };
+  };
   return data({ config, endpoint, fetchJSON }).then(result => ({ result, requested }));
 }
 
@@ -79,7 +82,10 @@ test('a service with no address reports the reason', async () => {
 test('a configured service is still fetched', async () => {
   const { requested } = await run({ services: [{ id: 's1', type: 'gluetun', url: 'vpn:8000' }] });
   assert.ok(requested.length > 0, 'a real address must still be requested');
-  assert.ok(requested.every(u => u.startsWith('http://vpn:8000')), requested.join(', '));
+  assert.ok(
+    requested.every(u => u.startsWith('http://vpn:8000')),
+    requested.join(', '),
+  );
 });
 
 test('the VPN path still refuses a missing address', async () => {

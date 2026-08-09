@@ -69,8 +69,14 @@ test('missing segments count as zero', () => {
    and more convincing than inventing cases. */
 test('the ordering from the specification holds', () => {
   const chain = [
-    '1.0.0-alpha', '1.0.0-alpha.1', '1.0.0-alpha.beta', '1.0.0-beta',
-    '1.0.0-beta.2', '1.0.0-beta.11', '1.0.0-rc.1', '1.0.0',
+    '1.0.0-alpha',
+    '1.0.0-alpha.1',
+    '1.0.0-alpha.beta',
+    '1.0.0-beta',
+    '1.0.0-beta.2',
+    '1.0.0-beta.11',
+    '1.0.0-rc.1',
+    '1.0.0',
   ];
   for (let i = 1; i < chain.length; i++) {
     assert.equal(compareVersions(chain[i], chain[i - 1]), 1, `${chain[i]} should follow ${chain[i - 1]}`);

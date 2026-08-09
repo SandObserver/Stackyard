@@ -1,4 +1,3 @@
-const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { sanitizeSvg } = require('../src/svg-sanitize');
@@ -40,7 +39,9 @@ test('safe elements and attributes are preserved', () => {
 });
 
 test('dangerous CSS in <style> is scrubbed', () => {
-  const out = sanitizeSvg('<svg><style>@import url(http://evil); .a{background:url(javascript:alert(1))}</style></svg>');
+  const out = sanitizeSvg(
+    '<svg><style>@import url(http://evil); .a{background:url(javascript:alert(1))}</style></svg>',
+  );
   assert.doesNotMatch(out, /@import/i);
   assert.doesNotMatch(out, /javascript:/i);
 });
@@ -118,7 +119,9 @@ test('legacy script protocols are scrubbed from CSS', () => {
 test('legitimate url(#id) references are preserved', () => {
   const attr = sanitizeSvg('<rect style="fill:url(#grad)"/>');
   assert.match(attr, /url\(#grad\)/);
-  const grad = sanitizeSvg('<svg><defs><linearGradient id="g"><stop offset="0" stop-color="#000"/></linearGradient></defs><rect fill="url(#g)"/></svg>');
+  const grad = sanitizeSvg(
+    '<svg><defs><linearGradient id="g"><stop offset="0" stop-color="#000"/></linearGradient></defs><rect fill="url(#g)"/></svg>',
+  );
   assert.match(grad, /fill="url\(#g\)"/);
   assert.match(grad, /<linearGradient id="g"/);
 });
@@ -234,9 +237,10 @@ test('truncated input never yields a handler or a script', () => {
 /* Truncating a known-good document at every offset should never produce
    something dangerous. Cheap to run and covers cut points nobody would pick. */
 test('no truncation of a realistic icon produces a handler or a script', () => {
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" onload="evil()">'
-    + '<style>.a{fill:url(#g)}</style><defs><linearGradient id="g"><stop offset="0"/></linearGradient></defs>'
-    + '<path d="M0 0h24v24H0z" fill="#f00" onclick="evil()"/><script>alert(1)</script></svg>';
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" onload="evil()">' +
+    '<style>.a{fill:url(#g)}</style><defs><linearGradient id="g"><stop offset="0"/></linearGradient></defs>' +
+    '<path d="M0 0h24v24H0z" fill="#f00" onclick="evil()"/><script>alert(1)</script></svg>';
   for (let i = 0; i <= svg.length; i++) {
     const out = sanitizeSvg(svg.slice(0, i));
     assert.doesNotMatch(out, /\son\w+\s*=/i, `handler at cut ${i}: ${out}`);

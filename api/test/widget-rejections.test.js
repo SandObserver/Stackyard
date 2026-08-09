@@ -16,22 +16,26 @@
 const path = require('node:path');
 const fs = require('node:fs');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const root = tmpDir('reject');
 const widgetsDir = path.join(root, 'widgets');
 
 function writeWidget(name, manifest) {
   const dir = path.join(widgetsDir, name);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'widget.json'),
-    typeof manifest === 'string' ? manifest : JSON.stringify(manifest));
+  fs.writeFileSync(path.join(dir, 'widget.json'), typeof manifest === 'string' ? manifest : JSON.stringify(manifest));
   return dir;
 }
 
 writeWidget('fine', { name: 'fine', label: 'Fine', sizes: ['small'] });
 writeWidget('badjson', '{ this is not json');
-writeWidget('badmanifest', { name: 'badmanifest', label: 'B', sizes: ['small'],
-  viewField: 'veiw', views: { a: { src: 'a.html' } } });
+writeWidget('badmanifest', {
+  name: 'badmanifest',
+  label: 'B',
+  sizes: ['small'],
+  viewField: 'veiw',
+  views: { a: { src: 'a.html' } },
+});
 writeWidget('wrongname', { name: 'somethingelse', label: 'W', sizes: ['small'] });
 /* A directory with no widget.json is not a folder-style widget and is not a
    rejection: the legacy flat-file widgets sit beside these. */
@@ -86,8 +90,10 @@ test('unreadable JSON is reported as such', () => {
 /* The parser names the syntax problem and an offset, never file content, so it
    is safe to put in front of an operator. */
 test('the JSON error does not quote the file back', () => {
-  assert.ok(!byName.badjson[0].includes('this is not json'),
-    `the message must not carry file content: ${byName.badjson[0]}`);
+  assert.ok(
+    !byName.badjson[0].includes('this is not json'),
+    `the message must not carry file content: ${byName.badjson[0]}`,
+  );
 });
 
 test('every reported error is a non-empty string', () => {
@@ -120,19 +126,28 @@ test('GET /api/widgets carries the rejections', async () => {
   const { dispatch } = require('../src/router');
 
   /* Put a broken widget back so there is something to report. */
-  writeWidget('badmanifest', { name: 'badmanifest', label: 'B', sizes: ['small'],
-    viewField: 'veiw', views: { a: { src: 'a.html' } } });
+  writeWidget('badmanifest', {
+    name: 'badmanifest',
+    label: 'B',
+    sizes: ['small'],
+    viewField: 'veiw',
+    views: { a: { src: 'a.html' } },
+  });
   widgets.loadRegistry();
 
   const server = http.createServer(dispatch);
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const { port } = server.address();
   const body = await new Promise((resolve, reject) => {
-    http.get({ hostname: '127.0.0.1', port, path: '/api/widgets' }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => resolve(JSON.parse(b)));
-    }).on('error', reject);
+    http
+      .get({ hostname: '127.0.0.1', port, path: '/api/widgets' }, res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve(JSON.parse(b)));
+      })
+      .on('error', reject);
   });
   server.closeAllConnections?.();
   await new Promise(r => server.close(r));
@@ -144,6 +159,5 @@ test('GET /api/widgets carries the rejections', async () => {
   assert.match(bad.errors.join(' '), /not a declared field/);
 
   /* Additive: a frontend that does not know about the field is unaffected. */
-  assert.ok(!body.widgets.some(w => w.name === 'badmanifest'),
-    'a rejected widget must not appear in the widget list');
+  assert.ok(!body.widgets.some(w => w.name === 'badmanifest'), 'a rejected widget must not appear in the widget list');
 });

@@ -8,7 +8,7 @@
 
 const path = require('node:path');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.WIDGETS_PATH = path.join(tmpDir('nowidgets'), 'missing');
 
 const { test } = require('node:test');
@@ -19,7 +19,12 @@ const { scrubAllSecrets, preserveAllSecrets } = require('../src/config-secrets')
 
 const stored = () => ({
   items: [
-    { id: 'w1', type: 'widget', widgetType: 'books', widgetConfig: { absUrl: 'https://real.example', absKey: 'KNOWN-SECRET' } },
+    {
+      id: 'w1',
+      type: 'widget',
+      widgetType: 'books',
+      widgetConfig: { absUrl: 'https://real.example', absKey: 'KNOWN-SECRET' },
+    },
     { id: 'w2', type: 'widget', widgetType: 'stats', widgetConfig: { token: 'ANOTHER-SECRET' } },
   ],
 });

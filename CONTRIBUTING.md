@@ -53,6 +53,18 @@ A few of these are worth knowing about before they fail:
   JSDoc, with no build step and nothing emitted. It has to stay clean. A new
   module needs two entries in `tsconfig.frontend.json`, the plain path and the
   `?v=*` form, because TypeScript allows one wildcard per pattern.
+- **Test code is linted and formatted** along with everything else, with a few
+  rules relaxed for `api/test`, `api/test-support` and `ui/test` in `biome.json`:
+  a stub whose signature has to match a real one keeps its unused parameter, a
+  scanner keeps `while ((m = re.exec(s)))`, and `'use strict'` stays where a test
+  depends on strict-mode semantics.
+
+  They are **not** typechecked. `checkJs` over `api/test` reports 131 errors,
+  almost all of them narrowing around Node's `server.address()` in test
+  harnesses rather than defects. Silencing them means JSDoc casts across roughly
+  forty files for no behaviour change, so the exclusion is deliberate; revisit it
+  as its own piece of work, not as a side effect of something else.
+
 - **`npm run lint`** is Biome, from `node_modules`. Run it through npm: a bare
   `npx biome` resolves to an unrelated package that exits 0 without checking
   anything.

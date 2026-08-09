@@ -8,7 +8,10 @@
       "scripts/**/*.js",
       "docs/widget-template/**/*.js",
       "e2e/**/*.js",
-      "playwright.config.js"
+      "playwright.config.js",
+      "api/test/**/*.js",
+      "api/test-support/**/*.js",
+      "ui/test/**/*.mjs"
     ]
   },
   "formatter": {
@@ -45,6 +48,27 @@
         "rules": {
           "style": {
             "noCommonJs": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["api/test/**/*.js", "api/test-support/**/*.js", "ui/test/**/*.mjs"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noAssignInExpressions": "off",
+            "noRedundantUseStrict": "off",
+            "noTemplateCurlyInString": "off"
+          },
+          "security": {
+            "noGlobalEval": "off"
+          },
+          "complexity": {
+            "noCommaOperator": "off"
+          },
+          "correctness": {
+            "noUnusedFunctionParameters": "off"
           }
         }
       }

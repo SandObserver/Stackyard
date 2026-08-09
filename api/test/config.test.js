@@ -11,7 +11,11 @@ const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { migrate, saveConfig, loadConfig, SCHEMA_VERSION } = require('../src/config');
 
-after(() => { try { fs.unlinkSync(TMP); } catch {} });
+after(() => {
+  try {
+    fs.unlinkSync(TMP);
+  } catch {}
+});
 
 test('migrate stamps an unversioned config to the current version', () => {
   const cfg = migrate({ items: [], settings: {} });
@@ -52,7 +56,11 @@ test('migrate tolerates a config with no server settings or a non-string URL', (
 test('a config already at the current version is not rewritten again', () => {
   /* Someone who deliberately re-enters a tcp URL after upgrading keeps it, so
      the step cannot fight the user on every read. */
-  const cfg = { _schemaVersion: SCHEMA_VERSION, items: [], settings: { server: { socketProxyUrl: 'tcp://socket-proxy:2375' } } };
+  const cfg = {
+    _schemaVersion: SCHEMA_VERSION,
+    items: [],
+    settings: { server: { socketProxyUrl: 'tcp://socket-proxy:2375' } },
+  };
   migrate(cfg);
   assert.equal(cfg.settings.server.socketProxyUrl, 'tcp://socket-proxy:2375');
 });

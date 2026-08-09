@@ -5,7 +5,7 @@ const { errorParts } = require('../test-support/widget-ctx');
 
 const handlers = {
   a: async ctx => ({ picked: 'a', cfg: ctx.config }),
-  b: async ctx => ({ picked: 'b' }),
+  b: async _ctx => ({ picked: 'b' }),
 };
 
 test('selects the handler named by the default provider field', async () => {
@@ -24,7 +24,10 @@ test('falls back to the default when the field names an unknown provider', async
 });
 
 test('reads the provider from a custom field', async () => {
-  const r = await dispatchProvider({ config: { diskProvider: 'b' } }, handlers, { field: 'diskProvider', default: 'a' });
+  const r = await dispatchProvider({ config: { diskProvider: 'b' } }, handlers, {
+    field: 'diskProvider',
+    default: 'a',
+  });
   assert.equal(r.picked, 'b');
 });
 
@@ -40,16 +43,23 @@ test('fails when no handler matches and no default is given', async () => {
 });
 
 test('onError wraps a thrown handler error into the widget error shape', async () => {
-  const throwing = { a: async () => { throw new Error('boom'); } };
-  const r = await dispatchProvider({ config: { provider: 'a' } }, throwing,
-    { default: 'a', onError: e => ({ items: [], error: e.message }) });
+  const throwing = {
+    a: async () => {
+      throw new Error('boom');
+    },
+  };
+  const r = await dispatchProvider({ config: { provider: 'a' } }, throwing, {
+    default: 'a',
+    onError: e => ({ items: [], error: e.message }),
+  });
   assert.deepEqual(r, { items: [], error: 'boom' });
 });
 
 test('without onError, a thrown handler error propagates', async () => {
-  const throwing = { a: async () => { throw new Error('boom'); } };
-  await assert.rejects(
-    () => dispatchProvider({ config: { provider: 'a' } }, throwing, { default: 'a' }),
-    /boom/,
-  );
+  const throwing = {
+    a: async () => {
+      throw new Error('boom');
+    },
+  };
+  await assert.rejects(() => dispatchProvider({ config: { provider: 'a' } }, throwing, { default: 'a' }), /boom/);
 });

@@ -15,7 +15,7 @@
 
 const path = require('node:path');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('polllimit'), 'apps.json');
 process.env.ALLOW_PRIVATE_IPS = 'true';
 
@@ -30,7 +30,10 @@ const { saveConfig } = require('../src/config');
 const { _resetRateLimits } = require('../src/auth');
 const LIMITS = require('../src/poll-limits');
 
-let server, base, upstream, upstreamHits = 0;
+let server,
+  base,
+  upstream,
+  upstreamHits = 0;
 
 before(async () => {
   upstream = http.createServer((_, res) => {
@@ -42,7 +45,9 @@ before(async () => {
   const upUrl = `http://127.0.0.1:${upstream.address().port}/api`;
 
   saveConfig({
-    items: [{ id: 'a1', type: 'app', name: 'A', href: 'https://a', badge: { enabled: true, url: upUrl, interval: 30 } }],
+    items: [
+      { id: 'a1', type: 'app', name: 'A', href: 'https://a', badge: { enabled: true, url: upUrl, interval: 30 } },
+    ],
     settings: {},
   });
 
@@ -52,11 +57,20 @@ before(async () => {
 });
 
 after(async () => {
-  await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
-  await new Promise(r => { upstream.closeAllConnections?.(); upstream.close(r); });
+  await new Promise(r => {
+    server.closeAllConnections?.();
+    server.close(r);
+  });
+  await new Promise(r => {
+    upstream.closeAllConnections?.();
+    upstream.close(r);
+  });
 });
 
-beforeEach(() => { upstreamHits = 0; if (_resetRateLimits) _resetRateLimits(); });
+beforeEach(() => {
+  upstreamHits = 0;
+  if (_resetRateLimits) _resetRateLimits();
+});
 
 function req(method, pathname) {
   const u = new URL(base + pathname);
@@ -65,9 +79,14 @@ function req(method, pathname) {
     /* Content-Length only when there is a body: declaring one on a GET leaves
        the server waiting for bytes that never arrive. */
     const headers = { Origin: base };
-    if (body) { headers['Content-Type'] = 'application/json'; headers['Content-Length'] = Buffer.byteLength(body); }
-    const r = http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method, headers },
-      res => { res.resume(); res.on('end', () => resolve(res.statusCode)); });
+    if (body) {
+      headers['Content-Type'] = 'application/json';
+      headers['Content-Length'] = Buffer.byteLength(body);
+    }
+    const r = http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method, headers }, res => {
+      res.resume();
+      res.on('end', () => resolve(res.statusCode));
+    });
     r.on('error', reject);
     r.end(body ?? undefined);
   });
@@ -75,7 +94,7 @@ function req(method, pathname) {
 
 async function burst(method, pathname, n) {
   let limited = 0;
-  for (let i = 0; i < n; i++) if (await req(method, pathname) === 429) limited++;
+  for (let i = 0; i < n; i++) if ((await req(method, pathname)) === 429) limited++;
   return limited;
 }
 
@@ -105,16 +124,18 @@ test('widget-options is limited', async () => {
    services. */
 test('a refused request never reaches the upstream service', async () => {
   await burst('GET', '/api/badges', LIMITS.BADGES.max + 40);
-  assert.equal(upstreamHits, LIMITS.BADGES.max,
-    `${upstreamHits} upstream requests for ${LIMITS.BADGES.max + 40} calls`);
+  assert.equal(
+    upstreamHits,
+    LIMITS.BADGES.max,
+    `${upstreamHits} upstream requests for ${LIMITS.BADGES.max + 40} calls`,
+  );
 });
 
 /* Counted per widget id, since that is what maps to one upstream service. One
    busy widget must not silence the others. */
 test('widget-data counts each widget separately', async () => {
   await burst('GET', '/api/widget-data/w1', LIMITS.WIDGET_DATA.max + 5);
-  assert.notEqual(await req('GET', '/api/widget-data/w2'), 429,
-    'a different widget should still be reachable');
+  assert.notEqual(await req('GET', '/api/widget-data/w2'), 429, 'a different widget should still be reachable');
 });
 
 /* ── the limits fit real use ──────────────────────────────────────────────── */
@@ -132,13 +153,17 @@ test('a minute of normal polling from ten devices stays well inside every limit'
   };
   for (const [name, used] of Object.entries(perMinute)) {
     const { max } = LIMITS[name];
-    assert.ok(used <= max / 2,
-      `${name}: ten devices use ${used}/min against a ${max}/min limit, leaving no room for a focus refetch`);
+    assert.ok(
+      used <= max / 2,
+      `${name}: ten devices use ${used}/min against a ${max}/min limit, leaving no room for a focus refetch`,
+    );
   }
 });
 
 test('one open tab uses a small share of the allowance', () => {
-  const used = 60 / 20;   /* badges, the fastest poll */
-  assert.ok(used / LIMITS.BADGES.max < 0.1,
-    `one tab uses ${Math.round((used / LIMITS.BADGES.max) * 100)}% of the badges allowance`);
+  const used = 60 / 20; /* badges, the fastest poll */
+  assert.ok(
+    used / LIMITS.BADGES.max < 0.1,
+    `one tab uses ${Math.round((used / LIMITS.BADGES.max) * 100)}% of the badges allowance`,
+  );
 });

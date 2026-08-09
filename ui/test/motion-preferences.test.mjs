@@ -41,8 +41,10 @@ test('both pages load tokens.css', () => {
 });
 
 test('only the dashboard loads dashboard.css', () => {
-  assert.ok(!stylesheetsOf('admin/index.html').includes('dashboard.css'),
-    'if Admin loaded it, none of this would have been necessary');
+  assert.ok(
+    !stylesheetsOf('admin/index.html').includes('dashboard.css'),
+    'if Admin loaded it, none of this would have been necessary',
+  );
 });
 
 /* ── every page honours motion and transparency ───────────────────────────── */
@@ -66,7 +68,9 @@ test('reduced motion neutralises rather than removes transitions', () => {
 
 test('every page ends up honouring all three preferences', () => {
   const forPage = page => {
-    const sheets = stylesheetsOf(page).map(f => read(`css/${f}`)).join('\n');
+    const sheets = stylesheetsOf(page)
+      .map(f => read(`css/${f}`))
+      .join('\n');
     return {
       motion: /@media \(prefers-reduced-motion: reduce\)/.test(sheets),
       transparency: /@media \(prefers-reduced-transparency: reduce\)/.test(sheets),
@@ -74,8 +78,11 @@ test('every page ends up honouring all three preferences', () => {
     };
   };
   for (const page of ['index.html', 'admin/index.html']) {
-    assert.deepEqual(forPage(page), { motion: true, transparency: true, contrast: true },
-      `${page} does not honour every preference`);
+    assert.deepEqual(
+      forPage(page),
+      { motion: true, transparency: true, contrast: true },
+      `${page} does not honour every preference`,
+    );
   }
 });
 
@@ -121,7 +128,10 @@ test('admin raises its own tokens for increased contrast', () => {
 /* Measured against the page's own background rather than chosen by eye. WCAG
    asks 4.5 for body text and 3.0 for a UI border. */
 test('the raised colours meet the contrast they are raised for', () => {
-  const lin = c => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const lin = c => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
   const lum = hex => {
     const n = parseInt(hex.slice(1), 16);
     return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
@@ -164,7 +174,10 @@ test('the raised colours meet the contrast they are raised for', () => {
 
   const pane = resolve('--pane');
   assert.ok(pane, 'the panel background does not resolve to a hex');
-  for (const [token, min, what] of [['--dm', 4.5, 'body text'], ['--bd', 3, 'a UI border']]) {
+  for (const [token, min, what] of [
+    ['--dm', 4.5, 'body text'],
+    ['--bd', 3, 'a UI border'],
+  ]) {
     const value = resolve(token);
     assert.ok(value, `${token} does not resolve to a hex`);
     const got = ratio(value, pane);

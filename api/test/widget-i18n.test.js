@@ -1,4 +1,4 @@
-const fs   = require('node:fs');
+const fs = require('node:fs');
 const path = require('node:path');
 const { test, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
@@ -18,14 +18,17 @@ function widget(name, catalogs) {
   const dir = path.join(ROOT, name);
   fs.mkdirSync(path.join(dir, 'i18n'), { recursive: true });
   for (const [lang, body] of Object.entries(catalogs)) {
-    fs.writeFileSync(path.join(dir, 'i18n', lang + '.json'),
-      typeof body === 'string' ? body : JSON.stringify(body));
+    fs.writeFileSync(path.join(dir, 'i18n', lang + '.json'), typeof body === 'string' ? body : JSON.stringify(body));
   }
   return dir;
 }
 
 beforeEach(() => _resetCache());
-after(() => { try { fs.rmSync(ROOT, { recursive: true, force: true }); } catch {} });
+after(() => {
+  try {
+    fs.rmSync(ROOT, { recursive: true, force: true });
+  } catch {}
+});
 
 test('a key resolves from the active language', () => {
   const dir = widget('a', { en: { 'x.label': 'Server URL' }, fa: { 'x.label': 'نشانی سرور' } });
@@ -60,33 +63,57 @@ test('English is served from the English catalog, not the raw key', () => {
 test('every human-facing key is translated and nothing else is', () => {
   const dir = widget('e', {
     en: {
-      'f.label': 'Label', 'f.placeholder': 'Placeholder', 'f.hint': 'Hint',
-      'f.rowLabel': 'Row', 'f.fetchLabel': 'Fetch', 'provider': 'TRANSLATED',
+      'f.label': 'Label',
+      'f.placeholder': 'Placeholder',
+      'f.hint': 'Hint',
+      'f.rowLabel': 'Row',
+      'f.fetchLabel': 'Fetch',
+      provider: 'TRANSLATED',
     },
   });
   const entry = {
-    fields: [{
-      key: 'provider', type: 'provider', variant: 'provider', optionsFrom: 'provider',
-      label: 'f.label', placeholder: 'f.placeholder', hint: 'f.hint',
-      rowLabel: 'f.rowLabel', fetchLabel: 'f.fetchLabel',
-      showIf: { field: 'provider', equals: 'provider' },
-    }],
+    fields: [
+      {
+        key: 'provider',
+        type: 'provider',
+        variant: 'provider',
+        optionsFrom: 'provider',
+        label: 'f.label',
+        placeholder: 'f.placeholder',
+        hint: 'f.hint',
+        rowLabel: 'f.rowLabel',
+        fetchLabel: 'f.fetchLabel',
+        showIf: { field: 'provider', equals: 'provider' },
+      },
+    ],
   };
   const f = translateEntry(entry, dir, 'e', 'en').fields[0];
   assert.deepEqual(
     { label: f.label, placeholder: f.placeholder, hint: f.hint, rowLabel: f.rowLabel, fetchLabel: f.fetchLabel },
-    { label: 'Label', placeholder: 'Placeholder', hint: 'Hint', rowLabel: 'Row', fetchLabel: 'Fetch' });
+    { label: 'Label', placeholder: 'Placeholder', hint: 'Hint', rowLabel: 'Row', fetchLabel: 'Fetch' },
+  );
   /* Identifiers, types and comparison values share the word "provider" and
      must survive untouched, or the lookups they take part in break. */
   assert.deepEqual(
     { key: f.key, type: f.type, variant: f.variant, optionsFrom: f.optionsFrom, showIf: f.showIf },
-    { key: 'provider', type: 'provider', variant: 'provider', optionsFrom: 'provider',
-      showIf: { field: 'provider', equals: 'provider' } });
+    {
+      key: 'provider',
+      type: 'provider',
+      variant: 'provider',
+      optionsFrom: 'provider',
+      showIf: { field: 'provider', equals: 'provider' },
+    },
+  );
 });
 
 test('option labels nested in arrays are translated', () => {
   const dir = widget('f', { en: { 'p.opt.adguard': 'AdGuard Home' }, de: { 'p.opt.adguard': 'AdGuard Home (DE)' } });
-  const out = translateEntry({ fields: [{ key: 'p', options: [{ value: 'adguard', label: 'p.opt.adguard' }] }] }, dir, 'f', 'de');
+  const out = translateEntry(
+    { fields: [{ key: 'p', options: [{ value: 'adguard', label: 'p.opt.adguard' }] }] },
+    dir,
+    'f',
+    'de',
+  );
   assert.equal(out.fields[0].options[0].label, 'AdGuard Home (DE)');
   assert.equal(out.fields[0].options[0].value, 'adguard');
 });

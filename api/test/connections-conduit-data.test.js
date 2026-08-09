@@ -14,7 +14,10 @@ test('the conduit map service fetches /metrics raw and parses region data', asyn
   ].join('\n');
 
   const calls = [];
-  const fetchJSON = async (url, opts) => { calls.push({ url, opts }); return { status: 200, data: metrics }; };
+  const fetchJSON = async (url, opts) => {
+    calls.push({ url, opts });
+    return { status: 200, data: metrics };
+  };
   const config = { services: [{ type: 'conduit', url: 'http://conduit.local:8080', enabled: true }] };
 
   const r = await dataFn({ endpoint: 'map', config, fetchJSON });
@@ -31,7 +34,9 @@ test('the conduit map service fetches /metrics raw and parses region data', asyn
 });
 
 test('the map view reads only the services array', async () => {
-  const fetchJSON = async () => { throw new Error('should not fetch'); };
+  const fetchJSON = async () => {
+    throw new Error('should not fetch');
+  };
   const r = await dataFn({ endpoint: 'map', config: { conduit: { url: 'http://conduit.local:8080' } }, fetchJSON });
   assert.deepEqual(r.services, []);
 });

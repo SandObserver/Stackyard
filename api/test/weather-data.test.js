@@ -12,16 +12,24 @@ function ctxFor(config, endpoint, reply) {
     ctx: {
       config,
       endpoint,
-      fetchJSON: async (url) => { calls.push(url); return reply; },
+      fetchJSON: async url => {
+        calls.push(url);
+        return reply;
+      },
       ...errorParts(),
     },
   };
 }
 
-const GEO = { status: 200, data: { results: [
-  { name: 'Ottawa', admin1: 'Ontario', country: 'Canada', latitude: 45.42, longitude: -75.7 },
-  { name: 'Ottawa', admin1: 'Illinois', country: 'United States', latitude: 41.35, longitude: -88.84 },
-] } };
+const GEO = {
+  status: 200,
+  data: {
+    results: [
+      { name: 'Ottawa', admin1: 'Ontario', country: 'Canada', latitude: 45.42, longitude: -75.7 },
+      { name: 'Ottawa', admin1: 'Illinois', country: 'United States', latitude: 41.35, longitude: -88.84 },
+    ],
+  },
+};
 
 test('geocode returns one option per match, each carrying lat and lon', async () => {
   const { ctx, calls } = ctxFor({ cityQuery: 'Ottawa' }, 'geocode', GEO);

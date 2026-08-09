@@ -24,15 +24,20 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 const SCHEMA_PATH = './node_modules/@biomejs/biome/configuration_schema.json';
 
 test('the schema is resolved from the installed package', () => {
-  assert.equal(biome.$schema, SCHEMA_PATH,
-    'point $schema at the installed package so a version bump cannot leave it behind');
+  assert.equal(
+    biome.$schema,
+    SCHEMA_PATH,
+    'point $schema at the installed package so a version bump cannot leave it behind',
+  );
 });
 
 /* The specific regression: a URL carries a version, and a version drifts. */
 test('the schema is not a versioned URL', () => {
   assert.ok(!/^https?:/.test(biome.$schema), '$schema must not be a remote URL');
-  assert.ok(!/\d+\.\d+\.\d+/.test(biome.$schema),
-    `$schema names a version (${biome.$schema}); Dependabot will not update it`);
+  assert.ok(
+    !/\d+\.\d+\.\d+/.test(biome.$schema),
+    `$schema names a version (${biome.$schema}); Dependabot will not update it`,
+  );
 });
 
 /* These two need the package on disk. The suite runs before `npm install` in

@@ -17,7 +17,7 @@
 
 const path = require('node:path');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('revoke'), 'apps.json');
 
 const { test, before, after, beforeEach } = require('node:test');
@@ -36,7 +36,12 @@ before(async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${server.address().port}`;
 });
-after(async () => { await new Promise(r => { server.closeAllConnections?.(); server.close(r); }); });
+after(async () => {
+  await new Promise(r => {
+    server.closeAllConnections?.();
+    server.close(r);
+  });
+});
 
 async function enableAuth() {
   saveConfig({
@@ -49,18 +54,28 @@ beforeEach(() => saveConfig({ items: [], settings: {} }));
 function req(method, pathname, cookie) {
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method,
-      headers: { 'Content-Type': 'application/json', 'Content-Length': 2, Origin: base, Cookie: cookie || '' },
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => {
-        let j = null;
-        try { j = JSON.parse(b); } catch {}
-        resolve({ status: res.statusCode, body: j, setCookie: res.headers['set-cookie'] || [] });
-      });
-    });
+    const r = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method,
+        headers: { 'Content-Type': 'application/json', 'Content-Length': 2, Origin: base, Cookie: cookie || '' },
+      },
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => {
+          let j = null;
+          try {
+            j = JSON.parse(b);
+          } catch {}
+          resolve({ status: res.statusCode, body: j, setCookie: res.headers['set-cookie'] || [] });
+        });
+      },
+    );
     r.on('error', reject);
     r.end('{}');
   });
@@ -109,8 +124,11 @@ test('the caller is handed a working replacement session', async () => {
   const r = await req('POST', '/api/auth/revoke-sessions', cookieFor(secret()));
   const fresh = tokenFrom(r.setCookie);
   assert.ok(fresh, 'the response must set a new session cookie');
-  assert.equal((await req('GET', '/api/config', 'ds=' + fresh)).status, 200,
-    'the person who pressed the button must stay signed in');
+  assert.equal(
+    (await req('GET', '/api/config', 'ds=' + fresh)).status,
+    200,
+    'the person who pressed the button must stay signed in',
+  );
 });
 
 test('the replacement session is a different one, not the old token reissued', async () => {
@@ -159,10 +177,24 @@ test('a cross-origin request cannot revoke', async () => {
   const before = secret();
   const u = new URL(base + '/api/auth/revoke-sessions');
   const r = await new Promise((resolve, reject) => {
-    const q = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': 2, Origin: 'http://evil.example', Cookie: cookieFor(before) },
-    }, res => { let b = ''; res.on('data', c => { b += c; }); res.on('end', () => resolve({ status: res.statusCode })); });
+    const q = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': 2,
+          Origin: 'http://evil.example',
+          Cookie: cookieFor(before),
+        },
+      },
+      res => {
+        res.on('data', () => {});
+        res.on('end', () => resolve({ status: res.statusCode }));
+      },
+    );
     q.on('error', reject);
     q.end('{}');
   });
@@ -195,10 +227,24 @@ test('changing the password still signs other devices out', async () => {
   const u = new URL(base + '/api/auth/set-password');
   const data = JSON.stringify({ password: 'a-new-password' });
   await new Promise((resolve, reject) => {
-    const q = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base, Cookie: old },
-    }, res => { res.resume(); res.on('end', resolve); });
+    const q = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(data),
+          Origin: base,
+          Cookie: old,
+        },
+      },
+      res => {
+        res.resume();
+        res.on('end', resolve);
+      },
+    );
     q.on('error', reject);
     q.end(data);
   });

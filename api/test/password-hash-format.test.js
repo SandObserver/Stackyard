@@ -24,7 +24,7 @@
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const _tmp = tmpDir('hash');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 
@@ -59,7 +59,7 @@ test('the default parameters are the 16 MiB row from OWASP', async () => {
    number an operator picks by. */
 test('every profile label matches the memory it costs', () => {
   for (const [label, params] of Object.entries(HASH_PROFILES)) {
-    const mib = (128 * (2 ** params.ln) * params.r) / 1048576;
+    const mib = (128 * 2 ** params.ln * params.r) / 1048576;
     assert.equal(`${mib}mib`, label, `${label} actually uses ${mib} MiB`);
   }
 });
@@ -69,7 +69,7 @@ test('every profile label matches the memory it costs', () => {
    pinning, because it is why moving to a heavier row can legitimately trigger a
    rehash and moving to a lighter one never does. */
 test('the profiles are comparable in work without being identical', () => {
-  const work = ({ ln, r, p }) => (2 ** ln) * r * p;
+  const work = ({ ln, r, p }) => 2 ** ln * r * p;
   const all = Object.values(HASH_PROFILES).map(work);
   const spread = Math.max(...all) / Math.min(...all);
   assert.ok(spread > 1, 'the rows are not all identical, so ordering matters');
@@ -78,7 +78,7 @@ test('the profiles are comparable in work without being identical', () => {
 
 test('every profile is at least as strong as the old implicit parameters', () => {
   /* The old format was N=2^14, r=8, p=1. No row may be a downgrade on that. */
-  const work = ({ ln, r, p }) => (2 ** ln) * r * p;
+  const work = ({ ln, r, p }) => 2 ** ln * r * p;
   const before = work({ ln: 14, r: 8, p: 1 });
   for (const [label, params] of Object.entries(HASH_PROFILES)) {
     assert.ok(work(params) > before, `${label} is weaker than what it replaces`);
@@ -117,8 +117,11 @@ test('a hash made with different parameters still verifies', async () => {
     const weaker = await hashPassword('correct-horse');
     assert.match(weaker, /ln=13,r=8,p=10/);
     process.env.PASSWORD_HASH_MEMORY = '32mib';
-    assert.equal(await verifyPassword('correct-horse', weaker), true,
-      'raising the cost must not invalidate existing hashes');
+    assert.equal(
+      await verifyPassword('correct-horse', weaker),
+      true,
+      'raising the cost must not invalidate existing hashes',
+    );
   } finally {
     if (prev === undefined) delete process.env.PASSWORD_HASH_MEMORY;
     else process.env.PASSWORD_HASH_MEMORY = prev;
@@ -127,12 +130,20 @@ test('a hash made with different parameters still verifies', async () => {
 
 test('a malformed hash fails the login rather than throwing', async () => {
   const cases = [
-    '', 'nocolon', 'salt:', ':key', 'salt:nothex',
+    '',
+    'nocolon',
+    'salt:',
+    ':key',
+    'salt:nothex',
     '$scrypt$ln=14,r=8,p=5$onlyonefield',
     '$scrypt$ln=14,r=8$salt$key',
     '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA',
     '$scrypt$ln=14,r=8,p=5$$',
-    null, undefined, 0, {}, [],
+    null,
+    undefined,
+    0,
+    {},
+    [],
   ];
   for (const h of cases) {
     assert.equal(await verifyPassword('anything', h), false, `should be false for ${JSON.stringify(h)}`);
@@ -142,8 +153,12 @@ test('a malformed hash fails the login rather than throwing', async () => {
 /* A hand-edited or corrupted hash must not be able to ask for an allocation big
    enough to take the process down instead of failing a login. */
 test('absurd parameters are refused rather than attempted', async () => {
-  for (const h of ['$scrypt$ln=31,r=8,p=1$c2FsdA$aGFzaA', '$scrypt$ln=14,r=999,p=1$c2FsdA$aGFzaA',
-                   '$scrypt$ln=14,r=8,p=9999$c2FsdA$aGFzaA', '$scrypt$ln=0,r=8,p=1$c2FsdA$aGFzaA']) {
+  for (const h of [
+    '$scrypt$ln=31,r=8,p=1$c2FsdA$aGFzaA',
+    '$scrypt$ln=14,r=999,p=1$c2FsdA$aGFzaA',
+    '$scrypt$ln=14,r=8,p=9999$c2FsdA$aGFzaA',
+    '$scrypt$ln=0,r=8,p=1$c2FsdA$aGFzaA',
+  ]) {
     assert.equal(parseHash(h), null, `${h} should not parse`);
     assert.equal(await verifyPassword('anything', h), false);
   }
@@ -248,7 +263,12 @@ before(async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${server.address().port}`;
 });
-after(async () => { await new Promise(r => { server.closeAllConnections?.(); server.close(r); }); });
+after(async () => {
+  await new Promise(r => {
+    server.closeAllConnections?.();
+    server.close(r);
+  });
+});
 
 const { loadConfig, saveConfig } = require('../src/config');
 
@@ -258,14 +278,22 @@ function login(password) {
   const data = JSON.stringify({ password });
   const u = new URL(base + '/api/auth/login');
   return new Promise((resolve, reject) => {
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => resolve({ status: res.statusCode, body: b }));
-    });
+    const r = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+      },
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve({ status: res.statusCode, body: b }));
+      },
+    );
     r.on('error', reject);
     r.end(data);
   });

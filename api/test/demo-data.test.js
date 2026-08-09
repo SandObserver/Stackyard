@@ -3,7 +3,8 @@ const assert = require('node:assert/strict');
 const { metrics, demoBadges, demoHealth } = require('../src/demo-data');
 
 test('metrics return plausible in-range values', () => {
-  const cpu = metrics.cpuSample().cpu, ram = metrics.ramPercent();
+  const cpu = metrics.cpuSample().cpu,
+    ram = metrics.ramPercent();
   assert.ok(cpu >= 0 && cpu <= 100, `cpu ${cpu}`);
   assert.ok(ram >= 0 && ram <= 100, `ram ${ram}`);
   assert.ok(metrics.procCount() > 0);
@@ -31,4 +32,3 @@ test('health marks the showcase app unhealthy and covers only healthcheck apps',
   assert.deepEqual(Object.keys(out), ['app-grafana']);
   assert.equal(out['app-grafana'].unhealthy, true);
 });
-
