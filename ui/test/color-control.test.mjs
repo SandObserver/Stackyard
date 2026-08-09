@@ -30,12 +30,17 @@ function stubContext() {
       /* Anything else leaves the previous value, which is what a browser does:
          an invalid assignment to fillStyle is ignored. */
     },
-    get fillStyle() { return value; },
+    get fillStyle() {
+      return value;
+    },
   };
 }
 
 globalThis.document = {
-  createElement: () => { canvasCount++; return { getContext: () => stubContext() }; },
+  createElement: () => {
+    canvasCount++;
+    return { getContext: () => stubContext() };
+  },
 };
 
 const { _internals } = await import('../js/admin-color-control.js');
@@ -45,8 +50,7 @@ const { cssToHex, hsvToRgb, hexToHsv } = _internals;
 
 test('a value already in #rrggbb form is not parsed through a canvas', () => {
   canvasCount = 0;
-  for (const hex of ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c',
-    '#ffcd00', '#35c759', '#0289ff', '#cb30df']) {
+  for (const hex of ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df']) {
     assert.equal(cssToHex(hex), hex);
   }
   assert.equal(canvasCount, 0, 'the eight presets should need no parsing at all');
@@ -112,7 +116,10 @@ test('every hue yields channels in range', () => {
     for (const s of [0, 50, 100]) {
       for (const v of [0, 50, 100]) {
         const c = hsvToRgb(h, s, v);
-        assert.ok(c.every(n => Number.isInteger(n) && n >= 0 && n <= 255), `h=${h} s=${s} v=${v} -> ${c}`);
+        assert.ok(
+          c.every(n => Number.isInteger(n) && n >= 0 && n <= 255),
+          `h=${h} s=${s} v=${v} -> ${c}`,
+        );
       }
     }
   }

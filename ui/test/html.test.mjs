@@ -11,10 +11,8 @@ test('interpolated values are escaped without being asked', () => {
 });
 
 test('escaping covers the attribute-breakout characters', () => {
-  assert.equal(s(html`<div title="${`" onmouseover="alert(1)`}">`),
-    '<div title="&quot; onmouseover=&quot;alert(1)">');
-  assert.equal(s(html`<div data-x='${`' onclick='x`}'>`),
-    "<div data-x='&#39; onclick=&#39;x'>");
+  assert.equal(s(html`<div title="${`" onmouseover="alert(1)`}">`), '<div title="&quot; onmouseover=&quot;alert(1)">');
+  assert.equal(s(html`<div data-x='${`' onclick='x`}'>`), "<div data-x='&#39; onclick=&#39;x'>");
 });
 
 test('static markup in the template is left alone', () => {
@@ -32,8 +30,7 @@ test('nested html results are not double-escaped', () => {
 
 test('arrays are joined with no separator and each item escaped', () => {
   const items = ['a&b', '<c>'];
-  assert.equal(s(html`<ul>${items.map(i => html`<li>${i}</li>`)}</ul>`),
-    '<ul><li>a&amp;b</li><li>&lt;c&gt;</li></ul>');
+  assert.equal(s(html`<ul>${items.map(i => html`<li>${i}</li>`)}</ul>`), '<ul><li>a&amp;b</li><li>&lt;c&gt;</li></ul>');
 });
 
 test('nested arrays flatten', () => {

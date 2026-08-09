@@ -68,8 +68,12 @@ test('every locale keeps its markup too', () => {
     for (const key of htmlKeys()) {
       const [a, b] = key.split('.');
       const value = cat[a]?.[b];
-      if (!value) continue;   /* a locale may not translate every key yet */
-      assert.deepEqual(tagsOf(sanitizeI18nMarkup(value)), tagsOf(value), `${file}: ${key} uses markup outside the subset`);
+      if (!value) continue; /* a locale may not translate every key yet */
+      assert.deepEqual(
+        tagsOf(sanitizeI18nMarkup(value)),
+        tagsOf(value),
+        `${file}: ${key} uses markup outside the subset`,
+      );
     }
   }
 });
@@ -110,7 +114,7 @@ test('a tag outside the subset is shown, not dropped', () => {
 
 test('ordinary text is escaped as usual', () => {
   assert.equal(sanitizeI18nMarkup('plain & <text>'), 'plain &amp; &lt;text&gt;');
-  assert.equal(sanitizeI18nMarkup("it's \"quoted\""), 'it&#39;s &quot;quoted&quot;');
+  assert.equal(sanitizeI18nMarkup('it\'s "quoted"'), 'it&#39;s &quot;quoted&quot;');
 });
 
 /* ── malformed markup cannot unbalance the output ─────────────────────────── */
@@ -139,8 +143,17 @@ test('a self-closing non-void tag is not treated as an element', () => {
 });
 
 test('output has balanced tags for arbitrary junk', () => {
-  const junk = ['<<strong>>', '<strong', 'strong>', '<>', '</>', '<strong></strong></strong>',
-                '<em><em><em>x', '<br><br/></br>', '<STRONG>x</STRONG>'];
+  const junk = [
+    '<<strong>>',
+    '<strong',
+    'strong>',
+    '<>',
+    '</>',
+    '<strong></strong></strong>',
+    '<em><em><em>x',
+    '<br><br/></br>',
+    '<STRONG>x</STRONG>',
+  ];
   for (const v of junk) {
     const out = sanitizeI18nMarkup(v);
     const opens = (out.match(/<(strong|em|code)>/g) || []).length;

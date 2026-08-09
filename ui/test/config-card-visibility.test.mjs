@@ -30,7 +30,8 @@ register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { visibleFieldKeys } = await import('../js/admin-logic.js');
 
-const widgets = fs.readdirSync(path.join(root, 'widgets'), { withFileTypes: true })
+const widgets = fs
+  .readdirSync(path.join(root, 'widgets'), { withFileTypes: true })
   .filter(e => e.isDirectory())
   .map(e => e.name)
   .filter(n => fs.existsSync(path.join(root, 'widgets', n, 'widget.json')))
@@ -63,9 +64,12 @@ test('every card has at least one field that always shows', () => {
       }
     }
   }
-  assert.deepEqual(empty, [],
+  assert.deepEqual(
+    empty,
+    [],
     `these cards can render empty:\n${empty.join('\n')}\n` +
-    'Give each card a field with no showIf, usually the selector the others depend on.');
+      'Give each card a field with no showIf, usually the selector the others depend on.',
+  );
 });
 
 /* Stronger than counting: with nothing filled in, which is how a form opens,

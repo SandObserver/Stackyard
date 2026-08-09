@@ -29,8 +29,9 @@ const REF = /(["'])(\/(?:css|js)\/[a-zA-Z0-9_.-]+\.(?:css|js))(\?v=[0-9a-zA-Z]+)
 function sources(dir, out = []) {
   for (const e of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
     const rel = path.join(dir, e.name);
-    if (e.isDirectory()) { if (e.name !== 'test' && e.name !== 'node_modules') sources(rel, out); }
-    else if (/\.(js|html)$/.test(e.name)) out.push(rel);
+    if (e.isDirectory()) {
+      if (e.name !== 'test' && e.name !== 'node_modules') sources(rel, out);
+    } else if (/\.(js|html)$/.test(e.name)) out.push(rel);
   }
   return out;
 }
@@ -55,9 +56,14 @@ test('the scan finds the references it should', () => {
 
 /* The finding. */
 test('every asset reference carries a version stamp', () => {
-  const missing = references().filter(r => !r.stamp).map(r => `${r.file} -> ${r.asset}`);
-  assert.deepEqual(missing, [],
-    `these will never cache-bust:\n${missing.join('\n')}\nAdd ?v=1; the build keeps it current.`);
+  const missing = references()
+    .filter(r => !r.stamp)
+    .map(r => `${r.file} -> ${r.asset}`);
+  assert.deepEqual(
+    missing,
+    [],
+    `these will never cache-bust:\n${missing.join('\n')}\nAdd ?v=1; the build keeps it current.`,
+  );
 });
 
 test('every referenced asset exists', () => {
@@ -89,8 +95,7 @@ test('the build script can see an unstamped reference', () => {
    in test.yml, which now just calls it. */
 test('the check is wired into CI', () => {
   const action = fs.readFileSync(path.resolve(root, '../.github/actions/checks/action.yml'), 'utf8');
-  assert.match(action, /bump-cache-busting\.js --check/,
-    'without this the check only runs when someone remembers to');
+  assert.match(action, /bump-cache-busting\.js --check/, 'without this the check only runs when someone remembers to');
 });
 
 test('the workflows call the shared checks rather than listing their own', () => {

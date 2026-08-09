@@ -59,12 +59,21 @@ test('the scan gates the push', () => {
   assert.equal(built.with.push, false, 'the gate must not publish what it is gating');
   assert.equal(built.with.load, true, 'trivy reads it from the local daemon');
   assert.equal(built.with.platforms, 'linux/amd64', 'only one platform can be loaded on the runner');
-  assert.equal(built.with.tags, byName('Scan the image').with['image-ref'],
-    'the scan must read the image this step just built');
-  assert.match(String(built.with['build-args']), /APP_VERSION=\$\{\{ steps\.meta\.outputs\.version \}\}/,
-    'a different build-arg would build different layers from the ones pushed');
-  assert.match(String(byName('Build and push').with['cache-from']), /type=gha/,
-    'without the shared cache the amd64 image is built twice over');
+  assert.equal(
+    built.with.tags,
+    byName('Scan the image').with['image-ref'],
+    'the scan must read the image this step just built',
+  );
+  assert.match(
+    String(built.with['build-args']),
+    /APP_VERSION=\$\{\{ steps\.meta\.outputs\.version \}\}/,
+    'a different build-arg would build different layers from the ones pushed',
+  );
+  assert.match(
+    String(byName('Build and push').with['cache-from']),
+    /type=gha/,
+    'without the shared cache the amd64 image is built twice over',
+  );
 });
 
 test('the scan fails the job on a high or critical finding', () => {
@@ -86,7 +95,9 @@ test('the image is addressed by digest everywhere after the build', () => {
 
 test('latest is decided by the semver check, not by looking for a hyphen', () => {
   const meta = byName('Extract metadata');
-  const latest = String(meta.with.tags).split('\n').find(l => l.includes('value=latest'));
+  const latest = String(meta.with.tags)
+    .split('\n')
+    .find(l => l.includes('value=latest'));
   assert.ok(latest, 'the latest tag rule is gone');
   assert.match(latest, /steps\.tag\.outputs\.prerelease == 'false'/);
   assert.doesNotMatch(latest, /contains\(github\.ref_name/, 'the hyphen heuristic is back');
@@ -125,10 +136,12 @@ test('the checks still run before anything is published', () => {
    reaching a registry if it slips through anyway. */
 
 test('the release waits for the end-to-end suite', () => {
-  assert.equal(workflow.jobs.e2e?.uses, './.github/workflows/e2e.yml',
-    'the release should call the same e2e workflow, not a copy of it');
-  assert.deepEqual([].concat(job.needs || []), ['e2e'],
-    'publishing must depend on the browser tests');
+  assert.equal(
+    workflow.jobs.e2e?.uses,
+    './.github/workflows/e2e.yml',
+    'the release should call the same e2e workflow, not a copy of it',
+  );
+  assert.deepEqual([].concat(job.needs || []), ['e2e'], 'publishing must depend on the browser tests');
 });
 
 test('the e2e workflow can be called, and still runs on its own', () => {
@@ -138,6 +151,8 @@ test('the e2e workflow can be called, and still runs on its own', () => {
   for (const t of ['workflow_call', 'pull_request', 'push', 'workflow_dispatch']) {
     assert.ok(t in triggers, `the e2e workflow lost its ${t} trigger`);
   }
-  assert.ok(triggers.pull_request.paths?.length,
-    'the pull request run should be filtered by path, or every docs change pays for it');
+  assert.ok(
+    triggers.pull_request.paths?.length,
+    'the pull request run should be filtered by path, or every docs change pays for it',
+  );
 });

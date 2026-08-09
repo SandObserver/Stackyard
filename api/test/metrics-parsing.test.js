@@ -21,7 +21,10 @@ test('a malformed CPU sample reports zero rather than NaN', () => {
 
 test('any NaN in either snapshot is caught', () => {
   const good = { total: 100, busy: 50, iowait: 5 };
-  for (const bad of [{ total: NaN, busy: 1, iowait: 1 }, { total: 200, busy: NaN, iowait: 1 }]) {
+  for (const bad of [
+    { total: NaN, busy: 1, iowait: 1 },
+    { total: 200, busy: NaN, iowait: 1 },
+  ]) {
     const r = computeCpu(good, bad);
     assert.ok(Number.isFinite(r.cpu), `cpu was ${r.cpu}`);
     assert.ok(Number.isFinite(r.iowait), `iowait was ${r.iowait}`);
@@ -29,8 +32,10 @@ test('any NaN in either snapshot is caught', () => {
 });
 
 test('an ordinary pair of samples still computes correctly', () => {
-  assert.deepEqual(computeCpu({ total: 100, busy: 50, iowait: 5 }, { total: 200, busy: 120, iowait: 10 }),
-    { cpu: 70, iowait: 5 });
+  assert.deepEqual(computeCpu({ total: 100, busy: 50, iowait: 5 }, { total: 200, busy: 120, iowait: 10 }), {
+    cpu: 70,
+    iowait: 5,
+  });
 });
 
 test('two identical samples report zero, not a division by zero', () => {
@@ -45,8 +50,9 @@ test('a counter that went backwards does not produce a negative percentage', () 
 
 /* ── /proc/net/dev: the field shift ───────────────────────────────────────── */
 
-const HEADER = 'Inter-|   Receive                                                |  Transmit\n'
-             + ' face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n';
+const HEADER =
+  'Inter-|   Receive                                                |  Transmit\n' +
+  ' face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n';
 
 test('an ordinary line reads bytes, not packets', () => {
   const text = `${HEADER}  eth0: 1234567    890    0    0    0     0          0         0   987654    321    0    0    0     0       0          0\n`;

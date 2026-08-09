@@ -1,20 +1,45 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reorderItems, isDockBlocked, nextActiveIndex, groupBounds, visibleFieldKeys, clearsStoredSecret, authEnableBlocked, widgetConfigMode, resolveAdminSection, rejectionLines, refusedNoticeKey } from '../js/admin-logic.js';
+import {
+  reorderItems,
+  isDockBlocked,
+  nextActiveIndex,
+  groupBounds,
+  visibleFieldKeys,
+  clearsStoredSecret,
+  authEnableBlocked,
+  widgetConfigMode,
+  resolveAdminSection,
+  rejectionLines,
+  refusedNoticeKey,
+} from '../js/admin-logic.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
-  const items = [{ id: 'a', type: 'app' }, { id: 'b', type: 'app' }, { id: 'c', type: 'app' }];
+  const items = [
+    { id: 'a', type: 'app' },
+    { id: 'b', type: 'app' },
+    { id: 'c', type: 'app' },
+  ];
   assert.equal(reorderItems(items, items[1], -1), true);
-  assert.deepEqual(items.map(i => i.id), ['b', 'a', 'c']);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['b', 'a', 'c'],
+  );
   assert.equal(reorderItems(items, items[0], -1), false); // already at the top
-  assert.deepEqual(items.map(i => i.id), ['b', 'a', 'c']);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['b', 'a', 'c'],
+  );
 });
 
 test('reorderItems skips items nested inside folders when ordering the top level', () => {
   const folder = { id: 'f', type: 'folder', children: ['x'] };
   const items = [folder, { id: 'x', type: 'app' }, { id: 'b', type: 'app' }];
   assert.equal(reorderItems(items, folder, 1), true); // folder moves past nested x to b's slot
-  assert.deepEqual(items.map(i => i.id), ['b', 'x', 'f']);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['b', 'x', 'f'],
+  );
 });
 
 test('reorderItems reorders a child within its folder', () => {
@@ -313,22 +338,24 @@ test('every reason becomes a line, named for the picker', () => {
 /* The editor is already showing one widget, so repeating its name reads as a
    stutter. */
 test('the name is left off when the caller is showing one widget', () => {
-  assert.deepEqual(rejectionLines([REFUSALS[0]], { withName: false }),
-    ['viewField "veiw" is not a declared field']);
+  assert.deepEqual(rejectionLines([REFUSALS[0]], { withName: false }), ['viewField "veiw" is not a declared field']);
 });
 
 /* The list is JSON off the API. A malformed entry must not render as
    "undefined: undefined" in front of someone already debugging a manifest. */
 test('an entry that is not a named widget with reasons is dropped', () => {
-  assert.deepEqual(rejectionLines([
-    null,
-    { errors: ['no name'] },
-    { name: '', errors: ['empty name'] },
-    { name: 'x' },
-    { name: 'y', errors: 'not an array' },
-    { name: 'z', errors: [] },
-    { name: 'ok', errors: ['', '   ', 42, 'a real reason'] },
-  ]), ['ok: a real reason']);
+  assert.deepEqual(
+    rejectionLines([
+      null,
+      { errors: ['no name'] },
+      { name: '', errors: ['empty name'] },
+      { name: 'x' },
+      { name: 'y', errors: 'not an array' },
+      { name: 'z', errors: [] },
+      { name: 'ok', errors: ['', '   ', 42, 'a real reason'] },
+    ]),
+    ['ok: a real reason'],
+  );
 });
 
 test('a missing or non-array list is no lines rather than a throw', () => {

@@ -30,10 +30,10 @@ const { errorBody, safeMessage, SAFE_MESSAGES, KIND, KINDS } = require('../src/a
 
 /* Things a real failure names that a browser has no business seeing. */
 const REVEALING = [
-  /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/,        /* an IP address */
-  /\b[a-z0-9-]+\.(?:lan|local|internal|home)\b/i,  /* an internal hostname */
-  /\/(?:data|app|etc|home|root|var)\//,        /* a server path */
-  /\bE[A-Z]{3,}\b/,                            /* a raw errno in prose */
+  /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/ /* an IP address */,
+  /\b[a-z0-9-]+\.(?:lan|local|internal|home)\b/i /* an internal hostname */,
+  /\/(?:data|app|etc|home|root|var)\// /* a server path */,
+  /\bE[A-Z]{3,}\b/ /* a raw errno in prose */,
 ];
 
 const REAL_ERRORS = [

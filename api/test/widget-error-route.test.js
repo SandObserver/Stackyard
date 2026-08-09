@@ -11,7 +11,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const root = tmpDir('werr-route');
 const widgetsDir = path.join(root, 'widgets');
 
@@ -19,8 +19,7 @@ const widgetsDir = path.join(root, 'widgets');
 function writeWidget(name, dataSrc) {
   const dir = path.join(widgetsDir, name);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'widget.json'),
-    JSON.stringify({ name, label: name, sizes: ['small'] }));
+  fs.writeFileSync(path.join(dir, 'widget.json'), JSON.stringify({ name, label: name, sizes: ['small'] }));
   fs.writeFileSync(path.join(dir, 'data.js'), dataSrc);
 }
 writeWidget('vouched', "module.exports = ctx => ctx.fail('Set a Pi-hole password', { kind: ctx.KIND.AUTH });\n");
@@ -53,15 +52,25 @@ before(async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   port = server.address().port;
 });
-after(() => new Promise(r => { server.closeAllConnections?.(); server.close(r); }));
+after(
+  () =>
+    new Promise(r => {
+      server.closeAllConnections?.();
+      server.close(r);
+    }),
+);
 
 function get(id) {
   return new Promise((resolve, reject) => {
-    http.get({ hostname: '127.0.0.1', port, path: `/api/widget-data/${id}` }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(b) }));
-    }).on('error', reject);
+    http
+      .get({ hostname: '127.0.0.1', port, path: `/api/widget-data/${id}` }, res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(b) }));
+      })
+      .on('error', reject);
   });
 }
 

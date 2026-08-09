@@ -16,7 +16,7 @@
 
 const path = require('node:path');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const _tmp = tmpDir('auth');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 
@@ -44,10 +44,10 @@ test('a wrong password does not verify', async () => {
 test('a malformed stored hash resolves false instead of crashing', async () => {
   const cases = [
     'somesalt:not-valid-hex',
-    'somesalt:' + 'a'.repeat(127),  /* odd length, one byte short after decode */
-    'somesalt:' + 'a'.repeat(130),  /* too long */
+    'somesalt:' + 'a'.repeat(127) /* odd length, one byte short after decode */,
+    'somesalt:' + 'a'.repeat(130) /* too long */,
     'somesalt:',
-    'zz:' + 'a'.repeat(128),        /* non-hex salt */
+    'zz:' + 'a'.repeat(128) /* non-hex salt */,
     ':' + 'a'.repeat(128),
     'nocolon',
     '',
@@ -89,9 +89,16 @@ before(async () => {
   base = `http://127.0.0.1:${server.address().port}`;
 });
 
-after(async () => { await new Promise(r => { server.closeAllConnections?.(); server.close(r); }); });
+after(async () => {
+  await new Promise(r => {
+    server.closeAllConnections?.();
+    server.close(r);
+  });
+});
 
-beforeEach(() => { saveConfig({ items: [], settings: {} }); });
+beforeEach(() => {
+  saveConfig({ items: [], settings: {} });
+});
 
 /* Once auth is enabled the config route requires a session, so these tests must
    send one. Without it the write 401s and the assertions below pass for the
@@ -105,19 +112,33 @@ function post(pathname, body, opts = {}) {
   const data = JSON.stringify(body);
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data),
-        Origin: base,
-        Cookie: opts.cookie || '',
+    const r = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(data),
+          Origin: base,
+          Cookie: opts.cookie || '',
+        },
       },
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
-    });
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => {
+          let j = null;
+          try {
+            j = JSON.parse(b);
+          } catch {}
+          resolve({ status: res.statusCode, body: j });
+        });
+      },
+    );
     r.on('error', reject);
     r.end(data);
   });
@@ -138,10 +159,14 @@ test('a config write cannot replace an existing password hash', async () => {
   cfg.settings.auth = { enabled: true, passwordHash: await hashPassword('correct-horse'), secret: 'real-secret' };
   saveConfig(cfg);
 
-  const r = await post('/api/config', {
-    items: [],
-    settings: { auth: { enabled: false, passwordHash: 'x:zz', secret: 'attacker-chosen' } },
-  }, { cookie: sessionCookie() });
+  const r = await post(
+    '/api/config',
+    {
+      items: [],
+      settings: { auth: { enabled: false, passwordHash: 'x:zz', secret: 'attacker-chosen' } },
+    },
+    { cookie: sessionCookie() },
+  );
   assert.equal(r.status, 200, 'the write must actually be accepted, or this proves nothing');
 
   const after = loadConfig().settings.auth;
@@ -157,16 +182,23 @@ test('a config write cannot add a new field to settings.auth', async () => {
   cfg.settings.auth = { enabled: true, secret: 'real-secret' };
   saveConfig(cfg);
 
-  const r = await post('/api/config', {
-    items: [],
-    settings: { auth: { enabled: true, secret: 'real-secret', somethingNew: 'injected' } },
-  }, { cookie: sessionCookie() });
+  const r = await post(
+    '/api/config',
+    {
+      items: [],
+      settings: { auth: { enabled: true, secret: 'real-secret', somethingNew: 'injected' } },
+    },
+    { cookie: sessionCookie() },
+  );
   assert.equal(r.status, 200, 'the write must actually be accepted, or this proves nothing');
   assert.ok(!('somethingNew' in loadConfig().settings.auth));
 });
 
 test('an ordinary config write is unaffected', async () => {
-  const r = await post('/api/config', { items: [{ id: 'a1', type: 'app', name: 'App' }], settings: { language: 'en' } });
+  const r = await post('/api/config', {
+    items: [{ id: 'a1', type: 'app', name: 'App' }],
+    settings: { language: 'en' },
+  });
   assert.equal(r.status, 200);
   const cfg = loadConfig();
   assert.equal(cfg.settings.language, 'en');

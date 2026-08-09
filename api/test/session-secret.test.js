@@ -13,7 +13,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('secret'), 'apps.json');
 
 const { test } = require('node:test');

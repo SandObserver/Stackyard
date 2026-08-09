@@ -13,7 +13,6 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { KIND, ApiError, classify, errorBody } = require('../src/api-error');
 
-
 /* ── classify ─────────────────────────────────────────────────────────────── */
 
 test('a socket error is classified as network and carries its errno', () => {
@@ -46,7 +45,11 @@ test('an SSRF block is classified as blocked, by name not instanceof', () => {
 
 test('a malformed request body is classified as invalid', () => {
   let thrown;
-  try { JSON.parse('{nope'); } catch (e) { thrown = e; }
+  try {
+    JSON.parse('{nope');
+  } catch (e) {
+    thrown = e;
+  }
   assert.equal(classify(thrown).kind, KIND.INVALID);
 });
 
@@ -59,7 +62,8 @@ test('an unrecognised failure falls back to internal, it does not throw', () => 
 
 test('an explicit kind on the error wins over inference', () => {
   const e = Object.assign(new Error('connect ECONNREFUSED 1.2.3.4:80'), {
-    code: 'ECONNREFUSED', kind: KIND.BLOCKED,
+    code: 'ECONNREFUSED',
+    kind: KIND.BLOCKED,
   });
   assert.equal(classify(e).kind, KIND.BLOCKED);
 });

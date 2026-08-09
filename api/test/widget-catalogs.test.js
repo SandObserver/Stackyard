@@ -1,4 +1,4 @@
-const fs   = require('node:fs');
+const fs = require('node:fs');
 const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -18,13 +18,13 @@ const WIDGETS_DIR = path.join(__dirname, '..', '..', 'ui', 'widgets');
    cannot select would never be read. */
 const LANGUAGES = ['en', 'fa', 'zh-Hans', 'es', 'de', 'fr'];
 
-const widgets = fs.readdirSync(WIDGETS_DIR, { withFileTypes: true })
+const widgets = fs
+  .readdirSync(WIDGETS_DIR, { withFileTypes: true })
   .filter(d => d.isDirectory() && fs.existsSync(path.join(WIDGETS_DIR, d.name, 'widget.json')))
   .map(d => d.name);
 
 const hasCatalog = w => fs.existsSync(path.join(WIDGETS_DIR, w, 'i18n', 'en.json'));
-const readCatalog = (w, lang) =>
-  JSON.parse(fs.readFileSync(path.join(WIDGETS_DIR, w, 'i18n', lang + '.json'), 'utf8'));
+const readCatalog = (w, lang) => JSON.parse(fs.readFileSync(path.join(WIDGETS_DIR, w, 'i18n', lang + '.json'), 'utf8'));
 
 /* Every translatable string in a manifest, as it is written there. */
 function manifestStrings(widget) {
@@ -52,8 +52,11 @@ for (const widget of widgets.filter(hasCatalog)) {
     for (const lang of LANGUAGES.filter(l => l !== 'en')) {
       const file = path.join(WIDGETS_DIR, widget, 'i18n', lang + '.json');
       assert.ok(fs.existsSync(file), `${widget} is missing ${lang}.json`);
-      assert.deepEqual(Object.keys(readCatalog(widget, lang)).sort(), en,
-        `${widget}/${lang}.json does not have the same keys as en.json`);
+      assert.deepEqual(
+        Object.keys(readCatalog(widget, lang)).sort(),
+        en,
+        `${widget}/${lang}.json does not have the same keys as en.json`,
+      );
     }
   });
 
@@ -81,7 +84,7 @@ for (const widget of widgets.filter(hasCatalog)) {
       const other = readCatalog(widget, lang);
       for (const [k, v] of Object.entries(en)) {
         const want = (v.match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
-        const got  = ((other[k] || '').match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
+        const got = ((other[k] || '').match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
         assert.deepEqual(got, want, `${widget}/${lang}.json: ${k} does not carry the same placeholders`);
       }
     }

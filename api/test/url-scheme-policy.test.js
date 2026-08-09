@@ -16,7 +16,6 @@
    Checked in two places on purpose. fetchUnchecked and pingUnchecked skip the
    guard by design and carry URLs from saved config, which can arrive by import,
    so the rule also sits where the connection is opened. */
-const path = require('node:path');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -113,8 +112,14 @@ test('a rejected URL opens no connection', async () => {
   const attempts = [];
   const realHttp = http.request;
   const realHttps = https.request;
-  http.request = (...args) => { attempts.push(args[0]); return realHttp.apply(http, args); };
-  https.request = (...args) => { attempts.push(args[0]); return realHttps.apply(https, args); };
+  http.request = (...args) => {
+    attempts.push(args[0]);
+    return realHttp.apply(http, args);
+  };
+  https.request = (...args) => {
+    attempts.push(args[0]);
+    return realHttps.apply(https, args);
+  };
   try {
     await fetchUnchecked('file:///etc/passwd', { timeout: 500 }).catch(() => {});
     await pingUnchecked('file:///etc/passwd', 500).catch(() => {});
@@ -127,13 +132,19 @@ test('a rejected URL opens no connection', async () => {
 });
 
 test('an ordinary http request still works', async () => {
-  const srv = http.createServer((_, res) => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"ok":true}'); });
+  const srv = http.createServer((_, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{"ok":true}');
+  });
   await new Promise(r => srv.listen(0, '127.0.0.1', r));
   try {
     const r = await fetchUnchecked(`http://127.0.0.1:${srv.address().port}/x`, { timeout: 2000 });
     assert.equal(r.status, 200);
     assert.deepEqual(r.data, { ok: true });
   } finally {
-    await new Promise(r => { srv.closeAllConnections?.(); srv.close(r); });
+    await new Promise(r => {
+      srv.closeAllConnections?.();
+      srv.close(r);
+    });
   }
 });

@@ -40,14 +40,20 @@ test('every page declares a theme colour', () => {
    colour above the content. */
 test('the manifest and every page agree on the theme colour', () => {
   for (const page of ['index.html', 'admin/index.html']) {
-    assert.equal(themeColorOf(read(page)), manifest.theme_color,
-      `${page} and the manifest disagree, so the browser chrome will not match the page`);
+    assert.equal(
+      themeColorOf(read(page)),
+      manifest.theme_color,
+      `${page} and the manifest disagree, so the browser chrome will not match the page`,
+    );
   }
 });
 
 test('the theme colour matches the dashboard background', () => {
-  assert.equal(manifest.theme_color, manifest.background_color,
-    'the splash background and the chrome should be the same colour');
+  assert.equal(
+    manifest.theme_color,
+    manifest.background_color,
+    'the splash background and the chrome should be the same colour',
+  );
 });
 
 /* ── the icons ────────────────────────────────────────────────────────────── */
@@ -55,8 +61,11 @@ test('the theme colour matches the dashboard background', () => {
 test('every icon declares exactly one purpose', () => {
   for (const icon of manifest.icons) {
     assert.ok(icon.purpose, `${icon.src} declares no purpose`);
-    assert.equal(icon.purpose.trim().split(/\s+/).length, 1,
-      `${icon.src} claims "${icon.purpose}"; one image cannot be both, and Android will crop it`);
+    assert.equal(
+      icon.purpose.trim().split(/\s+/).length,
+      1,
+      `${icon.src} claims "${icon.purpose}"; one image cannot be both, and Android will crop it`,
+    );
   }
 });
 

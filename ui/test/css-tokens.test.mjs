@@ -30,10 +30,31 @@ const all = files.map(f => [f, read(f)]);
    per-element sizing onto inline styles. A var() naming one of these is correct
    even though no stylesheet defines it. */
 const RUNTIME = new Set([
-  '--bg-image', '--bg-brightness', '--bg-color',
-  '--sc', '--sz', '--iw', '--rh', '--cw', '--lfs', '--lw', '--br', '--gap',
-  '--pad', '--gw', '--gh', '--fiw', '--dsz', '--tfs', '--left', '--bw', '--bh',
-  '--top', '--pt', '--ph', '--pb',
+  '--bg-image',
+  '--bg-brightness',
+  '--bg-color',
+  '--sc',
+  '--sz',
+  '--iw',
+  '--rh',
+  '--cw',
+  '--lfs',
+  '--lw',
+  '--br',
+  '--gap',
+  '--pad',
+  '--gw',
+  '--gh',
+  '--fiw',
+  '--dsz',
+  '--tfs',
+  '--left',
+  '--bw',
+  '--bh',
+  '--top',
+  '--pt',
+  '--ph',
+  '--pb',
 ]);
 
 const defined = new Set();
@@ -56,8 +77,11 @@ test('every var() names a token that exists', () => {
       missing.push(`${name} in ${f}`);
     }
   }
-  assert.deepEqual(missing, [],
-    `Undefined token with no fallback. The declaration is dropped at computed-value time and the property silently reverts:\n${missing.join('\n')}`);
+  assert.deepEqual(
+    missing,
+    [],
+    `Undefined token with no fallback. The declaration is dropped at computed-value time and the property silently reverts:\n${missing.join('\n')}`,
+  );
 });
 
 test('the accent is teal, through the role and not a literal', () => {
@@ -107,16 +131,22 @@ test('no theme colour literal outside tokens.css', () => {
       }
     }
   }
-  assert.deepEqual(offenders, [],
-    `Theme colour written as a literal. Use a role from tokens.css, or declare a page-scoped token in that file's :root:\n${offenders.join('\n')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Theme colour written as a literal. Use a role from tokens.css, or declare a page-scoped token in that file's :root:\n${offenders.join('\n')}`,
+  );
 });
 
 /* The rules both pages need live in one file. They were written out in full in
    each, so the wallpaper layer was ten identical declarations in two places. */
 test('the shared root rules are defined once, in tokens.css', () => {
   for (const sel of ['html::before', '*, *::before, *::after']) {
-    const owners = all.filter(([, src]) => src.includes(sel.replace(/, /g, ','))
-      || src.includes(sel)).map(([f]) => f);
-    assert.deepEqual(owners, ['tokens.css'], `${sel} should be defined only in tokens.css, found in ${owners.join(', ')}`);
+    const owners = all.filter(([, src]) => src.includes(sel.replace(/, /g, ',')) || src.includes(sel)).map(([f]) => f);
+    assert.deepEqual(
+      owners,
+      ['tokens.css'],
+      `${sel} should be defined only in tokens.css, found in ${owners.join(', ')}`,
+    );
   }
 });

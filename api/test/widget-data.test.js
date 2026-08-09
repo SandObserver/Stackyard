@@ -1,5 +1,5 @@
 const path = require('node:path');
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('wd'), 'apps.json');
 
 const { test } = require('node:test');
@@ -61,7 +61,9 @@ test('resolveRow ignores a row entry that is not a plain object', () => {
 
 test('dataFnContext exposes the resolved row and null without one', () => {
   const wc = { slots: [{ url: 'a' }, { url: 'b' }] };
-  assert.deepEqual(dataFnContext(wc, 'jobs', new URLSearchParams(), async () => {}, { key: 'slots', index: 0 }).row, { url: 'a' });
+  assert.deepEqual(dataFnContext(wc, 'jobs', new URLSearchParams(), async () => {}, { key: 'slots', index: 0 }).row, {
+    url: 'a',
+  });
   assert.equal(dataFnContext(wc, '', new URLSearchParams(), async () => {}).row, null);
 });
 

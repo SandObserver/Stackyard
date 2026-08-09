@@ -26,15 +26,14 @@ const read = p => fs.readFileSync(path.join(WIDGETS, p), 'utf8');
 
 test('the System Summary pins its own layout to left-to-right', () => {
   const src = read('stats/system-stats.html');
-  assert.match(src, /<div class="widget" id="widget"[^>]*\sdir="ltr"/,
-    'the System Summary root must keep dir="ltr"');
+  assert.match(src, /<div class="widget" id="widget"[^>]*\sdir="ltr"/, 'the System Summary root must keep dir="ltr"');
 });
 
 test('the pin is on the widget root, not on the document', () => {
   /* Pinning the document would also flip the screen-reader summary, which is a
      sentence and belongs in the reader's direction. */
   const src = read('stats/system-stats.html');
-  assert.doesNotMatch(src, /<html[^>]*\sdir=/, 'the document direction is the dashboard\'s to set');
+  assert.doesNotMatch(src, /<html[^>]*\sdir=/, "the document direction is the dashboard's to set");
   const srLine = src.split('\n').find(l => l.includes('id="sr-sum"')) || '';
   assert.doesNotMatch(srLine, /\sdir=/, 'the screen-reader summary should follow the page');
 });

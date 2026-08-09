@@ -18,8 +18,15 @@ const WIDGETS_DIR = path.join(__dirname, '..', '..', 'ui', 'widgets');
    the manifests inside the release image; it must never appear in a committed
    one, which the separate test below enforces. */
 const KNOWN_KEYS = new Set([
-  'name', 'label', 'sizes', 'fields',
-  'card', 'views', 'viewField', 'defaultView', 'entryVersions',
+  'name',
+  'label',
+  'sizes',
+  'fields',
+  'card',
+  'views',
+  'viewField',
+  'defaultView',
+  'entryVersions',
 ]);
 
 function unknownKeys(manifest) {
@@ -27,13 +34,15 @@ function unknownKeys(manifest) {
 }
 
 function widgetFolders() {
-  return fs.readdirSync(WIDGETS_DIR, { withFileTypes: true })
+  return fs
+    .readdirSync(WIDGETS_DIR, { withFileTypes: true })
     .filter(e => e.isDirectory() && fs.existsSync(path.join(WIDGETS_DIR, e.name, 'widget.json')))
     .map(e => e.name);
 }
 
 test('every widget folder ships a widget.json', () => {
-  const missing = fs.readdirSync(WIDGETS_DIR, { withFileTypes: true })
+  const missing = fs
+    .readdirSync(WIDGETS_DIR, { withFileTypes: true })
     .filter(e => e.isDirectory() && !fs.existsSync(path.join(WIDGETS_DIR, e.name, 'widget.json')))
     .map(e => e.name);
   assert.deepEqual(missing, [], `widget folders without a manifest: ${missing.join(', ')}`);
@@ -43,7 +52,9 @@ for (const name of widgetFolders()) {
   test(`${name}: widget.json is valid`, () => {
     const raw = fs.readFileSync(path.join(WIDGETS_DIR, name, 'widget.json'), 'utf8');
     let manifest;
-    assert.doesNotThrow(() => { manifest = JSON.parse(raw); }, `${name}/widget.json is not valid JSON`);
+    assert.doesNotThrow(() => {
+      manifest = JSON.parse(raw);
+    }, `${name}/widget.json is not valid JSON`);
     const { errors } = validateManifest(name, manifest);
     assert.deepEqual(errors, [], `${name}/widget.json: ${errors.join('; ')}`);
   });
@@ -65,8 +76,11 @@ for (const name of widgetFolders()) {
 
   test(`${name}: widget.json carries no entryVersions`, () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(WIDGETS_DIR, name, 'widget.json'), 'utf8'));
-    assert.equal('entryVersions' in manifest, false,
-      `${name}/widget.json: entryVersions is written into the image at release time and must not be committed`);
+    assert.equal(
+      'entryVersions' in manifest,
+      false,
+      `${name}/widget.json: entryVersions is written into the image at release time and must not be committed`,
+    );
   });
 }
 

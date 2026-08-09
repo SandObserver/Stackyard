@@ -16,10 +16,13 @@ import { resolveAdminSection } from '../js/admin-logic.js';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const html = fs.readFileSync(path.join(root, 'admin/index.html'), 'utf8');
 
-const sections = [...new Set(
-  [...html.matchAll(/id="sec-([a-z-]+)"[^>]*class="[^"]*\bsec\b/g)].map(m => m[1])
-    .concat([...html.matchAll(/class="[^"]*\bsec\b[^"]*"[^>]*id="sec-([a-z-]+)"/g)].map(m => m[1])),
-)];
+const sections = [
+  ...new Set(
+    [...html.matchAll(/id="sec-([a-z-]+)"[^>]*class="[^"]*\bsec\b/g)]
+      .map(m => m[1])
+      .concat([...html.matchAll(/class="[^"]*\bsec\b[^"]*"[^>]*id="sec-([a-z-]+)"/g)].map(m => m[1])),
+  ),
+];
 const links = [...new Set([...html.matchAll(/data-sec="([a-z-]+)"/g)].map(m => m[1]))];
 
 test('the markup still has sections and nav links', () => {

@@ -19,8 +19,9 @@ test('parsePrometheus reads negative, exponent and fractional values', () => {
 });
 
 test('parsePrometheus keeps labelled series as distinct keys', () => {
-  const out = parsePrometheus('http_requests_total{method="get",code="200"} 7\n'
-    + 'http_requests_total{method="post",code="200"} 9');
+  const out = parsePrometheus(
+    'http_requests_total{method="get",code="200"} 7\n' + 'http_requests_total{method="post",code="200"} 9',
+  );
   assert.equal(out['http_requests_total{method="get",code="200"}'], 7);
   assert.equal(out['http_requests_total{method="post",code="200"}'], 9);
 });

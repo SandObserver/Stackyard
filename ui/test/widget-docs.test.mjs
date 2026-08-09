@@ -45,22 +45,20 @@ test('the scan finds both sides', () => {
 });
 
 test('every iframe URL parameter is documented, and no others', () => {
-  assert.deepEqual(documentedParams(), codeParams(),
-    'the iframe parameter table in docs/widgets.md is out of date');
+  assert.deepEqual(documentedParams(), codeParams(), 'the iframe parameter table in docs/widgets.md is out of date');
 });
 
 test('the design canvas sizes are the ones the code uses', () => {
-  const inCode = [...widgetTypes.matchAll(/(\w+):\s*\[(\d+),\s*(\d+)\]/g)]
-    .map(m => `${m[1]} ${m[2]} ${m[3]}`).sort();
+  const inCode = [...widgetTypes.matchAll(/(\w+):\s*\[(\d+),\s*(\d+)\]/g)].map(m => `${m[1]} ${m[2]} ${m[3]}`).sort();
   assert.ok(inCode.length >= 4, `only ${inCode.length} canvas sizes found in the code`);
 
   const at = doc.indexOf('### Design canvas sizes');
   assert.notEqual(at, -1, 'the canvas size section is gone');
   const section = doc.slice(at, doc.indexOf('\n## ', at));
   const documented = [...section.matchAll(/^\| (\w+) \| (\d+) × (\d+) \|/gm)]
-    .map(m => `${m[1]} ${m[2]} ${m[3]}`).sort();
-  assert.deepEqual(documented, inCode,
-    'the canvas size table in docs/widgets.md is out of date');
+    .map(m => `${m[1]} ${m[2]} ${m[3]}`)
+    .sort();
+  assert.deepEqual(documented, inCode, 'the canvas size table in docs/widgets.md is out of date');
 });
 
 /* What a widget may load is enforced by nginx and is invisible from the widget
@@ -77,7 +75,6 @@ test('the widget CSP the guide describes is the one nginx sends', () => {
   /* Anchored on the delimiter: a widened list still contains "connect-src
      'self'" as a prefix, so a loose match would pass while the guide's claim
      that Stackyard is the only reachable host had stopped being true. */
-  assert.match(csp[1], /connect-src 'self';/,
-    'connect-src widened; the guide says a widget can only call Stackyard');
+  assert.match(csp[1], /connect-src 'self';/, 'connect-src widened; the guide says a widget can only call Stackyard');
   assert.match(section, /`connect-src` is `'self'`/);
 });

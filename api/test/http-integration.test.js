@@ -4,7 +4,7 @@
    load time. */
 const path = require('node:path');
 const fs = require('node:fs');
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const _tmp = tmpDir('http');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
@@ -14,29 +14,37 @@ process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
    supplied, which is what the SSRF guard has to intercept. */
 const _fx = path.join(_tmp, 'widgets', 'fixture');
 fs.mkdirSync(_fx, { recursive: true });
-fs.writeFileSync(path.join(_fx, 'widget.json'), JSON.stringify({
-  name: 'fixture', label: 'Fixture', sizes: ['medium'],
-  views: { main: { src: 'index.html' } },
-  fields: [{ key: 'url', type: 'text', label: 'URL' }],
-}));
+fs.writeFileSync(
+  path.join(_fx, 'widget.json'),
+  JSON.stringify({
+    name: 'fixture',
+    label: 'Fixture',
+    sizes: ['medium'],
+    views: { main: { src: 'index.html' } },
+    fields: [{ key: 'url', type: 'text', label: 'URL' }],
+  }),
+);
 fs.writeFileSync(path.join(_fx, 'index.html'), '');
-fs.writeFileSync(path.join(_fx, 'data.js'),
-  'module.exports = async ctx => ctx.fetchJSON(ctx.config.url, {});\n');
+fs.writeFileSync(path.join(_fx, 'data.js'), 'module.exports = async ctx => ctx.fetchJSON(ctx.config.url, {});\n');
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');       // registers auth/config/health/badges/... + OPTIONS
-require('../src/widget-data');  // registers /api/widget-data/:id (pulls in widgets)
+require('../src/routes'); // registers auth/config/health/badges/... + OPTIONS
+require('../src/widget-data'); // registers /api/widget-data/:id (pulls in widgets)
 const { dispatch, on } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword, makeToken, clearAttempts } = require('../src/auth');
 
 /* Routes that fail on purpose, to prove the router turns a handler error into a
    500 instead of crashing the process. */
-on('GET', '/api/_boom_sync', () => { throw new Error('sync boom'); });
-on('GET', '/api/_boom_async', async () => { throw new Error('async boom'); });
+on('GET', '/api/_boom_sync', () => {
+  throw new Error('sync boom');
+});
+on('GET', '/api/_boom_async', async () => {
+  throw new Error('async boom');
+});
 
 const SECRET = 'a'.repeat(64);
 let server, base, validCookie;
@@ -50,31 +58,46 @@ before(async () => {
   base = `http://127.0.0.1:${server.address().port}`;
 });
 
-after(() => new Promise(r => { server.closeAllConnections?.(); server.close(r); }));
+after(
+  () =>
+    new Promise(r => {
+      server.closeAllConnections?.();
+      server.close(r);
+    }),
+);
 
 function req(method, pathname, opts = {}) {
   const { cookie, body, origin, host } = opts;
   const data = body != null ? JSON.stringify(body) : null;
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
-    const r = http.request({
-      method, hostname: u.hostname, port: u.port, path: u.pathname + u.search,
-      agent: false,
-      headers: {
-        ...(cookie ? { Cookie: cookie } : {}),
-        ...(origin ? { Origin: origin } : {}),
-        ...(host ? { Host: host } : {}),
-        ...(data ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } : {}),
+    const r = http.request(
+      {
+        method,
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname + u.search,
+        agent: false,
+        headers: {
+          ...(cookie ? { Cookie: cookie } : {}),
+          ...(origin ? { Origin: origin } : {}),
+          ...(host ? { Host: host } : {}),
+          ...(data ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } : {}),
+        },
       },
-    }, res => {
-      const chunks = [];
-      res.on('data', c => chunks.push(c));
-      res.on('end', () => {
-        const text = Buffer.concat(chunks).toString('utf8');
-        let json = null; try { json = text ? JSON.parse(text) : null; } catch {}
-        resolve({ status: res.statusCode, headers: res.headers, body: json });
-      });
-    });
+      res => {
+        const chunks = [];
+        res.on('data', c => chunks.push(c));
+        res.on('end', () => {
+          const text = Buffer.concat(chunks).toString('utf8');
+          let json = null;
+          try {
+            json = text ? JSON.parse(text) : null;
+          } catch {}
+          resolve({ status: res.statusCode, headers: res.headers, body: json });
+        });
+      },
+    );
     r.on('error', reject);
     if (data) r.write(data);
     r.end();
@@ -152,8 +175,10 @@ test('path parameters are extracted and routed', async () => {
    data source" rather than 404. */
 test('a widget type naming an inherited member is unknown, not data-less', async () => {
   const cfg = loadConfig();
-  saveConfig({ ...cfg, items: [...(cfg.items || []),
-    { id: 'proto-w', type: 'widget', widgetType: 'constructor', widgetConfig: {} }] });
+  saveConfig({
+    ...cfg,
+    items: [...(cfg.items || []), { id: 'proto-w', type: 'widget', widgetType: 'constructor', widgetConfig: {} }],
+  });
   try {
     const r = await req('GET', '/api/widget-data/proto-w', { cookie: validCookie });
     assert.equal(r.status, 404);
@@ -179,7 +204,11 @@ test('OPTIONS without a session is refused like every other method', async () =>
 });
 
 test('no response carries the dead CORS headers', async () => {
-  for (const [method, path] of [['GET', '/api/config'], ['GET', '/api/health'], ['OPTIONS', '/api/config']]) {
+  for (const [method, path] of [
+    ['GET', '/api/config'],
+    ['GET', '/api/health'],
+    ['OPTIONS', '/api/config'],
+  ]) {
     const r = await req(method, path, { cookie: validCookie });
     assert.equal(r.headers['access-control-allow-methods'], undefined, `${method} ${path}`);
     assert.equal(r.headers['access-control-allow-headers'], undefined, `${method} ${path}`);
@@ -188,8 +217,10 @@ test('no response carries the dead CORS headers', async () => {
 
 test('a cross-origin write is rejected by the origin check', async () => {
   const r = await req('POST', '/api/auth/set-password', {
-    cookie: validCookie, body: { password: 'longenough123' },
-    origin: 'http://evil.example', host: '127.0.0.1:1',
+    cookie: validCookie,
+    body: { password: 'longenough123' },
+    origin: 'http://evil.example',
+    host: '127.0.0.1:1',
   });
   assert.equal(r.status, 403);
 });
@@ -234,9 +265,9 @@ test('POST /api/config drops unknown settings and preserves the stored auth secr
   // the existing secret was re-merged, so the session still authenticates
   assert.equal((await req('GET', '/api/config', { cookie: validCookie })).status, 200);
   const exp = await req('GET', '/api/config/export', { cookie: validCookie });
-  assert.equal(exp.body.settings.bogusKey, undefined);   // unknown key stripped
-  assert.equal(exp.body.settings.logLevel, undefined);   // invalid level stripped
-  assert.equal(exp.body.settings.theme, 'dark');         // known key kept
+  assert.equal(exp.body.settings.bogusKey, undefined); // unknown key stripped
+  assert.equal(exp.body.settings.logLevel, undefined); // invalid level stripped
+  assert.equal(exp.body.settings.theme, 'dark'); // known key kept
 });
 
 test('POST /api/config rejects a stale _rev with 409', async () => {
@@ -248,7 +279,10 @@ test('POST /api/config rejects a stale _rev with 409', async () => {
   assert.equal(ok.status, 200);
 
   // same rev again: disk has moved on, so this is the second tab saving over the first
-  const conflict = await req('POST', '/api/config', { cookie: validCookie, body: { items: [], settings: {}, _rev: stale } });
+  const conflict = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [], settings: {}, _rev: stale },
+  });
   assert.equal(conflict.status, 409);
   assert.match(conflict.body.error, /changed somewhere else/);
 });
@@ -320,7 +354,8 @@ test('POST /api/widget-options rejects a cross-origin write', async () => {
   const r = await req('POST', '/api/widget-options/x', {
     cookie: validCookie,
     body: { widgetType: 'fixture', endpoint: 'any', widgetConfig: { url: 'http://example.com/' } },
-    origin: 'http://evil.example', host: '127.0.0.1:1',
+    origin: 'http://evil.example',
+    host: '127.0.0.1:1',
   });
   assert.equal(r.status, 403);
   assert.match(String(r.body?.error), /origin mismatch/);
@@ -328,7 +363,8 @@ test('POST /api/widget-options rejects a cross-origin write', async () => {
 
 test('POST /api/widget-options refuses an unknown widget type', async () => {
   const r = await req('POST', '/api/widget-options/x', {
-    cookie: validCookie, body: { widgetType: 'nope', endpoint: 'any', widgetConfig: {} },
+    cookie: validCookie,
+    body: { widgetType: 'nope', endpoint: 'any', widgetConfig: {} },
   });
   assert.equal(r.status, 400);
 });
@@ -353,7 +389,10 @@ test('set-password rejects a too-short password', async () => {
 });
 
 test('set-password succeeds for an authenticated session and issues a new cookie', async () => {
-  const r = await req('POST', '/api/auth/set-password', { cookie: validCookie, body: { password: 'a-long-enough-password' } });
+  const r = await req('POST', '/api/auth/set-password', {
+    cookie: validCookie,
+    body: { password: 'a-long-enough-password' },
+  });
   assert.equal(r.status, 200);
   assert.match(String(r.headers['set-cookie'] || ''), /ds=.+/);
 });

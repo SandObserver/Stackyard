@@ -1,9 +1,14 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  toRows, rowsToObject: _rowsToObject, requestParts: _requestParts,
-  scrubItemBadgeSecrets, preserveItemBadgeSecrets, migrateItemBadgeHeaders,
-  droppedRowCount, firstMalformedRow,
+  toRows,
+  rowsToObject: _rowsToObject,
+  requestParts: _requestParts,
+  scrubItemBadgeSecrets,
+  preserveItemBadgeSecrets,
+  migrateItemBadgeHeaders,
+  droppedRowCount,
+  firstMalformedRow,
 } = require('../src/badge-headers');
 const { plain } = require('../test-support/plain');
 
@@ -14,10 +19,10 @@ const rowsToObject = rows => plain(_rowsToObject(rows));
 const requestParts = item => plain(_requestParts(item));
 
 test('toRows converts the old object shape to non-secret rows', () => {
-  assert.deepEqual(
-    toRows({ 'X-Api-Key': 'abc', Accept: 'application/json' }),
-    [{ key: 'X-Api-Key', value: 'abc', secret: false }, { key: 'Accept', value: 'application/json', secret: false }],
-  );
+  assert.deepEqual(toRows({ 'X-Api-Key': 'abc', Accept: 'application/json' }), [
+    { key: 'X-Api-Key', value: 'abc', secret: false },
+    { key: 'Accept', value: 'application/json', secret: false },
+  ]);
   assert.deepEqual(toRows(undefined), []);
   assert.deepEqual(toRows(null), []);
 });
@@ -37,10 +42,15 @@ test('rowsToObject skips blank keys and null values', () => {
 });
 
 test('scrub hides secret values, keeps non-secret ones', () => {
-  const item = { type: 'app', badge: { headers: [
-    { key: 'X-Api-Key', value: 'REAL', secret: true },
-    { key: 'Accept', value: 'application/json', secret: false },
-  ] } };
+  const item = {
+    type: 'app',
+    badge: {
+      headers: [
+        { key: 'X-Api-Key', value: 'REAL', secret: true },
+        { key: 'Accept', value: 'application/json', secret: false },
+      ],
+    },
+  };
   scrubItemBadgeSecrets(item);
   assert.deepEqual(item.badge.headers, [
     { key: 'X-Api-Key', secret: true, valueSet: true },
@@ -130,10 +140,15 @@ test('preserve does not leak a stored value into a new unrelated key', () => {
 });
 
 test('scrub then preserve round-trips without losing the secret', () => {
-  const stored = { type: 'app', badge: { headers: [
-    { key: 'X-Api-Key', value: 'REAL', secret: true },
-    { key: 'Accept', value: 'application/json', secret: false },
-  ] } };
+  const stored = {
+    type: 'app',
+    badge: {
+      headers: [
+        { key: 'X-Api-Key', value: 'REAL', secret: true },
+        { key: 'Accept', value: 'application/json', secret: false },
+      ],
+    },
+  };
   const sent = JSON.parse(JSON.stringify(stored));
   scrubItemBadgeSecrets(sent);
   /* browser edits nothing and posts the scrubbed shape back */
@@ -218,12 +233,15 @@ test('droppedRowCount reports how much was skipped', () => {
 /* ── refused on the way in ────────────────────────────────────────────────── */
 
 test('firstMalformedRow names the field and the position', () => {
-  assert.deepEqual(firstMalformedRow({ badge: { headers: [{ key: 'A', value: '1' }, null] } }),
-    { field: 'badge.headers', index: 1 });
-  assert.deepEqual(firstMalformedRow({ badge: { params: ['x'] } }),
-    { field: 'badge.params', index: 0 });
-  assert.deepEqual(firstMalformedRow({ monitoring: { activity: { headers: [5] } } }),
-    { field: 'monitoring.activity.headers', index: 0 });
+  assert.deepEqual(firstMalformedRow({ badge: { headers: [{ key: 'A', value: '1' }, null] } }), {
+    field: 'badge.headers',
+    index: 1,
+  });
+  assert.deepEqual(firstMalformedRow({ badge: { params: ['x'] } }), { field: 'badge.params', index: 0 });
+  assert.deepEqual(firstMalformedRow({ monitoring: { activity: { headers: [5] } } }), {
+    field: 'monitoring.activity.headers',
+    index: 0,
+  });
 });
 
 test('a clean item reports nothing', () => {

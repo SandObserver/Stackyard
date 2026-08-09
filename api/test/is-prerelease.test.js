@@ -52,8 +52,7 @@ test('a null or missing tag is a prerelease rather than a crash', () => {
 });
 
 test('the parse reports the parts it found', () => {
-  assert.deepEqual(parseTag('v1.5.0-rc.2'),
-    { major: 1, minor: 5, patch: 0, prerelease: 'rc.2', build: null });
+  assert.deepEqual(parseTag('v1.5.0-rc.2'), { major: 1, minor: 5, patch: 0, prerelease: 'rc.2', build: null });
   assert.equal(parseTag('nonsense'), null);
 });
 
@@ -75,7 +74,9 @@ test('the CLI writes one GITHUB_OUTPUT line and nothing else on stdout', () => {
 
 test('the CLI reads GITHUB_REF_NAME when given no argument', () => {
   const script = path.join(__dirname, '..', '..', 'scripts', 'is-prerelease.js');
-  const out = execFileSync(process.execPath, [script],
-    { encoding: 'utf8', env: { ...process.env, GITHUB_REF_NAME: 'v3.0.0-beta.1' } });
+  const out = execFileSync(process.execPath, [script], {
+    encoding: 'utf8',
+    env: { ...process.env, GITHUB_REF_NAME: 'v3.0.0-beta.1' },
+  });
   assert.equal(out, 'prerelease=true\n');
 });

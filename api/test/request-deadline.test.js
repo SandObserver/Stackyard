@@ -28,9 +28,19 @@ const BUDGET = 1000;
 const TOLERANCE = 900;
 
 const servers = [];
-after(() => { for (const s of servers) { try { s.close(); } catch {} } });
+after(() => {
+  for (const s of servers) {
+    try {
+      s.close();
+    } catch {}
+  }
+});
 
-const listen = s => new Promise(r => { servers.push(s); s.listen(0, '127.0.0.1', () => r(s.address().port)); });
+const listen = s =>
+  new Promise(r => {
+    servers.push(s);
+    s.listen(0, '127.0.0.1', () => r(s.address().port));
+  });
 
 /* Accepts the connection and then says nothing at all. Asked for over https,
    the TLS handshake never completes, which is the phase the socket timer does
@@ -66,15 +76,20 @@ test('both honour the same budget', async () => {
   const port = await stalledPort();
   const ping = await timed(() => pingUnchecked(`https://127.0.0.1:${port}/`, BUDGET));
   const fetch = await timed(() => fetchUnchecked(`https://127.0.0.1:${port}/`, { timeout: BUDGET }));
-  assert.ok(Math.abs(ping.ms - fetch.ms) < TOLERANCE,
-    `ping took ${ping.ms}ms and fetch took ${fetch.ms}ms for the same budget`);
+  assert.ok(
+    Math.abs(ping.ms - fetch.ms) < TOLERANCE,
+    `ping took ${ping.ms}ms and fetch took ${fetch.ms}ms for the same budget`,
+  );
 });
 
 /* A HEAD answered with 405 is retried as GET. A per-request timer would let a
    stalled host spend the budget twice. */
 test('a HEAD that is refused does not buy a second budget', async () => {
   const srv = http.createServer((req, res) => {
-    if (req.method === 'HEAD') { res.writeHead(405); res.end(); }
+    if (req.method === 'HEAD') {
+      res.writeHead(405);
+      res.end();
+    }
     /* GET: never answer. */
   });
   const port = await listen(srv);
@@ -86,7 +101,12 @@ test('a HEAD that is refused does not buy a second budget', async () => {
 /* ── the paths that must still work ───────────────────────────────────────── */
 
 test('a healthy server answers immediately', async () => {
-  const port = await listen(http.createServer((_, res) => { res.writeHead(200); res.end(); }));
+  const port = await listen(
+    http.createServer((_, res) => {
+      res.writeHead(200);
+      res.end();
+    }),
+  );
   const { result, ms } = await timed(() => pingUnchecked(`http://127.0.0.1:${port}/`, BUDGET));
   assert.deepEqual({ ok: result.ok, status: result.status }, { ok: true, status: 200 });
   assert.ok(ms < BUDGET, 'a healthy ping must not wait for the deadline');
@@ -94,8 +114,13 @@ test('a healthy server answers immediately', async () => {
 
 test('a server that refuses HEAD is still reached with GET', async () => {
   const srv = http.createServer((req, res) => {
-    if (req.method === 'HEAD') { res.writeHead(405); res.end(); return; }
-    res.writeHead(200); res.end();
+    if (req.method === 'HEAD') {
+      res.writeHead(405);
+      res.end();
+      return;
+    }
+    res.writeHead(200);
+    res.end();
   });
   const port = await listen(srv);
   const { result } = await timed(() => pingUnchecked(`http://127.0.0.1:${port}/`, BUDGET));
@@ -103,7 +128,12 @@ test('a server that refuses HEAD is still reached with GET', async () => {
 });
 
 test('a server error is reported rather than treated as healthy', async () => {
-  const port = await listen(http.createServer((_, res) => { res.writeHead(503); res.end(); }));
+  const port = await listen(
+    http.createServer((_, res) => {
+      res.writeHead(503);
+      res.end();
+    }),
+  );
   const { result } = await timed(() => pingUnchecked(`http://127.0.0.1:${port}/`, BUDGET));
   assert.equal(result.ok, false);
   assert.equal(result.status, 503);
@@ -120,7 +150,12 @@ test('a closed port fails fast rather than waiting out the budget', async () => 
 test('only one result is delivered even when the deadline races a response', async () => {
   /* Answers right at the budget, so the timer and the response may both fire. */
   const srv = http.createServer((_, res) => {
-    setTimeout(() => { try { res.writeHead(200); res.end(); } catch {} }, BUDGET);
+    setTimeout(() => {
+      try {
+        res.writeHead(200);
+        res.end();
+      } catch {}
+    }, BUDGET);
   });
   const port = await listen(srv);
   const { result } = await timed(() => pingUnchecked(`http://127.0.0.1:${port}/`, BUDGET));

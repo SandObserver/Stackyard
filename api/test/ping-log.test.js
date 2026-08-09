@@ -28,7 +28,9 @@ const { pingUrl } = _internals;
 /* Record what log.warn is given. The runner restores it after each test. */
 function warnings(t) {
   const seen = [];
-  t.mock.method(log, 'warn', (msg, data) => { seen.push({ msg, data }); });
+  t.mock.method(log, 'warn', (msg, data) => {
+    seen.push({ msg, data });
+  });
   return seen;
 }
 
@@ -43,7 +45,7 @@ async function closedPort() {
 
 const pingFailure = seen => seen.find(w => w.msg === 'ping failed');
 
-test('a failed ping logs a usable URL', async (t) => {
+test('a failed ping logs a usable URL', async t => {
   const port = await closedPort();
   const seen = warnings(t);
   await pingUrl(`http://127.0.0.1:${port}/health`, 2000);
@@ -55,7 +57,7 @@ test('a failed ping logs a usable URL', async (t) => {
 });
 
 /* The port is the half that made two services on one host indistinguishable. */
-test('the logged URL names the scheme and the port', async (t) => {
+test('the logged URL names the scheme and the port', async t => {
   const port = await closedPort();
   const seen = warnings(t);
   await pingUrl(`http://127.0.0.1:${port}/`, 2000);
@@ -67,7 +69,7 @@ test('the logged URL names the scheme and the port', async (t) => {
 
 /* A URL may carry an API key in its query string and credentials in its
    authority. u.origin excludes both, and the query is deliberately left off. */
-test('the logged URL carries neither credentials nor query string', async (t) => {
+test('the logged URL carries neither credentials nor query string', async t => {
   const port = await closedPort();
   const seen = warnings(t);
   await pingUrl(`http://user:hunter2@127.0.0.1:${port}/api?token=SECRET`, 2000);
@@ -79,7 +81,7 @@ test('the logged URL carries neither credentials nor query string', async (t) =>
 });
 
 /* The error text is logged in full, since the response no longer carries it. */
-test('the underlying error message is logged', async (t) => {
+test('the underlying error message is logged', async t => {
   const port = await closedPort();
   const seen = warnings(t);
   await pingUrl(`http://127.0.0.1:${port}/`, 2000);

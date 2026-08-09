@@ -49,8 +49,10 @@ const MESSAGE_LISTENER = /addEventListener\(\s*'message'\s*,\s*(?:async\s*)?(\w+
 
 test('the scan finds the widget pages', () => {
   assert.ok(pages.length > 10, `only ${pages.length} widget pages found`);
-  assert.ok(pages.includes('widgets/stats/disk-health.html'),
-    'the widget that implements the protocol should be in the scan');
+  assert.ok(
+    pages.includes('widgets/stats/disk-health.html'),
+    'the widget that implements the protocol should be in the scan',
+  );
 });
 
 /* ── the sending direction ────────────────────────────────────────────────── */
@@ -61,8 +63,11 @@ test('the dashboard listens for widget-active, and checks the origin', () => {
   const listeners = [...src.matchAll(MESSAGE_LISTENER)];
   assert.ok(listeners.length > 0);
   for (const m of listeners) {
-    assert.match(src.slice(m.index, m.index + 400), /e\.origin !== window\.location\.origin/,
-      'a message listener in ui.js does not check e.origin');
+    assert.match(
+      src.slice(m.index, m.index + 400),
+      /e\.origin !== window\.location\.origin/,
+      'a message listener in ui.js does not check e.origin',
+    );
   }
 });
 
@@ -72,24 +77,25 @@ test('a widget that posts, posts widget-active to its own origin', () => {
   for (const p of senders) {
     const src = read(p);
     assert.doesNotMatch(src, /postMessage\([^)]*,\s*['"]\*['"]\s*\)/, `${p} posts to '*'`);
-    assert.match(src, /postMessage\(\{ type:'widget-active' \}, window\.location\.origin\)/,
-      `${p} posts something other than widget-active to its own origin`);
+    assert.match(
+      src,
+      /postMessage\(\{ type:'widget-active' \}, window\.location\.origin\)/,
+      `${p} posts something other than widget-active to its own origin`,
+    );
   }
 });
 
 /* ── the resetting direction, which is a call and not a message ───────────── */
 
 test('the dashboard resets a widget by calling its __clearActive', () => {
-  assert.match(read(UI), /__clearActive\(\)/,
-    'the dashboard no longer calls into the widget to reset it');
+  assert.match(read(UI), /__clearActive\(\)/, 'the dashboard no longer calls into the widget to reset it');
 });
 
 test('a widget that can go active exposes __clearActive', () => {
   for (const p of pages) {
     const src = read(p);
     if (!/postMessage\(\{ type:'widget-active' \}/.test(src)) continue;
-    assert.match(src, /window\.__clearActive\s*=/,
-      `${p} announces itself active but cannot be reset`);
+    assert.match(src, /window\.__clearActive\s*=/, `${p} announces itself active but cannot be reset`);
   }
 });
 
@@ -100,7 +106,10 @@ test('no widget listens for a message the dashboard never sends', () => {
   const offenders = [];
   for (const p of pages) {
     const src = read(p);
-    if (!MESSAGE_LISTENER.test(src)) { MESSAGE_LISTENER.lastIndex = 0; continue; }
+    if (!MESSAGE_LISTENER.test(src)) {
+      MESSAGE_LISTENER.lastIndex = 0;
+      continue;
+    }
     MESSAGE_LISTENER.lastIndex = 0;
     for (const m of src.matchAll(/e\.data\.type === '([\w-]+)'/g)) {
       if (!ui.includes(`type: '${m[1]}'`) && !ui.includes(`type:'${m[1]}'`)) {
@@ -108,16 +117,22 @@ test('no widget listens for a message the dashboard never sends', () => {
       }
     }
   }
-  assert.deepEqual(offenders, [],
-    `Nothing in ui.js posts these. Remove the listener, or add the sender:\n  ${offenders.join('\n  ')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Nothing in ui.js posts these. Remove the listener, or add the sender:\n  ${offenders.join('\n  ')}`,
+  );
 });
 
 test('a widget listener, if one is added back, checks the origin', () => {
   for (const p of pages) {
     const src = read(p);
     for (const m of src.matchAll(MESSAGE_LISTENER)) {
-      assert.match(src.slice(m.index, m.index + 400), /e\.origin !== window\.location\.origin/,
-        `a message listener in ${p} does not check e.origin`);
+      assert.match(
+        src.slice(m.index, m.index + 400),
+        /e\.origin !== window\.location\.origin/,
+        `a message listener in ${p} does not check e.origin`,
+      );
     }
   }
 });

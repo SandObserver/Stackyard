@@ -15,7 +15,10 @@ function ctxFor(network, response) {
       endpoint: 'speed',
       config: { network },
       normalizeBase,
-      fetchJSON: async (url, opts) => { calls.push({ url, opts }); return response; },
+      fetchJSON: async (url, opts) => {
+        calls.push({ url, opts });
+        return response;
+      },
       ...errorParts(),
     },
     calls,
@@ -49,25 +52,22 @@ test('myspeed sends the x-password header only when a password is set', async ()
 });
 
 test('myspeed surfaces a 401 as a credentials error', async () => {
-  const { ctx } = ctxFor(
-    { enabled: true, url: 'http://ms:5216', provider: 'myspeed' },
-    { status: 401, data: null },
-  );
+  const { ctx } = ctxFor({ enabled: true, url: 'http://ms:5216', provider: 'myspeed' }, { status: 401, data: null });
   await assert.rejects(dataFn(ctx), /MySpeed returned 401, check password/);
 });
 
 test('myspeed reports an empty result', async () => {
-  const { ctx } = ctxFor(
-    { enabled: true, url: 'http://ms:5216', provider: 'myspeed' },
-    { status: 200, data: [] },
-  );
+  const { ctx } = ctxFor({ enabled: true, url: 'http://ms:5216', provider: 'myspeed' }, { status: 200, data: [] });
   await assert.rejects(dataFn(ctx), /No result from MySpeed/);
 });
 
 test('speedtest-tracker returns the latest row shaped for the widget', async () => {
   const { ctx } = ctxFor(
     { enabled: true, url: 'http://stt', provider: 'speedtest-tracker' },
-    { status: 200, data: { data: { id: 7, download: 500, upload: 50, ping: 9, failed: false, created_at: '2026-02-02T00:00:00Z' } } },
+    {
+      status: 200,
+      data: { data: { id: 7, download: 500, upload: 50, ping: 9, failed: false, created_at: '2026-02-02T00:00:00Z' } },
+    },
   );
   const r = await dataFn(ctx);
   assert.deepEqual(r, { download: 500, upload: 50, ping: 9, failed: false, ts: '2026-02-02T00:00:00Z' });
@@ -96,7 +96,9 @@ test('a thrown fetch propagates rather than becoming a successful result', async
     endpoint: 'speed',
     config: { network: { enabled: true, url: 'http://ms', provider: 'myspeed' } },
     normalizeBase,
-    fetchJSON: async () => { throw new Error('connect ECONNREFUSED'); },
+    fetchJSON: async () => {
+      throw new Error('connect ECONNREFUSED');
+    },
   };
   await assert.rejects(dataFn(ctx), /connect ECONNREFUSED/);
 });

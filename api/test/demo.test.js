@@ -17,8 +17,9 @@ const demo = JSON.parse(demoRaw);
    real or private host, fails the build. The check is an allowlist so the repo
    never has to name the hosts it is trying to keep out. */
 function hostAllowed(host) {
-  return host === 'example.com' || host.endsWith('.example.com')
-    || host === 'github.com' || host === 'cdn.jsdelivr.net';
+  return (
+    host === 'example.com' || host.endsWith('.example.com') || host === 'github.com' || host === 'cdn.jsdelivr.net'
+  );
 }
 
 const URL_RE = /https?:\/\/([^/"'\s)]+)/gi;
@@ -26,9 +27,15 @@ const PRIVATE_IP_RE = /\b(?:10\.\d|127\.\d|169\.254\.|192\.168\.|172\.(?:1[6-9]|
 const SECRET_KEY_RE = /(token|secret|password|passwd|apikey|pass)$/i;
 
 function walk(node, fn, keyPath = '') {
-  if (Array.isArray(node)) { node.forEach(v => walk(v, fn, keyPath)); return; }
+  if (Array.isArray(node)) {
+    node.forEach(v => walk(v, fn, keyPath));
+    return;
+  }
   if (node && typeof node === 'object') {
-    for (const [k, v] of Object.entries(node)) { fn(k, v); walk(v, fn, keyPath + '.' + k); }
+    for (const [k, v] of Object.entries(node)) {
+      fn(k, v);
+      walk(v, fn, keyPath + '.' + k);
+    }
   }
 }
 
@@ -54,7 +61,10 @@ test('demo config carries no secret values, only Set flags', () => {
 });
 
 test('demo config has the expected showcase shape', () => {
-  const types = demo.items.reduce((a, i) => { a[i.type] = (a[i.type] || 0) + 1; return a; }, {});
+  const types = demo.items.reduce((a, i) => {
+    a[i.type] = (a[i.type] || 0) + 1;
+    return a;
+  }, {});
   assert.equal(types.widget, 7);
   assert.equal(types.app, 17);
   assert.equal(types.folder, 2);
@@ -63,7 +73,13 @@ test('demo config has the expected showcase shape', () => {
   /* Exactly four docked apps. Tile colors are opt-in: only the two icons that
      are unreadable on a dark tile carry one. */
   assert.equal(demo.items.filter(i => i.dock).length, 4);
-  assert.deepEqual(demo.items.filter(i => i.color).map(i => i.id).sort(), ['app-prowlarr', 'app-vaultwarden']);
+  assert.deepEqual(
+    demo.items
+      .filter(i => i.color)
+      .map(i => i.id)
+      .sort(),
+    ['app-prowlarr', 'app-vaultwarden'],
+  );
   assert.equal(demo.settings.auth.enabled, false);
   /* Distinct widget types only (no duplicated widget shown twice). */
   const wtypes = demo.items.filter(i => i.type === 'widget').map(i => i.widgetType);

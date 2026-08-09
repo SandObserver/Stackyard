@@ -9,16 +9,21 @@
    these fails, the behaviour changed and that is the thing to look at. */
 const path = require('node:path');
 const fs = require('node:fs');
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const dir = tmpDir('rewrite');
 process.env.CONFIG_PATH = path.join(dir, 'apps.json');
-fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({
-  items: [],
-  settings: { server: {
-    hostIp: '192.168.1.50',
-    portMap: { '8096': { host: 'jellyfin', port: '8096' }, '9000': { host: 'portainer', port: '9443' } },
-  } },
-}));
+fs.writeFileSync(
+  process.env.CONFIG_PATH,
+  JSON.stringify({
+    items: [],
+    settings: {
+      server: {
+        hostIp: '192.168.1.50',
+        portMap: { 8096: { host: 'jellyfin', port: '8096' }, 9000: { host: 'portainer', port: '9443' } },
+      },
+    },
+  }),
+);
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

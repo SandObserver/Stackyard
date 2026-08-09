@@ -34,9 +34,9 @@ test('the minimum length is the boundary it claims to be', () => {
 });
 
 test('score rises with length and character variety', () => {
-  const weak   = pwStrength('aaaaaaaa');            /* 8 chars, one class */
-  const better = pwStrength('aaaaAAAA1111');        /* 12 chars, three classes */
-  const best   = pwStrength('aaaaAAAA1111!!!!');    /* 16 chars, four classes */
+  const weak = pwStrength('aaaaaaaa'); /* 8 chars, one class */
+  const better = pwStrength('aaaaAAAA1111'); /* 12 chars, three classes */
+  const best = pwStrength('aaaaAAAA1111!!!!'); /* 16 chars, four classes */
   assert.ok(weak.score < better.score, 'variety and length must count');
   assert.ok(better.score <= best.score);
   assert.equal(best.labelKey, 'pwStrength.strong');
@@ -59,8 +59,16 @@ test('the strongest password still gets a label and a colour', () => {
 /* Nothing in the range may fall off the end of either array. */
 test('every reachable score yields a label and a colour', () => {
   const seen = new Set();
-  for (const pw of ['aaaaaaaa', 'aaaaaaaaaaaa', 'aaaaAAAAaaaa', 'aaaaAAAA1111',
-    'aaaaAAAA1111!!!!', 'aA1!aA1!', 'aA1!aA1!aA1!', 'Aa1!'.repeat(8)]) {
+  for (const pw of [
+    'aaaaaaaa',
+    'aaaaaaaaaaaa',
+    'aaaaAAAAaaaa',
+    'aaaaAAAA1111',
+    'aaaaAAAA1111!!!!',
+    'aA1!aA1!',
+    'aA1!aA1!aA1!',
+    'Aa1!'.repeat(8),
+  ]) {
     const r = pwStrength(pw);
     seen.add(r.score);
     assert.equal(typeof r.labelKey, 'string', pw);

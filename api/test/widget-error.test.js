@@ -14,7 +14,7 @@
 
 const path = require('node:path');
 const fs = require('node:fs');
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('werr'), 'apps.json');
 
 const { test } = require('node:test');
@@ -74,8 +74,11 @@ test('ctx.fail throws rather than returning', () => {
 
 test('what ctx.fail throws carries the message through to the response', () => {
   let thrown;
-  try { ctx().fail('TrueNAS auth failed, check API key', { kind: KIND.AUTH }); }
-  catch (e) { thrown = e; }
+  try {
+    ctx().fail('TrueNAS auth failed, check API key', { kind: KIND.AUTH });
+  } catch (e) {
+    thrown = e;
+  }
   assert.ok(thrown);
   const body = errorBody(thrown);
   assert.equal(body.error, 'TrueNAS auth failed, check API key');
@@ -91,7 +94,8 @@ test('ctx exposes the kinds so a widget can classify without importing', () => {
 /* ── every bundled widget reports the same way ───────────────────────────── */
 
 const WIDGETS = path.join(__dirname, '..', '..', 'ui', 'widgets');
-const dataFiles = fs.readdirSync(WIDGETS)
+const dataFiles = fs
+  .readdirSync(WIDGETS)
   .map(n => [n, path.join(WIDGETS, n, 'data.js')])
   .filter(([, p]) => fs.existsSync(p));
 
@@ -116,8 +120,11 @@ test('no widget returns an error instead of throwing', () => {
       offenders.push(`${name}: ${m[0].slice(0, 60)}`);
     }
   }
-  assert.deepEqual(offenders, [],
-    `Whole-response error returned instead of thrown. Use ctx.fail(message) so the failure reaches the poll lifecycle:\n${offenders.join('\n')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Whole-response error returned instead of thrown. Use ctx.fail(message) so the failure reaches the poll lifecycle:\n${offenders.join('\n')}`,
+  );
 });
 
 /* A caught exception re-reported as a returned field skipped sanitisation
@@ -141,11 +148,15 @@ test('no widget forwards a raw caught message to the browser', () => {
    Scrutiny URL first." and the browser still show "HTTP 503", because a
    hand-rolled fetch throws on the status and never reads the body. fetchData
    reads it; a hand-rolled fetch must read `.error` itself. */
-const frontendFiles = fs.readdirSync(WIDGETS, { withFileTypes: true })
+const frontendFiles = fs
+  .readdirSync(WIDGETS, { withFileTypes: true })
   .filter(d => d.isDirectory())
-  .flatMap(d => fs.readdirSync(path.join(WIDGETS, d.name))
-    .filter(n => n.endsWith('.html'))
-    .map(n => [`${d.name}/${n}`, path.join(WIDGETS, d.name, n)]));
+  .flatMap(d =>
+    fs
+      .readdirSync(path.join(WIDGETS, d.name))
+      .filter(n => n.endsWith('.html'))
+      .map(n => [`${d.name}/${n}`, path.join(WIDGETS, d.name, n)]),
+  );
 
 test('every widget frontend shows the message the server vouched for', () => {
   const offenders = [];
@@ -156,8 +167,11 @@ test('every widget frontend shows the message the server vouched for', () => {
     const readsError = /\.error\s*\|\||\berror:\s*\w+\.error\b/.test(src);
     if (!usesToolbox && !readsError) offenders.push(name);
   }
-  assert.deepEqual(offenders, [],
-    `Widget-data failure reported without the server's message. Use fetchData from widget-toolbox, or read .error off the response body:\n${offenders.join('\n')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Widget-data failure reported without the server's message. Use fetchData from widget-toolbox, or read .error off the response body:\n${offenders.join('\n')}`,
+  );
 });
 
 /* The other half of the convention. A plain Error is sanitised to "Something
@@ -185,6 +199,9 @@ test('no widget reports a user-facing failure with a plain Error', () => {
       offenders.push(`${name}: throw new Error(${m[1].slice(0, 50)})`);
     }
   }
-  assert.deepEqual(offenders, [],
-    `Use ctx.fail(message, { kind }) so the message reaches the browser:\n${offenders.join('\n')}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Use ctx.fail(message, { kind }) so the message reaches the browser:\n${offenders.join('\n')}`,
+  );
 });

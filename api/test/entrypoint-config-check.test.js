@@ -85,8 +85,7 @@ test('a config nginx accepts starts normally', () => {
 test('a config nginx rejects stops the container from starting', () => {
   const r = run({ nginxExit: 1 });
   assert.notEqual(r.status, 0, 'the entrypoint must exit non-zero');
-  assert.ok(!r.started,
-    'nothing may be started once the config has been rejected');
+  assert.ok(!r.started, 'nothing may be started once the config has been rejected');
 });
 
 /* Checking before rendering would validate the previous file, or the shipped

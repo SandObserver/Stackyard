@@ -18,27 +18,33 @@ import { fileURLToPath } from 'node:url';
    Adding a prefix that is not here fails. If it genuinely belongs, add it with
    a reason in tokens.css and a line here. */
 const ALLOWED = new Set([
-  '-webkit-backdrop-filter',      /* Safari needed it well past 16.2 */
-  '-webkit-text-size-adjust',     /* Safari supports only the prefixed form */
-  '-webkit-line-clamp',           /* the line-clamp idiom, with the two below */
+  '-webkit-backdrop-filter' /* Safari needed it well past 16.2 */,
+  '-webkit-text-size-adjust' /* Safari supports only the prefixed form */,
+  '-webkit-line-clamp' /* the line-clamp idiom, with the two below */,
   '-webkit-box-orient',
-  '-webkit-box',                  /* as a display value, not the old flexbox */
-  '-webkit-tap-highlight-color',  /* WebKit-only, no standard equivalent */
-  '-webkit-font-smoothing',       /* non-standard */
-  '-moz-osx-font-smoothing',      /* non-standard */
-  '-webkit-appearance',           /* required inside ::-webkit-slider-thumb */
-  '-webkit-slider-thumb',         /* pseudo-element, no standard equivalent */
-  '-moz-range-thumb',             /* the Firefox counterpart */
-  '-webkit-user-select',          /* Safari only dropped the prefix at 17 */
+  '-webkit-box' /* as a display value, not the old flexbox */,
+  '-webkit-tap-highlight-color' /* WebKit-only, no standard equivalent */,
+  '-webkit-font-smoothing' /* non-standard */,
+  '-moz-osx-font-smoothing' /* non-standard */,
+  '-webkit-appearance' /* required inside ::-webkit-slider-thumb */,
+  '-webkit-slider-thumb' /* pseudo-element, no standard equivalent */,
+  '-moz-range-thumb' /* the Firefox counterpart */,
+  '-webkit-user-select' /* Safari only dropped the prefix at 17 */,
 ]);
 
 /* Removed by P12-1. Named so a reintroduction is reported as a regression
    rather than only as an unlisted prefix. */
 const REMOVED = [
-  '-webkit-flex', '-webkit-align-items', '-webkit-justify-content',
-  '-webkit-flex-direction', '-webkit-flex-shrink',
-  '-webkit-transform', '-webkit-transition', '-webkit-transition-duration',
-  '-webkit-animation-duration', '-webkit-animation-iteration-count',
+  '-webkit-flex',
+  '-webkit-align-items',
+  '-webkit-justify-content',
+  '-webkit-flex-direction',
+  '-webkit-flex-shrink',
+  '-webkit-transform',
+  '-webkit-transition',
+  '-webkit-transition-duration',
+  '-webkit-animation-duration',
+  '-webkit-animation-iteration-count',
   '-webkit-overflow-scrolling',
 ];
 
@@ -71,16 +77,20 @@ test('the scan finds the prefixes that are supposed to still be here', () => {
 });
 
 test('no vendor prefix outside the allowed list', () => {
-  const unlisted = [...found.keys()].filter(p => !ALLOWED.has(p)).sort()
+  const unlisted = [...found.keys()]
+    .filter(p => !ALLOWED.has(p))
+    .sort()
     .map(p => `${p} (${[...found.get(p)].join(', ')})`);
-  assert.deepEqual(unlisted, [],
-    `Unlisted vendor prefix. See the support floor at the top of ui/css/tokens.css; add it there with a reason if it is needed:\n${unlisted.join('\n')}`);
+  assert.deepEqual(
+    unlisted,
+    [],
+    `Unlisted vendor prefix. See the support floor at the top of ui/css/tokens.css; add it there with a reason if it is needed:\n${unlisted.join('\n')}`,
+  );
 });
 
 test('the prefixes P12-1 removed have not come back', () => {
   const back = REMOVED.filter(p => found.has(p) && !ALLOWED.has(p));
-  assert.deepEqual(back, [],
-    `Removed as dead at the stated support floor: ${back.join(', ')}`);
+  assert.deepEqual(back, [], `Removed as dead at the stated support floor: ${back.join(', ')}`);
 });
 
 /* -webkit-box is allowed only as the display value the line-clamp idiom needs.
@@ -91,8 +101,11 @@ test('-webkit-box appears only alongside line clamping', () => {
     const src = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     for (const block of src.split(/[{}]/)) {
       if (!/display\s*:\s*-webkit-box\b/.test(block)) continue;
-      assert.match(block, /-webkit-line-clamp/,
-        `display:-webkit-box without -webkit-line-clamp in ${path.relative(uiDir, f)}: that is the old flexbox spec, not the clamp idiom`);
+      assert.match(
+        block,
+        /-webkit-line-clamp/,
+        `display:-webkit-box without -webkit-line-clamp in ${path.relative(uiDir, f)}: that is the old flexbox spec, not the clamp idiom`,
+      );
     }
   }
 });

@@ -14,7 +14,7 @@
 
 const path = require('node:path');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('ver'), 'apps.json');
 
 const { test, before, after } = require('node:test');
@@ -41,8 +41,11 @@ test('a recent success is not re-fetched', () => {
    the guard asked whether a version had been found, so this returned true and
    every request went back out. */
 test('a recent failure is not re-fetched either', () => {
-  assert.equal(shouldFetch({ at: NOW - 1000, checked: true, latest: null }, NOW), false,
-    'a failed lookup must be cached like a successful one');
+  assert.equal(
+    shouldFetch({ at: NOW - 1000, checked: true, latest: null }, NOW),
+    false,
+    'a failed lookup must be cached like a successful one',
+  );
 });
 
 test('an expired entry is re-fetched, success or failure', () => {
@@ -63,16 +66,26 @@ before(async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${server.address().port}`;
 });
-after(async () => { await new Promise(r => { server.closeAllConnections?.(); server.close(r); }); });
+after(async () => {
+  await new Promise(r => {
+    server.closeAllConnections?.();
+    server.close(r);
+  });
+});
 
 function version() {
   const u = new URL(base + '/api/version');
   return new Promise((resolve, reject) => {
-    http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET' }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => resolve(JSON.parse(b)));
-    }).on('error', reject).end();
+    http
+      .request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET' }, res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve(JSON.parse(b)));
+      })
+      .on('error', reject)
+      .end();
   });
 }
 

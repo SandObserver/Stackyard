@@ -11,7 +11,7 @@
 
 const path = require('node:path');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('health'), 'apps.json');
 
 const { test, before, after } = require('node:test');
@@ -27,7 +27,11 @@ let containers = [];
 let targetStatus = 200;
 
 const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
-const close = s => new Promise(r => { s.closeAllConnections?.(); s.close(r); });
+const close = s =>
+  new Promise(r => {
+    s.closeAllConnections?.();
+    s.close(r);
+  });
 
 before(async () => {
   /* Stands in for the Docker socket proxy. */
@@ -38,22 +42,34 @@ before(async () => {
   socketBase = await listen(socket);
 
   /* Stands in for the app being pinged. */
-  target = http.createServer((_, res) => { res.writeHead(targetStatus); res.end(); });
+  target = http.createServer((_, res) => {
+    res.writeHead(targetStatus);
+    res.end();
+  });
   targetBase = await listen(target);
 
   server = http.createServer(dispatch);
   base = await listen(server);
 });
-after(async () => { await close(server); await close(socket); await close(target); });
+after(async () => {
+  await close(server);
+  await close(socket);
+  await close(target);
+});
 
 function health() {
   const u = new URL(base + '/api/health');
   return new Promise((resolve, reject) => {
-    http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET' }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => resolve(JSON.parse(b)));
-    }).on('error', reject).end();
+    http
+      .request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET' }, res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve(JSON.parse(b)));
+      })
+      .on('error', reject)
+      .end();
   });
 }
 

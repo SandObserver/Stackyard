@@ -13,7 +13,9 @@ function ctxFor(config, endpoint, routes, row = null) {
   return {
     calls,
     ctx: {
-      config, endpoint, row,
+      config,
+      endpoint,
+      row,
       /* The same surface widget-data.js hands a data function: a failure is
          thrown as a WidgetError so its message reaches the browser intact. */
       fail: (message, opts) => {
@@ -35,10 +37,15 @@ function ctxFor(config, endpoint, routes, row = null) {
 const LOGIN = { status: 200, data: { AccessToken: 'tok', RefreshNonce: 'nonce' } };
 
 test('duplicati-jobs returns options built from the row URL and password', async () => {
-  const { ctx, calls } = ctxFor({ slots: [] }, 'duplicati-jobs', {
-    '/api/v1/auth/login': LOGIN,
-    '/api/v1/backups': { status: 200, data: [{ Backup: { ID: '3', Name: 'Nightly' } }] },
-  }, { provider: 'duplicati', dupUrl: 'duplicati:8200', dupPass: 'pw' });
+  const { ctx, calls } = ctxFor(
+    { slots: [] },
+    'duplicati-jobs',
+    {
+      '/api/v1/auth/login': LOGIN,
+      '/api/v1/backups': { status: 200, data: [{ Backup: { ID: '3', Name: 'Nightly' } }] },
+    },
+    { provider: 'duplicati', dupUrl: 'duplicati:8200', dupPass: 'pw' },
+  );
 
   const out = await dataFn(ctx);
   assert.deepEqual(out, { options: [{ value: '3', label: 'Nightly' }] });
@@ -58,37 +65,54 @@ test('an options fetch with no resolved row is refused', async () => {
 
 test('kopia-sources sends basic auth only when a username is present', async () => {
   const reply = { status: 200, data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' } }] } };
-  const withUser = ctxFor({}, 'kopia-sources', { '/api/v1/sources': reply },
-    { provider: 'kopia', kopiaUrl: 'http://kopia:51515/', kopiaUser: 'u', kopiaPass: 'p' });
+  const withUser = ctxFor(
+    {},
+    'kopia-sources',
+    { '/api/v1/sources': reply },
+    { provider: 'kopia', kopiaUrl: 'http://kopia:51515/', kopiaUser: 'u', kopiaPass: 'p' },
+  );
   const out = await dataFn(withUser.ctx);
   assert.equal(out.options.length, 1);
   assert.equal(out.options[0].label, '/data');
   assert.match(withUser.calls[0].opts.headers.Authorization, /^Basic /);
   assert.equal(withUser.calls[0].url, 'http://kopia:51515/api/v1/sources');
 
-  const anon = ctxFor({}, 'kopia-sources', { '/api/v1/sources': reply },
-    { provider: 'kopia', kopiaUrl: 'http://kopia:51515', kopiaPass: 'p' });
+  const anon = ctxFor(
+    {},
+    'kopia-sources',
+    { '/api/v1/sources': reply },
+    { provider: 'kopia', kopiaUrl: 'http://kopia:51515', kopiaPass: 'p' },
+  );
   await dataFn(anon.ctx);
   assert.equal(anon.calls[0].opts.headers.Authorization, undefined);
 });
 
 test('kopia-sources surfaces an auth failure', async () => {
-  const { ctx } = ctxFor({}, 'kopia-sources', { '/api/v1/sources': { status: 401 } },
-    { provider: 'kopia', kopiaUrl: 'http://kopia:51515' });
+  const { ctx } = ctxFor(
+    {},
+    'kopia-sources',
+    { '/api/v1/sources': { status: 401 } },
+    { provider: 'kopia', kopiaUrl: 'http://kopia:51515' },
+  );
   await assert.rejects(() => dataFn(ctx), /authentication failed/i);
 });
 
 test('slots returns one entry per slot, null where unconfigured', async () => {
-  const config = { slots: [
-    { provider: 'duplicati', dupUrl: 'http://d:8200', dupPass: 'pw', jobId: '3', customName: 'Nightly' },
-    { provider: null },
-    { provider: 'kopia', kopiaUrl: 'http://k:51515', jobId: 'h@u:/data' },
-  ] };
+  const config = {
+    slots: [
+      { provider: 'duplicati', dupUrl: 'http://d:8200', dupPass: 'pw', jobId: '3', customName: 'Nightly' },
+      { provider: null },
+      { provider: 'kopia', kopiaUrl: 'http://k:51515', jobId: 'h@u:/data' },
+    ],
+  };
   const { ctx } = ctxFor(config, 'slots', {
     '/api/v1/auth/login': LOGIN,
     '/api/v1/serverstate': { status: 200, data: { ProposedSchedule: [] } },
     '/api/v1/backups': { status: 200, data: [{ Backup: { ID: '3', Name: 'Upstream Name' } }] },
-    '/api/v1/sources': { status: 200, data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' }, status: 'IDLE' }] } },
+    '/api/v1/sources': {
+      status: 200,
+      data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' }, status: 'IDLE' }] },
+    },
   });
 
   const out = await dataFn(ctx);
@@ -108,23 +132,30 @@ test('slots leaves a slot null when its job is gone upstream', async () => {
 });
 
 test('slots collapses same-instance slots into one round of upstream calls', async () => {
-  const config = { slots: [
-    { provider: 'duplicati', dupUrl: 'http://d:8200', dupPass: 'pw', jobId: '1' },
-    { provider: 'duplicati', dupUrl: 'http://d:8200/', dupPass: 'pw', jobId: '2' },
-  ] };
+  const config = {
+    slots: [
+      { provider: 'duplicati', dupUrl: 'http://d:8200', dupPass: 'pw', jobId: '1' },
+      { provider: 'duplicati', dupUrl: 'http://d:8200/', dupPass: 'pw', jobId: '2' },
+    ],
+  };
   const { ctx, calls } = ctxFor(config, 'slots', {
     '/api/v1/auth/login': LOGIN,
     '/api/v1/serverstate': { status: 200, data: {} },
     '/api/v1/backups': { status: 200, data: [{ Backup: { ID: '1', Name: 'A' } }, { Backup: { ID: '2', Name: 'B' } }] },
   });
   const out = await dataFn(ctx);
-  assert.deepEqual(out.map(s => s && s.name), ['A', 'B']);
+  assert.deepEqual(
+    out.map(s => s && s.name),
+    ['A', 'B'],
+  );
   assert.equal(calls.filter(c => c.url.endsWith('/api/v1/serverstate')).length, 1);
 });
 
 test('an unreachable instance leaves its slots null instead of failing the request', async () => {
   const { ctx } = ctxFor({ slots: [{ provider: 'duplicati', dupUrl: 'http://d:8200', jobId: '1' }] }, 'slots', {
-    '/api/v1/auth/login': () => { throw new Error('ECONNREFUSED'); },
+    '/api/v1/auth/login': () => {
+      throw new Error('ECONNREFUSED');
+    },
   });
   assert.deepEqual(await dataFn(ctx), [null]);
 });

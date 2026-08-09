@@ -3,14 +3,25 @@ import assert from 'node:assert/strict';
 import { computeBadgeVisual, needsDark, resolveColor, NAMED, healthReason } from '../js/badge-logic.js';
 
 test('unhealthy takes priority over everything else', () => {
-  const v = computeBadgeVisual({ health: true, activity: 5, staticBdg: { enabled: true, label: 'x' }, hasHC: true, hideHealthy: false });
+  const v = computeBadgeVisual({
+    health: true,
+    activity: 5,
+    staticBdg: { enabled: true, label: 'x' },
+    hasHC: true,
+    hideHealthy: false,
+  });
   assert.equal(v.cls, 'badge on red');
   assert.equal(v.txt, '!');
   assert.equal(v.aria, 'Status: needs attention');
 });
 
 test('activity takes priority over static label and healthy dot', () => {
-  const v = computeBadgeVisual({ activity: 3, staticBdg: { enabled: true, label: 'x' }, hasHC: true, hideHealthy: false });
+  const v = computeBadgeVisual({
+    activity: 3,
+    staticBdg: { enabled: true, label: 'x' },
+    hasHC: true,
+    hideHealthy: false,
+  });
   assert.equal(v.cls, 'badge on blue');
   assert.equal(v.txt, '3');
   assert.equal(v.aria, '3 pending');
@@ -152,13 +163,24 @@ test('healthReason tolerates junk', () => {
 /* ── the reason reaches the badge ─────────────────────────────────────────── */
 
 test('an unhealthy badge carries the reason as hover text', () => {
-  const v = computeBadgeVisual({ health: 1, activity: 0, hasHC: true, healthDetail: { state: 'exited', status: 'Exited (1)' } });
+  const v = computeBadgeVisual({
+    health: 1,
+    activity: 0,
+    hasHC: true,
+    healthDetail: { state: 'exited', status: 'Exited (1)' },
+  });
   assert.equal(v.title, 'Exited (1)');
   assert.match(v.aria, /needs attention: Exited \(1\)/, 'and is not sight-only');
 });
 
 test('a healthy badge carries no hover text', () => {
-  const v = computeBadgeVisual({ health: 0, activity: 0, hasHC: true, hideHealthy: false, healthDetail: { state: 'running', status: 'Up 3 days' } });
+  const v = computeBadgeVisual({
+    health: 0,
+    activity: 0,
+    hasHC: true,
+    hideHealthy: false,
+    healthDetail: { state: 'running', status: 'Up 3 days' },
+  });
   assert.equal(v.title, '');
 });
 

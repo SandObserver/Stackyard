@@ -38,8 +38,11 @@ test('the dashboard has a live region for page changes', () => {
 /* Announced, not shown: the page number is already visible in the dots. */
 test('the region is available to a screen reader but not on screen', () => {
   assert.match(/<div id="page-live"[^>]*>/.exec(html)[0], /class="visually-hidden"/);
-  assert.doesNotMatch(/<div id="page-live"[^>]*>/.exec(html)[0], /aria-hidden/,
-    'aria-hidden would make the region useless');
+  assert.doesNotMatch(
+    /<div id="page-live"[^>]*>/.exec(html)[0],
+    /aria-hidden/,
+    'aria-hidden would make the region useless',
+  );
 });
 
 test('visually-hidden keeps the element rendered', () => {
@@ -55,7 +58,10 @@ test('visually-hidden keeps the element rendered', () => {
 /* ── what gets announced ──────────────────────────────────────────────────── */
 
 test('the announcement is made where the page changes', () => {
-  const goTo = dashboard.slice(dashboard.indexOf('function goTo('), dashboard.indexOf('\n}', dashboard.indexOf('function goTo(')));
+  const goTo = dashboard.slice(
+    dashboard.indexOf('function goTo('),
+    dashboard.indexOf('\n}', dashboard.indexOf('function goTo(')),
+  );
   assert.match(goTo, /announcePage\(pg, total\)/);
 });
 
@@ -70,7 +76,10 @@ test('every way of changing page goes through goTo', () => {
 
 /* Repeating the same page would otherwise announce it again on every click. */
 test('nothing is announced when the page did not change', () => {
-  const goTo = dashboard.slice(dashboard.indexOf('function goTo('), dashboard.indexOf('\n}', dashboard.indexOf('function goTo(')));
+  const goTo = dashboard.slice(
+    dashboard.indexOf('function goTo('),
+    dashboard.indexOf('\n}', dashboard.indexOf('function goTo(')),
+  );
   assert.match(goTo, /const was = pg/);
   assert.match(goTo, /if \(pg !== was\)/);
 });
@@ -106,6 +115,9 @@ test('mobile no longer builds dots into a hidden container', () => {
   const ui = read('js/ui.js');
   assert.doesNotMatch(ui, /const de = \[\]/, 'unreachable markup that still had to be kept in step');
   /* Two statements, whether the formatter puts them on one line or two. */
-  assert.match(ui, /dw\.style\.cssText\s*=\s*'display:none';\s*dw\.innerHTML\s*=\s*''/,
-    'the container is still cleared');
+  assert.match(
+    ui,
+    /dw\.style\.cssText\s*=\s*'display:none';\s*dw\.innerHTML\s*=\s*''/,
+    'the container is still cleared',
+  );
 });

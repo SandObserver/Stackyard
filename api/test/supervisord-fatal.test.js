@@ -34,8 +34,11 @@ const listener = read('scripts/exit-on-fatal.py');
 
 test('an event listener is registered for FATAL', () => {
   assert.match(supervisord, /^\[eventlistener:exit-on-fatal\]$/m);
-  assert.match(supervisord, /^events=PROCESS_STATE_FATAL$/m,
-    'without this event the listener never hears about a program giving up');
+  assert.match(
+    supervisord,
+    /^events=PROCESS_STATE_FATAL$/m,
+    'without this event the listener never hears about a program giving up',
+  );
 });
 
 test('the listener starts, and restarts if it dies', () => {
@@ -67,8 +70,7 @@ test('the listener writes a marker and the entrypoint reads the same one', () =>
   const inEntrypoint = /SUPERVISOR_FATAL_MARKER:-([^}]+)\}/.exec(entrypoint);
   assert.ok(inListener, 'the listener does not define a marker path');
   assert.ok(inEntrypoint, 'the entrypoint does not read one');
-  assert.equal(inListener[1], inEntrypoint[1].trim(),
-    'the two must agree or the failure never reaches the exit code');
+  assert.equal(inListener[1], inEntrypoint[1].trim(), 'the two must agree or the failure never reaches the exit code');
 });
 
 test('the entrypoint exits non-zero when the marker is present', () => {
@@ -78,8 +80,10 @@ test('the entrypoint exits non-zero when the marker is present', () => {
 
 test('the marker is cleared at startup and after being read', () => {
   /* A marker left behind would fail every subsequent start. */
-  assert.ok((entrypoint.match(/rm -f "\$MARKER"/g) || []).length >= 2,
-    'the marker must be cleared before running and after reading it');
+  assert.ok(
+    (entrypoint.match(/rm -f "\$MARKER"/g) || []).length >= 2,
+    'the marker must be cleared before running and after reading it',
+  );
 });
 
 /* ── shutdown still works ─────────────────────────────────────────────────── */
@@ -89,14 +93,16 @@ test('the marker is cleared at startup and after being read', () => {
    without forwarding, a `docker stop` would kill the shell and leave supervisord
    running until the kill timeout, with nothing shut down cleanly. */
 test('signals are forwarded to supervisord', () => {
-  assert.match(entrypoint, /trap '[^']*kill -TERM "\$child"[^']*' TERM INT/,
-    'docker stop would otherwise not reach supervisord');
+  assert.match(
+    entrypoint,
+    /trap '[^']*kill -TERM "\$child"[^']*' TERM INT/,
+    'docker stop would otherwise not reach supervisord',
+  );
   assert.match(entrypoint, /wait "\$child"/);
 });
 
 test('the entrypoint reports the real exit code when nothing failed', () => {
-  assert.match(entrypoint, /exit "\$status"/,
-    'an ordinary shutdown must not be reported as a failure');
+  assert.match(entrypoint, /exit "\$status"/, 'an ordinary shutdown must not be reported as a failure');
 });
 
 /* ── the image ships what the config names ────────────────────────────────── */
@@ -106,8 +112,10 @@ test('the listener script is copied into the image at the path the config uses',
   assert.ok(m, 'the listener has no command');
   const [, interpreter, script] = m;
   assert.ok(dockerfile.includes(`${script}`), `${script} is not copied into the image`);
-  assert.ok(dockerfile.includes(interpreter),
-    `${interpreter} is never asserted to exist, so the listener could fail to start silently`);
+  assert.ok(
+    dockerfile.includes(interpreter),
+    `${interpreter} is never asserted to exist, so the listener could fail to start silently`,
+  );
 });
 
 test('the script is valid Python, checked at build time', () => {
@@ -131,17 +139,20 @@ test('the listener only acts on FATAL', () => {
 
 test('the listener is not excluded from the build context', () => {
   const ignore = read('.dockerignore');
-  assert.match(ignore, /^!scripts\/exit-on-fatal\.py$/m,
-    'without this the COPY fails: the file is not in the build context');
-  assert.match(ignore, /^scripts\/\*\*$/m,
-    'a bare `scripts` prunes the directory and the re-include is ignored');
-  assert.doesNotMatch(ignore, /^scripts$/m,
-    'the bare form would silently defeat the exception above it');
+  assert.match(
+    ignore,
+    /^!scripts\/exit-on-fatal\.py$/m,
+    'without this the COPY fails: the file is not in the build context',
+  );
+  assert.match(ignore, /^scripts\/\*\*$/m, 'a bare `scripts` prunes the directory and the re-include is ignored');
+  assert.doesNotMatch(ignore, /^scripts$/m, 'the bare form would silently defeat the exception above it');
 });
 
 test('the exception comes after the exclusion it overrides', () => {
   /* Docker applies every pattern in order and the last match wins. */
-  const lines = read('.dockerignore').split('\n').map(l => l.trim());
+  const lines = read('.dockerignore')
+    .split('\n')
+    .map(l => l.trim());
   const excluded = lines.indexOf('scripts/**');
   const included = lines.indexOf('!scripts/exit-on-fatal.py');
   assert.ok(excluded !== -1 && included !== -1);
@@ -151,6 +162,9 @@ test('the exception comes after the exclusion it overrides', () => {
 test('the rest of scripts/ is still kept out of the image', () => {
   const ignore = read('.dockerignore');
   const exceptions = ignore.split('\n').filter(l => l.trim().startsWith('!scripts/'));
-  assert.deepEqual(exceptions.map(l => l.trim()), ['!scripts/exit-on-fatal.py'],
-    'build tooling has no place in the image');
+  assert.deepEqual(
+    exceptions.map(l => l.trim()),
+    ['!scripts/exit-on-fatal.py'],
+    'build tooling has no place in the image',
+  );
 });

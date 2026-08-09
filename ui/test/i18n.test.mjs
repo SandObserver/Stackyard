@@ -52,8 +52,15 @@ test('t falls back to the key itself when nothing is loaded', () => {
    "constructor", "toString" and the rest. t() returned the inherited function
    instead of the key, and that value was written into the DOM. */
 test('t returns the key itself for a key named after an inherited member', () => {
-  for (const key of ['constructor', 'toString', 'valueOf', 'hasOwnProperty',
-    'isPrototypeOf', 'propertyIsEnumerable', '__proto__']) {
+  for (const key of [
+    'constructor',
+    'toString',
+    'valueOf',
+    'hasOwnProperty',
+    'isPrototypeOf',
+    'propertyIsEnumerable',
+    '__proto__',
+  ]) {
     assert.equal(t(key), key, key);
   }
 });

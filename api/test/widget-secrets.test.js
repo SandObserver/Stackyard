@@ -8,10 +8,15 @@ const ENTRY = {
     fields: [
       { key: 'apiKey', type: 'secret', label: 'API key' },
       { key: 'host', type: 'text', label: 'Host' },
-      { key: 'accounts', type: 'group', label: 'Accounts', fields: [
-        { key: 'token', type: 'secret', label: 'Token' },
-        { key: 'label', type: 'text', label: 'Label' },
-      ] },
+      {
+        key: 'accounts',
+        type: 'group',
+        label: 'Accounts',
+        fields: [
+          { key: 'token', type: 'secret', label: 'Token' },
+          { key: 'label', type: 'text', label: 'Label' },
+        ],
+      },
     ],
   },
 };
@@ -31,10 +36,15 @@ test('scrubWidgetSecrets replaces a top-level secret with a Set flag', () => {
 });
 
 test('scrubWidgetSecrets scrubs secrets inside group rows', () => {
-  const item = { widgetType: 'x', widgetConfig: { accounts: [
-    { token: 'tok-1', label: 'Primary' },
-    { token: 'tok-2', label: 'Backup' },
-  ] } };
+  const item = {
+    widgetType: 'x',
+    widgetConfig: {
+      accounts: [
+        { token: 'tok-1', label: 'Primary' },
+        { token: 'tok-2', label: 'Backup' },
+      ],
+    },
+  };
   scrubWidgetSecrets(item, ENTRY);
   for (const row of item.widgetConfig.accounts) {
     assert.equal(row.token, undefined);
@@ -66,14 +76,17 @@ test('preserveWidgetSecrets keeps a newly submitted secret instead of the old on
 });
 
 test('preserveWidgetSecrets matches group rows by position', () => {
-  const oldItem = { widgetConfig: { accounts: [
-    { token: 'tok-1', label: 'Primary' },
-    { token: 'tok-2', label: 'Backup' },
-  ] } };
-  const newItem = { widgetConfig: { accounts: [
-    { label: 'Primary renamed' },
-    { token: 'tok-2-new', label: 'Backup' },
-  ] } };
+  const oldItem = {
+    widgetConfig: {
+      accounts: [
+        { token: 'tok-1', label: 'Primary' },
+        { token: 'tok-2', label: 'Backup' },
+      ],
+    },
+  };
+  const newItem = {
+    widgetConfig: { accounts: [{ label: 'Primary renamed' }, { token: 'tok-2-new', label: 'Backup' }] },
+  };
   preserveWidgetSecrets(newItem, oldItem, ENTRY);
   assert.equal(newItem.widgetConfig.accounts[0].token, 'tok-1');
   assert.equal(newItem.widgetConfig.accounts[0].tokenSet, true);
@@ -92,12 +105,13 @@ test('preserveWidgetSecrets is a no-op for items without widgetConfig', () => {
 const ENTRY2 = {
   manifest: {
     fields: [
-      { key: 'network', type: 'object', label: 'Network', fields: [
-        { key: 'pass', type: 'secret', label: 'Password' },
-      ] },
-      { key: 'services', type: 'group', label: 'Services', fields: [
-        { key: 'token', type: 'secret', label: 'Token' },
-      ] },
+      {
+        key: 'network',
+        type: 'object',
+        label: 'Network',
+        fields: [{ key: 'pass', type: 'secret', label: 'Password' }],
+      },
+      { key: 'services', type: 'group', label: 'Services', fields: [{ key: 'token', type: 'secret', label: 'Token' }] },
     ],
   },
 };
@@ -126,16 +140,17 @@ test('preserveWidgetSecrets restores an object secret omitted by the browser', (
 });
 
 test('preserveWidgetSecrets matches group rows by id regardless of order', () => {
-  const oldItem = { widgetConfig: { services: [
-    { id: 'a', token: 'tok-a' },
-    { id: 'b', token: 'tok-b' },
-  ] } };
+  const oldItem = {
+    widgetConfig: {
+      services: [
+        { id: 'a', token: 'tok-a' },
+        { id: 'b', token: 'tok-b' },
+      ],
+    },
+  };
   /* Rows reordered and one omits its token; id matching must still restore the
      right secret to each row rather than lining them up by position. */
-  const newItem = { widgetConfig: { services: [
-    { id: 'b', token: 'tok-b-new' },
-    { id: 'a' },
-  ] } };
+  const newItem = { widgetConfig: { services: [{ id: 'b', token: 'tok-b-new' }, { id: 'a' }] } };
   preserveWidgetSecrets(newItem, oldItem, ENTRY2);
   assert.equal(newItem.widgetConfig.services[0].token, 'tok-b-new');
   assert.equal(newItem.widgetConfig.services[1].token, 'tok-a');
@@ -152,9 +167,12 @@ const INHERITED_ENTRY = {
   manifest: {
     fields: [
       { key: 'toString', type: 'secret', label: 'Token' },
-      { key: 'accounts', type: 'group', label: 'Accounts', fields: [
-        { key: 'constructor', type: 'secret', label: 'Key' },
-      ] },
+      {
+        key: 'accounts',
+        type: 'group',
+        label: 'Accounts',
+        fields: [{ key: 'constructor', type: 'secret', label: 'Key' }],
+      },
     ],
   },
 };

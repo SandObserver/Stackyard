@@ -19,7 +19,7 @@
 
 const path = require('node:path');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('decode'), 'apps.json');
 
 const { test, before, after } = require('node:test');
@@ -102,7 +102,7 @@ let server, base;
 
 before(async () => {
   require('../src/routes');
-  require('../src/widget-data');   /* registers /api/widget-config/:id */
+  require('../src/widget-data'); /* registers /api/widget-config/:id */
   const { dispatch } = require('../src/router');
   const { saveConfig } = require('../src/config');
   saveConfig({
@@ -113,19 +113,38 @@ before(async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${server.address().port}`;
 });
-after(async () => { await new Promise(r => { server.closeAllConnections?.(); server.close(r); }); });
+after(async () => {
+  await new Promise(r => {
+    server.closeAllConnections?.();
+    server.close(r);
+  });
+});
 
 function get(pathname, cookie) {
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET',
-      headers: cookie ? { Cookie: cookie } : {},
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
-    });
+    const r = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'GET',
+        headers: cookie ? { Cookie: cookie } : {},
+      },
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => {
+          let j = null;
+          try {
+            j = JSON.parse(b);
+          } catch {}
+          resolve({ status: res.statusCode, body: j });
+        });
+      },
+    );
     r.on('error', reject);
     r.end();
   });
@@ -176,7 +195,12 @@ test('a valid route parameter still decodes', async () => {
 
 test('no malformed URL produces a 500', async () => {
   const c = session();
-  for (const p of ['/api/widget-config/%', '/api/widget-config/%zz', '/api/widget-config/a%', '/api/widget-config/%E0%A4%A']) {
+  for (const p of [
+    '/api/widget-config/%',
+    '/api/widget-config/%zz',
+    '/api/widget-config/a%',
+    '/api/widget-config/%E0%A4%A',
+  ]) {
     const r = await get(p, c);
     assert.notEqual(r.status, 500, `${p} answered 500`);
     assert.equal(r.status, 400, `${p} should be a bad request`);

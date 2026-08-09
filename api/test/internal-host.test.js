@@ -50,8 +50,15 @@ test('localhost and dotted names are not Docker service names', () => {
 });
 
 test('isInternalHost covers loopback, private addresses and service names', () => {
-  for (const url of ['https://localhost/', 'https://myservice/', 'https://192.168.1.5/',
-    'https://10.0.0.1/', 'https://127.0.0.1/', 'https://[fd00::1]/', 'https://[::1]/']) {
+  for (const url of [
+    'https://localhost/',
+    'https://myservice/',
+    'https://192.168.1.5/',
+    'https://10.0.0.1/',
+    'https://127.0.0.1/',
+    'https://[fd00::1]/',
+    'https://[::1]/',
+  ]) {
     assert.equal(isInternalHost(host(url)), true, url);
   }
 });
@@ -87,7 +94,11 @@ test('a public host never skips TLS verification', () => {
 
 /* The setting gates everything: with it off, nothing skips verification. */
 test('nothing skips TLS verification while the setting is off', () => {
-  for (const cfg of [{ settings: {} }, { settings: { server: {} } }, { settings: { server: { skipTlsVerify: false } } }]) {
+  for (const cfg of [
+    { settings: {} },
+    { settings: { server: {} } },
+    { settings: { server: { skipTlsVerify: false } } },
+  ]) {
     assert.equal(shouldSkipTls('myservice', cfg), false);
     assert.equal(shouldSkipTls('192.168.1.5', cfg), false);
   }

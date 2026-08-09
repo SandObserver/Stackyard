@@ -49,14 +49,26 @@ function makeDom() {
       disabled: opts.disabled || false,
       attrs: new Map(Object.entries(opts.attrs || {})),
       offsetParent: opts.hidden ? null : {},
-      focus() { active = this; this.focused = (this.focused || 0) + 1; },
-      getAttribute(k) { return this.attrs.has(k) ? this.attrs.get(k) : null; },
-      setAttribute(k, v) { this.attrs.set(k, v); },
+      focus() {
+        active = this;
+        this.focused = (this.focused || 0) + 1;
+      },
+      getAttribute(k) {
+        return this.attrs.has(k) ? this.attrs.get(k) : null;
+      },
+      setAttribute(k, v) {
+        this.attrs.set(k, v);
+      },
       contains(other) {
         if (other === this) return true;
         return this.children.some(c => c.contains && c.contains(other));
       },
-      append(...kids) { for (const k of kids) { k.parent = this; this.children.push(k); } },
+      append(...kids) {
+        for (const k of kids) {
+          k.parent = this;
+          this.children.push(k);
+        }
+      },
       querySelectorAll(sel) {
         /* Only the shapes the module asks for. */
         const wanted = sel.split(',').map(s => s.trim());
@@ -69,7 +81,8 @@ function makeDom() {
               if (w.startsWith('input')) return c.tagName === 'INPUT' && !c.disabled;
               if (w.startsWith('select')) return c.tagName === 'SELECT' && !c.disabled;
               if (w.startsWith('textarea')) return c.tagName === 'TEXTAREA' && !c.disabled;
-              if (w.startsWith('[tabindex]')) return c.getAttribute('tabindex') != null && c.getAttribute('tabindex') !== '-1';
+              if (w.startsWith('[tabindex]'))
+                return c.getAttribute('tabindex') != null && c.getAttribute('tabindex') !== '-1';
               return false;
             });
             if (matches) out.push(c);
@@ -91,30 +104,47 @@ function makeDom() {
       _fire(type, event) {
         for (const l of (listeners.get(this) || []).filter(x => x.type === type)) l.fn(event);
       },
-      _listenerCount() { return (listeners.get(this) || []).length; },
+      _listenerCount() {
+        return (listeners.get(this) || []).length;
+      },
     };
     return node;
   };
 
   globalThis.document = {
-    get activeElement() { return active; },
+    get activeElement() {
+      return active;
+    },
     createElement: t => el(t),
   };
   globalThis.getComputedStyle = () => ({ visibility: 'visible', display: 'block', position: 'static' });
 
-  return { el, setActive: n => { active = n; }, getActive: () => active };
+  return {
+    el,
+    setActive: n => {
+      active = n;
+    },
+    getActive: () => active,
+  };
 }
 
 function keyEvent(key, shiftKey = false) {
   const e = { key, shiftKey, defaultPrevented: false };
-  e.preventDefault = () => { e.defaultPrevented = true; };
+  e.preventDefault = () => {
+    e.defaultPrevented = true;
+  };
   return e;
 }
 
 async function withDom(fn) {
   const dom = makeDom();
   const mod = await import('../js/dialog.js');
-  try { await fn(mod, dom); } finally { delete globalThis.document; delete globalThis.getComputedStyle; }
+  try {
+    await fn(mod, dom);
+  } finally {
+    delete globalThis.document;
+    delete globalThis.getComputedStyle;
+  }
 }
 
 /* A dialog with three focusable controls and one that is not. */
@@ -273,7 +303,11 @@ test('Escape closes by default', async () => {
   await withDom(({ trapFocus }, dom) => {
     const { ov } = dialogOf(dom);
     let closed = 0;
-    trapFocus(ov, { onClose: () => { closed++; } });
+    trapFocus(ov, {
+      onClose: () => {
+        closed++;
+      },
+    });
     ov._fire('keydown', keyEvent('Escape'));
     assert.equal(closed, 1);
   });
@@ -285,7 +319,12 @@ test('Escape can be turned off', async () => {
   await withDom(({ trapFocus }, dom) => {
     const { ov } = dialogOf(dom);
     let closed = 0;
-    trapFocus(ov, { closeOnEscape: false, onClose: () => { closed++; } });
+    trapFocus(ov, {
+      closeOnEscape: false,
+      onClose: () => {
+        closed++;
+      },
+    });
     ov._fire('keydown', keyEvent('Escape'));
     assert.equal(closed, 0);
   });
@@ -308,7 +347,10 @@ test('releasing twice is harmless', async () => {
   await withDom(({ trapFocus }, dom) => {
     const { ov } = dialogOf(dom);
     const release = trapFocus(ov);
-    assert.doesNotThrow(() => { release(); release(); });
+    assert.doesNotThrow(() => {
+      release();
+      release();
+    });
   });
 });
 
@@ -348,7 +390,10 @@ test('nothing keeps its own copy of the trap', () => {
   /* The search overlay's inline version is what left the others with nothing to
      reuse. */
   for (const file of ['js/spotlight.js', 'js/ui.js', 'js/dashboard.js']) {
-    assert.doesNotMatch(read(file), /e\.shiftKey && document\.activeElement === first/,
-      `${file} still carries its own trap`);
+    assert.doesNotMatch(
+      read(file),
+      /e\.shiftKey && document\.activeElement === first/,
+      `${file} still carries its own trap`,
+    );
   }
 });

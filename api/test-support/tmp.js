@@ -36,7 +36,11 @@ function arm() {
   armed = true;
   process.on('exit', () => {
     for (const dir of created) {
-      try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* best effort */ }
+      try {
+        fs.rmSync(dir, { recursive: true, force: true });
+      } catch {
+        /* best effort */
+      }
     }
   });
 }

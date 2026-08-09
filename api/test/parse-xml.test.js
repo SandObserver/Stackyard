@@ -12,15 +12,17 @@ const parseXml = xml => plain(_parseXml(xml));
 /* ── parseXml: general nested shape, matching the JSON shape widgets already read ── */
 
 test('parseXml maps root attributes with lossless numeric coercion', () => {
-  assert.deepEqual(parseXml('<MediaContainer size="3" title="Library"/>'),
-    { MediaContainer: { size: 3, title: 'Library' } });
+  assert.deepEqual(parseXml('<MediaContainer size="3" title="Library"/>'), {
+    MediaContainer: { size: 3, title: 'Library' },
+  });
 });
 
 test('parseXml nests elements and turns repeated tags into arrays', () => {
-  const xml = '<MediaContainer size="2">'
-    + '<Metadata title="The Matrix" duration="8160000"><Player state="playing"/></Metadata>'
-    + '<Metadata title="Ep1" type="episode"><Player state="paused"/></Metadata>'
-    + '</MediaContainer>';
+  const xml =
+    '<MediaContainer size="2">' +
+    '<Metadata title="The Matrix" duration="8160000"><Player state="playing"/></Metadata>' +
+    '<Metadata title="Ep1" type="episode"><Player state="paused"/></Metadata>' +
+    '</MediaContainer>';
   const p = parseXml(xml);
   assert.equal(p.MediaContainer.size, 2);
   assert.ok(Array.isArray(p.MediaContainer.Metadata));
@@ -37,25 +39,35 @@ test('parseXml keeps a single occurrence as one object, not an array', () => {
 });
 
 test('parseXml collapses text-only elements to their coerced value', () => {
-  assert.deepEqual(parseXml('<stats><total>14203</total><blocked>1876</blocked><name>home</name></stats>'),
-    { stats: { total: 14203, blocked: 1876, name: 'home' } });
+  assert.deepEqual(parseXml('<stats><total>14203</total><blocked>1876</blocked><name>home</name></stats>'), {
+    stats: { total: 14203, blocked: 1876, name: 'home' },
+  });
 });
 
 test('parseXml leaves IDs, version strings, exponents and huge integers as strings', () => {
-  assert.deepEqual(parseXml('<r id="007" ver="1.10" exp="1e3" big="9007199254740993"/>'),
-    { r: { id: '007', ver: '1.10', exp: '1e3', big: '9007199254740993' } });
+  assert.deepEqual(parseXml('<r id="007" ver="1.10" exp="1e3" big="9007199254740993"/>'), {
+    r: { id: '007', ver: '1.10', exp: '1e3', big: '9007199254740993' },
+  });
 });
 
 test('parseXml decodes entities, handles both quote styles and CDATA', () => {
-  assert.deepEqual(parseXml("<r a='x &amp; y' b=\"&lt;ok&gt;\"/>"), { r: { a: 'x & y', b: '<ok>' } });
+  assert.deepEqual(parseXml('<r a=\'x &amp; y\' b="&lt;ok&gt;"/>'), { r: { a: 'x & y', b: '<ok>' } });
   assert.deepEqual(parseXml('<note><![CDATA[<b>hi & bye</b>]]></note>'), { note: '<b>hi & bye</b>' });
 });
 
 /* ── Tag names that collide with inherited Object.prototype members ── */
 
 test('parseXml keeps a tag named after an inherited member as a single value', () => {
-  for (const name of ['toString', 'constructor', 'valueOf', 'hasOwnProperty',
-    'isPrototypeOf', 'toLocaleString', 'propertyIsEnumerable', '__defineGetter__']) {
+  for (const name of [
+    'toString',
+    'constructor',
+    'valueOf',
+    'hasOwnProperty',
+    'isPrototypeOf',
+    'toLocaleString',
+    'propertyIsEnumerable',
+    '__defineGetter__',
+  ]) {
     const p = parseXml(`<r><${name}>hi</${name}></r>`);
     assert.equal(p.r[name], 'hi', name);
     assert.ok(!Array.isArray(p.r[name]), name);
@@ -64,8 +76,7 @@ test('parseXml keeps a tag named after an inherited member as a single value', (
 });
 
 test('parseXml still arrays a repeated tag named after an inherited member', () => {
-  assert.deepEqual(parseXml('<r><toString>a</toString><toString>b</toString></r>'),
-    { r: { toString: ['a', 'b'] } });
+  assert.deepEqual(parseXml('<r><toString>a</toString><toString>b</toString></r>'), { r: { toString: ['a', 'b'] } });
 });
 
 /* A `__proto__` tag or attribute is kept as an ordinary key. On a plain object
@@ -125,8 +136,7 @@ test('parseXml keeps text alongside children under #text', () => {
 });
 
 test('parseXml decodes numeric character references and leaves unknown entities alone', () => {
-  assert.deepEqual(parseXml('<r a="&#65;&#x42;" b="&nbsp;&unknown;"/>'),
-    { r: { a: 'AB', b: '&nbsp;&unknown;' } });
+  assert.deepEqual(parseXml('<r a="&#65;&#x42;" b="&nbsp;&unknown;"/>'), { r: { a: 'AB', b: '&nbsp;&unknown;' } });
 });
 
 test('parseXml leaves an out-of-range numeric reference as written', () => {
@@ -233,9 +243,10 @@ test('several attributes each containing > all survive', () => {
    therefore stops at about 2499 items, sooner than the constant suggests. That is
    not an off-by-one; exactly 5000 nodes are kept. */
 
-const _feed = n => '<rss><channel>'
-  + Array.from({ length: n }, (_, i) => `<item><title>T${i}</title></item>`).join('')
-  + '</channel></rss>';
+const _feed = n =>
+  '<rss><channel>' +
+  Array.from({ length: n }, (_, i) => `<item><title>T${i}</title></item>`).join('') +
+  '</channel></rss>';
 
 test('a document within the caps is not flagged', () => {
   assert.equal(parseXml('<r><a>1</a></r>')['#truncated'], undefined);

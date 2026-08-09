@@ -1,9 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  PALETTE, KEY_STYLES, EXTRA_STYLES,
-  hashString, normalizeUrl, sameDashboard,
-  deriveComposition, deriveColor, buildModel,
+  PALETTE,
+  KEY_STYLES,
+  EXTRA_STYLES,
+  hashString,
+  normalizeUrl,
+  sameDashboard,
+  deriveComposition,
+  deriveColor,
+  buildModel,
 } from '../js/dashboard-switch-model.js';
 
 /* ── normalizeUrl ── */
@@ -129,21 +135,31 @@ test('buildModel caps slots at 2 for small and 5 for medium', () => {
 });
 
 test('buildModel drops rows without a usable URL', () => {
-  const m = buildModel({ keychains: [
-    { name: 'ok', url: 'http://a.lan' },
-    { name: 'blank', url: '' },
-    { name: 'bad', url: 'javascript:alert(1)' },
-    { name: 'missing' },
-  ] }, { size: 'medium' });
+  const m = buildModel(
+    {
+      keychains: [
+        { name: 'ok', url: 'http://a.lan' },
+        { name: 'blank', url: '' },
+        { name: 'bad', url: 'javascript:alert(1)' },
+        { name: 'missing' },
+      ],
+    },
+    { size: 'medium' },
+  );
   assert.equal(m.slots.length, 1);
   assert.equal(m.slots[0].name, 'ok');
 });
 
 test('buildModel de-duplicates keychains that canonicalize to the same URL', () => {
-  const m = buildModel({ keychains: [
-    { name: 'first', url: 'http://dash.lan' },
-    { name: 'dup', url: 'HTTP://dash.lan:80/' },
-  ] }, { size: 'medium' });
+  const m = buildModel(
+    {
+      keychains: [
+        { name: 'first', url: 'http://dash.lan' },
+        { name: 'dup', url: 'HTTP://dash.lan:80/' },
+      ],
+    },
+    { size: 'medium' },
+  );
   assert.equal(m.slots.length, 1);
   assert.equal(m.slots[0].name, 'first');
 });
@@ -164,10 +180,15 @@ test('buildModel honours a picked colour and derives one when unset or invalid',
 });
 
 test('buildModel flags the current dashboard by origin', () => {
-  const m = buildModel({ keychains: [
-    { name: 'A', url: 'http://a.lan' },
-    { name: 'B', url: 'http://b.lan' },
-  ] }, { size: 'medium', currentHref: 'http://b.lan/admin/index.html' });
+  const m = buildModel(
+    {
+      keychains: [
+        { name: 'A', url: 'http://a.lan' },
+        { name: 'B', url: 'http://b.lan' },
+      ],
+    },
+    { size: 'medium', currentHref: 'http://b.lan/admin/index.html' },
+  );
   assert.equal(m.slots.find(s => s.name === 'A').isCurrent, false);
   assert.equal(m.slots.find(s => s.name === 'B').isCurrent, true);
 });

@@ -24,7 +24,8 @@ const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 
 /* Variables the code reads that an operator is not meant to set. */
 const INTERNAL = {
-  REALIP_CONF: 'entrypoint only: where the generated proxy config is written, overridable so the rendering can be tested',
+  REALIP_CONF:
+    'entrypoint only: where the generated proxy config is written, overridable so the rendering can be tested',
   SUPERVISOR_FATAL_MARKER: 'internal handoff between the supervisord listener and the entrypoint',
 };
 
@@ -71,8 +72,13 @@ test('the scan finds both sides', () => {
 });
 
 test('every environment variable the API reads is documented, and no others', () => {
-  assert.deepEqual(documentedRows().map(r => r[0]).sort(), envInCode(),
-    'the environment table in docs/architecture.md is out of date');
+  assert.deepEqual(
+    documentedRows()
+      .map(r => r[0])
+      .sort(),
+    envInCode(),
+    'the environment table in docs/architecture.md is out of date',
+  );
 });
 
 /* Each exemption states why, so the list cannot quietly become a dumping
@@ -101,10 +107,8 @@ test('the documented defaults are the ones in the code', () => {
 test('the documented session and hash defaults match the code', () => {
   const defaults = Object.fromEntries(documentedRows());
   const auth = read('api/src/auth.js');
-  assert.equal(defaults.SESSION_MAX_AGE_DAYS,
-    /_maxAgeDays > 0 \? _maxAgeDays : (\d+)/.exec(auth)[1]);
-  assert.equal(defaults.PASSWORD_HASH_MEMORY,
-    /const DEFAULT_PROFILE = '([\w]+)'/.exec(auth)[1]);
+  assert.equal(defaults.SESSION_MAX_AGE_DAYS, /_maxAgeDays > 0 \? _maxAgeDays : (\d+)/.exec(auth)[1]);
+  assert.equal(defaults.PASSWORD_HASH_MEMORY, /const DEFAULT_PROFILE = '([\w]+)'/.exec(auth)[1]);
 });
 
 /* The levels the logger accepts, not the narrower set the Settings screen
@@ -125,6 +129,9 @@ test('docker-compose.yml carries every operator variable', () => {
   const compose = read('docker-compose.yml');
   /* Stamped by the release build, so there is nothing for an operator to set. */
   const missing = envInCode().filter(n => n !== 'APP_VERSION' && !compose.includes(n));
-  assert.deepEqual(missing, [],
-    `The table says docker-compose.yml lists them all. Add a commented line for:\n  ${missing.join('\n  ')}`);
+  assert.deepEqual(
+    missing,
+    [],
+    `The table says docker-compose.yml lists them all. Add a commented line for:\n  ${missing.join('\n  ')}`,
+  );
 });

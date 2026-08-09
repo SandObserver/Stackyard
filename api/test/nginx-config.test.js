@@ -28,14 +28,12 @@ const policy = (cspDefault.match(/add_header Content-Security-Policy "([^"]+)"/)
 test('csp-default.conf declares exactly one Content-Security-Policy header', () => {
   assert.ok(policy, 'no Content-Security-Policy header found in csp-default.conf');
   const directives = cspDefault.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
-  assert.equal(directives.length, 1,
-    'csp-default.conf must hold the one header and nothing else');
+  assert.equal(directives.length, 1, 'csp-default.conf must hold the one header and nothing else');
   assert.match(directives[0], /^add_header Content-Security-Policy /);
 });
 
 test('the default policy is not repeated anywhere in dashboard.conf', () => {
-  assert.ok(!dashboard.includes(policy),
-    'the default policy is inlined somewhere; include csp-default.conf instead');
+  assert.ok(!dashboard.includes(policy), 'the default policy is inlined somewhere; include csp-default.conf instead');
 });
 
 test('every location that sets a CSP either includes the default or is a known exception', () => {
@@ -45,8 +43,11 @@ test('every location that sets a CSP either includes the default or is a known e
   const EXCEPTIONS = ['^~ /admin', '^~ /widgets/'];
 
   const inline = [...dashboard.matchAll(/add_header Content-Security-Policy/g)];
-  assert.equal(inline.length, EXCEPTIONS.length,
-    `expected ${EXCEPTIONS.length} inline CSP headers, found ${inline.length}`);
+  assert.equal(
+    inline.length,
+    EXCEPTIONS.length,
+    `expected ${EXCEPTIONS.length} inline CSP headers, found ${inline.length}`,
+  );
 
   for (const name of EXCEPTIONS) {
     const at = dashboard.indexOf(`location ${name} {`);
@@ -71,8 +72,11 @@ test('the include is used, and every use points at the same path', () => {
 test('the Dockerfile ships every nginx config file', () => {
   const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
   for (const f of fs.readdirSync(NGINX_DIR).filter(f => f.endsWith('.conf'))) {
-    assert.match(dockerfile, new RegExp(`COPY nginx/${f.replace('.', '\\.')} `),
-      `nginx/${f} is not copied into the image, so the include would fail at runtime`);
+    assert.match(
+      dockerfile,
+      new RegExp(`COPY nginx/${f.replace('.', '\\.')} `),
+      `nginx/${f} is not copied into the image, so the include would fail at runtime`,
+    );
   }
 });
 
@@ -106,8 +110,11 @@ test('widget pages restrict who may frame them', () => {
 test('widgets still clear X-Frame-Options, so frame-ancestors is the only guard', () => {
   const at = dashboard.indexOf('location ^~ /widgets/ {');
   const block = dashboard.slice(at, dashboard.indexOf('\n    }', at));
-  assert.match(block, /add_header X-Frame-Options "" always;/,
-    'if this stops being cleared, the dashboard cannot embed widgets');
+  assert.match(
+    block,
+    /add_header X-Frame-Options "" always;/,
+    'if this stops being cleared, the dashboard cannot embed widgets',
+  );
 });
 
 test('admin refuses framing entirely, matching its X-Frame-Options DENY', () => {
@@ -132,8 +139,11 @@ test('every policy in the config states a frame-ancestors', () => {
 /* ── P16-5 and P16-6: version disclosure and compression ──────────────────── */
 
 test('the nginx version is not advertised', () => {
-  assert.match(dashboard, /^\s*server_tokens off;$/m,
-    'without this, every response carries Server: nginx/x.y.z and error pages print the version');
+  assert.match(
+    dashboard,
+    /^\s*server_tokens off;$/m,
+    'without this, every response carries Server: nginx/x.y.z and error pages print the version',
+  );
 });
 
 /* The API was not compressed at all: gzip_types listed text, CSS, JavaScript and
@@ -154,7 +164,10 @@ test('both JavaScript MIME types are listed', () => {
 /* nginx compresses text/html whenever gzip is on, and warns about a duplicate if
    it is also listed. */
 test('text/html is not listed in gzip_types', () => {
-  const block = dashboard.slice(dashboard.indexOf('gzip_types'), dashboard.indexOf(';', dashboard.indexOf('gzip_types')));
+  const block = dashboard.slice(
+    dashboard.indexOf('gzip_types'),
+    dashboard.indexOf(';', dashboard.indexOf('gzip_types')),
+  );
   assert.ok(!/\btext\/html\b/.test(block), 'nginx warns about this as a duplicate');
 });
 
@@ -205,45 +218,57 @@ test('nginx sets a body size limit at all', () => {
 
 test('nginx allows at least as much as the API does', () => {
   const nginxLimit = nginxSize(dashboard, 'client_max_body_size');
-  const iconLimit = 2 * 1024 * 1024;   /* ICON_MAX_BYTES in routes/icons.js */
+  const iconLimit = 2 * 1024 * 1024; /* ICON_MAX_BYTES in routes/icons.js */
 
-  assert.ok(nginxLimit >= BODY_LIMIT,
-    `nginx allows ${nginxLimit} but the API accepts bodies up to ${BODY_LIMIT}`);
-  assert.ok(nginxLimit >= iconLimit,
-    `nginx allows ${nginxLimit} but icon uploads may be ${iconLimit}`);
+  assert.ok(nginxLimit >= BODY_LIMIT, `nginx allows ${nginxLimit} but the API accepts bodies up to ${BODY_LIMIT}`);
+  assert.ok(nginxLimit >= iconLimit, `nginx allows ${nginxLimit} but icon uploads may be ${iconLimit}`);
 });
 
 /* Headroom, not a blank cheque: a body is buffered before it is forwarded, and
    this runs on hardware with 512 MB or less. */
 test('the limits stay within reach of each other', () => {
   const nginxLimit = nginxSize(dashboard, 'client_max_body_size');
-  assert.ok(nginxLimit <= BODY_LIMIT * 4,
-    `nginx allows ${nginxLimit}, far above the API's ${BODY_LIMIT}; buffering that costs memory`);
+  assert.ok(
+    nginxLimit <= BODY_LIMIT * 4,
+    `nginx allows ${nginxLimit}, far above the API's ${BODY_LIMIT}; buffering that costs memory`,
+  );
 });
 
 /* The measurement the API limit is derived from. If a config item grows enough
    for this to fail, the limit needs revisiting rather than the test relaxing. */
 test('the API limit leaves real configurations far inside it', () => {
   const app = {
-    id: 'radarr_m9x2p4', type: 'app', label: 'Radarr', href: 'https://radarr.example.lan:7878',
-    iconUrl: 'radarr', color: 'dark', dock: false,
+    id: 'radarr_m9x2p4',
+    type: 'app',
+    label: 'Radarr',
+    href: 'https://radarr.example.lan:7878',
+    iconUrl: 'radarr',
+    color: 'dark',
+    dock: false,
     monitoring: {
       healthcheck: { enabled: true },
       activity: {
-        enabled: true, url: 'https://radarr.example.lan:7878/api/v3/queue', interval: 30,
-        headers: [{ key: 'X-Api-Key', value: '0'.repeat(32), secret: true }], params: [],
+        enabled: true,
+        url: 'https://radarr.example.lan:7878/api/v3/queue',
+        interval: 30,
+        headers: [{ key: 'X-Api-Key', value: '0'.repeat(32), secret: true }],
+        params: [],
       },
     },
     badge: { enabled: true, url: 'https://radarr.example.lan:7878/api/v3/queue', interval: 30 },
-    container: 'radarr', ping: 'https://radarr.example.lan:7878',
+    container: 'radarr',
+    ping: 'https://radarr.example.lan:7878',
   };
   const big = JSON.stringify({
     items: Array.from({ length: 300 }, (_, i) => ({ ...app, id: `app${i}` })),
-    settings: { background: {}, server: {} }, _rev: 12,
+    settings: { background: {}, server: {} },
+    _rev: 12,
   });
 
-  assert.ok(big.length < BODY_LIMIT / 4,
-    `a 300-app config is ${big.length} bytes against a ${BODY_LIMIT} limit; the headroom has gone`);
+  assert.ok(
+    big.length < BODY_LIMIT / 4,
+    `a 300-app config is ${big.length} bytes against a ${BODY_LIMIT} limit; the headroom has gone`,
+  );
 });
 
 /* The Host nginx forwards decides whether a write is accepted.

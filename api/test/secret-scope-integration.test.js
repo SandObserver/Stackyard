@@ -11,7 +11,7 @@ const path = require('node:path');
 
 process.env.ALLOW_PRIVATE_IPS = 'true';
 process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const _tmp = tmpDir('scope');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 
@@ -38,24 +38,35 @@ function stub(sink) {
   });
 }
 const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
-const close = s => new Promise(r => { s.closeAllConnections?.(); s.close(r); });
+const close = s =>
+  new Promise(r => {
+    s.closeAllConnections?.();
+    s.close(r);
+  });
 
 before(async () => {
-  realSrv = stub(realSeen); realBase = await listen(realSrv);
-  evilSrv = stub(evilSeen); evilBase = await listen(evilSrv);
+  realSrv = stub(realSeen);
+  realBase = await listen(realSrv);
+  evilSrv = stub(evilSeen);
+  evilBase = await listen(evilSrv);
 
   saveConfig({
     items: [
       {
-        id: 'app1', type: 'app', name: 'App',
+        id: 'app1',
+        type: 'app',
+        name: 'App',
         badge: {
-          enabled: true, url: `${realBase}/api`,
+          enabled: true,
+          url: `${realBase}/api`,
           headers: [{ key: 'X-Api-Key', value: SECRET_VALUE, secret: true }],
           params: [{ key: 'mode', value: 'full', secret: false }],
         },
       },
       {
-        id: 'w1', type: 'widget', widgetType: 'books',
+        id: 'w1',
+        type: 'widget',
+        widgetType: 'books',
         widgetConfig: { provider: 'audiobookshelf', absUrl: realBase, absKey: SECRET_VALUE },
       },
     ],
@@ -66,20 +77,38 @@ before(async () => {
   base = await listen(server);
 });
 
-after(async () => { await close(server); await close(realSrv); await close(evilSrv); });
+after(async () => {
+  await close(server);
+  await close(realSrv);
+  await close(evilSrv);
+});
 
 function post(pathname, body) {
   const data = JSON.stringify(body);
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
-    });
+    const r = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+      },
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => {
+          let j = null;
+          try {
+            j = JSON.parse(b);
+          } catch {}
+          resolve({ status: res.statusCode, body: j });
+        });
+      },
+    );
     r.on('error', reject);
     r.end(data);
   });
@@ -92,7 +121,8 @@ const sawSecret = seen => seen.some(r => JSON.stringify(r).includes(SECRET_VALUE
 test('badge-proxy sends the stored credential to the saved destination', async () => {
   realSeen.length = 0;
   const r = await post('/api/badge-proxy', {
-    itemId: 'app1', url: `${realBase}/api`,
+    itemId: 'app1',
+    url: `${realBase}/api`,
     headers: [{ key: 'X-Api-Key', secret: true }],
     params: [{ key: 'mode', value: 'full', secret: false }],
   });
@@ -103,7 +133,8 @@ test('badge-proxy sends the stored credential to the saved destination', async (
 test('badge-proxy does not send the stored credential to a caller-chosen host', async () => {
   evilSeen.length = 0;
   await post('/api/badge-proxy', {
-    itemId: 'app1', url: `${evilBase}/collect`,
+    itemId: 'app1',
+    url: `${evilBase}/collect`,
     headers: [{ key: 'X-Api-Key', secret: true }],
     params: [{ key: 'mode', value: 'full', secret: false }],
   });
@@ -112,9 +143,11 @@ test('badge-proxy does not send the stored credential to a caller-chosen host', 
 });
 
 test('badge-proxy does not leak via a changed non-secret param either', async () => {
-  evilSeen.length = 0; realSeen.length = 0;
+  evilSeen.length = 0;
+  realSeen.length = 0;
   await post('/api/badge-proxy', {
-    itemId: 'app1', url: `${realBase}/api`,
+    itemId: 'app1',
+    url: `${realBase}/api`,
     headers: [{ key: 'X-Api-Key', secret: true }],
     params: [{ key: 'mode', value: 'CHANGED', secret: false }],
   });
@@ -126,7 +159,8 @@ test('badge-proxy does not leak via a changed non-secret param either', async ()
 test('widget-options sends the stored credential to the saved destination', async () => {
   realSeen.length = 0;
   await post('/api/widget-options/w1', {
-    widgetType: 'books', endpoint: 'lists',
+    widgetType: 'books',
+    endpoint: 'lists',
     widgetConfig: { provider: 'audiobookshelf', absUrl: realBase },
   });
   assert.ok(sawSecret(realSeen), 'a normal fetch must still use the stored credential');
@@ -135,7 +169,8 @@ test('widget-options sends the stored credential to the saved destination', asyn
 test('widget-options does not send the stored credential to a caller-chosen host', async () => {
   evilSeen.length = 0;
   await post('/api/widget-options/w1', {
-    widgetType: 'books', endpoint: 'lists',
+    widgetType: 'books',
+    endpoint: 'lists',
     widgetConfig: { provider: 'audiobookshelf', absUrl: evilBase },
   });
   assert.ok(!sawSecret(evilSeen), `the stored credential leaked: ${JSON.stringify(evilSeen)}`);
@@ -144,7 +179,8 @@ test('widget-options does not send the stored credential to a caller-chosen host
 test('widget-options ignores an id that is not saved', async () => {
   evilSeen.length = 0;
   await post('/api/widget-options/__preview__', {
-    widgetType: 'books', endpoint: 'lists',
+    widgetType: 'books',
+    endpoint: 'lists',
     widgetConfig: { provider: 'audiobookshelf', absUrl: evilBase },
   });
   assert.ok(!sawSecret(evilSeen));

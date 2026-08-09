@@ -94,8 +94,9 @@ const BUDGET = { [MAP]: 0, [STATS]: 0, [BACKUP]: 3 };
 test('no widget frontend touched here exceeds its innerHTML budget', () => {
   const over = [];
   for (const [f, budget] of Object.entries(BUDGET)) {
-    const writes = [...read(f).matchAll(/\.innerHTML\s*(\+?)=(?!=)\s*/g)]
-      .filter(m => !(m[1] === '' && /^(?:''|""|``)\s*[;,)]/.test(read(f).slice(m.index + m[0].length))));
+    const writes = [...read(f).matchAll(/\.innerHTML\s*(\+?)=(?!=)\s*/g)].filter(
+      m => !(m[1] === '' && /^(?:''|""|``)\s*[;,)]/.test(read(f).slice(m.index + m[0].length))),
+    );
     if (writes.length > budget) over.push(`${f}: ${writes.length} > ${budget}`);
   }
   assert.deepEqual(over, [], `Use setHtml(el, html\`...\`):\n${over.join('\n')}`);
@@ -103,7 +104,7 @@ test('no widget frontend touched here exceeds its innerHTML budget', () => {
 
 test('the upstream users value is escaped, not concatenated', () => {
   const src = read(MAP);
-  assert.ok(!src.includes("+info.users+"), 'info.users is still concatenated into markup');
+  assert.ok(!src.includes('+info.users+'), 'info.users is still concatenated into markup');
   assert.match(src, /\$\{info\.users\}/, 'info.users should be an html`` interpolation');
 });
 
@@ -127,6 +128,8 @@ test('both colour sites validate and assign through named CSSOM properties', () 
   /* The shorthand would accept a url(), so a validated colour must never be
      assigned through it. Literal hover colours elsewhere in the file use the
      shorthand and are fine, hence the check is on the variable, not the property. */
-  assert.ok(!/\.style\.background\s*=\s*(?!'|")/.test(src),
-    'a non-literal is assigned through the background shorthand; use backgroundColor');
+  assert.ok(
+    !/\.style\.background\s*=\s*(?!'|")/.test(src),
+    'a non-literal is assigned through the background shorthand; use backgroundColor',
+  );
 });

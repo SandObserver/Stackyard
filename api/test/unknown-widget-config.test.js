@@ -32,8 +32,18 @@ const SECRET = 'ORPHAN-SECRET';
 function storedConfig() {
   return {
     items: [
-      { id: 'w1', type: 'widget', widgetType: 'books', widgetConfig: { absUrl: 'https://real.example', absKey: 'KNOWN-SECRET' } },
-      { id: 'w2', type: 'widget', widgetType: 'no-such-widget', widgetConfig: { url: 'https://real.example', apiKey: SECRET, nested: { token: 'DEEP-SECRET' } } },
+      {
+        id: 'w1',
+        type: 'widget',
+        widgetType: 'books',
+        widgetConfig: { absUrl: 'https://real.example', absKey: 'KNOWN-SECRET' },
+      },
+      {
+        id: 'w2',
+        type: 'widget',
+        widgetType: 'no-such-widget',
+        widgetConfig: { url: 'https://real.example', apiKey: SECRET, nested: { token: 'DEEP-SECRET' } },
+      },
       { id: 'a1', type: 'app', name: 'App' },
     ],
   };
@@ -92,9 +102,18 @@ test('a supplied config for an unrecognised widget is discarded', () => {
 test('a new widget of an unrecognised type keeps what was sent', () => {
   const stored = storedConfig();
   const incoming = copy(stored);
-  incoming.items.push({ id: 'w3', type: 'widget', widgetType: 'no-such-widget', widgetConfig: { url: 'https://new.example' } });
+  incoming.items.push({
+    id: 'w3',
+    type: 'widget',
+    widgetType: 'no-such-widget',
+    widgetConfig: { url: 'https://new.example' },
+  });
   preserveAllSecrets(incoming, stored);
-  assert.deepEqual(find(incoming, 'w3').widgetConfig, { url: 'https://new.example' }, 'nothing stored, so nothing to protect');
+  assert.deepEqual(
+    find(incoming, 'w3').widgetConfig,
+    { url: 'https://new.example' },
+    'nothing stored, so nothing to protect',
+  );
 });
 
 test('the withheld flag is never written to stored config', () => {

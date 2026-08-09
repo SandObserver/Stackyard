@@ -39,32 +39,58 @@ function harness() {
     tagName: tag,
     style: { cssText: '', setProperty() {} },
     children: [],
-    clientWidth: 100, clientHeight: 100,
+    clientWidth: 100,
+    clientHeight: 100,
     src: '',
-    setAttribute() {}, removeAttribute() {},
-    appendChild(c) { this.children.push(c); },
-    addEventListener() { if (tag === 'iframe') counts.loadListeners++; },
-    removeEventListener() { if (tag === 'iframe') counts.loadListeners--; },
-    get contentDocument() { return null; },
+    setAttribute() {},
+    removeAttribute() {},
+    appendChild(c) {
+      this.children.push(c);
+    },
+    addEventListener() {
+      if (tag === 'iframe') counts.loadListeners++;
+    },
+    removeEventListener() {
+      if (tag === 'iframe') counts.loadListeners--;
+    },
+    get contentDocument() {
+      return null;
+    },
   });
 
   const realSetTimeout = globalThis.setTimeout;
   const realClearTimeout = globalThis.clearTimeout;
   const restore = {
-    document: globalThis.document, window: globalThis.window,
-    raf: globalThis.requestAnimationFrame, ro: globalThis.ResizeObserver,
-    st: realSetTimeout, ct: realClearTimeout,
+    document: globalThis.document,
+    window: globalThis.window,
+    raf: globalThis.requestAnimationFrame,
+    ro: globalThis.ResizeObserver,
+    st: realSetTimeout,
+    ct: realClearTimeout,
   };
 
   globalThis.document = { createElement: el, querySelectorAll: () => [] };
   globalThis.window = { addEventListener() {}, removeEventListener() {} };
   globalThis.requestAnimationFrame = () => {};
-  globalThis.setTimeout = (fn, ms) => { counts.timers++; return realSetTimeout(() => { counts.timers--; fn(); }, ms); };
-  globalThis.clearTimeout = h => { counts.timers--; return realClearTimeout(h); };
+  globalThis.setTimeout = (fn, ms) => {
+    counts.timers++;
+    return realSetTimeout(() => {
+      counts.timers--;
+      fn();
+    }, ms);
+  };
+  globalThis.clearTimeout = h => {
+    counts.timers--;
+    return realClearTimeout(h);
+  };
   globalThis.ResizeObserver = class {
-    constructor() { counts.observers++; }
+    constructor() {
+      counts.observers++;
+    }
     observe() {}
-    disconnect() { counts.observers--; }
+    disconnect() {
+      counts.observers--;
+    }
   };
 
   return {
@@ -94,7 +120,9 @@ test('teardown releases what a mount started', async () => {
     teardownWidgets();
     assert.equal(h.counts.observers, 0, 'the observer must be disconnected');
     assert.equal(h.counts.timers, 0, 'and the reload timer stopped');
-  } finally { h.done(); }
+  } finally {
+    h.done();
+  }
 });
 
 /* The behaviour that made this matter: repeated rebuilds. Before, twenty passes
@@ -103,10 +131,15 @@ test('repeated rebuilds do not accumulate observers or timers', async () => {
   const h = harness();
   try {
     const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
-    const mountSix = () => { for (let i = 0; i < 6; i++) mountScaledWidget(h.card(), OPTS); };
+    const mountSix = () => {
+      for (let i = 0; i < 6; i++) mountScaledWidget(h.card(), OPTS);
+    };
 
     mountSix();
-    for (let r = 0; r < 20; r++) { teardownWidgets(); mountSix(); }
+    for (let r = 0; r < 20; r++) {
+      teardownWidgets();
+      mountSix();
+    }
 
     assert.equal(h.counts.observers, 6, `21 rebuilds left ${h.counts.observers} observers`);
     assert.equal(h.counts.timers, 6, `21 rebuilds left ${h.counts.timers} reload timers`);
@@ -114,7 +147,9 @@ test('repeated rebuilds do not accumulate observers or timers', async () => {
     teardownWidgets();
     assert.equal(h.counts.observers, 0);
     assert.equal(h.counts.timers, 0);
-  } finally { h.done(); }
+  } finally {
+    h.done();
+  }
 });
 
 test('teardown with nothing mounted is safe', async () => {
@@ -122,8 +157,13 @@ test('teardown with nothing mounted is safe', async () => {
   try {
     const { teardownWidgets } = await import('../js/utils.js');
     assert.doesNotThrow(() => teardownWidgets());
-    assert.doesNotThrow(() => { teardownWidgets(); teardownWidgets(); });
-  } finally { h.done(); }
+    assert.doesNotThrow(() => {
+      teardownWidgets();
+      teardownWidgets();
+    });
+  } finally {
+    h.done();
+  }
 });
 
 test('a widget with no refresh interval starts no timer to leak', async () => {
@@ -134,21 +174,28 @@ test('a widget with no refresh interval starts no timer to leak', async () => {
     assert.equal(h.counts.timers, 0);
     teardownWidgets();
     assert.equal(h.counts.observers, 0);
-  } finally { h.done(); }
+  } finally {
+    h.done();
+  }
 });
 
 /* ── the wiring, checked as source ────────────────────────────────────────── */
 
 test('both build paths tear down before replacing the DOM', () => {
-  for (const [file, fn] of [['js/dashboard.js', 'buildDesktop'], ['js/ui.js', 'buildMobile']]) {
+  for (const [file, fn] of [
+    ['js/dashboard.js', 'buildDesktop'],
+    ['js/ui.js', 'buildMobile'],
+  ]) {
     const src = read(file);
     const at = src.indexOf(`function ${fn}(`);
     assert.ok(at !== -1, `${fn} not found in ${file}`);
     const head = src.slice(at, at + 400);
     assert.match(head, /teardownWidgets\(\)/, `${fn} must tear down before rebuilding`);
     /* Before the clear, or the previous widgets are already unreachable. */
-    assert.ok(head.indexOf('teardownWidgets()') < head.indexOf('BEL.clear()'),
-      `${fn} tears down after clearing, which is too late`);
+    assert.ok(
+      head.indexOf('teardownWidgets()') < head.indexOf('BEL.clear()'),
+      `${fn} tears down after clearing, which is too late`,
+    );
   }
 });
 
@@ -156,8 +203,11 @@ test('both build paths tear down before replacing the DOM', () => {
    keyboard opening on a phone rebuilt the entire dashboard. */
 test('a rebuild is skipped when the orientation has not changed', () => {
   const src = read('js/dashboard.js');
-  assert.match(src, /const landscape = innerWidth > innerHeight;\s*\n\s*if \(landscape === _wasLandscape\) return;/,
-    'the orientation guard is missing or reshaped');
+  assert.match(
+    src,
+    /const landscape = innerWidth > innerHeight;\s*\n\s*if \(landscape === _wasLandscape\) return;/,
+    'the orientation guard is missing or reshaped',
+  );
   assert.match(src, /_wasLandscape = landscape;/, 'and it must record the new orientation');
 });
 

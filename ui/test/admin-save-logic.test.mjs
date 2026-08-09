@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanId, buildAppItem, newItemId, upsertItem, claimFolderChildren, randomSuffix } from '../js/admin-save-logic.js';
+import {
+  cleanId,
+  buildAppItem,
+  newItemId,
+  upsertItem,
+  claimFolderChildren,
+  randomSuffix,
+} from '../js/admin-save-logic.js';
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
   assert.equal(cleanId('My App!'), 'My_App');
@@ -20,7 +27,10 @@ test('buildAppItem validates name and url', () => {
 });
 
 test('buildAppItem builds a minimal app with disabled monitoring', () => {
-  const { item } = buildAppItem({ label: 'My App', href: 'http://x', hcEn: false, actEn: false, scol: 'dark', spaths: [] }, null);
+  const { item } = buildAppItem(
+    { label: 'My App', href: 'http://x', hcEn: false, actEn: false, scol: 'dark', spaths: [] },
+    null,
+  );
   assert.equal(item.type, 'app');
   assert.equal(item.label, 'My App');
   assert.equal(item.color, 'dark');
@@ -38,11 +48,21 @@ test('buildAppItem preserves an existing id and defaults color to dark', () => {
 });
 
 test('buildAppItem enables healthcheck and activity from their fields', () => {
-  const { item } = buildAppItem({
-    label: 'A', href: 'http://x', hcEn: true, hcCon: 'nginx',
-    actEn: true, actUrl: 'http://api', actInt: 45,
-    actParams: [{ key: 'a', value: '1', secret: false }], actHeaders: [], spaths: ['stats.total'],
-  }, null);
+  const { item } = buildAppItem(
+    {
+      label: 'A',
+      href: 'http://x',
+      hcEn: true,
+      hcCon: 'nginx',
+      actEn: true,
+      actUrl: 'http://api',
+      actInt: 45,
+      actParams: [{ key: 'a', value: '1', secret: false }],
+      actHeaders: [],
+      spaths: ['stats.total'],
+    },
+    null,
+  );
   assert.equal(item.monitoring.healthcheck.enabled, true);
   assert.equal(item.monitoring.healthcheck.container, 'nginx');
   assert.equal(item.monitoring.activity.enabled, true);
@@ -60,9 +80,15 @@ test('buildAppItem maps multiple extract paths to objects', () => {
 test('buildAppItem builds custom and static badge objects only when meaningful', () => {
   const none = buildAppItem({ label: 'A', href: 'http://x', actColor: '#0289ff', custUnit: '', spaths: [] }, null).item;
   assert.equal(none.monitoring.activity.custom, undefined);
-  const custom = buildAppItem({ label: 'A', href: 'http://x', actColor: '#ff0000', custUnit: 'GB', spaths: [] }, null).item;
+  const custom = buildAppItem(
+    { label: 'A', href: 'http://x', actColor: '#ff0000', custUnit: 'GB', spaths: [] },
+    null,
+  ).item;
   assert.deepEqual(custom.monitoring.activity.custom, { color: '#ff0000', unit: 'GB' });
-  const stat = buildAppItem({ label: 'A', href: 'http://x', staticEn: true, staticLabel: 'VeryLongLabelHere', staticColor: 'red', spaths: [] }, null).item;
+  const stat = buildAppItem(
+    { label: 'A', href: 'http://x', staticEn: true, staticLabel: 'VeryLongLabelHere', staticColor: 'red', spaths: [] },
+    null,
+  ).item;
   assert.deepEqual(stat.monitoring.staticBadge, { enabled: true, label: 'VeryLongLa', color: 'red' });
 });
 
@@ -154,7 +180,11 @@ test('an existing item is replaced in place', () => {
   const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
   const r = upsertItem(items, 'b', { id: 'b', label: 'edited' });
   assert.equal(r.replaced, true);
-  assert.deepEqual(items.map(i => i.id), ['a', 'b', 'c'], 'order is preserved');
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['a', 'b', 'c'],
+    'order is preserved',
+  );
   assert.equal(items[1].label, 'edited');
 });
 
@@ -170,7 +200,10 @@ test('no holes are ever created', () => {
   const items = [{ id: 'a' }];
   upsertItem(items, 'gone', { id: 'new' });
   assert.equal(items.length, 2);
-  assert.ok(items.every(i => i != null), `holes present: ${JSON.stringify(items)}`);
+  assert.ok(
+    items.every(i => i != null),
+    `holes present: ${JSON.stringify(items)}`,
+  );
   assert.ok(!JSON.stringify({ items }).includes('null'));
 });
 
@@ -178,13 +211,19 @@ test('an id that no longer exists appends rather than losing the edit', () => {
   const items = [{ id: 'a' }];
   const r = upsertItem(items, 'deleted-elsewhere', { id: 'new', label: 'my work' });
   assert.equal(r.replaced, false, 'so the toast says Added, not Updated');
-  assert.deepEqual(items.map(i => i.id), ['a', 'new']);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['a', 'new'],
+  );
 });
 
 test('adding a new item appends', () => {
   const items = [{ id: 'a' }];
   assert.equal(upsertItem(items, null, { id: 'b' }).replaced, false);
-  assert.deepEqual(items.map(i => i.id), ['a', 'b']);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['a', 'b'],
+  );
 });
 
 test('upsertItem tolerates a missing list', () => {
@@ -224,7 +263,10 @@ test('the folder doing the claiming is left alone', () => {
 });
 
 test('apps are not touched, only folders', () => {
-  const items = [{ id: 'a1', type: 'app', children: ['app1'] }, { id: 'f1', type: 'folder', children: ['app1'] }];
+  const items = [
+    { id: 'a1', type: 'app', children: ['app1'] },
+    { id: 'f1', type: 'folder', children: ['app1'] },
+  ];
   claimFolderChildren(items, 'f2', ['app1']);
   assert.deepEqual(items[0].children, ['app1'], 'an app is not a folder');
   assert.deepEqual(items[1].children, []);

@@ -18,20 +18,56 @@ import { fileURLToPath } from 'node:url';
 
 const DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'i18n');
 const read = f => JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8'));
-const flat = (o, p = '') => Object.entries(o)
-  .flatMap(([k, v]) => (v && typeof v === 'object' ? flat(v, `${p}${k}.`) : [[p + k, v]]));
+const flat = (o, p = '') =>
+  Object.entries(o).flatMap(([k, v]) => (v && typeof v === 'object' ? flat(v, `${p}${k}.`) : [[p + k, v]]));
 
 /* Keys whose English value is correct in that language too. */
 const SAME_ON_PURPOSE = {
-  'de.json': new Set(['nav.dashboard', 'about.support', 'dashboard.filterApps', 'dashboard.filterWidgets',
-    'type.app', 'type.widget', 'app.name', 'app.url', 'app.badge', 'app.container', 'app.ping',
-    'app.dockPill', 'app.badgePill', 'home.dock', 'status.containerState', 'widgetCfg.name',
-    'general.importExport']),
-  'es.json': new Set(['nav.general', 'common.color', 'appearance.color', 'dashboard.filterWidgets',
-    'type.widget', 'app.url', 'app.ping', 'app.dockPill', 'home.dock']),
-  'fr.json': new Set(['general.description', 'appearance.source', 'about.documentation',
-    'dashboard.filterWidgets', 'type.widget', 'app.url', 'app.type', 'app.ping', 'app.badge',
-    'app.secret', 'app.dockPill', 'app.badgePill', 'home.dock']),
+  'de.json': new Set([
+    'nav.dashboard',
+    'about.support',
+    'dashboard.filterApps',
+    'dashboard.filterWidgets',
+    'type.app',
+    'type.widget',
+    'app.name',
+    'app.url',
+    'app.badge',
+    'app.container',
+    'app.ping',
+    'app.dockPill',
+    'app.badgePill',
+    'home.dock',
+    'status.containerState',
+    'widgetCfg.name',
+    'general.importExport',
+  ]),
+  'es.json': new Set([
+    'nav.general',
+    'common.color',
+    'appearance.color',
+    'dashboard.filterWidgets',
+    'type.widget',
+    'app.url',
+    'app.ping',
+    'app.dockPill',
+    'home.dock',
+  ]),
+  'fr.json': new Set([
+    'general.description',
+    'appearance.source',
+    'about.documentation',
+    'dashboard.filterWidgets',
+    'type.widget',
+    'app.url',
+    'app.type',
+    'app.ping',
+    'app.badge',
+    'app.secret',
+    'app.dockPill',
+    'app.badgePill',
+    'home.dock',
+  ]),
   'fa.json': new Set([]),
   'zh-Hans.json': new Set(['app.ping']),
 };
@@ -41,11 +77,14 @@ const en = Object.fromEntries(flat(read('en.json')));
 for (const [file, allowed] of Object.entries(SAME_ON_PURPOSE)) {
   test(`${file} translates every value that is not deliberately shared`, () => {
     const other = Object.fromEntries(flat(read(file)));
-    const untranslated = Object.keys(en).filter(k =>
-      !k.startsWith('_meta.') && !/Ph$/.test(k) &&      /* placeholders are examples */
-      /[A-Za-z]{3}/.test(String(en[k])) &&              /* something translatable */
-      other[k] === en[k] && !allowed.has(k));
-    assert.deepEqual(untranslated, [],
-      `${file}: still English. Translate, or add to SAME_ON_PURPOSE with a reason.`);
+    const untranslated = Object.keys(en).filter(
+      k =>
+        !k.startsWith('_meta.') &&
+        !/Ph$/.test(k) /* placeholders are examples */ &&
+        /[A-Za-z]{3}/.test(String(en[k])) /* something translatable */ &&
+        other[k] === en[k] &&
+        !allowed.has(k),
+    );
+    assert.deepEqual(untranslated, [], `${file}: still English. Translate, or add to SAME_ON_PURPOSE with a reason.`);
   });
 }

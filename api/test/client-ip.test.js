@@ -19,7 +19,7 @@
    client-supplied value cannot survive. No header chain is parsed in the app at
    all: when Stackyard is behind another reverse proxy, nginx resolves the real
    client itself from TRUSTED_PROXY, so the header is already correct. */
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -134,10 +134,14 @@ test('the entrypoint refuses to start when nginx rejects the config', () => {
   fs.writeFileSync(path.join(stubDir, 'nginx'), '#!/bin/sh\necho "bad config" >&2\nexit 1\n');
   fs.chmodSync(path.join(stubDir, 'nginx'), 0o755);
 
-  assert.throws(() => execFileSync('sh', [path.join(__dirname, '../../docker-entrypoint.sh'), 'true'], {
-    env: { PATH: `${stubDir}:${process.env.PATH}`, REALIP_CONF: path.join(dir, 'realip.conf') },
-    stdio: 'pipe',
-  }), /bad config|Command failed/);
+  assert.throws(
+    () =>
+      execFileSync('sh', [path.join(__dirname, '../../docker-entrypoint.sh'), 'true'], {
+        env: { PATH: `${stubDir}:${process.env.PATH}`, REALIP_CONF: path.join(dir, 'realip.conf') },
+        stdio: 'pipe',
+      }),
+    /bad config|Command failed/,
+  );
 });
 
 /* ── the nginx config that consumes it ────────────────────────────────────── */

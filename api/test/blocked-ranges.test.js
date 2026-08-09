@@ -19,25 +19,46 @@ const { isPrivateAddress, isBlockedIPv4, BLOCKED_IPV4 } = require('../src/proxy'
 
 /* first and last address of each CIDR, then the address either side of it. */
 const CASES = [
-  { cidr: '0.0.0.0/8',      first: '0.0.0.0',        last: '0.255.255.255',   after: '1.0.0.0' },
-  { cidr: '10.0.0.0/8',     first: '10.0.0.0',       last: '10.255.255.255',  before: '9.255.255.255',   after: '11.0.0.0' },
-  { cidr: '100.64.0.0/10',  first: '100.64.0.0',     last: '100.127.255.255', before: '100.63.255.255',  after: '100.128.0.0' },
-  { cidr: '127.0.0.0/8',    first: '127.0.0.0',      last: '127.255.255.255', before: '126.255.255.255', after: '128.0.0.0' },
-  { cidr: '169.254.0.0/16', first: '169.254.0.0',    last: '169.254.255.255', before: '169.253.255.255', after: '169.255.0.0' },
-  { cidr: '172.16.0.0/12',  first: '172.16.0.0',     last: '172.31.255.255',  before: '172.15.255.255',  after: '172.32.0.0' },
-  { cidr: '192.0.0.0/24',   first: '192.0.0.0',      last: '192.0.0.255',     before: '191.255.255.255', after: '192.0.1.0' },
-  { cidr: '192.168.0.0/16', first: '192.168.0.0',    last: '192.168.255.255', before: '192.167.255.255', after: '192.169.0.0' },
-  { cidr: '198.18.0.0/15',  first: '198.18.0.0',     last: '198.19.255.255',  before: '198.17.255.255',  after: '198.20.0.0' },
-  { cidr: '224.0.0.0/4',    first: '224.0.0.0',      last: '239.255.255.255', before: '223.255.255.255', after: null },
+  { cidr: '0.0.0.0/8', first: '0.0.0.0', last: '0.255.255.255', after: '1.0.0.0' },
+  { cidr: '10.0.0.0/8', first: '10.0.0.0', last: '10.255.255.255', before: '9.255.255.255', after: '11.0.0.0' },
+  {
+    cidr: '100.64.0.0/10',
+    first: '100.64.0.0',
+    last: '100.127.255.255',
+    before: '100.63.255.255',
+    after: '100.128.0.0',
+  },
+  { cidr: '127.0.0.0/8', first: '127.0.0.0', last: '127.255.255.255', before: '126.255.255.255', after: '128.0.0.0' },
+  {
+    cidr: '169.254.0.0/16',
+    first: '169.254.0.0',
+    last: '169.254.255.255',
+    before: '169.253.255.255',
+    after: '169.255.0.0',
+  },
+  { cidr: '172.16.0.0/12', first: '172.16.0.0', last: '172.31.255.255', before: '172.15.255.255', after: '172.32.0.0' },
+  { cidr: '192.0.0.0/24', first: '192.0.0.0', last: '192.0.0.255', before: '191.255.255.255', after: '192.0.1.0' },
+  {
+    cidr: '192.168.0.0/16',
+    first: '192.168.0.0',
+    last: '192.168.255.255',
+    before: '192.167.255.255',
+    after: '192.169.0.0',
+  },
+  { cidr: '198.18.0.0/15', first: '198.18.0.0', last: '198.19.255.255', before: '198.17.255.255', after: '198.20.0.0' },
+  { cidr: '224.0.0.0/4', first: '224.0.0.0', last: '239.255.255.255', before: '223.255.255.255', after: null },
   /* 240/4 abuts 224/4 below it and ends the address space above, so it has no
      allowed neighbour on either side. */
-  { cidr: '240.0.0.0/4',    first: '240.0.0.0',      last: '255.255.255.255', before: null, after: null },
+  { cidr: '240.0.0.0/4', first: '240.0.0.0', last: '255.255.255.255', before: null, after: null },
 ];
 
 test('every range in the table is covered by a test here', () => {
   const declared = BLOCKED_IPV4.map(([base, bits]) => `${base}/${bits}`).sort();
-  assert.deepEqual(CASES.map(c => c.cidr).sort(), declared,
-    'a range was added or removed without updating these tests');
+  assert.deepEqual(
+    CASES.map(c => c.cidr).sort(),
+    declared,
+    'a range was added or removed without updating these tests',
+  );
 });
 
 test('every range blocks its first and last address', () => {
@@ -78,8 +99,7 @@ test('IETF protocol assignments and benchmarking ranges are blocked', () => {
 /* ── IPv6 ─────────────────────────────────────────────────────────────────── */
 
 test('IPv6 multicast is blocked', () => {
-  for (const a of ['ff02::1', 'ff05::1:3', 'FF02::FB'])
-    assert.ok(isPrivateAddress(a), `${a} should be blocked`);
+  for (const a of ['ff02::1', 'ff05::1:3', 'FF02::FB']) assert.ok(isPrivateAddress(a), `${a} should be blocked`);
 });
 
 /* A group written 'ff' is 0x00ff, not 0xff00, so it is not multicast. 0xff02 can
@@ -91,8 +111,7 @@ test('a short first group is not mistaken for multicast', () => {
 test('the existing IPv6 ranges still work', () => {
   for (const a of ['::1', '::', 'fd00::1', 'fc00::1', 'fe80::1', 'feb0::1'])
     assert.ok(isPrivateAddress(a), `${a} should be blocked`);
-  for (const a of ['2001:db8::1', '2606:4700::1111'])
-    assert.ok(!isPrivateAddress(a), `${a} should be allowed`);
+  for (const a of ['2001:db8::1', '2606:4700::1111']) assert.ok(!isPrivateAddress(a), `${a} should be allowed`);
 });
 
 /* ── the new ranges through the IPv4-in-IPv6 wrappers ─────────────────────── */

@@ -1,7 +1,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 const DIR = tmpDir('config-corrupt');
 const CFG = path.join(DIR, 'apps.json');
 process.env.CONFIG_PATH = CFG;

@@ -22,8 +22,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 function sources(dir, out = []) {
   for (const e of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
     const rel = path.join(dir, e.name);
-    if (e.isDirectory()) { if (e.name !== 'test' && e.name !== 'node_modules') sources(rel, out); }
-    else if (/\.(js|mjs|html)$/.test(e.name)) out.push(rel);
+    if (e.isDirectory()) {
+      if (e.name !== 'test' && e.name !== 'node_modules') sources(rel, out);
+    } else if (/\.(js|mjs|html)$/.test(e.name)) out.push(rel);
   }
   return out;
 }
@@ -120,20 +121,31 @@ test('an unterminated comment does not hide or reveal a handler', () => {
 
   const closed = '<!-- a --> <button onclick="x">';
   const cSpans = commentSpans(closed);
-  assert.equal([...closed.matchAll(INLINE_ATTR)].filter(m => !inComment(cSpans, m.index)).length, 1,
-    'and a closed comment does not swallow what follows it');
+  assert.equal(
+    [...closed.matchAll(INLINE_ATTR)].filter(m => !inComment(cSpans, m.index)).length,
+    1,
+    'and a closed comment does not swallow what follows it',
+  );
 });
 
 /* The buttons themselves still exist and are still wired, just not inline. */
 test('both retry buttons attach their handler in code', () => {
-  for (const [file, selector] of [['js/dashboard.js', '.api-error-btn'], ['js/admin.js', '.retry-btn']]) {
+  for (const [file, selector] of [
+    ['js/dashboard.js', '.api-error-btn'],
+    ['js/admin.js', '.retry-btn'],
+  ]) {
     const src = fs.readFileSync(path.join(root, file), 'utf8');
     assert.ok(src.includes(selector), `${file} should still render the retry button`);
     /* Either the raw lookup or the typed q() helper from utils.js; what matters
        is that the handler is attached in code rather than as an inline
        onclick, which the page's CSP forbids. */
-    assert.match(src, new RegExp(`(querySelector\\('${selector.replace('.', '\\.')}'\\)|q\\('${selector.replace('.', '\\.')}',[^)]*\\))\\?\\.addEventListener\\('click'`),
-      `${file} should attach the retry handler with addEventListener`);
+    assert.match(
+      src,
+      new RegExp(
+        `(querySelector\\('${selector.replace('.', '\\.')}'\\)|q\\('${selector.replace('.', '\\.')}',[^)]*\\))\\?\\.addEventListener\\('click'`,
+      ),
+      `${file} should attach the retry handler with addEventListener`,
+    );
     assert.match(src, /location\.reload\(\)/, `${file} should still reload`);
   }
 });
@@ -147,6 +159,9 @@ test('the pages really do forbid inline script', () => {
 
   const dashboard = fs.readFileSync(path.join(nginx, 'dashboard.conf'), 'utf8');
   const admin = dashboard.slice(dashboard.indexOf('location ^~ /admin {'));
-  assert.match(admin.slice(0, admin.indexOf('\n    }')), /script-src 'self';/,
-    'the admin policy must not allow inline script either');
+  assert.match(
+    admin.slice(0, admin.indexOf('\n    }')),
+    /script-src 'self';/,
+    'the admin policy must not allow inline script either',
+  );
 });

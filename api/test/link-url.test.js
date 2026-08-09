@@ -15,7 +15,7 @@
    browser's module directly now, so there is one definition. That only works if
    the file stays free of anything only a browser has, which is what loading it
    here proves. */
-const { tmpDir, tmpPath } = require('../test-support/tmp');
+const { tmpDir } = require('../test-support/tmp');
 
 const path = require('node:path');
 const fs = require('node:fs');
@@ -25,9 +25,7 @@ const assert = require('node:assert/strict');
 /* Required, not imported: this is the same file the browser loads, and the point
    of the test is that the server can load it. */
 const shared = require('../../ui/js/link-url.js');
-const { isSafeLinkUrl, firstUnsafeLink, UNSAFE_LINK_SCHEMES, LINK_FIELDS, WIDGET_LINK_FIELDS, sanitizeItemLinks } = shared;
-
-
+const { isSafeLinkUrl, firstUnsafeLink, sanitizeItemLinks } = shared;
 
 /* ── what must be refused ─────────────────────────────────────────────────── */
 
@@ -65,9 +63,17 @@ test('interior whitespace and control characters do not hide a scheme', () => {
    would break these for no gain: the browser hands them to the OS, not to our
    origin. */
 test('protocol handlers a homelab actually uses are allowed', () => {
-  for (const v of ['ssh://host', 'vnc://host:5900', 'rdp://host', 'smb://nas/share',
-                   'sftp://host', 'steam://run/440', 'obsidian://open?vault=x',
-                   'mailto:me@example.com', 'tel:+15551234'])
+  for (const v of [
+    'ssh://host',
+    'vnc://host:5900',
+    'rdp://host',
+    'smb://nas/share',
+    'sftp://host',
+    'steam://run/440',
+    'obsidian://open?vault=x',
+    'mailto:me@example.com',
+    'tel:+15551234',
+  ])
     assert.equal(isSafeLinkUrl(v), true, `${v} should be allowed`);
 });
 
@@ -139,7 +145,11 @@ test('sanitizeItemLinks blanks an unsafe link and leaves the rest alone', () => 
     { id: 'a', href: 'javascript:alert(1)' },
     { id: 'b', href: 'https://example.com' },
     { id: 'c', url: 'data:text/html,x' },
-    { id: 'd', type: 'widget', widgetConfig: { linkUrl: 'javascript:x', scrutinyHref: 'https://ok.example', other: 'kept' } },
+    {
+      id: 'd',
+      type: 'widget',
+      widgetConfig: { linkUrl: 'javascript:x', scrutinyHref: 'https://ok.example', other: 'kept' },
+    },
   ];
   sanitizeItemLinks(items);
   assert.equal(items[0].href, '');
@@ -164,7 +174,6 @@ test('sanitizeItemLinks tolerates junk', () => {
 /* ── the save path ────────────────────────────────────────────────────────── */
 
 test('a config save is rejected when an item carries an unsafe link', async () => {
-    const fs = require('node:fs');
   const http = require('node:http');
   process.env.CONFIG_PATH = path.join(tmpDir('link'), 'apps.json');
 
@@ -177,41 +186,64 @@ test('a config save is rejected when an item carries an unsafe link', async () =
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
 
-  const post = body => new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const u = new URL(base + '/api/config');
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
+  const post = body =>
+    new Promise((resolve, reject) => {
+      const data = JSON.stringify(body);
+      const u = new URL(base + '/api/config');
+      const r = http.request(
+        {
+          hostname: u.hostname,
+          port: u.port,
+          path: u.pathname,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+        },
+        res => {
+          let b = '';
+          res.on('data', c => {
+            b += c;
+          });
+          res.on('end', () => {
+            let j = null;
+            try {
+              j = JSON.parse(b);
+            } catch {}
+            resolve({ status: res.statusCode, body: j });
+          });
+        },
+      );
+      r.on('error', reject);
+      r.end(data);
     });
-    r.on('error', reject);
-    r.end(data);
-  });
 
   try {
-    const bad = await post({ items: [{ id: 'a1', type: 'app', name: 'X', href: 'javascript:alert(1)' }], settings: {} });
+    const bad = await post({
+      items: [{ id: 'a1', type: 'app', name: 'X', href: 'javascript:alert(1)' }],
+      settings: {},
+    });
     assert.equal(bad.status, 400);
     assert.match(bad.body.error, /a1/, 'the message should name the item');
     assert.match(bad.body.error, /javascript/i, 'and the scheme');
-    assert.equal(loadConfig().items.find(i => i.id === 'a1'), undefined, 'nothing may be stored');
+    assert.equal(
+      loadConfig().items.find(i => i.id === 'a1'),
+      undefined,
+      'nothing may be stored',
+    );
 
     const ok = await post({ items: [{ id: 'a2', type: 'app', name: 'Y', href: 'ssh://host' }], settings: {} });
     assert.equal(ok.status, 200, 'a protocol handler must still save');
     assert.equal(loadConfig().items.find(i => i.id === 'a2').href, 'ssh://host');
   } finally {
-    await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
+    await new Promise(r => {
+      server.closeAllConnections?.();
+      server.close(r);
+    });
   }
 });
 
 /* Damaged rows are refused on save, so they cannot reach stored config. See
    P4-4 in badge-headers.test.js for why the read path tolerates them instead. */
 test('a config save is rejected when a badge row is malformed', async () => {
-  const os = require('node:os');
-  const fs = require('node:fs');
   const http = require('node:http');
   process.env.CONFIG_PATH = path.join(tmpDir('rows'), 'apps.json');
 
@@ -224,32 +256,60 @@ test('a config save is rejected when a badge row is malformed', async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
 
-  const post = body => new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const u = new URL(base + '/api/config');
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
+  const post = body =>
+    new Promise((resolve, reject) => {
+      const data = JSON.stringify(body);
+      const u = new URL(base + '/api/config');
+      const r = http.request(
+        {
+          hostname: u.hostname,
+          port: u.port,
+          path: u.pathname,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+        },
+        res => {
+          let b = '';
+          res.on('data', c => {
+            b += c;
+          });
+          res.on('end', () => {
+            let j = null;
+            try {
+              j = JSON.parse(b);
+            } catch {}
+            resolve({ status: res.statusCode, body: j });
+          });
+        },
+      );
+      r.on('error', reject);
+      r.end(data);
     });
-    r.on('error', reject);
-    r.end(data);
-  });
 
   try {
-    const bad = await post({ items: [{ id: 'a1', type: 'app', badge: { headers: [{ key: 'A', value: '1' }, null] } }], settings: {} });
+    const bad = await post({
+      items: [{ id: 'a1', type: 'app', badge: { headers: [{ key: 'A', value: '1' }, null] } }],
+      settings: {},
+    });
     assert.equal(bad.status, 400);
     assert.match(bad.body.error, /a1/);
     assert.match(bad.body.error, /badge\.headers\[1\]/);
-    assert.equal(loadConfig().items.find(i => i.id === 'a1'), undefined, 'nothing may be stored');
+    assert.equal(
+      loadConfig().items.find(i => i.id === 'a1'),
+      undefined,
+      'nothing may be stored',
+    );
 
-    const ok = await post({ items: [{ id: 'a2', type: 'app', badge: { headers: [{ key: 'A', value: '1', secret: false }] } }], settings: {} });
+    const ok = await post({
+      items: [{ id: 'a2', type: 'app', badge: { headers: [{ key: 'A', value: '1', secret: false }] } }],
+      settings: {},
+    });
     assert.equal(ok.status, 200, 'a clean item must still save');
   } finally {
-    await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
+    await new Promise(r => {
+      server.closeAllConnections?.();
+      server.close(r);
+    });
   }
 });
 
@@ -258,8 +318,6 @@ test('a config save is rejected when a badge row is malformed', async () => {
    own id. Refused on save rather than repaired: renaming would silently change
    what folder children point at. See P5-5. */
 test('a config save is rejected when two items share an id', async () => {
-  const os = require('node:os');
-  const fs = require('node:fs');
   const http = require('node:http');
   process.env.CONFIG_PATH = path.join(tmpDir('dup'), 'apps.json');
 
@@ -272,48 +330,75 @@ test('a config save is rejected when two items share an id', async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
 
-  const post = body => new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const u = new URL(base + '/api/config');
-    const r = http.request({
-      hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
-    }, res => {
-      let b = '';
-      res.on('data', c => { b += c; });
-      res.on('end', () => { let j = null; try { j = JSON.parse(b); } catch {} resolve({ status: res.statusCode, body: j }); });
+  const post = body =>
+    new Promise((resolve, reject) => {
+      const data = JSON.stringify(body);
+      const u = new URL(base + '/api/config');
+      const r = http.request(
+        {
+          hostname: u.hostname,
+          port: u.port,
+          path: u.pathname,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+        },
+        res => {
+          let b = '';
+          res.on('data', c => {
+            b += c;
+          });
+          res.on('end', () => {
+            let j = null;
+            try {
+              j = JSON.parse(b);
+            } catch {}
+            resolve({ status: res.statusCode, body: j });
+          });
+        },
+      );
+      r.on('error', reject);
+      r.end(data);
     });
-    r.on('error', reject);
-    r.end(data);
-  });
 
   try {
-    const bad = await post({ items: [
-      { id: 'dup', type: 'app', name: 'First' },
-      { id: 'dup', type: 'app', name: 'Second' },
-    ], settings: {} });
+    const bad = await post({
+      items: [
+        { id: 'dup', type: 'app', name: 'First' },
+        { id: 'dup', type: 'app', name: 'Second' },
+      ],
+      settings: {},
+    });
     assert.equal(bad.status, 400);
     assert.match(bad.body.error, /duplicate item id: dup/);
     assert.equal(loadConfig().items.filter(i => i.id === 'dup').length, 0, 'nothing may be stored');
 
     /* Different types, same id, is still a collision: the lookup does not care. */
-    const mixed = await post({ items: [
-      { id: 'same', type: 'app', name: 'A' },
-      { id: 'same', type: 'folder', label: 'B' },
-    ], settings: {} });
+    const mixed = await post({
+      items: [
+        { id: 'same', type: 'app', name: 'A' },
+        { id: 'same', type: 'folder', label: 'B' },
+      ],
+      settings: {},
+    });
     assert.equal(mixed.status, 400);
 
-    const ok = await post({ items: [
-      { id: 'one', type: 'app', name: 'A' },
-      { id: 'two', type: 'app', name: 'B' },
-    ], settings: {} });
+    const ok = await post({
+      items: [
+        { id: 'one', type: 'app', name: 'A' },
+        { id: 'two', type: 'app', name: 'B' },
+      ],
+      settings: {},
+    });
     assert.equal(ok.status, 200, 'distinct ids must still save');
     /* Counted by id, not by type: ensureSystemItems adds a `settings` app. */
     const ids = loadConfig().items.map(i => i.id);
     assert.ok(ids.includes('one') && ids.includes('two'));
     assert.equal(new Set(ids).size, ids.length, 'the stored config has no duplicates');
   } finally {
-    await new Promise(r => { server.closeAllConnections?.(); server.close(r); });
+    await new Promise(r => {
+      server.closeAllConnections?.();
+      server.close(r);
+    });
   }
 });
 
@@ -338,6 +423,9 @@ test('the declared Node floor supports requiring an ES module', () => {
    If that stops being true, this test is what says the floor can be revisited. */
 test('a src module still requires across the CommonJS/ESM boundary', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'config.js'), 'utf8');
-  assert.match(src, /require\(['"][^'"]*ui\/js\/link-url\.js['"]\)/,
-    'routes/config.js no longer requires the browser module; revisit the engines floor');
+  assert.match(
+    src,
+    /require\(['"][^'"]*ui\/js\/link-url\.js['"]\)/,
+    'routes/config.js no longer requires the browser module; revisit the engines floor',
+  );
 });
