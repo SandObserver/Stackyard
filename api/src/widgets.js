@@ -142,7 +142,7 @@ function _validateViewField(m) {
 }
 
 /* Validate a parsed widget.json. Returns { errors:[...] }. */
-function _validateManifest(name, m) {
+function validateManifest(name, m) {
   const errs = [];
   if (!m || typeof m !== 'object') return { errors: ['manifest is not an object'] };
   if (typeof m.name !== 'string' || !m.name) errs.push('missing "name"');
@@ -243,7 +243,7 @@ function loadRegistry() {
       continue;
     }
 
-    const { errors } = _validateManifest(name, manifest);
+    const { errors } = validateManifest(name, manifest);
     if (errors.length) {
       log.warn('widget registry: invalid manifest, skipped', { widget: name, errors });
       rejected.push({ name, errors });
@@ -312,4 +312,4 @@ on('GET', '/api/widgets', (_, res) => {
   json(res, 200, { widgets: list, rejected: getRejected() });
 });
 
-module.exports = { getRegistry, getRejected, loadRegistry, validateManifest: _validateManifest, WIDGETS_PATH };
+module.exports = { getRegistry, getRejected, loadRegistry, validateManifest, WIDGETS_PATH };

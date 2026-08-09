@@ -1,7 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { nextActiveIndex } from '/js/admin-logic.js?v=056a11e9';
-import { el, qa, inp as inpById, q } from '/js/utils.js?v=17424946';
+import { el, qa, q } from '/js/utils.js?v=17424946';
 
 export const API = '';
 
@@ -224,45 +223,4 @@ export function wireChecklist(dd, btn, list, onToggle) {
     li.tabIndex = -1;
   });
   return { close };
-}
-
-/* Secret inline-edit row: shows Configured/Not set, edits via a password field,
-   never renders the plaintext back. Input keeps its id/value for the save path. */
-export function _secretRow(host, { rowId, inpId, label, req, opt, isSet, hidden, onInput }) {
-  const disp = isSet ? 'Configured' : 'Not set';
-  const row = document.createElement('div');
-  row.className = 'row ie-row';
-  row.id = rowId;
-  row.hidden = !!hidden;
-  setHtml(
-    row,
-    html`<span class="rl">${label}${req ? html` <span class="req">*</span>` : ''}${opt ? html` <span class="opt-span">(optional)</span>` : ''}</span><span class="rv${isSet ? '' : ' is-ph'}">${disp}</span><input id="${inpId}" type="password" autocomplete="new-password" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button>`,
-  );
-  host.appendChild(row);
-  const rv = q('.rv', row),
-    inp = inpById(inpId),
-    pe = q('.pe', row);
-  const open = () => {
-    row.classList.add('editing');
-    inp.style.display = 'block';
-    inp.focus();
-  };
-  const commit = () => {
-    row.classList.remove('editing');
-    inp.style.display = 'none';
-    const has = !!inp.value;
-    rv.textContent = has ? 'New value set' : disp;
-    rv.classList.toggle('is-ph', !(has || isSet));
-  };
-  pe.addEventListener('click', open);
-  rv.addEventListener('click', open);
-  inp.addEventListener('blur', commit);
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      inp.blur();
-    }
-  });
-  if (onInput) inp.addEventListener('input', () => onInput(inp.value));
-  return row;
 }
