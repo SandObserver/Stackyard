@@ -13,6 +13,12 @@ iframe and only ever fetches your own API.
 Copy [widget-template/](widget-template/) to `ui/widgets/<name>/` for a working
 starting point.
 
+## Contents
+
+**Build a widget**  [Folder structure](#folder-structure) · [1. The manifest](#1-the-manifest-widgetjson) · [2. Providing data](#2-providing-data-datajs) · [3. The frontend](#3-the-frontend-indexhtml) · [Cache-busting](#cache-busting) · [Checklist](#checklist)
+
+**Reference**  [Manifest](#reference-the-manifest) · [data.js](#reference-datajs) · [Frontend](#reference-the-frontend) · [Toolbox](#toolbox-optional)
+
 ## Folder structure
 
 ```
@@ -51,6 +57,101 @@ without entering one. `sizes` is the set of card sizes offered.
 `name` must match the folder name. An invalid manifest is skipped at startup with
 a logged reason rather than crashing the server, so a typo disables just that
 widget.
+
+Views, card backgrounds, every field type and the option pickers are in [the manifest reference](#reference-the-manifest).
+
+## 2. Providing data (data.js)
+
+Runs on the backend (Node, CommonJS). Export a single async function taking
+`ctx`; the saved config is on `ctx.config`.
+
+```js
+module.exports = async function (ctx) {
+  const { url, apiKey } = ctx.config;
+  const r = await ctx.fetchJSON(`${url}/api/items`, {
+    headers: { 'X-Api-Key': apiKey },
+    timeout: 8000,
+  });
+  return { items: r.data.slice(0, 10) };
+};
+```
+
+What you return is served as-is at `/api/widget-data/<id>`. Keep upstream calls
+behind `ctx.fetchJSON` so they inherit the SSRF guard, IP pinning, size limit,
+and the app's TLS-skip setting.
+
+The full `ctx` API, how to report a failure, and demo mode are in [the data.js reference](#reference-datajs).
+
+## 3. The frontend (index.html)
+
+Runs in a sandboxed iframe scaled to the widget's design resolution. Reads its
+`id` from the query string, fetches its own data, and draws it. Keep everything
+inline; there is no shared widget stylesheet, and the frontend must not make
+external network calls.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box }
+    html,body { width:100%; height:100%; overflow:hidden; background:transparent;
+      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; color:#e8e8ea }
+    #root { width:100%; height:100%; display:flex; align-items:center; justify-content:center }
+  </style>
+</head>
+<body>
+  <div id="root">Loading</div>
+  <script>
+    const id = new URLSearchParams(location.search).get('id') || '';
+    const root = document.getElementById('root');
+    async function tick() {
+      try {
+        const r = await fetch(`/api/widget-data/${encodeURIComponent(id)}`);
+        const data = await r.json();
+        root.textContent = `${data.items.length} items`;
+      } catch (e) {
+        /* leave the last good render in place on a failed poll */
+      }
+    }
+    tick();
+    setInterval(tick, 30000);
+  </script>
+</body>
+</html>
+```
+
+The widget's saved config, if the frontend needs it, is available the same way
+at `/api/widget-config/<id>`.
+
+The iframe's URL parameters, the widget CSP, text direction, the mobile active-state protocol and the canvas sizes are in [the frontend reference](#reference-the-frontend).
+
+## Cache-busting
+
+Nothing to do by hand. The release build hashes each widget entry file by content
+and stamps the cache version into the manifest, the same way it version-stamps
+`/css/` and `/js/` imports.
+
+## Checklist
+
+Manifests are validated in CI, so a schema mistake fails the PR rather than
+silently disabling the widget at runtime. Run the same check locally with
+`cd api && node --test`.
+
+- [ ] `ui/widgets/<name>/widget.json` with `name` (matching the folder), `label`, `sizes`, and `fields`
+- [ ] `ui/widgets/<name>/data.js` exporting `module.exports = async (ctx) => ...`, for a widget that fetches. A widget that renders entirely in the browser (the clock, the dashboard switch) ships no `data.js` and never calls `/api/widget-data/`.
+- [ ] `ui/widgets/<name>/index.html` that reads `?id=` and fetches `/api/widget-data/<id>`
+- [ ] For a multi-view widget: a `views` block with `viewField` and `defaultView`
+
+---
+
+# Reference
+
+Lookup material for a widget already under way. The walkthrough above is the
+other half of this page.
+
+## Reference: the manifest
 
 ### Views (multiple looks)
 
@@ -264,25 +365,7 @@ if (ctx.endpoint === 'jobs') {
 `ctx.config` still holds the whole widget config, so secrets in the row are
 preserved the same way they are for a top-level field.
 
-## 2. Providing data (data.js)
-
-Runs on the backend (Node, CommonJS). Export a single async function taking
-`ctx`; the saved config is on `ctx.config`.
-
-```js
-module.exports = async function (ctx) {
-  const { url, apiKey } = ctx.config;
-  const r = await ctx.fetchJSON(`${url}/api/items`, {
-    headers: { 'X-Api-Key': apiKey },
-    timeout: 8000,
-  });
-  return { items: r.data.slice(0, 10) };
-};
-```
-
-What you return is served as-is at `/api/widget-data/<id>`. Keep upstream calls
-behind `ctx.fetchJSON` so they inherit the SSRF guard, IP pinning, size limit,
-and the app's TLS-skip setting.
+## Reference: data.js
 
 ### ctx reference
 
@@ -394,48 +477,7 @@ Only the widget's own polling gets a demo body. A config-time `optionsFrom`
 fetch always runs the real code, so a visitor pressing Fetch in the settings sees
 it fail rather than a list of options that do not exist.
 
-## 3. The frontend (index.html)
-
-Runs in a sandboxed iframe scaled to the widget's design resolution. Reads its
-`id` from the query string, fetches its own data, and draws it. Keep everything
-inline; there is no shared widget stylesheet, and the frontend must not make
-external network calls.
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <style>
-    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box }
-    html,body { width:100%; height:100%; overflow:hidden; background:transparent;
-      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; color:#e8e8ea }
-    #root { width:100%; height:100%; display:flex; align-items:center; justify-content:center }
-  </style>
-</head>
-<body>
-  <div id="root">Loading</div>
-  <script>
-    const id = new URLSearchParams(location.search).get('id') || '';
-    const root = document.getElementById('root');
-    async function tick() {
-      try {
-        const r = await fetch(`/api/widget-data/${encodeURIComponent(id)}`);
-        const data = await r.json();
-        root.textContent = `${data.items.length} items`;
-      } catch (e) {
-        /* leave the last good render in place on a failed poll */
-      }
-    }
-    tick();
-    setInterval(tick, 30000);
-  </script>
-</body>
-</html>
-```
-
-The widget's saved config, if the frontend needs it, is available the same way
-at `/api/widget-config/<id>`.
+## Reference: the frontend
 
 ### What the iframe is given
 
@@ -584,20 +626,3 @@ success was. `sinceLabel(ts)` gives that "3m ago" label on its own.
 - `smoothPath(points)` returns a smoothed SVG path string through `[[x,y], ...]`.
 
 Check the toolbox before building a new visual by hand.
-
-## Cache-busting
-
-Nothing to do by hand. The release build hashes each widget entry file by content
-and stamps the cache version into the manifest, the same way it version-stamps
-`/css/` and `/js/` imports.
-
-## Checklist
-
-Manifests are validated in CI, so a schema mistake fails the PR rather than
-silently disabling the widget at runtime. Run the same check locally with
-`cd api && node --test`.
-
-- [ ] `ui/widgets/<name>/widget.json` with `name` (matching the folder), `label`, `sizes`, and `fields`
-- [ ] `ui/widgets/<name>/data.js` exporting `module.exports = async (ctx) => ...`, for a widget that fetches. A widget that renders entirely in the browser (the clock, the dashboard switch) ships no `data.js` and never calls `/api/widget-data/`.
-- [ ] `ui/widgets/<name>/index.html` that reads `?id=` and fetches `/api/widget-data/<id>`
-- [ ] For a multi-view widget: a `views` block with `viewField` and `defaultView`
