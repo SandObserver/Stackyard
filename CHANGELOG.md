@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-08-09
+
 ### Changed
 
 - Finishing first-run setup on an install with nothing on the dashboard now
@@ -626,7 +628,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.5.2...HEAD
+[1.5.2]: https://github.com/SandObserver/stackyard/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/SandObserver/stackyard/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/SandObserver/stackyard/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/SandObserver/stackyard/compare/v1.3.1...v1.4.0
