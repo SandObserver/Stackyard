@@ -16,7 +16,7 @@
 <sub><i>Note: The first demo visit may take up to a minute due to Render's free-tier cold start.</i></sub>
 
 Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a calm, launcher-style grid of app tiles, folders, and a small number of
-*genuinely useful* widgets, running in a single container with no external services or dependencies. Built to be glanced at a hundred times a day without feeling cluttered.
+*genuinely useful* widgets, running in a single container. Built to be glanced at a hundred times a day without feeling cluttered.
 
 ## Contents
 
@@ -40,8 +40,7 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
 - **No dependencies.** Review it once and stop worrying about the supply chain.
 
-Launcher-style grid of app links, folders, and widgets, with a mobile layout.
-Available in English, Persian, Chinese, Spanish, German, and French.
+Has a mobile layout, and is available in English, Persian, Chinese, Spanish, German, and French.
 
 ## Getting started
 
