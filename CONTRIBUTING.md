@@ -62,3 +62,4 @@ A few of these are worth knowing about before they fail:
 - Widgets: [docs/widgets.md](docs/widgets.md)
 - Translations: [docs/i18n.md](docs/i18n.md)
 - Security model / reporting: [docs/security.md](docs/security.md)
+- Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
