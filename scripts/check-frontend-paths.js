@@ -1,17 +1,11 @@
 #!/usr/bin/env node
-/* Every module under ui/js needs two entries in tsconfig.frontend.json: the
-   plain path and the cache-busted one.
+/* Every module under ui/js needs two entries in tsconfig.frontend.json, the
+   plain path and the cache-busted one, because TypeScript allows one wildcard
+   per pattern (TS5061).
 
-   TypeScript allows at most one wildcard per pattern (TS5061), so "/js/foo.js"
-   and "/js/foo.js?v=*" cannot be globbed into a single entry. The frontend
-   typecheck is the only thing that resolves those specifiers back to real
-   files, and a module missing from the map is not a loud failure: the import
-   resolves to nothing, that module goes unchecked, and typecheck:ui still
-   passes. The gap only shows up as a bug nobody caught.
-
-   The file's own header tells an author to add both. This turns remembering
-   into a failing check, which is the point: the alternative is a build step,
-   and this project does not have one. */
+   A missing entry fails silently: the import resolves to nothing, that module
+   goes unchecked, and typecheck:ui still passes. This makes it a failing check
+   instead. */
 
 const fs = require('node:fs');
 const path = require('node:path');

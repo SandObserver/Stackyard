@@ -129,10 +129,9 @@ export function widgetConfigMode(type, reg) {
 
 /** Which admin section to show, given a requested id and the sections present.
 
-    Exactly one section must always show. The requested id can be stale, since it
-    comes from localStorage and can name a section an older version had, and
-    falling through leaves the page blank. Falls back to the first available
-    section rather than a hard-coded name.
+    Exactly one section must always show, and the requested id comes from
+    localStorage so it can name a section an older version had. Falls back to the
+    first available section rather than a hard-coded name.
 
     @param {string|null|undefined} requested
     @param {string[]} available in document order
@@ -191,17 +190,11 @@ export function reorderItems(items, item, dir, { folderId = null, childIdx = nul
   return true;
 }
 
-/* The reasons a widget was refused, one line per reason, ready to be written as
-   text. Kept here rather than in the form so the two places that show refusals
-   cannot word them differently, and so the shape coming off the API can be
-   checked without a DOM.
-
-   The shape is request-adjacent: it is built by the server from files on disk,
-   but it reaches this code as JSON, so an entry that is not a named widget with
-   at least one string reason is dropped rather than rendered as "undefined".
-
-   `withName` distinguishes the two callers: the editor is already showing one
-   widget, the picker is listing several. */
+/* The reasons a widget was refused, one line per reason, so the two places that
+   show refusals cannot word them differently. The shape arrives as JSON, so an
+   entry that is not a named widget with at least one string reason is dropped
+   rather than rendered as "undefined". `withName` separates the two callers:
+   the editor shows one widget, the picker lists several. */
 export function rejectionLines(rejections, { withName = true } = {}) {
   if (!Array.isArray(rejections)) return [];
   const out = [];

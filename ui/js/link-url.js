@@ -1,11 +1,9 @@
 /* Which URLs are safe to put in a link the user can click.
 
-   A denylist on purpose: a tile link is handed to the OS, and a homelab
-   dashboard legitimately links to ssh://, vnc://, rdp:// and whatever else the
-   user has registered. Only the schemes that execute script in our own origin
-   are refused, and rel="noopener noreferrer" does nothing about those.
-
-   Enforced on save and again on render, since a config can arrive by import.
+   A denylist on purpose: a tile link is handed to the OS, and a homelab links
+   to ssh://, vnc:// and whatever else the user registered, so only the schemes
+   that execute script in our own origin are refused. Enforced on save and again
+   on render, since a config can arrive by import.
 
    The server requires this file directly, so it must stay free of anything only
    a browser has: no DOM, no window, no imports. */

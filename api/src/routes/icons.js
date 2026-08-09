@@ -11,22 +11,12 @@ const { fail, KIND, errorBody } = require('../api-error');
    limit is the larger of the two because the request also contains boundaries
    and headers, so cutting it off at exactly the file limit would reject a file
    that is within it. */
-/* A safe, unused filename for an upload.
+/* A safe, unused filename for an upload. Reusing the submitted name overwrote
+   an existing icon that other apps still referenced, so a free name is found
+   instead and returned in the response.
 
-   Two problems with using the submitted name directly.
-
-   It overwrote silently. Uploading logo.svg twice replaced the first, and the
-   replaced icon is still referenced by whichever apps use it, so a tile's
-   picture changed without anyone touching that app. Nothing warned, and there
-   was no way back. Refusing the upload instead would punish a common and
-   innocent case, since a great many icons are called logo.svg; a free name is
-   found instead, and the response already returns the filename so the form shows
-   what was actually saved.
-
-   The name is also tidied. path.basename strips a Unix path, but on Linux it
-   does not treat a backslash as a separator, so a Windows-style name arrived as
-   the literal "..\..\etc\passwd.svg". That cannot escape the icons directory,
-   which is what matters, but it makes for a confusing file to find later.
+   Backslashes are stripped as well as slashes: path.basename does not treat one
+   as a separator on Linux.
 
    @param {string} dir @param {string} raw @returns {string} */
 function safeIconName(dir, raw) {
