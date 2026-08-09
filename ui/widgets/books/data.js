@@ -33,10 +33,10 @@ function authErr(r) {
 /* ───────────────────────── Audiobookshelf ───────────────────────── */
 async function absLibrary(ctx, base, hdr) {
   const r = await jget(ctx, base, '/api/libraries', hdr);
-  if (authErr(r)) throw new Error('Audiobookshelf auth failed (check API key)');
+  if (authErr(r)) ctx.fail('Audiobookshelf auth failed (check API key)', { kind: ctx.KIND.AUTH });
   const libs = (r.data && r.data.libraries) || [];
   const book = libs.find(l => l.mediaType === 'book') || libs[0];
-  if (!book) throw new Error('No Audiobookshelf library found');
+  if (!book) ctx.fail('No Audiobookshelf library found');
   return book.id;
 }
 function absBook(li) {
@@ -54,7 +54,7 @@ function absBook(li) {
 async function abs(ctx) {
   const base = ctx.normalizeBase(ctx.config.absUrl);
   const key = ctx.config.absKey;
-  if (!base || !key) throw new Error('Audiobookshelf URL and API key required');
+  if (!base || !key) ctx.fail('Audiobookshelf URL and API key required', { kind: ctx.KIND.INVALID });
   const hdr = { Authorization: 'Bearer ' + key };
   const lib = await absLibrary(ctx, base, hdr);
   const source = ctx.config.source || 'recently';
@@ -92,7 +92,7 @@ async function abs(ctx) {
 async function absLists(ctx) {
   const base = ctx.normalizeBase(ctx.config.absUrl);
   const key = ctx.config.absKey;
-  if (!base || !key) throw new Error('Audiobookshelf URL and API key required');
+  if (!base || !key) ctx.fail('Audiobookshelf URL and API key required', { kind: ctx.KIND.INVALID });
   const hdr = { Authorization: 'Bearer ' + key };
   const lib = await absLibrary(ctx, base, hdr);
   const out = [];
@@ -126,7 +126,7 @@ function komgaBook(b) {
 async function komga(ctx) {
   const base = ctx.normalizeBase(ctx.config.komgaUrl);
   const key = ctx.config.komgaKey;
-  if (!base || !key) throw new Error('Komga URL and API key required');
+  if (!base || !key) ctx.fail('Komga URL and API key required', { kind: ctx.KIND.INVALID });
   const hdr = { 'X-API-Key': key };
   const source = ctx.config.source || 'recently';
   let path;
@@ -134,7 +134,7 @@ async function komga(ctx) {
   else if (source === 'unread') path = `/api/v1/books/ondeck?size=${CAP}`;
   else path = `/api/v1/books/latest?size=${CAP}`;
   const r = await jget(ctx, base, path, hdr);
-  if (authErr(r)) throw new Error('Komga auth failed (check API key)');
+  if (authErr(r)) ctx.fail('Komga auth failed (check API key)', { kind: ctx.KIND.AUTH });
   const content = (r.data && r.data.content) || (Array.isArray(r.data) ? r.data : []);
   return {
     provider: 'komga',
@@ -147,7 +147,7 @@ async function komga(ctx) {
 async function komgaLists(ctx) {
   const base = ctx.normalizeBase(ctx.config.komgaUrl);
   const key = ctx.config.komgaKey;
-  if (!base || !key) throw new Error('Komga URL and API key required');
+  if (!base || !key) ctx.fail('Komga URL and API key required', { kind: ctx.KIND.INVALID });
   const r = await jget(ctx, base, `/api/v1/readlists?size=100`, { 'X-API-Key': key });
   const content = (r.data && r.data.content) || [];
   return { options: content.filter(l => l && l.id).map(l => ({ value: String(l.id), label: l.name || 'Read list' })) };
@@ -156,7 +156,7 @@ async function komgaLists(ctx) {
 /* ───────────────────────────── Kavita ───────────────────────────── */
 async function kavitaToken(ctx, base, key) {
   const r = await jpost(ctx, base, `/api/Plugin/authenticate?apiKey=${enc(key)}&pluginName=Stackyard`, null, null);
-  if (authErr(r) || !(r.data && r.data.token)) throw new Error('Kavita auth failed (check API key)');
+  if (authErr(r) || !(r.data && r.data.token)) ctx.fail('Kavita auth failed (check API key)', { kind: ctx.KIND.AUTH });
   return r.data.token;
 }
 function kavitaSeries(s) {
@@ -174,7 +174,7 @@ function kavitaSeries(s) {
 async function kavita(ctx) {
   const base = ctx.normalizeBase(ctx.config.kavitaUrl);
   const key = ctx.config.kavitaKey;
-  if (!base || !key) throw new Error('Kavita URL and API key required');
+  if (!base || !key) ctx.fail('Kavita URL and API key required', { kind: ctx.KIND.INVALID });
   const tok = await kavitaToken(ctx, base, key);
   const hdr = { Authorization: 'Bearer ' + tok };
   const source = ctx.config.source || 'recently';
@@ -210,7 +210,7 @@ async function kavita(ctx) {
 async function kavitaLists(ctx) {
   const base = ctx.normalizeBase(ctx.config.kavitaUrl);
   const key = ctx.config.kavitaKey;
-  if (!base || !key) throw new Error('Kavita URL and API key required');
+  if (!base || !key) ctx.fail('Kavita URL and API key required', { kind: ctx.KIND.INVALID });
   const tok = await kavitaToken(ctx, base, key);
   const r = await jpost(ctx, base, `/api/ReadingList/lists?PageNumber=1&PageSize=100&includePromoted=true`, {
     Authorization: 'Bearer ' + tok,

@@ -22,14 +22,14 @@ const MAX = 5;
 async function plex(ctx) {
   const base = ctx.normalizeBase(ctx.config.plexUrl);
   const token = ctx.config.plexToken;
-  if (!base || !token) throw new Error('Plex URL and token required');
+  if (!base || !token) ctx.fail('Plex URL and token required', { kind: ctx.KIND.INVALID });
   // Plex returns XML unless JSON is requested; token may be header or query
   const r = await ctx.fetchJSON(`${base}/status/sessions`, {
     headers: { Accept: 'application/json', 'X-Plex-Token': token },
     timeout: 8000,
   });
-  if (r.status === 401 || r.status === 403) throw new Error('Plex auth failed (check token)');
-  if (r.status >= 400) throw new Error('Plex HTTP ' + r.status);
+  if (r.status === 401 || r.status === 403) ctx.fail('Plex auth failed (check token)', { kind: ctx.KIND.AUTH });
+  if (r.status >= 400) ctx.fail('Plex HTTP ' + r.status);
   let list = (r.data && r.data.MediaContainer && r.data.MediaContainer.Metadata) || [];
   if (!Array.isArray(list)) list = [list];
   return list.map(m => {
@@ -51,14 +51,14 @@ async function jellyfinLike(ctx, provider) {
   const base = ctx.normalizeBase(provider === 'emby' ? ctx.config.embyUrl : ctx.config.jellyfinUrl);
   const key = provider === 'emby' ? ctx.config.embyKey : ctx.config.jellyfinKey;
   const name = provider === 'emby' ? 'Emby' : 'Jellyfin';
-  if (!base || !key) throw new Error(name + ' URL and API key required');
+  if (!base || !key) ctx.fail(name + ' URL and API key required', { kind: ctx.KIND.INVALID });
   /* Header auth works on current and older servers. Jellyfin deprecated the
      api_key query param (removal targeted for 10.13); Emby keeps its own token
      header. */
   const authHeaders = provider === 'emby' ? { 'X-Emby-Token': key } : { Authorization: `MediaBrowser Token="${key}"` };
   const r = await ctx.fetchJSON(`${base}/Sessions`, { headers: authHeaders, timeout: 8000 });
-  if (r.status === 401 || r.status === 403) throw new Error(name + ' auth failed');
-  if (r.status >= 400) throw new Error(name + ' HTTP ' + r.status);
+  if (r.status === 401 || r.status === 403) ctx.fail(name + ' auth failed', { kind: ctx.KIND.AUTH });
+  if (r.status >= 400) ctx.fail(name + ' HTTP ' + r.status);
   const list = Array.isArray(r.data) ? r.data : [];
   const out = [];
   for (const s of list) {
@@ -93,7 +93,7 @@ async function navidrome(ctx) {
   const base = ctx.normalizeBase(ctx.config.navidromeUrl);
   const user = ctx.config.navidromeUser,
     pass = ctx.config.navidromePassword;
-  if (!base || !user || !pass) throw new Error('Navidrome URL, username and password required');
+  if (!base || !user || !pass) ctx.fail('Navidrome URL, username and password required', { kind: ctx.KIND.INVALID });
   /* md5(password + salt) is the Subsonic API's authentication token, which
      Navidrome implements; anything stronger simply fails to authenticate, and
      the only alternative the protocol offers is sending the password in clear
@@ -107,9 +107,10 @@ async function navidrome(ctx) {
     .digest('hex');
   const url = `${base}/rest/getNowPlaying?u=${encodeURIComponent(user)}&t=${token}&s=${salt}&v=1.16.1&c=stackyard&f=json`;
   const r = await ctx.fetchJSON(url, { timeout: 8000 });
-  if (r.status >= 400) throw new Error('Navidrome HTTP ' + r.status);
+  if (r.status >= 400) ctx.fail('Navidrome HTTP ' + r.status);
   const sr = r.data && r.data['subsonic-response'];
-  if (sr && sr.status === 'failed') throw new Error('Navidrome: ' + ((sr.error && sr.error.message) || 'auth failed'));
+  if (sr && sr.status === 'failed')
+    ctx.fail('Navidrome rejected the request, check username and password', { kind: ctx.KIND.AUTH });
   let entries = (sr && sr.nowPlaying && sr.nowPlaying.entry) || [];
   if (!Array.isArray(entries)) entries = [entries];
   return entries.map(e => {

@@ -121,11 +121,17 @@ test('no widget returns an error instead of throwing', () => {
 });
 
 /* A caught exception re-reported as a returned field skipped sanitisation
-   entirely: the raw message went to the browser in a 200 body. There were 17. */
+   entirely: the raw message went to the browser in a 200 body. There were 17.
+
+   Log calls are stripped first: putting the caught message in the container log
+   is what a swallowed error should do, and it never reaches the browser. */
 test('no widget forwards a raw caught message to the browser', () => {
   const offenders = [];
   for (const [name, p] of dataFiles) {
-    const src = fs.readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const src = fs
+      .readFileSync(p, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/ctx\.log\.\w+\([^;]*?\);/g, '');
     if (/error:\s*e\.message/.test(src)) offenders.push(name);
   }
   assert.deepEqual(offenders, [], `Raw caught message sent as data: ${offenders.join(', ')}`);
@@ -152,4 +158,33 @@ test('every widget frontend shows the message the server vouched for', () => {
   }
   assert.deepEqual(offenders, [],
     `Widget-data failure reported without the server's message. Use fetchData from widget-toolbox, or read .error off the response body:\n${offenders.join('\n')}`);
+});
+
+/* The other half of the convention. A plain Error is sanitised to "Something
+   went wrong." on its way out, so `throw new Error('Komga URL and API key
+   required')` tells the user nothing. ctx.fail is what says the message
+   contains only words the author chose, and is therefore sent as written.
+
+   Not a blanket ban on throw: a guard inside a pure helper with no ctx in scope
+   still throws, and the sanitiser is right to replace it. What is banned is a
+   sentence written for the user that never reaches them.
+
+   connections is exempt and has to be. It reports several services in one
+   result, catches each service's throw itself, and writes the message into that
+   service's own `error` field, which is an error inside a successful response
+   rather than a failed one. Its sentences do reach the user, by the other route
+   the convention allows. */
+const THROWS_INTERNALLY = new Set(['connections']);
+
+test('no widget reports a user-facing failure with a plain Error', () => {
+  const offenders = [];
+  for (const [name, p] of dataFiles) {
+    if (THROWS_INTERNALLY.has(name)) continue;
+    const src = fs.readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of src.matchAll(/throw new Error\(([^)]*)\)/g)) {
+      offenders.push(`${name}: throw new Error(${m[1].slice(0, 50)})`);
+    }
+  }
+  assert.deepEqual(offenders, [],
+    `Use ctx.fail(message, { kind }) so the message reaches the browser:\n${offenders.join('\n')}`);
 });
