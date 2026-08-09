@@ -96,6 +96,10 @@ const MAP_DEFAULT_COLOR = {
 };
 
 /* Raw GET: Conduit exposes Prometheus-style text that needs the unparsed body. */
+function authErr(r) {
+  return r.status === 401 || r.status === 403;
+}
+
 function parseConduitText(raw) {
   const regions = {};
   let limit = 0,
@@ -156,7 +160,7 @@ async function vpnView(config, fetchJSON) {
         out.error = e.code || e.message || 'unreachable';
       }
       if (ipRes) {
-        if (ipRes.status === 401 || ipRes.status === 403) out.error = 'Auth required — set the API key';
+        if (authErr(ipRes)) out.error = 'Auth required — set the API key';
         else if (ipRes.status >= 400) out.error = 'Control server HTTP ' + ipRes.status;
         else {
           const d = ipRes.data || {};
@@ -192,7 +196,7 @@ async function vpnView(config, fetchJSON) {
       const apiBase = /\/api$/.test(base) ? base : base + '/api';
       const headers = { Authorization: `Token ${vpn.token || ''}`, Accept: 'application/json' };
       const r = await fetchJSON(apiBase + '/peers', { headers, timeout: 8000 });
-      if (r.status === 401 || r.status === 403) throw new Error('Auth failed — check the access token');
+      if (authErr(r)) throw new Error('Auth failed — check the access token');
       if (r.status >= 400) throw new Error('Management API HTTP ' + r.status);
       const peers = Array.isArray(r.data) ? r.data : [];
       const connected = peers.filter(p => p && p.connected);
@@ -261,7 +265,7 @@ async function mapView(config, fetchJSON) {
           const r = await fetchJSON(base + '/api/peers', {
             headers: s.token ? { Authorization: 'Token ' + s.token } : {},
           });
-          if (r.status === 401 || r.status === 403) throw new Error('Auth required — check the token');
+          if (authErr(r)) throw new Error('Auth required — check the token');
           if (r.status >= 400) throw new Error('HTTP ' + r.status);
           const peers = Array.isArray(r.data) ? r.data : [];
           const regions = {};
@@ -290,7 +294,7 @@ async function mapView(config, fetchJSON) {
             headers: { 'Content-Type': 'application/json', Authorization: s.apiKey ? 'Bearer ' + s.apiKey : '' },
             body,
           });
-          if (r.status === 401 || r.status === 403) throw new Error('Auth required — check the API key');
+          if (authErr(r)) throw new Error('Auth required — check the API key');
           if (r.status >= 400) throw new Error('HTTP ' + r.status);
           const rows = (r.data && r.data.results) || [];
           const regions = {};
@@ -313,7 +317,7 @@ async function mapView(config, fetchJSON) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: s.username || '', password: s.password || '' }),
           });
-          if (lg.status === 401 || lg.status === 403) throw new Error('Auth required — check username/password');
+          if (authErr(lg)) throw new Error('Auth required — check username/password');
           if (lg.status >= 400) throw new Error('Login HTTP ' + lg.status);
           const token = lg.data && lg.data.token;
           if (!token) throw new Error('Login failed');

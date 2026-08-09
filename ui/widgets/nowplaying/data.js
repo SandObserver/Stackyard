@@ -19,6 +19,10 @@ const crypto = require('crypto');
 
 const MAX = 5;
 
+function authErr(r) {
+  return r.status === 401 || r.status === 403;
+}
+
 async function plex(ctx) {
   const base = ctx.normalizeBase(ctx.config.plexUrl);
   const token = ctx.config.plexToken;
@@ -28,7 +32,7 @@ async function plex(ctx) {
     headers: { Accept: 'application/json', 'X-Plex-Token': token },
     timeout: 8000,
   });
-  if (r.status === 401 || r.status === 403) ctx.fail('Plex auth failed (check token)', { kind: ctx.KIND.AUTH });
+  if (authErr(r)) ctx.fail('Plex auth failed (check token)', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail('Plex HTTP ' + r.status);
   let list = (r.data && r.data.MediaContainer && r.data.MediaContainer.Metadata) || [];
   if (!Array.isArray(list)) list = [list];
@@ -57,7 +61,7 @@ async function jellyfinLike(ctx, provider) {
      header. */
   const authHeaders = provider === 'emby' ? { 'X-Emby-Token': key } : { Authorization: `MediaBrowser Token="${key}"` };
   const r = await ctx.fetchJSON(`${base}/Sessions`, { headers: authHeaders, timeout: 8000 });
-  if (r.status === 401 || r.status === 403) ctx.fail(name + ' auth failed', { kind: ctx.KIND.AUTH });
+  if (authErr(r)) ctx.fail(name + ' auth failed', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail(name + ' HTTP ' + r.status);
   const list = Array.isArray(r.data) ? r.data : [];
   const out = [];

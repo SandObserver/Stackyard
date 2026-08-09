@@ -26,6 +26,10 @@ module.exports = async function (ctx) {
   return adGuard(ctx, base, config, fetchJSON);
 };
 
+function authErr(r) {
+  return r.status === 401 || r.status === 403;
+}
+
 async function adGuard(ctx, base, config, fetchJSON) {
   const headers = {};
   /* Only attach Authorization when a credential is set (matches prior behavior). */
@@ -34,8 +38,7 @@ async function adGuard(ctx, base, config, fetchJSON) {
       'Basic ' + Buffer.from(`${config.dnsUser || ''}:${config.dnsPass || ''}`).toString('base64');
   }
   const r = await fetchJSON(base + '/control/stats', { headers, timeout: 8000 });
-  if (r.status === 401 || r.status === 403)
-    ctx.fail(`AdGuard auth failed (${r.status}) — check credentials`, { kind: ctx.KIND.AUTH });
+  if (authErr(r)) ctx.fail(`AdGuard auth failed (${r.status}) — check credentials`, { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail('AdGuard HTTP ' + r.status);
   return r.data; /* already in the shape the widget reads */
 }
@@ -129,7 +132,7 @@ async function nextDns(ctx, config, fetchJSON) {
   if (!config.dnsNextdnsProfile) ctx.fail('Profile ID not configured', { kind: ctx.KIND.INVALID });
   const url = 'https://api.nextdns.io/profiles/' + encodeURIComponent(config.dnsNextdnsProfile) + '/analytics/status';
   const r = await fetchJSON(url, { headers: { 'X-Api-Key': config.dnsNextdnsApiKey }, timeout: 8000 });
-  if (r.status === 401 || r.status === 403) ctx.fail('NextDNS auth failed — check API key', { kind: ctx.KIND.AUTH });
+  if (authErr(r)) ctx.fail('NextDNS auth failed — check API key', { kind: ctx.KIND.AUTH });
   if (r.status === 404) ctx.fail('NextDNS profile not found', { kind: ctx.KIND.INVALID });
   if (r.status >= 400) ctx.fail('NextDNS HTTP ' + r.status);
 
