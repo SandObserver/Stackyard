@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Connections map spreads a country's highlighted dots across it, clustered
   around the capital, instead of bunching them at the country's centre.
 
+- Badges no longer lose their rounded shape in Safari after a long session.
+
 ### Security
 
 - A Connections tile that cannot reach a service now says so in plain words

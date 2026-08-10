@@ -181,6 +181,11 @@
       justify-content:center;
       font-size:calc(13px * var(--sc,1)); font-weight:800; color:#fff; line-height:1;
       z-index:20; pointer-events:none;
+      /* Pins the badge to its own compositing layer for the life of the page.
+         WebKit otherwise promotes and demotes this rounded, absolutely
+         positioned element as its classes and inline colours change next to the
+         transformed icon, and its clipped corners can rasterise torn. */
+      transform:translateZ(0);
     }
     .badge.on  { display:flex }
     .badge.red  { background:var(--badge-red) }

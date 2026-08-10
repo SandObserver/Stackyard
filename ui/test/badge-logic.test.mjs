@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeBadgeVisual, needsDark, resolveColor, NAMED, healthReason } from '../js/badge-logic.js';
+import { computeBadgeVisual, needsDark, resolveColor, NAMED, healthReason, badgeSignature } from '../js/badge-logic.js';
 
 test('unhealthy takes priority over everything else', () => {
   const v = computeBadgeVisual({
@@ -188,4 +188,26 @@ test('an unhealthy badge with no detail still works', () => {
   const v = computeBadgeVisual({ health: 1, activity: 0, hasHC: true });
   assert.equal(v.title, '');
   assert.equal(v.aria, 'Status: needs attention');
+});
+
+test('the same badge visual signs identically, so an unchanged badge is not repainted', () => {
+  const opts = { health: 0, activity: 4, hasHC: true, custom: { unit: 'GB' } };
+  assert.equal(badgeSignature(computeBadgeVisual(opts)), badgeSignature(computeBadgeVisual(opts)));
+});
+
+test('every field that reaches the element changes the signature', () => {
+  const base = { cls: 'badge on blue', txt: '4', bg: '#ffcc00', aria: '4 pending', color: '#1c1c1e', title: 'x' };
+  for (const key of Object.keys(base)) {
+    assert.notEqual(badgeSignature(base), badgeSignature({ ...base, [key]: 'changed' }), key);
+  }
+});
+
+test('signature fields cannot pack into each other', () => {
+  assert.notEqual(badgeSignature({ cls: 'badge on', txt: '' }), badgeSignature({ cls: 'badge', txt: 'on' }));
+});
+
+test('a stale badge signs differently from the same badge fresh', () => {
+  const fresh = computeBadgeVisual({ activity: 2, badgesStale: false });
+  const stale = computeBadgeVisual({ activity: 2, badgesStale: true });
+  assert.notEqual(badgeSignature(fresh), badgeSignature(stale));
 });
