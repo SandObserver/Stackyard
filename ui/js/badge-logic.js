@@ -153,3 +153,12 @@ export function computeBadgeVisual({
 
   return { cls, txt, bg, aria, color, title: reason };
 }
+
+/** Identity of a rendered badge, for skipping DOM writes that would change nothing.
+    Covers every field {@link computeBadgeVisual} returns that reaches the element.
+    @param {{ cls?: string, txt?: string, bg?: string, aria?: string, color?: string, title?: string }} visual */
+export function badgeSignature({ cls = '', txt = '', bg = '', aria = '', color = '', title = '' } = {}) {
+  /* NUL separator: a plain space would let a class list and the label pack
+     into one string two different ways and compare equal. */
+  return [cls, txt, bg, aria, color, title].join('\u0000');
+}

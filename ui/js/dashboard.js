@@ -28,7 +28,7 @@ import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=dab9978e';
 import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=07fd9e2d';
-import { computeBadgeVisual } from '/js/badge-logic.js?v=d278c683';
+import { badgeSignature, computeBadgeVisual } from '/js/badge-logic.js?v=d278c683';
 import { configChanged, landingAfterSetup } from '/js/dashboard-logic.js?v=640430ba';
 import { trapFocus } from '/js/dialog.js?v=4ff94595';
 
@@ -74,6 +74,10 @@ let _badgeFails = 0,
   badgesStale = false,
   healthStale = false;
 const BEL = new Map();
+/* Last painted appearance per badge element. Polling calls bupd() for every
+   registered badge each cycle, and folder badges once more per child update, so
+   without this the same values are rewritten thousands of times a session. */
+const BSIG = new WeakMap();
 function breg(id, el) {
   if (!BEL.has(id)) BEL.set(id, new Set());
   BEL.get(id).add(el);
@@ -104,7 +108,11 @@ function bupd(id) {
     translate: t,
   });
 
+  const sig = badgeSignature({ cls, txt, bg, aria, color, title });
+
   els.forEach(el => {
+    if (BSIG.get(el) === sig) return;
+    BSIG.set(el, sig);
     el.className = cls;
     el.textContent = txt;
     if (aria) {
