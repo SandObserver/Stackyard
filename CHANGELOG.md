@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Books, Now Playing and Backup widgets now show why they failed, such as a
   missing API key or a rejected password, instead of a generic error.
 
+- The last visible row in a Settings group no longer draws a separator under
+  itself, which showed under Password Protection whenever protection was off.
+
 ### Security
 
 - A Connections tile that cannot reach a service now says so in plain words

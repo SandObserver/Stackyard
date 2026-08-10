@@ -1096,7 +1096,7 @@ function initSecToggle() {
   const pwHint = el('pw-hint-static');
   if (!en) return;
   function apply(on) {
-    if (pwRow) pwRow.style.display = on ? '' : 'none';
+    if (pwRow) pwRow.classList.toggle('d-none', !on);
     if (pwHint) pwHint.style.display = on ? '' : 'none';
   }
   apply(en.checked);
@@ -1109,8 +1109,8 @@ function initDockerToggle() {
   const socketRow = el('ie-socket');
   if (!en) return;
   function apply(on) {
-    if (hideRow) hideRow.style.display = on ? '' : 'none';
-    if (socketRow) socketRow.style.display = on ? '' : 'none';
+    if (hideRow) hideRow.classList.toggle('d-none', !on);
+    if (socketRow) socketRow.classList.toggle('d-none', !on);
   }
   apply(en.checked);
   en.addEventListener('change', () => apply(en.checked));
