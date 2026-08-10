@@ -82,6 +82,15 @@ test('a config nginx accepts starts normally', () => {
   assert.ok(r.started, 'the handoff command should have run');
 });
 
+/* -q prints nothing on success, which is two fewer lines on every boot. The
+   check itself is unchanged: set -eu still stops here, and nginx still prints
+   what it rejected. */
+test('the config check is quiet when it passes', () => {
+  const fs = require('node:fs');
+  const entrypoint = fs.readFileSync(require('node:path').join(__dirname, '../../docker-entrypoint.sh'), 'utf8');
+  assert.match(entrypoint, /^nginx -t -q$/m);
+});
+
 test('a config nginx rejects stops the container from starting', () => {
   const r = run({ nginxExit: 1 });
   assert.notEqual(r.status, 0, 'the entrypoint must exit non-zero');

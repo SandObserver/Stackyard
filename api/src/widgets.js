@@ -258,7 +258,9 @@ function loadRegistry() {
     };
   }
 
-  log.info('widget registry loaded', { count: Object.keys(reg).length, widgets: Object.keys(reg) });
+  /* debug, not info: the banner and the readiness record both carry the count,
+     so the names are the only extra here. Refusals stay at warn above. */
+  log.debug('widget registry loaded', { count: Object.keys(reg).length, widgets: Object.keys(reg) });
   _registry = reg;
   _rejected = rejected;
   return reg;

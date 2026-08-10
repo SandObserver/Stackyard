@@ -36,7 +36,9 @@ REALIP_CONF="${REALIP_CONF:-/etc/nginx/http.d/realip.conf}"
 } > "$REALIP_CONF"
 
 # Fail fast and loudly rather than starting with a config nginx will reject.
-nginx -t
+# -q keeps the two success lines out of every boot; set -eu still stops here on
+# failure, and nginx still prints what it rejected.
+nginx -t -q
 
 # supervisord always exits 0 on SIGTERM, including the SIGTERM that
 # scripts/exit-on-fatal.py sends when a program can no longer be started. The
