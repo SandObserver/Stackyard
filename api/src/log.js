@@ -5,7 +5,7 @@
    `audit` records security-relevant events and always emits. */
 
 const RANK = { debug: 10, info: 20, warn: 30, error: 40 };
-const THRESHOLD = { debug: 10, info: 20, warn: 30, error: 30, errors: 30 };
+const THRESHOLD = { debug: 10, info: 20, warn: 30, error: 30 };
 const ABBR = { debug: 'DBG', info: 'INF', warn: 'WRN', error: 'ERR', audit: 'AUD' };
 
 let _threshold = THRESHOLD.info;

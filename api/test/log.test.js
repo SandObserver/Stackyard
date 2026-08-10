@@ -61,6 +61,26 @@ test('setLevel accepts known names and rejects unknown ones', () => {
   assert.equal(log.setLevel('nonsense'), false);
 });
 
+/* The threshold table carried a fifth name, `errors`, that the rank table never
+   had: documented nowhere, offered by no UI, rejected by the settings route,
+   and reachable only by setting LOG_LEVEL to it by hand. */
+test('the accepted level names are the four the rest of the app knows', () => {
+  for (const name of ['debug', 'info', 'warn', 'error']) {
+    assert.equal(log.setLevel(name), true, `${name} must stay accepted`);
+  }
+  assert.equal(log.setLevel('errors'), false, 'the undocumented alias is gone');
+});
+
+/* warn and error deliberately share a threshold: the Settings tip reads "Errors
+   shows warnings and errors only". Raising error to 40 would silently drop
+   warnings for every install that selected it. */
+test('warnings still emit at the error level', t => {
+  const lines = capture(t);
+  log.setLevel('error');
+  log.warn('still here');
+  assert.match(lines.join(''), /msg="still here"/);
+});
+
 /* ── P1-4: values were printed bare ───────────────────────────────────────────
    A value containing a newline ended the line and started another, so one
    log.error call could emit a second line indistinguishable from a genuine AUD
