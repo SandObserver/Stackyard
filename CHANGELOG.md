@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The Docker Hub repository description is published from `README.md` on each
+  stable release.
+
 ### Fixed
 
 - The Books, Now Playing and Backup widgets now show why they failed, such as a

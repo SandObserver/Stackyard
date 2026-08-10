@@ -172,6 +172,25 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
+      # The page is only correct for an image that exists, so this runs after
+      # the push, and only for a stable tag: a release candidate must not
+      # rewrite the page describing what `latest` gives you.
+      - name: Generate the Docker Hub description
+        if: steps.registries.outputs.dockerhub == 'true' && steps.tag.outputs.prerelease == 'false'
+        run: node scripts/dockerhub-description.js > dockerhub-description.md
+
+      - name: Update the Docker Hub description
+        if: steps.registries.outputs.dockerhub == 'true' && steps.tag.outputs.prerelease == 'false'
+        uses: peter-evans/dockerhub-description@432a30c9e07499fd01da9f8a49f0faf9e0ca5b77 # v4.0.2
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          # The description API needs a token with write access; the pull-only
+          # token the push step is happy with returns 401 here.
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard
+          readme-filepath: dockerhub-description.md
+          short-description: A self-hosted homelab dashboard you actually want to look at.
+
       - name: Upload SBOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
