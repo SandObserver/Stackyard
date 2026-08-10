@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Books, Now Playing and Backup widgets now show why they failed, such as a
   missing API key or a rejected password, instead of a generic error.
 
+### Security
+
+- A Connections tile that cannot reach a service now says so in plain words
+  instead of printing the address it tried, which put an internal host and port
+  on the dashboard.
+
 ## [1.5.2] - 2026-08-09
 
 ### Changed

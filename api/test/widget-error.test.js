@@ -183,17 +183,12 @@ test('every widget frontend shows the message the server vouched for', () => {
    still throws, and the sanitiser is right to replace it. What is banned is a
    sentence written for the user that never reaches them.
 
-   connections is exempt and has to be. It reports several services in one
-   result, catches each service's throw itself, and writes the message into that
-   service's own `error` field, which is an error inside a successful response
-   rather than a failed one. Its sentences do reach the user, by the other route
-   the convention allows. */
-const THROWS_INTERNALLY = new Set(['connections']);
-
+   connections used to be exempt, because it catches its own throws and reports
+   each service inside a successful result. It uses ctx.fail too now, which is
+   what lets its catch tell a sentence it wrote from one Node threw. */
 test('no widget reports a user-facing failure with a plain Error', () => {
   const offenders = [];
   for (const [name, p] of dataFiles) {
-    if (THROWS_INTERNALLY.has(name)) continue;
     const src = fs.readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     for (const m of src.matchAll(/throw new Error\(([^)]*)\)/g)) {
       offenders.push(`${name}: throw new Error(${m[1].slice(0, 50)})`);
@@ -226,4 +221,33 @@ test('no widget rebuilds the base-URL normalisation ctx already provides', () =>
     if (/includes\(':\/\/'\)\s*\?/.test(src)) offenders.push(`${name}: hand-rolled scheme check`);
   }
   assert.deepEqual(offenders, [], `Use ctx.normalizeBase:\n${offenders.join('\n')}`);
+});
+
+/* An error field inside a successful result is allowed, and is how a widget
+   reporting several services marks the one that failed. It bypasses the
+   api-error sanitiser entirely, though: the response is a 200, so nothing
+   rewrites what goes in it.
+
+   A caught error's message names what it failed to reach, so writing one into a
+   result puts an internal host and port on the dashboard. The field has to be
+   given a phrase the widget chose. */
+test('no widget writes a caught message into a successful result', () => {
+  const offenders = [];
+  for (const [name, p] of dataFiles) {
+    const src = fs
+      .readFileSync(p, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/ctx\.log\.\w+\([^;]*?\);/g, '');
+    for (const m of src.matchAll(/(\w+)\.error\s*=\s*([^;]+);/g)) {
+      const value = m[2];
+      if (/\be\.(message|stack)\b|String\(e\)/.test(value)) {
+        offenders.push(`${name}: ${m[0].trim().slice(0, 60)}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `A caught message reaches the browser in a 200 body. Map it to a phrase first:\n${offenders.join('\n')}`,
+  );
 });
