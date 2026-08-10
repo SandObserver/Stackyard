@@ -290,3 +290,36 @@ test('the proxied Host keeps its port, or every write is refused', () => {
     assert.doesNotMatch(line, /\$host\b(?!_)/, '$host strips the port');
   }
 });
+
+/* Where request logs go.
+
+   Alpine's packaged nginx.conf sends the access log and the error log to files
+   under /var/log/nginx. Nothing in the container reads them, and nothing trims
+   them: no logrotate binary is installed and no cron runs. So request failures
+   an operator needs (413, upstream refused, permission problems) were invisible
+   in `docker logs`, while the files grew unbounded in the writable layer.
+
+   Both directives are valid in the server context, so this stays in a file the
+   repo owns rather than shipping our own nginx.conf. That also bounds it:
+   master and startup errors still follow the main context. */
+
+test('request errors reach the container log', () => {
+  const serverLevel = dashboard.slice(0, dashboard.indexOf('location'));
+  assert.match(
+    serverLevel,
+    /^\s*error_log stderr\b/m,
+    'without this, request failures are written to a file nobody reads',
+  );
+});
+
+test('the access log is off rather than written to an unrotated file', () => {
+  const serverLevel = dashboard.slice(0, dashboard.indexOf('location'));
+  assert.match(serverLevel, /^\s*access_log off;$/m);
+});
+
+/* The health check runs every few seconds forever, so it was given its own
+   access_log off long before the server-level one existed. */
+test('the health check is still excluded', () => {
+  const health = dashboard.slice(dashboard.indexOf('location = /health'));
+  assert.match(health.slice(0, health.indexOf('}')), /access_log off;/);
+});
