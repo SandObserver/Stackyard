@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The startup banner no longer prints a Web UI address that pointed at the
   internal API port and worked for nobody.
 
+- The Connections map spreads a country's highlighted dots across it, clustered
+  around the capital, instead of bunching them at the country's centre.
+
 ### Security
 
 - A Connections tile that cannot reach a service now says so in plain words

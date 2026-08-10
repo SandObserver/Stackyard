@@ -23,6 +23,10 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
 
   const D=window.__DOTS;
   const POP={US:331,CA:38,MX:130,BR:214,AR:46,CO:51,CL:19,PE:34,VE:28,GB:67,IE:5,NL:17,DE:83,FR:65,ES:47,PT:10,IT:59,CH:9,AT:9,BE:12,SE:10,NO:5,DK:6,FI:6,IS:0.37,PL:38,CZ:11,RO:19,BG:7,HU:10,GR:11,UA:43,RU:144,BY:9.4,EE:1.3,LV:1.9,LT:2.8,MD:2.6,RS:7,HR:4,SK:5,SI:2,TR:85,IL:9,AE:10,SA:35,QA:2.7,KW:4.3,OM:5,BH:1.7,JO:10,LB:5.5,SY:18,IQ:41,IR:89,YE:30,EG:104,JP:125,KR:52,CN:1412,HK:7.5,TW:24,IN:1408,PK:231,BD:170,NP:30,LK:22,ID:274,MY:33,TH:70,VN:97,PH:111,MM:54,KH:17,LA:7,SG:5.9,MN:3.3,KZ:19,UZ:34,AZ:10,AM:3,GE:3.7,KG:6.7,TM:6,AU:26,NZ:5,PG:9,ZA:60,NG:206,KE:54,ET:118,GH:31,TZ:60,UG:46,CD:90,CM:27,CI:27,SN:17,ML:21,GN:13,GA:2.2,AO:33,DZ:44,MA:37,TN:12,LY:7,SD:45,SS:11,MG:28,MZ:31,MW:19,ZW:15,NA:2.5,MU:1.3,DJ:1,SO:16,NI:6.6,PA:4.3,DO:11,GT:18,HN:10,SV:6.5,CR:5,JM:3,CU:11,GY:0.8,EC:18,BO:12,PY:7,UY:3.5};
+  /* Capital lon/lat for the countries in the dot set, used to bias highlighted
+     dots toward population centres. One dot cell spans 3.6 degrees of
+     longitude, so a tenth of a degree is already finer than the grid resolves. */
+  const CAP={CA:[-75.7,45.4],GL:[-51.7,64.2],NO:[10.7,59.9],RU:[37.6,55.8],US:[-77.0,38.9],SE:[18.1,59.3],FI:[24.9,60.2],IS:[-21.9,64.1],GB:[-0.1,51.5],DK:[12.6,55.7],LV:[24.1,56.9],IE:[-6.3,53.3],NL:[4.9,52.4],DE:[13.4,52.5],PL:[21.0,52.2],BY:[27.6,53.9],KZ:[71.4,51.2],CN:[116.4,39.9],FR:[2.4,48.9],CZ:[14.4,50.1],UA:[30.5,50.5],MN:[106.9,47.9],IT:[12.5,41.9],HR:[16.0,45.8],RS:[20.5,44.8],RO:[26.1,44.4],ES:[-3.7,40.4],AL:[19.8,41.3],BG:[23.3,42.7],GE:[44.8,41.7],TM:[58.4,37.9],UZ:[69.2,41.3],KG:[74.6,42.9],PT:[-9.1,38.7],GR:[23.7,38.0],TR:[32.9,39.9],IR:[51.4,35.7],AZ:[49.9,40.4],TJ:[68.8,38.6],KP:[125.8,39.0],MA:[-6.8,34.0],DZ:[3.1,36.8],TN:[10.2,36.8],SY:[36.3,33.5],IQ:[44.4,33.3],AF:[69.2,34.5],PK:[73.1,33.7],IN:[77.2,28.6],KR:[127.0,37.6],JP:[139.7,35.7],MX:[-99.1,19.4],LY:[13.2,32.9],EG:[31.2,30.0],SA:[46.7,24.7],NP:[85.3,27.7],BT:[89.6,27.5],EH:[-13.2,27.2],MR:[-16.0,18.1],ML:[-8.0,12.6],AE:[54.4,24.5],OM:[58.6,23.6],MM:[96.1,19.8],'CN-TW':[121.6,25.0],NE:[2.1,13.5],TD:[15.0,12.1],SD:[32.5,15.6],LA:[102.6,18.0],VN:[105.8,21.0],ER:[38.9,15.3],YE:[44.2,15.4],TH:[100.5,13.8],PH:[121.0,14.6],NI:[-86.3,12.1],SN:[-17.4,14.7],BF:[-1.5,12.4],NG:[7.5,9.1],ET:[38.7,9.0],KH:[104.9,11.6],CO:[-74.1,4.7],VE:[-66.9,10.5],SL:[-13.2,8.5],GN:[-13.7,9.5],CI:[-5.3,6.8],GH:[-0.2,5.6],BJ:[2.6,6.5],CF:[18.6,4.4],SS:[31.6,4.9],GY:[-58.2,6.8],SR:[-55.2,5.9],LR:[-10.8,6.3],CM:[11.5,3.9],SO:[45.3,2.0],MY:[101.7,3.1],BR:[-47.9,-15.8],GA:[9.5,0.4],CG:[15.3,-4.3],CD:[15.3,-4.3],UG:[32.6,0.3],KE:[36.8,-1.3],ID:[106.8,-6.2],EC:[-78.5,-0.2],PE:[-77.0,-12.0],RW:[30.1,-1.9],TZ:[35.7,-6.2],PG:[147.2,-9.5],AO:[13.2,-8.8],ZM:[28.3,-15.4],BO:[-68.1,-16.5],MW:[33.8,-14.0],MZ:[32.6,-25.9],AU:[149.1,-35.3],ZW:[31.0,-17.8],MG:[47.5,-18.9],VU:[168.3,-17.7],PY:[-57.6,-25.3],NA:[17.1,-22.6],BW:[25.9,-24.7],CL:[-70.7,-33.4],AR:[-58.4,-34.6],ZA:[28.2,-25.7],UY:[-56.2,-34.9],NZ:[174.8,-41.3]};
   const params=new URLSearchParams(location.search);
   const id=params.get('id')||'';
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -48,6 +52,52 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     for(let k=0;k<dt.length;k+=3){const d=(dt[k]-col)*(dt[k]-col)+(dt[k+1]-row)*(dt[k+1]-row);if(d<bd){bd=d;best=k;}}
     return best>=0?(dt[best]+','+dt[best+1]):null;}
 
+  const anchorOf={};
+  for(const cc in byCountry)anchorOf[cc]=CAP[cc]?lonLatToGrid(CAP[cc][0],CAP[cc][1]):centroid[cc];
+
+  function cellPick(list,gx,gy,minX,minY,w,h){
+    const cw=w/gx, ch=h/gy, cells=new Map();
+    for(const d of list){
+      const ix=clamp(Math.floor((d[0]-minX)/cw),0,gx-1), iy=clamp(Math.floor((d[1]-minY)/ch),0,gy-1);
+      const key=iy*gx+ix;
+      const dd=dist2(d,[minX+(ix+0.5)*cw,minY+(iy+0.5)*ch]);
+      const cur=cells.get(key);
+      if(!cur||dd<cur.d)cells.set(key,{d:dd,dot:d});
+    }
+    return cells;
+  }
+
+  /* Highlighted dots are spread over the country instead of taken from the
+     centre outwards: some cluster on the capital, the rest come one per cell
+     from a grid whose resolution grows until it can supply the number needed.
+     The capital's share shrinks as the count rises, so a country with one user
+     reads as a point on its capital and a busy one as nationwide coverage. */
+  function selectDots(cc,list,n){
+    if(n>=list.length)return list.slice();
+    const anchor=anchorOf[cc]||centroid[cc];
+    const used=new Set(), out=[];
+    const take=d=>{const k=d[0]+','+d[1];if(out.length>=n||used.has(k))return;used.add(k);out.push(d);};
+    const byAnchor=list.slice().sort((a,b)=>dist2(a,anchor)-dist2(b,anchor));
+    byAnchor.slice(0,Math.max(1,Math.round(n*clamp(1.15-0.09*n,0.35,1)))).forEach(take);
+    let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+    for(const d of list){
+      if(d[0]<minX)minX=d[0];if(d[0]>maxX)maxX=d[0];
+      if(d[1]<minY)minY=d[1];if(d[1]>maxY)maxY=d[1];
+    }
+    const w=maxX-minX+1, h=maxY-minY+1, need=n-out.length;
+    if(need>0){
+      let cells=null;
+      for(let target=need;;target=Math.ceil(target*1.4)+1){
+        const gx=clamp(Math.round(Math.sqrt(target*w/h)),1,w), gy=clamp(Math.ceil(target/gx),1,h);
+        cells=cellPick(list,gx,gy,minX,minY,w,h);
+        if(cells.size>=need||(gx>=w&&gy>=h))break;
+      }
+      Array.from(cells.values()).sort((a,b)=>dist2(a.dot,anchor)-dist2(b.dot,anchor)).forEach(c=>take(c.dot));
+    }
+    if(out.length<n)byAnchor.forEach(take);
+    return out;
+  }
+
   const fmtName=cc=>{try{return new Intl.DisplayNames(['en'],{type:'region'}).of(cc)||cc;}catch(e){return cc;}};
   let active={}, activeInfo={}, legend=[], showLegend=true;
   let emphasis=null;
@@ -67,9 +117,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       const rel=sig[cc]/sigMax;
       const alpha=clamp(globalA*(0.78+0.22*rel),0.74,1);
       const scale=1.25+0.95*rel;
-      const cen=centroid[cc];
-      const sorted=list.slice().sort((a,b)=>dist2(a,cen)-dist2(b,cen)).slice(0,n);
-      sorted.forEach(d=>{const key=d[0]+','+d[1];active[key]={color:COL,alpha,scale};activeInfo[key]={role,serviceName:name,color:colCss,cc,users:u};});
+      selectDots(cc,list,n).forEach(d=>{const key=d[0]+','+d[1];active[key]={color:COL,alpha,scale};activeInfo[key]={role,serviceName:name,color:colCss,cc,users:u};});
     }
   }
 
