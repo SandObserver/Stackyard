@@ -131,6 +131,34 @@ test('the listener only acts on FATAL', () => {
   assert.match(listener, /RESULT 2\\nOK/);
 });
 
+/* ── the boot log stays quiet without losing the safety net ───────────────── */
+
+const listenerBlock = () => supervisord.slice(supervisord.indexOf('[eventlistener:exit-on-fatal]'));
+
+/* This program's stdout is the event listener protocol channel. Pointing it at
+   /dev/stdout makes supervisord copy READY, RESULT and OK into `docker logs`,
+   where they read as noise nobody can act on. */
+test('the listener protocol does not reach the container log', () => {
+  const m = /^stdout_logfile=(\S+)$/m.exec(listenerBlock());
+  assert.ok(m, 'the listener has no stdout_logfile');
+  assert.notEqual(m[1], '/dev/stdout', 'this puts READY, RESULT and OK in docker logs');
+});
+
+/* The other half, and the one that must never be traded away: the "could not be
+   started" message goes to stderr, and it is the plainest explanation an
+   operator gets once supervisord stops narrating at info. */
+test('the listener still reports failure on stderr', () => {
+  assert.match(listenerBlock(), /^stderr_logfile=\/dev\/stderr$/m);
+});
+
+/* At info, supervisord narrates its own startup in eight lines that say nothing
+   an operator acts on. At warn the crash-loop line (`exited: ... not expected`)
+   and configuration failures both survive. `gave up: ... entered FATAL state` is
+   logged at info and is lost, which is why the two messages above exist. */
+test('supervisord logs at warn, not info', () => {
+  assert.match(supervisord, /^loglevel=warn$/m);
+});
+
 /* ── the script reaches the build context ────────────────────────────────────
    The first attempt at this failed CI: .dockerignore excluded `scripts`, so the
    file was never in the build context and COPY could not find it. A bare

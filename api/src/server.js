@@ -33,22 +33,17 @@ http.createServer(dispatch).listen(PORT, () => {
   const pkg = require('../package.json');
   const version = process.env.APP_VERSION || pkg.version;
   const widgets = Object.keys(getRegistry());
-  const W = 47;
-  const bar = c => c + '─'.repeat(W) + (c === '┌' ? '┐' : '┘');
-  const mid = t => '│ ' + t.padEnd(W - 2) + ' │';
-  const wlist = widgets.slice(0, 4).join(', ') + (widgets.length > 4 ? ', ...' : '');
+  /* The port the container listens on, not PORT: nginx fronts the API, so PORT
+     is internal and naming it here sends operators to an address that answers
+     for nobody. */
+  const row = (label, value) => '  ' + label.padEnd(11) + value;
   const lines = [
     '',
-    '  ' + bar('┌'),
-    '  ' + mid('STACKYARD'),
-    '  ' + mid('self-hosted dashboard · v' + version),
-    '  ' + bar('└'),
-    `  ➜  Web UI:    http://localhost:${PORT}`,
-    `  ➜  Config:    ${CONFIG_PATH}`,
-    `  ➜  Icons:     ${ICONS_PATH}`,
-    `  ➜  Widgets:   ${widgets.length} loaded (${wlist})`,
-    `  ➜  Node:      ${process.version}`,
-    '',
+    `  Stackyard ${version} · Node ${process.version}`,
+    row('Dashboard', ':80 in the container'),
+    row('Config', CONFIG_PATH),
+    row('Icons', ICONS_PATH),
+    row('Widgets', `${widgets.length} loaded`),
   ];
   try {
     const ll = require('./config').loadConfig().settings.logLevel;
@@ -56,14 +51,26 @@ http.createServer(dispatch).listen(PORT, () => {
   } catch {}
   log.print(lines.join('\n'));
 
+  /* The banner bypasses level filtering and the logfmt shape, so this is the
+     only greppable record that the app came up. */
+  log.info('server ready', {
+    version,
+    port: PORT,
+    widgets: widgets.length,
+    node: process.version,
+  });
+
   /* With this on, clients can spoof X-Forwarded-* unless there really is a proxy
-     in front. Flagged at boot so the misconfiguration is visible. */
-  if (process.env.TRUST_PROXY === 'true')
-    log.warn(
-      'TRUST_PROXY is enabled: X-Forwarded-Proto is trusted, so a request claiming https gets a Secure session cookie. Only safe behind a reverse proxy you control.',
-    );
-  if (process.env.TRUST_PROXY === 'true' && !process.env.TRUSTED_PROXY)
-    log.warn(
-      'TRUST_PROXY is set but TRUSTED_PROXY is not: rate limiting counts every request through the front proxy as one client. Set TRUSTED_PROXY to the proxy address.',
-    );
+     in front. Flagged at boot so the misconfiguration is visible. The unset case
+     covers the trust exposure too, so only ever one line. */
+  if (process.env.TRUST_PROXY === 'true') {
+    if (process.env.TRUSTED_PROXY)
+      log.warn(
+        'TRUST_PROXY is on, so forwarded headers are trusted; this is only safe behind a reverse proxy you control.',
+      );
+    else
+      log.warn(
+        'TRUST_PROXY without TRUSTED_PROXY trusts forwarded headers from any client and rate-limits all traffic as one; set TRUSTED_PROXY to the proxy address.',
+      );
+  }
 });
