@@ -12,6 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Docker Hub repository description is published from `README.md` on each
   stable release.
 
+- The support documentation describes the log format, the level abbreviations
+  and how to read the logs.
+
+### Changed
+
+- The container prints six lines when it starts, instead of twenty-three.
+
+- Nginx request errors now appear in `docker logs`, and Nginx no longer writes
+  an access log to a file inside the container that nothing rotated.
+
+- A misconfigured `TRUST_PROXY` produces one short warning instead of two long
+  ones.
+
 ### Fixed
 
 - The Books, Now Playing and Backup widgets now show why they failed, such as a
@@ -20,11 +33,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The last visible row in a Settings group no longer draws a separator under
   itself, which showed under Password Protection whenever protection was off.
 
+- The startup banner no longer prints a Web UI address that pointed at the
+  internal API port and worked for nobody.
+
 ### Security
 
 - A Connections tile that cannot reach a service now says so in plain words
   instead of printing the address it tried, which put an internal host and port
   on the dashboard.
+
+- A failed connection test no longer writes the request path to the log, where
+  a service that carries its API key in the path would have left it.
 
 ## [1.5.2] - 2026-08-09
 

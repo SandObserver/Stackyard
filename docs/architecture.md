@@ -36,7 +36,7 @@ Everything is optional; the defaults are what the container ships with.
 | `ICONS_PATH` | `/icons` | Where uploaded icons are written. |
 | `WIDGETS_PATH` | `/usr/share/nginx/html/widgets` | Where the widget folders are read from. Point it elsewhere only if you have moved them; a wrong path loads an empty registry, and every widget then reports as unknown. |
 | `PORT` | `3000` | The port the API listens on. nginx proxies to it, so changing it means changing `nginx/dashboard.conf` too. |
-| `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`. Settings, General also sets this, and that setting wins from the moment the config loads; the variable is what applies during boot and if no setting is stored. |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`, where `warn` and `error` behave the same: both show warnings and errors. Settings, General also sets this, and that setting wins from the moment the config loads; the variable is what applies during boot and if no setting is stored. |
 | `APP_VERSION` | the version in `package.json` | What the update check compares against. The release build stamps it, so leave it alone outside a build. |
 | `TRUST_PROXY` | unset | Believe `X-Forwarded-Proto`, so a request through a TLS-terminating proxy gets a `Secure` cookie. Only behind a proxy you control. See [security.md](./security.md#https-and-the-session-cookie). |
 | `TRUSTED_PROXY` | unset | Where a front proxy sits, so nginx can resolve the real client for rate limiting. See [security.md](./security.md#authentication). |

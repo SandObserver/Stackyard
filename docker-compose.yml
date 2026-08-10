@@ -53,8 +53,9 @@ services:
       # - PASSWORD_HASH_MEMORY=64mib
       # Set to true to allow widget URLs using private/LAN IP addresses
       # - ALLOW_PRIVATE_IPS=true
-      # Log verbosity: debug, info, warn or error. Settings, General sets this
-      # too, and that wins once the config has loaded.
+      # Log verbosity: debug, info, warn or error, where warn and error behave
+      # the same. Settings, General sets this too, and that wins once the config
+      # has loaded.
       # - LOG_LEVEL=info
       # Where the widget folders are read from. Only if you have moved them.
       # - WIDGETS_PATH=/usr/share/nginx/html/widgets
