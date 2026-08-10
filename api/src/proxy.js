@@ -387,9 +387,11 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
       /* This result reaches the browser as-is. The message names the address it
          failed to reach; the code does not, so only the code is kept. */
       req.on('error', (/** @type {unknown} */ e) => {
-        /* u.origin excludes credentials in the authority, and the query string
-           is left off because it can carry an API key. */
-        log.warn('ping failed', { url: u.origin + (opts.path || ''), error: errMessage(e) });
+        /* u.origin only: it excludes credentials in the authority, and the path
+           and query are both left off because either can carry an API key. The
+           operator's question is which service is unreachable, which the origin
+           answers on its own. */
+        log.warn('ping failed', { url: u.origin, error: errMessage(e) });
         dl.settle(resolve, { ok: false, status: 0, error: pingErrorText(e), code: errCode(e) });
       });
       req.end();
