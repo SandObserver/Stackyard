@@ -171,9 +171,21 @@ on('POST', '/api/auth/toggle', async (req, res) => {
       return json(res, 400, { error: 'Set a password before turning authentication on.', kind: KIND.INVALID });
     }
     cfg.settings.auth.enabled = !!enabled;
+    /* Turning protection off discards the password with it. Keeping the hash
+       strands the install: setting a new password needs a session, no session
+       can be obtained while auth is off, and login is a bypass that issues no
+       cookie, so a forgotten password could only be replaced by editing the
+       config on disk. The secret goes too, so tokens signed under it cannot be
+       honoured if protection is turned back on later. */
+    const cleared = !enabled && !!cfg.settings.auth.passwordHash;
+    if (!enabled) {
+      delete cfg.settings.auth.passwordHash;
+      delete cfg.settings.auth.secret;
+    }
     if (enabled && !cfg.settings.auth.secret) cfg.settings.auth.secret = newSessionSecret();
     saveConfig(cfg);
     log.audit('auth toggled', { enabled: !!enabled });
+    if (cleared) log.audit('password cleared', {});
     json(res, 200, { ok: true });
   } catch (e) {
     fail(res, e, { status: 400 });

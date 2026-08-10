@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Badges no longer lose their rounded shape in Safari after a long session.
 
+- Turning Password Protection off now deletes the stored password, which
+  previously stayed behind and could leave an install unable to set a new one.
+
 ### Security
 
 - A Connections tile that cannot reach a service now says so in plain words

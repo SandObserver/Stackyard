@@ -164,6 +164,7 @@
   "confirm": {
     "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",
     "revokeSessions": "退出所有设备，包括当前设备？",
+    "clearPassword": "关闭密码保护？已保存的密码将被删除，再次开启时需要设置新密码。",
     "remove": "删除“{name}”？"
   },
   "list": {

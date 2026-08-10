@@ -303,10 +303,15 @@ async function saveServer() {
     c.settings.logLevel = inp('log-level')?.value || 'info';
     c.settings.language = inp('lang-sel')?.value || 'en';
     const langChanged = c.settings.language !== prevLang;
-    await ap('/api/config', c);
 
     const pw = inp('sec-pw')?.value || '';
     const enabled = inp('sec-en')?.checked || false;
+    /* Asked before the first request of the save, not next to the toggle: the
+       password survives until Save, so this is the moment it is really deleted,
+       and cancelling here must leave every other field unsaved too. */
+    if (!enabled && _passwordSet && !confirm(t('confirm.clearPassword'))) return;
+    await ap('/api/config', c);
+
     if (authEnableBlocked({ enabled, passwordSet: _passwordSet, newPassword: pw })) {
       toast(t('toast.authNeedsPassword'), 'err');
       return;
@@ -326,6 +331,15 @@ async function saveServer() {
       }
     }
     await ap('/api/auth/toggle', { enabled });
+    if (!enabled) {
+      /* The server drops the password with the toggle, so the page must stop
+         claiming one is stored: re-enabling in this session needs a new one. */
+      _passwordSet = false;
+      const pwValEl = el('ie-pw-v');
+      if (pwValEl) pwValEl.textContent = 'Not set';
+      const pwEl = inp('sec-pw');
+      if (pwEl) pwEl.placeholder = '';
+    }
     toast(t('toast.saved'));
     if (langChanged) location.reload();
   } catch (e) {

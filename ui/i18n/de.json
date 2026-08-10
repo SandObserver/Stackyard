@@ -164,6 +164,7 @@
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",
     "revokeSessions": "Alle Geräte abmelden, auch dieses?",
+    "clearPassword": "Passwortschutz ausschalten? Das gespeicherte Passwort wird gelöscht, für ein erneutes Einschalten ist ein neues nötig.",
     "remove": "„{name}“ entfernen?"
   },
   "list": {

@@ -127,6 +127,65 @@ test('auth can always be switched off', async () => {
   assert.equal(loadConfig().settings.auth.enabled, false);
 });
 
+/* ── switching off discards the password ──────────────────────────────────── */
+
+/* A disabled password that stays on disk is its own dead end: set-password
+   refuses while a hash exists unless the caller holds a session, and no session
+   can be obtained with auth off, so a forgotten password could only be replaced
+   by hand-editing the config. */
+
+test('switching auth off clears the stored password and secret', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+
+  assert.equal(
+    (await req('POST', '/api/auth/toggle', { enabled: false }, 'ds=' + makeToken('s1', SECRET))).status,
+    200,
+  );
+
+  const stored = loadConfig().settings.auth;
+  assert.equal(stored.passwordHash, undefined);
+  assert.equal(stored.secret, undefined);
+  assert.equal((await req('GET', '/api/auth/check')).body.passwordSet, false);
+});
+
+test('an orphaned hash left by an earlier version is cleared on the next switch off', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: false, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+
+  assert.equal((await req('POST', '/api/auth/toggle', { enabled: true })).status, 200, 'the old password still works');
+  /* Auth is in force from here, so switching back off goes through the gate the
+     same way the admin would, with a session. The stored secret is untouched by
+     the enable, so a token signed with it is valid. */
+  const cookie = 'ds=' + makeToken('s1', SECRET);
+  assert.equal((await req('POST', '/api/auth/toggle', { enabled: false }, cookie)).status, 200);
+  assert.equal(loadConfig().settings.auth.passwordHash, undefined);
+
+  const r = await req('POST', '/api/auth/toggle', { enabled: true });
+  assert.equal(r.status, 400, 're-enabling now needs a new password rather than reviving the cleared one');
+  assert.match(r.body.error, /password/i);
+});
+
+test('a session token from before the switch off is not honoured again', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  const cookie = 'ds=' + makeToken('s1', SECRET);
+
+  await req('POST', '/api/auth/toggle', { enabled: false }, cookie);
+  await req('POST', '/api/auth/set-password', { password: 'a-brand-new-one' });
+
+  assert.equal((await req('GET', '/api/config', null, cookie)).status, 401);
+});
+
+test('switching off with no password stored is not an error', async () => {
+  const r = await req('POST', '/api/auth/toggle', { enabled: false });
+  assert.equal(r.status, 200);
+  assert.equal(loadConfig().settings.auth.enabled, false);
+});
+
 /* ── an install already locked recovers itself ────────────────────────────── */
 
 test('a locked install reports auth as off, matching how it behaves', async () => {

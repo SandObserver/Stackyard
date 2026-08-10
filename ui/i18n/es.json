@@ -164,6 +164,7 @@
   "confirm": {
     "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",
     "revokeSessions": "¿Cerrar sesión en todos los dispositivos, incluido este?",
+    "clearPassword": "¿Desactivar la protección con contraseña? Se eliminará la contraseña guardada, por lo que volver a activarla requerirá una nueva.",
     "remove": "¿Eliminar \"{name}\"?"
   },
   "list": {
