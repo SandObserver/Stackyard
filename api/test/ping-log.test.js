@@ -52,7 +52,7 @@ test('a failed ping logs a usable URL', async t => {
 
   const w = pingFailure(seen);
   assert.ok(w, 'the failure should be logged');
-  assert.equal(w.data.url, `http://127.0.0.1:${port}/health`);
+  assert.equal(w.data.url, `http://127.0.0.1:${port}`);
   assert.ok(!String(w.data.url).includes('undefined'), 'no part of the URL may be undefined');
 });
 
@@ -64,11 +64,11 @@ test('the logged URL names the scheme and the port', async t => {
 
   const { url } = pingFailure(seen).data;
   assert.match(url, /^http:\/\//, 'the scheme distinguishes http from https');
-  assert.ok(url.includes(`:${port}/`), `the port must be named: ${url}`);
+  assert.ok(url.endsWith(`:${port}`), `the port must be named: ${url}`);
 });
 
 /* A URL may carry an API key in its query string and credentials in its
-   authority. u.origin excludes both, and the query is deliberately left off. */
+   authority. u.origin excludes both. */
 test('the logged URL carries neither credentials nor query string', async t => {
   const port = await closedPort();
   const seen = warnings(t);
@@ -77,7 +77,19 @@ test('the logged URL carries neither credentials nor query string', async t => {
   const { url } = pingFailure(seen).data;
   assert.ok(!url.includes('hunter2'), `credentials must not be logged: ${url}`);
   assert.ok(!url.includes('SECRET'), `the query string must not be logged: ${url}`);
-  assert.equal(url, `http://127.0.0.1:${port}/api`);
+  assert.equal(url, `http://127.0.0.1:${port}`);
+});
+
+/* Not every service puts its key in the query string. Several carry it as a
+   path segment instead, which the record used to write out in full. */
+test('a secret in a path segment cannot reach the log', async t => {
+  const port = await closedPort();
+  const seen = warnings(t);
+  await pingUrl(`http://127.0.0.1:${port}/api/APIKEYINPATH/status`, 2000);
+
+  const { url } = pingFailure(seen).data;
+  assert.ok(!url.includes('APIKEYINPATH'), `the path must not be logged: ${url}`);
+  assert.equal(url, `http://127.0.0.1:${port}`);
 });
 
 /* The error text is logged in full, since the response no longer carries it. */
