@@ -18,6 +18,7 @@ const assert = require('node:assert/strict');
 
 const data = require(path.join(__dirname, '../../ui/widgets/connections/data.js'));
 const { normBase } = data;
+const { WidgetError, KIND } = require('../src/api-error');
 
 /* ── the normaliser ───────────────────────────────────────────────────────── */
 
@@ -56,14 +57,26 @@ test('the string "undefined" never appears in the result', () => {
 
 /* ── through the widget ───────────────────────────────────────────────────── */
 
-/* fetchJSON is passed in, so a call can be observed without any network. */
+/* fetchJSON is passed in, so a call can be observed without any network. The
+   rest of the context is the surface widget-data.js really hands a data
+   function: ctx.fail throws a WidgetError, which is what marks a message as one
+   the widget wrote rather than one that escaped from Node. */
 function run(config, endpoint = 'map') {
   const requested = [];
   const fetchJSON = async url => {
     requested.push(url);
     return { status: 200, data: {} };
   };
-  return data({ config, endpoint, fetchJSON }).then(result => ({ result, requested }));
+  const ctx = {
+    config,
+    endpoint,
+    fetchJSON,
+    KIND,
+    fail: (message, opts) => {
+      throw new WidgetError(message, opts);
+    },
+  };
+  return data(ctx).then(result => ({ result, requested }));
 }
 
 test('a service with no address is not fetched at all', async () => {

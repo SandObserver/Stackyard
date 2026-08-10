@@ -96,6 +96,24 @@ const MAP_DEFAULT_COLOR = {
 };
 
 /* Raw GET: Conduit exposes Prometheus-style text that needs the unparsed body. */
+/* What a failed service shows on the tile. This string travels in a successful
+   response, so the api-error sanitiser never sees it: a caught error's message
+   names the host and port it failed to reach. Our own sentence when we wrote
+   one, a phrase from the error code otherwise. */
+const TIMEOUT_CODES = new Set(['ETIMEDOUT', 'ESOCKETTIMEDOUT', 'UND_ERR_HEADERS_TIMEOUT']);
+function errorText(e) {
+  if (e && e.vouchedMessage) return e.vouchedMessage;
+  /* Already a sentence this repo wrote, and the reason is the point of it. */
+  if (e && e.name === 'SsrfBlockedError') return e.message;
+  const code = e && e.code;
+  if (code === 'ECONNREFUSED') return 'Connection refused';
+  if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') return 'Host not found';
+  if (TIMEOUT_CODES.has(code)) return 'Timed out';
+  if (code === 'ECONNRESET' || code === 'EPIPE') return 'Connection lost';
+  if (typeof code === 'string' && (code.startsWith('CERT_') || code.includes('_CERT_'))) return 'Certificate rejected';
+  return 'Unreachable';
+}
+
 function authErr(r) {
   return r.status === 401 || r.status === 403;
 }
@@ -130,13 +148,14 @@ function parseConduitText(raw) {
   return { regions, limit, connected, live };
 }
 
-const run = async function ({ config, endpoint, fetchJSON }) {
-  if (endpoint === 'vpn') return vpnView(config, fetchJSON);
-  return mapView(config, fetchJSON);
+const run = async function (ctx) {
+  if (ctx.endpoint === 'vpn') return vpnView(ctx);
+  return mapView(ctx);
 };
 
 /* ── VPN view ── */
-async function vpnView(config, fetchJSON) {
+async function vpnView(ctx) {
+  const { config, fetchJSON } = ctx;
   const vpn = config.vpn || {};
   const svc = vpn.service || 'gluetun';
   const out = {
@@ -151,13 +170,13 @@ async function vpnView(config, fetchJSON) {
   try {
     if (svc === 'gluetun') {
       const base = normBase(vpn.url);
-      if (!base) throw new Error('No control server URL configured');
+      if (!base) ctx.fail('No control server URL configured', { kind: ctx.KIND.INVALID });
       const headers = vpn.apiKey ? { 'X-API-Key': vpn.apiKey } : {};
       let ipRes = null;
       try {
         ipRes = await fetchJSON(base + '/v1/publicip/ip', { headers, timeout: 7000 });
       } catch (e) {
-        out.error = e.code || e.message || 'unreachable';
+        out.error = errorText(e);
       }
       if (ipRes) {
         if (authErr(ipRes)) out.error = 'Auth required — set the API key';
@@ -192,12 +211,12 @@ async function vpnView(config, fetchJSON) {
       }
     } else {
       const base = normBase(vpn.url).replace(/\/+$/, '');
-      if (!base) throw new Error('No management API URL configured');
+      if (!base) ctx.fail('No management API URL configured', { kind: ctx.KIND.INVALID });
       const apiBase = /\/api$/.test(base) ? base : base + '/api';
       const headers = { Authorization: `Token ${vpn.token || ''}`, Accept: 'application/json' };
       const r = await fetchJSON(apiBase + '/peers', { headers, timeout: 8000 });
-      if (authErr(r)) throw new Error('Auth failed — check the access token');
-      if (r.status >= 400) throw new Error('Management API HTTP ' + r.status);
+      if (authErr(r)) ctx.fail('Auth failed — check the access token', { kind: ctx.KIND.AUTH });
+      if (r.status >= 400) ctx.fail('Management API HTTP ' + r.status);
       const peers = Array.isArray(r.data) ? r.data : [];
       const connected = peers.filter(p => p && p.connected);
       out.peersTotal = peers.length;
@@ -219,14 +238,15 @@ async function vpnView(config, fetchJSON) {
       }
     }
   } catch (e) {
-    out.error = e.message;
+    out.error = errorText(e);
   }
 
   return out;
 }
 
 /* ── Map view ── */
-async function mapView(config, fetchJSON) {
+async function mapView(ctx) {
+  const { config, fetchJSON } = ctx;
   const wc = config || {};
   const services = (Array.isArray(wc.services) ? wc.services : []).filter(s => s && s.enabled !== false && s.url);
   const results = await Promise.all(
@@ -242,15 +262,15 @@ async function mapView(config, fetchJSON) {
       try {
         /* Same as the VPN path above: say the address is missing rather than
          letting a doomed request report itself as a network fault. */
-        if (!base) throw new Error('No URL configured');
+        if (!base) ctx.fail('No URL configured', { kind: ctx.KIND.INVALID });
         if (s.type === 'conduit') {
           const r = await fetchJSON(new URL('/metrics', base).href, { raw: true });
-          if (r.status >= 400) throw new Error('HTTP ' + r.status);
+          if (r.status >= 400) ctx.fail('HTTP ' + r.status);
           Object.assign(o, { kind: 'regions' }, parseConduitText(r.data));
         } else if (s.type === 'gluetun') {
           const r = await fetchJSON(base + '/v1/publicip/ip', { headers: s.apiKey ? { 'X-API-Key': s.apiKey } : {} });
-          if (r.status === 401) throw new Error('Auth required — set the API key');
-          if (r.status >= 400) throw new Error('HTTP ' + r.status);
+          if (r.status === 401) ctx.fail('Auth required — set the API key', { kind: ctx.KIND.AUTH });
+          if (r.status >= 400) ctx.fail('HTTP ' + r.status);
           const d = r.data || {};
           const L = d.location || d.loc;
           o.kind = 'point';
@@ -265,8 +285,8 @@ async function mapView(config, fetchJSON) {
           const r = await fetchJSON(base + '/api/peers', {
             headers: s.token ? { Authorization: 'Token ' + s.token } : {},
           });
-          if (authErr(r)) throw new Error('Auth required — check the token');
-          if (r.status >= 400) throw new Error('HTTP ' + r.status);
+          if (authErr(r)) ctx.fail('Auth required — check the token', { kind: ctx.KIND.AUTH });
+          if (r.status >= 400) ctx.fail('HTTP ' + r.status);
           const peers = Array.isArray(r.data) ? r.data : [];
           const regions = {};
           let conn = 0;
@@ -294,8 +314,8 @@ async function mapView(config, fetchJSON) {
             headers: { 'Content-Type': 'application/json', Authorization: s.apiKey ? 'Bearer ' + s.apiKey : '' },
             body,
           });
-          if (authErr(r)) throw new Error('Auth required — check the API key');
-          if (r.status >= 400) throw new Error('HTTP ' + r.status);
+          if (authErr(r)) ctx.fail('Auth required — check the API key', { kind: ctx.KIND.AUTH });
+          if (r.status >= 400) ctx.fail('HTTP ' + r.status);
           const rows = (r.data && r.data.results) || [];
           const regions = {};
           let total = 0;
@@ -317,10 +337,10 @@ async function mapView(config, fetchJSON) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: s.username || '', password: s.password || '' }),
           });
-          if (authErr(lg)) throw new Error('Auth required — check username/password');
-          if (lg.status >= 400) throw new Error('Login HTTP ' + lg.status);
+          if (authErr(lg)) ctx.fail('Auth required — check username/password', { kind: ctx.KIND.AUTH });
+          if (lg.status >= 400) ctx.fail('Login HTTP ' + lg.status);
           const token = lg.data && lg.data.token;
-          if (!token) throw new Error('Login failed');
+          if (!token) ctx.fail('Login failed', { kind: ctx.KIND.AUTH });
           const end = Date.now(),
             start = end - 7 * 24 * 3600 * 1000;
           const r = await fetchJSON(
@@ -333,7 +353,7 @@ async function mapView(config, fetchJSON) {
               end,
             { headers: { Authorization: 'Bearer ' + token } },
           );
-          if (r.status >= 400) throw new Error('HTTP ' + r.status);
+          if (r.status >= 400) ctx.fail('HTTP ' + r.status);
           const rows = Array.isArray(r.data) ? r.data : [];
           const regions = {};
           let total = 0;
@@ -353,7 +373,7 @@ async function mapView(config, fetchJSON) {
           o.error = 'Unsupported service type';
         }
       } catch (e) {
-        o.error = e.message || String(e);
+        o.error = errorText(e);
       }
       return o;
     }),
