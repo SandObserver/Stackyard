@@ -164,6 +164,7 @@
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",
     "revokeSessions": "Sign out all devices, including this one?",
+    "clearPassword": "Turn off Password Protection? The stored password is deleted, so turning it back on will need a new one.",
     "remove": "Remove \"{name}\"?"
   },
   "list": {

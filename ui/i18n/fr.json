@@ -164,6 +164,7 @@
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",
     "revokeSessions": "Déconnecter tous les appareils, y compris celui-ci ?",
+    "clearPassword": "Désactiver la protection par mot de passe ? Le mot de passe enregistré est supprimé, le réactiver en exigera un nouveau.",
     "remove": "Supprimer « {name} » ?"
   },
   "list": {
