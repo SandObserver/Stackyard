@@ -92,7 +92,11 @@ html{background:var(--bg-color,var(--bg-outer))}
 
 /* ── Rows ── */
 .row{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:52px;border-bottom:1px solid var(--bd-inner)}
-.row:last-child{border-bottom:none}
+/* The separator belongs between two visible rows. :last-child is a DOM
+   position, and a group's trailing rows can be hidden, which left a border
+   under the last row anyone could see. Hidden rows carry .d-none, never an
+   inline display, so this can ask the question. */
+.row:not(:has(~ .row:not(.d-none))){border-bottom:none}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:rgba(255,255,255,.04)}
 .rl{flex:1;font-size:14px;color:var(--tx);font-weight:400}
@@ -140,7 +144,6 @@ html{background:var(--bg-color,var(--bg-outer))}
 .chip.on{background:var(--ac);color:#fff}
 .chip:hover:not(.on){color:var(--tx)}
 .row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:66px;cursor:grab;border-bottom:1px solid var(--bd-inner);align-items:center}
-.row.drow:last-child{border-bottom:none}
 .row.drow:hover{background:rgba(255,255,255,.025)}
 .row.drow.dragging{opacity:.4;cursor:grabbing}
 .row.drow.drag-above{box-shadow:0 -2px 0 0 var(--ac)}

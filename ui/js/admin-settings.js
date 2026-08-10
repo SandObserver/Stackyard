@@ -152,9 +152,9 @@ export function loadSettings(c) {
     dockerEnEl.checked = !!s.server?.socketProxyUrl;
     const applyDocker = v => {
       if (dockerSubEl) dockerSubEl.classList.toggle('open', v);
-      if (hideHealthyRowEl) hideHealthyRowEl.style.display = v ? '' : 'none';
+      if (hideHealthyRowEl) hideHealthyRowEl.classList.toggle('d-none', !v);
       const socketRow = el('ie-socket');
-      if (socketRow) socketRow.style.display = v ? '' : 'none';
+      if (socketRow) socketRow.classList.toggle('d-none', !v);
       const socketHint = el('socket-hint');
       if (socketHint) socketHint.style.display = v ? '' : 'none';
     };
@@ -188,7 +188,7 @@ export function loadSettings(c) {
     const on = !!secEnEl?.checked;
     if (secLogout) secLogout.classList.toggle('d-none', !on);
     const canRevoke = on && _passwordSet;
-    if (secRevokeRow) secRevokeRow.style.display = canRevoke ? '' : 'none';
+    if (secRevokeRow) secRevokeRow.classList.toggle('d-none', !canRevoke);
     if (revokeTip) revokeTip.style.display = canRevoke ? '' : 'none';
   };
   secLogout?.addEventListener('click', async () => {
@@ -226,7 +226,7 @@ export function loadSettings(c) {
         secEnEl.checked = !!d.enabled;
         const pwRow = el('ie-pw');
         const pwHint = el('pw-hint-static');
-        if (pwRow) pwRow.style.display = d.enabled ? '' : 'none';
+        if (pwRow) pwRow.classList.toggle('d-none', !d.enabled);
         if (pwHint) pwHint.style.display = d.enabled ? '' : 'none';
       }
       const pwValEl = el('ie-pw-v');
