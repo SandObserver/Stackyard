@@ -17,7 +17,8 @@ Redact secrets before pasting logs or config.
 
 ## Reading the logs
 
-Both Nginx and the API log to the container's stdout:
+The API logs to the container's stdout. Nginx logs request errors to stderr and
+keeps no access log, so both reach the same place:
 
 ```
 docker logs <container-name>
@@ -31,7 +32,33 @@ docker compose logs -f
 
 In Portainer, open the container and use the **Logs** view.
 
-The API logs `key=value` pairs; errors carry an `error=` field.
+### What a log line looks like
+
+Every API record is one line:
+
+```
+<ISO-8601 UTC timestamp> <LVL> msg=<message> key=value
+```
+
+`LVL` is one of `DBG`, `INF`, `WRN`, `ERR` or `AUD`. `AUD` marks a
+security-relevant event and is never filtered by the level setting.
+
+A few things worth knowing when reading them:
+
+- Warnings are emitted at both `warn` and `error`, so choosing Errors in
+  Settings still shows them.
+- The startup banner is not a record. It has no timestamp and no level, and it
+  always prints.
+- Secrets are never logged. Values that could carry one, such as the address of
+  a service that failed a connection test, are reduced to the host.
+- Lines from supervisord and Nginx have their own shapes and are not Stackyard
+  records.
+
+The format is logfmt, so anything shipping to Loki or Grafana parses it with
+`| logfmt` and no custom rules.
+
+To change how much is logged, see the `LOG_LEVEL` row in
+[architecture.md](architecture.md#environment).
 
 ## Common problems
 
