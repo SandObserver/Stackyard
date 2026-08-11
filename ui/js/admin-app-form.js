@@ -1,5 +1,5 @@
 /* Admin UI: the app and folder edit forms. Reads and writes shared state. */
-import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=17424946';
+import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=84d58686';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=a0ea3e4b';
 import { state } from '/js/admin-state.js?v=3f9ad806';
@@ -14,7 +14,7 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=182410cc';
+} from '/js/admin-shared.js?v=bb36dbb3';
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=601fe763';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=af729113';
 

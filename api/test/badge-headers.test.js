@@ -255,3 +255,14 @@ test('a clean item reports nothing', () => {
 test('the legacy object shape is not treated as malformed', () => {
   assert.equal(firstMalformedRow({ badge: { headers: { 'X-Api-Key': 'k' } } }), null);
 });
+
+/* A withheld credential leaves its row with an empty value. Sending the header
+   name with nothing behind it tells the far end the field exists and achieves
+   nothing else. */
+test('a row with an empty value is not sent as a header', () => {
+  const out = rowsToObject([
+    { key: 'Authorization', value: '', secret: true },
+    { key: 'Accept', value: 'application/json', secret: false },
+  ]);
+  assert.deepEqual({ ...out }, { Accept: 'application/json' });
+});

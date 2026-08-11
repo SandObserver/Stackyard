@@ -1,15 +1,15 @@
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=a0ea3e4b';
-import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=17424946';
+import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=84d58686';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=3c60f7b0';
 import { newItemId, buildAppItem, upsertItem, claimFolderChildren } from '/js/admin-save-logic.js?v=77cac1d1';
-import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
+import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=bb36dbb3';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
 import { state } from '/js/admin-state.js?v=3f9ad806';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=653071f0';
 import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=b46e5b19';
 import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=133a7aac';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=49843791';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=f189373f';
 import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
 /* openModal is the item editor in this file, so the shared dialog comes in
    under a different name. */
@@ -85,14 +85,6 @@ async function applyBg() {
     }
   } catch {}
 }
-/* The server refills a stored credential only for the request it was stored
-   for. A save that moved a badge or a widget somewhere else therefore lands
-   without it, which has to be said out loud or the tile just stops working. */
-function reportWithheldSecrets(res) {
-  const names = (res?.withheld || []).map(w => w.label).filter(Boolean);
-  if (names.length) toast(t('toast.secretsWithheld', { items: names.join(', ') }), 'err');
-}
-
 /** Returns whether the write reached the server, so a caller that reports its
     own outcome does not announce success over a failed save. */
 async function save() {
@@ -102,8 +94,7 @@ async function save() {
   try {
     const full = await ag('/api/config');
     full.items = state.items;
-    const res = await ap('/api/config', full);
-    reportWithheldSecrets(res);
+    await ap('/api/config', full);
     toast('Saved');
     ok = true;
   } catch (e) {
@@ -136,7 +127,7 @@ async function appendAndSave(newItems) {
     const clash = newItems.find(i => taken.has(i.id));
     if (clash) throw new Error(`${clash.label}: this id already exists. Reload and import again.`);
     full.items = [...current, ...newItems];
-    reportWithheldSecrets(await ap('/api/config', full));
+    await ap('/api/config', full);
     state.items = full.items;
   } finally {
     state.saving = false;

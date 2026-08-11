@@ -21,13 +21,13 @@ import {
   qi,
   qa,
   setUserText,
-} from '/js/utils.js?v=17424946';
-import { initSpotlight } from '/js/spotlight.js?v=673a88df';
+} from '/js/utils.js?v=84d58686';
+import { initSpotlight } from '/js/spotlight.js?v=a5ba7f75';
 import { html, setHtml, raw } from '/js/html.js?v=ccec347c';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=dab9978e';
 import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=07fd9e2d';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=3d60a9bc';
 import { badgeSignature, computeBadgeVisual } from '/js/badge-logic.js?v=d278c683';
 import { configChanged, landingAfterSetup } from '/js/dashboard-logic.js?v=640430ba';
 import { trapFocus } from '/js/dialog.js?v=4ff94595';
