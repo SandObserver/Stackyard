@@ -160,6 +160,13 @@ on('POST', '/api/auth/toggle', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   try {
     const { enabled } = JSON.parse(await readBody(req));
+    /* Only a real true or false. Turning protection off deletes the password
+       and cannot be undone from the UI, so a body that does not say so plainly,
+       from an old cached page or a script, must change nothing rather than
+       being read as "off". */
+    if (typeof enabled !== 'boolean') {
+      return json(res, 400, { error: 'enabled must be true or false', kind: KIND.INVALID });
+    }
     const cfg = loadConfig();
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
@@ -176,7 +183,14 @@ on('POST', '/api/auth/toggle', async (req, res) => {
        can be obtained while auth is off, and login is a bypass that issues no
        cookie, so a forgotten password could only be replaced by editing the
        config on disk. The secret goes too, so tokens signed under it cannot be
-       honoured if protection is turned back on later. */
+       honoured if protection is turned back on later.
+
+       The trade this makes: with no hash stored, set-password no longer demands
+       a session, so anyone who can reach the dashboard while protection is off
+       can set one and lock the owner out. That is accepted rather than guarded,
+       because protection being off already means anyone who can reach the
+       dashboard can read and rewrite the whole config; a guard here would only
+       look like security. It is why the toggle asks before clearing. */
     const cleared = !enabled && !!cfg.settings.auth.passwordHash;
     if (!enabled) {
       delete cfg.settings.auth.passwordHash;

@@ -239,3 +239,33 @@ test('login still refuses a wrong password when one is set', async () => {
   assert.equal((await req('POST', '/api/auth/login', { password: 'nope' })).status, 401);
   assert.equal((await req('POST', '/api/auth/login', { password: 'correct-horse' })).status, 200);
 });
+
+/* ── the switch only answers to a real true or false ──────────────────────── */
+
+/* Switching off deletes the password and the secret, and nothing in the UI can
+   undo it. A body that does not plainly say so, from a cached older page or a
+   script, used to be read as "off" and destroyed both. */
+
+for (const [label, body] of [
+  ['an empty body', {}],
+  ['a null flag', { enabled: null }],
+  ['a zero', { enabled: 0 }],
+  ['a string', { enabled: 'false' }],
+  ['the string "true"', { enabled: 'true' }],
+  ['a missing key with other fields', { enable: false }],
+]) {
+  test(`${label} changes nothing rather than clearing the password`, async () => {
+    const cfg = loadConfig();
+    const hash = await hashPassword('correct-horse');
+    cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: hash };
+    saveConfig(cfg);
+
+    const r = await req('POST', '/api/auth/toggle', body, 'ds=' + makeToken('s1', SECRET));
+    assert.equal(r.status, 400, 'refused');
+
+    const stored = loadConfig().settings.auth;
+    assert.equal(stored.passwordHash, hash, 'the password survives');
+    assert.equal(stored.secret, SECRET, 'the secret survives');
+    assert.equal(stored.enabled, true, 'the flag is untouched');
+  });
+}

@@ -23,7 +23,9 @@
     "edit": "编辑",
     "color": "颜色",
     "create": "创建",
-    "chooseFiles": "选择文件"
+    "chooseFiles": "选择文件",
+    "configured": "已设置",
+    "notSet": "未设置"
   },
   "general": {
     "title": "标题",

@@ -23,7 +23,9 @@
     "edit": "Edit",
     "color": "Color",
     "create": "Create",
-    "chooseFiles": "Choose files"
+    "chooseFiles": "Choose files",
+    "configured": "Configured",
+    "notSet": "Not set"
   },
   "general": {
     "title": "Title",
