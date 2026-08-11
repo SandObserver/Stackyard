@@ -136,6 +136,12 @@
       "/js/html.js?v=*": [
         "./ui/js/html.js"
       ],
+      "/js/import-foreign.js": [
+        "./ui/js/import-foreign.js"
+      ],
+      "/js/import-foreign.js?v=*": [
+        "./ui/js/import-foreign.js"
+      ],
       "/js/i18n-markup.js": [
         "./ui/js/i18n-markup.js"
       ],
@@ -159,6 +165,12 @@
       ],
       "/js/link-url.js?v=*": [
         "./ui/js/link-url.js"
+      ],
+      "/js/modal.js": [
+        "./ui/js/modal.js"
+      ],
+      "/js/modal.js?v=*": [
+        "./ui/js/modal.js"
       ],
       "/js/mobile-metrics.js": [
         "./ui/js/mobile-metrics.js"
@@ -189,6 +201,12 @@
       ],
       "/js/utils.js?v=*": [
         "./ui/js/utils.js"
+      ],
+      "/js/yaml-lite.js": [
+        "./ui/js/yaml-lite.js"
+      ],
+      "/js/yaml-lite.js?v=*": [
+        "./ui/js/yaml-lite.js"
       ],
       "/js/widget-config-form.js": [
         "./ui/js/widget-config-form.js"

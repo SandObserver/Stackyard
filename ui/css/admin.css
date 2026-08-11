@@ -341,12 +341,21 @@ html{background:var(--bg-color,var(--bg-outer))}
 .sub{overflow:hidden;max-height:0;transition:max-height .25s ease;padding-inline-start:4px}
 .sub.open{max-height:2000px}
 
-/* ── Folder picker ── */
-.fp-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px}
-.fp-box{background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);width:100%;max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.6)}
-.fp-hdr{padding:16px 20px;font-size:15px;font-weight:700;border-bottom:1px solid var(--bd-inner)}
-.fp-list{overflow-y:auto;flex:1;padding:8px}
-.fp-foot{padding:12px 16px;border-top:1px solid var(--bd-inner);display:flex;justify-content:flex-end}
+/* ── Modal dialog (folder picker, import preview, prompts) ── */
+.dlg-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px}
+.dlg-box{background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);width:100%;max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.6)}
+.dlg-ov.wide .dlg-box{max-width:560px;max-height:80vh}
+.dlg-hdr{padding:16px 20px;font-size:15px;font-weight:700;border-bottom:1px solid var(--bd-inner)}
+.dlg-body{overflow-y:auto;flex:1;padding:8px}
+.dlg-foot{padding:12px 16px;border-top:1px solid var(--bd-inner);display:flex;justify-content:flex-end;gap:8px}
+.dlg-field{display:flex;flex-direction:column;gap:6px;padding:12px}
+.dlg-field span{font-size:13px;color:var(--dm)}
+.dlg-lead{padding:8px 12px 4px;font-size:14px}
+.dlg-sec{padding:12px 12px 4px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--dm)}
+.dlg-ul{list-style:none;margin:0;padding:0 12px 8px;display:flex;flex-direction:column;gap:4px}
+.dlg-li{display:flex;align-items:baseline;gap:8px;font-size:13px}
+.dlg-li .dlg-why{color:var(--dm);font-size:12px}
+.dlg-empty{padding:24px;text-align:center;color:var(--dm);font-size:13px}
 .fp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);background:none;border:none;color:var(--tx);font-size:14px;cursor:pointer;width:100%;text-align:start;font-family:inherit;transition:background var(--t)}
 .fp-row:hover{background:rgba(255,255,255,.06)}
 .fp-row.cur{background:rgba(2,122,255,.12)}
@@ -356,7 +365,6 @@ html{background:var(--bg-color,var(--bg-outer))}
 .fp-ic img{width:18px;height:18px;object-fit:contain}
 .fp-nm{flex:1}
 .fp-chk{color:var(--gn);font-weight:700}
-.fp-empty{padding:24px;text-align:center;color:var(--dm);font-size:13px}
 
 /* ── Icon picker ── */
 .ipw{position:relative}

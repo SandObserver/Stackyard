@@ -21,7 +21,9 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "edit": "Modifier",
-    "color": "Couleur"
+    "color": "Couleur",
+    "create": "Créer",
+    "chooseFiles": "Choisir des fichiers"
   },
   "general": {
     "title": "Titre",
@@ -44,7 +46,9 @@
     "passwordTip": "Laissez vide pour conserver le mot de passe actuel. 8 caractères minimum. Pour une protection renforcée, envisagez de placer le tableau de bord derrière un <strong>Authentication Proxy</strong>. Ce mot de passe intégré est une barrière légère, pas une couche d'authentification complète.",
     "backup": "Sauvegarde",
     "importExport": "Importer / Exporter",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "importForeign": "Importer depuis un autre tableau de bord",
+    "importForeignTip": "Lit les fichiers YAML de gethomepage et Dashy. Les liens et les dossiers sont ajoutés à votre tableau de bord ; les widgets de l’autre tableau de bord deviennent de simples liens."
   },
   "appearance": {
     "appTitle": "Titre de l'application",
@@ -85,7 +89,12 @@
     "noApps": "Aucune application disponible",
     "tip": "Appuyez pour ajouter ou retirer des applications de ce dossier.",
     "namePh": "Mon dossier",
-    "addAppToFolder": "Ajouter une application à ce dossier"
+    "addAppToFolder": "Ajouter une application à ce dossier",
+    "moveTo": "Déplacer \"{name}\" vers un dossier",
+    "addApp": "Ajouter une app au dossier",
+    "none": "Aucun dossier",
+    "allInFolder": "Toutes les apps sont déjà dans ce dossier.",
+    "createNew": "Créer un dossier"
   },
   "app": {
     "name": "Nom",
@@ -159,7 +168,11 @@
     "importNoChange": "Rien à importer — le fichier correspond à votre configuration actuelle.",
     "pwWeak": "Mot de passe trop faible : {label}",
     "sessionsRevoked": "Tous les appareils ont été déconnectés.",
-    "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification."
+    "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification.",
+    "importForeignDone": "Importation terminée. Apps : {apps}. Dossiers : {folders}.",
+    "importForeignNothing": "Rien à importer dans ces fichiers.",
+    "importYamlUnsupported": "{file} : {reason} (ligne {line})",
+    "importUnknownFormat": "{file} n’est pas une configuration gethomepage ou Dashy."
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",
@@ -172,7 +185,8 @@
     "noMatches": "Aucune correspondance."
   },
   "import": {
-    "confirm": "Importer {n} éléments ?\n\n{added} ajoutés, {updated} mis à jour, {deleted} supprimés."
+    "confirm": "Importer {n} éléments ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
+    "confirmTitle": "Importer la configuration"
   },
   "status": {
     "needsAttention": "État : nécessite une intervention",
@@ -215,5 +229,33 @@
     "refusedPlural": "{n} widgets n'ont pas pu être chargés et n'apparaissent pas dans la liste.",
     "name": "Nom",
     "type": "Type de widget"
+  },
+  "importForeign": {
+    "title": "Importer depuis un autre tableau de bord",
+    "lead": "Rien de ce qui existe déjà sur votre tableau de bord ne change.",
+    "willAdd": "Apps à ajouter",
+    "willCreate": "Dossiers à créer",
+    "changed": "Importé avec des modifications",
+    "notImported": "Non importé",
+    "appCount": "({n})",
+    "skipNoLabel": "sans nom",
+    "skipNoHref": "sans lien",
+    "skipUnsafeHref": "schéma de lien non pris en charge",
+    "skipPlaceholderHref": "le lien exige une variable que seul l’autre tableau de bord connaît",
+    "noteIcon": "icône abandonnée : {detail}",
+    "notePing": "ping ICMP abandonné : {detail}",
+    "noteRemoteContainer": "conteneur ignoré, il tourne sur {detail}",
+    "noteFlattened": "le groupe imbriqué est devenu un dossier distinct",
+    "noteSubItems": "sous-élément déplacé dans le dossier",
+    "noteWidgetLink": "widget importé comme lien",
+    "noteWidgetDropped": "{detail} widgets de section abandonnés",
+    "noteFields": "champs abandonnés : {detail}",
+    "notePages": "{detail} pages supplémentaires non suivies",
+    "noteLocalUrl": "seconde adresse locale abandonnée : {detail}",
+    "wholeFile": "ce fichier",
+    "untitledFolder": "Importé",
+    "skipRelativeHref": "le lien n’a pas d’adresse, seulement un chemin",
+    "skipUnreadable": "cette entrée n’a pas la forme autorisée par le format du fichier",
+    "monitors": "· interroge {url}"
   }
 }

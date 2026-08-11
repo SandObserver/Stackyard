@@ -21,7 +21,9 @@
     "showPassword": "显示密码",
     "hidePassword": "隐藏密码",
     "edit": "编辑",
-    "color": "颜色"
+    "color": "颜色",
+    "create": "创建",
+    "chooseFiles": "选择文件"
   },
   "general": {
     "title": "标题",
@@ -44,7 +46,9 @@
     "passwordTip": "留空以保留现有密码。至少 8 个字符。若需更强的保护，建议将仪表盘置于 <strong>Authentication Proxy</strong> 之后。此内置密码只是一道简单的门槛，并非完整的身份验证层。",
     "backup": "备份",
     "importExport": "导入 / 导出",
-    "signOut": "退出登录"
+    "signOut": "退出登录",
+    "importForeign": "从其他仪表板导入",
+    "importForeignTip": "读取 gethomepage 与 Dashy 的 YAML 文件。链接和文件夹会添加到你的仪表板；其他仪表板的挂件会变成普通链接。"
   },
   "appearance": {
     "appTitle": "应用标题",
@@ -85,7 +89,12 @@
     "noApps": "没有可用的应用",
     "tip": "点击以在此文件夹中添加或移除应用。",
     "namePh": "我的文件夹",
-    "addAppToFolder": "将应用添加到此文件夹"
+    "addAppToFolder": "将应用添加到此文件夹",
+    "moveTo": "将“{name}”移入文件夹",
+    "addApp": "将应用加入文件夹",
+    "none": "不放入文件夹",
+    "allInFolder": "所有应用都已在此文件夹中。",
+    "createNew": "新建文件夹"
   },
   "app": {
     "name": "名称",
@@ -159,7 +168,11 @@
     "importNoChange": "没有可导入的内容 — 该文件与您当前的配置一致。",
     "pwWeak": "密码强度不足：{label}",
     "sessionsRevoked": "已退出所有设备。",
-    "authNeedsPassword": "启用身份验证前请先设置密码。"
+    "authNeedsPassword": "启用身份验证前请先设置密码。",
+    "importForeignDone": "导入完成。应用：{apps}。文件夹：{folders}。",
+    "importForeignNothing": "这些文件中没有可导入的内容。",
+    "importYamlUnsupported": "{file}：{reason}（第 {line} 行）",
+    "importUnknownFormat": "{file} 不是 gethomepage 或 Dashy 配置。"
   },
   "confirm": {
     "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",
@@ -172,7 +185,8 @@
     "noMatches": "没有匹配项。"
   },
   "import": {
-    "confirm": "导入 {n} 个项目？\n\n新增 {added} 个，更新 {updated} 个，删除 {deleted} 个。"
+    "confirm": "导入 {n} 个项目？新增 {added} 个，更新 {updated} 个，删除 {deleted} 个。",
+    "confirmTitle": "导入配置"
   },
   "status": {
     "needsAttention": "状态：需要处理",
@@ -215,5 +229,33 @@
     "refusedPlural": "有 {n} 个小组件无法加载，因此未在下方列出。",
     "name": "名称",
     "type": "小组件类型"
+  },
+  "importForeign": {
+    "title": "从其他仪表板导入",
+    "lead": "仪表板上已有的内容不会改变。",
+    "willAdd": "将添加的应用",
+    "willCreate": "将创建的文件夹",
+    "changed": "导入时有改动",
+    "notImported": "未导入",
+    "appCount": "({n})",
+    "skipNoLabel": "没有名称",
+    "skipNoHref": "没有链接",
+    "skipUnsafeHref": "不支持的链接协议",
+    "skipPlaceholderHref": "链接需要只有对方仪表板才知道的变量",
+    "noteIcon": "已舍弃图标：{detail}",
+    "notePing": "已舍弃 ICMP ping：{detail}",
+    "noteRemoteContainer": "已忽略容器，它运行在 {detail}",
+    "noteFlattened": "嵌套分组已成为独立文件夹",
+    "noteSubItems": "子项已移入该文件夹",
+    "noteWidgetLink": "挂件已作为链接导入",
+    "noteWidgetDropped": "已舍弃 {detail} 个分区挂件",
+    "noteFields": "已舍弃字段：{detail}",
+    "notePages": "未跟随其余 {detail} 个页面",
+    "noteLocalUrl": "已舍弃第二个本地地址：{detail}",
+    "wholeFile": "此文件",
+    "untitledFolder": "已导入",
+    "skipRelativeHref": "链接没有地址，只有路径",
+    "skipUnreadable": "此条目不符合该文件格式允许的结构",
+    "monitors": "· 轮询 {url}"
   }
 }

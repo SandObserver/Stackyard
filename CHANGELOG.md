@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Import links and folders from a gethomepage or Dashy YAML config.
+
 - The Docker Hub repository description is published from `README.md` on each
   stable release.
 
@@ -16,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and how to read the logs.
 
 ### Changed
+
+- Confirming an import and naming a new folder use in-page dialogs instead of
+  the browser's own.
 
 - The container prints six lines when it starts, instead of twenty-three.
 

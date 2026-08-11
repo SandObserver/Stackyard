@@ -1,0 +1,196 @@
+// @ts-check
+/* An indentation-only subset of YAML, enough to read a gethomepage or Dashy
+   config without a dependency.
+
+   The subset is deliberate. Every construct this cannot represent faithfully is
+   refused with the line number rather than approximated, because the failure
+   mode of a permissive hand-written parser is not an exception, it is an item
+   that imports with the wrong URL and nobody notices. Anchors, flow
+   collections, block scalars, tabs and multi-document files all throw.
+
+   Pure: no DOM, no imports, no browser globals. */
+
+/** Thrown for anything outside the supported subset, with the source line.
+    Distinguishable from a TypeError so the caller can report it as a file
+    problem rather than a bug. */
+export class YamlLiteError extends Error {
+  /** @param {string} message @param {number} line */
+  constructor(message, line) {
+    super(`Line ${line}: ${message}`);
+    this.name = 'YamlLiteError';
+    this.line = line;
+    this.reason = message;
+  }
+}
+
+/* A key line: an unquoted or quoted key, a colon, then an optional value. The
+   key stops at the first colon that is followed by a space or end of line, so
+   "url: http://host:8080" splits once and keeps the port. */
+const KEY_RE = /^(?:(?:"((?:[^"\\]|\\.)*)")|(?:'((?:[^']|'')*)')|([^:#]+?))\s*:(?:\s+(.*))?$/;
+
+/** @param {string} raw @param {number} line */
+function scalar(raw, line) {
+  const s = raw.trim();
+  if (s === '') return '';
+  if (s[0] === '"') {
+    const m = /^"((?:[^"\\]|\\.)*)"\s*$/.exec(s);
+    if (!m) throw new YamlLiteError('unterminated double-quoted value', line);
+    return m[1].replace(/\\(["\\/nrt])/g, (_, c) => ({ n: '\n', r: '\r', t: '\t' })[c] || c);
+  }
+  if (s[0] === "'") {
+    const m = /^'((?:[^']|'')*)'\s*$/.exec(s);
+    if (!m) throw new YamlLiteError('unterminated single-quoted value', line);
+    return m[1].replace(/''/g, "'");
+  }
+  if (s === '|' || s === '>' || /^[|>][-+\d]*$/.test(s))
+    throw new YamlLiteError('block scalars are not supported', line);
+  if (s[0] === '&' || s[0] === '*') throw new YamlLiteError('anchors and aliases are not supported', line);
+  if (s[0] === '{' || s[0] === '[') throw new YamlLiteError('flow collections are not supported', line);
+  if (s === '~' || s === 'null' || s === 'Null' || s === 'NULL') return null;
+  if (s === 'true' || s === 'True' || s === 'TRUE' || s === 'yes' || s === 'Yes') return true;
+  if (s === 'false' || s === 'False' || s === 'FALSE' || s === 'no' || s === 'No') return false;
+  if (/^-?\d+$/.test(s)) return Number(s);
+  if (/^-?\d*\.\d+$/.test(s)) return Number(s);
+  /* A trailing comment only counts when a space precedes the #, so a value like
+     "#00ff00" or a URL fragment survives. */
+  const cut = s.search(/\s#/);
+  return cut === -1 ? s : s.slice(0, cut).trim();
+}
+
+/** @typedef {{ indent: number, text: string, line: number }} Line */
+
+/** @param {string} text @returns {Line[]} */
+function scan(text) {
+  /** @type {Line[]} */
+  const out = [];
+  let docs = 0;
+  /* A file saved on Windows starts with a byte order mark. Left in place it
+     becomes part of the first key and the document reads as malformed. */
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+  text.split(/\r\n|\r|\n/).forEach((raw, i) => {
+    const line = i + 1;
+    if (/^\s*$/.test(raw)) return;
+    if (/^\s*#/.test(raw)) return;
+    if (/^\t/.test(raw) || /^ *\t/.test(raw)) throw new YamlLiteError('tab indentation is not supported', line);
+    const trimmed = raw.trim();
+    if (trimmed === '---') {
+      /* One leading marker is ordinary. A second means a multi-document file,
+         where taking only the first document would silently drop the rest. */
+      if (++docs > 1 || out.length) throw new YamlLiteError('multi-document files are not supported', line);
+      return;
+    }
+    if (trimmed === '...') throw new YamlLiteError('multi-document files are not supported', line);
+    /* Before the anchor check: a merge key is written with an alias, and naming
+       the alias would send someone looking for the wrong thing. */
+    if (/^<<\s*:/.test(trimmed)) throw new YamlLiteError('merge keys are not supported', line);
+    if (/(^|\s)[&*][^\s]/.test(trimmed)) throw new YamlLiteError('anchors and aliases are not supported', line);
+    out.push({ indent: raw.length - raw.trimStart().length, text: trimmed, line });
+  });
+  return out;
+}
+
+/** Parse a block starting at `pos` whose lines are indented at least `indent`.
+    @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
+function block(lines, cur, indent) {
+  const first = lines[cur.pos];
+  return first.text.startsWith('- ') || first.text === '-' ? sequence(lines, cur, indent) : mapping(lines, cur, indent);
+}
+
+/** @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
+function sequence(lines, cur, indent) {
+  const out = [];
+  while (cur.pos < lines.length) {
+    const l = lines[cur.pos];
+    if (l.indent < indent) break;
+    if (l.indent > indent) throw new YamlLiteError('unexpected indentation', l.line);
+    if (!(l.text.startsWith('- ') || l.text === '-')) break;
+    const rest = l.text === '-' ? '' : l.text.slice(2).trim();
+    cur.pos++;
+    if (rest === '') {
+      /* "-" alone: the element is the block indented under it. */
+      if (cur.pos < lines.length && lines[cur.pos].indent > indent) out.push(block(lines, cur, lines[cur.pos].indent));
+      else out.push(null);
+      continue;
+    }
+    const m = KEY_RE.exec(rest);
+    if (m) {
+      /* The compound "- key: value" form. The element is a mapping whose first
+         key sits on the dash line, so its own indentation is the column the
+         key text starts at, not the dash. */
+      const inner = indent + 2;
+      const map = Object.create(null);
+      assign(map, m, l.line, lines, cur, inner);
+      while (cur.pos < lines.length && lines[cur.pos].indent === inner) {
+        const nl = lines[cur.pos];
+        if (nl.text.startsWith('- ') || nl.text === '-') break;
+        const nm = KEY_RE.exec(nl.text);
+        if (!nm) throw new YamlLiteError('expected "key: value"', nl.line);
+        cur.pos++;
+        assign(map, nm, nl.line, lines, cur, inner);
+      }
+      out.push(map);
+      continue;
+    }
+    out.push(scalar(rest, l.line));
+  }
+  return out;
+}
+
+/** Set one key on `map` from a matched key line, reading its nested block when
+    the value is empty.
+    @param {any} map @param {RegExpExecArray} m @param {number} line
+    @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
+function assign(map, m, line, lines, cur, indent) {
+  const key = m[1] !== undefined ? m[1] : m[2] !== undefined ? m[2].replace(/''/g, "'") : m[3].trim();
+  const inline = m[4];
+  if (inline !== undefined && inline.trim() !== '' && !/^#/.test(inline.trim())) {
+    map[key] = scalar(inline, line);
+    return;
+  }
+  const next = lines[cur.pos];
+  if (!next || next.indent <= indent) {
+    map[key] = null;
+    return;
+  }
+  /* A sequence may sit at the parent's own indentation, which is legal YAML and
+     common in both source formats. */
+  map[key] = block(lines, cur, next.indent);
+}
+
+/** @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
+function mapping(lines, cur, indent) {
+  const map = Object.create(null);
+  while (cur.pos < lines.length) {
+    const l = lines[cur.pos];
+    if (l.indent < indent) break;
+    if (l.indent > indent) throw new YamlLiteError('unexpected indentation', l.line);
+    if (l.text.startsWith('- ') || l.text === '-') {
+      /* A sequence at the same column as the keys of the mapping it belongs to.
+         Only valid as the whole value of the key above, which assign handles. */
+      break;
+    }
+    const m = KEY_RE.exec(l.text);
+    if (!m) throw new YamlLiteError('expected "key: value"', l.line);
+    cur.pos++;
+    assign(map, m, l.line, lines, cur, indent);
+  }
+  return map;
+}
+
+/** Parse a YAML subset document.
+
+    Objects come back with a null prototype: the keys are attacker-influenced
+    names from someone else's config, and a key called "constructor" or
+    "__proto__" must answer as data rather than as an inherited member.
+
+    @param {string} text @returns {any}
+    @throws {YamlLiteError} on anything outside the subset */
+export function parseYaml(text) {
+  const lines = scan(String(text == null ? '' : text));
+  if (!lines.length) return null;
+  if (lines[0].indent !== 0) throw new YamlLiteError('unexpected indentation', lines[0].line);
+  const cur = { pos: 0 };
+  const doc = block(lines, cur, 0);
+  if (cur.pos < lines.length) throw new YamlLiteError('unexpected indentation', lines[cur.pos].line);
+  return doc;
+}

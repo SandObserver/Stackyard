@@ -1,0 +1,76 @@
+---
+# Homelab services, grouped the way the Homepage docs suggest.
+- Media:
+    - Plex:
+        icon: plex.png
+        href: http://media.lab.internal:32400/web
+        description: Movies and TV
+        siteMonitor: http://media.lab.internal:32400/identity
+        container: sytest-plex
+    - Jellyfin:
+        icon: sh-jellyfin.webp
+        href: https://jellyfin.lab.internal/
+        description: Backup media server
+        siteMonitor: https://jellyfin.lab.internal/health
+    - "Arr Stack":
+        - Sonarr:
+            icon: sonarr.png
+            href: http://sonarr.lab.internal:8989
+            description: TV automation
+            container: sytest-sonarr
+            widget:
+              type: sonarr
+              url: http://sonarr.lab.internal:8989
+              key: "{{HOMEPAGE_VAR_SONARR_KEY}}"
+        - Radarr:
+            icon: mdi-filmstrip
+            href: http://radarr.lab.internal:7878
+            description: Movie automation
+            ping: radarr.lab.internal
+        - Prowlarr:
+            icon: si-prowlarr
+            href: http://prowlarr.lab.internal:9696
+            container: prowlarr
+            server: remote-docker
+
+- Infrastructure:
+    - Proxmox:
+        icon: proxmox.png
+        href: https://pve.lab.internal:8006
+        description: Hypervisor
+        siteMonitor: https://pve.lab.internal:8006
+    - "OPNsense Firewall":
+        icon: opnsense.png
+        href: https://10.0.0.1/
+        ping: 10.0.0.1
+    - Portainer:
+        icon: /icons/portainer-local.png
+        href: http://portainer.lab.internal:9000
+        description: Container management
+        siteMonitor: http://portainer.lab.internal:9000/api/status
+    - Grafana:
+        icon: https://grafana.com/static/assets/img/fav32.png
+        href: http://grafana.lab.internal:3000
+        widget:
+          type: grafana
+          url: http://grafana.lab.internal:3000
+          username: viewer
+          password: ${GRAFANA_PASSWORD}
+
+- "Tools & Utilities":
+    - Vaultwarden:
+        icon: vaultwarden.png
+        href: https://vault.lab.internal/
+        description: Password manager
+        siteMonitor: https://vault.lab.internal/alive
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: http://kuma.lab.internal:3001
+        widget:
+          type: uptimekuma
+          url: http://kuma.lab.internal:3001
+          slug: homelab
+    - "Café Monitor":
+        icon: grafana.png
+        href: http://xn--caf-dma.lab.internal:8080/
+        description: Unicode host test

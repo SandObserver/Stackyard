@@ -1,0 +1,25 @@
+---
+- Developer:
+    - Github:
+        - abbr: GH
+          href: https://github.com/
+          icon: github
+    - Stack Overflow:
+        - abbr: SO
+          href: https://stackoverflow.com/
+          icon: stackoverflow.png
+          description: Answers
+
+- Homelab Docs:
+    - Homepage Docs:
+        - abbr: HP
+          href: https://gethomepage.dev/
+          icon: homepage.png
+    - r/selfhosted:
+        - abbr: RS
+          href: https://www.reddit.com/r/selfhosted/
+          icon: reddit
+    - Awesome Selfhosted:
+        - abbr: AS
+          href: https://awesome-selfhosted.net/
+          icon: si-awesomelists
