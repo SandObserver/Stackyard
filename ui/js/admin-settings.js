@@ -1,9 +1,9 @@
 /* Admin UI: the General, Appearance and Security settings sections. */
-import { toast, ag, ap } from '/js/admin-shared.js?v=182410cc';
+import { toast, ag, ap } from '/js/admin-shared.js?v=bb36dbb3';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
 import { t } from '/js/i18n.js?v=133a7aac';
 import { authEnableBlocked, shouldWritePassword } from '/js/admin-logic.js?v=3c60f7b0';
-import { el, inp, q, qa, setUserText } from '/js/utils.js?v=17424946';
+import { el, inp, q, qa, setUserText } from '/js/utils.js?v=84d58686';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password behind
    it. */
@@ -252,9 +252,7 @@ async function saveWallpaper() {
     const c = await ag('/api/config');
     c.settings = c.settings || {};
     c.settings.background = bg;
-    const cfgRes = await ap('/api/config', c);
-    const withheld = (cfgRes?.withheld || []).map(w => w.label).filter(Boolean);
-    if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err');
+    await ap('/api/config', c);
     /* Save Unsplash key separately AFTER main config; the GET /api/config strips the key,
        so state.saving it before would cause the subsequent config write to overwrite it with nothing */
     if (type === 'unsplash') {
@@ -297,9 +295,7 @@ async function saveServer() {
        password survives until Save, so this is the moment it is really deleted,
        and cancelling here must leave every other field unsaved too. */
     if (!enabled && _passwordSet && !confirm(t('confirm.clearPassword'))) return;
-    const cfgRes = await ap('/api/config', c);
-    const withheld = (cfgRes?.withheld || []).map(w => w.label).filter(Boolean);
-    if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err');
+    await ap('/api/config', c);
 
     if (authEnableBlocked({ enabled, passwordSet: _passwordSet, newPassword: pw })) {
       toast(t('toast.authNeedsPassword'), 'err');

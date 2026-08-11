@@ -1,8 +1,8 @@
 /* Reusable colour control: swatch row, HSB sliders and a colour code. Operates in
    hex, resolves named CSS colours, and calls onChange(hex) on any change. */
-import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
+import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=bb36dbb3';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
-import { qa, q } from '/js/utils.js?v=1';
+import { qa, q } from '/js/utils.js?v=84d58686';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
 /* Badge blue rather than the general control blue, so a blue badge matches the

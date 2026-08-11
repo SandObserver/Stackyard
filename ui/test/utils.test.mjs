@@ -8,7 +8,7 @@ import { register } from 'node:module';
    here (rather than via --import) keeps it working under the test runner's
    per-file child processes. */
 register('./js-root-hooks.mjs', import.meta.url);
-const { clr, esc, sanitizeCssUrl } = await import('../js/utils.js');
+const { clr, esc, sanitizeCssUrl, safeAllow } = await import('../js/utils.js');
 
 test('clr maps the sentinel color names to concrete hex', () => {
   assert.equal(clr('dark'), '#1C1C1E');
@@ -55,4 +55,59 @@ test('sanitizeCssUrl leaves a normal URL intact and coerces empties', () => {
   assert.equal(sanitizeCssUrl('https://host/path/img.png?v=2'), 'https://host/path/img.png?v=2');
   assert.equal(sanitizeCssUrl(null), '');
   assert.equal(sanitizeCssUrl(undefined), '');
+});
+
+/* ── a colour has to be a colour ──────────────────────────────────────────── */
+
+/* The value is assigned to a background and can have arrived in an imported
+   config. A url() there fetches from the host it names; the page's img-src
+   refuses it today, and this is so that refusal is not the only thing in the
+   way. */
+
+test('clr keeps the colour forms the app and CSS actually use', () => {
+  for (const ok of [
+    '#fff',
+    '#ff0000',
+    '#ff0000cc',
+    'rgb(255, 0, 0)',
+    'rgba(255,0,0,.5)',
+    'hsl(210 50% 40%)',
+    'red',
+    'rebeccapurple',
+  ]) {
+    assert.equal(clr(ok), ok, `${ok} should survive`);
+  }
+});
+
+test('clr refuses anything that could fetch or inject, falling back to dark', () => {
+  for (const bad of [
+    'url(http://evil.example/a.png)',
+    'red; background-image: url(http://evil.example/b.png)',
+    'image-set("http://evil.example/c.png" 1x)',
+    '#fff;}body{display:none',
+    'var(--x)',
+    'expression(alert(1))',
+  ]) {
+    assert.equal(clr(bad), '#1C1C1E', `${bad} should not reach a stylesheet`);
+  }
+});
+
+/* ── an embedded panel is granted only what a panel needs ─────────────────── */
+
+test('safeAllow keeps presentation features', () => {
+  assert.equal(safeAllow('autoplay; fullscreen'), 'autoplay; fullscreen');
+  assert.equal(safeAllow('picture-in-picture'), 'picture-in-picture');
+});
+
+test('safeAllow drops the capability features whatever the config asks for', () => {
+  assert.equal(safeAllow('camera; microphone; geolocation'), 'fullscreen');
+  assert.equal(safeAllow('autoplay; camera'), 'autoplay');
+  assert.equal(safeAllow("camera 'self'; fullscreen"), 'fullscreen');
+  assert.equal(safeAllow('display-capture; usb; serial; midi; payment'), 'fullscreen');
+});
+
+test('safeAllow falls back to fullscreen when nothing usable is asked for', () => {
+  assert.equal(safeAllow(''), 'fullscreen');
+  assert.equal(safeAllow(null), 'fullscreen');
+  assert.equal(safeAllow(undefined), 'fullscreen');
 });

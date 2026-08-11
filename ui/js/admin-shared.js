@@ -1,6 +1,7 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { nextActiveIndex } from '/js/admin-logic.js?v=056a11e9';
-import { el, qa, q } from '/js/utils.js?v=17424946';
+import { el, qa, q } from '/js/utils.js?v=84d58686';
+import { t } from '/js/i18n.js?v=133a7aac';
 
 export const API = '';
 
@@ -45,7 +46,14 @@ export const ap = async (p, b) => {
     const d = await r.json().catch(() => null);
     throw tagged(r.status, d || (r.status === 401 ? { error: 'Unauthorised', kind: 'auth' } : null));
   }
-  return r.json();
+  const body = await r.json();
+  /* Reported here rather than at each save, because every write of a config
+     goes through this one function and a credential left behind by any of them
+     has to be said out loud. The server only sends this when something was
+     actually withheld. */
+  const withheld = (body?.withheld || []).map(w => w.label).filter(Boolean);
+  if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err');
+  return body;
 };
 
 /* A native `disabled` control is skipped by screen readers, so the user is never

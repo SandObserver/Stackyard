@@ -5,7 +5,21 @@ export const mk = (t, a = {}) => {
   Object.assign(e, a);
   return e;
 };
-export const clr = c => (!c || c === 'dark' ? '#1C1C1E' : c === 'light' ? '#F2F2F7' : c);
+/* Every colour an item renders with passes through here, and the value can have
+   arrived in an imported config, so this is where a colour that is not a colour
+   stops. It is assigned to a background, and a CSS url() in a background fetches
+   from whatever host it names: the page's img-src refuses that today, and this
+   is so the refusal does not have to be the only thing standing in the way. An
+   unrecognised value falls back rather than being dropped, so a tile keeps its
+   shape. */
+const SAFE_COLOR = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9a-z%.,\s/+-]*\)|[a-z]{3,20})$/i;
+export const DEFAULT_TILE_COLOR = '#1C1C1E';
+export const clr = c => {
+  if (!c || c === 'dark') return DEFAULT_TILE_COLOR;
+  if (c === 'light') return '#F2F2F7';
+  const v = String(c).trim();
+  return SAFE_COLOR.test(v) ? v : DEFAULT_TILE_COLOR;
+};
 export const fb = (l, sz) => {
   const e = mk('span');
   e.className = 'fb';
@@ -142,6 +156,29 @@ export function teardownWidgets() {
   _mounts.clear();
 }
 
+/* What an embedded panel may be granted. The list a widget carries comes from
+   stored config, which can arrive by import, and the permission features are
+   the ones worth asking about: a frame that names camera or geolocation gets
+   neither, whatever the config says. Presentation features are kept, since that
+   is what a widget legitimately uses. */
+const SAFE_IFRAME_FEATURES = new Set([
+  'autoplay',
+  'fullscreen',
+  'picture-in-picture',
+  'encrypted-media',
+  'clipboard-write',
+  'web-share',
+]);
+
+/** @param {unknown} value @returns {string} */
+export function safeAllow(value) {
+  const kept = String(value == null ? '' : value)
+    .split(';')
+    .map(part => part.trim())
+    .filter(part => part && SAFE_IFRAME_FEATURES.has(part.split(/[\s(]/)[0].toLowerCase()));
+  return kept.join('; ') || 'fullscreen';
+}
+
 /* Mounts the iframe at a fixed design resolution and scales it to fill `card`,
    so widget content renders identically at every size. `card` must be
    aspect-locked to the design ratio. */
@@ -164,7 +201,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   const clip = mk('div');
   clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
   const ifr = mk('iframe', { src, scrolling: o.scrolling === true || o.scrolling === 'yes' ? 'yes' : 'no', title });
-  ifr.setAttribute('allow', o.allow || 'fullscreen');
+  ifr.setAttribute('allow', safeAllow(o.allow));
   if (o.allowFullscreen !== false) ifr.setAttribute('allowfullscreen', '');
   if (o.referrerPolicy) ifr.setAttribute('referrerpolicy', o.referrerPolicy);
   if (o.loading) ifr.setAttribute('loading', o.loading);

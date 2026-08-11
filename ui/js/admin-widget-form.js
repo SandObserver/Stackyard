@@ -1,11 +1,11 @@
 /* Admin UI: the widget edit form and its per-type config sections. */
 import { state } from '/js/admin-state.js?v=3f9ad806';
-import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
+import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=bb36dbb3';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=db00a87b';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { sizesForView, widgetConfigMode, rejectionLines, refusedNoticeKey } from '/js/admin-logic.js?v=056a11e9';
 import { t } from '/js/i18n.js?v=133a7aac';
-import { q, qi, qa } from '/js/utils.js?v=1';
+import { q, qi, qa } from '/js/utils.js?v=84d58686';
 
 const SIZE_ICONS = {
   small:

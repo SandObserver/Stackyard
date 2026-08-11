@@ -1,9 +1,9 @@
 /* Admin UI: the login gate and password-strength meter. onLogin is injected, so
    this module does not depend back on the main one. */
-import { ag, ap } from '/js/admin-shared.js?v=182410cc';
+import { ag, ap } from '/js/admin-shared.js?v=bb36dbb3';
 import { t } from '/js/i18n.js?v=133a7aac';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
-import { el, inp as inpById, qa } from '/js/utils.js?v=17424946';
+import { el, inp as inpById, qa } from '/js/utils.js?v=84d58686';
 
 export async function checkAuth(onLogin) {
   try {

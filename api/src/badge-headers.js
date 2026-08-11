@@ -69,7 +69,11 @@ function rowsToObject(rows) {
   /** @type {Record<string,string>} */
   const out = Object.create(null);
   for (const r of toRows(rows)) {
-    if (!r.key || r.value == null) continue;
+    /* An empty value is not a header worth sending. It happens when a stored
+       credential was withheld because the request no longer matches the one it
+       was saved for, and sending the name with nothing behind it only tells the
+       far end that the field exists. */
+    if (!r.key || r.value == null || r.value === '') continue;
     out[r.key] = r.value;
   }
   return out;
