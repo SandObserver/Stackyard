@@ -252,7 +252,9 @@ async function saveWallpaper() {
     const c = await ag('/api/config');
     c.settings = c.settings || {};
     c.settings.background = bg;
-    await ap('/api/config', c);
+    const cfgRes = await ap('/api/config', c);
+    const withheld = (cfgRes?.withheld || []).map(w => w.label).filter(Boolean);
+    if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err');
     /* Save Unsplash key separately AFTER main config; the GET /api/config strips the key,
        so state.saving it before would cause the subsequent config write to overwrite it with nothing */
     if (type === 'unsplash') {
@@ -295,7 +297,9 @@ async function saveServer() {
        password survives until Save, so this is the moment it is really deleted,
        and cancelling here must leave every other field unsaved too. */
     if (!enabled && _passwordSet && !confirm(t('confirm.clearPassword'))) return;
-    await ap('/api/config', c);
+    const cfgRes = await ap('/api/config', c);
+    const withheld = (cfgRes?.withheld || []).map(w => w.label).filter(Boolean);
+    if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err');
 
     if (authEnableBlocked({ enabled, passwordSet: _passwordSet, newPassword: pw })) {
       toast(t('toast.authNeedsPassword'), 'err');

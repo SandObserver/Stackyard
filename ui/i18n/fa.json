@@ -174,7 +174,8 @@
     "importForeignDone": "درون‌ریزی پایان یافت. برنامه‌ها: {apps}. پوشه‌ها: {folders}.",
     "importForeignNothing": "در این فایل‌ها چیزی برای درون‌ریزی نیست.",
     "importYamlUnsupported": "{file}: {reason} (خط {line})",
-    "importUnknownFormat": "{file} پیکربندی gethomepage یا Dashy نیست."
+    "importUnknownFormat": "{file} پیکربندی gethomepage یا Dashy نیست.",
+    "secretsWithheld": "اعتبارنامه را دوباره وارد کنید برای: {items}. نگه داشته نشد، چون درخواستِ مربوط به آن تغییر کرده است."
   },
   "confirm": {
     "deleteFolder": "پوشه «{name}» حذف شود؟ برنامه‌های داخل آن حذف نخواهند شد.",

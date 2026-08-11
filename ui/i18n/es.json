@@ -174,7 +174,8 @@
     "importForeignDone": "Importación terminada. Apps: {apps}. Carpetas: {folders}.",
     "importForeignNothing": "No hay nada que importar en esos archivos.",
     "importYamlUnsupported": "{file}: {reason} (línea {line})",
-    "importUnknownFormat": "{file} no es una configuración de gethomepage ni de Dashy."
+    "importUnknownFormat": "{file} no es una configuración de gethomepage ni de Dashy.",
+    "secretsWithheld": "Vuelve a introducir la credencial de: {items}. No se conservó porque cambió la petición a la que pertenece."
   },
   "confirm": {
     "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",

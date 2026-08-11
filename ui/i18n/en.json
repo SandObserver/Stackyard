@@ -174,7 +174,8 @@
     "importForeignDone": "Import finished. Apps: {apps}. Folders: {folders}.",
     "importForeignNothing": "Nothing to import from those files.",
     "importYamlUnsupported": "{file}: {reason} (line {line})",
-    "importUnknownFormat": "{file} is not a gethomepage or Dashy config."
+    "importUnknownFormat": "{file} is not a gethomepage or Dashy config.",
+    "secretsWithheld": "Enter the credential again for: {items}. It was not kept, because the request it belongs to changed."
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",

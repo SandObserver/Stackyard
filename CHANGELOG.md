@@ -65,6 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- A stored credential is only reused for the request it was saved for.
+  Changing where a badge or a widget sends it now requires entering it again.
+
 - The Password Protection switch refuses a request that does not plainly say on
   or off, instead of reading it as off and deleting the stored password.
 

@@ -174,7 +174,8 @@
     "importForeignDone": "Import abgeschlossen. Apps: {apps}. Ordner: {folders}.",
     "importForeignNothing": "Aus diesen Dateien gibt es nichts zu importieren.",
     "importYamlUnsupported": "{file}: {reason} (Zeile {line})",
-    "importUnknownFormat": "{file} ist keine gethomepage- oder Dashy-Konfiguration."
+    "importUnknownFormat": "{file} ist keine gethomepage- oder Dashy-Konfiguration.",
+    "secretsWithheld": "Zugangsdaten erneut eingeben für: {items}. Sie wurden nicht übernommen, weil sich die zugehörige Anfrage geändert hat."
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",
