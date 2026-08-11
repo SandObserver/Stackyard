@@ -174,7 +174,8 @@
     "importForeignDone": "Importation terminée. Apps : {apps}. Dossiers : {folders}.",
     "importForeignNothing": "Rien à importer dans ces fichiers.",
     "importYamlUnsupported": "{file} : {reason} (ligne {line})",
-    "importUnknownFormat": "{file} n’est pas une configuration gethomepage ou Dashy."
+    "importUnknownFormat": "{file} n’est pas une configuration gethomepage ou Dashy.",
+    "secretsWithheld": "Saisissez à nouveau les identifiants pour : {items}. Ils n’ont pas été conservés, car la requête associée a changé."
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",

@@ -140,13 +140,17 @@ on('POST', '/api/config', async (req, res) => {
       data.settings = data.settings || {};
       data.settings.auth = JSON.parse(JSON.stringify(existing.settings.auth));
     }
-    preserveAllSecrets(data, existing);
+    /* A stored credential is only refilled for the request it was stored for.
+       Anything withheld is named back to the caller, so a save that changed
+       where a badge points does not look like it kept working. */
+    const { withheld } = preserveAllSecrets(data, existing);
     migrate(data); /* upgrade old imported/restored configs; no-op for normal saves */
     ensureSystemItems(data);
     saveConfig(data);
     if (data.settings) log.setLevel(data.settings.logLevel);
     log.audit('config saved', {});
-    json(res, 200, { ok: true });
+    if (withheld.length) log.audit('stored credentials withheld', { items: withheld.map(w => w.id) });
+    json(res, 200, withheld.length ? { ok: true, withheld } : { ok: true });
   } catch (e) {
     fail(res, e, { status: 400 });
   }

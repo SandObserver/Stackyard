@@ -123,7 +123,17 @@ value. Secrets are preserved on save when the browser submits the config
 without them. A value stored as a secret is never sent back, in the config
 response or in an export.
 
-Two consequences of that guarantee:
+A secret is only put back for the request it was stored for. If a save changes
+where the credential would be sent, by editing a badge's URL, its non-secret
+headers or parameters, or any non-secret field of a widget's config, the stored
+value is not restored and the response names the items whose credential has to
+be entered again. Matching on the item's id alone would let a config file take a
+credential out of an install: keep the id, mark the value as still stored, point
+the request elsewhere, and the next poll would deliver it there. A config is
+something people import from elsewhere, so that file is the attack. The
+endpoints that test a badge or a widget apply the same rule.
+
+Three consequences of that guarantee:
 
 - Unticking **Secret** on a header or credential row clears the stored value on
   the next save, and the credential has to be retyped. Refilling the row would
