@@ -11,6 +11,11 @@ import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-fo
 import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=133a7aac';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=c2d82934';
 import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
+/* openModal is the item editor in this file, so the shared dialog comes in
+   under a different name. */
+import { openModal as openDialog, confirmModal, promptModal } from '/js/modal.js?v=10d34989';
+import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=d4e5311d';
+import { detectSource, convert, SKIP, NOTE } from '/js/import-foreign.js?v=e0db2fb3';
 
 /* Admin UI: Stackyard Dashboard */
 
@@ -80,38 +85,56 @@ async function applyBg() {
     }
   } catch {}
 }
+/** Returns whether the write reached the server, so a caller that reports its
+    own outcome does not announce success over a failed save. */
 async function save() {
-  if (state.saving) return;
+  if (state.saving) return false;
   state.saving = true;
+  let ok = false;
   try {
     const full = await ag('/api/config');
     full.items = state.items;
     await ap('/api/config', full);
     toast('Saved');
+    ok = true;
   } catch (e) {
     toast('Save failed: ' + e.message, 'err');
   }
   state.saving = false;
   render();
+  return ok;
 }
 
-function trapFocus(box) {
-  const sel = 'button:not([disabled]),[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
-  return e => {
-    if (e.key !== 'Tab') return;
-    const f = qa(sel, box);
-    if (!f.length) return;
-    const first = f[0],
-      last = f[f.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
+/** Append items to what is on the server right now, rather than to the copy
+    this page loaded.
+
+    An import promises that nothing already on the dashboard changes. Writing
+    back the in-memory list would break that promise for anything added from
+    another tab or device while the preview was open: the read-modify-write
+    would silently drop it. Throws, so the caller can report the failure.
+
+    @param {any[]} newItems */
+async function appendAndSave(newItems) {
+  if (state.saving) throw new Error('A save is already in progress');
+  state.saving = true;
+  try {
+    const full = await ag('/api/config');
+    const current = Array.isArray(full.items) ? full.items : [];
+    /* Ids were allocated against the list the preview was built from. The
+       server refuses duplicates outright, so a collision with something saved
+       in the meantime is caught here with a message naming the item. */
+    const taken = new Set(current.map(i => i && i.id));
+    const clash = newItems.find(i => taken.has(i.id));
+    if (clash) throw new Error(`${clash.label}: this id already exists. Reload and import again.`);
+    full.items = [...current, ...newItems];
+    await ap('/api/config', full);
+    state.items = full.items;
+  } finally {
+    state.saving = false;
+    render();
+  }
 }
+
 function moveRow(item, dir, opts = {}) {
   if (reorderItems(state.items, item, dir, opts)) save();
 }
@@ -698,43 +721,16 @@ function closeModal() {
 }
 
 function openFolderPicker(appId, targetFolderId = null) {
-  const trigger = /** @type {HTMLElement} */ (document.activeElement);
   const folders = state.items.filter(i => i.type === 'folder');
   const currentFolder = folders.find(f => (f.children || []).includes(appId));
   const appItem = state.items.find(i => i.id === appId);
   const appName = appItem?.label || appId;
 
-  el('folder-picker-ov')?.remove();
-
-  const ov = document.createElement('div');
-  ov.id = 'folder-picker-ov';
-  ov.className = 'fp-ov';
-  const box = document.createElement('div');
-  box.className = 'fp-box';
-  box.setAttribute('role', 'dialog');
-  box.setAttribute('aria-modal', 'true');
-  box.setAttribute('aria-labelledby', 'fp-hdr');
-
-  const hdr = document.createElement('div');
-  hdr.className = 'fp-hdr';
-  hdr.id = 'fp-hdr';
-  hdr.textContent = appId ? `Move "${appName}" to folder` : 'Add app to folder';
-
-  const list = document.createElement('div');
-  list.className = 'fp-list';
-
-  const close = () => {
-    document.removeEventListener('keydown', onKey);
-    ov.remove();
-    if (trigger && trigger.focus) trigger.focus();
-  };
-  const trap = trapFocus(box);
-  const onKey = e => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      close();
-    } else trap(e);
-  };
+  const dlg = openDialog({
+    title: appId ? t('folder.moveTo', { name: appName }) : t('folder.addApp'),
+  });
+  const list = dlg.body;
+  const close = dlg.close;
 
   const rowBtn = (cls, onAct) => {
     const b = document.createElement('button');
@@ -751,8 +747,8 @@ function openFolderPicker(appId, targetFolderId = null) {
       : [];
     if (!available.length) {
       const em = document.createElement('div');
-      em.className = 'fp-empty';
-      em.textContent = 'All apps are already in this folder.';
+      em.className = 'dlg-empty';
+      em.textContent = t('folder.allInFolder');
       list.appendChild(em);
     }
     available.forEach(app => {
@@ -789,7 +785,7 @@ function openFolderPicker(appId, targetFolderId = null) {
       close();
     });
     const ns = document.createElement('span');
-    ns.textContent = 'No folder';
+    ns.textContent = t('folder.none');
     none.append(ns);
     list.appendChild(none);
 
@@ -818,44 +814,37 @@ function openFolderPicker(appId, targetFolderId = null) {
     divider.style.margin = '4px 8px';
     list.appendChild(divider);
 
-    const nr = rowBtn('accent', () => {
-      const name = prompt('Folder name:');
-      if (!name?.trim()) return;
+    const nr = rowBtn('accent', async () => {
+      /* Closed first: the name prompt is a modal of its own, and two overlays
+         fighting over the focus trap leaves focus in the one underneath. */
+      close();
+      const name = await promptModal({
+        title: t('folder.createNew'),
+        label: t('folder.name'),
+        placeholder: t('folder.namePh'),
+        confirmLabel: t('common.create'),
+        cancelLabel: t('common.cancel'),
+      });
+      if (!name) return;
       const fid = newItemId(
-        'folder',
+        name,
         'folder',
         state.items.map(i => i.id),
       );
-      state.items.push({ id: fid, type: 'folder', label: name.trim(), children: [appId] });
+      state.items.push({ id: fid, type: 'folder', label: name, children: [appId] });
       state.items.forEach(f => {
         if (f.type === 'folder' && f.id !== fid) f.children = (f.children || []).filter(id => id !== appId);
       });
       save();
-      close();
     });
     const nrs = document.createElement('span');
-    nrs.textContent = '+ Create new folder';
+    nrs.textContent = '+ ' + t('folder.createNew');
     nr.append(nrs);
     list.appendChild(nr);
   }
 
-  const footer = document.createElement('div');
-  footer.className = 'fp-foot';
-  const cancel = document.createElement('button');
-  cancel.type = 'button';
-  cancel.className = 'btn bg sm';
-  cancel.textContent = 'Cancel';
-  cancel.onclick = close;
-  footer.appendChild(cancel);
-
-  ov.onclick = e => {
-    if (e.target === ov) close();
-  };
-  document.addEventListener('keydown', onKey);
-  box.append(hdr, list, footer);
-  ov.appendChild(box);
-  document.body.appendChild(ov);
-  (q('button', list) || cancel).focus();
+  dlg.addAction(t('common.cancel'), 'bg sm', close);
+  dlg.focus(q('button', list));
 }
 
 async function doSave(orig) {
@@ -1239,7 +1228,17 @@ el('imp').onchange = async e => {
       tgt(e).value = '';
       return;
     }
-    if (!confirm(t('import.confirm', { n: d.items.length, added, updated, deleted }))) {
+    const lead = document.createElement('p');
+    lead.className = 'dlg-lead';
+    lead.textContent = t('import.confirm', { n: d.items.length, added, updated, deleted });
+    const ok = await confirmModal({
+      title: t('import.confirmTitle'),
+      body: lead,
+      confirmLabel: t('common.import'),
+      cancelLabel: t('common.cancel'),
+      destructive: deleted > 0,
+    });
+    if (!ok) {
       tgt(e).value = '';
       return;
     }
@@ -1250,6 +1249,156 @@ el('imp').onchange = async e => {
     toast(t('toast.importFailed', { err: e.message }), 'err');
   }
   tgt(e).value = '';
+};
+
+/* Why an item did not import, and what changed about one that did. Written out
+   as literals rather than assembled from the code, so a key can be traced from
+   the catalog back to here. */
+const SKIP_TEXT = {
+  [SKIP.NO_LABEL]: 'importForeign.skipNoLabel',
+  [SKIP.NO_HREF]: 'importForeign.skipNoHref',
+  [SKIP.UNSAFE_HREF]: 'importForeign.skipUnsafeHref',
+  [SKIP.PLACEHOLDER_HREF]: 'importForeign.skipPlaceholderHref',
+  [SKIP.RELATIVE_HREF]: 'importForeign.skipRelativeHref',
+  [SKIP.UNREADABLE]: 'importForeign.skipUnreadable',
+};
+const NOTE_TEXT = {
+  [NOTE.ICON_DROPPED]: 'importForeign.noteIcon',
+  [NOTE.PING_DROPPED]: 'importForeign.notePing',
+  [NOTE.CONTAINER_ON_REMOTE]: 'importForeign.noteRemoteContainer',
+  [NOTE.GROUP_FLATTENED]: 'importForeign.noteFlattened',
+  [NOTE.SUBITEMS_FLATTENED]: 'importForeign.noteSubItems',
+  [NOTE.WIDGET_AS_LINK]: 'importForeign.noteWidgetLink',
+  [NOTE.WIDGETS_DROPPED]: 'importForeign.noteWidgetDropped',
+  [NOTE.LOCAL_URL_DROPPED]: 'importForeign.noteLocalUrl',
+  [NOTE.FIELDS_DROPPED]: 'importForeign.noteFields',
+  [NOTE.PAGES_NOT_FOLLOWED]: 'importForeign.notePages',
+};
+
+/** One "Heading (n)" block followed by a line per entry. Every entry is listed:
+    a summary that says four services were dropped without naming them leaves
+    the person to diff two configs by hand.
+    @param {HTMLElement} parent @param {string} heading
+    @param {Array<{ name: string, group: string, why: string }>} rows */
+function dlgSection(parent, heading, rows) {
+  if (!rows.length) return;
+  const h = document.createElement('div');
+  h.className = 'dlg-sec';
+  h.textContent = `${heading} (${rows.length})`;
+  const ul = document.createElement('ul');
+  ul.className = 'dlg-ul';
+  for (const row of rows) {
+    const li = document.createElement('li');
+    li.className = 'dlg-li';
+    const nm = document.createElement('span');
+    /* Either part can be missing: a note about the file as a whole has neither,
+       and a note about a group has no item name. */
+    setUserText(nm, [row.group, row.name].filter(Boolean).join(' / ') || t('importForeign.wholeFile'));
+    const why = document.createElement('span');
+    why.className = 'dlg-why';
+    setUserText(why, row.why);
+    li.append(nm, why);
+    ul.appendChild(li);
+  }
+  parent.append(h, ul);
+}
+
+el('imp-foreign').onchange = async e => {
+  const input = tgt(e);
+  const files = [...(input.files || [])];
+  if (!files.length) return;
+  try {
+    /* Ids have to stay unique against what is already saved and against every
+       other file in the batch, so one taken set runs through all of them. */
+    const taken = new Set(state.items.map(i => i.id));
+    const items = [],
+      skipped = [],
+      notes = [];
+    for (const file of files) {
+      let doc;
+      try {
+        doc = parseYaml(await file.text());
+      } catch (err) {
+        /* All or nothing. A half-imported dashboard is harder to undo than a
+           refused file, and the line number is what makes the file fixable. */
+        if (err instanceof YamlLiteError)
+          throw new Error(t('toast.importYamlUnsupported', { file: file.name, reason: err.reason, line: err.line }));
+        throw err;
+      }
+      const kind = detectSource(doc);
+      if (!kind) throw new Error(t('toast.importUnknownFormat', { file: file.name }));
+      const out = convert(kind, doc, taken, t('importForeign.untitledFolder'));
+      items.push(...out.items);
+      skipped.push(...out.skipped);
+      notes.push(...out.notes);
+    }
+
+    const apps = items.filter(i => i.type === 'app').length;
+    const folders = items.length - apps;
+    if (!apps) {
+      toast(t('toast.importForeignNothing'), 'err');
+      input.value = '';
+      return;
+    }
+
+    const body = document.createElement('div');
+    const lead = document.createElement('p');
+    lead.className = 'dlg-lead';
+    lead.textContent = t('importForeign.lead');
+    body.appendChild(lead);
+    dlgSection(
+      body,
+      t('importForeign.willAdd'),
+      items
+        .filter(i => i.type === 'app')
+        .map(i => {
+          /* The monitored URL is shown next to the link because this server, not
+           the browser, polls it on a timer once the import is saved. */
+          const ping = i.monitoring?.healthcheck?.pingUrl;
+          return {
+            name: i.label,
+            group: '',
+            why: ping ? `${i.href}  ${t('importForeign.monitors', { url: ping })}` : i.href,
+          };
+        }),
+    );
+    dlgSection(
+      body,
+      t('importForeign.willCreate'),
+      items
+        .filter(i => i.type === 'folder')
+        .map(i => ({ name: i.label, group: '', why: t('importForeign.appCount', { n: i.children.length }) })),
+    );
+    dlgSection(
+      body,
+      t('importForeign.changed'),
+      notes.map(n => ({ name: n.name, group: n.group, why: t(NOTE_TEXT[n.code], { detail: n.detail || '' }) })),
+    );
+    dlgSection(
+      body,
+      t('importForeign.notImported'),
+      skipped.map(s => ({ name: s.name, group: s.group, why: t(SKIP_TEXT[s.reason], { detail: s.detail || '' }) })),
+    );
+
+    const ok = await confirmModal({
+      title: t('importForeign.title'),
+      body,
+      confirmLabel: t('common.import'),
+      cancelLabel: t('common.cancel'),
+      className: 'wide',
+    });
+    if (!ok) {
+      input.value = '';
+      return;
+    }
+    /* Appended, never merged: nothing already on the dashboard is renamed,
+       reordered or removed by an import from somewhere else. */
+    await appendAndSave(items);
+    toast(t('toast.importForeignDone', { apps, folders }));
+  } catch (err) {
+    toast(t('toast.importFailed', { err: err.message }), 'err');
+  }
+  input.value = '';
 };
 
 el('btn-add').onclick = () => openModal(null);

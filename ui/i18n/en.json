@@ -21,7 +21,9 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "edit": "Edit",
-    "color": "Color"
+    "color": "Color",
+    "create": "Create",
+    "chooseFiles": "Choose files"
   },
   "general": {
     "title": "Title",
@@ -44,7 +46,9 @@
     "passwordTip": "Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.",
     "backup": "Backup",
     "importExport": "Import / Export",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "importForeign": "Import from another dashboard",
+    "importForeignTip": "Reads gethomepage and Dashy YAML files. Links and folders are added to your dashboard; widgets from the other dashboard become plain links."
   },
   "appearance": {
     "appTitle": "App Title",
@@ -85,7 +89,12 @@
     "noApps": "No apps available",
     "tip": "Tap to add or remove apps from this folder.",
     "namePh": "My Folder",
-    "addAppToFolder": "Add app to this folder"
+    "addAppToFolder": "Add app to this folder",
+    "moveTo": "Move \"{name}\" to folder",
+    "addApp": "Add app to folder",
+    "none": "No folder",
+    "allInFolder": "All apps are already in this folder.",
+    "createNew": "Create new folder"
   },
   "app": {
     "name": "Name",
@@ -159,7 +168,11 @@
     "importNoChange": "Nothing to import — the file matches your current config.",
     "pwWeak": "Password too weak: {label}",
     "sessionsRevoked": "All devices signed out.",
-    "authNeedsPassword": "Set a password before turning authentication on."
+    "authNeedsPassword": "Set a password before turning authentication on.",
+    "importForeignDone": "Import finished. Apps: {apps}. Folders: {folders}.",
+    "importForeignNothing": "Nothing to import from those files.",
+    "importYamlUnsupported": "{file}: {reason} (line {line})",
+    "importUnknownFormat": "{file} is not a gethomepage or Dashy config."
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",
@@ -172,7 +185,8 @@
     "noMatches": "No matches."
   },
   "import": {
-    "confirm": "Import {n} items?\n\n{added} added, {updated} updated, {deleted} deleted."
+    "confirm": "Import {n} items? {added} added, {updated} updated, {deleted} deleted.",
+    "confirmTitle": "Import configuration"
   },
   "status": {
     "needsAttention": "Status: needs attention",
@@ -215,5 +229,33 @@
     "refusedPlural": "{n} widgets could not be loaded, so they are not listed below.",
     "name": "Name",
     "type": "Widget Type"
+  },
+  "importForeign": {
+    "title": "Import from another dashboard",
+    "lead": "Nothing already on your dashboard changes.",
+    "willAdd": "Apps to add",
+    "willCreate": "Folders to create",
+    "changed": "Imported with changes",
+    "notImported": "Not imported",
+    "appCount": "({n})",
+    "skipNoLabel": "no name",
+    "skipNoHref": "no link",
+    "skipUnsafeHref": "unsupported link scheme",
+    "skipPlaceholderHref": "the link needs a variable only the other dashboard can fill in",
+    "noteIcon": "icon dropped: {detail}",
+    "notePing": "ICMP ping dropped: {detail}",
+    "noteRemoteContainer": "container ignored, it runs on {detail}",
+    "noteFlattened": "nested group became its own folder",
+    "noteSubItems": "sub-item moved into the folder",
+    "noteWidgetLink": "widget imported as a link",
+    "noteWidgetDropped": "{detail} section widgets dropped",
+    "noteFields": "fields dropped: {detail}",
+    "notePages": "{detail} extra pages not followed",
+    "noteLocalUrl": "second local address dropped: {detail}",
+    "wholeFile": "this file",
+    "untitledFolder": "Imported",
+    "skipRelativeHref": "the link has no address, only a path",
+    "skipUnreadable": "this entry is not in a shape the file format allows",
+    "monitors": "· polls {url}"
   }
 }

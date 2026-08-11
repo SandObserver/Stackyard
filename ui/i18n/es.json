@@ -21,7 +21,9 @@
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "edit": "Editar",
-    "color": "Color"
+    "color": "Color",
+    "create": "Crear",
+    "chooseFiles": "Elegir archivos"
   },
   "general": {
     "title": "Título",
@@ -44,7 +46,9 @@
     "passwordTip": "Déjalo en blanco para mantener la contraseña actual. Mínimo 8 caracteres. Para una protección más sólida, considera colocar el panel detrás de un <strong>Authentication Proxy</strong>. Esta contraseña integrada es una barrera ligera, no una capa de autenticación completa.",
     "backup": "Copia de seguridad",
     "importExport": "Importar / Exportar",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "importForeign": "Importar desde otro panel",
+    "importForeignTip": "Lee archivos YAML de gethomepage y Dashy. Los enlaces y las carpetas se añaden a tu panel; los widgets del otro panel se convierten en enlaces simples."
   },
   "appearance": {
     "appTitle": "Título de la aplicación",
@@ -85,7 +89,12 @@
     "noApps": "No hay aplicaciones disponibles",
     "tip": "Toca para añadir o quitar aplicaciones de esta carpeta.",
     "namePh": "Mi carpeta",
-    "addAppToFolder": "Añadir aplicación a esta carpeta"
+    "addAppToFolder": "Añadir aplicación a esta carpeta",
+    "moveTo": "Mover \"{name}\" a una carpeta",
+    "addApp": "Añadir app a la carpeta",
+    "none": "Sin carpeta",
+    "allInFolder": "Todas las apps ya están en esta carpeta.",
+    "createNew": "Crear carpeta nueva"
   },
   "app": {
     "name": "Nombre",
@@ -159,7 +168,11 @@
     "importNoChange": "Nada que importar — el archivo coincide con tu configuración actual.",
     "pwWeak": "Contraseña demasiado débil: {label}",
     "sessionsRevoked": "Se cerró la sesión en todos los dispositivos.",
-    "authNeedsPassword": "Establece una contraseña antes de activar la autenticación."
+    "authNeedsPassword": "Establece una contraseña antes de activar la autenticación.",
+    "importForeignDone": "Importación terminada. Apps: {apps}. Carpetas: {folders}.",
+    "importForeignNothing": "No hay nada que importar en esos archivos.",
+    "importYamlUnsupported": "{file}: {reason} (línea {line})",
+    "importUnknownFormat": "{file} no es una configuración de gethomepage ni de Dashy."
   },
   "confirm": {
     "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",
@@ -172,7 +185,8 @@
     "noMatches": "Sin coincidencias."
   },
   "import": {
-    "confirm": "¿Importar {n} elementos?\n\n{added} añadidos, {updated} actualizados, {deleted} eliminados."
+    "confirm": "¿Importar {n} elementos? {added} añadidos, {updated} actualizados, {deleted} eliminados.",
+    "confirmTitle": "Importar configuración"
   },
   "status": {
     "needsAttention": "Estado: necesita atención",
@@ -215,5 +229,33 @@
     "refusedPlural": "No se pudieron cargar {n} widgets, por lo que no aparecen en la lista.",
     "name": "Nombre",
     "type": "Tipo de widget"
+  },
+  "importForeign": {
+    "title": "Importar desde otro panel",
+    "lead": "No cambia nada de lo que ya tienes en el panel.",
+    "willAdd": "Apps que se añadirán",
+    "willCreate": "Carpetas que se crearán",
+    "changed": "Importado con cambios",
+    "notImported": "No importado",
+    "appCount": "({n})",
+    "skipNoLabel": "sin nombre",
+    "skipNoHref": "sin enlace",
+    "skipUnsafeHref": "esquema de enlace no admitido",
+    "skipPlaceholderHref": "el enlace necesita una variable que solo conoce el otro panel",
+    "noteIcon": "icono descartado: {detail}",
+    "notePing": "ping ICMP descartado: {detail}",
+    "noteRemoteContainer": "contenedor ignorado, se ejecuta en {detail}",
+    "noteFlattened": "el grupo anidado pasó a ser su propia carpeta",
+    "noteSubItems": "subelemento movido a la carpeta",
+    "noteWidgetLink": "widget importado como enlace",
+    "noteWidgetDropped": "{detail} widgets de sección descartados",
+    "noteFields": "campos descartados: {detail}",
+    "notePages": "{detail} páginas adicionales no seguidas",
+    "noteLocalUrl": "segunda dirección local descartada: {detail}",
+    "wholeFile": "este archivo",
+    "untitledFolder": "Importado",
+    "skipRelativeHref": "el enlace no tiene dirección, solo una ruta",
+    "skipUnreadable": "esta entrada no tiene la forma que permite el formato del archivo",
+    "monitors": "· sondea {url}"
   }
 }

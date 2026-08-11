@@ -1,0 +1,102 @@
+# Dashy configuration for the lab
+# Docs: https://dashy.to/docs/configuring
+---
+pageInfo:
+  title: Lab Dashy
+  description: Self-hosted service index
+  navLinks:
+    - title: Homepage
+      path: http://127.0.0.1:18080/
+    - title: Docs
+      path: https://dashy.to/docs/
+
+appConfig:
+  theme: nord
+  layout: auto
+  iconSize: medium
+  language: en
+  statusCheck: true
+  statusCheckInterval: 300
+  hideComponents:
+    hideSettings: false
+  auth:
+    enableGuestAccess: true
+
+sections:
+  - name: Media
+    icon: fas fa-photo-video
+    displayData:
+      sortBy: default
+      cols: 2
+      collapsed: false
+    items:
+      - title: Plex
+        description: Movies and TV
+        icon: favicon
+        url: http://media.lab.internal:32400/web
+        target: newtab
+        statusCheck: true
+        statusCheckUrl: http://media.lab.internal:32400/identity
+        tags:
+          - media
+      - title: Jellyfin
+        description: Backup media server
+        icon: hl-jellyfin
+        url: https://jellyfin.lab.internal/
+        localUrl: http://192.168.1.50:8096
+        statusCheck: true
+      - title: Arr Stack
+        description: Automation tools
+        icon: si-sonarr
+        url: http://sonarr.lab.internal:8989
+        subItems:
+          - title: Sonarr
+            icon: sonarr.png
+            url: http://sonarr.lab.internal:8989
+          - title: Radarr
+            icon: mdi-filmstrip
+            url: http://radarr.lab.internal:7878
+
+  - name: Infrastructure
+    icon: fas fa-server
+    items:
+      - title: Proxmox
+        description: Hypervisor
+        icon: proxmox.png
+        url: https://pve.lab.internal:8006
+        statusCheck: true
+        statusCheckAllowInsecure: true
+      - title: OPNsense
+        icon: https://opnsense.org/wp-content/themes/OPNsense/assets/img/favicon.png
+        url: https://10.0.0.1/
+        color: "#d94f00"
+        backgroundColor: "#1a1a1a"
+      - title: Portainer
+        icon: /icons/portainer.png
+        url: http://portainer.lab.internal:9000
+        statusCheck: true
+        statusCheckUrl: http://portainer.lab.internal:9000/api/status
+        hotkey: 3
+
+  - name: Bookmarks
+    icon: fas fa-bookmark
+    displayData:
+      sortBy: alphabetical
+    items:
+      - title: GitHub
+        icon: si-github
+        url: https://github.com/
+        provider: GitHub
+      - title: Café ☕
+        icon: 🍵
+        url: https://example.com/caf%C3%A9
+        description: Unicode and emoji test
+
+  - name: System Widgets
+    icon: fas fa-chart-line
+    widgets:
+      - type: clock
+        options:
+          timeZone: Europe/Berlin
+          format: en-GB
+      - type: public-ip

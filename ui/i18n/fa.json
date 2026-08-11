@@ -21,7 +21,9 @@
     "showPassword": "نمایش گذرواژه",
     "hidePassword": "پنهان کردن گذرواژه",
     "edit": "ویرایش",
-    "color": "رنگ"
+    "color": "رنگ",
+    "create": "ساختن",
+    "chooseFiles": "انتخاب فایل‌ها"
   },
   "general": {
     "title": "عنوان",
@@ -44,7 +46,9 @@
     "passwordTip": "برای حفظ رمز عبور فعلی، این قسمت را خالی بگذارید. حداقل ۸ کاراکتر. برای محافظت قوی‌تر، قرار دادن داشبورد پشت یک <strong>Authentication Proxy</strong> را در نظر بگیرید. این رمز عبور داخلی یک محافظ سبک است، نه یک لایه کامل احراز هویت.",
     "backup": "پشتیبان‌گیری",
     "importExport": "وارد کردن / خروجی گرفتن",
-    "signOut": "خروج از حساب"
+    "signOut": "خروج از حساب",
+    "importForeign": "درون‌ریزی از داشبورد دیگر",
+    "importForeignTip": "فایل‌های YAML مربوط به gethomepage و Dashy را می‌خواند. پیوندها و پوشه‌ها به داشبورد شما افزوده می‌شوند؛ ویجت‌های داشبورد دیگر به پیوند ساده تبدیل می‌شوند."
   },
   "appearance": {
     "appTitle": "عنوان برنامه",
@@ -85,7 +89,12 @@
     "noApps": "هیچ برنامه‌ای موجود نیست",
     "tip": "برای افزودن یا حذف برنامه از این پوشه ضربه بزنید.",
     "namePh": "پوشه من",
-    "addAppToFolder": "افزودن برنامه به این پوشه"
+    "addAppToFolder": "افزودن برنامه به این پوشه",
+    "moveTo": "انتقال «{name}» به پوشه",
+    "addApp": "افزودن برنامه به پوشه",
+    "none": "بدون پوشه",
+    "allInFolder": "همه برنامه‌ها از پیش در این پوشه هستند.",
+    "createNew": "ساخت پوشه تازه"
   },
   "app": {
     "name": "نام",
@@ -159,7 +168,11 @@
     "importNoChange": "چیزی برای Import نیست — فایل با تنظیمات فعلی شما مطابقت دارد.",
     "pwWeak": "رمز عبور ضعیف است: {label}",
     "sessionsRevoked": "همه دستگاه‌ها خارج شدند.",
-    "authNeedsPassword": "پیش از فعال‌سازی احراز هویت، یک گذرواژه تعیین کنید."
+    "authNeedsPassword": "پیش از فعال‌سازی احراز هویت، یک گذرواژه تعیین کنید.",
+    "importForeignDone": "درون‌ریزی پایان یافت. برنامه‌ها: {apps}. پوشه‌ها: {folders}.",
+    "importForeignNothing": "در این فایل‌ها چیزی برای درون‌ریزی نیست.",
+    "importYamlUnsupported": "{file}: {reason} (خط {line})",
+    "importUnknownFormat": "{file} پیکربندی gethomepage یا Dashy نیست."
   },
   "confirm": {
     "deleteFolder": "پوشه «{name}» حذف شود؟ برنامه‌های داخل آن حذف نخواهند شد.",
@@ -172,7 +185,8 @@
     "noMatches": "نتیجه‌ای یافت نشد."
   },
   "import": {
-    "confirm": "{n} مورد Import شود؟\n\n{added} افزوده شد، {updated} به‌روزرسانی شد، {deleted} حذف شد."
+    "confirm": "{n} مورد درون‌ریزی شود؟ {added} افزوده، {updated} به‌روزرسانی، {deleted} حذف.",
+    "confirmTitle": "درون‌ریزی پیکربندی"
   },
   "status": {
     "needsAttention": "وضعیت: نیاز به رسیدگی",
@@ -215,5 +229,33 @@
     "refusedPlural": "‏{n} ابزارک بارگذاری نشدند، بنابراین در فهرست زیر نیستند.",
     "name": "نام",
     "type": "نوع ابزارک"
+  },
+  "importForeign": {
+    "title": "درون‌ریزی از داشبورد دیگر",
+    "lead": "آنچه از پیش در داشبورد دارید تغییر نمی‌کند.",
+    "willAdd": "برنامه‌های افزودنی",
+    "willCreate": "پوشه‌های ساختنی",
+    "changed": "با تغییر درون‌ریزی شد",
+    "notImported": "درون‌ریزی نشد",
+    "appCount": "({n})",
+    "skipNoLabel": "بدون نام",
+    "skipNoHref": "بدون پیوند",
+    "skipUnsafeHref": "طرح پیوند پشتیبانی‌نشده",
+    "skipPlaceholderHref": "پیوند به متغیری نیاز دارد که فقط داشبورد دیگر آن را می‌داند",
+    "noteIcon": "نماد کنار گذاشته شد: {detail}",
+    "notePing": "پینگ ICMP کنار گذاشته شد: {detail}",
+    "noteRemoteContainer": "کانتینر نادیده گرفته شد، روی {detail} اجرا می‌شود",
+    "noteFlattened": "گروه تودرتو به پوشه‌ای جداگانه تبدیل شد",
+    "noteSubItems": "زیرمورد به پوشه منتقل شد",
+    "noteWidgetLink": "ویجت به‌صورت پیوند درون‌ریزی شد",
+    "noteWidgetDropped": "{detail} ویجت بخش کنار گذاشته شد",
+    "noteFields": "فیلدهای کنارگذاشته: {detail}",
+    "notePages": "{detail} صفحه دیگر دنبال نشد",
+    "noteLocalUrl": "نشانی محلی دوم کنار گذاشته شد: {detail}",
+    "wholeFile": "همین پرونده",
+    "untitledFolder": "درون‌ریزی‌شده",
+    "skipRelativeHref": "پیوند نشانی ندارد، فقط یک مسیر",
+    "skipUnreadable": "این ورودی ساختاری ندارد که قالب پرونده بپذیرد",
+    "monitors": "· {url} را می‌پاید"
   }
 }
