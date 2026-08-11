@@ -8,6 +8,7 @@ import {
   visibleFieldKeys,
   clearsStoredSecret,
   authEnableBlocked,
+  shouldWritePassword,
   widgetConfigMode,
   resolveAdminSection,
   rejectionLines,
@@ -369,4 +370,26 @@ test('the notice key follows the count', () => {
   assert.equal(refusedNoticeKey(1), 'widgetCfg.refused');
   assert.equal(refusedNoticeKey(2), 'widgetCfg.refusedPlural');
   assert.equal(refusedNoticeKey(0), 'widgetCfg.refusedPlural');
+});
+
+/* ── shouldWritePassword ──────────────────────────────────────────────────── */
+
+/* Typing a password and switching protection off in the same save is a
+   contradiction. Storing it first signed every other device out, because
+   set-password rotates the session secret, and the toggle in the same save then
+   deleted the password again. The round trip cost the user their sessions and
+   left nothing behind, and the save reported success. */
+
+test('a password typed while switching protection off is not written', () => {
+  assert.equal(shouldWritePassword({ enabled: false, newPassword: 'correct-horse' }), false);
+});
+
+test('a password typed while switching protection on is written', () => {
+  assert.equal(shouldWritePassword({ enabled: true, newPassword: 'correct-horse' }), true);
+});
+
+test('nothing is written when no password was typed', () => {
+  assert.equal(shouldWritePassword({ enabled: true, newPassword: '' }), false);
+  assert.equal(shouldWritePassword({ enabled: true, newPassword: undefined }), false);
+  assert.equal(shouldWritePassword({ enabled: false, newPassword: '' }), false);
 });

@@ -1,7 +1,7 @@
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=a0ea3e4b';
 import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=17424946';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=056a11e9';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=3c60f7b0';
 import { newItemId, buildAppItem, upsertItem, claimFolderChildren } from '/js/admin-save-logic.js?v=77cac1d1';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=182410cc';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
@@ -9,7 +9,7 @@ import { state } from '/js/admin-state.js?v=3f9ad806';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=653071f0';
 import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=b46e5b19';
 import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=133a7aac';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=c2d82934';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=536793f6';
 import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
 /* openModal is the item editor in this file, so the shared dialog comes in
    under a different name. */

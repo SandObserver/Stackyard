@@ -23,7 +23,9 @@
     "edit": "ویرایش",
     "color": "رنگ",
     "create": "ساختن",
-    "chooseFiles": "انتخاب فایل‌ها"
+    "chooseFiles": "انتخاب فایل‌ها",
+    "configured": "تنظیم‌شده",
+    "notSet": "تنظیم نشده"
   },
   "general": {
     "title": "عنوان",

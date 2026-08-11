@@ -46,10 +46,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Badges no longer lose their rounded shape in Safari after a long session.
 
-- Turning Password Protection off now deletes the stored password, which
-  previously stayed behind and could leave an install unable to set a new one.
+- Turning Password Protection off now deletes the stored password.
+  While protection is off, anyone who can reach the dashboard can set a new one.
+
+- A password typed in the same save that turns Password Protection off is no
+  longer stored and then immediately deleted, which signed out every other
+  device for nothing.
+
+- The sign-out row no longer stays on screen after Password Protection is
+  turned off, where pressing it returned an error.
+
+- The password and Unsplash key status labels are translated instead of always
+  reading in English.
 
 ### Security
+
+- The Password Protection switch refuses a request that does not plainly say on
+  or off, instead of reading it as off and deleting the stored password.
 
 - A Connections tile that cannot reach a service now says so in plain words
   instead of printing the address it tried, which put an internal host and port

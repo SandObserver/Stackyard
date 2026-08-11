@@ -1,14 +1,28 @@
 /* Admin UI: the General, Appearance and Security settings sections. */
 import { toast, ag, ap } from '/js/admin-shared.js?v=182410cc';
-import { wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
 import { t } from '/js/i18n.js?v=133a7aac';
-import { authEnableBlocked } from '/js/admin-logic.js?v=056a11e9';
+import { authEnableBlocked, shouldWritePassword } from '/js/admin-logic.js?v=3c60f7b0';
 import { el, inp, q, qa, setUserText } from '/js/utils.js?v=17424946';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password behind
    it. */
 let _passwordSet = false;
+
+/* Both controls only mean anything while auth is on; the revoke one also needs
+   a password to exist, since that is what makes a session possible.
+
+   Module scope rather than a closure, because the three moments that change
+   what it reflects are in three different places: the check on load, the
+   toggle, and the save that clears a stored password. */
+function syncSessionRows() {
+  const on = !!inp('sec-en')?.checked;
+  el('sec-logout')?.classList.toggle('d-none', !on);
+  const canRevoke = on && _passwordSet;
+  el('sec-revoke-row')?.classList.toggle('d-none', !canRevoke);
+  const revokeTip = el('revoke-tip');
+  if (revokeTip) revokeTip.style.display = canRevoke ? '' : 'none';
+}
 
 export function loadSettings(c) {
   const s = c.settings || {};
@@ -73,9 +87,9 @@ export function loadSettings(c) {
         const vEl = el('ie-apikey-v');
         if (!d.configured) {
           apiEl.placeholder = 'Paste your Unsplash API key';
-          if (vEl) vEl.textContent = 'Not set';
+          if (vEl) vEl.textContent = t('common.notSet');
         } else {
-          if (vEl) vEl.textContent = 'Configured';
+          if (vEl) vEl.textContent = t('common.configured');
         }
       })
       .catch(() => {});
@@ -127,7 +141,7 @@ export function loadSettings(c) {
   );
   _sv('ie-ip-v', s.server?.hostIp, '192.168.1.100');
   _sv('ie-socket-v', s.server?.socketProxyUrl, 'http://socket-proxy:2375');
-  _sv('ie-pw-v', '', 'Not set'); /* set below after auth check */
+  _sv('ie-pw-v', '', t('common.notSet')); /* set below after auth check */
   const _si = (id, v) => {
     const node = inp(id);
     if (node && v != null) node.value = v;
@@ -166,31 +180,8 @@ export function loadSettings(c) {
   el('srv-save').addEventListener('click', saveServer);
 
   const secEnEl = inp('sec-en');
-  const secSubEl = el('sec-sub');
-  const secPwEl = el('sec-pw');
-  let pwStrengthWired = false;
-  function openSecSub() {
-    secSubEl.classList.add('open');
-    /* Wire strength meter on first open, avoids Safari input event bug
-       where listeners on password fields in hidden containers don't fire */
-    if (!pwStrengthWired && secPwEl) {
-      pwStrengthWired = true;
-      wirePasswordStrength('sec-pw', 'sec-pw-bars', 'sec-pw-hint');
-    }
-  }
   const secLogout = el('sec-logout');
   const secRevoke = inp('sec-revoke');
-  const secRevokeRow = el('sec-revoke-row');
-  const revokeTip = el('revoke-tip');
-  /* Both controls only mean anything while auth is on; the revoke one also needs
-     a password to exist, since that is what makes a session possible. */
-  const syncLogout = () => {
-    const on = !!secEnEl?.checked;
-    if (secLogout) secLogout.classList.toggle('d-none', !on);
-    const canRevoke = on && _passwordSet;
-    if (secRevokeRow) secRevokeRow.classList.toggle('d-none', !canRevoke);
-    if (revokeTip) revokeTip.style.display = canRevoke ? '' : 'none';
-  };
   secLogout?.addEventListener('click', async () => {
     await ap('/api/auth/logout', {}).catch(() => {});
     location.reload();
@@ -209,13 +200,7 @@ export function loadSettings(c) {
       secRevoke.disabled = false;
     }
   });
-  if (secEnEl && secSubEl) {
-    secEnEl.addEventListener('change', () => {
-      if (secEnEl.checked) openSecSub();
-      else secSubEl.classList.remove('open');
-      syncLogout();
-    });
-  }
+  secEnEl?.addEventListener('change', syncSessionRows);
 
   ag('/api/auth/check')
     .then(d => {
@@ -230,8 +215,8 @@ export function loadSettings(c) {
         if (pwHint) pwHint.style.display = d.enabled ? '' : 'none';
       }
       const pwValEl = el('ie-pw-v');
-      if (pwValEl) pwValEl.textContent = d.passwordSet ? 'Configured' : 'Not set';
-      syncLogout();
+      if (pwValEl) pwValEl.textContent = d.passwordSet ? t('common.configured') : t('common.notSet');
+      syncSessionRows();
     })
     .catch(() => {});
 }
@@ -316,7 +301,7 @@ async function saveServer() {
       toast(t('toast.authNeedsPassword'), 'err');
       return;
     }
-    if (pw) {
+    if (shouldWritePassword({ enabled, newPassword: pw })) {
       const { ok, labelKey } = pwStrength(pw);
       if (!ok) {
         toast(t('toast.pwWeak', { label: t(labelKey) }), 'err');
@@ -336,9 +321,17 @@ async function saveServer() {
          claiming one is stored: re-enabling in this session needs a new one. */
       _passwordSet = false;
       const pwValEl = el('ie-pw-v');
-      if (pwValEl) pwValEl.textContent = 'Not set';
+      if (pwValEl) pwValEl.textContent = t('common.notSet');
       const pwEl = inp('sec-pw');
-      if (pwEl) pwEl.placeholder = '';
+      if (pwEl) {
+        pwEl.placeholder = '';
+        /* Whatever was typed was not stored, so leaving it in the box would
+           read as a password this dashboard now has. */
+        pwEl.value = '';
+      }
+      /* The revoke row offers to end sessions that no longer exist, and the
+         server answers it with an error. */
+      syncSessionRows();
     }
     toast(t('toast.saved'));
     if (langChanged) location.reload();

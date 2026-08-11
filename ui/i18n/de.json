@@ -23,7 +23,9 @@
     "edit": "Bearbeiten",
     "color": "Farbe",
     "create": "Erstellen",
-    "chooseFiles": "Dateien wählen"
+    "chooseFiles": "Dateien wählen",
+    "configured": "Eingerichtet",
+    "notSet": "Nicht gesetzt"
   },
   "general": {
     "title": "Titel",

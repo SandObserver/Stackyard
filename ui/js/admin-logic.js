@@ -118,6 +118,14 @@ export function authEnableBlocked({ enabled, passwordSet, newPassword }) {
   return !!enabled && !passwordSet && !(newPassword || '').length;
 }
 
+/* A password typed in the same save that switches protection off is not stored.
+   Writing it would rotate the session secret and sign every other device out,
+   and the toggle in the same save would delete it again a moment later, so the
+   round trip costs the user their other sessions and leaves nothing behind. */
+export function shouldWritePassword({ enabled, newPassword }) {
+  return !!enabled && !!(newPassword || '').length;
+}
+
 /* 'registry' renders the manifest's fields, 'custom' the URL editor, and
    'unavailable' a registry widget whose manifest is not loaded. The last must not
    fall through to the custom editor: the server withholds that widget's config,
