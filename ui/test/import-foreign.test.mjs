@@ -360,3 +360,44 @@ test('conversion adds items only, so nothing existing is touched', () => {
     assert.equal(item.type === 'folder' || item.type === 'app', true);
   }
 });
+
+/* detectSource settles the format on the first entry that matches, so a group
+   the rest of the file does not agree with reaches the converter. Passing over
+   it imported a smaller dashboard with nothing in the preview saying so. */
+test('a group that is not a list is counted, not passed over', () => {
+  const doc = parseYaml('- Dev:\n    - Git:\n        href: http://git\n- Broken: notalist\n');
+  const out = convertHomepageServices(doc, []);
+  assert.equal(apps(out).length, 1);
+  assert.equal(byName(out.skipped, 'Broken').length, 1);
+  assert.equal(out.skipped[0].reason, SKIP.UNREADABLE);
+});
+
+test('a bookmarks group that is not a list is counted too', () => {
+  const doc = [{ Dev: [{ Git: [{ href: 'http://git' }] }] }, { Broken: 'notalist' }];
+  const out = convertHomepageBookmarks(doc, []);
+  assert.equal(apps(out).length, 1);
+  assert.equal(byName(out.skipped, 'Broken').length, 1);
+});
+
+test('a Dashy section with no readable items is counted, not dropped', () => {
+  const out = convertDashy({ sections: [{ name: 'Apps' }] }, []);
+  assert.equal(out.items.length, 0);
+  assert.equal(byName(out.skipped, 'Apps').length, 1);
+  assert.equal(out.skipped[0].reason, SKIP.UNREADABLE);
+});
+
+/* A section that only holds widgets already reports them as dropped, so a
+   second line about the same section would say nothing new. */
+test('a Dashy section holding only widgets reports the widgets alone', () => {
+  const out = convertDashy({ sections: [{ name: 'Stats', widgets: [{ type: 'cpu' }] }] }, []);
+  assert.deepEqual(out.skipped, []);
+  assert.equal(out.notes[0].code, NOTE.WIDGETS_DROPPED);
+});
+
+/* The caller builds one set and passes it to every file in the batch. Copying
+   it inside meant the second file could not see what the first allocated. */
+test('the caller sees the ids a conversion allocated', () => {
+  const taken = new Set(['Plex_abc']);
+  const out = convertHomepageServices(parseYaml(SERVICES), taken);
+  for (const item of out.items) assert.ok(taken.has(item.id), 'the id is in the caller’s set');
+});

@@ -131,7 +131,7 @@ export function convertIcon(raw) {
     }
     return host === 'cdn.jsdelivr.net' ? { iconUrl: s, dropped: false } : { iconUrl: '', dropped: true };
   }
-  if (s.startsWith('/') || s.includes('/')) return { iconUrl: '', dropped: true };
+  if (s.includes('/')) return { iconUrl: '', dropped: true };
   /* selfh.st and homelab-svg-assets prefixes. Both name the same service the
      dashboard-icons catalogue does, so the remainder is a usable slug. */
   const body = /^(sh|hl)-/i.test(s) ? s.slice(3) : s;
@@ -148,9 +148,11 @@ export function convertIcon(raw) {
 
 /** Collector for one conversion run. Keeps ids unique across every file in the
     batch, including against the items already on the dashboard.
+    A Set given by the caller is used as it is rather than copied: the ids of one
+    file have to be visible while the next one in the batch is converted.
     @param {Iterable<string>} takenIds */
 function collector(takenIds) {
-  const taken = new Set(takenIds || []);
+  const taken = takenIds instanceof Set ? takenIds : new Set(takenIds || []);
   return {
     taken,
     /** @type {any[]} */ items: [],
@@ -242,7 +244,7 @@ export function convertHomepageServices(doc, takenIds = []) {
   const col = collector(takenIds);
   if (!Array.isArray(doc)) return result(col);
 
-  const walk = (entries, groupLabel, depth) => {
+  const walk = (entries, groupLabel) => {
     const at = col.items.length;
     const children = [];
     for (const entry of Array.isArray(entries) ? entries : []) {
@@ -262,7 +264,7 @@ export function convertHomepageServices(doc, takenIds = []) {
         /* The child's own name, not the compound one: the preview prints
            "group / name", so passing the compound name repeats the parent. */
         col.note(NOTE.GROUP_FLATTENED, name, groupLabel, nested);
-        walk(value, nested, depth + 1);
+        walk(value, nested);
         continue;
       }
       if (!isMap(value)) {
@@ -295,8 +297,14 @@ export function convertHomepageServices(doc, takenIds = []) {
 
   for (const group of doc) {
     const g = soleEntry(group);
-    if (!g || !Array.isArray(g[1])) continue;
-    walk(g[1], g[0], 0);
+    if (!g || !Array.isArray(g[1])) {
+      /* A top-level group the file shapes differently from the rest. detectSource
+         settles the format on the first entry that matches, so one of these does
+         not stop the import, and passing over it loses the whole group. */
+      col.skip(SKIP.UNREADABLE, g ? g[0] : '', '');
+      continue;
+    }
+    walk(g[1], g[0]);
   }
   return result(col);
 }
@@ -308,7 +316,10 @@ export function convertHomepageBookmarks(doc, takenIds = []) {
 
   for (const group of doc) {
     const g = soleEntry(group);
-    if (!g || !Array.isArray(g[1])) continue;
+    if (!g || !Array.isArray(g[1])) {
+      col.skip(SKIP.UNREADABLE, g ? g[0] : '', '');
+      continue;
+    }
     const [groupLabel, entries] = g;
     const at = col.items.length;
     const children = [];
@@ -371,8 +382,6 @@ export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
       }
       const title = text(raw.title);
       const icon = convertIcon(raw.icon);
-      /* localUrl is the address on the other network. Importing it would give
-         half the tiles a link that only works from somewhere else. */
       const href = str(raw.url);
       const check = raw.statusCheck === true;
       /* Dashy's per-item switch for a health check against a self-signed
@@ -390,15 +399,22 @@ export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
       children.push(app.id);
       if (icon.dropped) col.note(NOTE.ICON_DROPPED, title, groupLabel, str(raw.icon));
       if (viaSubItem) col.note(NOTE.SUBITEMS_FLATTENED, title, groupLabel);
-      /* A second address for the same service, reachable only from the other
-         network. Reported rather than dropped in silence, because the tile
-         keeps whichever of the two the source called the primary one. */
+      /* localUrl is a second address for the same service, reachable only from
+         the other network, so importing it would give half the tiles a link that
+         works from somewhere else. Reported rather than dropped in silence,
+         because the tile keeps whichever of the two the source called primary. */
       if (str(raw.localUrl)) col.note(NOTE.LOCAL_URL_DROPPED, title, groupLabel, str(raw.localUrl));
       noteIgnored(col, raw, title, groupLabel);
       for (const sub of Array.isArray(raw.subItems) ? raw.subItems : []) addDashyItem(sub, true);
     };
 
-    for (const item of Array.isArray(section.items) ? section.items : []) addDashyItem(item, false);
+    if (Array.isArray(section.items)) for (const item of section.items) addDashyItem(item, false);
+    else if (!Array.isArray(section.widgets)) {
+      /* A section shaped like one but carrying nothing readable. Without this it
+         contributes no items, no skips and no notes, and the preview shows a
+         file smaller than the one that was chosen with nothing saying why. */
+      col.skip(SKIP.UNREADABLE, groupLabel, '');
+    }
     /* A section widget has no link of its own to keep, unlike a Homepage
        service widget, so there is nothing to import in its place. */
     if (Array.isArray(section.widgets) && section.widgets.length)

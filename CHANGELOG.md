@@ -63,6 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The password and Unsplash key status labels are translated instead of always
   reading in English.
 
+- Escape and the Tab trap keep working in a folder or prompt overlay after
+  clicking text inside it.
+
 ### Security
 
 - A stored credential is only reused for the request it was saved for.

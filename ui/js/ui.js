@@ -12,7 +12,7 @@ import {
   setUserText,
 } from '/js/utils.js?v=84d58686';
 import { t, currentLang } from '/js/i18n.js?v=133a7aac';
-import { trapFocus } from '/js/dialog.js?v=4ff94595';
+import { trapFocus } from '/js/dialog.js?v=b3841546';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=b32c23b3';
 
 let _state = null;

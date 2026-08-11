@@ -111,16 +111,37 @@ function makeDom() {
     return node;
   };
 
-  globalThis.document = {
+  /* The trap listens on the document, not on the dialog, because a click on
+     text inside the dialog leaves focus on the body and a listener under the
+     root would never see the key. So the document needs the same machinery a
+     node has. */
+  const doc = {
     get activeElement() {
       return active;
     },
     createElement: t => el(t),
+    addEventListener(type, fn) {
+      if (!listeners.has(this)) listeners.set(this, []);
+      listeners.get(this).push({ type, fn });
+    },
+    removeEventListener(type, fn) {
+      const l = listeners.get(this) || [];
+      const at = l.findIndex(x => x.type === type && x.fn === fn);
+      if (at !== -1) l.splice(at, 1);
+    },
+    _fire(type, event) {
+      for (const l of (listeners.get(this) || []).filter(x => x.type === type)) l.fn(event);
+    },
+    _listenerCount() {
+      return (listeners.get(this) || []).length;
+    },
   };
+  globalThis.document = doc;
   globalThis.getComputedStyle = () => ({ visibility: 'visible', display: 'block', position: 'static' });
 
   return {
     el,
+    doc,
     setActive: n => {
       active = n;
     },
@@ -308,7 +329,7 @@ test('Escape closes by default', async () => {
         closed++;
       },
     });
-    ov._fire('keydown', keyEvent('Escape'));
+    dom.doc._fire('keydown', keyEvent('Escape'));
     assert.equal(closed, 1);
   });
 });
@@ -325,7 +346,7 @@ test('Escape can be turned off', async () => {
         closed++;
       },
     });
-    ov._fire('keydown', keyEvent('Escape'));
+    dom.doc._fire('keydown', keyEvent('Escape'));
     assert.equal(closed, 0);
   });
 });
@@ -333,11 +354,11 @@ test('Escape can be turned off', async () => {
 test('releasing removes the listener', async () => {
   await withDom(({ trapFocus }, dom) => {
     const { ov } = dialogOf(dom);
-    const before = ov._listenerCount();
+    const before = dom.doc._listenerCount();
     const release = trapFocus(ov);
-    assert.equal(ov._listenerCount(), before + 1);
+    assert.equal(dom.doc._listenerCount(), before + 1);
     release();
-    assert.equal(ov._listenerCount(), before, 'a trap that outlives its dialog would capture later keys');
+    assert.equal(dom.doc._listenerCount(), before, 'a trap that outlives its dialog would capture later keys');
   });
 });
 
