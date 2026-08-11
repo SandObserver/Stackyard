@@ -1,0 +1,29 @@
+# The layout Dashy's own default config ships with: sequences written level
+# with the key they belong to, rather than indented under it.
+---
+pageInfo:
+  title: Flush Layout
+  navLinks:
+  - title: Docs
+    path: https://dashy.to/docs
+
+appConfig:
+  theme: colorful
+  searchBangs: {}
+
+sections:
+- name: Getting Started
+  icon: fas fa-rocket
+  items:
+  - title: Source
+    description: Where the code lives
+    icon: fab fa-github
+    url: https://github.com/example/repo
+    target: newtab
+  - title: Long Icon
+    icon: >-
+      https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/plex.svg
+    url: https://plex.example.com
+    statusCheck: true
+- name: Empty On Purpose
+  items: []

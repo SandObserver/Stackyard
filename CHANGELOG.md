@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Importing from another dashboard reads a list written level with its key, a
+  value folded across lines, and an empty `[]` or `{}`, each of which used to
+  refuse the whole file.
+
 - Confirming an import and naming a new folder use in-page dialogs instead of
   the browser's own.
 
