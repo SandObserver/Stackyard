@@ -140,3 +140,29 @@ test('nothing in the real files produces an item the save route would refuse', (
     assert.equal(out.skipped.filter(s => s.reason === SKIP.UNREADABLE).length, 0, `${f}: nothing unreadable`);
   }
 });
+
+/* Dashy's own default config writes its sequences level with the key rather
+   than indented under it, and that layout used to refuse the whole file. */
+test('a config in the flush layout converts like any other', () => {
+  const out = load('dashy-flush-layout.yml');
+  assert.equal(out.kind, 'dashy');
+  assert.deepEqual(
+    folders(out).map(f => f.label),
+    ['Getting Started'],
+  );
+  assert.deepEqual(
+    apps(out).map(a => a.label),
+    ['Source', 'Long Icon'],
+  );
+  /* A section with an empty list of items contributes no folder. */
+  assert.equal(
+    folders(out).some(f => f.label === 'Empty On Purpose'),
+    false,
+  );
+  /* The icon was folded across two lines in the source. */
+  assert.equal(
+    apps(out).find(a => a.label === 'Long Icon').iconUrl,
+    'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/plex.svg',
+  );
+  assert.equal(apps(out).find(a => a.label === 'Long Icon').monitoring.healthcheck.pingUrl, 'https://plex.example.com');
+});

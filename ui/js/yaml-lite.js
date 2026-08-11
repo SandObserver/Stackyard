@@ -5,8 +5,14 @@
    The subset is deliberate. Every construct this cannot represent faithfully is
    refused with the line number rather than approximated, because the failure
    mode of a permissive hand-written parser is not an exception, it is an item
-   that imports with the wrong URL and nobody notices. Anchors, flow
-   collections, block scalars, tabs and multi-document files all throw.
+   that imports with the wrong URL and nobody notices. Anchors and aliases,
+   merge keys, flow collections with contents, tabs and multi-document files all
+   throw.
+
+   What it does read is set by what real files contain, not by what is tidy to
+   implement. A sequence written level with its key, a long value folded across
+   lines, and an empty pair of brackets are all ordinary in configs people
+   actually keep, and each one used to refuse the whole file.
 
    Pure: no DOM, no imports, no browser globals. */
 
@@ -42,9 +48,12 @@ function scalar(raw, line) {
     if (!m) throw new YamlLiteError('unterminated single-quoted value', line);
     return m[1].replace(/''/g, "'");
   }
-  if (s === '|' || s === '>' || /^[|>][-+\d]*$/.test(s))
-    throw new YamlLiteError('block scalars are not supported', line);
   if (s[0] === '&' || s[0] === '*') throw new YamlLiteError('anchors and aliases are not supported', line);
+  /* An empty one is unambiguous and common: real configs disable a whole
+     section by writing `sections: []`. Anything with contents inside the
+     brackets still refuses, since that is where the parsing gets involved. */
+  if (s === '[]') return [];
+  if (s === '{}') return Object.create(null);
   if (s[0] === '{' || s[0] === '[') throw new YamlLiteError('flow collections are not supported', line);
   if (s === '~' || s === 'null' || s === 'Null' || s === 'NULL') return null;
   if (s === 'true' || s === 'True' || s === 'TRUE' || s === 'yes' || s === 'Yes') return true;
@@ -57,7 +66,36 @@ function scalar(raw, line) {
   return cut === -1 ? s : s.slice(0, cut).trim();
 }
 
-/** @typedef {{ indent: number, text: string, line: number }} Line */
+/** @typedef {{ indent: number, text: string, line: number, block?: string }} Line */
+
+/* A key whose value is a block scalar: "key: |", "key: >-", "key: |2". */
+const BLOCK_RE = /^(.*?):\s*([|>])([-+]?)(\d*)\s*$/;
+
+/** Fold the lines of a block scalar into its value.
+
+    Only the rules a real config exercises. A folded block joins its lines with
+    spaces, which is how a long API key or icon URL gets wrapped across lines; a
+    literal block keeps them. A blank line is a paragraph break either way, and
+    a line indented past the block keeps its own newlines.
+
+    @param {string[]} raw the block's lines, already stripped of its indentation
+    @param {string} style either "|" or ">" @param {string} chomp */
+function foldBlock(raw, style, chomp) {
+  let body;
+  if (style === '|') body = raw.join('\n');
+  else {
+    body = '';
+    for (let i = 0; i < raw.length; i++) {
+      const cur = raw[i];
+      if (i === 0) body = cur;
+      else if (cur === '' || raw[i - 1] === '' || /^\s/.test(cur) || /^\s/.test(raw[i - 1])) body += '\n' + cur;
+      else body += ' ' + cur;
+    }
+  }
+  if (chomp === '-') return body.replace(/\n+$/, '');
+  if (chomp === '+') return body + '\n';
+  return body.replace(/\n+$/, '') + (body.length ? '\n' : '');
+}
 
 /** @param {string} text @returns {Line[]} */
 function scan(text) {
@@ -67,25 +105,56 @@ function scan(text) {
   /* A file saved on Windows starts with a byte order mark. Left in place it
      becomes part of the first key and the document reads as malformed. */
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
-  text.split(/\r\n|\r|\n/).forEach((raw, i) => {
+  const rows = text.split(/\r\n|\r|\n/);
+
+  for (let i = 0; i < rows.length; i++) {
+    const raw = rows[i];
     const line = i + 1;
-    if (/^\s*$/.test(raw)) return;
-    if (/^\s*#/.test(raw)) return;
+    if (/^\s*$/.test(raw)) continue;
+    if (/^\s*#/.test(raw)) continue;
     if (/^\t/.test(raw) || /^ *\t/.test(raw)) throw new YamlLiteError('tab indentation is not supported', line);
     const trimmed = raw.trim();
     if (trimmed === '---') {
       /* One leading marker is ordinary. A second means a multi-document file,
          where taking only the first document would silently drop the rest. */
       if (++docs > 1 || out.length) throw new YamlLiteError('multi-document files are not supported', line);
-      return;
+      continue;
     }
     if (trimmed === '...') throw new YamlLiteError('multi-document files are not supported', line);
     /* Before the anchor check: a merge key is written with an alias, and naming
        the alias would send someone looking for the wrong thing. */
     if (/^<<\s*:/.test(trimmed)) throw new YamlLiteError('merge keys are not supported', line);
     if (/(^|\s)[&*][^\s]/.test(trimmed)) throw new YamlLiteError('anchors and aliases are not supported', line);
-    out.push({ indent: raw.length - raw.trimStart().length, text: trimmed, line });
-  });
+
+    const indent = raw.length - raw.trimStart().length;
+    const bm = BLOCK_RE.exec(trimmed);
+    /* Consumed here rather than in the value parser, because the block's own
+       lines are text, not structure: they may be indented like anything, hold a
+       tab, or begin with a character that means something at the start of a
+       line. Nothing below this point should look at them. */
+    if (bm && bm[1] !== '' && !bm[1].includes('#')) {
+      const body = [];
+      let base = bm[4] ? indent + Number(bm[4]) : -1;
+      let j = i + 1;
+      for (; j < rows.length; j++) {
+        const r = rows[j];
+        if (/^\s*$/.test(r)) {
+          body.push('');
+          continue;
+        }
+        const ri = r.length - r.trimStart().length;
+        if (ri <= indent) break;
+        if (base === -1) base = ri;
+        if (ri < base) break;
+        body.push(r.slice(base));
+      }
+      while (body.length && body[body.length - 1] === '') body.pop();
+      out.push({ indent, text: bm[1].trim() + ':', line, block: foldBlock(body, bm[2], bm[3]) });
+      i = j - 1;
+      continue;
+    }
+    out.push({ indent, text: trimmed, line });
+  }
   return out;
 }
 
@@ -119,14 +188,14 @@ function sequence(lines, cur, indent) {
          key text starts at, not the dash. */
       const inner = indent + 2;
       const map = Object.create(null);
-      assign(map, m, l.line, lines, cur, inner);
+      assign(map, m, l.line, lines, cur, inner, l);
       while (cur.pos < lines.length && lines[cur.pos].indent === inner) {
         const nl = lines[cur.pos];
         if (nl.text.startsWith('- ') || nl.text === '-') break;
         const nm = KEY_RE.exec(nl.text);
         if (!nm) throw new YamlLiteError('expected "key: value"', nl.line);
         cur.pos++;
-        assign(map, nm, nl.line, lines, cur, inner);
+        assign(map, nm, nl.line, lines, cur, inner, nl);
       }
       out.push(map);
       continue;
@@ -139,21 +208,36 @@ function sequence(lines, cur, indent) {
 /** Set one key on `map` from a matched key line, reading its nested block when
     the value is empty.
     @param {any} map @param {RegExpExecArray} m @param {number} line
-    @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
-function assign(map, m, line, lines, cur, indent) {
+    @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent
+    @param {Line} [own] the key's own line, when it carried a block scalar */
+function assign(map, m, line, lines, cur, indent, own) {
   const key = m[1] !== undefined ? m[1] : m[2] !== undefined ? m[2].replace(/''/g, "'") : m[3].trim();
+  if (own && own.block !== undefined) {
+    map[key] = own.block;
+    return;
+  }
   const inline = m[4];
   if (inline !== undefined && inline.trim() !== '' && !/^#/.test(inline.trim())) {
     map[key] = scalar(inline, line);
     return;
   }
   const next = lines[cur.pos];
-  if (!next || next.indent <= indent) {
+  if (!next) {
     map[key] = null;
     return;
   }
-  /* A sequence may sit at the parent's own indentation, which is legal YAML and
-     common in both source formats. */
+  /* A sequence belonging to a key is written either indented under it or level
+     with it, and level is the more common of the two: Dashy's own default
+     config writes navLinks that way. Only a sequence may do this. A mapping at
+     the same column is the next key of the same parent, not this key's value. */
+  if (next.indent === indent && (next.text.startsWith('- ') || next.text === '-')) {
+    map[key] = sequence(lines, cur, indent);
+    return;
+  }
+  if (next.indent <= indent) {
+    map[key] = null;
+    return;
+  }
   map[key] = block(lines, cur, next.indent);
 }
 
@@ -172,7 +256,7 @@ function mapping(lines, cur, indent) {
     const m = KEY_RE.exec(l.text);
     if (!m) throw new YamlLiteError('expected "key: value"', l.line);
     cur.pos++;
-    assign(map, m, l.line, lines, cur, indent);
+    assign(map, m, l.line, lines, cur, indent, l);
   }
   return map;
 }

@@ -100,10 +100,8 @@ for (const [name, text, reason] of [
   ['anchors', 'base: &defaults\n  icon: x\napp:\n  href: http://a\n', 'anchors'],
   ['aliases', 'a: *defaults\n', 'anchors'],
   ['merge keys', 'a:\n  <<: *defaults\n', 'merge keys'],
-  ['flow mappings', 'a: { b: 1 }\n', 'flow collections'],
-  ['flow sequences', 'a: [1, 2]\n', 'flow collections'],
-  ['block scalars', 'a: |\n  line one\n', 'block scalars'],
-  ['folded scalars', 'a: >\n  line one\n', 'block scalars'],
+  ['flow mappings with contents', 'a: { b: 1 }\n', 'flow collections'],
+  ['flow sequences with contents', 'a: [1, 2]\n', 'flow collections'],
   ['tab indentation', 'a:\n\tb: 1\n', 'tab indentation'],
   ['a second document', 'a: 1\n---\nb: 2\n', 'multi-document'],
 ]) {
@@ -136,4 +134,68 @@ test('a single leading document marker is fine', () => {
 test('an empty or comment-only file parses to nothing', () => {
   assert.equal(parseYaml(''), null);
   assert.equal(parseYaml('# just a note\n\n'), null);
+});
+
+/* ── layouts real files use ───────────────────────────────────────────────── */
+
+/* Every one of these came from a config someone actually keeps. Each used to
+   refuse the whole file, including Dashy's own default config, which writes its
+   navLinks level with the key rather than indented under it. */
+
+test('a sequence written level with its key belongs to that key', () => {
+  assert.deepEqual(plain(parseYaml('pageInfo:\n  navLinks:\n  - title: A\n    path: http://a\n')), {
+    pageInfo: { navLinks: [{ title: 'A', path: 'http://a' }] },
+  });
+});
+
+test('a sequence indented under its key means the same thing', () => {
+  const flush = parseYaml('a:\n  b:\n  - x: 1\n');
+  const nested = parseYaml('a:\n  b:\n    - x: 1\n');
+  assert.deepEqual(plain(flush), plain(nested));
+});
+
+test("a mapping level with a key is the next key, not that key's value", () => {
+  assert.deepEqual(plain(parseYaml('a:\n  b:\n  c: 2\n')), { a: { b: null, c: 2 } });
+});
+
+test('a Homepage group nested by two spaces reads like one nested by four', () => {
+  const two = parseYaml('- Group:\n  - Service:\n      href: http://a\n');
+  const four = parseYaml('- Group:\n    - Service:\n        href: http://a\n');
+  assert.deepEqual(plain(two), plain(four));
+});
+
+test('a folded value is joined into one line, which is how a long key is wrapped', () => {
+  assert.equal(parseYaml('key: >-\n  abc\n  def\n').key, 'abc def');
+  assert.equal(parseYaml('icon: >-\n  https://example.com/a.svg\n').icon, 'https://example.com/a.svg');
+});
+
+test('a literal value keeps its line breaks', () => {
+  assert.equal(parseYaml('note: |\n  one\n  two\n').note, 'one\ntwo\n');
+  assert.equal(parseYaml('note: |-\n  one\n  two\n').note, 'one\ntwo');
+});
+
+test('a folded value on the same line as a list dash is still read', () => {
+  assert.deepEqual(plain(parseYaml('- items:\n  - key: >-\n      abc123\n')), [{ items: [{ key: 'abc123' }] }]);
+});
+
+/* The body of a block is text. A parser that kept reading it as structure would
+   see a list item, a comment or a tab in there and either refuse a valid file or
+   mis-read it. */
+test('the body of a block is never read as structure', () => {
+  assert.equal(
+    parseYaml('note: |\n  - not a list item\n  # not a comment\n').note,
+    '- not a list item\n# not a comment\n',
+  );
+  assert.equal(parseYaml('note: |\n  has\ta tab\n').note, 'has\ta tab\n');
+  assert.deepEqual(plain(parseYaml('a: |\n  text\nb: 2\n')), { a: 'text\n', b: 2 });
+});
+
+test('an empty pair of brackets is a value, not a refusal', () => {
+  assert.deepEqual(plain(parseYaml('sections: []\n')), { sections: [] });
+  assert.deepEqual(plain(parseYaml('appConfig: {}\n')), { appConfig: {} });
+});
+
+test('brackets with contents still refuse, since that is where guessing starts', () => {
+  assert.throws(() => parseYaml('tags: [a, b]\n'), /flow collections/);
+  assert.throws(() => parseYaml('opts: { a: 1 }\n'), /flow collections/);
 });
