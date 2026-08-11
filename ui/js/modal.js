@@ -9,7 +9,7 @@
 
    Structure only. Callers fill the body with their own nodes. */
 
-import { trapFocus } from '/js/dialog.js?v=4ff94595';
+import { trapFocus } from '/js/dialog.js?v=b3841546';
 
 /** Open a modal and return its parts.
 
@@ -57,8 +57,15 @@ export function openModal({ title, className, onClose }) {
     if (onClose) onClose();
   };
 
+  /* Both ends of the click, or a text selection that starts inside the dialog
+     and is released past its edge dismisses it, discarding whatever the person
+     was reading closely enough to select. */
+  let downOnBackdrop = false;
+  ov.onmousedown = e => {
+    downOnBackdrop = e.target === ov;
+  };
   ov.onclick = e => {
-    if (e.target === ov) close();
+    if (e.target === ov && downOnBackdrop) close();
   };
 
   const addAction = (label, cls, onAct) => {
@@ -79,6 +86,9 @@ export function openModal({ title, className, onClose }) {
   document.body.appendChild(ov);
 
   const focus = initial => {
+    /* Arming twice is a caller re-rendering the body. The previous trap has to
+       go, or its listener outlives the dialog and its restore target is lost. */
+    release();
     release = trapFocus(box, { onClose: close, initialFocus: initial });
   };
 

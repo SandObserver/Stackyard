@@ -89,7 +89,7 @@ export function trapFocus(root, opts = {}) {
   function release() {
     if (released) return;
     released = true;
-    root.removeEventListener('keydown', /** @type {EventListener} */ (onKeydown));
+    document.removeEventListener('keydown', /** @type {EventListener} */ (onKeydown), true);
     /* Without this, closing leaves focus on nothing and the next Tab starts from
        the top of the page. Skipped if the element has left the document. */
     if (restoreTo && restoreTo.focus && restoreTo.isConnected) {
@@ -101,7 +101,12 @@ export function trapFocus(root, opts = {}) {
     }
   }
 
-  root.addEventListener('keydown', /** @type {EventListener} */ (onKeydown));
+  /* On the document rather than on root, because a dialog holds text that is not
+     focusable: clicking a line of it moves focus to the body, and a listener
+     inside root would then never see the key. Escape and the Tab wrap have to
+     work from wherever the click left focus, which is the case wrapTab's
+     out-of-root branch already covers. */
+  document.addEventListener('keydown', /** @type {EventListener} */ (onKeydown), true);
 
   const target = initialFocus || focusableWithin(root)[0];
   if (target && target.focus) {

@@ -13,9 +13,9 @@ import { loadSettings, showBgFields } from '/js/admin-settings.js?v=f189373f';
 import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
 /* openModal is the item editor in this file, so the shared dialog comes in
    under a different name. */
-import { openModal as openDialog, confirmModal, promptModal } from '/js/modal.js?v=10d34989';
-import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=a3f8f22e';
-import { detectSource, convert, SKIP, NOTE } from '/js/import-foreign.js?v=e0db2fb3';
+import { openModal as openDialog, confirmModal, promptModal } from '/js/modal.js?v=684b74e0';
+import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=14aa75ec';
+import { detectSource, convert, SKIP, NOTE } from '/js/import-foreign.js?v=cf38ec0b';
 
 /* Admin UI: Stackyard Dashboard */
 

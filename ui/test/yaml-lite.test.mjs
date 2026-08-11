@@ -199,3 +199,53 @@ test('brackets with contents still refuse, since that is where guessing starts',
   assert.throws(() => parseYaml('tags: [a, b]\n'), /flow collections/);
   assert.throws(() => parseYaml('opts: { a: 1 }\n'), /flow collections/);
 });
+
+/* A flow collection written as a list element used to reach the key matcher
+   first, which found the brace and the first key and built a mapping out of
+   them. The whole element parsed into something that was never in the file. */
+test('a flow collection refuses in a list too, not only after a key', () => {
+  assert.throws(() => parseYaml('sections:\n  - {name: Apps, items: []}\n'), /flow collections/);
+  assert.throws(() => parseYaml('sections:\n  - [a, b]\n'), /flow collections/);
+  assert.deepEqual(plain(parseYaml('sections:\n  - {}\n  - []\n')), { sections: [{}, []] });
+});
+
+test('a list inside a list line refuses rather than reading as text', () => {
+  assert.throws(() => parseYaml('a:\n  - - x\n'), /sequence inside a sequence/);
+});
+
+/* "*arr" is what a homelab calls the Sonarr and Radarr stack, and description
+   is an ordinary Homepage field. Refusing these refused valid files. */
+test('& and * inside a value are text, not an anchor', () => {
+  assert.equal(parseYaml('description: The *arr stack\n').description, 'The *arr stack');
+  assert.equal(parseYaml('description: Movies &TV\n').description, 'Movies &TV');
+  assert.equal(parseYaml('cron: "*/5 * * * *"\n').cron, '*/5 * * * *');
+  assert.equal(parseYaml('- name: Plex **HD**\n')[0].name, 'Plex **HD**');
+});
+
+test('an anchor where a node begins still refuses', () => {
+  assert.throws(() => parseYaml('base: &defaults\n  a: 1\n'), /anchors and aliases/);
+  assert.throws(() => parseYaml('a: *ref\n'), /anchors and aliases/);
+  assert.throws(() => parseYaml('&defaults key: 1\n'), /anchors and aliases/);
+  assert.throws(() => parseYaml('a:\n  - &ref x\n'), /anchors and aliases/);
+});
+
+/* Hand-aligned configs pad the dash. The continuation keys then sit one column
+   further in, and assuming a fixed offset threw on the whole file. */
+test('a list element keeps its own key column, however the dash is padded', () => {
+  const one = plain(parseYaml('sections:\n  - name: Apps\n    icon: box\n'));
+  assert.deepEqual(plain(parseYaml('sections:\n  -  name: Apps\n     icon: box\n')), one);
+  assert.deepEqual(plain(parseYaml('sections:\n  -   name: Apps\n      icon: box\n')), one);
+});
+
+test('a double-quoted key decodes its escapes the way a value does', () => {
+  assert.deepEqual(Object.keys(parseYaml('"a\\nb": 1\n')), ['a\nb']);
+});
+
+/* Every trailing newline, which is the whole difference between "keep" and the
+   default. Stripping the blank lines before the fold left nothing to keep. */
+test('the keep indicator keeps more than one trailing newline', () => {
+  assert.equal(parseYaml('a: |+\n  x\n\n\nb: 1\n').a, 'x\n\n\n');
+  assert.equal(parseYaml('a: |+\n').a, '');
+  assert.equal(parseYaml('a: |\n  x\n\n\nb: 1\n').a, 'x\n');
+  assert.equal(parseYaml('a: |-\n  x\n\n\nb: 1\n').a, 'x');
+});

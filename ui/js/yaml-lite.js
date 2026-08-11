@@ -34,6 +34,11 @@ export class YamlLiteError extends Error {
    "url: http://host:8080" splits once and keeps the port. */
 const KEY_RE = /^(?:(?:"((?:[^"\\]|\\.)*)")|(?:'((?:[^']|'')*)')|([^:#]+?))\s*:(?:\s+(.*))?$/;
 
+/** The escapes a double-quoted form decodes. Shared so a key and a value spell
+    the same text the same way.
+    @param {string} s */
+const unescapeDouble = s => s.replace(/\\(["\\/nrt])/g, (_, c) => ({ n: '\n', r: '\r', t: '\t' })[c] || c);
+
 /** @param {string} raw @param {number} line */
 function scalar(raw, line) {
   const s = raw.trim();
@@ -41,7 +46,7 @@ function scalar(raw, line) {
   if (s[0] === '"') {
     const m = /^"((?:[^"\\]|\\.)*)"\s*$/.exec(s);
     if (!m) throw new YamlLiteError('unterminated double-quoted value', line);
-    return m[1].replace(/\\(["\\/nrt])/g, (_, c) => ({ n: '\n', r: '\r', t: '\t' })[c] || c);
+    return unescapeDouble(m[1]);
   }
   if (s[0] === "'") {
     const m = /^'((?:[^']|'')*)'\s*$/.exec(s);
@@ -81,6 +86,7 @@ const BLOCK_RE = /^(.*?):\s*([|>])([-+]?)(\d*)\s*$/;
     @param {string[]} raw the block's lines, already stripped of its indentation
     @param {string} style either "|" or ">" @param {string} chomp */
 function foldBlock(raw, style, chomp) {
+  if (!raw.length) return '';
   let body;
   if (style === '|') body = raw.join('\n');
   else {
@@ -93,6 +99,8 @@ function foldBlock(raw, style, chomp) {
     }
   }
   if (chomp === '-') return body.replace(/\n+$/, '');
+  /* "keep" means every trailing newline the block ended with, so the blank lines
+     have to still be here rather than trimmed off before the fold. */
   if (chomp === '+') return body + '\n';
   return body.replace(/\n+$/, '') + (body.length ? '\n' : '');
 }
@@ -106,13 +114,16 @@ function scan(text) {
      becomes part of the first key and the document reads as malformed. */
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
   const rows = text.split(/\r\n|\r|\n/);
+  /* The empty string after a final newline is not a line of the file. It only
+     shows where a block scalar counts the blank lines it ends with. */
+  if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
 
   for (let i = 0; i < rows.length; i++) {
     const raw = rows[i];
     const line = i + 1;
     if (/^\s*$/.test(raw)) continue;
     if (/^\s*#/.test(raw)) continue;
-    if (/^\t/.test(raw) || /^ *\t/.test(raw)) throw new YamlLiteError('tab indentation is not supported', line);
+    if (/^ *\t/.test(raw)) throw new YamlLiteError('tab indentation is not supported', line);
     const trimmed = raw.trim();
     if (trimmed === '---') {
       /* One leading marker is ordinary. A second means a multi-document file,
@@ -121,10 +132,11 @@ function scan(text) {
       continue;
     }
     if (trimmed === '...') throw new YamlLiteError('multi-document files are not supported', line);
-    /* Before the anchor check: a merge key is written with an alias, and naming
-       the alias would send someone looking for the wrong thing. */
+    /* Named before the general anchor refusal, which a merge key would also
+       trip, because naming the alias sends someone looking for the wrong thing.
+       Anchors themselves are refused where a node begins rather than here: a
+       value is free text, and `description: The *arr stack` is not an alias. */
     if (/^<<\s*:/.test(trimmed)) throw new YamlLiteError('merge keys are not supported', line);
-    if (/(^|\s)[&*][^\s]/.test(trimmed)) throw new YamlLiteError('anchors and aliases are not supported', line);
 
     const indent = raw.length - raw.trimStart().length;
     const bm = BLOCK_RE.exec(trimmed);
@@ -148,7 +160,6 @@ function scan(text) {
         if (ri < base) break;
         body.push(r.slice(base));
       }
-      while (body.length && body[body.length - 1] === '') body.pop();
       out.push({ indent, text: bm[1].trim() + ':', line, block: foldBlock(body, bm[2], bm[3]) });
       i = j - 1;
       continue;
@@ -165,6 +176,13 @@ function block(lines, cur, indent) {
   return first.text.startsWith('- ') || first.text === '-' ? sequence(lines, cur, indent) : mapping(lines, cur, indent);
 }
 
+/** Refuse an anchor or alias where a node begins. Only the start of a node is
+    checked, so the same characters inside a value stay ordinary text.
+    @param {string} text @param {number} line */
+function refuseAnchor(text, line) {
+  if (/^[&*]\S/.test(text)) throw new YamlLiteError('anchors and aliases are not supported', line);
+}
+
 /** @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
 function sequence(lines, cur, indent) {
   const out = [];
@@ -173,7 +191,8 @@ function sequence(lines, cur, indent) {
     if (l.indent < indent) break;
     if (l.indent > indent) throw new YamlLiteError('unexpected indentation', l.line);
     if (!(l.text.startsWith('- ') || l.text === '-')) break;
-    const rest = l.text === '-' ? '' : l.text.slice(2).trim();
+    const after = l.text.slice(1);
+    const rest = after.trim();
     cur.pos++;
     if (rest === '') {
       /* "-" alone: the element is the block indented under it. */
@@ -181,12 +200,23 @@ function sequence(lines, cur, indent) {
       else out.push(null);
       continue;
     }
+    refuseAnchor(rest, l.line);
+    if (rest.startsWith('- ') || rest === '-')
+      throw new YamlLiteError('a sequence inside a sequence line is not supported', l.line);
+    /* Ahead of the key match, or a flow mapping's own brace and first key read
+       as a key line and the element parses into something that was never in the
+       file. scalar refuses it, and allows the empty pair. */
+    if (rest[0] === '{' || rest[0] === '[') {
+      out.push(scalar(rest, l.line));
+      continue;
+    }
     const m = KEY_RE.exec(rest);
     if (m) {
       /* The compound "- key: value" form. The element is a mapping whose first
-         key sits on the dash line, so its own indentation is the column the
-         key text starts at, not the dash. */
-      const inner = indent + 2;
+         key sits on the dash line, so its own indentation is the column the key
+         text starts at, not a fixed offset from the dash: "-  key" is as valid
+         as "- key" and its continuation lines line up with the key. */
+      const inner = indent + 1 + (after.length - after.trimStart().length);
       const map = Object.create(null);
       assign(map, m, l.line, lines, cur, inner, l);
       while (cur.pos < lines.length && lines[cur.pos].indent === inner) {
@@ -211,7 +241,7 @@ function sequence(lines, cur, indent) {
     @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent
     @param {Line} [own] the key's own line, when it carried a block scalar */
 function assign(map, m, line, lines, cur, indent, own) {
-  const key = m[1] !== undefined ? m[1] : m[2] !== undefined ? m[2].replace(/''/g, "'") : m[3].trim();
+  const key = m[1] !== undefined ? unescapeDouble(m[1]) : m[2] !== undefined ? m[2].replace(/''/g, "'") : m[3].trim();
   if (own && own.block !== undefined) {
     map[key] = own.block;
     return;
@@ -253,6 +283,7 @@ function mapping(lines, cur, indent) {
          Only valid as the whole value of the key above, which assign handles. */
       break;
     }
+    refuseAnchor(l.text, l.line);
     const m = KEY_RE.exec(l.text);
     if (!m) throw new YamlLiteError('expected "key: value"', l.line);
     cur.pos++;
