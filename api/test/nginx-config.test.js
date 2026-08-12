@@ -110,6 +110,33 @@ test('every policy in the config states a frame-ancestors', () => {
   }
 });
 
+/* ── the hosts a page may reach ───────────────────────────────────────────── */
+
+/* Google Fonts was allowed by three policies for a widget that no longer
+   exists, so every page could pull a stylesheet and a font from a host nothing
+   asked for. The app uses system fonts and ships its own assets. */
+test('no policy allows an outside font or stylesheet host', () => {
+  const all = [...dashboard.matchAll(/add_header Content-Security-Policy "([^"]+)"/g)].map(m => m[1]);
+  all.push(policy);
+  for (const p of all) {
+    const directives = Object.fromEntries(
+      p
+        .split(';')
+        .map(d => d.trim())
+        .filter(Boolean)
+        .map(d => {
+          const [name, ...values] = d.split(/\s+/);
+          return [name, values];
+        }),
+    );
+    for (const name of ['font-src', 'style-src']) {
+      const values = directives[name] || [];
+      const hosts = values.filter(v => v.startsWith('http') || v.includes('.'));
+      assert.deepEqual(hosts, [], `${name} allows an outside host: ${hosts.join(' ')}`);
+    }
+  }
+});
+
 /* ── P16-5 and P16-6: version disclosure and compression ──────────────────── */
 
 test('the nginx version is not advertised', () => {

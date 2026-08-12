@@ -116,6 +116,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Pages no longer permit stylesheets or fonts from Google Fonts, which nothing
+  requests.
+
 - The `linux/arm64` release image is scanned for vulnerabilities before it is
   published, the same as `linux/amd64`.
 
