@@ -104,7 +104,7 @@ Everything is configured in the admin UI (`/admin`), split into a few sections:
 
 ## Icons
 
-App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set, served over a CDN. You can also upload your own; custom icons are stored in `./icons`.
+App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set. Stackyard fetches each icon once and keeps it in memory, so the CDN is not contacted on every page load. You can also upload your own; custom icons are stored in `./icons`.
 
 ## Widgets
 

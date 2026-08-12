@@ -112,23 +112,28 @@ test('a local icon is tried before the CDN', async () => {
 test('a name with no local copy falls through to the CDN', async () => {
   await withLocalIcons([], () => {
     const chain = iconChain('radarr');
-    assert.equal(chain.length, 2, 'both svg and png are tried when no extension is given');
-    assert.ok(chain.every(u => u.startsWith('https://cdn.jsdelivr.net/')));
+    assert.deepEqual(chain, [
+      '/api/icons/cdn?name=radarr&ext=svg',
+      '/api/icons/cdn?name=radarr&ext=png',
+      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg',
+      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png',
+    ]);
   });
 });
 
 test('CDN URLs are encoded too', async () => {
   await withLocalIcons([], () => {
     for (const u of iconChain('a+b&c')) {
-      assert.ok(!u.includes('+') && !u.includes('&'), `unencoded character in ${u}`);
+      const name = u.startsWith('/api/') ? u.slice(u.indexOf('name=') + 5, u.indexOf('&ext=')) : u;
+      assert.ok(!name.includes('+') && !name.includes('&'), `unencoded character in ${u}`);
     }
   });
 });
 
 test('an explicit extension picks only that CDN path', async () => {
   await withLocalIcons([], () => {
-    assert.ok(iconChain('radarr.png').every(u => u.endsWith('.png')));
-    assert.ok(iconChain('radarr.svg').every(u => u.endsWith('.svg')));
+    assert.ok(iconChain('radarr.png').every(u => u.endsWith('.png') || u.endsWith('ext=png')));
+    assert.ok(iconChain('radarr.svg').every(u => u.endsWith('.svg') || u.endsWith('ext=svg')));
   });
 });
 
@@ -165,11 +170,9 @@ test('a name already in catalogue form is unchanged', () => {
 
 test('a mixed-case name reaches the right CDN URL', async () => {
   await withLocalIcons([], () => {
-    assert.equal(iconChain('MySpeed')[0], 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/myspeed.svg');
-    assert.equal(
-      iconChain('Home Assistant')[0],
-      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg',
-    );
+    assert.equal(iconChain('MySpeed')[0], '/api/icons/cdn?name=myspeed&ext=svg');
+    assert.equal(iconChain('Home Assistant')[0], '/api/icons/cdn?name=home-assistant&ext=svg');
+    assert.ok(iconChain('MySpeed').includes('https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/myspeed.svg'));
   });
 });
 

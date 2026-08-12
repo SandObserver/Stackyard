@@ -59,6 +59,11 @@ export function iconChain(rawIcon) {
     if (!localUrl) chain.push(rawIcon);
   } else {
     const cdn = encodeURIComponent(cdnIconName(name));
+    /* Through the API first, which holds the file, so the CDN is not told which
+       services this dashboard shows on every load. The direct link stays as the
+       fallback for a failed proxy fetch. */
+    if (!explicitExt || explicitExt === 'svg') chain.push(`/api/icons/cdn?name=${cdn}&ext=svg`);
+    if (!explicitExt || explicitExt === 'png') chain.push(`/api/icons/cdn?name=${cdn}&ext=png`);
     if (!explicitExt || explicitExt === 'svg')
       chain.push(`https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/${cdn}.svg`);
     if (!explicitExt || explicitExt === 'png')
