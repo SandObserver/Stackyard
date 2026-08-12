@@ -152,6 +152,16 @@ export function sparkline(values, opts = {}) {
   return svg;
 }
 
+/* A widget page loads no shared stylesheet, so a reduced-motion rule cannot
+   reach a style set here. Ask for the preference instead. */
+function reducedMotion() {
+  try {
+    return !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
 /* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 } */
 export function barFill(percent, opts = {}) {
   const pct = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -164,7 +174,8 @@ export function barFill(percent, opts = {}) {
   const fill = document.createElement('div');
   fill.style.cssText =
     `position:absolute;left:0;top:0;bottom:0;width:${pct}%;border-radius:${radius}px;` +
-    `background:${opts.color || '#0a84ff'};transition:width .4s ease`;
+    `background:${opts.color || '#0a84ff'}` +
+    (reducedMotion() ? '' : ';transition:width .4s ease');
   track.appendChild(fill);
   return track;
 }

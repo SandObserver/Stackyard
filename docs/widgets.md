@@ -614,7 +614,8 @@ success was. `sinceLabel(ts)` gives that "3m ago" label on its own.
 **Visuals** (self-contained inline SVG/DOM, no extra CSS)
 
 - `sparkline(values, opts?)` returns an `<svg>` area+line chart element.
-- `barFill(percent, opts?)` returns a track+fill bar element.
+- `barFill(percent, opts?)` returns a track+fill bar element. It skips its width
+  transition when the browser asks for reduced motion.
 - `smoothPath(points)` returns a smoothed SVG path string through `[[x,y], ...]`.
 
 Check the toolbox before building a new visual by hand.
