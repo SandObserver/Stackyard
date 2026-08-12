@@ -428,6 +428,24 @@ function result(col) {
   return { items: col.items, skipped: col.skipped, notes: col.notes };
 }
 
+/* Skipping certificate checking is the one security setting a foreign file can
+   ask for, so it is the one the import has to ask about rather than carry across
+   on the file's say-so. The conversion still records what the file asked for;
+   these two are how the dialog names those apps and how it applies the answer.
+
+   @param {any[]} items @returns {any[]} */
+export function insecureApps(items) {
+  return (Array.isArray(items) ? items : []).filter(i => i && i.type === 'app' && i.skipTlsVerify);
+}
+
+/** Turn the request down, leaving each app exactly as one that never asked: the
+    conversion drops the field rather than storing a false.
+    @param {any[]} items @returns {any[]} */
+export function clearSkipTls(items) {
+  for (const app of insecureApps(items)) delete app.skipTlsVerify;
+  return items;
+}
+
 /** Convert a parsed document of a detected kind.
     @param {'homepage-services'|'homepage-bookmarks'|'dashy'} kind
     @param {any} doc @param {Iterable<string>} takenIds

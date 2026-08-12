@@ -15,7 +15,7 @@ import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
    under a different name. */
 import { openModal as openDialog, confirmModal, promptModal } from '/js/modal.js?v=684b74e0';
 import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=14aa75ec';
-import { detectSource, convert, SKIP, NOTE } from '/js/import-foreign.js?v=cf38ec0b';
+import { detectSource, convert, insecureApps, clearSkipTls, SKIP, NOTE } from '/js/import-foreign.js?v=104555d0';
 
 /* Admin UI: Stackyard Dashboard */
 
@@ -1380,6 +1380,38 @@ el('imp-foreign').onchange = async e => {
       skipped.map(s => ({ name: s.name, group: s.group, why: t(SKIP_TEXT[s.reason], { detail: s.detail || '' }) })),
     );
 
+    /* A file from another dashboard can ask for certificate checking to be
+       skipped. That is a security setting, so it is never taken from the file on
+       the file's say-so: the apps that asked are named, and it stays off unless
+       it is turned on here. */
+    const insecure = insecureApps(items);
+    /** @type {HTMLInputElement|null} */
+    let skipTlsChoice = null;
+    if (insecure.length) {
+      const heading = document.createElement('div');
+      heading.className = 'dlg-sec';
+      heading.textContent = `${t('app.allowSelfSigned')} (${insecure.length})`;
+      const choice = document.createElement('label');
+      choice.className = 'dlg-choice';
+      skipTlsChoice = document.createElement('input');
+      skipTlsChoice.type = 'checkbox';
+      const why = document.createElement('span');
+      why.className = 'dlg-why';
+      why.textContent = t('app.selfSignedTip');
+      choice.append(skipTlsChoice, why);
+      const ul = document.createElement('ul');
+      ul.className = 'dlg-ul';
+      for (const item of insecure) {
+        const li = document.createElement('li');
+        li.className = 'dlg-li';
+        const nm = document.createElement('span');
+        setUserText(nm, item.label);
+        li.appendChild(nm);
+        ul.appendChild(li);
+      }
+      body.append(heading, choice, ul);
+    }
+
     const ok = await confirmModal({
       title: t('importForeign.title'),
       body,
@@ -1391,6 +1423,7 @@ el('imp-foreign').onchange = async e => {
       input.value = '';
       return;
     }
+    if (skipTlsChoice && !skipTlsChoice.checked) clearSkipTls(items);
     /* Appended, never merged: nothing already on the dashboard is renamed,
        reordered or removed by an import from somewhere else. */
     await appendAndSave(items);

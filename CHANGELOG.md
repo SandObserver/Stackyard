@@ -89,6 +89,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A failed connection test no longer writes the request path to the log, where
   a service that carries its API key in the path would have left it.
 
+- Allowing a self-signed certificate now applies only to addresses on your own
+  network, wherever the request came from.
+  A badge or health check pointed at a public address is verified again, so an
+  app relying on this for one must use a trusted certificate.
+
+- Importing from another dashboard asks before allowing self-signed
+  certificates, instead of taking the setting from the file.
+
+- Sessions now expire after 12 hours idle instead of 30 days, and a session in
+  use is extended. Override with `SESSION_MAX_AGE_DAYS`.
+
+- Requests that change something must state their origin.
+  A script calling the API directly now has to send an `Origin` header naming
+  the address it is calling.
+
+- The API listens on loopback only, so it can no longer be reached around Nginx.
+
+- The pre-login status reply no longer says whether a password has been set.
+
 ## [1.5.2] - 2026-08-09
 
 ### Changed

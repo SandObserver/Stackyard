@@ -355,6 +355,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 .dlg-ul{list-style:none;margin:0;padding:0 12px 8px;display:flex;flex-direction:column;gap:4px}
 .dlg-li{display:flex;align-items:baseline;gap:8px;font-size:13px}
 .dlg-li .dlg-why{color:var(--dm);font-size:12px}
+.dlg-choice{display:flex;align-items:flex-start;gap:8px;padding:0 12px 4px;font-size:13px;cursor:pointer}
+.dlg-choice input{margin-block-start:2px;flex:none}
 .dlg-empty{padding:24px;text-align:center;color:var(--dm);font-size:13px}
 .fp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);background:none;border:none;color:var(--tx);font-size:14px;cursor:pointer;width:100%;text-align:start;font-family:inherit;transition:background var(--t)}
 .fp-row:hover{background:rgba(255,255,255,.06)}

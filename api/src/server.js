@@ -27,7 +27,14 @@ require('./widget-data');
 
 const { dispatch } = require('./router');
 
-http.createServer(dispatch).listen(PORT, () => {
+/* Loopback only. nginx is the only thing that ever calls this port, and it does
+   so on 127.0.0.1, so binding every interface only added a way into the API that
+   goes around nginx: reachable from anything sharing the container's network,
+   and arriving without the client address nginx resolves, so rate limiting saw
+   one caller. */
+const HOST = '127.0.0.1';
+
+http.createServer(dispatch).listen(PORT, HOST, () => {
   const { CONFIG_PATH, ICONS_PATH } = require('./config');
   const { getRegistry } = require('./widgets');
   const pkg = require('../package.json');

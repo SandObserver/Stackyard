@@ -22,17 +22,27 @@ const {
   needsRehash,
 } = require('../auth');
 
+/* The one route that answers before sign-in, so it says only what the login
+   screen has to decide: whether to ask for a password, and whether this caller
+   already has a session. The two setup fields describe how the install is
+   configured and are added only once the caller is through, which is every case
+   that reads them: the setup prompt runs with protection off, where isAuthenticated
+   is true for everyone. */
 on('GET', '/api/auth/check', (req, res) => {
   const cfg = loadConfig();
-  json(res, 200, {
+  const authenticated = isAuthenticated(req);
+  const body = {
     /* The effective state, not the stored flag. Auth on with no password is
        reported as off because that is how it behaves; showing it as on would put
        a toggle in the admin UI that does not match what the server does. */
     enabled: authActive(cfg),
-    authenticated: isAuthenticated(req),
-    passwordSet: !!cfg.settings?.auth?.passwordHash,
-    setupPrompted: !!cfg.settings?.auth?.setupPrompted,
-  });
+    authenticated,
+  };
+  if (authenticated) {
+    body.passwordSet = !!cfg.settings?.auth?.passwordHash;
+    body.setupPrompted = !!cfg.settings?.auth?.setupPrompted;
+  }
+  json(res, 200, body);
 });
 
 on('POST', '/api/auth/login', async (req, res) => {

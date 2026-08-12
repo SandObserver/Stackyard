@@ -35,7 +35,7 @@ require('../src/routes'); // registers auth/config/health/badges/... + OPTIONS
 require('../src/widget-data'); // registers /api/widget-data/:id (pulls in widgets)
 const { dispatch, on } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
-const { hashPassword, makeToken, clearAttempts } = require('../src/auth');
+const { hashPassword, makeToken, verifyToken, clearAttempts, RENEW_AFTER_MS } = require('../src/auth');
 
 /* Routes that fail on purpose, to prove the router turns a handler error into a
    500 instead of crashing the process. */
@@ -66,8 +66,11 @@ after(
     }),
 );
 
+/* Origin defaults to this server's own, which is what a browser sends on a
+   same-origin write and what the origin check now requires. Pass `origin: null`
+   for the case of a request that states none. */
 function req(method, pathname, opts = {}) {
-  const { cookie, body, origin, host } = opts;
+  const { cookie, body, origin = base, host } = opts;
   const data = body != null ? JSON.stringify(body) : null;
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
@@ -237,6 +240,53 @@ test('cross-origin login, logout, ping and badge-proxy are rejected', async () =
   assert.equal(badge.status, 403);
 });
 
+/* A browser states an origin on every write, including a same-origin one, so a
+   write that states none did not come from a page on this dashboard. */
+test('a write that states no origin at all is rejected', async () => {
+  for (const [pathname, body] of [
+    ['/api/config', { items: [] }],
+    ['/api/ping', { url: 'http://x' }],
+    ['/api/badge-proxy', { url: 'http://x' }],
+    ['/api/auth/logout', {}],
+    ['/api/auth/login', { password: 'correct-horse' }],
+  ]) {
+    const r = await req('POST', pathname, { cookie: validCookie, body, origin: null });
+    assert.equal(r.status, 403, pathname);
+    assert.match(String(r.body?.error), /Origin/, pathname);
+  }
+});
+
+test('a read is not asked for an origin, since it changes nothing', async () => {
+  const r = await req('GET', '/api/config', { cookie: validCookie, origin: null });
+  assert.equal(r.status, 200);
+});
+
+/* Signed by the server, so it cannot be backdated by the holder: this builds the
+   token the server would have issued at that moment. */
+function agedCookie(ms) {
+  const real = Date.now;
+  Date.now = () => real() - ms;
+  try {
+    return 'ds=' + makeToken('session-aged', SECRET);
+  } finally {
+    Date.now = real;
+  }
+}
+
+test('a session still in use is extended rather than expiring under the shorter window', async () => {
+  const r = await req('GET', '/api/config', { cookie: agedCookie(RENEW_AFTER_MS + 1000) });
+  assert.equal(r.status, 200);
+  const issued = String(r.headers['set-cookie'] || '');
+  assert.match(issued, /ds=.+/, 'a session past halfway must come back renewed');
+  assert.equal(verifyToken(/ds=([^;]+)/.exec(issued)[1], SECRET), 'session-aged');
+});
+
+test('a fresh session is not handed a new cookie on every request', async () => {
+  const r = await req('GET', '/api/config', { cookie: validCookie });
+  assert.equal(r.status, 200);
+  assert.equal(r.headers['set-cookie'], undefined);
+});
+
 /* Config import/export route. */
 test('POST /api/config rejects items that are not an array', async () => {
   const r = await req('POST', '/api/config', { cookie: validCookie, body: { items: 'nope' } });
@@ -379,8 +429,19 @@ test('GET /api/truenas-proxy is not routed', async () => {
 test('dismiss-setup records the flag for an authenticated same-origin request', async () => {
   const r = await req('POST', '/api/auth/dismiss-setup', { cookie: validCookie });
   assert.equal(r.status, 200);
-  const check = await req('GET', '/api/auth/check');
+  const check = await req('GET', '/api/auth/check', { cookie: validCookie });
   assert.equal(check.body.setupPrompted, true);
+});
+
+/* The one route that answers before sign-in, so what it volunteers is the whole
+   pre-auth surface. */
+test('the pre-auth check withholds how the install is configured', async () => {
+  const r = await req('GET', '/api/auth/check');
+  assert.equal(r.status, 200);
+  assert.equal(r.body.enabled, true);
+  assert.equal(r.body.authenticated, false);
+  assert.ok(!('passwordSet' in r.body), 'passwordSet must not be told to a caller with no session');
+  assert.ok(!('setupPrompted' in r.body), 'setupPrompted must not be told to a caller with no session');
 });
 
 test('set-password rejects a too-short password', async () => {

@@ -68,10 +68,17 @@ test('the documented login limit is the one in the code', () => {
 });
 
 test('the documented session lifetime is the one in the code', () => {
-  const m = /_maxAgeDays > 0 \? _maxAgeDays : (\d+)/.exec(auth);
+  const m = /const DEFAULT_MAX_AGE_HOURS = (\d+)/.exec(auth);
   assert.ok(m, 'the default session lifetime was not found in auth.js');
-  assert.match(doc, new RegExp(`default ${m[1]} days`));
+  assert.match(doc, new RegExp(`default ${m[1]} hours`));
   assert.match(doc, /SESSION_MAX_AGE_DAYS/);
+});
+
+/* The lifetime only bounds an unused token if a used one is reissued, so the
+   page may only claim the renewal while the code still does it. */
+test('the documented session renewal is the one in the code', () => {
+  assert.match(auth, /RENEW_AFTER_MS = SESSION_MAX_AGE_MS \/ 2/, 'auth.js no longer renews at the halfway mark');
+  assert.match(doc, /halfway/);
 });
 
 /* ── the client address ───────────────────────────────────────────────────── */

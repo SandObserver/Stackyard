@@ -1,4 +1,4 @@
-const { isAuthenticated } = require('./auth');
+const { isAuthenticated, refreshSession } = require('./auth');
 const log = require('./log');
 const { tryDecode } = require('./percent-decode');
 
@@ -36,6 +36,9 @@ function route(req, res) {
 
   if (!PUBLIC_PATHS.has(u.pathname)) {
     if (!isAuthenticated(req)) return json(res, 401, { error: 'Unauthorised', auth: true, kind: 'auth' });
+    /* Before the handler, so a handler that issues its own cookie replaces this
+       one rather than being overwritten by it. */
+    refreshSession(req, res);
   }
 
   for (const r of routes) {
@@ -116,15 +119,26 @@ function getIp(req) {
   }
   return peer || 'unknown';
 }
+/* Every browser sends Origin on a request that changes something, including a
+   same-origin one, so a write arriving without it did not come from a page on
+   this dashboard. It used to be allowed through, which left the check answering
+   only the requests that were already declaring themselves.
+
+   This is what a command-line client has to add to write to the API: an Origin
+   naming the address it is calling. */
 function checkOrigin(req, res) {
   const origin = req.headers['origin'];
-  if (!origin) return true;
-  try {
-    const originHost = new URL(origin).host;
-    const serverHost = req.headers['host'];
-    if (originHost === serverHost) return true;
-  } catch {}
-  json(res, 403, { error: 'Forbidden: origin mismatch', kind: 'invalid' });
+  if (origin) {
+    try {
+      if (new URL(origin).host === req.headers['host']) return true;
+    } catch {
+      /* not a URL, so it names no host and cannot match one */
+    }
+  }
+  json(res, 403, {
+    error: origin ? 'Forbidden: origin mismatch' : 'Forbidden: this request needs an Origin header',
+    kind: 'invalid',
+  });
   return false;
 }
 

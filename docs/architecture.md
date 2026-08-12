@@ -42,7 +42,7 @@ Everything is optional; the defaults are what the container ships with.
 | `TRUSTED_PROXY` | unset | Where a front proxy sits, so nginx can resolve the real client for rate limiting. See [security.md](./security.md#authentication). |
 | `ALLOW_PRIVATE_IPS` | unset | Turn the SSRF guard off, which most homelab installs need. See [security.md](./security.md#ssrf-guard). |
 | `PASSWORD_HASH_MEMORY` | `16mib` | Memory per password hash. See [security.md](./security.md#password-hashing). |
-| `SESSION_MAX_AGE_DAYS` | `30` | Session lifetime before re-login. |
+| `SESSION_MAX_AGE_DAYS` | `12h` | Idle session lifetime before re-login; accepts a fraction. A session in use is extended. |
 | `SOCKET_PROXY_URL` | unset | A Docker socket proxy, for container health monitoring. |
 | `DEMO_MODE` | unset | Run as a read-only public showcase. See [demo.md](./demo.md). |
 

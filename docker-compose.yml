@@ -61,8 +61,9 @@ services:
       # - WIDGETS_PATH=/usr/share/nginx/html/widgets
       # Run as a read-only public showcase. See docs/demo.md.
       # - DEMO_MODE=true
-      # Session lifetime in days before re-login is required (default 30)
-      # - SESSION_MAX_AGE_DAYS=30
+      # Idle session lifetime in days before re-login is required (default 12
+      # hours). Accepts a fraction. A session in use is extended automatically.
+      # - SESSION_MAX_AGE_DAYS=0.5
     healthcheck:
       test:
         - CMD
