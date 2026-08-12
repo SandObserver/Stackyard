@@ -124,6 +124,11 @@ test('a widget renders inside its frame under the page policy', async ({ page, r
 /* The layout was decided once at load, so a desktop window dragged narrower
    than the breakpoint kept the desktop layout until it was reloaded. */
 test('resizing across the breakpoint switches the layout without a reload', async ({ page, request }) => {
+  /* A rebuild that throws leaves the page half-swapped, which is worse than not
+     rebuilding at all. */
+  const pageErrors = [];
+  page.on('pageerror', e => pageErrors.push(e.message));
+
   await seedConfig(request, { items: [app('alpha', 'Alpha'), app('bravo', 'Bravo')] });
   await stubPolls(page);
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -138,10 +143,11 @@ test('resizing across the breakpoint switches the layout without a reload', asyn
      rebuilt by the other builder rather than merely restyled. */
   await page.setViewportSize({ width: 500, height: 900 });
   await expect(body).toHaveClass(/is-mob/);
-  await expect(page.locator('#pages .dyn-mob-icon').filter({ hasText: 'Alpha' })).toBeVisible();
+  await expect(page.locator('#pages .dyn-mob-icon').filter({ hasText: 'Alpha' }), pageErrors.join(' | ')).toBeVisible();
 
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(body).not.toHaveClass(/is-mob/);
   await expect(page.locator('#pages a.icon').filter({ hasText: 'Alpha' })).toBeVisible();
   await expect(page.locator('#pages .dyn-mob-icon')).toHaveCount(0);
+  expect(pageErrors, 'the rebuild threw').toEqual([]);
 });
