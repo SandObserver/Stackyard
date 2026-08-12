@@ -116,6 +116,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- The `linux/arm64` release image is scanned for vulnerabilities before it is
+  published, the same as `linux/amd64`.
+
 - A stored credential is only reused for the request it was saved for.
   Changing where a badge or a widget sends it now requires entering it again.
 
