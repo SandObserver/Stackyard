@@ -20,7 +20,7 @@ const http = require('node:http');
 require('../src/routes');
 const { dispatch } = require('../src/router');
 
-let server, base, proxy, proxyBase, dead, deadBase;
+let server, base, proxy, proxyBase, dead, deadBase, hang, hangPort;
 let reply = { status: 200, body: JSON.stringify({ ApiVersion: '1.43' }) };
 
 const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
@@ -42,12 +42,18 @@ before(async () => {
   deadBase = await listen(dead);
   await close(dead);
 
+  /* Accepts the connection and never answers, which is how a dropped packet
+     looks to the prober: no error code, just the deadline. */
+  hang = http.createServer(() => {});
+  hangPort = new URL(await listen(hang)).port;
+
   server = http.createServer(dispatch);
   base = await listen(server);
 });
 after(async () => {
   await close(server);
   await close(proxy);
+  await close(hang);
 });
 
 function probe(url, { origin = true } = {}) {
@@ -112,6 +118,31 @@ test('a scheme that cannot be requested is refused before any connection', async
   const r = await probe('tcp://socket-proxy:2375');
   assert.equal(r.body.ok, false);
   assert.equal(r.body.fatal, true);
+});
+
+/* The two address shapes fail for opposite reasons and neither error text says
+   which, so the hint carries the shape and the UI turns it into advice. */
+test('a service name that fails is told to share a network', async () => {
+  const r = await probe('http://socket-proxy-nonexistent:2375');
+  assert.equal(r.body.ok, false);
+  assert.equal(r.body.hint, 'shared-network');
+});
+
+test('an address that fails is told to publish the port', async () => {
+  const r = await probe(deadBase);
+  assert.equal(r.body.ok, false);
+  assert.equal(r.body.hint, 'publish-port');
+});
+
+/* The case this whole endpoint came from. A proxy published on the host's
+   loopback drops packets from inside a container rather than refusing them, so
+   it arrives as a timeout. Treated as merely slow, it saved with a warning and
+   left every app red with no explanation. */
+test('a literal address that never answers is refused, not merely warned about', async () => {
+  const r = await probe(`http://127.0.0.1:${hangPort}`);
+  assert.equal(r.body.ok, false);
+  assert.equal(r.body.fatal, true, 'a timeout on a literal address is not a proxy still starting');
+  assert.equal(r.body.hint, 'publish-port');
 });
 
 test('a missing address is rejected', async () => {

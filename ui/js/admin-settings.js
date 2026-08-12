@@ -9,6 +9,14 @@ import { el, inp, q, qa, setUserText } from '/js/utils.js?v=84d58686';
    it. */
 let _passwordSet = false;
 
+/* Hint codes from the socket proxy probe, mapped to what the user can do about
+   each. The server picks the code from the address shape; the wording lives
+   here so it is translated. */
+const SOCKET_HINTS = Object.freeze({
+  'shared-network': 'toast.socketHintSharedNetwork',
+  'publish-port': 'toast.socketHintPublishPort',
+});
+
 /* Both controls only mean anything while auth is on; the revoke one also needs
    a password to exist, since that is what makes a session possible.
 
@@ -171,6 +179,8 @@ export function loadSettings(c) {
       if (socketRow) socketRow.classList.toggle('d-none', !v);
       const socketHint = el('socket-hint');
       if (socketHint) socketHint.style.display = v ? '' : 'none';
+      const socketHintLink = el('socket-hint-link');
+      if (socketHintLink) socketHintLink.style.display = v ? '' : 'none';
     };
     applyDocker(dockerEnEl.checked);
     dockerEnEl.addEventListener('change', () => applyDocker(dockerEnEl.checked));
@@ -323,14 +333,19 @@ async function saveServer() {
       toast(t('toast.saveFailed', { err: e.message }), 'err');
       return;
     }
+    /* The error says what happened; the hint says which of the two address
+       shapes it was and what makes that shape work. Neither is much use alone:
+       "connection refused" for an IP is exactly what a proxy published on the
+       host's loopback looks like from inside a container. */
+    const hint = SOCKET_HINTS[probe.hint] ? ` ${t(SOCKET_HINTS[probe.hint])}` : '';
     if (!probe.ok && probe.fatal) {
-      toast(t('toast.socketUrlBad', { reason: probe.error }), 'err');
+      toast(t('toast.socketUrlBad', { reason: probe.error }) + hint, 'err');
       return;
     }
     /* Not answering yet is not the same as wrong: a proxy still starting would
        otherwise block a save that is correct. Reported once the save lands, so
        it is not immediately replaced by the success toast. */
-    if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: probe.error });
+    if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: probe.error }) + hint;
   }
 
   /* Switching protection off deletes the stored password, so this is the moment
