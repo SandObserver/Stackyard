@@ -69,13 +69,27 @@ export function healthReason(detail, translate) {
   return parts.join(' \u2022 ');
 }
 
+/** What one item's entry in a /api/badges response means for the tile.
+
+    The route reports a per-item failure alongside the others' values, so an item
+    that did not answer must not be read as the number zero.
+
+    @param {any} entry @returns {{ value: number|null, failed: boolean }} */
+export function readBadgeUpdate(entry) {
+  if (!entry || typeof entry !== 'object') return { value: null, failed: true };
+  if (entry.kind || entry.error) return { value: null, failed: true };
+  const n = Number(entry.value);
+  if (!Number.isFinite(n)) return { value: null, failed: true };
+  return { value: n, failed: false };
+}
+
 /** The badge an item should show, as class, text and background colour.
     @param {{
       health?: boolean, activity?: number,
       custom?: { unit?: string, color?: string },
       staticBdg?: { enabled?: boolean, label?: string, color?: string },
       hasHC?: boolean, hideHealthy?: boolean,
-      badgesStale?: boolean, healthStale?: boolean,
+      badgesStale?: boolean, healthStale?: boolean, activityStale?: boolean,
       healthDetail?: Record<string, unknown>,
       translate?: (key: string, vars?: Record<string, unknown>) => string,
     }} opts */
@@ -88,6 +102,7 @@ export function computeBadgeVisual({
   hideHealthy,
   badgesStale,
   healthStale,
+  activityStale,
   healthDetail,
   translate,
 }) {
@@ -126,7 +141,10 @@ export function computeBadgeVisual({
   else if (staticBdg.enabled && staticBdg.label) aria = staticBdg.label;
   else if (cls.includes('green')) aria = tr('status.healthy');
 
-  if ((activity > 0 && badgesStale) || ((health || cls.includes('green')) && healthStale)) {
+  if (
+    (activity > 0 && (badgesStale || activityStale)) ||
+    ((health || cls.includes('green')) && (healthStale || activityStale))
+  ) {
     cls += ' stale';
     aria = (aria ? aria + ' ' : '') + tr('status.stale');
   }

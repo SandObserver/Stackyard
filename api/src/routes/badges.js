@@ -3,7 +3,7 @@ const { loadConfig } = require('../config');
 const { fetchChecked, fetchUnchecked, pingChecked, statusDesc } = require('../proxy');
 const { rateLimit } = require('../auth');
 const LIMITS = require('../poll-limits');
-const { PING_MS, FETCH_MS } = require('../timeouts');
+const { PING_MS, FETCH_MS, BATCH_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const { collectNumbers, computeBadgeValue } = require('../badge-extract');
@@ -59,7 +59,7 @@ on('GET', '/api/badges', async (req, res) => {
           const url = Object.keys(params).length
             ? baseUrl + (baseUrl.includes('?') ? '&' : '?') + new URLSearchParams(params)
             : baseUrl;
-          const r = await fetchUnchecked(url, { headers, timeout: PING_MS, skipTls: item.skipTlsVerify === true });
+          const r = await fetchUnchecked(url, { headers, timeout: BATCH_MS, skipTls: item.skipTlsVerify === true });
           const badge = item.monitoring?.activity?.enabled
             ? {
                 extract: item.monitoring.activity.extract,
