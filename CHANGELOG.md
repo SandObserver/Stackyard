@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Widgets spread their polling, so several on one dashboard no longer fetch from
+  your services on the same tick.
+
 - Importing from another dashboard reads a list written level with its key, a
   value folded across lines, and an empty `[]` or `{}`, each of which used to
   refuse the whole file.

@@ -35,6 +35,7 @@ import {
   restorePage,
 } from '/js/dashboard-logic.js?v=640430ba';
 import { trapFocus } from '/js/dialog.js?v=b3841546';
+import { jitter } from '/js/jitter.js?v=1';
 
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
 
@@ -715,14 +716,13 @@ async function boot() {
 
   /* Jittered, so several open clients do not poll on the same tick. */
   let _pollTimers = [];
-  const _jit = base => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
   const _repeat = (fn, base) => {
     let h;
     const tick = async () => {
       try {
         await fn();
       } catch {}
-      h = setTimeout(tick, _jit(base));
+      h = setTimeout(tick, jitter(base));
     };
     h = setTimeout(tick, Math.round(Math.random() * base));
     _pollTimers.push(() => clearTimeout(h));

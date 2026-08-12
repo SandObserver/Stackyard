@@ -259,3 +259,37 @@ test('stop while hidden stays stopped when the tab returns', async () => {
     assert.equal(calls, after, 'a stopped poll must not resurrect on visibility');
   });
 });
+
+/* Several widgets open together polled on the same exact cadence, so they kept
+   hitting the same services on the same tick. */
+test('the repeat interval is spread, and the first fetch is not delayed', async () => {
+  const delays = [];
+  const realTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (fn, ms, ...rest) => {
+    delays.push(ms);
+    return realTimeout(fn, ms, ...rest);
+  };
+  try {
+    await run(async (_dom, start) => {
+      const first = Date.now();
+      let firstFetchAt = 0;
+      start({
+        interval: 1000,
+        fetch: async () => {
+          firstFetchAt = firstFetchAt || Date.now();
+          return {};
+        },
+      });
+      await tick(20);
+      assert.ok(firstFetchAt - first < 50, 'the first fetch waits for nothing');
+    });
+  } finally {
+    globalThis.setTimeout = realTimeout;
+  }
+
+  const scheduled = delays.filter(d => d > 500);
+  assert.ok(scheduled.length > 0, 'the repeat was never scheduled');
+  for (const d of scheduled) {
+    assert.ok(d >= 850 && d <= 1150, `${d}ms is outside ±15% of the interval`);
+  }
+});
