@@ -128,6 +128,8 @@ test('resizing across the breakpoint switches the layout without a reload', asyn
   await stubPolls(page);
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/');
+  /* Wait for the first build. Resizing before it lands tests nothing. */
+  await page.locator('#pages a.icon').first().waitFor();
 
   const body = page.locator('body');
   await expect(body).not.toHaveClass(/is-mob/);

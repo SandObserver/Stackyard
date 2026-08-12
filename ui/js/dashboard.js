@@ -706,7 +706,7 @@ async function boot() {
   onLayoutChange(mobile => {
     MOB = mobile;
     buildLayout();
-  });
+  }, MOB);
 
   /* A rotation that does not cross the breakpoint still changes how much fits,
      and the mobile layout is measured. Debounced, and only while it is the

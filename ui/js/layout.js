@@ -28,12 +28,18 @@ export function isMobileLayout() {
   return matches(MOBILE_QUERY) || (matches(PORTRAIT_QUERY) && PHONE_UA.test(navigator.userAgent || ''));
 }
 
-/** Call `onChange` when, and only when, the answer flips. Returns a function
-    that detaches the listeners.
+/** Call `onChange` when, and only when, the answer flips.
 
-    @param {(mobile: boolean) => void} onChange @returns {() => void} */
-export function onLayoutChange(onChange) {
-  let last = isMobileLayout();
+    `applied` is what the caller has already rendered. Pass it: the window can
+    change between this module loading and the page finishing its first build,
+    and a baseline read here would treat that change as already handled and
+    never report it.
+
+    @param {(mobile: boolean) => void} onChange
+    @param {boolean} [applied] the layout the caller currently shows
+    @returns {() => void} a function that detaches the listeners */
+export function onLayoutChange(onChange, applied) {
+  let last = applied === undefined ? isMobileLayout() : applied;
   const check = () => {
     const now = isMobileLayout();
     if (now === last) return;
@@ -53,6 +59,8 @@ export function onLayoutChange(onChange) {
     })
     .filter(Boolean);
   for (const list of lists) list.addEventListener('change', check);
+  /* The window may already have moved past the caller's baseline. */
+  check();
   return () => {
     for (const list of lists) list.removeEventListener('change', check);
   };

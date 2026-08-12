@@ -29,8 +29,9 @@ import { detectSource, convert, insecureApps, clearSkipTls, SKIP, NOTE } from '/
 function _syncMobile(mobile) {
   document.documentElement.classList.toggle('is-mobile', mobile);
 }
-_syncMobile(isMobileLayout());
-onLayoutChange(_syncMobile);
+const _mobileAtLoad = isMobileLayout();
+_syncMobile(_mobileAtLoad);
+onLayoutChange(_syncMobile, _mobileAtLoad);
 
 const collapsedFolders = new Set(); /* tracks which folder ids are collapsed */
 let _flt = { q: '', type: 'all' };

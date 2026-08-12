@@ -95,6 +95,26 @@ test('a rotation that does not change the answer reports nothing', () => {
   assert.deepEqual(seen, [], 'still narrow, so still the mobile layout');
 });
 
+/* The page builds its layout, then registers. A window resized in between used
+   to be read as the baseline, so the listener believed the new size was already
+   on screen and never reported it: the dashboard stayed on the layout it built
+   until a reload. */
+test('a change between building and registering is reported at once', () => {
+  const media = stubMedia({ narrow: true });
+  const seen = [];
+  onLayoutChange(m => seen.push(m), false);
+  assert.deepEqual(seen, [true], 'the caller shows the desktop layout but the window is narrow');
+  media.set({ narrow: false });
+  assert.deepEqual(seen, [true, false]);
+});
+
+test('a baseline that already matches reports nothing', () => {
+  stubMedia({ narrow: true });
+  const seen = [];
+  onLayoutChange(m => seen.push(m), true);
+  assert.deepEqual(seen, [], 'nothing changed, so nothing should rebuild');
+});
+
 test('the returned function detaches every listener', () => {
   const media = stubMedia({ narrow: false });
   const stop = onLayoutChange(() => {});
