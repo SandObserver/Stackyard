@@ -1,5 +1,5 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { nextActiveIndex } from '/js/admin-logic.js?v=056a11e9';
+import { nextActiveIndex, recoversSession } from '/js/admin-logic.js?v=056a11e9';
 import { el, qa, q } from '/js/utils.js?v=84d58686';
 import { t } from '/js/i18n.js?v=133a7aac';
 
@@ -28,20 +28,50 @@ function tagged(status, body) {
   if (body && body.detail && typeof body.detail === 'object') e.detail = body.detail;
   return e;
 }
-export const ag = async p => {
+/* Set by the admin entry point rather than imported, because the sign-in screen
+   imports this module: importing it back would be a cycle, and one of the two
+   would be half-initialised at the moment it was needed. */
+/** @type {(() => Promise<boolean>) | null} */
+let _reauth = null;
+
+/** @param {() => Promise<boolean>} fn */
+export function setReauthHandler(fn) {
+  _reauth = fn;
+}
+
+/* One sign-in however many requests fail at once. A settings save makes three
+   writes in a row, and without this each would raise its own sign-in box over
+   the last. */
+/** @type {Promise<boolean> | null} */
+let _signingIn = null;
+function reauthenticate() {
+  if (!_reauth) return Promise.resolve(false);
+  if (!_signingIn) {
+    _signingIn = Promise.resolve(_reauth()).finally(() => {
+      _signingIn = null;
+    });
+  }
+  return _signingIn;
+}
+
+/* Retried once and only once: a second 401 after a successful sign-in is the
+   server refusing the request itself, and trying again would loop. */
+export const ag = async (p, recover = true) => {
   const r = await fetch(API + p, { cache: 'no-store' });
+  if (recover && recoversSession(p, r.status) && (await reauthenticate())) return ag(p, false);
   if (!r.ok) {
     const d = r.status === 401 ? null : await r.json().catch(() => null);
     throw tagged(r.status, d || (r.status === 401 ? { error: 'Unauthorised', kind: 'auth' } : null));
   }
   return r.json();
 };
-export const ap = async (p, b) => {
+export const ap = async (p, b, recover = true) => {
   const r = await fetch(API + p, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(b),
   });
+  if (recover && recoversSession(p, r.status) && (await reauthenticate())) return ap(p, b, false);
   if (!r.ok) {
     const d = await r.json().catch(() => null);
     throw tagged(r.status, d || (r.status === 401 ? { error: 'Unauthorised', kind: 'auth' } : null));

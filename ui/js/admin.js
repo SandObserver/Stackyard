@@ -10,8 +10,8 @@ import {
   snapshotItems,
   saveWithRevert,
 } from '/js/admin-save-logic.js?v=77cac1d1';
-import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=bb36dbb3';
-import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
+import { API, toast, ag, ap, initInlineEdit, setReauthHandler } from '/js/admin-shared.js?v=bb36dbb3';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
 import { state } from '/js/admin-state.js?v=3f9ad806';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=653071f0';
 import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=b46e5b19';
@@ -1483,6 +1483,12 @@ initDockerToggle();
 initBgType();
 initLogLevel();
 initLanguage();
+
+/* An expired session used to surface as "Save failed: Unauthorised" on every
+   attempt, with no way back to signing in short of a reload that discarded
+   whatever was being edited. Registered here rather than imported by the API
+   helpers, which the sign-in screen itself depends on. */
+setReauthHandler(requireLogin);
 
 checkAuth(load).then(ok => {
   if (!ok) return;

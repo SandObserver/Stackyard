@@ -126,6 +126,21 @@ export function shouldWritePassword({ enabled, newPassword }) {
   return !!enabled && !!(newPassword || '').length;
 }
 
+/* Signing in is itself two requests that answer with 401, and recovering from
+   those would put a sign-in box on top of a sign-in box: the first is how the
+   page asks whether anyone is signed in at all, and the second is how a wrong
+   password is reported. Every other 401 is a session that expired under someone
+   who is still working, which is what there is to recover from. */
+const NO_REAUTH = new Set(['/api/auth/check', '/api/auth/login']);
+
+/** Whether this failed request should send the user back through sign-in and
+    then be tried again.
+
+    @param {string} path @param {number} status @returns {boolean} */
+export function recoversSession(path, status) {
+  return status === 401 && !NO_REAUTH.has(String(path || '').split('?')[0]);
+}
+
 /* Why a settings save cannot go ahead. Codes rather than catalog keys: the
    message text is chosen at the call site, where the key can be written as a
    literal and traced back from the catalog. */
