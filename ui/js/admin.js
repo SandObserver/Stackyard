@@ -18,15 +18,11 @@ import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-fo
 import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=133a7aac';
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=f189373f';
 import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
-/* openModal is the item editor in this file, so the shared dialog comes in
-   under a different name. */
 import { openModal as openDialog, confirmModal, promptModal } from '/js/modal.js?v=684b74e0';
 import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=14aa75ec';
 import { detectSource, convert, insecureApps, clearSkipTls, SKIP, NOTE } from '/js/import-foreign.js?v=104555d0';
 
-/* Admin UI: Stackyard Dashboard */
-
-/* A class rather than a bare media query, because some phones report a wider CSS
+/* A class rather than a bare media query. Some phones report a wider CSS
    viewport than they have. */
 function _syncMobile() {
   const portrait = window.matchMedia('(orientation:portrait)').matches;
@@ -92,8 +88,7 @@ async function applyBg() {
     }
   } catch {}
 }
-/** Returns whether the write reached the server, so a caller that reports its
-    own outcome does not announce success over a failed save. */
+/** Returns whether the write reached the server. */
 async function save() {
   if (state.saving) return false;
   state.saving = true;
@@ -112,13 +107,9 @@ async function save() {
   return ok;
 }
 
-/** Append items to what is on the server right now, rather than to the copy
-    this page loaded.
-
-    An import promises that nothing already on the dashboard changes. Writing
-    back the in-memory list would break that promise for anything added from
-    another tab or device while the preview was open: the read-modify-write
-    would silently drop it. Throws, so the caller can report the failure.
+/** Append items to what is on the server right now, never to the copy this page
+    loaded. Writing back the in-memory list drops anything added from another
+    tab while the preview was open.
 
     @param {any[]} newItems */
 async function appendAndSave(newItems) {
@@ -127,9 +118,7 @@ async function appendAndSave(newItems) {
   try {
     const full = await ag('/api/config');
     const current = Array.isArray(full.items) ? full.items : [];
-    /* Ids were allocated against the list the preview was built from. The
-       server refuses duplicates outright, so a collision with something saved
-       in the meantime is caught here with a message naming the item. */
+    /* Ids were allocated against the list the preview was built from. */
     const taken = new Set(current.map(i => i && i.id));
     const clash = newItems.find(i => taken.has(i.id));
     if (clash) throw new Error(`${clash.label}: this id already exists. Reload and import again.`);
@@ -142,10 +131,7 @@ async function appendAndSave(newItems) {
   }
 }
 
-/** Save, and put the list back if the write did not land. Never rejects: every
-    caller here is an event handler, and `save` has already said what went
-    wrong. Returns whether the change is now on the server, so a caller does not
-    report its own success over a failed write. */
+/** Save, and put the list back if the write did not land. Never rejects. */
 async function saveOrRevert(before) {
   try {
     return await saveWithRevert({
@@ -166,7 +152,7 @@ function moveRow(item, dir, opts = {}) {
   if (reorderItems(state.items, item, dir, opts)) saveOrRevert(before);
 }
 
-/* Constant markup only; no user data reaches these. */
+/* Constant markup only. No user data reaches these. */
 const FOLDER_ICON =
   '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"></rect><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"></circle><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"></circle><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"></circle><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"></circle></svg>';
 const SIZE_ICONS = {
@@ -185,8 +171,7 @@ function svgNode(markup) {
   return t.content.firstElementChild;
 }
 
-/* dataTransfer is not readable during dragover, so the type is stashed here to
-   decide whether a folder can accept the drop. */
+/* dataTransfer is not readable during dragover. */
 let _dragType = null;
 
 function clearDragClasses(target) {
@@ -356,7 +341,6 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dragData);
     _dragType = item.type;
-    /* Slight delay so browser can capture drag image before dimming */
     requestAnimationFrame(() => row.classList.add('dragging'));
   });
   row.addEventListener('dragend', () => {
@@ -406,8 +390,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
   return row;
 }
 
-/* Drag data formats: "top:itemId" or "child:folderId:itemId". Returns
-   { srcId, srcFolderId } or null. */
+/* Drag data formats: "top:itemId" or "child:folderId:itemId". */
 function parseDragData(raw) {
   if (raw.startsWith('child:')) {
     const [, sfId, sItemId] = raw.split(':');
@@ -417,8 +400,7 @@ function parseDragData(raw) {
   return null;
 }
 
-/* Native HTML5 drag does not fire from touch on iOS Safari, so the handle drives
-   a pointer-based path that commits through the same applyDrop. The handle needs
+/* Native HTML5 drag does not fire from touch on iOS Safari. The handle needs
    touch-action:none (see admin.css) or starting on it scrolls the list. */
 function wireTouchDrag(row, handle, { indent, folderId }) {
   handle.addEventListener('pointerdown', e => {
@@ -513,12 +495,10 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
   });
 }
 
-/* Type of an item by id, for the folder-join rule during a touch drag. */
 function itemType(id) {
   return state.items.find(i => i.id === id)?.type || null;
 }
 
-/* Nearest scrollable ancestor, else the document scroller. */
 function scrollParent(el) {
   for (let p = el.parentElement; p; p = p.parentElement) {
     const oy = getComputedStyle(p).overflowY;
@@ -599,7 +579,6 @@ function _syncFilterUI() {
   });
 }
 
-/* Idempotent; safe to re-run. */
 function showListView() {
   el('dash-list-view').style.display = '';
   el('dash-edit-view').style.display = 'none';
@@ -651,7 +630,7 @@ function buildAddNewCard() {
   return grp;
 }
 
-/* Add New card is prepended after the builder runs, so the builder's reset can't wipe it. */
+/* Prepended after the builder runs, so the builder's reset cannot wipe it. */
 function _renderEditBody() {
   const body = el('ev-body');
   body.innerHTML = '';
@@ -720,8 +699,6 @@ async function _evDelete(item, idx) {
     if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== item.id);
   });
   state.items.splice(idx, 1);
-  /* Staying put on a failed delete: the list behind this view still holds the
-     item, so returning to it would show it as deleted. */
   if (await saveOrRevert(before)) showListView();
 }
 {
@@ -849,8 +826,8 @@ function openFolderPicker(appId, targetFolderId = null) {
     list.appendChild(divider);
 
     const nr = rowBtn('accent', async () => {
-      /* Closed first: the name prompt is a modal of its own, and two overlays
-         fighting over the focus trap leaves focus in the one underneath. */
+      /* Closed first. Two overlays fighting over the focus trap leave focus in
+         the one underneath. */
       close();
       const name = await promptModal({
         title: t('folder.createNew'),
@@ -991,13 +968,10 @@ async function doSave(orig) {
       }
       item = res.item;
     }
-    /* By id, not by position: an item that moved is still found, and one that has
-       gone is appended rather than silently dropping the edit. */
+    /* By id, never by position. */
     const before = snapshotItems(state.items);
     const { replaced } = upsertItem(state.items, state.eid, item);
-    /* The editor stays open on a failed write, with the filled-in form intact:
-       closing it would discard the work and leave "Updated" as the last thing
-       said about it. */
+    /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;
     closeModal();
     toast(replaced ? 'Updated' : 'Added');
@@ -1011,8 +985,6 @@ function initNav() {
   const STORE = 'admin_sec';
   const sections = qa('.sec', document).map(s => s.id.replace(/^sec-/, ''));
 
-  /* Resolved inside show(), so no caller can leave the page with nothing
-     visible. */
   function show(requested) {
     const id = resolveAdminSection(requested, sections);
     if (id === null) return;
@@ -1153,7 +1125,7 @@ function initBgType() {
   function setVal(val) {
     hidden.value = val;
     const labels = { unsplash: 'Unsplash', url: 'Image URL', color: 'Solid color' };
-    /* Update only the text node, preserve the SVG chevron */
+    /* Update only the text node. The SVG chevron must survive. */
     const textNode = btn.childNodes[0];
     if (textNode && textNode.nodeType === 3) textNode.textContent = labels[val] || val;
     list.querySelectorAll('li').forEach(li => li.setAttribute('aria-selected', String(li.dataset.val === val)));
@@ -1232,11 +1204,8 @@ function initLanguage() {
 const dashSaveEl = el('dash-save');
 if (dashSaveEl) dashSaveEl.onclick = () => save();
 
-/* Fetched rather than reached by navigating a link. A link hands the request to
-   the browser, so the page never learns the outcome: a refusal or an expired
-   session saved an error body under the backup's own filename, and the catch
-   here could not see it. Going through `ag` also means an expired session
-   raises the sign-in box and the export finishes afterwards. */
+/* Fetched, never reached by navigating a link. A link hands the request to the
+   browser, which saves an error body under the backup's own filename. */
 el('btn-exp').onclick = async () => {
   let url;
   try {
@@ -1252,8 +1221,8 @@ el('btn-exp').onclick = async () => {
   } catch (e) {
     toast(t('toast.exportFailed', { err: e.message }), 'err');
   } finally {
-    /* Revoked on the next frame: revoking it in this one races the download the
-       click just started, and the browser keeps nothing to save. */
+    /* Revoked on the next frame. Revoking it in this one races the download the
+       click just started. */
     if (url) requestAnimationFrame(() => URL.revokeObjectURL(url));
   }
 };
@@ -1303,9 +1272,8 @@ el('imp').onchange = async e => {
   tgt(e).value = '';
 };
 
-/* Why an item did not import, and what changed about one that did. Written out
-   as literals rather than assembled from the code, so a key can be traced from
-   the catalog back to here. */
+/* Written out as literals, so a key can be traced from the catalog back to
+   here. */
 const SKIP_TEXT = {
   [SKIP.NO_LABEL]: 'importForeign.skipNoLabel',
   [SKIP.NO_HREF]: 'importForeign.skipNoHref',
@@ -1327,9 +1295,7 @@ const NOTE_TEXT = {
   [NOTE.PAGES_NOT_FOLLOWED]: 'importForeign.notePages',
 };
 
-/** One "Heading (n)" block followed by a line per entry. Every entry is listed:
-    a summary that says four services were dropped without naming them leaves
-    the person to diff two configs by hand.
+/** One "Heading (n)" block followed by a line per entry.
     @param {HTMLElement} parent @param {string} heading
     @param {Array<{ name: string, group: string, why: string }>} rows */
 function dlgSection(parent, heading, rows) {
@@ -1343,8 +1309,6 @@ function dlgSection(parent, heading, rows) {
     const li = document.createElement('li');
     li.className = 'dlg-li';
     const nm = document.createElement('span');
-    /* Either part can be missing: a note about the file as a whole has neither,
-       and a note about a group has no item name. */
     setUserText(nm, [row.group, row.name].filter(Boolean).join(' / ') || t('importForeign.wholeFile'));
     const why = document.createElement('span');
     why.className = 'dlg-why';
@@ -1360,8 +1324,8 @@ el('imp-foreign').onchange = async e => {
   const files = [...(input.files || [])];
   if (!files.length) return;
   try {
-    /* Ids have to stay unique against what is already saved and against every
-       other file in the batch, so one taken set runs through all of them. */
+    /* Ids must stay unique against what is saved and against every other file
+       in the batch, so one taken set runs through all of them. */
     const taken = new Set(state.items.map(i => i.id));
     const items = [],
       skipped = [],
@@ -1372,7 +1336,7 @@ el('imp-foreign').onchange = async e => {
         doc = parseYaml(await file.text());
       } catch (err) {
         /* All or nothing. A half-imported dashboard is harder to undo than a
-           refused file, and the line number is what makes the file fixable. */
+           refused file. */
         if (err instanceof YamlLiteError)
           throw new Error(t('toast.importYamlUnsupported', { file: file.name, reason: err.reason, line: err.line }));
         throw err;
@@ -1404,8 +1368,6 @@ el('imp-foreign').onchange = async e => {
       items
         .filter(i => i.type === 'app')
         .map(i => {
-          /* The monitored URL is shown next to the link because this server, not
-           the browser, polls it on a timer once the import is saved. */
           const ping = i.monitoring?.healthcheck?.pingUrl;
           return {
             name: i.label,
@@ -1432,10 +1394,8 @@ el('imp-foreign').onchange = async e => {
       skipped.map(s => ({ name: s.name, group: s.group, why: t(SKIP_TEXT[s.reason], { detail: s.detail || '' }) })),
     );
 
-    /* A file from another dashboard can ask for certificate checking to be
-       skipped. That is a security setting, so it is never taken from the file on
-       the file's say-so: the apps that asked are named, and it stays off unless
-       it is turned on here. */
+    /* Never take certificate skipping from the file on its say-so. It stays off
+       unless it is turned on here. */
     const insecure = insecureApps(items);
     /** @type {HTMLInputElement|null} */
     let skipTlsChoice = null;
@@ -1476,8 +1436,8 @@ el('imp-foreign').onchange = async e => {
       return;
     }
     if (skipTlsChoice && !skipTlsChoice.checked) clearSkipTls(items);
-    /* Appended, never merged: nothing already on the dashboard is renamed,
-       reordered or removed by an import from somewhere else. */
+    /* Appended, never merged. An import must not rename, reorder or remove
+       anything already on the dashboard. */
     await appendAndSave(items);
     toast(t('toast.importForeignDone', { apps, folders }));
   } catch (err) {
@@ -1497,10 +1457,6 @@ initBgType();
 initLogLevel();
 initLanguage();
 
-/* An expired session used to surface as "Save failed: Unauthorised" on every
-   attempt, with no way back to signing in short of a reload that discarded
-   whatever was being edited. Registered here rather than imported by the API
-   helpers, which the sign-in screen itself depends on. */
 setReauthHandler(requireLogin);
 
 checkAuth(load).then(ok => {

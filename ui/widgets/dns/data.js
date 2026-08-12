@@ -1,16 +1,5 @@
-/* DNS Server widget data function.
-
-   Supports four providers, selected by widgetConfig.provider:
-     - "adguard" (default): AdGuard Home  GET /control/stats           (basic auth)
-     - "pihole":            Pi-hole v6    session login + summary/history
-     - "technitium":        Technitium    GET /api/dashboard/stats/get (token)
-     - "nextdns":           NextDNS       cloud analytics API          (api key + profile)
-
-   All are normalized into AdGuard's /control/stats shape so the widget HTML
-   renders them identically:
-     num_dns_queries, num_blocked_filtering, num_replaced_safebrowsing,
-     num_replaced_parental, num_cached, and the per-hour arrays
-     dns_queries / blocked_filtering. */
+/* Every provider is normalised into AdGuard's /control/stats shape, which is
+   what the widget HTML renders. */
 
 module.exports = async function (ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
@@ -32,7 +21,6 @@ function authErr(r) {
 
 async function adGuard(ctx, base, config, fetchJSON) {
   const headers = {};
-  /* Only attach Authorization when a credential is set (matches prior behavior). */
   if (config.dnsUser || config.dnsPass) {
     headers.Authorization =
       'Basic ' + Buffer.from(`${config.dnsUser || ''}:${config.dnsPass || ''}`).toString('base64');
@@ -44,8 +32,8 @@ async function adGuard(ctx, base, config, fetchJSON) {
 }
 
 async function piHole(ctx, base, config, fetchJSON) {
-  /* v6 uses session auth: POST /api/auth { password } -> session.sid, sent as
-     the X-FTL-SID header. If no password is set, the API responds unauthenticated. */
+  /* v6 session auth: POST /api/auth { password } -> session.sid, sent as the
+     X-FTL-SID header. */
   let sid = '';
   if (config.dnsPiholePassword) {
     const a = await fetchJSON(base + '/api/auth', {
@@ -72,8 +60,7 @@ async function piHole(ctx, base, config, fetchJSON) {
     num_forwarded: q.forwarded || 0,
   };
 
-  /* History: Pi-hole returns 10-minute slots with timestamps; the chart expects
-     one point per hour, so bucket consecutive slots into hourly sums. */
+  /* Pi-hole returns 10-minute slots. The chart expects one point per hour. */
   try {
     const h = await fetchJSON(base + '/api/history', { headers, timeout: 8000 });
     const slots = h.data && Array.isArray(h.data.history) ? h.data.history : [];
@@ -90,12 +77,10 @@ async function piHole(ctx, base, config, fetchJSON) {
       out.dns_queries = hours.map(hr => byHour.get(hr).total);
       out.blocked_filtering = hours.map(hr => byHour.get(hr).blocked);
     }
-  } catch {
-    /* chart is optional; summary numbers already returned */
-  }
+  } catch {}
 
-  /* Release the session. Pi-hole v6 caps concurrent API sessions, and polling
-     every interval would otherwise pile up sessions until it locks us out. */
+  /* Release the session. Pi-hole v6 caps concurrent sessions, and polling piles
+     them up until it locks this client out. */
   if (sid) {
     try {
       await fetchJSON(base + '/api/auth', { method: 'DELETE', headers, timeout: 5000 });
@@ -144,7 +129,7 @@ async function nextDns(ctx, config, fetchJSON) {
     if (row.status === 'blocked') blocked += q;
     else allowed += q; /* 'allowed' and 'default' both count as allowed */
   }
-  /* NextDNS has no cache breakdown; total = allowed + blocked, no Cached stream. */
+  /* NextDNS has no cache breakdown. */
   return {
     num_dns_queries: allowed + blocked,
     num_blocked_filtering: blocked,

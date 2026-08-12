@@ -1,21 +1,11 @@
 // @ts-check
-/* Convert a gethomepage or Dashy config into Stackyard items.
-
-   Links and folders only. A widget in the source becomes a plain app tile
-   pointing at the same service, never a Stackyard widget: the two widget
-   systems take different credentials and different options, and a tile that
-   looks configured but reports nothing is worse than a link.
-
-   Nothing here touches the DOM or the network, and the item shape comes from
-   buildAppItem rather than being written out again, so an item that arrives by
-   import is the same object an item created in the admin UI is.
-
-   Pure functions, DOM-free, so ui/test can exercise the rules directly. */
+/* Convert a gethomepage or Dashy config into Stackyard items. Links and folders
+   only: a widget in the source becomes a plain app tile, never a Stackyard
+   widget. Keep this module free of the DOM and of the network. */
 
 import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=77cac1d1';
 import { isSafeLinkUrl } from '/js/link-url.js?v=19038560';
 
-/* An item is not imported at all. */
 export const SKIP = Object.freeze({
   NO_LABEL: 'no-label',
   NO_HREF: 'no-href',
@@ -25,7 +15,6 @@ export const SKIP = Object.freeze({
   UNREADABLE: 'unreadable',
 });
 
-/* An item is imported, but something in the source did not survive the trip. */
 export const NOTE = Object.freeze({
   ICON_DROPPED: 'icon-dropped',
   PING_DROPPED: 'ping-dropped',
@@ -39,8 +28,7 @@ export const NOTE = Object.freeze({
   PAGES_NOT_FOLLOWED: 'pages-not-followed',
 });
 
-/* Fields with no equivalent on a Stackyard item. Counted so the summary can say
-   what was left behind rather than quietly discarding it. */
+/* Fields with no equivalent on a Stackyard item. */
 const IGNORED_FIELDS = Object.freeze([
   'description',
   'abbr',
@@ -55,20 +43,17 @@ const IGNORED_FIELDS = Object.freeze([
 
 const isMap = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const str = v => (typeof v === 'string' ? v.trim() : '');
-/* A name may legitimately be written unquoted and read back as a number or a
-   boolean: `title: 2024` and `title: no` are both real. A URL read as one of
-   those is not a URL, so only names go through this. */
+/* A name may be written unquoted and read back as a number or a boolean:
+   `title: 2024` and `title: no` are both real. Names only. */
 const text = v => (typeof v === 'string' ? v.trim() : typeof v === 'number' || typeof v === 'boolean' ? String(v) : '');
 
-/* Whatever the source meant by it, a link with no scheme cannot reach the
-   service after the import: it resolves against the dashboard's own origin. */
+/* A link with no scheme resolves against the dashboard's own origin. */
 function isAbsoluteLink(href) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(href)) return true;
   return href.startsWith('//');
 }
 
-/* A value Homepage or Dashy resolves from its own environment. It cannot be
-   resolved here, so the link would be dead on arrival. */
+/* A value Homepage or Dashy resolves from its own environment. */
 const hasPlaceholder = s => /\{\{[^}]*\}\}|\$\{[^}]*\}/.test(s);
 
 /** The single key of a `{ name: value }` wrapper, or null.
@@ -79,8 +64,7 @@ function soleEntry(v) {
   return keys.length === 1 ? [keys[0], v[keys[0]]] : null;
 }
 
-/** Which format a parsed document is, by shape rather than by filename: these
-    files get renamed, downloaded with a suffix, and pasted between installs.
+/** Which format a parsed document is, by shape rather than by filename.
     @param {any} doc @returns {'homepage-services'|'homepage-bookmarks'|'dashy'|null} */
 export function detectSource(doc) {
   if (isMap(doc)) {
@@ -97,8 +81,7 @@ export function detectSource(doc) {
     for (const entry of g[1]) {
       const e = soleEntry(entry);
       if (!e) continue;
-      /* The one structural difference between the two Homepage files: a
-         bookmark's fields sit inside an extra list, a service's do not. */
+      /* A bookmark's fields sit inside an extra list, a service's do not. */
       if (Array.isArray(e[1]) && e[1].some(row => isMap(row) && ('href' in row || 'abbr' in row))) {
         return 'homepage-bookmarks';
       }
@@ -107,22 +90,17 @@ export function detectSource(doc) {
   return sawGroup ? 'homepage-services' : null;
 }
 
-/** An icon reference the dashboard can actually resolve, or nothing.
-
-    A bare name is a dashboard-icons slug, which is exactly what iconChain
-    expects, so it is kept as it is. Icon fonts, emoji and paths into another
-    dashboard's own file tree have no equivalent and are blanked rather than
-    stored as a reference that resolves to a broken image.
+/** An icon reference the dashboard can resolve, or nothing. A bare name is a
+    dashboard-icons slug. Icon fonts, emoji and paths into another dashboard's
+    file tree are blanked.
 
     @param {unknown} raw @returns {{ iconUrl: string, dropped: boolean }} */
 export function convertIcon(raw) {
   const s = str(raw);
   if (!s) return { iconUrl: '', dropped: false };
   if (/^https?:\/\//i.test(s)) {
-    /* An icon is loaded into an <img src>, and the page's img-src allows only
-       this origin, data:, and the icon CDN. Any other host is refused by the
-       browser, so importing it would store a reference that can only ever
-       render as a broken image. See nginx/csp-default.conf. */
+    /* img-src allows only this origin, data: and the icon CDN. See
+       nginx/csp-default.conf. */
     let host = '';
     try {
       host = new URL(s).hostname.toLowerCase();
@@ -132,14 +110,11 @@ export function convertIcon(raw) {
     return host === 'cdn.jsdelivr.net' ? { iconUrl: s, dropped: false } : { iconUrl: '', dropped: true };
   }
   if (s.includes('/')) return { iconUrl: '', dropped: true };
-  /* selfh.st and homelab-svg-assets prefixes. Both name the same service the
-     dashboard-icons catalogue does, so the remainder is a usable slug. */
+  /* selfh.st and homelab-svg-assets prefixes. The remainder is a usable slug. */
   const body = /^(sh|hl)-/i.test(s) ? s.slice(3) : s;
-  /* iconChain only strips .svg and .png, so any other extension has to go here
-     or it ends up inside the CDN slug. */
+  /* iconChain only strips .svg and .png. Any other extension must go here or it
+     ends up inside the CDN slug. */
   const name = body.replace(/\.(png|webp|svg|jpe?g|gif|ico)$/i, '');
-  /* A whitespace-separated value is an icon-font class such as "fas fa-home",
-     never a dashboard-icons slug. */
   if (!name || /\s/.test(name) || /^(mdi|si|fa[srlbd]?)-/i.test(name) || name === 'favicon')
     return { iconUrl: '', dropped: true };
   if (!/^[a-z0-9][a-z0-9._-]*$/i.test(name)) return { iconUrl: '', dropped: true };
@@ -147,9 +122,8 @@ export function convertIcon(raw) {
 }
 
 /** Collector for one conversion run. Keeps ids unique across every file in the
-    batch, including against the items already on the dashboard.
-    A Set given by the caller is used as it is rather than copied: the ids of one
-    file have to be visible while the next one in the batch is converted.
+    batch. The caller's Set is used as it is, never copied: the ids of one file
+    must be visible while the next is converted.
     @param {Iterable<string>} takenIds */
 function collector(takenIds) {
   const taken = takenIds instanceof Set ? takenIds : new Set(takenIds || []);
@@ -191,8 +165,7 @@ function addApp(col, group, { label, href, iconUrl, container, pingUrl, skipTlsV
     col.skip(SKIP.RELATIVE_HREF, label, group, href);
     return null;
   }
-  /* The server refuses the whole save over one unsafe link, so an item carrying
-     one has to be dropped here or nothing imports at all. */
+  /* The server refuses the whole save over one unsafe link. */
   if (!isSafeLinkUrl(href)) {
     col.skip(SKIP.UNSAFE_HREF, label, group, href);
     return null;
@@ -223,9 +196,7 @@ function addApp(col, group, { label, href, iconUrl, container, pingUrl, skipTlsV
   return built.item;
 }
 
-/** Create the folder for a group, given the apps that landed in it. Empty
-    groups produce nothing: a folder with no apps is a tile that opens onto an
-    empty sheet. */
+/** Create the folder for a group, given the apps that landed in it. */
 function addFolder(col, label, childIds, at) {
   if (!childIds.length) return;
   const id = newItemId(label, 'folder', col.taken);
@@ -233,7 +204,6 @@ function addFolder(col, label, childIds, at) {
   col.items.splice(at, 0, { id, type: 'folder', label, children: childIds });
 }
 
-/** Record every source field that has no home on a Stackyard item. */
 function noteIgnored(col, src, name, group) {
   const present = IGNORED_FIELDS.filter(f => f in src && src[f] !== null && src[f] !== '');
   if (present.length) col.note(NOTE.FIELDS_DROPPED, name, group, present.join(', '));
@@ -250,19 +220,15 @@ export function convertHomepageServices(doc, takenIds = []) {
     for (const entry of Array.isArray(entries) ? entries : []) {
       const e = soleEntry(entry);
       if (!e) {
-        /* Not a `{ name: fields }` wrapper, so there is no service to read.
-           Counted rather than passed over, or a mangled file imports as a
-           smaller dashboard with nothing saying why. */
+        /* Not a `{ name: fields }` wrapper, so there is no service to read. */
         col.skip(SKIP.UNREADABLE, '', groupLabel);
         continue;
       }
       const [name, value] = e;
       if (Array.isArray(value)) {
-        /* Homepage nests groups; Stackyard folders do not, so the child group
-           becomes a folder of its own with a compound name. */
+        /* Homepage nests groups, Stackyard folders do not. */
         const nested = groupLabel ? `${groupLabel} / ${name}` : name;
-        /* The child's own name, not the compound one: the preview prints
-           "group / name", so passing the compound name repeats the parent. */
+        /* The child's own name. The preview prints "group / name" itself. */
         col.note(NOTE.GROUP_FLATTENED, name, groupLabel, nested);
         walk(value, nested);
         continue;
@@ -277,8 +243,7 @@ export function convertHomepageServices(doc, takenIds = []) {
         label: name,
         href: str(value.href),
         iconUrl: icon.iconUrl,
-        /* A container name is only meaningful against the Docker socket this
-           install can reach; with a `server` it names someone else's daemon. */
+        /* With a `server` the container name means someone else's daemon. */
         container: hasServer ? '' : str(value.container),
         pingUrl: str(value.siteMonitor),
       });
@@ -287,7 +252,7 @@ export function convertHomepageServices(doc, takenIds = []) {
       if (icon.dropped) col.note(NOTE.ICON_DROPPED, name, groupLabel, str(value.icon));
       if (hasServer && str(value.container)) col.note(NOTE.CONTAINER_ON_REMOTE, name, groupLabel, str(value.server));
       /* Homepage's `ping` is an ICMP host, not a URL. The health check makes an
-         HTTP request, so importing it would report every host as down. */
+         HTTP request. */
       if (str(value.ping)) col.note(NOTE.PING_DROPPED, name, groupLabel, str(value.ping));
       if (value.widget || value.widgets) col.note(NOTE.WIDGET_AS_LINK, name, groupLabel);
       noteIgnored(col, value, name, groupLabel);
@@ -298,9 +263,8 @@ export function convertHomepageServices(doc, takenIds = []) {
   for (const group of doc) {
     const g = soleEntry(group);
     if (!g || !Array.isArray(g[1])) {
-      /* A top-level group the file shapes differently from the rest. detectSource
-         settles the format on the first entry that matches, so one of these does
-         not stop the import, and passing over it loses the whole group. */
+      /* detectSource settles the format on the first entry that matches, so a
+         group shaped differently must still be read. */
       col.skip(SKIP.UNREADABLE, g ? g[0] : '', '');
       continue;
     }
@@ -330,8 +294,7 @@ export function convertHomepageBookmarks(doc, takenIds = []) {
         continue;
       }
       const [name, value] = e;
-      /* A bookmark's fields arrive inside a one-element list. Services are
-         written without it, and both files are worth reading either way. */
+      /* A bookmark's fields arrive inside a one-element list. */
       const fields = Array.isArray(value) ? value.find(isMap) : value;
       if (!isMap(fields)) {
         col.skip(SKIP.UNREADABLE, name, groupLabel);
@@ -356,13 +319,11 @@ export function convertHomepageBookmarks(doc, takenIds = []) {
 }
 
 /** @param {any} doc @param {Iterable<string>} [takenIds]
-    @param {string} [untitledFolder] label for a section that has no name of its
-    own; passed in because this module stays free of the i18n catalog */
+    @param {string} [untitledFolder] label for a section with no name of its own */
 export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
   const col = collector(takenIds);
   if (!isMap(doc)) return result(col);
   if (Array.isArray(doc.pages) && doc.pages.length) {
-    /* Each entry names another config file, often on another host. */
     col.note(NOTE.PAGES_NOT_FOLLOWED, '', '', String(doc.pages.length));
   }
 
@@ -384,8 +345,6 @@ export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
       const icon = convertIcon(raw.icon);
       const href = str(raw.url);
       const check = raw.statusCheck === true;
-      /* Dashy's per-item switch for a health check against a self-signed
-         certificate. Stackyard has the same switch, so it carries across. */
       const insecure = check && raw.statusCheckAllowInsecure === true;
       const app = addApp(col, groupLabel, {
         label: title,
@@ -399,10 +358,7 @@ export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
       children.push(app.id);
       if (icon.dropped) col.note(NOTE.ICON_DROPPED, title, groupLabel, str(raw.icon));
       if (viaSubItem) col.note(NOTE.SUBITEMS_FLATTENED, title, groupLabel);
-      /* localUrl is a second address for the same service, reachable only from
-         the other network, so importing it would give half the tiles a link that
-         works from somewhere else. Reported rather than dropped in silence,
-         because the tile keeps whichever of the two the source called primary. */
+      /* localUrl is a second address, reachable only from the other network. */
       if (str(raw.localUrl)) col.note(NOTE.LOCAL_URL_DROPPED, title, groupLabel, str(raw.localUrl));
       noteIgnored(col, raw, title, groupLabel);
       for (const sub of Array.isArray(raw.subItems) ? raw.subItems : []) addDashyItem(sub, true);
@@ -410,13 +366,10 @@ export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
 
     if (Array.isArray(section.items)) for (const item of section.items) addDashyItem(item, false);
     else if (!Array.isArray(section.widgets)) {
-      /* A section shaped like one but carrying nothing readable. Without this it
-         contributes no items, no skips and no notes, and the preview shows a
-         file smaller than the one that was chosen with nothing saying why. */
+      /* A section shaped like one but carrying nothing readable. */
       col.skip(SKIP.UNREADABLE, groupLabel, '');
     }
-    /* A section widget has no link of its own to keep, unlike a Homepage
-       service widget, so there is nothing to import in its place. */
+    /* A section widget has no link of its own to keep. */
     if (Array.isArray(section.widgets) && section.widgets.length)
       col.note(NOTE.WIDGETS_DROPPED, '', groupLabel, String(section.widgets.length));
     addFolder(col, groupLabel, children, at);
@@ -428,18 +381,15 @@ function result(col) {
   return { items: col.items, skipped: col.skipped, notes: col.notes };
 }
 
-/* Skipping certificate checking is the one security setting a foreign file can
-   ask for, so it is the one the import has to ask about rather than carry across
-   on the file's say-so. The conversion still records what the file asked for;
-   these two are how the dialog names those apps and how it applies the answer.
+/* Never carry certificate skipping across on the file's say-so. The conversion
+   records what the file asked for; the dialog applies the answer.
 
    @param {any[]} items @returns {any[]} */
 export function insecureApps(items) {
   return (Array.isArray(items) ? items : []).filter(i => i && i.type === 'app' && i.skipTlsVerify);
 }
 
-/** Turn the request down, leaving each app exactly as one that never asked: the
-    conversion drops the field rather than storing a false.
+/** Turn the request down, dropping the field rather than storing a false.
     @param {any[]} items @returns {any[]} */
 export function clearSkipTls(items) {
   for (const app of insecureApps(items)) delete app.skipTlsVerify;

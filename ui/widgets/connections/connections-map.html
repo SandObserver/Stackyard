@@ -23,9 +23,8 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
 
   const D=window.__DOTS;
   const POP={US:331,CA:38,MX:130,BR:214,AR:46,CO:51,CL:19,PE:34,VE:28,GB:67,IE:5,NL:17,DE:83,FR:65,ES:47,PT:10,IT:59,CH:9,AT:9,BE:12,SE:10,NO:5,DK:6,FI:6,IS:0.37,PL:38,CZ:11,RO:19,BG:7,HU:10,GR:11,UA:43,RU:144,BY:9.4,EE:1.3,LV:1.9,LT:2.8,MD:2.6,RS:7,HR:4,SK:5,SI:2,TR:85,IL:9,AE:10,SA:35,QA:2.7,KW:4.3,OM:5,BH:1.7,JO:10,LB:5.5,SY:18,IQ:41,IR:89,YE:30,EG:104,JP:125,KR:52,CN:1412,HK:7.5,TW:24,IN:1408,PK:231,BD:170,NP:30,LK:22,ID:274,MY:33,TH:70,VN:97,PH:111,MM:54,KH:17,LA:7,SG:5.9,MN:3.3,KZ:19,UZ:34,AZ:10,AM:3,GE:3.7,KG:6.7,TM:6,AU:26,NZ:5,PG:9,ZA:60,NG:206,KE:54,ET:118,GH:31,TZ:60,UG:46,CD:90,CM:27,CI:27,SN:17,ML:21,GN:13,GA:2.2,AO:33,DZ:44,MA:37,TN:12,LY:7,SD:45,SS:11,MG:28,MZ:31,MW:19,ZW:15,NA:2.5,MU:1.3,DJ:1,SO:16,NI:6.6,PA:4.3,DO:11,GT:18,HN:10,SV:6.5,CR:5,JM:3,CU:11,GY:0.8,EC:18,BO:12,PY:7,UY:3.5};
-  /* Capital lon/lat for the countries in the dot set, used to bias highlighted
-     dots toward population centres. One dot cell spans 3.6 degrees of
-     longitude, so a tenth of a degree is already finer than the grid resolves. */
+  /* Capital lon/lat, to bias highlighted dots toward population centres. One dot
+     cell spans 3.6 degrees of longitude. */
   const CAP={CA:[-75.7,45.4],GL:[-51.7,64.2],NO:[10.7,59.9],RU:[37.6,55.8],US:[-77.0,38.9],SE:[18.1,59.3],FI:[24.9,60.2],IS:[-21.9,64.1],GB:[-0.1,51.5],DK:[12.6,55.7],LV:[24.1,56.9],IE:[-6.3,53.3],NL:[4.9,52.4],DE:[13.4,52.5],PL:[21.0,52.2],BY:[27.6,53.9],KZ:[71.4,51.2],CN:[116.4,39.9],FR:[2.4,48.9],CZ:[14.4,50.1],UA:[30.5,50.5],MN:[106.9,47.9],IT:[12.5,41.9],HR:[16.0,45.8],RS:[20.5,44.8],RO:[26.1,44.4],ES:[-3.7,40.4],AL:[19.8,41.3],BG:[23.3,42.7],GE:[44.8,41.7],TM:[58.4,37.9],UZ:[69.2,41.3],KG:[74.6,42.9],PT:[-9.1,38.7],GR:[23.7,38.0],TR:[32.9,39.9],IR:[51.4,35.7],AZ:[49.9,40.4],TJ:[68.8,38.6],KP:[125.8,39.0],MA:[-6.8,34.0],DZ:[3.1,36.8],TN:[10.2,36.8],SY:[36.3,33.5],IQ:[44.4,33.3],AF:[69.2,34.5],PK:[73.1,33.7],IN:[77.2,28.6],KR:[127.0,37.6],JP:[139.7,35.7],MX:[-99.1,19.4],LY:[13.2,32.9],EG:[31.2,30.0],SA:[46.7,24.7],NP:[85.3,27.7],BT:[89.6,27.5],EH:[-13.2,27.2],MR:[-16.0,18.1],ML:[-8.0,12.6],AE:[54.4,24.5],OM:[58.6,23.6],MM:[96.1,19.8],'CN-TW':[121.6,25.0],NE:[2.1,13.5],TD:[15.0,12.1],SD:[32.5,15.6],LA:[102.6,18.0],VN:[105.8,21.0],ER:[38.9,15.3],YE:[44.2,15.4],TH:[100.5,13.8],PH:[121.0,14.6],NI:[-86.3,12.1],SN:[-17.4,14.7],BF:[-1.5,12.4],NG:[7.5,9.1],ET:[38.7,9.0],KH:[104.9,11.6],CO:[-74.1,4.7],VE:[-66.9,10.5],SL:[-13.2,8.5],GN:[-13.7,9.5],CI:[-5.3,6.8],GH:[-0.2,5.6],BJ:[2.6,6.5],CF:[18.6,4.4],SS:[31.6,4.9],GY:[-58.2,6.8],SR:[-55.2,5.9],LR:[-10.8,6.3],CM:[11.5,3.9],SO:[45.3,2.0],MY:[101.7,3.1],BR:[-47.9,-15.8],GA:[9.5,0.4],CG:[15.3,-4.3],CD:[15.3,-4.3],UG:[32.6,0.3],KE:[36.8,-1.3],ID:[106.8,-6.2],EC:[-78.5,-0.2],PE:[-77.0,-12.0],RW:[30.1,-1.9],TZ:[35.7,-6.2],PG:[147.2,-9.5],AO:[13.2,-8.8],ZM:[28.3,-15.4],BO:[-68.1,-16.5],MW:[33.8,-14.0],MZ:[32.6,-25.9],AU:[149.1,-35.3],ZW:[31.0,-17.8],MG:[47.5,-18.9],VU:[168.3,-17.7],PY:[-57.6,-25.3],NA:[17.1,-22.6],BW:[25.9,-24.7],CL:[-70.7,-33.4],AR:[-58.4,-34.6],ZA:[28.2,-25.7],UY:[-56.2,-34.9],NZ:[174.8,-41.3]};
   const params=new URLSearchParams(location.search);
   const id=params.get('id')||'';
@@ -67,11 +66,8 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     return cells;
   }
 
-  /* Highlighted dots are spread over the country instead of taken from the
-     centre outwards: some cluster on the capital, the rest come one per cell
-     from a grid whose resolution grows until it can supply the number needed.
-     The capital's share shrinks as the count rises, so a country with one user
-     reads as a point on its capital and a busy one as nationwide coverage. */
+  /* Some dots cluster on the capital, the rest come one per cell from a grid
+     whose resolution grows until it can supply the number needed. */
   function selectDots(cc,list,n){
     if(n>=list.length)return list.slice();
     const anchor=anchorOf[cc]||centroid[cc];
@@ -163,9 +159,8 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       it.style.cssText='all:unset;display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:9px;'+
         'cursor:'+(clickable?'pointer':'default')+';transition:background .12s,opacity .12s;color:inherit;'+
         'font:inherit;-webkit-tap-highlight-color:transparent;';
-      /* The dot's colour is a CSS value, so it is validated and then assigned
-         through named CSSOM properties rather than built into a style string.
-         See safeColor in widget-toolbox.js. */
+      /* The dot's colour is a CSS value. Validate it and assign it through
+         named CSSOM properties, never a style string. */
       const dot=document.createElement('span');
       dot.style.width='7px';dot.style.height='7px';dot.style.borderRadius='50%';
       const dotColor=safeColor(l.color,DEFAULT_DOT);
@@ -244,9 +239,8 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     'font-family:-apple-system,system-ui,sans-serif;color:#fff;';
   document.body.appendChild(tt);
   function showTip(info,cx,cy){
-    /* html`` escapes every interpolation, so info.users (which comes straight
-       from the upstream response) can no longer carry markup into the only CSP
-       context that allows inline script. */
+    /* info.users comes straight from the upstream response. html`` escapes
+       every interpolation. */
     const body=info.cc!=null
       ? html`<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px"><span style="font:700 14px/1.15 -apple-system;letter-spacing:-.01em">${fmtName(info.cc)}</span><span style="font:600 10px -apple-system;color:#30D158;display:inline-flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#30D158"></span>${wt('ui.online','Online')}</span></div><div style="display:flex;justify-content:space-between;gap:16px;font:500 12px/1.2 -apple-system;color:rgba(235,235,245,.62)"><span>${wt('ui.users','Users')}</span><span style="color:#fff;font-weight:600;font-variant-numeric:tabular-nums">${info.users}</span></div>`
       : html`<div style="font:600 14px/1.15 -apple-system;letter-spacing:-.01em">${(info.city?info.city+', ':'')+info.country}</div>`;

@@ -1,6 +1,6 @@
 /* Renders a widget's declared `fields` into a config form and reads the values
-   back. Each builder returns { el, get, control, liveValue }. The field types
-   and their manifest options are specified in docs/widgets.md. */
+   back. Each builder returns { el, get, control, liveValue }. See
+   docs/widgets.md. */
 
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { wireChecklist } from '/js/admin-shared.js?v=bb36dbb3';
@@ -173,8 +173,8 @@ async function _fetchOptions(field, ctx) {
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok || d.error) {
-    /* Carry the structured fields so the caller can branch on `kind` rather than
-       reading the message. See docs/api-errors.md. */
+    /* Carry the structured fields so the caller branches on `kind`, never on
+       the message. */
     const err = /** @type {Error & { status?: number, kind?: string, detail?: Record<string, unknown> }} */ (
       new Error(d.error || 'HTTP ' + r.status)
     );
@@ -186,8 +186,6 @@ async function _fetchOptions(field, ctx) {
   return Array.isArray(d.options) ? d.options : [];
 }
 
-/* Saves an array of scalars, one per row and null where unset, so a widget that
-   already stores a plain array does not change shape. */
 function _picklist(field, value, ctx, size) {
   const count =
     field.countBySize && size && field.countBySize[size] != null
@@ -441,11 +439,10 @@ function _multiselect(field, value) {
   return { el: wrap, get, control: wrap, liveValue: () => [...cur] };
 }
 
-/* The wrapper exists so `showIf` has one element to hide: the control itself
-   appends several rows. */
+/* The wrapper gives `showIf` one element to hide. The control appends several
+   rows. */
 function _color(field, value) {
   const wrap = document.createElement('div');
-  /* The control builds id-based selectors from this. */
   const idPrefix =
     'wcf-' + String(field.key).replace(/[^a-zA-Z0-9_-]/g, '') + '-' + Math.random().toString(36).slice(2, 7);
   const initial =
@@ -475,8 +472,7 @@ function _missingIn(built) {
   for (const b of built) {
     if (b.field.showIf && !_visible(b)) continue;
     if (b.field.type === 'secret' && !b.field.optional) {
-      /* Blank means "keep the stored value", so only a blank with nothing
-         stored is missing. */
+      /* Blank means "keep the stored value". */
       if (!b.get() && !b.hasStored()) out.push(b.field.label);
       continue;
     }
@@ -485,9 +481,8 @@ function _missingIn(built) {
   return out;
 }
 
-/* Each row is independent, so a row's condition reads that row's own values. */
 function _wireShowIf(built) {
-  /* Null prototype: a showIf naming "toString" would otherwise resolve to
+  /* Null prototype. A showIf naming "toString" would otherwise resolve to
      Object.prototype.toString and be called as a field reader. */
   const liveByKey = Object.create(null);
   for (const b of built) if (b.liveValue) liveByKey[b.field.key] = b.liveValue;
@@ -508,8 +503,6 @@ function _wireShowIf(built) {
   apply();
 }
 
-/* Sub-fields of type group or object are skipped; the manifest validator already
-   rejects them. */
 function _object(field, value, ctx) {
   const cfg = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   const wrap = document.createElement('div');
@@ -602,7 +595,7 @@ function _group(field, rows, size, ctx) {
 
       const card = document.createElement('div');
       card.className = 'grp';
-      /* Read through ctx rather than copied: the form assigns it only once every
+      /* Read through ctx, never copied. The form assigns it only once every
          field is built. */
       const rowCtx = {
         widgetId: ctx && ctx.widgetId,
@@ -681,7 +674,6 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
     if (typeof opts.onChange === 'function') opts.onChange(key);
   };
 
-  /* Group consecutive simple fields into a card; group fields render as their own cards. */
   let card = null;
   const flush = () => {
     card = null;

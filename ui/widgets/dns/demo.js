@@ -1,6 +1,3 @@
-/* Invented DNS figures for the public demo. Real upstreams are unreachable
-   there, so the widget is handed a body instead of running data.js. */
-
 module.exports = function dnsDemo({ demo: { wave } }) {
   const total = Math.round(wave(600, 46000, 52000));
   const blocked = Math.round(total * 0.19);

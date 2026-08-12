@@ -1,7 +1,4 @@
-/* Pure status-derivation helpers for the backup widget, split out from the
-   backup route so they can be unit-tested. All operate on already-parsed
-   provider JSON with no I/O. The async login/token/fetch logic stays in the
-   route. */
+/* Keep these free of I/O. The login, token and fetch logic stays in data.js. */
 
 function dupList(d) {
   return Array.isArray(d)

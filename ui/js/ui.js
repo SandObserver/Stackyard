@@ -32,8 +32,7 @@ const st = () => _state;
 const widgetReg = () => _state?.widgetReg || Object.create(null);
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
-/* Zero without viewport-fit=cover in the page meta. Safari reports 0 anyway,
-   since it already excludes its toolbars from innerHeight. */
+/* Zero without viewport-fit=cover in the page meta. */
 function readSafeInsets() {
   const p = mk('div');
   p.style.cssText =
@@ -47,8 +46,8 @@ function readSafeInsets() {
   return { top, bottom };
 }
 
-/* A tap outside a widget lands in the parent document, so the parent has to tell
-   the widgets to reset. Widgets expose window.__clearActive. */
+/* A tap outside a widget lands in the parent document. Widgets expose
+   window.__clearActive. */
 function clearMobWidgets(exceptWin) {
   qa('.mob-widget-card iframe, .widget iframe').forEach(ifr => {
     try {
@@ -57,20 +56,17 @@ function clearMobWidgets(exceptWin) {
     } catch {}
   });
 }
-/* A module-level guard on the window, so a second import of this module does
-   not bind the listener twice. Not a standard window property. */
+/* A module-level guard, so a second import does not bind the listener twice. */
 const _win = /** @type {any} */ (window);
 if (!_win.__wActiveMsgBound) {
   _win.__wActiveMsgBound = true;
   window.addEventListener('message', e => {
-    /* Widgets are same-origin iframes, so anything else is not part of this
-       protocol and must not be able to drive the dashboard. */
+    /* Widgets are same-origin iframes. Nothing else may drive the dashboard. */
     if (e.origin !== window.location.origin) return;
     if (e.data && e.data.type === 'widget-active') clearMobWidgets(e.source);
   });
 }
 
-/* css(): set multiple CSS custom properties on an element at once */
 function css(el, props) {
   for (const [k, v] of Object.entries(props)) el.style.setProperty(k, v);
   return el;
@@ -237,8 +233,7 @@ export function openFolderDesktop(folder) {
   document.body.appendChild(ov);
   folderOverlay = ov;
   /* The dashboard behind stays focusable while covered, so the overlay needs a
-     Tab trap. Attached after it is in the document, since the trap focuses its
-     first link. */
+     Tab trap. Attach it after the overlay is in the document. */
   releaseDeskTrap = trapFocus(ov, { closeOnEscape: false, onClose: closeDesk });
 }
 
@@ -358,7 +353,6 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   let releaseMobTrap = null;
   function closeMob() {
     qa('.badge', ov).forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
-    /* Releases the trap and returns focus to the button that opened it. */
     if (releaseMobTrap) {
       releaseMobTrap();
       releaseMobTrap = null;
@@ -537,14 +531,13 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   );
   document.body.appendChild(ov);
   folderOverlayMob = ov;
-  /* After the overlay is in the document, since the trap focuses its first
-     control. Escape is bound here so it cannot outlive the overlay. */
+  /* After the overlay is in the document: the trap focuses its first control. */
   releaseMobTrap = trapFocus(ov, { onClose: closeMob });
 }
 
 export function buildMobile() {
-  /* See buildDesktop: the previous widgets' observers and timers outlive their
-     DOM, so they are stopped before it is replaced. */
+  /* The previous widgets' observers and timers outlive their DOM. Stop them
+     before it is replaced. */
   teardownWidgets();
   st().BEL.clear();
   const vw = innerWidth,
@@ -590,7 +583,6 @@ export function buildMobile() {
   );
   const gridItems = items().filter(i => !i.dock && !i.hidden && !inFolder.has(String(i.id)));
 
-  /* First-fit, row-major packer → pages, each a list of {item,c,r,w,h}. */
   function packMobile(list) {
     const pages = [];
     let grid, placements;
@@ -668,13 +660,12 @@ export function buildMobile() {
     const preset = cardPreset(item, _state.widgetReg);
     if (preset) card.dataset.card = preset;
     if (wsub) card.dataset.wsubtype = wsub;
-    /* Same aspect as desktop, so the widget renders identically. Only
-       size-derived values are set here; the card material is in dashboard.css. */
+    /* Same aspect as desktop, so the widget renders identically. */
     card.style.cssText =
       `aspect-ratio:${design[0]}/${design[1]};width:100%;max-width:100%;max-height:100%;` +
       `flex-shrink:0;border-radius:${wBR}px;overflow:hidden;position:relative;`;
-    /* overlayHref with mobile:true adds a transparent layer, because an iframe
-       otherwise swallows the touch and the home pager never sees the swipe. */
+    /* An iframe swallows the touch, so the home pager never sees the swipe
+       without the transparent layer. */
     const overlayHref = item.url || item.href || item.widgetConfig?.scrutinyHref || item.widgetConfig?.linkUrl || null;
     mountScaledWidget(card, {
       src: widgetSrc(item, widgetReg(), { mobile: true, lang: currentLang() }),
@@ -711,8 +702,6 @@ export function buildMobile() {
     strip.appendChild(p);
   });
 
-  /* Cleared, not filled: mobile shows its own pill dots below, and building the
-     desktop ones into a hidden container leaves markup nothing reads. */
   const dw = el('dots');
   dw.style.cssText = 'display:none';
   dw.innerHTML = '';

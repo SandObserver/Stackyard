@@ -1,4 +1,3 @@
-/* Admin UI: the app and folder edit forms. Reads and writes shared state. */
 import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=84d58686';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=a0ea3e4b';
@@ -18,8 +17,6 @@ import {
 import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=601fe763';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=af729113';
 
-/* Folder form: settings-row system (PSD: add_new_folder).
-   Folder Name = inline-edit row; Add Apps = tap-to-toggle checklist dropdown. */
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
   const apps = state.items.filter(i => i.type === 'app' && !i.dock);
@@ -85,7 +82,6 @@ function _wireFolderApps() {
 
 export function buildAppForm(body, item) {
   const dockBlocked = isDockBlocked(state.items, item);
-  /* Per-app health checks only run when the global Docker toggle in General is on. */
   const globalHealthOn = !!inpById('srv-docker-en')?.checked;
   const mon = item?.monitoring || {};
   const hc = mon.healthcheck || {
@@ -108,10 +104,7 @@ export function buildAppForm(body, item) {
     const has = val != null && val !== '';
     return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button></div>`;
   };
-  /* The interval input sits inside the sentence, so the string is split around
-     its placeholder rather than concatenated: word order differs per language,
-     and in Persian the number comes before the unit with the whole line running
-     right to left. */
+  /* Split the string around its placeholder. Word order differs per language. */
   const [pollBefore, pollAfter] = t('app.pollInterval').split('{seconds}');
 
   const tog = (id, on) =>
@@ -316,8 +309,6 @@ function wireIcon() {
 
   const upInput = inpById('ip-upload');
   const upBtn = el('ip-upload-lbl');
-  /* Explicit click handler, more reliable than a <label> wrapping the input,
-     especially since the button text is swapped during upload. */
   if (upBtn && upInput) {
     upBtn.onclick = () => upInput.click();
     upInput.onchange = async () => {
@@ -376,9 +367,6 @@ function showIPRes(list, rawInput) {
     rs.appendChild(r);
   });
   if (!list.length && rawInput && !rawInput.includes('/')) {
-    /* The catalogue is lowercase and hyphenated, so what was typed is offered in
-       that spelling. Shown corrected rather than corrected silently, so what
-       gets saved is what is on screen. */
     const val = cdnIconName(rawInput);
     if (!val) {
       rs.classList.remove('open');
@@ -426,9 +414,8 @@ function setInitialGlyph(p) {
   s.textContent = (l[0] || '?').toUpperCase();
   p.replaceChildren(s);
 }
-/* Typing runs this per keystroke, so several attempts are in flight at once and
-   the half-typed ones fail last. Without the token, a stale failure replaced the
-   preview the finished name had already loaded. */
+/* Several attempts are in flight at once and the half-typed ones finish last.
+   The token stops a stale failure replacing a finished preview. */
 let prevRun = 0;
 function updPrev() {
   const p = el('ipv');
@@ -477,8 +464,7 @@ async function testPing() {
   }
 }
 
-/* A stored secret row arrives as value:"" with valueSet:true, so an empty value
-   means "keep the stored one". */
+/* An empty value on a row with valueSet means "keep the stored one". */
 function normKvRows(v) {
   if (Array.isArray(v))
     return v.map(r => ({
@@ -493,7 +479,7 @@ function normKvRows(v) {
 }
 
 /* An untouched secret row is sent with no value, so the server keeps the stored
-   one. Rows with no key are dropped. */
+   one. */
 export function serializeKvRows(rows) {
   const out = [];
   for (const r of rows || []) {
@@ -552,8 +538,8 @@ function kvRowEl(host, rows, row, ph) {
     row.secret = cEl.checked;
     vEl.type = cEl.checked ? 'password' : 'text';
     /* The server refuses to refill a non-secret row, so unticking clears the
-       credential on save. valueSet is cleared too, or the row would be sent as
-       "keep what you have" and the loss would only show up afterwards. */
+       credential on save. Clear valueSet too, or the row is sent as "keep what
+       you have". */
     if (clearsStoredSecret(row, cEl.checked)) {
       row.valueSet = false;
       vEl.value = '';
@@ -602,8 +588,7 @@ async function fetchBadge() {
     ['bprow', 'auth-row-wrap', 'poll-row'].forEach(id => el(id)?.classList.remove('bprow-hidden'));
     if (state.fnums.length) renderBadgeList(state.fnums, false);
   } catch (e) {
-    /* Branch on the error's `kind`, not on words inside its message. See
-       ui/js/admin-error.js and docs/api-errors.md. */
+    /* Branch on the error's `kind`, never on words inside its message. */
     const advice = badgeErrorAdvice(e);
     if (st) {
       st.style.cssText = 'margin-top:4px;color:' + (advice.tone === TONE.WARN ? '#ff9f0a' : '#ff453a');
@@ -626,7 +611,6 @@ function renderBadgeList(nums, existingOnly, query = '') {
   if (!list) return;
   list.innerHTML = '';
   if (existingOnly && !nums.length) {
-    /* Issue #8: saved paths already shown in #bst hint, don't repeat here */
     if (state.spaths.length) {
       state.spaths.forEach(p => {
         const it = document.createElement('div');

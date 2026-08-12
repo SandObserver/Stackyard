@@ -1,12 +1,9 @@
-/* Which URLs are safe to put in a link the user can click.
+/* Which URLs are safe to put in a link the user can click. A denylist: a tile
+   link is handed to the OS, so only the schemes that execute script in this
+   origin are refused. Enforced on save and again on render.
 
-   A denylist on purpose: a tile link is handed to the OS, and a homelab links
-   to ssh://, vnc:// and whatever else the user registered, so only the schemes
-   that execute script in our own origin are refused. Enforced on save and again
-   on render, since a config can arrive by import.
-
-   The server requires this file directly, so it must stay free of anything only
-   a browser has: no DOM, no window, no imports. */
+   The server requires this file directly. Keep it free of the DOM, of window
+   and of imports. */
 
 export const UNSAFE_LINK_SCHEMES = Object.freeze([
   'javascript' /* executes in our origin */,
@@ -18,7 +15,7 @@ export const UNSAFE_LINK_SCHEMES = Object.freeze([
 
 /* Browsers strip control characters and whitespace from the scheme before
    reading it, so "java\nscript:alert(1)" navigates as javascript:. Strip the
-   same ones, or this reads a scheme the browser will not. */
+   same ones. */
 const stripBlanks = s => {
   let out = '';
   for (let i = 0; i < s.length; i++) {
@@ -38,19 +35,16 @@ export function isSafeLinkUrl(value) {
   if (colon === -1) return true; /* relative, no scheme to worry about */
 
   const scheme = cleaned.slice(0, colon).toLowerCase();
-  /* A colon that appears after a path or query separator is not a scheme:
-     "/go?to=a:b" is relative. A real scheme cannot contain those characters. */
+  /* A colon after a path or query separator is not a scheme. */
   if (/[/?#]/.test(scheme)) return true;
   return !UNSAFE_LINK_SCHEMES.includes(scheme);
 }
 
-/* The link-bearing fields on a config item. Kept in one place so a new one is
-   added here rather than in each of the nine places an item is rendered. */
+/* The link-bearing fields on a config item. Add a new one here. */
 export const LINK_FIELDS = Object.freeze(['href', 'url']);
 export const WIDGET_LINK_FIELDS = Object.freeze(['scrutinyHref', 'linkUrl']);
 
-/** Blank any unsafe link on the items, in place. Returns the same array so it
-    can be used inline where a config response is unpacked.
+/** Blank any unsafe link on the items, in place.
     @param {Array<any>} items */
 export function sanitizeItemLinks(items) {
   for (const item of Array.isArray(items) ? items : []) {
@@ -68,8 +62,7 @@ export function sanitizeItemLinks(items) {
   return items;
 }
 
-/** The first unsafe link on an item, or null. Used by the server to reject a save
-    with a message naming the field, rather than silently blanking it.
+/** The first unsafe link on an item, or null.
     @param {any} item @returns {{ field:string, value:string }|null} */
 export function firstUnsafeLink(item) {
   if (!item || typeof item !== 'object') return null;

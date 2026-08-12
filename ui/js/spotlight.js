@@ -2,8 +2,7 @@ import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=
 import { wrapTab } from '/js/dialog.js?v=b3841546';
 import { t } from '/js/i18n.js?v=133a7aac';
 
-/* Attached to the window so a re-open can undo the previous one. Not a
-   standard window property. */
+/* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
 
 export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop, openFolderMobile }) {
@@ -134,7 +133,6 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
       }
     });
 
-  /* Mobile: touch on bar focuses input */
   const barEl = q('.spot-bar', ov);
   if (MOB && barEl) {
     barEl.style.cssText =
@@ -159,7 +157,6 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     ov.style.bottom = Math.max(0, window.innerHeight - vvH) + 'px';
   }
 
-  /* Escape and focus restoration stay in this file's own open/close. */
   const trap = e => {
     wrapTab(e, ov);
   };
@@ -284,7 +281,6 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     }
   };
 
-  /* Desktop: any printable key opens spotlight */
   document.addEventListener(
     'keydown',
     e => {

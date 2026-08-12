@@ -70,8 +70,7 @@ function placeIndividual(name,W,px,py,cls){
   const parts=e.paths.map(([f,o,d],i)=>`<g class="${cls}" style="--i:${i}"><path fill="${f}" opacity="${o}" transform="translate(${-e.x0},${-e.y0})" d="${d}"/></g>`).join('');
   return `<g transform="translate(${px},${py}) scale(${sc})">${parts}</g>`;
 }
-/* Cloud with an overridden fill/opacity — used for the lighter back cloud so it
-   reads bigger and whiter behind the front cloud. */
+/* Cloud with an overridden fill and opacity, for the lighter back cloud. */
 function placeCloud(W,px,py,fill,op){
   const e=EL.cloud;const sc=W/e.w;
   const inner=e.paths.map(([f,o,d])=>{
@@ -124,9 +123,7 @@ function mapCode(code){
 /* temperature -> color, warm(amber)->cold(blue). Works in C or F by converting to C. */
 function tempColor(temp,units){
   const c = units==='f' ? (temp-32)*5/9 : temp;
-  /* Piecewise hue so mild temps read amber/orange, not green:
-     very cold -> blue, cool -> cyan/teal, then jump warm side to amber->red.
-     Green band (~90-140deg) is skipped entirely. */
+  /* Piecewise hue. The green band, roughly 90-140deg, is skipped entirely. */
   let hue;
   if(c<=10){
     /* -10..10C : blue(210) -> teal(180) */
@@ -146,8 +143,8 @@ function render(d){
   clearMsg();
   const m=mapCode(d.code);
   const day=d.isDay!==false;
-  /* The widget paints its OWN background based on the weather region's day/night,
-     not the dashboard theme: light card by day, dark card by night. */
+  /* The background follows the weather region's day and night, not the
+     dashboard theme. */
   const bg = day ? '#ffffff' : '#242424';
   document.body.style.background = bg;
   widgetEl.style.background = bg;
@@ -183,8 +180,8 @@ async function boot(){
   try{const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);if(r.ok)cfg=await r.json();}catch(e){}
   const href=cfg&&cfg.widgetConfig&&cfg.widgetConfig.href;
   if(href){widgetEl.classList.add('clickable');widgetEl.addEventListener('click',()=>openUrl(href));}
-  /* poll keeps the last reading through a transient failure; onError shows the
-     widget's own specific message when there is nothing good to keep. */
+  /* poll keeps the last reading through a transient failure. onError runs when
+     there is nothing good to keep. */
   poll({ fetch:wfetch, render, interval:TICK_MS,
     onError:({error,everOk,stale})=>{ if(!everOk||stale) setMsg(error.message||'Unavailable'); } });
 }

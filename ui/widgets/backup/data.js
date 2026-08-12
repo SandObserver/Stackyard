@@ -1,6 +1,5 @@
-/* Backup widget data. Three endpoints: "slots" for the dashboard card, and
-   "duplicati-jobs"/"kopia-sources" for the admin job pickers, which run per
-   group row and read that row's own URL and password from ctx.row. */
+/* The job pickers run per group row and read that row's own URL and password
+   from ctx.row. */
 
 const {
   dupList,
@@ -16,10 +15,9 @@ const {
 
 const BACKUP_MS = 10000; /* backup providers respond more slowly than a normal data fetch */
 
-/* Duplicati issues short-lived access tokens, so one is cached per instance
-   rather than per widget: several slots and several widgets can point at the
-   same container. The password is kept alongside so a changed password forces a
-   fresh login instead of reusing a token minted with the old one. */
+/* Cached per instance, not per widget: several slots can point at the same
+   container. The password is kept alongside, so a changed password forces a
+   fresh login. */
 const _dupTokens = new Map();
 
 async function dupLogin(base, password, ctx) {
@@ -116,10 +114,8 @@ async function kopiaSources(row, ctx) {
   };
 }
 
-/* Group the configured slots by instance so one widget with three slots on the
-   same container makes one round of upstream calls, then write each answer back
-   into the slot's own index. Nulls are kept so the card maps result to slot by
-   position. */
+/* Grouped by instance, then written back by index. Nulls are kept: the card
+   maps result to slot by position. */
 async function slots(config, ctx) {
   const list = Array.isArray(config.slots) ? config.slots : [];
   const dupGroups = {},
@@ -168,8 +164,7 @@ async function slots(config, ctx) {
           };
         });
       } catch (e) {
-        /* One unreachable instance leaves its own slots null and the rest of the
-           widget intact, so the failure is logged rather than thrown. */
+        /* One unreachable instance must leave the rest of the widget intact. */
         ctx.log.warn('backup: duplicati group failed', { base, error: e.message });
       }
     }),

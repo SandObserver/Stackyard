@@ -19,9 +19,8 @@
   --t:.15s ease;
   --sbw:308px;
 
-  /* Category chips: a tint of a palette hue with the lighter value of the same
-     hue as its text, so a chip stays legible against its own tint. Derived from
-     the hue rather than written out, so a palette change carries through. */
+  /* Derived from the hue, never written out, so a palette change carries
+     through. */
   --chip-dk-bg:color-mix(in srgb, var(--sy-indigo) 20%, transparent);
   --chip-dk-fg:var(--sy-indigo-hi);
   --chip-wg-bg:color-mix(in srgb, var(--sy-green) 20%, transparent);
@@ -34,9 +33,7 @@
   --chip-fl-fg:var(--sy-brown-hi);
   --chip-sy-bg:color-mix(in srgb, var(--sy-gray) 22%, transparent);
   --chip-sy-fg:var(--sy-gray-hi);
-  /* Page neutrals, not palette hues: surfaces and placeholders particular to
-     this screen. Kept here rather than in tokens.css because the dashboard has
-     no equivalent and would never read them. */
+  /* Page neutrals particular to this screen. */
   --tile-placeholder:var(--sy-gray2-hi);  /* an app tile with no icon yet */
   --surface-sunken:var(--sy-gray5);       /* recessed well behind the About icon */
   --login-badge:#1a2a4a;                  /* the tinted square behind the login mark */
@@ -64,11 +61,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 .ni{flex-shrink:0;opacity:.6}
 
 /* ── Content pane ── */
-/* The divider between the navigation and the section belongs to this pane, not
-   to the sidebar. The sidebar is sticky and one viewport tall, so a border on it
-   stopped partway down whenever a section was longer than the screen, most
-   visibly on the dashboard list. This pane is as tall as its content, so the
-   line runs the whole length of whatever is showing. Logical, so it mirrors. */
+/* The divider belongs to this pane, not to the sidebar. The sidebar is sticky
+   and one viewport tall, so a border on it stops partway down. */
 .cp{flex:1;min-width:0;background:var(--pane);border-inline-start:1px solid var(--bd-inner);overflow-y:auto}
 
 /* ── Section ── */
@@ -93,9 +87,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 /* ── Rows ── */
 .row{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:52px;border-bottom:1px solid var(--bd-inner)}
 /* The separator belongs between two visible rows. :last-child is a DOM
-   position, and a group's trailing rows can be hidden, which left a border
-   under the last row anyone could see. Hidden rows carry .d-none, never an
-   inline display, so this can ask the question. */
+   position, and a group's trailing rows can be hidden. Hidden rows carry
+   .d-none, never an inline display. */
 .row:not(:has(~ .row:not(.d-none))){border-bottom:none}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:rgba(255,255,255,.04)}
@@ -153,11 +146,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 .rico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
 .rico img{width:30px;height:30px;object-fit:contain}
 .rinf{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px}
-/* dir="auto" on the name keeps an English title reading left-to-right and
-   truncating at its own end, which is what stops "Backup and Storage"
-   becoming "…nd Storage" in Persian. That also made it align left, away
-   from the icon. match-parent resolves the alignment against the row's
-   direction instead of the name's, so the title hugs the icon in both. */
+/* dir="auto" on the name makes it align by its own direction, away from the
+   icon. match-parent resolves the alignment against the row's direction. */
 .rnm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px;text-align:match-parent}
 .rmt{font-size:12px;color:var(--dm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rpills{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
@@ -187,10 +177,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 
 /* ── Color control: swatch row + HSB sliders + code (PSD Icon/Label/Activity) ── */
 .cc-row{padding-top:13px;padding-bottom:13px}
-/* Grid rather than a wrapping flex row. space-between on a flex row spreads
-   whatever wraps to the far edges, so on a narrow screen the last two
-   swatches ended up in opposite corners. Fixed-width columns keep a
-   wrapped swatch under the one above it. */
+/* Grid, not a wrapping flex row. space-between spreads whatever wraps to the
+   far edges. */
 .cc-sw{display:grid;grid-template-columns:repeat(auto-fit,26px);gap:10px;margin-inline-start:auto;flex:2;max-width:none;justify-content:space-between}
 .cc-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:none;padding:0;outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--t);flex-shrink:0}
 .cc-swatch.on{outline-color:#fff}
@@ -244,8 +232,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 /* App form: icon source row, poll, value list */
 .icon-src-row{gap:12px}
 .icon-prev{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden}
-/* Inset to match the list icon, which draws a 30px image in a 48px tile. At
-   100% the artwork touched the rounded corners of its own background. */
+/* Inset to match the list icon, which draws a 30px image in a 48px tile. */
 .icon-prev img{width:62%;height:62%;object-fit:contain}
 .icon-srch{flex:1;min-width:0;background:none;border:none;color:var(--tx);font-size:14px;text-align:end;outline:none;font-family:inherit}
 .icon-srch::placeholder{color:var(--dm)}
@@ -290,8 +277,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 .tr::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .tog input:checked+.tr::after{transform:translateX(18px)}
 .tog input:focus-visible+.tr{outline:2px solid var(--ac);outline-offset:3px}
-/* Unavailable toggle: still focusable and announced, so it needs a real focus
-   ring and a not-allowed cursor rather than pointer-events:none. */
+/* Still focusable and announced, so it needs a real focus ring rather than
+   pointer-events:none. */
 .tog-disabled{opacity:.45;cursor:not-allowed}
 .tog-disabled input{cursor:not-allowed}
 
@@ -321,12 +308,10 @@ html{background:var(--bg-color,var(--bg-outer))}
 /* ── Toast ── */
 #toast{position:fixed;bottom:24px;inset-inline-end:24px;background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);padding:12px 16px;font-size:14px;color:var(--tx);box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;max-width:320px}
 #toast.show{opacity:1;transform:translateY(0)}
-/* Tinted fill rather than the raw accent: white or near-white text on solid
-   --gn/--rd measures 2.02 and 3.43, both under the 4.5 WCAG AA needs. Mixed 30%
-   into the page colour it reaches 8.13 and 10.33, and the accent is kept at full
-   strength on the border, which carries the 3:1 non-text minimum on its own
-   (8.42 and 4.96 against the page). The increased-contrast palette swaps --gn
-   and --rd underneath, and every figure rises. */
+/* Tinted fill, not the raw accent. Near-white text on solid --gn/--rd measures
+   2.02 and 3.43, under the 4.5 WCAG AA needs; mixed 30% into the page colour it
+   reaches 8.13 and 10.33. The border keeps the accent at full strength for the
+   3:1 non-text minimum. */
 #toast.ok{background:color-mix(in srgb,var(--gn) 30%,var(--bg-outer));border-color:var(--gn)}
 #toast.err{background:color-mix(in srgb,var(--rd) 30%,var(--bg-outer));border-color:var(--rd)}
 
@@ -427,8 +412,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 /* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */
 #ev-body{padding:4px 0 24px}
 #ev-body .sec{padding:0;margin-bottom:0}
-/* Form card rhythm (PSD): comfortable gap between stacked cards; headers/tips
-   sit within the gap, tips hug the card above. */
+/* Headers and tips sit within the gap between cards. */
 #ev-body .grp{margin-bottom:0}
 #ev-body .grp + .grp{margin-top:44px}
 #ev-body .grp-hdr{margin-top:36px;padding-top:0}
@@ -467,12 +451,10 @@ html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:cente
 html.is-mobile .mtab .ni{width:31px;height:31px;flex-shrink:0}
 html.is-mobile .mtab.active{color:var(--ac2)}
 
-/* Touch reorder: the handle is the drag zone, so it needs a real touch target
-   and touch-action:none so starting a drag on it never scrolls the list. */
-/* Two-row layout: the name (in .rinf) takes the full width of its column, and
-   the status pills drop to the row below it. On a phone the single-row track
-   otherwise starved the name column down to one character. Handle and actions
-   span both rows. */
+/* The handle is the drag zone. It needs touch-action:none, or starting a drag
+   on it scrolls the list. */
+/* Two rows. On a phone a single-row track starves the name column down to one
+   character. */
 html.is-mobile .row.drow{
   grid-template-columns:28px 48px 1fr auto;
   grid-template-areas:"handle icon info actions" "handle icon pills actions";
@@ -523,9 +505,8 @@ html.is-mobile .rord{touch-action:none;width:28px;align-self:stretch;font-size:1
     --bd-inner:var(--sy-gray2);
     --tx:#ffffff;
   }
-  /* A focus ring is the one thing that must never be subtle in this mode. The
-     custom controls draw their own, so they are named rather than relying on a
-     generic rule that would miss them. */
+  /* The custom controls draw their own focus ring, so each is named here. A
+     generic rule misses them. */
   a:focus-visible, button:focus-visible, input:focus-visible,
   select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible,
   .row-dd-list li:focus-visible,

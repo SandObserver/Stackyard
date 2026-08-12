@@ -1,5 +1,3 @@
-/* Admin UI: the login gate and password-strength meter. onLogin is injected, so
-   this module does not depend back on the main one. */
 import { ag, ap } from '/js/admin-shared.js?v=bb36dbb3';
 import { t } from '/js/i18n.js?v=133a7aac';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
@@ -12,22 +10,16 @@ export async function checkAuth(onLogin) {
     showLoginScreen(onLogin);
     return false;
   } catch (e) {
-    /* 401 means auth is enabled and we're not logged in */
     if (e.status === 401) {
       showLoginScreen(onLogin);
       return false;
     }
-    return true; /* any other error, let load() handle it */
+    return true;
   }
 }
 
 /** Show the sign-in box over whatever is on screen, and resolve once the person
-    is back in.
-
-    The box is a fixed overlay, so the admin page underneath is untouched: a
-    half-filled editor is still there, and still filled in, when it closes. That
-    is the point of it, since the alternative on an expired session was a reload
-    that threw the work away.
+    is back in. A fixed overlay, so a half-filled editor underneath survives.
 
     @returns {Promise<boolean>} */
 export function requireLogin() {

@@ -1,12 +1,3 @@
-/* Books widget data function.
-   Default call returns { provider, source, books:[{title,author,progress,finished,color,kind}] } (<=8).
-   ?endpoint=lists returns { options:[{value,label}] } for the config-time list picker.
-   Providers:
-     audiobookshelf : Bearer API key; library auto-picked (first book library)
-     komga          : X-API-Key header
-     kavita         : API key -> JWT via /api/Plugin/authenticate (series-based; color from ColorScape)
-   Kavita recently/on-deck use the v2 POST endpoints and need verifying against a live server. */
-
 const CAP = 8;
 const enc = encodeURIComponent;
 const clamp01 = n => Math.min(1, Math.max(0, n));
@@ -230,8 +221,7 @@ module.exports = async ctx => {
       kavita: c => (wantLists ? kavitaLists(c) : kavita(c)),
     },
     {
-      /* No onError: a thrown failure propagates, so it is sanitised on the way out
-       and the poll lifecycle sees a failure rather than an empty success. */
+      /* No onError. A thrown failure must reach the poll lifecycle. */
       default: 'audiobookshelf',
     },
   );

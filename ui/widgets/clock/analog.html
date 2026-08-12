@@ -37,9 +37,7 @@ const id  = new URLSearchParams(location.search).get('id') || '';
 const API = '/api';
 const NS  = 'http://www.w3.org/2000/svg';
 
-/* Day and month names come from the browser rather than a catalog: it already
-   has every locale's names, in the right order and the right grammatical form,
-   and a hand-kept list of twelve English months could only ever be wrong. */
+/* Day and month names come from the browser, never from a catalog. */
 const _lang = new URLSearchParams(location.search).get('lang') || 'en';
 const _dateFmt = (() => {
   try { return new Intl.DateTimeFormat(_lang, { weekday: 'long', month: 'long', day: 'numeric' }); }
@@ -67,9 +65,8 @@ let _groups=null, _dateText=null, _rafId=null, _running=false, _vb=0;
 
 function _now(){
   if(!_timezone) return new Date();
-  /* toLocaleString drops milliseconds, which would freeze the smooth second
-     hand at whole seconds. Restore them from the real clock (timezone offsets
-     are never sub-second, so ms is identical in any zone). */
+  /* toLocaleString drops milliseconds and freezes the second hand at whole
+     seconds. Timezone offsets are never sub-second. */
   const d = new Date();
   const shifted = new Date(d.toLocaleString('en-US', { timeZone: _timezone }));
   shifted.setMilliseconds(d.getMilliseconds());

@@ -1,37 +1,24 @@
 // @ts-check
-/* Password strength scoring, shared by the admin settings form and the
-   first-run setup prompt. Returns a label key rather than a display string,
-   which keeps this module free of an i18n import; callers pass it to t(). */
+/* Returns a label key, not a display string. Keep this module free of an i18n
+   import. */
 
 const DIM = 'rgba(255,255,255,.1)';
 
-/* Five scores, four labels: the top two both read as strong, so the index must
-   clamp to the last entry rather than run past it. */
+/* Five scores, four labels. The index must clamp to the last entry. */
 const LABEL_KEYS = ['pwStrength.weak', 'pwStrength.fair', 'pwStrength.good', 'pwStrength.strong'];
 const COLORS = ['#ff9f0a', '#ffd60a', '#34c759', '#34c759'];
 const BARS = 5;
 
 export const MIN_PASSWORD_LENGTH = 8;
 
-/* Two entries of the same password, compared.
-
-   Only the first-run prompt needs this. Admin writes the typed value back into
-   the row, so the password is on screen until it is saved and a typo is visible
-   there; the prompt shows dots, with revealing them a deliberate act.
-
-   An empty new password means "keep the current one" and needs no
-   confirmation.
-
-   @param {string} newPassword @param {string} confirmation @returns {boolean} */
 export function passwordMismatch(newPassword, confirmation) {
   const pw = newPassword || '';
   return pw.length > 0 && pw !== (confirmation || '');
 }
 
-/** Score a password.
-    @param {string} pw
+/** @param {string} pw
     @returns {{ score:number, labelKey:string, color:string, ok:boolean }}
-    `labelKey` is '' when there is nothing to say; otherwise pass it to t(). */
+    `labelKey` is '' when there is nothing to say. */
 export function pwStrength(pw) {
   if (!pw) return { score: 0, labelKey: '', color: DIM, ok: false };
   if (pw.length < MIN_PASSWORD_LENGTH) {

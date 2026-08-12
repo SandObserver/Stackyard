@@ -1,12 +1,10 @@
-/* Only apps may live inside a folder; widgets and folders stay at the top level.
-   Kept apart from the DOM handlers in admin.js so the routing can be tested. */
+/* Only apps may live inside a folder. Widgets and folders stay at the top
+   level. */
 
 export function canJoinFolder(type) {
   return type === 'app';
 }
 
-/* 'into-folder' only for an app dropped onto a folder row or a row inside one,
-   otherwise 'reorder'. */
 export function dropTargetKind({ srcType, targetIsFolder = false, indent = false }) {
   if (canJoinFolder(srcType) && (targetIsFolder || indent)) return 'into-folder';
   return 'reorder';
@@ -18,8 +16,7 @@ export function dropTargetKind({ srcType, targetIsFolder = false, indent = false
      targetIsFolder, indent   the target is a folder, or sits inside one
      childIdx                 the target's index within its folder
      dropAbove                insert before rather than after (reorder only)
-   The child object stays in `items` throughout: folders reference it by id, so
-   leaving one is removing that id and joining one is adding it back. */
+   The child object stays in `items` throughout. Folders reference it by id. */
 export function applyDrop(items, d) {
   const src = items.find(i => i.id === d.srcId);
   if (!src || d.srcId === d.targetId) return false;
