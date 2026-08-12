@@ -23,14 +23,14 @@ Rules should name a role. A colour written as a literal outside `tokens.css` fai
 
 ## Widgets are iframes
 
-Every widget tile is a sandboxed `<iframe>` whose URL comes from `WIDGET_TYPES` in `widget-types.js`. The dashboard passes only URL, size, and title; the widget fetches its own data from `/api/widget-data/<id>` and is rendered at a fixed design size scaled to the tile. So widgets are isolated and drop-in: a new one is a folder plus one registry entry, with no dashboard changes.
+Every widget tile is a sandboxed `<iframe>` whose URL comes from `WIDGET_TYPES` in `widget-types.js`. The dashboard passes only URL, size, and title. The widget fetches its own data from `/api/widget-data/<id>` and is rendered at a fixed design size scaled to the tile. A new widget is a folder plus one registry entry, with no dashboard changes.
 See [widgets.md](./widgets.md).
 
 ## Badges
 
 `dashboard.js` polls `/api/badges` and `/api/health` and paints tiles through an id-to-elements registry. Appearance is one pure function, `computeBadgeVisual` in `badge-logic.js`.
 
-Each of these is a single batch request: the server fetches every configured badge (or health target) concurrently, each bounded by `PING_MS`, and returns one combined object only after all of them settle. So a slow or unreachable upstream holds back the whole batch until it times out, delaying the refresh of the other tiles by up to `PING_MS`. This is bounded and fine at homelab scale; if a dashboard ever grows large enough that one dead upstream's delay is a problem, the batch would need to stream per-tile results instead.
+Each of these is a single batch request. The server fetches every configured badge or health target concurrently, each bounded by `PING_MS`, and returns one combined object once all of them settle. A slow or unreachable upstream delays the refresh of the other tiles by up to `PING_MS`.
 
 ## Cache busting
 

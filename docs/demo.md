@@ -26,8 +26,7 @@ shape that widget renders, documented at the top of its `data.js`. See
 `api/src/demo-data.js` keeps only what is not tied to one widget: the `wave` and
 `round` drift helpers every `demo.js` shares through `ctx.demo`, fake host metrics
 handed to the stats widget through `ctx.metrics`, activity badges, and one
-deliberately unhealthy app. It names no widgets, so adding a widget never touches
-it.
+unhealthy app. It names no widgets, so adding a widget never touches it.
 
 `api/test/widget-demo.test.js` pins the bodies that are easy to get wrong:
 now-playing `progress` is 0..1, not a percentage, and the GitHub calendar must be
@@ -36,8 +35,7 @@ stable across calls rather than reshuffling on every poll.
 ## Wallpaper
 
 The demo ships `ui/demo-wallpaper.jpg`, served same-origin from the nginx root at
-`/demo-wallpaper.jpg`. Keeping it local avoids an outbound request and stays
-within the `img-src` CSP, which does not allow arbitrary remote image hosts.
+`/demo-wallpaper.jpg`. It is local because `img-src` does not allow arbitrary remote image hosts.
 
 Image by [StockSnap](https://pixabay.com/users/stocksnap-894430/) from
 [Pixabay](https://pixabay.com/), used under the Pixabay Content License.
@@ -52,18 +50,17 @@ public icon CDN) rather than full URLs. Shorthands resolve against
 jsdelivr URL.
 
 The same test pins the item counts and the tile colors, so adding a widget or an
-app to the demo means updating it deliberately rather than by accident.
+app to the demo means updating it too.
 
 ## Deploying on Render
 
 `render.yaml` runs a published release image with `DEMO_MODE=true`. Pin
 `image.url` to a release tag so the demo only moves when you update it.
 
-Set `PORT=80`. Render routes traffic to whatever `PORT` says, and nginx is the
-process serving the dashboard on 80. The API is unaffected: `supervisord.conf`
-pins `PORT=3000` for the API process, and nginx proxies to `127.0.0.1:3000`.
-Pointing `PORT` at 3000 sends visitors to the API instead of nginx, which answers
-every page with `{"error":"Not found"}`.
+Set `PORT=80`. Render routes traffic to whatever `PORT` says, and nginx serves
+the dashboard on 80. `supervisord.conf` pins `PORT=3000` for the API process,
+and nginx proxies to `127.0.0.1:3000`. Pointing `PORT` at 3000 sends visitors to
+the API, which answers every page with `{"error":"Not found"}`.
 
 To put it on a subdomain, add the domain in Render, then create a CNAME at your
 DNS provider pointing to the service's `onrender.com` hostname. On the free plan

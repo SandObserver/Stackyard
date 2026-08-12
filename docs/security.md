@@ -30,8 +30,8 @@ is a loopback address rather than a service name, and the Docker host's own IP
 (`settings.server.hostIp`, if you have set one) is trusted, because that is what
 the host-IP port mapping exists to reach.
 
-Two kinds of range are blocked, for the same reason: those that reach something
-internal, and those that are not routable destinations at all.
+Two kinds of range are blocked: those that reach something internal, and those
+that are not routable destinations at all.
 
 | Range | Why |
 |---|---|
@@ -57,7 +57,7 @@ both hex and dotted spellings.
 
 This guard limits what a compromised or malicious widget can access. It does not protect against an admin, who can already configure widgets to connect anywhere.
 
-Setting `ALLOW_PRIVATE_IPS=true` disables this guard entirely, so private, loopback and link-local targets are no longer blocked. Most homelab installs need it on because the services they link to live on private IPs; it is opt-in for that reason.
+Setting `ALLOW_PRIVATE_IPS=true` disables this guard entirely, so private, loopback and link-local targets are no longer blocked. Most homelab installs need it, because the services they link to live on private IPs.
 
 ## Authentication
 
@@ -85,19 +85,17 @@ a fresh install can claim the account. Set a password immediately after first
 launch, or keep the install off untrusted networks until you have.
 
 Authentication is only in force when a password is stored. Turning it on without
-one is refused, and an install already in that state is treated as switched off,
-because the alternative refuses every login while gating every other route,
-which locks the install with no way back in over HTTP. This is not a bypass: a
-session is verified against the password hash, so with none stored there is no
-credential to present and no session to forge.
+one is refused, and an install already in that state is treated as switched off.
+The alternative refuses every login while gating every other route, which locks
+the install with no way back in. This is not a bypass: a session is verified
+against the password hash, so with none stored there is no credential to present
+and no session to forge.
 
 Rate limiting keys on the client IP, which the app reads from the `X-Real-IP`
 header nginx sets. The header is believed only when the request arrived over
 loopback, which in the shipped container means it came from Stackyard's own
-nginx; nginx overwrites the header on every request, so a client cannot supply
-its own. A request from anywhere else is identified by its socket address, so
-running the API on its own, without the container's nginx in front, is safe by
-default rather than trusting whatever a caller sends.
+nginx. nginx overwrites the header on every request, so a client cannot supply
+its own. A request from anywhere else is identified by its socket address.
 
 If you put Stackyard behind another reverse proxy (Nginx Proxy Manager, Caddy,
 Traefik), set `TRUSTED_PROXY` to where that proxy is:
@@ -110,8 +108,7 @@ TRUSTED_PROXY="172.18.0.0/16 10.0.0.5"    # several, space or comma separated
 Without it, Stackyard's own nginx sees the front proxy as the client, so every
 request through it counts as the same client and rate limiting becomes one
 shared bucket. With it, nginx resolves the real client from the forwarding
-headers your proxy already sends, so no extra configuration is needed on the
-proxy side.
+headers your proxy already sends.
 
 `TRUSTED_PROXY` and `TRUST_PROXY` are separate: the first is about which client
 an address belongs to, the second about whether to believe a request that claims
@@ -129,11 +126,10 @@ A secret is only put back for the request it was stored for. If a save changes
 where the credential would be sent, by editing a badge's URL, its non-secret
 headers or parameters, or any non-secret field of a widget's config, the stored
 value is not restored and the response names the items whose credential has to
-be entered again. Matching on the item's id alone would let a config file take a
-credential out of an install: keep the id, mark the value as still stored, point
-the request elsewhere, and the next poll would deliver it there. A config is
-something people import from elsewhere, so that file is the attack. The
-endpoints that test a badge or a widget apply the same rule.
+be entered again. Matching on the item's id alone would let an imported config
+take a credential out of an install: keep the id, point the request elsewhere,
+and the next poll delivers it there. The endpoints that test a badge or a widget
+apply the same rule.
 
 Three consequences of that guarantee:
 
@@ -155,14 +151,13 @@ $scrypt$ln=14,r=8,p=5$<salt>$<key>
 ```
 
 The default is the 16 MiB row from OWASP's scrypt table: `N=2^14`, `r=8`, `p=5`.
-Memory is the constraint that matters on small hardware, so the row chosen keeps
-the same 16 MiB footprint as earlier versions while raising the work factor.
+Memory is the constraint that matters on small hardware.
 
 `PASSWORD_HASH_MEMORY` selects a different row if your hardware can afford more:
 `8mib`, `16mib` (default), `32mib`, `64mib` or `128mib`. Only whole rows, so the
 parameters cannot be set to an unbalanced combination. Changing it is safe at any
-time: every hash records what produced it, so existing passwords keep working, and
-one made with a lower work factor is rewritten the next time it is used to log in.
+time: every hash records what produced it, and one made with a lower work factor
+is rewritten the next time it is used to log in.
 
 Secrets are stored in `apps.json` in plain text on the data volume. Protect the data volume with appropriate filesystem permissions and backups.
 
@@ -180,8 +175,7 @@ untrusted input, never runs as root.
 
 Every released image is signed with [cosign](https://docs.sigstore.dev/) using
 keyless signing: the signature is bound to the GitHub Actions workflow that
-built it and recorded in Sigstore's public transparency log. There is no key for
-this project to hold, or to lose.
+built it and recorded in Sigstore's public transparency log.
 
 Check an image before running it:
 
@@ -203,8 +197,8 @@ The build also produces an SPDX SBOM listing what is inside the image, attached
 to the run as an artifact and downloadable from its summary page on GitHub.
 
 Images are published to `ghcr.io/sandobserver/stackyard`. A Docker Hub mirror is
-published alongside it when the project has credentials configured; ghcr.io is
-the one to prefer, and the one the signature above covers.
+published alongside it when the project has credentials configured. Prefer
+ghcr.io, which is what the signature above covers.
 
 ## Config file
 
