@@ -21,6 +21,21 @@ export async function checkAuth(onLogin) {
   }
 }
 
+/** Show the sign-in box over whatever is on screen, and resolve once the person
+    is back in.
+
+    The box is a fixed overlay, so the admin page underneath is untouched: a
+    half-filled editor is still there, and still filled in, when it closes. That
+    is the point of it, since the alternative on an expired session was a reload
+    that threw the work away.
+
+    @returns {Promise<boolean>} */
+export function requireLogin() {
+  return new Promise(resolve => {
+    showLoginScreen(() => resolve(true));
+  });
+}
+
 function showLoginScreen(onLogin) {
   const s = el('login-screen');
   const btn = inpById('login-btn');

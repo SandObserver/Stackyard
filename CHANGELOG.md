@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A session that expires while you are working in Admin now raises the sign-in
+  box over the page, and the interrupted save completes once you are back in,
+  instead of failing as "Unauthorised" until the page is reloaded.
+
 - Saving an app or widget no longer reports "Updated" when the write failed; the
   editor stays open with the form intact.
 

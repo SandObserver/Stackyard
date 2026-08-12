@@ -15,6 +15,7 @@ import {
   refusedNoticeKey,
   settingsSaveBlocker,
   clearsStoredPassword,
+  recoversSession,
   BLOCK,
 } from '../js/admin-logic.js';
 /* The real strength check, so these assert the rule the save actually applies. */
@@ -456,4 +457,31 @@ test('switching protection off with no password stored has nothing to lose', () 
 
 test('leaving protection on never clears a password', () => {
   assert.equal(clearsStoredPassword({ enabled: true, passwordSet: true }), false);
+});
+
+/* ── recoversSession ──────────────────────────────────────────────────────── */
+
+test('a 401 on an ordinary write is a session to recover', () => {
+  assert.equal(recoversSession('/api/config', 401), true);
+  assert.equal(recoversSession('/api/auth/toggle', 401), true);
+});
+
+test('the two sign-in requests are answers, not sessions to recover', () => {
+  assert.equal(recoversSession('/api/auth/check', 401), false);
+  assert.equal(recoversSession('/api/auth/login', 401), false);
+});
+
+test('a query string does not hide the path', () => {
+  assert.equal(recoversSession('/api/auth/check?x=1', 401), false);
+});
+
+test('only a 401 means the session, not any other failure', () => {
+  /* An upstream service answering 401 arrives as a 502 carrying that status in
+     its detail, so a failing badge never raises a sign-in box. */
+  for (const s of [200, 400, 403, 500, 502]) assert.equal(recoversSession('/api/config', s), false, String(s));
+});
+
+test('recoversSession tolerates a missing path', () => {
+  assert.equal(recoversSession(undefined, 401), true);
+  assert.equal(recoversSession(null, 200), false);
 });
