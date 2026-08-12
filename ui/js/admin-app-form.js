@@ -426,9 +426,14 @@ function setInitialGlyph(p) {
   s.textContent = (l[0] || '?').toUpperCase();
   p.replaceChildren(s);
 }
+/* Typing runs this per keystroke, so several attempts are in flight at once and
+   the half-typed ones fail last. Without the token, a stale failure replaced the
+   preview the finished name had already loaded. */
+let prevRun = 0;
 function updPrev() {
   const p = el('ipv');
   if (!p) return;
+  const run = ++prevRun;
   p.style.background = rc(state.scol);
   if (!state.siurl) {
     setInitialGlyph(p);
@@ -441,9 +446,9 @@ function updPrev() {
   }
   let step = 0;
   const img = document.createElement('img');
-  img.style.cssText = 'width:30px;height:30px;object-fit:contain;';
   img.alt = '';
   img.onerror = () => {
+    if (run !== prevRun) return;
     step++;
     if (step < fallbacks.length) {
       img.src = fallbacks[step];

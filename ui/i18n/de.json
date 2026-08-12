@@ -175,7 +175,10 @@
     "importForeignNothing": "Aus diesen Dateien gibt es nichts zu importieren.",
     "importYamlUnsupported": "{file}: {reason} (Zeile {line})",
     "importUnknownFormat": "{file} ist keine gethomepage- oder Dashy-Konfiguration.",
-    "secretsWithheld": "Zugangsdaten erneut eingeben für: {items}. Sie wurden nicht übernommen, weil sich die zugehörige Anfrage geändert hat."
+    "secretsWithheld": "Zugangsdaten erneut eingeben für: {items}. Sie wurden nicht übernommen, weil sich die zugehörige Anfrage geändert hat.",
+    "socketUrlMissing": "Adresse des Socket-Proxys eingeben oder Docker-Überwachung ausschalten.",
+    "socketUrlBad": "Socket-Proxy nicht gespeichert: {reason}",
+    "socketUrlUnverified": "Gespeichert, aber der Socket-Proxy hat nicht geantwortet: {reason}"
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",

@@ -507,6 +507,8 @@ module.exports = {
   pingUnchecked,
   SsrfBlockedError,
   statusDesc,
+  pingErrorText,
+  errCode,
   urlPolicyError,
   ALLOWED_PROTOCOLS,
   looksLikeMetrics,
