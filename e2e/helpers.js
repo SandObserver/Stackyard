@@ -10,11 +10,16 @@
    the half that actually breaks. */
 
 const { expect } = require('@playwright/test');
+const { BASE_URL } = require('./base-url');
 
 /** Replace the whole config. @param {import('@playwright/test').APIRequestContext} request */
 async function seedConfig(request, config) {
   const body = { _schemaVersion: 3, items: [], settings: {}, ...config };
-  const res = await request.post('/api/config', { data: body });
+  /* A write has to state its origin, and this request context is not a page, so
+     nothing sets one for it. Seeding the way a browser writes is also the point:
+     a seed that could reach the API by a route the admin page cannot would be
+     testing something the product does not do. */
+  const res = await request.post('/api/config', { data: body, headers: { Origin: BASE_URL } });
   expect(res.ok(), `seeding failed: ${res.status()} ${await res.text()}`).toBeTruthy();
 }
 

@@ -107,7 +107,9 @@ test('the documented defaults are the ones in the code', () => {
 test('the documented session and hash defaults match the code', () => {
   const defaults = Object.fromEntries(documentedRows());
   const auth = read('api/src/auth.js');
-  assert.equal(defaults.SESSION_MAX_AGE_DAYS, /_maxAgeDays > 0 \? _maxAgeDays : (\d+)/.exec(auth)[1]);
+  /* Documented in hours, because the default is shorter than the day the
+     variable is named for. */
+  assert.equal(defaults.SESSION_MAX_AGE_DAYS, `${/const DEFAULT_MAX_AGE_HOURS = (\d+)/.exec(auth)[1]}h`);
   assert.equal(defaults.PASSWORD_HASH_MEMORY, /const DEFAULT_PROFILE = '([\w]+)'/.exec(auth)[1]);
 });
 

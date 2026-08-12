@@ -18,6 +18,8 @@ const {
   convert,
   convertIcon,
   convertDashy,
+  insecureApps,
+  clearSkipTls,
   convertHomepageServices,
   convertHomepageBookmarks,
   SKIP,
@@ -400,4 +402,51 @@ test('the caller sees the ids a conversion allocated', () => {
   const taken = new Set(['Plex_abc']);
   const out = convertHomepageServices(parseYaml(SERVICES), taken);
   for (const item of out.items) assert.ok(taken.has(item.id), 'the id is in the caller’s set');
+});
+
+/* A file from another dashboard can ask for certificate checking to be skipped.
+   The import names those apps and asks, rather than taking a security setting on
+   the file's say-so, so the conversion has to keep the request separable from
+   the decision. */
+test('the apps a file asked to skip certificate checking for are identifiable', () => {
+  const out = convertDashy(
+    parseYaml(`
+sections:
+  - name: Net
+    items:
+      - title: PVE
+        url: https://pve.lan:8006
+        statusCheck: true
+        statusCheckAllowInsecure: true
+      - title: Plain
+        url: https://plain.lan
+        statusCheck: true
+`),
+  );
+  assert.deepEqual(
+    insecureApps(out.items).map(a => a.label),
+    ['PVE'],
+  );
+});
+
+test('turning the request down leaves the app as one that never asked', () => {
+  const items = [
+    { id: 'a', type: 'app', label: 'PVE', skipTlsVerify: true },
+    { id: 'b', type: 'app', label: 'Plain' },
+    { id: 'c', type: 'folder', label: 'Net' },
+  ];
+  clearSkipTls(items);
+  assert.deepEqual(items[0], { id: 'a', type: 'app', label: 'PVE' });
+  assert.deepEqual(insecureApps(items), []);
+});
+
+test('accepting the request is what keeps it, and nothing else is touched', () => {
+  const items = [{ id: 'a', type: 'app', label: 'PVE', skipTlsVerify: true }];
+  assert.equal(insecureApps(items).length, 1);
+  assert.equal(items[0].skipTlsVerify, true);
+});
+
+test('insecureApps tolerates the shapes a damaged conversion could produce', () => {
+  assert.deepEqual(insecureApps(null), []);
+  assert.deepEqual(insecureApps([null, undefined, { type: 'app' }, { type: 'folder', skipTlsVerify: true }]), []);
 });

@@ -182,9 +182,21 @@ function needsRehash(hash) {
 }
 
 /* The signed issued-at inside the token is the real control; the cookie Max-Age
-   is only a browser hint kept in sync with it. */
+   is only a browser hint kept in sync with it.
+
+   This is an idle window, not a fixed one: a session in use is reissued by
+   refreshSession below, so the age here is how long a session survives with
+   nobody using it. A token that leaks is therefore usable for hours rather than
+   the month it used to be, while somebody working in the dashboard is not
+   signed out mid-task. */
+const DEFAULT_MAX_AGE_HOURS = 12;
 const _maxAgeDays = Number(process.env.SESSION_MAX_AGE_DAYS);
-const SESSION_MAX_AGE_MS = (_maxAgeDays > 0 ? _maxAgeDays : 30) * 24 * 60 * 60 * 1000;
+const SESSION_MAX_AGE_MS = _maxAgeDays > 0 ? _maxAgeDays * 24 * 60 * 60 * 1000 : DEFAULT_MAX_AGE_HOURS * 60 * 60 * 1000;
+
+/* Reissue once the token is past halfway. Renewing on every request would set a
+   cookie on every response for no gain; waiting until it nearly expires would
+   leave a tab open across the boundary holding a token it cannot renew. */
+const RENEW_AFTER_MS = SESSION_MAX_AGE_MS / 2;
 
 /* `${sessionId}.${issuedAt}.${sig}`, where sig covers the first two. Signing the
    timestamp is what lets verifyToken enforce a max age with no session store. */
@@ -195,7 +207,12 @@ function makeToken(sessionId, secret) {
   return `${payload}.${sig}`;
 }
 
-function verifyToken(token, secret) {
+/** The session a token stands for, with the moment it was issued, or null when
+    it does not verify or has aged out. Callers that only need the identity use
+    verifyToken; the issued-at is what refreshSession needs to decide on renewal.
+    @param {string} token @param {string} secret
+    @returns {{ sessionId: string, iat: number }|null} */
+function readToken(token, secret) {
   const dot2 = token.lastIndexOf('.');
   if (dot2 === -1) return null;
   const sig = token.slice(dot2 + 1);
@@ -209,7 +226,11 @@ function verifyToken(token, secret) {
   const expected = crypto.createHmac('sha256', secret).update(rest).digest('hex');
   if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) return null;
   if (Date.now() - Number(iat) > SESSION_MAX_AGE_MS) return null;
-  return sessionId;
+  return { sessionId, iat: Number(iat) };
+}
+
+function verifyToken(token, secret) {
+  return readToken(token, secret)?.sessionId ?? null;
 }
 
 /* decodeURIComponent throws on an invalid escape, so a stray '%' in any cookie
@@ -337,6 +358,25 @@ function isAuthenticated(req) {
   return !!verifyToken(token, secret);
 }
 
+/* Extend a session that is still in use, so the shortened idle window does not
+   sign out somebody working in the dashboard. The identifier is carried over and
+   only the issued-at moves, so this lengthens a session rather than starting one.
+
+   A handler that sets its own cookie runs after this and replaces the header, so
+   logging out and rotating the secret both still win. */
+function refreshSession(req, res) {
+  const cfg = loadConfig();
+  if (!authActive(cfg)) return false;
+  const secret = cfg.settings.auth.secret;
+  if (!secret) return false;
+  const token = parseCookies(req).ds;
+  if (!token) return false;
+  const read = readToken(token, secret);
+  if (!read || Date.now() - read.iat < RENEW_AFTER_MS) return false;
+  setSessionCookie(res, makeToken(read.sessionId, secret), isSecureRequest(req));
+  return true;
+}
+
 /* Unlike isAuthenticated, requires a real session even when auth is off. For
    operations such as changing an existing password. */
 function hasValidSession(req) {
@@ -362,6 +402,8 @@ module.exports = {
   parseHash,
   makeToken,
   verifyToken,
+  readToken,
+  refreshSession,
   parseCookies,
   setSessionCookie,
   clearSessionCookie,
@@ -374,4 +416,5 @@ module.exports = {
   /* Tests exercise limits in sequence in one process. */
   _resetRateLimits: () => _rateBuckets.clear(),
   SESSION_MAX_AGE_MS,
+  RENEW_AFTER_MS,
 };

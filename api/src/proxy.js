@@ -122,6 +122,54 @@ function shouldSkipTls(hostname, cfg) {
   return isInternalHost(hostname);
 }
 
+/* Whether to turn certificate checking off for this one request.
+
+   The answer is the same wherever the request came from: only a host on your own
+   network. A self-signed certificate is a thing you have on a box you run, so
+   the switch that tolerates one has no honest use against a public address,
+   where the only effect is to accept whoever answers. The server-wide setting
+   was already scoped this way; the per-app switch and the per-request flag were
+   not, and those are the paths that carry a stored credential.
+
+   `ignored` says the caller asked and was refused, so a certificate failure can
+   be explained rather than just reported.
+
+   @param {string} hostname @param {boolean|null|undefined} requested
+   @returns {{ skip: boolean, ignored: boolean }} */
+function resolveSkipTls(hostname, requested) {
+  let wanted;
+  if (requested != null) wanted = requested === true;
+  else {
+    try {
+      wanted = loadConfig().settings?.server?.skipTlsVerify === true;
+    } catch {
+      wanted = false;
+    }
+  }
+  if (!wanted) return { skip: false, ignored: false };
+  const internal = isInternalHost(hostname);
+  return { skip: internal, ignored: !internal };
+}
+
+/* Shown when a certificate failed on a host the skip could not apply to, so the
+   answer names the reason rather than looking like the switch did nothing.
+
+   Wording only: it carries no hostname, path or upstream text, which is what
+   makes it safe to vouch for and show. See api-error.js. */
+const SKIP_TLS_IGNORED_MESSAGE =
+  'The certificate could not be verified. Allowing a self-signed certificate only applies to addresses on your own ' +
+  'network, so it was not used here.';
+
+const TLS_ERROR_CODES = new Set([
+  'DEPTH_ZERO_SELF_SIGNED_CERT',
+  'SELF_SIGNED_CERT_IN_CHAIN',
+  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+  'CERT_HAS_EXPIRED',
+  'CERT_NOT_YET_VALID',
+  'ERR_TLS_CERT_ALTNAME_INVALID',
+]);
+
 function rewriteUrl(raw) {
   try {
     const cfg = loadConfig(),
@@ -229,7 +277,7 @@ function fetchJSON(raw, opts = {}) {
     const done = (fn, arg) => dl.settle(fn, arg);
     const lib = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
-    const skipTls = opts.skipTls != null ? opts.skipTls : shouldSkipTls(u.hostname, loadConfig());
+    const { skip: skipTls, ignored: skipIgnored } = resolveSkipTls(u.hostname, opts.skipTls);
     const bodyBuf = opts.body ? Buffer.from(opts.body) : null;
     const hdrs = Object.assign({}, opts.headers || {});
     if (bodyBuf) hdrs['Content-Length'] = bodyBuf.length;
@@ -299,7 +347,11 @@ function fetchJSON(raw, opts = {}) {
       req.destroy();
       done(reject, new Error('Timed out'));
     });
-    req.on('error', e => done(reject, e));
+    req.on('error', (/** @type {unknown} */ e) => {
+      if (skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? ''))
+        /** @type {{ vouchedMessage?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
+      done(reject, e);
+    });
     if (bodyBuf) req.write(bodyBuf);
     req.end();
   });
@@ -356,7 +408,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
     if (policy) return resolve({ ok: false, status: 0, error: policy });
     const lib = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
-    const skip = skipTls != null ? skipTls : shouldSkipTls(u.hostname, loadConfig());
+    const { skip, ignored: skipIgnored } = resolveSkipTls(u.hostname, skipTls);
     const pin = pinIp && pinIp !== u.hostname ? pinIp : null;
     const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
     const opts = { hostname: connectHost, port, path: u.pathname || '/', timeout: ms, rejectUnauthorized: !skip };
@@ -392,7 +444,8 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
            operator's question is which service is unreachable, which the origin
            answers on its own. */
         log.warn('ping failed', { url: u.origin, error: errMessage(e) });
-        dl.settle(resolve, { ok: false, status: 0, error: pingErrorText(e), code: errCode(e) });
+        const text = skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? '') ? SKIP_TLS_IGNORED_MESSAGE : pingErrorText(e);
+        dl.settle(resolve, { ok: false, status: 0, error: text, code: errCode(e) });
       });
       req.end();
     };
@@ -460,6 +513,8 @@ module.exports = {
   rewriteUrl,
   getHostIp,
   shouldSkipTls,
+  resolveSkipTls,
+  SKIP_TLS_IGNORED_MESSAGE,
   isInternalHost,
   isDockerServiceName,
   bareHost,
