@@ -424,10 +424,10 @@ html{background:var(--bg-color,var(--bg-outer))}
 #ev-body .hint{font-size:12px;color:var(--dm)}
 
 /* ─────────────── Mobile: iOS-style settings + bottom tab bar ───────────────
-   Triggered by the .is-mobile class that admin.js sets using the SAME rule as
-   the dashboard (viewport <=768px OR a phone user-agent). A bare media query
-   missed phones that report a wider CSS viewport, where the dashboard still
-   switched to its mobile layout but the admin did not. */
+   Triggered by the .is-mobile class, set from the rule in ui/js/layout.js that
+   the dashboard uses too. A bare media query missed phones that report a wider
+   CSS viewport, where the dashboard switched to its mobile layout and Admin did
+   not. */
 .mtabbar{display:none}
 .m-back{display:none}
 html.is-mobile .adm-outer{padding:0;display:block;min-height:100dvh}

@@ -5,7 +5,10 @@ import { t } from '/js/i18n.js?v=133a7aac';
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
 
-export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop, openFolderMobile }) {
+/* `isMob` is a function, not a flag: the window can cross the breakpoint while
+   this module is loaded. */
+export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDesktop, openFolderMobile }) {
+  const MOB = () => isMob();
   const ov = el('spot');
   const inp = inpById('sin');
   const res = el('sres');
@@ -55,7 +58,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
       const doOpen = () => {
         close();
         if (isFolder) {
-          if (MOB)
+          if (MOB())
             openFolderMobile(
               app,
               Math.round(60 * (innerWidth / 393)),
@@ -134,7 +137,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     });
 
   const barEl = q('.spot-bar', ov);
-  if (MOB && barEl) {
+  if (MOB() && barEl) {
     barEl.style.cssText =
       'display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:18px;border:none;background:rgba(118,118,128,.30);box-sizing:border-box;';
     inp.style.cssText =
@@ -152,7 +155,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     );
 
   function _applyKbLayout() {
-    if (!MOB) return;
+    if (!MOB()) return;
     const vvH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     ov.style.bottom = Math.max(0, window.innerHeight - vvH) + 'px';
   }
@@ -167,7 +170,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
     ov.addEventListener('keydown', trap);
     inp.value = ch || '';
     render(inp.value);
-    if (MOB && window.visualViewport) {
+    if (MOB() && window.visualViewport) {
       window.visualViewport.addEventListener('resize', _applyKbLayout);
       window.visualViewport.addEventListener('scroll', _applyKbLayout);
       _w._spotVpCleanup = () => {
@@ -175,7 +178,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
         window.visualViewport.removeEventListener('scroll', _applyKbLayout);
       };
     }
-    if (MOB) {
+    if (MOB()) {
       inp.focus();
       if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length);
     }
@@ -183,7 +186,7 @@ export function initSpotlight({ getItems, MOB, CB, iconChain, openFolderDesktop,
       requestAnimationFrame(() => {
         ov.classList.add('vis');
         _applyKbLayout();
-        if (!MOB) {
+        if (!MOB()) {
           inp.focus();
           if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length);
         }

@@ -36,8 +36,10 @@ import {
 } from '/js/dashboard-logic.js?v=640430ba';
 import { trapFocus } from '/js/dialog.js?v=b3841546';
 import { jitter } from '/js/jitter.js?v=1';
+import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=1';
 
-const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
+/* Recomputed, never stored: the window can cross the breakpoint after load. */
+let MOB = isMobileLayout();
 
 const wCols = { d: WIDGET_COLS.desktop, m: WIDGET_COLS.mobile };
 const wRows = { d: WIDGET_ROWS.desktop, m: WIDGET_ROWS.mobile };
@@ -635,84 +637,91 @@ async function boot() {
   };
   _stateRef = state;
   initUI(state);
-  initSpotlight({ getItems: () => items, MOB, CB, iconChain, openFolderDesktop, openFolderMobile });
+  initSpotlight({ getItems: () => items, isMob: () => MOB, CB, iconChain, openFolderDesktop, openFolderMobile });
 
-  if (MOB) {
-    document.body.classList.add('is-mob');
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        buildMobile();
-        syncMobPages();
-        goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
-      }),
-    );
-  } else {
-    buildDesktop();
-    goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
-    document.addEventListener('keydown', e => {
-      if (el('spot').classList.contains('on')) return;
-      if (e.key === 'ArrowRight') goTo(pg + 1);
-      if (e.key === 'ArrowLeft') goTo(pg - 1);
-    });
-    let _dMx = 0,
-      _dDragging = false;
-    document.addEventListener('mousedown', e => {
-      _dMx = e.clientX;
-      _dDragging = false;
-    });
-    document.addEventListener('mousemove', e => {
-      if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true;
-    });
-    document.addEventListener('mouseup', e => {
-      if (!_dDragging) return;
-      const dx = e.clientX - _dMx;
-      if (Math.abs(dx) > 60) goTo(pg + (dx < 0 ? 1 : -1));
-      _dDragging = false;
-    });
-    let _dTx = 0;
-    document.addEventListener(
-      'touchstart',
-      e => {
-        _dTx = e.touches[0].clientX;
-      },
-      { passive: true },
-    );
-    document.addEventListener(
-      'touchend',
-      e => {
-        const dx = e.changedTouches[0].clientX - _dTx;
-        if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1));
-      },
-      { passive: true },
-    );
-  }
+  /* Mobile measures the viewport as it builds, so it waits for layout. */
+  const buildLayout = () => {
+    if (MOB) {
+      document.body.classList.add('is-mob');
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          buildMobile();
+          syncMobPages();
+          goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
+        }),
+      );
+    } else {
+      document.body.classList.remove('is-mob');
+      buildDesktop();
+      goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
+    }
+  };
+  buildLayout();
+
+  /* Attached once, not per layout: the window can cross the breakpoint later,
+     and a listener added on every crossing would fire twice. */
+  document.addEventListener('keydown', e => {
+    if (MOB) return;
+    if (el('spot').classList.contains('on')) return;
+    if (e.key === 'ArrowRight') goTo(pg + 1);
+    if (e.key === 'ArrowLeft') goTo(pg - 1);
+  });
+  let _dMx = 0,
+    _dDragging = false;
+  document.addEventListener('mousedown', e => {
+    _dMx = e.clientX;
+    _dDragging = false;
+  });
+  document.addEventListener('mousemove', e => {
+    if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true;
+  });
+  document.addEventListener('mouseup', e => {
+    if (MOB || !_dDragging) return;
+    const dx = e.clientX - _dMx;
+    if (Math.abs(dx) > 60) goTo(pg + (dx < 0 ? 1 : -1));
+    _dDragging = false;
+  });
+  let _dTx = 0;
+  document.addEventListener(
+    'touchstart',
+    e => {
+      _dTx = e.touches[0].clientX;
+    },
+    { passive: true },
+  );
+  /* The mobile layout has its own swipe, in ui.js. Both would advance two
+     pages for one gesture. */
+  document.addEventListener(
+    'touchend',
+    e => {
+      if (MOB) return;
+      const dx = e.changedTouches[0].clientX - _dTx;
+      if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1));
+    },
+    { passive: true },
+  );
 
   applyBg();
 
+  onLayoutChange(mobile => {
+    MOB = mobile;
+    buildLayout();
+  });
+
+  /* A rotation that does not cross the breakpoint still changes how much fits,
+     and the mobile layout is measured. Debounced, and only while it is the
+     layout in use: on a phone the keyboard opening resizes the viewport too. */
   let _rt;
-  /* Only on an orientation change. On a phone the keyboard opening resizes the
-     visual viewport. */
-  let _wasLandscape = null;
-  const _rebuild = () => {
-    clearTimeout(_rt);
-    _rt = setTimeout(() => {
-      if (!MOB) return;
-      const landscape = innerWidth > innerHeight;
-      if (landscape === _wasLandscape) return;
-      _wasLandscape = landscape;
-      if (landscape) {
-        document.body.classList.remove('is-mob');
-        buildDesktop();
-      } else {
-        document.body.classList.add('is-mob');
-        buildMobile();
-        syncMobPages();
-      }
-    }, 150);
-  };
-  window.addEventListener('resize', _rebuild, { passive: true });
-  window.addEventListener('orientationchange', _rebuild, { passive: true });
-  window.visualViewport?.addEventListener('resize', _rebuild, { passive: true });
+  window.addEventListener(
+    'orientationchange',
+    () => {
+      clearTimeout(_rt);
+      _rt = setTimeout(() => {
+        if (MOB) buildLayout();
+      }, 150);
+    },
+    { passive: true },
+  );
 
   /* Jittered, so several open clients do not poll on the same tick. */
   let _pollTimers = [];

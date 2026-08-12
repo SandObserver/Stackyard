@@ -142,6 +142,12 @@
       "/js/jitter.js": [
         "./ui/js/jitter.js"
       ],
+      "/js/layout.js": [
+        "./ui/js/layout.js"
+      ],
+      "/js/layout.js?v=*": [
+        "./ui/js/layout.js"
+      ],
       "/js/jitter.js?v=*": [
         "./ui/js/jitter.js"
       ],

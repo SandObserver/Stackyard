@@ -199,18 +199,19 @@ test('both build paths tear down before replacing the DOM', () => {
   }
 });
 
-/* The rebuild is only needed when orientation changes. Without this guard the
-   keyboard opening on a phone rebuilt the entire dashboard. */
-test('a rebuild is skipped when the orientation has not changed', () => {
+/* A rebuild discards every widget iframe, so it must happen only when the
+   layout actually changes. The keyboard opening on a phone resizes the visual
+   viewport, and rebuilding on that threw the dashboard away mid-typing. */
+test('a plain resize does not rebuild the dashboard', () => {
   const src = read('js/dashboard.js');
-  assert.match(
-    src,
-    /const landscape = innerWidth > innerHeight;\s*\n\s*if \(landscape === _wasLandscape\) return;/,
-    'the orientation guard is missing or reshaped',
-  );
-  assert.match(src, /_wasLandscape = landscape;/, 'and it must record the new orientation');
+  assert.doesNotMatch(src, /addEventListener\(\s*'resize'/, 'a resize listener rebuilds on every pixel');
+  assert.doesNotMatch(src, /visualViewport\?\.addEventListener/, 'the phone keyboard resizes this one');
 });
 
-test('the guard starts unset, so the first rebuild still runs', () => {
-  assert.match(read('js/dashboard.js'), /let _wasLandscape = null;/);
+/* A media query reports the crossing itself, once, rather than every resize
+   that happens to be on the same side of the breakpoint. */
+test('the rebuild is driven by the shared layout rule', () => {
+  const src = read('js/dashboard.js');
+  assert.match(src, /import \{[^}]*onLayoutChange[^}]*\} from '\/js\/layout\.js/);
+  assert.match(src, /onLayoutChange\(mobile => \{/, 'the layout change is what triggers a rebuild');
 });

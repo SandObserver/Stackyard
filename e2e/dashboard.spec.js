@@ -120,3 +120,23 @@ test('a widget renders inside its frame under the page policy', async ({ page, r
   await expect(frame.locator('#row-h svg').first()).toBeVisible();
   expect(violations, `the page refused something: ${violations.join(' | ')}`).toEqual([]);
 });
+
+/* The layout was decided once at load, so a desktop window dragged narrower
+   than the breakpoint kept the desktop layout until it was reloaded. */
+test('resizing across the breakpoint switches the layout without a reload', async ({ page, request }) => {
+  await seedConfig(request, { items: [app('alpha', 'Alpha'), app('bravo', 'Bravo')] });
+  await stubPolls(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/');
+
+  const body = page.locator('body');
+  await expect(body).not.toHaveClass(/is-mob/);
+
+  await page.setViewportSize({ width: 500, height: 900 });
+  await expect(body).toHaveClass(/is-mob/);
+  await expect(page.locator('#pages a.icon').filter({ hasText: 'Alpha' })).toBeVisible();
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(body).not.toHaveClass(/is-mob/);
+  await expect(page.locator('#pages a.icon').filter({ hasText: 'Alpha' })).toBeVisible();
+});
