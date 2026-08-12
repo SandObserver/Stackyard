@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An Admin save no longer changes the Unsplash wallpaper on every open
+  dashboard. The photo is kept for a day.
+
+- The dashboard reopens on the page you were last on instead of the first one.
+
 - The Docker socket proxy address is checked when it is saved, and a wrong one
   is refused with the reason and what to change about it, instead of being
   stored.

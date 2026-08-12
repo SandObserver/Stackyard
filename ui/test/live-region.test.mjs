@@ -81,7 +81,14 @@ test('nothing is announced when the page did not change', () => {
     dashboard.indexOf('\n}', dashboard.indexOf('function goTo(')),
   );
   assert.match(goTo, /const was = pg/);
-  assert.match(goTo, /if \(pg !== was\)/);
+  assert.match(goTo, /if \(pg !== was( |\))/);
+});
+
+/* The page restored on load was not chosen by the user, so it is not spoken. */
+test('restoring the page on load announces nothing', () => {
+  const calls = dashboard.split('\n').filter(l => l.includes('goTo(restorePage('));
+  assert.ok(calls.length > 0, 'the page is restored on load');
+  for (const line of calls) assert.match(line, /,\s*false\);$/, line.trim());
 });
 
 test('the announcement is translated', () => {

@@ -27,7 +27,13 @@ import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=dab9978
 import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=1515288b';
 import { badgeSignature, computeBadgeVisual } from '/js/badge-logic.js?v=d278c683';
-import { configChanged, landingAfterSetup } from '/js/dashboard-logic.js?v=640430ba';
+import {
+  configChanged,
+  landingAfterSetup,
+  readWallpaperCache,
+  writeWallpaperCache,
+  restorePage,
+} from '/js/dashboard-logic.js?v=640430ba';
 import { trapFocus } from '/js/dialog.js?v=b3841546';
 
 const MOB = innerWidth <= 768 || /iPhone|iPod|Android/i.test(navigator.userAgent);
@@ -51,6 +57,25 @@ function desktopSlots() {
 }
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
+
+const PAGE_STORE = 'dash_page',
+  WALLPAPER_STORE = 'dash_wallpaper';
+
+/** @param {string} key @returns {string|null} */
+function storeGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/** @param {string} key @param {string} value */
+function storeSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
 
 let items = [],
   pg = 0,
@@ -294,12 +319,13 @@ function announcePage(index, total) {
   live.textContent = t('home.pageAnnounce', { page: index + 1, total });
 }
 
-function goTo(n, dotEls) {
+function goTo(n, dotEls, announce = true) {
   const total = dotEls ? dotEls.length : totalPages;
   const was = pg;
   pg = Math.max(0, Math.min(total - 1, n));
-  if (pg !== was) announcePage(pg, total);
+  if (pg !== was && announce) announcePage(pg, total);
   if (_stateRef) _stateRef.pg = pg;
+  storeSet(PAGE_STORE, String(pg));
   const strip = el('pages');
   const t = `translateX(-${pg * 100}vw)`;
   strip.style.transform = strip.style.webkitTransform = t;
@@ -359,16 +385,22 @@ async function applyBg() {
       root.style.setProperty('--bg-color', '#0d1117');
       root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
     } else if (bg.type === 'unsplash') {
-      const r = await fetch('/api/wallpaper', { cache: 'no-store' });
-      const d = await r.json();
-      if (d.url) {
+      let url = readWallpaperCache(storeGet(WALLPAPER_STORE), bg, Date.now());
+      if (!url) {
+        const r = await fetch('/api/wallpaper', { cache: 'no-store' });
+        const d = await r.json();
+        url = d.url || null;
+        if (url) storeSet(WALLPAPER_STORE, writeWallpaperCache(url, bg, Date.now()));
+      }
+      if (url) {
+        const shown = url;
         const img = new Image();
         img.onload = () => {
-          root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(d.url)}')`);
+          root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(shown)}')`);
           root.style.setProperty('--bg-color', '#0d1117');
           root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
         };
-        img.src = d.url;
+        img.src = shown;
       }
     }
   } catch {}
@@ -603,10 +635,12 @@ async function boot() {
       requestAnimationFrame(() => {
         buildMobile();
         syncMobPages();
+        goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
       }),
     );
   } else {
     buildDesktop();
+    goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
     document.addEventListener('keydown', e => {
       if (el('spot').classList.contains('on')) return;
       if (e.key === 'ArrowRight') goTo(pg + 1);
