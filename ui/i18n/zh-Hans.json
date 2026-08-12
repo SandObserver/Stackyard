@@ -175,7 +175,10 @@
     "importForeignNothing": "这些文件中没有可导入的内容。",
     "importYamlUnsupported": "{file}：{reason}（第 {line} 行）",
     "importUnknownFormat": "{file} 不是 gethomepage 或 Dashy 配置。",
-    "secretsWithheld": "请重新输入以下项的凭据：{items}。凭据未被保留，因为它所属的请求已更改。"
+    "secretsWithheld": "请重新输入以下项的凭据：{items}。凭据未被保留，因为它所属的请求已更改。",
+    "socketUrlMissing": "请输入套接字代理地址，或关闭 Docker 监控。",
+    "socketUrlBad": "未保存套接字代理：{reason}",
+    "socketUrlUnverified": "已保存，但套接字代理没有响应：{reason}"
   },
   "confirm": {
     "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",

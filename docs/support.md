@@ -100,6 +100,23 @@ Most homelab services live on private IPs, so set `ALLOW_PRIVATE_IPS=true`.
 Docker service names (hostnames with no dot, such as `adguard`) are trusted and
 are not blocked, so linking to containers on the same network works without it.
 
+### Every app with a container shows as unhealthy
+
+The container list comes from a Docker socket proxy, which is a separate
+container you run yourself. Stackyard only stores its address. When that address
+cannot be reached, no container is found, and a container that cannot be found
+counts as not running, so every app checked by container name turns red at once.
+
+Settings refuses an address that is plainly wrong when you save it, and names the
+reason. An address that is accepted but stops working later shows as
+`container health fetch failed` in `docker logs`.
+
+Two addresses that look interchangeable are not. A service name such as
+`http://socket-proxy:2375` only resolves for containers on the same Docker
+network, so it works from a Stackyard deployed beside the proxy and from nowhere
+else. Reaching the proxy from another host needs its port published on that host
+and the address given as an IP, such as `http://192.168.1.100:2375`.
+
 ### A widget says "Not configured" or shows an error instead of data
 
 - Confirm the server URL and credentials in the Settings app. Secret fields show

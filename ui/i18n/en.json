@@ -175,7 +175,10 @@
     "importForeignNothing": "Nothing to import from those files.",
     "importYamlUnsupported": "{file}: {reason} (line {line})",
     "importUnknownFormat": "{file} is not a gethomepage or Dashy config.",
-    "secretsWithheld": "Enter the credential again for: {items}. It was not kept, because the request it belongs to changed."
+    "secretsWithheld": "Enter the credential again for: {items}. It was not kept, because the request it belongs to changed.",
+    "socketUrlMissing": "Enter the socket proxy address, or turn Docker monitoring off.",
+    "socketUrlBad": "Socket proxy not saved: {reason}",
+    "socketUrlUnverified": "Saved, but the socket proxy did not answer: {reason}"
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",

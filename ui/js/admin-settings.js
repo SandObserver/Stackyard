@@ -289,6 +289,7 @@ async function saveWallpaper() {
 async function saveServer() {
   const pw = inp('sec-pw')?.value || '';
   const enabled = inp('sec-en')?.checked || false;
+  let socketWarning = '';
 
   /* Every rule that can refuse this save is asked before the first request.
      Checked afterwards, as they were, a refusal had already saved the title,
@@ -304,6 +305,32 @@ async function saveServer() {
     if (blocker.reason === BLOCK.NEEDS_PASSWORD) toast(t('toast.authNeedsPassword'), 'err');
     else toast(t('toast.pwWeak', { label: t(blocker.labelKey) }), 'err');
     return;
+  }
+
+  /* Asked here, with the other refusals, so a wrong address never reaches the
+     config. Stored unchecked it looked configured while every app backed by a
+     container reported down, with the reason only in the container log. */
+  if (inp('srv-docker-en')?.checked) {
+    const url = inp('srv-socket')?.value?.trim() || '';
+    if (!url) {
+      toast(t('toast.socketUrlMissing'), 'err');
+      return;
+    }
+    let probe;
+    try {
+      probe = await ap('/api/docker/test', { url });
+    } catch (e) {
+      toast(t('toast.saveFailed', { err: e.message }), 'err');
+      return;
+    }
+    if (!probe.ok && probe.fatal) {
+      toast(t('toast.socketUrlBad', { reason: probe.error }), 'err');
+      return;
+    }
+    /* Not answering yet is not the same as wrong: a proxy still starting would
+       otherwise block a save that is correct. Reported once the save lands, so
+       it is not immediately replaced by the success toast. */
+    if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: probe.error });
   }
 
   /* Switching protection off deletes the stored password, so this is the moment
@@ -360,7 +387,7 @@ async function saveServer() {
         pwEl.value = '';
       }
     }
-    toast(t('toast.saved'));
+    toast(socketWarning || t('toast.saved'), socketWarning ? 'err' : 'ok');
     if (langChanged) {
       location.reload();
       return;

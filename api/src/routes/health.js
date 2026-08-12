@@ -1,9 +1,9 @@
-const { on, json, getIp } = require('../router');
+const { on, json, getIp, readBody, checkOrigin } = require('../router');
 const { rateLimit } = require('../auth');
 const { KIND } = require('../api-error');
 const LIMITS = require('../poll-limits');
 const { loadConfig } = require('../config');
-const { fetchUnchecked, pingUnchecked } = require('../proxy');
+const { fetchUnchecked, pingUnchecked, urlPolicyError, pingErrorText, errCode } = require('../proxy');
 const { PING_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
@@ -42,6 +42,61 @@ async function fetchContainerHealth() {
     return Object.create(null);
   }
 }
+
+/* These codes mean the address itself is wrong: nothing is listening, or the
+   name resolves nowhere. A timeout is not among them, because a proxy that is
+   still starting produces one, and refusing that save would lock the field on
+   an address that is about to work. */
+const WRONG_ADDRESS_CODES = new Set([
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+  'EPROTO',
+]);
+
+/* A Docker API answers /version with an ApiVersion. Anything else on that port
+   is some other service, which would otherwise be stored as a working address
+   and report every container as down. */
+async function probeSocketProxy(url) {
+  /* Outbound requests are disabled in the demo, so every address would fail the
+     probe and no Docker setting could be saved there at all. */
+  if (IS_DEMO) return { ok: true };
+  let u;
+  try {
+    u = new URL(url);
+  } catch {
+    return { ok: false, fatal: true, error: 'That is not a valid URL.' };
+  }
+  const policy = urlPolicyError(u);
+  if (policy) return { ok: false, fatal: true, error: policy };
+  try {
+    const r = await fetchUnchecked(`${url.replace(/\/+$/, '')}/version`, { timeout: PING_MS });
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, fatal: true, error: 'The socket proxy refused the request.' };
+    if (r.status >= 400) return { ok: false, fatal: true, error: `The address answered with HTTP ${r.status}.` };
+    if (!r.data || typeof r.data !== 'object' || !r.data.ApiVersion)
+      return { ok: false, fatal: true, error: 'Something is listening there, but it is not a Docker socket proxy.' };
+    return { ok: true, version: String(r.data.ApiVersion) };
+  } catch (e) {
+    return { ok: false, fatal: WRONG_ADDRESS_CODES.has(errCode(e) ?? ''), error: pingErrorText(e) };
+  }
+}
+
+on('POST', '/api/docker/test', async (req, res) => {
+  if (!checkOrigin(req, res)) return;
+  const limited = rateLimit(getIp(req), 'docker-test', 20, 60_000);
+  if (limited) return json(res, 429, { ok: false, error: limited, kind: KIND.BLOCKED });
+  try {
+    const { url } = JSON.parse(await readBody(req));
+    if (!url || typeof url !== 'string')
+      return json(res, 400, { ok: false, error: 'url required', kind: KIND.INVALID });
+    json(res, 200, await probeSocketProxy(url.trim()));
+  } catch {
+    json(res, 400, { ok: false, error: 'url required', kind: KIND.INVALID });
+  }
+});
 
 on('GET', '/health', (_, res) => json(res, 200, { ok: true }));
 
