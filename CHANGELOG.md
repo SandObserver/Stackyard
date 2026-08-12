@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Exporting the config now reports a failure instead of saving an error response
+  as `stackyard-config.json`.
+
 - A session that expires while you are working in Admin now raises the sign-in
   box over the page, and the interrupted save completes once you are back in,
   instead of failing as "Unauthorised" until the page is reloaded.
