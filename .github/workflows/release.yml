@@ -109,14 +109,14 @@ jobs:
             type=raw,value=latest,enable=${{ steps.tag.outputs.prerelease == 'false' }}
 
       # A multi-platform image is assembled by buildx and never exists locally,
-      # so scanning what gets pushed means pushing it first. One platform does
-      # load, and the layer cache carries it into the real build below, so the
-      # gate costs a cache-warm rebuild rather than a second full build.
+      # so each published platform is built on its own here and scanned before
+      # anything is pushed. The layer cache carries both into the real build
+      # below, so the gate costs a cache-warm rebuild rather than a second full
+      # build of each.
       #
-      # linux/arm64 cannot be loaded on an x86 runner and so is still published
-      # unscanned. It shares this image's base and package set; what it does not
-      # share is architecture-specific package versions.
-      - name: Build for scanning
+      # Keep both scans. The two platforms share a base and a package set, but
+      # not architecture-specific package versions.
+      - name: Build amd64 for scanning
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
@@ -125,14 +125,38 @@ jobs:
           push: false
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
-          tags: stackyard:scan
+          tags: stackyard:scan-amd64
           cache-to: type=gha,mode=max
           cache-from: type=gha
 
-      - name: Scan the image
+      - name: Scan the amd64 image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: stackyard:scan
+          image-ref: stackyard:scan-amd64
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      # Built under the QEMU set up above. Trivy reads the filesystem and does
+      # not run the image, so emulation is needed for the build only.
+      - name: Build arm64 for scanning
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          platforms: linux/arm64
+          load: true
+          push: false
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+          tags: stackyard:scan-arm64
+          cache-to: type=gha,mode=max
+          cache-from: type=gha
+
+      - name: Scan the arm64 image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: stackyard:scan-arm64
           format: table
           severity: HIGH,CRITICAL
           ignore-unfixed: true

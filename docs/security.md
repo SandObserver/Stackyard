@@ -190,8 +190,8 @@ which proves only that something signed the image.
 
 Each release build also scans the image with Trivy before publishing it and
 fails on a HIGH or CRITICAL finding that has a fix available, so a flagged image
-never reaches a registry. The scan covers `linux/amd64`; `linux/arm64` is built
-by emulation and cannot be scanned before it is pushed.
+never reaches a registry. Both published platforms are scanned: `linux/amd64`
+and `linux/arm64`, the second built under emulation on the runner.
 
 The build also produces an SPDX SBOM listing what is inside the image, attached
 to the run as an artifact and downloadable from its summary page on GitHub.

@@ -44,37 +44,61 @@ test('the supply-chain steps run after the build, in an order that works', () =>
   assert.ok(indexOf('Generate SBOM') < indexOf('Upload SBOM'), 'the SBOM must exist before it is uploaded');
 });
 
-test('the scan gates the push', () => {
-  const gate = indexOf('Build for scanning');
-  assert.ok(gate !== -1, 'the single-platform build the scan reads is gone');
-  assert.ok(gate < indexOf('Scan the image'), 'there is nothing to scan yet');
-  assert.ok(indexOf('Scan the image') < indexOf('Build and push'), 'a scanned image is one that has not shipped');
+/* Every platform in the push, and only those, must have a build-and-scan pair
+   ahead of it. arm64 shipped unscanned for several releases because the scan
+   read one platform while the push carried two. */
+const publishedPlatforms = String(byName('Build and push').with.platforms)
+  .split(',')
+  .map(p => p.trim())
+  .filter(Boolean);
+const scanBuilds = steps.filter(s => /^Build \S+ for scanning$/.test(s.name || ''));
 
-  const built = byName('Build for scanning');
-  assert.equal(built.with.push, false, 'the gate must not publish what it is gating');
-  assert.equal(built.with.load, true, 'trivy reads it from the local daemon');
-  assert.equal(built.with.platforms, 'linux/amd64', 'only one platform can be loaded on the runner');
-  assert.equal(
-    built.with.tags,
-    byName('Scan the image').with['image-ref'],
-    'the scan must read the image this step just built',
+test('every published platform is scanned before anything is pushed', () => {
+  assert.deepEqual(
+    scanBuilds.map(s => s.with.platforms).sort(),
+    [...publishedPlatforms].sort(),
+    'a platform is published that nothing scanned',
   );
-  assert.match(
-    String(built.with['build-args']),
-    /APP_VERSION=\$\{\{ steps\.meta\.outputs\.version \}\}/,
-    'a different build-arg would build different layers from the ones pushed',
-  );
+
+  for (const built of scanBuilds) {
+    const arch = built.with.platforms.replace('linux/', '');
+    const scan = byName(`Scan the ${arch} image`);
+    assert.ok(scan, `${arch} has no scan step`);
+    assert.ok(indexOf(built.name) < indexOf(scan.name), `${arch}: there is nothing to scan yet`);
+    assert.ok(indexOf(scan.name) < indexOf('Build and push'), `${arch}: a scanned image is one that has not shipped`);
+    assert.equal(built.with.push, false, `${arch}: the gate must not publish what it is gating`);
+    assert.equal(built.with.load, true, `${arch}: trivy reads it from the local daemon`);
+    assert.equal(built.with.tags, scan.with['image-ref'], `${arch}: the scan must read the image just built`);
+    assert.match(
+      String(built.with['build-args']),
+      /APP_VERSION=\$\{\{ steps\.meta\.outputs\.version \}\}/,
+      `${arch}: a different build-arg would build different layers from the ones pushed`,
+    );
+    assert.match(String(built.with['cache-to']), /type=gha/, `${arch}: the push step rebuilds this from cache`);
+  }
+
   assert.match(
     String(byName('Build and push').with['cache-from']),
     /type=gha/,
-    'without the shared cache the amd64 image is built twice over',
+    'without the shared cache every platform is built twice over',
   );
 });
 
-test('the scan fails the job on a high or critical finding', () => {
-  const scan = byName('Scan the image');
-  assert.equal(scan.with['exit-code'], '1', 'a finding must fail the release, not just print');
-  assert.equal(scan.with.severity, 'HIGH,CRITICAL');
+test('a high or critical finding fails the job, on either platform', () => {
+  for (const built of scanBuilds) {
+    const arch = built.with.platforms.replace('linux/', '');
+    const scan = byName(`Scan the ${arch} image`);
+    assert.equal(scan.with['exit-code'], '1', `${arch}: a finding must fail the release, not just print`);
+    assert.equal(scan.with.severity, 'HIGH,CRITICAL', arch);
+    assert.equal(scan.with['ignore-unfixed'], true, arch);
+  }
+});
+
+/* Emulation is set up for the whole job, but arm64 is the step that cannot
+   build without it. */
+test('QEMU is set up before the arm64 build', () => {
+  assert.ok(indexOf('Set up QEMU') !== -1, 'arm64 cannot be built on the runner without it');
+  assert.ok(indexOf('Set up QEMU') < indexOf('Build arm64 for scanning'));
 });
 
 test('the image is addressed by digest everywhere after the build', () => {
