@@ -3,6 +3,7 @@
 
 import { esc, html, setHtml } from '/js/html.js?v=ccec347c';
 import { isSafeLinkUrl } from '/js/link-url.js?v=19038560';
+import { jitter } from '/js/jitter.js?v=1';
 
 export { esc, html, setHtml };
 
@@ -348,7 +349,9 @@ export function poll(opts = {}) {
       paused = true;
       return;
     }
-    timer = setTimeout(loop, intervalFor(lastData));
+    /* Jittered, so several widgets on one dashboard do not fetch in lockstep.
+       The first tick is not delayed: that one is the widget's content. */
+    timer = setTimeout(loop, jitter(intervalFor(lastData)));
   }
 
   function onVisibility() {

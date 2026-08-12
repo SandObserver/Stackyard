@@ -599,6 +599,9 @@ A failure keeps the last good render in place; only after `staleAfter` (default
 2) consecutive failures does it surface `errorText` with how long ago the last
 success was. `sinceLabel(ts)` gives that "3m ago" label on its own.
 
+The first fetch runs immediately. Each repeat is spread by up to 15%, so several
+widgets on one dashboard do not fetch on the same tick.
+
 **Links**
 
 - `openUrl(href)` opens a link in a new tab. Use this rather than `window.open`,

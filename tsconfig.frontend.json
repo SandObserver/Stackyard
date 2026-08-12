@@ -139,6 +139,12 @@
       "/js/import-foreign.js": [
         "./ui/js/import-foreign.js"
       ],
+      "/js/jitter.js": [
+        "./ui/js/jitter.js"
+      ],
+      "/js/jitter.js?v=*": [
+        "./ui/js/jitter.js"
+      ],
       "/js/import-foreign.js?v=*": [
         "./ui/js/import-foreign.js"
       ],
