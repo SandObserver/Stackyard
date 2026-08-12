@@ -92,6 +92,86 @@ on('GET', '/api/icons/search', async (req, res) => {
   }
 });
 
+const CDN_ICON_BASE = 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons';
+/* The catalogue's slug form. Anything else is refused rather than passed into a
+   CDN path. */
+const CDN_NAME_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
+const CDN_ICON_MAX_BYTES = 512 * 1024;
+const CDN_CACHE_MAX = 300;
+
+/** @typedef {{at:number, status:number, body?:Buffer, type?:string}} CdnIconEntry */
+
+/** @type {Map<string, CdnIconEntry>} */
+const _cdnIcons = new Map();
+
+/** @param {string} key @param {CdnIconEntry} entry */
+function cdnCachePut(key, entry) {
+  _cdnIcons.delete(key);
+  _cdnIcons.set(key, entry);
+  /* Bounded. Icon names come from config an admin writes, but the map would
+     otherwise grow for the life of the process. */
+  while (_cdnIcons.size > CDN_CACHE_MAX) _cdnIcons.delete(_cdnIcons.keys().next().value);
+}
+
+/* Held in memory only. A restart refetches, so a changed upstream icon is never
+   served from a file nobody knows is there. */
+on('GET', '/api/icons/cdn', async (req, res) => {
+  const p = new URL(req.url, 'http://x').searchParams;
+  const name = p.get('name') || '';
+  const ext = (p.get('ext') || 'svg').toLowerCase();
+  if (!CDN_NAME_RE.test(name) || (ext !== 'svg' && ext !== 'png'))
+    return json(res, 400, { error: 'Unknown icon', kind: KIND.INVALID });
+
+  const key = `${ext}:${name}`;
+  const hit = _cdnIcons.get(key);
+  const fresh = hit && Date.now() - hit.at < ICON_CACHE_TTL;
+  if (fresh) return sendIcon(res, hit);
+
+  /** @type {CdnIconEntry} */
+  let entry;
+  try {
+    const r = await fetchUnchecked(`${CDN_ICON_BASE}/${ext}/${name}.${ext}`, { binary: true });
+    const body = Buffer.isBuffer(r.data) ? r.data : Buffer.alloc(0);
+    /* Anything other than a hit or a miss is the CDN being unwell, and caching
+       it would keep every icon missing for a day. */
+    if (r.status !== 200 && r.status !== 404)
+      return json(res, 502, { error: 'Icon could not be fetched', kind: KIND.UPSTREAM });
+    if (r.status === 404 || !body.length || body.length > CDN_ICON_MAX_BYTES) {
+      entry = { at: Date.now(), status: 404 };
+    } else if (ext === 'svg') {
+      /* Served from this origin, where opening the URL directly runs whatever
+         the file contains. */
+      entry = {
+        at: Date.now(),
+        status: 200,
+        body: Buffer.from(sanitizeSvg(body.toString('utf8'))),
+        type: 'image/svg+xml',
+      };
+    } else if (sniffIconType(body) === 'png') {
+      entry = { at: Date.now(), status: 200, body, type: 'image/png' };
+    } else {
+      entry = { at: Date.now(), status: 404 };
+    }
+  } catch {
+    /* Not cached. The browser falls back to the CDN for this load and the next
+       one can still succeed. */
+    return json(res, 502, { error: 'Icon could not be fetched', kind: KIND.UPSTREAM });
+  }
+  cdnCachePut(key, entry);
+  sendIcon(res, entry);
+});
+
+/** @param {import('http').ServerResponse} res @param {CdnIconEntry} entry */
+function sendIcon(res, entry) {
+  if (entry.status !== 200 || !entry.body) return json(res, 404, { error: 'Icon not found', kind: KIND.INVALID });
+  res.writeHead(200, {
+    'Content-Type': entry.type,
+    'Content-Length': entry.body.length,
+    'X-Content-Type-Options': 'nosniff',
+  });
+  res.end(entry.body);
+}
+
 on('GET', '/api/icons/local', (_, res) => {
   try {
     fs.mkdirSync(ICONS_PATH, { recursive: true });

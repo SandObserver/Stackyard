@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Icons from the community set are fetched once through Stackyard and kept in
+  memory, instead of being loaded from a public CDN on every page load.
+
 - A badge blocked for pointing at a private address now names
   `ALLOW_PRIVATE_IPS=true` as the setting that allows it.
 

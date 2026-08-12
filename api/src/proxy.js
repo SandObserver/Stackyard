@@ -293,6 +293,13 @@ function fetchJSON(raw, opts = {}) {
           bufs.push(c);
         });
         res.on('end', () => {
+          /* Before any string conversion. utf8 corrupts image bytes. */
+          if (opts.binary)
+            return done(resolve, {
+              status: res.statusCode,
+              data: Buffer.concat(bufs),
+              contentType: (res.headers['content-type'] || '').toLowerCase(),
+            });
           const body = Buffer.concat(bufs).toString('utf8');
           if (opts.raw) return done(resolve, { status: res.statusCode, data: body });
           const ct = (res.headers['content-type'] || '').toLowerCase();
