@@ -13,6 +13,10 @@ export const KIND = Object.freeze({
 
 export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 
+/* Matches the two SSRF messages that ALLOW_PRIVATE_IPS would let through.
+   Keep it in step with the guard in api/src/proxy.js. */
+const PRIVATE_BLOCK_RE = /is a private address\.|resolves to private IP /;
+
 /* An unknown or missing kind degrades to INTERNAL. */
 export function readError(e) {
   const kind = e && typeof e.kind === 'string' && Object.values(KIND).includes(e.kind) ? e.kind : KIND.INTERNAL;
@@ -46,6 +50,15 @@ export function badgeErrorAdvice(e) {
       tone: TONE.WARN,
       message:
         "Can't reach this address from Docker. Try using the container name, e.g. http://container-name:8181/api/v2",
+      openAuth: false,
+      sessionExpired: false,
+    };
+  }
+
+  if (kind === KIND.BLOCKED && PRIVATE_BLOCK_RE.test(message)) {
+    return {
+      tone: TONE.WARN,
+      message: `${message} Most homelab services live on private IPs. Set ALLOW_PRIVATE_IPS=true and restart the container.`,
       openAuth: false,
       sessionExpired: false,
     };

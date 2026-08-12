@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A badge blocked for pointing at a private address now names
+  `ALLOW_PRIVATE_IPS=true` as the setting that allows it.
+
 - An Admin save no longer changes the Unsplash wallpaper on every open
   dashboard. The photo is kept for a day.
 
