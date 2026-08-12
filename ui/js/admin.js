@@ -1,4 +1,5 @@
 import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=a0ea3e4b';
+import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=1';
 import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=84d58686';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=3c60f7b0';
@@ -23,16 +24,14 @@ import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=14aa75ec';
 import { detectSource, convert, insecureApps, clearSkipTls, SKIP, NOTE } from '/js/import-foreign.js?v=104555d0';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
-   viewport than they have. */
-function _syncMobile() {
-  const portrait = window.matchMedia('(orientation:portrait)').matches;
-  const m =
-    window.matchMedia('(max-width:768px)').matches || (portrait && /iPhone|iPod|Android/i.test(navigator.userAgent));
-  document.documentElement.classList.toggle('is-mobile', m);
+   viewport than they have. The rule lives in layout.js, shared with the
+   dashboard, so the two screens cannot disagree about what mobile means. */
+function _syncMobile(mobile) {
+  document.documentElement.classList.toggle('is-mobile', mobile);
 }
-_syncMobile();
-window.addEventListener('resize', _syncMobile);
-window.addEventListener('orientationchange', _syncMobile);
+const _mobileAtLoad = isMobileLayout();
+_syncMobile(_mobileAtLoad);
+onLayoutChange(_syncMobile, _mobileAtLoad);
 
 const collapsedFolders = new Set(); /* tracks which folder ids are collapsed */
 let _flt = { q: '', type: 'all' };

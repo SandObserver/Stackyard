@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Resizing a browser window across the mobile breakpoint now switches the
+  dashboard layout, instead of keeping the old one until a reload.
+
 - One unreachable service no longer delays every other tile's refresh by six
   seconds.
 

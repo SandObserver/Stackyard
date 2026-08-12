@@ -120,3 +120,35 @@ test('a widget renders inside its frame under the page policy', async ({ page, r
   await expect(frame.locator('#row-h svg').first()).toBeVisible();
   expect(violations, `the page refused something: ${violations.join(' | ')}`).toEqual([]);
 });
+
+/* The layout was decided once at load, so a desktop window dragged narrower
+   than the breakpoint kept the desktop layout until it was reloaded. */
+test('resizing across the breakpoint switches the layout without a reload', async ({ page, request }) => {
+  /* A rebuild that throws leaves the page half-swapped, which is worse than not
+     rebuilding at all. */
+  const pageErrors = [];
+  page.on('pageerror', e => pageErrors.push(e.message));
+
+  await seedConfig(request, { items: [app('alpha', 'Alpha'), app('bravo', 'Bravo')] });
+  await stubPolls(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/');
+  /* Wait for the first build. Resizing before it lands tests nothing. */
+  await page.locator('#pages a.icon').first().waitFor();
+
+  const body = page.locator('body');
+  await expect(body).not.toHaveClass(/is-mob/);
+
+  /* Each layout has its own markup, so the tile class proves the page was
+     rebuilt by the other builder rather than merely restyled. The mobile tile
+     carries its name as an aria-label: mobile labels are off by default. */
+  await page.setViewportSize({ width: 500, height: 900 });
+  await expect(body).toHaveClass(/is-mob/);
+  await expect(page.locator('#pages .dyn-mob-icon[aria-label="Alpha"]'), pageErrors.join(' | ')).toBeVisible();
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(body).not.toHaveClass(/is-mob/);
+  await expect(page.locator('#pages a.icon').filter({ hasText: 'Alpha' })).toBeVisible();
+  await expect(page.locator('#pages .dyn-mob-icon')).toHaveCount(0);
+  expect(pageErrors, 'the rebuild threw').toEqual([]);
+});
