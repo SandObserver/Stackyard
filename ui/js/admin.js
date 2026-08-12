@@ -10,7 +10,7 @@ import {
   snapshotItems,
   saveWithRevert,
 } from '/js/admin-save-logic.js?v=77cac1d1';
-import { API, toast, ag, ap, initInlineEdit, setReauthHandler } from '/js/admin-shared.js?v=bb36dbb3';
+import { toast, ag, ap, initInlineEdit, setReauthHandler } from '/js/admin-shared.js?v=bb36dbb3';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
 import { state } from '/js/admin-state.js?v=3f9ad806';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=653071f0';
@@ -1232,16 +1232,29 @@ function initLanguage() {
 const dashSaveEl = el('dash-save');
 if (dashSaveEl) dashSaveEl.onclick = () => save();
 
+/* Fetched rather than reached by navigating a link. A link hands the request to
+   the browser, so the page never learns the outcome: a refusal or an expired
+   session saved an error body under the backup's own filename, and the catch
+   here could not see it. Going through `ag` also means an expired session
+   raises the sign-in box and the export finishes afterwards. */
 el('btn-exp').onclick = async () => {
+  let url;
   try {
+    const config = await ag('/api/config/export');
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = API + '/api/config/export';
+    a.href = url;
     a.download = 'stackyard-config.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   } catch (e) {
     toast(t('toast.exportFailed', { err: e.message }), 'err');
+  } finally {
+    /* Revoked on the next frame: revoking it in this one races the download the
+       click just started, and the browser keeps nothing to save. */
+    if (url) requestAnimationFrame(() => URL.revokeObjectURL(url));
   }
 };
 el('imp').onchange = async e => {
