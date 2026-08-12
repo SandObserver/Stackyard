@@ -3,7 +3,16 @@ const { rateLimit } = require('../auth');
 const { KIND } = require('../api-error');
 const LIMITS = require('../poll-limits');
 const { loadConfig } = require('../config');
-const { fetchUnchecked, pingUnchecked, urlPolicyError, pingErrorText, errCode } = require('../proxy');
+const {
+  fetchUnchecked,
+  pingUnchecked,
+  urlPolicyError,
+  pingErrorText,
+  errCode,
+  bareHost,
+  isDockerServiceName,
+  isPrivateAddress,
+} = require('../proxy');
 const { PING_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
@@ -56,6 +65,27 @@ const WRONG_ADDRESS_CODES = new Set([
   'EPROTO',
 ]);
 
+/* The two address shapes fail for opposite reasons, and neither error text says
+   so on its own. A service name is resolved by Docker's own DNS, which answers
+   only for containers sharing a network. An IP reaches only what the proxy
+   published: a proxy bound to the host's loopback, as the usual compose does,
+   is unreachable from inside any container, at any address.
+
+   The hint names which of the two applies. The UI translates it; the codes are
+   the contract between them. */
+const HINT = Object.freeze({ SHARED_NETWORK: 'shared-network', PUBLISH_PORT: 'publish-port' });
+
+/* A packet to a port bound on another namespace's loopback is dropped rather
+   than refused, so this case arrives as a timeout. Left non-fatal it saved with
+   a warning, which is the exact silence this probe exists to end. A literal
+   address is also never the one that is still starting up under a name. */
+const isLiteralAddress = host => isPrivateAddress(host) || /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':');
+
+function addressHint(host) {
+  if (isDockerServiceName(host)) return HINT.SHARED_NETWORK;
+  return HINT.PUBLISH_PORT;
+}
+
 /* A Docker API answers /version with an ApiVersion. Anything else on that port
    is some other service, which would otherwise be stored as a working address
    and report every container as down. */
@@ -80,7 +110,10 @@ async function probeSocketProxy(url) {
       return { ok: false, fatal: true, error: 'Something is listening there, but it is not a Docker socket proxy.' };
     return { ok: true, version: String(r.data.ApiVersion) };
   } catch (e) {
-    return { ok: false, fatal: WRONG_ADDRESS_CODES.has(errCode(e) ?? ''), error: pingErrorText(e) };
+    const host = bareHost(u.hostname);
+    const code = errCode(e) ?? '';
+    const fatal = WRONG_ADDRESS_CODES.has(code) || (!code && isLiteralAddress(host));
+    return { ok: false, fatal, error: pingErrorText(e), hint: addressHint(host) };
   }
 }
 

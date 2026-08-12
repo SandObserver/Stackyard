@@ -111,11 +111,58 @@ Settings refuses an address that is plainly wrong when you save it, and names th
 reason. An address that is accepted but stops working later shows as
 `container health fetch failed` in `docker logs`.
 
-Two addresses that look interchangeable are not. A service name such as
-`http://socket-proxy:2375` only resolves for containers on the same Docker
-network, so it works from a Stackyard deployed beside the proxy and from nowhere
-else. Reaching the proxy from another host needs its port published on that host
-and the address given as an IP, such as `http://192.168.1.100:2375`.
+Two addresses that look interchangeable are not, and they fail for opposite
+reasons.
+
+**A service name**, such as `http://socket-proxy:2375`, is resolved by Docker's
+own DNS, which answers only for containers that share a network. Add the proxy's
+network to the Stackyard service and the name resolves:
+
+```yaml
+services:
+  stackyard:
+    networks:
+      - socket_proxy_network
+
+networks:
+  socket_proxy_network:
+    external: true
+    name: socket_proxy_network
+```
+
+A service on `network_mode: bridge` is on Docker's default bridge, which has no
+name resolution at all, so no service name can work from there.
+
+**An IP address** reaches only what the proxy published. The usual socket proxy
+compose publishes on the host's loopback:
+
+```yaml
+    ports:
+      - "127.0.0.1:2375:2375"
+```
+
+That port exists on the host and nowhere else. A container's own `127.0.0.1` is
+not the host's, and the host's LAN address does not carry the port either, so no
+IP reaches the proxy from inside a container. Because packets to it are dropped
+rather than refused, this appears as a timeout rather than a connection error.
+
+To use an IP, republish the proxy's port on an interface containers can reach.
+The Docker bridge address, usually `172.17.0.1`, reaches containers on that host
+without exposing anything to the network:
+
+```yaml
+    ports:
+      - "172.17.0.1:2375:2375"
+```
+
+Publishing on `0.0.0.0` also works and is worth avoiding. Even with `POST=0` and
+`EXEC=0`, it offers an unauthenticated read of every container, image, network
+and log on that host to anyone who can reach the port.
+
+Reaching a proxy on a **different host** needs that port published on the host's
+LAN address, with the exposure above. Running a socket proxy on each host and
+pointing each Stackyard at its own is usually better, since container names on
+one host mean nothing on another.
 
 ### A widget says "Not configured" or shows an error instead of data
 

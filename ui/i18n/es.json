@@ -38,7 +38,7 @@
     "hideHealthy": "Ocultar insignia de estado saludable",
     "socketUrl": "URL del socket",
     "loggingTip": "\"Errores\" muestra solo advertencias y errores. Los eventos de seguridad siempre se registran.",
-    "socketTip": "Usa la URL de un contenedor <strong>Proxy Socket</strong> para un acceso con mínimo privilegio.",
+    "socketTip": "Usa la URL de un contenedor <strong>socket proxy</strong>, nunca el socket de Docker. Un nombre como <code>http://socket-proxy:2375</code> solo funciona si este contenedor y el proxy comparten una red de Docker; una dirección IP solo funciona si el proxy publica su puerto más allá del bucle local del host.",
     "security": "Seguridad",
     "signOutEverywhereTip": "Cierra la sesión en todos los navegadores y dispositivos, incluido este. Útil si crees que una sesión quedó abierta o comprometida. Tu contraseña no cambia.",
     "signOutEverywhereBtn": "Cerrar todas",
@@ -178,7 +178,9 @@
     "secretsWithheld": "Vuelve a introducir la credencial de: {items}. No se conservó porque cambió la petición a la que pertenece.",
     "socketUrlMissing": "Introduce la dirección del proxy de socket o desactiva la supervisión de Docker.",
     "socketUrlBad": "Proxy de socket no guardado: {reason}",
-    "socketUrlUnverified": "Guardado, pero el proxy de socket no respondió: {reason}"
+    "socketUrlUnverified": "Guardado, pero el proxy de socket no respondió: {reason}",
+    "socketHintSharedNetwork": "Ese nombre lo resuelve Docker, que solo responde para contenedores en una red compartida. Ponlos en la misma red o usa una dirección que el proxy publique.",
+    "socketHintPublishPort": "Nada respondió en esa dirección. Un socket proxy publicado en el bucle local del host no es accesible desde un contenedor; publícalo en la dirección del puente de Docker, o pon ambos contenedores en una red compartida y usa el nombre del proxy."
   },
   "confirm": {
     "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",

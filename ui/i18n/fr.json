@@ -38,7 +38,7 @@
     "hideHealthy": "Masquer le badge d'état sain",
     "socketUrl": "URL du socket",
     "loggingTip": "\"Erreurs\" n'affiche que les avertissements et les erreurs. Les événements de sécurité sont toujours enregistrés.",
-    "socketTip": "Utilisez l'URL d'un conteneur <strong>Proxy Socket</strong> pour un accès à privilèges minimaux.",
+    "socketTip": "Utilisez l’URL d’un conteneur <strong>socket proxy</strong>, jamais le socket Docker lui-même. Un nom tel que <code>http://socket-proxy:2375</code> ne fonctionne que si ce conteneur et le proxy partagent un réseau Docker ; une adresse IP ne fonctionne que si le proxy publie son port au-delà de la boucle locale de l’hôte.",
     "security": "Sécurité",
     "signOutEverywhereTip": "Déconnecte tous les navigateurs et appareils, y compris celui-ci. Utile si une session a pu rester ouverte ou être compromise. Votre mot de passe ne change pas.",
     "signOutEverywhereBtn": "Tout déconnecter",
@@ -178,7 +178,9 @@
     "secretsWithheld": "Saisissez à nouveau les identifiants pour : {items}. Ils n’ont pas été conservés, car la requête associée a changé.",
     "socketUrlMissing": "Saisissez l’adresse du proxy de socket ou désactivez la surveillance Docker.",
     "socketUrlBad": "Proxy de socket non enregistré : {reason}",
-    "socketUrlUnverified": "Enregistré, mais le proxy de socket n’a pas répondu : {reason}"
+    "socketUrlUnverified": "Enregistré, mais le proxy de socket n’a pas répondu : {reason}",
+    "socketHintSharedNetwork": "Ce nom est résolu par Docker, qui ne répond que pour des conteneurs partageant un réseau. Placez les deux sur le même réseau, ou utilisez une adresse publiée par le proxy.",
+    "socketHintPublishPort": "Rien n’a répondu à cette adresse. Un socket proxy publié sur la boucle locale de l’hôte est inaccessible depuis un conteneur ; publiez-le sur l’adresse du pont Docker, ou placez les deux conteneurs sur un réseau partagé et utilisez le nom du proxy."
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",

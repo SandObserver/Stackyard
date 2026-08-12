@@ -37,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The Docker socket proxy address is checked when it is saved, and a wrong one
-  is refused with the reason instead of being stored.
+  is refused with the reason and what to change about it, instead of being
+  stored.
 
 - The icon preview in the app editor keeps its inset and no longer reverts to
   the initial letter while an icon name is being typed.

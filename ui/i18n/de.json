@@ -38,7 +38,7 @@
     "hideHealthy": "Badge für gesunden Status ausblenden",
     "socketUrl": "Socket-URL",
     "loggingTip": "\"Fehler\" zeigt nur Warnungen und Fehler an. Sicherheitsereignisse werden immer protokolliert.",
-    "socketTip": "Verwende die URL eines <strong>Proxy Socket</strong>-Containers für einen Zugriff mit minimalen Rechten.",
+    "socketTip": "Verwenden Sie die URL eines <strong>Socket-Proxy</strong>-Containers, niemals den Docker-Socket selbst. Ein Name wie <code>http://socket-proxy:2375</code> funktioniert nur, wenn dieser Container und der Proxy dasselbe Docker-Netzwerk teilen; eine IP-Adresse nur, wenn der Proxy seinen Port über das Loopback des Hosts hinaus veröffentlicht.",
     "security": "Sicherheit",
     "signOutEverywhereTip": "Meldet jeden Browser und jedes Gerät ab, auch dieses. Nützlich, wenn eine Sitzung offen geblieben oder kompromittiert sein könnte. Das Passwort bleibt unverändert.",
     "signOutEverywhereBtn": "Alle abmelden",
@@ -178,7 +178,9 @@
     "secretsWithheld": "Zugangsdaten erneut eingeben für: {items}. Sie wurden nicht übernommen, weil sich die zugehörige Anfrage geändert hat.",
     "socketUrlMissing": "Adresse des Socket-Proxys eingeben oder Docker-Überwachung ausschalten.",
     "socketUrlBad": "Socket-Proxy nicht gespeichert: {reason}",
-    "socketUrlUnverified": "Gespeichert, aber der Socket-Proxy hat nicht geantwortet: {reason}"
+    "socketUrlUnverified": "Gespeichert, aber der Socket-Proxy hat nicht geantwortet: {reason}",
+    "socketHintSharedNetwork": "Diesen Namen löst Docker nur für Container in einem gemeinsamen Netzwerk auf. Legen Sie beide in dasselbe Netzwerk oder verwenden Sie eine Adresse, die der Proxy veröffentlicht.",
+    "socketHintPublishPort": "Unter dieser Adresse hat nichts geantwortet. Ein auf dem Loopback des Hosts veröffentlichter Socket-Proxy ist aus einem Container nicht erreichbar; veröffentlichen Sie ihn auf der Docker-Bridge-Adresse oder legen Sie beide Container in ein gemeinsames Netzwerk und verwenden Sie den Namen des Proxys."
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",
