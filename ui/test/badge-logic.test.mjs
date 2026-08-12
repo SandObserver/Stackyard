@@ -1,6 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeBadgeVisual, needsDark, resolveColor, NAMED, healthReason, badgeSignature } from '../js/badge-logic.js';
+import {
+  computeBadgeVisual,
+  needsDark,
+  resolveColor,
+  NAMED,
+  healthReason,
+  badgeSignature,
+  readBadgeUpdate,
+} from '../js/badge-logic.js';
 
 test('unhealthy takes priority over everything else', () => {
   const v = computeBadgeVisual({
@@ -210,4 +218,40 @@ test('a stale badge signs differently from the same badge fresh', () => {
   const fresh = computeBadgeVisual({ activity: 2, badgesStale: false });
   const stale = computeBadgeVisual({ activity: 2, badgesStale: true });
   assert.notEqual(badgeSignature(fresh), badgeSignature(stale));
+});
+
+/* ── one item failing inside a working response ───────────────────────────────
+   The route reports each item separately: a failure arrives as an error field
+   beside a value of zero. Reading the zero paints "nothing pending" on a tile
+   whose service never answered. */
+
+test('a reported value is read as a value', () => {
+  assert.deepEqual(readBadgeUpdate({ value: 4 }), { value: 4, failed: false });
+  assert.deepEqual(readBadgeUpdate({ value: 0 }), { value: 0, failed: false });
+});
+
+test('an item that failed is not read as zero', () => {
+  assert.deepEqual(readBadgeUpdate({ value: 0, error: 'Timed out', kind: 'timeout' }), { value: null, failed: true });
+  assert.deepEqual(readBadgeUpdate({ value: 0, error: 'Connection refused.' }), { value: null, failed: true });
+});
+
+test('an entry that is missing or the wrong shape counts as failed', () => {
+  for (const v of [null, undefined, 5, 'x', {}, { value: 'many' }]) {
+    assert.deepEqual(readBadgeUpdate(v), { value: null, failed: true }, JSON.stringify(v) ?? 'undefined');
+  }
+});
+
+test('an item that failed marks its badge as out of date', () => {
+  const fresh = computeBadgeVisual({ activity: 3 });
+  const stale = computeBadgeVisual({ activity: 3, activityStale: true });
+  assert.ok(stale.cls.includes('stale'));
+  assert.match(stale.aria, /out of date/);
+  assert.equal(stale.txt, fresh.txt, 'the last known value is still shown');
+  assert.notEqual(badgeSignature(fresh), badgeSignature(stale));
+});
+
+test('a healthy dot is marked out of date too when its item failed', () => {
+  const v = computeBadgeVisual({ hasHC: true, hideHealthy: false, activityStale: true });
+  assert.ok(v.cls.includes('green'));
+  assert.ok(v.cls.includes('stale'));
 });

@@ -13,7 +13,7 @@ const {
   isDockerServiceName,
   isPrivateAddress,
 } = require('../proxy');
-const { PING_MS } = require('../timeouts');
+const { PING_MS, BATCH_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const log = require('../log');
@@ -154,7 +154,7 @@ on('GET', '/api/health', async (req, res) => {
           detail.status = c?.status || '';
         }
         if (ping) {
-          const r = await pingUnchecked(ping, PING_MS, item.skipTlsVerify === true);
+          const r = await pingUnchecked(ping, BATCH_MS, item.skipTlsVerify === true);
           if (!r.ok) unhealthy = true;
           detail.pingStatus = r.status;
           detail.pingError = r.error;

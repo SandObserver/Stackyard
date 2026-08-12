@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- One unreachable service no longer delays every other tile's refresh by six
+  seconds.
+
+- A badge whose service did not answer keeps its last value and is marked out of
+  date, instead of showing nothing.
+
 - Icons from the community set are fetched once through Stackyard and kept in
   memory, instead of being loaded from a public CDN on every page load.
 

@@ -26,7 +26,7 @@ import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=dab9978e';
 import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=1515288b';
-import { badgeSignature, computeBadgeVisual } from '/js/badge-logic.js?v=d278c683';
+import { badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=d278c683';
 import {
   configChanged,
   landingAfterSetup,
@@ -118,6 +118,7 @@ function bupd(id) {
   const { cls, txt, bg, aria, color, title } = computeBadgeVisual({
     health: s.health,
     activity: s.activity,
+    activityStale: !!s.activityStale,
     custom,
     staticBdg,
     hasHC,
@@ -412,7 +413,13 @@ function refreshBadges() {
 async function pollBadges() {
   try {
     const d = await (await fetch('/api/badges', { cache: 'no-store' })).json();
-    for (const [id, v] of Object.entries(d)) bset(id, 'activity', v.value || 0);
+    for (const [id, v] of Object.entries(d)) {
+      const { value, failed } = readBadgeUpdate(v);
+      /* A failed item keeps its last value, marked stale. Overwriting it with
+         zero reads as "nothing pending", which is not what happened. */
+      bset(id, 'activityStale', failed);
+      if (!failed) bset(id, 'activity', value);
+    }
     _badgeFails = 0;
     if (badgesStale) {
       badgesStale = false;
