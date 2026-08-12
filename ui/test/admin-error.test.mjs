@@ -79,7 +79,7 @@ test('a blocked private address names the setting that allows it', () => {
     const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message });
     assert.equal(a.tone, TONE.WARN, message);
     assert.match(a.message, /ALLOW_PRIVATE_IPS=true/, message);
-    assert.match(a.message, new RegExp(message.replace(/[.]/g, '\\.')), 'keeps the original reason');
+    assert.ok(a.message.includes(message), 'keeps the original reason');
     assert.equal(a.openAuth, false);
     assert.equal(a.sessionExpired, false);
   }
