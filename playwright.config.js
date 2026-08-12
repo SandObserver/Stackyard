@@ -15,8 +15,7 @@
    ships, nginx and its headers included. */
 
 const { defineConfig, devices } = require('@playwright/test');
-
-const baseURL = process.env.BASE_URL || 'http://127.0.0.1:8730';
+const { BASE_URL: baseURL } = require('./e2e/base-url');
 
 module.exports = defineConfig({
   testDir: './e2e',
