@@ -13,7 +13,12 @@ import {
   resolveAdminSection,
   rejectionLines,
   refusedNoticeKey,
+  settingsSaveBlocker,
+  clearsStoredPassword,
+  BLOCK,
 } from '../js/admin-logic.js';
+/* The real strength check, so these assert the rule the save actually applies. */
+import { pwStrength } from '../js/password-strength.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [
@@ -392,4 +397,63 @@ test('nothing is written when no password was typed', () => {
   assert.equal(shouldWritePassword({ enabled: true, newPassword: '' }), false);
   assert.equal(shouldWritePassword({ enabled: true, newPassword: undefined }), false);
   assert.equal(shouldWritePassword({ enabled: false, newPassword: '' }), false);
+});
+
+/* ── settingsSaveBlocker ──────────────────────────────────────────────────────
+   Both rules used to be checked after the config had already been sent, so a
+   refusal saved the title, language, log level and Docker fields and then
+   reported only the password problem. Asking here, before the first write, is
+   what makes a refusal leave the server untouched. */
+
+/* Written the way saveServer calls it, passing the strength result alongside
+   the password, so these exercise the rule as it really runs. */
+const blockerFor = v => settingsSaveBlocker({ ...v, strength: pwStrength(v.newPassword) });
+
+test('nothing blocks a save that changes no security setting', () => {
+  assert.equal(blockerFor({ enabled: false, passwordSet: false, newPassword: '' }), null);
+});
+
+test('enabling auth with no password to back it is blocked', () => {
+  const b = blockerFor({ enabled: true, passwordSet: false, newPassword: '' });
+  assert.equal(b.reason, BLOCK.NEEDS_PASSWORD);
+});
+
+test('a weak new password is blocked, and carries the label to say why', () => {
+  const b = blockerFor({ enabled: true, passwordSet: false, newPassword: 'abc' });
+  assert.equal(b.reason, BLOCK.WEAK_PASSWORD);
+  assert.ok(b.labelKey, 'the message names the strength that was reached');
+});
+
+test('a strong new password does not block', () => {
+  assert.equal(blockerFor({ enabled: true, passwordSet: false, newPassword: 'correct-horse-9!' }), null);
+});
+
+test('the missing-password rule is checked before the strength rule', () => {
+  /* Both could fire on the same save. The first is the one worth reporting: it
+     says the switch cannot go on at all, rather than that the box is too weak. */
+  const b = blockerFor({ enabled: true, passwordSet: false, newPassword: '' });
+  assert.equal(b.reason, BLOCK.NEEDS_PASSWORD);
+});
+
+test('a weak password typed while switching protection off never blocks', () => {
+  /* It is not stored, so its strength is not a reason to refuse the save. */
+  assert.equal(blockerFor({ enabled: false, passwordSet: true, newPassword: 'abc' }), null);
+});
+
+test('an already-stored password is not re-examined when nothing new is typed', () => {
+  assert.equal(blockerFor({ enabled: true, passwordSet: true, newPassword: '' }), null);
+});
+
+/* ── clearsStoredPassword ─────────────────────────────────────────────────── */
+
+test('switching protection off with a password stored has to be confirmed', () => {
+  assert.equal(clearsStoredPassword({ enabled: false, passwordSet: true }), true);
+});
+
+test('switching protection off with no password stored has nothing to lose', () => {
+  assert.equal(clearsStoredPassword({ enabled: false, passwordSet: false }), false);
+});
+
+test('leaving protection on never clears a password', () => {
+  assert.equal(clearsStoredPassword({ enabled: true, passwordSet: true }), false);
 });

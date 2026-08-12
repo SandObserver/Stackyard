@@ -2,7 +2,7 @@
 import { toast, ag, ap } from '/js/admin-shared.js?v=bb36dbb3';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
 import { t } from '/js/i18n.js?v=133a7aac';
-import { authEnableBlocked, shouldWritePassword } from '/js/admin-logic.js?v=3c60f7b0';
+import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=3c60f7b0';
 import { el, inp, q, qa, setUserText } from '/js/utils.js?v=84d58686';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password behind
@@ -202,23 +202,34 @@ export function loadSettings(c) {
   });
   secEnEl?.addEventListener('change', syncSessionRows);
 
-  ag('/api/auth/check')
-    .then(d => {
-      _passwordSet = !!d.passwordSet;
-      if (secEnEl) {
-        /* The effective state: enabled with no password behaves as off, and the
-         toggle has to match what the server does. */
-        secEnEl.checked = !!d.enabled;
-        const pwRow = el('ie-pw');
-        const pwHint = el('pw-hint-static');
-        if (pwRow) pwRow.classList.toggle('d-none', !d.enabled);
-        if (pwHint) pwHint.style.display = d.enabled ? '' : 'none';
-      }
-      const pwValEl = el('ie-pw-v');
-      if (pwValEl) pwValEl.textContent = d.passwordSet ? t('common.configured') : t('common.notSet');
-      syncSessionRows();
-    })
-    .catch(() => {});
+  syncAuthFromServer();
+}
+
+/* The security rows, read back from the server rather than assumed from what
+   was just sent. Called on load and again after a save, so a step that failed
+   part way through leaves the switches showing what the server really has
+   instead of what was asked for. */
+async function syncAuthFromServer() {
+  let d;
+  try {
+    d = await ag('/api/auth/check');
+  } catch {
+    return;
+  }
+  _passwordSet = !!d.passwordSet;
+  const secEnEl = inp('sec-en');
+  if (secEnEl) {
+    /* The effective state: enabled with no password behaves as off, and the
+       toggle has to match what the server does. */
+    secEnEl.checked = !!d.enabled;
+    const pwRow = el('ie-pw');
+    const pwHint = el('pw-hint-static');
+    if (pwRow) pwRow.classList.toggle('d-none', !d.enabled);
+    if (pwHint) pwHint.style.display = d.enabled ? '' : 'none';
+  }
+  const pwValEl = el('ie-pw-v');
+  if (pwValEl) pwValEl.textContent = d.passwordSet ? t('common.configured') : t('common.notSet');
+  syncSessionRows();
 }
 export function showBgFields(type) {
   ['unsplash', 'url', 'color'].forEach(t => {
@@ -276,6 +287,35 @@ async function saveWallpaper() {
   }
 }
 async function saveServer() {
+  const pw = inp('sec-pw')?.value || '';
+  const enabled = inp('sec-en')?.checked || false;
+
+  /* Every rule that can refuse this save is asked before the first request.
+     Checked afterwards, as they were, a refusal had already saved the title,
+     language, log level and Docker fields while reporting only the password
+     problem, and left the switch showing a state the server had rejected. */
+  const blocker = settingsSaveBlocker({
+    enabled,
+    passwordSet: _passwordSet,
+    newPassword: pw,
+    strength: pwStrength(pw),
+  });
+  if (blocker) {
+    if (blocker.reason === BLOCK.NEEDS_PASSWORD) toast(t('toast.authNeedsPassword'), 'err');
+    else toast(t('toast.pwWeak', { label: t(blocker.labelKey) }), 'err');
+    return;
+  }
+
+  /* Switching protection off deletes the stored password, so this is the moment
+     it really goes. Asked before anything is written, so answering no means the
+     save never started rather than abandoning one that is half done. */
+  if (clearsStoredPassword({ enabled, passwordSet: _passwordSet }) && !confirm(t('confirm.clearPassword'))) {
+    /* The switch was moved by hand and nothing was saved, so it has to go back
+       to what is still true. */
+    await syncAuthFromServer();
+    return;
+  }
+
   try {
     const c = await ag('/api/config');
     c.settings = c.settings || {};
@@ -300,26 +340,10 @@ async function saveServer() {
     c.settings.language = inp('lang-sel')?.value || 'en';
     const langChanged = c.settings.language !== prevLang;
 
-    const pw = inp('sec-pw')?.value || '';
-    const enabled = inp('sec-en')?.checked || false;
-    /* Asked before the first request of the save, not next to the toggle: the
-       password survives until Save, so this is the moment it is really deleted,
-       and cancelling here must leave every other field unsaved too. */
-    if (!enabled && _passwordSet && !confirm(t('confirm.clearPassword'))) return;
     await ap('/api/config', c);
 
-    if (authEnableBlocked({ enabled, passwordSet: _passwordSet, newPassword: pw })) {
-      toast(t('toast.authNeedsPassword'), 'err');
-      return;
-    }
     if (shouldWritePassword({ enabled, newPassword: pw })) {
-      const { ok, labelKey } = pwStrength(pw);
-      if (!ok) {
-        toast(t('toast.pwWeak', { label: t(labelKey) }), 'err');
-        return;
-      }
       await ap('/api/auth/set-password', { password: pw });
-      _passwordSet = true;
       const pwEl = inp('sec-pw');
       if (pwEl) {
         pwEl.value = '';
@@ -328,11 +352,6 @@ async function saveServer() {
     }
     await ap('/api/auth/toggle', { enabled });
     if (!enabled) {
-      /* The server drops the password with the toggle, so the page must stop
-         claiming one is stored: re-enabling in this session needs a new one. */
-      _passwordSet = false;
-      const pwValEl = el('ie-pw-v');
-      if (pwValEl) pwValEl.textContent = t('common.notSet');
       const pwEl = inp('sec-pw');
       if (pwEl) {
         pwEl.placeholder = '';
@@ -340,13 +359,19 @@ async function saveServer() {
            read as a password this dashboard now has. */
         pwEl.value = '';
       }
-      /* The revoke row offers to end sessions that no longer exist, and the
-         server answers it with an error. */
-      syncSessionRows();
     }
     toast(t('toast.saved'));
-    if (langChanged) location.reload();
+    if (langChanged) {
+      location.reload();
+      return;
+    }
+    /* The stored-password row, the switch and the session rows all follow from
+       the two writes above, so they are read back rather than inferred. */
+    await syncAuthFromServer();
   } catch (e) {
     toast(t('toast.saveFailed', { err: e.message }), 'err');
+    /* A failure part way through leaves the security rows describing what was
+       asked for rather than what landed. */
+    await syncAuthFromServer();
   }
 }
