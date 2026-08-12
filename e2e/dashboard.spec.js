@@ -4,7 +4,13 @@
    its Content-Security-Policy in force. */
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, app } = require('./helpers');
+const { seedConfig, dismissSetupPrompt, app } = require('./helpers');
+
+/* The dashboard shows the first-run prompt until it is dismissed, and builds no
+   tiles behind it. */
+test.beforeEach(async ({ request }) => {
+  await dismissSetupPrompt(request);
+});
 
 const badged = () => ({
   ...app('charlie', 'Charlie'),
