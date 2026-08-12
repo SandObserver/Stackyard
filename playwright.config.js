@@ -3,8 +3,10 @@
 
    The unit suites cover logic without a DOM. These cover what only a browser
    shows: that the admin form saves what it displays, that an edit changes only
-   what was edited, and that a saved change survives a reload. Drag reordering,
-   focus handling and the Persian mirroring are not covered here yet.
+   what was edited, that a saved change survives a reload, and that the
+   dashboard renders tiles, badges, search and an embedded widget. Drag
+   reordering, focus handling, the mobile layout and the Persian mirroring are
+   not covered here yet.
 
    Two browsers on purpose. WebKit is not decoration: the documented support
    floor is Safari 16.2, and the last two layout and keyboard problems found by
