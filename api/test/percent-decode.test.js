@@ -1,22 +1,3 @@
-/* Regression tests for P1-1 and P2-3, which are one defect in two places.
-
-   decodeURIComponent raises URIError on an invalid escape, and neither call site
-   expected it:
-
-     auth.js parseCookies decoded every cookie value, so a stray '%' in any
-     cookie on the domain, not only ours, turned every authenticated request into
-     a 500. That included the public /api/auth/check, so it needed no session.
-
-     router.js decoded route parameters, so /api/widget-config/% answered 500.
-
-   A 500 also misreports a malformed request as a server fault, which is wrong for
-   the client and noise in the log.
-
-   What a failure means differs by site, which is why the helper reports it rather
-   than deciding: an unrelated cookie is not this application's business and its
-   value is carried through, while a route parameter that will not decode is a bad
-   request and answers 400. */
-
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');

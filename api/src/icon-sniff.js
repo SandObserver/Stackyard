@@ -1,8 +1,3 @@
-/* Content check for uploaded raster icons. SVGs go through svg-sanitize instead,
-   which is a stronger control than a signature match. The goal is to reject a
-   non-image with an image extension, not to police filename honesty, so a PNG
-   named .ico passes. */
-
 const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 /* reserved=0, type=1 (icon). type=2 is a cursor and is not accepted. */
 const ICO = [0x00, 0x00, 0x01, 0x00];

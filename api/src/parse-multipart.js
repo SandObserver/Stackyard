@@ -1,6 +1,5 @@
-/* Buffer in, { filename, data, fileParts } out. filename is basename-stripped so
-   a part naming a path cannot escape the icons directory. fileParts is a count,
-   and the route rejects anything but one. */
+/* filename is basename-stripped. A part naming a path would otherwise escape
+   the icons directory. */
 
 const path = require('path');
 

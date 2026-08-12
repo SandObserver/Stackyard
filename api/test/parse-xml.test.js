@@ -195,8 +195,6 @@ test('a quote of the other kind inside a value is just a character', () => {
   assert.deepEqual(parseXml(`<r><a t='say "hi"'>1</a></r>`), { r: { a: { t: 'say "hi"', '#text': 1 } } });
 });
 
-/* The shape this actually breaks in practice: the mangled element used to
-   swallow its following sibling. */
 test('a feed-like document keeps its structure', () => {
   const xml = '<rss><item><enclosure url="http://h/f?a=1" title="S01>E02"/><title>ok</title></item></rss>';
   assert.deepEqual(parseXml(xml), {

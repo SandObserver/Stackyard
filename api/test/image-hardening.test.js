@@ -3,23 +3,6 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-/* The runtime image ships no package manager.
-
-   The base image brings npm, corepack and yarn, and their bundled dependencies
-   were the entirety of what the release scan found: seven HIGH or CRITICAL
-   issues, one of them critical, in tar, brace-expansion, ip-address and undici.
-   Alpine reported none and the API reported none, because the API has no
-   dependencies at all.
-
-   Nothing in the container uses them. Supervisord runs nginx, node and python3,
-   and there is nothing to install at runtime. Removing them takes the findings
-   with them, and takes a package manager out of reach of anyone who gets into a
-   running container.
-
-   The Dockerfile checks this at build time too. This test is the cheaper half:
-   it fails in seconds on a pull request, rather than at the end of a release
-   build, if the removal is dropped or a COPY reintroduces one. */
-
 const root = path.join(__dirname, '..', '..');
 const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
 

@@ -1,5 +1,3 @@
-/* Decode the five predefined XML entities plus numeric character references.
-   Anything unrecognised is left untouched rather than dropped. */
 function _xmlDecode(s) {
   if (s.indexOf('&') === -1) return s;
   return s.replace(/&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);/g, (m, e) => {
@@ -15,8 +13,9 @@ function _xmlDecode(s) {
   });
 }
 
-/* Only when the number round-trips to the original text, so an id with leading
-   zeros, a version like "1.10" or an oversized integer is not corrupted. */
+/* Coerce only when the number round-trips to the original text. An id with
+   leading zeros, a version like "1.10" or an oversized integer would otherwise
+   be corrupted. */
 function _xmlCoerce(raw) {
   const t = raw.trim();
   if (t === '') return raw;
@@ -27,13 +26,9 @@ function _xmlCoerce(raw) {
   return n;
 }
 
-/* Attributes and child elements both become keys; a repeated tag becomes an
-   array; an element with only text collapses to that text, and text alongside
-   children is kept under "#text". A child wins a name collision.
-
-   Null prototype throughout: the keys are tag names taken verbatim from the
-   feed, and an element called "__proto__" would otherwise replace the object's
-   prototype instead of becoming a key. */
+/* Null prototype throughout. The keys are tag names taken verbatim from the
+   feed, and an element called "__proto__" would replace the object's prototype
+   instead of becoming a key. */
 function _xmlValue(node) {
   const attrKeys = Object.keys(node.attrs);
   const text = _xmlDecode(node.text).trim();
@@ -59,18 +54,12 @@ function _xmlValue(node) {
   return obj;
 }
 
-/* A pragmatic reader for well-formed API responses, not a validating parser.
-   Node and depth caps bound pathological input.
-
-   A capped parse returns what it read with '#truncated': true, or a partial feed
-   is indistinguishable from a complete one and the badge shows a number that is
-   simply wrong. MAX_NODES counts nodes, not items, since nodes are what consume
-   the memory. */
+/* A capped parse must set '#truncated': true. Without it a partial feed is
+   indistinguishable from a complete one and a badge shows a wrong number. */
 /** @typedef {{ tag: string, attrs: Record<string,string>, children: XmlNode[], text: string }} XmlNode */
 /* The '>' that ends a tag, ignoring any inside a quoted attribute value. A raw
-   '>' there is valid XML and feeds do emit it, in an episode title for instance;
-   taking the first one anywhere ends the tag mid-attribute and the damage runs
-   into the sibling elements.
+   '>' there is valid XML and feeds do emit it. Taking the first one anywhere
+   ends the tag mid-attribute and damages the sibling elements.
 
    @param {string} xml @param {number} from index just past the '<'
    @param {number} len @returns {number} index of the closing '>', or -1 */
@@ -163,8 +152,6 @@ function parseXml(xml) {
       break;
     }
     top().children.push(node);
-    /* Past the depth cap the element is kept but nothing nested inside it is, so
-       that is a truncation too. */
     if (!selfClose) {
       if (stack.length < MAX_DEPTH) stack.push(node);
       else truncated = true;

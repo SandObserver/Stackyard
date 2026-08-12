@@ -1,18 +1,3 @@
-/* Regression tests for P4-11, P6-9 and P5-6: the polling routes had no ceiling.
-
-   /api/badges, /api/health, /api/widget-data/:id and /api/widget-options/:id all
-   reach out to the user's own services, and none of them was rate limited. 40
-   rapid requests to /api/badges produced 40 requests to the backing service.
-
-   The ceiling is not about protecting Stackyard, which does little work here. It
-   bounds how fast one client can drive traffic at someone's homelab: a dashboard
-   left open on several devices, or a browser stuck in a reload loop, multiplies
-   straight through.
-
-   Limits are derived from the dashboard's real poll intervals with headroom for
-   ten devices behind one address; see poll-limits.js. Ordinary use never comes
-   near them, which the last test here pins. */
-
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
@@ -120,8 +105,6 @@ test('widget-options is limited', async () => {
   assert.equal(limited, 5);
 });
 
-/* The point of all four: a burst must not become a burst against the user's own
-   services. */
 test('a refused request never reaches the upstream service', async () => {
   await burst('GET', '/api/badges', LIMITS.BADGES.max + 40);
   assert.equal(
@@ -140,9 +123,6 @@ test('widget-data counts each widget separately', async () => {
 
 /* ── the limits fit real use ──────────────────────────────────────────────── */
 
-/* The property that makes these safe: being refused means something is wrong,
-   not that a household is busy. The dashboard polls badges every 20s, health
-   every 30s and each widget every 30s. */
 test('a minute of normal polling from ten devices stays well inside every limit', () => {
   const DEVICES = 10;
   const perMinute = {

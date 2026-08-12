@@ -1,22 +1,3 @@
-/* Regression tests for P6-1 and P5-13: an unrecognised widget leaked its config.
-
-   A widget's manifest is what says which of its config fields are secret.
-   Without one, the scrub could not tell, and the previous default was to send
-   the config untouched. So an API key went to the browser on GET /api/config, on
-   GET /api/widget-config/:id, and into the config export, in plain text.
-
-   Three ways a widget ends up unrecognised:
-     its manifest failed validation, so widgets.js skipped it
-     the widget folder was removed or renamed, leaving an orphan config item
-     WIDGETS_PATH is wrong, in which case the registry loads empty and every
-       widget is unrecognised at once
-
-   The default is inverted: not recognised means withhold. That is only safe
-   because the save path puts the stored config back, so the empty config the
-   browser was handed cannot overwrite the real one. The two are tested together
-   here, because either alone is a bug: withholding without restoring destroys
-   settings, restoring without withholding is the leak. */
-
 const path = require('node:path');
 
 process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');

@@ -1,18 +1,3 @@
-/* Regression tests for P3-7 and P3-6: an upload wrote whatever name it claimed.
-
-   Uploading logo.svg twice replaced the first silently. The replaced icon is
-   still referenced by whichever apps use it, so a tile's picture changed without
-   anyone touching that app, with no warning and no way back.
-
-   Refusing the upload instead would punish a common and innocent case, since a
-   great many icons are called logo.svg. A free name is found, and the response
-   already carries the filename, which the admin form displays.
-
-   The name is also tidied. path.basename strips a Unix path but on Linux does
-   not treat a backslash as a separator, so a Windows-style name arrived as the
-   literal "..\\..\\etc\\passwd.svg". That could never escape the icons directory,
-   which is the part that matters, but it made for a confusing file to find. */
-
 const path = require('node:path');
 const fs = require('node:fs');
 
@@ -37,7 +22,6 @@ test('a free name is used as given', () => {
   assert.equal(safeIconName(dir(), 'logo.svg'), 'logo.svg');
 });
 
-/* The finding. */
 test('a name already taken does not overwrite', () => {
   const d = dir();
   touch(d, 'logo.svg');
@@ -83,8 +67,6 @@ test('a path is reduced to its filename, either separator', () => {
   assert.equal(safeIconName(d, '..\\..\\etc\\passwd.svg'), 'passwd.svg', 'a Windows path too');
 });
 
-/* The property that actually matters: whatever the name, the file lands inside
-   the icons directory. */
 test('the result always stays inside the icons directory', () => {
   const d = dir();
   for (const raw of ['../../etc/passwd.svg', '..\\..\\x.svg', '/etc/shadow.svg', '....//..svg', 'a/../../b.svg']) {

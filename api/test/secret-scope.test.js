@@ -1,14 +1,3 @@
-/* Regression tests for P5-1: a stored credential could be redirected.
-
-   /api/widget-options/:id and /api/badge-proxy both let the request choose the
-   destination while the server supplies the credential, and both restored on the
-   item id alone. Posting a config with the URL changed and the secret omitted
-   sent the real secret to the caller's host in plaintext.
-
-   The rule is in api/src/secret-scope.js: restore only when every non-secret
-   field is identical to what is saved. These tests pin the rule; the end-to-end
-   behaviour of both endpoints is in secret-scope-integration.test.js. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
@@ -72,7 +61,6 @@ test('an unchanged config restores the stored secret', () => {
   assert.equal(widgetConfigMatchesSaved({ absUrl: 'https://real.example' }, SAVED, books), true);
 });
 
-/* The finding itself. */
 test('a redirected destination does not restore the stored secret', () => {
   assert.equal(widgetConfigMatchesSaved({ absUrl: 'https://evil.example' }, SAVED, books), false);
 });
@@ -111,7 +99,6 @@ test('an unchanged badge request restores', () => {
   assert.equal(badgeRequestMatchesSaved(asSent, STORED_BADGE), true);
 });
 
-/* The finding itself, on the second endpoint. */
 test('a redirected badge URL does not restore', () => {
   const moved = Object.assign({}, asSent, { url: 'https://evil.example/collect' });
   assert.equal(badgeRequestMatchesSaved(moved, STORED_BADGE), false);

@@ -1,13 +1,3 @@
-/* A widget failure, end to end through /api/widget-data.
-
-   The point of a vouched message is that it survives the sanitiser and reaches
-   the browser. errorBody can be unit-tested, but that would still pass if the
-   route never consulted it, so this drives the real route against a real widget
-   on disk.
-
-   Its own file because WIDGETS_PATH and CONFIG_PATH are read when their modules
-   load, so both have to be set before anything is required. */
-
 const path = require('node:path');
 const fs = require('node:fs');
 

@@ -83,10 +83,6 @@ test('preserve takes a retyped value over the stored one', () => {
   assert.equal(incoming.badge.headers[0].value, 'NEW');
 });
 
-/* Replaces 'preserve keeps the value when a secret is unchecked without a
-   retype', which asserted the opposite. Restoring into a non-secret row moved
-   the stored credential into a row that scrubRows sends to the browser in full,
-   so unticking the Secret box and saving handed it back in plaintext. */
 test('preserve clears the value when a secret row arrives as non-secret', () => {
   const stored = { badge: { headers: [{ key: 'X-Api-Key', value: 'REAL', secret: true }] } };
   const incoming = { badge: { headers: [{ key: 'X-Api-Key', secret: false }] } };
@@ -96,7 +92,6 @@ test('preserve clears the value when a secret row arrives as non-secret', () => 
 });
 
 test('a stored secret cannot be read back by unticking Secret', () => {
-  /* The full round trip, which is what the finding actually was. */
   const stored = { badge: { headers: [{ key: 'X-Api-Key', value: 'SUPER-SECRET', secret: true }] } };
 
   const masked = JSON.parse(JSON.stringify(stored));

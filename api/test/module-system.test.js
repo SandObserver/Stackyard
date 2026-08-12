@@ -3,19 +3,6 @@ const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-/* The two halves of this project use different module systems, and mixing them
-   fails at runtime rather than at review.
-
-   CONTRIBUTING.md states the split. Biome now enforces one direction: an
-   override sets noCommonJs to error under ui/js, so a require() there fails
-   lint. Biome has no rule for the other direction, so an `import` in api/src is
-   checked here instead.
-
-   Note what is deliberately not covered. ui/widgets/<name>/data.js and demo.js
-   live under ui/ but run on the server: the API loads them with require()
-   (api/src/widget-data.js). They are CommonJS on purpose, which is why the lint
-   override names ui/js rather than all of ui. */
-
 const root = path.join(__dirname, '..', '..');
 
 function jsFiles(dir) {

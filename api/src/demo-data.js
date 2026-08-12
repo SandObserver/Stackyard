@@ -1,7 +1,3 @@
-/* Demo data that is not tied to one widget. A widget's own invented body lives
-   in its folder, in demo.js. */
-
-/* Smooth wave in [min,max], period seconds, plus a little noise. */
 function wave(periodSec, min, max, phase = 0) {
   const t = Date.now() / 1000;
   const mid = (min + max) / 2,

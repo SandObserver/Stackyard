@@ -1,11 +1,3 @@
-/* The worst case for P6-1: WIDGETS_PATH points somewhere unusable, so no
-   manifests load and every widget is unrecognised at once.
-
-   Before the default was inverted, that meant every widget's config went to the
-   browser and into the export with its credentials intact, off the back of a
-   single log warning. Its own process because WIDGETS_PATH is read once when
-   api/src/widgets.js loads. */
-
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');

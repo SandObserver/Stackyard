@@ -1,14 +1,3 @@
-/* Regression test for P6-2: an item with two health checks lost one's detail.
-
-   /api/health answers with `unhealthy` plus whatever explains it: `state` and
-   `status` from Docker, `pingStatus` and `pingError` from the URL check. For an
-   item configured with both, the ping's result replaced the container's entry
-   rather than joining it, so the container detail was discarded.
-
-   `unhealthy` was correct either way, being carried in a local across both
-   checks, so nothing looked broken. What was lost is the reason behind a red
-   tile, which is now its hover text; see healthReason in ui/js/badge-logic.js. */
-
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
@@ -98,7 +87,6 @@ test('an item with only a ping reports its result', async () => {
   assert.equal(r.pingStatus, 503);
 });
 
-/* The finding. Both checks configured, and both kinds of detail must survive. */
 test('an item with both checks keeps the detail from each', async () => {
   containers = [{ Names: ['/myapp'], State: 'exited', Status: 'Exited (1) 2 hours ago' }];
   targetStatus = 503;
@@ -162,8 +150,6 @@ test('an item naming an inherited member as its container is reported as unknown
   }
 });
 
-/* The same name arriving from the socket proxy has to be a usable entry, not a
-   prototype write that silently discards the container. */
 test('a container actually named __proto__ is matched, not discarded', async () => {
   containers = [{ Names: ['/__proto__'], State: 'exited', Status: 'Exited (1)' }];
   configure({ container: '__proto__' });

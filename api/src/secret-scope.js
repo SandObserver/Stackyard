@@ -1,17 +1,10 @@
-/* When a stored secret may be attached to a request the caller composed.
-
-   Two endpoints let the browser post an in-progress config and have the server
-   fill in a credential, and both let the request choose the destination, so
-   matching on the item id alone would send a stored credential anywhere the
-   caller names. Restore only when every non-secret field is identical to what
-   is saved. */
+/* Restore a stored secret only when every non-secret field matches what is
+   saved. The request chooses the destination, so matching on the item id alone
+   sends a stored credential anywhere the caller names. */
 
 const { secretSpec } = require('./widget-secrets');
 const { toRows } = require('./badge-headers');
 
-/* Order-insensitive: key order differs between what the browser sends and what
-   was parsed from disk, so JSON.stringify would report a difference that is not
-   one. */
 function stableEqual(a, b) {
   if (a === b) return true;
   if (a == null || b == null) return a == null && b == null;
@@ -28,8 +21,6 @@ function stableEqual(a, b) {
   return ka.every(k => stableEqual(a[k], b[k]));
 }
 
-/* A copy of a widget config with every declared secret, and its Set flag,
-   removed at all three levels the manifest allows. */
 function stripWidgetSecrets(config, entry) {
   const { topLevel, groups, objects } = secretSpec(entry);
   const out = JSON.parse(JSON.stringify(config || {}));
@@ -48,15 +39,11 @@ function stripWidgetSecrets(config, entry) {
   return out;
 }
 
-/* True when the posted widget config differs from the saved one only in its
-   secrets, so the saved secrets still belong to this request. */
 function widgetConfigMatchesSaved(newConfig, savedConfig, entry) {
   if (!entry) return false;
   return stableEqual(stripWidgetSecrets(newConfig, entry), stripWidgetSecrets(savedConfig, entry));
 }
 
-/* Positional, so a reorder is a change. Secret values are not compared, since
-   the browser never receives them; the key and the secret flag are. */
 function rowsMatch(newRows, oldRows) {
   const n = toRows(newRows);
   const o = toRows(oldRows);
@@ -76,8 +63,6 @@ function badgeRequestMatchesSaved(request, stored) {
   return rowsMatch(request.headers, stored.headers) && rowsMatch(request.params, stored.params);
 }
 
-/* The message both endpoints return when they decline to restore. Phrased for
-   the person editing the form, since that is who sees it. */
 const RETYPE_MESSAGE =
   'This configuration has changed since it was saved, so the stored credential was not used. ' +
   'Enter the credential to test these settings.';

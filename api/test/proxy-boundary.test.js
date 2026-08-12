@@ -63,8 +63,6 @@ test('fetchChecked rejects an unresolvable host rather than connecting', async (
 /* ── fetchUnchecked: not guarded, by design ─────────────────────────────── */
 
 test('fetchUnchecked reaches a private address', async t => {
-  /* The whole point of the split: config-supplied urls are normal homelab
-     targets on private IPs, and must not be blocked. */
   const port = await server(t);
   const r = await fetchUnchecked(`http://127.0.0.1:${port}/x`, { timeout: 3000 });
   assert.equal(r.status, 200);

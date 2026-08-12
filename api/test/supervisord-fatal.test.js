@@ -1,22 +1,3 @@
-/* Regression tests for P16-7: a dead API left the container running.
-
-   supervisord restarts a program that stops, but gives up after startretries and
-   marks it FATAL. It then keeps running, because the other program is still
-   alive, so the container stayed up with no API behind it and never recovered.
-
-   Docker's healthcheck does notice, since /health is proxied to the API, but
-   "unhealthy" is only a label: `restart: unless-stopped` restarts a container
-   that exits, not one that is merely unhealthy. So the dashboard was down, the
-   container looked like it was running, and nothing brought it back until
-   someone noticed.
-
-   PR6 made the API exit non-zero on a fatal error. This is the other half:
-   supervisord acting on it.
-
-   The listener's behaviour was verified by running supervisord against a program
-   that cannot start; these tests pin the wiring, which is what would silently
-   come apart. */
-
 const fs = require('node:fs');
 const path = require('node:path');
 const { test } = require('node:test');
@@ -88,10 +69,6 @@ test('the marker is cleared at startup and after being read', () => {
 
 /* ── shutdown still works ─────────────────────────────────────────────────── */
 
-/* The entrypoint cannot exec supervisord any more, since it has to survive to
-   read the marker. That means signals no longer reach supervisord on their own:
-   without forwarding, a `docker stop` would kill the shell and leave supervisord
-   running until the kill timeout, with nothing shut down cleanly. */
 test('signals are forwarded to supervisord', () => {
   assert.match(
     entrypoint,

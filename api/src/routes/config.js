@@ -3,9 +3,8 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-/* The one definition of the rule, shared with the browser rather than copied.
-   See ui/js/link-url.js; the Dockerfile places this file where the same relative
-   path resolves inside the image. */
+/* Shared with the browser rather than copied. The Dockerfile places this file
+   where the same relative path resolves inside the image. */
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { firstMalformedRow } = require('../badge-headers');
@@ -56,12 +55,9 @@ on('POST', '/api/config', async (req, res) => {
     if (!Array.isArray(data.items)) return json(res, 400, { error: 'items must be an array', kind: KIND.INVALID });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error: 'every item needs a non-empty id and type', kind: KIND.INVALID });
-    /* Everything downstream looks an item up with find(i => i.id === x), which
-       returns the first match, so a second item sharing an id is unreachable:
-       its badge, its widget config, its health entry and its folder membership
-       all resolve to the first one instead. Refused rather than repaired,
-       because renaming an id would silently change what folder children point
-       at and move things around the dashboard. */
+    /* Lookups take the first match, so a second item sharing an id is
+       unreachable. Refuse rather than rename: renaming changes what folder
+       children point at. */
     const seen = new Set();
     for (const item of data.items) {
       if (seen.has(item.id)) {
@@ -69,14 +65,9 @@ on('POST', '/api/config', async (req, res) => {
       }
       seen.add(item.id);
     }
-    /* A link is rendered into an <a href>, so a javascript: or data: URL would
-       execute in the dashboard's own origin when the tile is clicked. Rejected
-       rather than blanked, so the person saving finds out. The browser blanks
-       one already stored; see ui/js/link-url.js. */
+    /* A link is rendered into an <a href>. A javascript: or data: URL would
+       execute in the dashboard's own origin when the tile is clicked. */
     for (const item of data.items) {
-      /* Damaged rows are tolerated on read, because that runs on stored config
-         and refusing would break a badge over one bad entry. They are refused on
-         write, so they cannot get stored in the first place. */
       const badRow = firstMalformedRow(item);
       if (badRow) {
         return json(res, 400, {
@@ -92,9 +83,8 @@ on('POST', '/api/config', async (req, res) => {
         });
       }
     }
-    /* The dashboard renders at most DOCK_MAX dock apps, so a config holding more
-       would silently lose the extras. Mirrors DOCK_MAX in ui/js/admin-logic.js;
-       the two cannot share a module across the CJS/ESM split without a build step. */
+    /* Mirrors DOCK_MAX in ui/js/admin-logic.js. The two cannot share a module
+       across the CJS/ESM split without a build step. */
     if (data.items.filter(i => i.type === 'app' && i.dock).length > DOCK_MAX)
       return json(res, 400, { error: `at most ${DOCK_MAX} apps can be shown in the dock`, kind: KIND.INVALID });
     const KNOWN_SETTINGS = new Set([
@@ -119,9 +109,7 @@ on('POST', '/api/config', async (req, res) => {
         delete data.settings.language;
     }
     const existing = loadConfig();
-    /* Stale-write check. A client that sends no _rev (a script, or a config
-       restored from a file) is trusted and overwrites, so this only guards the
-       read-modify-write the admin UI does. */
+    /* Stale-write check. A client that sends no _rev overwrites. */
     if (data._rev != null && Number(data._rev) !== (Number(existing._rev) || 0))
       return json(res, 409, {
         error: 'This config was changed somewhere else. Reload the page and try again.',
@@ -132,19 +120,16 @@ on('POST', '/api/config', async (req, res) => {
       data.settings.background = data.settings.background || {};
       data.settings.background.apiKey = existing.settings.background.apiKey;
     }
-    /* settings.auth is owned entirely by the /api/auth/* routes; nothing a
-       config write supplies is kept. Taking the whole block rather than merging
-       field by field also covers any field added to it later. */
+    /* settings.auth is owned entirely by the /api/auth/* routes. Keep nothing a
+       config write supplies. */
     if (data.settings) delete data.settings.auth;
     if (existing.settings?.auth) {
       data.settings = data.settings || {};
       data.settings.auth = JSON.parse(JSON.stringify(existing.settings.auth));
     }
-    /* A stored credential is only refilled for the request it was stored for.
-       Anything withheld is named back to the caller, so a save that changed
-       where a badge points does not look like it kept working. */
+    /* A stored credential is only refilled for the request it was stored for. */
     const { withheld } = preserveAllSecrets(data, existing);
-    migrate(data); /* upgrade old imported/restored configs; no-op for normal saves */
+    migrate(data);
     ensureSystemItems(data);
     saveConfig(data);
     if (data.settings) log.setLevel(data.settings.logLevel);
@@ -158,7 +143,7 @@ on('POST', '/api/config', async (req, res) => {
 
 on('GET', '/api/config/export', (_, res) => {
   const safe = scrubSecrets(loadConfig());
-  delete safe._rev; /* a rev only means something against this install's disk */
+  delete safe._rev;
   const d = JSON.stringify(safe, null, 2);
   res.writeHead(200, {
     'Content-Type': 'application/json',

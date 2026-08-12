@@ -183,11 +183,6 @@ test('the wait is reported in the unit each surface uses', () => {
   assert.match(rateLimit(ip, 'unit', 2, 60_000), /Try again in 60s\./);
 });
 
-/* The property a refusal must not break. Counting a refused hit is invisible in
-   a fixed window, since the window is anchored on its first hit; moving that
-   anchor is what turns a lockout into one that never expires while a client
-   keeps retrying. Timed with a short window rather than a stubbed clock,
-   because the clock is read inside the counter. */
 test('being refused does not push the window out', async () => {
   const ip = '203.0.113.27';
   const WINDOW = 60;

@@ -1,28 +1,3 @@
-/* Regression tests for P2-8 and P3-8: error messages disclosed internals.
-
-   The message an operating system produces names the thing that failed:
-
-     connect ECONNREFUSED 172.17.0.2:8181
-     getaddrinfo ENOTFOUND nas.internal.lan
-     ENOENT: no such file or directory, open '/data/apps.json'
-
-   Those went to the browser verbatim. The SSRF guard was worse: it answered
-   "Blocked: 192.168.1.5 is a private address", telling a caller what it had just
-   probed, which is the disclosure that route exists to prevent.
-
-   The response text is composed from the kind now, never taken from the error.
-   Composing fails closed: nothing from the original is present unless it was
-   deliberately put there. Filtering would fail open, since whatever the filter
-   did not recognise would pass through, and a hostname in an unexpected position
-   is exactly what it would miss.
-
-   Nothing is lost, it moves. Every failure is logged in full, which is where an
-   operator should look and where it is not rendered in a browser.
-
-   This ordering is why fix/error-message-sanitisation was sequenced after
-   feat/structured-api-errors: before `kind` existed the message was the only
-   signal the UI had, so changing it would have broken badge behaviour silently. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 

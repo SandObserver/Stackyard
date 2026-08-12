@@ -135,8 +135,6 @@ test('TRUST_PROXY with TRUSTED_PROXY set warns exactly once', async () => {
   assert.match(w[0], /forwarded headers are trusted/);
 });
 
-/* The second condition implies the first, so this case used to print two long
-   warnings about one problem. */
 test('TRUST_PROXY without TRUSTED_PROXY warns exactly once, naming the fix', async () => {
   const out = await boot({ TRUST_PROXY: 'true' });
   const w = trustWarnings(out);

@@ -22,19 +22,14 @@ const {
   needsRehash,
 } = require('../auth');
 
-/* The one route that answers before sign-in, so it says only what the login
-   screen has to decide: whether to ask for a password, and whether this caller
-   already has a session. The two setup fields describe how the install is
-   configured and are added only once the caller is through, which is every case
-   that reads them: the setup prompt runs with protection off, where isAuthenticated
-   is true for everyone. */
+/* Answers before sign-in. Say only what the login screen has to decide. The
+   setup fields describe the install and are added only once the caller is
+   through. */
 on('GET', '/api/auth/check', (req, res) => {
   const cfg = loadConfig();
   const authenticated = isAuthenticated(req);
   const body = {
-    /* The effective state, not the stored flag. Auth on with no password is
-       reported as off because that is how it behaves; showing it as on would put
-       a toggle in the admin UI that does not match what the server does. */
+    /* The effective state, not the stored flag. */
     enabled: authActive(cfg),
     authenticated,
   };
@@ -51,7 +46,7 @@ on('POST', '/api/auth/login', async (req, res) => {
   try {
     const { password = '' } = JSON.parse(await readBody(req));
     const cfg = loadConfig();
-    if (!authActive(cfg)) return json(res, 200, { ok: true }); /* auth off, always pass */
+    if (!authActive(cfg)) return json(res, 200, { ok: true });
     const hash = cfg.settings.auth.passwordHash;
     const limitErr = registerLoginAttempt(ip);
     if (limitErr) {
@@ -65,10 +60,8 @@ on('POST', '/api/auth/login', async (req, res) => {
     }
     clearAttempts(ip);
     log.audit('login success', { ip });
-    /* A successful login is the only moment the plaintext is known, so it is the
-       only chance to move an old hash to the current format and work factor.
-       Failure here must not fail the login: the password is correct either way,
-       and the old hash still verifies. */
+    /* A failure here must not fail the login. The password is correct either
+       way and the old hash still verifies. */
     if (needsRehash(hash)) {
       try {
         const fresh = loadConfig();
@@ -112,10 +105,8 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
     cfg.settings.auth.passwordHash = await hashPassword(password);
-    /* Rotating the secret is what signs other devices out; see
-       rotateSessionSecret. Assigned here rather than calling it, because this
-       handler already holds the config and saves it once below; calling it
-       would load and write a second time. */
+    /* Rotating the secret is what signs other devices out. Assigned here rather
+       than calling rotateSessionSecret, which would load and write again. */
     cfg.settings.auth.secret = newSessionSecret();
     cfg.settings.auth.enabled = true;
     cfg.settings.auth.setupPrompted = true;
@@ -129,15 +120,10 @@ on('POST', '/api/auth/set-password', async (req, res) => {
   }
 });
 
-/* Sign out every device, including this one, without changing the password.
-   Before this the only way to do it was to change the password, since that
-   rotates the same secret as a side effect. */
 on('POST', '/api/auth/revoke-sessions', (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   const cfg = loadConfig();
-  /* Nothing to revoke when auth is not in force: there are no sessions to
-     invalidate, and rotating would only churn the stored secret. */
   if (!authActive(cfg)) {
     return json(res, 400, {
       error: 'Authentication is not enabled, so there are no sessions to sign out.',
@@ -146,9 +132,8 @@ on('POST', '/api/auth/revoke-sessions', (req, res) => {
   }
   const secret = rotateSessionSecret();
   log.audit('sessions revoked', { ip: getIp(req) });
-  /* The caller's own token was signed with the old secret and is now invalid, so
-     replace it in this response. Without this the person who pressed the button
-     is the one signed out. */
+  /* The caller's own token was signed with the old secret. Replace it in this
+     response, or the person who pressed the button is the one signed out. */
   const sessionId = newSessionId();
   setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
   json(res, 200, { ok: true });
@@ -170,37 +155,23 @@ on('POST', '/api/auth/toggle', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   try {
     const { enabled } = JSON.parse(await readBody(req));
-    /* Only a real true or false. Turning protection off deletes the password
-       and cannot be undone from the UI, so a body that does not say so plainly,
-       from an old cached page or a script, must change nothing rather than
-       being read as "off". */
+    /* Only a real true or false. Turning protection off deletes the password,
+       so an unclear body must change nothing rather than read as "off". */
     if (typeof enabled !== 'boolean') {
       return json(res, 400, { error: 'enabled must be true or false', kind: KIND.INVALID });
     }
     const cfg = loadConfig();
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
-    /* Switching auth on with no password stored locks the install: every login
-       is refused because there is nothing to check against, and setting a
-       password is itself behind the gate. Refuse instead of creating that
-       state. */
+    /* Auth on with no password stored locks the install: every login is refused
+       and setting a password is itself behind the gate. */
     if (enabled && !cfg.settings.auth.passwordHash) {
       return json(res, 400, { error: 'Set a password before turning authentication on.', kind: KIND.INVALID });
     }
     cfg.settings.auth.enabled = !!enabled;
-    /* Turning protection off discards the password with it. Keeping the hash
-       strands the install: setting a new password needs a session, no session
-       can be obtained while auth is off, and login is a bypass that issues no
-       cookie, so a forgotten password could only be replaced by editing the
-       config on disk. The secret goes too, so tokens signed under it cannot be
-       honoured if protection is turned back on later.
-
-       The trade this makes: with no hash stored, set-password no longer demands
-       a session, so anyone who can reach the dashboard while protection is off
-       can set one and lock the owner out. That is accepted rather than guarded,
-       because protection being off already means anyone who can reach the
-       dashboard can read and rewrite the whole config; a guard here would only
-       look like security. It is why the toggle asks before clearing. */
+    /* Turning protection off must discard the password and the secret. Keeping
+       the hash strands the install: setting a new password needs a session, and
+       no session can be obtained while auth is off. */
     const cleared = !enabled && !!cfg.settings.auth.passwordHash;
     if (!enabled) {
       delete cfg.settings.auth.passwordHash;

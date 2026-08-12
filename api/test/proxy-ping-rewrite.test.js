@@ -1,18 +1,3 @@
-/* Ping used to skip the host-IP rewrite that fetching applies, so "Test
-   connection" reported on a different target than the widget would actually
-   reach: the raw host IP instead of the mapped container. These tests hold the
-   two in agreement.
-
-   portMap maps 8096 to a dotless name that cannot resolve, so a ping that got
-   rewritten tries to reach that name, which is what proves the rewrite happened.
-   7000 maps to a private IP to prove the guard runs downstream of the rewrite
-   rather than on the URL as typed.
-
-   The target is read from the log rather than the returned error. The error no
-   longer names the host: it said "getaddrinfo ENOTFOUND stackyard-test-nx-host"
-   and that result is returned to the browser as-is by /api/ping, which disclosed
-   internal hostnames. The log is where the detail lives now, so that is where a
-   test looking for it belongs. */
 const path = require('node:path');
 const fs = require('node:fs');
 const { tmpDir } = require('../test-support/tmp');
@@ -78,13 +63,6 @@ test('pingUnchecked follows portMap to the mapped container', async () => {
 });
 
 test('ping and fetch resolve the same url to the same target', async () => {
-  /* The bug this fixes: a ping that succeeds where the fetch fails, or the
-     reverse, because they disagreed about where the url points.
-
-     fetchChecked rejects with an Error, which is internal and still carries the
-     detail; only the response body is sanitised, and errorBody is what does
-     that. So the two are read from their respective internals rather than from
-     what a browser would see. */
   const pingTarget = await targetOf(async () => {
     await pingChecked(MAPPED, MS, false);
   });

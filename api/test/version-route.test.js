@@ -1,17 +1,3 @@
-/* Regression test for P6-11: a failed version check kept hitting GitHub.
-
-   The cache guard was `latest !== null`, so a lookup that failed left it null and
-   the next request went straight back to GitHub. Unauthenticated callers get 60
-   requests an hour, so an install that cannot reach GitHub, or one behind blocked
-   egress, spent that quota and stayed rate-limited. The comment said the
-   timestamp was kept to hold the result, and it was; it just was not consulted.
-
-   The decision is tested as a pure function rather than by counting calls
-   through a stub. version.js captures fetchUnchecked when it loads, so replacing
-   the export afterwards has no effect, and adding an injection point to
-   production code purely so a test can reach it is worse than testing the rule
-   directly. */
-
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
@@ -37,9 +23,6 @@ test('a recent success is not re-fetched', () => {
   assert.equal(shouldFetch({ at: NOW - 1000, checked: true }, NOW), false);
 });
 
-/* The finding: a failure counts as cached. Before, `checked` did not exist and
-   the guard asked whether a version had been found, so this returned true and
-   every request went back out. */
 test('a recent failure is not re-fetched either', () => {
   assert.equal(
     shouldFetch({ at: NOW - 1000, checked: true, latest: null }, NOW),
@@ -89,7 +72,6 @@ function version() {
   });
 }
 
-/* No network here, so the lookup fails; that is the case that mattered. */
 test('the installed version is reported even when the lookup fails', async () => {
   const r = await version();
   assert.ok(r.current, 'the installed version is always reported');

@@ -172,10 +172,6 @@ test('path parameters are extracted and routed', async () => {
   assert.equal(r.body.error, 'widget not found');
 });
 
-/* P5-8: `widgetType` is stored config and is looked up in the registry. On an
-   object literal "constructor" resolved to a truthy value that is not an entry,
-   so the unknown-type branch was skipped and the answer was 503 "declares no
-   data source" rather than 404. */
 test('a widget type naming an inherited member is unknown, not data-less', async () => {
   const cfg = loadConfig();
   saveConfig({
@@ -191,11 +187,6 @@ test('a widget type naming an inherited member is unknown, not data-less', async
   }
 });
 
-/* P1-3: the CORS preflight was dead code. Access-Control-Allow-Origin was never
-   set anywhere, so no browser could ever accept the response, and the two
-   headers that were set went out on every request rather than only on OPTIONS.
-   Removing them also removes the auth gate's OPTIONS exemption, which was the
-   one wildcard route reachable without a session. */
 test('OPTIONS is no longer specially routed', async () => {
   const r = await req('OPTIONS', '/api/config', { cookie: validCookie });
   assert.equal(r.status, 404, 'it must fall through like any other unmatched method');
@@ -393,9 +384,6 @@ test('POST /api/widget-options blocks a private target URL', async () => {
     body: { widgetType: 'fixture', endpoint: 'any', widgetConfig: { url: 'http://127.0.0.1:1/' } },
   });
   assert.equal(r.status, 403);
-  /* The message no longer names the address. "Blocked: 192.168.1.5 is a private
-     address." told the caller what it had just probed, which is the disclosure
-     this route exists to prevent. `kind` is what the UI branches on. */
   assert.equal(r.body?.kind, 'blocked');
   assert.doesNotMatch(String(r.body?.error), /\d+\.\d+\.\d+\.\d+/, 'must not echo the address back');
 });

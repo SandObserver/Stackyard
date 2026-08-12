@@ -7,34 +7,19 @@ const { fetchUnchecked } = require('../proxy');
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
 
-/* The icon itself, and the whole multipart request that carries it. The stream
-   limit is the larger of the two because the request also contains boundaries
-   and headers, so cutting it off at exactly the file limit would reject a file
-   that is within it. */
-/* A safe, unused filename for an upload. Reusing the submitted name overwrote
-   an existing icon that other apps still referenced, so a free name is found
-   instead and returned in the response.
-
-   Backslashes are stripped as well as slashes: path.basename does not treat one
-   as a separator on Linux.
+/* A safe, unused filename for an upload. Never reuse the submitted name: it
+   overwrites an icon other apps still reference. Strip backslashes as well as
+   slashes, because path.basename does not treat one as a separator on Linux.
 
    @param {string} dir @param {string} raw @returns {string} */
 function safeIconName(dir, raw) {
   const ext = path.extname(String(raw).split(/[\\/]/).pop() || '').toLowerCase();
-  /* Split on separators of either kind and keep the last part, which is what
-     path.basename does for a Unix path and does not do for a Windows one, since
-     on Linux a backslash is an ordinary character. */
   const lastPart = String(raw).split(/[\\/]/).pop() || '';
   const stem =
     lastPart
       .slice(0, lastPart.length - path.extname(lastPart).length)
-      /* Control characters, and the characters that are awkward in a URL or on a
-       filesystem. Everything else, including spaces and non-Latin scripts, is
-       kept: the name is the user's and is percent-encoded when used.
-
-       A scan rather than a character-class range, because a control character
-       inside a regular expression is almost always a mistake and the lint rule
-       that says so is worth keeping. */
+      /* Drop control characters and the characters that are awkward in a URL or
+       on a filesystem. */
       .split('')
       .filter(ch => {
         const code = ch.charCodeAt(0);
@@ -43,12 +28,10 @@ function safeIconName(dir, raw) {
       .join('')
       .replace(/^\.+/, '') /* no leading dots: not hidden, not '..' */
       .trim()
-      .slice(0, 100) /* filesystems cap the whole name */ || 'icon';
+      .slice(0, 100) || 'icon';
 
   let candidate = `${stem}${ext}`;
-  /* Bounded: a directory holding thousands of icons of one name is not a case
-     worth serving, and an unbounded loop here would be a way to spend the
-     server's time. */
+  /* Bounded. An unbounded loop here is a way to spend the server's time. */
   for (let n = 2; n <= 999 && fs.existsSync(path.join(dir, candidate)); n++) {
     candidate = `${stem}-${n}${ext}`;
   }
@@ -151,11 +134,6 @@ on('POST', '/api/icons/upload', async (req, res) => {
     if (fileParts > 1) return json(res, 400, { error: 'only one file per upload', kind: KIND.INVALID });
     if (!/\.(svg|png|ico)$/i.test(filename))
       return json(res, 400, { error: 'only .svg, .png, .ico files allowed', kind: KIND.INVALID });
-    /* Every icon shipped with Stackyard is under 34 KB, and most are under 9 KB,
-       so 2 MB is generous by a wide margin. It is kept there rather than
-       tightened because the cost of being wrong is asymmetric: a rejected icon
-       is a support question, while the memory saved by a lower cap is
-       negligible at these sizes. See BODY_LIMIT in router.js. */
     if (fileData.length > ICON_MAX_BYTES)
       return json(res, 400, { error: 'file too large (max 2 MB)', kind: KIND.INVALID });
     if (/\.svg$/i.test(filename)) {
@@ -164,8 +142,7 @@ on('POST', '/api/icons/upload', async (req, res) => {
       return json(res, 400, { error: 'file is not a valid PNG or ICO image', kind: KIND.INVALID });
     }
     fs.mkdirSync(ICONS_PATH, { recursive: true });
-    /* Never the submitted name directly: see safeIconName. The response carries
-       the name that was used, which the admin form already displays. */
+    /* Never the submitted name directly. See safeIconName. */
     const saved = safeIconName(ICONS_PATH, filename);
     fs.writeFileSync(path.join(ICONS_PATH, saved), fileData);
     log.audit('icon uploaded', { filename: saved });
@@ -175,5 +152,4 @@ on('POST', '/api/icons/upload', async (req, res) => {
   }
 });
 
-/* Exported for tests; the routes above register themselves on require. */
 module.exports = { safeIconName };

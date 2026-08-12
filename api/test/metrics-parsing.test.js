@@ -1,8 +1,3 @@
-/* Regression tests for the /proc parsing in metrics.js and routes/system.js.
-
-   Every one of these is the same class of mistake: reading a /proc file without
-   allowing for a shape it really takes. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 

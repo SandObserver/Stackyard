@@ -52,12 +52,6 @@ test('parsePrometheus keeps a __proto__ metric without polluting the prototype',
   assert.equal(Object.prototype.x, undefined);
 });
 
-/* P4-10: the two parsers disagreed on bad input. parseXml guards its argument
-   and returns an empty object; this one called text.split straight away and
-   threw a TypeError. Both are handed upstream bodies and both are toolbox
-   methods a widget's data.js can call, so passing an already-parsed JSON body
-   threw out of the data function and became a 502, where the same mistake with
-   XML quietly returned {}. */
 test('parsePrometheus returns an empty object for every non-string input', () => {
   for (const v of [null, undefined, 42, {}, [], true, Symbol('x'), () => {}]) {
     assert.deepEqual(Object.keys(parsePrometheus(v)), [], String(typeof v));

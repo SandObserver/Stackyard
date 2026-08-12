@@ -7,19 +7,14 @@ const { getRegistry } = require('../widgets');
 let _netCache = { rx: 0, tx: 0 };
 let _netPrev = null;
 
-/* One /proc/net/dev line, as bytes received and transmitted.
-
-   Split on the colon, not on whitespace: the kernel pads the name to a fixed
-   width, so once the receive counter is wide enough it runs into the colon and
-   every field shifts by one. The interface name is matched exactly, or eth0
-   also matches eth0.100. */
-const RX_BYTES = 0; /* field order after the colon, per the header line */
+/* Split on the colon, not on whitespace. The kernel pads the name to a fixed
+   width, so a wide enough receive counter runs into the colon and shifts every
+   field by one. Match the interface name exactly, or eth0 also matches
+   eth0.100. */
+const RX_BYTES = 0;
 const TX_BYTES = 8;
 
-/** Parse the counters out of /proc/net/dev text. Separate from the file read so
-    the field handling can be tested without a kernel that produces the awkward
-    shapes.
-    @param {string} text @param {string} iface */
+/** @param {string} text @param {string} iface */
 function parseNetDev(text, iface) {
   for (const line of String(text || '').split('\n')) {
     const at = line.indexOf(':');
@@ -56,10 +51,8 @@ function _updateNetCache() {
     if (dt > 0) {
       const rx = Math.round((cur.rx - _netPrev.rx) / dt);
       const tx = Math.round((cur.tx - _netPrev.tx) / dt);
-      /* A counter that went backwards means the interface was reset or replaced,
-         not that traffic flowed backwards. Reporting the negative delta showed
-         figures like -2499500 until the next sample. Skip the window and start
-         again from this reading. */
+      /* A counter that went backwards means the interface was reset or
+         replaced. Skip the window rather than report a negative rate. */
       _netCache = rx >= 0 && tx >= 0 ? { rx, tx } : { rx: 0, tx: 0 };
     }
   }
@@ -78,8 +71,8 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   const w = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
   if (!w) return json(res, 404, { error: 'widget not found' });
   const _entry = getRegistry()[w.widgetType];
-  /* Same rule as the config read: with no manifest there is no way to tell which
-     fields are secret, so nothing is sent. See widget-secrets.js. */
+  /* With no manifest there is no way to tell which fields are secret, so
+     nothing is sent. See widget-secrets.js. */
   if (!_entry) {
     return json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: {}, [WITHHELD_FLAG]: true });
   }
@@ -88,5 +81,4 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: wc });
 });
 
-/* Exported for tests; the routes above register themselves on require. */
 module.exports = { parseNetDev };

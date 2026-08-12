@@ -44,11 +44,6 @@ test('the supply-chain steps run after the build, in an order that works', () =>
   assert.ok(indexOf('Generate SBOM') < indexOf('Upload SBOM'), 'the SBOM must exist before it is uploaded');
 });
 
-/* The finding it fails on is a reason not to publish, and a failed job
-   unpublishes nothing: the version tag, the major.minor tag and latest are all
-   at the flagged digest by the time the scan speaks. The gate is a
-   single-platform build the runner can load, and the push builds from its
-   cache, so the two see the same layers. */
 test('the scan gates the push', () => {
   const gate = indexOf('Build for scanning');
   assert.ok(gate !== -1, 'the single-platform build the scan reads is gone');

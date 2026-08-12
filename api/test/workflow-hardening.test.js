@@ -1,24 +1,3 @@
-/* P17-5 and P17-10: how much a workflow is trusted with, and what it runs.
-
-   test.yml declared no permissions, and this repository's default is write, so
-   a job that runs npm install and docker build had a token that could push to
-   the repository. Dependency code executes in that job. It needs to read the
-   tree and nothing else. codeql.yml and release.yml were already scoped; this
-   one had been missed.
-
-   Every third-party action was pinned to a moving tag. actions/checkout@v4 is
-   whatever commit that tag points at today, so a retagged or compromised
-   release runs with whatever the job grants, before any of our own code. They
-   are pinned to a commit now, with the version in a trailing comment.
-
-   Dependabot already watches github-actions weekly and understands SHA pins, so
-   these stay current without hand-editing; that is what makes pinning viable
-   here rather than a slow rot.
-
-   Read as text rather than parsed: no YAML dependency, and enough to pin the
-   properties that matter. GitHub is the only thing that truly validates a
-   workflow. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

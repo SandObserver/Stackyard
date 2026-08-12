@@ -1,12 +1,3 @@
-/* End-to-end proof that neither endpoint delivers a stored credential to a
-   destination the caller chose (P5-1).
-
-   The unit tests in secret-scope.test.js pin the rule. These run the real
-   routes against two stub upstreams, a "real" one and an attacker-controlled
-   one, and assert the secret only ever reaches the first.
-
-   Needs ALLOW_PRIVATE_IPS so the stubs are reachable, hence its own process. */
-
 const path = require('node:path');
 
 process.env.ALLOW_PRIVATE_IPS = 'true';

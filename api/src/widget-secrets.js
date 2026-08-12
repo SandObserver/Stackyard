@@ -1,8 +1,8 @@
 const { getRegistry } = require('./widgets');
 
-/* The secret field keys a widget declares, top level and one row deep, which is
-   enough because the validator forbids nested groups. Membership is tested with
-   Object.hasOwn, since config from disk inherits "constructor" and the rest. */
+/* The secret field keys a widget declares, top level and one row deep. Test
+   membership with Object.hasOwn. Config from disk inherits "constructor" and the
+   rest of Object.prototype. */
 function secretSpec(entry) {
   const fields = (entry && entry.manifest && entry.manifest.fields) || [];
   const topLevel = [];
@@ -27,8 +27,7 @@ function _entryFor(item, entry) {
   return entry || getRegistry()[item && item.widgetType];
 }
 
-/* Replaces each secret with a "<key>Set" flag. Mutates the item, so callers must
-   pass a copy. */
+/* Mutates the item. Pass a copy. */
 function scrubWidgetSecrets(item, entry) {
   const e = _entryFor(item, entry);
   if (!e || !item || !item.widgetConfig) return;
@@ -65,7 +64,7 @@ function scrubWidgetSecrets(item, entry) {
   }
 }
 
-/* Group rows are matched by position. Mutates newItem.widgetConfig. */
+/* Mutates newItem.widgetConfig. */
 function preserveWidgetSecrets(newItem, oldItem, entry) {
   const e = _entryFor(newItem, entry);
   if (!e || !newItem || !newItem.widgetConfig) return;
@@ -82,8 +81,8 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
     const oldRows = Array.isArray(owc[gk]) ? owc[gk] : [];
     nwc[gk].forEach((row, i) => {
       if (!row || typeof row !== 'object') return;
-      /* Match the previous row by id when the row carries one (so reordering or
-         deleting rows can't misassign a stored secret); fall back to position. */
+      /* Match by id first. Position alone misassigns a stored secret after a
+         reorder or a delete. */
       const oldRow = (row.id != null ? oldRows.find(r => r && r.id === row.id) : oldRows[i]) || {};
       for (const sk of subKeys) {
         if (!Object.hasOwn(row, sk) && oldRow[sk] != null) row[sk] = oldRow[sk];
@@ -102,12 +101,9 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
   }
 }
 
-/* The manifest is what says which fields are secret, so a widget without one has
-   its whole config withheld: not recognised means withhold. A wrong WIDGETS_PATH
-   makes every widget unknown at once.
-
-   Safe only because preserveConfigSecrets puts the stored config back on save.
-   Changing one without the other trades a leak for data loss. */
+/* A widget with no manifest has its whole config withheld. Safe only because
+   preserveConfigSecrets puts the stored config back on save. Changing one
+   without the other trades a leak for data loss. */
 const WITHHELD_FLAG = 'widgetConfigWithheld';
 
 function withholdWidgetConfig(item) {
@@ -115,8 +111,6 @@ function withholdWidgetConfig(item) {
   item[WITHHELD_FLAG] = true;
 }
 
-/* The browser was given nothing, so whatever it returns is discarded in favour of
-   what is stored. A widget with no stored counterpart is new. */
 function restoreWithheldConfig(newItem, oldItem) {
   delete newItem[WITHHELD_FLAG];
   if (oldItem && oldItem.widgetConfig) {
@@ -124,7 +118,6 @@ function restoreWithheldConfig(newItem, oldItem) {
   }
 }
 
-/* Whole-config wrappers. Each acts only on widgets present in the registry. */
 function scrubConfigSecrets(cfgCopy) {
   const reg = getRegistry();
   if (Array.isArray(cfgCopy.items)) {
@@ -146,8 +139,7 @@ function preserveConfigSecrets(newCfg, oldCfg) {
       if (!item || item.type !== 'widget') continue;
       const prev = oldItems.find(e => e && e.id === item.id);
       const entry = reg[item.widgetType];
-      /* A transport flag, never persisted: a manifest that loads again between
-         the read and the save would otherwise carry it into stored config. */
+      /* A transport flag. Never persist it. */
       delete item[WITHHELD_FLAG];
       if (entry) preserveWidgetSecrets(item, prev, entry);
       else restoreWithheldConfig(item, prev);

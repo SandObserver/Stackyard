@@ -1,18 +1,3 @@
-/* P5-13: a refused widget was invisible outside the container log.
-
-   loadRegistry skips a manifest it cannot parse or cannot validate, logs a
-   warning, and moves on. Nothing else knew. Admin could tell that a configured
-   widget's definition was missing, but not why, so its message ended by telling
-   the operator to go and read the server log — the last place a self-hoster
-   looks and the first place the UI cannot reach.
-
-   It matters more since the validator was tightened: a widget with one typo in
-   its showIf or viewField now does not load at all, where before it loaded and
-   misbehaved quietly.
-
-   The reasons travel with the registry now. They are kept beside it rather than
-   in it, so a lookup by widgetType can never resolve to a rejected widget. */
-
 const path = require('node:path');
 const fs = require('node:fs');
 
@@ -60,8 +45,6 @@ test('every refused widget is reported', () => {
   assert.deepEqual(Object.keys(byName).sort(), ['badjson', 'badmanifest', 'wrongname']);
 });
 
-/* A rejected widget is not a widget. Keeping the two apart is what stops a
-   lookup by widgetType finding one. */
 test('a refused widget is not in the registry', () => {
   const reg = widgets.getRegistry();
   for (const name of Object.keys(byName)) {

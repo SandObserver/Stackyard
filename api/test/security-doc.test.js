@@ -1,22 +1,3 @@
-/* docs/security.md against the code it describes.
-
-   Three claims on that page had gone stale: it warned about `X-Forwarded-For`,
-   which nothing reads any more; it explained the client-address guarantee by
-   nginx overwriting the header rather than by the loopback check that actually
-   enforces it; and it credited the Compose file with running the API as a
-   non-root user, which the image does.
-
-   A security page that is wrong is worse than one that is missing, because it
-   is what someone reads before deciding how to expose this. The claims that can
-   be checked against the code are checked here, so the same drift fails a test
-   rather than sitting on the page.
-
-   The blocked-address table is pinned separately, in blocked-ranges.test.js.
-
-   Prose is deliberately matched loosely, by the value or symbol it names, not
-   by sentence. A test that pins wording turns every edit into a test edit and
-   gets weakened until it means nothing. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -74,8 +55,6 @@ test('the documented session lifetime is the one in the code', () => {
   assert.match(doc, /SESSION_MAX_AGE_DAYS/);
 });
 
-/* The lifetime only bounds an unused token if a used one is reissued, so the
-   page may only claim the renewal while the code still does it. */
 test('the documented session renewal is the one in the code', () => {
   assert.match(auth, /RENEW_AFTER_MS = SESSION_MAX_AGE_MS \/ 2/, 'auth.js no longer renews at the halfway mark');
   assert.match(doc, /halfway/);

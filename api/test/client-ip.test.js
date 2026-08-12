@@ -1,24 +1,3 @@
-/* Regression tests for P16-1: the client IP was never actually known.
-
-   nginx set X-Real-IP on /api/. The app read X-Forwarded-For, which nginx never
-   set. They were never talking about the same header, and both settings were
-   wrong:
-
-     TRUST_PROXY off  every request looked like 127.0.0.1, so rate limiting was
-                      one shared bucket for all clients and five failed logins
-                      from anyone locked out everyone
-     TRUST_PROXY on   a client-supplied X-Forwarded-For passed straight through,
-                      and the app took the first entry, which the client chooses,
-                      so the limiter was bypassable by rotating the header
-
-   The second is worse, and it was the setting an operator would turn on
-   specifically to make rate limiting work.
-
-   The app reads X-Real-IP now, and only for a request arriving over loopback,
-   which is where nginx sits. nginx overwrites that header unconditionally, so a
-   client-supplied value cannot survive. No header chain is parsed in the app at
-   all: when Stackyard is behind another reverse proxy, nginx resolves the real
-   client itself from TRUSTED_PROXY, so the header is already correct. */
 const { tmpDir } = require('../test-support/tmp');
 
 const { test } = require('node:test');

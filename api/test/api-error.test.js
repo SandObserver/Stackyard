@@ -1,14 +1,3 @@
-/* Regression tests for the structured error contract (P11-3).
-
-   The behaviour this replaces had no test: admin-app-form.js decided what a
-   failure meant by looking for '401' or 'ECONNREFUSED' inside the error text, so
-   any change to that text broke the UI silently. These tests pin the contract on
-   both sides of it.
-
-   This file covers the backend half: classification and response bodies. The
-   frontend half, and the check that the two agree on the vocabulary, live in
-   ui/test/admin-error.test.js. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { KIND, ApiError, classify, errorBody } = require('../src/api-error');
@@ -81,10 +70,6 @@ test('ApiError carries kind, status and detail', () => {
 
 /* ── errorBody ────────────────────────────────────────────────────────────── */
 
-/* Replaces 'errorBody keeps the human-readable error string alongside the kind'.
-   That string named an internal address, which is the disclosure this now
-   prevents: the message is composed from the kind, and the original goes to the
-   log. */
 test('errorBody replaces the original message with one chosen by kind', () => {
   const e = Object.assign(new Error('connect ECONNREFUSED 1.2.3.4:80'), { code: 'ECONNREFUSED' });
   assert.deepEqual(errorBody(e), {

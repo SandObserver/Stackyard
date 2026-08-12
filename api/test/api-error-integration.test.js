@@ -1,10 +1,3 @@
-/* End-to-end shape of the structured error responses (P11-3).
-
-   Separate from http-integration.test.js because these cases need
-   ALLOW_PRIVATE_IPS=true so badge-proxy can reach a local stub upstream. That
-   file deliberately runs with the guard on, and the flag is read once at module
-   load, so the two cannot share a process. */
-
 const path = require('node:path');
 const fs = require('node:fs');
 
@@ -166,8 +159,6 @@ test('badge-proxy still succeeds on a 200', async () => {
   assert.ok(Array.isArray(r.body.numbers));
 });
 
-/* The counterpart to /api/badges no longer sending the body (P4-3): this is the
-   endpoint the admin field picker uses, and it is the one that must keep it. */
 test('badge-proxy still returns the upstream body for the field picker', async () => {
   upstreamStatus = 200;
   upstreamBody = '{"count":3,"nested":{"other":9}}';

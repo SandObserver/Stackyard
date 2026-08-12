@@ -1,16 +1,3 @@
-/* P4-3: /api/badges shipped the whole upstream body under `raw`.
-
-   The dashboard polls this endpoint every 20 seconds per open tab and reads one
-   field, `value`. `raw` carried the entire response of every badge-enabled app
-   alongside it, bounded only by FETCH_SIZE_LIMIT at 4 MB each, and nothing read
-   it. It also forwarded whatever else the upstream returned next to the counted
-   number. The admin field picker, which does need the body, uses
-   POST /api/badge-proxy instead.
-
-   ALLOW_PRIVATE_IPS is on because the stand-in upstream listens on loopback,
-   which the outbound guard blocks by default. Set before requiring proxy.js,
-   which reads it once at load. */
-
 const path = require('node:path');
 
 process.env.ALLOW_PRIVATE_IPS = 'true';
@@ -85,7 +72,6 @@ test('a badge reports the extracted value', async () => {
   assert.equal((await get('/api/badges')).a1.value, 7);
 });
 
-/* The finding. */
 test('the response carries no copy of the upstream body', async () => {
   upstreamBody = { pending: 7, library: ['a', 'b'], user: 'admin@example.com' };
   configure('pending');

@@ -1,17 +1,3 @@
-/* P13-1: widgets reported failures two ways, and the two behaved differently.
-
-   Four data.js files threw and four returned { error }. A throw becomes a 502,
-   so fetchData rejects and the shared poll() lifecycle treats it as a failure:
-   it counts toward staleAfter, keeps the last good render, and shows how long
-   ago the data was fresh. A returned { error } arrives as HTTP 200, so poll()
-   records a success, resets the failure count, and hands { error } to render()
-   as though it were data. Two widgets did both.
-
-   Everything throws now. The obstacle was that a thrown message is replaced by
-   a generic one, which is right for a caught exception and wrong for "Set a
-   Pi-hole password", so WidgetError carries a message its author vouched for.
-   ctx.fail is how a data.js throws one. */
-
 const path = require('node:path');
 const fs = require('node:fs');
 const { tmpDir } = require('../test-support/tmp');
@@ -103,15 +89,6 @@ test('the scan finds the widgets it is meant to check', () => {
   assert.ok(dataFiles.length >= 8, `only ${dataFiles.length} data functions found`);
 });
 
-/* The finding itself: no widget may report its own failure by returning it,
-   because that reaches the browser as a success and bypasses the poll
-   lifecycle.
-
-   What is matched is a whole-response error, `return { error: ... }` and
-   nothing else. An error field alongside real fields is a different thing: the
-   connections map reports per-service status and disk-health reports per-bay
-   status inside a response that succeeded, where one service or bay being down
-   is data rather than a widget failure. */
 test('no widget returns an error instead of throwing', () => {
   const offenders = [];
   for (const [name, p] of dataFiles) {
@@ -174,18 +151,6 @@ test('every widget frontend shows the message the server vouched for', () => {
   );
 });
 
-/* The other half of the convention. A plain Error is sanitised to "Something
-   went wrong." on its way out, so `throw new Error('Komga URL and API key
-   required')` tells the user nothing. ctx.fail is what says the message
-   contains only words the author chose, and is therefore sent as written.
-
-   Not a blanket ban on throw: a guard inside a pure helper with no ctx in scope
-   still throws, and the sanitiser is right to replace it. What is banned is a
-   sentence written for the user that never reaches them.
-
-   connections used to be exempt, because it catches its own throws and reports
-   each service inside a successful result. It uses ctx.fail too now, which is
-   what lets its catch tell a sentence it wrote from one Node threw. */
 test('no widget reports a user-facing failure with a plain Error', () => {
   const offenders = [];
   for (const [name, p] of dataFiles) {

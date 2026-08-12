@@ -74,8 +74,6 @@ function run({ nginxExit = 0, env = {} } = {}) {
   };
 }
 
-/* The control. Without this, a test that only asserts failure would still pass
-   if the entrypoint were broken in some entirely different way. */
 test('a config nginx accepts starts normally', () => {
   const r = run();
   assert.equal(r.status, 0);

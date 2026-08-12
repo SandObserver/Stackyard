@@ -1,11 +1,5 @@
-/* Null prototype: metric names come from the upstream body, and the name pattern
-   admits "__proto__", which would be taken as a prototype write.
-
-   Non-string input yields {} rather than throwing, matching parseXml, since both
-   are toolbox methods a widget's data.js can call directly.
-
-   Deliberately uncapped, unlike parseXml: this format is linear rather than
-   nesting, and FETCH_SIZE_LIMIT already bounds the body. */
+/* Keep the null prototype. Metric names come from the upstream body and the
+   name pattern admits "__proto__". */
 function parsePrometheus(text) {
   const out = Object.create(null);
   if (typeof text !== 'string') return out;
