@@ -65,9 +65,32 @@ test('our own expired session does not offer an upstream API key', () => {
    neither '403' nor 'Forbidden', so neither matcher fired. */
 test('an SSRF block shows its own reason', () => {
   const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message: 'Blocked: localhost is a private address.' });
-  assert.equal(a.tone, TONE.ERROR);
   assert.match(a.message, /private address/);
   assert.equal(a.openAuth, false);
+});
+
+/* A private address is what most homelab installs point a badge at, and one
+   setting unblocks it. */
+test('a blocked private address names the setting that allows it', () => {
+  for (const message of [
+    'Blocked: 192.168.1.5 is a private address.',
+    'Blocked: nas.lan resolves to private IP 10.0.0.4.',
+  ]) {
+    const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message });
+    assert.equal(a.tone, TONE.WARN, message);
+    assert.match(a.message, /ALLOW_PRIVATE_IPS=true/, message);
+    assert.match(a.message, new RegExp(message.replace(/[.]/g, '\\.')), 'keeps the original reason');
+    assert.equal(a.openAuth, false);
+    assert.equal(a.sessionExpired, false);
+  }
+});
+
+test('other blocked reasons are still shown verbatim', () => {
+  for (const message of ['Invalid URL', 'Blocked: nas.lan could not be resolved.', 'Blocked: ftp: is not allowed.']) {
+    const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message });
+    assert.equal(a.tone, TONE.ERROR, message);
+    assert.equal(a.message, message);
+  }
 });
 
 test('an error with no kind degrades to a plain failure, it does not throw', () => {
