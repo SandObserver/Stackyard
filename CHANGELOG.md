@@ -47,6 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A failed label-visibility toggle now reports the error instead of failing
   silently with the switch left in its new position.
 
+- A settings save that is refused for a missing or weak password no longer saves
+  the rest of the screen first.
+
+- The Password Protection switch is read back from the server after a save, so it
+  no longer shows a state the server rejected.
+
 - The Books, Now Playing and Backup widgets now show why they failed, such as a
   missing API key or a rejected password, instead of a generic error.
 

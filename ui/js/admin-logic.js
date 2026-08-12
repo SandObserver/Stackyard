@@ -126,6 +126,38 @@ export function shouldWritePassword({ enabled, newPassword }) {
   return !!enabled && !!(newPassword || '').length;
 }
 
+/* Why a settings save cannot go ahead. Codes rather than catalog keys: the
+   message text is chosen at the call site, where the key can be written as a
+   literal and traced back from the catalog. */
+export const BLOCK = Object.freeze({ NEEDS_PASSWORD: 'needsPassword', WEAK_PASSWORD: 'weakPassword' });
+
+/** What refuses this settings save, or null when nothing does.
+
+    Every rule that can refuse is asked here, before the first write, so a
+    refusal leaves the server exactly as it was. Both were previously checked
+    after the config had already been sent, which saved half the screen and then
+    reported only the password problem.
+
+    `strength` is the caller's pwStrength result. Passed in rather than computed
+    here, because this module is imported by tests that do not map the served
+    `/js/` paths, and one import would break every one of them.
+
+    @param {{ enabled: boolean, passwordSet: boolean, newPassword: string,
+              strength?: { ok: boolean, labelKey?: string } }} v
+    @returns {{ reason: string, labelKey?: string } | null} */
+export function settingsSaveBlocker({ enabled, passwordSet, newPassword, strength }) {
+  if (authEnableBlocked({ enabled, passwordSet, newPassword })) return { reason: BLOCK.NEEDS_PASSWORD };
+  if (shouldWritePassword({ enabled, newPassword }) && strength && !strength.ok)
+    return { reason: BLOCK.WEAK_PASSWORD, labelKey: strength.labelKey };
+  return null;
+}
+
+/* Switching protection off deletes the stored password, so the save has to ask
+   first. Nothing to ask when there is no password to lose. */
+export function clearsStoredPassword({ enabled, passwordSet }) {
+  return !enabled && !!passwordSet;
+}
+
 /* 'registry' renders the manifest's fields, 'custom' the URL editor, and
    'unavailable' a registry widget whose manifest is not loaded. The last must not
    fall through to the custom editor: the server withholds that widget's config,
