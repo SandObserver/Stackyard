@@ -14,6 +14,14 @@ async function seedConfig(request, config) {
   expect(res.ok(), `seeding failed: ${res.status()} ${await res.text()}`).toBeTruthy();
 }
 
+/** Clear the first-run setup prompt. Until it is dismissed the dashboard shows
+    the prompt and never builds its tiles, so every dashboard spec needs this.
+    @param {import('@playwright/test').APIRequestContext} request */
+async function dismissSetupPrompt(request) {
+  const res = await request.post('/api/auth/dismiss-setup', { headers: { Origin: BASE_URL } });
+  expect(res.ok(), `dismissing the setup prompt failed: ${res.status()}`).toBeTruthy();
+}
+
 /** The config as the server holds it. */
 async function readConfig(request) {
   const res = await request.get('/api/config');
@@ -76,6 +84,7 @@ function rowByName(page, name) {
 
 module.exports = {
   seedConfig,
+  dismissSetupPrompt,
   readConfig,
   expectItem,
   saveEditor,
