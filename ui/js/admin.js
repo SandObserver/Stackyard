@@ -2,7 +2,14 @@ import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=a0ea3e4b'
 import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=84d58686';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=3c60f7b0';
-import { newItemId, buildAppItem, upsertItem, claimFolderChildren } from '/js/admin-save-logic.js?v=77cac1d1';
+import {
+  newItemId,
+  buildAppItem,
+  upsertItem,
+  claimFolderChildren,
+  snapshotItems,
+  saveWithRevert,
+} from '/js/admin-save-logic.js?v=77cac1d1';
 import { API, toast, ag, ap, initInlineEdit } from '/js/admin-shared.js?v=bb36dbb3';
 import { checkAuth, wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
 import { state } from '/js/admin-state.js?v=3f9ad806';
@@ -135,8 +142,28 @@ async function appendAndSave(newItems) {
   }
 }
 
+/** Save, and put the list back if the write did not land. Never rejects: every
+    caller here is an event handler, and `save` has already said what went
+    wrong. Returns whether the change is now on the server, so a caller does not
+    report its own success over a failed write. */
+async function saveOrRevert(before) {
+  try {
+    return await saveWithRevert({
+      write: save,
+      snapshot: before,
+      restore: items => {
+        state.items = items;
+        render();
+      },
+    });
+  } catch {
+    return false;
+  }
+}
+
 function moveRow(item, dir, opts = {}) {
-  if (reorderItems(state.items, item, dir, opts)) save();
+  const before = snapshotItems(state.items);
+  if (reorderItems(state.items, item, dir, opts)) saveOrRevert(before);
 }
 
 /* Constant markup only; no user data reaches these. */
@@ -310,9 +337,9 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     hb.title = lbl;
     hb.setAttribute('aria-label', lbl);
     hb.onclick = () => {
+      const before = snapshotItems(state.items);
       item.hidden = !item.hidden;
-      save();
-      render();
+      saveOrRevert(before);
     };
     ac.append(hb);
   } else {
@@ -360,6 +387,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     if (!raw) return;
     const drop = parseDragData(raw);
     if (!drop) return;
+    const before = snapshotItems(state.items);
     if (
       applyDrop(state.items, {
         ...drop,
@@ -371,7 +399,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
         dropAbove,
       })
     )
-      save();
+      saveOrRevert(before);
   });
 
   if (document.documentElement.classList.contains('is-mobile')) wireTouchDrag(row, handle, { indent, folderId });
@@ -465,6 +493,7 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       end();
       if (!tr) return;
       const into = tr.dataset.isFolder && canJoinFolder(itemType(srcId));
+      const before = snapshotItems(state.items);
       const drop = applyDrop(state.items, {
         srcId,
         srcFolderId: indent ? folderId : null,
@@ -475,7 +504,7 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
         childIdx: tr.dataset.childIdx != null ? Number(tr.dataset.childIdx) : null,
         dropAbove: into ? false : dropAbove,
       });
-      if (drop) save();
+      if (drop) saveOrRevert(before);
     };
     const cancel = () => end();
     handle.addEventListener('pointermove', move);
@@ -679,19 +708,21 @@ function openModal(idx) {
   showEditView();
 }
 
-function _evDelete(item, idx) {
+async function _evDelete(item, idx) {
   if (!item) return;
   if (item.type === 'folder') {
     if (!confirm(t('confirm.deleteFolder', { name: item.label }))) return;
   } else {
     if (!confirm(t('confirm.remove', { name: item.label || item.id }))) return;
   }
+  const before = snapshotItems(state.items);
   state.items.forEach(f => {
     if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== item.id);
   });
   state.items.splice(idx, 1);
-  save().catch(() => {});
-  showListView();
+  /* Staying put on a failed delete: the list behind this view still holds the
+     item, so returning to it would show it as deleted. */
+  if (await saveOrRevert(before)) showListView();
 }
 {
   const s = inp('al-search');
@@ -753,12 +784,13 @@ function openFolderPicker(appId, targetFolderId = null) {
     }
     available.forEach(app => {
       const b = rowBtn('', () => {
+        const before = snapshotItems(state.items);
         state.items.forEach(f => {
           if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== app.id);
         });
         if (!tf.children) tf.children = [];
         tf.children.push(app.id);
-        save();
+        saveOrRevert(before);
         close();
       });
       const ri = document.createElement('span');
@@ -778,10 +810,11 @@ function openFolderPicker(appId, targetFolderId = null) {
     });
   } else {
     const none = rowBtn(currentFolder ? 'muted' : 'cur', () => {
+      const before = snapshotItems(state.items);
       state.items.forEach(f => {
         if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== appId);
       });
-      save();
+      saveOrRevert(before);
       close();
     });
     const ns = document.createElement('span');
@@ -792,12 +825,13 @@ function openFolderPicker(appId, targetFolderId = null) {
     folders.forEach(f => {
       const cur = currentFolder?.id === f.id;
       const b = rowBtn(cur ? 'cur' : '', () => {
+        const before = snapshotItems(state.items);
         state.items.forEach(ff => {
           if (ff.type === 'folder') ff.children = (ff.children || []).filter(id => id !== appId);
         });
         if (!f.children) f.children = [];
         if (!f.children.includes(appId)) f.children.push(appId);
-        save();
+        saveOrRevert(before);
         close();
       });
       const nm = document.createElement('span');
@@ -831,11 +865,12 @@ function openFolderPicker(appId, targetFolderId = null) {
         'folder',
         state.items.map(i => i.id),
       );
+      const before = snapshotItems(state.items);
       state.items.push({ id: fid, type: 'folder', label: name, children: [appId] });
       state.items.forEach(f => {
         if (f.type === 'folder' && f.id !== fid) f.children = (f.children || []).filter(id => id !== appId);
       });
-      save();
+      saveOrRevert(before);
     });
     const nrs = document.createElement('span');
     nrs.textContent = '+ ' + t('folder.createNew');
@@ -958,8 +993,12 @@ async function doSave(orig) {
     }
     /* By id, not by position: an item that moved is still found, and one that has
        gone is appended rather than silently dropping the edit. */
+    const before = snapshotItems(state.items);
     const { replaced } = upsertItem(state.items, state.eid, item);
-    await save();
+    /* The editor stays open on a failed write, with the filled-in form intact:
+       closing it would discard the work and leave "Updated" as the last thing
+       said about it. */
+    if (!(await saveOrRevert(before))) return;
     closeModal();
     toast(replaced ? 'Updated' : 'Added');
   } catch (e) {
@@ -1242,9 +1281,9 @@ el('imp').onchange = async e => {
       tgt(e).value = '';
       return;
     }
+    const before = snapshotItems(state.items);
     state.items = d.items;
-    await save();
-    toast(t('toast.imported'));
+    if (await saveOrRevert(before)) toast(t('toast.imported'));
   } catch (e) {
     toast(t('toast.importFailed', { err: e.message }), 'err');
   }

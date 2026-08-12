@@ -45,6 +45,39 @@ export function newItemId(label, fallback = 'item', taken = []) {
   return `${stem}_${n}`;
 }
 
+/** A detached copy of the item list, taken before a change so it can be put
+    back. Config items are JSON by definition, so a round trip clones them
+    faithfully.
+
+    @param {any[]} items @returns {any[]} */
+export function snapshotItems(items) {
+  return Array.isArray(items) ? JSON.parse(JSON.stringify(items)) : [];
+}
+
+/** Run `write` and undo the local change when it did not reach the server.
+
+    Every list edit in the admin UI changes the in-memory list first and saves
+    after. Without this a failed write leaves the list showing a dashboard the
+    server does not have, and the only sign of it is a toast that clears in
+    three seconds.
+
+    `write` reports failure by resolving false; a throw is also a failure, and
+    is re-raised after the restore so the caller still sees it.
+
+    @template T
+    @param {{ write: () => Promise<boolean|void>, snapshot: T,
+              restore: (snapshot: T) => void }} opts
+    @returns {Promise<boolean>} */
+export async function saveWithRevert({ write, snapshot, restore }) {
+  let ok = false;
+  try {
+    ok = (await write()) !== false;
+  } finally {
+    if (!ok) restore(snapshot);
+  }
+  return ok;
+}
+
 /* Returns { error } or { item }. */
 /** Put `item` where the item with `id` currently is, or append it.
 

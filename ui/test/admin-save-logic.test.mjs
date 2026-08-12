@@ -7,6 +7,8 @@ import {
   upsertItem,
   claimFolderChildren,
   randomSuffix,
+  snapshotItems,
+  saveWithRevert,
 } from '../js/admin-save-logic.js';
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
@@ -290,4 +292,70 @@ test('claiming nothing changes nothing', () => {
 test('claimFolderChildren tolerates junk', () => {
   assert.doesNotThrow(() => claimFolderChildren(null, 'f', ['a']));
   assert.doesNotThrow(() => claimFolderChildren([null, 'x', { id: 'f', type: 'folder' }], 'g', ['a']));
+});
+
+test('snapshotItems detaches nested folder children', () => {
+  const items = [{ id: 'f1', type: 'folder', children: ['a'] }];
+  const copy = snapshotItems(items);
+  items[0].children.push('b');
+  items[0].label = 'renamed';
+  assert.deepEqual(copy, [{ id: 'f1', type: 'folder', children: ['a'] }]);
+});
+
+test('snapshotItems tolerates junk', () => {
+  assert.deepEqual(snapshotItems(null), []);
+  assert.deepEqual(snapshotItems(undefined), []);
+});
+
+test('saveWithRevert keeps the change when the write lands', async () => {
+  let restored = null;
+  const ok = await saveWithRevert({
+    write: async () => true,
+    snapshot: ['before'],
+    restore: s => {
+      restored = s;
+    },
+  });
+  assert.equal(ok, true);
+  assert.equal(restored, null);
+});
+
+test('saveWithRevert puts the list back when the write reports failure', async () => {
+  let restored = null;
+  const ok = await saveWithRevert({
+    write: async () => false,
+    snapshot: ['before'],
+    restore: s => {
+      restored = s;
+    },
+  });
+  assert.equal(ok, false);
+  assert.deepEqual(restored, ['before']);
+});
+
+test('saveWithRevert restores and re-raises when the write throws', async () => {
+  let restored = null;
+  await assert.rejects(
+    saveWithRevert({
+      write: async () => {
+        throw new Error('offline');
+      },
+      snapshot: ['before'],
+      restore: s => {
+        restored = s;
+      },
+    }),
+    /offline/,
+  );
+  assert.deepEqual(restored, ['before']);
+});
+
+test('saveWithRevert treats a write that returns nothing as success', () => {
+  /* `save` is the only caller and returns a boolean, but a void write must not
+     be read as a failure and silently undone. */
+  return saveWithRevert({
+    write: async () => {},
+    snapshot: ['before'],
+    restore: () => assert.fail('should not revert'),
+  }).then(ok => assert.equal(ok, true));
 });

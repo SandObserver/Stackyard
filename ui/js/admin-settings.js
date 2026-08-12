@@ -230,12 +230,23 @@ export function showBgFields(type) {
   const brRow = el('bg-brightness-row');
   if (brRow) brRow.classList.toggle('d-none', type === 'color');
 }
-async function saveLabels() {
-  const c = await ag('/api/config');
-  c.settings = c.settings || {};
-  c.settings.showLabels = { desktop: inp('set-lbl-d')?.checked !== false, ios: inp('set-lbl-m')?.checked || false };
-  await ap('/api/config', c);
-  toast(t('toast.saved'));
+/** @param {Event} [e] */
+async function saveLabels(e) {
+  const toggled = /** @type {HTMLInputElement|null} */ (e?.target ?? null);
+  const wasChecked = toggled ? toggled.checked : false;
+  try {
+    const c = await ag('/api/config');
+    c.settings = c.settings || {};
+    c.settings.showLabels = { desktop: inp('set-lbl-d')?.checked !== false, ios: inp('set-lbl-m')?.checked || false };
+    await ap('/api/config', c);
+    toast(t('toast.saved'));
+  } catch (err) {
+    /* Wired straight to `change`, so an unhandled failure left the box in its
+       new position showing a setting the server was never given. Assigning
+       `checked` fires no event, so this does not loop. */
+    if (toggled) toggled.checked = !wasChecked;
+    toast(t('toast.saveFailed', { err: err.message }), 'err');
+  }
 }
 async function saveWallpaper() {
   try {

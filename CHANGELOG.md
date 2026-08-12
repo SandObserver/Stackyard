@@ -36,6 +36,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Saving an app or widget no longer reports "Updated" when the write failed; the
+  editor stays open with the form intact.
+
+- A failed save no longer leaves the admin list showing a delete, reorder,
+  drag-drop or folder change the server never received.
+
+- Importing a config reports "Imported" only once the write has landed.
+
+- A failed label-visibility toggle now reports the error instead of failing
+  silently with the switch left in its new position.
+
 - The Books, Now Playing and Backup widgets now show why they failed, such as a
   missing API key or a rejected password, instead of a generic error.
 
