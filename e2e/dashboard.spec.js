@@ -134,11 +134,14 @@ test('resizing across the breakpoint switches the layout without a reload', asyn
   const body = page.locator('body');
   await expect(body).not.toHaveClass(/is-mob/);
 
+  /* Each layout has its own markup, so the tile class proves the page was
+     rebuilt by the other builder rather than merely restyled. */
   await page.setViewportSize({ width: 500, height: 900 });
   await expect(body).toHaveClass(/is-mob/);
-  await expect(page.locator('#pages a.icon').filter({ hasText: 'Alpha' })).toBeVisible();
+  await expect(page.locator('#pages .dyn-mob-icon').filter({ hasText: 'Alpha' })).toBeVisible();
 
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(body).not.toHaveClass(/is-mob/);
   await expect(page.locator('#pages a.icon').filter({ hasText: 'Alpha' })).toBeVisible();
+  await expect(page.locator('#pages .dyn-mob-icon')).toHaveCount(0);
 });
