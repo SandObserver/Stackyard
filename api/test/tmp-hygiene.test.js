@@ -1,22 +1,3 @@
-/* P7-3 and P7-4: tests left temporary files behind, and some wrote to shared
-   paths.
-
-   Two shapes, one cause — nothing owned the cleanup.
-
-   A test that called fs.mkdtempSync directly usually never removed the result.
-   Measured before this landed: one run left 49 directories behind, and 2,354
-   had accumulated over three days, about 205 MB.
-
-   A test that pointed CONFIG_PATH at a fixed path such as
-   /tmp/stackyard-auth-test-nonexistent.json was relying on nothing ever
-   creating it. That held until a test called something that writes config, at
-   which point the file survived the run and every later run read what the last
-   one stored. It happened during this work: a stale secret kept reappearing
-   and the failure looked like a bug in the code under test.
-
-   test-support/tmp.js is the one way to get a temporary path, and registers
-   removal. These tests keep it the only way. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -45,8 +26,6 @@ test('no test creates a temporary directory of its own', () => {
   );
 });
 
-/* The half that actually caused a failure. A fixed path is shared between runs
-   and between developers, and is only safe while nothing writes to it. */
 test('no test names a fixed path under /tmp', () => {
   const offenders = files.filter(f => /['"]\/tmp\//.test(read(f)));
   assert.deepEqual(
@@ -74,9 +53,6 @@ test('the helper registers cleanup for every directory it creates', () => {
   assert.match(src, /created\.push\(/, 'every directory made must be recorded for removal');
 });
 
-/* Cleanup on exit rather than in an after() hook is deliberate: most of these
-   tests need their path at module scope, to set CONFIG_PATH before requiring
-   the module that reads it. A hook would run far too late. */
 test('cleanup does not depend on a test hook', () => {
   const src = fs.readFileSync(path.join(testDir, HELPER), 'utf8');
   assert.ok(

@@ -73,8 +73,6 @@ test('backup returns one result per configured slot', () => {
   assert.deepEqual(demoFn('backup')(ctx({})), []);
 });
 
-/* Stats deliberately has no demo.js: ctx.metrics already hands it invented host
-   numbers, so it runs its real code path on the demo and exercises more of it. */
 test('stats has no demo module and the registry reflects who does', () => {
   const fs = require('node:fs');
   const dir = path.join(__dirname, '..', '..', 'ui', 'widgets');

@@ -26,11 +26,9 @@ async function fetchContainerHealth() {
   try {
     const r = await fetchUnchecked(`${socketUrl}/containers/json?all=true`);
     if (!Array.isArray(r.data)) return Object.create(null);
-    /* Null prototype: keyed by container names from the socket proxy and looked
-       up by the name stored on an item. On an ordinary object an item whose
-       container is called "constructor" or "toString" matched an inherited
-       value, `unhealthy` read as undefined, and a container that does not exist
-       reported healthy. */
+    /* Null prototype. Keys are container names, so on an ordinary object a
+       container called "constructor" matches an inherited value and one that
+       does not exist reports healthy. */
     const out = Object.create(null);
     for (const c of r.data) {
       for (const name of c.Names || []) {
@@ -52,10 +50,9 @@ async function fetchContainerHealth() {
   }
 }
 
-/* These codes mean the address itself is wrong: nothing is listening, or the
-   name resolves nowhere. A timeout is not among them, because a proxy that is
-   still starting produces one, and refusing that save would lock the field on
-   an address that is about to work. */
+/* These codes mean the address itself is wrong. A timeout is not among them: a
+   proxy that is still starting produces one, and refusing that save locks the
+   field on an address that is about to work. */
 const WRONG_ADDRESS_CODES = new Set([
   'ECONNREFUSED',
   'ENOTFOUND',
@@ -65,20 +62,16 @@ const WRONG_ADDRESS_CODES = new Set([
   'EPROTO',
 ]);
 
-/* The two address shapes fail for opposite reasons, and neither error text says
-   so on its own. A service name is resolved by Docker's own DNS, which answers
+/* The two address shapes fail for opposite reasons. A service name resolves
    only for containers sharing a network. An IP reaches only what the proxy
-   published: a proxy bound to the host's loopback, as the usual compose does,
-   is unreachable from inside any container, at any address.
-
-   The hint names which of the two applies. The UI translates it; the codes are
-   the contract between them. */
+   published, and a proxy bound to the host's loopback is unreachable from
+   inside any container. These codes are the contract with the UI, which turns
+   them into advice. */
 const HINT = Object.freeze({ SHARED_NETWORK: 'shared-network', PUBLISH_PORT: 'publish-port' });
 
 /* A packet to a port bound on another namespace's loopback is dropped rather
-   than refused, so this case arrives as a timeout. Left non-fatal it saved with
-   a warning, which is the exact silence this probe exists to end. A literal
-   address is also never the one that is still starting up under a name. */
+   than refused, so this case arrives as a timeout. A literal address is never
+   the one that is still starting up under a name. */
 const isLiteralAddress = host => isPrivateAddress(host) || /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':');
 
 function addressHint(host) {
@@ -87,11 +80,10 @@ function addressHint(host) {
 }
 
 /* A Docker API answers /version with an ApiVersion. Anything else on that port
-   is some other service, which would otherwise be stored as a working address
-   and report every container as down. */
+   would be stored as a working address and report every container as down. */
 async function probeSocketProxy(url) {
-  /* Outbound requests are disabled in the demo, so every address would fail the
-     probe and no Docker setting could be saved there at all. */
+  /* Outbound requests are disabled in the demo, so every address fails the
+     probe. */
   if (IS_DEMO) return { ok: true };
   let u;
   try {
@@ -134,7 +126,6 @@ on('POST', '/api/docker/test', async (req, res) => {
 on('GET', '/health', (_, res) => json(res, 200, { ok: true }));
 
 on('GET', '/api/health', async (req, res) => {
-  /* Each call pings every configured service. See poll-limits.js. */
   const limited = rateLimit(getIp(req), 'health', LIMITS.HEALTH.max, LIMITS.HEALTH.windowMs);
   if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
   if (IS_DEMO) {
@@ -151,11 +142,8 @@ on('GET', '/api/health', async (req, res) => {
         const mon = item.monitoring?.healthcheck || {};
         const cName = mon.container || item.container || '';
         const ping = mon.pingUrl || item.ping || '';
-        /* Built up rather than replaced. An item with both a container and a
-         ping used to lose the container's state and status entirely, because
-         the ping's result overwrote the entry. `unhealthy` was right either
-         way, being carried in the local below, but the detail behind it was
-         thrown away, which is what the tile needs to say why it is red. */
+        /* Build the entry up rather than replace it. An item can have both a
+           container and a ping, and the tile needs the detail from each. */
         let unhealthy = false;
         const detail = {};
         if (cName) {

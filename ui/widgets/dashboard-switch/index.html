@@ -70,8 +70,8 @@
     `<circle cx="${cx}" cy="${RC}" r="${RING_R}" fill="none" stroke="#d3d7de" stroke-width="2.4"/>` +
     `<circle cx="${cx}" cy="${RC}" r="${RING_R - 1.5}" fill="none" stroke="#868a90" stroke-width="0.7"/>`;
 
-  /* Keys thread the ring's bottom wire and fan out; the front-left arc is redrawn
-     over the bows so the ring reads as woven through the holes. */
+  /* The front-left arc is redrawn over the bows, so the ring reads as woven
+     through the holes. */
   function keyMarkup(cx, ids) {
     const m = ids.length;
     return ids.map((eid, k) => {

@@ -1,17 +1,3 @@
-/* Regression tests for P13-2: a missing service address became http://undefined.
-
-   The Connections widget had two nearly identical URL normalisers. The VPN path
-   used one that returned '' for a missing address and reported "No control
-   server URL configured". The map path used its own copy without that guard, so
-   a service with no address fetched http://undefined: a real DNS lookup for a
-   host called "undefined", failing after a timeout with "getaddrinfo ENOTFOUND
-   undefined".
-
-   The widget therefore looked like it had a network fault when a field was
-   simply empty, and the error pointed at DNS rather than at the empty field.
-
-   Two copies of one rule is how they came to disagree, so there is one now. */
-
 const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -32,7 +18,6 @@ test('an address that already has a scheme is left alone', () => {
   assert.equal(normBase('https://host'), 'https://host');
 });
 
-/* The finding: every one of these used to produce a URL that was then fetched. */
 test('a missing address produces nothing to fetch', () => {
   for (const v of [undefined, null, '']) {
     assert.equal(normBase(v), '', `${JSON.stringify(v)} must not become a URL`);

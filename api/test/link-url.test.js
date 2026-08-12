@@ -1,20 +1,3 @@
-/* Regression tests for P10-12: a link URL was never checked.
-
-   An item's href is rendered into an <a href> in nine places across ui.js and
-   dashboard.js, and a config save stored whatever it was given. A
-   javascript: URL therefore executed in the dashboard's own origin when the tile
-   was clicked. rel="noopener noreferrer" does nothing about that; the scheme has
-   to be refused.
-
-   Enforced at both moments: on save, so an unsafe value is never stored, and on
-   render, so a config written before this existed or arriving by import cannot
-   fire either.
-
-   Both use the same file. It began as two copies with a test asserting they
-   agreed, which detects drift rather than preventing it; the server requires the
-   browser's module directly now, so there is one definition. That only works if
-   the file stays free of anything only a browser has, which is what loading it
-   here proves. */
 const { tmpDir } = require('../test-support/tmp');
 
 const path = require('node:path');
@@ -110,9 +93,6 @@ test('a clean item reports nothing', () => {
 
 /* ── the module is loadable outside a browser ─────────────────────────────── */
 
-/* The property that lets one file serve both: no DOM, no window, no imports. If
-   any appear, this file stops loading in Node and the test fails rather than the
-   API failing to start. */
 test('the shared rule loads on the server and exports what both sides need', () => {
   for (const name of ['isSafeLinkUrl', 'firstUnsafeLink', 'sanitizeItemLinks']) {
     assert.equal(typeof shared[name], 'function', `${name} should be exported`);
@@ -241,8 +221,6 @@ test('a config save is rejected when an item carries an unsafe link', async () =
   }
 });
 
-/* Damaged rows are refused on save, so they cannot reach stored config. See
-   P4-4 in badge-headers.test.js for why the read path tolerates them instead. */
 test('a config save is rejected when a badge row is malformed', async () => {
   const http = require('node:http');
   process.env.CONFIG_PATH = path.join(tmpDir('rows'), 'apps.json');
@@ -313,10 +291,6 @@ test('a config save is rejected when a badge row is malformed', async () => {
   }
 });
 
-/* Everything downstream looks an item up with find(i => i.id === x), which
-   returns the first match, so a second item sharing an id is unreachable by its
-   own id. Refused on save rather than repaired: renaming would silently change
-   what folder children point at. See P5-5. */
 test('a config save is rejected when two items share an id', async () => {
   const http = require('node:http');
   process.env.CONFIG_PATH = path.join(tmpDir('dup'), 'apps.json');

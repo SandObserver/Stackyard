@@ -1,6 +1,5 @@
-/* Invented contribution calendar for the public demo. Seeded from a fixed
-   constant and built once, so the grid is identical on every poll rather than
-   reshuffling under the visitor. */
+/* Seeded from a fixed constant and built once, so the grid is identical on
+   every poll. */
 
 let _cal = null;
 

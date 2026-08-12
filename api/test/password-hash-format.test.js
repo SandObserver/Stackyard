@@ -1,26 +1,3 @@
-/* Regression tests for P2-5: the stored hash recorded no parameters.
-
-   It was `<hex salt>:<hex key>` with scrypt's node defaults left implicit, which
-   meant the work factor could never be raised: a higher cost derives a different
-   key from the same salt, so every existing password would stop verifying and
-   every install would lock out. Recording the parameters is what makes a work
-   factor adjustable at all.
-
-   The format is the modular PHC string that OWASP's Password Storage Cheat Sheet
-   points to:
-
-     $scrypt$ln=14,r=8,p=5$<base64 salt>$<base64 key>
-
-   Parameters come from OWASP's scrypt table, which lists five settings it treats
-   as equivalent and which trade RAM for parallelism. The 16 MiB row is the
-   default: memory is the constraint that fails outright rather than merely being
-   slow on the small hardware this runs on, and 16 MiB is what the old parameters
-   already used, so the footprint is unchanged while the work factor rises
-   fivefold.
-
-   Legacy hashes must keep verifying, and must be rewritten on the next
-   successful login, or they would sit in the old format forever. */
-
 const path = require('node:path');
 const crypto = require('node:crypto');
 
@@ -34,8 +11,6 @@ const http = require('node:http');
 
 const { hashPassword, verifyPassword, needsRehash, parseHash, HASH_PROFILES, DEFAULT_PROFILE } = require('../src/auth');
 
-/* A hash in the format used before this change: scrypt with node's defaults, and
-   the salt fed in as its hex string rather than as decoded bytes. */
 function legacyHash(password) {
   const salt = crypto.randomBytes(16).toString('hex');
   return `${salt}:${crypto.scryptSync(password, salt, 64).toString('hex')}`;
@@ -221,8 +196,6 @@ test('switching between rows of equal work does not force a rewrite', async () =
   }
 });
 
-/* Choosing a heavier row is a deliberate decision to raise the work factor, and
-   rewriting on next login is how that takes effect for an existing password. */
 test('switching to a heavier row does rewrite on the next login', async () => {
   const prev = process.env.PASSWORD_HASH_MEMORY;
   try {

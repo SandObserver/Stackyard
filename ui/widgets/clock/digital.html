@@ -60,9 +60,7 @@ let _tickId   = null;
 
 const W = 22, H = 40, S = 3.4, G = 1.8, MID = H / 2, PAD = S;
 
-/* Day and month names come from the browser rather than a catalog: it already
-   has every locale's names, in the right order and the right grammatical form,
-   and a hand-kept list of twelve English months could only ever be wrong. */
+/* Day and month names come from the browser, never from a catalog. */
 const _lang = new URLSearchParams(location.search).get('lang') || 'en';
 const _dateFmt = (() => {
   try { return new Intl.DateTimeFormat(_lang, { weekday: 'long', month: 'long', day: 'numeric' }); }

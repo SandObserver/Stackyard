@@ -1,12 +1,9 @@
 // @ts-check
-/* Pure decisions lifted out of dashboard.js so they can be tested without a DOM
-   or a network. No DOM, no fetch, no module state. */
+/* Keep this module free of the DOM, of fetch and of module state. */
 
-/** Whether the open dashboard should reload to pick up a config change.
-
-    Compares the server's `_rev`, which is an exact answer. The field fingerprint
-    is only a fallback for a page held open across an upgrade, whose loaded copy
-    predates `_rev`; it misses any field nobody thought to list.
+/** Whether the open dashboard should reload to pick up a config change. The
+    field fingerprint is only a fallback for a page whose loaded copy predates
+    `_rev`. It misses any field nobody listed.
 
     @param {any} loaded the config this page was built from
     @param {any} fetched what the poll just received
@@ -23,10 +20,6 @@ function fingerprint(c) {
 }
 
 /** Where to send the browser once first-run setup is finished.
-
-    A fresh install has no items, so the dashboard has nothing to act on and
-    Admin is where the first one is added. Only the automatic step after setup:
-    opening `/` afterwards is not blocked, and an empty dashboard stays empty.
 
     @param {unknown} items the dashboard items the page was built from
     @returns {string|null} a path to navigate to, or null to stay put */

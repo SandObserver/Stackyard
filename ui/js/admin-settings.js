@@ -1,28 +1,21 @@
-/* Admin UI: the General, Appearance and Security settings sections. */
 import { toast, ag, ap } from '/js/admin-shared.js?v=bb36dbb3';
 import { pwStrength } from '/js/password-strength.js?v=dab9978e';
 import { t } from '/js/i18n.js?v=133a7aac';
 import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=3c60f7b0';
 import { el, inp, q, qa, setUserText } from '/js/utils.js?v=84d58686';
 
-/* Mirrors the server's rule: auth cannot be switched on with no password behind
-   it. */
+/* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
 
-/* Hint codes from the socket proxy probe, mapped to what the user can do about
-   each. The server picks the code from the address shape; the wording lives
-   here so it is translated. */
+/* Hint codes from the socket proxy probe. The server picks the code from the
+   address shape; the wording lives here so it is translated. */
 const SOCKET_HINTS = Object.freeze({
   'shared-network': 'toast.socketHintSharedNetwork',
   'publish-port': 'toast.socketHintPublishPort',
 });
 
-/* Both controls only mean anything while auth is on; the revoke one also needs
-   a password to exist, since that is what makes a session possible.
-
-   Module scope rather than a closure, because the three moments that change
-   what it reflects are in three different places: the check on load, the
-   toggle, and the save that clears a stored password. */
+/* Both controls only mean anything while auth is on. Revoke also needs a stored
+   password, which is what makes a session possible. */
 function syncSessionRows() {
   const on = !!inp('sec-en')?.checked;
   el('sec-logout')?.classList.toggle('d-none', !on);
@@ -85,8 +78,7 @@ export function loadSettings(c) {
       li.setAttribute('aria-selected', String(li.dataset.val === langEl.value)),
     );
   }
-  /* Unsplash API key: fetch whether one is configured via dedicated endpoint
-     (the key itself is never included in /api/config to avoid exposure) */
+  /* The key itself is never included in /api/config. */
   const apiEl = inp('bg-apikey-inp') || inp('bg-apikey');
   if (apiEl) {
     apiEl.placeholder = '●●●●●●●●●● (configured)';
@@ -128,8 +120,6 @@ export function loadSettings(c) {
   }
   el('bg-save').addEventListener('click', saveWallpaper);
 
-  /* These rows show what the user typed, so each follows its own direction
-     rather than the interface's, and truncates at its own end. */
   const _sv = (id, v, ph = '') => {
     const node = el(id);
     if (!node) return;
@@ -200,8 +190,6 @@ export function loadSettings(c) {
     if (!confirm(t('confirm.revokeSessions'))) return;
     secRevoke.disabled = true;
     try {
-      /* The server reissues this browser's cookie in the same response, so the
-         page stays signed in while every other device does not. */
       await ap('/api/auth/revoke-sessions', {});
       toast(t('toast.sessionsRevoked'), 'ok');
     } catch (e) {
@@ -215,10 +203,6 @@ export function loadSettings(c) {
   syncAuthFromServer();
 }
 
-/* The security rows, read back from the server rather than assumed from what
-   was just sent. Called on load and again after a save, so a step that failed
-   part way through leaves the switches showing what the server really has
-   instead of what was asked for. */
 async function syncAuthFromServer() {
   let d;
   try {
@@ -229,8 +213,7 @@ async function syncAuthFromServer() {
   _passwordSet = !!d.passwordSet;
   const secEnEl = inp('sec-en');
   if (secEnEl) {
-    /* The effective state: enabled with no password behaves as off, and the
-       toggle has to match what the server does. */
+    /* The effective state. Enabled with no password behaves as off. */
     secEnEl.checked = !!d.enabled;
     const pwRow = el('ie-pw');
     const pwHint = el('pw-hint-static');
@@ -246,8 +229,6 @@ export function showBgFields(type) {
     const node = el(`bg-${t}-fields`);
     if (node) node.classList.toggle('d-none', t !== type);
   });
-  /* Brightness dims a wallpaper image, meaningless for a solid colour,
-     so it's shown only for the unsplash/url sources. */
   const brRow = el('bg-brightness-row');
   if (brRow) brRow.classList.toggle('d-none', type === 'color');
 }
@@ -262,9 +243,8 @@ async function saveLabels(e) {
     await ap('/api/config', c);
     toast(t('toast.saved'));
   } catch (err) {
-    /* Wired straight to `change`, so an unhandled failure left the box in its
-       new position showing a setting the server was never given. Assigning
-       `checked` fires no event, so this does not loop. */
+    /* Put the box back on a failure, or it shows a setting the server was never
+       given. Assigning `checked` fires no event, so this does not loop. */
     if (toggled) toggled.checked = !wasChecked;
     toast(t('toast.saveFailed', { err: err.message }), 'err');
   }
@@ -285,8 +265,8 @@ async function saveWallpaper() {
     c.settings = c.settings || {};
     c.settings.background = bg;
     await ap('/api/config', c);
-    /* Save Unsplash key separately AFTER main config; the GET /api/config strips the key,
-       so state.saving it before would cause the subsequent config write to overwrite it with nothing */
+    /* After the main config. GET /api/config strips the key, so a config write
+       that follows would overwrite it with nothing. */
     if (type === 'unsplash') {
       const keyVal = (inp('bg-apikey-inp') || inp('bg-apikey'))?.value?.trim() || '';
       if (keyVal) await ap('/api/settings/unsplash-key', { apiKey: keyVal });
@@ -301,10 +281,7 @@ async function saveServer() {
   const enabled = inp('sec-en')?.checked || false;
   let socketWarning = '';
 
-  /* Every rule that can refuse this save is asked before the first request.
-     Checked afterwards, as they were, a refusal had already saved the title,
-     language, log level and Docker fields while reporting only the password
-     problem, and left the switch showing a state the server had rejected. */
+  /* Ask every rule that can refuse this save before the first request. */
   const blocker = settingsSaveBlocker({
     enabled,
     passwordSet: _passwordSet,
@@ -317,9 +294,8 @@ async function saveServer() {
     return;
   }
 
-  /* Asked here, with the other refusals, so a wrong address never reaches the
-     config. Stored unchecked it looked configured while every app backed by a
-     container reported down, with the reason only in the container log. */
+  /* Asked with the other refusals, so a wrong address never reaches the
+     config. */
   if (inp('srv-docker-en')?.checked) {
     const url = inp('srv-socket')?.value?.trim() || '';
     if (!url) {
@@ -333,27 +309,22 @@ async function saveServer() {
       toast(t('toast.saveFailed', { err: e.message }), 'err');
       return;
     }
-    /* The error says what happened; the hint says which of the two address
-       shapes it was and what makes that shape work. Neither is much use alone:
-       "connection refused" for an IP is exactly what a proxy published on the
-       host's loopback looks like from inside a container. */
+    /* The error and the hint are both needed: "connection refused" for an IP is
+       exactly what a proxy published on the host's loopback looks like from
+       inside a container. */
     const hint = SOCKET_HINTS[probe.hint] ? ` ${t(SOCKET_HINTS[probe.hint])}` : '';
     if (!probe.ok && probe.fatal) {
       toast(t('toast.socketUrlBad', { reason: probe.error }) + hint, 'err');
       return;
     }
-    /* Not answering yet is not the same as wrong: a proxy still starting would
-       otherwise block a save that is correct. Reported once the save lands, so
-       it is not immediately replaced by the success toast. */
+    /* Not answering yet is not the same as wrong. A proxy still starting would
+       otherwise block a save that is correct. */
     if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: probe.error }) + hint;
   }
 
-  /* Switching protection off deletes the stored password, so this is the moment
-     it really goes. Asked before anything is written, so answering no means the
-     save never started rather than abandoning one that is half done. */
+  /* Switching protection off deletes the stored password. Ask before anything
+     is written. */
   if (clearsStoredPassword({ enabled, passwordSet: _passwordSet }) && !confirm(t('confirm.clearPassword'))) {
-    /* The switch was moved by hand and nothing was saved, so it has to go back
-       to what is still true. */
     await syncAuthFromServer();
     return;
   }
@@ -364,8 +335,7 @@ async function saveServer() {
     const prevLang = c.settings.language || 'en';
     const dockerEnabled = inp('srv-docker-en')?.checked || false;
     const socketUrl = inp('srv-socket')?.value?.trim() || '';
-    /* Title / description from inline-edit value spans (committed on blur).
-       A greyed placeholder (.is-ph) means empty, so it is not saved. */
+    /* A greyed placeholder (.is-ph) means empty, so it is not saved. */
     const titleEl = el('ie-title-v');
     const descEl = el('ie-desc-v');
     const titleV = titleEl && !titleEl.classList.contains('is-ph') ? titleEl.textContent.trim() : '';
@@ -397,8 +367,7 @@ async function saveServer() {
       const pwEl = inp('sec-pw');
       if (pwEl) {
         pwEl.placeholder = '';
-        /* Whatever was typed was not stored, so leaving it in the box would
-           read as a password this dashboard now has. */
+        /* Whatever was typed was not stored. */
         pwEl.value = '';
       }
     }
@@ -407,13 +376,10 @@ async function saveServer() {
       location.reload();
       return;
     }
-    /* The stored-password row, the switch and the session rows all follow from
-       the two writes above, so they are read back rather than inferred. */
+    /* Read back from the server, never inferred from what was asked for. */
     await syncAuthFromServer();
   } catch (e) {
     toast(t('toast.saveFailed', { err: e.message }), 'err');
-    /* A failure part way through leaves the security rows describing what was
-       asked for rather than what landed. */
     await syncAuthFromServer();
   }
 }

@@ -1,11 +1,7 @@
 // @ts-check
-/* Keyboard behaviour a dialog needs to be usable and escapable. The page behind
-   an overlay is still focusable while covered, so Tab has to wrap inside it.
-   Escape and focus restoration belong with the trap: without them it is focus
-   that cannot leave and no way to close what is holding it. */
+/* The page behind an overlay is still focusable while covered, so Tab must wrap
+   inside it. Escape and focus restoration belong with the trap. */
 
-/* Focusable in practice. Deliberately narrow: this is for asking what a Tab
-   press would reach, not for a general accessibility audit. */
 const FOCUSABLE = [
   'a[href]',
   'button:not([disabled])',
@@ -20,8 +16,7 @@ const FOCUSABLE = [
 export function focusableWithin(root) {
   if (!root || typeof root.querySelectorAll !== 'function') return [];
   return /** @type {HTMLElement[]} */ ([...root.querySelectorAll(FOCUSABLE)]).filter(el => {
-    /* offsetParent is null for a hidden element, and also for position:fixed,
-       which is why that is checked separately. */
+    /* offsetParent is null for a hidden element and for position:fixed. */
     const style = typeof getComputedStyle === 'function' ? getComputedStyle(el) : null;
     if (style && (style.visibility === 'hidden' || style.display === 'none')) return false;
     if (el.offsetParent === null && (!style || style.position !== 'fixed')) return false;
@@ -40,8 +35,8 @@ export function wrapTab(e, root) {
     last = f[f.length - 1];
   const active = document.activeElement;
 
-  /* Focus outside the dialog entirely, which happens when it opens without
-     anything focused: pull it back rather than letting Tab continue behind. */
+  /* Focus outside the dialog, which happens when it opens with nothing
+     focused. */
   if (!root.contains(active)) {
     e.preventDefault();
     first.focus();
@@ -62,10 +57,7 @@ export function wrapTab(e, root) {
 }
 
 /** Make `root` behave as a modal dialog until the returned function is called.
-
-    Traps Tab, closes on Escape, and returns focus to whatever was focused when
-    it opened. Calling the returned function twice is harmless, since a dialog
-    can be closed by more than one route.
+    Calling that function twice is harmless.
 
     @param {Element} root
     @param {{ onClose?: () => void, initialFocus?: HTMLElement | null,
@@ -90,8 +82,8 @@ export function trapFocus(root, opts = {}) {
     if (released) return;
     released = true;
     document.removeEventListener('keydown', /** @type {EventListener} */ (onKeydown), true);
-    /* Without this, closing leaves focus on nothing and the next Tab starts from
-       the top of the page. Skipped if the element has left the document. */
+    /* Without this, closing leaves focus on nothing and the next Tab starts at
+       the top of the page. */
     if (restoreTo && restoreTo.focus && restoreTo.isConnected) {
       try {
         restoreTo.focus();
@@ -101,11 +93,8 @@ export function trapFocus(root, opts = {}) {
     }
   }
 
-  /* On the document rather than on root, because a dialog holds text that is not
-     focusable: clicking a line of it moves focus to the body, and a listener
-     inside root would then never see the key. Escape and the Tab wrap have to
-     work from wherever the click left focus, which is the case wrapTab's
-     out-of-root branch already covers. */
+  /* On the document, not on root. Clicking unfocusable text inside a dialog
+     moves focus to the body, where a listener on root never sees the key. */
   document.addEventListener('keydown', /** @type {EventListener} */ (onKeydown), true);
 
   const target = initialFocus || focusableWithin(root)[0];

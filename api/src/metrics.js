@@ -1,7 +1,7 @@
 const fs = require('fs');
 
-/* Fields after softirq were added over time, and a kernel reporting fewer yields
-   undefined, which becomes NaN and poisons every later result. */
+/* A kernel reporting fewer fields yields undefined. That becomes NaN and
+   poisons every later result. */
 function readCpuStat() {
   const line = fs.readFileSync('/proc/stat', 'utf8').split('\n')[0];
   const [, ...rest] = line.trim().split(/\s+/);
@@ -13,15 +13,10 @@ function readCpuStat() {
   return { total, busy: total - idle - iowait, iowait };
 }
 
-/* Both counters are cumulative, so this works on the delta between snapshots. */
-/* Guarding dt alone is not enough: a NaN in the numerator survives a good dt and
-   reaches the widget. */
 const _pct = v => (Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 0);
 
 function computeCpu(a, b) {
   const dt = b.total - a.total;
-  /* Not `dt <= 0`: NaN fails every comparison, so a malformed /proc/stat passed
-     straight through that guard. */
   if (dt <= 0) return { cpu: 0, iowait: 0 };
   return {
     cpu: _pct(((b.busy - a.busy) / dt) * 100),
@@ -29,16 +24,13 @@ function computeCpu(a, b) {
   };
 }
 
-/* One sampling window yields both busy% and iowait%, so a widget needing both
-   pays a single delay instead of two. */
 async function cpuSample() {
   const a = readCpuStat();
   await new Promise(r => setTimeout(r, 500));
   return computeCpu(a, readCpuStat());
 }
 
-/* Total number of processes/threads, from the 4th field of /proc/loadavg
-   ("runnable/total"); returns the total. */
+/* The 4th field of /proc/loadavg is "runnable/total". */
 function procCount() {
   try {
     const f = fs.readFileSync('/proc/loadavg', 'utf8').trim().split(/\s+/);
@@ -49,7 +41,7 @@ function procCount() {
   }
 }
 
-/* System uptime in whole seconds, from the first field of /proc/uptime. */
+/* The first field of /proc/uptime is seconds. */
 function uptimeSeconds() {
   try {
     const v = parseFloat(fs.readFileSync('/proc/uptime', 'utf8').split(/\s+/)[0]);
@@ -59,9 +51,8 @@ function uptimeSeconds() {
   }
 }
 
-/* MemAvailable is absent before kernel 3.14 and in some container setups, where
-   treating it as 0 reports every machine at 100% used. Free plus reclaimable is
-   what `free` used before it existed. */
+/* MemAvailable is absent on some kernels and container setups. Treating it as 0
+   reports every machine at 100% used. */
 function ramPercent() {
   const text = fs.readFileSync('/proc/meminfo', 'utf8');
   const get = key => {
@@ -75,8 +66,6 @@ function ramPercent() {
   if (avail === null) {
     avail = (get('MemFree') || 0) + (get('Buffers') || 0) + (get('Cached') || 0) + (get('SReclaimable') || 0);
   }
-  /* An implausible reading is better reported as zero than as a number that
-     looks real. */
   if (!Number.isFinite(avail) || avail < 0 || avail > total) return 0;
   return ((total - avail) / total) * 100;
 }

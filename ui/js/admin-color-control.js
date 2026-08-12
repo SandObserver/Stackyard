@@ -1,12 +1,8 @@
-/* Reusable colour control: swatch row, HSB sliders and a colour code. Operates in
-   hex, resolves named CSS colours, and calls onChange(hex) on any change. */
 import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=bb36dbb3';
 import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
 import { qa, q } from '/js/utils.js?v=84d58686';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
-/* Badge blue rather than the general control blue, so a blue badge matches the
-   folder badges and keeps white text. */
 export const BADGE_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#1e6ef4', '#cb30df'];
 const _ccIco = {
   hueLo:
@@ -20,9 +16,8 @@ const _ccIco = {
   brLo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 5V3M12 21v-2M5 12H3M21 12h-2M6.5 6.5 5.4 5.4M18.6 18.6l-1.1-1.1M17.5 6.5l1.1-1.1M5.4 18.6l1.1-1.1"/></svg>',
   brHi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="5"/><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4"/></svg>',
 };
-/* HSV to RGB, the standard chroma construction. The hue must be normalised
-   before `x` is computed, or a negative hue mixes a wrapped sextant with an
-   unwrapped `x` and yields a negative channel.
+/* Normalise the hue before computing `x`. A negative hue otherwise mixes a
+   wrapped sextant with an unwrapped `x` and yields a negative channel.
 
    @param {number} h 0..360 @param {number} s 0..100 @param {number} v 0..100
    @returns {[number, number, number]} each 0..255 */
@@ -54,10 +49,8 @@ function _hsvToHex(h, s, v) {
       .join('')
   );
 }
-/* Any CSS colour to lowercase #rrggbb, or null. The canvas is the parser:
-   assigning to fillStyle resolves a named colour or an rgb() string without a
-   lookup table. It is the expensive part, so an already-hex value skips it, and
-   callers compare these strings, so the case must stay stable. */
+/* Any CSS colour to lowercase #rrggbb, or null. Callers compare these strings,
+   so the case must stay stable. */
 const _HEX6 = /^#[0-9a-f]{6}$/i;
 function _cssToHex(str) {
   const direct = String(str ?? '').trim();
@@ -66,8 +59,6 @@ function _cssToHex(str) {
     const c = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'));
     c.fillStyle = '#000';
     c.fillStyle = str;
-    /* fillStyle reads back as string | CanvasGradient | CanvasPattern, but only
-     a string was ever assigned, so only a string comes back. */
     const v = String(c.fillStyle);
     if (_HEX6.test(v)) return v;
     const m = v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
@@ -96,8 +87,6 @@ function _hexToHsv(hex) {
   return { h: Math.round(h), s: Math.round(mx ? (d / mx) * 100 : 0), v: Math.round(mx * 100) };
 }
 
-/* Exported for tests only: nothing outside this module should build a control's
-   colours by hand. */
 export const _internals = { cssToHex: _cssToHex, hsvToRgb: _hsvToRgb, hexToHsv: _hexToHsv };
 
 /** @param {HTMLElement} container
@@ -120,8 +109,6 @@ export function renderColorControl(
     : html`<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
        ${swatchColors.map(swatch)}`;
   const wrap = document.createElement('div');
-  /* Authored SVG constants, the one thing here deliberately not escaped.
-     Everything from outside is escaped by html``. */
   const slider = (label, cls, id, max, val, lo, hi) => html`
     <div class="row hsb-row cc-tune"><span class="rl">${label}</span><div class="hsb-track"><span class="hsb-ico">${raw(lo)}</span><input type="range" class="${cls}" id="${id}" min="0" max="${max}" value="${val}" aria-label="${label}"><span class="hsb-ico">${raw(hi)}</span></div></div>`;
   setHtml(
@@ -135,8 +122,6 @@ export function renderColorControl(
   );
   const rows = /** @type {HTMLElement[]} */ ([...wrap.children]);
   rows.forEach(r => container.appendChild(r));
-  /* Scoped to this control's container; named locally so the module-level q
-     helper stays available under its own name. */
   const qLocal = sel => /** @type {HTMLInputElement} */ (container.querySelector(sel));
   const hEl = qLocal(`#${idPrefix}-h`),
     sEl = qLocal(`#${idPrefix}-s`),

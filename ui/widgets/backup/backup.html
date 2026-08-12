@@ -15,13 +15,8 @@
     padding: 10px; gap: 12px; box-sizing: border-box;
   }
 
-  /* Card sizing:
-     Desktop: body is 150px tall, width is large (1-col or 2-col grid).
-              Use calc-based thirds for medium, 62% for small.
-     Mobile:  body is square (small) or wide+short (medium).
-              Use percentage widths that fill the available space.
-     We detect mobile by body height ≤ 200px (small) or aspect ratio > 1.5 (medium mobile).
-     On mobile we fill available width equally; on desktop use aspect-ratio logic. */
+  /* Mobile is detected by body height <= 200px, or an aspect ratio above 1.5 for
+     a medium slot. */
   .card-wrap {
     position: relative; border-radius: 10px; overflow: hidden;
     flex-shrink: 0;
@@ -47,8 +42,8 @@
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 4px 7px 8px;
     display: flex; flex-direction: column; justify-content: flex-end;
-    /* Opaque strip in the card's own colour (set inline on .card-back), so the
-       placeholder can run full height behind it without showing through text. */
+    /* Opaque strip in the card's own colour, so the placeholder can run full
+       height behind it. */
     background: inherit;
   }
   .card-back-meta {
@@ -196,9 +191,7 @@ function rrect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-/* ── Canvas placeholder drawing ──
-   Draws dots/dashes (and optional haiku lines) directly onto a canvas.
-   Zero extra DOM nodes. Called once at buildShell, and redrawn on resize. */
+/* ── Canvas placeholder drawing ── */
 function drawPh(canvas, haiku, isFront) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2); /* cap DPR at 2 */
   const W   = canvas.offsetWidth;
@@ -307,10 +300,8 @@ function drawPh(canvas, haiku, isFront) {
   }
 }
 
-/* Draw the placeholder once the canvas has a real size, and redraw only when
-   that size actually changes. A ResizeObserver (vs a fixed timeout) fixes cards
-   whose height comes from aspect-ratio layout that isn't settled at draw time —
-   that was leaving the middle of the card blank. */
+/* Draw once the canvas has a real size. A card whose height comes from
+   aspect-ratio layout has no size at draw time. */
 function observeDraw(canvas, haiku, isFront) {
   let lastW = 0, lastH = 0;
   const ro = new ResizeObserver(() => {
@@ -322,9 +313,7 @@ function observeDraw(canvas, haiku, isFront) {
   ro.observe(canvas);
 }
 
-/* ── Mobile detection ──
-   Primary: URL param set by dashboard parent (most reliable).
-   Fallback: check at draw time when dimensions are known. */
+/* ── Mobile detection ── */
 const _mobileParam = new URLSearchParams(location.search).get('mobile') === '1';
 let _isMobile = _mobileParam;
 let _isMobileSquare = false;
@@ -366,8 +355,7 @@ async function boot() {
   const firstSlot = rawSlots.find(s=>s?.provider);
   _pollSec = Math.max(10, parseInt(firstSlot?.dupPollSec || 60, 10));
   buildShell();
-  /* Backup jobs are slow-moving, but a running job is worth watching closely,
-     so the gap shrinks to 5s while any slot reports running. */
+  /* The gap shrinks to 5s while any slot reports running. */
   poll({ fetch: fetchJobs, render: apply, interval: d => (d?.some(j=>j&&j.status==='running') ? 5 : _pollSec) * 1000,
     onError: ({ error, everOk, stale }) => { if (!everOk || stale) applyError({ error: error.message }); } });
 }
@@ -379,19 +367,14 @@ function buildShell() {
   const slots  = slotList();
   const haikus = assignHaikus(slots);
 
-  /* Compute card width based on actual iframe dimensions.
-     On desktop: body is 150px tall, wide iframe — use aspect-ratio-equivalent calc.
-     On mobile:  body can be square (small) or wide+short (medium) — fill proportionally.
-     Strategy: if body is wider than tall (landscape/desktop ratio), cards use fixed width
-     fractions. If body is square or portrait (mobile small widget), cards fill width. */
+  /* A body wider than tall gets fixed width fractions. A square or portrait one
+     fills the width. */
   const bodyW = document.body.clientWidth  || window.innerWidth  || 375;
   const bodyH = document.body.clientHeight || window.innerHeight || 150;
   const PAD   = 10, GAP = 12;
   const inner = bodyW - PAD * 2;
 
-  /* Re-evaluate mobile using actual dimensions as fallback.
-     Desktop iframes are always 150px tall. Mobile iframes are taller.
-     Also check square ratio for small mobile slots. */
+  /* Desktop iframes are always 150px tall. Mobile iframes are taller. */
   if (!_isMobile && bodyH > 160) {
     _isMobile = true;
     document.body.classList.add('is-mobile');
@@ -423,9 +406,8 @@ function buildShell() {
       cardH = null;
     }
   } else {
-    /* Medium: 3 equal columns.
-       On mobile: card height = 80% of iframe height (same ratio as small widget uses),
-       width from aspect ratio — gives same physical card size as small widget. */
+    /* On mobile the card height is 80% of the iframe height, the same ratio the
+       small widget uses. */
     if (isMobile) {
       const h = Math.round((bodyH - PAD * 2) * 0.9);
       const w = Math.round(h * 0.68);
@@ -543,8 +525,8 @@ async function fetchJobs() {
 }
 
 function apply(jobs) {
-  /* jobs is indexed by slot (same order as slotList) — map directly, never by id,
-     so slots sharing a container/source keep their own name and status. */
+  /* jobs is indexed by slot. Map by index, never by id, or slots sharing a
+     container lose their own name and status. */
   slotList().forEach((jobId,idx)=>{
     applyCard(idx, jobId ? (jobs[idx]||null) : null);
   });
@@ -609,8 +591,7 @@ function applyError(err) {
     if(front){ front.style.setProperty('--status-color',NAMED.red); front.setAttribute('role','img'); front.setAttribute('aria-label', `${wt('ui.backupError','Backup error')}: ${err?.error||wt('ui.unreachable','Unreachable')}`); }
     if(back) back.setAttribute('aria-hidden','true');
     if(bname) bname.textContent=wt('ui.error','Error');
-    /* err.error is the API's error string, which can carry upstream-derived
-       text. html`` escapes the interpolation; the <br> stays literal. */
+    /* err.error can carry upstream-derived text. html`` escapes it. */
     if(bmeta) setHtml(bmeta, html`${err?.error||wt('ui.unreachable','Unreachable')}<br>&nbsp;`);
     if(fname) fname.textContent=wt('ui.error','Error');
   });

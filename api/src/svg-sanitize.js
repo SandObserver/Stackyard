@@ -1,9 +1,8 @@
-/* Second layer for uploaded SVG icons; the primary XSS control is that they
-   render only through <img src>. See the security invariant in ui/js/icons.js.
+/* Second layer for uploaded SVG icons. The primary XSS control is that they
+   render only through <img src>. See ui/js/icons.js.
 
-   It rebuilds rather than strips: nothing is copied across unless the allowlist
-   recognises it, so markup the tokenizer misreads is dropped instead of passed
-   through. Do not turn this back into a remove-what-looks-dangerous filter. */
+   This rebuilds from an allowlist. Do not turn it into a filter that removes
+   what looks dangerous: markup the tokenizer misreads would then pass through. */
 
 const SAFE_ELEMENTS = new Set([
   'svg',
@@ -79,12 +78,10 @@ const SAFE_ATTRS = new Set([
 const SAFE_ELEMENTS_LC = new Set([...SAFE_ELEMENTS].map(s => s.toLowerCase()));
 const SAFE_ATTRS_LC = new Set([...SAFE_ATTRS].map(s => s.toLowerCase()));
 
-/* Attributes that take a URL or a payload, none of which an icon needs. */
 const UNSAFE_ATTR_RE = /^(href|xlink:href|src|action|formaction|data)$/i;
-/* Any on* attribute is an event handler (onload, onerror, onclick, ...). */
 const EVENT_ATTR_RE = /^on/i;
 
-/* `/` ends a name because browsers accept it as an attribute separator:
+/* '/' ends a name. Browsers accept it as an attribute separator, so
    <path/onload=...> is one attribute, not part of the tag name. */
 const NAME_END = /[\s/>=]/;
 const WS_OR_SLASH = /[\s/]/;
@@ -101,7 +98,7 @@ const escText = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').repl
 const escAttr = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
 /* ── Tokenizer ─────────────────────────────────────────────────────────────
-   Deliberately lossy: what it does not understand is not reported, so it cannot
+   Lossy by design. What it does not understand is not reported, so it cannot
    reach the output. */
 
 /** @param {string} src @param {number} i
@@ -111,8 +108,6 @@ function readAttributes(src, i) {
   const attrs = [];
   let selfClose = false;
   while (i < src.length) {
-    /* A slash immediately before '>' is the self-closing marker; anywhere else
-       it separates attributes. */
     while (i < src.length && WS_OR_SLASH.test(src[i])) {
       selfClose = src[i] === '/';
       i++;
@@ -129,7 +124,7 @@ function readAttributes(src, i) {
     if (!name) {
       i++;
       continue;
-    } /* nothing consumable here, keep moving */
+    }
     selfClose = false;
 
     let j = i;
@@ -152,8 +147,8 @@ function readAttributes(src, i) {
       attrs.push({ name, value: src.slice(j + 1, end) });
       i = end + 1;
     } else {
-      /* A '/' before '>' ends the value: unlike HTML, in SVG it is the
-         self-closing marker, and swallowing it loses the close. */
+      /* A '/' before '>' ends the value. In SVG it is the self-closing marker,
+         and swallowing it loses the close. */
       const start = j;
       while (j < src.length && !/[\s>]/.test(src[j]) && !(src[j] === '/' && src[j + 1] === '>')) j++;
       attrs.push({ name, value: src.slice(start, j) });
@@ -183,8 +178,6 @@ function tokenize(src) {
     if (lt > i) out.push({ type: 'text', value: src.slice(i, lt) });
 
     const rest = src.slice(lt, lt + 9);
-    /* Dropped whole. An unterminated one swallows the remainder, which is the
-       safe direction. */
     if (rest.startsWith('<!--')) {
       const end = src.indexOf('-->', lt + 4);
       i = end === -1 ? src.length : end + 3;
@@ -204,7 +197,6 @@ function tokenize(src) {
     const isClose = src[lt + 1] === '/';
     const nameAt = lt + (isClose ? 2 : 1);
     if (!/[a-zA-Z]/.test(src[nameAt] || '')) {
-      /* A '<' that does not start a tag is literal text, escaped on output. */
       out.push({ type: 'text', value: '<' });
       i = lt + 1;
       continue;
@@ -225,8 +217,8 @@ function tokenize(src) {
     out.push({ type: 'open', name, attrs, selfClose });
     i = next;
 
-    /* Taken raw to the closing tag, as a browser does: tokenizing CSS as markup
-       lets a '<' inside a selector derail the parse. */
+    /* Take CSS raw to the closing tag, as a browser does. Tokenizing it as
+       markup lets a '<' inside a selector derail the parse. */
     if (name.toLowerCase() === 'style' && !selfClose) {
       const at = src.slice(i).search(/<\/\s*style\b/i);
       const end = at === -1 ? src.length : i + at;
@@ -245,8 +237,7 @@ function keepAttr(name) {
   return SAFE_ATTRS_LC.has(lname) || lname.startsWith('aria-') || lname.startsWith('data-');
 }
 
-/** Rebuild the document from the allowlist.
-    @param {string} input @returns {string} */
+/** @param {string} input @returns {string} */
 function sanitizeSvg(input) {
   let out = '';
   for (const tok of tokenize(String(input))) {
@@ -255,8 +246,8 @@ function sanitizeSvg(input) {
       continue;
     }
 
-    /* Escaping would break selectors, so '<' is removed instead: it is what
-       would let markup be reassembled inside a style body. */
+    /* Remove '<' rather than escape it. Escaping breaks selectors, and '<' is
+       what lets markup be reassembled inside a style body. */
     if (tok.type === 'css') {
       out += scrubCss(tok.value).replace(/</g, '');
       continue;
@@ -264,7 +255,7 @@ function sanitizeSvg(input) {
 
     /* Drop any namespace prefix, so <svg:script> is matched as 'script'. */
     const local = tok.name.replace(/^.*:/, '').toLowerCase();
-    if (!SAFE_ELEMENTS_LC.has(local)) continue; /* dropped, never copied */
+    if (!SAFE_ELEMENTS_LC.has(local)) continue;
 
     if (tok.type === 'close') {
       out += `</${tok.name}>`;

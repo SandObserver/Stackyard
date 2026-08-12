@@ -1,5 +1,3 @@
-/* Invented reading list for the public demo. */
-
 module.exports = function booksDemo({ demo: { wave, round } }) {
   return {
     provider: 'audiobookshelf',

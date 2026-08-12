@@ -11,15 +11,9 @@ let _cfgCache = null,
   _cfgCacheAt = 0;
 const CONFIG_TTL_MS = 5000;
 
-/* Bump when a release changes the shape, and add a matching step in migrate(). */
+/* Bump when a release changes the shape. Add a matching step in migrate(). */
 const SCHEMA_VERSION = 3;
 
-/* Admin suggested `tcp://socket-proxy:2375` for the Docker socket, and a URL
-   with an unrecognised scheme used to be sent as an HTTP request regardless.
-   Outbound requests are now restricted to http and https, so a stored tcp URL
-   is refused, the container list comes back empty, and every app backed by a
-   container reports unhealthy at once. The address is the same host and port
-   either way, so it is rewritten rather than cleared. */
 function migrateSocketProxyScheme(settings) {
   const url = settings?.server?.socketProxyUrl;
   if (typeof url !== 'string' || !/^tcp:\/\//i.test(url)) return false;
@@ -27,8 +21,8 @@ function migrateSocketProxyScheme(settings) {
   return true;
 }
 
-/* Idempotent, so it is safe on every read and write. A config with no
-   _schemaVersion is version 1. Add ordered steps: `if (v < 2) { ...; v = 2; }`. */
+/* Must stay idempotent. It runs on every read and every write. A config with no
+   _schemaVersion is version 1. */
 function migrate(cfg) {
   if (!cfg || typeof cfg !== 'object') return cfg;
   let v = Number(cfg._schemaVersion) || 1;
@@ -48,8 +42,7 @@ function migrate(cfg) {
 }
 
 let _demoCfg = null;
-/* Read from the bundled showcase file, never from disk, so nothing a visitor
-   does can persist. */
+/* Never read from disk. Nothing a demo visitor does may persist. */
 function loadDemoConfig() {
   if (!_demoCfg) {
     const raw = fs.readFileSync(path.join(__dirname, '..', 'demo', 'demo-config.json'), 'utf8');
@@ -59,9 +52,6 @@ function loadDemoConfig() {
   return _demoCfg;
 }
 
-/* items is what every consumer iterates, so a wrong-typed one is the crash
-   vector. A missing items or settings is repaired rather than rejected, so a
-   minimal but valid config is kept instead of being backed up and blanked. */
 function _normalizeShape(parsed) {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
   if (parsed.items !== undefined && !Array.isArray(parsed.items)) return null;
@@ -70,8 +60,7 @@ function _normalizeShape(parsed) {
   return parsed;
 }
 
-/* Timestamped and written with wx, so one corruption cannot overwrite an earlier
-   backup, and the same content is preserved only once. */
+/* Written with wx. One corruption must not overwrite an earlier backup. */
 let _lastCorruptRaw = null;
 function _backupCorrupt(raw) {
   if (raw === _lastCorruptRaw) return;
@@ -101,7 +90,6 @@ function loadConfig() {
   try {
     parsed = JSON.parse(raw);
   } catch (e) {
-    /* Preserve it instead of letting the next save overwrite it. */
     log.warn('config file corrupt, backing up and starting with a blank config', {
       path: CONFIG_PATH,
       error: e.message,
@@ -112,8 +100,6 @@ function loadConfig() {
 
   const shaped = _normalizeShape(parsed);
   if (!shaped) {
-    /* Valid JSON, wrong shape. Treated like an unparseable file rather than
-       caching a shape that throws for every consumer. */
     log.warn('config file has the wrong shape, backing up and starting with a blank config', { path: CONFIG_PATH });
     _backupCorrupt(raw);
     return migrate({ items: [], settings: {} });
@@ -123,8 +109,7 @@ function loadConfig() {
   migrate(shaped);
   _cfgCache = shaped;
   _cfgCacheAt = now;
-  /* A failed write, on a read-only volume for instance, must not break reads: the
-     migrated copy is cached and re-migrates next load. */
+  /* A failed write must not break reads. */
   if (shaped._schemaVersion !== before) {
     try {
       saveConfig(shaped);
@@ -133,8 +118,6 @@ function loadConfig() {
   return shaped;
 }
 
-/* Every write bumps _rev, and POST /api/config rejects a stale one, so two admin
-   tabs saving over each other is a 409 rather than a silent loss. */
 function saveConfig(data) {
   if (data && typeof data === 'object') {
     data._schemaVersion = SCHEMA_VERSION;
@@ -144,11 +127,8 @@ function saveConfig(data) {
   fs.mkdirSync(dir, { recursive: true });
   const tmp = CONFIG_PATH + '.tmp';
 
-  /* Write, flush, rename, flush the directory. Temp-and-rename alone only stops a
-     reader seeing a half-written file; without the flushes a power cut can leave
-     the rename applied and the contents lost, which is a real case on a Pi that
-     gets unplugged. The second flush is on the directory, because the rename is
-     a directory entry. */
+  /* Write, flush, rename, flush the directory. Without both flushes a power cut
+     leaves the rename applied and the contents lost. */
   let fd;
   try {
     fd = fs.openSync(tmp, 'w');
@@ -161,7 +141,6 @@ function saveConfig(data) {
   try {
     fs.renameSync(tmp, CONFIG_PATH);
   } catch (e) {
-    /* Otherwise a failed save leaves a temp file behind for good. */
     try {
       fs.unlinkSync(tmp);
     } catch {
@@ -179,17 +158,14 @@ function saveConfig(data) {
     }
   } catch {
     /* Some filesystems refuse to fsync a directory. The contents are already
-       durable here, so this is not worth failing the save over. */
+       durable. */
   }
 
-  /* Only after the write succeeded, or the app shows changes that were never
-     saved. */
+  /* Only after the write succeeded. */
   _cfgCache = data;
   _cfgCacheAt = Date.now();
 }
 
-/* A permanent default item: movable and hideable like any app, but never removed
-   or edited. Guaranteed present on every read and write. */
 const SYSTEM_SETTINGS_ITEM = {
   id: 'settings',
   type: 'app',

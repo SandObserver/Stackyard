@@ -1,10 +1,9 @@
 # Adding a widget
 
-A widget is a self-contained folder under `ui/widgets/<name>/`. Everything the
-dashboard needs lives in that folder, so adding a widget touches no file outside
-it. The backend discovers the folder automatically, builds the admin config form
-from the manifest, and serves the manifest to the dashboard, which builds the
-widget's iframe URL from it.
+A widget is a self-contained folder under `ui/widgets/<name>/`. Adding one
+touches no file outside it. The backend discovers the folder, builds the admin
+config form from the manifest, and serves the manifest to the dashboard, which
+builds the widget's iframe URL from it.
 
 The manifest drives the config form and the view routing; `data.js` runs
 server-side and talks to the outside service; `index.html` runs in a sandboxed
@@ -424,21 +423,17 @@ if (r.status >= 400) ctx.fail('Service HTTP ' + r.status);
 A thrown failure becomes a 502, so `fetchData` rejects and the frontend's
 `poll()` treats it as a failure: it counts toward `staleAfter`, keeps the last
 good render in place and reports how long ago the data was fresh. A returned
-`{ error: ... }` arrives as HTTP 200, which `poll()` records as a success, so
-the retry and staleness handling never runs and the widget has to detect the
-error itself.
+`{ error: ... }` arrives as HTTP 200, which `poll()` records as a success.
 
-There is no need to catch what `ctx.fetchJSON` throws. Letting it propagate is
-what classifies it: a refused connection is reported as a network failure, a
-deadline as a timeout, and the outbound guard as blocked, each with the right
-`kind`.
+Do not catch what `ctx.fetchJSON` throws. Letting it propagate classifies it: a
+refused connection as a network failure, a deadline as a timeout, the outbound
+guard as blocked.
 
-`ctx.fail` rather than `throw new Error` because a thrown message is normally
-replaced with a generic one before it reaches the browser, since an arbitrary
-message may carry a hostname, a path or an upstream response body. `ctx.fail`
-says the message contains only words you chose, so it is sent as written. Do not
-build one by interpolating an upstream response or a caught error; a status code
-is fine.
+Use `ctx.fail`, not `throw new Error`. A thrown message is replaced with a
+generic one before it reaches the browser, because it may carry a hostname, a
+path or an upstream response body. `ctx.fail` says the message contains only
+words you chose. Do not build one by interpolating an upstream response or a
+caught error; a status code is fine.
 
 An error field *inside* a successful result is a different thing and is still
 correct. A widget reporting several services, or several disk bays, marks the
@@ -451,9 +446,8 @@ return { services: [{ name: 'VPN', error: 'Auth required' }, { name: 'Proxy', co
 ### Demo mode (demo.js)
 
 The public demo has no reachable services, so a widget can ship a `demo.js`
-beside its `data.js` returning an invented body. It is optional, and it is only
-required when the dashboard runs with `DEMO_MODE=true`, so it costs a normal
-install nothing.
+beside its `data.js` returning an invented body. It runs only when the dashboard
+runs with `DEMO_MODE=true`.
 
 ```js
 module.exports = function (ctx) {
@@ -468,10 +462,9 @@ numbers built with it drift between polls and every widget on the demo moves
 together. Structural data that should not reshuffle, like a calendar grid, is
 better built once and cached in a module-level variable.
 
-A widget with no `demo.js` runs its real `data.js` on the demo. That is the right
-choice when the data does not come from an unreachable service: the stats widget
-has none, because `ctx.metrics` already returns invented host figures and the
-real code path then gets exercised.
+A widget with no `demo.js` runs its real `data.js` on the demo. That is the
+right choice when the data does not come from an unreachable service: the stats
+widget has none, because `ctx.metrics` already returns invented host figures.
 
 Only the widget's own polling gets a demo body. A config-time `optionsFrom`
 fetch always runs the real code, so a visitor pressing Fetch in the settings sees
@@ -540,8 +533,8 @@ dashboard sets it, and a widget that overrides it stops following the app.
 ### Mobile active state
 
 A widget with an interior state a tap turns on, such as a selected row, has to
-take part in one small protocol, or two widgets end up active at once and a tap
-on the background leaves the state stuck on.
+take part in this protocol. Without it two widgets end up active at once and a
+tap on the background leaves the state stuck on.
 
 Post a message when the widget becomes active, and expose a function the
 dashboard calls to reset it:
@@ -554,10 +547,9 @@ window.__clearActive = () => { /* drop the active state, hide any tooltip */ };
 ```
 
 The dashboard resets every other widget when it receives that message, and calls
-`__clearActive` directly when a tap lands outside any widget. Resetting is a
-call rather than a message, since the frames are same-origin, so a widget needs
-no `message` listener of its own. If you add one anyway, check `e.origin`
-against `window.location.origin` first.
+`__clearActive` directly when a tap lands outside any widget. The frames are
+same-origin, so a widget needs no `message` listener of its own. If you add one,
+check `e.origin` against `window.location.origin` first.
 
 ### Design canvas sizes
 

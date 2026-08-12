@@ -43,8 +43,6 @@ Every API record is one line:
 `LVL` is one of `DBG`, `INF`, `WRN`, `ERR` or `AUD`. `AUD` marks a
 security-relevant event and is never filtered by the level setting.
 
-A few things worth knowing when reading them:
-
 - Warnings are emitted at both `warn` and `error`, so choosing Errors in
   Settings still shows them.
 - The startup banner is not a record. It has no timestamp and no level, and it
@@ -89,8 +87,8 @@ a small machine:
 | Icon upload | 2 MB | every icon shipped with Stackyard is under 34 KB |
 | Config save | 2 MB | a 300-app dashboard is about 155 KB |
 
-nginx allows 3 MB, deliberately above both, so the API is always the component
-that refuses an oversized request and can say what the limit is.
+nginx allows 3 MB, above both, so the API is always the component that refuses
+an oversized request and can say what the limit is.
 
 ### A widget shows "Blocked: ... is a private address"
 
@@ -102,10 +100,10 @@ are not blocked, so linking to containers on the same network works without it.
 
 ### Every app with a container shows as unhealthy
 
-The container list comes from a Docker socket proxy, which is a separate
-container you run yourself. Stackyard only stores its address. When that address
-cannot be reached, no container is found, and a container that cannot be found
-counts as not running, so every app checked by container name turns red at once.
+The container list comes from a Docker socket proxy, a separate container you
+run yourself. Stackyard only stores its address. When that address cannot be
+reached no container is found, and a container that cannot be found counts as
+not running, so every app checked by container name turns red at once.
 
 Settings refuses an address that is plainly wrong when you save it, and names the
 reason. An address that is accepted but stops working later shows as

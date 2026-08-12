@@ -85,8 +85,6 @@ test('a config killed mid-write is never left partial', async t => {
 
     assert.ok(fs.existsSync(configPath), `iteration ${i}: the config is gone entirely`);
 
-    /* The whole point: whatever a reader finds must be complete. A truncated
-       write would throw here. */
     let parsed;
     try {
       ({ parsed } = readConfig(configPath));

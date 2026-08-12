@@ -1,24 +1,6 @@
 // @ts-check
-/* An indentation-only subset of YAML, enough to read a gethomepage or Dashy
-   config without a dependency.
 
-   The subset is deliberate. Every construct this cannot represent faithfully is
-   refused with the line number rather than approximated, because the failure
-   mode of a permissive hand-written parser is not an exception, it is an item
-   that imports with the wrong URL and nobody notices. Anchors and aliases,
-   merge keys, flow collections with contents, tabs and multi-document files all
-   throw.
-
-   What it does read is set by what real files contain, not by what is tidy to
-   implement. A sequence written level with its key, a long value folded across
-   lines, and an empty pair of brackets are all ordinary in configs people
-   actually keep, and each one used to refuse the whole file.
-
-   Pure: no DOM, no imports, no browser globals. */
-
-/** Thrown for anything outside the supported subset, with the source line.
-    Distinguishable from a TypeError so the caller can report it as a file
-    problem rather than a bug. */
+/** Thrown for anything outside the supported subset, with the source line. */
 export class YamlLiteError extends Error {
   /** @param {string} message @param {number} line */
   constructor(message, line) {
@@ -29,14 +11,11 @@ export class YamlLiteError extends Error {
   }
 }
 
-/* A key line: an unquoted or quoted key, a colon, then an optional value. The
-   key stops at the first colon that is followed by a space or end of line, so
+/* The key stops at the first colon followed by a space or end of line, so
    "url: http://host:8080" splits once and keeps the port. */
 const KEY_RE = /^(?:(?:"((?:[^"\\]|\\.)*)")|(?:'((?:[^']|'')*)')|([^:#]+?))\s*:(?:\s+(.*))?$/;
 
-/** The escapes a double-quoted form decodes. Shared so a key and a value spell
-    the same text the same way.
-    @param {string} s */
+/** @param {string} s */
 const unescapeDouble = s => s.replace(/\\(["\\/nrt])/g, (_, c) => ({ n: '\n', r: '\r', t: '\t' })[c] || c);
 
 /** @param {string} raw @param {number} line */
@@ -54,9 +33,8 @@ function scalar(raw, line) {
     return m[1].replace(/''/g, "'");
   }
   if (s[0] === '&' || s[0] === '*') throw new YamlLiteError('anchors and aliases are not supported', line);
-  /* An empty one is unambiguous and common: real configs disable a whole
-     section by writing `sections: []`. Anything with contents inside the
-     brackets still refuses, since that is where the parsing gets involved. */
+  /* An empty flow sequence is unambiguous. Anything with contents inside the
+     brackets is refused. */
   if (s === '[]') return [];
   if (s === '{}') return Object.create(null);
   if (s[0] === '{' || s[0] === '[') throw new YamlLiteError('flow collections are not supported', line);
@@ -65,23 +43,19 @@ function scalar(raw, line) {
   if (s === 'false' || s === 'False' || s === 'FALSE' || s === 'no' || s === 'No') return false;
   if (/^-?\d+$/.test(s)) return Number(s);
   if (/^-?\d*\.\d+$/.test(s)) return Number(s);
-  /* A trailing comment only counts when a space precedes the #, so a value like
-     "#00ff00" or a URL fragment survives. */
+  /* A trailing comment needs a space before the #, or "#00ff00" and a URL
+     fragment are eaten. */
   const cut = s.search(/\s#/);
   return cut === -1 ? s : s.slice(0, cut).trim();
 }
 
 /** @typedef {{ indent: number, text: string, line: number, block?: string }} Line */
 
-/* A key whose value is a block scalar: "key: |", "key: >-", "key: |2". */
 const BLOCK_RE = /^(.*?):\s*([|>])([-+]?)(\d*)\s*$/;
 
-/** Fold the lines of a block scalar into its value.
-
-    Only the rules a real config exercises. A folded block joins its lines with
-    spaces, which is how a long API key or icon URL gets wrapped across lines; a
-    literal block keeps them. A blank line is a paragraph break either way, and
-    a line indented past the block keeps its own newlines.
+/** Fold the lines of a block scalar into its value. A folded block joins its
+    lines with spaces, a literal block keeps them. A blank line is a paragraph
+    break either way.
 
     @param {string[]} raw the block's lines, already stripped of its indentation
     @param {string} style either "|" or ">" @param {string} chomp */
@@ -99,8 +73,8 @@ function foldBlock(raw, style, chomp) {
     }
   }
   if (chomp === '-') return body.replace(/\n+$/, '');
-  /* "keep" means every trailing newline the block ended with, so the blank lines
-     have to still be here rather than trimmed off before the fold. */
+  /* "keep" means every trailing newline the block ended with, so the blank
+     lines must still be here. */
   if (chomp === '+') return body + '\n';
   return body.replace(/\n+$/, '') + (body.length ? '\n' : '');
 }
@@ -110,12 +84,10 @@ function scan(text) {
   /** @type {Line[]} */
   const out = [];
   let docs = 0;
-  /* A file saved on Windows starts with a byte order mark. Left in place it
-     becomes part of the first key and the document reads as malformed. */
+  /* A byte order mark left in place becomes part of the first key. */
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
   const rows = text.split(/\r\n|\r|\n/);
-  /* The empty string after a final newline is not a line of the file. It only
-     shows where a block scalar counts the blank lines it ends with. */
+  /* The empty string after a final newline is not a line of the file. */
   if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
 
   for (let i = 0; i < rows.length; i++) {
@@ -126,24 +98,20 @@ function scan(text) {
     if (/^ *\t/.test(raw)) throw new YamlLiteError('tab indentation is not supported', line);
     const trimmed = raw.trim();
     if (trimmed === '---') {
-      /* One leading marker is ordinary. A second means a multi-document file,
-         where taking only the first document would silently drop the rest. */
+      /* A second marker means a multi-document file. Reading only the first
+         document drops the rest. */
       if (++docs > 1 || out.length) throw new YamlLiteError('multi-document files are not supported', line);
       continue;
     }
     if (trimmed === '...') throw new YamlLiteError('multi-document files are not supported', line);
-    /* Named before the general anchor refusal, which a merge key would also
-       trip, because naming the alias sends someone looking for the wrong thing.
-       Anchors themselves are refused where a node begins rather than here: a
-       value is free text, and `description: The *arr stack` is not an alias. */
+    /* Refuse anchors where a node begins, not here. A value is free text, and
+       `description: The *arr stack` is not an alias. */
     if (/^<<\s*:/.test(trimmed)) throw new YamlLiteError('merge keys are not supported', line);
 
     const indent = raw.length - raw.trimStart().length;
     const bm = BLOCK_RE.exec(trimmed);
-    /* Consumed here rather than in the value parser, because the block's own
-       lines are text, not structure: they may be indented like anything, hold a
-       tab, or begin with a character that means something at the start of a
-       line. Nothing below this point should look at them. */
+    /* A block scalar's lines are text, not structure. Nothing below this point
+       may look at them. */
     if (bm && bm[1] !== '' && !bm[1].includes('#')) {
       const body = [];
       let base = bm[4] ? indent + Number(bm[4]) : -1;
@@ -176,8 +144,8 @@ function block(lines, cur, indent) {
   return first.text.startsWith('- ') || first.text === '-' ? sequence(lines, cur, indent) : mapping(lines, cur, indent);
 }
 
-/** Refuse an anchor or alias where a node begins. Only the start of a node is
-    checked, so the same characters inside a value stay ordinary text.
+/** Refuse an anchor or alias where a node begins. The same characters inside a
+    value stay ordinary text.
     @param {string} text @param {number} line */
 function refuseAnchor(text, line) {
   if (/^[&*]\S/.test(text)) throw new YamlLiteError('anchors and aliases are not supported', line);
@@ -203,9 +171,8 @@ function sequence(lines, cur, indent) {
     refuseAnchor(rest, l.line);
     if (rest.startsWith('- ') || rest === '-')
       throw new YamlLiteError('a sequence inside a sequence line is not supported', l.line);
-    /* Ahead of the key match, or a flow mapping's own brace and first key read
-       as a key line and the element parses into something that was never in the
-       file. scalar refuses it, and allows the empty pair. */
+    /* Ahead of the key match, or a flow mapping's brace and first key read as a
+       key line and parse into something that was never in the file. */
     if (rest[0] === '{' || rest[0] === '[') {
       out.push(scalar(rest, l.line));
       continue;

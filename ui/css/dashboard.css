@@ -17,10 +17,9 @@
       --label-shadow:     0 1px 4px rgba(0,0,0,.70);
       --bounce-spring:    cubic-bezier(.34,1.56,.64,1);
       --page-ease:        cubic-bezier(.77,0,.175,1);
-      /* The page behind the wallpaper, and the boot veil that hides the
-         unstyled first paint. One colour, written out twice before. */
-      /* Darker than the system greys on purpose: it sits behind the wallpaper
-         and doubles as the veil over the unstyled first paint. */
+      /* The page behind the wallpaper, and the boot veil over the unstyled
+         first paint. */
+      /* Darker than the system greys: it sits behind the wallpaper. */
       --bg-base:          #0d1117;
       /* The opaque card preset a widget can ask for by name. */
       --card-dark:        var(--sy-gray6);
@@ -58,11 +57,9 @@
       align-items:center;
       justify-content:start;
       overflow:hidden;
-      /* Vertical padding: top clears the controls bar, bottom clears the dock.
-         Horizontal padding is fluid so the self-limiting .grid still fits on
-         narrow-wide viewports (landscape phone, portrait tablet) instead of
-         overflowing the content box and being clipped left.
-         clamp scales gracefully on taller/shorter screens. */
+      /* Top clears the controls bar, bottom clears the dock. The fluid
+         horizontal padding keeps .grid inside the content box on a
+         narrow-wide viewport. */
       padding:clamp(44px,4vh,70px) clamp(16px,4vw,270px) clamp(110px,10vh,160px);
     }
     .grid {
@@ -88,9 +85,8 @@
     }
     .widget iframe { display:block; border:0; width:100% }
 
-    /* The mobile home screen builds its own card element, but the glass material
-       is the same one. Sizing stays inline there because it derives from the
-       widget family's design box. */
+    /* The mobile home screen builds its own card element with the same glass
+       material. Its sizing stays inline. */
     .mob-widget-card {
       border:1px solid var(--glass-border); background:var(--glass-bg);
       -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
@@ -181,10 +177,9 @@
       justify-content:center;
       font-size:calc(13px * var(--sc,1)); font-weight:800; color:#fff; line-height:1;
       z-index:20; pointer-events:none;
-      /* Pins the badge to its own compositing layer for the life of the page.
-         WebKit otherwise promotes and demotes this rounded, absolutely
-         positioned element as its classes and inline colours change next to the
-         transformed icon, and its clipped corners can rasterise torn. */
+      /* Pins the badge to its own compositing layer. WebKit otherwise
+         promotes and demotes it as its classes change, and the clipped
+         corners rasterise torn. */
       transform:translateZ(0);
     }
     .badge.on  { display:flex }
@@ -230,8 +225,7 @@
       width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.50);
       transition:background .2s,transform .2s,width .25s,opacity .25s;
       cursor:pointer; flex-shrink:0;
-      /* A dot is a <button> so that Tab reaches it and Enter and Space work.
-         These reset what a button brings with it; the appearance is unchanged. */
+      /* A dot is a <button>, so Tab reaches it and Enter and Space work. */
       padding:0; border:0; -webkit-appearance:none; appearance:none;
     }
     .dot.on { background:#fff; transform:scale(1.25) }
@@ -358,8 +352,8 @@
     }
     /* ✕ close button, mobile only */
     #spot-cancel-mob {
-      /* inset-inline-end, not right: the close button belongs at the end of the
-         line, which is the left in Persian. */
+      /* inset-inline-end, not right. The end of the line is the left in
+         Persian. */
       display:none; position:fixed; top:120px; inset-inline-end:16px; z-index:1002;
     }
     body.is-mob #spot.on #spot-cancel-mob { display:block; }
@@ -595,11 +589,10 @@
     .dyn-box-mob    { position:absolute; display:flex; flex-direction:column; align-items:center; left:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
     .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:1; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; overflow:visible; position:relative; }
 
-/* Reduced-motion / reduced-transparency: strip backdrop-filter blur effects
-   for users who prefer it and on older Safari/iOS where blur is expensive. */
-/* The general rules for both preferences now live in tokens.css, which every
-   page loads. What remains here is what only means something on the dashboard:
-   the tokens this file defines, and selectors for its own elements. */
+/* Strip backdrop-filter blur for anyone who asks for reduced motion or
+   transparency. */
+/* The general rules for both preferences live in tokens.css. What remains here
+   is only what the dashboard defines. */
 
 /* Reduced transparency → drop blur/material (legibility), keep motion as-is */
 @media (prefers-reduced-transparency: reduce) {
@@ -667,19 +660,15 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   .srn  { color:#fff; }
   .srh, .sr-section { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
-  /* A translucent card cannot honour a contrast request and stay translucent, so
-     it densifies to the value the default card uses in this mode. Opaque presets
-     already meet it and keep their colour. */
+  /* A translucent card cannot honour a contrast request and stay translucent. */
   .widget[data-card="translucent"], .mob-widget-card[data-card="translucent"] { background:rgba(0,0,0,.62); }
   .widget[data-card="light"], .mob-widget-card[data-card="light"] { border-color:rgba(0,0,0,.45); }
   .dot { background:rgba(255,255,255,.75); }
   .badge { box-shadow:0 0 0 1.5px rgba(0,0,0,.85); }
 }
 
-/* NOTE: widget interiors live in cross-document iframes, so they size to the
-   iframe viewport (vw/vh) directly — no parent container-query needed. Do NOT
-   add `container-type:size` here: it applies size containment and collapses the
-   desktop .widget (which has no explicit height) to 0, hiding all widgets. */
+/* Do not add `container-type:size` here. It applies size containment and
+   collapses the desktop .widget, which has no explicit height, to 0. */
 
 .setup-prompt {
   position: fixed; inset: 0; z-index: 10001;

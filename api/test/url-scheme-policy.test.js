@@ -1,22 +1,3 @@
-/* Regression tests for P3-1: the outbound guard ignored the URL scheme.
-
-   guardSsrf never looked at u.protocol, so file:, javascript:, data:, ftp: and
-   gopher: all passed. file: got through by an unlucky route: its hostname is
-   empty, and an empty hostname is dotless, so it matched the branch that treats
-   a dotless name as a trusted Docker service name and returned "allowed" before
-   any range check ran.
-
-   What made that reachable rather than merely untidy is the transport. It picks
-   the https module for 'https:' and the plain http module for everything else,
-   so an unknown scheme did not fail, it became an HTTP request. Node's http
-   module treats an empty hostname as localhost. So file:///etc/passwd became a
-   request to localhost, defeating the explicit localhost block three lines above
-   it in the same function.
-
-   Checked in two places on purpose. fetchUnchecked and pingUnchecked skip the
-   guard by design and carry URLs from saved config, which can arrive by import,
-   so the rule also sits where the connection is opened. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
@@ -79,7 +60,6 @@ test('guardSsrf blocks every non-http scheme', async () => {
   }
 });
 
-/* The specific route in: empty host matched the dotless service-name branch. */
 test('an empty hostname no longer passes as a Docker service name', async () => {
   const g = await _internals.guardSsrf('file:///etc/passwd');
   assert.ok(g.error);
@@ -103,11 +83,6 @@ test('pingUnchecked refuses a non-http scheme', async () => {
   assert.match(r.error, /http/);
 });
 
-/* The end of the chain, and the reason this mattered: an empty hostname was
-   silently resolved to localhost by Node's http module, so the request went out
-   before anything could object. Asserting on a listener would not show this,
-   since the old code aimed at port 80 rather than at any port a test can bind.
-   Assert instead that no connection is attempted at all. */
 test('a rejected URL opens no connection', async () => {
   const attempts = [];
   const realHttp = http.request;

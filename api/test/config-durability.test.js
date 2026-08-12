@@ -1,21 +1,3 @@
-/* Regression tests for P5-7, P5-11 and P5-12: the config write.
-
-   Writing to a temp file and renaming it into place means no reader ever sees a
-   half-written config, and that part was already right. What it does not do on
-   its own is get the contents onto the disk: a write lands in the operating
-   system's cache and is flushed later, so a power cut in that window can leave
-   the rename applied and the contents lost. That is not remote on the hardware
-   this targets, where a Pi on an SD card is routinely unplugged rather than shut
-   down, and the result is an empty or truncated config: the whole dashboard.
-
-   Two smaller faults in the same function. The in-memory cache was updated even
-   when the write threw, so the app went on showing changes that were never
-   saved. And a failed write left its temp file behind for good.
-
-   The flushing itself cannot be observed from a test, since the point of it is
-   what survives a power cut, so these tests pin the calls that provide it and
-   the behaviour around them. */
-
 const path = require('node:path');
 const fs = require('node:fs');
 

@@ -1,11 +1,9 @@
 // @ts-check
 
-/* Layout geometry, keyed by widget family size (small/medium/large/xlarge), not
-   by widget. Shared by every widget; adding a widget never touches this file. */
+/* Layout geometry, keyed by widget family size, never by widget. */
 export const WIDGET_HEIGHTS = { small: 150, medium: 150, large: 304, xlarge: 456 };
-/* The fixed design canvas per family, in px. Widgets always render at these
-   dimensions and are scaled to fit the card, so a family looks identical on
-   every device. */
+/* The fixed design canvas per family, in px. Widgets render at these dimensions
+   and are scaled to fit the card. */
 export const WIDGET_DESIGN = { small: [170, 170], medium: [360, 170], large: [360, 360], xlarge: [360, 540] };
 export const WIDGET_COLS = {
   desktop: { small: 1, medium: 2, large: 2, xlarge: 2 },
@@ -20,12 +18,9 @@ export const WIDGET_COST = {
   mobile: { small: 4, medium: 8, large: 16, xlarge: 24 },
 };
 
-/* The iframe URL, from the manifest entry in `reg`. A multi-view widget picks
-   its file through the manifest's `viewField` and `defaultView`. The cache
-   version is hashed from file content at release, never maintained by hand. The
-   `custom` type is absent from the registry and uses the item's own url. */
-/* A `card` inside the selected view wins over the manifest's top-level one.
-   Returns '' for an unknown name; the server validator rejects those. */
+/* The iframe URL, from the manifest entry in `reg`. The cache version is hashed
+   from file content at release, never maintained by hand. */
+/* A `card` inside the selected view wins over the manifest's top-level one. */
 export const CARD_PRESETS = ['dark', 'light', 'translucent'];
 
 export function cardPreset(item, reg) {
@@ -61,9 +56,7 @@ export function widgetSrc(item, reg, opts) {
   parts.push('id=' + encodeURIComponent(item?.id ?? ''));
   parts.push('size=' + encodeURIComponent(item?.widgetSize || entry.sizes?.[0] || 'medium'));
   if (opts?.mobile) parts.push('mobile=1');
-  /* A widget is an iframe and does not load the i18n module, so the toolbox
-     fetches the parent's locale file from cache instead. The strings themselves
-     cannot travel here: the URL is also the cache key. */
+  /* The strings cannot travel here: this URL is also the cache key. */
   if (opts?.lang) parts.push('lang=' + encodeURIComponent(opts.lang));
   return `/widgets/${type}/${file}?${parts.join('&')}`;
 }

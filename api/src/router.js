@@ -22,8 +22,8 @@ function on(m, p, h) {
   routes.push({ m, p, re, names, h });
 }
 
-/* A throwing handler must fail its own request, not the process. dispatch stays
-   synchronous for http.createServer while route() runs async handlers. */
+/* Keep dispatch synchronous for http.createServer. A throwing handler must fail
+   its own request, not the process. */
 function dispatch(req, res) {
   Promise.resolve()
     .then(() => route(req, res))
@@ -36,8 +36,8 @@ function route(req, res) {
 
   if (!PUBLIC_PATHS.has(u.pathname)) {
     if (!isAuthenticated(req)) return json(res, 401, { error: 'Unauthorised', auth: true, kind: 'auth' });
-    /* Before the handler, so a handler that issues its own cookie replaces this
-       one rather than being overwritten by it. */
+    /* Before the handler. A handler that issues its own cookie must replace this
+       one. */
     refreshSession(req, res);
   }
 
@@ -47,8 +47,6 @@ function route(req, res) {
     const match = u.pathname.match(r.re);
     if (!match) continue;
     req.params = {};
-    /* decodeURIComponent throws on an invalid escape, which is a bad request,
-       not a server fault. */
     let bad = null;
     for (let i = 0; i < r.names.length; i++) {
       const decoded = tryDecode(match[i + 1] || '');
@@ -83,8 +81,7 @@ function json(res, status, data) {
   res.end(b);
 }
 
-/* Buffered in memory before parsing, so this is a memory limit as much as a size
-   one: a 300-app config is about 155 KB. */
+/* Buffered in memory before parsing, so this is a memory limit too. */
 const BODY_LIMIT = 2 * 1024 * 1024;
 function readBody(req) {
   return new Promise((res, rej) => {
@@ -103,12 +100,9 @@ function readBody(req) {
   });
 }
 
-/* The client address, for rate limiting and audit records.
-
-   X-Real-IP is trusted only over loopback, where our own nginx is the only thing
-   that can set it; anything else is identified by its socket address. No header
-   chain is parsed: nginx has already resolved the real client from TRUSTED_PROXY
-   (see docker-entrypoint.sh). */
+/* Trust X-Real-IP only over loopback, where our own nginx is the only thing that
+   can set it. Do not parse a header chain: nginx has already resolved the real
+   client from TRUSTED_PROXY. */
 const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 
 function getIp(req) {
@@ -120,12 +114,8 @@ function getIp(req) {
   return peer || 'unknown';
 }
 /* Every browser sends Origin on a request that changes something, including a
-   same-origin one, so a write arriving without it did not come from a page on
-   this dashboard. It used to be allowed through, which left the check answering
-   only the requests that were already declaring themselves.
-
-   This is what a command-line client has to add to write to the API: an Origin
-   naming the address it is calling. */
+   same-origin one. A write arriving without it did not come from a page on this
+   dashboard, so it is refused. */
 function checkOrigin(req, res) {
   const origin = req.headers['origin'];
   if (origin) {

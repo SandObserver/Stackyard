@@ -1,14 +1,3 @@
-/* Regression tests for the shared CSP include (P16-3).
-
-   The default Content-Security-Policy used to be repeated verbatim at nine
-   sites in nginx/dashboard.conf. A one-line policy change therefore meant a
-   nine-place edit, and nothing caught a site that was missed. These tests pin
-   the include, and pin the two locations that deliberately differ.
-
-   They read the config as text rather than running nginx, so they work in CI
-   without an nginx binary. `nginx -t` against the built image is the separate
-   chore/nginx-config-test branch; it catches syntax, this catches drift. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -37,9 +26,6 @@ test('the default policy is not repeated anywhere in dashboard.conf', () => {
 });
 
 test('every location that sets a CSP either includes the default or is a known exception', () => {
-  /* Locations that state their own policy. Both are intentional and documented
-     in csp-default.conf; adding a third should be a deliberate decision, so it
-     fails here until this list is updated. */
   const EXCEPTIONS = ['^~ /admin', '^~ /widgets/'];
 
   const inline = [...dashboard.matchAll(/add_header Content-Security-Policy/g)];
@@ -81,18 +67,6 @@ test('the Dockerfile ships every nginx config file', () => {
 });
 
 /* ── frame-ancestors (P14-2) ──────────────────────────────────────────────── */
-
-/* /widgets/ deliberately clears X-Frame-Options so the dashboard can embed
-   widgets, but nothing replaced it, so widget pages could be framed by any
-   origin. They are the only pages allowed inline script, and they have clickable
-   elements, so the exposure is clickjacking. The session cookie is
-   SameSite=Strict, so a foreign frame carries no credentials.
-
-   Every policy states frame-ancestors now, not only the one that was missing it.
-   X-Frame-Options already enforced the same thing on the others, but it is
-   obsolete and unspecified, so a location that omits it in future would
-   otherwise have no framing policy at all. That is exactly how this gap
-   appeared. */
 
 function policyFor(location) {
   const at = dashboard.indexOf(`location ${location} {`);

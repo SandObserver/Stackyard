@@ -1,6 +1,3 @@
-/* Invented backup results for the public demo, one per slot the visitor has
-   configured, so the card matches the settings form they are looking at. */
-
 module.exports = function backupDemo({ config }) {
   const slots = Array.isArray(config?.slots) ? config.slots : [];
   const now = Date.now();

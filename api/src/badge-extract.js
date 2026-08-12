@@ -1,6 +1,3 @@
-/* Value extraction for activity badges. Plain parsed JSON in, no I/O, so keep it
-   free of the route it serves. */
-
 function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 }) {
   const MAX_DEPTH = 6,
     MAX_NODES = 256;

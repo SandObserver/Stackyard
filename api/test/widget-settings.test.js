@@ -1,14 +1,3 @@
-/* P5-3, P5-4, P18-2: ctx.settings was loadConfig().settings itself.
-
-   Every widget data function received the session signing key and the password
-   hash under settings.auth, the host IP, port map, TLS-skip flag and Docker
-   socket URL under settings.server, and held the live cached object, so it
-   could rewrite any of them for the rest of the config cache's lifetime. One
-   key in the repository is read this way: stats.diskMount.
-
-   The list is an allowlist so that a secret added under settings later is
-   withheld by default rather than shared until someone remembers to deny it. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { widgetSettings, SHARED_KEYS } = require('../src/widget-settings');
@@ -45,8 +34,6 @@ test('no secret or infrastructure setting is passed', () => {
   assert.ok(!text.includes('socket:2375'));
 });
 
-/* The point of the allowlist: something nobody has asked for is withheld
-   without anyone having to notice it was added. */
 test('a newly added setting is withheld by default', () => {
   const out = widgetSettings({ ...FULL(), someNewApiKey: 'FUTURE-SECRET' });
   assert.equal(out.someNewApiKey, undefined);

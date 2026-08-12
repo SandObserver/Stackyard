@@ -1,20 +1,3 @@
-/* What CONTRIBUTING.md tells a contributor to run, against what CI runs.
-
-   P18-7. The pull request template asked for one command, `cd api && node
-   --test`, out of the eight checks that decide whether a change merges, and
-   neither document mentioned the cache-busting check, which runs first and is
-   the one a new contributor is most likely to trip: reference a new stylesheet
-   or module without a `?v=` stamp and the build fails with nothing local to
-   reproduce it.
-
-   The checks are defined once, in the composite action, so the list can be
-   compared rather than described. A check added to CI without being written
-   down fails here, which is the only way a list like this stays true.
-
-   Commands are compared as text, and the doc is written to match the action
-   verbatim for that reason: a doc that paraphrases a command is a doc someone
-   copies and gets wrong. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -85,8 +68,6 @@ test('every check CI runs is one CONTRIBUTING.md tells you to run', () => {
   assert.deepEqual(missing, [], `CI runs these and CONTRIBUTING.md does not list them:\n  ${missing.join('\n  ')}`);
 });
 
-/* The other direction. A command that no longer exists is worse than a missing
-   one, because it is followed and then trusted. */
 test('CONTRIBUTING.md lists no check CI does not run', () => {
   const block = /```\n([\s\S]*?)```/.exec(docSection());
   assert.ok(block, 'the command block is gone');

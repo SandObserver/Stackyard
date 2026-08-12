@@ -66,8 +66,8 @@
 <script type="module">
 import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
 await loadStrings();
-/* Applied after the catalog arrives: these two are in the markup so the widget
-   still reads correctly in English if the fetch fails. */
+/* These two are in the markup, so the widget still reads correctly in English
+   if the catalog fetch fails. */
 document.getElementById('sub-label').textContent = wt('ui.queriesBlocked', 'Queries Blocked');
 document.getElementById('widget').setAttribute('aria-label', wt('ui.aria', 'DNS filtering'));
 const TICK_MS = 30000;
@@ -120,8 +120,8 @@ async function gfetch() {
   let r; try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=stats`); } catch { throw new Error('Unreachable'); }
   if (!r.ok) {
     const d = await r.json().catch(()=>({}));
-    /* Prefer what the server said: data.js reports in the widget's own words
-       ("Pi-hole auth failed — check password"), which beats a status mapping. */
+    /* Prefer what the server said. data.js reports in the widget's own
+       words. */
     throw new Error(d.error || (r.status===503?'Not configured':r.status===401?'Auth error':
                     r.status===502?'Unreachable':'Error '+r.status));
   }

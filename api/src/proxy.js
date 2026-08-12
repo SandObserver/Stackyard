@@ -9,8 +9,8 @@ const { parseXml } = require('./parse-xml');
 const log = require('./log');
 const { parsePrometheus } = require('./parse-prometheus');
 
-/* Addresses that are never a legitimate outbound target. The third column is
-   documentation; docs/security.md is checked against it. */
+/* Addresses that are never a legitimate outbound target. A test checks
+   docs/security.md against the third column. */
 /** @type {Array<[string, number, string]>} */
 const BLOCKED_IPV4 = [
   ['0.0.0.0', 8, 'this network (RFC 1122)'],
@@ -26,8 +26,8 @@ const BLOCKED_IPV4 = [
   ['240.0.0.0', 4, 'reserved, includes 255.255.255.255 broadcast (RFC 1112)'],
 ];
 
-/* Loopback, unspecified, unique local, link-local, multicast. ff00::/8 needs
-   all four hex digits: a group written 'ff' is 0x00ff, which is not multicast. */
+/* ff00::/8 needs all four hex digits. A group written 'ff' is 0x00ff, which is
+   not multicast. */
 const BLOCKED_IPV6_RE = /^(::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|ff[0-9a-f]{2}:)/i;
 
 /** @param {string} addr @returns {number|null} */
@@ -50,9 +50,8 @@ function isBlockedIPv4(addr) {
   return _blockedV4.some(r => (n & r.mask) >>> 0 === r.base);
 }
 
-/* The range check only understands dotted-decimal, so without decoding these a
-   hex-tailed literal such as ::7f00:1 or 64:ff9b::a9fe:a9fe (cloud metadata)
-   slips past it. */
+/* The range check only understands dotted-decimal. Without this a hex-tailed
+   literal such as ::7f00:1 or 64:ff9b::a9fe:a9fe slips past it. */
 function embeddedIPv4(addr) {
   if (typeof addr !== 'string') return null;
   const s = addr.toLowerCase();
@@ -74,7 +73,7 @@ function isPrivateAddress(addr) {
   if (s.startsWith('::ffff:') || s.startsWith('64:ff9b::')) {
     const v4 = embeddedIPv4(s);
     if (v4) return isBlockedIPv4(v4);
-    return true; /* wrapper prefix with a tail we can't parse: refuse */
+    return true; /* unparseable tail behind a wrapper prefix: refuse */
   }
   if (s.startsWith('::')) {
     const v4 = embeddedIPv4(s);
@@ -82,16 +81,15 @@ function isPrivateAddress(addr) {
   }
   return isBlockedIPv4(s) || BLOCKED_IPV6_RE.test(s);
 }
-/* Never sniffed from the body the way XML is: a plain-text line like
-   "Version 1.2" matches the metric grammar exactly. */
+/* Never sniff this from the body alone. A plain-text line like "Version 1.2"
+   matches the metric grammar exactly. */
 function looksLikeMetrics(ct, body) {
   if (ct.includes('openmetrics') || /(^|;)\s*version=0\.0\.\d/.test(ct)) return true;
   return ct.includes('text/plain') && body.includes('# TYPE');
 }
 
 const FETCH_SIZE_LIMIT = 4 * 1024 * 1024;
-/* Disables SSRF filtering entirely. Opt-in, because most homelab targets are on
-   private IPs but turning it on removes the guard. */
+/* Disables SSRF filtering entirely. */
 const ALLOW_PRIVATE_IPS = process.env.ALLOW_PRIVATE_IPS === 'true';
 
 function getHostIp() {
@@ -102,13 +100,12 @@ function getHostIp() {
   }
 }
 
-/* URL keeps IPv6 literals bracketed, and the range checks do not recognise that
+/* URL keeps IPv6 literals bracketed. The range checks do not recognise that
    form. */
 const bareHost = hostname => String(hostname ?? '').replace(/^\[|\]$/g, '');
 
-/* A dotless single-label name is a Docker service name, trusted on an internal
-   network. Excludes IPv6 literals, which are dotless but contain colons, and
-   localhost, which is loopback. Expects a bare host, so run bareHost first. */
+/* A dotless single-label name is a Docker service name. Expects a bare host, so
+   run bareHost first. */
 const isDockerServiceName = h => !!h && h !== 'localhost' && !h.includes('.') && !h.includes(':');
 
 function isInternalHost(hostname) {
@@ -122,17 +119,9 @@ function shouldSkipTls(hostname, cfg) {
   return isInternalHost(hostname);
 }
 
-/* Whether to turn certificate checking off for this one request.
-
-   The answer is the same wherever the request came from: only a host on your own
-   network. A self-signed certificate is a thing you have on a box you run, so
-   the switch that tolerates one has no honest use against a public address,
-   where the only effect is to accept whoever answers. The server-wide setting
-   was already scoped this way; the per-app switch and the per-request flag were
-   not, and those are the paths that carry a stored credential.
-
-   `ignored` says the caller asked and was refused, so a certificate failure can
-   be explained rather than just reported.
+/* Skip certificate checking for internal hosts only. On a public address the
+   only effect is to accept whoever answers, on paths that carry a stored
+   credential.
 
    @param {string} hostname @param {boolean|null|undefined} requested
    @returns {{ skip: boolean, ignored: boolean }} */
@@ -151,11 +140,8 @@ function resolveSkipTls(hostname, requested) {
   return { skip: internal, ignored: !internal };
 }
 
-/* Shown when a certificate failed on a host the skip could not apply to, so the
-   answer names the reason rather than looking like the switch did nothing.
-
-   Wording only: it carries no hostname, path or upstream text, which is what
-   makes it safe to vouch for and show. See api-error.js. */
+/* Wording only. It carries no hostname, path or upstream text, which is what
+   makes it safe to show verbatim. See api-error.js. */
 const SKIP_TLS_IGNORED_MESSAGE =
   'The certificate could not be verified. Allowing a self-signed certificate only applies to addresses on your own ' +
   'network, so it was not used here.';
@@ -187,10 +173,9 @@ function rewriteUrl(raw) {
   }
 }
 
-/* The transport picks the https module for 'https:' and plain http for anything
-   else, so without this an unrecognised scheme becomes an HTTP request, and with
-   an empty hostname Node sends it to localhost. Checked again where the
-   connection is opened, since the unchecked entry points skip the guard. */
+/* Without this an unrecognised scheme becomes an HTTP request, and an empty
+   hostname goes to localhost. Checked again where the connection is opened: the
+   unchecked entry points skip the guard. */
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 /** @param {URL} u @returns {string|null} */
@@ -209,17 +194,12 @@ async function guardSsrf(rawUrl) {
   } catch {
     return { error: 'Invalid URL', ip: null };
   }
-  /* An empty hostname would otherwise pass the service-name allowance below and
-     connect to localhost. */
   const policy = urlPolicyError(u);
   if (policy) return { error: policy, ip: null };
   const h = bareHost(u.hostname);
-  /* Loopback, not a service name: block it before the allowance below. */
+  /* Loopback, not a service name. Block it before the allowance below. */
   if (!ALLOW_PRIVATE_IPS && h === 'localhost') return { error: `Blocked: ${h} is a private address.`, ip: null };
-  /* Trusted on internal networks. */
   if (isDockerServiceName(h)) return { error: null, ip: null };
-  /* The Docker host's own IP is trusted. A trust policy, not a workaround for
-     the rewrite. */
   const hostIp = getHostIp();
   if (hostIp && h === hostIp) return { error: null, ip: null };
   if (!ALLOW_PRIVATE_IPS && isPrivateAddress(h)) return { error: `Blocked: ${h} is a private address.`, ip: null };
@@ -231,7 +211,7 @@ async function guardSsrf(rawUrl) {
   }
   if (!ALLOW_PRIVATE_IPS && isPrivateAddress(address))
     return { error: `Blocked: ${h} resolves to private IP ${address}.`, ip: null };
-  /* A literal address cannot be rebound, so there is nothing to pin. */
+  /* A literal address cannot be rebound. */
   if (h === address) return { error: null, ip: null };
   return { error: null, ip: address };
 }
@@ -247,7 +227,7 @@ function withDeadline(ms, onExpire) {
   const timer = setTimeout(() => {
     if (!settled) onExpire();
   }, ms);
-  /* Unref'd so a pending request never holds the process open at shutdown. */
+  /* Unref'd. A pending request must not hold the process open at shutdown. */
   if (timer.unref) timer.unref();
   return {
     settle(fn, arg) {
@@ -272,7 +252,6 @@ function fetchJSON(raw, opts = {}) {
     }
     const policy = urlPolicyError(u);
     if (policy) return reject(Object.assign(new Error(policy), { kind: 'blocked', status: 403 }));
-    /* Assigned below, once `req` exists for the deadline to destroy. */
     let dl = null;
     const done = (fn, arg) => dl.settle(fn, arg);
     const lib = u.protocol === 'https:' ? https : http;
@@ -283,9 +262,8 @@ function fetchJSON(raw, opts = {}) {
     if (bodyBuf) hdrs['Content-Length'] = bodyBuf.length;
     const pin = opts.pinIp && opts.pinIp !== u.hostname ? opts.pinIp : null;
     if (pin) hdrs['Host'] = u.host;
-    /* http.request wants a bare IPv6 address, not the bracketed form URL keeps
-       (hostname is "[::1]"); brackets here fail to resolve. Host header and SNI
-       stay on the original bracketed hostname. */
+    /* http.request wants a bare IPv6 address. The bracketed form URL keeps fails
+       to resolve. Host header and SNI stay on the bracketed hostname. */
     const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
     const req = lib.request(
       {
@@ -294,7 +272,7 @@ function fetchJSON(raw, opts = {}) {
         path: u.pathname + u.search,
         method: opts.method || 'GET',
         headers: hdrs,
-        servername: pin ? u.hostname : undefined /* keep SNI + cert validation on the real hostname */,
+        servername: pin ? u.hostname : undefined /* keep SNI and cert validation on the real hostname */,
         timeout: opts.timeout || FETCH_MS,
         rejectUnauthorized: !skipTls,
       },
@@ -325,8 +303,8 @@ function fetchJSON(raw, opts = {}) {
             else if (ct.includes('xml') || body.trimStart().startsWith('<')) {
               const parsed = parseXml(body);
               if (parsed['#truncated']) {
-                /* Origin and path only: a URL can carry an API key in its query
-                 string and credentials in its authority. */
+                /* Origin and path only. The query can carry an API key and the
+                   authority can carry credentials. */
                 log.warn('XML response was too large to read in full', {
                   url: u.origin + u.pathname,
                   bytes: body.length,
@@ -338,7 +316,7 @@ function fetchJSON(raw, opts = {}) {
         });
       },
     );
-    /* Armed here rather than earlier because it destroys `req`. */
+    /* Armed here, not earlier: it destroys `req`. */
     dl = withDeadline(opts.timeout || FETCH_MS, () => {
       req.destroy();
       done(reject, new Error('Timed out'));
@@ -369,8 +347,8 @@ function statusDesc(code) {
   return `HTTP ${code}`;
 }
 
-/* Built from the error code, not the message: filtering messages is fail-open
-   and could leak internal hostnames. */
+/* Built from the error code, never the message. Filtering messages is fail-open
+   and leaks internal hostnames. */
 const PING_ERRORS = Object.freeze({
   ECONNREFUSED: 'Connection refused.',
   ENOTFOUND: 'Host not found.',
@@ -417,7 +395,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
       opts.servername = u.hostname;
     }
 
-    /* One deadline for the whole ping: the 405 retry below would otherwise let a
+    /* One deadline for the whole ping. The 405 retry below would otherwise let a
        stalled host take the budget twice over. */
     let current = null;
     const dl = withDeadline(ms, () => {
@@ -436,13 +414,11 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
         req.destroy();
         dl.settle(resolve, { ok: false, status: 0, error: 'Timed out' });
       });
-      /* This result reaches the browser as-is. The message names the address it
-         failed to reach; the code does not, so only the code is kept. */
+      /* This result reaches the browser as-is. Keep the code, never the message:
+         the message names the address it failed to reach. */
       req.on('error', (/** @type {unknown} */ e) => {
-        /* u.origin only: it excludes credentials in the authority, and the path
-           and query are both left off because either can carry an API key. The
-           operator's question is which service is unreachable, which the origin
-           answers on its own. */
+        /* u.origin only. The authority can carry credentials and the path and
+           query can carry an API key. */
         log.warn('ping failed', { url: u.origin, error: errMessage(e) });
         const text = skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? '') ? SKIP_TLS_IGNORED_MESSAGE : pingErrorText(e);
         dl.settle(resolve, { ok: false, status: 0, error: text, code: errCode(e) });
@@ -451,7 +427,6 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
     };
 
     send('HEAD', sc => {
-      /* Some servers refuse HEAD; the retry shares the same overall budget. */
       if (sc === 405)
         return send('GET', gsc => dl.settle(resolve, { ok: gsc < 500, status: gsc, desc: statusDesc(gsc) }));
       dl.settle(resolve, { ok: sc < 500, status: sc, desc: statusDesc(sc) });
@@ -462,12 +437,11 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
 /* ── The outbound boundary ──────────────────────────────────────────────────
 
    The only supported ways out. Checked is for a URL that arrived in an HTTP
-   request; Unchecked is for one from saved config, which only an admin can
-   write. Each rewrites first and guards the rewritten URL, so the URL checked is
-   the URL connected to: put any new rewrite step above the guard. */
+   request. Unchecked is for one from saved config, which only an admin can
+   write. Put any new rewrite step above the guard, so the URL checked is the URL
+   connected to. */
 
 class SsrfBlockedError extends Error {
-  /* Carries the status a route should return, so a generic catch keeps the 403. */
   constructor(reason) {
     super(reason);
     this.name = 'SsrfBlockedError';
@@ -476,7 +450,7 @@ class SsrfBlockedError extends Error {
 }
 
 async function fetchChecked(url, opts = {}) {
-  /* Before guardSsrf, whose dns.lookup is itself an outbound request. */
+  /* Before guardSsrf. Its dns.lookup is itself an outbound request. */
   if (IS_DEMO) return fetchJSON(url, opts);
   const target = rewriteUrl(url);
   const guard = await guardSsrf(target);

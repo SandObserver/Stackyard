@@ -28,8 +28,6 @@ on('POST', '/api/ping', async (req, res) => {
 });
 
 on('GET', '/api/badges', async (req, res) => {
-  /* Every call here fans out to the user's own services, so the ceiling bounds
-     outbound traffic rather than work done here. See poll-limits.js. */
   const limited = rateLimit(getIp(req), 'badges', LIMITS.BADGES.max, LIMITS.BADGES.windowMs);
   if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
   const cfg = loadConfig(),
@@ -45,10 +43,8 @@ on('GET', '/api/badges', async (req, res) => {
       .map(async item => {
         try {
           const src = item.monitoring?.activity?.enabled ? item.monitoring.activity : item.badge;
-          /* A stored row that is not a { key, value, secret } entry is skipped
-           rather than failing the badge, so say which item is damaged. Silence
-           here is what made this misleading: the request went out without its
-           credential and the service answered as it would to any stranger. */
+          /* A skipped row means the request goes out without its credential.
+             Report which item is damaged. */
           const dropped =
             droppedRowCount(
               item?.monitoring?.activity?.enabled ? item.monitoring.activity?.headers : item?.badge?.headers,
@@ -70,10 +66,8 @@ on('GET', '/api/badges', async (req, res) => {
                 params: item.monitoring.activity.params,
               }
             : item.badge;
-          /* The extracted number only. This used to carry `raw: r.data`, the whole
-           upstream body, per item, on a poll that runs every 20 seconds per tab
-           and accepts bodies up to FETCH_SIZE_LIMIT. Nothing read it. The admin
-           field picker needs the body and gets it from /api/badge-proxy. */
+          /* The extracted number only. This poll runs per item per tab and must
+             not carry the upstream body. */
           out[item.id] = { value: computeBadgeValue(r.data, badge) };
         } catch (e) {
           out[item.id] = Object.assign({ value: 0 }, errorBody(e));
@@ -92,12 +86,9 @@ on('POST', '/api/badge-proxy', async (req, res) => {
     const body = JSON.parse(await readBody(req));
     const { url, itemId, skipTls = false } = body;
     if (!url) return json(res, 400, { error: 'url required', kind: KIND.INVALID });
-    /* Rows the user did not retype arrive without a value, and are filled from
-       the stored item so a test after reload uses the real credential.
-
-       Only when the request targets exactly the saved destination with exactly
-       the saved non-secret rows, or the caller picks the URL while the server
-       picks the credential. See secret-scope.js. */
+    /* Refill a blanked row only when the request targets exactly the saved
+       destination with exactly the saved non-secret rows. Otherwise the caller
+       picks the URL while the server picks the credential. */
     let headerRows = toRows(body.headers);
     let paramRows = toRows(body.params);
     let declined = false;
@@ -121,15 +112,9 @@ on('POST', '/api/badge-proxy', async (req, res) => {
       ? url + (url.includes('?') ? '&' : '?') + new URLSearchParams(params)
       : url;
     const r = await fetchChecked(fullUrl, { headers, timeout: FETCH_MS, skipTls: skipTls === true });
-    /* fetchJSON resolves on a 4xx/5xx rather than rejecting, so an upstream that
-       answered "401 Unauthorised" used to come back here as a plain 200 with an
-       error body attached. The admin UI could not tell that apart from success:
-       it reported "Connected, no numeric values found" and never offered to
-       enable authentication, which is the case its auth branch exists for.
-       Report it as a failure, with the upstream's status as data. */
+    /* fetchJSON resolves on a 4xx/5xx rather than rejecting. Report it as a
+       failure here, or the admin UI reads an error body as success. */
     if (r.status >= 400) {
-      /* A 401/403 straight after declining to restore is almost certainly the
-         missing credential, not a wrong key. Say which it is. */
       if (declined && (r.status === 401 || r.status === 403)) {
         return json(res, 502, { error: RETYPE_MESSAGE, kind: KIND.INVALID });
       }

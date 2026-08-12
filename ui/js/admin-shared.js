@@ -14,10 +14,9 @@ export const toast = (m, t = 'ok') => {
   tt = setTimeout(() => (e.className = ''), 3000);
 };
 
-/* Throw a tagged 401 so callers can redirect to login, and carry `kind` and
-   `detail` (docs/api-errors.md) so they branch on data, not on message text. */
-/** An error carrying the API's structured fields. `kind` is the machine-readable
-    classification the backend sends alongside the message; see docs/api-errors.md.
+/* Carry `kind` and `detail`, so callers branch on data, never on message
+   text. */
+/** An error carrying the API's structured fields. See docs/api-errors.md.
     @typedef {Error & { status?: number, kind?: string, detail?: Record<string, unknown> }} ApiError */
 
 /** @param {number} status @param {any} body @returns {ApiError} */
@@ -28,9 +27,8 @@ function tagged(status, body) {
   if (body && body.detail && typeof body.detail === 'object') e.detail = body.detail;
   return e;
 }
-/* Set by the admin entry point rather than imported, because the sign-in screen
-   imports this module: importing it back would be a cycle, and one of the two
-   would be half-initialised at the moment it was needed. */
+/* Set by the admin entry point, never imported. The sign-in screen imports this
+   module, so importing it back is a cycle. */
 /** @type {(() => Promise<boolean>) | null} */
 let _reauth = null;
 
@@ -39,9 +37,7 @@ export function setReauthHandler(fn) {
   _reauth = fn;
 }
 
-/* One sign-in however many requests fail at once. A settings save makes three
-   writes in a row, and without this each would raise its own sign-in box over
-   the last. */
+/* One sign-in however many requests fail at once. */
 /** @type {Promise<boolean> | null} */
 let _signingIn = null;
 function reauthenticate() {
@@ -54,8 +50,8 @@ function reauthenticate() {
   return _signingIn;
 }
 
-/* Retried once and only once: a second 401 after a successful sign-in is the
-   server refusing the request itself, and trying again would loop. */
+/* Retried once only. A second 401 after a successful sign-in is the server
+   refusing the request itself. */
 export const ag = async (p, recover = true) => {
   const r = await fetch(API + p, { cache: 'no-store' });
   if (recover && recoversSession(p, r.status) && (await reauthenticate())) return ag(p, false);
@@ -77,18 +73,15 @@ export const ap = async (p, b, recover = true) => {
     throw tagged(r.status, d || (r.status === 401 ? { error: 'Unauthorised', kind: 'auth' } : null));
   }
   const body = await r.json();
-  /* Reported here rather than at each save, because every write of a config
-     goes through this one function and a credential left behind by any of them
-     has to be said out loud. The server only sends this when something was
-     actually withheld. */
+  /* Every config write goes through here, and a withheld credential has to be
+     said out loud. */
   const withheld = (body?.withheld || []).map(w => w.label).filter(Boolean);
   if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err');
   return body;
 };
 
-/* A native `disabled` control is skipped by screen readers, so the user is never
-   told why it will not turn on. aria-disabled keeps it announced but carries no
-   behaviour, so activation is blocked here instead. */
+/* A native `disabled` control is skipped by screen readers. aria-disabled keeps
+   it announced but carries no behaviour, so activation is blocked here. */
 export function setTogDisabled(input, disabled, describedById) {
   if (!input) return;
   input.setAttribute('aria-disabled', disabled ? 'true' : 'false');
@@ -114,9 +107,7 @@ export const PE_SVG =
 export const CHEV_SVG =
   '<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
-/* Inline-edit row: click the pencil to reveal an input, commit on blur/Enter. */
-/* `root` lets a caller wire a subtree that is not in the document yet; it
-   defaults to the document, which is where every id-based caller looks. */
+/* `root` lets a caller wire a subtree that is not in the document yet. */
 /** @param {string} rowId @param {string} inputId
     @param {{ type?: string, placeholder?: string,
               onCommit?: (value: string) => void, root?: ParentNode }} [opts] */
@@ -158,8 +149,6 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
   }
 
   pen.addEventListener('click', open);
-  /* Secret rows already open from the value text; match that so the target is
-     the whole value, not just a 28px pencil. */
   valEl.addEventListener('click', open);
   inp.addEventListener('blur', commit);
   inp.addEventListener(
@@ -177,8 +166,7 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
   );
 }
 
-/* The listbox interaction WAI-ARIA expects for a `.row-dd` checklist: roving
-   tabindex, arrows, Home/End, Enter/Space, Escape and outside-click close. The
+/* The listbox interaction WAI-ARIA expects for a `.row-dd` checklist. The
    caller owns the markup and what a toggle means. */
 export function wireChecklist(dd, btn, list, onToggle) {
   const opts = () => qa('li[role="option"]', list);

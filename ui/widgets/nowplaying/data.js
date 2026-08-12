@@ -1,19 +1,5 @@
-/* Now Playing widget data function.
-
-   Config (server-side, secrets included):
-     provider          : 'plex' | 'jellyfin' | 'emby' | 'navidrome'
-     plexUrl/Token     : Plex Media Server /status/sessions (X-Plex-Token); no Tautulli needed
-     jellyfinUrl/Key   : Jellyfin /Sessions
-     embyUrl/Key       : Emby /Sessions (same shape as Jellyfin)
-     navidromeUrl/User/Password : Subsonic getNowPlaying. Progress + play/paused come from the
-                                  OpenSubsonic playbackReport extension (Navidrome >= 0.62, positionMs/state);
-                                  older servers omit these, so progress falls back to null.
-
-   Returns the normalized shape the widget renders:
-     { provider, sessions: [{ title, subtitle, progress, state, type, player }] }
-   progress is 0..1, or null when the source has no duration (Navidrome).
-   state is 'playing' | 'paused'. player is the device or client the session is
-   running on, '' when the source does not name one. sessions is capped at 5. */
+/* Returns { provider, sessions: [{ title, subtitle, progress, state, type,
+   player }] }. progress is 0..1, or null when the source has no duration. */
 
 const crypto = require('crypto');
 
@@ -27,7 +13,7 @@ async function plex(ctx) {
   const base = ctx.normalizeBase(ctx.config.plexUrl);
   const token = ctx.config.plexToken;
   if (!base || !token) ctx.fail('Plex URL and token required', { kind: ctx.KIND.INVALID });
-  // Plex returns XML unless JSON is requested; token may be header or query
+  /* Plex returns XML unless JSON is requested. */
   const r = await ctx.fetchJSON(`${base}/status/sessions`, {
     headers: { Accept: 'application/json', 'X-Plex-Token': token },
     timeout: 8000,
@@ -56,9 +42,7 @@ async function jellyfinLike(ctx, provider) {
   const key = provider === 'emby' ? ctx.config.embyKey : ctx.config.jellyfinKey;
   const name = provider === 'emby' ? 'Emby' : 'Jellyfin';
   if (!base || !key) ctx.fail(name + ' URL and API key required', { kind: ctx.KIND.INVALID });
-  /* Header auth works on current and older servers. Jellyfin deprecated the
-     api_key query param (removal targeted for 10.13); Emby keeps its own token
-     header. */
+  /* Header auth. Jellyfin deprecated the api_key query param. */
   const authHeaders = provider === 'emby' ? { 'X-Emby-Token': key } : { Authorization: `MediaBrowser Token="${key}"` };
   const r = await ctx.fetchJSON(`${base}/Sessions`, { headers: authHeaders, timeout: 8000 });
   if (authErr(r)) ctx.fail(name + ' auth failed', { kind: ctx.KIND.AUTH });
@@ -98,12 +82,10 @@ async function navidrome(ctx) {
   const user = ctx.config.navidromeUser,
     pass = ctx.config.navidromePassword;
   if (!base || !user || !pass) ctx.fail('Navidrome URL, username and password required', { kind: ctx.KIND.INVALID });
-  /* md5(password + salt) is the Subsonic API's authentication token, which
-     Navidrome implements; anything stronger simply fails to authenticate, and
-     the only alternative the protocol offers is sending the password in clear
-     text. Not a password hash at rest, and not a choice open to this widget.
-     CodeQL flags it as js/insufficient-password-hash and the alert is dismissed
-     for that reason; expect it to reappear whenever these lines move. */
+  /* md5(password + salt) is the Subsonic API's authentication token. Anything
+     stronger fails to authenticate, and the only alternative the protocol
+     offers is the password in clear text. Not a password hash at rest. CodeQL
+     flags it as js/insufficient-password-hash and the alert is dismissed. */
   const salt = crypto.randomBytes(6).toString('hex');
   const token = crypto
     .createHash('md5')

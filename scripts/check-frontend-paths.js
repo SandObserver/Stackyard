@@ -1,11 +1,8 @@
 #!/usr/bin/env node
 /* Every module under ui/js needs two entries in tsconfig.frontend.json, the
-   plain path and the cache-busted one, because TypeScript allows one wildcard
-   per pattern (TS5061).
-
-   A missing entry fails silently: the import resolves to nothing, that module
-   goes unchecked, and typecheck:ui still passes. This makes it a failing check
-   instead. */
+   plain path and the cache-busted one: TypeScript allows one wildcard per
+   pattern. A missing entry resolves to nothing, that module goes unchecked, and
+   typecheck:ui still passes. */
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -14,9 +11,7 @@ const ROOT = path.join(__dirname, '..');
 const CONFIG = path.join(ROOT, 'tsconfig.frontend.json');
 const JS_DIR = path.join(ROOT, 'ui', 'js');
 
-/* The config is JSON with comments, which JSON.parse will not take. Only block
-   comments are used, and no string in the file contains the opening sequence.
-   Checked below rather than assumed. */
+/* The config is JSON with comments, which JSON.parse will not take. */
 function readConfig(file) {
   const raw = fs.readFileSync(file, 'utf8');
   const stripped = raw.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -54,9 +49,8 @@ for (const file of modules) {
   if (!(busted in paths)) missing.push(busted);
 }
 
-/* The other direction: an entry left behind after a module is renamed or
-   deleted resolves to a file that is not there, which is silent in the same
-   way. */
+/* An entry left behind after a rename resolves to a file that is not there,
+   and is silent in the same way. */
 const known = new Set(modules.flatMap(f => [`/js/${f}`, `/js/${f}?v=*`]));
 const stale = Object.keys(paths)
   .filter(p => p.startsWith('/js/') && !known.has(p))

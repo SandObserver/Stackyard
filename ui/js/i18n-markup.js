@@ -1,16 +1,13 @@
 // @ts-check
-/* The subset of markup a translation may contain: these four tags, no attributes
-   at all, everything else escaped. Output is rebuilt rather than filtered, so
-   anything unrecognised becomes visible text.
-
-   Permitting no attributes is what keeps this short: no URL to validate, no
-   style to scrub, no event handler to strip. Widening that is a decision to make
-   here, deliberately. */
+/* The subset of markup a translation may contain: these four tags, no
+   attributes, everything else escaped. The output is rebuilt, not filtered.
+   Permitting an attribute means validating a URL, scrubbing a style and
+   stripping an event handler. */
 
 import { esc, raw } from '/js/html.js?v=ccec347c';
 
 export const ALLOWED_TAGS = Object.freeze(['strong', 'em', 'code', 'br']);
-/* br is void: it never has a closing tag and never wraps anything. */
+/* br is void. It never has a closing tag and never wraps anything. */
 export const VOID_TAGS = Object.freeze(['br']);
 
 const TAG = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)\s*(\/?)>/g;
@@ -22,8 +19,8 @@ export function sanitizeI18nMarkup(value) {
   const src = String(value == null ? '' : value);
   let out = '';
   let last = 0;
-  /* Tags opened and not yet closed, so a stray or mismatched closing tag cannot
-     unbalance the result and leak into surrounding markup. */
+  /* Tags opened and not yet closed. A stray closing tag must not unbalance the
+     result and leak into the surrounding markup. */
   const open = [];
 
   TAG.lastIndex = 0;
@@ -34,15 +31,12 @@ export function sanitizeI18nMarkup(value) {
     const [, closing, rawName, selfClosing] = m;
     const name = rawName.toLowerCase();
 
-    /* Shown as text, not dropped, so a translator sees the mistake rather than
-       losing the word inside it. */
     if (!ALLOWED_TAGS.includes(name)) {
       out += esc(m[0]);
       continue;
     }
 
     if (VOID_TAGS.includes(name)) {
-      /* A closing tag for a void element is meaningless; drop it silently. */
       if (!closing) out += `<${name}>`;
       continue;
     }
@@ -54,7 +48,7 @@ export function sanitizeI18nMarkup(value) {
     if (closing) {
       const at = open.lastIndexOf(name);
       if (at === -1) continue; /* closes nothing; drop it */
-      /* Close anything still open inside it, so the output stays well-formed. */
+      /* Close anything still open inside it. The output must stay well-formed. */
       while (open.length > at) out += `</${open.pop()}>`;
     } else {
       open.push(name);
@@ -63,7 +57,6 @@ export function sanitizeI18nMarkup(value) {
   }
   out += esc(src.slice(last));
 
-  /* Close whatever the string left open. */
   while (open.length) out += `</${open.pop()}>`;
   return out;
 }

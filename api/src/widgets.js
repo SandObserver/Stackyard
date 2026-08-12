@@ -5,8 +5,6 @@ const log = require('./log');
 const { translateEntry } = require('./widget-i18n');
 const { loadConfig } = require('./config');
 
-/* In the container the UI is copied to the nginx web root, so the API is pointed
-   at that path. */
 const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets';
 
 const VALID_SIZES = new Set(['small', 'medium', 'large', 'xlarge']);
@@ -25,12 +23,12 @@ const VALID_FIELDTYPES = new Set([
 ]);
 
 let _registry = null;
-/* Kept beside the registry, never in it: a lookup by widgetType must not resolve
-   to a rejected widget. */
+/* Kept beside the registry, never in it. A lookup by widgetType must not
+   resolve to a rejected widget. */
 let _rejected = [];
 
-/* Siblings may share a key to swap a label per service type, but only one may be
-   visible at a time or the last one read silently wins. */
+/* Siblings may share a key, but only one may be visible at a time or the last
+   one read silently wins. */
 function _validateSiblingKeys(fields, where) {
   const errs = [];
   const counts = Object.create(null);
@@ -50,9 +48,8 @@ function _validateSiblingKeys(fields, where) {
   return errs;
 }
 
-/* Shape only; _validateShowIfTargets checks the target, which needs the whole
-   sibling list. Both failures are silent: a condition that can never be met
-   hides the field for good, and looks like a missing feature. */
+/* Shape only. _validateShowIfTargets checks the target, which needs the whole
+   sibling list. */
 function _validateShowIf(f, where) {
   if (f.showIf === undefined) return [];
   const s = f.showIf;
@@ -67,8 +64,8 @@ function _validateShowIf(f, where) {
   return errs;
 }
 
-/* Conditions resolve within a sibling set, so naming a field outside it hides
-   the dependant for good. */
+/* Conditions resolve within a sibling set. Naming a field outside it hides the
+   dependant for good. */
 function _validateShowIfTargets(fields, where) {
   const keys = new Set(fields.filter(f => f && typeof f.key === 'string' && f.key).map(f => f.key));
   const errs = [];
@@ -82,8 +79,6 @@ function _validateShowIfTargets(fields, where) {
   return errs;
 }
 
-/* Deliberately permissive about unknown keys, so the manifest format can grow
-   without breaking older widgets. */
 function _validateField(f, where, depth = 0) {
   const errs = [];
   if (!f || typeof f !== 'object') {
@@ -116,13 +111,10 @@ function _validateField(f, where, depth = 0) {
   return errs;
 }
 
-/* An option's stored value, for the two shapes a select accepts: a bare string,
-   or { value, label }. */
 const _optionValue = o => (o && typeof o === 'object' ? o.value : o);
 
 /* A typo in "viewField" fails silently: the widget pins to defaultView and the
-   selector does nothing. Only a field declaring "options" can be checked, since
-   "optionsFrom" fetches its choices at runtime. */
+   selector does nothing. */
 function _validateViewField(m) {
   const errs = [];
   const fields = Array.isArray(m.fields) ? m.fields : [];
@@ -141,7 +133,6 @@ function _validateViewField(m) {
   return errs;
 }
 
-/* Validate a parsed widget.json. Returns { errors:[...] }. */
 function validateManifest(name, m) {
   const errs = [];
   if (!m || typeof m !== 'object') return { errors: ['manifest is not an object'] };
@@ -206,12 +197,8 @@ function validateManifest(name, m) {
   return { errors: errs };
 }
 
-/* A folder without widget.json is skipped, not refused: the legacy flat-file
-   widgets coexist, and an empty registry is a valid result.
-
-   Null prototype, because every caller looks a widget up by a widgetType from
-   config: on an ordinary object, "constructor" answers a miss with something
-   truthy. */
+/* Null prototype. Every caller looks a widget up by a widgetType from config,
+   and on an ordinary object "constructor" answers a miss with something truthy. */
 function loadRegistry() {
   const reg = Object.create(null);
   const rejected = [];
@@ -230,15 +217,13 @@ function loadRegistry() {
     const name = ent.name;
     const dir = path.join(WIDGETS_PATH, name);
     const manPath = path.join(dir, 'widget.json');
-    if (!fs.existsSync(manPath)) continue; /* not a folder-style widget, skip */
+    if (!fs.existsSync(manPath)) continue;
 
     let manifest;
     try {
       manifest = JSON.parse(fs.readFileSync(manPath, 'utf8'));
     } catch (e) {
       log.warn('widget registry: invalid JSON, skipped', { widget: name, error: e.message });
-      /* The parser's message names the syntax problem and a character offset,
-         never file content, so it is safe to show an operator. */
       rejected.push({ name, errors: [`widget.json is not valid JSON: ${e.message}`] });
       continue;
     }
@@ -258,33 +243,23 @@ function loadRegistry() {
     };
   }
 
-  /* debug, not info: the banner and the readiness record both carry the count,
-     so the names are the only extra here. Refusals stay at warn above. */
   log.debug('widget registry loaded', { count: Object.keys(reg).length, widgets: Object.keys(reg) });
   _registry = reg;
   _rejected = rejected;
   return reg;
 }
 
-/* Why each refused widget was refused. Loading the registry fills this, so a
-   caller that has not loaded yet gets the answer rather than an empty list. */
 function getRejected() {
   if (!_registry) loadRegistry();
   return _rejected;
 }
 
-/* Lazily built on first use, then cached. Widgets are baked into the image and
-   do not change at runtime, so a single load is sufficient. */
 function getRegistry() {
   if (!_registry) loadRegistry();
   return _registry;
 }
 
-/* The browser-facing shape, carrying nothing the backend keeps to itself.
-
-   Translated here rather than in the browser: this is the one place a manifest
-   becomes browser-facing, and the settings form then receives ordinary strings
-   and needs to know nothing about catalogs. */
+/* The browser-facing shape, carrying nothing the backend keeps to itself. */
 function _publicEntry(name, e, lang) {
   const m = e.manifest;
   return translateEntry(
@@ -309,8 +284,6 @@ on('GET', '/api/widgets', (_, res) => {
   const reg = getRegistry();
   const lang = loadConfig().settings?.language || 'en';
   const list = Object.entries(reg).map(([name, e]) => _publicEntry(name, e, lang));
-  /* Safe to send: the errors describe files inside the image, and this route is
-     behind the auth gate. */
   json(res, 200, { widgets: list, rejected: getRejected() });
 });
 

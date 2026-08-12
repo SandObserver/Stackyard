@@ -4,10 +4,9 @@ const path = require('path');
 const crypto = require('crypto');
 
 const UI_DIR = path.join(__dirname, '..', 'ui');
-/* An asset reference, with or without a version stamp. The stamp is optional
-   on purpose: requiring it made a reference written without one invisible to
-   this script, so it stayed unstamped and that one file kept being served from
-   cache after an upgrade. */
+/* An asset reference, with or without a version stamp. The stamp must stay
+   optional, or a reference written without one is invisible here and keeps
+   being served from cache after an upgrade. */
 const REF_RE = /(["'])(\/(?:css|js)\/[a-zA-Z0-9_.-]+\.(?:css|js))(\?v=[0-9a-zA-Z]+)?/g;
 
 function listFiles(dir, exts, out = []) {
@@ -26,14 +25,9 @@ function hashFor(assetPath) {
   return crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 8);
 }
 
-/* Some files reference each other (dashboard.js imports ui.js, which imports
-   utils.js, etc). Each file's hash depends on the current on-disk content of
-   the files it references, so rewriting in one pass can still leave stale
-   hashes for anything processed before its dependency was updated. Repeat
-   until a pass makes no changes. */
-/* References that had no stamp before this run. Reported at the end so CI fails
-   on a reference someone wrote without one, rather than the script quietly
-   fixing it and the next person repeating the mistake. */
+/* Each file's hash depends on the on-disk content of the files it references,
+   so one pass can leave stale hashes. Repeat until a pass makes no changes. */
+/* References that had no stamp before this run. */
 const unstamped = [];
 /* Manifests whose entryVersions no longer match their entry files. */
 const staleManifests = [];
@@ -47,9 +41,8 @@ function findUnstamped(text, file) {
   return found;
 }
 
-/* --check reports without writing. A check that modifies the tree is not a
-   check: it would make CI pass by fixing the thing it is meant to report, and
-   leave the working tree dirty. */
+/* --check must not write. A check that modifies the tree makes CI pass by
+   fixing the thing it reports. */
 const CHECK_ONLY = process.argv.includes('--check');
 
 const files = listFiles(UI_DIR, ['.html', '.js']);
@@ -59,8 +52,7 @@ let totalChangedFiles = 0;
 let filesChangedThisPass = -1;
 
 while (filesChangedThisPass !== 0) {
-  /* Nothing is written in check mode, so a second pass would see the same work
-     again and never converge. */
+  /* Nothing is written in check mode, so a second pass never converges. */
   if (CHECK_ONLY && pass > 0) break;
   if (++pass > MAX_PASSES) throw new Error(`Did not converge after ${MAX_PASSES} passes, check for a reference cycle`);
   filesChangedThisPass = 0;
@@ -81,9 +73,6 @@ while (filesChangedThisPass !== 0) {
 
 console.log(`bump-cache-busting: stable after ${pass} pass(es), ${totalChangedFiles} file write(s)`);
 
-/* --check reports rather than accepts. The build runs this script before
-   packaging, so an unstamped reference becomes a failing check instead of a file
-   that silently never cache-busts. */
 if (unstamped.length) {
   const unique = [...new Set(unstamped)];
   console.error(`bump-cache-busting: ${unique.length} reference(s) had no ?v= stamp:`);
@@ -91,12 +80,9 @@ if (unstamped.length) {
   if (CHECK_ONLY) console.error('Add ?v=1 to each; this script keeps the value current from then on.');
 }
 
-/* Widget iframe entry files are referenced indirectly: the dashboard builds each
-   URL from the manifest, not from a literal string in code, so the pass above
-   cannot reach them. Stamp each widget's entry files by content hash into its
-   manifest under `entryVersions` instead, so the dashboard cache-busts them
-   without a hand-maintained number. Entry files are the manifest's view srcs,
-   or index.html when the widget declares no views. */
+/* The dashboard builds a widget's iframe URL from the manifest, not from a
+   literal in code, so the pass above cannot reach those files. Stamp them by
+   content hash into the manifest under `entryVersions`. */
 const WIDGETS_DIR = path.join(UI_DIR, 'widgets');
 
 function stampWidgetManifests() {
@@ -120,8 +106,8 @@ function stampWidgetManifests() {
       if (!fs.existsSync(full)) throw new Error(`Widget "${ent.name}" references a missing entry file: ${file}`);
       versions[file] = crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 8);
     }
-    /* Only when something actually changed. Rewriting unconditionally reformats
-       every manifest on every run, which buries a real change in noise. */
+    /* Only when something changed. Rewriting unconditionally reformats every
+       manifest on every run. */
     const current = JSON.stringify(manifest.entryVersions || {});
     if (current === JSON.stringify(versions)) continue;
     if (CHECK_ONLY) {
@@ -137,14 +123,10 @@ function stampWidgetManifests() {
 
 stampWidgetManifests();
 
-/* Reported last, so one run lists everything that needs attention rather than
-   stopping at the first problem. */
 if (CHECK_ONLY) {
-  /* Manifests are reported but do not fail the check. They are stamped by the
-     release build, so they are expected to be out of date in a working tree and
-     failing on that would make the check useless day to day. An unstamped asset
-     reference is different: it is written by hand and never becomes correct on
-     its own. */
+  /* Manifests are reported but must not fail the check: the release build
+     stamps them, so a working tree is expected to be out of date. An unstamped
+     asset reference is written by hand and never becomes correct on its own. */
   if (staleManifests.length) {
     console.log(`bump-cache-busting: ${staleManifests.length} widget manifest(s) will be stamped by the build`);
   }

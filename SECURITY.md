@@ -12,7 +12,7 @@ Include the affected version or commit, a description of the issue, and steps to
 
 ## Scope and threat model
 
-Stackyard serves plain HTTP and is designed to run on a trusted LAN, not on the public internet. Its authentication simplifies managing local dashboards and is not an internet-facing security boundary. Some features trade safety for convenience and are opt-in with warnings.
+Stackyard serves plain HTTP and is designed to run on a trusted LAN, not on the public internet. Its authentication is not an internet-facing security boundary. Some features trade safety for convenience and are opt-in with warnings.
 
 The outbound-request guard protects against a compromised or malicious widget reaching internal addresses, not against a malicious administrator: anyone who can edit the config already has full config-write access.
 

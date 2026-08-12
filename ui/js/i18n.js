@@ -1,12 +1,12 @@
 // @ts-check
-/* Catalogs are plain JSON at /i18n/<code>.json, English being the source and the
-   fallback. Adding a language is an entry in LANGUAGES plus the file. */
+/* Catalogs are plain JSON at /i18n/<code>.json. English is the source and the
+   fallback. */
 
 import { setHtml } from '/js/html.js?v=ccec347c';
 import { i18nMarkup } from '/js/i18n-markup.js?v=875ccb8e';
 
-/* `dir` flips the document for right-to-left scripts. Only list a locale whose
-   file exists, or the selector offers one that cannot render. */
+/* Only list a locale whose file exists, or the selector offers one that cannot
+   render. */
 export const LANGUAGES = [
   { code: 'en', name: 'English', dir: 'ltr' },
   { code: 'fa', name: 'فارسی', dir: 'rtl' },
@@ -16,7 +16,6 @@ export const LANGUAGES = [
   { code: 'fr', name: 'Français', dir: 'ltr' },
 ];
 
-/* Fallback direction lookup for any RTL locale not explicitly listed above. */
 const RTL = new Set(['fa', 'ar', 'he', 'ur', 'ps', 'sd', 'ug', 'yi']);
 
 export function dirFor(code) {
@@ -25,8 +24,8 @@ export function dirFor(code) {
   return RTL.has(String(code || '').split('-')[0]) ? 'rtl' : 'ltr';
 }
 
-/* Null prototype on all three: `t` and the reverse map are keyed by catalog
-   key and by English source text, so an inherited member must not answer. */
+/* Null prototype on all three. The keys are catalog keys and English source
+   text, so an inherited member must not answer. */
 let base = Object.create(null); /* en.json, flattened: the fallback for every key */
 let active = Object.create(null); /* selected locale, flattened; falls back to base per key */
 let current = 'en';
@@ -55,8 +54,6 @@ async function fetchCatalog(code) {
   }
 }
 
-/* Load English (fallback) plus the requested locale, then set <html lang/dir>.
-   Falls back to English if the requested catalog is missing or fails to load. */
 export async function initI18n(code) {
   code = code || 'en';
   base = (await fetchCatalog('en')) || Object.create(null);
@@ -78,14 +75,13 @@ export function getLang() {
      data-i18n="key"       -> textContent
      data-i18n-html="key"  -> markup, limited to the tags i18n-markup.js allows
      data-i18n-ph="key"    -> placeholder
-     data-i18n-al="key"    -> aria-label
-   Safe to re-run, including after rendering dynamic markup. */
+     data-i18n-al="key"    -> aria-label */
 function translateDOM(root) {
   root = root || document;
   root.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.getAttribute('data-i18n'));
   });
-  /* Only the small tag subset in i18n-markup.js, never arbitrary markup. */
+  /* Only the tag subset in i18n-markup.js, never arbitrary markup. */
   root.querySelectorAll('[data-i18n-html]').forEach(el => {
     setHtml(el, i18nMarkup(t(el.getAttribute('data-i18n-html'))));
   });
@@ -97,8 +93,6 @@ function translateDOM(root) {
   });
 }
 
-/* Translate a dotted key, falling back to English then to the key itself.
-   Interpolates {name} placeholders from the optional vars object. */
 export function t(key, vars) {
   let s = active[key] != null ? active[key] : base[key] != null ? base[key] : key;
   if (vars) s = String(s).replace(/\{(\w+)\}/g, (m, k) => (vars[k] != null ? vars[k] : m));

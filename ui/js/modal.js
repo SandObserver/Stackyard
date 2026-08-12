@@ -1,23 +1,12 @@
 // @ts-check
-/* The one modal in the admin UI.
-
-   Everything a dialog owes the person using it lives here once: a backdrop that
-   dismisses, Escape, a focus trap, and focus returned to whatever opened it.
-   The browser's own confirm() and prompt() do all of that too, which is why
-   they were worth using, but they cannot show a list, cannot be styled, and
-   block the page while open.
-
-   Structure only. Callers fill the body with their own nodes. */
+/* The one modal in the admin UI: backdrop, Escape, focus trap, and focus
+   returned to whatever opened it. Structure only. Callers fill the body. */
 
 import { trapFocus } from '/js/dialog.js?v=b3841546';
 
-/** Open a modal and return its parts.
-
-    `close()` is safe to call more than once, since a dialog can be dismissed by
-    the backdrop, Escape, an action button, or the caller.
-
-    The trap is armed by `focus()` rather than on open, because the element
-    worth focusing is usually one the caller has not appended yet.
+/** Open a modal and return its parts. `close()` is safe to call more than once.
+    `focus()` arms the trap, because the element worth focusing is usually one
+    the caller has not appended yet.
 
     @param {{ title: string, className?: string, onClose?: () => void }} opts
     @returns {{ box: HTMLElement, body: HTMLElement, footer: HTMLElement,
@@ -35,8 +24,8 @@ export function openModal({ title, className, onClose }) {
 
   const hdr = document.createElement('div');
   hdr.className = 'dlg-hdr';
-  /* Unique per open: two ids would point the second dialog's label at the
-     first one's heading. */
+  /* Unique per open. Two ids point the second dialog's label at the first one's
+     heading. */
   hdr.id = 'dlg-hdr-' + Math.random().toString(36).slice(2, 8);
   hdr.textContent = title;
   box.setAttribute('aria-labelledby', hdr.id);
@@ -57,9 +46,8 @@ export function openModal({ title, className, onClose }) {
     if (onClose) onClose();
   };
 
-  /* Both ends of the click, or a text selection that starts inside the dialog
-     and is released past its edge dismisses it, discarding whatever the person
-     was reading closely enough to select. */
+  /* Both ends of the click. A text selection released past the dialog's edge
+     would otherwise dismiss it. */
   let downOnBackdrop = false;
   ov.onmousedown = e => {
     downOnBackdrop = e.target === ov;
@@ -86,8 +74,8 @@ export function openModal({ title, className, onClose }) {
   document.body.appendChild(ov);
 
   const focus = initial => {
-    /* Arming twice is a caller re-rendering the body. The previous trap has to
-       go, or its listener outlives the dialog and its restore target is lost. */
+    /* Arming twice is a caller re-rendering the body. The previous trap must
+       go, or its listener outlives the dialog. */
     release();
     release = trapFocus(box, { onClose: close, initialFocus: initial });
   };
@@ -96,7 +84,6 @@ export function openModal({ title, className, onClose }) {
 }
 
 /** A modal with Cancel and a confirming action, resolving to true or false.
-    Replaces confirm() where the question needs more than one line of text.
 
     @param {{ title: string, body: Node, confirmLabel: string, cancelLabel: string,
               destructive?: boolean, className?: string }} opts
@@ -116,7 +103,6 @@ export function confirmModal({ title, body, confirmLabel, cancelLabel, destructi
 }
 
 /** A modal asking for one line of text, resolving to the trimmed value or null.
-    Replaces prompt().
 
     @param {{ title: string, label: string, placeholder?: string,
               confirmLabel: string, cancelLabel: string }} opts

@@ -16,8 +16,6 @@ function ctxFor(config, endpoint, routes, row = null) {
       config,
       endpoint,
       row,
-      /* The same surface widget-data.js hands a data function: a failure is
-         thrown as a WidgetError so its message reaches the browser intact. */
       fail: (message, opts) => {
         throw new WidgetError(message, opts);
       },

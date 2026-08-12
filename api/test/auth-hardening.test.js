@@ -1,19 +1,3 @@
-/* Regression tests for P2-1 and P5-2, which are one chain.
-
-   verifyPassword fed the stored hash straight to timingSafeEqual.
-   Buffer.from(x, 'hex') silently drops anything that is not a hex pair, so a
-   malformed stored hash produced a short buffer and timingSafeEqual threw on the
-   length mismatch. That throw happened inside the scrypt callback, on a later
-   tick, where the surrounding Promise could not see it: not catchable by await,
-   it escaped as an uncaughtException and killed the process. With no restart,
-   the API stayed down.
-
-   The way in was the config write path. It merged settings.auth field by field
-   and only when auth already existed, so before a password was ever set an
-   unauthenticated caller could POST a config carrying its own passwordHash.
-
-   Fixing only the crash would have left the injection open, so both are here. */
-
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
@@ -39,8 +23,6 @@ test('a wrong password does not verify', async () => {
   assert.equal(await verifyPassword('nope', await hashPassword('correct-horse')), false);
 });
 
-/* The finding. Each of these used to reach timingSafeEqual with a buffer of the
-   wrong length and take the process down. */
 test('a malformed stored hash resolves false instead of crashing', async () => {
   const cases = [
     'somesalt:not-valid-hex',
@@ -205,7 +187,6 @@ test('an ordinary config write is unaffected', async () => {
   assert.ok(cfg.items.some(i => i.id === 'a1'));
 });
 
-/* The chain end to end: plant a hash, then log in. This used to kill the run. */
 test('a config write cannot make a later login crash the server', async () => {
   await post('/api/config', { items: [], settings: { auth: { enabled: true, passwordHash: 'x:zz' } } });
   const r = await post('/api/auth/login', { password: 'anything' });

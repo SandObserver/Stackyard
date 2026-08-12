@@ -1,14 +1,11 @@
 #!/usr/bin/env node
-/* Does this tag name a stable release, or a candidate? The answer decides
-   whether the build moves `latest`, which is what an unpinned pull gets.
+/* Decides whether the build moves `latest`. Anything that is not valid semver
+   is a prerelease, so a mistyped tag such as `v1.5` cannot move it. Not
+   api/src/semver.js: that one coerces malformed input. */
 
-   Anything that is not valid semver is reported as a prerelease, so a mistyped
-   tag such as `v1.5` cannot move `latest`. Not api/src/semver.js: that one
-   coerces malformed input rather than rejecting it. */
-
-/* semver.org's own recommended pattern, with an optional leading v for git tag
-   style. Note what it rejects: leading zeroes in the core, an empty prerelease
-   identifier, a trailing dot. */
+/* semver.org's recommended pattern, with an optional leading v. It rejects
+   leading zeroes in the core, an empty prerelease identifier and a trailing
+   dot. */
 const SEMVER =
   /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
@@ -28,8 +25,7 @@ function parseTag(ref) {
   };
 }
 
-/** True when this tag must not move `latest`: a release candidate, or anything
-    that is not a version at all.
+/** True when this tag must not move `latest`.
 
     @param {unknown} ref @returns {boolean} */
 function isPrerelease(ref) {
@@ -48,9 +44,8 @@ function explain(ref) {
 
 module.exports = { parseTag, isPrerelease, explain };
 
-/* CLI: writes a line in the shape GitHub Actions reads from $GITHUB_OUTPUT, so
-   the workflow can redirect it there directly. The explanation goes to stderr
-   to keep stdout parseable. */
+/* Writes a line in the shape GitHub Actions reads from $GITHUB_OUTPUT. The
+   explanation goes to stderr, so stdout stays parseable. */
 if (require.main === module) {
   const ref = process.argv[2] ?? process.env.GITHUB_REF_NAME ?? '';
   if (!ref) {

@@ -71,9 +71,6 @@ test('the accepted level names are the four the rest of the app knows', () => {
   assert.equal(log.setLevel('errors'), false, 'the undocumented alias is gone');
 });
 
-/* warn and error deliberately share a threshold: the Settings tip reads "Errors
-   shows warnings and errors only". Raising error to 40 would silently drop
-   warnings for every install that selected it. */
 test('warnings still emit at the error level', t => {
   const lines = capture(t);
   log.setLevel('error');
@@ -169,9 +166,6 @@ test('null and undefined values still print empty', t => {
   assert.match(lines[0], / a= b= c=x/);
 });
 
-/* The property behind all of the above: a logfmt reader gets back exactly what
-   was logged. Asserting on the emitted text alone would pass for an encoding
-   that is self-consistent but unreadable, so this decodes instead. */
 test('every value round-trips through a logfmt parser', t => {
   const lines = capture(t);
   const values = [

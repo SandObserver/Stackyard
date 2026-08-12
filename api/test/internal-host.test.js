@@ -1,22 +1,3 @@
-/* P3-5: "is this host internal" existed twice and the copies disagreed.
-
-   guardSsrf excluded IPv6 literals from the dotless Docker-service-name
-   allowance, because a literal is dotless too and is separated only by its
-   colons. shouldSkipTls was a bare `!hostname.includes('.')`, so it never got
-   that exclusion, and it never stripped the brackets URL leaves on an IPv6
-   hostname either. Two consequences, both only reachable with skipTlsVerify on:
-
-     a public IPv6 address such as [2001:4860:4860::8888] counted as a Docker
-     service name and had its certificate left unverified
-
-     a private IPv6 address such as [fd00::1] could not match the private-range
-     check at all, because isPrivateAddress does not recognise the bracketed
-     form, and passed only by the same dotless accident
-
-   The classification is now one definition. The verdict still is not shared:
-   guardSsrf lets a service name through and blocks loopback, while the TLS-skip
-   check treats both as internal. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { shouldSkipTls, isInternalHost, isDockerServiceName, bareHost } = require('../src/proxy');
@@ -69,7 +50,6 @@ test('isInternalHost rejects public hosts, including IPv6 literals', () => {
   }
 });
 
-/* The finding, at the level it is actually reachable. */
 test('a public IPv6 address does not skip TLS verification', () => {
   assert.equal(shouldSkipTls(host('https://[2001:4860:4860::8888]/'), SKIP_ON), false);
   assert.equal(shouldSkipTls(host('https://[2606:4700:4700::1111]/'), SKIP_ON), false);

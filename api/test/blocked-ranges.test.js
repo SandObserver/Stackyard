@@ -1,17 +1,3 @@
-/* Regression tests for P3-4: ranges missing from the outbound guard.
-
-   Carrier-grade NAT, multicast, the reserved 240/4 block including the broadcast
-   address, IETF protocol assignments, benchmarking, and IPv6 multicast were all
-   accepted as outbound targets.
-
-   The check was one regular expression that listed the IPv4 ranges twice, once
-   alone and once inside its ::ffff: branch, so a range had to be added in two
-   places. That is how these were missed. It is a numeric CIDR comparison now,
-   one line per range.
-
-   Every entry is tested at both edges and one address outside each, because an
-   off-by-one in a range check fails silently and in the permissive direction. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -75,7 +61,6 @@ test('no range blocks the address either side of it', () => {
   }
 });
 
-/* The specific additions this branch is about. */
 test('carrier-grade NAT is blocked', () => {
   assert.ok(isPrivateAddress('100.64.0.1'));
   assert.ok(isPrivateAddress('100.100.100.100'));

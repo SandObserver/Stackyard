@@ -1,5 +1,3 @@
-/* GitHub widget data function. */
-
 module.exports = async function (ctx) {
   const { config, fetchJSON } = ctx;
   const token = config.githubToken;
@@ -12,9 +10,8 @@ module.exports = async function (ctx) {
   return pullRequests(ctx, token, username, config, fetchJSON);
 };
 
-/* Contribution calendar via GraphQL: needs a classic PAT with read:user, or a
-   fine-grained PAT with "User contributions" read access. Private-repo
-   contributions only appear with the correct token scope. */
+/* Needs a classic PAT with read:user, or a fine-grained PAT with "User
+   contributions" read access. */
 async function contributions(ctx, token, username, fetchJSON) {
   const query = `query($login: String!) {
     user(login: $login) {
@@ -44,7 +41,6 @@ async function contributions(ctx, token, username, fetchJSON) {
   return { view: 'contributions', weeks: cal.weeks || [], totalContributions: cal.totalContributions || 0 };
 }
 
-/* Open pull requests via the search API. Multiple filters are OR-ed together. */
 async function pullRequests(ctx, token, username, config, fetchJSON) {
   const raw =
     Array.isArray(config.githubPrFilters) && config.githubPrFilters.length

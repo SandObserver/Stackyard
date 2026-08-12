@@ -67,9 +67,6 @@ test('dataFnContext exposes the resolved row and null without one', () => {
   assert.equal(dataFnContext(wc, '', new URLSearchParams(), async () => {}).row, null);
 });
 
-/* P5-3, P5-4: what a data function is actually handed. widget-settings.test.js
-   covers the filter itself; this pins the wiring, since the leak was in how ctx
-   was built and not in any rule. */
 test('the ctx a data function receives carries no secret settings', () => {
   saveConfig({
     items: [],

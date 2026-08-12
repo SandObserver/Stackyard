@@ -80,8 +80,6 @@ test('the logged URL carries neither credentials nor query string', async t => {
   assert.equal(url, `http://127.0.0.1:${port}`);
 });
 
-/* Not every service puts its key in the query string. Several carry it as a
-   path segment instead, which the record used to write out in full. */
 test('a secret in a path segment cannot reach the log', async t => {
   const port = await closedPort();
   const seen = warnings(t);
@@ -92,7 +90,6 @@ test('a secret in a path segment cannot reach the log', async t => {
   assert.equal(url, `http://127.0.0.1:${port}`);
 });
 
-/* The error text is logged in full, since the response no longer carries it. */
 test('the underlying error message is logged', async t => {
   const port = await closedPort();
   const seen = warnings(t);

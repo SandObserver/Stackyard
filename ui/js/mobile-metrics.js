@@ -1,9 +1,5 @@
-/* Every size derives from sc, so the layout renders at one physical size
-   whatever page scale the browser reports. Anything in raw px here, or in CSS
-   without var(--sc), breaks that.
-
-   Safari reports 0 insets because it already excludes its toolbars from vh, so
-   the reserves collapse rather than subtracting chrome twice. */
+/* Every size must derive from sc. Raw px here, or CSS without var(--sc), breaks
+   rendering at one physical size whatever page scale the browser reports. */
 
 const BASE_VW = 393;
 
@@ -15,8 +11,7 @@ export function mobileMetrics(vw, vh, insetTop = 0, insetBottom = 0) {
   const dh = Math.round(108 * sc);
   const pillH = Math.round(34 * sc);
   const pillGap = Math.round(10 * sc);
-  /* Bottom reserve below the dock: the pill's own gap and height, plus
-     clearance. Reserving less lets the pill sit on top of the last row. */
+  /* Reserving less lets the pill sit on top of the last row. */
   const dz = pillGap + pillH + Math.round(8 * sc);
   const avail = vh - sb - safe - dh - dz;
   return {
@@ -34,7 +29,6 @@ export function mobileMetrics(vw, vh, insetTop = 0, insetBottom = 0) {
   };
 }
 
-/* Distance from the viewport bottom to the pill's bottom edge. */
 export function pillBottom(m) {
   return m.safe + m.dh + m.pillGap;
 }

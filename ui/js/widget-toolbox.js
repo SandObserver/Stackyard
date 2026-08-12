@@ -1,16 +1,14 @@
-/* Optional toolbox for widget authors: data access, self-contained visuals, and
-   a fetch/render loop. Importing it is never required. */
+/* Optional toolbox for widget authors: data access, self-contained visuals and
+   a fetch/render loop. */
 
 import { esc, html, setHtml } from '/js/html.js?v=ccec347c';
 import { isSafeLinkUrl } from '/js/link-url.js?v=19038560';
 
-/* Re-exported so a widget frontend needs only this one import. */
 export { esc, html, setHtml };
 
-/* Escaping cannot make a CSS value safe: `red; background-image: url(...)`
-   survives esc() and still parses as a second declaration, so the value is
-   validated and rejected rather than repaired. Assign the result through a
-   specific CSSOM property, never a concatenated style string. */
+/* Escaping cannot make a CSS value safe. `red; background-image: url(...)`
+   survives esc() and still parses as a second declaration. Assign the result
+   through a specific CSSOM property, never a concatenated style string. */
 const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\))$/i;
 export function safeColor(value, fallback) {
   return COLOR_RE.test(String(value ?? '').trim()) ? String(value).trim() : fallback;
@@ -29,7 +27,6 @@ export async function fetchData(endpoint, opts = {}) {
   const r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, { cache: 'no-store', signal: opts.signal });
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
-    /* Carries the HTTP status so a caller can branch on it; see docs/api-errors.md. */
     const e = /** @type {Error & { status?: number }} */ (new Error(d.error || 'HTTP ' + r.status));
     e.status = r.status;
     throw e;
@@ -37,11 +34,10 @@ export async function fetchData(endpoint, opts = {}) {
   return r.json();
 }
 
-/* window.open is unreliable from a sandboxed iframe. */
 export function openUrl(href) {
   if (!href) return;
   /* A javascript: or data: URL clicked from a widget runs in the dashboard's
-     origin, and widget config can arrive by import. See link-url.js. */
+     origin, and widget config can arrive by import. */
   if (!isSafeLinkUrl(href)) return;
   try {
     const a = document.createElement('a');
@@ -173,10 +169,8 @@ export function barFill(percent, opts = {}) {
   return track;
 }
 
-/* Relative "updated" label from a timestamp (ms since epoch). */
-/* A widget is an iframe and does not load the i18n module, so the language
-   arrives on the iframe URL and the strings come from the parent's locale file,
-   served from cache. Labels fall back to English until it arrives. */
+/* A widget is an iframe and does not load the i18n module. The language arrives
+   on the iframe URL. */
 const _lang = new URLSearchParams(location.search).get('lang') || 'en';
 let _strings = null;
 
@@ -196,13 +190,9 @@ function _t(key, fallback) {
   return (_strings && _strings[key]) || fallback;
 }
 
-/* A widget's own strings live in its own folder, beside its manifest, and are
-   looked up by the same keys the manifest uses. The widget name comes from the
-   path the iframe was loaded from, so a widget needs no configuration to find
-   its catalog.
-
-   English is the source: its catalog is not fetched, and an untranslated key
-   renders the fallback the caller passed. */
+/* A widget's own strings live in its folder, beside its manifest. English is the
+   source: its catalog is not fetched, and an untranslated key renders the
+   fallback the caller passed. */
 const _widgetName = (String(location.pathname || '').match(/\/widgets\/([^/]+)\//) || [])[1] || '';
 let _own = null;
 
@@ -225,18 +215,13 @@ export async function loadStrings() {
   }
 }
 
-/** A string from this widget's own catalog, falling back to the English text
-    passed in.
-
-    @param {string} key @param {string} fallback @returns {string} */
+/** @param {string} key @param {string} fallback @returns {string} */
 export function wt(key, fallback) {
   const v = _own && _own[key];
   return typeof v === 'string' && v ? v : fallback;
 }
 
-/** How long ago something happened, in the widget's language.
-
-   @param {number} ts @returns {string} */
+/** @param {number} ts @returns {string} */
 export function sinceLabel(ts) {
   if (!ts) return '';
   const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
@@ -260,7 +245,6 @@ export function sinceLabel(ts) {
   }
 }
 
-/* A muted status message overlaid on the widget. */
 function _overlay(root) {
   if (getComputedStyle(root).position === 'static') root.style.position = 'relative';
   const el = document.createElement('div');
@@ -297,8 +281,7 @@ function _overlay(root) {
      root = document.body,   element the status message overlays
      loadingText, emptyText, errorText
    }
-   Returns { stop }, which also detaches the visibility listener. Polling stops
-   while the tab is hidden and resumes with an immediate fetch. */
+   Returns { stop }, which also detaches the visibility listener. */
 export function poll(opts = {}) {
   const intervalFor = d => (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000;
   const staleAfter = opts.staleAfter != null ? opts.staleAfter : 2;
@@ -339,18 +322,17 @@ export function poll(opts = {}) {
           (opts.errorText || _t('unavailable', 'Unavailable')) + (lastOk ? ' · ' + sinceLabel(lastOk) : ''),
           true,
         );
-      /* within tolerance: leave the last good render untouched */
     }
   }
 
   const isHidden = () => typeof document !== 'undefined' && document.hidden === true;
 
-  /* setTimeout, not setInterval: a slow fetch must not overlap the next one. */
+  /* setTimeout, not setInterval. A slow fetch must not overlap the next one. */
   async function loop() {
     await tick();
     if (stopped) return;
-    /* Nothing is scheduled while hidden: each tick reaches the user's own
-       service, and browser throttling only slows that, it does not stop it. */
+    /* Schedule nothing while hidden. Each tick reaches the user's own service,
+       and browser throttling only slows that. */
     if (isHidden()) {
       paused = true;
       return;
@@ -358,8 +340,6 @@ export function poll(opts = {}) {
     timer = setTimeout(loop, intervalFor(lastData));
   }
 
-  /* Handled here rather than at the next tick: a widget on a long interval is
-     usually sitting on an armed timer when the tab hides. */
   function onVisibility() {
     if (stopped) return;
     if (isHidden()) {

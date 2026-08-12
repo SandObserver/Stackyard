@@ -1,11 +1,6 @@
 // @ts-check
-/* The admin flows a user actually performs: add an app, edit one, and add a
-   widget. Each asserts what was persisted, read back from the API, rather than
-   only what the page redrew.
-
-   These are the first end-to-end specs in the project, so they are deliberately
-   few. A flaky end-to-end test is worse than a missing one: it gets retried
-   until it passes and then believed. */
+/* Each spec asserts what was persisted, read back from the API, not only what
+   the page redrew. */
 
 const { test, expect } = require('@playwright/test');
 const {
@@ -80,9 +75,8 @@ test('adding a widget stores its type', async ({ page, request }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();
 
-  /* The type tiles switch what the form renders. Selected by data-ctype: the
-     accessible name is "Add Widget" and is not translated, so matching on it
-     would break the moment it is. */
+  /* Selected by data-ctype. The accessible name is untranslated, so matching on
+     it breaks the moment that changes. */
   await page.locator('.tile-opt[data-ctype="widget"]').click();
   const typeSelect = page.locator('#f-wtype');
   await typeSelect.waitFor({ state: 'visible' });

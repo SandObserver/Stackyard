@@ -1,15 +1,3 @@
-/* getOrCreateSecret and rotateSessionSecret, which write config.
-
-   Their own file with a throwaway CONFIG_PATH, because auth.test.js points at a
-   fixed path it expects never to exist and both of these create it. A test that
-   writes to a shared fixed path leaves the next run reading whatever the last
-   one stored.
-
-   P2-7, P2-9, P2-10: the two were the same function apart from one
-   short-circuit, and the random value they produce was written inline at four
-   call sites, so the strength and encoding of the key that signs every session
-   was defined in four places. */
-
 const path = require('node:path');
 const fs = require('node:fs');
 

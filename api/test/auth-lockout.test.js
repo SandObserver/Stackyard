@@ -1,18 +1,3 @@
-/* Regression tests for P2-2: enabling auth with no password locked the install.
-
-   /api/auth/toggle accepted enabled:true with no password stored. After that
-   every route was gated except login, health and the auth check. Login refused
-   because there was nothing to check against, and its message told the user to
-   go to Admin, which was now behind the gate. Setting a password and switching
-   auth back off were both gated too, so there was no way back in over HTTP: the
-   only fix was editing apps.json on the data volume.
-
-   Two halves here. The toggle now refuses to create that state, and an install
-   already in it is treated as not authenticated, so the admin is reachable and a
-   password can be set. Nothing is rewritten on disk; the stored flag is simply
-   not honoured on its own, and starts being honoured again the moment a password
-   exists. */
-
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
@@ -82,7 +67,6 @@ function req(method, pathname, body, cookie) {
   });
 }
 
-/* Put an install into the state that used to be a dead end. */
 function saveLockedState() {
   saveConfig({ items: [], settings: { auth: { enabled: true, secret: SECRET } } });
 }
@@ -241,10 +225,6 @@ test('login still refuses a wrong password when one is set', async () => {
 });
 
 /* ── the switch only answers to a real true or false ──────────────────────── */
-
-/* Switching off deletes the password and the secret, and nothing in the UI can
-   undo it. A body that does not plainly say so, from a cached older page or a
-   script, used to be read as "off" and destroyed both. */
 
 for (const [label, body] of [
   ['an empty body', {}],

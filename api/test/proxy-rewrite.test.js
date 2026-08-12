@@ -89,8 +89,6 @@ test('rewriting changes the host, so the guard must run after it', async () => {
 });
 
 test('guarding the rewritten URL also passes, via the dotless-name branch', async () => {
-  /* The property that makes reordering viable: once rewritten, the host is a
-     dotless Docker name, which the guard already trusts. */
   assert.deepEqual(await guardSsrf(rewriteUrl('http://192.168.1.50:8096/')), { error: null, ip: null });
 });
 

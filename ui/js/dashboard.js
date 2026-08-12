@@ -1,5 +1,3 @@
-/* dashboard.js: boot, state, badge system, desktop layout, navigation, background, polling */
-
 import { loadLocalIcons, iconChain } from '/js/icons.js?v=a0ea3e4b';
 import {
   WIDGET_HEIGHTS,
@@ -39,7 +37,7 @@ const wRows = { d: WIDGET_ROWS.desktop, m: WIDGET_ROWS.mobile };
 const WH = { d: WIDGET_HEIGHTS };
 const wCost = { d: WIDGET_COST.desktop, m: WIDGET_COST.mobile };
 
-/* Mirrors the .grid and .page values in dashboard.css and must move with them. */
+/* Mirrors the .grid and .page values in dashboard.css. Move them together. */
 const DCOLS = 6;
 const ROW_UNIT = WIDGET_HEIGHTS.small;
 const ROW_GAP = 30;
@@ -59,10 +57,8 @@ let items = [],
   totalPages = 0,
   S = {},
   _stateRef = null;
-/* The server bumps this on every write, so comparing it answers "has anything
-   changed" exactly. */
 let _rev = null;
-/* Null prototype: keyed by values from config, so an inherited property must
+/* Null prototype. Keyed by values from config, so an inherited property must
    never answer a miss. */
 let widgetReg = Object.create(null);
 const _mobTsCleanup = null,
@@ -74,9 +70,8 @@ let _badgeFails = 0,
   badgesStale = false,
   healthStale = false;
 const BEL = new Map();
-/* Last painted appearance per badge element. Polling calls bupd() for every
-   registered badge each cycle, and folder badges once more per child update, so
-   without this the same values are rewritten thousands of times a session. */
+/* Last painted appearance per badge element. Without it the same values are
+   rewritten thousands of times a session. */
 const BSIG = new WeakMap();
 function breg(id, el) {
   if (!BEL.has(id)) BEL.set(id, new Set());
@@ -124,7 +119,7 @@ function bupd(id) {
     }
     el.style.background = bg;
     el.style.color = color;
-    /* Assigned, not interpolated: an upstream error string must not become
+    /* Assigned, never interpolated. An upstream error string must not become
        markup. */
     if (title) el.title = title;
     else el.removeAttribute('title');
@@ -222,8 +217,6 @@ function mkWidget(item) {
   if (preset) card.dataset.card = preset;
   if (item.widgetConfig?.widgetSubType) card.dataset.wsubtype = item.widgetConfig.widgetSubType;
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
-  /* A definite height, or the grid row sizes unpredictably and
-     `.wc{align-items:stretch}` overrides it. */
   card.style.height = WH.d[sz] + 'px';
   mountScaledWidget(card, {
     src: widgetSrc(item, widgetReg, { lang: currentLang() }),
@@ -247,8 +240,8 @@ function mkDock(item) {
   return a;
 }
 
-/* A real <button>, not a styled div: a div is skipped by Tab and does nothing on
-   Enter or Space, which left paging reachable by pointer only.
+/* A real <button>, not a styled div. A div is skipped by Tab and does nothing
+   on Enter or Space.
 
    @param {number} i @param {number} total @param {number} current
    @param {(i:number)=>void} go */
@@ -263,8 +256,8 @@ function mkDot(i, total, current, go) {
 }
 
 function buildDesktop() {
-  /* Removing the DOM does not stop the observers and timers the previous widgets
-     started. */
+  /* Removing the DOM does not stop the observers and timers the previous
+     widgets started. */
   teardownWidgets();
   BEL.clear();
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, 4);
@@ -291,9 +284,8 @@ function buildDesktop() {
   ct.innerHTML = '';
 }
 
-/* Announces the current page, since the grid otherwise swaps silently. Polite,
-   and only for user-initiated changes: announcing polled health would talk over
-   whatever someone is doing every time a service flaps.
+/* Announce user-initiated page changes only. Announcing polled health talks
+   over whatever someone is doing every time a service flaps.
 
    @param {number} index @param {number} total */
 function announcePage(index, total) {
@@ -306,10 +298,7 @@ function goTo(n, dotEls) {
   const total = dotEls ? dotEls.length : totalPages;
   const was = pg;
   pg = Math.max(0, Math.min(total - 1, n));
-  /* Only on an actual change, or a screen reader announces the same page on
-     every click. */
   if (pg !== was) announcePage(pg, total);
-  /* The mobile swipe handler reads this. */
   if (_stateRef) _stateRef.pg = pg;
   const strip = el('pages');
   const t = `translateX(-${pg * 100}vw)`;
@@ -324,16 +313,14 @@ function goTo(n, dotEls) {
   );
   (dotEls ?? document.querySelectorAll('.dot')).forEach((d, i) => {
     d.classList.toggle('on', i === pg);
-    /* In step with the class, or a screen reader keeps announcing the page the
-       dashboard loaded on. */
     if (i === pg) d.setAttribute('aria-current', 'true');
     else d.removeAttribute('aria-current');
   });
   if (MOB && CB.mobPillBump) CB.mobPillBump(pg);
 }
 
-/* ensureSpace can create overflow pages that paginate() did not report, so the
-   dots are synced from the DOM rather than from its count. */
+/* ensureSpace can create overflow pages paginate() did not report, so sync the
+   dots from the DOM. */
 function syncMobPages() {
   const strip = el('pages');
   const domCount = strip ? strip.children.length : 0;
@@ -449,10 +436,7 @@ function showSetupPrompt() {
     const skip = qi('#setup-skip', ov);
     const dim = 'rgba(255,255,255,.1)';
 
-    /* A typo here locks the dashboard with no way back in, so the password is
-       confirmed and can be read back before it is set. */
-    /* Both filled in and equal. passwordMismatch treats an empty new password
-       as "keep the current one", which does not apply on a first run. */
+    /* A typo here locks the dashboard with no way back in. */
     const matches = () => pw2.value !== '' && !passwordMismatch(pw.value, pw2.value);
     const sync = () => {
       const { score, labelKey, color, ok } = pwStrength(pw.value);
@@ -478,8 +462,6 @@ function showSetupPrompt() {
       rev.title = label;
     };
 
-    /* Escape deliberately does not close this: dismissing it by accident
-       silently means "no password". Skip is the way out. */
     let releaseTrap = trapFocus(ov, { closeOnEscape: false, initialFocus: pw });
     const close = () => {
       if (releaseTrap) {
@@ -515,8 +497,6 @@ function showSetupPrompt() {
           body: JSON.stringify({ password: pw.value }),
         });
         if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || t('setup.failed'));
-        /* set-password issues the session cookie before it answers, so Admin
-           loads signed in rather than bouncing to the login page. */
         const to = landingAfterSetup(items);
         if (to) location.href = to;
         else location.reload();
@@ -557,8 +537,8 @@ async function boot() {
     const res = await fetch('/api/config', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
-    /* Saving rejects these, but a config written before that existed, or one
-       arriving by import, still reaches here. See ui/js/link-url.js. */
+    /* Saving rejects these, but a config written earlier still reaches here.
+       See ui/js/link-url.js. */
     items = sanitizeItemLinks(c.items || []);
     S = c.settings || {};
     _rev = c._rev ?? null;
@@ -577,8 +557,7 @@ async function boot() {
       msg,
       html`<p class="api-error-title">${t('home.apiDownTitle')}</p><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`,
     );
-    /* Not an inline onclick: the page's CSP refuses those, and the button would
-       silently do nothing. */
+    /* Not an inline onclick. The page's CSP refuses those. */
     msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
     document.body.appendChild(msg);
     document.body.classList.add('ready');
@@ -670,8 +649,7 @@ async function boot() {
 
   let _rt;
   /* Only on an orientation change. On a phone the keyboard opening resizes the
-     visual viewport, and rebuilding on that meant tapping the search box rebuilt
-     the dashboard. */
+     visual viewport. */
   let _wasLandscape = null;
   const _rebuild = () => {
     clearTimeout(_rt);
@@ -694,8 +672,7 @@ async function boot() {
   window.addEventListener('orientationchange', _rebuild, { passive: true });
   window.visualViewport?.addEventListener('resize', _rebuild, { passive: true });
 
-  /* Jittered so several open clients do not poll on the same tick, and do not
-     re-synchronise over time. */
+  /* Jittered, so several open clients do not poll on the same tick. */
   let _pollTimers = [];
   const _jit = base => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
   const _repeat = (fn, base) => {

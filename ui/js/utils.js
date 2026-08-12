@@ -5,13 +5,9 @@ export const mk = (t, a = {}) => {
   Object.assign(e, a);
   return e;
 };
-/* Every colour an item renders with passes through here, and the value can have
-   arrived in an imported config, so this is where a colour that is not a colour
-   stops. It is assigned to a background, and a CSS url() in a background fetches
-   from whatever host it names: the page's img-src refuses that today, and this
-   is so the refusal does not have to be the only thing standing in the way. An
-   unrecognised value falls back rather than being dropped, so a tile keeps its
-   shape. */
+/* Every colour an item renders with passes through here, and the value can
+   arrive in an imported config. It is assigned to a background, where a CSS
+   url() fetches from whatever host it names. */
 const SAFE_COLOR = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9a-z%.,\s/+-]*\)|[a-z]{3,20})$/i;
 export const DEFAULT_TILE_COLOR = '#1C1C1E';
 export const clr = c => {
@@ -27,17 +23,11 @@ export const fb = (l, sz) => {
   e.textContent = (l || '?')[0].toUpperCase();
   return e;
 };
-/* esc lives in html.js with the template primitives; re-exported here so the
-   existing importers of utils.esc keep working. */
 export { esc } from '/js/html.js?v=ccec347c';
 
-/* A name the user typed, which has its own direction regardless of the
-   interface language. Without dir="auto" an English name inside a Persian
-   dashboard is laid out right-to-left, so an over-long one keeps its tail and
-   loses its head: "Backup and Storage" truncates to "…nd Storage". The
-   attribute makes each name follow its own first strong character, so English
-   names clip at the end and Persian names clip at the start, in either
-   interface language.
+/* A name the user typed has its own direction. Without dir="auto" an English
+   name inside a Persian dashboard lays out right-to-left and an over-long one
+   loses its head rather than its tail.
 
    @param {HTMLElement} node @param {string} text @returns {HTMLElement} */
 export const setUserText = (node, text) => {
@@ -46,16 +36,12 @@ export const setUserText = (node, text) => {
   return node;
 };
 
-/* Strip quotes, parens and backslashes so a user URL can't break out of a CSS
-   url('...') wrapper. Shared by the dashboard and admin background setters. */
+/* Strip quotes, parens and backslashes. A user URL must not break out of a CSS
+   url('...') wrapper. */
 export const sanitizeCssUrl = u => String(u || '').replace(/['"\\()]/g, '');
 
 /* ── Typed element lookups ───────────────────────────────────────────────────
-   Pick by what you are going to touch: el for anything, inp for a form control,
-   which is where .value, .checked, .disabled and .files live. The casts are
-   JSDoc and compile to nothing.
-
-   None of these check for null: they look up elements the page itself renders,
+   None of these check for null. They look up elements the page itself renders,
    so a missing one is a bug in the markup. */
 
 /** @param {string} id @returns {HTMLElement} */
@@ -81,7 +67,7 @@ export const qa = (sel, root = document) => /** @type {HTMLElement[]} */ ([...ro
     @param {Event} e @returns {HTMLInputElement} */
 export const tgt = e => /** @type {HTMLInputElement} */ (e.target);
 
-/* breg is passed in to avoid a circular import; it lives in dashboard state. */
+/* breg is passed in to avoid a circular import. */
 const SETTINGS_ICON =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAyNHB0IiBoZWlnaHQ9IjEwMjRwdCIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBmaWxsPSIjZjJmMmY3IiBzdHJva2U9IiNmMmYyZjciIHN0cm9rZS13aWR0aD0iMC4wOTM3NSIgb3BhY2l0eT0iMS4wMCIgZD0iIE0gMzU1LjU1IDM5OC43NyBDIDM2NC45OSAzOTcuNjIgMzc0LjUxIDM5OC4xMCAzODQuMDAgMzk4LjAwIEMgNDc0LjY3IDM5OC4wMCA1NjUuMzQgMzk4LjAxIDY1Ni4wMSAzOTcuOTkgQyA2NzcuMTEgMzk3Ljk1IDY5OC4yMiA0MDMuODMgNzE2LjE1IDQxNC45OSBDIDc0Ni42MiA0MzMuNjAgNzY3LjMwIDQ2Ny4zMiA3NjkuNjYgNTAzLjAwIEMgNzcyLjYwIDUzOC4xNiA3NTcuNzIgNTc0LjA5IDczMS4wMCA1OTcuMDcgQyA3MTQuMjIgNjExLjcyIDY5My4wNCA2MjEuMjcgNjcwLjk0IDYyNC4wNSBDIDY2MS42NyA2MjUuMzQgNjUyLjMwIDYyNC45NCA2NDIuOTggNjI1LjAwIEMgNTU3LjMxIDYyNS4wMCA0NzEuNjQgNjI1LjAwIDM4NS45NyA2MjUuMDAgQyAzNzMuMzAgNjI0LjkyIDM2MC41MCA2MjUuNjAgMzQ3Ljk5IDYyMy4xMCBDIDMxNy4yMiA2MTcuNjAgMjg5LjIzIDU5OC42MiAyNzIuNjEgNTcyLjE2IEMgMjU5Ljc3IDU1Mi4wMyAyNTMuNjAgNTI3Ljc1IDI1NS4yNiA1MDMuOTMgQyAyNTYuNzAgNDgxLjI4IDI2NS4yNCA0NTkuMTcgMjc5LjMyIDQ0MS4zNyBDIDI5Ny43MyA0MTcuNzkgMzI1LjgwIDQwMi4wNiAzNTUuNTUgMzk4Ljc3IE0gNDY5LjMxIDQxMC40NyBDIDQ1Mi43OSA0MTIuMjIgNDM2LjYwIDQxNy41OCA0MjIuNzEgNDI2Ljc4IEMgNDAwLjE2IDQ0MS40MCAzODQuMDUgNDY1LjUyIDM3OS4xMCA0OTEuOTMgQyAzNzQuNjQgNTExLjQwIDM3Ny42NCA1MzEuODcgMzg0Ljc1IDU1MC4zMiBDIDM4OC4wNiA1NTcuNDAgMzkxLjMzIDU2NC41OSAzOTYuMjYgNTcwLjczIEMgNDE0Ljg1IDU5Ny42MyA0NDcuNTcgNjEzLjMwIDQ4MC4wNSA2MTMuMDEgQyA1MzguNzIgNjEzLjAwIDU5Ny4zOCA2MTMuMDQgNjU2LjA1IDYxMi45NyBDIDY4NC44OSA2MTIuMjggNzEzLjU2IDU5OS4zNyA3MzIuMDAgNTc2Ljk3IEMgNzM2LjY3IDU3MC44MyA3NDEuNTkgNTY0Ljc4IDc0NC43NCA1NTcuNjggQyA3NTAuMTEgNTQ3LjkxIDc1Mi44NSA1MzYuOTYgNzU0Ljg0IDUyNi4wNyBDIDc1Ny45MiA1MDguMzMgNzU0Ljc2IDQ5MC4wNiA3NDguNTMgNDczLjM1IEMgNzQ1LjE5IDQ2NS43NSA3NDEuNDcgNDU4LjI2IDczNi4zMiA0NTEuNzEgQyA3MjQuOTYgNDM1LjQxIDcwOC4xMyA0MjMuMzYgNjg5LjY5IDQxNi4zMSBDIDY3OC4xNiA0MTIuNTkgNjY2LjEzIDQwOS44NyA2NTMuOTYgNDEwLjAzIEMgNTk3LjI5IDQwOS45NSA1NDAuNjEgNDEwLjAzIDQ4My45NCA0MTAuMDAgQyA0NzkuMDYgNDA5Ljk4IDQ3NC4xNyA0MDkuOTQgNDY5LjMxIDQxMC40NyBaIiAvPgo8cGF0aCBmaWxsPSIjZGZkZmU0IiBzdHJva2U9IiNkZmRmZTQiIHN0cm9rZS13aWR0aD0iMC4wOTM3NSIgb3BhY2l0eT0iMS4wMCIgZD0iIE0gNDY5LjMxIDQxMC40NyBDIDQ3NC4xNyA0MDkuOTQgNDc5LjA2IDQwOS45OCA0ODMuOTQgNDEwLjAwIEMgNTQwLjYxIDQxMC4wMyA1OTcuMjkgNDA5Ljk1IDY1My45NiA0MTAuMDMgQyA2NjYuMTMgNDA5Ljg3IDY3OC4xNiA0MTIuNTkgNjg5LjY5IDQxNi4zMSBDIDcwOC4xMyA0MjMuMzYgNzI0Ljk2IDQzNS40MSA3MzYuMzIgNDUxLjcxIEMgNzQxLjQ3IDQ1OC4yNiA3NDUuMTkgNDY1Ljc1IDc0OC41MyA0NzMuMzUgQyA3NTQuNzYgNDkwLjA2IDc1Ny45MiA1MDguMzMgNzU0Ljg0IDUyNi4wNyBDIDc1Mi44NSA1MzYuOTYgNzUwLjExIDU0Ny45MSA3NDQuNzQgNTU3LjY4IEMgNzQxLjU5IDU2NC43OCA3MzYuNjcgNTcwLjgzIDczMi4wMCA1NzYuOTcgQyA3MTMuNTYgNTk5LjM3IDY4NC44OSA2MTIuMjggNjU2LjA1IDYxMi45NyBDIDU5Ny4zOCA2MTMuMDQgNTM4LjcyIDYxMy4wMCA0ODAuMDUgNjEzLjAxIEMgNDQ3LjU3IDYxMy4zMCA0MTQuODUgNTk3LjYzIDM5Ni4yNiA1NzAuNzMgQyAzOTEuMzMgNTY0LjU5IDM4OC4wNiA1NTcuNDAgMzg0Ljc1IDU1MC4zMiBDIDM3Ny42NCA1MzEuODcgMzc0LjY0IDUxMS40MCAzNzkuMTAgNDkxLjkzIEMgMzg0LjA1IDQ2NS41MiA0MDAuMTYgNDQxLjQwIDQyMi43MSA0MjYuNzggQyA0MzYuNjAgNDE3LjU4IDQ1Mi43OSA0MTIuMjIgNDY5LjMxIDQxMC40NyBNIDQ2Ny40OCA0MjIuNjYgQyA0MzYuNjggNDI2LjEzIDQwOC43NCA0NDcuMDggMzk2LjUwIDQ3NS41MSBDIDM4Ny43NyA0OTUuMjcgMzg2LjU4IDUxOC4yMSAzOTMuMjEgNTM4Ljc2IEMgMzk4LjcyIDU1Ni4xNiA0MDkuNzUgNTcxLjc1IDQyNC4zMCA1ODIuNzYgQyA0MzkuMDQgNTk0LjA3IDQ1Ny4zOSA2MDAuNTEgNDc1Ljk1IDYwMS4wMCBDIDUzMi4zMiA2MDEuMDAgNTg4LjY5IDYwMS4wMCA2NDUuMDYgNjAxLjAwIEMgNjUyLjE5IDYwMC45NCA2NTkuMzcgNjAxLjMzIDY2Ni40NiA2MDAuMjIgQyA2ODMuMTYgNTk4LjA4IDY5OS4xNCA1OTAuOTUgNzEyLjAyIDU4MC4xMSBDIDcyOC41OCA1NjYuMzIgNzM5Ljg5IDU0Ni4zMiA3NDMuMDAgNTI0Ljk4IEMgNzQ1Ljg2IDUwNi42NSA3NDIuNzYgNDg3LjQ2IDczNC4zNCA0NzAuOTQgQyA3MjYuNzQgNDU1Ljk3IDcxNC44NCA0NDMuMjMgNzAwLjQxIDQzNC42MyBDIDY4NS45NCA0MjUuODggNjY4LjkyIDQyMS41NCA2NTIuMDMgNDIxLjk5IEMgNTk1LjY2IDQyMi4wMSA1MzkuMjkgNDIyLjAwIDQ4Mi45MSA0MjIuMDAgQyA0NzcuNzYgNDIxLjk0IDQ3Mi41OSA0MjEuOTQgNDY3LjQ4IDQyMi42NiBaIiAvPgo8cGF0aCBmaWxsPSIjMzg3Zjk1IiBzdHJva2U9IiMzODdmOTUiIHN0cm9rZS13aWR0aD0iMC4wOTM3NSIgb3BhY2l0eT0iMS4wMCIgZD0iIE0gNDY3LjQ4IDQyMi42NiBDIDQ3Mi41OSA0MjEuOTQgNDc3Ljc2IDQyMS45NCA0ODIuOTEgNDIyLjAwIEMgNTM5LjI5IDQyMi4wMCA1OTUuNjYgNDIyLjAxIDY1Mi4wMyA0MjEuOTkgQyA2NjguOTIgNDIxLjU0IDY4NS45NCA0MjUuODggNzAwLjQxIDQzNC42MyBDIDcxNC44NCA0NDMuMjMgNzI2Ljc0IDQ1NS45NyA3MzQuMzQgNDcwLjk0IEMgNzQyLjc2IDQ4Ny40NiA3NDUuODYgNTA2LjY1IDc0My4wMCA1MjQuOTggQyA3MzkuODkgNTQ2LjMyIDcyOC41OCA1NjYuMzIgNzEyLjAyIDU4MC4xMSBDIDY5OS4xNCA1OTAuOTUgNjgzLjE2IDU5OC4wOCA2NjYuNDYgNjAwLjIyIEMgNjU5LjM3IDYwMS4zMyA2NTIuMTkgNjAwLjk0IDY0NS4wNiA2MDEuMDAgQyA1ODguNjkgNjAxLjAwIDUzMi4zMiA2MDEuMDAgNDc1Ljk1IDYwMS4wMCBDIDQ1Ny4zOSA2MDAuNTEgNDM5LjA0IDU5NC4wNyA0MjQuMzAgNTgyLjc2IEMgNDA5Ljc1IDU3MS43NSAzOTguNzIgNTU2LjE2IDM5My4yMSA1MzguNzYgQyAzODYuNTggNTE4LjIxIDM4Ny43NyA0OTUuMjcgMzk2LjUwIDQ3NS41MSBDIDQwOC43NCA0NDcuMDggNDM2LjY4IDQyNi4xMyA0NjcuNDggNDIyLjY2IFoiIC8+Cjwvc3ZnPg==';
 
@@ -114,8 +100,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
         else img.replaceWith(fb(item.label, sz));
       };
       img.onerror = tryNext;
-      /* 403 responses don't trigger onerror; the browser considers them a successful
-         load. Check naturalWidth on load; a broken/blocked image has zero dimensions. */
+      /* A 403 fires load, not onerror. A blocked image has zero dimensions. */
       img.onload = () => {
         if (img.naturalWidth === 0) tryNext();
       };
@@ -139,12 +124,11 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
 
 /* Live widget mounts, so a rebuild can switch off what it is about to discard.
    mountScaledWidget starts an observer, a reload timer and touch listeners that
-   all outlive the DOM it creates, and a rebuild is cheap to trigger, so stranded
-   timers keep polling the backing services forever. */
+   outlive the DOM it creates, and stranded timers keep polling the backing
+   services forever. */
 const _mounts = new Set();
 
-/** Stop everything the mounted widgets started. Called by a rebuild before it
-    replaces the DOM; safe to call when nothing is mounted. */
+/** Stop everything the mounted widgets started. */
 export function teardownWidgets() {
   for (const stop of _mounts) {
     try {
@@ -157,10 +141,8 @@ export function teardownWidgets() {
 }
 
 /* What an embedded panel may be granted. The list a widget carries comes from
-   stored config, which can arrive by import, and the permission features are
-   the ones worth asking about: a frame that names camera or geolocation gets
-   neither, whatever the config says. Presentation features are kept, since that
-   is what a widget legitimately uses. */
+   stored config, which can arrive by import, so a frame naming camera or
+   geolocation gets neither. */
 const SAFE_IFRAME_FEATURES = new Set([
   'autoplay',
   'fullscreen',
@@ -179,9 +161,8 @@ export function safeAllow(value) {
   return kept.join('; ') || 'fullscreen';
 }
 
-/* Mounts the iframe at a fixed design resolution and scales it to fill `card`,
-   so widget content renders identically at every size. `card` must be
-   aspect-locked to the design ratio. */
+/* Mounts the iframe at a fixed design resolution and scales it to fill `card`.
+   `card` must be aspect-locked to the design ratio. */
 /** @param {HTMLElement} card
     @param {{
       src?: string, title?: string, design?: [number, number],
@@ -192,9 +173,9 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   const [dw, dh] = design;
   const o = iframeOpts || {};
   /* Without a positioned ancestor the iframe escapes up the tree and paints at
-     the page origin. Set directly rather than through getComputedStyle, which
-     returns an unresolved value for a card that has not been laid out. */
-  /* Everything that outlives the DOM is registered here so teardown can undo it. */
+     the page origin. Do not read it through getComputedStyle, which returns an
+     unresolved value for a card that has not been laid out. */
+  /* Register everything that outlives the DOM, so teardown can undo it. */
   const cleanups = [];
   if (!card.style.position) card.style.position = 'relative';
   card.style.overflow = 'hidden';
@@ -212,12 +193,8 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   clip.appendChild(ifr);
   card.appendChild(clip);
 
-  /* A widget page is authored in English and sets no direction of its own, so
-     without this its text stays left-to-right while the rest of the app
-     mirrors. Applied from here rather than by each widget: the frames are
-     same-origin, and a widget folder should need no code to follow the page.
-
-     Reapplied on every load, since a refresh replaces the document. */
+  /* A widget page sets no direction of its own. Reapplied on every load: a
+     refresh replaces the document. */
   const applyDir = () => {
     let doc;
     try {
@@ -236,7 +213,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') applyDir();
   } catch {}
 
-  /* Jittered so a dashboard full of widgets does not reload against every
+  /* Jittered, so a dashboard full of widgets does not reload against every
      backing service on the same tick. */
   const refreshInterval = Number(o.refreshInterval) || 0;
   if (refreshInterval >= 250) {
@@ -245,8 +222,8 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
       ifr.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
     };
     const jit = () => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
-    /* The handle is reassigned every tick, so the cleanup reads the current one
-       rather than capturing the first. */
+    /* The handle is reassigned every tick. The cleanup must read the current
+       one. */
     let timer = setTimeout(
       function tick() {
         reload();
@@ -257,9 +234,8 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     cleanups.push(() => clearTimeout(timer));
   }
 
-  /* An iframe swallows touches, so the pager never sees a swipe that starts on a
-     widget. Listening on the iframe's own document keeps interior taps working,
-     which an overlay would block. */
+  /* An iframe swallows touches. Listening on its own document keeps interior
+     taps working, which an overlay would block. */
   if (mobile) {
     const attach = () => {
       let doc;
@@ -348,8 +324,6 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   requestAnimationFrame(fit);
   fit();
 
-  /* Blanking src stops an in-flight load completing against a document nobody
-     will see. */
   const stop = () => {
     for (const fn of cleanups) {
       try {

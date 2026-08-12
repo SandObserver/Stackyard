@@ -1,20 +1,3 @@
-/* Tests for P2-4: signing out every device.
-
-   Revocation already existed, but only as a side effect: changing the password
-   rotates settings.auth.secret, and since a token's signature is checked against
-   that value, replacing it makes every outstanding token unverifiable. So the
-   only way to sign out a device you no longer control was to change your password
-   as well.
-
-   POST /api/auth/revoke-sessions does that rotation on its own. Deliberately no
-   second mechanism such as a stored cutoff timestamp: that would mean two ways
-   for a session to die, two places to look when one misbehaves, and a config read
-   on every authenticated request in a path that currently needs none.
-
-   The caller's own session dies too, which is unavoidable. The endpoint therefore
-   has to reissue its cookie in the same response, or the person who pressed the
-   button is the one signed out. That is the property most of these tests check. */
-
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
@@ -117,8 +100,6 @@ test('a session from before the call no longer works', async () => {
   assert.equal((await req('GET', '/api/config', old)).status, 401, 'the old session must be dead');
 });
 
-/* The ordering wrinkle: the caller's own token was signed with the secret that
-   just changed, so the response has to carry a replacement. */
 test('the caller is handed a working replacement session', async () => {
   await enableAuth();
   const r = await req('POST', '/api/auth/revoke-sessions', cookieFor(secret()));
@@ -211,8 +192,6 @@ test('revoking is refused when auth is not enabled', async () => {
 });
 
 test('revoking is refused when auth is on but no password is set', async () => {
-  /* The same unusable state fix/auth-enable-requires-password addressed: there
-     are no sessions, because there is nothing to authenticate against. */
   saveConfig({ items: [], settings: { auth: { enabled: true, secret: 'a'.repeat(64) } } });
   const before = secret();
   assert.equal((await req('POST', '/api/auth/revoke-sessions', '')).status, 400);

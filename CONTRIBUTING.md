@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions are welcome within the constraints that keep Stackyard small and auditable. A change that breaks one of these won't be merged, however useful:
+Contributions are welcome within the constraints that keep Stackyard small and auditable. A change that breaks one of these will not be merged:
 
 - **One container**: Nginx and the Node API run together under supervisord. No extra services, no database.
 - **No runtime dependencies**: the API ships zero npm runtime packages; the frontend is vanilla HTML/CSS/JS with no framework and no build step.
@@ -38,17 +38,12 @@ npm run typecheck:ui
 docker build -t stackyard:ci .
 ```
 
-The docker build is the slow one and is the least likely to break; the rest take
-seconds. CodeQL also runs on every pull request, and a finding it reports has to
-be resolved before merge.
-
-A few of these are worth knowing about before they fail:
+CodeQL also runs on every pull request. A finding it reports has to be resolved
+before merge.
 
 - **`bump-cache-busting.js --check`** verifies that every `/css/` and `/js/`
-  reference carries a `?v=` stamp. Add a stylesheet or a module and reference it
-  without one, and this is what fails. The hashes themselves are recomputed by
-  the release build, so write `?v=1` and leave the real value alone; never edit
-  a stamp by hand.
+  reference carries a `?v=` stamp. The release build recomputes the hashes, so
+  write `?v=1` and never edit a stamp by hand.
 - **`npm run typecheck:ui`** typechecks every module under `ui/js` from its
   JSDoc, with no build step and nothing emitted. It has to stay clean. A new
   module needs two entries in `tsconfig.frontend.json`, the plain path and the
@@ -60,10 +55,8 @@ A few of these are worth knowing about before they fail:
   depends on strict-mode semantics.
 
   They are **not** typechecked. `checkJs` over `api/test` reports 131 errors,
-  almost all of them narrowing around Node's `server.address()` in test
-  harnesses rather than defects. Silencing them means JSDoc casts across roughly
-  forty files for no behaviour change, so the exclusion is deliberate; revisit it
-  as its own piece of work, not as a side effect of something else.
+  almost all narrowing around Node's `server.address()` in test harnesses.
+  Changing that is its own piece of work, not a side effect of something else.
 
 - **`npm run lint`** is Biome, from `node_modules`. Run it through npm: a bare
   `npx biome` resolves to an unrelated package that exits 0 without checking

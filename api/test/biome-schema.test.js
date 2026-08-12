@@ -1,17 +1,3 @@
-/* P17-4: biome.json pinned a schema version that nothing kept in step.
-
-   It said 2.5.3 while package.json pinned 2.5.6, and every lint run printed a
-   "configuration schema version does not match the CLI version" notice.
-   Dependabot bumps package.json weekly and never touches biome.json, so the
-   gap reopened on its own after every upgrade and could only be closed by
-   remembering to edit a second file by hand.
-
-   The fix is to stop naming a version. Biome ships configuration_schema.json
-   inside the package, so pointing at that path means the schema is always
-   whatever is installed. There is no number to drift.
-
-   These tests keep it that way: a versioned URL is how the problem comes back. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -31,7 +17,6 @@ test('the schema is resolved from the installed package', () => {
   );
 });
 
-/* The specific regression: a URL carries a version, and a version drifts. */
 test('the schema is not a versioned URL', () => {
   assert.ok(!/^https?:/.test(biome.$schema), '$schema must not be a remote URL');
   assert.ok(

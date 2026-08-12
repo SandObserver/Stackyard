@@ -1,9 +1,3 @@
-/* Stats widget data function. Endpoints:
-     endpoint=system        → live host metrics for the System Summary view
-     endpoint=disk-health   → SMART data from Scrutiny for the Disk Health view
-     endpoint=speed         → speed test results (MySpeed / Speedtest Tracker)
-     endpoint=devices       → drives or pools offered to the bay pickers */
-
 module.exports = async function (ctx) {
   if (ctx.endpoint === 'devices') return diskDevices(ctx);
   if (ctx.endpoint === 'disk-health') return diskHealth(ctx);
@@ -11,7 +5,6 @@ module.exports = async function (ctx) {
   return systemSummary(ctx);
 };
 
-/* Config-time picker: one option per drive or pool, shared by every bay row. */
 function diskDevices(ctx) {
   return ctx.dispatchProvider(
     {
@@ -37,8 +30,6 @@ async function scrutinyDeviceOptions(ctx) {
   return { options };
 }
 
-/* The three TrueNAS statuses worth naming, checked identically by the pool
-   picker and the disk-health view. */
 function truenasStatus(ctx, r) {
   if (r.status === 401 || r.status === 403) ctx.fail('TrueNAS auth failed, check API key', { kind: ctx.KIND.AUTH });
   if (r.status === 404) ctx.fail('TrueNAS REST API not found (removed in v26; supported on 25.x, or use Scrutiny)');
@@ -60,7 +51,6 @@ async function truenasPoolOptions(ctx) {
   return { options };
 }
 
-/* Disk Health dispatch: Scrutiny (per-disk SMART) or TrueNAS (per-pool health). */
 function diskHealth(ctx) {
   return ctx.dispatchProvider(
     {
@@ -71,8 +61,7 @@ function diskHealth(ctx) {
   );
 }
 
-/* System Summary: CPU / RAM / temperature / per-mount disk usage.
-   Mount paths come from the widget's disk slots; falls back to the global
+/* Mount paths come from the widget's disk slots, then the global
    stats.diskMount setting, then '/'. */
 async function systemSummary({ config, settings, metrics }) {
   const slots = config.slots || [];
@@ -104,8 +93,6 @@ async function systemSummary({ config, settings, metrics }) {
   return { cpu, ram, temp: temps[0] ?? null, temps, disks, iowait, procs, uptime };
 }
 
-/* Disk Health (Scrutiny): maps the widget's configured bays (device_id per bay)
-   onto Scrutiny's SMART summary. */
 async function diskHealthScrutiny(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const url = config.scrutinyUrl;
@@ -139,9 +126,8 @@ async function diskHealthScrutiny(ctx) {
   return { bays: result, href: config.scrutinyHref || '', provider: 'scrutiny' };
 }
 
-/* Disk Health (TrueNAS): each configured bay holds a ZFS pool name; pools are
-   matched from /api/v2.0/pool. A pool's `healthy` flag is the per-bay status
-   (healthy → 0, unhealthy → 2, the same codes the widget uses for Scrutiny). */
+/* A pool's `healthy` flag becomes the per-bay status, in the codes the widget
+   already uses for Scrutiny. */
 async function diskHealthTrueNas(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const url = config.truenasUrl;
@@ -180,10 +166,8 @@ async function diskHealthTrueNas(ctx) {
   return { bays: result, href: config.truenasHref || '', provider: 'truenas' };
 }
 
-/* Speed test results for the network slot: MySpeed or Speedtest Tracker. The
-   provider lives in the nested network slot (config.network.provider), so this
-   branches directly rather than via ctx.dispatchProvider, which reads a
-   top-level field. Returns { download, upload, ping, failed, ts } or { error }. */
+/* The provider lives in the nested network slot, so this branches directly
+   rather than through ctx.dispatchProvider, which reads a top-level field. */
 async function speed(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const net = config.network;

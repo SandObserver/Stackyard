@@ -1,8 +1,5 @@
-/* Connections widget data function. Two endpoints:
-     endpoint=vpn  → single-tunnel status (gluetun control server or NetBird mesh)
-     endpoint=map  → per-service geo/region data for the dot-matrix world map
-   Self-contained: carries its own helpers so it doesn't depend on routes.js.
-   Returns a result object (errors are reported inside it, never thrown). */
+/* Two endpoints: "vpn" for single-tunnel status, "map" for the per-service geo
+   data. Errors are reported inside the result, never thrown. */
 
 const COUNTRY_TO_ISO2 = {
   'united states': 'US',
@@ -71,16 +68,9 @@ const COUNTRY_TO_ISO2 = {
 };
 const nameToIso2 = name => (name ? COUNTRY_TO_ISO2[String(name).trim().toLowerCase()] || '' : '');
 /* A configured address as a fetchable base URL, or '' when there is nothing
-   usable. Callers check for '' and report that rather than attempting a request.
-
-   The map path used to have its own copy of this that omitted the guard, so a
-   service with no address fetched http://undefined: a real DNS lookup for a host
-   called "undefined", failing after a timeout with "getaddrinfo ENOTFOUND
-   undefined". The widget looked like it had a network fault when a field was
-   simply empty. Two copies of one rule is how they came to disagree.
-
-   Whitespace is trimmed, since a field containing only spaces is as empty as one
-   containing nothing, and http://%20%20 fails just as obscurely. */
+   usable. Callers must check for '' and report it rather than attempting a
+   request: an empty field otherwise fetches http://undefined and reports itself
+   as a network fault. */
 const normBase = u => {
   const v = String(u ?? '').trim();
   if (!v) return '';
@@ -95,15 +85,14 @@ const MAP_DEFAULT_COLOR = {
   umami: '#64D2FF',
 };
 
-/* Raw GET: Conduit exposes Prometheus-style text that needs the unparsed body. */
-/* What a failed service shows on the tile. This string travels in a successful
-   response, so the api-error sanitiser never sees it: a caught error's message
-   names the host and port it failed to reach. Our own sentence when we wrote
-   one, a phrase from the error code otherwise. */
+/* Conduit exposes Prometheus-style text, so the body must stay unparsed. */
+/* This string travels in a successful response, so the api-error sanitiser
+   never sees it. A caught error's message names the host and port it failed to
+   reach, so use it only when this file wrote it. */
 const TIMEOUT_CODES = new Set(['ETIMEDOUT', 'ESOCKETTIMEDOUT', 'UND_ERR_HEADERS_TIMEOUT']);
 function errorText(e) {
   if (e && e.vouchedMessage) return e.vouchedMessage;
-  /* Already a sentence this repo wrote, and the reason is the point of it. */
+  /* Already a sentence this repo wrote. */
   if (e && e.name === 'SsrfBlockedError') return e.message;
   const code = e && e.code;
   if (code === 'ECONNREFUSED') return 'Connection refused';
@@ -204,9 +193,7 @@ async function vpnView(ctx) {
           let s = await fetchJSON(base + '/v1/vpn/status', { headers, timeout: 6000 });
           if (s.status === 404) s = await fetchJSON(base + '/v1/openvpn/status', { headers, timeout: 6000 });
           if (s.status < 400 && s.data && s.data.status) out.status = s.data.status;
-        } catch {
-          /* ignore: publicip already decided */
-        }
+        } catch {}
         out.connected = !!out.ip || out.status === 'running';
       }
     } else {
@@ -260,8 +247,8 @@ async function mapView(ctx) {
         adminUrl: s.adminUrl || '',
       };
       try {
-        /* Same as the VPN path above: say the address is missing rather than
-         letting a doomed request report itself as a network fault. */
+        /* Say the address is missing rather than letting a doomed request
+           report itself as a network fault. */
         if (!base) ctx.fail('No URL configured', { kind: ctx.KIND.INVALID });
         if (s.type === 'conduit') {
           const r = await fetchJSON(new URL('/metrics', base).href, { raw: true });
@@ -382,6 +369,4 @@ async function mapView(ctx) {
 }
 
 module.exports = run;
-/* Exported for tests. normBase decides whether a request is attempted at all,
-   and it used to have a second copy that behaved differently. */
 module.exports.normBase = normBase;

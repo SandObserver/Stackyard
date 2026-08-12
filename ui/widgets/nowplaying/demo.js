@@ -1,7 +1,3 @@
-/* Invented playback sessions for the public demo. progress is 0..1 per the
-   widget contract, and sweeps nearly the whole range so the tape winds visibly
-   between polls. */
-
 module.exports = function nowplayingDemo({ demo: { wave, round } }) {
   return {
     provider: 'jellyfin',

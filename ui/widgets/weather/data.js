@@ -1,17 +1,5 @@
-/* Weather widget data function: Open-Meteo (keyless).
-
-   Config:
-     city      : display name (resolved to lat/long in the editor)
-     lat, lon  : coordinates stored once the city is confirmed
-     units     : 'c' (default) or 'f'
-     href      : optional click-through URL
-
-   ?endpoint=geocode returns { options:[{value,label,set:{lat,lon}}] } for the
-   config-time location picker, using config.cityQuery as the search text.
-
-   Returns the normalized shape the widget HTML renders:
-     { temp, units, code, isDay, condition, city }
-   code is the WMO weather code; the front-end maps it to an icon + label. */
+/* Open-Meteo, keyless. Returns { temp, units, code, isDay, condition, city },
+   where code is the WMO weather code. */
 
 async function geocode(ctx) {
   const q = String(ctx.config.cityQuery || ctx.config.city || '').trim();
@@ -51,7 +39,6 @@ module.exports = async function (ctx) {
 
   const cur = r.data.current;
   let isDay = cur.is_day === 1 || cur.is_day === true;
-  /* is_day is provided by Open-Meteo; fall back to sunrise/sunset if absent. */
   if (cur.is_day == null && r.data.daily && r.data.daily.sunrise) {
     const now = new Date(cur.time).getTime();
     const sr = new Date(r.data.daily.sunrise[0]).getTime();

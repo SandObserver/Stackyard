@@ -1,15 +1,3 @@
-/* Regression tests for P6-5 and P6-11: the update check.
-
-   The old comparison split on '.' and ran parseInt over the parts, so
-   "1.5.0-rc.1" parsed as [1, 5, 0, 1]: parseInt("0-rc") is 0 and the trailing
-   ".1" became a fourth number. The release "1.5.0" therefore compared as older
-   than its own release candidate, and anyone running an rc was told they were up
-   to date, permanently and silently.
-
-   Precedence is implemented from semver.org section 11 rather than approximated.
-   The approximation that only asks "does it have a suffix" gets rc.2 against
-   rc.10 wrong, which the old code happened to get right. */
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 

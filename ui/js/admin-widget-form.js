@@ -1,4 +1,3 @@
-/* Admin UI: the widget edit form and its per-type config sections. */
 import { state } from '/js/admin-state.js?v=3f9ad806';
 import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=bb36dbb3';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=db00a87b';
@@ -36,7 +35,7 @@ export function buildWidgetForm(body, item) {
 }
 
 function _renderWidgetForm(body) {
-  /* Re-render of the same registry widget (e.g. size change): keep typed values. */
+  /* Re-render of the same registry widget: keep typed values. */
   if (state._autoForm && state._autoFormType === state._wtype) {
     state._wAutoCfg = Object.assign({}, state._wAutoCfg, state._autoForm.getValues());
   }
@@ -71,8 +70,6 @@ function _renderWidgetForm(body) {
     _renderWidgetForm(body);
   };
 
-  /* A refused widget is absent from the list above, which on its own looks like
-     it was never installed. This is where someone goes looking for it. */
   const refused = (state._widgetRejected || []).filter(r => r && r.name);
   if (refused.length) {
     const note = document.createElement('p');
@@ -117,7 +114,7 @@ function _renderWidgetForm(body) {
       widgetType: state._wtype,
       size: state._wsize,
       /* A view switch can change which sizes are offered, and the tiles are
-         drawn above this form, so the whole form is redrawn. */
+         drawn above this form. */
       onChange(key) {
         if (_vf && key === _vf) _renderWidgetForm(body);
       },
@@ -127,8 +124,8 @@ function _renderWidgetForm(body) {
   else _renderCustomConfig(body);
 }
 
-/* Its stored settings are held on the server and not sent here, so there is
-   nothing to render and a save leaves them untouched. */
+/* Its stored settings are held on the server and not sent here. A save leaves
+   them untouched. */
 function _renderUnavailableConfig(body) {
   const card = document.createElement('div');
   card.className = 'grp';
@@ -143,13 +140,8 @@ function _renderUnavailableConfig(body) {
   if (why) appendRejectionReasons(body, [why], { name: false });
 }
 
-/* Why the server refused a widget, as a list. Shared by the two places that
-   show it, so a reason cannot be phrased one way in the picker and another in
-   the editor. A refusal is usually one typo in widget.json, and the container
-   log is the last place a self-hoster looks.
-
-   `withName` is what differs: the editor is already showing one widget, the
-   picker is listing several. */
+/* Why the server refused a widget, as a list. `withName` is what differs: the
+   editor shows one widget, the picker lists several. */
 function appendRejectionReasons(target, rejections, { name: withName = true } = {}) {
   const lines = rejectionLines(rejections, { withName });
   if (!lines.length) return;
@@ -157,8 +149,8 @@ function appendRejectionReasons(target, rejections, { name: withName = true } = 
   list.className = 'grp-tip cfg-reject-list';
   for (const line of lines) {
     const li = document.createElement('li');
-    /* textContent, not markup: a validator message is built from names taken
-       out of the manifest. */
+    /* textContent, never markup. A validator message carries names taken out of
+       the manifest. */
     li.textContent = line;
     list.appendChild(li);
   }

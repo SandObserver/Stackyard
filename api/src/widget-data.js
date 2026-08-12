@@ -16,8 +16,6 @@ const { fail, KIND, WidgetError } = require('./api-error');
 const { rateLimit } = require('./auth');
 const LIMITS = require('./poll-limits');
 
-/* Host-IP to container-name rewriting is applied later by the fetch boundary, so
-   it is deliberately not repeated here. */
 function normalizeBase(raw) {
   if (!raw) return '';
   const s = String(raw).trim();
@@ -25,8 +23,7 @@ function normalizeBase(raw) {
   return withProto.replace(/\/+$/, '');
 }
 
-/* The row an options fetch came from. Request-supplied, so the shape is checked
-   rather than trusted. */
+/* Request-supplied, so the shape is checked rather than trusted. */
 function resolveRow(wc, row) {
   if (!row || typeof row.key !== 'string' || !Number.isInteger(row.index) || row.index < 0) return null;
   if (!Object.hasOwn(wc, row.key)) return null;
@@ -39,14 +36,12 @@ function resolveRow(wc, row) {
 function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
   const ctx = {
     config: wc /* full widgetConfig, including secrets (server-side only) */,
-    /* A frozen copy of the non-secret keys only: the full settings object carries
-       the session signing key and the password hash. */
+    /* Non-secret keys only. The full settings object carries the session signing
+       key and the password hash. */
     settings: widgetSettings(loadConfig().settings),
     endpoint: endpoint,
-    /* Set only for an optionsFrom fetch inside a group, so a per-row picker reads
-       the URL and key that row was given. */
     row: resolveRow(wc, row),
-    params: searchParams /* URLSearchParams for any extra query params */,
+    params: searchParams,
     /* The caller supplies the fetcher to match the URL's provenance: unchecked
        for saved config, checked for a request-supplied preview config. */
     fetchJSON: fetch,
@@ -54,8 +49,6 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     metrics: IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
     demo: IS_DEMO ? demoData.helpers : null,
     normalizeBase,
-    /* Reports a failure in the author's own words. A plain Error is sanitised to
-       a generic message instead. See api-error.js. */
     fail: (message, opts) => {
       throw new WidgetError(message, opts);
     },
@@ -66,13 +59,10 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
   return ctx;
 }
 
-/* The module ships inside the image and is trusted author code, not runtime
-   input. */
 async function runDataFn(name, ctx) {
   return runWidgetModule(name, 'data.js', ctx);
 }
 
-/* Only reached in demo mode, so the file is never required on a normal install. */
 function runDemoFn(name, ctx) {
   return runWidgetModule(name, 'demo.js', ctx);
 }
@@ -91,8 +81,8 @@ async function runWidgetModule(name, file, ctx) {
 
 async function getWidgetData(item, entry, endpointName, searchParams, fetch, row = null, isOptions = false) {
   const wc = item.widgetConfig || {};
-  /* Only the dashboard's own data gets a canned body: an options fetch must run
-     the real path, or the editor shows fabricated options. */
+  /* An options fetch must run the real path, or the editor shows fabricated
+     options. */
   if (IS_DEMO && !isOptions && entry.hasDemoFn) {
     const body = await runDemoFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row));
     if (body) return { status: 200, body };
@@ -103,7 +93,6 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch, row
 }
 
 on('GET', '/api/widget-data/:id', async (req, res) => {
-  /* Per widget id, which is what maps to one upstream service. */
   const limited = rateLimit(
     getIp(req),
     `widget-data:${req.params.id}`,
@@ -130,9 +119,8 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
   }
 });
 
-/* Config-time "Fetch" for a select field declared with optionsFrom. The admin UI
-   posts the in-progress config, keyed by widget id ('__preview__' before first
-   save), and the widget's own data.js answers it. */
+/* Config-time "Fetch" for a select field declared with optionsFrom. The id is
+   '__preview__' before the first save. */
 on('POST', '/api/widget-options/:id', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const limited = rateLimit(getIp(req), 'widget-options', LIMITS.WIDGET_OPTIONS.max, LIMITS.WIDGET_OPTIONS.windowMs);
@@ -153,9 +141,9 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
     widgetConfig: body.widgetConfig || {},
   };
   const saved = (loadConfig().items || []).find(i => i.id === req.params.id && i.type === 'widget');
-  /* Only restore a blanked secret when the rest of the posted config matches what
-     is saved: otherwise the request picks the destination while the server
-     supplies the credential. See secret-scope.js. */
+  /* Only restore a blanked secret when the rest of the posted config matches
+     what is saved. Otherwise the request picks the destination while the server
+     supplies the credential. */
   const scoped = !!saved && widgetConfigMatchesSaved(item.widgetConfig, saved.widgetConfig, entry);
   if (scoped) preserveWidgetSecrets(item, saved, entry);
 
@@ -172,8 +160,6 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
     json(res, out.status, out.body);
   } catch (e) {
     if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });
-    /* A failure right after declining to restore is most likely the missing
-       credential. */
     if (!scoped && saved) return fail(res, e, { status: 502, kind: KIND.INVALID, error: RETYPE_MESSAGE });
     log.error('widget-options failed', { widget: body.widgetType, error: e.message });
     fail(res, e, { status: 502 });

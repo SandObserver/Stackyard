@@ -1,18 +1,3 @@
-/* Regression tests for P3-3: a ping could run past its time budget.
-
-   Node's socket-level `timeout` is an inactivity timer on the socket and does
-   not reliably bound a stalled DNS lookup, TCP connect or TLS handshake.
-   fetchJSON carried a second timer covering the whole attempt; pingUrl did not,
-   so against a host that accepts the connection then goes silent it took twice
-   its budget: 4 seconds for a 2 second limit.
-
-   That matters most for health checks, where a service that is reachable but
-   hung is exactly the case being tested for, and the pings run in parallel, so
-   the overshoot held up the whole health response rather than one tile.
-
-   The deadline is one helper used by both, since two copies of a timing rule is
-   how the two came to differ. */
-
 process.env.ALLOW_PRIVATE_IPS = 'true';
 
 const { test, after } = require('node:test');

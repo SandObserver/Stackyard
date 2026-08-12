@@ -324,8 +324,7 @@ document.addEventListener('touchend', e => {
   }
 }, { passive:true });
 
-/* The dashboard calls this directly when a tap lands outside this widget. See
-   the mobile active state section in docs/widgets.md. */
+/* The dashboard calls this directly when a tap lands outside this widget. */
 window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
 
 async function fetchBays() {

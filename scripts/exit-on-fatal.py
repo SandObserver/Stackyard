@@ -57,21 +57,17 @@ def main():
                 'Stopping so the container exits and its restart policy applies.\n' % name
             )
             write_stdout('RESULT 2\nOK')
-            # supervisord always exits 0 on SIGTERM, so a marker file carries
-            # the failure out to the entrypoint, which turns it into the
-            # container's exit code. Without that the container would report a
-            # clean stop: `restart: unless-stopped` restarts on any exit so it
-            # would still recover, but someone using `on-failure` would get no
-            # restart at all, and `docker ps` would describe a dead API as a
-            # normal shutdown.
+            # supervisord always exits 0 on SIGTERM. The marker file carries the
+            # failure out to the entrypoint, which turns it into the container's
+            # exit code. Without it a dead API reports a clean stop.
             try:
                 with open(FAILURE_MARKER, 'w') as fh:
                     fh.write(name)
             except OSError:
                 pass  # the exit still happens; only the exit code is lost
 
-            # SIGTERM to supervisord rather than supervisorctl: it needs no
-            # XML-RPC interface enabled and nothing extra on PATH.
+            # SIGTERM to supervisord, not supervisorctl: it needs no XML-RPC
+            # interface enabled and nothing extra on PATH.
             os.kill(os.getppid(), signal.SIGTERM)
             sys.exit(1)
 

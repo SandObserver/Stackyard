@@ -79,13 +79,9 @@
 </head>
 <body>
 <p id="sr-sum" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:-1px;"></p>
-<!-- dir="ltr" deliberately, and not inherited from the page. This widget is
-     percentages, byte counts and sparklines: content with its own direction
-     rather than text. Mirroring it would move the value column to the right and
-     run the sparklines' time axis right to left, which reads as a bug rather
-     than as a translation. Labels inside are single words and still shape
-     correctly, because bidi resolves a run of Persian inside a left-to-right
-     block. The screen-reader summary above is left to follow the page. -->
+<!-- dir="ltr", not inherited from the page. This widget is percentages, byte
+     counts and sparklines: content with its own direction. Mirroring it runs
+     the sparklines' time axis right to left. -->
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <script type="module">
 import { poll, fetchData, html, setHtml, loadStrings, wt } from '/js/widget-toolbox.js?v=1';
@@ -198,8 +194,7 @@ function mkValueEl(slot, i) {
     setHtml(d, html`<div class="v" id="pct-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`);
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
-    /* slot.type reaches a class attribute here, the same untrusted value as the
-       label fallback in mkChartEl. */
+    /* slot.type reaches a class attribute here, and comes from config. */
     setHtml(d, html`<div class="v c-${slot.type}" id="pct-${i}">—${unit}</div>`);
   }
   return d;
@@ -208,8 +203,8 @@ function mkValueEl(slot, i) {
 function mkChartEl(slot, i) {
   const d = document.createElement('div'); d.className = 'chart-section';
   const lbl = { cpu:'CPU', ram:'RAM', temp:'TEMP', disk:'DISK', iowait:'IO WAIT', procs:'PROCS' }[slot.type] || slot.type.toUpperCase();
-  /* lbl falls back to slot.type for an unknown type, and slot.type comes from
-     config, which can arrive by import. html`` escapes it. */
+  /* slot.type comes from config, which can arrive by import. html`` escapes
+     it. */
   if (slot.type === 'disk') {
     setHtml(d, html`<div class="chart-lbl">${lbl}</div>
       <div class="disk-bars">
@@ -286,10 +281,8 @@ function buildSpark(id, hist, colorCls) {
   });
 }
 
-/* ── Deviation bars (process count) ── scaled to the window's own spread so
-   small moves in a large, stable count stay visible; a near-flat window reads
-   calm rather than jumpy. Bars above the mean are highlighted; dashed line marks
-   the mean. Same bar DOM as the sparkline so it matches. */
+/* ── Deviation bars (process count) ── scaled to the window's own spread, so
+   small moves in a large, stable count stay visible. */
 function buildDevBars(id, hist, colorCls) {
   const el = document.getElementById(id); if (!el) return;
   el.innerHTML = '';

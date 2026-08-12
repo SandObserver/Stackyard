@@ -11,9 +11,8 @@ machine-readable `kind`, and sometimes a small `detail` object.
 }
 ```
 
-`error` is for a person to read. `kind` is for code to branch on. Nothing should
-ever decide what a failure means by looking for words inside `error`; that is
-what this contract exists to replace.
+`error` is for a person to read. `kind` is for code to branch on. Never decide
+what a failure means by looking for words inside `error`.
 
 The backend side lives in `api/src/api-error.js`, the frontend side in
 `ui/js/admin-error.js`, and `api/test/api-error.test.js` asserts the two agree.
@@ -36,12 +35,10 @@ A route may pass an explicit `error` when the text is one the code chose and can
 vouch for, such as `Set a password before turning authentication on.` Such a
 message must not name a host, an address or a path.
 
-A widget's `data.js` vouches for a message the same way, from further off, by
-throwing `ctx.fail(message)` rather than a plain `Error`. That is how
-`API key not configured` and `TrueNAS auth failed, check API key` survive: they
-tell someone what to change, where `Something went wrong.` does not. The same
-restriction applies, and a status code is the only thing that should ever be
-interpolated into one. See [widgets.md](./widgets.md#reporting-a-failure).
+A widget's `data.js` vouches for a message the same way, by throwing
+`ctx.fail(message)` rather than a plain `Error`. The same restriction applies,
+and a status code is the only thing that may be interpolated into one. See
+[widgets.md](./widgets.md#reporting-a-failure).
 
 ## Kinds
 
@@ -64,18 +61,15 @@ Two of these are easy to confuse:
 - `upstream` with `detail.status` of 401 or 403 is about *the service the user is
   pointing at*. That is the one where offering to add an API key makes sense.
 
-Reading them the other way round is exactly the bug this contract fixed: the
-admin UI used to match the string `Unauthori`, which is the text of our own
-session-expiry message, and so told users to add an upstream API key when their
-own login had simply timed out.
+Reading them the other way round tells someone to add an upstream API key when
+their own login has timed out.
 
 ## Handling an unknown kind
 
 A consumer that does not recognise a `kind`, or receives a response with no
 `kind` at all, must treat it as `internal` and fall back to displaying `error`.
-This is what lets an older frontend run against a newer API, and a newer frontend
-run against an API container that has not been redeployed yet. Both
-`classify()` and `readError()` do this; do not add a `throw` to either.
+This is what lets an older frontend run against a newer API, and the reverse.
+Both `classify()` and `readError()` do this. Do not add a `throw` to either.
 
 ## The `detail` object
 
@@ -85,8 +79,7 @@ where arbitrary strings accumulate.
 1. **Declared keys only.** Anything not in the table below does not go in.
 2. **Server-derived values only.** A status code we read, an errno Node handed
    us, a URL we constructed ourselves. Never an upstream response body, an
-   upstream header, or a filesystem path. This is the rule that keeps `detail`
-   safe once error-message sanitisation makes `error` generic.
+   upstream header, or a filesystem path.
 3. **Omit it entirely** rather than sending `{}`.
 
 | Kind | Key | Type | Meaning |

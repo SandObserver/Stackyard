@@ -1,7 +1,6 @@
 // @ts-check
-/* Translated through an injected `translate` rather than by importing i18n: this
-   file has no imports and no module state, which is what lets it be tested
-   directly. A caller that passes none gets readable English. */
+/* Keep this file free of imports and of module state. Translation arrives
+   through an injected `translate`; a caller that passes none gets English. */
 const EN = {
   'status.needsAttention': 'Status: needs attention',
   'status.healthy': 'Status: healthy',
@@ -21,8 +20,7 @@ function _fallback(key, vars) {
 
 export const NAMED = { blue: '#1e6ef4', green: '#008932', yellow: '#ffcc00', red: '#e9152d', gray: '#636366' };
 
-/* WCAG contrast: dark text only where it beats white.
-   ratioW = 1.05/(L+0.05), ratioD = (L+0.05)/0.0617 for #1c1c1e. */
+/* WCAG contrast: dark text only where it beats white. */
 export function needsDark(hex) {
   try {
     const h = hex.replace(/^#/, '');
@@ -42,11 +40,7 @@ export function resolveColor(c) {
   return c ? NAMED[c] || c : '';
 }
 
-/* Priority: unhealthy > activity > fixed-label > healthy-dot. */
-/* Why a tile is red, as one short line of hover text. Docker's `status` is
-   preferred over `state` because "Exited (1) 2 hours ago" says more than
-   "exited", and both checks failing produces both reasons. Long values are
-   truncated: a tooltip that runs off the screen is worse than none. */
+/* Why a tile is red, as one short line of hover text. */
 const REASON_MAX = 90;
 
 const _clip = (s, n) => {
@@ -59,15 +53,13 @@ export function healthReason(detail, translate) {
   if (!detail || typeof detail !== 'object') return '';
   const parts = [];
 
-  /* 'unknown' is the server's sentinel for a container it could not find, which
-     is a different problem from one that is stopped. */
+  /* 'unknown' is the server's sentinel for a container it could not find. */
   if (detail.state === 'unknown') {
     parts.push(tr('status.containerNotFound'));
   } else if (detail.state && detail.state !== 'running') {
-    /* Passed through untranslated: the text comes from the daemon. */
+    /* Untranslated. The text comes from the daemon. */
     parts.push(_clip(detail.status || tr('status.containerState', { state: detail.state }), REASON_MAX));
   } else if (detail.status && /unhealthy/i.test(detail.status)) {
-    /* Running, but Docker's own healthcheck is failing. */
     parts.push(_clip(detail.status, REASON_MAX));
   }
 
@@ -124,7 +116,7 @@ export function computeBadgeVisual({
     txt = '';
   }
 
-  /* Accessible status text so meaning isn't carried by color alone (HIG: don't rely on color) */
+  /* Status text, so meaning is not carried by colour alone. */
   let aria = '';
   if (health) aria = tr('status.needsAttention');
   else if (activity > 0)
@@ -139,13 +131,10 @@ export function computeBadgeVisual({
     aria = (aria ? aria + ' ' : '') + tr('status.stale');
   }
 
-  /* Hover text, and appended to the label so it is not sight-only. Only when
-     something is actually wrong: a tooltip on a healthy tile is noise. */
+  /* Appended to the label too, so it is not sight-only. */
   const reason = health ? healthReason(healthDetail) : '';
   if (reason) aria = aria + ': ' + reason;
 
-  /* Auto dark text: WCAG luminance check on the resolved hex. Falls back to
-     class-based color (blue/red/green) when bg is empty. */
   const effectiveBg =
     bg ||
     (cls.includes('red') ? NAMED.red : cls.includes('green') ? NAMED.green : cls.includes('blue') ? NAMED.blue : '');
@@ -154,11 +143,11 @@ export function computeBadgeVisual({
   return { cls, txt, bg, aria, color, title: reason };
 }
 
-/** Identity of a rendered badge, for skipping DOM writes that would change nothing.
-    Covers every field {@link computeBadgeVisual} returns that reaches the element.
+/** Identity of a rendered badge, for skipping DOM writes that change nothing.
+    Must cover every field computeBadgeVisual returns that reaches the element.
     @param {{ cls?: string, txt?: string, bg?: string, aria?: string, color?: string, title?: string }} visual */
 export function badgeSignature({ cls = '', txt = '', bg = '', aria = '', color = '', title = '' } = {}) {
-  /* NUL separator: a plain space would let a class list and the label pack
-     into one string two different ways and compare equal. */
+  /* NUL separator. A plain space lets a class list and a label pack into one
+     string two ways and compare equal. */
   return [cls, txt, bg, aria, color, title].join('\u0000');
 }
