@@ -1,5 +1,5 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { nextActiveIndex, recoversSession } from '/js/admin-logic.js?v=056a11e9';
+import { nextActiveIndex, recoversSession, toastMs } from '/js/admin-logic.js?v=056a11e9';
 import { el, qa, q } from '/js/utils.js?v=84d58686';
 import { t } from '/js/i18n.js?v=133a7aac';
 
@@ -11,7 +11,7 @@ export const toast = (m, t = 'ok') => {
   e.textContent = m;
   e.className = `show ${t}`;
   clearTimeout(tt);
-  tt = setTimeout(() => (e.className = ''), 3000);
+  tt = setTimeout(() => (e.className = ''), toastMs(m));
 };
 
 /* Carry `kind` and `detail`, so callers branch on data, never on message
