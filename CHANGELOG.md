@@ -19,8 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Dashboard tiles scale with the window, so six columns stay square on a tablet
-  and fill the width of a large screen.
+- Dashboard tiles scale down with the window, so six columns stay square on a
+  tablet. Sizes above the design width are unchanged.
 
 - Settings keeps its sidebar on a tablet, narrowed.
 
