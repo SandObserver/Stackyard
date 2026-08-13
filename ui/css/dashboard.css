@@ -65,22 +65,23 @@
     /* ── Desktop grid scale ──
        Six columns at every width. The grid, the gaps and the tile height are
        one proportional system derived from the viewport, so six columns stay
-       square on a tablet and grow on a large screen instead of sitting in a
-       1041px island.
+       square on a tablet. Above the design width the system stops: each min()
+       is capped at its design value, so a large screen gets the same sizes a
+       desktop has always had.
 
        The design width is 1041px, which over six columns and a 25px gap gives a
        152.67px column, the width the 152px tile height and every value in
        WIDGET_HEIGHTS were drawn against. Each ratio below is that value over
-       1041. The upper bound of each min() is the design value times 1.25.
+       1041.
 
        dashboard.js reads --tile-h and --row-gap back to paginate. Changing a
        ratio here without changing DESIGN_TILE there breaks the page breaks. */
     :root {
       --grid-avail:calc(100vw - 88px);
-      --grid-w:min(1301px, var(--grid-avail));
-      --col-gap:min(31.25px, calc(var(--grid-avail) * 0.024015));
-      --row-gap:min(37.5px, calc(var(--grid-avail) * 0.028818));
-      --tile-h:min(190px, calc(var(--grid-avail) * 0.146013));
+      --grid-w:min(1041px, var(--grid-avail));
+      --col-gap:min(25px, calc(var(--grid-avail) * 0.024015));
+      --row-gap:min(30px, calc(var(--grid-avail) * 0.028818));
+      --tile-h:min(152px, calc(var(--grid-avail) * 0.146013));
     }
     /* Measured by dashboard.js. An element resolves these to pixels; reading the
        custom properties themselves returns their unresolved text. */
