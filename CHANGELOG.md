@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The App, Widget and Folder tiles under Add New show their names instead of
   their internal keys.
 
+- The Backup widget shows the job picker for the provider you picked. Kopia
+  showed the Duplicati picker as well, and Duplicati showed no picker at all.
+
 ## [1.6.0] - 2026-08-13
 
 ### Added

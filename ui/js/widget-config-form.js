@@ -11,7 +11,7 @@ import {
   collectFieldValues,
   requiredFieldMissing,
   groupBounds,
-  visibleFieldKeys,
+  visibleFieldFlags,
 } from '/js/admin-logic.js?v=056a11e9';
 import { optionsErrorText } from '/js/admin-error.js?v=af729113';
 import { qi } from '/js/utils.js?v=84d58686';
@@ -489,11 +489,11 @@ function _wireShowIf(built) {
   const fields = built.map(b => b.field);
   const readValue = key => (liveByKey[key] ? liveByKey[key]() : undefined);
   const apply = () => {
-    const shown = visibleFieldKeys(fields, readValue);
-    for (const b of built) {
-      if (!b.field.showIf) continue;
-      b.el.style.display = shown.has(b.field.key) ? '' : 'none';
-    }
+    const shown = visibleFieldFlags(fields, readValue);
+    built.forEach((b, i) => {
+      if (!b.field.showIf) return;
+      b.el.style.display = shown[i] ? '' : 'none';
+    });
   };
   for (const b of built) {
     if (b.control) b.control.addEventListener('change', apply);
