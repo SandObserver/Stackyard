@@ -40,6 +40,17 @@ test('a blocked request does not name what it was blocked from reaching', () => 
   assert.doesNotMatch(body.error, /192\.168/);
 });
 
+/* The UI advises about ALLOW_PRIVATE_IPS from this code. Sending the reason as
+   text instead would name the address. */
+test('a private-address block carries a reason code and no address', () => {
+  const { SsrfBlockedError } = require('../src/proxy');
+  const body = errorBody(new SsrfBlockedError('Blocked: 192.168.1.5 is a private address.', 'private-address'));
+  assert.equal(body.kind, KIND.BLOCKED);
+  assert.equal(body.detail.reason, 'private-address');
+  assert.equal(body.error, safeMessage(KIND.BLOCKED));
+  for (const pattern of REVEALING) assert.doesNotMatch(JSON.stringify(body), pattern);
+});
+
 test('every message the API can produce is one of the composed set', () => {
   const allowed = new Set(Object.values(SAFE_MESSAGES));
   for (const e of REAL_ERRORS) {

@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Backup widget shows the job picker for the provider you picked. Kopia
   showed the Duplicati picker as well, and Duplicati showed no picker at all.
 
+- A badge or widget field blocked for pointing at a private address now names
+  `ALLOW_PRIVATE_IPS=true` as the setting that allows it. The advice was added
+  in 1.6.0 but never appeared.
+
 ## [1.6.0] - 2026-08-13
 
 ### Added

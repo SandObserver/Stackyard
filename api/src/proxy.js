@@ -178,6 +178,10 @@ function rewriteUrl(raw) {
    unchecked entry points skip the guard. */
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
+/* A code, never the address. The block message must not repeat what was
+   blocked, so the reason travels as this instead. */
+const PRIVATE_ADDRESS = 'private-address';
+
 /** @param {URL} u @returns {string|null} */
 function urlPolicyError(u) {
   if (!ALLOWED_PROTOCOLS.has(u.protocol)) {
@@ -198,11 +202,13 @@ async function guardSsrf(rawUrl) {
   if (policy) return { error: policy, ip: null };
   const h = bareHost(u.hostname);
   /* Loopback, not a service name. Block it before the allowance below. */
-  if (!ALLOW_PRIVATE_IPS && h === 'localhost') return { error: `Blocked: ${h} is a private address.`, ip: null };
+  if (!ALLOW_PRIVATE_IPS && h === 'localhost')
+    return { error: `Blocked: ${h} is a private address.`, ip: null, reason: PRIVATE_ADDRESS };
   if (isDockerServiceName(h)) return { error: null, ip: null };
   const hostIp = getHostIp();
   if (hostIp && h === hostIp) return { error: null, ip: null };
-  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(h)) return { error: `Blocked: ${h} is a private address.`, ip: null };
+  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(h))
+    return { error: `Blocked: ${h} is a private address.`, ip: null, reason: PRIVATE_ADDRESS };
   let address;
   try {
     ({ address } = await dns.lookup(h));
@@ -210,7 +216,7 @@ async function guardSsrf(rawUrl) {
     return { error: `Blocked: ${h} could not be resolved.`, ip: null };
   }
   if (!ALLOW_PRIVATE_IPS && isPrivateAddress(address))
-    return { error: `Blocked: ${h} resolves to private IP ${address}.`, ip: null };
+    return { error: `Blocked: ${h} resolves to private IP ${address}.`, ip: null, reason: PRIVATE_ADDRESS };
   /* A literal address cannot be rebound. */
   if (h === address) return { error: null, ip: null };
   return { error: null, ip: address };
@@ -449,10 +455,11 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
    connected to. */
 
 class SsrfBlockedError extends Error {
-  constructor(reason) {
-    super(reason);
+  constructor(message, reason) {
+    super(message);
     this.name = 'SsrfBlockedError';
     this.status = 403;
+    if (reason) this.detail = { reason };
   }
 }
 
@@ -461,7 +468,7 @@ async function fetchChecked(url, opts = {}) {
   if (IS_DEMO) return fetchJSON(url, opts);
   const target = rewriteUrl(url);
   const guard = await guardSsrf(target);
-  if (guard.error) throw new SsrfBlockedError(guard.error);
+  if (guard.error) throw new SsrfBlockedError(guard.error, guard.reason);
   return fetchJSON(target, { ...opts, pinIp: guard.ip });
 }
 
@@ -477,7 +484,7 @@ async function pingChecked(url, ms, skipTls) {
   if (IS_DEMO) return pingUrl(url, ms, skipTls);
   const target = rewriteUrl(url);
   const guard = await guardSsrf(target);
-  if (guard.error) throw new SsrfBlockedError(guard.error);
+  if (guard.error) throw new SsrfBlockedError(guard.error, guard.reason);
   return pingUrl(target, ms, skipTls, guard.ip);
 }
 

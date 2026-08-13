@@ -13,9 +13,14 @@ export const KIND = Object.freeze({
 
 export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 
-/* Matches the two SSRF messages that ALLOW_PRIVATE_IPS would let through.
-   Keep it in step with the guard in api/src/proxy.js. */
-const PRIVATE_BLOCK_RE = /is a private address\.|resolves to private IP /;
+/* The reason code the API sends with a block that ALLOW_PRIVATE_IPS would let
+   through. The message itself never names the address. */
+const PRIVATE_ADDRESS = 'private-address';
+
+const PRIVATE_ADDRESS_ADVICE =
+  'Most homelab services live on private IPs. Set ALLOW_PRIVATE_IPS=true and restart the container.';
+
+const blockedForPrivateAddress = ({ kind, detail }) => kind === KIND.BLOCKED && detail?.reason === PRIVATE_ADDRESS;
 
 /* An unknown or missing kind degrades to INTERNAL. */
 export function readError(e) {
@@ -25,7 +30,8 @@ export function readError(e) {
 }
 
 export function badgeErrorAdvice(e) {
-  const { kind, detail, message } = readError(e);
+  const read = readError(e);
+  const { kind, detail, message } = read;
 
   if (kind === KIND.AUTH) {
     return {
@@ -55,10 +61,10 @@ export function badgeErrorAdvice(e) {
     };
   }
 
-  if (kind === KIND.BLOCKED && PRIVATE_BLOCK_RE.test(message)) {
+  if (blockedForPrivateAddress(read)) {
     return {
       tone: TONE.WARN,
-      message: `${message} Most homelab services live on private IPs. Set ALLOW_PRIVATE_IPS=true and restart the container.`,
+      message: `${message} ${PRIVATE_ADDRESS_ADVICE}`,
       openAuth: false,
       sessionExpired: false,
     };
@@ -74,7 +80,9 @@ export function badgeErrorAdvice(e) {
 }
 
 export function optionsErrorText(e) {
-  const { kind, message } = readError(e);
+  const read = readError(e);
+  const { kind, message } = read;
   if (kind === KIND.INVALID && message) return message;
+  if (blockedForPrivateAddress(read)) return `${message} ${PRIVATE_ADDRESS_ADVICE}`;
   return 'Fetch failed: ' + (message || 'Request failed.');
 }

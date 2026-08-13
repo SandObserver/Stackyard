@@ -88,9 +88,12 @@ where arbitrary strings accumulate.
 | `timeout` | `code` | string | Node errno, when there was one |
 | `upstream` | `status` | number | The HTTP status the target replied with |
 | `invalid` | `code` | string | `ERR_INVALID_URL`, where applicable |
+| `blocked` | `reason` | string | `private-address`, when `ALLOW_PRIVATE_IPS=true` would allow the request |
 
-`blocked`, `auth` and `internal` carry no `detail`. For `blocked` the reason is
-already a sentence we wrote ourselves, so `error` is safe to show verbatim.
+`auth` and `internal` carry no `detail`.
+
+A `blocked` message never names the address it blocked, so it carries no wording
+to match on. The UI keys its advice off `detail.reason`.
 
 ## Adding a kind
 
