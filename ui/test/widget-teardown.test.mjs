@@ -201,11 +201,22 @@ test('both build paths tear down before replacing the DOM', () => {
 
 /* A rebuild discards every widget iframe, so it must happen only when the
    layout actually changes. The keyboard opening on a phone resizes the visual
-   viewport, and rebuilding on that threw the dashboard away mid-typing. */
-test('a plain resize does not rebuild the dashboard', () => {
+   viewport, and rebuilding on that threw the dashboard away mid-typing.
+
+   The desktop tile size follows the viewport, so that layout does have to
+   repaginate on a resize. Three things keep it from becoming the old bug:
+   mobile leaves before the timer is armed, the timer debounces, and a resize
+   that does not change the slot count returns without rebuilding. */
+test('a resize rebuilds only when the desktop slot count changes', () => {
   const src = read('js/dashboard.js');
-  assert.doesNotMatch(src, /addEventListener\(\s*'resize'/, 'a resize listener rebuilds on every pixel');
   assert.doesNotMatch(src, /visualViewport\?\.addEventListener/, 'the phone keyboard resizes this one');
+  const at = src.indexOf("addEventListener('resize'");
+  assert.ok(at !== -1, 'the desktop layout needs a resize listener to repaginate');
+  assert.equal(src.indexOf("addEventListener('resize'", at + 1), -1, 'one resize listener only');
+  const body = src.slice(at, at + 500);
+  assert.match(body, /if \(MOB\) return;[\s\S]*clearTimeout/, 'mobile must leave before the debounce is armed');
+  assert.match(body, /setTimeout\(/, 'an undebounced resize rebuilds on every pixel');
+  assert.match(body, /if \(slots === _slots\) return;/, 'a resize that changes nothing must not rebuild');
 });
 
 /* A media query reports the crossing itself, once, rather than every resize
