@@ -12,7 +12,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { badgeErrorAdvice, optionsErrorText, KIND, TONE } from '../js/admin-error.js';
+import { badgeErrorAdvice, optionsErrorAdvice, KIND, TONE } from '../js/admin-error.js';
 
 /* api/src/api-error.js is CommonJS (the server half of the codebase is), so it
    needs createRequire rather than a plain import. */
@@ -84,8 +84,11 @@ test('a block without the reason code gets no private-address advice', () => {
 
 test('the widget options Fetch gives the same advice', () => {
   const blocked = { kind: KIND.BLOCKED, message: 'The request was blocked.', detail: { reason: 'private-address' } };
-  assert.match(optionsErrorText(blocked), /ALLOW_PRIVATE_IPS=true/);
-  assert.match(optionsErrorText({ kind: KIND.BLOCKED, message: 'The request was blocked.' }), /^Fetch failed: /);
+  assert.match(optionsErrorAdvice(blocked).message, /ALLOW_PRIVATE_IPS=true/);
+  assert.equal(optionsErrorAdvice(blocked).tone, TONE.WARN, 'a fixable setting is not a hard error');
+  const plain = optionsErrorAdvice({ kind: KIND.BLOCKED, message: 'The request was blocked.' });
+  assert.match(plain.message, /^Fetch failed: /);
+  assert.equal(plain.tone, TONE.ERROR);
 });
 
 test('other blocked reasons are still shown verbatim', () => {
@@ -109,22 +112,22 @@ test('an unknown future kind degrades instead of crashing an older frontend', ()
   assert.equal(a.message, 'Too many requests.');
 });
 
-/* ── optionsErrorText (P11-2) ─────────────────────────────────────────────── */
+/* ── optionsErrorAdvice (P11-2) ───────────────────────────────────────────── */
 
 test('the retype instruction is shown on its own, without a failure prefix', async () => {
-  const { optionsErrorText } = await import('../js/admin-error.js');
+  const { optionsErrorAdvice } = await import('../js/admin-error.js');
   const msg =
     'This configuration has changed since it was saved, so the stored credential was not used. Enter the credential to test these settings.';
-  assert.equal(optionsErrorText({ kind: KIND.INVALID, message: msg }), msg);
+  assert.equal(optionsErrorAdvice({ kind: KIND.INVALID, message: msg }).message, msg);
 });
 
 test('any other failure keeps the Fetch failed prefix', async () => {
-  const { optionsErrorText } = await import('../js/admin-error.js');
-  assert.equal(optionsErrorText({ kind: KIND.NETWORK, message: 'boom' }), 'Fetch failed: boom');
-  assert.equal(optionsErrorText(new Error('boom')), 'Fetch failed: boom');
+  const { optionsErrorAdvice } = await import('../js/admin-error.js');
+  assert.equal(optionsErrorAdvice({ kind: KIND.NETWORK, message: 'boom' }).message, 'Fetch failed: boom');
+  assert.equal(optionsErrorAdvice(new Error('boom')).message, 'Fetch failed: boom');
 });
 
-test('optionsErrorText tolerates an error with no message', async () => {
-  const { optionsErrorText } = await import('../js/admin-error.js');
-  assert.equal(optionsErrorText({ kind: KIND.INVALID }), 'Fetch failed: Request failed.');
+test('optionsErrorAdvice tolerates an error with no message', async () => {
+  const { optionsErrorAdvice } = await import('../js/admin-error.js');
+  assert.equal(optionsErrorAdvice({ kind: KIND.INVALID }).message, 'Fetch failed: Request failed.');
 });

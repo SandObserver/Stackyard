@@ -88,6 +88,7 @@
   --accent:        var(--sy-teal);
   --accent-strong: var(--sy-teal-hi);
   --danger:        var(--sy-red);
+  --warning:       var(--sy-orange);
   --success:       var(--sy-green);
 
   --sy-radius-lg:14px;

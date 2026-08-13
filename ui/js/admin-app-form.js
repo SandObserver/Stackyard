@@ -591,7 +591,7 @@ async function fetchBadge() {
     /* Branch on the error's `kind`, never on words inside its message. */
     const advice = badgeErrorAdvice(e);
     if (st) {
-      st.style.cssText = 'margin-top:4px;color:' + (advice.tone === TONE.WARN ? '#ff9f0a' : '#ff453a');
+      st.style.cssText = 'margin-top:4px;color:' + (advice.tone === TONE.WARN ? 'var(--warning)' : 'var(--danger)');
       st.textContent = advice.tone === TONE.WARN ? advice.message : '✗ ' + advice.message;
     }
     if (advice.openAuth) {
