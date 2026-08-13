@@ -76,8 +76,10 @@ function classify(e) {
     return e.detail ? { kind: e.kind, detail: e.detail } : { kind: e.kind };
   }
 
-  /* Matched by name. Importing proxy.js here makes a require cycle. */
-  if (e && e.name === 'SsrfBlockedError') return { kind: KIND.BLOCKED };
+  /* Matched by name. Importing proxy.js here makes a require cycle. The detail
+     is a reason code. It must never carry the address that was blocked. */
+  if (e && e.name === 'SsrfBlockedError')
+    return e.detail ? { kind: KIND.BLOCKED, detail: e.detail } : { kind: KIND.BLOCKED };
 
   const code = e && typeof e.code === 'string' ? e.code : null;
   if (code) {

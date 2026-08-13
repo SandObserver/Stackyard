@@ -12,7 +12,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { badgeErrorAdvice, KIND, TONE } from '../js/admin-error.js';
+import { badgeErrorAdvice, optionsErrorText, KIND, TONE } from '../js/admin-error.js';
 
 /* api/src/api-error.js is CommonJS (the server half of the codebase is), so it
    needs createRequire rather than a plain import. */
@@ -61,28 +61,31 @@ test('our own expired session does not offer an upstream API key', () => {
   assert.match(a.message, /session/i);
 });
 
-/* Previously fell through to the generic red branch: the reason text contains
-   neither '403' nor 'Forbidden', so neither matcher fired. */
-test('an SSRF block shows its own reason', () => {
-  const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message: 'Blocked: localhost is a private address.' });
-  assert.match(a.message, /private address/);
+/* A private address is what most homelab installs point a badge at, and one
+   setting unblocks it. The API sends a reason code, never the address, so the
+   advice must key off the code. */
+test('a blocked private address names the setting that allows it', () => {
+  const message = 'The request was blocked.';
+  const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message, detail: { reason: 'private-address' } });
+  assert.equal(a.tone, TONE.WARN);
+  assert.match(a.message, /ALLOW_PRIVATE_IPS=true/);
+  assert.ok(a.message.includes(message), 'keeps the original reason');
   assert.equal(a.openAuth, false);
+  assert.equal(a.sessionExpired, false);
 });
 
-/* A private address is what most homelab installs point a badge at, and one
-   setting unblocks it. */
-test('a blocked private address names the setting that allows it', () => {
-  for (const message of [
-    'Blocked: 192.168.1.5 is a private address.',
-    'Blocked: nas.lan resolves to private IP 10.0.0.4.',
-  ]) {
-    const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message });
-    assert.equal(a.tone, TONE.WARN, message);
-    assert.match(a.message, /ALLOW_PRIVATE_IPS=true/, message);
-    assert.ok(a.message.includes(message), 'keeps the original reason');
-    assert.equal(a.openAuth, false);
-    assert.equal(a.sessionExpired, false);
-  }
+/* The message the API actually sends for a private address carries no wording
+   to match on, so a matcher over the text advises nobody. */
+test('a block without the reason code gets no private-address advice', () => {
+  const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message: 'The request was blocked.' });
+  assert.equal(a.tone, TONE.ERROR);
+  assert.doesNotMatch(a.message, /ALLOW_PRIVATE_IPS/);
+});
+
+test('the widget options Fetch gives the same advice', () => {
+  const blocked = { kind: KIND.BLOCKED, message: 'The request was blocked.', detail: { reason: 'private-address' } };
+  assert.match(optionsErrorText(blocked), /ALLOW_PRIVATE_IPS=true/);
+  assert.match(optionsErrorText({ kind: KIND.BLOCKED, message: 'The request was blocked.' }), /^Fetch failed: /);
 });
 
 test('other blocked reasons are still shown verbatim', () => {
