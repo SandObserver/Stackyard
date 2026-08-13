@@ -192,7 +192,7 @@ function rrect(ctx, x, y, w, h, r) {
 }
 
 /* ── Canvas placeholder drawing ── */
-function drawPh(canvas, haiku, isFront) {
+function drawPh(canvas, haiku, isFront, seed) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2); /* cap DPR at 2 */
   const W   = canvas.offsetWidth;
   const H   = canvas.offsetHeight;
@@ -204,7 +204,9 @@ function drawPh(canvas, haiku, isFront) {
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
 
-  const rng = Math.random.bind(Math);
+  /* Both faces of a card must draw the same pattern, and a redraw must repeat
+     it. Never use Math.random here. */
+  const rng = mkRng(seed);
 
   /* Colors */
   const dotC  = isFront ? 'rgba(0,0,0,0.08)'   : 'rgba(255,255,255,0.35)';
@@ -302,13 +304,13 @@ function drawPh(canvas, haiku, isFront) {
 
 /* Draw once the canvas has a real size. A card whose height comes from
    aspect-ratio layout has no size at draw time. */
-function observeDraw(canvas, haiku, isFront) {
+function observeDraw(canvas, haiku, isFront, seed) {
   let lastW = 0, lastH = 0;
   const ro = new ResizeObserver(() => {
     const w = canvas.offsetWidth, h = canvas.offsetHeight;
     if (!w || !h || (w === lastW && h === lastH)) return;
     lastW = w; lastH = h;
-    drawPh(canvas, haiku, isFront);
+    drawPh(canvas, haiku, isFront, seed);
   });
   ro.observe(canvas);
 }
@@ -470,7 +472,10 @@ function buildShell() {
     back.className = 'card-back'; back.id = `back-${idx}`;
 
     const backCanvas = document.createElement('canvas');
-    if (isMobile) backCanvas.style.height = 'calc(100% - 100px)';
+    /* Same height as the front canvas. A different height changes the row plan
+       and the placeholder moves when the card is hovered. The name zone is
+       opaque and covers the extra rows. */
+    if (isMobile) backCanvas.style.height = 'calc(100% - 48px)';
     back.appendChild(backCanvas);
     const backZone = document.createElement('div');
     backZone.className = 'card-name-zone';
@@ -511,11 +516,11 @@ function buildShell() {
     wrap.append(back, front);
     w.appendChild(wrap);
 
-    _canvases[idx] = { front: frontCanvas, back: backCanvas, haiku };
+    _canvases[idx] = { front: frontCanvas, back: backCanvas, haiku, seed };
 
     /* Draw when each canvas actually has its size (and redraw on real resize) */
-    observeDraw(frontCanvas, haiku, true);
-    observeDraw(backCanvas,  haiku, false);
+    observeDraw(frontCanvas, haiku, true,  seed);
+    observeDraw(backCanvas,  haiku, false, seed);
   });
 
 }
@@ -558,7 +563,7 @@ function applyCard(idx, job) {
   /* Redraw back canvas with updated text color when status changes */
   const c = _canvases[idx];
   if (c && c.back.offsetWidth && c.back.offsetHeight) {
-    drawPh(c.back, c.haiku, false);
+    drawPh(c.back, c.haiku, false, c.seed);
   }
 
   if(bname) bname.textContent = job.name||'—';
