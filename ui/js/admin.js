@@ -596,7 +596,8 @@ const TYPE_ICONS = {
   folder:
     '<rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"/><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"/><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"/><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"/>',
 };
-const TYPE_LABELS = { app: t('type.app'), widget: t('type.widget'), folder: t('type.folder') };
+/* Read at draw time. The catalog is not loaded when this module evaluates. */
+const typeLabels = () => ({ app: t('type.app'), widget: t('type.widget'), folder: t('type.folder') });
 
 function buildAddNewCard() {
   const grp = document.createElement('div');
@@ -606,20 +607,22 @@ function buildAddNewCard() {
   setHtml(row, html`<span class="rl">${t('type.addNew')}</span>`);
   const grpTiles = document.createElement('div');
   grpTiles.className = 'tile-grp';
-  ['app', 'widget', 'folder'].forEach(t => {
+  const labels = typeLabels();
+  ['app', 'widget', 'folder'].forEach(kind => {
+    const label = labels[kind];
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'tile-opt' + (t === state.ctype ? ' on' : '');
-    b.dataset.ctype = t;
-    b.setAttribute('aria-pressed', String(t === state.ctype));
-    b.setAttribute('aria-label', 'Add ' + TYPE_LABELS[t]);
+    b.className = 'tile-opt' + (kind === state.ctype ? ' on' : '');
+    b.dataset.ctype = kind;
+    b.setAttribute('aria-pressed', String(kind === state.ctype));
+    b.setAttribute('aria-label', t('type.addNew') + ': ' + label);
     setHtml(
       b,
-      html`<span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(TYPE_ICONS[t])}</svg></span><span class="tile-cap">${TYPE_LABELS[t]}</span>`,
+      html`<span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(TYPE_ICONS[kind])}</svg></span><span class="tile-cap">${label}</span>`,
     );
     b.onclick = () => {
-      if (state.ctype === t) return;
-      state.ctype = t;
+      if (state.ctype === kind) return;
+      state.ctype = kind;
       _renderEditBody();
     };
     grpTiles.appendChild(b);
