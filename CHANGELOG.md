@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Dashboard tiles scale with the window, so six columns stay square on a tablet
+  and fill the width of a large screen.
+
+- Settings keeps its sidebar on a tablet, narrowed.
+
 - Widgets spread their polling, so several on one dashboard no longer fetch from
   your services on the same tick.
 
@@ -41,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Resizing a browser window across the mobile breakpoint now switches the
   dashboard layout, instead of keeping the old one until a reload.
+
+- Dragging a Settings row to reorder it now works by touch on a tablet.
+
+- Controls in Settings reach the 44px minimum on a touch device.
+
+- Settings respects the notch and home indicator when installed as a PWA.
 
 - One unreachable service no longer delays every other tile's refresh by six
   seconds.

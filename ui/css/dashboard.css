@@ -62,10 +62,37 @@
          narrow-wide viewport. */
       padding:clamp(44px,4vh,70px) clamp(16px,4vw,270px) clamp(110px,10vh,160px);
     }
+    /* ── Desktop grid scale ──
+       Six columns at every width. The grid, the gaps and the tile height are
+       one proportional system derived from the viewport, so six columns stay
+       square on a tablet and grow on a large screen instead of sitting in a
+       1041px island.
+
+       The design width is 1041px, which over six columns and a 25px gap gives a
+       152.67px column, the width the 152px tile height and every value in
+       WIDGET_HEIGHTS were drawn against. Each ratio below is that value over
+       1041. The upper bound of each min() is the design value times 1.25.
+
+       dashboard.js reads --tile-h and --row-gap back to paginate. Changing a
+       ratio here without changing DESIGN_TILE there breaks the page breaks. */
+    :root {
+      --grid-avail:calc(100vw - 88px);
+      --grid-w:min(1301px, var(--grid-avail));
+      --col-gap:min(31.25px, calc(var(--grid-avail) * 0.024015));
+      --row-gap:min(37.5px, calc(var(--grid-avail) * 0.028818));
+      --tile-h:min(190px, calc(var(--grid-avail) * 0.146013));
+    }
+    /* Measured by dashboard.js. An element resolves these to pixels; reading the
+       custom properties themselves returns their unresolved text. */
+    .gm-probe {
+      position:absolute; visibility:hidden; pointer-events:none;
+      width:0; height:var(--tile-h);
+    }
+    .gm-probe > i { display:block; height:var(--row-gap); }
     .grid {
       display:grid; grid-template-columns:repeat(6,1fr);
-      column-gap:25px; row-gap:30px;
-      width:min(1041px,calc(100vw - 88px)); align-items:start;
+      column-gap:var(--col-gap); row-gap:var(--row-gap);
+      width:var(--grid-w); align-items:start;
     }
     .c1 { grid-column:span 1 }
     .c2 { grid-column:span 2 }
@@ -113,7 +140,7 @@
               backdrop-filter: blur(22px) saturate(140%);
     }
     .icon {
-      height:152px;
+      height:var(--tile-h,152px);
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -643,7 +670,11 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 .dot { position:relative; }
 .dot::after { content:''; position:absolute; inset:-11px; }
 
-@media (pointer:coarse) { .ctrl { width:44px; height:44px; } }
+/* 44px is the Apple HIG minimum, and a dot is 8px of it. */
+@media (pointer:coarse) {
+  .ctrl { width:44px; height:44px; }
+  .dot::after { inset:-18px; }
+}
 
 /* Increased-contrast mode (HIG: provide higher contrast when Increase Contrast is on) */
 @media (prefers-contrast: more) {

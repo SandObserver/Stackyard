@@ -46,16 +46,38 @@ const wRows = { d: WIDGET_ROWS.desktop, m: WIDGET_ROWS.mobile };
 const WH = { d: WIDGET_HEIGHTS };
 const wCost = { d: WIDGET_COST.desktop, m: WIDGET_COST.mobile };
 
-/* Mirrors the .grid and .page values in dashboard.css. Move them together. */
 const DCOLS = 6;
-const ROW_UNIT = WIDGET_HEIGHTS.small;
-const ROW_GAP = 30;
+/* The design values the stylesheet's --tile-h and --row-gap ratios were derived
+   from. Read gridMetrics() for the live sizes; these are only the fallback and
+   the divisor that turns a live tile height back into a scale factor. */
+const DESIGN_TILE = 152;
+const DESIGN_ROW_GAP = 30;
+
+/* The stylesheet owns the desktop scale, so it tracks a resize with no script.
+   Reading it back here is what keeps pagination and widget heights on the same
+   system. Do not reintroduce a second copy of these numbers.
+
+   Measured off a real element, never with getPropertyValue: a custom property
+   reads back as the text it was written as, so a min() or calc() comes out
+   unresolved and parses as NaN. */
+function gridMetrics() {
+  const probe = document.createElement('div');
+  probe.className = 'gm-probe';
+  const gap = document.createElement('i');
+  probe.appendChild(gap);
+  document.body.appendChild(probe);
+  const tile = probe.getBoundingClientRect().height || DESIGN_TILE;
+  const rowGap = gap.getBoundingClientRect().height || DESIGN_ROW_GAP;
+  probe.remove();
+  return { tile, rowGap, scale: tile / DESIGN_TILE };
+}
+let gm = { tile: DESIGN_TILE, rowGap: DESIGN_ROW_GAP, scale: 1 };
 
 function desktopSlots() {
   const ih = innerHeight;
   const top = Math.min(70, Math.max(44, ih * 0.04));
   const bottom = Math.min(160, Math.max(110, ih * 0.1));
-  const rows = Math.max(1, Math.min(4, Math.floor((ih - top - bottom + ROW_GAP) / (ROW_UNIT + ROW_GAP))));
+  const rows = Math.max(1, Math.min(4, Math.floor((ih - top - bottom + gm.rowGap) / (gm.tile + gm.rowGap))));
   return DCOLS * rows;
 }
 
@@ -207,8 +229,8 @@ function paginate() {
 function mkIcon(item) {
   if (item.type === 'folder') return mkFolder(item);
   const showLabel = S.showLabels?.desktop !== false;
-  const iw = showLabel ? 72 : 78,
-    isz = showLabel ? 50 : 56;
+  const iw = Math.round((showLabel ? 72 : 78) * gm.scale),
+    isz = Math.round((showLabel ? 50 : 56) * gm.scale);
   const a =
     item.system === 'settings'
       ? mk('a', { href: '/admin/' })
@@ -216,7 +238,7 @@ function mkIcon(item) {
   a.className = 'icon';
   a.setAttribute('aria-label', item.label || item.id);
   if (!showLabel) a.title = item.label || item.id;
-  a.appendChild(mkWrap(item, iw, 16, isz, 'iwrap'));
+  a.appendChild(mkWrap(item, iw, Math.round(16 * gm.scale), isz, 'iwrap'));
   if (showLabel) {
     const l = mk('div');
     l.className = 'ilabel';
@@ -246,7 +268,7 @@ function mkWidget(item) {
   if (preset) card.dataset.card = preset;
   if (item.widgetConfig?.widgetSubType) card.dataset.wsubtype = item.widgetConfig.widgetSubType;
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
-  card.style.height = WH.d[sz] + 'px';
+  card.style.height = Math.round(WH.d[sz] * gm.scale) + 'px';
   mountScaledWidget(card, {
     src: widgetSrc(item, widgetReg, { lang: currentLang() }),
     title: widgetTitle(item),
@@ -289,6 +311,8 @@ function buildDesktop() {
      widgets started. */
   teardownWidgets();
   BEL.clear();
+  /* Before paginate() and before any tile is built: both size against it. */
+  gm = gridMetrics();
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, 4);
   const pages = paginate();
   totalPages = pages.length;
@@ -722,6 +746,25 @@ async function boot() {
     },
     { passive: true },
   );
+
+  /* The desktop tile size follows the viewport, so a resize can change how many
+     rows fit. Rebuild only when the slot count actually moves, not on every
+     pixel: a rebuild tears down and remounts every widget iframe. */
+  let _dz,
+    _slots = desktopSlots();
+  window.addEventListener('resize', () => {
+    if (MOB) return;
+    clearTimeout(_dz);
+    _dz = setTimeout(() => {
+      if (MOB) return;
+      gm = gridMetrics();
+      const slots = desktopSlots();
+      if (slots === _slots) return;
+      _slots = slots;
+      buildDesktop();
+      goTo(Math.min(pg, totalPages - 1), null, false);
+    }, 200);
+  });
 
   /* Jittered, so several open clients do not poll on the same tick. */
   let _pollTimers = [];

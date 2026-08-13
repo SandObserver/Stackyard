@@ -385,7 +385,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
       saveOrRevert(before);
   });
 
-  if (document.documentElement.classList.contains('is-mobile')) wireTouchDrag(row, handle, { indent, folderId });
+  wireTouchDrag(row, handle, { indent, folderId });
   return row;
 }
 
