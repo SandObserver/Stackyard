@@ -28,7 +28,7 @@ import { register } from 'node:module';
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { visibleFieldKeys } = await import('../js/admin-logic.js');
+const { visibleFieldKeys, visibleFieldFlags } = await import('../js/admin-logic.js');
 
 const widgets = fs
   .readdirSync(path.join(root, 'widgets'), { withFileTypes: true })
@@ -149,5 +149,20 @@ test('a field is hidden when its condition is not met', () => {
 
 test('the form applies that to the rendered rows', () => {
   const src = fs.readFileSync(path.join(root, 'js/widget-config-form.js'), 'utf8');
-  assert.match(src, /b\.el\.style\.display = shown\.has\(b\.field\.key\) \? '' : 'none'/);
+  assert.match(src, /b\.el\.style\.display = shown\[i\] \? '' : 'none'/);
+});
+
+/* Two fields may share a key, one per branch. Resolving by key gave both the
+   same answer: with kopia picked the duplicati job picker showed too, and with
+   duplicati picked neither showed. */
+test('fields sharing a key follow their own condition', () => {
+  const fields = [
+    { key: 'provider', type: 'select' },
+    { key: 'jobId', type: 'select', optionsFrom: 'duplicati-jobs', showIf: { field: 'provider', equals: 'duplicati' } },
+    { key: 'jobId', type: 'select', optionsFrom: 'kopia-sources', showIf: { field: 'provider', equals: 'kopia' } },
+  ];
+  const at = provider => visibleFieldFlags(fields, k => (k === 'provider' ? provider : undefined));
+  assert.deepEqual(at('kopia'), [true, false, true]);
+  assert.deepEqual(at('duplicati'), [true, true, false]);
+  assert.deepEqual(at(''), [true, false, false]);
 });

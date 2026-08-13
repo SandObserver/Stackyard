@@ -30,26 +30,44 @@ export function showIfMatches(cond, current) {
 }
 
 /* Follow showIf chains. A hidden controller still holds a value underneath, and
-   its dependants would show themselves against it. */
-export function visibleFieldKeys(fields, readValue) {
-  const byKey = new Map(fields.map(f => [f.key, f]));
+   its dependants would show themselves against it.
+
+   Resolve each field by its position. Two fields may share a key, one per
+   branch of a showIf, and resolving by key gives both the same answer: the
+   wrong branch is shown, or both branches are hidden. */
+export function visibleFieldFlags(fields, readValue) {
+  const idxsByKey = new Map();
+  fields.forEach((f, i) => {
+    if (!f || f.key == null) return;
+    const at = idxsByKey.get(f.key);
+    if (at) at.push(i);
+    else idxsByKey.set(f.key, [i]);
+  });
   const memo = new Map();
-  const isShown = key => {
-    if (memo.has(key)) return memo.get(key);
-    memo.set(key, false); /* guard against a cycle in malformed manifests */
-    const f = byKey.get(key);
+  const isShown = i => {
+    if (memo.has(i)) return memo.get(i);
+    memo.set(i, false); /* guard against a cycle in malformed manifests */
+    const f = fields[i];
     let ok = true;
     if (f && f.showIf) {
       const dep = f.showIf.field;
-      ok = byKey.has(dep)
-        ? isShown(dep) && showIfMatches(f.showIf, readValue(dep))
+      const depIdxs = idxsByKey.get(dep);
+      ok = depIdxs
+        ? depIdxs.some(j => isShown(j)) && showIfMatches(f.showIf, readValue(dep))
         : showIfMatches(f.showIf, readValue(dep));
     }
-    memo.set(key, ok);
+    memo.set(i, ok);
     return ok;
   };
+  return fields.map((f, i) => (f && f.key != null ? isShown(i) : false));
+}
+
+export function visibleFieldKeys(fields, readValue) {
+  const flags = visibleFieldFlags(fields, readValue);
   const out = new Set();
-  for (const f of fields) if (f.key != null && isShown(f.key)) out.add(f.key);
+  fields.forEach((f, i) => {
+    if (flags[i]) out.add(f.key);
+  });
   return out;
 }
 
