@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A long error in Admin now stays on screen long enough to read, up to fifteen
+  seconds.
+
 ## [1.6.0] - 2026-08-13
 
 ### Added

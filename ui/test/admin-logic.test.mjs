@@ -16,6 +16,7 @@ import {
   settingsSaveBlocker,
   clearsStoredPassword,
   recoversSession,
+  toastMs,
   BLOCK,
 } from '../js/admin-logic.js';
 /* The real strength check, so these assert the rule the save actually applies. */
@@ -484,4 +485,12 @@ test('only a 401 means the session, not any other failure', () => {
 test('recoversSession tolerates a missing path', () => {
   assert.equal(recoversSession(undefined, 401), true);
   assert.equal(recoversSession(null, 200), false);
+});
+
+test('toastMs holds a long message longer than a short one', () => {
+  assert.equal(toastMs('Saved'), 3000);
+  assert.equal(toastMs(''), 3000);
+  assert.equal(toastMs('x'.repeat(100)), 6000);
+  assert.equal(toastMs('x'.repeat(1000)), 15000);
+  assert.equal(toastMs(undefined), 3000);
 });
