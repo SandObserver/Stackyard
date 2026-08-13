@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A long error in Admin now stays on screen long enough to read, up to fifteen
   seconds.
+- Backup placeholder no longer moves or reshuffles when a card is hovered or
+  tapped.
 
 ## [1.6.0] - 2026-08-13
 
