@@ -210,6 +210,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .row-status{font-size:13px;margin-inline-end:8px;color:var(--dm)}
 .row-status.ok{color:var(--ok)}
 .row-status.err{color:var(--danger)}
+.row-status.warn{color:var(--warning)}
 
 /* ── Textarea row (Add to URL / Add to Header) ── */
 .kv-hdr{padding-bottom:4px}

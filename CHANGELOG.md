@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ALLOW_PRIVATE_IPS=true` as the setting that allows it. The advice was added
   in 1.6.0 but never appeared.
 
+- A widget settings Fetch marks a blocked private address as a warning, the
+  same as a badge test, instead of a hard error.
+
 ## [1.6.0] - 2026-08-13
 
 ### Added

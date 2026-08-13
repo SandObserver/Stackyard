@@ -79,10 +79,14 @@ export function badgeErrorAdvice(e) {
   };
 }
 
-export function optionsErrorText(e) {
+/* Same shape as badgeErrorAdvice: a settings Fetch and a badge test report the
+   same failures and must not disagree about the tone. */
+export function optionsErrorAdvice(e) {
   const read = readError(e);
   const { kind, message } = read;
-  if (kind === KIND.INVALID && message) return message;
-  if (blockedForPrivateAddress(read)) return `${message} ${PRIVATE_ADDRESS_ADVICE}`;
-  return 'Fetch failed: ' + (message || 'Request failed.');
+  if (blockedForPrivateAddress(read)) {
+    return { tone: TONE.WARN, message: `${message} ${PRIVATE_ADDRESS_ADVICE}` };
+  }
+  if (kind === KIND.INVALID && message) return { tone: TONE.ERROR, message };
+  return { tone: TONE.ERROR, message: 'Fetch failed: ' + (message || 'Request failed.') };
 }

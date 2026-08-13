@@ -13,7 +13,7 @@ import {
   groupBounds,
   visibleFieldFlags,
 } from '/js/admin-logic.js?v=056a11e9';
-import { optionsErrorText } from '/js/admin-error.js?v=af729113';
+import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=af729113';
 import { qi } from '/js/utils.js?v=84d58686';
 
 const PE =
@@ -269,8 +269,9 @@ function _picklist(field, value, ctx, size) {
           : 'No options found';
         status.className = 'row-status ok';
       } catch (e) {
-        status.textContent = optionsErrorText(e);
-        status.className = 'row-status err';
+        const advice = optionsErrorAdvice(e);
+        status.textContent = advice.message;
+        status.className = 'row-status ' + (advice.tone === TONE.WARN ? 'warn' : 'err');
       } finally {
         btn.disabled = false;
       }
@@ -353,8 +354,9 @@ function _select(field, value, ctx, config = {}) {
           : 'No options found';
         status.className = 'row-status ok';
       } catch (e) {
-        status.textContent = optionsErrorText(e);
-        status.className = 'row-status err';
+        const advice = optionsErrorAdvice(e);
+        status.textContent = advice.message;
+        status.className = 'row-status ' + (advice.tone === TONE.WARN ? 'warn' : 'err');
       } finally {
         btn.disabled = false;
       }
