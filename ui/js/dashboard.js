@@ -732,6 +732,33 @@ async function boot() {
     buildLayout();
   }, MOB);
 
+  /* iOS reports its safe-area insets after the first paint, and again after a
+     rotation. The probe is sized by them, so its box changing is the signal
+     that the space the layout was measured against has moved. */
+  if (typeof ResizeObserver === 'function') {
+    const probe = document.createElement('div');
+    probe.className = 'sa-probe';
+    document.body.appendChild(probe);
+    let _sat,
+      _saH = -1,
+      _saFirst = true;
+    new ResizeObserver(entries => {
+      const h = entries[0].contentRect.height;
+      if (h === _saH) return;
+      _saH = h;
+      /* Observing delivers the current size at once, and the layout being built
+         now already has it. */
+      if (_saFirst) {
+        _saFirst = false;
+        return;
+      }
+      clearTimeout(_sat);
+      _sat = setTimeout(() => {
+        if (MOB) buildLayout();
+      }, 100);
+    }).observe(probe);
+  }
+
   /* A rotation that does not cross the breakpoint still changes how much fits,
      and the mobile layout is measured. Debounced, and only while it is the
      layout in use: on a phone the keyboard opening resizes the viewport too. */
