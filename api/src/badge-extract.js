@@ -58,7 +58,10 @@ function extractPath(obj, dotPath) {
   let cur = obj;
   for (const seg of segments) {
     if (cur == null) return undefined;
-    if (seg === '$count' || seg === 'count') return Array.isArray(cur) ? cur.length : undefined;
+    if (seg === '$count') return Array.isArray(cur) ? cur.length : undefined;
+    /* `count` is the array-length token only on an array. On an object it is
+       the field of that name. */
+    if (seg === 'count' && Array.isArray(cur)) return cur.length;
     const fM = seg.match(filterRe);
     if (fM) {
       const [, field, rawVal] = fM;

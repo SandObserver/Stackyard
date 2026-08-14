@@ -17,6 +17,12 @@ test('extractPath resolves $count and count on arrays', () => {
   assert.equal(extractPath({ x: 5 }, 'x.count'), undefined); // not an array
 });
 
+test('extractPath reads a field named count on an object', () => {
+  assert.equal(extractPath({ count: 99 }, 'count'), 99);
+  assert.equal(extractPath({ queue: { count: 4 } }, 'queue.count'), 4);
+  assert.equal(computeBadgeValue({ count: 99 }, { extract: 'count' }), 99);
+});
+
 test('extractPath filters an array by a boolean field then counts', () => {
   const data = { list: [{ on: true }, { on: false }, { on: true }] };
   assert.equal(extractPath(data, 'list.filter(on==true).count'), 2);
