@@ -387,7 +387,11 @@ test('all four dialogs use the shared behaviour', () => {
   const sites = [
     ['js/spotlight.js', /wrapTab\(e, ov\)/, 'the search overlay'],
     ['js/ui.js', /trapFocus\(ov, \{ closeOnEscape: false, onClose: closeDesk \}\)/, 'the desktop folder overlay'],
-    ['js/ui.js', /releaseMobTrap = trapFocus\(ov, \{ onClose: closeMob \}\)/, 'the mobile folder overlay'],
+    [
+      'js/ui.js',
+      /releaseMobTrap = trapFocus\(ov, \{ onClose: closeMob, initialFocus: ov \}\)/,
+      'the mobile folder overlay',
+    ],
     ['js/dashboard.js', /trapFocus\(ov, \{ closeOnEscape: false, initialFocus: pw \}\)/, 'the setup prompt'],
   ];
   for (const [file, pattern, what] of sites) {

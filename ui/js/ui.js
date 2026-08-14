@@ -332,7 +332,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
 }
 
 let folderOverlayMob = null;
-export function openFolderMobile(folder, isz, _ir, _im, _sc) {
+export function openFolderMobile(folder, isz, _ir, _im, sc) {
   if (folderOverlayMob) {
     folderOverlayMob.remove();
     folderOverlayMob = null;
@@ -349,6 +349,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   ov.setAttribute('role', 'dialog');
   ov.setAttribute('aria-modal', 'true');
   ov.setAttribute('aria-label', (folder.label || t('type.folder')) + ' folder');
+  ov.tabIndex = -1;
 
   let releaseMobTrap = null;
   function closeMob() {
@@ -374,6 +375,11 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
     folderIm = Math.round(folderIconW * 0.64);
   const gridInnerW = folderIconW * 3 + gap * 2,
     gridH = folderIconW * 3 + gap * 2;
+  /* A badge sits 7px outside its icon corner. Without this inset the outer
+     icons' badges cross into the next page and the viewport shows them. */
+  const badgeOvh = Math.min(Math.ceil(7 * (sc || 1)), padH, padVT, padVB);
+  const pageW = gridInnerW + badgeOvh * 2,
+    pageH = gridH + badgeOvh * 2;
   const dotSz = Math.round(7 * ptScale);
   const dotsZoneH = pages.length > 1 ? Math.round(26 * ptScale) : 0;
   const boxH = padVT + gridH + padVB + dotsZoneH;
@@ -405,29 +411,35 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
     '--bh': boxH + 'px',
     '--top': boxTop + 'px',
     '--br': boxR + 'px',
-    '--pt': padVT + 'px',
-    '--ph': padH + 'px',
-    '--pb': padVB + 'px',
+    '--pt': padVT - badgeOvh + 'px',
+    '--ph': padH - badgeOvh + 'px',
+    '--pb': padVB - badgeOvh + 'px',
   });
 
   const clipW = mk('div');
   clipW.className = 'dyn-clip';
-  css(clipW, { '--gw': gridInnerW + 'px', '--gh': gridH + 'px' });
+  css(clipW, { '--gw': pageW + 'px', '--gh': pageH + 'px' });
   const strip = mk('div');
   strip.className = 'dyn-strip';
-  css(strip, { '--gh': gridH + 'px', width: pages.length * gridInnerW + 'px' });
+  css(strip, { '--gh': pageH + 'px', width: pages.length * pageW + 'px' });
 
   let dotEls = [];
   function gotoPage(n) {
     curPage = Math.max(0, Math.min(pages.length - 1, n));
-    strip.style.transform = strip.style.webkitTransform = `translateX(-${curPage * gridInnerW}px)`;
+    strip.style.transform = strip.style.webkitTransform = `translateX(-${curPage * pageW}px)`;
     dotEls.forEach((d, j) => d.classList.toggle('on', j === curPage));
   }
 
   function buildPage(apps) {
     const p = mk('div');
     p.className = 'dyn-page-grid';
-    css(p, { '--gw': gridInnerW + 'px', '--gh': gridH + 'px', '--gap': gap + 'px', '--fiw': folderIconW + 'px' });
+    css(p, {
+      '--gw': pageW + 'px',
+      '--gh': pageH + 'px',
+      '--gap': gap + 'px',
+      '--fiw': folderIconW + 'px',
+      '--ovh': badgeOvh + 'px',
+    });
     for (let i = 0; i < 9; i++) {
       const child = apps[i];
       if (child) {
@@ -459,7 +471,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
     dotsEl = mk('div');
     dotsEl.className = 'folder-dots dyn-dots-row';
     css(dotsEl, {
-      padding: `${Math.round(18 * ptScale)}px 0 ${Math.round(4 * ptScale)}px`,
+      padding: `${Math.max(0, Math.round(18 * ptScale) - badgeOvh)}px 0 ${Math.round(4 * ptScale)}px`,
       gap: Math.round(7 * ptScale) + 'px',
     });
     dotEls = pages.map((_, i) => {
@@ -531,8 +543,7 @@ export function openFolderMobile(folder, isz, _ir, _im, _sc) {
   );
   document.body.appendChild(ov);
   folderOverlayMob = ov;
-  /* After the overlay is in the document: the trap focuses its first control. */
-  releaseMobTrap = trapFocus(ov, { onClose: closeMob });
+  releaseMobTrap = trapFocus(ov, { onClose: closeMob, initialFocus: ov });
 }
 
 export function buildMobile() {

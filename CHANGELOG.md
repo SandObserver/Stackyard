@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Notification badges inside a folder no longer get trimmed at the page edge or
+  bleed into the next page.
+
+- Opening a folder on a phone no longer puts a focus ring on the first app.
+
 - A long error in Admin now stays on screen long enough to read, up to fifteen
   seconds.
 
