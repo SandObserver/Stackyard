@@ -613,7 +613,8 @@
     .dyn-dots-row   { display:flex; justify-content:center; align-items:center; flex-shrink:0; width:100%; }
     /* WebKit paints its own focus ring on a script-focused anchor. Only
        :focus-visible is styled below. */
-    .folder-overlay-mobile:focus, .dyn-fold-anchor:focus { outline:none; }
+    .folder-overlay-mobile:focus, .dyn-fold-anchor:focus,
+    .folder-overlay:focus, .folder-icon-link:focus { outline:none; }
     .dyn-fold-anchor { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; -webkit-tap-highlight-color:transparent; }
     .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
     .dyn-title-mob  { position:absolute; pointer-events:none; font-size:var(--tfs); }

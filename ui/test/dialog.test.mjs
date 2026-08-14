@@ -386,7 +386,11 @@ test('trapFocus tolerates a missing root', async () => {
 test('all four dialogs use the shared behaviour', () => {
   const sites = [
     ['js/spotlight.js', /wrapTab\(e, ov\)/, 'the search overlay'],
-    ['js/ui.js', /trapFocus\(ov, \{ closeOnEscape: false, onClose: closeDesk \}\)/, 'the desktop folder overlay'],
+    [
+      'js/ui.js',
+      /trapFocus\(ov, \{ closeOnEscape: false, onClose: closeDesk, initialFocus: ov \}\)/,
+      'the desktop folder overlay',
+    ],
     [
       'js/ui.js',
       /releaseMobTrap = trapFocus\(ov, \{ onClose: closeMob, initialFocus: ov \}\)/,

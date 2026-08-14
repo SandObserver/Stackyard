@@ -88,8 +88,24 @@ test('the overlay takes focus itself, not the first app', () => {
 });
 
 test('the native focus ring cannot render on a folder app link', () => {
-  assert.match(css, /\.folder-overlay-mobile:focus, \.dyn-fold-anchor:focus \{ outline:none; \}/);
-  const reset = css.indexOf('.dyn-fold-anchor:focus {');
-  const visible = css.indexOf('.dyn-fold-anchor:focus-visible');
-  assert.ok(visible > reset, 'the accent ring must be declared after the reset or it never applies');
+  assert.match(css, /\.folder-overlay-mobile:focus, \.dyn-fold-anchor:focus,/);
+  assert.match(css, /\.folder-overlay:focus, \.folder-icon-link:focus \{ outline:none; \}/);
+  for (const [reset, visible] of [
+    ['.dyn-fold-anchor:focus,', '.dyn-fold-anchor:focus-visible'],
+    ['.folder-icon-link:focus ', '.folder-icon-link:focus-visible'],
+  ]) {
+    assert.ok(
+      css.indexOf(visible) > css.indexOf(reset),
+      `${visible}: the accent ring must be declared after the reset or it never applies`,
+    );
+  }
+});
+
+/* Desktop Safari showed the same ring the phone did: same trap, same missing
+   plain-focus rule. */
+test('the desktop overlay takes focus itself too', () => {
+  const desktop = ui.slice(ui.indexOf('export function openFolderDesktop('), ui.indexOf('function mFolder('));
+  assert.match(desktop, /ov\.tabIndex = -1/);
+  assert.match(desktop, /trapFocus\(ov, \{ closeOnEscape: false, onClose: closeDesk, initialFocus: ov \}\)/);
+  assert.doesNotMatch(desktop, /trapFocus\(ov, \{ closeOnEscape: false, onClose: closeDesk \}\)/);
 });

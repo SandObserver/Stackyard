@@ -170,6 +170,7 @@ export function openFolderDesktop(folder) {
   ov.setAttribute('role', 'dialog');
   ov.setAttribute('aria-modal', 'true');
   ov.setAttribute('aria-label', (folder.label || t('type.folder')) + ' folder');
+  ov.tabIndex = -1;
   const _prevFocus = /** @type {HTMLElement} */ (document.activeElement);
   let releaseDeskTrap = null;
   const outer = mk('div');
@@ -234,7 +235,7 @@ export function openFolderDesktop(folder) {
   folderOverlay = ov;
   /* The dashboard behind stays focusable while covered, so the overlay needs a
      Tab trap. Attach it after the overlay is in the document. */
-  releaseDeskTrap = trapFocus(ov, { closeOnEscape: false, onClose: closeDesk });
+  releaseDeskTrap = trapFocus(ov, { closeOnEscape: false, onClose: closeDesk, initialFocus: ov });
 }
 
 function mFolder(item, cw, rh, isz, ir, im, sc) {
