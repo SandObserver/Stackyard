@@ -608,9 +608,13 @@
     .dyn-fold-sheen { position:absolute; inset:0; pointer-events:none; z-index:2; border-radius:inherit; background:linear-gradient(135deg,rgba(255,255,255,.12) 0%,transparent 55%); }
     .dyn-clip       { overflow:hidden; flex-shrink:0; width:var(--gw); height:var(--gh); }
     .dyn-strip      { display:flex; height:var(--gh); will-change:transform; transition:transform .3s cubic-bezier(.4,0,.2,1); }
-    .dyn-page-grid  { flex-shrink:0; display:grid; gap:var(--gap); justify-content:center; align-content:start; width:var(--gw); height:var(--gh); grid-template-columns:repeat(3,var(--fiw)); grid-template-rows:repeat(3,var(--fiw)); }
+    .dyn-page-grid  { flex-shrink:0; display:grid; gap:var(--gap); justify-content:center; align-content:start; width:var(--gw); height:var(--gh); padding:var(--ovh,0); overflow:hidden; grid-template-columns:repeat(3,var(--fiw)); grid-template-rows:repeat(3,var(--fiw)); }
     .dyn-dot        { border-radius:50%; cursor:pointer; flex-shrink:0; width:var(--dsz); height:var(--dsz); }
     .dyn-dots-row   { display:flex; justify-content:center; align-items:center; flex-shrink:0; width:100%; }
+    /* WebKit paints its own focus ring on a script-focused anchor. Only
+       :focus-visible is styled below. */
+    .folder-overlay-mobile:focus, .dyn-fold-anchor:focus,
+    .folder-overlay:focus, .folder-icon-link:focus { outline:none; }
     .dyn-fold-anchor { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; -webkit-tap-highlight-color:transparent; }
     .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
     .dyn-title-mob  { position:absolute; pointer-events:none; font-size:var(--tfs); }
