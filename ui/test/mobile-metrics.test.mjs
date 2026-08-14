@@ -69,7 +69,10 @@ test('the stylesheet holds the insets, with the scaled minimum as the floor', ()
 test('the page reserves the insets and the grid fills what is left', () => {
   const css = read('css/dashboard.css');
   const page = css.match(/\.mob-page\s*{[^}]*}/)[0];
-  assert.match(page, /padding:var\(--sa-top\) var\(--sm,18px\) calc\(var\(--sa-bottom\) \+ var\(--dh,108px\) \+ var\(--dz,52px\)\)/);
+  assert.match(
+    page,
+    /padding:var\(--sa-top\) var\(--sm,18px\) calc\(var\(--sa-bottom\) \+ var\(--dh,108px\) \+ var\(--dz,52px\)\)/,
+  );
   const grid = css.match(/\.mob-grid\s*{[^}]*}/)[0];
   assert.match(grid, /height:100%/);
   assert.match(grid, /grid-template-rows:repeat\(6,1fr\)/, 'a row height in px would need the inset in JavaScript');

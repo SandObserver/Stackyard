@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Phone home screen no longer starts under the status bar in a home-screen
+  install. The first row clears the clock and the island.
+
+- Settings reserves the status bar area on a phone.
+
 - Notification badges inside a folder no longer get trimmed at the page edge or
   bleed into the next page.
 
@@ -33,11 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A widget settings Fetch marks a blocked private address as a warning, the
   same as a badge test, instead of a hard error.
-
-- Phone home screen no longer starts under the status bar in a home-screen
-  install. The first row clears the clock and the island.
-
-- Settings reserves the status bar area on a phone.
 
 ## [1.6.0] - 2026-08-13
 
