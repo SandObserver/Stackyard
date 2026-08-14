@@ -466,7 +466,9 @@ html{background:var(--bg-color,var(--bg-outer))}
    not. */
 .mtabbar{display:none}
 .m-back{display:none}
-html.is-mobile .adm-outer{padding:0;display:block;min-height:100dvh}
+/* The status bar overlaps the page in a home-screen install. The sticky section
+   header scrolls under it without this. */
+html.is-mobile .adm-outer{padding:env(safe-area-inset-top) 0 0;display:block;min-height:100dvh}
 html.is-mobile .adm{max-width:none;width:100%;min-height:100dvh;border:none;border-radius:0}
 html.is-mobile .sb{display:none}
 /* No sidebar on mobile, so nothing for the divider to divide. */

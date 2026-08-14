@@ -32,20 +32,6 @@ const st = () => _state;
 const widgetReg = () => _state?.widgetReg || Object.create(null);
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
-/* Zero without viewport-fit=cover in the page meta. */
-function readSafeInsets() {
-  const p = mk('div');
-  p.style.cssText =
-    'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;' +
-    'padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);';
-  document.body.appendChild(p);
-  const cs = getComputedStyle(p);
-  const top = parseFloat(cs.paddingTop) || 0;
-  const bottom = parseFloat(cs.paddingBottom) || 0;
-  p.remove();
-  return { top, bottom };
-}
-
 /* A tap outside a widget lands in the parent document. Widgets expose
    window.__clearActive. */
 function clearMobWidgets(exceptWin) {
@@ -554,9 +540,42 @@ export function buildMobile() {
   st().BEL.clear();
   const vw = innerWidth,
     vh = innerHeight;
-  const { top: insetTop, bottom: insetBottom } = readSafeInsets();
-  const { sc, sm, sb, safe, dh, pillH, pillGap, dz, avail, rh, cw } = mobileMetrics(vw, vh, insetTop, insetBottom);
-  document.body.style.setProperty('--sc', String(sc));
+  const { sc, sm, dh, pillH, pillGap, dz } = mobileMetrics(vw);
+  const COLS = 4,
+    ROWS = 6;
+  const gap = Math.round(sm * 0.5);
+  css(document.body, {
+    '--sc': String(sc),
+    '--sm': sm + 'px',
+    '--dh': dh + 'px',
+    '--dz': dz + 'px',
+    '--gap': gap + 'px',
+    '--pgh': vh + 'px',
+  });
+  /* ── Mobile layout: single-pass 4×6 grid bin-packing ──
+     Footprints in cells: icon/folder 1×1, small 2×2, medium 4×2, large 4×4,
+     xlarge 4×6. */
+  const strip = el('pages');
+  strip.innerHTML = '';
+
+  function mkPage() {
+    const p = mk('div');
+    p.className = 'mob-page';
+    const g = mk('div');
+    g.className = 'mob-grid';
+    p.appendChild(g);
+    return { page: p, grid: g };
+  }
+
+  /* Every size below comes from this box, so the safe-area insets reach the
+     layout as the space the stylesheet already reserved. Reading the insets
+     instead would take a value iOS has not reported yet. */
+  const firstPage = mkPage();
+  strip.appendChild(firstPage.page);
+  const gridBox = firstPage.grid.getBoundingClientRect();
+  const cw = gridBox.width / COLS,
+    rh = gridBox.height / ROWS;
+  const rh2 = (gridBox.height - gap * (ROWS - 1)) / ROWS; /* exact row height incl. gaps */
   const maxIsz = Math.round(74 * sc);
   const isz = Math.round(Math.min(cw * 0.9, rh * 0.8, maxIsz));
   const ir = Math.round(isz * 0.225),
@@ -564,15 +583,6 @@ export function buildMobile() {
   const dock = items()
     .filter(i => i.type === 'app' && i.dock && !i.hidden)
     .slice(0, 4);
-  /* ── Mobile layout: single-pass 4×6 grid bin-packing ──
-     Footprints in cells: icon/folder 1×1, small 2×2, medium 4×2, large 4×4,
-     xlarge 4×6. */
-  const strip = el('pages');
-  strip.innerHTML = '';
-  const COLS = 4,
-    ROWS = 6;
-  const gap = Math.round(sm * 0.5);
-  const rh2 = (avail - gap * (ROWS - 1)) / ROWS; /* exact row height incl. gaps */
   const showLabel = S().showLabels?.ios === true;
   const wBR = Math.round(ir * 1.3);
 
@@ -695,24 +705,21 @@ export function buildMobile() {
     return item.type === 'folder' ? mFolder(item, cw, rh2, isz, ir, im, sc) : mIcon(item);
   }
 
-  pages.forEach(placements => {
-    const p = mk('div');
-    p.className = 'mob-page';
-    p.style.cssText =
-      `flex:0 0 100vw;width:100vw;height:${vh}px;overflow:hidden;box-sizing:border-box;` +
-      `display:grid;grid-template-columns:repeat(${COLS},1fr);grid-template-rows:repeat(${ROWS},${rh2}px);` +
-      `column-gap:${gap}px;row-gap:${gap}px;justify-content:center;align-content:start;` +
-      `padding:${sb}px ${sm}px ${safe + dh + dz}px;`;
+  pages.forEach((placements, i) => {
+    /* The first page is already in the document: it is what was measured. */
+    const { page, grid } = i === 0 ? firstPage : mkPage();
     placements.forEach(({ item, c, r, w, h }) => {
       const cell = mk('div');
-      cell.style.cssText =
-        `grid-column:${c + 1}/span ${w};grid-row:${r + 1}/span ${h};` +
-        `display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;`;
+      cell.className = 'mob-cell';
+      css(cell, { 'grid-column': `${c + 1}/span ${w}`, 'grid-row': `${r + 1}/span ${h}` });
       cell.appendChild(item.type === 'widget' ? makeWidgetCard(item) : makeIconEl(item));
-      p.appendChild(cell);
+      grid.appendChild(cell);
     });
-    strip.appendChild(p);
+    if (i > 0) strip.appendChild(page);
   });
+  /* Nothing was placed, so the measuring page would show as a blank first
+     page. */
+  if (!pages.length) firstPage.page.remove();
 
   const dw = el('dots');
   dw.style.cssText = 'display:none';
@@ -724,7 +731,7 @@ export function buildMobile() {
   const dockIconSz = Math.round(Math.min(isz, ((dockW - Math.round(28 * sc)) / 4) * 0.85));
   const dockIr = Math.round(dockIconSz * 0.225),
     dockIm = Math.round(dockIconSz * 0.64);
-  dk.style.cssText = `position:fixed;left:50%;bottom:${safe}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${Math.round(14 * sc)}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
+  dk.style.cssText = `position:fixed;left:50%;bottom:var(--sa-bottom);-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${Math.round(14 * sc)}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
   dk.innerHTML = '';
   dock.forEach(item => {
     const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
@@ -741,9 +748,8 @@ export function buildMobile() {
     _pdotGap = Math.round(5 * sc),
     _pdotPad = Math.round(14 * sc);
   const pillDotsW = pages.length * (_pdotSz + _pdotGap) - _pdotGap + _pdotPad * 2;
-  const pillBottom = safe + dh + pillGap;
   const pill = el('mob-search-pill');
-  pill.style.cssText = `position:fixed;left:50%;bottom:${pillBottom}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:-webkit-flex;display:flex;z-index:500;`;
+  pill.style.cssText = `position:fixed;left:50%;bottom:calc(var(--sa-bottom) + ${dh + pillGap}px);-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:-webkit-flex;display:flex;z-index:500;`;
 
   const pillNew = /** @type {HTMLElement} */ (pill.cloneNode(true));
   const pillNewDots = q('.msp-dots', pillNew);

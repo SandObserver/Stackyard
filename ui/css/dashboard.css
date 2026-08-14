@@ -506,6 +506,34 @@
     }
     .sra { margin-inline-start:auto; color:rgba(255,255,255,.25); font-size:0.8125rem }
 
+    /* ── Mobile safe area ──
+       iOS reports an inset after the first paint and again after a rotation.
+       These stay in CSS so the browser keeps them current. Nothing reads them
+       into JavaScript. */
+    body.is-mob {
+      --sa-top:    max(env(safe-area-inset-top), calc(18px * var(--sc,1)));
+      --sa-bottom: max(env(safe-area-inset-bottom), calc(8px * var(--sc,1)));
+    }
+    /* Sized by the insets, and observed. A change to either fires the layout
+       rebuild. */
+    .sa-probe {
+      position:fixed; top:0; left:0; width:1px; visibility:hidden; pointer-events:none;
+      height:calc(env(safe-area-inset-top) + env(safe-area-inset-bottom));
+    }
+    .mob-page {
+      flex:0 0 100vw; width:100vw; height:var(--pgh,100dvh); overflow:hidden;
+      padding:var(--sa-top) var(--sm,18px) calc(var(--sa-bottom) + var(--dh,108px) + var(--dz,52px));
+    }
+    /* The box the layout measures. */
+    .mob-grid {
+      width:100%; height:100%;
+      display:grid;
+      grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(6,1fr);
+      gap:var(--gap);
+      justify-content:center; align-content:start;
+    }
+    .mob-cell { display:flex; align-items:center; justify-content:center; min-width:0; min-height:0; }
+
     /* ── Folder overlay — mobile ── */
     .folder-overlay-mobile {
       position:fixed; inset:0; z-index:800;
