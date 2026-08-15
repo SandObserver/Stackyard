@@ -551,6 +551,17 @@ The dashboard resets every other widget when it receives that message, and calls
 same-origin, so a widget needs no `message` listener of its own. If you add one,
 check `e.origin` against `window.location.origin` first.
 
+### Off-screen pages
+
+Every page is mounted at once. The dashboard multiplies the poll interval of
+widgets on other pages, through `window.__setPollRate`, which `widget-toolbox.js`
+defines. A widget that polls with `poll()` needs nothing. A widget that runs its
+own timer should read the same hook, or it keeps fetching at full rate on a page
+nobody is looking at.
+
+Returning to a page refreshes a widget at once when its data is older than one
+normal interval.
+
 ### Design canvas sizes
 
 Widgets render at these fixed sizes and are scaled uniformly to fit their card.

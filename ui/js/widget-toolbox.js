@@ -294,6 +294,23 @@ function _overlay(root) {
      loadingText, emptyText, errorText
    }
    Returns { stop }, which also detaches the visibility listener. */
+
+/* Widgets on a page the user has swiped away from keep running: the dashboard
+   mounts every page at once. It multiplies their poll interval through
+   window.__setPollRate, which the dashboard calls on each frame. */
+const _polls = new Set();
+let _rate = 1;
+
+/** @param {number} rate multiplier on every poll interval in this frame */
+export function setPollRate(rate) {
+  const r = Number(rate) > 0 ? Number(rate) : 1;
+  if (r === _rate) return;
+  _rate = r;
+  for (const p of _polls) p(r);
+}
+
+if (typeof window !== 'undefined') /** @type {any} */ (window).__setPollRate = setPollRate;
+
 export function poll(opts = {}) {
   const intervalFor = d => (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000;
   const staleAfter = opts.staleAfter != null ? opts.staleAfter : 2;
@@ -308,9 +325,11 @@ export function poll(opts = {}) {
     lastData = null,
     timer = null;
   let paused = false;
+  let lastTick = 0;
 
   async function tick() {
     if (stopped) return;
+    lastTick = Date.now();
     try {
       const data = await doFetch();
       if (stopped) return;
@@ -351,8 +370,24 @@ export function poll(opts = {}) {
     }
     /* Jittered, so several widgets on one dashboard do not fetch in lockstep.
        The first tick is not delayed: that one is the widget's content. */
-    timer = setTimeout(loop, jitter(intervalFor(lastData)));
+    timer = setTimeout(loop, jitter(intervalFor(lastData) * _rate));
   }
+
+  /* Reschedules against the time of the last fetch, so returning to a page
+     refreshes at once when the data is already older than one normal interval,
+     and waits out the remainder when it is not. */
+  function onRate(rate) {
+    if (stopped || paused || timer === null) return;
+    clearTimeout(timer);
+    const due = lastTick + intervalFor(lastData) * rate - Date.now();
+    if (due <= 0) {
+      timer = null;
+      loop();
+    } else {
+      timer = setTimeout(loop, jitter(due));
+    }
+  }
+  _polls.add(onRate);
 
   function onVisibility() {
     if (stopped) return;
@@ -376,6 +411,7 @@ export function poll(opts = {}) {
     stop() {
       stopped = true;
       clearTimeout(timer);
+      _polls.delete(onRate);
       if (canObserve) document.removeEventListener('visibilitychange', onVisibility);
     },
   };

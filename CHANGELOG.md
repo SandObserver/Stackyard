@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Widgets on a page you are not looking at now poll four times less often, and
+  refresh when you swipe back to them.
+
 - Scripts and stylesheets are now cached for a year instead of revalidated on
   every load. Their URLs change whenever the file does.
 

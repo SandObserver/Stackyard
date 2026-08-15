@@ -7,7 +7,7 @@ import { register } from 'node:module';
    before loading it. */
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
-const { poll } = await import('../js/widget-toolbox.js');
+const { poll, setPollRate } = await import('../js/widget-toolbox.js');
 
 const tick = ms => new Promise(r => setTimeout(r, ms));
 
@@ -292,4 +292,61 @@ test('the repeat interval is spread, and the first fetch is not delayed', async 
   for (const d of scheduled) {
     assert.ok(d >= 850 && d <= 1150, `${d}ms is outside ±15% of the interval`);
   }
+});
+
+test('a raised rate stretches the interval and lowering it restores the cadence', async () => {
+  await run(async (_dom, start) => {
+    let calls = 0;
+    start({ interval: 20, fetch: async () => ({ n: ++calls }) });
+    await tick(50);
+    const visible = calls;
+    assert.ok(visible >= 2, `expected polling at the normal rate, got ${visible}`);
+
+    setPollRate(8);
+    await tick(60);
+    assert.ok(calls - visible <= 1, `expected the slow rate to hold off, got ${calls - visible} calls`);
+
+    setPollRate(1);
+    await tick(30);
+    assert.ok(calls > visible + 1, 'the normal cadence resumes');
+  });
+});
+
+test('returning to the normal rate refetches at once when the data is already old', async () => {
+  await run(async (_dom, start) => {
+    let calls = 0;
+    start({ interval: 20, fetch: async () => ({ n: ++calls }) });
+    setPollRate(10);
+    await tick(60);
+    const before = calls;
+    setPollRate(1);
+    await tick(5);
+    assert.equal(calls, before + 1, 'one immediate refresh, not a wait for the next tick');
+  });
+});
+
+test('a rate change does not refetch when the data is still fresh', async () => {
+  await run(async (_dom, start) => {
+    let calls = 0;
+    start({ interval: 200, fetch: async () => ({ n: ++calls }) });
+    await tick(10);
+    const before = calls;
+    setPollRate(4);
+    setPollRate(1);
+    await tick(20);
+    assert.equal(calls, before, 'swiping back and forth must not fetch every time');
+  });
+});
+
+test('a stopped poll is not rescheduled by a later rate change', async () => {
+  await run(async (_dom, start) => {
+    let calls = 0;
+    const p = start({ interval: 10, fetch: async () => ({ n: ++calls }) });
+    await tick(15);
+    p.stop();
+    const after = calls;
+    setPollRate(1);
+    await tick(30);
+    assert.equal(calls, after);
+  });
 });
