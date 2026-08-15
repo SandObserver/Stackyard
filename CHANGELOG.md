@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Hue, saturation and brightness sliders no longer stretch across the row on a
+  phone.
+
+- Settings no longer flashes the desktop sidebar before the phone layout
+  appears.
+
+- Dock and the Settings tab bar now sit as close to the bottom of the screen as
+  to the sides.
+
 ## [1.6.1] - 2026-08-14
 
 ### Fixed

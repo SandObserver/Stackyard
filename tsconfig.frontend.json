@@ -184,6 +184,12 @@
       "/js/modal.js?v=*": [
         "./ui/js/modal.js"
       ],
+      "/js/mobile-class.js": [
+        "./ui/js/mobile-class.js"
+      ],
+      "/js/mobile-class.js?v=*": [
+        "./ui/js/mobile-class.js"
+      ],
       "/js/mobile-metrics.js": [
         "./ui/js/mobile-metrics.js"
       ],

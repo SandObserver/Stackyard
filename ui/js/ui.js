@@ -731,7 +731,8 @@ export function buildMobile() {
   const dockIconSz = Math.round(Math.min(isz, ((dockW - Math.round(28 * sc)) / 4) * 0.85));
   const dockIr = Math.round(dockIconSz * 0.225),
     dockIm = Math.round(dockIconSz * 0.64);
-  dk.style.cssText = `position:fixed;left:50%;bottom:var(--sa-bottom);-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${Math.round(14 * sc)}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
+  const dockGap = Math.round(9 * sc);
+  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${Math.round(14 * sc)}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
   dk.innerHTML = '';
   dock.forEach(item => {
     const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
@@ -749,7 +750,7 @@ export function buildMobile() {
     _pdotPad = Math.round(14 * sc);
   const pillDotsW = pages.length * (_pdotSz + _pdotGap) - _pdotGap + _pdotPad * 2;
   const pill = el('mob-search-pill');
-  pill.style.cssText = `position:fixed;left:50%;bottom:calc(var(--sa-bottom) + ${dh + pillGap}px);-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:-webkit-flex;display:flex;z-index:500;`;
+  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dh + pillGap}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:-webkit-flex;display:flex;z-index:500;`;
 
   const pillNew = /** @type {HTMLElement} */ (pill.cloneNode(true));
   const pillNewDots = q('.msp-dots', pillNew);
