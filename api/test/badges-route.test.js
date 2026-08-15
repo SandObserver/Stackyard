@@ -106,3 +106,36 @@ test('an unreachable upstream still answers with a value of zero', async () => {
   assert.equal(r.value, 0);
   assert.ok(r.error, 'the failure must still be reported');
 });
+
+/* A dead target costs a full timeout on every cycle, and the batch answers only
+   when everything has settled. After a few failures it is left alone and the
+   failure it already reported is reused. */
+test('a target that keeps failing stops being contacted', async () => {
+  const backoff = require('../src/poll-backoff');
+  backoff.reset();
+  let hits = 0;
+  const flaky = http.createServer((_, res) => {
+    hits++;
+    res.destroy();
+  });
+  const flakyBase = await listen(flaky);
+  try {
+    saveConfig({
+      items: [
+        { id: 'a1', type: 'app', name: 'App', badge: { enabled: true, url: `${flakyBase}/x`, extract: 'pending' } },
+      ],
+      settings: {},
+    });
+    for (let i = 0; i < backoff.FAILURES_BEFORE_BACKOFF; i++) await get('/api/badges');
+    const contacted = hits;
+    assert.equal(contacted, backoff.FAILURES_BEFORE_BACKOFF, 'every early cycle reaches the target');
+
+    const r = (await get('/api/badges')).a1;
+    assert.equal(hits, contacted, 'the target is not contacted again while backed off');
+    assert.equal(r.value, 0);
+    assert.ok(r.error, 'the remembered failure is reported, not a silent zero');
+  } finally {
+    backoff.reset();
+    await close(flaky);
+  }
+});

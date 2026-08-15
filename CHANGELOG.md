@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widgets on a page you are not looking at now poll four times less often, and
   refresh when you swipe back to them.
 
+- Badge and health targets that keep failing are contacted less often, so an
+  offline service no longer slows every other tile on every refresh.
+
 - Scripts and stylesheets are now cached for a year instead of revalidated on
   every load. Their URLs change whenever the file does.
 
