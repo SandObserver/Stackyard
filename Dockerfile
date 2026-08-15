@@ -1,3 +1,12 @@
+# Asset URLs are served with a one-year immutable lifetime, so every build has to
+# stamp them itself. An unstamped tree would pin `?v=1` in browser caches and
+# keep serving the old file after an upgrade.
+FROM node:24-alpine AS assets
+WORKDIR /src
+COPY ui/ ./ui/
+COPY scripts/bump-cache-busting.js ./scripts/bump-cache-busting.js
+RUN node scripts/bump-cache-busting.js
+
 FROM node:24-alpine
 
 LABEL org.opencontainers.image.title="Stackyard" \
@@ -56,8 +65,8 @@ COPY nginx/csp-default.conf /etc/nginx/http.d/csp-default.conf
 # config is valid at build time.
 COPY nginx/realip.conf /etc/nginx/http.d/realip.conf
 
-# Copy UI static files
-COPY ui/ /usr/share/nginx/html/
+# Copy UI static files, with their cache-busting stamps already written.
+COPY --from=assets /src/ui/ /usr/share/nginx/html/
 
 # Copy API source, owned by the node user
 # The image mirrors the repository layout: api/ and ui/ keep their names and their

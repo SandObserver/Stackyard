@@ -36,4 +36,7 @@ An item that failed is reported with an error beside its value. The tile keeps i
 
 ## Cache busting
 
-`?v=` is a content hash rewritten at release by `scripts/bump-cache-busting.js`; do not edit one by hand. On `/css/` and `/js/` URLs the script rewrites the literal in the source. Widget iframe URLs are built from the manifest rather than written literally, so the script hashes each widget's entry files into `entryVersions` in its `widget.json`, and `widget-types.js` reads the hash from there when it builds the URL.
+`?v=` is a content hash rewritten by `scripts/bump-cache-busting.js`; do not edit one by hand. The image build runs the script, so every image carries current hashes.
+
+nginx serves `/js/` and `/css/` with a one-year `immutable` lifetime, which is only correct because those URLs change whenever their content does. `index.html`, `/admin`, `/i18n/` and `/widgets/` stay `no-cache`.
+ On `/css/` and `/js/` URLs the script rewrites the literal in the source. Widget iframe URLs are built from the manifest rather than written literally, so the script hashes each widget's entry files into `entryVersions` in its `widget.json`, and `widget-types.js` reads the hash from there when it builds the URL.
