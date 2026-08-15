@@ -11,6 +11,7 @@ const { requestParts, toRows, preserveItemBadgeSecrets, rowsToObject, droppedRow
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
 const { badgeRequestMatchesSaved, RETYPE_MESSAGE } = require('../secret-scope');
+const backoff = require('../poll-backoff');
 
 on('POST', '/api/ping', async (req, res) => {
   if (!checkOrigin(req, res)) return;
@@ -41,6 +42,11 @@ on('GET', '/api/badges', async (req, res) => {
           ((i.badge?.enabled && i.badge?.url) || (i.monitoring?.activity?.enabled && i.monitoring?.activity?.url)),
       )
       .map(async item => {
+        const key = `badge:${item.id}`;
+        if (backoff.skip(key)) {
+          out[item.id] = backoff.remembered(key) || { value: 0 };
+          return;
+        }
         try {
           const src = item.monitoring?.activity?.enabled ? item.monitoring.activity : item.badge;
           /* A skipped row means the request goes out without its credential.
@@ -69,8 +75,11 @@ on('GET', '/api/badges', async (req, res) => {
           /* The extracted number only. This poll runs per item per tab and must
              not carry the upstream body. */
           out[item.id] = { value: computeBadgeValue(r.data, badge) };
+          backoff.success(key);
         } catch (e) {
-          out[item.id] = Object.assign({ value: 0 }, errorBody(e));
+          const body = Object.assign({ value: 0 }, errorBody(e));
+          backoff.failure(key, body);
+          out[item.id] = body;
         }
       }),
   );

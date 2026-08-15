@@ -268,6 +268,21 @@ test('a saved setting on the known list survives, an unknown one is dropped', as
   }
 });
 
+test('saving the config clears the poll backoff, so an edited address is retried', async () => {
+  const backoff = require('../src/poll-backoff');
+  const cfg = loadConfig();
+  try {
+    for (let i = 0; i < backoff.FAILURES_BEFORE_BACKOFF; i++) backoff.failure('badge:a1', { value: 0 });
+    assert.equal(backoff.skip('badge:a1'), true);
+    const r = await req('POST', '/api/config', { cookie: validCookie, body: { items: [], _rev: cfg._rev } });
+    assert.equal(r.status, 200);
+    assert.equal(backoff.skip('badge:a1'), false);
+  } finally {
+    backoff.reset();
+    saveConfig(cfg);
+  }
+});
+
 test('a read is not asked for an origin, since it changes nothing', async () => {
   const r = await req('GET', '/api/config', { cookie: validCookie, origin: null });
   assert.equal(r.status, 200);

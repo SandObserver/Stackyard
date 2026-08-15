@@ -32,6 +32,8 @@ See [widgets.md](./widgets.md).
 
 Each of these is a single batch request. The server fetches every configured badge or health target concurrently, each bounded by `BATCH_MS`, and returns one combined object once all of them settle. A slow or unreachable upstream delays the refresh of the other tiles by up to `BATCH_MS`. `PING_MS` is longer and bounds a single connection test instead.
 
+A target that fails three times in a row is left alone for a growing wait, up to two minutes, and its last reported failure is reused meanwhile. Only an unreachable target backs off; one that answers with an error status stays on the normal cycle. A success or a config save clears the wait. See `api/src/poll-backoff.js`.
+
 An item that failed is reported with an error beside its value. The tile keeps its last known value and is marked out of date, so a service that did not answer never reads as zero.
 
 ## Cache busting

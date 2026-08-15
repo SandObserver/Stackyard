@@ -8,6 +8,7 @@ const { fail, KIND } = require('../api-error');
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { firstMalformedRow } = require('../badge-headers');
+const backoff = require('../poll-backoff');
 
 const DOCK_MAX = 4;
 
@@ -135,6 +136,9 @@ on('POST', '/api/config', async (req, res) => {
     migrate(data);
     ensureSystemItems(data);
     saveConfig(data);
+    /* An edited address must be tried at once, not wait out a backoff the
+       previous one earned. */
+    backoff.reset();
     if (data.settings) log.setLevel(data.settings.logLevel);
     log.audit('config saved', {});
     if (withheld.length) log.audit('stored credentials withheld', { items: withheld.map(w => w.id) });

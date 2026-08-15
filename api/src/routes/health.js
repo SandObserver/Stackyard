@@ -14,6 +14,7 @@ const {
   isPrivateAddress,
 } = require('../proxy');
 const { PING_MS, BATCH_MS } = require('../timeouts');
+const backoff = require('../poll-backoff');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const log = require('../log');
@@ -154,8 +155,18 @@ on('GET', '/api/health', async (req, res) => {
           detail.status = c?.status || '';
         }
         if (ping) {
-          const r = await pingUnchecked(ping, BATCH_MS, item.skipTlsVerify === true);
+          const key = `ping:${item.id}`;
+          /* status 0 is a host that never answered. A status of any kind means
+             the address is reachable and stays on the normal cycle. */
+          const skipped = backoff.skip(key);
+          const r = skipped
+            ? backoff.remembered(key)
+            : await pingUnchecked(ping, BATCH_MS, item.skipTlsVerify === true);
           if (!r.ok) unhealthy = true;
+          if (!skipped) {
+            if (r.ok) backoff.success(key);
+            else if (!r.status) backoff.failure(key, r);
+          }
           detail.pingStatus = r.status;
           detail.pingError = r.error;
         }
