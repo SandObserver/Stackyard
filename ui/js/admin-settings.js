@@ -169,8 +169,6 @@ export function loadSettings(c) {
       if (socketRow) socketRow.classList.toggle('d-none', !v);
       const socketHint = el('socket-hint');
       if (socketHint) socketHint.style.display = v ? '' : 'none';
-      const socketHintLink = el('socket-hint-link');
-      if (socketHintLink) socketHintLink.style.display = v ? '' : 'none';
     };
     applyDocker(dockerEnEl.checked);
     dockerEnEl.addEventListener('change', () => applyDocker(dockerEnEl.checked));
