@@ -148,8 +148,11 @@ export function renderColorControl(
     const h = +hEl.value,
       v = +vEl.value,
       hex = curHex();
-    sEl.style.background = `linear-gradient(90deg, ${_hsvToHex(h, 0, v)}, ${_hsvToHex(h, 100, v)})`;
-    vEl.style.background = `linear-gradient(90deg, #000, ${_hsvToHex(h, 100, 100)})`;
+    /* backgroundImage, never the background shorthand. The shorthand resets
+       background-clip, which is what keeps the track thin inside the 44px touch
+       target on a phone. */
+    sEl.style.backgroundImage = `linear-gradient(90deg, ${_hsvToHex(h, 0, v)}, ${_hsvToHex(h, 100, v)})`;
+    vEl.style.backgroundImage = `linear-gradient(90deg, #000, ${_hsvToHex(h, 100, 100)})`;
     qa('.cc-swatch', container).forEach(b => {
       let on = false;
       if (mode === 'dark' || mode === 'light') on = b.dataset.v === mode;
