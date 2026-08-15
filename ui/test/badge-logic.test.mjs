@@ -8,6 +8,7 @@ import {
   healthReason,
   badgeSignature,
   readBadgeUpdate,
+  badgeMinimum,
 } from '../js/badge-logic.js';
 
 test('unhealthy takes priority over everything else', () => {
@@ -254,4 +255,41 @@ test('a healthy dot is marked out of date too when its item failed', () => {
   const v = computeBadgeVisual({ hasHC: true, hideHealthy: false, activityStale: true });
   assert.ok(v.cls.includes('green'));
   assert.ok(v.cls.includes('stale'));
+});
+
+test('a count below the configured minimum shows no activity badge', () => {
+  const v = computeBadgeVisual({ activity: 3, custom: { min: 5 }, hasHC: false });
+  assert.equal(v.cls, 'badge', 'no colour and no text');
+  assert.equal(v.txt, '');
+  assert.equal(v.aria, '');
+});
+
+test('the minimum is inclusive', () => {
+  const v = computeBadgeVisual({ activity: 5, custom: { min: 5 } });
+  assert.match(v.cls, /blue/);
+  assert.equal(v.txt, '5');
+});
+
+test('no minimum keeps badging any count above zero', () => {
+  assert.match(computeBadgeVisual({ activity: 1 }).cls, /blue/);
+  assert.equal(computeBadgeVisual({ activity: 0 }).cls, 'badge');
+});
+
+test('a suppressed count does not mark the tile stale', () => {
+  const v = computeBadgeVisual({ activity: 2, custom: { min: 9 }, badgesStale: true, hasHC: false });
+  assert.ok(!v.cls.includes('stale'), 'nothing is shown, so nothing can be out of date');
+});
+
+test('a static badge shows through while activity is below the minimum', () => {
+  const v = computeBadgeVisual({ activity: 2, custom: { min: 9 }, staticBdg: { enabled: true, label: 'beta' } });
+  assert.equal(v.txt, 'beta');
+});
+
+test('an unusable minimum falls back to one', () => {
+  for (const min of [undefined, null, 0, -4, 1, 'x', Number.NaN, Infinity]) {
+    assert.equal(badgeMinimum({ min }), 1, String(min));
+  }
+  assert.equal(badgeMinimum(), 1);
+  assert.equal(badgeMinimum({ min: '7' }), 7, 'a numeric string from a form input still counts');
+  assert.equal(badgeMinimum({ min: 4.8 }), 4, 'a fractional count is floored');
 });

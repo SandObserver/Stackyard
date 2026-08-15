@@ -134,6 +134,8 @@
     "addToHeader": "Zum Header hinzufügen",
     "unit": "Einheit",
     "unitPh": "z. B. GB",
+    "badgeMin": "Anzeigen ab",
+    "badgeMinPh": "z. B. 5",
     "poll": "Abfrage",
     "allowSelfSigned": "Selbstsigniertes Zertifikat zulassen",
     "selfSignedTip": "Überspringt die TLS-Prüfung für die URLs dieser App. Das Überspringen der Prüfung ist unsicher und sollte nur erfolgen, wenn du die Risiken vollständig verstehst.",

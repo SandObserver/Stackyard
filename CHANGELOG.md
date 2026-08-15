@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep Screen Awake in Settings > Appearance, off by default. Needs HTTPS.
 
+- Show From on a live activity badge, to badge only counts at or above a number.
+
 ### Changed
 
 - Widgets on a page you are not looking at now poll four times less often, and

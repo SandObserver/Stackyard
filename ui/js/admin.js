@@ -951,6 +951,7 @@ async function doSave(orig) {
         actHeaders: serializeKvRows(state._bhdr),
         actColor: inp('act-col-val')?.value || '#0289ff',
         custUnit: inp('bcust-unit')?.value?.trim() || '',
+        custMin: parseInt(inp('bcust-min')?.value || '', 10),
         staticEn: inp('static-en')?.checked || false,
         staticLabel: inp('f-static-label')?.value?.trim() || '',
         staticColor: inp('static-col-val')?.value || '#1e6ef4',

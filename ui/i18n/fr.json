@@ -134,6 +134,8 @@
     "addToHeader": "Ajouter au Header",
     "unit": "Unité",
     "unitPh": "p. ex. GB",
+    "badgeMin": "Afficher à partir de",
+    "badgeMinPh": "p. ex. 5",
     "poll": "Interrogation",
     "allowSelfSigned": "Autoriser un certificat auto-signé",
     "selfSignedTip": "Ignore la vérification TLS pour les URL de cette application. Ignorer la vérification n'est pas sûr et ne doit être fait que si vous comprenez pleinement les risques.",

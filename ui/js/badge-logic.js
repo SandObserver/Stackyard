@@ -83,10 +83,18 @@ export function readBadgeUpdate(entry) {
   return { value: n, failed: false };
 }
 
+/** The count at or above which an activity badge appears. Anything below one,
+    missing or unreadable means the original behaviour: any count above zero.
+    @param {{ min?: unknown }} [custom] @returns {number} */
+export function badgeMinimum(custom) {
+  const n = Math.floor(Number(custom?.min));
+  return Number.isFinite(n) && n > 1 ? n : 1;
+}
+
 /** The badge an item should show, as class, text and background colour.
     @param {{
       health?: boolean, activity?: number,
-      custom?: { unit?: string, color?: string },
+      custom?: { unit?: string, color?: string, min?: number },
       staticBdg?: { enabled?: boolean, label?: string, color?: string },
       hasHC?: boolean, hideHealthy?: boolean,
       badgesStale?: boolean, healthStale?: boolean, activityStale?: boolean,
@@ -107,6 +115,10 @@ export function computeBadgeVisual({
   translate,
 }) {
   const tr = typeof translate === 'function' ? translate : (k, v) => _fallback(k, v);
+  /* Below this the item is treated as having no activity at all. One keeps the
+     original behaviour of badging any count above zero. */
+  const min = badgeMinimum(custom);
+  const active = activity >= min;
   let cls,
     txt,
     bg = '';
@@ -114,7 +126,7 @@ export function computeBadgeVisual({
   if (health) {
     cls = 'badge on red';
     txt = '!';
-  } else if (activity > 0) {
+  } else if (active) {
     cls = 'badge on blue';
     txt = activity > 99 ? '99+' : String(activity);
     if (custom.unit) txt += ' ' + custom.unit.slice(0, 8);
@@ -134,7 +146,7 @@ export function computeBadgeVisual({
   /* Status text, so meaning is not carried by colour alone. */
   let aria = '';
   if (health) aria = tr('status.needsAttention');
-  else if (activity > 0)
+  else if (active)
     aria = tr('status.pending', {
       count: (activity > 99 ? '99+' : String(activity)) + (custom.unit ? ' ' + custom.unit : ''),
     });
@@ -142,7 +154,7 @@ export function computeBadgeVisual({
   else if (cls.includes('green')) aria = tr('status.healthy');
 
   if (
-    (activity > 0 && (badgesStale || activityStale)) ||
+    (active && (badgesStale || activityStale)) ||
     ((health || cls.includes('green')) && (healthStale || activityStale))
   ) {
     cls += ' stale';
