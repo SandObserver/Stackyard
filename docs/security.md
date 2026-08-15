@@ -5,6 +5,18 @@
 Stackyard does not terminate TLS and serves traffic over plain HTTP only. Login attempts are rate-limited, but the application is **not** designed or hardened for direct exposure to the public internet: authentication exists to simplify management of multiple local dashboards, and is not an internet-facing security boundary. Deploy it on a trusted network, or behind a reverse proxy that terminates TLS and provides its own authentication and access controls.
 
 
+## Third-party requests
+
+Three hosts outside the services you configure are contacted: `cdn.jsdelivr.net`, for the [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set, Unsplash, for wallpaper, and `api.github.com`, for the update check. Nothing else leaves your network, and no usage data is collected or sent.
+
+Dashboard icons load through `/api/icons/cdn`, which fetches each icon once, sanitizes SVGs, and caches it for 24 hours. The CDN therefore does not learn which services your dashboard shows. The browser contacts the CDN directly in two cases: when the proxy fetch fails, since the direct URL is the last fallback in the chain, and in the admin icon picker, whose previews use the catalogue's own URLs.
+
+Wallpaper works differently. The server calls `api.unsplash.com` with your API key when the wallpaper source is Unsplash, and the browser then loads the chosen image from `images.unsplash.com`. Set the wallpaper to a URL or a solid colour to contact Unsplash never.
+
+The update check runs on the server when the admin About page is opened, at most once an hour. It is a plain read of the public releases endpoint and sends nothing about the install.
+
+Uploaded icons are served from `/icons/` and are never sent anywhere.
+
 ## HTTPS and the session cookie
 
 The session cookie sets the `Secure` flag only when the request is HTTPS. It is
