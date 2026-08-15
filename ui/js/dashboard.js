@@ -37,6 +37,7 @@ import {
 import { trapFocus } from '/js/dialog.js?v=b3841546';
 import { jitter } from '/js/jitter.js?v=1';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=1';
+import { startWakeLock } from '/js/wake-lock.js?v=1';
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();
@@ -841,6 +842,9 @@ async function boot() {
   pollBadges();
   pollHealth();
   startPolling();
+
+  /* A settings change reloads the page, so this is read once. */
+  if (S.keepAwake === true) startWakeLock();
 
   document.body.classList.add('ready');
 }

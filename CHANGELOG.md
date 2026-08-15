@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Keep Screen Awake in Settings > Appearance, off by default. Needs HTTPS.
+
 ### Fixed
 
 - Hue, saturation and brightness sliders no longer stretch across the row on a

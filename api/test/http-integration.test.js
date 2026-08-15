@@ -255,13 +255,14 @@ test('a saved setting on the known list survives, an unknown one is dropped', as
       body: {
         items: [],
         _rev: cfg._rev,
-        settings: { showLabels: { desktop: false, ios: true }, notASetting: 'x' },
+        settings: { showLabels: { desktop: false, ios: true }, keepAwake: 'yes', notASetting: 'x' },
       },
     });
     assert.equal(r.status, 200);
     const saved = loadConfig();
     assert.deepEqual(saved.settings.showLabels, { desktop: false, ios: true });
     assert.equal(saved.settings.notASetting, undefined);
+    assert.equal(saved.settings.keepAwake, false, 'a non-boolean keepAwake is stored as off, not as a string');
   } finally {
     saveConfig(cfg);
   }

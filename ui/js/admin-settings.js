@@ -37,6 +37,11 @@ export function loadSettings(c) {
     lm.checked = s.showLabels?.ios === true;
     lm.addEventListener('change', saveLabels);
   }
+  const aw = inp('set-awake');
+  if (aw) {
+    aw.checked = s.keepAwake === true;
+    aw.addEventListener('change', saveKeepAwake);
+  }
   const bg = s.background || { type: 'unsplash', brightness: 0.62 };
   const typeEl = inp('bg-type');
   if (typeEl) {
@@ -238,6 +243,22 @@ async function saveLabels(e) {
     const c = await ag('/api/config');
     c.settings = c.settings || {};
     c.settings.showLabels = { desktop: inp('set-lbl-d')?.checked !== false, ios: inp('set-lbl-m')?.checked || false };
+    await ap('/api/config', c);
+    toast(t('toast.saved'));
+  } catch (err) {
+    /* Put the box back on a failure, or it shows a setting the server was never
+       given. Assigning `checked` fires no event, so this does not loop. */
+    if (toggled) toggled.checked = !wasChecked;
+    toast(t('toast.saveFailed', { err: err.message }), 'err');
+  }
+}
+async function saveKeepAwake(e) {
+  const toggled = /** @type {HTMLInputElement|null} */ (e?.target ?? null);
+  const wasChecked = toggled ? toggled.checked : false;
+  try {
+    const c = await ag('/api/config');
+    c.settings = c.settings || {};
+    c.settings.keepAwake = !!inp('set-awake')?.checked;
     await ap('/api/config', c);
     toast(t('toast.saved'));
   } catch (err) {
