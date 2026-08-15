@@ -127,6 +127,8 @@ Adding one is a folder plus one registry entry, with no changes to the rest of t
 
 Instead of writing a widget to surface one number, point Stackyard at any API endpoint and it lists the values in the response. Pick the one you care about (pending requests in a media server, items in a queue) and it becomes a small badge on that tile. Any service with an API, without code.
 
+Set **Show From** to badge only counts at or above a number, so a queue that is never quite empty stays quiet until it matters.
+
 ## Security
 
 Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.

@@ -180,6 +180,7 @@ export function buildAppForm(body, item) {
         </div>
         <div id="act-color-slot"></div>
         ${ier('ie-bunit', t('app.unit'), 'bcust-unit', actCustom.unit, t('app.unitPh'))}
+        ${ier('ie-bmin', t('app.badgeMin'), 'bcust-min', actCustom.min, t('app.badgeMinPh'), 'number')}
         <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" min="10" max="3600" value="${act.interval || 30}">${pollAfter}</div></div></div>
       </div>
     </div>

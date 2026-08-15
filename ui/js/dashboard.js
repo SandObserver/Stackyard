@@ -26,7 +26,7 @@ import { initI18n, t, currentLang } from '/js/i18n.js?v=133a7aac';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=dab9978e';
 import { sanitizeItemLinks } from '/js/link-url.js?v=19038560';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=b60663b5';
-import { badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=d278c683';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=d278c683';
 import {
   configChanged,
   landingAfterSetup,
@@ -191,7 +191,9 @@ function folderBadge(folder) {
   for (const c of children) {
     const s = badgeState[c.id] || {};
     if (s.health) hasHealth = true;
-    if (s.activity > 0) actSum += s.activity;
+    /* A child whose own count is below its minimum shows no badge, so it must
+       not raise the folder's either. */
+    if (s.activity >= badgeMinimum(c.monitoring?.activity?.custom)) actSum += s.activity;
   }
   return { health: hasHealth, activity: actSum };
 }

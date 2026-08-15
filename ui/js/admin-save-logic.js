@@ -96,11 +96,14 @@ export function buildAppItem(v, orig, takenIds = []) {
   if (!v.label) return { error: 'Name required' };
   if (!v.href) return { error: 'URL required' };
   const DEFCOL = '#0289ff';
+  /* One badges any count above zero, which is the default, so it is not stored. */
+  const custMin = Number.isFinite(v.custMin) && v.custMin > 1 ? Math.floor(v.custMin) : undefined;
   const customObj =
-    (v.actColor && v.actColor !== DEFCOL) || v.custUnit
+    (v.actColor && v.actColor !== DEFCOL) || v.custUnit || custMin
       ? {
           color: v.actColor && v.actColor !== DEFCOL ? v.actColor : undefined,
           unit: v.custUnit || undefined,
+          min: custMin,
         }
       : undefined;
   const staticBadgeObj =

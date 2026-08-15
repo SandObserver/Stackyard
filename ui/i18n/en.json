@@ -134,6 +134,8 @@
     "addToHeader": "Add to Header",
     "unit": "Unit",
     "unitPh": "e.g. GB",
+    "badgeMin": "Show From",
+    "badgeMinPh": "e.g. 5",
     "poll": "Poll",
     "allowSelfSigned": "Allow self-signed certificate",
     "selfSignedTip": "Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks.",

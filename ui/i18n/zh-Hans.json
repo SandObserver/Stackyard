@@ -134,6 +134,8 @@
     "addToHeader": "添加到 Header",
     "unit": "单位",
     "unitPh": "例如 GB",
+    "badgeMin": "达到时显示",
+    "badgeMinPh": "例如 5",
     "poll": "轮询",
     "allowSelfSigned": "允许自签名证书",
     "selfSignedTip": "跳过此应用 URL 的 TLS 验证。跳过验证并不安全，仅在您完全了解风险的情况下才应这样做。",

@@ -86,7 +86,7 @@ test('buildAppItem builds custom and static badge objects only when meaningful',
     { label: 'A', href: 'http://x', actColor: '#ff0000', custUnit: 'GB', spaths: [] },
     null,
   ).item;
-  assert.deepEqual(custom.monitoring.activity.custom, { color: '#ff0000', unit: 'GB' });
+  assert.deepEqual(custom.monitoring.activity.custom, { color: '#ff0000', unit: 'GB', min: undefined });
   const stat = buildAppItem(
     { label: 'A', href: 'http://x', staticEn: true, staticLabel: 'VeryLongLabelHere', staticColor: 'red', spaths: [] },
     null,
@@ -358,4 +358,14 @@ test('saveWithRevert treats a write that returns nothing as success', () => {
     snapshot: ['before'],
     restore: () => assert.fail('should not revert'),
   }).then(ok => assert.equal(ok, true));
+});
+
+test('buildAppItem stores a badge minimum only above one', () => {
+  const build = custMin =>
+    buildAppItem({ label: 'A', href: 'http://x', actColor: '#0289ff', custUnit: '', custMin, spaths: [] }, null).item
+      .monitoring.activity.custom;
+  assert.equal(build(Number.NaN), undefined, 'an empty field stores nothing');
+  assert.equal(build(1), undefined, 'one is the default and is not stored');
+  assert.equal(build(0), undefined);
+  assert.deepEqual(build(5), { color: undefined, unit: undefined, min: 5 });
 });
