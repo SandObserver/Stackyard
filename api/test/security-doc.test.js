@@ -89,6 +89,22 @@ test('every hash profile the code offers is documented, and no others', () => {
   assert.match(section, new RegExp(`\`${dflt}\` \\(default\\)`), `${dflt} is the default in the code`);
 });
 
+/* A commented example is where most operators meet this flag, and it is the one
+   setting in that block that turns a security control off. Leaving it stays a
+   decision an operator makes knowingly. */
+test('the Compose example says what turning off the SSRF guard costs', () => {
+  const at = compose.indexOf('ALLOW_PRIVATE_IPS');
+  assert.ok(at !== -1, 'the flag is no longer in the Compose example');
+  const comment = compose.slice(0, at).split('\n').slice(-4).join('\n');
+  assert.match(comment, /SSRF guard/, 'the comment must name the guard it disables');
+  assert.match(comment, /docs\/security\.md/, 'and point at the page that explains it');
+  assert.match(
+    compose,
+    /^\s*# - ALLOW_PRIVATE_IPS=true$/m,
+    'it must stay commented out, so the guard is on by default',
+  );
+});
+
 /* ── the container ────────────────────────────────────────────────────────── */
 
 test('the Compose hardening the page claims is in the Compose file', () => {
