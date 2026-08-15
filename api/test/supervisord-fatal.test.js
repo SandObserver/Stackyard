@@ -164,12 +164,16 @@ test('the exception comes after the exclusion it overrides', () => {
   assert.ok(included > excluded, 'the exception must come last or it has no effect');
 });
 
-test('the rest of scripts/ is still kept out of the image', () => {
+test('the rest of scripts/ is still kept out of the build context', () => {
   const ignore = read('.dockerignore');
   const exceptions = ignore.split('\n').filter(l => l.trim().startsWith('!scripts/'));
-  assert.deepEqual(
-    exceptions.map(l => l.trim()),
-    ['!scripts/exit-on-fatal.py'],
-    'build tooling has no place in the image',
-  );
+  assert.deepEqual(exceptions.map(l => l.trim()), ['!scripts/exit-on-fatal.py', '!scripts/bump-cache-busting.js']);
+});
+
+/* The stamping script runs in the first stage only. Copying it into the runtime
+   image would ship build tooling to every user. */
+test('only the supervisor listener reaches the runtime image', () => {
+  const runtime = read('Dockerfile').split(/^FROM node:24-alpine$/m).pop();
+  const copied = [...runtime.matchAll(/^COPY (?:--\S+ )*(scripts\/\S+)/gm)].map(m => m[1]);
+  assert.deepEqual(copied, ['scripts/exit-on-fatal.py']);
 });

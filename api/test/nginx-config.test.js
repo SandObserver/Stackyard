@@ -345,6 +345,9 @@ test('hashed asset paths are immutable and their entry points are not', () => {
 test('the image stamps assets itself, so a locally built image is not pinned to ?v=1', () => {
   const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
   assert.match(dockerfile, /RUN node scripts\/bump-cache-busting\.js/);
+  /* scripts/ is excluded from the build context except by name. */
+  const ignore = fs.readFileSync(path.join(__dirname, '../../.dockerignore'), 'utf8');
+  assert.match(ignore, /^!scripts\/bump-cache-busting\.js$/m, 'the script must reach the build context');
   assert.match(dockerfile, /COPY --from=assets \/src\/ui\/ \/usr\/share\/nginx\/html\//);
   assert.ok(
     !/^COPY ui\/ \/usr\/share\/nginx\/html/m.test(dockerfile),

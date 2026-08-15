@@ -7,6 +7,7 @@ api/coverage
 ui/test
 scripts/**
 !scripts/exit-on-fatal.py
+!scripts/bump-cache-busting.js
 *.md
 docs
 .dockerignore
