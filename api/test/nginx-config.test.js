@@ -324,3 +324,33 @@ test('the health check is still excluded', () => {
   const health = dashboard.slice(dashboard.indexOf('location = /health'));
   assert.match(health.slice(0, health.indexOf('}')), /access_log off;/);
 });
+
+/* A hashed URL may be cached for a year. A page that names those URLs must not
+   be, or a browser keeps requesting the previous release's assets. */
+test('hashed asset paths are immutable and their entry points are not', () => {
+  const block = name => {
+    const at = dashboard.indexOf(`location ${name} {`);
+    assert.ok(at !== -1, `location ${name} not found`);
+    return dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  };
+  for (const name of ['/js/', '/css/']) {
+    assert.match(block(name), /add_header Cache-Control "public, max-age=31536000, immutable"/, name);
+  }
+  /* Stamped by hand or not at all, so a year-long lifetime would strand them. */
+  for (const name of ['^~ /widgets/', '/i18n/', '= /', '^~ /admin']) {
+    assert.match(block(name), /add_header Cache-Control "no-cache/, name);
+  }
+});
+
+test('the image stamps assets itself, so a locally built image is not pinned to ?v=1', () => {
+  const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
+  assert.match(dockerfile, /RUN node scripts\/bump-cache-busting\.js/);
+  /* scripts/ is excluded from the build context except by name. */
+  const ignore = fs.readFileSync(path.join(__dirname, '../../.dockerignore'), 'utf8');
+  assert.match(ignore, /^!scripts\/bump-cache-busting\.js$/m, 'the script must reach the build context');
+  assert.match(dockerfile, /COPY --from=assets \/src\/ui\/ \/usr\/share\/nginx\/html\//);
+  assert.ok(
+    !/^COPY ui\/ \/usr\/share\/nginx\/html/m.test(dockerfile),
+    'the web root must come from the stamped stage, not straight from the build context',
+  );
+});
