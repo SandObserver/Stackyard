@@ -338,6 +338,31 @@ function buildDesktop() {
   ct.innerHTML = '';
 }
 
+/* Every page is mounted at once, so widgets the user has swiped away from keep
+   polling. Off-screen frames run at a fraction of their configured rate. */
+const OFF_PAGE_RATE = 4;
+
+function applyPollRates() {
+  const strip = el('pages');
+  if (!strip) return;
+  Array.from(strip.children).forEach((page, i) => {
+    const rate = i === pg ? 1 : OFF_PAGE_RATE;
+    qa('iframe', /** @type {HTMLElement} */ (page)).forEach(ifr => {
+      const frame = /** @type {HTMLIFrameElement} */ (ifr);
+      /* A frame that has not loaded yet carries no toolbox to tell. */
+      if (!frame.dataset.rateBound) {
+        frame.dataset.rateBound = '1';
+        frame.addEventListener('load', applyPollRates);
+      }
+      try {
+        /** @type {any} */ (frame.contentWindow)?.__setPollRate?.(rate);
+      } catch {
+        /* A frame mid-navigation has no reachable window. */
+      }
+    });
+  });
+}
+
 /* Announce user-initiated page changes only. Announcing polled health talks
    over whatever someone is doing every time a service flaps.
 
@@ -372,6 +397,7 @@ function goTo(n, dotEls, announce = true) {
     else d.removeAttribute('aria-current');
   });
   if (MOB && CB.mobPillBump) CB.mobPillBump(pg);
+  applyPollRates();
 }
 
 /* ensureSpace can create overflow pages paginate() did not report, so sync the
