@@ -51,7 +51,9 @@ services:
       # Memory used per password hash. Default 16mib suits small hardware;
       # raise it if you can. See docs/security.md.
       # - PASSWORD_HASH_MEMORY=64mib
-      # Set to true to allow widget URLs using private/LAN IP addresses
+      # Turns the SSRF guard off, so badges and widgets may reach private, LAN
+      # and loopback addresses. Most homelab installs need it, because the
+      # services they point at live on private IPs. See docs/security.md.
       # - ALLOW_PRIVATE_IPS=true
       # Log verbosity: debug, info, warn or error, where warn and error behave
       # the same. Settings, General sets this too, and that wins once the config
