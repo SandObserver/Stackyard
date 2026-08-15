@@ -85,10 +85,12 @@ test('the layout sizes itself from the measured grid box', () => {
   assert.match(ui, /rh = gridBox\.height \/ ROWS/);
 });
 
-test('the dock and the pill sit above the CSS inset', () => {
+test('the dock sits the same distance from the bottom as from the sides', () => {
   const ui = read('js/ui.js');
-  assert.match(ui, /bottom:var\(--sa-bottom\)/, 'the dock');
-  assert.match(ui, /bottom:calc\(var\(--sa-bottom\) \+ \$\{dh \+ pillGap\}px\)/, 'the pill');
+  assert.match(ui, /const dockGap = Math\.round\(9 \* sc\)/);
+  assert.match(ui, /const dockW = vw - Math\.round\(18 \* sc\)/, 'a side gap of dockGap on each edge');
+  assert.match(ui, /bottom:\$\{dockGap\}px/, 'the dock');
+  assert.match(ui, /bottom:\$\{dockGap \+ dh \+ pillGap\}px/, 'the pill');
 });
 
 /* ── The rebuild trigger ──────────────────────────────────────────────────── */

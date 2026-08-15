@@ -475,11 +475,12 @@ html.is-mobile .sb{display:none}
 html.is-mobile .cp{width:100%;border-inline-start:none}
 html.is-mobile .sec{padding:16px 16px calc(132px + env(safe-area-inset-bottom))}
 html.is-mobile .sec-title{font-size:26px}
+html.is-mobile .hsb-track{max-width:min(240px,62%)}
 html.is-mobile .sec-hdr{position:sticky;top:0;z-index:20;background:var(--pane);padding:10px 0 10px}
 html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--cp);color:var(--ac2);text-decoration:none;flex-shrink:0}
 html.is-mobile .m-back:active{opacity:.7}
 html.is-mobile body.authed .mtabbar{
-  display:flex;position:fixed;left:14px;right:14px;bottom:calc(20px + env(safe-area-inset-bottom));
+  display:flex;position:fixed;left:14px;right:14px;bottom:14px;
   z-index:8000;justify-content:space-around;align-items:center;gap:2px;
   background:rgba(30,30,38,.72);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);
   border:1px solid rgba(255,255,255,.08);border-radius:28px;
