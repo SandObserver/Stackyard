@@ -42,6 +42,8 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 
 Has a mobile layout, and is available in English, Persian, Chinese, Spanish, German, and French.
 
+Add it to a phone's home screen and it opens in its own window, without browser chrome. There is no offline mode: every tile shows live data, so the dashboard needs to reach your services.
+
 ## Getting started
 
 You need Docker.
