@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hue, saturation and brightness sliders no longer stretch across the row on a
   phone.
 
+- Saturation, brightness and wallpaper brightness sliders now draw a thin track
+  on a phone, matching hue.
+
 - Settings no longer flashes the desktop sidebar before the phone layout
   appears.
 

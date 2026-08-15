@@ -112,7 +112,10 @@ export function loadSettings(c) {
     const min = parseFloat(el.min) || 0.1,
       max = parseFloat(el.max) || 1.0;
     const pct = ((parseFloat(el.value) - min) / (max - min)) * 100;
-    el.style.background = `linear-gradient(to right, var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
+    /* backgroundImage, never the background shorthand. The shorthand resets
+       background-clip, which is what keeps the track thin inside the 44px touch
+       target on a phone. */
+    el.style.backgroundImage = `linear-gradient(to right, var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
   }
   if (brEl) {
     brEl.value = bg.brightness ?? 0.62;
