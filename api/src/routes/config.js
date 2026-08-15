@@ -89,6 +89,7 @@ on('POST', '/api/config', async (req, res) => {
       return json(res, 400, { error: `at most ${DOCK_MAX} apps can be shown in the dock`, kind: KIND.INVALID });
     const KNOWN_SETTINGS = new Set([
       'background',
+      'showLabels',
       'stats',
       'server',
       'auth',

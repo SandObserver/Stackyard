@@ -247,6 +247,26 @@ test('a write that states no origin at all is rejected', async () => {
   }
 });
 
+test('a saved setting on the known list survives, an unknown one is dropped', async () => {
+  const cfg = loadConfig();
+  try {
+    const r = await req('POST', '/api/config', {
+      cookie: validCookie,
+      body: {
+        items: [],
+        _rev: cfg._rev,
+        settings: { showLabels: { desktop: false, ios: true }, notASetting: 'x' },
+      },
+    });
+    assert.equal(r.status, 200);
+    const saved = loadConfig();
+    assert.deepEqual(saved.settings.showLabels, { desktop: false, ios: true });
+    assert.equal(saved.settings.notASetting, undefined);
+  } finally {
+    saveConfig(cfg);
+  }
+});
+
 test('a read is not asked for an origin, since it changes nothing', async () => {
   const r = await req('GET', '/api/config', { cookie: validCookie, origin: null });
   assert.equal(r.status, 200);

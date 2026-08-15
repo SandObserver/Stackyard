@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove the stray Support link from Settings > General.
 
+- App title toggles in Settings > Appearance now persist across a reload.
+
 ## [1.6.1] - 2026-08-14
 
 ### Fixed
