@@ -232,6 +232,12 @@
       "/js/widget-config-form.js?v=*": [
         "./ui/js/widget-config-form.js"
       ],
+      "/js/wake-lock.js": [
+        "./ui/js/wake-lock.js"
+      ],
+      "/js/wake-lock.js?v=*": [
+        "./ui/js/wake-lock.js"
+      ],
       "/js/widget-toolbox.js": [
         "./ui/js/widget-toolbox.js"
       ],

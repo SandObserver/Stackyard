@@ -90,6 +90,7 @@ on('POST', '/api/config', async (req, res) => {
     const KNOWN_SETTINGS = new Set([
       'background',
       'showLabels',
+      'keepAwake',
       'stats',
       'server',
       'auth',
@@ -108,6 +109,7 @@ on('POST', '/api/config', async (req, res) => {
         delete data.settings.logLevel;
       if (data.settings.language && !/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(data.settings.language))
         delete data.settings.language;
+      if ('keepAwake' in data.settings) data.settings.keepAwake = data.settings.keepAwake === true;
     }
     const existing = loadConfig();
     /* Stale-write check. A client that sends no _rev overwrites. */
