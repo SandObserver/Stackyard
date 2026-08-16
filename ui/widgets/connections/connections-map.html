@@ -37,7 +37,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
   const hexRgb=h=>{h=(h||'').replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
     const n=parseInt(h,16);return isFinite(n)?[(n>>16)&255,(n>>8)&255,n&255]:[175,82,222];};
   const rgbCss=a=>'rgb('+a.join(',')+')';
-  const DEFAULT_DOT='#AF52DE';
+  const DEFAULT_DOT='#DB34F2';
 
   // per-country dot lists + centroids
   const byCountry={}, centroid={};
@@ -123,7 +123,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     showLegend = meta.showLegend!==false;
     const services=(Array.isArray(data.services)?data.services.slice():[]).sort((a,b)=>String(a&&a.name||'').toLowerCase().localeCompare(String(b&&b.name||'').toLowerCase()));
     services.forEach((svc,idx)=>{
-      const COL=hexRgb(svc.color||'#AF52DE'), colCss=rgbCss(COL);
+      const COL=hexRgb(svc.color||'#DB34F2'), colCss=rgbCss(COL);
       const role=svc.id||(svc.type+'-'+idx);
       const name=svc.name||svc.type||wt('ui.service','Service');
       const chip={name,color:colCss,role,adminUrl:svc.adminUrl||''};

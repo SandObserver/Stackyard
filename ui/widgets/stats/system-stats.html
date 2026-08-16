@@ -28,15 +28,15 @@
   /* Value display — medium */
   .v        { font-size: clamp(18px, 7cqw, 28px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
   /* Slot colors driven by CSS custom properties set per-slot in JS */
-  .v.c-cpu  { color: var(--sc0, #ff2d55); } .v.c-ram  { color: var(--sc1, #30d158); }
-  .v.c-temp { color: var(--sc2, #00c0e8); } .v.c-disk { color: var(--sc2, #00c0e8); }
+  .v.c-cpu  { color: var(--sc0, #FF375F); } .v.c-ram  { color: var(--sc1, #30d158); }
+  .v.c-temp { color: var(--sc2, #00D2E0); } .v.c-disk { color: var(--sc2, #00D2E0); }
   .disk-line { display: flex; align-items: baseline; white-space: nowrap; }
-  .disk-num  { font-size: clamp(15px, 5.2cqw, 22px); font-weight: 700; color: var(--sc2, #00c0e8);
+  .disk-num  { font-size: clamp(15px, 5.2cqw, 22px); font-weight: 700; color: var(--sc2, #00D2E0);
     letter-spacing: -0.02em; line-height: 1; }
-  .disk-unit { font-size: clamp(9px, 3cqw, 14px); font-weight: 600; color: var(--sc2, #00c0e8); margin: 0 1px; }
-  .disk-sep  { font-size: clamp(11px, 3.5cqw, 17px); font-weight: 400; color: var(--sc2, #00c0e8);
+  .disk-unit { font-size: clamp(9px, 3cqw, 14px); font-weight: 600; color: var(--sc2, #00D2E0); margin: 0 1px; }
+  .disk-sep  { font-size: clamp(11px, 3.5cqw, 17px); font-weight: 400; color: var(--sc2, #00D2E0);
     opacity: 0.5; margin: 0 1px; }
-  .disk-sub  { font-size: clamp(9px, 2.4cqw, 11px); font-weight: 500; color: var(--sc2, #00c0e8);
+  .disk-sub  { font-size: clamp(9px, 2.4cqw, 11px); font-weight: 500; color: var(--sc2, #00D2E0);
     margin-top: 2px; opacity: 0.7; }
 
   /* Sparkline chart — medium right column */
@@ -51,11 +51,11 @@
   .bar-slot { position: relative; height: 100%; flex-shrink: 0; }
   .bar-bg   { position: absolute; inset: 0; background: rgba(255,255,255,0.07); border-radius: 1px 1px 0 0; }
   .bar-fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 1px 1px 0 0; transition: height 0.5s ease; }
-  .bc-0 { background: var(--sc0, #ff2d55); }
+  .bc-0 { background: var(--sc0, #FF375F); }
   .bc-1 { background: var(--sc1, #30d158); }
-  .bc-2 { background: var(--sc2, #00c0e8); }
+  .bc-2 { background: var(--sc2, #00D2E0); }
   /* Process-count deviation chart: bars above the mean highlighted, dashed mean line */
-  .bar-fill.dev-hi { background: #ff9f0a; }
+  .bar-fill.dev-hi { background: #FF9230; }
   .dev-mean { position: absolute; left: 0; right: 0; height: 1px; pointer-events: none;
     background: repeating-linear-gradient(to right, rgba(255,255,255,0.45) 0,
       rgba(255,255,255,0.45) 3px, transparent 3px, transparent 6px); }
@@ -65,7 +65,7 @@
   .disk-track  { width: 100%; height: 10px; background: rgba(255,255,255,0.13);
     border-radius: 2px; overflow: hidden; }
   .disk-track.secondary { height: 6px; }
-  .disk-fill   { height: 100%; background: var(--sc2, #00c0e8); border-radius: 2px; width: 0%;
+  .disk-fill   { height: 100%; background: var(--sc2, #00D2E0); border-radius: 2px; width: 0%;
     transition: width 0.6s ease; }
 
   /* Network slot — text only, always one line */
@@ -136,7 +136,7 @@ function buildShell() {
   w.className = 'widget' + (size === 'medium' ? ' size-medium' : '');
 
   /* Apply per-slot color as CSS custom property so both text and charts update automatically */
-  const SLOT_DEFS = ['#ff2d55','#30d158','#00c0e8'];
+  const SLOT_DEFS = ['#FF375F','#30d158','#00D2E0'];
   slots.forEach((slot, i) => {
     const c = slot.color || SLOT_DEFS[i] || SLOT_DEFS[0];
     document.documentElement.style.setProperty('--sc'+i, c);
@@ -191,7 +191,7 @@ function mkValueEl(slot, i) {
     ${slot.secondary ? html`<div class="disk-sub" id="disk-sec-${i}">— / —</div>` : ''}`);
   } else if (slot.type === 'iowait' || slot.type === 'procs') {
     const unit = slot.type === 'iowait' ? '%' : '';
-    setHtml(d, html`<div class="v" id="pct-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`);
+    setHtml(d, html`<div class="v" id="pct-${i}" style="color:var(--sc${i}, #0091FF)">—${unit}</div>`);
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
     /* slot.type reaches a class attribute here, and comes from config. */
@@ -248,7 +248,7 @@ function mkSmallRow(slot, i) {
     </div>`);
   } else if (slot.type === 'iowait' || slot.type === 'procs') {
     const unit = slot.type === 'iowait' ? '%' : '';
-    setHtml(d, html`<div class="v" id="small-${i}" style="color:var(--sc${i}, #0a84ff)">—${unit}</div>`);
+    setHtml(d, html`<div class="v" id="small-${i}" style="color:var(--sc${i}, #0091FF)">—${unit}</div>`);
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
     setHtml(d, html`<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`);

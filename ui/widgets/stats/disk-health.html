@@ -17,14 +17,14 @@
   #shell {
     width:100%; height:100%;
     border-radius:20px;
-    background:#2b2c2e;
+    background:#2C2C2E;
     padding:7px;
     box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
   }
   #panel {
     width:100%; height:100%;
     border-radius:15px;
-    background:#282a2d;
+    background:#2C2C2E;
     padding:11px;
     display:flex; gap:7px;
     position:relative;
@@ -36,8 +36,8 @@
     flex:1; min-height:0;
     display:flex; gap:3px;
     border-radius:6px; padding:3px;
-    background:#0d0d0e;
-    box-shadow:0 0 0 2px #0d0d0e;
+    background:#1C1C1E;
+    box-shadow:0 0 0 2px #1C1C1E;
   }
   #root.size-medium #bays { gap:2px; }
 
@@ -46,18 +46,18 @@
     border-radius:4px;
     position:relative;
     overflow:hidden;
-    background:#363739;
+    background:#3A3A3C;
     cursor:default;
     display:flex;
     transform-origin:center;
     transition: transform 0.2s cubic-bezier(.34,1.2,.64,1), box-shadow 0.2s ease, background 0.2s ease;
   }
-  .bay.empty { background:#262729; }
+  .bay.empty { background:#2C2C2E; }
   .bay.assigned { cursor:pointer; }
   .bay.assigned:hover,
   .bay.assigned.touch-active {
     transform: scale(1.08);
-    background:#404145;
+    background:#48484A;
     z-index:3;
     box-shadow: 0 6px 16px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06);
   }
@@ -78,24 +78,24 @@
   #right { width:20px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:7px; padding-top:1px; }
   #pwrbtn {
     width:18px; height:18px; border-radius:50%;
-    background:#2a2b2d;
+    background:#2C2C2E;
     display:flex; align-items:center; justify-content:center;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
     flex-shrink:0;
   }
   #usb {
     width:12px; height:18px; border-radius:3px;
-    background:#0d0d0f; position:relative; flex-shrink:0;
+    background:#1C1C1E; position:relative; flex-shrink:0;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
   }
   #usb::before {
     content:''; position:absolute; top:2px; bottom:2px; left:3px;
-    width:3.5px; border-radius:2px; background:#2f8fe6;
+    width:3.5px; border-radius:2px; background:#0091FF;
   }
   #dots { margin-top:auto; display:flex; flex-direction:column; align-items:center; gap:8px; padding-bottom:2px; }
   #root.size-medium #dots { gap:3.5px; }
-  #dots i { width:5.5px; height:5.5px; border-radius:50%; background:#3f4042; transition: background 0.2s; }
-  #dots i.green { background:#22c55e; } #dots i.yellow { background:#ffcc00; } #dots i.red { background:#ff3b30; }
+  #dots i { width:5.5px; height:5.5px; border-radius:50%; background:#3A3A3C; transition: background 0.2s; }
+  #dots i.green { background:#30D158; } #dots i.yellow { background:#FFD600; } #dots i.red { background:#FF4245; }
 
   #tip {
     position:absolute; z-index:20;
@@ -110,8 +110,8 @@
   }
   #root.tip-active #tip { opacity:1; transform:translateY(0); }
   #tip .t1 { display:flex; align-items:center; gap:6px; }
-  #tip .t1 i { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:#3f4042; }
-  #tip .t1 i.green { background:#22c55e; } #tip .t1 i.yellow { background:#ffcc00; } #tip .t1 i.red { background:#ff3b30; }
+  #tip .t1 i { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:#3A3A3C; }
+  #tip .t1 i.green { background:#30D158; } #tip .t1 i.yellow { background:#FFD600; } #tip .t1 i.red { background:#FF4245; }
   #tip .nm { font-size:12px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #tip .meta { font-size:11px; font-weight:500; color:rgba(255,255,255,0.62); white-space:nowrap; padding-inline-start:13px; }
 

@@ -10,9 +10,9 @@
     font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif}
 
   .widget{width:100%;height:100%;position:relative;border-radius:inherit;overflow:hidden;
-    background:linear-gradient(160deg,#3c3c3e,#2b2b2d 60%,#242426)}
+    background:linear-gradient(160deg,#3A3A3C,#2C2C2E 60%,#2C2C2E)}
   .widget.clickable{cursor:pointer}
-  .widget.clickable:focus-visible{outline:2px solid #5ab0ff;outline-offset:-3px}
+  .widget.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-3px}
   .widget::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
     box-shadow:inset 3px 0 0 rgba(0,0,0,.22),inset -3px 0 0 rgba(0,0,0,.22),
       inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 1px rgba(0,0,0,.3)}
@@ -28,27 +28,27 @@
   @keyframes inL{from{transform:translateX(-114%);opacity:0}to{transform:translateX(0);opacity:1}}
 
   .sticker{position:absolute;left:14px;right:14px;top:11px;height:76px;
-    background:linear-gradient(180deg,#e6e6e6,#d2d2d2);border-radius:6px;
+    background:linear-gradient(180deg,#FFFFFF,#d2d2d2);border-radius:6px;
     border:1px solid rgba(0,0,0,.18);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);
     padding:7px 10px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
-  .title{font-size:13px;font-weight:700;line-height:1.16;color:#222;
+  .title{font-size:13px;font-weight:700;line-height:1.16;color:#1C1C1E;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   /* margin-top:auto seats the meta lines on the sticker's bottom edge. */
   .sub,.player{flex:none;font-size:9px;font-weight:600;line-height:1.12;letter-spacing:.02em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
-  .sub{color:#4d4d4d;margin-top:auto}
-  .player{color:#7a7a7a}
-  .idle .title{color:#6f6f6f;font-weight:600}
+  .sub{color:#48484A;margin-top:auto}
+  .player{color:#8E8E93}
+  .idle .title{color:#636366;font-weight:600}
 
   .window{position:absolute;left:14px;right:14px;top:94px;bottom:14px;
-    background:radial-gradient(135% 135% at 50% 20%,#5a5a5e,#4c4c50 58%,#444448);
+    background:radial-gradient(135% 135% at 50% 20%,#636366,#48484A 58%,#48484A);
     border-radius:5px 5px 38px 38px;overflow:hidden;
     box-shadow:inset 0 2px 5px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.28)}
 
   .tape{position:absolute;left:71px;top:-8px;border-radius:50%;transform:translate(-50%,-50%);
-    background:radial-gradient(circle at 50% 46%,#202020,#0d0d0d 80%);transition:width .6s ease,height .6s ease}
+    background:radial-gradient(circle at 50% 46%,#1C1C1E,#1C1C1E 80%);transition:width .6s ease,height .6s ease}
   .strand{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-  .spinwrap{position:absolute;left:71px;top:-8px;width:88px;height:88px;margin:-44px 0 0 -44px;color:#9a9a9a}
+  .spinwrap{position:absolute;left:71px;top:-8px;width:88px;height:88px;margin:-44px 0 0 -44px;color:#8E8E93}
   .spinwrap .reel{width:100%;height:100%;display:block;transform-origin:center;
     animation:spin 3.6s linear infinite;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
   .spinwrap.paused .reel{animation-play-state:paused}
@@ -57,11 +57,11 @@
   .glass{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   .ticks{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
     display:flex;flex-direction:column;gap:6px;opacity:.5}
-  .ticks i{display:block;width:12px;height:2px;background:#eaeaea;border-radius:1px}
+  .ticks i{display:block;width:12px;height:2px;background:#FFFFFF;border-radius:1px}
 
   .arrow{position:absolute;top:93px;transform:translateY(-50%);width:24px;height:34px;
     border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
-    color:#f0f0f0;opacity:.92;transition:opacity .15s;z-index:3}
+    color:#FFFFFF;opacity:.92;transition:opacity .15s;z-index:3}
   .arrow svg{width:17px;height:17px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
   .arrow.l{left:0}.arrow.r{right:0}
   .arrow:disabled{opacity:.2;cursor:default}
@@ -95,13 +95,13 @@
       <!-- Strand first. The tape spool paints over its left end, so the join
            stays hidden at every wound diameter. -->
       <svg class="strand" viewBox="0 0 142 56" preserveAspectRatio="none" aria-hidden="true">
-        <path id="strandpath" d="M142 19 L74 30 L74 36 L142 25 Z" fill="#141414"/>
+        <path id="strandpath" d="M142 19 L74 30 L74 36 L142 25 Z" fill="#1C1C1E"/>
       </svg>
       <div class="tape" id="tape"></div>
       <div class="spinwrap paused" id="spin">
         <svg class="reel" id="reel" viewBox="792.54 31.97 196.00 196.00" aria-hidden="true">
-          <path d=" M 846.60 73.75 C 854.03 68.08 862.02 62.68 871.03 59.93 C 874.09 61.75 874.96 65.71 876.95 68.50 C 892.30 65.15 908.90 67.45 922.50 75.43 C 937.55 84.03 948.62 99.11 952.49 116.00 C 955.24 116.03 958.01 115.80 960.75 116.23 C 962.00 117.17 961.96 118.87 962.22 120.27 C 963.09 128.08 963.35 136.01 962.34 143.82 C 962.05 145.18 962.11 146.88 960.82 147.75 C 957.72 148.25 954.56 147.94 951.45 148.00 C 948.55 157.32 943.64 166.03 936.92 173.13 C 934.33 175.85 931.53 178.37 928.55 180.66 C 920.28 186.68 910.62 190.77 900.51 192.31 C 896.71 192.85 892.86 193.06 889.04 192.98 C 879.06 192.71 869.26 189.91 860.49 185.20 C 858.09 187.02 856.43 190.79 853.17 190.93 C 845.90 186.06 839.57 179.78 834.09 172.98 C 833.23 171.59 831.37 170.15 832.25 168.34 C 833.67 166.36 835.55 164.76 837.25 163.02 C 830.03 151.08 826.76 136.78 828.39 122.90 C 830.00 107.77 837.50 93.53 848.67 83.26 C 847.60 80.37 842.78 76.39 846.60 73.75 M 881.51 78.71 C 871.25 80.65 861.64 85.89 854.17 93.16 C 844.71 102.91 838.56 116.27 839.00 130.00 C 838.56 143.26 844.32 156.18 853.20 165.82 C 860.20 173.20 869.44 178.33 879.26 180.88 C 890.56 182.97 902.80 182.48 913.15 177.04 C 927.73 170.49 938.35 156.61 942.00 141.18 C 943.32 133.86 943.33 126.31 942.03 118.99 C 938.39 103.26 927.46 89.17 912.54 82.67 C 903.03 77.76 891.93 77.25 881.51 78.71 Z" fill="#f4f4f4"/>
-          <path d=" M 882.57 83.76 C 893.71 81.75 905.58 83.83 915.25 89.75 C 927.33 96.96 935.83 109.85 937.59 123.81 C 939.03 134.51 936.65 145.68 930.91 154.83 C 923.43 166.90 910.26 175.30 896.11 176.72 C 883.13 178.20 869.63 173.95 859.91 165.21 C 848.02 154.96 842.06 138.44 844.53 122.96 C 847.21 103.57 863.25 87.00 882.57 83.76 Z" fill="#f4f4f4"/>
+          <path d=" M 846.60 73.75 C 854.03 68.08 862.02 62.68 871.03 59.93 C 874.09 61.75 874.96 65.71 876.95 68.50 C 892.30 65.15 908.90 67.45 922.50 75.43 C 937.55 84.03 948.62 99.11 952.49 116.00 C 955.24 116.03 958.01 115.80 960.75 116.23 C 962.00 117.17 961.96 118.87 962.22 120.27 C 963.09 128.08 963.35 136.01 962.34 143.82 C 962.05 145.18 962.11 146.88 960.82 147.75 C 957.72 148.25 954.56 147.94 951.45 148.00 C 948.55 157.32 943.64 166.03 936.92 173.13 C 934.33 175.85 931.53 178.37 928.55 180.66 C 920.28 186.68 910.62 190.77 900.51 192.31 C 896.71 192.85 892.86 193.06 889.04 192.98 C 879.06 192.71 869.26 189.91 860.49 185.20 C 858.09 187.02 856.43 190.79 853.17 190.93 C 845.90 186.06 839.57 179.78 834.09 172.98 C 833.23 171.59 831.37 170.15 832.25 168.34 C 833.67 166.36 835.55 164.76 837.25 163.02 C 830.03 151.08 826.76 136.78 828.39 122.90 C 830.00 107.77 837.50 93.53 848.67 83.26 C 847.60 80.37 842.78 76.39 846.60 73.75 M 881.51 78.71 C 871.25 80.65 861.64 85.89 854.17 93.16 C 844.71 102.91 838.56 116.27 839.00 130.00 C 838.56 143.26 844.32 156.18 853.20 165.82 C 860.20 173.20 869.44 178.33 879.26 180.88 C 890.56 182.97 902.80 182.48 913.15 177.04 C 927.73 170.49 938.35 156.61 942.00 141.18 C 943.32 133.86 943.33 126.31 942.03 118.99 C 938.39 103.26 927.46 89.17 912.54 82.67 C 903.03 77.76 891.93 77.25 881.51 78.71 Z" fill="#FFFFFF"/>
+          <path d=" M 882.57 83.76 C 893.71 81.75 905.58 83.83 915.25 89.75 C 927.33 96.96 935.83 109.85 937.59 123.81 C 939.03 134.51 936.65 145.68 930.91 154.83 C 923.43 166.90 910.26 175.30 896.11 176.72 C 883.13 178.20 869.63 173.95 859.91 165.21 C 848.02 154.96 842.06 138.44 844.53 122.96 C 847.21 103.57 863.25 87.00 882.57 83.76 Z" fill="#FFFFFF"/>
           <path d=" M 928.55 180.66 C 931.53 178.37 934.33 175.85 936.92 173.13 C 941.69 177.90 945.38 183.59 949.66 188.79 C 951.57 191.20 953.50 193.63 955.01 196.34 C 955.18 198.10 954.89 200.15 953.27 201.18 C 938.14 212.82 920.17 221.31 901.10 223.60 C 898.01 223.83 894.19 224.86 891.98 221.99 C 891.00 219.11 890.72 216.06 890.49 213.05 C 890.07 206.35 889.16 199.69 889.04 192.98 C 892.86 193.06 896.71 192.85 900.51 192.31 C 901.86 195.99 902.85 199.85 904.75 203.29 C 905.08 203.49 905.73 203.89 906.06 204.08 C 915.44 202.77 924.32 198.89 932.63 194.46 C 935.61 193.27 933.57 189.96 932.97 187.86 C 931.74 185.36 931.56 181.65 928.55 180.66 Z" fill="currentColor" transform="translate(890.54 129.97) scale(0.86) translate(-890.54 -129.97)"/>
         </svg>
       </div>
@@ -126,7 +126,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   const API='/api';
   const id=new URLSearchParams(location.search).get('id')||'';
   const TICK_MS=10000;
-  const COLORS={plex:'#e5a00d',jellyfin:'#007ca6',emby:'#4caf50',navidrome:'#0084ff'};
+  const COLORS={plex:'#e5a00d',jellyfin:'#007ca6',emby:'#4caf50',navidrome:'#0091FF'};
   const PROVIDER_NAME={plex:'Plex',jellyfin:'Jellyfin',emby:'Emby',navidrome:'Navidrome'};
   const TAPE_MIN=64, TAPE_MAX=126, TAPE_NOPROG=92;
   const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -155,7 +155,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   }
   function paint(announce){
     const s=sessions[idx];
-    reelEl.parentElement.style.color=COLORS[provider]||'#9a9a9a';
+    reelEl.parentElement.style.color=COLORS[provider]||'#8E8E93';
     const d = s ? tapeSize(s) : TAPE_MIN;
     if(!s){
       wEl.classList.add('idle');

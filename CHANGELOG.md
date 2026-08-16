@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Text on both pages now follows one type scale, so some sizes and line spacing
   shift slightly.
 
+- Widget colours now match the rest of the app. Reds, blues, greens and greys
+  that had been left on older values are corrected.
+
 - Settings on a phone use the larger phone text size. On a desktop the panel
   keeps its denser size.
 

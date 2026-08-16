@@ -78,11 +78,11 @@ const normBase = u => {
 };
 
 const MAP_DEFAULT_COLOR = {
-  conduit: '#AF52DE',
+  conduit: '#DB34F2',
   gluetun: '#30D158',
-  netbird: '#FF9F0A',
-  plausible: '#5E5CE6',
-  umami: '#64D2FF',
+  netbird: '#FF9230',
+  plausible: '#6D7CFF',
+  umami: '#3CD3FE',
 };
 
 /* Conduit exposes Prometheus-style text, so the body must stay unparsed. */
@@ -243,7 +243,7 @@ async function mapView(ctx) {
         id: s.id || s.type + '-' + idx,
         type: s.type,
         name: s.name || s.type.charAt(0).toUpperCase() + s.type.slice(1),
-        color: s.color || MAP_DEFAULT_COLOR[s.type] || '#AF52DE',
+        color: s.color || MAP_DEFAULT_COLOR[s.type] || '#DB34F2',
         adminUrl: s.adminUrl || '',
       };
       try {

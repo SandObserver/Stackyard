@@ -7,11 +7,11 @@
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   html,body{width:100%;height:100%;overflow:hidden;background:#1c1c1e;
-    font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;color:#e8e8ea}
+    font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;color:#FFFFFF}
   #root{width:100%;height:100%}
   svg{display:block;width:100%;height:100%}
   .nm{fill:#d6d6db;font-size:11px;font-weight:500;transition:fill .14s ease}
-  .empty{fill:#7a7a7a;font-size:12px}
+  .empty{fill:#8E8E93;font-size:12px}
   .kc{cursor:pointer;-webkit-tap-highlight-color:transparent}
   .kc:focus{outline:none}
   .kc .focus{opacity:0}
@@ -65,10 +65,10 @@
   }
   const ringPair = (cx, a0, a1) =>
     `<path d="${arcPath(cx, RC, RING_R, a0, a1)}" fill="none" stroke="#d3d7de" stroke-width="2.4" stroke-linecap="round"/>` +
-    `<path d="${arcPath(cx, RC, RING_R - 1.5, a0, a1)}" fill="none" stroke="#868a90" stroke-width="0.7"/>`;
+    `<path d="${arcPath(cx, RC, RING_R - 1.5, a0, a1)}" fill="none" stroke="#8E8E93" stroke-width="0.7"/>`;
   const fullRing = cx =>
     `<circle cx="${cx}" cy="${RC}" r="${RING_R}" fill="none" stroke="#d3d7de" stroke-width="2.4"/>` +
-    `<circle cx="${cx}" cy="${RC}" r="${RING_R - 1.5}" fill="none" stroke="#868a90" stroke-width="0.7"/>`;
+    `<circle cx="${cx}" cy="${RC}" r="${RING_R - 1.5}" fill="none" stroke="#8E8E93" stroke-width="0.7"/>`;
 
   /* The front-left arc is redrawn over the bows, so the ring reads as woven
      through the holes. */
@@ -127,7 +127,7 @@
       else { a.setAttribute('target', '_top'); }
       if (s.isCurrent) a.setAttribute('aria-current', 'page');
       a.innerHTML =
-        `<rect class="focus" x="${(cx - cellW / 2 + 2).toFixed(1)}" y="4" width="${(cellW - 4).toFixed(1)}" height="${H - 8}" rx="12" fill="none" stroke="#5ab0ff" stroke-width="2"/>` +
+        `<rect class="focus" x="${(cx - cellW / 2 + 2).toFixed(1)}" y="4" width="${(cellW - 4).toFixed(1)}" height="${H - 8}" rx="12" fill="none" stroke="#00D2E0" stroke-width="2"/>` +
         '<g class="chain">' +
         fullRing(cx) +
         `<rect x="${cx - 3.2}" y="${TAB_TOP}" width="6.4" height="${TAB_BOT - TAB_TOP}" rx="3.2" fill="${s.colorHex}"/>` +

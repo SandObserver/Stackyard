@@ -62,7 +62,7 @@
   /* Front card */
   .card-front {
     position: absolute; inset: 0; border-radius: 10px;
-    background: #f0f0f0;
+    background: #FFFFFF;
     transition: opacity 0.22s ease;
     clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
     overflow: hidden;
@@ -90,7 +90,7 @@
   .card-front-name-zone {
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 4px 7px 8px;
-    background: #f0f0f0;
+    background: #FFFFFF;
   }
   .card-front-name {
     font-size: 7px; font-weight: 700; color: #1c1c1e;
@@ -120,7 +120,7 @@ const id   = new URLSearchParams(location.search).get('id')   || '';
 const size = new URLSearchParams(location.search).get('size') || 'small';
 const API  = '/api';
 
-const NAMED = { green:'#008932', yellow:'#ffcc00', red:'#e9152d', blue:'#1e6ef4' };
+const NAMED = { green:'#30D158', yellow:'#FFD600', red:'#FF4245', blue:'#0091FF' };
 
 function needsDark(hex) {
   try {

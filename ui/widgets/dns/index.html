@@ -19,7 +19,7 @@
   .widget.clickable { cursor:pointer; }
 
   .hero { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
-  .pct  { font-size:clamp(26px,9cqw,36px); font-weight:700; color:#ff5a4d; line-height:1; letter-spacing:-0.02em; }
+  .pct  { font-size:clamp(26px,9cqw,36px); font-weight:700; color:#FF4245; line-height:1; letter-spacing:-0.02em; }
   .sub  { font-size:clamp(9px,3cqw,11px); font-weight:600; letter-spacing:0.09em; color:rgba(255,255,255,0.5); text-transform:uppercase; }
 
   .flow { flex:1; min-height:0; margin-top:13px; position:relative; }
@@ -162,9 +162,9 @@ function render(m) {
 
   const sum = m.allowed + m.cached + m.blocked || 1;
   const segs = [
-    { key:'allowed', label:wt('ui.allowed','Allowed'), value:m.allowed, color:'#34c759' },
-    { key:'cached',  label:wt('ui.cached','Cached'),   value:m.cached,  color:'#0a84ff' },
-    { key:'blocked', label:wt('ui.blocked','Blocked'), value:m.blocked, color:'#ff453a' },
+    { key:'allowed', label:wt('ui.allowed','Allowed'), value:m.allowed, color:'#30D158' },
+    { key:'cached',  label:wt('ui.cached','Cached'),   value:m.cached,  color:'#0091FF' },
+    { key:'blocked', label:wt('ui.blocked','Blocked'), value:m.blocked, color:'#FF4245' },
   ].filter(s => s.value > 0);
 
   if (!segs.length) { svgEl.innerHTML=''; return; }

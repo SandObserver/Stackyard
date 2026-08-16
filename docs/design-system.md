@@ -120,11 +120,15 @@ Six rules do not use it, on purpose.
 
 ## Widgets
 
-A widget is a separate document in an iframe. It may keep its own stylesheet and is not required to load `tokens.css`.
+A widget is a separate document in an iframe. It keeps its own stylesheet and does not load `tokens.css`.
 
-The face is the exception: a widget must spell the stack the same way as everything else, and the test covers `ui/widgets/` for that.
+It cannot name a token. Most widget colours sit in canvas fills, SVG attributes and data modules, where a `var()` is not a colour. A widget carries the values instead, and two tests keep them from drifting.
 
-Widget colour and text sizes are not yet on the system. Fourteen widgets carry their own values, and most of their colours are not palette entries.
+**Colour.** Every colour must be a palette value or be listed in `ui/test/widget-colours.test.mjs` with what it is. The list covers artwork and colours that are not the project's to choose: the GitHub contribution scale, the Plex, Jellyfin and Emby brand colours, the weather illustration set, and the fallback covers the books widget draws when there is no artwork. A second test removes an entry once nothing uses it, so a stale exemption cannot let the next colour through unexamined.
+
+**The face.** A widget must spell the font stack the same way as everything else.
+
+**Size.** Widget text is not on the type scale. The scale stops at 11 and the densest tiles go down to 6.5, so the sizes are snapped to a step where one is within a point and left alone below that.
 
 ## Page-scoped tokens
 
