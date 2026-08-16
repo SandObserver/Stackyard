@@ -45,6 +45,13 @@ let MOB = isMobileLayout();
 const wCols = { d: WIDGET_COLS.desktop, m: WIDGET_COLS.mobile };
 const wRows = { d: WIDGET_ROWS.desktop, m: WIDGET_ROWS.mobile };
 const WH = { d: WIDGET_HEIGHTS };
+/* An app icon's corner is 22.37% of its width. A fixed radius only lands on that
+   at one icon size, and the grid draws two: 72 with a label under it, 78
+   without. */
+const ICON_R = 0.2237;
+/* A widget tile's corner, at design size. WIDGET_DESIGN's small is 170 square
+   against the reference's 165, so this is its 28 unchanged. */
+const WIDGET_R = 28;
 const wCost = { d: WIDGET_COST.desktop, m: WIDGET_COST.mobile };
 
 const DCOLS = 6;
@@ -241,7 +248,7 @@ function mkIcon(item) {
   a.className = 'icon';
   a.setAttribute('aria-label', item.label || item.id);
   if (!showLabel) a.title = item.label || item.id;
-  a.appendChild(mkWrap(item, iw, Math.round(16 * gm.scale), isz, 'iwrap'));
+  a.appendChild(mkWrap(item, iw, Math.round(iw * ICON_R), isz, 'iwrap'));
   if (showLabel) {
     const l = mk('div');
     l.className = 'ilabel';
@@ -272,6 +279,7 @@ function mkWidget(item) {
   if (item.widgetConfig?.widgetSubType) card.dataset.wsubtype = item.widgetConfig.widgetSubType;
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
   card.style.height = Math.round(WH.d[sz] * gm.scale) + 'px';
+  card.style.borderRadius = Math.round(WIDGET_R * gm.scale) + 'px';
   mountScaledWidget(card, {
     src: widgetSrc(item, widgetReg, { lang: currentLang() }),
     title: widgetTitle(item),
@@ -290,7 +298,7 @@ function mkDock(item) {
   a.className = 'di';
   a.setAttribute('aria-label', item.label || item.id);
   a.title = item.label || item.id;
-  a.appendChild(mkWrap(item, 78, 15, 50, 'dwrap'));
+  a.appendChild(mkWrap(item, 78, Math.round(78 * ICON_R), 50, 'dwrap'));
   return a;
 }
 

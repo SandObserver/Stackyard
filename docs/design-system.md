@@ -135,6 +135,10 @@ Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds the
 | Group header and footer | text inset 16, so it aligns with the row's label |
 | Sidebar | 320 wide, items 44 tall, selection a full pill |
 | Tab bar selection | covers the whole tab, radius 16 |
+| Segmented control | 32 track, 28 segments, capsule |
+| Alert buttons | 48 tall, capsule |
+| App icon corner | 22.37% of the icon's width |
+| Widget tile corner | 28 at design size, scaled with the tile |
 | Between a group and the next heading | about 34 |
 | Small button on touch | drawn at 30, hit area extended to 44 |
 
@@ -157,6 +161,10 @@ Every inline action keeps its drawn size on touch and has its hit area extended 
 A dashboard row drops its address on a phone. It truncates to a fragment at that width and crowds the name and the pills it shares the row with.
 
 The pill takes 6 above and below, and the bar gives back the same from its own padding, so adding it did not change the bar's height.
+
+A radius that rounds something whose size varies has to be derived, not written down. An app icon is drawn at two widths, 72 with a label and 78 without, and a widget tile scales with the dashboard. Literal radii were right at one size and wrong everywhere else.
+
+The choice rows are a segmented control drawn on the radio inputs that were already there. The inputs stay, because the form reads them and a screen reader announces them; only the dot goes, since the selected segment is the indicator. The input is 0 by 0, so the segment wears the focus ring.
 
 The group cannot clip its rows, because it keeps `overflow: visible` so a dropdown can escape it. The first and last visible rows carry the corner radius themselves instead, or a row's hover fill squares off the corners.
 

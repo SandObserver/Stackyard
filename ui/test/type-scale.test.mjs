@@ -150,3 +150,22 @@ test('a rule using a size token takes its leading from the scale', () => {
   }
   assert.deepEqual(offenders, [], `Size from the scale, leading from elsewhere:\n  ${offenders.join('\n  ')}`);
 });
+
+/* Radii that have to follow the thing they round.
+
+   An app icon's corner is 22.37% of its width, and the grid draws two widths: 72
+   with a label under it and 78 without. A fixed radius lands on the ratio at one
+   of them and is wrong at the other, which is what a literal 16 and a literal 15
+   were doing.
+
+   A widget tile's corner is 28 at design size, and WIDGET_DESIGN's small is 170
+   square against the reference's 165, so it is the reference value unchanged. It
+   has to scale with the tile or the corners tighten as the dashboard grows. */
+test('icon and tile radii are derived, not literal', () => {
+  const dash = fs.readFileSync(path.join(cssDir, '..', 'js', 'dashboard.js'), 'utf8');
+  assert.match(dash, /const ICON_R = 0\.2237;/);
+  assert.match(dash, /mkWrap\(item, iw, Math\.round\(iw \* ICON_R\)/, 'the grid icon derives its corner');
+  assert.match(dash, /mkWrap\(item, 78, Math\.round\(78 \* ICON_R\)/, 'the dock icon derives its corner');
+  assert.match(dash, /const WIDGET_R = 28;/);
+  assert.match(dash, /borderRadius = Math\.round\(WIDGET_R \* gm\.scale\)/, 'a tile corner scales with the tile');
+});

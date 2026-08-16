@@ -35,6 +35,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The selected tab on a phone is marked with a pill instead of a coloured
   label.
 
+- Widget tiles and dock icons are rounded correctly, and stay so at every icon
+  and dashboard size.
+
+- Either-or settings are now a segmented control instead of radio dots.
+
+- Buttons in a dialog are taller and rounded.
+
 - Row separators now start level with the row's label instead of spanning the
   full width.
 

@@ -38,6 +38,7 @@
   --surface-sunken:var(--sy-gray5);       /* recessed well behind the About icon */
   --login-badge:#1a2a4a;                  /* the tinted square behind the login mark */
   --tab-pill:rgba(255,255,255,.07);       /* the selection behind the active tab */
+  --segment-on:rgba(255,255,255,.27);     /* the selected segment of a segmented control */
 
 }
 html,body{min-height:100vh;color:var(--tx);font-family:var(--font-ui);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -210,14 +211,18 @@ html{background:var(--bg-color,var(--bg-outer))}
 .hsb-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;border-radius:3px;cursor:pointer;outline:none}
 .hsb-hue{background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
 
-/* ── Segmented radio row (Container/Ping, Disk Health/System Summary) ── */
-.segr{display:flex;gap:24px;margin-inline-start:auto;align-items:center}
-.segr-opt{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm)}
+/* ── Segmented control (Container/Ping, Disk Health/System Summary) ──
+   A 32 track carrying 28 segments, so the segments sit 2 inside it. The radio
+   inputs stay: they are what the form reads and what a screen reader announces.
+   Only the dot is dropped, since the selected segment is the indicator now. */
+.segr{display:flex;gap:2px;margin-inline-start:auto;align-items:center;background:var(--fill-tertiary);border-radius:16px;padding:2px}
+.segr-opt{flex:1;display:flex;align-items:center;justify-content:center;min-height:28px;padding-inline:12px;border-radius:14px;cursor:pointer;white-space:nowrap;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);transition:background var(--t),color var(--t)}
 .segr-opt input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
-.segr-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--dm);flex-shrink:0;position:relative;transition:border-color var(--t)}
-.segr-opt input:checked+.segr-dot{border-color:var(--ok)}
-.segr-opt input:checked+.segr-dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--ok)}
+.segr-dot{display:none}
+.segr-opt:has(input:checked){background:var(--segment-on)}
 .segr-opt:has(input:checked) span{color:var(--tx)}
+/* The input is 0 by 0, so an outline on it is invisible. The segment wears it. */
+.segr-opt:has(input:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
 
 /* ── In-row trailing button + status (Upload/Test/Fetch) ── */
 .row-btn{background:rgba(120,120,128,.24);border:none;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;font-family:inherit;padding:6px 13px;border-radius:7px;cursor:pointer;flex-shrink:0;transition:background var(--t)}
@@ -353,6 +358,9 @@ html{background:var(--bg-color,var(--bg-outer))}
 .dlg-hdr{padding:16px 20px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:700;border-bottom:1px solid var(--bd-inner)}
 .dlg-body{overflow-y:auto;flex:1;padding:8px}
 .dlg-foot{padding:12px 16px;border-top:1px solid var(--bd-inner);display:flex;justify-content:flex-end;gap:8px}
+/* An alert's buttons are capsules and taller than a settings button. Named with
+   .sm too, so this outranks the touch block that sizes a small button. */
+.dlg-foot .btn,.dlg-foot .btn.sm{min-height:48px;border-radius:24px;padding-inline:20px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline)}
 .dlg-field{display:flex;flex-direction:column;gap:6px;padding:12px}
 .dlg-field span{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm)}
 .dlg-lead{padding:8px 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
