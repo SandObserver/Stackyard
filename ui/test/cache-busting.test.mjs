@@ -17,7 +17,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -87,6 +89,37 @@ test('the build script can see an unstamped reference', () => {
   for (const sample of ['import { x } from "/js/utils.js"', 'import { x } from "/js/utils.js?v=b81f6875"']) {
     pattern.lastIndex = 0;
     assert.ok(pattern.test(sample), `the script would skip: ${sample}`);
+  }
+});
+
+/* A stamp naming content the file no longer has is the same failure as a
+   missing one: the browser serves the cached copy and the page runs a mix of
+   versions. --check reported those files in a count and passed anyway, so an
+   edited stylesheet shipped behind a stale stamp. Run against a copy of the
+   tree, since the script rewrites what it is pointed at. */
+test('--check fails on a stamp that no longer matches its file', () => {
+  const repo = path.resolve(root, '..');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-stamp-'));
+  try {
+    for (const dir of ['ui', 'scripts']) {
+      fs.cpSync(path.join(repo, dir), path.join(tmp, dir), { recursive: true });
+    }
+    const script = path.join(tmp, 'scripts', 'bump-cache-busting.js');
+    const run = () => spawnSync(process.execPath, [script, '--check'], { encoding: 'utf8' });
+
+    assert.equal(run().status, 0, 'the committed tree should pass before it is broken');
+
+    const index = path.join(tmp, 'ui', 'index.html');
+    const before = fs.readFileSync(index, 'utf8');
+    const broken = before.replace(/(\/css\/dashboard\.css\?v=)[0-9a-f]+/, '$1deadbeef');
+    assert.notEqual(broken, before, 'the fixture reference was not found');
+    fs.writeFileSync(index, broken);
+
+    const r = run();
+    assert.equal(r.status, 1, 'a stale stamp has to fail the check');
+    assert.match(`${r.stdout}${r.stderr}`, /deadbeef/, 'the failure should name the stale reference');
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
 
