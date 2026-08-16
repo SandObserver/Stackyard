@@ -132,12 +132,19 @@ Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds the
 | Switch | 64 × 28, knob 38 × 24 inset 2, travel 22 |
 | Slider | track 6, handle a 20 round knob |
 | Outer margin | 16 on a phone, 20 on a tablet or desktop |
+| Group header and footer | text inset 16, so it aligns with the row's label |
+| Sidebar | 320 wide, items 44 tall, selection a full pill |
+| Tab bar selection | a pill filling the tab, not a tint on the label |
 
 The switch knob is a capsule, not a circle. That is a shape change, so resizing the old circle does not get you there.
 
 The slider handle is the one deliberate departure from the kit, which draws a 2 × 24 line. A line is too small a thing to find and drag on a phone, so every slider keeps a round knob. The wallpaper slider and the three colour sliders share one handle rule, because they previously carried a copy each and drifted apart.
 
 `--sy-radius-group` is separate from `--sy-radius-lg` on purpose. The panel, the dialogs and the toast keep 14; only the grouped list is rounded to 26.
+
+A group's header and footer align with the row's label, not with the group's edge. They are separate elements sitting outside the group, so they carry the row's 16 inset themselves.
+
+The tab bar's pill takes 6 above and below, and the bar gives back the same from its own padding, so adding it did not change the bar's height.
 
 The group cannot clip its rows, because it keeps `overflow: visible` so a dropdown can escape it. The first and last visible rows carry the corner radius themselves instead, or a row's hover fill squares off the corners.
 

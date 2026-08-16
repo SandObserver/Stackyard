@@ -99,3 +99,36 @@ test('the touch target still paints a 6 track', () => {
   const painted = 44 - 2 * Number(m[1]);
   assert.equal(painted, 6, `the painted track is ${painted}, not 6`);
 });
+
+/* A group's header and footer belong to the rows below and above them, so they
+   align with the row's label rather than the group's edge. They had sat at 0
+   and 2, sixteen short, which reads as the header being adrift from its group. */
+test('a group header and footer align with the row label', () => {
+  assert.match(rule(admin, '.grp-hdr'), /padding:16px 16px 5px/);
+  assert.match(rule(admin, '.grp-tip'), /padding:8px 16px 14px/);
+  assert.match(rule(admin, '.row'), /padding:0 16px/, 'the inset only aligns if the row still uses 16');
+});
+
+test('the sidebar is 320 with 44 items and a pill selection', () => {
+  assert.match(admin, /--sbw:320px/);
+  const item = rule(admin, '.nl');
+  assert.match(item, /min-height:44px/);
+  /* Half the height, so the selection is a pill rather than a rounded box. */
+  assert.match(item, /border-radius:22px/);
+});
+
+/* The bar's height is the pill's padding plus its own. Raising one without
+   lowering the other grows the bar and eats into the page. */
+test('the tab selection is a pill and the bar keeps its height', () => {
+  const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  const tab = /html\.is-mobile \.mtab\{([^}]*)\}/.exec(bare);
+  assert.ok(tab, 'the tab rule is gone');
+  const pillPad = Number(/padding-block:(\d+)px/.exec(tab[1])[1]);
+  assert.match(tab[1], /border-radius:26px/, 'the pill has to be fully rounded');
+
+  const bar = /html\.is-mobile body\.authed \.mtabbar\{([\s\S]*?)\}/.exec(bare);
+  const barPad = Number(/padding:(\d+)px \d+px/.exec(bar[1])[1]);
+  assert.equal(pillPad + barPad, 13, `the bar grew: ${pillPad} + ${barPad} should still be 13`);
+
+  assert.match(rule(admin, 'html.is-mobile .mtab.active'), /background:var\(--tab-pill\)/);
+});
