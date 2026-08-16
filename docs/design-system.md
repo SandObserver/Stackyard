@@ -130,7 +130,7 @@ Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds the
 | Separator | 1 tall, inset 16 at the leading edge, flush at the trailing |
 | Grouped list radius | 26, as `--sy-radius-group` |
 | Switch | 64 × 28, knob 38 × 24 inset 2, travel 22 |
-| Slider | track 6, handle a 20 round knob |
+| Slider | track 6, knob 20, one design for all of them |
 | Outer margin | 16 on a phone, 20 on a tablet or desktop |
 | Group header and footer | text inset 16, so it aligns with the row's label |
 | Sidebar | 320 wide, items 44 tall, selection a full pill |
@@ -140,7 +140,9 @@ Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds the
 
 The switch knob is a capsule, not a circle. That is a shape change, so resizing the old circle does not get you there.
 
-The slider handle is the one deliberate departure from the kit, which draws a 2 × 24 line. A line is too small a thing to find and drag on a phone, so every slider keeps a round knob. The wallpaper slider and the three colour sliders share one handle rule, because they previously carried a copy each and drifted apart.
+Sliders are the deliberate departure from the kit. It draws the system slider with a 2 × 24 line handle, too small a thing to find and drag on a phone, and a colour slider as a 34 bar with a knob the height of the bar. Both are rejected: there is one slider in this project, a 6 track with a 20 round knob, and the handle is declared once for all of them because they previously carried a copy each and drifted apart.
+
+On touch a slider is padded out to a 44 target and the paint is clipped back to the track. Clipping to the content box shrinks each corner by the padding, so the radius is raised by the same amount or the track draws with square ends.
 
 `--sy-radius-group` is separate from `--sy-radius-lg` on purpose. The panel, the dialogs and the toast keep 14; only the grouped list is rounded to 26.
 

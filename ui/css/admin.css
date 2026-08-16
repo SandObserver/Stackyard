@@ -136,9 +136,10 @@ html{background:var(--bg-color,var(--bg-outer))}
 .slider-wrap{display:flex;align-items:center;gap:8px;flex:2;max-width:none}
 .si{color:var(--dm);flex-shrink:0}
 .adm-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right, var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:3px;cursor:pointer;outline:none}
-/* One handle for every slider. The two used to carry their own copy and drifted
-   apart. The kit draws a thin line here, which is too small a thing to find and
-   drag on a phone, so the round knob stays. */
+/* One handle for every slider, size included. The two used to carry their own
+   copy and drifted apart. The kit draws a thin line here, which is too small a
+   thing to find and drag on a phone, so the round knob stays, and it draws a
+   colour slider as a thick bar, which would split the two again. One control. */
 .adm-range::-webkit-slider-thumb,
 .hsb-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 .adm-range::-moz-range-thumb,
@@ -473,9 +474,11 @@ html{background:var(--bg-color,var(--bg-outer))}
      which this block precedes. */
   html.is-mobile a.m-back { width:44px; height:44px; }
   .rnm[role="button"] { min-height:44px; }
-  /* The track keeps its drawn height; the padding is the hit area. */
-  .adm-range { height:44px; padding-block:19px; background-clip:content-box; }
-  .hsb-range { height:44px; padding-block:19px; background-clip:content-box; }
+  /* The track keeps its drawn height; the padding is the hit area. Clipping to
+     the content box shrinks each corner by the padding, so the radius is raised
+     by the same amount or the track is drawn with square ends. */
+  .adm-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:22px; }
+  .hsb-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:22px; }
   .cc-swatch { width:34px; height:34px; }
 }
 
