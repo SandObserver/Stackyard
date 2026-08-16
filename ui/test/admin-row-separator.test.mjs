@@ -14,7 +14,11 @@ import { fileURLToPath } from 'node:url';
 
    The fix needs both halves to hold: the stylesheet has to ask whether a later
    row is visible, and a hidden row has to be hidden in a way CSS can see. An
-   inline style="display:none" is invisible to a selector, so rows use .d-none. */
+   inline style="display:none" is invisible to a selector, so rows use .d-none.
+
+   The separator is drawn as .row::after rather than a border, because a
+   grouped list insets it to the leading edge of the label and a border cannot
+   be inset. The exemption moved with it. */
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
@@ -24,12 +28,12 @@ const html = read('admin/index.html');
 test('the separator is removed from the last visible row, not the last child', () => {
   assert.match(
     css,
-    /\.row:not\(:has\(~ \.row:not\(\.d-none\)\)\)\{border-bottom:none\}/,
+    /\.row:not\(:has\(~ \.row:not\(\.d-none\)\)\)::after\{content:none\}/,
     'the visibility-aware rule is gone',
   );
   assert.doesNotMatch(
     css,
-    /\.row(\.\w+)?:last-child\{border-bottom:none\}/,
+    /\.row(\.\w+)?:last-child(::after)?\{(border-bottom:none|content:none)\}/,
     'a :last-child exemption is back; it cannot see a hidden trailing row',
   );
 });
