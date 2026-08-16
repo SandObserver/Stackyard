@@ -15,7 +15,7 @@ There is no build step and no autoprefixer, so every vendor prefix is written by
 
 ## Colour
 
-`ui/css/tokens.css` holds the palette, the roles and Apple's semantic sets. See [docs/design-system.md](design-system.md).
+`ui/css/tokens.css` holds the palette, the roles and the semantic sets. See [docs/design-system.md](design-system.md).
 
 ## Widgets are iframes
 
