@@ -68,6 +68,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Home screen no longer leaves a dead strip below the dock in a home-screen
+  install on iOS.
+
+- App icons now use the current logo, and the browser tab icon follows the
+  light or dark theme.
+
 - Hue, saturation and brightness sliders no longer stretch across the row on a
   phone.
 
