@@ -12,8 +12,10 @@ import { fileURLToPath } from 'node:url';
    slider draws a 6 track with a 2 by 24 line for a handle, which is a handle
    shape rather than a smaller circle.
 
-   The colour picker is deliberately not here. It is its own control, with a 34
-   round knob on a 34 track, and it keeps the round handle it already had.
+   The slider handle is the one deliberate departure. The kit draws a 2 by 24
+   line, which is too small a thing to find and drag on a phone, so every slider
+   keeps a 20 round knob. The two sliders had drifted apart because each carried
+   its own copy of the rule, so they now share one.
 
    They had all been drawn to an older version of the design language and were
    sized for smaller text than the project now uses. */
@@ -66,12 +68,24 @@ test('the switch is 64 by 28 with a capsule knob that travels 22', () => {
   assert.match(rule(admin, '.tog input:checked+.tr::after'), /translateX\(22px\)/);
 });
 
-test('the system slider is a line handle on a 6 track', () => {
+test('both sliders run a 6 track', () => {
   assert.match(rule(admin, '.adm-range'), /height:6px/);
-  for (const sel of ['.adm-range::-webkit-slider-thumb', '.adm-range::-moz-range-thumb']) {
-    const knob = rule(admin, sel);
-    assert.match(knob, /width:2px/, `${sel} should be a line`);
-    assert.match(knob, /height:24px/, `${sel} stands proud of the track`);
+  assert.match(rule(admin, '.hsb-range'), /height:6px/);
+});
+
+/* The drift this guards: the wallpaper slider and the three colour sliders were
+   two rules with the same job, and one was changed without the other. Sharing
+   the selector is what makes them the same control, so the check is that they
+   are declared together and not that each happens to say 20. */
+test('every slider shares one handle rule', () => {
+  const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const kind of ['::-webkit-slider-thumb', '::-moz-range-thumb']) {
+    const shared = new RegExp(`\\.adm-range${kind},\\s*\\.hsb-range${kind}\\{([^}]*)\\}`);
+    const m = shared.exec(bare);
+    assert.ok(m, `the two sliders do not share their ${kind} rule`);
+    assert.match(m[1], /width:20px/);
+    assert.match(m[1], /height:20px/);
+    assert.match(m[1], /border-radius:50%/, 'a round knob, big enough to drag on a phone');
   }
 });
 
@@ -84,8 +98,4 @@ test('the touch target still paints a 6 track', () => {
   assert.ok(m, 'the touch-sized rule is gone');
   const painted = 44 - 2 * Number(m[1]);
   assert.equal(painted, 6, `the painted track is ${painted}, not 6`);
-});
-
-test('the colour picker keeps its round knob', () => {
-  assert.match(rule(admin, '.hsb-range::-webkit-slider-thumb'), /border-radius:50%/);
 });

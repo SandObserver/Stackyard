@@ -130,16 +130,16 @@ Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds the
 | Separator | 1 tall, inset 16 at the leading edge, flush at the trailing |
 | Grouped list radius | 26, as `--sy-radius-group` |
 | Switch | 64 × 28, knob 38 × 24 inset 2, travel 22 |
-| System slider | track 6, handle a 2 × 24 line |
+| Slider | track 6, handle a 20 round knob |
 | Outer margin | 16 on a phone, 20 on a tablet or desktop |
 
-The switch knob is a capsule, not a circle, and the slider handle is a line rather than a smaller knob. Both are shape changes, so resizing the old shapes does not get you there.
+The switch knob is a capsule, not a circle. That is a shape change, so resizing the old circle does not get you there.
+
+The slider handle is the one deliberate departure from the kit, which draws a 2 × 24 line. A line is too small a thing to find and drag on a phone, so every slider keeps a round knob. The wallpaper slider and the three colour sliders share one handle rule, because they previously carried a copy each and drifted apart.
 
 `--sy-radius-group` is separate from `--sy-radius-lg` on purpose. The panel, the dialogs and the toast keep 14; only the grouped list is rounded to 26.
 
 The group cannot clip its rows, because it keeps `overflow: visible` so a dropdown can escape it. The first and last visible rows carry the corner radius themselves instead, or a row's hover fill squares off the corners.
-
-The colour picker is not a system slider. It is its own control, with a round knob on a thicker track, and it keeps the round handle.
 
 ## Widgets
 

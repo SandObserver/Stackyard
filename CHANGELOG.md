@@ -21,8 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widget colours now match the rest of the app. Reds, blues, greens and greys
   that had been left on older values are corrected.
 
-- Settings controls are redrawn: switches are wider with a capsule knob, sliders
-  use a line handle on a thicker track, and groups are more rounded.
+- Settings controls are redrawn: switches are wider with a capsule knob, slider
+  tracks are thicker, and groups are more rounded.
+
+- The wallpaper brightness slider now has the same handle as the colour sliders.
 
 - Row separators now start level with the row's label instead of spanning the
   full width.

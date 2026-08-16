@@ -135,8 +135,13 @@ html{background:var(--bg-color,var(--bg-outer))}
 .slider-wrap{display:flex;align-items:center;gap:8px;flex:2;max-width:none}
 .si{color:var(--dm);flex-shrink:0}
 .adm-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right, var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:3px;cursor:pointer;outline:none}
-.adm-range::-webkit-slider-thumb{-webkit-appearance:none;width:2px;height:24px;border-radius:1px;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
-.adm-range::-moz-range-thumb{width:2px;height:24px;border-radius:1px;border:none;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+/* One handle for every slider. The two used to carry their own copy and drifted
+   apart. The kit draws a thin line here, which is too small a thing to find and
+   drag on a phone, so the round knob stays. */
+.adm-range::-webkit-slider-thumb,
+.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+.adm-range::-moz-range-thumb,
+.hsb-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;border:none;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 
 /* ── Dashboard list rows — no delete button ── */
 .al-filter{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -201,8 +206,6 @@ html{background:var(--bg-color,var(--bg-outer))}
 .hsb-track{display:flex;align-items:center;gap:10px;margin-inline-start:auto;flex:2;max-width:none}
 .hsb-ico{width:17px;height:17px;color:var(--dm);flex-shrink:0;display:flex}
 .hsb-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;border-radius:3px;cursor:pointer;outline:none}
-.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
-.hsb-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;border:none;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 .hsb-hue{background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
 
 /* ── Segmented radio row (Container/Ping, Disk Health/System Summary) ── */
