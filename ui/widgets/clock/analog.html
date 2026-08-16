@@ -7,7 +7,7 @@
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 
   .widget {
     width: 100%; height: 100%;
@@ -19,7 +19,7 @@
 
   .face { display: block; }
   .face text {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
   }
   .disc-group { will-change: transform; }
@@ -56,8 +56,8 @@ const DISC = {
   second: { color:'#FC9C00', r:0.255 },
 };
 const DIAL = {
-  light: { bg:'#ffffff', fill:'#ffffff', date:'rgba(0,0,0,0.4)',  tick:'#ffffff', dot:'#1a1a1a' },
-  dark:  { bg:'#1c1c1e', fill:'#ececee', date:'rgba(0,0,0,0.42)', tick:'#ffffff', dot:'#1a1a1a' },
+  light: { bg:'#ffffff', fill:'#ffffff', date:'rgba(0,0,0,0.4)',  tick:'#ffffff', dot:'#1C1C1E' },
+  dark:  { bg:'#1c1c1e', fill:'#FFFFFF', date:'rgba(0,0,0,0.42)', tick:'#ffffff', dot:'#1C1C1E' },
 };
 
 let _mode='dark', _timezone='', _showDate=true;

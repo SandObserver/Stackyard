@@ -115,7 +115,7 @@
           "key": "color",
           "type": "color",
           "label": "slots.color.label",
-          "default": "#0289ff"
+          "default": "#0091FF"
         }
       ]
     },

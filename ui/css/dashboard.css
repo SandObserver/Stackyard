@@ -31,7 +31,7 @@
     html {
       width:100vw; height:100vh; height:100dvh; overflow:hidden;
       background: var(--bg-color, var(--bg-base));
-      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;
+      font-family:var(--font-ui);
       -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     }
     /* background, position and z-index come from tokens.css. */
@@ -189,7 +189,7 @@
 
     /* ── Icon label ── */
     .ilabel {
-      font-size:0.8125rem; font-weight:500; color:var(--label-color);
+      font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); font-weight:500; color:var(--label-color);
       text-align:center; text-shadow:var(--label-shadow); margin-top:6px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
@@ -203,7 +203,7 @@
       display:none;
       align-items:center;
       justify-content:center;
-      font-size:calc(13px * var(--sc,1)); font-weight:800; color:var(--label-primary); line-height:1;
+      font-size:calc(var(--fs-footnote) * var(--sc,1));letter-spacing:var(--tr-footnote); font-weight:800; color:var(--label-primary); line-height:1;
       z-index:20; pointer-events:none;
       /* Pins the badge to its own compositing layer. WebKit otherwise
          promotes and demotes it as its classes change, and the clipped
@@ -219,7 +219,7 @@
     body:not(.is-mob) .badge {
       top:-7px; right:-7px;
       min-width:20px; height:20px; padding:0 5px;
-      font-size:0.6875rem; font-weight:700;
+      font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2); font-weight:700;
     }
 
     /* ── Top-right controls ── */
@@ -229,7 +229,7 @@
     }
     .ctrl {
       width:34px; height:34px; border-radius:9px; border:0; cursor:pointer;
-      background:rgba(255,255,255,.10); color:rgba(255,255,255,.62); font-size:1rem;
+      background:rgba(255,255,255,.10); color:rgba(255,255,255,.62); font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);
       display:flex;
       align-items:center;
       justify-content:center;
@@ -285,12 +285,12 @@
       pointer-events:none;
     }
     #mob-search-pill .msp-icon {
-      font-size:calc(13px * var(--sc,1)); color:rgba(255,255,255,.60); line-height:1;
+      font-size:calc(var(--fs-footnote) * var(--sc,1));letter-spacing:var(--tr-footnote); color:rgba(255,255,255,.60); line-height:1;
       font-style:normal;
     }
     #mob-search-pill .msp-label {
-      font-size:calc(15px * var(--sc,1)); font-weight:400; color:rgba(255,255,255,.80);
-      white-space:nowrap; letter-spacing:0.01em;
+      font-size:calc(var(--fs-subheadline) * var(--sc,1));line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:400; color:rgba(255,255,255,.80);
+      white-space:nowrap; 
     }
     /* Dots row — shown when paging */
     #mob-search-pill .msp-dots {
@@ -448,19 +448,19 @@
     }
     #sin {
       flex:1; background:transparent; border:0; outline:none;
-      font-size:1rem; color:rgba(255,255,255,.92);
+      font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout); color:rgba(255,255,255,.92);
       font-family:inherit; caret-color:var(--accent);
       -webkit-appearance:none; appearance:none;
       min-height:26px; padding:0; margin:0; width:100%;
     }
     /* Mobile only — larger input text to match the bigger search bar */
-    body.is-mob #spot #sin { font-size:1.5625rem; }
+    body.is-mob #spot #sin { font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2); }
     #sin::placeholder { color:rgba(255,255,255,.38); }
     #spot #sin::placeholder { color:rgba(235,235,245,.38); }
     #spot-cancel {
       display:none; flex-shrink:0; background:transparent; border:0;
       outline:0; cursor:pointer; -webkit-tap-highlight-color:transparent;
-      font-size:1.0625rem; color:rgba(255,255,255,.55); font-weight:400;
+      font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); color:rgba(255,255,255,.55); font-weight:400;
       padding:0 4px; white-space:nowrap;
       align-items:center;
       justify-content:center;
@@ -470,7 +470,7 @@
     body.is-mob #sres .sr { padding:calc(10px * var(--sc,1)) calc(14px * var(--sc,1)); gap:calc(12px * var(--sc,1)); }
     body.is-mob #sres .sr + .sr { border-top:0.5px solid rgba(255,255,255,.10); }
     body.is-mob #sres .sr-section { display:none; }
-    body.is-mob #sres .srn { font-size:calc(17px * var(--sc,1)); font-weight:500; }
+    body.is-mob #sres .srn { font-size:calc(var(--fs-body) * var(--sc,1));line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight:500; }
     body.is-mob #sres .srh { display:none; }
     body.is-mob #sres .sra { display:none; }
     body.is-mob #sres .sri { width:calc(44px * var(--sc,1)); height:calc(44px * var(--sc,1)); border-radius:calc(10px * var(--sc,1)); }
@@ -479,7 +479,7 @@
 
     /* ── Spotlight result rows ── */
     .sr-section {
-      font-size:0.8125rem; font-weight:600; color:rgba(255,255,255,.42);
+      font-size:var(--fs-footnote);line-height:var(--lh-footnote); font-weight:600; color:rgba(255,255,255,.42);
       padding:10px 16px 4px; letter-spacing:0.04em; text-transform:uppercase;
       border-bottom:0.5px solid rgba(255,255,255,.08);
     }
@@ -499,12 +499,12 @@
     }
     .sri img, .sri .sri-img { width:28px; height:28px; object-fit:contain }
     #sres .sri img, #sres .sri .sri-img { width:34px !important; height:34px !important; }
-    .srn { font-size:1.0625rem; font-weight:400; color:rgba(255,255,255,.92) }
+    .srn { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight:400; color:rgba(255,255,255,.92) }
     .srh {
-      font-size:0.8125rem; color:rgba(255,255,255,.38); margin-top:1px;
+      font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color:rgba(255,255,255,.38); margin-top:1px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .sra { margin-inline-start:auto; color:rgba(255,255,255,.25); font-size:0.8125rem }
+    .sra { margin-inline-start:auto; color:rgba(255,255,255,.25); font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 
     /* ── Mobile safe area ──
        iOS reports an inset after the first paint and again after a rotation.
@@ -579,7 +579,7 @@
       gap:16px; max-width:600px; width:90vw;
     }
     .folder-title-desktop {
-      font-size:22px; font-weight:600; color:rgba(255,255,255,.95);
+      font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2); font-weight:600; color:rgba(255,255,255,.95);
       text-shadow:0 1px 8px rgba(0,0,0,.6); text-align:center;
     }
     .folder-box-desktop {
@@ -672,12 +672,12 @@
   align-items: center; justify-content: center;
   color: rgba(255,255,255,.7); font-family: inherit; gap: 16px; z-index: 10000;
 }
-.api-error-title { font-size: 17px; font-weight: 500; margin: 0; }
-.api-error-sub   { font-size: 13px; color: rgba(255,255,255,.4); margin: 0; }
+.api-error-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 500; margin: 0; }
+.api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.4); margin: 0; }
 .api-error-btn   {
   margin-top: 8px; padding: 10px 24px; border-radius: 20px;
   background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
-  color: var(--label-primary); font-size: 15px; cursor: pointer; font-family: inherit;
+  color: var(--label-primary); font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); cursor: pointer; font-family: inherit;
 }
 
 /* ── Accessibility layer (added in Phase 3) ── */
@@ -748,12 +748,12 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
   color: var(--label-primary);
 }
-.setup-title { font-size: 17px; font-weight: 600; margin: 0; }
-.setup-sub   { font-size: 13px; line-height: 1.4; color: rgba(255,255,255,.55); margin: 0; }
+.setup-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 600; margin: 0; }
+.setup-sub   { font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote); line-height: 1.4; color: rgba(255,255,255,.55); margin: 0; }
 .setup-pw {
   width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 12px;
   background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.16);
-  color: var(--label-primary); font-size: 15px; font-family: inherit; outline: none;
+  color: var(--label-primary); font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-family: inherit; outline: none;
 }
 .setup-pw:focus { border-color: var(--accent); }
 .setup-field { position: relative; display: flex; align-items: center; }
@@ -767,11 +767,11 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 .setup-reveal[aria-pressed="true"] { color: var(--accent); }
 .setup-bars { display: flex; gap: 4px; }
 .setup-bars .pwbar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); transition: background .15s; }
-.setup-hint { font-size: 12px; min-height: 14px; color: rgba(255,255,255,.5); }
-.setup-err  { display: none; font-size: 13px; color: var(--danger); }
+.setup-hint { font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1); min-height: 14px; color: rgba(255,255,255,.5); }
+.setup-err  { display: none; font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: var(--danger); }
 .setup-btns { display: flex; gap: 10px; margin-top: 4px; }
 .setup-btn {
-  flex: 1; padding: 10px; border-radius: 14px; font-size: 15px; cursor: pointer; font-family: inherit;
+  flex: 1; padding: 10px; border-radius: 14px; font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); cursor: pointer; font-family: inherit;
   border: 1px solid rgba(255,255,255,.18);
 }
 .setup-btn-skip { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
