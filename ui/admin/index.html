@@ -4,12 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <!-- Same value as the dashboard and the manifest, so the browser chrome does
-       not change colour when moving between them. -->
+       not change colour when moving between them. admin-theme.js rewrites it
+       when this page renders in the light theme. -->
   <meta name="theme-color" content="#0d1117">
   <title>Stackyard Settings</title>
   <script src="/js/mobile-class.js?v=fe95da0d"></script>
-  <link rel="stylesheet" href="/css/tokens.css?v=f8135c6f">
-  <link rel="stylesheet" href="/css/admin.css?v=2635f968">
+  <script src="/js/admin-theme.js?v=66565254"></script>
+  <link rel="stylesheet" href="/css/tokens.css?v=5077138e">
+  <link rel="stylesheet" href="/css/admin.css?v=3904bb4a">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
 </head>
 <body>
@@ -127,8 +129,21 @@
       </div>
       <div class="grp-hdr" data-i18n="appearance.display">Display</div>
       <div class="grp">
+        <div class="row">
+          <span class="rl" data-i18n="appearance.displayMode">Settings Display Mode</span>
+          <div class="row-dd" id="theme-dd">
+            <button class="row-dd-btn" type="button" id="theme-btn" aria-haspopup="listbox">System Default<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg></button>
+            <ul class="row-dd-list" id="theme-list" role="listbox" aria-label="Settings display mode" hidden>
+              <li role="option" data-val="system" aria-selected="true" data-i18n="appearance.displaySystem">System Default</li>
+              <li role="option" data-val="light" aria-selected="false" data-i18n="appearance.displayLight">Light</li>
+              <li role="option" data-val="dark" aria-selected="false" data-i18n="appearance.displayDark">Dark</li>
+            </ul>
+          </div>
+          <input type="hidden" id="theme-sel" value="system">
+        </div>
         <div class="row"><span class="rl" data-i18n="appearance.keepAwake">Keep Screen Awake</span><label class="tog" aria-label="Keep Screen Awake"><input type="checkbox" id="set-awake"><div class="tr"></div></label></div>
       </div>
+      <p class="grp-tip" data-i18n="appearance.displayModeTip">Sets the appearance of the Settings pages. It is stored in this browser, applies to this device only, and takes effect at once.</p>
       <p class="grp-tip" data-i18n="appearance.keepAwakeTip">Stops the screen dimming or locking while the dashboard is open. Browsers only allow this over HTTPS, so it has no effect on a plain HTTP address.</p>
       <div class="grp-hdr" data-i18n="appearance.wallpaper">Wallpaper</div>
       <div class="grp">
@@ -288,6 +303,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=4a92bad6"></script>
+<script type="module" src="/js/admin.js?v=e2141d76"></script>
 </body>
 </html>

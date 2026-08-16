@@ -100,7 +100,7 @@ Then run `stackyard:local` the same way as above. For working on the code withou
 Everything is configured in the admin UI (`/admin`), split into a few sections:
 
 - **General**: title, description, and your server's **Host IP** (used to allow your own server in badge URLs and SSRF checks). Also **Monitoring** (logging level, Docker container health checks, and the socket URL used to reach Docker), optional **password protection**, and config **import / export**. Backup also imports a gethomepage or Dashy YAML config: links and folders are added to the dashboard, existing items are left alone, and anything that cannot be carried across is listed before you confirm.
-- **Appearance**: wallpaper and the overall look. Also **Keep Screen Awake**, which stops the screen dimming while the dashboard is open. Browsers allow this over HTTPS only.
+- **Appearance**: wallpaper and the overall look. **Settings Display Mode** picks the appearance of the Settings pages: System Default, Light or Dark. It is stored in the browser and applies to that device only. Also **Keep Screen Awake**, which stops the screen dimming while the dashboard is open. Browsers allow this over HTTPS only.
 - **Dashboard**: add and arrange your apps, folders, and widgets, and configure each one (including live activity badges).
 - **About**: version and links.
 

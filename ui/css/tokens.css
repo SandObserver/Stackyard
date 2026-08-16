@@ -31,8 +31,13 @@
    outside it fails rather than accumulating quietly. */
 
 /* ── Palette ─────────────────────────────────────────────────────────────────
-   System colours from the reference kit, dark values. Both pages render on a dark panel or a
-   wallpaper, and no stylesheet declares a prefers-color-scheme rule.
+   System colours from the reference kit, dark values. The dashboard renders on
+   a dark panel or a wallpaper and has one appearance. The Settings page has two,
+   and the light one re-declares this palette further down.
+
+   No stylesheet declares a prefers-color-scheme rule. The Settings page resolves
+   the system preference in script and writes data-theme on <html>, so the light
+   values are selected by attribute and never by media query.
 
    Each hue also has a -hi entry, the increased-contrast value for the same
    colour in dark mode. The prefers-contrast block below swaps the whole palette
@@ -91,6 +96,12 @@
   --warning:       var(--sy-orange);
   --success:       var(--sy-green);
 
+  /* Ink on a filled control: an accent button, the selected navigation row, a
+     tile carrying a user-chosen colour. White in both themes. It is not a label
+     level, because the surface under it is a colour rather than a background,
+     and following the text ramp would turn it black in the light theme. */
+  --on-accent:     #FFFFFF;
+
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
   /* A grouped list is rounded much harder than a panel or a dialog. Its own
@@ -146,6 +157,80 @@
   /* The white of a knob on a slider or a switch. It is drawn at full white in
      both themes, so it is not a label and does not follow the text ramp. */
   --control-knob:      #FFFFFF;
+}
+
+/* ── Light theme ─────────────────────────────────────────────────────────────
+   The same palette, roles and semantic sets at their light values. Only the
+   Settings page opts in, by carrying data-theme="light" on <html>. A page that
+   never sets the attribute is unaffected, which is why the dashboard keeps one
+   appearance.
+
+   The -hi entries are the increased-contrast light values, so the
+   prefers-contrast block below raises the light theme the same way it raises
+   the dark one.
+
+   The light hues are tuned for a fill, not for text: green at #34C759 behind
+   black is a badge, not a sentence. Every role here that ends up as text or as
+   the edge of a control therefore points at the -hi entry, which is the
+   accessible variant of the same hue. ui/test/contrast.test.mjs measures the
+   pairs that carry a WCAG requirement in both themes. */
+html[data-theme="light"] {
+  --sy-red:#FF3B30;      --sy-red-hi:#D70015;
+  --sy-orange:#FF9500;   --sy-orange-hi:#C93400;
+  --sy-yellow:#FFCC00;   --sy-yellow-hi:#B25000;
+  --sy-green:#34C759;    --sy-green-hi:#248A3D;
+  --sy-mint:#00C7BE;     --sy-mint-hi:#0C817B;
+  --sy-teal:#30B0C7;     --sy-teal-hi:#0071A4;
+  --sy-cyan:#32ADE6;     --sy-cyan-hi:#007AA3;
+  --sy-blue:#007AFF;     --sy-blue-hi:#0040DD;
+  --sy-indigo:#5856D6;   --sy-indigo-hi:#3634A3;
+  --sy-purple:#AF52DE;   --sy-purple-hi:#8944AB;
+  --sy-pink:#FF2D55;     --sy-pink-hi:#C9155A;
+  --sy-brown:#A2845E;    --sy-brown-hi:#7F6545;
+
+  /* gray is the darkest here and gray6 the lightest, the reverse of the dark
+     set. A role that points at a grey follows without being re-declared. */
+  --sy-gray:#8E8E93;     --sy-gray-hi:#6C6C70;
+  --sy-gray2:#AEAEB2;    --sy-gray2-hi:#8E8E93;
+  --sy-gray3:#C7C7CC;    --sy-gray3-hi:#AEAEB2;
+  --sy-gray4:#D1D1D6;    --sy-gray4-hi:#BCBCC0;
+  --sy-gray5:#E5E5EA;    --sy-gray5-hi:#D8D8DC;
+  --sy-gray6:#F2F2F7;    --sy-gray6-hi:#EBEBF0;
+
+  /* The dark theme lifts two greys off the palette to clear WCAG on its worst
+     surface. The light theme needs no equivalent: the accessible greys above
+     already clear it on white, so each points at its palette neighbour. */
+  --sy-a11y-dim:var(--sy-gray-hi);
+  --sy-a11y-border:var(--sy-gray);
+
+  /* The accent is the accessible teal, not the light one. It is a button fill
+     under white ink and a link colour on white, and the light teal carries
+     neither. --accent-strong is the hover state, one step deeper again. */
+  --accent:        var(--sy-teal-hi);
+  --accent-strong: #00587E;
+  --danger:        var(--sy-red-hi);
+  --warning:       var(--sy-orange-hi);
+  --success:       var(--sy-green-hi);
+
+  --label-primary:     #000000;
+  --label-secondary:   rgba(60,60,67,.60);
+  --label-tertiary:    rgba(60,60,67,.30);
+  --label-quaternary:  rgba(60,60,67,.18);
+
+  --fill-primary:      rgba(120,120,128,.20);
+  --fill-secondary:    rgba(120,120,128,.16);
+  --fill-tertiary:     rgba(118,118,128,.12);
+  --fill-quaternary:   rgba(116,116,128,.08);
+
+  --separator-opaque:  #C6C6C8;
+  --separator:         rgba(60,60,67,.29);
+
+  --bg-primary:        #FFFFFF;
+  --bg-secondary:      var(--sy-gray6);
+  --bg-tertiary:       #FFFFFF;
+  --bg-elevated-primary:   #FFFFFF;
+  --bg-elevated-secondary: var(--sy-gray6);
+  --bg-elevated-tertiary:  #FFFFFF;
 }
 
 /* ── Type scale ──────────────────────────────────────────────────────────────
@@ -243,11 +328,15 @@ html.type-small:not(.is-mobile) {
   * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
 
-/* Increased contrast: the raised dark values. Every role points
-   at a hue, so raising the hues raises the roles. Each page raises its own
-   surface and border tokens in its own file. */
+/* Increased contrast: the raised values of whichever theme is in force. Every
+   role points at a hue, so raising the hues raises the roles. Each page raises
+   its own surface and border tokens in its own file.
+
+   The light theme needs its own copy of this list. It sets the palette on
+   html[data-theme="light"], which outranks a :root rule, so a shared block here
+   would leave the light hues unraised. */
 @media (prefers-contrast: more) {
-  :root {
+  :root, html[data-theme="light"] {
     --sy-red:var(--sy-red-hi);
     --sy-orange:var(--sy-orange-hi);
     --sy-yellow:var(--sy-yellow-hi);

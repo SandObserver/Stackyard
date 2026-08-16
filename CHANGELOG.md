@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Light theme for the Settings pages, with Settings Display Mode in Settings >
+  Appearance: System Default, Light or Dark. Stored per device.
+
 - Keep Screen Awake in Settings > Appearance, off by default. Needs HTTPS.
 
 - Show From on a live activity badge, to badge only counts at or above a number.
