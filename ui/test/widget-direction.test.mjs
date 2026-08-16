@@ -4,7 +4,7 @@
    Its content is percentages, byte counts and sparklines rather than prose.
    Mirroring moved the value column to the right and ran each sparkline's time
    axis from right to left, which reads as a rendering fault rather than as a
-   translation, and Apple's guidance keeps content with its own inherent
+   translation, and the platform guidance keeps content with its own inherent
    directionality unmirrored.
 
    The exception lives on the widget's own root, so the document still carries

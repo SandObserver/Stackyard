@@ -61,7 +61,7 @@
     "keepAwakeTip": "打开仪表板期间屏幕不会变暗或锁定。浏览器仅在 HTTPS 下允许该功能，因此在普通 HTTP 地址上无效。",
     "wallpaper": "壁纸",
     "source": "来源",
-    "unsplashKey": "Unsplash API key",
+    "unsplashKey": "API key",
     "collectionId": "合集 ID",
     "imageUrl": "图片地址",
     "color": "颜色",

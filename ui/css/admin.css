@@ -104,7 +104,10 @@ html{background:var(--bg-color,var(--bg-outer))}
 .grp > .row:not(:has(~ .row:not(.d-none))){border-end-start-radius:var(--sy-radius-group);border-end-end-radius:var(--sy-radius-group)}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:rgba(255,255,255,.04)}
-.rl{flex:1;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--tx);font-weight:400}
+/* The label holds its line and the value gives way, which is the order a
+   settings row reads in. Without this the label wrapped and the value stayed
+   whole, so a long label made the row two lines tall. */
+.rl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--tx);font-weight:400}
 .rv{flex:2;min-width:0;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--dm);text-align:end;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rv.is-ph{color:var(--dm)}
 .ie-row.editing .rv,.ie-row.editing .pe{display:none}
@@ -463,7 +466,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 
 /* ── Touch input ──
    Sizing follows the pointer, not the window: a tablet gets the desktop layout
-   and is still driven by a finger. 44px is the Apple HIG minimum. */
+   and is still driven by a finger. 44px is the minimum tap target. */
 @media (pointer:coarse) {
   .nl { min-height:44px; }
   .btn { min-height:44px; padding:11px 18px; }
@@ -490,7 +493,7 @@ html{background:var(--bg-color,var(--bg-outer))}
   .cc-swatch { width:34px; height:34px; }
 }
 
-/* ─────────────── Mobile: iOS-style settings + bottom tab bar ───────────────
+/* ─────────────── Mobile: phone settings + bottom tab bar ───────────────
    Triggered by the .is-mobile class, set from the rule in ui/js/layout.js that
    the dashboard uses too. A bare media query missed phones that report a wider
    CSS viewport, where the dashboard switched to its mobile layout and Admin did
@@ -570,7 +573,7 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
    This page's own tokens, raised against its own background. The dashboard's
    block cannot be shared: it overrides tokens defined in dashboard.css.
 
-   Measured against the raised surfaces, since the palette moves to Apple's
+   Measured against the raised surfaces, since the palette moves to the
    increased-contrast greys in this mode and the card goes to gray4-hi #444446.
    That is why `--dm` is not simply gray-hi here: gray-hi reaches only 4.39 on
    the raised card, which is below where the default already sits.

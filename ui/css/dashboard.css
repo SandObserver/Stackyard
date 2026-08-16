@@ -194,7 +194,7 @@
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
 
-    /* ── Badge — iOS size, scaled by --sc (desktop overrides below) ── */
+    /* ── Badge — reference size, scaled by --sc (desktop overrides below) ── */
     .badge {
       position:absolute;
       top:calc(-7px * var(--sc,1)); right:calc(-7px * var(--sc,1));
@@ -239,7 +239,7 @@
     }
     .ctrl:hover { background:rgba(255,255,255,.18); color:rgba(255,255,255,.90) }
 
-    /* ── Page dots — iOS-style pill ── */
+    /* ── Page dots ── */
     #dots {
       position:fixed; bottom:160px; left:50%; /* desktop only — mobile overrides bottom inline */
       transform:translateX(-50%);
@@ -258,7 +258,7 @@
     }
     .dot.on { background:var(--control-knob); transform:scale(1.25) }
 
-    /* ── iOS search pill — mobile only ── */
+    /* ── Search pill — mobile only ── */
     #mob-search-pill {
       position:fixed; left:50%; z-index:500;
       transform:translateX(-50%);
@@ -659,7 +659,7 @@
   :root { --glass-blur: none; --dock-blur: none; }
 }
 
-/* Reduced motion → neutralize slides, springs, and lift transforms (HIG: honor Reduce Motion) */
+/* Reduced motion: neutralize slides, springs, and lift transforms. */
 @media (prefers-reduced-motion: reduce) {
   #pages { transition: none !important; }
   .icon:hover .iwrap, .folder-icon-link:hover .iwrap, .di:hover .dwrap,
@@ -688,7 +688,7 @@
   overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
 }
 
-/* Visible keyboard focus for all interactive elements (HIG: clear, visible focus) */
+/* Visible keyboard focus for all interactive elements. */
 a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 .icon:focus-visible, .di:focus-visible, .ctrl:focus-visible, .sr:focus-visible,
 .dot:focus-visible, .dyn-mob-icon:focus-visible, .dyn-mob-btn:focus-visible,
@@ -703,13 +703,13 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 .dot { position:relative; }
 .dot::after { content:''; position:absolute; inset:-11px; }
 
-/* 44px is the Apple HIG minimum, and a dot is 8px of it. */
+/* 44px is the minimum tap target, and a dot is 8px of it. */
 @media (pointer:coarse) {
   .ctrl { width:44px; height:44px; }
   .dot::after { inset:-18px; }
 }
 
-/* Increased-contrast mode (HIG: provide higher contrast when Increase Contrast is on) */
+/* Increased-contrast mode. */
 @media (prefers-contrast: more) {
   :root {
     --glass-bg:      rgba(0,0,0,.62);
