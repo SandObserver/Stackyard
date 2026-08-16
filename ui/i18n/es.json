@@ -173,7 +173,6 @@
   "toast": {
     "saved": "Guardado",
     "saveFailed": "Error al guardar: {err}",
-    "wallpaperSaved": "Fondo de pantalla guardado",
     "imported": "Importado",
     "importFailed": "Error al importar: {err}",
     "exportFailed": "Error al exportar: {err}",

@@ -173,7 +173,6 @@
   "toast": {
     "saved": "ذخیره شد",
     "saveFailed": "ذخیره ناموفق بود: {err}",
-    "wallpaperSaved": "تصویر زمینه ذخیره شد",
     "imported": "وارد شد",
     "importFailed": "Import ناموفق بود: {err}",
     "exportFailed": "Export ناموفق بود: {err}",

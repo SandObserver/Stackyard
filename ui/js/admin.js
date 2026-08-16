@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=482854de';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=7235acf0';
 import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=9a601113';
 import { state } from '/js/admin-state.js?v=42393ee1';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=4b093a55';
