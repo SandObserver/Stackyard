@@ -61,7 +61,7 @@
     "keepAwakeTip": "تا زمانی که داشبورد باز است، صفحه کم‌نور یا قفل نمی‌شود. مرورگرها این قابلیت را فقط روی HTTPS اجازه می‌دهند، بنابراین روی نشانی ساده HTTP اثری ندارد.",
     "wallpaper": "تصویر زمینه",
     "source": "منبع",
-    "unsplashKey": "Unsplash API key",
+    "unsplashKey": "API key",
     "collectionId": "شناسهٔ مجموعه",
     "imageUrl": "آدرس تصویر",
     "color": "رنگ",

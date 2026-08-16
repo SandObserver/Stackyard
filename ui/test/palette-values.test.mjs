@@ -4,9 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* The palette is Apple's system colours, dark values. Every entry below is
-   transcribed from the Accents and Grays variables of the iOS/iPadOS and macOS
-   design kits, which agree on all eighteen.
+/* The palette is the system colours, dark values. Every entry below is
+   transcribed from the Accents and Grays variables of the design kits, which
+   agree on all eighteen.
 
    The values had been copied by hand, and one had gone in wrong: Cyan was
    #3CCFFE against the kit's #3CD3FE. No rule referenced Cyan, so nothing rendered

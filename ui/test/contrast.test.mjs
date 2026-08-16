@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
    Secondary text sat at 3.48 against a card and 4.27 against the pane, where
    1.4.3 asks 4.5; borders sat at 1.90 and 2.33 against the 3.0 of 1.4.11. The
    numbers had been measured by hand and written into a comment, which is how
-   they went stale: the palette moved to Apple's system greys underneath them
+   they went stale: the palette moved to the system greys underneath them
    and nothing recomputed anything.
 
    So the ratios are computed here from the files themselves. A colour change
@@ -119,7 +119,7 @@ test('increased contrast clears every threshold too', () => {
 });
 
 /* The mode exists to improve the pairs that are close to their limit. It did
-   not, on a card: Apple's gray-hi reaches only 4.39 there, because the surfaces
+   not, on a card: the raised grey reaches only 4.39 there, because the surfaces
    are raised alongside the text.
 
    Only pairs within twice their threshold are compared. Primary text is at 12:1
@@ -142,7 +142,7 @@ test('increased contrast improves the pairs that are near their threshold', () =
   assert.deepEqual(worse, [], `Increased contrast has to help where it matters:\n  ${worse.join('\n  ')}`);
 });
 
-/* The two greys that are not Apple's exist because Apple's neighbours do not
+/* The two greys that are not from the palette exist because its neighbours do not
    land where the thresholds are. If one is ever loosened back to a palette
    step, that has to be a deliberate change with the ratio checked above, not a
    tidy-up that reads like restoring consistency. */
@@ -151,7 +151,7 @@ test('the derived greys are declared with their reason', () => {
   assert.match(tokens, /--sy-a11y-border:\s*#838387/);
   const at = tokens.indexOf('--sy-a11y-dim:');
   const note = tokens.slice(Math.max(0, at - 1200), at);
-  assert.match(note, /WCAG/, 'the derived greys need the note saying why they are not Apple values');
+  assert.match(note, /WCAG/, 'the derived greys need the note saying why they are not palette values');
 });
 
 /* ── the save toast ───────────────────────────────────────────────────────── */

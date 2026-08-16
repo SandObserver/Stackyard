@@ -61,7 +61,7 @@
     "keepAwakeTip": "Stops the screen dimming or locking while the dashboard is open. Browsers only allow this over HTTPS, so it has no effect on a plain HTTP address.",
     "wallpaper": "Wallpaper",
     "source": "Source",
-    "unsplashKey": "Unsplash API Key",
+    "unsplashKey": "API Key",
     "collectionId": "Collection ID",
     "imageUrl": "Image URL",
     "color": "Color",

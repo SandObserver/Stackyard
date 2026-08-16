@@ -26,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The wallpaper brightness slider now has the same handle as the colour sliders.
 
-
 - Group headings and their help text now line up with the settings above and
   below them.
 
@@ -41,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Either-or settings are now a segmented control instead of radio dots.
 
 - Buttons in a dialog are taller and rounded.
+
+- A long settings label now keeps its line and the value beside it shortens,
+  instead of the label breaking in two.
+
+- Unsplash API Key is now just API Key, under a Source row that already names
+  Unsplash.
 
 - Row separators now start level with the row's label instead of spanning the
   full width.

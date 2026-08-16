@@ -61,7 +61,7 @@
     "keepAwakeTip": "Empêche l’écran de s’assombrir ou de se verrouiller tant que le tableau de bord est ouvert. Les navigateurs ne l’autorisent qu’en HTTPS, cela reste donc sans effet sur une adresse HTTP simple.",
     "wallpaper": "Fond d'écran",
     "source": "Source",
-    "unsplashKey": "Unsplash API key",
+    "unsplashKey": "API key",
     "collectionId": "ID de collection",
     "imageUrl": "URL de l'image",
     "color": "Couleur",

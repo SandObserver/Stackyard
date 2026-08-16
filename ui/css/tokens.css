@@ -34,7 +34,7 @@
    Apple's system colours, dark values. Both pages render on a dark panel or a
    wallpaper, and no stylesheet declares a prefers-color-scheme rule.
 
-   Each hue also has a -hi entry, Apple's increased-contrast value for the same
+   Each hue also has a -hi entry, the increased-contrast value for the same
    colour in dark mode. The prefers-contrast block below swaps the whole palette
    over to them, so every role that points at a hue follows automatically.
 
@@ -65,7 +65,7 @@
   --sy-gray5:#2C2C2E;    --sy-gray5-hi:#363638;
   --sy-gray6:#1C1C1E;    --sy-gray6-hi:#242426;
 
-  /* Two greys that are not Apple's. Each is the smallest lift off the grey it
+  /* Two greys that are not from the palette. Each is the smallest lift off the grey it
      replaces that clears WCAG on the worst surface it is used against, the
      card, gray4 #3A3A3C.
 
@@ -99,7 +99,7 @@
 }
 
 /* ── Semantic colour ─────────────────────────────────────────────────────────
-   Apple's semantic sets, dark values: what a colour is applied to, one level
+   The semantic sets, dark values: what a colour is applied to, one level
    below the roles above. A rule that needs "the dimmest readable caption" names
    a label level rather than inventing an alpha.
 
@@ -243,7 +243,7 @@ html.type-small:not(.is-mobile) {
   * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
 
-/* Increased contrast: Apple's increased-contrast dark values. Every role points
+/* Increased contrast: the raised dark values. Every role points
    at a hue, so raising the hues raises the roles. Each page raises its own
    surface and border tokens in its own file. */
 @media (prefers-contrast: more) {

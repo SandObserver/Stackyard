@@ -61,7 +61,7 @@
     "keepAwakeTip": "Evita que la pantalla se atenúe o se bloquee mientras el panel está abierto. Los navegadores solo lo permiten mediante HTTPS, así que no tiene efecto en una dirección HTTP simple.",
     "wallpaper": "Fondo de pantalla",
     "source": "Origen",
-    "unsplashKey": "Unsplash API key",
+    "unsplashKey": "API key",
     "collectionId": "ID de colección",
     "imageUrl": "URL de la imagen",
     "color": "Color",

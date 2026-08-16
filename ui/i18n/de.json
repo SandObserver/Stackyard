@@ -61,7 +61,7 @@
     "keepAwakeTip": "Verhindert, dass sich der Bildschirm abdunkelt oder sperrt, solange das Dashboard geöffnet ist. Browser erlauben das nur über HTTPS, bei einer einfachen HTTP-Adresse bleibt es wirkungslos.",
     "wallpaper": "Hintergrundbild",
     "source": "Quelle",
-    "unsplashKey": "Unsplash API key",
+    "unsplashKey": "API key",
     "collectionId": "Sammlungs-ID",
     "imageUrl": "Bild-URL",
     "color": "Farbe",
