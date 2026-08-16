@@ -82,6 +82,23 @@ test('both documents use the repository path with its real capitalisation', () =
   }
 });
 
+/* The runner image has no xmllint, so a workflow that reaches for it fails at
+   step one. Both validate through the committed script instead. */
+test('the workflows validate with the committed script, not xmllint', () => {
+  const dir = path.join(ROOT, '.github', 'workflows');
+  for (const f of ['ca-template-check.yml', 'ca-template-changes.yml']) {
+    const src = fs.readFileSync(path.join(dir, f), 'utf8');
+    /* Comments may name it as the thing being avoided; commands may not. */
+    const commands = src
+      .split('\n')
+      .filter(line => !/^\s*#/.test(line))
+      .join('\n');
+    assert.doesNotMatch(commands, /\bxmllint\b/, `${f} runs xmllint, which the runner does not have`);
+    assert.match(commands, /scripts\/ca-validate\.py/, `${f} should validate through the script`);
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, 'scripts', 'ca-validate.py')));
+});
+
 test('the donation link is the canonical form', () => {
   for (const xml of [template, profile]) {
     assert.equal(tag(xml, 'DonateLink'), 'https://buymeacoffee.com/sandobserver');

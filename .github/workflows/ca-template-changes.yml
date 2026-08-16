@@ -31,9 +31,10 @@ jobs:
         id: changes
         run: node scripts/ca-changes.js >> "$GITHUB_OUTPUT"
 
+      # Python's standard library: the runner image carries no xmllint.
       - name: Check the result is still well-formed
         if: steps.changes.outputs.changed == 'true'
-        run: xmllint --noout templates/stackyard.xml
+        run: python3 scripts/ca-validate.py "${{ github.repository }}" "${{ github.event.repository.default_branch }}"
 
       # The checkout keeps no credentials, so the token authenticates this one
       # push and is never left in the runner's git config.
