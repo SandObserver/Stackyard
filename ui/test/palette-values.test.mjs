@@ -1,12 +1,12 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-/* The palette is the system colours, dark values. Every entry below is
-   transcribed from the Accents and Grays variables of the design kits, which
-   agree on all eighteen.
+/* The palette is the system colours. Every entry below is transcribed from the
+   Accents and Grays variables of the design kits, which agree on all eighteen in
+   both themes.
 
    The values had been copied by hand, and one had gone in wrong: Cyan was
    #3CCFFE against the kit's #3CD3FE. No rule referenced Cyan, so nothing rendered
@@ -42,15 +42,58 @@ const APPLE_DARK = {
   '--sy-gray6': '#1C1C1E',
 };
 
-/* Only the base :root, not the increased-contrast block, which redeclares every
-   hue as a var() reference to its -hi partner. */
-function baseDeclarations() {
-  const end = tokens.indexOf('@media (prefers-contrast: more)');
-  assert.ok(end > 0, 'the increased-contrast block should exist');
+/* The light values of the same eighteen, from the Any and Light column of the
+   same variables. */
+const APPLE_LIGHT = {
+  '--sy-red': '#FF3B30',
+  '--sy-orange': '#FF9500',
+  '--sy-yellow': '#FFCC00',
+  '--sy-green': '#34C759',
+  '--sy-mint': '#00C7BE',
+  '--sy-teal': '#30B0C7',
+  '--sy-cyan': '#32ADE6',
+  '--sy-blue': '#007AFF',
+  '--sy-indigo': '#5856D6',
+  '--sy-purple': '#AF52DE',
+  '--sy-pink': '#FF2D55',
+  '--sy-brown': '#A2845E',
+  '--sy-gray': '#8E8E93',
+  '--sy-gray2': '#AEAEB2',
+  '--sy-gray3': '#C7C7CC',
+  '--sy-gray4': '#D1D1D6',
+  '--sy-gray5': '#E5E5EA',
+  '--sy-gray6': '#F2F2F7',
+};
+
+/* Every top-level block a selector opens: the palette, the roles and the
+   semantic sets are three of them. Anchored to the start of a line, which is
+   what leaves out the copies nested in the increased-contrast block, where the
+   hues are var() references to their -hi partners rather than values. */
+function blockOf(selector) {
+  const opener = `\n${selector} {`;
+  const found = [];
+  for (let at = tokens.indexOf(opener); at >= 0; at = tokens.indexOf(opener, at + 1)) {
+    const start = at + opener.length;
+    const end = tokens.indexOf('\n}', start);
+    assert.ok(end > start, `${selector} is not closed`);
+    found.push(tokens.slice(start, end));
+  }
+  assert.ok(found.length > 0, `${selector} should open a block in tokens.css`);
+  return found.join('\n');
+}
+
+/* Both themes declare the palette, and the file carries one block for each. */
+function paletteOf(selector) {
   const out = new Map();
-  for (const m of tokens.slice(0, end).matchAll(/(--sy-[\w-]+)\s*:\s*(#[0-9A-Fa-f]{6})/g)) {
+  for (const m of blockOf(selector).matchAll(/(--sy-[\w-]+)\s*:\s*(#[0-9A-Fa-f]{6})/g)) {
     out.set(m[1], m[2].toUpperCase());
   }
+  return out;
+}
+
+function declarationsOf(selector) {
+  const out = new Map();
+  for (const m of blockOf(selector).matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) out.set(m[1], m[2].trim());
   return out;
 }
 
@@ -78,27 +121,51 @@ const APPLE_SEMANTIC = {
   '--control-knob': '#FFFFFF',
 };
 
-test('every semantic token is its reference value', () => {
-  const end = tokens.indexOf('@media (prefers-contrast: more)');
-  const declared = new Map();
-  for (const m of tokens.slice(0, end).matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) {
-    declared.set(m[1], m[2].trim());
-  }
-  const wrong = [];
-  for (const [name, expected] of Object.entries(APPLE_SEMANTIC)) {
-    const actual = declared.get(name);
-    const same = actual && actual.replace(/\s+/g, '').toUpperCase() === expected.replace(/\s+/g, '').toUpperCase();
-    if (!same) wrong.push(`${name}: ${actual ?? 'not declared'}, expected ${expected}`);
-  }
-  assert.deepEqual(wrong, [], `The semantic layer has drifted:\n  ${wrong.join('\n  ')}`);
-});
+/* The semantic sets, light. The surfaces are white or a palette grey, and the
+   labels and fills are transcribed at the alpha the kit publishes. */
+const APPLE_SEMANTIC_LIGHT = {
+  '--label-primary': '#000000',
+  '--label-secondary': 'rgba(60,60,67,.60)',
+  '--label-tertiary': 'rgba(60,60,67,.30)',
+  '--label-quaternary': 'rgba(60,60,67,.18)',
+  '--fill-primary': 'rgba(120,120,128,.20)',
+  '--fill-secondary': 'rgba(120,120,128,.16)',
+  '--fill-tertiary': 'rgba(118,118,128,.12)',
+  '--fill-quaternary': 'rgba(116,116,128,.08)',
+  '--separator-opaque': '#C6C6C8',
+  '--separator': 'rgba(60,60,67,.29)',
+  '--bg-primary': '#FFFFFF',
+  '--bg-secondary': 'var(--sy-gray6)',
+  '--bg-tertiary': '#FFFFFF',
+  '--bg-elevated-primary': '#FFFFFF',
+  '--bg-elevated-secondary': 'var(--sy-gray6)',
+  '--bg-elevated-tertiary': '#FFFFFF',
+};
 
-test('every palette entry is its reference value', () => {
-  const declared = baseDeclarations();
-  const wrong = [];
-  for (const [name, expected] of Object.entries(APPLE_DARK)) {
-    const actual = declared.get(name);
-    if (actual !== expected) wrong.push(`${name}: ${actual ?? 'not declared'}, the kit has ${expected}`);
-  }
-  assert.deepEqual(wrong, [], `The palette has drifted from the system colours:\n  ${wrong.join('\n  ')}`);
-});
+const THEMES = [
+  [':root', APPLE_DARK, APPLE_SEMANTIC, 'dark'],
+  ['html[data-theme="light"]', APPLE_LIGHT, APPLE_SEMANTIC_LIGHT, 'light'],
+];
+
+for (const [selector, palette, semantic, name] of THEMES) {
+  test(`every semantic token is its reference value: ${name}`, () => {
+    const declared = declarationsOf(selector);
+    const wrong = [];
+    for (const [token, expected] of Object.entries(semantic)) {
+      const actual = declared.get(token);
+      const same = actual && actual.replace(/\s+/g, '').toUpperCase() === expected.replace(/\s+/g, '').toUpperCase();
+      if (!same) wrong.push(`${token}: ${actual ?? 'not declared'}, expected ${expected}`);
+    }
+    assert.deepEqual(wrong, [], `The ${name} semantic layer has drifted:\n  ${wrong.join('\n  ')}`);
+  });
+
+  test(`every palette entry is its reference value: ${name}`, () => {
+    const declared = paletteOf(selector);
+    const wrong = [];
+    for (const [token, expected] of Object.entries(palette)) {
+      const actual = declared.get(token);
+      if (actual !== expected) wrong.push(`${token}: ${actual ?? 'not declared'}, the kit has ${expected}`);
+    }
+    assert.deepEqual(wrong, [], `The ${name} palette has drifted from the system colours:\n  ${wrong.join('\n  ')}`);
+  });
+}

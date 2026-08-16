@@ -76,6 +76,12 @@
       "/js/admin-settings.js?v=*": [
         "./ui/js/admin-settings.js"
       ],
+      "/js/admin-theme.js": [
+        "./ui/js/admin-theme.js"
+      ],
+      "/js/admin-theme.js?v=*": [
+        "./ui/js/admin-theme.js"
+      ],
       "/js/admin-shared.js": [
         "./ui/js/admin-shared.js"
       ],
@@ -207,6 +213,12 @@
       ],
       "/js/spotlight.js?v=*": [
         "./ui/js/spotlight.js"
+      ],
+      "/js/theme.js": [
+        "./ui/js/theme.js"
+      ],
+      "/js/theme.js?v=*": [
+        "./ui/js/theme.js"
       ],
       "/js/ui.js": [
         "./ui/js/ui.js"

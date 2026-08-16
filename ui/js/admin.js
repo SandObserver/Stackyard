@@ -1,27 +1,28 @@
-import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=69c2b9bd';
-import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
-import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=b81f6875';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=c2c81c20';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e76fbf24';
+import { applyDrop, canJoinFolder } from '/js/admin-drag-logic.js?v=8fcf583a';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=4f8a0761';
 import {
-  newItemId,
   buildAppItem,
-  upsertItem,
   claimFolderChildren,
-  snapshotItems,
+  newItemId,
   saveWithRevert,
+  snapshotItems,
+  upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { toast, ag, ap, initInlineEdit, setReauthHandler } from '/js/admin-shared.js?v=9a601113';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e76fbf24';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=482854de';
+import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=9a601113';
 import { state } from '/js/admin-state.js?v=42393ee1';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=4b093a55';
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=c2c81c20';
-import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=d056c9c5';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=482854de';
-import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=8fcf583a';
-import { openModal as openDialog, confirmModal, promptModal } from '/js/modal.js?v=ff76dc56';
+import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
+import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
+import { clearSkipTls, convert, detectSource, insecureApps, NOTE, SKIP } from '/js/import-foreign.js?v=07b2664f';
+import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
+import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
+import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=fbd2d2ef';
+import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=b81f6875';
 import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=c69d0ef5';
-import { detectSource, convert, insecureApps, clearSkipTls, SKIP, NOTE } from '/js/import-foreign.js?v=07b2664f';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
    viewport than they have. The rule lives in layout.js, shared with the
@@ -42,6 +43,7 @@ async function load() {
   state.items = c.items || [];
   state._settings = c.settings || {};
   await initI18n(c.settings?.language || 'en');
+  syncThemeLabel();
   try {
     const wr = await ag('/api/widgets');
     state._widgetReg = Object.create(null);
@@ -1204,6 +1206,45 @@ function initLanguage() {
   setVal(hidden.value || 'en');
 }
 
+/* The row label follows the catalog, so it is written once the catalog is
+   loaded and again on every language change. */
+let syncThemeLabel = () => {};
+
+const THEME_LABEL_KEYS = {
+  system: 'appearance.displaySystem',
+  light: 'appearance.displayLight',
+  dark: 'appearance.displayDark',
+};
+
+function initTheme() {
+  const btn = el('theme-btn');
+  const list = el('theme-list');
+  const hidden = inp('theme-sel');
+  if (!btn || !list || !hidden) return;
+  syncThemeLabel = () => {
+    const tn = btn.childNodes[0];
+    if (tn && tn.nodeType === 3) tn.textContent = t(THEME_LABEL_KEYS[hidden.value] || THEME_LABEL_KEYS.system);
+  };
+  function setVal(val) {
+    hidden.value = writeMode(val);
+    syncThemeLabel();
+    list
+      .querySelectorAll('li')
+      .forEach(li => li.setAttribute('aria-selected', String(li.dataset.val === hidden.value)));
+    list.hidden = true;
+  }
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    list.hidden = !list.hidden;
+  });
+  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => setVal(li.dataset.val)));
+  document.addEventListener('click', () => {
+    list.hidden = true;
+  });
+  watchSystemTheme(() => hidden.value);
+  setVal(readMode());
+}
+
 const dashSaveEl = el('dash-save');
 if (dashSaveEl) dashSaveEl.onclick = () => save();
 
@@ -1459,6 +1500,7 @@ initDockerToggle();
 initBgType();
 initLogLevel();
 initLanguage();
+initTheme();
 
 setReauthHandler(requireLogin);
 

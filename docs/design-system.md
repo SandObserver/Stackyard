@@ -4,7 +4,7 @@ The visual system both pages share. It lives in `ui/css/tokens.css`.
 
 Values are measured from a reference design kit, not chosen.
 
-Dark values only. No stylesheet declares a `prefers-color-scheme` rule.
+Two themes, dark and light. No stylesheet declares a `prefers-color-scheme` rule; see Themes below.
 
 ## The three colour layers
 
@@ -15,6 +15,8 @@ Pick from the lowest layer that answers the question.
 Do not name a palette entry in a rule. The layers above point at it.
 
 **Roles.** What a colour is for: `--accent`, `--danger`, `--warning`, `--success`. Each points at a hue.
+
+`--on-accent` is the ink on a filled control: an accent button, a selected row, a tile carrying a user-chosen colour. It is white in both themes. It is not a label level, because the surface under it is a colour rather than a background.
 
 **Semantic.** What a colour is applied to.
 
@@ -27,6 +29,22 @@ Do not name a palette entry in a rule. The layers above point at it.
 | Backgrounds, elevated | `--bg-elevated-primary`, `--bg-elevated-secondary`, `--bg-elevated-tertiary` | The same three, over a sheet |
 
 Two singletons sit beside them. `--bg-primary-light` is the opt-in light widget card. `--control-knob` is the white of a slider or switch knob, full white in both themes.
+
+## Themes
+
+The dark theme is the default and is declared on `:root`. The light theme redeclares the palette, the roles and the semantic sets under `html[data-theme="light"]`.
+
+A page opts in by carrying the attribute. Only the Settings page does. The dashboard never sets it and has one appearance.
+
+`ui/js/admin-theme.js` writes the attribute before the first paint. It reads the mode from `localStorage` under `sy-theme`: `system`, `light` or `dark`. `system` is resolved in script, not in a media query, so there is one light block rather than two. `ui/js/theme.js` holds the same logic for the running page, and `ui/test/theme.test.mjs` holds the two together.
+
+The choice is per device. It is never written to the config.
+
+Light hues are drawn for a fill. Green at `#34C759` behind text is a badge, not a sentence. A role that ends up as text or as the edge of a control points at the `-hi` entry, which is the accessible variant of the same hue. `--accent` is one of them.
+
+`prefers-contrast: more` raises whichever theme is in force. A light hue needs its `-hi` partner for the same reason a dark one does.
+
+`ui/test/contrast.test.mjs` measures every required pair in four combinations: each theme, raised and not.
 
 ## Two limits on the semantic layer
 
@@ -172,8 +190,17 @@ It cannot name a token. Most widget colours sit in canvas fills, SVG attributes 
 
 A surface particular to one page is declared in that page's own `:root`. `--pane` and `--cp` on the admin page, `--glass-bg` and `--dock-bg` on the dashboard. These are not part of the system.
 
+A themed page declares its light values in the same file, under `html[data-theme="light"]`.
+
+The admin page also scopes two families there rather than writing values into rules.
+
+| Family | Tokens | Use |
+| --- | --- | --- |
+| Overlays | `--ov-soft`, `--ov`, `--ov-strong`, `--field-fill`, `--track-off` | A tint over whatever surface a control sits on. White over dark, black over light |
+| Elevation | `--shadow-pop`, `--shadow-dlg`, `--shadow-login`, `--shadow-ghost`, `--shadow-bar`, `--shadow-knob`, `--shadow-tog`, `--shadow-sunken` | A shadow over a dark surface is depth; the same shadow over a light one is dirt |
+
 ## Rules
 
 A colour written as a literal outside `tokens.css` fails `ui/test/css-tokens.test.mjs`. The same test checks that every `var()` names a token that exists. `ui/test/palette-values.test.mjs` pins each palette entry to its reference value.
 
-`#fff` and `#000` are allowed as ink on an arbitrary coloured fill, where the colour underneath is user-chosen and no token can describe it.
+`#fff` and `#000` are allowed as ink on an arbitrary coloured fill, where the colour underneath is user-chosen and no token can describe it. On the admin page `--on-accent` names that ink.

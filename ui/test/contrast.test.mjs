@@ -1,7 +1,7 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 /* WCAG contrast for the admin greys, computed rather than recorded.
@@ -28,28 +28,76 @@ const admin = read('admin.css');
 
 /* ── resolving a token to a hex value ─────────────────────────────────────── */
 
-/* Declarations from a block, last one winning, which is how the cascade reads a
-   single :root. */
-function declarations(src, from = 0, to = src.length) {
-  const out = new Map();
-  /* Not anchored to the line start: tokens.css writes two declarations per
-     line, a grey and its -hi partner. */
-  for (const m of src.slice(from, to).matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) {
-    out.set(m[1], m[2].trim());
+/* The page has two themes and each has a raised variant, so a declaration has to
+   be read with the selector and the media query it sits under. Splitting the
+   file at the contrast block was enough while there was one theme; it would now
+   fold the light values into the dark map.
+
+   Every rule in these two files, with the at-rule it is nested in. One level of
+   nesting is all either file has. */
+function rules(src) {
+  const s = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  const out = [];
+  let i = 0;
+  let media = null;
+  while (i < s.length) {
+    const open = s.indexOf('{', i);
+    if (open < 0) break;
+    const prelude = s.slice(i, open).trim();
+    if (prelude.startsWith('@')) {
+      media = prelude;
+      i = open + 1;
+      continue;
+    }
+    let depth = 1;
+    let j = open + 1;
+    while (j < s.length && depth > 0) {
+      if (s[j] === '{') depth++;
+      else if (s[j] === '}') depth--;
+      j++;
+    }
+    out.push({ media, selectors: prelude.split(',').map(x => x.trim()), body: s.slice(open + 1, j - 1) });
+    while (/\s/.test(s[j] || '')) j++;
+    /* The next brace to close is the at-rule's own. */
+    if (s[j] === '}') {
+      media = null;
+      j++;
+    }
+    i = j;
   }
   return out;
 }
 
-const raisedAt = s => s.indexOf('@media (prefers-contrast: more)');
-
-/* Two resolvers: the default theme, and the one someone gets after asking their
-   system for more contrast. The raised block is layered on top of the base. */
-function resolver({ raised }) {
-  const base = new Map([...declarations(tokens, 0, raisedAt(tokens)), ...declarations(admin, 0, raisedAt(admin))]);
-  if (raised) {
-    for (const [k, v] of declarations(tokens, raisedAt(tokens))) base.set(k, v);
-    for (const [k, v] of declarations(admin, raisedAt(admin))) base.set(k, v);
+/* Declarations from the rules a theme selects, in file order, last one
+   winning. */
+function declarations(src, wanted) {
+  const out = new Map();
+  for (const rule of rules(src)) {
+    if (!wanted(rule)) continue;
+    /* Not anchored to the line start: tokens.css writes two declarations per
+       line, a grey and its -hi partner. */
+    for (const m of rule.body.matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) out.set(m[1], m[2].trim());
   }
+  return out;
+}
+
+const RAISED = '@media (prefers-contrast: more)';
+const LIGHT = 'html[data-theme="light"]';
+
+/* Four resolvers: each theme, and what each becomes after someone asks their
+   system for more contrast. A theme layers its own rules over the defaults, and
+   the raised block layers over both. */
+function resolver({ raised = false, light = false } = {}) {
+  const wants = rule => {
+    if (rule.media && rule.media !== RAISED) return false;
+    if (rule.media === RAISED && !raised) return false;
+    const isLight = rule.selectors.includes(LIGHT);
+    const isBase = rule.selectors.includes(':root');
+    /* The light theme inherits every :root default and overrides some of them.
+       The dark theme never reads a light-only rule. */
+    return light ? isBase || isLight : isBase;
+  };
+  const base = new Map([...declarations(tokens, wants), ...declarations(admin, wants)]);
   return function resolve(name, seen = new Set()) {
     assert.ok(!seen.has(name), `${name} resolves in a cycle`);
     seen.add(name);
@@ -88,34 +136,51 @@ const REQUIRED = [
 ];
 
 test('the resolver reads both files', () => {
-  const resolve = resolver({ raised: false });
+  const resolve = resolver();
   assert.equal(resolve('--dm'), '#A3A3A8');
   assert.equal(resolve('--pane'), '#2C2C2E');
   assert.equal(resolve('--cp'), '#3A3A3C');
 });
 
-test('every required pair clears its threshold in the default theme', () => {
-  const resolve = resolver({ raised: false });
+test('the resolver reads the light theme', () => {
+  const resolve = resolver({ light: true });
+  assert.equal(resolve('--dm'), '#6C6C70');
+  assert.equal(resolve('--pane'), '#F2F2F7');
+  assert.equal(resolve('--cp'), '#FFFFFF');
+});
+
+/* Four combinations, one measurement. The light theme is not exempt from any
+   threshold the dark one carries. */
+for (const light of [false, true]) {
+  for (const raised of [false, true]) {
+    const name = `${light ? 'light' : 'dark'}${raised ? ', increased contrast' : ''}`;
+    test(`every required pair clears its threshold: ${name}`, () => {
+      const resolve = resolver({ raised, light });
+      const failures = [];
+      for (const [fg, min, what] of REQUIRED) {
+        for (const bg of SURFACES) {
+          const r = ratio(resolve(fg), resolve(bg));
+          if (r < min) failures.push(`${fg} on ${bg}: ${r.toFixed(2)}, needs ${min} (${what})`);
+        }
+      }
+      assert.deepEqual(failures, [], `Below the WCAG minimum (${name}):\n  ${failures.join('\n  ')}`);
+    });
+  }
+}
+
+/* The accent is a link colour and a button fill in both themes, and the light
+   hues are drawn for a fill. --accent-strong is what a rule names when the
+   accent has to be read as text. */
+test('the accent reads as text on every surface it is used on', () => {
   const failures = [];
-  for (const [fg, min, what] of REQUIRED) {
+  for (const light of [false, true]) {
+    const resolve = resolver({ light });
     for (const bg of SURFACES) {
-      const r = ratio(resolve(fg), resolve(bg));
-      if (r < min) failures.push(`${fg} on ${bg}: ${r.toFixed(2)}, needs ${min} (${what})`);
+      const r = ratio(resolve('--ac2'), resolve(bg));
+      if (r < 4.5) failures.push(`${light ? 'light' : 'dark'}: --ac2 on ${bg}: ${r.toFixed(2)}, needs 4.5`);
     }
   }
   assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
-});
-
-test('increased contrast clears every threshold too', () => {
-  const high = resolver({ raised: true });
-  const failures = [];
-  for (const [fg, min, what] of REQUIRED) {
-    for (const bg of SURFACES) {
-      const r = ratio(high(fg), high(bg));
-      if (r < min) failures.push(`${fg} on ${bg}: ${r.toFixed(2)}, needs ${min} (${what})`);
-    }
-  }
-  assert.deepEqual(failures, [], `Below the WCAG minimum in the raised mode:\n  ${failures.join('\n  ')}`);
 });
 
 /* The mode exists to improve the pairs that are close to their limit. It did
