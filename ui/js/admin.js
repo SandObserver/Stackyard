@@ -399,7 +399,7 @@ function parseDragData(raw) {
   return null;
 }
 
-/* Native HTML5 drag does not fire from touch on iOS Safari. The handle needs
+/* Native HTML5 drag does not fire from touch on mobile WebKit. The handle needs
    touch-action:none (see admin.css) or starting on it scrolls the list. */
 function wireTouchDrag(row, handle, { indent, folderId }) {
   handle.addEventListener('pointerdown', e => {

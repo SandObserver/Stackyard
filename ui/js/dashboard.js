@@ -25,7 +25,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=a8e01084';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=7522fffa';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=e2857764';
 import {
   configChanged,
@@ -769,7 +769,7 @@ async function boot() {
     buildLayout();
   }, MOB);
 
-  /* iOS reports its safe-area insets after the first paint, and again after a
+  /* The platform reports its safe-area insets after the first paint, and again after a
      rotation. The probe is sized by them, so its box changing is the signal
      that the space the layout was measured against has moved. */
   if (typeof ResizeObserver === 'function') {

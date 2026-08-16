@@ -174,7 +174,7 @@ const HAIKUS = (wt('ui.haikus',
   + 'Keep it safe.\nExpect the|unexpected.\nWorries don\'t.|Good backups|do.\nPrepare early.|Panic rarely.|Smile.')
 ).split('\n').map(line => line.split('|'))
 
-/* Safe rounded rect — avoids ctx.roundRect which has iframe bugs in Safari */
+/* Safe rounded rect — avoids ctx.roundRect which has iframe bugs in WebKit */
 function rrect(ctx, x, y, w, h, r) {
   if (w <= 0 || h <= 0) return;
   r = Math.min(r, w/2, h/2);

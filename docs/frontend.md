@@ -9,9 +9,13 @@ The admin writes the whole config with `POST /api/config`; the dashboard reads i
 
 ## Browser support
 
-Safari and iOS Safari 16.2 and newer, and current Chrome, Edge and Firefox. 16.2 is where `color-mix()` lands, which the admin's category chips derive their tints from.
+WebKit 16.2 and newer, and current Chrome, Edge and Firefox. 16.2 is where `color-mix()` lands, which the admin's category chips derive their tints from.
 
 There is no build step and no autoprefixer, so every vendor prefix is written by hand. The support floor, the list of prefixes that are still needed and the reason each one stays are at the top of `ui/css/tokens.css`; `ui/test/vendor-prefix-ratchet.test.mjs` fails on any prefix outside that list. Note that "an unprefixed property sits beside it" is not a reason to remove one: `-webkit-backdrop-filter` is paired everywhere and still required.
+
+### Platform identifiers
+
+Some vendor names appear in the source as identifiers, not as references. `-apple-system` and `BlinkMacSystemFont` are font-family keywords. `apple-touch-icon` and the `apple-mobile-web-app-*` meta names are web platform names read at add-to-homescreen time. `showLabels.ios` is a stored config key. User-agent patterns match device strings. None of these can be renamed. Prose describes behaviour in neutral terms instead.
 
 ## Colour
 

@@ -44,7 +44,7 @@ test('every metric scales with sc', () => {
 
 /* ── The insets belong to the stylesheet ──────────────────────────────────── */
 
-/* iOS reports an inset after the first paint. A value read into JavaScript at
+/* The platform reports an inset after the first paint. A value read into JavaScript at
    build time is the zero it reported before, and nothing re-reads it. */
 test('no metric is computed from a safe-area inset', () => {
   const src = read('js/mobile-metrics.js');
@@ -56,7 +56,7 @@ test('no metric is computed from a safe-area inset', () => {
 
 test('the layout never reads an inset out of the document', () => {
   const ui = read('js/ui.js');
-  assert.doesNotMatch(ui, /safe-area-inset/, 'reading the inset back returns 0 on iOS until it is reported');
+  assert.doesNotMatch(ui, /safe-area-inset/, 'reading the inset back returns 0 until the platform reports it');
   assert.doesNotMatch(ui, /readSafeInsets/);
 });
 

@@ -1,5 +1,5 @@
 /* ── Browser support ─────────────────────────────────────────────────────────
-   Safari and iOS Safari 16.2 and newer, and current Chrome, Edge and Firefox.
+   WebKit 16.2 and newer, and current Chrome, Edge and Firefox.
    16.2 is where color-mix() lands, which the chip tints in admin.css derive
    from. There is no build step and no autoprefixer, so every vendor prefix in
    this project is hand-written and has to earn its place.
@@ -8,15 +8,15 @@
    set (-webkit-flex, -webkit-align-items, -webkit-justify-content and friends),
    -webkit-transform, -webkit-transition, -webkit-animation-*, all of which have
    been unprefixed everywhere for a decade, and -webkit-overflow-scrolling,
-   which iOS has ignored since version 13.
+   which mobile WebKit has ignored since version 13.
 
    These are the ones that stay, and why. Do not remove them on the grounds that
    an unprefixed property sits beside them; for the first two that is exactly
    the point.
 
-     -webkit-backdrop-filter     Safari needed the prefix well past 16.2, so the
+     -webkit-backdrop-filter     WebKit needed the prefix well past 16.2, so the
                                  glass panels flatten without it.
-     -webkit-text-size-adjust    Safari supports only the prefixed form.
+     -webkit-text-size-adjust    WebKit supports only the prefixed form.
      -webkit-line-clamp          With display:-webkit-box and -webkit-box-orient
      -webkit-box-orient          this is still the only portable way to clamp
      display:-webkit-box         text to a number of lines.
@@ -25,13 +25,13 @@
      -webkit-appearance          Required inside ::-webkit-slider-thumb.
      ::-webkit-slider-thumb      Pseudo-elements with no standard equivalent, as
      ::-moz-range-thumb          is the Firefox counterpart.
-     -webkit-user-select         Safari only dropped the prefix at 17.
+     -webkit-user-select         WebKit only dropped the prefix at 17.
 
    ui/test/vendor-prefix-ratchet.test.mjs holds this list, so adding a prefix
    outside it fails rather than accumulating quietly. */
 
 /* ── Palette ─────────────────────────────────────────────────────────────────
-   Apple's system colours, dark values. Both pages render on a dark panel or a
+   System colours from the reference kit, dark values. Both pages render on a dark panel or a
    wallpaper, and no stylesheet declares a prefers-color-scheme rule.
 
    Each hue also has a -hi entry, the increased-contrast value for the same

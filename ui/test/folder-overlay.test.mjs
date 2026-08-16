@@ -16,7 +16,7 @@
 
    The second defect: the overlay trapped focus without saying what to focus,
    the trap fell back to the first focusable element, and that is the first app
-   link. iOS Safari paints its own focus ring for a script-driven focus on an
+   link. Mobile WebKit paints its own focus ring for a script-driven focus on an
    anchor, which the stylesheet only styles for :focus-visible. Opening a folder
    also should not move focus onto an item nobody asked for.
 
@@ -101,7 +101,7 @@ test('the native focus ring cannot render on a folder app link', () => {
   }
 });
 
-/* Desktop Safari showed the same ring the phone did: same trap, same missing
+/* Desktop WebKit showed the same ring the phone did: same trap, same missing
    plain-focus rule. */
 test('the desktop overlay takes focus itself too', () => {
   const desktop = ui.slice(ui.indexOf('export function openFolderDesktop('), ui.indexOf('function mFolder('));

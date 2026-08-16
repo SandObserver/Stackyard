@@ -507,7 +507,7 @@
     .sra { margin-inline-start:auto; color:rgba(255,255,255,.25); font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 
     /* ── Mobile safe area ──
-       iOS reports an inset after the first paint and again after a rotation.
+       The platform reports an inset after the first paint and again after a rotation.
        These stay in CSS so the browser keeps them current. Nothing reads them
        into JavaScript. */
     body.is-mob {

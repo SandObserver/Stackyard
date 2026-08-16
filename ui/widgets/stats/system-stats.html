@@ -109,7 +109,7 @@ async function boot() {
   if (!cfg) cfg = { widgetType:'stats', widgetSize:'medium',
     widgetConfig:{ slots:[{type:'cpu'},{type:'ram'},{type:'disk',primary:'/'}], network:{enabled:false} }};
 
-  /* Detect narrow/iOS */
+  /* Detect a narrow viewport */
   if (document.documentElement.clientHeight >= 180) document.body.classList.add('narrow');
 
   buildShell();

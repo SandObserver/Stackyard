@@ -84,7 +84,7 @@ function render(data) {
   const old = widget.querySelector('.graph');
   if (old) old.remove();
 
-  /* Wait for layout to settle before measuring — critical inside iframes on iOS */
+  /* Wait for layout to settle before measuring — critical inside iframes on mobile WebKit */
   requestAnimationFrame(() => _renderGraph(data, weeks, widget));
 }
 
