@@ -1,0 +1,54 @@
+name: CA template changes
+
+on:
+  release:
+    types: [published]
+
+# Commits the updated template back to the default branch. The repository
+# default is read, so the write is granted here and nowhere else.
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      # Commit onto the default branch, not the tag the release points at: a
+      # tag checkout is detached and the push would go nowhere.
+      - name: Checkout default branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+
+      # Reads the newest dated section, never [Unreleased]. See scripts/ca-changes.js.
+      - name: Write the newest release notes into the template
+        id: changes
+        run: node scripts/ca-changes.js >> "$GITHUB_OUTPUT"
+
+      # Python's standard library: the runner image carries no xmllint.
+      - name: Check the result is still well-formed
+        if: steps.changes.outputs.changed == 'true'
+        run: python3 scripts/ca-validate.py "${{ github.repository }}" "${{ github.event.repository.default_branch }}"
+
+      # The checkout keeps no credentials, so the token authenticates this one
+      # push and is never left in the runner's git config.
+      - name: Commit
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add templates/stackyard.xml
+          git commit -m "Docs: describe ${VERSION} in the Community Applications template"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${BRANCH}"

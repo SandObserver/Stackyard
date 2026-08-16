@@ -1,0 +1,35 @@
+name: CA template
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'templates/*.xml'
+      - 'ca_profile.xml'
+      - 'scripts/ca-validate.py'
+      - '.github/workflows/ca-template-check.yml'
+  pull_request:
+    paths:
+      - 'templates/*.xml'
+      - 'ca_profile.xml'
+      - 'scripts/ca-validate.py'
+      - '.github/workflows/ca-template-check.yml'
+
+# Reads the tree and nothing else.
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # Python's standard library, so nothing is installed. The runner image
+      # carries no xmllint.
+      - name: Validate the template and the profile
+        run: python3 scripts/ca-validate.py "${{ github.repository }}" "${{ github.event.repository.default_branch }}"

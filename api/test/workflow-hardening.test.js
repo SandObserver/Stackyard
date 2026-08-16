@@ -52,9 +52,13 @@ test('no workflow grants a write scope it does not need', () => {
      lets the job mint a short-lived OIDC token, which is what cosign exchanges
      for a Sigstore certificate when it signs the released image. Keyless
      signing needs it, and it is the reason there is no private key to hold. */
+  /* The CA template's release notes are committed back to the default branch,
+     which is the only thing that write scope covers. The checkout still keeps
+     no credentials: the push authenticates on its own. */
   const allowed = {
     'workflows/release.yml': ['packages: write', 'id-token: write'],
     'workflows/codeql.yml': ['security-events: write'],
+    'workflows/ca-template-changes.yml': ['contents: write'],
   };
   const bad = [];
   for (const [f, src] of workflows) {

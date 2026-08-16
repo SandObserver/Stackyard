@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Stackyard</Name>
+  <Repository>ghcr.io/sandobserver/stackyard:latest</Repository>
+  <Registry>https://ghcr.io</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/SandObserver/Stackyard/issues</Support>
+  <Project>https://github.com/SandObserver/Stackyard</Project>
+  <ReadMe>https://github.com/SandObserver/Stackyard/blob/main/README.md</ReadMe>
+  <License>https://github.com/SandObserver/Stackyard/blob/main/LICENSE</License>
+  <Overview>A self-hosted homelab dashboard you actually want to look at.[br][br]Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a calm, launcher-style grid of app tiles, folders, and a small number of genuinely useful widgets. Built to be glanced at a hundred times a day without feeling cluttered.[br][br]Everything is set up from the browser. Add app tiles, group them into folders, arrange pages, and drop in widgets for the services you already run. Widgets cover Docker, system health, downloads, media, backups, network and more.[br][br]Runs as one container with no external database and no runtime dependencies. Configuration and uploaded icons persist in the two paths below.[br][br]Note: most homelab services live on private addresses. The Allow Private IPs setting below is on by default so links and widgets pointing at your other containers work. Turn it off to keep the SSRF guard enabled.</Overview>
+  <Category>Tools:Utilities</Category>
+  <WebUI>http://[IP]:[PORT:80]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/SandObserver/Stackyard/main/templates/stackyard.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/SandObserver/Stackyard/main/templates/icon.svg</Icon>
+  <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot.png</Screenshot>
+  <ExtraSearchTerms>homelab dashboard homepage self-hosted launcher start page widgets</ExtraSearchTerms>
+  <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
+  <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
+  <Changes>
+### 1.6.1 - 2026-08-14
+
+### Fixed
+
+- Phone home screen no longer starts under the status bar in a home-screen
+  install. The first row clears the clock and the island.
+
+- Settings reserves the status bar area on a phone.
+
+- Notification badges inside a folder no longer get trimmed at the page edge or
+  bleed into the next page.
+
+- Opening a folder no longer puts a focus ring on the first app, on a phone or
+  on the desktop.
+
+- A long error in Admin now stays on screen long enough to read, up to fifteen
+  seconds.
+
+- Backup placeholder no longer moves or reshuffles when a card is hovered or
+  tapped.
+
+- The App, Widget and Folder tiles under Add New show their names instead of
+  their internal keys.
+
+- The Backup widget shows the job picker for the provider you picked. Kopia
+  showed the Duplicati picker as well, and Duplicati showed no picker at all.
+
+- A badge or widget field blocked for pointing at a private address now names
+  `ALLOW_PRIVATE_IPS=true` as the setting that allows it. The advice was added
+  in 1.6.0 but never appeared.
+
+- A widget settings Fetch marks a blocked private address as a warning, the
+  same as a badge test, instead of a hard error.
+
+- A badge extract path ending in `count` now reads a JSON field of that
+  name. It only counts an array when the value is an array.
+  </Changes>
+  <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
+  <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
+  <Config Name="Icon Storage" Target="/icons" Default="/mnt/user/appdata/stackyard/icons" Mode="rw" Description="Icons you upload for your app tiles." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/icons</Config>
+  <Config Name="Allow Private IPs" Target="ALLOW_PRIVATE_IPS" Default="true" Mode="" Description="Let widgets and badges reach private addresses, which most homelab services use. Set to false to keep the SSRF guard on." Type="Variable" Display="always" Required="false" Mask="false">true</Config>
+  <Config Name="Docker Socket Proxy URL" Target="SOCKET_PROXY_URL" Default="" Mode="" Description="Optional. Address of a Docker socket proxy, for the Docker widgets. Example: http://socket-proxy:2375" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Trust Proxy" Target="TRUST_PROXY" Default="" Mode="" Description="Optional. Set to true when running behind a reverse proxy, so client addresses are read from the forwarded headers." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+</Container>
