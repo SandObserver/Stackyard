@@ -1,4 +1,4 @@
-import { iconChain } from '/js/icons.js?v=a0ea3e4b';
+import { iconChain } from '/js/icons.js?v=69c2b9bd';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);
@@ -23,7 +23,7 @@ export const fb = (l, sz) => {
   e.textContent = (l || '?')[0].toUpperCase();
   return e;
 };
-export { esc } from '/js/html.js?v=ccec347c';
+export { esc } from '/js/html.js?v=c71f8903';
 
 /* A name the user typed has its own direction. Without dir="auto" an English
    name inside a Persian dashboard lays out right-to-left and an over-long one

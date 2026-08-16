@@ -1,8 +1,8 @@
-import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=a0ea3e4b';
-import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=1';
-import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=84d58686';
-import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=3c60f7b0';
+import { loadLocalIcons, resolveIcon, iconChain } from '/js/icons.js?v=69c2b9bd';
+import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
+import { clr as rc, sanitizeCssUrl, el, inp, q, qa, tgt, setUserText } from '/js/utils.js?v=b81f6875';
+import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=4f8a0761';
 import {
   newItemId,
   buildAppItem,
@@ -10,18 +10,18 @@ import {
   claimFolderChildren,
   snapshotItems,
   saveWithRevert,
-} from '/js/admin-save-logic.js?v=77cac1d1';
-import { toast, ag, ap, initInlineEdit, setReauthHandler } from '/js/admin-shared.js?v=bb36dbb3';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=dd849d4c';
-import { state } from '/js/admin-state.js?v=3f9ad806';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=653071f0';
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=b46e5b19';
-import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=133a7aac';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=a1f5ad8a';
-import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=53aeaa55';
-import { openModal as openDialog, confirmModal, promptModal } from '/js/modal.js?v=684b74e0';
-import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=14aa75ec';
-import { detectSource, convert, insecureApps, clearSkipTls, SKIP, NOTE } from '/js/import-foreign.js?v=104555d0';
+} from '/js/admin-save-logic.js?v=52a970d3';
+import { toast, ag, ap, initInlineEdit, setReauthHandler } from '/js/admin-shared.js?v=9a601113';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e76fbf24';
+import { state } from '/js/admin-state.js?v=42393ee1';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=4b093a55';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=c2c81c20';
+import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=d056c9c5';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=482854de';
+import { canJoinFolder, applyDrop } from '/js/admin-drag-logic.js?v=8fcf583a';
+import { openModal as openDialog, confirmModal, promptModal } from '/js/modal.js?v=ff76dc56';
+import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=c69d0ef5';
+import { detectSource, convert, insecureApps, clearSkipTls, SKIP, NOTE } from '/js/import-foreign.js?v=07b2664f';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
    viewport than they have. The rule lives in layout.js, shared with the

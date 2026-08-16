@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The wallpaper brightness slider now has the same handle as the colour sliders.
 
+- Each colour slider handle shows the value it is set to.
+
 - Group headings and their help text now line up with the settings above and
   below them.
 
@@ -67,6 +69,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The logo is redrawn, and its arc now follows the accent colour.
 
 ### Fixed
+
+- Home screen no longer leaves a dead strip below the dock in a home-screen
+  install on iOS.
+
+- App icons now use the current logo, and the browser tab icon follows the
+  light or dark theme.
+
+- Colour and brightness slider tracks draw round ends on a touch device instead
+  of tapering to a point.
 
 - Hue, saturation and brightness sliders no longer stretch across the row on a
   phone.

@@ -10,7 +10,10 @@
     <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0d1117">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Not black-translucent. iOS then places the web view at the top of the
+       screen but still sizes it to the screen minus the status bar, leaving a
+       dead strip below the dock in a home-screen install. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Stackyard">
   <meta name="mobile-web-app-capable" content="yes">
 
@@ -20,8 +23,8 @@
   <link rel="icon" type="image/png" href="/icons/favicon.png">
 
   <title>Stackyard</title>
-  <link rel="stylesheet" href="/css/tokens.css?v=e24110a8">
-  <link rel="stylesheet" href="/css/dashboard.css?v=4b904232">
+  <link rel="stylesheet" href="/css/tokens.css?v=cbcdec0a">
+  <link rel="stylesheet" href="/css/dashboard.css?v=f5117d06">
 </head>
 <body>
 <h1 class="visually-hidden">Stackyard</h1>
@@ -50,5 +53,5 @@
     </div>
   </div>
 </div>
-<script type="module" src="/js/dashboard.js?v=4693af36"></script>
+<script type="module" src="/js/dashboard.js?v=537f459e"></script>
 </body></html>

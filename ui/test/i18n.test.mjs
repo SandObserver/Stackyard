@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { register } from 'node:module';
 
-/* i18n.js imports html.js by its served path ('/js/html.js?v=...'), which Node
+/* i18n.js imports html.js by its served path ('/js/html.js?v=c71f8903...'), which Node
    cannot resolve from disk. Register the mapping hook in THIS process, then load
    i18n.js dynamically so the hook is active when its imports resolve. Same
    reasoning as utils.test.mjs. */

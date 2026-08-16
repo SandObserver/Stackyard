@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
 
-/* utils.js imports a peer by its served path ('/js/icons.js?v=...'), which Node
+/* utils.js imports a peer by its served path ('/js/icons.js?v=69c2b9bd...'), which Node
    cannot resolve from disk. Register the mapping hook in THIS process, then load
    utils.js dynamically so the hook is active when its imports resolve. Doing it
    here (rather than via --import) keeps it working under the test runner's

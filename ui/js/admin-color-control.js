@@ -1,6 +1,6 @@
-import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=bb36dbb3';
-import { html, raw, setHtml } from '/js/html.js?v=ccec347c';
-import { qa, q } from '/js/utils.js?v=84d58686';
+import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=9a601113';
+import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { qa, q } from '/js/utils.js?v=b81f6875';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
 export const BADGE_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#1e6ef4', '#cb30df'];
@@ -153,6 +153,11 @@ export function renderColorControl(
        target on a phone. */
     sEl.style.backgroundImage = `linear-gradient(90deg, ${_hsvToHex(h, 0, v)}, ${_hsvToHex(h, 100, v)})`;
     vEl.style.backgroundImage = `linear-gradient(90deg, #000, ${_hsvToHex(h, 100, 100)})`;
+    /* Each knob previews what its own slider is set to: the hue on its own, the
+       resulting colour for the other two. */
+    hEl.style.setProperty('--knob-fill', _hsvToHex(h, 100, 100));
+    sEl.style.setProperty('--knob-fill', hex);
+    vEl.style.setProperty('--knob-fill', hex);
     qa('.cc-swatch', container).forEach(b => {
       let on = false;
       if (mode === 'dark' || mode === 'light') on = b.dataset.v === mode;

@@ -101,16 +101,27 @@ test('every slider shares one handle rule', () => {
   );
 });
 
-/* Clipping the paint to the content box shrinks each corner by the padding, so
-   a track set to half its own height still draws square ends on touch. */
+/* Clipping the paint to the content box shrinks each corner by the padding on
+   that axis. The padding is vertical only, so the two radii cannot be one
+   value: the vertical one is raised to cancel it and the horizontal one is not.
+   A single radius leaves the horizontal corner uncancelled, and the ends taper
+   to a point instead of drawing round. */
 test('a touch track still draws round ends', () => {
   const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   for (const cls of ['adm-range', 'hsb-range']) {
     const track = 6;
-    const m = new RegExp(`\\.${cls} \\{ height:44px; padding-block:(\\d+)px;[^}]*border-radius:(\\d+)px`).exec(bare);
-    assert.ok(m, `${cls} has no compensated radius in the touch block`);
-    const inner = Number(m[2]) - Number(m[1]);
-    assert.equal(inner, track / 2, `${cls} draws at radius ${inner}, half of ${track} is ${track / 2}`);
+    const m = new RegExp(
+      `\\.${cls} \\{ height:44px; padding-block:(\\d+)px;[^}]*border-radius:(\\d+)px\\s*/\\s*(\\d+)px`,
+    ).exec(bare);
+    assert.ok(m, `${cls} has no per-axis compensated radius in the touch block`);
+    const pad = Number(m[1]);
+    /* No horizontal padding, so this radius is drawn as written. */
+    assert.equal(Number(m[2]), track / 2, `${cls} draws horizontal radius ${m[2]}, expected ${track / 2}`);
+    assert.equal(
+      Number(m[3]) - pad,
+      track / 2,
+      `${cls} draws vertical radius ${Number(m[3]) - pad}, expected ${track / 2}`,
+    );
   }
 });
 
