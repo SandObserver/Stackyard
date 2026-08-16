@@ -104,9 +104,28 @@ test('the touch target still paints a 6 track', () => {
    align with the row's label rather than the group's edge. They had sat at 0
    and 2, sixteen short, which reads as the header being adrift from its group. */
 test('a group header and footer align with the row label', () => {
-  assert.match(rule(admin, '.grp-hdr'), /padding:16px 16px 5px/);
+  assert.match(rule(admin, '.grp-hdr'), /padding:26px 16px 6px/);
   assert.match(rule(admin, '.grp-tip'), /padding:8px 16px 14px/);
   assert.match(rule(admin, '.row'), /padding:0 16px/, 'the inset only aligns if the row still uses 16');
+});
+
+/* Sections need air between them or the page reads as one wall of rows. The
+   kit leaves about 34 between a group and the next section's heading. */
+test('there is room between one group and the next heading', () => {
+  const gap =
+    Number(/margin-bottom:(\d+)px/.exec(rule(admin, '.grp'))[1]) +
+    Number(/padding:(\d+)px/.exec(rule(admin, '.grp-hdr'))[1]);
+  assert.ok(gap >= 30, `only ${gap} between a group and the next heading`);
+});
+
+/* A small button keeps its drawn size on touch. Making 44 the box rather than
+   the hit area turns every inline action into a slab. */
+test('a small button stays small on touch', () => {
+  const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  const m = /\.btn\.sm \{([^}]*)\}/.exec(bare);
+  assert.ok(m, 'the touch rule for a small button is gone');
+  assert.match(m[1], /min-height:30px/, 'the drawn box stays 30');
+  assert.match(bare, /\.btn\.sm::after \{[^}]*height:44px/, 'the hit area has to be extended instead');
 });
 
 test('the sidebar is 320 with 44 items and a pill selection', () => {
@@ -124,12 +143,13 @@ test('the tab selection is a pill and the bar keeps its height', () => {
   const tab = /html\.is-mobile \.mtab\{([^}]*)\}/.exec(bare);
   assert.ok(tab, 'the tab rule is gone');
   const pillPad = Number(/padding-block:(\d+)px/.exec(tab[1])[1]);
-  assert.match(tab[1], /border-radius:26px/, 'the pill has to be fully rounded');
+  /* Not a stadium. The label runs along the bottom edge, where a stadium's
+     curve is tightest, so at this padding a half-height radius clips the ends
+     of a long label. Checked as a bound, since the failure is geometric. */
+  const radius = Number(/border-radius:(\d+)px/.exec(tab[1])[1]);
+  const inset = radius - Math.sqrt(Math.max(0, radius ** 2 - (radius - pillPad) ** 2));
+  assert.ok(inset < 5, `the pill cuts ${inset.toFixed(1)} in at the label's line; keep it under 5`);
 
-  /* Stretched to an equal share of the bar, a stadium's curve takes about half
-     its height off each end and a wide label rides it. The pill is sized to its
-     own content instead. */
-  assert.doesNotMatch(tab[1], /flex:1[;}]/, 'the pill must not be stretched to a fixed cell');
   assert.match(tab[1], /padding-inline:\d+px/, 'the label needs room either side of it');
   assert.match(tab[1], /white-space:nowrap/, 'a label must not wrap inside the pill');
 

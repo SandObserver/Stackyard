@@ -76,8 +76,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 .ev-back:hover{opacity:.8}
 
 /* ── Groups ── */
-.grp{background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:4px;border:1px solid var(--bd-inner)}
-.grp-hdr{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm);padding:16px 16px 5px;}
+.grp{background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:8px;border:1px solid var(--bd-inner)}
+.grp-hdr{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm);padding:26px 16px 6px;}
 .grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:8px 16px 14px;line-height:1.55}
 /* Why a widget was refused, one validator message per line. Indented as a list rather than run together, since a manifest can fail several rules at once. */
 .cfg-reject-list{list-style:disc;padding-inline-start:20px;margin-block-start:-8px}
@@ -460,6 +460,10 @@ html{background:var(--bg-color,var(--bg-outer))}
   .btn { min-height:44px; padding:11px 18px; }
   .chip { min-height:44px; padding:11px 16px; }
   .pe { width:44px; height:44px; }
+  /* A small button stays small. 44 is the hit area, not the drawn box, the same
+     trick .pe uses; making it the box turns every inline action into a slab. */
+  .btn.sm { min-height:30px; padding:6px 14px; position:relative; }
+  .btn.sm::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:100%; min-width:44px; height:44px; }
   .al-search { min-height:44px; }
   .tog { min-height:44px; }
   .row-dd-btn { min-height:44px; }
@@ -500,13 +504,12 @@ html.is-mobile body.authed .mtabbar{
   border:1px solid rgba(255,255,255,.08);border-radius:28px;
   padding:7px 8px;box-shadow:0 8px 30px rgba(0,0,0,.4);
 }
-html.is-mobile .mtab{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;border-radius:26px;padding-block:6px;padding-inline:14px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
+html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;border-radius:16px;padding-block:6px;padding-inline:8px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
 html.is-mobile .mtab .ni{width:31px;height:31px;flex-shrink:0}
-/* The selection is a pill around the tab's own content, not a tint on the label
-   and not the width of an equal share of the bar. A stadium's curve takes about
-   half its height off each end, so a wide label like Appearance rides the curve
-   when the pill is stretched to a fixed cell. The kit sizes it to the content
-   with padding either side, and space-around does the distributing.
+/* The selection covers the whole tab, icon and label. Not a stadium: the label
+   sits along the bottom edge, which is where a stadium's curve is tightest, and
+   at 6 from the bottom a 26 radius cuts about 9 in from each side and clips the
+   ends of a long label. 16 cuts in under 4 and the label clears it.
 
    The 6 above and below comes off the bar's own padding, so the bar keeps its
    height. */
