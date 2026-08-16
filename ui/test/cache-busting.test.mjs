@@ -84,7 +84,7 @@ test('the build script can see an unstamped reference', () => {
   /* Evaluated as written rather than reconstructed, so this tests the pattern
      the script actually uses. */
   const pattern = (0, eval)(line[1]);
-  for (const sample of ['import { x } from "/js/utils.js"', 'import { x } from "/js/utils.js?v=abc12345"']) {
+  for (const sample of ['import { x } from "/js/utils.js"', 'import { x } from "/js/utils.js?v=b81f6875"']) {
     pattern.lastIndex = 0;
     assert.ok(pattern.test(sample), `the script would skip: ${sample}`);
   }

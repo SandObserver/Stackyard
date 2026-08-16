@@ -2,7 +2,7 @@
 /* The one modal in the admin UI: backdrop, Escape, focus trap, and focus
    returned to whatever opened it. Structure only. Callers fill the body. */
 
-import { trapFocus } from '/js/dialog.js?v=b3841546';
+import { trapFocus } from '/js/dialog.js?v=05935547';
 
 /** Open a modal and return its parts. `close()` is safe to call more than once.
     `focus()` arms the trap, because the element worth focusing is usually one

@@ -2,8 +2,8 @@
 /* Catalogs are plain JSON at /i18n/<code>.json. English is the source and the
    fallback. */
 
-import { setHtml } from '/js/html.js?v=ccec347c';
-import { i18nMarkup } from '/js/i18n-markup.js?v=875ccb8e';
+import { setHtml } from '/js/html.js?v=c71f8903';
+import { i18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
 
 /* Only list a locale whose file exists, or the selector offers one that cannot
    render. */

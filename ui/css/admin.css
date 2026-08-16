@@ -144,10 +144,13 @@ html{background:var(--bg-color,var(--bg-outer))}
    copy and drifted apart. The kit draws a thin line here, which is too small a
    thing to find and drag on a phone, so the round knob stays, and it draws a
    colour slider as a thick bar, which would split the two again. One control. */
+/* --knob-fill is the value the slider currently holds, set per input. The ring
+   stays the knob colour, so a fill matching the track under it is still
+   visible. Unset, the knob is solid as before. */
 .adm-range::-webkit-slider-thumb,
-.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:20px;height:20px;border-radius:50%;background:var(--knob-fill,var(--control-knob));border:2px solid var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 .adm-range::-moz-range-thumb,
-.hsb-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;border:none;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+.hsb-range::-moz-range-thumb{box-sizing:border-box;width:20px;height:20px;border-radius:50%;background:var(--knob-fill,var(--control-knob));border:2px solid var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 
 /* ── Dashboard list rows — no delete button ── */
 .al-filter{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -486,10 +489,12 @@ html{background:var(--bg-color,var(--bg-outer))}
   html.is-mobile a.m-back { width:44px; height:44px; }
   .rnm[role="button"] { min-height:44px; }
   /* The track keeps its drawn height; the padding is the hit area. Clipping to
-     the content box shrinks each corner by the padding, so the radius is raised
-     by the same amount or the track is drawn with square ends. */
-  .adm-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:22px; }
-  .hsb-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:22px; }
+     the content box shrinks each corner by the padding on that axis, so the two
+     radii are raised separately: 22 vertical cancels the 19 padding, and there
+     is no horizontal padding to cancel. One radius for both draws elliptical
+     corners that taper to a point. */
+  .adm-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:3px / 22px; }
+  .hsb-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:3px / 22px; }
   .cc-swatch { width:34px; height:34px; }
 }
 

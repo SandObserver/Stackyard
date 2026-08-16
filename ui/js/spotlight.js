@@ -1,6 +1,6 @@
-import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=84d58686';
-import { wrapTab } from '/js/dialog.js?v=b3841546';
-import { t } from '/js/i18n.js?v=133a7aac';
+import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=b81f6875';
+import { wrapTab } from '/js/dialog.js?v=05935547';
+import { t } from '/js/i18n.js?v=d056c9c5';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
 
-/* widget-toolbox imports a peer by its served path ('/js/html.js?v=...') and
+/* widget-toolbox imports a peer by its served path ('/js/html.js?v=c71f8903...') and
    reads location.search at module load, so map the path and stub location
    before loading it. */
 register('./js-root-hooks.mjs', import.meta.url);

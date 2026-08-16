@@ -1,9 +1,9 @@
 /* Optional toolbox for widget authors: data access, self-contained visuals and
    a fetch/render loop. */
 
-import { esc, html, setHtml } from '/js/html.js?v=ccec347c';
-import { isSafeLinkUrl } from '/js/link-url.js?v=19038560';
-import { jitter } from '/js/jitter.js?v=1';
+import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
+import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
+import { jitter } from '/js/jitter.js?v=4edf48f2';
 
 export { esc, html, setHtml };
 

@@ -1,5 +1,5 @@
-import { iconChain } from '/js/icons.js?v=a0ea3e4b';
-import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=13def718';
+import { iconChain } from '/js/icons.js?v=69c2b9bd';
+import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=b81ceeea';
 import {
   mk,
   clr,
@@ -10,10 +10,10 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=84d58686';
-import { t, currentLang } from '/js/i18n.js?v=133a7aac';
-import { trapFocus } from '/js/dialog.js?v=b3841546';
-import { mobileMetrics } from '/js/mobile-metrics.js?v=b32c23b3';
+} from '/js/utils.js?v=b81f6875';
+import { t, currentLang } from '/js/i18n.js?v=d056c9c5';
+import { trapFocus } from '/js/dialog.js?v=05935547';
+import { mobileMetrics } from '/js/mobile-metrics.js?v=4cf70285';
 
 let _state = null;
 export function initUI(state) {
