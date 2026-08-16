@@ -29,6 +29,8 @@ function hashFor(assetPath) {
    so one pass can leave stale hashes. Repeat until a pass makes no changes. */
 /* References that had no stamp before this run. */
 const unstamped = [];
+/* References whose stamp does not match the content it names. */
+const stale = [];
 /* Manifests whose entryVersions no longer match their entry files. */
 const staleManifests = [];
 
@@ -37,6 +39,23 @@ function findUnstamped(text, file) {
   const re = new RegExp(REF_RE.source, 'g');
   for (let m = re.exec(text); m !== null; m = re.exec(text)) {
     if (!m[3]) found.push(`${path.relative(UI_DIR, file)} references ${m[2]} without ?v=`);
+  }
+  return found;
+}
+
+/* A stamp that names content the file no longer has. The browser keeps serving
+   the cached copy, so the page runs a mix of versions after an upgrade. This is
+   the same failure an unstamped reference causes, and it has to fail the check
+   for the same reason. */
+function findStale(text, file) {
+  const found = [];
+  const re = new RegExp(REF_RE.source, 'g');
+  for (let m = re.exec(text); m !== null; m = re.exec(text)) {
+    if (!m[3]) continue; /* reported as unstamped instead */
+    const want = `?v=${hashFor(m[2])}`;
+    if (m[3] !== want) {
+      found.push(`${path.relative(UI_DIR, file)} references ${m[2]}${m[3]}, but its content is ${want}`);
+    }
   }
   return found;
 }
@@ -59,6 +78,7 @@ while (filesChangedThisPass !== 0) {
   for (const file of files) {
     const original = fs.readFileSync(file, 'utf8');
     unstamped.push(...findUnstamped(original, file));
+    if (CHECK_ONLY) stale.push(...findStale(original, file));
     const updated = original.replace(
       REF_RE,
       (_match, quote, assetPath) => `${quote}${assetPath}?v=${hashFor(assetPath)}`,
@@ -130,12 +150,12 @@ if (CHECK_ONLY) {
   if (staleManifests.length) {
     console.log(`bump-cache-busting: ${staleManifests.length} widget manifest(s) will be stamped by the build`);
   }
-  const problems = [...new Set(unstamped)];
+  const problems = [...new Set([...unstamped, ...stale])];
   if (problems.length) {
     console.error('bump-cache-busting --check failed:');
     for (const p of problems) console.error(`  ${p}`);
     console.error('Run `node scripts/bump-cache-busting.js` and commit the result.');
     process.exit(1);
   }
-  console.log('bump-cache-busting: every asset reference is stamped');
+  console.log('bump-cache-busting: every asset reference is stamped and current');
 }
