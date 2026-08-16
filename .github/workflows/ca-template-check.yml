@@ -1,0 +1,75 @@
+name: CA template
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'templates/*.xml'
+      - 'ca_profile.xml'
+      - '.github/workflows/ca-template-check.yml'
+  pull_request:
+    paths:
+      - 'templates/*.xml'
+      - 'ca_profile.xml'
+      - '.github/workflows/ca-template-check.yml'
+
+# Reads the tree and nothing else.
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # Community Applications parses these with a real XML parser. A stray
+      # ampersand in a description is enough to drop the app from the store.
+      - name: Check both documents are well-formed XML
+        run: |
+          set -euo pipefail
+          for f in templates/stackyard.xml ca_profile.xml; do
+            xmllint --noout "$f"
+            echo "ok: $f"
+          done
+
+      - name: Check required tags are present and non-empty
+        run: |
+          set -euo pipefail
+          value() { xmllint --xpath "normalize-space(//$2)" "$1" 2>/dev/null || true; }
+
+          for t in Name Repository; do
+            v="$(value templates/stackyard.xml "$t")"
+            if [ -z "$v" ]; then
+              echo "::error file=templates/stackyard.xml::<$t> is missing or empty"
+              exit 1
+            fi
+            echo "ok: <$t> = $v"
+          done
+
+          v="$(value ca_profile.xml 'Profile/Profile')"
+          if [ -z "$v" ]; then
+            echo "::error file=ca_profile.xml::<Profile> is missing or empty"
+            exit 1
+          fi
+          echo "ok: <Profile> is ${#v} characters"
+
+      # A TemplateURL pointing at another repo or a branch that does not exist
+      # makes Community Applications serve a template it can never refresh.
+      - name: Check TemplateURL matches this repo and its default branch
+        env:
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          expected="https://raw.githubusercontent.com/${REPO}/${BRANCH}/templates/stackyard.xml"
+          actual="$(xmllint --xpath 'normalize-space(//TemplateURL)' templates/stackyard.xml)"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error file=templates/stackyard.xml::<TemplateURL> is $actual, expected $expected"
+            exit 1
+          fi
+          echo "ok: $actual"

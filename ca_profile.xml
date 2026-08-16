@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<Profile>
+  <Profile>Stackyard is a self-hosted homelab dashboard: a calm, launcher-style grid of app tiles, folders and a small number of genuinely useful widgets, running in a single container with no external database and no runtime dependencies. This repository holds the full source, the Docker image build, and the Community Applications template for it. The image is published to ghcr.io and Docker Hub on each release.</Profile>
+  <Icon>https://raw.githubusercontent.com/SandObserver/Stackyard/main/templates/icon.svg</Icon>
+  <WebPage>https://github.com/SandObserver/Stackyard</WebPage>
+  <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
+  <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
+</Profile>

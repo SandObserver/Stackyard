@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show From on a live activity badge, to badge only counts at or above a number.
 
+- Install from Unraid Community Applications, with a template in `templates/`.
+
 ### Changed
 
 - Text on both pages now follows one type scale, so some sizes and line spacing
