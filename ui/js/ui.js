@@ -584,7 +584,9 @@ export function buildMobile() {
     .filter(i => i.type === 'app' && i.dock && !i.hidden)
     .slice(0, 4);
   const showLabel = S().showLabels?.ios === true;
-  const wBR = Math.round(ir * 1.3);
+  /* The reference draws a 66 icon and a 28 widget corner, so a widget's corner
+     is 0.424 of the icon it sits beside. */
+  const wBR = Math.round(isz * 0.424);
 
   const fp = it =>
     it.type !== 'widget'

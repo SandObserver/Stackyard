@@ -215,3 +215,29 @@ test('inline actions keep their drawn size on touch', () => {
 test('the dashboard row drops its address on a phone', () => {
   assert.match(admin, /html\.is-mobile \.rmt\{display:none\}/);
 });
+
+/* A segmented control, built on the radios that were already there. The inputs
+   stay because the form reads them and a screen reader announces them; only the
+   dot goes, since the selected segment is the indicator. */
+test('the choice rows are a segmented control', () => {
+  const track = rule(admin, '.segr');
+  const seg = rule(admin, '.segr-opt');
+  assert.match(track, /padding:2px/);
+  assert.match(seg, /min-height:28px/);
+  /* 28 segment inside 2 of padding each side is a 32 track, and half of that
+     is the radius that makes it a capsule. */
+  assert.match(track, /border-radius:16px/);
+  assert.match(rule(admin, '.segr-dot'), /display:none/, 'the dot is replaced by the selected segment');
+  assert.match(admin, /\.segr-opt:has\(input:checked\)\{background:var\(--segment-on\)\}/);
+  /* The input is 0 by 0, so the generic input:focus-visible outline is invisible
+     on it and the segment has to wear the ring. */
+  assert.match(admin, /\.segr-opt:has\(input:focus-visible\)\{outline:/);
+});
+
+test("an alert's buttons are capsules", () => {
+  const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  const m = /\.dlg-foot \.btn,\.dlg-foot \.btn\.sm\{([^}]*)\}/.exec(bare);
+  assert.ok(m, 'the dialog buttons must name .sm too, or the touch block outranks this');
+  assert.match(m[1], /min-height:48px/);
+  assert.match(m[1], /border-radius:24px/, 'half the height, so it is a capsule');
+});

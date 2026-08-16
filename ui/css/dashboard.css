@@ -107,7 +107,7 @@
     }
     .widget {
       position:relative;
-      width:100%; border-radius:18px; overflow:hidden;
+      width:100%; border-radius:28px; overflow:hidden;
       border:1px solid var(--glass-border); background:var(--glass-bg);
       -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
     }
