@@ -242,9 +242,9 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     /* info.users comes straight from the upstream response. html`` escapes
        every interpolation. */
     const body=info.cc!=null
-      ? html`<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px"><span style="font:700 14px/1.15 -apple-system;letter-spacing:-.01em">${fmtName(info.cc)}</span><span style="font:600 10px -apple-system;color:#30D158;display:inline-flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#30D158"></span>${wt('ui.online','Online')}</span></div><div style="display:flex;justify-content:space-between;gap:16px;font:500 12px/1.2 -apple-system;color:rgba(235,235,245,.62)"><span>${wt('ui.users','Users')}</span><span style="color:#fff;font-weight:600;font-variant-numeric:tabular-nums">${info.users}</span></div>`
-      : html`<div style="font:600 14px/1.15 -apple-system;letter-spacing:-.01em">${(info.city?info.city+', ':'')+info.country}</div>`;
-    setHtml(tt, html`<div style="font:700 11px/1.2 -apple-system;display:flex;align-items:center;gap:6px;margin-bottom:5px;color:rgba(235,235,245,.82)"><span data-dot></span>${info.serviceName||''}</div>${body}`);
+      ? html`<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px"><span style="font-weight:700;font-size:14px;line-height:1.15;letter-spacing:-.01em">${fmtName(info.cc)}</span><span style="font-weight:600;font-size:10px;color:#30D158;display:inline-flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#30D158"></span>${wt('ui.online','Online')}</span></div><div style="display:flex;justify-content:space-between;gap:16px;font-weight:500;font-size:12px;line-height:1.2;color:rgba(235,235,245,.62)"><span>${wt('ui.users','Users')}</span><span style="color:#fff;font-weight:600;font-variant-numeric:tabular-nums">${info.users}</span></div>`
+      : html`<div style="font-weight:600;font-size:14px;line-height:1.15;letter-spacing:-.01em">${(info.city?info.city+', ':'')+info.country}</div>`;
+    setHtml(tt, html`<div style="font-weight:700;font-size:11px;line-height:1.2;display:flex;align-items:center;gap:6px;margin-bottom:5px;color:rgba(235,235,245,.82)"><span data-dot></span>${info.serviceName||''}</div>${body}`);
     /* Colour is set after the markup, through named CSSOM properties. */
     const tdot=tt.querySelector('[data-dot]');
     if(tdot){
