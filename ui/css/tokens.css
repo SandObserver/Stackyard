@@ -95,6 +95,56 @@
   --sy-radius-md:10px;
 }
 
+/* ── Semantic colour ─────────────────────────────────────────────────────────
+   Apple's semantic sets, dark values: what a colour is applied to, one level
+   below the roles above. A rule that needs "the dimmest readable caption" names
+   a label level rather than inventing an alpha.
+
+   Labels are the text ramp. Fills are the tint behind a small control, and are
+   grey-tinted rather than pure white, which is what distinguishes them from
+   this project's glass overlays. Separators divide content. Backgrounds are the
+   three layered surfaces, with an elevated set for content over a sheet.
+
+   Two cautions before using these.
+
+   Labels/Secondary and below do not clear WCAG 1.4.3 on this project's card
+   surfaces. That is what --sy-a11y-dim exists for, and ui/test/contrast.test.mjs
+   holds the line. Use a label level for hierarchy, not for text that has to be
+   read on a card.
+
+   The dashboard's glass is not built from Fills. Its overlays are pure white at
+   low alpha over a wallpaper; Apple's fills assume an opaque surface under
+   them. Substituting one for the other changes the look. */
+:root {
+  --label-primary:     #FFFFFF;
+  --label-secondary:   rgba(235,235,245,.70);
+  --label-tertiary:    rgba(235,235,245,.30);
+  --label-quaternary:  rgba(235,235,245,.16);
+
+  --fill-primary:      rgba(120,120,128,.36);
+  --fill-secondary:    rgba(120,120,128,.32);
+  --fill-tertiary:     rgba(118,118,128,.24);
+  --fill-quaternary:   rgba(118,118,128,.18);
+
+  --separator-opaque:  #38383A;
+  --separator:         rgba(255,255,255,.17);
+
+  --bg-primary:        #000000;
+  --bg-secondary:      var(--sy-gray6);
+  --bg-tertiary:       var(--sy-gray5);
+  --bg-elevated-primary:   var(--sy-gray6);
+  --bg-elevated-secondary: var(--sy-gray5);
+  --bg-elevated-tertiary:  var(--sy-gray4);
+
+  /* Apple's Backgrounds/Primary, light. The opt-in light widget card is the one
+     surface in the project that renders in the light theme. */
+  --bg-primary-light:  #FFFFFF;
+
+  /* The white of a knob on a slider or a switch. Apple draws it at full white in
+     both themes, so it is not a label and does not follow the text ramp. */
+  --control-knob:      #FFFFFF;
+}
+
 /* ── Accessibility preferences ───────────────────────────────────────────────
    Here rather than in dashboard.css because both pages load this file and only
    the dashboard loaded that one. Someone with reduced motion turned on got a

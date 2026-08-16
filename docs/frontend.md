@@ -15,11 +15,7 @@ There is no build step and no autoprefixer, so every vendor prefix is written by
 
 ## Colour
 
-`ui/css/tokens.css` holds two layers. A palette names Apple's system colours by hue (`--sy-teal`, `--sy-red`), each with a `-hi` partner carrying Apple's increased-contrast value; the `prefers-contrast: more` block swaps the whole palette to the `-hi` set. On top, roles name what a colour is for (`--accent`, `--danger`, `--success`) and point at a hue, so changing the accent is one line.
-
-Dark values only.
-
-Rules should name a role. A colour written as a literal outside `tokens.css` fails `ui/test/css-tokens.test.mjs`, which also checks that every `var()` names a token that exists. Page-specific surfaces and greys are not part of the system palette and live in that page's own `:root`.
+`ui/css/tokens.css` holds the palette, the roles and Apple's semantic sets. See [docs/design-system.md](design-system.md).
 
 ## Widgets are iframes
 

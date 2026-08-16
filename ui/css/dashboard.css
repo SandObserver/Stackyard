@@ -131,7 +131,7 @@
     }
     .widget[data-card="light"],
     .mob-widget-card[data-card="light"] {
-      background: #ffffff; border-color: rgba(0,0,0,.12);
+      background: var(--bg-primary-light); border-color: rgba(0,0,0,.12);
       -webkit-backdrop-filter: none; backdrop-filter: none;
     }
     .widget[data-card="translucent"],
@@ -203,7 +203,7 @@
       display:none;
       align-items:center;
       justify-content:center;
-      font-size:calc(13px * var(--sc,1)); font-weight:800; color:#fff; line-height:1;
+      font-size:calc(13px * var(--sc,1)); font-weight:800; color:var(--label-primary); line-height:1;
       z-index:20; pointer-events:none;
       /* Pins the badge to its own compositing layer. WebKit otherwise
          promotes and demotes it as its classes change, and the clipped
@@ -256,7 +256,7 @@
       /* A dot is a <button>, so Tab reaches it and Enter and Space work. */
       padding:0; border:0; -webkit-appearance:none; appearance:none;
     }
-    .dot.on { background:#fff; transform:scale(1.25) }
+    .dot.on { background:var(--control-knob); transform:scale(1.25) }
 
     /* ── iOS search pill — mobile only ── */
     #mob-search-pill {
@@ -542,7 +542,7 @@
       background:rgba(0,0,0,.18);
     }
     .folder-title-mobile {
-      font-weight:700; color:#fff;
+      font-weight:700; color:var(--label-primary);
       text-align:start; line-height:1.05;
       text-shadow:0 1px 6px rgba(0,0,0,.45);
       -webkit-user-select:none; user-select:none;
@@ -563,7 +563,7 @@
       background:rgba(255,255,255,.35);
       transition:background .2s,transform .2s;
     }
-    .folder-dot.on { background:#fff; transform:scale(1.25) }
+    .folder-dot.on { background:var(--control-knob); transform:scale(1.25) }
 
     /* ── Folder overlay — desktop ── */
     .folder-overlay {
@@ -677,7 +677,7 @@
 .api-error-btn   {
   margin-top: 8px; padding: 10px 24px; border-radius: 20px;
   background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
-  color: #fff; font-size: 15px; cursor: pointer; font-family: inherit;
+  color: var(--label-primary); font-size: 15px; cursor: pointer; font-family: inherit;
 }
 
 /* ── Accessibility layer (added in Phase 3) ── */
@@ -716,12 +716,12 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
     --glass-border:  rgba(255,255,255,.30);
     --dock-bg:       rgba(40,40,44,.55);
     --dock-border:   rgba(255,255,255,.30);
-    --label-color:   #ffffff;
+    --label-color:   var(--label-primary);
     --label-shadow:  0 1px 4px rgba(0,0,0,.95);
   }
-  .ilabel, .dyn-mob-label, .dyn-fold-label, .dyn-fold-inner-label { color:#fff; }
-  .ctrl { color:#fff; background:rgba(255,255,255,.22); }
-  .srn  { color:#fff; }
+  .ilabel, .dyn-mob-label, .dyn-fold-label, .dyn-fold-inner-label { color:var(--label-primary); }
+  .ctrl { color:var(--label-primary); background:rgba(255,255,255,.22); }
+  .srn  { color:var(--label-primary); }
   .srh, .sr-section { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
   /* A translucent card cannot honour a contrast request and stay translucent. */
@@ -746,14 +746,14 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   padding: 24px; border-radius: 20px;
   background: rgba(40,40,44,.7); border: 1px solid rgba(255,255,255,.14);
   -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
-  color: #fff;
+  color: var(--label-primary);
 }
 .setup-title { font-size: 17px; font-weight: 600; margin: 0; }
 .setup-sub   { font-size: 13px; line-height: 1.4; color: rgba(255,255,255,.55); margin: 0; }
 .setup-pw {
   width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 12px;
   background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.16);
-  color: #fff; font-size: 15px; font-family: inherit; outline: none;
+  color: var(--label-primary); font-size: 15px; font-family: inherit; outline: none;
 }
 .setup-pw:focus { border-color: var(--accent); }
 .setup-field { position: relative; display: flex; align-items: center; }
@@ -775,7 +775,7 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   border: 1px solid rgba(255,255,255,.18);
 }
 .setup-btn-skip { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
-.setup-btn-set  { background: var(--accent); border-color: var(--accent); color: #fff; }
+.setup-btn-set  { background: var(--accent); border-color: var(--accent); color: var(--label-primary); }
 .setup-btn-set:disabled { opacity: .4; cursor: default; }
 
 /* ── RTL ──

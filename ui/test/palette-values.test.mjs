@@ -54,6 +54,45 @@ function baseDeclarations() {
   return out;
 }
 
+/* The semantic sets, dark. Labels and fills are transcribed at the alpha Apple
+   publishes; the surfaces point at palette greys and are checked through the
+   reference rather than by value. */
+const APPLE_SEMANTIC = {
+  '--label-primary': '#FFFFFF',
+  '--label-secondary': 'rgba(235,235,245,.70)',
+  '--label-tertiary': 'rgba(235,235,245,.30)',
+  '--label-quaternary': 'rgba(235,235,245,.16)',
+  '--fill-primary': 'rgba(120,120,128,.36)',
+  '--fill-secondary': 'rgba(120,120,128,.32)',
+  '--fill-tertiary': 'rgba(118,118,128,.24)',
+  '--fill-quaternary': 'rgba(118,118,128,.18)',
+  '--separator-opaque': '#38383A',
+  '--separator': 'rgba(255,255,255,.17)',
+  '--bg-primary': '#000000',
+  '--bg-secondary': 'var(--sy-gray6)',
+  '--bg-tertiary': 'var(--sy-gray5)',
+  '--bg-elevated-primary': 'var(--sy-gray6)',
+  '--bg-elevated-secondary': 'var(--sy-gray5)',
+  '--bg-elevated-tertiary': 'var(--sy-gray4)',
+  '--bg-primary-light': '#FFFFFF',
+  '--control-knob': '#FFFFFF',
+};
+
+test('every semantic token is its Apple value', () => {
+  const end = tokens.indexOf('@media (prefers-contrast: more)');
+  const declared = new Map();
+  for (const m of tokens.slice(0, end).matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) {
+    declared.set(m[1], m[2].trim());
+  }
+  const wrong = [];
+  for (const [name, expected] of Object.entries(APPLE_SEMANTIC)) {
+    const actual = declared.get(name);
+    const same = actual && actual.replace(/\s+/g, '').toUpperCase() === expected.replace(/\s+/g, '').toUpperCase();
+    if (!same) wrong.push(`${name}: ${actual ?? 'not declared'}, expected ${expected}`);
+  }
+  assert.deepEqual(wrong, [], `The semantic layer has drifted:\n  ${wrong.join('\n  ')}`);
+});
+
 test('every palette entry is its Apple value', () => {
   const declared = baseDeclarations();
   const wrong = [];
