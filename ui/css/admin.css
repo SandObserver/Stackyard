@@ -459,11 +459,13 @@ html{background:var(--bg-color,var(--bg-outer))}
   .nl { min-height:44px; }
   .btn { min-height:44px; padding:11px 18px; }
   .chip { min-height:44px; padding:11px 16px; }
-  .pe { width:44px; height:44px; }
   /* A small button stays small. 44 is the hit area, not the drawn box, the same
      trick .pe uses; making it the box turns every inline action into a slab. */
   .btn.sm { min-height:30px; padding:6px 14px; position:relative; }
   .btn.sm::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:100%; min-width:44px; height:44px; }
+  /* After .btn.sm, which outranks .ic on its own and would give an icon button
+     the side padding of a text one. */
+  .btn.ic { padding:6px; }
   .al-search { min-height:44px; }
   .tog { min-height:44px; }
   .row-dd-btn { min-height:44px; }
@@ -528,6 +530,9 @@ html.is-mobile .row.drow{
 html.is-mobile .rord{grid-area:handle}
 html.is-mobile .rico{grid-area:icon}
 html.is-mobile .rinf{grid-area:info;align-self:center}
+/* An address truncates to a fragment at this width, "https://files.s…", which
+   tells the reader nothing and crowds the name and the pills. */
+html.is-mobile .rmt{display:none}
 html.is-mobile .rpills{grid-area:pills;align-self:center}
 html.is-mobile .ract{grid-area:actions}
 html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);opacity:.55}

@@ -148,7 +148,11 @@ A group's header and footer align with the row's label, not with the group's edg
 
 The tab bar's pill is not a stadium. Its label runs along the bottom edge, which is where a stadium's curve is tightest: at 6 from the bottom a 26 radius cuts about 9 in from each side and clips the ends of a long label. 16 cuts in under 4. The test checks the geometry rather than the number.
 
-A small button keeps its drawn size on touch and has its hit area extended to 44 instead, the same way the inline edit button does. Making 44 the drawn box turns every inline action into a slab.
+Every inline action keeps its drawn size on touch and has its hit area extended to 44 instead. Making 44 the drawn box turns an action into a slab and pushes it away from the text it belongs to.
+
+`.btn.sm` is two classes and outranks `.ic`, so an icon button has to be named again in the touch block or it takes a text button's side padding.
+
+A dashboard row drops its address on a phone. It truncates to a fragment at that width and crowds the name and the pills it shares the row with.
 
 The pill takes 6 above and below, and the bar gives back the same from its own padding, so adding it did not change the bar's height.
 
