@@ -500,10 +500,16 @@ html.is-mobile body.authed .mtabbar{
   border:1px solid rgba(255,255,255,.08);border-radius:28px;
   padding:7px 8px;box-shadow:0 8px 30px rgba(0,0,0,.4);
 }
-html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;border-radius:26px;padding-block:6px;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
+html.is-mobile .mtab{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;border-radius:26px;padding-block:6px;padding-inline:14px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
 html.is-mobile .mtab .ni{width:31px;height:31px;flex-shrink:0}
-/* The selection is a pill filling the tab, not a tint on the label. Its 6 above
-   and below comes off the bar's own padding, so the bar keeps its height. */
+/* The selection is a pill around the tab's own content, not a tint on the label
+   and not the width of an equal share of the bar. A stadium's curve takes about
+   half its height off each end, so a wide label like Appearance rides the curve
+   when the pill is stretched to a fixed cell. The kit sizes it to the content
+   with padding either side, and space-around does the distributing.
+
+   The 6 above and below comes off the bar's own padding, so the bar keeps its
+   height. */
 html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--label-primary)}
 
 /* The handle is the drag zone. It needs touch-action:none, or starting a drag

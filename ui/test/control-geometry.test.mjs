@@ -126,6 +126,13 @@ test('the tab selection is a pill and the bar keeps its height', () => {
   const pillPad = Number(/padding-block:(\d+)px/.exec(tab[1])[1]);
   assert.match(tab[1], /border-radius:26px/, 'the pill has to be fully rounded');
 
+  /* Stretched to an equal share of the bar, a stadium's curve takes about half
+     its height off each end and a wide label rides it. The pill is sized to its
+     own content instead. */
+  assert.doesNotMatch(tab[1], /flex:1[;}]/, 'the pill must not be stretched to a fixed cell');
+  assert.match(tab[1], /padding-inline:\d+px/, 'the label needs room either side of it');
+  assert.match(tab[1], /white-space:nowrap/, 'a label must not wrap inside the pill');
+
   const bar = /html\.is-mobile body\.authed \.mtabbar\{([\s\S]*?)\}/.exec(bare);
   const barPad = Number(/padding:(\d+)px \d+px/.exec(bar[1])[1]);
   assert.equal(pillPad + barPad, 13, `the bar grew: ${pillPad} + ${barPad} should still be 13`);

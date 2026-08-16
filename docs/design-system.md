@@ -134,7 +134,7 @@ Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds the
 | Outer margin | 16 on a phone, 20 on a tablet or desktop |
 | Group header and footer | text inset 16, so it aligns with the row's label |
 | Sidebar | 320 wide, items 44 tall, selection a full pill |
-| Tab bar selection | a pill filling the tab, not a tint on the label |
+| Tab bar selection | a pill around the tab's content, not a tint on the label |
 
 The switch knob is a capsule, not a circle. That is a shape change, so resizing the old circle does not get you there.
 
@@ -144,7 +144,9 @@ The slider handle is the one deliberate departure from the kit, which draws a 2 
 
 A group's header and footer align with the row's label, not with the group's edge. They are separate elements sitting outside the group, so they carry the row's 16 inset themselves.
 
-The tab bar's pill takes 6 above and below, and the bar gives back the same from its own padding, so adding it did not change the bar's height.
+The tab bar's pill is sized to its own content with padding either side, not stretched to an equal share of the bar. A stadium's curve takes about half its height off each end, so a wide label rides the curve when the pill is stretched to a fixed cell. `space-around` does the distributing.
+
+The pill takes 6 above and below, and the bar gives back the same from its own padding, so adding it did not change the bar's height.
 
 The group cannot clip its rows, because it keeps `overflow: visible` so a dropdown can escape it. The first and last visible rows carry the corner radius themselves instead, or a row's hover fill squares off the corners.
 
