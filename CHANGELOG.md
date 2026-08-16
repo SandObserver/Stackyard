@@ -101,6 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Connections map tooltips now use the system font on Android, Windows and
   Linux instead of falling back to a serif.
 
+- Saving on Settings > Appearance no longer reports "Wallpaper saved" when
+  something else on the page was saved.
+
 ## [1.6.1] - 2026-08-14
 
 ### Fixed

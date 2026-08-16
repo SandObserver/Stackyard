@@ -173,7 +173,6 @@
   "toast": {
     "saved": "Enregistré",
     "saveFailed": "Échec de l'enregistrement : {err}",
-    "wallpaperSaved": "Fond d'écran enregistré",
     "imported": "Importé",
     "importFailed": "Échec de l'import : {err}",
     "exportFailed": "Échec de l'export : {err}",

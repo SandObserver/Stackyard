@@ -173,7 +173,6 @@
   "toast": {
     "saved": "Saved",
     "saveFailed": "Save failed: {err}",
-    "wallpaperSaved": "Wallpaper saved",
     "imported": "Imported",
     "importFailed": "Import failed: {err}",
     "exportFailed": "Export failed: {err}",

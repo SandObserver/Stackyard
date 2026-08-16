@@ -173,7 +173,6 @@
   "toast": {
     "saved": "已保存",
     "saveFailed": "保存失败：{err}",
-    "wallpaperSaved": "壁纸已保存",
     "imported": "已导入",
     "importFailed": "Import 失败：{err}",
     "exportFailed": "Export 失败：{err}",

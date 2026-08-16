@@ -293,7 +293,7 @@ async function saveWallpaper() {
       const keyVal = (inp('bg-apikey-inp') || inp('bg-apikey'))?.value?.trim() || '';
       if (keyVal) await ap('/api/settings/unsplash-key', { apiKey: keyVal });
     }
-    toast(t('toast.wallpaperSaved'));
+    toast(t('toast.saved'));
   } catch (e) {
     toast(t('toast.saveFailed', { err: e.message }), 'err');
   }
