@@ -1,5 +1,11 @@
 # Support
 
+## Supporting Stackyard
+
+- Like it? Tell someone about it.
+- Found a bug, or have an idea? [Open an issue](https://github.com/SandObserver/stackyard/issues).
+- Want to buy me a coffee? https://buymeacoffee.com/sandobserver
+
 ## Where to get help
 
 - Bugs and feature requests: https://github.com/SandObserver/stackyard/issues
