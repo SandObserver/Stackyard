@@ -117,7 +117,11 @@ test('a touch track still draws round ends', () => {
     const pad = Number(m[1]);
     /* No horizontal padding, so this radius is drawn as written. */
     assert.equal(Number(m[2]), track / 2, `${cls} draws horizontal radius ${m[2]}, expected ${track / 2}`);
-    assert.equal(Number(m[3]) - pad, track / 2, `${cls} draws vertical radius ${Number(m[3]) - pad}, expected ${track / 2}`);
+    assert.equal(
+      Number(m[3]) - pad,
+      track / 2,
+      `${cls} draws vertical radius ${Number(m[3]) - pad}, expected ${track / 2}`,
+    );
   }
 });
 
