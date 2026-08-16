@@ -70,8 +70,14 @@ const APPLE_LIGHT = {
    what leaves out the copies nested in the increased-contrast block, where the
    hues are var() references to their -hi partners rather than values. */
 function blockOf(selector) {
-  const re = new RegExp(`^${selector.replace(/[[\]"]/g, '\\$&')} \\{([\\s\\S]*?)\\n\\}`, 'gm');
-  const found = [...tokens.matchAll(re)].map(m => m[1]);
+  const opener = `\n${selector} {`;
+  const found = [];
+  for (let at = tokens.indexOf(opener); at >= 0; at = tokens.indexOf(opener, at + 1)) {
+    const start = at + opener.length;
+    const end = tokens.indexOf('\n}', start);
+    assert.ok(end > start, `${selector} is not closed`);
+    found.push(tokens.slice(start, end));
+  }
   assert.ok(found.length > 0, `${selector} should open a block in tokens.css`);
   return found.join('\n');
 }
