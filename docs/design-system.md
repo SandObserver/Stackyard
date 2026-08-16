@@ -34,6 +34,20 @@ Two singletons sit beside them. `--bg-primary-light` is the opt-in light widget 
 
 **The dashboard's glass is not built from Fills.** Its overlays are pure white at low alpha over a wallpaper. The kit's fills are grey-tinted and assume an opaque surface beneath. Substituting one for the other changes the look.
 
+## The face
+
+One stack, everywhere:
+
+```css
+-apple-system, BlinkMacSystemFont, system-ui, sans-serif
+```
+
+`--font-ui` holds it for the two pages. `ui/test/font-stack.test.mjs` fails on any other spelling, including in the widget guide and the widget template.
+
+Do not name `SF Pro Display` or `SF Pro Text`. `-apple-system` resolves to the system face and picks the optical cut for the size it is used at, Text below 20 and Display at 20 and above. Naming a cut pins it. The dashboard used to ask for Display and the admin page for Text, and most widgets asked for Display at 11px, which is the cut meant for large sizes.
+
+`monospace` is the exception, for the code spans in the admin hints.
+
 ## Type
 
 Eleven text styles, at the default Dynamic Type step. Three tokens each: `--fs-<style>`, `--lh-<style>`, `--tr-<style>`.
@@ -103,6 +117,14 @@ Six rules do not use it, on purpose.
 
 - `.rico`, `.icon-prev`, `.fp-ic`, `.ipv`, `.kv-box::after` size a single character centred in a fixed box. That is a mark, not text, and a text leading and tracking would push it off centre.
 - `.bsep` is an uppercase separator label. Uppercase needs positive tracking, and the scale's values are for sentence case. `.dlg-sec` and `.sr-section` keep their own tracking for the same reason while taking their size from the scale.
+
+## Widgets
+
+A widget is a separate document in an iframe. It may keep its own stylesheet and is not required to load `tokens.css`.
+
+The face is the exception: a widget must spell the stack the same way as everything else, and the test covers `ui/widgets/` for that.
+
+Widget colour and text sizes are not yet on the system. Fourteen widgets carry their own values, and most of their colours are not palette entries.
 
 ## Page-scoped tokens
 

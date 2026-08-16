@@ -96,7 +96,7 @@ external network calls.
   <style>
     *,*::before,*::after { margin:0; padding:0; box-sizing:border-box }
     html,body { width:100%; height:100%; overflow:hidden; background:transparent;
-      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; color:#e8e8ea }
+      font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif; color:#e8e8ea }
     #root { width:100%; height:100%; display:flex; align-items:center; justify-content:center }
   </style>
 </head>

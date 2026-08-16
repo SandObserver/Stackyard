@@ -175,6 +175,12 @@
   --fs-caption-2:11px;   --lh-caption-2:1.1818;   --tr-caption-2:0.0055em;    /* 11/13 */
 
   --fw-headline:600;
+
+  /* The system face. -apple-system resolves to it and picks the optical cut for
+     the size it is used at, Text below 20 and Display at 20 and above. Naming
+     SF Pro Display or SF Pro Text pins one cut and defeats that, which is what
+     the two pages and most widgets used to do. Do not add them back. */
+  --font-ui: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 /* ── Type step ───────────────────────────────────────────────────────────────

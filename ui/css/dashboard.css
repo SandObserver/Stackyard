@@ -31,7 +31,7 @@
     html {
       width:100vw; height:100vh; height:100dvh; overflow:hidden;
       background: var(--bg-color, var(--bg-base));
-      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;
+      font-family:var(--font-ui);
       -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     }
     /* background, position and z-index come from tokens.css. */

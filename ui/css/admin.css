@@ -39,7 +39,7 @@
   --login-badge:#1a2a4a;                  /* the tinted square behind the login mark */
 
 }
-html,body{min-height:100vh;color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{min-height:100vh;color:var(--tx);font-family:var(--font-ui);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html{background:var(--bg-color,var(--bg-outer))}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
