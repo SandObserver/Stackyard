@@ -95,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - App title toggles in Settings > Appearance now persist across a reload.
 
+- Connections map tooltips now use the system font on Android, Windows and
+  Linux instead of falling back to a serif.
+
 ## [1.6.1] - 2026-08-14
 
 ### Fixed
