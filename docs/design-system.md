@@ -2,7 +2,7 @@
 
 The visual system both pages share. It lives in `ui/css/tokens.css`.
 
-Values come from Apple's iOS, iPadOS and macOS design kits. Both the dashboard and the settings page follow iOS on a phone and iPadOS on a tablet or desktop.
+Values are measured from a reference design kit, not chosen.
 
 Dark values only. No stylesheet declares a `prefers-color-scheme` rule.
 
@@ -10,13 +10,13 @@ Dark values only. No stylesheet declares a `prefers-color-scheme` rule.
 
 Pick from the lowest layer that answers the question.
 
-**Palette.** The system colours named by hue: `--sy-teal`, `--sy-red`, `--sy-gray4`. Twelve hues and six greys. Each has a `-hi` partner holding an increased-contrast value, and the `prefers-contrast: more` block swaps the whole palette to the `-hi` set.
+**Palette.** Twelve hues and six greys, named by hue: `--sy-teal`, `--sy-red`, `--sy-gray4`. Each has a `-hi` partner holding an increased-contrast value. The `prefers-contrast: more` block swaps the palette to the `-hi` set.
 
-A rule should not name a palette entry directly. The palette exists so the layers above it have something to point at.
+Do not name a palette entry in a rule. The layers above point at it.
 
-**Roles.** What a colour is for: `--accent`, `--danger`, `--warning`, `--success`. Each points at a hue. Changing the accent is one line.
+**Roles.** What a colour is for: `--accent`, `--danger`, `--warning`, `--success`. Each points at a hue.
 
-**Semantic.** What a colour is applied to, in the kit's own sets.
+**Semantic.** What a colour is applied to.
 
 | Set | Tokens | Use |
 | --- | --- | --- |
@@ -24,15 +24,15 @@ A rule should not name a palette entry directly. The palette exists so the layer
 | Fills | `--fill-primary` through `--fill-quaternary` | The tint behind a small control |
 | Separators | `--separator`, `--separator-opaque` | Dividing content |
 | Backgrounds | `--bg-primary`, `--bg-secondary`, `--bg-tertiary` | The three layered surfaces |
-| Backgrounds, elevated | `--bg-elevated-primary`, `--bg-elevated-secondary`, `--bg-elevated-tertiary` | The same three, for content over a sheet |
+| Backgrounds, elevated | `--bg-elevated-primary`, `--bg-elevated-secondary`, `--bg-elevated-tertiary` | The same three, over a sheet |
 
-Two singletons sit beside them. `--bg-primary-light` is the opt-in light widget card, the one surface that renders in the light theme. `--control-knob` is the white of a knob on a slider or a switch, which is drawn at full white in both themes.
+Two singletons sit beside them. `--bg-primary-light` is the opt-in light widget card. `--control-knob` is the white of a slider or switch knob, full white in both themes.
 
 ## Two limits on the semantic layer
 
-**Label levels below primary do not clear WCAG on this project's cards.** The ramp assumes the surfaces it was drawn against. Use `--sy-a11y-dim` for text that has to be read on a card; use a label level for hierarchy. `ui/test/contrast.test.mjs` computes the ratios and fails on a regression, so this is enforced rather than remembered.
+**Label levels below primary do not clear WCAG on this project's cards.** Use `--sy-a11y-dim` for text that has to be read on a card. Use a label level for hierarchy. `ui/test/contrast.test.mjs` fails on a regression.
 
-**The dashboard's glass is not built from Fills.** Its overlays are pure white at low alpha over a wallpaper. The kit's fills are grey-tinted and assume an opaque surface beneath. Substituting one for the other changes the look.
+**The dashboard's glass is not built from Fills.** The glass is white at low alpha over a wallpaper. Fills are grey-tinted and assume an opaque surface. Substituting one for the other changes the look.
 
 ## The face
 
@@ -42,15 +42,15 @@ One stack, everywhere:
 -apple-system, BlinkMacSystemFont, system-ui, sans-serif
 ```
 
-`--font-ui` holds it for the two pages. `ui/test/font-stack.test.mjs` fails on any other spelling, including in the widget guide and the widget template.
+`--font-ui` holds it. `ui/test/font-stack.test.mjs` fails on any other spelling, including in the widget guide and the widget template.
 
-Do not name `SF Pro Display` or `SF Pro Text`. `-apple-system` resolves to the system face and picks the optical cut for the size it is used at, Text below 20 and Display at 20 and above. Naming a cut pins it. The dashboard used to ask for Display and the admin page for Text, and most widgets asked for Display at 11px, which is the cut meant for large sizes.
+Do not name an optical cut. The stack resolves to the system face and picks the cut for the size it is drawn at: Text below 20, Display at 20 and above. Naming a cut pins it.
 
-`monospace` is the exception, for the code spans in the admin hints.
+`monospace` is the exception, for code spans in the admin hints.
 
 ## Type
 
-Eleven text styles, at the default Dynamic Type step. Three tokens each: `--fs-<style>`, `--lh-<style>`, `--tr-<style>`.
+Eleven styles at the default step. Three tokens each: `--fs-<style>`, `--lh-<style>`, `--tr-<style>`.
 
 | Style | Size | Leading | Tracking |
 | --- | --- | --- | --- |
@@ -68,7 +68,7 @@ Eleven text styles, at the default Dynamic Type step. Three tokens each: `--fs-<
 
 Headline is Body at semibold. `--fw-headline` carries the weight.
 
-Set all three tokens together. A size without its leading and tracking is a third of a style, and `ui/test/type-scale.test.mjs` fails on it.
+Set all three tokens together. `ui/test/type-scale.test.mjs` fails on a size without its leading and tracking.
 
 ```css
 .rl {
@@ -78,7 +78,7 @@ Set all three tokens together. A size without its leading and tracking is a thir
 }
 ```
 
-Line height is stored unitless and tracking in `em`, not as the published pixel values. The dashboard multiplies its sizes by `var(--sc)` and a reader can zoom; a ratio and an em follow the size they are used with, where a pixel leading would hold still and the style would come apart at every size but the default. The test multiplies each ratio back out and checks it still lands on the published pair.
+Leading is stored unitless and tracking in `em`, never as pixels. Sizes are multiplied by `var(--sc)` and a reader can zoom, so both have to follow the size they are used with.
 
 On the admin page:
 
@@ -90,13 +90,13 @@ On the admin page:
 | Segmented options, dialog body text, small glyph buttons | `footnote` |
 | The version line and the mobile tab bar | `caption-2` |
 
-A grouped list's header and footer are `footnote`, not a caption. Caption 1 sits below the size either is drawn at.
+A grouped list's header and footer are `footnote`. Caption 1 sits below the size either is drawn at.
 
 ### Steps
 
-The table above is the default Dynamic Type step. A page can run the whole scale at a smaller step, which is how a denser screen is handled: the same eleven styles at smaller sizes, never a size chosen outside the scale.
+A page can run the whole scale at a smaller step. The same eleven styles at smaller sizes, never a size chosen outside the scale.
 
-A document opts in with a class on `<html>`, and the step applies only where the layout is not a phone. The admin page carries `type-small`, so its desktop panel runs at the Small step and a settings row is 15. On a phone it falls back to the default step and a settings row is 17, matching the phone settings design.
+A document opts in with a class on `<html>`. The step applies only where the layout is not a phone. The admin page carries `type-small`, so its desktop panel runs at the Small step and a settings row is 15. On a phone a settings row is 17.
 
 | Style | Default | Small |
 | --- | --- | --- |
@@ -107,32 +107,32 @@ A document opts in with a class on `<html>`, and the step applies only where the
 | `footnote` | 13/18 | 12/16 |
 | `caption-1` | 12/16 | 11/13 |
 
-Tracking is republished per step rather than inherited. There is one absolute tracking per style, so the em that reproduces -0.43 at 17 does not reproduce it at 15. The test checks every step against the same published pairs.
+Tracking is republished per step. There is one absolute tracking per style, so the em that reproduces -0.43 at 17 does not reproduce it at 15.
 
-Adding a step is a block of eleven declarations and an entry in `ui/test/type-scale.test.mjs`. Moving a page between steps is one class.
+Adding a step is eleven declarations and an entry in `ui/test/type-scale.test.mjs`. Moving a page between steps is one class.
 
 ### Off the scale
 
 Six rules do not use it, on purpose.
 
-- `.rico`, `.icon-prev`, `.fp-ic`, `.ipv`, `.kv-box::after` size a single character centred in a fixed box. That is a mark, not text, and a text leading and tracking would push it off centre.
-- `.bsep` is an uppercase separator label. Uppercase needs positive tracking, and the scale's values are for sentence case. `.dlg-sec` and `.sr-section` keep their own tracking for the same reason while taking their size from the scale.
+- `.rico`, `.icon-prev`, `.fp-ic`, `.ipv`, `.kv-box::after` centre a single character in a fixed box. A text leading and tracking would push it off centre.
+- `.bsep` is an uppercase separator label. Uppercase needs positive tracking. `.dlg-sec` and `.sr-section` keep their own tracking and take their size from the scale.
 
 ## Control geometry
 
-Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds them.
+`ui/test/control-geometry.test.mjs` holds these.
 
 | | |
 | --- | --- |
 | Settings row | 52 tall |
 | Row carrying two lines | 68 tall |
 | Row side padding | 16 |
-| Separator | 1 tall, inset 16 at the leading edge, flush at the trailing |
+| Separator | 1 tall, inset 16 leading, flush trailing |
 | Grouped list radius | 26, as `--sy-radius-group` |
 | Switch | 64 × 28, knob 38 × 24 inset 2, travel 22 |
-| Slider | track 6, knob 20, one design for all of them |
-| Outer margin | 16 on a phone, 20 on a tablet or desktop |
-| Group header and footer | text inset 16, so it aligns with the row's label |
+| Slider | track 6, knob 20, one design for all |
+| Outer margin | 16 on a phone, 20 otherwise |
+| Group header and footer | text inset 16 |
 | Sidebar | 320 wide, items 44 tall, selection a full pill |
 | Tab bar selection | covers the whole tab, radius 16 |
 | Segmented control | 32 track, 28 segments, capsule |
@@ -142,50 +142,38 @@ Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds the
 | Between a group and the next heading | about 34 |
 | Small button on touch | drawn at 30, hit area extended to 44 |
 
-The switch knob is a capsule, not a circle. That is a shape change, so resizing the old circle does not get you there.
+The switch knob is a capsule, not a circle.
 
-Sliders are the deliberate departure from the kit. It draws the system slider with a 2 × 24 line handle, too small a thing to find and drag on a phone, and a colour slider as a 34 bar with a knob the height of the bar. Both are rejected: there is one slider in this project, a 6 track with a 20 round knob, and the handle is declared once for all of them because they previously carried a copy each and drifted apart.
+On touch a slider is padded out to a 44 target and the paint is clipped back to the track. Clipping to the content box shrinks each corner by the padding on that axis. The padding is vertical only, so the two radii are set separately. A single radius draws ends that taper to a point.
 
-On touch a slider is padded out to a 44 target and the paint is clipped back to the track. Clipping to the content box shrinks each corner by the padding, so the radius is raised by the same amount or the track draws with square ends.
+`--sy-radius-group` is separate from `--sy-radius-lg`. Only the grouped list is rounded to 26; the panel, the dialogs and the toast keep 14.
 
-`--sy-radius-group` is separate from `--sy-radius-lg` on purpose. The panel, the dialogs and the toast keep 14; only the grouped list is rounded to 26.
+Derive a radius that rounds something whose size varies. An app icon is drawn at 72 with a label and 78 without, and a widget tile scales with the dashboard.
 
-A group's header and footer align with the row's label, not with the group's edge. They are separate elements sitting outside the group, so they carry the row's 16 inset themselves.
+`.btn.sm` outranks `.ic`. Name an icon button again in the touch block or it takes a text button's side padding.
 
-The tab bar's pill is not a stadium. Its label runs along the bottom edge, which is where a stadium's curve is tightest: at 6 from the bottom a 26 radius cuts about 9 in from each side and clips the ends of a long label. 16 cuts in under 4. The test checks the geometry rather than the number.
+The choice rows draw a segmented control on radio inputs. The inputs stay: the form reads them and a screen reader announces them. The input is 0 by 0, so the segment wears the focus ring.
 
-Every inline action keeps its drawn size on touch and has its hit area extended to 44 instead. Making 44 the drawn box turns an action into a slab and pushes it away from the text it belongs to.
-
-`.btn.sm` is two classes and outranks `.ic`, so an icon button has to be named again in the touch block or it takes a text button's side padding.
-
-A dashboard row drops its address on a phone. It truncates to a fragment at that width and crowds the name and the pills it shares the row with.
-
-The pill takes 6 above and below, and the bar gives back the same from its own padding, so adding it did not change the bar's height.
-
-A radius that rounds something whose size varies has to be derived, not written down. An app icon is drawn at two widths, 72 with a label and 78 without, and a widget tile scales with the dashboard. Literal radii were right at one size and wrong everywhere else.
-
-The choice rows are a segmented control drawn on the radio inputs that were already there. The inputs stay, because the form reads them and a screen reader announces them; only the dot goes, since the selected segment is the indicator. The input is 0 by 0, so the segment wears the focus ring.
-
-The group cannot clip its rows, because it keeps `overflow: visible` so a dropdown can escape it. The first and last visible rows carry the corner radius themselves instead, or a row's hover fill squares off the corners.
+The group keeps `overflow: visible` so a dropdown can escape it. The first and last visible rows carry the corner radius themselves, or a row's hover fill squares off the corners.
 
 ## Widgets
 
 A widget is a separate document in an iframe. It keeps its own stylesheet and does not load `tokens.css`.
 
-It cannot name a token. Most widget colours sit in canvas fills, SVG attributes and data modules, where a `var()` is not a colour. A widget carries the values instead, and two tests keep them from drifting.
+It cannot name a token. Most widget colours sit in canvas fills, SVG attributes and data modules, where a `var()` is not a colour. A widget carries the values instead.
 
-**Colour.** Every colour must be a palette value or be listed in `ui/test/widget-colours.test.mjs` with what it is. The list covers artwork and colours that are not the project's to choose: the GitHub contribution scale, the Plex, Jellyfin and Emby brand colours, the weather illustration set, and the fallback covers the books widget draws when there is no artwork. A second test removes an entry once nothing uses it, so a stale exemption cannot let the next colour through unexamined.
+**Colour.** Every colour must be a palette value or be listed in `ui/test/widget-colours.test.mjs` with what it is. The list covers artwork and colours that are not the project's to choose. A second test removes an entry once nothing uses it.
 
 **The face.** A widget must spell the font stack the same way as everything else.
 
-**Size.** Widget text is not on the type scale. The scale stops at 11 and the densest tiles go down to 6.5, so the sizes are snapped to a step where one is within a point and left alone below that.
+**Size.** Widget text is not on the type scale. The scale stops at 11 and the densest tiles go to 6.5. Sizes are snapped to a step where one is within a point.
 
 ## Page-scoped tokens
 
-A surface particular to one page is declared in that page's own `:root`, not here. `--pane` and `--cp` on the admin page, `--glass-bg` and `--dock-bg` on the dashboard. These are not part of the system.
+A surface particular to one page is declared in that page's own `:root`. `--pane` and `--cp` on the admin page, `--glass-bg` and `--dock-bg` on the dashboard. These are not part of the system.
 
 ## Rules
 
 A colour written as a literal outside `tokens.css` fails `ui/test/css-tokens.test.mjs`. The same test checks that every `var()` names a token that exists. `ui/test/palette-values.test.mjs` pins each palette entry to its reference value.
 
-`#fff` and `#000` are allowed as ink on an arbitrary coloured fill, where the colour underneath is chosen by the user and no token can describe it.
+`#fff` and `#000` are allowed as ink on an arbitrary coloured fill, where the colour underneath is user-chosen and no token can describe it.

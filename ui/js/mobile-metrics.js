@@ -2,7 +2,7 @@
    rendering at one physical size whatever page scale the browser reports.
 
    Safe-area insets are not here. The stylesheet holds them, and the layout
-   measures the box the stylesheet produced. iOS reports an inset after the
+   measures the box the stylesheet produced. The platform reports an inset after the
    first paint, so a value read into JavaScript is stale from the moment it is
    taken. */
 

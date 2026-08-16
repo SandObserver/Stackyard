@@ -26,7 +26,7 @@ test('plex names the player from the device title', async () => {
               title: 'Arrival',
               duration: 6000,
               viewOffset: 3000,
-              Player: { state: 'playing', title: 'Living Room TV', product: 'Plex for Apple TV' },
+              Player: { state: 'playing', title: 'Living Room TV', product: 'Plex for TV' },
             },
           ],
         },
@@ -62,14 +62,14 @@ test('jellyfin prefers DeviceName over Client', async () => {
   const r = await dataFn(
     ctxFor({ provider: 'jellyfin', jellyfinUrl: 'https://jf.example.com', jellyfinKey: 'k' }, [
       {
-        DeviceName: 'Bedroom iPad',
+        DeviceName: 'Bedroom Tablet',
         Client: 'Jellyfin Web',
         NowPlayingItem: { Type: 'Movie', Name: 'Dune', RunTimeTicks: 100 },
         PlayState: { PositionTicks: 25, IsPaused: true },
       },
     ]),
   );
-  assert.equal(r.sessions[0].player, 'Bedroom iPad');
+  assert.equal(r.sessions[0].player, 'Bedroom Tablet');
   assert.equal(r.sessions[0].state, 'paused');
   assert.equal(r.sessions[0].progress, 0.25);
 });

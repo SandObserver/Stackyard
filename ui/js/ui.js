@@ -13,7 +13,7 @@ import {
 } from '/js/utils.js?v=b81f6875';
 import { t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { trapFocus } from '/js/dialog.js?v=05935547';
-import { mobileMetrics } from '/js/mobile-metrics.js?v=4cf70285';
+import { mobileMetrics } from '/js/mobile-metrics.js?v=e48d02a8';
 
 let _state = null;
 export function initUI(state) {
@@ -569,7 +569,7 @@ export function buildMobile() {
 
   /* Every size below comes from this box, so the safe-area insets reach the
      layout as the space the stylesheet already reserved. Reading the insets
-     instead would take a value iOS has not reported yet. */
+     instead would take a value the platform has not reported yet. */
   const firstPage = mkPage();
   strip.appendChild(firstPage.page);
   const gridBox = firstPage.grid.getBoundingClientRect();
