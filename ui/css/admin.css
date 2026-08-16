@@ -17,7 +17,7 @@
   --r:var(--sy-radius-lg);
   --rs:var(--sy-radius-md);
   --t:.15s ease;
-  --sbw:308px;
+  --sbw:320px;
 
   /* Derived from the hue, never written out, so a palette change carries
      through. */
@@ -37,6 +37,7 @@
   --tile-placeholder:var(--sy-gray2-hi);  /* an app tile with no icon yet */
   --surface-sunken:var(--sy-gray5);       /* recessed well behind the About icon */
   --login-badge:#1a2a4a;                  /* the tinted square behind the login mark */
+  --tab-pill:rgba(255,255,255,.07);       /* the selection behind the active tab */
 
 }
 html,body{min-height:100vh;color:var(--tx);font-family:var(--font-ui);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -54,7 +55,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .sb-name{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:700;color:var(--tx)}
 .sb-ver{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);color:var(--dm);margin-top:1px}
 .sb-nav{list-style:none;display:flex;flex-direction:column;gap:2px}
-.nl{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border-radius:10px;border:none;background:transparent;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;text-align:start;transition:background var(--t),color var(--t);min-height:40px;font-family:inherit}
+.nl{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border-radius:22px;border:none;background:transparent;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;text-align:start;transition:background var(--t),color var(--t);min-height:44px;font-family:inherit}
 .nl:hover{color:var(--tx)}
 .nl.active{background:var(--ac);color:var(--label-primary)}
 .nl.active .ni{opacity:1}
@@ -75,9 +76,9 @@ html{background:var(--bg-color,var(--bg-outer))}
 .ev-back:hover{opacity:.8}
 
 /* ── Groups ── */
-.grp{background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:4px;border:1px solid var(--bd-inner)}
-.grp-hdr{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm);padding:16px 0 5px;}
-.grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:6px 2px 14px;line-height:1.55}
+.grp{background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:8px;border:1px solid var(--bd-inner)}
+.grp-hdr{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm);padding:26px 16px 6px;}
+.grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:8px 16px 14px;line-height:1.55}
 /* Why a widget was refused, one validator message per line. Indented as a list rather than run together, since a manifest can fail several rules at once. */
 .cfg-reject-list{list-style:disc;padding-inline-start:20px;margin-block-start:-8px}
 .cfg-reject-list li{margin-block-end:4px}
@@ -458,7 +459,13 @@ html{background:var(--bg-color,var(--bg-outer))}
   .nl { min-height:44px; }
   .btn { min-height:44px; padding:11px 18px; }
   .chip { min-height:44px; padding:11px 16px; }
-  .pe { width:44px; height:44px; }
+  /* A small button stays small. 44 is the hit area, not the drawn box, the same
+     trick .pe uses; making it the box turns every inline action into a slab. */
+  .btn.sm { min-height:30px; padding:6px 14px; position:relative; }
+  .btn.sm::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:100%; min-width:44px; height:44px; }
+  /* After .btn.sm, which outranks .ic on its own and would give an icon button
+     the side padding of a text one. */
+  .btn.ic { padding:6px; }
   .al-search { min-height:44px; }
   .tog { min-height:44px; }
   .row-dd-btn { min-height:44px; }
@@ -497,11 +504,18 @@ html.is-mobile body.authed .mtabbar{
   z-index:8000;justify-content:space-around;align-items:center;gap:2px;
   background:rgba(30,30,38,.72);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);
   border:1px solid rgba(255,255,255,.08);border-radius:28px;
-  padding:13px 8px;box-shadow:0 8px 30px rgba(0,0,0,.4);
+  padding:7px 8px;box-shadow:0 8px 30px rgba(0,0,0,.4);
 }
-html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
+html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;border-radius:16px;padding-block:6px;padding-inline:8px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
 html.is-mobile .mtab .ni{width:31px;height:31px;flex-shrink:0}
-html.is-mobile .mtab.active{color:var(--ac2)}
+/* The selection covers the whole tab, icon and label. Not a stadium: the label
+   sits along the bottom edge, which is where a stadium's curve is tightest, and
+   at 6 from the bottom a 26 radius cuts about 9 in from each side and clips the
+   ends of a long label. 16 cuts in under 4 and the label clears it.
+
+   The 6 above and below comes off the bar's own padding, so the bar keeps its
+   height. */
+html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--label-primary)}
 
 /* The handle is the drag zone. It needs touch-action:none, or starting a drag
    on it scrolls the list. */
@@ -516,6 +530,9 @@ html.is-mobile .row.drow{
 html.is-mobile .rord{grid-area:handle}
 html.is-mobile .rico{grid-area:icon}
 html.is-mobile .rinf{grid-area:info;align-self:center}
+/* An address truncates to a fragment at this width, "https://files.s…", which
+   tells the reader nothing and crowds the name and the pills. */
+html.is-mobile .rmt{display:none}
 html.is-mobile .rpills{grid-area:pills;align-self:center}
 html.is-mobile .ract{grid-area:actions}
 html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);opacity:.55}

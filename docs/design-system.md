@@ -132,12 +132,29 @@ Measured from the kit, not chosen. `ui/test/control-geometry.test.mjs` holds the
 | Switch | 64 × 28, knob 38 × 24 inset 2, travel 22 |
 | Slider | track 6, handle a 20 round knob |
 | Outer margin | 16 on a phone, 20 on a tablet or desktop |
+| Group header and footer | text inset 16, so it aligns with the row's label |
+| Sidebar | 320 wide, items 44 tall, selection a full pill |
+| Tab bar selection | covers the whole tab, radius 16 |
+| Between a group and the next heading | about 34 |
+| Small button on touch | drawn at 30, hit area extended to 44 |
 
 The switch knob is a capsule, not a circle. That is a shape change, so resizing the old circle does not get you there.
 
 The slider handle is the one deliberate departure from the kit, which draws a 2 × 24 line. A line is too small a thing to find and drag on a phone, so every slider keeps a round knob. The wallpaper slider and the three colour sliders share one handle rule, because they previously carried a copy each and drifted apart.
 
 `--sy-radius-group` is separate from `--sy-radius-lg` on purpose. The panel, the dialogs and the toast keep 14; only the grouped list is rounded to 26.
+
+A group's header and footer align with the row's label, not with the group's edge. They are separate elements sitting outside the group, so they carry the row's 16 inset themselves.
+
+The tab bar's pill is not a stadium. Its label runs along the bottom edge, which is where a stadium's curve is tightest: at 6 from the bottom a 26 radius cuts about 9 in from each side and clips the ends of a long label. 16 cuts in under 4. The test checks the geometry rather than the number.
+
+Every inline action keeps its drawn size on touch and has its hit area extended to 44 instead. Making 44 the drawn box turns an action into a slab and pushes it away from the text it belongs to.
+
+`.btn.sm` is two classes and outranks `.ic`, so an icon button has to be named again in the touch block or it takes a text button's side padding.
+
+A dashboard row drops its address on a phone. It truncates to a fragment at that width and crowds the name and the pills it shares the row with.
+
+The pill takes 6 above and below, and the bar gives back the same from its own padding, so adding it did not change the bar's height.
 
 The group cannot clip its rows, because it keeps `overflow: visible` so a dropdown can escape it. The first and last visible rows carry the corner radius themselves instead, or a row's hover fill squares off the corners.
 

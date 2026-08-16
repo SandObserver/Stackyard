@@ -24,12 +24,17 @@ const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'cs
 const admin = fs.readFileSync(path.join(dir, 'admin.css'), 'utf8');
 const tokens = fs.readFileSync(path.join(dir, 'tokens.css'), 'utf8');
 
-/* The declaration block for a selector, comments stripped. */
+/* The declaration block for a selector, comments stripped.
+
+   Anchored to the start of a rule. A bare indexOf finds `.pe{` inside
+   `.ie-row.editing .pe{`, which sits earlier in the file and reports the wrong
+   block. */
 function rule(css, selector) {
   const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const at = bare.indexOf(selector + '{');
+  const at = bare.search(new RegExp(`(^|[}\n])\\s*${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{`));
   assert.ok(at >= 0, `${selector} is not in the stylesheet`);
-  return bare.slice(at + selector.length + 1, bare.indexOf('}', at));
+  const open = bare.indexOf('{', at);
+  return bare.slice(open + 1, bare.indexOf('}', open));
 }
 
 test('a row is 52, and a row carrying two lines is 68', () => {
@@ -98,4 +103,95 @@ test('the touch target still paints a 6 track', () => {
   assert.ok(m, 'the touch-sized rule is gone');
   const painted = 44 - 2 * Number(m[1]);
   assert.equal(painted, 6, `the painted track is ${painted}, not 6`);
+});
+
+/* A group's header and footer belong to the rows below and above them, so they
+   align with the row's label rather than the group's edge. They had sat at 0
+   and 2, sixteen short, which reads as the header being adrift from its group. */
+test('a group header and footer align with the row label', () => {
+  assert.match(rule(admin, '.grp-hdr'), /padding:26px 16px 6px/);
+  assert.match(rule(admin, '.grp-tip'), /padding:8px 16px 14px/);
+  assert.match(rule(admin, '.row'), /padding:0 16px/, 'the inset only aligns if the row still uses 16');
+});
+
+/* Sections need air between them or the page reads as one wall of rows. The
+   kit leaves about 34 between a group and the next section's heading. */
+test('there is room between one group and the next heading', () => {
+  const gap =
+    Number(/margin-bottom:(\d+)px/.exec(rule(admin, '.grp'))[1]) +
+    Number(/padding:(\d+)px/.exec(rule(admin, '.grp-hdr'))[1]);
+  assert.ok(gap >= 30, `only ${gap} between a group and the next heading`);
+});
+
+/* A small button keeps its drawn size on touch. Making 44 the box rather than
+   the hit area turns every inline action into a slab. */
+test('a small button stays small on touch', () => {
+  const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  const m = /\.btn\.sm \{([^}]*)\}/.exec(bare);
+  assert.ok(m, 'the touch rule for a small button is gone');
+  assert.match(m[1], /min-height:30px/, 'the drawn box stays 30');
+  assert.match(bare, /\.btn\.sm::after \{[^}]*height:44px/, 'the hit area has to be extended instead');
+});
+
+test('the sidebar is 320 with 44 items and a pill selection', () => {
+  assert.match(admin, /--sbw:320px/);
+  const item = rule(admin, '.nl');
+  assert.match(item, /min-height:44px/);
+  /* Half the height, so the selection is a pill rather than a rounded box. */
+  assert.match(item, /border-radius:22px/);
+});
+
+/* The bar's height is the pill's padding plus its own. Raising one without
+   lowering the other grows the bar and eats into the page. */
+test('the tab selection is a pill and the bar keeps its height', () => {
+  const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  const tab = /html\.is-mobile \.mtab\{([^}]*)\}/.exec(bare);
+  assert.ok(tab, 'the tab rule is gone');
+  const pillPad = Number(/padding-block:(\d+)px/.exec(tab[1])[1]);
+  /* Not a stadium. The label runs along the bottom edge, where a stadium's
+     curve is tightest, so at this padding a half-height radius clips the ends
+     of a long label. Checked as a bound, since the failure is geometric. */
+  const radius = Number(/border-radius:(\d+)px/.exec(tab[1])[1]);
+  const inset = radius - Math.sqrt(Math.max(0, radius ** 2 - (radius - pillPad) ** 2));
+  assert.ok(inset < 5, `the pill cuts ${inset.toFixed(1)} in at the label's line; keep it under 5`);
+
+  assert.match(tab[1], /padding-inline:\d+px/, 'the label needs room either side of it');
+  assert.match(tab[1], /white-space:nowrap/, 'a label must not wrap inside the pill');
+
+  const bar = /html\.is-mobile body\.authed \.mtabbar\{([\s\S]*?)\}/.exec(bare);
+  const barPad = Number(/padding:(\d+)px \d+px/.exec(bar[1])[1]);
+  assert.equal(pillPad + barPad, 13, `the bar grew: ${pillPad} + ${barPad} should still be 13`);
+
+  assert.match(rule(admin, 'html.is-mobile .mtab.active'), /background:var\(--tab-pill\)/);
+});
+
+/* Every inline action on a phone: the drawn box stays small and 44 is the hit
+   area. Setting 44 on the box instead pushes the control away from the text it
+   belongs to, and .pe sat 16 further from its value than it should have. */
+test('inline actions keep their drawn size on touch', () => {
+  const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  const touch = /@media \(pointer:coarse\) \{([\s\S]*?)\n\}/.exec(bare);
+  assert.ok(touch, 'the touch block is gone');
+
+  assert.doesNotMatch(
+    touch[1],
+    /\.pe \{[^}]*width:44px/,
+    '.pe already carries a 44 hit area through ::after; sizing the box to 44 doubles it',
+  );
+  assert.match(rule(admin, '.pe'), /width:28px/, 'the drawn box stays 28');
+  assert.match(rule(admin, '.pe::after'), /width:44px/, 'the hit area is the pseudo-element');
+
+  /* .btn.sm is two classes and outranks .ic, so an icon button needs saying
+     again or it takes a text button's side padding. */
+  assert.match(touch[1], /\.btn\.ic \{[^}]*padding:6px/, 'an icon button keeps its square padding');
+  assert.ok(
+    touch[1].indexOf('.btn.ic') > touch[1].indexOf('.btn.sm'),
+    '.btn.ic has to come after .btn.sm to win at equal specificity',
+  );
+});
+
+/* The address truncates to a fragment at phone width and crowds the name and
+   the pills, which share the row with it. */
+test('the dashboard row drops its address on a phone', () => {
+  assert.match(admin, /html\.is-mobile \.rmt\{display:none\}/);
 });
