@@ -62,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scripts and stylesheets are now cached for a year instead of revalidated on
   every load. Their URLs change whenever the file does.
 
+- The logo is redrawn, and its arc now follows the accent colour.
+
 ### Fixed
 
 - Hue, saturation and brightness sliders no longer stretch across the row on a
