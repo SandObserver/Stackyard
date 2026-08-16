@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
    design kits, which agree on all eighteen.
 
    The values had been copied by hand, and one had gone in wrong: Cyan was
-   #3CCFFE against Apple's #3CD3FE. No rule referenced Cyan, so nothing rendered
+   #3CCFFE against the kit's #3CD3FE. No rule referenced Cyan, so nothing rendered
    the mistake and nothing caught it. The palette is documented as the list you
    read to choose a colour, so a wrong entry is wrong whether or not a rule uses
    it today.
@@ -54,7 +54,7 @@ function baseDeclarations() {
   return out;
 }
 
-/* The semantic sets, dark. Labels and fills are transcribed at the alpha Apple
+/* The semantic sets, dark. Labels and fills are transcribed at the alpha the kit
    publishes; the surfaces point at palette greys and are checked through the
    reference rather than by value. */
 const APPLE_SEMANTIC = {
@@ -78,7 +78,7 @@ const APPLE_SEMANTIC = {
   '--control-knob': '#FFFFFF',
 };
 
-test('every semantic token is its Apple value', () => {
+test('every semantic token is its reference value', () => {
   const end = tokens.indexOf('@media (prefers-contrast: more)');
   const declared = new Map();
   for (const m of tokens.slice(0, end).matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) {
@@ -93,12 +93,12 @@ test('every semantic token is its Apple value', () => {
   assert.deepEqual(wrong, [], `The semantic layer has drifted:\n  ${wrong.join('\n  ')}`);
 });
 
-test('every palette entry is its Apple value', () => {
+test('every palette entry is its reference value', () => {
   const declared = baseDeclarations();
   const wrong = [];
   for (const [name, expected] of Object.entries(APPLE_DARK)) {
     const actual = declared.get(name);
-    if (actual !== expected) wrong.push(`${name}: ${actual ?? 'not declared'}, Apple has ${expected}`);
+    if (actual !== expected) wrong.push(`${name}: ${actual ?? 'not declared'}, the kit has ${expected}`);
   }
-  assert.deepEqual(wrong, [], `The palette has drifted from Apple's system colours:\n  ${wrong.join('\n  ')}`);
+  assert.deepEqual(wrong, [], `The palette has drifted from the system colours:\n  ${wrong.join('\n  ')}`);
 });

@@ -113,7 +113,7 @@
    read on a card.
 
    The dashboard's glass is not built from Fills. Its overlays are pure white at
-   low alpha over a wallpaper; Apple's fills assume an opaque surface under
+   low alpha over a wallpaper; the kit's fills assume an opaque surface under
    them. Substituting one for the other changes the look. */
 :root {
   --label-primary:     #FFFFFF;
@@ -136,11 +136,11 @@
   --bg-elevated-secondary: var(--sy-gray5);
   --bg-elevated-tertiary:  var(--sy-gray4);
 
-  /* Apple's Backgrounds/Primary, light. The opt-in light widget card is the one
+  /* Backgrounds/Primary, light. The opt-in light widget card is the one
      surface in the project that renders in the light theme. */
   --bg-primary-light:  #FFFFFF;
 
-  /* The white of a knob on a slider or a switch. Apple draws it at full white in
+  /* The white of a knob on a slider or a switch. It is drawn at full white in
      both themes, so it is not a label and does not follow the text ramp. */
   --control-knob:      #FFFFFF;
 }
