@@ -93,6 +93,9 @@
 
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
+  /* A grouped list is rounded much harder than a panel or a dialog. Its own
+     token, so raising it does not also round the settings panel. */
+  --sy-radius-group:26px;
 }
 
 /* ── Semantic colour ─────────────────────────────────────────────────────────

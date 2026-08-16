@@ -66,7 +66,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .cp{flex:1;min-width:0;background:var(--pane);border-inline-start:1px solid var(--bd-inner);overflow-y:auto}
 
 /* ── Section ── */
-.sec{padding:20px 24px 48px}
+.sec{padding:20px 20px 48px}
 .sec[hidden]{display:none}
 .sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
 .sec-title{font-size:var(--fs-title-3);line-height:var(--lh-title-3);letter-spacing:var(--tr-title-3);font-weight:700;flex:1}
@@ -75,7 +75,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .ev-back:hover{opacity:.8}
 
 /* ── Groups ── */
-.grp{background:var(--cp);border-radius:var(--r);overflow:visible;margin-bottom:4px;border:1px solid var(--bd-inner)}
+.grp{background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:4px;border:1px solid var(--bd-inner)}
 .grp-hdr{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm);padding:16px 0 5px;}
 .grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:6px 2px 14px;line-height:1.55}
 /* Why a widget was refused, one validator message per line. Indented as a list rather than run together, since a manifest can fail several rules at once. */
@@ -85,11 +85,21 @@ html{background:var(--bg-color,var(--bg-outer))}
 .grp-tip code{font-family:monospace;font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2)}
 
 /* ── Rows ── */
-.row{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:52px;border-bottom:1px solid var(--bd-inner)}
+.row{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:52px;position:relative}
 /* The separator belongs between two visible rows. :last-child is a DOM
    position, and a group's trailing rows can be hidden. Hidden rows carry
    .d-none, never an inline display. */
-.row:not(:has(~ .row:not(.d-none))){border-bottom:none}
+/* Inset to the leading edge of the label, flush at the trailing edge, which is
+   how a grouped list draws it. A border cannot be inset, so it is drawn here.
+   Absolute, so it is not a grid item in the two-column drow. */
+.row::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:0;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
+.row:not(:has(~ .row:not(.d-none)))::after{content:none}
+/* The group is rounded hard and cannot clip: it keeps overflow visible so a
+   dropdown can escape it. So the end rows carry the corners themselves, or a
+   row's hover fill squares them off. Last visible, not last child, for the same
+   reason as the separator. */
+.grp > .row:first-child{border-start-start-radius:var(--sy-radius-group);border-start-end-radius:var(--sy-radius-group)}
+.grp > .row:not(:has(~ .row:not(.d-none))){border-end-start-radius:var(--sy-radius-group);border-end-end-radius:var(--sy-radius-group)}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:rgba(255,255,255,.04)}
 .rl{flex:1;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--tx);font-weight:400}
@@ -124,9 +134,9 @@ html{background:var(--bg-color,var(--bg-outer))}
 /* ── Slider — wider with JS-driven blue fill ── */
 .slider-wrap{display:flex;align-items:center;gap:8px;flex:2;max-width:none}
 .si{color:var(--dm);flex-shrink:0}
-.adm-range{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right, var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:2px;cursor:pointer;outline:none}
-.adm-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
-.adm-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;border:none;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+.adm-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right, var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:3px;cursor:pointer;outline:none}
+.adm-range::-webkit-slider-thumb{-webkit-appearance:none;width:2px;height:24px;border-radius:1px;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+.adm-range::-moz-range-thumb{width:2px;height:24px;border-radius:1px;border:none;background:var(--control-knob);box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 
 /* ── Dashboard list rows — no delete button ── */
 .al-filter{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -136,7 +146,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .chip{padding:6px 13px;border-radius:20px;border:none;background:rgba(255,255,255,.07);color:var(--dm);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;cursor:pointer;transition:background var(--t),color var(--t);font-family:inherit}
 .chip.on{background:var(--ac);color:var(--label-primary)}
 .chip:hover:not(.on){color:var(--tx)}
-.row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:66px;cursor:grab;border-bottom:1px solid var(--bd-inner);align-items:center}
+.row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:grab;align-items:center}
 .row.drow:hover{background:rgba(255,255,255,.025)}
 .row.drow.dragging{opacity:.4;cursor:grabbing}
 .row.drow.drag-above{box-shadow:0 -2px 0 0 var(--ac)}
@@ -277,10 +287,10 @@ html{background:var(--bg-color,var(--bg-outer))}
 /* ── Toggle ── */
 .tog{display:inline-flex;align-items:center;flex-shrink:0;cursor:pointer}
 .tog input{position:absolute;opacity:0;width:0;height:0}
-.tr{width:44px;height:26px;border-radius:13px;background:rgba(255,255,255,.15);position:relative;transition:background .2s}
+.tr{width:64px;height:28px;border-radius:14px;background:rgba(255,255,255,.15);position:relative;transition:background .2s}
 .tog input:checked+.tr{background:var(--gn)}
-.tr::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:var(--control-knob);top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-.tog input:checked+.tr::after{transform:translateX(18px)}
+.tr::after{content:'';position:absolute;width:38px;height:24px;border-radius:12px;background:var(--control-knob);top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tog input:checked+.tr::after{transform:translateX(22px)}
 .tog input:focus-visible+.tr{outline:2px solid var(--ac);outline-offset:3px}
 /* Still focusable and announced, so it needs a real focus ring rather than
    pointer-events:none. */
@@ -454,7 +464,7 @@ html{background:var(--bg-color,var(--bg-outer))}
   html.is-mobile a.m-back { width:44px; height:44px; }
   .rnm[role="button"] { min-height:44px; }
   /* The track keeps its drawn height; the padding is the hit area. */
-  .adm-range { height:44px; padding-block:20px; background-clip:content-box; }
+  .adm-range { height:44px; padding-block:19px; background-clip:content-box; }
   .hsb-range { height:44px; padding-block:19px; background-clip:content-box; }
   .cc-swatch { width:34px; height:34px; }
 }
