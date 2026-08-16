@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The wallpaper brightness slider now has the same handle as the colour sliders.
 
+
 - Group headings and their help text now line up with the settings above and
   below them.
 

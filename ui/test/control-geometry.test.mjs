@@ -78,10 +78,9 @@ test('both sliders run a 6 track', () => {
   assert.match(rule(admin, '.hsb-range'), /height:6px/);
 });
 
-/* The drift this guards: the wallpaper slider and the three colour sliders were
-   two rules with the same job, and one was changed without the other. Sharing
-   the selector is what makes them the same control, so the check is that they
-   are declared together and not that each happens to say 20. */
+/* One visual control. The two were separate rules with the same job and one was
+   changed without the other, so the handle is declared once, size included. The
+   kit draws a colour slider as a thick bar, which would split them again. */
 test('every slider shares one handle rule', () => {
   const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   for (const kind of ['::-webkit-slider-thumb', '::-moz-range-thumb']) {
@@ -91,6 +90,27 @@ test('every slider shares one handle rule', () => {
     assert.match(m[1], /width:20px/);
     assert.match(m[1], /height:20px/);
     assert.match(m[1], /border-radius:50%/, 'a round knob, big enough to drag on a phone');
+  }
+  /* A size rule for one alone is how they came apart before. Preceded by a
+     closing brace, not a comma, so the shared rule's own second selector line
+     does not read as one. */
+  assert.doesNotMatch(
+    bare,
+    /\}\s*\.hsb-range::-\w+-(slider|range)-thumb\{/,
+    'a colour-only handle rule is back; the two have to stay one control',
+  );
+});
+
+/* Clipping the paint to the content box shrinks each corner by the padding, so
+   a track set to half its own height still draws square ends on touch. */
+test('a touch track still draws round ends', () => {
+  const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const cls of ['adm-range', 'hsb-range']) {
+    const track = 6;
+    const m = new RegExp(`\\.${cls} \\{ height:44px; padding-block:(\\d+)px;[^}]*border-radius:(\\d+)px`).exec(bare);
+    assert.ok(m, `${cls} has no compensated radius in the touch block`);
+    const inner = Number(m[2]) - Number(m[1]);
+    assert.equal(inner, track / 2, `${cls} draws at radius ${inner}, half of ${track} is ${track / 2}`);
   }
 });
 
