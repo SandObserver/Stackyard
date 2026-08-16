@@ -1,52 +1,16 @@
 /* ── Browser support ─────────────────────────────────────────────────────────
    WebKit 16.2 and newer, and current Chrome, Edge and Firefox.
-   16.2 is where color-mix() lands, which the chip tints in admin.css derive
-   from. There is no build step and no autoprefixer, so every vendor prefix in
-   this project is hand-written and has to earn its place.
 
-   97 prefixes were removed once this floor was written down: the old flexbox
-   set (-webkit-flex, -webkit-align-items, -webkit-justify-content and friends),
-   -webkit-transform, -webkit-transition, -webkit-animation-*, all of which have
-   been unprefixed everywhere for a decade, and -webkit-overflow-scrolling,
-   which mobile WebKit has ignored since version 13.
+   There is no autoprefixer. The vendor prefixes still in this project are the
+   ones with no working unprefixed equivalent at that floor. Do not remove one
+   because an unprefixed property sits beside it.
 
-   These are the ones that stay, and why. Do not remove them on the grounds that
-   an unprefixed property sits beside them; for the first two that is exactly
-   the point.
-
-     -webkit-backdrop-filter     WebKit needed the prefix well past 16.2, so the
-                                 glass panels flatten without it.
-     -webkit-text-size-adjust    WebKit supports only the prefixed form.
-     -webkit-line-clamp          With display:-webkit-box and -webkit-box-orient
-     -webkit-box-orient          this is still the only portable way to clamp
-     display:-webkit-box         text to a number of lines.
-     -webkit-tap-highlight-color WebKit-only, no standard equivalent exists.
-     -webkit-font-smoothing      Non-standard, as is -moz-osx-font-smoothing.
-     -webkit-appearance          Required inside ::-webkit-slider-thumb.
-     ::-webkit-slider-thumb      Pseudo-elements with no standard equivalent, as
-     ::-moz-range-thumb          is the Firefox counterpart.
-     -webkit-user-select         WebKit only dropped the prefix at 17.
-
-   ui/test/vendor-prefix-ratchet.test.mjs holds this list, so adding a prefix
-   outside it fails rather than accumulating quietly. */
+   ui/test/vendor-prefix-ratchet.test.mjs holds the permitted list. */
 
 /* ── Palette ─────────────────────────────────────────────────────────────────
-   System colours from the reference kit, dark values. The dashboard renders on
-   a dark panel or a wallpaper and has one appearance. The Settings page has two,
-   and the light one re-declares this palette further down.
-
-   No stylesheet declares a prefers-color-scheme rule. The Settings page resolves
-   the system preference in script and writes data-theme on <html>, so the light
-   values are selected by attribute and never by media query.
-
-   Each hue also has a -hi entry, the increased-contrast value for the same
-   colour in dark mode. The prefers-contrast block below swaps the whole palette
-   over to them, so every role that points at a hue follows automatically.
-
-   The full set is defined, including hues no rule currently references, so
-   choosing a colour means reading this list. Two earlier tokens were already
-   values from this palette under other names: --sy-red held Pink and
-   --sy-blue-badge held Blue, both increased-contrast light. */
+   Dark values. Each hue has a -hi partner, the increased-contrast value used by
+   the prefers-contrast block below. The light theme re-declares both further
+   down. */
 :root {
   --sy-red:#FF4245;      --sy-red-hi:#FF6165;
   --sy-orange:#FF9230;   --sy-orange-hi:#FFA056;
@@ -61,8 +25,7 @@
   --sy-pink:#FF375F;     --sy-pink-hi:#FF8AC4;
   --sy-brown:#B78A66;    --sy-brown-hi:#DBA679;
 
-  /* systemGray through systemGray6. gray6 is the darkest, gray the
-     lightest. */
+  /* gray6 is the darkest, gray the lightest. The light theme reverses this. */
   --sy-gray:#8E8E93;     --sy-gray-hi:#AEAEB2;
   --sy-gray2:#636366;    --sy-gray2-hi:#7C7C80;
   --sy-gray3:#48484A;    --sy-gray3-hi:#545456;
@@ -70,25 +33,14 @@
   --sy-gray5:#2C2C2E;    --sy-gray5-hi:#363638;
   --sy-gray6:#1C1C1E;    --sy-gray6-hi:#242426;
 
-  /* Two greys that are not from the palette. Each is the smallest lift off the grey it
-     replaces that clears WCAG on the worst surface it is used against, the
-     card, gray4 #3A3A3C.
-
-       --sy-a11y-dim     gray  #8E8E93 -> #A3A3A8   3.48 -> 4.52, needs 4.5
-       --sy-a11y-border  gray2 #636366 -> #838387   1.90 -> 3.01, needs 3.0 */
+  /* Not palette values. Each is the lift off gray and gray2 that clears WCAG on
+     the card surface, gray4. Lowering either fails ui/test/contrast.test.mjs. */
   --sy-a11y-dim:#A3A3A8;
   --sy-a11y-border:#838387;
 }
 
 /* ── Roles ───────────────────────────────────────────────────────────────────
-   What a colour is for, pointing at what it is. A rule should name the role, so
-   changing the accent is one line here rather than a hunt through two
-   stylesheets, which is what it used to be: the accent was written as #027aff in
-   admin.css and #0a84ff in dashboard.css, two different blues for one job.
-
-   --accent-strong is the lighter accent, used both for accent-coloured text on
-   a dark panel and as the hover fill under an accent button. It is the palette's
-   own increased-contrast teal rather than a shade invented here. */
+   What a colour is for. A rule names a role, never a palette entry. */
 :root {
   --accent:        var(--sy-teal);
   --accent-strong: var(--sy-teal-hi);
@@ -96,39 +48,23 @@
   --warning:       var(--sy-orange);
   --success:       var(--sy-green);
 
-  /* Ink on a filled control: an accent button, the selected navigation row, a
-     tile carrying a user-chosen colour. White in both themes. It is not a label
-     level, because the surface under it is a colour rather than a background,
-     and following the text ramp would turn it black in the light theme. */
+  /* Ink on a filled control. White in both themes. Not a label level: the text
+     ramp would turn it black in the light theme. */
   --on-accent:     #FFFFFF;
 
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
-  /* A grouped list is rounded much harder than a panel or a dialog. Its own
-     token, so raising it does not also round the settings panel. */
   --sy-radius-group:26px;
 }
 
 /* ── Semantic colour ─────────────────────────────────────────────────────────
-   The semantic sets, dark values: what a colour is applied to, one level
-   below the roles above. A rule that needs "the dimmest readable caption" names
-   a label level rather than inventing an alpha.
+   What a colour is applied to, dark values. See docs/design-system.md.
 
-   Labels are the text ramp. Fills are the tint behind a small control, and are
-   grey-tinted rather than pure white, which is what distinguishes them from
-   this project's glass overlays. Separators divide content. Backgrounds are the
-   three layered surfaces, with an elevated set for content over a sheet.
+   Label levels below primary do not clear WCAG on this project's cards. Text
+   that has to be read on a card uses --sy-a11y-dim.
 
-   Two cautions before using these.
-
-   Labels/Secondary and below do not clear WCAG 1.4.3 on this project's card
-   surfaces. That is what --sy-a11y-dim exists for, and ui/test/contrast.test.mjs
-   holds the line. Use a label level for hierarchy, not for text that has to be
-   read on a card.
-
-   The dashboard's glass is not built from Fills. Its overlays are pure white at
-   low alpha over a wallpaper; the kit's fills assume an opaque surface under
-   them. Substituting one for the other changes the look. */
+   Fills are not the dashboard's glass. The glass is white at low alpha over a
+   wallpaper; a fill is grey-tinted and assumes an opaque surface. */
 :root {
   --label-primary:     #FFFFFF;
   --label-secondary:   rgba(235,235,245,.70);
@@ -150,30 +86,20 @@
   --bg-elevated-secondary: var(--sy-gray5);
   --bg-elevated-tertiary:  var(--sy-gray4);
 
-  /* Backgrounds/Primary, light. The opt-in light widget card is the one
-     surface in the project that renders in the light theme. */
+  /* The opt-in light widget card. */
   --bg-primary-light:  #FFFFFF;
 
-  /* The white of a knob on a slider or a switch. It is drawn at full white in
-     both themes, so it is not a label and does not follow the text ramp. */
+  /* A slider or switch knob. Full white in both themes, so not a label. */
   --control-knob:      #FFFFFF;
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────────
-   The same palette, roles and semantic sets at their light values. Only the
-   Settings page opts in, by carrying data-theme="light" on <html>. A page that
-   never sets the attribute is unaffected, which is why the dashboard keeps one
-   appearance.
+   The same sets at their light values, selected by an attribute a page sets on
+   <html>. No stylesheet declares a prefers-color-scheme rule.
 
-   The -hi entries are the increased-contrast light values, so the
-   prefers-contrast block below raises the light theme the same way it raises
-   the dark one.
-
-   The light hues are tuned for a fill, not for text: green at #34C759 behind
-   black is a badge, not a sentence. Every role here that ends up as text or as
-   the edge of a control therefore points at the -hi entry, which is the
-   accessible variant of the same hue. ui/test/contrast.test.mjs measures the
-   pairs that carry a WCAG requirement in both themes. */
+   Light hues are drawn for a fill, not for text. A role that ends up as text or
+   as the edge of a control points at the -hi entry, the accessible variant of
+   the same hue. ui/test/contrast.test.mjs measures the required pairs. */
 html[data-theme="light"] {
   --sy-red:#FF3B30;      --sy-red-hi:#D70015;
   --sy-orange:#FF9500;   --sy-orange-hi:#C93400;
@@ -188,8 +114,7 @@ html[data-theme="light"] {
   --sy-pink:#FF2D55;     --sy-pink-hi:#C9155A;
   --sy-brown:#A2845E;    --sy-brown-hi:#7F6545;
 
-  /* gray is the darkest here and gray6 the lightest, the reverse of the dark
-     set. A role that points at a grey follows without being re-declared. */
+  /* Reversed: gray is the darkest here, gray6 the lightest. */
   --sy-gray:#8E8E93;     --sy-gray-hi:#6C6C70;
   --sy-gray2:#AEAEB2;    --sy-gray2-hi:#8E8E93;
   --sy-gray3:#C7C7CC;    --sy-gray3-hi:#AEAEB2;
@@ -197,15 +122,12 @@ html[data-theme="light"] {
   --sy-gray5:#E5E5EA;    --sy-gray5-hi:#D8D8DC;
   --sy-gray6:#F2F2F7;    --sy-gray6-hi:#EBEBF0;
 
-  /* The dark theme lifts two greys off the palette to clear WCAG on its worst
-     surface. The light theme needs no equivalent: the accessible greys above
-     already clear it on white, so each points at its palette neighbour. */
+  /* The greys above already clear WCAG on white, so no lift is needed here. */
   --sy-a11y-dim:var(--sy-gray-hi);
   --sy-a11y-border:var(--sy-gray);
 
-  /* The accent is the accessible teal, not the light one. It is a button fill
-     under white ink and a link colour on white, and the light teal carries
-     neither. --accent-strong is the hover state, one step deeper again. */
+  /* The accessible teal. The light teal carries neither white ink nor a link
+     colour on white. */
   --accent:        var(--sy-teal-hi);
   --accent-strong: #00587E;
   --danger:        var(--sy-red-hi);
@@ -234,21 +156,13 @@ html[data-theme="light"] {
 }
 
 /* ── Type scale ──────────────────────────────────────────────────────────────
-   The eleven text styles, at the default Dynamic Type step. Three tokens each:
-   size, line height, letter spacing. A rule that sets a size should set all
-   three, or the style is only a third applied.
+   Eleven styles at the default step. A rule sets all three tokens of a style.
 
-   Line height is unitless and letter spacing is in em, both deliberately. The
-   dashboard multiplies its sizes by var(--sc), and a reader can zoom. A ratio
-   and an em follow the size they are used with; a px leading and a px tracking
-   would hold still and the style would come apart at every size but this one.
+   Leading is unitless and tracking is in em, never px. Sizes are multiplied by
+   var(--sc) and a reader can zoom, so both have to follow the size in use.
 
-   Headline is Body at semibold. It carries its own tokens so a rule can name
-   the style it means, but only the weight distinguishes the two.
-
-   The published values are absolute: Footnote is 13 on 18 with -0.08 tracking.
-   The comment after each line records that pair, because the ratio is what the
-   rule needs and the pair is what a design is checked against. */
+   The comment on each line is the size and leading pair the design is checked
+   against. ui/test/type-scale.test.mjs holds them. */
 :root {
   --fs-large-title:34px; --lh-large-title:1.2059; --tr-large-title:0.0118em;  /* 34/41 */
   --fs-title-1:28px;     --lh-title-1:1.2143;     --tr-title-1:0.0136em;      /* 28/34 */
@@ -264,28 +178,17 @@ html[data-theme="light"] {
 
   --fw-headline:600;
 
-  /* The system face. -apple-system resolves to it and picks the optical cut for
-     the size it is used at, Text below 20 and Display at 20 and above. Naming
-     SF Pro Display or SF Pro Text pins one cut and defeats that, which is what
-     the two pages and most widgets used to do. Do not add them back. */
+  /* The system face. It picks the optical cut for the size it is drawn at.
+     Naming a cut pins one and defeats that. Do not name one. */
   --font-ui: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 /* ── Type step ───────────────────────────────────────────────────────────────
-   The scale above is the default Dynamic Type step. A page can run the whole
-   scale one or more steps down by opting into a step here, which is how the
-   published system handles a denser screen: the same eleven styles at smaller
-   sizes, not a size picked outside the scale.
+   The same eleven styles at smaller sizes, for a denser layout. A page opts in
+   with a class on <html>. A phone stays at the default step.
 
-   A document opts in with a class on <html>, and the step applies only where
-   the layout is not a phone. The admin panel uses it; a phone stays at the
-   default step, where a settings row is 17.
-
-   Tracking is republished, not inherited. The reference gives one absolute
-   tracking per style, so an em that reproduces -0.43px at 17 does not
-   reproduce it at 15. Each step carries its own em for that reason.
-
-   ui/test/type-scale.test.mjs checks each step against the published pairs. */
+   Tracking is republished per step, not inherited. There is one absolute
+   tracking per style, so the em that reproduces it at 17 does not at 15. */
 html.type-small:not(.is-mobile) {
   --fs-large-title:32px; --lh-large-title:1.2188; --tr-large-title:0.0125em;  /* 32/39 */
   --fs-title-1:26px;     --lh-title-1:1.2308;     --tr-title-1:0.0146em;      /* 26/32 */
@@ -301,16 +204,9 @@ html.type-small:not(.is-mobile) {
 }
 
 /* ── Accessibility preferences ───────────────────────────────────────────────
-   Here rather than in dashboard.css because both pages load this file and only
-   the dashboard loaded that one. Someone with reduced motion turned on got a
-   calm dashboard and a Settings page that still slid and sprang, which is worse
-   than being consistently wrong: the setting appears to work until you open
-   Settings.
-
-   Only the rules that apply to any page live here. Selectors naming dashboard
-   elements stay in dashboard.css, as do overrides of tokens that file defines,
-   since overriding them here would be writing to variables that do not exist on
-   the Admin page. */
+   Both pages load this file, so a preference applies to both. Only rules that
+   suit any page belong here. A selector naming dashboard elements, or an
+   override of a token dashboard.css defines, stays in that file. */
 
 /* Not zero. A duration of exactly 0 skips the transitionend event some code
    waits on. .01ms is instant and still fires. */
@@ -328,13 +224,9 @@ html.type-small:not(.is-mobile) {
   * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
 
-/* Increased contrast: the raised values of whichever theme is in force. Every
-   role points at a hue, so raising the hues raises the roles. Each page raises
-   its own surface and border tokens in its own file.
-
-   The light theme needs its own copy of this list. It sets the palette on
-   html[data-theme="light"], which outranks a :root rule, so a shared block here
-   would leave the light hues unraised. */
+/* Increased contrast: raise the hues and every role follows. Both selectors are
+   needed. The light theme sets the palette at a higher specificity, so a :root
+   rule alone would leave the light hues unraised. */
 @media (prefers-contrast: more) {
   :root, html[data-theme="light"] {
     --sy-red:var(--sy-red-hi);
@@ -358,11 +250,7 @@ html.type-small:not(.is-mobile) {
   }
 }
 
-/* ── Rules both pages need ───────────────────────────────────────────────────
-   These were written out in full in admin.css and again in dashboard.css. The
-   wallpaper layer was the same ten declarations in both, so a change to how the
-   background image is drawn had to be made twice or the two pages drifted. Both
-   pages load this file, so here is the one place they can share. */
+/* ── Rules both pages need ───────────────────────────────────────────────── */
 
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0 }
 
