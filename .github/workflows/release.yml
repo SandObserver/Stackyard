@@ -226,3 +226,60 @@ jobs:
           repository: ${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard
           readme-filepath: dockerhub-description.md
           short-description: A self-hosted homelab dashboard you actually want to look at.
+
+  # A tag with an image and no release page has happened before. This runs after
+  # the image is published, so the page never describes something unpublished.
+  release-page:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    # Every write here is the app token's.
+    permissions: {}
+    steps:
+      # The app token, not GITHUB_TOKEN: a release published with the built-in
+      # token starts no workflow run, and the Community Applications template
+      # update listens for exactly that event.
+      - name: Mint a token for the release app
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+
+      - name: Classify the tag
+        id: tag
+        run: node scripts/is-prerelease.js "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
+      # The notes are the changelog section, so the page and the file cannot
+      # describe the release differently.
+      - name: Publish the release page
+        env:
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG already has a release page."
+            exit 0
+          fi
+          node scripts/release-notes.js "$TAG" > release-notes.md
+          if [ "$PRERELEASE" = 'true' ]; then
+            FLAG=--prerelease
+          else
+            FLAG=--latest
+          fi
+          gh release create "$TAG" \
+            --title "${TAG#v}" \
+            --notes-file release-notes.md \
+            --verify-tag \
+            "$FLAG"

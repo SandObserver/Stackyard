@@ -26,6 +26,7 @@ in `.github/actions/checks/action.yml`, so the list here is the whole of it:
 
 ```
 npm ci
+node scripts/changelog-check.js
 node scripts/bump-cache-busting.js --check
 npm run paths:check
 cd api && npm test
@@ -41,6 +42,12 @@ docker build -t stackyard:ci .
 CodeQL also runs on every pull request. A finding it reports has to be resolved
 before merge.
 
+- **`changelog-check.js`** verifies the structure of `CHANGELOG.md`: the Keep a
+  Changelog header, the six section names, a real date on every released
+  version, descending versions, and a compare link per version. Structure fails
+  the check. Style problems in `[Unreleased]`, such as a rationale clause or a
+  three-sentence entry, print as warnings on the pull request and do not fail
+  it. Releasing is documented in [docs/releasing.md](docs/releasing.md).
 - **`bump-cache-busting.js --check`** verifies that every `/css/` and `/js/`
   reference carries a `?v=` stamp. The release build recomputes the hashes, so
   write `?v=1` and never edit a stamp by hand.
