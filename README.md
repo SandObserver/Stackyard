@@ -22,12 +22,11 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 
 - [Why Stackyard](#why-stackyard)
 - [Getting started](#getting-started)
-- [Building from source](#building-from-source)
-- [Configuring](#configuring)
 - [Icons](#icons)
 - [Widgets](#widgets)
 - [Live activity badges](#live-activity-badges)
 - [Security](#security)
+- [Building from source](#building-from-source)
 - [Contributing](#contributing)
 - [Changelog](#changelog)
 - [License](#license)
@@ -40,7 +39,7 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
 - **No dependencies.** Review it once and stop worrying about the supply chain.
 
-Has a mobile layout, and is available in English, Persian, Chinese, Spanish, German, and French.
+Has a mobile layout and ships in English, Persian, Chinese, Spanish, German, and French.
 
 Add it to a phone's home screen and it opens in its own window, without browser chrome. There is no offline mode: every tile shows live data, so the dashboard needs to reach your services.
 
@@ -48,7 +47,7 @@ Add it to a phone's home screen and it opens in its own window, without browser 
 
 You need Docker.
 
-**Using Docker Compose** (`docker-compose.yml`):
+**Using Docker Compose:**
 
 ```yaml
 services:
@@ -79,11 +78,48 @@ docker run -d \
   ghcr.io/sandobserver/stackyard:latest
 ```
 
-Then open `http://localhost:8700` and set things up from the admin app on the dashboard (or go to `/admin`). Config and uploaded icons persist in `./data` and `./icons`.
+**On Unraid:** install it from [Community Apps](https://ca.unraid.net/apps/stackyard-0ara4ku0sjjwqy).
 
-The same image is published to Docker Hub as `sandobserver/stackyard`, if you would rather pull from there. Prefer `ghcr.io`: it is the registry the [release signature](docs/security.md#verifying-a-release-image) covers.
+Then open `http://localhost:8700` and set everything up at `/admin`. Config and uploaded icons persist in `./data` and `./icons`.
 
-The [`docker-compose.yml`](docker-compose.yml) in the repo is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access, and Docker health checks.
+The same image is on Docker Hub as `sandobserver/stackyard`. Prefer `ghcr.io`: it is the registry the [release signature](docs/security.md#verifying-a-release-image) covers.
+
+The repo's [`docker-compose.yml`](docker-compose.yml) is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access, and Docker health checks.
+
+General holds the title, language, password protection, and import and export. Import also reads a gethomepage or Dashy YAML file.
+
+![Stackyard admin, General section](docs/screenshot-admin.png)
+
+## Icons
+
+App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set. You can also upload your own; custom icons are stored in `./icons`.
+
+## Widgets
+
+Widgets and the services they read:
+
+- **Clock**
+- **Now Playing**: Plex, Jellyfin, Emby, Navidrome
+- **Weather**: Open-Meteo (no API key required)
+- **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
+- **GitHub**: contribution graph and pull requests
+- **Books**: Audiobookshelf, Komga, Kavita
+- **System stats**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed
+- **Disk health**: TrueNAS, Scrutiny
+- **Backup**: Duplicati, Kopia
+- **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
+
+Adding one is a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md).
+
+## Live activity badges
+
+Give Stackyard an API endpoint and it lists the numbers in the response, so you pick the one you want on the tile. Point it at Sonarr's queue and the Sonarr tile carries a count of episodes still downloading. **Show From** sets a floor, so a queue that is never quite empty stays quiet until it matters.
+
+![Configuring a live activity badge](docs/screenshot-app-edit.png)
+
+## Security
+
+Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
 
 ## Building from source
 
@@ -94,46 +130,6 @@ docker build -t stackyard:local .
 ```
 
 Then run `stackyard:local` the same way as above. For working on the code without Docker, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Configuring
-
-Everything is configured in the admin UI (`/admin`), split into a few sections:
-
-- **General**: title, description, and your server's **Host IP** (used to allow your own server in badge URLs and SSRF checks). Also **Monitoring** (logging level, Docker container health checks, and the socket URL used to reach Docker), optional **password protection**, and config **import / export**. Backup also imports a gethomepage or Dashy YAML config: links and folders are added to the dashboard, existing items are left alone, and anything that cannot be carried across is listed before you confirm.
-- **Appearance**: wallpaper and the overall look. **Settings Display Mode** picks the appearance of the Settings pages: System Default, Light or Dark. It is stored in the browser and applies to that device only. Also **Keep Screen Awake**, which stops the screen dimming while the dashboard is open. Browsers allow this over HTTPS only.
-- **Dashboard**: add and arrange your apps, folders, and widgets, and configure each one (including live activity badges).
-- **About**: version and links.
-
-## Icons
-
-App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set. Stackyard fetches each icon once and keeps it in memory, so the CDN is not contacted on every page load. You can also upload your own; custom icons are stored in `./icons`.
-
-## Widgets
-
-Current widgets and the services they integrate with:
-
-- **Clock**
-- **Now Playing**: Plex, Jellyfin, Emby, Navidrome
-- **Weather**: Open-Meteo (no API key required)
-- **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
-- **GitHub**: contribution graph and pull requests
-- **Books**: Audiobookshelf, Komga, Kavita
-- **System stats**: CPU, memory, disk usage, network speed (SpeedTest Tracker, MySpeed), RX/TX throughput, and uptime.
-- **Disk health**: TrueNAS, Scrutiny
-- **Backup**: Duplicati, Kopia
-- **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
-
-Adding one is a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md).
-
-## Live activity badges
-
-Instead of writing a widget to surface one number, point Stackyard at any API endpoint and it lists the values in the response. Pick the one you care about (pending requests in a media server, items in a queue) and it becomes a small badge on that tile. Any service with an API, without code.
-
-Set **Show From** to badge only counts at or above a number, so a queue that is never quite empty stays quiet until it matters.
-
-## Security
-
-Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
 
 ## Contributing
 
