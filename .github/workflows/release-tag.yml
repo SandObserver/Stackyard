@@ -1,0 +1,72 @@
+name: Release tag
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - api/package.json
+
+# The tag is pushed with the app token. A tag pushed with GITHUB_TOKEN starts no
+# workflow run, so the image would never build.
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint a token for the release app
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+
+      # api/package.json changes for other reasons too. Only a version that the
+      # changelog already describes as released is a release.
+      - name: Decide whether this is a release
+        id: decide
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./api/package.json').version")"
+          if git ls-remote --exit-code --tags "https://github.com/${REPO}.git" "v${VERSION}" >/dev/null 2>&1; then
+            echo "v${VERSION} is already tagged."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! node scripts/changelog-check.js --release "${VERSION}"; then
+            echo "::notice::api/package.json says ${VERSION}, but the tree is not release-ready. No tag."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+
+      - name: Tag the release
+        if: steps.decide.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.decide.outputs.version }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config user.name 'stackyard-release[bot]'
+          git config user.email '${{ steps.app.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git tag -a "v${VERSION}" -m "Release ${VERSION}"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "refs/tags/v${VERSION}"

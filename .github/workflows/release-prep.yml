@@ -1,0 +1,88 @@
+name: Release prep
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, without the leading v (for example 1.8.0)'
+        required: true
+        type: string
+
+# Every write goes through the app token below. GITHUB_TOKEN needs no scope of
+# its own, and a pull request it opened would start no checks.
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint a token for the release app
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout default branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+
+      # Dates the section, writes the compare link, bumps api/package.json and
+      # moves the demo pin in render.yaml.
+      - name: Prepare the release
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node scripts/release-prep.js "$VERSION"
+
+      # The same gate the pull request will run, failing here instead of after
+      # a branch exists.
+      - name: Check the changelog
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node scripts/changelog-check.js --release "$VERSION"
+
+      - name: Open the release pull request
+        env:
+          VERSION: ${{ inputs.version }}
+          BASE: ${{ github.event.repository.default_branch }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          set -euo pipefail
+          BRANCH="release/v${VERSION}"
+          git config user.name 'stackyard-release[bot]'
+          git config user.email '${{ steps.app.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git checkout -b "${BRANCH}"
+          git add CHANGELOG.md api/package.json render.yaml
+          git commit -m "Release ${VERSION}"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${BRANCH}"
+          gh pr create \
+            --base "${BASE}" \
+            --head "${BRANCH}" \
+            --title "Release: ${VERSION}" \
+            --label release \
+            --body "$(printf '%s\n' \
+              '**Summary**' \
+              "- Date the changelog section as ${VERSION} and add its compare link." \
+              "- Bump api/package.json to ${VERSION}." \
+              "- Pin the demo image to ${VERSION} in render.yaml." \
+              '' \
+              '**Testing**' \
+              'The changelog gate ran in release mode before this branch was pushed. Merging this tags the release and publishes the image.' \
+              '' \
+              '**Checklist**' \
+              '- [x] Stays within the project constraints: one container, no runtime dependencies, no build step (see CONTRIBUTING.md).' \
+              '- [ ] Tests added or updated for new logic, and the full suite, lint, and typechecks pass.' \
+              '- [ ] Docs updated if behavior or configuration changed.' \
+              '- [x] CHANGELOG.md updated under Unreleased if the change is user-visible.')"

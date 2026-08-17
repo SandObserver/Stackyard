@@ -31,6 +31,19 @@ runs:
       shell: bash
       run: npm ci
 
+    # Structure fails here; style prints warnings on the pull request.
+    - name: Check the changelog
+      shell: bash
+      run: node scripts/changelog-check.js
+
+    # A release must also agree with itself: the newest dated section, the
+    # package version and the demo pin all name one version, and nothing is left
+    # under [Unreleased].
+    - name: Check the changelog describes this release
+      if: inputs.mode == 'release'
+      shell: bash
+      run: node scripts/changelog-check.js --release "$(node -p "require('./api/package.json').version")"
+
     - name: Check asset cache-busting
       shell: bash
       run: node scripts/bump-cache-busting.js --check
