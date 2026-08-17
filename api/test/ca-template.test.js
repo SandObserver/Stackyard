@@ -82,6 +82,19 @@ test('both documents use the repository path with its real capitalisation', () =
   }
 });
 
+/* The default branch requires a pull request. A workflow that pushes the
+   template straight at it is rejected by the ruleset and the release notes
+   never reach the listing. */
+test('the template update opens a pull request instead of pushing to the default branch', () => {
+  const src = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'ca-template-changes.yml'), 'utf8');
+  const commands = src
+    .split('\n')
+    .filter(line => !/^\s*#/.test(line))
+    .join('\n');
+  assert.match(commands, /gh pr create/, 'the update no longer opens a pull request');
+  assert.doesNotMatch(commands, /git push[^\n]*HEAD:\$\{BASE\}/, 'a direct push to the default branch is rejected');
+});
+
 /* The runner image has no xmllint, so a workflow that reaches for it fails at
    step one. Both validate through the committed script instead. */
 test('the workflows validate with the committed script, not xmllint', () => {
