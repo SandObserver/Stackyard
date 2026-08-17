@@ -17,12 +17,20 @@ import { buildWidgetForm } from '/js/admin-widget-form.js?v=09994a9d';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
-import { clearSkipTls, convert, detectSource, insecureApps, NOTE, SKIP } from '/js/import-foreign.js?v=07b2664f';
+import {
+  clearSkipTls,
+  convert,
+  detectSource,
+  insecureApps,
+  NOTE,
+  parseErrorsAsSkipped,
+  SKIP,
+} from '/js/import-foreign.js?v=4161a917';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=fbd2d2ef';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=b81f6875';
-import { parseYaml, YamlLiteError } from '/js/yaml-lite.js?v=c69d0ef5';
+import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
    viewport than they have. The rule lives in layout.js, shared with the
@@ -1333,6 +1341,7 @@ const SKIP_TEXT = {
   [SKIP.PLACEHOLDER_HREF]: 'importForeign.skipPlaceholderHref',
   [SKIP.RELATIVE_HREF]: 'importForeign.skipRelativeHref',
   [SKIP.UNREADABLE]: 'importForeign.skipUnreadable',
+  [SKIP.UNPARSABLE]: 'importForeign.skipUnparsable',
 };
 const NOTE_TEXT = {
   [NOTE.ICON_DROPPED]: 'importForeign.noteIcon',
@@ -1383,12 +1392,12 @@ el('imp-foreign').onchange = async e => {
       skipped = [],
       notes = [];
     for (const file of files) {
-      let doc;
+      let doc, parseErrors;
       try {
-        doc = parseYaml(await file.text());
+        /* One unreadable line drops its own entry and no more. Refusing the
+           whole file cost the reader every other service in it. */
+        ({ doc, errors: parseErrors } = parseYamlTolerant(await file.text()));
       } catch (err) {
-        /* All or nothing. A half-imported dashboard is harder to undo than a
-           refused file. */
         if (err instanceof YamlLiteError)
           throw new Error(t('toast.importYamlUnsupported', { file: file.name, reason: err.reason, line: err.line }));
         throw err;
@@ -1397,7 +1406,7 @@ el('imp-foreign').onchange = async e => {
       if (!kind) throw new Error(t('toast.importUnknownFormat', { file: file.name }));
       const out = convert(kind, doc, taken, t('importForeign.untitledFolder'));
       items.push(...out.items);
-      skipped.push(...out.skipped);
+      skipped.push(...parseErrorsAsSkipped(parseErrors, file.name), ...out.skipped);
       notes.push(...out.notes);
     }
 

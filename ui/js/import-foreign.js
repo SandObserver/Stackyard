@@ -13,6 +13,7 @@ export const SKIP = Object.freeze({
   PLACEHOLDER_HREF: 'placeholder-href',
   RELATIVE_HREF: 'relative-href',
   UNREADABLE: 'unreadable',
+  UNPARSABLE: 'unparsable',
 });
 
 export const NOTE = Object.freeze({
@@ -404,4 +405,17 @@ export function convert(kind, doc, takenIds, untitledFolder) {
   if (kind === 'dashy') return convertDashy(doc, takenIds, untitledFolder);
   if (kind === 'homepage-bookmarks') return convertHomepageBookmarks(doc, takenIds);
   return convertHomepageServices(doc, takenIds);
+}
+
+/** The lines the parser could not read, as entries for the same list that shows
+    what else was left out.
+    @param {Array<{ line: number, reason: string }>} errors @param {string} fileName
+    @returns {Array<{ reason: string, name: string, group: string, detail: string }>} */
+export function parseErrorsAsSkipped(errors, fileName = '') {
+  return (Array.isArray(errors) ? errors : []).map(e => ({
+    reason: SKIP.UNPARSABLE,
+    name: fileName,
+    group: '',
+    detail: String(e.line),
+  }));
 }

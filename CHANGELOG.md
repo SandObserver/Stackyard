@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Import from another dashboard reads inline lists and mappings, environment
+  placeholders, anchors on a value, and a comment after a quoted value.
+
+- Import from another dashboard no longer refuses a whole file over one
+  unreadable line. The line is listed in the preview and the rest is imported.
+
 - Settings > About shows the version again, and the update link is translated.
 
 - Serving a bundled icon no longer logs an nginx error.

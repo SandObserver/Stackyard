@@ -22,6 +22,7 @@ const {
   clearSkipTls,
   convertHomepageServices,
   convertHomepageBookmarks,
+  parseErrorsAsSkipped,
   SKIP,
   NOTE,
 } = await import('/js/import-foreign.js');
@@ -449,4 +450,25 @@ test('accepting the request is what keeps it, and nothing else is touched', () =
 test('insecureApps tolerates the shapes a damaged conversion could produce', () => {
   assert.deepEqual(insecureApps(null), []);
   assert.deepEqual(insecureApps([null, undefined, { type: 'app' }, { type: 'folder', skipTlsVerify: true }]), []);
+});
+
+/* A line the parser had to drop is a missing service, so it belongs in the same
+   list the preview already shows for everything else left out. */
+test('parser errors become skipped rows carrying the line and the file', () => {
+  const rows = parseErrorsAsSkipped(
+    [
+      { line: 12, reason: 'merge keys are not supported' },
+      { line: 30, reason: 'an alias to a block anchor is not supported' },
+    ],
+    'services.yaml',
+  );
+  assert.deepEqual(rows, [
+    { reason: SKIP.UNPARSABLE, name: 'services.yaml', group: '', detail: '12' },
+    { reason: SKIP.UNPARSABLE, name: 'services.yaml', group: '', detail: '30' },
+  ]);
+});
+
+test('a clean parse contributes no skipped rows', () => {
+  assert.deepEqual(parseErrorsAsSkipped([], 'services.yaml'), []);
+  assert.deepEqual(parseErrorsAsSkipped(null), []);
 });

@@ -166,3 +166,34 @@ test('a config in the flush layout converts like any other', () => {
   );
   assert.equal(apps(out).find(a => a.label === 'Long Icon').monitoring.healthcheck.pingUrl, 'https://plex.example.com');
 });
+
+/* The constructs that used to refuse a whole file, in one config: inline lists
+   and mappings, unquoted environment placeholders, an anchor on a value, a
+   folded description and a comment after a quoted value. Every one of them was
+   taken from a public gethomepage config, and the file is what Homepage's own
+   documentation tells people to write. */
+test('a services.yaml using flow syntax and placeholders imports in full', () => {
+  const out = load('homepage-services-flow.yaml');
+  assert.equal(out.kind, 'homepage-services');
+  assert.deepEqual(
+    folders(out).map(f => f.label),
+    ['Productivity', 'Monitoring'],
+  );
+  assert.equal(apps(out).length, 6);
+
+  /* The widget fields are an inline list. The service around it still imports. */
+  const nextcloud = apps(out).find(a => a.label === 'Nextcloud');
+  assert.equal(nextcloud.href, 'https://cloud.example.com');
+  assert.equal(nextcloud.monitoring.healthcheck.pingUrl, 'https://cloud.example.com/status.php');
+  assert.equal(nextcloud.monitoring.healthcheck.container, 'nextcloud');
+
+  /* The whole widget is written as an inline mapping on one line. */
+  const paperless = apps(out).find(a => a.label === 'Paperless');
+  assert.equal(paperless.href, 'https://paper.example.com');
+  assert.ok(out.notes.some(n => n.code === NOTE.WIDGET_AS_LINK && n.name === 'Paperless'));
+
+  /* An icon-font name has no CDN slug, so it is dropped and reported. */
+  assert.ok(out.notes.some(n => n.code === NOTE.ICON_DROPPED && n.name === 'Weather API'));
+
+  assert.equal(apps(out).filter(a => !a.href).length, 0);
+});

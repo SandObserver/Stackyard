@@ -313,6 +313,7 @@
     "untitledFolder": "已导入",
     "skipRelativeHref": "链接没有地址，只有路径",
     "skipUnreadable": "此条目不符合该文件格式允许的结构",
+    "skipUnparsable": "无法读取第 {detail} 行",
     "monitors": "· 轮询 {url}"
   },
   "login": {
