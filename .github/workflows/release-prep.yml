@@ -61,8 +61,8 @@ jobs:
         run: |
           set -euo pipefail
           BRANCH="release/v${VERSION}"
-          git config user.name 'stackyard-release[bot]'
-          git config user.email '${{ steps.app.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git config user.name 'SandObserver'
+          git config user.email '260779319+SandObserver@users.noreply.github.com'
           git checkout -b "${BRANCH}"
           git add CHANGELOG.md api/package.json render.yaml
           git commit -m "Release ${VERSION}"
