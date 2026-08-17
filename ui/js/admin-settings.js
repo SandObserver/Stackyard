@@ -119,7 +119,7 @@ export function loadSettings(c) {
     /* backgroundImage, never the background shorthand. The shorthand resets
        background-clip, which is what keeps the track thin inside the 44px touch
        target on a phone. */
-    el.style.backgroundImage = `linear-gradient(to right, var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
+    el.style.backgroundImage = `linear-gradient(var(--slider-dir), var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
   }
   if (brEl) {
     brEl.value = bg.brightness ?? 0.62;

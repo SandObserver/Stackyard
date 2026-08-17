@@ -192,11 +192,18 @@ test('the dashboard needs no direction overrides at all', () => {
   );
 });
 
-/* Only the chevrons, which no logical property can express. */
+/* Only the chevrons and the gradient angle, which no logical property can
+   express. */
 test('admin keeps only the overrides that cannot be logical', () => {
+  const allowed = [/transform:\s*scaleX\(-1\)/, /--slider-dir:\s*270deg/];
   const overrides = [...code('css/admin.css').matchAll(/\[dir="rtl"\][^{]*\{[^}]*\}/g)].map(m => m[0]);
-  assert.equal(overrides.length, 1, `expected only the chevron mirror, found:\n${overrides.join('\n')}`);
-  assert.match(overrides[0], /transform:\s*scaleX\(-1\)/, 'a drawing has no logical property');
+  assert.equal(overrides.length, allowed.length, `unexpected override list, found:\n${overrides.join('\n')}`);
+  for (const rule of allowed) {
+    assert.ok(
+      overrides.some(o => rule.test(o)),
+      `no override matches ${rule}`,
+    );
+  }
 });
 
 /* ── the logical replacements are actually there ──────────────────────────── */

@@ -151,8 +151,8 @@ export function renderColorControl(
     /* backgroundImage, never the background shorthand. The shorthand resets
        background-clip, which is what keeps the track thin inside the 44px touch
        target on a phone. */
-    sEl.style.backgroundImage = `linear-gradient(90deg, ${_hsvToHex(h, 0, v)}, ${_hsvToHex(h, 100, v)})`;
-    vEl.style.backgroundImage = `linear-gradient(90deg, #000, ${_hsvToHex(h, 100, 100)})`;
+    sEl.style.backgroundImage = `linear-gradient(var(--slider-dir), ${_hsvToHex(h, 0, v)}, ${_hsvToHex(h, 100, v)})`;
+    vEl.style.backgroundImage = `linear-gradient(var(--slider-dir), #000, ${_hsvToHex(h, 100, 100)})`;
     /* Each knob previews what its own slider is set to: the hue on its own, the
        resulting colour for the other two. */
     hEl.style.setProperty('--knob-fill', _hsvToHex(h, 100, 100));
