@@ -18,38 +18,161 @@ const KEY_RE = /^(?:(?:"((?:[^"\\]|\\.)*)")|(?:'((?:[^']|'')*)')|([^:#]+?))\s*:(
 /** @param {string} s */
 const unescapeDouble = s => s.replace(/\\(["\\/nrt])/g, (_, c) => ({ n: '\n', r: '\r', t: '\t' })[c] || c);
 
-/** @param {string} raw @param {number} line */
-function scalar(raw, line) {
-  const s = raw.trim();
-  if (s === '') return '';
-  if (s[0] === '"') {
-    const m = /^"((?:[^"\\]|\\.)*)"\s*$/.exec(s);
-    if (!m) throw new YamlLiteError('unterminated double-quoted value', line);
-    return unescapeDouble(m[1]);
-  }
-  if (s[0] === "'") {
-    const m = /^'((?:[^']|'')*)'\s*$/.exec(s);
-    if (!m) throw new YamlLiteError('unterminated single-quoted value', line);
-    return m[1].replace(/''/g, "'");
-  }
-  if (s[0] === '&' || s[0] === '*') throw new YamlLiteError('anchors and aliases are not supported', line);
-  /* An empty flow sequence is unambiguous. Anything with contents inside the
-     brackets is refused. */
-  if (s === '[]') return [];
-  if (s === '{}') return Object.create(null);
-  if (s[0] === '{' || s[0] === '[') throw new YamlLiteError('flow collections are not supported', line);
+/** Type a plain (unquoted) scalar. The text is already free of comments.
+    @param {string} s */
+function plain(s) {
   if (s === '~' || s === 'null' || s === 'Null' || s === 'NULL') return null;
   if (s === 'true' || s === 'True' || s === 'TRUE' || s === 'yes' || s === 'Yes') return true;
   if (s === 'false' || s === 'False' || s === 'FALSE' || s === 'no' || s === 'No') return false;
   if (/^-?\d+$/.test(s)) return Number(s);
   if (/^-?\d*\.\d+$/.test(s)) return Number(s);
+  return s;
+}
+
+/* Homepage substitutes these out of the raw text before it parses the file, so
+   the braces are never YAML to it. Reading them as a flow mapping turns a real
+   href into a parse failure. */
+const PLACEHOLDER_RE = /^\{\{|^\$\{/;
+
+const FLOW_DEPTH = 32;
+
+/** @typedef {{ s: string, i: number, line: number, ctx: Ctx }} Flow */
+
+/** @param {Flow} p */
+const flowSpace = p => {
+  while (p.i < p.s.length && /\s/.test(p.s[p.i])) p.i++;
+};
+
+/** One value inside a flow collection. Plain text runs to the next structural
+    character, which is why a bare URL keeps its colon and its slashes.
+    @param {Flow} p @param {number} depth */
+function flowNode(p, depth) {
+  if (depth > FLOW_DEPTH) throw new YamlLiteError('flow collection nested too deeply', p.line);
+  flowSpace(p);
+  const c = p.s[p.i];
+  if (c === undefined) throw new YamlLiteError('unterminated flow collection', p.line);
+  if (c === '[' || c === '{') return flowCollection(p, depth);
+  if (c === '"' || c === "'") return flowQuoted(p);
+  let start = p.i;
+  while (p.i < p.s.length && !/[,\]}]/.test(p.s[p.i])) {
+    /* A colon only ends the key when a space or a closing bracket follows it,
+       matching the block form, so "http://host:8080" stays one value. */
+    if (p.s[p.i] === ':' && /^[\s,\]}]|^$/.test(p.s.slice(p.i + 1, p.i + 2))) break;
+    p.i++;
+  }
+  const text = p.s.slice(start, p.i).trim();
+  const alias = /^\*(\S+)$/.exec(text);
+  if (alias) {
+    if (!p.ctx.anchors.has(alias[1])) throw new YamlLiteError('an alias to a block anchor is not supported', p.line);
+    return p.ctx.anchors.get(alias[1]);
+  }
+  return plain(text);
+}
+
+/** @param {Flow} p */
+function flowQuoted(p) {
+  const q = p.s[p.i];
+  const re = q === '"' ? /^"((?:[^"\\]|\\.)*)"/ : /^'((?:[^']|'')*)'/;
+  const m = re.exec(p.s.slice(p.i));
+  if (!m) throw new YamlLiteError(`unterminated ${q === '"' ? 'double' : 'single'}-quoted value`, p.line);
+  p.i += m[0].length;
+  return q === '"' ? unescapeDouble(m[1]) : m[1].replace(/''/g, "'");
+}
+
+/** @param {Flow} p @param {number} depth */
+function flowCollection(p, depth) {
+  const open = p.s[p.i++];
+  const seq = open === '[';
+  const close = seq ? ']' : '}';
+  const out = seq ? [] : Object.create(null);
+  flowSpace(p);
+  if (p.s[p.i] === close) {
+    p.i++;
+    return out;
+  }
+  for (;;) {
+    const node = flowNode(p, depth + 1);
+    flowSpace(p);
+    if (seq) {
+      out.push(node);
+    } else {
+      let value = null;
+      if (p.s[p.i] === ':') {
+        p.i++;
+        flowSpace(p);
+        if (!/[,\]}]/.test(p.s[p.i] || ',')) value = flowNode(p, depth + 1);
+      }
+      /* A flow mapping key is text. An object or a list cannot name a field. */
+      if (node !== null && typeof node === 'object') throw new YamlLiteError('flow mapping key is not text', p.line);
+      out[String(node)] = value;
+      flowSpace(p);
+    }
+    if (p.s[p.i] === ',') {
+      p.i++;
+      flowSpace(p);
+      /* A trailing comma before the bracket is allowed. */
+      if (p.s[p.i] === close) {
+        p.i++;
+        return out;
+      }
+      continue;
+    }
+    if (p.s[p.i] === close) {
+      p.i++;
+      return out;
+    }
+    throw new YamlLiteError('unterminated flow collection', p.line);
+  }
+}
+
+/** @param {string} s @param {number} line @param {Ctx} ctx */
+function parseFlow(s, line, ctx) {
+  const p = { s, i: 0, line, ctx };
+  const out = flowCollection(p, 0);
+  flowSpace(p);
+  if (p.i < s.length && s[p.i] !== '#') throw new YamlLiteError('trailing text after a flow collection', line);
+  return out;
+}
+
+/** @param {string} raw @param {number} line @param {Ctx} ctx */
+function scalar(raw, line, ctx) {
+  let s = raw.trim();
+  if (s === '') return '';
+  const anchor = /^&(\S+)(?:\s+([\s\S]*))?$/.exec(s);
+  if (anchor) {
+    if (anchor[2] === undefined || anchor[2].trim() === '')
+      throw new YamlLiteError('an anchor on a block is not supported', line);
+    const value = scalar(anchor[2], line, ctx);
+    ctx.anchors.set(anchor[1], value);
+    return value;
+  }
+  const alias = /^\*(\S+)\s*$/.exec(s);
+  if (alias) {
+    if (!ctx.anchors.has(alias[1])) throw new YamlLiteError('an alias to a block anchor is not supported', line);
+    return ctx.anchors.get(alias[1]);
+  }
+  if (s[0] === '"') {
+    const m = /^"((?:[^"\\]|\\.)*)"\s*(?:#.*)?$/.exec(s);
+    if (!m) throw new YamlLiteError('unterminated double-quoted value', line);
+    return unescapeDouble(m[1]);
+  }
+  if (s[0] === "'") {
+    const m = /^'((?:[^']|'')*)'\s*(?:#.*)?$/.exec(s);
+    if (!m) throw new YamlLiteError('unterminated single-quoted value', line);
+    return m[1].replace(/''/g, "'");
+  }
+  if (PLACEHOLDER_RE.test(s)) {
+    const cut = s.search(/\s#/);
+    return cut === -1 ? s : s.slice(0, cut).trim();
+  }
+  if (s[0] === '{' || s[0] === '[') return parseFlow(s, line, ctx);
   /* A trailing comment needs a space before the #, or "#00ff00" and a URL
      fragment are eaten. */
   const cut = s.search(/\s#/);
-  return cut === -1 ? s : s.slice(0, cut).trim();
+  return plain(cut === -1 ? s : s.slice(0, cut).trim());
 }
 
-/** @typedef {{ indent: number, text: string, line: number, block?: string }} Line */
+/** @typedef {{ indent: number, text: string, line: number, block?: string, bad?: string }} Line */
 
 const BLOCK_RE = /^(.*?):\s*([|>])([-+]?)(\d*)\s*$/;
 
@@ -106,7 +229,6 @@ function scan(text) {
     if (trimmed === '...') throw new YamlLiteError('multi-document files are not supported', line);
     /* Refuse anchors where a node begins, not here. A value is free text, and
        `description: The *arr stack` is not an alias. */
-    if (/^<<\s*:/.test(trimmed)) throw new YamlLiteError('merge keys are not supported', line);
 
     const indent = raw.length - raw.trimStart().length;
     const bm = BLOCK_RE.exec(trimmed);
@@ -137,90 +259,146 @@ function scan(text) {
   return out;
 }
 
+/** @typedef {{ tolerant: boolean, errors: Array<{ line: number, reason: string }>,
+                anchors: Map<string, any> }} Ctx */
+
 /** Parse a block starting at `pos` whose lines are indented at least `indent`.
-    @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
-function block(lines, cur, indent) {
+    @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent @param {Ctx} ctx */
+function block(lines, cur, indent, ctx) {
   const first = lines[cur.pos];
-  return first.text.startsWith('- ') || first.text === '-' ? sequence(lines, cur, indent) : mapping(lines, cur, indent);
+  return first.text.startsWith('- ') || first.text === '-'
+    ? sequence(lines, cur, indent, ctx)
+    : mapping(lines, cur, indent, ctx);
 }
 
-/** Refuse an anchor or alias where a node begins. The same characters inside a
-    value stay ordinary text.
+/** Refuse an anchor written on a key. It names the key, not the value, and
+    nothing in either source format uses it.
     @param {string} text @param {number} line */
 function refuseAnchor(text, line) {
-  if (/^[&*]\S/.test(text)) throw new YamlLiteError('anchors and aliases are not supported', line);
+  if (/^&\S+\s+\S+\s*:/.test(text)) throw new YamlLiteError('an anchor on a key is not supported', line);
 }
 
-/** @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
-function sequence(lines, cur, indent) {
+/** The anchor an inline value is nothing but, as in "- &ref_0" with the node
+    itself indented underneath.
+    @param {string|undefined} inline */
+const blockAnchor = inline => {
+  const m = inline === undefined ? null : /^&(\S+)\s*$/.exec(inline.trim());
+  return m ? m[1] : '';
+};
+
+/** Fold a merge key's value into the mapping it was written in. Keys already
+    set win, which is what a merge means.
+    @param {any} map @param {any} value @param {number} line */
+function merge(map, value, line) {
+  const sources = Array.isArray(value) ? value : [value];
+  for (const src of sources) {
+    if (!src || typeof src !== 'object' || Array.isArray(src))
+      throw new YamlLiteError('a merge key needs a mapping', line);
+    for (const k of Object.keys(src)) if (!(k in map)) map[k] = src[k];
+  }
+}
+
+/** Give up on the node that started at `start` and step over every line that
+    belongs to it, so one unreadable entry costs its own subtree and no more.
+    @param {Line[]} lines @param {{ pos: number }} cur @param {number} start
+    @param {number} indent @param {Ctx} ctx @param {unknown} err */
+function recover(lines, cur, start, indent, ctx, err) {
+  if (!ctx.tolerant || !(err instanceof YamlLiteError)) throw err;
+  ctx.errors.push({ line: err.line, reason: err.reason });
+  cur.pos = start + 1;
+  while (cur.pos < lines.length && lines[cur.pos].indent > indent) cur.pos++;
+}
+
+/** @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent @param {Ctx} ctx */
+function sequence(lines, cur, indent, ctx) {
   const out = [];
   while (cur.pos < lines.length) {
     const l = lines[cur.pos];
     if (l.indent < indent) break;
-    if (l.indent > indent) throw new YamlLiteError('unexpected indentation', l.line);
+    if (l.indent > indent) {
+      const start = cur.pos;
+      recover(lines, cur, start, indent, ctx, new YamlLiteError('unexpected indentation', l.line));
+      continue;
+    }
     if (!(l.text.startsWith('- ') || l.text === '-')) break;
-    const after = l.text.slice(1);
-    const rest = after.trim();
-    cur.pos++;
-    if (rest === '') {
-      /* "-" alone: the element is the block indented under it. */
-      if (cur.pos < lines.length && lines[cur.pos].indent > indent) out.push(block(lines, cur, lines[cur.pos].indent));
-      else out.push(null);
-      continue;
+    const start = cur.pos;
+    try {
+      out.push(sequenceEntry(lines, cur, indent, ctx));
+    } catch (err) {
+      recover(lines, cur, start, indent, ctx, err);
     }
-    refuseAnchor(rest, l.line);
-    if (rest.startsWith('- ') || rest === '-')
-      throw new YamlLiteError('a sequence inside a sequence line is not supported', l.line);
-    /* Ahead of the key match, or a flow mapping's brace and first key read as a
-       key line and parse into something that was never in the file. */
-    if (rest[0] === '{' || rest[0] === '[') {
-      out.push(scalar(rest, l.line));
-      continue;
-    }
-    const m = KEY_RE.exec(rest);
-    if (m) {
-      /* The compound "- key: value" form. The element is a mapping whose first
-         key sits on the dash line, so its own indentation is the column the key
-         text starts at, not a fixed offset from the dash: "-  key" is as valid
-         as "- key" and its continuation lines line up with the key. */
-      const inner = indent + 1 + (after.length - after.trimStart().length);
-      const map = Object.create(null);
-      assign(map, m, l.line, lines, cur, inner, l);
-      while (cur.pos < lines.length && lines[cur.pos].indent === inner) {
-        const nl = lines[cur.pos];
-        if (nl.text.startsWith('- ') || nl.text === '-') break;
-        const nm = KEY_RE.exec(nl.text);
-        if (!nm) throw new YamlLiteError('expected "key: value"', nl.line);
-        cur.pos++;
-        assign(map, nm, nl.line, lines, cur, inner, nl);
-      }
-      out.push(map);
-      continue;
-    }
-    out.push(scalar(rest, l.line));
   }
   return out;
+}
+
+/** One element of a sequence, with `cur` already on its dash line.
+    @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent @param {Ctx} ctx */
+function sequenceEntry(lines, cur, indent, ctx) {
+  const l = lines[cur.pos];
+  if (l.bad) throw new YamlLiteError(l.bad, l.line);
+  const after = l.text.slice(1);
+  const rest = after.trim();
+  cur.pos++;
+  /* Dashy's own editor writes every item this way: an anchor alone on the dash
+     line, the item indented under it, and an alias wherever it repeats. */
+  const anchor = blockAnchor(rest);
+  if (rest === '' || anchor) {
+    let value = null;
+    if (cur.pos < lines.length && lines[cur.pos].indent > indent) value = block(lines, cur, lines[cur.pos].indent, ctx);
+    if (anchor) ctx.anchors.set(anchor, value);
+    return value;
+  }
+  refuseAnchor(rest, l.line);
+  if (rest.startsWith('- ') || rest === '-')
+    throw new YamlLiteError('a sequence inside a sequence line is not supported', l.line);
+  /* Ahead of the key match, or a flow mapping's brace and first key read as a
+     key line and parse into something that was never in the file. */
+  if (rest[0] === '{' || rest[0] === '[') return scalar(rest, l.line, ctx);
+  const m = KEY_RE.exec(rest);
+  if (m) {
+    /* The compound "- key: value" form. The element is a mapping whose first
+       key sits on the dash line, so its own indentation is the column the key
+       text starts at, not a fixed offset from the dash: "-  key" is as valid
+       as "- key" and its continuation lines line up with the key. */
+    const inner = indent + 1 + (after.length - after.trimStart().length);
+    const map = Object.create(null);
+    assign(map, m, l.line, lines, cur, inner, ctx, l);
+    while (cur.pos < lines.length && lines[cur.pos].indent === inner) {
+      const nl = lines[cur.pos];
+      if (nl.text.startsWith('- ') || nl.text === '-') break;
+      if (!mappingEntry(map, lines, cur, inner, ctx)) break;
+    }
+    return map;
+  }
+  return scalar(rest, l.line, ctx);
 }
 
 /** Set one key on `map` from a matched key line, reading its nested block when
     the value is empty.
     @param {any} map @param {RegExpExecArray} m @param {number} line
     @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent
-    @param {Line} [own] the key's own line, when it carried a block scalar */
-function assign(map, m, line, lines, cur, indent, own) {
+    @param {Ctx} ctx @param {Line} [own] the key's own line, when it carried a block scalar */
+function assign(map, m, line, lines, cur, indent, ctx, own) {
   const key = m[1] !== undefined ? unescapeDouble(m[1]) : m[2] !== undefined ? m[2].replace(/''/g, "'") : m[3].trim();
   if (own && own.block !== undefined) {
     map[key] = own.block;
     return;
   }
   const inline = m[4];
-  if (inline !== undefined && inline.trim() !== '' && !/^#/.test(inline.trim())) {
-    map[key] = scalar(inline, line);
+  const anchor = blockAnchor(inline);
+  /** Record the anchor this key carried, then store the value under the key. */
+  const set = value => {
+    if (anchor) ctx.anchors.set(anchor, value);
+    if (key === '<<') merge(map, value, line);
+    else map[key] = value;
+  };
+  if (!anchor && inline !== undefined && inline.trim() !== '' && !/^#/.test(inline.trim())) {
+    set(scalar(inline, line, ctx));
     return;
   }
   const next = lines[cur.pos];
   if (!next) {
-    map[key] = null;
+    set(null);
     return;
   }
   /* A sequence belonging to a key is written either indented under it or level
@@ -228,35 +406,67 @@ function assign(map, m, line, lines, cur, indent, own) {
      config writes navLinks that way. Only a sequence may do this. A mapping at
      the same column is the next key of the same parent, not this key's value. */
   if (next.indent === indent && (next.text.startsWith('- ') || next.text === '-')) {
-    map[key] = sequence(lines, cur, indent);
+    set(sequence(lines, cur, indent, ctx));
     return;
   }
   if (next.indent <= indent) {
-    map[key] = null;
+    set(null);
     return;
   }
-  map[key] = block(lines, cur, next.indent);
+  set(block(lines, cur, next.indent, ctx));
 }
 
-/** @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent */
-function mapping(lines, cur, indent) {
+/** Read one "key: value" line into `map`. Returns false when the line does not
+    start a key, which ends the mapping.
+    @param {any} map @param {Line[]} lines @param {{ pos: number }} cur
+    @param {number} indent @param {Ctx} ctx */
+function mappingEntry(map, lines, cur, indent, ctx) {
+  const l = lines[cur.pos];
+  const start = cur.pos;
+  try {
+    if (l.bad) throw new YamlLiteError(l.bad, l.line);
+    refuseAnchor(l.text, l.line);
+    const m = KEY_RE.exec(l.text);
+    if (!m) throw new YamlLiteError('expected "key: value"', l.line);
+    cur.pos++;
+    assign(map, m, l.line, lines, cur, indent, ctx, l);
+  } catch (err) {
+    recover(lines, cur, start, indent, ctx, err);
+  }
+  return true;
+}
+
+/** @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent @param {Ctx} ctx */
+function mapping(lines, cur, indent, ctx) {
   const map = Object.create(null);
   while (cur.pos < lines.length) {
     const l = lines[cur.pos];
     if (l.indent < indent) break;
-    if (l.indent > indent) throw new YamlLiteError('unexpected indentation', l.line);
+    if (l.indent > indent) {
+      recover(lines, cur, cur.pos, indent, ctx, new YamlLiteError('unexpected indentation', l.line));
+      continue;
+    }
     if (l.text.startsWith('- ') || l.text === '-') {
       /* A sequence at the same column as the keys of the mapping it belongs to.
          Only valid as the whole value of the key above, which assign handles. */
       break;
     }
-    refuseAnchor(l.text, l.line);
-    const m = KEY_RE.exec(l.text);
-    if (!m) throw new YamlLiteError('expected "key: value"', l.line);
-    cur.pos++;
-    assign(map, m, l.line, lines, cur, indent, l);
+    if (!mappingEntry(map, lines, cur, indent, ctx)) break;
   }
   return map;
+}
+
+/** @param {string} text @param {boolean} tolerant */
+function run(text, tolerant) {
+  /** @type {Ctx} */
+  const ctx = { tolerant, errors: [], anchors: new Map() };
+  const lines = scan(String(text == null ? '' : text));
+  if (!lines.length) return { doc: null, errors: ctx.errors };
+  if (lines[0].indent !== 0) throw new YamlLiteError('unexpected indentation', lines[0].line);
+  const cur = { pos: 0 };
+  const doc = block(lines, cur, 0, ctx);
+  if (cur.pos < lines.length) throw new YamlLiteError('unexpected indentation', lines[cur.pos].line);
+  return { doc, errors: ctx.errors };
 }
 
 /** Parse a YAML subset document.
@@ -268,11 +478,15 @@ function mapping(lines, cur, indent) {
     @param {string} text @returns {any}
     @throws {YamlLiteError} on anything outside the subset */
 export function parseYaml(text) {
-  const lines = scan(String(text == null ? '' : text));
-  if (!lines.length) return null;
-  if (lines[0].indent !== 0) throw new YamlLiteError('unexpected indentation', lines[0].line);
-  const cur = { pos: 0 };
-  const doc = block(lines, cur, 0);
-  if (cur.pos < lines.length) throw new YamlLiteError('unexpected indentation', lines[cur.pos].line);
-  return doc;
+  return run(text, false).doc;
+}
+
+/** Parse a document, dropping what cannot be read instead of refusing the file.
+    Each dropped node is reported, so the caller can tell someone what is
+    missing rather than losing it silently.
+
+    @param {string} text @returns {{ doc: any, errors: Array<{ line: number, reason: string }> }}
+    @throws {YamlLiteError} when the whole file cannot be scanned */
+export function parseYamlTolerant(text) {
+  return run(text, true);
 }

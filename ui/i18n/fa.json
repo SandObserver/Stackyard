@@ -313,6 +313,7 @@
     "untitledFolder": "درون‌ریزی‌شده",
     "skipRelativeHref": "پیوند نشانی ندارد، فقط یک مسیر",
     "skipUnreadable": "این ورودی ساختاری ندارد که قالب پرونده بپذیرد",
+    "skipUnparsable": "خط {detail} خوانده نشد",
     "monitors": "· {url} را می‌پاید"
   },
   "login": {

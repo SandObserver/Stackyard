@@ -313,6 +313,7 @@
     "untitledFolder": "Importado",
     "skipRelativeHref": "el enlace no tiene dirección, solo una ruta",
     "skipUnreadable": "esta entrada no tiene la forma que permite el formato del archivo",
+    "skipUnparsable": "no se pudo leer la línea {detail}",
     "monitors": "· sondea {url}"
   },
   "login": {

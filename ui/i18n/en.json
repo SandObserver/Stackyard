@@ -313,6 +313,7 @@
     "untitledFolder": "Imported",
     "skipRelativeHref": "the link has no address, only a path",
     "skipUnreadable": "this entry is not in a shape the file format allows",
+    "skipUnparsable": "line {detail} could not be read",
     "monitors": "· polls {url}"
   },
   "login": {

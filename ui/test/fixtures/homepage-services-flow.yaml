@@ -1,0 +1,65 @@
+# Everything the reader used to refuse, in one file: inline lists, inline
+# mappings, a custom API with mappings, block scalars and self-signed hosts.
+- Productivity:
+    - Nextcloud:
+        icon: nextcloud.png
+        href: https://cloud.example.com
+        description: >-
+          Files, calendar
+          and contacts
+        siteMonitor: https://cloud.example.com/status.php
+        container: nextcloud
+        widget:
+          type: nextcloud
+          url: https://cloud.example.com
+          username: "{{HOMEPAGE_VAR_NC_USER}}"
+          password: "{{HOMEPAGE_VAR_NC_PASS}}"
+          fields: ["cpuload", "memoryusage", "activeusers"]
+
+    - Vaultwarden:
+        icon: bitwarden.png
+        href: https://vault.example.com
+        siteMonitor: https://vault.example.com/alive
+        container: vaultwarden
+        tags: [security, passwords]
+
+    - Paperless:
+        icon: paperless-ngx.png
+        href: https://paper.example.com
+        widget: {type: paperlessngx, url: "http://paperless:8000", key: "{{HOMEPAGE_VAR_PAPERLESS_KEY}}"}
+
+- Monitoring:
+    - Grafana:
+        icon: grafana.png
+        href: https://grafana.example.com
+        container: grafana
+        widget:
+          type: grafana
+          url: http://grafana:3000
+          username: "{{HOMEPAGE_VAR_GRAFANA_USER}}"
+          password: "{{HOMEPAGE_VAR_GRAFANA_PASS}}"
+          fields: ["dashboards", "datasources", "totalalerts"]
+
+    - Weather API:
+        icon: mdi-weather-partly-cloudy
+        href: https://weather.example.com
+        widget:
+          type: customapi
+          url: https://weather.example.com/api/current
+          refreshInterval: 10000
+          headers:
+            X-Api-Key: "{{HOMEPAGE_VAR_WEATHER_KEY}}"
+          mappings:
+            - field: temp_c
+              label: Temperature
+              format: number
+              suffix: " °C"
+            - field: humidity
+              label: Humidity
+              format: percent
+
+    - Old NAS:
+        icon: synology.png
+        href: https://nas.example.com:5001
+        siteMonitor: https://nas.example.com:5001
+        description: self-signed certificate

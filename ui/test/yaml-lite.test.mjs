@@ -11,7 +11,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const { parseYaml, YamlLiteError } = await import('/js/yaml-lite.js');
+const { parseYaml, parseYamlTolerant, YamlLiteError } = await import('/js/yaml-lite.js');
 
 const plain = v => JSON.parse(JSON.stringify(v));
 
@@ -97,13 +97,14 @@ test('objects have a null prototype, so a config key cannot answer as an inherit
 /* Each of these is a construct the parser could guess at. Guessing produces an
    item that looks imported and points somewhere else. */
 for (const [name, text, reason] of [
-  ['anchors', 'base: &defaults\n  icon: x\napp:\n  href: http://a\n', 'anchors'],
-  ['aliases', 'a: *defaults\n', 'anchors'],
-  ['merge keys', 'a:\n  <<: *defaults\n', 'merge keys'],
-  ['flow mappings with contents', 'a: { b: 1 }\n', 'flow collections'],
-  ['flow sequences with contents', 'a: [1, 2]\n', 'flow collections'],
+  ['an alias to an anchor that is not there', 'a: *defaults\n', 'alias'],
+  ['an anchor written on a key', '&defaults key: 1\n', 'anchor on a key'],
+  ['a merge key that does not name a mapping', 'a: &n 1\nb:\n  <<: *n\n', 'merge key needs a mapping'],
   ['tab indentation', 'a:\n\tb: 1\n', 'tab indentation'],
   ['a second document', 'a: 1\n---\nb: 2\n', 'multi-document'],
+  ['an unterminated flow collection', 'a: [1, 2\n', 'unterminated flow'],
+  ['text after a flow collection', 'a: [1, 2] junk\n', 'trailing text'],
+  ['a flow mapping keyed by a collection', 'a: { [1]: 2 }\n', 'not text'],
 ]) {
   test(`refuses ${name} rather than guessing`, () => {
     assert.throws(
@@ -120,7 +121,7 @@ for (const [name, text, reason] of [
 
 test('reports the line the problem is on', () => {
   try {
-    parseYaml('a: 1\nb: 2\nc: [3]\n');
+    parseYaml('a: 1\nb: 2\nc: *nope\n');
     assert.fail('should have thrown');
   } catch (err) {
     assert.equal(err.line, 3);
@@ -195,18 +196,59 @@ test('an empty pair of brackets is a value, not a refusal', () => {
   assert.deepEqual(plain(parseYaml('appConfig: {}\n')), { appConfig: {} });
 });
 
-test('brackets with contents still refuse, since that is where guessing starts', () => {
-  assert.throws(() => parseYaml('tags: [a, b]\n'), /flow collections/);
-  assert.throws(() => parseYaml('opts: { a: 1 }\n'), /flow collections/);
+/* Homepage's own documentation writes widget fields this way. */
+test('brackets with contents read as the collection they are', () => {
+  assert.deepEqual(plain(parseYaml('fields: ["wanted", "queued"]\n')), { fields: ['wanted', 'queued'] });
+  assert.deepEqual(plain(parseYaml('tags: [a, b]\n')), { tags: ['a', 'b'] });
+  assert.deepEqual(plain(parseYaml('opts: { a: 1 }\n')), { opts: { a: 1 } });
+  assert.deepEqual(plain(parseYaml('a: [ 1 , 2 , ]\n')), { a: [1, 2] });
+  assert.deepEqual(plain(parseYaml('a: [[1, 2], {b: [3]}]\n')), { a: [[1, 2], { b: [3] }] });
+  assert.deepEqual(plain(parseYaml('a: {b: null, c: true, d: 1.5}\n')), { a: { b: null, c: true, d: 1.5 } });
+  assert.deepEqual(plain(parseYaml('a: [x] # note\n')), { a: ['x'] });
+});
+
+/* A colon ends a flow key only with a space or a bracket after it, the same
+   rule the block form uses, or a URL loses its port. */
+test('a URL inside a flow collection keeps its port', () => {
+  assert.deepEqual(plain(parseYaml('a: [http://host:8080/x]\n')), { a: ['http://host:8080/x'] });
+  assert.deepEqual(plain(parseYaml('a: {url: http://host:8080}\n')), { a: { url: 'http://host:8080' } });
+});
+
+test('a flow mapping key with no value is null, not a missing key', () => {
+  assert.deepEqual(plain(parseYaml('a: {b: , c: 1}\n')), { a: { b: null, c: 1 } });
+});
+
+test('a flow collection is null-prototyped too', () => {
+  assert.equal(Object.getPrototypeOf(parseYaml('a: {constructor: mine}\n').a), null);
 });
 
 /* A flow collection written as a list element used to reach the key matcher
    first, which found the brace and the first key and built a mapping out of
    them. The whole element parsed into something that was never in the file. */
-test('a flow collection refuses in a list too, not only after a key', () => {
-  assert.throws(() => parseYaml('sections:\n  - {name: Apps, items: []}\n'), /flow collections/);
-  assert.throws(() => parseYaml('sections:\n  - [a, b]\n'), /flow collections/);
+test('a flow collection reads in a list too, not only after a key', () => {
+  assert.deepEqual(plain(parseYaml('sections:\n  - {name: Apps, items: []}\n')), {
+    sections: [{ name: 'Apps', items: [] }],
+  });
+  assert.deepEqual(plain(parseYaml('sections:\n  - [a, b]\n')), { sections: [['a', 'b']] });
   assert.deepEqual(plain(parseYaml('sections:\n  - {}\n  - []\n')), { sections: [{}, []] });
+});
+
+/* Homepage replaces these in the raw text before it parses the file, so the
+   braces are never YAML to it. Reading them as a flow mapping refused files
+   whose only fault was keeping a secret out of the config. */
+test('an environment placeholder is text, not a flow mapping', () => {
+  assert.equal(parseYaml('href: {{HOMEPAGE_VAR_URL}}\n').href, '{{HOMEPAGE_VAR_URL}}');
+  assert.equal(parseYaml('key: {{HOMEPAGE_FILE_TOKEN}} # secret\n').key, '{{HOMEPAGE_FILE_TOKEN}}');
+  assert.equal(parseYaml('href: "{{HOMEPAGE_VAR_URL}}"\n').href, '{{HOMEPAGE_VAR_URL}}');
+  assert.equal(parseYaml('href: ${DASHY_URL}\n').href, '${DASHY_URL}');
+});
+
+/* A comment after a quoted value is ordinary YAML, and the closing quote no
+   longer has to be the end of the line. */
+test('a quoted value may carry a trailing comment', () => {
+  assert.equal(parseYaml('a: "x" # note\n').a, 'x');
+  assert.equal(parseYaml("a: 'x' # note\n").a, 'x');
+  assert.equal(parseYaml('a: "x # not a comment"\n').a, 'x # not a comment');
 });
 
 test('a list inside a list line refuses rather than reading as text', () => {
@@ -222,11 +264,36 @@ test('& and * inside a value are text, not an anchor', () => {
   assert.equal(parseYaml('- name: Plex **HD**\n')[0].name, 'Plex **HD**');
 });
 
-test('an anchor where a node begins still refuses', () => {
-  assert.throws(() => parseYaml('base: &defaults\n  a: 1\n'), /anchors and aliases/);
-  assert.throws(() => parseYaml('a: *ref\n'), /anchors and aliases/);
-  assert.throws(() => parseYaml('&defaults key: 1\n'), /anchors and aliases/);
-  assert.throws(() => parseYaml('a:\n  - &ref x\n'), /anchors and aliases/);
+/* Dashy's own documentation recommends anchors. An anchor on a plain value is
+   the common shape, and its value is the same with or without the anchor. */
+test('an anchor on a value keeps the value, and its alias resolves', () => {
+  assert.equal(parseYaml('server: &local my-docker\n').server, 'my-docker');
+  assert.deepEqual(plain(parseYaml('a: &n 1\nb: *n\n')), { a: 1, b: 1 });
+  assert.deepEqual(plain(parseYaml('a:\n  - &ref x\n  - *ref\n')), { a: ['x', 'x'] });
+});
+
+/* Dashy's editor writes every item as an anchor on the dash line with the item
+   indented under it, then repeats the item by alias on its other pages. A whole
+   config written by the Dashy UI is this shape throughout. */
+test('an anchor on a block is reusable by alias', () => {
+  assert.deepEqual(plain(parseYaml('base: &d\n  icon: x\napp:\n  <<: *d\n  href: http://a\n')), {
+    base: { icon: 'x' },
+    app: { icon: 'x', href: 'http://a' },
+  });
+  assert.deepEqual(plain(parseYaml('a:\n  - &r\n    t: A\n  - *r\n')), { a: [{ t: 'A' }, { t: 'A' }] });
+});
+
+/* A key already written wins over the one merged in, which is what a merge
+   means. Reversing it would silently rewrite a service's URL. */
+test('a merge key never overwrites a key the mapping already has', () => {
+  assert.deepEqual(plain(parseYaml('d: &d\n  url: http://old\n  icon: x\na:\n  <<: *d\n  url: http://new\n')).a, {
+    url: 'http://new',
+    icon: 'x',
+  });
+});
+
+test('a merge key takes a list of anchors as well as one', () => {
+  assert.deepEqual(plain(parseYaml('p: &p\n  a: 1\nq: &q\n  b: 2\nr:\n  <<: [*p, *q]\n')).r, { a: 1, b: 2 });
 });
 
 /* Hand-aligned configs pad the dash. The continuation keys then sit one column
@@ -248,4 +315,62 @@ test('the keep indicator keeps more than one trailing newline', () => {
   assert.equal(parseYaml('a: |+\n').a, '');
   assert.equal(parseYaml('a: |\n  x\n\n\nb: 1\n').a, 'x\n');
   assert.equal(parseYaml('a: |-\n  x\n\n\nb: 1\n').a, 'x');
+});
+
+/* Refusing a whole file over one line cost the reader everything and protected
+   nothing: the importer discards most of what a config holds. Tolerant mode
+   drops the node the problem is in and says which line it was. */
+
+test('tolerant mode keeps the rest of the file and reports what it dropped', () => {
+  const { doc, errors } = parseYamlTolerant('a: 1\nb: *nope\nc: 3\n');
+  assert.deepEqual(plain(doc), { a: 1, c: 3 });
+  assert.deepEqual(errors, [{ line: 2, reason: 'an alias to a block anchor is not supported' }]);
+});
+
+/* The unreadable key is the only thing lost. Its siblings, the service holding
+   it and every other service in the file are all still there. */
+test('a dropped key costs that key and nothing around it', () => {
+  const { doc, errors } = parseYamlTolerant(`- Media:
+    - Plex:
+        href: http://plex:32400
+        widget:
+          fields: [broken
+          type: plex
+    - Sonarr:
+        href: http://sonarr:8989
+`);
+  assert.deepEqual(plain(doc), [
+    {
+      Media: [
+        { Plex: { href: 'http://plex:32400', widget: { type: 'plex' } } },
+        { Sonarr: { href: 'http://sonarr:8989' } },
+      ],
+    },
+  ]);
+  assert.deepEqual(errors, [{ line: 5, reason: 'unterminated flow collection' }]);
+});
+
+/* A key whose value is a block loses the block with it, or the orphaned lines
+   below read as keys of the parent. */
+test('a dropped key takes the block underneath it', () => {
+  const { doc, errors } = parseYamlTolerant('a:\n  &anchored key: 1\n    icon: x\n  href: http://a\n');
+  assert.deepEqual(plain(doc), { a: { href: 'http://a' } });
+  assert.equal(errors.length, 1);
+});
+
+test('a dropped list element costs that element only', () => {
+  const { doc, errors } = parseYamlTolerant('a:\n  - &ok x\n  - *missing\n  - z\n');
+  assert.deepEqual(plain(doc), { a: ['x', 'z'] });
+  assert.equal(errors.length, 1);
+});
+
+test('tolerant mode still throws when the whole file cannot be scanned', () => {
+  assert.throws(() => parseYamlTolerant('a:\n\tb: 1\n'), /tab indentation/);
+});
+
+test('a clean file reports no errors and parses identically either way', () => {
+  const text = '- Media:\n    - Plex:\n        href: http://plex:32400\n';
+  const { doc, errors } = parseYamlTolerant(text);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(plain(doc), plain(parseYaml(text)));
 });
