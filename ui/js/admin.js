@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=bbbe33e8';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=50a3227f';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=1803560c';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=aecc8f5e';
 import { applyDrop, canJoinFolder } from '/js/admin-drag-logic.js?v=8fcf583a';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=4f8a0761';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=80a4637d';
 import {
   buildAppItem,
   claimFolderChildren,
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=65d3ca83';
-import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=9a601113';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=3f841153';
+import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=0e28865a';
 import { state } from '/js/admin-state.js?v=42393ee1';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=09994a9d';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=5e526baf';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';

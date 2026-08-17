@@ -1,11 +1,12 @@
-import { toast, ag, ap } from '/js/admin-shared.js?v=9a601113';
+import { toast, ag, ap } from '/js/admin-shared.js?v=0e28865a';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=d056c9c5';
-import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=4f8a0761';
+import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=80a4637d';
 import { el, inp, q, qa, setUserText } from '/js/utils.js?v=b81f6875';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
+let _authEnabled = false;
 
 /* Hint codes from the socket proxy probe. The server picks the code from the
    address shape; the wording lives here so it is translated. */
@@ -221,6 +222,7 @@ async function syncAuthFromServer() {
     return;
   }
   _passwordSet = !!d.passwordSet;
+  _authEnabled = !!d.enabled;
   const secEnEl = inp('sec-en');
   if (secEnEl) {
     /* The effective state. Enabled with no password behaves as off. */
@@ -350,7 +352,10 @@ async function saveServer() {
 
   /* Switching protection off deletes the stored password. Ask before anything
      is written. */
-  if (clearsStoredPassword({ enabled, passwordSet: _passwordSet }) && !confirm(t('confirm.clearPassword'))) {
+  if (
+    clearsStoredPassword({ enabled, wasEnabled: _authEnabled, passwordSet: _passwordSet }) &&
+    !confirm(t('confirm.clearPassword'))
+  ) {
     await syncAuthFromServer();
     return;
   }
