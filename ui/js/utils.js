@@ -111,6 +111,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
     breg &&
     (item.monitoring?.healthcheck?.enabled ||
       item.monitoring?.activity?.enabled ||
+      item.monitoring?.staticBadge?.enabled ||
       item.container ||
       item.badge?.enabled)
   ) {
