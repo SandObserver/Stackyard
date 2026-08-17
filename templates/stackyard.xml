@@ -19,111 +19,28 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.7.0 - 2026-08-16
-
-### Added
-
-- Light theme for the Settings pages, with Settings Display Mode in Settings &gt;
-  Appearance: System Default, Light or Dark. Stored per device.
-
-- Keep Screen Awake in Settings &gt; Appearance, off by default. Needs HTTPS.
-
-- Show From on a live activity badge, to badge only counts at or above a number.
-
-- Install from Unraid Community Applications, with a template in `templates/`.
+### 1.7.1 - 2026-08-17
 
 ### Changed
 
-- Text on both pages now follows one type scale, so some sizes and line spacing
-  shift slightly.
-
-- Widget colours now match the rest of the app. Reds, blues, greens and greys
-  that had been left on older values are corrected.
-
-- Settings controls are redrawn: switches are wider with a capsule knob, slider
-  tracks are thicker, and groups are more rounded.
-
-- The wallpaper brightness slider now has the same handle as the colour sliders.
-
-- Each colour slider handle shows the value it is set to.
-
-- Group headings and their help text now line up with the settings above and
-  below them.
-
-- The settings sidebar is wider, with taller items and a rounded selection.
-
-- The selected tab on a phone is marked with a pill instead of a coloured
-  label.
-
-- Widget tiles and dock icons are rounded correctly, and stay so at every icon
-  and dashboard size.
-
-- Either-or settings are now a segmented control instead of radio dots.
-
-- Buttons in a dialog are taller and rounded.
-
-- A long settings label now keeps its line and the value beside it shortens,
-  instead of the label breaking in two.
-
-- Unsplash API Key is now just API Key, under a Source row that already names
-  Unsplash.
-
-- Row separators now start level with the row's label instead of spanning the
-  full width.
-
-- Settings on a phone use the larger phone text size. On a desktop the panel
-  keeps its denser size.
-
-- Widgets on a page you are not looking at now poll four times less often, and
-  refresh when you swipe back to them.
-
-- Badge and health targets that keep failing are contacted less often, so an
-  offline service no longer slows every other tile on every refresh.
-
-- Scripts and stylesheets are now cached for a year instead of revalidated on
-  every load. Their URLs change whenever the file does.
-
-- The logo is redrawn, and its arc now follows the accent colour.
+- `docker-compose.yml` now reads every operator setting from the environment, so
+  a Docker UI's environment editor works without editing the file.
 
 ### Fixed
 
-- Home screen no longer leaves a dead strip below the dock in a home-screen
-  install on iOS.
+- Import from another dashboard reads inline lists and mappings, environment
+  placeholders, anchors on a value, and a comment after a quoted value.
 
-- App icons now use the current logo, and the browser tab icon follows the
-  light or dark theme.
+- Import from another dashboard no longer refuses a whole file over one
+  unreadable line. The line is listed in the preview and the rest is imported.
 
-- Colour and brightness slider tracks draw round ends on a touch device instead
-  of tapering to a point.
+- Settings &gt; About shows the version again, and the update link is translated.
 
-- Hue, saturation and brightness sliders no longer stretch across the row on a
-  phone.
+- Serving a bundled icon no longer logs an nginx error.
 
-- Slider fills and colour ramps now run the same way as the handle in
-  right-to-left languages.
+- The home-screen icon is served on an install that has uploaded no icons.
 
-- Saturation, brightness and wallpaper brightness sliders now draw a thin track
-  on a phone, matching hue.
-
-- Settings no longer flashes the desktop sidebar before the phone layout
-  appears.
-
-- Dock and the Settings tab bar now sit as close to the bottom of the screen as
-  to the sides.
-
-- Remove the stray Support link from Settings &gt; General.
-
-- App title toggles in Settings &gt; Appearance now persist across a reload.
-
-- Connections map tooltips now use the system font on Android, Windows and
-  Linux instead of falling back to a serif.
-
-- Saving on Settings &gt; Appearance no longer reports "Wallpaper saved" when
-  something else on the page was saved.
-
-- The login and set-password screens, the phone tab bar, the logging level and
-  wallpaper source menus, the version line and the app, widget and widget
-  configuration forms are now translated instead of always showing English.
+- The `TRUST_PROXY` warning now gives an example value and where to set it.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
