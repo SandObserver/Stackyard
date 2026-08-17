@@ -89,7 +89,7 @@ test('every hash profile the code offers is documented, and no others', () => {
   assert.match(section, new RegExp(`\`${dflt}\` \\(default\\)`), `${dflt} is the default in the code`);
 });
 
-/* A commented example is where most operators meet this flag, and it is the one
+/* The Compose example is where most operators meet this flag, and it is the one
    setting in that block that turns a security control off. Leaving it stays a
    decision an operator makes knowingly. */
 test('the Compose example says what turning off the SSRF guard costs', () => {
@@ -100,8 +100,20 @@ test('the Compose example says what turning off the SSRF guard costs', () => {
   assert.match(comment, /docs\/security\.md/, 'and point at the page that explains it');
   assert.match(
     compose,
-    /^\s*# - ALLOW_PRIVATE_IPS=true$/m,
-    'it must stay commented out, so the guard is on by default',
+    /^\s*- ALLOW_PRIVATE_IPS=\$\{ALLOW_PRIVATE_IPS:-\}$/m,
+    'it must default to empty, so the guard is on until an operator sets it',
+  );
+});
+
+/* Every operator setting has to be substituted, or a value set in a Docker UI's
+   environment editor is silently dropped instead of reaching the container. */
+test('the Compose file substitutes each operator setting it activates', () => {
+  const active = [...compose.matchAll(/^\s*- ([A-Z_]+)=(.*)$/gm)].filter(m => !m[1].startsWith('#'));
+  const literal = active.filter(m => m[2] !== `\${${m[1]}:-}`).map(m => m[1]);
+  assert.deepEqual(
+    literal,
+    [],
+    `A hardcoded value ignores the environment. Use \${NAME:-} for:\n  ${literal.join('\n  ')}`,
   );
 });
 

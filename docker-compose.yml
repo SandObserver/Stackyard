@@ -36,36 +36,40 @@ services:
       # Optional: disk usage monitoring (add your mount paths)
       # - /mnt/your-drive:/mnt/your-drive:ro
     environment:
-      # Optional overrides — defaults shown
-      # - CONFIG_PATH=/data/apps.json
-      # - ICONS_PATH=/icons
-      # - PORT=3000
-      # Socket proxy URL for Docker container health monitoring
-      # - SOCKET_PROXY_URL=http://socket-proxy:2375
+      # Set these either here, by replacing the value after the colon-dash, or in
+      # a .env file beside this one, or in your Docker UI's environment editor.
+      # An empty value means the built-in default.
+      #
+      # Socket proxy URL for Docker container health monitoring.
+      - SOCKET_PROXY_URL=${SOCKET_PROXY_URL:-}
       # Set to true if behind a reverse proxy (Nginx Proxy Manager, Traefik, etc.)
-      # - TRUST_PROXY=true
+      - TRUST_PROXY=${TRUST_PROXY:-}
       # Where your reverse proxy is, if you have one in front (Nginx Proxy
-      # Manager, Caddy, Traefik). Without this, every request through it counts
-      # as one client for rate limiting. See docs/security.md.
-      # - TRUSTED_PROXY=172.18.0.0/16
+      # Manager, Caddy, Traefik), for example 172.18.0.0/16. Without this, every
+      # request through it counts as one client for rate limiting. See
+      # docs/security.md.
+      - TRUSTED_PROXY=${TRUSTED_PROXY:-}
       # Memory used per password hash. Default 16mib suits small hardware;
-      # raise it if you can. See docs/security.md.
-      # - PASSWORD_HASH_MEMORY=64mib
+      # raise it if you can, for example 64mib. See docs/security.md.
+      - PASSWORD_HASH_MEMORY=${PASSWORD_HASH_MEMORY:-}
       # Turns the SSRF guard off, so badges and widgets may reach private, LAN
       # and loopback addresses. Most homelab installs need it, because the
       # services they point at live on private IPs. See docs/security.md.
-      # - ALLOW_PRIVATE_IPS=true
+      - ALLOW_PRIVATE_IPS=${ALLOW_PRIVATE_IPS:-}
       # Log verbosity: debug, info, warn or error, where warn and error behave
       # the same. Settings, General sets this too, and that wins once the config
       # has loaded.
-      # - LOG_LEVEL=info
-      # Where the widget folders are read from. Only if you have moved them.
-      # - WIDGETS_PATH=/usr/share/nginx/html/widgets
+      - LOG_LEVEL=${LOG_LEVEL:-}
       # Run as a read-only public showcase. See docs/demo.md.
-      # - DEMO_MODE=true
+      - DEMO_MODE=${DEMO_MODE:-}
       # Idle session lifetime in days before re-login is required (default 12
       # hours). Accepts a fraction. A session in use is extended automatically.
-      # - SESSION_MAX_AGE_DAYS=0.5
+      - SESSION_MAX_AGE_DAYS=${SESSION_MAX_AGE_DAYS:-}
+      # Internal paths and port. Change only if you have moved them.
+      # - CONFIG_PATH=/data/apps.json
+      # - ICONS_PATH=/icons
+      # - PORT=3000
+      # - WIDGETS_PATH=/usr/share/nginx/html/widgets
     healthcheck:
       test:
         - CMD

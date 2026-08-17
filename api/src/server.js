@@ -64,7 +64,7 @@ http.createServer(dispatch).listen(PORT, HOST, () => {
       );
     else
       log.warn(
-        'TRUST_PROXY without TRUSTED_PROXY trusts forwarded headers from any client and rate-limits all traffic as one; set TRUSTED_PROXY to the proxy address.',
+        'TRUST_PROXY without TRUSTED_PROXY trusts forwarded headers from any client and rate-limits all traffic as one; set TRUSTED_PROXY to the proxy address, for example TRUSTED_PROXY=172.18.0.0/16, in the environment section of docker-compose.yml. See docs/security.md.',
       );
   }
 });

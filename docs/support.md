@@ -83,6 +83,19 @@ every request through it shares one rate-limit bucket. Set `TRUSTED_PROXY` to
 where the proxy is, for example `TRUSTED_PROXY=172.18.0.0/16`; see
 [security.md](security.md).
 
+### A setting has no effect
+
+Values typed into a Docker UI's environment editor, such as Portainer's stack
+environment panel, do not reach the container by themselves. Compose uses them
+to substitute `${NAME}` in the Compose file, and passes nothing else through.
+The shipped `docker-compose.yml` carries a `${NAME}` line for every operator
+setting, so the panel works. A Compose file that hardcodes values ignores the
+panel. Confirm what the container actually received:
+
+```
+docker exec stackyard env
+```
+
 ### An upload or a save is rejected as too large
 
 Stackyard limits request sizes so a single request cannot consume the memory of
