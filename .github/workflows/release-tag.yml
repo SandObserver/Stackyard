@@ -23,7 +23,7 @@ jobs:
         id: app
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.RELEASE_APP_ID }}
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       - name: Checkout
@@ -66,7 +66,7 @@ jobs:
           GH_TOKEN: ${{ steps.app.outputs.token }}
         run: |
           set -euo pipefail
-          git config user.name 'stackyard-release[bot]'
-          git config user.email '${{ steps.app.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git config user.name 'SandObserver'
+          git config user.email '260779319+SandObserver@users.noreply.github.com'
           git tag -a "v${VERSION}" -m "Release ${VERSION}"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "refs/tags/v${VERSION}"

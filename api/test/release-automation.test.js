@@ -70,7 +70,7 @@ test('the release runs one at a time', () => {
 
 test('docs/releasing.md documents the app secrets the workflows read', () => {
   const doc = fs.readFileSync(path.join(ROOT, 'docs', 'releasing.md'), 'utf8');
-  for (const secret of ['RELEASE_APP_ID', 'RELEASE_APP_PRIVATE_KEY']) {
+  for (const secret of ['RELEASE_APP_CLIENT_ID', 'RELEASE_APP_PRIVATE_KEY']) {
     assert.ok(doc.includes(secret), `${secret} is read by a workflow and not documented`);
     assert.ok(
       wf('release-prep.yml').includes(secret),

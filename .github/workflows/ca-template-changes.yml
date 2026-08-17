@@ -16,7 +16,7 @@ jobs:
         id: app
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.RELEASE_APP_ID }}
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       # Branch from the default branch, not the tag the release points at: a
@@ -56,8 +56,8 @@ jobs:
         run: |
           set -euo pipefail
           BRANCH="docs/ca-template-${VERSION}"
-          git config user.name 'stackyard-release[bot]'
-          git config user.email '${{ steps.app.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git config user.name 'SandObserver'
+          git config user.email '260779319+SandObserver@users.noreply.github.com'
           git checkout -b "${BRANCH}"
           git add templates/stackyard.xml
           git commit -m "Docs: describe ${VERSION} in the Community Applications template"

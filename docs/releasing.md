@@ -49,8 +49,8 @@ App** on the account that owns the repository:
    `.pem`.
 5. **Install App** on this repository only.
 6. In the repository, add two secrets under **Settings > Secrets and variables >
-   Actions**: `RELEASE_APP_ID` is the app's App ID, and
-   `RELEASE_APP_PRIVATE_KEY` is the whole `.pem` file including the
+   Actions**: `RELEASE_APP_CLIENT_ID` is the app's Client ID, not its App ID,
+   and `RELEASE_APP_PRIVATE_KEY` is the whole `.pem` file including the
    `-----BEGIN` and `-----END` lines.
 
 The app needs no ruleset bypass. It opens pull requests rather than pushing to
