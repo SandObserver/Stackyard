@@ -158,9 +158,9 @@ export function settingsSaveBlocker({ enabled, passwordSet, newPassword, strengt
 }
 
 /* Switching protection off deletes the stored password, so the save asks
-   first. */
-export function clearsStoredPassword({ enabled, passwordSet }) {
-  return !enabled && !!passwordSet;
+   first. A save that leaves protection off deletes nothing. */
+export function clearsStoredPassword({ enabled, wasEnabled, passwordSet }) {
+  return !enabled && !!wasEnabled && !!passwordSet;
 }
 
 /* 'unavailable' must not fall through to the custom editor. The server

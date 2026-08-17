@@ -308,6 +308,17 @@ function authActive(cfg) {
   return !!(auth?.enabled && auth?.passwordHash);
 }
 
+/* Protection off must leave no password and no secret behind. A stranded hash
+   cannot be replaced: setting a password needs a session, and no session exists
+   while protection is off. Returns whether anything was removed. */
+function stripDisabledCredentials(auth) {
+  if (!auth || auth.enabled) return false;
+  const had = !!auth.passwordHash || !!auth.secret;
+  delete auth.passwordHash;
+  delete auth.secret;
+  return had;
+}
+
 function isAuthenticated(req) {
   const cfg = loadConfig();
   if (!authActive(cfg)) return true;
@@ -370,6 +381,7 @@ module.exports = {
   rateLimit,
   isAuthenticated,
   hasValidSession,
+  stripDisabledCredentials,
   _resetRateLimits: () => _rateBuckets.clear(),
   SESSION_MAX_AGE_MS,
   RENEW_AFTER_MS,

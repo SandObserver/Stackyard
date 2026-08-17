@@ -9,6 +9,7 @@ const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
+const { stripDisabledCredentials } = require('../auth');
 
 const DOCK_MAX = 4;
 
@@ -130,6 +131,7 @@ on('POST', '/api/config', async (req, res) => {
     if (existing.settings?.auth) {
       data.settings = data.settings || {};
       data.settings.auth = JSON.parse(JSON.stringify(existing.settings.auth));
+      if (stripDisabledCredentials(data.settings.auth)) log.audit('stale password cleared', {});
     }
     /* A stored credential is only refilled for the request it was stored for. */
     const { withheld } = preserveAllSecrets(data, existing);

@@ -1,4 +1,4 @@
-import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=9a601113';
+import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=0e28865a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=b81f6875';
 

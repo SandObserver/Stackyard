@@ -1,8 +1,8 @@
 import { state } from '/js/admin-state.js?v=42393ee1';
-import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=9a601113';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=d64f6be7';
+import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=0e28865a';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=b7651909';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { sizesForView, widgetConfigMode, rejectionLines, refusedNoticeKey } from '/js/admin-logic.js?v=4f8a0761';
+import { sizesForView, widgetConfigMode, rejectionLines, refusedNoticeKey } from '/js/admin-logic.js?v=80a4637d';
 import { t } from '/js/i18n.js?v=d056c9c5';
 import { q, qi, qa } from '/js/utils.js?v=b81f6875';
 

@@ -18,6 +18,7 @@ const {
   clearAttempts,
   isAuthenticated,
   hasValidSession,
+  stripDisabledCredentials,
   authActive,
   needsRehash,
 } = require('../auth');
@@ -173,10 +174,7 @@ on('POST', '/api/auth/toggle', async (req, res) => {
        the hash strands the install: setting a new password needs a session, and
        no session can be obtained while auth is off. */
     const cleared = !enabled && !!cfg.settings.auth.passwordHash;
-    if (!enabled) {
-      delete cfg.settings.auth.passwordHash;
-      delete cfg.settings.auth.secret;
-    }
+    stripDisabledCredentials(cfg.settings.auth);
     if (enabled && !cfg.settings.auth.secret) cfg.settings.auth.secret = newSessionSecret();
     saveConfig(cfg);
     log.audit('auth toggled', { enabled: !!enabled });

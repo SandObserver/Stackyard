@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Saving settings no longer warns about deleting the stored password when
+  password protection is already off.
+
+- A password left stored while protection is off is now discarded on the next
+  settings save.
+
 ## [1.7.1] - 2026-08-17
 
 ### Changed

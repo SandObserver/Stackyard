@@ -449,15 +449,19 @@ test('an already-stored password is not re-examined when nothing new is typed', 
 /* ── clearsStoredPassword ─────────────────────────────────────────────────── */
 
 test('switching protection off with a password stored has to be confirmed', () => {
-  assert.equal(clearsStoredPassword({ enabled: false, passwordSet: true }), true);
+  assert.equal(clearsStoredPassword({ enabled: false, wasEnabled: true, passwordSet: true }), true);
 });
 
 test('switching protection off with no password stored has nothing to lose', () => {
-  assert.equal(clearsStoredPassword({ enabled: false, passwordSet: false }), false);
+  assert.equal(clearsStoredPassword({ enabled: false, wasEnabled: true, passwordSet: false }), false);
 });
 
 test('leaving protection on never clears a password', () => {
-  assert.equal(clearsStoredPassword({ enabled: true, passwordSet: true }), false);
+  assert.equal(clearsStoredPassword({ enabled: true, wasEnabled: true, passwordSet: true }), false);
+});
+
+test('a save that leaves protection off asks nothing, even with a stale password stored', () => {
+  assert.equal(clearsStoredPassword({ enabled: false, wasEnabled: false, passwordSet: true }), false);
 });
 
 /* ── recoversSession ──────────────────────────────────────────────────────── */

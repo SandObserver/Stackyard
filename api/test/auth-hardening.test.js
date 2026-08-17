@@ -176,6 +176,31 @@ test('a config write cannot add a new field to settings.auth', async () => {
   assert.ok(!('somethingNew' in loadConfig().settings.auth));
 });
 
+test('a config write drops a password left behind while protection is off', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: false, passwordHash: await hashPassword('correct-horse'), secret: 'stale-secret' };
+  saveConfig(cfg);
+
+  const r = await post('/api/config', { items: [], settings: { language: 'en' } });
+  assert.equal(r.status, 200);
+  const after = loadConfig().settings.auth;
+  assert.equal(after.passwordHash, undefined);
+  assert.equal(after.secret, undefined);
+  assert.equal(after.enabled, false);
+});
+
+test('a config write keeps the stored password while protection is on', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, passwordHash: await hashPassword('correct-horse'), secret: 'real-secret' };
+  saveConfig(cfg);
+
+  const r = await post('/api/config', { items: [], settings: { language: 'en' } }, { cookie: sessionCookie() });
+  assert.equal(r.status, 200);
+  const after = loadConfig().settings.auth;
+  assert.equal(after.secret, 'real-secret');
+  assert.equal(await verifyPassword('correct-horse', after.passwordHash), true);
+});
+
 test('an ordinary config write is unaffected', async () => {
   const r = await post('/api/config', {
     items: [{ id: 'a1', type: 'app', name: 'App' }],
