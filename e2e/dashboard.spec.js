@@ -67,6 +67,20 @@ test('a badge value is painted, and the next poll replaces it', async ({ page, r
   await expect(badge).toHaveText('12');
 });
 
+/* A fixed label is the only badge an item can carry that no poll ever reports,
+   so it is the one that stays invisible if a tile paints on poll results alone. */
+test('a fixed label alone paints, with nothing polling that item', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [{ ...app('delta', 'Delta'), monitoring: { staticBadge: { enabled: true, label: '3 active' } } }],
+  });
+  await stubPolls(page);
+  await page.goto('/');
+
+  const badge = page.locator('#pages .iwrap .badge');
+  await expect(badge).toHaveText('3 active');
+  await expect(badge).toHaveClass(/\bon\b/);
+});
+
 /* A service that did not answer must not read as the number zero. */
 test('a badge whose item failed keeps its value and is marked out of date', async ({ page, request }) => {
   await seedConfig(request, { items: [badged()] });

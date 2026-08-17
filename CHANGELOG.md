@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A tile with only a fixed label set now shows that badge.
+
 - Saving settings no longer warns about deleting the stored password when
   password protection is already off.
 

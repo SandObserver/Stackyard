@@ -19,13 +19,13 @@ import {
   qi,
   qa,
   setUserText,
-} from '/js/utils.js?v=b81f6875';
-import { initSpotlight } from '/js/spotlight.js?v=4bb67d77';
+} from '/js/utils.js?v=b18c93ed';
+import { initSpotlight } from '/js/spotlight.js?v=712fa7de';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=7522fffa';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=b3975ac9';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=e2857764';
 import {
   configChanged,
@@ -134,6 +134,10 @@ const BSIG = new WeakMap();
 function breg(id, el) {
   if (!BEL.has(id)) BEL.set(id, new Set());
   BEL.get(id).add(el);
+  /* Paint on registration. A poll only reaches ids it returns, so a fixed label
+     alone stays invisible, and a rebuild blanks every badge until the next
+     poll. */
+  bupd(id);
 }
 function bunreg(id, el) {
   if (BEL.has(id)) BEL.get(id).delete(el);

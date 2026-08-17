@@ -10,7 +10,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=b81f6875';
+} from '/js/utils.js?v=b18c93ed';
 import { t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { trapFocus } from '/js/dialog.js?v=05935547';
 import { mobileMetrics } from '/js/mobile-metrics.js?v=e48d02a8';
