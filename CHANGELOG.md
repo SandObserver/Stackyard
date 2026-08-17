@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Serving a bundled icon no longer logs an nginx error.
 
+- The home-screen icon is served on an install that has uploaded no icons.
+
 - The `TRUST_PROXY` warning now gives an example value and where to set it.
 
 ## [1.7.0] - 2026-08-16

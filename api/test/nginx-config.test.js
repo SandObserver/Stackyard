@@ -66,6 +66,38 @@ test('the Dockerfile ships every nginx config file', () => {
   }
 });
 
+/* ── the icon lookup ──────────────────────────────────────────────────────── */
+
+/* Icons resolve in two steps: the user's mounted volume, then the copy bundled
+   in the image. Doing that with error_page 404 works, but a failed open is
+   logged as an error, and an install that has uploaded no icons is the normal
+   case rather than a fault. try_files tests for the file instead.
+
+   The home-screen paths had no second step at all, so a fresh install answered
+   404 and got no icon on the home screen. */
+test('every icon path tries the mounted volume, then the bundled copy', () => {
+  const block = name => {
+    const at = dashboard.indexOf(`location ${name} {`);
+    assert.ok(at !== -1, `location ${name} not found`);
+    return dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  };
+
+  assert.match(block('/icons/'), /^\s*root \/;$/m, 'root / maps the request path onto the mount');
+  assert.match(block('/icons/'), /try_files \$uri @icon_miss;/);
+  assert.match(block('@icon_miss'), /root \/usr\/share\/nginx\/html;/);
+
+  for (const name of ['= /apple-touch-icon.png', '= /apple-touch-icon-precomposed.png']) {
+    assert.match(block(name), /^\s*root \/;$/m, name);
+    assert.match(block(name), /try_files \/icons\/favicon\.png @apple_icon_miss;/, name);
+  }
+  assert.match(block('@apple_icon_miss'), /root \/usr\/share\/nginx\/html;/);
+  assert.match(block('@apple_icon_miss'), /try_files \/icons\/favicon\.png =404;/);
+});
+
+test('no icon path resolves its fallback through a logged 404', () => {
+  assert.ok(!/error_page 404 = @icon/.test(dashboard), 'a failed open logs an error on every request');
+});
+
 /* ── frame-ancestors (P14-2) ──────────────────────────────────────────────── */
 
 function policyFor(location) {
