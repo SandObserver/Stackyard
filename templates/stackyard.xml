@@ -15,7 +15,9 @@
   <TemplateURL>https://raw.githubusercontent.com/SandObserver/Stackyard/main/templates/stackyard.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/SandObserver/Stackyard/main/templates/icon.svg</Icon>
   <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot.png</Screenshot>
-  <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot-admin.png</Screenshot>
+  <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot-general.png</Screenshot>
+  <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot-appearance.png</Screenshot>
+  <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot-apps.png</Screenshot>
   <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot-app-edit.png</Screenshot>
   <ExtraSearchTerms>homelab dashboard homepage self-hosted launcher start page widgets</ExtraSearchTerms>
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>

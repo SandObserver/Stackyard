@@ -21,10 +21,10 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 ## Contents
 
 - [Why Stackyard](#why-stackyard)
-- [Getting started](#getting-started)
-- [Icons](#icons)
 - [Widgets](#widgets)
 - [Live activity badges](#live-activity-badges)
+- [Icons](#icons)
+- [Getting started](#getting-started)
 - [Security](#security)
 - [Building from source](#building-from-source)
 - [Contributing](#contributing)
@@ -39,13 +39,36 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
 - **No dependencies.** Review it once and stop worrying about the supply chain.
 
-Has a mobile layout and ships in English, Persian, Chinese, Spanish, German, and French.
+Ships with a mobile layout, six languages including right-to-left, tested colour contrast and screen-reader labels, and a web manifest, so a phone can install it to the home screen and open it in its own window. There is no offline mode: every tile shows live data.
 
-Add it to a phone's home screen and it opens in its own window, without browser chrome. There is no offline mode: every tile shows live data, so the dashboard needs to reach your services.
+## Widgets
+
+Widgets and the services they read:
+
+- **Clock**
+- **Now Playing**: Plex, Jellyfin, Emby, Navidrome
+- **Weather**: Open-Meteo (no API key required)
+- **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
+- **GitHub**: contribution graph and pull requests
+- **Books**: Audiobookshelf, Komga, Kavita
+- **System stats**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed
+- **Disk health**: TrueNAS, Scrutiny
+- **Backup**: Duplicati, Kopia
+- **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
+
+Adding one is a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md).
+
+## Live activity badges
+
+Give Stackyard an API endpoint and it lists the numbers in the response, so you pick the one you want on the tile. Point it at Sonarr's queue and the Sonarr tile carries a count of episodes still downloading. **Show From** sets a floor, so a queue that is never quite empty stays quiet until it matters.
+
+## Icons
+
+App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set. You can also upload your own; custom icons are stored in `./icons`.
 
 ## Getting started
 
-You need Docker.
+You need [Docker](https://docs.docker.com/get-started/get-docker/).
 
 **Using Docker Compose:**
 
@@ -86,34 +109,7 @@ The same image is on Docker Hub as `sandobserver/stackyard`. Prefer `ghcr.io`: i
 
 The repo's [`docker-compose.yml`](docker-compose.yml) is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access, and Docker health checks.
 
-General holds the title, language, password protection, and import and export. Import also reads a gethomepage or Dashy YAML file.
-
-![Stackyard admin, General section](docs/screenshot-admin.png)
-
-## Icons
-
-App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set. You can also upload your own; custom icons are stored in `./icons`.
-
-## Widgets
-
-Widgets and the services they read:
-
-- **Clock**
-- **Now Playing**: Plex, Jellyfin, Emby, Navidrome
-- **Weather**: Open-Meteo (no API key required)
-- **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
-- **GitHub**: contribution graph and pull requests
-- **Books**: Audiobookshelf, Komga, Kavita
-- **System stats**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed
-- **Disk health**: TrueNAS, Scrutiny
-- **Backup**: Duplicati, Kopia
-- **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
-
-Adding one is a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md).
-
-## Live activity badges
-
-Give Stackyard an API endpoint and it lists the numbers in the response, so you pick the one you want on the tile. Point it at Sonarr's queue and the Sonarr tile carries a count of episodes still downloading. **Show From** sets a floor, so a queue that is never quite empty stays quiet until it matters.
+Every section of the admin UI is shown in [docs/screenshots.md](docs/screenshots.md).
 
 ## Security
 
