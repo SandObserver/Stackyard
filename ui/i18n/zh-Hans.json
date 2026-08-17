@@ -92,6 +92,7 @@
     "reportIssue": "报告问题",
     "sourceCode": "源代码",
     "support": "支持",
+    "updateTo": "更新到 v{v}",
     "version": "版本 v{v}"
   },
   "dashboard": {

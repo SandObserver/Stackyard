@@ -43,6 +43,7 @@ async function load() {
   state.items = c.items || [];
   state._settings = c.settings || {};
   await initI18n(c.settings?.language || 'en');
+  initVersion();
   syncThemeLabel();
   try {
     const wr = await ag('/api/widgets');
@@ -1087,7 +1088,14 @@ async function initVersion() {
           const lv = String(d.latest).replace(/^v/i, '');
           setHtml(
             aEl,
-            html`Version v${v} &middot; <a href="https://github.com/SandObserver/stackyard/releases/latest" target="_blank" rel="noopener" class="upd-link">Update to v${lv}</a>`,
+            html`${t('about.version', { v })} &middot;
+              <a
+                href="https://github.com/SandObserver/stackyard/releases/latest"
+                target="_blank"
+                rel="noopener"
+                class="upd-link"
+                >${t('about.updateTo', { v: lv })}</a
+              >`,
           );
         }
       }
@@ -1494,7 +1502,6 @@ el('btn-add').onclick = () => openModal(null);
 
 initNav();
 initAllInlineEdits();
-initVersion();
 initSecToggle();
 initDockerToggle();
 initBgType();

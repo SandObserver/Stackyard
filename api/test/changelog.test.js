@@ -105,10 +105,39 @@ test('the committed changelog passes the gate', () => {
   assert.equal(check([]), 0);
 });
 
+/* Release mode is run on a changelog whose pending entries have already been
+   moved into the release being cut, so the committed file is emptied of them
+   first. Between releases it holds the next release's entries, and running the
+   gate on it as it stands would fail on a file that is correct. */
+function atReleaseTime() {
+  const markdown = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
+  const doc = cl.parse(markdown);
+  const unreleased = cl.unreleased(doc);
+  const next = doc.versions[doc.versions.indexOf(unreleased) + 1];
+  const lines = doc.lines.slice();
+  lines.splice(unreleased.line, next.line - 1 - unreleased.line, '');
+  const file = path.join(tmpDir('changelog'), 'at-release.md');
+  fs.writeFileSync(file, lines.join('\n'), 'utf8');
+  return file;
+}
+
 test('the gate agrees with the released version, and rejects any other', () => {
   const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'api', 'package.json'), 'utf8')).version;
-  assert.equal(check(['--release', version]), 0);
-  assert.equal(check(['--release', '99.0.0']), 1);
+  const file = atReleaseTime();
+  assert.equal(check(['--file', file, '--release', version]), 0);
+  assert.equal(check(['--file', file, '--release', '99.0.0']), 1);
+});
+
+test('the gate refuses to cut a release that leaves entries behind', () => {
+  const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'api', 'package.json'), 'utf8')).version;
+  const file = path.join(tmpDir('changelog'), 'left-behind.md');
+  const markdown = fs.readFileSync(atReleaseTime(), 'utf8');
+  fs.writeFileSync(
+    file,
+    markdown.replace('## [Unreleased]\n', '## [Unreleased]\n\n### Fixed\n\n- A late fix.\n'),
+    'utf8',
+  );
+  assert.equal(check(['--file', file, '--release', version]), 1);
 });
 
 /* Each mutation is one rule. A gate that has never been seen to fail is a

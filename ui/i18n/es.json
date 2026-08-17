@@ -92,6 +92,7 @@
     "reportIssue": "Reportar un problema",
     "sourceCode": "Código fuente",
     "support": "Soporte",
+    "updateTo": "Actualizar a v{v}",
     "version": "Versión v{v}"
   },
   "dashboard": {
