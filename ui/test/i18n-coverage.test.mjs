@@ -24,6 +24,11 @@ const flat = (o, p = '') =>
 /* Keys whose English value is correct in that language too. */
 const SAME_ON_PURPOSE = {
   'de.json': new Set([
+    /* Debug, Info and the version line are written the same way in German. */
+    'general.logDebug',
+    'general.logInfo',
+    'about.version',
+    'appearance.sourceUnsplash',
     'nav.dashboard',
     'about.support',
     'dashboard.filterApps',
@@ -43,6 +48,7 @@ const SAME_ON_PURPOSE = {
     'general.importExport',
   ]),
   'es.json': new Set([
+    'appearance.sourceUnsplash',
     'nav.general',
     'common.color',
     'appearance.color',
@@ -54,6 +60,10 @@ const SAME_ON_PURPOSE = {
     'home.dock',
   ]),
   'fr.json': new Set([
+    /* Info and the version line are written the same way in French. */
+    'general.logInfo',
+    'about.version',
+    'appearance.sourceUnsplash',
     'general.description',
     'appearance.source',
     'about.documentation',
@@ -68,8 +78,8 @@ const SAME_ON_PURPOSE = {
     'app.badgePill',
     'home.dock',
   ]),
-  'fa.json': new Set([]),
-  'zh-Hans.json': new Set(['app.ping']),
+  'fa.json': new Set(['appearance.sourceUnsplash']),
+  'zh-Hans.json': new Set(['app.ping', 'appearance.sourceUnsplash']),
 };
 
 const en = Object.fromEntries(flat(read('en.json')));

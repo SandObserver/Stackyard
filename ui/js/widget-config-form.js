@@ -2,6 +2,7 @@
    back. Each builder returns { el, get, control, liveValue }. See
    docs/widgets.md. */
 
+import { t } from '/js/i18n.js?v=d056c9c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { wireChecklist } from '/js/admin-shared.js?v=9a601113';
 import { renderColorControl } from '/js/admin-color-control.js?v=abdc83a6';
@@ -90,10 +91,10 @@ function _ieRow(field, value, inputType) {
 function _secret(field, isSet) {
   const row = document.createElement('div');
   row.className = 'row ie-row';
-  const display = isSet ? 'Configured' : 'Not set';
+  const display = isSet ? t('common.configured') : t('common.notSet');
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? 'Enter new value to replace' : field.placeholder || ''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${field.label}">${raw(PE)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? t('widgetCfg.replaceSecret') : field.placeholder || ''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${field.label}">${raw(PE)}</button>`,
   );
   const rv = row.querySelector('.rv'),
     inp = qi('.row-inp', row),
@@ -106,7 +107,7 @@ function _secret(field, isSet) {
   const commit = () => {
     row.classList.remove('editing');
     inp.style.display = 'none';
-    rv.textContent = inp.value ? 'New value set' : display;
+    rv.textContent = inp.value ? t('widgetCfg.newValueSet') : display;
     inp.dispatchEvent(new Event('change', { bubbles: true }));
   };
   pe.addEventListener('click', open);
@@ -122,7 +123,7 @@ function _secret(field, isSet) {
     const v = inp.value.trim();
     return v === '' ? null : [field.key, v];
   };
-  const hint = isSet ? 'A value is saved. Enter a new one to replace it, or leave blank to keep it.' : field.hint;
+  const hint = isSet ? t('widgetCfg.storedSecretHint') : field.hint;
   const api = { get, control: inp, liveValue: () => inp.value, hasStored: () => isSet };
   if (hint) {
     const w = document.createElement('div');
@@ -215,7 +216,7 @@ function _picklist(field, value, ctx, size) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'row-btn';
-  btn.textContent = field.fetchLabel || 'Fetch';
+  btn.textContent = field.fetchLabel || t('widgetCfg.fetch');
   setHtml(fr, html`<span class="rl"></span>`);
   fr.appendChild(status);
   fr.appendChild(btn);
@@ -250,7 +251,7 @@ function _picklist(field, value, ctx, size) {
       );
       if (cur && !opts.some(o => String(o.value) === cur))
         items.unshift(html`<option value="${cur}" selected>${cur}</option>`);
-      items.unshift(html`<option value=""${cur ? '' : ' selected'}>Empty</option>`);
+      items.unshift(html`<option value=""${cur ? '' : ' selected'}>${t('widgetCfg.empty')}</option>`);
       setHtml(sel, html`${items}`);
     });
   }
@@ -258,15 +259,15 @@ function _picklist(field, value, ctx, size) {
 
   if (field.optionsFrom) {
     btn.addEventListener('click', async () => {
-      status.textContent = 'Fetching...';
+      status.textContent = t('widgetCfg.fetching');
       status.className = 'row-status';
       btn.disabled = true;
       try {
         opts = await _fetchOptions(field, ctx);
         paint();
         status.textContent = opts.length
-          ? `Loaded ${opts.length} option${opts.length > 1 ? 's' : ''}`
-          : 'No options found';
+          ? t(opts.length === 1 ? 'widgetCfg.loaded' : 'widgetCfg.loadedPlural', { n: opts.length })
+          : t('widgetCfg.noOptions');
         status.className = 'row-status ok';
       } catch (e) {
         const advice = optionsErrorAdvice(e);
@@ -335,13 +336,13 @@ function _select(field, value, ctx, config = {}) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'row-btn';
-    btn.textContent = 'Fetch';
+    btn.textContent = t('widgetCfg.fetch');
     setHtml(fr, html`<span class="rl"></span>`);
     fr.appendChild(status);
     fr.appendChild(btn);
     wrap.appendChild(fr);
     btn.addEventListener('click', async () => {
-      status.textContent = 'Fetching...';
+      status.textContent = t('widgetCfg.fetching');
       status.className = 'row-status';
       btn.disabled = true;
       try {
@@ -350,8 +351,8 @@ function _select(field, value, ctx, config = {}) {
         paint();
         syncCarried();
         status.textContent = opts.length
-          ? `Loaded ${opts.length} option${opts.length > 1 ? 's' : ''}`
-          : 'No options found';
+          ? t(opts.length === 1 ? 'widgetCfg.loaded' : 'widgetCfg.loadedPlural', { n: opts.length })
+          : t('widgetCfg.noOptions');
         status.className = 'row-status ok';
       } catch (e) {
         const advice = optionsErrorAdvice(e);
@@ -584,7 +585,7 @@ function _group(field, rows, size, ctx) {
       const rm = document.createElement('button');
       rm.type = 'button';
       rm.className = 'grp-hdr-rm';
-      rm.textContent = 'Remove';
+      rm.textContent = t('widgetCfg.remove');
       rm.disabled = data.length <= min;
       if (fixed) rm.style.display = 'none';
       rm.onclick = () => {

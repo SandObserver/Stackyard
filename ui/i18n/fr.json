@@ -7,7 +7,9 @@
     "general": "Général",
     "appearance": "Apparence",
     "dashboard": "Tableau de bord",
-    "about": "À propos"
+    "about": "À propos",
+    "sections": "Sections des réglages",
+    "backToDashboard": "Retour au tableau de bord"
   },
   "common": {
     "save": "Enregistrer",
@@ -25,7 +27,9 @@
     "create": "Créer",
     "chooseFiles": "Choisir des fichiers",
     "configured": "Définie",
-    "notSet": "Non définie"
+    "notSet": "Non définie",
+    "show": "Afficher",
+    "hide": "Masquer"
   },
   "general": {
     "title": "Titre",
@@ -50,7 +54,13 @@
     "importExport": "Importer / Exporter",
     "signOut": "Se déconnecter",
     "importForeign": "Importer depuis un autre tableau de bord",
-    "importForeignTip": "Lit les fichiers YAML de gethomepage et Dashy. Les liens et les dossiers sont ajoutés à votre tableau de bord ; les widgets de l’autre tableau de bord deviennent de simples liens."
+    "importForeignTip": "Lit les fichiers YAML de gethomepage et Dashy. Les liens et les dossiers sont ajoutés à votre tableau de bord ; les widgets de l’autre tableau de bord deviennent de simples liens.",
+    "logDebug": "Débogage",
+    "logInfo": "Info",
+    "logError": "Erreurs",
+    "passwordPh": "Nouveau mot de passe (8 caractères minimum)",
+    "showSettingsAria": "Afficher les Réglages sur le tableau de bord",
+    "hideSettingsAria": "Masquer les Réglages sur le tableau de bord"
   },
   "appearance": {
     "appTitle": "Titre de l'application",
@@ -71,13 +81,18 @@
     "imageUrl": "URL de l'image",
     "color": "Couleur",
     "brightness": "Luminosité",
-    "collectionTip": "Laissez le Collection ID vide pour un résultat aléatoire."
+    "collectionTip": "Laissez le Collection ID vide pour un résultat aléatoire.",
+    "sourceUnsplash": "Unsplash",
+    "sourceUrl": "URL de l'image",
+    "sourceColor": "Couleur unie",
+    "unsplashKeyPh": "Collez votre clé API Unsplash"
   },
   "about": {
     "documentation": "Documentation",
     "reportIssue": "Signaler un problème",
     "sourceCode": "Code source",
-    "support": "Assistance"
+    "support": "Assistance",
+    "version": "Version v{v}"
   },
   "dashboard": {
     "searchPh": "Rechercher",
@@ -104,7 +119,9 @@
     "addApp": "Ajouter une app au dossier",
     "none": "Aucun dossier",
     "allInFolder": "Toutes les apps sont déjà dans ce dossier.",
-    "createNew": "Créer un dossier"
+    "createNew": "Créer un dossier",
+    "expandAria": "Développer le dossier {name}",
+    "collapseAria": "Réduire le dossier {name}"
   },
   "app": {
     "name": "Nom",
@@ -148,7 +165,13 @@
     "healthPill": "État",
     "badgePill": "Badge",
     "secret": "Secret",
-    "pollInterval": "toutes les {seconds} secondes"
+    "pollInterval": "toutes les {seconds} secondes",
+    "enterUrlFirst": "Saisissez d'abord une URL.",
+    "testing": "Test en cours…",
+    "fetching": "Récupération…",
+    "noNumericValues": "Aucune valeur numérique dans la réponse.",
+    "values": "Valeurs",
+    "computedFromArray": "Calculé à partir de la liste"
   },
   "home": {
     "search": "Rechercher",
@@ -168,7 +191,8 @@
     "results": "résultats",
     "apiDownTitle": "Connexion à l’API du tableau de bord impossible",
     "apiDownSub": "Vérifiez que le conteneur de l’API est démarré",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "opensSettings": "Ouvre les réglages"
   },
   "toast": {
     "saved": "Enregistré",
@@ -245,7 +269,22 @@
     "refused": "{n} widget n'a pas pu être chargé et n'apparaît pas dans la liste.",
     "refusedPlural": "{n} widgets n'ont pas pu être chargés et n'apparaissent pas dans la liste.",
     "name": "Nom",
-    "type": "Type de widget"
+    "type": "Type de widget",
+    "namePh": "Mon widget",
+    "editName": "Modifier le nom",
+    "size": "Taille",
+    "iframeTip": "L’URL sera intégrée au tableau de bord dans un iframe.",
+    "advanced": "Avancé",
+    "replaceSecret": "Saisissez une nouvelle valeur pour la remplacer",
+    "newValueSet": "Nouvelle valeur définie",
+    "storedSecretHint": "Une valeur est enregistrée. Saisissez-en une nouvelle pour la remplacer, ou laissez vide pour la conserver.",
+    "fetch": "Récupérer",
+    "fetching": "Récupération…",
+    "remove": "Supprimer",
+    "noOptions": "Aucune option trouvée",
+    "empty": "Vide",
+    "loaded": "{n} option chargée",
+    "loadedPlural": "{n} options chargées"
   },
   "importForeign": {
     "title": "Importer depuis un autre tableau de bord",
@@ -274,5 +313,17 @@
     "skipRelativeHref": "le lien n’a pas d’adresse, seulement un chemin",
     "skipUnreadable": "cette entrée n’a pas la forme autorisée par le format du fichier",
     "monitors": "· interroge {url}"
+  },
+  "login": {
+    "subtitle": "Connectez-vous pour continuer",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "incorrect": "Mot de passe incorrect."
+  },
+  "setpw": {
+    "title": "Définir un mot de passe",
+    "desc": "Choisissez un mot de passe fort pour votre tableau de bord.",
+    "newPassword": "Nouveau mot de passe",
+    "submit": "Définir le mot de passe"
   }
 }

@@ -7,7 +7,9 @@
     "general": "عمومی",
     "appearance": "ظاهری",
     "dashboard": "داشبورد",
-    "about": "درباره"
+    "about": "درباره",
+    "sections": "بخش‌های تنظیمات",
+    "backToDashboard": "بازگشت به داشبورد"
   },
   "common": {
     "save": "ذخیره",
@@ -25,7 +27,9 @@
     "create": "ساختن",
     "chooseFiles": "انتخاب فایل‌ها",
     "configured": "تنظیم‌شده",
-    "notSet": "تنظیم نشده"
+    "notSet": "تنظیم نشده",
+    "show": "نمایش",
+    "hide": "پنهان کردن"
   },
   "general": {
     "title": "عنوان",
@@ -50,7 +54,13 @@
     "importExport": "وارد کردن / خروجی گرفتن",
     "signOut": "خروج از حساب",
     "importForeign": "درون‌ریزی از داشبورد دیگر",
-    "importForeignTip": "فایل‌های YAML مربوط به gethomepage و Dashy را می‌خواند. پیوندها و پوشه‌ها به داشبورد شما افزوده می‌شوند؛ ویجت‌های داشبورد دیگر به پیوند ساده تبدیل می‌شوند."
+    "importForeignTip": "فایل‌های YAML مربوط به gethomepage و Dashy را می‌خواند. پیوندها و پوشه‌ها به داشبورد شما افزوده می‌شوند؛ ویجت‌های داشبورد دیگر به پیوند ساده تبدیل می‌شوند.",
+    "logDebug": "اشکال‌زدایی",
+    "logInfo": "اطلاعات",
+    "logError": "خطاها",
+    "passwordPh": "رمز عبور جدید (حداقل ۸ نویسه)",
+    "showSettingsAria": "نمایش تنظیمات در داشبورد",
+    "hideSettingsAria": "پنهان کردن تنظیمات در داشبورد"
   },
   "appearance": {
     "appTitle": "عنوان برنامه",
@@ -71,13 +81,18 @@
     "imageUrl": "آدرس تصویر",
     "color": "رنگ",
     "brightness": "روشنایی",
-    "collectionTip": "برای تصاویر تصادفی، Collection ID را خالی بگذارید."
+    "collectionTip": "برای تصاویر تصادفی، Collection ID را خالی بگذارید.",
+    "sourceUnsplash": "Unsplash",
+    "sourceUrl": "نشانی تصویر",
+    "sourceColor": "رنگ یکدست",
+    "unsplashKeyPh": "کلید API آنسپلش را بچسبانید"
   },
   "about": {
     "documentation": "مستندات",
     "reportIssue": "گزارش مشکل",
     "sourceCode": "کد منبع",
-    "support": "پشتیبانی"
+    "support": "پشتیبانی",
+    "version": "نسخه v{v}"
   },
   "dashboard": {
     "searchPh": "جستجو",
@@ -104,7 +119,9 @@
     "addApp": "افزودن برنامه به پوشه",
     "none": "بدون پوشه",
     "allInFolder": "همه برنامه‌ها از پیش در این پوشه هستند.",
-    "createNew": "ساخت پوشه تازه"
+    "createNew": "ساخت پوشه تازه",
+    "expandAria": "باز کردن پوشه {name}",
+    "collapseAria": "بستن پوشه {name}"
   },
   "app": {
     "name": "نام",
@@ -148,7 +165,13 @@
     "healthPill": "سلامت",
     "badgePill": "نشان",
     "secret": "محرمانه",
-    "pollInterval": "هر {seconds} ثانیه"
+    "pollInterval": "هر {seconds} ثانیه",
+    "enterUrlFirst": "ابتدا یک نشانی وارد کنید.",
+    "testing": "در حال آزمایش…",
+    "fetching": "در حال دریافت…",
+    "noNumericValues": "هیچ مقدار عددی در پاسخ نیست.",
+    "values": "مقادیر",
+    "computedFromArray": "محاسبه‌شده از فهرست"
   },
   "home": {
     "search": "جستجو",
@@ -168,7 +191,8 @@
     "results": "نتیجه",
     "apiDownTitle": "اتصال به API داشبورد ممکن نشد",
     "apiDownSub": "مطمئن شوید کانتینر API در حال اجراست",
-    "retry": "تلاش دوباره"
+    "retry": "تلاش دوباره",
+    "opensSettings": "تنظیمات را باز می‌کند"
   },
   "toast": {
     "saved": "ذخیره شد",
@@ -245,7 +269,22 @@
     "refused": "‏{n} ابزارک بارگذاری نشد، بنابراین در فهرست زیر نیست.",
     "refusedPlural": "‏{n} ابزارک بارگذاری نشدند، بنابراین در فهرست زیر نیستند.",
     "name": "نام",
-    "type": "نوع ابزارک"
+    "type": "نوع ابزارک",
+    "namePh": "ابزارک من",
+    "editName": "ویرایش نام",
+    "size": "اندازه",
+    "iframeTip": "این نشانی به‌صورت آی‌فریم در داشبورد جاسازی می‌شود.",
+    "advanced": "پیشرفته",
+    "replaceSecret": "برای جایگزینی، مقدار تازه وارد کنید",
+    "newValueSet": "مقدار تازه ثبت شد",
+    "storedSecretHint": "یک مقدار ذخیره شده است. برای جایگزینی مقدار تازه وارد کنید یا برای نگه داشتن آن، خالی بگذارید.",
+    "fetch": "دریافت",
+    "fetching": "در حال دریافت…",
+    "remove": "حذف",
+    "noOptions": "گزینه‌ای پیدا نشد",
+    "empty": "خالی",
+    "loaded": "{n} گزینه بارگیری شد",
+    "loadedPlural": "{n} گزینه بارگیری شد"
   },
   "importForeign": {
     "title": "درون‌ریزی از داشبورد دیگر",
@@ -274,5 +313,17 @@
     "skipRelativeHref": "پیوند نشانی ندارد، فقط یک مسیر",
     "skipUnreadable": "این ورودی ساختاری ندارد که قالب پرونده بپذیرد",
     "monitors": "· {url} را می‌پاید"
+  },
+  "login": {
+    "subtitle": "برای ادامه وارد شوید",
+    "password": "رمز عبور",
+    "signIn": "ورود",
+    "incorrect": "رمز عبور نادرست است."
+  },
+  "setpw": {
+    "title": "تعیین رمز عبور",
+    "desc": "یک رمز عبور قوی برای داشبورد خود انتخاب کنید.",
+    "newPassword": "رمز عبور جدید",
+    "submit": "تعیین رمز عبور"
   }
 }

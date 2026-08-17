@@ -48,7 +48,7 @@ test('the picker says how many widgets were refused', () => {
 test('the notice renders next to the type list', () => {
   const atType = form.indexOf('id="f-wtype"');
   const atNotice = form.indexOf('refusedNoticeKey(');
-  const atSize = form.search(/sizeHdr\.textContent\s*=\s*'Size'/);
+  const atSize = form.search(/sizeHdr\.textContent\s*=\s*t\('widgetCfg\.size'\)/);
   assert.ok(atType !== -1 && atNotice !== -1 && atSize !== -1, 'the form no longer has these parts');
   assert.ok(
     atType < atNotice && atNotice < atSize,
