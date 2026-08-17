@@ -5,7 +5,7 @@
 import { t } from '/js/i18n.js?v=d056c9c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { wireChecklist } from '/js/admin-shared.js?v=9a601113';
-import { renderColorControl } from '/js/admin-color-control.js?v=abdc83a6';
+import { renderColorControl } from '/js/admin-color-control.js?v=6e4beac5';
 import {
   seedCarried,
   applyOptionSet,

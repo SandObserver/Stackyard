@@ -19,6 +19,11 @@
   --t:.15s ease;
   --sbw:320px;
 
+  /* Slider fills and colour ramps must run the same way as the native range
+     handle, which reverses under RTL. Every gradient painted on a track takes
+     its direction from here, in CSS and in JS. */
+  --slider-dir:90deg;
+
   /* Derived from the hue, never written out, so a palette change carries
      through. */
   --chip-dk-bg:color-mix(in srgb, var(--sy-indigo) 20%, transparent);
@@ -224,7 +229,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 /* ── Slider — wider with JS-driven blue fill ── */
 .slider-wrap{display:flex;align-items:center;gap:8px;flex:2;max-width:none}
 .si{color:var(--dm);flex-shrink:0}
-.adm-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right, var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:3px;cursor:pointer;outline:none}
+.adm-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;background:linear-gradient(var(--slider-dir), var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:3px;cursor:pointer;outline:none}
 /* One handle for every slider, size included. The two used to carry their own
    copy and drifted apart. The kit draws a thin line here, which is too small a
    thing to find and drag on a phone, so the round knob stays, and it draws a
@@ -300,7 +305,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .hsb-track{display:flex;align-items:center;gap:10px;margin-inline-start:auto;flex:2;max-width:none}
 .hsb-ico{width:17px;height:17px;color:var(--dm);flex-shrink:0;display:flex}
 .hsb-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;border-radius:3px;cursor:pointer;outline:none}
-.hsb-hue{background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.hsb-hue{background:linear-gradient(var(--slider-dir),#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
 
 /* ── Segmented control (Container/Ping, Disk Health/System Summary) ──
    A 32 track carrying 28 segments, so the segments sit 2 inside it. The radio
@@ -655,9 +660,10 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
    meant Persian quietly looked wrong. All nine are gone, unneeded.
 
    What cannot be expressed logically stays: a chevron is a drawing, not a box,
-   so it is mirrored explicitly. */
+   and a gradient angle has no logical form, so both are flipped explicitly. */
 [dir="rtl"] .m-back svg,
 [dir="rtl"] .ev-back svg { transform: scaleX(-1); }
+[dir="rtl"] { --slider-dir:270deg; }
 
 /* ── Increased contrast ──────────────────────────────────────────────────────
    This page's own tokens, raised against its own background. The dashboard's

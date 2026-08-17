@@ -14,7 +14,7 @@ import {
   setTogDisabled,
   wireChecklist,
 } from '/js/admin-shared.js?v=9a601113';
-import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=abdc83a6';
+import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=6e4beac5';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {

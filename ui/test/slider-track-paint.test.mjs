@@ -28,6 +28,27 @@ test('no gradient is painted through the background shorthand', () => {
   assert.deepEqual(offenders, [], 'use style.backgroundImage; the shorthand resets background-clip');
 });
 
+test('every slider gradient takes its direction from --slider-dir', () => {
+  const offenders = [];
+  const sources = [...jsFiles, ['css/admin.css', read('css/admin.css')]];
+  for (const [name, src] of sources) {
+    for (const m of src.matchAll(/linear-gradient\(\s*(to\s+[a-z]+|-?[\d.]+deg)/g)) {
+      const line = src.slice(0, m.index).split('\n').length;
+      const context = src.slice(Math.max(0, m.index - 200), m.index);
+      if (/adm-range|hsb-range|hsb-hue|sEl\.style|vEl\.style|el\.style/.test(context)) {
+        offenders.push(`${name}:${line} uses ${m[1]}`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, [], 'a fixed direction leaves the fill running against the handle in RTL');
+});
+
+test('--slider-dir reverses under RTL', () => {
+  const css = read('css/admin.css');
+  assert.match(css, /--slider-dir:\s*90deg/, '--slider-dir has no left-to-right default');
+  assert.match(css, /\[dir="rtl"\][^{]*\{[^}]*--slider-dir:\s*270deg/, '--slider-dir is not reversed for RTL');
+});
+
 test('the touch-sized sliders still clip their track', () => {
   const css = read('css/admin.css');
   for (const cls of ['.adm-range', '.hsb-range']) {

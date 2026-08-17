@@ -85,6 +85,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hue, saturation and brightness sliders no longer stretch across the row on a
   phone.
 
+- Slider fills and colour ramps now run the same way as the handle in
+  right-to-left languages.
+
 - Saturation, brightness and wallpaper brightness sliders now draw a thin track
   on a phone, matching hue.
 
