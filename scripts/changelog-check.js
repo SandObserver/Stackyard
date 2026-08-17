@@ -176,8 +176,9 @@ function checkRelease(doc, version) {
   if (pkg.version !== version) fail(1, `api/package.json is ${pkg.version}, not ${version}`);
 
   const render = fs.readFileSync(path.join(ROOT, 'render.yaml'), 'utf8');
-  if (!new RegExp(`stackyard:${version}\\b`).test(render)) {
-    fail(1, `render.yaml does not pin the demo to ${version}; it would stay on the old image`);
+  const pinned = /stackyard:(\S+)/.exec(render);
+  if (!pinned || pinned[1] !== version) {
+    fail(1, `render.yaml pins the demo to ${pinned ? pinned[1] : 'nothing'}, not ${version}`);
   }
 
   const previous = releases[1];

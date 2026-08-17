@@ -105,8 +105,9 @@ function compareVersions(a, b) {
     redirects one to the other and both forms are already in the file.
     @param {string} url @param {string} tail */
 function linkMatches(url, tail) {
-  const expected = new RegExp(`^https://github\\.com/${REPO}/${tail}$`, 'i');
-  return expected.test(url);
+  const prefix = `https://github.com/${REPO}/`;
+  if (url.slice(0, prefix.length).toLowerCase() !== prefix.toLowerCase()) return false;
+  return url.slice(prefix.length) === tail;
 }
 
 /** The bump the entries imply. Advisory only: a tooling or docs addition is a
