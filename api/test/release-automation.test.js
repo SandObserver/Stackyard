@@ -23,7 +23,7 @@ test('release prep opens a pull request rather than writing to the default branc
 });
 
 test('the tag and the release page are pushed with the app token', () => {
-  for (const f of ['release-tag.yml', 'release.yml']) {
+  for (const f of ['release-tag.yml', 'release.yml', 'ca-template-changes.yml']) {
     const src = wf(f);
     assert.ok(src.includes(APP_TOKEN), `${f} does not use the app token`);
     assert.doesNotMatch(
@@ -53,7 +53,7 @@ test('the release page is published from the changelog, after the image', () => 
 });
 
 test('the release workflows grant the built-in token nothing', () => {
-  for (const f of ['release-prep.yml', 'release-tag.yml']) {
+  for (const f of ['release-prep.yml', 'release-tag.yml', 'ca-template-changes.yml']) {
     const doc = yaml.load(wf(f));
     assert.deepEqual(doc.permissions, {}, `${f} should leave GITHUB_TOKEN with no scope`);
   }

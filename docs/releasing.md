@@ -31,13 +31,30 @@ keeps `latest`, the Docker Hub description and the demo on the last stable
 release, and marks the release page as a pre-release. See
 `scripts/is-prerelease.js`.
 
-## Requirements
+## The release app
 
-The prep, tagging and release-page steps authenticate as a GitHub App, through
-the `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY` secrets. The app needs
-Contents and Pull requests write access. Without it the release cannot proceed:
-the built-in token cannot push to the protected default branch, and a tag or a
-release it creates starts no workflow run, so nothing would build.
+Every write in the release runs as a GitHub App. The built-in `GITHUB_TOKEN`
+cannot push to the protected default branch, and a tag or a release it creates
+starts no workflow run, so the image would never build and the Community
+Applications template would never update.
+
+Create it once, under **Settings > Developer settings > GitHub Apps > New GitHub
+App** on the account that owns the repository:
+
+1. Name it `stackyard-release`. Homepage URL can be the repository URL.
+2. Clear **Webhook > Active**. The app receives nothing.
+3. Repository permissions: **Contents: Read and write**, **Pull requests: Read
+   and write**. Nothing else. Metadata read-only is added automatically.
+4. Create the app, then **Generate a private key** and keep the downloaded
+   `.pem`.
+5. **Install App** on this repository only.
+6. In the repository, add two secrets under **Settings > Secrets and variables >
+   Actions**: `RELEASE_APP_ID` is the app's App ID, and
+   `RELEASE_APP_PRIVATE_KEY` is the whole `.pem` file including the
+   `-----BEGIN` and `-----END` lines.
+
+The app needs no ruleset bypass. It opens pull requests rather than pushing to
+the default branch, and the ruleset covers branches, not tags.
 
 ## When a release build fails
 
