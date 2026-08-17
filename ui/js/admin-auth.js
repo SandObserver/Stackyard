@@ -44,7 +44,7 @@ function showLoginScreen(onLogin) {
       onLogin?.();
     } catch (e) {
       if (err) {
-        err.textContent = e.message || 'Incorrect password.';
+        err.textContent = e.message || t('login.incorrect');
         err.style.display = 'block';
       }
       if (pw) {

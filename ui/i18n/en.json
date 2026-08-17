@@ -7,7 +7,9 @@
     "general": "General",
     "appearance": "Appearance",
     "dashboard": "Dashboard",
-    "about": "About"
+    "about": "About",
+    "sections": "Settings sections",
+    "backToDashboard": "Back to dashboard"
   },
   "common": {
     "save": "Save",
@@ -25,7 +27,9 @@
     "create": "Create",
     "chooseFiles": "Choose files",
     "configured": "Configured",
-    "notSet": "Not set"
+    "notSet": "Not set",
+    "show": "Show",
+    "hide": "Hide"
   },
   "general": {
     "title": "Title",
@@ -50,7 +54,13 @@
     "importExport": "Import / Export",
     "signOut": "Sign out",
     "importForeign": "Import from another dashboard",
-    "importForeignTip": "Reads gethomepage and Dashy YAML files. Links and folders are added to your dashboard; widgets from the other dashboard become plain links."
+    "importForeignTip": "Reads gethomepage and Dashy YAML files. Links and folders are added to your dashboard; widgets from the other dashboard become plain links.",
+    "logDebug": "Debug",
+    "logInfo": "Info",
+    "logError": "Errors",
+    "passwordPh": "New password (min 8 chars)",
+    "showSettingsAria": "Show Settings on dashboard",
+    "hideSettingsAria": "Hide Settings on dashboard"
   },
   "appearance": {
     "appTitle": "App Title",
@@ -71,13 +81,18 @@
     "imageUrl": "Image URL",
     "color": "Color",
     "brightness": "Brightness",
-    "collectionTip": "Leave Collection ID blank for random."
+    "collectionTip": "Leave Collection ID blank for random.",
+    "sourceUnsplash": "Unsplash",
+    "sourceUrl": "Image URL",
+    "sourceColor": "Solid color",
+    "unsplashKeyPh": "Paste your Unsplash API key"
   },
   "about": {
     "documentation": "Documentation",
     "reportIssue": "Report an issue",
     "sourceCode": "Source code",
-    "support": "Support"
+    "support": "Support",
+    "version": "Version v{v}"
   },
   "dashboard": {
     "searchPh": "Search",
@@ -104,7 +119,9 @@
     "addApp": "Add app to folder",
     "none": "No folder",
     "allInFolder": "All apps are already in this folder.",
-    "createNew": "Create new folder"
+    "createNew": "Create new folder",
+    "expandAria": "Expand folder {name}",
+    "collapseAria": "Collapse folder {name}"
   },
   "app": {
     "name": "Name",
@@ -148,7 +165,13 @@
     "healthPill": "Health",
     "badgePill": "Badge",
     "secret": "Secret",
-    "pollInterval": "every {seconds} seconds"
+    "pollInterval": "every {seconds} seconds",
+    "enterUrlFirst": "Enter a URL first.",
+    "testing": "Testing…",
+    "fetching": "Fetching…",
+    "noNumericValues": "No numeric values in response.",
+    "values": "Values",
+    "computedFromArray": "Computed from array"
   },
   "home": {
     "search": "Search",
@@ -168,7 +191,8 @@
     "results": "results",
     "apiDownTitle": "Could not connect to dashboard API",
     "apiDownSub": "Make sure the API container is running",
-    "retry": "Retry"
+    "retry": "Retry",
+    "opensSettings": "Opens settings"
   },
   "toast": {
     "saved": "Saved",
@@ -245,7 +269,22 @@
     "refused": "{n} widget could not be loaded, so it is not listed below.",
     "refusedPlural": "{n} widgets could not be loaded, so they are not listed below.",
     "name": "Name",
-    "type": "Widget Type"
+    "type": "Widget Type",
+    "namePh": "My Widget",
+    "editName": "Edit name",
+    "size": "Size",
+    "iframeTip": "The URL will be embedded as an iframe in the dashboard.",
+    "advanced": "Advanced",
+    "replaceSecret": "Enter new value to replace",
+    "newValueSet": "New value set",
+    "storedSecretHint": "A value is saved. Enter a new one to replace it, or leave blank to keep it.",
+    "fetch": "Fetch",
+    "fetching": "Fetching…",
+    "remove": "Remove",
+    "noOptions": "No options found",
+    "empty": "Empty",
+    "loaded": "Loaded {n} option",
+    "loadedPlural": "Loaded {n} options"
   },
   "importForeign": {
     "title": "Import from another dashboard",
@@ -274,5 +313,17 @@
     "skipRelativeHref": "the link has no address, only a path",
     "skipUnreadable": "this entry is not in a shape the file format allows",
     "monitors": "· polls {url}"
+  },
+  "login": {
+    "subtitle": "Sign in to continue",
+    "password": "Password",
+    "signIn": "Sign in",
+    "incorrect": "Incorrect password."
+  },
+  "setpw": {
+    "title": "Set a password",
+    "desc": "Choose a strong password for your dashboard.",
+    "newPassword": "New password",
+    "submit": "Set password"
   }
 }

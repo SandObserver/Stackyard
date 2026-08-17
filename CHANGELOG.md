@@ -104,6 +104,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Saving on Settings > Appearance no longer reports "Wallpaper saved" when
   something else on the page was saved.
 
+- The login and set-password screens, the phone tab bar, the logging level and
+  wallpaper source menus, the version line and the app, widget and widget
+  configuration forms are now translated instead of always showing English.
+
 ## [1.6.1] - 2026-08-14
 
 ### Fixed

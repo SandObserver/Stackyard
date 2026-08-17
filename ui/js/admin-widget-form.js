@@ -1,6 +1,6 @@
 import { state } from '/js/admin-state.js?v=42393ee1';
 import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=9a601113';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=0154057f';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=22eb3392';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, refusedNoticeKey } from '/js/admin-logic.js?v=4f8a0761';
 import { t } from '/js/i18n.js?v=d056c9c5';
@@ -53,12 +53,12 @@ function _renderWidgetForm(body) {
   setHtml(
     shell,
     html`
-    <div class="row ie-row" id="ie-wname"><span class="rl">${t('widgetCfg.name')}</span><span class="rv${state._wlabel ? '' : ' is-ph'}">${state._wlabel ? state._wlabel : 'My Widget'}</span><input id="f-wlabel" type="text" value="${state._wlabel}" style="display:none"><button class="pe" type="button" aria-label="Edit name">${raw(PE_SVG)}</button></div>
+    <div class="row ie-row" id="ie-wname"><span class="rl">${t('widgetCfg.name')}</span><span class="rv${state._wlabel ? '' : ' is-ph'}">${state._wlabel ? state._wlabel : t('widgetCfg.namePh')}</span><input id="f-wlabel" type="text" value="${state._wlabel}" style="display:none"><button class="pe" type="button" aria-label="${t('widgetCfg.editName')}">${raw(PE_SVG)}</button></div>
     <div class="row"><span class="rl">${t('widgetCfg.type')}</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="Widget type">${typeOpts}</select>${raw(CHEV_SVG)}</div></div>`,
   );
   body.appendChild(shell);
   initInlineEdit('ie-wname', 'f-wlabel', {
-    placeholder: 'My Widget',
+    placeholder: t('widgetCfg.namePh'),
     onCommit(v) {
       state._wlabel = v;
     },
@@ -83,7 +83,7 @@ function _renderWidgetForm(body) {
   if (!_sizeOpts.includes(state._wsize)) state._wsize = _sizeOpts.includes('medium') ? 'medium' : _sizeOpts[0];
   const sizeHdr = document.createElement('p');
   sizeHdr.className = 'grp-hdr';
-  sizeHdr.textContent = 'Size';
+  sizeHdr.textContent = t('widgetCfg.size');
   body.appendChild(sizeHdr);
   const scard = document.createElement('div');
   scard.className = 'grp';
@@ -167,7 +167,7 @@ function _renderCustomConfig(body) {
   );
   const tip = document.createElement('p');
   tip.className = 'grp-tip';
-  tip.textContent = 'The URL will be embedded as an iframe in the dashboard.';
+  tip.textContent = t('widgetCfg.iframeTip');
   body.appendChild(tip);
   initInlineEdit('cust-url-row', 'f-url', {
     placeholder: 'https://app.example.com/widget.html',
@@ -179,7 +179,7 @@ function _renderCustomConfig(body) {
   const o = state._iframeOpts || {};
   const advHdr = document.createElement('p');
   advHdr.className = 'grp-hdr';
-  advHdr.textContent = 'Advanced';
+  advHdr.textContent = t('widgetCfg.advanced');
   body.appendChild(advHdr);
   const adv = document.createElement('div');
   adv.className = 'grp';

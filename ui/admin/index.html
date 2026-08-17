@@ -20,7 +20,7 @@
 
   <!-- Sidebar -->
   <nav class="sb" aria-label="Settings navigation">
-    <a class="sb-brand" href="/" aria-label="Back to dashboard">
+    <a class="sb-brand" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard">
       <svg width="30" height="30" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)"><path fill="var(--accent)" d="M4978 9180 c-75 -13 -146 -39 -233 -83 -112 -57 -244 -190 -302 -302 -70 -135 -88 -210 -88 -360 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 141 -72 193 -84 430 -93 354 -15 602 -64 885 -177 803 -319 1400 -1028 1569 -1863 39 -195 46 -272 46 -520 0 -155 -5 -278 -14 -335 -50 -332 -129 -578 -281 -870 -108 -207 -125 -266 -125 -430 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 135 -70 210 -88 360 -88 108 0 143 4 205 24 174 54 330 167 424 309 65 100 195 366 269 552 135 343 219 677 263 1055 13 111 18 226 18 445 0 318 -13 473 -60 730 -102 550 -309 1064 -617 1525 -668 1002 -1742 1656 -2937 1790 -169 19 -524 28 -592 15z"/><path fill="var(--tx)" d="M2131 7549 c-287 -51 -529 -264 -623 -549 -29 -87 -32 -106 -32 -230 0 -111 3 -149 22 -213 55 -191 173 -354 330 -454 32 -21 426 -249 875 -508 707 -407 814 -472 799 -483 -9 -7 -396 -232 -861 -500 -747 -431 -852 -495 -917 -555 -314 -293 -338 -763 -56 -1104 85 -103 257 -210 402 -249 47 -13 102 -18 195 -18 146 0 214 14 330 69 39 18 441 247 894 509 453 262 826 476 828 476 1 0 3 -445 3 -989 0 -1079 -1 -1063 58 -1213 77 -199 249 -369 448 -444 470 -177 976 104 1070 593 12 63 14 339 14 1723 0 1064 -4 1685 -10 1751 -25 247 -119 435 -284 571 -61 51 -2844 1666 -3014 1749 -40 21 -104 45 -140 54 -79 20 -255 28 -331 14z"/></g></svg>
       <div>
         <div class="sb-name">Stackyard</div>
@@ -53,7 +53,7 @@
     <!-- General -->
     <section class="sec" id="sec-general" hidden>
       <div class="sec-hdr">
-        <a class="m-back" href="/" aria-label="Back to dashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.general">General</h1>
+        <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.general">General</h1>
         <div class="sec-hdr-actions">
           <button class="btn bp sm" id="srv-save" type="button" data-i18n="common.save">Save</button>
         </div>
@@ -83,10 +83,10 @@
           <span class="rl" data-i18n="general.loggingLevel">Logging Level</span>
           <div class="row-dd" id="log-level-dd">
             <button class="row-dd-btn" type="button" id="log-level-btn" aria-haspopup="listbox">Info<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg></button>
-            <ul class="row-dd-list" id="log-level-list" role="listbox" aria-label="Logging level" hidden>
-              <li role="option" data-val="debug" aria-selected="false">Debug</li>
-              <li role="option" data-val="info" aria-selected="true">Info</li>
-              <li role="option" data-val="error" aria-selected="false">Errors</li>
+            <ul class="row-dd-list" id="log-level-list" role="listbox" aria-label="Logging level" data-i18n-al="general.loggingLevel" hidden>
+              <li role="option" data-val="debug" aria-selected="false" data-i18n="general.logDebug">Debug</li>
+              <li role="option" data-val="info" aria-selected="true" data-i18n="general.logInfo">Info</li>
+              <li role="option" data-val="error" aria-selected="false" data-i18n="general.logError">Errors</li>
             </ul>
           </div>
           <input type="hidden" id="log-level" value="info">
@@ -119,7 +119,7 @@
     <!-- Appearance -->
     <section class="sec" id="sec-appearance" hidden>
       <div class="sec-hdr">
-        <a class="m-back" href="/" aria-label="Back to dashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
+        <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
         <div class="sec-hdr-actions"><button class="btn bp sm" id="bg-save" type="button" data-i18n="common.save">Save</button></div>
       </div>
       <div class="grp-hdr" data-i18n="appearance.appTitle">App Title</div>
@@ -133,7 +133,7 @@
           <span class="rl" data-i18n="appearance.displayMode">Settings Display Mode</span>
           <div class="row-dd" id="theme-dd">
             <button class="row-dd-btn" type="button" id="theme-btn" aria-haspopup="listbox">System Default<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg></button>
-            <ul class="row-dd-list" id="theme-list" role="listbox" aria-label="Settings display mode" hidden>
+            <ul class="row-dd-list" id="theme-list" role="listbox" aria-label="Settings display mode" data-i18n-al="appearance.displayMode" hidden>
               <li role="option" data-val="system" aria-selected="true" data-i18n="appearance.displaySystem">System Default</li>
               <li role="option" data-val="light" aria-selected="false" data-i18n="appearance.displayLight">Light</li>
               <li role="option" data-val="dark" aria-selected="false" data-i18n="appearance.displayDark">Dark</li>
@@ -151,10 +151,10 @@
           <span class="rl" data-i18n="appearance.source">Source</span>
           <div class="row-dd" id="bg-type-dd">
             <button class="row-dd-btn" type="button" id="bg-type-btn" aria-haspopup="listbox">Unsplash<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg></button>
-            <ul class="row-dd-list" id="bg-type-list" role="listbox" aria-label="Wallpaper source" hidden>
-              <li role="option" data-val="unsplash" aria-selected="true">Unsplash</li>
-              <li role="option" data-val="url" aria-selected="false">Image URL</li>
-              <li role="option" data-val="color" aria-selected="false">Solid color</li>
+            <ul class="row-dd-list" id="bg-type-list" role="listbox" aria-label="Wallpaper source" data-i18n-al="appearance.source" hidden>
+              <li role="option" data-val="unsplash" aria-selected="true" data-i18n="appearance.sourceUnsplash">Unsplash</li>
+              <li role="option" data-val="url" aria-selected="false" data-i18n="appearance.sourceUrl">Image URL</li>
+              <li role="option" data-val="color" aria-selected="false" data-i18n="appearance.sourceColor">Solid color</li>
             </ul>
           </div>
           <input type="hidden" id="bg-type" value="unsplash">
@@ -185,7 +185,7 @@
     <section class="sec" id="sec-dashboard" hidden>
       <div id="dash-list-view">
         <div class="sec-hdr">
-          <a class="m-back" href="/" aria-label="Back to dashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.dashboard">Dashboard</h1>
+          <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.dashboard">Dashboard</h1>
           <div class="sec-hdr-actions">
             <button class="btn bp sm" id="btn-add" type="button" data-i18n="common.add">+Add</button>
             <button class="btn save-btn-green sm" id="dash-save" type="button" data-i18n="common.save">Save</button>
@@ -223,7 +223,7 @@
 
     <!-- About -->
     <section class="sec" id="sec-about" hidden>
-      <div class="sec-hdr"><a class="m-back" href="/" aria-label="Back to dashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.about">About</h1></div>
+      <div class="sec-hdr"><a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.about">About</h1></div>
       <div class="about-hero">
         <div class="about-ic-wrap">
           <svg width="64" height="64" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)"><path fill="var(--accent)" d="M4978 9180 c-75 -13 -146 -39 -233 -83 -112 -57 -244 -190 -302 -302 -70 -135 -88 -210 -88 -360 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 141 -72 193 -84 430 -93 354 -15 602 -64 885 -177 803 -319 1400 -1028 1569 -1863 39 -195 46 -272 46 -520 0 -155 -5 -278 -14 -335 -50 -332 -129 -578 -281 -870 -108 -207 -125 -266 -125 -430 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 135 -70 210 -88 360 -88 108 0 143 4 205 24 174 54 330 167 424 309 65 100 195 366 269 552 135 343 219 677 263 1055 13 111 18 226 18 445 0 318 -13 473 -60 730 -102 550 -309 1064 -617 1525 -668 1002 -1742 1656 -2937 1790 -169 19 -524 28 -592 15z"/><path fill="var(--tx)" d="M2131 7549 c-287 -51 -529 -264 -623 -549 -29 -87 -32 -106 -32 -230 0 -111 3 -149 22 -213 55 -191 173 -354 330 -454 32 -21 426 -249 875 -508 707 -407 814 -472 799 -483 -9 -7 -396 -232 -861 -500 -747 -431 -852 -495 -917 -555 -314 -293 -338 -763 -56 -1104 85 -103 257 -210 402 -249 47 -13 102 -18 195 -18 146 0 214 14 330 69 39 18 441 247 894 509 453 262 826 476 828 476 1 0 3 -445 3 -989 0 -1079 -1 -1063 58 -1213 77 -199 249 -369 448 -444 470 -177 976 104 1070 593 12 63 14 339 14 1723 0 1064 -4 1685 -10 1751 -25 247 -119 435 -284 571 -61 51 -2844 1666 -3014 1749 -40 21 -104 45 -140 54 -79 20 -255 28 -331 14z"/></g></svg>
@@ -261,22 +261,22 @@
 <div id="toast" role="status" aria-live="polite"></div>
 
 <!-- Mobile bottom tab bar (shown only on small screens, when authenticated) -->
-<nav class="mtabbar" aria-label="Settings sections">
+<nav class="mtabbar" aria-label="Settings sections" data-i18n-al="nav.sections">
   <button class="mtab" data-sec="general" type="button">
     <svg class="ni" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    <span>General</span>
+    <span data-i18n="nav.general">General</span>
   </button>
   <button class="mtab" data-sec="appearance" type="button">
     <svg class="ni" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-    <span>Appearance</span>
+    <span data-i18n="nav.appearance">Appearance</span>
   </button>
   <button class="mtab" data-sec="dashboard" type="button">
     <svg class="ni" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    <span>Dashboard</span>
+    <span data-i18n="nav.dashboard">Dashboard</span>
   </button>
   <button class="mtab" data-sec="about" type="button">
     <svg class="ni" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-    <span>About</span>
+    <span data-i18n="nav.about">About</span>
   </button>
 </nav>
 
@@ -286,23 +286,23 @@
     <div class="login-header">
       <div class="login-icon"><svg width="42" height="42" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)"><path fill="var(--accent)" d="M4978 9180 c-75 -13 -146 -39 -233 -83 -112 -57 -244 -190 -302 -302 -70 -135 -88 -210 -88 -360 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 141 -72 193 -84 430 -93 354 -15 602 -64 885 -177 803 -319 1400 -1028 1569 -1863 39 -195 46 -272 46 -520 0 -155 -5 -278 -14 -335 -50 -332 -129 -578 -281 -870 -108 -207 -125 -266 -125 -430 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 135 -70 210 -88 360 -88 108 0 143 4 205 24 174 54 330 167 424 309 65 100 195 366 269 552 135 343 219 677 263 1055 13 111 18 226 18 445 0 318 -13 473 -60 730 -102 550 -309 1064 -617 1525 -668 1002 -1742 1656 -2937 1790 -169 19 -524 28 -592 15z"/><path fill="var(--tx)" d="M2131 7549 c-287 -51 -529 -264 -623 -549 -29 -87 -32 -106 -32 -230 0 -111 3 -149 22 -213 55 -191 173 -354 330 -454 32 -21 426 -249 875 -508 707 -407 814 -472 799 -483 -9 -7 -396 -232 -861 -500 -747 -431 -852 -495 -917 -555 -314 -293 -338 -763 -56 -1104 85 -103 257 -210 402 -249 47 -13 102 -18 195 -18 146 0 214 14 330 69 39 18 441 247 894 509 453 262 826 476 828 476 1 0 3 -445 3 -989 0 -1079 -1 -1063 58 -1213 77 -199 249 -369 448 -444 470 -177 976 104 1070 593 12 63 14 339 14 1723 0 1064 -4 1685 -10 1751 -25 247 -119 435 -284 571 -61 51 -2844 1666 -3014 1749 -40 21 -104 45 -140 54 -79 20 -255 28 -331 14z"/></g></svg></div>
       <div class="login-title">Stackyard</div>
-      <div class="login-sub">Sign in to continue</div>
+      <div class="login-sub" data-i18n="login.subtitle">Sign in to continue</div>
     </div>
     <div id="login-err" class="login-err" role="alert"></div>
-    <input id="login-pw" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" class="login-pw">
-    <button id="login-btn" type="button" class="login-btn">Sign in</button>
+    <input id="login-pw" type="password" placeholder="Password" aria-label="Password" data-i18n-ph="login.password" data-i18n-al="login.password" autocomplete="current-password" class="login-pw">
+    <button id="login-btn" type="button" class="login-btn" data-i18n="login.signIn">Sign in</button>
   </div>
 </div>
 <div id="setpw-screen" class="setpw-screen">
   <div class="setpw-wrap"><div class="setpw-card">
-    <div class="setpw-title">Set a password</div><div class="setpw-desc">Choose a strong password for your dashboard.</div>
-    <input id="setpw-input" type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" class="setpw-input">
+    <div class="setpw-title" data-i18n="setpw.title">Set a password</div><div class="setpw-desc" data-i18n="setpw.desc">Choose a strong password for your dashboard.</div>
+    <input id="setpw-input" type="password" placeholder="New password" aria-label="New password" data-i18n-ph="setpw.newPassword" data-i18n-al="setpw.newPassword" autocomplete="new-password" class="setpw-input">
     <div id="setpw-bars" class="setpw-bars"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
     <div id="setpw-hint" class="setpw-hint"></div><div id="setpw-err" class="setpw-err" role="alert"></div>
-    <button id="setpw-btn" type="button" class="setpw-btn">Set password</button>
+    <button id="setpw-btn" type="button" class="setpw-btn" data-i18n="setpw.submit">Set password</button>
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=49f10493"></script>
+<script type="module" src="/js/admin.js?v=b6658e33"></script>
 </body>
 </html>

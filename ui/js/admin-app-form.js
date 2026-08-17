@@ -452,10 +452,10 @@ async function testPing() {
   const url = inpById('hc-ping')?.value?.trim();
   const st = el('hc-ping-status');
   if (!url) {
-    st.textContent = 'Enter a URL first.';
+    st.textContent = t('app.enterUrlFirst');
     return;
   }
-  st.textContent = 'Testing…';
+  st.textContent = t('app.testing');
   const skipTls = inpById('f-skip-tls')?.checked || false;
   try {
     const r = await ap('/api/ping', { url, skipTls });
@@ -560,12 +560,12 @@ async function fetchBadge() {
   const st = el('bst');
   if (!url) {
     if (st) st.style.cssText = 'margin-top:4px;color:var(--dm)';
-    if (st) st.textContent = 'Enter a URL first.';
+    if (st) st.textContent = t('app.enterUrlFirst');
     return;
   }
   if (st) {
     st.style.cssText = 'margin-top:4px;color:var(--dm)';
-    st.textContent = 'Fetching…';
+    st.textContent = t('app.fetching');
   }
   const btn = inpById('bfetch');
   if (btn) btn.disabled = true;
@@ -638,7 +638,7 @@ function renderBadgeList(nums, existingOnly, query = '') {
   if (!nums.length) {
     const e = document.createElement('div');
     e.style.cssText = 'padding:8px 12px;font-size:13px;color:var(--dm)';
-    e.textContent = 'No numeric values in response.';
+    e.textContent = t('app.noNumericValues');
     list.appendChild(e);
     return;
   }
@@ -677,7 +677,7 @@ function renderBadgeList(nums, existingOnly, query = '') {
     if (computed.length && !q) {
       const s = document.createElement('div');
       s.className = 'bsep';
-      s.textContent = 'Values';
+      s.textContent = t('app.values');
       list.appendChild(s);
     }
     direct.forEach(addItem);
@@ -686,7 +686,7 @@ function renderBadgeList(nums, existingOnly, query = '') {
     if (!q) {
       const s = document.createElement('div');
       s.className = 'bsep';
-      s.textContent = 'Computed from array';
+      s.textContent = t('app.computedFromArray');
       list.appendChild(s);
     }
     computed.forEach(addItem);

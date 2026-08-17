@@ -48,7 +48,11 @@ export function loadSettings(c) {
     typeEl.value = bg.type || 'unsplash';
     showBgFields(bg.type || 'unsplash');
     const btn = el('bg-type-btn');
-    const labels = { unsplash: 'Unsplash', url: 'Image URL', color: 'Solid color' };
+    const labels = {
+      unsplash: t('appearance.sourceUnsplash'),
+      url: t('appearance.sourceUrl'),
+      color: t('appearance.sourceColor'),
+    };
     if (btn) {
       const tn = btn.childNodes[0];
       if (tn && tn.nodeType === 3) tn.textContent = labels[typeEl.value] || typeEl.value;
@@ -61,7 +65,7 @@ export function loadSettings(c) {
   if (llEl) {
     llEl.value = s.logLevel || 'info';
     const llBtn = el('log-level-btn');
-    const llLabels = { debug: 'Debug', info: 'Info', error: 'Errors' };
+    const llLabels = { debug: t('general.logDebug'), info: t('general.logInfo'), error: t('general.logError') };
     if (llBtn) {
       const tn = llBtn.childNodes[0];
       if (tn && tn.nodeType === 3) tn.textContent = llLabels[llEl.value] || llEl.value;
@@ -91,7 +95,7 @@ export function loadSettings(c) {
       .then(d => {
         const vEl = el('ie-apikey-v');
         if (!d.configured) {
-          apiEl.placeholder = 'Paste your Unsplash API key';
+          apiEl.placeholder = t('appearance.unsplashKeyPh');
           if (vEl) vEl.textContent = t('common.notSet');
         } else {
           if (vEl) vEl.textContent = t('common.configured');

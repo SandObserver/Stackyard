@@ -7,7 +7,9 @@
     "general": "Allgemein",
     "appearance": "Erscheinungsbild",
     "dashboard": "Dashboard",
-    "about": "Über"
+    "about": "Über",
+    "sections": "Einstellungsbereiche",
+    "backToDashboard": "Zurück zum Dashboard"
   },
   "common": {
     "save": "Speichern",
@@ -25,7 +27,9 @@
     "create": "Erstellen",
     "chooseFiles": "Dateien wählen",
     "configured": "Eingerichtet",
-    "notSet": "Nicht gesetzt"
+    "notSet": "Nicht gesetzt",
+    "show": "Anzeigen",
+    "hide": "Ausblenden"
   },
   "general": {
     "title": "Titel",
@@ -50,7 +54,13 @@
     "importExport": "Import / Export",
     "signOut": "Abmelden",
     "importForeign": "Aus anderem Dashboard importieren",
-    "importForeignTip": "Liest YAML-Dateien von gethomepage und Dashy. Links und Ordner werden deinem Dashboard hinzugefügt; Widgets des anderen Dashboards werden zu einfachen Links."
+    "importForeignTip": "Liest YAML-Dateien von gethomepage und Dashy. Links und Ordner werden deinem Dashboard hinzugefügt; Widgets des anderen Dashboards werden zu einfachen Links.",
+    "logDebug": "Debug",
+    "logInfo": "Info",
+    "logError": "Fehler",
+    "passwordPh": "Neues Passwort (mind. 8 Zeichen)",
+    "showSettingsAria": "Einstellungen im Dashboard anzeigen",
+    "hideSettingsAria": "Einstellungen im Dashboard ausblenden"
   },
   "appearance": {
     "appTitle": "App-Titel",
@@ -71,13 +81,18 @@
     "imageUrl": "Bild-URL",
     "color": "Farbe",
     "brightness": "Helligkeit",
-    "collectionTip": "Collection ID leer lassen für ein zufälliges Bild."
+    "collectionTip": "Collection ID leer lassen für ein zufälliges Bild.",
+    "sourceUnsplash": "Unsplash",
+    "sourceUrl": "Bild-URL",
+    "sourceColor": "Volltonfarbe",
+    "unsplashKeyPh": "Füge deinen Unsplash-API-Schlüssel ein"
   },
   "about": {
     "documentation": "Dokumentation",
     "reportIssue": "Problem melden",
     "sourceCode": "Quellcode",
-    "support": "Support"
+    "support": "Support",
+    "version": "Version v{v}"
   },
   "dashboard": {
     "searchPh": "Suchen",
@@ -104,7 +119,9 @@
     "addApp": "App zum Ordner hinzufügen",
     "none": "Kein Ordner",
     "allInFolder": "Alle Apps sind bereits in diesem Ordner.",
-    "createNew": "Neuen Ordner erstellen"
+    "createNew": "Neuen Ordner erstellen",
+    "expandAria": "Ordner {name} aufklappen",
+    "collapseAria": "Ordner {name} zuklappen"
   },
   "app": {
     "name": "Name",
@@ -148,7 +165,13 @@
     "healthPill": "Zustand",
     "badgePill": "Badge",
     "secret": "Geheim",
-    "pollInterval": "alle {seconds} Sekunden"
+    "pollInterval": "alle {seconds} Sekunden",
+    "enterUrlFirst": "Gib zuerst eine URL ein.",
+    "testing": "Wird getestet…",
+    "fetching": "Wird abgerufen…",
+    "noNumericValues": "Keine numerischen Werte in der Antwort.",
+    "values": "Werte",
+    "computedFromArray": "Aus Liste berechnet"
   },
   "home": {
     "search": "Suchen",
@@ -168,7 +191,8 @@
     "results": "Ergebnisse",
     "apiDownTitle": "Keine Verbindung zur Dashboard-API",
     "apiDownSub": "Stellen Sie sicher, dass der API-Container läuft",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "opensSettings": "Öffnet die Einstellungen"
   },
   "toast": {
     "saved": "Gespeichert",
@@ -245,7 +269,22 @@
     "refused": "{n} Widget konnte nicht geladen werden und wird unten nicht aufgeführt.",
     "refusedPlural": "{n} Widgets konnten nicht geladen werden und werden unten nicht aufgeführt.",
     "name": "Name",
-    "type": "Widget-Typ"
+    "type": "Widget-Typ",
+    "namePh": "Mein Widget",
+    "editName": "Namen bearbeiten",
+    "size": "Größe",
+    "iframeTip": "Die URL wird im Dashboard als Iframe eingebettet.",
+    "advanced": "Erweitert",
+    "replaceSecret": "Neuen Wert zum Ersetzen eingeben",
+    "newValueSet": "Neuer Wert gesetzt",
+    "storedSecretHint": "Ein Wert ist gespeichert. Gib einen neuen ein, um ihn zu ersetzen, oder lass das Feld leer.",
+    "fetch": "Abrufen",
+    "fetching": "Wird abgerufen…",
+    "remove": "Entfernen",
+    "noOptions": "Keine Optionen gefunden",
+    "empty": "Leer",
+    "loaded": "{n} Option geladen",
+    "loadedPlural": "{n} Optionen geladen"
   },
   "importForeign": {
     "title": "Aus anderem Dashboard importieren",
@@ -274,5 +313,17 @@
     "skipRelativeHref": "der Link hat keine Adresse, nur einen Pfad",
     "skipUnreadable": "dieser Eintrag hat nicht die Form, die das Dateiformat erlaubt",
     "monitors": "· fragt {url} ab"
+  },
+  "login": {
+    "subtitle": "Melde dich an, um fortzufahren",
+    "password": "Passwort",
+    "signIn": "Anmelden",
+    "incorrect": "Falsches Passwort."
+  },
+  "setpw": {
+    "title": "Passwort festlegen",
+    "desc": "Wähle ein starkes Passwort für dein Dashboard.",
+    "newPassword": "Neues Passwort",
+    "submit": "Passwort festlegen"
   }
 }

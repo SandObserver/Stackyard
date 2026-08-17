@@ -1,5 +1,5 @@
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=c2c81c20';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e76fbf24';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=5b4d4ab3';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=50a3227f';
 import { applyDrop, canJoinFolder } from '/js/admin-drag-logic.js?v=8fcf583a';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=4f8a0761';
 import {
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=7235acf0';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=69eeb330';
 import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=9a601113';
 import { state } from '/js/admin-state.js?v=42393ee1';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=4b093a55';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=bc9a99af';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
@@ -253,7 +253,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     nm.setAttribute('role', 'button');
     nm.setAttribute('tabindex', '0');
     nm.setAttribute('aria-expanded', String(!collapsed));
-    nm.setAttribute('aria-label', (collapsed ? 'Expand' : 'Collapse') + ' folder ' + item.label);
+    nm.setAttribute('aria-label', t(collapsed ? 'folder.expandAria' : 'folder.collapseAria', { name: item.label }));
     const chevron = document.createElement('span');
     chevron.style.cssText = 'font-size:10px;color:var(--dm);transition:transform .15s;flex-shrink:0;';
     chevron.textContent = '▼';
@@ -285,7 +285,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     const wtLabel = state._widgetReg?.[wt]?.label || 'Custom';
     mt.textContent = `${wtLabel} widget · ${item.widgetSize || 'medium'}`;
   } else if (item.type === 'folder') mt.textContent = `${(item.children || []).length} apps`;
-  else if (item.system === 'settings') mt.textContent = 'Opens settings';
+  else if (item.system === 'settings') mt.textContent = t('home.opensSettings');
   else mt.textContent = item.href || '';
   inf.append(nm, mt);
   const pb = document.createElement('div');
@@ -318,8 +318,8 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
   if (item.system === 'settings') {
     const hb = document.createElement('button');
     hb.className = 'btn bg sm';
-    hb.textContent = item.hidden ? 'Show' : 'Hide';
-    const lbl = (item.hidden ? 'Show' : 'Hide') + ' Settings on dashboard';
+    hb.textContent = t(item.hidden ? 'common.show' : 'common.hide');
+    const lbl = t(item.hidden ? 'general.showSettingsAria' : 'general.hideSettingsAria');
     hb.title = lbl;
     hb.setAttribute('aria-label', lbl);
     hb.onclick = () => {
@@ -1022,7 +1022,7 @@ function initAllInlineEdits() {
 
   initInlineEdit('ie-pw', 'sec-pw', {
     type: 'password',
-    placeholder: 'New password (min 8 chars)',
+    placeholder: t('general.passwordPh'),
     onCommit() {
       const bars = el('sec-pw-bars');
       const hint = el('sec-pw-hint');
@@ -1079,7 +1079,7 @@ async function initVersion() {
       const vEl = el('sidebar-version');
       const aEl = el('about-version');
       if (vEl) vEl.textContent = 'v' + v;
-      if (aEl) aEl.textContent = 'Version v' + v;
+      if (aEl) aEl.textContent = t('about.version', { v });
       if (d.updateAvailable) {
         const dot = el('about-update-dot');
         if (dot) dot.style.display = 'flex';

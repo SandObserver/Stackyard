@@ -7,7 +7,9 @@
     "general": "General",
     "appearance": "Apariencia",
     "dashboard": "Panel",
-    "about": "Acerca de"
+    "about": "Acerca de",
+    "sections": "Secciones de ajustes",
+    "backToDashboard": "Volver al panel"
   },
   "common": {
     "save": "Guardar",
@@ -25,7 +27,9 @@
     "create": "Crear",
     "chooseFiles": "Elegir archivos",
     "configured": "Configurado",
-    "notSet": "Sin definir"
+    "notSet": "Sin definir",
+    "show": "Mostrar",
+    "hide": "Ocultar"
   },
   "general": {
     "title": "Título",
@@ -50,7 +54,13 @@
     "importExport": "Importar / Exportar",
     "signOut": "Cerrar sesión",
     "importForeign": "Importar desde otro panel",
-    "importForeignTip": "Lee archivos YAML de gethomepage y Dashy. Los enlaces y las carpetas se añaden a tu panel; los widgets del otro panel se convierten en enlaces simples."
+    "importForeignTip": "Lee archivos YAML de gethomepage y Dashy. Los enlaces y las carpetas se añaden a tu panel; los widgets del otro panel se convierten en enlaces simples.",
+    "logDebug": "Depuración",
+    "logInfo": "Información",
+    "logError": "Errores",
+    "passwordPh": "Nueva contraseña (mín. 8 caracteres)",
+    "showSettingsAria": "Mostrar Ajustes en el panel",
+    "hideSettingsAria": "Ocultar Ajustes en el panel"
   },
   "appearance": {
     "appTitle": "Título de la aplicación",
@@ -71,13 +81,18 @@
     "imageUrl": "URL de la imagen",
     "color": "Color",
     "brightness": "Brillo",
-    "collectionTip": "Deja el Collection ID en blanco para elegir una imagen aleatoria."
+    "collectionTip": "Deja el Collection ID en blanco para elegir una imagen aleatoria.",
+    "sourceUnsplash": "Unsplash",
+    "sourceUrl": "URL de imagen",
+    "sourceColor": "Color sólido",
+    "unsplashKeyPh": "Pega tu clave de API de Unsplash"
   },
   "about": {
     "documentation": "Documentación",
     "reportIssue": "Reportar un problema",
     "sourceCode": "Código fuente",
-    "support": "Soporte"
+    "support": "Soporte",
+    "version": "Versión v{v}"
   },
   "dashboard": {
     "searchPh": "Buscar",
@@ -104,7 +119,9 @@
     "addApp": "Añadir app a la carpeta",
     "none": "Sin carpeta",
     "allInFolder": "Todas las apps ya están en esta carpeta.",
-    "createNew": "Crear carpeta nueva"
+    "createNew": "Crear carpeta nueva",
+    "expandAria": "Expandir la carpeta {name}",
+    "collapseAria": "Contraer la carpeta {name}"
   },
   "app": {
     "name": "Nombre",
@@ -148,7 +165,13 @@
     "healthPill": "Estado",
     "badgePill": "Insignia",
     "secret": "Secreto",
-    "pollInterval": "cada {seconds} segundos"
+    "pollInterval": "cada {seconds} segundos",
+    "enterUrlFirst": "Introduce primero una URL.",
+    "testing": "Probando…",
+    "fetching": "Obteniendo…",
+    "noNumericValues": "No hay valores numéricos en la respuesta.",
+    "values": "Valores",
+    "computedFromArray": "Calculado a partir de la lista"
   },
   "home": {
     "search": "Buscar",
@@ -168,7 +191,8 @@
     "results": "resultados",
     "apiDownTitle": "No se pudo conectar con la API del panel",
     "apiDownSub": "Comprueba que el contenedor de la API esté en ejecución",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "opensSettings": "Abre los ajustes"
   },
   "toast": {
     "saved": "Guardado",
@@ -245,7 +269,22 @@
     "refused": "No se pudo cargar {n} widget, por lo que no aparece en la lista.",
     "refusedPlural": "No se pudieron cargar {n} widgets, por lo que no aparecen en la lista.",
     "name": "Nombre",
-    "type": "Tipo de widget"
+    "type": "Tipo de widget",
+    "namePh": "Mi widget",
+    "editName": "Editar el nombre",
+    "size": "Tamaño",
+    "iframeTip": "La URL se incrustará como un iframe en el panel.",
+    "advanced": "Avanzado",
+    "replaceSecret": "Introduce un valor nuevo para reemplazarlo",
+    "newValueSet": "Nuevo valor establecido",
+    "storedSecretHint": "Hay un valor guardado. Introduce uno nuevo para reemplazarlo o déjalo en blanco para conservarlo.",
+    "fetch": "Obtener",
+    "fetching": "Obteniendo…",
+    "remove": "Quitar",
+    "noOptions": "No se encontraron opciones",
+    "empty": "Vacío",
+    "loaded": "{n} opción cargada",
+    "loadedPlural": "{n} opciones cargadas"
   },
   "importForeign": {
     "title": "Importar desde otro panel",
@@ -274,5 +313,17 @@
     "skipRelativeHref": "el enlace no tiene dirección, solo una ruta",
     "skipUnreadable": "esta entrada no tiene la forma que permite el formato del archivo",
     "monitors": "· sondea {url}"
+  },
+  "login": {
+    "subtitle": "Inicia sesión para continuar",
+    "password": "Contraseña",
+    "signIn": "Iniciar sesión",
+    "incorrect": "Contraseña incorrecta."
+  },
+  "setpw": {
+    "title": "Establece una contraseña",
+    "desc": "Elige una contraseña segura para tu panel.",
+    "newPassword": "Nueva contraseña",
+    "submit": "Establecer contraseña"
   }
 }
