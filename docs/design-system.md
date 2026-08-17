@@ -1,86 +1,151 @@
 # Design system
 
-The visual system both pages share. It lives in `ui/css/tokens.css`.
+The visual language both pages share: colour, type, geometry, motion.
 
 Values are measured from a reference design kit, not chosen.
 
-## The three colour layers
+---
 
-Pick from the lowest layer that answers the question.
+## Color
 
-**Palette.** Twelve hues and six greys, named by hue: `--sy-teal`, `--sy-red`, `--sy-gray4`. Each has a `-hi` partner holding an increased-contrast value. The `prefers-contrast: more` block swaps the palette to the `-hi` set.
+Three layers. Pick from the lowest layer that answers the question.
 
-Do not name a palette entry in a rule.
+### Palette
 
-**Roles.** What a colour is for: `--accent`, `--danger`, `--warning`, `--success`. Each points at a hue.
+Twelve hues and six greys. Each entry has a `-hi` partner, the increased-contrast value.
 
-`--on-accent` is the ink on a filled control. It is white in both themes. It is not a label level.
+| Token | Dark | Dark `-hi` | Light | Light `-hi` |
+| --- | --- | --- | --- | --- |
+| `--sy-red` | ![](https://img.shields.io/badge/-%20-FF4245) `#FF4245` | ![](https://img.shields.io/badge/-%20-FF6165) `#FF6165` | ![](https://img.shields.io/badge/-%20-FF3B30) `#FF3B30` | ![](https://img.shields.io/badge/-%20-D70015) `#D70015` |
+| `--sy-orange` | ![](https://img.shields.io/badge/-%20-FF9230) `#FF9230` | ![](https://img.shields.io/badge/-%20-FFA056) `#FFA056` | ![](https://img.shields.io/badge/-%20-FF9500) `#FF9500` | ![](https://img.shields.io/badge/-%20-C93400) `#C93400` |
+| `--sy-yellow` | ![](https://img.shields.io/badge/-%20-FFD600) `#FFD600` | ![](https://img.shields.io/badge/-%20-FEDF43) `#FEDF43` | ![](https://img.shields.io/badge/-%20-FFCC00) `#FFCC00` | ![](https://img.shields.io/badge/-%20-B25000) `#B25000` |
+| `--sy-green` | ![](https://img.shields.io/badge/-%20-30D158) `#30D158` | ![](https://img.shields.io/badge/-%20-4AD968) `#4AD968` | ![](https://img.shields.io/badge/-%20-34C759) `#34C759` | ![](https://img.shields.io/badge/-%20-248A3D) `#248A3D` |
+| `--sy-mint` | ![](https://img.shields.io/badge/-%20-00DAC3) `#00DAC3` | ![](https://img.shields.io/badge/-%20-54DFCB) `#54DFCB` | ![](https://img.shields.io/badge/-%20-00C7BE) `#00C7BE` | ![](https://img.shields.io/badge/-%20-0C817B) `#0C817B` |
+| `--sy-teal` | ![](https://img.shields.io/badge/-%20-00D2E0) `#00D2E0` | ![](https://img.shields.io/badge/-%20-3BDDEC) `#3BDDEC` | ![](https://img.shields.io/badge/-%20-30B0C7) `#30B0C7` | ![](https://img.shields.io/badge/-%20-0071A4) `#0071A4` |
+| `--sy-cyan` | ![](https://img.shields.io/badge/-%20-3CD3FE) `#3CD3FE` | ![](https://img.shields.io/badge/-%20-6DD9FF) `#6DD9FF` | ![](https://img.shields.io/badge/-%20-32ADE6) `#32ADE6` | ![](https://img.shields.io/badge/-%20-007AA3) `#007AA3` |
+| `--sy-blue` | ![](https://img.shields.io/badge/-%20-0091FF) `#0091FF` | ![](https://img.shields.io/badge/-%20-5CB8FF) `#5CB8FF` | ![](https://img.shields.io/badge/-%20-007AFF) `#007AFF` | ![](https://img.shields.io/badge/-%20-0040DD) `#0040DD` |
+| `--sy-indigo` | ![](https://img.shields.io/badge/-%20-6D7CFF) `#6D7CFF` | ![](https://img.shields.io/badge/-%20-A7AAFF) `#A7AAFF` | ![](https://img.shields.io/badge/-%20-5856D6) `#5856D6` | ![](https://img.shields.io/badge/-%20-3634A3) `#3634A3` |
+| `--sy-purple` | ![](https://img.shields.io/badge/-%20-DB34F2) `#DB34F2` | ![](https://img.shields.io/badge/-%20-EA8DFF) `#EA8DFF` | ![](https://img.shields.io/badge/-%20-AF52DE) `#AF52DE` | ![](https://img.shields.io/badge/-%20-8944AB) `#8944AB` |
+| `--sy-pink` | ![](https://img.shields.io/badge/-%20-FF375F) `#FF375F` | ![](https://img.shields.io/badge/-%20-FF8AC4) `#FF8AC4` | ![](https://img.shields.io/badge/-%20-FF2D55) `#FF2D55` | ![](https://img.shields.io/badge/-%20-C9155A) `#C9155A` |
+| `--sy-brown` | ![](https://img.shields.io/badge/-%20-B78A66) `#B78A66` | ![](https://img.shields.io/badge/-%20-DBA679) `#DBA679` | ![](https://img.shields.io/badge/-%20-A2845E) `#A2845E` | ![](https://img.shields.io/badge/-%20-7F6545) `#7F6545` |
+| `--sy-gray` | ![](https://img.shields.io/badge/-%20-8E8E93) `#8E8E93` | ![](https://img.shields.io/badge/-%20-AEAEB2) `#AEAEB2` | ![](https://img.shields.io/badge/-%20-8E8E93) `#8E8E93` | ![](https://img.shields.io/badge/-%20-6C6C70) `#6C6C70` |
+| `--sy-gray2` | ![](https://img.shields.io/badge/-%20-636366) `#636366` | ![](https://img.shields.io/badge/-%20-7C7C80) `#7C7C80` | ![](https://img.shields.io/badge/-%20-AEAEB2) `#AEAEB2` | ![](https://img.shields.io/badge/-%20-8E8E93) `#8E8E93` |
+| `--sy-gray3` | ![](https://img.shields.io/badge/-%20-48484A) `#48484A` | ![](https://img.shields.io/badge/-%20-545456) `#545456` | ![](https://img.shields.io/badge/-%20-C7C7CC) `#C7C7CC` | ![](https://img.shields.io/badge/-%20-AEAEB2) `#AEAEB2` |
+| `--sy-gray4` | ![](https://img.shields.io/badge/-%20-3A3A3C) `#3A3A3C` | ![](https://img.shields.io/badge/-%20-444446) `#444446` | ![](https://img.shields.io/badge/-%20-D1D1D6) `#D1D1D6` | ![](https://img.shields.io/badge/-%20-BCBCC0) `#BCBCC0` |
+| `--sy-gray5` | ![](https://img.shields.io/badge/-%20-2C2C2E) `#2C2C2E` | ![](https://img.shields.io/badge/-%20-363638) `#363638` | ![](https://img.shields.io/badge/-%20-E5E5EA) `#E5E5EA` | ![](https://img.shields.io/badge/-%20-D8D8DC) `#D8D8DC` |
+| `--sy-gray6` | ![](https://img.shields.io/badge/-%20-1C1C1E) `#1C1C1E` | ![](https://img.shields.io/badge/-%20-242426) `#242426` | ![](https://img.shields.io/badge/-%20-F2F2F7) `#F2F2F7` | ![](https://img.shields.io/badge/-%20-EBEBF0) `#EBEBF0` |
 
-**Semantic.** What a colour is applied to.
+Grey order reverses between themes: `gray6` is darkest in dark, lightest in light.
+
+> [!WARNING]
+> Never name a palette entry in a rule. Rules name a role or a semantic token.
+
+### Roles
+
+What a colour is for.
+
+| Token | Dark | Light |
+| --- | --- | --- |
+| `--accent` | `--sy-teal` | `--sy-teal-hi` |
+| `--accent-strong` | `--sy-teal-hi` | ![](https://img.shields.io/badge/-%20-00587E) `#00587E` |
+| `--danger` | `--sy-red` | `--sy-red-hi` |
+| `--warning` | `--sy-orange` | `--sy-orange-hi` |
+| `--success` | `--sy-green` | `--sy-green-hi` |
+| `--on-accent` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
+
+Light hues are drawn for a fill. A role that becomes text or the edge of a control points at the `-hi` entry. Use `--accent-strong` wherever the accent has to be read as text.
+
+`--on-accent` is the ink on a filled control. It is not a label level.
+
+### Semantic
+
+What a colour is applied to.
 
 | Set | Tokens | Use |
 | --- | --- | --- |
-| Labels | `--label-primary`, `--label-secondary`, `--label-tertiary`, `--label-quaternary` | Text, in descending prominence |
-| Fills | `--fill-primary` through `--fill-quaternary` | The tint behind a small control |
+| Labels | `--label-primary` … `--label-quaternary` | Text, descending prominence |
+| Fills | `--fill-primary` … `--fill-quaternary` | The tint behind a small control |
 | Separators | `--separator`, `--separator-opaque` | Dividing content |
 | Backgrounds | `--bg-primary`, `--bg-secondary`, `--bg-tertiary` | The three layered surfaces |
-| Backgrounds, elevated | `--bg-elevated-primary`, `--bg-elevated-secondary`, `--bg-elevated-tertiary` | The same three, over a sheet |
+| Backgrounds, elevated | `--bg-elevated-primary` … `-tertiary` | The same three, over a sheet |
+| Contrast-safe | `--sy-a11y-dim`, `--sy-a11y-border` | Text and control edges on a card |
+| One-offs | `--bg-primary-light`, `--control-knob` | Opt-in light widget card; slider and switch knob |
 
-`--bg-primary-light` is the opt-in light widget card. `--control-knob` is a slider or switch knob, full white in both themes.
+<details>
+<summary>Semantic values, both themes</summary>
 
-## Themes
+| Token | Dark | Light |
+| --- | --- | --- |
+| `--label-primary` | `#FFFFFF` | `#000000` |
+| `--label-secondary` | `rgba(235,235,245,.70)` | `rgba(60,60,67,.60)` |
+| `--label-tertiary` | `rgba(235,235,245,.30)` | `rgba(60,60,67,.30)` |
+| `--label-quaternary` | `rgba(235,235,245,.16)` | `rgba(60,60,67,.18)` |
+| `--fill-primary` | `rgba(120,120,128,.36)` | `rgba(120,120,128,.20)` |
+| `--fill-secondary` | `rgba(120,120,128,.32)` | `rgba(120,120,128,.16)` |
+| `--fill-tertiary` | `rgba(118,118,128,.24)` | `rgba(118,118,128,.12)` |
+| `--fill-quaternary` | `rgba(118,118,128,.18)` | `rgba(116,116,128,.08)` |
+| `--separator` | `rgba(255,255,255,.17)` | `rgba(60,60,67,.29)` |
+| `--separator-opaque` | `#38383A` | `#C6C6C8` |
+| `--bg-primary` | `#000000` | `#FFFFFF` |
+| `--sy-a11y-dim` | `#A3A3A8` | `--sy-gray-hi` |
+| `--sy-a11y-border` | `#838387` | `--sy-gray` |
 
-The dark theme is declared on `:root`. The light theme redeclares the palette, the roles and the semantic sets under `html[data-theme="light"]`. A page opts in by carrying the attribute. Only the Settings page does.
+| Token | Dark | Light |
+| --- | --- | --- |
+| `--bg-secondary` | `--sy-gray6` | `--sy-gray6` |
+| `--bg-tertiary` | `--sy-gray5` | `#FFFFFF` |
+| `--bg-elevated-primary` | `--sy-gray6` | `#FFFFFF` |
+| `--bg-elevated-secondary` | `--sy-gray5` | `--sy-gray6` |
+| `--bg-elevated-tertiary` | `--sy-gray4` | `#FFFFFF` |
+| `--bg-primary-light` | `#FFFFFF` | `#FFFFFF` |
+| `--control-knob` | `#FFFFFF` | `#FFFFFF` |
 
-No stylesheet declares a `prefers-color-scheme` rule. `ui/js/admin-theme.js` writes the attribute before the first paint, from `localStorage` under `sy-theme`: `system`, `light` or `dark`. `system` is resolved in script. `ui/js/theme.js` holds the same logic for the running page and `ui/test/theme.test.mjs` holds the two together.
+</details>
 
-The choice is per device. It is never written to the config.
+> [!WARNING]
+> Label levels below primary do not clear WCAG on this project's cards. Use `--sy-a11y-dim` for text that has to be read on a card. Use a label level for hierarchy only.
 
-Light hues are drawn for a fill. A role that ends up as text or as the edge of a control points at the `-hi` entry, the accessible variant of the same hue. `--accent` is one of them.
+> [!NOTE]
+> Fills are not the dashboard's glass. The glass is white at low alpha over a wallpaper. A fill is grey-tinted and assumes an opaque surface.
 
-`prefers-contrast: more` raises whichever theme is in force. `ui/test/contrast.test.mjs` measures every required pair in four combinations: each theme, raised and not.
+### Themes
 
-## Two limits on the semantic layer
+Dark is the default, declared on `:root`. Light redeclares the palette, roles and semantic sets under `html[data-theme="light"]`, set on `<html>`. Only the Settings page opts in.
 
-**Label levels below primary do not clear WCAG on this project's cards.** Use `--sy-a11y-dim` for text that has to be read on a card. Use a label level for hierarchy.
+`prefers-contrast: more` swaps every hue and grey to its `-hi` partner, in whichever theme is in force.
 
-**The dashboard's glass is not built from Fills.** The glass is white at low alpha over a wallpaper. Fills are grey-tinted and assume an opaque surface.
+---
 
-## The face
+## Typography
 
-One stack, everywhere:
+One stack everywhere, held by `--font-ui`:
 
 ```css
 -apple-system, BlinkMacSystemFont, system-ui, sans-serif
 ```
 
-`--font-ui` holds it. `ui/test/font-stack.test.mjs` fails on any other spelling, including in the widget guide and the widget template.
+`monospace` is the exception, for code spans in admin hints.
 
-Do not name an optical cut. The stack picks the cut for the size it is drawn at. Naming a cut pins one.
+> [!WARNING]
+> Do not name an optical cut. The stack picks the cut for the size it is drawn at; naming one pins it.
 
-`monospace` is the exception, for code spans in the admin hints.
+Eleven styles, three tokens each: `--fs-<style>`, `--lh-<style>`, `--tr-<style>`. Sizes in px, leading unitless, tracking in `em`.
 
-## Type
-
-Eleven styles at the default step. Three tokens each: `--fs-<style>`, `--lh-<style>`, `--tr-<style>`.
-
-| Style | Size | Leading | Tracking |
+| Style | Default | Small step | Tracking |
 | --- | --- | --- | --- |
-| `large-title` | 34 | 41 | 0.40 |
-| `title-1` | 28 | 34 | 0.38 |
-| `title-2` | 22 | 28 | -0.26 |
-| `title-3` | 20 | 25 | -0.45 |
-| `headline` | 17 | 22 | -0.43 |
-| `body` | 17 | 22 | -0.43 |
-| `callout` | 16 | 21 | -0.31 |
-| `subheadline` | 15 | 20 | -0.23 |
-| `footnote` | 13 | 18 | -0.08 |
-| `caption-1` | 12 | 16 | 0 |
-| `caption-2` | 11 | 13 | 0.06 |
+| `large-title` | 34/41 | 32/39 | 0.40 |
+| `title-1` | 28/34 | 26/32 | 0.38 |
+| `title-2` | 22/28 | 20/24 | -0.26 |
+| `title-3` | 20/25 | 18/23 | -0.45 |
+| `headline` | 17/22 | 15/20 | -0.43 |
+| `body` | 17/22 | 15/20 | -0.43 |
+| `callout` | 16/21 | 14/19 | -0.31 |
+| `subheadline` | 15/20 | 13/18 | -0.23 |
+| `footnote` | 13/18 | 12/16 | -0.08 |
+| `caption-1` | 12/16 | 11/13 | 0 |
+| `caption-2` | 11/13 | 11/13 | 0.06 |
 
-Headline is Body at semibold. `--fw-headline` carries the weight.
-
-Set all three tokens together. `ui/test/type-scale.test.mjs` fails on a size without its leading and tracking.
+Tracking is one absolute px value per style, republished per step as its own `em`. Headline is Body at semibold; `--fw-headline` carries the weight.
 
 ```css
 .rl {
@@ -90,9 +155,13 @@ Set all three tokens together. `ui/test/type-scale.test.mjs` fails on a size wit
 }
 ```
 
-Leading is unitless and tracking is in `em`, never pixels. Sizes are multiplied by `var(--sc)` and a reader can zoom, so both have to follow the size in use.
+> [!WARNING]
+> Set all three tokens together. A size from the scale with leading from elsewhere is a style that looks applied and is not.
 
-On the admin page:
+The small step is opt-in per page via a class on `<html>`, and never applies on a phone. The Settings page carries it, so a settings row is 15 on a desktop and 17 on a phone.
+
+<details>
+<summary>Style assignments on the Settings page</summary>
 
 | Element | Style |
 | --- | --- |
@@ -102,91 +171,99 @@ On the admin page:
 | Segmented options, dialog body text, small glyph buttons | `footnote` |
 | The version line and the mobile tab bar | `caption-2` |
 
-### Steps
+A single character centred in a fixed box takes no text leading or tracking. An uppercase separator label keeps its own positive tracking.
 
-The same eleven styles at smaller sizes, never a size chosen outside the scale. A page opts in with a class on `<html>`, and the step applies only where the layout is not a phone. The admin page carries `type-small`, so a settings row is 15 on a desktop and 17 on a phone.
+</details>
 
-| Style | Default | Small |
-| --- | --- | --- |
-| `title-3` | 20/25 | 18/23 |
-| `body`, `headline` | 17/22 | 15/20 |
-| `callout` | 16/21 | 14/19 |
-| `subheadline` | 15/20 | 13/18 |
-| `footnote` | 13/18 | 12/16 |
-| `caption-1` | 12/16 | 11/13 |
+---
 
-Tracking is republished per step. There is one absolute tracking per style, so the em that reproduces -0.43 at 17 does not reproduce it at 15.
-
-Adding a step is eleven declarations and an entry in `ui/test/type-scale.test.mjs`.
-
-### Off the scale
-
-Six rules do not use it, on purpose.
-
-- `.rico`, `.icon-prev`, `.fp-ic`, `.ipv`, `.kv-box::after` centre a single character in a fixed box. A text leading and tracking would push it off centre.
-- `.bsep` is an uppercase separator label. Uppercase needs positive tracking. `.dlg-sec` and `.sr-section` keep their own tracking and take their size from the scale.
-
-## Control geometry
-
-`ui/test/control-geometry.test.mjs` holds these.
+## Spacing & geometry
 
 | | |
 | --- | --- |
-| Settings row | 52 tall |
-| Row carrying two lines | 68 tall |
+| Settings row | 52 tall, 68 with two lines |
 | Row side padding | 16 |
 | Separator | 1 tall, inset 16 leading, flush trailing |
-| Grouped list radius | 26, as `--sy-radius-group` |
-| Switch | 64 × 28, knob 38 × 24 inset 2, travel 22 |
-| Slider | track 6, knob 20, one design for all |
-| Outer margin | 16 on a phone, 20 otherwise |
 | Group header and footer | text inset 16 |
-| Sidebar | 320 wide, items 44 tall, selection a full pill |
-| Tab bar selection | covers the whole tab, radius 16 |
+| Between a group and the next heading | about 34 |
+| Outer margin | 16 on a phone, 20 otherwise |
+| Sidebar | 320 wide, items 44 tall, pill selection |
+| Switch | 64 × 28, knob 38 × 24 inset 2, travel 22 |
+| Slider | track 6, knob 20, one design everywhere |
 | Segmented control | 32 track, 28 segments, capsule |
 | Alert buttons | 48 tall, capsule |
-| App icon corner | 22.37% of the icon's width |
-| Widget tile corner | 28 at design size, scaled with the tile |
-| Between a group and the next heading | about 34 |
+| Tab bar selection | covers the whole tab, radius 16 |
 | Small button on touch | drawn at 30, hit area extended to 44 |
+| App icon corner | 22.37% of the icon width |
+| Widget tile corner | 28 at design size, scales with the tile |
 
-The switch knob is a capsule, not a circle.
+### Radius
 
-On touch a slider is padded out to a 44 target and the paint is clipped back to the track. Clipping to the content box shrinks each corner by the padding on that axis. The padding is vertical only, so set the two radii separately. A single radius draws ends that taper to a point.
+| Token | Value | Applies to |
+| --- | --- | --- |
+| `--sy-radius-group` | 26 | Grouped lists only |
+| `--sy-radius-lg` | 14 | Panel, dialogs, toast |
+| `--sy-radius-md` | 10 | Buttons, inputs, menus, popovers |
 
-Only the grouped list is rounded to `--sy-radius-group`. The panel, the dialogs and the toast keep `--sy-radius-lg`.
+Derive a radius for anything whose size varies. The switch knob is a capsule, not a circle.
 
-Derive a radius that rounds something whose size varies. An app icon is drawn at 72 with a label and 78 without, and a widget tile scales with the dashboard.
+> [!WARNING]
+> On touch a control keeps its drawn size and gains a 44 hit area; sizing the box to 44 pushes it away from the text it belongs to. A slider padded out to 44 needs its two radii set separately, or the track ends taper to a point.
 
-`.btn.sm` outranks `.ic`. Name an icon button again in the touch block or it takes a text button's side padding.
+---
 
-The choice rows draw a segmented control on radio inputs. The inputs stay: the form reads them and a screen reader announces them. The input is 0 by 0, so the segment wears the focus ring.
+## Motion
 
-The group keeps `overflow: visible` so a dropdown can escape it. The first and last visible rows carry the corner radius themselves, or a row's hover fill squares off the corners.
+| Preference | Effect |
+| --- | --- |
+| Default transition | 0.15s ease |
+| `prefers-reduced-motion: reduce` | Transitions and animations drop to 0.01ms, one iteration, instant scrolling |
+| `prefers-reduced-transparency: reduce` | Backdrop blur is removed, motion is kept |
 
-## Widgets
+> [!NOTE]
+> Reduced motion uses 0.01ms, not 0. A duration of exactly 0 skips the transition-end event that some interactions wait on.
 
-A widget is a separate document in an iframe. It keeps its own stylesheet, does not load `tokens.css`, and cannot name a token. It carries the values instead.
+---
 
-**Colour.** Every colour must be a palette value or be listed in `ui/test/widget-colours.test.mjs` with what it is. A second test removes an entry once nothing uses it.
+<details>
+<summary>Widgets</summary>
 
-**The face.** A widget spells the font stack the same way as everything else.
+A widget is a separate document in an iframe. It keeps its own stylesheet and cannot name a token, so it carries raw values.
 
-**Size.** Widget text is not on the type scale. The scale stops at 11 and the densest tiles go to 6.5. Sizes are snapped to a step where one is within a point.
+| Rule | Requirement |
+| --- | --- |
+| Colour | A palette value, or a registered bespoke colour with a stated source |
+| Face | The same font stack, spelled the same way |
+| Size | Off the type scale; the scale stops at 11 and the densest tiles reach 6.5 |
 
-## Page-scoped tokens
+Bespoke colours are brand colours, third-party data scales and artwork. An entry is removed once nothing uses it.
 
-A surface particular to one page is declared in that page's own `:root`, and its light values in the same file under `html[data-theme="light"]`. `--pane` and `--cp` on the admin page, `--glass-bg` and `--dock-bg` on the dashboard. These are not part of the system.
+</details>
 
-The admin page scopes two more families there.
+<details>
+<summary>Page-scoped tokens</summary>
+
+A surface particular to one page is declared in that page's own `:root`, with light values under the same theme attribute. Not part of the system.
+
+| Page | Tokens |
+| --- | --- |
+| Settings | `--pane`, `--cp` |
+| Dashboard | `--glass-bg`, `--dock-bg` |
+
+The Settings page scopes two more families.
 
 | Family | Tokens | Use |
 | --- | --- | --- |
 | Overlays | `--ov-soft`, `--ov`, `--ov-strong`, `--field-fill`, `--track-off` | A tint over whatever surface a control sits on. White over dark, black over light |
-| Elevation | `--shadow-pop`, `--shadow-dlg`, `--shadow-login`, `--shadow-ghost`, `--shadow-bar`, `--shadow-knob`, `--shadow-tog`, `--shadow-sunken` | A shadow over a dark surface is depth; the same shadow over a light one is dirt |
+| Elevation | `--shadow-pop`, `--shadow-dlg`, `--shadow-login`, `--shadow-ghost`, `--shadow-bar`, `--shadow-knob`, `--shadow-tog`, `--shadow-sunken` | A shadow over a dark surface reads as depth; the same shadow over a light one reads as dirt |
+
+</details>
+
+---
 
 ## Rules
 
-A colour written as a literal outside `tokens.css` fails `ui/test/css-tokens.test.mjs`. The same test checks that every `var()` names a token that exists. `ui/test/palette-values.test.mjs` pins each palette entry to its reference value.
-
-`#fff` and `#000` are allowed as ink on an arbitrary coloured fill, where the colour underneath is user-chosen and no token can describe it. On the admin page `--on-accent` names that ink.
+1. Never write a colour literal outside the token file.
+2. Never name a palette entry in a rule. Name a role or a semantic token.
+3. Set a text style's three tokens together.
+4. `#fff` and `#000` are allowed as ink on a user-chosen coloured fill, where no token can describe what is underneath. On the Settings page `--on-accent` names that ink.
