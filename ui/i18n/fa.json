@@ -92,6 +92,7 @@
     "reportIssue": "گزارش مشکل",
     "sourceCode": "کد منبع",
     "support": "پشتیبانی",
+    "updateTo": "به‌روزرسانی به v{v}",
     "version": "نسخه v{v}"
   },
   "dashboard": {
