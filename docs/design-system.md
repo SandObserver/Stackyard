@@ -37,46 +37,32 @@ Twelve hues and six greys. Each entry has a `-hi` partner, the increased-contras
 
 Grey order reverses between themes: `gray6` is darkest in dark, lightest in light.
 
-> [!WARNING]
-> Never name a palette entry in a rule. Rules name a role or a semantic token.
+Rules never name a palette entry. They name a role or a semantic token.
 
 ### Roles
 
-What a colour is for.
+What a colour is for. Each role resolves to a palette entry.
 
 | Token | Dark | Light |
 | --- | --- | --- |
-| `--accent` | `--sy-teal` | `--sy-teal-hi` |
-| `--accent-strong` | `--sy-teal-hi` | ![](https://img.shields.io/badge/-%20-00587E) `#00587E` |
-| `--danger` | `--sy-red` | `--sy-red-hi` |
-| `--warning` | `--sy-orange` | `--sy-orange-hi` |
-| `--success` | `--sy-green` | `--sy-green-hi` |
+| `--accent` | ![](https://img.shields.io/badge/-%20-00D2E0) `--sy-teal` `#00D2E0` | ![](https://img.shields.io/badge/-%20-0071A4) `--sy-teal-hi` `#0071A4` |
+| `--accent-strong` | ![](https://img.shields.io/badge/-%20-3BDDEC) `--sy-teal-hi` `#3BDDEC` | ![](https://img.shields.io/badge/-%20-00587E) `#00587E` |
+| `--danger` | ![](https://img.shields.io/badge/-%20-FF4245) `--sy-red` `#FF4245` | ![](https://img.shields.io/badge/-%20-D70015) `--sy-red-hi` `#D70015` |
+| `--warning` | ![](https://img.shields.io/badge/-%20-FF9230) `--sy-orange` `#FF9230` | ![](https://img.shields.io/badge/-%20-C93400) `--sy-orange-hi` `#C93400` |
+| `--success` | ![](https://img.shields.io/badge/-%20-30D158) `--sy-green` `#30D158` | ![](https://img.shields.io/badge/-%20-248A3D) `--sy-green-hi` `#248A3D` |
 | `--on-accent` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
 
-Light hues are drawn for a fill. A role that becomes text or the edge of a control points at the `-hi` entry. Use `--accent-strong` wherever the accent has to be read as text.
+Light hues are drawn for a fill, so a light role that becomes text or the edge of a control points at the `-hi` entry. Use `--accent-strong` wherever the accent has to be read as text.
 
-`--on-accent` is the ink on a filled control. It is not a label level.
+`--on-accent` is the ink on a filled control. It is white in both themes and is not a label level.
 
 ### Semantic
 
 What a colour is applied to.
 
-| Set | Tokens | Use |
-| --- | --- | --- |
-| Labels | `--label-primary` … `--label-quaternary` | Text, descending prominence |
-| Fills | `--fill-primary` … `--fill-quaternary` | The tint behind a small control |
-| Separators | `--separator`, `--separator-opaque` | Dividing content |
-| Backgrounds | `--bg-primary`, `--bg-secondary`, `--bg-tertiary` | The three layered surfaces |
-| Backgrounds, elevated | `--bg-elevated-primary` … `-tertiary` | The same three, over a sheet |
-| Contrast-safe | `--sy-a11y-dim`, `--sy-a11y-border` | Text and control edges on a card |
-| One-offs | `--bg-primary-light`, `--control-knob` | Opt-in light widget card; slider and switch knob |
-
-<details>
-<summary>Semantic values, both themes</summary>
-
 | Token | Dark | Light |
 | --- | --- | --- |
-| `--label-primary` | `#FFFFFF` | `#000000` |
+| `--label-primary` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` | ![](https://img.shields.io/badge/-%20-000000) `#000000` |
 | `--label-secondary` | `rgba(235,235,245,.70)` | `rgba(60,60,67,.60)` |
 | `--label-tertiary` | `rgba(235,235,245,.30)` | `rgba(60,60,67,.30)` |
 | `--label-quaternary` | `rgba(235,235,245,.16)` | `rgba(60,60,67,.18)` |
@@ -85,28 +71,22 @@ What a colour is applied to.
 | `--fill-tertiary` | `rgba(118,118,128,.24)` | `rgba(118,118,128,.12)` |
 | `--fill-quaternary` | `rgba(118,118,128,.18)` | `rgba(116,116,128,.08)` |
 | `--separator` | `rgba(255,255,255,.17)` | `rgba(60,60,67,.29)` |
-| `--separator-opaque` | `#38383A` | `#C6C6C8` |
-| `--bg-primary` | `#000000` | `#FFFFFF` |
-| `--sy-a11y-dim` | `#A3A3A8` | `--sy-gray-hi` |
-| `--sy-a11y-border` | `#838387` | `--sy-gray` |
+| `--separator-opaque` | ![](https://img.shields.io/badge/-%20-38383A) `#38383A` | ![](https://img.shields.io/badge/-%20-C6C6C8) `#C6C6C8` |
+| `--bg-primary` | ![](https://img.shields.io/badge/-%20-000000) `#000000` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
+| `--bg-secondary` | ![](https://img.shields.io/badge/-%20-1C1C1E) `--sy-gray6` | ![](https://img.shields.io/badge/-%20-F2F2F7) `--sy-gray6` |
+| `--bg-tertiary` | ![](https://img.shields.io/badge/-%20-2C2C2E) `--sy-gray5` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
+| `--bg-elevated-primary` | ![](https://img.shields.io/badge/-%20-1C1C1E) `--sy-gray6` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
+| `--bg-elevated-secondary` | ![](https://img.shields.io/badge/-%20-2C2C2E) `--sy-gray5` | ![](https://img.shields.io/badge/-%20-F2F2F7) `--sy-gray6` |
+| `--bg-elevated-tertiary` | ![](https://img.shields.io/badge/-%20-3A3A3C) `--sy-gray4` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
+| `--sy-a11y-dim` | ![](https://img.shields.io/badge/-%20-A3A3A8) `#A3A3A8` | ![](https://img.shields.io/badge/-%20-6C6C70) `--sy-gray-hi` |
+| `--sy-a11y-border` | ![](https://img.shields.io/badge/-%20-838387) `#838387` | ![](https://img.shields.io/badge/-%20-8E8E93) `--sy-gray` |
+| `--bg-primary-light` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
+| `--control-knob` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
 
-| Token | Dark | Light |
-| --- | --- | --- |
-| `--bg-secondary` | `--sy-gray6` | `--sy-gray6` |
-| `--bg-tertiary` | `--sy-gray5` | `#FFFFFF` |
-| `--bg-elevated-primary` | `--sy-gray6` | `#FFFFFF` |
-| `--bg-elevated-secondary` | `--sy-gray5` | `--sy-gray6` |
-| `--bg-elevated-tertiary` | `--sy-gray4` | `#FFFFFF` |
-| `--bg-primary-light` | `#FFFFFF` | `#FFFFFF` |
-| `--control-knob` | `#FFFFFF` | `#FFFFFF` |
-
-</details>
+Labels are text in descending prominence. Fills are the tint behind a small control, not the dashboard's glass: the glass is white at low alpha over a wallpaper, a fill is grey-tinted and assumes an opaque surface. The elevated backgrounds are the same three surfaces drawn over a sheet. `--bg-primary-light` is the opt-in light widget card.
 
 > [!WARNING]
-> Label levels below primary do not clear WCAG on this project's cards. Use `--sy-a11y-dim` for text that has to be read on a card. Use a label level for hierarchy only.
-
-> [!NOTE]
-> Fills are not the dashboard's glass. The glass is white at low alpha over a wallpaper. A fill is grey-tinted and assumes an opaque surface.
+> Label levels below primary do not clear WCAG on this project's cards. Use `--sy-a11y-dim` for text that has to be read on a card, and `--sy-a11y-border` for a control edge. Label levels carry hierarchy only.
 
 ### Themes
 
@@ -124,10 +104,7 @@ One stack everywhere, held by `--font-ui`:
 -apple-system, BlinkMacSystemFont, system-ui, sans-serif
 ```
 
-`monospace` is the exception, for code spans in admin hints.
-
-> [!WARNING]
-> Do not name an optical cut. The stack picks the cut for the size it is drawn at; naming one pins it.
+`monospace` is the exception, for code spans in admin hints. Do not name an optical cut; the stack picks the cut for the size it is drawn at, and naming one pins it.
 
 Eleven styles, three tokens each: `--fs-<style>`, `--lh-<style>`, `--tr-<style>`. Sizes in px, leading unitless, tracking in `em`.
 
@@ -145,7 +122,7 @@ Eleven styles, three tokens each: `--fs-<style>`, `--lh-<style>`, `--tr-<style>`
 | `caption-1` | 12/16 | 11/13 | 0 |
 | `caption-2` | 11/13 | 11/13 | 0.06 |
 
-Tracking is one absolute px value per style, republished per step as its own `em`. Headline is Body at semibold; `--fw-headline` carries the weight.
+Set all three tokens of a style together. A size from the scale with leading from elsewhere is a style that looks applied and is not.
 
 ```css
 .rl {
@@ -155,8 +132,7 @@ Tracking is one absolute px value per style, republished per step as its own `em
 }
 ```
 
-> [!WARNING]
-> Set all three tokens together. A size from the scale with leading from elsewhere is a style that looks applied and is not.
+Tracking is one absolute px value per style, republished per step as its own `em`. Headline is Body at semibold; `--fw-headline` carries the weight.
 
 The small step is opt-in per page via a class on `<html>`, and never applies on a phone. The Settings page carries it, so a settings row is 15 on a desktop and 17 on a phone.
 
@@ -177,27 +153,39 @@ A single character centred in a fixed box takes no text leading or tracking. An 
 
 ---
 
-## Spacing & geometry
+## Layout
+
+The Settings surface is a column of grouped rows. Everything aligns to the row label at 16.
 
 | | |
 | --- | --- |
-| Settings row | 52 tall, 68 with two lines |
-| Row side padding | 16 |
+| Row | 52 tall, 68 carrying two lines |
+| Row padding | 16 each side |
 | Separator | 1 tall, inset 16 leading, flush trailing |
 | Group header and footer | text inset 16 |
-| Between a group and the next heading | about 34 |
-| Outer margin | 16 on a phone, 20 otherwise |
-| Sidebar | 320 wide, items 44 tall, pill selection |
-| Switch | 64 × 28, knob 38 × 24 inset 2, travel 22 |
-| Slider | track 6, knob 20, one design everywhere |
-| Segmented control | 32 track, 28 segments, capsule |
-| Alert buttons | 48 tall, capsule |
-| Tab bar selection | covers the whole tab, radius 16 |
-| Small button on touch | drawn at 30, hit area extended to 44 |
-| App icon corner | 22.37% of the icon width |
-| Widget tile corner | 28 at design size, scales with the tile |
+| Group to the next heading | about 34 |
+| Page margin | 16 on a phone, 20 otherwise |
+| Sidebar | 320 wide, 44 items |
 
-### Radius
+## Controls
+
+| Control | Track | Handle |
+| --- | --- | --- |
+| Switch | 64 × 28 | 38 × 24 capsule, inset 2, travels 22 |
+| Slider | 6 tall | 20 round, one design everywhere |
+| Segmented | 32 tall, capsule | 28 segments |
+| Alert button | 48 tall, capsule | |
+| Sidebar selection | 44 tall, pill | |
+| Tab bar selection | full tab, radius 16 | |
+
+A capsule is a radius of half the height. The switch knob is a capsule too, not a circle.
+
+On touch a control keeps its drawn size and gains a 44 hit area on top. A small button stays 30 and a slider stays 6.
+
+> [!WARNING]
+> Sizing the box itself to 44 turns every inline action into a slab and pushes it away from the text it belongs to. A slider padded out to 44 also needs its two radii set separately, or clipping the paint back to the track tapers the ends to a point.
+
+## Corners
 
 | Token | Value | Applies to |
 | --- | --- | --- |
@@ -205,10 +193,7 @@ A single character centred in a fixed box takes no text leading or tracking. An 
 | `--sy-radius-lg` | 14 | Panel, dialogs, toast |
 | `--sy-radius-md` | 10 | Buttons, inputs, menus, popovers |
 
-Derive a radius for anything whose size varies. The switch knob is a capsule, not a circle.
-
-> [!WARNING]
-> On touch a control keeps its drawn size and gains a 44 hit area; sizing the box to 44 pushes it away from the text it belongs to. A slider padded out to 44 needs its two radii set separately, or the track ends taper to a point.
+Anything whose size varies derives its corner instead of naming a token. An app icon rounds to 22.37% of its width, because the grid draws it at 72 with a label and 78 without. A widget tile is 28 at design size and scales with the tile.
 
 ---
 
@@ -220,25 +205,21 @@ Derive a radius for anything whose size varies. The switch knob is a capsule, no
 | `prefers-reduced-motion: reduce` | Transitions and animations drop to 0.01ms, one iteration, instant scrolling |
 | `prefers-reduced-transparency: reduce` | Backdrop blur is removed, motion is kept |
 
-> [!NOTE]
-> Reduced motion uses 0.01ms, not 0. A duration of exactly 0 skips the transition-end event that some interactions wait on.
+Reduced motion uses 0.01ms rather than 0, because a duration of exactly 0 skips the transition-end event that some interactions wait on.
 
 ---
 
-<details>
-<summary>Widgets</summary>
+## Widgets
 
 A widget is a separate document in an iframe. It keeps its own stylesheet and cannot name a token, so it carries raw values.
 
-| Rule | Requirement |
+| | |
 | --- | --- |
 | Colour | A palette value, or a registered bespoke colour with a stated source |
 | Face | The same font stack, spelled the same way |
 | Size | Off the type scale; the scale stops at 11 and the densest tiles reach 6.5 |
 
 Bespoke colours are brand colours, third-party data scales and artwork. An entry is removed once nothing uses it.
-
-</details>
 
 <details>
 <summary>Page-scoped tokens</summary>
