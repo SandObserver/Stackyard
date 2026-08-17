@@ -38,8 +38,8 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 - **Anything can be a badge.** Point Stackyard at any API, pick a value from the response, and show it as a [live activity badge](#live-activity-badges). No custom widget, no code.
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
 - **No dependencies.** Review it once and stop worrying about the supply chain.
-
-Ships with a mobile layout, six languages including right-to-left, tested colour contrast and screen-reader labels, and a web manifest, so a phone can install it to the home screen and open it in its own window. There is no offline mode: every tile shows live data.
+- **Six languages, right-to-left included.** Contrast and screen-reader labels are covered by tests.
+- **Installs like an app.** A mobile layout that opens in its own window from a home screen. No offline mode: every tile is live.
 
 ## Widgets
 
