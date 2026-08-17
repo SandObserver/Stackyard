@@ -115,8 +115,6 @@ Adding one is a folder plus one registry entry, with no changes to the rest of t
 
 Give Stackyard an API endpoint and it lists the numbers in the response, so you pick the one you want on the tile. Point it at Sonarr's queue and the Sonarr tile carries a count of episodes still downloading. **Show From** sets a floor, so a queue that is never quite empty stays quiet until it matters.
 
-![Configuring a live activity badge](docs/screenshot-app-edit.png)
-
 ## Security
 
 Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
