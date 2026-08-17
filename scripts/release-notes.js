@@ -11,10 +11,30 @@ const cl = require('./changelog.js');
 
 const ROOT = path.join(__dirname, '..');
 
+/** The section a tag describes.
+
+    A prerelease has no section of its own: the changelog is dated when the
+    stable version is cut. `v1.8.0-beta.1` reads the 1.8.0 section if it already
+    exists, and [Unreleased] otherwise, which is what it is a candidate for.
+
+    @param {string} markdown @param {string} version */
+function sectionFor(doc, version) {
+  const name = version.replace(/^v/, '');
+  const exact = doc.versions.find(v => v.name === name);
+  if (exact) return exact;
+  const parsed = cl.parseTagName(name);
+  if (!parsed || !parsed.prerelease) return null;
+  const base = `${parsed.major}.${parsed.minor}.${parsed.patch}`;
+  const stable = doc.versions.find(v => v.name === base);
+  if (stable) return stable;
+  const unreleased = cl.unreleased(doc);
+  return unreleased && unreleased.sections.length ? unreleased : null;
+}
+
 /** @param {string} markdown @param {string} version */
 function notesFor(markdown, version) {
   const doc = cl.parse(markdown);
-  const wanted = doc.versions.find(v => v.name === version.replace(/^v/, ''));
+  const wanted = sectionFor(doc, version);
   if (!wanted) return null;
   const next = doc.versions[doc.versions.indexOf(wanted) + 1];
   const end = next ? next.line - 1 : doc.lines.length;

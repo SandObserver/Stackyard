@@ -173,3 +173,13 @@ test('release notes are the section body without the link definitions', () => {
   assert.equal(notesFor(sample, 'v1.1.0'), notes);
   assert.equal(notesFor(sample, '9.9.9'), null);
 });
+
+/* A beta is tagged before its section is dated, so it has none of its own. With
+   no fallback the release page step fails after the image has published. */
+test('a prerelease falls back to its base version, then to Unreleased', () => {
+  assert.match(notesFor(sample, 'v1.2.0-beta.1'), /Widget for the doorbell\./);
+  assert.equal(notesFor(sample, 'v1.1.0-beta.1'), notesFor(sample, '1.1.0'));
+
+  const nothingPending = sample.replace('### Added\n\n- Widget for the doorbell.\n\n', '');
+  assert.equal(notesFor(nothingPending, 'v1.2.0-beta.1'), null);
+});
