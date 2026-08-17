@@ -19,42 +19,111 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.6.1 - 2026-08-14
+### 1.7.0 - 2026-08-16
+
+### Added
+
+- Light theme for the Settings pages, with Settings Display Mode in Settings &gt;
+  Appearance: System Default, Light or Dark. Stored per device.
+
+- Keep Screen Awake in Settings &gt; Appearance, off by default. Needs HTTPS.
+
+- Show From on a live activity badge, to badge only counts at or above a number.
+
+- Install from Unraid Community Applications, with a template in `templates/`.
+
+### Changed
+
+- Text on both pages now follows one type scale, so some sizes and line spacing
+  shift slightly.
+
+- Widget colours now match the rest of the app. Reds, blues, greens and greys
+  that had been left on older values are corrected.
+
+- Settings controls are redrawn: switches are wider with a capsule knob, slider
+  tracks are thicker, and groups are more rounded.
+
+- The wallpaper brightness slider now has the same handle as the colour sliders.
+
+- Each colour slider handle shows the value it is set to.
+
+- Group headings and their help text now line up with the settings above and
+  below them.
+
+- The settings sidebar is wider, with taller items and a rounded selection.
+
+- The selected tab on a phone is marked with a pill instead of a coloured
+  label.
+
+- Widget tiles and dock icons are rounded correctly, and stay so at every icon
+  and dashboard size.
+
+- Either-or settings are now a segmented control instead of radio dots.
+
+- Buttons in a dialog are taller and rounded.
+
+- A long settings label now keeps its line and the value beside it shortens,
+  instead of the label breaking in two.
+
+- Unsplash API Key is now just API Key, under a Source row that already names
+  Unsplash.
+
+- Row separators now start level with the row's label instead of spanning the
+  full width.
+
+- Settings on a phone use the larger phone text size. On a desktop the panel
+  keeps its denser size.
+
+- Widgets on a page you are not looking at now poll four times less often, and
+  refresh when you swipe back to them.
+
+- Badge and health targets that keep failing are contacted less often, so an
+  offline service no longer slows every other tile on every refresh.
+
+- Scripts and stylesheets are now cached for a year instead of revalidated on
+  every load. Their URLs change whenever the file does.
+
+- The logo is redrawn, and its arc now follows the accent colour.
 
 ### Fixed
 
-- Phone home screen no longer starts under the status bar in a home-screen
-  install. The first row clears the clock and the island.
+- Home screen no longer leaves a dead strip below the dock in a home-screen
+  install on iOS.
 
-- Settings reserves the status bar area on a phone.
+- App icons now use the current logo, and the browser tab icon follows the
+  light or dark theme.
 
-- Notification badges inside a folder no longer get trimmed at the page edge or
-  bleed into the next page.
+- Colour and brightness slider tracks draw round ends on a touch device instead
+  of tapering to a point.
 
-- Opening a folder no longer puts a focus ring on the first app, on a phone or
-  on the desktop.
+- Hue, saturation and brightness sliders no longer stretch across the row on a
+  phone.
 
-- A long error in Admin now stays on screen long enough to read, up to fifteen
-  seconds.
+- Slider fills and colour ramps now run the same way as the handle in
+  right-to-left languages.
 
-- Backup placeholder no longer moves or reshuffles when a card is hovered or
-  tapped.
+- Saturation, brightness and wallpaper brightness sliders now draw a thin track
+  on a phone, matching hue.
 
-- The App, Widget and Folder tiles under Add New show their names instead of
-  their internal keys.
+- Settings no longer flashes the desktop sidebar before the phone layout
+  appears.
 
-- The Backup widget shows the job picker for the provider you picked. Kopia
-  showed the Duplicati picker as well, and Duplicati showed no picker at all.
+- Dock and the Settings tab bar now sit as close to the bottom of the screen as
+  to the sides.
 
-- A badge or widget field blocked for pointing at a private address now names
-  `ALLOW_PRIVATE_IPS=true` as the setting that allows it. The advice was added
-  in 1.6.0 but never appeared.
+- Remove the stray Support link from Settings &gt; General.
 
-- A widget settings Fetch marks a blocked private address as a warning, the
-  same as a badge test, instead of a hard error.
+- App title toggles in Settings &gt; Appearance now persist across a reload.
 
-- A badge extract path ending in `count` now reads a JSON field of that
-  name. It only counts an array when the value is an array.
+- Connections map tooltips now use the system font on Android, Windows and
+  Linux instead of falling back to a serif.
+
+- Saving on Settings &gt; Appearance no longer reports "Wallpaper saved" when
+  something else on the page was saved.
+
+- The login and set-password screens, the phone tab bar, the logging level and
+  wallpaper source menus, the version line and the app, widget and widget
+  configuration forms are now translated instead of always showing English.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>

@@ -4,16 +4,17 @@ on:
   release:
     types: [published]
 
-# Commits the updated template back to the default branch. The repository
-# default is read, so the write is granted here and nowhere else.
+# Opens a pull request against the default branch. The repository default is
+# read, so the writes are granted here and nowhere else.
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      # Commit onto the default branch, not the tag the release points at: a
+      # Branch from the default branch, not the tag the release points at: a
       # tag checkout is detached and the push would go nowhere.
       - name: Checkout default branch
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -38,17 +39,40 @@ jobs:
 
       # The checkout keeps no credentials, so the token authenticates this one
       # push and is never left in the runner's git config.
-      - name: Commit
+      #
+      # A pull request, never a direct push: the default branch requires one.
+      # Checks do not start on a pull request opened with GITHUB_TOKEN. Merging
+      # this one needs the ruleset bypass, or a re-run of the checks.
+      - name: Open a pull request
         if: steps.changes.outputs.changed == 'true'
         env:
           VERSION: ${{ github.event.release.tag_name }}
-          BRANCH: ${{ github.event.repository.default_branch }}
+          BASE: ${{ github.event.repository.default_branch }}
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          BRANCH="docs/ca-template-${VERSION}"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "${BRANCH}"
           git add templates/stackyard.xml
           git commit -m "Docs: describe ${VERSION} in the Community Applications template"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${BRANCH}"
+          gh pr create \
+            --base "${BASE}" \
+            --head "${BRANCH}" \
+            --title "Docs: describe ${VERSION} in the Community Applications template" \
+            --label documentation \
+            --body "$(printf '%s\n' \
+              '**Summary**' \
+              "- Copy the ${VERSION} changelog section into the Community Applications template." \
+              '' \
+              '**Testing**' \
+              'The template was validated as well-formed before this branch was pushed.' \
+              '' \
+              '**Checklist**' \
+              '- [x] Stays within the project constraints: one container, no runtime dependencies, no build step (see CONTRIBUTING.md).' \
+              '- [ ] Tests added or updated for new logic, and the full suite, lint, and typechecks pass.' \
+              '- [x] Docs updated if behavior or configuration changed.' \
+              '- [ ] CHANGELOG.md updated under Unreleased if the change is user-visible.')"
