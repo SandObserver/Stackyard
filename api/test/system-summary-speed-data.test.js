@@ -4,7 +4,7 @@ const path = require('node:path');
 const { normalizeBase } = require('../src/widget-data');
 const { errorParts } = require('../test-support/widget-ctx');
 
-const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'stats', 'data.js'));
+const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
 
 /* Minimal stand-in for the ctx widget-data.js builds, capturing the last fetch
    call so header/URL wiring can be asserted. fetchJSON returns { status, data }. */

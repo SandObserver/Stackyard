@@ -73,16 +73,18 @@ test('backup returns one result per configured slot', () => {
   assert.deepEqual(demoFn('backup')(ctx({})), []);
 });
 
-test('stats has no demo module and the registry reflects who does', () => {
+test('the system widgets have no demo module and the registry reflects who does', () => {
   const fs = require('node:fs');
   const dir = path.join(__dirname, '..', '..', 'ui', 'widgets');
   const has = n => fs.existsSync(path.join(dir, n, 'demo.js'));
-  assert.equal(has('stats'), false);
+  assert.equal(has('system-summary'), false);
+  assert.equal(has('disk-health'), false);
   for (const n of ['backup', 'books', 'dns', 'github', 'nowplaying', 'weather']) assert.equal(has(n), true, n);
 
   process.env.WIDGETS_PATH = dir;
   const reg = require('../src/widgets').getRegistry();
-  assert.equal(reg.stats.hasDemoFn, false);
+  assert.equal(reg['system-summary'].hasDemoFn, false);
+  assert.equal(reg['disk-health'].hasDemoFn, false);
   assert.equal(reg.weather.hasDemoFn, true);
 });
 

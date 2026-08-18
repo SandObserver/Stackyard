@@ -106,7 +106,7 @@ async function boot() {
     const r = await fetch(`${API}/widget-config/${id}`);
     if (r.ok) cfg = await r.json();
   } catch {}
-  if (!cfg) cfg = { widgetType:'stats', widgetSize:'medium',
+  if (!cfg) cfg = { widgetType:'system-summary', widgetSize:'medium',
     widgetConfig:{ slots:[{type:'cpu'},{type:'ram'},{type:'disk',primary:'/'}], network:{enabled:false} }};
 
   /* Detect a narrow viewport */

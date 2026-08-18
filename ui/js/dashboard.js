@@ -25,7 +25,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=b3975ac9';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=371827cc';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=e2857764';
 import {
   configChanged,
@@ -264,8 +264,6 @@ function mkIcon(item) {
 }
 
 function widgetTitle(item) {
-  if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health')
-    return item.label || t('status.diskHealth');
   return item.label || widgetReg[item.widgetType]?.label || t('type.widget');
 }
 function mkWidget(item) {
@@ -280,7 +278,6 @@ function mkWidget(item) {
   if (item.widgetType) card.dataset.wtype = item.widgetType;
   const preset = cardPreset(item, widgetReg);
   if (preset) card.dataset.card = preset;
-  if (item.widgetConfig?.widgetSubType) card.dataset.wsubtype = item.widgetConfig.widgetSubType;
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
   card.style.height = Math.round(WH.d[sz] * gm.scale) + 'px';
   card.style.borderRadius = Math.round(WIDGET_R * gm.scale) + 'px';

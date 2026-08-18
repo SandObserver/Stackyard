@@ -50,7 +50,7 @@ const MESSAGE_LISTENER = /addEventListener\(\s*'message'\s*,\s*(?:async\s*)?(\w+
 test('the scan finds the widget pages', () => {
   assert.ok(pages.length > 10, `only ${pages.length} widget pages found`);
   assert.ok(
-    pages.includes('widgets/stats/disk-health.html'),
+    pages.includes('widgets/disk-health/index.html'),
     'the widget that implements the protocol should be in the scan',
   );
 });

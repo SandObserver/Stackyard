@@ -378,7 +378,7 @@ preserved the same way they are for a top-level field.
 | `ctx.fetchJSON(url, opts)` | Fetch a URL and parse the body. JSON is returned as-is; Prometheus text and XML are auto-parsed. Metrics are recognised from `application/openmetrics-text` or `text/plain; version=0.0.4`, or from a bare `text/plain` containing a `# TYPE` comment; anything else plain-text comes back as a string. Pass `{ raw: true }` to get the untouched text body instead, for a custom parser. Returns `{ status, data }` or throws. Respects the app's TLS-skip setting. |
 | `ctx.parsePrometheus(text)` | Parse a Prometheus metrics body into an object. Non-string input gives an empty object rather than throwing, as `ctx.fetchJSON`'s XML parsing does, so handing it an already-parsed body is not fatal. Uncapped: the response size limit already bounds it. |
 | `ctx.normalizeBase(raw)` | Tidy a user-entered base URL (add scheme, drop trailing slash). |
-| `ctx.metrics` | Host metrics for stats-style widgets: `{ cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds }`. Each is a function. `cpuSample()` is async and returns `{ cpu, iowait }` (both percentages) from a single sampling window; the rest return directly. `cpuTemp(zone)` defaults to zone 0, `diskStats(mountPoint)` takes a mount path. These read the host's `/proc` and `/sys`, so they report host-wide usage, not the container's cgroup limits. |
+| `ctx.metrics` | Host metrics for a widget reporting on this machine: `{ cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds }`. Each is a function. `cpuSample()` is async and returns `{ cpu, iowait }` (both percentages) from a single sampling window; the rest return directly. `cpuTemp(zone)` defaults to zone 0, `diskStats(mountPoint)` takes a mount path. These read the host's `/proc` and `/sys`, so they report host-wide usage, not the container's cgroup limits. |
 | `ctx.dispatchProvider(handlers, opts)` | Run the handler for the provider the user picked, for a widget that supports several backends. `handlers` is `{ providerKey: async (ctx) => result }`. `opts.field` is the config field holding the key (default `provider`), `opts.default` the key to fall back to. `opts.onError(err, ctx)` can turn a thrown handler error into a result, but rarely should: letting it propagate is what puts the failure through the poll lifecycle. |
 | `ctx.fail(message, opts)` | Report a failure. Throws, so it never returns. `message` is shown to the user as written; `opts.kind` is one of `ctx.KIND.*` (default `UPSTREAM`). See "Reporting a failure" below. |
 | `ctx.KIND` | The error kinds, for `ctx.fail`: `AUTH`, `INVALID`, `UPSTREAM`, `NETWORK`, `TIMEOUT`, `BLOCKED`, `INTERNAL`. See [api-errors.md](./api-errors.md). |
@@ -463,8 +463,9 @@ together. Structural data that should not reshuffle, like a calendar grid, is
 better built once and cached in a module-level variable.
 
 A widget with no `demo.js` runs its real `data.js` on the demo. That is the
-right choice when the data does not come from an unreachable service: the stats
-widget has none, because `ctx.metrics` already returns invented host figures.
+right choice when the data does not come from an unreachable service: the system
+summary widget has none, because `ctx.metrics` already returns invented host
+figures.
 
 Only the widget's own polling gets a demo body. A config-time `optionsFrom`
 fetch always runs the real code, so a visitor pressing Fetch in the settings sees

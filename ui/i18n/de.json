@@ -238,8 +238,7 @@
     "containerNotFound": "Container nicht gefunden",
     "containerState": "Container {state}",
     "pingFailed": "Ping fehlgeschlagen: {error}",
-    "pingReturned": "Ping ergab {status}",
-    "diskHealth": "Laufwerkszustand"
+    "pingReturned": "Ping ergab {status}"
   },
   "setup": {
     "title": "Dashboard-Passwort festlegen?",

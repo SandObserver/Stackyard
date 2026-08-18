@@ -20,12 +20,7 @@ const REG = {
     views: { digital: { src: 'digital.html' }, analog: { src: 'analog.html' } },
     entryVersions: { 'digital.html': 'aa11aa11', 'analog.html': 'bb22bb22' },
   },
-  stats: {
-    sizes: ['small', 'medium'],
-    viewField: 'widgetSubType',
-    defaultView: 'system-summary',
-    views: { 'system-summary': { src: 'system-stats.html' }, 'disk-health': { src: 'disk-health.html' } },
-  },
+  'system-summary': { sizes: ['small', 'medium'], views: null },
   connections: {
     sizes: ['small', 'medium'],
     viewField: 'view',
@@ -57,17 +52,12 @@ test('unknown or custom widgetType falls back to the item url', () => {
 });
 
 test('the default view is used when config selects nothing', () => {
-  assert.match(widgetSrc({ id: 'a', widgetType: 'stats' }, REG), /\/stats\/system-stats\.html/);
   assert.match(widgetSrc({ id: 'a', widgetType: 'connections' }, REG), /connections-map\.html/);
   assert.match(widgetSrc({ id: 'a', widgetType: 'github' }, REG), /github\/pullrequests\.html/);
   assert.match(widgetSrc({ id: 'a', widgetType: 'clock' }, REG), /clock\/digital\.html/);
 });
 
 test('the viewField in widgetConfig selects the view file', () => {
-  assert.match(
-    widgetSrc({ id: 'a', widgetType: 'stats', widgetConfig: { widgetSubType: 'disk-health' } }, REG),
-    /disk-health\.html/,
-  );
   assert.match(
     widgetSrc({ id: 'a', widgetType: 'connections', widgetConfig: { view: 'vpn' } }, REG),
     /connections-vpn\.html/,
@@ -91,7 +81,7 @@ test('an unknown view value falls back to the first declared view', () => {
 
 test('entryVersions become the ?v cache tag; absent versions omit it', () => {
   assert.match(widgetSrc({ id: 'a', widgetType: 'clock' }, REG), /[?&]v=aa11aa11/);
-  assert.doesNotMatch(widgetSrc({ id: 'a', widgetType: 'stats' }, REG), /[?&]v=/);
+  assert.doesNotMatch(widgetSrc({ id: 'a', widgetType: 'system-summary' }, REG), /[?&]v=/);
 });
 
 test('the widget id is URL-encoded into the src', () => {
@@ -100,8 +90,8 @@ test('the widget id is URL-encoded into the src', () => {
 });
 
 test('size comes from the item, falling back to the first declared size', () => {
-  assert.match(widgetSrc({ id: 'a', widgetType: 'stats', widgetSize: 'medium' }, REG), /[?&]size=medium/);
-  assert.match(widgetSrc({ id: 'a', widgetType: 'stats' }, REG), /[?&]size=small/);
+  assert.match(widgetSrc({ id: 'a', widgetType: 'system-summary', widgetSize: 'medium' }, REG), /[?&]size=medium/);
+  assert.match(widgetSrc({ id: 'a', widgetType: 'system-summary' }, REG), /[?&]size=small/);
 });
 
 test('opts.mobile appends the mobile flag', () => {
@@ -126,11 +116,11 @@ test('the geometry tables cover the same set of sizes', () => {
    card, and a widget that declares none. */
 const CARD_REG = {
   books: { sizes: ['small'], card: 'dark' },
-  stats: {
+  clock: {
     sizes: ['small'],
-    viewField: 'widgetSubType',
-    defaultView: 'system-summary',
-    views: { 'system-summary': { src: 'a.html', card: 'dark' }, 'disk-health': { src: 'b.html' } },
+    viewField: 'clockStyle',
+    defaultView: 'digital',
+    views: { digital: { src: 'a.html', card: 'dark' }, analog: { src: 'b.html' } },
   },
   connections: {
     sizes: ['medium'],
@@ -168,7 +158,7 @@ test('cardPreset falls back to the default view when none is chosen', () => {
 });
 
 test('a view without a card does not inherit one from a sibling view', () => {
-  const item = { widgetType: 'stats', widgetConfig: { widgetSubType: 'disk-health' } };
+  const item = { widgetType: 'clock', widgetConfig: { clockStyle: 'analog' } };
   assert.equal(cardPreset(item, CARD_REG), '');
 });
 

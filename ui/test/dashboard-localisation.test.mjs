@@ -50,7 +50,6 @@ test('every locale carries the status strings', () => {
     'containerState',
     'pingFailed',
     'pingReturned',
-    'diskHealth',
   ];
   for (const file of locales()) {
     const cat = JSON.parse(read(`i18n/${file}`));

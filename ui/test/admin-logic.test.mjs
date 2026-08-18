@@ -162,16 +162,16 @@ test('visibleFieldKeys shows the chain once the toggle is on', () => {
 });
 
 test('visibleFieldKeys does not leak a field across a hidden branch default', () => {
-  /* diskProvider defaults to scrutiny but is hidden under the system-summary
-     view, so scrutinyUrl (keyed on diskProvider) must stay hidden. */
+  /* provider holds a default but is itself hidden, so the field keyed on it
+     must stay hidden too. */
   const fields = [
-    { key: 'widgetSubType' },
-    { key: 'diskProvider', default: 'scrutiny', showIf: { field: 'widgetSubType', equals: 'disk-health' } },
-    { key: 'scrutinyUrl', showIf: { field: 'diskProvider', equals: 'scrutiny' } },
+    { key: 'source' },
+    { key: 'provider', default: 'scrutiny', showIf: { field: 'source', equals: 'disks' } },
+    { key: 'scrutinyUrl', showIf: { field: 'provider', equals: 'scrutiny' } },
   ];
-  const vals = { widgetSubType: 'system-summary', diskProvider: 'scrutiny', scrutinyUrl: '' };
+  const vals = { source: 'system', provider: 'scrutiny', scrutinyUrl: '' };
   const shown = visibleFieldKeys(fields, k => vals[k]);
-  assert.deepEqual([...shown], ['widgetSubType']);
+  assert.deepEqual([...shown], ['source']);
 });
 
 test('visibleFieldKeys evaluates a condition on a field outside the sibling set directly', () => {

@@ -51,7 +51,7 @@ Widgets and the services they read:
 - **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
 - **GitHub**: contribution graph and pull requests
 - **Books**: Audiobookshelf, Komga, Kavita
-- **System stats**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed
+- **System summary**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed
 - **Disk health**: TrueNAS, Scrutiny
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami

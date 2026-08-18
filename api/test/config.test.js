@@ -60,6 +60,53 @@ test('a config already at the current version is not rewritten again', () => {
   assert.equal(cfg.settings.server.socketProxyUrl, 'tcp://socket-proxy:2375');
 });
 
+test('migrate turns each stats view into its own widget type', () => {
+  const cfg = migrate({
+    items: [
+      { id: 'a', type: 'widget', widgetType: 'stats', widgetConfig: { widgetSubType: 'disk-health', bays: ['sda'] } },
+      { id: 'b', type: 'widget', widgetType: 'stats', widgetConfig: { widgetSubType: 'system-summary' } },
+    ],
+    settings: {},
+  });
+  assert.equal(cfg.items[0].widgetType, 'disk-health');
+  assert.deepEqual(cfg.items[0].widgetConfig, { bays: ['sda'] });
+  assert.equal(cfg.items[1].widgetType, 'system-summary');
+  assert.deepEqual(cfg.items[1].widgetConfig, {});
+});
+
+test('migrate treats a stats widget with no view as the system summary', () => {
+  const cfg = migrate({
+    items: [
+      { id: 'a', type: 'widget', widgetType: 'stats', widgetConfig: { slots: [{ type: 'cpu' }] } },
+      { id: 'b', type: 'widget', widgetType: 'stats' },
+    ],
+    settings: {},
+  });
+  assert.equal(cfg.items[0].widgetType, 'system-summary');
+  assert.deepEqual(cfg.items[0].widgetConfig.slots, [{ type: 'cpu' }]);
+  assert.equal(cfg.items[1].widgetType, 'system-summary');
+});
+
+test('migrate leaves an already-split widget and every other type alone', () => {
+  const items = [
+    { id: 'a', type: 'widget', widgetType: 'disk-health', widgetConfig: { bays: ['sda'] } },
+    { id: 'b', type: 'widget', widgetType: 'weather', widgetConfig: { units: 'c' } },
+    { id: 'c', type: 'app', label: 'Radarr' },
+  ];
+  const cfg = migrate({ items: JSON.parse(JSON.stringify(items)), settings: {} });
+  assert.deepEqual(cfg.items, items);
+});
+
+test('migrating a stats widget twice changes nothing the second time', () => {
+  const cfg = migrate({
+    items: [{ id: 'a', type: 'widget', widgetType: 'stats', widgetConfig: { widgetSubType: 'disk-health' } }],
+    settings: {},
+  });
+  const once = JSON.parse(JSON.stringify(cfg));
+  migrate(cfg);
+  assert.deepEqual(cfg, once);
+});
+
 test('loadConfig upgrades an unversioned file on disk and keeps data intact', () => {
   fs.writeFileSync(TMP, JSON.stringify({ items: [{ id: 'x', type: 'app' }], settings: { greeting: 'hi' } }));
   const loaded = loadConfig();

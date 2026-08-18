@@ -238,8 +238,7 @@
     "containerNotFound": "Container not found",
     "containerState": "Container {state}",
     "pingFailed": "Ping failed: {error}",
-    "pingReturned": "Ping returned {status}",
-    "diskHealth": "Disk health"
+    "pingReturned": "Ping returned {status}"
   },
   "setup": {
     "title": "Set a dashboard password?",

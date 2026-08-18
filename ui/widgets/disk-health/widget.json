@@ -1,0 +1,90 @@
+{
+  "name": "disk-health",
+  "label": "widget.label",
+  "sizes": [
+    "small",
+    "medium"
+  ],
+  "fields": [
+    {
+      "key": "diskProvider",
+      "type": "select",
+      "label": "diskProvider.label",
+      "default": "scrutiny",
+      "options": [
+        {
+          "value": "scrutiny",
+          "label": "diskProvider.opt.scrutiny"
+        },
+        {
+          "value": "truenas",
+          "label": "diskProvider.opt.truenas"
+        }
+      ]
+    },
+    {
+      "key": "scrutinyUrl",
+      "type": "text",
+      "label": "scrutinyUrl.label",
+      "placeholder": "scrutinyUrl.placeholder",
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "scrutiny"
+      }
+    },
+    {
+      "key": "scrutinyHref",
+      "type": "text",
+      "label": "scrutinyHref.label",
+      "placeholder": "scrutinyHref.placeholder",
+      "optional": true,
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "scrutiny"
+      }
+    },
+    {
+      "key": "truenasUrl",
+      "type": "text",
+      "label": "truenasUrl.label",
+      "placeholder": "truenasUrl.placeholder",
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "truenas"
+      }
+    },
+    {
+      "key": "truenasKey",
+      "type": "secret",
+      "label": "truenasKey.label",
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "truenas"
+      }
+    },
+    {
+      "key": "truenasHref",
+      "type": "text",
+      "label": "truenasHref.label",
+      "placeholder": "truenasHref.placeholder",
+      "optional": true,
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "truenas"
+      }
+    },
+    {
+      "key": "bays",
+      "type": "picklist",
+      "label": "bays.label",
+      "rowLabel": "bays.rowLabel",
+      "optionsFrom": "devices",
+      "fetchLabel": "bays.fetchLabel",
+      "countBySize": {
+        "small": 4,
+        "medium": 10
+      },
+      "hint": "bays.hint"
+    }
+  ]
+}

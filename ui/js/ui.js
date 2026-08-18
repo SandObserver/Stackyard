@@ -646,8 +646,6 @@ export function buildMobile() {
   const pages = packMobile(gridItems);
 
   function widgetTitle(item) {
-    if (item.widgetType === 'stats' && item.widgetConfig?.widgetSubType === 'disk-health')
-      return item.label || t('status.diskHealth');
     return item.label || widgetReg()[item.widgetType]?.label || t('type.widget');
   }
 
@@ -677,13 +675,11 @@ export function buildMobile() {
     const card = mk('div');
     const sz = item.widgetSize || 'medium';
     const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
-    const wtype = item.widgetType || '',
-      wsub = item.widgetConfig?.widgetSubType || '';
+    const wtype = item.widgetType || '';
     card.className = 'mob-widget-card';
     if (wtype) card.dataset.wtype = wtype;
     const preset = cardPreset(item, _state.widgetReg);
     if (preset) card.dataset.card = preset;
-    if (wsub) card.dataset.wsubtype = wsub;
     /* Same aspect as desktop, so the widget renders identically. */
     card.style.cssText =
       `aspect-ratio:${design[0]}/${design[1]};width:100%;max-width:100%;max-height:100%;` +
