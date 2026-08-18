@@ -1,6 +1,7 @@
 module.exports = async function (ctx) {
   if (ctx.endpoint === 'speed') return speed(ctx);
-  if (ctx.endpoint === 'sensors') return glancesSensorOptions(ctx);
+  if (ctx.endpoint === 'sensors') return sensorOptions(ctx);
+  if (ctx.endpoint === 'systems') return beszelSystemOptions(ctx);
   return systemSummary(ctx);
 };
 
@@ -9,8 +10,18 @@ function systemSummary(ctx) {
     {
       system: systemSummaryLocal,
       glances: systemSummaryGlances,
+      beszel: systemSummaryBeszel,
     },
     { field: 'statProvider', default: 'system' },
+  );
+}
+
+/* Only a source that names its sensors offers the picker, so the local machine
+   has no handler here. */
+function sensorOptions(ctx) {
+  return ctx.dispatchProvider(
+    { glances: glancesSensorOptions, beszel: beszelSensorOptions },
+    { field: 'statProvider' },
   );
 }
 
@@ -186,5 +197,150 @@ async function systemSummaryGlances(ctx) {
     iowait: typeof cpu?.iowait === 'number' ? cpu.iowait : null,
     procs: typeof procs?.total === 'number' ? procs.total : null,
     uptime,
+  };
+}
+
+/* Beszel is a PocketBase app: a login returns a token rather than accepting a
+   key. The account collection moved between releases, so both are tried and the
+   working one is remembered with its token. */
+const BESZEL_COLLECTIONS = ['_superusers', 'users'];
+const _beszelSession = new Map();
+
+async function beszelLogin(ctx, base) {
+  const { config, fetchJSON } = ctx;
+  if (!config.beszelUser || !config.beszelPass)
+    ctx.fail('Enter the Beszel account and password first.', { kind: ctx.KIND.INVALID });
+  const body = JSON.stringify({ identity: config.beszelUser, password: config.beszelPass });
+  const known = _beszelSession.get(base);
+  const tries = known ? [known.collection] : BESZEL_COLLECTIONS;
+
+  for (const collection of tries) {
+    const r = await fetchJSON(`${base}/api/collections/${collection}/auth-with-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      timeout: 8000,
+    });
+    if (r.status < 400 && r.data?.token) {
+      const session = { collection, token: r.data.token };
+      _beszelSession.set(base, session);
+      return session;
+    }
+  }
+  _beszelSession.delete(base);
+  ctx.fail('Beszel rejected the account and password', { kind: ctx.KIND.AUTH });
+}
+
+/* An expired token is not refused: PocketBase applies the collection's read
+   rule instead, and an unauthenticated read of systems is an empty list. So an
+   empty answer is retried once with a fresh token before it is believed. */
+async function beszelGet(ctx, base, path) {
+  const { fetchJSON } = ctx;
+  let session = _beszelSession.get(base) || (await beszelLogin(ctx, base));
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await fetchJSON(`${base}${path}`, {
+      headers: { Authorization: session.token },
+      timeout: 8000,
+    });
+    if (r.status === 401 || r.status === 403 || (Array.isArray(r.data?.items) && !r.data.items.length)) {
+      if (attempt === 0) {
+        _beszelSession.delete(base);
+        session = await beszelLogin(ctx, base);
+        continue;
+      }
+      return r.data;
+    }
+    if (r.status >= 400) ctx.fail('Beszel HTTP ' + r.status);
+    return r.data;
+  }
+}
+
+function beszelBase(ctx) {
+  if (!ctx.config.beszelUrl) ctx.fail('Enter the Beszel URL first.', { kind: ctx.KIND.INVALID });
+  return ctx.normalizeBase(ctx.config.beszelUrl);
+}
+
+async function beszelSystems(ctx) {
+  const base = beszelBase(ctx);
+  const data = await beszelGet(ctx, base, '/api/collections/systems/records?perPage=200&fields=id,name,status');
+  return Array.isArray(data?.items) ? data.items : [];
+}
+
+async function beszelSystemOptions(ctx) {
+  const options = (await beszelSystems(ctx)).map(s => ({ value: s.id, label: s.name || s.id }));
+  return { options };
+}
+
+async function beszelLatest(ctx, base, systemId) {
+  const filter = encodeURIComponent(`system='${systemId}' && type='1m'`);
+  const data = await beszelGet(
+    ctx,
+    base,
+    `/api/collections/system_stats/records?filter=(${filter})&sort=-created&perPage=1`,
+  );
+  return data?.items?.[0]?.stats || null;
+}
+
+async function beszelSensorOptions(ctx) {
+  const base = beszelBase(ctx);
+  const id = ctx.config.beszelSystem;
+  if (!id) ctx.fail('Choose a system first.', { kind: ctx.KIND.INVALID });
+  const stats = await beszelLatest(ctx, base, id);
+  const temps = stats && typeof stats.t === 'object' ? stats.t : {};
+  return { options: Object.keys(temps).map(label => ({ value: label, label })) };
+}
+
+/* The root filesystem is the one Beszel reports directly. Every other one is
+   named, and a slot names it the way Beszel does. */
+function beszelDisk(stats, name) {
+  if (!name || name === '/') {
+    return { usedPct: Number(stats?.dp) || 0, totalGb: Number(stats?.d) || 0 };
+  }
+  const fs = stats?.efs?.[name];
+  const total = Number(fs?.d) || 0;
+  const used = Number(fs?.du) || 0;
+  return { usedPct: total > 0 ? (used / total) * 100 : 0, totalGb: total };
+}
+
+async function systemSummaryBeszel(ctx) {
+  const base = beszelBase(ctx);
+  const id = ctx.config.beszelSystem;
+  if (!id) ctx.fail('Choose a system first.', { kind: ctx.KIND.INVALID });
+
+  const systems = await beszelSystems(ctx);
+  if (!systems.length) ctx.fail('Beszel is reporting no systems for this account');
+  const system = systems.find(s => s.id === id);
+  if (!system) ctx.fail('That system is no longer in Beszel. Choose it again.', { kind: ctx.KIND.INVALID });
+
+  const [record, stats] = await Promise.all([
+    beszelGet(ctx, base, `/api/collections/systems/records/${encodeURIComponent(id)}?fields=info`),
+    beszelLatest(ctx, base, id),
+  ]);
+  if (!stats) ctx.fail('Beszel has no readings for that system yet');
+
+  const slots = ctx.config.slots || [];
+  const mounts = new Set();
+  for (const s of slots) {
+    if (s.type !== 'disk') continue;
+    mounts.add(s.primary || '/');
+    if (s.secondary) mounts.add(s.secondary);
+  }
+  const disks = [...mounts].map(mount => ({ mount, ...beszelDisk(stats, mount) }));
+
+  const temps = {};
+  for (const [label, value] of Object.entries(stats.t || {})) {
+    if (typeof value === 'number') temps[label] = value;
+  }
+  const iowait = Array.isArray(stats.cpub) && typeof stats.cpub[2] === 'number' ? stats.cpub[2] : null;
+
+  return {
+    cpu: typeof stats.cpu === 'number' ? stats.cpu : null,
+    ram: typeof stats.mp === 'number' ? stats.mp : null,
+    temp: Object.values(temps)[0] ?? null,
+    temps,
+    disks,
+    iowait,
+    procs: null,
+    uptime: Number(record?.info?.u) || null,
   };
 }

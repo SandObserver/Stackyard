@@ -20,6 +20,10 @@
         {
           "value": "glances",
           "label": "statProvider.opt.glances"
+        },
+        {
+          "value": "beszel",
+          "label": "statProvider.opt.beszel"
         }
       ]
     },
@@ -51,6 +55,46 @@
       "showIf": {
         "field": "statProvider",
         "equals": "glances"
+      }
+    },
+    {
+      "key": "beszelUrl",
+      "type": "text",
+      "label": "beszelUrl.label",
+      "placeholder": "beszelUrl.placeholder",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "beszel"
+      }
+    },
+    {
+      "key": "beszelUser",
+      "type": "text",
+      "label": "beszelUser.label",
+      "placeholder": "beszelUser.placeholder",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "beszel"
+      }
+    },
+    {
+      "key": "beszelPass",
+      "type": "secret",
+      "label": "beszelPass.label",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "beszel"
+      }
+    },
+    {
+      "key": "beszelSystem",
+      "type": "select",
+      "label": "beszelSystem.label",
+      "optionsFrom": "systems",
+      "hint": "beszelSystem.hint",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "beszel"
       }
     },
     {
@@ -219,6 +263,87 @@
         "field": "statProvider",
         "equals": "glances"
       }
+    },
+    {
+      "key": "slots",
+      "type": "group",
+      "label": "slots.label",
+      "min": 3,
+      "max": 3,
+      "fields": [
+        {
+          "key": "type",
+          "type": "select",
+          "label": "slots.type.label",
+          "default": "cpu",
+          "options": [
+            {
+              "value": "cpu",
+              "label": "slots.type.opt.cpu"
+            },
+            {
+              "value": "ram",
+              "label": "slots.type.opt.ram"
+            },
+            {
+              "value": "temp",
+              "label": "slots.type.opt.temp"
+            },
+            {
+              "value": "disk",
+              "label": "slots.type.opt.disk"
+            },
+            {
+              "value": "iowait",
+              "label": "slots.type.opt.iowait"
+            }
+          ]
+        },
+        {
+          "key": "primary",
+          "type": "text",
+          "label": "slots.fsPrimary.label",
+          "default": "/",
+          "placeholder": "slots.fsPrimary.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "disk"
+          }
+        },
+        {
+          "key": "secondary",
+          "type": "text",
+          "label": "slots.fsSecondary.label",
+          "placeholder": "slots.fsSecondary.placeholder",
+          "optional": true,
+          "showIf": {
+            "field": "type",
+            "equals": "disk"
+          }
+        },
+        {
+          "key": "sensor",
+          "type": "select",
+          "label": "slots.sensor.label",
+          "optionsFrom": "sensors",
+          "hint": "slots.sensor.hint",
+          "showIf": {
+            "field": "type",
+            "equals": "temp"
+          }
+        },
+        {
+          "key": "color",
+          "type": "color",
+          "label": "slots.color.label",
+          "default": "#0091FF"
+        }
+      ],
+      "showIf": {
+        "field": "statProvider",
+        "equals": "beszel"
+      },
+      "hint": "slots.beszelHint"
     },
     {
       "key": "network",
