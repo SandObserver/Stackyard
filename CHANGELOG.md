@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A widget's settings no longer open filled in from the last widget of the same
+  type you edited.
+
 - A tile with only a fixed label set now shows that badge.
 
 - Saving settings no longer warns about deleting the stored password when

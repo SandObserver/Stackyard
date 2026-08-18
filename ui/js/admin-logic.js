@@ -1,6 +1,15 @@
 // @ts-check
 /* Keep this module free of the DOM and of imports. Tests load it directly. */
 
+/* Values typed into a widget's config form survive a re-render of that same
+   form, and nothing else. Opening the editor again is a new session, so the
+   saved config wins, or one widget's form would fill in from the last widget of
+   the same type that was open. */
+export function carriesTypedValues(cached, wtype, session) {
+  if (!cached || !cached.form) return false;
+  return cached.type === wtype && cached.session === session;
+}
+
 export function seedCarried(config, carryKeys) {
   const out = Object.create(null);
   for (const k of carryKeys || []) if (config && config[k] !== undefined) out[k] = config[k];

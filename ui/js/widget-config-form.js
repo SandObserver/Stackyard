@@ -4,8 +4,8 @@
 
 import { t } from '/js/i18n.js?v=d056c9c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { wireChecklist } from '/js/admin-shared.js?v=9c6bb360';
-import { renderColorControl } from '/js/admin-color-control.js?v=c853fe21';
+import { wireChecklist } from '/js/admin-shared.js?v=3d2627a9';
+import { renderColorControl } from '/js/admin-color-control.js?v=3a3a1bad';
 import {
   seedCarried,
   applyOptionSet,
@@ -13,7 +13,7 @@ import {
   requiredFieldMissing,
   groupBounds,
   visibleFieldFlags,
-} from '/js/admin-logic.js?v=80a4637d';
+} from '/js/admin-logic.js?v=f3f87abf';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 import { qi } from '/js/utils.js?v=b18c93ed';
 

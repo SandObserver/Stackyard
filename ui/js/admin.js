@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=70e2d15b';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=cb00465f';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=f8fda76d';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=76be763e';
 import { applyDrop, canJoinFolder } from '/js/admin-drag-logic.js?v=8fcf583a';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=80a4637d';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=f3f87abf';
 import {
   buildAppItem,
   claimFolderChildren,
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=263d3422';
-import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=9c6bb360';
-import { state } from '/js/admin-state.js?v=42393ee1';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=04ee8ab3';
+import { loadSettings, showBgFields } from '/js/admin-settings.js?v=e9bec962';
+import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=3d2627a9';
+import { state } from '/js/admin-state.js?v=b7731aa4';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=5292c6a0';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
@@ -695,6 +695,7 @@ function openModal(idx) {
 
   state._evItem = item;
   state._evIsEdit = isEdit;
+  state._evSession += 1;
   _renderEditBody();
 
   showEditView();
