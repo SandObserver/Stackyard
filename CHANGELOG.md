@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- System Summary can read its figures from a host running Glances.
+
 ### Changed
 
 - The Stats widget is now two widgets, System Summary and Disk Health. Existing

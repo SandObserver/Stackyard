@@ -6,6 +6,8 @@ import {
   nextActiveIndex,
   groupBounds,
   visibleFieldKeys,
+  visibleFieldFlags,
+  collectFieldValues,
   clearsStoredSecret,
   authEnableBlocked,
   shouldWritePassword,
@@ -172,6 +174,26 @@ test('visibleFieldKeys does not leak a field across a hidden branch default', ()
   const vals = { source: 'system', provider: 'scrutiny', scrutinyUrl: '' };
   const shown = visibleFieldKeys(fields, k => vals[k]);
   assert.deepEqual([...shown], ['source']);
+});
+
+test('only the visible copy of a repeated key is saved', () => {
+  /* The system summary declares its slot list once per source. Both are built,
+     one is on screen, and the saved config must carry that one alone. */
+  const fields = [
+    { key: 'statProvider' },
+    { key: 'slots', type: 'group', showIf: { field: 'statProvider', equals: 'system' } },
+    { key: 'slots', type: 'group', showIf: { field: 'statProvider', equals: 'glances' } },
+  ];
+  const vals = { statProvider: 'glances' };
+  const flags = visibleFieldFlags(fields, k => vals[k]);
+  assert.deepEqual(flags, [true, false, true]);
+
+  const saved = collectFieldValues([
+    { field: fields[0], visible: true, kv: ['statProvider', 'glances'] },
+    { field: fields[1], visible: false, kv: ['slots', [{ type: 'cpu', thermalZone: 0 }]] },
+    { field: fields[2], visible: true, kv: ['slots', [{ type: 'temp', sensor: 'Core 0' }]] },
+  ]);
+  assert.deepEqual(saved.slots, [{ type: 'temp', sensor: 'Core 0' }]);
 });
 
 test('visibleFieldKeys evaluates a condition on a field outside the sibling set directly', () => {

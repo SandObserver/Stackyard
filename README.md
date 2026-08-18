@@ -51,10 +51,13 @@ Widgets and the services they read:
 - **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
 - **GitHub**: contribution graph and pull requests
 - **Books**: Audiobookshelf, Komga, Kavita
-- **System summary**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed
+- **System summary**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed. Reports on this machine or on a host running Glances
 - **Disk health**: TrueNAS, Scrutiny
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
+
+A Glances running in Docker reports its own filesystems, not the host's. Mount
+the host paths into the Glances container for a disk slot to read them.
 
 Adding one is a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md).
 
