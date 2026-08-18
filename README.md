@@ -56,6 +56,9 @@ Widgets and the services they read:
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
 
+A Glances running in Docker reports its own filesystems, not the host's. Mount
+the host paths into the Glances container for a disk slot to read them.
+
 Adding one is a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md).
 
 ## Live activity badges
