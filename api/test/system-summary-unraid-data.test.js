@@ -22,10 +22,12 @@ const REPLY = {
   },
   info: { os: { uptime: BOOTED } },
   shares: [
-    { name: 'media', size: 8 * 1024 ** 2, used: 2 * 1024 ** 2 },
-    { name: 'appdata', size: 1024 ** 2, used: 1024 ** 2 / 4 },
+    { name: 'media', size: 8 * 1024 ** 2, used: 2 * 1024 ** 2, free: 6 * 1024 ** 2 },
+    /* No size limit set, which is the usual case, and what a real server returns. */
+    { name: 'appdata', size: 0, used: 1024 ** 2, free: 3 * 1024 ** 2 },
   ],
-  array: { capacity: { kilobytes: { total: 20 * 1024 ** 2, used: 5 * 1024 ** 2 } } },
+  /* BigInt fields come back as strings. */
+  array: { capacity: { kilobytes: { total: String(20 * 1024 ** 2), used: String(5 * 1024 ** 2) } } },
 };
 
 function ctxFor(config, reply = { status: 200, data: { data: REPLY } }, endpoint = 'system') {
@@ -74,7 +76,7 @@ test('a named slot reads a share and a blank one reads the whole array', async (
   const r = await dataFn(ctx);
   assert.deepEqual(r.disks, [
     { mount: 'media', usedPct: 25, totalGb: 8 },
-    { mount: 'appdata', usedPct: 25, totalGb: 1 },
+    { mount: 'appdata', usedPct: 25, totalGb: 4 },
     { mount: '', usedPct: 25, totalGb: 20 },
   ]);
 });
@@ -84,6 +86,12 @@ test('boot time becomes an elapsed uptime', async () => {
   const r = await dataFn(ctx);
   const expected = Math.round((Date.now() - Date.parse(BOOTED)) / 1000);
   assert.ok(Math.abs(r.uptime - expected) <= 1, `${r.uptime} should be about ${expected}`);
+});
+
+test('a share with no size limit is measured against what is left on the pool', async () => {
+  const { ctx } = ctxFor({ slots: [{ type: 'disk', primary: 'appdata' }] });
+  const r = await dataFn(ctx);
+  assert.deepEqual(r.disks, [{ mount: 'appdata', usedPct: 25, totalGb: 4 }], 'used + free is the only total there is');
 });
 
 test('shares and the array are only asked for when a slot needs them', async () => {
@@ -99,19 +107,24 @@ test('shares and the array are only asked for when a slot needs them', async () 
   assert.doesNotMatch(withDisk.sent[0].query, /array/);
 });
 
-test('a GraphQL error is reported as written, and a permission problem as an auth failure', async () => {
-  const denied = ctxFor({ slots: SLOTS }, { status: 200, data: { errors: [{ message: 'Forbidden resource' }] } });
-  await assert.rejects(dataFn(denied.ctx), e => {
-    assert.equal(e.kind, 'auth');
-    assert.match(e.message, /Forbidden resource/);
-    return true;
-  });
-
-  const broken = ctxFor({ slots: SLOTS }, { status: 200, data: { errors: [{ message: 'Cannot query field' }] } });
-  await assert.rejects(dataFn(broken.ctx), e => {
-    assert.equal(e.kind, 'upstream');
-    return true;
-  });
+/* Neither a refused key nor a key without the role answers 401: both come back
+   as 200 with an errors array, so only the error's own code separates an auth
+   problem from a broken query. */
+test('an auth problem is read from the GraphQL error code, not the status', async () => {
+  const cases = [
+    [{ message: 'Forbidden resource', extensions: { code: 'FORBIDDEN' } }, 'auth'],
+    [{ message: 'API key validation failed', extensions: { code: 'UNAUTHENTICATED' } }, 'auth'],
+    [{ message: 'Cannot query field "nope"', extensions: { code: 'GRAPHQL_VALIDATION_FAILED' } }, 'upstream'],
+    [{ message: 'Forbidden resource' }, 'auth'],
+  ];
+  for (const [error, kind] of cases) {
+    const { ctx } = ctxFor({ slots: SLOTS }, { status: 200, data: { errors: [error] } });
+    await assert.rejects(dataFn(ctx), e => {
+      assert.equal(e.kind, kind, error.message);
+      assert.match(e.message, new RegExp(error.message.split('"')[0]));
+      return true;
+    });
+  }
 });
 
 test('a refused key is an auth failure', async () => {

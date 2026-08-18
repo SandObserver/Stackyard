@@ -360,12 +360,17 @@ async function unraidQuery(ctx, query) {
   });
   if (r.status === 401 || r.status === 403) ctx.fail('Unraid rejected the API key', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail('Unraid HTTP ' + r.status);
-  const problem = r.data?.errors?.[0]?.message;
-  /* A key without the right role fails here, with 200 and an errors array. */
-  if (problem)
-    ctx.fail('Unraid: ' + problem, {
-      kind: /permission|forbidden|unauthor/i.test(problem) ? ctx.KIND.AUTH : ctx.KIND.UPSTREAM,
-    });
+  /* Both a refused key and a key without the role answer 200 with an errors
+     array, so the status code alone never reports an auth problem. */
+  const problem = r.data?.errors?.[0];
+  if (problem) {
+    const code = problem.extensions?.code;
+    const denied =
+      code === 'FORBIDDEN' ||
+      code === 'UNAUTHENTICATED' ||
+      /permission|forbidden|unauthor|api key/i.test(problem.message || '');
+    ctx.fail('Unraid: ' + problem.message, { kind: denied ? ctx.KIND.AUTH : ctx.KIND.UPSTREAM });
+  }
   if (!r.data?.data) ctx.fail('Unraid returned no data');
   return r.data.data;
 }
@@ -418,8 +423,11 @@ function unraidDisk(data, name) {
     return { usedPct: total > 0 ? (used / total) * 100 : 0, totalGb: kbToGb(total) };
   }
   const share = (data.shares || []).find(s => s?.name === name);
-  const total = Number(share?.size) || 0;
   const used = Number(share?.used) || 0;
+  /* size is the share's own limit, and is 0 when none is set, which is the
+     usual case. What is left on the pool is then the only total there is. */
+  const limit = Number(share?.size) || 0;
+  const total = limit > 0 ? limit : used + (Number(share?.free) || 0);
   return { usedPct: total > 0 ? (used / total) * 100 : 0, totalGb: kbToGb(total) };
 }
 
@@ -437,7 +445,7 @@ async function systemSummaryUnraid(ctx) {
      asked for when a slot needs them. */
   const parts = [`metrics { cpu { percentTotal } memory { percentTotal }${wants('temp') ? ' ' + UNRAID_TEMPS : ''} }`];
   parts.push('info { os { uptime } }');
-  if ([...mounts].some(m => m)) parts.push('shares { name size used }');
+  if ([...mounts].some(m => m)) parts.push('shares { name size used free }');
   if (mounts.has('')) parts.push('array { capacity { kilobytes { total used } } }');
 
   const data = await unraidQuery(ctx, `{ ${parts.join(' ')} }`);
