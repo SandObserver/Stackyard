@@ -89,10 +89,14 @@ await loadStrings();
 const TICK_MS  = 10000;
 const SPEED_MS = 60000;
 const THROUGHPUT_MS = 3000;
+/* Every tick is a call to someone else's server, so a remote source is read at
+   the same rate as the rest of the widget rather than every three seconds. */
+const REMOTE_THROUGHPUT_MS = 10000;
 const id       = new URLSearchParams(location.search).get('id') || '';
 const API      = '/api';
 
 let cfg = null;      /* widget config from /api/widget-config/:id */
+const isRemote = () => (cfg?.widgetConfig?.statProvider || 'system') !== 'system';
 let stats = null;    /* latest /api/system-stats response */
 let speed = null;    /* latest myspeed response */
 
@@ -119,7 +123,8 @@ async function boot() {
   if (net.enabled && netMode === 'speed')
     poll({ fetch: fetchSpeed, interval: SPEED_MS, render: applySpeed, onError: () => {} });
   if (net.enabled && netMode === 'throughput')
-    poll({ fetch: fetchThroughput, interval: THROUGHPUT_MS, render: applyThroughput, onError: () => {} });
+    poll({ fetch: fetchThroughput, interval: isRemote() ? REMOTE_THROUGHPUT_MS : THROUGHPUT_MS,
+      render: applyThroughput, onError: () => {} });
 
   poll({ fetch: fetchStats, interval: TICK_MS,
     render: d => { stats = d; applyStats(stats); } });
@@ -424,6 +429,9 @@ function fmtUptime(sec) {
 }
 
 async function fetchThroughput() {
+  /* A remote source answers through the widget's own data function. Only this
+     machine's traffic comes from the dashboard's cached reading. */
+  if (isRemote()) return fetchData('throughput');
   const r = await fetch(`${API}/network-stats`, { cache: 'no-store' });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const d = await r.json();
@@ -431,9 +439,10 @@ async function fetchThroughput() {
   return d;
 }
 
+/* A source reporting totals has no rate to give until it has been read twice. */
 function applyThroughput(d) {
-  const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtRate(d.rx);
-  const up = document.getElementById('net-up'); if (up) up.textContent = fmtRate(d.tx);
+  const dn = document.getElementById('net-dn'); if (dn) dn.textContent = d ? fmtRate(d.rx) : '—';
+  const up = document.getElementById('net-up'); if (up) up.textContent = d ? fmtRate(d.tx) : '—';
 }
 
 async function fetchSpeed() {

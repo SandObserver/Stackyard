@@ -52,6 +52,8 @@
   "network.mode.opt.speed": "Débit",
   "network.mode.opt.throughput": "Trafic",
   "network.mode.opt.uptime": "Disponibilité",
+  "network.interface.label": "Interface",
+  "network.interface.hint": "Renseignez la connexion ci-dessus, puis chargez la liste.",
   "network.provider.label": "Fournisseur",
   "network.provider.opt.myspeed": "MySpeed",
   "network.provider.opt.speedtest-tracker": "Speedtest Tracker",
