@@ -28,4 +28,6 @@ export const state = {
   _wAutoCfg: {},
   _autoForm: null,
   _autoFormType: null,
+  _autoFormSession: null,
+  _evSession: 0,
 };

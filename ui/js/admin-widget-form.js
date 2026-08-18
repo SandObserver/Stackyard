@@ -1,8 +1,14 @@
-import { state } from '/js/admin-state.js?v=42393ee1';
-import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=9c6bb360';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=e2dfacc3';
+import { state } from '/js/admin-state.js?v=b7731aa4';
+import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=3d2627a9';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=bf180b36';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { sizesForView, widgetConfigMode, rejectionLines, refusedNoticeKey } from '/js/admin-logic.js?v=80a4637d';
+import {
+  sizesForView,
+  widgetConfigMode,
+  rejectionLines,
+  refusedNoticeKey,
+  carriesTypedValues,
+} from '/js/admin-logic.js?v=f3f87abf';
 import { t } from '/js/i18n.js?v=d056c9c5';
 import { q, qi, qa } from '/js/utils.js?v=b18c93ed';
 
@@ -35,8 +41,14 @@ export function buildWidgetForm(body, item) {
 }
 
 function _renderWidgetForm(body) {
-  /* Re-render of the same registry widget: keep typed values. */
-  if (state._autoForm && state._autoFormType === state._wtype) {
+  /* Re-render of the same form in the same editing session: keep typed values. */
+  if (
+    carriesTypedValues(
+      { form: state._autoForm, type: state._autoFormType, session: state._autoFormSession },
+      state._wtype,
+      state._evSession,
+    )
+  ) {
     state._wAutoCfg = Object.assign({}, state._wAutoCfg, state._autoForm.getValues());
   }
   state._autoForm = null;
@@ -120,6 +132,7 @@ function _renderWidgetForm(body) {
       },
     });
     state._autoFormType = state._wtype;
+    state._autoFormSession = state._evSession;
   } else if (_mode === 'unavailable') _renderUnavailableConfig(body);
   else _renderCustomConfig(body);
 }

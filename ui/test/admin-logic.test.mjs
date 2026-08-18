@@ -6,6 +6,7 @@ import {
   nextActiveIndex,
   groupBounds,
   visibleFieldKeys,
+  carriesTypedValues,
   visibleFieldFlags,
   collectFieldValues,
   clearsStoredSecret,
@@ -174,6 +175,20 @@ test('visibleFieldKeys does not leak a field across a hidden branch default', ()
   const vals = { source: 'system', provider: 'scrutiny', scrutinyUrl: '' };
   const shown = visibleFieldKeys(fields, k => vals[k]);
   assert.deepEqual([...shown], ['source']);
+});
+
+/* Two tiles of one widget type each open the same form. Carrying values by type
+   alone filled the second tile's form from the first, so a Beszel tile opened
+   after a Glances one showed Glances as its source. */
+test('typed values are carried within one editing session, never into the next', () => {
+  const form = { getValues: () => ({}) };
+  const opened = { form, type: 'system-summary', session: 4 };
+
+  assert.equal(carriesTypedValues(opened, 'system-summary', 4), true, 'a re-render of the same open form');
+  assert.equal(carriesTypedValues(opened, 'system-summary', 5), false, 'another widget of the same type');
+  assert.equal(carriesTypedValues(opened, 'dns', 4), false, 'a different widget type');
+  assert.equal(carriesTypedValues({ form: null, type: 'system-summary', session: 4 }, 'system-summary', 4), false);
+  assert.equal(carriesTypedValues(null, 'system-summary', 4), false);
 });
 
 test('only the visible copy of a repeated key is saved', () => {

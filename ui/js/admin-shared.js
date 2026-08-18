@@ -1,5 +1,5 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { nextActiveIndex, recoversSession, toastMs } from '/js/admin-logic.js?v=80a4637d';
+import { nextActiveIndex, recoversSession, toastMs } from '/js/admin-logic.js?v=f3f87abf';
 import { el, qa, q } from '/js/utils.js?v=b18c93ed';
 import { t } from '/js/i18n.js?v=d056c9c5';
 
