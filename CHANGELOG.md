@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- System Summary can read its figures from a host running Glances or Beszel.
+- System Summary can read its figures from a host running Glances or Beszel, or
+  from the Unraid API.
 
 ### Changed
 

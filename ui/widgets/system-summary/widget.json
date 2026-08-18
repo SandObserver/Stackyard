@@ -24,6 +24,10 @@
         {
           "value": "beszel",
           "label": "statProvider.opt.beszel"
+        },
+        {
+          "value": "unraid",
+          "label": "statProvider.opt.unraid"
         }
       ]
     },
@@ -95,6 +99,25 @@
       "showIf": {
         "field": "statProvider",
         "equals": "beszel"
+      }
+    },
+    {
+      "key": "unraidUrl",
+      "type": "text",
+      "label": "unraidUrl.label",
+      "placeholder": "unraidUrl.placeholder",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "unraid"
+      }
+    },
+    {
+      "key": "unraidApiKey",
+      "type": "secret",
+      "label": "unraidApiKey.label",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "unraid"
       }
     },
     {
@@ -344,6 +367,84 @@
         "equals": "beszel"
       },
       "hint": "slots.beszelHint"
+    },
+    {
+      "key": "slots",
+      "type": "group",
+      "label": "slots.label",
+      "min": 3,
+      "max": 3,
+      "fields": [
+        {
+          "key": "type",
+          "type": "select",
+          "label": "slots.type.label",
+          "default": "cpu",
+          "options": [
+            {
+              "value": "cpu",
+              "label": "slots.type.opt.cpu"
+            },
+            {
+              "value": "ram",
+              "label": "slots.type.opt.ram"
+            },
+            {
+              "value": "temp",
+              "label": "slots.type.opt.temp"
+            },
+            {
+              "value": "disk",
+              "label": "slots.type.opt.disk"
+            }
+          ]
+        },
+        {
+          "key": "primary",
+          "type": "text",
+          "label": "slots.sharePrimary.label",
+          "default": "/",
+          "placeholder": "slots.sharePrimary.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "disk"
+          },
+          "hint": "slots.share.hint"
+        },
+        {
+          "key": "secondary",
+          "type": "text",
+          "label": "slots.shareSecondary.label",
+          "placeholder": "slots.shareSecondary.placeholder",
+          "optional": true,
+          "showIf": {
+            "field": "type",
+            "equals": "disk"
+          }
+        },
+        {
+          "key": "sensor",
+          "type": "select",
+          "label": "slots.sensor.label",
+          "optionsFrom": "sensors",
+          "hint": "slots.sensor.hint",
+          "showIf": {
+            "field": "type",
+            "equals": "temp"
+          }
+        },
+        {
+          "key": "color",
+          "type": "color",
+          "label": "slots.color.label",
+          "default": "#0091FF"
+        }
+      ],
+      "showIf": {
+        "field": "statProvider",
+        "equals": "unraid"
+      },
+      "hint": "slots.unraidHint"
     },
     {
       "key": "network",
