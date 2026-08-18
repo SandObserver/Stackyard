@@ -523,7 +523,293 @@
             "equals": "myspeed"
           }
         }
-      ]
+      ],
+      "showIf": {
+        "field": "statProvider",
+        "equals": "system"
+      }
+    },
+    {
+      "key": "network",
+      "type": "object",
+      "label": "network.label",
+      "fields": [
+        {
+          "key": "enabled",
+          "type": "toggle",
+          "label": "network.enabled.label",
+          "default": false
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.mode.label",
+          "default": "speed",
+          "showIf": {
+            "field": "enabled",
+            "equals": true
+          },
+          "options": [
+            {
+              "value": "speed",
+              "label": "network.mode.opt.speed"
+            },
+            {
+              "value": "throughput",
+              "label": "network.mode.opt.throughput"
+            },
+            {
+              "value": "uptime",
+              "label": "network.mode.opt.uptime"
+            }
+          ]
+        },
+        {
+          "key": "interface",
+          "type": "select",
+          "label": "network.interface.label",
+          "optionsFrom": "interfaces",
+          "hint": "network.interface.hint",
+          "showIf": {
+            "field": "mode",
+            "equals": "throughput"
+          }
+        },
+        {
+          "key": "provider",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.provider.label",
+          "default": "myspeed",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          },
+          "options": [
+            {
+              "value": "myspeed",
+              "label": "network.provider.opt.myspeed"
+            },
+            {
+              "value": "speedtest-tracker",
+              "label": "network.provider.opt.speedtest-tracker"
+            }
+          ]
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "network.url.label",
+          "placeholder": "network.url.placeholder",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          }
+        },
+        {
+          "key": "myspeedPass",
+          "type": "secret",
+          "label": "network.myspeedPass.label",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "myspeed"
+          }
+        }
+      ],
+      "showIf": {
+        "field": "statProvider",
+        "equals": "glances"
+      }
+    },
+    {
+      "key": "network",
+      "type": "object",
+      "label": "network.label",
+      "fields": [
+        {
+          "key": "enabled",
+          "type": "toggle",
+          "label": "network.enabled.label",
+          "default": false
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.mode.label",
+          "default": "speed",
+          "showIf": {
+            "field": "enabled",
+            "equals": true
+          },
+          "options": [
+            {
+              "value": "speed",
+              "label": "network.mode.opt.speed"
+            },
+            {
+              "value": "throughput",
+              "label": "network.mode.opt.throughput"
+            },
+            {
+              "value": "uptime",
+              "label": "network.mode.opt.uptime"
+            }
+          ]
+        },
+        {
+          "key": "interface",
+          "type": "select",
+          "label": "network.interface.label",
+          "optionsFrom": "interfaces",
+          "hint": "network.interface.hint",
+          "showIf": {
+            "field": "mode",
+            "equals": "throughput"
+          }
+        },
+        {
+          "key": "provider",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.provider.label",
+          "default": "myspeed",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          },
+          "options": [
+            {
+              "value": "myspeed",
+              "label": "network.provider.opt.myspeed"
+            },
+            {
+              "value": "speedtest-tracker",
+              "label": "network.provider.opt.speedtest-tracker"
+            }
+          ]
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "network.url.label",
+          "placeholder": "network.url.placeholder",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          }
+        },
+        {
+          "key": "myspeedPass",
+          "type": "secret",
+          "label": "network.myspeedPass.label",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "myspeed"
+          }
+        }
+      ],
+      "showIf": {
+        "field": "statProvider",
+        "equals": "beszel"
+      }
+    },
+    {
+      "key": "network",
+      "type": "object",
+      "label": "network.label",
+      "fields": [
+        {
+          "key": "enabled",
+          "type": "toggle",
+          "label": "network.enabled.label",
+          "default": false
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.mode.label",
+          "default": "speed",
+          "showIf": {
+            "field": "enabled",
+            "equals": true
+          },
+          "options": [
+            {
+              "value": "speed",
+              "label": "network.mode.opt.speed"
+            },
+            {
+              "value": "throughput",
+              "label": "network.mode.opt.throughput"
+            },
+            {
+              "value": "uptime",
+              "label": "network.mode.opt.uptime"
+            }
+          ]
+        },
+        {
+          "key": "interface",
+          "type": "select",
+          "label": "network.interface.label",
+          "optionsFrom": "interfaces",
+          "hint": "network.interface.hint",
+          "showIf": {
+            "field": "mode",
+            "equals": "throughput"
+          }
+        },
+        {
+          "key": "provider",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.provider.label",
+          "default": "myspeed",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          },
+          "options": [
+            {
+              "value": "myspeed",
+              "label": "network.provider.opt.myspeed"
+            },
+            {
+              "value": "speedtest-tracker",
+              "label": "network.provider.opt.speedtest-tracker"
+            }
+          ]
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "network.url.label",
+          "placeholder": "network.url.placeholder",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          }
+        },
+        {
+          "key": "myspeedPass",
+          "type": "secret",
+          "label": "network.myspeedPass.label",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "myspeed"
+          }
+        }
+      ],
+      "showIf": {
+        "field": "statProvider",
+        "equals": "unraid"
+      }
     }
   ]
 }

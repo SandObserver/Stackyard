@@ -52,6 +52,8 @@
   "network.mode.opt.speed": "Speed",
   "network.mode.opt.throughput": "Throughput",
   "network.mode.opt.uptime": "Uptime",
+  "network.interface.label": "Interface",
+  "network.interface.hint": "Fill in the connection above, then load the list.",
   "network.provider.label": "Provider",
   "network.provider.opt.myspeed": "MySpeed",
   "network.provider.opt.speedtest-tracker": "Speedtest Tracker",

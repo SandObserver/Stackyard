@@ -52,6 +52,8 @@
   "network.mode.opt.speed": "سرعت",
   "network.mode.opt.throughput": "گذردهی",
   "network.mode.opt.uptime": "زمان کارکرد",
+  "network.interface.label": "رابط شبکه",
+  "network.interface.hint": "اتصال بالا را کامل کنید، سپس فهرست را بارگیری کنید.",
   "network.provider.label": "ارائه‌دهنده",
   "network.provider.opt.myspeed": "MySpeed",
   "network.provider.opt.speedtest-tracker": "Speedtest Tracker",

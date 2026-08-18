@@ -2,6 +2,8 @@ module.exports = async function (ctx) {
   if (ctx.endpoint === 'speed') return speed(ctx);
   if (ctx.endpoint === 'sensors') return sensorOptions(ctx);
   if (ctx.endpoint === 'systems') return beszelSystemOptions(ctx);
+  if (ctx.endpoint === 'interfaces') return interfaceOptions(ctx);
+  if (ctx.endpoint === 'throughput') return throughput(ctx);
   return systemSummary(ctx);
 };
 
@@ -272,14 +274,18 @@ async function beszelSystemOptions(ctx) {
   return { options };
 }
 
-async function beszelLatest(ctx, base, systemId) {
+async function beszelLatestRecord(ctx, base, systemId) {
   const filter = encodeURIComponent(`system='${systemId}' && type='1m'`);
   const data = await beszelGet(
     ctx,
     base,
     `/api/collections/system_stats/records?filter=(${filter})&sort=-created&perPage=1`,
   );
-  return data?.items?.[0]?.stats || null;
+  return data?.items?.[0] || null;
+}
+
+async function beszelLatest(ctx, base, systemId) {
+  return (await beszelLatestRecord(ctx, base, systemId))?.stats || null;
 }
 
 async function beszelSensorOptions(ctx) {
@@ -465,4 +471,140 @@ async function systemSummaryUnraid(ctx) {
     procs: null,
     uptime,
   };
+}
+
+/* A counter is not a rate. Sources that report totals are turned into one here,
+   against the previous reading for the same interface. The first reading has
+   nothing to compare with and reports nothing.
+
+   `at` is when the counters were taken, not when they were read. A source that
+   publishes on its own schedule hands back the same totals to every poll in
+   between, and dividing those by the time since the last poll reports zero
+   traffic. Reading it twice is then the same reading, so the rate last worked
+   out stands until the counters actually move. */
+const _netPrev = new Map();
+
+function rateFromTotals(key, at, rx, tx) {
+  const prev = _netPrev.get(key);
+  if (prev && at <= prev.at) return prev.rate;
+  let rate = null;
+  /* Counters that went backwards mean the interface was reset or replaced.
+     Skip the window rather than report a negative rate. */
+  if (prev && rx >= prev.rx && tx >= prev.tx) {
+    const seconds = (at - prev.at) / 1000;
+    if (seconds > 0) {
+      rate = { rx: Math.round((rx - prev.rx) / seconds), tx: Math.round((tx - prev.tx) / seconds) };
+    }
+  }
+  _netPrev.set(key, { at, rx, tx, rate });
+  return rate;
+}
+
+function throughput(ctx) {
+  return ctx.dispatchProvider(
+    {
+      glances: glancesThroughput,
+      beszel: beszelThroughput,
+      unraid: unraidThroughput,
+    },
+    { field: 'statProvider' },
+  );
+}
+
+function interfaceOptions(ctx) {
+  return ctx.dispatchProvider(
+    {
+      glances: glancesInterfaces,
+      beszel: beszelInterfaces,
+      unraid: unraidInterfaces,
+    },
+    { field: 'statProvider' },
+  );
+}
+
+const chosenInterface = ctx => ctx.config.network?.interface || '';
+
+/* ── Glances ─────────────────────────────────────────────────────────────── */
+
+async function glancesInterfaces(ctx) {
+  const list = await glancesGet(ctx, 'network');
+  const options = (Array.isArray(list) ? list : [])
+    .filter(e => e?.interface_name)
+    .map(e => ({ value: e.interface_name, label: e.alias || e.interface_name }));
+  return { options };
+}
+
+async function glancesThroughput(ctx) {
+  const name = chosenInterface(ctx);
+  if (!name) ctx.fail('Choose a network interface first.', { kind: ctx.KIND.INVALID });
+  const list = await glancesGet(ctx, 'network');
+  const e = (Array.isArray(list) ? list : []).find(x => x?.interface_name === name);
+  if (!e) ctx.fail(`Glances is not reporting the ${name} interface.`, { kind: ctx.KIND.INVALID });
+  /* Version 4 reports the rate. Version 3 reports the window and its length. */
+  const perSec = (rate, bytes) => {
+    if (typeof rate === 'number') return Math.round(rate);
+    const window = Number(e.time_since_update);
+    return window > 0 ? Math.round((Number(bytes) || 0) / window) : 0;
+  };
+  return {
+    rx: perSec(e.bytes_recv_rate_per_sec, e.bytes_recv),
+    tx: perSec(e.bytes_sent_rate_per_sec, e.bytes_sent),
+  };
+}
+
+/* ── Beszel ──────────────────────────────────────────────────────────────── */
+
+async function beszelInterfaces(ctx) {
+  const base = beszelBase(ctx);
+  const id = ctx.config.beszelSystem;
+  if (!id) ctx.fail('Choose a system first.', { kind: ctx.KIND.INVALID });
+  const stats = await beszelLatest(ctx, base, id);
+  const options = Object.keys(stats?.ni || {}).map(name => ({ value: name, label: name }));
+  return { options: [{ value: BESZEL_ALL, label: 'All interfaces' }, ...options] };
+}
+
+const BESZEL_ALL = '*';
+
+async function beszelThroughput(ctx) {
+  const base = beszelBase(ctx);
+  const id = ctx.config.beszelSystem;
+  if (!id) ctx.fail('Choose a system first.', { kind: ctx.KIND.INVALID });
+  const name = chosenInterface(ctx);
+  if (!name) ctx.fail('Choose a network interface first.', { kind: ctx.KIND.INVALID });
+  const record = await beszelLatestRecord(ctx, base, id);
+  const stats = record?.stats;
+  if (!stats) ctx.fail('Beszel has no readings for that system yet');
+
+  /* Beszel already divides the whole host's traffic by its own interval. */
+  if (name === BESZEL_ALL) {
+    const b = Array.isArray(stats.b) ? stats.b : [];
+    return { rx: Math.round(Number(b[1]) || 0), tx: Math.round(Number(b[0]) || 0) };
+  }
+  const row = stats.ni?.[name];
+  if (!Array.isArray(row)) ctx.fail(`Beszel is not reporting the ${name} interface.`, { kind: ctx.KIND.INVALID });
+  /* Per-interface entries carry totals, and a new record only lands once a
+     minute, so the record's own timestamp is the window. */
+  const at = Date.parse(record?.created) || 0;
+  return rateFromTotals(`beszel|${base}|${id}|${name}`, at, Number(row[3]) || 0, Number(row[2]) || 0);
+}
+
+/* ── Unraid ──────────────────────────────────────────────────────────────── */
+
+const UNRAID_NET = 'metrics { network { name bytesReceived bytesSent } }';
+
+async function unraidInterfaces(ctx) {
+  const data = await unraidQuery(ctx, `{ ${UNRAID_NET} }`);
+  const options = (data.metrics?.network || []).filter(n => n?.name).map(n => ({ value: n.name, label: n.name }));
+  return { options };
+}
+
+async function unraidThroughput(ctx) {
+  const name = chosenInterface(ctx);
+  if (!name) ctx.fail('Choose a network interface first.', { kind: ctx.KIND.INVALID });
+  const data = await unraidQuery(ctx, `{ ${UNRAID_NET} }`);
+  const n = (data.metrics?.network || []).find(x => x?.name === name);
+  if (!n) ctx.fail(`Unraid is not reporting the ${name} interface.`, { kind: ctx.KIND.INVALID });
+  const base = ctx.normalizeBase(ctx.config.unraidUrl);
+  /* Unraid's counters move continuously, so the clock is the only window. */
+  return rateFromTotals(`unraid|${base}|${name}`, Date.now(), Number(n.bytesReceived) || 0, Number(n.bytesSent) || 0);
 }

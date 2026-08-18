@@ -52,6 +52,8 @@
   "network.mode.opt.speed": "Geschwindigkeit",
   "network.mode.opt.throughput": "Durchsatz",
   "network.mode.opt.uptime": "Betriebszeit",
+  "network.interface.label": "Schnittstelle",
+  "network.interface.hint": "Verbindung oben ausfüllen, dann die Liste laden.",
   "network.provider.label": "Anbieter",
   "network.provider.opt.myspeed": "MySpeed",
   "network.provider.opt.speedtest-tracker": "Speedtest Tracker",
