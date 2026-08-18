@@ -12,13 +12,26 @@ let _cfgCache = null,
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape. Add a matching step in migrate(). */
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 function migrateSocketProxyScheme(settings) {
   const url = settings?.server?.socketProxyUrl;
   if (typeof url !== 'string' || !/^tcp:\/\//i.test(url)) return false;
   settings.server.socketProxyUrl = url.replace(/^tcp:\/\//i, 'http://');
   return true;
+}
+
+/* The stats widget was one widget with two views. Each view is now its own
+   widget type, and the view key no longer means anything. */
+function migrateStatsWidgetSplit(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  for (const item of cfg.items) {
+    if (!item || item.widgetType !== 'stats') continue;
+    const wc = item.widgetConfig;
+    const view = wc && typeof wc === 'object' ? wc.widgetSubType : undefined;
+    item.widgetType = view === 'disk-health' ? 'disk-health' : 'system-summary';
+    if (wc && typeof wc === 'object') delete wc.widgetSubType;
+  }
 }
 
 /* Must stay idempotent. It runs on every read and every write. A config with no
@@ -36,6 +49,10 @@ function migrate(cfg) {
     if (migrateSocketProxyScheme(cfg.settings))
       log.warn('Docker socket URL rewritten from tcp to http; the tcp form is no longer accepted');
     v = 3;
+  }
+  if (v < 4) {
+    migrateStatsWidgetSplit(cfg);
+    v = 4;
   }
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;

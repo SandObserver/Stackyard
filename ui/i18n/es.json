@@ -238,8 +238,7 @@
     "containerNotFound": "Contenedor no encontrado",
     "containerState": "Contenedor {state}",
     "pingFailed": "Ping fallido: {error}",
-    "pingReturned": "El ping devolvió {status}",
-    "diskHealth": "Estado del disco"
+    "pingReturned": "El ping devolvió {status}"
   },
   "setup": {
     "title": "¿Establecer una contraseña del panel?",

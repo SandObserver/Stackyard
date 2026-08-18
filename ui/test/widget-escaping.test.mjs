@@ -31,7 +31,7 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
 const MAP = 'widgets/connections/connections-map.html';
 const BACKUP = 'widgets/backup/backup.html';
-const STATS = 'widgets/stats/system-stats.html';
+const STATS = 'widgets/system-summary/index.html';
 
 /* ── safeColor ────────────────────────────────────────────────────────────── */
 

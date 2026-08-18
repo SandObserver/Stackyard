@@ -238,8 +238,7 @@
     "containerNotFound": "Conteneur introuvable",
     "containerState": "Conteneur {state}",
     "pingFailed": "Échec du ping : {error}",
-    "pingReturned": "Le ping a renvoyé {status}",
-    "diskHealth": "État du disque"
+    "pingReturned": "Le ping a renvoyé {status}"
   },
   "setup": {
     "title": "Définir un mot de passe pour le tableau de bord ?",

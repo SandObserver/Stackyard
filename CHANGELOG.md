@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Stats widget is now two widgets, System Summary and Disk Health. Existing
+  tiles are converted on the next load.
+
 ### Fixed
 
 - A tile with only a fixed label set now shows that badge.

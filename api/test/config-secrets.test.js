@@ -27,10 +27,9 @@ function sampleConfig() {
       {
         id: 's1',
         type: 'widget',
-        widgetType: 'stats',
+        widgetType: 'disk-health',
         widgetConfig: {
           truenasKey: 'TRUENAS',
-          network: { myspeedPass: 'MYSPEED', enabled: true },
         },
       },
       {
@@ -40,6 +39,14 @@ function sampleConfig() {
         widgetConfig: {
           vpn: { apiKey: 'VPNAPI', token: 'VPNTOK' },
           services: [{ id: 'x', token: 'SVC' }],
+        },
+      },
+      {
+        id: 'y1',
+        type: 'widget',
+        widgetType: 'system-summary',
+        widgetConfig: {
+          network: { myspeedPass: 'MYSPEED', enabled: true },
         },
       },
     ],
@@ -60,12 +67,12 @@ test('scrubConfigSecrets strips every widget secret, including backup slots (was
   const copy = JSON.parse(JSON.stringify(sampleConfig()));
   scrubConfigSecrets(copy);
   assert.deepEqual(anySecretLeft(copy), []);
-  const [b, s, c] = copy.items;
+  const [b, s, c, y] = copy.items;
   assert.equal(b.widgetConfig.slots[0].dupPassSet, true);
   assert.equal(b.widgetConfig.slots[1].kopiaPassSet, true);
   assert.equal(s.widgetConfig.truenasKeySet, true);
-  assert.equal(s.widgetConfig.network.myspeedPassSet, true);
-  assert.equal(s.widgetConfig.network.enabled, true);
+  assert.equal(y.widgetConfig.network.myspeedPassSet, true);
+  assert.equal(y.widgetConfig.network.enabled, true);
   assert.equal(c.widgetConfig.vpn.apiKeySet, true);
   assert.equal(c.widgetConfig.services[0].tokenSet, true);
 });
@@ -77,11 +84,11 @@ test('preserveConfigSecrets restores secrets the browser omitted after scrubbing
   const incoming = JSON.parse(JSON.stringify(existing));
   scrubConfigSecrets(incoming);
   preserveConfigSecrets(incoming, existing);
-  const [b, s, c] = incoming.items;
+  const [b, s, c, y] = incoming.items;
   assert.equal(b.widgetConfig.slots[0].dupPass, 'DUP');
   assert.equal(b.widgetConfig.slots[1].kopiaPass, 'KOP');
   assert.equal(s.widgetConfig.truenasKey, 'TRUENAS');
-  assert.equal(s.widgetConfig.network.myspeedPass, 'MYSPEED');
+  assert.equal(y.widgetConfig.network.myspeedPass, 'MYSPEED');
   assert.equal(c.widgetConfig.vpn.apiKey, 'VPNAPI');
   assert.equal(c.widgetConfig.vpn.token, 'VPNTOK');
   assert.equal(c.widgetConfig.services[0].token, 'SVC');

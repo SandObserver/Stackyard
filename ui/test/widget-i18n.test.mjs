@@ -29,8 +29,8 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
 const { widgetSrc } = await import('../js/widget-types.js');
 
-const REG = { stats: { sizes: ['medium'], entryVersions: { 'index.html': 'abc12345' } } };
-const ITEM = { id: 'w1', widgetType: 'stats', widgetSize: 'medium' };
+const REG = { 'system-summary': { sizes: ['medium'], entryVersions: { 'index.html': 'abc12345' } } };
+const ITEM = { id: 'w1', widgetType: 'system-summary', widgetSize: 'medium' };
 
 /* ── the language reaches the iframe ──────────────────────────────────────── */
 

@@ -17,7 +17,7 @@ const stored = () => ({
       widgetType: 'books',
       widgetConfig: { absUrl: 'https://real.example', absKey: 'KNOWN-SECRET' },
     },
-    { id: 'w2', type: 'widget', widgetType: 'stats', widgetConfig: { token: 'ANOTHER-SECRET' } },
+    { id: 'w2', type: 'widget', widgetType: 'system-summary', widgetConfig: { token: 'ANOTHER-SECRET' } },
   ],
 });
 const copy = v => JSON.parse(JSON.stringify(v));

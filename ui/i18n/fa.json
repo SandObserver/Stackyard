@@ -238,8 +238,7 @@
     "containerNotFound": "کانتینر پیدا نشد",
     "containerState": "کانتینر {state}",
     "pingFailed": "پینگ ناموفق: {error}",
-    "pingReturned": "پینگ {status} برگرداند",
-    "diskHealth": "سلامت دیسک"
+    "pingReturned": "پینگ {status} برگرداند"
   },
   "setup": {
     "title": "گذرواژه‌ای برای داشبورد تنظیم شود؟",

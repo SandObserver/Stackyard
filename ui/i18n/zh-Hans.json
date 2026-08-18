@@ -238,8 +238,7 @@
     "containerNotFound": "未找到容器",
     "containerState": "容器 {state}",
     "pingFailed": "Ping 失败：{error}",
-    "pingReturned": "Ping 返回 {status}",
-    "diskHealth": "磁盘健康"
+    "pingReturned": "Ping 返回 {status}"
   },
   "setup": {
     "title": "要设置仪表板密码吗？",

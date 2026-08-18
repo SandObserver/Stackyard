@@ -44,11 +44,10 @@
     {
       "id": "w-stats",
       "type": "widget",
-      "widgetType": "stats",
+      "widgetType": "system-summary",
       "label": "System",
       "widgetSize": "medium",
       "widgetConfig": {
-        "widgetSubType": "system-summary",
         "slots": [
           {
             "type": "cpu"

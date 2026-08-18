@@ -34,7 +34,7 @@ const BUDGET = {
   'widgets/dashboard-switch/index.html': 2,
   'widgets/dns/index.html': 2,
   'widgets/github/pullrequests.html': 4,
-  'widgets/stats/disk-health.html': 1,
+  'widgets/disk-health/index.html': 1,
   'widgets/weather/index.html': 2,
 };
 

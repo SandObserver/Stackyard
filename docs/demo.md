@@ -25,7 +25,7 @@ shape that widget renders, documented at the top of its `data.js`. See
 
 `api/src/demo-data.js` keeps only what is not tied to one widget: the `wave` and
 `round` drift helpers every `demo.js` shares through `ctx.demo`, fake host metrics
-handed to the stats widget through `ctx.metrics`, activity badges, and one
+handed to the system summary widget through `ctx.metrics`, activity badges, and one
 unhealthy app. It names no widgets, so adding a widget never touches it.
 
 `api/test/widget-demo.test.js` pins the bodies that are easy to get wrong:
