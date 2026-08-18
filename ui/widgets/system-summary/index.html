@@ -15,8 +15,12 @@
     justify-content: space-evenly; }
   .widget.size-medium { flex-direction: row; }
 
-  /* Small: stacked value rows matching medium left column style */
-  .slot-row { display: flex; align-items: center; flex: 1; min-height: 0; }
+  /* Small: stacked rows, each a label above its value */
+  .slot-row { display: flex; flex-direction: column; justify-content: center;
+    flex: 1; min-height: 0; gap: 1px; }
+  .slot-row .chart-lbl { margin-bottom: 0; }
+  .slot-row .v { font-size: clamp(15px, 5.6cqw, 23px); }
+  .slot-row .disk-num { font-size: clamp(13px, 4.4cqw, 19px); }
 
   /* Medium: left column (values) + right column (charts) */
   .col-left  { display: flex; flex-direction: column; justify-content: space-evenly;
@@ -205,9 +209,14 @@ function mkValueEl(slot, i) {
   return d;
 }
 
+/* slot.type comes from config, which can arrive by import, so an unknown type
+   falls back to its own text and every use escapes it. */
+const SLOT_LABELS = { cpu:'CPU', ram:'RAM', temp:'TEMP', disk:'DISK', iowait:'IO WAIT', procs:'PROCS' };
+const slotLabel = slot => SLOT_LABELS[slot.type] || String(slot.type || '').toUpperCase();
+
 function mkChartEl(slot, i) {
   const d = document.createElement('div'); d.className = 'chart-section';
-  const lbl = { cpu:'CPU', ram:'RAM', temp:'TEMP', disk:'DISK', iowait:'IO WAIT', procs:'PROCS' }[slot.type] || slot.type.toUpperCase();
+  const lbl = slotLabel(slot);
   /* slot.type comes from config, which can arrive by import. html`` escapes
      it. */
   if (slot.type === 'disk') {
@@ -244,19 +253,20 @@ function mkNetValueEl(net) {
 
 function mkSmallRow(slot, i) {
   const d = document.createElement('div'); d.className = 'slot-row';
+  const lbl = html`<div class="chart-lbl">${slotLabel(slot)}</div>`;
   if (slot.type === 'disk') {
     /* Disk: show used/total in cyan like medium left column */
-    setHtml(d, html`<div class="disk-line">
+    setHtml(d, html`${lbl}<div class="disk-line">
       <span class="disk-num" id="small-disk-used-${i}">—</span><span class="disk-unit">GB</span>
       <span class="disk-sep">/</span>
       <span class="disk-num" id="small-disk-total-${i}">—</span><span class="disk-unit">GB</span>
     </div>`);
   } else if (slot.type === 'iowait' || slot.type === 'procs') {
     const unit = slot.type === 'iowait' ? '%' : '';
-    setHtml(d, html`<div class="v" id="small-${i}" style="color:var(--sc${i}, #0091FF)">—${unit}</div>`);
+    setHtml(d, html`${lbl}<div class="v" id="small-${i}" style="color:var(--sc${i}, #0091FF)">—${unit}</div>`);
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
-    setHtml(d, html`<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`);
+    setHtml(d, html`${lbl}<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`);
   }
   return d;
 }
