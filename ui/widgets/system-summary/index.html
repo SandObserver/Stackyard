@@ -329,9 +329,9 @@ function applyStats(data) {
     if (slot.type === 'iowait') val = data.iowait ?? null;
     if (slot.type === 'procs')  val = data.procs  ?? null;
     if (slot.type === 'temp') {
-      /* Each temp slot has its own thermalZone — read the right zone from data.temps */
-      const zone = Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0;
-      val = data.temps?.[zone] ?? null;
+      /* A slot names either a thermal zone or a sensor, depending on the source */
+      const key = slot.sensor ? slot.sensor : (Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0);
+      val = data.temps?.[key] ?? null;
     }
 
     if (size === 'medium') {
