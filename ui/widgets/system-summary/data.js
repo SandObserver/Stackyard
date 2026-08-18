@@ -11,6 +11,7 @@ function systemSummary(ctx) {
       system: systemSummaryLocal,
       glances: systemSummaryGlances,
       beszel: systemSummaryBeszel,
+      unraid: systemSummaryUnraid,
     },
     { field: 'statProvider', default: 'system' },
   );
@@ -20,7 +21,7 @@ function systemSummary(ctx) {
    has no handler here. */
 function sensorOptions(ctx) {
   return ctx.dispatchProvider(
-    { glances: glancesSensorOptions, beszel: beszelSensorOptions },
+    { glances: glancesSensorOptions, beszel: beszelSensorOptions, unraid: unraidSensorOptions },
     { field: 'statProvider' },
   );
 }
@@ -342,5 +343,118 @@ async function systemSummaryBeszel(ctx) {
     iowait,
     procs: null,
     uptime: Number(record?.info?.u) || null,
+  };
+}
+
+/* Unraid's own web server proxies the API at /graphql, and refuses GET unless
+   its sandbox is on, so every request here is a POST carrying the key. */
+async function unraidQuery(ctx, query) {
+  const { config, fetchJSON, normalizeBase } = ctx;
+  if (!config.unraidUrl) ctx.fail('Enter the Unraid URL first.', { kind: ctx.KIND.INVALID });
+  if (!config.unraidApiKey) ctx.fail('Enter the Unraid API key first.', { kind: ctx.KIND.INVALID });
+  const r = await fetchJSON(normalizeBase(config.unraidUrl) + '/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': config.unraidApiKey },
+    body: JSON.stringify({ query }),
+    timeout: 8000,
+  });
+  if (r.status === 401 || r.status === 403) ctx.fail('Unraid rejected the API key', { kind: ctx.KIND.AUTH });
+  if (r.status >= 400) ctx.fail('Unraid HTTP ' + r.status);
+  const problem = r.data?.errors?.[0]?.message;
+  /* A key without the right role fails here, with 200 and an errors array. */
+  if (problem)
+    ctx.fail('Unraid: ' + problem, {
+      kind: /permission|forbidden|unauthor/i.test(problem) ? ctx.KIND.AUTH : ctx.KIND.UPSTREAM,
+    });
+  if (!r.data?.data) ctx.fail('Unraid returned no data');
+  return r.data.data;
+}
+
+const UNRAID_TEMPS = 'temperature { sensors { name current { value unit } } }';
+
+function unraidCelsius(reading) {
+  const v = Number(reading?.value);
+  if (!Number.isFinite(v)) return null;
+  switch (reading.unit) {
+    case 'FAHRENHEIT':
+      return ((v - 32) * 5) / 9;
+    case 'KELVIN':
+      return v - 273.15;
+    case 'RANKINE':
+      return ((v - 491.67) * 5) / 9;
+    default:
+      return v;
+  }
+}
+
+function unraidTemps(temperature) {
+  const out = {};
+  for (const s of temperature?.sensors || []) {
+    const c = unraidCelsius(s?.current);
+    if (s?.name && c !== null) out[s.name] = c;
+  }
+  return out;
+}
+
+async function unraidSensorOptions(ctx) {
+  const data = await unraidQuery(ctx, `{ metrics { ${UNRAID_TEMPS} } }`);
+  const temperature = data.metrics?.temperature;
+  /* Unraid ships temperature reporting off, and resolves the field to null
+     rather than failing, so an empty picker would look like a broken key. */
+  if (!temperature) ctx.fail('Turn on temperature reporting in Unraid first.', { kind: ctx.KIND.INVALID });
+  const temps = unraidTemps(temperature);
+  return { options: Object.keys(temps).map(name => ({ value: name, label: name })) };
+}
+
+const KB = 1024;
+const kbToGb = v => (Number(v) || 0) / KB ** 2;
+
+/* A named slot is a user share. A blank one is the array as a whole. */
+function unraidDisk(data, name) {
+  if (!name) {
+    const kb = data.array?.capacity?.kilobytes || {};
+    const total = Number(kb.total) || 0;
+    const used = Number(kb.used) || 0;
+    return { usedPct: total > 0 ? (used / total) * 100 : 0, totalGb: kbToGb(total) };
+  }
+  const share = (data.shares || []).find(s => s?.name === name);
+  const total = Number(share?.size) || 0;
+  const used = Number(share?.used) || 0;
+  return { usedPct: total > 0 ? (used / total) * 100 : 0, totalGb: kbToGb(total) };
+}
+
+async function systemSummaryUnraid(ctx) {
+  const slots = ctx.config.slots || [];
+  const wants = type => slots.some(s => s.type === type);
+  const mounts = new Set();
+  for (const s of slots) {
+    if (s.type !== 'disk') continue;
+    mounts.add(s.primary || '');
+    if (s.secondary) mounts.add(s.secondary);
+  }
+
+  /* Shares and the array sit behind their own permissions, so they are only
+     asked for when a slot needs them. */
+  const parts = [`metrics { cpu { percentTotal } memory { percentTotal }${wants('temp') ? ' ' + UNRAID_TEMPS : ''} }`];
+  parts.push('info { os { uptime } }');
+  if ([...mounts].some(m => m)) parts.push('shares { name size used }');
+  if (mounts.has('')) parts.push('array { capacity { kilobytes { total used } } }');
+
+  const data = await unraidQuery(ctx, `{ ${parts.join(' ')} }`);
+  const temps = unraidTemps(data.metrics?.temperature);
+
+  /* info.os.uptime is the boot time, not an elapsed count. */
+  const booted = Date.parse(data.info?.os?.uptime);
+  const uptime = Number.isFinite(booted) ? Math.max(0, Math.round((Date.now() - booted) / 1000)) : null;
+
+  return {
+    cpu: typeof data.metrics?.cpu?.percentTotal === 'number' ? data.metrics.cpu.percentTotal : null,
+    ram: typeof data.metrics?.memory?.percentTotal === 'number' ? data.metrics.memory.percentTotal : null,
+    temp: Object.values(temps)[0] ?? null,
+    temps,
+    disks: [...mounts].map(mount => ({ mount, ...unraidDisk(data, mount) })),
+    iowait: null,
+    procs: null,
+    uptime,
   };
 }
