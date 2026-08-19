@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- System Summary can read its figures from a host running Glances or Beszel, or
-  from the Unraid API. The network row's throughput follows the same source, on
-  an interface you pick.
+- System Summary can read its figures from Glances, Beszel or the Unraid API.
+
+- The network row's throughput follows the chosen source, on a selected
+  interface.
 
 ### Changed
 
@@ -22,8 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- A widget's settings no longer open filled in from the last widget of the same
-  type you edited.
+- A widget's settings now open from that widget's own saved config.
 
 - A tile with only a fixed label set now shows that badge.
 
