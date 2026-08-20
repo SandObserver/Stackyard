@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=848f1e7d';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=fde6479c';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=76be763e';
 import { applyDrop, canJoinFolder } from '/js/admin-drag-logic.js?v=8fcf583a';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=f3f87abf';
@@ -13,7 +13,7 @@ import {
 import { loadSettings, showBgFields } from '/js/admin-settings.js?v=e9bec962';
 import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=3d2627a9';
 import { state } from '/js/admin-state.js?v=b7731aa4';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=5292c6a0';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=bb1a94d7';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
@@ -30,6 +30,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=fbd2d2ef';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=b18c93ed';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=5fb6a01b';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
@@ -1078,7 +1079,17 @@ function initAllInlineEdits() {
   const colorInp = document.createElement('input');
   colorInp.id = 'bg-color-inp';
   document.body.appendChild(colorInp);
-  initInlineEdit('ie-bgcolor', 'bg-color-inp', { placeholder: '#0d1117' });
+  initInlineEdit('ie-bgcolor', 'bg-color-inp', {
+    placeholder: '#0d1117',
+    onCommit(val) {
+      if (!val) return;
+      const { value, ok } = normalizeColorInput(val);
+      if (!ok) return toast(t('toast.colorInvalid'), 'err');
+      colorInp.value = value;
+      const rv = q('#ie-bgcolor .rv');
+      if (rv) rv.textContent = value;
+    },
+  });
 }
 
 async function initVersion() {

@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Color fields now accept a hex code typed without its leading `#`, and say so
+  when a value is not a color.
+
 - Apps with a container check no longer show an unhealthy badge while Docker
   container health checks are off.
 

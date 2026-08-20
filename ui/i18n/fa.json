@@ -198,6 +198,7 @@
   "toast": {
     "saved": "ذخیره شد",
     "saveFailed": "ذخیره ناموفق بود: {err}",
+    "colorInvalid": "این یک رنگ نیست. از #rrggbb یا نام رنگ CSS استفاده کنید.",
     "imported": "وارد شد",
     "importFailed": "Import ناموفق بود: {err}",
     "exportFailed": "Export ناموفق بود: {err}",
