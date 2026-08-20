@@ -148,6 +148,12 @@
       "/js/jitter.js": [
         "./ui/js/jitter.js"
       ],
+      "/js/label-contrast.js": [
+        "./ui/js/label-contrast.js"
+      ],
+      "/js/label-contrast.js?v=*": [
+        "./ui/js/label-contrast.js"
+      ],
       "/js/layout.js": [
         "./ui/js/layout.js"
       ],

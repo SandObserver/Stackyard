@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- App titles now take their color from the background behind them, per icon over
+  a wallpaper.
+
 - An app can now be dropped between two folders, on the top or bottom edge of a
   folder row.
 

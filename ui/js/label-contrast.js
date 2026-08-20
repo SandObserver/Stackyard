@@ -1,0 +1,229 @@
+// @ts-check
+/* Icon label colour, chosen from the background behind each label.
+
+   The pure half of this module has no DOM, no fetch and no module state. The
+   DOM half is at the bottom and is named so. */
+
+/** WCAG 2.1 relative luminance of an sRGB triple.
+
+    @param {number} r @param {number} g @param {number} b 0-255
+    @returns {number} 0-1 */
+export function relativeLuminance(r, g, b) {
+  const lin = (/** @type {number} */ c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+/** @param {number} a @param {number} b two relative luminances
+    @returns {number} the WCAG contrast ratio, 1-21 */
+export function contrastRatio(a, b) {
+  const [hi, lo] = a >= b ? [a, b] : [b, a];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Luminance of the two label tones. Both carry a shadow, so the text is not
+    pure black or pure white. */
+const TONE_LUM = {
+  light: relativeLuminance(255, 255, 255),
+  dark: relativeLuminance(0, 0, 0),
+};
+
+/** The tone that keeps the most contrast against the worst patch it covers.
+
+    @param {ArrayLike<number>} lums the background luminances under the label
+    @returns {'light'|'dark'} */
+export function toneForLuminances(lums) {
+  if (!lums || lums.length === 0) return 'light';
+  let worstLight = Infinity,
+    worstDark = Infinity;
+  for (let i = 0; i < lums.length; i++) {
+    worstLight = Math.min(worstLight, contrastRatio(TONE_LUM.light, lums[i]));
+    worstDark = Math.min(worstDark, contrastRatio(TONE_LUM.dark, lums[i]));
+  }
+  return worstDark > worstLight ? 'dark' : 'light';
+}
+
+/** The part of an image `background-size:cover` actually shows.
+
+    @param {number} iw @param {number} ih the image's natural size
+    @param {number} vw @param {number} vh the box it covers
+    @returns {{sx:number, sy:number, sw:number, sh:number}} */
+export function coverSourceRect(iw, ih, vw, vh) {
+  if (!(iw > 0 && ih > 0 && vw > 0 && vh > 0)) return { sx: 0, sy: 0, sw: iw || 1, sh: ih || 1 };
+  const scale = Math.max(vw / iw, vh / ih);
+  const sw = Math.min(iw, vw / scale),
+    sh = Math.min(ih, vh / scale);
+  return { sx: (iw - sw) / 2, sy: (ih - sh) / 2, sw, sh };
+}
+
+/** CSS `filter:brightness()` multiplies each sRGB channel.
+
+    @param {number} c 0-255 @param {number} amount @returns {number} */
+export function applyBrightness(c, amount) {
+  return Math.max(0, Math.min(255, c * amount));
+}
+
+/** Per-cell luminance of an image already drawn at the grid's own size.
+
+    @param {ArrayLike<number>} data RGBA, `cols * rows` pixels
+    @param {number} cols @param {number} rows
+    @param {number} brightness the wallpaper brightness the page renders at
+    @returns {number[]} */
+export function gridFromPixels(data, cols, rows, brightness = 1) {
+  const out = [];
+  for (let i = 0; i < cols * rows; i++) {
+    const p = i * 4;
+    out.push(
+      relativeLuminance(
+        applyBrightness(data[p], brightness),
+        applyBrightness(data[p + 1], brightness),
+        applyBrightness(data[p + 2], brightness),
+      ),
+    );
+  }
+  return out;
+}
+
+/** The grid cells a viewport rectangle covers, clamped to the grid.
+
+    @param {{left:number, top:number, right:number, bottom:number}} rect
+    @param {number} vw @param {number} vh the viewport
+    @param {number} cols @param {number} rows
+    @returns {number[]} indices into a `gridFromPixels` array */
+export function cellsForRect(rect, vw, vh, cols, rows) {
+  if (!(vw > 0 && vh > 0)) return [];
+  const clamp = (/** @type {number} */ n, /** @type {number} */ max) => Math.max(0, Math.min(max - 1, n));
+  const c0 = clamp(Math.floor((rect.left / vw) * cols), cols),
+    c1 = clamp(Math.ceil((rect.right / vw) * cols) - 1, cols),
+    r0 = clamp(Math.floor((rect.top / vh) * rows), rows),
+    r1 = clamp(Math.ceil((rect.bottom / vh) * rows) - 1, rows);
+  const out = [];
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) out.push(r * cols + c);
+  return out;
+}
+
+/** The tone for one rectangle of the viewport.
+
+    @param {number[]} grid @param {number} cols @param {number} rows
+    @param {number} vw @param {number} vh
+    @param {{left:number, top:number, right:number, bottom:number}} rect
+    @returns {'light'|'dark'} */
+export function toneForRect(grid, cols, rows, vw, vh, rect) {
+  return toneForLuminances(cellsForRect(rect, vw, vh, cols, rows).map(i => grid[i]));
+}
+
+/* ── The DOM half ─────────────────────────────────────────────────────────── */
+
+export const GRID_COLS = 32;
+export const GRID_ROWS = 18;
+
+/** Resolve any CSS colour to an sRGB triple.
+
+    A canvas keeps its previous fillStyle when the value does not parse, so an
+    unreadable value has to be told apart from a real one. Two different seeds
+    cannot both be the answer.
+
+    @param {string} value @returns {[number, number, number]|null} */
+export function parseCssColor(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const read = (/** @type {string} */ seed) => {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 1;
+    const ctx = cv.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = seed;
+    ctx.fillStyle = value;
+    ctx.fillRect(0, 0, 1, 1);
+    const d = ctx.getImageData(0, 0, 1, 1).data;
+    return /** @type {[number, number, number]} */ ([d[0], d[1], d[2]]);
+  };
+  const a = read('#000000'),
+    b = read('#ffffff');
+  if (!a || !b) return null;
+  if (a[0] !== b[0] || a[1] !== b[1] || a[2] !== b[2]) return null;
+  return a;
+}
+
+/** Read an image into a luminance grid.
+
+    @param {HTMLImageElement} img a loaded image
+    @param {number} vw @param {number} vh the viewport it covers
+    @param {number} brightness
+    @returns {number[]|null} null when the image cannot be read */
+export function sampleImage(img, vw, vh, brightness) {
+  try {
+    const { sx, sy, sw, sh } = coverSourceRect(img.naturalWidth, img.naturalHeight, vw, vh);
+    const cv = document.createElement('canvas');
+    cv.width = GRID_COLS;
+    cv.height = GRID_ROWS;
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return null;
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, GRID_COLS, GRID_ROWS);
+    return gridFromPixels(ctx.getImageData(0, 0, GRID_COLS, GRID_ROWS).data, GRID_COLS, GRID_ROWS, brightness);
+  } catch {
+    return null;
+  }
+}
+
+/** Load a second copy of the wallpaper that a canvas is allowed to read.
+
+    Requesting the displayed image with CORS would fail the whole wallpaper on a
+    host that does not allow it.
+
+    @param {string} url @returns {Promise<HTMLImageElement|null>} */
+export function loadSamplingImage(url) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+/** Every label the dashboard draws over the background. */
+const LABEL_SELECTOR = '.ilabel, .dyn-mob-label, .dyn-fold-label';
+
+/** A folder overlay lays its own dark scrim over the background, so the labels
+    on it are not reading the background at all. */
+const SCRIM = '.folder-overlay, .folder-overlay-mobile';
+
+/** Where a label sits once its page is the one on screen. Pages are one
+    viewport wide and slide horizontally, so an off-screen page's labels land on
+    the same patch of the fixed wallpaper as the page in view.
+
+    @param {Element} label @param {Element|null} page
+    @returns {{left:number, top:number, right:number, bottom:number}} */
+function labelViewportRect(label, page) {
+  const r = label.getBoundingClientRect();
+  if (!page) return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  const p = page.getBoundingClientRect();
+  return { left: r.left - p.left, top: r.top - p.top, right: r.right - p.left, bottom: r.bottom - p.top };
+}
+
+/** Tone every label against the current background.
+
+    @param {{grid: number[]|null, tone: 'light'|'dark'|null}} bg the sampled
+      wallpaper, or a single tone for a solid colour
+    @param {Document|HTMLElement} [root] */
+export function applyLabelTones(bg, root = document) {
+  const vw = window.innerWidth,
+    vh = window.innerHeight;
+  for (const label of root.querySelectorAll(LABEL_SELECTOR)) {
+    if (label.closest(SCRIM)) {
+      label.removeAttribute('data-tone');
+    } else if (bg.grid) {
+      const page = label.closest('.page');
+      label.setAttribute(
+        'data-tone',
+        toneForRect(bg.grid, GRID_COLS, GRID_ROWS, vw, vh, labelViewportRect(label, page)),
+      );
+    } else if (bg.tone) {
+      label.setAttribute('data-tone', bg.tone);
+    } else {
+      label.removeAttribute('data-tone');
+    }
+  }
+}

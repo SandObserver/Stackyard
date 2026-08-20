@@ -38,6 +38,14 @@ import { trapFocus } from '/js/dialog.js?v=05935547';
 import { jitter } from '/js/jitter.js?v=4edf48f2';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
+import {
+  applyLabelTones,
+  loadSamplingImage,
+  parseCssColor,
+  relativeLuminance,
+  sampleImage,
+  toneForLuminances,
+} from '/js/label-contrast.js?v=322fb66e';
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();
@@ -437,6 +445,43 @@ function syncMobPages() {
   }
 }
 
+/** The background as the label tones see it: a sampled wallpaper grid, or one
+    tone for a solid colour. Null on both means the labels keep their default. */
+let bgTone = { grid: null, tone: null };
+
+/** Re-tone the labels. Cheap: it re-reads the sampled grid, never the image. */
+function retone() {
+  requestAnimationFrame(() => applyLabelTones(bgTone));
+}
+
+function toneForColor(color) {
+  const rgb = parseCssColor(color);
+  if (!rgb) return null;
+  return toneForLuminances([relativeLuminance(rgb[0], rgb[1], rgb[2])]);
+}
+
+/** The readable copy of the current wallpaper, held so a resize re-samples
+    without fetching again. */
+let _bgSample = null;
+
+async function sampleWallpaper(url, brightness) {
+  const img = await loadSamplingImage(url);
+  _bgSample = img ? { img, brightness } : null;
+  bgTone = { grid: img ? sampleImage(img, window.innerWidth, window.innerHeight, brightness) : null, tone: null };
+  retone();
+}
+
+/* The wallpaper is sized to cover the viewport, so a resize moves which part of
+   it every label sits on. */
+function resampleBg() {
+  if (!_bgSample) return retone();
+  bgTone = {
+    grid: sampleImage(_bgSample.img, window.innerWidth, window.innerHeight, _bgSample.brightness),
+    tone: null,
+  };
+  retone();
+}
+
 async function applyBg() {
   const root = document.documentElement;
   try {
@@ -446,10 +491,15 @@ async function applyBg() {
       root.style.setProperty('--bg-image', 'none');
       root.style.setProperty('--bg-color', safeColor);
       root.style.setProperty('--bg-brightness', '1');
+      bgTone = { grid: null, tone: toneForColor(safeColor) };
+      retone();
     } else if (bg.type === 'url' && bg.url) {
-      root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(bg.url)}')`);
+      const url = sanitizeCssUrl(bg.url);
+      const brightness = Number(bg.brightness ?? 0.62);
+      root.style.setProperty('--bg-image', `url('${url}')`);
       root.style.setProperty('--bg-color', '#0d1117');
-      root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
+      root.style.setProperty('--bg-brightness', String(brightness));
+      sampleWallpaper(url, brightness);
     } else if (bg.type === 'unsplash') {
       let url = readWallpaperCache(storeGet(WALLPAPER_STORE), bg, Date.now());
       if (!url) {
@@ -460,11 +510,13 @@ async function applyBg() {
       }
       if (url) {
         const shown = url;
+        const brightness = Number(bg.brightness ?? 0.62);
         const img = new Image();
         img.onload = () => {
           root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(shown)}')`);
           root.style.setProperty('--bg-color', '#0d1117');
-          root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
+          root.style.setProperty('--bg-brightness', String(brightness));
+          sampleWallpaper(sanitizeCssUrl(shown), brightness);
         };
         img.src = shown;
       }
@@ -710,12 +762,14 @@ async function boot() {
           buildMobile();
           syncMobPages();
           goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
+          retone();
         }),
       );
     } else {
       document.body.classList.remove('is-mob');
       buildDesktop();
       goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
+      retone();
     }
   };
   buildLayout();
@@ -807,6 +861,7 @@ async function boot() {
       clearTimeout(_rt);
       _rt = setTimeout(() => {
         if (MOB) buildLayout();
+        resampleBg();
       }, 150);
     },
     { passive: true },
@@ -817,7 +872,10 @@ async function boot() {
      pixel: a rebuild tears down and remounts every widget iframe. */
   let _dz,
     _slots = desktopSlots();
+  let _rs;
   window.addEventListener('resize', () => {
+    clearTimeout(_rs);
+    _rs = setTimeout(resampleBg, 200);
     if (MOB) return;
     clearTimeout(_dz);
     _dz = setTimeout(() => {
@@ -828,6 +886,7 @@ async function boot() {
       _slots = slots;
       buildDesktop();
       goTo(Math.min(pg, totalPages - 1), null, false);
+      retone();
     }, 200);
   });
 
