@@ -1,6 +1,6 @@
 import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=fde6479c';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=76be763e';
-import { applyDrop, canJoinFolder } from '/js/admin-drag-logic.js?v=8fcf583a';
+import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=f3f87abf';
 import {
   buildAppItem,
@@ -363,10 +363,11 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     clearDragClasses();
+    const rect = row.getBoundingClientRect();
     if (row.dataset.isFolder && canJoinFolder(_dragType)) {
-      row.classList.add('drag-into');
+      const zone = folderRowZone(e.clientY, rect);
+      row.classList.add(zone === 'into' ? 'drag-into' : zone === 'above' ? 'drag-above' : 'drag-below');
     } else {
-      const rect = row.getBoundingClientRect();
       row.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-above' : 'drag-below');
     }
   });
@@ -377,6 +378,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
   row.addEventListener('drop', e => {
     e.preventDefault();
     const dropAbove = row.classList.contains('drag-above');
+    const dropInto = row.classList.contains('drag-into');
     clearDragClasses();
     const raw = e.dataTransfer.getData('text/plain');
     if (!raw) return;
@@ -388,7 +390,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
         ...drop,
         targetId: item.id,
         targetFolderId: folderId,
-        targetIsFolder: item.type === 'folder',
+        targetIsFolder: item.type === 'folder' && dropInto,
         indent,
         childIdx,
         dropAbove,
@@ -431,6 +433,7 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
     const offY = e.clientY - startRect.top;
     let hovered = null,
       dropAbove = false,
+      dropInto = false,
       scrollTimer = null;
     const scroller = scrollParent(row);
 
@@ -443,10 +446,14 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       const tr = /** @type {HTMLElement} */ (under && under.closest('.drow'));
       if (!tr || tr === row || tr === ghost) return;
       hovered = tr;
+      const r = tr.getBoundingClientRect();
       if (tr.dataset.isFolder && canJoinFolder(itemType(srcId))) {
-        tr.classList.add('drag-into');
+        const zone = folderRowZone(y, r);
+        dropInto = zone === 'into';
+        dropAbove = zone === 'above';
+        tr.classList.add(dropInto ? 'drag-into' : dropAbove ? 'drag-above' : 'drag-below');
       } else {
-        const r = tr.getBoundingClientRect();
+        dropInto = false;
         dropAbove = y < r.top + r.height / 2;
         tr.classList.add(dropAbove ? 'drag-above' : 'drag-below');
       }
@@ -485,14 +492,14 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       const tr = hovered;
       end();
       if (!tr) return;
-      const into = tr.dataset.isFolder && canJoinFolder(itemType(srcId));
+      const into = !!tr.dataset.isFolder && canJoinFolder(itemType(srcId)) && dropInto;
       const before = snapshotItems(state.items);
       const drop = applyDrop(state.items, {
         srcId,
         srcFolderId: indent ? folderId : null,
         targetId: tr.dataset.itemId,
         targetFolderId: tr.dataset.folderId || null,
-        targetIsFolder: !!tr.dataset.isFolder,
+        targetIsFolder: into,
         indent: !!tr.dataset.indent,
         childIdx: tr.dataset.childIdx != null ? Number(tr.dataset.childIdx) : null,
         dropAbove: into ? false : dropAbove,
