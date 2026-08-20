@@ -136,7 +136,7 @@
     "dockFull": "Dock plein ({max}/{max}). Retirez d'abord une application.",
     "badge": "Badge",
     "healthCheck": "Vérification de l'état",
-    "healthGlobalOff": "Activez les Vérifications de l'état des conteneurs Docker dans Général, puis configurez-les, pour utiliser ceci.",
+    "healthGlobalOff": "Les vérifications de conteneur exigent les Vérifications de l'état des conteneurs Docker dans Général. Les vérifications d'URL fonctionnent sans.",
     "type": "Type",
     "container": "Conteneur",
     "ping": "Ping",

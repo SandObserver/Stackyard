@@ -136,7 +136,7 @@
     "dockFull": "Dock full ({max}/{max}). Remove an app first.",
     "badge": "Badge",
     "healthCheck": "Health Check",
-    "healthGlobalOff": "Turn on Docker Container Health Checks in General, then configure it, to use this.",
+    "healthGlobalOff": "Container checks need Docker Container Health Checks turned on in General. URL checks work without it.",
     "type": "Type",
     "container": "Container",
     "ping": "Ping",
