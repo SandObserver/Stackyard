@@ -20,10 +20,11 @@ const demoData = require('../demo-data');
 const log = require('../log');
 const SOCKET_PROXY_URL_DEFAULT = process.env.SOCKET_PROXY_URL || '';
 
-async function fetchContainerHealth() {
-  const cfg = loadConfig();
-  const socketUrl = cfg.settings?.server?.socketProxyUrl || SOCKET_PROXY_URL_DEFAULT;
-  if (!socketUrl) return Object.create(null);
+function socketProxyUrl(cfg) {
+  return cfg.settings?.server?.socketProxyUrl || SOCKET_PROXY_URL_DEFAULT;
+}
+
+async function fetchContainerHealth(socketUrl) {
   try {
     const r = await fetchUnchecked(`${socketUrl}/containers/json?all=true`);
     if (!Array.isArray(r.data)) return Object.create(null);
@@ -133,15 +134,18 @@ on('GET', '/api/health', async (req, res) => {
     const cfg = loadConfig();
     return json(res, 200, demoData.demoHealth(cfg.items));
   }
-  const containers = await fetchContainerHealth();
-  const cfg = loadConfig(),
-    result = Object.create(null);
+  const cfg = loadConfig();
+  const socketUrl = socketProxyUrl(cfg);
+  /* Without a proxy address every container lookup misses, which would report
+     every container-backed app as unhealthy. */
+  const containers = socketUrl ? await fetchContainerHealth(socketUrl) : Object.create(null);
+  const result = Object.create(null);
   await Promise.allSettled(
     cfg.items
       .filter(i => i.type === 'app' && (i.container || i.ping || i.monitoring?.healthcheck?.enabled))
       .map(async item => {
         const mon = item.monitoring?.healthcheck || {};
-        const cName = mon.container || item.container || '';
+        const cName = socketUrl ? mon.container || item.container || '' : '';
         const ping = mon.pingUrl || item.ping || '';
         /* Build the entry up rather than replace it. An item can have both a
            container and a ping, and the tile needs the detail from each. */
@@ -170,7 +174,7 @@ on('GET', '/api/health', async (req, res) => {
           detail.pingStatus = r.status;
           detail.pingError = r.error;
         }
-        result[item.id] = { unhealthy, ...detail };
+        if (cName || ping) result[item.id] = { unhealthy, ...detail };
       }),
   );
   json(res, 200, result);

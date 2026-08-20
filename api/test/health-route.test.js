@@ -2,6 +2,7 @@ const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('health'), 'apps.json');
+delete process.env.SOCKET_PROXY_URL;
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
@@ -62,10 +63,10 @@ function health() {
   });
 }
 
-function configure(item) {
+function configure(item, socketProxyUrl = socketBase) {
   saveConfig({
     items: [Object.assign({ id: 'a1', type: 'app', name: 'App' }, item)],
-    settings: { server: { socketProxyUrl: socketBase } },
+    settings: { server: { socketProxyUrl } },
   });
 }
 
@@ -156,4 +157,20 @@ test('a container actually named __proto__ is matched, not discarded', async () 
   const r = (await health()).a1;
   assert.equal(r.unhealthy, true);
   assert.equal(r.state, 'exited');
+});
+
+test('a container check is skipped while no socket proxy is configured', async () => {
+  containers = [];
+  configure({ container: 'myapp', monitoring: { healthcheck: { enabled: true, container: 'myapp' } } }, '');
+  assert.equal((await health()).a1, undefined);
+});
+
+test('a ping check still runs while no socket proxy is configured', async () => {
+  containers = [];
+  targetStatus = 200;
+  configure({ container: 'myapp', ping: `${targetBase}/` }, '');
+  const r = (await health()).a1;
+  assert.equal(r.unhealthy, false);
+  assert.equal(r.pingStatus, 200);
+  assert.equal(r.state, undefined);
 });

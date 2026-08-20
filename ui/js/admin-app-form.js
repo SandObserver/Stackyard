@@ -138,7 +138,7 @@ export function buildAppForm(body, item) {
     <p class="grp-hdr">${t('app.badge')}</p>
     <div class="grp">
       <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled)}</div>
-      <div id="hc-sub" ${hc.enabled && globalHealthOn ? '' : 'hidden'}>
+      <div id="hc-sub" ${hc.enabled ? '' : 'hidden'}>
         <div class="row"><span class="rl">${t('app.type')}</span><div class="segr">
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing ? '' : 'checked'}><span class="segr-dot"></span><span>${t('app.container')}</span></label>
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${isPing ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.ping')}</span></label>
@@ -238,13 +238,12 @@ export function buildAppForm(body, item) {
 
   setTogDisabled(el('f-dock'), dockBlocked, 'dock-full-tip');
   const hcEn = el('hc-en');
-  setTogDisabled(hcEn, !globalHealthOn, 'hc-off-tip');
   const showHide = (id, on) => {
     const node = el(id);
     if (node) node.hidden = !on;
   };
   hcEn?.addEventListener('change', e => {
-    if (globalHealthOn) showHide('hc-sub', tgt(e).checked);
+    showHide('hc-sub', tgt(e).checked);
   });
   document.querySelectorAll('input[name="hc-type"]').forEach(r =>
     r.addEventListener('change', () => {

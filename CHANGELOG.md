@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Apps with a container check no longer show an unhealthy badge while Docker
+  container health checks are off.
+
+- An app's health check can be turned off while Docker container health checks
+  are off.
+
 - A widget's settings now open from that widget's own saved config.
 
 - A tile with only a fixed label set now shows that badge.
