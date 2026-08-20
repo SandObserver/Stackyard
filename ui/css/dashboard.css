@@ -15,6 +15,10 @@
       --icon-sheen:       linear-gradient(135deg,rgba(255,255,255,.10) 0%,transparent 60%);
       --label-color:      rgba(255,255,255,.90);
       --label-shadow:     0 1px 4px rgba(0,0,0,.70);
+      /* The tone the labels take on a background measured as light. The shadow
+         is a hairline: the colour carries the contrast, not the shadow. */
+      --label-color-dark:  rgba(0,0,0,.92);
+      --label-shadow-dark: 0 0 2px rgba(255,255,255,.55);
       --bounce-spring:    cubic-bezier(.34,1.56,.64,1);
       --page-ease:        cubic-bezier(.77,0,.175,1);
       /* The page behind the wallpaper, and the boot veil over the unstyled
@@ -192,6 +196,13 @@
       font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); font-weight:500; color:var(--label-color);
       text-align:center; text-shadow:var(--label-shadow); margin-top:6px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+
+    /* Labels measured against a light background. The tone is set on the
+       element by the dashboard, never by the theme: the background is the
+       user's, not the system's. */
+    .ilabel[data-tone="dark"], .dyn-mob-label[data-tone="dark"], .dyn-fold-label[data-tone="dark"] {
+      color:var(--label-color-dark); text-shadow:var(--label-shadow-dark);
     }
 
     /* ── Badge — reference size, scaled by --sc (desktop overrides below) ── */
@@ -720,6 +731,9 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
     --label-shadow:  0 1px 4px rgba(0,0,0,.95);
   }
   .ilabel, .dyn-mob-label, .dyn-fold-label, .dyn-fold-inner-label { color:var(--label-primary); }
+  .ilabel[data-tone="dark"], .dyn-mob-label[data-tone="dark"], .dyn-fold-label[data-tone="dark"] {
+    color:#000000; text-shadow:0 0 2px rgba(255,255,255,.95);
+  }
   .ctrl { color:var(--label-primary); background:rgba(255,255,255,.22); }
   .srn  { color:var(--label-primary); }
   .srh, .sr-section { color:rgba(235,235,245,.85); }
