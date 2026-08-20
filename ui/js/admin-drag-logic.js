@@ -5,6 +5,21 @@ export function canJoinFolder(type) {
   return type === 'app';
 }
 
+/* Share of a folder row's height at each edge that places the dragged row next
+   to the folder instead of inside it. */
+export const FOLDER_EDGE = 0.25;
+
+/** Which part of a folder row the pointer is over.
+    @param {number} y pointer position
+    @param {{ top: number, height: number }} rect the row's box
+    @returns {'above' | 'into' | 'below'} */
+export function folderRowZone(y, rect) {
+  const edge = rect.height * FOLDER_EDGE;
+  if (y < rect.top + edge) return 'above';
+  if (y > rect.top + rect.height - edge) return 'below';
+  return 'into';
+}
+
 export function dropTargetKind({ srcType, targetIsFolder = false, indent = false }) {
   if (canJoinFolder(srcType) && (targetIsFolder || indent)) return 'into-folder';
   return 'reorder';

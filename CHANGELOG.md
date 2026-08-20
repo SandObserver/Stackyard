@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An app can now be dropped between two folders, on the top or bottom edge of a
+  folder row.
+
 - Color fields now accept a hex code typed without its leading `#`, and say so
   when a value is not a color.
 

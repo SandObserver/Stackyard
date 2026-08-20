@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canJoinFolder, dropTargetKind, applyDrop } from '../js/admin-drag-logic.js';
+import { canJoinFolder, dropTargetKind, applyDrop, folderRowZone } from '../js/admin-drag-logic.js';
 
 /* a, b, w top level; f is a folder holding c. */
 const model = () => [
@@ -170,4 +170,31 @@ test('dropping an item on itself changes nothing', () => {
     false,
   );
   assert.deepEqual(order(items), ['a', 'b', 'f', 'c', 'w']);
+});
+
+const rect = { top: 100, height: 40 };
+
+test('the edges of a folder row place a row next to it', () => {
+  assert.equal(folderRowZone(101, rect), 'above');
+  assert.equal(folderRowZone(139, rect), 'below');
+});
+
+test('the middle of a folder row still drops into the folder', () => {
+  for (const y of [111, 120, 129]) assert.equal(folderRowZone(y, rect), 'into');
+});
+
+test('a drop on a folder edge reorders instead of joining the folder', () => {
+  const items = model();
+  applyDrop(items, {
+    srcId: 'a',
+    srcFolderId: null,
+    targetId: 'f',
+    targetFolderId: null,
+    targetIsFolder: false,
+    indent: false,
+    childIdx: null,
+    dropAbove: true,
+  });
+  assert.deepEqual(folder(items, 'f'), ['c']);
+  assert.deepEqual(order(items), ['b', 'a', 'f', 'c', 'w']);
 });
