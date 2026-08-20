@@ -198,6 +198,7 @@
   "toast": {
     "saved": "Saved",
     "saveFailed": "Save failed: {err}",
+    "colorInvalid": "That is not a color. Use #rrggbb or a CSS color name.",
     "imported": "Imported",
     "importFailed": "Import failed: {err}",
     "exportFailed": "Export failed: {err}",

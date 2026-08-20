@@ -198,6 +198,7 @@
   "toast": {
     "saved": "Guardado",
     "saveFailed": "Error al guardar: {err}",
+    "colorInvalid": "Eso no es un color. Usa #rrggbb o un nombre de color CSS.",
     "imported": "Importado",
     "importFailed": "Error al importar: {err}",
     "exportFailed": "Error al exportar: {err}",

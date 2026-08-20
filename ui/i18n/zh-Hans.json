@@ -198,6 +198,7 @@
   "toast": {
     "saved": "已保存",
     "saveFailed": "保存失败：{err}",
+    "colorInvalid": "这不是颜色。请使用 #rrggbb 或 CSS 颜色名称。",
     "imported": "已导入",
     "importFailed": "Import 失败：{err}",
     "exportFailed": "Export 失败：{err}",

@@ -43,7 +43,7 @@ globalThis.document = {
   },
 };
 
-const { _internals } = await import('../js/admin-color-control.js');
+const { _internals, normalizeColorInput } = await import('../js/admin-color-control.js');
 const { cssToHex, hsvToRgb, hexToHsv } = _internals;
 
 /* ── the finding ─────────────────────────────────────────────────────────── */
@@ -80,18 +80,41 @@ test('shorthand, named and rgb forms resolve as before', () => {
   assert.equal(cssToHex('rgba(4,5,6,0.5)'), '#040506', 'alpha is dropped');
 });
 
-/* A browser ignores an invalid assignment to fillStyle, so the '#000' seeded
-   just before it is what comes back. Pinned because callers treat the result as
-   a colour rather than checking it. */
-test('an unreadable value falls back rather than throwing', () => {
+test('a value that is not a colour is rejected rather than read as black', () => {
   for (const bad of ['not-a-colour', '', '#12345', '#1234567']) {
-    assert.equal(cssToHex(bad), '#000000', JSON.stringify(bad));
+    assert.equal(cssToHex(bad), null, JSON.stringify(bad));
   }
 });
 
+test('black itself is still parsed', () => {
+  assert.equal(cssToHex('#000'), '#000000');
+});
+
 test('a null or undefined input does not throw', () => {
-  assert.equal(cssToHex(undefined), '#000000');
-  assert.equal(cssToHex(null), '#000000');
+  assert.equal(cssToHex(undefined), null);
+  assert.equal(cssToHex(null), null);
+});
+
+test('a hex code typed without its hash is accepted', () => {
+  for (const [typed, want] of [
+    ['ffffff', '#ffffff'],
+    ['FFF', '#FFF'],
+    ['abc', '#abc'],
+  ]) {
+    assert.deepEqual(normalizeColorInput(typed), { value: want, ok: true }, typed);
+  }
+});
+
+test('a value that needs no hash is left as typed', () => {
+  for (const good of ['#0289ff', 'red', 'rgb(1, 2, 3)', '  #1c1c1e  '.trim()]) {
+    assert.deepEqual(normalizeColorInput(good), { value: good, ok: true }, good);
+  }
+});
+
+test('a value that is not a colour is reported, not repaired', () => {
+  for (const bad of ['not-a-colour', '#12345', 'ggg', '']) {
+    assert.equal(normalizeColorInput(bad).ok, false, JSON.stringify(bad));
+  }
 });
 
 /* ── the conversions the control is built on ─────────────────────────────── */

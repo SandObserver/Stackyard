@@ -1,4 +1,5 @@
-import { PE_SVG, initInlineEdit } from '/js/admin-shared.js?v=3d2627a9';
+import { PE_SVG, initInlineEdit, toast } from '/js/admin-shared.js?v=3d2627a9';
+import { t } from '/js/i18n.js?v=d056c9c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=b18c93ed';
 
@@ -52,20 +53,43 @@ function _hsvToHex(h, s, v) {
 /* Any CSS colour to lowercase #rrggbb, or null. Callers compare these strings,
    so the case must stay stable. */
 const _HEX6 = /^#[0-9a-f]{6}$/i;
+/* An invalid assignment to fillStyle leaves the previous value, so a single
+   read cannot tell "black" from "not a colour". Two seeds can: only an
+   assignment that took effect makes both reads agree. */
+function _cssParse(str) {
+  const c = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'));
+  const read = seed => {
+    c.fillStyle = seed;
+    c.fillStyle = str;
+    return String(c.fillStyle);
+  };
+  const first = read('#000000');
+  return first === read('#ffffff') ? first : null;
+}
 function _cssToHex(str) {
   const direct = String(str ?? '').trim();
   if (_HEX6.test(direct)) return direct.toLowerCase();
   try {
-    const c = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'));
-    c.fillStyle = '#000';
-    c.fillStyle = str;
-    const v = String(c.fillStyle);
-    if (_HEX6.test(v)) return v;
+    const v = _cssParse(str);
+    if (v === null) return null;
+    if (_HEX6.test(v)) return v.toLowerCase();
     const m = v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
     return m ? '#' + [m[1], m[2], m[3]].map(n => (+n).toString(16).padStart(2, '0')).join('') : null;
   } catch {
     return null;
   }
+}
+
+const _BARE_HEX = /^[0-9a-f]{3,8}$/i;
+/** A typed colour, with a missing leading hash supplied.
+    @param {string} str
+    @returns {{ value: string, ok: boolean }} */
+export function normalizeColorInput(str) {
+  const v = String(str ?? '').trim();
+  if (!v) return { value: '', ok: false };
+  if (_cssToHex(v)) return { value: v, ok: true };
+  if (_BARE_HEX.test(v) && _cssToHex('#' + v)) return { value: '#' + v, ok: true };
+  return { value: v, ok: false };
 }
 function _hexToHsv(hex) {
   const h6 = _cssToHex(hex);
@@ -213,14 +237,15 @@ export function renderColorControl(
     root: container,
     placeholder: '#rrggbb or any CSS color',
     onCommit(val) {
-      const hv = _hexToHsv(val);
+      const { value, ok } = normalizeColorInput(val);
+      const hv = ok ? _hexToHsv(value) : null;
       if (hv) {
         mode = 'color';
         showTune = true;
         hEl.value = String(hv.h);
         sEl.value = String(hv.s);
         vEl.value = String(hv.v);
-      }
+      } else if (val) toast(t('toast.colorInvalid'), 'err');
       commit();
     },
   });
