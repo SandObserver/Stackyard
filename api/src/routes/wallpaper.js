@@ -32,8 +32,9 @@ function wallpaperName(ext) {
   return `wallpaper-${Date.now().toString(36)}${ext}`;
 }
 
-/** Write the image and drop the one it replaces. One wallpaper is stored at a
-    time, so the directory cannot grow without bound.
+/** Write the image. The file it replaces stays until a config write says the
+    new one is the wallpaper: an upload that is never saved must not delete the
+    wallpaper still on screen.
 
     @param {Buffer} data @param {string} ext @returns {string} the served URL */
 function storeWallpaper(data, ext) {
@@ -41,14 +42,45 @@ function storeWallpaper(data, ext) {
   fs.mkdirSync(dir, { recursive: true });
   const saved = wallpaperName(ext);
   fs.writeFileSync(path.join(dir, saved), data);
-  for (const f of fs.readdirSync(dir)) {
-    if (f !== saved) {
-      try {
-        fs.unlinkSync(path.join(dir, f));
-      } catch {}
-    }
-  }
   return WALLPAPER_URL_BASE + saved;
+}
+
+/** Which stored wallpapers a save keeps: the one the config now points at, and
+    nothing else. A config that names none keeps the newest file, so switching
+    the source to Unsplash and back does not throw the image away.
+
+    @param {string[]} files names in the wallpaper directory, newest last
+    @param {string} referenced the file name the config points at, or ''
+    @returns {string[]} the names to delete */
+function wallpapersToDrop(files, referenced) {
+  if (referenced && files.includes(referenced)) return files.filter(f => f !== referenced);
+  const keep = files[files.length - 1];
+  return files.filter(f => f !== keep);
+}
+
+/** Remove every stored wallpaper a saved config no longer points at.
+
+    @param {unknown} url `settings.background.url`, whatever it holds
+    @returns {void} */
+function pruneWallpapers(url) {
+  const dir = WALLPAPER_DIR();
+  let files;
+  try {
+    files = fs
+      .readdirSync(dir)
+      .map(name => ({ name, at: fs.statSync(path.join(dir, name)).mtimeMs }))
+      /* The name carries the same timestamp, and decides a tie. */
+      .sort((a, b) => a.at - b.at || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+      .map(f => f.name);
+  } catch {
+    return; /* nothing has ever been stored */
+  }
+  const referenced = typeof url === 'string' && url.startsWith(WALLPAPER_URL_BASE) ? path.basename(url) : '';
+  for (const name of wallpapersToDrop(files, referenced)) {
+    try {
+      fs.unlinkSync(path.join(dir, name));
+    } catch {}
+  }
 }
 
 on('GET', '/api/wallpaper', async (_, res) => {
@@ -156,4 +188,4 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
   }
 });
 
-module.exports = { storeWallpaper, WALLPAPER_URL_BASE };
+module.exports = { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE };

@@ -10,6 +10,7 @@ const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
+const { pruneWallpapers } = require('./wallpaper');
 
 const DOCK_MAX = 4;
 
@@ -138,6 +139,9 @@ on('POST', '/api/config', async (req, res) => {
     migrate(data);
     ensureSystemItems(data);
     saveConfig(data);
+    /* Only now: until the config points at it, the file being replaced is still
+       the wallpaper on screen. */
+    pruneWallpapers(data.settings?.background?.url);
     /* An edited address must be tried at once, not wait out a backoff the
        previous one earned. */
     backoff.reset();

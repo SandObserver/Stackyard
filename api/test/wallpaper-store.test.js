@@ -13,7 +13,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 
 const { sniffImageType } = require('../src/image-sniff');
-const { storeWallpaper, WALLPAPER_URL_BASE } = require('../src/routes/wallpaper');
+const { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE } = require('../src/routes/wallpaper');
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]);
@@ -60,13 +60,38 @@ test('the stored name is generated, and carries the sniffed extension', () => {
   assert.ok(fs.existsSync(path.join(iconsDir, url.replace('/icons/', ''))));
 });
 
-test('storing again replaces the wallpaper rather than piling them up', () => {
-  storeWallpaper(PNG, '.png');
+test('an upload leaves the wallpaper still on screen alone', () => {
+  const inUse = storeWallpaper(PNG, '.png');
   storeWallpaper(JPEG, '.jpg');
-  storeWallpaper(GIF, '.gif');
+  assert.ok(fs.existsSync(path.join(iconsDir, inUse.replace('/icons/', ''))), 'the saved wallpaper was deleted');
+});
+
+test('a save keeps only the wallpaper the config points at', () => {
+  const dropped = storeWallpaper(PNG, '.png');
+  const kept = storeWallpaper(JPEG, '.jpg');
+  pruneWallpapers(kept);
   const files = fs.readdirSync(dir());
-  assert.equal(files.length, 1);
-  assert.match(files[0], /\.gif$/);
+  assert.deepEqual(files, [path.basename(kept)]);
+  assert.ok(!fs.existsSync(path.join(iconsDir, dropped.replace('/icons/', ''))));
+});
+
+test('a config naming no wallpaper still keeps the newest, and only that', () => {
+  assert.deepEqual(wallpapersToDrop(['a.png', 'b.jpg', 'c.gif'], ''), ['a.png', 'b.jpg']);
+  assert.deepEqual(wallpapersToDrop(['a.png', 'b.jpg'], 'a.png'), ['b.jpg']);
+  /* A name the directory does not hold decides nothing. */
+  assert.deepEqual(wallpapersToDrop(['a.png', 'b.jpg'], 'gone.png'), ['a.png']);
+  assert.deepEqual(wallpapersToDrop([], 'a.png'), []);
+});
+
+test('pruning a directory that was never written does nothing', () => {
+  assert.doesNotThrow(() => pruneWallpapers('/icons/wallpaper/none.png'));
+});
+
+test('a URL outside the wallpaper directory keeps nothing by name', () => {
+  storeWallpaper(PNG, '.png');
+  const newest = storeWallpaper(GIF, '.gif');
+  pruneWallpapers('https://example.invalid/photo.jpg');
+  assert.deepEqual(fs.readdirSync(dir()), [path.basename(newest)]);
 });
 
 test('wallpapers are kept out of the directory the icon picker lists', () => {
@@ -171,6 +196,25 @@ test('an over-size upload is refused with a message, not a broken response', asy
   const r = await upload('huge.png', huge);
   assert.equal(r.status, 400);
   assert.match(r.body.error, /16 MB/);
+});
+
+test('saving a config that names the new wallpaper drops the old file', async () => {
+  const dropped = storeWallpaper(PNG, '.png');
+  const kept = storeWallpaper(JPEG, '.jpg');
+  const { loadConfig } = require('../src/config');
+  const cfg = loadConfig();
+  const body = Buffer.from(
+    JSON.stringify({
+      _schemaVersion: cfg._schemaVersion,
+      _rev: cfg._rev,
+      items: [],
+      settings: { background: { type: 'url', url: kept, brightness: 1, fit: 'fill' } },
+    }),
+  );
+  const r = await request('/api/config', { 'Content-Type': 'application/json' }, body);
+  assert.equal(r.status, 200);
+  assert.deepEqual(fs.readdirSync(dir()), [path.basename(kept)]);
+  assert.ok(!fs.existsSync(path.join(iconsDir, dropped.replace('/icons/', ''))));
 });
 
 test('a link on a scheme that is not http is refused', async () => {
