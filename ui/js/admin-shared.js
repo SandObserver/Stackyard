@@ -1,5 +1,5 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { nextActiveIndex, recoversSession, toastHoldMs } from '/js/admin-logic.js?v=8558624f';
+import { nextActiveIndex, recoversSession, toastHoldMs } from '/js/admin-logic.js?v=ddfc6f80';
 import { el, qa, q } from '/js/utils.js?v=b18c93ed';
 import { t } from '/js/i18n.js?v=d056c9c5';
 
@@ -8,11 +8,7 @@ export const API = '';
 let tt;
 let _toastWired = false;
 
-/** The notice hides itself on a timer, except while it is being read: an error
-    carries the server's own words, and losing them mid-sentence costs the one
-    thing that says what went wrong. An error waits for a click instead.
-
-    @param {string} m @param {'ok'|'err'} [t] @returns {void} */
+/** @param {string} m @param {'ok'|'err'} [t] @returns {void} */
 export const toast = (m, t = 'ok') => {
   const e = el('toast');
   e.textContent = m;
@@ -20,7 +16,6 @@ export const toast = (m, t = 'ok') => {
   clearTimeout(tt);
   if (!_toastWired) {
     _toastWired = true;
-    /* Hover and focus hold it open; leaving starts a fresh, short countdown. */
     const hold = () => clearTimeout(tt);
     const release = () => {
       clearTimeout(tt);

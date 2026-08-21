@@ -60,6 +60,14 @@ test('the stored name is generated, and carries the sniffed extension', () => {
   assert.ok(fs.existsSync(path.join(iconsDir, url.replace('/icons/', ''))));
 });
 
+test('two images stored in the same millisecond each keep their own file', () => {
+  const first = storeWallpaper(PNG, '.png');
+  const second = storeWallpaper(JPEG, '.jpg');
+  assert.notEqual(first, second);
+  assert.ok(fs.existsSync(path.join(iconsDir, first.replace('/icons/', ''))));
+  assert.ok(fs.existsSync(path.join(iconsDir, second.replace('/icons/', ''))));
+});
+
 test('an upload leaves the wallpaper still on screen alone', () => {
   const inUse = storeWallpaper(PNG, '.png');
   storeWallpaper(JPEG, '.jpg');
@@ -182,7 +190,7 @@ test('a name claiming a format the bytes do not have is refused', async () => {
 test('a name that walks out of the wallpaper directory cannot', async () => {
   const r = await upload('../../escape.png', PNG);
   assert.equal(r.status, 200);
-  assert.match(r.body.url, /^\/icons\/wallpaper\/wallpaper-[a-z0-9]+\.png$/);
+  assert.match(r.body.url, /^\/icons\/wallpaper\/wallpaper-[a-z0-9]+-[a-f0-9]{8}\.png$/);
 });
 
 test('fetching something that is not a URL is refused before any request', async () => {

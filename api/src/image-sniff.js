@@ -1,5 +1,4 @@
-/* Wallpaper formats, identified by their own bytes. The extension a browser
-   sends is not evidence of anything. */
+/* The submitted extension is not evidence. Identify the format by its bytes. */
 
 const SIGNATURES = [
   { type: 'png', ext: '.png', mime: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
@@ -19,17 +18,16 @@ function riffBrand(buf) {
   return 'webp';
 }
 
-/** ISO base media: the brand follows the 'ftyp' box type. */
+/** @param {Buffer} buf @returns {string|null} the brand after the ftyp box */
 function isoBrand(buf) {
   if (!startsWith(buf, [0x66, 0x74, 0x79, 0x70], 4)) return null;
   const brand = buf.slice(8, 12).toString('latin1');
   return brand === 'avif' || brand === 'avis' ? 'avif' : null;
 }
 
-/** The format of an image, or null when it is not one this project accepts.
-
-    @param {Buffer} buf
-    @returns {{type: string, ext: string, mime: string}|null} */
+/** @param {Buffer} buf
+    @returns {{type: string, ext: string, mime: string}|null} null when the
+      bytes are not an accepted image */
 function sniffImageType(buf) {
   for (const s of SIGNATURES) if (startsWith(buf, s.bytes)) return { type: s.type, ext: s.ext, mime: s.mime };
   if (riffBrand(buf)) return { type: 'webp', ext: '.webp', mime: 'image/webp' };

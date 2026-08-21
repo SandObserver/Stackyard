@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=6309ee29';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=0be99366';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=f87415c7';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=589ad7b9';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=8558624f';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=ddfc6f80';
 import {
   buildAppItem,
   claimFolderChildren,
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=3ff06da1';
-import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=7669ed7d';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=b2b67c47';
+import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=d96fc091';
 import { state } from '/js/admin-state.js?v=b7731aa4';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=19f5f17e';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=55e0396a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
@@ -30,7 +30,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=fbd2d2ef';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=b18c93ed';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=4c3b8c98';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=89eee5e8';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
@@ -1220,8 +1220,7 @@ function initBgFit() {
   setVal(hidden.value || 'fill');
 }
 
-/** The error a response carries. A body that is not JSON is the web server
-    answering on its own, which is what an over-size upload gets.
+/** A body that is not JSON is the web server answering on its own.
 
     @param {Response} r @returns {Promise<string>} */
 async function responseError(r) {
@@ -1234,7 +1233,7 @@ async function responseError(r) {
   return `HTTP ${r.status}`;
 }
 
-/** Point the wallpaper fields at an image this server now holds. */
+/** @param {string} url an image this server holds @returns {void} */
 function setWallpaperUrl(url) {
   const urlInp = inp('bg-url-inp');
   if (urlInp) urlInp.value = url;
@@ -1273,8 +1272,8 @@ function initWallpaperUpload() {
   btn.onclick = () => /** @type {HTMLInputElement} */ (input).click();
 }
 
-/** A pasted link is downloaded once and served from this origin: the page's
-    content policy refuses images from anywhere else.
+/** Downloads a pasted link to this server. The page's content policy refuses an
+    image from any other origin.
 
     @param {string} url @returns {Promise<void>} */
 async function fetchWallpaperLink(url) {
@@ -1290,7 +1289,8 @@ async function fetchWallpaperLink(url) {
     setWallpaperUrl(d.url);
     toast(t('toast.wallpaperStored'));
   } catch (e) {
-    setWallpaperUrl('');
+    /* A link that failed must not replace the wallpaper already saved. */
+    setWallpaperUrl(state._settings?.background?.url || '');
     toast(t('toast.wallpaperFailed', { err: e.message }), 'err');
   }
 }

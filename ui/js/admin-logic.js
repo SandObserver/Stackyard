@@ -262,13 +262,11 @@ export function toastMs(message) {
   return Math.min(15000, Math.max(3000, len * 60));
 }
 
-/** After leaving a notice that was held open. Short: it has been read. */
+/** After a notice has been held open and released. It has been read. */
 const TOAST_RELEASE_MS = 1500;
 
-/** How long a notice stays up, or null when it must wait to be dismissed.
-
-    An error carries the server's own words, and it is the message a user is
-    most likely to copy, so it never disappears on its own.
+/** How long a notice stays up, or null when it waits to be dismissed. An error
+    carries the server's own words, so it never disappears on its own.
 
     @param {string} kind `'err'` or `'ok'`
     @param {string} message

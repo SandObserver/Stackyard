@@ -1,10 +1,7 @@
 // @ts-check
-/* The wallpaper fit reaches the dashboard.
-
-   The chain has four links: the dropdown writes a hidden field, the save reads
-   it, the dashboard maps it to a CSS custom property, and the wallpaper layer
-   reads that property. A break anywhere leaves the setting looking present and
-   doing nothing, which is exactly what cannot be seen from the admin page. */
+/* The fit setting from the dropdown to the wallpaper layer. A break in that
+   chain leaves the control present and doing nothing, which is what the admin
+   page cannot show. */
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, readConfig, dismissSetupPrompt } = require('./helpers');
@@ -16,9 +13,8 @@ test.beforeEach(async ({ request }) => {
   await dismissSetupPrompt(request);
 });
 
-/* The page fills these fields from the config after it loads, so a click before
-   that lands is overwritten. Waiting for the stored URL to appear is waiting
-   for the load. */
+/* The page fills these fields from the config after it loads. A click before
+   that lands is overwritten. */
 async function openAppearance(page) {
   await page.goto('/admin/');
   await page.locator('.nl[data-sec="appearance"]').click();
@@ -60,8 +56,7 @@ test('the settings pages show the wallpaper the same way the dashboard does', as
 });
 
 test('fill covers the viewport and fit shows the whole image', async ({ page, request }) => {
-  /* The wallpaper is applied after the page has built its tiles, so this is a
-     value to wait for, not one to read once. */
+  /* The wallpaper is applied after the tiles are built. Wait for the value. */
   const expectSize = async want => {
     await page.goto('/');
     await page.locator('#pages').waitFor();

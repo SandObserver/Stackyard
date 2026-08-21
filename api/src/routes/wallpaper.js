@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { on, json, checkOrigin, getIp } = require('../router');
@@ -10,33 +11,36 @@ const { parseMultipartFile } = require('../parse-multipart');
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
 
-/** Wallpapers live under the icons mount, in their own directory: the icon
-    picker lists the top level, and a wallpaper is not an icon. */
 const WALLPAPER_DIR = () => path.join(ICONS_PATH, 'wallpaper');
 const WALLPAPER_URL_BASE = '/icons/wallpaper/';
 
-/* A 4K wallpaper is the size to carry. Keep client_max_body_size on
-   /api/wallpaper/upload in nginx/dashboard.conf at or above this. */
+/* Keep client_max_body_size on /api/wallpaper/upload at or above this. nginx
+   refuses a larger body before the request reaches this code. */
 const UPLOAD_MAX_BYTES = 16 * 1024 * 1024;
 const UPLOAD_STREAM_MAX_BYTES = Math.round(UPLOAD_MAX_BYTES * 1.25);
+const LINK_BODY_MAX_BYTES = 4096;
+const UPLOADS_PER_HOUR = 20;
 
-/* A photo over a slow link takes longer than a widget's JSON poll. Keep
-   proxy_read_timeout on /api/wallpaper/fetch in nginx above this. */
+/* Keep proxy_read_timeout on /api/wallpaper/fetch above this. */
 const FETCH_TIMEOUT_MS = 30_000;
 
-/** The stored name is generated, never the submitted one: it is served from
-    this origin, and the extension follows the sniffed bytes.
+const ACCEPTED = 'JPEG, PNG, WebP, AVIF or GIF';
+const TOO_LARGE = 'image too large (max 16 MB)';
 
-    @param {string} ext @returns {string} */
+/* A message only reaches the browser when the route hands it over itself. See
+   docs/api-errors.md. */
+const oversize = () => Object.assign(new Error('body over the limit'), { oversize: true });
+
+/** @param {string} ext @returns {string} */
 function wallpaperName(ext) {
-  return `wallpaper-${Date.now().toString(36)}${ext}`;
+  return `wallpaper-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}${ext}`;
 }
 
-/** Write the image. The file it replaces stays until a config write says the
-    new one is the wallpaper: an upload that is never saved must not delete the
-    wallpaper still on screen.
+/** Writes the image under a generated name and returns the URL it is served at.
+    Deletes nothing: until a config write names the new file, the file it
+    replaces is still the wallpaper on screen.
 
-    @param {Buffer} data @param {string} ext @returns {string} the served URL */
+    @param {Buffer} data @param {string} ext @returns {string} */
 function storeWallpaper(data, ext) {
   const dir = WALLPAPER_DIR();
   fs.mkdirSync(dir, { recursive: true });
@@ -45,42 +49,78 @@ function storeWallpaper(data, ext) {
   return WALLPAPER_URL_BASE + saved;
 }
 
-/** Which stored wallpapers a save keeps: the one the config now points at, and
-    nothing else. A config that names none keeps the newest file, so switching
-    the source to Unsplash and back does not throw the image away.
-
-    @param {string[]} files names in the wallpaper directory, newest last
-    @param {string} referenced the file name the config points at, or ''
+/** @param {string[]} files names in the directory, oldest first
+    @param {string} referenced the name the config points at, or ''
     @returns {string[]} the names to delete */
 function wallpapersToDrop(files, referenced) {
   if (referenced && files.includes(referenced)) return files.filter(f => f !== referenced);
-  const keep = files[files.length - 1];
-  return files.filter(f => f !== keep);
+  const newest = files[files.length - 1];
+  return files.filter(f => f !== newest);
 }
 
-/** Remove every stored wallpaper a saved config no longer points at.
+/** @param {string} dir @returns {string[]} names, oldest first */
+function storedByAge(dir) {
+  return fs
+    .readdirSync(dir)
+    .map(name => ({ name, at: fs.statSync(path.join(dir, name)).mtimeMs }))
+    .sort((a, b) => a.at - b.at || a.name.localeCompare(b.name))
+    .map(f => f.name);
+}
 
-    @param {unknown} url `settings.background.url`, whatever it holds
-    @returns {void} */
+/** Removes every stored wallpaper the saved config no longer points at.
+
+    @param {unknown} url `settings.background.url` @returns {void} */
 function pruneWallpapers(url) {
   const dir = WALLPAPER_DIR();
   let files;
   try {
-    files = fs
-      .readdirSync(dir)
-      .map(name => ({ name, at: fs.statSync(path.join(dir, name)).mtimeMs }))
-      /* The name carries the same timestamp, and decides a tie. */
-      .sort((a, b) => a.at - b.at || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
-      .map(f => f.name);
+    files = storedByAge(dir);
   } catch {
-    return; /* nothing has ever been stored */
+    return;
   }
   const referenced = typeof url === 'string' && url.startsWith(WALLPAPER_URL_BASE) ? path.basename(url) : '';
   for (const name of wallpapersToDrop(files, referenced)) {
     try {
       fs.unlinkSync(path.join(dir, name));
-    } catch {}
+    } catch (e) {
+      log.warn('wallpaper could not be removed', { name, error: e.message });
+    }
   }
+}
+
+/** @param {import('http').IncomingMessage} req @param {number} max
+    @returns {Promise<Buffer>} */
+function readBodyCapped(req, max) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let total = 0;
+    req.on('data', c => {
+      total += c.length;
+      if (total > max) {
+        req.destroy();
+        return reject(oversize());
+      }
+      chunks.push(c);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
+/** @param {import('http').IncomingMessage} req @param {import('http').ServerResponse} res
+    @returns {boolean} whether the request may write a wallpaper */
+function mayWrite(req, res) {
+  if (IS_DEMO) {
+    json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+    return false;
+  }
+  if (!checkOrigin(req, res)) return false;
+  const limited = rateLimit(getIp(req), 'upload', UPLOADS_PER_HOUR, 3_600_000);
+  if (limited) {
+    json(res, 429, { error: limited, kind: KIND.BLOCKED });
+    return false;
+  }
+  return true;
 }
 
 on('GET', '/api/wallpaper', async (_, res) => {
@@ -100,66 +140,38 @@ on('GET', '/api/wallpaper', async (_, res) => {
 });
 
 on('POST', '/api/wallpaper/upload', async (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
-  if (!checkOrigin(req, res)) return;
+  if (!mayWrite(req, res)) return;
   try {
-    const limited = rateLimit(getIp(req), 'upload', 20, 3_600_000);
-    if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
     const ct = req.headers['content-type'] || '';
     if (!ct.includes('multipart/form-data'))
       return json(res, 400, { error: 'multipart/form-data required', kind: KIND.INVALID });
     const bMatch = ct.match(/boundary=(?:"([^"]+)"|([^\s;]+))/i);
     if (!bMatch) return json(res, 400, { error: 'missing boundary', kind: KIND.INVALID });
-    const buf = await new Promise((resolve, reject) => {
-      const chunks = [];
-      let total = 0;
-      req.on('data', c => {
-        total += c.length;
-        if (total > UPLOAD_STREAM_MAX_BYTES) {
-          req.destroy();
-          return reject(new Error('image too large (max 16 MB)'));
-        }
-        chunks.push(c);
-      });
-      req.on('end', () => resolve(Buffer.concat(chunks)));
-      req.on('error', reject);
-    });
+
+    const buf = await readBodyCapped(req, UPLOAD_STREAM_MAX_BYTES);
     const { filename, data, fileParts } = parseMultipartFile(buf, bMatch[1] || bMatch[2]);
     if (!filename || !data?.length) return json(res, 400, { error: 'no file found in upload', kind: KIND.INVALID });
     if (fileParts > 1) return json(res, 400, { error: 'only one file per upload', kind: KIND.INVALID });
-    if (data.length > UPLOAD_MAX_BYTES)
-      return json(res, 400, { error: 'image too large (max 16 MB)', kind: KIND.INVALID });
+    if (data.length > UPLOAD_MAX_BYTES) return json(res, 400, { error: TOO_LARGE, kind: KIND.INVALID });
     const kind = sniffImageType(data);
-    if (!kind) return json(res, 400, { error: 'file is not a JPEG, PNG, WebP, AVIF or GIF image', kind: KIND.INVALID });
+    if (!kind) return json(res, 400, { error: `file is not a ${ACCEPTED} image`, kind: KIND.INVALID });
+
     const url = storeWallpaper(data, kind.ext);
     log.audit('wallpaper uploaded', { url, type: kind.type, bytes: data.length });
     json(res, 200, { ok: true, url });
   } catch (e) {
+    if (e.oversize) return json(res, 400, { error: TOO_LARGE, kind: KIND.INVALID });
     fail(res, e, { status: 500 });
   }
 });
 
 on('POST', '/api/wallpaper/fetch', async (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
-  if (!checkOrigin(req, res)) return;
+  if (!mayWrite(req, res)) return;
   try {
-    const limited = rateLimit(getIp(req), 'upload', 20, 3_600_000);
-    if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
-    const body = await new Promise((resolve, reject) => {
-      let s = '';
-      req.on('data', c => {
-        s += c;
-        if (s.length > 4096) {
-          req.destroy();
-          reject(new Error('request too large'));
-        }
-      });
-      req.on('end', () => resolve(s));
-      req.on('error', reject);
-    });
+    const body = await readBodyCapped(req, LINK_BODY_MAX_BYTES);
     let url = '';
     try {
-      url = String(JSON.parse(body || '{}').url || '').trim();
+      url = String(JSON.parse(body.toString('utf8') || '{}').url || '').trim();
     } catch {
       return json(res, 400, { error: 'invalid JSON body', kind: KIND.INVALID });
     }
@@ -177,12 +189,13 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
       return json(res, 502, { error: `the image could not be fetched (HTTP ${r.status})`, kind: KIND.UPSTREAM });
     const data = Buffer.isBuffer(r.data) ? r.data : Buffer.alloc(0);
     const kind = sniffImageType(data);
-    if (!kind)
-      return json(res, 400, { error: 'that link is not a JPEG, PNG, WebP, AVIF or GIF image', kind: KIND.INVALID });
+    if (!kind) return json(res, 400, { error: `that link is not a ${ACCEPTED} image`, kind: KIND.INVALID });
+
     const saved = storeWallpaper(data, kind.ext);
     log.audit('wallpaper fetched', { url: parsed.origin + parsed.pathname, type: kind.type, bytes: data.length });
     json(res, 200, { ok: true, url: saved });
   } catch (e) {
+    if (e.oversize) return json(res, 400, { error: 'request too large', kind: KIND.INVALID });
     if (e instanceof SsrfBlockedError) return json(res, 403, { error: e.message, kind: KIND.BLOCKED });
     fail(res, e, { status: 502 });
   }

@@ -45,7 +45,7 @@ import {
   relativeLuminance,
   sampleImage,
   toneForLuminances,
-} from '/js/label-contrast.js?v=2332228f';
+} from '/js/label-contrast.js?v=69cbdcb0';
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();
@@ -445,15 +445,14 @@ function syncMobPages() {
   }
 }
 
-/** What shows behind a wallpaper that does not reach every edge. Matches
-    --bg-base in tokens.css. */
+/* Matches --bg-base in tokens.css. It shows wherever a fitted wallpaper does
+   not reach. */
 const WALLPAPER_BACKDROP = '#0d1117';
 
-/** The background as the label tones see it: a sampled wallpaper grid, or one
-    tone for a solid colour. Null on both means the labels keep their default. */
+/* A sampled wallpaper grid, or one tone for a solid colour. Null on both leaves
+   the labels as they are. */
 let bgTone = { grid: null, tone: null };
 
-/** Re-tone the labels. Cheap: it re-reads the sampled grid, never the image. */
 function retone() {
   requestAnimationFrame(() => applyLabelTones(bgTone));
 }
@@ -464,8 +463,7 @@ function toneForColor(color) {
   return toneForLuminances([relativeLuminance(rgb[0], rgb[1], rgb[2])]);
 }
 
-/** The readable copy of the current wallpaper, held so a resize re-samples
-    without fetching again. */
+/* Held so a resize re-samples without fetching the image again. */
 let _bgSample = null;
 
 async function sampleWallpaper(url, brightness, fit) {
@@ -475,7 +473,7 @@ async function sampleWallpaper(url, brightness, fit) {
 }
 
 /* The wallpaper is sized against the viewport, so a resize moves which part of
-   it every label sits on. */
+   it each label sits on. */
 function resampleBg() {
   if (!_bgSample) return retone();
   bgTone = {
