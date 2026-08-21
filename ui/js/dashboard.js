@@ -45,7 +45,7 @@ import {
   relativeLuminance,
   sampleImage,
   toneForLuminances,
-} from '/js/label-contrast.js?v=322fb66e';
+} from '/js/label-contrast.js?v=69cbdcb0';
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();
@@ -445,11 +445,14 @@ function syncMobPages() {
   }
 }
 
-/** The background as the label tones see it: a sampled wallpaper grid, or one
-    tone for a solid colour. Null on both means the labels keep their default. */
+/* Matches --bg-base in tokens.css. It shows wherever a fitted wallpaper does
+   not reach. */
+const WALLPAPER_BACKDROP = '#0d1117';
+
+/* A sampled wallpaper grid, or one tone for a solid colour. Null on both leaves
+   the labels as they are. */
 let bgTone = { grid: null, tone: null };
 
-/** Re-tone the labels. Cheap: it re-reads the sampled grid, never the image. */
 function retone() {
   requestAnimationFrame(() => applyLabelTones(bgTone));
 }
@@ -460,23 +463,28 @@ function toneForColor(color) {
   return toneForLuminances([relativeLuminance(rgb[0], rgb[1], rgb[2])]);
 }
 
-/** The readable copy of the current wallpaper, held so a resize re-samples
-    without fetching again. */
+/* Held so a resize re-samples without fetching the image again. */
 let _bgSample = null;
 
-async function sampleWallpaper(url, brightness) {
+async function sampleWallpaper(url, brightness, fit) {
   const img = await loadSamplingImage(url);
-  _bgSample = img ? { img, brightness } : null;
-  bgTone = { grid: img ? sampleImage(img, window.innerWidth, window.innerHeight, brightness) : null, tone: null };
-  retone();
+  _bgSample = img ? { img, brightness, fit } : null;
+  resampleBg();
 }
 
-/* The wallpaper is sized to cover the viewport, so a resize moves which part of
-   it every label sits on. */
+/* The wallpaper is sized against the viewport, so a resize moves which part of
+   it each label sits on. */
 function resampleBg() {
   if (!_bgSample) return retone();
   bgTone = {
-    grid: sampleImage(_bgSample.img, window.innerWidth, window.innerHeight, _bgSample.brightness),
+    grid: sampleImage(
+      _bgSample.img,
+      window.innerWidth,
+      window.innerHeight,
+      _bgSample.brightness,
+      _bgSample.fit,
+      WALLPAPER_BACKDROP,
+    ),
     tone: null,
   };
   retone();
@@ -491,15 +499,18 @@ async function applyBg() {
       root.style.setProperty('--bg-image', 'none');
       root.style.setProperty('--bg-color', safeColor);
       root.style.setProperty('--bg-brightness', '1');
+      root.style.setProperty('--bg-size', 'cover');
       bgTone = { grid: null, tone: toneForColor(safeColor) };
       retone();
     } else if (bg.type === 'url' && bg.url) {
       const url = sanitizeCssUrl(bg.url);
       const brightness = Number(bg.brightness ?? 0.62);
+      const fit = bg.fit === 'fit' ? 'fit' : 'fill';
       root.style.setProperty('--bg-image', `url('${url}')`);
-      root.style.setProperty('--bg-color', '#0d1117');
+      root.style.setProperty('--bg-color', WALLPAPER_BACKDROP);
       root.style.setProperty('--bg-brightness', String(brightness));
-      sampleWallpaper(url, brightness);
+      root.style.setProperty('--bg-size', fit === 'fit' ? 'contain' : 'cover');
+      sampleWallpaper(url, brightness, fit);
     } else if (bg.type === 'unsplash') {
       let url = readWallpaperCache(storeGet(WALLPAPER_STORE), bg, Date.now());
       if (!url) {
@@ -514,9 +525,10 @@ async function applyBg() {
         const img = new Image();
         img.onload = () => {
           root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(shown)}')`);
-          root.style.setProperty('--bg-color', '#0d1117');
+          root.style.setProperty('--bg-color', WALLPAPER_BACKDROP);
           root.style.setProperty('--bg-brightness', String(brightness));
-          sampleWallpaper(sanitizeCssUrl(shown), brightness);
+          root.style.setProperty('--bg-size', 'cover');
+          sampleWallpaper(sanitizeCssUrl(shown), brightness, 'fill');
         };
         img.src = shown;
       }

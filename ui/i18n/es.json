@@ -83,9 +83,16 @@
     "brightness": "Brillo",
     "collectionTip": "Deja el Collection ID en blanco para elegir una imagen aleatoria.",
     "sourceUnsplash": "Unsplash",
-    "sourceUrl": "URL de imagen",
+    "sourceUrl": "Imagen",
     "sourceColor": "Color sólido",
-    "unsplashKeyPh": "Pega tu clave de API de Unsplash"
+    "unsplashKeyPh": "Pega tu clave de API de Unsplash",
+    "image": "Imagen",
+    "noImage": "Sin imagen",
+    "fit": "Ajuste",
+    "fitFill": "Rellenar",
+    "fitContain": "Ajustar",
+    "uploading": "Subiendo…",
+    "imageTip": "Las imágenes subidas y enlazadas se guardan en este servidor y se sirven desde él."
   },
   "about": {
     "documentation": "Documentación",
@@ -215,7 +222,10 @@
     "socketUrlBad": "Proxy de socket no guardado: {reason}",
     "socketUrlUnverified": "Guardado, pero el proxy de socket no respondió: {reason}",
     "socketHintSharedNetwork": "Ese nombre lo resuelve Docker, que solo responde para contenedores en una red compartida. Ponlos en la misma red o usa una dirección que el proxy publique.",
-    "socketHintPublishPort": "Nada respondió en esa dirección. Un socket proxy publicado en el bucle local del host no es accesible desde un contenedor; publícalo en la dirección del puente de Docker, o pon ambos contenedores en una red compartida y usa el nombre del proxy."
+    "socketHintPublishPort": "Nada respondió en esa dirección. Un socket proxy publicado en el bucle local del host no es accesible desde un contenedor; publícalo en la dirección del puente de Docker, o pon ambos contenedores en una red compartida y usa el nombre del proxy.",
+    "wallpaperStored": "Fondo de pantalla guardado en este servidor.",
+    "wallpaperFailed": "Error con el fondo de pantalla: {err}",
+    "imageTooLarge": "Esa imagen es demasiado grande para el servidor."
   },
   "confirm": {
     "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",

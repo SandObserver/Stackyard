@@ -257,6 +257,44 @@ test('nginx allows at least as much as the API does', () => {
   assert.ok(nginxLimit >= iconLimit, `nginx allows ${nginxLimit} but icon uploads may be ${iconLimit}`);
 });
 
+/* The same trap, one address along: a wallpaper is a photo, so the upload route
+   allows far more than the site-wide limit. nginx has to allow at least as much
+   on that address, or the request never reaches the code that knows the rule
+   and the browser is handed an HTML error page it cannot read. */
+
+test('nginx allows a wallpaper upload as large as the API accepts', () => {
+  const block = /location\s*=\s*\/api\/wallpaper\/upload\s*\{([\s\S]*?)\n    \}/.exec(dashboard);
+  assert.ok(block, 'the wallpaper upload has no location of its own');
+  const routeLimit = nginxSize(block[1], 'client_max_body_size');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'wallpaper.js'), 'utf8');
+  const m = /UPLOAD_MAX_BYTES = (\d+) \* 1024 \* 1024/.exec(src);
+  assert.ok(m, 'UPLOAD_MAX_BYTES not found in routes/wallpaper.js');
+  const apiLimit = Number(m[1]) * 1024 * 1024;
+  assert.ok(routeLimit >= apiLimit, `nginx allows ${routeLimit} but the API accepts ${apiLimit}`);
+});
+
+test('nginx waits for a wallpaper download at least as long as the API does', () => {
+  const block = /location\s*=\s*\/api\/wallpaper\/fetch\s*\{([\s\S]*?)\n    \}/.exec(dashboard);
+  assert.ok(block, 'the wallpaper link fetch has no location of its own');
+  const readTimeout = /proxy_read_timeout\s+(\d+)s;/.exec(block[1]);
+  assert.ok(readTimeout, 'no proxy_read_timeout on the fetch location');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'wallpaper.js'), 'utf8');
+  const m = /FETCH_TIMEOUT_MS = ([\d_]+)/.exec(src);
+  assert.ok(m, 'FETCH_TIMEOUT_MS not found in routes/wallpaper.js');
+  const apiMs = Number(m[1].replace(/_/g, ''));
+  assert.ok(
+    Number(readTimeout[1]) * 1000 >= apiMs,
+    `nginx gives up after ${readTimeout[1]}s while the API waits ${apiMs}ms`,
+  );
+});
+
+test('the wallpaper upload is proxied like the rest of the API', () => {
+  const block = /location\s*=\s*\/api\/wallpaper\/upload\s*\{([\s\S]*?)\n    \}/.exec(dashboard);
+  assert.match(block[1], /proxy_pass\s+http:\/\/127\.0\.0\.1:3000;/);
+  assert.match(block[1], /proxy_set_header\s+X-Real-IP\s+\$remote_addr;/);
+  assert.match(block[1], /proxy_set_header\s+X-Forwarded-For\s+\$proxy_add_x_forwarded_for;/);
+});
+
 /* Headroom, not a blank cheque: a body is buffered before it is forwarded, and
    this runs on hardware with 512 MB or less. */
 test('the limits stay within reach of each other', () => {

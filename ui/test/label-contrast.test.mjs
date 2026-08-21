@@ -4,8 +4,10 @@ import { test } from 'node:test';
 import {
   applyBrightness,
   cellsForRect,
+  containDestRect,
   contrastRatio,
   coverSourceRect,
+  drawPlan,
   gridFromPixels,
   relativeLuminance,
   toneForLuminances,
@@ -81,4 +83,27 @@ test('two labels on one photo can take different tones', () => {
   const right = { left: 60, top: 0, right: 100, bottom: 100 };
   assert.equal(toneForRect(grid, 2, 1, 100, 100, left), 'dark');
   assert.equal(toneForRect(grid, 2, 1, 100, 100, right), 'light');
+});
+
+test('fit shows the whole image, centred, with a band on two edges', () => {
+  const wide = containDestRect(2000, 1000, 1000, 1000);
+  assert.deepEqual(wide, { dx: 0, dy: 250, dw: 1000, dh: 500 });
+  const tall = containDestRect(1000, 2000, 1000, 1000);
+  assert.deepEqual(tall, { dx: 250, dy: 0, dw: 500, dh: 1000 });
+});
+
+test('an image the shape of the viewport has no band in either mode', () => {
+  assert.deepEqual(containDestRect(1600, 900, 800, 450), { dx: 0, dy: 0, dw: 800, dh: 450 });
+  assert.deepEqual(coverSourceRect(1600, 900, 800, 450), { sx: 0, sy: 0, sw: 1600, sh: 900 });
+});
+
+test('fill crops the source and fills the viewport; fit keeps the source whole', () => {
+  const fill = drawPlan(2000, 1000, 1000, 1000, 'fill');
+  assert.deepEqual(fill, { sx: 500, sy: 0, sw: 1000, sh: 1000, dx: 0, dy: 0, dw: 1000, dh: 1000 });
+  const fit = drawPlan(2000, 1000, 1000, 1000, 'fit');
+  assert.deepEqual(fit, { sx: 0, sy: 0, sw: 2000, sh: 1000, dx: 0, dy: 250, dw: 1000, dh: 500 });
+});
+
+test('an unknown fit is treated as fill', () => {
+  assert.deepEqual(drawPlan(2000, 1000, 1000, 1000, 'stretch'), drawPlan(2000, 1000, 1000, 1000, 'fill'));
 });

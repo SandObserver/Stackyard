@@ -20,6 +20,7 @@ import {
   clearsStoredPassword,
   recoversSession,
   toastMs,
+  toastHoldMs,
   BLOCK,
 } from '../js/admin-logic.js';
 /* The real strength check, so these assert the rule the save actually applies. */
@@ -526,6 +527,17 @@ test('only a 401 means the session, not any other failure', () => {
 test('recoversSession tolerates a missing path', () => {
   assert.equal(recoversSession(undefined, 401), true);
   assert.equal(recoversSession(null, 200), false);
+});
+
+test('an error waits to be dismissed, in both phases', () => {
+  assert.equal(toastHoldMs('err', 'Wallpaper failed: image too large (max 16 MB)', 'show'), null);
+  assert.equal(toastHoldMs('err', 'x', 'release'), null);
+});
+
+test('a confirmation still hides itself, and sooner once it has been read', () => {
+  assert.equal(toastHoldMs('ok', 'Saved', 'show'), 3000);
+  assert.equal(toastHoldMs('ok', 'x'.repeat(1000), 'show'), 15000);
+  assert.equal(toastHoldMs('ok', 'x'.repeat(1000), 'release'), 1500);
 });
 
 test('toastMs holds a long message longer than a short one', () => {

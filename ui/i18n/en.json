@@ -83,9 +83,16 @@
     "brightness": "Brightness",
     "collectionTip": "Leave Collection ID blank for random.",
     "sourceUnsplash": "Unsplash",
-    "sourceUrl": "Image URL",
+    "sourceUrl": "Image",
     "sourceColor": "Solid color",
-    "unsplashKeyPh": "Paste your Unsplash API key"
+    "unsplashKeyPh": "Paste your Unsplash API key",
+    "image": "Image",
+    "noImage": "No image",
+    "fit": "Fit",
+    "fitFill": "Fill",
+    "fitContain": "Fit",
+    "uploading": "Uploading…",
+    "imageTip": "Uploaded and linked images are stored on this server and served from it."
   },
   "about": {
     "documentation": "Documentation",
@@ -215,7 +222,10 @@
     "socketUrlBad": "Socket proxy not saved: {reason}",
     "socketUrlUnverified": "Saved, but the socket proxy did not answer: {reason}",
     "socketHintSharedNetwork": "That name is resolved by Docker, which answers only for containers on a shared network. Put both on the same network, or use an address the proxy publishes.",
-    "socketHintPublishPort": "Nothing at that address answered. A socket proxy published on the host’s loopback cannot be reached from inside a container; publish it on the Docker bridge address, or put both containers on a shared network and use the proxy’s name."
+    "socketHintPublishPort": "Nothing at that address answered. A socket proxy published on the host’s loopback cannot be reached from inside a container; publish it on the Docker bridge address, or put both containers on a shared network and use the proxy’s name.",
+    "wallpaperStored": "Wallpaper stored on this server.",
+    "wallpaperFailed": "Wallpaper failed: {err}",
+    "imageTooLarge": "That image is too large for the server to accept."
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",

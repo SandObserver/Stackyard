@@ -1,17 +1,38 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { nextActiveIndex, recoversSession, toastMs } from '/js/admin-logic.js?v=f3f87abf';
+import { nextActiveIndex, recoversSession, toastHoldMs } from '/js/admin-logic.js?v=ddfc6f80';
 import { el, qa, q } from '/js/utils.js?v=b18c93ed';
 import { t } from '/js/i18n.js?v=d056c9c5';
 
 export const API = '';
 
 let tt;
+let _toastWired = false;
+
+/** @param {string} m @param {'ok'|'err'} [t] @returns {void} */
 export const toast = (m, t = 'ok') => {
   const e = el('toast');
   e.textContent = m;
   e.className = `show ${t}`;
   clearTimeout(tt);
-  tt = setTimeout(() => (e.className = ''), toastMs(m));
+  if (!_toastWired) {
+    _toastWired = true;
+    const hold = () => clearTimeout(tt);
+    const release = () => {
+      clearTimeout(tt);
+      const ms = toastHoldMs(e.classList.contains('err') ? 'err' : 'ok', e.textContent || '', 'release');
+      if (ms != null) tt = setTimeout(() => (e.className = ''), ms);
+    };
+    e.addEventListener('mouseenter', hold);
+    e.addEventListener('focusin', hold);
+    e.addEventListener('mouseleave', release);
+    e.addEventListener('focusout', release);
+    e.addEventListener('click', () => {
+      clearTimeout(tt);
+      e.className = '';
+    });
+  }
+  const ms = toastHoldMs(t, m, 'show');
+  if (ms != null) tt = setTimeout(() => (e.className = ''), ms);
 };
 
 /* Carry `kind` and `detail`, so callers branch on data, never on message

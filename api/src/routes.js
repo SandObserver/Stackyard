@@ -4,4 +4,5 @@ require('./routes/health');
 require('./routes/badges');
 require('./routes/system');
 require('./routes/icons');
+require('./routes/wallpaper');
 require('./routes/version');

@@ -2,10 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const { on, json, checkOrigin, getIp } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
-const { loadConfig, ICONS_PATH } = require('../config');
+const { ICONS_PATH } = require('../config');
 const { fetchUnchecked } = require('../proxy');
 const log = require('../log');
-const { fail, KIND, errorBody } = require('../api-error');
+const { fail, KIND } = require('../api-error');
 
 /* A safe, unused filename for an upload. Never reuse the submitted name: it
    overwrites an icon other apps still reference. Strip backslashes as well as
@@ -44,22 +44,6 @@ const { rateLimit } = require('../auth');
 const { sanitizeSvg } = require('../svg-sanitize');
 const { sniffIconType } = require('../icon-sniff');
 const { parseMultipartFile } = require('../parse-multipart');
-
-on('GET', '/api/wallpaper', async (_, res) => {
-  const cfg = loadConfig(),
-    bg = cfg.settings?.background || {};
-  if (bg.type !== 'unsplash') return json(res, 200, { url: null });
-  try {
-    const p = new URLSearchParams({ orientation: 'landscape', content_filter: 'high', client_id: bg.apiKey || '' });
-    if (bg.collection) p.set('collections', bg.collection);
-    const r = await fetchUnchecked(`https://api.unsplash.com/photos/random?${p}`);
-    const raw = r.data?.urls?.raw;
-    if (!raw) return json(res, 200, { url: null, error: r.data?.errors?.[0] || 'No image returned' });
-    json(res, 200, { url: `${raw}&w=2800&h=1800&q=85&fm=jpg&fit=crop&crop=entropy` });
-  } catch (e) {
-    json(res, 200, Object.assign({ url: null }, errorBody(e)));
-  }
-});
 
 let _iconCache = null,
   _iconCacheAt = 0;

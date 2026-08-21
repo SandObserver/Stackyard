@@ -290,9 +290,12 @@ function fetchJSON(raw, opts = {}) {
         }
         const bufs = [];
         let total = 0;
+        /* A caller that stores what it receives, rather than parsing it, sets
+           its own ceiling. */
+        const sizeLimit = Number(opts.maxBytes) > 0 ? Number(opts.maxBytes) : FETCH_SIZE_LIMIT;
         res.on('data', c => {
           total += c.length;
-          if (total > FETCH_SIZE_LIMIT) {
+          if (total > sizeLimit) {
             req.destroy();
             return done(reject, new Error('Response too large'));
           }

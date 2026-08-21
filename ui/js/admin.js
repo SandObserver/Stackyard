@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=fde6479c';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=76be763e';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=f87415c7';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=589ad7b9';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=f3f87abf';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=ddfc6f80';
 import {
   buildAppItem,
   claimFolderChildren,
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=e9bec962';
-import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=3d2627a9';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=b2b67c47';
+import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=d96fc091';
 import { state } from '/js/admin-state.js?v=b7731aa4';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=bb1a94d7';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=55e0396a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
@@ -30,7 +30,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=fbd2d2ef';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=b18c93ed';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=5fb6a01b';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=89eee5e8';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
@@ -80,10 +80,12 @@ async function applyBg() {
       root.style.setProperty('--bg-image', 'none');
       root.style.setProperty('--bg-color', String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g, ''));
       root.style.setProperty('--bg-brightness', '1');
+      root.style.setProperty('--bg-size', 'cover');
     } else if (bg.type === 'url' && bg.url) {
       root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(bg.url)}')`);
       root.style.setProperty('--bg-color', '#0d1117');
       root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
+      root.style.setProperty('--bg-size', bg.fit === 'fit' ? 'contain' : 'cover');
     } else if (bg.type === 'unsplash') {
       const r = await fetch('/api/wallpaper', { cache: 'no-store' });
       const d = await r.json();
@@ -93,6 +95,7 @@ async function applyBg() {
           root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(d.url)}')`);
           root.style.setProperty('--bg-color', '#0d1117');
           root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
+          root.style.setProperty('--bg-size', 'cover');
         };
         img.src = d.url;
       }
@@ -1081,7 +1084,12 @@ function initAllInlineEdits() {
   urlInp.id = 'bg-url-inp';
   urlInp.type = 'url';
   document.body.appendChild(urlInp);
-  initInlineEdit('ie-bgurl', 'bg-url-inp', { placeholder: 'https://example.com/photo.jpg' });
+  initInlineEdit('ie-bgurl', 'bg-url-inp', {
+    placeholder: 'https://example.com/photo.jpg',
+    onCommit(v) {
+      fetchWallpaperLink(v.trim());
+    },
+  });
 
   const colorInp = document.createElement('input');
   colorInp.id = 'bg-color-inp';
@@ -1164,7 +1172,7 @@ function initBgType() {
 
   function setVal(val) {
     hidden.value = val;
-    const labels = { unsplash: 'Unsplash', url: 'Image URL', color: 'Solid color' };
+    const labels = { unsplash: 'Unsplash', url: 'Image', color: 'Solid color' };
     /* Update only the text node. The SVG chevron must survive. */
     const textNode = btn.childNodes[0];
     if (textNode && textNode.nodeType === 3) textNode.textContent = labels[val] || val;
@@ -1173,6 +1181,8 @@ function initBgType() {
     showBgFields(val);
     const hint = el('bgcol-hint');
     if (hint) hint.style.display = val === 'unsplash' ? '' : 'none';
+    const imgHint = el('bg-url-hint');
+    if (imgHint) imgHint.style.display = val === 'url' ? '' : 'none';
   }
 
   btn.addEventListener('click', e => {
@@ -1187,6 +1197,102 @@ function initBgType() {
   });
 
   setVal(hidden.value || 'unsplash');
+}
+
+function initBgFit() {
+  const btn = el('bg-fit-btn');
+  const list = el('bg-fit-list');
+  const hidden = inp('bg-fit');
+  if (!btn || !list || !hidden) return;
+  function setVal(val) {
+    hidden.value = val;
+    showBgFit(val);
+    list.hidden = true;
+  }
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    list.hidden = !list.hidden;
+  });
+  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => setVal(li.dataset.val || 'fill')));
+  document.addEventListener('click', () => {
+    list.hidden = true;
+  });
+  setVal(hidden.value || 'fill');
+}
+
+/** A body that is not JSON is the web server answering on its own.
+
+    @param {Response} r @returns {Promise<string>} */
+async function responseError(r) {
+  const text = await r.text().catch(() => '');
+  try {
+    const d = JSON.parse(text);
+    if (d && d.error) return String(d.error);
+  } catch {}
+  if (r.status === 413) return t('toast.imageTooLarge');
+  return `HTTP ${r.status}`;
+}
+
+/** @param {string} url an image this server holds @returns {void} */
+function setWallpaperUrl(url) {
+  const urlInp = inp('bg-url-inp');
+  if (urlInp) urlInp.value = url;
+  const rv = el('ie-bgurl-v');
+  if (rv) {
+    setUserText(rv, url);
+    rv.classList.remove('is-ph');
+  }
+  showWallpaperFile(url);
+}
+
+function initWallpaperUpload() {
+  const input = inp('bg-upload');
+  const btn = el('bg-upload-lbl');
+  if (!input || !btn) return;
+  input.onchange = async () => {
+    const file = /** @type {HTMLInputElement} */ (input).files?.[0];
+    if (!file) return;
+    const orig = btn.textContent;
+    btn.textContent = t('appearance.uploading');
+    try {
+      const form = new FormData();
+      form.append('wallpaper', file, file.name);
+      const r = await fetch('/api/wallpaper/upload', { method: 'POST', body: form });
+      if (!r.ok) throw new Error(await responseError(r));
+      const d = await r.json();
+      setWallpaperUrl(d.url);
+      toast(t('toast.wallpaperStored'));
+    } catch (e) {
+      toast(t('toast.wallpaperFailed', { err: e.message }), 'err');
+    } finally {
+      btn.textContent = orig;
+      /** @type {HTMLInputElement} */ (input).value = '';
+    }
+  };
+  btn.onclick = () => /** @type {HTMLInputElement} */ (input).click();
+}
+
+/** Downloads a pasted link to this server. The page's content policy refuses an
+    image from any other origin.
+
+    @param {string} url @returns {Promise<void>} */
+async function fetchWallpaperLink(url) {
+  if (!url || url.startsWith('/icons/')) return;
+  try {
+    const r = await fetch('/api/wallpaper/fetch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!r.ok) throw new Error(await responseError(r));
+    const d = await r.json();
+    setWallpaperUrl(d.url);
+    toast(t('toast.wallpaperStored'));
+  } catch (e) {
+    /* A link that failed must not replace the wallpaper already saved. */
+    setWallpaperUrl(state._settings?.background?.url || '');
+    toast(t('toast.wallpaperFailed', { err: e.message }), 'err');
+  }
 }
 
 function initLogLevel() {
@@ -1533,6 +1639,8 @@ initAllInlineEdits();
 initSecToggle();
 initDockerToggle();
 initBgType();
+initBgFit();
+initWallpaperUpload();
 initLogLevel();
 initLanguage();
 initTheme();

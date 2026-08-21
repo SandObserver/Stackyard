@@ -83,9 +83,16 @@
     "brightness": "亮度",
     "collectionTip": "将 Collection ID 留空以随机显示。",
     "sourceUnsplash": "Unsplash",
-    "sourceUrl": "图片网址",
+    "sourceUrl": "图片",
     "sourceColor": "纯色",
-    "unsplashKeyPh": "粘贴你的 Unsplash API 密钥"
+    "unsplashKeyPh": "粘贴你的 Unsplash API 密钥",
+    "image": "图片",
+    "noImage": "未设置图片",
+    "fit": "适应方式",
+    "fitFill": "填充",
+    "fitContain": "适应",
+    "uploading": "上传中…",
+    "imageTip": "上传和链接的图片都保存在本服务器，并由本服务器提供。"
   },
   "about": {
     "documentation": "文档",
@@ -215,7 +222,10 @@
     "socketUrlBad": "未保存套接字代理：{reason}",
     "socketUrlUnverified": "已保存，但套接字代理没有响应：{reason}",
     "socketHintSharedNetwork": "该名称由 Docker 解析，且只对处于同一网络的容器生效。请将两者放入同一网络，或改用代理已发布的地址。",
-    "socketHintPublishPort": "该地址没有任何响应。发布在主机回环上的套接字代理无法从容器内访问；请将其发布到 Docker 网桥地址，或把两个容器放入同一网络并使用代理名称。"
+    "socketHintPublishPort": "该地址没有任何响应。发布在主机回环上的套接字代理无法从容器内访问；请将其发布到 Docker 网桥地址，或把两个容器放入同一网络并使用代理名称。",
+    "wallpaperStored": "壁纸已保存到本服务器。",
+    "wallpaperFailed": "壁纸操作失败：{err}",
+    "imageTooLarge": "该图片过大，服务器无法接受。"
   },
   "confirm": {
     "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",

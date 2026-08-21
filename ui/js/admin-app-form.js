@@ -2,7 +2,7 @@ import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
 import { state } from '/js/admin-state.js?v=b7731aa4';
-import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=f3f87abf';
+import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=ddfc6f80';
 import { t } from '/js/i18n.js?v=d056c9c5';
 import {
   toast,
@@ -13,8 +13,8 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=3d2627a9';
-import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=5fb6a01b';
+} from '/js/admin-shared.js?v=d96fc091';
+import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=89eee5e8';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {

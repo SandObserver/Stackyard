@@ -11,7 +11,9 @@ Three hosts outside the services you configure are contacted: `cdn.jsdelivr.net`
 
 Dashboard icons load through `/api/icons/cdn`, which fetches each icon once, sanitizes SVGs, and caches it for 24 hours. The CDN therefore does not learn which services your dashboard shows. The browser contacts the CDN directly in two cases: when the proxy fetch fails, since the direct URL is the last fallback in the chain, and in the admin icon picker, whose previews use the catalogue's own URLs.
 
-Wallpaper works differently. The server calls `api.unsplash.com` with your API key when the wallpaper source is Unsplash, and the browser then loads the chosen image from `images.unsplash.com`. Set the wallpaper to a URL or a solid colour to contact Unsplash never.
+Wallpaper works differently. The server calls `api.unsplash.com` with your API key when the wallpaper source is Unsplash, and the browser then loads the chosen image from `images.unsplash.com`. Set the wallpaper to an image or a solid colour to contact Unsplash never.
+
+An image wallpaper is stored on the server, under `/icons/wallpaper/`, and served from there. A pasted link is downloaded once, when you save it, through the same address guard as widget requests. The browser never loads a wallpaper from another host.
 
 The update check runs on the server when the admin About page is opened, at most once an hour. It is a plain read of the public releases endpoint and sends nothing about the install.
 
