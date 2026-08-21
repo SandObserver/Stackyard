@@ -224,7 +224,8 @@
     "socketHintSharedNetwork": "该名称由 Docker 解析，且只对处于同一网络的容器生效。请将两者放入同一网络，或改用代理已发布的地址。",
     "socketHintPublishPort": "该地址没有任何响应。发布在主机回环上的套接字代理无法从容器内访问；请将其发布到 Docker 网桥地址，或把两个容器放入同一网络并使用代理名称。",
     "wallpaperStored": "壁纸已保存到本服务器。",
-    "wallpaperFailed": "壁纸操作失败：{err}"
+    "wallpaperFailed": "壁纸操作失败：{err}",
+    "imageTooLarge": "该图片过大，服务器无法接受。"
   },
   "confirm": {
     "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",

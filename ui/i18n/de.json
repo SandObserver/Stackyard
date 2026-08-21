@@ -224,7 +224,8 @@
     "socketHintSharedNetwork": "Diesen Namen löst Docker nur für Container in einem gemeinsamen Netzwerk auf. Legen Sie beide in dasselbe Netzwerk oder verwenden Sie eine Adresse, die der Proxy veröffentlicht.",
     "socketHintPublishPort": "Unter dieser Adresse hat nichts geantwortet. Ein auf dem Loopback des Hosts veröffentlichter Socket-Proxy ist aus einem Container nicht erreichbar; veröffentlichen Sie ihn auf der Docker-Bridge-Adresse oder legen Sie beide Container in ein gemeinsames Netzwerk und verwenden Sie den Namen des Proxys.",
     "wallpaperStored": "Hintergrundbild auf diesem Server gespeichert.",
-    "wallpaperFailed": "Hintergrundbild fehlgeschlagen: {err}"
+    "wallpaperFailed": "Hintergrundbild fehlgeschlagen: {err}",
+    "imageTooLarge": "Dieses Bild ist zu groß für den Server."
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",

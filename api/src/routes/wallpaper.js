@@ -15,8 +15,14 @@ const { fail, KIND, errorBody } = require('../api-error');
 const WALLPAPER_DIR = () => path.join(ICONS_PATH, 'wallpaper');
 const WALLPAPER_URL_BASE = '/icons/wallpaper/';
 
-const UPLOAD_MAX_BYTES = 8 * 1024 * 1024;
+/* A 4K wallpaper is the size to carry. Keep client_max_body_size on
+   /api/wallpaper/upload in nginx/dashboard.conf at or above this. */
+const UPLOAD_MAX_BYTES = 16 * 1024 * 1024;
 const UPLOAD_STREAM_MAX_BYTES = Math.round(UPLOAD_MAX_BYTES * 1.25);
+
+/* A photo over a slow link takes longer than a widget's JSON poll. Keep
+   proxy_read_timeout on /api/wallpaper/fetch in nginx above this. */
+const FETCH_TIMEOUT_MS = 30_000;
 
 /** The stored name is generated, never the submitted one: it is served from
     this origin, and the extension follows the sniffed bytes.
@@ -79,7 +85,7 @@ on('POST', '/api/wallpaper/upload', async (req, res) => {
         total += c.length;
         if (total > UPLOAD_STREAM_MAX_BYTES) {
           req.destroy();
-          return reject(new Error('image too large (max 8 MB)'));
+          return reject(new Error('image too large (max 16 MB)'));
         }
         chunks.push(c);
       });
@@ -90,7 +96,7 @@ on('POST', '/api/wallpaper/upload', async (req, res) => {
     if (!filename || !data?.length) return json(res, 400, { error: 'no file found in upload', kind: KIND.INVALID });
     if (fileParts > 1) return json(res, 400, { error: 'only one file per upload', kind: KIND.INVALID });
     if (data.length > UPLOAD_MAX_BYTES)
-      return json(res, 400, { error: 'image too large (max 8 MB)', kind: KIND.INVALID });
+      return json(res, 400, { error: 'image too large (max 16 MB)', kind: KIND.INVALID });
     const kind = sniffImageType(data);
     if (!kind) return json(res, 400, { error: 'file is not a JPEG, PNG, WebP, AVIF or GIF image', kind: KIND.INVALID });
     const url = storeWallpaper(data, kind.ext);
@@ -134,7 +140,7 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')
       return json(res, 400, { error: 'only http and https links can be fetched', kind: KIND.INVALID });
 
-    const r = await fetchChecked(url, { binary: true });
+    const r = await fetchChecked(url, { binary: true, maxBytes: UPLOAD_MAX_BYTES, timeout: FETCH_TIMEOUT_MS });
     if (r.status !== 200)
       return json(res, 502, { error: `the image could not be fetched (HTTP ${r.status})`, kind: KIND.UPSTREAM });
     const data = Buffer.isBuffer(r.data) ? r.data : Buffer.alloc(0);

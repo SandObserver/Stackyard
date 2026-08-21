@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - App titles now take their color from the background behind them, per icon over
   a wallpaper.
 
+- Error notices in Settings now stay until dismissed, and hovering holds any
+  notice open.
+
 - An app can now be dropped between two folders, on the top or bottom edge of a
   folder row.
 

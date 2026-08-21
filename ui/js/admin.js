@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=fde6479c';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=76be763e';
+import { buildAppForm, buildFolderForm, serializeKvRows } from '/js/admin-app-form.js?v=6309ee29';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=0be99366';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=f3f87abf';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=8558624f';
 import {
   buildAppItem,
   claimFolderChildren,
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=4a5974c9';
-import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=3d2627a9';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=3ff06da1';
+import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=7669ed7d';
 import { state } from '/js/admin-state.js?v=b7731aa4';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=bb1a94d7';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=19f5f17e';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
@@ -30,7 +30,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=fbd2d2ef';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=b18c93ed';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=5fb6a01b';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=4c3b8c98';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
@@ -1178,6 +1178,8 @@ function initBgType() {
     showBgFields(val);
     const hint = el('bgcol-hint');
     if (hint) hint.style.display = val === 'unsplash' ? '' : 'none';
+    const imgHint = el('bg-url-hint');
+    if (imgHint) imgHint.style.display = val === 'url' ? '' : 'none';
   }
 
   btn.addEventListener('click', e => {
@@ -1215,6 +1217,20 @@ function initBgFit() {
   setVal(hidden.value || 'fill');
 }
 
+/** The error a response carries. A body that is not JSON is the web server
+    answering on its own, which is what an over-size upload gets.
+
+    @param {Response} r @returns {Promise<string>} */
+async function responseError(r) {
+  const text = await r.text().catch(() => '');
+  try {
+    const d = JSON.parse(text);
+    if (d && d.error) return String(d.error);
+  } catch {}
+  if (r.status === 413) return t('toast.imageTooLarge');
+  return `HTTP ${r.status}`;
+}
+
 /** Point the wallpaper fields at an image this server now holds. */
 function setWallpaperUrl(url) {
   const urlInp = inp('bg-url-inp');
@@ -1240,8 +1256,8 @@ function initWallpaperUpload() {
       const form = new FormData();
       form.append('wallpaper', file, file.name);
       const r = await fetch('/api/wallpaper/upload', { method: 'POST', body: form });
+      if (!r.ok) throw new Error(await responseError(r));
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
       setWallpaperUrl(d.url);
       toast(t('toast.wallpaperStored'));
     } catch (e) {
@@ -1266,8 +1282,8 @@ async function fetchWallpaperLink(url) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
+    if (!r.ok) throw new Error(await responseError(r));
     const d = await r.json();
-    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
     setWallpaperUrl(d.url);
     toast(t('toast.wallpaperStored'));
   } catch (e) {

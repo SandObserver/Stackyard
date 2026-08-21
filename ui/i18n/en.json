@@ -224,7 +224,8 @@
     "socketHintSharedNetwork": "That name is resolved by Docker, which answers only for containers on a shared network. Put both on the same network, or use an address the proxy publishes.",
     "socketHintPublishPort": "Nothing at that address answered. A socket proxy published on the host’s loopback cannot be reached from inside a container; publish it on the Docker bridge address, or put both containers on a shared network and use the proxy’s name.",
     "wallpaperStored": "Wallpaper stored on this server.",
-    "wallpaperFailed": "Wallpaper failed: {err}"
+    "wallpaperFailed": "Wallpaper failed: {err}",
+    "imageTooLarge": "That image is too large for the server to accept."
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",

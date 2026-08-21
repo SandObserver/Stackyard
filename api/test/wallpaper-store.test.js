@@ -166,6 +166,13 @@ test('fetching something that is not a URL is refused before any request', async
   assert.match(r.body.error, /valid URL/);
 });
 
+test('an over-size upload is refused with a message, not a broken response', async () => {
+  const huge = Buffer.concat([PNG, Buffer.alloc(17 * 1024 * 1024)]);
+  const r = await upload('huge.png', huge);
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /16 MB/);
+});
+
 test('a link on a scheme that is not http is refused', async () => {
   const r = await fetchLink('file:///etc/passwd');
   assert.equal(r.status, 400);
