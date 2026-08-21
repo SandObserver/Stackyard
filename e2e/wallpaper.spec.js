@@ -45,6 +45,20 @@ test('the saved choice is shown again when the page is reopened', async ({ page,
   await expect(page.locator('#bg-fit-list li[data-val="fit"]')).toHaveAttribute('aria-selected', 'true');
 });
 
+test('the settings pages show the wallpaper the same way the dashboard does', async ({ page, request }) => {
+  const sizeOnAdmin = async () => {
+    await page.goto('/admin/');
+    await page.locator('.nl[data-sec="appearance"]').click();
+    await expect(page.locator('#ie-bgurl-v')).toContainText('/icons/wallpaper/');
+    return page.evaluate(() => getComputedStyle(document.documentElement, '::before').backgroundSize);
+  };
+
+  expect(await sizeOnAdmin()).toBe('cover');
+
+  await seedConfig(request, { items: [], settings: { background: { ...WALLPAPER, fit: 'fit' } } });
+  expect(await sizeOnAdmin()).toBe('contain');
+});
+
 test('fill covers the viewport and fit shows the whole image', async ({ page, request }) => {
   /* The wallpaper is applied after the page has built its tiles, so this is a
      value to wait for, not one to read once. */

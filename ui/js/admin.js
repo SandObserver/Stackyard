@@ -80,10 +80,12 @@ async function applyBg() {
       root.style.setProperty('--bg-image', 'none');
       root.style.setProperty('--bg-color', String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g, ''));
       root.style.setProperty('--bg-brightness', '1');
+      root.style.setProperty('--bg-size', 'cover');
     } else if (bg.type === 'url' && bg.url) {
       root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(bg.url)}')`);
       root.style.setProperty('--bg-color', '#0d1117');
       root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
+      root.style.setProperty('--bg-size', bg.fit === 'fit' ? 'contain' : 'cover');
     } else if (bg.type === 'unsplash') {
       const r = await fetch('/api/wallpaper', { cache: 'no-store' });
       const d = await r.json();
@@ -93,6 +95,7 @@ async function applyBg() {
           root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(d.url)}')`);
           root.style.setProperty('--bg-color', '#0d1117');
           root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
+          root.style.setProperty('--bg-size', 'cover');
         };
         img.src = d.url;
       }
