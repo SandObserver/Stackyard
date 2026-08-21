@@ -83,9 +83,16 @@
     "brightness": "Helligkeit",
     "collectionTip": "Collection ID leer lassen für ein zufälliges Bild.",
     "sourceUnsplash": "Unsplash",
-    "sourceUrl": "Bild-URL",
+    "sourceUrl": "Bild",
     "sourceColor": "Volltonfarbe",
-    "unsplashKeyPh": "Füge deinen Unsplash-API-Schlüssel ein"
+    "unsplashKeyPh": "Füge deinen Unsplash-API-Schlüssel ein",
+    "image": "Bild",
+    "noImage": "Kein Bild",
+    "fit": "Anpassung",
+    "fitFill": "Füllen",
+    "fitContain": "Einpassen",
+    "uploading": "Wird hochgeladen…",
+    "imageTip": "Hochgeladene und verlinkte Bilder werden auf diesem Server gespeichert und von ihm ausgeliefert."
   },
   "about": {
     "documentation": "Dokumentation",
@@ -215,7 +222,9 @@
     "socketUrlBad": "Socket-Proxy nicht gespeichert: {reason}",
     "socketUrlUnverified": "Gespeichert, aber der Socket-Proxy hat nicht geantwortet: {reason}",
     "socketHintSharedNetwork": "Diesen Namen löst Docker nur für Container in einem gemeinsamen Netzwerk auf. Legen Sie beide in dasselbe Netzwerk oder verwenden Sie eine Adresse, die der Proxy veröffentlicht.",
-    "socketHintPublishPort": "Unter dieser Adresse hat nichts geantwortet. Ein auf dem Loopback des Hosts veröffentlichter Socket-Proxy ist aus einem Container nicht erreichbar; veröffentlichen Sie ihn auf der Docker-Bridge-Adresse oder legen Sie beide Container in ein gemeinsames Netzwerk und verwenden Sie den Namen des Proxys."
+    "socketHintPublishPort": "Unter dieser Adresse hat nichts geantwortet. Ein auf dem Loopback des Hosts veröffentlichter Socket-Proxy ist aus einem Container nicht erreichbar; veröffentlichen Sie ihn auf der Docker-Bridge-Adresse oder legen Sie beide Container in ein gemeinsames Netzwerk und verwenden Sie den Namen des Proxys.",
+    "wallpaperStored": "Hintergrundbild auf diesem Server gespeichert.",
+    "wallpaperFailed": "Hintergrundbild fehlgeschlagen: {err}"
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",

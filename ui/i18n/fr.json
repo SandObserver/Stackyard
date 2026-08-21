@@ -83,9 +83,16 @@
     "brightness": "Luminosité",
     "collectionTip": "Laissez le Collection ID vide pour un résultat aléatoire.",
     "sourceUnsplash": "Unsplash",
-    "sourceUrl": "URL de l'image",
+    "sourceUrl": "Image",
     "sourceColor": "Couleur unie",
-    "unsplashKeyPh": "Collez votre clé API Unsplash"
+    "unsplashKeyPh": "Collez votre clé API Unsplash",
+    "image": "Image",
+    "noImage": "Aucune image",
+    "fit": "Cadrage",
+    "fitFill": "Remplir",
+    "fitContain": "Ajuster",
+    "uploading": "Téléversement…",
+    "imageTip": "Les images téléversées et liées sont stockées sur ce serveur et servies depuis celui-ci."
   },
   "about": {
     "documentation": "Documentation",
@@ -215,7 +222,9 @@
     "socketUrlBad": "Proxy de socket non enregistré : {reason}",
     "socketUrlUnverified": "Enregistré, mais le proxy de socket n’a pas répondu : {reason}",
     "socketHintSharedNetwork": "Ce nom est résolu par Docker, qui ne répond que pour des conteneurs partageant un réseau. Placez les deux sur le même réseau, ou utilisez une adresse publiée par le proxy.",
-    "socketHintPublishPort": "Rien n’a répondu à cette adresse. Un socket proxy publié sur la boucle locale de l’hôte est inaccessible depuis un conteneur ; publiez-le sur l’adresse du pont Docker, ou placez les deux conteneurs sur un réseau partagé et utilisez le nom du proxy."
+    "socketHintPublishPort": "Rien n’a répondu à cette adresse. Un socket proxy publié sur la boucle locale de l’hôte est inaccessible depuis un conteneur ; publiez-le sur l’adresse du pont Docker, ou placez les deux conteneurs sur un réseau partagé et utilisez le nom du proxy.",
+    "wallpaperStored": "Fond d'écran enregistré sur ce serveur.",
+    "wallpaperFailed": "Échec du fond d'écran : {err}"
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",

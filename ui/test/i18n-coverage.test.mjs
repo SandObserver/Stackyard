@@ -62,6 +62,9 @@ const SAME_ON_PURPOSE = {
   'fr.json': new Set([
     /* Info and the version line are written the same way in French. */
     'general.logInfo',
+    /* "Image" is the French word too. */
+    'appearance.image',
+    'appearance.sourceUrl',
     'about.version',
     'appearance.sourceUnsplash',
     'general.description',

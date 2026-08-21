@@ -259,7 +259,8 @@ html.type-small:not(.is-mobile) {
 html::before {
   content:''; position:fixed; inset:0; z-index:0;
   background-image:var(--bg-image,none);
-  background-size:cover; background-position:center;
+  background-size:var(--bg-size,cover); background-position:center;
+  background-repeat:no-repeat; background-color:var(--bg-color,var(--bg-base));
   pointer-events:none;
   filter:brightness(var(--bg-brightness,1));
   transform:translateZ(0);

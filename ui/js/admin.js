@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=52a970d3';
-import { loadSettings, showBgFields } from '/js/admin-settings.js?v=e9bec962';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=4a5974c9';
 import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=3d2627a9';
 import { state } from '/js/admin-state.js?v=b7731aa4';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=bb1a94d7';
@@ -1081,7 +1081,12 @@ function initAllInlineEdits() {
   urlInp.id = 'bg-url-inp';
   urlInp.type = 'url';
   document.body.appendChild(urlInp);
-  initInlineEdit('ie-bgurl', 'bg-url-inp', { placeholder: 'https://example.com/photo.jpg' });
+  initInlineEdit('ie-bgurl', 'bg-url-inp', {
+    placeholder: 'https://example.com/photo.jpg',
+    onCommit(v) {
+      fetchWallpaperLink(v.trim());
+    },
+  });
 
   const colorInp = document.createElement('input');
   colorInp.id = 'bg-color-inp';
@@ -1164,7 +1169,7 @@ function initBgType() {
 
   function setVal(val) {
     hidden.value = val;
-    const labels = { unsplash: 'Unsplash', url: 'Image URL', color: 'Solid color' };
+    const labels = { unsplash: 'Unsplash', url: 'Image', color: 'Solid color' };
     /* Update only the text node. The SVG chevron must survive. */
     const textNode = btn.childNodes[0];
     if (textNode && textNode.nodeType === 3) textNode.textContent = labels[val] || val;
@@ -1187,6 +1192,88 @@ function initBgType() {
   });
 
   setVal(hidden.value || 'unsplash');
+}
+
+function initBgFit() {
+  const btn = el('bg-fit-btn');
+  const list = el('bg-fit-list');
+  const hidden = inp('bg-fit');
+  if (!btn || !list || !hidden) return;
+  function setVal(val) {
+    hidden.value = val;
+    showBgFit(val);
+    list.hidden = true;
+  }
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    list.hidden = !list.hidden;
+  });
+  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => setVal(li.dataset.val || 'fill')));
+  document.addEventListener('click', () => {
+    list.hidden = true;
+  });
+  setVal(hidden.value || 'fill');
+}
+
+/** Point the wallpaper fields at an image this server now holds. */
+function setWallpaperUrl(url) {
+  const urlInp = inp('bg-url-inp');
+  if (urlInp) urlInp.value = url;
+  const rv = el('ie-bgurl-v');
+  if (rv) {
+    setUserText(rv, url);
+    rv.classList.remove('is-ph');
+  }
+  showWallpaperFile(url);
+}
+
+function initWallpaperUpload() {
+  const input = inp('bg-upload');
+  const btn = el('bg-upload-lbl');
+  if (!input || !btn) return;
+  input.onchange = async () => {
+    const file = /** @type {HTMLInputElement} */ (input).files?.[0];
+    if (!file) return;
+    const orig = btn.textContent;
+    btn.textContent = t('appearance.uploading');
+    try {
+      const form = new FormData();
+      form.append('wallpaper', file, file.name);
+      const r = await fetch('/api/wallpaper/upload', { method: 'POST', body: form });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+      setWallpaperUrl(d.url);
+      toast(t('toast.wallpaperStored'));
+    } catch (e) {
+      toast(t('toast.wallpaperFailed', { err: e.message }), 'err');
+    } finally {
+      btn.textContent = orig;
+      /** @type {HTMLInputElement} */ (input).value = '';
+    }
+  };
+  btn.onclick = () => /** @type {HTMLInputElement} */ (input).click();
+}
+
+/** A pasted link is downloaded once and served from this origin: the page's
+    content policy refuses images from anywhere else.
+
+    @param {string} url @returns {Promise<void>} */
+async function fetchWallpaperLink(url) {
+  if (!url || url.startsWith('/icons/')) return;
+  try {
+    const r = await fetch('/api/wallpaper/fetch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    setWallpaperUrl(d.url);
+    toast(t('toast.wallpaperStored'));
+  } catch (e) {
+    setWallpaperUrl('');
+    toast(t('toast.wallpaperFailed', { err: e.message }), 'err');
+  }
 }
 
 function initLogLevel() {
@@ -1533,6 +1620,8 @@ initAllInlineEdits();
 initSecToggle();
 initDockerToggle();
 initBgType();
+initBgFit();
+initWallpaperUpload();
 initLogLevel();
 initLanguage();
 initTheme();

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Wallpapers can be uploaded, and a pasted image link is downloaded to the
+  server and served from it.
+
+- Wallpapers can be shown filled or fitted.
+
 - System Summary can read its figures from Glances, Beszel or the Unraid API.
 
 - The network row's throughput follows the chosen source, on a selected

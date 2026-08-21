@@ -162,6 +162,9 @@ export function loadSettings(c) {
   _sv('ie-bgcol-v', s.background?.collection, 'Collection ID');
   _si('bg-col-inp', s.background?.collection || '');
   _si('bg-url-inp', s.background?.url || '');
+  _si('bg-fit', s.background?.fit === 'fit' ? 'fit' : 'fill');
+  showBgFit(s.background?.fit === 'fit' ? 'fit' : 'fill');
+  showWallpaperFile(s.background?.url || '');
   _si('bg-color-inp', s.background?.color || '');
   _sv('ie-bgurl-v', s.background?.url, 'Image URL');
   _sv('ie-bgcolor-v', s.background?.color, '#rrggbb or any CSS color');
@@ -236,6 +239,30 @@ async function syncAuthFromServer() {
   if (pwValEl) pwValEl.textContent = d.passwordSet ? t('common.configured') : t('common.notSet');
   syncSessionRows();
 }
+/** The stored wallpaper, named by its file rather than its full path.
+
+    @param {string} url @returns {void} */
+export function showWallpaperFile(url) {
+  const node = el('bg-file-v');
+  if (!node) return;
+  const name = url ? decodeURIComponent(String(url).split('/').pop() || '') : '';
+  if (name) {
+    setUserText(node, name);
+    node.classList.remove('is-ph');
+  } else {
+    node.textContent = t('appearance.noImage');
+    node.classList.add('is-ph');
+  }
+}
+
+/** @param {string} fit @returns {void} */
+export function showBgFit(fit) {
+  const btn = el('bg-fit-btn');
+  const tn = btn?.childNodes[0];
+  if (tn && tn.nodeType === 3) tn.textContent = fit === 'fit' ? t('appearance.fitContain') : t('appearance.fitFill');
+  qa('#bg-fit-list li', document).forEach(li => li.setAttribute('aria-selected', String(li.dataset.val === fit)));
+}
+
 export function showBgFields(type) {
   ['unsplash', 'url', 'color'].forEach(t => {
     const node = el(`bg-${t}-fields`);
@@ -286,6 +313,7 @@ async function saveWallpaper() {
       bg.collection = (inp('bg-col-inp') || inp('bg-col'))?.value?.trim() || '';
     } else if (type === 'url') {
       bg.url = (inp('bg-url-inp') || inp('bg-url'))?.value?.trim() || '';
+      bg.fit = inp('bg-fit')?.value === 'fit' ? 'fit' : 'fill';
     } else if (type === 'color') {
       bg.color = (inp('bg-color-inp') || inp('bg-color'))?.value?.trim() || '';
     }

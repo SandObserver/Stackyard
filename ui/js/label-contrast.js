@@ -58,6 +58,34 @@ export function coverSourceRect(iw, ih, vw, vh) {
   return { sx: (iw - sw) / 2, sy: (ih - sh) / 2, sw, sh };
 }
 
+/** Where `background-size:contain` puts the whole image, centred, with the
+    background colour showing on the two edges it does not reach.
+
+    @param {number} iw @param {number} ih @param {number} vw @param {number} vh
+    @returns {{dx:number, dy:number, dw:number, dh:number}} */
+export function containDestRect(iw, ih, vw, vh) {
+  if (!(iw > 0 && ih > 0 && vw > 0 && vh > 0)) return { dx: 0, dy: 0, dw: vw, dh: vh };
+  const scale = Math.min(vw / iw, vh / ih);
+  const dw = iw * scale,
+    dh = ih * scale;
+  return { dx: (vw - dw) / 2, dy: (vh - dh) / 2, dw, dh };
+}
+
+/** How the wallpaper is laid over the viewport, in the units the sampling
+    canvas uses.
+
+    @param {number} iw @param {number} ih @param {number} vw @param {number} vh
+    @param {string} fit `'fit'` for contain, anything else for cover
+    @returns {{sx:number, sy:number, sw:number, sh:number, dx:number, dy:number, dw:number, dh:number}} */
+export function drawPlan(iw, ih, vw, vh, fit) {
+  if (fit === 'fit') {
+    const { dx, dy, dw, dh } = containDestRect(iw, ih, vw, vh);
+    return { sx: 0, sy: 0, sw: iw || 1, sh: ih || 1, dx, dy, dw, dh };
+  }
+  const { sx, sy, sw, sh } = coverSourceRect(iw, ih, vw, vh);
+  return { sx, sy, sw, sh, dx: 0, dy: 0, dw: vw, dh: vh };
+}
+
 /** CSS `filter:brightness()` multiplies each sRGB channel.
 
     @param {number} c 0-255 @param {number} amount @returns {number} */
@@ -151,16 +179,24 @@ export function parseCssColor(value) {
     @param {HTMLImageElement} img a loaded image
     @param {number} vw @param {number} vh the viewport it covers
     @param {number} brightness
+    @param {string} [fit] `'fit'` for contain, anything else for cover
+    @param {string} [baseColor] what shows where a fitted image does not reach
     @returns {number[]|null} null when the image cannot be read */
-export function sampleImage(img, vw, vh, brightness) {
+export function sampleImage(img, vw, vh, brightness, fit = 'fill', baseColor = '#0d1117') {
   try {
-    const { sx, sy, sw, sh } = coverSourceRect(img.naturalWidth, img.naturalHeight, vw, vh);
+    const p = drawPlan(img.naturalWidth, img.naturalHeight, vw, vh, fit);
     const cv = document.createElement('canvas');
     cv.width = GRID_COLS;
     cv.height = GRID_ROWS;
     const ctx = cv.getContext('2d', { willReadFrequently: true });
     if (!ctx) return null;
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, GRID_COLS, GRID_ROWS);
+    /* Fit leaves two edges showing the colour behind the image, and a label can
+       sit on them. */
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, GRID_COLS, GRID_ROWS);
+    const kx = GRID_COLS / vw,
+      ky = GRID_ROWS / vh;
+    ctx.drawImage(img, p.sx, p.sy, p.sw, p.sh, p.dx * kx, p.dy * ky, p.dw * kx, p.dh * ky);
     return gridFromPixels(ctx.getImageData(0, 0, GRID_COLS, GRID_ROWS).data, GRID_COLS, GRID_ROWS, brightness);
   } catch {
     return null;
