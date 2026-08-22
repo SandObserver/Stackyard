@@ -43,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Apps with a container check no longer show an unhealthy badge while Docker
   container health checks are off.
 
+- Text and icons on filled buttons, badges and controls now meet WCAG AA
+  contrast in both themes.
+
 - An app's health check can be turned off while Docker container health checks
   are off.
 

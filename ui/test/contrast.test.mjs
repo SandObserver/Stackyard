@@ -25,6 +25,7 @@ const read = f => fs.readFileSync(path.join(dir, f), 'utf8');
 
 const tokens = read('tokens.css');
 const admin = read('admin.css');
+const dashboard = read('dashboard.css');
 
 /* ── resolving a token to a hex value ─────────────────────────────────────── */
 
@@ -87,7 +88,7 @@ const LIGHT = 'html[data-theme="light"]';
 /* Four resolvers: each theme, and what each becomes after someone asks their
    system for more contrast. A theme layers its own rules over the defaults, and
    the raised block layers over both. */
-function resolver({ raised = false, light = false } = {}) {
+function resolver({ raised = false, light = false, extra = [] } = {}) {
   const wants = rule => {
     if (rule.media && rule.media !== RAISED) return false;
     if (rule.media === RAISED && !raised) return false;
@@ -97,7 +98,8 @@ function resolver({ raised = false, light = false } = {}) {
        The dark theme never reads a light-only rule. */
     return light ? isBase || isLight : isBase;
   };
-  const base = new Map([...declarations(tokens, wants), ...declarations(admin, wants)]);
+  const sources = [tokens, admin, ...extra];
+  const base = new Map(sources.flatMap(src => [...declarations(src, wants)]));
   return function resolve(name, seen = new Set()) {
     assert.ok(!seen.has(name), `${name} resolves in a cycle`);
     seen.add(name);
@@ -278,3 +280,70 @@ for (const raised of [false, true]) {
     assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
   });
 }
+
+/* ── ink on a filled control ──────────────────────────────────────────────── */
+
+/* A control filled with a role colour carries its own ink. White failed on
+   every dark fill: the accent at 1.86, the success green at 2.02, the danger
+   red at 3.43, all under the 4.5 of 1.4.3. --on-fill moves with the theme
+   instead, and the pairs are measured here rather than assumed.
+
+   The rules are read off the stylesheet, so a new filled control is measured
+   without anyone adding it to a list. */
+function filledRules() {
+  const found = [];
+  for (const rule of rules(admin)) {
+    if (!/color:\s*var\(--on-fill\)/.test(rule.body)) continue;
+    const bg = /background:\s*var\((--[\w-]+)\)/.exec(rule.body);
+    if (bg) found.push({ what: rule.selectors.join(','), fill: bg[1] });
+  }
+  return found;
+}
+
+/* Fills declared by a different rule than the ink, so the scan above cannot
+   pair them up. [what, ink, fill]. */
+const SPLIT_PAIRS = [
+  ['the checked credential box', '--on-fill', '--ac'],
+  ['the red app badge', '--on-fill', '--badge-red'],
+  ['the blue app badge', '--on-fill', '--badge-blue'],
+  ['the green app badge', '--on-fill', '--badge-green'],
+];
+
+/* Not text. 1.4.11 asks 3.0 of the glyph against the fill behind it. */
+const GRAPHIC_PAIRS = [['the icon on an app tile with no icon yet', '--on-tint', '--tile-placeholder']];
+
+test('every filled control the stylesheet declares is paired with its ink', () => {
+  const found = filledRules().map(r => r.what);
+  for (const sel of ['.bp', '.login-btn', '.setpw-btn', '.nl.active', '.chip.on', '.save-btn-green']) {
+    assert.ok(
+      found.includes(sel),
+      `${sel} is filled with a role colour and no longer names --on-fill: ${found.join(', ')}`,
+    );
+  }
+});
+
+for (const light of [false, true]) {
+  for (const raised of [false, true]) {
+    const name = `${light ? 'light' : 'dark'}${raised ? ', increased contrast' : ''}`;
+    test(`ink on a filled control clears its threshold: ${name}`, () => {
+      const resolve = resolver({ raised, light, extra: [dashboard] });
+      const failures = [];
+      const check = (what, ink, fill, min) => {
+        const r = ratio(resolve(ink), resolve(fill));
+        if (r < min) failures.push(`${what}: ${ink} on ${fill} is ${r.toFixed(2)}, needs ${min}`);
+      };
+      for (const { what, fill } of filledRules()) check(what, '--on-fill', fill, 4.5);
+      for (const [what, ink, fill] of SPLIT_PAIRS) check(what, ink, fill, 4.5);
+      for (const [what, ink, fill] of GRAPHIC_PAIRS) check(what, ink, fill, 3.0);
+      assert.deepEqual(failures, [], `Below the WCAG minimum (${name}):\n  ${failures.join('\n  ')}`);
+    });
+  }
+}
+
+/* --on-tint is the ink on a fill this project does not choose: the colour a
+   user picks for an app. No test can measure that pair. It stays white in both
+   themes so the ink does not change under the user while the fill does not. */
+test('--on-tint is white in both themes', () => {
+  assert.equal(resolver()('--on-tint'), '#FFFFFF');
+  assert.equal(resolver({ light: true })('--on-tint'), '#FFFFFF');
+});

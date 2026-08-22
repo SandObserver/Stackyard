@@ -28,7 +28,8 @@
       /* The opaque card preset a widget can ask for by name. */
       --card-dark:        var(--sy-gray6);
       --badge-red:        var(--danger);
-      --badge-blue:       var(--sy-blue);
+      --badge-blue:       var(--info);
+      --badge-green:      var(--success);
     }
 
     /* ── Root ── */
@@ -214,7 +215,7 @@
       display:none;
       align-items:center;
       justify-content:center;
-      font-size:calc(var(--fs-footnote) * var(--sc,1));letter-spacing:var(--tr-footnote); font-weight:800; color:var(--label-primary); line-height:1;
+      font-size:calc(var(--fs-footnote) * var(--sc,1));letter-spacing:var(--tr-footnote); font-weight:800; color:var(--on-fill); line-height:1;
       z-index:20; pointer-events:none;
       /* Pins the badge to its own compositing layer. WebKit otherwise
          promotes and demotes it as its classes change, and the clipped
@@ -224,7 +225,7 @@
     .badge.on  { display:flex }
     .badge.red  { background:var(--badge-red) }
     .badge.blue { background:var(--badge-blue) }
-    .badge.green { background:var(--success) }
+    .badge.green { background:var(--badge-green) }
     .badge.stale { opacity:.55; outline:1.5px dashed rgba(255,255,255,.92); outline-offset:1px }
     /* Desktop: restore compact badge size */
     body:not(.is-mob) .badge {
