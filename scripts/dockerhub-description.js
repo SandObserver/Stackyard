@@ -33,7 +33,9 @@ const HEADER = `# Stackyard
 Try it: **[demo.sandobserver.com](https://demo.sandobserver.com)**
 The first demo visit may take up to a minute due to Render's free-tier cold start.
 
-Source, issues and full documentation: **[github.com/${REPO}](https://github.com/${REPO})**
+Documentation: **[stackyard.sandobserver.com/docs](https://stackyard.sandobserver.com/docs/)**
+
+Source and issues: **[github.com/${REPO}](https://github.com/${REPO})**
 `;
 
 /** Everything before the first `##` heading, replaced by the markdown header.

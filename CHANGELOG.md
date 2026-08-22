@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The Documentation and Support links in Settings, About now open the
+  documentation site.
+
 - Small System Summary tiles now label each figure, as the medium size does.
 
 - The Stats widget is now two widgets, System Summary and Disk Health. Existing

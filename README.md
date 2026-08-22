@@ -18,24 +18,13 @@
 Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a calm, launcher-style grid of app tiles, folders, and a small number of
 *genuinely useful* widgets, running in a single container. Built to be glanced at a hundred times a day without feeling cluttered.
 
-## Contents
-
-- [Why Stackyard](#why-stackyard)
-- [Widgets](#widgets)
-- [Live activity badges](#live-activity-badges)
-- [Icons](#icons)
-- [Getting started](#getting-started)
-- [Security](#security)
-- [Building from source](#building-from-source)
-- [Contributing](#contributing)
-- [Changelog](#changelog)
-- [License](#license)
+**Documentation: [stackyard.sandobserver.com/docs](https://stackyard.sandobserver.com/docs/)**
 
 ## Why Stackyard
 
 - **Attention goes where it's needed, not everywhere at once.** A calm grid, no charts or counters. Health badges only appear when something's wrong.
 - **A glance should tell you more than a number would.** Widgets are small visuals, not readouts.
-- **Anything can be a badge.** Point Stackyard at any API, pick a value from the response, and show it as a [live activity badge](#live-activity-badges). No custom widget, no code.
+- **Anything can be a badge.** Point Stackyard at any API, pick a value from the response, and show it as a [live activity badge](https://stackyard.sandobserver.com/docs/badges/). No custom widget, no code.
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
 - **No dependencies.** Review it once and stop worrying about the supply chain.
 - **Six languages, right-to-left included.** Contrast and screen-reader labels are covered by tests.
@@ -56,24 +45,11 @@ Widgets and the services they read:
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
 
-A Glances running in Docker reports its own filesystems, not the host's. Mount
-the host paths into the Glances container for a disk slot to read them.
-
-Adding one is a folder plus one registry entry, with no changes to the rest of the app. See [docs/widgets.md](docs/widgets.md).
-
-## Live activity badges
-
-Give Stackyard an API endpoint and it lists the numbers in the response, so you pick the one you want on the tile. Point it at Sonarr's queue and the Sonarr tile carries a count of episodes still downloading. **Show From** sets a floor, so a queue that is never quite empty stays quiet until it matters.
-
-## Icons
-
-App icons resolve automatically by name from the community [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set. You can also upload your own; custom icons are stored in `./icons`.
+Each widget is documented at [Widgets](https://stackyard.sandobserver.com/docs/widgets/). Adding one is a folder plus one registry entry, with no changes to the rest of the app; see [docs/widgets.md](docs/widgets.md).
 
 ## Getting started
 
 You need [Docker](https://docs.docker.com/get-started/get-docker/).
-
-**Using Docker Compose:**
 
 ```yaml
 services:
@@ -92,41 +68,27 @@ services:
 docker compose up -d
 ```
 
-**Or with `docker run`:**
-
-```sh
-docker run -d \
-  --name stackyard \
-  --restart unless-stopped \
-  -p 8700:80 \
-  -v ./data:/data \
-  -v ./icons:/icons \
-  ghcr.io/sandobserver/stackyard:latest
-```
-
-**On Unraid:** install it from [Community Apps](https://ca.unraid.net/apps/stackyard-0ara4ku0sjjwqy).
-
 Then open `http://localhost:8700` and set everything up at `/admin`. Config and uploaded icons persist in `./data` and `./icons`.
+
+On Unraid, install it from [Community Apps](https://ca.unraid.net/apps/stackyard-0ara4ku0sjjwqy).
 
 The same image is on Docker Hub as `sandobserver/stackyard`. Prefer `ghcr.io`: it is the registry the [release signature](docs/security.md#verifying-a-release-image) covers.
 
 The repo's [`docker-compose.yml`](docker-compose.yml) is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access, and Docker health checks.
 
-Every section of the admin UI is shown in [docs/screenshots.md](docs/screenshots.md).
+Full instructions, including building from source, are at [Installation](https://stackyard.sandobserver.com/docs/installation/docker/).
+
+## Documentation
+
+- [First setup](https://stackyard.sandobserver.com/docs/first-setup/)
+- [Settings reference](https://stackyard.sandobserver.com/docs/settings-reference/)
+- [Badges](https://stackyard.sandobserver.com/docs/badges/)
+- [Customization](https://stackyard.sandobserver.com/docs/customization/)
+- [Troubleshooting](https://stackyard.sandobserver.com/docs/troubleshooting/) and [Support](https://stackyard.sandobserver.com/docs/support/)
 
 ## Security
 
 Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
-
-## Building from source
-
-```sh
-git clone https://github.com/SandObserver/stackyard.git
-cd stackyard
-docker build -t stackyard:local .
-```
-
-Then run `stackyard:local` the same way as above. For working on the code without Docker, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contributing
 
