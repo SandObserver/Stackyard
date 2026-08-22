@@ -165,10 +165,10 @@ export function computeBadgeVisual({
   const reason = health ? healthReason(healthDetail) : '';
   if (reason) aria = aria + ': ' + reason;
 
-  const effectiveBg =
-    bg ||
-    (cls.includes('red') ? NAMED.red : cls.includes('green') ? NAMED.green : cls.includes('blue') ? NAMED.blue : '');
-  const color = effectiveBg && needsDark(effectiveBg) ? '#1c1c1e' : '';
+  /* Only a user's own colour is inked here, and then always. A named badge is
+     filled from a token and takes --on-fill, which the empty string leaves in
+     place. NAMED does not hold those token values and never decided this. */
+  const color = bg ? (needsDark(bg) ? '#1c1c1e' : '#ffffff') : '';
 
   return { cls, txt, bg, aria, color, title: reason };
 }

@@ -105,7 +105,19 @@ test('computed color follows the resolved background, custom or class-based', ()
 
   const classBasedRed = computeBadgeVisual({ health: true });
   assert.equal(classBasedRed.bg, '');
-  assert.equal(classBasedRed.color, '');
+  assert.equal(classBasedRed.color, '', 'a named badge is inked by --on-fill, which the theme moves');
+});
+
+/* A dark user colour used to return no ink and fall through to the stylesheet.
+   The stylesheet now inks a named fill, which is bright in the dark theme, so
+   the fall-through would put dark text on a dark badge. */
+test('a user colour is always given its own ink', () => {
+  assert.equal(computeBadgeVisual({ activity: 1, custom: { color: '#1e6ef4' } }).color, '#ffffff');
+  assert.equal(computeBadgeVisual({ activity: 1, custom: { color: '#ffcc00' } }).color, '#1c1c1e');
+  assert.equal(
+    computeBadgeVisual({ activity: 0, staticBdg: { enabled: true, label: 'beta', color: '#008932' } }).color,
+    '#ffffff',
+  );
 });
 
 /* ── P6-2: a red tile could not say why ──────────────────────────────────────

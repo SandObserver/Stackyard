@@ -47,10 +47,17 @@
   --danger:        var(--sy-red);
   --warning:       var(--sy-orange);
   --success:       var(--sy-green);
+  --info:          var(--sy-blue);
 
-  /* Ink on a filled control. White in both themes. Not a label level: the text
-     ramp would turn it black in the light theme. */
-  --on-accent:     #FFFFFF;
+  /* Ink on a control filled with a role colour. It moves with the theme because
+     the fill does: the dark hues are bright and carry dark ink, the light ones
+     are drawn dark and carry white. Not a label level, and not the same as
+     --on-tint. ui/test/contrast.test.mjs measures every pair. */
+  --on-fill:       #000000;
+
+  /* Ink on a fill this file does not choose: a user's app colour, or the
+     placeholder behind an app with no icon. White in both themes. */
+  --on-tint:       #FFFFFF;
 
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
@@ -104,7 +111,7 @@ html[data-theme="light"] {
   --sy-red:#FF3B30;      --sy-red-hi:#D70015;
   --sy-orange:#FF9500;   --sy-orange-hi:#C93400;
   --sy-yellow:#FFCC00;   --sy-yellow-hi:#B25000;
-  --sy-green:#34C759;    --sy-green-hi:#248A3D;
+  --sy-green:#34C759;    --sy-green-hi:#238539;
   --sy-mint:#00C7BE;     --sy-mint-hi:#0C817B;
   --sy-teal:#30B0C7;     --sy-teal-hi:#0071A4;
   --sy-cyan:#32ADE6;     --sy-cyan-hi:#007AA3;
@@ -122,6 +129,9 @@ html[data-theme="light"] {
   --sy-gray5:#E5E5EA;    --sy-gray5-hi:#D8D8DC;
   --sy-gray6:#F2F2F7;    --sy-gray6-hi:#EBEBF0;
 
+  /* --sy-green-hi is not the palette step. The step, #248A3D, measures 4.40
+     behind white ink on a filled control, below the 4.5 of 1.4.3. */
+
   /* The greys above already clear WCAG on white, so no lift is needed here. */
   --sy-a11y-dim:var(--sy-gray-hi);
   --sy-a11y-border:var(--sy-gray);
@@ -133,6 +143,9 @@ html[data-theme="light"] {
   --danger:        var(--sy-red-hi);
   --warning:       var(--sy-orange-hi);
   --success:       var(--sy-green-hi);
+  --info:          var(--sy-blue-hi);
+
+  --on-fill:       #FFFFFF;
 
   --label-primary:     #000000;
   --label-secondary:   rgba(60,60,67,.60);
