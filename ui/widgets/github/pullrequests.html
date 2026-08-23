@@ -195,7 +195,7 @@ function render(data) {
     if (body && data.allUrl) {
       body.style.cursor = 'pointer';
       body.setAttribute('role','link'); body.setAttribute('tabindex','0');
-      body.setAttribute('aria-label', `${total} pull requests ${label} — view all`);
+      body.setAttribute('aria-label', `${total} ${label}, ${wt('ui.viewAll','view all')}`);
       const go = () => openUrl(data.allUrl);
       body.onclick = go;
       body.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } };
@@ -212,7 +212,7 @@ function render(data) {
   if (hdr && data.allUrl) {
     hdr.style.cursor = 'pointer';
     hdr.setAttribute('role','link'); hdr.setAttribute('tabindex','0');
-    hdr.setAttribute('aria-label', `${total} pull requests ${label} — view all`);
+    hdr.setAttribute('aria-label', `${total} ${label}, ${wt('ui.viewAll','view all')}`);
     const go = () => openUrl(data.allUrl);
     hdr.onclick = go;
     hdr.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } };

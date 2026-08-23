@@ -11,7 +11,7 @@
   <script src="/js/mobile-class.js?v=fe95da0d"></script>
   <script src="/js/admin-theme.js?v=66565254"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=26b1b862">
-  <link rel="stylesheet" href="/css/admin.css?v=35ed0598">
+  <link rel="stylesheet" href="/css/admin.css?v=526eaf5a">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
 </head>
 <body>
@@ -48,7 +48,7 @@
   </nav>
 
   <!-- Content -->
-  <div class="cp">
+  <main class="cp">
 
     <!-- General -->
     <section class="sec" id="sec-general" hidden>
@@ -91,8 +91,8 @@
           </div>
           <input type="hidden" id="log-level" value="info">
         </div>
-        <div class="row"><span class="rl" data-i18n="general.dockerHealth">Docker Container Health Checks</span><label class="tog" aria-label="Docker Container Health Checks"><input type="checkbox" id="srv-docker-en"><div class="tr"></div></label></div>
-        <div class="row d-none" id="srv-hide-healthy-row"><span class="rl" data-i18n="general.hideHealthy">Hide Healthy Badge</span><label class="tog" aria-label="Hide Healthy Badge"><input type="checkbox" id="srv-hide-healthy"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-srv-docker-en" data-i18n="general.dockerHealth">Docker Container Health Checks</span><label class="tog"><input type="checkbox" id="srv-docker-en" aria-labelledby="rl-srv-docker-en"><div class="tr"></div></label></div>
+        <div class="row d-none" id="srv-hide-healthy-row"><span class="rl" id="rl-srv-hide-healthy" data-i18n="general.hideHealthy">Hide Healthy Badge</span><label class="tog"><input type="checkbox" id="srv-hide-healthy" aria-labelledby="rl-srv-hide-healthy"><div class="tr"></div></label></div>
         <div class="row ie-row d-none" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Socket URL</span><span class="rv is-ph" id="ie-socket-v">http://socket-proxy:2375</span><button class="pe" type="button" aria-label="Edit socket URL"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
       </div>
       <p class="grp-tip" data-i18n="general.loggingTip">Errors shows warnings and errors only. Security events are always logged.</p>
@@ -100,7 +100,7 @@
 
       <div class="grp-hdr" data-i18n="general.security">Security</div>
       <div class="grp">
-        <div class="row"><span class="rl" data-i18n="general.passwordProtection">Password Protection</span><label class="tog" aria-label="Password Protection"><input type="checkbox" id="sec-en"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-sec-en" data-i18n="general.passwordProtection">Password Protection</span><label class="tog"><input type="checkbox" id="sec-en" aria-labelledby="rl-sec-en"><div class="tr"></div></label></div>
         <div class="row ie-row d-none" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button" aria-label="Edit password"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
         <div class="row d-none" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign out all devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div>
       </div>
@@ -124,8 +124,8 @@
       </div>
       <div class="grp-hdr" data-i18n="appearance.appTitle">App Title</div>
       <div class="grp">
-        <div class="row"><span class="rl" data-i18n="appearance.showTitleDesktop">Show App Title On Desktop</span><label class="tog" aria-label="Show App Title On Desktop"><input type="checkbox" id="set-lbl-d"><div class="tr"></div></label></div>
-        <div class="row"><span class="rl" data-i18n="appearance.showTitleMobile">Show App Title On Mobile</span><label class="tog" aria-label="Show App Title On Mobile"><input type="checkbox" id="set-lbl-m"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-lbl-d" data-i18n="appearance.showTitleDesktop">Show App Title On Desktop</span><label class="tog"><input type="checkbox" id="set-lbl-d" aria-labelledby="rl-set-lbl-d"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-lbl-m" data-i18n="appearance.showTitleMobile">Show App Title On Mobile</span><label class="tog"><input type="checkbox" id="set-lbl-m" aria-labelledby="rl-set-lbl-m"><div class="tr"></div></label></div>
       </div>
       <div class="grp-hdr" data-i18n="appearance.display">Display</div>
       <div class="grp">
@@ -141,7 +141,7 @@
           </div>
           <input type="hidden" id="theme-sel" value="system">
         </div>
-        <div class="row"><span class="rl" data-i18n="appearance.keepAwake">Keep Screen Awake</span><label class="tog" aria-label="Keep Screen Awake"><input type="checkbox" id="set-awake"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-awake" data-i18n="appearance.keepAwake">Keep Screen Awake</span><label class="tog"><input type="checkbox" id="set-awake" aria-labelledby="rl-set-awake"><div class="tr"></div></label></div>
       </div>
       <p class="grp-tip" data-i18n="appearance.displayModeTip">Sets the appearance of the Settings pages. It is stored in this browser, applies to this device only, and takes effect at once.</p>
       <p class="grp-tip" data-i18n="appearance.keepAwakeTip">Stops the screen dimming or locking while the dashboard is open. Browsers only allow this over HTTPS, so it has no effect on a plain HTTP address.</p>
@@ -260,7 +260,7 @@
       </div>
     </section>
 
-  </div><!-- .cp -->
+  </main><!-- .cp -->
 </div><!-- .adm -->
 </div><!-- .adm-outer -->
 
@@ -321,6 +321,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=1a323317"></script>
+<script type="module" src="/js/admin.js?v=c2ef0c30"></script>
 </body>
 </html>

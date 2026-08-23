@@ -129,10 +129,13 @@ export const CHEV_SVG =
   '<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
 /* `root` lets a caller wire a subtree that is not in the document yet. */
-/** @param {string} rowId @param {string} inputId
-    @param {{ type?: string, placeholder?: string,
+/** A function placeholder is resolved on use, not at wiring time: this runs
+    before the catalog is fetched, so a translated one has to be read later.
+    @param {string} rowId @param {string} inputId
+    @param {{ type?: string, placeholder?: string | (() => string),
               onCommit?: (value: string) => void, root?: ParentNode }} [opts] */
 export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = '', onCommit, root = document } = {}) {
+  const ph = () => (typeof placeholder === 'function' ? placeholder() : placeholder);
   const byId = id => (root === document ? el(id) : root.querySelector('#' + CSS.escape(id)));
   const row = byId(rowId);
   const inp = /** @type {HTMLInputElement} */ (byId(inputId));
@@ -142,15 +145,23 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
   if (!valEl || !pen) return;
 
   inp.type = type;
-  inp.placeholder = placeholder;
+  inp.placeholder = ph();
   inp.className = 'row-inp';
   inp.style.display = '';
   inp.style.cssText = '';
+  /* The row's own label carries the translation. A placeholder is a hint, not a
+     name, and several readers drop it once the field holds a value. */
+  const labelEl = q('.rl', row);
+  if (labelEl) {
+    if (!labelEl.id) labelEl.id = `${rowId}-rl`;
+    inp.setAttribute('aria-labelledby', labelEl.id);
+  }
   row.insertBefore(inp, pen);
 
   function open() {
     if (row.classList.contains('editing')) return;
     row.classList.add('editing');
+    inp.placeholder = ph();
     inp.value = valEl.classList.contains('is-ph') ? '' : valEl.textContent;
     inp.focus();
     inp.select?.();
@@ -163,7 +174,7 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
       valEl.textContent = v;
       valEl.classList.remove('is-ph');
     } else {
-      valEl.textContent = placeholder || '';
+      valEl.textContent = ph() || '';
       valEl.classList.add('is-ph');
     }
     onCommit?.(v);

@@ -172,7 +172,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     let ly=-8+d/2-6; if(ly>50)ly=50; if(ly<18)ly=18;
     strandEl.setAttribute('d', `M142 19 L74 ${(ly-3).toFixed(1)} L74 ${(ly+3).toFixed(1)} L142 25 Z`);
     const label=describe(s);
-    wEl.setAttribute('aria-label', href? label+'. Activate to open link.' : label);
+    wEl.setAttribute('aria-label', href? label+'. '+wt('ui.activateToOpen','Activate to open link.') : label);
     if(announce) srEl.textContent=label;
     const many=sessions.length>1;
     prevB.disabled=!many; nextB.disabled=!many;

@@ -4,8 +4,8 @@
 
 import { t } from '/js/i18n.js?v=d056c9c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { wireChecklist } from '/js/admin-shared.js?v=d96fc091';
-import { renderColorControl } from '/js/admin-color-control.js?v=89eee5e8';
+import { wireChecklist } from '/js/admin-shared.js?v=8f69dad6';
+import { renderColorControl } from '/js/admin-color-control.js?v=984a0b69';
 import {
   seedCarried,
   applyOptionSet,

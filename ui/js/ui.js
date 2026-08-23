@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
-import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=b81ceeea';
+import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=6a5e1619';
 import {
   mk,
   clr,
@@ -645,8 +645,10 @@ export function buildMobile() {
   }
   const pages = packMobile(gridItems);
 
+  /* Scoped to this build, so the names stay stable across a rebuild. */
+  const usedWidgetTitles = new Set();
   function widgetTitle(item) {
-    return item.label || widgetReg()[item.widgetType]?.label || t('type.widget');
+    return uniqueTitle(item.label || widgetReg()[item.widgetType]?.label || t('type.widget'), usedWidgetTitles);
   }
 
   function mIcon(item) {

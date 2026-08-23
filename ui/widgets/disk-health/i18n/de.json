@@ -21,5 +21,7 @@
   "ui.healthy": "In Ordnung",
   "ui.warning": "Warnung",
   "ui.failed": "Ausgefallen",
-  "ui.ageAlert": "Alterswarnung"
+  "ui.ageAlert": "Alterswarnung",
+  "ui.bay": "Schacht {n}",
+  "ui.bayEmpty": "Schacht {n}: leer"
 }

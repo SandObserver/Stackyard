@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Settings content is now a main landmark, and the dashboard pager is a
+  navigation landmark.
+
+- Repeated widgets of one type now get distinct frame names.
+
+### Fixed
+
+- Toggles and inline-edit fields in Settings now carry an accessible name.
+
+- Type pills, filter chips and the digital clock's date line now meet the WCAG
+  contrast minimum in both themes.
+
+- The password field's placeholder now renders its translation.
+
+- Accessible names in the GitHub, Disk Health, Now Playing, Connections and
+  Dashboard Switch widgets are now translated.
+
 ## [1.8.0] - 2026-08-23
 
 ### Added

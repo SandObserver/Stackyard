@@ -26,5 +26,6 @@
   "ui.onPlayer": "روی",
   "ui.paused": "مکث",
   "ui.previous": "مورد قبلی",
-  "ui.next": "مورد بعدی"
+  "ui.next": "مورد بعدی",
+  "ui.activateToOpen": "برای باز کردن پیوند فعال کنید."
 }

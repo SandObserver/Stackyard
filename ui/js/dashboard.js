@@ -7,7 +7,8 @@ import {
   WIDGET_COST,
   widgetSrc,
   cardPreset,
-} from '/js/widget-types.js?v=b81ceeea';
+  uniqueTitle,
+} from '/js/widget-types.js?v=6a5e1619';
 import {
   mk,
   mkWrap as _mkWrap,
@@ -25,7 +26,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=371827cc';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=45508206';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=771f3230';
 import {
   configChanged,
@@ -271,8 +272,10 @@ function mkIcon(item) {
   return a;
 }
 
+/* Reset per build: the names must stay stable across a rebuild. */
+let usedWidgetTitles = new Set();
 function widgetTitle(item) {
-  return item.label || widgetReg[item.widgetType]?.label || t('type.widget');
+  return uniqueTitle(item.label || widgetReg[item.widgetType]?.label || t('type.widget'), usedWidgetTitles);
 }
 function mkWidget(item) {
   const sz = item.widgetSize || 'medium';
@@ -331,6 +334,7 @@ function buildDesktop() {
      widgets started. */
   teardownWidgets();
   BEL.clear();
+  usedWidgetTitles = new Set();
   /* Before paginate() and before any tile is built: both size against it. */
   gm = gridMetrics();
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, 4);
