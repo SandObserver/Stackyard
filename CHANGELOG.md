@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An accessibility statement, in `ACCESSIBILITY.md`.
+
 ### Changed
 
 - Settings content is now a main landmark, and the dashboard pager is a
