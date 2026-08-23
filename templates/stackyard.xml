@@ -23,28 +23,62 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.7.1 - 2026-08-17
+### 1.8.0 - 2026-08-23
+
+### Added
+
+- Wallpapers can be uploaded, and a pasted image link is downloaded to the
+  server and served from it.
+
+- Wallpapers can be shown filled or fitted.
+
+- System Summary can read its figures from Glances, Beszel or the Unraid API.
+
+- The network row's throughput follows the chosen source, on a selected
+  interface.
 
 ### Changed
 
-- `docker-compose.yml` now reads every operator setting from the environment, so
-  a Docker UI's environment editor works without editing the file.
+- The Documentation and Support links in Settings, About now open the
+  documentation site.
+
+- Small System Summary tiles now label each figure, as the medium size does.
+
+- The Stats widget is now two widgets, System Summary and Disk Health. Existing
+  tiles are converted on the next load.
 
 ### Fixed
 
-- Import from another dashboard reads inline lists and mappings, environment
-  placeholders, anchors on a value, and a comment after a quoted value.
+- App titles now take their color from the background behind them, per icon over
+  a wallpaper.
 
-- Import from another dashboard no longer refuses a whole file over one
-  unreadable line. The line is listed in the preview and the rest is imported.
+- Error notices in Settings now stay until dismissed, and hovering holds any
+  notice open.
 
-- Settings &gt; About shows the version again, and the update link is translated.
+- An app can now be dropped between two folders, on the top or bottom edge of a
+  folder row.
 
-- Serving a bundled icon no longer logs an nginx error.
+- Color fields now accept a hex code typed without its leading `#`, and say so
+  when a value is not a color.
 
-- The home-screen icon is served on an install that has uploaded no icons.
+- Apps with a container check no longer show an unhealthy badge while Docker
+  container health checks are off.
 
-- The `TRUST_PROXY` warning now gives an example value and where to set it.
+- Text and icons on filled buttons, badges and controls now meet WCAG AA
+  contrast in both themes.
+
+- An app's health check can be turned off while Docker container health checks
+  are off.
+
+- A widget's settings now open from that widget's own saved config.
+
+- A tile with only a fixed label set now shows that badge.
+
+- Saving settings no longer warns about deleting the stored password when
+  password protection is already off.
+
+- A password left stored while protection is off is now discarded on the next
+  settings save.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
