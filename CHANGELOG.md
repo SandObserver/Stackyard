@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Pagination dots now meet the minimum target size.
 
+- Widgets no longer read their figures aloud on every poll. System Summary,
+  Weather, DNS and Now Playing announced themselves on a timer.
+
 ## [1.8.0] - 2026-08-23
 
 ### Added
