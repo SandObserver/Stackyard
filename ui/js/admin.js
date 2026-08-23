@@ -319,7 +319,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
   const mkMove = (dir, can) => {
     const b = document.createElement('button');
     b.className = 'btn bg sm ic';
-    const lbl = dir < 0 ? 'Move up' : 'Move down';
+    const lbl = t(dir < 0 ? 'common.moveUp' : 'common.moveDown');
     b.title = lbl;
     b.setAttribute('aria-label', lbl + ': ' + (item.label || item.id || 'item'));
     b.textContent = dir < 0 ? '↑' : '↓';

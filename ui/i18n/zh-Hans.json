@@ -29,7 +29,9 @@
     "configured": "已设置",
     "notSet": "未设置",
     "show": "显示",
-    "hide": "隐藏"
+    "hide": "隐藏",
+    "moveUp": "上移",
+    "moveDown": "下移"
   },
   "general": {
     "title": "标题",

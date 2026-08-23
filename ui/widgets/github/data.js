@@ -76,14 +76,9 @@ async function pullRequests(ctx, token, username, config, fetchJSON) {
     return { number: pr.number, title: pr.title, repo: m ? m[1] : '—', url: pr.html_url };
   });
 
-  const labelMap = {
-    created: 'created',
-    assigned: 'assigned',
-    mentioned: 'mentioned',
-    'review-requested': 'review requested',
-  };
-  const label = filterArr.map(f => labelMap[f] || f).join(', ');
   const allUrl = `https://github.com/pulls?q=${encodeURIComponent(`is:open is:pr ${qualifier}`)}`;
 
-  return { view: 'prs', totalCount: r.data?.total_count ?? items.length, label, allUrl, items };
+  /* The filters travel as keys. Naming them here would send English to a page
+     that already holds the translation. */
+  return { view: 'prs', totalCount: r.data?.total_count ?? items.length, filters: filterArr, allUrl, items };
 }

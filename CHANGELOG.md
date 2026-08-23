@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widgets no longer read their figures aloud on every poll. System Summary,
   Weather, DNS and Now Playing announced themselves on a timer.
 
+- The Move up and Move down buttons in Settings, and the pull request filter
+  names in the GitHub widget, are now translated.
+
 ## [1.8.0] - 2026-08-23
 
 ### Added

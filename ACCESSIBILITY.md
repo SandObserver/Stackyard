@@ -21,18 +21,17 @@ This is a self-assessment. No external audit has been carried out.
 
 ## Known limitations
 
-- **Widgets need an extra step to read.** Each widget is an embedded document. A screen reader does not enter one during linear navigation. In VoiceOver, use Control + Option + Shift + Down to read a widget's contents. Widgets containing a button or a link are also reachable with Tab.
-- **Opening a widget's link on mobile.** Tapping a widget away from its own controls opens the configured link. This responds to touch only. Widgets that carry their own link expose it separately, and that one is reachable by keyboard.
+- **Widgets need an extra step to read.** Each widget is an embedded document. A screen reader does not enter one during linear navigation, so its contents are read only after the reader is asked to enter it. Widgets containing a button or a link are also reachable with Tab.
+- **A phone shortcut that responds only to touch.** On a phone, a widget that has a link set opens it when tapped away from the widget's own controls. There is no keyboard equivalent for that shortcut. Widgets that carry their own link also expose it as a control, and that one is reachable by keyboard. The shortcut does not exist on a desktop.
 - **Widget colours are not covered by the contrast test.** Each widget is a separate document with its own stylesheet. Those colours are checked by hand rather than by the build, and a widget rendered on a transparent background cannot be measured automatically.
-- **Untranslated names.** The Move up and Move down buttons in Settings, and the pull request filter names in the GitHub widget, are English in every language.
 
 ## How this was assessed
 
 - Automated testing with [axe-core](https://github.com/dequelabs/axe-core) in Chromium and WebKit, against the released container.
 - Manual browser testing for reflow, text resize, text spacing, target size, and keyboard operation.
-- Manual screen reader testing with VoiceOver on macOS and Safari.
+- Manual screen reader testing with VoiceOver, on macOS with Safari and on iOS.
 
-Screen reader testing has covered the dashboard and Settings. It has not covered every widget. NVDA and JAWS have not been used.
+Automated testing has covered every widget. Screen reader testing has covered the dashboard, Settings, and the widgets on a running dashboard, but not every widget in every configuration. The Windows screen readers NVDA and JAWS have not been used.
 
 ## Reporting a problem
 

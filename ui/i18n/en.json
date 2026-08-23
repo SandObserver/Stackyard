@@ -29,7 +29,9 @@
     "configured": "Configured",
     "notSet": "Not set",
     "show": "Show",
-    "hide": "Hide"
+    "hide": "Hide",
+    "moveUp": "Move up",
+    "moveDown": "Move down"
   },
   "general": {
     "title": "Title",
