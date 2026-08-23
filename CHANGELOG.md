@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-08-23
+
 ### Added
 
 - Wallpapers can be uploaded, and a pasted image link is downloaded to the
@@ -895,7 +897,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.7.1...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/SandObserver/stackyard/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/SandObserver/stackyard/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/SandObserver/stackyard/compare/v1.6.1...v1.7.0
 [1.6.1]: https://github.com/SandObserver/stackyard/compare/v1.6.0...v1.6.1
