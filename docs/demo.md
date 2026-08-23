@@ -63,5 +63,6 @@ and nginx proxies to `127.0.0.1:3000`. Pointing `PORT` at 3000 sends visitors to
 the API, which answers every page with `{"error":"Not found"}`.
 
 To put it on a subdomain, add the domain in Render, then create a CNAME at your
-DNS provider pointing to the service's `onrender.com` hostname. On the free plan
-the service sleeps when idle, so the first request after a pause is slow.
+DNS provider pointing to the service's `onrender.com` hostname. The public demo
+is reached this way, at `demo.sandobserver.com`. On the free plan the service
+sleeps when idle, so the first request after a pause is slow.
