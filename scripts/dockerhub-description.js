@@ -30,7 +30,7 @@ const HEADER = `# Stackyard
 
 ![Stackyard dashboard](${RAW}/docs/screenshot.png)
 
-Try it: **[stackyard-demo.onrender.com](https://stackyard-demo.onrender.com)**
+Try it: **[demo.sandobserver.com](https://demo.sandobserver.com)**
 The first demo visit may take up to a minute due to Render's free-tier cold start.
 
 Source, issues and full documentation: **[github.com/${REPO}](https://github.com/${REPO})**

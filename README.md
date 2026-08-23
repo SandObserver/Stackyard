@@ -12,7 +12,7 @@
 <p align="center"><img src="docs/screenshot.png" width="85%" alt="Stackyard dashboard"></p>
 
 
-<p align="center">Try it: <b><a href="https://stackyard-demo.onrender.com">stackyard-demo.onrender.com</a></b><br>
+<p align="center">Try it: <b><a href="https://demo.sandobserver.com">demo.sandobserver.com</a></b><br>
 <sub><i>Note: The first demo visit may take up to a minute due to Render's free-tier cold start.</i></sub>
 
 Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a calm, launcher-style grid of app tiles, folders, and a small number of
