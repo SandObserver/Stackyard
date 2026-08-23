@@ -29,7 +29,9 @@
     "configured": "Configurado",
     "notSet": "Sin definir",
     "show": "Mostrar",
-    "hide": "Ocultar"
+    "hide": "Ocultar",
+    "moveUp": "Subir",
+    "moveDown": "Bajar"
   },
   "general": {
     "title": "Título",

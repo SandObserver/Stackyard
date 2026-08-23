@@ -29,7 +29,9 @@
     "configured": "Eingerichtet",
     "notSet": "Nicht gesetzt",
     "show": "Anzeigen",
-    "hide": "Ausblenden"
+    "hide": "Ausblenden",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten"
   },
   "general": {
     "title": "Titel",

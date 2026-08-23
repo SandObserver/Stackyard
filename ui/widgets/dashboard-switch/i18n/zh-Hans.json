@@ -20,5 +20,6 @@
   "openIn.opt.same": "当前标签页",
   "openIn.opt.new": "新标签页",
   "ui.switcher": "面板切换器",
-  "ui.empty": "请在设置中添加一个面板"
+  "ui.empty": "请在设置中添加一个面板",
+  "ui.switchTo": "切换到 {name}"
 }

@@ -110,7 +110,8 @@ function _renderGraph(data, weeks, widget) {
   let total = 0;
   weeks.forEach(w => (w.contributionDays||[]).forEach(d => { total += (d.contributionCount||0); }));
   widget.setAttribute('role','img');
-  widget.setAttribute('aria-label', `GitHub contributions: ${total} in the last year`);
+  widget.setAttribute('aria-label',
+    wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', total));
 
   const padded = [];
   for (let i = 0; i < COLS; i++) {

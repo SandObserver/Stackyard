@@ -68,5 +68,6 @@
   "ui.noData": "داده‌ای نیست",
   "ui.worldMap": "نقشهٔ جهانی اتصال‌ها",
   "ui.service": "سرویس",
-  "ui.users": "کاربران"
+  "ui.users": "کاربران",
+  "ui.openAdmin": "باز کردن مدیریت"
 }

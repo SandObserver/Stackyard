@@ -22,5 +22,7 @@
   "ui.notConfigured": "پیکربندی نشده",
   "ui.badToken": "توکن نامعتبر",
   "ui.error": "خطا",
-  "ui.noPrs": "درخواست ادغامی نیست"
+  "ui.noPrs": "درخواست ادغامی نیست",
+  "ui.contributionsAria": "مشارکت‌های گیت‌هاب: {total} در سال گذشته",
+  "ui.viewAll": "مشاهده همه"
 }

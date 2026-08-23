@@ -25,19 +25,26 @@
   --slider-dir:90deg;
 
   /* Derived from the hue, never written out, so a palette change carries
-     through. */
+     through. The hue's readable variant is drawn for a surface, not for a pill
+     tinted with the same hue, where it reaches only 3.6 to 4.4 against the 4.5
+     of 1.4.3. Lifting it toward the theme's extreme clears every pill on both
+     the pane and a card. */
+  --chip-ink-boost:#FFFFFF;
+  /* An unselected chip sits on the field fill, not on the pane, and --dm is
+     measured against the pane. */
+  --chip-text:#C7C7CC;
   --chip-dk-bg:color-mix(in srgb, var(--sy-indigo) 20%, transparent);
-  --chip-dk-fg:var(--sy-indigo-hi);
+  --chip-dk-fg:color-mix(in srgb, var(--sy-indigo-hi) 82%, var(--chip-ink-boost));
   --chip-wg-bg:color-mix(in srgb, var(--sy-green) 20%, transparent);
-  --chip-wg-fg:var(--sy-green-hi);
+  --chip-wg-fg:color-mix(in srgb, var(--sy-green-hi) 82%, var(--chip-ink-boost));
   --chip-hl-bg:color-mix(in srgb, var(--sy-pink) 20%, transparent);
-  --chip-hl-fg:var(--sy-pink-hi);
+  --chip-hl-fg:color-mix(in srgb, var(--sy-pink-hi) 82%, var(--chip-ink-boost));
   --chip-bg-bg:color-mix(in srgb, var(--sy-blue) 20%, transparent);
-  --chip-bg-fg:var(--sy-blue-hi);
+  --chip-bg-fg:color-mix(in srgb, var(--sy-blue-hi) 82%, var(--chip-ink-boost));
   --chip-fl-bg:color-mix(in srgb, var(--sy-brown) 20%, transparent);
-  --chip-fl-fg:var(--sy-brown-hi);
+  --chip-fl-fg:color-mix(in srgb, var(--sy-brown-hi) 82%, var(--chip-ink-boost));
   --chip-sy-bg:color-mix(in srgb, var(--sy-gray) 22%, transparent);
-  --chip-sy-fg:var(--sy-gray-hi);
+  --chip-sy-fg:color-mix(in srgb, var(--sy-gray-hi) 82%, var(--chip-ink-boost));
   /* Page neutrals particular to this screen. */
   --tile-placeholder:var(--sy-gray2-hi);  /* an app tile with no icon yet */
   --surface-sunken:var(--sy-gray5);       /* recessed well behind the About icon */
@@ -101,6 +108,9 @@ html[data-theme="light"] {
   --bd-inner:var(--sy-gray4);
   --tx:#1C1C1E;
   --dm:var(--sy-gray-hi);
+
+  --chip-ink-boost:#000000;
+  --chip-text:#5A5A5E;
 
   --tile-placeholder:var(--sy-gray2-hi);
   --surface-sunken:var(--sy-gray5);
@@ -247,7 +257,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .al-search{background:var(--ov);border:1px solid var(--bd-inner);border-radius:20px;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);padding:7px 14px;width:180px;font-family:inherit}
 .al-search:focus{outline:none;border-color:var(--ac)}
 .al-chips{display:flex;gap:5px}
-.chip{padding:6px 13px;border-radius:20px;border:none;background:var(--field-fill);color:var(--dm);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;cursor:pointer;transition:background var(--t),color var(--t);font-family:inherit}
+.chip{padding:6px 13px;border-radius:20px;border:none;background:var(--field-fill);color:var(--chip-text);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;cursor:pointer;transition:background var(--t),color var(--t);font-family:inherit}
 .chip.on{background:var(--ac);color:var(--on-fill)}
 .chip:hover:not(.on){color:var(--tx)}
 .row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:grab;align-items:center}

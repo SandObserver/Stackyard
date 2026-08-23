@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
-import { widgetSrc, cardPreset, WIDGET_DESIGN } from '/js/widget-types.js?v=b81ceeea';
+import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=6a5e1619';
 import {
   mk,
   clr,
@@ -415,6 +415,12 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
     curPage = Math.max(0, Math.min(pages.length - 1, n));
     strip.style.transform = strip.style.webkitTransform = `translateX(-${curPage * pageW}px)`;
     dotEls.forEach((d, j) => d.classList.toggle('on', j === curPage));
+    /* A page that has scrolled off stays focusable, so Tab would leave the
+       visible page for tiles nobody can see. */
+    [...strip.children].forEach((page, j) => {
+      if (j === curPage) page.removeAttribute('inert');
+      else page.setAttribute('inert', '');
+    });
   }
 
   function buildPage(apps) {
@@ -645,8 +651,10 @@ export function buildMobile() {
   }
   const pages = packMobile(gridItems);
 
+  /* Scoped to this build, so the names stay stable across a rebuild. */
+  const usedWidgetTitles = new Set();
   function widgetTitle(item) {
-    return item.label || widgetReg()[item.widgetType]?.label || t('type.widget');
+    return uniqueTitle(item.label || widgetReg()[item.widgetType]?.label || t('type.widget'), usedWidgetTitles);
   }
 
   function mIcon(item) {

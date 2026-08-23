@@ -90,6 +90,10 @@ Full instructions, including building from source, are at [Installation](https:/
 
 Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
 
+## Accessibility
+
+Stackyard targets WCAG 2.2 level AA and is partially conformant. Every control is named and reachable by keyboard, colours meet the contrast minimum in both themes, and the interface honours the reduced-motion and increased-contrast settings. Known limitations and how this was assessed are in [ACCESSIBILITY.md](ACCESSIBILITY.md).
+
 ## Contributing
 
 Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/frontend.md](docs/frontend.md). Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md).

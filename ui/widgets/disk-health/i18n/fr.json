@@ -21,5 +21,7 @@
   "ui.healthy": "Bon état",
   "ui.warning": "Avertissement",
   "ui.failed": "En échec",
-  "ui.ageAlert": "Alerte de vieillissement"
+  "ui.ageAlert": "Alerte de vieillissement",
+  "ui.bay": "Baie {n}",
+  "ui.bayEmpty": "Baie {n} : vide"
 }

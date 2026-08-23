@@ -60,3 +60,13 @@ export function widgetSrc(item, reg, opts) {
   if (opts?.lang) parts.push('lang=' + encodeURIComponent(opts.lang));
   return `/widgets/${type}/${file}?${parts.join('&')}`;
 }
+
+/* Two widgets of the same type carry the same manifest label, and a frame list
+   then holds several entries with one name. */
+/** @param {string} base @param {Set<string>} used */
+export function uniqueTitle(base, used) {
+  let title = base;
+  for (let n = 2; used.has(title); n++) title = `${base} ${n}`;
+  used.add(title);
+  return title;
+}

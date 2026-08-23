@@ -20,5 +20,6 @@
   "openIn.opt.same": "Same tab",
   "openIn.opt.new": "New tab",
   "ui.switcher": "Dashboard switcher",
-  "ui.empty": "Add a dashboard in settings"
+  "ui.empty": "Add a dashboard in settings",
+  "ui.switchTo": "Switch to {name}"
 }

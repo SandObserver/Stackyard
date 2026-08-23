@@ -22,5 +22,7 @@
   "ui.notConfigured": "Nicht konfiguriert",
   "ui.badToken": "Ungültiger Token",
   "ui.error": "Fehler",
-  "ui.noPrs": "Keine Pull Requests"
+  "ui.noPrs": "Keine Pull Requests",
+  "ui.contributionsAria": "GitHub-Beiträge: {total} im letzten Jahr",
+  "ui.viewAll": "alle anzeigen"
 }

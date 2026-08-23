@@ -148,3 +148,44 @@ test('the translations are not copies of the English', () => {
     assert.equal(same.length, 0, `${file} left ${same.join(', ')} in English`);
   }
 });
+
+/* ── names built on the server ────────────────────────────────────────────── */
+
+/* The pull request filter names were assembled into a finished English string
+   in data.js and sent to the page, which then showed them and put them in the
+   accessible name. The widget's own catalog already held all six translations
+   and never got to use them. The keys travel now, and the page names them. */
+
+test('the GitHub widget is sent filter keys, not English', () => {
+  const data = read('widgets/github/data.js');
+  assert.match(data, /filters: filterArr/, 'the server has to send the keys');
+  assert.doesNotMatch(data, /'review requested'/, 'a finished English name is being sent again');
+});
+
+test('the GitHub widget names its filters from its catalog', () => {
+  const page = read('widgets/github/pullrequests.html');
+  assert.match(page, /wt\('githubPrFilters\.opt\.' \+ f/, 'the page has to look the keys up');
+  assert.doesNotMatch(page, /data\.label/, 'the page is still reading the server-built name');
+});
+
+test('every locale can name every pull request filter', () => {
+  const dir = path.join(root, 'widgets', 'github', 'i18n');
+  for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+    const cat = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    for (const f of ['created', 'assigned', 'mentioned', 'review-requested']) {
+      assert.ok(cat[`githubPrFilters.opt.${f}`], `${file} cannot name the ${f} filter`);
+    }
+  }
+});
+
+/* Both are read out beside an item's name, so an untranslated one reaches a
+   screen reader in English while the row beside it is translated. */
+test('every locale names the reorder buttons', () => {
+  for (const file of fs.readdirSync(path.join(root, 'i18n')).filter(f => f.endsWith('.json'))) {
+    const cat = JSON.parse(read(`i18n/${file}`));
+    for (const key of ['moveUp', 'moveDown']) {
+      assert.ok(cat.common?.[key], `${file} is missing common.${key}`);
+    }
+  }
+  assert.match(read('js/admin.js'), /t\(dir < 0 \? 'common\.moveUp' : 'common\.moveDown'\)/);
+});

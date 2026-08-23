@@ -13,8 +13,8 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=d96fc091';
-import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=89eee5e8';
+} from '/js/admin-shared.js?v=8f69dad6';
+import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=984a0b69';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
