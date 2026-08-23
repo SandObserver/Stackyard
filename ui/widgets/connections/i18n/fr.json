@@ -68,5 +68,6 @@
   "ui.noData": "Aucune donnée",
   "ui.worldMap": "Carte mondiale des connexions",
   "ui.service": "Service",
-  "ui.users": "Utilisateurs"
+  "ui.users": "Utilisateurs",
+  "ui.openAdmin": "ouvrir l'administration"
 }

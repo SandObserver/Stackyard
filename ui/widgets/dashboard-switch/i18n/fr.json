@@ -20,5 +20,6 @@
   "openIn.opt.same": "Le même onglet",
   "openIn.opt.new": "Un nouvel onglet",
   "ui.switcher": "Sélecteur de tableaux de bord",
-  "ui.empty": "Ajoutez un tableau de bord dans les réglages"
+  "ui.empty": "Ajoutez un tableau de bord dans les réglages",
+  "ui.switchTo": "Basculer vers {name}"
 }

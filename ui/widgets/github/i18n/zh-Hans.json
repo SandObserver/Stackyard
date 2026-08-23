@@ -22,5 +22,7 @@
   "ui.notConfigured": "尚未配置",
   "ui.badToken": "令牌无效",
   "ui.error": "错误",
-  "ui.noPrs": "没有拉取请求"
+  "ui.noPrs": "没有拉取请求",
+  "ui.contributionsAria": "GitHub 贡献：过去一年 {total} 次",
+  "ui.viewAll": "查看全部"
 }

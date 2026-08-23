@@ -26,5 +26,6 @@
   "ui.onPlayer": "auf",
   "ui.paused": "pausiert",
   "ui.previous": "Vorheriges Element",
-  "ui.next": "Nächstes Element"
+  "ui.next": "Nächstes Element",
+  "ui.activateToOpen": "Aktivieren, um den Link zu öffnen."
 }

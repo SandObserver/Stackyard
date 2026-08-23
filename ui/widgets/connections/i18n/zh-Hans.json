@@ -68,5 +68,6 @@
   "ui.noData": "暂无数据",
   "ui.worldMap": "全球连接地图",
   "ui.service": "服务",
-  "ui.users": "用户"
+  "ui.users": "用户",
+  "ui.openAdmin": "打开管理"
 }

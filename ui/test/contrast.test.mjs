@@ -100,16 +100,80 @@ function resolver({ raised = false, light = false, extra = [] } = {}) {
   };
   const sources = [tokens, admin, ...extra];
   const base = new Map(sources.flatMap(src => [...declarations(src, wants)]));
-  return function resolve(name, seen = new Set()) {
+  function resolve(name, seen = new Set()) {
     assert.ok(!seen.has(name), `${name} resolves in a cycle`);
     seen.add(name);
     const value = base.get(name);
     assert.ok(value, `${name} is not declared`);
     const ref = /^var\(\s*(--[\w-]+)\s*\)$/.exec(value);
     if (ref) return resolve(ref[1], seen);
+    const mix = MIX.exec(value);
+    if (mix) {
+      const [, colour, pct, other] = mix;
+      const a = hexOf(resolve, colour, seen);
+      /* A tint over nothing is not a colour yet. Only the opaque form resolves
+         here; tintOf carries the transparent one to its backdrop. */
+      assert.notEqual(other.trim(), 'transparent', `${name} is a tint, not a colour`);
+      return blend(a, hexOf(resolve, other, seen), Number(pct) / 100);
+    }
     assert.match(value, /^#[0-9a-fA-F]{6}$/, `${name} is not a plain hex value: ${value}`);
     return value;
+  }
+  /* The declared value, before it is resolved to a colour. */
+  resolve.raw = name => {
+    const value = base.get(name);
+    assert.ok(value, `${name} is not declared`);
+    const ref = /^var\(\s*(--[\w-]+)\s*\)$/.exec(value);
+    return ref ? resolve.raw(ref[1]) : value;
   };
+  return resolve;
+}
+
+const MIX = /^color-mix\(\s*in srgb\s*,\s*(.+?)\s+([\d.]+)%\s*,\s*(.+)\)$/;
+
+/* A literal, a var(), or a nested mix. */
+function hexOf(resolve, expr, seen) {
+  const e = expr.trim();
+  const ref = /^var\(\s*(--[\w-]+)\s*\)$/.exec(e);
+  if (ref) return resolve(ref[1], new Set(seen));
+  assert.match(e, /^#[0-9a-fA-F]{6}$/, `not a colour: ${e}`);
+  return e;
+}
+
+/** `a` at `weight`, the rest `b`. @returns {string} hex */
+function blend(a, b, weight) {
+  const ch = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+  const [x, y] = [ch(a), ch(b)];
+  return (
+    '#' +
+    x
+      .map((v, i) =>
+        Math.round(v * weight + y[i] * (1 - weight))
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')
+  );
+}
+
+/* A translucent fill is not a colour until it has a backdrop. Both spellings the
+   stylesheets use resolve the same way: rgba() and a mix with transparent. */
+function tintOver(resolve, name, surface) {
+  const value = resolve.raw(name);
+  const rgba = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/.exec(value);
+  if (rgba) {
+    const hex =
+      '#' +
+      rgba
+        .slice(1, 4)
+        .map(v => Number(v).toString(16).padStart(2, '0'))
+        .join('');
+    return blend(hex, resolve(surface), Number(rgba[4]));
+  }
+  const mix = MIX.exec(value);
+  assert.ok(mix, `${name} is not a translucent fill: ${value}`);
+  assert.equal(mix[3].trim(), 'transparent', `${name} is already opaque`);
+  return blend(hexOf(resolve, mix[1]), resolve(surface), Number(mix[2]) / 100);
 }
 
 /* ── WCAG 2.1 relative luminance and contrast ─────────────────────────────── */
@@ -136,6 +200,38 @@ const REQUIRED = [
   ['--dm', 4.5, 'secondary text, and the placeholder and unset-value text that share it'],
   ['--bd', 3.0, 'the border that delineates a control'],
 ];
+
+/* A pill and an unselected chip are not text on a surface: each sits on a
+   translucent fill, and the ink has to clear 4.5 against the fill composited
+   over whatever is behind it. The hue's readable variant does not survive that
+   composite on its own, which is how six pills sat between 3.6 and 4.4.
+
+   The pane and the card are the two backdrops these appear on. */
+const TINTED = [
+  ['--chip-dk-fg', '--chip-dk-bg', 'the dashboard-type pill'],
+  ['--chip-wg-fg', '--chip-wg-bg', 'the widget-type pill'],
+  ['--chip-hl-fg', '--chip-hl-bg', 'the hidden-item pill'],
+  ['--chip-bg-fg', '--chip-bg-bg', 'the badge pill'],
+  ['--chip-fl-fg', '--chip-fl-bg', 'the folder-type pill'],
+  ['--chip-sy-fg', '--chip-sy-bg', 'the system-item pill'],
+  ['--chip-text', '--field-fill', 'an unselected filter chip'],
+];
+
+const TINT_BACKDROPS = ['--pane', '--cp'];
+
+for (const light of [false, true]) {
+  test(`every tinted label clears 4.5 on both backdrops: ${light ? 'light' : 'dark'}`, () => {
+    const resolve = resolver({ light });
+    const failures = [];
+    for (const [ink, fill, what] of TINTED) {
+      for (const backdrop of TINT_BACKDROPS) {
+        const r = ratio(resolve(ink), tintOver(resolve, fill, backdrop));
+        if (r < 4.5) failures.push(`${ink} on ${fill} over ${backdrop}: ${r.toFixed(2)}, needs 4.5 (${what})`);
+      }
+    }
+    assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
+  });
+}
 
 test('the resolver reads both files', () => {
   const resolve = resolver();

@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An accessibility statement, in `ACCESSIBILITY.md`.
+
+### Changed
+
+- Settings content is now a main landmark, and the dashboard pager is a
+  navigation landmark.
+
+- Repeated widgets of one type now get distinct frame names.
+
+### Fixed
+
+- Toggles and inline-edit fields in Settings now carry an accessible name.
+
+- Type pills, filter chips and the digital clock's date line now meet the WCAG
+  contrast minimum in both themes.
+
+- The password field's placeholder now renders its translation.
+
+- Accessible names in the GitHub, Disk Health, Now Playing, Connections and
+  Dashboard Switch widgets are now translated.
+
+- Tab no longer moves to tiles on a dashboard page that is off screen.
+
+- Pagination dots now meet the minimum target size.
+
+- Widgets no longer read their figures aloud on every poll. System Summary,
+  Weather, DNS and Now Playing announced themselves on a timer.
+
+- The Move up and Move down buttons in Settings, and the pull request filter
+  names in the GitHub widget, are now translated.
+
 ## [1.8.0] - 2026-08-23
 
 ### Added

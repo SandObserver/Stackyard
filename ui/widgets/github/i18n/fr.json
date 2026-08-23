@@ -22,5 +22,7 @@
   "ui.notConfigured": "Non configuré",
   "ui.badToken": "Jeton invalide",
   "ui.error": "Erreur",
-  "ui.noPrs": "Aucune pull request"
+  "ui.noPrs": "Aucune pull request",
+  "ui.contributionsAria": "Contributions GitHub : {total} sur la dernière année",
+  "ui.viewAll": "tout afficher"
 }

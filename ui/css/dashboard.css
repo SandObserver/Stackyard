@@ -255,7 +255,9 @@
     #dots {
       position:fixed; bottom:160px; left:50%; /* desktop only — mobile overrides bottom inline */
       transform:translateX(-50%);
-      display:flex; gap:10px; z-index:500;
+      /* 24px between centres: an interior dot's hit area is bounded by its
+         neighbours', so the pitch is its width. */
+      display:flex; gap:16px; z-index:500;
       background:rgba(255,255,255,.28);
       -webkit-backdrop-filter:blur(12px) saturate(140%); backdrop-filter:blur(12px) saturate(140%);
       border-radius:24px; padding:10px 18px;

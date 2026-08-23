@@ -69,12 +69,11 @@ test('changing page moves aria-current with the class', () => {
   assert.match(block, /removeAttribute\('aria-current'\)/);
 });
 
-test('the dots are grouped and the group is named', () => {
+test('the dots are a named landmark', () => {
   const html = read('index.html');
-  const dots = /<div id="dots"[^>]*>/.exec(html);
-  assert.ok(dots, 'the dots container is missing');
-  assert.match(dots[0], /role="group"/, 'otherwise it is a row of buttons with no context');
-  assert.match(dots[0], /aria-label="[^"]+"/);
+  const dots = /<nav id="dots"[^>]*>/.exec(html);
+  assert.ok(dots, 'the dots container is missing, or is no longer a landmark');
+  assert.match(dots[0], /aria-label="[^"]+"/, 'otherwise it is a row of buttons with no context');
   assert.match(dots[0], /data-i18n-al="home\.pagination"/, 'and the name must be translated');
 });
 

@@ -121,7 +121,7 @@
       const a = document.createElementNS(NS, 'a');
       a.setAttribute('class', s.isCurrent ? 'kc cur' : 'kc');
       a.setAttribute('tabindex', '0');
-      a.setAttribute('aria-label', `Switch to ${s.name}`);
+      a.setAttribute('aria-label', wt('ui.switchTo', 'Switch to {name}').replace('{name}', s.name));
       a.setAttributeNS(null, 'href', s.href);
       if (model.openIn === 'new') { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer'); }
       else { a.setAttribute('target', '_top'); }

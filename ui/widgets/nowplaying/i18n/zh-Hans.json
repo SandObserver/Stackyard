@@ -26,5 +26,6 @@
   "ui.onPlayer": "于",
   "ui.paused": "已暂停",
   "ui.previous": "上一项",
-  "ui.next": "下一项"
+  "ui.next": "下一项",
+  "ui.activateToOpen": "激活以打开链接。"
 }

@@ -21,5 +21,7 @@
   "ui.healthy": "Correcto",
   "ui.warning": "Aviso",
   "ui.failed": "Fallido",
-  "ui.ageAlert": "Aviso por antigüedad"
+  "ui.ageAlert": "Aviso por antigüedad",
+  "ui.bay": "Bahía {n}",
+  "ui.bayEmpty": "Bahía {n}: vacía"
 }

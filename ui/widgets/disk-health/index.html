@@ -274,13 +274,13 @@ function update() {
       const cap = fmtCap(d.capacity);
       const st  = statusText(d.device_status ?? 0, d.hasSmart ?? false);
       bay.setAttribute('role','button'); bay.setAttribute('tabindex','0');
-      bay.setAttribute('aria-label', `Bay ${i+1}: ${shortName(d)}${cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
+      bay.setAttribute('aria-label', `${wt('ui.bay','Bay {n}').replace('{n}', i+1)}: ${shortName(d)}${cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
     } else {
       bay.classList.add('empty'); bay.classList.remove('assigned');
       dot.className = '';
       nm.textContent = '';
       bay.setAttribute('role','img'); bay.removeAttribute('tabindex');
-      bay.setAttribute('aria-label', `Bay ${i+1}: empty`);
+      bay.setAttribute('aria-label', wt('ui.bayEmpty','Bay {n}: empty').replace('{n}', i+1));
     }
   }
 }

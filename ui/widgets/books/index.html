@@ -19,8 +19,8 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .head svg{width:13px;height:13px;color:#636366;flex:none}
 
-  .shelf{flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;
-    gap:2px;padding-bottom:9px;margin-top:6px;perspective:520px}
+  .shelf{flex:1;position:relative;padding-bottom:9px;margin-top:6px;perspective:520px}
+  .books{list-style:none;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
   .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     color:#636366;font-size:11px}
 
@@ -45,15 +45,18 @@
   .ledge{position:absolute;left:0;right:0;bottom:0;height:7px;background:#4a3018}
   .ledge-top{position:absolute;left:0;right:0;bottom:7px;height:1.5px;background:#6b4a28}
 
-  .info{position:absolute;left:0;right:0;top:0;padding:9px 12px 10px;
-    background:linear-gradient(180deg,rgba(18,18,18,.97),rgba(18,18,18,.86));
-    border-bottom:.5px solid rgba(255,255,255,.06);
+  /* Inset to the card's own padding. At the edge it sat under the rounded
+     corner and read as part of the tile rather than a layer over it. */
+  .info{position:absolute;left:14px;right:14px;top:14px;padding:10px 12px 11px;border-radius:10px;
+    background:linear-gradient(180deg,rgba(18,18,18,.97),rgba(18,18,18,.90));
+    border:.5px solid rgba(255,255,255,.08);
+    box-shadow:0 6px 18px rgba(0,0,0,.34);
     opacity:0;transform:translateY(-4px);transition:opacity .16s,transform .16s;pointer-events:none}
   .info.show{opacity:1;transform:translateY(0)}
-  .info .t{font-size:11px;font-weight:600;color:#FFFFFF;line-height:1.25;
+  .info .t{font-size:13px;font-weight:600;color:#FFFFFF;line-height:1.25;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .info .a{font-size:10px;color:#8E8E93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-  .info .p{font-size:9px;font-weight:600;letter-spacing:.03em;color:#0091FF;margin-top:3px}
+  .info .a{font-size:11px;color:#8E8E93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .info .p{font-size:10px;font-weight:600;letter-spacing:.03em;color:#0091FF;margin-top:3px}
   .info .p.done{color:#30D158}.info .p.none{color:#8E8E93}
 
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -72,7 +75,8 @@
       <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z"/></svg>
   </div>
   <div class="shelf" id="shelf">
-    <div class="ledge-top"></div><div class="ledge"></div>
+    <ul class="books" id="books"></ul>
+    <div class="ledge-top" aria-hidden="true"></div><div class="ledge" aria-hidden="true"></div>
   </div>
   <div class="info" id="info" aria-hidden="true">
     <div class="t" id="i-t"></div><div class="a" id="i-a"></div><div class="p" id="i-p"></div>
@@ -91,6 +95,7 @@
   const SRC_LABEL={recently:'RECENTLY ADDED',unread:'ON DECK',list:'READING'};
 
   const card=document.getElementById('card'), shelf=document.getElementById('shelf'), lbl=document.getElementById('lbl');
+  const list=document.getElementById('books');
   const info=document.getElementById('info'), iT=document.getElementById('i-t'), iA=document.getElementById('i-a'), iP=document.getElementById('i-p'), sr=document.getElementById('sr');
   let href='';
 
@@ -111,12 +116,17 @@
   function hideInfo(){ info.classList.remove('show'); info.setAttribute('aria-hidden','true'); }
 
   function render(books){
-    shelf.querySelectorAll('.bk,.empty').forEach(n=>n.remove());
+    list.innerHTML='';
+    shelf.querySelectorAll('.empty').forEach(n=>n.remove());
+    /* Removing the bullets drops the list semantics in one engine, so the role
+       is declared even on a real list. It is set only while there are rows: an
+       empty list that declares the role reports as missing its children. */
+    list.removeAttribute('role');
     if(!books.length){ const e=document.createElement('div'); e.className='empty'; e.textContent=wt('ui.noBooks','No books'); shelf.appendChild(e); return; }
+    list.setAttribute('role','list');
     const tallestIdx=books.reduce((mi,b,i,a)=>(b._h>a[mi]._h?i:mi),0);
-    const ledgeTop=shelf.querySelector('.ledge-top');
     books.forEach((b,i)=>{
-      const el=document.createElement('div'); el.className='bk';
+      const el=document.createElement('li'); el.className='bk';
       el.style.width=b._w+'px'; el.style.height=b._h+'px'; el.style.background=b._color;
       const dark = lum(b._color) > 0.62;
       const sp=document.createElement('span'); sp.className='spine';
@@ -125,14 +135,14 @@
       if(i===tallestIdx){ const rb=document.createElement('div'); rb.className='ribbon'; el.appendChild(rb); }
       if(b._w>=17){ const d=document.createElement('div'); d.className='deco'; d.innerHTML='<span></span><span></span>'; el.appendChild(d); }
       el.appendChild(sp);
-      el.tabIndex=0; el.setAttribute('role','listitem');
+      el.tabIndex=0;
       const [ptxt]=progressText(b);
       el.setAttribute('aria-label',(b.title||wt('ui.untitled','Untitled'))+(b.author?' '+wt('ui.by','by')+' '+b.author:'')+', '+ptxt);
       const on=()=>{ el.classList.add('up'); showInfo(b); };
       const off=()=>{ el.classList.remove('up'); hideInfo(); };
       el.addEventListener('mouseenter',on); el.addEventListener('mouseleave',off);
       el.addEventListener('focus',on); el.addEventListener('blur',off);
-      shelf.insertBefore(el, ledgeTop);
+      list.appendChild(el);
     });
   }
 

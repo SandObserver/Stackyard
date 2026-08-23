@@ -167,7 +167,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       dot.style.backgroundColor=dotColor;
       dot.style.boxShadow='0 0 5px '+dotColor;
       it.append(dot,document.createTextNode(l.name));
-      it.setAttribute('aria-label', l.name+(clickable?' — open admin':''));
+      it.setAttribute('aria-label', l.name+(clickable?', '+wt('ui.openAdmin','open admin'):''));
       const emph=()=>{emphasis=l.role;it.style.background='rgba(255,255,255,.10)';legendEl.querySelectorAll('button').forEach(b=>{if(b!==it)b.style.opacity='.45';});kick();};
       const clear=()=>{emphasis=null;legendEl.querySelectorAll('button').forEach(b=>{b.style.background='none';b.style.opacity='1';});kick();};
       it.addEventListener('pointerenter',emph);

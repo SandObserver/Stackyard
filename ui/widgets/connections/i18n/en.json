@@ -68,5 +68,6 @@
   "ui.noData": "No data",
   "ui.worldMap": "World map of connections",
   "ui.service": "Service",
-  "ui.users": "Users"
+  "ui.users": "Users",
+  "ui.openAdmin": "open admin"
 }

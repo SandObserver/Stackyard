@@ -20,5 +20,6 @@
   "openIn.opt.same": "Gleichem Tab",
   "openIn.opt.new": "Neuem Tab",
   "ui.switcher": "Dashboard-Umschalter",
-  "ui.empty": "Fügen Sie in den Einstellungen ein Dashboard hinzu"
+  "ui.empty": "Fügen Sie in den Einstellungen ein Dashboard hinzu",
+  "ui.switchTo": "Zu {name} wechseln"
 }
