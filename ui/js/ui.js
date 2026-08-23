@@ -415,6 +415,12 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
     curPage = Math.max(0, Math.min(pages.length - 1, n));
     strip.style.transform = strip.style.webkitTransform = `translateX(-${curPage * pageW}px)`;
     dotEls.forEach((d, j) => d.classList.toggle('on', j === curPage));
+    /* A page that has scrolled off stays focusable, so Tab would leave the
+       visible page for tiles nobody can see. */
+    [...strip.children].forEach((page, j) => {
+      if (j === curPage) page.removeAttribute('inert');
+      else page.setAttribute('inert', '');
+    });
   }
 
   function buildPage(apps) {

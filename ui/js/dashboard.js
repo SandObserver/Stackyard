@@ -26,7 +26,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=45508206';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=14202a72';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=771f3230';
 import {
   configChanged,
@@ -396,6 +396,20 @@ function announcePage(index, total) {
   live.textContent = t('home.pageAnnounce', { page: index + 1, total });
 }
 
+/* A page that has scrolled off is still in the DOM and still focusable, so Tab
+   walks out of the visible page into tiles nobody can see and the pager does
+   not follow. inert takes them out of the tab order and the accessibility tree
+   together. */
+/** @param {number} current */
+function syncPageInert(current) {
+  const strip = el('pages');
+  if (!strip) return;
+  [...strip.children].forEach((page, i) => {
+    if (i === current) page.removeAttribute('inert');
+    else page.setAttribute('inert', '');
+  });
+}
+
 function goTo(n, dotEls, announce = true) {
   const total = dotEls ? dotEls.length : totalPages;
   const was = pg;
@@ -404,6 +418,7 @@ function goTo(n, dotEls, announce = true) {
   if (_stateRef) _stateRef.pg = pg;
   storeSet(PAGE_STORE, String(pg));
   const strip = el('pages');
+  syncPageInert(pg);
   const t = `translateX(-${pg * 100}vw)`;
   strip.style.transform = strip.style.webkitTransform = t;
   strip.style.willChange = 'transform';

@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accessible names in the GitHub, Disk Health, Now Playing, Connections and
   Dashboard Switch widgets are now translated.
 
+- Tab no longer moves to tiles on a dashboard page that is off screen.
+
+- Pagination dots now meet the minimum target size.
+
 ## [1.8.0] - 2026-08-23
 
 ### Added
