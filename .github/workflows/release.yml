@@ -234,6 +234,8 @@ jobs:
     runs-on: ubuntu-latest
     # Every write here is the app token's.
     permissions: {}
+    outputs:
+      prerelease: ${{ steps.tag.outputs.prerelease }}
     steps:
       # The app token, not GITHUB_TOKEN: a release published with the built-in
       # token starts no workflow run, and the Community Applications template
@@ -283,3 +285,31 @@ jobs:
             --notes-file release-notes.md \
             --verify-tag \
             "$FLAG"
+
+  # The documentation site generates its changelog, its development page and its
+  # release badge from this repository at build time. Its host builds only on a
+  # push to its own repository, so without this it keeps serving the previous
+  # release until something unrelated is pushed there.
+  docs-rebuild:
+    needs: release-page
+    if: needs.release-page.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Request a documentation site rebuild
+        env:
+          HOOK: ${{ secrets.DOCS_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "$HOOK" ]; then
+            echo 'DOCS_DEPLOY_HOOK_URL is not set. Nothing requested.'
+            exit 0
+          fi
+          # Never print the hook. The URL is the credential.
+          code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --request POST --max-time 30 "$HOOK")
+          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+            echo "The deploy hook answered HTTP $code."
+            exit 1
+          fi
+          echo 'Documentation site rebuild requested.'

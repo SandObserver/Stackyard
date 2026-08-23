@@ -56,6 +56,24 @@ App** on the account that owns the repository:
 The app needs no ruleset bypass. It opens pull requests rather than pushing to
 the default branch, and the ruleset covers branches, not tags.
 
+## The documentation site
+
+The site at https://stackyard.sandobserver.com builds its changelog, its
+development page and its release badge from this repository. Its host builds
+only on a push to its own repository, so a release here does not update it on
+its own.
+
+The `docs-rebuild` job asks the host to build after a stable release. It reads
+one secret, `DOCS_DEPLOY_HOOK_URL`, added under **Settings > Secrets and
+variables > Actions**. Create the hook in the Cloudflare Pages project under
+**Settings > Builds and deployments > Deploy hooks**, pointed at `main`.
+
+The URL is the credential. Anyone holding it can trigger a build. It is never
+printed in a log.
+
+Without the secret the job reports that nothing was requested and the release
+still succeeds. An rc tag never triggers a rebuild.
+
 ## When a release build fails
 
 The tag stays and nothing publishes. Fix `main`, delete the tag locally and on

@@ -61,6 +61,19 @@ test('the release workflows grant the built-in token nothing', () => {
   assert.deepEqual(release.jobs['release-page'].permissions, {});
 });
 
+test('a stable release asks the documentation site to rebuild', () => {
+  const doc = yaml.load(wf('release.yml'));
+  const job = doc.jobs['docs-rebuild'];
+  assert.ok(job, 'release.yml has no docs-rebuild job');
+  assert.equal(job.needs, 'release-page', 'the site must not describe a release page that failed');
+  assert.deepEqual(job.permissions, {}, 'the rebuild needs no scope on this repository');
+  assert.match(String(job.if), /prerelease == 'false'/, 'an rc tag must not move the site');
+  assert.equal(doc.jobs['release-page'].outputs?.prerelease, '${{ steps.tag.outputs.prerelease }}');
+  const script = job.steps.map(s => s.run || '').join('\n');
+  assert.match(script, /DOCS_DEPLOY_HOOK_URL is not set/, 'a missing hook must not fail the release');
+  assert.doesNotMatch(script, /echo\s+"?\$HOOK/, 'the hook URL is a credential and must not be printed');
+});
+
 test('the release runs one at a time', () => {
   for (const f of ['release-prep.yml', 'release-tag.yml']) {
     const doc = yaml.load(wf(f));
@@ -70,10 +83,14 @@ test('the release runs one at a time', () => {
 
 test('docs/releasing.md documents the app secrets the workflows read', () => {
   const doc = fs.readFileSync(path.join(ROOT, 'docs', 'releasing.md'), 'utf8');
-  for (const secret of ['RELEASE_APP_CLIENT_ID', 'RELEASE_APP_PRIVATE_KEY']) {
+  for (const [secret, file] of [
+    ['RELEASE_APP_CLIENT_ID', 'release-prep.yml'],
+    ['RELEASE_APP_PRIVATE_KEY', 'release-prep.yml'],
+    ['DOCS_DEPLOY_HOOK_URL', 'release.yml'],
+  ]) {
     assert.ok(doc.includes(secret), `${secret} is read by a workflow and not documented`);
     assert.ok(
-      wf('release-prep.yml').includes(secret),
+      wf(file).includes(secret),
       `${secret} is documented but no longer read; the doc would send someone to create a secret nothing uses`,
     );
   }
