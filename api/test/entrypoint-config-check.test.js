@@ -55,6 +55,7 @@ function run({ nginxExit = 0, env = {} } = {}) {
       env: {
         PATH: `${binDir}:${process.env.PATH}`,
         REALIP_CONF: realip,
+        LISTEN_CONF: path.join(dir, 'listen-ipv6.inc'),
         SUPERVISOR_FATAL_MARKER: path.join(dir, 'fatal'),
         SY_REALIP: realip,
         SY_SEEN: seen,
