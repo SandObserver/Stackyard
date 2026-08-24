@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- nginx now also listens on IPv6 where the container has it, so hosts that reach
+  the container over IPv6 pass the health check.
+
 - Toggles and inline-edit fields in Settings now carry an accessible name.
 
 - Type pills, filter chips and the digital clock's date line now meet the WCAG

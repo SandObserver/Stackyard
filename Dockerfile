@@ -110,9 +110,11 @@ RUN chmod +x /docker-entrypoint.sh && \
     # Proves the config parses in the image that ships, which also proves nginx
     # was built with the realip module the entrypoint depends on. A missing
     # module fails the build here rather than at a user's container start.
+    printf 'listen [::]:80;\n' > /etc/nginx/listen-ipv6.inc && \
     printf 'set_real_ip_from 127.0.0.1;\nreal_ip_header X-Forwarded-For;\nreal_ip_recursive on;\n' > /etc/nginx/http.d/realip.conf && \
     nginx -t && \
-    printf '# Placeholder, replaced at container start by docker-entrypoint.sh.\n' > /etc/nginx/http.d/realip.conf
+    printf '# Placeholder, replaced at container start by docker-entrypoint.sh.\n' > /etc/nginx/http.d/realip.conf && \
+    printf '# Placeholder, replaced at container start by docker-entrypoint.sh.\n' > /etc/nginx/listen-ipv6.inc
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/stackyard.conf"]

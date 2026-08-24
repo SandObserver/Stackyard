@@ -71,7 +71,12 @@ function render(env) {
   fs.chmodSync(path.join(stubDir, 'nginx'), 0o755);
 
   execFileSync('sh', [path.join(__dirname, '../../docker-entrypoint.sh'), 'true'], {
-    env: { PATH: `${stubDir}:${process.env.PATH}`, REALIP_CONF: out, ...env },
+    env: {
+      PATH: `${stubDir}:${process.env.PATH}`,
+      REALIP_CONF: out,
+      LISTEN_CONF: path.join(dir, 'listen-ipv6.inc'),
+      ...env,
+    },
   });
   return fs.readFileSync(out, 'utf8');
 }
@@ -116,7 +121,11 @@ test('the entrypoint refuses to start when nginx rejects the config', () => {
   assert.throws(
     () =>
       execFileSync('sh', [path.join(__dirname, '../../docker-entrypoint.sh'), 'true'], {
-        env: { PATH: `${stubDir}:${process.env.PATH}`, REALIP_CONF: path.join(dir, 'realip.conf') },
+        env: {
+          PATH: `${stubDir}:${process.env.PATH}`,
+          REALIP_CONF: path.join(dir, 'realip.conf'),
+          LISTEN_CONF: path.join(dir, 'listen-ipv6.inc'),
+        },
         stdio: 'pipe',
       }),
     /bad config|Command failed/,
