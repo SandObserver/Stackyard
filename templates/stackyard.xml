@@ -23,62 +23,43 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.8.0 - 2026-08-23
+### 1.8.1 - 2026-08-25
 
 ### Added
 
-- Wallpapers can be uploaded, and a pasted image link is downloaded to the
-  server and served from it.
-
-- Wallpapers can be shown filled or fitted.
-
-- System Summary can read its figures from Glances, Beszel or the Unraid API.
-
-- The network row's throughput follows the chosen source, on a selected
-  interface.
+- An accessibility statement, in `ACCESSIBILITY.md`.
 
 ### Changed
 
-- The Documentation and Support links in Settings, About now open the
-  documentation site.
+- Settings content is now a main landmark, and the dashboard pager is a
+  navigation landmark.
 
-- Small System Summary tiles now label each figure, as the medium size does.
-
-- The Stats widget is now two widgets, System Summary and Disk Health. Existing
-  tiles are converted on the next load.
+- Repeated widgets of one type now get distinct frame names.
 
 ### Fixed
 
-- App titles now take their color from the background behind them, per icon over
-  a wallpaper.
+- nginx now also listens on IPv6 where the container has it, so hosts that reach
+  the container over IPv6 pass the health check.
 
-- Error notices in Settings now stay until dismissed, and hovering holds any
-  notice open.
+- Toggles and inline-edit fields in Settings now carry an accessible name.
 
-- An app can now be dropped between two folders, on the top or bottom edge of a
-  folder row.
+- Type pills, filter chips and the digital clock's date line now meet the WCAG
+  contrast minimum in both themes.
 
-- Color fields now accept a hex code typed without its leading `#`, and say so
-  when a value is not a color.
+- The password field's placeholder now renders its translation.
 
-- Apps with a container check no longer show an unhealthy badge while Docker
-  container health checks are off.
+- Accessible names in the GitHub, Disk Health, Now Playing, Connections and
+  Dashboard Switch widgets are now translated.
 
-- Text and icons on filled buttons, badges and controls now meet WCAG AA
-  contrast in both themes.
+- Tab no longer moves to tiles on a dashboard page that is off screen.
 
-- An app's health check can be turned off while Docker container health checks
-  are off.
+- Pagination dots now meet the minimum target size.
 
-- A widget's settings now open from that widget's own saved config.
+- Widgets no longer read their figures aloud on every poll. System Summary,
+  Weather, DNS and Now Playing announced themselves on a timer.
 
-- A tile with only a fixed label set now shows that badge.
-
-- Saving settings no longer warns about deleting the stored password when
-  password protection is already off.
-
-- A password left stored while protection is off is now discarded on the next
-  settings save.
+- The Move up and Move down buttons in Settings, and the pull request filter
+  names in the GitHub widget, are now translated.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
