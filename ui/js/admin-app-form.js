@@ -1,7 +1,7 @@
 import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=b18c93ed';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
-import { state } from '/js/admin-state.js?v=b7731aa4';
+import { state } from '/js/admin-state.js?v=c23e6346';
 import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=ddfc6f80';
 import { t } from '/js/i18n.js?v=d056c9c5';
 import {
@@ -14,7 +14,8 @@ import {
   setTogDisabled,
   wireChecklist,
 } from '/js/admin-shared.js?v=8f69dad6';
-import { renderColorControl, BADGE_SWATCHES } from '/js/admin-color-control.js?v=984a0b69';
+import { MAX_LABELS } from '/js/badge-logic.js?v=be6330d6';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=9fded679';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
@@ -94,21 +95,17 @@ export function buildAppForm(body, item) {
     url: item?.badge?.url || '',
     interval: item?.badge?.interval || 30,
   };
-  const actCustom = mon.activity?.custom || {};
   const staticBadge = mon.staticBadge || {};
   const hasStatic = !!staticBadge.enabled;
   const isPing = !!hc.pingUrl;
   const skipTls = !!item?.skipTlsVerify;
 
-  const ier = (rowId, label, inpId, val, ph, type = 'text') => {
-    const has = val != null && val !== '';
-    return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${label}">${raw(PE_SVG)}</button></div>`;
-  };
+  const ier = _ieRow;
   /* Split the string around its placeholder. Word order differs per language. */
   const [pollBefore, pollAfter] = t('app.pollInterval').split('{seconds}');
 
-  const tog = (id, on) =>
-    html`<label class="tog"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}><div class="tr"></div></label>`;
+  const tog = (id, on, name) =>
+    html`<label class="tog"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} aria-label="${name}"><div class="tr"></div></label>`;
 
   setHtml(
     body,
@@ -124,20 +121,20 @@ export function buildAppForm(body, item) {
         <span class="icon-prev" id="ipv" style="background:${rc(state.scol)}">${state.siurl ? html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">` : html`<span>${(item?.label || '?')[0]?.toUpperCase() || '?'}</span>`}</span>
         <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="${t('app.iconPh')}" value="${state.siurl}">
         <button type="button" class="row-btn" id="ip-upload-lbl">${t('app.upload')}</button>
-        <input type="file" id="ip-upload" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0">
+        <input type="file" id="ip-upload" aria-label="${t('app.upload')}" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0">
       </div>
       <div class="iprs" id="iprs"></div>
       <div id="icon-color-slot"></div>
     </div>
 
     <div class="grp">
-      <div class="row"><span class="rl">${t('app.showInDock')}</span>${tog('f-dock', !!item?.dock)}</div>
+      <div class="row"><span class="rl">${t('app.showInDock')}</span>${tog('f-dock', !!item?.dock, t('app.showInDock'))}</div>
     </div>
     ${dockBlocked ? html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull', { max: DOCK_MAX })}</p>` : ''}
 
     <p class="grp-hdr">${t('app.badge')}</p>
     <div class="grp">
-      <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled)}</div>
+      <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled, t('app.healthCheck'))}</div>
       <div id="hc-sub" ${hc.enabled ? '' : 'hidden'}>
         <div class="row"><span class="rl">${t('app.type')}</span><div class="segr">
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing ? '' : 'checked'}><span class="segr-dot"></span><span>${t('app.container')}</span></label>
@@ -153,7 +150,7 @@ export function buildAppForm(body, item) {
     ${globalHealthOn ? '' : html`<p class="grp-tip" id="hc-off-tip">${t('app.healthGlobalOff')}</p>`}
 
     <div class="grp">
-      <div class="row"><span class="rl">${t('app.fixedLabel')}</span>${tog('static-en', hasStatic)}</div>
+      <div class="row"><span class="rl">${t('app.fixedLabel')}</span>${tog('static-en', hasStatic, t('app.fixedLabel'))}</div>
       <div id="static-sub" ${hasStatic ? '' : 'hidden'}>
         ${ier('ie-static-label', t('app.labelText'), 'f-static-label', staticBadge.label, t('app.labelPh'))}
         <div id="static-color-slot"></div>
@@ -161,16 +158,12 @@ export function buildAppForm(body, item) {
     </div>
 
     <div class="grp">
-      <div class="row"><span class="rl">${t('app.liveActivity')}</span>${tog('act-en', act.enabled)}</div>
+      <div class="row"><span class="rl">${t('app.liveActivity')}</span>${tog('act-en', act.enabled, t('app.liveActivity'))}</div>
       <div id="act-sub" ${act.enabled ? '' : 'hidden'}>
         ${ier('ie-burl', t('app.apiUrl'), 'f-burl', act.url, t('app.apiUrlPh'), 'url')}
-        <div class="row"><span class="rl"></span><span id="bst" class="row-status">${state.spaths.length ? 'Saved: ' + state.spaths.join(' + ') : ''}</span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
-        <div id="bprow" class="${state.spaths.length ? '' : 'bprow-hidden'}">
-          <div class="row"><span class="rl">${t('app.value')}</span></div>
-          <div class="bval-box"><input class="bval-search" id="bsearch" type="text" placeholder="${t('app.filterValues')}" autocomplete="off"><div class="blist" id="blist"></div></div>
-        </div>
+        <div class="row"><span class="rl"></span><span id="bst" class="row-status"></span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
         <div id="auth-row-wrap">
-          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers))}</div>
+          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers), t('app.authentication'))}</div>
           <div id="auth-sub" ${act.params?.length || act.headers?.length ? '' : 'hidden'}>
             <div class="row kv-hdr"><span class="rl">Add to URL <span class="rl-sub">(query params)</span></span></div>
             <div id="bpar-rows" class="kv-rows"></div>
@@ -178,15 +171,21 @@ export function buildAppForm(body, item) {
             <div id="bhdr-rows" class="kv-rows"></div>
           </div>
         </div>
-        <div id="act-color-slot"></div>
-        ${ier('ie-bunit', t('app.unit'), 'bcust-unit', actCustom.unit, t('app.unitPh'))}
-        ${ier('ie-bmin', t('app.badgeMin'), 'bcust-min', actCustom.min, t('app.badgeMinPh'), 'number')}
-        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" min="10" max="3600" value="${act.interval || 30}">${pollAfter}</div></div></div>
+        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" min="10" max="3600" value="${act.interval || 30}" aria-label="${t('app.poll')}">${pollAfter}</div></div></div>
+      </div>
+    </div>
+    <div id="act-labels-wrap" class="bprow-hidden">
+      <div id="act-labels"></div>
+      <div class="albl-add-wrap"><button type="button" class="albl-add" id="act-add-label">${t('app.addLabel')}</button></div>
+      <p class="grp-tip" id="act-label-max" hidden>${t('app.labelMax', { n: MAX_LABELS })}</p>
+      <div id="act-combine-row" class="bprow-hidden">
+        <div class="grp"><div class="row"><span class="rl">${t('app.combineValues')}</span>${tog('act-combine', !!act.combine || !!state.slegacySum, t('app.combineValues'))}</div></div>
+        <p class="grp-tip" id="act-combine-tip">${t('app.combineTip')}</p>
       </div>
     </div>
 
     <div class="grp">
-      <div class="row"><span class="rl">${t('app.allowSelfSigned')}</span>${tog('f-skip-tls', skipTls)}</div>
+      <div class="row"><span class="rl">${t('app.allowSelfSigned')}</span>${tog('f-skip-tls', skipTls, t('app.allowSelfSigned'))}</div>
     </div>
     <p class="grp-tip">${t('app.selfSignedTip')}</p>`,
   );
@@ -202,7 +201,6 @@ export function buildAppForm(body, item) {
   initInlineEdit('ie-hc-ping', 'hc-ping', { placeholder: t('app.pingUrlPh') });
   initInlineEdit('ie-static-label', 'f-static-label', { placeholder: t('app.labelPh') });
   initInlineEdit('ie-burl', 'f-burl', { placeholder: t('app.apiUrlPh') });
-  initInlineEdit('ie-bunit', 'bcust-unit', { placeholder: t('app.unitPh') });
 
   renderColorControl(el('icon-color-slot'), {
     value: state.scol || 'dark',
@@ -216,18 +214,11 @@ export function buildAppForm(body, item) {
     },
   });
   renderColorControl(el('static-color-slot'), {
-    value: staticBadge.color || '#1e6ef4',
+    value: staticBadge.color || BADGE_DEFAULT,
     idPrefix: 'static-col',
     swatchColors: BADGE_SWATCHES,
     label: t('common.color'),
   });
-  renderColorControl(el('act-color-slot'), {
-    value: actCustom.color || '#1e6ef4',
-    idPrefix: 'act-col',
-    swatchColors: BADGE_SWATCHES,
-    label: t('common.color'),
-  });
-
   state._bpar = normKvRows(act.params);
   state._bhdr = normKvRows(act.headers);
   renderKvRows(el('bpar-rows'), state._bpar, 'key=value');
@@ -257,11 +248,253 @@ export function buildAppForm(body, item) {
   el('act-en')?.addEventListener('change', e => showHide('act-sub', tgt(e).checked));
   el('auth-en')?.addEventListener('change', e => showHide('auth-sub', tgt(e).checked));
   el('bfetch')?.addEventListener('click', fetchBadge);
-  el('bsearch')?.addEventListener('input', e => renderBadgeList(state.fnums, false, tgt(e).value));
-  if (state.spaths.length) {
-    ['bprow', 'auth-row-wrap', 'poll-row'].forEach(id => el(id)?.classList.remove('bprow-hidden'));
-    renderBadgeList([], true);
+  el('act-combine')?.addEventListener('change', () => {
+    captureActLabels();
+    syncActMode();
+  });
+  el('act-add-label')?.addEventListener('click', addActLabel);
+  const savedStatus = el('bst');
+  if (savedStatus && state.spaths.length)
+    savedStatus.textContent = t(state.spaths.length === 1 ? 'app.labelsSaved' : 'app.labelsSavedPlural', {
+      n: state.spaths.length,
+    });
+  syncActMode();
+}
+
+/* ── Live Activity labels ───────────────────────────────────────────────── */
+
+/** One label's stored styling, keyed by value path. @param {string} path */
+function actLabel(path) {
+  if (!state.slabels) state.slabels = Object.create(null);
+  if (!state.slabels[path]) state.slabels[path] = { name: '', unit: '', color: BADGE_DEFAULT, min: '' };
+  return state.slabels[path];
+}
+
+/** Read every rendered label card back into state. Run this before anything
+    re-renders the list. Skipping it loses the edits in the DOM. */
+export function captureActLabels() {
+  state.spaths.forEach((path, i) => {
+    const l = actLabel(path);
+    const read = id => inpById(id)?.value?.trim() ?? undefined;
+    const name = read(`albl-name-${i}`);
+    if (name !== undefined) l.name = name;
+    const unit = read(`albl-unit-${i}`);
+    if (unit !== undefined) l.unit = unit;
+    const min = read(`albl-min-${i}`);
+    if (min !== undefined) l.min = min;
+    const col = inpById(`albl-col-${i}-val`)?.value;
+    if (col) l.color = col;
+  });
+}
+
+/** Carry a label's styling to its new path. Styling is keyed by path, so
+    without this the card resets to the defaults. */
+function repathActLabel(from, to) {
+  if (from === to) return;
+  const l = state.slabels?.[from];
+  if (l && !state.slabels[to]) state.slabels[to] = l;
+}
+
+function syncActMode() {
+  const ready = state.fnums.length > 0 || state.spaths.length > 0;
+  el('act-labels-wrap')?.classList.toggle('bprow-hidden', !ready);
+  el('act-combine-row')?.classList.toggle('bprow-hidden', state.spaths.length < 2);
+  const add = el('act-add-label');
+  if (add) {
+    add.hidden = state.spaths.length >= MAX_LABELS;
+    const tip = el('act-label-max');
+    if (tip) tip.hidden = !add.hidden;
   }
+  const host = el('act-labels');
+  if (!host) return;
+  if (!ready) {
+    host.innerHTML = '';
+    return;
+  }
+  renderActLabels(host);
+}
+
+/** Fetched values, plus any path the config already uses so a saved label
+    stays selectable before its API is re-fetched. */
+function actValueOptions() {
+  const seen = new Set();
+  const out = [];
+  for (const n of state.fnums) {
+    if (seen.has(n.path)) continue;
+    seen.add(n.path);
+    out.push({ path: n.path, label: n.label || n.path, value: n.value, computed: !!n.computed });
+  }
+  for (const p of state.spaths) {
+    if (seen.has(p)) continue;
+    seen.add(p);
+    out.push({ path: p, label: p, value: null, computed: false });
+  }
+  return out;
+}
+
+function _valueSelect(idx, path) {
+  const opts = actValueOptions();
+  const groups = [
+    { name: t('app.values'), rows: opts.filter(o => !o.computed) },
+    { name: t('app.computedFromArray'), rows: opts.filter(o => o.computed) },
+  ].filter(g => g.rows.length);
+  const optionOf = o =>
+    html`<option value="${o.path}" ${o.path === path ? 'selected' : ''}>${o.value == null ? o.label : `${o.label} — ${o.value}`}</option>`;
+  const body =
+    groups.length > 1
+      ? groups.map(g => html`<optgroup label="${g.name}">${g.rows.map(optionOf)}</optgroup>`)
+      : opts.map(optionOf);
+  return html`<div class="row"><span class="rl">${t('app.value')}</span><div class="sel-wrap"><select class="row-sel" id="albl-path-${idx}" aria-label="${t('app.value')}">${body}</select>${raw(CHEV_SVG)}</div></div>`;
+}
+
+function renderActLabels(host) {
+  host.innerHTML = '';
+  state.spaths.forEach((path, i) => {
+    const l = actLabel(path);
+    const hdr = document.createElement('p');
+    hdr.className = 'grp-hdr grp-hdr-row albl-hdr' + (i === 0 ? ' albl-hdr-first' : '');
+    hdr.dataset.idx = String(i);
+    setHtml(
+      hdr,
+      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><span>${t('app.labelN', { n: i + 1 })}</span>`,
+    );
+    const ctl = document.createElement('span');
+    ctl.className = 'albl-ctl';
+    const mkBtn = (txt, aria, cls, disabled, onClick) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = cls;
+      b.textContent = txt;
+      b.setAttribute('aria-label', aria);
+      b.disabled = disabled;
+      b.onclick = onClick;
+      return b;
+    };
+    ctl.append(
+      mkBtn('\u2191', t('app.moveUp'), 'albl-move', i === 0, () => moveActLabel(i, -1)),
+      mkBtn('\u2193', t('app.moveDown'), 'albl-move', i === state.spaths.length - 1, () => moveActLabel(i, 1)),
+      mkBtn(t('widgetCfg.remove'), t('app.removeLabel'), 'grp-hdr-rm', false, () => {
+        captureActLabels();
+        state.spaths.splice(i, 1);
+        syncActMode();
+      }),
+    );
+    hdr.appendChild(ctl);
+    host.appendChild(hdr);
+
+    const card = document.createElement('div');
+    card.className = 'grp';
+    setHtml(
+      card,
+      html`${_valueSelect(i, path)}
+      ${_ieRow(`ie-albl-name-${i}`, _optRow(t('app.labelText')), `albl-name-${i}`, l.name, t('app.labelPh'), 'text', t('app.labelText'))}
+      <div id="albl-col-slot-${i}"></div>
+      ${_ieRow(`ie-albl-unit-${i}`, _optRow(t('app.unit')), `albl-unit-${i}`, l.unit, t('app.unitPh'), 'text', t('app.unit'))}
+      ${_ieRow(`ie-albl-min-${i}`, _optRow(t('app.badgeMin')), `albl-min-${i}`, l.min, t('app.badgeMinPh'), 'number', t('app.badgeMin'))}`,
+    );
+    host.appendChild(card);
+    initInlineEdit(`ie-albl-name-${i}`, `albl-name-${i}`, { placeholder: t('app.labelPh') });
+    initInlineEdit(`ie-albl-unit-${i}`, `albl-unit-${i}`, { placeholder: t('app.unitPh') });
+    initInlineEdit(`ie-albl-min-${i}`, `albl-min-${i}`, { placeholder: t('app.badgeMinPh') });
+    renderColorControl(el(`albl-col-slot-${i}`), {
+      value: l.color || BADGE_DEFAULT,
+      idPrefix: `albl-col-${i}`,
+      swatchColors: BADGE_SWATCHES,
+      label: t('common.color'),
+    });
+    const sel = inpById(`albl-path-${i}`);
+    if (sel) {
+      sel.onchange = () => {
+        captureActLabels();
+        const next = sel.value;
+        if (state.spaths.includes(next)) {
+          sel.value = state.spaths[i];
+          toast(t('app.labelValueTaken'), 'err');
+          return;
+        }
+        repathActLabel(state.spaths[i], next);
+        state.spaths[i] = next;
+        syncActMode();
+      };
+    }
+  });
+  wireActLabelDrag(host);
+}
+
+const _optRow = label => html`${label} <span class="rl-sub">${t('app.optional')}</span>`;
+
+const GRIP_SVG =
+  '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" focusable="false"><circle cx="6" cy="4" r="1.3"/><circle cx="10" cy="4" r="1.3"/><circle cx="6" cy="8" r="1.3"/><circle cx="10" cy="8" r="1.3"/><circle cx="6" cy="12" r="1.3"/><circle cx="10" cy="12" r="1.3"/></svg>';
+
+function addActLabel() {
+  captureActLabels();
+  if (state.spaths.length >= MAX_LABELS) {
+    toast(t('app.labelMax', { n: MAX_LABELS }), 'err');
+    return;
+  }
+  const free = actValueOptions().find(o => !state.spaths.includes(o.path));
+  if (!free) {
+    toast(t('app.noValuesLeft'), 'err');
+    return;
+  }
+  state.spaths.push(free.path);
+  syncActMode();
+}
+
+function moveActLabel(from, delta) {
+  const to = from + delta;
+  if (to < 0 || to >= state.spaths.length) return;
+  captureActLabels();
+  const [p] = state.spaths.splice(from, 1);
+  state.spaths.splice(to, 0, p);
+  syncActMode();
+}
+
+/** Drag a label header to reorder. Keep the arrows: a pointer drag is
+    unreachable by keyboard. */
+function wireActLabelDrag(host) {
+  let from = -1;
+  const headers = () => /** @type {HTMLElement[]} */ ([...host.querySelectorAll('.albl-hdr')]);
+  for (const hdr of headers()) {
+    hdr.addEventListener('pointerdown', e => {
+      const ev = /** @type {PointerEvent} */ (e);
+      if (ev.button != null && ev.button !== 0) return;
+      if (/** @type {HTMLElement} */ (ev.target).closest('button')) return;
+      from = Number(hdr.dataset.idx);
+      hdr.classList.add('albl-dragging');
+      hdr.setPointerCapture(ev.pointerId);
+    });
+    hdr.addEventListener('pointermove', e => {
+      if (from < 0) return;
+      e.preventDefault();
+      const ev = /** @type {PointerEvent} */ (e);
+      for (const other of headers()) {
+        if (other === hdr) continue;
+        const r = other.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom) continue;
+        const to = Number(other.dataset.idx);
+        hdr.classList.remove('albl-dragging');
+        const at = from;
+        from = -1;
+        moveActLabel(at, to - at);
+        return;
+      }
+    });
+    const end = () => {
+      hdr.classList.remove('albl-dragging');
+      from = -1;
+    };
+    hdr.addEventListener('pointerup', end);
+    hdr.addEventListener('pointercancel', end);
+  }
+}
+
+/** The inline-edit row markup. `label` may carry markup, so the button's
+    accessible name comes from `aria`: an attribute cannot hold an element. */
+function _ieRow(rowId, label, inpId, val, ph, type = 'text', aria) {
+  const has = val != null && val !== '';
+  const name = aria == null ? String(label) : aria;
+  return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${name}">${raw(PE_SVG)}</button></div>`;
 }
 
 function wireIcon() {
@@ -585,8 +818,9 @@ async function fetchBadge() {
       if (!state.fnums.length) st.textContent = '✓ Connected, no numeric values found';
       else st.textContent = `✓ Found ${state.fnums.length} value${state.fnums.length !== 1 ? 's' : ''}`;
     }
-    ['bprow', 'auth-row-wrap', 'poll-row'].forEach(id => el(id)?.classList.remove('bprow-hidden'));
-    if (state.fnums.length) renderBadgeList(state.fnums, false);
+    el('auth-row-wrap')?.classList.remove('bprow-hidden');
+    if (state.fnums.length && !state.spaths.length) addActLabel();
+    else syncActMode();
   } catch (e) {
     /* Branch on the error's `kind`, never on words inside its message. */
     const advice = badgeErrorAdvice(e);
@@ -604,90 +838,5 @@ async function fetchBadge() {
     }
   } finally {
     if (btn) btn.disabled = false;
-  }
-}
-function renderBadgeList(nums, existingOnly, query = '') {
-  const list = el('blist');
-  if (!list) return;
-  list.innerHTML = '';
-  if (existingOnly && !nums.length) {
-    if (state.spaths.length) {
-      state.spaths.forEach(p => {
-        const it = document.createElement('div');
-        it.className = 'bi on';
-        setHtml(
-          it,
-          html`<div class="bck"></div><div class="binfo"><div class="blabel">${p}</div><div class="bpath">${p}</div></div>`,
-        );
-        it.onclick = () => {
-          const i = state.spaths.indexOf(p);
-          if (i >= 0) {
-            state.spaths.splice(i, 1);
-            it.classList.remove('on');
-          } else {
-            state.spaths.push(p);
-            it.classList.add('on');
-          }
-        };
-        list.appendChild(it);
-      });
-    }
-    return;
-  }
-  if (!nums.length) {
-    const e = document.createElement('div');
-    e.style.cssText = 'padding:8px 12px;font-size:13px;color:var(--dm)';
-    e.textContent = t('app.noNumericValues');
-    list.appendChild(e);
-    return;
-  }
-  const q = query.toLowerCase().trim();
-  const filtered = q ? nums.filter(n => (n.label || n.path).toLowerCase().includes(q)) : nums;
-  if (!filtered.length) {
-    const e = document.createElement('div');
-    e.style.cssText = 'padding:8px 12px;font-size:13px;color:var(--dm)';
-    e.textContent = t('list.noMatches');
-    list.appendChild(e);
-    return;
-  }
-  const direct = filtered.filter(n => !n.computed);
-  const computed = filtered.filter(n => n.computed);
-  const addItem = ({ path, value, label }) => {
-    const it = document.createElement('div');
-    it.className = 'bi' + (state.spaths.includes(path) ? ' on' : '');
-    const displayLabel = label || path;
-    setHtml(
-      it,
-      html`<div class="bck"></div><div class="binfo"><div class="blabel">${displayLabel}</div><div class="bpath">${path}</div></div><div class="bval">${value}</div>`,
-    );
-    it.onclick = () => {
-      const i = state.spaths.indexOf(path);
-      if (i >= 0) {
-        state.spaths.splice(i, 1);
-        it.classList.remove('on');
-      } else {
-        state.spaths.push(path);
-        it.classList.add('on');
-      }
-    };
-    list.appendChild(it);
-  };
-  if (direct.length) {
-    if (computed.length && !q) {
-      const s = document.createElement('div');
-      s.className = 'bsep';
-      s.textContent = t('app.values');
-      list.appendChild(s);
-    }
-    direct.forEach(addItem);
-  }
-  if (computed.length) {
-    if (!q) {
-      const s = document.createElement('div');
-      s.className = 'bsep';
-      s.textContent = t('app.computedFromArray');
-      list.appendChild(s);
-    }
-    computed.forEach(addItem);
   }
 }

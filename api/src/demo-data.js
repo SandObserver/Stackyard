@@ -23,7 +23,13 @@ function demoBadges(items) {
   const preset = Object.assign(Object.create(null), { 'app-jellyfin': 2, 'app-portainer': 12 });
   const out = Object.create(null);
   for (const i of items || []) {
-    if (i?.type === 'app' && i.monitoring?.activity?.enabled) out[i.id] = { value: preset[i.id] ?? 1 };
+    if (i?.type !== 'app' || !i.monitoring?.activity?.enabled) continue;
+    const labels = i.monitoring.activity.labels;
+    if (!i.monitoring.activity.combine && Array.isArray(labels) && labels.length) {
+      const values = labels.map((_, n) => round(wave(30 + n * 11, 0, 9 + n * 37, n)));
+      const at = values.findIndex(v => v >= 1);
+      out[i.id] = { value: at === -1 ? 0 : values[at], values };
+    } else out[i.id] = { value: preset[i.id] ?? 1 };
   }
   return out;
 }

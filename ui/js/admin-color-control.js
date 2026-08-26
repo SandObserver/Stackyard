@@ -4,6 +4,7 @@ import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=b18c93ed';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
+export const BADGE_DEFAULT = '#1e6ef4';
 export const BADGE_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#1e6ef4', '#cb30df'];
 const _ccIco = {
   hueLo:
@@ -158,6 +159,10 @@ export function renderColorControl(
   container.appendChild(hidden);
   let mode = isSem(value) ? value : 'color';
   let showTune = false;
+  /* The value as it was stored. The sliders are integers, so reading a colour
+     back out of them shifts it, and an untouched control would save a colour
+     nobody picked. Cleared the moment the user changes anything. */
+  let pristine = mode === 'color' ? value : null;
   const curHex = () => _hsvToHex(+hEl.value, +sEl.value, +vEl.value);
   const _rgb = h => {
     const x = _cssToHex(h);
@@ -195,9 +200,10 @@ export function renderColorControl(
       codeRv.textContent = mode === 'color' ? hex : mode === 'dark' ? 'Dark' : 'Light';
       codeRv.classList.remove('is-ph');
     }
-    hidden.value = mode === 'color' ? hex : mode;
+    hidden.value = mode === 'color' ? (pristine ?? hex) : mode;
   }
   const commit = () => {
+    pristine = null;
     paint();
     onChange?.(hidden.value);
   };

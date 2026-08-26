@@ -37,6 +37,8 @@ const SAME_ON_PURPOSE = {
     'type.widget',
     'app.name',
     'app.url',
+    /* "Optional" is the German word too. */
+    'app.optional',
     'app.badge',
     'app.container',
     'app.ping',

@@ -106,6 +106,12 @@
       "/js/admin.js?v=*": [
         "./ui/js/admin.js"
       ],
+      "/js/badge-popover.js": [
+        "./ui/js/badge-popover.js"
+      ],
+      "/js/badge-popover.js?v=*": [
+        "./ui/js/badge-popover.js"
+      ],
       "/js/badge-logic.js": [
         "./ui/js/badge-logic.js"
       ],

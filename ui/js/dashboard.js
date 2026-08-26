@@ -27,7 +27,8 @@ import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=14202a72';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=771f3230';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=be6330d6';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=d00c0629';
 import {
   configChanged,
   landingAfterSetup,
@@ -161,10 +162,14 @@ function bupd(id) {
   const staticBdg = item?.monitoring?.staticBadge || {};
   const hasHC = !!(item?.monitoring?.healthcheck?.enabled || item?.container || item?.ping);
 
-  const { cls, txt, bg, aria, color, title } = computeBadgeVisual({
+  const act = item?.monitoring?.activity || {};
+  const isFolder = item?.type === 'folder';
+  const { cls, txt, num, unit, bg, aria, color, title, more, nextColor, rows } = computeBadgeVisual({
     health: s.health,
     activity: s.activity,
     activityStale: !!s.activityStale,
+    labels: isFolder ? s.labels : act.combine ? undefined : act.labels,
+    values: s.values,
     custom,
     staticBdg,
     hasHC,
@@ -175,13 +180,23 @@ function bupd(id) {
     translate: t,
   });
 
-  const sig = badgeSignature({ cls, txt, bg, aria, color, title });
+  const sig = badgeSignature({ cls, txt, unit, bg, aria, color, title, nextColor, rows });
 
   els.forEach(el => {
     if (BSIG.get(el) === sig) return;
     BSIG.set(el, sig);
     el.className = cls;
-    el.textContent = txt;
+    let txtEl = el.firstElementChild;
+    let unitEl = txtEl?.nextElementSibling;
+    if (!txtEl) {
+      txtEl = document.createElement('span');
+      txtEl.className = 'badge-txt';
+      unitEl = document.createElement('span');
+      unitEl.className = 'badge-unit';
+      el.append(txtEl, unitEl);
+    }
+    txtEl.textContent = num;
+    unitEl.textContent = unit ? ' ' + unit : '';
     if (aria) {
       el.setAttribute('role', 'status');
       el.setAttribute('aria-label', aria);
@@ -189,8 +204,14 @@ function bupd(id) {
       el.removeAttribute('role');
       el.removeAttribute('aria-label');
     }
-    el.style.background = bg;
+    /* Never the `background` shorthand. It resets background-clip, and the
+       pill behind is painted from this same value. */
+    if (bg) el.style.setProperty('--badge-bg', bg);
+    else el.style.removeProperty('--badge-bg');
     el.style.color = color;
+    if (nextColor) el.style.setProperty('--badge-next', nextColor);
+    else el.style.removeProperty('--badge-next');
+    wireBadgePopover(el, more ? rows : null);
     /* Assigned, never interpolated. An upstream error string must not become
        markup. */
     if (title) el.title = title;
@@ -204,18 +225,32 @@ function bset(id, type, val) {
   bupd(id);
   items.filter(i => i.type === 'folder' && (i.children || []).includes(id)).forEach(f => bupd(f.id));
 }
+/** A folder's badge, from the badges of the apps inside it. A labelled child
+    contributes its labels; the rest add into a total. */
 function folderBadge(folder) {
   const children = (folder.children || []).map(id => items.find(i => i.id === id)).filter(Boolean);
   let actSum = 0,
     hasHealth = false;
+  const labels = [],
+    values = [];
   for (const c of children) {
     const s = badgeState[c.id] || {};
     if (s.health) hasHealth = true;
+    const ca = c.monitoring?.activity;
+    const own = !ca?.combine && Array.isArray(ca?.labels) && ca.labels.length ? ca.labels : null;
+    if (own && Array.isArray(s.values)) {
+      own.forEach((l, n) => {
+        if (!l || typeof l.path !== 'string' || !l.path) return;
+        labels.push({ ...l, name: `${c.label || c.id} · ${l.name || l.unit || l.path}` });
+        values.push(s.values[n]);
+      });
+      continue;
+    }
     /* A child whose own count is below its minimum shows no badge, so it must
        not raise the folder's either. */
-    if (s.activity >= badgeMinimum(c.monitoring?.activity?.custom)) actSum += s.activity;
+    if (s.activity >= badgeMinimum(ca?.custom)) actSum += s.activity;
   }
-  return { health: hasHealth, activity: actSum };
+  return { health: hasHealth, activity: actSum, labels, values };
 }
 
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
@@ -333,6 +368,7 @@ function buildDesktop() {
   /* Removing the DOM does not stop the observers and timers the previous
      widgets started. */
   teardownWidgets();
+  closeBadgePopover();
   BEL.clear();
   usedWidgetTitles = new Set();
   /* Before paginate() and before any tile is built: both size against it. */
@@ -566,7 +602,10 @@ async function pollBadges() {
       /* A failed item keeps its last value, marked stale. Overwriting it with
          zero reads as "nothing pending", which is not what happened. */
       bset(id, 'activityStale', failed);
-      if (!failed) bset(id, 'activity', value);
+      if (!failed) {
+        bset(id, 'values', Array.isArray(v?.values) ? v.values.map(Number) : null);
+        bset(id, 'activity', value);
+      }
     }
     _badgeFails = 0;
     if (badgesStale) {

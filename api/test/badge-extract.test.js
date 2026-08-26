@@ -1,6 +1,12 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { collectNumbers, extractPath, computeBadgeValue } = require('../src/badge-extract');
+const {
+  collectNumbers,
+  extractPath,
+  computeBadgeValue,
+  computeLabelValues,
+  firstFiringLabel,
+} = require('../src/badge-extract');
 
 test('extractPath resolves a plain dot path', () => {
   assert.equal(extractPath({ a: { b: 5 } }, 'a.b'), 5);
@@ -78,4 +84,66 @@ test('computeBadgeValue ignores non-numeric results and missing extract', () => 
   assert.equal(computeBadgeValue({ a: 'text' }, { extract: 'a' }), 0);
   assert.equal(computeBadgeValue({ a: 5 }, {}), 0);
   assert.equal(computeBadgeValue({}, null), 0);
+});
+
+test('computeLabelValues resolves each label independently', () => {
+  const data = { queue: { pending: 3, failed: 0 }, items: [{ ok: true }, { ok: false }] };
+  const labels = [{ path: 'queue.pending' }, { path: 'queue.failed' }, { path: 'items.$count' }];
+  assert.deepEqual(computeLabelValues(data, labels), [3, 0, 2]);
+});
+
+test('a label whose path resolves to nothing reads as zero, keeping its slot', () => {
+  assert.deepEqual(computeLabelValues({ a: 1 }, [{ path: 'nope' }, { path: 'a' }]), [0, 1]);
+});
+
+test('firstFiringLabel returns the earliest label that reaches its own minimum', () => {
+  const labels = [{ path: 'a', min: 5 }, { path: 'b' }, { path: 'c' }];
+  assert.equal(firstFiringLabel(labels, [4, 2, 9]), 1);
+  assert.equal(firstFiringLabel(labels, [5, 2, 9]), 0);
+  assert.equal(firstFiringLabel(labels, [0, 0, 0]), -1);
+});
+
+test('a labels value that is not an array yields no values', () => {
+  for (const bad of [null, undefined, 'pending', 42, {}, true]) {
+    assert.deepEqual(computeLabelValues({ a: 1 }, bad), []);
+  }
+});
+
+test('a label entry that is not an object keeps its slot as zero', () => {
+  const got = computeLabelValues({ a: 5 }, [null, 7, [], { path: 'a' }, { path: '' }, { path: 42 }]);
+  assert.deepEqual(got, [0, 0, 0, 5, 0, 0]);
+});
+
+test('a path resolving to a non-number reads as zero', () => {
+  const data = { s: 'x', o: {}, arr: [1, 2], b: true, n: null, nan: Number.NaN, inf: Number.POSITIVE_INFINITY };
+  const paths = ['s', 'o', 'arr', 'b', 'n', 'nan', 'inf'].map(p => ({ path: p }));
+  assert.deepEqual(computeLabelValues(data, paths), [0, 0, 0, 0, 0, 0, 0]);
+});
+
+test('a hostile path does not reach the prototype chain', () => {
+  const got = computeLabelValues({ a: 1 }, [{ path: '__proto__.polluted' }, { path: 'constructor.name' }]);
+  assert.deepEqual(got, [0, 0]);
+  assert.equal({}.polluted, undefined);
+});
+
+test('a very deep path resolves iteratively rather than overflowing the stack', () => {
+  let data = { n: 1 };
+  for (let i = 0; i < 5000; i++) data = { d: data };
+  const deep = 'd.'.repeat(5000) + 'n';
+  assert.deepEqual(computeLabelValues(data, [{ path: deep }]), [1]);
+});
+
+test('firstFiringLabel copes with a values list of the wrong length', () => {
+  const labels = [{ path: 'a' }, { path: 'b' }, { path: 'c' }];
+  assert.equal(firstFiringLabel(labels, []), -1);
+  assert.equal(firstFiringLabel(labels, [0, 0, 4]), 2);
+  assert.equal(firstFiringLabel([], [1, 2]), -1);
+  for (const bad of [null, undefined, 'x', 7]) assert.equal(firstFiringLabel(bad, [1]), -1);
+});
+
+test('a nonsense minimum falls back to one rather than never firing', () => {
+  for (const min of [undefined, null, 0, -5, 'x', Number.NaN, {}, []]) {
+    assert.equal(firstFiringLabel([{ path: 'a', min }], [1]), 0, `min ${JSON.stringify(min)}`);
+  }
+  assert.equal(firstFiringLabel([{ path: 'a', min: 1e9 }], [999]), -1);
 });

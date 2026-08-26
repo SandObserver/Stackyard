@@ -216,19 +216,68 @@
       align-items:center;
       justify-content:center;
       font-size:calc(var(--fs-footnote) * var(--sc,1));letter-spacing:var(--tr-footnote); font-weight:800; color:var(--on-fill); line-height:1;
+      white-space:nowrap;
+      max-width:calc(100% + 7px * var(--sc,1));
+      gap:0;
       z-index:20; pointer-events:none;
+      -webkit-touch-callout:none; touch-action:manipulation;
       /* Pins the badge to its own compositing layer. WebKit otherwise
          promotes and demotes it as its classes change, and the clipped
          corners rasterise torn. */
       transform:translateZ(0);
+      /* The fill is a custom property, not `background`: the pill behind is
+         painted from the same value. */
+      --badge-peek:calc(7px * var(--sc,1));
+      background:var(--badge-bg,transparent);
     }
     .badge.on  { display:flex }
-    .badge.red  { background:var(--badge-red) }
-    .badge.blue { background:var(--badge-blue) }
-    .badge.green { background:var(--badge-green) }
+    .badge-txt { flex-shrink:0 }
+    .badge-unit { overflow:hidden; text-overflow:ellipsis; min-width:0; white-space:pre }
+    /* Numbers only at phone size. The pill is a corner marker there, and a unit
+       makes it wider than the icon it belongs to. The list still names it. */
+    body.is-mob .badge-unit { display:none }
+    .badge.red  { --badge-bg:var(--badge-red) }
+    .badge.blue { --badge-bg:var(--badge-blue) }
+    .badge.green { --badge-bg:var(--badge-green) }
     .badge.stale { opacity:.55; outline:1.5px dashed rgba(255,255,255,.92); outline-offset:1px }
+
+    /* Both pills are pseudo-elements at negative depth. That is the only order
+       where one paints under the other and both stay under the label, and it
+       needs the element's own background to stay clear. */
+    .badge.has-more { pointer-events:auto; background:none; right:calc(-7px * var(--sc,1) + var(--badge-peek)) }
+    .badge.has-more::before, .badge.has-more::after {
+      content:''; position:absolute; inset:0; border-radius:50px;
+    }
+    .badge.has-more::before {
+      z-index:-2; transform:translateX(var(--badge-peek));
+      background:var(--badge-next,var(--badge-blue));
+    }
+    .badge.has-more::after { z-index:-1; background:var(--badge-bg,var(--badge-blue)) }
+    body:not(.is-mob) .badge.has-more { right:calc(-7px + var(--badge-peek)) }
+
+    /* ── Badge popover — the values the pill has no room for ── */
+    .badge-pop {
+      position:fixed; z-index:900; min-width:124px; max-width:230px;
+      padding:5px; border-radius:11px;
+      background:rgba(28,30,42,.96);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 0 .5px rgba(255,255,255,.08);
+      -webkit-backdrop-filter:blur(24px) saturate(160%);
+      backdrop-filter:blur(24px) saturate(160%);
+      color:#fff; pointer-events:none;
+    }
+    .badge-pop[hidden] { display:none }
+    .badge-pop-row {
+      display:flex; align-items:center; gap:7px; padding:2px 6px;
+      font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);
+    }
+    .badge-pop-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:var(--badge-blue) }
+    .badge-pop-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:rgba(255,255,255,.78) }
+    .badge-pop-val { font-weight:700; flex-shrink:0; font-variant-numeric:tabular-nums }
     /* Desktop: restore compact badge size */
     body:not(.is-mob) .badge {
+      --badge-peek:6px;
+      max-width:calc(100% + 7px);
       top:-7px; right:-7px;
       min-width:20px; height:20px; padding:0 5px;
       font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2); font-weight:700;
