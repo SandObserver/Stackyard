@@ -24,7 +24,7 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 
 - **Attention goes where it's needed, not everywhere at once.** A calm grid, no charts or counters. Health badges only appear when something's wrong.
 - **A glance should tell you more than a number would.** Widgets are small visuals, not readouts.
-- **Anything can be a badge.** Point Stackyard at any API, pick a value from the response, and show it as a [live activity badge](https://stackyard.sandobserver.com/docs/badges/). No custom widget, no code.
+- **Anything can be a badge.** Point Stackyard at any API and show what it reports as a [live activity badge](https://stackyard.sandobserver.com/docs/badges/). One poll can carry several labelled values, each with its own colour and threshold. No custom widget, no code.
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
 - **No dependencies.** Review it once and stop worrying about the supply chain.
 - **Six languages, right-to-left included.** Contrast and screen-reader labels are covered by tests.
