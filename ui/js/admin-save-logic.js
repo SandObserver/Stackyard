@@ -1,6 +1,11 @@
 // @ts-check
 /* Keep this module free of the DOM. The DOM reads stay in doSave. */
 
+const BADGE_DEFAULT = '#1e6ef4';
+
+/* Keep in step with MAX_LABELS in badge-logic.js. */
+const MAX_LABELS = 5;
+
 export function cleanId(label, fallback = 'item') {
   return (
     String(label || '')
@@ -91,6 +96,21 @@ export function claimFolderChildren(items, folderId, childIds) {
   return list;
 }
 
+/** One stored Live Activity label. Array order is priority order.
+
+    @param {string} path @param {any} [style]
+    @returns {{ path: string, name?: string, unit?: string, color?: string, min?: number }} */
+export function buildActivityLabel(path, style) {
+  const min = Math.floor(Number(style?.min));
+  return {
+    path,
+    name: style?.name?.trim() || undefined,
+    unit: style?.unit?.trim() || undefined,
+    color: style?.color && style.color !== BADGE_DEFAULT ? style.color : undefined,
+    min: Number.isFinite(min) && min > 1 ? min : undefined,
+  };
+}
+
 /** @param {any} v @param {any} [orig] @param {Iterable<string>} [takenIds] */
 export function buildAppItem(v, orig, takenIds = []) {
   if (!v.label) return { error: 'Name required' };
@@ -111,6 +131,15 @@ export function buildAppItem(v, orig, takenIds = []) {
       ? { enabled: true, label: v.staticLabel.slice(0, 10), color: v.staticColor || 'blue' }
       : undefined;
   const spaths = v.spaths || [];
+  const combine = spaths.length >= 2 && !!v.actCombine;
+  const labels = spaths.length
+    ? spaths.slice(0, MAX_LABELS).map(p => buildActivityLabel(p, v.slabels?.[p]))
+    : undefined;
+  const first = combine ? buildActivityLabel('', v.slabels?.[spaths[0]]) : null;
+  const combinedCustom =
+    first && (first.color || first.unit || first.min)
+      ? { color: first.color, unit: first.unit, min: first.min }
+      : undefined;
   return {
     item: {
       id: orig?.id || newItemId(v.label, 'app', takenIds),
@@ -129,8 +158,10 @@ export function buildAppItem(v, orig, takenIds = []) {
           params: v.actParams?.length ? v.actParams : undefined,
           headers: v.actHeaders?.length ? v.actHeaders : undefined,
           extract: spaths.length === 1 ? spaths[0] : spaths.length > 1 ? spaths.map(p => ({ path: p })) : undefined,
+          labels: combine ? undefined : labels,
+          combine: combine || undefined,
           interval: Math.max(10, v.actInt),
-          custom: customObj,
+          custom: combinedCustom || customObj,
         },
         staticBadge: staticBadgeObj,
       },

@@ -14,6 +14,9 @@ export const state = {
   siurl: '',
   scol: 'dark',
   spaths: [],
+  /* Live Activity label styling, keyed by value path. */
+  slabels: Object.create(null),
+  slegacySum: false,
   fnums: [],
 
   _evItem: null,

@@ -388,6 +388,20 @@ html{background:var(--bg-color,var(--bg-outer))}
 .grp-tip.in-card{margin:0;padding:7px 16px 12px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .grp-hdr-row{display:flex;align-items:center;justify-content:space-between}
 .grp-hdr-rm{background:none;border:none;color:var(--danger);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-family:inherit;cursor:pointer;padding:2px 4px}
+.albl-hdr{display:flex;align-items:center;gap:6px;touch-action:none}
+.albl-grip{display:inline-flex;color:var(--dm);cursor:grab;flex-shrink:0}
+.albl-hdr.albl-dragging{opacity:.5}
+.albl-hdr.albl-dragging .albl-grip{cursor:grabbing}
+.albl-ctl{display:flex;align-items:center;gap:2px;margin-inline-start:auto}
+.albl-move{background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer;padding:3px 7px;border-radius:6px}
+.albl-move:hover:not(:disabled){background:var(--ov)}
+.albl-move:disabled{color:var(--dm);cursor:default;opacity:.45}
+.albl-move:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.albl-add-wrap{display:flex;justify-content:center;padding:10px 16px 4px}
+.albl-add{background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;padding:8px 14px;border-radius:9px}
+.albl-add::before{content:'+';margin-inline-end:6px;font-weight:600}
+.albl-add:hover{background:var(--ov)}
+.albl-add:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .grp-hdr-rm:disabled{color:var(--dm);cursor:default}
 .wcf-add-row{display:flex;align-items:center;width:100%;min-height:52px;padding:0 16px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
 
@@ -556,6 +570,9 @@ html{background:var(--bg-color,var(--bg-outer))}
 #ev-body .grp-hdr + .grp{margin-top:0}
 #ev-body .grp-tip + .grp{margin-top:44px}
 #ev-body .grp-tip + .grp-hdr{margin-top:36px}
+/* Both classes. The heading is the first child of its own container, so the
+   :first-child rule above outranks a single-class selector and zeroes it. */
+#ev-body .grp-hdr.albl-hdr-first{margin-top:44px}
 #ev-body .div{margin:20px 0;background:var(--bd-inner)}
 #ev-body .hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm)}
 

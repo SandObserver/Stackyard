@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Live Activity can show several labelled values from one poll, each with its
+  own name, colour, unit and threshold. The badge shows the first label that
+  reaches its threshold; the rest open on hover, tap or keyboard focus.
+
+- Folder badges now show the badge of the app inside them that is reporting,
+  rather than a total.
+
+### Changed
+
+- Badge text is white wherever white is readable, instead of whichever ink
+  scores higher.
+
+- Badges show the number alone at phone size, so a unit cannot make one wider
+  than its icon.
+
+### Fixed
+
+- Opening and saving an app no longer rewrites a colour that was not changed.
+
+- Admin form toggles now carry accessible names.
+
 ## [1.8.2] - 2026-08-25
 
 ### Fixed

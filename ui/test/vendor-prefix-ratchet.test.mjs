@@ -24,6 +24,7 @@ const ALLOWED = new Set([
   '-webkit-box-orient',
   '-webkit-box' /* as a display value, not the old flexbox */,
   '-webkit-tap-highlight-color' /* WebKit-only, no standard equivalent */,
+  '-webkit-touch-callout' /* WebKit-only. Stops iOS answering a press on the badge with its own callout */,
   '-webkit-font-smoothing' /* non-standard */,
   '-moz-osx-font-smoothing' /* non-standard */,
   '-webkit-appearance' /* required inside ::-webkit-slider-thumb */,

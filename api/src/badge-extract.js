@@ -84,6 +84,30 @@ function extractPath(obj, dotPath) {
   return cur;
 }
 
+/** Positional: index n is the value for `labels[n]`. A label that resolves to
+    no number reads as 0 and keeps its slot.
+    @param {any} data @param {any} labels @returns {number[]} */
+function computeLabelValues(data, labels) {
+  if (!Array.isArray(labels)) return [];
+  return labels.map(l => {
+    const path = typeof l === 'string' ? l : l?.path;
+    if (typeof path !== 'string' || !path) return 0;
+    const v = extractPath(data, path);
+    return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+  });
+}
+
+/** The first label reaching its threshold, or -1.
+    @param {any} labels @param {number[]} values @returns {number} */
+function firstFiringLabel(labels, values) {
+  if (!Array.isArray(labels)) return -1;
+  for (let i = 0; i < labels.length; i++) {
+    const min = Math.floor(Number(labels[i]?.min));
+    if (values[i] >= (Number.isFinite(min) && min > 1 ? min : 1)) return i;
+  }
+  return -1;
+}
+
 function computeBadgeValue(data, badge) {
   if (!badge?.extract) return 0;
   const paths = Array.isArray(badge.extract)
@@ -95,4 +119,4 @@ function computeBadgeValue(data, badge) {
   }, 0);
 }
 
-module.exports = { collectNumbers, extractPath, computeBadgeValue };
+module.exports = { collectNumbers, extractPath, computeBadgeValue, computeLabelValues, firstFiringLabel };

@@ -139,3 +139,129 @@ test('a target that keeps failing stops being contacted', async () => {
     await close(flaky);
   }
 });
+
+/* A fresh id per test. The poll backoff is keyed by item id and outlives one
+   test, so a reused id serves a remembered body instead of polling. */
+let _labelSeq = 0;
+function configureLabels(labels, combine, extract) {
+  const id = `lbl${++_labelSeq}`;
+  saveConfig({
+    items: [
+      {
+        id,
+        type: 'app',
+        name: 'App',
+        monitoring: {
+          activity: { enabled: true, url: `${upstreamBase}/api/counts`, labels, combine, extract },
+        },
+      },
+    ],
+    settings: {},
+  });
+  return id;
+}
+
+test('labels report one value each, and the badge value is the first that fires', async () => {
+  upstreamBody = { pending: 0, approved: 142, declined: 7 };
+  const id = configureLabels([{ path: 'pending' }, { path: 'approved' }, { path: 'declined' }]);
+  const body = await get('/api/badges');
+  assert.deepEqual(body[id].values, [0, 142, 7]);
+  assert.equal(body[id].value, 142);
+});
+
+test('a per-label minimum decides which label the badge value comes from', async () => {
+  upstreamBody = { pending: 3, approved: 142 };
+  const id = configureLabels([{ path: 'pending', min: 10 }, { path: 'approved' }]);
+  const body = await get('/api/badges');
+  assert.equal(body[id].value, 142);
+});
+
+test('no firing label reports zero rather than the first value', async () => {
+  upstreamBody = { pending: 0, approved: 0 };
+  const id = configureLabels([{ path: 'pending' }, { path: 'approved' }]);
+  assert.equal((await get('/api/badges'))[id].value, 0);
+});
+
+test('combine keeps the summed single value and sends no label list', async () => {
+  upstreamBody = { pending: 3, approved: 4 };
+  const id = configureLabels([{ path: 'pending' }, { path: 'approved' }], true, [
+    { path: 'pending' },
+    { path: 'approved' },
+  ]);
+  const body = await get('/api/badges');
+  assert.equal(body[id].values, undefined);
+  assert.equal(body[id].value, 7);
+});
+
+test('a label the config left without a path keeps its slot in the value list', async () => {
+  upstreamBody = { approved: 5 };
+  const id = configureLabels([{ name: 'broken' }, { path: 'approved' }]);
+  assert.deepEqual((await get('/api/badges'))[id].values, [0, 5]);
+});
+
+test('a labels list of the wrong type falls back to the summed value', async () => {
+  upstreamBody = { pending: 3, approved: 4 };
+  const id = configureLabels('not-an-array', false, [{ path: 'pending' }, { path: 'approved' }]);
+  const body = await get('/api/badges');
+  assert.equal(body[id].values, undefined);
+  assert.equal(body[id].value, 7);
+});
+
+test('an empty labels list falls back to the summed value', async () => {
+  upstreamBody = { pending: 3 };
+  const id = configureLabels([], false, 'pending');
+  assert.equal((await get('/api/badges'))[id].value, 3);
+});
+
+test('labels survive an upstream body that is not an object', async () => {
+  upstreamBody = [1, 2, 3];
+  const id = configureLabels([{ path: 'pending' }, { path: '$count' }]);
+  const body = await get('/api/badges');
+  assert.deepEqual(body[id].values, [0, 3]);
+});
+
+test('a label list far longer than the response still answers', async () => {
+  upstreamBody = { a: 1 };
+  const many = Array.from({ length: 200 }, (_, n) => ({ path: `missing${n}` }));
+  many[150] = { path: 'a' };
+  const id = configureLabels(many);
+  const body = await get('/api/badges');
+  assert.equal(body[id].values.length, 200);
+  assert.equal(body[id].value, 1, 'the only firing label owns the value');
+});
+
+test('a label whose path names a prototype key reports zero', async () => {
+  upstreamBody = { pending: 2 };
+  const id = configureLabels([{ path: '__proto__' }, { path: 'constructor' }, { path: 'pending' }]);
+  assert.deepEqual((await get('/api/badges'))[id].values, [0, 0, 2]);
+});
+
+test('duplicate paths each report their own slot', async () => {
+  upstreamBody = { pending: 6 };
+  const id = configureLabels([{ path: 'pending' }, { path: 'pending' }]);
+  assert.deepEqual((await get('/api/badges'))[id].values, [6, 6]);
+});
+
+/* Configs written before labels existed. These shapes are still on disk in
+   every dashboard that has not been re-saved. */
+test('a legacy badge block with a single extract path is unchanged', async () => {
+  upstreamBody = { pending: 5 };
+  configure('pending');
+  const body = await get('/api/badges');
+  assert.deepEqual(Object.keys(body.a1), ['value'], 'no values key is added');
+  assert.equal(body.a1.value, 5);
+});
+
+test('a legacy badge block with several extract paths still sums them', async () => {
+  upstreamBody = { a: 2, b: 3, c: 4 };
+  configure([{ path: 'a' }, { path: 'b' }, { path: 'c' }]);
+  assert.equal((await get('/api/badges')).a1.value, 9);
+});
+
+test('a monitoring.activity block with no labels still sums its extract paths', async () => {
+  upstreamBody = { a: 2, b: 3 };
+  const id = configureLabels(undefined, undefined, [{ path: 'a' }, { path: 'b' }]);
+  const body = await get('/api/badges');
+  assert.equal(body[id].values, undefined, 'an old config gets no label list');
+  assert.equal(body[id].value, 5);
+});

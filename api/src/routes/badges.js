@@ -6,7 +6,7 @@ const LIMITS = require('../poll-limits');
 const { PING_MS, FETCH_MS, BATCH_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
-const { collectNumbers, computeBadgeValue } = require('../badge-extract');
+const { collectNumbers, computeBadgeValue, computeLabelValues, firstFiringLabel } = require('../badge-extract');
 const { requestParts, toRows, preserveItemBadgeSecrets, rowsToObject, droppedRowCount } = require('../badge-headers');
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
@@ -27,6 +27,16 @@ on('POST', '/api/ping', async (req, res) => {
     json(res, 200, Object.assign({ ok: false, status: 0 }, errorBody(e)));
   }
 });
+
+/** The labels a block renders from, or null when it sums into one number.
+    @param {any} block @returns {any[]|null} */
+function activityLabels(block) {
+  const labels = block?.labels;
+  if (block?.combine || !Array.isArray(labels) || !labels.length) return null;
+  /* Do not filter. The dashboard matches values to labels by index, and a
+     dropped entry shifts every later label onto the wrong value. */
+  return labels;
+}
 
 on('GET', '/api/badges', async (req, res) => {
   const limited = rateLimit(getIp(req), 'badges', LIMITS.BADGES.max, LIMITS.BADGES.windowMs);
@@ -72,9 +82,16 @@ on('GET', '/api/badges', async (req, res) => {
                 params: item.monitoring.activity.params,
               }
             : item.badge;
-          /* The extracted number only. This poll runs per item per tab and must
+          /* The extracted numbers only. This poll runs per item per tab and must
              not carry the upstream body. */
-          out[item.id] = { value: computeBadgeValue(r.data, badge) };
+          const labels = activityLabels(src);
+          if (labels) {
+            const values = computeLabelValues(r.data, labels);
+            const at = firstFiringLabel(labels, values);
+            out[item.id] = { value: at === -1 ? 0 : values[at], values };
+          } else {
+            out[item.id] = { value: computeBadgeValue(r.data, badge) };
+          }
           backoff.success(key);
         } catch (e) {
           const body = Object.assign({ value: 0 }, errorBody(e));
