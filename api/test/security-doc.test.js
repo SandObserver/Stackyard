@@ -106,10 +106,11 @@ test('the Compose example says what turning off the SSRF guard costs', () => {
 });
 
 /* Every operator setting has to be substituted, or a value set in a Docker UI's
-   environment editor is silently dropped instead of reaching the container. */
+   environment editor is silently dropped instead of reaching the container. A
+   default after `:-` is allowed; the operator's value still wins. */
 test('the Compose file substitutes each operator setting it activates', () => {
   const active = [...compose.matchAll(/^\s*- ([A-Z_]+)=(.*)$/gm)].filter(m => !m[1].startsWith('#'));
-  const literal = active.filter(m => m[2] !== `\${${m[1]}:-}`).map(m => m[1]);
+  const literal = active.filter(m => !new RegExp(`^\\$\\{${m[1]}:-.*\\}$`).test(m[2])).map(m => m[1]);
   assert.deepEqual(
     literal,
     [],

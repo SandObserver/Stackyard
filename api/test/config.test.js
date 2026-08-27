@@ -6,7 +6,7 @@ process.env.CONFIG_PATH = TMP;
 
 const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
-const { migrate, saveConfig, loadConfig, SCHEMA_VERSION } = require('../src/config');
+const { migrate, saveConfig, loadConfig, SCHEMA_VERSION, missingPathDirs } = require('../src/config');
 
 after(() => {
   try {
@@ -138,4 +138,28 @@ test('saveConfig treats a missing or junk _rev as zero', () => {
     saveConfig(cfg);
     assert.equal(cfg._rev, 1);
   }
+});
+
+test('missingPathDirs reports a config path whose directory is absent', () => {
+  const found = missingPathDirs({ CONFIG_PATH: '/nowhere/apps.json' }, () => false);
+  assert.deepEqual(found, [{ name: 'CONFIG_PATH', dir: '/nowhere' }]);
+});
+
+test('missingPathDirs reports an absent icons directory', () => {
+  const found = missingPathDirs({ ICONS_PATH: '/nowhere/icons' }, () => false);
+  assert.deepEqual(found, [{ name: 'ICONS_PATH', dir: '/nowhere/icons' }]);
+});
+
+test('missingPathDirs says nothing when the paths exist', () => {
+  assert.deepEqual(
+    missingPathDirs({ CONFIG_PATH: '/data/apps.json', ICONS_PATH: '/icons' }, () => true),
+    [],
+  );
+});
+
+test('missingPathDirs says nothing when neither variable is set', () => {
+  assert.deepEqual(
+    missingPathDirs({}, () => false),
+    [],
+  );
 });

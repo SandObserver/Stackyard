@@ -32,10 +32,10 @@ Everything is optional; the defaults are what the container ships with.
 
 | variable | default | what it does |
 |---|---|---|
-| `CONFIG_PATH` | `/data/apps.json` | Where the config file lives. |
-| `ICONS_PATH` | `/icons` | Where uploaded icons are written. |
+| `CONFIG_PATH` | `/data/apps.json` | Where the config file lives. A directory that does not exist is reported as a warning at startup. |
+| `ICONS_PATH` | `/icons` | Where uploaded icons are written. A directory that does not exist is reported as a warning at startup. |
 | `WIDGETS_PATH` | `/usr/share/nginx/html/widgets` | Where the widget folders are read from. Point it elsewhere only if you have moved them; a wrong path loads an empty registry, and every widget then reports as unknown. |
-| `PORT` | `3000` | The port the API listens on. nginx proxies to it, so changing it means changing `nginx/dashboard.conf` too. |
+| `PORT` | `3000` | The port the API listens on. Fixed in the container: `supervisord.conf` sets it for the API process, so setting it on the container changes nothing. Some hosting platforms read `PORT` to decide where to route, and there it must be `80`, the port nginx serves on. |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`, where `warn` and `error` behave the same: both show warnings and errors. Settings, General also sets this, and that setting wins from the moment the config loads; the variable is what applies during boot and if no setting is stored. |
 | `APP_VERSION` | the version in `package.json` | What the update check compares against. The release build stamps it, so leave it alone outside a build. |
 | `TRUST_PROXY` | unset | Believe `X-Forwarded-Proto`, so a request through a TLS-terminating proxy gets a `Secure` cookie. Only behind a proxy you control. See [security.md](./security.md#https-and-the-session-cookie). |

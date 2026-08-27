@@ -16,7 +16,9 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-  # Base image (node:24-alpine); stays on the 24 line and only takes patch and minor updates.
+  # Base image. The Dockerfile pins it by digest, which is what gives this entry
+  # something to raise: a bare `24-alpine` never changes version, so nothing on
+  # the 24 line is ever proposed. Major moves stay manual under the ignore below.
   - package-ecosystem: docker
     directory: /
     schedule:

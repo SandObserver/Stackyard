@@ -1,17 +1,23 @@
+# Both stages are pinned by digest, so a build is reproducible and Dependabot has
+# something to raise. A bare `24-alpine` moves under the tag, and no minor or
+# patch update ever appears on the 24 line for Dependabot to propose. Change both
+# together.
+#
 # Asset URLs are served with a one-year immutable lifetime, so every build has to
 # stamp them itself. An unstamped tree would pin `?v=1` in browser caches and
 # keep serving the old file after an upgrade.
-FROM node:24-alpine AS assets
+FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS assets
 WORKDIR /src
 COPY ui/ ./ui/
 COPY scripts/bump-cache-busting.js ./scripts/bump-cache-busting.js
 RUN node scripts/bump-cache-busting.js
 
-FROM node:24-alpine
+FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43
 
 LABEL org.opencontainers.image.title="Stackyard" \
       org.opencontainers.image.description="Self-hosted homelab dashboard" \
-      org.opencontainers.image.source="https://github.com/SandObserver/stackyard"
+      org.opencontainers.image.source="https://github.com/SandObserver/stackyard" \
+      org.opencontainers.image.licenses="Apache-2.0"
 
 # No package manager in the runtime image: nothing here uses one, and their
 # bundled dependencies were this image's only HIGH and CRITICAL findings. Paths
