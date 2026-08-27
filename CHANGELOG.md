@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Folder badges now show the badge of the app inside them that is reporting,
   rather than a total.
 
+- A startup warning when `CONFIG_PATH` or `ICONS_PATH` points at a directory
+  that does not exist.
+
+- Release images carry an SBOM attestation, verifiable with
+  `cosign verify-attestation`. See `docs/security.md`.
+
 ### Changed
 
 - Badge text is white wherever white is readable, instead of whichever ink
@@ -24,11 +30,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Badges show the number alone at phone size, so a unit cannot make one wider
   than its icon.
 
+- The Compose file caps CPU with `cpus` instead of a relative share, bounds the
+  Node heap to the memory limit, and runs an init process.
+
 ### Fixed
 
 - Opening and saving an app no longer rewrites a colour that was not changed.
 
 - Admin form toggles now carry accessible names.
+
+- `CONFIG_PATH` and `ICONS_PATH` now take effect. The container was overriding
+  both, so a config file moved elsewhere was ignored.
 
 ## [1.8.2] - 2026-08-25
 

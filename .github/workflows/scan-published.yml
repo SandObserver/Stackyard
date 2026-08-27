@@ -1,0 +1,42 @@
+name: Scan the published image
+
+# The release build scans what it is about to publish, which says nothing about
+# an image already in a registry. Between releases a new HIGH in the base image
+# is invisible, and `latest` is what self-hosted installs are running.
+#
+# This scans the published image itself, not a rebuild, so a failure means the
+# image people are running is affected.
+on:
+  schedule:
+    - cron: '41 4 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    strategy:
+      # Both published platforms, and one failing must not hide the other.
+      fail-fast: false
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+    steps:
+      # Pulled per platform and scanned locally. Trivy reads the filesystem and
+      # does not run the image, so the runner's own architecture does not matter.
+      - name: Pull the published image
+        run: docker pull --platform "$PLATFORM" ghcr.io/sandobserver/stackyard:latest
+        env:
+          PLATFORM: ${{ matrix.platform }}
+
+      # Same severity and same ignore-unfixed as the release gate, so this cannot
+      # report a state the release build would have allowed through.
+      - name: Scan it
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/sandobserver/stackyard:latest
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'

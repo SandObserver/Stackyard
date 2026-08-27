@@ -205,6 +205,20 @@ jobs:
           path: stackyard-${{ steps.meta.outputs.version }}.spdx.json
           if-no-files-found: error
 
+      # The artifact above expires. An SBOM that cannot be fetched for an older
+      # release cannot answer the one question it exists for, so the same
+      # document is also attested to the registry beside the signature, keyless
+      # and by digest. Verification steps: docs/security.md.
+      - name: Attest the SBOM to the registry
+        run: |
+          cosign attest --yes \
+            --predicate "stackyard-${VERSION}.spdx.json" \
+            --type spdxjson \
+            "ghcr.io/sandobserver/stackyard@${DIGEST}"
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+
       # The page is only correct for an image that exists, so this runs after
       # the push, and only for a stable tag: a pre-release must not rewrite the
       # page describing what `latest` gives you.

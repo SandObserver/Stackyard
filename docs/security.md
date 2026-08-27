@@ -207,8 +207,20 @@ fails on a HIGH or CRITICAL finding that has a fix available, so a flagged image
 never reaches a registry. Both published platforms are scanned: `linux/amd64`
 and `linux/arm64`, the second built under emulation on the runner.
 
-The build also produces an SPDX SBOM listing what is inside the image, attached
-to the run as an artifact and downloadable from its summary page on GitHub.
+A scheduled job scans the published `latest` image every week, on both platforms.
+That covers a vulnerability disclosed after a release, which the gate above
+cannot see.
+
+The build also produces an SPDX SBOM listing what is inside the image. It is
+attached to the run as an artifact, and attested to the registry beside the
+signature so it stays available after the artifact expires:
+
+```
+cosign verify-attestation ghcr.io/sandobserver/stackyard:1.5.0 \
+  --type spdxjson \
+  --certificate-identity-regexp '^https://github.com/SandObserver/stackyard/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
 
 Images are published to `ghcr.io/sandobserver/stackyard`. A Docker Hub mirror is
 published alongside it when the project has credentials configured. Prefer

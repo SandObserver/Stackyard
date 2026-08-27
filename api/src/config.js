@@ -7,6 +7,22 @@ const { migrateItemBadgeHeaders } = require('./badge-headers');
 const CONFIG_PATH = process.env.CONFIG_PATH || '/data/apps.json';
 const ICONS_PATH = process.env.ICONS_PATH || '/icons';
 
+/* A path set to somewhere that does not exist starts the process normally and
+   fails on the first write, with nothing said at boot. Only an explicit value
+   is checked: the image creates the defaults. */
+function missingPathDirs(env = process.env, exists = p => fs.existsSync(p)) {
+  const out = [];
+  if (env.CONFIG_PATH) {
+    const dir = path.dirname(env.CONFIG_PATH);
+    if (!exists(dir)) out.push({ name: 'CONFIG_PATH', dir });
+  }
+  if (env.ICONS_PATH && !exists(env.ICONS_PATH)) out.push({ name: 'ICONS_PATH', dir: env.ICONS_PATH });
+  return out;
+}
+
+for (const { name, dir } of missingPathDirs())
+  log.warn('configured directory does not exist; writes there will fail', { variable: name, dir });
+
 let _cfgCache = null,
   _cfgCacheAt = 0;
 const CONFIG_TTL_MS = 5000;
@@ -204,4 +220,13 @@ function ensureSystemItems(cfg) {
   return cfg;
 }
 
-module.exports = { CONFIG_PATH, ICONS_PATH, SCHEMA_VERSION, loadConfig, saveConfig, ensureSystemItems, migrate };
+module.exports = {
+  CONFIG_PATH,
+  ICONS_PATH,
+  SCHEMA_VERSION,
+  loadConfig,
+  saveConfig,
+  ensureSystemItems,
+  migrate,
+  missingPathDirs,
+};
