@@ -441,8 +441,6 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .bg:hover:not(:disabled){background:var(--ov);color:var(--tx)}
 .bd-btn{background:transparent;color:var(--rd);border:1px solid var(--rd)}
 .bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}
-.save-btn-green{background:var(--gn);color:var(--on-fill)}
-.save-btn-green:hover:not(:disabled){background:var(--sy-green-hi)}
 .sm{padding:6px 14px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);min-height:30px}
 .ic{padding:6px;min-height:0}
 .cursor-ptr{cursor:pointer}

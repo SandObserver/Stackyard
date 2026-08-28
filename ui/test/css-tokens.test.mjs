@@ -24,6 +24,8 @@ const files = fs.readdirSync(cssDir).filter(f => f.endsWith('.css'));
 const strip = s => s.replace(/\/\*[\s\S]*?\*\//g, '');
 const read = f => strip(fs.readFileSync(path.join(cssDir, f), 'utf8'));
 const all = files.map(f => [f, read(f)]);
+/* The markup, which the css helper's directory does not reach. */
+const read2 = f => fs.readFileSync(path.resolve(cssDir, '..', f), 'utf8');
 
 /* Set from JavaScript at runtime rather than declared in CSS: the wallpaper and
    its brightness come from settings, and the dashboard's layout engine writes
@@ -149,4 +151,56 @@ test('the shared root rules are defined once, in tokens.css', () => {
       `${sel} should be defined only in tokens.css, found in ${owners.join(', ')}`,
     );
   }
+});
+
+/* ── A class says what a thing is, not what colour it is ──────────────────── */
+
+/* Rule 2 in design-system.md: never name a palette entry in a rule. A class
+   called .save-btn-green did it in the selector as well, and its own hover
+   reached past the role into --sy-green-hi. Save was teal on one pane and green
+   on two others, for one action. */
+
+const PALETTE_WORDS = [
+  'red',
+  'orange',
+  'yellow',
+  'green',
+  'mint',
+  'teal',
+  'cyan',
+  'blue',
+  'indigo',
+  'purple',
+  'pink',
+  'brown',
+];
+
+/* The badge's colour is its state, chosen in the config and read back in
+   badge-logic.js, so here the hue is the thing being named. They are the only
+   ones, and a new colour-named class is what this is watching for. */
+const STATE_CLASSES = ['red', 'blue', 'green'];
+
+/** Every class name a stylesheet defines. Comments are already stripped. */
+function classNames(css) {
+  return [...new Set([...css.matchAll(/\.([a-zA-Z][\w-]*)/g)].map(m => m[1]))];
+}
+
+test('no class name states a colour', () => {
+  const offenders = [];
+  for (const sheet of ['admin.css', 'dashboard.css', 'tokens.css']) {
+    for (const name of classNames(read(sheet))) {
+      if (STATE_CLASSES.includes(name)) continue;
+      const parts = name.toLowerCase().split(/[-_]/);
+      if (PALETTE_WORDS.some(w => parts.includes(w))) offenders.push(`${sheet}: .${name}`);
+    }
+  }
+  assert.deepEqual(offenders, [], `A class names a role, not a hue:\n  ${offenders.join('\n  ')}`);
+});
+
+/* One action, one colour. Save is the primary button on every pane. */
+test('every Save is the same button', () => {
+  const html = read2('admin/index.html');
+  const saves = [...html.matchAll(/<button[^>]*id="[\w-]*save"[^>]*>/g)].map(m => m[0]);
+  assert.ok(saves.length >= 3, `expected the Save buttons, found ${saves.length}`);
+  for (const s of saves) assert.match(s, /class="btn bp /, `a Save is not the primary button: ${s}`);
 });

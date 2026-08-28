@@ -82,6 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The dashboard heading now sits inside a landmark.
 
+- Save is the same button on every Settings pane. It was green on two panes and
+  teal on a third, for one action.
+
 - In right-to-left languages a badge now sits on the leading corner of its tile,
   the badge popover follows it, a Settings row's title and subtitle share an
   edge, and the Now Playing arrows point the way they read.

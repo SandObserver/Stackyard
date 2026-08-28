@@ -410,7 +410,7 @@ const GRAPHIC_PAIRS = [['the icon on an app tile with no icon yet', '--on-tint',
 
 test('every filled control the stylesheet declares is paired with its ink', () => {
   const found = filledRules().map(r => r.what);
-  for (const sel of ['.bp', '.login-btn', '.setpw-btn', '.nl.active', '.chip.on', '.save-btn-green']) {
+  for (const sel of ['.bp', '.login-btn', '.setpw-btn', '.nl.active', '.chip.on']) {
     assert.ok(
       found.includes(sel),
       `${sel} is filled with a role colour and no longer names --on-fill: ${found.join(', ')}`,
