@@ -29,14 +29,20 @@ export const fb = (l, sz, plate) => {
 };
 export { esc } from '/js/html.js?v=c71f8903';
 
-/* A name the user typed has its own direction. Without dir="auto" an English
-   name inside a Persian dashboard lays out right-to-left and an over-long one
-   loses its head rather than its tail.
+/* A name the user typed has its own direction. Without that an English name
+   inside a Persian dashboard lays out right-to-left and an over-long one loses
+   its head rather than its tail.
+
+   The isolation goes on a <bdi> around the text, not on the block. `dir` sets
+   alignment as well as bidi, so a Latin name on the block dragged its whole row
+   to the other edge: a title and its subtitle ended up on opposite sides.
 
    @param {HTMLElement} node @param {string} text @returns {HTMLElement} */
 export const setUserText = (node, text) => {
-  node.textContent = text;
-  node.setAttribute('dir', 'auto');
+  node.textContent = '';
+  const bdi = mk('bdi');
+  bdi.textContent = text;
+  node.appendChild(bdi);
   return node;
 };
 

@@ -20,15 +20,15 @@ import {
   qi,
   qa,
   setUserText,
-} from '/js/utils.js?v=0cfffdfb';
-import { initSpotlight } from '/js/spotlight.js?v=33ffbcad';
+} from '/js/utils.js?v=2e617767';
+import { initSpotlight } from '/js/spotlight.js?v=cd630755';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=4524d8bc';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=de9a2526';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=f220ce9b';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=7e5a5805';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=08aae50f';
 import {
   configChanged,
   landingAfterSetup,

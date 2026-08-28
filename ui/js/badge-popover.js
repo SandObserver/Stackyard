@@ -50,7 +50,10 @@ function place(badge) {
   const gap = 8;
   let top = r.bottom + gap;
   if (top + pr.height > window.innerHeight - 8) top = Math.max(8, r.top - gap - pr.height);
-  let left = r.right - pr.width;
+  /* Aligned with the badge's trailing edge, which is the other side of the
+     screen in a right-to-left language. */
+  const rtl = (document.documentElement.getAttribute('dir') || 'ltr') === 'rtl';
+  let left = rtl ? r.left : r.right - pr.width;
   left = Math.min(Math.max(8, left), window.innerWidth - pr.width - 8);
   p.style.top = Math.round(top) + 'px';
   p.style.left = Math.round(left) + 'px';

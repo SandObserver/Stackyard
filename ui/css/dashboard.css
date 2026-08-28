@@ -212,7 +212,7 @@
     /* ── Badge — reference size, scaled by --sc (desktop overrides below) ── */
     .badge {
       position:absolute;
-      top:calc(-7px * var(--sc,1)); right:calc(-7px * var(--sc,1));
+      top:calc(-7px * var(--sc,1)); inset-inline-end:calc(-7px * var(--sc,1));
       min-width:calc(24px * var(--sc,1)); height:calc(24px * var(--sc,1));
       border-radius:50px; padding:0 calc(6px * var(--sc,1));
       display:none;
@@ -246,19 +246,23 @@
     /* Both pills are pseudo-elements at negative depth. That is the only order
        where one paints under the other and both stay under the label, and it
        needs the element's own background to stay clear. */
-    .badge.has-more { pointer-events:auto; background:none; right:calc(-7px * var(--sc,1) + var(--badge-peek)) }
+    .badge.has-more { pointer-events:auto; background:none; inset-inline-end:calc(-7px * var(--sc,1) + var(--badge-peek)) }
     .badge.has-more::before, .badge.has-more::after {
       content:''; position:absolute; inset:0; border-radius:50px;
     }
     /* Separated from the front pill, or the peek reads as a colour fringe on one
        pill rather than as a second pill behind it. */
+    /* Shifted by its own insets rather than by translateX, which has no logical
+       form: the pill behind peeks towards the trailing edge, whichever side of
+       the screen that is. */
     .badge.has-more::before {
-      z-index:-2; transform:translateX(var(--badge-peek));
+      z-index:-2;
+      inset-inline-start:var(--badge-peek); inset-inline-end:calc(var(--badge-peek) * -1);
       background:var(--badge-next,var(--badge-blue));
       box-shadow:0 0 0 1.5px var(--badge-stack-edge,rgba(0,0,0,.55));
     }
     .badge.has-more::after { z-index:-1; background:var(--badge-bg,var(--badge-blue)) }
-    body:not(.is-mob) .badge.has-more { right:calc(-7px + var(--badge-peek)) }
+    body:not(.is-mob) .badge.has-more { inset-inline-end:calc(-7px + var(--badge-peek)) }
 
     /* ── Badge popover — the values the pill has no room for ── */
     .badge-pop {
@@ -292,7 +296,7 @@
     body:not(.is-mob) .badge {
       --badge-peek:6px;
       max-width:calc(100% + 7px);
-      top:-7px; right:-7px;
+      top:-7px; inset-inline-end:-7px;
       min-width:20px; height:20px; padding:0 5px;
       font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2); font-weight:700;
     }
