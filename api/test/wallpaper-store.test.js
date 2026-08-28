@@ -23,6 +23,16 @@ const GIF = Buffer.from('GIF89a\0\0\0\0');
 
 const dir = () => path.join(iconsDir, 'wallpaper');
 
+/* Stored wallpapers are ordered by mtime, and two writes in one millisecond tie.
+   The tie then falls to the content hash in the name, so which file counts as
+   newest is arbitrary. Age the earlier one so these tests order by intent. */
+function age(url, secondsOlder) {
+  const file = path.join(dir(), path.basename(url));
+  const when = new Date(Date.now() - secondsOlder * 1000);
+  fs.utimesSync(file, when, when);
+  return url;
+}
+
 /* ── the format is read from the bytes ────────────────────────────────────── */
 
 test('every accepted format is recognised', () => {
@@ -96,7 +106,7 @@ test('pruning a directory that was never written does nothing', () => {
 });
 
 test('a URL outside the wallpaper directory keeps nothing by name', () => {
-  storeWallpaper(PNG, '.png');
+  age(storeWallpaper(PNG, '.png'), 60);
   const newest = storeWallpaper(GIF, '.gif');
   pruneWallpapers('https://example.invalid/photo.jpg');
   assert.deepEqual(fs.readdirSync(dir()), [path.basename(newest)]);
