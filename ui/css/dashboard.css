@@ -805,6 +805,19 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   .badge { box-shadow:0 0 0 1.5px rgba(0,0,0,.85); }
 }
 
+/* The wallpaper and the blur are handled in tokens.css. What remains is the
+   state this page carries in colour alone. */
+@media (forced-colors: active) {
+  #dots { background:Canvas; border:1px solid CanvasText; }
+  /* State by shape, not by fill: forced colors paints both dots the same. */
+  .dot { background:Canvas; border:1px solid CanvasText; }
+  .dot.on { background:Highlight; border-color:Highlight; }
+  /* The one opt-out. A status colour is information, and the system palette has
+     no way to say "needs attention". The border keeps the pill a shape once the
+     fill is no longer trusted to. */
+  .badge { forced-color-adjust:none; border:1px solid CanvasText; }
+}
+
 /* Do not add `container-type:size` here. It applies size containment and
    collapses the desktop .widget, which has no explicit height, to 0. */
 

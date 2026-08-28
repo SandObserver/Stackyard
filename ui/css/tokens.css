@@ -283,5 +283,20 @@ html::before {
   transform:translateZ(0);
 }
 
+/* Forced colors replaces declared colours with the user's palette, but leaves
+   background images and backdrop-filter alone. Without this the wallpaper and
+   the glass survive underneath flattened text.
+
+   The blur override is universal and !important because it has to beat every
+   rule that sets one, including any added later. A named list would go stale,
+   and the point of this mode is that the material is discarded. */
+@media (forced-colors: active) {
+  html::before { background-image:none; background-color:Canvas; filter:none; }
+  *, *::before, *::after {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+}
+
 /* Sits above the wallpaper. Each page adds its own sizing. */
 body { background:transparent; position:relative; z-index:1 }
