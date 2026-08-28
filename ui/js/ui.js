@@ -10,9 +10,10 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=b18c93ed';
+} from '/js/utils.js?v=3eb63c9e';
 import { t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { trapFocus } from '/js/dialog.js?v=05935547';
+import { toneForColor } from '/js/label-contrast.js?v=72a28022';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=424d5d41';
 
 let _state = null;
@@ -61,8 +62,10 @@ function css(el, props) {
 function mkMiniIcon(child, pointerEvents) {
   const bg = mk('div');
   bg.className = 'folder-mini-bg';
-  bg.style.background = clr(child.color);
+  const plate = clr(child.color);
+  bg.style.background = plate;
   if (pointerEvents === 'none') bg.style.pointerEvents = 'none';
+  const onLight = toneForColor(plate) === 'dark';
   if (child.iconUrl) {
     const srcs = iconChain(child.iconUrl);
     if (srcs.length) {
@@ -79,14 +82,14 @@ function mkMiniIcon(child, pointerEvents) {
       bg.appendChild(img);
     } else {
       const s = mk('span');
-      s.className = 'folder-mini-fb';
+      s.className = onLight ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
       if (pointerEvents === 'none') s.style.pointerEvents = 'none';
       s.textContent = (child.label || '?')[0].toUpperCase();
       bg.appendChild(s);
     }
   } else {
     const s = mk('span');
-    s.className = 'folder-mini-fb';
+    s.className = onLight ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
     if (pointerEvents === 'none') s.style.pointerEvents = 'none';
     s.textContent = (child.label || '?')[0].toUpperCase();
     bg.appendChild(s);

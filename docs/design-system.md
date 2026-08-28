@@ -53,12 +53,13 @@ What a colour is for. Each role resolves to a palette entry.
 | `--info` | ![](https://img.shields.io/badge/-%20-0091FF) `--sy-blue` `#0091FF` | ![](https://img.shields.io/badge/-%20-0040DD) `--sy-blue-hi` `#0040DD` |
 | `--on-fill` | ![](https://img.shields.io/badge/-%20-000000) `#000000` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
 | `--on-tint` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
+| `--on-tint-dark` | ![](https://img.shields.io/badge/-%20-000000) `#000000` | ![](https://img.shields.io/badge/-%20-000000) `#000000` |
 
 Light hues are drawn for a fill, so a light role that becomes text or the edge of a control points at the `-hi` entry. Use `--accent-strong` wherever the accent has to be read as text.
 
 `--on-fill` is the ink on a control filled with a role colour. It is dark in the dark theme and white in the light theme, because the fill moves the other way. It is not a label level. White on the dark hues fails 1.4.3: the accent measures 1.86, the success green 2.02, the danger red 3.43.
 
-`--on-tint` is the ink on a fill this project does not choose, such as the colour a user picks for an app. It is white in both themes.
+`--on-tint` is the ink on a fill this project does not choose, such as the colour a user picks for an app. The fill is unknown, so the ink is a pair rather than a value. The renderer measures the fill's luminance and takes whichever of `--on-tint` and `--on-tint-dark` gives the better ratio. Both are opaque. White alone fails 1.4.3 on seven of the eight colours the picker offers: the palette yellow measures 1.50 and the green 2.22.
 
 ### Semantic
 
@@ -251,5 +252,5 @@ The Settings page scopes two more families.
 1. Never write a colour literal outside the token file.
 2. Never name a palette entry in a rule. Name a role or a semantic token.
 3. Set a text style's three tokens together.
-4. `--on-tint` is the ink on a user-chosen coloured fill, where no token can describe what is underneath. Do not write `#fff` or `#000` for it.
+4. `--on-tint` is the ink on a user-chosen coloured fill, where no token can describe what is underneath. Take it from the fill's measured luminance, never as a fixed value, and never with alpha.
 5. A control filled with a role colour takes `--on-fill`. `ui/test/contrast.test.mjs` measures every such pair in both themes.

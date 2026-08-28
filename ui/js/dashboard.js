@@ -20,13 +20,13 @@ import {
   qi,
   qa,
   setUserText,
-} from '/js/utils.js?v=b18c93ed';
-import { initSpotlight } from '/js/spotlight.js?v=712fa7de';
+} from '/js/utils.js?v=3eb63c9e';
+import { initSpotlight } from '/js/spotlight.js?v=9263d60d';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=cb32cf6d';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=8bd9df12';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=be6330d6';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=d00c0629';
 import {
@@ -40,14 +40,7 @@ import { trapFocus } from '/js/dialog.js?v=05935547';
 import { jitter } from '/js/jitter.js?v=4edf48f2';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import {
-  applyLabelTones,
-  loadSamplingImage,
-  parseCssColor,
-  relativeLuminance,
-  sampleImage,
-  toneForLuminances,
-} from '/js/label-contrast.js?v=69cbdcb0';
+import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=72a28022';
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();
@@ -518,12 +511,6 @@ let bgTone = { grid: null, tone: null };
 
 function retone() {
   requestAnimationFrame(() => applyLabelTones(bgTone));
-}
-
-function toneForColor(color) {
-  const rgb = parseCssColor(color);
-  if (!rgb) return null;
-  return toneForLuminances([relativeLuminance(rgb[0], rgb[1], rgb[2])]);
 }
 
 /* Held so a resize re-samples without fetching the image again. */

@@ -181,7 +181,10 @@
     }
     .iwrap img, .dwrap img { object-fit:contain; position:relative; z-index:3 }
     .iwrap .fb, .dwrap .fb,
-    .dyn-mob-icon .fb, .dyn-dock-icon .fb { position:relative; z-index:3; font-weight:600; color:rgba(255,255,255,.85) }
+    .dyn-mob-icon .fb, .dyn-dock-icon .fb { position:relative; z-index:3; font-weight:600; color:var(--on-tint) }
+    /* Alpha on this ink breaks the contrast guarantee: at .85 one palette entry
+       clears neither tone. */
+    .fb.fb-on-light { color:var(--on-tint-dark) }
 
     /* Hover lift */
     .icon:hover .iwrap,
@@ -687,7 +690,8 @@
       overflow:hidden; box-shadow:inset 0 0 0 0.5px rgba(255,255,255,.15);
     }
     .folder-mini-img { width:72%; height:72%; object-fit:contain }
-    .folder-mini-fb  { font-size:50%; font-weight:700; color:rgba(255,255,255,.85) }
+    .folder-mini-fb  { font-size:50%; font-weight:700; color:var(--on-tint) }
+    .folder-mini-fb.fb-on-light { color:var(--on-tint-dark) }
 
     /* Dynamic layout classes — pixel values set via CSS custom properties from JS */
     .dyn-box        { position:relative; flex-shrink:0; }

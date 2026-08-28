@@ -166,6 +166,19 @@ export function parseCssColor(value) {
   return a;
 }
 
+/** The ink for a solid fill, from the fill's own luminance.
+
+    A fill the user chose cannot have an ink the project chose. Alpha on the ink
+    breaks the guarantee: at .85 one palette entry clears neither tone.
+
+    @param {string} color any CSS colour the parser accepts
+    @returns {'light'|'dark'|null} null when the colour cannot be parsed */
+export function toneForColor(color) {
+  const rgb = parseCssColor(color);
+  if (!rgb) return null;
+  return toneForLuminances([relativeLuminance(rgb[0], rgb[1], rgb[2])]);
+}
+
 /** An image as a luminance grid.
 
     @param {HTMLImageElement} img a loaded image

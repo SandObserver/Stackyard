@@ -1,7 +1,7 @@
-import { PE_SVG, initInlineEdit, toast } from '/js/admin-shared.js?v=8f69dad6';
+import { PE_SVG, initInlineEdit, toast } from '/js/admin-shared.js?v=abaed3c3';
 import { t } from '/js/i18n.js?v=d056c9c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa, q } from '/js/utils.js?v=b18c93ed';
+import { qa, q } from '/js/utils.js?v=3eb63c9e';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
 export const BADGE_DEFAULT = '#1e6ef4';

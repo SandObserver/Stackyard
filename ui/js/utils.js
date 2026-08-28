@@ -1,4 +1,5 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
+import { toneForColor } from '/js/label-contrast.js?v=72a28022';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);
@@ -16,9 +17,12 @@ export const clr = c => {
   const v = String(c).trim();
   return SAFE_COLOR.test(v) ? v : DEFAULT_TILE_COLOR;
 };
-export const fb = (l, sz) => {
+/* The plate is a colour the user chose, so the ink has to be measured from it.
+   White on the palette's own yellow reads at 1.5:1. */
+export const fb = (l, sz, plate) => {
   const e = mk('span');
   e.className = 'fb';
+  if (toneForColor(plate) === 'dark') e.classList.add('fb-on-light');
   e.style.fontSize = Math.round(sz * 0.32) + 'px';
   e.textContent = (l || '?')[0].toUpperCase();
   return e;
@@ -85,7 +89,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
     const img = mk('img', { src: SETTINGS_ICON, alt: '', draggable: false });
     img.setAttribute('aria-hidden', 'true');
     img.style.cssText = `width:${si}px;height:${si}px;object-fit:contain;position:relative;z-index:3;`;
-    img.onerror = () => img.replaceWith(fb(item.label, sz));
+    img.onerror = () => img.replaceWith(fb(item.label, sz, wrapBg));
     w.appendChild(img);
   } else if (rawIcon) {
     const chain = iconChain(rawIcon);
@@ -97,7 +101,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
       const tryNext = () => {
         step++;
         if (step < chain.length) img.src = chain[step];
-        else img.replaceWith(fb(item.label, sz));
+        else img.replaceWith(fb(item.label, sz, wrapBg));
       };
       img.onerror = tryNext;
       /* A 403 fires load, not onerror. A blocked image has zero dimensions. */
@@ -105,8 +109,8 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
         if (img.naturalWidth === 0) tryNext();
       };
       w.appendChild(img);
-    } else w.appendChild(fb(item.label, sz));
-  } else w.appendChild(fb(item.label, sz));
+    } else w.appendChild(fb(item.label, sz, wrapBg));
+  } else w.appendChild(fb(item.label, sz, wrapBg));
   if (
     breg &&
     (item.monitoring?.healthcheck?.enabled ||
