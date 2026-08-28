@@ -750,12 +750,20 @@ export function buildMobile() {
 
   const dk = el('dock');
   dk.className = 'mdock';
-  const dockW = vw - Math.round(18 * sc);
-  const dockIconSz = Math.round(Math.min(isz, ((dockW - Math.round(28 * sc)) / 4) * 0.85));
+  const maxDockW = vw - Math.round(18 * sc);
+  const dockPad = Math.round(14 * sc);
+  const dockIconSz = Math.round(Math.min(isz, ((maxDockW - Math.round(28 * sc)) / 4) * 0.85));
   const dockIr = Math.round(dockIconSz * 0.225),
     dockIm = Math.round(dockIconSz * 0.64);
   const dockGap = Math.round(9 * sc);
-  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${Math.round(14 * sc)}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
+  /* Sized to what it holds, not to the window. The grid gains columns on a wide
+     screen while the dock keeps four icons, and a stretched bar reads as empty
+     rather than as a dock. */
+  const dockContentW = dock.length
+    ? dock.length * dockIconSz + (dock.length - 1) * Math.round(22 * sc) + dockPad * 2
+    : maxDockW;
+  const dockW = Math.min(maxDockW, dockContentW);
+  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
   dk.innerHTML = '';
   dock.forEach(item => {
     const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
