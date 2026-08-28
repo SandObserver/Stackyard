@@ -26,8 +26,8 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=e5cdc817';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=be6330d6';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=4524d8bc';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=f220ce9b';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=7e5a5805';
 import {
   configChanged,
@@ -198,13 +198,17 @@ function bupd(id) {
     }
     txtEl.textContent = num;
     unitEl.textContent = unit ? ' ' + unit : '';
-    if (aria) {
-      el.setAttribute('role', 'status');
-      el.setAttribute('aria-label', aria);
-    } else {
-      el.removeAttribute('role');
-      el.removeAttribute('aria-label');
-    }
+    /* The badge belongs to its tile's name, not to a live region of its own.
+       An explicit label on the anchor wins over everything inside it, so a
+       badge left to speak for itself is never reached by a reader moving from
+       tile to tile. A name change is silent, which is what a figure on a timer
+       needs. */
+    el.setAttribute('aria-hidden', 'true');
+    el.removeAttribute('role');
+    el.removeAttribute('aria-label');
+    const tile = /** @type {HTMLElement|null} */ (el.closest('a, [role="button"]'));
+    const tileName = tile?.dataset.tileName;
+    if (tile && tileName) tile.setAttribute('aria-label', aria ? `${tileName}, ${aria}` : tileName);
     /* Never the `background` shorthand. It resets background-clip, and the
        pill behind is painted from this same value. */
     if (bg) el.style.setProperty('--badge-bg', bg);
@@ -296,6 +300,7 @@ function mkIcon(item) {
       : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'icon';
   a.setAttribute('aria-label', item.label || item.id);
+  a.dataset.tileName = item.label || item.id;
   if (!showLabel) a.title = item.label || item.id;
   a.appendChild(mkWrap(item, iw, Math.round(iw * ICON_R), isz, 'iwrap'));
   if (showLabel) {
@@ -345,6 +350,7 @@ function mkDock(item) {
       : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'di';
   a.setAttribute('aria-label', item.label || item.id);
+  a.dataset.tileName = item.label || item.id;
   a.title = item.label || item.id;
   a.appendChild(mkWrap(item, 78, Math.round(78 * ICON_R), 50, 'dwrap'));
   return a;

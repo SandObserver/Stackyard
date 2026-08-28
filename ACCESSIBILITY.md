@@ -17,7 +17,7 @@ This is a self-assessment. No external audit has been carried out.
 - The interface honours `prefers-reduced-motion` and `prefers-contrast`.
 - Content reflows to a 320 CSS pixel viewport with no horizontal scrolling, and survives text resizing to 200%.
 - The interface is translated into six languages. Accessible names are translated with it, apart from those listed below.
-- Page changes are announced. Polled figures are not announced, so a screen reader is not interrupted by data that changes on a timer.
+- Page changes are announced. Polled figures are not announced, so a screen reader is not interrupted by data that changes on a timer. A tile's badge is part of the tile's name, so it is read on arrival rather than spoken when it changes.
 
 ## Known limitations
 

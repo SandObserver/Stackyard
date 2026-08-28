@@ -106,6 +106,7 @@ export function mkFolder(item) {
   a.href = '#';
   a.setAttribute('role', 'button');
   a.setAttribute('aria-label', (item.label || t('type.folder')) + ' folder');
+  a.dataset.tileName = (item.label || t('type.folder')) + ' folder';
   if (!showLabel) a.title = item.label || t('type.folder');
   a.onclick = e => {
     e.preventDefault();
@@ -234,6 +235,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   a.type = 'button';
   a.className = 'dyn-mob-btn';
   a.setAttribute('aria-label', (item.label || t('type.folder')) + ' folder');
+  a.dataset.tileName = (item.label || t('type.folder')) + ' folder';
   css(a, { '--rh': rh + 'px' });
   let _opening = false;
   function _openFolder() {
@@ -687,6 +689,7 @@ export function buildMobile() {
         : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
     a.className = 'dyn-mob-icon';
     a.setAttribute('aria-label', item.label || item.id);
+    a.dataset.tileName = item.label || item.id;
     css(a, { '--cw': '100%', '--rh': rh2 + 'px' });
     a.appendChild(mkWrap(item, eff, er, em, ''));
     if (showLabel) {
@@ -773,6 +776,7 @@ export function buildMobile() {
     a.className = 'dyn-dock-icon';
     const nm = item.label || item.id;
     a.setAttribute('aria-label', nm);
+    a.dataset.tileName = nm;
     a.title = nm; /* dock icons never show a label */
     a.appendChild(mkWrap(item, dockIconSz, dockIr, dockIm, ''));
     dk.appendChild(a);

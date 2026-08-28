@@ -77,6 +77,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the current page by shape as well as colour. Over a light wallpaper the whole
   indicator was invisible.
 
+- A tile's badge is now part of what a screen reader reads for that tile. It was
+  unreachable there, and each badge announced itself on the poll instead.
+
+- The dashboard heading now sits inside a landmark.
+
 ## [1.8.2] - 2026-08-25
 
 ### Fixed

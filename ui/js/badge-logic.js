@@ -85,8 +85,14 @@ export function healthReason(detail, translate) {
     parts.push(_clip(detail.status, REASON_MAX));
   }
 
-  if (detail.pingError) parts.push(_clip(tr('status.pingFailed', { error: detail.pingError }), REASON_MAX));
-  else if (detail.pingStatus >= 400) parts.push(tr('status.pingReturned', { status: detail.pingStatus }));
+  /* Give the room to the translated words and trim the upstream ones. The error
+     text comes from the network layer and is never translated, so clipping the
+     composed sentence cuts the half a reader can actually use. */
+  if (detail.pingError) {
+    const around = tr('status.pingFailed', { error: '' }).length;
+    const room = Math.max(8, REASON_MAX - around);
+    parts.push(_clip(tr('status.pingFailed', { error: _clip(detail.pingError, room) }), REASON_MAX));
+  } else if (detail.pingStatus >= 400) parts.push(tr('status.pingReturned', { status: detail.pingStatus }));
 
   return parts.join(' \u2022 ');
 }
