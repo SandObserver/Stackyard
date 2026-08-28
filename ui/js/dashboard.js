@@ -20,13 +20,13 @@ import {
   qi,
   qa,
   setUserText,
-} from '/js/utils.js?v=bc2329e9';
-import { initSpotlight } from '/js/spotlight.js?v=f6e02383';
+} from '/js/utils.js?v=0cfffdfb';
+import { initSpotlight } from '/js/spotlight.js?v=33ffbcad';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=a446cb79';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=e5cdc817';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=be6330d6';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=7e5a5805';
 import {
@@ -40,7 +40,7 @@ import { trapFocus } from '/js/dialog.js?v=05935547';
 import { jitter } from '/js/jitter.js?v=4edf48f2';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=72a28022';
+import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=38adb276';
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();

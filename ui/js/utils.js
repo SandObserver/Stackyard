@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
-import { toneForColor } from '/js/label-contrast.js?v=72a28022';
+import { toneForColor } from '/js/label-contrast.js?v=38adb276';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);

@@ -326,14 +326,26 @@
       border-radius:24px; padding:10px 18px;
       align-items:center;
     }
+    /* State by shape as well as fill. A tint over a wallpaper the project does
+       not control cannot carry the state on its own: over a light one the whole
+       indicator painted white on white and measured 1.00:1. */
     .dot {
-      width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.50);
-      transition:background .2s,transform .2s,width .25s,opacity .25s;
-      cursor:pointer; flex-shrink:0;
-      /* A dot is a <button>, so Tab reaches it and Enter and Space work. */
-      padding:0; border:0; -webkit-appearance:none; appearance:none;
+      width:8px; height:8px; border-radius:50%;
+      background:transparent; border:1.5px solid var(--dots-ink,rgba(255,255,255,.75));
+      transition:background .2s,border-color .2s,transform .2s,width .25s,opacity .25s;
+      cursor:pointer; flex-shrink:0; box-sizing:border-box;
+      padding:0; -webkit-appearance:none; appearance:none;
     }
-    .dot.on { background:var(--control-knob); transform:scale(1.25) }
+    .dot.on { background:var(--dots-ink,var(--control-knob)); transform:scale(1.25) }
+
+    /* Apple's guidance for a translucent control over rich content: dim what is
+       bright, leave what is dark. The tone is sampled from the wallpaper behind
+       the bar, by the same pass that inks the icon labels. */
+    #dots[data-tone="dark"] {
+      background:rgba(0,0,0,.35);
+      --dots-ink:rgba(0,0,0,.85);
+    }
+    #dots[data-tone="dark"] .dot { border-color:rgba(0,0,0,.55) }
 
     /* ── Search pill — mobile only ── */
     #mob-search-pill {

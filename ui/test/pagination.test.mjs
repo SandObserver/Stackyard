@@ -77,14 +77,34 @@ test('the dots are a named landmark', () => {
   assert.match(dots[0], /data-i18n-al="home\.pagination"/, 'and the name must be translated');
 });
 
-/* A button carries padding, a border and platform styling that a div does not,
-   so the appearance would change without these. */
+/* A button carries padding and platform styling a div does not, so the
+   appearance would change without these. The border is not reset: an outline is
+   how an inactive dot is told from the current one. */
 test('the button styling is reset so the dots look unchanged', () => {
   const css = read('css/dashboard.css');
   const block = css.slice(css.indexOf('.dot {'), css.indexOf('}', css.indexOf('.dot {')));
-  for (const prop of ['padding:0', 'border:0', 'appearance:none']) {
+  for (const prop of ['padding:0', 'appearance:none', 'box-sizing:border-box']) {
     assert.ok(block.includes(prop), `.dot does not reset ${prop}`);
   }
+});
+
+/* Colour alone cannot carry the state: the tint sits over a wallpaper the
+   project does not control, and under forced colors both dots are painted the
+   same. */
+test('the current page differs from the others by shape, not only by fill', () => {
+  const css = read('css/dashboard.css');
+  const dot = css.slice(css.indexOf('.dot {'), css.indexOf('}', css.indexOf('.dot {')));
+  assert.match(dot, /background:transparent/, 'an inactive dot is filled, so only its colour differs');
+  assert.match(dot, /border:[\d.]+px solid/, 'an inactive dot has no outline');
+  const on = css.slice(css.indexOf('.dot.on {'), css.indexOf('}', css.indexOf('.dot.on {')));
+  assert.match(on, /background:var\(--dots-ink/, 'the current dot is not filled');
+});
+
+/* The bar and the dots are tinted over the wallpaper, so they need the reading
+   the icon labels already get. */
+test('the indicator is enrolled in the wallpaper sampling', () => {
+  assert.match(read('js/label-contrast.js'), /LABEL_SELECTOR = '[^']*#dots/, 'the indicator is not sampled');
+  assert.match(read('css/dashboard.css'), /#dots\[data-tone="dark"\]/, 'nothing responds to the sampled tone');
 });
 
 test('the focus outline still applies to a dot', () => {

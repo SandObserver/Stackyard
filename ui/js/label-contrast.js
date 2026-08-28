@@ -222,7 +222,9 @@ export function loadSamplingImage(url) {
   });
 }
 
-const LABEL_SELECTOR = '.ilabel, .dyn-mob-label, .dyn-fold-label';
+/* The page indicator is chrome over the same wallpaper, and it is tinted rather
+   than inked, so it needs the same reading. */
+const LABEL_SELECTOR = '.ilabel, .dyn-mob-label, .dyn-fold-label, #dots';
 
 /* A folder overlay lays its own scrim over the background. */
 const SCRIM = '.folder-overlay, .folder-overlay-mobile';

@@ -73,6 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The badge popover can be hovered without closing, and no longer truncates the
   label names it exists to show.
 
+- The page indicator now takes its tint from the wallpaper behind it, and marks
+  the current page by shape as well as colour. Over a light wallpaper the whole
+  indicator was invisible.
+
 ## [1.8.2] - 2026-08-25
 
 ### Fixed
