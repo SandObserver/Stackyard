@@ -13,7 +13,7 @@ import {
 } from '/js/utils.js?v=b18c93ed';
 import { t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { trapFocus } from '/js/dialog.js?v=05935547';
-import { mobileMetrics } from '/js/mobile-metrics.js?v=e48d02a8';
+import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=424d5d41';
 
 let _state = null;
 export function initUI(state) {
@@ -539,6 +539,9 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   releaseMobTrap = trapFocus(ov, { onClose: closeMob, initialFocus: ov });
 }
 
+/* Cells per widget size on the 4x6 home grid. */
+const MOB_FOOTPRINT = { small: [2, 2], medium: [4, 2], large: [4, 4], xlarge: [4, 6] };
+
 export function buildMobile() {
   /* The previous widgets' observers and timers outlive their DOM. Stop them
      before it is replaced. */
@@ -547,8 +550,6 @@ export function buildMobile() {
   const vw = innerWidth,
     vh = innerHeight;
   const { sc, sm, dh, pillH, pillGap, dz } = mobileMetrics(vw);
-  const COLS = 4,
-    ROWS = 6;
   const gap = Math.round(sm * 0.5);
   css(document.body, {
     '--sc': String(sc),
@@ -558,9 +559,10 @@ export function buildMobile() {
     '--gap': gap + 'px',
     '--pgh': vh + 'px',
   });
-  /* ── Mobile layout: single-pass 4×6 grid bin-packing ──
+  /* ── Mobile layout: single-pass grid bin-packing ──
      Footprints in cells: icon/folder 1×1, small 2×2, medium 4×2, large 4×4,
-     xlarge 4×6. */
+     xlarge 4×6. A footprint is a physical size, so it does not change with the
+     column count: a wider box gets more columns, not larger widgets. */
   const strip = el('pages');
   strip.innerHTML = '';
 
@@ -579,9 +581,33 @@ export function buildMobile() {
   const firstPage = mkPage();
   strip.appendChild(firstPage.page);
   const gridBox = firstPage.grid.getBoundingClientRect();
-  const cw = gridBox.width / COLS,
-    rh = gridBox.height / ROWS;
+  const { cols: COLS, rows: ROWS } = gridCellCount({ gridW: gridBox.width, gridH: gridBox.height, sc });
+  css(document.body, { '--mcols': String(COLS), '--mrows': String(ROWS) });
+  const rh = gridBox.height / ROWS;
   const rh2 = (gridBox.height - gap * (ROWS - 1)) / ROWS; /* exact row height incl. gaps */
+  /* One column width for the whole grid, narrow enough that every widget shape
+     present fits its rows. Fitting each card to its own cell instead would make
+     a card's width stop matching its column span, and two small widgets would
+     no longer measure the same as one medium. */
+  const cw2 = gridColumnWidth({
+    gridW: gridBox.width,
+    rowH: rh2,
+    gap,
+    cols: COLS,
+    footprints: [
+      ...new Set(
+        items()
+          .filter(i => i.type === 'widget' && !i.hidden)
+          .map(i => i.widgetSize || 'medium'),
+      ),
+    ].map(sz => ({
+      design: WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium,
+      span: MOB_FOOTPRINT[sz] || MOB_FOOTPRINT.medium,
+    })),
+  });
+  const gridW = cw2 * COLS + gap * (COLS - 1);
+  const cw = gridW / COLS;
+  css(document.body, { '--mgw': Math.round(gridW) + 'px' });
   const maxIsz = Math.round(74 * sc);
   const isz = Math.round(Math.min(cw * 0.9, rh * 0.8, maxIsz));
   const ir = Math.round(isz * 0.225),
@@ -594,16 +620,7 @@ export function buildMobile() {
      is 0.424 of the icon it sits beside. */
   const wBR = Math.round(isz * 0.424);
 
-  const fp = it =>
-    it.type !== 'widget'
-      ? [1, 1]
-      : it.widgetSize === 'xlarge'
-        ? [4, 6]
-        : it.widgetSize === 'large'
-          ? [4, 4]
-          : it.widgetSize === 'small'
-            ? [2, 2]
-            : [4, 2];
+  const fp = it => (it.type !== 'widget' ? [1, 1] : MOB_FOOTPRINT[it.widgetSize] || MOB_FOOTPRINT.medium);
 
   const inFolder = new Set(
     items()
