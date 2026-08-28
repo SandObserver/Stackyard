@@ -101,3 +101,53 @@ test('every locale carries the new strings', () => {
     assert.match(cat.home.goToPage, /\{total\}/, `${file} drops the {total} placeholder`);
   }
 });
+
+/* ── The pager reaches every input on both layouts ────────────────────────── */
+
+/* The phone layout is what a narrow window gets, and its own swipe is the only
+   pager there. Skipping the key and mouse handlers on it left a second page
+   visible in the dots and unreachable without a touchscreen. */
+
+const keydown = dashboard.slice(
+  dashboard.indexOf("document.addEventListener('keydown'"),
+  dashboard.indexOf('let _dMx'),
+);
+const mouseup = dashboard.slice(
+  dashboard.indexOf("document.addEventListener('mouseup'"),
+  dashboard.indexOf('let _dTx'),
+);
+
+test('arrow keys page on the phone layout too', () => {
+  assert.match(keydown, /ArrowRight/);
+  assert.doesNotMatch(keydown, /if \(MOB\) return/, 'the phone layout has no keyboard pager of its own');
+});
+
+test('a mouse drag pages on the phone layout too', () => {
+  assert.match(mouseup, /goTo\(/);
+  assert.doesNotMatch(mouseup, /if \(MOB\b/, 'a narrow window is driven by a mouse');
+});
+
+/* One swipe must not advance two pages. */
+test('the mouse pager ignores the compatibility event a touch produces', () => {
+  assert.match(mouseup, /_lastTouch/);
+  assert.match(dashboard, /const COMPAT_POINTER_MS = \d+/);
+  for (const handler of ['touchstart', 'touchend']) {
+    const block = dashboard.slice(
+      dashboard.indexOf(`'${handler}'`),
+      dashboard.indexOf('{ passive: true }', dashboard.indexOf(`'${handler}'`)),
+    );
+    assert.match(block, /_lastTouch = Date\.now\(\)/, `${handler} does not record the touch`);
+  }
+});
+
+/* The mobile folder overlay covers the whole page, and the key handler is on
+   the document. */
+test('an open folder overlay stops the keyboard pager', () => {
+  assert.match(keydown, /folder-overlay/);
+});
+
+test('the touch pager still belongs to one layout only', () => {
+  const at = dashboard.indexOf("'touchend'");
+  const touchend = dashboard.slice(at, dashboard.indexOf('{ passive: true }', at));
+  assert.match(touchend, /if \(MOB\) return/, 'both swipe handlers would advance two pages for one gesture');
+});

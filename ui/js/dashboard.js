@@ -101,6 +101,10 @@ function desktopSlots() {
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
+/* A touch produces a compatibility mouse event after it. */
+const COMPAT_POINTER_MS = 500;
+let _lastTouch = 0;
+
 /* A backend that accepts the connection and never answers would otherwise leave
    the boot veil up forever. Generous: this only has to beat a hang. */
 const BOOT_TIMEOUT_MS = 15000;
@@ -857,9 +861,13 @@ async function boot() {
 
   /* Attached once, not per layout: the window can cross the breakpoint later,
      and a listener added on every crossing would fire twice. */
+  /* A pointer or a key must reach the pager on both layouts. The phone layout is
+     what a narrow window gets, and there its own swipe is the only pager, so a
+     mouse and a keyboard cannot leave page one. */
   document.addEventListener('keydown', e => {
-    if (MOB) return;
     if (el('spot').classList.contains('on')) return;
+    /* The overlay covers the page it would scroll behind. */
+    if (document.querySelector('.folder-overlay')) return;
     if (e.key === 'ArrowRight') goTo(pg + 1);
     if (e.key === 'ArrowLeft') goTo(pg - 1);
   });
@@ -873,16 +881,20 @@ async function boot() {
     if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true;
   });
   document.addEventListener('mouseup', e => {
-    if (MOB || !_dDragging) return;
+    if (!_dDragging) return;
+    _dDragging = false;
+    /* A swipe is followed by a compatibility mouse event. Acting on both pages
+       twice for one gesture. */
+    if (Date.now() - _lastTouch < COMPAT_POINTER_MS) return;
     const dx = e.clientX - _dMx;
     if (Math.abs(dx) > 60) goTo(pg + (dx < 0 ? 1 : -1));
-    _dDragging = false;
   });
   let _dTx = 0;
   document.addEventListener(
     'touchstart',
     e => {
       _dTx = e.touches[0].clientX;
+      _lastTouch = Date.now();
     },
     { passive: true },
   );
@@ -891,6 +903,7 @@ async function boot() {
   document.addEventListener(
     'touchend',
     e => {
+      _lastTouch = Date.now();
       if (MOB) return;
       const dx = e.changedTouches[0].clientX - _dTx;
       if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1));
