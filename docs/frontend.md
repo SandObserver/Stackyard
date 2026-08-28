@@ -30,6 +30,8 @@ See [widgets.md](./widgets.md).
 
 `dashboard.js` polls `/api/badges` and `/api/health` and paints tiles through an id-to-elements registry. Appearance is one pure function, `computeBadgeVisual` in `badge-logic.js`.
 
+An activity source can carry a `labels` array: each entry names one value path plus its own text, unit, colour and minimum, and array order is priority order. The badge route returns a positional `values` array beside the existing `value`, so index `n` is the number for `labels[n]`; a malformed entry keeps its slot rather than shifting the rest. `computeBadgeVisual` picks the first label that reaches its minimum and returns the badges it could not draw as `rows`, which `badge-popover.js` renders in one shared element for the whole dashboard. `combine` on the source keeps the older behaviour of summing every selected value into one number.
+
 Each of these is a single batch request. The server fetches every configured badge or health target concurrently, each bounded by `BATCH_MS`, and returns one combined object once all of them settle. A slow or unreachable upstream delays the refresh of the other tiles by up to `BATCH_MS`. `PING_MS` is longer and bounds a single connection test instead.
 
 A target that fails three times in a row is left alone for a growing wait, up to two minutes, and its last reported failure is reused meanwhile. Only an unreachable target backs off; one that answers with an error status stays on the normal cycle. A success or a config save clears the wait. See `api/src/poll-backoff.js`.
