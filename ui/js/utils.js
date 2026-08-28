@@ -312,7 +312,10 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     const w = card.clientWidth,
       h = card.clientHeight;
     if (!w || !h) return;
-    const s = Math.max(w / dw, h / dh); /* cover; with matched aspect = exact fill */
+    /* Contain, not cover. With a matched aspect the two are the same and this
+       fills the card exactly. Where the card's aspect drifts from the design's,
+       cover crops the widget instead, and the card clips what it cropped. */
+    const s = Math.min(w / dw, h / dh);
     const tx = (w - dw * s) / 2,
       ty = (h - dh * s) / 2;
     ifr.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;

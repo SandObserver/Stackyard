@@ -20,13 +20,13 @@ import {
   qi,
   qa,
   setUserText,
-} from '/js/utils.js?v=3eb63c9e';
-import { initSpotlight } from '/js/spotlight.js?v=9263d60d';
+} from '/js/utils.js?v=bc2329e9';
+import { initSpotlight } from '/js/spotlight.js?v=f6e02383';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=8bd9df12';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=a446cb79';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=be6330d6';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=7e5a5805';
 import {

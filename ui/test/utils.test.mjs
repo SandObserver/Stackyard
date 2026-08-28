@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 
 /* utils.js imports a peer by its served path ('/js/icons.js?v=69c2b9bd...'), which Node
@@ -110,4 +113,29 @@ test('safeAllow falls back to fullscreen when nothing usable is asked for', () =
   assert.equal(safeAllow(''), 'fullscreen');
   assert.equal(safeAllow(null), 'fullscreen');
   assert.equal(safeAllow(undefined), 'fullscreen');
+});
+
+const uiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const read = f => fs.readFileSync(path.join(uiRoot, f), 'utf8');
+
+/* ── A card can never clip the widget it holds ────────────────────────────── */
+
+/* Desktop widget heights are fixed while their widths follow the grid, so a
+   card's aspect drifts from the widget's design aspect. Cover cropped the
+   difference and the card clipped what it cropped: 5px off a medium widget at
+   1440px. Contain is identical wherever the aspects match. */
+test('the widget is contained by its card, not cropped to it', () => {
+  const src = read('js/utils.js');
+  const fit = src.slice(src.indexOf('const fit = () =>'), src.indexOf('ifr.style.opacity'));
+  assert.match(fit, /Math\.min\(w \/ dw, h \/ dh\)/, 'cover lets a card clip its own widget');
+  assert.doesNotMatch(fit, /Math\.max\(w \/ dw, h \/ dh\)/);
+});
+
+test('a drifting aspect letterboxes instead of clipping', () => {
+  const scale = (w, h, dw, dh) => Math.min(w / dw, h / dh);
+  /* The measured desktop case: a medium card at 1440px. */
+  const s = scale(330, 150, 360, 170);
+  assert.ok(170 * s <= 150 + 1, `the widget renders ${Math.round(170 * s)} tall in a 150 card`);
+  /* A matched aspect still fills the card exactly. */
+  assert.equal(scale(340, 170, 360, 170) * 360, 340);
 });

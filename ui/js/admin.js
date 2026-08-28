@@ -1,5 +1,5 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=9387eec9';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=456ce169';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=9a24935c';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e2a582e8';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=ddfc6f80';
 import {
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=48a9e055';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=c406d37b';
-import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=abaed3c3';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=76d03cea';
+import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=767a14c1';
 import { state } from '/js/admin-state.js?v=c23e6346';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=40ff88af';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=aca447ec';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
@@ -29,8 +29,8 @@ import {
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=fbd2d2ef';
-import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=3eb63c9e';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=99d74820';
+import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=bc2329e9';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=6d975f24';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
 
 /* A class rather than a bare media query. Some phones report a wider CSS

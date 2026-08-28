@@ -10,7 +10,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=3eb63c9e';
+} from '/js/utils.js?v=bc2329e9';
 import { t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { trapFocus } from '/js/dialog.js?v=05935547';
 import { toneForColor } from '/js/label-contrast.js?v=72a28022';
