@@ -101,6 +101,10 @@ function desktopSlots() {
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
 
+/* A backend that accepts the connection and never answers would otherwise leave
+   the boot veil up forever. Generous: this only has to beat a hang. */
+const BOOT_TIMEOUT_MS = 15000;
+
 const PAGE_STORE = 'dash_page',
   WALLPAPER_STORE = 'dash_wallpaper';
 
@@ -744,7 +748,10 @@ function showSetupPrompt() {
 async function boot() {
   let authData = null;
   try {
-    const authCheck = await fetch('/api/auth/check', { cache: 'no-store' });
+    const authCheck = await fetch('/api/auth/check', {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(BOOT_TIMEOUT_MS),
+    });
     if (authCheck.status === 401) {
       window.location.href = '/admin/';
       return;
@@ -760,7 +767,7 @@ async function boot() {
 
   let configFailed = false;
   try {
-    const res = await fetch('/api/config', { cache: 'no-store' });
+    const res = await fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
     /* Saving rejects these, but a config written earlier still reaches here.
@@ -777,6 +784,10 @@ async function boot() {
   await loadLocalIcons();
 
   if (configFailed) {
+    /* The catalog is loaded as the last step of the fetch that just failed, so
+       without this the only screen left renders its own keys. nginx serves this
+       file, the API served the config, so it is still reachable. */
+    await initI18n('en');
     const msg = document.createElement('div');
     msg.className = 'api-error-screen';
     setHtml(
