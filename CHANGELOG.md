@@ -22,13 +22,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release images carry an SBOM attestation, verifiable with
   `cosign verify-attestation`. See `docs/security.md`.
 
+- Support for Windows High Contrast. The wallpaper and the blurred materials are
+  dropped, the current page is marked by shape as well as colour, and badges keep
+  their status colour.
+
+- Settings states which of an app's labels the badge will show.
+
 ### Changed
 
 - Badge text is white wherever white is readable, instead of whichever ink
   scores higher.
 
-- Badges show the number alone at phone size, so a unit cannot make one wider
-  than its icon.
+- Badges show the number alone on every layout, so a unit cannot make one wider
+  than the icon it marks. The unit stays in the popover and in the badge's
+  accessible name.
+
+- The home screen fits more columns and rows as the window grows, instead of
+  scaling four columns to fill it.
+
+- A multi-value badge shows a wider second pill behind the first, so the extra
+  values read as a stack.
 
 - The Compose file caps CPU with `cpus` instead of a relative share, bounds the
   Node heap to the memory limit, and runs an init process.
@@ -41,6 +54,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `CONFIG_PATH` and `ICONS_PATH` now take effect. The container was overriding
   both, so a config file moved elsewhere was ignored.
+
+- Widgets on the phone layout no longer render taller than the card that clips
+  them.
+
+- Arrow keys and a mouse drag now change page on the phone layout. A second page
+  was unreachable without a touchscreen.
+
+- The screen shown when the API is unreachable no longer renders raw translation
+  keys.
+
+- Placeholder text in fields without a rule of their own is now readable. The
+  first-run password dialog was the worst affected.
+
+- The initial shown for an app with no icon takes its colour from the tile
+  behind it. White was unreadable on most of the colours the picker offers.
+
+- The badge popover can be hovered without closing, and no longer truncates the
+  label names it exists to show.
 
 ## [1.8.2] - 2026-08-25
 
