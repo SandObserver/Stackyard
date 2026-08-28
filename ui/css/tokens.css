@@ -66,6 +66,23 @@
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
   --sy-radius-group:26px;
+
+  /* Spacing. Named by value, because --sp-3 would say nothing about what it is.
+     These are the steps the stylesheets already use; the two files hold about
+     three hundred spacing literals and a fifth of them sit off any rhythm, so
+     the scale is declared here and rules move onto it as they are touched
+     rather than in one pass. */
+  --sp-2:2px;
+  --sp-4:4px;
+  --sp-6:6px;
+  --sp-8:8px;
+  --sp-10:10px;
+  --sp-12:12px;
+  --sp-16:16px;
+  --sp-20:20px;
+  --sp-24:24px;
+  --sp-32:32px;
+  --sp-44:44px;
 }
 
 /* ── Semantic colour ─────────────────────────────────────────────────────────

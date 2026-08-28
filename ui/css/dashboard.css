@@ -325,7 +325,10 @@
       /* 24px between centres: an interior dot's hit area is bounded by its
          neighbours', so the pitch is its width. */
       display:flex; gap:16px; z-index:500;
-      background:rgba(255,255,255,.28);
+      /* The tone is sampled after the first paint. Until it lands the bar is a
+         white tint, which over a light wallpaper is invisible, so it carries an
+         edge that reads on either ground. */
+      background:rgba(255,255,255,.28); border:1px solid rgba(0,0,0,.22);
       -webkit-backdrop-filter:blur(12px) saturate(140%); backdrop-filter:blur(12px) saturate(140%);
       border-radius:24px; padding:10px 18px;
       align-items:center;
@@ -346,7 +349,7 @@
        bright, leave what is dark. The tone is sampled from the wallpaper behind
        the bar, by the same pass that inks the icon labels. */
     #dots[data-tone="dark"] {
-      background:rgba(0,0,0,.35);
+      background:rgba(0,0,0,.35); border-color:rgba(255,255,255,.30);
       --dots-ink:rgba(0,0,0,.85);
     }
     #dots[data-tone="dark"] .dot { border-color:rgba(0,0,0,.55) }

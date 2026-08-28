@@ -172,6 +172,14 @@ The Settings surface is a column of grouped rows. Everything aligns to the row l
 | Page margin | 16 on a phone, 20 otherwise |
 | Sidebar | 320 wide, 44 items |
 
+### Spacing
+
+`--sp-2` `--sp-4` `--sp-6` `--sp-8` `--sp-10` `--sp-12` `--sp-16` `--sp-20` `--sp-24` `--sp-32` `--sp-44`, each naming its own value in px.
+
+Use a step. A rule needing a value that is not one is either a step nobody has added or a number nobody chose deliberately; say which in the rule.
+
+The stylesheets predate the scale and still hold spacing as literals. Rules move onto the scale as they are edited, not in a single pass: about a fifth of the existing values sit off any rhythm, and rounding them would move the layout everywhere for no gain a reader could name.
+
 ## Controls
 
 | Control | Track | Handle |
@@ -250,7 +258,7 @@ The Settings page scopes two more families.
 ## Rules
 
 1. Never write a colour literal outside the token file.
-2. Never name a palette entry in a rule. Name a role or a semantic token.
+2. Never name a palette accent in a rule. Name a role or a semantic token. The greys, the radii and the accessibility tokens are addressed directly on purpose: they have no role layer above them.
 3. Set a text style's three tokens together.
 4. `--on-tint` is the ink on a user-chosen coloured fill, where no token can describe what is underneath. Take it from the fill's measured luminance, never as a fixed value, and never with alpha.
 5. A control filled with a role colour takes `--on-fill`. `ui/test/contrast.test.mjs` measures every such pair in both themes.

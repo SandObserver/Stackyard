@@ -204,3 +204,32 @@ test('every Save is the same button', () => {
   assert.ok(saves.length >= 3, `expected the Save buttons, found ${saves.length}`);
   for (const s of saves) assert.match(s, /class="btn bp /, `a Save is not the primary button: ${s}`);
 });
+
+/* ── Spacing ──────────────────────────────────────────────────────────────── */
+
+/* Every other dimension of the system is tokenised. Spacing was prose in
+   design-system.md and literals in the stylesheets, which is how the two drift.
+   The scale is declared; the conversion is deliberate and gradual, so these pin
+   the tokens and the documentation to each other rather than banning literals. */
+
+const SPACING = [2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 44];
+
+test('every spacing step is declared, and names its own value', () => {
+  const tokens = read('tokens.css');
+  for (const step of SPACING) {
+    const m = tokens.match(new RegExp(`--sp-${step}:\\s*(\\d+)px`));
+    assert.ok(m, `--sp-${step} is not declared`);
+    assert.equal(Number(m[1]), step, `--sp-${step} is ${m[1]}px`);
+  }
+});
+
+test('the token file declares no step the documentation does not list', () => {
+  const declared = [...read('tokens.css').matchAll(/--sp-(\d+):/g)].map(m => Number(m[1])).sort((a, b) => a - b);
+  assert.deepEqual(declared, SPACING);
+});
+
+test('the documentation lists the same steps', () => {
+  const doc = read2('../docs/design-system.md');
+  const listed = [...doc.matchAll(/`--sp-(\d+)`/g)].map(m => Number(m[1])).sort((a, b) => a - b);
+  assert.deepEqual(listed, SPACING, 'design-system.md and tokens.css disagree about the scale');
+});
