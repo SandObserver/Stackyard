@@ -518,6 +518,10 @@
     }
     /* Mobile only — larger input text to match the bigger search bar */
     body.is-mob #spot #sin { font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2); }
+    /* One default, not a rule per field. The user agent's placeholder assumes a
+       light page and fails contrast on every surface here. Rules below override
+       it where a field genuinely differs. */
+    input::placeholder, textarea::placeholder { color:rgba(255,255,255,.55); }
     #sin::placeholder { color:rgba(255,255,255,.38); }
     #spot #sin::placeholder { color:rgba(235,235,245,.38); }
     #spot-cancel {
