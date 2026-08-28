@@ -28,7 +28,7 @@ import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=8bd9df12';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=be6330d6';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=d00c0629';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=7e5a5805';
 import {
   configChanged,
   landingAfterSetup,

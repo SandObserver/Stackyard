@@ -178,6 +178,7 @@
     "labelValueTaken": "Dieser Wert wird bereits von einer anderen Bezeichnung verwendet.",
     "noValuesLeft": "Jeder abgerufene Wert hat bereits eine Bezeichnung.",
     "labelMax": "Ein Abzeichen zeigt höchstens {n} Bezeichnungen.",
+    "labelOrderTip": "Das Abzeichen zeigt die erste Bezeichnung in dieser Liste, die ihren Schwellenwert erreicht. Zum Umsortieren ziehen.",
     "labelsSaved": "{n} Bezeichnung gespeichert",
     "labelsSavedPlural": "{n} Bezeichnungen gespeichert",
     "poll": "Abfrage",

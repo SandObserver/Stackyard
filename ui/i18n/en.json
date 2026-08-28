@@ -178,6 +178,7 @@
     "labelValueTaken": "That value is already used by another label.",
     "noValuesLeft": "Every fetched value already has a label.",
     "labelMax": "A badge shows at most {n} labels.",
+    "labelOrderTip": "The badge shows the first label in this list that reaches its threshold. Drag to reorder.",
     "labelsSaved": "{n} label saved",
     "labelsSavedPlural": "{n} labels saved",
     "poll": "Poll",

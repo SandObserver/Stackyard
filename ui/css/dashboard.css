@@ -235,10 +235,9 @@
     }
     .badge.on  { display:flex }
     .badge-txt { flex-shrink:0 }
-    .badge-unit { overflow:hidden; text-overflow:ellipsis; min-width:0; white-space:pre }
-    /* Numbers only at phone size. The pill is a corner marker there, and a unit
-       makes it wider than the icon it belongs to. The list still names it. */
-    body.is-mob .badge-unit { display:none }
+    /* The pill is a corner marker. A unit makes it wider than the icon it marks,
+       measured at 66px on a 72px icon. The popover names every value. */
+    .badge-unit { display:none }
     .badge.red  { --badge-bg:var(--badge-red) }
     .badge.blue { --badge-bg:var(--badge-blue) }
     .badge.green { --badge-bg:var(--badge-green) }
@@ -251,31 +250,43 @@
     .badge.has-more::before, .badge.has-more::after {
       content:''; position:absolute; inset:0; border-radius:50px;
     }
+    /* Separated from the front pill, or the peek reads as a colour fringe on one
+       pill rather than as a second pill behind it. */
     .badge.has-more::before {
       z-index:-2; transform:translateX(var(--badge-peek));
       background:var(--badge-next,var(--badge-blue));
+      box-shadow:0 0 0 1.5px var(--badge-stack-edge,rgba(0,0,0,.55));
     }
     .badge.has-more::after { z-index:-1; background:var(--badge-bg,var(--badge-blue)) }
     body:not(.is-mob) .badge.has-more { right:calc(-7px + var(--badge-peek)) }
 
     /* ── Badge popover — the values the pill has no room for ── */
     .badge-pop {
-      position:fixed; z-index:900; min-width:124px; max-width:230px;
+      position:fixed; z-index:900; min-width:124px; max-width:min(300px,calc(100vw - 16px));
       padding:5px; border-radius:11px;
       background:rgba(28,30,42,.96);
       border:1px solid rgba(255,255,255,.16);
       box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 0 .5px rgba(255,255,255,.08);
       -webkit-backdrop-filter:blur(24px) saturate(160%);
       backdrop-filter:blur(24px) saturate(160%);
-      color:#fff; pointer-events:none;
+      color:#fff;
+      /* SC 1.4.13 asks that hover content be hoverable. pointer-events:none put
+         it out of reach and left the outside-pointerdown guard unreachable. */
+      pointer-events:auto;
     }
     .badge-pop[hidden] { display:none }
     .badge-pop-row {
-      display:flex; align-items:center; gap:7px; padding:2px 6px;
+      display:flex; align-items:flex-start; gap:7px; padding:2px 6px;
       font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);
     }
-    .badge-pop-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:var(--badge-blue) }
-    .badge-pop-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:rgba(255,255,255,.78) }
+    .badge-pop-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:.35em; background:var(--badge-blue) }
+    /* Two lines, then clip. German and Persian labels run longer than English.
+       The value stays on one line beside it. */
+    .badge-pop-name {
+      flex:1; min-width:0; color:rgba(255,255,255,.78);
+      overflow-wrap:anywhere;
+      display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+    }
     .badge-pop-val { font-weight:700; flex-shrink:0; font-variant-numeric:tabular-nums }
     /* Desktop: restore compact badge size */
     body:not(.is-mob) .badge {

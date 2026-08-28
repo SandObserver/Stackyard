@@ -176,6 +176,7 @@ export function buildAppForm(body, item) {
     </div>
     <div id="act-labels-wrap" class="bprow-hidden">
       <div id="act-labels"></div>
+      <p class="grp-tip" id="act-label-order">${t('app.labelOrderTip')}</p>
       <div class="albl-add-wrap"><button type="button" class="albl-add" id="act-add-label">${t('app.addLabel')}</button></div>
       <p class="grp-tip" id="act-label-max" hidden>${t('app.labelMax', { n: MAX_LABELS })}</p>
       <div id="act-combine-row" class="bprow-hidden">
