@@ -129,18 +129,18 @@
    as the edge of a control points at the -hi entry, the accessible variant of
    the same hue. ui/test/contrast.test.mjs measures the required pairs. */
 html[data-theme="light"] {
-  --sy-red:#FF3B30;      --sy-red-hi:#D70015;
-  --sy-orange:#FF9500;   --sy-orange-hi:#C93400;
+  --sy-red:#FF383C;      --sy-red-hi:#D70015;
+  --sy-orange:#FF8D28;   --sy-orange-hi:#C93400;
   --sy-yellow:#FFCC00;   --sy-yellow-hi:#B25000;
   --sy-green:#34C759;    --sy-green-hi:#238539;
-  --sy-mint:#00C7BE;     --sy-mint-hi:#0C817B;
-  --sy-teal:#30B0C7;     --sy-teal-hi:#0071A4;
-  --sy-cyan:#32ADE6;     --sy-cyan-hi:#007AA3;
-  --sy-blue:#007AFF;     --sy-blue-hi:#0040DD;
-  --sy-indigo:#5856D6;   --sy-indigo-hi:#3634A3;
-  --sy-purple:#AF52DE;   --sy-purple-hi:#8944AB;
+  --sy-mint:#00C8B3;     --sy-mint-hi:#0C817B;
+  --sy-teal:#00C3D0;     --sy-teal-hi:#0071A4;
+  --sy-cyan:#00C0E8;     --sy-cyan-hi:#007AA3;
+  --sy-blue:#0088FF;     --sy-blue-hi:#0040DD;
+  --sy-indigo:#6155F5;   --sy-indigo-hi:#3634A3;
+  --sy-purple:#CB30E0;   --sy-purple-hi:#8944AB;
   --sy-pink:#FF2D55;     --sy-pink-hi:#C9155A;
-  --sy-brown:#A2845E;    --sy-brown-hi:#7F6545;
+  --sy-brown:#AC7F5E;    --sy-brown-hi:#7F6545;
 
   /* Reversed: gray is the darkest here, gray6 the lightest. */
   --sy-gray:#8E8E93;     --sy-gray-hi:#6C6C70;
@@ -173,13 +173,13 @@ html[data-theme="light"] {
   --label-tertiary:    rgba(60,60,67,.30);
   --label-quaternary:  rgba(60,60,67,.18);
 
-  --fill-primary:      rgba(120,120,128,.20);
+  --fill-primary:      rgba(120,120,120,.20);
   --fill-secondary:    rgba(120,120,128,.16);
   --fill-tertiary:     rgba(118,118,128,.12);
   --fill-quaternary:   rgba(116,116,128,.08);
 
   --separator-opaque:  #C6C6C8;
-  --separator:         rgba(60,60,67,.29);
+  --separator:         rgba(0,0,0,.12);
 
   --bg-primary:        #FFFFFF;
   --bg-secondary:      var(--sy-gray6);

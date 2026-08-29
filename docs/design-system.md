@@ -16,18 +16,18 @@ Twelve hues and six greys. Each entry has a `-hi` partner, the increased-contras
 
 | Token | Dark | Dark `-hi` | Light | Light `-hi` |
 | --- | --- | --- | --- | --- |
-| `--sy-red` | ![](https://img.shields.io/badge/-%20-FF4245) `#FF4245` | ![](https://img.shields.io/badge/-%20-FF6165) `#FF6165` | ![](https://img.shields.io/badge/-%20-FF3B30) `#FF3B30` | ![](https://img.shields.io/badge/-%20-D70015) `#D70015` |
-| `--sy-orange` | ![](https://img.shields.io/badge/-%20-FF9230) `#FF9230` | ![](https://img.shields.io/badge/-%20-FFA056) `#FFA056` | ![](https://img.shields.io/badge/-%20-FF9500) `#FF9500` | ![](https://img.shields.io/badge/-%20-C93400) `#C93400` |
+| `--sy-red` | ![](https://img.shields.io/badge/-%20-FF4245) `#FF4245` | ![](https://img.shields.io/badge/-%20-FF6165) `#FF6165` | ![](https://img.shields.io/badge/-%20-FF383C) `#FF383C` | ![](https://img.shields.io/badge/-%20-D70015) `#D70015` |
+| `--sy-orange` | ![](https://img.shields.io/badge/-%20-FF9230) `#FF9230` | ![](https://img.shields.io/badge/-%20-FFA056) `#FFA056` | ![](https://img.shields.io/badge/-%20-FF8D28) `#FF8D28` | ![](https://img.shields.io/badge/-%20-C93400) `#C93400` |
 | `--sy-yellow` | ![](https://img.shields.io/badge/-%20-FFD600) `#FFD600` | ![](https://img.shields.io/badge/-%20-FEDF43) `#FEDF43` | ![](https://img.shields.io/badge/-%20-FFCC00) `#FFCC00` | ![](https://img.shields.io/badge/-%20-B25000) `#B25000` |
 | `--sy-green` | ![](https://img.shields.io/badge/-%20-30D158) `#30D158` | ![](https://img.shields.io/badge/-%20-4AD968) `#4AD968` | ![](https://img.shields.io/badge/-%20-34C759) `#34C759` | ![](https://img.shields.io/badge/-%20-248A3D) `#248A3D` |
-| `--sy-mint` | ![](https://img.shields.io/badge/-%20-00DAC3) `#00DAC3` | ![](https://img.shields.io/badge/-%20-54DFCB) `#54DFCB` | ![](https://img.shields.io/badge/-%20-00C7BE) `#00C7BE` | ![](https://img.shields.io/badge/-%20-0C817B) `#0C817B` |
-| `--sy-teal` | ![](https://img.shields.io/badge/-%20-00D2E0) `#00D2E0` | ![](https://img.shields.io/badge/-%20-3BDDEC) `#3BDDEC` | ![](https://img.shields.io/badge/-%20-30B0C7) `#30B0C7` | ![](https://img.shields.io/badge/-%20-0071A4) `#0071A4` |
-| `--sy-cyan` | ![](https://img.shields.io/badge/-%20-3CD3FE) `#3CD3FE` | ![](https://img.shields.io/badge/-%20-6DD9FF) `#6DD9FF` | ![](https://img.shields.io/badge/-%20-32ADE6) `#32ADE6` | ![](https://img.shields.io/badge/-%20-007AA3) `#007AA3` |
-| `--sy-blue` | ![](https://img.shields.io/badge/-%20-0091FF) `#0091FF` | ![](https://img.shields.io/badge/-%20-5CB8FF) `#5CB8FF` | ![](https://img.shields.io/badge/-%20-007AFF) `#007AFF` | ![](https://img.shields.io/badge/-%20-0040DD) `#0040DD` |
-| `--sy-indigo` | ![](https://img.shields.io/badge/-%20-6D7CFF) `#6D7CFF` | ![](https://img.shields.io/badge/-%20-A7AAFF) `#A7AAFF` | ![](https://img.shields.io/badge/-%20-5856D6) `#5856D6` | ![](https://img.shields.io/badge/-%20-3634A3) `#3634A3` |
-| `--sy-purple` | ![](https://img.shields.io/badge/-%20-DB34F2) `#DB34F2` | ![](https://img.shields.io/badge/-%20-EA8DFF) `#EA8DFF` | ![](https://img.shields.io/badge/-%20-AF52DE) `#AF52DE` | ![](https://img.shields.io/badge/-%20-8944AB) `#8944AB` |
+| `--sy-mint` | ![](https://img.shields.io/badge/-%20-00DAC3) `#00DAC3` | ![](https://img.shields.io/badge/-%20-54DFCB) `#54DFCB` | ![](https://img.shields.io/badge/-%20-00C8B3) `#00C8B3` | ![](https://img.shields.io/badge/-%20-0C817B) `#0C817B` |
+| `--sy-teal` | ![](https://img.shields.io/badge/-%20-00D2E0) `#00D2E0` | ![](https://img.shields.io/badge/-%20-3BDDEC) `#3BDDEC` | ![](https://img.shields.io/badge/-%20-00C3D0) `#00C3D0` | ![](https://img.shields.io/badge/-%20-0071A4) `#0071A4` |
+| `--sy-cyan` | ![](https://img.shields.io/badge/-%20-3CD3FE) `#3CD3FE` | ![](https://img.shields.io/badge/-%20-6DD9FF) `#6DD9FF` | ![](https://img.shields.io/badge/-%20-00C0E8) `#00C0E8` | ![](https://img.shields.io/badge/-%20-007AA3) `#007AA3` |
+| `--sy-blue` | ![](https://img.shields.io/badge/-%20-0091FF) `#0091FF` | ![](https://img.shields.io/badge/-%20-5CB8FF) `#5CB8FF` | ![](https://img.shields.io/badge/-%20-0088FF) `#0088FF` | ![](https://img.shields.io/badge/-%20-0040DD) `#0040DD` |
+| `--sy-indigo` | ![](https://img.shields.io/badge/-%20-6D7CFF) `#6D7CFF` | ![](https://img.shields.io/badge/-%20-A7AAFF) `#A7AAFF` | ![](https://img.shields.io/badge/-%20-6155F5) `#6155F5` | ![](https://img.shields.io/badge/-%20-3634A3) `#3634A3` |
+| `--sy-purple` | ![](https://img.shields.io/badge/-%20-DB34F2) `#DB34F2` | ![](https://img.shields.io/badge/-%20-EA8DFF) `#EA8DFF` | ![](https://img.shields.io/badge/-%20-CB30E0) `#CB30E0` | ![](https://img.shields.io/badge/-%20-8944AB) `#8944AB` |
 | `--sy-pink` | ![](https://img.shields.io/badge/-%20-FF375F) `#FF375F` | ![](https://img.shields.io/badge/-%20-FF8AC4) `#FF8AC4` | ![](https://img.shields.io/badge/-%20-FF2D55) `#FF2D55` | ![](https://img.shields.io/badge/-%20-C9155A) `#C9155A` |
-| `--sy-brown` | ![](https://img.shields.io/badge/-%20-B78A66) `#B78A66` | ![](https://img.shields.io/badge/-%20-DBA679) `#DBA679` | ![](https://img.shields.io/badge/-%20-A2845E) `#A2845E` | ![](https://img.shields.io/badge/-%20-7F6545) `#7F6545` |
+| `--sy-brown` | ![](https://img.shields.io/badge/-%20-B78A66) `#B78A66` | ![](https://img.shields.io/badge/-%20-DBA679) `#DBA679` | ![](https://img.shields.io/badge/-%20-AC7F5E) `#AC7F5E` | ![](https://img.shields.io/badge/-%20-7F6545) `#7F6545` |
 | `--sy-gray` | ![](https://img.shields.io/badge/-%20-8E8E93) `#8E8E93` | ![](https://img.shields.io/badge/-%20-AEAEB2) `#AEAEB2` | ![](https://img.shields.io/badge/-%20-8E8E93) `#8E8E93` | ![](https://img.shields.io/badge/-%20-6C6C70) `#6C6C70` |
 | `--sy-gray2` | ![](https://img.shields.io/badge/-%20-636366) `#636366` | ![](https://img.shields.io/badge/-%20-7C7C80) `#7C7C80` | ![](https://img.shields.io/badge/-%20-AEAEB2) `#AEAEB2` | ![](https://img.shields.io/badge/-%20-8E8E93) `#8E8E93` |
 | `--sy-gray3` | ![](https://img.shields.io/badge/-%20-48484A) `#48484A` | ![](https://img.shields.io/badge/-%20-545456) `#545456` | ![](https://img.shields.io/badge/-%20-C7C7CC) `#C7C7CC` | ![](https://img.shields.io/badge/-%20-AEAEB2) `#AEAEB2` |
@@ -75,7 +75,7 @@ What a colour is applied to.
 | `--fill-secondary` | `rgba(120,120,128,.32)` | `rgba(120,120,128,.16)` |
 | `--fill-tertiary` | `rgba(118,118,128,.24)` | `rgba(118,118,128,.12)` |
 | `--fill-quaternary` | `rgba(118,118,128,.18)` | `rgba(116,116,128,.08)` |
-| `--separator` | `rgba(255,255,255,.17)` | `rgba(60,60,67,.29)` |
+| `--separator` | `rgba(255,255,255,.17)` | `rgba(0,0,0,.12)` |
 | `--separator-opaque` | ![](https://img.shields.io/badge/-%20-38383A) `#38383A` | ![](https://img.shields.io/badge/-%20-C6C6C8) `#C6C6C8` |
 | `--bg-primary` | ![](https://img.shields.io/badge/-%20-000000) `#000000` | ![](https://img.shields.io/badge/-%20-FFFFFF) `#FFFFFF` |
 | `--bg-secondary` | ![](https://img.shields.io/badge/-%20-1C1C1E) `--sy-gray6` | ![](https://img.shields.io/badge/-%20-F2F2F7) `--sy-gray6` |
