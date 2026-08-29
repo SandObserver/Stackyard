@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=cf5ac75a';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=6aa6302b';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d19a6fdf';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
@@ -1460,7 +1460,7 @@ el('imp').onchange = async e => {
     }
     const lead = document.createElement('p');
     lead.className = 'dlg-lead';
-    lead.textContent = t('import.confirm', { n: d.items.length, added, updated, deleted });
+    lead.textContent = t('import.confirm', { count: d.items.length, added, updated, deleted });
     const ok = await confirmModal({
       title: t('import.confirmTitle'),
       body: lead,

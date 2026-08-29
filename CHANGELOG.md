@@ -52,7 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Counted messages now use each language's own plural rules. French and Persian
-  put a count of zero in the plural form.
+  put a count of zero in the plural form. The import confirmation and the badge
+  label limit were still counting in English.
 
 - Persian now uses the import, export, widget and file terms that shipped
   software uses, one word per concept, and no longer leaves "Import" in English

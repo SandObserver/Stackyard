@@ -191,7 +191,8 @@
     "removeLabel": "Bezeichnung entfernen",
     "labelValueTaken": "Dieser Wert wird bereits von einer anderen Bezeichnung verwendet.",
     "noValuesLeft": "Jeder abgerufene Wert hat bereits eine Bezeichnung.",
-    "labelMax": "Ein Badge zeigt höchstens {n} Bezeichnungen.",
+    "labelMax_one": "Ein Badge zeigt höchstens {count} Bezeichnung.",
+    "labelMax_other": "Ein Badge zeigt höchstens {count} Bezeichnungen.",
     "labelOrderTip": "Das Badge zeigt die erste Bezeichnung in dieser Liste, die ihren Schwellenwert erreicht. Zum Umsortieren ziehen.",
     "labelsSaved_one": "{count} Bezeichnung gespeichert",
     "labelsSaved_other": "{count} Bezeichnungen gespeichert",
@@ -271,7 +272,8 @@
     "noMatches": "Keine Treffer."
   },
   "import": {
-    "confirm": "{n} Elemente importieren? {added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht.",
+    "confirm_one": "{count} Element importieren? {added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht.",
+    "confirm_other": "{count} Elemente importieren? {added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht.",
     "confirmTitle": "Konfiguration importieren"
   },
   "status": {

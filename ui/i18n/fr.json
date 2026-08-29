@@ -191,7 +191,9 @@
     "removeLabel": "Supprimer le libellé",
     "labelValueTaken": "Cette valeur est déjà utilisée par un autre libellé.",
     "noValuesLeft": "Chaque valeur récupérée a déjà un libellé.",
-    "labelMax": "Un badge affiche au maximum {n} libellés.",
+    "labelMax_one": "Un badge affiche au maximum {count} libellé.",
+    "labelMax_many": "Un badge affiche au maximum {count} libellés.",
+    "labelMax_other": "Un badge affiche au maximum {count} libellés.",
     "labelOrderTip": "Le badge affiche le premier libellé de cette liste qui atteint son seuil. Faites glisser pour réordonner.",
     "labelsSaved_one": "{count} libellé enregistré",
     "labelsSaved_many": "{count} libellés enregistrés",
@@ -272,7 +274,9 @@
     "noMatches": "Aucune correspondance."
   },
   "import": {
-    "confirm": "Importer {n} éléments ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
+    "confirm_one": "Importer {count} élément ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
+    "confirm_many": "Importer {count} éléments ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
+    "confirm_other": "Importer {count} éléments ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
     "confirmTitle": "Importer la configuration"
   },
   "status": {

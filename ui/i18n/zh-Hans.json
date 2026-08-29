@@ -191,7 +191,7 @@
     "removeLabel": "移除标签",
     "labelValueTaken": "该数值已被另一个标签使用。",
     "noValuesLeft": "每个获取到的数值都已有标签。",
-    "labelMax": "一个徽章最多显示 {n} 个标签。",
+    "labelMax_other": "一个徽章最多显示 {count} 个标签。",
     "labelOrderTip": "徽章显示此列表中第一个达到阈值的标签。拖动可重新排序。",
     "labelsSaved_other": "已保存 {count} 个标签",
     "poll": "轮询",
@@ -270,7 +270,7 @@
     "noMatches": "没有匹配项。"
   },
   "import": {
-    "confirm": "导入 {n} 个项目？新增 {added} 个，更新 {updated} 个，删除 {deleted} 个。",
+    "confirm_other": "导入 {count} 个项目？新增 {added} 个，更新 {updated} 个，删除 {deleted} 个。",
     "confirmTitle": "导入配置"
   },
   "status": {

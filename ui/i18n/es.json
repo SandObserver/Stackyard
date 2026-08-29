@@ -191,7 +191,9 @@
     "removeLabel": "Eliminar etiqueta",
     "labelValueTaken": "Ese valor ya lo usa otra etiqueta.",
     "noValuesLeft": "Todos los valores obtenidos ya tienen una etiqueta.",
-    "labelMax": "Una insignia muestra como máximo {n} etiquetas.",
+    "labelMax_one": "Una insignia muestra como máximo {count} etiqueta.",
+    "labelMax_many": "Una insignia muestra como máximo {count} etiquetas.",
+    "labelMax_other": "Una insignia muestra como máximo {count} etiquetas.",
     "labelOrderTip": "La insignia muestra la primera etiqueta de esta lista que alcanza su umbral. Arrastra para reordenar.",
     "labelsSaved_one": "{count} etiqueta guardada",
     "labelsSaved_many": "{count} etiquetas guardadas",
@@ -272,7 +274,9 @@
     "noMatches": "Sin coincidencias."
   },
   "import": {
-    "confirm": "¿Importar {n} elementos? {added} añadidos, {updated} actualizados, {deleted} eliminados.",
+    "confirm_one": "¿Importar {count} elemento? {added} añadidos, {updated} actualizados, {deleted} eliminados.",
+    "confirm_many": "¿Importar {count} elementos? {added} añadidos, {updated} actualizados, {deleted} eliminados.",
+    "confirm_other": "¿Importar {count} elementos? {added} añadidos, {updated} actualizados, {deleted} eliminados.",
     "confirmTitle": "Importar configuración"
   },
   "status": {
