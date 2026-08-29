@@ -82,6 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The dashboard heading now sits inside a landmark.
 
+- A tile whose label is too long to fit now shows the full name on hover.
+
 - Save is the same button on every Settings pane. It was green on two panes and
   teal on a third, for one action.
 

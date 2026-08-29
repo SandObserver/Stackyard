@@ -46,6 +46,21 @@ export const setUserText = (node, text) => {
   return node;
 };
 
+/* A tile label is one line and ellipsises. The full name is on the anchor's
+   accessible name either way, so this is for a pointer: a tooltip only where the
+   text is actually cut, because one on every tile is noise.
+
+   @param {ParentNode} [root] */
+export function titleWhenTruncated(root = document) {
+  for (const label of root.querySelectorAll('.ilabel, .dyn-mob-label, .dyn-fold-label')) {
+    const tile = /** @type {HTMLElement|null} */ (label.closest('a, button'));
+    if (!tile) continue;
+    const text = label.textContent || '';
+    if (label.scrollWidth > label.clientWidth + 1) tile.title = text;
+    else if (tile.title === text) tile.removeAttribute('title');
+  }
+}
+
 /* Strip quotes, parens and backslashes. A user URL must not break out of a CSS
    url('...') wrapper. */
 export const sanitizeCssUrl = u => String(u || '').replace(/['"\\()]/g, '');

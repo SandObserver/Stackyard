@@ -10,23 +10,24 @@ import {
   uniqueTitle,
 } from '/js/widget-types.js?v=6a5e1619';
 import {
+  el,
   mk,
   mkWrap as _mkWrap,
   mountScaledWidget,
-  teardownWidgets,
-  sanitizeCssUrl,
-  el,
   q,
-  qi,
   qa,
+  qi,
+  sanitizeCssUrl,
   setUserText,
-} from '/js/utils.js?v=2e617767';
-import { initSpotlight } from '/js/spotlight.js?v=cd630755';
+  teardownWidgets,
+  titleWhenTruncated,
+} from '/js/utils.js?v=26566e09';
+import { initSpotlight } from '/js/spotlight.js?v=43d88b9b';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=de9a2526';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=d3561e4b';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=f220ce9b';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=08aae50f';
 import {
@@ -516,7 +517,12 @@ const WALLPAPER_BACKDROP = '#0d1117';
 let bgTone = { grid: null, tone: null };
 
 function retone() {
-  requestAnimationFrame(() => applyLabelTones(bgTone));
+  requestAnimationFrame(() => {
+    applyLabelTones(bgTone);
+    /* Same frame: both need the layout the build produced, and both re-run on a
+       rebuild and a resize for the same reason. */
+    titleWhenTruncated();
+  });
 }
 
 /* Held so a resize re-samples without fetching the image again. */
