@@ -8,6 +8,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
     <link rel="manifest" href="/manifest.json">
+  <!-- Tracks --bg-base. A literal because it is read before any stylesheet. -->
   <meta name="theme-color" content="#0d1117">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <!-- Not black-translucent. The web view is then placed at the top of the
@@ -23,12 +24,11 @@
   <link rel="icon" type="image/png" href="/icons/favicon.png">
 
   <title>Stackyard</title>
-  <link rel="stylesheet" href="/css/tokens.css?v=ce8625c6">
-  <link rel="stylesheet" href="/css/dashboard.css?v=86e55efc">
+  <link rel="stylesheet" href="/css/tokens.css?v=5fc1ecde">
+  <link rel="stylesheet" href="/css/dashboard.css?v=04bfb037">
 </head>
 <body>
 <header class="visually-hidden"><h1>Stackyard</h1></header>
-<div id="ctrls"></div>
 <main id="pages" aria-label="Home screen" data-i18n-al="home.homeScreen"></main>
 <nav id="dots" aria-label="Dashboard pages" data-i18n-al="home.pagination"></nav>
 <!-- Announces the page after a change. The dots are reachable by keyboard. -->
@@ -53,5 +53,5 @@
     </div>
   </div>
 </div>
-<script type="module" src="/js/dashboard.js?v=330d7ce1"></script>
+<script type="module" src="/js/dashboard.js?v=6d062cc5"></script>
 </body></html>

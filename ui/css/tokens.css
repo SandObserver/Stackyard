@@ -63,6 +63,11 @@
   --on-tint:       #FFFFFF;
   --on-tint-dark:  #000000;
 
+  /* The page's own ground, behind the wallpaper layer and before a background
+     is applied. The theme-color meta tag and theme.js carry this value as a
+     literal: both run before any stylesheet is parsed. */
+  --bg-base:#0d1117;
+
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
   --sy-radius-group:26px;

@@ -31,7 +31,10 @@ export function resolveTheme(mode, prefersDark) {
   return m;
 }
 
-/** The chrome colour for a theme: the surface the page draws behind its panel. */
+/** The chrome colour for a theme: the surface the page draws behind its panel.
+
+    A literal, not a token read back: this runs in a classic script before the
+    first paint, when no stylesheet has been parsed. It tracks --bg-base. */
 export function themeColor(theme) {
   return theme === 'light' ? '#FFFFFF' : '#0d1117';
 }

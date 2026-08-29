@@ -22,7 +22,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
 } from '/js/utils.js?v=26566e09';
-import { initSpotlight } from '/js/spotlight.js?v=43d88b9b';
+import { initSpotlight } from '/js/spotlight.js?v=4352b315';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
@@ -403,8 +403,6 @@ function buildDesktop() {
   const dk = el('dock');
   dk.innerHTML = '';
   dock.forEach(item => dk.appendChild(mkDock(item)));
-  const ct = el('ctrls');
-  ct.innerHTML = '';
 }
 
 /* Every page is mounted at once, so widgets the user has swiped away from keep

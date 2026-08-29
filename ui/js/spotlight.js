@@ -47,7 +47,14 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
     f.appendChild(hdr);
     cur.forEach((app, i) => {
       const isFolder = app.type === 'folder';
-      const a = mk('a', { href: app.href || '#', target: isFolder ? '_self' : '_blank', rel: 'noreferrer noopener' });
+      /* Settings is this dashboard, so it opens here and carries no
+         leaves-the-site arrow. Its tile does the same. */
+      const isInternal = isFolder || app.system === 'settings';
+      const a = mk('a', {
+        href: app.href || '#',
+        target: isInternal ? '_self' : '_blank',
+        rel: 'noreferrer noopener',
+      });
       a.className = 'sr' + (i === 0 ? ' sel' : '');
       a.id = 'sr-opt-' + i;
       a.setAttribute('role', 'option');
@@ -67,6 +74,8 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
               innerWidth / 393,
             );
           else openFolderDesktop(app);
+        } else if (app.system === 'settings' && app.href) {
+          window.location.href = app.href;
         } else if (app.href) {
           window.open(app.href, '_blank', 'noreferrer,noopener');
         }
@@ -111,12 +120,15 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       const ht = mk('div');
       ht.className = 'srh';
       ht.textContent = (app.href || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
-      const ar = mk('span');
-      ar.className = 'sra';
-      ar.textContent = '↗';
-      ar.setAttribute('aria-hidden', 'true');
       tx.append(nm, ht);
-      a.append(ic, tx, ar);
+      a.append(ic, tx);
+      if (!isInternal) {
+        const ar = mk('span');
+        ar.className = 'sra';
+        ar.textContent = '↗';
+        ar.setAttribute('aria-hidden', 'true');
+        a.append(ar);
+      }
       f.appendChild(a);
     });
     res.appendChild(f);
