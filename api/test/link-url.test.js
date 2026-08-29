@@ -376,6 +376,88 @@ test('a config save is rejected when two items share an id', async () => {
   }
 });
 
+/* ── a folder's children must resolve ─────────────────────────────────────── */
+
+/* A folder draws its children by id. One that resolves to nothing renders an
+   empty folder with no way to tell why, and the save used to return 200. A
+   hand-edited or partly-merged export is the realistic way to produce one. */
+test('a config save is rejected when a folder points at an item that is not there', async () => {
+  const http = require('node:http');
+  process.env.CONFIG_PATH = path.join(tmpDir('children'), 'apps.json');
+
+  require('../src/routes');
+  const { dispatch } = require('../src/router');
+  const { saveConfig, loadConfig } = require('../src/config');
+  saveConfig({ items: [], settings: {} });
+
+  const server = http.createServer(dispatch);
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+
+  const post = body =>
+    new Promise((resolve, reject) => {
+      const data = JSON.stringify(body);
+      const u = new URL(base + '/api/config');
+      const r = http.request(
+        {
+          hostname: u.hostname,
+          port: u.port,
+          path: u.pathname,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+        },
+        res => {
+          let b = '';
+          res.on('data', c => {
+            b += c;
+          });
+          res.on('end', () => {
+            let j = null;
+            try {
+              j = JSON.parse(b);
+            } catch {}
+            resolve({ status: res.statusCode, body: j });
+          });
+        },
+      );
+      r.on('error', reject);
+      r.end(data);
+    });
+
+  try {
+    const bad = await post({
+      items: [
+        { id: 'media', type: 'folder', label: 'Media', children: ['sonarr', 'gone', 'also-gone'] },
+        { id: 'sonarr', type: 'app', name: 'Sonarr' },
+      ],
+      settings: {},
+    });
+    assert.equal(bad.status, 400);
+    assert.match(bad.body.error, /media: children point at items that are not here/);
+    assert.match(bad.body.error, /gone/, 'the message has to name what is missing to be fixable');
+    assert.match(bad.body.error, /also-gone/, 'every dangling id, not just the first');
+    assert.equal(loadConfig().items.filter(i => i.id === 'media').length, 0, 'nothing may be stored');
+
+    /* A folder whose children all resolve still saves, and so does an empty one. */
+    const ok = await post({
+      items: [
+        { id: 'media', type: 'folder', label: 'Media', children: ['sonarr'] },
+        { id: 'sonarr', type: 'app', name: 'Sonarr' },
+        { id: 'empty', type: 'folder', label: 'Empty', children: [] },
+      ],
+      settings: {},
+    });
+    assert.equal(ok.status, 200, 'a folder whose children resolve must still save');
+    const ids = loadConfig().items.map(i => i.id);
+    assert.ok(ids.includes('media') && ids.includes('empty'));
+  } finally {
+    await new Promise(r => {
+      server.closeAllConnections?.();
+      server.close(r);
+    });
+  }
+});
+
 /* ── the Node floor that cross-boundary require depends on ────────────────── */
 
 /* require() of an ES module was behind --experimental-require-module on Node
