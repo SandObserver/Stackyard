@@ -1,6 +1,7 @@
 {
   "name": "connections",
   "label": "widget.label",
+  "glyph": "network",
   "sizes": [
     "small",
     "medium"

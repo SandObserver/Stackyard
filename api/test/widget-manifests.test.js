@@ -20,6 +20,7 @@ const WIDGETS_DIR = path.join(__dirname, '..', '..', 'ui', 'widgets');
 const KNOWN_KEYS = new Set([
   'name',
   'label',
+  'glyph',
   'sizes',
   'fields',
   'card',

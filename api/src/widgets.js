@@ -9,6 +9,21 @@ const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets'
 
 const VALID_SIZES = new Set(['small', 'medium', 'large', 'xlarge']);
 const VALID_CARDS = new Set(['dark', 'light', 'translucent']);
+/* Mirrors GLYPH_NAMES in ui/js/widget-glyphs.js. The two cannot share a module
+   across the CJS/ESM split without a build step; a test compares them. */
+const VALID_GLYPHS = new Set([
+  'clock',
+  'weather',
+  'gauge',
+  'shield',
+  'drive',
+  'archive',
+  'shelf',
+  'play',
+  'network',
+  'merge',
+  'panels',
+]);
 const VALID_FIELDTYPES = new Set([
   'text',
   'secret',
@@ -146,6 +161,8 @@ function validateManifest(name, m) {
     });
 
   if (m.card !== undefined && !VALID_CARDS.has(m.card)) errs.push(`unknown card "${m.card}"`);
+  /* Optional. A widget that declares none keeps the size icon. */
+  if (m.glyph !== undefined && !VALID_GLYPHS.has(m.glyph)) errs.push(`unknown glyph "${m.glyph}"`);
 
   if (m.fields !== undefined) {
     if (!Array.isArray(m.fields)) errs.push('"fields" must be an array');
@@ -266,6 +283,7 @@ function _publicEntry(name, e, lang) {
     {
       name: m.name,
       label: m.label,
+      glyph: m.glyph || null,
       sizes: m.sizes,
       card: m.card || null,
       fields: m.fields || [],

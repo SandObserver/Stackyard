@@ -1,6 +1,7 @@
 {
   "name": "system-summary",
   "label": "widget.label",
+  "glyph": "gauge",
   "sizes": [
     "small",
     "medium"

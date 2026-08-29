@@ -148,6 +148,12 @@
       "/js/format-number.js?v=*": [
         "./ui/js/format-number.js"
       ],
+      "/js/widget-glyphs.js": [
+        "./ui/js/widget-glyphs.js"
+      ],
+      "/js/widget-glyphs.js?v=*": [
+        "./ui/js/widget-glyphs.js"
+      ],
       "/js/html.js": [
         "./ui/js/html.js"
       ],

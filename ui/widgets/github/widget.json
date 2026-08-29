@@ -1,6 +1,7 @@
 {
   "name": "github",
   "label": "widget.label",
+  "glyph": "merge",
   "sizes": [
     "small",
     "medium",
