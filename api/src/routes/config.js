@@ -68,6 +68,19 @@ on('POST', '/api/config', async (req, res) => {
       }
       seen.add(item.id);
     }
+    /* A folder draws its children by id. One that resolves to nothing renders an
+       empty folder with no way to tell why, and a hand-edited or partly-merged
+       export is how it happens. */
+    for (const item of data.items) {
+      if (!Array.isArray(item.children)) continue;
+      const dangling = item.children.filter(id => !seen.has(String(id)));
+      if (dangling.length) {
+        return json(res, 400, {
+          error: `${item.id}: children point at items that are not here: ${dangling.join(', ')}`,
+          kind: KIND.INVALID,
+        });
+      }
+    }
     /* A link is rendered into an <a href>. A javascript: or data: URL would
        execute in the dashboard's own origin when the tile is clicked. */
     for (const item of data.items) {

@@ -82,6 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The dashboard heading now sits inside a landmark.
 
+- A configuration whose folder points at an item that is not in it is now
+  rejected, naming the missing entries, instead of saving an empty folder.
+
 - The light theme's accent hues now match the current reference kit. Nine had
   drifted to an earlier generation, along with the separator and one fill.
 
