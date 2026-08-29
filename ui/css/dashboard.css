@@ -49,6 +49,25 @@
     }
     body.ready::after { opacity:0; }
 
+    /* Something is happening. boot() makes five sequential round trips, and an
+       empty rectangle for the whole of it reads as hung rather than as loading.
+
+       Held back so the usual fast boot stays a clean fade and only a slow one
+       shows anything. Wordless: the catalogue is loaded by the boot this is
+       covering, so there is no sentence to show. */
+    body::before {
+      content:''; position:fixed; z-index:10000;
+      inset-inline-start:50%; top:50%; width:28px; height:28px; margin:-14px 0 0 -14px;
+      border-radius:50%; pointer-events:none;
+      border:2px solid var(--label-quaternary);
+      border-top-color:var(--label-secondary);
+      opacity:0;
+      animation:boot-wait 1s linear infinite, boot-show .3s ease .6s forwards;
+    }
+    body.ready::before { animation:none; opacity:0; }
+    @keyframes boot-wait { to { transform:rotate(360deg) } }
+    @keyframes boot-show { to { opacity:1 } }
+
     /* ── Page strip ── */
     #pages {
       position:fixed; inset:0; z-index:10;
@@ -762,6 +781,8 @@
 
 /* Reduced motion: neutralize slides, springs, and lift transforms. */
 @media (prefers-reduced-motion: reduce) {
+  /* A ring that does not turn says nothing, so it becomes a resting dot. */
+  body::before { animation:boot-show .3s ease .6s forwards; border-color:var(--label-secondary); }
   #pages { transition: none !important; }
   .icon:hover .iwrap, .folder-icon-link:hover .iwrap, .di:hover .dwrap,
   .dot.on { transform: none !important; }

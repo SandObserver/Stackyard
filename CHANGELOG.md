@@ -82,6 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The dashboard heading now sits inside a landmark.
 
+- The boot screen shows a quiet indicator when loading takes more than a moment,
+  instead of an empty rectangle.
+
+- In Settings, the logging note now sits with the row it describes, and the host
+  address note says what it does rather than naming the mechanism.
+
 - Numbers on the dashboard now use the digits of the reader's locale. A Persian
   reader whose device asks for Persian digits sees them in badges, the weather,
   the system summary, disk health, Pi-hole and reading progress; one whose device
