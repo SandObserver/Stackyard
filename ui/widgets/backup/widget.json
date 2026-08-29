@@ -1,6 +1,7 @@
 {
   "name": "backup",
   "label": "widget.label",
+  "glyph": "archive",
   "sizes": [
     "small",
     "medium"

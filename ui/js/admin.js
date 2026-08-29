@@ -30,6 +30,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=db4192cd';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=26566e09';
+import { widgetGlyph } from '/js/widget-glyphs.js?v=b5036986';
 import { normalizeColorInput } from '/js/admin-color-control.js?v=32111fda';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
 
@@ -235,7 +236,9 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
   if (item.type === 'folder') {
     ico.appendChild(svgNode(FOLDER_ICON));
   } else if (item.type === 'widget') {
-    ico.appendChild(svgNode(SIZE_ICONS[item.widgetSize] || SIZE_ICONS.medium));
+    /* The type when the widget declares one, the size otherwise. */
+    const glyph = widgetGlyph(state._widgetReg?.[item.widgetType]?.glyph);
+    ico.appendChild(svgNode(glyph || SIZE_ICONS[item.widgetSize] || SIZE_ICONS.medium));
   } else if (item.iconUrl) {
     const img = document.createElement('img');
     img.alt = item.label || '';

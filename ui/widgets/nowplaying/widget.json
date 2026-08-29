@@ -1,6 +1,7 @@
 {
   "name": "nowplaying",
   "label": "widget.label",
+  "glyph": "play",
   "sizes": [
     "small"
   ],

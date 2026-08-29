@@ -1,6 +1,7 @@
 {
   "name": "books",
   "label": "widget.label",
+  "glyph": "shelf",
   "sizes": [
     "small"
   ],
