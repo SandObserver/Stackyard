@@ -3,7 +3,7 @@ import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
 import { state } from '/js/admin-state.js?v=c23e6346';
 import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=d17394da';
-import { t } from '/js/i18n.js?v=807b6f3a';
+import { t } from '/js/i18n.js?v=83239bf4';
 import {
   toast,
   ag,
@@ -13,9 +13,9 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=364dba7c';
+} from '/js/admin-shared.js?v=e4464b78';
 import { MAX_LABELS } from '/js/badge-logic.js?v=41a929ac';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d8e72816';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=49b9c909';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
@@ -43,7 +43,7 @@ export function buildFolderForm(body, item) {
         <span class="rl">${t('folder.name')}</span>
         <span class="rv${item?.label ? '' : ' is-ph'}">${item?.label || t('folder.namePh')}</span>
         <input id="f-fname" type="text" value="${item?.label || ''}" style="display:none">
-        <button class="pe" type="button" aria-label="Edit folder name">${raw(PE_SVG)}</button>
+        <button class="pe" type="button">${raw(PE_SVG)}</button>
       </div>
       <div class="row">
         <span class="rl">${t('folder.addApps')}</span>
@@ -52,7 +52,7 @@ export function buildFolderForm(body, item) {
             <span id="folder-apps-label">${t('folder.selectApps')}</span>
             ${raw(CHEV_SVG)}
           </button>
-          <ul class="row-dd-list checklist" id="folder-apps-list" role="listbox" aria-multiselectable="true" aria-label="Apps in this folder" hidden>${opts}</ul>
+          <ul class="row-dd-list checklist" id="folder-apps-list" role="listbox" aria-multiselectable="true" aria-label="${t('folder.appsInFolder')}" hidden>${opts}</ul>
         </div>
       </div>
     </div>
@@ -165,7 +165,7 @@ export function buildAppForm(body, item) {
         <div id="auth-row-wrap">
           <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers), t('app.authentication'))}</div>
           <div id="auth-sub" ${act.params?.length || act.headers?.length ? '' : 'hidden'}>
-            <div class="row kv-hdr"><span class="rl">Add to URL <span class="rl-sub">(query params)</span></span></div>
+            <div class="row kv-hdr"><span class="rl">${t('app.addToUrl')} <span class="rl-sub">(query params)</span></span></div>
             <div id="bpar-rows" class="kv-rows"></div>
             <div class="row kv-hdr"><span class="rl">${t('app.addToHeader')}</span></div>
             <div id="bhdr-rows" class="kv-rows"></div>
@@ -493,7 +493,7 @@ function wireActLabelDrag(host) {
 function _ieRow(rowId, label, inpId, val, ph, type = 'text', aria) {
   const has = val != null && val !== '';
   const name = aria == null ? String(label) : aria;
-  return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${name}">${raw(PE_SVG)}</button></div>`;
+  return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" style="display:none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`;
 }
 
 function wireIcon() {
@@ -750,10 +750,10 @@ function kvRowEl(host, rows, row, ph) {
   setHtml(
     el,
     html`
-    <input class="kv-k" type="text" placeholder="Key" value="${row.key}" aria-label="Header key">
-    <input class="kv-v" type="${row.secret ? 'password' : 'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="Header value">
-    <label class="kv-cred" title="Store this value as a credential: hidden after saving and never exported. Unticking clears the stored value."><input type="checkbox" ${row.secret ? 'checked' : ''} aria-label="${t('app.secret')}"><span class="kv-box"></span><span class="kv-cred-lbl">${t('app.secret')}</span></label>
-    <button class="kv-del" type="button" aria-label="Remove">✕</button>`,
+    <input class="kv-k" type="text" placeholder="${t('app.headerKeyPh')}" value="${row.key}" aria-label="${t('app.headerKey')}">
+    <input class="kv-v" type="${row.secret ? 'password' : 'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="${t('app.headerValue')}">
+    <label class="kv-cred" title="${t('app.secretTip')}"><input type="checkbox" ${row.secret ? 'checked' : ''} aria-label="${t('app.secret')}"><span class="kv-box"></span><span class="kv-cred-lbl">${t('app.secret')}</span></label>
+    <button class="kv-del" type="button" aria-label="${t('widgetCfg.remove')}">✕</button>`,
   );
   const kEl = qi('.kv-k', el),
     vEl = qi('.kv-v', el),

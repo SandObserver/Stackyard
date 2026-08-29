@@ -9,7 +9,10 @@
     "dashboard": "Dashboard",
     "about": "Über",
     "sections": "Einstellungsbereiche",
-    "backToDashboard": "Zurück zum Dashboard"
+    "backToDashboard": "Zurück zum Dashboard",
+    "navigation": "Einstellungsnavigation",
+    "backToDashboardList": "Zurück zur Dashboard-Liste",
+    "pageTitle": "Stackyard Einstellungen"
   },
   "common": {
     "save": "Speichern",
@@ -31,7 +34,8 @@
     "show": "Anzeigen",
     "hide": "Ausblenden",
     "moveUp": "Nach oben",
-    "moveDown": "Nach unten"
+    "moveDown": "Nach unten",
+    "editNamed": "{name} bearbeiten"
   },
   "general": {
     "title": "Titel",
@@ -62,7 +66,9 @@
     "logError": "Fehler",
     "passwordPh": "Neues Passwort (mind. 8 Zeichen)",
     "showSettingsAria": "Einstellungen im Dashboard anzeigen",
-    "hideSettingsAria": "Einstellungen im Dashboard ausblenden"
+    "hideSettingsAria": "Einstellungen im Dashboard ausblenden",
+    "importJson": "Konfigurations-JSON importieren",
+    "importForeignFiles": "Homepage- oder Dashy-YAML-Konfiguration importieren"
   },
   "appearance": {
     "appTitle": "App-Titel",
@@ -94,7 +100,12 @@
     "fitFill": "Füllen",
     "fitContain": "Einpassen",
     "uploading": "Wird hochgeladen…",
-    "imageTip": "Hochgeladene und verlinkte Bilder werden auf diesem Server gespeichert und von ihm ausgeliefert."
+    "imageTip": "Hochgeladene und verlinkte Bilder werden auf diesem Server gespeichert und von ihm ausgeliefert.",
+    "customColor": "Eigene Farbe",
+    "themeDark": "Dunkel (Design)",
+    "themeLight": "Hell (Design)",
+    "colorCode": "Farbcode",
+    "wallpaperSource": "Hintergrundquelle"
   },
   "about": {
     "documentation": "Dokumentation",
@@ -102,14 +113,16 @@
     "sourceCode": "Quellcode",
     "support": "Support",
     "updateTo": "Auf v{v} aktualisieren",
-    "version": "Version v{v}"
+    "version": "Version v{v}",
+    "updateAvailable": "Update verfügbar"
   },
   "dashboard": {
     "searchPh": "Suchen",
     "filterAll": "Alle",
     "filterApps": "Apps",
     "filterWidgets": "Widgets",
-    "filterFolders": "Ordner"
+    "filterFolders": "Ordner",
+    "filterByType": "Nach Typ filtern"
   },
   "type": {
     "addNew": "Neu hinzufügen",
@@ -131,7 +144,8 @@
     "allInFolder": "Alle Apps sind bereits in diesem Ordner.",
     "createNew": "Neuen Ordner erstellen",
     "expandAria": "Ordner {name} aufklappen",
-    "collapseAria": "Ordner {name} zuklappen"
+    "collapseAria": "Ordner {name} zuklappen",
+    "appsInFolder": "Apps in diesem Ordner"
   },
   "app": {
     "name": "Name",
@@ -193,7 +207,12 @@
     "testing": "Wird getestet…",
     "fetching": "Wird abgerufen…",
     "values": "Werte",
-    "computedFromArray": "Aus Liste berechnet"
+    "computedFromArray": "Aus Liste berechnet",
+    "headerKey": "Header-Schlüssel",
+    "headerValue": "Header-Wert",
+    "headerKeyPh": "Schlüssel",
+    "addToUrl": "An URL anhängen",
+    "secretTip": "Diesen Wert als Zugangsdaten speichern: nach dem Speichern verborgen und nie exportiert. Das Abwählen löscht den gespeicherten Wert."
   },
   "home": {
     "search": "Suchen",
@@ -311,7 +330,12 @@
     "noOptions": "Keine Optionen gefunden",
     "empty": "Leer",
     "loaded_one": "{count} Option geladen",
-    "loaded_other": "{count} Optionen geladen"
+    "loaded_other": "{count} Optionen geladen",
+    "iframeUrl": "Iframe-URL",
+    "referrerPolicy": "Referrer-Richtlinie",
+    "allowFeaturePolicy": "Erlauben (Feature-Policy)",
+    "allowFullscreen": "Vollbild erlauben",
+    "refreshInterval": "Aktualisierungsintervall"
   },
   "importForeign": {
     "title": "Aus anderem Dashboard importieren",

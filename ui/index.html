@@ -29,8 +29,8 @@
 </head>
 <body>
 <header class="visually-hidden"><h1>Stackyard</h1></header>
-<main id="pages" aria-label="Home screen" data-i18n-al="home.homeScreen"></main>
-<nav id="dots" aria-label="Dashboard pages" data-i18n-al="home.pagination"></nav>
+<main id="pages" aria-label="Home screen" data-i18n-al="home.homeScreen" data-i18n-al="home.homeScreen"></main>
+<nav id="dots" aria-label="Dashboard pages" data-i18n-al="home.pagination" data-i18n-al="home.pagination"></nav>
 <!-- Announces the page after a change. The dots are reachable by keyboard. -->
 <div id="page-live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
 <div id="mob-search-pill">
@@ -40,18 +40,18 @@
   </div>
   <div class="msp-dots"></div>
 </div>
-<nav id="dock" aria-label="Dock" data-i18n-al="home.dock"></nav>
-<div id="spot" role="dialog" aria-modal="true" aria-label="Search" aria-hidden="true" data-i18n-al="home.searchDialog">
-  <div id="spot-cancel-mob"><button id="spot-cancel-mob-btn" type="button" aria-label="Close search" data-i18n-al="home.closeSearch"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="2" y1="2" x2="12" y2="12" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+<nav id="dock" aria-label="Dock" data-i18n-al="home.dock" data-i18n-al="home.dock"></nav>
+<div id="spot" role="dialog" aria-modal="true" aria-label="Search" data-i18n-al="home.search" aria-hidden="true" data-i18n-al="home.searchDialog">
+  <div id="spot-cancel-mob"><button id="spot-cancel-mob-btn" type="button" aria-label="Close search" data-i18n-al="home.closeSearch" data-i18n-al="home.closeSearch"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="2" y1="2" x2="12" y2="12" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
   <div id="sres-live" class="visually-hidden" aria-live="polite"></div>
   <div id="sres"></div>
   <div id="sbox">
     <div class="spot-bar">
       <span class="spot-icon"><svg width="22" height="22" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.6"/><line x1="10.1" y1="10.1" x2="13.5" y2="13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
-      <input id="sin" type="text" placeholder="Search…" aria-label="Search apps and folders" data-i18n-ph="home.searchPh" data-i18n-al="home.searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+      <input id="sin" type="text" placeholder="Search…" data-i18n-ph="home.searchPh" aria-label="Search apps and folders" data-i18n-al="home.searchInput" data-i18n-ph="home.searchPh" data-i18n-al="home.searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
       <button id="spot-cancel" type="button" data-i18n="common.cancel">Cancel</button>
     </div>
   </div>
 </div>
-<script type="module" src="/js/dashboard.js?v=090874e3"></script>
+<script type="module" src="/js/dashboard.js?v=40c606df"></script>
 </body></html>

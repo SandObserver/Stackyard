@@ -2,10 +2,10 @@
    back. Each builder returns { el, get, control, liveValue }. See
    docs/widgets.md. */
 
-import { t } from '/js/i18n.js?v=807b6f3a';
+import { t } from '/js/i18n.js?v=83239bf4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { wireChecklist } from '/js/admin-shared.js?v=364dba7c';
-import { renderColorControl } from '/js/admin-color-control.js?v=d8e72816';
+import { wireChecklist } from '/js/admin-shared.js?v=e4464b78';
+import { renderColorControl } from '/js/admin-color-control.js?v=49b9c909';
 import {
   seedCarried,
   applyOptionSet,
@@ -33,7 +33,7 @@ function _ieRow(field, value, inputType) {
   row.className = 'row ie-row';
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp" type="${inputType}" autocomplete="off" value="${has ? value : field.default != null ? field.default : ''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${field.label}">${raw(PE)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp" type="${inputType}" autocomplete="off" value="${has ? value : field.default != null ? field.default : ''}" style="display:none"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
   );
   const rv = row.querySelector('.rv'),
     inp = qi('.row-inp', row),
@@ -94,7 +94,7 @@ function _secret(field, isSet) {
   const display = isSet ? t('common.configured') : t('common.notSet');
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? t('widgetCfg.replaceSecret') : field.placeholder || ''}" style="display:none"><button class="pe" type="button" aria-label="Edit ${field.label}">${raw(PE)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? t('widgetCfg.replaceSecret') : field.placeholder || ''}" style="display:none"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
   );
   const rv = row.querySelector('.rv'),
     inp = qi('.row-inp', row),

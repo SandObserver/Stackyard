@@ -9,7 +9,10 @@
     "dashboard": "Dashboard",
     "about": "About",
     "sections": "Settings sections",
-    "backToDashboard": "Back to dashboard"
+    "backToDashboard": "Back to dashboard",
+    "navigation": "Settings navigation",
+    "backToDashboardList": "Back to dashboard list",
+    "pageTitle": "Stackyard Settings"
   },
   "common": {
     "save": "Save",
@@ -31,7 +34,8 @@
     "show": "Show",
     "hide": "Hide",
     "moveUp": "Move up",
-    "moveDown": "Move down"
+    "moveDown": "Move down",
+    "editNamed": "Edit {name}"
   },
   "general": {
     "title": "Title",
@@ -62,7 +66,9 @@
     "logError": "Errors",
     "passwordPh": "New password (min 8 chars)",
     "showSettingsAria": "Show Settings on dashboard",
-    "hideSettingsAria": "Hide Settings on dashboard"
+    "hideSettingsAria": "Hide Settings on dashboard",
+    "importJson": "Import configuration JSON",
+    "importForeignFiles": "Import Homepage or Dashy YAML config"
   },
   "appearance": {
     "appTitle": "App Title",
@@ -94,7 +100,12 @@
     "fitFill": "Fill",
     "fitContain": "Fit",
     "uploading": "Uploading…",
-    "imageTip": "Uploaded and linked images are stored on this server and served from it."
+    "imageTip": "Uploaded and linked images are stored on this server and served from it.",
+    "customColor": "Custom color",
+    "themeDark": "Dark (theme)",
+    "themeLight": "Light (theme)",
+    "colorCode": "Color Code",
+    "wallpaperSource": "Wallpaper source"
   },
   "about": {
     "documentation": "Documentation",
@@ -102,14 +113,16 @@
     "sourceCode": "Source code",
     "support": "Support",
     "updateTo": "Update to v{v}",
-    "version": "Version v{v}"
+    "version": "Version v{v}",
+    "updateAvailable": "Update available"
   },
   "dashboard": {
     "searchPh": "Search",
     "filterAll": "All",
     "filterApps": "Apps",
     "filterWidgets": "Widgets",
-    "filterFolders": "Folders"
+    "filterFolders": "Folders",
+    "filterByType": "Filter by type"
   },
   "type": {
     "addNew": "Add New",
@@ -131,7 +144,8 @@
     "allInFolder": "All apps are already in this folder.",
     "createNew": "Create new folder",
     "expandAria": "Expand folder {name}",
-    "collapseAria": "Collapse folder {name}"
+    "collapseAria": "Collapse folder {name}",
+    "appsInFolder": "Apps in this folder"
   },
   "app": {
     "name": "Name",
@@ -193,7 +207,12 @@
     "testing": "Testing…",
     "fetching": "Fetching…",
     "values": "Values",
-    "computedFromArray": "Computed from array"
+    "computedFromArray": "Computed from array",
+    "headerKey": "Header key",
+    "headerValue": "Header value",
+    "headerKeyPh": "Key",
+    "addToUrl": "Add to URL",
+    "secretTip": "Store this value as a credential: hidden after saving and never exported. Unticking clears the stored value."
   },
   "home": {
     "search": "Search",
@@ -311,7 +330,12 @@
     "noOptions": "No options found",
     "empty": "Empty",
     "loaded_one": "Loaded {count} option",
-    "loaded_other": "Loaded {count} options"
+    "loaded_other": "Loaded {count} options",
+    "iframeUrl": "Iframe URL",
+    "referrerPolicy": "Referrer Policy",
+    "allowFeaturePolicy": "Allow (feature policy)",
+    "allowFullscreen": "Allow Fullscreen",
+    "refreshInterval": "Refresh Interval"
   },
   "importForeign": {
     "title": "Import from another dashboard",

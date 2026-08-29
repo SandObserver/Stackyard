@@ -21,7 +21,10 @@ test('the settings content is a main landmark', () => {
 });
 
 test('the settings sidebar is still a named navigation landmark', () => {
-  assert.match(admin, /<nav class="sb" aria-label="[^"]+">/);
+  const el = /<nav class="sb"([^>]*)>/.exec(admin);
+  assert.ok(el, 'the sidebar is no longer a landmark');
+  assert.match(el[1], /aria-label="[^"]+"/, 'the sidebar is a landmark with no name');
+  assert.match(el[1], /data-i18n-al="[^"]+"/, 'the sidebar has a name the catalog never translates');
 });
 
 test('the dashboard names its own regions', () => {

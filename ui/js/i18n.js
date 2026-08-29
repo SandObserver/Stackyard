@@ -173,7 +173,8 @@ export function getLang() {
      data-i18n="key"       -> textContent
      data-i18n-html="key"  -> markup, limited to the tags i18n-markup.js allows
      data-i18n-ph="key"    -> placeholder
-     data-i18n-al="key"    -> aria-label */
+     data-i18n-al="key"    -> aria-label
+     data-i18n-title="key" -> title */
 function translateDOM(root) {
   root = root || document;
   root.querySelectorAll('[data-i18n]').forEach(el => {
@@ -188,6 +189,9 @@ function translateDOM(root) {
   });
   root.querySelectorAll('[data-i18n-al]').forEach(el => {
     el.setAttribute('aria-label', t(el.getAttribute('data-i18n-al')));
+  });
+  root.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
   });
 }
 
