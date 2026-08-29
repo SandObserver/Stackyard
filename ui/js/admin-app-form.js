@@ -14,7 +14,7 @@ import {
   setTogDisabled,
   wireChecklist,
 } from '/js/admin-shared.js?v=e9afcefb';
-import { MAX_LABELS } from '/js/badge-logic.js?v=f220ce9b';
+import { MAX_LABELS } from '/js/badge-logic.js?v=c6430afc';
 import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=32111fda';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 

@@ -142,6 +142,12 @@
       "/js/dialog.js?v=*": [
         "./ui/js/dialog.js"
       ],
+      "/js/format-number.js": [
+        "./ui/js/format-number.js"
+      ],
+      "/js/format-number.js?v=*": [
+        "./ui/js/format-number.js"
+      ],
       "/js/html.js": [
         "./ui/js/html.js"
       ],

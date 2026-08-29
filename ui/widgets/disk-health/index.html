@@ -145,7 +145,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=3d21db7d';
+import { poll, fetchData, openUrl, loadStrings, wt, formatNumber } from '/js/widget-toolbox.js?v=1dda58ca';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -177,7 +177,8 @@ function statusText(s, hasSmart) {
   if (s === 3) return wt('ui.ageAlert','Age Alert');
   return '';
 }
-function fmtCap(c){ if(!c||c<=0) return ''; if(c>=1e12){const t=c/1e12; return (t>=10?Math.round(t):t.toFixed(1))+' TB';} return Math.round(c/1e9)+' GB'; }
+/* TB and GB are symbols, not words: only the figure is localised. */
+function fmtCap(c){ if(!c||c<=0) return ''; if(c>=1e12){const t=c/1e12; return formatNumber(t>=10?Math.round(t):Number(t.toFixed(1)))+' TB';} return formatNumber(Math.round(c/1e9))+' GB'; }
 function shortName(d) {
   const n = (d.device_name || '').replace(/^\/dev\//, '');
   return n ? n.toUpperCase() : (d.device?.label || d.label || '');
@@ -211,7 +212,7 @@ function showTip(i) {
   const cap = fmtCap(d.capacity);
   if (cap) parts.push(cap);
   parts.push(statusText(d.device_status ?? 0, d.hasSmart ?? false));
-  if (d.temp != null) parts.push(d.temp + '°C');
+  if (d.temp != null) parts.push(formatNumber(Number(d.temp)) + '°C');
   tipMeta.textContent = parts.filter(Boolean).join(' · ');
   rootEl.classList.add('tip-active');
   positionTip(i);
@@ -249,7 +250,7 @@ function build() {
     bayEls.push(bay);
 
     const num = document.createElement('span');
-    num.textContent = (i + 1);
+    num.textContent = formatNumber(i + 1);
     numsEl.appendChild(num);
 
     const dot = document.createElement('i');

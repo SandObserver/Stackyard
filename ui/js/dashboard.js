@@ -28,7 +28,8 @@ import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=d3561e4b';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=f220ce9b';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=c6430afc';
+import { formatNumber } from '/js/format-number.js?v=e2165e12';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=08aae50f';
 import {
   configChanged,
@@ -180,6 +181,7 @@ function bupd(id) {
     healthStale,
     healthDetail: s.healthDetail,
     translate: t,
+    format: formatNumber,
   });
 
   const sig = badgeSignature({ cls, txt, unit, bg, aria, color, title, nextColor, rows });

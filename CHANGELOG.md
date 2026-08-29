@@ -82,6 +82,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The dashboard heading now sits inside a landmark.
 
+- Numbers on the dashboard now use the digits of the reader's locale. A Persian
+  reader whose device asks for Persian digits sees them in badges, the weather,
+  the system summary, disk health, Pi-hole and reading progress; one whose device
+  asks for Latin digits keeps those.
+
 - A configuration whose folder points at an item that is not in it is now
   rejected, naming the missing entries, instead of saving an empty folder.
 

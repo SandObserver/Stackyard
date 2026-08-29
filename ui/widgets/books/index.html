@@ -84,7 +84,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=3d21db7d';
+  import { poll, openUrl, loadStrings, wt, formatNumber } from '/js/widget-toolbox.js?v=1dda58ca';
   await loadStrings();
   document.getElementById('lbl').textContent = wt('ui.reading', 'READING');
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
@@ -104,7 +104,7 @@
     const r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;return 0.2126*r+0.7152*g+0.0722*b;}
   function progressText(b){
     if(b.finished) return [wt('ui.finished','Finished'),'done'];
-    if(b.progress!=null) return [wt('ui.percentRead','{pct}% read').replace('{pct}',String(Math.round(b.progress*100))),'reading'];
+    if(b.progress!=null) return [wt('ui.percentRead','{pct}% read').replace('{pct}',formatNumber(Math.round(b.progress*100))),'reading'];
     return [wt('ui.unread','Unread'),'none'];
   }
   function showInfo(b){
