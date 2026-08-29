@@ -109,3 +109,42 @@ test('both dashboard builders number their frames', () => {
     assert.match(read(f), /uniqueTitle\(/, `${f} builds widget frames without numbering them`);
   }
 });
+
+/* ── The top-right control is gone, not hidden ────────────────────────────── */
+
+/* Its container was cleared unconditionally on every build, so it rendered
+   nothing while four rules, a focus entry, a coarse-pointer size, an
+   increased-contrast variant and an icon file were kept for it. */
+
+const dashCss2 = read('css/dashboard.css');
+
+test('no styling is kept for a control that is not drawn', () => {
+  assert.doesNotMatch(dashCss2, /\.ctrl\b/, 'dead rules for the removed control');
+  assert.doesNotMatch(dashCss2, /#ctrls\b/, 'the container rule outlived the container');
+});
+
+test('the markup and its clearing are gone too', () => {
+  assert.doesNotMatch(read('index.html'), /id="ctrls"/);
+  assert.doesNotMatch(read('js/dashboard.js'), /el\('ctrls'\)/);
+});
+
+/* Deleting styles is only safe if nothing references the class. */
+test('nothing references the control any more', () => {
+  for (const f of ['js/dashboard.js', 'js/ui.js', 'js/spotlight.js', 'index.html']) {
+    assert.doesNotMatch(read(f), /\bctrls?\b(?!-)/, `${f} still names the control`);
+  }
+});
+
+/* ── The internal result does not claim to leave the site ─────────────────── */
+
+const spot = read('js/spotlight.js');
+
+test('a system result opens here, with no leaves-the-site arrow', () => {
+  assert.match(spot, /app\.system === 'settings'/, 'nothing distinguishes the internal destination');
+  assert.match(spot, /target: isInternal \? '_self' : '_blank'/);
+  assert.match(spot, /if \(!isInternal\) \{[\s\S]{0,200}'↗'/, 'the arrow is drawn for every result');
+});
+
+test('a system result navigates rather than opening a tab', () => {
+  assert.match(spot, /app\.system === 'settings' && app\.href[\s\S]{0,80}window\.location\.href = app\.href/);
+});

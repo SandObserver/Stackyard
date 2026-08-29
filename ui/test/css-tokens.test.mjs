@@ -233,3 +233,17 @@ test('the documentation lists the same steps', () => {
   const listed = [...doc.matchAll(/`--sp-(\d+)`/g)].map(m => Number(m[1])).sort((a, b) => a - b);
   assert.deepEqual(listed, SPACING, 'design-system.md and tokens.css disagree about the scale');
 });
+
+/* tokens.css referenced --bg-base as a fallback without ever declaring it, so
+   the fallback resolved to nothing. */
+test('every custom property a stylesheet falls back to is declared', () => {
+  const declared = new Set();
+  for (const [, css] of all) for (const m of css.matchAll(/(--[\w-]+)\s*:/g)) declared.add(m[1]);
+  const missing = [];
+  for (const [file, css] of all) {
+    for (const m of css.matchAll(/var\(\s*--[\w-]+\s*,\s*var\(\s*(--[\w-]+)\s*\)/g)) {
+      if (!declared.has(m[1])) missing.push(`${file}: ${m[1]}`);
+    }
+  }
+  assert.deepEqual(missing, [], `A fallback that is not declared resolves to nothing:\n  ${missing.join('\n  ')}`);
+});

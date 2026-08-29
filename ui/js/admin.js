@@ -28,7 +28,7 @@ import {
 } from '/js/import-foreign.js?v=ef4f3d44';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
-import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=fbd2d2ef';
+import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=db4192cd';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=26566e09';
 import { normalizeColorInput } from '/js/admin-color-control.js?v=32111fda';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';

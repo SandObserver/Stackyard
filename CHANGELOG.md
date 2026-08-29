@@ -82,6 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The dashboard heading now sits inside a landmark.
 
+- The Settings entry in search now opens in the same tab and no longer shows the
+  arrow that means a link leaves the dashboard.
+
 - The boot screen shows a quiet indicator when loading takes more than a moment,
   instead of an empty rectangle.
 

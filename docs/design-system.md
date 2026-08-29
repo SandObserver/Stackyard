@@ -208,6 +208,8 @@ On touch a control keeps its drawn size and gains a 44 hit area on top. A small 
 
 Anything whose size varies derives its corner instead of naming a token. An app icon rounds to 22.37% of its width, because the grid draws it at 72 with a label and 78 without. A widget tile is 28 at design size and scales with the tile.
 
+A box inset by *p* inside a corner of radius *R* takes `max(R − p, 0)`, so the two curves stay parallel. `.segr` is `16 − 2 = 14`.
+
 ---
 
 ## Motion

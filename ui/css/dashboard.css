@@ -320,22 +320,6 @@
       font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2); font-weight:700;
     }
 
-    /* ── Top-right controls ── */
-    #ctrls {
-      position:fixed; top:10px; right:max(44px,calc((100vw - 1160px)/2));
-      z-index:200; display:flex; gap:6px;
-    }
-    .ctrl {
-      width:34px; height:34px; border-radius:9px; border:0; cursor:pointer;
-      background:rgba(255,255,255,.10); color:rgba(255,255,255,.62); font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transition:background .15s,color .15s;
-      text-decoration:none;
-      -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-    }
-    .ctrl:hover { background:rgba(255,255,255,.18); color:rgba(255,255,255,.90) }
 
     /* ── Page dots ── */
     #dots {
@@ -812,7 +796,7 @@
 
 /* Visible keyboard focus for all interactive elements. */
 a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
-.icon:focus-visible, .di:focus-visible, .ctrl:focus-visible, .sr:focus-visible,
+.icon:focus-visible, .di:focus-visible, .sr:focus-visible,
 .dot:focus-visible, .dyn-mob-icon:focus-visible, .dyn-mob-btn:focus-visible,
 .dyn-dock-icon:focus-visible, .dyn-fold-anchor:focus-visible,
 .folder-icon-link:focus-visible {
@@ -827,7 +811,6 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 
 /* 44px is the minimum tap target, and a dot is 8px of it. */
 @media (pointer:coarse) {
-  .ctrl { width:44px; height:44px; }
   .dot::after { inset:-18px; }
 }
 
@@ -845,7 +828,6 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   .ilabel[data-tone="dark"], .dyn-mob-label[data-tone="dark"], .dyn-fold-label[data-tone="dark"] {
     color:#000000; text-shadow:0 0 2px rgba(255,255,255,.95);
   }
-  .ctrl { color:var(--label-primary); background:rgba(255,255,255,.22); }
   .srn  { color:var(--label-primary); }
   .srh, .sr-section { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
