@@ -92,3 +92,13 @@ test('the widgets endpoint forwards the glyph', () => {
   const entry = api.slice(api.indexOf('label: m.label'), api.indexOf('entryVersions: m.entryVersions'));
   assert.match(entry, /glyph: m\.glyph/, 'the glyph never reaches the browser');
 });
+
+/* A widget author reads the docs, not the module. */
+test('the documented glyph names are exactly the ones that exist', () => {
+  const doc = fs.readFileSync(path.join(root, '..', 'docs/widgets.md'), 'utf8');
+  const section = doc.slice(doc.indexOf('### List icon'), doc.indexOf('### Card background'));
+  /* From the separator, so the table's own header cell is not read as a name. */
+  const body = section.slice(section.indexOf('| --- |'));
+  const listed = [...body.matchAll(/^\| `([\w-]+)` \|/gm)].map(m => m[1]).sort();
+  assert.deepEqual(listed, [...GLYPH_NAMES].sort(), 'docs/widgets.md and the module disagree');
+});
