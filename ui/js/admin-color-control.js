@@ -1,5 +1,5 @@
-import { PE_SVG, initInlineEdit, toast } from '/js/admin-shared.js?v=364dba7c';
-import { t } from '/js/i18n.js?v=807b6f3a';
+import { PE_SVG, initInlineEdit, toast } from '/js/admin-shared.js?v=e4464b78';
+import { t } from '/js/i18n.js?v=83239bf4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=26566e09';
 
@@ -127,11 +127,11 @@ export function renderColorControl(
   const swatch = h =>
     html`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`;
   const swatches = semantic
-    ? html`<button type="button" class="cc-swatch cc-sem" data-v="dark" style="background:#1c1c1e" title="Dark (theme)" aria-label="Dark"></button>
-       <button type="button" class="cc-swatch cc-sem" data-v="light" style="background:#f2f2f7" title="Light (theme)" aria-label="Light"></button>
-       <button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
+    ? html`<button type="button" class="cc-swatch cc-sem" data-v="dark" style="background:#1c1c1e" title="${t('appearance.themeDark')}" aria-label="${t('appearance.displayDark')}"></button>
+       <button type="button" class="cc-swatch cc-sem" data-v="light" style="background:#f2f2f7" title="${t('appearance.themeLight')}" aria-label="${t('appearance.displayLight')}"></button>
+       <button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="${t('appearance.customColor')}"></button>
        ${['#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'].map(swatch)}`
-    : html`<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="Custom color"></button>
+    : html`<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="${t('appearance.customColor')}"></button>
        ${swatchColors.map(swatch)}`;
   const wrap = document.createElement('div');
   const slider = (label, cls, id, max, val, lo, hi) => html`
@@ -143,7 +143,7 @@ export function renderColorControl(
     ${slider('Hue', 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
     ${slider('Saturation', 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
     ${slider('Brightness', 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
-    <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">Color Code</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" style="display:none"><button class="pe" type="button" aria-label="Edit color code">${raw(PE_SVG)}</button></div>`,
+    <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">${t('appearance.colorCode')}</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" style="display:none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
   );
   const rows = /** @type {HTMLElement[]} */ ([...wrap.children]);
   rows.forEach(r => container.appendChild(r));

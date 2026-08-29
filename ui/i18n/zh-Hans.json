@@ -9,7 +9,10 @@
     "dashboard": "仪表盘",
     "about": "关于",
     "sections": "设置分区",
-    "backToDashboard": "返回仪表板"
+    "backToDashboard": "返回仪表板",
+    "navigation": "设置导航",
+    "backToDashboardList": "返回仪表板列表",
+    "pageTitle": "Stackyard 设置"
   },
   "common": {
     "save": "保存",
@@ -31,7 +34,8 @@
     "show": "显示",
     "hide": "隐藏",
     "moveUp": "上移",
-    "moveDown": "下移"
+    "moveDown": "下移",
+    "editNamed": "编辑{name}"
   },
   "general": {
     "title": "标题",
@@ -62,7 +66,9 @@
     "logError": "错误",
     "passwordPh": "新密码（至少 8 个字符）",
     "showSettingsAria": "在仪表板上显示设置",
-    "hideSettingsAria": "在仪表板上隐藏设置"
+    "hideSettingsAria": "在仪表板上隐藏设置",
+    "importJson": "导入配置 JSON",
+    "importForeignFiles": "导入 Homepage 或 Dashy 的 YAML 配置"
   },
   "appearance": {
     "appTitle": "应用标题",
@@ -94,7 +100,12 @@
     "fitFill": "填充",
     "fitContain": "适应",
     "uploading": "上传中…",
-    "imageTip": "上传和链接的图片都保存在本服务器，并由本服务器提供。"
+    "imageTip": "上传和链接的图片都保存在本服务器，并由本服务器提供。",
+    "customColor": "自定义颜色",
+    "themeDark": "深色（主题）",
+    "themeLight": "浅色（主题）",
+    "colorCode": "颜色代码",
+    "wallpaperSource": "壁纸来源"
   },
   "about": {
     "documentation": "文档",
@@ -102,14 +113,16 @@
     "sourceCode": "源代码",
     "support": "支持",
     "updateTo": "更新到 v{v}",
-    "version": "版本 v{v}"
+    "version": "版本 v{v}",
+    "updateAvailable": "有可用更新"
   },
   "dashboard": {
     "searchPh": "搜索",
     "filterAll": "全部",
     "filterApps": "应用",
     "filterWidgets": "小组件",
-    "filterFolders": "文件夹"
+    "filterFolders": "文件夹",
+    "filterByType": "按类型筛选"
   },
   "type": {
     "addNew": "新建",
@@ -131,7 +144,8 @@
     "allInFolder": "所有应用都已在此文件夹中。",
     "createNew": "新建文件夹",
     "expandAria": "展开文件夹 {name}",
-    "collapseAria": "折叠文件夹 {name}"
+    "collapseAria": "折叠文件夹 {name}",
+    "appsInFolder": "此文件夹中的应用"
   },
   "app": {
     "name": "名称",
@@ -192,7 +206,12 @@
     "testing": "正在测试…",
     "fetching": "正在获取…",
     "values": "数值",
-    "computedFromArray": "由列表计算得出"
+    "computedFromArray": "由列表计算得出",
+    "headerKey": "标头名称",
+    "headerValue": "标头值",
+    "headerKeyPh": "名称",
+    "addToUrl": "追加到 URL",
+    "secretTip": "将此值存储为凭据：保存后隐藏，且从不导出。取消勾选会清除已存储的值。"
   },
   "home": {
     "search": "搜索",
@@ -307,7 +326,12 @@
     "remove": "移除",
     "noOptions": "未找到选项",
     "empty": "空",
-    "loaded_other": "已加载 {count} 个选项"
+    "loaded_other": "已加载 {count} 个选项",
+    "iframeUrl": "Iframe 地址",
+    "referrerPolicy": "来源地址策略",
+    "allowFeaturePolicy": "允许（功能策略）",
+    "allowFullscreen": "允许全屏",
+    "refreshInterval": "刷新间隔"
   },
   "importForeign": {
     "title": "从其他仪表板导入",

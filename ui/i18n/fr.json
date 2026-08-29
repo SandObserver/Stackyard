@@ -9,7 +9,10 @@
     "dashboard": "Tableau de bord",
     "about": "À propos",
     "sections": "Sections des réglages",
-    "backToDashboard": "Retour au tableau de bord"
+    "backToDashboard": "Retour au tableau de bord",
+    "navigation": "Navigation des réglages",
+    "backToDashboardList": "Retour à la liste des tableaux de bord",
+    "pageTitle": "Réglages de Stackyard"
   },
   "common": {
     "save": "Enregistrer",
@@ -31,7 +34,8 @@
     "show": "Afficher",
     "hide": "Masquer",
     "moveUp": "Monter",
-    "moveDown": "Descendre"
+    "moveDown": "Descendre",
+    "editNamed": "Modifier {name}"
   },
   "general": {
     "title": "Titre",
@@ -62,7 +66,9 @@
     "logError": "Erreurs",
     "passwordPh": "Nouveau mot de passe (8 caractères minimum)",
     "showSettingsAria": "Afficher les Réglages sur le tableau de bord",
-    "hideSettingsAria": "Masquer les Réglages sur le tableau de bord"
+    "hideSettingsAria": "Masquer les Réglages sur le tableau de bord",
+    "importJson": "Importer le JSON de configuration",
+    "importForeignFiles": "Importer une configuration YAML Homepage ou Dashy"
   },
   "appearance": {
     "appTitle": "Titre de l'application",
@@ -94,7 +100,12 @@
     "fitFill": "Remplir",
     "fitContain": "Ajuster",
     "uploading": "Téléversement…",
-    "imageTip": "Les images téléversées et liées sont stockées sur ce serveur et servies depuis celui-ci."
+    "imageTip": "Les images téléversées et liées sont stockées sur ce serveur et servies depuis celui-ci.",
+    "customColor": "Couleur personnalisée",
+    "themeDark": "Sombre (thème)",
+    "themeLight": "Clair (thème)",
+    "colorCode": "Code couleur",
+    "wallpaperSource": "Source du fond d'écran"
   },
   "about": {
     "documentation": "Documentation",
@@ -102,14 +113,16 @@
     "sourceCode": "Code source",
     "support": "Assistance",
     "updateTo": "Mettre à jour vers v{v}",
-    "version": "Version v{v}"
+    "version": "Version v{v}",
+    "updateAvailable": "Mise à jour disponible"
   },
   "dashboard": {
     "searchPh": "Rechercher",
     "filterAll": "Tous",
     "filterApps": "Applications",
     "filterWidgets": "Widgets",
-    "filterFolders": "Dossiers"
+    "filterFolders": "Dossiers",
+    "filterByType": "Filtrer par type"
   },
   "type": {
     "addNew": "Ajouter",
@@ -131,7 +144,8 @@
     "allInFolder": "Toutes les apps sont déjà dans ce dossier.",
     "createNew": "Créer un dossier",
     "expandAria": "Développer le dossier {name}",
-    "collapseAria": "Réduire le dossier {name}"
+    "collapseAria": "Réduire le dossier {name}",
+    "appsInFolder": "Applications de ce dossier"
   },
   "app": {
     "name": "Nom",
@@ -194,7 +208,12 @@
     "testing": "Test en cours…",
     "fetching": "Récupération…",
     "values": "Valeurs",
-    "computedFromArray": "Calculé à partir de la liste"
+    "computedFromArray": "Calculé à partir de la liste",
+    "headerKey": "Clé d'en-tête",
+    "headerValue": "Valeur d'en-tête",
+    "headerKeyPh": "Clé",
+    "addToUrl": "Ajouter à l'URL",
+    "secretTip": "Enregistrer cette valeur comme identifiant : masquée après l'enregistrement et jamais exportée. La décocher efface la valeur enregistrée."
   },
   "home": {
     "search": "Rechercher",
@@ -315,7 +334,12 @@
     "empty": "Vide",
     "loaded_one": "{count} option chargée",
     "loaded_many": "{count} options chargées",
-    "loaded_other": "{count} options chargées"
+    "loaded_other": "{count} options chargées",
+    "iframeUrl": "URL de l'iframe",
+    "referrerPolicy": "Politique de référent",
+    "allowFeaturePolicy": "Autoriser (politique de fonctionnalités)",
+    "allowFullscreen": "Autoriser le plein écran",
+    "refreshInterval": "Intervalle d'actualisation"
   },
   "importForeign": {
     "title": "Importer depuis un autre tableau de bord",

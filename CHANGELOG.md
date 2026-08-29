@@ -58,6 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   software uses, one word per concept, and no longer leaves "Import" in English
   in one message.
 
+- Settings now translates its accessible names, its remaining field labels and
+  its page title, which were English in every language.
+
 - Opening and saving an app no longer rewrites a colour that was not changed.
 
 - Admin form toggles now carry accessible names.

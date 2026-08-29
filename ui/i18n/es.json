@@ -9,7 +9,10 @@
     "dashboard": "Panel",
     "about": "Acerca de",
     "sections": "Secciones de ajustes",
-    "backToDashboard": "Volver al panel"
+    "backToDashboard": "Volver al panel",
+    "navigation": "Navegación de ajustes",
+    "backToDashboardList": "Volver a la lista de paneles",
+    "pageTitle": "Ajustes de Stackyard"
   },
   "common": {
     "save": "Guardar",
@@ -31,7 +34,8 @@
     "show": "Mostrar",
     "hide": "Ocultar",
     "moveUp": "Subir",
-    "moveDown": "Bajar"
+    "moveDown": "Bajar",
+    "editNamed": "Editar {name}"
   },
   "general": {
     "title": "Título",
@@ -62,7 +66,9 @@
     "logError": "Errores",
     "passwordPh": "Nueva contraseña (mín. 8 caracteres)",
     "showSettingsAria": "Mostrar Ajustes en el panel",
-    "hideSettingsAria": "Ocultar Ajustes en el panel"
+    "hideSettingsAria": "Ocultar Ajustes en el panel",
+    "importJson": "Importar JSON de configuración",
+    "importForeignFiles": "Importar configuración YAML de Homepage o Dashy"
   },
   "appearance": {
     "appTitle": "Título de la aplicación",
@@ -94,7 +100,12 @@
     "fitFill": "Rellenar",
     "fitContain": "Ajustar",
     "uploading": "Subiendo…",
-    "imageTip": "Las imágenes subidas y enlazadas se guardan en este servidor y se sirven desde él."
+    "imageTip": "Las imágenes subidas y enlazadas se guardan en este servidor y se sirven desde él.",
+    "customColor": "Color personalizado",
+    "themeDark": "Oscuro (tema)",
+    "themeLight": "Claro (tema)",
+    "colorCode": "Código de color",
+    "wallpaperSource": "Origen del fondo"
   },
   "about": {
     "documentation": "Documentación",
@@ -102,14 +113,16 @@
     "sourceCode": "Código fuente",
     "support": "Soporte",
     "updateTo": "Actualizar a v{v}",
-    "version": "Versión v{v}"
+    "version": "Versión v{v}",
+    "updateAvailable": "Actualización disponible"
   },
   "dashboard": {
     "searchPh": "Buscar",
     "filterAll": "Todos",
     "filterApps": "Aplicaciones",
     "filterWidgets": "Widgets",
-    "filterFolders": "Carpetas"
+    "filterFolders": "Carpetas",
+    "filterByType": "Filtrar por tipo"
   },
   "type": {
     "addNew": "Añadir nuevo",
@@ -131,7 +144,8 @@
     "allInFolder": "Todas las apps ya están en esta carpeta.",
     "createNew": "Crear carpeta nueva",
     "expandAria": "Expandir la carpeta {name}",
-    "collapseAria": "Contraer la carpeta {name}"
+    "collapseAria": "Contraer la carpeta {name}",
+    "appsInFolder": "Aplicaciones de esta carpeta"
   },
   "app": {
     "name": "Nombre",
@@ -194,7 +208,12 @@
     "testing": "Probando…",
     "fetching": "Obteniendo…",
     "values": "Valores",
-    "computedFromArray": "Calculado a partir de la lista"
+    "computedFromArray": "Calculado a partir de la lista",
+    "headerKey": "Clave de cabecera",
+    "headerValue": "Valor de cabecera",
+    "headerKeyPh": "Clave",
+    "addToUrl": "Añadir a la URL",
+    "secretTip": "Guardar este valor como credencial: se oculta tras guardar y nunca se exporta. Al desmarcarlo se borra el valor guardado."
   },
   "home": {
     "search": "Buscar",
@@ -315,7 +334,12 @@
     "empty": "Vacío",
     "loaded_one": "{count} opción cargada",
     "loaded_many": "{count} opciones cargadas",
-    "loaded_other": "{count} opciones cargadas"
+    "loaded_other": "{count} opciones cargadas",
+    "iframeUrl": "URL del iframe",
+    "referrerPolicy": "Política de referente",
+    "allowFeaturePolicy": "Permitir (política de funciones)",
+    "allowFullscreen": "Permitir pantalla completa",
+    "refreshInterval": "Intervalo de actualización"
   },
   "importForeign": {
     "title": "Importar desde otro panel",
