@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Settings states which of an app's labels the badge will show.
 
+- `?lang=en-XA` renders the interface expanded and accented, and `?lang=cimode`
+  renders every string as its key. See `docs/i18n.md`.
+
 ### Changed
 
 - Badge text is white wherever white is readable, instead of whichever ink
@@ -47,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Node heap to the memory limit, and runs an init process.
 
 ### Fixed
+
+- Counted messages now use each language's own plural rules. French and Persian
+  put a count of zero in the plural form.
 
 - Opening and saving an app no longer rewrites a colour that was not changed.
 

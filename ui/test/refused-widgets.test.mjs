@@ -35,11 +35,10 @@ test('both places that show a refusal go through that one renderer', () => {
 });
 
 test('the picker says how many widgets were refused', () => {
-  assert.match(form, /refusedNoticeKey\(/, 'the picker does not show the count notice');
-  assert.ok(en.widgetCfg?.refused, 'widgetCfg.refused is missing from en.json');
-  assert.ok(en.widgetCfg?.refusedPlural, 'widgetCfg.refusedPlural is missing from en.json');
-  for (const k of ['refused', 'refusedPlural']) {
-    assert.match(en.widgetCfg[k], /\{n\}/, `widgetCfg.${k} should name the count`);
+  assert.match(form, /t\('widgetCfg\.refused', \{ count:/, 'the picker does not show the count notice');
+  for (const k of ['refused_one', 'refused_other']) {
+    assert.ok(en.widgetCfg?.[k], `widgetCfg.${k} is missing from en.json`);
+    assert.match(en.widgetCfg[k], /\{count\}/, `widgetCfg.${k} should name the count`);
   }
 });
 
@@ -47,7 +46,7 @@ test('the picker says how many widgets were refused', () => {
    widget is missing from, not at the bottom of the form. */
 test('the notice renders next to the type list', () => {
   const atType = form.indexOf('id="f-wtype"');
-  const atNotice = form.indexOf('refusedNoticeKey(');
+  const atNotice = form.indexOf("t('widgetCfg.refused'");
   const atSize = form.search(/sizeHdr\.textContent\s*=\s*t\('widgetCfg\.size'\)/);
   assert.ok(atType !== -1 && atNotice !== -1 && atSize !== -1, 'the form no longer has these parts');
   assert.ok(

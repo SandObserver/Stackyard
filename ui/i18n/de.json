@@ -179,8 +179,8 @@
     "noValuesLeft": "Jeder abgerufene Wert hat bereits eine Bezeichnung.",
     "labelMax": "Ein Abzeichen zeigt höchstens {n} Bezeichnungen.",
     "labelOrderTip": "Das Abzeichen zeigt die erste Bezeichnung in dieser Liste, die ihren Schwellenwert erreicht. Zum Umsortieren ziehen.",
-    "labelsSaved": "{n} Bezeichnung gespeichert",
-    "labelsSavedPlural": "{n} Bezeichnungen gespeichert",
+    "labelsSaved_one": "{count} Bezeichnung gespeichert",
+    "labelsSaved_other": "{count} Bezeichnungen gespeichert",
     "poll": "Abfrage",
     "allowSelfSigned": "Selbstsigniertes Zertifikat zulassen",
     "selfSignedTip": "Überspringt die TLS-Prüfung für die URLs dieser App. Das Überspringen der Prüfung ist unsicher und sollte nur erfolgen, wenn du die Risiken vollständig verstehst.",
@@ -260,8 +260,8 @@
     "healthy": "Status: in Ordnung",
     "pending": "{count} ausstehend",
     "stale": "(möglicherweise veraltet)",
-    "moreValues": "{n} weiteres Abzeichen",
-    "moreValuesPlural": "{n} weitere Abzeichen",
+    "moreValues_one": "{count} weiteres Abzeichen",
+    "moreValues_other": "{count} weitere Abzeichen",
     "containerNotFound": "Container nicht gefunden",
     "containerState": "Container {state}",
     "pingFailed": "Ping fehlgeschlagen: {error}",
@@ -293,8 +293,8 @@
   "widgetCfg": {
     "unavailable": "Einstellungen nicht verfügbar",
     "unavailableTip": "Die Definition dieses Widgets ({type}) konnte nicht geladen werden, daher können seine Einstellungen nicht angezeigt oder bearbeitet werden. Sie bleiben auf dem Server erhalten und werden durch Speichern nicht verändert.",
-    "refused": "{n} Widget konnte nicht geladen werden und wird unten nicht aufgeführt.",
-    "refusedPlural": "{n} Widgets konnten nicht geladen werden und werden unten nicht aufgeführt.",
+    "refused_one": "{count} Widget konnte nicht geladen werden und wird unten nicht aufgeführt.",
+    "refused_other": "{count} Widgets konnten nicht geladen werden und werden unten nicht aufgeführt.",
     "name": "Name",
     "type": "Widget-Typ",
     "namePh": "Mein Widget",
@@ -310,8 +310,8 @@
     "remove": "Entfernen",
     "noOptions": "Keine Optionen gefunden",
     "empty": "Leer",
-    "loaded": "{n} Option geladen",
-    "loadedPlural": "{n} Optionen geladen"
+    "loaded_one": "{count} Option geladen",
+    "loaded_other": "{count} Optionen geladen"
   },
   "importForeign": {
     "title": "Aus anderem Dashboard importieren",

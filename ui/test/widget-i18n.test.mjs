@@ -149,6 +149,57 @@ test('the translations are not copies of the English', () => {
   }
 });
 
+/* Each widget carries its own catalogs, one folder per widget, and nothing was
+   comparing them against their own English source. A widget added with five of
+   the six languages loses those strings silently: the manifest text renders
+   instead, which reads as English inside a translated settings form. */
+const CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other'];
+const PLURAL = new RegExp(`_(${CATEGORIES.join('|')})$`);
+const placeholders = v => (String(v).match(/\{\w+\}/g) || []).sort();
+
+const widgetCatalogDirs = () =>
+  fs
+    .readdirSync(path.join(root, 'widgets'), { withFileTypes: true })
+    .filter(e => e.isDirectory() && fs.existsSync(path.join(root, 'widgets', e.name, 'i18n')))
+    .map(e => e.name);
+
+test('the scan finds the widget catalogs', () => {
+  assert.ok(widgetCatalogDirs().length > 5, 'expected a catalog folder for most widgets');
+});
+
+test('every widget catalog covers every shipped locale', () => {
+  const wanted = fs
+    .readdirSync(path.join(root, 'i18n'))
+    .filter(f => f.endsWith('.json'))
+    .sort();
+  for (const name of widgetCatalogDirs()) {
+    const have = fs
+      .readdirSync(path.join(root, 'widgets', name, 'i18n'))
+      .filter(f => f.endsWith('.json'))
+      .sort();
+    assert.deepEqual(have, wanted, `widgets/${name}/i18n does not carry the same locales as the dashboard`);
+  }
+});
+
+test('every widget catalog carries the English key set and its placeholders', () => {
+  for (const name of widgetCatalogDirs()) {
+    const dir = `widgets/${name}/i18n`;
+    const en = JSON.parse(read(`${dir}/en.json`));
+    const enBases = [...new Set(Object.keys(en).map(k => k.replace(PLURAL, '')))].sort();
+    for (const file of fs.readdirSync(path.join(root, dir)).filter(f => f.endsWith('.json') && f !== 'en.json')) {
+      const cat = JSON.parse(read(`${dir}/${file}`));
+      const bases = [...new Set(Object.keys(cat).map(k => k.replace(PLURAL, '')))].sort();
+      assert.deepEqual(bases, enBases, `${dir}/${file} key set differs from en.json`);
+      for (const [k, v] of Object.entries(cat)) {
+        assert.ok(typeof v === 'string' && v.trim(), `${dir}/${file} has an empty value for ${k}`);
+        const source = en[k] ?? en[`${k.replace(PLURAL, '')}_other`];
+        if (source !== undefined)
+          assert.deepEqual(placeholders(v), placeholders(source), `${dir}/${file} ${k} changed the placeholders`);
+      }
+    }
+  }
+});
+
 /* ── names built on the server ────────────────────────────────────────────── */
 
 /* The pull request filter names were assembled into a finished English string

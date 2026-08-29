@@ -179,8 +179,8 @@
     "noValuesLeft": "Every fetched value already has a label.",
     "labelMax": "A badge shows at most {n} labels.",
     "labelOrderTip": "The badge shows the first label in this list that reaches its threshold. Drag to reorder.",
-    "labelsSaved": "{n} label saved",
-    "labelsSavedPlural": "{n} labels saved",
+    "labelsSaved_one": "{count} label saved",
+    "labelsSaved_other": "{count} labels saved",
     "poll": "Poll",
     "allowSelfSigned": "Allow self-signed certificate",
     "selfSignedTip": "Skip TLS verification for this app's URLs. Skipping verification is insecure and should only be done if you fully understand the risks.",
@@ -260,8 +260,8 @@
     "healthy": "Status: healthy",
     "pending": "{count} pending",
     "stale": "(may be out of date)",
-    "moreValues": "{n} more badge",
-    "moreValuesPlural": "{n} more badges",
+    "moreValues_one": "{count} more badge",
+    "moreValues_other": "{count} more badges",
     "containerNotFound": "Container not found",
     "containerState": "Container {state}",
     "pingFailed": "Ping failed: {error}",
@@ -293,8 +293,8 @@
   "widgetCfg": {
     "unavailable": "Settings unavailable",
     "unavailableTip": "This widget's definition ({type}) could not be loaded, so its settings cannot be shown or edited. They are kept on the server and are not affected by saving.",
-    "refused": "{n} widget could not be loaded, so it is not listed below.",
-    "refusedPlural": "{n} widgets could not be loaded, so they are not listed below.",
+    "refused_one": "{count} widget could not be loaded, so it is not listed below.",
+    "refused_other": "{count} widgets could not be loaded, so they are not listed below.",
     "name": "Name",
     "type": "Widget Type",
     "namePh": "My Widget",
@@ -310,8 +310,8 @@
     "remove": "Remove",
     "noOptions": "No options found",
     "empty": "Empty",
-    "loaded": "Loaded {n} option",
-    "loadedPlural": "Loaded {n} options"
+    "loaded_one": "Loaded {count} option",
+    "loaded_other": "Loaded {count} options"
   },
   "importForeign": {
     "title": "Import from another dashboard",

@@ -1,15 +1,9 @@
 import { state } from '/js/admin-state.js?v=c23e6346';
-import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=e9afcefb';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=a68e6a57';
+import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=364dba7c';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=fe5f27c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import {
-  sizesForView,
-  widgetConfigMode,
-  rejectionLines,
-  refusedNoticeKey,
-  carriesTypedValues,
-} from '/js/admin-logic.js?v=ddfc6f80';
-import { t } from '/js/i18n.js?v=d056c9c5';
+import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=d17394da';
+import { t } from '/js/i18n.js?v=807b6f3a';
 import { q, qi, qa } from '/js/utils.js?v=26566e09';
 
 const SIZE_ICONS = {
@@ -86,7 +80,7 @@ function _renderWidgetForm(body) {
   if (refused.length) {
     const note = document.createElement('p');
     note.className = 'grp-tip';
-    note.textContent = t(refusedNoticeKey(refused.length), { n: refused.length });
+    note.textContent = t('widgetCfg.refused', { count: refused.length });
     body.appendChild(note);
     appendRejectionReasons(body, refused);
   }

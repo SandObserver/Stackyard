@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=aa32f5ed';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=2191f31e';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=e826c365';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=94820ba3';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
-import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=ddfc6f80';
+import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
 import {
   buildAppItem,
   claimFolderChildren,
@@ -10,12 +10,12 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=48a9e055';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=455deefb';
-import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=e9afcefb';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=ad8ea851';
+import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=364dba7c';
 import { state } from '/js/admin-state.js?v=c23e6346';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=5a2dc8e8';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=94059ff7';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=d056c9c5';
+import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=807b6f3a';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
 import {
   clearSkipTls,
@@ -31,7 +31,7 @@ import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=db4192cd';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=26566e09';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b5036986';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=32111fda';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=d8e72816';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
 
 /* A class rather than a bare media query. Some phones report a wider CSS

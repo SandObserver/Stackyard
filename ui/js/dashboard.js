@@ -22,13 +22,13 @@ import {
   teardownWidgets,
   titleWhenTruncated,
 } from '/js/utils.js?v=26566e09';
-import { initSpotlight } from '/js/spotlight.js?v=4352b315';
+import { initSpotlight } from '/js/spotlight.js?v=2194fc10';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
-import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
+import { initI18n, t, currentLang } from '/js/i18n.js?v=807b6f3a';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=d3561e4b';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=c6430afc';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=751eb261';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
 import { formatNumber } from '/js/format-number.js?v=e2165e12';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=08aae50f';
 import {
