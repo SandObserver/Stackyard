@@ -139,3 +139,58 @@ test('a drifting aspect letterboxes instead of clipping', () => {
   /* A matched aspect still fills the card exactly. */
   assert.equal(scale(340, 170, 360, 170) * 360, 340);
 });
+
+/* ── A tooltip only where the label is cut ────────────────────────────────── */
+
+/* Tile labels are one line and ellipsise. The anchor's accessible name carries
+   the full text either way, so this is for a pointer; on the live instance 3 of
+   13 labels truncated and none could be read in full. */
+
+test('a truncated label gets a title and an untruncated one does not', async () => {
+  const { titleWhenTruncated } = await import('../js/utils.js');
+  const make = (text, scrollWidth, clientWidth, tile) => ({
+    textContent: text,
+    scrollWidth,
+    clientWidth,
+    closest: () => tile,
+  });
+  const cut = { title: '', removeAttribute() {} };
+  const whole = { title: '', removeAttribute() {} };
+  const labels = [make('Backup and Storage', 180, 72, cut), make('Gitea', 40, 72, whole)];
+  titleWhenTruncated(/** @type {any} */ ({ querySelectorAll: () => labels }));
+  assert.equal(cut.title, 'Backup and Storage');
+  assert.equal(whole.title, '', 'a tooltip on every tile is noise');
+});
+
+/* Widths change with the layout, so a title set at one size must clear at
+   another. */
+test('a title this set is removed once the label fits', async () => {
+  const { titleWhenTruncated } = await import('../js/utils.js');
+  const removed = [];
+  const tile = {
+    title: 'Backup and Storage',
+    removeAttribute(name) {
+      removed.push(name);
+      this.title = '';
+    },
+  };
+  const label = { textContent: 'Backup and Storage', scrollWidth: 40, clientWidth: 72, closest: () => tile };
+  titleWhenTruncated(/** @type {any} */ ({ querySelectorAll: () => [label] }));
+  assert.deepEqual(removed, ['title']);
+});
+
+/* A title someone else set, such as the one a hidden-label tile carries, is not
+   this pass's to clear. */
+test('a title it did not set is left alone', async () => {
+  const { titleWhenTruncated } = await import('../js/utils.js');
+  const tile = { title: 'Something else', removeAttribute: () => assert.fail('removed a title it did not set') };
+  const label = { textContent: 'Gitea', scrollWidth: 40, clientWidth: 72, closest: () => tile };
+  titleWhenTruncated(/** @type {any} */ ({ querySelectorAll: () => [label] }));
+  assert.equal(tile.title, 'Something else');
+});
+
+test('the layout runs the pass when it tones the labels', () => {
+  const dash = read('js/dashboard.js');
+  const retone = dash.slice(dash.indexOf('function retone()'), dash.indexOf('function retone()') + 320);
+  assert.match(retone, /titleWhenTruncated\(\)/, 'nothing re-runs it on a rebuild or a resize');
+});
