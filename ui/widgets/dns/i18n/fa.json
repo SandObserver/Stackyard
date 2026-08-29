@@ -5,7 +5,7 @@
   "dnsUrl.placeholder": "dns-host:80",
   "dnsUrl.hint": "نام کانتینر و پورت، یا یک نشانی کامل.",
   "dnsHref.label": "نشانی کلیک",
-  "dnsHref.hint": "جایی که با کلیک روی ابزارک باز می‌شود. برای غیرفعال کردن خالی بگذارید.",
+  "dnsHref.hint": "جایی که با کلیک روی ویجت باز می‌شود. برای غیرفعال کردن خالی بگذارید.",
   "dnsUser.label": "نام کاربری",
   "dnsPass.label": "گذرواژه",
   "dnsPiholePassword.label": "گذرواژه Pi-hole",

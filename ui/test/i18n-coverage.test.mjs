@@ -103,3 +103,53 @@ for (const [file, allowed] of Object.entries(SAME_ON_PURPOSE)) {
     assert.deepEqual(untranslated, [], `${file}: still English. Translate, or add to SAME_ON_PURPOSE with a reason.`);
   });
 }
+
+/* ── one word per concept ─────────────────────────────────────────────────── */
+
+/* A machine translates each string on its own, so the same concept comes back
+   under a different word in each. The Persian catalogue named a widget both
+   ابزارک and ویجت, and a file both فایل and پرونده, in one interface.
+
+   It also reached for فرهنگستان coinages that correct Persian dictionaries
+   carry but shipped software does not use. درون‌ریزی and برون‌بری for import and
+   export appear in none of Immich, Jellyfin or Uptime Kuma, all of which build
+   import on وارد کردن; Immich, the closest of the three to this project, ships
+   وارد کردن پیکربندی for "Import configuration" and خروجی for "Export".
+
+   Each entry is the rejected term and what to write instead. Adding one is how
+   a terminology decision is recorded, so it survives the next bulk retranslation.
+   The glossary in docs/i18n.md carries the same list in prose. */
+const REJECTED = {
+  'fa.json': [
+    ['درون‌ریزی', 'وارد کردن'],
+    ['برون‌بری', 'خروجی'],
+    ['ابزارک', 'ویجت'],
+    ['پرونده', 'فایل'],
+  ],
+};
+
+const widgetCatalogues = locale => {
+  const dir = path.join(DIR, '..', 'widgets');
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter(e => e.isDirectory() && fs.existsSync(path.join(dir, e.name, 'i18n', locale)))
+    .map(e => [
+      `widgets/${e.name}/i18n/${locale}`,
+      JSON.parse(fs.readFileSync(path.join(dir, e.name, 'i18n', locale), 'utf8')),
+    ]);
+};
+
+for (const [file, pairs] of Object.entries(REJECTED)) {
+  test(`${file} uses one agreed word per concept`, () => {
+    const catalogues = [[file, read(file)], ...widgetCatalogues(file)];
+    const found = [];
+    for (const [name, catalogue] of catalogues) {
+      for (const [key, value] of flat(catalogue)) {
+        for (const [rejected, instead] of pairs) {
+          if (String(value).includes(rejected)) found.push(`${name} ${key}: ${rejected} -> ${instead}`);
+        }
+      }
+    }
+    assert.deepEqual(found, [], `A term the glossary rules out. See docs/i18n.md:\n  ${found.join('\n  ')}`);
+  });
+}

@@ -54,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Counted messages now use each language's own plural rules. French and Persian
   put a count of zero in the plural form.
 
+- Persian now uses the import, export, widget and file terms that shipped
+  software uses, one word per concept, and no longer leaves "Import" in English
+  in one message.
+
 - Opening and saving an app no longer rewrites a colour that was not changed.
 
 - Admin form toggles now carry accessible names.
