@@ -61,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings now translates its accessible names, its remaining field labels and
   its page title, which were English in every language.
 
+- German, Spanish, French, Chinese and Persian now use one agreed word per
+  concept, and no longer leave "Logging", "API key", "Collection ID" or
+  "Authentication Proxy" in English.
+
 - Opening and saving an app no longer rewrites a colour that was not changed.
 
 - Admin form toggles now carry accessible names.

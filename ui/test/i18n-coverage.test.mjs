@@ -126,6 +126,20 @@ const REJECTED = {
     ['ابزارک', 'ویجت'],
     ['پرونده', 'فایل'],
   ],
+  /* Abzeichen is a pinned badge or a medal. The reference locales use Badge 26
+     times and Abzeichen never. Bezeichnung is what the rest of the catalogue
+     calls a label. */
+  'de.json': [
+    ['Abzeichen', 'Badge'],
+    ['Beschriftung', 'Bezeichnung'],
+  ],
+  /* 标记 is a mark or a verb. 徽章 is the status readout, which is what Uptime
+     Kuma, a monitoring dashboard, uses throughout. 挂件 is an ornament. */
+  'zh-Hans.json': [
+    ['标记', '徽章'],
+    ['挂件', '小组件'],
+    ['仪表盘', '仪表板'],
+  ],
 };
 
 const widgetCatalogues = locale => {
@@ -151,5 +165,109 @@ for (const [file, pairs] of Object.entries(REJECTED)) {
       }
     }
     assert.deepEqual(found, [], `A term the glossary rules out. See docs/i18n.md:\n  ${found.join('\n  ')}`);
+  });
+}
+
+/* ── English left inside a non-Latin catalogue ────────────────────────────── */
+
+/* A machine translation that skips a word leaves it in English, and in a
+   non-Latin script that is visible to a scan even though the value as a whole
+   differs from the source. Persian rendered "چیزی برای Import نیست", and Chinese
+   had "Import 失败", "Logging 级别" and "添加到 Header".
+
+   Only the catalogues written in another script can be checked this way. In
+   German, Spanish and French an English word is not distinguishable from the
+   language around it.
+
+   ALLOWED is the vocabulary that stays in Latin script on purpose: brands,
+   protocols, formats, and identifiers a reader types or sees in a config file.
+   Everything is matched whole-word and case-insensitively. */
+const LATIN_OK = [
+  'Stackyard',
+  'Docker',
+  'Unsplash',
+  'GitHub',
+  'Plex',
+  'Homepage',
+  'Dashy',
+  'gethomepage',
+  'JSON',
+  'YAML',
+  'CSS',
+  'SVG',
+  'PNG',
+  'HTML',
+  'URL',
+  'URLs',
+  'IP',
+  'API',
+  'ICMP',
+  'DNS',
+  'HTTP',
+  'HTTPS',
+  'SSL',
+  'TLS',
+  'PWA',
+  'UI',
+  'ID',
+  'CPU',
+  'RAM',
+  'SMART',
+  'RSS',
+  'VPN',
+  'PAT',
+  'SSO',
+  'Ping',
+  'Dock',
+  'Iframe',
+  'Referrer',
+  'Socket',
+  'Widget',
+  'http',
+  'https',
+  'repo',
+  'ltr',
+  'rtl',
+  'px',
+  'ms',
+  'container',
+  'name',
+  'port',
+  'server',
+  'your',
+  'example',
+  'com',
+  'app',
+  'api',
+  'read',
+  'user',
+  'min',
+  'max',
+  'chars',
+  'rrggbb',
+  'autoplay',
+  'fullscreen',
+];
+const ALLOWED = new Set(LATIN_OK.map(w => w.toLowerCase()));
+
+for (const file of ['fa.json', 'zh-Hans.json']) {
+  test(`${file} leaves no English word untranslated`, () => {
+    const stray = [];
+    for (const [key, value] of flat(read(file))) {
+      if (key.startsWith('_meta') || /Ph$/.test(key)) continue; /* examples are literal */
+      /* Markup tag names and placeholder names are not prose. */
+      const prose = String(value)
+        .replace(/<\/?[a-zA-Z][a-zA-Z0-9]*\s*\/?>/g, ' ')
+        .replace(/\{\w+\}/g, ' ')
+        .replace(/\b[a-z][a-z0-9+.-]*:\/\/\S+/gi, ' ') /* a URL is typed, not read */;
+      for (const word of prose.match(/[A-Za-z][A-Za-z']+/g) || []) {
+        if (!ALLOWED.has(word.toLowerCase())) stray.push(`${key}: ${word}`);
+      }
+    }
+    assert.deepEqual(
+      stray,
+      [],
+      `English left in the translation. Translate it, or add the token to LATIN_OK:\n  ${stray.join('\n  ')}`,
+    );
   });
 }
