@@ -194,3 +194,38 @@ test('increased contrast widens every focus ring, including the custom ones', ()
   }
   assert.match(block, /outline-width:3px/);
 });
+
+/* ── The boot veil says something is happening ────────────────────────────── */
+
+/* boot() makes five sequential round trips behind an opaque rectangle. An empty
+   rectangle for the whole of it reads as hung rather than as loading. */
+
+const dashCss = read('css/dashboard.css');
+const bootRule = dashCss.slice(dashCss.indexOf('body::before {'), dashCss.indexOf('body.ready::before'));
+
+test('the indicator is held back so a fast boot stays clean', () => {
+  const delay = bootRule.match(/boot-show [\d.]+s ease ([\d.]+)s/);
+  assert.ok(delay, 'the reveal is not delayed');
+  assert.ok(Number(delay[1]) >= 0.4, `revealed after ${delay[1]}s, which a normal boot would show`);
+});
+
+/* The catalogue is loaded by the boot this covers, so there is no sentence to
+   show. See the API-down screen, which had the same problem. */
+test('the indicator carries no words', () => {
+  assert.match(bootRule, /content:''/);
+  assert.doesNotMatch(bootRule, /data-i18n/);
+});
+
+test('it is hidden once the page is ready', () => {
+  assert.match(dashCss, /body\.ready::before \{[^}]*opacity:0/);
+});
+
+/* A ring that does not turn says nothing, so reduced motion gets a resting dot
+   rather than a still ring. */
+test('reduced motion keeps the indicator but drops the spin', () => {
+  const at = dashCss.indexOf('@media (prefers-reduced-motion: reduce)');
+  const block = dashCss.slice(at, dashCss.indexOf('}\n', dashCss.indexOf('body::before', at)));
+  assert.match(block, /body::before/, 'the indicator spins for someone who asked it not to');
+  assert.doesNotMatch(block, /boot-wait/, 'the spin survives reduced motion');
+  assert.match(block, /boot-show/, 'the indicator disappears entirely under reduced motion');
+});
