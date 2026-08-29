@@ -1,4 +1,4 @@
-import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=b18c93ed';
+import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=2e617767';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
 import { state } from '/js/admin-state.js?v=c23e6346';
@@ -13,9 +13,9 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=8f69dad6';
-import { MAX_LABELS } from '/js/badge-logic.js?v=be6330d6';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=9fded679';
+} from '/js/admin-shared.js?v=43c167a7';
+import { MAX_LABELS } from '/js/badge-logic.js?v=f220ce9b';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d54fb19e';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
@@ -176,6 +176,7 @@ export function buildAppForm(body, item) {
     </div>
     <div id="act-labels-wrap" class="bprow-hidden">
       <div id="act-labels"></div>
+      <p class="grp-tip" id="act-label-order">${t('app.labelOrderTip')}</p>
       <div class="albl-add-wrap"><button type="button" class="albl-add" id="act-add-label">${t('app.addLabel')}</button></div>
       <p class="grp-tip" id="act-label-max" hidden>${t('app.labelMax', { n: MAX_LABELS })}</p>
       <div id="act-combine-row" class="bprow-hidden">

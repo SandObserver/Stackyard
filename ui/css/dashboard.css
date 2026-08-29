@@ -181,7 +181,10 @@
     }
     .iwrap img, .dwrap img { object-fit:contain; position:relative; z-index:3 }
     .iwrap .fb, .dwrap .fb,
-    .dyn-mob-icon .fb, .dyn-dock-icon .fb { position:relative; z-index:3; font-weight:600; color:rgba(255,255,255,.85) }
+    .dyn-mob-icon .fb, .dyn-dock-icon .fb { position:relative; z-index:3; font-weight:600; color:var(--on-tint) }
+    /* Alpha on this ink breaks the contrast guarantee: at .85 one palette entry
+       clears neither tone. */
+    .fb.fb-on-light { color:var(--on-tint-dark) }
 
     /* Hover lift */
     .icon:hover .iwrap,
@@ -209,7 +212,7 @@
     /* ── Badge — reference size, scaled by --sc (desktop overrides below) ── */
     .badge {
       position:absolute;
-      top:calc(-7px * var(--sc,1)); right:calc(-7px * var(--sc,1));
+      top:calc(-7px * var(--sc,1)); inset-inline-end:calc(-7px * var(--sc,1));
       min-width:calc(24px * var(--sc,1)); height:calc(24px * var(--sc,1));
       border-radius:50px; padding:0 calc(6px * var(--sc,1));
       display:none;
@@ -232,10 +235,9 @@
     }
     .badge.on  { display:flex }
     .badge-txt { flex-shrink:0 }
-    .badge-unit { overflow:hidden; text-overflow:ellipsis; min-width:0; white-space:pre }
-    /* Numbers only at phone size. The pill is a corner marker there, and a unit
-       makes it wider than the icon it belongs to. The list still names it. */
-    body.is-mob .badge-unit { display:none }
+    /* The pill is a corner marker. A unit makes it wider than the icon it marks,
+       measured at 66px on a 72px icon. The popover names every value. */
+    .badge-unit { display:none }
     .badge.red  { --badge-bg:var(--badge-red) }
     .badge.blue { --badge-bg:var(--badge-blue) }
     .badge.green { --badge-bg:var(--badge-green) }
@@ -244,41 +246,57 @@
     /* Both pills are pseudo-elements at negative depth. That is the only order
        where one paints under the other and both stay under the label, and it
        needs the element's own background to stay clear. */
-    .badge.has-more { pointer-events:auto; background:none; right:calc(-7px * var(--sc,1) + var(--badge-peek)) }
+    .badge.has-more { pointer-events:auto; background:none; inset-inline-end:calc(-7px * var(--sc,1) + var(--badge-peek)) }
     .badge.has-more::before, .badge.has-more::after {
       content:''; position:absolute; inset:0; border-radius:50px;
     }
+    /* Separated from the front pill, or the peek reads as a colour fringe on one
+       pill rather than as a second pill behind it. */
+    /* Shifted by its own insets rather than by translateX, which has no logical
+       form: the pill behind peeks towards the trailing edge, whichever side of
+       the screen that is. */
     .badge.has-more::before {
-      z-index:-2; transform:translateX(var(--badge-peek));
+      z-index:-2;
+      inset-inline-start:var(--badge-peek); inset-inline-end:calc(var(--badge-peek) * -1);
       background:var(--badge-next,var(--badge-blue));
+      box-shadow:0 0 0 1.5px var(--badge-stack-edge,rgba(0,0,0,.55));
     }
     .badge.has-more::after { z-index:-1; background:var(--badge-bg,var(--badge-blue)) }
-    body:not(.is-mob) .badge.has-more { right:calc(-7px + var(--badge-peek)) }
+    body:not(.is-mob) .badge.has-more { inset-inline-end:calc(-7px + var(--badge-peek)) }
 
     /* ── Badge popover — the values the pill has no room for ── */
     .badge-pop {
-      position:fixed; z-index:900; min-width:124px; max-width:230px;
+      position:fixed; z-index:900; min-width:124px; max-width:min(300px,calc(100vw - 16px));
       padding:5px; border-radius:11px;
       background:rgba(28,30,42,.96);
       border:1px solid rgba(255,255,255,.16);
       box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 0 .5px rgba(255,255,255,.08);
       -webkit-backdrop-filter:blur(24px) saturate(160%);
       backdrop-filter:blur(24px) saturate(160%);
-      color:#fff; pointer-events:none;
+      color:#fff;
+      /* SC 1.4.13 asks that hover content be hoverable. pointer-events:none put
+         it out of reach and left the outside-pointerdown guard unreachable. */
+      pointer-events:auto;
     }
     .badge-pop[hidden] { display:none }
     .badge-pop-row {
-      display:flex; align-items:center; gap:7px; padding:2px 6px;
+      display:flex; align-items:flex-start; gap:7px; padding:2px 6px;
       font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);
     }
-    .badge-pop-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:var(--badge-blue) }
-    .badge-pop-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:rgba(255,255,255,.78) }
+    .badge-pop-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:.35em; background:var(--badge-blue) }
+    /* Two lines, then clip. German and Persian labels run longer than English.
+       The value stays on one line beside it. */
+    .badge-pop-name {
+      flex:1; min-width:0; color:rgba(255,255,255,.78);
+      overflow-wrap:anywhere;
+      display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+    }
     .badge-pop-val { font-weight:700; flex-shrink:0; font-variant-numeric:tabular-nums }
     /* Desktop: restore compact badge size */
     body:not(.is-mob) .badge {
       --badge-peek:6px;
       max-width:calc(100% + 7px);
-      top:-7px; right:-7px;
+      top:-7px; inset-inline-end:-7px;
       min-width:20px; height:20px; padding:0 5px;
       font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2); font-weight:700;
     }
@@ -307,19 +325,34 @@
       /* 24px between centres: an interior dot's hit area is bounded by its
          neighbours', so the pitch is its width. */
       display:flex; gap:16px; z-index:500;
-      background:rgba(255,255,255,.28);
+      /* The tone is sampled after the first paint. Until it lands the bar is a
+         white tint, which over a light wallpaper is invisible, so it carries an
+         edge that reads on either ground. */
+      background:rgba(255,255,255,.28); border:1px solid rgba(0,0,0,.22);
       -webkit-backdrop-filter:blur(12px) saturate(140%); backdrop-filter:blur(12px) saturate(140%);
       border-radius:24px; padding:10px 18px;
       align-items:center;
     }
+    /* State by shape as well as fill. A tint over a wallpaper the project does
+       not control cannot carry the state on its own: over a light one the whole
+       indicator painted white on white and measured 1.00:1. */
     .dot {
-      width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.50);
-      transition:background .2s,transform .2s,width .25s,opacity .25s;
-      cursor:pointer; flex-shrink:0;
-      /* A dot is a <button>, so Tab reaches it and Enter and Space work. */
-      padding:0; border:0; -webkit-appearance:none; appearance:none;
+      width:8px; height:8px; border-radius:50%;
+      background:transparent; border:1.5px solid var(--dots-ink,rgba(255,255,255,.75));
+      transition:background .2s,border-color .2s,transform .2s,width .25s,opacity .25s;
+      cursor:pointer; flex-shrink:0; box-sizing:border-box;
+      padding:0; -webkit-appearance:none; appearance:none;
     }
-    .dot.on { background:var(--control-knob); transform:scale(1.25) }
+    .dot.on { background:var(--dots-ink,var(--control-knob)); transform:scale(1.25) }
+
+    /* Apple's guidance for a translucent control over rich content: dim what is
+       bright, leave what is dark. The tone is sampled from the wallpaper behind
+       the bar, by the same pass that inks the icon labels. */
+    #dots[data-tone="dark"] {
+      background:rgba(0,0,0,.35); border-color:rgba(255,255,255,.30);
+      --dots-ink:rgba(0,0,0,.85);
+    }
+    #dots[data-tone="dark"] .dot { border-color:rgba(0,0,0,.55) }
 
     /* ── Search pill — mobile only ── */
     #mob-search-pill {
@@ -518,6 +551,10 @@
     }
     /* Mobile only — larger input text to match the bigger search bar */
     body.is-mob #spot #sin { font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2); }
+    /* One default, not a rule per field. The user agent's placeholder assumes a
+       light page and fails contrast on every surface here. Rules below override
+       it where a field genuinely differs. */
+    input::placeholder, textarea::placeholder { color:rgba(255,255,255,.55); }
     #sin::placeholder { color:rgba(255,255,255,.38); }
     #spot #sin::placeholder { color:rgba(235,235,245,.38); }
     #spot-cancel {
@@ -589,9 +626,9 @@
     }
     /* The box the layout measures. */
     .mob-grid {
-      width:100%; height:100%;
+      width:var(--mgw,100%); height:100%; margin-inline:auto;
       display:grid;
-      grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(6,1fr);
+      grid-template-columns:repeat(var(--mcols,4),1fr); grid-template-rows:repeat(var(--mrows,6),1fr);
       gap:var(--gap);
       justify-content:center; align-content:start;
     }
@@ -683,7 +720,8 @@
       overflow:hidden; box-shadow:inset 0 0 0 0.5px rgba(255,255,255,.15);
     }
     .folder-mini-img { width:72%; height:72%; object-fit:contain }
-    .folder-mini-fb  { font-size:50%; font-weight:700; color:rgba(255,255,255,.85) }
+    .folder-mini-fb  { font-size:50%; font-weight:700; color:var(--on-tint) }
+    .folder-mini-fb.fb-on-light { color:var(--on-tint-dark) }
 
     /* Dynamic layout classes — pixel values set via CSS custom properties from JS */
     .dyn-box        { position:relative; flex-shrink:0; }
@@ -795,6 +833,19 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   .widget[data-card="light"], .mob-widget-card[data-card="light"] { border-color:rgba(0,0,0,.45); }
   .dot { background:rgba(255,255,255,.75); }
   .badge { box-shadow:0 0 0 1.5px rgba(0,0,0,.85); }
+}
+
+/* The wallpaper and the blur are handled in tokens.css. What remains is the
+   state this page carries in colour alone. */
+@media (forced-colors: active) {
+  #dots { background:Canvas; border:1px solid CanvasText; }
+  /* State by shape, not by fill: forced colors paints both dots the same. */
+  .dot { background:Canvas; border:1px solid CanvasText; }
+  .dot.on { background:Highlight; border-color:Highlight; }
+  /* The one opt-out. A status colour is information, and the system palette has
+     no way to say "needs attention". The border keeps the pill a shape once the
+     fill is no longer trusted to. */
+  .badge { forced-color-adjust:none; border:1px solid CanvasText; }
 }
 
 /* Do not add `container-type:size` here. It applies size containment and

@@ -1,4 +1,5 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
+import { toneForColor } from '/js/label-contrast.js?v=38adb276';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);
@@ -16,23 +17,32 @@ export const clr = c => {
   const v = String(c).trim();
   return SAFE_COLOR.test(v) ? v : DEFAULT_TILE_COLOR;
 };
-export const fb = (l, sz) => {
+/* The plate is a colour the user chose, so the ink has to be measured from it.
+   White on the palette's own yellow reads at 1.5:1. */
+export const fb = (l, sz, plate) => {
   const e = mk('span');
   e.className = 'fb';
+  if (toneForColor(plate) === 'dark') e.classList.add('fb-on-light');
   e.style.fontSize = Math.round(sz * 0.32) + 'px';
   e.textContent = (l || '?')[0].toUpperCase();
   return e;
 };
 export { esc } from '/js/html.js?v=c71f8903';
 
-/* A name the user typed has its own direction. Without dir="auto" an English
-   name inside a Persian dashboard lays out right-to-left and an over-long one
-   loses its head rather than its tail.
+/* A name the user typed has its own direction. Without that an English name
+   inside a Persian dashboard lays out right-to-left and an over-long one loses
+   its head rather than its tail.
+
+   The isolation goes on a <bdi> around the text, not on the block. `dir` sets
+   alignment as well as bidi, so a Latin name on the block dragged its whole row
+   to the other edge: a title and its subtitle ended up on opposite sides.
 
    @param {HTMLElement} node @param {string} text @returns {HTMLElement} */
 export const setUserText = (node, text) => {
-  node.textContent = text;
-  node.setAttribute('dir', 'auto');
+  node.textContent = '';
+  const bdi = mk('bdi');
+  bdi.textContent = text;
+  node.appendChild(bdi);
   return node;
 };
 
@@ -85,7 +95,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
     const img = mk('img', { src: SETTINGS_ICON, alt: '', draggable: false });
     img.setAttribute('aria-hidden', 'true');
     img.style.cssText = `width:${si}px;height:${si}px;object-fit:contain;position:relative;z-index:3;`;
-    img.onerror = () => img.replaceWith(fb(item.label, sz));
+    img.onerror = () => img.replaceWith(fb(item.label, sz, wrapBg));
     w.appendChild(img);
   } else if (rawIcon) {
     const chain = iconChain(rawIcon);
@@ -97,7 +107,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
       const tryNext = () => {
         step++;
         if (step < chain.length) img.src = chain[step];
-        else img.replaceWith(fb(item.label, sz));
+        else img.replaceWith(fb(item.label, sz, wrapBg));
       };
       img.onerror = tryNext;
       /* A 403 fires load, not onerror. A blocked image has zero dimensions. */
@@ -105,8 +115,8 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
         if (img.naturalWidth === 0) tryNext();
       };
       w.appendChild(img);
-    } else w.appendChild(fb(item.label, sz));
-  } else w.appendChild(fb(item.label, sz));
+    } else w.appendChild(fb(item.label, sz, wrapBg));
+  } else w.appendChild(fb(item.label, sz, wrapBg));
   if (
     breg &&
     (item.monitoring?.healthcheck?.enabled ||
@@ -308,7 +318,10 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     const w = card.clientWidth,
       h = card.clientHeight;
     if (!w || !h) return;
-    const s = Math.max(w / dw, h / dh); /* cover; with matched aspect = exact fill */
+    /* Contain, not cover. With a matched aspect the two are the same and this
+       fills the card exactly. Where the card's aspect drifts from the design's,
+       cover crops the widget instead, and the card clips what it cropped. */
+    const s = Math.min(w / dw, h / dh);
     const tx = (w - dw * s) / 2,
       ty = (h - dh * s) / 2;
     ifr.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;

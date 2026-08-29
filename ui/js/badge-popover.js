@@ -4,6 +4,9 @@
 
 const HOVER_IN_MS = 320;
 const COMPAT_CLICK_MS = 500;
+/* SC 1.4.13 asks that hover content be hoverable. The pointer has to cross the
+   gap between the badge and the popover without it closing underneath. */
+const HOVER_OUT_MS = 200;
 
 /** @type {HTMLElement|null} */
 let pop = null;
@@ -12,6 +15,7 @@ let openFor = null;
 /** @type {HTMLElement|null} */
 let describedEl = null;
 let openTimer = 0;
+let closeTimer = 0;
 let openedAt = 0;
 
 const ROWS = new WeakMap();
@@ -23,6 +27,10 @@ function ensurePop() {
   pop.id = 'badge-pop';
   pop.setAttribute('role', 'tooltip');
   pop.hidden = true;
+  /* Interactive now, so a click on it must not reach the tile underneath. */
+  pop.addEventListener('pointerenter', cancelClose);
+  pop.addEventListener('pointerleave', scheduleClose);
+  pop.addEventListener('click', e => e.stopPropagation());
   document.body.appendChild(pop);
   return pop;
 }
@@ -42,7 +50,10 @@ function place(badge) {
   const gap = 8;
   let top = r.bottom + gap;
   if (top + pr.height > window.innerHeight - 8) top = Math.max(8, r.top - gap - pr.height);
-  let left = r.right - pr.width;
+  /* Aligned with the badge's trailing edge, which is the other side of the
+     screen in a right-to-left language. */
+  const rtl = (document.documentElement.getAttribute('dir') || 'ltr') === 'rtl';
+  let left = rtl ? r.left : r.right - pr.width;
   left = Math.min(Math.max(8, left), window.innerWidth - pr.width - 8);
   p.style.top = Math.round(top) + 'px';
   p.style.left = Math.round(left) + 'px';
@@ -84,6 +95,8 @@ function open(badge) {
 export function closeBadgePopover() {
   clearTimeout(openTimer);
   openTimer = 0;
+  clearTimeout(closeTimer);
+  closeTimer = 0;
   if (pop) pop.hidden = true;
   openFor = null;
   if (describedEl) {
@@ -94,8 +107,23 @@ export function closeBadgePopover() {
 
 /** @param {HTMLElement} badge */
 function schedule(badge, delay) {
+  clearTimeout(closeTimer);
+  closeTimer = 0;
   clearTimeout(openTimer);
   openTimer = window.setTimeout(() => open(badge), delay);
+}
+
+/* Cancelled when the pointer arrives on the popover. */
+function scheduleClose() {
+  clearTimeout(openTimer);
+  openTimer = 0;
+  clearTimeout(closeTimer);
+  closeTimer = window.setTimeout(closeBadgePopover, HOVER_OUT_MS);
+}
+
+function cancelClose() {
+  clearTimeout(closeTimer);
+  closeTimer = 0;
 }
 
 let globalsWired = false;
@@ -138,7 +166,7 @@ export function wireBadgePopover(badge, rows) {
   });
   badge.addEventListener('pointerleave', e => {
     if (/** @type {PointerEvent} */ (e).pointerType === 'touch') return;
-    closeBadgePopover();
+    scheduleClose();
   });
 
   /* Keep the tap. iOS answers a long press on a link with its own callout and

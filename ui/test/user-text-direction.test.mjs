@@ -57,17 +57,37 @@ test('setUserText is what the dashboard, folders, search and admin all use', () 
   }
 });
 
-test('setUserText sets the text and marks it auto-direction', async () => {
+/* The isolation belongs on the text, not on the block that holds it: `dir` sets
+   alignment as well as bidi, so marking the block made a Latin name drag its
+   row's alignment to the other edge. */
+test('setUserText isolates the name in a bdi and leaves the block alone', async () => {
   const { setUserText } = await import('../js/utils.js');
-  const calls = [];
+  const made = [];
   const node = /** @type {any} */ ({
     textContent: '',
+    children: [],
     setAttribute(name, value) {
-      calls.push([name, value]);
+      made.push(['block', name, value]);
+    },
+    appendChild(child) {
+      this.children.push(child);
+      this.textContent = child.textContent;
     },
   });
+  globalThis.document = {
+    createElement(tag) {
+      const el = { tag, textContent: '', setAttribute: (n, v) => made.push([tag, n, v]) };
+      return el;
+    },
+  };
   const returned = setUserText(node, 'Backup and Storage');
-  assert.equal(node.textContent, 'Backup and Storage');
-  assert.deepEqual(calls, [['dir', 'auto']]);
+  assert.equal(node.children.length, 1);
+  assert.equal(node.children[0].tag, 'bdi', 'the name is not isolated');
+  assert.equal(node.children[0].textContent, 'Backup and Storage');
+  assert.deepEqual(
+    made.filter(m => m[0] === 'block'),
+    [],
+    'the block still carries a direction, which sets its alignment too',
+  );
   assert.equal(returned, node, 'returns the node so it can be appended inline');
 });

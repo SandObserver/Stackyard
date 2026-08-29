@@ -82,6 +82,101 @@ function rowByName(page, name) {
   return page.locator('#al .row').filter({ has: page.locator('.rnm', { hasText: name }) });
 }
 
+/* ── Reading a real pixel ─────────────────────────────────────────────────── */
+
+/* Translucent chrome over a wallpaper cannot be judged from the stylesheet: what
+   the eye gets is the blur and every layer composited together. So these read
+   the pixel the browser actually painted.
+
+   Playwright vendors a PNG decoder, but it is an internal of the bundle and
+   would break on an upgrade. A screenshot is 8-bit non-interlaced RGB or RGBA,
+   which zlib and twenty lines cover. */
+
+const zlib = require('node:zlib');
+
+/** @param {Buffer} png @returns {{width:number,height:number,channels:number,data:Buffer}} */
+function decodePng(png) {
+  let width = 0,
+    height = 0,
+    channels = 0;
+  const idat = [];
+  for (let at = 8; at + 8 <= png.length; ) {
+    const len = png.readUInt32BE(at);
+    const type = png.toString('ascii', at + 4, at + 8);
+    const body = png.subarray(at + 8, at + 8 + len);
+    if (type === 'IHDR') {
+      width = body.readUInt32BE(0);
+      height = body.readUInt32BE(4);
+      const depth = body[8],
+        colour = body[9];
+      if (depth !== 8 || (colour !== 2 && colour !== 6)) {
+        throw new Error(`unexpected screenshot format: depth ${depth}, colour type ${colour}`);
+      }
+      channels = colour === 6 ? 4 : 3;
+    } else if (type === 'IDAT') {
+      idat.push(body);
+    } else if (type === 'IEND') {
+      break;
+    }
+    at += 12 + len;
+  }
+  const raw = zlib.inflateSync(Buffer.concat(idat));
+  const stride = width * channels;
+  const out = Buffer.alloc(stride * height);
+  /* Undo the per-row filter. Each row is prefixed by its filter type. */
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)];
+    const src = raw.subarray(y * (stride + 1) + 1, y * (stride + 1) + 1 + stride);
+    const line = out.subarray(y * stride, (y + 1) * stride);
+    const prior = y ? out.subarray((y - 1) * stride, y * stride) : Buffer.alloc(stride);
+    for (let x = 0; x < stride; x++) {
+      const a = x >= channels ? line[x - channels] : 0;
+      const b = prior[x];
+      const c = x >= channels ? prior[x - channels] : 0;
+      let v = src[x];
+      if (filter === 1) v += a;
+      else if (filter === 2) v += b;
+      else if (filter === 3) v += (a + b) >> 1;
+      else if (filter === 4) {
+        const p = a + b - c;
+        const pa = Math.abs(p - a),
+          pb = Math.abs(p - b),
+          pc = Math.abs(p - c);
+        v += pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+      }
+      line[x] = v & 0xff;
+    }
+  }
+  return { width, height, channels, data: out };
+}
+
+/** The colour the browser painted at the centre of an element.
+    @param {import('@playwright/test').Locator} locator @returns {Promise<[number,number,number]>} */
+async function centrePixel(locator) {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error('the element is not visible');
+  const shot = await locator.page().screenshot({
+    clip: { x: box.x + box.width / 2, y: box.y + box.height / 2, width: 1, height: 1 },
+  });
+  const { data, channels } = decodePng(shot);
+  return [data[0], data[1], data[2]];
+}
+
+/** WCAG relative luminance. @param {[number,number,number]} rgb */
+function luminance([r, g, b]) {
+  const lin = c => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+/** WCAG contrast ratio between two painted colours. */
+function contrast(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
 module.exports = {
   seedConfig,
   dismissSetupPrompt,
@@ -93,4 +188,6 @@ module.exports = {
   setInlineRow,
   rowNames,
   rowByName,
+  centrePixel,
+  contrast,
 };

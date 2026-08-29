@@ -56,12 +56,33 @@
   --on-fill:       #000000;
 
   /* Ink on a fill this file does not choose: a user's app colour, or the
-     placeholder behind an app with no icon. White in both themes. */
+     placeholder behind an app with no icon. The fill is unknown here, so the
+     ink cannot be one value. The renderer measures the fill and picks the pair
+     member that clears 4.5:1. Both are opaque: alpha on this ink drops one
+     palette entry below the threshold on either tone. */
   --on-tint:       #FFFFFF;
+  --on-tint-dark:  #000000;
 
   --sy-radius-lg:14px;
   --sy-radius-md:10px;
   --sy-radius-group:26px;
+
+  /* Spacing. Named by value, because --sp-3 would say nothing about what it is.
+     These are the steps the stylesheets already use; the two files hold about
+     three hundred spacing literals and a fifth of them sit off any rhythm, so
+     the scale is declared here and rules move onto it as they are touched
+     rather than in one pass. */
+  --sp-2:2px;
+  --sp-4:4px;
+  --sp-6:6px;
+  --sp-8:8px;
+  --sp-10:10px;
+  --sp-12:12px;
+  --sp-16:16px;
+  --sp-20:20px;
+  --sp-24:24px;
+  --sp-32:32px;
+  --sp-44:44px;
 }
 
 /* ── Semantic colour ─────────────────────────────────────────────────────────
@@ -277,6 +298,21 @@ html::before {
   pointer-events:none;
   filter:brightness(var(--bg-brightness,1));
   transform:translateZ(0);
+}
+
+/* Forced colors replaces declared colours with the user's palette, but leaves
+   background images and backdrop-filter alone. Without this the wallpaper and
+   the glass survive underneath flattened text.
+
+   The blur override is universal and !important because it has to beat every
+   rule that sets one, including any added later. A named list would go stale,
+   and the point of this mode is that the material is discarded. */
+@media (forced-colors: active) {
+  html::before { background-image:none; background-color:Canvas; filter:none; }
+  *, *::before, *::after {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
 }
 
 /* Sits above the wallpaper. Each page adds its own sizing. */

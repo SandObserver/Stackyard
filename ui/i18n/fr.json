@@ -178,6 +178,7 @@
     "labelValueTaken": "Cette valeur est déjà utilisée par un autre libellé.",
     "noValuesLeft": "Chaque valeur récupérée a déjà un libellé.",
     "labelMax": "Un badge affiche au maximum {n} libellés.",
+    "labelOrderTip": "Le badge affiche le premier libellé de cette liste qui atteint son seuil. Faites glisser pour réordonner.",
     "labelsSaved": "{n} libellé enregistré",
     "labelsSavedPlural": "{n} libellés enregistrés",
     "poll": "Interrogation",

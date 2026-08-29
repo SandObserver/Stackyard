@@ -178,6 +178,7 @@
     "labelValueTaken": "该数值已被另一个标签使用。",
     "noValuesLeft": "每个获取到的数值都已有标签。",
     "labelMax": "一个标记最多显示 {n} 个标签。",
+    "labelOrderTip": "标记显示此列表中第一个达到阈值的标签。拖动可重新排序。",
     "labelsSaved": "已保存 {n} 个标签",
     "labelsSavedPlural": "已保存 {n} 个标签",
     "poll": "轮询",

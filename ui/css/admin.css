@@ -346,6 +346,10 @@ html{background:var(--bg-color,var(--bg-outer))}
 .kv-row .kv-k{flex:1;min-width:0}
 .kv-row .kv-v{flex:1.4;min-width:0}
 .kv-k,.kv-v{background:rgba(120,120,128,.16);border:none;border-radius:8px;color:var(--tx);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);padding:9px 11px;outline:none}
+/* One default, not a rule per field. The user agent's placeholder assumes a
+   light page and fails contrast on every surface here. Rules below override it
+   where a field genuinely differs. */
+input::placeholder,textarea::placeholder{color:var(--dm)}
 .kv-k::placeholder,.kv-v::placeholder{color:var(--dm)}
 .kv-cred{display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;user-select:none}
 .kv-cred input{position:absolute;opacity:0;width:0;height:0}
@@ -437,8 +441,6 @@ html{background:var(--bg-color,var(--bg-outer))}
 .bg:hover:not(:disabled){background:var(--ov);color:var(--tx)}
 .bd-btn{background:transparent;color:var(--rd);border:1px solid var(--rd)}
 .bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}
-.save-btn-green{background:var(--gn);color:var(--on-fill)}
-.save-btn-green:hover:not(:disabled){background:var(--sy-green-hi)}
 .sm{padding:6px 14px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);min-height:30px}
 .ic{padding:6px;min-height:0}
 .cursor-ptr{cursor:pointer}

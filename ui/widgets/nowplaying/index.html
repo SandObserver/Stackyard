@@ -63,7 +63,9 @@
     border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
     color:#FFFFFF;opacity:.92;transition:opacity .15s;z-index:3}
   .arrow svg{width:17px;height:17px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
-  .arrow.l{left:0}.arrow.r{right:0}
+  .arrow.l{inset-inline-start:0}.arrow.r{inset-inline-end:0}
+  /* A chevron is a drawing: no logical property points it the other way. */
+  [dir="rtl"] .arrow svg{transform:scaleX(-1)}
   .arrow:disabled{opacity:.2;cursor:default}
   .arrow:not(:disabled):hover{opacity:1}
   .arrow:focus-visible{outline:2px solid #fff;outline-offset:1px;border-radius:4px;opacity:1}

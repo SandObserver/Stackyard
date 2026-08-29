@@ -77,14 +77,34 @@ test('the dots are a named landmark', () => {
   assert.match(dots[0], /data-i18n-al="home\.pagination"/, 'and the name must be translated');
 });
 
-/* A button carries padding, a border and platform styling that a div does not,
-   so the appearance would change without these. */
+/* A button carries padding and platform styling a div does not, so the
+   appearance would change without these. The border is not reset: an outline is
+   how an inactive dot is told from the current one. */
 test('the button styling is reset so the dots look unchanged', () => {
   const css = read('css/dashboard.css');
   const block = css.slice(css.indexOf('.dot {'), css.indexOf('}', css.indexOf('.dot {')));
-  for (const prop of ['padding:0', 'border:0', 'appearance:none']) {
+  for (const prop of ['padding:0', 'appearance:none', 'box-sizing:border-box']) {
     assert.ok(block.includes(prop), `.dot does not reset ${prop}`);
   }
+});
+
+/* Colour alone cannot carry the state: the tint sits over a wallpaper the
+   project does not control, and under forced colors both dots are painted the
+   same. */
+test('the current page differs from the others by shape, not only by fill', () => {
+  const css = read('css/dashboard.css');
+  const dot = css.slice(css.indexOf('.dot {'), css.indexOf('}', css.indexOf('.dot {')));
+  assert.match(dot, /background:transparent/, 'an inactive dot is filled, so only its colour differs');
+  assert.match(dot, /border:[\d.]+px solid/, 'an inactive dot has no outline');
+  const on = css.slice(css.indexOf('.dot.on {'), css.indexOf('}', css.indexOf('.dot.on {')));
+  assert.match(on, /background:var\(--dots-ink/, 'the current dot is not filled');
+});
+
+/* The bar and the dots are tinted over the wallpaper, so they need the reading
+   the icon labels already get. */
+test('the indicator is enrolled in the wallpaper sampling', () => {
+  assert.match(read('js/label-contrast.js'), /LABEL_SELECTOR = '[^']*#dots/, 'the indicator is not sampled');
+  assert.match(read('css/dashboard.css'), /#dots\[data-tone="dark"\]/, 'nothing responds to the sampled tone');
 });
 
 test('the focus outline still applies to a dot', () => {
@@ -100,4 +120,54 @@ test('every locale carries the new strings', () => {
     assert.match(cat.home.goToPage, /\{page\}/, `${file} drops the {page} placeholder`);
     assert.match(cat.home.goToPage, /\{total\}/, `${file} drops the {total} placeholder`);
   }
+});
+
+/* ── The pager reaches every input on both layouts ────────────────────────── */
+
+/* The phone layout is what a narrow window gets, and its own swipe is the only
+   pager there. Skipping the key and mouse handlers on it left a second page
+   visible in the dots and unreachable without a touchscreen. */
+
+const keydown = dashboard.slice(
+  dashboard.indexOf("document.addEventListener('keydown'"),
+  dashboard.indexOf('let _dMx'),
+);
+const mouseup = dashboard.slice(
+  dashboard.indexOf("document.addEventListener('mouseup'"),
+  dashboard.indexOf('let _dTx'),
+);
+
+test('arrow keys page on the phone layout too', () => {
+  assert.match(keydown, /ArrowRight/);
+  assert.doesNotMatch(keydown, /if \(MOB\) return/, 'the phone layout has no keyboard pager of its own');
+});
+
+test('a mouse drag pages on the phone layout too', () => {
+  assert.match(mouseup, /goTo\(/);
+  assert.doesNotMatch(mouseup, /if \(MOB\b/, 'a narrow window is driven by a mouse');
+});
+
+/* One swipe must not advance two pages. */
+test('the mouse pager ignores the compatibility event a touch produces', () => {
+  assert.match(mouseup, /_lastTouch/);
+  assert.match(dashboard, /const COMPAT_POINTER_MS = \d+/);
+  for (const handler of ['touchstart', 'touchend']) {
+    const block = dashboard.slice(
+      dashboard.indexOf(`'${handler}'`),
+      dashboard.indexOf('{ passive: true }', dashboard.indexOf(`'${handler}'`)),
+    );
+    assert.match(block, /_lastTouch = Date\.now\(\)/, `${handler} does not record the touch`);
+  }
+});
+
+/* The mobile folder overlay covers the whole page, and the key handler is on
+   the document. */
+test('an open folder overlay stops the keyboard pager', () => {
+  assert.match(keydown, /folder-overlay/);
+});
+
+test('the touch pager still belongs to one layout only', () => {
+  const at = dashboard.indexOf("'touchend'");
+  const touchend = dashboard.slice(at, dashboard.indexOf('{ passive: true }', at));
+  assert.match(touchend, /if \(MOB\) return/, 'both swipe handlers would advance two pages for one gesture');
 });

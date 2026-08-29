@@ -20,15 +20,15 @@ import {
   qi,
   qa,
   setUserText,
-} from '/js/utils.js?v=b18c93ed';
-import { initSpotlight } from '/js/spotlight.js?v=712fa7de';
+} from '/js/utils.js?v=2e617767';
+import { initSpotlight } from '/js/spotlight.js?v=cd630755';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=d056c9c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=14202a72';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=be6330d6';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=d00c0629';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=de9a2526';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=f220ce9b';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=08aae50f';
 import {
   configChanged,
   landingAfterSetup,
@@ -40,14 +40,7 @@ import { trapFocus } from '/js/dialog.js?v=05935547';
 import { jitter } from '/js/jitter.js?v=4edf48f2';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import {
-  applyLabelTones,
-  loadSamplingImage,
-  parseCssColor,
-  relativeLuminance,
-  sampleImage,
-  toneForLuminances,
-} from '/js/label-contrast.js?v=69cbdcb0';
+import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=38adb276';
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();
@@ -100,6 +93,14 @@ function desktopSlots() {
 }
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
+
+/* A touch produces a compatibility mouse event after it. */
+const COMPAT_POINTER_MS = 500;
+let _lastTouch = 0;
+
+/* A backend that accepts the connection and never answers would otherwise leave
+   the boot veil up forever. Generous: this only has to beat a hang. */
+const BOOT_TIMEOUT_MS = 15000;
 
 const PAGE_STORE = 'dash_page',
   WALLPAPER_STORE = 'dash_wallpaper';
@@ -197,13 +198,17 @@ function bupd(id) {
     }
     txtEl.textContent = num;
     unitEl.textContent = unit ? ' ' + unit : '';
-    if (aria) {
-      el.setAttribute('role', 'status');
-      el.setAttribute('aria-label', aria);
-    } else {
-      el.removeAttribute('role');
-      el.removeAttribute('aria-label');
-    }
+    /* The badge belongs to its tile's name, not to a live region of its own.
+       An explicit label on the anchor wins over everything inside it, so a
+       badge left to speak for itself is never reached by a reader moving from
+       tile to tile. A name change is silent, which is what a figure on a timer
+       needs. */
+    el.setAttribute('aria-hidden', 'true');
+    el.removeAttribute('role');
+    el.removeAttribute('aria-label');
+    const tile = /** @type {HTMLElement|null} */ (el.closest('a, [role="button"]'));
+    const tileName = tile?.dataset.tileName;
+    if (tile && tileName) tile.setAttribute('aria-label', aria ? `${tileName}, ${aria}` : tileName);
     /* Never the `background` shorthand. It resets background-clip, and the
        pill behind is painted from this same value. */
     if (bg) el.style.setProperty('--badge-bg', bg);
@@ -295,6 +300,7 @@ function mkIcon(item) {
       : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'icon';
   a.setAttribute('aria-label', item.label || item.id);
+  a.dataset.tileName = item.label || item.id;
   if (!showLabel) a.title = item.label || item.id;
   a.appendChild(mkWrap(item, iw, Math.round(iw * ICON_R), isz, 'iwrap'));
   if (showLabel) {
@@ -344,6 +350,7 @@ function mkDock(item) {
       : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
   a.className = 'di';
   a.setAttribute('aria-label', item.label || item.id);
+  a.dataset.tileName = item.label || item.id;
   a.title = item.label || item.id;
   a.appendChild(mkWrap(item, 78, Math.round(78 * ICON_R), 50, 'dwrap'));
   return a;
@@ -510,12 +517,6 @@ let bgTone = { grid: null, tone: null };
 
 function retone() {
   requestAnimationFrame(() => applyLabelTones(bgTone));
-}
-
-function toneForColor(color) {
-  const rgb = parseCssColor(color);
-  if (!rgb) return null;
-  return toneForLuminances([relativeLuminance(rgb[0], rgb[1], rgb[2])]);
 }
 
 /* Held so a resize re-samples without fetching the image again. */
@@ -744,7 +745,10 @@ function showSetupPrompt() {
 async function boot() {
   let authData = null;
   try {
-    const authCheck = await fetch('/api/auth/check', { cache: 'no-store' });
+    const authCheck = await fetch('/api/auth/check', {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(BOOT_TIMEOUT_MS),
+    });
     if (authCheck.status === 401) {
       window.location.href = '/admin/';
       return;
@@ -760,7 +764,7 @@ async function boot() {
 
   let configFailed = false;
   try {
-    const res = await fetch('/api/config', { cache: 'no-store' });
+    const res = await fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
     /* Saving rejects these, but a config written earlier still reaches here.
@@ -777,6 +781,10 @@ async function boot() {
   await loadLocalIcons();
 
   if (configFailed) {
+    /* The catalog is loaded as the last step of the fetch that just failed, so
+       without this the only screen left renders its own keys. nginx serves this
+       file, the API served the config, so it is still reachable. */
+    await initI18n('en');
     const msg = document.createElement('div');
     msg.className = 'api-error-screen';
     setHtml(
@@ -846,9 +854,13 @@ async function boot() {
 
   /* Attached once, not per layout: the window can cross the breakpoint later,
      and a listener added on every crossing would fire twice. */
+  /* A pointer or a key must reach the pager on both layouts. The phone layout is
+     what a narrow window gets, and there its own swipe is the only pager, so a
+     mouse and a keyboard cannot leave page one. */
   document.addEventListener('keydown', e => {
-    if (MOB) return;
     if (el('spot').classList.contains('on')) return;
+    /* The overlay covers the page it would scroll behind. */
+    if (document.querySelector('.folder-overlay')) return;
     if (e.key === 'ArrowRight') goTo(pg + 1);
     if (e.key === 'ArrowLeft') goTo(pg - 1);
   });
@@ -862,16 +874,20 @@ async function boot() {
     if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true;
   });
   document.addEventListener('mouseup', e => {
-    if (MOB || !_dDragging) return;
+    if (!_dDragging) return;
+    _dDragging = false;
+    /* A swipe is followed by a compatibility mouse event. Acting on both pages
+       twice for one gesture. */
+    if (Date.now() - _lastTouch < COMPAT_POINTER_MS) return;
     const dx = e.clientX - _dMx;
     if (Math.abs(dx) > 60) goTo(pg + (dx < 0 ? 1 : -1));
-    _dDragging = false;
   });
   let _dTx = 0;
   document.addEventListener(
     'touchstart',
     e => {
       _dTx = e.touches[0].clientX;
+      _lastTouch = Date.now();
     },
     { passive: true },
   );
@@ -880,6 +896,7 @@ async function boot() {
   document.addEventListener(
     'touchend',
     e => {
+      _lastTouch = Date.now();
       if (MOB) return;
       const dx = e.changedTouches[0].clientX - _dTx;
       if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1));

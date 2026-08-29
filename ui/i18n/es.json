@@ -178,6 +178,7 @@
     "labelValueTaken": "Ese valor ya lo usa otra etiqueta.",
     "noValuesLeft": "Todos los valores obtenidos ya tienen una etiqueta.",
     "labelMax": "Una insignia muestra como máximo {n} etiquetas.",
+    "labelOrderTip": "La insignia muestra la primera etiqueta de esta lista que alcanza su umbral. Arrastra para reordenar.",
     "labelsSaved": "{n} etiqueta guardada",
     "labelsSavedPlural": "{n} etiquetas guardadas",
     "poll": "Sondeo",
