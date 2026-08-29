@@ -57,7 +57,7 @@ without entering one. `sizes` is the set of card sizes offered.
 a logged reason rather than crashing the server, so a typo disables just that
 widget.
 
-Views, card backgrounds, every field type and the option pickers are in [the manifest reference](#reference-the-manifest).
+Views, the list icon, card backgrounds, every field type and the option pickers are in [the manifest reference](#reference-the-manifest).
 
 ## 2. Providing data (data.js)
 
@@ -138,7 +138,7 @@ Manifests are validated in CI, so a schema mistake fails the PR rather than
 silently disabling the widget at runtime. Run the same check locally with
 `cd api && node --test`.
 
-- [ ] `ui/widgets/<name>/widget.json` with `name` (matching the folder), `label`, `sizes`, and `fields`
+- [ ] `ui/widgets/<name>/widget.json` with `name` (matching the folder), `label`, `sizes`, and `fields`, plus a `glyph` if one fits
 - [ ] `ui/widgets/<name>/data.js` exporting `module.exports = async (ctx) => ...`, for a widget that fetches. A widget that renders entirely in the browser (the clock, the dashboard switch) ships no `data.js` and never calls `/api/widget-data/`.
 - [ ] `ui/widgets/<name>/index.html` that reads `?id=` and fetches `/api/widget-data/<id>`
 - [ ] For a multi-view widget: a `views` block with `viewField` and `defaultView`
@@ -182,6 +182,34 @@ breaks either rule is rejected, because both failures are otherwise silent: a
 `defaultView` and the selector does nothing, and an option with no matching view
 selects a view that does not exist. A field using `optionsFrom` is not checked
 against the views, since its choices are fetched at runtime.
+
+### List icon
+
+Settings lists every item with an icon. A widget that names a `glyph` shows that;
+one that names none shows its card size instead, so the field is optional and an
+existing widget needs no change.
+
+| `glyph` | what it depicts |
+| --- | --- |
+| `clock` | A dial and hands |
+| `weather` | A sun behind a cloud |
+| `gauge` | A dial with a needle, for a measured figure |
+| `shield` | A shield with record lines, for a name server |
+| `drive` | A drive with a trace across it |
+| `archive` | A store with an arrow into it |
+| `shelf` | Book spines |
+| `play` | A play mark in a frame |
+| `network` | Three linked nodes |
+| `merge` | Two branches joining one |
+| `panels` | Two panels, one handing over to the other |
+
+```json
+{ "glyph": "gauge" }
+```
+
+Pick the one that fits; two widgets naming the same glyph puts the list back
+where it started, and a test refuses it. A name that is not on this list is
+rejected at startup with the rest of the manifest.
 
 ### Card background
 
