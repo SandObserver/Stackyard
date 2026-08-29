@@ -191,7 +191,8 @@
     "removeLabel": "Remove label",
     "labelValueTaken": "That value is already used by another label.",
     "noValuesLeft": "Every fetched value already has a label.",
-    "labelMax": "A badge shows at most {n} labels.",
+    "labelMax_one": "A badge shows at most {count} label.",
+    "labelMax_other": "A badge shows at most {count} labels.",
     "labelOrderTip": "The badge shows the first label in this list that reaches its threshold. Drag to reorder.",
     "labelsSaved_one": "{count} label saved",
     "labelsSaved_other": "{count} labels saved",
@@ -271,7 +272,8 @@
     "noMatches": "No matches."
   },
   "import": {
-    "confirm": "Import {n} items? {added} added, {updated} updated, {deleted} deleted.",
+    "confirm_one": "Import {count} item? {added} added, {updated} updated, {deleted} deleted.",
+    "confirm_other": "Import {count} items? {added} added, {updated} updated, {deleted} deleted.",
     "confirmTitle": "Import configuration"
   },
   "status": {

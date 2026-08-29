@@ -191,7 +191,8 @@
     "removeLabel": "حذف برچسب",
     "labelValueTaken": "این مقدار پیش‌تر در برچسب دیگری استفاده شده است.",
     "noValuesLeft": "هر مقدار دریافت‌شده از پیش یک برچسب دارد.",
-    "labelMax": "هر نشان حداکثر {n} برچسب نمایش می‌دهد.",
+    "labelMax_one": "هر نشان حداکثر {count} برچسب نمایش می‌دهد.",
+    "labelMax_other": "هر نشان حداکثر {count} برچسب نمایش می‌دهد.",
     "labelOrderTip": "نشان، نخستین برچسب این فهرست را که به آستانه‌اش می‌رسد نمایش می‌دهد. برای تغییر ترتیب بکشید.",
     "labelsSaved_one": "{count} برچسب ذخیره شد",
     "labelsSaved_other": "{count} برچسب ذخیره شد",
@@ -271,7 +272,8 @@
     "noMatches": "نتیجه‌ای یافت نشد."
   },
   "import": {
-    "confirm": "{n} مورد وارد شود؟ {added} افزوده، {updated} به‌روزرسانی، {deleted} حذف.",
+    "confirm_one": "{count} مورد وارد شود؟ {added} افزوده، {updated} به‌روزرسانی، {deleted} حذف.",
+    "confirm_other": "{count} مورد وارد شود؟ {added} افزوده، {updated} به‌روزرسانی، {deleted} حذف.",
     "confirmTitle": "وارد کردن پیکربندی"
   },
   "status": {

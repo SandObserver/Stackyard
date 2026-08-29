@@ -178,7 +178,7 @@ export function buildAppForm(body, item) {
       <div id="act-labels"></div>
       <p class="grp-tip" id="act-label-order">${t('app.labelOrderTip')}</p>
       <div class="albl-add-wrap"><button type="button" class="albl-add" id="act-add-label">${t('app.addLabel')}</button></div>
-      <p class="grp-tip" id="act-label-max" hidden>${t('app.labelMax', { n: MAX_LABELS })}</p>
+      <p class="grp-tip" id="act-label-max" hidden>${t('app.labelMax', { count: MAX_LABELS })}</p>
       <div id="act-combine-row" class="bprow-hidden">
         <div class="grp"><div class="row"><span class="rl">${t('app.combineValues')}</span>${tog('act-combine', !!act.combine || !!state.slegacySum, t('app.combineValues'))}</div></div>
         <p class="grp-tip" id="act-combine-tip">${t('app.combineTip')}</p>
@@ -428,7 +428,7 @@ const GRIP_SVG =
 function addActLabel() {
   captureActLabels();
   if (state.spaths.length >= MAX_LABELS) {
-    toast(t('app.labelMax', { n: MAX_LABELS }), 'err');
+    toast(t('app.labelMax', { count: MAX_LABELS }), 'err');
     return;
   }
   const free = actValueOptions().find(o => !state.spaths.includes(o.path));

@@ -246,3 +246,44 @@ test('no locale leaves a string empty', async () => {
     for (const [k, v] of Object.entries(await load(code)))
       assert.ok(typeof v === 'string' && v.trim(), `${code}.json has an empty value for ${k}`);
 });
+
+/* ── counted messages nothing pluralised ──────────────────────────────────── */
+
+/* The plural work converted the messages that already carried a singular and a
+   plural key. It did not find the ones that had never been pluralised at all,
+   because nothing was looking for them.
+
+   The tell is a number followed by a noun that is written plural in English:
+   "{count} items", "at most {n} labels". A number followed by an adjective or a
+   participle is not one, because those do not agree in any language shipped
+   here: "{count} pending" is right for every count.
+
+   NOT_COUNTED holds what the scan flags that is not a counted noun, each with
+   the reason it is not. */
+const NOT_COUNTED = {
+  'app.pollInterval': 'wraps an editable field, minimum 10',
+  /* The sentence is split around a live input, so the surrounding words would
+     have to be rebuilt on every keystroke to stay in agreement. The field's
+     minimum is 10, so the singular can never be reached. */
+};
+
+test('every counted noun has plural forms', async () => {
+  const en = await load('en');
+  const bases = new Set(Object.keys(en).map(k => k.replace(PLURAL, '')));
+  const missing = [];
+  for (const [key, value] of Object.entries(en)) {
+    if (PLURAL.test(key) || key in NOT_COUNTED) continue;
+    /* A placeholder, then a word ending in s that is not a known non-noun. */
+    const m = String(value).match(/\{\w+\}\s+([a-z]+s)\b/);
+    if (!m) continue;
+    if (/^(is|was|has|does|as|its|this|less|plus)$/.test(m[1])) continue;
+    if (!bases.has(key) || !Object.keys(en).some(k => k.startsWith(key + '_'))) {
+      missing.push(`${key}: "${value}"`);
+    }
+  }
+  assert.deepEqual(
+    missing,
+    [],
+    `A count and a plural noun, with no plural forms. Split it per category, or add it to NOT_COUNTED with a reason:\n  ${missing.join('\n  ')}`,
+  );
+});
