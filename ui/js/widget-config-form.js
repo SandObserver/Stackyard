@@ -2,10 +2,10 @@
    back. Each builder returns { el, get, control, liveValue }. See
    docs/widgets.md. */
 
-import { t } from '/js/i18n.js?v=d056c9c5';
+import { t } from '/js/i18n.js?v=807b6f3a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { wireChecklist } from '/js/admin-shared.js?v=e9afcefb';
-import { renderColorControl } from '/js/admin-color-control.js?v=32111fda';
+import { wireChecklist } from '/js/admin-shared.js?v=364dba7c';
+import { renderColorControl } from '/js/admin-color-control.js?v=d8e72816';
 import {
   seedCarried,
   applyOptionSet,
@@ -13,7 +13,7 @@ import {
   requiredFieldMissing,
   groupBounds,
   visibleFieldFlags,
-} from '/js/admin-logic.js?v=ddfc6f80';
+} from '/js/admin-logic.js?v=d17394da';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 import { qi } from '/js/utils.js?v=26566e09';
 
@@ -265,9 +265,7 @@ function _picklist(field, value, ctx, size) {
       try {
         opts = await _fetchOptions(field, ctx);
         paint();
-        status.textContent = opts.length
-          ? t(opts.length === 1 ? 'widgetCfg.loaded' : 'widgetCfg.loadedPlural', { n: opts.length })
-          : t('widgetCfg.noOptions');
+        status.textContent = opts.length ? t('widgetCfg.loaded', { count: opts.length }) : t('widgetCfg.noOptions');
         status.className = 'row-status ok';
       } catch (e) {
         const advice = optionsErrorAdvice(e);
@@ -350,9 +348,7 @@ function _select(field, value, ctx, config = {}) {
         chosen = sel.value || chosen;
         paint();
         syncCarried();
-        status.textContent = opts.length
-          ? t(opts.length === 1 ? 'widgetCfg.loaded' : 'widgetCfg.loadedPlural', { n: opts.length })
-          : t('widgetCfg.noOptions');
+        status.textContent = opts.length ? t('widgetCfg.loaded', { count: opts.length }) : t('widgetCfg.noOptions');
         status.className = 'row-status ok';
       } catch (e) {
         const advice = optionsErrorAdvice(e);

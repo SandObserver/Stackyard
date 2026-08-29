@@ -11,7 +11,7 @@ import {
   qa,
   setUserText,
 } from '/js/utils.js?v=26566e09';
-import { t, currentLang } from '/js/i18n.js?v=d056c9c5';
+import { t, currentLang } from '/js/i18n.js?v=807b6f3a';
 import { trapFocus } from '/js/dialog.js?v=05935547';
 import { toneForColor } from '/js/label-contrast.js?v=38adb276';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=424d5d41';

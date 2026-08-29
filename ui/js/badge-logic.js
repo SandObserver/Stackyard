@@ -7,17 +7,24 @@ const EN = {
   'status.healthy': 'Status: healthy',
   'status.pending': '{count} pending',
   'status.stale': '(may be out of date)',
-  'status.moreValues': '{n} more badge',
-  'status.moreValuesPlural': '{n} more badges',
+  'status.moreValues_one': '{count} more badge',
+  'status.moreValues_other': '{count} more badges',
   'status.containerNotFound': 'Container not found',
   'status.containerState': 'Container {state}',
   'status.pingFailed': 'Ping failed: {error}',
   'status.pingReturned': 'Ping returned {status}',
 };
 
-/** @param {string} key @param {Record<string, unknown>} [vars] */
+/** English, with the same counted-message resolution the real translator does.
+    @param {string} key @param {Record<string, unknown>} [vars] */
 function _fallback(key, vars) {
-  const s = EN[key] || key;
+  const count = vars && vars.count;
+  let s = null;
+  if (typeof count === 'number' && Number.isFinite(count)) {
+    const category = new Intl.PluralRules('en').select(count);
+    s = EN[`${key}_${category}`] ?? EN[`${key}_other`] ?? null;
+  }
+  if (s == null) s = EN[key] || key;
   return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : s;
 }
 
@@ -249,7 +256,7 @@ export function computeBadgeVisual({
   const more = Math.max(0, rows.length - 1);
   if (more) {
     cls += ' has-more';
-    aria = aria + '. ' + tr(more === 1 ? 'status.moreValues' : 'status.moreValuesPlural', { n: more });
+    aria = aria + '. ' + tr('status.moreValues', { count: more });
   }
   const nextColor = more ? rows[1].color : '';
 

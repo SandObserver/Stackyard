@@ -15,7 +15,6 @@ import {
   widgetConfigMode,
   resolveAdminSection,
   rejectionLines,
-  refusedNoticeKey,
   settingsSaveBlocker,
   clearsStoredPassword,
   recoversSession,
@@ -408,13 +407,6 @@ test('a missing or non-array list is no lines rather than a throw', () => {
   for (const v of [undefined, null, {}, 'nope', 0]) {
     assert.deepEqual(rejectionLines(v), [], `${JSON.stringify(v)} should give no lines`);
   }
-});
-
-/* Two keys, because a language pluralises the sentence rather than the number. */
-test('the notice key follows the count', () => {
-  assert.equal(refusedNoticeKey(1), 'widgetCfg.refused');
-  assert.equal(refusedNoticeKey(2), 'widgetCfg.refusedPlural');
-  assert.equal(refusedNoticeKey(0), 'widgetCfg.refusedPlural');
 });
 
 /* ── shouldWritePassword ──────────────────────────────────────────────────── */

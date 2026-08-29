@@ -251,10 +251,6 @@ export function rejectionLines(rejections, { withName = true } = {}) {
   return out;
 }
 
-export function refusedNoticeKey(count) {
-  return count === 1 ? 'widgetCfg.refused' : 'widgetCfg.refusedPlural';
-}
-
 /* Long errors need longer than short confirmations. 60ms per character is
    about 16 characters a second, under a slow reading speed. */
 export function toastMs(message) {

@@ -75,7 +75,17 @@ const src = files.map(f => stripComments(fs.readFileSync(f, 'utf8'))).join('\n')
    kind of half-sanitisation that is right until a key contains a character the
    escape missed. There is nothing to escape in a plain includes(). */
 const quoted = k => [`'${k}'`, `"${k}"`, `\`${k}\``];
-const referenced = new Set(keys.filter(k => quoted(k).some(q => src.includes(q))));
+
+/* A counted message is stored once per plural category, as `key_one`,
+   `key_other` and so on, and the source names the base key. Both directions
+   below compare base names, so a category the source never writes out is still
+   accounted for. */
+const CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other'];
+const PLURAL = new RegExp(`_(${CATEGORIES.join('|')})$`);
+const baseName = k => k.replace(PLURAL, '');
+const pluralBases = new Set(keys.filter(k => PLURAL.test(k)).map(baseName));
+
+const referenced = new Set(keys.filter(k => quoted(baseName(k)).some(q => src.includes(q))));
 
 /* The widget toolbox loads the widget block and looks up bare names inside it,
    so widget.loading is written as _t('loading', 'Loading'). */
@@ -106,7 +116,7 @@ test('every referenced key exists in the catalog', () => {
   for (const m of src.matchAll(/data-i18n(?:-html|-ph|-al)?=["']([\w.]+)["']/g)) named.add(m[1]);
 
   const known = new Set(keys);
-  const missing = [...named].filter(k => !known.has(k)).sort();
+  const missing = [...named].filter(k => !known.has(k) && !pluralBases.has(k)).sort();
   assert.deepEqual(
     missing,
     [],

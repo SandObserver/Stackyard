@@ -2,8 +2,8 @@ import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
 import { state } from '/js/admin-state.js?v=c23e6346';
-import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=ddfc6f80';
-import { t } from '/js/i18n.js?v=d056c9c5';
+import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=d17394da';
+import { t } from '/js/i18n.js?v=807b6f3a';
 import {
   toast,
   ag,
@@ -13,9 +13,9 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=e9afcefb';
-import { MAX_LABELS } from '/js/badge-logic.js?v=c6430afc';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=32111fda';
+} from '/js/admin-shared.js?v=364dba7c';
+import { MAX_LABELS } from '/js/badge-logic.js?v=41a929ac';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d8e72816';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
@@ -256,9 +256,7 @@ export function buildAppForm(body, item) {
   el('act-add-label')?.addEventListener('click', addActLabel);
   const savedStatus = el('bst');
   if (savedStatus && state.spaths.length)
-    savedStatus.textContent = t(state.spaths.length === 1 ? 'app.labelsSaved' : 'app.labelsSavedPlural', {
-      n: state.spaths.length,
-    });
+    savedStatus.textContent = t('app.labelsSaved', { count: state.spaths.length });
   syncActMode();
 }
 
