@@ -162,6 +162,20 @@ async function centrePixel(locator) {
   return [data[0], data[1], data[2]];
 }
 
+/** The colour the browser painted at one point inside an element.
+    @param {import('@playwright/test').Locator} locator
+    @param {number} fx @param {number} fy fractions of the element's box
+    @returns {Promise<[number,number,number]>} */
+async function pixelAt(locator, fx, fy) {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error('the element is not visible');
+  const shot = await locator.page().screenshot({
+    clip: { x: box.x + box.width * fx, y: box.y + box.height * fy, width: 1, height: 1 },
+  });
+  const { data } = decodePng(shot);
+  return [data[0], data[1], data[2]];
+}
+
 /** WCAG relative luminance. @param {[number,number,number]} rgb */
 function luminance([r, g, b]) {
   const lin = c => {
@@ -189,5 +203,6 @@ module.exports = {
   rowNames,
   rowByName,
   centrePixel,
+  pixelAt,
   contrast,
 };
