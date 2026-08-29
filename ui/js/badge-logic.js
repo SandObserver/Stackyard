@@ -1,6 +1,7 @@
 // @ts-check
 /* Keep this file free of imports and of module state. Translation arrives
-   through an injected `translate`; a caller that passes none gets English. */
+   through an injected `translate`, and the digit shape through an injected
+   `format`; a caller that passes neither gets English and Latin digits. */
 const EN = {
   'status.needsAttention': 'Status: needs attention',
   'status.healthy': 'Status: healthy',
@@ -153,6 +154,7 @@ export function firingLabels(labels, values) {
       badgesStale?: boolean, healthStale?: boolean, activityStale?: boolean,
       healthDetail?: Record<string, unknown>,
       translate?: (key: string, vars?: Record<string, unknown>) => string,
+      format?: (value: number) => string,
     }} opts */
 export function computeBadgeVisual({
   health,
@@ -168,8 +170,11 @@ export function computeBadgeVisual({
   activityStale,
   healthDetail,
   translate,
+  format,
 }) {
   const tr = typeof translate === 'function' ? translate : (k, v) => _fallback(k, v);
+  /* Digit shape is the reader's, not the interface language's. */
+  const fmt = typeof format === 'function' ? format : v => String(v);
   /* Below this the item is treated as having no activity at all. One keeps the
      original behaviour of badging any count above zero. */
   const min = badgeMinimum(custom);
@@ -188,12 +193,12 @@ export function computeBadgeVisual({
     num = '!';
   } else if (top) {
     cls = 'badge on blue';
-    num = top.value > 99 ? '99+' : String(top.value);
+    num = top.value > 99 ? `${fmt(99)}+` : fmt(top.value);
     unit = top.unit ? top.unit.slice(0, 8) : '';
     bg = top.color;
   } else if (active) {
     cls = 'badge on blue';
-    num = activity > 99 ? '99+' : String(activity);
+    num = activity > 99 ? `${fmt(99)}+` : fmt(activity);
     unit = custom.unit ? custom.unit.slice(0, 8) : '';
     bg = safeColor(custom.color);
   } else if (fixed) {
@@ -212,10 +217,10 @@ export function computeBadgeVisual({
   /* Status text, so meaning is not carried by colour alone. */
   let aria = '';
   if (health) aria = tr('status.needsAttention');
-  else if (top) aria = top.name ? `${top.name}: ${top.value}` : tr('status.pending', { count: String(top.value) });
+  else if (top) aria = top.name ? `${top.name}: ${fmt(top.value)}` : tr('status.pending', { count: fmt(top.value) });
   else if (active)
     aria = tr('status.pending', {
-      count: (activity > 99 ? '99+' : String(activity)) + (custom.unit ? ' ' + custom.unit : ''),
+      count: (activity > 99 ? `${fmt(99)}+` : fmt(activity)) + (custom.unit ? ' ' + custom.unit : ''),
     });
   else if (fixed) aria = staticBdg.label;
   else if (cls.includes('green')) aria = tr('status.healthy');

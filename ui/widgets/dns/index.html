@@ -64,7 +64,7 @@
 </div>
 
 <script type="module">
-import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=3d21db7d';
+import { poll, openUrl, loadStrings, wt, formatNumber } from '/js/widget-toolbox.js?v=1dda58ca';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -88,11 +88,13 @@ const tipEl = document.getElementById('tip');
 const msgEl = document.getElementById('msg');
 const srEl  = document.getElementById('sr');
 
+/* Digits follow the reader's locale. The k and M suffixes do not: they are
+   symbols rather than words, and the catalogue has no translation for them. */
 function fmt(n) {
   if (n==null||isNaN(n)) return '—';
-  if (n>=1_000_000) return (n/1_000_000).toFixed(2).replace(/\.?0+$/,'')+'M';
-  if (n>=1_000)     return (n/1_000).toFixed(1).replace(/\.0$/,'')+'k';
-  return n.toLocaleString();
+  if (n>=1_000_000) return formatNumber(Number((n/1_000_000).toFixed(2)))+'M';
+  if (n>=1_000)     return formatNumber(Number((n/1_000).toFixed(1)))+'k';
+  return formatNumber(n);
 }
 
 async function boot() {
@@ -138,14 +140,14 @@ function apply(d) {
   const allowed = Math.max(0, total - blocked - cached);
   const pct = total > 0 ? Math.round(blocked / total * 100) : 0;
 
-  pctEl.textContent = pct + '%';
+  pctEl.textContent = formatNumber(pct / 100, { style: 'percent' });
 
   const model = { total, allowed, cached, blocked, pct };
   _last = model;
   render(model);
 
   srEl.textContent = wt('ui.summary', '{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.')
-    .replace('{pct}', String(pct)).replace('{total}', fmt(total))
+    .replace('{pct}', formatNumber(pct)).replace('{total}', fmt(total))
     .replace('{allowed}', fmt(allowed)).replace('{cached}', fmt(cached)).replace('{blocked}', fmt(blocked));
 }
 

@@ -234,6 +234,11 @@ export function wt(key, fallback) {
 }
 
 /** @param {number} ts @returns {string} */
+/* Digit shape follows the reader's locale. Re-exported here so a widget takes it
+   from the toolbox rather than reaching for toLocaleString, which is the same
+   thing until someone passes it a language. */
+export { formatNumber, localiseDigits } from '/js/format-number.js?v=e2165e12';
+
 export function sinceLabel(ts) {
   if (!ts) return '';
   const s = Math.max(0, Math.round((Date.now() - ts) / 1000));

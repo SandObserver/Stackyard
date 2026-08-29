@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=cd6ffbe9';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=aa32f5ed';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=2191f31e';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=ddfc6f80';
