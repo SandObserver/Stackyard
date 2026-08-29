@@ -558,8 +558,11 @@
        light page and fails contrast on every surface here. Rules below override
        it where a field genuinely differs. */
     input::placeholder, textarea::placeholder { color:rgba(255,255,255,.55); }
-    #sin::placeholder { color:rgba(255,255,255,.38); }
-    #spot #sin::placeholder { color:rgba(235,235,245,.38); }
+    /* The panel is a scrim and a blur over a wallpaper the project does not
+       control, so the ink has to clear 4.5:1 against whatever that composites
+       to. At .38 it did not over a light one. */
+    #sin::placeholder { color:rgba(255,255,255,.55); }
+    #spot #sin::placeholder { color:rgba(235,235,245,.55); }
     #spot-cancel {
       display:none; flex-shrink:0; background:transparent; border:0;
       outline:0; cursor:pointer; -webkit-tap-highlight-color:transparent;
