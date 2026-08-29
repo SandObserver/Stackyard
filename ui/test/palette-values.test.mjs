@@ -5,8 +5,11 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 /* The palette is the system colours. Every entry below is transcribed from the
-   Accents and Grays variables of the design kits, which agree on all eighteen in
-   both themes.
+   Accents and Grays variables of the design kit.
+
+   The two themes do not agree on every hue. Nine light accents moved in the iOS
+   and iPadOS 27 kit while the dark ones and the greys stayed put, so a light
+   value that looks like the familiar iOS colour is out of date, not correct.
 
    The values had been copied by hand, and one had gone in wrong: Cyan was
    #3CCFFE against the kit's #3CD3FE. No rule referenced Cyan, so nothing rendered
@@ -45,18 +48,18 @@ const APPLE_DARK = {
 /* The light values of the same eighteen, from the Any and Light column of the
    same variables. */
 const APPLE_LIGHT = {
-  '--sy-red': '#FF3B30',
-  '--sy-orange': '#FF9500',
+  '--sy-red': '#FF383C',
+  '--sy-orange': '#FF8D28',
   '--sy-yellow': '#FFCC00',
   '--sy-green': '#34C759',
-  '--sy-mint': '#00C7BE',
-  '--sy-teal': '#30B0C7',
-  '--sy-cyan': '#32ADE6',
-  '--sy-blue': '#007AFF',
-  '--sy-indigo': '#5856D6',
-  '--sy-purple': '#AF52DE',
+  '--sy-mint': '#00C8B3',
+  '--sy-teal': '#00C3D0',
+  '--sy-cyan': '#00C0E8',
+  '--sy-blue': '#0088FF',
+  '--sy-indigo': '#6155F5',
+  '--sy-purple': '#CB30E0',
   '--sy-pink': '#FF2D55',
-  '--sy-brown': '#A2845E',
+  '--sy-brown': '#AC7F5E',
   '--sy-gray': '#8E8E93',
   '--sy-gray2': '#AEAEB2',
   '--sy-gray3': '#C7C7CC',
@@ -128,12 +131,12 @@ const APPLE_SEMANTIC_LIGHT = {
   '--label-secondary': 'rgba(60,60,67,.60)',
   '--label-tertiary': 'rgba(60,60,67,.30)',
   '--label-quaternary': 'rgba(60,60,67,.18)',
-  '--fill-primary': 'rgba(120,120,128,.20)',
+  '--fill-primary': 'rgba(120,120,120,.20)',
   '--fill-secondary': 'rgba(120,120,128,.16)',
   '--fill-tertiary': 'rgba(118,118,128,.12)',
   '--fill-quaternary': 'rgba(116,116,128,.08)',
   '--separator-opaque': '#C6C6C8',
-  '--separator': 'rgba(60,60,67,.29)',
+  '--separator': 'rgba(0,0,0,.12)',
   '--bg-primary': '#FFFFFF',
   '--bg-secondary': 'var(--sy-gray6)',
   '--bg-tertiary': '#FFFFFF',

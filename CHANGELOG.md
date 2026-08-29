@@ -82,6 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The dashboard heading now sits inside a landmark.
 
+- The light theme's accent hues now match the current reference kit. Nine had
+  drifted to an earlier generation, along with the separator and one fill.
+
 - A tile whose label is too long to fit now shows the full name on hover.
 
 - Save is the same button on every Settings pane. It was green on two panes and
