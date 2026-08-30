@@ -75,7 +75,7 @@ test('the Dockerfile deletes setuptools', () => {
 });
 
 test('setuptools is removed in the layer that installs supervisor', () => {
-  const run = /RUN apk add --no-cache nginx supervisor[\s\S]*?(?=\n(?:#|[A-Z]+ ))/.exec(dockerfile);
+  const run = /RUN apk upgrade --no-cache &&[\s\S]*?(?=\n(?:#|[A-Z]+ ))/.exec(dockerfile);
   assert.ok(run, 'the apk install step has been restructured');
   assert.match(
     run[0],
@@ -91,4 +91,15 @@ test('the build proves the removal and that supervisord survives it', () => {
   assert.match(dockerfile, /if python3 -c 'import setuptools' 2>\/dev\/null; then/);
   assert.match(dockerfile, /setuptools survived removal/);
   assert.match(dockerfile, /supervisord --version/);
+});
+
+/* The base image is pinned by digest, so nothing else pulls a security update
+   into the image. Alpine had a fixed OpenSSL the pinned base did not carry, and
+   the published image stayed vulnerable until this step existed. */
+test('the build upgrades the base packages before installing anything', () => {
+  assert.match(dockerfile, /RUN apk upgrade --no-cache/, "the image would ship the base digest's packages unchanged");
+  assert.ok(
+    dockerfile.indexOf('apk upgrade') < dockerfile.indexOf('apk add'),
+    'upgrade first, or the packages installed below are resolved against a stale index',
+  );
 });
