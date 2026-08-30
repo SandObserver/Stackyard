@@ -191,6 +191,17 @@ test('verification reads the digest, and checks what the docs tell a reader to c
   );
 });
 
+test('the attestation payload is kept out of the job log', () => {
+  const runs = workflow.jobs['verify-published'].steps.filter(s => s.run).map(s => s.run);
+  const attestation = runs.find(r => r.includes('verify-attestation'));
+  assert.ok(attestation, 'the SBOM attestation is verified');
+  assert.match(
+    attestation,
+    />\s*\S+/,
+    'the payload is one line of about two megabytes; printing it stalls the log stream until the job times out',
+  );
+});
+
 /* docs/security.md tells a reader to run these. Drift means the release verifies
    something the reader cannot reproduce. */
 test('the documented verification flags are the ones the release runs', () => {

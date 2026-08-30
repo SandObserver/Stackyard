@@ -245,12 +245,15 @@ jobs:
         env:
           DIGEST: ${{ needs.build-and-push.outputs.digest }}
 
+      # Redirect the payload. It is one line of about two megabytes, and the
+      # log stream stalls on it until the job times out.
       - name: Verify the SBOM attestation
         run: |
           cosign verify-attestation "ghcr.io/sandobserver/stackyard@${DIGEST}" \
             --type spdxjson \
             --certificate-identity-regexp '^https://github.com/SandObserver/Stackyard/' \
-            --certificate-oidc-issuer https://token.actions.githubusercontent.com
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            > attestation.json
         env:
           DIGEST: ${{ needs.build-and-push.outputs.digest }}
 
