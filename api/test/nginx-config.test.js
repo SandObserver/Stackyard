@@ -179,6 +179,19 @@ test('the nginx version is not advertised', () => {
   );
 });
 
+/* add_header appends. A Content-Type set that way stacks on top of the one nginx
+   already derived from mime.types, and the response carries two. */
+test('no location sets Content-Type through add_header', () => {
+  assert.ok(!/add_header\s+Content-Type\b/.test(dashboard));
+});
+
+test('the manifest is served as a manifest', () => {
+  const at = dashboard.indexOf('location = /manifest.json {');
+  const block = dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  assert.match(block, /^\s*default_type application\/manifest\+json;$/m);
+  assert.match(block, /^\s*types \{ \}$/m, 'the inherited map would otherwise win');
+});
+
 /* The API was not compressed at all: gzip_types listed text, CSS, JavaScript and
    SVG, and nothing JSON. */
 test('JSON responses are compressed', () => {
