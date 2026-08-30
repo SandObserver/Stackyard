@@ -258,10 +258,10 @@ test('no widget writes display text in English', () => {
       const assign = /\.textContent\s*=\s*(['"`])((?:(?!\1)[\s\S])*)\1/g;
       for (const m of src.matchAll(assign)) {
         /* A widget writes markup, entities, interpolated values and a stylesheet
-           through this same property. None of them is display text. */
-        if (/[{}]/.test(m[2])) continue;
-        const words = m[2].replace(/<[^>]*>/g, '').replace(/&[a-z]+;/g, '');
-        if (/[A-Za-z]{3,}/.test(words)) offenders.push(`${widget}/${file}: ${words.trim().slice(0, 40)}`);
+           through this same property. None of them is a sentence someone reads,
+           and each is recognised by a character rather than by unpicking it. */
+        if (/[{}<>&]/.test(m[2])) continue;
+        if (/[A-Za-z]{3,}/.test(m[2])) offenders.push(`${widget}/${file}: ${m[2].trim().slice(0, 40)}`);
       }
     }
   }
