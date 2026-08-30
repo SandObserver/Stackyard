@@ -66,6 +66,10 @@ const _dateFmt = (() => {
   try { return new Intl.DateTimeFormat(_lang, { weekday: 'long', month: 'long', day: 'numeric' }); }
   catch { return new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }); }
 })();
+const _dateShortFmt = (() => {
+  try { return new Intl.DateTimeFormat(_lang, { weekday: 'short', month: 'short', day: 'numeric' }); }
+  catch { return new Intl.DateTimeFormat('en', { weekday: 'short', month: 'short', day: 'numeric' }); }
+})();
 function _a11yLabel(now){
   const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
   return `${hh}:${mm}, ${_dateFmt.format(now)}`;
@@ -176,10 +180,7 @@ function tick() {
   hd.forEach((n,i) => { applyDigit(_hSVGs[i], n, _lastH[i]); _lastH[i] = n; });
   md.forEach((n,i) => { applyDigit(_mSVGs[i], n, _lastM[i]); _lastM[i] = n; });
   if (_showDate) {
-    const D = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    document.getElementById('date-line').textContent =
-      `${D[now.getDay()]}, ${M[now.getMonth()]} ${now.getDate()}`;
+    document.getElementById('date-line').textContent = _dateShortFmt.format(now);
   }
   if (_tickId) clearTimeout(_tickId);
   _tickId = setTimeout(tick, (60 - now.getSeconds()) * 1000);

@@ -58,6 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   put a count of zero in the plural form. The import confirmation and the badge
   label limit were still counting in English.
 
+- The Pull Requests widget now translates its caption, and the clock takes its
+  day and month names from the reader's locale. Both were always English.
+
 - Persian now uses the import, export, widget and file terms that shipped
   software uses, one word per concept, and no longer leaves "Import" in English
   in one message.
