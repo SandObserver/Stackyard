@@ -11,6 +11,7 @@ permissions: {}
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Mint a token for the release app
         id: app
