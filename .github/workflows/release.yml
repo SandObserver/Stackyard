@@ -17,6 +17,7 @@ jobs:
   build-and-push:
     needs: e2e
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -246,6 +247,7 @@ jobs:
   release-page:
     needs: build-and-push
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # Every write here is the app token's.
     permissions: {}
     outputs:
@@ -308,6 +310,7 @@ jobs:
     needs: release-page
     if: needs.release-page.outputs.prerelease == 'false'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions: {}
     steps:
       - name: Request a documentation site rebuild

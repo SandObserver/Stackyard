@@ -17,6 +17,7 @@ permissions:
 jobs:
   scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       # Both published platforms, and one failing must not hide the other.
       fail-fast: false
