@@ -13,7 +13,7 @@
    pixel the antialiasing happened to land on. */
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, dismissSetupPrompt, app, pixelAt, contrast } = require('./helpers');
+const { seedConfig, dismissSetupPrompt, app, settledPixelAt, contrast } = require('./helpers');
 
 /* SC 1.4.3: a placeholder is text. */
 const AA_TEXT = 4.5;
@@ -32,9 +32,14 @@ async function openSearch(page, request, colour) {
   await dismissSetupPrompt(request);
   await page.goto('/');
   await page.locator('.icon').first().waitFor({ state: 'visible' });
+  /* The wallpaper is applied after the config arrives. The panel is a scrim
+     over it, so sampling before it lands reads the text against the wrong
+     backdrop and reports a contrast the reader never sees. */
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--bg-color').trim()))
+    .toBe(colour);
   await page.keyboard.press('/');
   await page.locator('#sin').waitFor({ state: 'visible' });
-  await page.waitForTimeout(400);
 }
 
 for (const [name, colour] of [
@@ -46,7 +51,7 @@ for (const [name, colour] of [
     /* Behind the placeholder itself, not the overlay's centre: the field sits on
        the search bar, and the bar is what the text is read against. Sampled past
        the end of the placeholder so no glyph is under the probe. */
-    const panel = await pixelAt(page.locator('#sin'), 0.92, 0.5);
+    const panel = await settledPixelAt(page.locator('#sin'), 0.92, 0.5);
     const declared = await page.locator('#sin').evaluate(el => getComputedStyle(el, '::placeholder').color);
     const { rgb, a } = rgba(declared);
     const painted = over(rgb, a, panel);
