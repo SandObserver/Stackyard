@@ -9,8 +9,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # A tag must not publish an image the browser tests reject. Two minutes, and
-  # the same workflow that runs on pull requests, rather than a copy of it.
+  # A tag must not publish an image the browser tests reject.
   e2e:
     uses: ./.github/workflows/e2e.yml
 
@@ -24,8 +23,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      # Keyless signing exchanges this for a short-lived Sigstore certificate.
-      # No key material is stored anywhere.
+      # Exchanged for a short-lived Sigstore certificate by keyless signing.
       id-token: write
 
     steps:
@@ -34,9 +32,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # Every check the Tests workflow runs, plus the stamp pass, before anything
-      # publishes. On failure the tag stays with nothing published: fix main,
-      # delete the tag, tag again.
+      # Runs before anything publishes. On failure the tag stays with nothing
+      # published: fix main, delete the tag, tag again.
       - name: Run project checks
         uses: ./.github/actions/checks
         with:
@@ -55,18 +52,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Docker Hub is a mirror, and entirely optional: with no credentials set
-      # the release publishes to ghcr.io exactly as before.
-      #
-      # One step decides, and both the login and the tag list read its answer.
-      # Deciding twice, once in an `if:` and once here, is how a build ends up
-      # pushing to a registry it never logged in to.
+      # Docker Hub is optional. Decide once here. The login and the tag list must
+      # read this output, or a build pushes to a registry it never logged in to.
       - name: Choose registries
         id: registries
         env:
-          # A variable, not a secret: a username is not sensitive, and as a
-          # secret it was masked everywhere in the logs, including in the ghcr
-          # tags, which share the name. Only the token is secret.
+          # Keep this a variable. As a secret it masks the ghcr tags, which share
+          # the name. Only the token is secret.
           DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
         run: |
@@ -93,9 +85,8 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # A hyphen in the ref used to decide this. See scripts/is-prerelease.js:
-      # build metadata can contain a hyphen, and a mistyped tag has none, which
-      # is the case that quietly moved `latest`.
+      # Do not decide this on a hyphen in the ref. It moves `latest` to a
+      # pre-release. See scripts/is-prerelease.js.
       - name: Classify the tag
         id: tag
         run: node scripts/is-prerelease.js "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
@@ -112,14 +103,9 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ steps.tag.outputs.prerelease == 'false' }}
 
-      # A multi-platform image is assembled by buildx and never exists locally,
-      # so each published platform is built on its own here and scanned before
-      # anything is pushed. The layer cache carries both into the real build
-      # below, so the gate costs a cache-warm rebuild rather than a second full
-      # build of each.
-      #
-      # Keep both scans. The two platforms share a base and a package set, but
-      # not architecture-specific package versions.
+      # A multi-platform image never exists locally, so each platform is built
+      # and scanned here before anything is pushed. Keep both scans. Package
+      # versions differ by architecture.
       - name: Build amd64 for scanning
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
@@ -142,8 +128,6 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
 
-      # Built under the QEMU set up above. Trivy reads the filesystem and does
-      # not run the image, so emulation is needed for the build only.
       - name: Build arm64 for scanning
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
@@ -179,13 +163,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
 
-      # Everything below addresses the image by digest: a tag can be moved.
+      # Everything below addresses the image by digest. A tag can be moved.
 
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      # Keyless, so the signature is bound to this workflow's identity and there
-      # is no key to hold. Verification steps: docs/security.md.
+      # Keyless. Verification steps: docs/security.md.
       - name: Sign the image
         run: cosign sign --yes "ghcr.io/sandobserver/stackyard@${DIGEST}"
         env:
@@ -200,8 +183,8 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
-      # Before the Docker Hub steps. They describe an image that is already
-      # published, so a failure there must not cost the release its SBOM.
+      # Keep this before the Docker Hub steps. A failure there must not cost the
+      # release its SBOM.
       - name: Upload SBOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -209,10 +192,8 @@ jobs:
           path: stackyard-${{ steps.meta.outputs.version }}.spdx.json
           if-no-files-found: error
 
-      # The artifact above expires. An SBOM that cannot be fetched for an older
-      # release cannot answer the one question it exists for, so the same
-      # document is also attested to the registry beside the signature, keyless
-      # and by digest. Verification steps: docs/security.md.
+      # The artifact above expires, so the same document is attested to the
+      # registry by digest. Verification steps: docs/security.md.
       - name: Attest the SBOM to the registry
         run: |
           cosign attest --yes \
@@ -223,32 +204,27 @@ jobs:
           VERSION: ${{ steps.meta.outputs.version }}
           DIGEST: ${{ steps.build.outputs.digest }}
 
-      # The page is only correct for an image that exists, so this runs after
-      # the push, and only for a stable tag: a pre-release must not rewrite the
-      # page describing what `latest` gives you.
+      # After the push, and stable tags only. A pre-release must not rewrite the
+      # page describing `latest`.
       - name: Generate the Docker Hub description
         if: steps.registries.outputs.dockerhub == 'true' && steps.tag.outputs.prerelease == 'false'
         run: node scripts/dockerhub-description.js > dockerhub-description.md
 
-      # The description is not part of the release. A rejection here leaves the
-      # Docker Hub page describing an older version and nothing else.
       - name: Update the Docker Hub description
         if: steps.registries.outputs.dockerhub == 'true' && steps.tag.outputs.prerelease == 'false'
         continue-on-error: true
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
-          # The description API needs a token permitted to edit repository
-          # metadata. A token that pushes images is not enough: it returns 403.
+          # Needs a token permitted to edit repository metadata. A push token
+          # returns 403.
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard
           readme-filepath: dockerhub-description.md
           short-description: A self-hosted homelab dashboard you actually want to look at.
 
-  # Every gate above runs against a locally built image. This is the only step
-  # that reads the artefact people actually pull. It cannot unpublish a bad
-  # image, but it stops the release page, the documentation rebuild and the
-  # Community Applications update from describing one.
+  # The only gate that reads the published image. It cannot unpublish a bad one,
+  # but it stops the release page and the downstream updates describing it.
   verify-published:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -260,8 +236,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      # The commands docs/security.md tells a reader to run, against the digest
-      # this run pushed. If they fail here they fail for the reader too.
+      # The commands docs/security.md tells a reader to run.
       - name: Verify the signature
         run: |
           cosign verify "ghcr.io/sandobserver/stackyard@${DIGEST}" \
@@ -286,8 +261,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Pulled by digest and started the way a user starts it. A signed image
-      # that does not boot is still a failed release.
+      # Pulled by digest and started the way a user starts it.
       - name: Start the published image
         run: |
           mkdir -p "$RUNNER_TEMP/data" "$RUNNER_TEMP/icons"
@@ -313,21 +287,18 @@ jobs:
           docker logs stackyard-verify
           exit 1
 
-  # A tag with an image and no release page has happened before. This runs after
-  # the image is published and verified, so the page never describes something
-  # unpublished or broken.
+  # Runs after the image is published and verified, so the page never describes
+  # something unpublished or broken.
   release-page:
     needs: verify-published
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Every write here is the app token's.
     permissions: {}
     outputs:
       prerelease: ${{ steps.tag.outputs.prerelease }}
     steps:
-      # The app token, not GITHUB_TOKEN: a release published with the built-in
-      # token starts no workflow run, and the Community Applications template
-      # update listens for exactly that event.
+      # Use the app token. A release published with GITHUB_TOKEN starts no
+      # workflow run, and the Community Applications update listens for one.
       - name: Mint a token for the release app
         id: app
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0

@@ -4,14 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 
-/* The release workflow runs on a tag and nowhere else, so no pull request ever
-   exercises it. Its first outing after a change is the release itself, which is
-   how v1.5.0-rc.1 came to publish nothing at all.
-
-   These are the properties that cannot be verified any other way until a tag is
-   cut: what the job is allowed to do, that the supply-chain steps run in an
-   order where each has something to work on, and that nothing addresses the
-   image by a tag when a digest is available. */
+/* The release workflow runs on a tag only, so nothing else exercises it before a
+   release. These pin what cannot be verified until a tag is cut. */
 
 const root = path.join(__dirname, '..', '..');
 const workflow = yaml.load(fs.readFileSync(path.join(root, '.github/workflows/release.yml'), 'utf8'));
@@ -21,8 +15,7 @@ const byName = name => steps.find(s => s.name === name);
 const indexOf = name => steps.findIndex(s => s.name === name);
 
 test('the job asks for exactly the permissions it needs', () => {
-  /* id-token is what keyless signing exchanges for a Sigstore certificate.
-     Without it cosign fails at the end of a release that has already pushed. */
+  /* Without id-token, cosign fails after the release has already pushed. */
   assert.deepEqual(job.permissions, { contents: 'read', packages: 'write', 'id-token': 'write' });
 });
 
@@ -44,9 +37,8 @@ test('the supply-chain steps run after the build, in an order that works', () =>
   assert.ok(indexOf('Generate SBOM') < indexOf('Upload SBOM'), 'the SBOM must exist before it is uploaded');
 });
 
-/* Every platform in the push, and only those, must have a build-and-scan pair
-   ahead of it. arm64 shipped unscanned for several releases because the scan
-   read one platform while the push carried two. */
+/* Every pushed platform, and only those, needs a build-and-scan pair ahead of
+   it. A scan that reads fewer platforms than the push ships one unscanned. */
 const publishedPlatforms = String(byName('Build and push').with.platforms)
   .split(',')
   .map(p => p.trim())
@@ -94,16 +86,13 @@ test('a high or critical finding fails the job, on either platform', () => {
   }
 });
 
-/* Emulation is set up for the whole job, but arm64 is the step that cannot
-   build without it. */
 test('QEMU is set up before the arm64 build', () => {
   assert.ok(indexOf('Set up QEMU') !== -1, 'arm64 cannot be built on the runner without it');
   assert.ok(indexOf('Set up QEMU') < indexOf('Build arm64 for scanning'));
 });
 
 test('the image is addressed by digest everywhere after the build', () => {
-  /* A tag can be moved between being scanned and being pulled. The digest is
-     the artifact that was actually examined. */
+  /* A tag can be moved between the scan and the pull. */
   for (const name of ['Sign the image', 'Generate SBOM']) {
     const step = byName(name);
     const text = JSON.stringify(step.with || step.run || '');
@@ -124,8 +113,7 @@ test('latest is decided by the semver check, not by looking for a hyphen', () =>
 });
 
 test('Docker Hub is optional, and decided once', () => {
-  /* Deciding separately in an `if:` and in the tag list is how a build pushes
-     to a registry it never logged in to. */
+  /* Deciding twice pushes to a registry the build never logged in to. */
   const login = byName('Log in to Docker Hub');
   assert.equal(login.if, "steps.registries.outputs.dockerhub == 'true'");
   assert.ok(indexOf('Choose registries') < indexOf('Log in to Docker Hub'));
@@ -135,8 +123,6 @@ test('Docker Hub is optional, and decided once', () => {
 });
 
 test('ghcr.io is published unconditionally', () => {
-  /* Whatever happens with the mirror, the registry the project documents has to
-     receive the release. */
   const choose = byName('Choose registries');
   assert.match(choose.run, /echo 'ghcr\.io\/sandobserver\/stackyard'/);
   assert.equal(byName('Log in to GitHub Container Registry').if, undefined);
@@ -147,12 +133,7 @@ test('the checks still run before anything is published', () => {
   assert.equal(byName('Run project checks').with.mode, 'release');
 });
 
-/* A tag must not publish an image the browser tests reject.
-
-   The end-to-end suite found a bug that made every write fail on a mapped port,
-   and it found it after that code had already shipped in 1.5.0. Running it on
-   pull requests stops the next one merging; gating the release stops one
-   reaching a registry if it slips through anyway. */
+/* A tag must not publish an image the browser tests reject. */
 
 test('the release waits for the end-to-end suite', () => {
   assert.equal(
@@ -176,9 +157,8 @@ test('the e2e workflow can be called, and still runs on its own', () => {
   );
 });
 
-/* The published image is the one thing every other gate cannot see: they all run
-   against a locally built copy. These pin the checks that read the artefact a
-   user pulls, and that nothing announces a release before they pass. */
+/* Every other gate reads a locally built copy. These pin the checks that read
+   the published image, and that nothing announces a release before they pass. */
 
 test('the published image is verified, and the release page waits for it', () => {
   const verify = workflow.jobs['verify-published'];
@@ -211,8 +191,8 @@ test('verification reads the digest, and checks what the docs tell a reader to c
   );
 });
 
-/* docs/security.md tells a reader to run these. If the workflow drifts from the
-   documented flags, the release verifies something the reader cannot reproduce. */
+/* docs/security.md tells a reader to run these. Drift means the release verifies
+   something the reader cannot reproduce. */
 test('the documented verification flags are the ones the release runs', () => {
   const docs = fs.readFileSync(path.join(root, 'docs/security.md'), 'utf8');
   for (const flag of [

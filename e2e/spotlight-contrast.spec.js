@@ -1,16 +1,7 @@
 // @ts-check
-/* The search placeholder, measured against the panel as painted.
-
-   The panel is a scrim and a blur over the user's wallpaper, so what sits behind
-   the text is every layer composited. Over a light wallpaper it used to settle at
-   rgb(93,93,93), where no weight of white placeholder clears 4.5:1: the scrim
-   bounds every piece of text on the panel, which is why raising the ink alone
-   could not fix it.
-
-   The panel is sampled from the screenshot because only the browser knows what
-   the blur produced. The ink is read from the stylesheet and composited over it,
-   because a placeholder is thin and sampling a glyph stroke measures whichever
-   pixel the antialiasing happened to land on. */
+/* The panel is sampled from the screenshot because only the browser knows what
+   the blur produced. The ink is read from the stylesheet and composited over it.
+   Sampling a glyph stroke measures whichever pixel the antialiasing landed on. */
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, dismissSetupPrompt, app, settledPixelAt, contrast } = require('./helpers');
@@ -32,9 +23,8 @@ async function openSearch(page, request, colour) {
   await dismissSetupPrompt(request);
   await page.goto('/');
   await page.locator('.icon').first().waitFor({ state: 'visible' });
-  /* The wallpaper is applied after the config arrives. The panel is a scrim
-     over it, so sampling before it lands reads the text against the wrong
-     backdrop and reports a contrast the reader never sees. */
+  /* The wallpaper is applied after the config arrives. Sampling before it lands
+     reads the text against the wrong backdrop. */
   await expect
     .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--bg-color').trim()))
     .toBe(colour);
@@ -48,9 +38,8 @@ for (const [name, colour] of [
 ]) {
   test(`the search placeholder clears 4.5:1 over ${name}`, async ({ page, request }) => {
     await openSearch(page, request, colour);
-    /* Behind the placeholder itself, not the overlay's centre: the field sits on
-       the search bar, and the bar is what the text is read against. Sampled past
-       the end of the placeholder so no glyph is under the probe. */
+    /* The bar is what the text is read against. Sampled past the end of the
+       placeholder so no glyph is under the probe. */
     const panel = await settledPixelAt(page.locator('#sin'), 0.92, 0.5);
     const declared = await page.locator('#sin').evaluate(el => getComputedStyle(el, '::placeholder').color);
     const { rgb, a } = rgba(declared);

@@ -179,8 +179,8 @@ test('the nginx version is not advertised', () => {
   );
 });
 
-/* add_header appends. A Content-Type set that way stacks on top of the one nginx
-   already derived from mime.types, and the response carries two. */
+/* add_header appends. A Content-Type set that way stacks on the one nginx
+   derived from mime.types, and the response carries two. */
 test('no location sets Content-Type through add_header', () => {
   assert.ok(!/add_header\s+Content-Type\b/.test(dashboard));
 });
