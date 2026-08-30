@@ -141,7 +141,7 @@ function buildShell() {
     const count = document.createElement('div'); count.className = 'small-count'; count.id = 'small-count';
     count.textContent = '—';
     const sub   = document.createElement('div'); sub.className = 'small-sub'; sub.id = 'small-sub';
-    sub.textContent = 'Pull Requests';
+    sub.textContent = wt('view.prs.label', 'Pull Requests');
     if (mobile) {
       count.style.fontSize = '54px';
       sub.style.fontSize   = '16px';

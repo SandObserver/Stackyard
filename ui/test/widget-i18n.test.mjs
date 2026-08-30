@@ -240,3 +240,52 @@ test('every locale names the reorder buttons', () => {
   }
   assert.match(read('js/admin.js'), /t\(dir < 0 \? 'common\.moveUp' : 'common\.moveDown'\)/);
 });
+
+/* The tests above cover the toolbox's own status strings. A widget also writes
+   text of its own, and that text goes straight to the screen without passing
+   through a catalog unless the author remembers `wt`. The GitHub pull request
+   caption did not, and read English on every translated dashboard. */
+test('no widget writes display text in English', () => {
+  const dir = path.join(root, 'widgets');
+  const offenders = [];
+  for (const widget of fs.readdirSync(dir)) {
+    const wdir = path.join(dir, widget);
+    if (!fs.statSync(wdir).isDirectory()) continue;
+    for (const file of fs.readdirSync(wdir).filter(f => f.endsWith('.html') || f.endsWith('.js'))) {
+      const src = fs.readFileSync(path.join(wdir, file), 'utf8');
+      /* The assigned literal only. A lookup starts with wt( or _t( and does not
+         match, and neither does a value built from data. */
+      const assign = /\.textContent\s*=\s*(['"`])((?:(?!\1)[\s\S])*)\1/g;
+      for (const m of src.matchAll(assign)) {
+        /* A widget writes markup, entities, interpolated values and a stylesheet
+           through this same property. None of them is display text. */
+        if (/[{}]/.test(m[2])) continue;
+        const words = m[2].replace(/<[^>]*>/g, '').replace(/&[a-z]+;/g, '');
+        if (/[A-Za-z]{3,}/.test(words)) offenders.push(`${widget}/${file}: ${words.trim().slice(0, 40)}`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, [], 'these strings never reach a catalog');
+});
+
+/* The fallback is what renders until the catalog arrives, so it has to be the
+   English the catalog was written from. */
+test('the pull request caption is looked up, and every locale translates it', () => {
+  assert.match(read('widgets/github/pullrequests.html'), /wt\('view\.prs\.label', 'Pull Requests'\)/);
+  const dir = path.join(root, 'widgets', 'github', 'i18n');
+  for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+    const cat = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    assert.ok(cat['view.prs.label'], `${file} cannot name the pull request view`);
+  }
+});
+
+/* The accessible label went through Intl from the start. The date on screen did
+   not, so a Persian dashboard showed a Persian clock reading "Sun, Aug 30". */
+test('both clock styles name days and months through Intl', () => {
+  for (const style of ['analog', 'digital']) {
+    const src = read(`widgets/clock/${style}.html`);
+    assert.match(src, /_dateShortFmt\.format\(now\)/, `${style} does not format its date`);
+    assert.doesNotMatch(src, /'Jan'\s*,\s*'Feb'/, `${style} still carries English month names`);
+    assert.doesNotMatch(src, /'Sun'\s*,\s*'Mon'/, `${style} still carries English day names`);
+  }
+});

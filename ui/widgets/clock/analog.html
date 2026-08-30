@@ -43,6 +43,10 @@ const _dateFmt = (() => {
   try { return new Intl.DateTimeFormat(_lang, { weekday: 'long', month: 'long', day: 'numeric' }); }
   catch { return new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }); }
 })();
+const _dateShortFmt = (() => {
+  try { return new Intl.DateTimeFormat(_lang, { weekday: 'short', month: 'short', day: 'numeric' }); }
+  catch { return new Intl.DateTimeFormat('en', { weekday: 'short', month: 'short', day: 'numeric' }); }
+})();
 function _a11yLabel(now){
   const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
   return `${hh}:${mm}, ${_dateFmt.format(now)}`;
@@ -133,9 +137,7 @@ function render(smoothSeconds){
 
   document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now));
   if(_showDate && _dateText){
-    const D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    _dateText.textContent=`${D[now.getDay()]}, ${M[now.getMonth()]} ${now.getDate()}`;
+    _dateText.textContent=_dateShortFmt.format(now);
   }
 }
 
