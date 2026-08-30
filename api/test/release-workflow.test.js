@@ -175,3 +175,51 @@ test('the e2e workflow can be called, and still runs on its own', () => {
     'e2e is a required check, so a path filter would block a pull request that never runs it',
   );
 });
+
+/* The published image is the one thing every other gate cannot see: they all run
+   against a locally built copy. These pin the checks that read the artefact a
+   user pulls, and that nothing announces a release before they pass. */
+
+test('the published image is verified, and the release page waits for it', () => {
+  const verify = workflow.jobs['verify-published'];
+  assert.ok(verify, 'the post-release verification job is gone');
+  assert.deepEqual([].concat(verify.needs || []), ['build-and-push']);
+  assert.deepEqual(
+    [].concat(workflow.jobs['release-page'].needs || []),
+    ['verify-published'],
+    'a release page must not describe an image that failed verification',
+  );
+  assert.equal(job.outputs?.digest, '${{ steps.build.outputs.digest }}', 'the digest has to reach the verify job');
+});
+
+test('verification reads the digest, and checks what the docs tell a reader to check', () => {
+  const runs = workflow.jobs['verify-published'].steps.filter(s => s.run).map(s => s.run);
+  const cosign = runs.filter(r => r.includes('cosign'));
+  assert.equal(cosign.length, 2, 'both the signature and the SBOM attestation are verified');
+  for (const r of cosign) {
+    assert.match(r, /stackyard@\$\{DIGEST\}/, 'a tag can be moved; verify the digest');
+    assert.match(r, /--certificate-identity-regexp/);
+    assert.match(r, /--certificate-oidc-issuer https:\/\/token\.actions\.githubusercontent\.com/);
+  }
+  assert.ok(
+    cosign.some(r => r.includes('verify-attestation') && r.includes('--type spdxjson')),
+    'the SBOM attestation is what --type spdxjson verifies',
+  );
+  assert.ok(
+    runs.some(r => r.includes('/health')),
+    'a signed image that does not boot is still a failed release',
+  );
+});
+
+/* docs/security.md tells a reader to run these. If the workflow drifts from the
+   documented flags, the release verifies something the reader cannot reproduce. */
+test('the documented verification flags are the ones the release runs', () => {
+  const docs = fs.readFileSync(path.join(root, 'docs/security.md'), 'utf8');
+  for (const flag of [
+    "--certificate-identity-regexp '^https://github.com/SandObserver/stackyard/'",
+    '--certificate-oidc-issuer https://token.actions.githubusercontent.com',
+    '--type spdxjson',
+  ]) {
+    assert.ok(docs.includes(flag), `docs/security.md no longer documents ${flag}`);
+  }
+});
