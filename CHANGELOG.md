@@ -72,6 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   concept, and no longer leave "Logging", "API key", "Collection ID" or
   "Authentication Proxy" in English.
 
+- A tile label is now cut at the end of its own name. On a right-to-left
+  dashboard a Latin name lost its beginning instead.
+
 - Opening and saving an app no longer rewrites a colour that was not changed.
 
 - Admin form toggles now carry accessible names.
