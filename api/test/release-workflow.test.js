@@ -196,10 +196,20 @@ test('verification reads the digest, and checks what the docs tell a reader to c
 test('the documented verification flags are the ones the release runs', () => {
   const docs = fs.readFileSync(path.join(root, 'docs/security.md'), 'utf8');
   for (const flag of [
-    "--certificate-identity-regexp '^https://github.com/SandObserver/stackyard/'",
+    "--certificate-identity-regexp '^https://github.com/SandObserver/Stackyard/'",
     '--certificate-oidc-issuer https://token.actions.githubusercontent.com',
     '--type spdxjson',
   ]) {
     assert.ok(docs.includes(flag), `docs/security.md no longer documents ${flag}`);
+  }
+});
+
+test('the identity pattern matches the identity the release signs with', () => {
+  const identity = 'https://github.com/SandObserver/Stackyard/.github/workflows/release.yml@refs/tags/v1.0.0';
+  const runs = workflow.jobs['verify-published'].steps.filter(s => s.run).map(s => s.run);
+  const patterns = runs.flatMap(r => [...r.matchAll(/--certificate-identity-regexp '([^']+)'/g)].map(m => m[1]));
+  assert.equal(patterns.length, 2);
+  for (const pattern of patterns) {
+    assert.match(identity, new RegExp(pattern), `no signature can satisfy ${pattern}`);
   }
 });

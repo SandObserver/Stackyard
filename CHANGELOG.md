@@ -53,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The signature verification commands in `docs/security.md` now name the
+  repository as it is spelled, so they verify a release image instead of
+  rejecting it.
+
 - Scripts, stylesheets, translation catalogs and the web manifest no longer
   carry a duplicate `Content-Type` header.
 

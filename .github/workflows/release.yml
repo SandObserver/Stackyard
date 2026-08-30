@@ -240,7 +240,7 @@ jobs:
       - name: Verify the signature
         run: |
           cosign verify "ghcr.io/sandobserver/stackyard@${DIGEST}" \
-            --certificate-identity-regexp '^https://github.com/SandObserver/stackyard/' \
+            --certificate-identity-regexp '^https://github.com/SandObserver/Stackyard/' \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com
         env:
           DIGEST: ${{ needs.build-and-push.outputs.digest }}
@@ -249,7 +249,7 @@ jobs:
         run: |
           cosign verify-attestation "ghcr.io/sandobserver/stackyard@${DIGEST}" \
             --type spdxjson \
-            --certificate-identity-regexp '^https://github.com/SandObserver/stackyard/' \
+            --certificate-identity-regexp '^https://github.com/SandObserver/Stackyard/' \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com
         env:
           DIGEST: ${{ needs.build-and-push.outputs.digest }}

@@ -195,7 +195,7 @@ Check an image before running it:
 
 ```
 cosign verify ghcr.io/sandobserver/stackyard:1.5.0 \
-  --certificate-identity-regexp '^https://github.com/SandObserver/stackyard/' \
+  --certificate-identity-regexp '^https://github.com/SandObserver/Stackyard/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
@@ -218,7 +218,7 @@ signature so it stays available after the artifact expires:
 ```
 cosign verify-attestation ghcr.io/sandobserver/stackyard:1.5.0 \
   --type spdxjson \
-  --certificate-identity-regexp '^https://github.com/SandObserver/stackyard/' \
+  --certificate-identity-regexp '^https://github.com/SandObserver/Stackyard/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
