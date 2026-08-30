@@ -85,6 +85,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widgets on the phone layout no longer render taller than the card that clips
   them.
 
+- In right-to-left languages every page after the first is reachable again. The
+  pages moved off the wrong side of the screen, and the arrow keys and swipes
+  ran backwards.
+
 - Arrow keys and a mouse drag now change page on the phone layout. A second page
   was unreachable without a touchscreen.
 

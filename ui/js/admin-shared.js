@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { nextActiveIndex, recoversSession, toastHoldMs } from '/js/admin-logic.js?v=d17394da';
-import { el, qa, q } from '/js/utils.js?v=b9a5b134';
+import { el, qa, q } from '/js/utils.js?v=8ca7ce3c';
 import { t } from '/js/i18n.js?v=83239bf4';
 
 export const API = '';
