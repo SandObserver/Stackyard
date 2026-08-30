@@ -21,13 +21,13 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=26566e09';
-import { initSpotlight } from '/js/spotlight.js?v=71c04e24';
+} from '/js/utils.js?v=b9a5b134';
+import { initSpotlight } from '/js/spotlight.js?v=00545746';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=8390a5b8';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=b400beaf';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
 import { formatNumber } from '/js/format-number.js?v=e2165e12';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=08aae50f';
@@ -309,6 +309,7 @@ function mkIcon(item) {
   if (showLabel) {
     const l = mk('div');
     l.className = 'ilabel';
+    l.dir = 'auto';
     l.style.width = iw + 12 + 'px';
     setUserText(l, item.label || item.id);
     a.appendChild(l);

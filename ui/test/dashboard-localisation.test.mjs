@@ -196,20 +196,35 @@ test('the first-run prompt and API error are translated', () => {
 });
 
 /* An app's name is user text, so its language can differ from the interface
-   language. Without this the block's direction decides where the line is cut,
-   and a Latin name on a right-to-left dashboard lost its beginning: "Backup and
-   Storage" read "...nd Storage".
+   language. Without a direction of its own the block's direction decides which
+   end is cut, and a Latin name on a right-to-left dashboard lost its beginning:
+   "Backup and Storage" read "...ckup and St".
 
-   dir on the block would set alignment too, which moves a name away from its own
-   icon. These labels are centred, so plaintext moves nothing. */
-test('every tile label is cut at the end of its own name, and stays centred', () => {
+   unicode-bidi:plaintext fixes it in Blink and does nothing in WebKit, so the
+   attribute is what the label carries. It is safe here only because these labels
+   are centred: dir sets alignment too, which moves a name off its own icon. */
+test('every tile label carries its own direction', () => {
+  const ui = read('js/ui.js');
+  const dashboard = read('js/dashboard.js');
+  for (const [src, name] of [
+    [ui, 'ui.js'],
+    [dashboard, 'dashboard.js'],
+  ]) {
+    for (const m of src.matchAll(
+      /className = '(ilabel|dyn-mob-label|dyn-fold-label|dyn-fold-inner-label)';\n(\s*)(.*)/g,
+    )) {
+      assert.match(m[3], /^l\.dir = 'auto';$/, `${name}: .${m[1]} is cut by the page direction`);
+    }
+  }
+});
+
+test('the labels the direction is set on are centred', () => {
   const css = read('css/dashboard.css');
   for (const cls of ['ilabel', 'dyn-mob-label', 'dyn-fold-label', 'dyn-fold-inner-label']) {
     const rule = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(
       m => new RegExp(`\\.${cls}\\s*[,{]|\\.${cls}$`).test(m[1].trim()) && m[2].includes('text-overflow'),
     );
     assert.ok(rule, `no truncating rule for .${cls}`);
-    assert.match(rule[2], /unicode-bidi:plaintext/, `.${cls} is cut by the page direction`);
-    assert.match(rule[2], /text-align:center/, `.${cls} is not centred`);
+    assert.match(rule[2], /text-align:center/, `.${cls} is not centred, so dir would move it`);
   }
 });
