@@ -10,7 +10,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=26566e09';
+} from '/js/utils.js?v=b9a5b134';
 import { t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { trapFocus } from '/js/dialog.js?v=05935547';
 import { toneForColor } from '/js/label-contrast.js?v=38adb276';
@@ -139,6 +139,7 @@ export function mkFolder(item) {
   if (showLabel) {
     const l = mk('div');
     l.className = 'ilabel';
+    l.dir = 'auto';
     l.style.width = iw + 12 + 'px';
     setUserText(l, item.label || t('type.folder'));
     a.appendChild(l);
@@ -188,6 +189,7 @@ export function openFolderDesktop(folder) {
     if (showLabel) {
       const l = mk('div');
       l.className = 'ilabel';
+      l.dir = 'auto';
       l.style.width = iw + 12 + 'px';
       setUserText(l, child.label || child.id);
       a.appendChild(l);
@@ -316,6 +318,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   if (showLabel) {
     const l = mk('div');
     l.className = 'dyn-fold-label';
+    l.dir = 'auto';
     css(l, { '--lfs': Math.max(9, Math.round(9 * sc)) + 'px', '--lw': cw - 4 + 'px' });
     setUserText(l, item.label || t('type.folder'));
     a.appendChild(l);
@@ -452,6 +455,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
         if (showLabel) {
           const l = mk('div');
           l.className = 'dyn-fold-inner-label';
+          l.dir = 'auto';
           css(l, { '--lfs': Math.max(11, Math.round(11 * ptScale)) + 'px', '--fiw': folderIconW + 'px' });
           setUserText(l, child.label || child.id);
           a.appendChild(l);
@@ -695,6 +699,7 @@ export function buildMobile() {
     if (showLabel) {
       const l = mk('div');
       l.className = 'dyn-mob-label';
+      l.dir = 'auto';
       css(l, { '--lfs': Math.max(9, Math.round(9 * sc)) + 'px', '--lw': '100%' });
       setUserText(l, item.label || item.id);
       a.appendChild(l);

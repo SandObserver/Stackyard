@@ -37,6 +37,10 @@ export { esc } from '/js/html.js?v=c71f8903';
    alignment as well as bidi, so a Latin name on the block dragged its whole row
    to the other edge: a title and its subtitle ended up on opposite sides.
 
+   A centred label sets `dir` on the block as well, because alignment cannot move
+   centred text. Without it the block's direction decides which end is cut, and
+   WebKit ignores unicode-bidi:plaintext for that.
+
    @param {HTMLElement} node @param {string} text @returns {HTMLElement} */
 export const setUserText = (node, text) => {
   node.textContent = '';
