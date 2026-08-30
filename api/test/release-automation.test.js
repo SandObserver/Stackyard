@@ -44,7 +44,12 @@ test('the release page is published from the changelog, after the image', () => 
   const doc = yaml.load(wf('release.yml'));
   const page = doc.jobs['release-page'];
   assert.ok(page, 'release.yml has no release-page job');
-  assert.equal(page.needs, 'build-and-push', 'the page must not describe an image that failed to publish');
+  assert.equal(page.needs, 'verify-published', 'the page must not describe an image that failed to publish');
+  assert.equal(
+    doc.jobs['verify-published'].needs,
+    'build-and-push',
+    'verification reads the pushed image, so it runs after the push',
+  );
   const script = page.steps.map(s => s.run || '').join('\n');
   assert.match(script, /release-notes\.js/, 'the notes must come from CHANGELOG.md');
   assert.match(script, /gh release create/);
