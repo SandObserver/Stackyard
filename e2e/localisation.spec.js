@@ -1,9 +1,6 @@
 // @ts-check
-/* Choosing a language, and what the choice reaches.
-
-   Everything else that checks translation reads the catalogues or the source on
-   disk. None of it proves a reader can pick a language, that the choice
-   survives a reload, or that the words fit the space they are drawn in. */
+/* Choosing a language, and what the choice reaches. Every other translation
+   check reads the catalogues or the source on disk. */
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, dismissSetupPrompt, app } = require('./helpers');
@@ -29,8 +26,7 @@ test('a language chosen in Settings is saved and survives a reload', async ({ pa
   await expect.poll(async () => (await (await request.get('/api/config')).json()).settings?.language).toBe('de');
 
   /* Do not reload here. A language change reloads the page itself, and a second
-     navigation on top of that aborts the first. The German text cannot appear
-     until that reload has landed, so waiting for it waits for the reload. */
+     navigation aborts the first. */
   await expect(page.locator('#srv-save')).toHaveText(GERMAN_SAVE);
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
 });
@@ -49,8 +45,8 @@ test('Persian sets the direction as well as the language', async ({ page, reques
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 });
 
-/* A widget is an iframe and does not load the i18n module. The language has to
-   arrive on its URL or the tile is English inside a translated page. */
+/* A widget is an iframe and does not load the i18n module. The language must
+   arrive on its URL. */
 test('a widget frame is given the language', async ({ page, request }) => {
   await seedConfig(request, {
     items: [{ id: 'w1', type: 'widget', widgetType: 'clock', widgetSize: 'medium', label: 'Clock' }],
@@ -93,14 +89,8 @@ test('a development locale is not written to the config', async ({ page, request
 
 /* ── the words fit ────────────────────────────────────────────────────────── */
 
-/* The pseudolocale pads every message by about 40%, which is what makes this
-   worth measuring: a control that holds the padded string holds a real
-   translation.
-
-   Only undesigned overflow counts. A row label sets `text-overflow: ellipsis`
-   and is meant to truncate, so an ellipsis there is the design working, not a
-   defect. What this looks for is text that overflows with nothing to show for
-   it: cut off with no ellipsis, or spilling out of its box. */
+/* The pseudolocale pads every message by about 40%. Only undesigned overflow
+   counts: text cut off with no ellipsis, or spilling out of its box. */
 const CLIPPED = `() => {
   const out = [];
   for (const e of document.querySelectorAll('button, .rl, .nl, h1, h2, label, .grp-hdr')) {

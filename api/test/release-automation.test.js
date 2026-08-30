@@ -4,10 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 
-/* The release runs unattended, and each step exists because the one before it
-   cannot reach the next. GITHUB_TOKEN starts no workflow run, so a tag or a
-   release page it creates ends the chain silently: the image never builds, or
-   the Community Applications listing never updates. */
+/* GITHUB_TOKEN starts no workflow run, so a tag or a release page it creates
+   ends the chain silently. */
 
 const ROOT = path.join(__dirname, '..', '..');
 const wf = f => fs.readFileSync(path.join(ROOT, '.github', 'workflows', f), 'utf8');

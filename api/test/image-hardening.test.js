@@ -16,8 +16,6 @@ test('the Dockerfile removes npm, corepack and yarn', () => {
 });
 
 test('the removal is verified inside the build', () => {
-  /* A path that stops matching after a base image bump would otherwise remove
-     nothing and say nothing. */
   assert.match(dockerfile, /if command -v npm \|\| command -v npx \|\| command -v yarn \|\| command -v corepack; then/);
   assert.match(dockerfile, /a package manager survived removal/);
 });
@@ -27,12 +25,8 @@ test('node itself is still checked to work afterwards', () => {
 });
 
 test('nothing in the image invokes a package manager', () => {
-  /* If a future change needs npm at runtime, this fails and the removal has to
-     be reconsidered rather than worked around.
-
-     An invocation is the name used as a command. Every legitimate mention in
-     these files is part of a path being deleted, so a preceding slash is what
-     separates the two; `command -v` is the removal's own check. */
+  /* An invocation is the name used as a command. A preceding slash marks a path
+     being deleted, and `command -v` is the removal's own check. */
   const INVOKED = /(?:^|[\s;&|(])(npm|npx|yarn|corepack)\b/;
   for (const file of ['Dockerfile', 'docker-entrypoint.sh', 'supervisord.conf']) {
     const src = fs.readFileSync(path.join(root, file), 'utf8');
@@ -45,8 +39,8 @@ test('nothing in the image invokes a package manager', () => {
 });
 
 test('the API still declares no runtime dependencies', () => {
-  /* The removal is only safe while this holds: a dependency would need an
-     install step, and the image has nothing to run one with. */
+  /* A runtime dependency would need an install step, and the image has no
+     package manager to run one. */
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'api', 'package.json'), 'utf8'));
   assert.deepEqual(
     pkg.dependencies ?? {},
@@ -55,14 +49,8 @@ test('the API still declares no runtime dependencies', () => {
   );
 });
 
-/* setuptools arrives as an apk dependency of supervisor and is reported against
-   CVE-2026-59890. It is deleted rather than accepted: supervisor has not needed
-   it at runtime since Python 3.8, this image is 3.14, and the Alpine package
-   ships no pkg_resources for anything to import.
-
-   The deletion has to share the RUN that installs supervisor. In a later layer
-   the files would still exist in this one, which is where a scanner reads them
-   from and where the image would still carry them. */
+/* setuptools arrives as an apk dependency of supervisor. The deletion has to
+   share the RUN that installs it, or the files stay in that layer. */
 test('the Dockerfile deletes setuptools', () => {
   for (const target of [
     '/usr/lib/python3*/site-packages/setuptools',
@@ -84,9 +72,6 @@ test('setuptools is removed in the layer that installs supervisor', () => {
   );
 });
 
-/* Deleting the files is only half of it. The build asserts nothing can import
-   setuptools afterwards, and that supervisord, whose apk dependency brought it
-   in, still starts without it. */
 test('the build proves the removal and that supervisord survives it', () => {
   assert.match(dockerfile, /if python3 -c 'import setuptools' 2>\/dev\/null; then/);
   assert.match(dockerfile, /setuptools survived removal/);
@@ -94,8 +79,7 @@ test('the build proves the removal and that supervisord survives it', () => {
 });
 
 /* The base image is pinned by digest, so nothing else pulls a security update
-   into the image. Alpine had a fixed OpenSSL the pinned base did not carry, and
-   the published image stayed vulnerable until this step existed. */
+   into the image. */
 test('the build upgrades the base packages before installing anything', () => {
   assert.match(dockerfile, /RUN apk upgrade --no-cache/, "the image would ship the base digest's packages unchanged");
   assert.ok(

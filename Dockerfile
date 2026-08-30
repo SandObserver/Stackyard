@@ -1,11 +1,6 @@
-# Both stages are pinned by digest, so a build is reproducible and Dependabot has
-# something to raise. A bare `24-alpine` moves under the tag, and no minor or
-# patch update ever appears on the 24 line for Dependabot to propose. Change both
-# together.
-#
-# Asset URLs are served with a one-year immutable lifetime, so every build has to
-# stamp them itself. An unstamped tree would pin `?v=1` in browser caches and
-# keep serving the old file after an upgrade.
+# Both stages are pinned by digest. Change both together.
+# This stage stamps the asset URLs. Assets are served immutable for a year, so an
+# unstamped tree keeps serving the old file after an upgrade.
 FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS assets
 WORKDIR /src
 COPY ui/ ./ui/
@@ -19,10 +14,8 @@ LABEL org.opencontainers.image.title="Stackyard" \
       org.opencontainers.image.source="https://github.com/SandObserver/stackyard" \
       org.opencontainers.image.licenses="Apache-2.0"
 
-# No package manager in the runtime image: nothing here uses one, and their
-# bundled dependencies were this image's only HIGH and CRITICAL findings. Paths
-# are globbed because the yarn directory carries its version; the check below
-# fails the build if a base image rename makes a glob stop matching.
+# No package manager in the runtime image. The check fails the build if a base
+# image change makes a path stop matching.
 RUN rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
            /opt/yarn-* && \
@@ -33,96 +26,66 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
     fi && \
     node -e "process.exit(0)"
 
-# Install Nginx and supervisor
-#
-# `apk upgrade` first. The base image is pinned by digest, so without this the
-# image ships whatever packages that digest was built with, however long ago.
-# Alpine published a fixed OpenSSL that the pinned base did not carry, and the
-# published image stayed vulnerable. The release build scans both platforms and
-# fails on a fixable HIGH, so a bad package cannot reach a registry.
+# Keep `apk upgrade` first. The base image is pinned by digest and gets no
+# security updates without it.
 RUN apk upgrade --no-cache && \
     apk add --no-cache nginx supervisor && \
-    # Remove default nginx config from both possible locations
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/http.d/default.conf && \
-    # Log/run paths for nginx and supervisor
     mkdir -p /var/log/nginx /var/log/supervisor /var/lib/nginx /run/nginx && \
-    # Data and icons dirs — users mount volumes here.
-    # Owned by the node user (UID 1000, provided by the base image) so the
-    # API process can write config and uploaded icons without running as root.
+    # Users mount volumes here. Owned by node so the API can write config and
+    # icons without running as root.
     mkdir -p /data /icons && \
     chown -R node:node /data /icons && \
-    # setuptools comes in as an apk dependency of supervisor, and CVE-2026-59890
-    # is reported against the version Alpine carries. `apk del` refuses it, but
-    # the dependency is packaging metadata rather than a runtime need: supervisor
-    # has not required setuptools on Python 3.8 or newer, this image is 3.14, and
-    # the Alpine package ships no pkg_resources for anything to import. Nothing
-    # here runs pip. So the library is deleted outright rather than carried and
-    # explained. Same layer as the install, or the files survive in this one.
+    # Delete setuptools in the layer that installs it. In a later layer the
+    # files stay in this one.
     rm -rf /usr/lib/python3*/site-packages/setuptools \
            /usr/lib/python3*/site-packages/setuptools-*.dist-info \
            /usr/lib/python3*/site-packages/_distutils_hack \
            /usr/lib/python3*/site-packages/distutils-precedence.pth && \
-    # Both halves proved here: nothing can import it, and supervisord still runs
-    # without it. A path that stops matching after a base image bump would
-    # otherwise delete nothing and say nothing.
     if python3 -c 'import setuptools' 2>/dev/null; then \
       echo 'setuptools survived removal'; exit 1; \
     fi && \
     supervisord --version
 
-# Copy Nginx config — Alpine nginx reads from http.d/
+# Alpine nginx reads from http.d/
 COPY nginx/dashboard.conf /etc/nginx/http.d/dashboard.conf
 COPY nginx/security-headers.conf /etc/nginx/http.d/security-headers.conf
 COPY nginx/csp-default.conf /etc/nginx/http.d/csp-default.conf
-# Replaced at container start by docker-entrypoint.sh; present here so the
-# config is valid at build time.
+# Replaced at container start by docker-entrypoint.sh. Present so the config is
+# valid at build time.
 COPY nginx/realip.conf /etc/nginx/http.d/realip.conf
 
-# Copy UI static files, with their cache-busting stamps already written.
 COPY --from=assets /src/ui/ /usr/share/nginx/html/
 
-# Copy API source, owned by the node user
-# The image mirrors the repository layout: api/ and ui/ keep their names and their
-# position relative to each other. Rules that both the browser and the server
-# enforce can then live in one file and be reached by the same relative path in
-# both places, rather than being copied and kept in step by hand.
+# The image mirrors the repository layout. Shared modules keep the same relative
+# path in both places.
 COPY --chown=node:node api/ /app/api/
-# Only the shared modules from ui/, not the whole UI: nginx serves that from the
-# web root above. See ui/js/link-url.js.
 COPY --chown=node:node ui/js/link-url.js /app/ui/js/link-url.js
-# The supervisord event listener that exits the container when a program cannot
-# be started. See scripts/exit-on-fatal.py.
 COPY scripts/exit-on-fatal.py /app/scripts/exit-on-fatal.py
-# supervisor is a Python program, so apk pulls python3 in with it. Asserted
-# rather than assumed: if that ever stops being true the image fails to build,
-# instead of shipping a listener that cannot start and leaving the very failure
-# it exists to catch undetected.
+# Fails the build if python3 is no longer present. Without it the event listener
+# cannot start and no failure is reported.
 RUN /usr/bin/python3 -c "import ast,sys; ast.parse(open('/app/scripts/exit-on-fatal.py').read())"
 
-# Copy supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/stackyard.conf
 
 WORKDIR /app/api
 
-# Version baked from the release tag by CI (docker/metadata-action → build-arg).
-# Placed late so version-only rebuilds don't bust earlier layers.
+# Late, so a version-only rebuild does not bust earlier layers.
 ARG APP_VERSION=dev
 ENV APP_VERSION=$APP_VERSION
 
 EXPOSE 80
 
-# Healthcheck runs through Nginx → Node, covering both processes.
+# Runs through nginx to Node, so it covers both processes.
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
   CMD wget -qO- http://127.0.0.1:80/health > /dev/null || exit 1
 
-# supervisord runs as root so it can bind port 80 (nginx) and spawn processes.
-# It drops the API process to the unprivileged 'node' user (see supervisord.conf).
-# nginx drops its worker processes to the 'nginx' user automatically.
+# supervisord runs as root to bind port 80. It drops the API process to the node
+# user. See supervisord.conf.
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh && \
-    # Proves the config parses in the image that ships, which also proves nginx
-    # was built with the realip module the entrypoint depends on. A missing
-    # module fails the build here rather than at a user's container start.
+    # Proves the shipped config parses and that nginx carries the realip module
+    # the entrypoint needs.
     printf 'listen [::]:80;\n' > /etc/nginx/listen-ipv6.inc && \
     printf 'set_real_ip_from 127.0.0.1;\nreal_ip_header X-Forwarded-For;\nreal_ip_recursive on;\n' > /etc/nginx/http.d/realip.conf && \
     nginx -t && \

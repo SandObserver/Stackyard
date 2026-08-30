@@ -1,7 +1,6 @@
 // @ts-check
-/* Seed through the API, never by writing the config file: a spec must work
-   against a container it shares no filesystem with, and the seed must pass the
-   same validation a real save does. */
+/* Seed through the API, never by writing the config file. A spec runs against a
+   container it shares no filesystem with. */
 
 const { expect } = require('@playwright/test');
 const { BASE_URL } = require('./base-url');
@@ -9,13 +8,13 @@ const { BASE_URL } = require('./base-url');
 /** Replace the whole config. @param {import('@playwright/test').APIRequestContext} request */
 async function seedConfig(request, config) {
   const body = { _schemaVersion: 3, items: [], settings: {}, ...config };
-  /* A write has to state its origin, and this request context is not a page. */
+  /* A write must state its origin. This request context is not a page. */
   const res = await request.post('/api/config', { data: body, headers: { Origin: BASE_URL } });
   expect(res.ok(), `seeding failed: ${res.status()} ${await res.text()}`).toBeTruthy();
 }
 
-/** Clear the first-run setup prompt. Until it is dismissed the dashboard shows
-    the prompt and never builds its tiles, so every dashboard spec needs this.
+/** Clear the first-run setup prompt. Until it is dismissed the dashboard builds
+    no tiles.
     @param {import('@playwright/test').APIRequestContext} request */
 async function dismissSetupPrompt(request) {
   const res = await request.post('/api/auth/dismiss-setup', { headers: { Origin: BASE_URL } });
@@ -42,8 +41,8 @@ function app(id, label, href = `http://example.invalid/${id}`) {
   return { id, type: 'app', label, href, color: 'dark', dock: false };
 }
 
-/** Open Settings and switch to the Dashboard section. Admin has no URL
-    routing: the section is chosen by clicking the sidebar. */
+/** Open Settings and switch to the Dashboard section. Admin has no URL routing;
+    the section is chosen by clicking the sidebar. */
 async function openDashboardList(page) {
   await page.goto('/admin/');
   await page.locator('.nl[data-sec="dashboard"]').click();
@@ -84,13 +83,9 @@ function rowByName(page, name) {
 
 /* ── Reading a real pixel ─────────────────────────────────────────────────── */
 
-/* Translucent chrome over a wallpaper cannot be judged from the stylesheet: what
-   the eye gets is the blur and every layer composited together. So these read
-   the pixel the browser actually painted.
-
-   Playwright vendors a PNG decoder, but it is an internal of the bundle and
-   would break on an upgrade. A screenshot is 8-bit non-interlaced RGB or RGBA,
-   which zlib and twenty lines cover. */
+/* Translucent chrome over a wallpaper cannot be judged from the stylesheet, so
+   these read the painted pixel. Playwright's own PNG decoder is a bundle
+   internal and breaks on an upgrade. */
 
 const zlib = require('node:zlib');
 
@@ -191,9 +186,8 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** The colour at one point, once it has stopped changing. A panel that fades or
-    blurs in is still moving when it first becomes visible, and a sample taken
-    then measures a frame the reader never sees.
+/** The colour at one point, once it has stopped changing. A panel that fades in
+    is still moving when it first becomes visible.
     @param {import('@playwright/test').Locator} locator
     @param {number} fx @param {number} fy fractions of the element's box
     @returns {Promise<[number,number,number]>} */

@@ -1,19 +1,14 @@
 name: End-to-end
 
-# Runs before a merge, not only after one: a browser test that can block a
-# release should be able to block a merge. This is a required check, so it runs
-# on every pull request. Do not filter it by path. A required check that never
-# starts blocks a pull request forever.
-#
-# Also on main, and on demand.
+# A required check. Do not filter it by path. A required check that never starts
+# blocks a pull request forever.
 on:
   pull_request:
   push:
     branches:
       - main
   workflow_dispatch:
-  # Called by the release workflow, so a tag cannot publish an image whose
-  # browser tests fail.
+  # Called by the release workflow.
   workflow_call:
 
 permissions:
