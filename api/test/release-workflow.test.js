@@ -171,7 +171,7 @@ test('the e2e workflow can be called, and still runs on its own', () => {
     assert.ok(t in triggers, `the e2e workflow lost its ${t} trigger`);
   }
   assert.ok(
-    triggers.pull_request.paths?.length,
-    'the pull request run should be filtered by path, or every docs change pays for it',
+    !triggers.pull_request?.paths,
+    'e2e is a required check, so a path filter would block a pull request that never runs it',
   );
 });
