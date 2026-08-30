@@ -28,7 +28,9 @@ test('a language chosen in Settings is saved and survives a reload', async ({ pa
   /* Read it back from the server, not from the page that just wrote it. */
   await expect.poll(async () => (await (await request.get('/api/config')).json()).settings?.language).toBe('de');
 
-  await page.reload();
+  /* Do not reload here. A language change reloads the page itself, and a second
+     navigation on top of that aborts the first. The German text cannot appear
+     until that reload has landed, so waiting for it waits for the reload. */
   await expect(page.locator('#srv-save')).toHaveText(GERMAN_SAVE);
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
 });

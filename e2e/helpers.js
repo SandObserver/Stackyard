@@ -191,6 +191,23 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/** The colour at one point, once it has stopped changing. A panel that fades or
+    blurs in is still moving when it first becomes visible, and a sample taken
+    then measures a frame the reader never sees.
+    @param {import('@playwright/test').Locator} locator
+    @param {number} fx @param {number} fy fractions of the element's box
+    @returns {Promise<[number,number,number]>} */
+async function settledPixelAt(locator, fx, fy) {
+  let previous = await pixelAt(locator, fx, fy);
+  for (let i = 0; i < 20; i++) {
+    await locator.page().waitForTimeout(100);
+    const current = await pixelAt(locator, fx, fy);
+    if (current.every((c, n) => c === previous[n])) return current;
+    previous = current;
+  }
+  throw new Error(`the colour at ${fx},${fy} never settled: last read rgb(${previous})`);
+}
+
 module.exports = {
   seedConfig,
   dismissSetupPrompt,
@@ -204,5 +221,6 @@ module.exports = {
   rowByName,
   centrePixel,
   pixelAt,
+  settledPixelAt,
   contrast,
 };
