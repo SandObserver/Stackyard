@@ -14,6 +14,7 @@ import {
   mk,
   mkWrap as _mkWrap,
   mountScaledWidget,
+  pageDir,
   q,
   qa,
   qi,
@@ -21,13 +22,13 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=b9a5b134';
-import { initSpotlight } from '/js/spotlight.js?v=00545746';
+} from '/js/utils.js?v=8ca7ce3c';
+import { initSpotlight } from '/js/spotlight.js?v=fe9e1b53';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=b400beaf';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=88773f11';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
 import { formatNumber } from '/js/format-number.js?v=e2165e12';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=08aae50f';
@@ -464,7 +465,7 @@ function goTo(n, dotEls, announce = true) {
   storeSet(PAGE_STORE, String(pg));
   const strip = el('pages');
   syncPageInert(pg);
-  const t = `translateX(-${pg * 100}vw)`;
+  const t = `translateX(${-pageDir() * pg * 100}vw)`;
   strip.style.transform = strip.style.webkitTransform = t;
   strip.style.willChange = 'transform';
   strip.addEventListener(
@@ -868,8 +869,8 @@ async function boot() {
     if (el('spot').classList.contains('on')) return;
     /* The overlay covers the page it would scroll behind. */
     if (document.querySelector('.folder-overlay')) return;
-    if (e.key === 'ArrowRight') goTo(pg + 1);
-    if (e.key === 'ArrowLeft') goTo(pg - 1);
+    if (e.key === 'ArrowRight') goTo(pg + pageDir());
+    if (e.key === 'ArrowLeft') goTo(pg - pageDir());
   });
   let _dMx = 0,
     _dDragging = false;
@@ -887,7 +888,7 @@ async function boot() {
        twice for one gesture. */
     if (Date.now() - _lastTouch < COMPAT_POINTER_MS) return;
     const dx = e.clientX - _dMx;
-    if (Math.abs(dx) > 60) goTo(pg + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 60) goTo(pg + (dx < 0 ? 1 : -1) * pageDir());
   });
   let _dTx = 0;
   document.addEventListener(
@@ -906,7 +907,7 @@ async function boot() {
       _lastTouch = Date.now();
       if (MOB) return;
       const dx = e.changedTouches[0].clientX - _dTx;
-      if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1));
+      if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1) * pageDir());
     },
     { passive: true },
   );

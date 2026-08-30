@@ -65,7 +65,7 @@ test('the icon grid itself is unchanged', () => {
 
 test('the strip is measured and moved in padded pages', () => {
   assert.match(overlay, /width: pages\.length \* pageW \+ 'px'/);
-  assert.match(overlay, /translateX\(-\$\{curPage \* pageW\}px\)/);
+  assert.match(overlay, /translateX\(\$\{-pageDir\(\) \* curPage \* pageW\}px\)/);
   assert.doesNotMatch(overlay, /curPage \* gridInnerW/, 'a page step shorter than the page leaves the seam visible');
 });
 

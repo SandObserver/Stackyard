@@ -50,6 +50,15 @@ export const setUserText = (node, text) => {
   return node;
 };
 
+/* A page strip is laid out in the page's direction, so the next page sits to the
+   left in one direction and to the right in the other. translateX has no logical
+   form, and a strip moved the wrong way leaves the screen: 1 where a page
+   advances leftwards, -1 where it advances rightwards.
+
+   The same number mirrors the inputs. A leftward drag and the right arrow ask
+   for the next page in one direction and the previous page in the other. */
+export const pageDir = () => (getComputedStyle(document.documentElement).direction === 'rtl' ? -1 : 1);
+
 /* A tile label is one line and ellipsises. The full name is on the anchor's
    accessible name either way, so this is for a pointer: a tooltip only where the
    text is actually cut, because one on every tile is noise.

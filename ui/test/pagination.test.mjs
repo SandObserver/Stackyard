@@ -171,3 +171,42 @@ test('the touch pager still belongs to one layout only', () => {
   const touchend = dashboard.slice(at, dashboard.indexOf('{ passive: true }', at));
   assert.match(touchend, /if \(MOB\) return/, 'both swipe handlers would advance two pages for one gesture');
 });
+
+/* A strip is laid out in the page's direction, so the next page is on the left
+   in one direction and on the right in the other. translateX has no logical
+   form: with the sign fixed, a Persian dashboard moved page two further off the
+   screen instead of onto it, and every page after the first was unreachable. */
+test('both page strips move by the direction of the page', () => {
+  assert.match(
+    dashboard,
+    /translateX\(\$\{-pageDir\(\) \* pg \* 100\}vw\)/,
+    'the dashboard strip is fixed to one direction',
+  );
+  assert.match(
+    read('js/ui.js'),
+    /translateX\(\$\{-pageDir\(\) \* curPage \* pageW\}px\)/,
+    'the folder strip is fixed to one direction',
+  );
+});
+
+/* The arrows and a drag name a side of the screen, not a page number, so they
+   mirror with the layout. */
+test('the arrow keys and every drag mirror too', () => {
+  assert.match(dashboard, /ArrowRight'\) goTo\(pg \+ pageDir\(\)\)/);
+  assert.match(dashboard, /ArrowLeft'\) goTo\(pg - pageDir\(\)\)/);
+  for (const src of [dashboard, read('js/ui.js')]) {
+    for (const m of src.matchAll(/\(dx < 0 \? 1 : -1\)(.{0,12})/g)) {
+      assert.match(m[1], /^ \* pageDir\(\)/, 'a drag still assumes one direction');
+    }
+  }
+});
+
+/* One reading of the document, so a right-to-left page cannot get a left-to-right
+   number from a stale copy. */
+test('the direction is read from the document, not stored', () => {
+  const utils = read('js/utils.js');
+  assert.match(
+    utils,
+    /export const pageDir = \(\) => \(?getComputedStyle\(document\.documentElement\)\.direction === 'rtl' \? -1 : 1\)?;/,
+  );
+});
