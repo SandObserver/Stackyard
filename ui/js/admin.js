@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=ef291542';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=1d7010c3';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d1c7d163';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
@@ -32,7 +32,7 @@ import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=db4192cd';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=8ca7ce3c';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b5036986';
 import { normalizeColorInput } from '/js/admin-color-control.js?v=bfd0955a';
-import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=cceca788';
+import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=1907cce7';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
    viewport than they have. The rule lives in layout.js, shared with the

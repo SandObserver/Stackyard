@@ -386,10 +386,10 @@ function renderActLabels(host) {
     setHtml(
       card,
       html`${_valueSelect(i, path)}
-      ${_ieRow(`ie-albl-name-${i}`, _optRow(t('app.labelText')), `albl-name-${i}`, l.name, t('app.labelPh'), 'text', t('app.labelText'))}
+      ${_ieRow(`ie-albl-name-${i}`, _optRow(t('app.labelText')), `albl-name-${i}`, l.name, t('app.labelPh'))}
       <div id="albl-col-slot-${i}"></div>
-      ${_ieRow(`ie-albl-unit-${i}`, _optRow(t('app.unit')), `albl-unit-${i}`, l.unit, t('app.unitPh'), 'text', t('app.unit'))}
-      ${_ieRow(`ie-albl-min-${i}`, _optRow(t('app.badgeMin')), `albl-min-${i}`, l.min, t('app.badgeMinPh'), 'number', t('app.badgeMin'))}`,
+      ${_ieRow(`ie-albl-unit-${i}`, _optRow(t('app.unit')), `albl-unit-${i}`, l.unit, t('app.unitPh'))}
+      ${_ieRow(`ie-albl-min-${i}`, _optRow(t('app.badgeMin')), `albl-min-${i}`, l.min, t('app.badgeMinPh'), 'number')}`,
     );
     host.appendChild(card);
     initInlineEdit(`ie-albl-name-${i}`, `albl-name-${i}`, { placeholder: t('app.labelPh') });
@@ -488,11 +488,10 @@ function wireActLabelDrag(host) {
   }
 }
 
-/** The inline-edit row markup. `label` may carry markup, so the button's
-    accessible name comes from `aria`: an attribute cannot hold an element. */
-function _ieRow(rowId, label, inpId, val, ph, type = 'text', aria) {
+/** The inline-edit row markup. The pencil's accessible name is set by
+    initInlineEdit, from the row's own label. */
+function _ieRow(rowId, label, inpId, val, ph, type = 'text') {
   const has = val != null && val !== '';
-  const name = aria == null ? String(label) : aria;
   return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" style="display:none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`;
 }
 

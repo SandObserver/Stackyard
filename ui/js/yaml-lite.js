@@ -53,7 +53,7 @@ function flowNode(p, depth) {
   if (c === undefined) throw new YamlLiteError('unterminated flow collection', p.line);
   if (c === '[' || c === '{') return flowCollection(p, depth);
   if (c === '"' || c === "'") return flowQuoted(p);
-  let start = p.i;
+  const start = p.i;
   while (p.i < p.s.length && !/[,\]}]/.test(p.s[p.i])) {
     /* A colon only ends the key when a space or a closing bracket follows it,
        matching the block form, so "http://host:8080" stays one value. */
@@ -136,7 +136,7 @@ function parseFlow(s, line, ctx) {
 
 /** @param {string} raw @param {number} line @param {Ctx} ctx */
 function scalar(raw, line, ctx) {
-  let s = raw.trim();
+  const s = raw.trim();
   if (s === '') return '';
   const anchor = /^&(\S+)(?:\s+([\s\S]*))?$/.exec(s);
   if (anchor) {

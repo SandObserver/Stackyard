@@ -5,7 +5,7 @@
   "scripts": {
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint": "biome lint .",
+    "lint": "biome lint --error-on-warnings .",
     "paths:check": "node scripts/check-frontend-paths.js",
     "typecheck": "tsc -p tsconfig.json",
     "typecheck:ui": "tsc -p tsconfig.frontend.json"

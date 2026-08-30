@@ -158,7 +158,7 @@ async function centrePixel(locator) {
   const shot = await locator.page().screenshot({
     clip: { x: box.x + box.width / 2, y: box.y + box.height / 2, width: 1, height: 1 },
   });
-  const { data, channels } = decodePng(shot);
+  const { data } = decodePng(shot);
   return [data[0], data[1], data[2]];
 }
 
