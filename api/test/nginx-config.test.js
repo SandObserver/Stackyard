@@ -276,7 +276,7 @@ test('nginx allows at least as much as the API does', () => {
    and the browser is handed an HTML error page it cannot read. */
 
 test('nginx allows a wallpaper upload as large as the API accepts', () => {
-  const block = /location\s*=\s*\/api\/wallpaper\/upload\s*\{([\s\S]*?)\n    \}/.exec(dashboard);
+  const block = /location\s*=\s*\/api\/wallpaper\/upload\s*\{([\s\S]*?)\n {4}\}/.exec(dashboard);
   assert.ok(block, 'the wallpaper upload has no location of its own');
   const routeLimit = nginxSize(block[1], 'client_max_body_size');
   const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'wallpaper.js'), 'utf8');
@@ -287,7 +287,7 @@ test('nginx allows a wallpaper upload as large as the API accepts', () => {
 });
 
 test('nginx waits for a wallpaper download at least as long as the API does', () => {
-  const block = /location\s*=\s*\/api\/wallpaper\/fetch\s*\{([\s\S]*?)\n    \}/.exec(dashboard);
+  const block = /location\s*=\s*\/api\/wallpaper\/fetch\s*\{([\s\S]*?)\n {4}\}/.exec(dashboard);
   assert.ok(block, 'the wallpaper link fetch has no location of its own');
   const readTimeout = /proxy_read_timeout\s+(\d+)s;/.exec(block[1]);
   assert.ok(readTimeout, 'no proxy_read_timeout on the fetch location');
@@ -302,7 +302,7 @@ test('nginx waits for a wallpaper download at least as long as the API does', ()
 });
 
 test('the wallpaper upload is proxied like the rest of the API', () => {
-  const block = /location\s*=\s*\/api\/wallpaper\/upload\s*\{([\s\S]*?)\n    \}/.exec(dashboard);
+  const block = /location\s*=\s*\/api\/wallpaper\/upload\s*\{([\s\S]*?)\n {4}\}/.exec(dashboard);
   assert.match(block[1], /proxy_pass\s+http:\/\/127\.0\.0\.1:3000;/);
   assert.match(block[1], /proxy_set_header\s+X-Real-IP\s+\$remote_addr;/);
   assert.match(block[1], /proxy_set_header\s+X-Forwarded-For\s+\$proxy_add_x_forwarded_for;/);

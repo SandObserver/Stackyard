@@ -57,3 +57,12 @@ test('biome is a pinned dev dependency', () => {
   assert.ok(v, '@biomejs/biome must be a devDependency');
   assert.match(v, /^\d+\.\d+\.\d+$/, `pin an exact version, got "${v}"`);
 });
+
+/* A warning that cannot fail anything is a warning nobody clears. */
+test('lint fails on a warning, not only on an error', () => {
+  assert.match(
+    pkg.scripts.lint,
+    /--error-on-warnings/,
+    'without this flag the lint gate exits 0 with warnings outstanding',
+  );
+});

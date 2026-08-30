@@ -67,7 +67,8 @@ before merge.
 
 - **`npm run lint`** is Biome, from `node_modules`. Run it through npm: a bare
   `npx biome` resolves to an unrelated package that exits 0 without checking
-  anything.
+  anything. A warning fails the run. Fix it or relax the rule in `biome.json`;
+  leaving it outstanding is not an option CI allows.
 
 ## More
 
