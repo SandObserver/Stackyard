@@ -194,3 +194,22 @@ test('the first-run prompt and API error are translated', () => {
     assert.ok(src.includes(key), `${key} is not used`);
   }
 });
+
+/* An app's name is user text, so its language can differ from the interface
+   language. Without this the block's direction decides where the line is cut,
+   and a Latin name on a right-to-left dashboard lost its beginning: "Backup and
+   Storage" read "...nd Storage".
+
+   dir on the block would set alignment too, which moves a name away from its own
+   icon. These labels are centred, so plaintext moves nothing. */
+test('every tile label is cut at the end of its own name, and stays centred', () => {
+  const css = read('css/dashboard.css');
+  for (const cls of ['ilabel', 'dyn-mob-label', 'dyn-fold-label', 'dyn-fold-inner-label']) {
+    const rule = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(
+      m => new RegExp(`\\.${cls}\\s*[,{]|\\.${cls}$`).test(m[1].trim()) && m[2].includes('text-overflow'),
+    );
+    assert.ok(rule, `no truncating rule for .${cls}`);
+    assert.match(rule[2], /unicode-bidi:plaintext/, `.${cls} is cut by the page direction`);
+    assert.match(rule[2], /text-align:center/, `.${cls} is not centred`);
+  }
+});

@@ -215,10 +215,14 @@
     }
 
     /* ── Icon label ── */
+    /* A name is user text, so its language need not be the interface language.
+       plaintext takes the direction from the name itself, so the ellipsis falls
+       at the name's own end. These labels are centred, so it moves no text: dir
+       on the block would, and drags a row to the other edge. */
     .ilabel {
       font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); font-weight:500; color:var(--label-color);
       text-align:center; text-shadow:var(--label-shadow); margin-top:6px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; unicode-bidi:plaintext;
     }
 
     /* Labels measured against a light background. The tone is set on the
@@ -736,8 +740,8 @@
     .dyn-grid       { display:grid; grid-template-columns:repeat(6,var(--iw)); gap:24px; justify-content:center; }
     .dyn-mob-btn    { flex:1; height:var(--rh); background:none; border:none; padding:0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; -webkit-tap-highlight-color:transparent; -webkit-appearance:none; }
     .dyn-mob-icon   { display:flex; flex-direction:column; align-items:center; justify-content:center; width:var(--cw); height:var(--rh); cursor:pointer; text-decoration:none; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
-    .dyn-mob-label  { font-weight:500; color:rgba(255,255,255,.88); text-align:center; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
-    .dyn-fold-label { font-weight:500; color:rgba(255,255,255,.90); text-align:center; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
+    .dyn-mob-label  { font-weight:500; color:rgba(255,255,255,.88); text-align:center; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; unicode-bidi:plaintext; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
+    .dyn-fold-label { font-weight:500; color:rgba(255,255,255,.90); text-align:center; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; unicode-bidi:plaintext; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-wrap  { position:absolute; inset:0; pointer-events:none; border-radius:var(--br); background:rgba(120,130,160,.35); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:var(--gap); padding:var(--pad); overflow:hidden; -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); box-shadow:inset 1px 1px 0 rgba(255,255,255,.22),inset -1px -1px 0 rgba(0,0,0,.12); }
     .dyn-fold-cell  { display:flex; align-items:center; justify-content:center; z-index:1; pointer-events:none; min-width:0; min-height:0; }
     .dyn-fold-sheen { position:absolute; inset:0; pointer-events:none; z-index:2; border-radius:inherit; background:linear-gradient(135deg,rgba(255,255,255,.12) 0%,transparent 55%); }
@@ -751,7 +755,7 @@
     .folder-overlay-mobile:focus, .dyn-fold-anchor:focus,
     .folder-overlay:focus, .folder-icon-link:focus { outline:none; }
     .dyn-fold-anchor { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; -webkit-tap-highlight-color:transparent; }
-    .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
+    .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; unicode-bidi:plaintext; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
     .dyn-title-mob  { position:absolute; pointer-events:none; font-size:var(--tfs); }
     .dyn-box-mob    { position:absolute; display:flex; flex-direction:column; align-items:center; left:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
     .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:1; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; overflow:visible; position:relative; }
