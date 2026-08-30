@@ -147,6 +147,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the badge popover follows it, a Settings row's title and subtitle share an
   edge, and the Now Playing arrows point the way they read.
 
+### Security
+
+- The image now installs Alpine's current security updates at build time.
+
 ## [1.8.2] - 2026-08-25
 
 ### Fixed

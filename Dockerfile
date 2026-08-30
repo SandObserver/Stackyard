@@ -34,7 +34,14 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
     node -e "process.exit(0)"
 
 # Install Nginx and supervisor
-RUN apk add --no-cache nginx supervisor && \
+#
+# `apk upgrade` first. The base image is pinned by digest, so without this the
+# image ships whatever packages that digest was built with, however long ago.
+# Alpine published a fixed OpenSSL that the pinned base did not carry, and the
+# published image stayed vulnerable. The release build scans both platforms and
+# fails on a fixable HIGH, so a bad package cannot reach a registry.
+RUN apk upgrade --no-cache && \
+    apk add --no-cache nginx supervisor && \
     # Remove default nginx config from both possible locations
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/http.d/default.conf && \
     # Log/run paths for nginx and supervisor
