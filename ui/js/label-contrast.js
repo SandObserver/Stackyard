@@ -138,15 +138,15 @@ export function toneForRect(grid, cols, rows, vw, vh, rect) {
 
 /* ── The DOM half ─────────────────────────────────────────────────────────── */
 
-export const GRID_COLS = 32;
-export const GRID_ROWS = 18;
+const GRID_COLS = 32;
+const GRID_ROWS = 18;
 
 /** Any CSS colour as an sRGB triple. A canvas keeps its previous fillStyle when
     the value does not parse, so two seeds are needed to tell an unreadable value
     from a real one.
 
     @param {string} value @returns {[number, number, number]|null} */
-export function parseCssColor(value) {
+function parseCssColor(value) {
   if (typeof value !== 'string' || !value.trim()) return null;
   const read = (/** @type {string} */ seed) => {
     const cv = document.createElement('canvas');

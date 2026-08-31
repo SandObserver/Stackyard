@@ -120,7 +120,6 @@
       width:var(--grid-w); align-items:start;
     }
     .c1 { grid-column:span 1 }
-    .c2 { grid-column:span 2 }
     .r2 { grid-row:span 2 }
     .r3 { grid-row:span 3 }
 
@@ -584,7 +583,7 @@
     body.is-mob #sres .sra { display:none; }
     body.is-mob #sres .sri { width:calc(44px * var(--sc,1)); height:calc(44px * var(--sc,1)); border-radius:calc(10px * var(--sc,1)); }
     /* !important: beats the equally-important #sres .sri img rule below. */
-    body.is-mob #sres .sri img, body.is-mob #sres .sri .sri-img { width:calc(30px * var(--sc,1)) !important; height:calc(30px * var(--sc,1)) !important; }
+    body.is-mob #sres .sri img { width:calc(30px * var(--sc,1)) !important; height:calc(30px * var(--sc,1)) !important; }
 
     /* ── Spotlight result rows ── */
     .sr-section {
@@ -606,8 +605,8 @@
       justify-content:center;
       flex-shrink:0; overflow:hidden;
     }
-    .sri img, .sri .sri-img { width:28px; height:28px; object-fit:contain }
-    #sres .sri img, #sres .sri .sri-img { width:34px !important; height:34px !important; }
+    .sri img { width:28px; height:28px; object-fit:contain }
+    #sres .sri img { width:34px !important; height:34px !important; }
     .srn { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight:400; color:rgba(255,255,255,.92) }
     .srh {
       font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color:rgba(255,255,255,.38); margin-top:1px;
