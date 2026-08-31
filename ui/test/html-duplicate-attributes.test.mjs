@@ -16,8 +16,30 @@ const pages = fs
   .sort();
 
 /* Inline scripts and styles are not markup. Left in place their string
-   literals parse as tags and their template ids as duplicates. */
-const markupOf = html => html.replace(/<script\b[^>]*>[\s\S]*?<\/script>|<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+   literals parse as tags and their template ids as duplicates. Found by index
+   rather than by pattern: an end tag may carry whitespace before its bracket. */
+const EMBEDDED = ['script', 'style'];
+
+const markupOf = html => {
+  const lower = html.toLowerCase();
+  let kept = '';
+  let at = 0;
+  for (;;) {
+    let start = -1;
+    let resume = html.length;
+    for (const tag of EMBEDDED) {
+      const open = lower.indexOf(`<${tag}`, at);
+      if (open === -1 || (start !== -1 && open > start)) continue;
+      const close = lower.indexOf(`</${tag}`, open);
+      const bracket = close === -1 ? -1 : lower.indexOf('>', close);
+      start = open;
+      resume = bracket === -1 ? html.length : bracket + 1;
+    }
+    if (start === -1) return kept + html.slice(at);
+    kept += html.slice(at, start);
+    at = resume;
+  }
+};
 
 const tagsOf = markup => markup.match(/<[a-zA-Z][a-zA-Z0-9-]*(?:"[^"]*"|'[^']*'|[^>"'])*>/g) || [];
 
