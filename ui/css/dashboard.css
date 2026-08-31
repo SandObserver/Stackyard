@@ -753,7 +753,7 @@
     .dyn-fold-anchor { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; -webkit-tap-highlight-color:transparent; }
     .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
     .dyn-title-mob  { position:absolute; pointer-events:none; font-size:var(--tfs); }
-    .dyn-box-mob    { position:absolute; display:flex; flex-direction:column; align-items:center; left:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
+    .dyn-box-mob    { position:absolute; display:flex; flex-direction:column; align-items:center; inset-inline-start:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
     .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:1; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; overflow:visible; position:relative; }
 
 /* Strip backdrop-filter blur for anyone who asks for reduced motion or

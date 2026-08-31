@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Persian now uses one agreed word per concept for address, password, test and
   system, instead of two.
 
+- The settings toggle, the dropdown chevron and the update dot now follow the
+  text direction in right-to-left languages.
+
 ## [1.9.1] - 2026-08-30
 
 ### Added

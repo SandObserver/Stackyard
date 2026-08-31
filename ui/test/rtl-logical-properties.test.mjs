@@ -192,10 +192,10 @@ test('the dashboard needs no direction overrides at all', () => {
   );
 });
 
-/* Only the chevrons and the gradient angle, which no logical property can
-   express. */
+/* Only the chevrons, the gradient angle and the toggle knob's travel, none of
+   which a logical property can express. */
 test('admin keeps only the overrides that cannot be logical', () => {
-  const allowed = [/transform:\s*scaleX\(-1\)/, /--slider-dir:\s*270deg/];
+  const allowed = [/transform:\s*scaleX\(-1\)/, /--slider-dir:\s*270deg/, /transform:\s*translateX\(-22px\)/];
   const overrides = [...code('css/admin.css').matchAll(/\[dir="rtl"\][^{]*\{[^}]*\}/g)].map(m => m[0]);
   assert.equal(overrides.length, allowed.length, `unexpected override list, found:\n${overrides.join('\n')}`);
   for (const rule of allowed) {
@@ -272,4 +272,61 @@ test('a right-to-left locale is shipped, so this is not hypothetical', () => {
 test('the page sets its direction from the chosen locale', () => {
   /* Logical properties do nothing unless dir is actually set. */
   assert.match(read('js/i18n.js'), /setAttribute\('dir', dirFor\(current\)\)/);
+});
+
+/* ── insets ───────────────────────────────────────────────────────────────── */
+
+/* `left` and `right` are the same defect as `margin-left`, and the check above
+   did not cover them, so the settings toggle knob, the select chevron and the
+   update dot all still sat by screen side.
+
+   Three uses are not a defect and are allowed. A pair with the same value on
+   both sides is symmetric and reads the same in either direction. `left: 50%`
+   with a transform is centring. An invisible element has no reading direction:
+   the safe-area probe is measured, never seen.
+
+   Widget pages are deliberately out of scope here. Their absolute positions
+   place artwork, a tape reel or a book spine, and mirroring a drawing is worse
+   than leaving it. */
+const INSET = /(?<![\w-])(left|right)\s*:\s*([^;}]+)/g;
+const RULES = /([^{}]+)\{([^{}]*)\}/g;
+
+const insetOffenders = css => {
+  const out = [];
+  for (const rule of css.matchAll(RULES)) {
+    const [selector, body] = [rule[1].trim().split('\n').pop().trim(), rule[2]];
+    const sides = new Map();
+    for (const d of body.matchAll(INSET)) sides.set(d[1], d[2].trim());
+    if (sides.size === 0) continue;
+    if (/visibility\s*:\s*hidden/.test(body)) continue;
+    if (sides.size === 2 && sides.get('left') === sides.get('right')) continue;
+    if ([...sides.values()].every(v => v === '50%') && /transform\s*:/.test(body)) continue;
+    for (const [side, value] of sides) out.push(`${selector}: ${side}: ${value}`);
+  }
+  return out;
+};
+
+test('no stylesheet places anything by screen side', () => {
+  const offenders = [];
+  for (const sheet of SHEETS) {
+    for (const hit of insetOffenders(code(sheet))) offenders.push(`${sheet} ${hit}`);
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `These do not flip for Persian. Use inset-inline-start/end:\n  ${offenders.join('\n  ')}`,
+  );
+});
+
+test('the inset check still recognises what it is meant to allow', () => {
+  assert.deepEqual(insetOffenders('.a{left:0;right:0}'), [], 'a symmetric pair is not a defect');
+  assert.deepEqual(insetOffenders('.b{left:50%;transform:translateX(-50%)}'), [], 'centring is not a defect');
+  assert.deepEqual(insetOffenders('.c{left:0;visibility:hidden}'), [], 'an invisible probe has no direction');
+  assert.deepEqual(insetOffenders('.d{margin-left:2px}'), [], 'the check above owns the margin form');
+  assert.deepEqual(insetOffenders('.e{left:2px}'), ['.e: left: 2px'], 'a one-sided inset is a defect');
+  assert.deepEqual(
+    insetOffenders('.f{left:0;right:8px}'),
+    ['.f: left: 0', '.f: right: 8px'],
+    'an uneven pair is a defect',
+  );
 });
