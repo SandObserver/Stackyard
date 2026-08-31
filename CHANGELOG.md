@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Folder tiles and the folder rows in Settings are real buttons, so they behave
   as controls for the keyboard and for screen readers.
 
+### Security
+
+- A custom widget's page is sandboxed and can no longer navigate the dashboard
+  away.
+
 ## [1.9.1] - 2026-08-30
 
 ### Added

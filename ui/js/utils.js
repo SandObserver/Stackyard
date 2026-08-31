@@ -202,6 +202,23 @@ export function safeAllow(value) {
 
 /* Mounts the iframe at a fixed design resolution and scales it to fill `card`.
    `card` must be aspect-locked to the design ratio. */
+/* Withheld: allow-top-navigation. Without it a framed page cannot redirect the
+   dashboard through top.location. Everything a real service needs is granted,
+   including its own origin, so its session and storage still work.
+
+   Only a cross-origin frame gets this. A bundled widget is served from here, so
+   it would need allow-same-origin and the attribute would withhold nothing. */
+const SANDBOX =
+  'allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads';
+
+const isCrossOrigin = src => {
+  try {
+    return new URL(src, location.href).origin !== location.origin;
+  } catch {
+    return false;
+  }
+};
+
 /** @param {HTMLElement} card
     @param {{
       src?: string, title?: string, design?: [number, number],
@@ -221,6 +238,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   const clip = mk('div');
   clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
   const ifr = mk('iframe', { src, scrolling: o.scrolling === true || o.scrolling === 'yes' ? 'yes' : 'no', title });
+  if (isCrossOrigin(src)) ifr.setAttribute('sandbox', SANDBOX);
   ifr.setAttribute('allow', safeAllow(o.allow));
   if (o.allowFullscreen !== false) ifr.setAttribute('allowfullscreen', '');
   if (o.referrerPolicy) ifr.setAttribute('referrerpolicy', o.referrerPolicy);

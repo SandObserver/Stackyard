@@ -29,7 +29,7 @@ Some vendor names appear in the source as identifiers, not as references. `-appl
 
 ## Widgets are iframes
 
-Every widget tile is a sandboxed `<iframe>` whose URL comes from `WIDGET_TYPES` in `widget-types.js`. The dashboard passes only URL, size, and title. The widget fetches its own data from `/api/widget-data/<id>` and is rendered at a fixed design size scaled to the tile. A new widget is a folder plus one registry entry, with no dashboard changes.
+Every widget tile is an `<iframe>` whose URL comes from `WIDGET_TYPES` in `widget-types.js`. A bundled widget is served from this server and is not sandboxed: a sandbox would have to grant it `allow-same-origin` and would withhold nothing. A custom widget frames a URL the user supplied, and that frame is sandboxed. It keeps scripts, its own origin, forms, dialogs, pop-ups and downloads, so a real service still works; it is denied top-level navigation, so it cannot redirect the dashboard. The dashboard passes only URL, size, and title. The widget fetches its own data from `/api/widget-data/<id>` and is rendered at a fixed design size scaled to the tile. A new widget is a folder plus one registry entry, with no dashboard changes.
 See [widgets.md](./widgets.md).
 
 ## Badges
