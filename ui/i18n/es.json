@@ -35,7 +35,8 @@
     "hide": "Ocultar",
     "moveUp": "Subir",
     "moveDown": "Bajar",
-    "editNamed": "Editar {name}"
+    "editNamed": "Editar {name}",
+    "addNamed": "+ Añadir {name}"
   },
   "general": {
     "title": "Título",
@@ -146,7 +147,10 @@
     "createNew": "Crear carpeta nueva",
     "expandAria": "Expandir la carpeta {name}",
     "collapseAria": "Contraer la carpeta {name}",
-    "appsInFolder": "Aplicaciones de esta carpeta"
+    "appsInFolder": "Aplicaciones de esta carpeta",
+    "appsCount_one": "{count} aplicación",
+    "appsCount_many": "{count} de aplicaciones",
+    "appsCount_other": "{count} aplicaciones"
   },
   "app": {
     "name": "Nombre",
@@ -216,7 +220,13 @@
     "headerValue": "Valor de cabecera",
     "headerKeyPh": "Clave",
     "addToUrl": "Añadir a la URL",
-    "secretTip": "Guardar este valor como credencial: se oculta tras guardar y nunca se exporta. Al desmarcarlo se borra el valor guardado."
+    "secretTip": "Guardar este valor como credencial: se oculta tras guardar y nunca se exporta. Al desmarcarlo se borra el valor guardado.",
+    "reachable": "Accesible ({status})",
+    "httpError": "Error HTTP {status}",
+    "connectedNoValues": "Conectado, no se encontraron valores numéricos",
+    "foundValues_one": "{count} valor encontrado",
+    "foundValues_many": "{count} de valores encontrados",
+    "foundValues_other": "{count} valores encontrados"
   },
   "home": {
     "search": "Buscar",
@@ -237,7 +247,8 @@
     "apiDownTitle": "No se pudo conectar con la API del panel",
     "apiDownSub": "Comprueba que el contenedor de la API esté en ejecución",
     "retry": "Reintentar",
-    "opensSettings": "Abre los ajustes"
+    "opensSettings": "Abre los ajustes",
+    "loadFailed": "No se pudo cargar la configuración del panel."
   },
   "toast": {
     "saved": "Guardado",
@@ -262,7 +273,16 @@
     "socketHintPublishPort": "Nada respondió en esa dirección. Un socket proxy publicado en el bucle local del host no es accesible desde un contenedor; publícalo en la dirección del puente de Docker, o pon ambos contenedores en una red compartida y usa el nombre del proxy.",
     "wallpaperStored": "Fondo de pantalla guardado en este servidor.",
     "wallpaperFailed": "Error con el fondo de pantalla: {err}",
-    "imageTooLarge": "Esa imagen es demasiado grande para el servidor."
+    "imageTooLarge": "Esa imagen es demasiado grande para el servidor.",
+    "updated": "Actualizado",
+    "added": "Añadido",
+    "error": "Error: {err}",
+    "urlRequired": "URL obligatoria",
+    "nameRequired": "Nombre obligatorio",
+    "fieldRequired": "{field} es obligatorio",
+    "configLoadFailed": "No se pudo cargar la configuración. ¿Está en marcha el contenedor de la API? ({err})",
+    "uploaded": "{name} subido",
+    "uploadFailed": "Error al subir: {err}"
   },
   "confirm": {
     "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",
@@ -344,7 +364,17 @@
     "referrerPolicy": "Política de referente",
     "allowFeaturePolicy": "Permitir (política de funciones)",
     "allowFullscreen": "Permitir pantalla completa",
-    "refreshInterval": "Intervalo de actualización"
+    "refreshInterval": "Intervalo de actualización",
+    "meta": "Widget {type} · {size}",
+    "sizeSmall": "Pequeño",
+    "sizeMedium": "Mediano",
+    "sizeLarge": "Grande",
+    "sizeXLarge": "Muy grande",
+    "none": "Ninguno",
+    "noneSelected": "Ninguno seleccionado",
+    "selectedCount_one": "{count} seleccionado",
+    "selectedCount_many": "{count} de seleccionados",
+    "selectedCount_other": "{count} seleccionados"
   },
   "importForeign": {
     "title": "Importar desde otro panel",
@@ -386,5 +416,9 @@
     "desc": "Elige una contraseña segura para tu panel.",
     "newPassword": "Nueva contraseña",
     "submit": "Establecer contraseña"
+  },
+  "pill": {
+    "system": "Sistema",
+    "hidden": "Oculto"
   }
 }

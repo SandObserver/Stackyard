@@ -35,7 +35,8 @@
     "hide": "Ausblenden",
     "moveUp": "Nach oben",
     "moveDown": "Nach unten",
-    "editNamed": "{name} bearbeiten"
+    "editNamed": "{name} bearbeiten",
+    "addNamed": "+ {name} hinzufügen"
   },
   "general": {
     "title": "Titel",
@@ -146,7 +147,9 @@
     "createNew": "Neuen Ordner erstellen",
     "expandAria": "Ordner {name} aufklappen",
     "collapseAria": "Ordner {name} zuklappen",
-    "appsInFolder": "Apps in diesem Ordner"
+    "appsInFolder": "Apps in diesem Ordner",
+    "appsCount_one": "{count} App",
+    "appsCount_other": "{count} Apps"
   },
   "app": {
     "name": "Name",
@@ -214,7 +217,12 @@
     "headerValue": "Header-Wert",
     "headerKeyPh": "Schlüssel",
     "addToUrl": "An URL anhängen",
-    "secretTip": "Diesen Wert als Zugangsdaten speichern: nach dem Speichern verborgen und nie exportiert. Das Abwählen löscht den gespeicherten Wert."
+    "secretTip": "Diesen Wert als Zugangsdaten speichern: nach dem Speichern verborgen und nie exportiert. Das Abwählen löscht den gespeicherten Wert.",
+    "reachable": "Erreichbar ({status})",
+    "httpError": "HTTP-Fehler {status}",
+    "connectedNoValues": "Verbunden, keine numerischen Werte gefunden",
+    "foundValues_one": "{count} Wert gefunden",
+    "foundValues_other": "{count} Werte gefunden"
   },
   "home": {
     "search": "Suchen",
@@ -235,7 +243,8 @@
     "apiDownTitle": "Keine Verbindung zur Dashboard-API",
     "apiDownSub": "Stellen Sie sicher, dass der API-Container läuft",
     "retry": "Erneut versuchen",
-    "opensSettings": "Öffnet die Einstellungen"
+    "opensSettings": "Öffnet die Einstellungen",
+    "loadFailed": "Dashboard-Konfiguration konnte nicht geladen werden."
   },
   "toast": {
     "saved": "Gespeichert",
@@ -260,7 +269,16 @@
     "socketHintPublishPort": "Unter dieser Adresse hat nichts geantwortet. Ein auf dem Loopback des Hosts veröffentlichter Socket-Proxy ist aus einem Container nicht erreichbar; veröffentlichen Sie ihn auf der Docker-Bridge-Adresse oder legen Sie beide Container in ein gemeinsames Netzwerk und verwenden Sie den Namen des Proxys.",
     "wallpaperStored": "Hintergrundbild auf diesem Server gespeichert.",
     "wallpaperFailed": "Hintergrundbild fehlgeschlagen: {err}",
-    "imageTooLarge": "Dieses Bild ist zu groß für den Server."
+    "imageTooLarge": "Dieses Bild ist zu groß für den Server.",
+    "updated": "Aktualisiert",
+    "added": "Hinzugefügt",
+    "error": "Fehler: {err}",
+    "urlRequired": "URL erforderlich",
+    "nameRequired": "Name erforderlich",
+    "fieldRequired": "{field} ist erforderlich",
+    "configLoadFailed": "Konfiguration konnte nicht geladen werden. Läuft der API-Container? ({err})",
+    "uploaded": "{name} hochgeladen",
+    "uploadFailed": "Hochladen fehlgeschlagen: {err}"
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",
@@ -338,7 +356,16 @@
     "referrerPolicy": "Referrer-Richtlinie",
     "allowFeaturePolicy": "Erlauben (Feature-Policy)",
     "allowFullscreen": "Vollbild erlauben",
-    "refreshInterval": "Aktualisierungsintervall"
+    "refreshInterval": "Aktualisierungsintervall",
+    "meta": "{type}-Widget · {size}",
+    "sizeSmall": "Klein",
+    "sizeMedium": "Mittel",
+    "sizeLarge": "Groß",
+    "sizeXLarge": "Sehr groß",
+    "none": "Keine",
+    "noneSelected": "Nichts ausgewählt",
+    "selectedCount_one": "{count} ausgewählt",
+    "selectedCount_other": "{count} ausgewählt"
   },
   "importForeign": {
     "title": "Aus anderem Dashboard importieren",
@@ -380,5 +407,9 @@
     "desc": "Wähle ein starkes Passwort für dein Dashboard.",
     "newPassword": "Neues Passwort",
     "submit": "Passwort festlegen"
+  },
+  "pill": {
+    "system": "System",
+    "hidden": "Ausgeblendet"
   }
 }

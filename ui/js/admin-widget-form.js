@@ -1,6 +1,6 @@
 import { state } from '/js/admin-state.js?v=c23e6346';
 import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=1d330931';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=77017460';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=4d7fd7b9';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=d17394da';
 import { t } from '/js/i18n.js?v=83239bf4';
@@ -21,7 +21,15 @@ const CUSTOM_SIZES = ['small', 'medium', 'large', 'xlarge'];
 function widgetSizes(type) {
   return type === 'custom' ? CUSTOM_SIZES : state._widgetReg[type]?.sizes || ['medium'];
 }
-const SIZE_LABELS = { small: 'Small', medium: 'Medium', large: 'Large', xlarge: 'Extra Large' };
+const SIZE_KEYS = {
+  small: 'widgetCfg.sizeSmall',
+  medium: 'widgetCfg.sizeMedium',
+  large: 'widgetCfg.sizeLarge',
+  xlarge: 'widgetCfg.sizeXLarge',
+};
+
+/* A registry widget may declare a size that is not one of the four. */
+export const sizeLabel = size => (SIZE_KEYS[size] ? t(SIZE_KEYS[size]) : size);
 
 export function buildWidgetForm(body, item) {
   const wt = item?.widgetType || 'custom';
@@ -95,7 +103,7 @@ function _renderWidgetForm(body) {
   scard.className = 'grp';
   setHtml(
     scard,
-    html`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s => html`<button type="button" class="tile-opt${s === state._wsize ? ' on' : ''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s] || SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${SIZE_LABELS[s]}</span></button>`)}</div></div>`,
+    html`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s => html`<button type="button" class="tile-opt${s === state._wsize ? ' on' : ''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s] || SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${sizeLabel(s)}</span></button>`)}</div></div>`,
   );
   body.appendChild(scard);
   qa('.tile-opt', scard).forEach(b =>

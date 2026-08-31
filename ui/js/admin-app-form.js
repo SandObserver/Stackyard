@@ -15,7 +15,7 @@ import {
   wireChecklist,
 } from '/js/admin-shared.js?v=1d330931';
 import { MAX_LABELS } from '/js/badge-logic.js?v=41a929ac';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=bfd0955a';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=e374d8be';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
@@ -72,7 +72,11 @@ function _wireFolderApps() {
   const sync = () => {
     const sel = qa('li[aria-selected="true"]', list);
     label.textContent =
-      sel.length === 0 ? t('folder.selectApps') : sel.length === 1 ? sel[0].textContent : sel.length + ' selected';
+      sel.length === 0
+        ? t('folder.selectApps')
+        : sel.length === 1
+          ? sel[0].textContent
+          : t('widgetCfg.selectedCount', { count: sel.length });
   };
   wireChecklist(dd, btn, list, li => {
     li.setAttribute('aria-selected', li.getAttribute('aria-selected') === 'true' ? 'false' : 'true');
@@ -546,21 +550,21 @@ function wireIcon() {
       const file = upInput.files[0];
       if (!file) return;
       const origText = upBtn.textContent;
-      upBtn.textContent = '↑ Uploading…';
+      upBtn.textContent = '↑ ' + t('appearance.uploading');
       try {
         const form = new FormData();
         form.append('icon', file, file.name);
         const r = await fetch('/api/icons/upload', { method: 'POST', body: form });
         const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Upload failed');
+        if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
         await loadLocalIcons();
         state.siurl = d.filename;
         const ipIn = inpById('ip-in');
         if (ipIn) ipIn.value = d.filename;
         updPrev();
-        toast(`Uploaded ${d.filename}`);
+        toast(t('toast.uploaded', { name: d.filename }));
       } catch (e) {
-        toast('Upload failed: ' + e.message, 'err');
+        toast(t('toast.uploadFailed', { err: e.message }), 'err');
       } finally {
         upBtn.textContent = origText;
         upInput.value = '';
@@ -689,7 +693,9 @@ async function testPing() {
   const skipTls = inpById('f-skip-tls')?.checked || false;
   try {
     const r = await ap('/api/ping', { url, skipTls });
-    st.textContent = r.ok ? `✓ Reachable (${r.status})` : `✗ HTTP ${r.status}`;
+    st.textContent = r.ok
+      ? '✓ ' + t('app.reachable', { status: r.status })
+      : '✗ ' + t('app.httpError', { status: r.status });
   } catch (e) {
     st.textContent = '✗ ' + e.message;
   }
@@ -732,7 +738,7 @@ function renderKvRows(host, rows, ph) {
   const add = document.createElement('button');
   add.type = 'button';
   add.className = 'kv-add';
-  setHtml(add, html`<span>+ Add</span>`);
+  setHtml(add, html`<span>${t('common.add')}</span>`);
   add.onclick = () => {
     rows.push({ key: '', value: '', secret: false, valueSet: false });
     renderKvRows(host, rows, ph);
@@ -813,8 +819,8 @@ async function fetchBadge() {
     state.fnums = r.numbers || [];
     if (st) {
       st.style.cssText = 'margin-top:4px;color:#34c759';
-      if (!state.fnums.length) st.textContent = '✓ Connected, no numeric values found';
-      else st.textContent = `✓ Found ${state.fnums.length} value${state.fnums.length !== 1 ? 's' : ''}`;
+      if (!state.fnums.length) st.textContent = '✓ ' + t('app.connectedNoValues');
+      else st.textContent = '✓ ' + t('app.foundValues', { count: state.fnums.length });
     }
     el('auth-row-wrap')?.classList.remove('bprow-hidden');
     if (state.fnums.length && !state.spaths.length) addActLabel();

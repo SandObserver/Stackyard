@@ -197,7 +197,8 @@ export function renderColorControl(
     if (rb) rb.classList.toggle('on', mode === 'color' && showTune);
     tune.forEach(r => (r.style.display = showTune ? '' : 'none'));
     if (!codeRv.closest('.editing')) {
-      codeRv.textContent = mode === 'color' ? hex : mode === 'dark' ? 'Dark' : 'Light';
+      codeRv.textContent =
+        mode === 'color' ? hex : t(mode === 'dark' ? 'appearance.displayDark' : 'appearance.displayLight');
       codeRv.classList.remove('is-ph');
     }
     hidden.value = mode === 'color' ? (pristine ?? hex) : mode;

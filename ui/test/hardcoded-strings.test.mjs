@@ -130,32 +130,6 @@ const READS_AS_PROSE = v =>
   !/^https?:/i.test(v.trim()) &&
   !(v === v.trim() && /^[a-z][a-z0-9-]*$/.test(v));
 
-/* Settings strings still to be translated. This list only shrinks. Adding to it
-   is not a fix. */
-const PERMITTED = new Set([
-  'admin-app-form.js: " value"',
-  'admin-app-form.js: "Upload failed: "',
-  'admin-app-form.js: "Uploaded "',
-  'admin-app-form.js: "↑ Uploading…"',
-  'admin-app-form.js: "✓ Connected, no numeric values found"',
-  'admin-app-form.js: "✓ Found "',
-  'admin-app-form.js: "✓ Reachable ("',
-  'admin-app-form.js: "✗ HTTP "',
-  'admin-color-control.js: "Dark"',
-  'admin-color-control.js: "Light"',
-  'admin.js: " apps"',
-  'admin.js: " is required"',
-  'admin.js: " widget · "',
-  'admin.js: "Added"',
-  'admin.js: "Could not load config. Is the API container running? ("',
-  'admin.js: "Error: "',
-  'admin.js: "Name required"',
-  'admin.js: "Save failed: "',
-  'admin.js: "Saved"',
-  'admin.js: "URL required"',
-  'admin.js: "Updated"',
-]);
-
 const runtimeStrings = () => {
   const seen = [];
   for (const file of fs.readdirSync(path.join(root, 'js')).sort()) {
@@ -178,7 +152,7 @@ const runtimeStrings = () => {
 };
 
 test('no user-facing string is built at run time instead of translated', () => {
-  const found = [...new Set(runtimeStrings())].filter(s => !PERMITTED.has(s)).sort();
+  const found = [...new Set(runtimeStrings())].sort();
   assert.deepEqual(
     found,
     [],
@@ -186,8 +160,38 @@ test('no user-facing string is built at run time instead of translated', () => {
   );
 });
 
-test('nothing permitted has already been translated', () => {
-  const seen = new Set(runtimeStrings());
-  const stale = [...PERMITTED].filter(s => !seen.has(s)).sort();
-  assert.deepEqual(stale, [], `translated already; delete these from PERMITTED:\n  ${stale.join('\n  ')}`);
+/* The builder writes markup from a template literal, so neither scan above sees
+   the words inside it. This one reads the text nodes and the named attributes
+   of every html`` block, across lines, because those blocks span them. */
+const BLOCKS = /html`((?:[^`\\]|\\.)*)`/g;
+
+const withoutHoles = v =>
+  v
+    .replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/* NOT_PROSE above exempts a bare token, because an attribute value is often
+   one. A word on its own in a text node is not: System, Hidden and None all
+   shipped that way. So this scan exempts only a unit, a brand and a URL. */
+const MARKUP_NOT_PROSE = [/^\([a-z]{1,4}\)$/, /^Stackyard\b/, /^https?:\/\//i, /^[\d.:/]+$/];
+
+test('no user-facing string is written into the markup builder', () => {
+  const found = [];
+  for (const file of fs.readdirSync(path.join(root, 'js')).sort()) {
+    if (!file.endsWith('.js')) continue;
+    const src = fs.readFileSync(path.join(root, 'js', file), 'utf8');
+    const lineOf = at => src.slice(0, at).split('\n').length;
+    for (const block of src.matchAll(BLOCKS)) {
+      const seen = [];
+      for (const m of block[1].matchAll(/>([^<>]+)</g)) seen.push(withoutHoles(m[1]));
+      for (const m of block[1].matchAll(/(?:aria-label|title|placeholder)="([^"]*)"/g)) seen.push(withoutHoles(m[1]));
+      for (const value of seen) {
+        if (!/[A-Za-z]{2}/.test(value)) continue;
+        if (MARKUP_NOT_PROSE.some(re => re.test(value))) continue;
+        found.push(`${file}:${lineOf(block.index)}: ${JSON.stringify(value)}`);
+      }
+    }
+  }
+  assert.deepEqual(found, [], `English written into markup. Add a key and reference it:\n  ${found.join('\n  ')}`);
 });

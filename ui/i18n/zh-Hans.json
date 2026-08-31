@@ -35,7 +35,8 @@
     "hide": "隐藏",
     "moveUp": "上移",
     "moveDown": "下移",
-    "editNamed": "编辑{name}"
+    "editNamed": "编辑{name}",
+    "addNamed": "+ 添加{name}"
   },
   "general": {
     "title": "标题",
@@ -146,7 +147,8 @@
     "createNew": "新建文件夹",
     "expandAria": "展开文件夹 {name}",
     "collapseAria": "折叠文件夹 {name}",
-    "appsInFolder": "此文件夹中的应用"
+    "appsInFolder": "此文件夹中的应用",
+    "appsCount_other": "{count} 个应用"
   },
   "app": {
     "name": "名称",
@@ -212,7 +214,11 @@
     "headerValue": "标头值",
     "headerKeyPh": "名称",
     "addToUrl": "追加到 URL",
-    "secretTip": "将此值存储为凭据：保存后隐藏，且从不导出。取消勾选会清除已存储的值。"
+    "secretTip": "将此值存储为凭据：保存后隐藏，且从不导出。取消勾选会清除已存储的值。",
+    "reachable": "可访问（{status}）",
+    "httpError": "HTTP 错误 {status}",
+    "connectedNoValues": "已连接，未找到数值",
+    "foundValues_other": "找到 {count} 个数值"
   },
   "home": {
     "search": "搜索",
@@ -233,7 +239,8 @@
     "apiDownTitle": "无法连接到仪表板 API",
     "apiDownSub": "请确认 API 容器正在运行",
     "retry": "重试",
-    "opensSettings": "打开设置"
+    "opensSettings": "打开设置",
+    "loadFailed": "无法加载仪表板配置。"
   },
   "toast": {
     "saved": "已保存",
@@ -258,7 +265,16 @@
     "socketHintPublishPort": "该地址没有任何响应。发布在主机回环上的套接字代理无法从容器内访问；请将其发布到 Docker 网桥地址，或把两个容器放入同一网络并使用代理名称。",
     "wallpaperStored": "壁纸已保存到本服务器。",
     "wallpaperFailed": "壁纸操作失败：{err}",
-    "imageTooLarge": "该图片过大，服务器无法接受。"
+    "imageTooLarge": "该图片过大，服务器无法接受。",
+    "updated": "已更新",
+    "added": "已添加",
+    "error": "错误：{err}",
+    "urlRequired": "需要网址",
+    "nameRequired": "需要名称",
+    "fieldRequired": "需要{field}",
+    "configLoadFailed": "无法加载配置。API 容器正在运行吗？({err})",
+    "uploaded": "已上传 {name}",
+    "uploadFailed": "上传失败：{err}"
   },
   "confirm": {
     "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",
@@ -332,7 +348,15 @@
     "referrerPolicy": "来源地址策略",
     "allowFeaturePolicy": "允许（功能策略）",
     "allowFullscreen": "允许全屏",
-    "refreshInterval": "刷新间隔"
+    "refreshInterval": "刷新间隔",
+    "meta": "{type} 小组件 · {size}",
+    "sizeSmall": "小",
+    "sizeMedium": "中",
+    "sizeLarge": "大",
+    "sizeXLarge": "超大",
+    "none": "无",
+    "noneSelected": "未选择",
+    "selectedCount_other": "已选择 {count} 个"
   },
   "importForeign": {
     "title": "从其他仪表板导入",
@@ -374,5 +398,9 @@
     "desc": "为你的仪表板选择一个强密码。",
     "newPassword": "新密码",
     "submit": "设置密码"
+  },
+  "pill": {
+    "system": "系统",
+    "hidden": "已隐藏"
   }
 }

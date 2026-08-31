@@ -35,7 +35,8 @@
     "hide": "Masquer",
     "moveUp": "Monter",
     "moveDown": "Descendre",
-    "editNamed": "Modifier {name}"
+    "editNamed": "Modifier {name}",
+    "addNamed": "+ Ajouter {name}"
   },
   "general": {
     "title": "Titre",
@@ -146,7 +147,10 @@
     "createNew": "Créer un dossier",
     "expandAria": "Développer le dossier {name}",
     "collapseAria": "Réduire le dossier {name}",
-    "appsInFolder": "Applications de ce dossier"
+    "appsInFolder": "Applications de ce dossier",
+    "appsCount_one": "{count} application",
+    "appsCount_many": "{count} d’applications",
+    "appsCount_other": "{count} applications"
   },
   "app": {
     "name": "Nom",
@@ -216,7 +220,13 @@
     "headerValue": "Valeur d'en-tête",
     "headerKeyPh": "Clé",
     "addToUrl": "Ajouter à l'URL",
-    "secretTip": "Enregistrer cette valeur comme identifiant : masquée après l'enregistrement et jamais exportée. La décocher efface la valeur enregistrée."
+    "secretTip": "Enregistrer cette valeur comme identifiant : masquée après l'enregistrement et jamais exportée. La décocher efface la valeur enregistrée.",
+    "reachable": "Accessible ({status})",
+    "httpError": "Erreur HTTP {status}",
+    "connectedNoValues": "Connecté, aucune valeur numérique trouvée",
+    "foundValues_one": "{count} valeur trouvée",
+    "foundValues_many": "{count} de valeurs trouvées",
+    "foundValues_other": "{count} valeurs trouvées"
   },
   "home": {
     "search": "Rechercher",
@@ -237,7 +247,8 @@
     "apiDownTitle": "Connexion à l’API du tableau de bord impossible",
     "apiDownSub": "Vérifiez que le conteneur de l’API est démarré",
     "retry": "Réessayer",
-    "opensSettings": "Ouvre les réglages"
+    "opensSettings": "Ouvre les réglages",
+    "loadFailed": "Impossible de charger la configuration du tableau de bord."
   },
   "toast": {
     "saved": "Enregistré",
@@ -262,7 +273,16 @@
     "socketHintPublishPort": "Rien n’a répondu à cette adresse. Un socket proxy publié sur la boucle locale de l’hôte est inaccessible depuis un conteneur ; publiez-le sur l’adresse du pont Docker, ou placez les deux conteneurs sur un réseau partagé et utilisez le nom du proxy.",
     "wallpaperStored": "Fond d'écran enregistré sur ce serveur.",
     "wallpaperFailed": "Échec du fond d'écran : {err}",
-    "imageTooLarge": "Cette image est trop volumineuse pour le serveur."
+    "imageTooLarge": "Cette image est trop volumineuse pour le serveur.",
+    "updated": "Mis à jour",
+    "added": "Ajouté",
+    "error": "Erreur : {err}",
+    "urlRequired": "URL requise",
+    "nameRequired": "Nom requis",
+    "fieldRequired": "{field} est requis",
+    "configLoadFailed": "Impossible de charger la configuration. Le conteneur API est-il démarré ? ({err})",
+    "uploaded": "{name} téléversé",
+    "uploadFailed": "Échec du téléversement : {err}"
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",
@@ -344,7 +364,17 @@
     "referrerPolicy": "Politique de référent",
     "allowFeaturePolicy": "Autoriser (politique de fonctionnalités)",
     "allowFullscreen": "Autoriser le plein écran",
-    "refreshInterval": "Intervalle d'actualisation"
+    "refreshInterval": "Intervalle d'actualisation",
+    "meta": "Widget {type} · {size}",
+    "sizeSmall": "Petit",
+    "sizeMedium": "Moyen",
+    "sizeLarge": "Grand",
+    "sizeXLarge": "Très grand",
+    "none": "Aucun",
+    "noneSelected": "Aucun sélectionné",
+    "selectedCount_one": "{count} sélectionné",
+    "selectedCount_many": "{count} de sélectionnés",
+    "selectedCount_other": "{count} sélectionnés"
   },
   "importForeign": {
     "title": "Importer depuis un autre tableau de bord",
@@ -386,5 +416,9 @@
     "desc": "Choisissez un mot de passe fort pour votre tableau de bord.",
     "newPassword": "Nouveau mot de passe",
     "submit": "Définir le mot de passe"
+  },
+  "pill": {
+    "system": "Système",
+    "hidden": "Masqué"
   }
 }

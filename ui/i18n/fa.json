@@ -35,7 +35,8 @@
     "hide": "پنهان کردن",
     "moveUp": "انتقال به بالا",
     "moveDown": "انتقال به پایین",
-    "editNamed": "ویرایش {name}"
+    "editNamed": "ویرایش {name}",
+    "addNamed": "+ افزودن {name}"
   },
   "general": {
     "title": "عنوان",
@@ -146,7 +147,9 @@
     "createNew": "ساخت پوشه تازه",
     "expandAria": "باز کردن پوشه {name}",
     "collapseAria": "بستن پوشه {name}",
-    "appsInFolder": "برنامه‌های این پوشه"
+    "appsInFolder": "برنامه‌های این پوشه",
+    "appsCount_one": "{count} برنامه",
+    "appsCount_other": "{count} برنامه"
   },
   "app": {
     "name": "نام",
@@ -214,7 +217,12 @@
     "headerValue": "مقدار هدر",
     "headerKeyPh": "کلید",
     "addToUrl": "افزودن به نشانی",
-    "secretTip": "ذخیرهٔ این مقدار به‌عنوان اعتبارنامه: پس از ذخیره پنهان می‌شود و هرگز خروجی گرفته نمی‌شود. برداشتن تیک، مقدار ذخیره‌شده را پاک می‌کند."
+    "secretTip": "ذخیرهٔ این مقدار به‌عنوان اعتبارنامه: پس از ذخیره پنهان می‌شود و هرگز خروجی گرفته نمی‌شود. برداشتن تیک، مقدار ذخیره‌شده را پاک می‌کند.",
+    "reachable": "در دسترس ({status})",
+    "httpError": "خطای HTTP {status}",
+    "connectedNoValues": "متصل شد، هیچ مقدار عددی یافت نشد",
+    "foundValues_one": "{count} مقدار یافت شد",
+    "foundValues_other": "{count} مقدار یافت شد"
   },
   "home": {
     "search": "جستجو",
@@ -235,7 +243,8 @@
     "apiDownTitle": "اتصال به API داشبورد ممکن نشد",
     "apiDownSub": "مطمئن شوید کانتینر API در حال اجراست",
     "retry": "تلاش دوباره",
-    "opensSettings": "تنظیمات را باز می‌کند"
+    "opensSettings": "تنظیمات را باز می‌کند",
+    "loadFailed": "پیکربندی داشبورد بارگذاری نشد."
   },
   "toast": {
     "saved": "ذخیره شد",
@@ -260,7 +269,16 @@
     "socketHintPublishPort": "هیچ پاسخی از آن نشانی نیامد. پراکسی سوکتی که روی لوپ‌بک میزبان منتشر شده از درون کانتینر در دسترس نیست؛ آن را روی نشانی پل داکر منتشر کنید یا هر دو کانتینر را در یک شبکه مشترک بگذارید و از نام پراکسی استفاده کنید.",
     "wallpaperStored": "تصویر زمینه روی این سرور ذخیره شد.",
     "wallpaperFailed": "تصویر زمینه ناموفق بود: {err}",
-    "imageTooLarge": "این تصویر برای سرور بیش از حد بزرگ است."
+    "imageTooLarge": "این تصویر برای سرور بیش از حد بزرگ است.",
+    "updated": "به‌روزرسانی شد",
+    "added": "افزوده شد",
+    "error": "خطا: {err}",
+    "urlRequired": "نشانی لازم است",
+    "nameRequired": "نام لازم است",
+    "fieldRequired": "{field} لازم است",
+    "configLoadFailed": "پیکربندی بارگذاری نشد. آیا کانتینر API در حال اجراست؟ ({err})",
+    "uploaded": "{name} بارگذاری شد",
+    "uploadFailed": "بارگذاری ناموفق بود: {err}"
   },
   "confirm": {
     "deleteFolder": "پوشه «{name}» حذف شود؟ برنامه‌های داخل آن حذف نخواهند شد.",
@@ -338,7 +356,16 @@
     "referrerPolicy": "سیاست ارجاع‌دهنده",
     "allowFeaturePolicy": "اجازه (سیاست قابلیت‌ها)",
     "allowFullscreen": "اجازهٔ تمام‌صفحه",
-    "refreshInterval": "بازهٔ به‌روزرسانی"
+    "refreshInterval": "بازهٔ به‌روزرسانی",
+    "meta": "ویجت {type} · {size}",
+    "sizeSmall": "کوچک",
+    "sizeMedium": "متوسط",
+    "sizeLarge": "بزرگ",
+    "sizeXLarge": "خیلی بزرگ",
+    "none": "هیچ‌کدام",
+    "noneSelected": "هیچ‌کدام انتخاب نشده",
+    "selectedCount_one": "{count} انتخاب شده",
+    "selectedCount_other": "{count} انتخاب شده"
   },
   "importForeign": {
     "title": "وارد کردن از داشبورد دیگر",
@@ -380,5 +407,9 @@
     "desc": "یک رمز عبور قوی برای داشبورد خود انتخاب کنید.",
     "newPassword": "رمز عبور جدید",
     "submit": "تعیین رمز عبور"
+  },
+  "pill": {
+    "system": "سیستمی",
+    "hidden": "پنهان"
   }
 }

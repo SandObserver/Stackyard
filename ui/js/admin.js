@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=1d7010c3';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=7d47ac6a';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d1c7d163';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=ebe3e806';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
@@ -13,7 +13,7 @@ import {
 import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=f5343e07';
 import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=1d330931';
 import { state } from '/js/admin-state.js?v=c23e6346';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=c549d05d';
+import { buildWidgetForm, sizeLabel } from '/js/admin-widget-form.js?v=61720974';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=83239bf4';
 import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
@@ -31,7 +31,7 @@ import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=db4192cd';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=8ca7ce3c';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b5036986';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=bfd0955a';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=e374d8be';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=1907cce7';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
@@ -113,10 +113,10 @@ async function save() {
     const full = await ag('/api/config');
     full.items = state.items;
     await ap('/api/config', full);
-    toast('Saved');
+    toast(t('toast.saved'));
     ok = true;
   } catch (e) {
-    toast('Save failed: ' + e.message, 'err');
+    toast(t('toast.saveFailed', { err: e.message }), 'err');
   }
   state.saving = false;
   render();
@@ -300,8 +300,8 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
   if (item.type === 'widget') {
     const wt = item.widgetType || 'custom';
     const wtLabel = state._widgetReg?.[wt]?.label || 'Custom';
-    mt.textContent = `${wtLabel} widget · ${item.widgetSize || 'medium'}`;
-  } else if (item.type === 'folder') mt.textContent = `${(item.children || []).length} apps`;
+    mt.textContent = t('widgetCfg.meta', { type: wtLabel, size: sizeLabel(item.widgetSize || 'medium') });
+  } else if (item.type === 'folder') mt.textContent = t('folder.appsCount', { count: (item.children || []).length });
   else if (item.system === 'settings') mt.textContent = t('home.opensSettings');
   else mt.textContent = item.href || '';
   inf.append(nm, mt);
@@ -315,8 +315,8 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     pills.push(html`<span class="pill p-hl">${t('app.healthPill')}</span>`);
   if (item.monitoring?.activity?.enabled || item.badge?.enabled)
     pills.push(html`<span class="pill p-bg">${t('app.badgePill')}</span>`);
-  if (item.system === 'settings') pills.push(html`<span class="pill p-sy">System</span>`);
-  if (item.hidden) pills.push(html`<span class="pill p-hd">Hidden</span>`);
+  if (item.system === 'settings') pills.push(html`<span class="pill p-sy">${t('pill.system')}</span>`);
+  if (item.hidden) pills.push(html`<span class="pill p-hd">${t('pill.hidden')}</span>`);
   setHtml(pb, html`${pills}`);
   const ac = document.createElement('div');
   ac.className = 'ract';
@@ -325,7 +325,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     b.className = 'btn bg sm ic';
     const lbl = t(dir < 0 ? 'common.moveUp' : 'common.moveDown');
     b.title = lbl;
-    b.setAttribute('aria-label', lbl + ': ' + (item.label || item.id || 'item'));
+    b.setAttribute('aria-label', lbl + ': ' + (item.label || item.id || t('type.app')));
     b.textContent = dir < 0 ? '↑' : '↓';
     b.disabled = !can;
     b.onclick = () => moveRow(item, dir, { folderId, childIdx });
@@ -914,7 +914,7 @@ async function doSave(orig) {
       if (state._autoForm && state._autoFormType === state._wtype && state._widgetReg[state._wtype]) {
         const missing = state._autoForm.validate();
         if (missing.length) {
-          toast(missing[0] + ' is required', 'err');
+          toast(t('toast.fieldRequired', { field: missing[0] }), 'err');
           return;
         }
         item = {
@@ -934,7 +934,7 @@ async function doSave(orig) {
       } else if (state._wtype === 'custom') {
         const url = inp('f-url')?.value?.trim();
         if (!url) {
-          toast('URL required', 'err');
+          toast(t('toast.urlRequired'), 'err');
           return;
         }
         const ifo = {};
@@ -961,7 +961,7 @@ async function doSave(orig) {
     } else if (state.ctype === 'folder') {
       const label = inp('f-fname')?.value?.trim();
       if (!label) {
-        toast('Name required', 'err');
+        toast(t('toast.nameRequired'), 'err');
         return;
       }
       /* An app belongs to one folder, or the dashboard renders it twice. */
@@ -1024,9 +1024,9 @@ async function doSave(orig) {
     /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;
     closeModal();
-    toast(replaced ? 'Updated' : 'Added');
+    toast(t(replaced ? 'toast.updated' : 'toast.added'));
   } catch (e) {
-    toast('Error: ' + e.message, 'err');
+    toast(t('toast.error', { err: e.message }), 'err');
   }
 }
 
@@ -1674,13 +1674,13 @@ setReauthHandler(requireLogin);
 checkAuth(load).then(ok => {
   if (!ok) return;
   load().catch(e => {
-    toast('Could not load config. Is the API container running? (' + e.message + ')', 'err');
+    toast(t('toast.configLoadFailed', { err: e.message }), 'err');
     const al = el('al');
     if (al) {
       /* An inline onclick is blocked by the CSP. */
       setHtml(
         al,
-        html`<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">Failed to load dashboard config.<br><br><button class="retry-btn" type="button" style="padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">Retry</button></div>`,
+        html`<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">${t('home.loadFailed')}<br><br><button class="retry-btn" type="button" style="padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">${t('home.retry')}</button></div>`,
       );
       q('.retry-btn', al)?.addEventListener('click', () => location.reload());
     }
