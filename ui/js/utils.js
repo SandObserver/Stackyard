@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
-import { toneForColor } from '/js/label-contrast.js?v=38adb276';
+import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);
@@ -10,7 +10,7 @@ export const mk = (t, a = {}) => {
    arrive in an imported config. It is assigned to a background, where a CSS
    url() fetches from whatever host it names. */
 const SAFE_COLOR = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9a-z%.,\s/+-]*\)|[a-z]{3,20})$/i;
-export const DEFAULT_TILE_COLOR = '#1C1C1E';
+const DEFAULT_TILE_COLOR = '#1C1C1E';
 export const clr = c => {
   if (!c || c === 'dark') return DEFAULT_TILE_COLOR;
   if (c === 'light') return '#F2F2F7';

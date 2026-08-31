@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
-import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=6a5e1619';
+import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=a1b61636';
 import {
   mk,
   clr,
@@ -11,10 +11,10 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=d7db702a';
+} from '/js/utils.js?v=8a2001ad';
 import { t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { trapFocus } from '/js/dialog.js?v=05935547';
-import { toneForColor } from '/js/label-contrast.js?v=38adb276';
+import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=424d5d41';
 
 let _state = null;

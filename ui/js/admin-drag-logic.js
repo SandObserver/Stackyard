@@ -7,7 +7,7 @@ export function canJoinFolder(type) {
 
 /* Share of a folder row's height at each edge that places the dragged row next
    to the folder instead of inside it. */
-export const FOLDER_EDGE = 0.25;
+const FOLDER_EDGE = 0.25;
 
 /** Which part of a folder row the pointer is over.
     @param {number} y pointer position

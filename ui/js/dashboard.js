@@ -8,7 +8,7 @@ import {
   widgetSrc,
   cardPreset,
   uniqueTitle,
-} from '/js/widget-types.js?v=6a5e1619';
+} from '/js/widget-types.js?v=a1b61636';
 import {
   el,
   mk,
@@ -22,13 +22,13 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=d7db702a';
-import { initSpotlight } from '/js/spotlight.js?v=6ef63334';
+} from '/js/utils.js?v=8a2001ad';
+import { initSpotlight } from '/js/spotlight.js?v=6a90af65';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=41f953c1';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=64cc87dc';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
 import { formatNumber } from '/js/format-number.js?v=e2165e12';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=92c4b2ee';
@@ -43,7 +43,7 @@ import { trapFocus } from '/js/dialog.js?v=05935547';
 import { jitter } from '/js/jitter.js?v=4edf48f2';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=38adb276';
+import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();

@@ -21,7 +21,7 @@ export const WIDGET_COST = {
 /* The iframe URL, from the manifest entry in `reg`. The cache version is hashed
    from file content at release, never maintained by hand. */
 /* A `card` inside the selected view wins over the manifest's top-level one. */
-export const CARD_PRESETS = ['dark', 'light', 'translucent'];
+const CARD_PRESETS = ['dark', 'light', 'translucent'];
 
 export function cardPreset(item, reg) {
   const entry = item?.widgetType ? reg?.[item.widgetType] : null;
