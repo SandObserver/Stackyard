@@ -1,4 +1,4 @@
-import { toast, ag, ap } from '/js/admin-shared.js?v=a0ccaee8';
+import { toast, ag, ap } from '/js/admin-shared.js?v=cd2162b7';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=83239bf4';
 import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=d17394da';
