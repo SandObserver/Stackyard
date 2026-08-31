@@ -383,36 +383,38 @@ test('trapFocus tolerates a missing root', async () => {
 
 /* ── every dialog uses it ─────────────────────────────────────────────────── */
 
-test('all four dialogs use the shared behaviour', () => {
+/* Every modal surface must keep focus inside itself. There are two ways to do
+   that and no third: a native dialog opened with showModal, which the browser
+   contains and makes the rest of the page inert, or the shared trap here. A
+   surface that rolls its own is the defect the next test forbids.
+
+   The list moves as surfaces convert. Each entry names the mechanism it is
+   entitled to, so converting one is an edit here rather than a deletion. */
+test('every modal surface keeps focus, one way or the other', () => {
+  const contains = { dialog: /\bshowModal\(\)/g, trap: /\btrapFocus\(|\bwrapTab\(/g };
   const sites = [
-    ['js/spotlight.js', /wrapTab\(e, ov\)/, 'the search overlay'],
-    [
-      'js/ui.js',
-      /trapFocus\(ov, \{ closeOnEscape: false, onClose: closeDesk, initialFocus: ov \}\)/,
-      'the desktop folder overlay',
-    ],
-    [
-      'js/ui.js',
-      /releaseMobTrap = trapFocus\(ov, \{ onClose: closeMob, initialFocus: ov \}\)/,
-      'the mobile folder overlay',
-    ],
-    ['js/dashboard.js', /trapFocus\(ov, \{ closeOnEscape: false, initialFocus: pw \}\)/, 'the setup prompt'],
+    ['js/ui.js', 'dialog', 2, 'the two folder overlays'],
+    ['js/modal.js', 'dialog', 1, 'the admin modal'],
+    ['js/spotlight.js', 'trap', 1, 'the search overlay'],
+    ['js/dashboard.js', 'trap', 1, 'the setup prompt'],
   ];
-  for (const [file, pattern, what] of sites) {
-    assert.match(read(file), pattern, `${what} does not use the shared trap`);
+  /* Comments name these mechanisms while explaining them. */
+  const source = file => read(file).replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const [file, how, count, what] of sites) {
+    const found = (source(file).match(contains[how]) || []).length;
+    assert.equal(found, count, `${what}: expected ${count} ${how} site(s) in ${file}, found ${found}`);
   }
 });
 
-test('every dialog releases its trap when it closes', () => {
-  /* A trap that outlives its dialog keeps a listener on a removed element and
-     never restores focus. */
+test('a converted surface leaves no trap behind', () => {
+  /* A trap released nowhere keeps a listener on a removed element. The two
+     folder overlays are dialogs now and must hold neither a trap nor a handle
+     to release. */
   const ui = read('js/ui.js');
-  /* Whitespace-tolerant: the formatter chooses whether this sits on one line or
-     three. What matters is that each release is called and then cleared. */
+  assert.doesNotMatch(ui, /trapFocus/, 'a folder overlay still arms the trap');
+  assert.doesNotMatch(ui, /release(Desk|Mob)Trap/, 'a folder overlay still holds a trap handle');
   const releases = name => new RegExp(`if\\s*\\(${name}\\)\\s*\\{\\s*${name}\\(\\);\\s*${name}\\s*=\\s*null;\\s*\\}`);
-  assert.match(ui, releases('releaseDeskTrap'));
-  assert.match(ui, releases('releaseMobTrap'));
-  assert.match(read('js/dashboard.js'), releases('releaseTrap'));
+  assert.match(read('js/dashboard.js'), releases('releaseTrap'), 'the setup prompt must still release its trap');
 });
 
 test('nothing keeps its own copy of the trap', () => {

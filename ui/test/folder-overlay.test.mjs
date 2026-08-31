@@ -81,10 +81,12 @@ test('a page clips its own overflow', () => {
   assert.match(overlay, /'--ovh': badgeOvh \+ 'px'/);
 });
 
+/* showModal focuses the first thing it can find, which is the first app in the
+   folder. The overlay takes focus itself so a reader is told which folder
+   opened before hearing its contents. */
 test('the overlay takes focus itself, not the first app', () => {
   assert.match(overlay, /ov\.tabIndex = -1/);
-  assert.match(overlay, /trapFocus\(ov, \{ onClose: closeMob, initialFocus: ov \}\)/);
-  assert.doesNotMatch(overlay, /trapFocus\(ov, \{ onClose: closeMob \}\)/);
+  assert.match(overlay, /ov\.showModal\(\);\s*ov\.focus\(\)/);
 });
 
 test('the native focus ring cannot render on a folder app link', () => {
@@ -106,6 +108,5 @@ test('the native focus ring cannot render on a folder app link', () => {
 test('the desktop overlay takes focus itself too', () => {
   const desktop = ui.slice(ui.indexOf('export function openFolderDesktop('), ui.indexOf('function mFolder('));
   assert.match(desktop, /ov\.tabIndex = -1/);
-  assert.match(desktop, /trapFocus\(ov, \{ closeOnEscape: false, onClose: closeDesk, initialFocus: ov \}\)/);
-  assert.doesNotMatch(desktop, /trapFocus\(ov, \{ closeOnEscape: false, onClose: closeDesk \}\)/);
+  assert.match(desktop, /ov\.showModal\(\);\s*ov\.focus\(\)/);
 });
