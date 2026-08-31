@@ -643,6 +643,15 @@
     .mob-cell { display:flex; align-items:center; justify-content:center; min-width:0; min-height:0; }
 
     /* ── Folder overlay — mobile ── */
+    /* Both folder overlays are the scrim itself, filling the viewport, so the
+       dialog defaults have to be undone: a modal dialog is otherwise inset from
+       the edges, given a border and a padding, and centred by an auto margin
+       the reset in tokens.css has already zeroed. */
+    .folder-overlay, .folder-overlay-mobile {
+      max-width:none; max-height:none; width:100%; height:100%;
+      margin:0; padding:0; border:0; color:inherit;
+    }
+    .folder-overlay::backdrop, .folder-overlay-mobile::backdrop { background:none }
     .folder-overlay-mobile {
       position:fixed; inset:0; z-index:800;
       -webkit-backdrop-filter:blur(22px) brightness(.72);

@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A screen reader can no longer read the Settings page behind an open dialog.
 
+- A screen reader can no longer read the dashboard behind an open folder.
+
 ### Security
 
 - A custom widget's page is sandboxed and can no longer navigate the dashboard

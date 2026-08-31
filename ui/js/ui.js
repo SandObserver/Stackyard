@@ -13,7 +13,6 @@ import {
   setUserText,
 } from '/js/utils.js?v=8a2001ad';
 import { t, currentLang } from '/js/i18n.js?v=83239bf4';
-import { trapFocus } from '/js/dialog.js?v=05935547';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=424d5d41';
 
@@ -156,14 +155,10 @@ export function openFolderDesktop(folder) {
   }
   const children = (folder.children || []).map(id => items().find(i => i.id === id)).filter(Boolean);
   const showLabel = S().showLabels?.desktop !== false;
-  const ov = mk('div');
+  const ov = /** @type {HTMLDialogElement} */ (mk('dialog'));
   ov.className = 'folder-overlay';
-  ov.setAttribute('role', 'dialog');
-  ov.setAttribute('aria-modal', 'true');
   ov.setAttribute('aria-label', folderName(folder));
   ov.tabIndex = -1;
-  const _prevFocus = /** @type {HTMLElement} */ (document.activeElement);
-  let releaseDeskTrap = null;
   const outer = mk('div');
   outer.className = 'folder-outer';
   const title = mk('div');
@@ -201,33 +196,28 @@ export function openFolderDesktop(folder) {
   children.forEach(c => bupd(c.id));
   qa('.badge', grid).forEach(el => registeredBadges.push(el));
   function closeDesk() {
+    ov.close();
+  }
+  /* Escape and the tile's own toggle arrive here alike, and a badge registered
+     to an element that has gone keeps the dashboard repainting it. */
+  ov.addEventListener('close', () => {
     registeredBadges.forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
-    document.removeEventListener('keydown', escDesk);
-    if (releaseDeskTrap) {
-      releaseDeskTrap();
-      releaseDeskTrap = null;
-    }
     ov.remove();
     folderOverlay = null;
-    if (_prevFocus && _prevFocus.focus) _prevFocus.focus();
-  }
+  });
+  /* The overlay is the scrim, so a click reported against it is a click
+     outside the folder. */
   ov.onclick = e => {
     if (e.target === ov) closeDesk();
   };
-  const escDesk = e => {
-    if (e.key === 'Escape') {
-      closeDesk();
-      document.removeEventListener('keydown', escDesk);
-    }
-  };
-  document.addEventListener('keydown', escDesk);
   outer.append(title, box);
   ov.appendChild(outer);
   document.body.appendChild(ov);
   folderOverlay = ov;
-  /* The dashboard behind stays focusable while covered, so the overlay needs a
-     Tab trap. Attach it after the overlay is in the document. */
-  releaseDeskTrap = trapFocus(ov, { closeOnEscape: false, onClose: closeDesk, initialFocus: ov });
+  /* Not show(): only showModal makes the dashboard behind it inert, and the
+     tiles under the scrim were reachable by Tab and by a screen reader. */
+  ov.showModal();
+  ov.focus();
 }
 
 function mFolder(item, cw, rh, isz, ir, im, sc) {
@@ -339,23 +329,21 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   let curPage = 0;
   const vw = innerWidth,
     vh = innerHeight;
-  const ov = mk('div');
+  const ov = /** @type {HTMLDialogElement} */ (mk('dialog'));
   ov.className = 'folder-overlay-mobile';
-  ov.setAttribute('role', 'dialog');
-  ov.setAttribute('aria-modal', 'true');
   ov.setAttribute('aria-label', folderName(folder));
   ov.tabIndex = -1;
 
-  let releaseMobTrap = null;
   function closeMob() {
+    ov.close();
+  }
+  /* A badge registered to an element that has gone keeps the dashboard
+     repainting it. */
+  ov.addEventListener('close', () => {
     qa('.badge', ov).forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
-    if (releaseMobTrap) {
-      releaseMobTrap();
-      releaseMobTrap = null;
-    }
     ov.remove();
     folderOverlayMob = null;
-  }
+  });
 
   const ptScale = vw / 393;
   const margin = Math.round(34 * ptScale),
@@ -545,7 +533,8 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   );
   document.body.appendChild(ov);
   folderOverlayMob = ov;
-  releaseMobTrap = trapFocus(ov, { onClose: closeMob, initialFocus: ov });
+  ov.showModal();
+  ov.focus();
 }
 
 /* Cells per widget size on the 4x6 home grid. */
