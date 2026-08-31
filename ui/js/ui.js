@@ -34,6 +34,8 @@ const st = () => _state;
 const widgetReg = () => _state?.widgetReg || Object.create(null);
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
+const folderName = f => (f.label ? t('type.folderNamed', { name: f.label }) : t('type.folder'));
+
 /* A tap outside a widget lands in the parent document. Widgets expose
    window.__clearActive. */
 function clearMobWidgets(exceptWin) {
@@ -106,8 +108,8 @@ export function mkFolder(item) {
   a.style.cursor = 'pointer';
   a.href = '#';
   a.setAttribute('role', 'button');
-  a.setAttribute('aria-label', (item.label || t('type.folder')) + ' folder');
-  a.dataset.tileName = (item.label || t('type.folder')) + ' folder';
+  a.setAttribute('aria-label', folderName(item));
+  a.dataset.tileName = folderName(item);
   if (!showLabel) a.title = item.label || t('type.folder');
   a.onclick = e => {
     e.preventDefault();
@@ -161,7 +163,7 @@ export function openFolderDesktop(folder) {
   ov.className = 'folder-overlay';
   ov.setAttribute('role', 'dialog');
   ov.setAttribute('aria-modal', 'true');
-  ov.setAttribute('aria-label', (folder.label || t('type.folder')) + ' folder');
+  ov.setAttribute('aria-label', folderName(folder));
   ov.tabIndex = -1;
   const _prevFocus = /** @type {HTMLElement} */ (document.activeElement);
   let releaseDeskTrap = null;
@@ -237,8 +239,8 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   const a = document.createElement('button');
   a.type = 'button';
   a.className = 'dyn-mob-btn';
-  a.setAttribute('aria-label', (item.label || t('type.folder')) + ' folder');
-  a.dataset.tileName = (item.label || t('type.folder')) + ' folder';
+  a.setAttribute('aria-label', folderName(item));
+  a.dataset.tileName = folderName(item);
   css(a, { '--rh': rh + 'px' });
   let _opening = false;
   function _openFolder() {
@@ -344,7 +346,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   ov.className = 'folder-overlay-mobile';
   ov.setAttribute('role', 'dialog');
   ov.setAttribute('aria-modal', 'true');
-  ov.setAttribute('aria-label', (folder.label || t('type.folder')) + ' folder');
+  ov.setAttribute('aria-label', folderName(folder));
   ov.tabIndex = -1;
 
   let releaseMobTrap = null;

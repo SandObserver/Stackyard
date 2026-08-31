@@ -128,7 +128,8 @@
     "addNew": "Ajouter",
     "app": "Application",
     "widget": "Widget",
-    "folder": "Dossier"
+    "folder": "Dossier",
+    "folderNamed": "Dossier {name}"
   },
   "folder": {
     "name": "Nom du dossier",

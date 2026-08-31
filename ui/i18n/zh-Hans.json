@@ -128,7 +128,8 @@
     "addNew": "新建",
     "app": "应用",
     "widget": "小组件",
-    "folder": "文件夹"
+    "folder": "文件夹",
+    "folderNamed": "文件夹 {name}"
   },
   "folder": {
     "name": "文件夹名称",

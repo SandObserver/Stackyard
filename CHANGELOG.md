@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The search overlay and the wallpaper source list announce their own names
   again, instead of names meant for other controls.
 
+- Folder tiles and the folder overlay announce their name in the chosen
+  language, instead of appending an English word to it.
+
 ## [1.9.1] - 2026-08-30
 
 ### Added
