@@ -1,13 +1,13 @@
 # Both stages are pinned by digest. Change both together.
 # This stage stamps the asset URLs. Assets are served immutable for a year, so an
 # unstamped tree keeps serving the old file after an upgrade.
-FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS assets
+FROM node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS assets
 WORKDIR /src
 COPY ui/ ./ui/
 COPY scripts/bump-cache-busting.js ./scripts/bump-cache-busting.js
 RUN node scripts/bump-cache-busting.js
 
-FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43
+FROM node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf
 
 LABEL org.opencontainers.image.title="Stackyard" \
       org.opencontainers.image.description="Self-hosted homelab dashboard" \
