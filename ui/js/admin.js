@@ -27,7 +27,7 @@ import {
   SKIP,
 } from '/js/import-foreign.js?v=ef4f3d44';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
-import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=ff76dc56';
+import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=da3d2b8a';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=db4192cd';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=8a2001ad';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b5036986';

@@ -475,11 +475,20 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .sub.open{max-height:2000px}
 
 /* ── Modal dialog (folder picker, import preview, prompts) ── */
-.dlg-ov{position:fixed;inset:0;z-index:600;background:var(--scrim);display:flex;align-items:center;justify-content:center;padding:24px}
-.dlg-box{background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);width:100%;max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:var(--shadow-dlg)}
-.dlg-ov.wide .dlg-box{max-width:560px;max-height:80vh}
+/* The dialog is its own box in the top layer, so it needs no wrapper and no
+   z-index. Two things it must state for itself: margin:auto, because the
+   universal reset in tokens.css zeroes the auto margin the browser centres a
+   dialog with, and a width that is not 100%, which would leave that centring
+   no free space. The 48px is the gap it keeps from the viewport edge. */
+.dlg-box{margin:auto;background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);width:calc(100% - 48px);max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:var(--shadow-dlg);padding:0;color:var(--tx)}
+.dlg-box::backdrop{background:var(--scrim)}
+.dlg-box.wide{max-width:560px;max-height:80vh}
 .dlg-hdr{padding:16px 20px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:700;border-bottom:1px solid var(--bd-inner)}
-.dlg-body{overflow-y:auto;flex:1;padding:8px}
+/* flex:1 sets flex-basis:0, so the body contributes nothing to a dialog that
+   is sizing to its content and WebKit collapses it to a clipped row.
+   flex-basis:auto sizes it to its content; min-height:0 lets it shrink and
+   scroll once the box reaches its maximum height. */
+.dlg-body{overflow-y:auto;flex:1 1 auto;min-height:0;padding:8px}
 .dlg-foot{padding:12px 16px;border-top:1px solid var(--bd-inner);display:flex;justify-content:flex-end;gap:8px}
 /* An alert's buttons are capsules and taller than a settings button. Named with
    .sm too, so this outranks the touch block that sizes a small button. */

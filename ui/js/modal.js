@@ -1,12 +1,12 @@
 // @ts-check
-/* The one modal in the admin UI: backdrop, Escape, focus trap, and focus
-   returned to whatever opened it. Structure only. Callers fill the body. */
+/* The one modal in the admin UI. Structure only; callers fill the body.
 
-import { trapFocus } from '/js/dialog.js?v=05935547';
+   showModal() puts the dialog in the top layer and makes the rest of the page
+   inert, which a focus trap cannot do: the old one stopped Tab but left the
+   page behind readable to a screen reader. Escape, focus restoration and the
+   backdrop come with it. */
 
 /** Open a modal and return its parts. `close()` is safe to call more than once.
-    `focus()` arms the trap, because the element worth focusing is usually one
-    the caller has not appended yet.
 
     @param {{ title: string, className?: string, onClose?: () => void }} opts
     @returns {{ box: HTMLElement, body: HTMLElement, footer: HTMLElement,
@@ -14,13 +14,8 @@ import { trapFocus } from '/js/dialog.js?v=05935547';
                 addAction: (label: string, cls: string, onAct?: () => void) => HTMLButtonElement,
                 focus: (initial?: HTMLElement|null) => void }} */
 export function openModal({ title, className, onClose }) {
-  const ov = document.createElement('div');
-  ov.className = 'dlg-ov' + (className ? ' ' + className : '');
-
-  const box = document.createElement('div');
-  box.className = 'dlg-box';
-  box.setAttribute('role', 'dialog');
-  box.setAttribute('aria-modal', 'true');
+  const box = /** @type {HTMLDialogElement} */ (document.createElement('dialog'));
+  box.className = 'dlg-box' + (className ? ' ' + className : '');
 
   const hdr = document.createElement('div');
   hdr.className = 'dlg-hdr';
@@ -36,24 +31,30 @@ export function openModal({ title, className, onClose }) {
   const footer = document.createElement('div');
   footer.className = 'dlg-foot';
 
-  let release = () => {};
   let closed = false;
   const close = () => {
     if (closed) return;
     closed = true;
-    release();
-    ov.remove();
-    if (onClose) onClose();
+    box.close();
   };
 
-  /* Both ends of the click. A text selection released past the dialog's edge
-     would otherwise dismiss it. */
+  /* Escape and the close() above arrive here alike, so the caller is told once
+     however the dialog went away. */
+  box.addEventListener('close', () => {
+    closed = true;
+    box.remove();
+    if (onClose) onClose();
+  });
+
+  /* A click on the backdrop is reported against the dialog itself, because the
+     backdrop is not an element. Both ends of the click are checked: a text
+     selection released past the dialog's edge would otherwise dismiss it. */
   let downOnBackdrop = false;
-  ov.onmousedown = e => {
-    downOnBackdrop = e.target === ov;
+  box.onmousedown = e => {
+    downOnBackdrop = e.target === box;
   };
-  ov.onclick = e => {
-    if (e.target === ov && downOnBackdrop) close();
+  box.onclick = e => {
+    if (e.target === box && downOnBackdrop) close();
   };
 
   const addAction = (label, cls, onAct) => {
@@ -70,14 +71,13 @@ export function openModal({ title, className, onClose }) {
   };
 
   box.append(hdr, body, footer);
-  ov.appendChild(box);
-  document.body.appendChild(ov);
+  document.body.appendChild(box);
+  box.showModal();
 
+  /* The element worth focusing is usually one the caller appends after opening,
+     so showModal's own choice is corrected here. */
   const focus = initial => {
-    /* Arming twice is a caller re-rendering the body. The previous trap must
-       go, or its listener outlives the dialog. */
-    release();
-    release = trapFocus(box, { onClose: close, initialFocus: initial });
+    if (initial) initial.focus();
   };
 
   return { box, body, footer, close, addAction, focus };

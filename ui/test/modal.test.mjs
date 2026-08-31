@@ -2,6 +2,10 @@
    prompt() cannot show. It replaced them, so it owes what they gave for free:
    a backdrop that dismisses, Escape, and an answer that comes back once.
 
+   It is a native <dialog> now, so Escape and focus restoration belong to the
+   browser and are not re-tested here. What is still ours is which clicks
+   dismiss and that an answer arrives exactly once, however the dialog went.
+
    The dismissal routes are what these cover. A dialog that closes when it
    should not is worse than the browser's version, because the import preview
    behind it is a list someone reads before deciding, and a dropped answer
@@ -24,6 +28,30 @@ function makeDom() {
     children: [],
     parent: null,
     isConnected: true,
+    open: false,
+    _on: new Map(),
+    addEventListener(type, fn) {
+      if (!this._on.has(type)) this._on.set(type, []);
+      this._on.get(type).push(fn);
+    },
+    removeEventListener(type, fn) {
+      const l = this._on.get(type) || [];
+      const at = l.indexOf(fn);
+      if (at !== -1) l.splice(at, 1);
+    },
+    _fire(type) {
+      for (const fn of [...(this._on.get(type) || [])]) fn({ type, target: this });
+    },
+    /* The browser's own contract: showModal opens it, close fires `close`, and
+       closing an already-closed dialog does nothing. */
+    showModal() {
+      this.open = true;
+    },
+    close() {
+      if (!this.open) return;
+      this.open = false;
+      this._fire('close');
+    },
     disabled: false,
     className: '',
     textContent: '',
@@ -107,24 +135,29 @@ async function withDom(fn) {
   }
 }
 
-const overlay = dom => dom.body.children[dom.body.children.length - 1];
+const dialog = dom => dom.body.children[dom.body.children.length - 1];
 const buttons = box => box.children[2].children;
 
-/* A click reports the nearest ancestor of where it went down and where it came
-   up, so a selection dragged out of the dialog arrives on the overlay. */
-function clickFrom(ov, downTarget, upTarget) {
-  ov.onmousedown({ target: downTarget });
-  ov.onclick({ target: upTarget });
+/* The backdrop is not an element, so a click on it is reported against the
+   dialog. Both ends are given: a selection dragged out of the dialog comes up
+   there having gone down inside. */
+function clickFrom(dlg, downTarget, upTarget) {
+  dlg.onmousedown({ target: downTarget });
+  dlg.onclick({ target: upTarget });
 }
+
+/* Escape is the browser's, and it closes the dialog rather than calling back
+   into the module. */
+const pressEscape = dlg => dlg.close();
 
 test('the backdrop dismisses when the click both starts and ends on it', async () => {
   await withDom(({ openModal }, dom) => {
     let closed = 0;
     openModal({ title: 'T', onClose: () => closed++ });
-    const ov = overlay(dom);
-    clickFrom(ov, ov, ov);
+    const dlg = dialog(dom);
+    clickFrom(dlg, dlg, dlg);
     assert.equal(closed, 1);
-    assert.equal(dom.body.children.includes(ov), false, 'the overlay is gone');
+    assert.equal(dom.body.children.includes(dlg), false, 'the dialog is gone');
   });
 });
 
@@ -134,10 +167,10 @@ test('a selection released on the backdrop does not dismiss', async () => {
   await withDom(({ openModal }, dom) => {
     let closed = 0;
     const m = openModal({ title: 'T', onClose: () => closed++ });
-    const ov = overlay(dom);
-    clickFrom(ov, m.body, ov);
+    const dlg = dialog(dom);
+    clickFrom(dlg, m.body, dlg);
     assert.equal(closed, 0);
-    assert.equal(dom.body.children.includes(ov), true, 'the dialog is still open');
+    assert.equal(dom.body.children.includes(dlg), true, 'the dialog is still open');
   });
 });
 
@@ -145,21 +178,31 @@ test('a click inside the dialog does not dismiss', async () => {
   await withDom(({ openModal }, dom) => {
     let closed = 0;
     const m = openModal({ title: 'T', onClose: () => closed++ });
-    clickFrom(overlay(dom), m.body, m.body);
+    clickFrom(dialog(dom), m.body, m.body);
     assert.equal(closed, 0);
   });
 });
 
-/* The dialog body holds text that nothing can focus, so a click on it leaves
-   focus on the page. Escape has to work from there. */
-test('Escape closes after a click on text inside the dialog', async () => {
+/* Escape reaches the dialog wherever focus sits inside it, because the browser
+   owns the key now. The caller must still be told exactly once. */
+test('Escape answers the caller once', async () => {
   await withDom(({ openModal }, dom) => {
     let closed = 0;
     const m = openModal({ title: 'T', onClose: () => closed++ });
     m.addAction('OK', 'bp sm');
-    m.focus();
-    dom.setActive(dom.body);
-    dom.doc._fire('keydown', { key: 'Escape', preventDefault() {} });
+    pressEscape(dialog(dom));
+    assert.equal(closed, 1);
+  });
+});
+
+test('Escape after close does not answer twice', async () => {
+  await withDom(({ openModal }, dom) => {
+    let closed = 0;
+    const m = openModal({ title: 'T', onClose: () => closed++ });
+    /* Held before closing: a closed dialog is removed from the page. */
+    const dlg = dialog(dom);
+    m.close();
+    pressEscape(dlg);
     assert.equal(closed, 1);
   });
 });
@@ -174,27 +217,35 @@ test('close is safe to call twice, so two dismissal routes answer once', async (
   });
 });
 
-test('arming the trap again releases the one before it', async () => {
+test('focusing twice leaves nothing behind to answer again', async () => {
   await withDom(({ openModal }, dom) => {
     let closed = 0;
     const m = openModal({ title: 'T', onClose: () => closed++ });
     const a = m.addAction('OK', 'bp sm');
     m.focus(a);
     m.focus(a);
-    dom.doc._fire('keydown', { key: 'Escape', preventDefault() {} });
-    assert.equal(closed, 1, 'an orphaned trap would close it a second time');
+    assert.equal(dom.getActive(), a, 'focus did not land on the requested control');
+    pressEscape(dialog(dom));
+    assert.equal(closed, 1);
+  });
+});
+
+test('the dialog is opened as a modal, not merely appended', async () => {
+  await withDom(({ openModal }, dom) => {
+    openModal({ title: 'T' });
+    assert.equal(dialog(dom).tagName, 'DIALOG', 'the page behind it is only inert for a real dialog');
+    assert.equal(dialog(dom).open, true, 'showModal was never called');
   });
 });
 
 test('confirmModal resolves true on the confirming action and false otherwise', async () => {
   await withDom(async ({ confirmModal }, dom) => {
     const yes = confirmModal({ title: 'T', body: dom.el('p'), confirmLabel: 'Go', cancelLabel: 'No' });
-    const box = overlay(dom).children[0];
-    buttons(box)[1].onclick();
+    buttons(dialog(dom))[1].onclick();
     assert.equal(await yes, true);
 
     const no = confirmModal({ title: 'T', body: dom.el('p'), confirmLabel: 'Go', cancelLabel: 'No' });
-    buttons(overlay(dom).children[0])[0].onclick();
+    buttons(dialog(dom))[0].onclick();
     assert.equal(await no, false);
   });
 });
@@ -204,8 +255,8 @@ test('confirmModal resolves true on the confirming action and false otherwise', 
 test('confirmModal resolves false when the backdrop dismisses it', async () => {
   await withDom(async ({ confirmModal }, dom) => {
     const answer = confirmModal({ title: 'T', body: dom.el('p'), confirmLabel: 'Go', cancelLabel: 'No' });
-    const ov = overlay(dom);
-    clickFrom(ov, ov, ov);
+    const dlg = dialog(dom);
+    clickFrom(dlg, dlg, dlg);
     assert.equal(await answer, false);
   });
 });
@@ -213,12 +264,12 @@ test('confirmModal resolves false when the backdrop dismisses it', async () => {
 test('promptModal returns the trimmed value and refuses an empty one', async () => {
   await withDom(async ({ promptModal }, dom) => {
     const answer = promptModal({ title: 'T', label: 'Name', confirmLabel: 'Save', cancelLabel: 'No' });
-    const box = overlay(dom).children[0];
+    const box = dialog(dom);
     const input = box.children[1].children[0].children[1];
 
     input.value = '   ';
     buttons(box)[1].onclick();
-    assert.equal(dom.body.children.includes(overlay(dom)), true, 'an empty value keeps the dialog open');
+    assert.equal(dom.body.children.includes(box), true, 'an empty value keeps the dialog open');
 
     input.value = '  Media  ';
     buttons(box)[1].onclick();
@@ -229,7 +280,7 @@ test('promptModal returns the trimmed value and refuses an empty one', async () 
 test('promptModal resolves null when it is cancelled', async () => {
   await withDom(async ({ promptModal }, dom) => {
     const answer = promptModal({ title: 'T', label: 'Name', confirmLabel: 'Save', cancelLabel: 'No' });
-    buttons(overlay(dom).children[0])[0].onclick();
+    buttons(dialog(dom))[0].onclick();
     assert.equal(await answer, null);
   });
 });
