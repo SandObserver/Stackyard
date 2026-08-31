@@ -39,7 +39,6 @@ import {
   writeWallpaperCache,
   restorePage,
 } from '/js/dashboard-logic.js?v=a0604f3b';
-import { trapFocus } from '/js/dialog.js?v=05935547';
 import { jitter } from '/js/jitter.js?v=4edf48f2';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -653,14 +652,13 @@ const EYE =
 
 function showSetupPrompt() {
   return new Promise(resolve => {
-    const ov = document.createElement('div');
+    const ov = /** @type {HTMLDialogElement} */ (document.createElement('dialog'));
     ov.className = 'setup-prompt';
+    ov.setAttribute('aria-labelledby', 'setup-title');
     setHtml(
       ov,
-      html`<div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-title"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`,
+      html`<div class="setup-card"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`,
     );
-    document.body.appendChild(ov);
-
     const pw = qi('#setup-pw', ov);
     const pw2 = qi('#setup-pw2', ov);
     const rev = qi('#setup-reveal', ov);
@@ -697,15 +695,17 @@ function showSetupPrompt() {
       rev.title = label;
     };
 
-    let releaseTrap = trapFocus(ov, { closeOnEscape: false, initialFocus: pw });
-    const close = () => {
-      if (releaseTrap) {
-        releaseTrap();
-        releaseTrap = null;
-      }
+    document.body.appendChild(ov);
+    ov.showModal();
+    pw.focus();
+    /* Escape must not dismiss this: there is nothing usable behind it, and Skip
+       is the deliberate way past. */
+    ov.addEventListener('cancel', e => e.preventDefault());
+    ov.addEventListener('close', () => {
       ov.remove();
       resolve();
-    };
+    });
+    const close = () => ov.close();
 
     skip.onclick = async () => {
       skip.disabled = true;

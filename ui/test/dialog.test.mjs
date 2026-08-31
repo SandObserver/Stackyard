@@ -395,8 +395,8 @@ test('every modal surface keeps focus, one way or the other', () => {
   const sites = [
     ['js/ui.js', 'dialog', 2, 'the two folder overlays'],
     ['js/modal.js', 'dialog', 1, 'the admin modal'],
+    ['js/dashboard.js', 'dialog', 1, 'the setup prompt'],
     ['js/spotlight.js', 'trap', 1, 'the search overlay'],
-    ['js/dashboard.js', 'trap', 1, 'the setup prompt'],
   ];
   /* Comments name these mechanisms while explaining them. */
   const source = file => read(file).replace(/\/\*[\s\S]*?\*\//g, '');
@@ -407,14 +407,23 @@ test('every modal surface keeps focus, one way or the other', () => {
 });
 
 test('a converted surface leaves no trap behind', () => {
-  /* A trap released nowhere keeps a listener on a removed element. The two
-     folder overlays are dialogs now and must hold neither a trap nor a handle
-     to release. */
-  const ui = read('js/ui.js');
-  assert.doesNotMatch(ui, /trapFocus/, 'a folder overlay still arms the trap');
-  assert.doesNotMatch(ui, /release(Desk|Mob)Trap/, 'a folder overlay still holds a trap handle');
-  const releases = name => new RegExp(`if\\s*\\(${name}\\)\\s*\\{\\s*${name}\\(\\);\\s*${name}\\s*=\\s*null;\\s*\\}`);
-  assert.match(read('js/dashboard.js'), releases('releaseTrap'), 'the setup prompt must still release its trap');
+  /* A trap released nowhere keeps a listener on a removed element, so a
+     converted surface must hold neither a trap nor a handle to release. */
+  for (const file of ['js/ui.js', 'js/dashboard.js', 'js/modal.js']) {
+    assert.doesNotMatch(read(file), /trapFocus/, `${file} still arms the trap`);
+    assert.doesNotMatch(read(file), /release\w*Trap/, `${file} still holds a trap handle`);
+  }
+});
+
+/* Escape closes a dialog unless the page says otherwise. The setup prompt has
+   nothing usable behind it and offers Skip as the way past, so it must refuse
+   the cancel rather than let a stray keypress dismiss it. */
+test('the setup prompt refuses to be cancelled', () => {
+  assert.match(
+    read('js/dashboard.js'),
+    /addEventListener\('cancel', e => e\.preventDefault\(\)\)/,
+    'Escape now dismisses the setup prompt, which it never used to',
+  );
 });
 
 test('nothing keeps its own copy of the trap', () => {
