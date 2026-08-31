@@ -2,6 +2,7 @@
 import { nextActiveIndex, recoversSession, toastHoldMs } from '/js/admin-logic.js?v=d17394da';
 import { el, qa, q } from '/js/utils.js?v=8a2001ad';
 import { t } from '/js/i18n.js?v=83239bf4';
+import { iconChain } from '/js/icons.js?v=69c2b9bd';
 
 export const API = '';
 
@@ -296,4 +297,35 @@ export function wireChecklist(dd, btn, list, onToggle) {
     li.tabIndex = -1;
   });
   return { close };
+}
+
+/* An icon name resolves to several candidate URLs, and only the browser can
+   say which one exists. Walk them on error and fall back to a letter, or a
+   name that resolves to nothing leaves a broken image behind.
+
+   Shared because it was not: the folder picker carried its own copy with no
+   fallback at all, and every app whose first candidate missed showed broken.
+
+    @param {HTMLElement} host @param {string} [rawIcon] @param {string} [fallbackText]
+    @param {string} [imgCss] @returns {void} */
+export function paintIcon(host, rawIcon, fallbackText = '?', imgCss = '') {
+  const letter = () => {
+    host.textContent = fallbackText;
+  };
+  const candidates = rawIcon ? iconChain(rawIcon) : [];
+  if (!candidates.length) return letter();
+  const img = document.createElement('img');
+  img.alt = '';
+  if (imgCss) img.style.cssText = imgCss;
+  let at = 0;
+  img.onerror = () => {
+    at++;
+    if (at < candidates.length) img.src = candidates[at];
+    else {
+      img.remove();
+      letter();
+    }
+  };
+  img.src = candidates[0];
+  host.appendChild(img);
 }

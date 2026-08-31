@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A screen reader can no longer read the dashboard behind an open folder.
 
+- Apps in the folder picker show their icon instead of a broken image.
+
 ### Security
 
 - A custom widget's page is sandboxed and can no longer navigate the dashboard

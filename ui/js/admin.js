@@ -1,5 +1,5 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=37ff196e';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=b123bb4a';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=4d7e3bd2';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=70c9a068';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=6b767e76';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
 import {
@@ -10,13 +10,13 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=48a9e055';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=61f41c73';
-import { ag, ap, initInlineEdit, setReauthHandler, toast } from '/js/admin-shared.js?v=c2c4a4a5';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=e9db088e';
+import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=02ab2257';
 import { state } from '/js/admin-state.js?v=c23e6346';
-import { buildWidgetForm, sizeLabel } from '/js/admin-widget-form.js?v=5390df93';
+import { buildWidgetForm, sizeLabel } from '/js/admin-widget-form.js?v=f9bfbb2a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=83239bf4';
-import { iconChain, loadLocalIcons, resolveIcon } from '/js/icons.js?v=69c2b9bd';
+import { loadLocalIcons } from '/js/icons.js?v=69c2b9bd';
 import {
   clearSkipTls,
   convert,
@@ -31,7 +31,7 @@ import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=db4192cd';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=8a2001ad';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b5036986';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=d296b27d';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=a7660a6a';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=1907cce7';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
@@ -241,24 +241,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     const glyph = widgetGlyph(state._widgetReg?.[item.widgetType]?.glyph);
     ico.appendChild(svgNode(glyph || SIZE_ICONS[item.widgetSize] || SIZE_ICONS.medium));
   } else if (item.iconUrl) {
-    const img = document.createElement('img');
-    img.alt = item.label || '';
-    img.style.cssText = 'width:28px;height:28px;object-fit:contain;';
-    const fbs = iconChain(item.iconUrl);
-    if (fbs.length) {
-      let s = 0;
-      img.onerror = () => {
-        s++;
-        if (s < fbs.length) img.src = fbs[s];
-        else {
-          ico.textContent = (item.label || '?')[0].toUpperCase();
-        }
-      };
-      img.src = fbs[0];
-      ico.appendChild(img);
-    } else {
-      ico.textContent = (item.label || '?')[0].toUpperCase();
-    }
+    paintIcon(ico, item.iconUrl, (item.label || '?')[0].toUpperCase(), 'width:28px;height:28px;object-fit:contain;');
   } else ico.textContent = (item.label || item.id || '?')[0].toUpperCase();
   const inf = document.createElement('div');
   inf.className = 'rinf';
@@ -813,12 +796,7 @@ function openFolderPicker(appId, targetFolderId = null) {
       const ri = document.createElement('span');
       ri.className = 'fp-ic';
       ri.style.background = rc(app.color);
-      if (app.iconUrl) {
-        const img = document.createElement('img');
-        img.alt = '';
-        img.src = resolveIcon(app.iconUrl);
-        ri.appendChild(img);
-      } else ri.textContent = (app.label || '?')[0];
+      paintIcon(ri, app.iconUrl, (app.label || '?')[0]);
       const nm = document.createElement('span');
       nm.className = 'fp-nm';
       setUserText(nm, app.label || app.id);
