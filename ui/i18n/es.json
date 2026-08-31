@@ -128,7 +128,8 @@
     "addNew": "Añadir nuevo",
     "app": "Aplicación",
     "widget": "Widget",
-    "folder": "Carpeta"
+    "folder": "Carpeta",
+    "folderNamed": "Carpeta {name}"
   },
   "folder": {
     "name": "Nombre de la carpeta",

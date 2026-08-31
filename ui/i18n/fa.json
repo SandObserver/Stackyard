@@ -128,7 +128,8 @@
     "addNew": "افزودن جدید",
     "app": "برنامه",
     "widget": "ویجت",
-    "folder": "پوشه"
+    "folder": "پوشه",
+    "folderNamed": "پوشه {name}"
   },
   "folder": {
     "name": "نام پوشه",
