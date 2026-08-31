@@ -218,14 +218,28 @@ export function wireChecklist(dd, btn, list, onToggle) {
     });
     o[active].focus();
   };
+  /* Scoped to the open state. A listener that outlives the list holds the
+     detached subtree it closes over, and the settings form rewires on every
+     render. */
+  let outside = null;
   const open = () => {
     list.hidden = false;
     btn.setAttribute('aria-expanded', 'true');
+    outside = new AbortController();
+    document.addEventListener(
+      'click',
+      e => {
+        if (!dd.contains(e.target)) close();
+      },
+      { signal: outside.signal },
+    );
     const o = opts();
     const first = o.findIndex(li => li.getAttribute('aria-selected') === 'true');
     setActive(first >= 0 ? first : 0);
   };
   const close = ({ focusBtn = false } = {}) => {
+    outside?.abort();
+    outside = null;
     list.hidden = true;
     btn.setAttribute('aria-expanded', 'false');
     opts().forEach(li => li.classList.remove('kb-active'));
@@ -278,9 +292,6 @@ export function wireChecklist(dd, btn, list, onToggle) {
     }
   });
 
-  document.addEventListener('click', e => {
-    if (!dd.contains(e.target)) close();
-  });
   opts().forEach(li => {
     li.tabIndex = -1;
   });
