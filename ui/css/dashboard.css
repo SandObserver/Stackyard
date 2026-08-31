@@ -164,7 +164,10 @@
       -webkit-backdrop-filter: blur(22px) saturate(140%);
               backdrop-filter: blur(22px) saturate(140%);
     }
+    /* Shared by an app's link and a folder's button, so it carries the reset a
+       button needs to look like the tile beside it. */
     .icon {
+      font:inherit; color:inherit; background:none; border:0; padding:0;
       height:var(--tile-h,152px);
       display:flex;
       flex-direction:column;

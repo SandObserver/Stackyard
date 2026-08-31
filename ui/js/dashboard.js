@@ -28,10 +28,10 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=36d6a49f';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=35d025e0';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
 import { formatNumber } from '/js/format-number.js?v=e2165e12';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=08aae50f';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=92c4b2ee';
 import {
   configChanged,
   landingAfterSetup,
@@ -210,7 +210,7 @@ function bupd(id) {
     el.setAttribute('aria-hidden', 'true');
     el.removeAttribute('role');
     el.removeAttribute('aria-label');
-    const tile = /** @type {HTMLElement|null} */ (el.closest('a, [role="button"]'));
+    const tile = /** @type {HTMLElement|null} */ (el.closest('a, button, [role="button"]'));
     const tileName = tile?.dataset.tileName;
     if (tile && tileName) tile.setAttribute('aria-label', aria ? `${tileName}, ${aria}` : tileName);
     /* Never the `background` shorthand. It resets background-clip, and the

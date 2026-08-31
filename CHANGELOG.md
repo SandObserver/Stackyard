@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Settings no longer accumulates memory as multi-select fields are redrawn.
 
+- Folder tiles and the folder rows in Settings are real buttons, so they behave
+  as controls for the keyboard and for screen readers.
+
 ## [1.9.1] - 2026-08-30
 
 ### Added

@@ -103,16 +103,13 @@ function mkMiniIcon(child, pointerEvents) {
 export function mkFolder(item) {
   const showLabel = S().showLabels?.desktop !== false;
   const iw = showLabel ? 72 : 78;
-  const a = mk('a');
+  const a = mk('button');
+  a.type = 'button';
   a.className = 'icon';
-  a.style.cursor = 'pointer';
-  a.href = '#';
-  a.setAttribute('role', 'button');
   a.setAttribute('aria-label', folderName(item));
   a.dataset.tileName = folderName(item);
   if (!showLabel) a.title = item.label || t('type.folder');
-  a.onclick = e => {
-    e.preventDefault();
+  a.onclick = () => {
     openFolderDesktop(item);
   };
   const box = mk('div');

@@ -262,13 +262,13 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
   } else ico.textContent = (item.label || item.id || '?')[0].toUpperCase();
   const inf = document.createElement('div');
   inf.className = 'rinf';
-  const nm = document.createElement('div');
+  const isFolderRow = item.type === 'folder';
+  const nm = document.createElement(isFolderRow ? 'button' : 'div');
   nm.className = 'rnm';
-  if (item.type === 'folder') {
+  if (isFolderRow) {
     const collapsed = collapsedFolders.has(item.id);
-    nm.style.cssText = 'display:flex;align-items:center;gap:6px;cursor:pointer;';
-    nm.setAttribute('role', 'button');
-    nm.setAttribute('tabindex', '0');
+    nm.setAttribute('type', 'button');
+    nm.style.cssText = 'display:flex;align-items:center;gap:6px;';
     nm.setAttribute('aria-expanded', String(!collapsed));
     nm.setAttribute('aria-label', t(collapsed ? 'folder.expandAria' : 'folder.collapseAria', { name: item.label }));
     const chevron = document.createElement('span');
@@ -285,12 +285,6 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
         collapsedFolders.add(item.id);
       }
       render();
-    };
-    nm.onkeydown = e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        nm.onclick(/** @type {any} */ (e));
-      }
     };
   } else {
     setUserText(nm, item.label || item.id);

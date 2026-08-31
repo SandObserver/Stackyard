@@ -276,7 +276,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .rnm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);text-align:match-parent}
 /* On a folder the name is the collapse control, so it is a target and not a
    label. 24px is the WCAG 2.5.8 minimum; the coarse-pointer block raises it. */
-.rnm[role="button"]{min-height:24px}
+button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;min-height:24px}
 .rmt{font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);color:var(--dm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rpills{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .pill{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
@@ -610,7 +610,7 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
   /* The element selector outranks the 36px rule in the mobile block below,
      which this block precedes. */
   html.is-mobile a.m-back { width:44px; height:44px; }
-  .rnm[role="button"] { min-height:44px; }
+  button.rnm { min-height:44px; }
   /* The track keeps its drawn height; the padding is the hit area. Clipping to
      the content box shrinks each corner by the padding on that axis, so the two
      radii are raised separately: 22 vertical cancels the 19 padding, and there
