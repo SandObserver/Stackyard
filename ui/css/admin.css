@@ -384,7 +384,7 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .sel-wrap{margin-inline-start:auto;position:relative;display:flex;align-items:center;justify-content:flex-end;min-width:0}
 .row-sel{appearance:none;-webkit-appearance:none;background:none;border:none;color:var(--dm);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);text-align:end;text-align-last:end;padding-block:0; padding-inline:0 26px;outline:none;cursor:pointer;max-width:100%;text-overflow:ellipsis}
 .row-sel option{background:var(--cp);color:var(--tx)}
-.sel-wrap .dd-chev{position:absolute;right:0;top:50%;transform:translateY(-50%);pointer-events:none}
+.sel-wrap .dd-chev{position:absolute;inset-inline-end:0;top:50%;transform:translateY(-50%);pointer-events:none}
 .upd-link{color:var(--ac2)}
 /* Left-aligned tile group (Size) */
 .tile-grp-left{margin-inline-start:0;margin-inline-end:auto}
@@ -412,7 +412,7 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 /* About */
 .about-hero{display:flex;flex-direction:column;align-items:center;padding:16px 0 24px}
 .about-ic-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:19px;background:var(--surface-sunken);margin-bottom:12px;box-shadow:var(--shadow-sunken)}
-.about-dot{position:absolute;top:-3px;right:-5px;width:20px;height:20px;background:var(--gn);border-radius:50%;border:2px solid var(--cp);display:flex;align-items:center;justify-content:center;color:var(--on-fill)}
+.about-dot{position:absolute;top:-3px;inset-inline-end:-5px;width:20px;height:20px;background:var(--gn);border-radius:50%;border:2px solid var(--cp);display:flex;align-items:center;justify-content:center;color:var(--on-fill)}
 .about-name{font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);font-weight:700;}
 .about-ver{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:3px}
 .about-ri{flex-shrink:0;color:var(--dm)}
@@ -423,8 +423,10 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .tog input{position:absolute;opacity:0;width:0;height:0}
 .tr{width:64px;height:28px;border-radius:14px;background:var(--track-off);position:relative;transition:background .2s}
 .tog input:checked+.tr{background:var(--gn)}
-.tr::after{content:'';position:absolute;width:38px;height:24px;border-radius:12px;background:var(--control-knob);top:2px;left:2px;transition:transform .2s;box-shadow:var(--shadow-tog)}
+.tr::after{content:'';position:absolute;width:38px;height:24px;border-radius:12px;background:var(--control-knob);top:2px;inset-inline-start:2px;transition:transform .2s;box-shadow:var(--shadow-tog)}
 .tog input:checked+.tr::after{transform:translateX(22px)}
+/* translateX has no logical form, so the travel is mirrored explicitly. */
+[dir="rtl"] .tog input:checked+.tr::after{transform:translateX(-22px)}
 .tog input:focus-visible+.tr{outline:2px solid var(--ac);outline-offset:3px}
 /* Still focusable and announced, so it needs a real focus ring rather than
    pointer-events:none. */
