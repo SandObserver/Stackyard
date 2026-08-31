@@ -1,10 +1,10 @@
 {
   "widget.label": "تعویض داشبورد",
   "keychains.label": "جاکلیدی",
-  "keychains.hint": "رنگ آویز را روی خودکار بگذارید تا از نشانی داشبورد گرفته شود.",
+  "keychains.hint": "رنگ آویز را روی خودکار بگذارید تا از آدرس داشبورد گرفته شود.",
   "keychains.name.label": "نام",
   "keychains.name.placeholder": "مثلاً اتاق نشیمن",
-  "keychains.url.label": "نشانی داشبورد",
+  "keychains.url.label": "آدرس داشبورد",
   "keychains.url.placeholder": "http://host:port",
   "keychains.color.label": "رنگ آویز",
   "keychains.color.opt.default": "خودکار",
