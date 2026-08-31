@@ -9,7 +9,13 @@ The admin writes the whole config with `POST /api/config`; the dashboard reads i
 
 ## Browser support
 
-WebKit 16.2 and newer, and current Chrome, Edge and Firefox. 16.2 is where `color-mix()` lands, which the admin's category chips derive their tints from.
+Two floors, with two different rules.
+
+**Desktop: Safari 17.6 and newer, and current Chrome, Edge and Firefox.** The floor is the newest Safari the maintainer's test machine runs. It moves when that machine moves, not on a date. A desktop user below the floor can switch to Chrome or Firefox.
+
+**iOS: Safari 17.0 and newer.** On iOS every browser is Safari underneath, so a user below the floor has no other browser to switch to. The floor is the lowest iOS Safari that supports every platform feature this codebase uses. The Popover API sets it, at 17.0. Raise it only when the code needs a feature the floor does not have.
+
+`color-mix()` set the previous floor of WebKit 16.2. It is inside both floors now and constrains nothing.
 
 There is no build step and no autoprefixer, so every vendor prefix is written by hand. The support floor, the list of prefixes that are still needed and the reason each one stays are at the top of `ui/css/tokens.css`; `ui/test/vendor-prefix-ratchet.test.mjs` fails on any prefix outside that list. Note that "an unprefixed property sits beside it" is not a reason to remove one: `-webkit-backdrop-filter` is paired everywhere and still required.
 
