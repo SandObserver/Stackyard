@@ -51,13 +51,16 @@ const REMOVED = [
 const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TOKEN = /-(?:webkit|moz|ms|o)-[a-z-]+/g;
 
+/* Stylesheets, the <style> blocks in widget pages, and the style strings the
+   modules write. Four prefixes on the REMOVED list below survived in JS for as
+   long as this read .css and .html only. */
 function styleFiles(dir) {
   const out = [];
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     if (e.name === 'test' || e.name === 'node_modules') continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) out.push(...styleFiles(p));
-    else if (/\.(css|html)$/.test(e.name)) out.push(p);
+    else if (/\.(css|html|js)$/.test(e.name)) out.push(p);
   }
   return out;
 }
