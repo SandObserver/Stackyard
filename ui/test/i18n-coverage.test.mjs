@@ -37,6 +37,8 @@ const SAME_ON_PURPOSE = {
     'type.widget',
     'app.name',
     'app.url',
+    /* "System" is the German word too. */
+    'pill.system',
     /* "Optional" is the German word too. */
     'app.optional',
     'app.badge',
@@ -60,6 +62,8 @@ const SAME_ON_PURPOSE = {
     'app.ping',
     'app.dockPill',
     'home.dock',
+    /* "Error" is the Spanish word too. */
+    'toast.error',
   ]),
   'fr.json': new Set([
     /* Info and the version line are written the same way in French. */

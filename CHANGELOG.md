@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Folder tiles and the folder overlay announce their name in the chosen
   language, instead of appending an English word to it.
 
+- Settings now shows its confirmations, errors, pills, widget size names and
+  connection-test results in the chosen language.
+
 ## [1.9.1] - 2026-08-30
 
 ### Added

@@ -35,7 +35,8 @@
     "hide": "Hide",
     "moveUp": "Move up",
     "moveDown": "Move down",
-    "editNamed": "Edit {name}"
+    "editNamed": "Edit {name}",
+    "addNamed": "+ Add {name}"
   },
   "general": {
     "title": "Title",
@@ -146,7 +147,9 @@
     "createNew": "Create new folder",
     "expandAria": "Expand folder {name}",
     "collapseAria": "Collapse folder {name}",
-    "appsInFolder": "Apps in this folder"
+    "appsInFolder": "Apps in this folder",
+    "appsCount_one": "{count} app",
+    "appsCount_other": "{count} apps"
   },
   "app": {
     "name": "Name",
@@ -214,7 +217,12 @@
     "headerValue": "Header value",
     "headerKeyPh": "Key",
     "addToUrl": "Add to URL",
-    "secretTip": "Store this value as a credential: hidden after saving and never exported. Unticking clears the stored value."
+    "secretTip": "Store this value as a credential: hidden after saving and never exported. Unticking clears the stored value.",
+    "reachable": "Reachable ({status})",
+    "httpError": "HTTP error {status}",
+    "connectedNoValues": "Connected, no numeric values found",
+    "foundValues_one": "Found {count} value",
+    "foundValues_other": "Found {count} values"
   },
   "home": {
     "search": "Search",
@@ -235,7 +243,8 @@
     "apiDownTitle": "Could not connect to dashboard API",
     "apiDownSub": "Make sure the API container is running",
     "retry": "Retry",
-    "opensSettings": "Opens settings"
+    "opensSettings": "Opens settings",
+    "loadFailed": "Failed to load dashboard config."
   },
   "toast": {
     "saved": "Saved",
@@ -260,7 +269,16 @@
     "socketHintPublishPort": "Nothing at that address answered. A socket proxy published on the host’s loopback cannot be reached from inside a container; publish it on the Docker bridge address, or put both containers on a shared network and use the proxy’s name.",
     "wallpaperStored": "Wallpaper stored on this server.",
     "wallpaperFailed": "Wallpaper failed: {err}",
-    "imageTooLarge": "That image is too large for the server to accept."
+    "imageTooLarge": "That image is too large for the server to accept.",
+    "updated": "Updated",
+    "added": "Added",
+    "error": "Error: {err}",
+    "urlRequired": "URL required",
+    "nameRequired": "Name required",
+    "fieldRequired": "{field} is required",
+    "configLoadFailed": "Could not load config. Is the API container running? ({err})",
+    "uploaded": "Uploaded {name}",
+    "uploadFailed": "Upload failed: {err}"
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",
@@ -338,7 +356,16 @@
     "referrerPolicy": "Referrer Policy",
     "allowFeaturePolicy": "Allow (feature policy)",
     "allowFullscreen": "Allow Fullscreen",
-    "refreshInterval": "Refresh Interval"
+    "refreshInterval": "Refresh Interval",
+    "meta": "{type} widget · {size}",
+    "sizeSmall": "Small",
+    "sizeMedium": "Medium",
+    "sizeLarge": "Large",
+    "sizeXLarge": "Extra Large",
+    "none": "None",
+    "noneSelected": "None selected",
+    "selectedCount_one": "{count} selected",
+    "selectedCount_other": "{count} selected"
   },
   "importForeign": {
     "title": "Import from another dashboard",
@@ -380,5 +407,9 @@
     "desc": "Choose a strong password for your dashboard.",
     "newPassword": "New password",
     "submit": "Set password"
+  },
+  "pill": {
+    "system": "System",
+    "hidden": "Hidden"
   }
 }

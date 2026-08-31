@@ -5,7 +5,7 @@
 import { t } from '/js/i18n.js?v=83239bf4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { wireChecklist } from '/js/admin-shared.js?v=1d330931';
-import { renderColorControl } from '/js/admin-color-control.js?v=bfd0955a';
+import { renderColorControl } from '/js/admin-color-control.js?v=e374d8be';
 import {
   seedCarried,
   applyOptionSet,
@@ -23,7 +23,9 @@ const CHEV =
   '<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
 function _tag(field) {
-  return field.optional ? html` <span class="opt-span">(optional)</span>` : html` <span class="req">*</span>`;
+  return field.optional
+    ? html` <span class="opt-span">(${t('app.optional')})</span>`
+    : html` <span class="req">*</span>`;
 }
 
 function _ieRow(field, value, inputType) {
@@ -310,8 +312,8 @@ function _select(field, value, ctx, config = {}) {
     );
     if (chosen && !opts.some(o => String(o.value) === chosen))
       items.unshift(html`<option value="${chosen}" selected>${chosen}</option>`);
-    if (field.optional) items.unshift(html`<option value="">None</option>`);
-    setHtml(sel, items.length ? html`${items}` : html`<option value="">None</option>`);
+    if (field.optional) items.unshift(html`<option value="">${t('widgetCfg.none')}</option>`);
+    setHtml(sel, items.length ? html`${items}` : html`<option value="">${t('widgetCfg.none')}</option>`);
   }
   paint();
 
@@ -409,7 +411,8 @@ function _multiselect(field, value) {
   const cur = new Set(
     Array.isArray(value) ? value.map(String) : Array.isArray(field.default) ? field.default.map(String) : [],
   );
-  const summary = () => (cur.size === 0 ? 'None selected' : cur.size + ' selected');
+  const summary = () =>
+    cur.size === 0 ? t('widgetCfg.noneSelected') : t('widgetCfg.selectedCount', { count: cur.size });
   setHtml(
     row,
     html`<span class="rl">${field.label}</span><div class="row-dd"><button class="row-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ms-sum">${summary()}</span>${raw(CHEV)}</button><ul class="row-dd-list checklist" role="listbox" aria-multiselectable="true" hidden>${opts.map(o => html`<li role="option" data-val="${o.value}" aria-selected="${String(cur.has(String(o.value)))}">${o.label}</li>`)}</ul></div>`,
@@ -557,7 +560,10 @@ function _group(field, rows, size, ctx) {
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.className = 'wcf-add-row';
-  setHtml(addBtn, html`<span class="rl" style="color:var(--ac2)">+ Add ${field.label}</span>`);
+  setHtml(
+    addBtn,
+    html`<span class="rl" style="color:var(--ac2)">${t('common.addNamed', { name: field.label })}</span>`,
+  );
   addWrap.appendChild(addBtn);
   wrap.appendChild(addWrap);
   const fixed = min === max;
