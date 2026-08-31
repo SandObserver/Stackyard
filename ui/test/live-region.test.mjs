@@ -151,9 +151,36 @@ test('a badge is not a live region', () => {
   assert.match(paint, /removeAttribute\('role'\)/);
 });
 
+/* The selector is exercised rather than spelled out. A tile is an app's link, a
+   folder's button, or anything carrying the role, and any selector that reaches
+   all three passes. Pinning the string failed when folder tiles stopped being
+   anchors, for a change that was correct. */
+const tileSelector = () => {
+  const m = /closest\((['"])(.+?)\1\)/.exec(badgePaint());
+  assert.ok(m, 'the paint no longer looks for an ancestor tile');
+  return m[2];
+};
+
+const reaches = (selector, node) =>
+  selector
+    .split(',')
+    .map(part => part.trim())
+    .some(part => {
+      const m = /^([a-z]*)(?:\[role="([^"]+)"\])?$/.exec(part);
+      if (!m) return false;
+      const [, tag, role] = m;
+      if (tag && tag !== node.tag) return false;
+      if (role && role !== node.role) return false;
+      return Boolean(tag || role);
+    });
+
 test('the badge is composed into the tile name instead', () => {
   const paint = badgePaint();
-  assert.match(paint, /closest\('a, \[role="button"\]'\)/, 'the paint does not find its tile');
+  const selector = tileSelector();
+  assert.ok(reaches(selector, { tag: 'a' }), `${selector} misses an app tile`);
+  assert.ok(reaches(selector, { tag: 'button' }), `${selector} misses a folder tile`);
+  assert.ok(reaches(selector, { tag: 'div', role: 'button' }), `${selector} misses a tile carrying the role`);
+  assert.ok(!reaches(selector, { tag: 'span' }), `${selector} would climb past the tile`);
   assert.match(paint, /tile\.setAttribute\('aria-label'/, 'the tile name is never recomposed');
   assert.match(paint, /aria-hidden/, 'the badge still speaks for itself as well');
 });

@@ -39,7 +39,7 @@ function ensurePop() {
     control nested in a link is unreachable.
     @param {HTMLElement} badge @returns {HTMLElement|null} */
 function tileOf(badge) {
-  return /** @type {HTMLElement|null} */ (badge.closest('a, [role="button"]'));
+  return /** @type {HTMLElement|null} */ (badge.closest('a, button, [role="button"]'));
 }
 
 /** @param {HTMLElement} badge */
