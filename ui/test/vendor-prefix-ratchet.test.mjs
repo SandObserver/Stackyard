@@ -8,17 +8,16 @@ import { fileURLToPath } from 'node:url';
    they accumulate, and nothing said which were still doing anything.
 
    P12-1: there were 177, of which 97 were dead at the support floor written at the top
-   of tokens.css (WebKit 16.2+, current Chrome, Edge and
-   Firefox). The tempting test, "does an unprefixed equivalent sit beside
-   it", is wrong and would have removed -webkit-backdrop-filter, which WebKit
-   needed well past 16.2 and which is paired with the unprefixed property in all
+   of tokens.css. The tempting test, "does an unprefixed equivalent sit beside
+   it", is wrong and would have removed -webkit-backdrop-filter, which Safari
+   still needs at the floor and which is paired with the unprefixed property in all
    26 places. Membership of this list is a per-property judgement, so the list is
    explicit rather than derived.
 
    Adding a prefix that is not here fails. If it genuinely belongs, add it with
    a reason in tokens.css and a line here. */
 const ALLOWED = new Set([
-  '-webkit-backdrop-filter' /* WebKit needed it well past 16.2 */,
+  '-webkit-backdrop-filter' /* Safari has no unprefixed form until 18.0 */,
   '-webkit-text-size-adjust' /* WebKit supports only the prefixed form */,
   '-webkit-line-clamp' /* the line-clamp idiom, with the two below */,
   '-webkit-box-orient',

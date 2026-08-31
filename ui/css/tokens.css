@@ -1,5 +1,8 @@
 /* ── Browser support ─────────────────────────────────────────────────────────
-   WebKit 16.2 and newer, and current Chrome, Edge and Firefox.
+   Desktop: Safari 17.6 and newer, and current Chrome, Edge and Firefox.
+   iOS: Safari 17.0 and newer.
+
+   The rule behind each number is in docs/frontend.md.
 
    There is no autoprefixer. The vendor prefixes still in this project are the
    ones with no working unprefixed equivalent at that floor. Do not remove one
