@@ -11,7 +11,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=8ca7ce3c';
+} from '/js/utils.js?v=3ae4d9d8';
 import { t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { trapFocus } from '/js/dialog.js?v=05935547';
 import { toneForColor } from '/js/label-contrast.js?v=38adb276';
@@ -777,7 +777,7 @@ export function buildMobile() {
     ? dock.length * dockIconSz + (dock.length - 1) * Math.round(22 * sc) + dockPad * 2
     : maxDockW;
   const dockW = Math.min(maxDockW, dockContentW);
-  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
+  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
   dk.innerHTML = '';
   dock.forEach(item => {
     const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
@@ -796,7 +796,7 @@ export function buildMobile() {
     _pdotPad = Math.round(14 * sc);
   const pillDotsW = pages.length * (_pdotSz + _pdotGap) - _pdotGap + _pdotPad * 2;
   const pill = el('mob-search-pill');
-  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dh + pillGap}px;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:-webkit-flex;display:flex;z-index:500;`;
+  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dh + pillGap}px;transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:flex;z-index:500;`;
 
   const pillNew = /** @type {HTMLElement} */ (pill.cloneNode(true));
   const pillNewDots = q('.msp-dots', pillNew);
