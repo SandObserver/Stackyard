@@ -8,7 +8,7 @@
   "units.opt.c": "°C",
   "units.opt.f": "°F",
   "feelsLike.label": "نمایش دمای محسوس",
-  "href.label": "نشانی پیوند",
+  "href.label": "آدرس پیوند",
   "href.placeholder": "https://…",
   "ui.clear": "صاف",
   "ui.mostlyClear": "عمدتاً صاف",

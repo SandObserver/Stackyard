@@ -9,7 +9,7 @@
   "githubUser.placeholder": "octocat",
   "githubToken.label": "توکن دسترسی شخصی",
   "githubToken.hint": "توکن کلاسیک با دسترسی repo و read:user (یا توکن دقیق با همان سطح خواندن). فقط همین ویجت از آن استفاده می‌کند.",
-  "githubHref.label": "نشانی کلیک",
+  "githubHref.label": "آدرس کلیک",
   "githubHref.hint": "جایی که با کلیک روی ویجت باز می‌شود. برای غیرفعال کردن خالی بگذارید.",
   "githubPrFilters.label": "پالایه‌های درخواست ادغام",
   "githubPrFilters.hint": "کدام درخواست‌های باز نمایش داده شوند. چند پالایه با هم ترکیب می‌شوند.",

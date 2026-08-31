@@ -129,6 +129,12 @@ const REJECTED = {
     ['برون‌بری', 'خروجی'],
     ['ابزارک', 'ویجت'],
     ['پرونده', 'فایل'],
+    ['گذرواژه', 'رمز عبور'],
+    ['نشانی', 'آدرس'],
+    ['آزمایش', 'تست'],
+    ['سامانه', 'سیستم'],
+    ['پیش‌تخته', 'داشبورد'],
+    ['پساکند', 'ذخیره'],
   ],
   /* Abzeichen is a pinned badge or a medal. The reference locales use Badge 26
      times and Abzeichen never. Bezeichnung is what the rest of the catalogue
