@@ -270,7 +270,10 @@
     /* Both pills are pseudo-elements at negative depth. That is the only order
        where one paints under the other and both stay under the label, and it
        needs the element's own background to stay clear. */
-    .badge.has-more { pointer-events:auto; background:none; inset-inline-end:calc(-7px * var(--sc,1) + var(--badge-peek)) }
+    .badge.has-more { background:none; inset-inline-end:calc(-7px * var(--sc,1) + var(--badge-peek)) }
+    /* The badge is transparent to the pointer so a click reaches the tile. One
+       with a popover has to take it, or nothing can hover what it opens. */
+    .badge.has-pop { pointer-events:auto }
     .badge.has-more::before, .badge.has-more::after {
       content:''; position:absolute; inset:0; border-radius:50px;
     }

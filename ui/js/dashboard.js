@@ -29,7 +29,7 @@ import { initI18n, t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=69dbb7cb';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=016f4907';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
 import {
@@ -167,7 +167,7 @@ function bupd(id) {
 
   const act = item?.monitoring?.activity || {};
   const isFolder = item?.type === 'folder';
-  const { cls, txt, num, unit, bg, aria, color, title, more, nextColor, rows } = computeBadgeVisual({
+  const { cls, txt, num, unit, bg, aria, color, nextColor, popover, rows } = computeBadgeVisual({
     health: s.health,
     activity: s.activity,
     activityStale: !!s.activityStale,
@@ -184,7 +184,7 @@ function bupd(id) {
     format: formatNumber,
   });
 
-  const sig = badgeSignature({ cls, txt, unit, bg, aria, color, title, nextColor, rows });
+  const sig = badgeSignature({ cls, txt, unit, bg, aria, color, nextColor, rows });
 
   els.forEach(el => {
     if (BSIG.get(el) === sig) return;
@@ -219,11 +219,11 @@ function bupd(id) {
     el.style.color = color;
     if (nextColor) el.style.setProperty('--badge-next', nextColor);
     else el.style.removeProperty('--badge-next');
-    wireBadgePopover(el, more ? rows : null);
-    /* Assigned, never interpolated. An upstream error string must not become
-       markup. */
-    if (title) el.title = title;
-    else el.removeAttribute('title');
+    /* No title attribute. The popover carries the reason, and a badge that can
+       be hovered would otherwise draw the browser's own tooltip beside it.
+       Removed rather than skipped: one set by an earlier paint would persist. */
+    el.removeAttribute('title');
+    wireBadgePopover(el, popover ? rows : null);
   });
 }
 
