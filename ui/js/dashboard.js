@@ -23,7 +23,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
 } from '/js/utils.js?v=8a2001ad';
-import { initSpotlight } from '/js/spotlight.js?v=6a90af65';
+import { initSpotlight } from '/js/spotlight.js?v=b7d04047';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
