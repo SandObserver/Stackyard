@@ -25,6 +25,16 @@ const widgets = fs
   .filter(e => e.isDirectory())
   .map(e => e.name);
 
+/* The Settings page is several modules and the split moves between them, so
+   these look across all of them rather than naming one. What is asserted is a
+   fact about the page, not about which file happens to hold it. */
+const settingsSource = () =>
+  fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => /^admin.*\.js$/.test(f))
+    .map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8'))
+    .join('\n');
+
 test('every widget declares a glyph, and it is one that exists', () => {
   for (const w of widgets) {
     const m = JSON.parse(read(`widgets/${w}/widget.json`));
@@ -55,17 +65,15 @@ test('an unknown or missing glyph falls back rather than throwing', () => {
   for (const v of [undefined, null, '', 'not-a-glyph', 42, {}]) {
     assert.equal(widgetGlyph(/** @type {any} */ (v)), null);
   }
-  const admin = read('js/admin.js');
   assert.match(
-    admin,
+    settingsSource(),
     /glyph \|\| SIZE_ICONS\[item\.widgetSize\] \|\| SIZE_ICONS\.medium/,
     'no fallback to the size icon',
   );
 });
 
 test('the list draws the glyph from the widget registry', () => {
-  const admin = read('js/admin.js');
-  assert.match(admin, /widgetGlyph\(state\._widgetReg\?\.\[item\.widgetType\]\?\.glyph\)/);
+  assert.match(settingsSource(), /widgetGlyph\(state\._widgetReg\?\.\[item\.widgetType\]\?\.glyph\)/);
 });
 
 /* The validator has its own copy of the names, because the API is CommonJS and

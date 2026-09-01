@@ -34,3 +34,9 @@ export const state = {
   _autoFormSession: null,
   _evSession: 0,
 };
+
+/* Which folders are collapsed, and what the list is filtered to. Both the page
+   and the list read and write these, so they live here rather than in either. */
+export const collapsedFolders = new Set();
+
+export const filter = { q: '', type: 'all' };

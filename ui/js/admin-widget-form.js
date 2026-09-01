@@ -1,4 +1,4 @@
-import { state } from '/js/admin-state.js?v=c23e6346';
+import { state } from '/js/admin-state.js?v=7d68e98e';
 import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=578a9485';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=64989da4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';

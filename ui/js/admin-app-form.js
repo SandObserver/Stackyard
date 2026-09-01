@@ -1,7 +1,7 @@
 import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=1e7c27bc';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
-import { state } from '/js/admin-state.js?v=c23e6346';
+import { state } from '/js/admin-state.js?v=7d68e98e';
 import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=d17394da';
 import { t } from '/js/i18n.js?v=83239bf4';
 import {

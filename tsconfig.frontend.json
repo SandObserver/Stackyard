@@ -71,6 +71,13 @@
       "/js/admin-logic.js?v=*": [
         "./ui/js/admin-logic.js"
       ],
+
+      "/js/admin-list.js": [
+        "./ui/js/admin-list.js"
+      ],
+      "/js/admin-list.js?v=*": [
+        "./ui/js/admin-list.js"
+      ],
       "/js/admin-save-logic.js": [
         "./ui/js/admin-save-logic.js"
       ],

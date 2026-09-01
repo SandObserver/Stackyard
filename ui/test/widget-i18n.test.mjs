@@ -34,6 +34,16 @@ const ITEM = { id: 'w1', widgetType: 'system-summary', widgetSize: 'medium' };
 
 /* ── the language reaches the iframe ──────────────────────────────────────── */
 
+/* The Settings page is several modules and the split moves between them, so
+   these look across all of them rather than naming one. What is asserted is a
+   fact about the page, not about which file happens to hold it. */
+const settingsSource = () =>
+  fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => /^admin.*\.js$/.test(f))
+    .map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8'))
+    .join('\n');
+
 test('the widget URL carries the language', () => {
   assert.match(widgetSrc(ITEM, REG, { lang: 'fa' }), /[?&]lang=fa\b/);
 });
@@ -238,7 +248,7 @@ test('every locale names the reorder buttons', () => {
       assert.ok(cat.common?.[key], `${file} is missing common.${key}`);
     }
   }
-  assert.match(read('js/admin.js'), /t\(dir < 0 \? 'common\.moveUp' : 'common\.moveDown'\)/);
+  assert.match(settingsSource(), /t\(dir < 0 \? 'common\.moveUp' : 'common\.moveDown'\)/);
 });
 
 /* The tests above cover the toolbox's own status strings. A widget also writes
