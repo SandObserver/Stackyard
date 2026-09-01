@@ -10,7 +10,7 @@
    it is near, and which classes say so. */
 
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=6b767e76';
-import { state } from '/js/admin-state.js?v=c23e6346';
+import { state } from '/js/admin-state.js?v=7d68e98e';
 import { snapshotItems } from '/js/admin-save-logic.js?v=48a9e055';
 import { qa } from '/js/utils.js?v=1e7c27bc';
 
