@@ -578,7 +578,7 @@ function _group(field, rows, size, ctx) {
   let rowBuilt = [];
 
   function render() {
-    rowsHost.innerHTML = '';
+    rowsHost.replaceChildren();
     rowBuilt = [];
     data.forEach((rowData, idx) => {
       const hdr = document.createElement('p');
@@ -667,7 +667,7 @@ function _buildSimple(field, config, ctx) {
 }
 
 export function renderWidgetConfigForm(container, fields, config = {}, opts = {}) {
-  container.innerHTML = '';
+  container.replaceChildren();
   const built = [];
   const ctx = {
     widgetId: (opts && opts.widgetId) || null,

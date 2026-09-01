@@ -23,12 +23,12 @@ import {
   teardownWidgets,
   titleWhenTruncated,
 } from '/js/utils.js?v=8a2001ad';
-import { initSpotlight } from '/js/spotlight.js?v=b7d04047';
+import { initSpotlight } from '/js/spotlight.js?v=d1f646d3';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=83239bf4';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=a262f363';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=42d6bd46';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
 import { formatNumber } from '/js/format-number.js?v=e2165e12';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=92c4b2ee';
@@ -388,7 +388,7 @@ function buildDesktop() {
   const pages = paginate();
   totalPages = pages.length;
   const strip = el('pages');
-  strip.innerHTML = '';
+  strip.replaceChildren();
   pages.forEach(pageItems => {
     const p = mk('div');
     p.className = 'page';
@@ -399,10 +399,10 @@ function buildDesktop() {
     strip.appendChild(p);
   });
   const dots = el('dots');
-  dots.innerHTML = '';
+  dots.replaceChildren();
   pages.forEach((_, i) => dots.appendChild(mkDot(i, pages.length, 0, goTo)));
   const dk = el('dock');
-  dk.innerHTML = '';
+  dk.replaceChildren();
   dock.forEach(item => dk.appendChild(mkDock(item)));
 }
 
@@ -491,7 +491,7 @@ function syncMobPages() {
   if (domCount <= totalPages) return; /* no overflow pages, nothing to fix */
   totalPages = domCount;
   const dots = el('dots');
-  dots.innerHTML = '';
+  dots.replaceChildren();
   for (let i = 0; i < domCount; i++) dots.appendChild(mkDot(i, domCount, pg, goTo));
   const pillDots = q('.msp-dots');
   if (pillDots) {

@@ -121,10 +121,11 @@ test('health polling does not announce', () => {
 test('mobile no longer builds dots into a hidden container', () => {
   const ui = read('js/ui.js');
   assert.doesNotMatch(ui, /const de = \[\]/, 'unreachable markup that still had to be kept in step');
-  /* Two statements, whether the formatter puts them on one line or two. */
+  /* Hidden and emptied, in that order. Which call empties it is the
+     innerHTML ratchet's business, not this test's. */
   assert.match(
     ui,
-    /dw\.style\.cssText\s*=\s*'display:none';\s*dw\.innerHTML\s*=\s*''/,
+    /dw\.style\.cssText\s*=\s*'display:none';\s*dw\.(?:replaceChildren\(\)|innerHTML\s*=\s*'')/,
     'the container is still cleared',
   );
 });

@@ -311,7 +311,7 @@ function syncActMode() {
   const host = el('act-labels');
   if (!host) return;
   if (!ready) {
-    host.innerHTML = '';
+    host.replaceChildren();
     return;
   }
   renderActLabels(host);
@@ -351,7 +351,7 @@ function _valueSelect(idx, path) {
 }
 
 function renderActLabels(host) {
-  host.innerHTML = '';
+  host.replaceChildren();
   state.spaths.forEach((path, i) => {
     const l = actLabel(path);
     const hdr = document.createElement('p');
@@ -579,7 +579,7 @@ function wireIcon() {
 function showIPRes(list, rawInput) {
   const rs = el('iprs');
   if (!rs) return;
-  rs.innerHTML = '';
+  rs.replaceChildren();
   list.forEach(ic => {
     const r = document.createElement('button');
     r.type = 'button';

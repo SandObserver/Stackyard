@@ -562,7 +562,7 @@ export function buildMobile() {
      xlarge 4×6. A footprint is a physical size, so it does not change with the
      column count: a wider box gets more columns, not larger widgets. */
   const strip = el('pages');
-  strip.innerHTML = '';
+  strip.replaceChildren();
 
   function mkPage() {
     const p = mk('div');
@@ -746,7 +746,7 @@ export function buildMobile() {
 
   const dw = el('dots');
   dw.style.cssText = 'display:none';
-  dw.innerHTML = '';
+  dw.replaceChildren();
 
   const dk = el('dock');
   dk.className = 'mdock';
@@ -764,7 +764,7 @@ export function buildMobile() {
     : maxDockW;
   const dockW = Math.min(maxDockW, dockContentW);
   dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
-  dk.innerHTML = '';
+  dk.replaceChildren();
   dock.forEach(item => {
     const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
     a.className = 'dyn-dock-icon';
@@ -786,7 +786,7 @@ export function buildMobile() {
 
   const pillNew = /** @type {HTMLElement} */ (pill.cloneNode(true));
   const pillNewDots = q('.msp-dots', pillNew);
-  pillNewDots.innerHTML = '';
+  pillNewDots.replaceChildren();
   const pillDotEls = pages.map((_, i) => {
     const d = document.createElement('div');
     d.className = 'msp-dot' + (i === 0 ? ' on' : '');
