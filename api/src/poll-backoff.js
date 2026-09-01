@@ -1,12 +1,6 @@
-/* Batched polls fan out to every configured target on every cycle. A target
-   that has been unreachable for months costs a full timeout each time, and the
-   batch answers only when everything has settled, so it delays the tiles that
-   did answer.
-
-   After a few consecutive failures a target is left alone until its next
-   attempt time, and the caller reuses the failure it already reported. Only a
-   thrown request counts: a service that answers with an error status is
-   reachable and is polled normally. */
+/* Only a thrown request counts as a failure. A service answering with an error
+   status is reachable and is polled normally.
+   Why the batch needs this at all: docs/frontend.md, Badges. */
 
 const FAILURES_BEFORE_BACKOFF = 3;
 const FIRST_DELAY_MS = 30_000;

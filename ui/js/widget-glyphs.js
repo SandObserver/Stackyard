@@ -1,11 +1,6 @@
 // @ts-check
-/* A glyph per widget type for the Settings item list, drawn on the 24-unit grid
-   the other icons in admin.js use. Inline rather than a file per glyph: they are
-   stroked with currentColor, so they follow the theme and the increased-contrast
-   block with no rule of their own, which an <img> cannot do.
-
-   A widget names one in its manifest. A widget that names none, or names one
-   that is not here, keeps the size icon. */
+/* Drawn on the same 24-unit grid as the other item-list icons, and stroked
+   with currentColor so they follow the theme. Do not replace with an <img>. */
 
 /** @type {Record<string, string>} */
 const PATHS = {

@@ -1,14 +1,6 @@
 // @ts-check
-/* Whether to show the mobile layout, as one rule for the dashboard and Admin.
-
-   The width test is a media query, not a stored innerWidth, so it answers the
-   same question the stylesheets ask. The user-agent test covers phones that
-   report a wider CSS viewport than 768px, where a width query alone leaves a
-   phone on the desktop layout; it is qualified by portrait so a phone held
-   sideways gets the wider layout it has room for.
-
-   Keep this module free of imports: both entry points load it before anything
-   else has run. */
+/* Keep this module free of imports. Both entry points load it first.
+   Why the test has two halves: docs/frontend.md, Layout. */
 
 export const MOBILE_QUERY = '(max-width:768px)';
 const PORTRAIT_QUERY = '(orientation:portrait)';

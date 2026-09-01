@@ -1,6 +1,6 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
-import { SETTINGS_ICON } from '/js/settings-icon.js?v=b96f0073';
+import { SETTINGS_ICON } from '/js/settings-icon.js?v=b96e5b13';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);

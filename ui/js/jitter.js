@@ -1,7 +1,5 @@
 // @ts-check
-/* Spread repeated timers, so several pollers started together do not keep
-   firing on the same tick. Keep it dependency-free: it is imported inside
-   widget frames as well as by the dashboard. */
+/* Keep this module free of imports. It is loaded inside widget frames. */
 
 const SPREAD = 0.15;
 

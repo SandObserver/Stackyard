@@ -1,15 +1,6 @@
-/* The Settings page appearance: dark, light, or whichever the device asks for.
-
-   The choice is per device, not per dashboard. It is read from localStorage and
-   never written to the config, so two people opening Settings on two machines
-   each get their own, and a machine keeps its own through a config import.
-
-   "system" is resolved here rather than in a media query. The stylesheets carry
-   one light block, selected by data-theme, and a prefers-color-scheme copy of it
-   would be a second place to change every colour.
-
-   ui/js/admin-theme.js repeats what this file decides so the attribute is on
-   <html> before the first paint. A parity test holds the two together. */
+/* Never write the choice to the config: it is per device.
+   Why it is resolved here rather than in a media query, and why admin-theme.js
+   repeats it: docs/frontend.md, Theme. */
 
 export const THEME_KEY = 'sy-theme';
 
