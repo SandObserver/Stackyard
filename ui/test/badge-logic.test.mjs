@@ -696,7 +696,8 @@ test('a legacy unhealthy badge is unchanged', () => {
   assert.equal(v.txt, '!');
   assert.ok(v.cls.startsWith('badge on red'));
   assert.equal(v.more, 0);
-  assert.ok(v.title, 'the hover reason still explains the failure');
+  assert.ok(v.title, 'the reason is no longer computed');
+  assert.equal(v.rows[0].name, v.title, 'the popover row is where the reason is shown');
 });
 
 test('every badge carries a name that does not rely on its colour', () => {
@@ -731,4 +732,57 @@ test('a badge that opens a list says how many are behind it, in the right number
     values: [1, 1, 1],
   });
   assert.ok(three.aria.endsWith('2 more badges'), three.aria);
+});
+
+/* ── when the popover is offered at all ───────────────────────────────────── */
+
+/* It exists to show what the badge cannot. A failure qualifies on its own: the
+   reason is otherwise only in the accessible name, so a sighted reader sees
+   that something is wrong and never what. A healthy badge does not, because it
+   would repeat what is already drawn. */
+test('a failing badge offers the popover on its own', () => {
+  const v = computeBadgeVisual({
+    health: true,
+    hasHC: true,
+    hideHealthy: false,
+    healthDetail: { status: 'unhealthy' },
+  });
+  assert.equal(v.popover, true, 'the failure reason is unreachable without it');
+  assert.ok(v.cls.includes('has-pop'), 'without the class the badge cannot be hovered');
+  assert.equal(v.more, 0, 'there is nothing extra to count, only the failure itself');
+  assert.equal(v.rows.length, 1);
+  assert.ok(v.rows[0].name, 'the row carries no reason to show');
+  assert.equal(v.rows[0].value, '', 'the row repeats the mark the badge already draws');
+});
+
+test('a healthy badge offers nothing to open', () => {
+  const v = computeBadgeVisual({ health: false, hasHC: true, hideHealthy: false });
+  assert.equal(v.popover, false, 'a popover here repeats the tile');
+  assert.ok(!v.cls.includes('has-pop'), 'a badge with nothing to open must let the click through');
+  assert.deepEqual(v.rows, []);
+});
+
+test('a single activity value offers nothing to open', () => {
+  const v = computeBadgeVisual({
+    labels: [{ path: 'a', name: 'Queue', unit: '', min: 0 }],
+    values: [7],
+    hasHC: false,
+    hideHealthy: false,
+  });
+  assert.equal(v.popover, false, 'the one value is already the badge');
+});
+
+test('two or more values still offer it', () => {
+  const v = computeBadgeVisual({
+    labels: [
+      { path: 'a', name: 'CPU', unit: '%', min: 0 },
+      { path: 'b', name: 'RAM', unit: 'GB', min: 0 },
+    ],
+    values: [52, 146],
+    hasHC: false,
+    hideHealthy: false,
+  });
+  assert.equal(v.popover, true);
+  assert.equal(v.more, 1);
+  assert.equal(v.rows.length, 2);
 });

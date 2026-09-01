@@ -167,3 +167,28 @@ test('the cue costs no height', () => {
   const b = block(css, '.badge.has-more {');
   assert.doesNotMatch(b, /height:/, 'the collapsed cue must not change the pill height');
 });
+
+/* The badge ignores the pointer so a click reaches the tile beneath it. That
+   made the popover unreachable by hover on anything but a multi-value badge,
+   because only that one turned pointer-events back on, and a dispatched event
+   does not notice: it skips hit-testing entirely. */
+test('a badge with a popover accepts the pointer', () => {
+  const pop = block(css, '.badge.has-pop {');
+  assert.match(pop, /pointer-events:\s*auto/, 'nothing can hover the badge that opens it');
+  assert.doesNotMatch(
+    block(css, '.badge.has-more {'),
+    /pointer-events/,
+    'having extra values is not what decides whether it can be hovered',
+  );
+});
+
+/* A badge that can be hovered draws the browser's own tooltip from a title
+   attribute, beside the styled popover showing the same text. */
+test('the badge sets no title attribute', () => {
+  const dashboard = read('js/dashboard.js');
+  const from = dashboard.indexOf('els.forEach(el =>');
+  /* From the loop, not the file: the import names wireBadgePopover first. */
+  const paint = dashboard.slice(from, dashboard.indexOf('wireBadgePopover', from));
+  assert.doesNotMatch(paint, /\.title\s*=/, 'the browser tooltip would duplicate the popover');
+  assert.match(paint, /removeAttribute\('title'\)/, 'a title left from an earlier paint would persist');
+});

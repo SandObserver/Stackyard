@@ -249,7 +249,9 @@ export function computeBadgeVisual({
      place. NAMED does not hold those token values and never decided this. */
   const color = bg ? (needsDark(bg) ? '#1c1c1e' : '#ffffff') : '';
 
-  if (health) rows.push({ name: reason || tr('status.needsAttention'), value: '!', unit: '', color: NAMED.red });
+  /* No value: the mark is what the badge already draws, and the row exists for
+     the reason beside it. */
+  if (health) rows.push({ name: reason || tr('status.needsAttention'), value: '', unit: '', color: NAMED.red });
   for (const f of fired) rows.push(f);
   if (fixed) rows.push({ name: staticBdg.label, value: '', unit: '', color: safeColor(staticBdg.color) });
 
@@ -260,7 +262,29 @@ export function computeBadgeVisual({
   }
   const nextColor = more ? rows[1].color : '';
 
-  return { cls, txt, num, unit, bg, aria, color, title: reason, more, nextColor, rows: more ? rows : [] };
+  /* The popover exists to show what the badge cannot. Several values qualify,
+     and so does a failure, whose reason is otherwise only in the name. A single
+     healthy badge does not: it would repeat what is already drawn. */
+  const popover = more > 0 || Boolean(health);
+  /* A badge ignores the pointer so a click reaches the tile under it. One that
+     has something to open must not, or it can never be hovered. Separate from
+     has-more, which draws the second pill and is about having extra values. */
+  if (popover) cls += ' has-pop';
+
+  return {
+    cls,
+    txt,
+    num,
+    unit,
+    bg,
+    aria,
+    color,
+    title: reason,
+    more,
+    nextColor,
+    popover,
+    rows: popover ? rows : [],
+  };
 }
 
 /** Identity of a rendered badge, for skipping DOM writes that change nothing.

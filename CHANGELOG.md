@@ -47,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Medium, large and extra-large widgets are their full width again.
 
+- A failing badge shows why on hover or tap, instead of only in its name.
+
 ### Security
 
 - A custom widget's page is sandboxed and can no longer navigate the dashboard
