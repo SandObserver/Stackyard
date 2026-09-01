@@ -1,4 +1,4 @@
-import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=8a2001ad';
+import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=1e7c27bc';
 import { t } from '/js/i18n.js?v=83239bf4';
 
 /* Attached to the window so a re-open can undo the previous one. */

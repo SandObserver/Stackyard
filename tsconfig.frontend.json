@@ -232,6 +232,13 @@
       "/js/spotlight.js?v=*": [
         "./ui/js/spotlight.js"
       ],
+
+      "/js/settings-icon.js": [
+        "./ui/js/settings-icon.js"
+      ],
+      "/js/settings-icon.js?v=*": [
+        "./ui/js/settings-icon.js"
+      ],
       "/js/theme.js": [
         "./ui/js/theme.js"
       ],
