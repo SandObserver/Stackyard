@@ -39,6 +39,24 @@ function clearDragClasses(target) {
   });
 }
 
+/* At most one row shows a drop marker, so moving it is a two-row edit. Sweeping
+   every row instead runs a query and four class removals per row on every
+   pointer event, which is what made dragging a long list feel heavy. The sweep
+   is still used once a drag ends, where its cost does not repeat. */
+let _marked = null;
+
+function mark(row, cls) {
+  if (_marked && _marked !== row) clearDragClasses(_marked);
+  clearDragClasses(row);
+  row.classList.add(cls);
+  _marked = row;
+}
+
+function unmark() {
+  if (_marked) clearDragClasses(_marked);
+  _marked = null;
+}
+
 /* Drag data formats: "top:itemId" or "child:folderId:itemId". */
 function parseDragData(raw) {
   if (raw.startsWith('child:')) {
@@ -91,23 +109,24 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
 
     const place = (x, y) => {
       ghost.style.top = y - offY + 'px';
-      ghost.style.left = startRect.left + 'px';
-      clearDragClasses();
-      hovered = null;
       const under = /** @type {HTMLElement} */ (document.elementFromPoint(x, y));
       const tr = /** @type {HTMLElement} */ (under && under.closest('.drow'));
-      if (!tr || tr === row || tr === ghost) return;
+      if (!tr || tr === row || tr === ghost) {
+        unmark();
+        hovered = null;
+        return;
+      }
       hovered = tr;
       const r = tr.getBoundingClientRect();
       if (tr.dataset.isFolder && canJoinFolder(itemType(srcId))) {
         const zone = folderRowZone(y, r);
         dropInto = zone === 'into';
         dropAbove = zone === 'above';
-        tr.classList.add(dropInto ? 'drag-into' : dropAbove ? 'drag-above' : 'drag-below');
+        mark(tr, dropInto ? 'drag-into' : dropAbove ? 'drag-above' : 'drag-below');
       } else {
         dropInto = false;
         dropAbove = y < r.top + r.height / 2;
-        tr.classList.add(dropAbove ? 'drag-above' : 'drag-below');
+        mark(tr, dropAbove ? 'drag-above' : 'drag-below');
       }
     };
     const autoscroll = y => {
@@ -138,6 +157,7 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       if (scrollTimer) clearInterval(scrollTimer);
       ghost.remove();
       row.classList.remove('dragging');
+      _marked = null;
       clearDragClasses();
     };
     const up = () => {
@@ -181,18 +201,18 @@ export function wireRowDrag(row, handle, { item, indent, folderId, childIdx }) {
   row.addEventListener('dragend', () => {
     row.classList.remove('dragging');
     _dragType = null;
+    _marked = null;
     clearDragClasses();
   });
   row.addEventListener('dragover', e => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    clearDragClasses();
     const rect = row.getBoundingClientRect();
     if (row.dataset.isFolder && canJoinFolder(_dragType)) {
       const zone = folderRowZone(e.clientY, rect);
-      row.classList.add(zone === 'into' ? 'drag-into' : zone === 'above' ? 'drag-above' : 'drag-below');
+      mark(row, zone === 'into' ? 'drag-into' : zone === 'above' ? 'drag-above' : 'drag-below');
     } else {
-      row.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-above' : 'drag-below');
+      mark(row, e.clientY < rect.top + rect.height / 2 ? 'drag-above' : 'drag-below');
     }
   });
   row.addEventListener('dragleave', e => {
