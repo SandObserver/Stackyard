@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Apps in the folder picker show their icon instead of a broken image.
 
+- Medium, large and extra-large widgets are their full width again.
+
 ### Security
 
 - A custom widget's page is sandboxed and can no longer navigate the dashboard
