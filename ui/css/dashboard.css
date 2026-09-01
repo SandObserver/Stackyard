@@ -286,7 +286,11 @@
     body:not(.is-mob) .badge.has-more { inset-inline-end:calc(-7px + var(--badge-peek)) }
 
     /* ── Badge popover — the values the pill has no room for ── */
+    /* In the top layer now. The popover defaults have to be undone or they
+       fight the hand-placed coordinates: inset:0 and an auto margin centre it,
+       and it arrives with a border and a padding of its own. */
     .badge-pop {
+      inset:auto; margin:0;
       position:fixed; z-index:900; min-width:124px; max-width:min(300px,calc(100vw - 16px));
       padding:5px; border-radius:11px;
       background:rgba(28,30,42,.96);
@@ -299,7 +303,6 @@
          it out of reach and left the outside-pointerdown guard unreachable. */
       pointer-events:auto;
     }
-    .badge-pop[hidden] { display:none }
     .badge-pop-row {
       display:flex; align-items:flex-start; gap:7px; padding:2px 6px;
       font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);
