@@ -31,7 +31,7 @@ import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=69dbb7cb';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
 import { formatNumber } from '/js/format-number.js?v=016f4907';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=e84bc29a';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
 import {
   configChanged,
   landingAfterSetup,
@@ -950,17 +950,13 @@ async function boot() {
      and the mobile layout is measured. Debounced, and only while it is the
      layout in use: on a phone the keyboard opening resizes the viewport too. */
   let _rt;
-  window.addEventListener(
-    'orientationchange',
-    () => {
-      clearTimeout(_rt);
-      _rt = setTimeout(() => {
-        if (MOB) buildLayout();
-        resampleBg();
-      }, 150);
-    },
-    { passive: true },
-  );
+  screen.orientation.addEventListener('change', () => {
+    clearTimeout(_rt);
+    _rt = setTimeout(() => {
+      if (MOB) buildLayout();
+      resampleBg();
+    }, 150);
+  });
 
   /* The desktop tile size follows the viewport, so a resize can change how many
      rows fit. Rebuild only when the slot count actually moves, not on every

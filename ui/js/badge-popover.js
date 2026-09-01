@@ -26,7 +26,10 @@ function ensurePop() {
   pop.className = 'badge-pop';
   pop.id = 'badge-pop';
   pop.setAttribute('role', 'tooltip');
-  pop.hidden = true;
+  /* auto, so the browser gives the top layer, dismissal on a click outside and
+     Escape. It cannot position it: anchor positioning is Safari 26, well above
+     the support floor, so place() stays. */
+  pop.setAttribute('popover', 'auto');
   /* Interactive now, so a click on it must not reach the tile underneath. */
   pop.addEventListener('pointerenter', cancelClose);
   pop.addEventListener('pointerleave', scheduleClose);
@@ -81,7 +84,7 @@ function open(badge) {
     line.append(dot, name, val);
     p.appendChild(line);
   }
-  p.hidden = false;
+  p.showPopover();
   openFor = badge;
   openedAt = Date.now();
   place(badge);
@@ -97,7 +100,7 @@ export function closeBadgePopover() {
   openTimer = 0;
   clearTimeout(closeTimer);
   closeTimer = 0;
-  if (pop) pop.hidden = true;
+  if (pop?.matches(':popover-open')) pop.hidePopover();
   openFor = null;
   if (describedEl) {
     describedEl.removeAttribute('aria-describedby');
@@ -126,23 +129,20 @@ function cancelClose() {
   closeTimer = 0;
 }
 
+/* Escape and a click outside are the browser's now. Scrolling and resizing are
+   not: light dismiss does not cover them, and the popover is positioned by hand
+   against a badge that has moved. */
 let globalsWired = false;
 function wireGlobals() {
   if (globalsWired) return;
   globalsWired = true;
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && openFor) closeBadgePopover();
-  });
   window.addEventListener('scroll', () => closeBadgePopover(), { capture: true, passive: true });
   window.addEventListener('resize', () => closeBadgePopover());
-  document.addEventListener(
-    'pointerdown',
-    e => {
-      const target = /** @type {Node} */ (e.target);
-      if (openFor && pop && !pop.contains(target) && !openFor.contains(target)) closeBadgePopover();
-    },
-    true,
-  );
+  /* The browser dismisses it without telling this module, which would then
+     think it is still open. */
+  ensurePop().addEventListener('toggle', e => {
+    if (/** @type {any} */ (e).newState === 'closed' && openFor) closeBadgePopover();
+  });
 }
 
 /** Attach or remove the popover on one badge. Null rows remove it.

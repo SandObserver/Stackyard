@@ -68,9 +68,24 @@ test('a click on the popover does not reach the tile', () => {
   assert.match(popover, /pop\.addEventListener\('click', e => e\.stopPropagation\(\)\)/);
 });
 
-test('Escape and outside-pointerdown still close it', () => {
-  assert.match(popover, /e\.key === 'Escape'[\s\S]{0,60}closeBadgePopover\(\)/);
-  assert.match(popover, /pop\.contains\(target\)/, 'the outside guard is gone');
+/* Escape and a click outside used to be hand-written here. An auto popover is
+   given both by the browser, so what this checks is that it is one, and that
+   the module is told when the browser closes it behind its back. */
+test('Escape and a click outside still close it', () => {
+  assert.match(popover, /setAttribute\('popover', 'auto'\)/, 'not an auto popover, so neither dismissal exists');
+  assert.match(popover, /showPopover\(\)/, 'shown some other way, which never enters the top layer');
+  assert.match(
+    popover,
+    /addEventListener\('toggle'[\s\S]{0,140}closeBadgePopover\(\)/,
+    'the module would still think it is open after the browser dismissed it',
+  );
+});
+
+/* Scrolling and resizing are not light dismiss, and the popover is placed by
+   hand against a badge that has just moved. */
+test('scrolling or resizing still closes it', () => {
+  assert.match(popover, /addEventListener\('scroll'[\s\S]{0,80}closeBadgePopover\(\)/);
+  assert.match(popover, /addEventListener\('resize'[\s\S]{0,80}closeBadgePopover\(\)/);
 });
 
 /* ── W-07 ─────────────────────────────────────────────────────────────────── */
