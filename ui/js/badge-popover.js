@@ -133,7 +133,7 @@ function wireGlobals() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && openFor) closeBadgePopover();
   });
-  window.addEventListener('scroll', () => closeBadgePopover(), true);
+  window.addEventListener('scroll', () => closeBadgePopover(), { capture: true, passive: true });
   window.addEventListener('resize', () => closeBadgePopover());
   document.addEventListener(
     'pointerdown',

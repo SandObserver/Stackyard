@@ -30,8 +30,8 @@ import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=69dbb7cb';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=41a929ac';
-import { formatNumber } from '/js/format-number.js?v=e2165e12';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=92c4b2ee';
+import { formatNumber } from '/js/format-number.js?v=016f4907';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=e84bc29a';
 import {
   configChanged,
   landingAfterSetup,

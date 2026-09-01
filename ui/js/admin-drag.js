@@ -129,9 +129,13 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
         mark(tr, dropAbove ? 'drag-above' : 'drag-below');
       }
     };
+    /* Scaled by elapsed time, not by frame. A frame is 16ms at 60Hz and 8ms at
+       120Hz, so a fixed step per frame scrolls twice as fast on the faster
+       display. */
+    const SCROLL_PX_PER_MS = 12 / 16;
     const autoscroll = y => {
       if (scrollTimer) {
-        clearInterval(scrollTimer);
+        cancelAnimationFrame(scrollTimer);
         scrollTimer = null;
       }
       const rect =
@@ -142,9 +146,13 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       const up = y < rect.top + M,
         dn = y > rect.bottom - M;
       if (!up && !dn) return;
-      scrollTimer = setInterval(() => {
-        scrollByPx(scroller, up ? -12 : 12);
-      }, 16);
+      let last = performance.now();
+      const step = now => {
+        scrollByPx(scroller, (up ? -1 : 1) * (now - last) * SCROLL_PX_PER_MS);
+        last = now;
+        scrollTimer = requestAnimationFrame(step);
+      };
+      scrollTimer = requestAnimationFrame(step);
     };
     const move = ev => {
       place(ev.clientX, ev.clientY);
@@ -154,7 +162,7 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       handle.removeEventListener('pointermove', move);
       handle.removeEventListener('pointerup', up);
       handle.removeEventListener('pointercancel', cancel);
-      if (scrollTimer) clearInterval(scrollTimer);
+      if (scrollTimer) cancelAnimationFrame(scrollTimer);
       ghost.remove();
       row.classList.remove('dragging');
       _marked = null;
