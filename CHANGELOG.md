@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dragging a row in Settings no longer slows down as the list grows.
 
+- Auto-scrolling while dragging a row now moves at the same speed on every
+  display.
+
 - Apps in the folder picker show their icon instead of a broken image.
 
 ### Security

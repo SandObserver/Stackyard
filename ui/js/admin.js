@@ -1,6 +1,6 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=27306e89';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=02ba91ef';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=c65c2620';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=3516c71d';
 import { resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
 import {
   buildAppItem,
@@ -13,7 +13,7 @@ import {
 import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=7ab76a3a';
 import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=578a9485';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=1e197f62';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=16bdd033';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=83239bf4';
 import { loadLocalIcons } from '/js/icons.js?v=69c2b9bd';
@@ -27,7 +27,7 @@ import {
   SKIP,
 } from '/js/import-foreign.js?v=ef4f3d44';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
-import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=da3d2b8a';
+import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=3c33351b';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=db4192cd';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=1e7c27bc';
 import { normalizeColorInput } from '/js/admin-color-control.js?v=177e0d03';

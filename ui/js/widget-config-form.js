@@ -22,6 +22,11 @@ const PE =
 const CHEV =
   '<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
+/* A counter, not randomness. Six base-36 characters collide plausibly over a
+   long session, and an id that changes per run cannot be asserted on. */
+let _seq = 0;
+const uniqueId = prefix => `${prefix}-${++_seq}`;
+
 function _tag(field) {
   return field.optional
     ? html` <span class="opt-span">(${t('app.optional')})</span>`
@@ -377,7 +382,7 @@ function _pills(field, value) {
   row.className = 'row';
   const opts = Array.isArray(field.options) ? field.options : [];
   let sel = value != null ? value : field.default != null ? field.default : opts[0] ? opts[0].value : '';
-  const name = 'wcf-' + field.key + '-' + Math.random().toString(36).slice(2, 7);
+  const name = uniqueId('wcf-' + field.key);
   setHtml(
     row,
     html`<span class="rl">${field.label}</span><div class="segr" role="group" aria-label="${field.label}">${opts.map(o => html`<label class="segr-opt"><input type="radio" name="${name}" value="${o.value}"${String(o.value) === String(sel) ? ' checked' : ''}><span class="segr-dot"></span><span>${o.label}</span></label>`)}</div>`,
@@ -445,8 +450,7 @@ function _multiselect(field, value) {
    rows. */
 function _color(field, value) {
   const wrap = document.createElement('div');
-  const idPrefix =
-    'wcf-' + String(field.key).replace(/[^a-zA-Z0-9_-]/g, '') + '-' + Math.random().toString(36).slice(2, 7);
+  const idPrefix = uniqueId('wcf-' + String(field.key).replace(/[^a-zA-Z0-9_-]/g, ''));
   const initial =
     value != null && value !== '' ? String(value) : field.default != null ? String(field.default) : '#0289ff';
   const ctl = renderColorControl(wrap, {

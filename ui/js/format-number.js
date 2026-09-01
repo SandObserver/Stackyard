@@ -48,8 +48,18 @@ export function formatNumber(value, options) {
   return cached.format(value);
 }
 
+/* Ten entries, built once per locale from the same cached formatter. Formatting
+   each character separately called Intl on every digit of every polled string. */
+let digitMap = null;
+let digitMapFor = null;
+
 /** The digits of an already-formed string, for text built elsewhere.
     @param {string} text @returns {string} */
 export function localiseDigits(text) {
-  return String(text).replace(/\d/g, d => formatNumber(Number(d)));
+  const loc = locale();
+  if (!digitMap || digitMapFor !== loc) {
+    digitMap = Array.from({ length: 10 }, (_, d) => formatNumber(d));
+    digitMapFor = loc;
+  }
+  return String(text).replace(/\d/g, d => digitMap[Number(d)]);
 }

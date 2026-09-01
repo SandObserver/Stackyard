@@ -6,6 +6,11 @@
    page behind readable to a screen reader. Escape, focus restoration and the
    backdrop come with it. */
 
+/* A counter, not randomness. Six base-36 characters collide plausibly over a
+   long session, and an id that changes per run cannot be asserted on. */
+let _seq = 0;
+const uniqueId = prefix => `${prefix}-${++_seq}`;
+
 /** Open a modal and return its parts. `close()` is safe to call more than once.
 
     @param {{ title: string, className?: string, onClose?: () => void }} opts
@@ -21,7 +26,7 @@ export function openModal({ title, className, onClose }) {
   hdr.className = 'dlg-hdr';
   /* Unique per open. Two ids point the second dialog's label at the first one's
      heading. */
-  hdr.id = 'dlg-hdr-' + Math.random().toString(36).slice(2, 8);
+  hdr.id = uniqueId('dlg-hdr');
   hdr.textContent = title;
   box.setAttribute('aria-labelledby', hdr.id);
 
