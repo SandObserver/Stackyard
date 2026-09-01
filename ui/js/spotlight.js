@@ -1,5 +1,4 @@
 import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=8a2001ad';
-import { wrapTab } from '/js/dialog.js?v=05935547';
 import { t } from '/js/i18n.js?v=83239bf4';
 
 /* Attached to the window so a re-open can undo the previous one. */
@@ -9,14 +8,13 @@ const _w = /** @type {any} */ (window);
    this module is loaded. */
 export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDesktop, openFolderMobile }) {
   const MOB = () => isMob();
-  const ov = el('spot');
+  const ov = /** @type {HTMLDialogElement} */ (el('spot'));
   const inp = inpById('sin');
   const res = el('sres');
   const cancelBtn = el('spot-cancel');
   const live = el('sres-live');
   let si = 0,
     cur = [];
-  let lastFocused = null;
 
   inp.setAttribute('role', 'combobox');
   inp.setAttribute('aria-autocomplete', 'list');
@@ -172,14 +170,10 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
     ov.style.bottom = Math.max(0, window.innerHeight - vvH) + 'px';
   }
 
-  const trap = e => {
-    wrapTab(e, ov);
-  };
   function open(ch) {
-    lastFocused = document.activeElement;
+    if (ov.open) return;
+    ov.showModal();
     ov.classList.add('on');
-    ov.setAttribute('aria-hidden', 'false');
-    ov.addEventListener('keydown', trap);
     inp.value = ch || '';
     render(inp.value);
     if (MOB() && window.visualViewport) {
@@ -206,28 +200,34 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
     );
   }
 
+  /* Escape would close the dialog outright and skip the fade, so it is refused
+     and routed through close() like every other dismissal. */
+  ov.addEventListener('cancel', e => {
+    e.preventDefault();
+    close();
+  });
+
+  /* The dialog stays open for the length of the fade, so the page behind it
+     is inert until the overlay has actually gone. The browser returns focus
+     when it closes. */
+  ov.addEventListener('close', () => {
+    ov.classList.remove('on');
+    inp.value = '';
+    res.innerHTML = '';
+  });
+
   function close() {
+    if (!ov.open) return;
     ov.classList.remove('vis');
-    ov.removeEventListener('keydown', trap);
-    ov.setAttribute('aria-hidden', 'true');
     inp.setAttribute('aria-expanded', 'false');
     inp.setAttribute('aria-activedescendant', '');
-    if (lastFocused && lastFocused.focus) {
-      try {
-        lastFocused.focus();
-      } catch {}
-      lastFocused = null;
-    }
     if (_w._spotVpCleanup) {
       _w._spotVpCleanup();
       _w._spotVpCleanup = null;
     }
     ov.style.bottom = '';
     setTimeout(() => {
-      if (!ov.classList.contains('vis')) ov.classList.remove('on');
-      inp.value = '';
-      res.innerHTML = '';
-      inp.blur();
+      if (!ov.classList.contains('vis')) ov.close();
     }, 220);
   }
 

@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A screen reader can no longer read the dashboard behind the first-run
   password prompt.
 
+- A screen reader can no longer read the dashboard behind the search overlay.
+
 - Apps in the folder picker show their icon instead of a broken image.
 
 ### Security

@@ -25,7 +25,7 @@
 
   <title>Stackyard</title>
   <link rel="stylesheet" href="/css/tokens.css?v=797311cf">
-  <link rel="stylesheet" href="/css/dashboard.css?v=a06e74bf">
+  <link rel="stylesheet" href="/css/dashboard.css?v=508f14ee">
 </head>
 <body>
 <header class="visually-hidden"><h1>Stackyard</h1></header>
@@ -41,7 +41,7 @@
   <div class="msp-dots"></div>
 </div>
 <nav id="dock" aria-label="Dock" data-i18n-al="home.dock"></nav>
-<div id="spot" role="dialog" aria-modal="true" aria-label="Search" data-i18n-al="home.searchDialog" aria-hidden="true">
+<dialog id="spot" aria-label="Search" data-i18n-al="home.searchDialog">
   <div id="spot-cancel-mob"><button id="spot-cancel-mob-btn" type="button" aria-label="Close search" data-i18n-al="home.closeSearch"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="2" y1="2" x2="12" y2="12" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
   <div id="sres-live" class="visually-hidden" aria-live="polite"></div>
   <div id="sres"></div>
@@ -52,6 +52,6 @@
       <button id="spot-cancel" type="button" data-i18n="common.cancel">Cancel</button>
     </div>
   </div>
-</div>
-<script type="module" src="/js/dashboard.js?v=0a85e947"></script>
+</dialog>
+<script type="module" src="/js/dashboard.js?v=f5de4510"></script>
 </body></html>

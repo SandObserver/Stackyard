@@ -449,11 +449,23 @@
     }
 
     /* ── Spotlight overlay — shared base ── */
+    /* The overlay is the scrim, so the dialog defaults have to go: a modal
+       dialog is otherwise capped short of the viewport, bordered, padded, and
+       centred by an auto margin the reset in tokens.css has already zeroed. It
+       keeps display:none while closed so the fade has somewhere to start from.
+
+       width and height are auto, which is what a div had: the four insets then
+       size the box. A dialog is fit-content by default, which ignores them, and
+       a stated 100% makes the browser ignore `bottom` instead, which is how the
+       mobile keyboard is kept clear. */
     #spot {
       position:fixed; inset:0; z-index:1000;
+      max-width:none; max-height:none; width:auto; height:auto;
+      margin:0; padding:0; border:0; color:inherit;
       display:none; opacity:0;
       transition:opacity .2s ease;
     }
+    #spot::backdrop { background:none }
     #spot.on  { display:flex;
                 flex-direction:column; }
     #spot.vis { opacity:1 }

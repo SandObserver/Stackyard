@@ -136,12 +136,6 @@
       "/js/dashboard.js?v=*": [
         "./ui/js/dashboard.js"
       ],
-      "/js/dialog.js": [
-        "./ui/js/dialog.js"
-      ],
-      "/js/dialog.js?v=*": [
-        "./ui/js/dialog.js"
-      ],
       "/js/format-number.js": [
         "./ui/js/format-number.js"
       ],
