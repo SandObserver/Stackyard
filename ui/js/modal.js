@@ -1,10 +1,5 @@
 // @ts-check
-/* The one modal in the admin UI. Structure only; callers fill the body.
-
-   showModal() puts the dialog in the top layer and makes the rest of the page
-   inert, which a focus trap cannot do: the old one stopped Tab but left the
-   page behind readable to a screen reader. Escape, focus restoration and the
-   backdrop come with it. */
+/* Structure only; callers fill the body. */
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a
    long session, and an id that changes per run cannot be asserted on. */

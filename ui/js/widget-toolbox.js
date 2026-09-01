@@ -3,7 +3,7 @@
 
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
-import { jitter } from '/js/jitter.js?v=4edf48f2';
+import { jitter } from '/js/jitter.js?v=4eeef4c9';
 
 export { esc, html, setHtml };
 
@@ -237,7 +237,7 @@ export function wt(key, fallback) {
 /* Digit shape follows the reader's locale. Re-exported here so a widget takes it
    from the toolbox rather than reaching for toLocaleString, which is the same
    thing until someone passes it a language. */
-export { formatNumber, localiseDigits } from '/js/format-number.js?v=016f4907';
+export { formatNumber, localiseDigits } from '/js/format-number.js?v=4a5ccef4';
 
 export function sinceLabel(ts) {
   if (!ts) return '';
@@ -281,24 +281,7 @@ function _overlay(root) {
   };
 }
 
-/* Fetch on a timer and render, keeping the last good render through a transient
-   failure: errorText appears only after `staleAfter` consecutive failures, or at
-   once if the widget has never loaded. Pass onError to draw the error instead,
-   and poll shows no overlay.
-
-   opts: {
-     render,                 (data) => void  draw a successful, non-empty result
-     endpoint,               optional data endpoint name for fetchData
-     fetch,                  optional async () => data (defaults to fetchData(endpoint))
-     isEmpty,                optional (data) => bool  a successful but empty result
-     onError,                optional (info) => void  render your own error UI
-     interval = 30000,       poll period in ms, or (data) => ms to vary it
-                             with the last successful result
-     staleAfter = 2,         consecutive failures tolerated before showing the error
-     root = document.body,   element the status message overlays
-     loadingText, emptyText, errorText
-   }
-   Returns { stop }, which also detaches the visibility listener. */
+/* The options and the poll lifecycle are documented in docs/widgets.md. */
 
 /* Widgets on a page the user has swiped away from keep running: the dashboard
    mounts every page at once. It multiplies their poll interval through

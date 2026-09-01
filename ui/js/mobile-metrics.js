@@ -1,10 +1,8 @@
-/* Every size must derive from sc. Raw px here, or CSS without var(--sc), breaks
-   rendering at one physical size whatever page scale the browser reports.
+/* Every size must derive from sc. A raw px here breaks rendering at one
+   physical size whatever page scale the browser reports.
 
-   Safe-area insets are not here. The stylesheet holds them, and the layout
-   measures the box the stylesheet produced. The platform reports an inset after the
-   first paint, so a value read into JavaScript is stale from the moment it is
-   taken. */
+   Never read a safe-area inset into JavaScript: it is reported after the first
+   paint, so the value is stale when it is taken. The stylesheet owns them. */
 
 const BASE_VW = 393;
 

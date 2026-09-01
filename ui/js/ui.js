@@ -11,10 +11,10 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=1e7c27bc';
-import { t, currentLang } from '/js/i18n.js?v=83239bf4';
+} from '/js/utils.js?v=d949e985';
+import { t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
-import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=424d5d41';
+import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=7be08bb0';
 
 let _state = null;
 export function initUI(state) {

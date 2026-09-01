@@ -1,15 +1,6 @@
 // @ts-check
-/* Digit shape follows the reader's locale, not the interface language.
-
-   Apple's guidance is explicit that numerals take "the correct localized digits
-   for the user's locale and preferences", and that neither Arabic nor Persian
-   always uses native digits: it depends on the country, and the reader can
-   choose. An iPhone in Arabic with a Latin-numeral region shows Latin digits in
-   its badges. So the language setting picks the words and the locale picks the
-   digits.
-
-   A number that identifies rather than counts, such as a version or a port, is
-   not passed through here: those are the same string in every language. */
+/* The language picks the words, the locale picks the digits. A number that
+   identifies rather than counts is not passed through here. */
 
 /** @type {Intl.NumberFormat|null} */
 let cached = null;

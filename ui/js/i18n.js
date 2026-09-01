@@ -91,16 +91,8 @@ async function fetchCatalog(code) {
   }
 }
 
-/* Two development locales. Neither is in the registry, so neither is offered in
-   the selector; both are reached by adding ?lang= to the page URL.
-
-   PSEUDO_LANG rewrites the English catalog: it accents the letters, pads the
-   text by about 40% and brackets each message. Text that clips, wraps badly or
-   was concatenated from fragments then shows up on any screen, in a language
-   the reader can still read.
-
-   KEY_LANG loads no catalog, so every string renders as its own key. It answers
-   "which key is this on screen" and "what here is not translated at all". */
+/* Development locales, reached by ?lang= and absent from the registry.
+   What each one does: docs/i18n.md. */
 export const PSEUDO_LANG = 'en-XA';
 export const KEY_LANG = 'cimode';
 

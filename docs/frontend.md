@@ -32,6 +32,32 @@ Some vendor names appear in the source as identifiers, not as references. `-appl
 Every widget tile is an `<iframe>` whose URL comes from `WIDGET_TYPES` in `widget-types.js`. A bundled widget is served from this server and is not sandboxed: a sandbox would have to grant it `allow-same-origin` and would withhold nothing. A custom widget frames a URL the user supplied, and that frame is sandboxed. It keeps scripts, its own origin, forms, dialogs, pop-ups and downloads, so a real service still works; it is denied top-level navigation, so it cannot redirect the dashboard. The dashboard passes only URL, size, and title. The widget fetches its own data from `/api/widget-data/<id>` and is rendered at a fixed design size scaled to the tile. A new widget is a folder plus one registry entry, with no dashboard changes.
 See [widgets.md](./widgets.md).
 
+## Layout
+
+One rule decides the mobile layout for both pages, in `ui/js/layout.js`.
+
+It asks two questions. The width test is a media query rather than a stored
+width, so it answers the same question the stylesheets ask. The user-agent test
+covers phones that report a CSS viewport wider than 768px, which a width test
+alone leaves on the desktop layout. That test is qualified by portrait, so a
+phone held sideways gets the wider layout it has room for.
+
+The module has no imports. Both entry points load it before anything else runs.
+
+## Theme
+
+The appearance choice is per device, not per dashboard. It is read from
+`localStorage` and never written to the config, so two people opening Settings
+on two machines each keep their own, and a machine keeps its own through a
+config import.
+
+"system" is resolved in JavaScript rather than by a media query. The stylesheets
+carry one light block, selected by `data-theme`. A `prefers-color-scheme` copy of
+it would be a second place to change every colour.
+
+`ui/js/admin-theme.js` repeats what `theme.js` decides, so the attribute is on
+`<html>` before the first paint. A parity test holds the two together.
+
 ## Badges
 
 `dashboard.js` polls `/api/badges` and `/api/health` and paints tiles through an id-to-elements registry. Appearance is one pure function, `computeBadgeVisual` in `badge-logic.js`.
@@ -43,6 +69,12 @@ Each of these is a single batch request. The server fetches every configured bad
 A target that fails three times in a row is left alone for a growing wait, up to two minutes, and its last reported failure is reused meanwhile. Only an unreachable target backs off; one that answers with an error status stays on the normal cycle. A success or a config save clears the wait. See `api/src/poll-backoff.js`.
 
 An item that failed is reported with an error beside its value. The tile keeps its last known value and is marked out of date, so a service that did not answer never reads as zero.
+
+A batched poll fans out to every configured target on every cycle. A target
+unreachable for months costs a full timeout each time, and the batch answers
+only once everything settles, so it delays the tiles that did answer. After a
+few consecutive failures a target is left alone until its next attempt time and
+the caller reuses the failure it already reported.
 
 ## Cache busting
 

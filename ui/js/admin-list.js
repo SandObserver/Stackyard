@@ -14,13 +14,13 @@
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
 import { snapshotItems } from '/js/admin-save-logic.js?v=48a9e055';
 import { reorderItems } from '/js/admin-logic.js?v=d17394da';
-import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=00e625fc';
-import { paintIcon } from '/js/admin-shared.js?v=578a9485';
-import { clr as rc, el, qa, setUserText } from '/js/utils.js?v=1e7c27bc';
+import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=e1ffd5ea';
+import { paintIcon } from '/js/admin-shared.js?v=76c76594';
+import { clr as rc, el, qa, setUserText } from '/js/utils.js?v=d949e985';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=83239bf4';
-import { sizeLabel } from '/js/admin-widget-form.js?v=16bdd033';
-import { widgetGlyph } from '/js/widget-glyphs.js?v=b5036986';
+import { t } from '/js/i18n.js?v=e644a5c5';
+import { sizeLabel } from '/js/admin-widget-form.js?v=a28e476c';
+import { widgetGlyph } from '/js/widget-glyphs.js?v=12b0a947';
 
 /** @type {{ openModal: (idx: number|null) => void,
              openFolderPicker: (appId: string|null, targetFolderId?: string|null) => void,

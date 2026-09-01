@@ -1,9 +1,9 @@
-import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=1e7c27bc';
+import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=d949e985';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
 import { state } from '/js/admin-state.js?v=7d68e98e';
 import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=d17394da';
-import { t } from '/js/i18n.js?v=83239bf4';
+import { t } from '/js/i18n.js?v=e644a5c5';
 import {
   toast,
   ag,
@@ -13,9 +13,9 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=578a9485';
+} from '/js/admin-shared.js?v=76c76594';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=177e0d03';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=1cd86a5a';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {

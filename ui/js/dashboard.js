@@ -22,15 +22,15 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=1e7c27bc';
-import { initSpotlight } from '/js/spotlight.js?v=986f7589';
+} from '/js/utils.js?v=d949e985';
+import { initSpotlight } from '/js/spotlight.js?v=36e0ef4e';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
-import { initI18n, t, currentLang } from '/js/i18n.js?v=83239bf4';
+import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=69dbb7cb';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=82e0bf6b';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
-import { formatNumber } from '/js/format-number.js?v=016f4907';
+import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
 import {
   configChanged,
@@ -39,8 +39,8 @@ import {
   writeWallpaperCache,
   restorePage,
 } from '/js/dashboard-logic.js?v=a0604f3b';
-import { jitter } from '/js/jitter.js?v=4edf48f2';
-import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=28416a75';
+import { jitter } from '/js/jitter.js?v=4eeef4c9';
+import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 
