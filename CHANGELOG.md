@@ -50,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A custom widget's page is sandboxed and can no longer navigate the dashboard
   away.
 
+- Released images carry the operating system security patches available at
+  build time. The step that applies them was being served from a build cache.
+
 ## [1.9.1] - 2026-08-30
 
 ### Added

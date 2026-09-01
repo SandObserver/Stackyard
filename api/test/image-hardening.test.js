@@ -62,9 +62,29 @@ test('the Dockerfile deletes setuptools', () => {
   }
 });
 
+/* One RUN, continuations and all. Matching a single line breaks the moment the
+   step gains one, which is how a Dockerfile edit fails a test about setuptools. */
+function runBlockContaining(needle) {
+  const lines = dockerfile.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i].startsWith('RUN ')) continue;
+    const block = [];
+    for (let j = i; j < lines.length; j++) {
+      block.push(lines[j]);
+      /* A comment inside a continuation is dropped by the parser and does not
+         end the step, so it carries no backslash of its own. */
+      const isComment = lines[j].trim().startsWith('#');
+      if (!isComment && !lines[j].endsWith('\\')) break;
+    }
+    const text = block.join('\n');
+    if (text.includes(needle)) return text;
+  }
+  return null;
+}
+
 test('setuptools is removed in the layer that installs supervisor', () => {
-  const run = /RUN apk upgrade --no-cache &&[\s\S]*?(?=\n(?:#|[A-Z]+ ))/.exec(dockerfile);
-  assert.ok(run, 'the apk install step has been restructured');
+  const run = [runBlockContaining('apk upgrade --no-cache')];
+  assert.ok(run[0], 'the apk install step has been restructured');
   assert.match(
     run[0],
     /rm -rf \/usr\/lib\/python3\*\/site-packages\/setuptools/,
@@ -81,9 +101,21 @@ test('the build proves the removal and that supervisord survives it', () => {
 /* The base image is pinned by digest, so nothing else pulls a security update
    into the image. */
 test('the build upgrades the base packages before installing anything', () => {
-  assert.match(dockerfile, /RUN apk upgrade --no-cache/, "the image would ship the base digest's packages unchanged");
+  assert.match(dockerfile, /apk upgrade --no-cache/, "the image would ship the base digest's packages unchanged");
   assert.ok(
     dockerfile.indexOf('apk upgrade') < dockerfile.indexOf('apk add'),
     'upgrade first, or the packages installed below are resolved against a stale index',
   );
+});
+
+/* The release build has a layer cache, and nothing above this step changes
+   between releases. Without something per-release in it, the cache serves the
+   upgrade and it silently stops fetching: that is how a published image came to
+   carry a libexpat with two HIGH advisories against it. */
+test('the upgrade cannot be served from a cache across releases', () => {
+  const run = runBlockContaining('apk upgrade --no-cache');
+  assert.ok(run, 'the upgrade step was not found');
+  assert.match(run, /\$\{?APP_VERSION\}?/, 'nothing per-release is read here, so a cache can serve this layer forever');
+  const argAt = dockerfile.lastIndexOf('ARG APP_VERSION', dockerfile.indexOf(run));
+  assert.ok(argAt !== -1, 'APP_VERSION is read in the step but never declared above it');
 });

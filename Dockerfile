@@ -28,7 +28,16 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
 
 # Keep `apk upgrade` first. The base image is pinned by digest and gets no
 # security updates without it.
-RUN apk upgrade --no-cache && \
+#
+# APP_VERSION is read here so this layer cannot be served from a build cache
+# across releases. Nothing above it changes between them, so the upgrade was
+# being reused and had stopped fetching anything: a scheduled scan found a
+# patched package that a normal rebuild would not have picked up. Tying it to
+# the version keeps one release reproducible and makes the next one fetch
+# again.
+ARG APP_VERSION=dev
+RUN echo "packages upgraded for ${APP_VERSION}" && \
+    apk upgrade --no-cache && \
     apk add --no-cache nginx supervisor && \
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/http.d/default.conf && \
     mkdir -p /var/log/nginx /var/log/supervisor /var/lib/nginx /run/nginx && \
@@ -71,7 +80,6 @@ COPY supervisord.conf /etc/supervisor/conf.d/stackyard.conf
 WORKDIR /app/api
 
 # Late, so a version-only rebuild does not bust earlier layers.
-ARG APP_VERSION=dev
 ENV APP_VERSION=$APP_VERSION
 
 EXPOSE 80
