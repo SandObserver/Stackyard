@@ -1,6 +1,6 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=01cdb114';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=02ba91ef';
-import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=6b767e76';
+import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=4ce42773';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
 import {
   buildAppItem,
@@ -187,16 +187,6 @@ function svgNode(markup) {
   return t.content.firstElementChild;
 }
 
-/* dataTransfer is not readable during dragover. */
-let _dragType = null;
-
-function clearDragClasses(target) {
-  const rows = target ? [target] : qa('.row');
-  rows.forEach(r => {
-    r.classList.remove('drag-above', 'drag-below', 'drag-into', 'drag-over');
-  });
-}
-
 function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } = {}) {
   const row = document.createElement('div');
   row.className = 'row drow';
@@ -330,187 +320,8 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } =
     ac.append(ed);
   }
   row.append(handle, ico, inf, pb, ac);
-  const dragData = indent ? 'child:' + folderId + ':' + item.id : 'top:' + item.id;
-
-  row.addEventListener('dragstart', e => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', dragData);
-    _dragType = item.type;
-    requestAnimationFrame(() => row.classList.add('dragging'));
-  });
-  row.addEventListener('dragend', () => {
-    row.classList.remove('dragging');
-    _dragType = null;
-    clearDragClasses();
-  });
-  row.addEventListener('dragover', e => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    clearDragClasses();
-    const rect = row.getBoundingClientRect();
-    if (row.dataset.isFolder && canJoinFolder(_dragType)) {
-      const zone = folderRowZone(e.clientY, rect);
-      row.classList.add(zone === 'into' ? 'drag-into' : zone === 'above' ? 'drag-above' : 'drag-below');
-    } else {
-      row.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-above' : 'drag-below');
-    }
-  });
-  row.addEventListener('dragleave', e => {
-    if (!e.relatedTarget || !row.contains(/** @type {Node} */ (e.relatedTarget))) clearDragClasses(row);
-  });
-
-  row.addEventListener('drop', e => {
-    e.preventDefault();
-    const dropAbove = row.classList.contains('drag-above');
-    const dropInto = row.classList.contains('drag-into');
-    clearDragClasses();
-    const raw = e.dataTransfer.getData('text/plain');
-    if (!raw) return;
-    const drop = parseDragData(raw);
-    if (!drop) return;
-    const before = snapshotItems(state.items);
-    if (
-      applyDrop(state.items, {
-        ...drop,
-        targetId: item.id,
-        targetFolderId: folderId,
-        targetIsFolder: item.type === 'folder' && dropInto,
-        indent,
-        childIdx,
-        dropAbove,
-      })
-    )
-      saveOrRevert(before);
-  });
-
-  wireTouchDrag(row, handle, { indent, folderId });
+  wireRowDrag(row, handle, { item, indent, folderId, childIdx });
   return row;
-}
-
-/* Drag data formats: "top:itemId" or "child:folderId:itemId". */
-function parseDragData(raw) {
-  if (raw.startsWith('child:')) {
-    const [, sfId, sItemId] = raw.split(':');
-    return { srcId: sItemId, srcFolderId: sfId };
-  }
-  if (raw.startsWith('top:')) return { srcId: raw.slice(4), srcFolderId: null };
-  return null;
-}
-
-/* Native HTML5 drag does not fire from touch on mobile WebKit. The handle needs
-   touch-action:none (see admin.css) or starting on it scrolls the list. */
-function wireTouchDrag(row, handle, { indent, folderId }) {
-  handle.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'mouse') return;
-    if (row.draggable === false) return; /* hidden while filtering */
-    e.preventDefault();
-    const srcId = row.dataset.itemId;
-    const startRect = row.getBoundingClientRect();
-    const ghost = row.cloneNode(true);
-    ghost.className = 'row drow drag-ghost';
-    ghost.style.width = startRect.width + 'px';
-    ghost.style.left = startRect.left + 'px';
-    ghost.style.top = startRect.top + 'px';
-    document.body.appendChild(ghost);
-    row.classList.add('dragging');
-    handle.setPointerCapture(e.pointerId);
-    const offY = e.clientY - startRect.top;
-    let hovered = null,
-      dropAbove = false,
-      dropInto = false,
-      scrollTimer = null;
-    const scroller = scrollParent(row);
-
-    const place = (x, y) => {
-      ghost.style.top = y - offY + 'px';
-      ghost.style.left = startRect.left + 'px';
-      clearDragClasses();
-      hovered = null;
-      const under = /** @type {HTMLElement} */ (document.elementFromPoint(x, y));
-      const tr = /** @type {HTMLElement} */ (under && under.closest('.drow'));
-      if (!tr || tr === row || tr === ghost) return;
-      hovered = tr;
-      const r = tr.getBoundingClientRect();
-      if (tr.dataset.isFolder && canJoinFolder(itemType(srcId))) {
-        const zone = folderRowZone(y, r);
-        dropInto = zone === 'into';
-        dropAbove = zone === 'above';
-        tr.classList.add(dropInto ? 'drag-into' : dropAbove ? 'drag-above' : 'drag-below');
-      } else {
-        dropInto = false;
-        dropAbove = y < r.top + r.height / 2;
-        tr.classList.add(dropAbove ? 'drag-above' : 'drag-below');
-      }
-    };
-    const autoscroll = y => {
-      if (scrollTimer) {
-        clearInterval(scrollTimer);
-        scrollTimer = null;
-      }
-      const rect =
-        scroller === document.scrollingElement
-          ? { top: 0, bottom: window.innerHeight }
-          : scroller.getBoundingClientRect();
-      const M = 52;
-      const up = y < rect.top + M,
-        dn = y > rect.bottom - M;
-      if (!up && !dn) return;
-      scrollTimer = setInterval(() => {
-        scrollByPx(scroller, up ? -12 : 12);
-      }, 16);
-    };
-    const move = ev => {
-      place(ev.clientX, ev.clientY);
-      autoscroll(ev.clientY);
-    };
-    const end = () => {
-      handle.removeEventListener('pointermove', move);
-      handle.removeEventListener('pointerup', up);
-      handle.removeEventListener('pointercancel', cancel);
-      if (scrollTimer) clearInterval(scrollTimer);
-      ghost.remove();
-      row.classList.remove('dragging');
-      clearDragClasses();
-    };
-    const up = () => {
-      const tr = hovered;
-      end();
-      if (!tr) return;
-      const into = !!tr.dataset.isFolder && canJoinFolder(itemType(srcId)) && dropInto;
-      const before = snapshotItems(state.items);
-      const drop = applyDrop(state.items, {
-        srcId,
-        srcFolderId: indent ? folderId : null,
-        targetId: tr.dataset.itemId,
-        targetFolderId: tr.dataset.folderId || null,
-        targetIsFolder: into,
-        indent: !!tr.dataset.indent,
-        childIdx: tr.dataset.childIdx != null ? Number(tr.dataset.childIdx) : null,
-        dropAbove: into ? false : dropAbove,
-      });
-      if (drop) saveOrRevert(before);
-    };
-    const cancel = () => end();
-    handle.addEventListener('pointermove', move);
-    handle.addEventListener('pointerup', up);
-    handle.addEventListener('pointercancel', cancel);
-  });
-}
-
-function itemType(id) {
-  return state.items.find(i => i.id === id)?.type || null;
-}
-
-function scrollParent(el) {
-  for (let p = el.parentElement; p; p = p.parentElement) {
-    const oy = getComputedStyle(p).overflowY;
-    if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight) return p;
-  }
-  return document.scrollingElement || document.documentElement;
-}
-function scrollByPx(scroller, dy) {
-  if (scroller === document.scrollingElement) window.scrollBy(0, dy);
-  else scroller.scrollTop += dy;
 }
 
 function render() {
@@ -1630,6 +1441,7 @@ el('imp-foreign').onchange = async e => {
 
 el('btn-add').onclick = () => openModal(null);
 
+initDrag(saveOrRevert);
 initNav();
 initAllInlineEdits();
 initSecToggle();
