@@ -21,12 +21,18 @@ import { fileURLToPath } from 'node:url';
 
    Lower a number when you migrate one. Never raise one.
 
-   Two things are deliberately not counted:
+   Two things are deliberately not counted in the widget budgets:
 
    Reads (`if (el.innerHTML)`) do not write markup.
 
    Clears (`el.innerHTML = ''`) interpolate nothing, so there is no value to
-   escape and no way for them to be unsafe. */
+   escape and no way for them to be unsafe.
+
+   ui/js is held to a stricter rule than either. It mentions the property
+   nowhere outside html.js, clears included, so the check there is the presence
+   of the word rather than a judgement about what is being assigned. A clear is
+   `replaceChildren()`, which says what it does and cannot become a write by
+   someone appending an interpolation to it later. */
 const BUDGET = {
   'widgets/backup/backup.html': 3,
   'widgets/books/index.html': 1,
@@ -122,4 +128,23 @@ test('the budget has no stale entries', () => {
 test('a fully migrated file is removed from the budget', () => {
   const zeroed = Object.keys(BUDGET).filter(f => !(f in counts));
   assert.deepEqual(zeroed, [], `Delete these from BUDGET so they can never regress: ${zeroed.join(', ')}`);
+});
+
+/* The budgets above ask what is being assigned. This asks nothing: outside its
+   one implementation, ui/js does not name the property at all. That is only
+   enforceable because every clear is replaceChildren(), and it is what stops a
+   safe clear being edited into an unsafe write. */
+test('no module outside html.js names innerHTML at all', () => {
+  const offenders = [];
+  for (const file of fs.readdirSync(jsDir).sort()) {
+    if (!file.endsWith('.js') || file === IMPLEMENTATION) continue;
+    const src = fs.readFileSync(path.join(jsDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const hits = (src.match(/innerHTML/g) || []).length;
+    if (hits) offenders.push(`js/${file}: ${hits}`);
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `Use setHtml(el, html\`...\`) to write, or replaceChildren() to clear:\n${offenders.join('\n')}`,
+  );
 });

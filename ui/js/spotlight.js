@@ -24,7 +24,7 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
   res.setAttribute('aria-label', t('home.searchResults'));
 
   const render = q => {
-    res.innerHTML = '';
+    res.replaceChildren();
     const apps = getItems().filter(i => i.type === 'app' || i.type === 'folder');
     const qq = q.toLowerCase().trim();
     cur = qq ? apps.filter(a => (a.label || a.id).toLowerCase().includes(qq)) : apps;
@@ -97,7 +97,7 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
           step++;
           if (step < srcs.length) img.src = srcs[step];
           else {
-            ic.innerHTML = '';
+            ic.replaceChildren();
             ic.textContent = (app.label || app.id)[0].toUpperCase();
             ic.style.color = '#fff';
             ic.style.fontWeight = '600';
@@ -213,7 +213,7 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
   ov.addEventListener('close', () => {
     ov.classList.remove('on');
     inp.value = '';
-    res.innerHTML = '';
+    res.replaceChildren();
   });
 
   function close() {

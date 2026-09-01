@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=4d7e3bd2';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=27cbd363';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=70c9a068';
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=6b767e76';
 import { reorderItems, resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
@@ -13,7 +13,7 @@ import {
 import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=e9db088e';
 import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=02ab2257';
 import { state } from '/js/admin-state.js?v=c23e6346';
-import { buildWidgetForm, sizeLabel } from '/js/admin-widget-form.js?v=f9bfbb2a';
+import { buildWidgetForm, sizeLabel } from '/js/admin-widget-form.js?v=dcea842e';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=83239bf4';
 import { loadLocalIcons } from '/js/icons.js?v=69c2b9bd';
@@ -532,7 +532,7 @@ function render() {
     setHtml(l, html`<div class="empty"><p class="empty-msg">${t('list.empty')}</p></div>`);
     return;
   }
-  l.innerHTML = '';
+  l.replaceChildren();
   if (_flt.q || _flt.type !== 'all') {
     const q = _flt.q.toLowerCase();
     const matches = state.items.filter(it => {
@@ -638,7 +638,7 @@ function buildAddNewCard() {
 /* Prepended after the builder runs, so the builder's reset cannot wipe it. */
 function _renderEditBody() {
   const body = el('ev-body');
-  body.innerHTML = '';
+  body.replaceChildren();
   if (state.ctype === 'widget') buildWidgetForm(body, state._evItem);
   else if (state.ctype === 'folder') buildFolderForm(body, state._evItem);
   else buildAppForm(body, state._evItem);
