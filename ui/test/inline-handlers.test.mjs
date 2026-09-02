@@ -1,14 +1,9 @@
-/* Regression test for P9-2: an inline handler that the CSP refuses to run.
+/* No inline event handler in markup. Every page except the widget iframes
+   serves script-src 'self', so the browser refuses one: the control renders,
+   looks clickable, and does nothing, with the only clue in the console.
 
-   The API error screen offered a Retry button written as
-   onclick="location.reload()". Every page except the widget iframes serves
-   script-src 'self', so the browser refuses an inline handler: the button
-   rendered, looked clickable, and did nothing. A user whose dashboard was
-   already broken clicked the one obvious remedy and got no response, with the
-   only clue in the console.
-
-   This class of bug is silent by nature, which is why it is worth a test rather
-   than a fix alone. Handlers are attached with addEventListener now. */
+   The failure is silent, which is why it is worth a test rather than a fix
+   alone. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,21 +33,15 @@ const INLINE_ATTR = /\son[a-z]+\s*=\s*["'][^"']/gi;
 
 /* Comment spans, as [start, end) offsets.
 
-   The obvious approach is to delete the comments and search what is left, but
-   that is the shape of an incomplete sanitizer: one pass over `<!--...-->`
-   leaves the opener of an unterminated comment behind, so a handler after it
-   could be missed. Nothing here is sanitizing untrusted input, but the weakness
-   is real for a checker, and a checker that can quietly miss things is worse
-   than none.
-
-   Finding the spans instead means nothing is rewritten, an unterminated comment
-   simply runs to the end of the file as a browser or a parser would treat it,
-   and a match can be reported at its true line number.
+   Do not delete the comments and search what is left. One pass over
+   `<!--...-->` leaves the opener of an unterminated comment behind, so a
+   handler after it is missed. Finding the spans rewrites nothing, an
+   unterminated comment runs to the end of the file as a parser would treat it,
+   and a match keeps its true line number.
 
    Deliberately not a full tokenizer: `//` inside a string or a regular
    expression is read as a comment here. That errs towards ignoring a match, and
-   the retry-button assertions below pin the two real call sites, so a miss in
-   this scan cannot let the actual bug back in unnoticed. */
+   the retry-button assertions below pin the two real call sites. */
 function commentSpans(src) {
   const spans = [];
   const push = (open, close, keepOpen) => {
@@ -111,8 +100,7 @@ test('the scan finds an inline handler in code and ignores one in a comment', ()
   assert.equal([...commented.matchAll(INLINE_ATTR)].filter(m => !inComment(cSpans, m.index)).length, 0);
 });
 
-/* The case that made deleting comments the wrong approach: an unterminated one
-   used to leave its opener behind, so a later handler could slip through. */
+/* An unterminated comment must not let a later handler slip through. */
 test('an unterminated comment does not hide or reveal a handler', () => {
   const src = '<!-- a --> <!-- b\n<button onclick="x">';
   const spans = commentSpans(src);

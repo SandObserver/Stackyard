@@ -142,7 +142,7 @@ test('nothing in the real files produces an item the save route would refuse', (
 });
 
 /* Dashy's own default config writes its sequences level with the key rather
-   than indented under it, and that layout used to refuse the whole file. */
+   than indented under it. */
 test('a config in the flush layout converts like any other', () => {
   const out = load('dashy-flush-layout.yml');
   assert.equal(out.kind, 'dashy');
@@ -167,11 +167,11 @@ test('a config in the flush layout converts like any other', () => {
   assert.equal(apps(out).find(a => a.label === 'Long Icon').monitoring.healthcheck.pingUrl, 'https://plex.example.com');
 });
 
-/* The constructs that used to refuse a whole file, in one config: inline lists
-   and mappings, unquoted environment placeholders, an anchor on a value, a
-   folded description and a comment after a quoted value. Every one of them was
-   taken from a public gethomepage config, and the file is what Homepage's own
-   documentation tells people to write. */
+/* The hardest constructs in one config: inline lists and mappings, unquoted
+   environment placeholders, an anchor on a value, a folded description and a
+   comment after a quoted value. Every one is taken from a public gethomepage
+   config, and the file is what Homepage's own documentation tells people to
+   write. */
 test('a services.yaml using flow syntax and placeholders imports in full', () => {
   const out = load('homepage-services-flow.yaml');
   assert.equal(out.kind, 'homepage-services');

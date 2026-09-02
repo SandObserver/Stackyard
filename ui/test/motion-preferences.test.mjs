@@ -1,18 +1,9 @@
-/* Regression tests for P12-3: the Admin page ignored accessibility preferences.
+/* Both pages honour reduced motion, reduced transparency and increased
+   contrast. A preference honoured on one page and not the other appears to work
+   until you open the other one.
 
-   An operating system lets someone ask for reduced motion, reduced transparency
-   or increased contrast, and people turn these on for real reasons: motion
-   sensitivity, vestibular disorders, low vision.
-
-   The dashboard honoured all three. Admin honoured none, because the blocks
-   lived in dashboard.css and only the dashboard loads that file. Someone with
-   reduced motion turned on got a calm dashboard and a Settings page that still
-   slid and sprang, which is worse than being consistently wrong: the setting
-   appears to work until you open Settings.
-
-   The general rules moved to tokens.css, which both pages load. Contrast could
-   not simply move, since the dashboard's block overrides tokens defined in
-   dashboard.css; Admin has its own block against its own tokens. */
+   The general rules live in tokens.css, which both pages load. Contrast cannot
+   live there: each page's block overrides tokens its own stylesheet defines. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

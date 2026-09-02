@@ -1,17 +1,9 @@
-/* Regression tests for P9-9: a page change was never announced.
+/* A page change is announced. A control that can be reached and operated, whose
+   effect is never spoken, is worse than one that cannot be reached at all.
 
-   A screen reader reads a live region when its contents change, which is how a
-   user hears the result of something they just did. The dashboard had one for
-   search results and nothing else, so paging swapped the grid in silence.
-
-   That mattered more after the page dots became real buttons: a control that
-   can be reached and operated, whose effect is never announced, is arguably
-   worse than one that cannot be reached at all.
-
-   Deliberately not extended to health changes. Those are polled rather than
-   user-initiated, so announcing them would have a screen reader talk over
-   whatever someone is doing whenever a service flaps; the reason a tile is red
-   is in its hover text instead. A live region should say what the user did, not
+   Health changes are deliberately left out. They are polled rather than
+   user-initiated, so announcing them talks over whatever someone is doing
+   whenever a service flaps. A live region says what the user did, not
    everything that changes. */
 
 import { test } from 'node:test';
@@ -116,8 +108,8 @@ test('health polling does not announce', () => {
 
 /* ── the hidden dots ──────────────────────────────────────────────────────── */
 
-/* Mobile shows its own pill dots and hides the desktop container, but built
-   dots into it anyway and pushed them into an array nothing read. */
+/* Mobile shows its own pill dots and hides the desktop container, so nothing
+   builds dots into it. */
 test('mobile no longer builds dots into a hidden container', () => {
   const ui = read('js/ui.js');
   assert.doesNotMatch(ui, /const de = \[\]/, 'unreachable markup that still had to be kept in step');
@@ -134,8 +126,8 @@ test('mobile no longer builds dots into a hidden container', () => {
 
 /* An explicit aria-label on the anchor wins over everything inside it, so a
    badge that labels itself is never reached by a reader moving from tile to
-   tile. It was also a live region each, repainted on the poll, which
-   ACCESSIBILITY.md says the interface does not do. */
+   tile. A badge is also not a live region: ACCESSIBILITY.md says a polled
+   change is not announced. */
 
 const dash = read('js/dashboard.js');
 
@@ -154,8 +146,7 @@ test('a badge is not a live region', () => {
 
 /* The selector is exercised rather than spelled out. A tile is an app's link, a
    folder's button, or anything carrying the role, and any selector that reaches
-   all three passes. Pinning the string failed when folder tiles stopped being
-   anchors, for a change that was correct. */
+   all three passes. Pinning the string breaks on a correct change. */
 const tileSelector = () => {
   const m = /closest\((['"])(.+?)\1\)/.exec(badgePaint());
   assert.ok(m, 'the paint no longer looks for an ancestor tile');
@@ -200,7 +191,7 @@ test('the declared live regions are only the two intended ones', () => {
   assert.deepEqual(ids, ['page-live', 'sres-live']);
 });
 
-/* axe found the heading sitting outside every landmark. */
+/* The heading must sit inside a landmark. */
 test('the heading is inside a landmark', () => {
   assert.match(read('index.html'), /<header[^>]*>\s*<h1>/, 'the h1 is not in a landmark');
 });

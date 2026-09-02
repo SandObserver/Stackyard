@@ -1,19 +1,9 @@
-/* Regression tests for P8-6: widget status text was always English.
+/* Widget status text follows the selected language.
 
-   Every widget shows "Loading", "Unavailable", "No data" and a relative time
-   while it works or fails, and all of it was hardcoded English. Someone running
-   Stackyard in Persian saw a translated dashboard with English words inside
-   every tile.
-
-   Unlike the dashboard's own strings, this was not just a matter of swapping
-   text for lookups. A widget is an iframe: it loads widget-toolbox.js but not
-   the i18n module, and nothing told it which language was selected. The language
-   had to reach the iframe first.
-
-   It arrives on the iframe URL, and the toolbox fetches the same locale file the
-   parent already has, so the request comes from cache. The alternative was
-   passing the translated strings themselves, which would lengthen the URL with
-   every new string; the URL is also the cache key, so it would churn. */
+   A widget is an iframe. It loads widget-toolbox.js but not the i18n module, so
+   the language reaches it on the iframe URL and the toolbox fetches the same
+   locale file the parent already has. Do not pass the translated strings on the
+   URL instead: the URL is the cache key, so every new string churns it. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -35,8 +25,7 @@ const ITEM = { id: 'w1', widgetType: 'system-summary', widgetSize: 'medium' };
 /* ── the language reaches the iframe ──────────────────────────────────────── */
 
 /* The Settings page is several modules and the split moves between them, so
-   these look across all of them rather than naming one. What is asserted is a
-   fact about the page, not about which file happens to hold it. */
+   these look across all of them rather than naming one. */
 const settingsSource = () =>
   fs
     .readdirSync(path.join(root, 'js'))
@@ -159,10 +148,9 @@ test('the translations are not copies of the English', () => {
   }
 });
 
-/* Each widget carries its own catalogs, one folder per widget, and nothing was
-   comparing them against their own English source. A widget added with five of
-   the six languages loses those strings silently: the manifest text renders
-   instead, which reads as English inside a translated settings form. */
+/* Each widget carries its own catalogs, one folder per widget. A widget added
+   with five of the six languages loses those strings silently: the manifest
+   text renders instead, in English inside a translated settings form. */
 const CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other'];
 const PLURAL = new RegExp(`_(${CATEGORIES.join('|')})$`);
 const placeholders = v => (String(v).match(/\{\w+\}/g) || []).sort();
@@ -212,10 +200,8 @@ test('every widget catalog carries the English key set and its placeholders', ()
 
 /* ── names built on the server ────────────────────────────────────────────── */
 
-/* The pull request filter names were assembled into a finished English string
-   in data.js and sent to the page, which then showed them and put them in the
-   accessible name. The widget's own catalog already held all six translations
-   and never got to use them. The keys travel now, and the page names them. */
+/* A name assembled into finished English on the server cannot be translated by
+   the page that shows it. The keys travel instead, and the page names them. */
 
 test('the GitHub widget is sent filter keys, not English', () => {
   const data = read('widgets/github/data.js');
@@ -251,10 +237,9 @@ test('every locale names the reorder buttons', () => {
   assert.match(settingsSource(), /t\(dir < 0 \? 'common\.moveUp' : 'common\.moveDown'\)/);
 });
 
-/* The tests above cover the toolbox's own status strings. A widget also writes
-   text of its own, and that text goes straight to the screen without passing
-   through a catalog unless the author remembers `wt`. The GitHub pull request
-   caption did not, and read English on every translated dashboard. */
+/* The tests above cover the toolbox's own status strings. Text a widget writes
+   itself reaches the screen without a catalog unless the author remembers
+   `wt`. */
 test('no widget writes display text in English', () => {
   const dir = path.join(root, 'widgets');
   const offenders = [];
@@ -289,8 +274,8 @@ test('the pull request caption is looked up, and every locale translates it', ()
   }
 });
 
-/* The accessible label went through Intl from the start. The date on screen did
-   not, so a Persian dashboard showed a Persian clock reading "Sun, Aug 30". */
+/* The date on screen goes through Intl, not only the accessible label, or a
+   Persian clock reads "Sun, Aug 30". */
 test('both clock styles name days and months through Intl', () => {
   for (const style of ['analog', 'digital']) {
     const src = read(`widgets/clock/${style}.html`);

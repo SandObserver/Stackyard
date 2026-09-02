@@ -1,18 +1,10 @@
-/* Regression tests for P17-9: an unstamped asset reference stayed unstamped.
+/* Every asset reference carries a ?v= stamp that changes with the file's
+   contents. A reference written without one is served from cache after an
+   upgrade while every other file is refreshed, so the page runs mixed versions.
 
-   Browsers cache JavaScript and CSS, so each reference carries a ?v= stamp that
-   changes with the file's contents. The script that maintains those stamps only
-   matched references that already had one, so a reference written without one
-   was invisible to it and never became cache-busted. A browser then kept serving
-   that file from cache after an upgrade while every other file was refreshed,
-   leaving a page running mixed versions, which is an awkward thing to diagnose.
-
-   One reference was in that state: spotlight.js imported utils.js unstamped.
-
-   Fixing the reference alone would leave the tool unable to see the problem it
-   exists to prevent, so the pattern accepts a missing stamp and `--check` fails
-   on one. This test is the same rule, so a failure is visible from the test suite
-   rather than only from the build. */
+   The stamping script must therefore match a reference that lacks a stamp, not
+   only one that already has it. This test is the same rule, so a failure is
+   visible from the test suite rather than only from the build. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -93,10 +85,9 @@ test('the build script can see an unstamped reference', () => {
 });
 
 /* A stamp naming content the file no longer has is the same failure as a
-   missing one: the browser serves the cached copy and the page runs a mix of
-   versions. --check reported those files in a count and passed anyway, so an
-   edited stylesheet shipped behind a stale stamp. Run against a copy of the
-   tree, since the script rewrites what it is pointed at. */
+   missing one, so --check fails on a stale stamp rather than counting it. Run
+   against a copy of the tree, since the script rewrites what it is pointed
+   at. */
 test('--check fails on a stamp that no longer matches its file', () => {
   const repo = path.resolve(root, '..');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-stamp-'));
@@ -138,17 +129,12 @@ test('the workflows call the shared checks rather than listing their own', () =>
   }
 });
 
-/* The documented rule, against the mechanism.
+/* The widget `?v=` is not manual. The release hashes each entry file into the
+   manifest and widget-types.js reads it from there, so hand-editing one edits a
+   value the build owns.
 
-   docs/frontend.md told contributors that the widget `?v=` was manual and to
-   bump it by hand when a widget's files changed. It has not been manual since
-   entryVersions existed: the release hashes each entry file into the manifest
-   and widget-types.js reads it from there. A contributor following the document
-   would have hand-edited a value the build owns.
-
-   Pinned by mechanism rather than by sentence: what must stay true is that no
-   widget URL carries a literal stamp and that the manifest is where the value
-   comes from. */
+   Pinned by mechanism rather than by sentence: no widget URL carries a literal
+   stamp, and the manifest is where the value comes from. */
 test('the widget cache version comes from the manifest, not a hand-written literal', () => {
   const src = fs.readFileSync(path.join(root, 'js/widget-types.js'), 'utf8');
   assert.match(src, /entryVersions\?\.\[file\]/, 'widget-types.js no longer reads the manifest hash');

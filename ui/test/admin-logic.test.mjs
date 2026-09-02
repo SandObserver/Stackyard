@@ -177,9 +177,8 @@ test('visibleFieldKeys does not leak a field across a hidden branch default', ()
   assert.deepEqual([...shown], ['source']);
 });
 
-/* Two tiles of one widget type each open the same form. Carrying values by type
-   alone filled the second tile's form from the first, so a Beszel tile opened
-   after a Glances one showed Glances as its source. */
+/* Two tiles of one widget type open the same form. Values must be carried per
+   tile, not per type, or the second tile's form is filled from the first. */
 test('typed values are carried within one editing session, never into the next', () => {
   const form = { getValues: () => ({}) };
   const opened = { form, type: 'system-summary', session: 4 };
@@ -230,10 +229,9 @@ test('visibleFieldKeys shows unconditional fields and tolerates a cycle', () => 
 
 /* ── clearsStoredSecret (P11-1) ───────────────────────────────────────────── */
 
-/* Unticking Secret used to leave valueSet:true on the row, so the form kept
-   sending "keep the stored value" for a row the server now treats as public.
-   Paired with the server refusing to refill a non-secret row, this is what makes
-   unticking mean "clear it" on both sides instead of "reveal it". */
+/* Unticking Secret clears valueSet on the row. The server refuses to refill a
+   non-secret row, so unticking means "clear it" on both sides, never
+   "reveal it". */
 
 test('unticking Secret on a stored credential clears it', () => {
   assert.equal(clearsStoredSecret({ value: '', valueSet: true, secret: true }, false), true);
@@ -259,8 +257,8 @@ test('clearsStoredSecret tolerates a missing row', () => {
 /* ── authEnableBlocked (P2-2) ─────────────────────────────────────────────── */
 
 /* Mirrors the server's refusal so the user is told before the save runs. Auth
-   switched on with no password locks the install: every login is refused
-   because there is nothing to check against, while everything else is gated. */
+   switched on with no password locks the install: every login is refused and
+   everything else is gated. */
 
 test('enabling auth with no password and none typed is blocked', () => {
   assert.equal(authEnableBlocked({ enabled: true, passwordSet: false, newPassword: '' }), true);
@@ -284,10 +282,9 @@ test('authEnableBlocked tolerates a missing password field', () => {
 
 /* ── widgetConfigMode (P6-1) ──────────────────────────────────────────────── */
 
-/* A registry widget whose manifest is not loaded used to fall through to the
-   custom iframe editor, which is misleading: it is not a custom widget. The
-   server also withholds its stored config in that state, so there is nothing to
-   edit and empty fields would look like lost settings. */
+/* A registry widget whose manifest is not loaded must not fall through to the
+   custom iframe editor. The server withholds its stored config in that state,
+   so empty fields would look like lost settings. */
 
 test('a widget with a loaded manifest gets the registry form', () => {
   assert.equal(widgetConfigMode('books', { books: {} }), 'registry');
@@ -307,14 +304,11 @@ test('widgetConfigMode tolerates a missing registry', () => {
   assert.equal(widgetConfigMode('custom', null), 'custom');
 });
 
-/* ── P10-3: a stale stored section blanked the admin page ────────────────────
+/* ── a stale stored section blanks the admin page ────────────────────────────
    show() hides every section that is not the requested one, so a request naming
-   a section that no longer exists hid all of them: an empty page, no active nav
-   link, and nothing on screen to suggest what happened. The stored value came
-   straight from localStorage, so anyone whose browser held a section name from
-   an older version got that after upgrading, and only clearing site data fixed
-   it. The `|| 'general'` fallback covered a missing value but not a stale one,
-   which is the case that actually occurs. */
+   a section that no longer exists hides all of them. The stored name comes from
+   localStorage and survives an upgrade, so a fallback must cover a stale value
+   and not only a missing one. */
 
 const SECTIONS = ['general', 'appearance', 'dashboard', 'about'];
 
@@ -362,10 +356,9 @@ test('no sections at all resolves to null', () => {
 
 /* ── refused widgets ──────────────────────────────────────────────────────── */
 
-/* A widget whose manifest is refused does not appear in the type list, which on
-   its own is indistinguishable from never having installed it. The reasons
-   already travel with /api/widgets; these turn them into lines the picker and
-   the config editor both show, so the two cannot word a refusal differently. */
+/* A widget whose manifest is refused does not appear in the type list, which
+   alone is indistinguishable from never having installed it. The picker and the
+   config editor share these lines so they cannot word a refusal differently. */
 
 const REFUSALS = [
   { name: 'weather', errors: ['viewField "veiw" is not a declared field'] },
@@ -412,10 +405,9 @@ test('a missing or non-array list is no lines rather than a throw', () => {
 /* ── shouldWritePassword ──────────────────────────────────────────────────── */
 
 /* Typing a password and switching protection off in the same save is a
-   contradiction. Storing it first signed every other device out, because
-   set-password rotates the session secret, and the toggle in the same save then
-   deleted the password again. The round trip cost the user their sessions and
-   left nothing behind, and the save reported success. */
+   contradiction. Do not store it first: set-password rotates the session
+   secret, so it signs every other device out and the same save then deletes the
+   password again. */
 
 test('a password typed while switching protection off is not written', () => {
   assert.equal(shouldWritePassword({ enabled: false, newPassword: 'correct-horse' }), false);
@@ -432,13 +424,12 @@ test('nothing is written when no password was typed', () => {
 });
 
 /* ── settingsSaveBlocker ──────────────────────────────────────────────────────
-   Both rules used to be checked after the config had already been sent, so a
-   refusal saved the title, language, log level and Docker fields and then
-   reported only the password problem. Asking here, before the first write, is
-   what makes a refusal leave the server untouched. */
+   Both rules are checked before the first write. Checking after the config has
+   been sent saves the title, language, log level and Docker fields and then
+   reports only the password problem. */
 
 /* Written the way saveServer calls it, passing the strength result alongside
-   the password, so these exercise the rule as it really runs. */
+   the password. */
 const blockerFor = v => settingsSaveBlocker({ ...v, strength: pwStrength(v.newPassword) });
 
 test('nothing blocks a save that changes no security setting', () => {

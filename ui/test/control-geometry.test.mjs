@@ -4,21 +4,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* Control geometry against the kit.
-
-   These are measured values, not preferences. A settings row is 52 and a row
-   carrying two lines is 68. A grouped list is rounded to 26. A switch is 64 by
-   28 with a 38 by 24 capsule knob inset 2, so the knob travels 22. The system
-   slider draws a 6 track with a 2 by 24 line for a handle, which is a handle
-   shape rather than a smaller circle.
+/* Control geometry against the kit. These are measured values, not
+   preferences.
 
    The slider handle is the one deliberate departure. The kit draws a 2 by 24
-   line, which is too small a thing to find and drag on a phone, so every slider
-   keeps a 20 round knob. The two sliders had drifted apart because each carried
-   its own copy of the rule, so they now share one.
-
-   They had all been drawn to an older version of the design language and were
-   sized for smaller text than the project now uses. */
+   line, too small to find and drag on a phone, so every slider keeps a 20 round
+   knob and both sliders share one rule. */
 
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'css');
 const admin = fs.readFileSync(path.join(dir, 'admin.css'), 'utf8');
@@ -78,9 +69,8 @@ test('both sliders run a 6 track', () => {
   assert.match(rule(admin, '.hsb-range'), /height:6px/);
 });
 
-/* One visual control. The two were separate rules with the same job and one was
-   changed without the other, so the handle is declared once, size included. The
-   kit draws a colour slider as a thick bar, which would split them again. */
+/* One visual control, so the handle is declared once, size included. The kit
+   draws a colour slider as a thick bar, which would split them again. */
 test('every slider shares one handle rule', () => {
   const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   for (const kind of ['::-webkit-slider-thumb', '::-moz-range-thumb']) {
@@ -91,9 +81,9 @@ test('every slider shares one handle rule', () => {
     assert.match(m[1], /height:20px/);
     assert.match(m[1], /border-radius:50%/, 'a round knob, big enough to drag on a phone');
   }
-  /* A size rule for one alone is how they came apart before. Preceded by a
-     closing brace, not a comma, so the shared rule's own second selector line
-     does not read as one. */
+  /* A size rule for one slider alone splits them again. Preceded by a closing
+     brace, not a comma, so the shared rule's own second selector line does not
+     read as one. */
   assert.doesNotMatch(
     bare,
     /\}\s*\.hsb-range::-\w+-(slider|range)-thumb\{/,
@@ -137,8 +127,7 @@ test('the touch target still paints a 6 track', () => {
 });
 
 /* A group's header and footer belong to the rows below and above them, so they
-   align with the row's label rather than the group's edge. They had sat at 0
-   and 2, sixteen short, which reads as the header being adrift from its group. */
+   align with the row's label rather than the group's edge. */
 test('a group header and footer align with the row label', () => {
   assert.match(rule(admin, '.grp-hdr'), /padding:26px 16px 6px/);
   assert.match(rule(admin, '.grp-tip'), /padding:8px 16px 14px/);
@@ -197,8 +186,8 @@ test('the tab selection is a pill and the bar keeps its height', () => {
 });
 
 /* Every inline action on a phone: the drawn box stays small and 44 is the hit
-   area. Setting 44 on the box instead pushes the control away from the text it
-   belongs to, and .pe sat 16 further from its value than it should have. */
+   area. Setting 44 on the box pushes the control away from the text it belongs
+   to. */
 test('inline actions keep their drawn size on touch', () => {
   const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   const touch = /@media \(pointer:coarse\) \{([\s\S]*?)\n\}/.exec(bare);

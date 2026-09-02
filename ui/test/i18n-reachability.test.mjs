@@ -5,26 +5,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /* Every catalog key is referenced by name, and every name referenced exists.
+   Both directions are checked, and both start clean.
 
-   P15-1 and P15-4. This could not be checked before, because the app
-   translated two different ways. Most strings were looked up by key, but about
-   50 were translated by matching their rendered English text against the
-   catalog at runtime: the markup said "Name" and a reverse map swapped it for
-   "Nom". Reachability was then a substring search over the source, which can
-   only ever be a guess, and the mechanism failed in ways nothing reported:
-   editing the English text in markup silently stopped that string translating,
-   in every language; three keys shared the text "Search", so whichever was
-   read last won; and short values like "All" or "Set" were swapped wherever
-   they appeared.
-
-   Those sites now name their key, the reverse map is gone, and the question is
-   exactly decidable. Both directions are checked, and both start clean.
-
-   A key referenced through a variable, as password-strength.js does with its
-   labelKey, is still found: the key appears as a string literal in the source
-   even though it is not written inside the t() call. That is the one thing
-   this cannot follow, so a key assembled from pieces at runtime would need an
-   entry in DYNAMIC below. Nothing needs one today. */
+   A key referenced through a variable is still found: it appears as a string
+   literal even though it is not written inside the t() call. A key assembled
+   from pieces at runtime cannot be seen, and needs an entry in DYNAMIC below.
+   Nothing needs one today. */
 
 const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -70,10 +56,9 @@ const src = files.map(f => stripComments(fs.readFileSync(f, 'utf8'))).join('\n')
 /* A key is referenced if its full dotted name appears as a string literal. That
    covers t('a.b'), data-i18n="a.b", and a key held in a variable or an array.
 
-   Matched by substring rather than by a regex built from the key. Building one
-   means escaping the key first, and escaping only the dot, as this did, is the
-   kind of half-sanitisation that is right until a key contains a character the
-   escape missed. There is nothing to escape in a plain includes(). */
+   Matched by substring, not by a regex built from the key. A regex must escape
+   every regex character in the key, and escaping only the dot passes until a
+   key carries one the escape missed. */
 const quoted = k => [`'${k}'`, `"${k}"`, `\`${k}\``];
 
 /* A counted message is stored once per plural category, as `key_one`,
@@ -124,8 +109,8 @@ test('every referenced key exists in the catalog', () => {
   );
 });
 
-/* The mechanism this replaced. Its absence is what makes the two tests above
-   exact rather than approximate, so it must not come back. */
+/* Translating by matching rendered English against the catalog must not come
+   back. Its absence is what makes the two tests above exact. */
 test('translation by matching English text is gone', () => {
   const i18n = fs.readFileSync(path.join(uiDir, 'js/i18n.js'), 'utf8');
   for (const gone of ['revMap', 'translateText', 'TEXT_SELECTORS']) {
@@ -136,8 +121,5 @@ test('translation by matching English text is gone', () => {
   }
 });
 
-/* Two keys sharing an English value used to be a real hazard: the reverse map
-   was keyed by value, so one of them silently won. With that gone they are
-   independent, and three separate elements legitimately read "Search" — a
-   placeholder, a label and a dialog's aria-label, each free to be translated
-   differently. Nothing to assert. */
+/* Two keys may share an English value. Three separate elements legitimately
+   read "Search", each free to be translated differently. Nothing to assert. */

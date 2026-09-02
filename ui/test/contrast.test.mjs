@@ -4,21 +4,11 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-/* WCAG contrast for the admin greys, computed rather than recorded.
-
-   Secondary text sat at 3.48 against a card and 4.27 against the pane, where
-   1.4.3 asks 4.5; borders sat at 1.90 and 2.33 against the 3.0 of 1.4.11. The
-   numbers had been measured by hand and written into a comment, which is how
-   they went stale: the palette moved to the system greys underneath them
-   and nothing recomputed anything.
-
-   So the ratios are computed here from the files themselves. A colour change
-   that drops a pair below its threshold fails, and no one has to remember to
-   re-measure.
+/* WCAG contrast for the admin greys, computed from the stylesheets. A ratio
+   measured by hand goes stale when the palette moves under it.
 
    Only the pairs that carry a requirement are listed. A decorative separator is
-   not a UI component under 1.4.11, and asserting a threshold on one would mean
-   raising it for no reason a user could name. */
+   not a UI component under 1.4.11. */
 
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'css');
 const read = f => fs.readFileSync(path.join(dir, f), 'utf8');
@@ -29,13 +19,9 @@ const dashboard = read('dashboard.css');
 
 /* ── resolving a token to a hex value ─────────────────────────────────────── */
 
-/* The page has two themes and each has a raised variant, so a declaration has to
-   be read with the selector and the media query it sits under. Splitting the
-   file at the contrast block was enough while there was one theme; it would now
-   fold the light values into the dark map.
-
-   Every rule in these two files, with the at-rule it is nested in. One level of
-   nesting is all either file has. */
+/* Every rule in these two files, with the at-rule it is nested in. A
+   declaration only means something read with the selector and media query it
+   sits under. One level of nesting is all either file has. */
 function rules(src) {
   const s = src.replace(/\/\*[\s\S]*?\*\//g, '');
   const out = [];
@@ -190,7 +176,7 @@ function ratio(a, b) {
 }
 
 /* Every surface the admin page puts these on. The card is the worst of the
-   three and is the one the hand-measured note missed. */
+   three. */
 const SURFACES = ['--bg-outer', '--pane', '--cp'];
 
 /* [foreground, minimum, what it is]. 4.5 is 1.4.3 for body text, 3.0 is 1.4.11
@@ -204,9 +190,7 @@ const REQUIRED = [
 /* A pill and an unselected chip are not text on a surface: each sits on a
    translucent fill, and the ink has to clear 4.5 against the fill composited
    over whatever is behind it. The hue's readable variant does not survive that
-   composite on its own, which is how six pills sat between 3.6 and 4.4.
-
-   The pane and the card are the two backdrops these appear on. */
+   composite on its own. The pane and the card are the two backdrops. */
 const TINTED = [
   ['--chip-dk-fg', '--chip-dk-bg', 'the dashboard-type pill'],
   ['--chip-wg-fg', '--chip-wg-bg', 'the widget-type pill'],
@@ -281,15 +265,10 @@ test('the accent reads as text on every surface it is used on', () => {
   assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
 });
 
-/* The mode exists to improve the pairs that are close to their limit. It did
-   not, on a card: the raised grey reaches only 4.39 there, because the surfaces
-   are raised alongside the text.
-
-   Only pairs within twice their threshold are compared. Primary text is at 12:1
-   and dips to 12.06 from 12.49, because #ffffff against a lighter surface is a
-   fraction worse than #f2f2f7 against a darker one. Requiring an improvement
-   there would be arithmetic nobody can see, on a pair that is not the point of
-   the mode. */
+/* Only pairs within twice their threshold are compared. Primary text is at
+   12:1 and dips a fraction in the raised theme, because the surfaces are raised
+   alongside the text. Requiring an improvement there would be arithmetic nobody
+   can see. */
 test('increased contrast improves the pairs that are near their threshold', () => {
   const base = resolver({ raised: false });
   const high = resolver({ raised: true });
@@ -305,10 +284,9 @@ test('increased contrast improves the pairs that are near their threshold', () =
   assert.deepEqual(worse, [], `Increased contrast has to help where it matters:\n  ${worse.join('\n  ')}`);
 });
 
-/* The two greys that are not from the palette exist because its neighbours do not
-   land where the thresholds are. If one is ever loosened back to a palette
-   step, that has to be a deliberate change with the ratio checked above, not a
-   tidy-up that reads like restoring consistency. */
+/* Two greys here are not palette steps, because its neighbours do not land
+   where the thresholds are. Restoring one to a palette step is a deliberate
+   change with the ratio rechecked, not a consistency tidy-up. */
 test('the derived greys are declared with their reason', () => {
   assert.match(tokens, /--sy-a11y-dim:\s*#A3A3A8/);
   assert.match(tokens, /--sy-a11y-border:\s*#838387/);
@@ -320,11 +298,9 @@ test('the derived greys are declared with their reason', () => {
 /* ── the save toast ───────────────────────────────────────────────────────── */
 
 /* The toast reports success and failure, so its text carries 1.4.3 and its
-   border carries 1.4.11 as the boundary of the thing being shown. The accent
-   cannot be the fill: --gn and --rd behind near-white text measure 2.02 and
-   3.43. The fill is a mix of the accent into the page colour instead, with the
-   accent at full strength on the border, and both halves are computed here from
-   the declaration itself rather than trusted. */
+   border carries 1.4.11. The accent cannot be the fill: --gn and --rd behind
+   near-white text measure 2.02 and 3.43. The fill is a mix of the accent into
+   the page colour, with the accent at full strength on the border. */
 
 /* color-mix(in srgb, <a> N%, <b>), which is a straight per-channel blend. */
 function mixSrgb(a, b, percent) {
@@ -334,8 +310,8 @@ function mixSrgb(a, b, percent) {
   return `#${out.map(v => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/* [class, accent token, mix percentage, page token] read off the stylesheet, so
-   changing the recipe re-measures rather than silently drifting from the note. */
+/* [class, accent token, mix percentage, page token], read off the stylesheet,
+   so changing the recipe re-measures. */
 function toastRules() {
   const src = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   const re =
@@ -379,13 +355,10 @@ for (const raised of [false, true]) {
 
 /* ── ink on a filled control ──────────────────────────────────────────────── */
 
-/* A control filled with a role colour carries its own ink. White failed on
-   every dark fill: the accent at 1.86, the success green at 2.02, the danger
-   red at 3.43, all under the 4.5 of 1.4.3. --on-fill moves with the theme
-   instead, and the pairs are measured here rather than assumed.
-
-   The rules are read off the stylesheet, so a new filled control is measured
-   without anyone adding it to a list. */
+/* A control filled with a role colour carries its own ink. White fails 1.4.3
+   on every dark fill, so --on-fill moves with the theme instead. The rules are
+   read off the stylesheet, so a new filled control is measured without anyone
+   adding it to a list. */
 function filledRules() {
   const found = [];
   for (const rule of rules(admin)) {

@@ -5,19 +5,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /* The token layer: a palette named by hue, and roles named by job that point at
-   it. P12-4 and P12-5.
-
-   Two classes of bug this guards.
+   it. Two classes of bug this guards.
 
    A var() naming a token nobody defines is invalid at computed-value time, so
-   the property silently falls back to its initial value. --card was referenced
-   twice in admin.css and had never been defined anywhere in the repo's history:
-   the mobile back button and the drag ghost were drawing a transparent
-   background and nothing said so.
+   the property silently falls back to its initial value and nothing says so.
 
-   A theme colour written as a literal escapes the palette. The accent used to be
-   #027aff in admin.css and #0a84ff in dashboard.css, two different blues doing
-   one job, which is what made changing it a hunt rather than an edit. */
+   A theme colour written as a literal escapes the palette, so one job ends up
+   with a different value per stylesheet. */
 
 const cssDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../css');
 const files = fs.readdirSync(cssDir).filter(f => f.endsWith('.css'));
@@ -140,8 +134,7 @@ test('no theme colour literal outside tokens.css', () => {
   );
 });
 
-/* The rules both pages need live in one file. They were written out in full in
-   each, so the wallpaper layer was ten identical declarations in two places. */
+/* The rules both pages need live in one file, not written out in each. */
 test('the shared root rules are defined once, in tokens.css', () => {
   for (const sel of ['html::before', '*, *::before, *::after']) {
     const owners = all.filter(([, src]) => src.includes(sel.replace(/, /g, ',')) || src.includes(sel)).map(([f]) => f);
@@ -155,10 +148,9 @@ test('the shared root rules are defined once, in tokens.css', () => {
 
 /* ── A class says what a thing is, not what colour it is ──────────────────── */
 
-/* Rule 2 in design-system.md: never name a palette entry in a rule. A class
-   called .save-btn-green did it in the selector as well, and its own hover
-   reached past the role into --sy-green-hi. Save was teal on one pane and green
-   on two others, for one action. */
+/* Rule 2 in design-system.md: never name a palette entry in a rule, in the
+   selector included. Naming one gives a single action a different colour per
+   pane. */
 
 const PALETTE_WORDS = [
   'red',
@@ -207,10 +199,9 @@ test('every Save is the same button', () => {
 
 /* ── Spacing ──────────────────────────────────────────────────────────────── */
 
-/* Every other dimension of the system is tokenised. Spacing was prose in
-   design-system.md and literals in the stylesheets, which is how the two drift.
-   The scale is declared; the conversion is deliberate and gradual, so these pin
-   the tokens and the documentation to each other rather than banning literals. */
+/* The spacing scale is declared. The conversion of the stylesheets is
+   deliberate and gradual, so these pin the tokens and the documentation to each
+   other rather than banning literals. */
 
 const SPACING = [2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 44];
 
@@ -234,8 +225,7 @@ test('the documentation lists the same steps', () => {
   assert.deepEqual(listed, SPACING, 'design-system.md and tokens.css disagree about the scale');
 });
 
-/* tokens.css referenced --bg-base as a fallback without ever declaring it, so
-   the fallback resolved to nothing. */
+/* A fallback naming an undeclared token resolves to nothing. */
 test('every custom property a stylesheet falls back to is declared', () => {
   const declared = new Set();
   for (const [, css] of all) for (const m of css.matchAll(/(--[\w-]+)\s*:/g)) declared.add(m[1]);

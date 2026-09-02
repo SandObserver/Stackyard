@@ -1,20 +1,9 @@
-/* Regression tests for P12-2: the layout did not follow the text direction.
+/* The stylesheets must use logical properties. A physical one does not follow
+   the text direction, so Persian looks wrong invisibly to anyone working in
+   English.
 
-   CSS has physical properties, where `margin-left` means the left of the screen
-   whatever the language, and logical ones, where `margin-inline-start` means the
-   start of the text: left in English, right in Persian.
-
-   The stylesheets used physical properties, so nothing flipped for Persian, and
-   a block of [dir="rtl"] rules undid them one by one. That block existed because
-   the properties were physical, and its own comment said to refine it against
-   real translated content. It could only ever cover what someone had noticed:
-   any new rule with `margin-left` in it needed a matching entry, and forgetting
-   meant Persian quietly looked wrong, invisibly to anyone working in English.
-
-   Both stylesheets use logical properties now, and all but one override is gone.
-
-   The exception is deliberate. A back chevron is a drawing, not a box, so no
-   logical property expresses "point the other way"; it is mirrored explicitly. */
+   The overrides that remain are deliberate. A back chevron is a drawing, not a
+   box, so no logical property expresses "point the other way". */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -27,11 +16,8 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
 const SHEETS = ['css/admin.css', 'css/dashboard.css', 'css/tokens.css', 'css/widget-config-form.css'];
 
-/* Widget pages, whose CSS lives in a <style> block. They were out of scope when
-   the pages were converted, and they set no direction of their own, so they
-   stayed left-to-right in Persian whatever their properties said. The dashboard
-   sets the frame's direction now, which is what makes converting them mean
-   something. */
+/* Widget pages, whose CSS lives in a <style> block. The dashboard sets the
+   frame's direction, so their logical properties resolve. */
 function widgetPages() {
   const out = [];
   const walk = dir => {
@@ -80,12 +66,9 @@ test('no stylesheet positions anything by screen side', () => {
   }
 });
 
-/* A widget's own CSS is held to the same rule, but only for the properties that
-   sit next to text. `left: 0; right: 0` on an absolutely positioned box is
-   symmetric and means the same in either direction, `left: 50%` with a
-   translate is centring, and a book spine or a tape reel is a drawing rather
-   than a line of text. Flipping those would be churn at best and would mirror
-   artwork at worst. */
+/* A widget's own CSS is held to the same rule, but only for the properties
+   that sit next to text. A symmetric pair, centring with a translate, and
+   artwork are exempt: mirroring a drawing is worse than leaving it. */
 test('no widget page spaces text by screen side', () => {
   const offenders = [];
   for (const file of widgetPages()) {
@@ -102,10 +85,8 @@ test('no widget page spaces text by screen side', () => {
   );
 });
 
-/* The conversion above is inert unless something sets the direction, and a
-   widget page is authored in English with no direction of its own. The
-   dashboard sets it when it mounts the frame, so a widget folder needs no code
-   of its own to follow the page. */
+/* The dashboard sets the direction when it mounts the frame. A widget folder
+   needs no code of its own to follow the page. */
 test('the dashboard gives each widget frame the page direction', () => {
   const utils = read('js/utils.js');
   assert.match(utils, /doc\.documentElement\.setAttribute\('dir'/, 'nothing sets the direction inside a widget frame');
@@ -116,16 +97,14 @@ test('the dashboard gives each widget frame the page direction', () => {
   );
 });
 
-/* Pinning the direction of a fragment is legitimate and sometimes correct: an
-   IP address table, a log tail, a chart axis and a keyboard shortcut list read
-   the same in every language. What a widget may not do is pin the direction of
-   its whole document, because that is the one the dashboard sets, and a widget
-   that overrides it stops following the app.
+/* A widget may pin the direction of a fragment: an IP address table or a log
+   tail reads the same in every language. It may not pin its whole document.
+   That is the one the dashboard sets, and overriding it stops the widget
+   following the app.
 
-   So the line is the document, not the idea: `<div dir="ltr">` and a rule on a
-   container are fine, `<html dir>`, `<body dir>` and `html`/`body`/`:root
-   { direction }` are not. A widget that really is direction-independent
-   throughout wraps its content and pins that. */
+   The line is the document, not the idea. `<div dir="ltr">` and a rule on a
+   container are fine; `<html dir>`, `<body dir>` and `html`/`body`/`:root
+   { direction }` are not. */
 const DOC_SELECTOR = /(^|,)\s*(html|body|:root)\b/;
 const DIRECTION_DECL = /(?<![\w-])direction\s*:/;
 
@@ -241,10 +220,8 @@ test('absolutely positioned elements use the inline end', () => {
   assert.match(code('css/dashboard.css'), /inset-inline-end:16px/, 'the mobile close button');
 });
 
-/* The toast used to carry its success or failure on a bar along one edge, which
-   had to be the inline start so it followed the text. It is a tinted fill with a
-   border on every side now, so there is no leading edge to place, and the way
-   that stays true is that neither rule names a side at all. */
+/* The toast is a tinted fill with a border on every side, so it has no leading
+   edge to place. Neither rule may name a side. */
 test('the toast state has no edge that could point the wrong way', () => {
   const src = code('css/admin.css');
   const rules = [...src.matchAll(/#toast\.(?:ok|err)\{([^}]*)\}/g)].map(m => m[1]);
@@ -276,18 +253,13 @@ test('the page sets its direction from the chosen locale', () => {
 
 /* ── insets ───────────────────────────────────────────────────────────────── */
 
-/* `left` and `right` are the same defect as `margin-left`, and the check above
-   did not cover them, so the settings toggle knob, the select chevron and the
-   update dot all still sat by screen side.
+/* `left` and `right` are the same defect as `margin-left`.
 
-   Three uses are not a defect and are allowed. A pair with the same value on
-   both sides is symmetric and reads the same in either direction. `left: 50%`
-   with a transform is centring. An invisible element has no reading direction:
-   the safe-area probe is measured, never seen.
+   Three uses are allowed. A pair with the same value on both sides is
+   symmetric. `left: 50%` with a transform is centring. An invisible element has
+   no reading direction: the safe-area probe is measured, never seen.
 
-   Widget pages are deliberately out of scope here. Their absolute positions
-   place artwork, a tape reel or a book spine, and mirroring a drawing is worse
-   than leaving it. */
+   Widget pages are out of scope: their absolute positions place artwork. */
 const INSET = /(?<![\w-])(left|right)\s*:\s*([^;}]+)/g;
 const RULES = /([^{}]+)\{([^{}]*)\}/g;
 

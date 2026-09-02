@@ -1,13 +1,6 @@
-/* Regression tests for phase 2, the unreleased multi-badge UI.
-
-   W-05 a badge with a unit measured 66px on a 72px icon, overhanging the tile
-   and the widget above it. W-06 the popover set pointer-events:none, so SC
-   1.4.13's hoverable requirement failed and the pop.contains guard was dead
-   code. W-07 the popover ellipsised the names it exists to reveal. W-08 the
-   visible label is the first to fire, which is a decision and now says so in
-   the admin. W-09 the extra values were signalled by a six-pixel colour sliver.
-
-   The feature is unreleased, so no configuration depends on any of this yet. */
+/* The multi-badge UI: the pill fits its icon, the popover is hoverable under
+   SC 1.4.13, it does not ellipsise the names it exists to reveal, and the extra
+   values are signalled by more than a colour sliver. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -68,9 +61,8 @@ test('a click on the popover does not reach the tile', () => {
   assert.match(popover, /pop\.addEventListener\('click', e => e\.stopPropagation\(\)\)/);
 });
 
-/* Escape and a click outside used to be hand-written here. An auto popover is
-   given both by the browser, so what this checks is that it is one, and that
-   the module is told when the browser closes it behind its back. */
+/* An auto popover is given Escape and light dismiss by the browser. The module
+   must be told when the browser closes it behind its back. */
 test('Escape and a click outside still close it', () => {
   assert.match(popover, /setAttribute\('popover', 'auto'\)/, 'not an auto popover, so neither dismissal exists');
   assert.match(popover, /showPopover\(\)/, 'shown some other way, which never enters the top layer');
@@ -168,10 +160,9 @@ test('the cue costs no height', () => {
   assert.doesNotMatch(b, /height:/, 'the collapsed cue must not change the pill height');
 });
 
-/* The badge ignores the pointer so a click reaches the tile beneath it. That
-   made the popover unreachable by hover on anything but a multi-value badge,
-   because only that one turned pointer-events back on, and a dispatched event
-   does not notice: it skips hit-testing entirely. */
+/* The badge ignores the pointer so a click reaches the tile beneath it. Every
+   badge with a popover must turn pointer-events back on, or no real pointer can
+   reach it. A dispatched event does not notice: it skips hit-testing. */
 test('a badge with a popover accepts the pointer', () => {
   const pop = block(css, '.badge.has-pop {');
   assert.match(pop, /pointer-events:\s*auto/, 'nothing can hover the badge that opens it');
