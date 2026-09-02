@@ -23,7 +23,7 @@ function syncSessionRows() {
   const canRevoke = on && _passwordSet;
   el('sec-revoke-row')?.classList.toggle('d-none', !canRevoke);
   const revokeTip = el('revoke-tip');
-  if (revokeTip) revokeTip.style.display = canRevoke ? '' : 'none';
+  if (revokeTip) revokeTip.classList.toggle('d-none', !canRevoke);
 }
 
 export function loadSettings(c) {
@@ -184,7 +184,7 @@ export function loadSettings(c) {
       const socketRow = el('ie-socket');
       if (socketRow) socketRow.classList.toggle('d-none', !v);
       const socketHint = el('socket-hint');
-      if (socketHint) socketHint.style.display = v ? '' : 'none';
+      if (socketHint) socketHint.classList.toggle('d-none', !v);
     };
     applyDocker(dockerEnEl.checked);
     dockerEnEl.addEventListener('change', () => applyDocker(dockerEnEl.checked));
@@ -233,7 +233,7 @@ async function syncAuthFromServer() {
     const pwRow = el('ie-pw');
     const pwHint = el('pw-hint-static');
     if (pwRow) pwRow.classList.toggle('d-none', !d.enabled);
-    if (pwHint) pwHint.style.display = d.enabled ? '' : 'none';
+    if (pwHint) pwHint.classList.toggle('d-none', !d.enabled);
   }
   const pwValEl = el('ie-pw-v');
   if (pwValEl) pwValEl.textContent = d.passwordSet ? t('common.configured') : t('common.notSet');

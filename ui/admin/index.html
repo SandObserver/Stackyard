@@ -11,7 +11,7 @@
   <script src="/js/mobile-class.js?v=fe95da0d"></script>
   <script src="/js/admin-theme.js?v=66565254"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=797311cf">
-  <link rel="stylesheet" href="/css/admin.css?v=105cd1e3">
+  <link rel="stylesheet" href="/css/admin.css?v=7d275790">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
 </head>
 <body>
@@ -98,7 +98,7 @@
         <div class="row d-none" id="srv-hide-healthy-row"><span class="rl" id="rl-srv-hide-healthy" data-i18n="general.hideHealthy">Hide Healthy Badge</span><label class="tog"><input type="checkbox" id="srv-hide-healthy" aria-labelledby="rl-srv-hide-healthy"><div class="tr"></div></label></div>
         <div class="row ie-row d-none" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Socket URL</span><span class="rv is-ph" id="ie-socket-v">http://socket-proxy:2375</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
       </div>
-      <p class="grp-tip" id="socket-hint" style="display:none" data-i18n-html="general.socketTip">Use the URL of a <strong>socket proxy</strong> container, never the Docker socket itself. A name such as <code>http://socket-proxy:2375</code> works only when this container and the proxy share a Docker network; an IP address works only when the proxy publishes its port beyond the host's own loopback.</p>
+      <p class="grp-tip d-none" id="socket-hint" data-i18n-html="general.socketTip">Use the URL of a <strong>socket proxy</strong> container, never the Docker socket itself. A name such as <code>http://socket-proxy:2375</code> works only when this container and the proxy share a Docker network; an IP address works only when the proxy publishes its port beyond the host's own loopback.</p>
 
       <div class="grp-hdr" data-i18n="general.security">Security</div>
       <div class="grp">
@@ -106,8 +106,8 @@
         <div class="row ie-row d-none" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
         <div class="row d-none" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign out all devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div>
       </div>
-      <p class="grp-tip" id="revoke-tip" style="display:none" data-i18n="general.signOutEverywhereTip">Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.</p>
-      <p class="grp-tip" id="pw-hint-static" style="display:none" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p>
+      <p class="grp-tip d-none" id="revoke-tip" data-i18n="general.signOutEverywhereTip">Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.</p>
+      <p class="grp-tip d-none" id="pw-hint-static" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p>
 
       <div class="grp-hdr" data-i18n="general.backup">Backup</div>
       <div class="grp">
@@ -170,7 +170,7 @@
             <span class="rl" data-i18n="appearance.image">Image</span>
             <span class="rv is-ph" id="bg-file-v" data-i18n="appearance.noImage">No image</span>
             <button type="button" class="row-btn" id="bg-upload-lbl" data-i18n="app.upload">Upload</button>
-            <input type="file" id="bg-upload" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" style="position:absolute;width:1px;height:1px;opacity:0">
+            <input type="file" id="bg-upload" class="file-hidden" accept="image/png,image/jpeg,image/webp,image/avif,image/gif">
           </div>
           <div class="row ie-row" id="ie-bgurl"><span class="rl" data-i18n="appearance.imageUrl">Image URL</span><span class="rv is-ph" id="ie-bgurl-v">Image URL</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
           <div class="row">
@@ -211,7 +211,7 @@
             <button class="btn bp sm" id="dash-save" type="button" data-i18n="common.save">Save</button>
           </div>
         </div>
-        <div class="al-filter" id="al-filter" style="display:none">
+        <div class="al-filter d-none" id="al-filter">
           <input id="al-search" type="search" class="al-search" placeholder="Search" aria-label="Search" data-i18n-ph="dashboard.searchPh">
           <div class="al-chips" role="group" aria-label="Filter by type" data-i18n-al="dashboard.filterByType">
             <button type="button" class="chip on" data-flt="all" aria-pressed="true" data-i18n="dashboard.filterAll">All</button>
@@ -220,11 +220,11 @@
             <button type="button" class="chip" data-flt="folder" aria-pressed="false" data-i18n="dashboard.filterFolders">Folders</button>
           </div>
         </div>
-        <div class="grp" id="al-grp" style="display:none"><div id="al"></div></div>
+        <div class="grp d-none" id="al-grp"><div id="al"></div></div>
       </div>
 
       <!-- Push edit view -->
-      <div id="dash-edit-view" style="display:none">
+      <div id="dash-edit-view" class="d-none">
         <div class="sec-hdr">
           <button class="ev-back" id="ev-back" type="button" aria-label="Back to dashboard list" data-i18n-al="nav.backToDashboardList">
             <svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"/></svg>
@@ -247,7 +247,7 @@
       <div class="about-hero">
         <div class="about-ic-wrap">
           <svg width="64" height="64" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)"><path fill="var(--accent)" d="M4978 9180 c-75 -13 -146 -39 -233 -83 -112 -57 -244 -190 -302 -302 -70 -135 -88 -210 -88 -360 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 141 -72 193 -84 430 -93 354 -15 602 -64 885 -177 803 -319 1400 -1028 1569 -1863 39 -195 46 -272 46 -520 0 -155 -5 -278 -14 -335 -50 -332 -129 -578 -281 -870 -108 -207 -125 -266 -125 -430 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 135 -70 210 -88 360 -88 108 0 143 4 205 24 174 54 330 167 424 309 65 100 195 366 269 552 135 343 219 677 263 1055 13 111 18 226 18 445 0 318 -13 473 -60 730 -102 550 -309 1064 -617 1525 -668 1002 -1742 1656 -2937 1790 -169 19 -524 28 -592 15z"/><path fill="var(--tx)" d="M2131 7549 c-287 -51 -529 -264 -623 -549 -29 -87 -32 -106 -32 -230 0 -111 3 -149 22 -213 55 -191 173 -354 330 -454 32 -21 426 -249 875 -508 707 -407 814 -472 799 -483 -9 -7 -396 -232 -861 -500 -747 -431 -852 -495 -917 -555 -314 -293 -338 -763 -56 -1104 85 -103 257 -210 402 -249 47 -13 102 -18 195 -18 146 0 214 14 330 69 39 18 441 247 894 509 453 262 826 476 828 476 1 0 3 -445 3 -989 0 -1079 -1 -1063 58 -1213 77 -199 249 -369 448 -444 470 -177 976 104 1070 593 12 63 14 339 14 1723 0 1064 -4 1685 -10 1751 -25 247 -119 435 -284 571 -61 51 -2844 1666 -3014 1749 -40 21 -104 45 -140 54 -79 20 -255 28 -331 14z"/></g></svg>
-          <div class="about-dot" id="about-update-dot" style="display:none" title="Update available" data-i18n-title="about.updateAvailable">
+          <div class="about-dot d-none" id="about-update-dot" title="Update available" data-i18n-title="about.updateAvailable">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
           </div>
         </div>
@@ -268,15 +268,15 @@
 
 <!-- Modal kept dormant in DOM (JS references it); removed in cleanup unit. -->
 <!-- Hidden inputs mounted into ie-rows by JS -->
-<input id="srv-ip"    type="text"     style="display:none" autocomplete="off">
-<input id="srv-socket" type="text"   style="display:none" autocomplete="off">
-<input id="sec-pw"    type="password" style="display:none" autocomplete="new-password">
-<input id="bg-apikey" type="text"    style="display:none" autocomplete="off">
-<input id="bg-col"    type="text"    style="display:none" autocomplete="off">
-<input id="bg-url"    type="url"     style="display:none" autocomplete="off">
-<input id="bg-color"  type="text"    style="display:none" autocomplete="off">
-<div id="sec-pw-bars" class="pw-bars" style="display:none"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
-<div id="sec-pw-hint" class="pw-hint" style="display:none"></div>
+<input id="srv-ip"    type="text"     class="d-none" autocomplete="off">
+<input id="srv-socket" type="text"   class="d-none" autocomplete="off">
+<input id="sec-pw"    type="password" class="d-none" autocomplete="new-password">
+<input id="bg-apikey" type="text"    class="d-none" autocomplete="off">
+<input id="bg-col"    type="text"    class="d-none" autocomplete="off">
+<input id="bg-url"    type="url"     class="d-none" autocomplete="off">
+<input id="bg-color"  type="text"    class="d-none" autocomplete="off">
+<div id="sec-pw-bars" class="pw-bars d-none"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
+<div id="sec-pw-hint" class="pw-hint d-none"></div>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -323,6 +323,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=d18b2410"></script>
+<script type="module" src="/js/admin.js?v=c64e0d76"></script>
 </body>
 </html>

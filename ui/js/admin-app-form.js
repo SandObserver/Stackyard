@@ -15,7 +15,7 @@ import {
   wireChecklist,
 } from '/js/admin-shared.js?v=76c76594';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=1cd86a5a';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=5648e765';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
@@ -42,7 +42,7 @@ export function buildFolderForm(body, item) {
       <div class="row ie-row" id="ie-fname">
         <span class="rl">${t('folder.name')}</span>
         <span class="rv${item?.label ? '' : ' is-ph'}">${item?.label || t('folder.namePh')}</span>
-        <input id="f-fname" type="text" value="${item?.label || ''}" style="display:none">
+        <input id="f-fname" type="text" value="${item?.label || ''}" class="d-none">
         <button class="pe" type="button">${raw(PE_SVG)}</button>
       </div>
       <div class="row">
@@ -122,10 +122,10 @@ export function buildAppForm(body, item) {
     <p class="grp-hdr">${t('app.icon')}</p>
     <div class="grp" id="ipw">
       <div class="row icon-src-row">
-        <span class="icon-prev" id="ipv" style="background:${rc(state.scol)}">${state.siurl ? html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">` : html`<span>${(item?.label || '?')[0]?.toUpperCase() || '?'}</span>`}</span>
+        <span class="icon-prev" id="ipv">${state.siurl ? html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">` : html`<span>${(item?.label || '?')[0]?.toUpperCase() || '?'}</span>`}</span>
         <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="${t('app.iconPh')}" value="${state.siurl}">
         <button type="button" class="row-btn" id="ip-upload-lbl">${t('app.upload')}</button>
-        <input type="file" id="ip-upload" aria-label="${t('app.upload')}" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon" style="position:absolute;width:1px;height:1px;opacity:0">
+        <input type="file" id="ip-upload" class="file-hidden" aria-label="${t('app.upload')}" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon">
       </div>
       <div class="iprs" id="iprs"></div>
       <div id="icon-color-slot"></div>
@@ -207,6 +207,9 @@ export function buildAppForm(body, item) {
   initInlineEdit('ie-static-label', 'f-static-label', { placeholder: t('app.labelPh') });
   initInlineEdit('ie-burl', 'f-burl', { placeholder: t('app.apiUrlPh') });
 
+  /* The markup carries no style attribute, so the preview is painted here. */
+  const pv0 = el('ipv');
+  if (pv0) pv0.style.background = rc(state.scol);
   renderColorControl(el('icon-color-slot'), {
     value: state.scol || 'dark',
     idPrefix: 'icon-col',
@@ -496,7 +499,7 @@ function wireActLabelDrag(host) {
     initInlineEdit, from the row's own label. */
 function _ieRow(rowId, label, inpId, val, ph, type = 'text') {
   const has = val != null && val !== '';
-  return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" style="display:none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`;
+  return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`;
 }
 
 function wireIcon() {

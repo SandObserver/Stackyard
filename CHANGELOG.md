@@ -51,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- The dashboard and settings pages no longer permit inline styles.
+
 - A custom widget's page is sandboxed and can no longer navigate the dashboard
   away.
 

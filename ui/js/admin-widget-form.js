@@ -1,6 +1,6 @@
 import { state } from '/js/admin-state.js?v=7d68e98e';
 import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=76c76594';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=8804d849';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=899b59cb';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=d17394da';
 import { t } from '/js/i18n.js?v=e644a5c5';
@@ -67,7 +67,7 @@ function _renderWidgetForm(body) {
   setHtml(
     shell,
     html`
-    <div class="row ie-row" id="ie-wname"><span class="rl">${t('widgetCfg.name')}</span><span class="rv${state._wlabel ? '' : ' is-ph'}">${state._wlabel ? state._wlabel : t('widgetCfg.namePh')}</span><input id="f-wlabel" type="text" value="${state._wlabel}" style="display:none"><button class="pe" type="button" aria-label="${t('widgetCfg.editName')}">${raw(PE_SVG)}</button></div>
+    <div class="row ie-row" id="ie-wname"><span class="rl">${t('widgetCfg.name')}</span><span class="rv${state._wlabel ? '' : ' is-ph'}">${state._wlabel ? state._wlabel : t('widgetCfg.namePh')}</span><input id="f-wlabel" type="text" value="${state._wlabel}" class="d-none"><button class="pe" type="button" aria-label="${t('widgetCfg.editName')}">${raw(PE_SVG)}</button></div>
     <div class="row"><span class="rl">${t('widgetCfg.type')}</span><div class="sel-wrap"><select id="f-wtype" class="row-sel" aria-label="${t('widgetCfg.type')}">${typeOpts}</select>${raw(CHEV_SVG)}</div></div>`,
   );
   body.appendChild(shell);
@@ -178,7 +178,7 @@ function _renderCustomConfig(body) {
   body.appendChild(card);
   setHtml(
     card,
-    html`<div class="row ie-row" id="cust-url-row"><span class="rl">${t('widgetCfg.iframeUrl')} <span class="req">*</span></span><span class="rv${state._customUrl ? '' : ' is-ph'}">${state._customUrl ? state._customUrl : 'https://app.example.com/widget.html'}</span><input id="f-url" type="url" value="${state._customUrl || ''}" style="display:none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
+    html`<div class="row ie-row" id="cust-url-row"><span class="rl">${t('widgetCfg.iframeUrl')} <span class="req">*</span></span><span class="rv${state._customUrl ? '' : ' is-ph'}">${state._customUrl ? state._customUrl : 'https://app.example.com/widget.html'}</span><input id="f-url" type="url" value="${state._customUrl || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
   );
   const tip = document.createElement('p');
   tip.className = 'grp-tip';
@@ -214,9 +214,9 @@ function _renderCustomConfig(body) {
     adv,
     html`
     <div class="row"><span class="rl">${t('widgetCfg.referrerPolicy')}</span><div class="sel-wrap"><select class="row-sel" id="if-referrer" aria-label="${t('widgetCfg.referrerPolicy')}">${refOpts}</select>${raw(CHEV_SVG)}</div></div>
-    <div class="row ie-row" id="if-allow-row"><span class="rl">${t('widgetCfg.allowFeaturePolicy')}</span><span class="rv${o.allow ? '' : ' is-ph'}">${o.allow ? o.allow : 'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${o.allow || ''}" style="display:none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
+    <div class="row ie-row" id="if-allow-row"><span class="rl">${t('widgetCfg.allowFeaturePolicy')}</span><span class="rv${o.allow ? '' : ' is-ph'}">${o.allow ? o.allow : 'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${o.allow || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
     <div class="row"><span class="rl">${t('widgetCfg.allowFullscreen')}</span><label class="tog"><input type="checkbox" id="if-fs" ${o.allowFullscreen !== false ? 'checked' : ''}><div class="tr"></div></label></div>
-    <div class="row ie-row" id="if-refresh-row"><span class="rl">${t('widgetCfg.refreshInterval')} <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval ? '' : ' is-ph'}">${o.refreshInterval ? o.refreshInterval : 'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval || ''}" style="display:none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
+    <div class="row ie-row" id="if-refresh-row"><span class="rl">${t('widgetCfg.refreshInterval')} <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval ? '' : ' is-ph'}">${o.refreshInterval ? o.refreshInterval : 'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
   );
   const sync = () => {
     state._iframeOpts.referrerPolicy = qi('#if-referrer', adv).value || undefined;

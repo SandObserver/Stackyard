@@ -124,11 +124,10 @@ export function renderColorControl(
 ) {
   const isSem = v => v === 'dark' || v === 'light';
   const init = _hexToHsv(isSem(value) ? '#0289ff' : value) || { h: 212, s: 99, v: 100 };
-  const swatch = h =>
-    html`<button type="button" class="cc-swatch" data-v="${h}" style="background:${h}" aria-label="${h}"></button>`;
+  const swatch = h => html`<button type="button" class="cc-swatch" data-v="${h}" aria-label="${h}"></button>`;
   const swatches = semantic
-    ? html`<button type="button" class="cc-swatch cc-sem" data-v="dark" style="background:#1c1c1e" title="${t('appearance.themeDark')}" aria-label="${t('appearance.displayDark')}"></button>
-       <button type="button" class="cc-swatch cc-sem" data-v="light" style="background:#f2f2f7" title="${t('appearance.themeLight')}" aria-label="${t('appearance.displayLight')}"></button>
+    ? html`<button type="button" class="cc-swatch cc-sem cc-sem-dark" data-v="dark" title="${t('appearance.themeDark')}" aria-label="${t('appearance.displayDark')}"></button>
+       <button type="button" class="cc-swatch cc-sem cc-sem-light" data-v="light" title="${t('appearance.themeLight')}" aria-label="${t('appearance.displayLight')}"></button>
        <button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="${t('appearance.customColor')}"></button>
        ${['#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'].map(swatch)}`
     : html`<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="${t('appearance.customColor')}"></button>
@@ -143,8 +142,14 @@ export function renderColorControl(
     ${slider('Hue', 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
     ${slider('Saturation', 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
     ${slider('Brightness', 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
-    <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">${t('appearance.colorCode')}</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" style="display:none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
+    <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">${t('appearance.colorCode')}</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
   );
+  /* The markup carries no style attribute, so the page keeps style-src without
+     'unsafe-inline'. A swatch paints itself from its own value. */
+  for (const b of wrap.querySelectorAll('.cc-swatch[data-v]')) {
+    const v = b.getAttribute('data-v');
+    if (v && v[0] === '#') /** @type {HTMLElement} */ (b).style.background = v;
+  }
   const rows = /** @type {HTMLElement[]} */ ([...wrap.children]);
   rows.forEach(r => container.appendChild(r));
   const qLocal = sel => /** @type {HTMLInputElement} */ (container.querySelector(sel));
@@ -195,7 +200,7 @@ export function renderColorControl(
     });
     const rb = q('.cc-rainbow', container);
     if (rb) rb.classList.toggle('on', mode === 'color' && showTune);
-    tune.forEach(r => (r.style.display = showTune ? '' : 'none'));
+    tune.forEach(r => r.classList.toggle('d-none', !showTune));
     if (!codeRv.closest('.editing')) {
       codeRv.textContent =
         mode === 'color' ? hex : t(mode === 'dark' ? 'appearance.displayDark' : 'appearance.displayLight');
