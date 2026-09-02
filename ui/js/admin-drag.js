@@ -248,5 +248,4 @@ export function wireRowDrag(row, handle, { item, indent, folderId, childIdx }) {
   });
 
   wireTouchDrag(row, handle, { indent, folderId });
-  wireTouchDrag(row, handle, { indent, folderId });
 }
