@@ -1,7 +1,7 @@
-import { toast, ag, ap } from '/js/admin-shared.js?v=76c76594';
+import { toast, ag, ap } from '/js/admin-shared.js?v=465f9207';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=e644a5c5';
-import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=d17394da';
+import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=0aebc197';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
 import { el, inp, q, qa, setUserText } from '/js/utils.js?v=d949e985';
 

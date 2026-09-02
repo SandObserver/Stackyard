@@ -13,13 +13,13 @@
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
 import { snapshotItems } from '/js/admin-save-logic.js?v=48a9e055';
-import { reorderItems } from '/js/admin-logic.js?v=d17394da';
+import { reorderItems } from '/js/admin-logic.js?v=0aebc197';
 import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=f9adcc10';
-import { paintIcon } from '/js/admin-shared.js?v=76c76594';
+import { paintIcon } from '/js/admin-shared.js?v=465f9207';
 import { clr as rc, el, qa, setUserText } from '/js/utils.js?v=d949e985';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=e644a5c5';
-import { sizeLabel } from '/js/admin-widget-form.js?v=519dd14b';
+import { sizeLabel } from '/js/admin-widget-form.js?v=efebd802';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=12b0a947';
 
 /** @type {{ openModal: (idx: number|null) => void,

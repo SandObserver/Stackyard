@@ -2,7 +2,7 @@ import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
 import { state } from '/js/admin-state.js?v=7d68e98e';
-import { isDockBlocked, DOCK_MAX, clearsStoredSecret } from '/js/admin-logic.js?v=d17394da';
+import { isDockBlocked, DOCK_MAX, clearsStoredSecret, isBareHostUrl } from '/js/admin-logic.js?v=0aebc197';
 import { t } from '/js/i18n.js?v=e644a5c5';
 import {
   toast,
@@ -13,9 +13,9 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=76c76594';
+} from '/js/admin-shared.js?v=465f9207';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=5648e765';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=97a90a94';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
@@ -822,8 +822,11 @@ async function fetchBadge() {
     state.fnums = r.numbers || [];
     if (st) {
       st.style.cssText = 'margin-top:4px;color:#34c759';
-      if (!state.fnums.length) st.textContent = '✓ ' + t('app.connectedNoValues');
-      else st.textContent = '✓ ' + t('app.foundValues', { count: state.fnums.length });
+      if (!state.fnums.length) {
+        const bare = isBareHostUrl(url);
+        if (bare) st.style.cssText = 'margin-top:4px;color:var(--warning)';
+        st.textContent = bare ? t('app.needsApiPath') : '✓ ' + t('app.connectedNoValues');
+      } else st.textContent = '✓ ' + t('app.foundValues', { count: state.fnums.length });
     }
     el('auth-row-wrap')?.classList.remove('bprow-hidden');
     if (state.fnums.length && !state.spaths.length) addActLabel();
