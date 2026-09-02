@@ -86,9 +86,13 @@ const BESPOKE = new Map(
     /* Chosen to read apart from each other at a glance on a clock face, which
        the neighbouring palette hues do not. Deliberate, do not "correct" them
        to cyan, pink and orange. */
-    '#18B4F0': 'analog clock, hour hand',
-    '#FC1878': 'analog clock, minute hand',
-    '#FC9C00': 'analog clock, second hand',
+    '#3FBCF2': 'analog clock, hour disc',
+    '#FE3A86': 'analog clock, minute disc',
+    '#FDA632': 'analog clock, second disc',
+    '#633680': 'analog clock, minute and hour discs overlapping',
+    '#F00F14': 'analog clock, minute and second discs overlapping',
+    '#577C40': 'analog clock, hour and second discs overlapping',
+    '#5F2123': 'analog clock, all three discs overlapping',
     /* GitHub's own light contribution scale, in the demo fixture. */
     '#EBEDF0': 'GitHub demo contribution scale, step 0',
     '#9BE9A8': 'GitHub demo contribution scale, step 1',
