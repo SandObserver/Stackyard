@@ -5,7 +5,7 @@
 import { t } from '/js/i18n.js?v=e644a5c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { wireChecklist } from '/js/admin-shared.js?v=76c76594';
-import { renderColorControl } from '/js/admin-color-control.js?v=1cd86a5a';
+import { renderColorControl } from '/js/admin-color-control.js?v=5648e765';
 import {
   seedCarried,
   applyOptionSet,
@@ -40,7 +40,7 @@ function _ieRow(field, value, inputType) {
   row.className = 'row ie-row';
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp" type="${inputType}" autocomplete="off" value="${has ? value : field.default != null ? field.default : ''}" style="display:none"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp d-none" type="${inputType}" autocomplete="off" value="${has ? value : field.default != null ? field.default : ''}"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
   );
   const rv = row.querySelector('.rv'),
     inp = qi('.row-inp', row),
@@ -101,7 +101,7 @@ function _secret(field, isSet) {
   const display = isSet ? t('common.configured') : t('common.notSet');
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp" type="password" autocomplete="new-password" placeholder="${isSet ? t('widgetCfg.replaceSecret') : field.placeholder || ''}" style="display:none"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp d-none" type="password" autocomplete="new-password" placeholder="${isSet ? t('widgetCfg.replaceSecret') : field.placeholder || ''}"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
   );
   const rv = row.querySelector('.rv'),
     inp = qi('.row-inp', row),
@@ -564,10 +564,7 @@ function _group(field, rows, size, ctx) {
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.className = 'wcf-add-row';
-  setHtml(
-    addBtn,
-    html`<span class="rl" style="color:var(--ac2)">${t('common.addNamed', { name: field.label })}</span>`,
-  );
+  setHtml(addBtn, html`<span class="rl wcf-add-label">${t('common.addNamed', { name: field.label })}</span>`);
   addWrap.appendChild(addBtn);
   wrap.appendChild(addWrap);
   const fixed = min === max;

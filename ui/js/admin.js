@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=c86f9f02';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=72b55d37';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9ea23064';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=448f1f49';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=7b74f027';
 import { resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
 import {
   buildAppItem,
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=48a9e055';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=40d84dc5';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=98432503';
 import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=76c76594';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=a28e476c';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=519dd14b';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=e644a5c5';
 import { loadLocalIcons } from '/js/icons.js?v=69c2b9bd';
@@ -30,7 +30,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
 import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=5da8a871';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=00c011c9';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=d949e985';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=1cd86a5a';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=5648e765';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=1907cce7';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
@@ -160,12 +160,12 @@ async function saveOrRevert(before) {
 }
 
 function showListView() {
-  el('dash-list-view').style.display = '';
-  el('dash-edit-view').style.display = 'none';
+  el('dash-list-view').classList.remove('d-none');
+  el('dash-edit-view').classList.add('d-none');
 }
 function showEditView() {
-  el('dash-list-view').style.display = 'none';
-  el('dash-edit-view').style.display = '';
+  el('dash-list-view').classList.add('d-none');
+  el('dash-edit-view').classList.remove('d-none');
   el('cp')?.scrollTo?.(0, 0);
   q('.cp')?.scrollTo?.(0, 0);
 }
@@ -621,8 +621,8 @@ function initAllInlineEdits() {
     onCommit() {
       const bars = el('sec-pw-bars');
       const hint = el('sec-pw-hint');
-      if (bars) bars.style.display = 'none';
-      if (hint) hint.style.display = 'none';
+      if (bars) bars.classList.add('d-none');
+      if (hint) hint.classList.add('d-none');
     },
   });
   const pwInp = el('sec-pw');
@@ -632,12 +632,8 @@ function initAllInlineEdits() {
       () => {
         const bars = el('sec-pw-bars');
         const hint = el('sec-pw-hint');
-        if (bars) {
-          bars.style.display = 'flex';
-        }
-        if (hint) {
-          hint.style.display = 'block';
-        }
+        bars?.classList.remove('d-none');
+        hint?.classList.remove('d-none');
         wirePasswordStrength('sec-pw', 'sec-pw-bars', 'sec-pw-hint');
       },
       { once: true },
@@ -692,7 +688,7 @@ async function initVersion() {
       if (aEl) aEl.textContent = t('about.version', { v });
       if (d.updateAvailable) {
         const dot = el('about-update-dot');
-        if (dot) dot.style.display = 'flex';
+        dot?.classList.remove('d-none');
         if (aEl && d.latest) {
           const lv = String(d.latest).replace(/^v/i, '');
           setHtml(
@@ -719,7 +715,7 @@ function initSecToggle() {
   if (!en) return;
   function apply(on) {
     if (pwRow) pwRow.classList.toggle('d-none', !on);
-    if (pwHint) pwHint.style.display = on ? '' : 'none';
+    if (pwHint) pwHint.classList.toggle('d-none', !on);
   }
   apply(en.checked);
   en.addEventListener('change', () => apply(en.checked));
@@ -1231,7 +1227,7 @@ checkAuth(load).then(ok => {
       /* An inline onclick is blocked by the CSP. */
       setHtml(
         al,
-        html`<div style="padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px">${t('home.loadFailed')}<br><br><button class="retry-btn" type="button" style="padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">${t('home.retry')}</button></div>`,
+        html`<div class="dash-load-fail">${t('home.loadFailed')}<br><br><button class="retry-btn" type="button">${t('home.retry')}</button></div>`,
       );
       q('.retry-btn', al)?.addEventListener('click', () => location.reload());
     }

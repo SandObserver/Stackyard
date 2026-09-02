@@ -19,7 +19,7 @@ import { paintIcon } from '/js/admin-shared.js?v=76c76594';
 import { clr as rc, el, qa, setUserText } from '/js/utils.js?v=d949e985';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=e644a5c5';
-import { sizeLabel } from '/js/admin-widget-form.js?v=a28e476c';
+import { sizeLabel } from '/js/admin-widget-form.js?v=519dd14b';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=12b0a947';
 
 /** @type {{ openModal: (idx: number|null) => void,
@@ -204,9 +204,9 @@ export function render() {
   const bar = el('al-filter');
   const grp = el('al-grp');
   if (bar) {
-    if (state.items.length >= 6) bar.style.display = '';
+    if (state.items.length >= 6) bar.classList.remove('d-none');
     else {
-      bar.style.display = 'none';
+      bar.classList.add('d-none');
       if (filter.q || filter.type !== 'all') {
         filter.q = '';
         filter.type = 'all';
@@ -214,7 +214,7 @@ export function render() {
       }
     }
   }
-  if (grp) grp.style.display = state.items.length ? '' : 'none';
+  if (grp) grp.classList.toggle('d-none', !state.items.length);
   if (!state.items.length) {
     setHtml(l, html`<div class="empty"><p class="empty-msg">${t('list.empty')}</p></div>`);
     return;

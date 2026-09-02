@@ -1,5 +1,10 @@
 /* admin.css v33 */
 :root{
+  /* The two plate previews in the colour control. Fixed in both themes: each
+     shows the plate it selects, not the theme the page is in. */
+  --cc-plate-dark:#1C1C1E;
+  --cc-plate-light:#F2F2F7;
+
   /* Surfaces and borders, darkest first, from the system greys. */
   --bg-outer:var(--sy-gray6);
   --sb:var(--sy-gray5);
@@ -363,7 +368,12 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .kv-del{flex-shrink:0;background:none;border:none;color:var(--dm);cursor:pointer;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);padding:4px;border-radius:6px}
 .kv-del:hover{color:var(--tx)}
 .kv-add{background:none;border:none;color:var(--ac2);cursor:pointer;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:600;padding:4px 0}
+.dash-load-fail{padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px}
+.dash-load-fail .retry-btn{padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit}
+.wcf-add-label{color:var(--ac2)}
 .cc-sem{position:relative}
+.cc-sem-dark{background:var(--cc-plate-dark)}
+.cc-sem-light{background:var(--cc-plate-light)}
 /* App form: icon source row, poll, value list */
 .icon-src-row{gap:12px}
 .icon-prev{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--on-tint);font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden}
