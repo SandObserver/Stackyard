@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Widget settings now draw a separator under every row, instead of only under
+  the rows that carry no hint.
+
+- The Disk Health bay picker is now its own section, instead of a box drawn
+  inside the box above it.
+
 - Settings now shows the same Unsplash wallpaper as the dashboard, instead of
   picking a new photo on every visit.
 

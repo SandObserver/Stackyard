@@ -1,6 +1,6 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=5702feef';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9fc96f28';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=cea8d7ce';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=0a1e50b5';
 import { resolveAdminSection } from '/js/admin-logic.js?v=dcf7c37d';
 import {
   buildAppItem,
@@ -13,7 +13,7 @@ import {
 import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=f019211c';
 import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=132c869f';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=db272c65';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=0ca20e21';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=e644a5c5';
 import { loadLocalIcons } from '/js/icons.js?v=69c2b9bd';

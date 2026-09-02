@@ -26,13 +26,26 @@ const html = read('admin/index.html');
 test('the separator is removed from the last visible row, not the last child', () => {
   assert.match(
     css,
-    /\.row:not\(:has\(~ \.row:not\(\.d-none\)\)\)::after\{content:none\}/,
+    /\.row:not\(:has\(~ \.row:not\(\.d-none\), ~ \.row-wrap:not\(\.d-none\)\)\)::after\{content:none\}/,
     'the visibility-aware rule is gone',
   );
   assert.doesNotMatch(
     css,
     /\.row(\.\w+)?:last-child(::after)?\{(border-bottom:none|content:none)\}/,
     'a :last-child exemption is back; it cannot see a hidden trailing row',
+  );
+});
+
+test('a wrapped field draws the separator, and drops it when last visible', () => {
+  assert.match(
+    css,
+    /\.row-wrap::after\{content:'';position:absolute/,
+    'a wrapped field draws no separator, so a hinted row runs into the next one',
+  );
+  assert.match(
+    css,
+    /\.row-wrap:not\(:has\(~ \.row:not\(\.d-none\), ~ \.row-wrap:not\(\.d-none\)\)\)::after\{content:none\}/,
+    'a trailing wrapped field draws a separator with nothing under it',
   );
 });
 

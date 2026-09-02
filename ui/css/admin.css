@@ -200,13 +200,20 @@ html{background:var(--bg-color,var(--bg-outer))}
    how a grouped list draws it. A border cannot be inset, so it is drawn here.
    Absolute, so it is not a grid item in the two-column drow. */
 .row::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:0;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
-.row:not(:has(~ .row:not(.d-none)))::after{content:none}
+.row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none)))::after{content:none}
+/* A field with a hint, or a control that draws several rows, is wrapped so
+   `showIf` has one element to hide. The wrapper draws the closing separator,
+   below the hint, so the line falls between two fields and not inside one. */
+.row-wrap{position:relative}
+.row-wrap::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:0;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
+.row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none)))::after{content:none}
 /* The group is rounded hard and cannot clip: it keeps overflow visible so a
    dropdown can escape it. So the end rows carry the corners themselves, or a
    row's hover fill squares them off. Last visible, not last child, for the same
    reason as the separator. */
-.grp > .row:first-child{border-start-start-radius:var(--sy-radius-group);border-start-end-radius:var(--sy-radius-group)}
-.grp > .row:not(:has(~ .row:not(.d-none))){border-end-start-radius:var(--sy-radius-group);border-end-end-radius:var(--sy-radius-group)}
+.grp > .row:first-child,.grp > .row-wrap:first-child > .row:first-child{border-start-start-radius:var(--sy-radius-group);border-start-end-radius:var(--sy-radius-group)}
+.grp > .row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none))),
+.grp > .row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none))) > .row:last-child{border-end-start-radius:var(--sy-radius-group);border-end-end-radius:var(--sy-radius-group)}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:var(--ov-soft)}
 /* The label holds its line and the value gives way, which is the order a

@@ -530,6 +530,7 @@ function _object(field, value, ctx) {
     if (sf.type === 'group' || sf.type === 'object') continue;
     const b = _buildSimple(sf, cfg, subCtx);
     b.field = sf;
+    if (!b.el.classList.contains('row')) b.el.classList.add('row-wrap');
     card.appendChild(b.el);
     built.push(b);
   }
@@ -614,6 +615,7 @@ function _group(field, rows, size, ctx) {
         if (sf.type === 'group' || sf.type === 'object') continue;
         const b = _buildSimple(sf, rowData, rowCtx);
         b.field = sf;
+        if (!b.el.classList.contains('row')) b.el.classList.add('row-wrap');
         card.appendChild(b.el);
         built.push(b);
       }
@@ -686,9 +688,14 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
   };
   for (const f of fields) {
     if (!f || !f.key) continue;
-    if (f.type === 'group' || f.type === 'object') {
+    if (f.type === 'group' || f.type === 'object' || f.type === 'picklist') {
       flush();
-      const b = f.type === 'group' ? _group(f, config[f.key], opts && opts.size, ctx) : _object(f, config[f.key], ctx);
+      const b =
+        f.type === 'group'
+          ? _group(f, config[f.key], opts && opts.size, ctx)
+          : f.type === 'object'
+            ? _object(f, config[f.key], ctx)
+            : _picklist(f, config[f.key], ctx, ctx.size);
       b.field = f;
       container.appendChild(b.el);
       built.push(b);
@@ -701,6 +708,7 @@ export function renderWidgetConfigForm(container, fields, config = {}, opts = {}
       card.className = 'grp';
       container.appendChild(card);
     }
+    if (!b.el.classList.contains('row')) b.el.classList.add('row-wrap');
     card.appendChild(b.el);
     if (b.control) b.control.addEventListener('change', () => notify(f.key));
     built.push(b);
