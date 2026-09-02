@@ -1,9 +1,6 @@
-/* The admin nav links and the sections they reveal must agree.
-
-   A link whose data-sec names no section hid every section and left the page
-   blank, the same failure a stale stored value caused (P10-3). resolveAdminSection
-   now prevents the blank page either way, but a mismatch here is still a bug
-   worth catching at its source rather than surviving as a silent fallback. */
+/* The admin nav links and the sections they reveal must agree. A link whose
+   data-sec names no section is caught here rather than surviving as a silent
+   fallback in resolveAdminSection. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

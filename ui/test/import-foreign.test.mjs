@@ -243,9 +243,8 @@ test('icons: a slug survives, an icon font does not', () => {
   }
 });
 
-/* Found against a real Homepage export: grafana.com served the icon, the page's
-   img-src refused it, and the tile showed a broken image with a CSP violation
-   in the console. An icon the browser will not load is not an icon. */
+/* An icon the page's img-src refuses is not an icon. It renders as a broken
+   image with a CSP violation in the console. */
 test('an icon URL the page cannot load is dropped, not stored', () => {
   assert.deepEqual(convertIcon('https://grafana.com/static/assets/img/fav32.png'), { iconUrl: '', dropped: true });
   assert.deepEqual(convertIcon('http://192.168.1.5/icon.png'), { iconUrl: '', dropped: true });
@@ -256,8 +255,8 @@ test('an icon URL the page cannot load is dropped, not stored', () => {
   assert.deepEqual(convertIcon('https://['), { iconUrl: '', dropped: true });
 });
 
-/* The preview prints "group / name", so the note for a flattened group used to
-   read "Media / Media / Arr Stack". */
+/* The preview prints "group / name", so a flattened group must not repeat its
+   own name. */
 test('the flattened-group note names the child once', () => {
   const out = convertHomepageServices(parseYaml(SERVICES));
   const note = out.notes.find(n => n.code === NOTE.GROUP_FLATTENED);
@@ -266,7 +265,7 @@ test('the flattened-group note names the child once', () => {
   assert.equal(note.detail, 'Media / Arr Stack');
 });
 
-/* All three found against the real Dashy export. */
+/* All three come from a real Dashy export. */
 test('Dashy allow-insecure carries across to the TLS switch Stackyard already has', () => {
   const out = convertDashy(
     parseYaml(`sections:
@@ -309,9 +308,9 @@ test('a note about a whole section carries no item name to repeat', () => {
   assert.equal(note.group, 'Stats');
 });
 
-/* All five found by feeding the converter deliberately damaged files. Silence
-   is the thing being tested against: a mangled entry that vanishes leaves a
-   smaller dashboard and no way to tell what went missing. */
+/* Deliberately damaged files. Silence is the thing being tested against: a
+   mangled entry that vanishes leaves a smaller dashboard and no way to tell
+   what went missing. */
 test('an entry that is not in a readable shape is reported, not passed over', () => {
   const hp = convertHomepageServices(parseYaml('- G:\n    - just a string\n    - Two: keys\n      Here: yes\n'));
   assert.equal(hp.skipped.filter(s => s.reason === SKIP.UNREADABLE).length, 2);
@@ -366,7 +365,7 @@ test('conversion adds items only, so nothing existing is touched', () => {
 
 /* detectSource settles the format on the first entry that matches, so a group
    the rest of the file does not agree with reaches the converter. Passing over
-   it imported a smaller dashboard with nothing in the preview saying so. */
+   it silently imports a smaller dashboard. */
 test('a group that is not a list is counted, not passed over', () => {
   const doc = parseYaml('- Dev:\n    - Git:\n        href: http://git\n- Broken: notalist\n');
   const out = convertHomepageServices(doc, []);
@@ -398,7 +397,7 @@ test('a Dashy section holding only widgets reports the widgets alone', () => {
 });
 
 /* The caller builds one set and passes it to every file in the batch. Copying
-   it inside meant the second file could not see what the first allocated. */
+   it inside hides the first file's allocations from the second. */
 test('the caller sees the ids a conversion allocated', () => {
   const taken = new Set(['Plex_abc']);
   const out = convertHomepageServices(parseYaml(SERVICES), taken);

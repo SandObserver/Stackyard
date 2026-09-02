@@ -1,10 +1,7 @@
-/* A glyph per widget type in the Settings item list.
+/* A glyph per widget type in the Settings item list. The row already names the
+   widget and its size in words, so a size icon says it twice.
 
-   The row already names the widget and its size in words, so the icon column
-   was saying the size a second time. A type glyph says something the row does
-   not, in a column that is scanned rather than read.
-
-   The glyphs are inline SVG rather than a file each: they are stroked with
+   The glyphs are inline SVG, not a file each. They are stroked with
    currentColor, so they follow the theme and the increased-contrast block with
    no rule of their own, which an <img> cannot do. */
 
@@ -26,8 +23,7 @@ const widgets = fs
   .map(e => e.name);
 
 /* The Settings page is several modules and the split moves between them, so
-   these look across all of them rather than naming one. What is asserted is a
-   fact about the page, not about which file happens to hold it. */
+   these look across all of them rather than naming one. */
 const settingsSource = () =>
   fs
     .readdirSync(path.join(root, 'js'))
@@ -43,7 +39,7 @@ test('every widget declares a glyph, and it is one that exists', () => {
   }
 });
 
-/* Two widgets sharing a glyph would put the list back where it started. */
+/* Two widgets sharing a glyph make the column unscannable again. */
 test('no two widgets share a glyph', () => {
   const used = widgets.map(w => JSON.parse(read(`widgets/${w}/widget.json`)).glyph);
   assert.equal(new Set(used).size, used.length, `duplicated: ${used.join(', ')}`);

@@ -1,22 +1,16 @@
-/* The one message protocol between a widget and the dashboard.
-
-   P9-6 and P9-7: both ends were unguarded. The dashboard listened for `message`
-   with no origin check, so any window holding a handle on it could post
-   {type:'widget-active'} and drive it, and the widget posted to '*', addressing
-   whatever parent happened to be there.
+/* The one message protocol between a widget and the dashboard. Both ends are
+   guarded: the dashboard checks the origin of every `message`, and a widget
+   never posts to '*'.
 
    The protocol has one direction. A widget with an interior active state posts
    {type:'widget-active'} when it becomes active, and the dashboard resets every
-   other widget. Resetting is a direct call to the widget's own
-   window.__clearActive, since the frames are same-origin, so there is no message
-   travelling the other way. A `widget-clear` listener survived in the disk
-   widget for a while with nothing sending to it, which is the shape this now
-   forbids: a receiver with no sender reads as a supported protocol.
+   other widget by calling its window.__clearActive directly, since the frames
+   are same-origin. Nothing travels the other way, so a receiver with no sender
+   is forbidden: it reads as a supported protocol.
 
    Asserted as source text because both ends are inline script in a page with no
-   test harness. The rules are enforced over every widget page, not only the one
-   that implements the protocol today, so a new widget copying the pattern is
-   held to the same terms. */
+   test harness. The rules cover every widget page, so a new widget copying the
+   pattern is held to the same terms. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

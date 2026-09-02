@@ -4,18 +4,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* Vendor prefixes are hand-written here: no build step, no autoprefixer. So
-   they accumulate, and nothing said which were still doing anything.
+/* Vendor prefixes are hand-written here: no build step, no autoprefixer, so
+   they accumulate past the support floor at the top of tokens.css.
 
-   P12-1: there were 177, of which 97 were dead at the support floor written at the top
-   of tokens.css. The tempting test, "does an unprefixed equivalent sit beside
-   it", is wrong and would have removed -webkit-backdrop-filter, which Safari
-   still needs at the floor and which is paired with the unprefixed property in all
-   26 places. Membership of this list is a per-property judgement, so the list is
-   explicit rather than derived.
+   Do not derive the list from "an unprefixed equivalent sits beside it". That
+   removes -webkit-backdrop-filter, which Safari still needs at the floor and
+   which is paired with the unprefixed property in all 26 places. Membership is
+   a per-property judgement, so the list is explicit.
 
-   Adding a prefix that is not here fails. If it genuinely belongs, add it with
-   a reason in tokens.css and a line here. */
+   Adding a prefix that is not here fails. If it belongs, add it with a reason
+   in tokens.css and a line here. */
 const ALLOWED = new Set([
   '-webkit-backdrop-filter' /* Safari has no unprefixed form until 18.0 */,
   '-webkit-text-size-adjust' /* WebKit supports only the prefixed form */,
@@ -32,8 +30,8 @@ const ALLOWED = new Set([
   '-webkit-user-select' /* WebKit only dropped the prefix at 17 */,
 ]);
 
-/* Removed by P12-1. Named so a reintroduction is reported as a regression
-   rather than only as an unlisted prefix. */
+/* Named so a reintroduction is reported as a regression rather than only as an
+   unlisted prefix. */
 const REMOVED = [
   '-webkit-flex',
   '-webkit-align-items',
@@ -52,8 +50,7 @@ const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TOKEN = /-(?:webkit|moz|ms|o)-[a-z-]+/g;
 
 /* Stylesheets, the <style> blocks in widget pages, and the style strings the
-   modules write. Four prefixes on the REMOVED list below survived in JS for as
-   long as this read .css and .html only. */
+   modules write. Reading .css and .html alone leaves the prefixes in JS. */
 function styleFiles(dir) {
   const out = [];
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

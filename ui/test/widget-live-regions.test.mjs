@@ -1,16 +1,10 @@
-/* A widget must not narrate its own polling.
+/* A widget must not narrate its own polling. live-region.test.mjs states the
+   rule for the dashboard: a live region says what the user did, not everything
+   that changes. A widget that re-reads its figures on every poll talks over the
+   reader, and the figures are there to be read by navigating to the widget
+   anyway.
 
-   live-region.test.mjs states the rule for the dashboard: a live region says
-   what the user did, not everything that changes, which is why health polling
-   was deliberately left silent. Four widgets did the opposite. System Summary
-   restated the CPU, memory and disk figures every ten seconds, Weather and DNS
-   re-read their summaries on every poll, and Now Playing re-announced the
-   current track even when it had not changed.
-
-   None of it was information the user asked for, and all of it is still there
-   to be read by navigating to the widget. A reader was simply talked over.
-
-   So the regions that remain are listed here by name. A new one has to be
+   The regions that remain are listed here by name. A new one has to be
    justified against the same rule rather than added by habit. */
 
 import assert from 'node:assert/strict';

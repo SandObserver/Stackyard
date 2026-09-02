@@ -1,16 +1,12 @@
 /* Every control the settings page ships has to say what it is.
 
-   Three of them did not. A toggle was written as a label wrapping a bare
-   checkbox, with the name on the label: aria-label is prohibited on an element
-   with no role, so it was discarded and the checkbox reached a screen reader as
-   "checkbox, not checked". All six read that way. The inline-edit fields were
-   never linked to the row label beside them, so each announced as an unnamed
-   edit box once the pencil opened it, the password field included.
+   aria-label is prohibited on an element with no role, so a name written on a
+   label wrapping a bare checkbox is discarded and the control reaches a screen
+   reader as "checkbox, not checked".
 
-   The visible label is the one the catalog already translates, so pointing at
-   it with aria-labelledby names the control and keeps it in step with the
-   language. A second aria-label would be a second string to translate and a
-   second one to forget. */
+   Point at the visible label with aria-labelledby. The catalog already
+   translates it, so the control stays in step with the language. A second
+   aria-label is a second string to translate and a second one to forget. */
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

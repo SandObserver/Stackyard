@@ -1,22 +1,11 @@
-/* Regression tests for P8-2 and P9-1, which are one defect.
+/* mountScaledWidget starts things that outlive the DOM it creates: a
+   ResizeObserver on the card, a setTimeout chain reloading the iframe, and
+   touch listeners on the iframe's document. It must return a teardown, or
+   dropping the card leaves all of it running and still fetching from the
+   backing services.
 
-   mountScaledWidget starts things that outlive the DOM it creates: a
-   ResizeObserver on the card, a setTimeout chain reloading the iframe, and touch
-   listeners on the iframe's document. It returned only the iframe, so no caller
-   could stop any of it. Dropping the card removed the iframe and left the rest
-   running.
-
-   That compounded because a rebuild is cheap to trigger. buildMobile and
-   buildDesktop replace the whole DOM and remount every widget, and _rebuild ran
-   on any viewport change: on a phone, opening the keyboard resizes the visual
-   viewport, so tapping the search box rebuilt the dashboard. Each pass stranded
-   one observer and one reload timer per widget, and those timers went on
-   fetching from the backing services forever. A phone left open for a day
-   accumulated dozens of invisible widgets all still polling.
-
-   Fixed in two places, and neither is sufficient alone: teardown stops what a
-   rebuild discards, and the orientation guard stops most rebuilds happening at
-   all. */
+   Two defences, and neither is sufficient alone: teardown stops what a rebuild
+   discards, and the orientation guard stops most rebuilds happening at all. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -125,8 +114,8 @@ test('teardown releases what a mount started', async () => {
   }
 });
 
-/* The behaviour that made this matter: repeated rebuilds. Before, twenty passes
-   left 120 observers and 120 live timers still polling the backing services. */
+/* Repeated rebuilds, which is what makes a stranded observer or timer
+   accumulate. */
 test('repeated rebuilds do not accumulate observers or timers', async () => {
   const h = harness();
   try {
@@ -201,12 +190,12 @@ test('both build paths tear down before replacing the DOM', () => {
 
 /* A rebuild discards every widget iframe, so it must happen only when the
    layout actually changes. The keyboard opening on a phone resizes the visual
-   viewport, and rebuilding on that threw the dashboard away mid-typing.
+   viewport, and rebuilding on that throws the dashboard away mid-typing.
 
-   The desktop tile size follows the viewport, so that layout does have to
-   repaginate on a resize. Three things keep it from becoming the old bug:
-   mobile leaves before the timer is armed, the timer debounces, and a resize
-   that does not change the slot count returns without rebuilding. */
+   The desktop tile size follows the viewport, so that layout does repaginate on
+   a resize. Three things bound it: mobile leaves before the timer is armed, the
+   timer debounces, and a resize that does not change the slot count returns
+   without rebuilding. */
 test('a resize rebuilds only when the desktop slot count changes', () => {
   const src = read('js/dashboard.js');
   assert.doesNotMatch(src, /visualViewport\?\.addEventListener/, 'the phone keyboard resizes this one');

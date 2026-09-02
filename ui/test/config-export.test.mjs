@@ -1,15 +1,11 @@
-/* Regression test for the config export, which could not report a failure.
+/* The config export fetches the response and checks it before anything is
+   saved. Clicking an anchor hands the request to the browser, so the page never
+   learns the outcome and a refusal, a server error or an expired session is
+   written to disk as an error body under the backup's own filename. The failure
+   then surfaces when the backup is needed.
 
-   The export set an anchor's href to /api/config/export and clicked it, which
-   hands the request to the browser. The page then never learns the outcome: a
-   refusal, a server error or an expired session was written to disk as an error
-   body under the backup's own filename, and the try/catch around the click
-   could not observe any of it. The failure surfaces when the backup is needed,
-   which is the worst moment to find out.
-
-   Fetching it instead means the response is checked before anything is saved,
-   and going through `ag` means an expired session raises the sign-in box and
-   the export finishes afterwards.
+   Going through `ag` means an expired session raises the sign-in box and the
+   export finishes afterwards.
 
    Scanned from the source rather than driven, because the download itself is
    browser machinery: what matters is which of the two routes the code takes. */

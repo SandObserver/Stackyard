@@ -1,13 +1,10 @@
-/* Regression tests for W-04: forced colors was entirely unhandled.
+/* Windows High Contrast replaces declared colours with the user's palette, but
+   it does not remove background images or backdrop-filter. Unhandled, the
+   wallpaper and the glass survive while everything over them is flattened, so
+   two states paint the same.
 
-   Windows High Contrast replaces declared colours with the user's palette, but
-   it does not remove background images or backdrop-filter. So the wallpaper and
-   the glass survived while everything over them was flattened: the active page
-   dot measured 1.00:1 against an inactive one, and a red "needs attention"
-   badge became a bare exclamation mark with no fill and no shape.
-
-   The mode cannot be emulated in a stylesheet parser, so these read the rules.
-   The runtime half belongs to harness item H-2. */
+   The mode cannot be emulated in a stylesheet parser, so these read the
+   rules. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -63,7 +60,7 @@ test('every blurred surface loses its blur, including ones added later', () => {
   assert.match(shared, /-webkit-backdrop-filter:\s*none\s*!important/);
 });
 
-/* The failure that made this critical: both dots painted the same colour. */
+/* The two dots must not paint the same colour. */
 test('the current page is marked by shape, not only by fill', () => {
   assert.match(dash, /\.dot\s*\{[^}]*border:\s*1px solid CanvasText/, 'an inactive dot has no outline');
   assert.match(dash, /\.dot\.on\s*\{[^}]*background:\s*Highlight/, 'the active dot does not use the system highlight');

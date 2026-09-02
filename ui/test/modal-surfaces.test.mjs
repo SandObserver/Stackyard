@@ -1,13 +1,10 @@
 /* Every surface that covers the page must keep focus inside itself.
 
-   These were four hand-built overlays sharing one focus trap, in dialog.js.
-   A trap stops Tab and nothing else: the page behind stayed readable to a
-   screen reader, which is what a native dialog fixes by making it inert. All
-   four are dialogs now and that file is gone.
+   A focus trap stops Tab and nothing else: the page behind stays readable to a
+   screen reader. A native dialog makes it inert instead.
 
-   What is left to check is that none of them drifts back: that each surface
-   still opens as a modal, that no trap or hand-rolled equivalent reappears,
-   and that the one surface which must not be dismissed by Escape still
+   So each surface opens as a modal, no trap or hand-rolled equivalent
+   reappears, and the one surface that must not be dismissed by Escape still
    refuses it. */
 
 import { test } from 'node:test';
@@ -63,7 +60,7 @@ test('the setup prompt refuses to be cancelled', () => {
 });
 
 test('nothing keeps its own copy of the trap', () => {
-  /* The search overlay's inline version is what left the others with nothing to
+  /* Including an inline copy in one surface, which leaves the others nothing to
      reuse. */
   for (const file of ['js/spotlight.js', 'js/ui.js', 'js/dashboard.js']) {
     assert.doesNotMatch(

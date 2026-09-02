@@ -121,9 +121,9 @@ const read = f => fs.readFileSync(path.join(uiRoot, f), 'utf8');
 /* ── A card can never clip the widget it holds ────────────────────────────── */
 
 /* Desktop widget heights are fixed while their widths follow the grid, so a
-   card's aspect drifts from the widget's design aspect. Cover cropped the
-   difference and the card clipped what it cropped: 5px off a medium widget at
-   1440px. Contain is identical wherever the aspects match. */
+   card's aspect drifts from the widget's design aspect. Cover crops the
+   difference and the card clips what it crops. Contain is identical wherever
+   the aspects match. */
 test('the widget is contained by its card, not cropped to it', () => {
   const src = read('js/utils.js');
   const fit = src.slice(src.indexOf('const fit = () =>'), src.indexOf('ifr.style.opacity'));
@@ -143,8 +143,7 @@ test('a drifting aspect letterboxes instead of clipping', () => {
 /* ── A tooltip only where the label is cut ────────────────────────────────── */
 
 /* Tile labels are one line and ellipsise. The anchor's accessible name carries
-   the full text either way, so this is for a pointer; on the live instance 3 of
-   13 labels truncated and none could be read in full. */
+   the full text either way, so the tooltip is for a pointer. */
 
 test('a truncated label gets a title and an untruncated one does not', async () => {
   const { titleWhenTruncated } = await import('../js/utils.js');

@@ -6,19 +6,17 @@ import { fileURLToPath } from 'node:url';
 
 /* A settings row's separator belongs between two rows the user can see.
 
-   The rule was `.row:last-child { border-bottom: none }`, which asks a question
-   about position in the DOM rather than about what is on screen. Security's
-   group ends with two rows that stay hidden until password protection is on, so
-   the exemption landed on a hidden row and the visible last row, Password
-   Protection, drew a border under itself with nothing beneath it.
+   `:last-child` asks about position in the DOM, not about what is on screen, so
+   a group ending in hidden rows draws a border under its visible last row with
+   nothing beneath it.
 
-   The fix needs both halves to hold: the stylesheet has to ask whether a later
-   row is visible, and a hidden row has to be hidden in a way CSS can see. An
-   inline style="display:none" is invisible to a selector, so rows use .d-none.
+   Both halves have to hold: the stylesheet asks whether a later row is visible,
+   and a hidden row is hidden in a way CSS can see. An inline
+   style="display:none" is invisible to a selector, so rows use .d-none.
 
-   The separator is drawn as .row::after rather than a border, because a
-   grouped list insets it to the leading edge of the label and a border cannot
-   be inset. The exemption moved with it. */
+   The separator is drawn as .row::after rather than a border, because a grouped
+   list insets it to the leading edge of the label and a border cannot be
+   inset. */
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');

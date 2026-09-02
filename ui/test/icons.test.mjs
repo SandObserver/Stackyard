@@ -1,13 +1,10 @@
-/* Regression tests for P8-4 and P3-6: icon filenames were rewritten before use.
+/* An icon filename is used as saved. Lowercasing the extension requests a file
+   that does not exist, and uppercase extensions arrive routinely from Windows
+   and cameras.
 
-   resolveIcon took the filename apart and reassembled it with the extension
-   lowercased, so an icon saved as LOGO.SVG was requested as /icons/LOGO.svg: a
-   file that does not exist. The icon silently never appeared, with nothing to
-   explain it. Uppercase extensions arrive routinely from Windows and cameras.
-
-   The filename was also placed into the path unencoded. A space survives because
-   browsers encode it, but '+' and '&' change meaning in a URL and would have
-   requested something else. */
+   The filename is encoded into the path. A space survives unencoded because
+   browsers encode it, but '+' and '&' change a URL's meaning and request
+   something else. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -146,9 +143,8 @@ test('no icon produces an empty chain', async () => {
 
 /* ── the CDN spells things its own way ───────────────────────────────────────
    Every file in the dashboard-icons repository is lowercase and hyphenated, and
-   jsDelivr serves GitHub paths, which are case-sensitive. Typing "MySpeed"
-   requested MySpeed.svg and got a 404, while myspeed.svg existed all along and
-   nothing on screen explained it. */
+   jsDelivr serves GitHub paths, which are case-sensitive. An unnormalised name
+   404s with nothing on screen to explain it. */
 
 test('a typed name is spelled the way the catalogue spells it', () => {
   assert.equal(cdnIconName('MySpeed'), 'myspeed');

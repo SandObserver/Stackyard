@@ -1,11 +1,7 @@
-/* The dashboard decided once at load whether to show the mobile layout, from a
-   stored innerWidth, and only ever reconsidered on a phone rotating. A desktop
-   window dragged narrower than the breakpoint kept the desktop layout until it
-   was reloaded.
-
-   Admin had the live version of the same rule written out separately, and
-   admin.css described it as "the SAME rule as the dashboard", which it had
-   stopped being. One module now answers for both. */
+/* One module answers whether to show the mobile layout, for the dashboard and
+   for Admin. Deciding once at load from a stored innerWidth keeps a desktop
+   window dragged narrower than the breakpoint on the desktop layout until it is
+   reloaded. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -95,10 +91,9 @@ test('a rotation that does not change the answer reports nothing', () => {
   assert.deepEqual(seen, [], 'still narrow, so still the mobile layout');
 });
 
-/* The page builds its layout, then registers. A window resized in between used
-   to be read as the baseline, so the listener believed the new size was already
-   on screen and never reported it: the dashboard stayed on the layout it built
-   until a reload. */
+/* The page builds its layout, then registers. A window resized in between must
+   not be read as the baseline, or the listener believes the new size is already
+   on screen and never reports it. */
 test('a change between building and registering is reported at once', () => {
   const media = stubMedia({ narrow: true });
   const seen = [];

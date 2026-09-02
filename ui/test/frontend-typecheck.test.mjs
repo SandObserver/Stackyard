@@ -4,18 +4,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* P17-3: the frontend was not typechecked.
+/* The frontend is typechecked. With checkJs off, tsconfig.frontend.json only
+   resolves the cache-busted import specifiers, and the test suite cannot see
+   the class of mistake that matters most here: a name used before it is
+   defined, a misspelled identifier, a property read off the wrong element type.
 
-   tsconfig.frontend.json existed but ran with checkJs off, so it only resolved
-   the cache-busted import specifiers. Nothing checked the code itself, and the
-   test suite cannot see the class of mistake that matters most here: a name
-   used before it is defined, a misspelled identifier, a property read off the
-   wrong element type. Four such bugs were live in ui/js while all 492 frontend
-   tests passed.
-
-   checkJs is on now and the project is clean. These tests keep it that way:
-   turning it back off, or adding a module the project does not include, has to
-   fail here rather than quietly restoring the old blind spot. */
+   Turning checkJs back off, or adding a module the project does not include,
+   fails here rather than quietly restoring the blind spot. */
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cfgPath = path.join(root, 'tsconfig.frontend.json');

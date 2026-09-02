@@ -1,19 +1,12 @@
-/* Regression tests for P15-2 and P15-3: the installed app's metadata.
+/* The installed app's metadata.
 
-   The manifest declared theme_color #58c0cd while the page declared #0d1117.
-   theme_color tints the browser's own chrome, the status bar on Android and the
-   toolbar on desktop, and the point of it is that the bar blends into the page.
-   Two different values put a teal band above a near-black dashboard, and which
-   one won depended on the platform.
+   theme_color tints the browser's own chrome, so it must match the page or a
+   band of the wrong colour sits above the content.
 
-   The single icon was marked "purpose": "any maskable", which one image cannot
-   be. `any` is drawn as supplied; `maskable` may be cropped to a circle or a
-   squircle, losing up to 20% from each edge. An icon that fills its frame gets
-   its edges shaved when cropped, and one padded for cropping looks small when
-   drawn uncropped. Claiming both meant Android cropped an icon not designed for
-   it. There are two icons now, each honest about what it is.
-
-   The manifest also declared no lang or dir. */
+   One image cannot be "any maskable". `any` is drawn as supplied; `maskable`
+   may be cropped to a circle or a squircle, losing up to 20% from each edge. An
+   icon that fills its frame is shaved when cropped, and one padded for cropping
+   looks small when drawn uncropped. Each icon declares one purpose. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -36,8 +29,8 @@ test('every page declares a theme colour', () => {
   }
 });
 
-/* The finding: a value that disagrees with the page shows as a band of the wrong
-   colour above the content. */
+/* A value that disagrees with the page shows as a band of the wrong colour
+   above the content. */
 test('the manifest and every page agree on the theme colour', () => {
   for (const page of ['index.html', 'admin/index.html']) {
     assert.equal(

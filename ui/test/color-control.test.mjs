@@ -9,9 +9,8 @@ register('./js-root-hooks.mjs', import.meta.url);
    whatever CSS accepts. Node has no canvas, so this stands in for the parts the
    module relies on, and counts how many are built.
 
-   P11-6 is about that count. _cssToHex created a canvas and a 2D context on
-   every call, including for the eight preset swatches, which are already
-   #rrggbb and need no parsing at all. */
+   The count is the point. A value already in #rrggbb needs no canvas at
+   all. */
 const NAMED = { red: '#ff0000', rebeccapurple: '#663399', white: '#ffffff' };
 let canvasCount = 0;
 
@@ -131,9 +130,8 @@ test('hsvToRgb and hexToHsv round-trip the presets', () => {
   }
 });
 
-/* The reformat that came with this: the hue is normalised before the chroma is
-   derived from it, so a negative hue can no longer produce a negative channel
-   (h=-30 used to give [255, 0, -127], formatting as "#ff00-7f"). */
+/* The hue is normalised before the chroma is derived from it. A negative hue
+   otherwise produces a negative channel, which formats as "#ff00-7f". */
 test('every hue yields channels in range', () => {
   for (let h = -720; h <= 720; h += 7) {
     for (const s of [0, 50, 100]) {

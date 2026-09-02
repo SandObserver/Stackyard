@@ -1,16 +1,10 @@
-/* Regression tests for P12-1: dashboard text was always English.
+/* Dashboard text follows the selected language, status announcements and the
+   first-run password prompt included.
 
-   Stackyard ships six languages, and some dashboard text ignored that. The
-   sharpest case was the status announcements: someone using it in Persian heard
-   English from a screen reader, with no way to see the visual state instead. The
-   widest was the first-run password prompt, which is the first thing a new user
-   meets.
-
-   badge-logic.js takes a translator rather than importing one. It is a pure
-   module, no imports and no module state, which is what lets it be tested
-   directly and reused; importing the i18n loader would tie every caller to it.
-   Anything that passes nothing gets readable English, so a missing translator
-   is a degraded label rather than a raw key on screen. */
+   badge-logic.js takes a translator rather than importing one. It is pure, no
+   imports and no module state, so it can be tested directly and reused. A
+   caller that passes nothing gets readable English, not a raw key on
+   screen. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -197,12 +191,12 @@ test('the first-run prompt and API error are translated', () => {
 
 /* An app's name is user text, so its language can differ from the interface
    language. Without a direction of its own the block's direction decides which
-   end is cut, and a Latin name on a right-to-left dashboard lost its beginning:
-   "Backup and Storage" read "...ckup and St".
+   end is cut, and a Latin name on a right-to-left dashboard loses its
+   beginning.
 
-   unicode-bidi:plaintext fixes it in Blink and does nothing in WebKit, so the
-   attribute is what the label carries. It is safe here only because these labels
-   are centred: dir sets alignment too, which moves a name off its own icon. */
+   unicode-bidi:plaintext does nothing in WebKit, so the label carries dir
+   instead. That is safe only because these labels are centred: dir sets
+   alignment too, which moves a name off its own icon. */
 test('every tile label carries its own direction', () => {
   const ui = read('js/ui.js');
   const dashboard = read('js/dashboard.js');

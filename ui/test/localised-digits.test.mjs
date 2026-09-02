@@ -1,14 +1,10 @@
-/* Digit shape follows the reader's locale, not the interface language.
+/* The language setting picks the words and the locale picks the digits. Neither
+   Arabic nor Persian always uses native digits: it depends on the country and
+   the reader can choose.
 
-   Apple's guidance is that numerals take the digits of the user's locale and
-   preferences, and that neither Arabic nor Persian always uses native digits:
-   it depends on the country and the reader can choose. An iPhone in Arabic with
-   a Latin-numeral region shows Latin digits in its badges. So the language
-   setting picks the words and the locale picks the digits.
-
-   A number that identifies rather than counts is left alone. So is a number
-   that is not read by a person at all: an SVG coordinate or a CSS length in
-   Persian digits does not render. */
+   A number that identifies rather than counts is left alone. So is a number no
+   person reads: an SVG coordinate or a CSS length in Persian digits does not
+   render. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -42,8 +38,8 @@ test('a Persian locale gets Persian digits', async () => {
   });
 });
 
-/* The same language with a Latin-numeral preference, which is the case the
-   interface-language approach would have got wrong. */
+/* The same language with a Latin-numeral preference, which choosing digits by
+   interface language gets wrong. */
 test('a Persian speaker who asks for Latin digits gets them', async () => {
   await withLocale('fa-IR-u-nu-latn', ({ formatNumber }) => {
     assert.equal(formatNumber(128), '128');
@@ -100,7 +96,7 @@ test('widgets take it from the toolbox rather than each inventing one', () => {
 });
 
 /* toLocaleString with no argument is the same thing until someone passes it a
-   language, which is how this drifts back. */
+   language. */
 test('no converted widget reaches for toLocaleString on a number', () => {
   for (const w of ['dns', 'weather', 'books', 'system-summary', 'disk-health']) {
     const src = read(`widgets/${w}/index.html`).replace(/new Date\([^)]*\)\.toLocaleString\([^)]*\)/g, '');
