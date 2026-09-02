@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Settings now shows the same Unsplash wallpaper as the dashboard, instead of
+  picking a new photo on every visit.
+
 - The search overlay and the wallpaper source list announce their own names
   again, instead of names meant for other controls.
 
