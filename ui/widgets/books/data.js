@@ -20,6 +20,11 @@ function jpost(ctx, base, path, headers, body) {
 function authErr(r) {
   return r.status === 401 || r.status === 403;
 }
+function shelvesOf(ctx) {
+  const rows = Array.isArray(ctx.config.shelves) ? ctx.config.shelves : null;
+  const list = rows && rows.length ? rows : [{ source: ctx.config.source, listId: ctx.config.listId }];
+  return list.map(r => ({ source: (r && r.source) || 'recently', listId: r && r.listId }));
+}
 
 /* ───────────────────────── Audiobookshelf ───────────────────────── */
 async function absLibrary(ctx, base, hdr) {
@@ -42,24 +47,17 @@ function absBook(li) {
     kind: 'book',
   };
 }
-async function abs(ctx) {
-  const base = ctx.normalizeBase(ctx.config.absUrl);
-  const key = ctx.config.absKey;
-  if (!base || !key) ctx.fail('Audiobookshelf URL and API key required', { kind: ctx.KIND.INVALID });
-  const hdr = { Authorization: 'Bearer ' + key };
-  const lib = await absLibrary(ctx, base, hdr);
-  const source = ctx.config.source || 'recently';
-  let items = [];
-  if (source === 'list' && ctx.config.listId) {
-    const [kind, id] = String(ctx.config.listId).split(':');
+async function absItems(ctx, base, hdr, lib, shelf) {
+  if (shelf.source === 'list' && shelf.listId) {
+    const [kind, id] = String(shelf.listId).split(':');
     if (kind === 'playlist') {
       const r = await jget(ctx, base, `/api/playlists/${enc(id)}`, hdr);
-      items = ((r.data && r.data.items) || []).map(it => it.libraryItem || it);
-    } else {
-      const r = await jget(ctx, base, `/api/collections/${enc(id)}`, hdr);
-      items = (r.data && r.data.books) || [];
+      return ((r.data && r.data.items) || []).map(it => it.libraryItem || it);
     }
-  } else if (source === 'unread') {
+    const r = await jget(ctx, base, `/api/collections/${enc(id)}`, hdr);
+    return (r.data && r.data.books) || [];
+  }
+  if (shelf.source === 'unread') {
     const f = Buffer.from('not-finished').toString('base64');
     const r = await jget(
       ctx,
@@ -67,18 +65,28 @@ async function abs(ctx) {
       `/api/libraries/${enc(lib)}/items?filter=progress.${f}&sort=addedAt&desc=1&limit=${CAP}`,
       hdr,
     );
-    items = (r.data && r.data.results) || [];
-  } else {
-    const r = await jget(ctx, base, `/api/libraries/${enc(lib)}/items?sort=addedAt&desc=1&limit=${CAP}`, hdr);
-    items = (r.data && r.data.results) || [];
+    return (r.data && r.data.results) || [];
   }
-  return {
-    provider: 'audiobookshelf',
-    source,
-    books: cap(items)
-      .map(absBook)
-      .filter(b => b.title),
-  };
+  const r = await jget(ctx, base, `/api/libraries/${enc(lib)}/items?sort=addedAt&desc=1&limit=${CAP}`, hdr);
+  return (r.data && r.data.results) || [];
+}
+async function abs(ctx) {
+  const base = ctx.normalizeBase(ctx.config.absUrl);
+  const key = ctx.config.absKey;
+  if (!base || !key) ctx.fail('Audiobookshelf URL and API key required', { kind: ctx.KIND.INVALID });
+  const hdr = { Authorization: 'Bearer ' + key };
+  const lib = await absLibrary(ctx, base, hdr);
+  const shelves = [];
+  for (const shelf of shelvesOf(ctx)) {
+    const items = await absItems(ctx, base, hdr, lib, shelf);
+    shelves.push({
+      source: shelf.source,
+      books: cap(items)
+        .map(absBook)
+        .filter(b => b.title),
+    });
+  }
+  return { provider: 'audiobookshelf', shelves };
 }
 async function absLists(ctx) {
   const base = ctx.normalizeBase(ctx.config.absUrl);
@@ -119,21 +127,23 @@ async function komga(ctx) {
   const key = ctx.config.komgaKey;
   if (!base || !key) ctx.fail('Komga URL and API key required', { kind: ctx.KIND.INVALID });
   const hdr = { 'X-API-Key': key };
-  const source = ctx.config.source || 'recently';
-  let path;
-  if (source === 'list' && ctx.config.listId) path = `/api/v1/readlists/${enc(ctx.config.listId)}/books?size=${CAP}`;
-  else if (source === 'unread') path = `/api/v1/books/ondeck?size=${CAP}`;
-  else path = `/api/v1/books/latest?size=${CAP}`;
-  const r = await jget(ctx, base, path, hdr);
-  if (authErr(r)) ctx.fail('Komga auth failed (check API key)', { kind: ctx.KIND.AUTH });
-  const content = (r.data && r.data.content) || (Array.isArray(r.data) ? r.data : []);
-  return {
-    provider: 'komga',
-    source,
-    books: cap(content)
-      .map(komgaBook)
-      .filter(b => b.title),
-  };
+  const shelves = [];
+  for (const shelf of shelvesOf(ctx)) {
+    let path;
+    if (shelf.source === 'list' && shelf.listId) path = `/api/v1/readlists/${enc(shelf.listId)}/books?size=${CAP}`;
+    else if (shelf.source === 'unread') path = `/api/v1/books/ondeck?size=${CAP}`;
+    else path = `/api/v1/books/latest?size=${CAP}`;
+    const r = await jget(ctx, base, path, hdr);
+    if (authErr(r)) ctx.fail('Komga auth failed (check API key)', { kind: ctx.KIND.AUTH });
+    const content = (r.data && r.data.content) || (Array.isArray(r.data) ? r.data : []);
+    shelves.push({
+      source: shelf.source,
+      books: cap(content)
+        .map(komgaBook)
+        .filter(b => b.title),
+    });
+  }
+  return { provider: 'komga', shelves };
 }
 async function komgaLists(ctx) {
   const base = ctx.normalizeBase(ctx.config.komgaUrl);
@@ -162,41 +172,45 @@ function kavitaSeries(s) {
     kind: 'series',
   };
 }
+async function kavitaList(ctx, base, hdr, shelf) {
+  if (shelf.source === 'list' && shelf.listId) {
+    const r = await jget(ctx, base, `/api/ReadingList/items?readingListId=${enc(shelf.listId)}`, hdr);
+    return (Array.isArray(r.data) ? r.data : []).map(it => ({
+      name: it.seriesName || it.title,
+      pages: it.pagesTotal,
+      pagesRead: it.pagesRead,
+      primaryColor: it.primaryColor,
+    }));
+  }
+  if (shelf.source === 'unread') {
+    const r = await jpost(ctx, base, `/api/Series/on-deck?pageSize=${CAP}`, hdr, {});
+    return Array.isArray(r.data) ? r.data : [];
+  }
+  const r = await jpost(ctx, base, `/api/Series/recently-added-v2?pageSize=${CAP}`, hdr, {
+    statements: [],
+    combination: 1,
+    limitTo: CAP,
+    sortOptions: { sortField: 2, isAscending: false },
+  });
+  return Array.isArray(r.data) ? r.data : [];
+}
 async function kavita(ctx) {
   const base = ctx.normalizeBase(ctx.config.kavitaUrl);
   const key = ctx.config.kavitaKey;
   if (!base || !key) ctx.fail('Kavita URL and API key required', { kind: ctx.KIND.INVALID });
   const tok = await kavitaToken(ctx, base, key);
   const hdr = { Authorization: 'Bearer ' + tok };
-  const source = ctx.config.source || 'recently';
-  let list = [];
-  if (source === 'list' && ctx.config.listId) {
-    const r = await jget(ctx, base, `/api/ReadingList/items?readingListId=${enc(ctx.config.listId)}`, hdr);
-    list = (Array.isArray(r.data) ? r.data : []).map(it => ({
-      name: it.seriesName || it.title,
-      pages: it.pagesTotal,
-      pagesRead: it.pagesRead,
-      primaryColor: it.primaryColor,
-    }));
-  } else if (source === 'unread') {
-    const r = await jpost(ctx, base, `/api/Series/on-deck?pageSize=${CAP}`, hdr, {});
-    list = Array.isArray(r.data) ? r.data : [];
-  } else {
-    const r = await jpost(ctx, base, `/api/Series/recently-added-v2?pageSize=${CAP}`, hdr, {
-      statements: [],
-      combination: 1,
-      limitTo: CAP,
-      sortOptions: { sortField: 2, isAscending: false },
+  const shelves = [];
+  for (const shelf of shelvesOf(ctx)) {
+    const list = await kavitaList(ctx, base, hdr, shelf);
+    shelves.push({
+      source: shelf.source,
+      books: cap(list)
+        .map(kavitaSeries)
+        .filter(b => b.title),
     });
-    list = Array.isArray(r.data) ? r.data : [];
   }
-  return {
-    provider: 'kavita',
-    source,
-    books: cap(list)
-      .map(kavitaSeries)
-      .filter(b => b.title),
-  };
+  return { provider: 'kavita', shelves };
 }
 async function kavitaLists(ctx) {
   const base = ctx.normalizeBase(ctx.config.kavitaUrl);

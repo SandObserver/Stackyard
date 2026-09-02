@@ -19,7 +19,13 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .head svg{width:13px;height:13px;color:#636366;flex:none}
 
+  .shelves{flex:1;display:flex;flex-direction:column;min-height:0}
+  .shelf-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
+  .shelf-lbl{flex:none;font-size:9px;font-weight:600;color:#636366;letter-spacing:.06em;margin-top:5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .shelf-lbl[hidden]{display:none}
   .shelf{flex:1;position:relative;padding-bottom:9px;margin-top:6px;perspective:520px}
+  .size-large .shelf{margin-top:2px}
   .books{list-style:none;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
   .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     color:#636366;font-size:11px}
@@ -74,9 +80,14 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
       <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z"/></svg>
   </div>
-  <div class="shelf" id="shelf">
-    <ul class="books" id="books"></ul>
-    <div class="ledge-top" aria-hidden="true"></div><div class="ledge" aria-hidden="true"></div>
+  <div class="shelves" id="shelves">
+    <div class="shelf-wrap">
+      <span class="shelf-lbl" hidden></span>
+      <div class="shelf" id="shelf">
+        <ul class="books" id="books"></ul>
+        <div class="ledge-top" aria-hidden="true"></div><div class="ledge" aria-hidden="true"></div>
+      </div>
+    </div>
   </div>
   <div class="info" id="info" aria-hidden="true">
     <div class="t" id="i-t"></div><div class="a" id="i-a"></div><div class="p" id="i-p"></div>
@@ -91,14 +102,23 @@
   const API='/api';
   const params=new URLSearchParams(location.search);
   const id=params.get('id')||'';
-  const size=params.get('size')==='medium'?'medium':'small';
-  const SHOW=size==='medium'?16:8;
+  const SIZES={small:{shelves:1,show:8},medium:{shelves:1,show:16},large:{shelves:3,show:16}};
+  const size=SIZES[params.get('size')]?params.get('size'):'small';
+  const {shelves:SHELVES,show:SHOW}=SIZES[size];
   const POLL_MS=300000;
   const PALETTE=['#8E8E93','#008575','#956D51','#48484A','#008198','#A16A00','#C55300'];
   const SRC_LABEL={recently:'RECENTLY ADDED',unread:'ON DECK',list:'READING'};
 
-  const card=document.getElementById('card'), shelf=document.getElementById('shelf'), lbl=document.getElementById('lbl');
-  const list=document.getElementById('books');
+  const card=document.getElementById('card'), lbl=document.getElementById('lbl');
+  const host=document.getElementById('shelves');
+  const tpl=host.firstElementChild;
+  card.classList.add('size-'+size);
+  const bays=[];
+  for(let i=0;i<SHELVES;i++){
+    const w=i===0?tpl:tpl.cloneNode(true);
+    if(i>0){ w.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id')); host.appendChild(w); }
+    bays.push({ shelf:w.querySelector('.shelf'), list:w.querySelector('.books'), lbl:w.querySelector('.shelf-lbl') });
+  }
   const info=document.getElementById('info'), iT=document.getElementById('i-t'), iA=document.getElementById('i-a'), iP=document.getElementById('i-p'), sr=document.getElementById('sr');
   let href='';
 
@@ -118,7 +138,7 @@
   }
   function hideInfo(){ info.classList.remove('show'); info.setAttribute('aria-hidden','true'); }
 
-  function render(books){
+  function render(books,list,shelf){
     list.innerHTML='';
     shelf.querySelectorAll('.empty').forEach(n=>n.remove());
     /* Removing the bullets drops the list semantics in one engine, so the role
@@ -171,7 +191,16 @@
       card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head')) go(); });
       card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
     }
-    poll({ interval:POLL_MS, render:d=>{ lbl.textContent=SRC_LABEL[d.source]||'READING'; render(decorate((Array.isArray(d.books)?d.books:[]).slice(0,SHOW))); } });
+    poll({ interval:POLL_MS, render:d=>{
+      const shelves=Array.isArray(d.shelves)?d.shelves:[{source:d.source,books:d.books}];
+      lbl.textContent=SHELVES>1?wt('widget.label','Books'):(SRC_LABEL[shelves[0]&&shelves[0].source]||'READING');
+      bays.forEach((bay,i)=>{
+        const sh=shelves[i]||{books:[]};
+        bay.lbl.hidden=SHELVES<2;
+        bay.lbl.textContent=SRC_LABEL[sh.source]||'READING';
+        render(decorate((Array.isArray(sh.books)?sh.books:[]).slice(0,SHOW)),bay.list,bay.shelf);
+      });
+    } });
   }
   boot();
 </script>

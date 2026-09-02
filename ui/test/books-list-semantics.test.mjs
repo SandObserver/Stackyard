@@ -30,9 +30,10 @@ test('the list keeps its role despite the bullets being removed', () => {
 /* An empty list that declares the role reports as missing its children, and an
    unconfigured widget renders no rows at all. */
 test('the role is dropped while the shelf is empty', () => {
-  const render = books.slice(books.indexOf('function render(books)'));
+  const render = books.slice(books.indexOf('function render(books,list,shelf)'));
   const drop = render.indexOf("list.removeAttribute('role')");
   const set = render.indexOf("list.setAttribute('role','list')");
+  assert.ok(books.includes('function render(books,list,shelf)'), 'the render signature moved');
   assert.ok(drop > -1 && set > -1, 'the role is never toggled');
   assert.ok(drop < set, 'the role has to be cleared before the empty case returns');
 });

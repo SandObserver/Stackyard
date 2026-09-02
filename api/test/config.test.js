@@ -111,6 +111,38 @@ test('migrate downsizes a medium DNS widget to small', () => {
   assert.equal(cfg.items[2].widgetSize, 'medium');
 });
 
+test('migrate moves a books widget onto a shelf row', () => {
+  const cfg = migrate({
+    items: [
+      {
+        id: 'a',
+        type: 'widget',
+        widgetType: 'books',
+        widgetConfig: { absUrl: 'http://b', source: 'list', listId: 'c:1' },
+      },
+      { id: 'b', type: 'widget', widgetType: 'books', widgetConfig: { absUrl: 'http://b' } },
+      { id: 'c', type: 'widget', widgetType: 'books', widgetConfig: { shelves: [{ source: 'unread' }] } },
+    ],
+    settings: {},
+  });
+  assert.deepEqual(cfg.items[0].widgetConfig.shelves, [{ source: 'list', listId: 'c:1' }]);
+  assert.equal(cfg.items[0].widgetConfig.source, undefined);
+  assert.equal(cfg.items[0].widgetConfig.listId, undefined);
+  assert.equal(cfg.items[0].widgetConfig.absUrl, 'http://b');
+  assert.deepEqual(cfg.items[1].widgetConfig.shelves, [{}]);
+  assert.deepEqual(cfg.items[2].widgetConfig.shelves, [{ source: 'unread' }]);
+});
+
+test('migrating a books widget twice changes nothing the second time', () => {
+  const cfg = migrate({
+    items: [{ id: 'a', type: 'widget', widgetType: 'books', widgetConfig: { source: 'unread' } }],
+    settings: {},
+  });
+  const once = JSON.parse(JSON.stringify(cfg));
+  migrate(cfg);
+  assert.deepEqual(cfg, once);
+});
+
 test('migrating a stats widget twice changes nothing the second time', () => {
   const cfg = migrate({
     items: [{ id: 'a', type: 'widget', widgetType: 'stats', widgetConfig: { widgetSubType: 'disk-health' } }],

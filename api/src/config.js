@@ -28,7 +28,7 @@ let _cfgCache = null,
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape. Add a matching step in migrate(). */
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 function migrateSocketProxyScheme(settings) {
   const url = settings?.server?.socketProxyUrl;
@@ -58,6 +58,22 @@ function migrateDnsWidgetSize(cfg) {
   }
 }
 
+/* The Books widget held one view. It now holds a row per shelf. */
+function migrateBooksShelves(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  for (const item of cfg.items) {
+    if (!item || item.widgetType !== 'books') continue;
+    const wc = item.widgetConfig;
+    if (!wc || typeof wc !== 'object' || Array.isArray(wc.shelves)) continue;
+    const shelf = {};
+    if (wc.source != null) shelf.source = wc.source;
+    if (wc.listId != null) shelf.listId = wc.listId;
+    wc.shelves = [shelf];
+    delete wc.source;
+    delete wc.listId;
+  }
+}
+
 /* Must stay idempotent. It runs on every read and every write. A config with no
    _schemaVersion is version 1. */
 function migrate(cfg) {
@@ -81,6 +97,10 @@ function migrate(cfg) {
   if (v < 5) {
     migrateDnsWidgetSize(cfg);
     v = 5;
+  }
+  if (v < 6) {
+    migrateBooksShelves(cfg);
+    v = 6;
   }
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;

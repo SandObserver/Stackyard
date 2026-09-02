@@ -4,7 +4,8 @@
   "glyph": "shelf",
   "sizes": [
     "small",
-    "medium"
+    "medium",
+    "large"
   ],
   "card": "dark",
   "fields": [
@@ -89,36 +90,48 @@
       }
     },
     {
-      "key": "source",
-      "type": "select",
-      "variant": "pills",
-      "label": "source.label",
-      "options": [
+      "key": "shelves",
+      "type": "group",
+      "label": "shelves.label",
+      "countBySize": {
+        "small": 1,
+        "medium": 1,
+        "large": 3
+      },
+      "fields": [
         {
-          "value": "recently",
-          "label": "source.opt.recently"
+          "key": "source",
+          "type": "select",
+          "variant": "pills",
+          "label": "source.label",
+          "options": [
+            {
+              "value": "recently",
+              "label": "source.opt.recently"
+            },
+            {
+              "value": "unread",
+              "label": "source.opt.unread"
+            },
+            {
+              "value": "list",
+              "label": "source.opt.list"
+            }
+          ]
         },
         {
-          "value": "unread",
-          "label": "source.opt.unread"
-        },
-        {
-          "value": "list",
-          "label": "source.opt.list"
+          "key": "listId",
+          "type": "select",
+          "label": "listId.label",
+          "optional": true,
+          "optionsFrom": "lists",
+          "hint": "listId.hint",
+          "showIf": {
+            "field": "source",
+            "equals": "list"
+          }
         }
       ]
-    },
-    {
-      "key": "listId",
-      "type": "select",
-      "label": "listId.label",
-      "optional": true,
-      "optionsFrom": "lists",
-      "hint": "listId.hint",
-      "showIf": {
-        "field": "source",
-        "equals": "list"
-      }
     },
     {
       "key": "href",

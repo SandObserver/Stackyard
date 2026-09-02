@@ -16,6 +16,7 @@
   "kavitaUrl.placeholder": "http://host:5000",
   "kavitaKey.label": "Clé d’API",
   "kavitaKey.hint": "User Settings → 3rd Party Clients.",
+  "shelves.label": "Étagère",
   "source.label": "Afficher",
   "source.opt.recently": "Ajouts récents",
   "source.opt.unread": "Non lus / En cours",
