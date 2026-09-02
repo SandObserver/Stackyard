@@ -94,12 +94,10 @@ test('buildAppItem builds custom and static badge objects only when meaningful',
   assert.deepEqual(stat.monitoring.staticBadge, { enabled: true, label: 'VeryLongLa', color: 'red' });
 });
 
-/* ── P10-8: two items could be created with the same id ──────────────────────
-   Ids were `cleanId(label) + '_' + Date.now()`, so two items created in the same
-   millisecond took the same one. The odds understate it, because nothing
-   downstream copes: every lookup is find(i => i.id === x), which returns the
-   first match, so the second item's badge, widget config, health entry and
-   folder membership all resolve to the first. */
+/* ── two items must not be created with the same id ──────────────────────────
+   Nothing downstream copes with a duplicate. Every lookup is
+   find(i => i.id === x), so the second item's badge, widget config, health
+   entry and folder membership all resolve to the first. */
 
 test('an id is built from the label', () => {
   assert.match(newItemId('My App', 'app'), /^My_App_/);
@@ -107,14 +105,12 @@ test('an id is built from the label', () => {
   assert.match(newItemId('!!!', 'folder'), /^folder_/);
 });
 
-/* The case the old scheme could not handle: ids were `label_` plus Date.now(),
-   so two items created in the same millisecond took the same one.
+/* Two items created in the same millisecond.
 
    Written the way every caller uses it, passing the ids already in the config.
-   That is what makes uniqueness a guarantee rather than a probability, and an
-   earlier version of this test omitted it and asserted the guarantee anyway. It
-   passed almost always and failed about one run in fifty, which is worse than
-   either passing or failing. */
+   That is what makes uniqueness a guarantee rather than a probability. Omitting
+   the taken set and asserting the guarantee anyway fails about one run in
+   fifty. */
 test('an id is never one already in the config', () => {
   const taken = new Set();
   for (let i = 0; i < 200; i++) {
@@ -125,16 +121,13 @@ test('an id is never one already in the config', () => {
   assert.equal(taken.size, 200);
 });
 
-/* Without a taken set there is no guarantee, only randomness, so this asserts
-   what the randomness is for: that a collision is rare enough that the loop
-   above almost never has to do anything.
+/* Without a taken set there is only randomness, so this asserts that a
+   collision is rare enough that the loop above almost never runs.
 
-   The suffix is tested directly rather than through whole ids. An id also
-   carries a timestamp, which advances during a long loop and supplies entropy
-   the suffix did not, so a whole-id test passes even with a weak suffix and
-   fails only occasionally. That is precisely the intermittent failure this is
-   replacing: it is the suffix that has to carry the randomness, so that is what
-   is measured. */
+   The suffix is measured directly, not through whole ids. An id also carries a
+   timestamp, which advances during a long loop and supplies entropy the suffix
+   did not, so a whole-id test passes with a weak suffix and fails only
+   occasionally. */
 test('the random suffix does not collide', () => {
   const seen = new Set();
   for (let i = 0; i < 20_000; i++) seen.add(randomSuffix());
@@ -171,12 +164,11 @@ test('a new item gets an id not already in the config', () => {
   assert.match(built.item.id, /^App_/);
 });
 
-/* ── P10-1: the edit target was an array position ────────────────────────────
-   Saving did `state.items[state.eid] = item`, where eid was an index captured
-   when the modal opened. A stale index wrote past the end, growing the array
-   with holes; JSON turns those into nulls, and the server rejected the whole
-   save with a message about missing ids, so the user lost the edit and the
-   message did not describe what happened. */
+/* ── the edit target is an id, not an array position ─────────────────────────
+   An index captured when the modal opened goes stale and writes past the end,
+   growing the array with holes. JSON turns those into nulls and the server
+   rejects the whole save, so the user loses the edit to a message about missing
+   ids. */
 
 test('an existing item is replaced in place', () => {
   const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
@@ -233,10 +225,9 @@ test('upsertItem tolerates a missing list', () => {
   assert.doesNotThrow(() => upsertItem(undefined, null, { id: 'a' }));
 });
 
-/* ── P10-2: an app could sit in two folders ──────────────────────────────────
-   The "remove it from any existing folder first" step ran only when creating a
-   folder, so editing an existing one and ticking an app already filed elsewhere
-   left it in both, and the dashboard rendered it twice. */
+/* ── an app must not sit in two folders ──────────────────────────────────────
+   The "remove it from any existing folder first" step runs when editing a
+   folder as well as creating one, or the dashboard renders the app twice. */
 
 test('claiming an app removes it from the folder it was in', () => {
   const items = [
@@ -247,7 +238,7 @@ test('claiming an app removes it from the folder it was in', () => {
   assert.deepEqual(items[0].children, ['app2'], 'the old folder loses it');
 });
 
-/* The finding: this is the editing case, where the guard used to skip. */
+/* The editing case, which is where the guard is easiest to miss. */
 test('editing a folder still clears the app from the others', () => {
   const items = [
     { id: 'f1', type: 'folder', children: ['app1'] },

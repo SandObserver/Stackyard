@@ -1,18 +1,8 @@
-/* Regression tests for P9-8: page dots were not controls.
+/* The page dots must be real buttons. A div with a click handler leaves a
+   keyboard user stuck on page one, and role="button" with a tabindex means
+   reimplementing the key handling by hand.
 
-   When a dashboard holds more apps than fit on one screen, the dots at the
-   bottom move between pages. They were plain divs with a click handler, and a
-   div is not a control: Tab skips it, a screen reader announces nothing, and
-   Enter and Space do nothing. Paging worked by pointer only, so a keyboard user
-   could not leave page one.
-
-   They are real buttons now. Reaching for role="button" and tabindex instead
-   would mean reimplementing by hand what the element already does, and the key
-   handling is the part that gets forgotten.
-
-   Built in JavaScript against a live document, so these read the source. The
-   behaviour they pin is the shape of what is built rather than what a browser
-   does with it, which is the browser's job once it is a button. */
+   The dots are built in JavaScript, so these read the source. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,16 +41,15 @@ test('the current page is marked for a screen reader', () => {
   assert.match(mkDot, /setAttribute\('aria-current', 'true'\)/);
 });
 
-/* Both call sites had their own copy, and one of them would have been missed. */
+/* One helper for both call sites. Two copies leave one of them missed. */
 test('both places that build dots use the one helper', () => {
   const calls = dashboard.match(/mkDot\(/g) || [];
   assert.ok(calls.length >= 3, `expected the definition and two call sites, found ${calls.length}`);
   assert.doesNotMatch(dashboard, /const d = mk\('div'\); d\.className = 'dot'/, 'a call site still builds its own div');
 });
 
-/* Paging updates the dots in place rather than rebuilding them, so the
-   attribute has to be updated too, or a screen reader keeps announcing the page
-   the dashboard loaded on. */
+/* Paging updates the dots in place, so the attribute has to be updated too, or
+   a screen reader keeps announcing the page the dashboard loaded on. */
 test('changing page moves aria-current with the class', () => {
   const upd = dashboard.slice(dashboard.indexOf("(dotEls ?? document.querySelectorAll('.dot'))"));
   const block = upd.slice(0, upd.indexOf('\n}'));
@@ -124,9 +113,9 @@ test('every locale carries the new strings', () => {
 
 /* ── The pager reaches every input on both layouts ────────────────────────── */
 
-/* The phone layout is what a narrow window gets, and its own swipe is the only
-   pager there. Skipping the key and mouse handlers on it left a second page
-   visible in the dots and unreachable without a touchscreen. */
+/* The phone layout is what a narrow window gets. Without the key and mouse
+   handlers a second page is visible in the dots and unreachable without a
+   touchscreen. */
 
 const keydown = dashboard.slice(
   dashboard.indexOf("document.addEventListener('keydown'"),
@@ -174,8 +163,8 @@ test('the touch pager still belongs to one layout only', () => {
 
 /* A strip is laid out in the page's direction, so the next page is on the left
    in one direction and on the right in the other. translateX has no logical
-   form: with the sign fixed, a Persian dashboard moved page two further off the
-   screen instead of onto it, and every page after the first was unreachable. */
+   form. A fixed sign moves page two further off a Persian dashboard instead of
+   onto it, leaving every page after the first unreachable. */
 test('both page strips move by the direction of the page', () => {
   assert.match(
     dashboard,
@@ -201,8 +190,8 @@ test('the arrow keys and every drag mirror too', () => {
   }
 });
 
-/* One reading of the document, so a right-to-left page cannot get a left-to-right
-   number from a stale copy. */
+/* One reading of the document, so a right-to-left page cannot take a
+   left-to-right number from a stale copy. */
 test('the direction is read from the document, not stored', () => {
   const utils = read('js/utils.js');
   assert.match(

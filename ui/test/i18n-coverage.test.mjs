@@ -1,13 +1,8 @@
-/* Every catalogue value should be a translation, not the English left in place.
+/* Every catalogue value is a translation, not the English left in place. A
+   value identical to English renders perfectly well, so nothing else reports
+   one.
 
-   The Persian catalogue had four keys whose values were still the English
-   words, and asking the question properly turned up the same in all five: ten
-   in Chinese, seven each in Spanish and French, five in German. None of it
-   failed anything, because a value identical to English renders perfectly well.
-
-   Some values are identical on purpose: "Color" is Spanish, "Secret" is French,
-   "Name" is German, and several product words like Dock, Ping and Widget are
-   used untranslated in these languages. Those are listed per language, so
+   Some values are identical on purpose. Those are listed per language, so
    adding one is a deliberate act rather than a silent gap. */
 
 import { test } from 'node:test';
@@ -110,19 +105,13 @@ for (const [file, allowed] of Object.entries(SAME_ON_PURPOSE)) {
 
 /* ── one word per concept ─────────────────────────────────────────────────── */
 
-/* A machine translates each string on its own, so the same concept comes back
-   under a different word in each. The Persian catalogue named a widget both
-   ابزارک and ویجت, and a file both فایل and پرونده, in one interface.
+/* A machine translates each string on its own, so one concept comes back under
+   a different word in each. A correct dictionary word is also not always the
+   one shipped software uses.
 
-   It also reached for فرهنگستان coinages that correct Persian dictionaries
-   carry but shipped software does not use. درون‌ریزی and برون‌بری for import and
-   export appear in none of Immich, Jellyfin or Uptime Kuma, all of which build
-   import on وارد کردن; Immich, the closest of the three to this project, ships
-   وارد کردن پیکربندی for "Import configuration" and خروجی for "Export".
-
-   Each entry is the rejected term and what to write instead. Adding one is how
-   a terminology decision is recorded, so it survives the next bulk retranslation.
-   The glossary in docs/i18n.md carries the same list in prose. */
+   Each entry is the rejected term and what to write instead. Adding one records
+   a terminology decision, so it survives the next bulk retranslation. The
+   glossary in docs/i18n.md carries the same list in prose. */
 const REJECTED = {
   'fa.json': [
     ['درون‌ریزی', 'وارد کردن'],
@@ -180,14 +169,10 @@ for (const [file, pairs] of Object.entries(REJECTED)) {
 
 /* ── English left inside a non-Latin catalogue ────────────────────────────── */
 
-/* A machine translation that skips a word leaves it in English, and in a
-   non-Latin script that is visible to a scan even though the value as a whole
-   differs from the source. Persian rendered "چیزی برای Import نیست", and Chinese
-   had "Import 失败", "Logging 级别" and "添加到 Header".
-
-   Only the catalogues written in another script can be checked this way. In
-   German, Spanish and French an English word is not distinguishable from the
-   language around it.
+/* A machine translation that skips a word leaves it in English, which a scan
+   can see in a non-Latin script even when the value as a whole differs from the
+   source. Only the catalogues written in another script can be checked this
+   way.
 
    ALLOWED is the vocabulary that stays in Latin script on purpose: brands,
    protocols, formats, and identifiers a reader types or sees in a config file.

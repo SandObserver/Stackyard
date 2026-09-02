@@ -1,19 +1,11 @@
-/* Regression tests for P14-1: unescaped interpolations in widget frontends.
+/* A widget frontend must not concatenate values into markup. Widget iframes are
+   the only CSP context that allows inline script, so markup injected there
+   runs.
 
-   Widget iframes are the only CSP context that allows inline script
-   (`script-src 'self' 'unsafe-inline'` in nginx/dashboard.conf), so markup
-   injected there actually runs. Four sites concatenated values into innerHTML.
-
-   Two kinds of test here:
-
-   safeColor is exercised directly, because a CSS value cannot be made safe by
-   escaping and the validator is the whole defence.
-
-   The four call sites are checked as source text. They live in .html files with
-   inline modules, so there is no DOM-free way to import and run them; asserting
-   they no longer build markup by concatenation is what stops the pattern coming
-   back. `chore/typecheck-pure-frontend-modules` and the widget innerHTML ratchet
-   are the general versions of this. */
+   safeColor is exercised directly: a CSS value cannot be made safe by escaping,
+   so the validator is the whole defence. The call sites are checked as source
+   text, because they live in .html files with inline modules and there is no
+   DOM-free way to import and run them. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -78,17 +70,16 @@ test('safeColor does not accept named colours', () => {
 
 /* ── The four sites ───────────────────────────────────────────────────────── */
 
-/* A ratchet for the three files this branch touches, in the same shape as
-   ui/test/innerhtml-ratchet.test.mjs. Clears (`= ''`) write no markup and are
-   not counted. backup.html keeps three writes on purpose:
+/* A ratchet in the same shape as ui/test/innerhtml-ratchet.test.mjs. Clears
+   (`= ''`) write no markup and are not counted. backup.html keeps three writes
+   on purpose:
 
      a literal '&nbsp;<br>&nbsp;' placeholder
      the running-state SVG, which interpolates nothing
      `Last ${last}` / `Next ${next}`, where relTime() returns only '—' or a
      number followed by a unit
 
-   Neither can carry a value from config or from upstream. The general version
-   of this, covering all of ui/widgets, is security/extend-innerhtml-ratchet. */
+   None can carry a value from config or from upstream. */
 const BUDGET = { [MAP]: 0, [STATS]: 0, [BACKUP]: 3 };
 
 test('no widget frontend touched here exceeds its innerHTML budget', () => {
@@ -110,9 +101,7 @@ test('the upstream users value is escaped, not concatenated', () => {
 
 test('the backup error text is escaped', () => {
   const src = read(BACKUP);
-  /* The fallback is a translated string now, so the assertion is on the shape
-     that matters: the upstream error goes through html`` and setHtml, never
-     concatenation. */
+  /* The upstream error goes through html`` and setHtml, never concatenation. */
   assert.match(src, /setHtml\(bmeta, html`\$\{err\?\.error\|\|wt\(/);
 });
 

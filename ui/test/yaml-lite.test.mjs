@@ -139,9 +139,9 @@ test('an empty or comment-only file parses to nothing', () => {
 
 /* ── layouts real files use ───────────────────────────────────────────────── */
 
-/* Every one of these came from a config someone actually keeps. Each used to
-   refuse the whole file, including Dashy's own default config, which writes its
-   navLinks level with the key rather than indented under it. */
+/* Every one of these came from a config someone actually keeps, Dashy's own
+   default among them, which writes its navLinks level with the key rather than
+   indented under it. */
 
 test('a sequence written level with its key belongs to that key', () => {
   assert.deepEqual(plain(parseYaml('pageInfo:\n  navLinks:\n  - title: A\n    path: http://a\n')), {
@@ -222,9 +222,9 @@ test('a flow collection is null-prototyped too', () => {
   assert.equal(Object.getPrototypeOf(parseYaml('a: {constructor: mine}\n').a), null);
 });
 
-/* A flow collection written as a list element used to reach the key matcher
-   first, which found the brace and the first key and built a mapping out of
-   them. The whole element parsed into something that was never in the file. */
+/* A flow collection written as a list element must not reach the key matcher
+   first. The brace and the first key build a mapping that was never in the
+   file. */
 test('a flow collection reads in a list too, not only after a key', () => {
   assert.deepEqual(plain(parseYaml('sections:\n  - {name: Apps, items: []}\n')), {
     sections: [{ name: 'Apps', items: [] }],
@@ -234,8 +234,8 @@ test('a flow collection reads in a list too, not only after a key', () => {
 });
 
 /* Homepage replaces these in the raw text before it parses the file, so the
-   braces are never YAML to it. Reading them as a flow mapping refused files
-   whose only fault was keeping a secret out of the config. */
+   braces are never YAML to it. Reading them as a flow mapping refuses a file
+   whose only fault is keeping a secret out of the config. */
 test('an environment placeholder is text, not a flow mapping', () => {
   assert.equal(parseYaml('href: {{HOMEPAGE_VAR_URL}}\n').href, '{{HOMEPAGE_VAR_URL}}');
   assert.equal(parseYaml('key: {{HOMEPAGE_FILE_TOKEN}} # secret\n').key, '{{HOMEPAGE_FILE_TOKEN}}');
@@ -256,7 +256,7 @@ test('a list inside a list line refuses rather than reading as text', () => {
 });
 
 /* "*arr" is what a homelab calls the Sonarr and Radarr stack, and description
-   is an ordinary Homepage field. Refusing these refused valid files. */
+   is an ordinary Homepage field. Neither is an alias. */
 test('& and * inside a value are text, not an anchor', () => {
   assert.equal(parseYaml('description: The *arr stack\n').description, 'The *arr stack');
   assert.equal(parseYaml('description: Movies &TV\n').description, 'Movies &TV');
@@ -296,8 +296,8 @@ test('a merge key takes a list of anchors as well as one', () => {
   assert.deepEqual(plain(parseYaml('p: &p\n  a: 1\nq: &q\n  b: 2\nr:\n  <<: [*p, *q]\n')).r, { a: 1, b: 2 });
 });
 
-/* Hand-aligned configs pad the dash. The continuation keys then sit one column
-   further in, and assuming a fixed offset threw on the whole file. */
+/* Hand-aligned configs pad the dash, so the continuation keys sit one column
+   further in. The offset is read, not assumed. */
 test('a list element keeps its own key column, however the dash is padded', () => {
   const one = plain(parseYaml('sections:\n  - name: Apps\n    icon: box\n'));
   assert.deepEqual(plain(parseYaml('sections:\n  -  name: Apps\n     icon: box\n')), one);
@@ -309,7 +309,7 @@ test('a double-quoted key decodes its escapes the way a value does', () => {
 });
 
 /* Every trailing newline, which is the whole difference between "keep" and the
-   default. Stripping the blank lines before the fold left nothing to keep. */
+   default. Blank lines are not stripped before the fold. */
 test('the keep indicator keeps more than one trailing newline', () => {
   assert.equal(parseYaml('a: |+\n  x\n\n\nb: 1\n').a, 'x\n\n\n');
   assert.equal(parseYaml('a: |+\n').a, '');
@@ -317,9 +317,9 @@ test('the keep indicator keeps more than one trailing newline', () => {
   assert.equal(parseYaml('a: |-\n  x\n\n\nb: 1\n').a, 'x');
 });
 
-/* Refusing a whole file over one line cost the reader everything and protected
-   nothing: the importer discards most of what a config holds. Tolerant mode
-   drops the node the problem is in and says which line it was. */
+/* Refusing a whole file over one line protects nothing: the importer discards
+   most of what a config holds. Tolerant mode drops the node the problem is in
+   and says which line it was. */
 
 test('tolerant mode keeps the rest of the file and reports what it dropped', () => {
   const { doc, errors } = parseYamlTolerant('a: 1\nb: *nope\nc: 3\n');

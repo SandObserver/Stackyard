@@ -11,10 +11,7 @@ import { fileURLToPath } from 'node:url';
    Two directories are scanned. ui/js is fully migrated, so its budget is empty
    and any write there fails.
 
-   ui/widgets was outside the scan entirely (P8-1, P14-3): 3,660 lines where an
-   upstream value could be interpolated into markup with nothing to catch it.
-   The four sites that actually took upstream data were fixed in Wave 1
-   (P14-1); the 16 below are static strings and computed numbers, so they are
+   The widget writes below are static strings and computed numbers, so they are
    safe as written and are recorded as a budget rather than migrated. What the
    budget buys is the next write, not these. widget-toolbox.js re-exports esc,
    html and setHtml, so a widget has the safe path available.
@@ -52,11 +49,9 @@ const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const jsDir = path.join(uiDir, 'js');
 const widgetsDir = path.join(uiDir, 'widgets');
 /* Matches `= ` and `+= `. The compound form appends markup and is exactly as
-   unsafe, but was invisible here until admin.js turned out to use it seven
-   times. Only the plain form can be a clear: `+= ''` writes nothing anyway. */
+   unsafe. Only the plain form can be a clear: `+= ''` writes nothing anyway. */
 const ASSIGN = /\.innerHTML\s*(\+?)=(?!=)\s*/g;
-/* insertAdjacentHTML writes markup exactly like an innerHTML assignment and was
-   invisible to the earlier ASSIGN-only regex; 15 call sites hid behind it. */
+/* insertAdjacentHTML writes markup exactly like an innerHTML assignment. */
 const INSERT = /\.insertAdjacentHTML\s*\(/g;
 const CLEAR = /^(?:''|""|``)\s*[;,)]/;
 

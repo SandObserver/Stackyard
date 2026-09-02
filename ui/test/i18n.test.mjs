@@ -49,9 +49,9 @@ test('t falls back to the key itself when nothing is loaded', () => {
   assert.equal(getLang(), 'en');
 });
 
-/* P8-8/P11-7: the catalogs were object literals, so `active[key]` found
-   "constructor", "toString" and the rest. t() returned the inherited function
-   instead of the key, and that value was written into the DOM. */
+/* A catalog must not inherit from Object.prototype, or `active[key]` finds
+   "constructor" and "toString", and t() writes the inherited function into the
+   DOM. */
 test('t returns the key itself for a key named after an inherited member', () => {
   for (const key of [
     'constructor',
@@ -249,9 +249,7 @@ test('no locale leaves a string empty', async () => {
 
 /* ── counted messages nothing pluralised ──────────────────────────────────── */
 
-/* The plural work converted the messages that already carried a singular and a
-   plural key. It did not find the ones that had never been pluralised at all,
-   because nothing was looking for them.
+/* A message that was never pluralised at all is easy to miss.
 
    The tell is a number followed by a noun that is written plural in English:
    "{count} items", "at most {n} labels". A number followed by an adjective or a
