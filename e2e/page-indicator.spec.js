@@ -2,14 +2,13 @@
 /* The page dots, measured as painted rather than as declared.
 
    The dot is a white tint on a translucent blurred bar over the user's
-   wallpaper. The stylesheet gate cannot judge that: it reads declared colours,
-   and what reaches the eye is every layer composited together over a picture
-   the project has never seen. So this reads the pixel the browser painted.
+   wallpaper, so the stylesheet gate cannot judge it: it reads declared colours,
+   and what reaches the eye is every layer composited together. This reads the
+   pixel the browser painted.
 
    Both extremes of a background are covered, because the failure is worst over
-   a light one. A solid colour is used rather than a photograph so the reading
-   is the same on every run; a photograph reaches the same code path, sampled
-   per region instead of once. */
+   a light one. A solid colour rather than a photograph keeps the reading the
+   same on every run. */
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, dismissSetupPrompt, app, centrePixel, contrast } = require('./helpers');
