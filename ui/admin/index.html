@@ -11,7 +11,7 @@
   <script src="/js/mobile-class.js?v=fe95da0d"></script>
   <script src="/js/admin-theme.js?v=66565254"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=797311cf">
-  <link rel="stylesheet" href="/css/admin.css?v=7d275790">
+  <link rel="stylesheet" href="/css/admin.css?v=42527785">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
 </head>
 <body>
@@ -106,6 +106,8 @@
         <div class="row ie-row d-none" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
         <div class="row d-none" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign out all devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div>
       </div>
+      <div id="sec-pw-bars" class="pw-bars d-none"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
+      <div id="sec-pw-hint" class="pw-hint d-none"></div>
       <p class="grp-tip d-none" id="revoke-tip" data-i18n="general.signOutEverywhereTip">Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.</p>
       <p class="grp-tip d-none" id="pw-hint-static" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p>
 
@@ -275,9 +277,6 @@
 <input id="bg-col"    type="text"    class="d-none" autocomplete="off">
 <input id="bg-url"    type="url"     class="d-none" autocomplete="off">
 <input id="bg-color"  type="text"    class="d-none" autocomplete="off">
-<div id="sec-pw-bars" class="pw-bars d-none"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
-<div id="sec-pw-hint" class="pw-hint d-none"></div>
-
 <div id="toast" role="status" aria-live="polite"></div>
 
 <!-- Mobile bottom tab bar (shown only on small screens, when authenticated) -->
