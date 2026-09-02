@@ -111,11 +111,21 @@
       "type": "widget",
       "widgetType": "books",
       "label": "Books",
-      "widgetSize": "small",
+      "widgetSize": "large",
       "widgetConfig": {
         "provider": "audiobookshelf",
         "absUrl": "https://books.example.com",
-        "source": "unread",
+        "shelves": [
+          {
+            "source": "unread"
+          },
+          {
+            "source": "recently"
+          },
+          {
+            "source": "list"
+          }
+        ],
         "href": "https://books.example.com"
       }
     },
