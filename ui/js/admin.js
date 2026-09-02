@@ -1,6 +1,6 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=c86f9f02';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9ea23064';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=df1c8e86';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=448f1f49';
 import { resolveAdminSection } from '/js/admin-logic.js?v=d17394da';
 import {
   buildAppItem,
