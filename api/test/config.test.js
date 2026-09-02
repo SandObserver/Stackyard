@@ -97,6 +97,20 @@ test('migrate leaves an already-split widget and every other type alone', () => 
   assert.deepEqual(cfg.items, items);
 });
 
+test('migrate downsizes a medium DNS widget to small', () => {
+  const cfg = migrate({
+    items: [
+      { id: 'a', type: 'widget', widgetType: 'dns', widgetSize: 'medium' },
+      { id: 'b', type: 'widget', widgetType: 'dns', widgetSize: 'small' },
+      { id: 'c', type: 'widget', widgetType: 'system-summary', widgetSize: 'medium' },
+    ],
+    settings: {},
+  });
+  assert.equal(cfg.items[0].widgetSize, 'small');
+  assert.equal(cfg.items[1].widgetSize, 'small');
+  assert.equal(cfg.items[2].widgetSize, 'medium');
+});
+
 test('migrating a stats widget twice changes nothing the second time', () => {
   const cfg = migrate({
     items: [{ id: 'a', type: 'widget', widgetType: 'stats', widgetConfig: { widgetSubType: 'disk-health' } }],

@@ -28,7 +28,7 @@ let _cfgCache = null,
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape. Add a matching step in migrate(). */
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 function migrateSocketProxyScheme(settings) {
   const url = settings?.server?.socketProxyUrl;
@@ -47,6 +47,14 @@ function migrateStatsWidgetSplit(cfg) {
     const view = wc && typeof wc === 'object' ? wc.widgetSubType : undefined;
     item.widgetType = view === 'disk-health' ? 'disk-health' : 'system-summary';
     if (wc && typeof wc === 'object') delete wc.widgetSubType;
+  }
+}
+
+/* The DNS widget no longer offers a medium size. */
+function migrateDnsWidgetSize(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  for (const item of cfg.items) {
+    if (item && item.widgetType === 'dns' && item.widgetSize === 'medium') item.widgetSize = 'small';
   }
 }
 
@@ -69,6 +77,10 @@ function migrate(cfg) {
   if (v < 4) {
     migrateStatsWidgetSplit(cfg);
     v = 4;
+  }
+  if (v < 5) {
+    migrateDnsWidgetSize(cfg);
+    v = 5;
   }
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;

@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deleting an item, deleting a folder, signing out all devices and turning off
   password protection now ask in the app's own dialog, in the chosen language.
 
+### Removed
+
+- The DNS widget no longer offers a medium size. Existing medium DNS widgets
+  become small.
+
 ### Fixed
 
 - The search overlay and the wallpaper source list announce their own names
