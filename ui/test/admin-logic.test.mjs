@@ -20,6 +20,7 @@ import {
   recoversSession,
   toastMs,
   toastHoldMs,
+  isBareHostUrl,
   BLOCK,
 } from '../js/admin-logic.js';
 /* The real strength check, so these assert the rule the save actually applies. */
@@ -529,4 +530,31 @@ test('toastMs holds a long message longer than a short one', () => {
   assert.equal(toastMs('x'.repeat(100)), 6000);
   assert.equal(toastMs('x'.repeat(1000)), 15000);
   assert.equal(toastMs(undefined), 3000);
+});
+
+test('a host-only address is bare, with or without a scheme, port or query', () => {
+  for (const u of [
+    '10.0.0.5:8096',
+    'http://10.0.0.5:8096',
+    'https://sonarr.example.com',
+    'http://qbit:8080/',
+    '  10.0.0.5  ',
+    'http://10.0.0.5:8096/?x=1',
+  ]) {
+    assert.equal(isBareHostUrl(u), true, u);
+  }
+});
+
+test('an address carrying a path is not bare', () => {
+  for (const u of [
+    '10.0.0.5:8096/api/v2',
+    'http://qbit:8080/api/v2/transfer/info',
+    'https://sonarr.example.com/api/v3/health',
+  ]) {
+    assert.equal(isBareHostUrl(u), false, u);
+  }
+});
+
+test('isBareHostUrl rejects what it cannot parse', () => {
+  for (const u of ['', '   ', 'http://', undefined, null, 42]) assert.equal(isBareHostUrl(u), false, String(u));
 });

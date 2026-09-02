@@ -224,6 +224,7 @@
     "reachable": "Accessible ({status})",
     "httpError": "Erreur HTTP {status}",
     "connectedNoValues": "Connecté, aucune valeur numérique trouvée",
+    "needsApiPath": "Connecté, mais cette adresse n’a pas de chemin d’API. Saisissez l’URL d’API complète du service.",
     "foundValues_one": "{count} valeur trouvée",
     "foundValues_many": "{count} de valeurs trouvées",
     "foundValues_other": "{count} valeurs trouvées"

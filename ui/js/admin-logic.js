@@ -272,3 +272,21 @@ export function toastHoldMs(kind, message, phase) {
   if (kind === 'err') return null;
   return phase === 'release' ? TOAST_RELEASE_MS : toastMs(message);
 }
+
+/** True when the address names a host only, with no path to read data from.
+    A bare address is accepted with a scheme, without one, and with a port,
+    a trailing slash, or a query string.
+
+    @param {string} url
+    @returns {boolean} */
+export function isBareHostUrl(url) {
+  const raw = typeof url === 'string' ? url.trim() : '';
+  if (!raw) return false;
+  let parsed;
+  try {
+    parsed = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : 'http://' + raw);
+  } catch {
+    return false;
+  }
+  return parsed.pathname === '/';
+}

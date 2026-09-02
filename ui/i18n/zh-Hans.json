@@ -218,6 +218,7 @@
     "reachable": "可访问（{status}）",
     "httpError": "HTTP 错误 {status}",
     "connectedNoValues": "已连接，未找到数值",
+    "needsApiPath": "已连接，但该地址没有 API 路径。请输入服务的完整 API 地址。",
     "foundValues_other": "找到 {count} 个数值"
   },
   "home": {

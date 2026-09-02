@@ -224,6 +224,7 @@
     "reachable": "Accesible ({status})",
     "httpError": "Error HTTP {status}",
     "connectedNoValues": "Conectado, no se encontraron valores numéricos",
+    "needsApiPath": "Conectado, pero esta dirección no tiene ruta de API. Introduce la URL de API completa del servicio.",
     "foundValues_one": "{count} valor encontrado",
     "foundValues_many": "{count} de valores encontrados",
     "foundValues_other": "{count} valores encontrados"
