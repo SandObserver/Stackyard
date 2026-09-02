@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=48a9e055';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=98432503';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=c649025d';
 import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=76c76594';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=519dd14b';
@@ -27,7 +27,7 @@ import {
   SKIP,
 } from '/js/import-foreign.js?v=ef4f3d44';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
-import { confirmModal, openModal as openDialog, promptModal } from '/js/modal.js?v=5da8a871';
+import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=00c011c9';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=d949e985';
 import { normalizeColorInput } from '/js/admin-color-control.js?v=5648e765';
@@ -290,11 +290,17 @@ function openModal(idx) {
 
 async function _evDelete(item, idx) {
   if (!item) return;
-  if (item.type === 'folder') {
-    if (!confirm(t('confirm.deleteFolder', { name: item.label }))) return;
-  } else {
-    if (!confirm(t('confirm.remove', { name: item.label || item.id }))) return;
-  }
+  const isFolder = item.type === 'folder';
+  const ok = await confirmText({
+    title: t('common.delete'),
+    text: isFolder
+      ? t('confirm.deleteFolder', { name: item.label })
+      : t('confirm.remove', { name: item.label || item.id }),
+    confirmLabel: t('common.delete'),
+    cancelLabel: t('common.cancel'),
+    destructive: true,
+  });
+  if (!ok) return;
   const before = snapshotItems(state.items);
   state.items.forEach(f => {
     if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== item.id);

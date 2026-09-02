@@ -102,6 +102,18 @@ export function confirmModal({ title, body, confirmLabel, cancelLabel, destructi
   });
 }
 
+/** confirmModal for a plain sentence, which is what a replaced confirm() asks.
+
+    @param {{ title: string, text: string, confirmLabel: string, cancelLabel: string,
+              destructive?: boolean }} opts
+    @returns {Promise<boolean>} */
+export function confirmText({ title, text, confirmLabel, cancelLabel, destructive }) {
+  const lead = document.createElement('p');
+  lead.className = 'dlg-lead';
+  lead.textContent = text;
+  return confirmModal({ title, body: lead, confirmLabel, cancelLabel, destructive });
+}
+
 /** A modal asking for one line of text, resolving to the trimmed value or null.
 
     @param {{ title: string, label: string, placeholder?: string,
