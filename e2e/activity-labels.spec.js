@@ -1,7 +1,7 @@
 // @ts-check
 /* The editor builds its Live Activity section from ids the template owns. A
-   removed id used to throw inside the build and leave the whole editor blank,
-   with every button in it inert, so these specs open the editor for real. */
+   removed id must not throw inside the build: that leaves the whole editor
+   blank with every button in it inert, so these specs open it for real. */
 
 const { test, expect } = require('@playwright/test');
 const {

@@ -2,10 +2,9 @@
 /* What a screen reader is given for a tile, read from the browser's own
    accessibility tree rather than from the markup.
 
-   A badge used to label itself and carry role="status". An explicit label on the
-   anchor wins over everything inside it, so the badge was never part of what a
-   reader hears moving from tile to tile, while every badge added a live region
-   repainted on the poll. */
+   An explicit label on the anchor wins over everything inside it, so a badge
+   that labels itself is never part of what a reader hears moving from tile to
+   tile. A badge is also not a live region. */
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, dismissSetupPrompt, app } = require('./helpers');
@@ -18,8 +17,8 @@ const watched = (id, label) => ({
   monitoring: { healthcheck: { enabled: true, pingUrl: DEAD } },
 });
 
-/* Three badged tiles, not one: the defect was a live region per badge, so it
-   only shows as growth. */
+/* Three badged tiles, not one: a live region per badge only shows as
+   growth. */
 const ITEMS = [watched('watched', 'Watched'), watched('w2', 'Second'), watched('w3', 'Third'), app('plain', 'Plain')];
 
 /* Chromium only: the full tree with its live and atomic properties comes from

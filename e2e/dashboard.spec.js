@@ -135,8 +135,8 @@ test('a widget renders inside its frame under the page policy', async ({ page, r
   expect(violations, `the page refused something: ${violations.join(' | ')}`).toEqual([]);
 });
 
-/* The layout was decided once at load, so a desktop window dragged narrower
-   than the breakpoint kept the desktop layout until it was reloaded. */
+/* A desktop window dragged narrower than the breakpoint switches layout
+   without a reload. */
 test('resizing across the breakpoint switches the layout without a reload', async ({ page, request }) => {
   /* A rebuild that throws leaves the page half-swapped, which is worse than not
      rebuilding at all. */
