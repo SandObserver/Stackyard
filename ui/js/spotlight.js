@@ -146,15 +146,9 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       }
     });
 
-  const barEl = q('.spot-bar', ov);
-  if (MOB() && barEl) {
-    barEl.style.cssText =
-      'display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:18px;border:none;background:rgba(118,118,128,.30);box-sizing:border-box;';
-    inp.style.cssText =
-      'flex:1;background:transparent;border:0;outline:none;font-size:17px;color:rgba(255,255,255,.92);font-family:inherit;caret-color:#007aff;-webkit-appearance:none;min-height:26px;padding:0;margin:0;';
-  }
-  if (barEl)
-    barEl.addEventListener(
+  const fieldEl = q('.spot-field', ov);
+  if (fieldEl)
+    fieldEl.addEventListener(
       'touchend',
       e => {
         e.preventDefault();
@@ -164,10 +158,17 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       { passive: false },
     );
 
+  /* Set both edges. iOS scrolls a smaller visual viewport over an unchanged
+     page, so the height alone leaves the overlay off the screen. */
   function _applyKbLayout() {
     if (!MOB()) return;
-    const vvH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    ov.style.bottom = Math.max(0, window.innerHeight - vvH) + 'px';
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const top = Math.max(0, vv.offsetTop);
+    const bottom = Math.max(0, window.innerHeight - vv.height - top);
+    ov.style.top = top + 'px';
+    ov.style.bottom = bottom + 'px';
+    ov.classList.toggle('kb', bottom > 120);
   }
 
   function open(ch) {
@@ -225,7 +226,9 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       _w._spotVpCleanup();
       _w._spotVpCleanup = null;
     }
+    ov.style.top = '';
     ov.style.bottom = '';
+    ov.classList.remove('kb');
     setTimeout(() => {
       if (!ov.classList.contains('vis')) ov.close();
     }, 220);
@@ -251,18 +254,7 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       'touchend',
       e => {
         e.preventDefault();
-        close();
-      },
-      { passive: false },
-    );
-  }
-  const mobCancelBtn = el('spot-cancel-mob-btn');
-  if (mobCancelBtn) {
-    mobCancelBtn.onclick = close;
-    mobCancelBtn.addEventListener(
-      'touchend',
-      e => {
-        e.preventDefault();
+        e.stopPropagation();
         close();
       },
       { passive: false },
