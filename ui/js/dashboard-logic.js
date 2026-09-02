@@ -19,41 +19,6 @@ function fingerprint(c) {
   return JSON.stringify(c?.items?.map(i => `${i?.id}|${i?.label}|${i?.href}`)) + JSON.stringify(c?.settings);
 }
 
-/** One day. */
-const WALLPAPER_TTL_MS = 24 * 60 * 60 * 1000;
-
-/** @param {any} bg the background settings @returns {string} */
-function wallpaperKey(bg) {
-  return `${bg?.type || ''}|${bg?.collection || ''}`;
-}
-
-/** The still-valid wallpaper URL held for these background settings, if any.
-
-    @param {string|null} stored the raw stored entry
-    @param {any} bg the background settings the page was built from
-    @param {number} now
-    @returns {string|null} */
-export function readWallpaperCache(stored, bg, now) {
-  if (typeof stored !== 'string' || !stored) return null;
-  let entry;
-  try {
-    entry = JSON.parse(stored);
-  } catch {
-    return null;
-  }
-  if (!entry || typeof entry.url !== 'string' || !entry.url) return null;
-  if (entry.key !== wallpaperKey(bg)) return null;
-  if (typeof entry.at !== 'number' || !Number.isFinite(entry.at)) return null;
-  /* A clock moved backwards would otherwise hold one photo forever. */
-  if (now < entry.at || now - entry.at >= WALLPAPER_TTL_MS) return null;
-  return entry.url;
-}
-
-/** @param {string} url @param {any} bg @param {number} now @returns {string} */
-export function writeWallpaperCache(url, bg, now) {
-  return JSON.stringify({ url, key: wallpaperKey(bg), at: now });
-}
-
 /** The page index to open on, clamped to the pages that exist.
 
     @param {string|null} stored @param {number} totalPages @returns {number} */

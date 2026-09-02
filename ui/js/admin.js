@@ -32,6 +32,7 @@ import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=00c011c9';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=d949e985';
 import { normalizeColorInput } from '/js/admin-color-control.js?v=5648e765';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=1907cce7';
+import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
    viewport than they have. The rule lives in layout.js, shared with the
@@ -85,17 +86,23 @@ async function applyBg() {
       root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
       root.style.setProperty('--bg-size', bg.fit === 'fit' ? 'contain' : 'cover');
     } else if (bg.type === 'unsplash') {
-      const r = await fetch('/api/wallpaper', { cache: 'no-store' });
-      const d = await r.json();
-      if (d.url) {
+      let url = loadWallpaper(bg);
+      if (!url) {
+        const r = await fetch('/api/wallpaper', { cache: 'no-store' });
+        const d = await r.json();
+        url = d.url || null;
+        if (url) saveWallpaper(url, bg);
+      }
+      if (url) {
+        const shown = url;
         const img = new Image();
         img.onload = () => {
-          root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(d.url)}')`);
+          root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(shown)}')`);
           root.style.setProperty('--bg-color', '#0d1117');
           root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
           root.style.setProperty('--bg-size', 'cover');
         };
-        img.src = d.url;
+        img.src = shown;
       }
     }
   } catch {}

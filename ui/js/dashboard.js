@@ -32,13 +32,8 @@ import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } fr
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
-import {
-  configChanged,
-  landingAfterSetup,
-  readWallpaperCache,
-  writeWallpaperCache,
-  restorePage,
-} from '/js/dashboard-logic.js?v=a0604f3b';
+import { configChanged, landingAfterSetup, restorePage } from '/js/dashboard-logic.js?v=74ffcb7e';
+import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -104,8 +99,7 @@ let _lastTouch = 0;
    the boot veil up forever. Generous: this only has to beat a hang. */
 const BOOT_TIMEOUT_MS = 15000;
 
-const PAGE_STORE = 'dash_page',
-  WALLPAPER_STORE = 'dash_wallpaper';
+const PAGE_STORE = 'dash_page';
 
 /** @param {string} key @returns {string|null} */
 function storeGet(key) {
@@ -575,12 +569,12 @@ async function applyBg() {
       root.style.setProperty('--bg-size', fit === 'fit' ? 'contain' : 'cover');
       sampleWallpaper(url, brightness, fit);
     } else if (bg.type === 'unsplash') {
-      let url = readWallpaperCache(storeGet(WALLPAPER_STORE), bg, Date.now());
+      let url = loadWallpaper(bg);
       if (!url) {
         const r = await fetch('/api/wallpaper', { cache: 'no-store' });
         const d = await r.json();
         url = d.url || null;
-        if (url) storeSet(WALLPAPER_STORE, writeWallpaperCache(url, bg, Date.now()));
+        if (url) saveWallpaper(url, bg);
       }
       if (url) {
         const shown = url;

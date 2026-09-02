@@ -289,6 +289,12 @@
       "/js/wake-lock.js?v=*": [
         "./ui/js/wake-lock.js"
       ],
+      "/js/wallpaper-cache.js": [
+        "./ui/js/wallpaper-cache.js"
+      ],
+      "/js/wallpaper-cache.js?v=*": [
+        "./ui/js/wallpaper-cache.js"
+      ],
       "/js/widget-toolbox.js": [
         "./ui/js/widget-toolbox.js"
       ],
