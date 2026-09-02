@@ -97,11 +97,10 @@ test('esc is re-exported and escapes single quotes', async () => {
   assert.equal(esc(`<a href='x'>&"`), '&lt;a href=&#39;x&#39;&gt;&amp;&quot;');
 });
 
-/* ── P8-7: polling continued in a hidden tab ─────────────────────────────────
+/* ── polling stops in a hidden tab ───────────────────────────────────────────
    Each widget is its own document with its own timer, and most ticks reach the
-   user's own service through the API, so a backgrounded dashboard kept calling
-   Plex, Pi-hole and GitHub. The dashboard already paused its own badge, health
-   and config polls; the widgets were the half that did not.
+   user's own service through the API, so a backgrounded dashboard goes on
+   calling Plex, Pi-hole and GitHub.
 
    A fake document, since these tests run outside a browser. Each test passes
    onError, which makes poll skip the status overlay: that needs
@@ -260,8 +259,8 @@ test('stop while hidden stays stopped when the tab returns', async () => {
   });
 });
 
-/* Several widgets open together polled on the same exact cadence, so they kept
-   hitting the same services on the same tick. */
+/* Several widgets open together must not poll on the same exact cadence, or
+   they hit the same services on the same tick. */
 test('the repeat interval is spread, and the first fetch is not delayed', async () => {
   const delays = [];
   const realTimeout = globalThis.setTimeout;

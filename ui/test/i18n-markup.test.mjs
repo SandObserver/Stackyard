@@ -1,18 +1,15 @@
-/* Regression tests for P8-5 and P10-4: escaping was switched off in i18n.
+/* A translated string may carry markup, and must not carry anything else.
+   `data-i18n-html` allows four tags with no attributes and escapes the rest.
+   Passing the string through raw() instead allows a script tag, an event
+   handler or an image with onerror.
 
-   P8-5. `data-i18n-html` passed a translated string through raw(), so a
-   translation could contain any markup at all: a script tag, an event handler,
-   an image with onerror. The mechanism exists for a real reason, two tips use
-   <strong> mid-sentence and splitting those into separate keys would stop a
-   translator moving the emphasis, so the fix constrains it rather than removing
-   it: four tags, no attributes, everything else escaped.
+   The mechanism exists because two tips use <strong> mid-sentence, and
+   splitting those into separate keys stops a translator moving the emphasis.
+   raw() around a string with no markup in it switches off escaping for
+   nothing.
 
-   P10-4. Three call sites wrapped translated strings in raw() that contain no
-   markup at all, switching off escaping for nothing.
-
-   Locale files are static assets with no runtime mechanism to add one, so the
-   realistic path was a careless or malicious translation contribution rather
-   than an attacker. Hardening, not a live hole. */
+   The realistic path is a careless or malicious translation contribution.
+   Locale files are static assets with no runtime mechanism to add one. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

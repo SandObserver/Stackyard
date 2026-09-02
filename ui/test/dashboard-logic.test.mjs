@@ -1,14 +1,6 @@
-/* Regression tests for P9-3: the config poll missed most changes.
-
-   The poll compared a hand-picked fingerprint: each item's id, label and href,
-   plus the settings blob. Everything else was invisible, so changing an icon, a
-   colour, a dock pin, a hidden flag or any badge setting left every other open
-   dashboard showing stale content until someone reloaded by hand. Change an icon
-   on a laptop and the wall tablet keeps the old one.
-
-   The server already stamps `_rev` on every write, which is an exact answer to
-   "has anything changed", and already sends it on GET /api/config. It was simply
-   not being used. */
+/* The config poll compares the server's `_rev`, which it stamps on every write.
+   A hand-picked fingerprint of a few fields leaves every other open dashboard
+   showing stale content until someone reloads by hand. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -43,8 +35,7 @@ test('a bumped revision reloads', () => {
   assert.equal(configChanged(loaded, withRev(5)), true);
 });
 
-/* The changes the old fingerprint could not see. Each is an edit a user makes in
-   Admin that other open dashboards used to ignore entirely. */
+/* Edits a fingerprint of id, label and href cannot see. */
 test('every kind of edit is noticed, not just name and link', () => {
   const edits = {
     icon: c => {
@@ -119,9 +110,9 @@ test('a missing loaded config does not throw', () => {
 
 /* ── the wallpaper across a reload ────────────────────────────────────────── */
 
-/* Every admin save reloads every open dashboard, and each reload used to ask
-   Unsplash for another random photo, so an unrelated edit changed the wallpaper
-   on every screen. */
+/* Every admin save reloads every open dashboard. Asking Unsplash for a fresh
+   random photo on each reload changes the wallpaper on every screen after an
+   unrelated edit. */
 
 const BG = { type: 'unsplash', collection: '1234' };
 const T0 = 1_760_000_000_000;
@@ -176,12 +167,10 @@ test('junk in storage lands on the first page', () => {
   }
 });
 
-/* Where first-run setup leaves the browser.
-
-   A fresh install is { items: [], settings: {} } and the setup prompt always
-   fires, so before this both paths closed onto a dashboard with nothing on it
-   and no hint of what to do. There are deliberately no placeholder items to
-   land on, so the answer is to send the user where items are added. */
+/* Where first-run setup leaves the browser. A fresh install is
+   { items: [], settings: {} } and carries no placeholder items on purpose, so
+   both paths send the user where items are added rather than onto an empty
+   dashboard. */
 
 test('a fresh install lands on Admin', () => {
   assert.equal(landingAfterSetup([]), '/admin');

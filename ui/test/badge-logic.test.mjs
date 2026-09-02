@@ -180,9 +180,9 @@ test('computed color follows the resolved background, custom or class-based', ()
   assert.equal(classBasedRed.color, '', 'a named badge is inked by --on-fill, which the theme moves');
 });
 
-/* A dark user colour used to return no ink and fall through to the stylesheet.
-   The stylesheet now inks a named fill, which is bright in the dark theme, so
-   the fall-through would put dark text on a dark badge. */
+/* A dark user colour must return its ink. Falling through to the stylesheet
+   inks a named fill, which is bright in the dark theme, so the badge gets dark
+   text on a dark ground. */
 test('a user colour is always given its own ink', () => {
   assert.equal(computeBadgeVisual({ activity: 1, custom: { color: '#1e6ef4' } }).color, '#ffffff');
   assert.equal(computeBadgeVisual({ activity: 1, custom: { color: '#ffcc00' } }).color, '#1c1c1e');
@@ -192,15 +192,14 @@ test('a user colour is always given its own ink', () => {
   );
 });
 
-/* ── P6-2: a red tile could not say why ──────────────────────────────────────
+/* ── a red tile says why ─────────────────────────────────────────────────────
    /api/health returns `unhealthy` plus the detail explaining it: `state` and
-   `status` from Docker, `pingStatus` and `pingError` from the URL check. Only
-   `unhealthy` was ever read, so a red dot carried no reason. An item configured
-   with both checks also lost its container detail server-side, because the ping
-   result replaced the container's entry instead of joining it.
+   `status` from Docker, `pingStatus` and `pingError` from the URL check. An
+   item with both checks configured keeps both: the ping result joins the
+   container's entry rather than replacing it.
 
-   The reason is now the tile's hover text, and is appended to the accessible
-   label so it is not sight-only. */
+   The reason is the tile's hover text, and is appended to the accessible label
+   so it is not sight-only. */
 
 test('a stopped container explains itself using Docker wording', () => {
   assert.equal(healthReason({ state: 'exited', status: 'Exited (1) 2 hours ago' }), 'Exited (1) 2 hours ago');
@@ -233,7 +232,7 @@ test('a ping that answered with an error status reports the code', () => {
   assert.equal(healthReason({ pingStatus: 200 }), '', 'a good status is not a reason');
 });
 
-/* The case the server bug hid: both checks configured and both failing. */
+/* Both checks configured and both failing. */
 test('both checks failing give both reasons', () => {
   const r = healthReason({ state: 'exited', status: 'Exited (1) 2 hours ago', pingError: 'ECONNREFUSED' });
   assert.match(r, /Exited \(1\) 2 hours ago/);
@@ -307,8 +306,8 @@ test('a stale badge signs differently from the same badge fresh', () => {
 
 /* ── one item failing inside a working response ───────────────────────────────
    The route reports each item separately: a failure arrives as an error field
-   beside a value of zero. Reading the zero paints "nothing pending" on a tile
-   whose service never answered. */
+   beside a value of zero. Read the error, or the tile paints "nothing pending"
+   for a service that never answered. */
 
 test('a reported value is read as a value', () => {
   assert.deepEqual(readBadgeUpdate({ value: 4 }), { value: 4, failed: false });

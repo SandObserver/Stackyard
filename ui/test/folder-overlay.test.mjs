@@ -1,24 +1,14 @@
-/* Regression tests for the mobile folder overlay.
+/* The mobile folder overlay.
 
-   Two defects, both in the overlay that opens when a folder is tapped on a
-   phone.
+   A badge sits outside its icon's top-right corner by design, so each page is
+   inset by the overhang and clips itself. Pages laid flush in one strip render
+   a right-column badge in the next page's space: trimmed while its own page is
+   shown, and a sliver at the far edge after a swipe. The inset comes out of the
+   box padding, so the icons do not move.
 
-   A badge sits outside its icon's top-right corner by design. The pages of a
-   folder were laid out flush against each other in one strip, each page exactly
-   as wide as three icons and two gaps, and one viewport clipped the strip. A
-   badge on the right-hand column therefore rendered in the next page's space:
-   trimmed while its own page was shown, and visible as a sliver at the left
-   edge after a swipe. The top row lost the same 7px upwards.
-
-   The fix insets each page by the overhang and lets the page clip itself, so a
-   badge stays inside the page it belongs to. The inset comes out of the box
-   padding, so the icons do not move.
-
-   The second defect: the overlay trapped focus without saying what to focus,
-   the trap fell back to the first focusable element, and that is the first app
-   link. Mobile WebKit paints its own focus ring for a script-driven focus on an
-   anchor, which the stylesheet only styles for :focus-visible. Opening a folder
-   also should not move focus onto an item nobody asked for.
+   The overlay takes focus itself. A focus trap falling back to the first
+   focusable element lands on the first app link, and WebKit paints its own ring
+   for a script-driven focus on an anchor.
 
    Source-shape tests: the geometry is written in JavaScript against a real
    layout, which is not available here. */
@@ -103,8 +93,7 @@ test('the native focus ring cannot render on a folder app link', () => {
   }
 });
 
-/* Desktop WebKit showed the same ring the phone did: same trap, same missing
-   plain-focus rule. */
+/* Desktop WebKit paints the same ring as the phone. */
 test('the desktop overlay takes focus itself too', () => {
   const desktop = ui.slice(ui.indexOf('export function openFolderDesktop('), ui.indexOf('function mFolder('));
   assert.match(desktop, /ov\.tabIndex = -1/);

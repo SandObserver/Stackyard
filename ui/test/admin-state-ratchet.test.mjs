@@ -4,20 +4,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* Every field in admin-state.js must be read or written somewhere else.
-
-   P10-6: `_wgithubCfg` and `_wclockCfg` were declared here and reset in
-   closeModal, and that reset was their only reference. They were per-widget
-   config holders from before the manifest-driven auto-form, and `_wAutoCfg`
-   took over for every widget type without them being removed. They then sat
-   there long enough to look like a pattern worth copying.
+/* Every field in admin-state.js must be read or written somewhere else. A field
+   a migration orphans otherwise sits here long enough to look like a pattern
+   worth copying.
 
    Same shape as innerhtml-ratchet.test.mjs, and like that one the budget is
-   empty because the cleanup is complete: any field added here and never used
-   fails immediately, rather than outliving the migration that orphaned it.
-
-   Fields legitimately unreferenced outside this file, if any ever exist, go in
-   ALLOWED with a reason. Nothing qualifies today. */
+   empty because the cleanup is complete. Fields legitimately unreferenced
+   outside this file go in ALLOWED with a reason. Nothing qualifies today. */
 const ALLOWED = {};
 
 const jsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../js');
@@ -72,8 +65,8 @@ test('state is not accessed dynamically, which would defeat the check above', ()
   );
 });
 
-/* The two fields the finding named, so a revert is caught by name and not only
-   by the general rule. */
+/* The two orphaned config holders, by name, so a revert is caught here and not
+   only by the general rule. */
 test('the fields P10-6 removed have not come back', () => {
   for (const gone of ['_wgithubCfg', '_wclockCfg']) {
     assert.ok(!fields.includes(gone), `${gone} was removed as dead; _wAutoCfg holds widget config`);

@@ -1,13 +1,8 @@
 /* Every user-facing string must go through the translation system.
 
-   The reachability test proves each catalogue key is used and each reference
-   exists. It cannot see a string that was never made a key: English typed
-   straight into an attribute is invisible to it, because nothing is missing
-   from the catalogue. About 55 such strings had accumulated in Settings, most
-   of them accessible names, so a screen reader in Persian read a translated
-   page and then spoke English for every control.
-
-   This scan reads the absence instead. It finds a literal where a translated
+   The reachability test cannot see a string that was never made a key: English
+   typed straight into an attribute leaves nothing missing from the catalogue.
+   This scan reads the absence instead, and finds a literal where a translated
    value belongs. */
 
 import { test } from 'node:test';
@@ -83,10 +78,10 @@ test('no user-facing string is written into the source instead of a catalogue', 
   assert.deepEqual(found, [], `English written into the source. Add a key and reference it:\n  ${found.join('\n  ')}`);
 });
 
-/* The scan above reads attributes in source text. It cannot see a string that
-   is concatenated or interpolated at run time, which is how the same defect
-   came back: a translated label with an English noun welded onto it. This scan
-   reads the other half, the expressions that reach a reader. */
+/* The scan above reads attributes in source text. It cannot see a string
+   concatenated or interpolated at run time, such as a translated label with an
+   English noun welded onto it. This scan reads the expressions that reach a
+   reader. */
 
 /* Where a string becomes something a person reads. */
 const SINKS = [
@@ -172,8 +167,8 @@ const withoutHoles = v =>
     .trim();
 
 /* NOT_PROSE above exempts a bare token, because an attribute value is often
-   one. A word on its own in a text node is not: System, Hidden and None all
-   shipped that way. So this scan exempts only a unit, a brand and a URL. */
+   one. A word on its own in a text node is not, so this scan exempts only a
+   unit, a brand and a URL. */
 const MARKUP_NOT_PROSE = [/^\([a-z]{1,4}\)$/, /^Stackyard\b/, /^https?:\/\//i, /^[\d.:/]+$/];
 
 test('no user-facing string is written into the markup builder', () => {

@@ -11,11 +11,9 @@ import { fileURLToPath } from 'node:url';
    and iPadOS 27 kit while the dark ones and the greys stayed put, so a light
    value that looks like the familiar iOS colour is out of date, not correct.
 
-   The values had been copied by hand, and one had gone in wrong: Cyan was
-   #3CCFFE against the kit's #3CD3FE. No rule referenced Cyan, so nothing rendered
-   the mistake and nothing caught it. The palette is documented as the list you
+   The values are transcribed by hand. The palette is documented as the list you
    read to choose a colour, so a wrong entry is wrong whether or not a rule uses
-   it today.
+   it today, and nothing renders a hue no rule references.
 
    The -hi partners are not listed. They are increased-contrast values, and the
    kits export their increased-contrast modes empty, so there is nothing to

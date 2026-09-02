@@ -1,10 +1,6 @@
-/* P9-5: pwStrength existed in ui/js/admin-auth.js and ui/js/dashboard.js,
-   identical apart from two comments, and had no test in either place.
-
-   It also returned hardcoded English labels that both callers put in front of
-   the user: the first-run setup dialog wrote one into its hint, and
-   admin-settings interpolated one into t('toast.pwWeak'), so a translated
-   sentence ended in an English word. It returns a key now. */
+/* pwStrength lives in one place and returns a key, not an English label. Both
+   callers put its result in front of the user, so a label ends a translated
+   sentence in an English word. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -42,11 +38,9 @@ test('score rises with length and character variety', () => {
   assert.equal(best.labelKey, 'pwStrength.strong');
 });
 
-/* The bug both copies carried. The index was Math.min(4, score - 1) against
-   four-entry label and colour arrays, so the maximum score indexed past the end
-   and returned undefined for both. The setup dialog assigns the label straight
-   to hint.textContent, which renders the string "undefined", so the strongest
-   possible password was the one that looked broken. */
+/* The maximum score must not index past the end of the label and colour
+   arrays. The setup dialog assigns the label straight to hint.textContent, so
+   undefined renders as the string "undefined" on the strongest password. */
 test('the strongest password still gets a label and a colour', () => {
   const r = pwStrength('aaaaAAAA1111!!!!');
   assert.equal(r.score, 5, 'it must reach the top of the scale');
@@ -99,8 +93,8 @@ test('a colour is always returned', () => {
   }
 });
 
-/* The half of the finding that was a live defect: every key it can return has
-   to exist in every locale, or a caller's t() falls back to printing the key. */
+/* Every key it can return exists in every locale, or a caller's t() prints the
+   key. */
 test('every label key it returns exists in all locales', async () => {
   const keys = new Set();
   for (const pw of ['', 'abc', 'aaaaaaaa', 'aaaaAAAA1111', 'aaaaAAAA1111!!!!', 'aA1!aA1!']) {
@@ -122,8 +116,7 @@ test('every label key it returns exists in all locales', async () => {
   }
 });
 
-/* The duplicate is gone rather than merely unused: neither caller may carry its
-   own copy again. */
+/* Neither caller may carry its own copy again. */
 test('neither caller redefines the function', async () => {
   for (const file of ['../js/dashboard.js', '../js/admin-auth.js']) {
     const src = await readFile(new URL(file, import.meta.url), 'utf8');

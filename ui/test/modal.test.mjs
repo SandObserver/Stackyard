@@ -1,15 +1,11 @@
-/* The dialog the admin UI opens for anything the browser's own confirm() and
-   prompt() cannot show. It replaced them, so it owes what they gave for free:
-   a backdrop that dismisses, Escape, and an answer that comes back once.
+/* The dialog the admin UI opens for anything confirm() and prompt() cannot
+   show. It owes what they gave for free: a backdrop that dismisses, Escape, and
+   an answer that comes back once.
 
-   It is a native <dialog> now, so Escape and focus restoration belong to the
-   browser and are not re-tested here. What is still ours is which clicks
-   dismiss and that an answer arrives exactly once, however the dialog went.
-
-   The dismissal routes are what these cover. A dialog that closes when it
-   should not is worse than the browser's version, because the import preview
-   behind it is a list someone reads before deciding, and a dropped answer
-   reads as Cancel and discards the whole import. */
+   It is a native <dialog>, so Escape and focus restoration belong to the
+   browser and are not re-tested here. What is ours is which clicks dismiss and
+   that an answer arrives exactly once, however the dialog went. A dropped
+   answer reads as Cancel and discards the whole import. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

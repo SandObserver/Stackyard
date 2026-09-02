@@ -1,19 +1,9 @@
-/* Regression tests for P11-4 and P11-5: a config card could render empty.
+/* Every card in a widget's config form has something to show. The form hides a
+   conditional field but not the card containing it, so a card whose every field
+   carries a `showIf` renders as an empty box with a heading.
 
-   Fields in a widget's config form can be conditional: a `showIf` hides one
-   until another has a particular value. The form hides the field, but not the
-   card containing it, so a card whose every field is conditional would render as
-   an empty box with a heading and nothing in it.
-
-   That cannot happen today. Every card in every shipped widget has at least one
-   field with no `showIf`, almost always the provider or mode selector that
-   decides what the rest of the card shows. So the finding describes something
-   the code permits rather than something the manifests produce.
-
-   Hiding empty cards at runtime would be code for a case that never occurs, and
-   would quietly paper over a manifest written that way. The rule worth stating
-   is that a card should always have something to show, and this is where a
-   manifest that breaks it gets caught.
+   Hiding empty cards at runtime would paper over a manifest written that way.
+   A manifest that breaks the rule is caught here instead.
 
    The visibility rule is imported rather than reimplemented, so this tests what
    the form actually does. */

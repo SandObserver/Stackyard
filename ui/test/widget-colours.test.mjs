@@ -11,12 +11,8 @@ import { fileURLToPath } from 'node:url';
    where a var() is not a colour. It carries the values instead, and this is
    what stops them drifting back.
 
-   They had drifted. A widget's blue was #0A84FF and the dashboard's was
-   #0091FF; the same happened to red, orange, yellow, green, teal, pink and
-   purple, each stuck at the value it had when that widget was written. Fifty
-   greys sat within a few units of a palette grey without being one.
-
-   Bespoke colours are listed below with what they are. The test is a
+   Without this each widget's colours stay at the value they had when it was
+   written. Bespoke colours are listed below with what they are. The test is a
    ratchet: a new colour has to be a palette value or be named here. */
 
 const widgets = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'widgets');
@@ -103,7 +99,7 @@ const BESPOKE = new Map(
 );
 
 /* Not just the page. A widget's demo fixture, its data module and its manifest
-   all carry colours, and those drifted too. */
+   all carry colours. */
 const SCANNED = /\.(html|js|json)$/;
 
 function files(dir, out = []) {

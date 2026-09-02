@@ -6,14 +6,11 @@ import { fileURLToPath } from 'node:url';
 
 /* The eleven text styles, at every Dynamic Type step the project declares.
 
-   The reference publishes each style as an absolute pair, Footnote is 13 on 18
-   with -0.08 tracking. The stylesheet stores a unitless ratio and an em instead,
-   so that a size scaled by --sc or by browser zoom carries its leading and
-   tracking with it. That conversion is the thing that can go wrong: a ratio
-   rounded too hard stops reproducing the pair it came from.
-
-   So the pairs are checked rather than the ratios. Each ratio is multiplied back
-   out by its own size and compared with what the reference publishes. */
+   The reference publishes each style as an absolute pair. The stylesheet stores
+   a unitless ratio and an em instead, so a size scaled by --sc or by browser
+   zoom carries its leading and tracking with it. A ratio rounded too hard stops
+   reproducing the pair it came from, so the pairs are checked rather than the
+   ratios. */
 
 const cssDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../css');
 const tokens = fs.readFileSync(path.join(cssDir, 'tokens.css'), 'utf8');
@@ -126,8 +123,8 @@ for (const [step, scale] of Object.entries(STEPS)) {
 }
 
 /* A rule that sets a size from the scale and takes its leading from somewhere
-   else is the failure this guards: the style looks applied and is not. Rules
-   that set their own line-height on purpose are listed, with the reason. */
+   else looks applied and is not. Rules that set their own line-height on
+   purpose are listed, with the reason. */
 const OWN_LINE_HEIGHT = new Set([
   '.badge', // a count in a fixed circle
   '#mob-search-pill .msp-icon',
@@ -153,10 +150,9 @@ test('a rule using a size token takes its leading from the scale', () => {
 
 /* Radii that have to follow the thing they round.
 
-   An app icon's corner is 22.37% of its width, and the grid draws two widths: 72
-   with a label under it and 78 without. A fixed radius lands on the ratio at one
-   of them and is wrong at the other, which is what a literal 16 and a literal 15
-   were doing.
+   An app icon's corner is 22.37% of its width, and the grid draws two widths:
+   72 with a label under it and 78 without. A fixed radius lands on the ratio at
+   one of them and is wrong at the other.
 
    A widget tile's corner is 28 at design size, and WIDGET_DESIGN's small is 170
    square against the reference's 165, so it is the reference value unchanged. It

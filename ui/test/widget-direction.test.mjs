@@ -2,10 +2,9 @@
    dashboard mirror properly. The System Summary is the deliberate exception.
 
    Its content is percentages, byte counts and sparklines rather than prose.
-   Mirroring moved the value column to the right and ran each sparkline's time
-   axis from right to left, which reads as a rendering fault rather than as a
-   translation, and the platform guidance keeps content with its own inherent
-   directionality unmirrored.
+   Mirroring runs each sparkline's time axis backwards, which reads as a
+   rendering fault rather than as a translation. Content with its own inherent
+   directionality stays unmirrored.
 
    The exception lives on the widget's own root, so the document still carries
    the page's language and direction for anything that reads them, including the

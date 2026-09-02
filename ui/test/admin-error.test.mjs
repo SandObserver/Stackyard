@@ -1,9 +1,6 @@
-/* Regression tests for the frontend half of the structured error contract (P11-3).
-
-   ui/js/admin-error.js decides what the admin UI does about a failure. It
-   replaces the substring matching in admin-app-form.js `fetchBadge`, which
-   looked for '401' or 'ECONNREFUSED' inside the error text, broke silently, and
-   had no test at all.
+/* The frontend half of the structured error contract. ui/js/admin-error.js
+   decides what the admin UI does about a failure, keying off the kind the API
+   sends rather than matching substrings in the error text.
 
    The backend half lives in api/test/api-error.test.js. The vocabulary check
    below is the seam between them: a kind added on one side and forgotten on the
@@ -51,9 +48,8 @@ test('an upstream 500 does not suggest credentials', () => {
   assert.equal(badgeErrorAdvice({ kind: KIND.UPSTREAM, detail: { status: 500 } }).openAuth, false);
 });
 
-/* This is the misfire the audit entry did not mention: the old `isAuth` branch
-   matched 'Unauthori', which is the text of our OWN session-expiry error, so an
-   expired admin session told the user to add an upstream API key. */
+/* Matching on 'Unauthori' catches this project's own session-expiry error, so
+   an expired admin session advises the user to add an upstream API key. */
 test('our own expired session does not offer an upstream API key', () => {
   const a = badgeErrorAdvice({ kind: KIND.AUTH, message: 'Unauthorised' });
   assert.equal(a.openAuth, false, 'must not tick the Authentication toggle');
@@ -62,8 +58,7 @@ test('our own expired session does not offer an upstream API key', () => {
 });
 
 /* A private address is what most homelab installs point a badge at, and one
-   setting unblocks it. The API sends a reason code, never the address, so the
-   advice must key off the code. */
+   setting unblocks it. The API sends a reason code, never the address. */
 test('a blocked private address names the setting that allows it', () => {
   const message = 'The request was blocked.';
   const a = badgeErrorAdvice({ kind: KIND.BLOCKED, message, detail: { reason: 'private-address' } });

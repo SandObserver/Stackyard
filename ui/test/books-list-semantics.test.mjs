@@ -1,8 +1,6 @@
-/* The books shelf is a list, and it has to say so in markup.
-
-   The spines were divs carrying role="listitem" with no list above them, so the
-   role was dropped and each book reached a reader as unpositioned focusable
-   text with no count. They are `li` elements in a real `ul` now.
+/* The books shelf is a list, and it has to say so in markup. role="listitem"
+   with no list above it is dropped, and each book reaches a reader as
+   unpositioned focusable text with no count.
 
    The shelf itself cannot be that list: it also holds the two decorative ledge
    strips, which are not books. The list is nested inside it. */

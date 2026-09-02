@@ -4,13 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* docs/widgets.md against the contract it describes.
-
-   The guide is the whole specification of what a widget author may rely on, and
-   the two halves that had drifted are the ones nothing was checking: the iframe
-   URL grew `size`, `mobile` and `lang` while the guide still described only
-   `id`, and the widget page's Content-Security-Policy, which decides what a
-   frontend is allowed to load, was never written down at all.
+/* docs/widgets.md against the contract it describes. The guide is the whole
+   specification of what a widget author may rely on, and the two halves that
+   drift unwatched are the iframe URL's parameters and the widget page's
+   Content-Security-Policy.
 
    Pinned by the value, not by the sentence, for the same reason as
    api/test/security-doc.test.js: a test that matches wording turns every edit
@@ -73,8 +70,8 @@ test('the widget CSP the guide describes is the one nginx sends', () => {
   const section = doc.slice(at, doc.indexOf('\n### ', at + 5));
 
   /* Anchored on the delimiter: a widened list still contains "connect-src
-     'self'" as a prefix, so a loose match would pass while the guide's claim
-     that Stackyard is the only reachable host had stopped being true. */
+     'self'" as a prefix, so a loose match passes after Stackyard stops being
+     the only reachable host. */
   assert.match(csp[1], /connect-src 'self';/, 'connect-src widened; the guide says a widget can only call Stackyard');
   assert.match(section, /`connect-src` is `'self'`/);
 });

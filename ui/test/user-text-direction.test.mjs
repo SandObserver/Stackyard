@@ -1,18 +1,13 @@
-/* A name the user typed carries its own direction, which is not the interface's.
+/* A name the user typed carries its own direction, which is not the
+   interface's. A name that inherits the document's direction truncates from the
+   wrong end, losing the part that identifies it.
 
-   With the dashboard in Persian the document is right-to-left, so an English
-   app or folder name inherits that direction and truncates from the wrong end:
-   "Backup and Storage" rendered as "…nd Storage", losing the part that
-   identifies it. The reverse happens to a Persian name in an English
-   dashboard.
+   setUserText sets dir="auto", so each name resolves its own direction from its
+   first strong character and clips at its own end.
 
-   setUserText sets dir="auto", so each name resolves its own direction from
-   its first strong character and clips at its own end, whatever the interface
-   language.
-
-   This is a ratchet, not a unit test: the risk is a future render site setting
-   textContent from item.label directly and quietly reintroducing the bug. Any
-   new one has to go through setUserText or be listed here. */
+   This is a ratchet: a render site setting textContent from item.label directly
+   reintroduces the defect, so any new one goes through setUserText or is listed
+   here. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -57,9 +52,9 @@ test('setUserText is what the dashboard, folders, search and admin all use', () 
   }
 });
 
-/* The isolation belongs on the text, not on the block that holds it: `dir` sets
-   alignment as well as bidi, so marking the block made a Latin name drag its
-   row's alignment to the other edge. */
+/* The isolation belongs on the text, not on the block that holds it. `dir` sets
+   alignment as well as bidi, so marking the block drags the row's alignment to
+   the other edge. */
 test('setUserText isolates the name in a bdi and leaves the block alone', async () => {
   const { setUserText } = await import('../js/utils.js');
   const made = [];

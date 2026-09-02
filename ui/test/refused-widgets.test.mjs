@@ -4,18 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* A refused widget has to explain itself where it is missing from.
-
-   The reasons already travelled with /api/widgets and were rendered in exactly
-   one place: the config editor of a dashboard item already using that widget.
-   That is the one case a refused widget cannot produce for a new install, so a
-   widget whose manifest was refused simply never appeared in the type list and
-   the reason stayed in the container log.
+/* A refused widget has to explain itself where it is missing from. Rendering
+   the reason only in the config editor of an item already using that widget is
+   the one case a new install cannot reach, so the reason stays in the container
+   log.
 
    The wording and filtering are pure and tested in admin-logic.test.mjs. These
-   are the wiring: both places go through that one helper, and the picker path
-   renders it. Asserted as source text because the form builds DOM and there is
-   no browser here. */
+   are the wiring. Asserted as source text because the form builds DOM and there
+   is no browser here. */
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const form = fs.readFileSync(path.join(root, 'js/admin-widget-form.js'), 'utf8');

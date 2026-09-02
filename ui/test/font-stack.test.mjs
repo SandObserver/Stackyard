@@ -6,12 +6,6 @@ import { fileURLToPath } from 'node:url';
 
 /* One font stack across the project.
 
-   It had been written eight different ways: with and without 'SF Pro Display',
-   with and without 'SF Pro Text', with and without 'Helvetica Neue' or
-   system-ui. The dashboard asked for Display and the admin page for Text, and
-   most widgets asked for Display at 11px, which is the cut meant for large
-   sizes.
-
    -apple-system resolves to the system face and picks the optical cut for the
    size it is used at. Naming a cut pins it and defeats that, so no cut is
    named.

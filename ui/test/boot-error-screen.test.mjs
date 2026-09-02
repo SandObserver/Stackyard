@@ -1,12 +1,10 @@
-/* Regression tests for W-02: the API-down screen rendered its own keys.
+/* The API-down screen loads a catalog before it renders. The catalog is
+   otherwise loaded as the last statement of the try that fetches the config, so
+   a failed fetch skips it and t() answers with the key: the one screen the
+   dashboard can show in that state reads "home.apiDownTitle".
 
-   The catalog is loaded as the last statement of the try that fetches the
-   config. A failed fetch skips it, and t() answers with the key, so the only
-   screen the dashboard can show in that state read "home.apiDownTitle".
-
-   There is no DOM here and the project ships no test browser, so this drives
-   the two halves separately: that an uninitialised catalog really does return
-   keys, and that the error branch loads one before it renders. */
+   There is no DOM here and the project ships no test browser, so the two halves
+   are driven separately. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -77,9 +75,9 @@ test('every locale still carries the strings the screen needs', () => {
 
 /* ── A hung backend must not hold the boot veil ───────────────────────────── */
 
-/* A refused connection reached the error screen. A backend that accepts the
-   connection and never answers did not: boot() awaited both fetches with no
-   timeout, so the dashboard sat on a featureless veil indefinitely. */
+/* Both fetches carry a timeout. A backend that accepts the connection and
+   never answers otherwise leaves the dashboard on a featureless veil
+   indefinitely, where a refused connection reaches the error screen. */
 
 const boot = () => {
   const src = read('js/dashboard.js');
@@ -102,8 +100,8 @@ test('the timeout is long enough not to fire on a slow start', () => {
   assert.ok(ms <= 30000, `${ms}ms is long enough to read as a hang`);
 });
 
-/* An abort lands in the same catch as a refusal, so the screen it reaches is
-   the one W-02 fixed. */
+/* An abort lands in the same catch as a refusal, so it reaches the same
+   screen. */
 test('a timeout reaches the API-down screen, not a blank page', () => {
   const src = boot();
   assert.match(src, /catch \(e\)[\s\S]{0,120}configFailed = true/);

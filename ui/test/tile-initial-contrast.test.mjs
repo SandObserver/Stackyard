@@ -1,12 +1,7 @@
-/* Regression tests for W-26: fallback initials were white on any plate.
-
-   An app with no icon shows its first letter on the colour the user picked. The
-   ink was --on-tint, hardcoded white, at .85 alpha. Against the eight swatches
-   the picker offers, seven failed 1.4.3, and the badge default cleared neither
-   white nor black because the alpha weakened both.
-
-   The picker also has a free colour wheel, so a list of exceptions cannot close
-   this. The ink has to be computed, which is what these pin. */
+/* An app with no icon shows its first letter on the colour the user picked, so
+   the ink is computed. Hardcoded white fails 1.4.3 on seven of the eight
+   swatches the picker offers, and the picker's free colour wheel means a list
+   of exceptions cannot close it. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -72,7 +67,7 @@ test('the rule holds across the whole colour space, not just the swatches', () =
   assert.ok(worst.r >= AA, `rgb(${worst.hex}) measures ${worst.r.toFixed(2)}:1`);
 });
 
-/* White alone is what the defect was. If someone reverts to it, this says so. */
+/* White alone is the defect, so a revert to it is reported here. */
 test('a single fixed ink cannot pass, which is why the pair exists', () => {
   const { light } = inks();
   const failures = swatches().filter(s => contrastRatio(lumOf(light), lumOf(hex(s))) < AA);
@@ -96,8 +91,7 @@ test('the renderer measures the plate instead of assuming it', () => {
   assert.match(css, /\.fb\.fb-on-light\s*\{\s*color:var\(--on-tint-dark\)/);
 });
 
-/* One implementation. A second copy of the tone rule is how the palette
-   comments went stale before. */
+/* One implementation. A second copy of the tone rule drifts from this one. */
 /* The folder preview draws the same initial on the same user colour. */
 test('the folder preview initial is measured too', () => {
   const css = read('css/dashboard.css');

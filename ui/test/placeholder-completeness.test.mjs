@@ -1,11 +1,9 @@
-/* Regression tests for W-03: placeholders were styled one selector at a time.
+/* Placeholders are styled by a bare element default, not one selector at a
+   time. A field nobody remembered falls back to the user agent's grey, which
+   assumes a light page and fails 1.4.3 on these surfaces.
 
-   A field nobody remembered fell back to the user agent's grey, which assumes a
-   light page. On the dark surfaces here that measured 2.46:1, and 4.06:1 on the
-   first-run password dialog, against the 4.5 of WCAG 1.4.3.
-
-   The contrast gate could not see this: it measures declarations, and the
-   defect was an absence. These tests read the absence instead. */
+   The contrast gate cannot see this: it measures declarations, and the defect
+   is an absence. These tests read the absence instead. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -44,7 +42,7 @@ test('the default resolves to a colour, not to nothing', () => {
 });
 
 /* Every field that shows a placeholder, whether or not it has a rule of its
-   own. Without the default these were the ones falling through. */
+   own. */
 test('every placeholder in the markup is covered', () => {
   const markup = read('admin/index.html') + read('index.html');
   const fields = [...markup.matchAll(/<input\b[^>]*placeholder=/g)];

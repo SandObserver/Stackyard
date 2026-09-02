@@ -146,7 +146,7 @@ const FOOTPRINT = { small: [2, 2], medium: [4, 2], large: [4, 4], xlarge: [4, 6]
 const DESIGN = { small: [170, 170], medium: [360, 170], large: [360, 360], xlarge: [360, 540] };
 const ALL = Object.keys(FOOTPRINT).map(sz => ({ design: DESIGN[sz], span: FOOTPRINT[sz] }));
 
-/* The matrix W-01 was measured across, plus a short height for each width. */
+/* Every width one phone can report, plus a short height for each. */
 const VIEWPORTS = [
   [320, 568],
   [375, 667],
