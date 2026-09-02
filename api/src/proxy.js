@@ -286,7 +286,13 @@ function fetchJSON(raw, opts = {}) {
         const sc = res.statusCode ?? 0;
         if (sc >= 300 && sc < 400) {
           res.resume();
-          return done(reject, new Error(`Redirect blocked (${sc}). Use the final URL directly`));
+          const e = new Error(`Redirect blocked (${sc}). Use the final URL directly`);
+          /* Wording only, and a status this project read. Safe to show. */
+          /** @type {any} */ (e).vouchedMessage =
+            `The address answered with a redirect (HTTP ${sc}). Enter the address it points to.`;
+          /** @type {any} */ (e).kind = 'upstream';
+          /** @type {any} */ (e).detail = { status: sc };
+          return done(reject, e);
         }
         const bufs = [];
         let total = 0;

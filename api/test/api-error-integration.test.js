@@ -150,6 +150,17 @@ test('badge-proxy does not leak the upstream response body into detail', async (
   assert.ok(!JSON.stringify(r.body).includes('hunter2'));
 });
 
+test('badge-proxy explains a redirect instead of reporting an internal error', async () => {
+  upstreamStatus = 307;
+  upstreamBody = '';
+  const r = await post('/api/badge-proxy', { url: upstreamBase });
+  assert.equal(r.status, 502);
+  assert.equal(r.body.kind, KIND.UPSTREAM);
+  assert.equal(r.body.detail.status, 307);
+  assert.match(r.body.error, /redirect/i);
+  assert.ok(!r.body.error.includes(upstreamBase), 'the message names no address');
+});
+
 test('badge-proxy still succeeds on a 200', async () => {
   upstreamStatus = 200;
   upstreamBody = '{"count":3}';
