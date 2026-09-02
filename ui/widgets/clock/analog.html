@@ -22,8 +22,6 @@
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
   }
-  .disc-group { will-change: transform; }
-  .disc-group circle { mix-blend-mode: multiply; }
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
@@ -54,10 +52,19 @@ function _a11yLabel(now){
 
 const _reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* Every fill below is a finished colour, not a colour to blend. Browsers
+   disagree on the colour space they blend in, so the overlaps are drawn as
+   flat shapes. Recompute all seven together if a disc changes. */
 const DISC = {
-  hour:   { color:'#18B4F0', r:0.30 },
-  minute: { color:'#FC1878', r:0.345 },
-  second: { color:'#FC9C00', r:0.255 },
+  minute: { color:'#fe3a86', r:0.345 },
+  hour:   { color:'#3fbcf2', r:0.30 },
+  second: { color:'#fda632', r:0.255 },
+};
+const OVERLAP = {
+  minuteHour:       '#633680',
+  minuteSecond:     '#f00f14',
+  hourSecond:       '#577c40',
+  minuteHourSecond: '#5f2123',
 };
 const DIAL = {
   light: { bg:'#ffffff', fill:'#ffffff', date:'rgba(0,0,0,0.4)',  tick:'#ffffff', dot:'#1C1C1E' },
@@ -112,17 +119,46 @@ function buildShell(){
   } else { _dateText=null; }
 
   const dist=V*0.085;
-  _groups={};
-  for(const key of ['minute','hour','second']){
-    const d=DISC[key];
-    const g=el('g',{ class:'disc-group', transform:`rotate(0 ${cx} ${cy})` });
-    g.appendChild(el('circle',{ cx, cy:cy-dist, r:V*d.r, fill:d.color, 'fill-opacity':0.9 }));
-    const rOuter=cy-dist-V*d.r, tickLen=V*0.05, tw=V*0.014;
-    g.appendChild(el('line',{ x1:cx, y1:rOuter+tickLen, x2:cx, y2:rOuter,
-      stroke:dial.tick, 'stroke-width':tw, 'stroke-linecap':'round' }));
-    face.appendChild(g);
-    _groups[key]=g;
-  }
+  _groups={ minute:{discs:[],ticks:[]}, hour:{discs:[],ticks:[]}, second:{discs:[],ticks:[]} };
+
+  const defs=el('defs');
+  face.appendChild(defs);
+
+  const discOf=(key,attrs)=>{
+    const node=el('circle', Object.assign({ cx, cy:cy-dist, r:V*DISC[key].r }, attrs));
+    _groups[key].discs.push(node);
+    return node;
+  };
+  const tickOf=key=>{
+    const rOuter=cy-dist-V*DISC[key].r;
+    const node=el('line',{ x1:cx, y1:rOuter+V*0.05, x2:cx, y2:rOuter,
+      stroke:dial.tick, 'stroke-width':V*0.014, 'stroke-linecap':'round' });
+    _groups[key].ticks.push(node);
+    return node;
+  };
+  const clipOf=(id,key,attrs)=>{
+    const c=el('clipPath',{ id });
+    c.appendChild(discOf(key, attrs));
+    defs.appendChild(c);
+    return `url(#${id})`;
+  };
+
+  const inMinute=clipOf('clip-minute','minute',{});
+  const inHour=clipOf('clip-hour','hour',{});
+  const inMinuteHour=clipOf('clip-minute-hour','hour',{ 'clip-path':inMinute });
+
+  face.appendChild(discOf('minute',{ fill:DISC.minute.color }));
+  face.appendChild(tickOf('minute'));
+
+  face.appendChild(discOf('hour',{ fill:DISC.hour.color }));
+  face.appendChild(discOf('hour',{ fill:OVERLAP.minuteHour, 'clip-path':inMinute }));
+  face.appendChild(tickOf('hour'));
+
+  face.appendChild(discOf('second',{ fill:DISC.second.color }));
+  face.appendChild(discOf('second',{ fill:OVERLAP.minuteSecond, 'clip-path':inMinute }));
+  face.appendChild(discOf('second',{ fill:OVERLAP.hourSecond, 'clip-path':inHour }));
+  face.appendChild(discOf('second',{ fill:OVERLAP.minuteHourSecond, 'clip-path':inMinuteHour }));
+  face.appendChild(tickOf('second'));
 
   face.appendChild(el('circle',{ cx, cy, r:V*0.022, fill:dial.dot }));
 }
@@ -131,9 +167,24 @@ function render(smoothSeconds){
   const now=_now();
   const h=now.getHours(), m=now.getMinutes(), s=now.getSeconds(), ms=now.getMilliseconds();
   const cx=_vb/2, cy=_vb/2;
-  _groups.hour.setAttribute('transform',   `rotate(${((h%12)+m/60)*30} ${cx} ${cy})`);
-  _groups.minute.setAttribute('transform', `rotate(${(m+s/60)*6} ${cx} ${cy})`);
-  _groups.second.setAttribute('transform', `rotate(${(s+(smoothSeconds?ms/1000:0))*6} ${cx} ${cy})`);
+  const angle={
+    hour:   ((h%12)+m/60)*30,
+    minute: (m+s/60)*6,
+    second: (s+(smoothSeconds?ms/1000:0))*6,
+  };
+  /* A clip path inherits the transform of the shape that references it, so the
+     discs carry their position instead of a rotation. */
+  const dist=_vb*0.085;
+  for(const key in angle){
+    const rad=angle[key]*Math.PI/180;
+    const dx=cx+dist*Math.sin(rad), dy=cy-dist*Math.cos(rad);
+    for(const node of _groups[key].discs){
+      node.setAttribute('cx', dx);
+      node.setAttribute('cy', dy);
+    }
+    const t=`rotate(${angle[key]} ${cx} ${cy})`;
+    for(const node of _groups[key].ticks) node.setAttribute('transform', t);
+  }
 
   document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now));
   if(_showDate && _dateText){

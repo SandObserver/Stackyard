@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Folder tiles and the folder overlay announce their name in the chosen
   language, instead of appending an English word to it.
 
+- The analog clock's discs show the same overlap colours in every browser,
+  instead of hiding each other and the date in Firefox.
+
 - Settings now shows its confirmations, errors, pills, widget size names and
   connection-test results in the chosen language.
 
