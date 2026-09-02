@@ -23,155 +23,84 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.9.1 - 2026-08-30
-
-### Added
-
-- Live Activity can show several labelled values from one poll, each with its
-  own name, colour, unit and threshold. The badge shows the first label that
-  reaches its threshold; the rest open on hover, tap or keyboard focus.
-
-- Folder badges now show the badge of the app inside them that is reporting,
-  rather than a total.
-
-- A startup warning when `CONFIG_PATH` or `ICONS_PATH` points at a directory
-  that does not exist.
-
-- Release images carry an SBOM attestation, verifiable with
-  `cosign verify-attestation`. See `docs/security.md`.
-
-- Support for Windows High Contrast. The wallpaper and the blurred materials are
-  dropped, the current page is marked by shape as well as colour, and badges keep
-  their status colour.
-
-- Settings states which of an app's labels the badge will show.
-
-- `?lang=en-XA` renders the interface expanded and accented, and `?lang=cimode`
-  renders every string as its key. See `docs/i18n.md`.
+### 1.9.2 - 2026-09-02
 
 ### Changed
 
-- Badge text is white wherever white is readable, instead of whichever ink
-  scores higher.
+- Search on a phone now closes with a Cancel button beside the field instead of
+  a circle at the top of the screen.
 
-- Badges show the number alone on every layout, so a unit cannot make one wider
-  than the icon it marks. The unit stays in the popover and in the badge's
-  accessible name.
+- Fetch now says that a full API URL is needed when the badge address names a
+  host only, including when the address fails to answer.
 
-- The home screen fits more columns and rows as the window grows, instead of
-  scaling four columns to fill it.
+- A badge address that redirects now says so, instead of reporting an internal
+  error.
 
-- A multi-value badge shows a wider second pill behind the first, so the extra
-  values read as a stack.
+- Deleting an item, deleting a folder, signing out all devices and turning off
+  password protection now ask in the app's own dialog, in the chosen language.
 
-- The Compose file caps CPU with `cpus` instead of a relative share, bounds the
-  Node heap to the memory limit, and runs an init process.
+### Removed
+
+- The DNS widget no longer offers a medium size. Existing medium DNS widgets
+  become small.
 
 ### Fixed
 
-- The signature verification commands in `docs/security.md` now name the
-  repository as it is spelled, so they verify a release image instead of
-  rejecting it.
+- Settings now shows the same Unsplash wallpaper as the dashboard, instead of
+  picking a new photo on every visit.
 
-- Scripts, stylesheets, translation catalogs and the web manifest no longer
-  carry a duplicate `Content-Type` header.
+- The search overlay and the wallpaper source list announce their own names
+  again, instead of names meant for other controls.
 
-- Counted messages now use each language's own plural rules. French and Persian
-  put a count of zero in the plural form. The import confirmation and the badge
-  label limit were still counting in English.
+- Folder tiles and the folder overlay announce their name in the chosen
+  language, instead of appending an English word to it.
 
-- The Pull Requests widget now translates its caption, and the clock takes its
-  day and month names from the reader's locale. Both were always English.
+- The analog clock's discs show the same overlap colours in every browser,
+  instead of hiding each other and the date in Firefox.
 
-- Persian now uses the import, export, widget and file terms that shipped
-  software uses, one word per concept, and no longer leaves "Import" in English
-  in one message.
+- Settings now shows its confirmations, errors, pills, widget size names and
+  connection-test results in the chosen language.
 
-- Settings now translates its accessible names, its remaining field labels and
-  its page title, which were English in every language.
+- Persian now uses one agreed word per concept for address, password, test and
+  system, instead of two.
 
-- German, Spanish, French, Chinese and Persian now use one agreed word per
-  concept, and no longer leave "Logging", "API key", "Collection ID" or
-  "Authentication Proxy" in English.
+- The settings toggle, the dropdown chevron and the update dot now follow the
+  text direction in right-to-left languages.
 
-- A tile label is now cut at the end of its own name in Safari too. On a
-  right-to-left dashboard a Latin name lost its beginning instead.
+- Settings no longer accumulates memory as multi-select fields are redrawn.
 
-- Opening and saving an app no longer rewrites a colour that was not changed.
+- Folder tiles and the folder rows in Settings are real buttons, so they behave
+  as controls for the keyboard and for screen readers.
 
-- Admin form toggles now carry accessible names.
+- A screen reader can no longer read the Settings page behind an open dialog.
 
-- `CONFIG_PATH` and `ICONS_PATH` now take effect. The container was overriding
-  both, so a config file moved elsewhere was ignored.
+- A screen reader can no longer read the dashboard behind an open folder.
 
-- Widgets on the phone layout no longer render taller than the card that clips
-  them.
+- A screen reader can no longer read the dashboard behind the first-run
+  password prompt.
 
-- In right-to-left languages every page after the first is reachable again. The
-  pages moved off the wrong side of the screen, and the arrow keys and swipes
-  ran backwards.
+- A screen reader can no longer read the dashboard behind the search overlay.
 
-- Arrow keys and a mouse drag now change page on the phone layout. A second page
-  was unreachable without a touchscreen.
+- Dragging a row in Settings no longer slows down as the list grows.
 
-- The screen shown when the API is unreachable no longer renders raw translation
-  keys.
+- Auto-scrolling while dragging a row now moves at the same speed on every
+  display.
 
-- Placeholder text in fields without a rule of their own is now readable. The
-  first-run password dialog was the worst affected.
+- Apps in the folder picker show their icon instead of a broken image.
 
-- The initial shown for an app with no icon takes its colour from the tile
-  behind it. White was unreadable on most of the colours the picker offers.
+- Medium, large and extra-large widgets are their full width again.
 
-- The badge popover can be hovered without closing, and no longer truncates the
-  label names it exists to show.
-
-- The page indicator now takes its tint from the wallpaper behind it, and marks
-  the current page by shape as well as colour. Over a light wallpaper the whole
-  indicator was invisible.
-
-- A tile's badge is now part of what a screen reader reads for that tile. It was
-  unreachable there, and each badge announced itself on the poll instead.
-
-- The dashboard heading now sits inside a landmark.
-
-- The search field's placeholder is now readable over any wallpaper.
-
-- Each widget now shows an icon for what it is in the Settings list, instead of
-  every widget of the same size sharing one.
-
-- The Settings entry in search now opens in the same tab and no longer shows the
-  arrow that means a link leaves the dashboard.
-
-- The boot screen shows a quiet indicator when loading takes more than a moment,
-  instead of an empty rectangle.
-
-- In Settings, the logging note now sits with the row it describes, and the host
-  address note says what it does rather than naming the mechanism.
-
-- Numbers on the dashboard now use the digits of the reader's locale. A Persian
-  reader whose device asks for Persian digits sees them in badges, the weather,
-  the system summary, disk health, Pi-hole and reading progress; one whose device
-  asks for Latin digits keeps those.
-
-- A configuration whose folder points at an item that is not in it is now
-  rejected, naming the missing entries, instead of saving an empty folder.
-
-- The light theme's accent hues now match the current reference kit. Nine had
-  drifted to an earlier generation, along with the separator and one fill.
-
-- A tile whose label is too long to fit now shows the full name on hover.
-
-- Save is the same button on every Settings pane. It was green on two panes and
-  teal on a third, for one action.
-
-- In right-to-left languages a badge now sits on the leading corner of its tile,
-  the badge popover follows it, a Settings row's title and subtitle share an
-  edge, and the Now Playing arrows point the way they read.
+- A failing badge shows why on hover or tap, instead of only in its name.
 
 ### Security
 
-- The image now installs Alpine's current security updates at build time.
+- The dashboard and settings pages no longer permit inline styles.
+
+- A custom widget's page is sandboxed and can no longer navigate the dashboard
+  away.
+
+- Released images carry the operating system security patches available at
+  build time. The step that applies them was being served from a build cache.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
