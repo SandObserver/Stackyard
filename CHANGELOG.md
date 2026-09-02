@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Search on a phone now closes with a Cancel button beside the field instead of
+  a circle at the top of the screen.
+
 - Fetch now says that a full API URL is needed when the badge address names a
   host only.
 
