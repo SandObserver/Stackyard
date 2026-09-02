@@ -13,7 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a circle at the top of the screen.
 
 - Fetch now says that a full API URL is needed when the badge address names a
-  host only.
+  host only, including when the address fails to answer.
+
+- A badge address that redirects now says so, instead of reporting an internal
+  error.
 
 - Deleting an item, deleting a folder, signing out all devices and turning off
   password protection now ask in the app's own dialog, in the chosen language.

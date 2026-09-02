@@ -21,6 +21,7 @@ import {
   toastMs,
   toastHoldMs,
   isBareHostUrl,
+  failureIsMissingApiPath,
   BLOCK,
 } from '../js/admin-logic.js';
 /* The real strength check, so these assert the rule the save actually applies. */
@@ -557,4 +558,13 @@ test('an address carrying a path is not bare', () => {
 
 test('isBareHostUrl rejects what it cannot parse', () => {
   for (const u of ['', '   ', 'http://', undefined, null, 42]) assert.equal(isBareHostUrl(u), false, String(u));
+});
+
+test('a failed fetch of a bare address reports the missing API path', () => {
+  assert.equal(failureIsMissingApiPath('https://seerr.example.com', { tone: 'error' }), true);
+  assert.equal(failureIsMissingApiPath('https://seerr.example.com/api/v1/request/count', { tone: 'error' }), false);
+});
+
+test('an expired session is reported as itself, whatever the address', () => {
+  assert.equal(failureIsMissingApiPath('https://seerr.example.com', { sessionExpired: true }), false);
 });

@@ -222,6 +222,7 @@
     "httpError": "HTTP error {status}",
     "connectedNoValues": "Connected, no numeric values found",
     "needsApiPath": "Connected, but this address has no API path. Enter the service's full API URL.",
+    "needsApiPathError": "This address has no API path. Enter the service's full API URL.",
     "foundValues_one": "Found {count} value",
     "foundValues_other": "Found {count} values"
   },

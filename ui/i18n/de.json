@@ -222,6 +222,7 @@
     "httpError": "HTTP-Fehler {status}",
     "connectedNoValues": "Verbunden, keine numerischen Werte gefunden",
     "needsApiPath": "Verbunden, aber diese Adresse hat keinen API-Pfad. Geben Sie die vollständige API-URL des Dienstes ein.",
+    "needsApiPathError": "Diese Adresse hat keinen API-Pfad. Geben Sie die vollständige API-URL des Dienstes ein.",
     "foundValues_one": "{count} Wert gefunden",
     "foundValues_other": "{count} Werte gefunden"
   },

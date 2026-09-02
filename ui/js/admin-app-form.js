@@ -2,7 +2,13 @@ import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
 import { state } from '/js/admin-state.js?v=7d68e98e';
-import { isDockBlocked, DOCK_MAX, clearsStoredSecret, isBareHostUrl } from '/js/admin-logic.js?v=0aebc197';
+import {
+  isDockBlocked,
+  DOCK_MAX,
+  clearsStoredSecret,
+  isBareHostUrl,
+  failureIsMissingApiPath,
+} from '/js/admin-logic.js?v=dcf7c37d';
 import { t } from '/js/i18n.js?v=e644a5c5';
 import {
   toast,
@@ -13,9 +19,9 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=465f9207';
+} from '/js/admin-shared.js?v=132c869f';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=97a90a94';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=3a61c02f';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {
@@ -834,11 +840,14 @@ async function fetchBadge() {
   } catch (e) {
     /* Branch on the error's `kind`, never on words inside its message. */
     const advice = badgeErrorAdvice(e);
+    const missingPath = failureIsMissingApiPath(url, advice);
     if (st) {
-      st.style.cssText = 'margin-top:4px;color:' + (advice.tone === TONE.WARN ? 'var(--warning)' : 'var(--danger)');
-      st.textContent = advice.tone === TONE.WARN ? advice.message : '✗ ' + advice.message;
+      const tone = missingPath || advice.tone === TONE.WARN ? 'var(--warning)' : 'var(--danger)';
+      st.style.cssText = 'margin-top:4px;color:' + tone;
+      if (missingPath) st.textContent = t('app.needsApiPathError');
+      else st.textContent = advice.tone === TONE.WARN ? advice.message : '✗ ' + advice.message;
     }
-    if (advice.openAuth) {
+    if (advice.openAuth && !missingPath) {
       const authCb = inpById('auth-en');
       const authSub = el('auth-sub');
       if (authCb && !authCb.checked) {

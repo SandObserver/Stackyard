@@ -222,6 +222,7 @@
     "httpError": "خطای HTTP {status}",
     "connectedNoValues": "متصل شد، هیچ مقدار عددی یافت نشد",
     "needsApiPath": "متصل شد، اما این آدرس مسیر API ندارد. آدرس API کامل سرویس را وارد کنید.",
+    "needsApiPathError": "این آدرس مسیر API ندارد. آدرس API کامل سرویس را وارد کنید.",
     "foundValues_one": "{count} مقدار یافت شد",
     "foundValues_other": "{count} مقدار یافت شد"
   },
