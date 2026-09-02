@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The Books widget now offers a medium size, showing more of the shelf.
+
 ## [1.9.2] - 2026-09-02
 
 ### Changed

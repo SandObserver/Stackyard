@@ -1,4 +1,4 @@
-const CAP = 8;
+const CAP = 16;
 const enc = encodeURIComponent;
 const clamp01 = n => Math.min(1, Math.max(0, n));
 const cap = arr => (Array.isArray(arr) ? arr : []).slice(0, CAP);

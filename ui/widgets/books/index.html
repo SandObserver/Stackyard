@@ -89,7 +89,10 @@
   document.getElementById('lbl').textContent = wt('ui.reading', 'READING');
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const API='/api';
-  const id=new URLSearchParams(location.search).get('id')||'';
+  const params=new URLSearchParams(location.search);
+  const id=params.get('id')||'';
+  const size=params.get('size')==='medium'?'medium':'small';
+  const SHOW=size==='medium'?16:8;
   const POLL_MS=300000;
   const PALETTE=['#8E8E93','#008575','#956D51','#48484A','#008198','#A16A00','#C55300'];
   const SRC_LABEL={recently:'RECENTLY ADDED',unread:'ON DECK',list:'READING'};
@@ -168,7 +171,7 @@
       card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head')) go(); });
       card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
     }
-    poll({ interval:POLL_MS, render:d=>{ lbl.textContent=SRC_LABEL[d.source]||'READING'; render(decorate(Array.isArray(d.books)?d.books:[])); } });
+    poll({ interval:POLL_MS, render:d=>{ lbl.textContent=SRC_LABEL[d.source]||'READING'; render(decorate((Array.isArray(d.books)?d.books:[]).slice(0,SHOW))); } });
   }
   boot();
 </script>

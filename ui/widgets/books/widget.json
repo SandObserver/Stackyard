@@ -3,7 +3,8 @@
   "label": "widget.label",
   "glyph": "shelf",
   "sizes": [
-    "small"
+    "small",
+    "medium"
   ],
   "card": "dark",
   "fields": [
