@@ -2,6 +2,7 @@ import { toast, ag, ap } from '/js/admin-shared.js?v=76c76594';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=e644a5c5';
 import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=d17394da';
+import { confirmText } from '/js/modal.js?v=11fa1eff';
 import { el, inp, q, qa, setUserText } from '/js/utils.js?v=d949e985';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
@@ -201,7 +202,14 @@ export function loadSettings(c) {
     location.reload();
   });
   secRevoke?.addEventListener('click', async () => {
-    if (!confirm(t('confirm.revokeSessions'))) return;
+    const ok = await confirmText({
+      title: t('general.signOutEverywhere'),
+      text: t('confirm.revokeSessions'),
+      confirmLabel: t('general.signOutEverywhereBtn'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) return;
     secRevoke.disabled = true;
     try {
       await ap('/api/auth/revoke-sessions', {});
@@ -380,12 +388,18 @@ async function saveServer() {
 
   /* Switching protection off deletes the stored password. Ask before anything
      is written. */
-  if (
-    clearsStoredPassword({ enabled, wasEnabled: _authEnabled, passwordSet: _passwordSet }) &&
-    !confirm(t('confirm.clearPassword'))
-  ) {
-    await syncAuthFromServer();
-    return;
+  if (clearsStoredPassword({ enabled, wasEnabled: _authEnabled, passwordSet: _passwordSet })) {
+    const ok = await confirmText({
+      title: t('general.passwordProtection'),
+      text: t('confirm.clearPassword'),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (!ok) {
+      await syncAuthFromServer();
+      return;
+    }
   }
 
   try {
