@@ -35,14 +35,19 @@ test('nowplaying sessions match the widget contract', () => {
 
 test('books body matches the widget contract', () => {
   const b = demoFn('books')(ctx());
-  assert.ok(b.books.length >= 1);
-  for (const bk of b.books) {
+  assert.equal(b.shelves.length, 3, 'the large size draws three shelves');
+  const all = b.shelves.flatMap(s => s.books);
+  for (const sh of b.shelves) {
+    assert.ok(['recently', 'unread', 'list'].includes(sh.source));
+    assert.ok(sh.books.length >= 16, 'a shelf has to fill the widest tile');
+  }
+  for (const bk of all) {
     assert.equal(typeof bk.title, 'string');
     assert.equal(typeof bk.finished, 'boolean');
     assert.ok(bk.progress === null || (bk.progress >= 0 && bk.progress <= 1));
   }
   assert.ok(
-    b.books.some(bk => bk.finished),
+    all.some(bk => bk.finished),
     'at least one finished book',
   );
 });
