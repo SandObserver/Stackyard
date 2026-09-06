@@ -19,6 +19,13 @@ what the module offers: `_internals` for functions reached directly, `_reset*`
 for the hooks that clear state between tests. Anything else exported is API, and
 is exported under the name it is defined with.
 
+## Tests
+
+A change to behaviour lands with its tests, in the same pull request. New
+functionality needs tests for that functionality. A bug fix needs a test that
+fails without the fix. The coverage floor below enforces part of this rule; it
+is not the whole of it.
+
 ## Before opening a PR
 
 These are the checks CI runs, in the order it runs them. They are defined once,
@@ -41,6 +48,9 @@ docker build -t stackyard:ci .
 
 CodeQL also runs on every pull request. A finding it reports has to be resolved
 before merge.
+
+Trivy also scans the image built above. A HIGH or CRITICAL finding with a fix
+available fails the run. The threshold is in [SECURITY.md](SECURITY.md).
 
 - **`changelog-check.js`** verifies the structure of `CHANGELOG.md`: the Keep a
   Changelog header, the six section names, a real date on every released
@@ -77,3 +87,4 @@ before merge.
 - Translations: [docs/i18n.md](docs/i18n.md)
 - Security model / reporting: [docs/security.md](docs/security.md)
 - Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Who maintains this and how decisions are made: [GOVERNANCE.md](GOVERNANCE.md)

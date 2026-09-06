@@ -95,6 +95,17 @@ runs:
       shell: bash
       run: docker build -t stackyard:ci .
 
+    # Keep the severity and ignore-unfixed the same as the release gate.
+    - name: Scan the image
+      if: inputs.mode == 'test'
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      with:
+        image-ref: stackyard:ci
+        format: table
+        severity: HIGH,CRITICAL
+        ignore-unfixed: true
+        exit-code: '1'
+
     # Release only, and last: this rewrites files. --check above proves every
     # asset reference carries a stamp, but not that the stamp is current, so
     # this pass is what makes the shipped stamps correct.
