@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The page indicator is hidden when the dashboard has one page.
+
 - The demo dashboard shows the Books widget at its large size.
 
 ### Fixed
