@@ -6,8 +6,12 @@
   <a href="https://github.com/SandObserver/stackyard/pkgs/container/stackyard"><img alt="ghcr.io" src="https://img.shields.io/badge/ghcr.io-stackyard-2496ED?logo=github&logoColor=white"></a>
   <a href="https://hub.docker.com/r/sandobserver/stackyard"><img alt="Docker Hub" src="https://img.shields.io/badge/docker%20hub-stackyard-2496ED?logo=docker&logoColor=white"></a>
   <a href="https://github.com/SandObserver/stackyard/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/SandObserver/stackyard"></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/SandObserver/stackyard/actions/workflows/test.yml"><img alt="Tests Status" src="https://github.com/SandObserver/stackyard/actions/workflows/test.yml/badge.svg"></a>
   <a href="https://www.bestpractices.dev/projects/14462"><img alt="OpenSSF Best Practices" src="https://www.bestpractices.dev/projects/14462/badge"></a>
+  <a href="https://www.bestpractices.dev/projects/14462"><img alt="OpenSSF Baseline" src="https://www.bestpractices.dev/projects/14462/baseline"></a>
 </p>
 
 <p align="center"><img src="docs/screenshot.png" width="85%" alt="Stackyard dashboard"></p>
