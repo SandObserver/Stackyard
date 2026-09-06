@@ -11,7 +11,9 @@ The admin writes the whole config with `POST /api/config`; the dashboard reads i
 
 Two floors, with two different rules.
 
-**Desktop: Safari 17.6 and newer, and current Chrome, Edge and Firefox.** The floor is the newest Safari the maintainer's test machine runs. It moves when that machine moves, not on a date. A desktop user below the floor can switch to Chrome or Firefox.
+**Desktop: Safari 17.6 and newer, and current Chrome, Edge and Firefox.** The floor is a fixed version. It moves only when a deliberate decision raises it, never because a machine was updated. A desktop user below the floor can switch to Chrome or Firefox.
+
+The test machine is separate from the floor. Primary verification runs on the newest Safari, Chrome and Firefox installed there. Checks at the floor itself are best effort, because no browser at the floor is installed. Treat a floor-only regression as something the test suite must catch, not something a manual pass will find.
 
 **iOS: Safari 17.0 and newer.** On iOS every browser is Safari underneath, so a user below the floor has no other browser to switch to. The floor is the lowest iOS Safari that supports every platform feature this codebase uses. The Popover API sets it, at 17.0. Raise it only when the code needs a feature the floor does not have.
 
