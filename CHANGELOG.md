@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The demo dashboard shows the Books widget at its large size.
 
+### Fixed
+
+- The tab icon now carries its own background, so it shows the same mark in
+  every browser.
+
 ## [1.9.2] - 2026-09-02
 
 ### Changed
