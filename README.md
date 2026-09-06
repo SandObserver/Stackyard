@@ -7,6 +7,7 @@
   <a href="https://hub.docker.com/r/sandobserver/stackyard"><img alt="Docker Hub" src="https://img.shields.io/badge/docker%20hub-stackyard-2496ED?logo=docker&logoColor=white"></a>
   <a href="https://github.com/SandObserver/stackyard/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/SandObserver/stackyard"></a>
   <a href="https://github.com/SandObserver/stackyard/actions/workflows/test.yml"><img alt="Tests Status" src="https://github.com/SandObserver/stackyard/actions/workflows/test.yml/badge.svg"></a>
+  <a href="https://www.bestpractices.dev/projects/14462"><img alt="OpenSSF Best Practices" src="https://www.bestpractices.dev/projects/14462/badge"></a>
 </p>
 
 <p align="center"><img src="docs/screenshot.png" width="85%" alt="Stackyard dashboard"></p>
@@ -96,7 +97,7 @@ Stackyard targets WCAG 2.2 level AA and is partially conformant. Every control i
 
 ## Contributing
 
-Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/frontend.md](docs/frontend.md). Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md).
+Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/frontend.md](docs/frontend.md). Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md). Who maintains Stackyard and how decisions are made is in [GOVERNANCE.md](GOVERNANCE.md).
 
 ## Changelog
 
