@@ -44,15 +44,13 @@ npm run format:check
 npm run typecheck
 npm run typecheck:ui
 docker build -t stackyard:ci .
-trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 stackyard:ci
 ```
 
 CodeQL also runs on every pull request. A finding it reports has to be resolved
 before merge.
 
-The Trivy step scans the image the pull request would produce. A HIGH or
-CRITICAL finding that has a fix available fails the run. The threshold and the
-schedule are in [SECURITY.md](SECURITY.md).
+Trivy also scans the image built above. A HIGH or CRITICAL finding with a fix
+available fails the run. The threshold is in [SECURITY.md](SECURITY.md).
 
 - **`changelog-check.js`** verifies the structure of `CHANGELOG.md`: the Keep a
   Changelog header, the six section names, a real date on every released

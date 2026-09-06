@@ -95,10 +95,7 @@ runs:
       shell: bash
       run: docker build -t stackyard:ci .
 
-    # Scans the image the pull request would produce, so a base image or package
-    # that gained a fixable HIGH or CRITICAL finding fails here rather than at
-    # release. Same severity and ignore-unfixed as the release gate and the
-    # weekly scan of the published image; the three must stay in step.
+    # Keep the severity and ignore-unfixed the same as the release gate.
     - name: Scan the image
       if: inputs.mode == 'test'
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
