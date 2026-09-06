@@ -393,8 +393,10 @@ function buildDesktop() {
     strip.appendChild(p);
   });
   const dots = el('dots');
+  dots.style.cssText = '';
   dots.replaceChildren();
   pages.forEach((_, i) => dots.appendChild(mkDot(i, pages.length, 0, goTo)));
+  dots.hidden = pages.length < 2;
   const dk = el('dock');
   dk.replaceChildren();
   dock.forEach(item => dk.appendChild(mkDock(item)));
@@ -487,6 +489,7 @@ function syncMobPages() {
   const dots = el('dots');
   dots.replaceChildren();
   for (let i = 0; i < domCount; i++) dots.appendChild(mkDot(i, domCount, pg, goTo));
+  dots.hidden = domCount < 2;
   const pillDots = q('.msp-dots');
   if (pillDots) {
     while (pillDots.children.length < domCount) {

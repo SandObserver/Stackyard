@@ -199,3 +199,13 @@ test('the direction is read from the document, not stored', () => {
     /export const pageDir = \(\) => \(?getComputedStyle\(document\.documentElement\)\.direction === 'rtl' \? -1 : 1\)?;/,
   );
 });
+
+test('the pager is hidden when there is one page', () => {
+  assert.match(dashboard, /dots\.hidden = pages\.length < 2/);
+  assert.match(dashboard, /dots\.hidden = domCount < 2/, 'overflow pages can add a second page later');
+});
+
+test('the hidden pager is not painted', () => {
+  const css = read('css/dashboard.css');
+  assert.match(css, /#dots\[hidden\] \{ display:none \}/, 'display:flex on #dots beats the hidden attribute');
+});

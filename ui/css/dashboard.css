@@ -367,6 +367,7 @@
       --dots-ink:rgba(0,0,0,.85);
     }
     #dots[data-tone="dark"] .dot { border-color:rgba(0,0,0,.55) }
+    #dots[hidden] { display:none }
 
     /* ── Search pill — mobile only ── */
     #mob-search-pill {
