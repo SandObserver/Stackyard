@@ -75,3 +75,13 @@ test('both layouts drop the settings tile while the dashboard is empty', () => {
   assert.match(read('js/dashboard.js'), /if \(bare && item\.system\) continue;/);
   assert.match(read('js/ui.js'), /!\(bare && i\.system\)/);
 });
+
+test('the mobile search pill is hidden while the dashboard is empty', () => {
+  const src = read('js/ui.js');
+  assert.match(src, /display:\$\{bare \? 'none' : 'flex'\}/);
+  const build = src.slice(src.indexOf('export function buildMobile'));
+  assert.ok(
+    build.indexOf('const bare = isDashboardEmpty') < build.indexOf("display:${bare ? 'none' : 'flex'}"),
+    'bare is assigned before the pill is sized',
+  );
+});

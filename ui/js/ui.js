@@ -787,7 +787,7 @@ export function buildMobile() {
     _pdotPad = Math.round(14 * sc);
   const pillDotsW = pages.length * (_pdotSz + _pdotGap) - _pdotGap + _pdotPad * 2;
   const pill = el('mob-search-pill');
-  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dh + pillGap}px;transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:flex;z-index:500;`;
+  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dh + pillGap}px;transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:${bare ? 'none' : 'flex'};z-index:500;`;
 
   const pillNew = /** @type {HTMLElement} */ (pill.cloneNode(true));
   const pillNewDots = q('.msp-dots', pillNew);
