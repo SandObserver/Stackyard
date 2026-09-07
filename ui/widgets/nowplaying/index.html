@@ -39,6 +39,11 @@
   .sub{color:#48484A;margin-top:auto}
   .player{color:#8E8E93}
   .idle .title{color:#636366;font-weight:600}
+  /* The cassette label is light card stock, so the shared caption follows it. */
+  .sticker{--wt-cap-color:#636366}
+  .np-cap{flex:none;margin-top:auto}
+  /* .title sets display, which outranks the hidden attribute's UA rule. */
+  .sticker [hidden]{display:none}
 
   .window{position:absolute;left:14px;right:14px;top:94px;bottom:14px;
     background:radial-gradient(135% 135% at 50% 20%,#636366,#48484A 58%,#48484A);
@@ -92,6 +97,7 @@
       <div class="title" id="title">Nothing playing</div>
       <div class="sub" id="sub"></div>
       <div class="player" id="player"></div>
+      <div class="np-cap" id="np-cap" hidden></div>
     </div>
     <div class="window">
       <!-- Strand first. The tape spool paints over its left end, so the join
@@ -119,7 +125,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=432c5712';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
 await loadStrings();
 document.getElementById('title').textContent = wt('ui.nothingPlaying', 'Nothing playing');
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
@@ -155,6 +161,12 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     if(s.state==='paused') t+=' ('+wt('ui.paused','paused')+')';
     return t;
   }
+  /* The three label lines and the caption occupy the same stock. Only one set
+     is ever shown. */
+  function showText(on){
+    for(const el of [titleEl,subEl,playerEl]) el.hidden=!on;
+  }
+
   function paint(announce){
     const s=sessions[idx];
     reelEl.parentElement.style.color=COLORS[provider]||'#8E8E93';
@@ -218,8 +230,21 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
       wEl.addEventListener('click',openHref);
       wEl.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openHref(); } });
     }
-    poll({ fetch:npFetch, interval:TICK_MS, render:apply,
-      onError:({everOk})=>{ if(!everOk){ sessions=[]; paint(false); } } });
+    /* The tape goes grey and the label says why. Idle already means "nothing
+       playing", so a failure must not borrow it. */
+    const state=errorState({ root:wEl, content:[document.querySelector('.window')],
+      caption:document.getElementById('np-cap') });
+
+    poll({ fetch:npFetch, interval:TICK_MS,
+      render:d=>{ showText(true); state.ok(); apply(d); },
+      onError:({error,everOk,stale,since})=>{
+        if(!everOk||stale){
+          sessions=[]; idx=0; paint(false);
+          showText(false);
+          const line=state.fail(error,{since,inert:everOk});
+          wEl.setAttribute('aria-label', line);
+        }
+      } });
   }
   boot();
 </script>

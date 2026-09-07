@@ -23,5 +23,6 @@
   "ui.failed": "Failed",
   "ui.ageAlert": "Age Alert",
   "ui.bay": "Bay {n}",
-  "ui.bayEmpty": "Bay {n}: empty"
+  "ui.bayEmpty": "Bay {n}: empty",
+  "ui.noDrives": "No drives reported"
 }

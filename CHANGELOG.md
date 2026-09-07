@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The demo dashboard shows the Books widget at its large size.
 
+- Widgets keep their layout when a service fails, and report the reason in one
+  line instead of showing the server's message.
+
+- A widget with nothing to show now reads differently from one that failed.
+
 ### Fixed
 
 - The tab icon now carries its own background, so it shows the same mark in

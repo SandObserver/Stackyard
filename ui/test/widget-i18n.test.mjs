@@ -81,10 +81,11 @@ test('English skips the fetch entirely', () => {
   assert.match(toolbox, /if \(_lang === 'en'\) return;/);
 });
 
+/* The failure wording is per kind and lives in widget-error.js. What stays here
+   is the toolbox's own two states. */
 test('no status string is hardcoded any more', () => {
   for (const [key, english] of [
     ['loading', 'Loading'],
-    ['unavailable', 'Unavailable'],
     ['noData', 'No data'],
   ]) {
     assert.ok(toolbox.includes(`_t('${key}', '${english}')`), `${english} is not looked up`);
@@ -130,10 +131,13 @@ test('an unusable locale tag falls back rather than throwing', () => {
 
 /* ── the strings exist ────────────────────────────────────────────────────── */
 
+/* One line per failure kind. widget-error.js maps the kind to the key. */
+const ERROR_KEYS = ['errNetwork', 'errTimeout', 'errAuth', 'errBlocked', 'errInvalid', 'errUpstream', 'errInternal'];
+
 test('every locale carries the widget strings', () => {
   for (const file of fs.readdirSync(path.join(root, 'i18n')).filter(f => f.endsWith('.json'))) {
     const cat = JSON.parse(read(`i18n/${file}`));
-    for (const key of ['loading', 'unavailable', 'noData', 'justNow']) {
+    for (const key of ['loading', 'noData', 'justNow', ...ERROR_KEYS]) {
       assert.ok(cat.widget?.[key], `${file} is missing widget.${key}`);
     }
   }
@@ -143,7 +147,7 @@ test('the translations are not copies of the English', () => {
   const en = JSON.parse(read('i18n/en.json'));
   for (const file of fs.readdirSync(path.join(root, 'i18n')).filter(f => f.endsWith('.json') && f !== 'en.json')) {
     const cat = JSON.parse(read(`i18n/${file}`));
-    const same = ['loading', 'unavailable', 'noData'].filter(k => cat.widget[k] === en.widget[k]);
+    const same = ['loading', 'noData', ...ERROR_KEYS].filter(k => cat.widget[k] === en.widget[k]);
     assert.equal(same.length, 0, `${file} left ${same.join(', ')} in English`);
   }
 });

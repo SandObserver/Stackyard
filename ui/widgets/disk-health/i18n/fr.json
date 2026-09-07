@@ -23,5 +23,6 @@
   "ui.failed": "En échec",
   "ui.ageAlert": "Alerte de vieillissement",
   "ui.bay": "Baie {n}",
-  "ui.bayEmpty": "Baie {n} : vide"
+  "ui.bayEmpty": "Baie {n} : vide",
+  "ui.noDrives": "Aucun disque signalé"
 }

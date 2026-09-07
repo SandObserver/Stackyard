@@ -23,5 +23,6 @@
   "ui.failed": "خراب",
   "ui.ageAlert": "هشدار فرسودگی",
   "ui.bay": "جایگاه {n}",
-  "ui.bayEmpty": "جایگاه {n}: خالی"
+  "ui.bayEmpty": "جایگاه {n}: خالی",
+  "ui.noDrives": "هیچ درایوی گزارش نشد"
 }

@@ -99,10 +99,12 @@ test('the upstream users value is escaped, not concatenated', () => {
   assert.match(src, /\$\{info\.users\}/, 'info.users should be an html`` interpolation');
 });
 
-test('the backup error text is escaped', () => {
+/* The upstream sentence used to be drawn on the card. The card now shows the
+   line the shared error state returns, which is a catalog value. */
+test('the backup failure draws no upstream text', () => {
   const src = read(BACKUP);
-  /* The upstream error goes through html`` and setHtml, never concatenation. */
-  assert.match(src, /setHtml\(bmeta, html`\$\{err\?\.error\|\|wt\(/);
+  assert.ok(!/err\?\.error/.test(src), 'the upstream error is back on the card');
+  assert.match(src, /applyError\(state\.fail\(/);
 });
 
 test('the system-stats label falls back through an escaped interpolation', () => {

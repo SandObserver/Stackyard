@@ -23,5 +23,6 @@
   "ui.failed": "Ausgefallen",
   "ui.ageAlert": "Alterswarnung",
   "ui.bay": "Schacht {n}",
-  "ui.bayEmpty": "Schacht {n}: leer"
+  "ui.bayEmpty": "Schacht {n}: leer",
+  "ui.noDrives": "Keine Laufwerke gemeldet"
 }

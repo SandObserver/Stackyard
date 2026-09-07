@@ -331,9 +331,15 @@
   },
   "widget": {
     "loading": "Loading",
-    "unavailable": "Unavailable",
     "noData": "No data",
-    "justNow": "just now"
+    "justNow": "just now",
+    "errNetwork": "Out of reach",
+    "errTimeout": "Took too long",
+    "errAuth": "Key rejected",
+    "errBlocked": "Request blocked",
+    "errInvalid": "Not set up yet",
+    "errUpstream": "Service error",
+    "errInternal": "Something went wrong"
   },
   "widgetCfg": {
     "unavailable": "Settings unavailable",

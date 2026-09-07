@@ -23,5 +23,6 @@
   "ui.failed": "Fallido",
   "ui.ageAlert": "Aviso por antigüedad",
   "ui.bay": "Bahía {n}",
-  "ui.bayEmpty": "Bahía {n}: vacía"
+  "ui.bayEmpty": "Bahía {n}: vacía",
+  "ui.noDrives": "No se han detectado unidades"
 }

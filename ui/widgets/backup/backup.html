@@ -113,7 +113,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt } from '/js/widget-toolbox.js?v=432c5712';
+import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -358,8 +358,14 @@ async function boot() {
   _pollSec = Math.max(10, parseInt(firstSlot?.dupPollSec || 60, 10));
   buildShell();
   /* The gap shrinks to 5s while any slot reports running. */
-  poll({ fetch: fetchJobs, render: apply, interval: d => (d?.some(j=>j&&j.status==='running') ? 5 : _pollSec) * 1000,
-    onError: ({ error, everOk, stale }) => { if (!everOk || stale) applyError({ error: error.message }); } });
+  const w = document.getElementById('widget');
+  const state = errorState({ root: w, content: () => Array.from(w.querySelectorAll('.card-wrap')) });
+
+  poll({ fetch: fetchJobs, interval: d => (d?.some(j=>j&&j.status==='running') ? 5 : _pollSec) * 1000,
+    render: d => { state.ok(); apply(d); },
+    onError: ({ error, everOk, stale, since }) => {
+      if (!everOk || stale) applyError(state.fail(error, { since, inert: everOk }));
+    } });
 }
 
 function buildShell() {
@@ -585,20 +591,18 @@ function applyCard(idx, job) {
   back.setAttribute('aria-hidden','true');
 }
 
-function applyError(err) {
+/* Red is reserved for a backup that actually failed. Not being able to reach
+   the server is not the same claim, so the slots go inert instead. */
+function applyError(line) {
   slotList().forEach((_,idx)=>{
-    const back  = document.getElementById(`back-${idx}`);
     const front = document.getElementById(`front-${idx}`);
     const bname = document.getElementById(`back-name-${idx}`);
     const bmeta = document.getElementById(`back-meta-${idx}`);
     const fname = document.getElementById(`front-name-${idx}`);
-    if(back){back.style.background=NAMED.red;back.style.color='#fff';}
-    if(front){ front.style.setProperty('--status-color',NAMED.red); front.setAttribute('role','img'); front.setAttribute('aria-label', `${wt('ui.backupError','Backup error')}: ${err?.error||wt('ui.unreachable','Unreachable')}`); }
-    if(back) back.setAttribute('aria-hidden','true');
-    if(bname) bname.textContent=wt('ui.error','Error');
-    /* err.error can carry upstream-derived text. html`` escapes it. */
-    if(bmeta) setHtml(bmeta, html`${err?.error||wt('ui.unreachable','Unreachable')}<br>&nbsp;`);
-    if(fname) fname.textContent=wt('ui.error','Error');
+    if(front){ front.setAttribute('role','img'); front.setAttribute('aria-label', line); }
+    if(bname) bname.textContent = line;
+    if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
+    if(fname) fname.textContent = '\u2014';
   });
 }
 

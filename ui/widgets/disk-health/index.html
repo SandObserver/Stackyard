@@ -145,7 +145,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, formatNumber } from '/js/widget-toolbox.js?v=432c5712';
+import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -329,9 +329,7 @@ document.addEventListener('touchend', e => {
 window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
 
 async function fetchBays() {
-  const d = await fetchData('disk-health');
-  if (!d || !d.bays) throw new Error('no bay data');
-  return d;
+  return fetchData('disk-health');
 }
 
 function applyBays(d) {
@@ -345,7 +343,21 @@ function applyBays(d) {
 
 build();
 update();
-poll({ fetch: fetchBays, interval: 60_000, render: applyBays });
+
+const state = errorState({
+  root: document.getElementById('root'),
+  content: document.getElementById('shell'),
+  place: 'center',
+});
+
+poll({
+  fetch: fetchBays,
+  interval: 60_000,
+  render: d => { state.ok(); applyBays(d); },
+  isEmpty: d => !d || !Array.isArray(d.bays) || d.bays.length === 0,
+  onEmpty: () => state.empty(wt('ui.noDrives', 'No drives reported')),
+  onError: ({ error, everOk, stale, since }) => { if (!everOk || stale) state.fail(error, { since, inert: everOk }); },
+});
 </script>
 </body>
 </html>

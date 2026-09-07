@@ -301,6 +301,12 @@
       "/js/wallpaper-cache.js?v=*": [
         "./ui/js/wallpaper-cache.js"
       ],
+      "/js/widget-error.js": [
+        "./ui/js/widget-error.js"
+      ],
+      "/js/widget-error.js?v=*": [
+        "./ui/js/widget-error.js"
+      ],
       "/js/widget-toolbox.js": [
         "./ui/js/widget-toolbox.js"
       ],

@@ -88,7 +88,7 @@
      the sparklines' time axis right to left. -->
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <script type="module">
-import { poll, fetchData, html, setHtml, loadStrings, wt, formatNumber } from '/js/widget-toolbox.js?v=432c5712';
+import { poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
 await loadStrings();
 const TICK_MS  = 10000;
 const SPEED_MS = 60000;
@@ -124,14 +124,33 @@ async function boot() {
   const net = cfg.widgetConfig?.network || {};
   const netMode = net.mode || 'speed';
   /* Uptime mode needs no extra poll, it updates from the stats loop. */
+  /* The network row is one line inside a widget whose other figures are still
+     good. It reports its own failure by going blank and inert, not by taking
+     the whole widget's caption. */
+  const netFailed = on => {
+    const row = document.querySelector('.net-row');
+    if (row) row.classList.toggle('wt-inert', on);
+    if (!on) return;
+    for (const el of ['net-dn', 'net-up', 'net-uptime']) {
+      const n = document.getElementById(el);
+      if (n) n.textContent = '—';
+    }
+  };
   if (net.enabled && netMode === 'speed')
-    poll({ fetch: fetchSpeed, interval: SPEED_MS, render: applySpeed, onError: () => {} });
+    poll({ fetch: fetchSpeed, interval: SPEED_MS,
+      render: d => { netFailed(false); applySpeed(d); },
+      onError: ({ stale }) => { if (stale) netFailed(true); } });
   if (net.enabled && netMode === 'throughput')
     poll({ fetch: fetchThroughput, interval: isRemote() ? REMOTE_THROUGHPUT_MS : THROUGHPUT_MS,
-      render: applyThroughput, onError: () => {} });
+      render: d => { netFailed(false); applyThroughput(d); },
+      onError: ({ stale }) => { if (stale) netFailed(true); } });
+
+  const widgetEl = document.getElementById('widget');
+  const state = errorState({ root: document.body, content: [widgetEl] });
 
   poll({ fetch: fetchStats, interval: TICK_MS,
-    render: d => { stats = d; applyStats(stats); } });
+    render: d => { state.ok(); stats = d; applyStats(stats); },
+    onError: ({ error, everOk, stale, since }) => { if (!everOk || stale) state.fail(error, { since, inert: everOk }); } });
 }
 
 /* ── Build static HTML shell based on config ── */

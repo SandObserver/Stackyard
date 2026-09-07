@@ -21,16 +21,16 @@
   .l2{background:#006d32;}
   .l3{background:#26a641;}
   .l4{background:#39d353;}
-  .msg{font-size:11px;color:rgba(255,255,255,0.3);text-align:center;}
+  .msg{position:absolute;inset-inline:8px;bottom:6px;justify-content:center;}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
 </head>
 <body>
 <div class="widget" id="widget">
-  <div class="msg" id="msg">Loading…</div>
+  <div class="msg wt-cap" id="msg" hidden></div>
 </div>
 <script type="module">
-import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=432c5712';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -60,27 +60,18 @@ async function boot() {
     w.classList.add('clickable');
     w.addEventListener('click', () => openUrl(_href));
   }
-  poll({ fetch: fetchGraph, interval: TICK_MS, render,
-    onError: ({ error, everOk, stale }) => { if (!everOk || stale) showMsg(error.message); } });
+  poll({ fetch: fetchGraph, interval: TICK_MS,
+    render: d => { state.ok(); render(d); },
+    onError: ({ error, everOk, stale, since }) => {
+      if (!everOk || stale) showError(error, since, everOk);
+    } });
 }
 
-async function fetchGraph() {
-  let r;
-  try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=data`); }
-  catch { throw new Error(wt('ui.unreachable','Unreachable')); }
-  if (!r.ok) {
-    const d = await r.json().catch(()=>({}));
-    throw new Error(d.error || (r.status===503?wt('ui.notConfigured','Not configured'):r.status===401?wt('ui.badToken','Bad token'):wt('ui.error','Error')+' '+r.status));
-  }
-  const d = await r.json();
-  return d;
-}
+const fetchGraph = () => fetchData('data');
 
 function render(data) {
   const weeks  = (data.weeks || []).slice(-COLS);
   const widget = document.getElementById('widget');
-  const msg    = document.getElementById('msg');
-  if (msg) msg.remove();
   const old = widget.querySelector('.graph');
   if (old) old.remove();
 
@@ -110,8 +101,11 @@ function _renderGraph(data, weeks, widget) {
   let total = 0;
   weeks.forEach(w => (w.contributionDays||[]).forEach(d => { total += (d.contributionCount||0); }));
   widget.setAttribute('role','img');
-  widget.setAttribute('aria-label',
-    wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', total));
+  /* An empty grid is the error shell. Naming it "0 contributions" would state
+     something untrue. */
+  if (weeks.length)
+    widget.setAttribute('aria-label',
+      wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', total));
 
   const padded = [];
   for (let i = 0; i < COLS; i++) {
@@ -138,13 +132,21 @@ function _renderGraph(data, weeks, widget) {
   widget.appendChild(graph);
 }
 
-function showMsg(txt) {
+/* The year grid is the widget's shape. Draw an empty one if nothing has been
+   drawn yet, then let it go inert, rather than leaving a bare frame. */
+function showError(error, since, everOk) {
   const widget = document.getElementById('widget');
-  const old = widget.querySelector('.graph'); if (old) old.remove();
-  let m = document.getElementById('msg');
-  if (!m) { m=document.createElement('div'); m.className='msg'; m.id='msg'; widget.appendChild(m); }
-  m.textContent = txt;
+  if (!widget.querySelector('.graph')) _renderGraph({}, [], widget);
+  const line = state.fail(error, { since, inert: everOk });
+  widget.setAttribute('role', 'img');
+  widget.setAttribute('aria-label', line);
 }
+
+const state = errorState({
+  root: document.getElementById('widget'),
+  content: () => [document.getElementById('widget').querySelector('.graph')],
+  caption: document.getElementById('msg'),
+});
 
 boot();
 </script>

@@ -4,6 +4,9 @@
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
+import { errorState as _errorState, errorKind, errorCopy, errorGlyph } from '/js/widget-error.js?v=cf6d179a';
+
+export { errorKind, errorCopy, errorGlyph };
 
 export { esc, html, setHtml };
 
@@ -28,8 +31,9 @@ export async function fetchData(endpoint, opts = {}) {
   const r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, { cache: 'no-store', signal: opts.signal });
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
-    const e = /** @type {Error & { status?: number }} */ (new Error(d.error || 'HTTP ' + r.status));
+    const e = /** @type {Error & { status?: number, kind?: string }} */ (new Error(d.error || 'HTTP ' + r.status));
     e.status = r.status;
+    if (typeof d.kind === 'string') e.kind = d.kind;
     throw e;
   }
   return r.json();
@@ -262,23 +266,18 @@ export function sinceLabel(ts) {
   }
 }
 
-function _overlay(root) {
-  if (getComputedStyle(root).position === 'static') root.style.position = 'relative';
-  const el = document.createElement('div');
-  el.style.cssText =
-    'position:absolute;inset:0;display:none;align-items:center;justify-content:center;' +
-    'text-align:center;padding:0 16px;font-size:11px;line-height:1.35;color:rgba(150,150,150,0.92);pointer-events:none';
-  root.appendChild(el);
-  return {
-    show(msg, dim) {
-      el.textContent = msg;
-      el.style.background = dim ? 'rgba(20,20,22,0.55)' : 'transparent';
-      el.style.display = 'flex';
-    },
-    hide() {
-      el.style.display = 'none';
-    },
-  };
+/** The shared error, empty and healthy states, wired to the widget catalog.
+    @param {any} opts */
+export function errorState(opts = {}) {
+  return _errorState(Object.assign({ t: _t }, opts));
+}
+
+/** The reader's wording for a failure, for a widget that draws its own state.
+    @param {unknown} err a caught error, or { kind } from a response
+    @returns {string} */
+export function errorLine(err) {
+  const { key, text } = errorCopy(errorKind(err));
+  return _t(key, text);
 }
 
 /* The options and the poll lifecycle are documented in docs/widgets.md. */
@@ -305,7 +304,7 @@ export function poll(opts = {}) {
   const isEmpty = opts.isEmpty || (() => false);
   const doFetch = opts.fetch || (() => fetchData(opts.endpoint));
   const custom = typeof opts.onError === 'function'; /* widget draws its own error UI */
-  const ov = custom ? null : _overlay(opts.root || document.body);
+  const ov = custom ? null : errorState({ root: opts.root || document.body, content: opts.content });
   let lastOk = 0,
     fails = 0,
     everOk = false,
@@ -325,9 +324,13 @@ export function poll(opts = {}) {
       lastOk = Date.now();
       everOk = true;
       lastData = data;
-      if (!custom && isEmpty(data)) ov.show(opts.emptyText || _t('noData', 'No data'), false);
-      else {
-        if (ov) ov.hide();
+      if (isEmpty(data)) {
+        /* Reached the service and it has nothing to show. Not a failure, and it
+           must not be drawn like one. */
+        if (ov) ov.empty(opts.emptyText || _t('noData', 'No data'));
+        else opts.onEmpty && opts.onEmpty(data);
+      } else {
+        if (ov) ov.ok();
         opts.render && opts.render(data);
       }
     } catch (e) {
@@ -335,12 +338,7 @@ export function poll(opts = {}) {
       fails++;
       const stale = fails >= staleAfter;
       if (custom) opts.onError({ error: e, everOk, stale, since: lastOk ? sinceLabel(lastOk) : '' });
-      else if (!everOk) ov.show(opts.errorText || _t('unavailable', 'Unavailable'), false);
-      else if (stale)
-        ov.show(
-          (opts.errorText || _t('unavailable', 'Unavailable')) + (lastOk ? ' · ' + sinceLabel(lastOk) : ''),
-          true,
-        );
+      else if (!everOk || stale) ov.fail(e, { since: everOk && lastOk ? sinceLabel(lastOk) : '' });
     }
   }
 
@@ -393,7 +391,7 @@ export function poll(opts = {}) {
   const canObserve = typeof document !== 'undefined' && typeof document.addEventListener === 'function';
   if (canObserve) document.addEventListener('visibilitychange', onVisibility);
 
-  if (ov) ov.show(opts.loadingText || _t('loading', 'Loading'), false);
+  if (ov) ov.empty(opts.loadingText || _t('loading', 'Loading'));
   loop();
   return {
     stop() {
