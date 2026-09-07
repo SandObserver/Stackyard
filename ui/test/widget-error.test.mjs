@@ -139,3 +139,20 @@ test('system summary reports its failure to the summary paragraph', () => {
   const src = fs.readFileSync(path.join(root, 'widgets/system-summary/index.html'), 'utf8');
   assert.match(src, /sr-sum[\s\S]{0,200}sum\.textContent = line/, 'the failure never reaches the summary');
 });
+
+test('every widget surfaces a failure on the same terms', () => {
+  const dir = path.join(root, 'widgets');
+  const odd = [];
+  for (const w of fs.readdirSync(dir)) {
+    const d = path.join(dir, w);
+    if (!fs.statSync(d).isDirectory()) continue;
+    for (const f of fs.readdirSync(d).filter(f => f.endsWith('.html'))) {
+      const src = fs.readFileSync(path.join(d, f), 'utf8');
+      for (const gate of src.match(/if\s*\(\s*!?everOk[^)]*\)/g) || []) {
+        const norm = gate.replace(/\s+/g, '');
+        if (norm !== 'if(!everOk||stale)' && norm !== 'if(everOk&&!stale)') odd.push(`${w}/${f}: ${gate}`);
+      }
+    }
+  }
+  assert.deepEqual(odd, [], 'these wait longer than the rest before saying anything');
+});

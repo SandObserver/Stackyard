@@ -148,7 +148,7 @@ async function boot() {
   poll({ fetch: fetchStats, interval: TICK_MS,
     render: d => { state.ok(); stats = d; applyStats(stats); },
     onError: ({ error, everOk, stale, since }) => {
-      if (!everOk && !stale) return;
+      if (everOk && !stale) return;
       const line = state.fail(error, { since, inert: everOk });
       /* #widget is aria-hidden, so the summary paragraph is the only thing a
          screen reader reads here. */
