@@ -30,9 +30,6 @@
   "ui.unknown": "unbekannt",
   "ui.last": "zuletzt",
   "ui.next": "nächste",
-  "ui.backupError": "Backup-Fehler",
-  "ui.unreachable": "Nicht erreichbar",
-  "ui.error": "Fehler",
   "ui.runningNow": "Läuft…",
   "ui.lastCap": "Zuletzt",
   "ui.nextCap": "Nächste"

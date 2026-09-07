@@ -103,8 +103,6 @@ function errorText(e) {
   return 'Unreachable';
 }
 
-/* The widget picks its wording from the kind. errorText stays for the log and
-   for anything the reader never sees. */
 function errorKindOf(e) {
   if (e && e.name === 'SsrfBlockedError') return 'blocked';
   const code = e && e.code;

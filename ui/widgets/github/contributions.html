@@ -30,7 +30,7 @@
   <div class="msg wt-cap" id="msg" hidden></div>
 </div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=196bd41e';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=c27f1c81';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -61,7 +61,7 @@ async function boot() {
     w.addEventListener('click', () => openUrl(_href));
   }
   poll({ fetch: fetchGraph, interval: TICK_MS,
-    render: d => { state.ok(); render(d); },
+    render: d => { document.getElementById('msg').removeAttribute('aria-hidden'); state.ok(); render(d); },
     onError: ({ error, everOk, stale, since }) => {
       if (!everOk || stale) showError(error, since, everOk);
     } });
@@ -101,8 +101,7 @@ function _renderGraph(data, weeks, widget) {
   let total = 0;
   weeks.forEach(w => (w.contributionDays||[]).forEach(d => { total += (d.contributionCount||0); }));
   widget.setAttribute('role','img');
-  /* An empty grid is the error shell. Naming it "0 contributions" would state
-     something untrue. */
+  /* Do not name an empty grid. It would report zero contributions as fact. */
   if (weeks.length)
     widget.setAttribute('aria-label',
       wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', total));
@@ -132,14 +131,14 @@ function _renderGraph(data, weeks, widget) {
   widget.appendChild(graph);
 }
 
-/* The year grid is the widget's shape. Draw an empty one if nothing has been
-   drawn yet, then let it go inert, rather than leaving a bare frame. */
 function showError(error, since, everOk) {
   const widget = document.getElementById('widget');
   if (!widget.querySelector('.graph')) _renderGraph({}, [], widget);
   const line = state.fail(error, { since, inert: everOk });
   widget.setAttribute('role', 'img');
   widget.setAttribute('aria-label', line);
+  /* The root is named with the same line. Reading both says it twice. */
+  document.getElementById('msg').setAttribute('aria-hidden', 'true');
 }
 
 const state = errorState({

@@ -30,9 +30,6 @@
   "ui.unknown": "نامشخص",
   "ui.last": "آخرین",
   "ui.next": "بعدی",
-  "ui.backupError": "خطای پشتیبان‌گیری",
-  "ui.unreachable": "در دسترس نیست",
-  "ui.error": "خطا",
   "ui.runningNow": "در حال اجرا…",
   "ui.lastCap": "آخرین",
   "ui.nextCap": "بعدی"

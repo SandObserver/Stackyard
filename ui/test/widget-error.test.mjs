@@ -121,3 +121,21 @@ test('a widget that toggles hidden on a styled element says so in its own CSS', 
   const src = fs.readFileSync(path.join(root, 'widgets/nowplaying/index.html'), 'utf8');
   assert.match(src, /\[hidden\]\s*\{\s*display:\s*none/, 'the clamped title cannot be hidden');
 });
+
+/* A widget that names its own root with the failure line must not leave the
+   visible caption readable too, or a screen reader says it twice. */
+test('a widget naming its root with the line hides the caption from readers', () => {
+  for (const f of ['nowplaying/index.html', 'github/contributions.html']) {
+    const src = fs.readFileSync(path.join(root, 'widgets', f), 'utf8');
+    assert.match(src, /aria-label['"]?,\s*line\)/, `${f} does not name its root`);
+    assert.match(src, /setAttribute\(\s*['"]aria-hidden['"]\s*,\s*['"]true['"]\s*\)/, `${f} reads the line twice`);
+    assert.match(src, /removeAttribute\(\s*['"]aria-hidden['"]\s*\)/, `${f} never restores the caption`);
+  }
+});
+
+/* This widget's body is aria-hidden, so its summary paragraph is the only thing
+   a screen reader reads. */
+test('system summary reports its failure to the summary paragraph', () => {
+  const src = fs.readFileSync(path.join(root, 'widgets/system-summary/index.html'), 'utf8');
+  assert.match(src, /sr-sum[\s\S]{0,200}sum\.textContent = line/, 'the failure never reaches the summary');
+});

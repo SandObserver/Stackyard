@@ -1,16 +1,11 @@
 // @ts-check
-/* The failure states every widget shares.
+/* The failure states every widget shares. The wording comes from the kind the
+   API sends, documented in docs/api-errors.md.
 
-   The API classifies a failure into one of seven kinds and sends the kind
-   beside the message (docs/api-errors.md). The kind picks the wording and the
-   glyph here. The upstream sentence is never drawn: it names products, ports
-   and status codes, and it is not translated.
+   Never draw a response's error message. It names hosts, ports and status
+   codes, and it is not translated. */
 
-   A broken widget keeps its layout and goes inert. An empty one stays bright.
-   The two must not look alike. */
-
-/* Same 24-unit grid as widget-glyphs.js, stroked with currentColor. Each shape
-   is [tag, attributes], built as nodes rather than markup. */
+/* Nodes, not markup: this file is covered by the innerHTML ratchet. */
 const GLYPHS = {
   offline: [
     ['path', { d: 'M4 4l16 16' }],
@@ -61,20 +56,17 @@ const FALLBACK = 'internal';
 export function errorKind(err) {
   const e = /** @type {{ kind?: unknown, status?: unknown }} */ (err && typeof err === 'object' ? err : {});
   if (typeof e.kind === 'string' && Object.hasOwn(COPY, e.kind)) return e.kind;
-  /* A widget that fetches for itself has only the status. */
   const s = typeof e.status === 'number' ? e.status : 0;
   if (s === 401 || s === 403) return 'auth';
   if (s === 503) return 'invalid';
   if (s === 504) return 'timeout';
   if (s === 502) return 'network';
   if (s >= 400) return 'upstream';
-  /* fetch() itself rejected, so nothing answered. */
   return err ? 'network' : FALLBACK;
 }
 
-/** One kind's glyph, as an SVG element.
-    @param {string} kind @param {Document} doc @returns {SVGElement} */
-export function errorGlyph(kind, doc) {
+/** @param {string} kind @param {Document} doc @returns {SVGElement} */
+function errorGlyph(kind, doc) {
   const [g] = COPY[kind] || COPY[FALLBACK];
   const svg = doc.createElementNS(SVG_NS, 'svg');
   for (const [k, v] of Object.entries({
@@ -102,7 +94,6 @@ export function errorCopy(kind) {
   return { key, text };
 }
 
-/** The kinds this module knows, for tests and for the catalog. */
 export const ERROR_KINDS = Object.freeze(Object.keys(COPY));
 
 const STYLE_ID = 'wt-error-css';
@@ -132,18 +123,12 @@ function ensureStyle(doc) {
   doc.head.appendChild(s);
 }
 
-/** One widget's error, empty and healthy states.
-
-    opts: { root, content=root, caption, place='foot', t }
-    `content` is the element, or elements, that go inert. `caption` is the widget's own metadata slot;
-    without one, a line is placed at the foot of `root`, or over its centre when
-    `place` is 'center'.
+/** One widget's error, empty and healthy states. The options are documented in
+    docs/widgets.md.
 
     @param {any} opts */
 export function errorState(opts = {}) {
   const root = opts.root;
-  /* Several widgets have no single content wrapper, so an array is accepted. A
-     widget that rebuilds its content passes a function instead. */
   const contentOf = () =>
     [].concat((typeof opts.content === 'function' ? opts.content() : opts.content) || root || []).filter(Boolean);
   const t = typeof opts.t === 'function' ? opts.t : (_k, fallback) => fallback;
@@ -152,7 +137,7 @@ export function errorState(opts = {}) {
 
   let cap = opts.caption || null;
   if (!cap && root) {
-    /* The auto caption is absolutely placed, so it needs a positioned root. */
+    /* Absolutely placed. Without a positioned root it escapes the widget. */
     const view = doc.defaultView;
     if (view && view.getComputedStyle(root).position === 'static') root.style.position = 'relative';
     cap = doc.createElement('div');
@@ -164,8 +149,6 @@ export function errorState(opts = {}) {
     cap.hidden = true;
   }
 
-  /* Nodes and text only. An upstream string never reaches this, but the
-     widget's own catalog is still data. */
   function paint(glyph, text, suffix) {
     if (!cap) return;
     cap.textContent = '';
@@ -183,9 +166,8 @@ export function errorState(opts = {}) {
   }
 
   return {
-    /** Going inert is how good data is marked as no longer current. A widget
-        that never had any is drawing placeholders already, and fading those
-        leaves an empty frame: pass inert false.
+    /** Pass inert false when the widget never had data. Fading a placeholder
+        leaves an empty frame.
 
         @param {unknown} err @param {{ since?: string, inert?: boolean }} [info]
         @returns {string} the line drawn, for an accessible name */
@@ -198,8 +180,7 @@ export function errorState(opts = {}) {
       paint(errorGlyph(kind, doc), line, info.since || '');
       return line;
     },
-    /** The widget reached its service and there is genuinely nothing to show.
-        @param {string} text */
+    /** @param {string} text */
     empty(text) {
       for (const el of contentOf()) el.classList.remove('wt-inert');
       paint(null, text, '');
@@ -210,9 +191,6 @@ export function errorState(opts = {}) {
         cap.hidden = true;
         cap.textContent = '';
       }
-    },
-    get caption() {
-      return cap;
     },
   };
 }

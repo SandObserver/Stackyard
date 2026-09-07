@@ -4,9 +4,7 @@
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
-import { errorState as _errorState, errorKind, errorCopy, errorGlyph } from '/js/widget-error.js?v=9cac07aa';
-
-export { errorKind, errorCopy, errorGlyph };
+import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=e06eef64';
 
 export { esc, html, setHtml };
 
@@ -325,8 +323,6 @@ export function poll(opts = {}) {
       everOk = true;
       lastData = data;
       if (isEmpty(data)) {
-        /* Reached the service and it has nothing to show. Not a failure, and it
-           must not be drawn like one. */
         if (ov) ov.empty(opts.emptyText || _t('noData', 'No data'));
         else opts.onEmpty && opts.onEmpty(data);
       } else {
