@@ -76,7 +76,7 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   if (!_entry) {
     return json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: {}, [WITHHELD_FLAG]: true });
   }
-  const wc = JSON.parse(JSON.stringify(w.widgetConfig || {}));
+  const wc = structuredClone(w.widgetConfig || {});
   scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
   json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: wc });
 });

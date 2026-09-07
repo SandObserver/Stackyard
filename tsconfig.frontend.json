@@ -18,12 +18,12 @@
     "checkJs": true,
     "noEmit": true,
     "module": "esnext",
-    "target": "es2022",
+    "target": "es2023",
     "moduleResolution": "bundler",
     "strict": false,
     "skipLibCheck": true,
     "lib": [
-      "es2022",
+      "es2023",
       "dom",
       "dom.iterable"
     ],

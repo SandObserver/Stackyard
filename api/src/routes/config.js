@@ -15,7 +15,7 @@ const { pruneWallpapers } = require('./wallpaper');
 const DOCK_MAX = 4;
 
 function scrubSecrets(cfg) {
-  const safe = JSON.parse(JSON.stringify(cfg));
+  const safe = structuredClone(cfg);
   scrubAllSecrets(safe);
   if (safe.settings?.background?.apiKey) delete safe.settings.background.apiKey;
   if (safe.settings?.auth) {
@@ -144,7 +144,7 @@ on('POST', '/api/config', async (req, res) => {
     if (data.settings) delete data.settings.auth;
     if (existing.settings?.auth) {
       data.settings = data.settings || {};
-      data.settings.auth = JSON.parse(JSON.stringify(existing.settings.auth));
+      data.settings.auth = structuredClone(existing.settings.auth);
       if (stripDisabledCredentials(data.settings.auth)) log.audit('stale password cleared', {});
     }
     /* A stored credential is only refilled for the request it was stored for. */

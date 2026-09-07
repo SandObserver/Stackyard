@@ -211,7 +211,7 @@ function scan(text) {
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
   const rows = text.split(/\r\n|\r|\n/);
   /* The empty string after a final newline is not a line of the file. */
-  if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
+  if (rows.length > 1 && rows.at(-1) === '') rows.pop();
 
   for (let i = 0; i < rows.length; i++) {
     const raw = rows[i];

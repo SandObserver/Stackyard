@@ -73,7 +73,7 @@ async function runWidgetModule(name, file, ctx) {
   try {
     fn = require(fnPath);
   } catch (e) {
-    throw new Error(`${file} failed to load: ` + e.message);
+    throw new Error(`${file} failed to load`, { cause: e });
   }
   if (typeof fn !== 'function') throw new Error(`${file} must export a function`);
   return await fn(ctx);
@@ -114,7 +114,7 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
     const out = await getWidgetData(item, entry, endpointName, u.searchParams, fetchUnchecked);
     json(res, out.status, out.body);
   } catch (e) {
-    log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: e.message });
+    log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: log.reason(e) });
     fail(res, e, { status: 502 });
   }
 });
@@ -161,7 +161,7 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   } catch (e) {
     if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });
     if (!scoped && saved) return fail(res, e, { status: 502, kind: KIND.INVALID, error: RETYPE_MESSAGE });
-    log.error('widget-options failed', { widget: body.widgetType, error: e.message });
+    log.error('widget-options failed', { widget: body.widgetType, error: log.reason(e) });
     fail(res, e, { status: 502 });
   }
 });
