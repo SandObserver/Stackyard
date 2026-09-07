@@ -20,10 +20,19 @@ function jpost(ctx, base, path, headers, body) {
 function authErr(r) {
   return r.status === 401 || r.status === 403;
 }
+/* The reader's own word for a shelf, when the service has one. */
+function listName(r) {
+  const d = r && r.data;
+  return (d && typeof d.name === 'string' && d.name) || '';
+}
 function shelvesOf(ctx) {
   const rows = Array.isArray(ctx.config.shelves) ? ctx.config.shelves : null;
   const list = rows && rows.length ? rows : [{ source: ctx.config.source, listId: ctx.config.listId }];
-  return list.map(r => ({ source: (r && r.source) || 'recently', listId: r && r.listId }));
+  return list.map(r => ({
+    source: (r && r.source) || 'recently',
+    listId: r && r.listId,
+    label: r && typeof r.label === 'string' ? r.label.trim() : '',
+  }));
 }
 
 /* ───────────────────────── Audiobookshelf ───────────────────────── */
@@ -52,10 +61,10 @@ async function absItems(ctx, base, hdr, lib, shelf) {
     const [kind, id] = String(shelf.listId).split(':');
     if (kind === 'playlist') {
       const r = await jget(ctx, base, `/api/playlists/${enc(id)}`, hdr);
-      return ((r.data && r.data.items) || []).map(it => it.libraryItem || it);
+      return { name: listName(r), items: ((r.data && r.data.items) || []).map(it => it.libraryItem || it) };
     }
     const r = await jget(ctx, base, `/api/collections/${enc(id)}`, hdr);
-    return (r.data && r.data.books) || [];
+    return { name: listName(r), items: (r.data && r.data.books) || [] };
   }
   if (shelf.source === 'unread') {
     const f = Buffer.from('not-finished').toString('base64');
@@ -65,10 +74,10 @@ async function absItems(ctx, base, hdr, lib, shelf) {
       `/api/libraries/${enc(lib)}/items?filter=progress.${f}&sort=addedAt&desc=1&limit=${CAP}`,
       hdr,
     );
-    return (r.data && r.data.results) || [];
+    return { name: '', items: (r.data && r.data.results) || [] };
   }
   const r = await jget(ctx, base, `/api/libraries/${enc(lib)}/items?sort=addedAt&desc=1&limit=${CAP}`, hdr);
-  return (r.data && r.data.results) || [];
+  return { name: '', items: (r.data && r.data.results) || [] };
 }
 async function abs(ctx) {
   const base = ctx.normalizeBase(ctx.config.absUrl);
@@ -78,9 +87,10 @@ async function abs(ctx) {
   const lib = await absLibrary(ctx, base, hdr);
   const shelves = [];
   for (const shelf of shelvesOf(ctx)) {
-    const items = await absItems(ctx, base, hdr, lib, shelf);
+    const { name, items } = await absItems(ctx, base, hdr, lib, shelf);
     shelves.push({
       source: shelf.source,
+      name: shelf.label || name,
       books: cap(items)
         .map(absBook)
         .filter(b => b.title),
@@ -122,6 +132,13 @@ function komgaBook(b) {
     kind: 'book',
   };
 }
+/* The books endpoint carries no list name, so the same listing the settings
+   picker uses is read back. Only for a shelf the reader has not named. */
+async function komgaListName(ctx, base, hdr, listId) {
+  const r = await jget(ctx, base, `/api/v1/readlists?size=100`, hdr);
+  const hit = ((r.data && r.data.content) || []).find(l => l && String(l.id) === String(listId));
+  return (hit && hit.name) || '';
+}
 async function komga(ctx) {
   const base = ctx.normalizeBase(ctx.config.komgaUrl);
   const key = ctx.config.komgaKey;
@@ -136,8 +153,11 @@ async function komga(ctx) {
     const r = await jget(ctx, base, path, hdr);
     if (authErr(r)) ctx.fail('Komga auth failed (check API key)', { kind: ctx.KIND.AUTH });
     const content = (r.data && r.data.content) || (Array.isArray(r.data) ? r.data : []);
+    let name = shelf.label;
+    if (!name && shelf.source === 'list' && shelf.listId) name = await komgaListName(ctx, base, hdr, shelf.listId);
     shelves.push({
       source: shelf.source,
+      name,
       books: cap(content)
         .map(komgaBook)
         .filter(b => b.title),
@@ -194,6 +214,13 @@ async function kavitaList(ctx, base, hdr, shelf) {
   });
   return Array.isArray(r.data) ? r.data : [];
 }
+/* Same as Komga: the items endpoint carries no list title. */
+async function kavitaListName(ctx, base, hdr, listId) {
+  const r = await jpost(ctx, base, `/api/ReadingList/lists?PageNumber=1&PageSize=100&includePromoted=true`, hdr);
+  const arr = Array.isArray(r.data) ? r.data : (r.data && r.data.content) || [];
+  const hit = arr.find(l => l && String(l.id) === String(listId));
+  return (hit && (hit.title || hit.name)) || '';
+}
 async function kavita(ctx) {
   const base = ctx.normalizeBase(ctx.config.kavitaUrl);
   const key = ctx.config.kavitaKey;
@@ -203,8 +230,11 @@ async function kavita(ctx) {
   const shelves = [];
   for (const shelf of shelvesOf(ctx)) {
     const list = await kavitaList(ctx, base, hdr, shelf);
+    let name = shelf.label;
+    if (!name && shelf.source === 'list' && shelf.listId) name = await kavitaListName(ctx, base, hdr, shelf.listId);
     shelves.push({
       source: shelf.source,
+      name,
       books: cap(list)
         .map(kavitaSeries)
         .filter(b => b.title),
