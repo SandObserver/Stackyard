@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Hovering a disk bay or a connections legend entry works again.
+
 - A disk bay whose drive the service no longer reports is marked, rather than
   drawn as a healthy drive with no name.
 

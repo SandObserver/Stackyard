@@ -120,7 +120,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
+import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=196bd41e';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';

@@ -109,7 +109,13 @@ const STYLE_ID = 'wt-error-css';
 const CSS = `
 .wt-inert { filter: grayscale(0.9) opacity(0.5); transition: filter 0.4s ease; pointer-events: none; }
 .wt-cap { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 11px; font-weight: 500;
-  line-height: 1.3; color: var(--wt-cap-color, rgba(255,255,255,0.62)); }
+  line-height: 1.3; color: var(--wt-cap-color, rgba(255,255,255,0.62));
+  /* The caption is never a target. A centred one covers its whole widget, and
+     with pointer events it swallows every hover the widget has. */
+  pointer-events: none; }
+/* This rule sets display, which outranks the user agent's [hidden] rule. Without
+   its own hidden rule the caption never goes away. */
+.wt-cap[hidden] { display: none; }
 .wt-cap svg { width: 12px; height: 12px; flex: 0 0 auto; opacity: 0.85; }
 .wt-cap b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wt-cap i { font-style: normal; opacity: 0.7; flex: 0 0 auto; }

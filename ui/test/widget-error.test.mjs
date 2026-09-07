@@ -105,3 +105,19 @@ test('a disk bay that reports an error is drawn as neither healthy nor empty', (
     'an unreported bay still opens a device page',
   );
 });
+
+/* The caption sets its own display, which outranks the user agent's [hidden]
+   rule. Without both of these it stays laid out on a healthy widget, and a
+   centred one covers the whole widget and eats every hover it has. */
+test('the caption hides itself and never takes pointer events', () => {
+  const src = fs.readFileSync(path.join(root, 'js/widget-error.js'), 'utf8');
+  const block = src.slice(src.indexOf('.wt-cap {'), src.indexOf('.wt-cap svg'));
+  assert.match(block, /pointer-events:\s*none/, 'the caption can be hovered');
+  assert.match(block, /\.wt-cap\[hidden\]\s*\{\s*display:\s*none/, 'hidden does not hide the caption');
+});
+
+/* Same trap, in a widget that sets display on the elements it toggles. */
+test('a widget that toggles hidden on a styled element says so in its own CSS', () => {
+  const src = fs.readFileSync(path.join(root, 'widgets/nowplaying/index.html'), 'utf8');
+  assert.match(src, /\[hidden\]\s*\{\s*display:\s*none/, 'the clamped title cannot be hidden');
+});
