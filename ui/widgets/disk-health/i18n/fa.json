@@ -24,5 +24,6 @@
   "ui.ageAlert": "هشدار فرسودگی",
   "ui.bay": "جایگاه {n}",
   "ui.bayEmpty": "جایگاه {n}: خالی",
-  "ui.noDrives": "هیچ درایوی گزارش نشد"
+  "ui.noDrives": "هیچ درایوی گزارش نشد",
+  "ui.notReporting": "گزارش نمی‌دهد"
 }

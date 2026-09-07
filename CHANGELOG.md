@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A disk bay whose drive the service no longer reports is marked, rather than
+  drawn as a healthy drive with no name.
+
 - The tab icon now carries its own background, so it shows the same mark in
   every browser.
 

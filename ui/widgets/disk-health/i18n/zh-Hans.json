@@ -24,5 +24,6 @@
   "ui.ageAlert": "老化提醒",
   "ui.bay": "硬盘位 {n}",
   "ui.bayEmpty": "硬盘位 {n}：空",
-  "ui.noDrives": "未报告任何硬盘"
+  "ui.noDrives": "未报告任何硬盘",
+  "ui.notReporting": "未上报"
 }

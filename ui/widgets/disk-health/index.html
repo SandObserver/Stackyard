@@ -53,6 +53,10 @@
     transition: transform 0.2s cubic-bezier(.34,1.2,.64,1), box-shadow 0.2s ease, background 0.2s ease;
   }
   .bay.empty { background:#2C2C2E; }
+  /* Configured, but the service no longer reports it. Darker than an assigned
+     bay and ringed, so it reads as neither healthy nor empty. */
+  .bay.unread { background:#2C2C2E; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.22); }
+  .bay.unread .bay-name { color:rgba(255,255,255,0.28); }
   .bay.assigned { cursor:pointer; }
   .bay.assigned:hover,
   .bay.assigned.touch-active {
@@ -96,6 +100,7 @@
   #root.size-medium #dots { gap:3.5px; }
   #dots i { width:5.5px; height:5.5px; border-radius:50%; background:#3A3A3C; transition: background 0.2s; }
   #dots i.green { background:#30D158; } #dots i.yellow { background:#FFD600; } #dots i.red { background:#FF4245; }
+  #dots i.unread { background:transparent; box-shadow: inset 0 0 0 1.5px #8E8E93; }
 
   #tip {
     position:absolute; z-index:20;
@@ -112,6 +117,7 @@
   #tip .t1 { display:flex; align-items:center; gap:6px; }
   #tip .t1 i { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:#3A3A3C; }
   #tip .t1 i.green { background:#30D158; } #tip .t1 i.yellow { background:#FFD600; } #tip .t1 i.red { background:#FF4245; }
+  #tip .t1 i.unread { background:transparent; box-shadow: inset 0 0 0 1.5px #8E8E93; }
   #tip .nm { font-size:12px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #tip .meta { font-size:11px; font-weight:500; color:rgba(255,255,255,0.62); white-space:nowrap; padding-inline-start:13px; }
 
@@ -163,6 +169,10 @@ if (isMobile) {
   document.head.appendChild(s);
 }
 
+/* A bay the service did not report. Its status fields are placeholders, so they
+   must not be read as a healthy drive. */
+const unread = d => !!(d && d.error);
+
 function ledClass(s, hasSmart) {
   if (!hasSmart) return '';
   if (s === 2) return 'red';
@@ -205,6 +215,14 @@ const tipMeta = document.getElementById('tip-meta');
 function showTip(i) {
   const d = bayData[i];
   if (!d) return;
+  if (unread(d)) {
+    tipLed.className = 'unread';
+    tipName.textContent = fullName(d) || wt('ui.bay', 'Bay {n}').replace('{n}', i + 1);
+    tipMeta.textContent = wt('ui.notReporting', 'Not reporting');
+    rootEl.classList.add('tip-active');
+    positionTip(i);
+    return;
+  }
   const lc = ledClass(d.device_status ?? 0, d.hasSmart ?? false);
   tipLed.className = lc || '';
   tipName.textContent = fullName(d);
@@ -267,8 +285,15 @@ function update() {
     const bay = bayEls[i];
     const nm  = document.getElementById(`nm-${i}`);
     const dot = document.getElementById(`dot-${i}`);
-    if (d) {
-      bay.classList.add('assigned'); bay.classList.remove('empty');
+    if (unread(d)) {
+      bay.classList.add('unread'); bay.classList.remove('empty', 'assigned');
+      dot.className = 'unread';
+      nm.textContent = shortName(d);
+      bay.setAttribute('role', 'img'); bay.removeAttribute('tabindex');
+      bay.setAttribute('aria-label',
+        `${wt('ui.bay','Bay {n}').replace('{n}', i+1)}: ${wt('ui.notReporting','Not reporting')}`);
+    } else if (d) {
+      bay.classList.add('assigned'); bay.classList.remove('empty', 'unread');
       const lc = ledClass(d.device_status ?? 0, d.hasSmart ?? false);
       dot.className = lc || '';
       nm.textContent = shortName(d);
@@ -277,7 +302,7 @@ function update() {
       bay.setAttribute('role','button'); bay.setAttribute('tabindex','0');
       bay.setAttribute('aria-label', `${wt('ui.bay','Bay {n}').replace('{n}', i+1)}: ${shortName(d)}${cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
     } else {
-      bay.classList.add('empty'); bay.classList.remove('assigned');
+      bay.classList.add('empty'); bay.classList.remove('assigned', 'unread');
       dot.className = '';
       nm.textContent = '';
       bay.setAttribute('role','img'); bay.removeAttribute('tabindex');
@@ -287,7 +312,7 @@ function update() {
 }
 
 function openBay(i) {
-  const d = bayData[i]; if (!d) return;
+  const d = bayData[i]; if (!d || unread(d)) return;
   const u = deviceHref(d); if (u) openUrl(u);
 }
 
