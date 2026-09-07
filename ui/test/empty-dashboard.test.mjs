@@ -121,3 +121,14 @@ test('both layouts mark the body when nothing is docked', () => {
   for (const f of ['js/dashboard.js', 'js/ui.js'])
     assert.match(read(f), /classList\.toggle\('no-dock', !dock\.length\)/);
 });
+
+test('the import link opens the settings section that holds import', () => {
+  assert.match(read('js/utils.js'), /href: '\/admin\/#general'/, 'it lands wherever settings was left');
+  const admin = read('js/admin.js');
+  assert.match(admin, /show\(location\.hash\.slice\(1\) \|\| localStorage/, 'admin ignores the hash on load');
+  assert.match(admin, /addEventListener\('hashchange'/, 'admin ignores a later hash change');
+});
+
+test('the welcome screen titles itself with a heading', () => {
+  assert.match(read('js/utils.js'), /const title = mk\('h2'\)/, 'the title is not a heading');
+});

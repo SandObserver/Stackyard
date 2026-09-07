@@ -30,7 +30,7 @@
   <div class="msg wt-cap" id="msg" hidden></div>
 </div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=c27f1c81';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=833f5b5f';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -137,7 +137,6 @@ function showError(error, since, everOk) {
   const line = state.fail(error, { since, inert: everOk });
   widget.setAttribute('role', 'img');
   widget.setAttribute('aria-label', line);
-  /* The root is named with the same line. Reading both says it twice. */
   document.getElementById('msg').setAttribute('aria-hidden', 'true');
 }
 

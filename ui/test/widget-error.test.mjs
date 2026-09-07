@@ -1,7 +1,3 @@
-/* The failure kind is what picks the wording, so the mapping from a caught
-   error to a kind is the part worth pinning. The upstream sentence must never
-   reach the reader. */
-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -55,8 +51,6 @@ test('an unknown kind still gets usable copy', () => {
   assert.deepEqual(errorCopy('banana'), errorCopy('internal'));
 });
 
-/* An upstream sentence names hosts, ports and status codes, and is not
-   translated. No widget may draw one. */
 test('no widget renders a response error message', () => {
   const offenders = [];
   const dir = path.join(root, 'widgets');
@@ -72,8 +66,6 @@ test('no widget renders a response error message', () => {
   assert.deepEqual([...new Set(offenders)], [], 'these draw the upstream sentence instead of the kind');
 });
 
-/* Error and empty are different claims. A widget that can render nothing must
-   say which of the two it is. */
 test('every polling widget declares an empty state or draws its own', () => {
   const dir = path.join(root, 'widgets');
   const missing = [];
@@ -83,8 +75,6 @@ test('every polling widget declares an empty state or draws its own', () => {
     for (const f of fs.readdirSync(d).filter(f => f.endsWith('.html'))) {
       const src = fs.readFileSync(path.join(d, f), 'utf8');
       if (!/\bpoll\(\{/.test(src)) continue;
-      /* errorLine is the hook for a widget that keeps a designed state of its
-         own, like the VPN card's disconnected face. */
       const handled = /isEmpty\s*:/.test(src) || /errorState\(/.test(src) || /errorLine\(/.test(src);
       if (!handled) missing.push(`${w}/${f}`);
     }
@@ -92,8 +82,6 @@ test('every polling widget declares an empty state or draws its own', () => {
   assert.deepEqual(missing, [], 'these poll but never say what empty looks like');
 });
 
-/* A bay the service stopped reporting keeps placeholder status fields. Reading
-   those as a healthy drive is the failure this guards. */
 test('a disk bay that reports an error is drawn as neither healthy nor empty', () => {
   const src = fs.readFileSync(path.join(root, 'widgets/disk-health/index.html'), 'utf8');
   assert.match(src, /const unread = d => !!\(d && d\.error\)/, 'no unread test');
@@ -106,9 +94,6 @@ test('a disk bay that reports an error is drawn as neither healthy nor empty', (
   );
 });
 
-/* The caption sets its own display, which outranks the user agent's [hidden]
-   rule. Without both of these it stays laid out on a healthy widget, and a
-   centred one covers the whole widget and eats every hover it has. */
 test('the caption hides itself and never takes pointer events', () => {
   const src = fs.readFileSync(path.join(root, 'js/widget-error.js'), 'utf8');
   const block = src.slice(src.indexOf('.wt-cap {'), src.indexOf('.wt-cap svg'));
@@ -116,14 +101,11 @@ test('the caption hides itself and never takes pointer events', () => {
   assert.match(block, /\.wt-cap\[hidden\]\s*\{\s*display:\s*none/, 'hidden does not hide the caption');
 });
 
-/* Same trap, in a widget that sets display on the elements it toggles. */
 test('a widget that toggles hidden on a styled element says so in its own CSS', () => {
   const src = fs.readFileSync(path.join(root, 'widgets/nowplaying/index.html'), 'utf8');
   assert.match(src, /\[hidden\]\s*\{\s*display:\s*none/, 'the clamped title cannot be hidden');
 });
 
-/* A widget that names its own root with the failure line must not leave the
-   visible caption readable too, or a screen reader says it twice. */
 test('a widget naming its root with the line hides the caption from readers', () => {
   for (const f of ['nowplaying/index.html', 'github/contributions.html']) {
     const src = fs.readFileSync(path.join(root, 'widgets', f), 'utf8');
@@ -133,8 +115,6 @@ test('a widget naming its root with the line hides the caption from readers', ()
   }
 });
 
-/* This widget's body is aria-hidden, so its summary paragraph is the only thing
-   a screen reader reads. */
 test('system summary reports its failure to the summary paragraph', () => {
   const src = fs.readFileSync(path.join(root, 'widgets/system-summary/index.html'), 'utf8');
   assert.match(src, /sr-sum[\s\S]{0,200}sum\.textContent = line/, 'the failure never reaches the summary');
@@ -155,4 +135,17 @@ test('every widget surfaces a failure on the same terms', () => {
     }
   }
   assert.deepEqual(odd, [], 'these wait longer than the rest before saying anything');
+});
+
+test('the caption never goes inert with the failure it reports', () => {
+  const src = fs.readFileSync(path.join(root, 'js/widget-error.js'), 'utf8');
+  const block = src.slice(src.indexOf('const contentOf'), src.indexOf('const t ='));
+  assert.match(block, /\[\.\.\.root\.children\]\.filter\(el => el !== cap\)/, 'the root fades its own caption');
+});
+
+test('a caption too long for its card wraps instead of being cut', () => {
+  const src = fs.readFileSync(path.join(root, 'js/widget-error.js'), 'utf8');
+  const block = src.slice(src.indexOf('.wt-cap b {'), src.indexOf('.wt-cap i {'));
+  assert.doesNotMatch(block, /white-space:\s*nowrap/, 'the line is still held to one row');
+  assert.match(block, /-webkit-line-clamp:\s*2/, 'the line is not clamped');
 });

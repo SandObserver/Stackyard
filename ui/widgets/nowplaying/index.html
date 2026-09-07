@@ -124,7 +124,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=c27f1c81';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=833f5b5f';
 await loadStrings();
 document.getElementById('title').textContent = wt('ui.nothingPlaying', 'Nothing playing');
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
@@ -238,7 +238,6 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
           showText(false);
           const line=state.fail(error,{since,inert:everOk});
           wEl.setAttribute('aria-label', line);
-          /* The root is named with the same line. Reading both says it twice. */
           document.getElementById('np-cap').setAttribute('aria-hidden','true');
         }
       } });

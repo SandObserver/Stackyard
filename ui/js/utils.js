@@ -417,7 +417,7 @@ export function renderEmptyState(items) {
   box.className = 'empty-state';
   const mark = mk('img', { src: BRAND_MARK, alt: '' });
   mark.className = 'empty-state-mark';
-  const title = mk('p');
+  const title = mk('h2');
   title.className = 'empty-state-title';
   title.textContent = t('home.emptyTitle');
   const sub = mk('p');
@@ -426,7 +426,7 @@ export function renderEmptyState(items) {
   const btn = mk('a', { href: '/admin/' });
   btn.className = 'empty-state-btn';
   btn.textContent = t('home.emptyAction');
-  const hint = mk('a', { href: '/admin/' });
+  const hint = mk('a', { href: '/admin/#general' });
   hint.className = 'empty-state-hint';
   hint.textContent = t('home.emptyImportLink');
   box.append(mark, title, sub, btn, hint);

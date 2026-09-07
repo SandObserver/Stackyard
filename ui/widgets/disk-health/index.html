@@ -149,7 +149,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=c27f1c81';
+import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=833f5b5f';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -351,10 +351,6 @@ document.addEventListener('touchend', e => {
 /* The dashboard calls this directly when a tap lands outside this widget. */
 window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
 
-async function fetchBays() {
-  return fetchData('disk-health');
-}
-
 function applyBays(d) {
   _href   = d.href || '';
   _provider = d.provider || 'scrutiny';
@@ -374,7 +370,7 @@ const state = errorState({
 });
 
 poll({
-  fetch: fetchBays,
+  fetch: () => fetchData('disk-health'),
   interval: 60_000,
   render: d => { state.ok(); applyBays(d); },
   isEmpty: d => !d || !Array.isArray(d.bays) || d.bays.length === 0,

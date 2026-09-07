@@ -96,7 +96,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=c27f1c81';
+  import { poll, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=833f5b5f';
   await loadStrings();
   document.getElementById('lbl').textContent = wt('ui.reading', 'READING');
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
@@ -104,7 +104,7 @@
   const params=new URLSearchParams(location.search);
   const id=params.get('id')||'';
   const SIZES={small:{shelves:1,show:8},medium:{shelves:1,show:16},large:{shelves:3,show:16}};
-  const size=SIZES[params.get('size')]?params.get('size'):'small';
+  const size=Object.hasOwn(SIZES,params.get('size'))?params.get('size'):'small';
   const {shelves:SHELVES,show:SHOW}=SIZES[size];
   const POLL_MS=300000;
   const PALETTE=['#8E8E93','#008575','#956D51','#48484A','#008198','#A16A00','#C55300'];
@@ -204,15 +204,12 @@
       caption:document.getElementById('cap') });
 
     poll({ interval:POLL_MS,
-      isEmpty:d=>{
-        const shelves=Array.isArray(d&&d.shelves)?d.shelves:[{books:d&&d.books}];
-        return shelves.every(sh=>!(sh&&Array.isArray(sh.books)&&sh.books.length));
-      },
+      isEmpty:d=>(Array.isArray(d&&d.shelves)?d.shelves:[]).every(sh=>!(sh&&Array.isArray(sh.books)&&sh.books.length)),
       onEmpty:()=>state.empty(wt('ui.noBooks','No books')),
       onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); },
       render:d=>{
       state.ok();
-      const shelves=Array.isArray(d.shelves)?d.shelves:[{source:d.source,books:d.books}];
+      const shelves=Array.isArray(d.shelves)?d.shelves:[];
       lbl.textContent=SHELVES>1?wt('widget.label','Books'):shelfName(shelves[0]);
       bays.forEach((bay,i)=>{
         const sh=shelves[i]||{books:[]};

@@ -17,8 +17,6 @@ const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 /* Keys built at runtime rather than written out. Each needs a reason: the test
    cannot see them, so this list is where they are accounted for. */
 const DYNAMIC = {
-  /* widget-error.js holds a kind -> [glyph, key, English] table and looks the
-     key up by failure kind, so the names appear there without the prefix. */
   'widget.errNetwork': 'error kind table',
   'widget.errTimeout': 'error kind table',
   'widget.errAuth': 'error kind table',
