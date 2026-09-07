@@ -96,7 +96,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
+  import { poll, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=056cb20d';
   await loadStrings();
   document.getElementById('lbl').textContent = wt('ui.reading', 'READING');
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
@@ -193,7 +193,8 @@
       card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
     }
     const state = errorState({ root:card, content:document.getElementById('shelves'),
-      caption:document.getElementById('cap') });
+      caption:document.getElementById('cap'),
+      art:{ name:'web', slot:document.getElementById('shelves') } });
 
     poll({ interval:POLL_MS,
       isEmpty:d=>{

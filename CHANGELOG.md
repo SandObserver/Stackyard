@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A widget with nothing to show now reads differently from one that failed.
 
+- A failed widget draws in place of its usual content: a meteor for the sky, a
+  cut flow for DNS, a web on the book shelf, a cross in the contribution year.
+
 ### Fixed
 
 - A disk bay whose drive the service no longer reports is marked, rather than

@@ -61,7 +61,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
+import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=056cb20d';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -113,7 +113,12 @@ async function boot() {
 
 /* The ring and the figure stay in place and go inert. The caption sits at the
    foot of the flow, where the widget's own labels are. */
-const state = errorState({ root: widgetEl, content: [pctEl, svgEl], caption: msgEl });
+const state = errorState({
+  root: widgetEl,
+  content: [pctEl],
+  caption: msgEl,
+  art: { name: 'severed', slot: document.getElementById('flow'), hide: svgEl },
+});
 
 const gfetch = () => fetchData('stats');
 

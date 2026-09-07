@@ -9,7 +9,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { errorKind, errorCopy, ERROR_KINDS } = await import('../js/widget-error.js');
+const artModule = await import('../js/widget-error.js');
+const { errorKind, errorCopy, ERROR_KINDS } = artModule;
+const ART_NAMES_ALL = artModule.ART_NAMES;
 
 test('the kind the API sent wins', () => {
   for (const kind of ERROR_KINDS) {
@@ -104,4 +106,29 @@ test('a disk bay that reports an error is drawn as neither healthy nor empty', (
     /openBay\(i\) \{\s*\n\s*const d = bayData\[i\]; if \(!d \|\| unread\(d\)\) return;/.test(src),
     'an unreported bay still opens a device page',
   );
+});
+
+/* Each drawing takes the place of what the widget shows when it works, so a
+   widget naming one that does not exist would leave an empty slot. */
+test('every drawing a widget asks for exists', () => {
+  const { ART_NAMES } = artModule;
+  const dir = path.join(root, 'widgets');
+  const missing = [];
+  for (const w of fs.readdirSync(dir)) {
+    const d = path.join(dir, w);
+    if (!fs.statSync(d).isDirectory()) continue;
+    for (const f of fs.readdirSync(d).filter(f => f.endsWith('.html'))) {
+      const src = fs.readFileSync(path.join(d, f), 'utf8');
+      for (const m of src.matchAll(/name\s*:\s*'([a-z]+)'\s*,\s*slot/g)) {
+        if (!ART_NAMES.includes(m[1])) missing.push(`${w}/${f}: ${m[1]}`);
+      }
+    }
+  }
+  assert.deepEqual(missing, [], 'these name a drawing the module does not have');
+});
+
+test('the drawings are built as nodes, never as markup', () => {
+  const src = fs.readFileSync(path.join(root, 'js/widget-error.js'), 'utf8');
+  assert.ok(!/innerHTML/.test(src), 'widget-error.js writes markup');
+  assert.ok(ART_NAMES_ALL.length >= 6, `only ${ART_NAMES_ALL.length} drawings`);
 });

@@ -120,7 +120,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
+import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=056cb20d';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -368,8 +368,10 @@ async function boot() {
   const w = document.getElementById('widget');
   const state = errorState({
     root: w,
-    content: () => Array.from(w.querySelectorAll('.card-wrap')),
+    content: [],
     caption: document.getElementById('bk-cap'),
+    art: { name: 'torn', slot: document.getElementById('cards'),
+           hide: () => Array.from(w.querySelectorAll('.card-wrap')) },
   });
 
   poll({ fetch: fetchJobs, interval: d => (d?.some(j=>j&&j.status==='running') ? 5 : _pollSec) * 1000,
@@ -613,10 +615,14 @@ function applyCard(idx, job) {
    the server is not the same claim, so the slots go inert instead. */
 function applyError(line) {
   slotList().forEach((_,idx)=>{
+    const back  = document.getElementById(`back-${idx}`);
     const front = document.getElementById(`front-${idx}`);
     const bname = document.getElementById(`back-name-${idx}`);
     const bmeta = document.getElementById(`back-meta-${idx}`);
     const fname = document.getElementById(`front-name-${idx}`);
+    /* The healthy path sets both, picked to suit the status colour. Leaving
+       them unset inherits the document's black onto a dark card. */
+    if(back){ back.style.background='rgba(255,255,255,0.06)'; back.style.color='#fff'; }
     if(front){ front.setAttribute('role','img'); front.setAttribute('aria-label', line); }
     if(bname) bname.textContent = line;
     if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
