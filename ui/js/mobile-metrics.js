@@ -36,10 +36,11 @@ export function gridCellCount({ gridW, gridH, sc }) {
   return { cols, rows };
 }
 
-export function mobileMetrics(vw) {
+/** @param {number} vw @param {boolean} docked */
+export function mobileMetrics(vw, docked = true) {
   const sc = Math.min(vw / BASE_VW, MAX_SC);
   const sm = Math.round(18 * sc);
-  const dh = Math.round(108 * sc);
+  const dh = docked ? Math.round(108 * sc) : 0;
   const pillH = Math.round(34 * sc);
   const pillGap = Math.round(10 * sc);
   /* Reserving less lets the pill sit on top of the last row. */

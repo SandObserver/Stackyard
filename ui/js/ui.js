@@ -16,7 +16,7 @@ import {
 } from '/js/utils.js?v=4c1189b9';
 import { t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
-import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=7be08bb0';
+import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';
 
 let _state = null;
 export function initUI(state) {
@@ -549,7 +549,11 @@ export function buildMobile() {
   st().BEL.clear();
   const vw = innerWidth,
     vh = innerHeight;
-  const { sc, sm, dh, pillH, pillGap, dz } = mobileMetrics(vw);
+  const dock = items()
+    .filter(i => i.type === 'app' && i.dock && !i.hidden)
+    .slice(0, 4);
+  const { sc, sm, dh, pillH, pillGap, dz } = mobileMetrics(vw, dock.length > 0);
+  document.body.classList.toggle('no-dock', !dock.length);
   const gap = Math.round(sm * 0.5);
   css(document.body, {
     '--sc': String(sc),
@@ -612,9 +616,6 @@ export function buildMobile() {
   const isz = Math.round(Math.min(cw * 0.9, rh * 0.8, maxIsz));
   const ir = Math.round(isz * 0.225),
     im = Math.round(isz * 0.64);
-  const dock = items()
-    .filter(i => i.type === 'app' && i.dock && !i.hidden)
-    .slice(0, 4);
   const showLabel = S().showLabels?.ios === true;
   /* The reference draws a 66 icon and a 28 widget corner, so a widget's corner
      is 0.424 of the icon it sits beside. */

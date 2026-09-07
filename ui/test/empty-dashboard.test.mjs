@@ -85,3 +85,39 @@ test('the mobile search pill is hidden while the dashboard is empty', () => {
     'bare is assigned before the pill is sized',
   );
 });
+
+test('an undocked mobile layout reserves no dock height', async () => {
+  const { mobileMetrics } = await import('../js/mobile-metrics.js');
+  assert.equal(mobileMetrics(393, false).dh, 0);
+  assert.ok(mobileMetrics(393, true).dh > 0);
+  assert.equal(mobileMetrics(393).dh, mobileMetrics(393, true).dh, 'the default stays docked');
+});
+
+test('the dock reservation follows what is actually docked', () => {
+  const src = read('js/ui.js');
+  assert.match(src, /mobileMetrics\(vw, dock\.length > 0\)/);
+  assert.ok(
+    src.indexOf('const dock = items()') < src.indexOf('mobileMetrics(vw,'),
+    'the dock is known before the metrics are taken',
+  );
+});
+
+test('the desktop bottom reserve collapses to the top reserve without a dock', () => {
+  const src = read('js/dashboard.js');
+  assert.match(src, /const bottom = hasDock \? Math\.min\(160, Math\.max\(110, ih \* 0\.1\)\) : top;/);
+  assert.match(src, /desktopSlots\(items\.some\(i => i\.type === 'app' && i\.dock && !i\.hidden\)\)/);
+});
+
+test('the page padding and the slot maths use the same two reserves', () => {
+  const css = read('css/dashboard.css');
+  const js = read('js/dashboard.js');
+  assert.match(css, /padding:clamp\(44px,4vh,70px\) clamp\(16px,4vw,270px\) clamp\(110px,10vh,160px\)/);
+  assert.match(css, /body\.no-dock \.page \{ padding-block-end:clamp\(44px,4vh,70px\) \}/);
+  assert.match(js, /Math\.min\(70, Math\.max\(44, ih \* 0\.04\)\)/);
+  assert.match(js, /Math\.min\(160, Math\.max\(110, ih \* 0\.1\)\)/);
+});
+
+test('both layouts mark the body when nothing is docked', () => {
+  for (const f of ['js/dashboard.js', 'js/ui.js'])
+    assert.match(read(f), /classList\.toggle\('no-dock', !dock\.length\)/);
+});

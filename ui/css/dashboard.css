@@ -86,6 +86,8 @@
          narrow-wide viewport. */
       padding:clamp(44px,4vh,70px) clamp(16px,4vw,270px) clamp(110px,10vh,160px);
     }
+    /* Mirrored by desktopSlots() in dashboard.js. */
+    body.no-dock .page { padding-block-end:clamp(44px,4vh,70px) }
     /* ── Desktop grid scale ──
        Six columns at every width. The grid, the gaps and the tile height are
        one proportional system derived from the viewport, so six columns stay
