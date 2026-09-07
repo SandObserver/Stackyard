@@ -30,9 +30,6 @@
   "ui.unknown": "未知",
   "ui.last": "上次",
   "ui.next": "下次",
-  "ui.backupError": "备份出错",
-  "ui.unreachable": "无法连接",
-  "ui.error": "错误",
   "ui.runningNow": "运行中…",
   "ui.lastCap": "上次",
   "ui.nextCap": "下次"

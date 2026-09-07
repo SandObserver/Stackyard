@@ -18,10 +18,6 @@
   "githubPrFilters.opt.mentioned": "نام‌برده‌شده",
   "githubPrFilters.opt.review-requested": "درخواست بازبینی",
   "ui.prAria": "درخواست‌های ادغام گیت‌هاب",
-  "ui.unreachable": "در دسترس نیست",
-  "ui.notConfigured": "پیکربندی نشده",
-  "ui.badToken": "توکن نامعتبر",
-  "ui.error": "خطا",
   "ui.noPrs": "درخواست ادغامی نیست",
   "ui.contributionsAria": "مشارکت‌های گیت‌هاب: {total} در سال گذشته",
   "ui.viewAll": "مشاهده همه"

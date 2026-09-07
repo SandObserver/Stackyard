@@ -103,6 +103,14 @@ function errorText(e) {
   return 'Unreachable';
 }
 
+function errorKindOf(e) {
+  if (e && e.name === 'SsrfBlockedError') return 'blocked';
+  const code = e && e.code;
+  if (TIMEOUT_CODES.has(code)) return 'timeout';
+  if (typeof code === 'string' && code) return 'network';
+  return 'upstream';
+}
+
 function authErr(r) {
   return r.status === 401 || r.status === 403;
 }
@@ -166,11 +174,16 @@ async function vpnView(ctx) {
         ipRes = await fetchJSON(base + '/v1/publicip/ip', { headers, timeout: 7000 });
       } catch (e) {
         out.error = errorText(e);
+        out.errorKind = errorKindOf(e);
       }
       if (ipRes) {
-        if (authErr(ipRes)) out.error = 'Auth required — set the API key';
-        else if (ipRes.status >= 400) out.error = 'Control server HTTP ' + ipRes.status;
-        else {
+        if (authErr(ipRes)) {
+          out.error = 'Auth required — set the API key';
+          out.errorKind = 'auth';
+        } else if (ipRes.status >= 400) {
+          out.error = 'Control server HTTP ' + ipRes.status;
+          out.errorKind = 'upstream';
+        } else {
           const d = ipRes.data || {};
           out.ip = d.public_ip || d.ip || '';
           out.city = d.city || '';
@@ -226,6 +239,7 @@ async function vpnView(ctx) {
     }
   } catch (e) {
     out.error = errorText(e);
+    out.errorKind = errorKindOf(e);
   }
 
   return out;
@@ -358,9 +372,11 @@ async function mapView(ctx) {
           o.limit = 0;
         } else {
           o.error = 'Unsupported service type';
+          o.errorKind = 'invalid';
         }
       } catch (e) {
         o.error = errorText(e);
+        o.errorKind = errorKindOf(e);
       }
       return o;
     }),

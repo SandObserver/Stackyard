@@ -41,30 +41,27 @@
   .tip b { font-size:11px; font-weight:600; color:#fff; }
   .tip s { font-size:11px; font-weight:500; color:rgba(255,255,255,0.6); text-decoration:none; }
 
-  .msg {
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size:11px; color:rgba(255,255,255,0.34); text-align:center; padding:0 16px;
-  }
+  .msg { position:absolute; inset-inline:0; bottom:0; }
 
   .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 </style>
 </head>
 <body>
 <div class="widget" id="widget" role="group" aria-label="DNS filtering">
-  <div class="hero">
+  <div class="hero" id="hero">
     <div class="pct" id="pct">—</div>
     <div class="sub" id="sub-label">Queries Blocked</div>
   </div>
   <div class="flow" id="flow">
     <svg id="svg" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true"></svg>
     <div class="tip" id="tip"></div>
-    <div class="msg" id="msg" style="display:none"></div>
+    <div class="msg" id="msg" hidden></div>
   </div>
   <div class="sr-only" id="sr"></div>
 </div>
 
 <script type="module">
-import { poll, openUrl, loadStrings, wt, formatNumber } from '/js/widget-toolbox.js?v=432c5712';
+import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=c27f1c81';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -109,26 +106,14 @@ async function boot() {
     widgetEl.addEventListener('click', () => openUrl(_href));
   }
   poll({ fetch:gfetch, interval:TICK_MS,
-    render:d=>{ clearMsg(); apply(d); },
-    onError:({error,everOk,stale})=>{ if(!everOk||stale) setMsg(error.message||'Unreachable'); } });
+    render:d=>{ state.ok(); apply(d); },
+    onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); } });
   addEventListener('resize', () => { if (_last) render(_last); });
 }
 
-function setMsg(t) { msgEl.textContent = t; msgEl.style.display = ''; svgEl.style.display='none'; }
-function clearMsg() { msgEl.style.display = 'none'; svgEl.style.display=''; }
+const state = errorState({ root: widgetEl, content: [pctEl, svgEl], caption: msgEl });
 
-async function gfetch() {
-  let r; try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=stats`); } catch { throw new Error('Unreachable'); }
-  if (!r.ok) {
-    const d = await r.json().catch(()=>({}));
-    /* Prefer what the server said. data.js reports in the widget's own
-       words. */
-    throw new Error(d.error || (r.status===503?'Not configured':r.status===401?'Auth error':
-                    r.status===502?'Unreachable':'Error '+r.status));
-  }
-  const d = await r.json();
-  return d;
-}
+const gfetch = () => fetchData('stats');
 
 function apply(d) {
   const total   = +d.num_dns_queries || 0;

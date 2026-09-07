@@ -325,9 +325,15 @@
   },
   "widget": {
     "loading": "加载中",
-    "unavailable": "不可用",
     "noData": "无数据",
-    "justNow": "刚刚"
+    "justNow": "刚刚",
+    "errNetwork": "无法连接",
+    "errTimeout": "响应超时",
+    "errAuth": "密钥被拒绝",
+    "errBlocked": "请求被阻止",
+    "errInvalid": "尚未配置",
+    "errUpstream": "服务出错",
+    "errInternal": "出了点问题"
   },
   "widgetCfg": {
     "unavailable": "设置不可用",

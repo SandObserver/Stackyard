@@ -331,9 +331,15 @@
   },
   "widget": {
     "loading": "در حال بارگذاری",
-    "unavailable": "در دسترس نیست",
     "noData": "داده‌ای نیست",
-    "justNow": "همین حالا"
+    "justNow": "همین حالا",
+    "errNetwork": "دور از دسترس",
+    "errTimeout": "زمان تمام شد",
+    "errAuth": "کلید رد شد",
+    "errBlocked": "درخواست مسدود شد",
+    "errInvalid": "هنوز تنظیم نشده",
+    "errUpstream": "خطای سرویس",
+    "errInternal": "مشکلی پیش آمد"
   },
   "widgetCfg": {
     "unavailable": "تنظیمات در دسترس نیست",

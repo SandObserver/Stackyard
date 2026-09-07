@@ -331,9 +331,15 @@
   },
   "widget": {
     "loading": "Wird geladen",
-    "unavailable": "Nicht verfügbar",
     "noData": "Keine Daten",
-    "justNow": "gerade eben"
+    "justNow": "gerade eben",
+    "errNetwork": "Nicht erreichbar",
+    "errTimeout": "Zeitüberschreitung",
+    "errAuth": "Schlüssel abgelehnt",
+    "errBlocked": "Anfrage blockiert",
+    "errInvalid": "Noch nicht eingerichtet",
+    "errUpstream": "Dienstfehler",
+    "errInternal": "Etwas ist schiefgelaufen"
   },
   "widgetCfg": {
     "unavailable": "Einstellungen nicht verfügbar",

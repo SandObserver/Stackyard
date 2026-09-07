@@ -337,9 +337,15 @@
   },
   "widget": {
     "loading": "Chargement",
-    "unavailable": "Indisponible",
     "noData": "Aucune donnée",
-    "justNow": "à l’instant"
+    "justNow": "à l’instant",
+    "errNetwork": "Injoignable",
+    "errTimeout": "Trop lent à répondre",
+    "errAuth": "Clé refusée",
+    "errBlocked": "Requête bloquée",
+    "errInvalid": "Pas encore configuré",
+    "errUpstream": "Erreur du service",
+    "errInternal": "Une erreur est survenue"
   },
   "widgetCfg": {
     "unavailable": "Réglages indisponibles",

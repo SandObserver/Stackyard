@@ -92,10 +92,11 @@
   <div class="info" id="info" aria-hidden="true">
     <div class="t" id="i-t"></div><div class="a" id="i-a"></div><div class="p" id="i-p"></div>
   </div>
+  <div class="wt-cap" id="cap" hidden></div>
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, openUrl, loadStrings, wt, formatNumber } from '/js/widget-toolbox.js?v=432c5712';
+  import { poll, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=c27f1c81';
   await loadStrings();
   document.getElementById('lbl').textContent = wt('ui.reading', 'READING');
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
@@ -191,7 +192,18 @@
       card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head')) go(); });
       card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
     }
-    poll({ interval:POLL_MS, render:d=>{
+    const state = errorState({ root:card, content:document.getElementById('shelves'),
+      caption:document.getElementById('cap') });
+
+    poll({ interval:POLL_MS,
+      isEmpty:d=>{
+        const shelves=Array.isArray(d&&d.shelves)?d.shelves:[{books:d&&d.books}];
+        return shelves.every(sh=>!(sh&&Array.isArray(sh.books)&&sh.books.length));
+      },
+      onEmpty:()=>state.empty(wt('ui.noBooks','No books')),
+      onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); },
+      render:d=>{
+      state.ok();
       const shelves=Array.isArray(d.shelves)?d.shelves:[{source:d.source,books:d.books}];
       lbl.textContent=SHELVES>1?wt('widget.label','Books'):(SRC_LABEL[shelves[0]&&shelves[0].source]||'READING');
       bays.forEach((bay,i)=>{

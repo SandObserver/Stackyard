@@ -30,9 +30,6 @@
   "ui.unknown": "desconocido",
   "ui.last": "última",
   "ui.next": "siguiente",
-  "ui.backupError": "Error de copia",
-  "ui.unreachable": "Inaccesible",
-  "ui.error": "Error",
   "ui.runningNow": "En curso…",
   "ui.lastCap": "Última",
   "ui.nextCap": "Siguiente"

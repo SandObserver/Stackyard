@@ -636,11 +636,45 @@ poll({
 ```
 
 A failure keeps the last good render in place; only after `staleAfter` (default
-2) consecutive failures does it surface `errorText` with how long ago the last
+2) consecutive failures does it surface the failure with how long ago the last
 success was. `sinceLabel(ts)` gives that "3m ago" label on its own.
 
 The first fetch runs immediately. Each repeat is spread by up to 15%, so several
 widgets on one dashboard do not fetch on the same tick.
+
+**Failure and empty states**
+
+Empty and failed are different claims and must not look alike. `isEmpty(data)`
+decides which one applies. Without a custom handler `poll()` draws both itself.
+With `onError`, add `onEmpty` for the other half.
+
+`errorState(opts)` draws a widget's failure state:
+
+```js
+const state = errorState({ root, content: chartEl, caption: metaLineEl });
+
+poll({
+  render: d => { state.ok(); draw(d); },
+  isEmpty: d => d.items.length === 0,
+  onEmpty: () => state.empty(wt('ui.noItems', 'Nothing here')),
+  onError: ({ error, everOk, stale, since }) => {
+    if (!everOk || stale) state.fail(error, { since, inert: everOk });
+  },
+});
+```
+
+- `content` is the element, elements, or a function returning them, that go
+  inert. `caption` is the widget's own metadata slot; without one a line is
+  placed at the foot of `root`, or over its centre with `place: 'center'`.
+- `fail(err, { since, inert })` returns the line it drew, for an accessible
+  name. Pass `inert: false` when the widget never had data: there is nothing to
+  fade, and fading a placeholder leaves an empty frame.
+- Set `--wt-cap-color` on the widget when its card is light.
+
+The wording comes from the failure kind the API sends, not from the response
+message. An upstream sentence names hosts, ports and status codes and is not
+translated, so no widget draws one. `errorLine(err)` returns the same wording
+for a widget that keeps a designed state of its own.
 
 **Links**
 

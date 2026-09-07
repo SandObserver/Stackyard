@@ -38,6 +38,8 @@
   .pr-title{font-weight:500;color:rgba(255,255,255,0.88);white-space:nowrap;overflow:hidden;
     text-overflow:ellipsis;line-height:1.3;}
 
+  .pr-cap{flex:none;padding:2px 2px 1px;}
+  .widget.size-list .pr-cap{flex:1;justify-content:center;padding:0;}
   .msg{flex:1;display:flex;align-items:center;justify-content:center;
     font-size:11px;color:rgba(255,255,255,0.28);text-align:center;}
 
@@ -62,7 +64,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="GitHub pull requests"></div>
 <script type="module">
-import { poll, openUrl, loadStrings, wt } from '/js/widget-toolbox.js?v=432c5712';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=c27f1c81';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.prAria','GitHub pull requests'));
 
@@ -119,8 +121,21 @@ async function boot() {
   } catch {}
   if (!cfg) cfg = { widgetConfig:{} };
   buildShell();
-  poll({ fetch: fetchPrs, interval: TICK_MS, render,
-    onError: ({ error, everOk, stale }) => { if (!everOk || stale) showError(error.message); } });
+  const w = document.getElementById('widget');
+  if (size !== 'small') w.classList.add('size-list');
+  const list = () => document.getElementById('pr-list');
+  const state = errorState({
+    root: w,
+    content: () => [w.querySelector('.hdr'), w.querySelector('.small-body')],
+    caption: document.getElementById('pr-cap'),
+  });
+  const showList = on => { const l = list(); if (l) l.hidden = !on; };
+
+  poll({ fetch: fetchPrs, interval: TICK_MS,
+    render: d => { showList(true); state.ok(); render(d); },
+    onError: ({ error, everOk, stale, since }) => {
+      if (!everOk || stale) { showList(false); state.fail(error, { since, inert: everOk }); }
+    } });
 }
 
 function buildShell() {
@@ -147,7 +162,7 @@ function buildShell() {
       sub.style.fontSize   = '16px';
     }
     body.append(count, sub);
-    w.append(hdr, body);
+    w.append(hdr, body, makeCap());
   } else {
     /* Medium / Large: header + list */
     const hdr = document.createElement('div'); hdr.className = 'hdr';
@@ -161,21 +176,19 @@ function buildShell() {
     hl.append(ico, cnt, lbl); hdr.append(hl, gh);
 
     const list = document.createElement('div'); list.className = 'pr-list'; list.id = 'pr-list';
-    w.append(hdr, list);
+    w.append(hdr, list, makeCap());
   }
 }
 
-async function fetchPrs() {
-  let r;
-  try { r = await fetch(`${API}/widget-data/${encodeURIComponent(id)}?endpoint=data`); }
-  catch { throw new Error(wt('ui.unreachable','Unreachable')); }
-  if (!r.ok) {
-    const d = await r.json().catch(()=>({}));
-    throw new Error(d.error || (r.status===503?wt('ui.notConfigured','Not configured'):r.status===401?wt('ui.badToken','Bad token'):wt('ui.error','Error')+' '+r.status));
-  }
-  const d = await r.json();
-  return d;
+function makeCap() {
+  const c = document.createElement('div');
+  c.className = 'wt-cap pr-cap';
+  c.id = 'pr-cap';
+  c.hidden = true;
+  return c;
 }
+
+const fetchPrs = () => fetchData('data');
 
 function render(data) {
   /* data: { totalCount, label, items:[{number,title,repo,url}] } */
@@ -246,17 +259,6 @@ function render(data) {
     } else { item.setAttribute('role','listitem'); }
     list.appendChild(item);
   });
-}
-
-function showError(msg) {
-  if (size === 'small') {
-    const sc = document.getElementById('small-count'); if(sc) sc.textContent = '—';
-    return;
-  }
-  const list = document.getElementById('pr-list'); if (!list) return;
-  list.innerHTML = '';
-  const m = document.createElement('div'); m.className = 'msg'; m.id = 'pr-error';
-  m.textContent = msg; list.appendChild(m);
 }
 
 boot();

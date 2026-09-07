@@ -337,9 +337,15 @@
   },
   "widget": {
     "loading": "Cargando",
-    "unavailable": "No disponible",
     "noData": "Sin datos",
-    "justNow": "ahora mismo"
+    "justNow": "ahora mismo",
+    "errNetwork": "Fuera de alcance",
+    "errTimeout": "Tardó demasiado",
+    "errAuth": "Clave rechazada",
+    "errBlocked": "Solicitud bloqueada",
+    "errInvalid": "Sin configurar aún",
+    "errUpstream": "Error del servicio",
+    "errInternal": "Algo salió mal"
   },
   "widgetCfg": {
     "unavailable": "Ajustes no disponibles",
