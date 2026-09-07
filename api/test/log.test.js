@@ -204,3 +204,44 @@ test('every value round-trips through a logfmt parser', t => {
     assert.equal(got, expected, `round trip failed for ${JSON.stringify(expected)}`);
   });
 });
+
+test('a serialised error carries its cause chain', t => {
+  const lines = capture(t);
+  const root = new Error('ENOENT');
+  log.error('load failed', { error: new Error('data.js failed to load', { cause: root }) });
+  assert.match(lines[0], /data\.js failed to load/);
+  assert.match(lines[0], /ENOENT/);
+});
+
+test('a non-error cause is serialised as a string', t => {
+  const lines = capture(t);
+  log.error('boom', { error: new Error('outer', { cause: 'plain reason' }) });
+  assert.match(lines[0], /plain reason/);
+});
+
+test('a cyclic cause chain terminates', t => {
+  const lines = capture(t);
+  const a = new Error('a');
+  const b = new Error('b', { cause: a });
+  a.cause = b;
+  log.error('cycle', { error: a });
+  assert.match(lines[0], / ERR msg=cycle/);
+});
+
+test('reason joins the message chain outermost first', () => {
+  const root = new Error('ENOENT: no such file');
+  const wrapped = new Error('data.js failed to load', { cause: root });
+  assert.equal(log.reason(wrapped), 'data.js failed to load: ENOENT: no such file');
+});
+
+test('reason falls back to the value when there is no message', () => {
+  assert.equal(log.reason('a string'), 'a string');
+  assert.equal(log.reason(new Error('solo')), 'solo');
+});
+
+test('reason terminates on a cyclic chain', () => {
+  const a = new Error('a');
+  const b = new Error('b', { cause: a });
+  a.cause = b;
+  assert.equal(log.reason(a), 'a: b');
+});

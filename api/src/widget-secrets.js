@@ -114,7 +114,7 @@ function withholdWidgetConfig(item) {
 function restoreWithheldConfig(newItem, oldItem) {
   delete newItem[WITHHELD_FLAG];
   if (oldItem && oldItem.widgetConfig) {
-    newItem.widgetConfig = JSON.parse(JSON.stringify(oldItem.widgetConfig));
+    newItem.widgetConfig = structuredClone(oldItem.widgetConfig);
   }
 }
 

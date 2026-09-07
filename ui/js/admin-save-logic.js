@@ -44,7 +44,7 @@ export function newItemId(label, fallback = 'item', taken = []) {
 
 /** @param {any[]} items @returns {any[]} */
 export function snapshotItems(items) {
-  return Array.isArray(items) ? JSON.parse(JSON.stringify(items)) : [];
+  return Array.isArray(items) ? structuredClone(items) : [];
 }
 
 /** Run `write` and undo the local change when it did not reach the server.

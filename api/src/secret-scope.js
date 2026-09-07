@@ -23,7 +23,7 @@ function stableEqual(a, b) {
 
 function stripWidgetSecrets(config, entry) {
   const { topLevel, groups, objects } = secretSpec(entry);
-  const out = JSON.parse(JSON.stringify(config || {}));
+  const out = structuredClone(config || {});
   const drop = (obj, keys) => {
     if (!obj || typeof obj !== 'object') return;
     for (const k of keys) {

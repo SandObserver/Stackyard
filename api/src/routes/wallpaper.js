@@ -54,7 +54,7 @@ function storeWallpaper(data, ext) {
     @returns {string[]} the names to delete */
 function wallpapersToDrop(files, referenced) {
   if (referenced && files.includes(referenced)) return files.filter(f => f !== referenced);
-  const newest = files[files.length - 1];
+  const newest = files.at(-1);
   return files.filter(f => f !== newest);
 }
 

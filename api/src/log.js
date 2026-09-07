@@ -15,11 +15,40 @@ function _apply(name) {
 }
 _apply(process.env.LOG_LEVEL);
 
+const CAUSE_DEPTH = 4;
+
+/* Bounded and cycle-guarded. A cause chain can be self-referential, and an
+   unbounded walk here hangs the process that is already failing. */
+function _err(e, seen = new Set()) {
+  if (seen.has(e) || seen.size >= CAUSE_DEPTH) return { message: e.message };
+  seen.add(e);
+  const out = { message: e.message, stack: e.stack };
+  if (e.cause instanceof Error) out.cause = _err(e.cause, seen);
+  else if (e.cause !== undefined) out.cause = String(e.cause);
+  return out;
+}
+
+/** The message chain of an error, outermost first. Keeps an operator log to one
+    readable line where the full serialised error would be a stack dump.
+    @param {unknown} e @returns {string} */
+function reason(e) {
+  const parts = [];
+  const seen = new Set();
+  let cur = e;
+  while (cur && typeof cur === 'object' && !seen.has(cur) && parts.length < CAUSE_DEPTH) {
+    seen.add(cur);
+    const m = /** @type {{ message?: unknown }} */ (cur).message;
+    if (typeof m === 'string' && m) parts.push(m);
+    cur = /** @type {{ cause?: unknown }} */ (cur).cause;
+  }
+  if (typeof cur === 'string' && cur) parts.push(cur);
+  return parts.join(': ') || String(e ?? '');
+}
+
 function _fields(data) {
-  if (data instanceof Error) return { error: { message: data.message, stack: data.stack } };
+  if (data instanceof Error) return { error: _err(data) };
   const out = {};
-  for (const [k, v] of Object.entries(data || {}))
-    out[k] = v instanceof Error ? { message: v.message, stack: v.stack } : v;
+  for (const [k, v] of Object.entries(data || {})) out[k] = v instanceof Error ? _err(v) : v;
   return out;
 }
 
@@ -87,3 +116,4 @@ const log = {
 };
 
 module.exports = log;
+module.exports.reason = reason;

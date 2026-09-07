@@ -1,6 +1,6 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=5702feef';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9fc96f28';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=0a1e50b5';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=9d47d1ea';
 import { resolveAdminSection } from '/js/admin-logic.js?v=dcf7c37d';
 import {
   buildAppItem,
@@ -9,7 +9,7 @@ import {
   saveWithRevert,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=48a9e055';
+} from '/js/admin-save-logic.js?v=4f71ef6c';
 import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=f019211c';
 import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=132c869f';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
@@ -25,13 +25,13 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=ef4f3d44';
+} from '/js/import-foreign.js?v=722d1c25';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=00c011c9';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=d949e985';
 import { normalizeColorInput } from '/js/admin-color-control.js?v=3a61c02f';
-import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=1907cce7';
+import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
 /* A class rather than a bare media query. Some phones report a wider CSS
@@ -238,7 +238,7 @@ function _renderEditBody() {
 function openModal(idx) {
   const editing = idx != null ? state.items[idx] : null;
   state.eid = editing?.id ?? null;
-  const item = editing ? JSON.parse(JSON.stringify(editing)) : null;
+  const item = editing ? structuredClone(editing) : null;
   state.ctype = item?.type || 'app';
   state.siurl = item?.iconUrl || '';
   state.scol = item?.color || 'dark';
