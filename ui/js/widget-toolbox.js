@@ -4,7 +4,7 @@
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
-import { errorState as _errorState, errorKind, errorCopy, errorGlyph } from '/js/widget-error.js?v=3d7b571a';
+import { errorState as _errorState, errorKind, errorCopy, errorGlyph } from '/js/widget-error.js?v=cf6d179a';
 
 export { errorKind, errorCopy, errorGlyph };
 

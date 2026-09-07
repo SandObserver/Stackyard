@@ -125,7 +125,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=056cb20d';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
 await loadStrings();
 document.getElementById('title').textContent = wt('ui.nothingPlaying', 'Nothing playing');
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
@@ -232,10 +232,8 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     }
     /* The tape goes grey and the label says why. Idle already means "nothing
        playing", so a failure must not borrow it. */
-    const state=errorState({ root:wEl, content:[],
-      caption:document.getElementById('np-cap'),
-      art:{ name:'tangle', slot:document.querySelector('.window'),
-            hide:[tapeEl, spinEl, document.querySelector('.strand')] } });
+    const state=errorState({ root:wEl, content:[document.querySelector('.window')],
+      caption:document.getElementById('np-cap') });
 
     poll({ fetch:npFetch, interval:TICK_MS,
       render:d=>{ showText(true); state.ok(); apply(d); },

@@ -41,7 +41,7 @@
   .pr-cap{flex:none;padding:2px 2px 1px;}
   /* Medium and large leave a tall empty list behind. The caption takes that
      space rather than sitting alone at the foot of it. */
-  .widget.size-list .pr-cap{justify-content:center;}
+  .widget.size-list .pr-cap{flex:1;justify-content:center;padding:0;}
   .msg{flex:1;display:flex;align-items:center;justify-content:center;
     font-size:11px;color:rgba(255,255,255,0.28);text-align:center;}
 
@@ -66,7 +66,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="GitHub pull requests"></div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=056cb20d';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.prAria','GitHub pull requests'));
 
@@ -131,12 +131,13 @@ async function boot() {
     /* The header and the count keep their shape and go inert. */
     content: () => [w.querySelector('.hdr'), w.querySelector('.small-body')],
     caption: document.getElementById('pr-cap'),
-    art: size === 'small' ? null : { name: 'unplugged', slot: list() },
   });
+  const showList = on => { const l = list(); if (l) l.hidden = !on; };
+
   poll({ fetch: fetchPrs, interval: TICK_MS,
-    render: d => { state.ok(); render(d); },
+    render: d => { showList(true); state.ok(); render(d); },
     onError: ({ error, everOk, stale, since }) => {
-      if (!everOk || stale) state.fail(error, { since, inert: everOk });
+      if (!everOk || stale) { showList(false); state.fail(error, { since, inert: everOk }); }
     } });
 }
 

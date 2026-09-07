@@ -9,10 +9,8 @@
   html,body{width:100%;height:100%;overflow:hidden;
     background:transparent;
     font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;}
-  /* Column, so the caption takes a row under the grid instead of landing on
-     its last week. */
-  .widget{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;
-    justify-content:center;gap:4px;padding:8px;cursor:default;}
+  .widget{width:100%;height:100%;display:flex;align-items:center;
+    justify-content:center;padding:8px;cursor:default;}
   .widget.clickable{cursor:pointer;}
   .graph{display:flex;flex-direction:row;gap:2px;align-items:flex-start;}
   .col{display:flex;flex-direction:column;gap:2px;}
@@ -23,8 +21,7 @@
   .l2{background:#006d32;}
   .l3{background:#26a641;}
   .l4{background:#39d353;}
-  /* The caption precedes the grid in the markup; order puts it underneath. */
-  .msg{order:2;flex:none;justify-content:center;max-width:100%;}
+  .msg{position:absolute;inset-inline:8px;bottom:6px;justify-content:center;}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
 </head>
@@ -33,7 +30,7 @@
   <div class="msg wt-cap" id="msg" hidden></div>
 </div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=056cb20d';
+import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=6d6dbe28';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -72,10 +69,7 @@ async function boot() {
 
 const fetchGraph = () => fetchData('data');
 
-let _last = null;
-
 function render(data) {
-  _last = data;
   const weeks  = (data.weeks || []).slice(-COLS);
   const widget = document.getElementById('widget');
   const old = widget.querySelector('.graph');
@@ -85,9 +79,7 @@ function render(data) {
   requestAnimationFrame(() => _renderGraph(data, weeks, widget));
 }
 
-/* reserve: the height the caption row takes, so the grid stops short of it
-   instead of pushing it out of the widget. */
-function _renderGraph(data, weeks, widget, reserve = 0) {
+function _renderGraph(data, weeks, widget) {
 
   /* Quartile-based levels relative to max in visible window */
   let maxCount = 0;
@@ -98,7 +90,7 @@ function _renderGraph(data, weeks, widget, reserve = 0) {
 
   const pad  = compact ? 4 : 8;
   const W = (IW || widget.offsetWidth)  - pad*2;
-  const H = (IH || widget.offsetHeight) - pad*2 - reserve;
+  const H = (IH || widget.offsetHeight) - pad*2;
   const cellW = Math.floor((W - (COLS-1)*2) / COLS);
   const cellH = Math.floor((H - (ROWS-1)*2) / ROWS);
   const cell  = Math.min(cellW, cellH); /* no cap — fill the full space */
@@ -140,34 +132,11 @@ function _renderGraph(data, weeks, widget, reserve = 0) {
   widget.appendChild(graph);
 }
 
-/* The year grid is the widget's shape. The cells themselves draw the failure:
-   a cross struck through the middle of an otherwise empty year. */
-const CROSS = [
-  [0, 0], [1, 1], [2, 2], [3, 3], [4, 4],
-  [4, 0], [3, 1], [1, 3], [0, 4],
-];
-
-function markCross(widget) {
-  const cols = widget.querySelectorAll('.col');
-  if (cols.length < 5) return;
-  const c0 = Math.floor((cols.length - 5) / 2);
-  const r0 = 1;
-  for (const [dc, dr] of CROSS) {
-    const cell = cols[c0 + dc]?.children[r0 + dr];
-    if (cell) cell.className = 'cell l2';
-  }
-}
-
-/* The caption row's height, reserved out of the grid. */
-const CAP_H = 18;
-
+/* The year grid is the widget's shape. Draw an empty one if nothing has been
+   drawn yet, then let it go inert, rather than leaving a bare frame. */
 function showError(error, since, everOk) {
   const widget = document.getElementById('widget');
-  const old = widget.querySelector('.graph');
-  if (old) old.remove();
-  const weeks = ((_last && _last.weeks) || []).slice(-COLS);
-  _renderGraph(_last || {}, weeks, widget, CAP_H);
-  if (!everOk) markCross(widget);
+  if (!widget.querySelector('.graph')) _renderGraph({}, [], widget);
   const line = state.fail(error, { since, inert: everOk });
   widget.setAttribute('role', 'img');
   widget.setAttribute('aria-label', line);
