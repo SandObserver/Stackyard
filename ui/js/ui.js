@@ -3,6 +3,8 @@ import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-ty
 import {
   mk,
   clr,
+  isDashboardEmpty,
+  renderEmptyState,
   mkWrap as _mkWrap,
   mountScaledWidget,
   pageDir,
@@ -11,7 +13,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=d949e985';
+} from '/js/utils.js?v=4c1189b9';
 import { t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=7be08bb0';
@@ -626,7 +628,8 @@ export function buildMobile() {
       .flatMap(f => f.children || [])
       .map(String),
   );
-  const gridItems = items().filter(i => !i.dock && !i.hidden && !inFolder.has(String(i.id)));
+  const bare = isDashboardEmpty(items());
+  const gridItems = items().filter(i => !i.dock && !i.hidden && !inFolder.has(String(i.id)) && !(bare && i.system));
 
   function packMobile(list) {
     const pages = [];
@@ -743,6 +746,7 @@ export function buildMobile() {
   /* Nothing was placed, so the measuring page would show as a blank first
      page. */
   if (!pages.length) firstPage.page.remove();
+  renderEmptyState(items());
 
   const dw = el('dots');
   dw.style.cssText = 'display:none';
@@ -763,6 +767,7 @@ export function buildMobile() {
     ? dock.length * dockIconSz + (dock.length - 1) * Math.round(22 * sc) + dockPad * 2
     : maxDockW;
   const dockW = Math.min(maxDockW, dockContentW);
+  dk.hidden = !dock.length;
   dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
   dk.replaceChildren();
   dock.forEach(item => {

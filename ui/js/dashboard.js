@@ -11,10 +11,12 @@ import {
 } from '/js/widget-types.js?v=a1b61636';
 import {
   el,
+  isDashboardEmpty,
   mk,
   mkWrap as _mkWrap,
   mountScaledWidget,
   pageDir,
+  renderEmptyState,
   q,
   qa,
   qi,
@@ -22,13 +24,13 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=d949e985';
-import { initSpotlight } from '/js/spotlight.js?v=687fae26';
+} from '/js/utils.js?v=4c1189b9';
+import { initSpotlight } from '/js/spotlight.js?v=c8d5d2d8';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=82e0bf6b';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=47debc3c';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -266,10 +268,12 @@ function paginate() {
       .map(String),
   );
   const budget = desktopSlots();
+  const bare = isDashboardEmpty(items);
   const pages = [];
   let cur = [],
     used = 0;
   for (const item of items) {
+    if (bare && item.system) continue;
     if (item.dock) continue;
     if (item.hidden) continue;
     if (inFolder.has(String(item.id))) continue;
@@ -392,6 +396,7 @@ function buildDesktop() {
     p.appendChild(g);
     strip.appendChild(p);
   });
+  renderEmptyState(items);
   const dots = el('dots');
   dots.style.cssText = '';
   dots.replaceChildren();
@@ -400,6 +405,7 @@ function buildDesktop() {
   const dk = el('dock');
   dk.replaceChildren();
   dock.forEach(item => dk.appendChild(mkDock(item)));
+  dk.hidden = !dock.length;
 }
 
 /* Every page is mounted at once, so widgets the user has swiped away from keep

@@ -249,7 +249,11 @@
     "apiDownSub": "Comprueba que el contenedor de la API esté en ejecución",
     "retry": "Reintentar",
     "opensSettings": "Abre los ajustes",
-    "loadFailed": "No se pudo cargar la configuración del panel."
+    "loadFailed": "No se pudo cargar la configuración del panel.",
+    "emptyTitle": "Tu panel está vacío",
+    "emptyBody": "Añade tus aplicaciones, carpetas y widgets para crear tu pantalla de inicio.",
+    "emptyAction": "Abrir ajustes",
+    "emptyImportLink": "Importar una copia de seguridad o una configuración de Homepage o Dashy"
   },
   "toast": {
     "saved": "Guardado",

@@ -245,7 +245,11 @@
     "apiDownSub": "Make sure the API container is running",
     "retry": "Retry",
     "opensSettings": "Opens settings",
-    "loadFailed": "Failed to load dashboard config."
+    "loadFailed": "Failed to load dashboard config.",
+    "emptyTitle": "Your dashboard is empty",
+    "emptyBody": "Add your apps, folders and widgets to build your home screen.",
+    "emptyAction": "Open settings",
+    "emptyImportLink": "Import a backup, Homepage or Dashy config"
   },
   "toast": {
     "saved": "Saved",

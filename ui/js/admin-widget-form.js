@@ -1,10 +1,10 @@
 import { state } from '/js/admin-state.js?v=7d68e98e';
-import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=132c869f';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=0f95ec4c';
+import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=d7dd8b71';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=02918336';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=dcf7c37d';
 import { t } from '/js/i18n.js?v=e644a5c5';
-import { q, qi, qa } from '/js/utils.js?v=d949e985';
+import { q, qi, qa } from '/js/utils.js?v=4c1189b9';
 
 const SIZE_ICONS = {
   small:

@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- An empty dashboard now shows a welcome screen with the app mark, a link to
+  settings and a link to import a backup or another dashboard's config.
+
+- The dock is hidden when no app is docked.
+
 - The page indicator is hidden when the dashboard has one page.
 
 - The demo dashboard shows the Books widget at its large size.

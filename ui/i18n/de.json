@@ -245,7 +245,11 @@
     "apiDownSub": "Stellen Sie sicher, dass der API-Container läuft",
     "retry": "Erneut versuchen",
     "opensSettings": "Öffnet die Einstellungen",
-    "loadFailed": "Dashboard-Konfiguration konnte nicht geladen werden."
+    "loadFailed": "Dashboard-Konfiguration konnte nicht geladen werden.",
+    "emptyTitle": "Dein Dashboard ist leer",
+    "emptyBody": "Füge Apps, Ordner und Widgets hinzu, um deinen Startbildschirm aufzubauen.",
+    "emptyAction": "Einstellungen öffnen",
+    "emptyImportLink": "Backup oder Homepage-/Dashy-Konfiguration importieren"
   },
   "toast": {
     "saved": "Gespeichert",
