@@ -664,8 +664,9 @@ poll({
 ```
 
 - `content` is the element, elements, or a function returning them, that go
-  inert. `caption` is the widget's own metadata slot; without one a line is
-  placed at the foot of `root`, or over its centre with `place: 'center'`.
+  inert. Without it every child of `root` but the caption goes inert. `caption`
+  is the widget's own metadata slot; without one a line is placed at the foot of
+  `root`, or over its centre with `place: 'center'`.
 - `fail(err, { since, inert })` returns the line it drew, for an accessible
   name. Pass `inert: false` when the widget never had data: there is nothing to
   fade, and fading a placeholder leaves an empty frame.

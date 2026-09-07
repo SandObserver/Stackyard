@@ -27,13 +27,35 @@ const TITLES = [
   ['Gnomon', 'Nick Harkaway'],
   ['The Peripheral', 'William Gibson'],
   ['Version Control', 'Dexter Palmer'],
+  ['Kindred', 'Octavia E. Butler'],
+  ['Parable of the Sower', 'Octavia E. Butler'],
+  ['Dawn', 'Octavia E. Butler'],
+  ["Childhood's End", 'Arthur C. Clarke'],
+  ['Rendezvous with Rama', 'Arthur C. Clarke'],
+  ['The Stars My Destination', 'Alfred Bester'],
+  ['Flowers for Algernon', 'Daniel Keyes'],
+  ['Do Androids Dream of Electric Sheep?', 'Philip K. Dick'],
+  ['Ubik', 'Philip K. Dick'],
+  ['The Man in the High Castle', 'Philip K. Dick'],
+  ['Neuromancer', 'William Gibson'],
+  ['Snow Crash', 'Neal Stephenson'],
+  ['Anathem', 'Neal Stephenson'],
+  ['The Quantum Thief', 'Hannu Rajaniemi'],
+  ['Embassytown', 'China Mieville'],
+  ['The Long Way to a Small Angry Planet', 'Becky Chambers'],
+  ['A Psalm for the Wild-Built', 'Becky Chambers'],
+  ['All Systems Red', 'Martha Wells'],
+  ['Children of Time', 'Adrian Tchaikovsky'],
+  ['Spin', 'Robert Charles Wilson'],
 ];
 
 module.exports = function booksDemo({ demo: { wave, round } }) {
-  const shelf = (source, offset) => ({
+  /* Disjoint runs. Overlapping slices put the same title on every shelf, which
+     reads as a bug in the shelf that repeats it. */
+  const shelf = (source, from, to) => ({
     source,
-    books: TITLES.slice(offset, offset + 16).map(([title, author], i) => {
-      const n = offset + i;
+    books: TITLES.slice(from, to).map(([title, author], i) => {
+      const n = from + i;
       const finished = n % 5 === 2;
       const unread = source === 'unread' || n % 5 === 3;
       return {
@@ -48,6 +70,6 @@ module.exports = function booksDemo({ demo: { wave, round } }) {
   });
   return {
     provider: 'audiobookshelf',
-    shelves: [shelf('unread', 0), shelf('recently', 8), shelf('list', 12)],
+    shelves: [shelf('unread', 0, 16), shelf('recently', 16, 32), shelf('list', 32, 48)],
   };
 };

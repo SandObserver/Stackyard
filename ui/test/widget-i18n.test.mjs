@@ -81,8 +81,6 @@ test('English skips the fetch entirely', () => {
   assert.match(toolbox, /if \(_lang === 'en'\) return;/);
 });
 
-/* The failure wording is per kind and lives in widget-error.js. What stays here
-   is the toolbox's own two states. */
 test('no status string is hardcoded any more', () => {
   for (const [key, english] of [
     ['loading', 'Loading'],
@@ -131,7 +129,6 @@ test('an unusable locale tag falls back rather than throwing', () => {
 
 /* ── the strings exist ────────────────────────────────────────────────────── */
 
-/* One line per failure kind. widget-error.js maps the kind to the key. */
 const ERROR_KEYS = ['errNetwork', 'errTimeout', 'errAuth', 'errBlocked', 'errInvalid', 'errUpstream', 'errInternal'];
 
 test('every locale carries the widget strings', () => {

@@ -108,7 +108,10 @@ const CSS = `
    its own hidden rule the caption never goes away. */
 .wt-cap[hidden] { display: none; }
 .wt-cap svg { width: 12px; height: 12px; flex: 0 0 auto; opacity: 0.85; }
-.wt-cap b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wt-cap b { font-weight: 500; overflow: hidden; min-width: 0;
+  /* Two lines, then clip. The narrowest card cannot hold the longest line on
+     one, and an ellipsised failure does not say what failed. */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .wt-cap i { font-style: normal; opacity: 0.7; flex: 0 0 auto; }
 .wt-cap-auto { position: absolute; inset-inline: 16px; bottom: 12px; }
 .wt-cap-center { position: absolute; inset: 0; justify-content: center; text-align: center; padding: 0 14px; }
@@ -129,8 +132,14 @@ function ensureStyle(doc) {
     @param {any} opts */
 export function errorState(opts = {}) {
   const root = opts.root;
-  const contentOf = () =>
-    [].concat((typeof opts.content === 'function' ? opts.content() : opts.content) || root || []).filter(Boolean);
+  /* Named content, else everything in the root but the caption. inert is a CSS
+     filter, which a descendant cannot escape, so fading the root would fade the
+     failure line with it. */
+  const contentOf = () => {
+    const named = typeof opts.content === 'function' ? opts.content() : opts.content;
+    if (named) return [].concat(named).filter(Boolean);
+    return root ? [...root.children].filter(el => el !== cap) : [];
+  };
   const t = typeof opts.t === 'function' ? opts.t : (_k, fallback) => fallback;
   const doc = root && root.ownerDocument;
   ensureStyle(doc);

@@ -99,8 +99,6 @@ test('the upstream users value is escaped, not concatenated', () => {
   assert.match(src, /\$\{info\.users\}/, 'info.users should be an html`` interpolation');
 });
 
-/* The upstream sentence used to be drawn on the card. The card now shows the
-   line the shared error state returns, which is a catalog value. */
 test('the backup failure draws no upstream text', () => {
   const src = read(BACKUP);
   assert.ok(!/err\?\.error/.test(src), 'the upstream error is back on the card');

@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=4a5478d6';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=681cfd29';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=8524801f';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=8c9ef961';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=1bb8584a';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=2067483a';
 import { resolveAdminSection } from '/js/admin-logic.js?v=dcf7c37d';
 import {
   buildAppItem,
@@ -10,10 +10,10 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=4f71ef6c';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=909c58ad';
-import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=d7dd8b71';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=9f7cf590';
+import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=70ec6be1';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=cc1dfdec';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=997ca7c6';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=e644a5c5';
 import { loadLocalIcons } from '/js/icons.js?v=69c2b9bd';
@@ -29,8 +29,8 @@ import {
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=00c011c9';
-import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=4c1189b9';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=f638b750';
+import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=e8b2a9f7';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=2d28867b';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
@@ -609,7 +609,8 @@ function initNav() {
     localStorage.setItem(STORE, id);
   }
   links.forEach(l => l.addEventListener('click', () => show(l.dataset.sec)));
-  show(localStorage.getItem(STORE));
+  addEventListener('hashchange', () => show(location.hash.slice(1)));
+  show(location.hash.slice(1) || localStorage.getItem(STORE));
 }
 
 function initAllInlineEdits() {
