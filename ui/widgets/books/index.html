@@ -22,7 +22,7 @@
   .shelves{flex:1;display:flex;flex-direction:column;min-height:0}
   .shelf-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
   .shelf-lbl{flex:none;font-size:9px;font-weight:600;color:#636366;letter-spacing:.06em;margin-top:5px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .shelf-lbl[hidden]{display:none}
   .shelf{flex:1;position:relative;padding-bottom:9px;margin-top:6px;perspective:520px}
   .size-large .shelf{margin-top:2px}
@@ -108,7 +108,15 @@
   const {shelves:SHELVES,show:SHOW}=SIZES[size];
   const POLL_MS=300000;
   const PALETTE=['#8E8E93','#008575','#956D51','#48484A','#008198','#A16A00','#C55300'];
-  const SRC_LABEL={recently:'RECENTLY ADDED',unread:'ON DECK',list:'READING'};
+  const SRC={recently:['ui.srcRecently','RECENTLY ADDED'],unread:['ui.srcUnread','ON DECK'],list:['ui.reading','READING']};
+  /* The reader's own name for the shelf, then the service's, then the generic
+     word for what the shelf holds. */
+  function shelfName(sh){
+    if(sh&&sh.name) return sh.name;
+    const src=sh&&sh.source;
+    const [key,en]=Object.hasOwn(SRC,src)?SRC[src]:SRC.list;
+    return wt(key,en);
+  }
 
   const card=document.getElementById('card'), lbl=document.getElementById('lbl');
   const host=document.getElementById('shelves');
@@ -205,11 +213,11 @@
       render:d=>{
       state.ok();
       const shelves=Array.isArray(d.shelves)?d.shelves:[{source:d.source,books:d.books}];
-      lbl.textContent=SHELVES>1?wt('widget.label','Books'):(SRC_LABEL[shelves[0]&&shelves[0].source]||'READING');
+      lbl.textContent=SHELVES>1?wt('widget.label','Books'):shelfName(shelves[0]);
       bays.forEach((bay,i)=>{
         const sh=shelves[i]||{books:[]};
         bay.lbl.hidden=SHELVES<2;
-        bay.lbl.textContent=SRC_LABEL[sh.source]||'READING';
+        bay.lbl.textContent=shelfName(sh);
         render(decorate((Array.isArray(sh.books)?sh.books:[]).slice(0,SHOW)),bay.list,bay.shelf);
       });
     } });

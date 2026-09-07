@@ -100,6 +100,14 @@
       },
       "fields": [
         {
+          "key": "label",
+          "type": "text",
+          "label": "shelfName.label",
+          "optional": true,
+          "placeholder": "shelfName.placeholder",
+          "hint": "shelfName.hint"
+        },
+        {
           "key": "source",
           "type": "select",
           "variant": "pills",

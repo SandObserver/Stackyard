@@ -288,3 +288,11 @@ test('both clock styles name days and months through Intl', () => {
     assert.doesNotMatch(src, /'Sun'\s*,\s*'Mon'/, `${style} still carries English day names`);
   }
 });
+
+test('a books shelf label comes from the catalog, not the source key', () => {
+  const src = fs.readFileSync(path.join(root, 'widgets/books/index.html'), 'utf8');
+  assert.doesNotMatch(src, /const SRC_LABEL\s*=/, 'the labels are hardcoded again');
+  for (const key of ['ui.srcRecently', 'ui.srcUnread', 'ui.reading'])
+    assert.ok(src.includes(key), `${key} is never looked up`);
+  assert.match(src, /if\s*\(sh&&sh\.name\)\s*return sh\.name/, 'a named shelf no longer wins');
+});

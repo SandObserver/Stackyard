@@ -88,6 +88,71 @@ test('Komga asks a different path per shelf', async () => {
   assert.deepEqual(paths, [
     '/api/v1/books/ondeck?size=16',
     '/api/v1/readlists/7/books?size=16',
+    '/api/v1/readlists?size=100',
     '/api/v1/books/latest?size=16',
   ]);
+});
+
+test('a shelf the reader named keeps that name', async () => {
+  const ctx = ctxFor({ ...ABS, shelves: [{ source: 'recently', label: '  Bedside pile  ' }] }, url =>
+    url.endsWith('/api/libraries')
+      ? { status: 200, data: { libraries: [{ id: 'L', mediaType: 'book' }] } }
+      : { status: 200, data: { results: [item('One')] } },
+  );
+  const r = await dataFn(ctx);
+  assert.equal(r.shelves[0].name, 'Bedside pile');
+});
+
+test('an unnamed list shelf carries the list name the service reports', async () => {
+  const ctx = ctxFor({ ...ABS, shelves: [{ source: 'list', listId: 'collection:c1' }] }, url => {
+    if (url.endsWith('/api/libraries')) return { status: 200, data: { libraries: [{ id: 'L', mediaType: 'book' }] } };
+    return { status: 200, data: { name: 'Sci-fi to read', books: [item('One')] } };
+  });
+  const r = await dataFn(ctx);
+  assert.equal(r.shelves[0].name, 'Sci-fi to read');
+});
+
+test('a named list shelf does not ask the service for a name', async () => {
+  const seen = [];
+  const ctx = ctxFor(
+    {
+      provider: 'komga',
+      komgaUrl: 'http://komga:25600',
+      komgaKey: 'k',
+      shelves: [{ source: 'list', listId: '7', label: 'Mine' }],
+    },
+    url => {
+      seen.push(url);
+      return { status: 200, data: { content: [{ name: 'One', metadata: { title: 'One' } }] } };
+    },
+  );
+  const r = await dataFn(ctx);
+  assert.equal(r.shelves[0].name, 'Mine');
+  assert.deepEqual(
+    seen.filter(u => u.includes('/readlists?')),
+    [],
+    'it looked the name up anyway',
+  );
+});
+
+test('komga reads an unnamed list name from the same listing the picker uses', async () => {
+  const ctx = ctxFor(
+    { provider: 'komga', komgaUrl: 'http://komga:25600', komgaKey: 'k', shelves: [{ source: 'list', listId: '7' }] },
+    url =>
+      url.includes('/readlists?')
+        ? { status: 200, data: { content: [{ id: 7, name: 'Weekly pulls' }] } }
+        : { status: 200, data: { content: [{ name: 'One', metadata: { title: 'One' } }] } },
+  );
+  const r = await dataFn(ctx);
+  assert.equal(r.shelves[0].name, 'Weekly pulls');
+});
+
+test('a shelf with no name of any kind reports none, so the widget picks the wording', async () => {
+  const ctx = ctxFor({ ...ABS, shelves: [{ source: 'unread' }] }, url =>
+    url.endsWith('/api/libraries')
+      ? { status: 200, data: { libraries: [{ id: 'L', mediaType: 'book' }] } }
+      : { status: 200, data: { results: [item('One')] } },
+  );
+  const r = await dataFn(ctx);
+  assert.equal(r.shelves[0].name, '');
 });
