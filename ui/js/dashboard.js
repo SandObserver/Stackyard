@@ -11,10 +11,12 @@ import {
 } from '/js/widget-types.js?v=a1b61636';
 import {
   el,
+  isDashboardEmpty,
   mk,
   mkWrap as _mkWrap,
   mountScaledWidget,
   pageDir,
+  renderEmptyState,
   q,
   qa,
   qi,
@@ -22,13 +24,13 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=d949e985';
-import { initSpotlight } from '/js/spotlight.js?v=687fae26';
+} from '/js/utils.js?v=4c1189b9';
+import { initSpotlight } from '/js/spotlight.js?v=c8d5d2d8';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=82e0bf6b';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=b71e1c75';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -81,10 +83,14 @@ function gridMetrics() {
 }
 let gm = { tile: DESIGN_TILE, rowGap: DESIGN_ROW_GAP, scale: 1 };
 
-function desktopSlots() {
+/* The reserves mirror the .page padding in dashboard.css. Change one and the
+   page breaks stop matching the box.
+
+   @param {boolean} hasDock */
+function desktopSlots(hasDock) {
   const ih = innerHeight;
   const top = Math.min(70, Math.max(44, ih * 0.04));
-  const bottom = Math.min(160, Math.max(110, ih * 0.1));
+  const bottom = hasDock ? Math.min(160, Math.max(110, ih * 0.1)) : top;
   const rows = Math.max(1, Math.min(4, Math.floor((ih - top - bottom + gm.rowGap) / (gm.tile + gm.rowGap))));
   return DCOLS * rows;
 }
@@ -265,11 +271,13 @@ function paginate() {
       .flatMap(f => f.children || [])
       .map(String),
   );
-  const budget = desktopSlots();
+  const budget = desktopSlots(items.some(i => i.type === 'app' && i.dock && !i.hidden));
+  const bare = isDashboardEmpty(items);
   const pages = [];
   let cur = [],
     used = 0;
   for (const item of items) {
+    if (bare && item.system) continue;
     if (item.dock) continue;
     if (item.hidden) continue;
     if (inFolder.has(String(item.id))) continue;
@@ -379,6 +387,7 @@ function buildDesktop() {
   /* Before paginate() and before any tile is built: both size against it. */
   gm = gridMetrics();
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, 4);
+  document.body.classList.toggle('no-dock', !dock.length);
   const pages = paginate();
   totalPages = pages.length;
   const strip = el('pages');
@@ -392,6 +401,7 @@ function buildDesktop() {
     p.appendChild(g);
     strip.appendChild(p);
   });
+  renderEmptyState(items);
   const dots = el('dots');
   dots.style.cssText = '';
   dots.replaceChildren();
@@ -400,6 +410,7 @@ function buildDesktop() {
   const dk = el('dock');
   dk.replaceChildren();
   dock.forEach(item => dk.appendChild(mkDock(item)));
+  dk.hidden = !dock.length;
 }
 
 /* Every page is mounted at once, so widgets the user has swiped away from keep

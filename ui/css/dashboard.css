@@ -86,6 +86,8 @@
          narrow-wide viewport. */
       padding:clamp(44px,4vh,70px) clamp(16px,4vw,270px) clamp(110px,10vh,160px);
     }
+    /* Mirrored by desktopSlots() in dashboard.js. */
+    body.no-dock .page { padding-block-end:clamp(44px,4vh,70px) }
     /* ── Desktop grid scale ──
        Six columns at every width. The grid, the gaps and the tile height are
        one proportional system derived from the viewport, so six columns stay
@@ -797,6 +799,43 @@
   .icon:hover .iwrap, .folder-icon-link:hover .iwrap, .di:hover .dwrap,
   .dot.on { transform: none !important; }
 }
+
+/* ── Empty dashboard welcome ── */
+.empty-state {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding-inline: 24px; text-align: center;
+  pointer-events: none;
+}
+.empty-state-mark {
+  width: clamp(84px, 13vh, 132px); height: auto;
+  margin-block-end: var(--sp-32);
+}
+.empty-state-title {
+  margin: 0 0 var(--sp-10); font-weight: 600; color: var(--label-primary);
+  font-size:var(--fs-title-1);line-height:var(--lh-title-1);letter-spacing:var(--tr-title-1);
+}
+.empty-state-sub {
+  margin: 0; max-width: 38ch; color: var(--label-secondary);
+  font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);
+}
+.empty-state-btn {
+  pointer-events: auto;
+  margin-block-start: var(--sp-32); padding: var(--sp-12) var(--sp-32);
+  border-radius: 22px;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+  color: var(--label-primary); text-decoration: none;
+  font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);
+}
+.empty-state-hint {
+  pointer-events: auto;
+  margin-block-start: var(--sp-20); color: var(--accent); text-decoration: none;
+  font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);
+}
+.empty-state-hint:hover { text-decoration: underline }
+
+#dock[hidden] { display: none }
 
 /* API error screen — no inline styles, CSP-safe */
 .api-error-screen {

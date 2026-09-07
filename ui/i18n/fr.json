@@ -249,7 +249,11 @@
     "apiDownSub": "Vérifiez que le conteneur de l’API est démarré",
     "retry": "Réessayer",
     "opensSettings": "Ouvre les réglages",
-    "loadFailed": "Impossible de charger la configuration du tableau de bord."
+    "loadFailed": "Impossible de charger la configuration du tableau de bord.",
+    "emptyTitle": "Votre tableau de bord est vide",
+    "emptyBody": "Ajoutez vos applications, dossiers et widgets pour composer votre écran d’accueil.",
+    "emptyAction": "Ouvrir les réglages",
+    "emptyImportLink": "Importer une sauvegarde ou une configuration Homepage ou Dashy"
   },
   "toast": {
     "saved": "Enregistré",

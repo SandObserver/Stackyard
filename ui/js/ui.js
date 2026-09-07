@@ -3,6 +3,8 @@ import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-ty
 import {
   mk,
   clr,
+  isDashboardEmpty,
+  renderEmptyState,
   mkWrap as _mkWrap,
   mountScaledWidget,
   pageDir,
@@ -11,10 +13,10 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=d949e985';
+} from '/js/utils.js?v=4c1189b9';
 import { t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
-import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=7be08bb0';
+import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';
 
 let _state = null;
 export function initUI(state) {
@@ -547,7 +549,11 @@ export function buildMobile() {
   st().BEL.clear();
   const vw = innerWidth,
     vh = innerHeight;
-  const { sc, sm, dh, pillH, pillGap, dz } = mobileMetrics(vw);
+  const dock = items()
+    .filter(i => i.type === 'app' && i.dock && !i.hidden)
+    .slice(0, 4);
+  const { sc, sm, dh, pillH, pillGap, dz } = mobileMetrics(vw, dock.length > 0);
+  document.body.classList.toggle('no-dock', !dock.length);
   const gap = Math.round(sm * 0.5);
   css(document.body, {
     '--sc': String(sc),
@@ -610,9 +616,6 @@ export function buildMobile() {
   const isz = Math.round(Math.min(cw * 0.9, rh * 0.8, maxIsz));
   const ir = Math.round(isz * 0.225),
     im = Math.round(isz * 0.64);
-  const dock = items()
-    .filter(i => i.type === 'app' && i.dock && !i.hidden)
-    .slice(0, 4);
   const showLabel = S().showLabels?.ios === true;
   /* The reference draws a 66 icon and a 28 widget corner, so a widget's corner
      is 0.424 of the icon it sits beside. */
@@ -626,7 +629,8 @@ export function buildMobile() {
       .flatMap(f => f.children || [])
       .map(String),
   );
-  const gridItems = items().filter(i => !i.dock && !i.hidden && !inFolder.has(String(i.id)));
+  const bare = isDashboardEmpty(items());
+  const gridItems = items().filter(i => !i.dock && !i.hidden && !inFolder.has(String(i.id)) && !(bare && i.system));
 
   function packMobile(list) {
     const pages = [];
@@ -743,6 +747,7 @@ export function buildMobile() {
   /* Nothing was placed, so the measuring page would show as a blank first
      page. */
   if (!pages.length) firstPage.page.remove();
+  renderEmptyState(items());
 
   const dw = el('dots');
   dw.style.cssText = 'display:none';
@@ -763,6 +768,7 @@ export function buildMobile() {
     ? dock.length * dockIconSz + (dock.length - 1) * Math.round(22 * sc) + dockPad * 2
     : maxDockW;
   const dockW = Math.min(maxDockW, dockContentW);
+  dk.hidden = !dock.length;
   dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
   dk.replaceChildren();
   dock.forEach(item => {
@@ -782,7 +788,7 @@ export function buildMobile() {
     _pdotPad = Math.round(14 * sc);
   const pillDotsW = pages.length * (_pdotSz + _pdotGap) - _pdotGap + _pdotPad * 2;
   const pill = el('mob-search-pill');
-  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dh + pillGap}px;transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:flex;z-index:500;`;
+  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dh + pillGap}px;transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:${bare ? 'none' : 'flex'};z-index:500;`;
 
   const pillNew = /** @type {HTMLElement} */ (pill.cloneNode(true));
   const pillNewDots = q('.msp-dots', pillNew);

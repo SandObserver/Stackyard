@@ -1,6 +1,8 @@
 import { iconChain } from '/js/icons.js?v=69c2b9bd';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { SETTINGS_ICON } from '/js/settings-icon.js?v=b96e5b13';
+import { BRAND_MARK } from '/js/brand-mark.js?v=1dcbf1ac';
+import { t } from '/js/i18n.js?v=e644a5c5';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);
@@ -399,4 +401,34 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   };
   _mounts.add(stop);
   return ifr;
+}
+
+/** @param {any[]} items */
+export const isDashboardEmpty = items => !(items || []).some(i => i && !i.system && !i.hidden);
+
+/* Keep this on the body. A child of the page strip counts as a page.
+
+   @param {any[]} items */
+export function renderEmptyState(items) {
+  document.querySelector('.empty-state')?.remove();
+  if (!isDashboardEmpty(items)) return;
+
+  const box = mk('div');
+  box.className = 'empty-state';
+  const mark = mk('img', { src: BRAND_MARK, alt: '' });
+  mark.className = 'empty-state-mark';
+  const title = mk('p');
+  title.className = 'empty-state-title';
+  title.textContent = t('home.emptyTitle');
+  const sub = mk('p');
+  sub.className = 'empty-state-sub';
+  sub.textContent = t('home.emptyBody');
+  const btn = mk('a', { href: '/admin/' });
+  btn.className = 'empty-state-btn';
+  btn.textContent = t('home.emptyAction');
+  const hint = mk('a', { href: '/admin/' });
+  hint.className = 'empty-state-hint';
+  hint.textContent = t('home.emptyImportLink');
+  box.append(mark, title, sub, btn, hint);
+  document.body.appendChild(box);
 }

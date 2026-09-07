@@ -241,7 +241,11 @@
     "apiDownSub": "请确认 API 容器正在运行",
     "retry": "重试",
     "opensSettings": "打开设置",
-    "loadFailed": "无法加载仪表板配置。"
+    "loadFailed": "无法加载仪表板配置。",
+    "emptyTitle": "仪表板还是空的",
+    "emptyBody": "添加应用、文件夹和小组件，搭建你的主屏幕。",
+    "emptyAction": "打开设置",
+    "emptyImportLink": "导入备份或 Homepage、Dashy 配置"
   },
   "toast": {
     "saved": "已保存",

@@ -247,6 +247,12 @@
         "./ui/js/spotlight.js"
       ],
 
+      "/js/brand-mark.js": [
+        "./ui/js/brand-mark.js"
+      ],
+      "/js/brand-mark.js?v=*": [
+        "./ui/js/brand-mark.js"
+      ],
       "/js/settings-icon.js": [
         "./ui/js/settings-icon.js"
       ],
