@@ -9,9 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The demo dashboard shows the Books widget at its medium size.
-
-- The demo dashboard colours every app and folder tile.
+- The demo dashboard now shows the apps, icons, tile colours and widgets of the
+  dashboard pictured on the project site.
 
 - The System widget draws its charts immediately on the demo, instead of
   filling them one reading at a time.

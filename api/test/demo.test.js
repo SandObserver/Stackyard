@@ -65,26 +65,47 @@ test('demo config has the expected showcase shape', () => {
     a[i.type] = (a[i.type] || 0) + 1;
     return a;
   }, {});
-  assert.equal(types.widget, 7);
-  assert.equal(types.app, 17);
+  assert.equal(types.widget, 6);
+  assert.equal(types.app, 24);
   assert.equal(types.folder, 2);
   assert.equal(demo.settings.background.url, '/demo-wallpaper.jpg');
   assert.equal(demo.settings.background.brightness, 0.4);
   assert.equal(demo.items.filter(i => i.dock).length, 4);
-  /* Every app and folder tile is colored, the way a built-out dashboard looks.
-     An icon drawn in dark ink needs a light tile to stay readable. */
-  const tiles = demo.items.filter(i => i.type === 'app' || i.type === 'folder');
-  assert.deepEqual(
-    tiles.filter(i => !i.color).map(i => i.id),
-    [],
-  );
-  for (const i of tiles.filter(i => /-dark(\.svg)?$/.test(i.iconUrl || ''))) {
-    assert.equal(i.color, 'light', `${i.id} carries a dark icon and needs a light tile`);
-  }
   assert.equal(demo.settings.auth.enabled, false);
   /* Distinct widget types only (no duplicated widget shown twice). */
   const wtypes = demo.items.filter(i => i.type === 'widget').map(i => i.widgetType);
   assert.equal(new Set(wtypes).size, wtypes.length);
+});
+
+/* The grid is six fixed columns. A medium widget spans two, and the Settings
+   tile is an extra cell, so a total that is not a multiple of six leaves the
+   last row short. */
+test('the demo fills whole grid rows', () => {
+  const children = new Set(demo.items.flatMap(i => i.children || []));
+  const cells = demo.items
+    .filter(i => !i.dock && !children.has(i.id))
+    .reduce((n, i) => n + (i.widgetSize === 'medium' ? 2 : 1), 1);
+  assert.equal(cells % 6, 0, `${cells} cells does not fill the last row`);
+});
+
+/* Tile color is chosen per app, the way a built-out dashboard looks: most tiles
+   keep the default dark plate and a few carry a brand color. A folder draws its
+   own plate, and the Settings tile is not configurable. */
+test('every app tile names a color', () => {
+  const apps = demo.items.filter(i => i.type === 'app');
+  assert.deepEqual(
+    apps.filter(i => !i.color).map(i => i.id),
+    [],
+  );
+  assert.deepEqual(
+    demo.items.filter(i => i.type === 'folder' && i.color).map(i => i.id),
+    [],
+  );
+  assert.ok(apps.filter(i => i.color === 'dark').length >= apps.length / 2, 'dark is the common case');
+  /* An icon drawn in light ink needs a tile dark enough to hold it. */
+  for (const i of apps.filter(i => /-light\.svg$/.test(i.iconUrl || ''))) {
+    assert.notEqual(i.color, 'light', `${i.id} carries a light icon and cannot sit on a light tile`);
+  }
 });
 
 test('loadConfig serves the bundled demo config in demo mode', () => {
