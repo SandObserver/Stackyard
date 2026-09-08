@@ -70,16 +70,17 @@ test('demo config has the expected showcase shape', () => {
   assert.equal(types.folder, 2);
   assert.equal(demo.settings.background.url, '/demo-wallpaper.jpg');
   assert.equal(demo.settings.background.brightness, 0.4);
-  /* Exactly four docked apps. Tile colors are opt-in: only the two icons that
-     are unreadable on a dark tile carry one. */
   assert.equal(demo.items.filter(i => i.dock).length, 4);
+  /* Every app and folder tile is colored, the way a built-out dashboard looks.
+     An icon drawn in dark ink needs a light tile to stay readable. */
+  const tiles = demo.items.filter(i => i.type === 'app' || i.type === 'folder');
   assert.deepEqual(
-    demo.items
-      .filter(i => i.color)
-      .map(i => i.id)
-      .sort(),
-    ['app-prowlarr', 'app-vaultwarden'],
+    tiles.filter(i => !i.color).map(i => i.id),
+    [],
   );
+  for (const i of tiles.filter(i => /-dark(\.svg)?$/.test(i.iconUrl || ''))) {
+    assert.equal(i.color, 'light', `${i.id} carries a dark icon and needs a light tile`);
+  }
   assert.equal(demo.settings.auth.enabled, false);
   /* Distinct widget types only (no duplicated widget shown twice). */
   const wtypes = demo.items.filter(i => i.type === 'widget').map(i => i.widgetType);

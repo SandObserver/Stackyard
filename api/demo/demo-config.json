@@ -111,19 +111,13 @@
       "type": "widget",
       "widgetType": "books",
       "label": "Books",
-      "widgetSize": "large",
+      "widgetSize": "medium",
       "widgetConfig": {
         "provider": "audiobookshelf",
         "absUrl": "https://books.example.com",
         "shelves": [
           {
             "source": "unread"
-          },
-          {
-            "source": "recently"
-          },
-          {
-            "source": "list"
           }
         ],
         "href": "https://books.example.com"
@@ -141,7 +135,8 @@
           "enabled": true,
           "interval": 30
         }
-      }
+      },
+      "color": "dark"
     },
     {
       "id": "app-portainer",
@@ -155,7 +150,8 @@
           "enabled": true,
           "interval": 30
         }
-      }
+      },
+      "color": "light"
     },
     {
       "id": "app-hass",
@@ -163,7 +159,8 @@
       "label": "Home Assistant",
       "href": "https://home.example.com",
       "iconUrl": "home-assistant",
-      "dock": true
+      "dock": true,
+      "color": "#18BCF2"
     },
     {
       "id": "app-vaultwarden",
@@ -181,28 +178,32 @@
       "children": [
         "app-sonarr",
         "app-radarr"
-      ]
+      ],
+      "color": "dark"
     },
     {
       "id": "app-sonarr",
       "type": "app",
       "label": "Sonarr",
       "href": "https://sonarr.example.com",
-      "iconUrl": "sonarr"
+      "iconUrl": "sonarr",
+      "color": "#35C5F4"
     },
     {
       "id": "app-radarr",
       "type": "app",
       "label": "Radarr",
       "href": "https://radarr.example.com",
-      "iconUrl": "radarr"
+      "iconUrl": "radarr",
+      "color": "#FFC230"
     },
     {
       "id": "app-immich",
       "type": "app",
       "label": "Immich",
       "href": "https://photos.example.com",
-      "iconUrl": "immich"
+      "iconUrl": "immich",
+      "color": "dark"
     },
     {
       "id": "app-grafana",
@@ -215,49 +216,56 @@
           "enabled": true,
           "pingUrl": "https://metrics.example.com"
         }
-      }
+      },
+      "color": "#F46800"
     },
     {
       "id": "app-uptimekuma",
       "type": "app",
       "label": "Uptime Kuma",
       "href": "https://status.example.com",
-      "iconUrl": "uptime-kuma"
+      "iconUrl": "uptime-kuma",
+      "color": "#5CDD8B"
     },
     {
       "id": "app-nextcloud",
       "type": "app",
       "label": "Nextcloud",
       "href": "https://cloud.example.com",
-      "iconUrl": "nextcloud"
+      "iconUrl": "nextcloud",
+      "color": "#0082C9"
     },
     {
       "id": "app-paperless",
       "type": "app",
       "label": "Paperless",
       "href": "https://docs.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/paperless-ngx-light.svg"
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/paperless-ngx-light.svg",
+      "color": "dark"
     },
     {
       "id": "app-gitea",
       "type": "app",
       "label": "Gitea",
       "href": "https://git.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/gitea-light.svg"
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/gitea-light.svg",
+      "color": "dark"
     },
     {
       "id": "app-pihole",
       "type": "app",
       "label": "Pi-hole",
       "href": "https://dns.example.com",
-      "iconUrl": "pi-hole"
+      "iconUrl": "pi-hole",
+      "color": "#96060C"
     },
     {
       "id": "app-npm",
       "type": "app",
       "label": "Proxy Manager",
       "href": "https://proxy.example.com",
-      "iconUrl": "npm"
+      "iconUrl": "npm",
+      "color": "#F15833"
     },
     {
       "id": "folder-downloads",
@@ -267,14 +275,16 @@
         "app-qbittorrent",
         "app-prowlarr",
         "app-bazarr"
-      ]
+      ],
+      "color": "dark"
     },
     {
       "id": "app-qbittorrent",
       "type": "app",
       "label": "qBittorrent",
       "href": "https://dl.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/qbittorrent-light.svg"
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/qbittorrent-light.svg",
+      "color": "dark"
     },
     {
       "id": "app-prowlarr",
@@ -289,7 +299,8 @@
       "type": "app",
       "label": "Bazarr",
       "href": "https://bazarr.example.com",
-      "iconUrl": "bazarr-dark"
+      "iconUrl": "bazarr-dark",
+      "color": "light"
     }
   ]
 }
