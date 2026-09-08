@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The stored config schema moves to version 6, rewriting Books widget shelves.
+  Downgrading to 1.9.2 afterwards leaves those widgets unreadable.
+
 - An empty dashboard now shows a welcome screen with the app mark, a link to
   settings and a link to import a backup or another dashboard's config.
 
