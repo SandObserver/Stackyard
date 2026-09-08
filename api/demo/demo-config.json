@@ -34,7 +34,7 @@
       "type": "app",
       "label": "Portainer",
       "href": "https://containers.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/portainer-light.svg",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/portainer-dark.svg",
       "dock": true,
       "monitoring": {
         "activity": {
