@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-09-08
+
 ### Added
 
 - The Books widget now offers a medium size, showing more of the shelf.
@@ -1213,7 +1215,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.9.2...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/SandObserver/stackyard/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/SandObserver/stackyard/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/SandObserver/stackyard/compare/v1.8.2...v1.9.1
 [1.8.2]: https://github.com/SandObserver/stackyard/compare/v1.8.1...v1.8.2
