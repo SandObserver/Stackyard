@@ -34,7 +34,7 @@
       "type": "app",
       "label": "Portainer",
       "href": "https://containers.example.com",
-      "iconUrl": "portainer",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/portainer-light.svg",
       "dock": true,
       "monitoring": {
         "activity": {
@@ -49,7 +49,7 @@
       "type": "app",
       "label": "Home Assistant",
       "href": "https://home.example.com",
-      "iconUrl": "home-assistant",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/home-assistant-light.svg",
       "dock": true,
       "color": "#18BCF2"
     },
@@ -58,7 +58,7 @@
       "type": "app",
       "label": "Vaultwarden",
       "href": "https://vault.example.com",
-      "iconUrl": "vaultwarden",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/vaultwarden-light.svg",
       "dock": true,
       "color": "#175DDC"
     },
@@ -125,7 +125,7 @@
       "type": "app",
       "label": "Homebridge",
       "href": "https://bridge.example.com",
-      "iconUrl": "homebridge",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/homebridge-light.svg",
       "color": "#4A2E6B"
     },
     {
@@ -244,7 +244,7 @@
       "type": "app",
       "label": "Proxmox",
       "href": "https://hypervisor.example.com",
-      "iconUrl": "proxmox",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/proxmox-light.svg",
       "color": "#E57000"
     },
     {
@@ -252,7 +252,7 @@
       "type": "app",
       "label": "Proxy",
       "href": "https://proxy.example.com",
-      "iconUrl": "npm",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/nginx-proxy-manager.svg",
       "color": "dark"
     },
     {
@@ -268,7 +268,7 @@
       "type": "app",
       "label": "Mealie",
       "href": "https://recipes.example.com",
-      "iconUrl": "mealie",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/mealie-light.svg",
       "color": "#E58325"
     },
     {
@@ -276,7 +276,7 @@
       "type": "app",
       "label": "Frigate",
       "href": "https://cameras.example.com",
-      "iconUrl": "frigate",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/frigate-light.svg",
       "color": "#2167BC"
     },
     {
@@ -333,7 +333,7 @@
       "type": "app",
       "label": "Prowlarr",
       "href": "https://indexers.example.com",
-      "iconUrl": "prowlarr",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/prowlarr-light.svg",
       "color": "#E66001"
     },
     {

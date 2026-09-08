@@ -204,7 +204,7 @@ function buildShell() {
       const n = Math.max(20, Math.floor(wrap.offsetWidth / 2.2));
       if (n !== BARS) {
         BARS = n;
-        [0,1,2].forEach(i => { history[i].vals = Array(BARS).fill(null); });
+        [0,1,2].forEach(i => { history[i].vals = fitBars(history[i].vals); });
       }
     }
   });
@@ -345,6 +345,15 @@ function buildDevBars(id, hist, colorCls) {
   });
   const line = document.getElementById(id.replace('spark-', 'dev-mean-'));
   if (line) { line.style.display = 'block'; line.style.bottom = pos(mean) + '%'; }
+}
+
+/* The bar count is measured after the first paint, and the readings have to
+   survive it. Refilling with nulls empties a chart that was already drawn. */
+function fitBars(vals) {
+  const out = Array(BARS).fill(null);
+  const tail = (vals || []).slice(-BARS);
+  for (let i = 0; i < tail.length; i++) out[BARS - tail.length + i] = tail[i];
+  return out;
 }
 
 /* Takes the tail of a supplied past and leaves room for the live value the same

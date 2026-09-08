@@ -108,6 +108,18 @@ test('every app tile names a color', () => {
   }
 });
 
+/* Several brand icons are one solid fill of the brand color. On a tile of that
+   same color the icon is invisible, which reads as a missing icon. The light
+   variant is drawn in white and cannot collide. */
+test('a brand-colored tile carries a white icon', () => {
+  const onBrand = demo.items.filter(i => i.type === 'app' && /^#/.test(i.color || ''));
+  assert.ok(onBrand.length >= 8, 'the demo shows brand-colored tiles');
+  assert.deepEqual(
+    onBrand.filter(i => !/-light\.svg$/.test(i.iconUrl || '')).map(i => i.id),
+    [],
+  );
+});
+
 test('loadConfig serves the bundled demo config in demo mode', () => {
   const cfg = loadConfig();
   assert.equal(cfg.settings.background.url, '/demo-wallpaper.jpg');

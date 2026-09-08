@@ -14,12 +14,19 @@ const src = fs.readFileSync(path.join(root, 'widgets/system-summary/index.html')
 
 const fn = src.match(/function seedFromPast\(slot, i, past\) \{[\s\S]*?\n\}/);
 assert.ok(fn, 'seedFromPast is defined in the widget');
+const fitSrc = src.match(/function fitBars\(vals\) \{[\s\S]*?\n\}/);
+assert.ok(fitSrc, 'fitBars is defined in the widget');
 
 function load(bars) {
   const history = [{}, {}, {}, {}];
   for (const h of history) h.vals = Array(bars).fill(null);
   const seed = new Function('history', `${fn[0]}; return seedFromPast;`)(history);
   return { history, seed };
+}
+
+/* BARS is a module-level binding in the widget; the harness supplies it. */
+function loadFit(bars) {
+  return new Function('BARS', `${fitSrc[0]}; return fitBars;`)(bars);
 }
 
 const past = { cpu: [1, 2, 3, 4, 5], ram: [9, 9], temps: { 0: [40, 41], 2: [70, 71] } };
@@ -66,4 +73,21 @@ test('a real host sends no past and the chart stays empty', () => {
   assert.deepEqual(history[0].vals, [null, null, null]);
   seed({ type: 'disk', primary: '/' }, 0, past);
   assert.deepEqual(history[0].vals, [null, null, null], 'a disk slot draws no sparkline');
+});
+
+/* The bar count is re-measured after the first paint. That used to refill the
+   arrays with nulls, which threw away the seeded past and left the chart flat. */
+test('a wider chart keeps the readings it already had', () => {
+  const fit = loadFit(6);
+  assert.deepEqual(fit([null, 1, 2, 3]), [null, null, null, 1, 2, 3]);
+});
+
+test('a narrower chart keeps the newest readings', () => {
+  const fit = loadFit(2);
+  assert.deepEqual(fit([1, 2, 3, 4]), [3, 4]);
+});
+
+test('an empty chart stays empty at any width', () => {
+  assert.deepEqual(loadFit(3)([null, null]), [null, null, null]);
+  assert.deepEqual(loadFit(2)([]), [null, null]);
 });
