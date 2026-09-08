@@ -14,10 +14,15 @@ function ctxFor(config, m) {
 
 const SLOTS = { slots: [{ type: 'cpu' }, { type: 'ram' }, { type: 'temp', thermalZone: 1 }] };
 
+/* The curve is a function of the clock, so two reads a few milliseconds apart
+   can round to neighbouring values. The point is that the series ends where the
+   live value is, not that two separate reads are identical. */
+const CONTINUOUS = 1;
+
 test('a demo series ends at the value the metric reports now', () => {
   const s = metrics.series('cpu', 40, 10);
   assert.equal(s.length, 40);
-  assert.equal(s.at(-1), metrics.cpuSample().cpu);
+  assert.ok(Math.abs(s.at(-1) - metrics.cpuSample().cpu) <= CONTINUOUS);
   assert.ok(
     s.every(v => v >= 8 && v <= 46),
     'every point stays inside the curve range',
@@ -36,8 +41,8 @@ test('the demo host supplies a past for every charted slot', async () => {
   assert.equal(r.history.ram.length, 120);
   assert.deepEqual(Object.keys(r.history.temps).sort(), ['0', '1']);
   assert.equal(r.history.temps[1].length, 120);
-  assert.equal(r.history.cpu.at(-1), r.cpu);
-  assert.equal(r.history.ram.at(-1), r.ram);
+  assert.ok(Math.abs(r.history.cpu.at(-1) - r.cpu) <= CONTINUOUS);
+  assert.ok(Math.abs(r.history.ram.at(-1) - r.ram) <= CONTINUOUS);
 });
 
 test('a real host supplies no history', async () => {
