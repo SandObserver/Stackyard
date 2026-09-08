@@ -204,7 +204,7 @@ function buildShell() {
       const n = Math.max(20, Math.floor(wrap.offsetWidth / 2.2));
       if (n !== BARS) {
         BARS = n;
-        [0,1,2].forEach(i => { history[i].vals = Array(BARS).fill(null); });
+        [0,1,2].forEach(i => { history[i].vals = fitBars(history[i].vals); });
       }
     }
   });
@@ -347,6 +347,38 @@ function buildDevBars(id, hist, colorCls) {
   if (line) { line.style.display = 'block'; line.style.bottom = pos(mean) + '%'; }
 }
 
+/* The bar count is measured after the first paint, and the readings have to
+   survive it. Refilling with nulls empties a chart that was already drawn. */
+function fitBars(vals) {
+  const out = Array(BARS).fill(null);
+  const tail = (vals || []).slice(-BARS);
+  for (let i = 0; i < tail.length; i++) out[BARS - tail.length + i] = tail[i];
+  return out;
+}
+
+/* Takes the tail of a supplied past and leaves room for the live value the same
+   tick appends. Runs once per slot, while the chart still holds no readings. */
+function seedFromPast(slot, i, past) {
+  const h = history[i].vals;
+  if (!past || history[i].seeded || h.some(v => v !== null)) return;
+  history[i].seeded = true;
+
+  let src = null;
+  if (slot.type === 'cpu') src = past.cpu;
+  else if (slot.type === 'ram') src = past.ram;
+  else if (slot.type === 'iowait') src = past.iowait;
+  else if (slot.type === 'procs') src = past.procs;
+  else if (slot.type === 'temp') {
+    const key = slot.sensor ? slot.sensor : (Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0);
+    src = past.temps?.[key];
+  }
+  if (!Array.isArray(src) || !src.length) return;
+
+  const want = h.length - 1;
+  const tail = src.slice(-want);
+  history[i].vals = Array(h.length - tail.length).fill(null).concat(tail);
+}
+
 /* ── Update DOM from stats ── */
 function applyStats(data) {
   const wc    = cfg.widgetConfig || {};
@@ -359,6 +391,7 @@ function applyStats(data) {
 
   slots.forEach((slot, i) => {
     if (!history[i].vals) history[i].vals = Array(BARS).fill(null);
+    seedFromPast(slot, i, data.history);
 
     /* val holds a percentage (cpu/ram) or a temperature in °C — named generically to cover both */
     let val = null;

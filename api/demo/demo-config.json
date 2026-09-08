@@ -15,6 +15,54 @@
   },
   "items": [
     {
+      "id": "app-jellyfin",
+      "type": "app",
+      "label": "Jellyfin",
+      "href": "https://media.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/jellyfin-light.svg",
+      "dock": true,
+      "monitoring": {
+        "activity": {
+          "enabled": true,
+          "interval": 30
+        }
+      },
+      "color": "#6D4AA8"
+    },
+    {
+      "id": "app-portainer",
+      "type": "app",
+      "label": "Portainer",
+      "href": "https://containers.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/portainer-dark.svg",
+      "dock": true,
+      "monitoring": {
+        "activity": {
+          "enabled": true,
+          "interval": 30
+        }
+      },
+      "color": "dark"
+    },
+    {
+      "id": "app-hass",
+      "type": "app",
+      "label": "Home Assistant",
+      "href": "https://home.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/home-assistant-light.svg",
+      "dock": true,
+      "color": "#18BCF2"
+    },
+    {
+      "id": "app-vaultwarden",
+      "type": "app",
+      "label": "Vaultwarden",
+      "href": "https://vault.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/vaultwarden-light.svg",
+      "dock": true,
+      "color": "#175DDC"
+    },
+    {
       "id": "w-clock",
       "type": "widget",
       "widgetType": "clock",
@@ -42,6 +90,45 @@
       }
     },
     {
+      "id": "w-nowplaying",
+      "type": "widget",
+      "widgetType": "nowplaying",
+      "label": "Now Playing",
+      "widgetSize": "small",
+      "widgetConfig": {
+        "provider": "jellyfin",
+        "jellyfinUrl": "https://media.example.com",
+        "href": "https://media.example.com"
+      }
+    },
+    {
+      "id": "folder-media",
+      "type": "folder",
+      "label": "Media",
+      "children": [
+        "app-sonarr",
+        "app-radarr",
+        "app-tautulli",
+        "app-prowlarr"
+      ]
+    },
+    {
+      "id": "app-immich",
+      "type": "app",
+      "label": "Immich",
+      "href": "https://photos.example.com",
+      "iconUrl": "immich",
+      "color": "dark"
+    },
+    {
+      "id": "app-homebridge",
+      "type": "app",
+      "label": "Homebridge",
+      "href": "https://bridge.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/homebridge-light.svg",
+      "color": "#4A2E6B"
+    },
+    {
       "id": "w-stats",
       "type": "widget",
       "widgetType": "system-summary",
@@ -62,9 +149,56 @@
           }
         ],
         "network": {
-          "enabled": false
+          "enabled": true,
+          "mode": "throughput",
+          "provider": "system",
+          "interface": "eth0"
         }
       }
+    },
+    {
+      "id": "app-paperless",
+      "type": "app",
+      "label": "Paperless",
+      "href": "https://docs.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/paperless-ngx.svg",
+      "color": "light"
+    },
+    {
+      "id": "app-seerr",
+      "type": "app",
+      "label": "Seerr",
+      "href": "https://requests.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/seerr-light.svg",
+      "monitoring": {
+        "activity": {
+          "enabled": true,
+          "interval": 30
+        }
+      },
+      "color": "#6E28DA"
+    },
+    {
+      "id": "app-grafana",
+      "type": "app",
+      "label": "Grafana",
+      "href": "https://metrics.example.com",
+      "iconUrl": "grafana",
+      "monitoring": {
+        "healthcheck": {
+          "enabled": true,
+          "pingUrl": "https://metrics.example.com"
+        }
+      },
+      "color": "dark"
+    },
+    {
+      "id": "app-adguard",
+      "type": "app",
+      "label": "AdGuard",
+      "href": "https://dns.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/adguard-home-light.svg",
+      "color": "#68B379"
     },
     {
       "id": "w-dns",
@@ -78,143 +212,23 @@
       }
     },
     {
-      "id": "w-nowplaying",
+      "id": "w-switch",
       "type": "widget",
-      "widgetType": "nowplaying",
-      "label": "Now Playing",
+      "widgetType": "dashboard-switch",
+      "label": "Dashboards",
       "widgetSize": "small",
       "widgetConfig": {
-        "provider": "jellyfin",
-        "jellyfinUrl": "https://media.example.com",
-        "href": "https://media.example.com"
-      }
-    },
-    {
-      "id": "w-backup",
-      "type": "widget",
-      "widgetType": "backup",
-      "label": "Backup",
-      "widgetSize": "small",
-      "widgetConfig": {
-        "slots": [
+        "keychains": [
           {
-            "provider": "duplicati",
-            "customName": "Offsite",
-            "jobId": "1",
-            "dupUrl": "https://backup.example.com"
-          }
-        ]
-      }
-    },
-    {
-      "id": "w-books",
-      "type": "widget",
-      "widgetType": "books",
-      "label": "Books",
-      "widgetSize": "large",
-      "widgetConfig": {
-        "provider": "audiobookshelf",
-        "absUrl": "https://books.example.com",
-        "shelves": [
-          {
-            "source": "unread"
+            "label": "Home",
+            "url": "https://home.example.com"
           },
           {
-            "source": "recently"
-          },
-          {
-            "source": "list"
+            "label": "Lab",
+            "url": "https://lab.example.com"
           }
         ],
-        "href": "https://books.example.com"
-      }
-    },
-    {
-      "id": "app-jellyfin",
-      "type": "app",
-      "label": "Jellyfin",
-      "href": "https://media.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/jellyfin-light.svg",
-      "dock": true,
-      "monitoring": {
-        "activity": {
-          "enabled": true,
-          "interval": 30
-        }
-      }
-    },
-    {
-      "id": "app-portainer",
-      "type": "app",
-      "label": "Portainer",
-      "href": "https://containers.example.com",
-      "iconUrl": "portainer-dark",
-      "dock": true,
-      "monitoring": {
-        "activity": {
-          "enabled": true,
-          "interval": 30
-        }
-      }
-    },
-    {
-      "id": "app-hass",
-      "type": "app",
-      "label": "Home Assistant",
-      "href": "https://home.example.com",
-      "iconUrl": "home-assistant",
-      "dock": true
-    },
-    {
-      "id": "app-vaultwarden",
-      "type": "app",
-      "label": "Vaultwarden",
-      "href": "https://vault.example.com",
-      "iconUrl": "vaultwarden",
-      "dock": true,
-      "color": "light"
-    },
-    {
-      "id": "folder-media",
-      "type": "folder",
-      "label": "Media",
-      "children": [
-        "app-sonarr",
-        "app-radarr"
-      ]
-    },
-    {
-      "id": "app-sonarr",
-      "type": "app",
-      "label": "Sonarr",
-      "href": "https://sonarr.example.com",
-      "iconUrl": "sonarr"
-    },
-    {
-      "id": "app-radarr",
-      "type": "app",
-      "label": "Radarr",
-      "href": "https://radarr.example.com",
-      "iconUrl": "radarr"
-    },
-    {
-      "id": "app-immich",
-      "type": "app",
-      "label": "Immich",
-      "href": "https://photos.example.com",
-      "iconUrl": "immich"
-    },
-    {
-      "id": "app-grafana",
-      "type": "app",
-      "label": "Grafana",
-      "href": "https://metrics.example.com",
-      "iconUrl": "grafana",
-      "monitoring": {
-        "healthcheck": {
-          "enabled": true,
-          "pingUrl": "https://metrics.example.com"
-        }
+        "openIn": "same"
       }
     },
     {
@@ -222,42 +236,64 @@
       "type": "app",
       "label": "Uptime Kuma",
       "href": "https://status.example.com",
-      "iconUrl": "uptime-kuma"
+      "iconUrl": "uptime-kuma",
+      "color": "dark"
     },
     {
-      "id": "app-nextcloud",
+      "id": "app-proxmox",
       "type": "app",
-      "label": "Nextcloud",
-      "href": "https://cloud.example.com",
-      "iconUrl": "nextcloud"
+      "label": "Proxmox",
+      "href": "https://hypervisor.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/proxmox-light.svg",
+      "color": "#E57000"
     },
     {
-      "id": "app-paperless",
+      "id": "app-npm",
       "type": "app",
-      "label": "Paperless",
-      "href": "https://docs.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/paperless-ngx-light.svg"
+      "label": "Proxy",
+      "href": "https://proxy.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/nginx-proxy-manager.svg",
+      "color": "dark"
     },
     {
       "id": "app-gitea",
       "type": "app",
       "label": "Gitea",
       "href": "https://git.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/gitea-light.svg"
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/gitea-light.svg",
+      "color": "dark"
     },
     {
-      "id": "app-pihole",
+      "id": "app-mealie",
       "type": "app",
-      "label": "Pi-hole",
-      "href": "https://dns.example.com",
-      "iconUrl": "pi-hole"
+      "label": "Mealie",
+      "href": "https://recipes.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/mealie-light.svg",
+      "color": "#E58325"
     },
     {
-      "id": "app-npm",
+      "id": "app-frigate",
       "type": "app",
-      "label": "Proxy Manager",
-      "href": "https://proxy.example.com",
-      "iconUrl": "npm"
+      "label": "Frigate",
+      "href": "https://cameras.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/frigate-light.svg",
+      "color": "#2167BC"
+    },
+    {
+      "id": "app-syncthing",
+      "type": "app",
+      "label": "Syncthing",
+      "href": "https://sync.example.com",
+      "iconUrl": "syncthing",
+      "color": "dark"
+    },
+    {
+      "id": "app-authelia",
+      "type": "app",
+      "label": "Authelia",
+      "href": "https://auth.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/authelia-light.svg",
+      "color": "#2F3FA6"
     },
     {
       "id": "folder-downloads",
@@ -265,31 +301,56 @@
       "label": "Downloads",
       "children": [
         "app-qbittorrent",
-        "app-prowlarr",
-        "app-bazarr"
+        "app-sabnzbd"
       ]
     },
     {
-      "id": "app-qbittorrent",
+      "id": "app-sonarr",
       "type": "app",
-      "label": "qBittorrent",
-      "href": "https://dl.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/qbittorrent-light.svg"
+      "label": "Sonarr",
+      "href": "https://tv.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/sonarr.svg",
+      "color": "dark"
+    },
+    {
+      "id": "app-radarr",
+      "type": "app",
+      "label": "Radarr",
+      "href": "https://movies.example.com",
+      "iconUrl": "radarr",
+      "color": "dark"
+    },
+    {
+      "id": "app-tautulli",
+      "type": "app",
+      "label": "Tautulli",
+      "href": "https://stats.example.com",
+      "iconUrl": "tautulli",
+      "color": "dark"
     },
     {
       "id": "app-prowlarr",
       "type": "app",
       "label": "Prowlarr",
-      "href": "https://prowlarr.example.com",
-      "iconUrl": "prowlarr",
-      "color": "#e66000"
+      "href": "https://indexers.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/prowlarr-light.svg",
+      "color": "#E66001"
     },
     {
-      "id": "app-bazarr",
+      "id": "app-qbittorrent",
       "type": "app",
-      "label": "Bazarr",
-      "href": "https://bazarr.example.com",
-      "iconUrl": "bazarr-dark"
+      "label": "qBittorrent",
+      "href": "https://torrents.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/qbittorrent-light.svg",
+      "color": "dark"
+    },
+    {
+      "id": "app-sabnzbd",
+      "type": "app",
+      "label": "SABnzbd",
+      "href": "https://usenet.example.com",
+      "iconUrl": "sabnzbd",
+      "color": "dark"
     }
   ]
 }

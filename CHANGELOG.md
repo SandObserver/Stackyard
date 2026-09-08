@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The demo dashboard now shows the apps, icons, tile colours and widgets of the
+  dashboard pictured on the project site.
+
+- The System widget draws its charts immediately on the demo, instead of
+  filling them one reading at a time.
+
 ## [1.10.0] - 2026-09-07
 
 ### Added

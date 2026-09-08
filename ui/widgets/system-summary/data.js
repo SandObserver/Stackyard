@@ -1,3 +1,6 @@
+const SEED_POINTS = 120;
+const SEED_STEP_SEC = 10;
+
 module.exports = async function (ctx) {
   if (ctx.endpoint === 'speed') return speed(ctx);
   if (ctx.endpoint === 'sensors') return sensorOptions(ctx);
@@ -57,7 +60,32 @@ async function systemSummaryLocal({ config, settings, metrics }) {
     if (t !== null) temps[z] = t;
   }
 
-  return { cpu, ram, temp: temps[0] ?? null, temps, disks, iowait, procs, uptime };
+  return {
+    cpu,
+    ram,
+    temp: temps[0] ?? null,
+    temps,
+    disks,
+    iowait,
+    procs,
+    uptime,
+    history: seedHistory(metrics, zones),
+  };
+}
+
+/* Charts start empty and gain one point per tick, so a fresh demo shows a flat
+   widget for minutes. Only the demo host supplies a past. */
+function seedHistory(metrics, zones) {
+  if (typeof metrics.series !== 'function') return undefined;
+  const temps = {};
+  for (const z of zones) temps[z] = metrics.series('temp', SEED_POINTS, SEED_STEP_SEC);
+  return {
+    cpu: metrics.series('cpu', SEED_POINTS, SEED_STEP_SEC),
+    ram: metrics.series('ram', SEED_POINTS, SEED_STEP_SEC),
+    iowait: metrics.series('iowait', SEED_POINTS, SEED_STEP_SEC),
+    procs: metrics.series('procs', SEED_POINTS, SEED_STEP_SEC),
+    temps,
+  };
 }
 
 /* The provider lives in the nested network slot, so this branches directly
