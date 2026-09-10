@@ -98,9 +98,9 @@ test('no icon path resolves its fallback through a logged 404', () => {
   assert.ok(!/error_page 404 = @icon/.test(dashboard), 'a failed open logs an error on every request');
 });
 
-/* Clients that ignore the icon links in the page ask for /favicon.ico. Without
-   a location the request reaches the filesystem and nginx logs it at error
-   level, which is the only error level line a healthy install produces. */
+/* Without a location the request reaches the filesystem and is logged as an
+   error, which is otherwise the only error level line a healthy install
+   produces. */
 test('/favicon.ico tries the mounted volume before the bundled file', () => {
   const block = name => {
     const at = dashboard.indexOf(`location ${name} {`);
