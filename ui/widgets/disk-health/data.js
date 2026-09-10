@@ -13,18 +13,42 @@ function diskDevices(ctx) {
   );
 }
 
+/* Scrutiny builds disagree on the device identifier. The fork sends device_id,
+   the original sends scrutiny_uuid from 0.9.0 and wwn before it. Each one
+   equals that device's key in the summary map. */
+function scrutinyDeviceIds(key, device) {
+  return [device?.device_id, device?.scrutiny_uuid, device?.wwn, key].filter(v => typeof v === 'string' && v);
+}
+
+function scrutinyStatus(ctx, r) {
+  if (r.status === 401 || r.status === 403) ctx.fail('Scrutiny auth failed', { kind: ctx.KIND.AUTH });
+  if (r.status >= 400) ctx.fail('Scrutiny HTTP ' + r.status);
+}
+
+/* Index under every identifier, so a bay saved before an upgrade still
+   resolves. Preferred first: an alternate must not shadow another disk. */
+function scrutinyIndex(summary) {
+  const entries = Object.entries(summary).filter(([, e]) => e?.device);
+  const byId = {};
+  for (const [key, entry] of entries) byId[scrutinyDeviceIds(key, entry.device)[0]] = entry;
+  for (const [key, entry] of entries) {
+    for (const id of scrutinyDeviceIds(key, entry.device)) if (!(id in byId)) byId[id] = entry;
+  }
+  return byId;
+}
+
 async function scrutinyDeviceOptions(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   if (!config.scrutinyUrl) ctx.fail('Enter the Scrutiny URL first.', { kind: ctx.KIND.INVALID });
   const r = await fetchJSON(normalizeBase(config.scrutinyUrl) + '/api/summary', { timeout: 8000 });
-  if (r.status >= 400) ctx.fail('Scrutiny HTTP ' + r.status);
+  scrutinyStatus(ctx, r);
   const summary = r.data?.data?.summary || {};
-  const options = Object.values(summary)
-    .filter(e => e.device?.device_id)
-    .map(e => ({
-      value: e.device.device_id,
-      label: e.device.model_name || e.device.device_name || e.device.device_id,
-    }));
+  const options = Object.entries(summary)
+    .filter(([, e]) => e?.device)
+    .map(([key, e]) => {
+      const id = scrutinyDeviceIds(key, e.device)[0];
+      return { value: id, label: e.device.model_name || e.device.device_name || id };
+    });
   return { options };
 }
 
@@ -67,12 +91,9 @@ async function diskHealthScrutiny(ctx) {
 
   const base = normalizeBase(url);
   const r = await fetchJSON(base + '/api/summary', { timeout: 8000 });
+  scrutinyStatus(ctx, r);
 
-  const summary = r.data?.data?.summary || {};
-  const byId = {};
-  Object.values(summary).forEach(entry => {
-    if (entry.device?.device_id) byId[entry.device.device_id] = entry;
-  });
+  const byId = scrutinyIndex(r.data?.data?.summary || {});
 
   const result = bays.map(deviceId => {
     if (!deviceId) return null;

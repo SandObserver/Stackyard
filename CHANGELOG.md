@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The System widget draws its charts immediately on the demo, instead of
   filling them one reading at a time.
 
+### Fixed
+
+- The Disk Health widget now reads Scrutiny disks from builds that identify a
+  device by `scrutiny_uuid` or `wwn`, not only `device_id`.
+
 ## [1.10.0] - 2026-09-07
 
 ### Added
