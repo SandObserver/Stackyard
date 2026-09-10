@@ -98,3 +98,13 @@ test('docs/releasing.md documents the app secrets the workflows read', () => {
     );
   }
 });
+
+/* Release prep folds changelog.d into the dated section and deletes the files.
+   A delete left unstaged folds the same entries in again at the next release. */
+test('release prep stages the fragments it consumed', () => {
+  const add = wf('release-prep.yml')
+    .split('\n')
+    .find(l => l.includes('git add '));
+  assert.ok(add, 'release-prep no longer stages anything');
+  assert.match(add, /\bchangelog\.d\b/, `release-prep does not stage changelog.d: ${add.trim()}`);
+});
