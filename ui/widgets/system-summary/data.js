@@ -77,13 +77,17 @@ async function systemSummaryLocal({ config, settings, metrics, params }) {
    widget for minutes. Only the demo host supplies a past. */
 function seedHistory(metrics, zones) {
   if (typeof metrics.series !== 'function') return undefined;
+  /* The series ends at the reading this same response reports live, and the
+     widget appends that reading to the seed. Stop one step short, or the chart
+     draws the same value twice at its right edge. */
+  const past = kind => metrics.series(kind, SEED_POINTS + 1, SEED_STEP_SEC).slice(0, -1);
   const temps = {};
-  for (const z of zones) temps[z] = metrics.series('temp', SEED_POINTS, SEED_STEP_SEC);
+  for (const z of zones) temps[z] = past('temp');
   return {
-    cpu: metrics.series('cpu', SEED_POINTS, SEED_STEP_SEC),
-    ram: metrics.series('ram', SEED_POINTS, SEED_STEP_SEC),
-    iowait: metrics.series('iowait', SEED_POINTS, SEED_STEP_SEC),
-    procs: metrics.series('procs', SEED_POINTS, SEED_STEP_SEC),
+    cpu: past('cpu'),
+    ram: past('ram'),
+    iowait: past('iowait'),
+    procs: past('procs'),
     temps,
   };
 }
