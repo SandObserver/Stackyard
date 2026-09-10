@@ -109,6 +109,8 @@ async function speed(ctx) {
   const base = normalizeBase(net.url);
 
   if ((net.provider || 'myspeed') === 'speedtest-tracker') {
+    const token = (net.stToken || '').trim();
+    if (token) return speedtestTrackerV1(ctx, base, token);
     const r = await fetchJSON(base + '/api/speedtest/latest', { timeout: 8000 });
     const row = r.data?.data;
     if (!row?.id) ctx.fail('No result from Speedtest Tracker');
@@ -127,6 +129,30 @@ async function speed(ctx) {
   const row = Array.isArray(r.data) ? r.data[0] : r.data;
   if (!row) ctx.fail('No result from MySpeed');
   return { download: row.download, upload: row.upload, ping: row.ping, failed: false, ts: row.created };
+}
+
+/* The v1 result reports bytes per second in `download`, where the untokened
+   route reports megabits. Read `download_bits`, or the widget states an eighth
+   of the real speed. */
+async function speedtestTrackerV1(ctx, base, token) {
+  const r = await ctx.fetchJSON(base + '/api/v1/results/latest', {
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+    timeout: 8000,
+  });
+  if (r.status === 401 || r.status === 403) {
+    ctx.fail('Speedtest Tracker rejected the API token', { kind: ctx.KIND.AUTH });
+  }
+  if (r.status >= 400) ctx.fail('Speedtest Tracker HTTP ' + r.status);
+  const row = r.data?.data;
+  if (!row?.id) ctx.fail('No result from Speedtest Tracker');
+  const mbit = bits => (bits == null ? null : bits / 1e6);
+  return {
+    download: mbit(row.download_bits),
+    upload: mbit(row.upload_bits),
+    ping: row.ping,
+    failed: row.status === 'failed',
+    ts: row.created_at,
+  };
 }
 
 /* Glances serves the same fields under /api/4 and /api/3, and offers no way to

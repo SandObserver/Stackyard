@@ -60,5 +60,7 @@
   "network.url.label": "服务地址",
   "network.url.placeholder": "myspeed:5216",
   "network.myspeedPass.label": "MySpeed 密码",
+  "network.stToken.label": "API 令牌",
+  "network.stToken.hint": "可选。留空则使用旧的兼容路由。",
   "ui.noData": "暂无数据"
 }
