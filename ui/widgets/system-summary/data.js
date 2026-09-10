@@ -90,10 +90,24 @@ function seedHistory(metrics, zones) {
 
 /* The provider lives in the nested network slot, so this branches directly
    rather than through ctx.dispatchProvider, which reads a top-level field. */
+/* The demo has no speed-test service behind it, and the throughput reading it
+   used instead is the demo container's own traffic. */
+function demoSpeed({ wave, round }) {
+  return {
+    download: round(wave(900, 380, 520), 1),
+    upload: round(wave(1100, 32, 48), 1),
+    ping: round(wave(700, 6, 18), 1),
+    failed: false,
+    ts: new Date().toISOString(),
+  };
+}
+
 async function speed(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const net = config.network;
-  if (!net?.enabled || !net?.url) ctx.fail('network slot not configured', { kind: ctx.KIND.INVALID });
+  if (!net?.enabled) ctx.fail('network slot not configured', { kind: ctx.KIND.INVALID });
+  if (ctx.demo) return demoSpeed(ctx.demo);
+  if (!net.url) ctx.fail('network slot not configured', { kind: ctx.KIND.INVALID });
   const base = normalizeBase(net.url);
 
   if ((net.provider || 'myspeed') === 'speedtest-tracker') {
