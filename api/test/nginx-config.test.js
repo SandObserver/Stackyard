@@ -101,10 +101,16 @@ test('no icon path resolves its fallback through a logged 404', () => {
 /* Clients that ignore the icon links in the page ask for /favicon.ico. Without
    a location the request reaches the filesystem and nginx logs it at error
    level, which is the only error level line a healthy install produces. */
-test('/favicon.ico is served from the bundled file', () => {
-  const at = dashboard.indexOf('location = /favicon.ico {');
-  assert.ok(at !== -1, 'no location for /favicon.ico');
-  assert.match(dashboard.slice(at, dashboard.indexOf('\n    }', at)), /try_files \/favicon\.ico =404;/);
+test('/favicon.ico tries the mounted volume before the bundled file', () => {
+  const block = name => {
+    const at = dashboard.indexOf(`location ${name} {`);
+    assert.ok(at !== -1, `location ${name} not found`);
+    return dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  };
+  assert.match(block('= /favicon.ico'), /^\s*root \/;$/m, 'root / maps the request path onto the mount');
+  assert.match(block('= /favicon.ico'), /try_files \/icons\/favicon\.ico \/icons\/favicon\.png @favicon_miss;/);
+  assert.match(block('@favicon_miss'), /root \/usr\/share\/nginx\/html;/);
+  assert.match(block('@favicon_miss'), /try_files \/icons\/favicon\.ico \/favicon\.ico =404;/);
 });
 
 test('the favicon.ico the location serves is shipped', () => {
