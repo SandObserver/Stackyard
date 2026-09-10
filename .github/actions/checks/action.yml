@@ -36,6 +36,10 @@ runs:
       shell: bash
       run: node scripts/changelog-check.js
 
+    - name: Check the changelog fragments
+      shell: bash
+      run: node scripts/changelog-fragments.js --check
+
     # A release must also agree with itself: the newest dated section, the
     # package version and the demo pin all name one version, and nothing is left
     # under [Unreleased].

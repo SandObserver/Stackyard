@@ -6,9 +6,9 @@ A release is two merges and no local commands.
 
 1. Run the **Release prep** workflow from the Actions tab. Give the version
    without the leading `v`, for example `1.8.0`.
-2. It dates the `[Unreleased]` section, adds the compare link, bumps
-   `api/package.json`, pins the demo image in `render.yaml`, and opens a
-   `Release: X.Y.Z` pull request.
+2. It folds `changelog.d/` into `[Unreleased]`, dates that section, adds the
+   compare link, bumps `api/package.json`, pins the demo image in
+   `render.yaml`, and opens a `Release: X.Y.Z` pull request.
 3. Review the dated section. Merge when the checks pass.
 4. The merge tags `vX.Y.Z`. The tag builds, scans, signs and pushes the image,
    then publishes the release page from that changelog section.
@@ -20,7 +20,8 @@ of the process.
 
 ## What decides the version
 
-`[Unreleased]` holds the entries. The version is yours to choose: an addition
+`[Unreleased]` holds the entries once the fragments in `changelog.d/` are
+folded in, which release prep does first. The version is yours to choose: an addition
 that only touches tooling or documentation is a patch, not a minor. The
 changelog gate prints the bump its entries imply and does not enforce it.
 

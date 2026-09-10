@@ -65,7 +65,9 @@ jobs:
           git config user.name 'SandObserver'
           git config user.email '260779319+SandObserver@users.noreply.github.com'
           git checkout -b "${BRANCH}"
-          git add CHANGELOG.md api/package.json render.yaml
+          # changelog.d too: release prep folds the fragments in and deletes
+          # them, and an unstaged delete folds them in again next release.
+          git add CHANGELOG.md api/package.json render.yaml changelog.d
           git commit -m "Release ${VERSION}"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${BRANCH}"
           gh pr create \
@@ -75,7 +77,7 @@ jobs:
             --label release \
             --body "$(printf '%s\n' \
               '**Summary**' \
-              "- Date the changelog section as ${VERSION} and add its compare link." \
+              "- Fold changelog.d into Unreleased, date it as ${VERSION} and add its compare link." \
               "- Bump api/package.json to ${VERSION}." \
               "- Pin the demo image to ${VERSION} in render.yaml." \
               '' \

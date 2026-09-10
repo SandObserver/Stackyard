@@ -10,4 +10,4 @@ this; they are listed in
 - [ ] Stays within the project constraints: one container, no runtime dependencies, no build step (see CONTRIBUTING.md).
 - [ ] Tests added or updated for new logic, and the full suite, lint, and typechecks pass.
 - [ ] Docs updated if behavior or configuration changed.
-- [ ] CHANGELOG.md updated under Unreleased if the change is user-visible.
+- [ ] A `changelog.d/` fragment added if the change is user-visible (see [changelog.d/README.md](../blob/main/changelog.d/README.md)). Release, dependency and tooling changes need none.

@@ -9,6 +9,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const cl = require('./changelog.js');
+const fragments = require('./changelog-fragments.js');
 
 const ROOT = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -53,6 +54,10 @@ function main(argv) {
   if (!version || !cl.parseTagName(version)) die(`"${version ?? ''}" is not a valid semantic version`);
   if (version.startsWith('v')) die('give the version without the leading v');
   if (!cl.validDate(date)) die(`"${date}" is not a date in YYYY-MM-DD form`);
+
+  /* Entries live one-per-file until a release, so fold them in before the
+     section is dated or the release ships without them. */
+  fragments.fold();
 
   const changed = dateTheSection(read('CHANGELOG.md'), version, date);
   write('CHANGELOG.md', changed.markdown);
