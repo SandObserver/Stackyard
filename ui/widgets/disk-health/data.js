@@ -13,18 +13,25 @@ function diskDevices(ctx) {
   );
 }
 
+/* Scrutiny builds disagree on the device identifier. The community fork sends
+   device_id, the original sends scrutiny_uuid from 0.9.0 and wwn before it.
+   Each one equals that device's key in the summary map. */
+function scrutinyDeviceId(key, device) {
+  return device?.device_id || device?.scrutiny_uuid || device?.wwn || key;
+}
+
 async function scrutinyDeviceOptions(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   if (!config.scrutinyUrl) ctx.fail('Enter the Scrutiny URL first.', { kind: ctx.KIND.INVALID });
   const r = await fetchJSON(normalizeBase(config.scrutinyUrl) + '/api/summary', { timeout: 8000 });
   if (r.status >= 400) ctx.fail('Scrutiny HTTP ' + r.status);
   const summary = r.data?.data?.summary || {};
-  const options = Object.values(summary)
-    .filter(e => e.device?.device_id)
-    .map(e => ({
-      value: e.device.device_id,
-      label: e.device.model_name || e.device.device_name || e.device.device_id,
-    }));
+  const options = Object.entries(summary)
+    .filter(([, e]) => e?.device)
+    .map(([key, e]) => {
+      const id = scrutinyDeviceId(key, e.device);
+      return { value: id, label: e.device.model_name || e.device.device_name || id };
+    });
   return { options };
 }
 
@@ -70,8 +77,8 @@ async function diskHealthScrutiny(ctx) {
 
   const summary = r.data?.data?.summary || {};
   const byId = {};
-  Object.values(summary).forEach(entry => {
-    if (entry.device?.device_id) byId[entry.device.device_id] = entry;
+  Object.entries(summary).forEach(([key, entry]) => {
+    if (entry?.device) byId[scrutinyDeviceId(key, entry.device)] = entry;
   });
 
   const result = bays.map(deviceId => {
