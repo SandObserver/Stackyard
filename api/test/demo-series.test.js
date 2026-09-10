@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { metrics } = require('../src/demo-data');
+const { metrics, CURVES } = require('../src/demo-data');
 const { dispatchProvider } = require('../src/provider-dispatch');
 
 const statsFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
@@ -20,13 +20,41 @@ const SLOTS = { slots: [{ type: 'cpu' }, { type: 'ram' }, { type: 'temp', therma
 const CONTINUOUS = 1;
 
 test('a demo series ends at the value the metric reports now', () => {
+  const [, min, max] = CURVES.cpu;
   const s = metrics.series('cpu', 40, 10);
   assert.equal(s.length, 40);
   assert.ok(Math.abs(s.at(-1) - metrics.cpuSample().cpu) <= CONTINUOUS);
   assert.ok(
-    s.every(v => v >= 8 && v <= 46),
+    s.every(v => v >= min && v <= max),
     'every point stays inside the curve range',
   );
+});
+
+/* The wobble used to be added on top of the wave, so a peak reached max + 4%
+   and a trough min - 4%. Sampling a handful of points from the current clock
+   hits that only when the run lands on an extreme, which made this suite fail
+   about one run in four. Sweep the clock instead, so the extremes are always
+   visited. */
+test('no curve leaves its declared range, at any point on the clock', () => {
+  const realNow = Date.now;
+  try {
+    for (const [kind, [period, min, max]] of Object.entries(CURVES)) {
+      /* The wobble runs on its own period, so stepping over a span far longer
+         than the wave brings the two into phase at some point. */
+      let lo = Infinity;
+      let hi = -Infinity;
+      for (let t = 0; t < period * 500; t += period / 40) {
+        Date.now = () => t * 1000;
+        const v = metrics.series(kind, 1, 10)[0];
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+      assert.ok(lo >= min, `${kind} fell to ${lo}, below its declared minimum of ${min}`);
+      assert.ok(hi <= max, `${kind} rose to ${hi}, above its declared maximum of ${max}`);
+    }
+  } finally {
+    Date.now = realNow;
+  }
 });
 
 test('a demo series keeps each metric decimal precision', () => {
