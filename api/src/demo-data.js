@@ -1,8 +1,12 @@
+/* The wobble takes its share of the amplitude rather than adding to it. Added
+   on top, it carries every peak past `max` and every trough below `min`. */
+const NOISE = 0.04;
+
 function waveAt(t, periodSec, min, max, phase = 0) {
   const mid = (min + max) / 2,
     amp = (max - min) / 2;
-  const n = Math.sin(t / 3) * 0.04;
-  return mid + amp * Math.sin((t / periodSec) * 2 * Math.PI + phase) + amp * n;
+  const n = Math.sin(t / 3) * NOISE;
+  return mid + amp * ((1 - NOISE) * Math.sin((t / periodSec) * 2 * Math.PI + phase) + n);
 }
 
 function wave(periodSec, min, max, phase = 0) {
@@ -71,4 +75,4 @@ function demoHealth(items) {
 
 const helpers = { wave, round };
 
-module.exports = { metrics, helpers, demoBadges, demoHealth };
+module.exports = { metrics, helpers, demoBadges, demoHealth, CURVES };
