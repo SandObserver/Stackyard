@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   device by `scrutiny_uuid` or `wwn`, not only `device_id`.
 
 - Clients that ask for `/favicon.ico` now get the app mark instead of a 404.
+
 - The demo's dashboard switcher shows its keychain names instead of the
   addresses behind them.
 
