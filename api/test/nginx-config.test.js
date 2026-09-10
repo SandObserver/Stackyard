@@ -98,6 +98,25 @@ test('no icon path resolves its fallback through a logged 404', () => {
   assert.ok(!/error_page 404 = @icon/.test(dashboard), 'a failed open logs an error on every request');
 });
 
+/* Clients that ignore the icon links in the page ask for /favicon.ico. Without
+   a location the request reaches the filesystem and nginx logs it at error
+   level, which is the only error level line a healthy install produces. */
+test('/favicon.ico is served from the bundled file', () => {
+  const at = dashboard.indexOf('location = /favicon.ico {');
+  assert.ok(at !== -1, 'no location for /favicon.ico');
+  assert.match(dashboard.slice(at, dashboard.indexOf('\n    }', at)), /try_files \/favicon\.ico =404;/);
+});
+
+test('the favicon.ico the location serves is shipped', () => {
+  const ico = path.join(__dirname, '../../ui/favicon.ico');
+  assert.ok(fs.existsSync(ico), 'ui/favicon.ico is missing, so the location answers 404');
+  /* ICO header: reserved 0, type 1, then the image count. */
+  const head = fs.readFileSync(ico).subarray(0, 6);
+  assert.equal(head.readUInt16LE(0), 0, 'not an ICO file');
+  assert.equal(head.readUInt16LE(2), 1, 'not an ICO file');
+  assert.ok(head.readUInt16LE(4) >= 1, 'the ICO carries no image');
+});
+
 /* ── frame-ancestors (P14-2) ──────────────────────────────────────────────── */
 
 function policyFor(location) {
