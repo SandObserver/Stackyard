@@ -18,6 +18,7 @@ const SLOTS = { slots: [{ type: 'cpu' }, { type: 'ram' }, { type: 'temp', therma
    can round to neighbouring values. The point is that the series ends where the
    live value is, not that two separate reads are identical. */
 const CONTINUOUS = 1;
+const SEED_STEP = 10;
 
 test('a demo series ends at the value the metric reports now', () => {
   const [, min, max] = CURVES.cpu;
@@ -66,8 +67,19 @@ test('the demo host supplies a past for every charted slot', async () => {
   assert.equal(r.history.ram.length, 120);
   assert.deepEqual(Object.keys(r.history.temps).sort(), ['0', '1']);
   assert.equal(r.history.temps[1].length, 120);
-  assert.ok(Math.abs(r.history.cpu.at(-1) - r.cpu) <= CONTINUOUS);
-  assert.ok(Math.abs(r.history.ram.at(-1) - r.ram) <= CONTINUOUS);
+});
+
+/* The widget appends the live reading to the seed. A seed running all the way
+   to now puts the same value in the last two bars. */
+test('the seeded past stops one step short of the live reading', async () => {
+  const oneStepBack = kind => metrics.series(kind, 2, SEED_STEP)[0];
+  const r = await statsFn(ctxFor(SLOTS, metrics));
+  for (const kind of ['cpu', 'ram']) {
+    assert.ok(
+      Math.abs(r.history[kind].at(-1) - oneStepBack(kind)) <= CONTINUOUS,
+      `${kind} history ends at ${r.history[kind].at(-1)}, not at ${oneStepBack(kind)}`,
+    );
+  }
 });
 
 test('the past is left out unless the widget asks for it', async () => {
