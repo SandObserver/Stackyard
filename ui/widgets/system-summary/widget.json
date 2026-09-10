@@ -523,6 +523,17 @@
             "field": "provider",
             "equals": "myspeed"
           }
+        },
+        {
+          "key": "stToken",
+          "type": "secret",
+          "label": "network.stToken.label",
+          "hint": "network.stToken.hint",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "speedtest-tracker"
+          }
         }
       ],
       "showIf": {
@@ -616,6 +627,17 @@
           "showIf": {
             "field": "provider",
             "equals": "myspeed"
+          }
+        },
+        {
+          "key": "stToken",
+          "type": "secret",
+          "label": "network.stToken.label",
+          "hint": "network.stToken.hint",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "speedtest-tracker"
           }
         }
       ],
@@ -711,6 +733,17 @@
             "field": "provider",
             "equals": "myspeed"
           }
+        },
+        {
+          "key": "stToken",
+          "type": "secret",
+          "label": "network.stToken.label",
+          "hint": "network.stToken.hint",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "speedtest-tracker"
+          }
         }
       ],
       "showIf": {
@@ -804,6 +837,17 @@
           "showIf": {
             "field": "provider",
             "equals": "myspeed"
+          }
+        },
+        {
+          "key": "stToken",
+          "type": "secret",
+          "label": "network.stToken.label",
+          "hint": "network.stToken.hint",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "speedtest-tracker"
           }
         }
       ],

@@ -60,5 +60,7 @@
   "network.url.label": "آدرس سرویس",
   "network.url.placeholder": "myspeed:5216",
   "network.myspeedPass.label": "رمز عبور MySpeed",
+  "network.stToken.label": "توکن API",
+  "network.stToken.hint": "اختیاری. برای استفاده از مسیر سازگاری قدیمی خالی بگذارید.",
   "ui.noData": "داده‌ای نیست"
 }

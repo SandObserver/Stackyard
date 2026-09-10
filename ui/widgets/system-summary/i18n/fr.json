@@ -60,5 +60,7 @@
   "network.url.label": "URL du service",
   "network.url.placeholder": "myspeed:5216",
   "network.myspeedPass.label": "Mot de passe MySpeed",
+  "network.stToken.label": "Jeton d’API",
+  "network.stToken.hint": "Facultatif. Laissez vide pour utiliser l’ancienne route de compatibilité.",
   "ui.noData": "Aucune donnée"
 }

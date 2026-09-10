@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The System widget's Speedtest Tracker provider accepts an API token, and uses
+  the documented v1 API when one is set.
+
 ### Changed
 
 - The demo dashboard now shows the apps, icons, tile colours and widgets of the
