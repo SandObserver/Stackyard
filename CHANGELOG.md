@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Disk Health widget now reads Scrutiny disks from builds that identify a
   device by `scrutiny_uuid` or `wwn`, not only `device_id`.
 
+- Clients that ask for `/favicon.ico` now get the app mark instead of a 404.
+
 ## [1.10.0] - 2026-09-07
 
 ### Added

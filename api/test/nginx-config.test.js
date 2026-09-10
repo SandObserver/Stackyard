@@ -98,6 +98,31 @@ test('no icon path resolves its fallback through a logged 404', () => {
   assert.ok(!/error_page 404 = @icon/.test(dashboard), 'a failed open logs an error on every request');
 });
 
+/* Without a location the request reaches the filesystem and is logged as an
+   error, which is otherwise the only error level line a healthy install
+   produces. */
+test('/favicon.ico tries the mounted volume before the bundled file', () => {
+  const block = name => {
+    const at = dashboard.indexOf(`location ${name} {`);
+    assert.ok(at !== -1, `location ${name} not found`);
+    return dashboard.slice(at, dashboard.indexOf('\n    }', at));
+  };
+  assert.match(block('= /favicon.ico'), /^\s*root \/;$/m, 'root / maps the request path onto the mount');
+  assert.match(block('= /favicon.ico'), /try_files \/icons\/favicon\.ico \/icons\/favicon\.png @favicon_miss;/);
+  assert.match(block('@favicon_miss'), /root \/usr\/share\/nginx\/html;/);
+  assert.match(block('@favicon_miss'), /try_files \/icons\/favicon\.ico \/favicon\.ico =404;/);
+});
+
+test('the favicon.ico the location serves is shipped', () => {
+  const ico = path.join(__dirname, '../../ui/favicon.ico');
+  assert.ok(fs.existsSync(ico), 'ui/favicon.ico is missing, so the location answers 404');
+  /* ICO header: reserved 0, type 1, then the image count. */
+  const head = fs.readFileSync(ico).subarray(0, 6);
+  assert.equal(head.readUInt16LE(0), 0, 'not an ICO file');
+  assert.equal(head.readUInt16LE(2), 1, 'not an ICO file');
+  assert.ok(head.readUInt16LE(4) >= 1, 'the ICO carries no image');
+});
+
 /* ── frame-ancestors (P14-2) ──────────────────────────────────────────────── */
 
 function policyFor(location) {
