@@ -33,7 +33,7 @@ function sensorOptions(ctx) {
 
 /* Mount paths come from the widget's disk slots, then the global
    stats.diskMount setting, then '/'. */
-async function systemSummaryLocal({ config, settings, metrics }) {
+async function systemSummaryLocal({ config, settings, metrics, params }) {
   const slots = config.slots || [];
 
   const mounts = new Set();
@@ -69,7 +69,7 @@ async function systemSummaryLocal({ config, settings, metrics }) {
     iowait,
     procs,
     uptime,
-    history: seedHistory(metrics, zones),
+    history: params?.get('seed') === '1' ? seedHistory(metrics, zones) : undefined,
   };
 }
 
@@ -88,10 +88,6 @@ function seedHistory(metrics, zones) {
   };
 }
 
-/* The provider lives in the nested network slot, so this branches directly
-   rather than through ctx.dispatchProvider, which reads a top-level field. */
-/* The demo has no speed-test service behind it, and the throughput reading it
-   used instead is the demo container's own traffic. */
 function demoSpeed({ wave, round }) {
   return {
     download: round(wave(900, 380, 520), 1),
@@ -102,6 +98,8 @@ function demoSpeed({ wave, round }) {
   };
 }
 
+/* The provider lives in the nested network slot, so this branches directly
+   rather than through ctx.dispatchProvider, which reads a top-level field. */
 async function speed(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const net = config.network;

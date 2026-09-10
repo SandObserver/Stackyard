@@ -138,10 +138,7 @@ test('pingUrl makes no outbound request in demo mode', async () => {
   assert.equal(r.status, 0);
 });
 
-/* The demo config is written by hand, so a key the widget never reads is not a
-   syntax error and no test caught it. The switcher's keychains were spelled
-   `label` where the widget reads `name`, and the demo fell back to showing the
-   raw hostnames. */
+/* The demo config is written by hand: a key no widget reads is not an error. */
 test('every demo widget setting is a key its widget declares', () => {
   const declared = name => {
     const manifest = JSON.parse(
@@ -179,8 +176,6 @@ test('every demo widget setting is a key its widget declares', () => {
   }
 });
 
-/* Everything else on the demo is fabricated. Throughput was not: it read the
-   demo container's own network traffic. */
 test('the demo network row asks for speed, which the demo fabricates', () => {
   const stats = demo.items.find(i => i.id === 'w-stats');
   const net = stats.widgetConfig.network;

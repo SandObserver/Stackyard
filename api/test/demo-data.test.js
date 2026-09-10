@@ -33,8 +33,6 @@ test('health marks the showcase app unhealthy and covers only healthcheck apps',
   assert.equal(out['app-grafana'].unhealthy, true);
 });
 
-/* The demo has no speed-test service to read, and the throughput reading it
-   used instead came from the demo container's own interface. */
 test('the demo answers the speed endpoint without reaching a service', async () => {
   const path = require('node:path');
   const statsFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));

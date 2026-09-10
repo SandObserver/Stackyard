@@ -88,7 +88,7 @@
      the sparklines' time axis right to left. -->
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <script type="module">
-import { poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=833f5b5f';
+import { poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=01f4c217';
 await loadStrings();
 const TICK_MS  = 10000;
 const SPEED_MS = 60000;
@@ -467,8 +467,12 @@ function applyStats(data) {
 }
 
 /* ── Fetch and apply ── */
+/* The server omits the seeded past unless this asks for it. */
+let wantSeed = true;
 async function fetchStats() {
-  return fetchData('system');
+  const d = await fetchData('system', wantSeed ? { params: { seed: '1' } } : {});
+  wantSeed = false;
+  return d;
 }
 
 function fmtMbps(v) {

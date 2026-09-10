@@ -25,7 +25,11 @@ export function widgetId() {
 
 export async function fetchData(endpoint, opts = {}) {
   const id = widgetId();
-  const qs = endpoint ? '?endpoint=' + encodeURIComponent(endpoint) : '';
+  const p = new URLSearchParams();
+  if (endpoint) p.set('endpoint', endpoint);
+  for (const [k, v] of Object.entries(opts.params || {})) p.set(k, String(v));
+  const query = p.toString();
+  const qs = query ? '?' + query : '';
   const r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, { cache: 'no-store', signal: opts.signal });
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
