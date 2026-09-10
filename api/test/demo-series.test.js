@@ -30,17 +30,14 @@ test('a demo series ends at the value the metric reports now', () => {
   );
 });
 
-/* The wobble used to be added on top of the wave, so a peak reached max + 4%
-   and a trough min - 4%. Sampling a handful of points from the current clock
-   hits that only when the run lands on an extreme, which made this suite fail
-   about one run in four. Sweep the clock instead, so the extremes are always
-   visited. */
+/* Sampling the current clock reaches an extreme only when the run happens to
+   land on one. Sweep the clock so they are always visited. */
 test('no curve leaves its declared range, at any point on the clock', () => {
   const realNow = Date.now;
   try {
     for (const [kind, [period, min, max]] of Object.entries(CURVES)) {
-      /* The wobble runs on its own period, so stepping over a span far longer
-         than the wave brings the two into phase at some point. */
+      /* The wobble runs on its own period. A span far longer than the wave
+         brings the two into phase. */
       let lo = Infinity;
       let hi = -Infinity;
       for (let t = 0; t < period * 500; t += period / 40) {
