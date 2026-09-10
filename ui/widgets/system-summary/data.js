@@ -132,8 +132,8 @@ async function speed(ctx) {
 }
 
 /* The v1 result reports bytes per second in `download`, where the untokened
-   route reports megabits. Read `download_bits` and convert, or the widget
-   states an eighth of the real speed. */
+   route reports megabits. Read `download_bits`, or the widget states an eighth
+   of the real speed. */
 async function speedtestTrackerV1(ctx, base, token) {
   const r = await ctx.fetchJSON(base + '/api/v1/results/latest', {
     headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },

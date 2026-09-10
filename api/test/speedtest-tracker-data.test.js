@@ -85,7 +85,6 @@ test('with a token it calls the v1 route as a bearer', async () => {
   assert.equal(r.ts, '2026-09-10 18:00:01');
 });
 
-/* Reading `download` instead of `download_bits` would report 116868750 here. */
 test('the v1 route is converted from bits, so both routes report the same speed', async () => {
   const compat = await dataFn(makeCtx(slot(), () => COMPAT));
   const v1 = await dataFn(makeCtx(slot({ stToken: 't' }), () => V1));
