@@ -26,8 +26,7 @@ function makeCtx(endpoint, config, fetchJSON) {
   return ctx;
 }
 
-/* One device, described the way each Scrutiny build describes it. The map key
-   is the identifier in all three. */
+/* One device, as each Scrutiny build describes it. */
 const FORK = { '2f18a4f8-9ae8': { device: { device_id: '2f18a4f8-9ae8', model_name: 'WD Red', wwn: '0x5001' } } };
 const ORIGINAL_UUID = { 'a1b2-c3d4': { device: { scrutiny_uuid: 'a1b2-c3d4', model_name: 'WD Red', wwn: '0x5001' } } };
 const ORIGINAL_WWN = { '0x5001': { device: { wwn: '0x5001', model_name: 'WD Red' } } };
@@ -70,8 +69,6 @@ test('a bay that no device matches is reported as not found', async () => {
   assert.equal(r.bays[0].device_status, 0);
 });
 
-/* Upgrading Scrutiny changes which identifier it prefers, and the saved bay
-   still holds the old one. */
 test('a bay saved as a wwn still resolves once the server sends a scrutiny_uuid', async () => {
   const config = { diskProvider: 'scrutiny', scrutinyUrl: 'http://s.local', bays: ['0x5001'] };
   const r = await dataFn(makeCtx('', config, summaryFetch(ORIGINAL_UUID)));
@@ -86,7 +83,6 @@ test('a bay saved as a wwn still resolves against the fork, which prefers device
   assert.equal(r.bays[0].model_name, 'WD Red');
 });
 
-/* Disk B's wwn must not take the slot disk A answers to by preference. */
 test("one disk's alternate identifier never shadows another disk's preferred one", async () => {
   const summary = {
     a: { device: { device_id: 'shared', model_name: 'Disk A' } },
@@ -103,8 +99,6 @@ for (const [status, kind, match] of [
   [403, 'auth', /auth failed/],
   [500, undefined, /Scrutiny HTTP 500/],
 ]) {
-  /* Without this the bays render as "not found", which reads as missing disks
-     rather than an unreachable server. */
   test(`the bay list reports HTTP ${status} instead of an empty summary`, async () => {
     const config = { diskProvider: 'scrutiny', scrutinyUrl: 'http://s.local', bays: ['x'] };
     await assert.rejects(

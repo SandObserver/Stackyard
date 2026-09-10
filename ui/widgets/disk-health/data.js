@@ -13,10 +13,9 @@ function diskDevices(ctx) {
   );
 }
 
-/* Scrutiny builds disagree on the device identifier. The community fork sends
-   device_id, the original sends scrutiny_uuid from 0.9.0 and wwn before it.
-   Each one equals that device's key in the summary map. Most builds send more
-   than one, and a saved bay holds whichever the server sent at the time. */
+/* Scrutiny builds disagree on the device identifier. The fork sends device_id,
+   the original sends scrutiny_uuid from 0.9.0 and wwn before it. Each one
+   equals that device's key in the summary map. */
 function scrutinyDeviceIds(key, device) {
   return [device?.device_id, device?.scrutiny_uuid, device?.wwn, key].filter(v => typeof v === 'string' && v);
 }
@@ -26,10 +25,8 @@ function scrutinyStatus(ctx, r) {
   if (r.status >= 400) ctx.fail('Scrutiny HTTP ' + r.status);
 }
 
-/* Every identifier a device answers to, so a bay saved against an older
-   Scrutiny still resolves after an upgrade changes which one it prefers. Two
-   passes: a preferred identifier must never be shadowed by another disk's
-   alternate. */
+/* Index under every identifier, so a bay saved before an upgrade still
+   resolves. Preferred first: an alternate must not shadow another disk. */
 function scrutinyIndex(summary) {
   const entries = Object.entries(summary).filter(([, e]) => e?.device);
   const byId = {};
