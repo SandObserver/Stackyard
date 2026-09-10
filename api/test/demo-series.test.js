@@ -6,8 +6,8 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 
 const statsFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
 
-function ctxFor(config, m) {
-  const ctx = { endpoint: undefined, config, settings: {}, metrics: m };
+function ctxFor(config, m, params = new URLSearchParams('seed=1')) {
+  const ctx = { endpoint: undefined, config, settings: {}, metrics: m, params };
   ctx.dispatchProvider = (handlers, opts) => dispatchProvider(ctx, handlers, opts);
   return ctx;
 }
@@ -68,6 +68,12 @@ test('the demo host supplies a past for every charted slot', async () => {
   assert.equal(r.history.temps[1].length, 120);
   assert.ok(Math.abs(r.history.cpu.at(-1) - r.cpu) <= CONTINUOUS);
   assert.ok(Math.abs(r.history.ram.at(-1) - r.ram) <= CONTINUOUS);
+});
+
+test('the past is left out unless the widget asks for it', async () => {
+  const r = await statsFn(ctxFor(SLOTS, metrics, new URLSearchParams()));
+  assert.equal(r.history, undefined);
+  assert.equal(typeof r.cpu, 'number');
 });
 
 test('a real host supplies no history', async () => {

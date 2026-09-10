@@ -32,3 +32,26 @@ test('health marks the showcase app unhealthy and covers only healthcheck apps',
   assert.deepEqual(Object.keys(out), ['app-grafana']);
   assert.equal(out['app-grafana'].unhealthy, true);
 });
+
+test('the demo answers the speed endpoint without reaching a service', async () => {
+  const path = require('node:path');
+  const statsFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
+  const { helpers } = require('../src/demo-data');
+  const ctx = {
+    endpoint: 'speed',
+    config: { network: { enabled: true, mode: 'speed' } },
+    demo: helpers,
+    fetchJSON: () => {
+      throw new Error('the demo must not fetch');
+    },
+    normalizeBase: s => s,
+    KIND: { INVALID: 'invalid' },
+    fail: m => {
+      throw new Error(m);
+    },
+  };
+  const r = await statsFn(ctx);
+  assert.ok(r.download > 0 && r.upload > 0 && r.ping > 0);
+  assert.equal(r.failed, false);
+  assert.ok(!Number.isNaN(Date.parse(r.ts)));
+});

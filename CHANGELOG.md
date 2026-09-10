@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Clients that ask for `/favicon.ico` now get the app mark instead of a 404.
 
+- The demo's dashboard switcher shows its keychain names instead of the
+  addresses behind them.
+
+- The demo's network row shows a fabricated speed instead of the demo
+  container's own traffic.
+
 ## [1.10.0] - 2026-09-07
 
 ### Added

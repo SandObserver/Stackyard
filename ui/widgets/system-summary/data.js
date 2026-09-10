@@ -33,7 +33,7 @@ function sensorOptions(ctx) {
 
 /* Mount paths come from the widget's disk slots, then the global
    stats.diskMount setting, then '/'. */
-async function systemSummaryLocal({ config, settings, metrics }) {
+async function systemSummaryLocal({ config, settings, metrics, params }) {
   const slots = config.slots || [];
 
   const mounts = new Set();
@@ -69,7 +69,7 @@ async function systemSummaryLocal({ config, settings, metrics }) {
     iowait,
     procs,
     uptime,
-    history: seedHistory(metrics, zones),
+    history: params?.get('seed') === '1' ? seedHistory(metrics, zones) : undefined,
   };
 }
 
@@ -88,12 +88,24 @@ function seedHistory(metrics, zones) {
   };
 }
 
+function demoSpeed({ wave, round }) {
+  return {
+    download: round(wave(900, 380, 520), 1),
+    upload: round(wave(1100, 32, 48), 1),
+    ping: round(wave(700, 6, 18), 1),
+    failed: false,
+    ts: new Date().toISOString(),
+  };
+}
+
 /* The provider lives in the nested network slot, so this branches directly
    rather than through ctx.dispatchProvider, which reads a top-level field. */
 async function speed(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const net = config.network;
-  if (!net?.enabled || !net?.url) ctx.fail('network slot not configured', { kind: ctx.KIND.INVALID });
+  if (!net?.enabled) ctx.fail('network slot not configured', { kind: ctx.KIND.INVALID });
+  if (ctx.demo) return demoSpeed(ctx.demo);
+  if (!net.url) ctx.fail('network slot not configured', { kind: ctx.KIND.INVALID });
   const base = normalizeBase(net.url);
 
   if ((net.provider || 'myspeed') === 'speedtest-tracker') {

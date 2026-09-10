@@ -34,7 +34,7 @@
       "type": "app",
       "label": "Portainer",
       "href": "https://containers.example.com",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/portainer-dark.svg",
+      "iconUrl": "portainer-dark",
       "dock": true,
       "monitoring": {
         "activity": {
@@ -150,9 +150,8 @@
         ],
         "network": {
           "enabled": true,
-          "mode": "throughput",
-          "provider": "system",
-          "interface": "eth0"
+          "mode": "speed",
+          "provider": "myspeed"
         }
       }
     },
@@ -220,12 +219,12 @@
       "widgetConfig": {
         "keychains": [
           {
-            "label": "Home",
-            "url": "https://home.example.com"
+            "url": "https://home.example.com",
+            "name": "Home"
           },
           {
-            "label": "Lab",
-            "url": "https://lab.example.com"
+            "url": "https://lab.example.com",
+            "name": "Lab"
           }
         ],
         "openIn": "same"

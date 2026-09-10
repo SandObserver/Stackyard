@@ -137,3 +137,48 @@ test('pingUrl makes no outbound request in demo mode', async () => {
   assert.equal(r.ok, false);
   assert.equal(r.status, 0);
 });
+
+/* The demo config is written by hand: a key no widget reads is not an error. */
+test('every demo widget setting is a key its widget declares', () => {
+  const declared = name => {
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '..', '..', 'ui', 'widgets', name, 'widget.json'), 'utf8'),
+    );
+    const keys = new Set();
+    const collect = fields => {
+      for (const f of fields) {
+        if (f.key) keys.add(f.key);
+        if (f.fields) collect(f.fields);
+      }
+    };
+    collect(manifest.fields || []);
+    return keys;
+  };
+
+  /* Written by the location picker rather than typed into a declared field. */
+  const UNDECLARED = { weather: ['lat', 'lon'] };
+
+  for (const item of demo.items) {
+    if (item.type !== 'widget') continue;
+    const keys = declared(item.widgetType);
+    for (const k of UNDECLARED[item.widgetType] || []) keys.add(k);
+    const check = (obj, where) => {
+      for (const [k, v] of Object.entries(obj || {})) {
+        assert.ok(keys.has(k), `${item.id}: ${where}${k} is not a field of the ${item.widgetType} widget`);
+        if (Array.isArray(v)) {
+          for (const row of v) if (row && typeof row === 'object') check(row, `${where}${k}[].`);
+        } else if (v && typeof v === 'object') {
+          check(v, `${where}${k}.`);
+        }
+      }
+    };
+    check(item.widgetConfig, '');
+  }
+});
+
+test('the demo network row asks for speed, which the demo fabricates', () => {
+  const stats = demo.items.find(i => i.id === 'w-stats');
+  const net = stats.widgetConfig.network;
+  assert.equal(net.enabled, true);
+  assert.equal(net.mode, 'speed', 'throughput reads the container, and the demo has no shim for it');
+});
