@@ -7,9 +7,11 @@ Stackyard does not terminate TLS and serves traffic over plain HTTP only. Login 
 
 ## Third-party requests
 
-Three hosts outside the services you configure are contacted: `cdn.jsdelivr.net`, for the [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) set, Unsplash, for wallpaper, and `api.github.com`, for the update check. Nothing else leaves your network, and no usage data is collected or sent.
+Four hosts outside the services you configure are contacted: `cdn.jsdelivr.net`, for icon files, `raw.githubusercontent.com`, for one icon catalogue's index, Unsplash, for wallpaper, and `api.github.com`, for the update check and one icon catalogue's index. Nothing else leaves your network, and no usage data is collected or sent.
 
-Dashboard icons load through `/api/icons/cdn`, which fetches each icon once, sanitizes SVGs, and caches it for 24 hours. The CDN therefore does not learn which services your dashboard shows. The browser contacts the CDN directly in two cases: when the proxy fetch fails, since the direct URL is the last fallback in the chain, and in the admin icon picker, whose previews use the catalogue's own URLs.
+The icon picker searches four catalogues: [dashboard-icons](https://github.com/homarr-labs/dashboard-icons), [selfh.st](https://github.com/selfhst/icons), [simple-icons](https://github.com/simple-icons/simple-icons) and [lobehub](https://github.com/lobehub/lobe-icons). Each index is read once and cached for 24 hours, and only when you type in the picker. Two of them are listed by file as well, which is how the picker only ever offers a file that exists. Nothing is fetched on a dashboard load.
+
+Icon files load through `/api/icons/cdn`, which fetches each icon once, sanitizes SVGs, and caches it for 24 hours. The CDN therefore does not learn which services your dashboard shows. The browser contacts the CDN directly in two cases: when the proxy fetch fails, since the direct URL is the last fallback in the chain, and in the admin icon picker, whose previews use the catalogue's own URLs.
 
 Wallpaper works differently. The server calls `api.unsplash.com` with your API key when the wallpaper source is Unsplash, and the browser then loads the chosen image from `images.unsplash.com`. Set the wallpaper to an image or a solid colour to contact Unsplash never.
 

@@ -1,0 +1,1 @@
+The icon picker now searches dashboardicons, selfh.st, simple-icons and lobehub together, matches a service by its alias or by any spelling of its name, and offers an icon's light and dark file as a choice.

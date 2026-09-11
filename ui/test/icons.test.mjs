@@ -12,7 +12,9 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const { resolveIcon, iconChain, loadLocalIcons, cdnIconName } = await import('../js/icons.js');
+const { resolveIcon, iconChain, loadLocalIcons, cdnIconName, cdnIconRef, splitIconRef } = await import(
+  '../js/icons.js'
+);
 
 /* loadLocalIcons fills the module's set from the API, so stand in for that
    rather than reaching into the module. */
@@ -110,8 +112,7 @@ test('a name with no local copy falls through to the CDN', async () => {
   await withLocalIcons([], () => {
     const chain = iconChain('radarr');
     assert.deepEqual(chain, [
-      '/api/icons/cdn?name=radarr&ext=svg',
-      '/api/icons/cdn?name=radarr&ext=png',
+      '/api/icons/cdn?name=radarr&source=di',
       'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg',
       'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png',
     ]);
@@ -121,7 +122,7 @@ test('a name with no local copy falls through to the CDN', async () => {
 test('CDN URLs are encoded too', async () => {
   await withLocalIcons([], () => {
     for (const u of iconChain('a+b&c')) {
-      const name = u.startsWith('/api/') ? u.slice(u.indexOf('name=') + 5, u.indexOf('&ext=')) : u;
+      const name = u.startsWith('/api/') ? u.slice(u.indexOf('name=') + 5, u.indexOf('&', u.indexOf('name='))) : u;
       assert.ok(!name.includes('+') && !name.includes('&'), `unencoded character in ${u}`);
     }
   });
@@ -129,8 +130,8 @@ test('CDN URLs are encoded too', async () => {
 
 test('an explicit extension picks only that CDN path', async () => {
   await withLocalIcons([], () => {
-    assert.ok(iconChain('radarr.png').every(u => u.endsWith('.png') || u.endsWith('ext=png')));
-    assert.ok(iconChain('radarr.svg').every(u => u.endsWith('.svg') || u.endsWith('ext=svg')));
+    assert.ok(iconChain('radarr.png').every(u => u.endsWith('.png') || u.includes('ext=png')));
+    assert.ok(iconChain('radarr.svg').every(u => u.endsWith('.svg') || u.includes('ext=svg')));
   });
 });
 
@@ -166,8 +167,8 @@ test('a name already in catalogue form is unchanged', () => {
 
 test('a mixed-case name reaches the right CDN URL', async () => {
   await withLocalIcons([], () => {
-    assert.equal(iconChain('MySpeed')[0], '/api/icons/cdn?name=myspeed&ext=svg');
-    assert.equal(iconChain('Home Assistant')[0], '/api/icons/cdn?name=home-assistant&ext=svg');
+    assert.equal(iconChain('MySpeed')[0], '/api/icons/cdn?name=myspeed&source=di');
+    assert.equal(iconChain('Home Assistant')[0], '/api/icons/cdn?name=home-assistant&source=di');
     assert.ok(iconChain('MySpeed').includes('https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/myspeed.svg'));
   });
 });
@@ -187,4 +188,59 @@ test('a local icon still takes precedence over the CDN', async () => {
   await withLocalIcons(['MySpeed.svg'], () => {
     assert.equal(iconChain('MySpeed.svg')[0], '/icons/MySpeed.svg');
   });
+});
+
+/* An icon from one of the three catalogues added after dashboard-icons is
+   stored as source and name together. */
+test('a catalogue prefix picks that catalogue', async () => {
+  await withLocalIcons([], () => {
+    assert.deepEqual(iconChain('selfhst:bigbluebutton'), [
+      '/api/icons/cdn?name=bigbluebutton&source=selfhst',
+      'https://cdn.jsdelivr.net/gh/selfhst/icons/svg/bigbluebutton.svg',
+      'https://cdn.jsdelivr.net/gh/selfhst/icons/png/bigbluebutton.png',
+    ]);
+  });
+});
+
+/* Hundreds of catalogue entries are png only and hundreds have no png. Asking
+   for a format the browser guessed cost a 404 on every page load; the server
+   knows which it is from the index it already holds. */
+test('the proxy is asked once, without a format', async () => {
+  await withLocalIcons([], () => {
+    const chain = iconChain('plexdrive');
+    assert.equal(chain.filter(u => u.startsWith('/api/')).length, 1);
+    assert.equal(chain[0], '/api/icons/cdn?name=plexdrive&source=di');
+  });
+});
+
+/* An extension in the saved value is the user's, and is passed on. */
+test('an extension in the name is still passed through', async () => {
+  await withLocalIcons([], () => {
+    assert.equal(iconChain('plex.png')[0], '/api/icons/cdn?name=plex&ext=png&source=di');
+  });
+});
+
+/* simple-icons and lobehub publish SVG only, so a PNG attempt is a guaranteed
+   404 on every dashboard load. */
+test('a catalogue with no png is not asked for one', async () => {
+  await withLocalIcons([], () => {
+    assert.deepEqual(iconChain('simple:plex'), [
+      '/api/icons/cdn?name=plex&source=simple',
+      'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/plex.svg',
+    ]);
+    assert.equal(iconChain('lobe:deepseek').length, 2);
+  });
+});
+
+test('an unknown prefix is treated as a name, not a catalogue', async () => {
+  await withLocalIcons([], () => {
+    assert.ok(iconChain('nosuch:plex')[0].includes('source=di'));
+  });
+});
+
+test('a prefix survives normalising and a stray one does not', async () => {
+  assert.equal(cdnIconRef('selfhst:AdGuard_Home'), 'selfhst:adguard-home');
+  assert.equal(cdnIconRef('Adguard Home'), 'adguard-home');
+  assert.equal(cdnIconRef('selfhst:'), '');
+  assert.deepEqual(splitIconRef('lobe:openai-color'), { source: 'lobe', slug: 'openai-color' });
 });

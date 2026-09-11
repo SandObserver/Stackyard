@@ -95,23 +95,50 @@ test('a png is served with its own type and cached the same way', async t => {
 });
 
 /* A name the catalogue does not have is asked for on every page load, so the
-   miss is remembered too. */
+   miss is remembered too. Both hosts are tried before it counts as missing. */
 test('a missing icon is remembered as missing', async t => {
+  const urls = stubCdn(t, [
+    { status: 404, body: 'not found' },
+    { status: 404, body: 'not found' },
+  ]);
+  assert.equal((await get('/api/icons/cdn?name=nothing-here&ext=svg')).status, 404);
+  assert.equal((await get('/api/icons/cdn?name=nothing-here&ext=svg')).status, 404);
+  assert.equal(urls.length, 2);
+});
+
+/* dashboard-icons is past jsDelivr's package size limit, so that host answers
+   403 for a file it has not already cached. The repository still has it. */
+test('an icon jsDelivr will not serve is fetched from the repository', async t => {
+  const urls = stubCdn(t, [
+    { status: 403, body: 'Package size exceeded the configured limit of 50 MB.' },
+    { status: 200, body: SVG, type: 'image/svg+xml' },
+  ]);
+  const r = await get('/api/icons/cdn?name=dagster-dark&ext=svg');
+  assert.equal(r.status, 200);
+  assert.match(r.body.toString(), /<svg/);
+  assert.equal(urls[0], 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/dagster-dark.svg');
+  assert.equal(urls[1], 'https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/svg/dagster-dark.svg');
+});
+
+/* Only dashboard-icons has a second host. The other three catalogues are
+   served by jsDelivr alone. */
+test('a source with no mirror is asked once', async t => {
   const urls = stubCdn(t, [{ status: 404, body: 'not found' }]);
-  assert.equal((await get('/api/icons/cdn?name=nothing-here&ext=svg')).status, 404);
-  assert.equal((await get('/api/icons/cdn?name=nothing-here&ext=svg')).status, 404);
+  assert.equal((await get('/api/icons/cdn?name=nothing-here&ext=svg&source=selfhst')).status, 404);
   assert.equal(urls.length, 1);
+  assert.equal(urls[0], 'https://cdn.jsdelivr.net/gh/selfhst/icons/svg/nothing-here.svg');
 });
 
 /* Caching a CDN outage would keep every icon missing for a day. */
 test('a CDN failure is not cached', async t => {
   const urls = stubCdn(t, [
     { status: 503, body: 'busy' },
+    { status: 503, body: 'busy' },
     { status: 200, body: SVG, type: 'image/svg+xml' },
   ]);
   assert.equal((await get('/api/icons/cdn?name=plex&ext=svg')).status, 502);
   assert.equal((await get('/api/icons/cdn?name=plex&ext=svg')).status, 200);
-  assert.equal(urls.length, 2);
+  assert.equal(urls.length, 3);
 });
 
 test('the request goes to the icon catalogue and nowhere else', async t => {
@@ -120,10 +147,56 @@ test('the request goes to the icon catalogue and nowhere else', async t => {
   assert.equal(urls[0], 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg');
 });
 
+/* Hundreds of catalogue entries are png only. With no extension asked for, one
+   request must settle it rather than the browser logging a 404 first. */
+test('an icon with no extension asked for tries both formats in one request', async t => {
+  const urls = stubCdn(t, [
+    { status: 404, body: 'not found' },
+    { status: 404, body: 'not found' },
+    { status: 200, body: PNG, type: 'image/png' },
+  ]);
+  const r = await get('/api/icons/cdn?name=plexdrive&source=di');
+  assert.equal(r.status, 200);
+  assert.equal(r.headers['content-type'], 'image/png');
+  assert.ok(
+    urls.some(u => u.endsWith('/svg/plexdrive.svg')),
+    'the svg was never tried',
+  );
+  assert.ok(
+    urls.some(u => u.endsWith('/png/plexdrive.png')),
+    'the png was never tried',
+  );
+});
+
+/* A format already held is served without asking either host again. */
+test('a second request for an auto-format icon reaches no host', async t => {
+  const urls = stubCdn(t, [
+    { status: 404, body: 'not found' },
+    { status: 404, body: 'not found' },
+    { status: 200, body: PNG, type: 'image/png' },
+  ]);
+  await get('/api/icons/cdn?name=plexripper&source=di');
+  const after = urls.length;
+  const second = await get('/api/icons/cdn?name=plexripper&source=di');
+  assert.equal(second.status, 200);
+  assert.equal(urls.length, after, 'the second request went upstream');
+});
+
+/* An extension in the saved value is an instruction, not a hint. */
+test('an extension asked for is the only one tried', async t => {
+  const urls = stubCdn(t, [{ status: 404, body: 'not found' }]);
+  assert.equal((await get('/api/icons/cdn?name=nothing-at-all&ext=png&source=di')).status, 404);
+  assert.ok(
+    urls.every(u => u.includes('/png/')),
+    'a format nobody asked for was tried',
+  );
+});
+
 /* The name reaches a CDN path, so only the catalogue's own spelling is allowed
    through. */
 test('a name outside the catalogue form is refused without any outbound call', async t => {
   const urls = stubCdn(t, []);
+  assert.equal((await get('/api/icons/cdn?name=radarr&ext=svg&source=nope')).status, 400);
   for (const name of ['../secret', 'a/b', 'UPPER', 'sp ace', '', 'a'.repeat(65), '-lead']) {
     const r = await get(`/api/icons/cdn?name=${encodeURIComponent(name)}&ext=svg`);
     assert.equal(r.status, 400, name);

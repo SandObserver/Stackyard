@@ -1,4 +1,4 @@
-import { iconChain } from '/js/icons.js?v=69c2b9bd';
+import { iconChain } from '/js/icons.js?v=04e7796e';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { SETTINGS_ICON } from '/js/settings-icon.js?v=b96e5b13';
 import { BRAND_MARK } from '/js/brand-mark.js?v=1dcbf1ac';

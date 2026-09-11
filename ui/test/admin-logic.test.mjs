@@ -4,6 +4,7 @@ import {
   reorderItems,
   isDockBlocked,
   nextActiveIndex,
+  sameIconName,
   groupBounds,
   visibleFieldKeys,
   carriesTypedValues,
@@ -567,4 +568,26 @@ test('a failed fetch of a bare address reports the missing API path', () => {
 
 test('an expired session is reported as itself, whatever the address', () => {
   assert.equal(failureIsMissingApiPath('https://seerr.example.com', { sessionExpired: true }), false);
+});
+
+/* A service is written with spaces, hyphens, underscores or nothing between
+   its parts, and the picker has to recognise its own result either way. */
+test('sameIconName ignores case and every separator', () => {
+  for (const typed of ['AdGuard Home', 'adguard_home', 'ADGUARD-HOME', 'adguardhome', ' adguard home ']) {
+    assert.equal(sameIconName(typed, 'adguard-home'), true, typed);
+  }
+  assert.equal(sameIconName('Café', 'cafe'), true, 'accents are folded');
+});
+
+test('sameIconName does not match a different service', () => {
+  assert.equal(sameIconName('plex', 'plexamp'), false);
+  assert.equal(sameIconName('seerr', 'overseerr'), false);
+});
+
+/* Two empty names are not the same name, or an empty field would match the
+   first result. */
+test('sameIconName treats nothing as nothing', () => {
+  assert.equal(sameIconName('', ''), false);
+  assert.equal(sameIconName(null, undefined), false);
+  assert.equal(sameIconName('---', '***'), false);
 });

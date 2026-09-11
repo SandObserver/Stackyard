@@ -1,4 +1,4 @@
-import { iconChain } from '/js/icons.js?v=69c2b9bd';
+import { iconChain } from '/js/icons.js?v=04e7796e';
 import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=a1b61636';
 import {
   mk,
@@ -13,7 +13,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=e8b2a9f7';
+} from '/js/utils.js?v=970a91b0';
 import { t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';

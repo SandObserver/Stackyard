@@ -1,4 +1,4 @@
-import { loadLocalIcons, iconChain } from '/js/icons.js?v=69c2b9bd';
+import { loadLocalIcons, iconChain } from '/js/icons.js?v=04e7796e';
 import {
   WIDGET_HEIGHTS,
   WIDGET_DESIGN,
@@ -24,14 +24,14 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=e8b2a9f7';
-import { initFluidHover } from '/js/fluid-hover.js?v=84f0f4f1';
-import { initSpotlight } from '/js/spotlight.js?v=ea359211';
+} from '/js/utils.js?v=970a91b0';
+import { initFluidHover } from '/js/fluid-hover.js?v=cfd57c54';
+import { initSpotlight } from '/js/spotlight.js?v=e5647af5';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=954ae39e';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=08ec9951';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';

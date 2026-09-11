@@ -19,6 +19,7 @@ function dropDetached() {
 const LISTS = [
   { container: '#sres', item: '.sr' },
   { container: '.row-dd-list', item: 'li[role="option"]' },
+  { container: '#iprs', item: '.ipr' },
   { container: '.grp', item: '.row-link, .row.drow' },
 ];
 
