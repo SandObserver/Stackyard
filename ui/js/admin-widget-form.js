@@ -1,6 +1,6 @@
 import { state } from '/js/admin-state.js?v=7d68e98e';
-import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=70ec6be1';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=e6ec5157';
+import { PE_SVG, CHEV_SVG, initInlineEdit } from '/js/admin-shared.js?v=f8867194';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=32e09e8f';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=dcf7c37d';
 import { t } from '/js/i18n.js?v=e644a5c5';

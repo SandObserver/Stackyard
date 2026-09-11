@@ -156,6 +156,24 @@
       "/js/format-number.js?v=*": [
         "./ui/js/format-number.js"
       ],
+      "/js/glide-select.js": [
+        "./ui/js/glide-select.js"
+      ],
+      "/js/glide-select.js?v=*": [
+        "./ui/js/glide-select.js"
+      ],
+      "/js/moving-pill.js": [
+        "./ui/js/moving-pill.js"
+      ],
+      "/js/moving-pill.js?v=*": [
+        "./ui/js/moving-pill.js"
+      ],
+      "/js/fluid-hover.js": [
+        "./ui/js/fluid-hover.js"
+      ],
+      "/js/fluid-hover.js?v=*": [
+        "./ui/js/fluid-hover.js"
+      ],
       "/js/widget-glyphs.js": [
         "./ui/js/widget-glyphs.js"
       ],

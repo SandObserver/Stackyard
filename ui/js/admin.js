@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=8c9ef961';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=1bb8584a';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=2067483a';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=422dc867';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=4e5c345a';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=a19506ea';
 import { resolveAdminSection } from '/js/admin-logic.js?v=dcf7c37d';
 import {
   buildAppItem,
@@ -10,10 +10,12 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=4f71ef6c';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=9f7cf590';
-import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=70ec6be1';
+import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=bfbf2a1b';
+import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=f8867194';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=997ca7c6';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=c56fc384';
+import { initFluidHover } from '/js/fluid-hover.js?v=2c9f351f';
+import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=e644a5c5';
 import { loadLocalIcons } from '/js/icons.js?v=69c2b9bd';
@@ -30,7 +32,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=00c011c9';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=e8b2a9f7';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=2d28867b';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=1a19ed2c';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
@@ -39,7 +41,10 @@ import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6'
    dashboard, so the two screens cannot disagree about what mobile means. */
 function _syncMobile(mobile) {
   document.documentElement.classList.toggle('is-mobile', mobile);
+  syncGlideSelect();
 }
+initFluidHover();
+
 const _mobileAtLoad = isMobileLayout();
 _syncMobile(_mobileAtLoad);
 onLayoutChange(_syncMobile, _mobileAtLoad);
@@ -606,11 +611,13 @@ function initNav() {
       s.hidden = s.id !== 'sec-' + id;
     });
     links.forEach(l => l.classList.toggle('active', l.dataset.sec === id));
+    syncGlideSelect();
     localStorage.setItem(STORE, id);
   }
   links.forEach(l => l.addEventListener('click', () => show(l.dataset.sec)));
   addEventListener('hashchange', () => show(location.hash.slice(1)));
   show(location.hash.slice(1) || localStorage.getItem(STORE));
+  initGlideSelect();
 }
 
 function initAllInlineEdits() {
