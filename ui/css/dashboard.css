@@ -84,7 +84,9 @@
       /* Top clears the controls bar, bottom clears the dock. The fluid
          horizontal padding keeps .grid inside the content box on a
          narrow-wide viewport. */
-      padding:clamp(44px,4vh,70px) clamp(16px,4vw,270px) clamp(110px,10vh,160px);
+      padding-block:clamp(44px,4vh,70px) clamp(110px,10vh,160px);
+      padding-inline:max(clamp(16px,4vw,270px), var(--sa-left,0px))
+                     max(clamp(16px,4vw,270px), var(--sa-right,0px));
     }
     /* Mirrored by desktopSlots() in dashboard.js. */
     body.no-dock .page { padding-block-end:clamp(44px,4vh,70px) }
@@ -501,7 +503,9 @@
     /* Search bar pinned to bottom on mobile */
     body.is-mob #spot #sbox {
       flex-shrink:0;
-      padding:10px 16px calc(env(safe-area-inset-bottom) + 12px); box-sizing:border-box;
+      padding-block:10px calc(env(safe-area-inset-bottom) + 12px);
+      padding-inline:max(16px, var(--sa-left,0px)) max(16px, var(--sa-right,0px));
+      box-sizing:border-box;
     }
     /* ── Spotlight — desktop overrides ── */
     body:not(.is-mob) #spot {
@@ -628,6 +632,13 @@
     }
     .sra { margin-inline-start:auto; color:rgba(255,255,255,.25); font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 
+    /* The side reserves, used by both layouts. A device that reserves no side
+       edge reports 0px, which leaves every gutter at its design value. */
+    :root {
+      --sa-left:  env(safe-area-inset-left);
+      --sa-right: env(safe-area-inset-right);
+    }
+
     /* ── Mobile safe area ──
        The platform reports an inset after the first paint and again after a rotation.
        These stay in CSS so the browser keeps them current. Nothing reads them
@@ -639,12 +650,14 @@
     /* Sized by the insets, and observed. A change to either fires the layout
        rebuild. */
     .sa-probe {
-      position:fixed; top:0; left:0; width:1px; visibility:hidden; pointer-events:none;
+      position:fixed; top:0; left:0; visibility:hidden; pointer-events:none;
+      width:calc(1px + var(--sa-left,0px) + var(--sa-right,0px));
       height:calc(env(safe-area-inset-top) + env(safe-area-inset-bottom));
     }
     .mob-page {
       flex:0 0 100vw; width:100vw; height:var(--pgh,100dvh); overflow:hidden;
-      padding:var(--sa-top) var(--sm,18px) calc(var(--sa-bottom) + var(--dh,108px) + var(--dz,52px));
+      padding-block:var(--sa-top) calc(var(--sa-bottom) + var(--dh,108px) + var(--dz,52px));
+      padding-inline:max(var(--sm,18px), var(--sa-left,0px)) max(var(--sm,18px), var(--sa-right,0px));
     }
     /* The box the layout measures. */
     .mob-grid {
