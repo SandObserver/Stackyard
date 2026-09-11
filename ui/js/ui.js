@@ -581,7 +581,12 @@ export function buildMobile() {
 
   /* Every size below comes from this box, so the safe-area insets reach the
      layout as the space the stylesheet already reserved. Reading the insets
-     instead would take a value the platform has not reported yet. */
+     instead would take a value the platform has not reported yet.
+
+     Clear the width first. The grid is sized by --mgw, so a rebuild would
+     otherwise measure the width it was given last time rather than the space
+     it now has, and a reserve that grew would never be taken. */
+  css(document.body, { '--mgw': '' });
   const firstPage = mkPage();
   strip.appendChild(firstPage.page);
   const gridBox = firstPage.grid.getBoundingClientRect();

@@ -30,7 +30,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=3c2c7d0b';
+import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=954ae39e';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -936,11 +936,13 @@ async function boot() {
     document.body.appendChild(probe);
     let _sat,
       _saH = -1,
+      _saW = -1,
       _saFirst = true;
     new ResizeObserver(entries => {
-      const h = entries[0].contentRect.height;
-      if (h === _saH) return;
+      const { width: w, height: h } = entries[0].contentRect;
+      if (h === _saH && w === _saW) return;
       _saH = h;
+      _saW = w;
       /* Observing delivers the current size at once, and the layout being built
          now already has it. */
       if (_saFirst) {

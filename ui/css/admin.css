@@ -646,7 +646,7 @@ html.is-mobile .adm{max-width:none;width:100%;min-height:100dvh;border:none;bord
 html.is-mobile .sb{display:none}
 /* No sidebar on mobile, so nothing for the divider to divide. */
 html.is-mobile .cp{width:100%;border-inline-start:none}
-html.is-mobile .sec{padding:16px 16px calc(132px + env(safe-area-inset-bottom))}
+html.is-mobile .sec{padding-block:16px calc(132px + env(safe-area-inset-bottom));padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
 html.is-mobile .sec-title{font-size:var(--fs-title-1);line-height:var(--lh-title-1);letter-spacing:var(--tr-title-1)}
 html.is-mobile .hsb-track{max-width:min(240px,62%)}
 html.is-mobile .sec-hdr{position:sticky;top:0;z-index:20;background:var(--pane);padding:10px 0 10px}

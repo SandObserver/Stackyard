@@ -111,7 +111,7 @@ test('the desktop bottom reserve collapses to the top reserve without a dock', (
 test('the page padding and the slot maths use the same two reserves', () => {
   const css = read('css/dashboard.css');
   const js = read('js/dashboard.js');
-  assert.match(css, /padding:clamp\(44px,4vh,70px\) clamp\(16px,4vw,270px\) clamp\(110px,10vh,160px\)/);
+  assert.match(css, /padding-block:clamp\(44px,4vh,70px\) clamp\(110px,10vh,160px\)/);
   assert.match(css, /body\.no-dock \.page \{ padding-block-end:clamp\(44px,4vh,70px\) \}/);
   assert.match(js, /Math\.min\(70, Math\.max\(44, ih \* 0\.04\)\)/);
   assert.match(js, /Math\.min\(160, Math\.max\(110, ih \* 0\.1\)\)/);

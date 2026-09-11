@@ -87,7 +87,7 @@ test('the page reserves the insets and the grid fills what is left', () => {
   const page = css.match(/\.mob-page\s*{[^}]*}/)[0];
   assert.match(
     page,
-    /padding:var\(--sa-top\) var\(--sm,18px\) calc\(var\(--sa-bottom\) \+ var\(--dh,108px\) \+ var\(--dz,52px\)\)/,
+    /padding-block:var\(--sa-top\) calc\(var\(--sa-bottom\) \+ var\(--dh,108px\) \+ var\(--dz,52px\)\)/,
   );
   const grid = css.match(/\.mob-grid\s*{[^}]*}/)[0];
   assert.match(grid, /height:100%/);
@@ -330,4 +330,50 @@ test('the dock never grows past the window', () => {
 test('an empty dock keeps a width', () => {
   const ui = read('js/ui.js');
   assert.match(ui, /dock\.length\s*\?[\s\S]{0,160}:\s*maxDockW/);
+});
+
+/* The hinge and the system controls sit on a side edge on some devices, and a
+   landscape phone already reserves one. A container that reserves the top and
+   bottom but not the sides lets content sit under that edge. */
+test('every page container reserves the side insets as well as the top and bottom', () => {
+  const css = read('css/dashboard.css');
+  for (const sel of ['.mob-page', '.page']) {
+    const block = css.match(new RegExp(`\\${sel}\\s*{[^}]*}`))[0];
+    assert.match(block, /padding-inline:/, `${sel} sets no inline padding`);
+    for (const side of ['left', 'right']) {
+      assert.match(block, new RegExp(`--sa-${side}`), `${sel} reserves nothing on the ${side}`);
+    }
+  }
+});
+
+/* max(), so the design gutter is the floor and the inset only ever widens it.
+   A bare inset would collapse the margin to zero on every device that reports
+   none, which is all of them today. */
+test('the side reserve widens the design gutter and never replaces it', () => {
+  const css = read('css/dashboard.css');
+  for (const sel of ['.mob-page', '.page']) {
+    const inline = css.match(new RegExp(`\\${sel}\\s*{[^}]*}`))[0].match(/padding-inline:[^;]*/)[0];
+    assert.equal((inline.match(/max\(/g) || []).length, 2, `${sel} does not take the larger of the two on both sides`);
+  }
+});
+
+/* The probe is what tells the layout an inset changed. Sized on one axis only,
+   a side inset appearing would not rebuild the layout. */
+test('the safe-area probe is sized by both axes', () => {
+  const probe = read('css/dashboard.css').match(/\.sa-probe\s*{[^}]*}/)[0];
+  assert.match(probe, /width:calc\([^;]*--sa-left[^;]*--sa-right/);
+  assert.match(probe, /height:calc\([^)]*safe-area-inset-top[^;]*safe-area-inset-bottom/);
+  assert.match(read('js/dashboard.js'), /const \{ width: w, height: h \} = entries\[0\]\.contentRect;/);
+});
+
+/* The grid is sized by --mgw and is also the box the rebuild measures. Left
+   set, a rebuild measures the width it was given last time, so a reserve that
+   grew is never taken and the last column overflows. */
+test('the rebuild clears the grid width before it measures', () => {
+  const src = read('js/ui.js');
+  const clear = src.indexOf("css(document.body, { '--mgw': '' })");
+  const measure = src.indexOf('firstPage.grid.getBoundingClientRect()');
+  assert.ok(clear !== -1, 'the grid width is never cleared');
+  assert.ok(measure !== -1, 'the grid box is no longer measured');
+  assert.ok(clear < measure, 'the width is cleared after the measurement, which is too late');
 });
