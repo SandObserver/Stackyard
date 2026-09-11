@@ -140,7 +140,7 @@
     "tip": "Appuyez pour ajouter ou retirer des applications de ce dossier.",
     "namePh": "Mon dossier",
     "addAppToFolder": "Ajouter une application à ce dossier",
-    "moveTo": "Déplacer \"{name}\" vers un dossier",
+    "moveTo": "Déplacer « {name} » vers un dossier",
     "addApp": "Ajouter une app au dossier",
     "none": "Aucun dossier",
     "allInFolder": "Toutes les apps sont déjà dans ce dossier.",
@@ -262,7 +262,7 @@
     "imported": "Importé",
     "importFailed": "Échec de l'import : {err}",
     "exportFailed": "Échec de l'export : {err}",
-    "importNoChange": "Rien à importer — le fichier correspond à votre configuration actuelle.",
+    "importNoChange": "Rien à importer. Le fichier correspond à votre configuration actuelle.",
     "pwWeak": "Mot de passe trop faible : {label}",
     "sessionsRevoked": "Tous les appareils ont été déconnectés.",
     "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification.",
@@ -285,24 +285,24 @@
     "urlRequired": "URL requise",
     "nameRequired": "Nom requis",
     "fieldRequired": "{field} est requis",
-    "configLoadFailed": "Impossible de charger la configuration. Le conteneur API est-il démarré ? ({err})",
+    "configLoadFailed": "Impossible de charger la configuration. Le conteneur API est-il démarré ? ({err})",
     "uploaded": "{name} téléversé",
     "uploadFailed": "Échec du téléversement : {err}"
   },
   "confirm": {
-    "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",
-    "revokeSessions": "Déconnecter tous les appareils, y compris celui-ci ?",
-    "clearPassword": "Désactiver la protection par mot de passe ? Le mot de passe enregistré est supprimé, le réactiver en exigera un nouveau.",
-    "remove": "Supprimer « {name} » ?"
+    "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",
+    "revokeSessions": "Déconnecter tous les appareils, y compris celui-ci ?",
+    "clearPassword": "Désactiver la protection par mot de passe ? Le mot de passe enregistré est supprimé, le réactiver en exigera un nouveau.",
+    "remove": "Supprimer « {name} » ?"
   },
   "list": {
     "empty": "Aucune application pour le moment. Cliquez sur +Ajouter.",
     "noMatches": "Aucune correspondance."
   },
   "import": {
-    "confirm_one": "Importer {count} élément ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
-    "confirm_many": "Importer {count} éléments ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
-    "confirm_other": "Importer {count} éléments ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
+    "confirm_one": "Importer {count} élément ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
+    "confirm_many": "Importer {count} éléments ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
+    "confirm_other": "Importer {count} éléments ? {added} ajoutés, {updated} mis à jour, {deleted} supprimés.",
     "confirmTitle": "Importer la configuration"
   },
   "status": {
@@ -319,7 +319,7 @@
     "pingReturned": "Le ping a renvoyé {status}"
   },
   "setup": {
-    "title": "Définir un mot de passe pour le tableau de bord ?",
+    "title": "Définir un mot de passe pour le tableau de bord ?",
     "sub": "Facultatif. Sans mot de passe, quiconque peut accéder à ce tableau de bord peut l’utiliser et le configurer. Ceci ne remplace pas un service d’authentification dédié.",
     "newPassword": "Nouveau mot de passe",
     "skip": "Ignorer",

@@ -124,6 +124,19 @@ const REJECTED = {
     ['سامانه', 'سیستم'],
     ['پیش‌تخته', 'داشبورد'],
     ['پساکند', 'ذخیره'],
+    ['کاراکتر', 'نویسه'],
+    ['پورت', 'درگاه'],
+    ['یکا', 'واحد'],
+    ['جست‌وجو', 'جستجو'],
+    ['حافظه‌شده', 'کش‌شده'],
+    ['بارگیری', 'بارگذاری'],
+    /* Product names stay in Latin, as the English catalogue writes them. */
+    ['ترونس', 'TrueNAS'],
+    ['آنرید', 'Unraid'],
+    ['جِلی‌فین', 'Jellyfin'],
+    ['امبی', 'Emby'],
+    ['آنسپلش', 'Unsplash'],
+    ['گیت‌هاب', 'GitHub'],
   ],
   /* Abzeichen is a pinned badge or a medal. The reference locales use Badge 26
      times and Abzeichen never. Bezeichnung is what the rest of the catalogue

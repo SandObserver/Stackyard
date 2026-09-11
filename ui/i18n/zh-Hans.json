@@ -254,7 +254,7 @@
     "imported": "已导入",
     "importFailed": "导入失败：{err}",
     "exportFailed": "导出失败：{err}",
-    "importNoChange": "没有可导入的内容 — 该文件与您当前的配置一致。",
+    "importNoChange": "没有可导入的内容。该文件与您当前的配置一致。",
     "pwWeak": "密码强度不足：{label}",
     "sessionsRevoked": "已退出所有设备。",
     "authNeedsPassword": "启用身份验证前请先设置密码。",

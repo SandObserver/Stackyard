@@ -258,7 +258,7 @@
     "imported": "Imported",
     "importFailed": "Import failed: {err}",
     "exportFailed": "Export failed: {err}",
-    "importNoChange": "Nothing to import — the file matches your current config.",
+    "importNoChange": "Nothing to import. The file matches your current config.",
     "pwWeak": "Password too weak: {label}",
     "sessionsRevoked": "All devices signed out.",
     "authNeedsPassword": "Set a password before turning authentication on.",

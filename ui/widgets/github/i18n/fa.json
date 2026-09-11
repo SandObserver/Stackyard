@@ -17,8 +17,8 @@
   "githubPrFilters.opt.assigned": "واگذارشده",
   "githubPrFilters.opt.mentioned": "نام‌برده‌شده",
   "githubPrFilters.opt.review-requested": "درخواست بازبینی",
-  "ui.prAria": "درخواست‌های ادغام گیت‌هاب",
+  "ui.prAria": "درخواست‌های ادغام GitHub",
   "ui.noPrs": "درخواست ادغامی نیست",
-  "ui.contributionsAria": "مشارکت‌های گیت‌هاب: {total} در سال گذشته",
-  "ui.viewAll": "مشاهده همه"
+  "ui.contributionsAria": "مشارکت‌های GitHub: {total} در سال گذشته",
+  "ui.viewAll": "مشاهدهٔ همه"
 }
