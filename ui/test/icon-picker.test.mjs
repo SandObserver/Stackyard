@@ -49,8 +49,24 @@ test('the active option is published, not only styled', () => {
 test('the cursor is the one the admin already has', () => {
   const kd = form.slice(form.indexOf('inp.onkeydown'), form.indexOf('const upInput'));
   assert.match(kd, /nextActiveIndex\(e\.key, ipActive, ipList\.length\)/);
-  assert.doesNotMatch(kd, /ArrowDown/, 'the arrows are handled twice, in two ways');
   for (const key of ['Enter', 'Escape', 'Tab']) assert.ok(kd.includes(`'${key}'`), `${key} does nothing`);
+});
+
+/* nextActiveIndex also answers Home and End, which is right for a listbox that
+   holds focus. Focus here is in a text field, where they move the caret. */
+test('Home and End are left to the caret', () => {
+  const kd = form.slice(form.indexOf('inp.onkeydown'), form.indexOf('const upInput'));
+  const guard = kd.slice(0, kd.indexOf('const moved'));
+  assert.match(guard, /e\.key === 'ArrowDown' \|\| e\.key === 'ArrowUp'/, 'every key it answers is intercepted');
+  assert.doesNotMatch(kd, /'Home'|'End'/);
+});
+
+/* Enter acts on the cursor, so a row that is announced as active while another
+   is marked selected sends Enter somewhere nothing is pointing at. */
+test('the pointer moves the whole cursor, not only what is announced', () => {
+  const row = form.slice(form.indexOf('function ipRow'), form.indexOf('function showIPRes'));
+  assert.match(row, /onpointerenter = \(\) => ipSetActive\(i, \{ scroll: false \}\)/);
+  assert.doesNotMatch(row, /ipActive = i/, 'the pointer sets the index behind the markers');
 });
 
 test('Escape closes the list without closing the form behind it', () => {
@@ -219,4 +235,17 @@ test('a truncated icon name reads correctly right to left', () => {
   const row = form.slice(form.indexOf('function ipRow'), form.indexOf('function showIPRes'));
   assert.match(row, /sp\.dir = 'auto'/);
   assert.match(css, /\.ipr-name\{[^}]*text-align:match-parent/);
+});
+
+/* The tile draws the matched catalogue's file, so the saved value has to be
+   that catalogue's reference: "Spring Boot" matches simple-icons, and saving
+   the typed text resolves to dashboardicons and loads nothing. */
+test('what the tile shows is what gets saved', () => {
+  const show = form.slice(form.indexOf('function showIPRes'), form.length);
+  const branch = show.slice(show.indexOf('if (match)'), show.indexOf('if (!list.length)'));
+  assert.match(branch, /state\.siurl = match\.ref/, 'the typed text stays saved');
+  assert.ok(
+    branch.indexOf('state.siurl = match.ref') < branch.indexOf('updPrev(match.urls)'),
+    'the preview is painted before the value it belongs to is stored',
+  );
 });

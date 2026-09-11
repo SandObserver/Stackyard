@@ -6,6 +6,10 @@ const { fetchUnchecked } = require('./proxy');
 const log = require('./log');
 
 const CATALOG_TTL = 24 * 60 * 60 * 1000;
+/* A failed fetch is remembered this long. Without it every debounced keystroke
+   retries, and two of these listings come from api.github.com, whose 60 an hour
+   are shared with the update check. */
+const RETRY_AFTER = 60 * 1000;
 const MAX_RESULTS = 24;
 
 const JSDELIVR = 'https://cdn.jsdelivr.net/gh';
@@ -166,12 +170,19 @@ function parseFileTree(data) {
   return { svg, png };
 }
 
-/** @type {Map<string, {at: number, entries: any[]}>} */
+/** @type {Map<string, {at: number, entries: any[], index: Map<string, any>}>} */
 const _cache = new Map();
 /** @type {Map<string, {at: number, files: {svg: Set<string>, png: Set<string>} | null}>} */
 const _files = new Map();
 /** @type {Map<string, Promise<any>>} */
 const _inflight = new Map();
+/** @type {Map<string, number>} */
+const _failedAt = new Map();
+
+function tooSoon(key) {
+  const at = _failedAt.get(key);
+  return !!at && Date.now() - at < RETRY_AFTER;
+}
 
 /* One fetch at a time per thing fetched. A search and a lookup start together
    and would otherwise pull the same multi-megabyte listing twice. */
@@ -186,7 +197,9 @@ function once(key, work) {
 function entriesFor(src) {
   const hit = _cache.get(src.id);
   if (hit && Date.now() - hit.at < CATALOG_TTL) return Promise.resolve(hit.entries);
-  return once(`entries:${src.id}`, async () => {
+  const key = `entries:${src.id}`;
+  if (tooSoon(key)) return Promise.resolve(hit ? hit.entries : null);
+  return once(key, async () => {
     try {
       const headers = src.headers || { Accept: 'application/json' };
       let r = await fetchUnchecked(src.listing, { headers });
@@ -194,12 +207,16 @@ function entriesFor(src) {
       if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
       const entries = src.parse(r.data).filter(e => e.slug);
       if (!entries.length) throw new Error('empty catalogue');
-      _cache.set(src.id, { at: Date.now(), entries });
+      _failedAt.delete(key);
+      _cache.set(src.id, { at: Date.now(), entries, index: indexEntries(entries) });
       return entries;
     } catch (e) {
       log.warn('Icon catalogue could not be read', { source: src.id, reason: e.message });
-      /* A stale copy beats dropping a whole catalogue over one failed refresh. */
-      return hit ? hit.entries : [];
+      _failedAt.set(key, Date.now());
+      /* A stale copy beats dropping a whole catalogue over one failed refresh.
+         null, not an empty list: a catalogue that answered nothing and one that
+         holds no such icon mean different things to the caller. */
+      return hit ? hit.entries : null;
     }
   });
 }
@@ -208,7 +225,9 @@ function filesFor(src) {
   if (!src.files) return Promise.resolve(null);
   const hit = _files.get(src.id);
   if (hit && Date.now() - hit.at < CATALOG_TTL) return Promise.resolve(hit.files);
-  return once(`files:${src.id}`, async () => {
+  const key = `files:${src.id}`;
+  if (tooSoon(key)) return Promise.resolve(hit ? hit.files : null);
+  return once(key, async () => {
     try {
       const r = await fetchUnchecked(src.files, {
         headers: { 'User-Agent': 'stackyard', Accept: 'application/vnd.github+json' },
@@ -217,10 +236,12 @@ function filesFor(src) {
       if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
       const files = parseFileTree(r.data);
       if (!files.svg.size && !files.png.size) throw new Error('empty file list');
+      _failedAt.delete(key);
       _files.set(src.id, { at: Date.now(), files });
       return files;
     } catch (e) {
       log.warn('Icon file list could not be read', { source: src.id, reason: e.message });
+      _failedAt.set(key, Date.now());
       /* Back to what the metadata claims: wrong for ten entries, which beats
          no icons at all. */
       return hit ? hit.files : null;
@@ -239,8 +260,25 @@ function rank(entry, q) {
   return -1;
 }
 
-function findEntry(entries, slug) {
+/* Built once per catalogue. formatHint runs before the icon cache is consulted
+   on every dashboard icon, and scanning 3268 entries with three normalisations
+   each blocks the API for the whole page. */
+function indexEntries(entries) {
+  const byName = new Map();
+  for (const e of entries) {
+    for (const n of [e.slug, e.light, e.dark]) {
+      if (!n) continue;
+      const k = norm(n);
+      if (k && !byName.has(k)) byName.set(k, e);
+    }
+  }
+  return byName;
+}
+
+function findEntry(src, entries, slug) {
+  const index = _cache.get(src.id)?.index;
   const target = norm(slug);
+  if (index) return index.get(target);
   return entries.find(
     e => norm(e.slug) === target || (e.light && norm(e.light) === target) || (e.dark && norm(e.dark) === target),
   );
@@ -308,10 +346,13 @@ async function searchIcons(query) {
     Promise.all(SOURCES.map(entriesFor)),
     Promise.all(SOURCES.map(filesFor)),
   ]);
+  /* No catalogue answered at all. Reported, rather than returned as an empty
+     result, which reads as a definite "there is no such icon". */
+  if (lists.every(entries => entries === null)) throw new Error('no icon catalogue could be read');
   /** @type {{r: number, s: number, e: any}[]} */
   const hits = [];
   lists.forEach((entries, s) => {
-    for (const e of entries) {
+    for (const e of entries || []) {
       const r = rank(e, q);
       if (r >= 0) hits.push({ r, s, e });
     }
@@ -338,7 +379,7 @@ async function lookupIcon(ref) {
   const src = SOURCES.find(s => s.id === source);
   if (!src || !slug) return null;
   const [entries, files] = await Promise.all([entriesFor(src), filesFor(src)]);
-  const entry = findEntry(entries, slug);
+  const entry = findEntry(src, entries || [], slug);
   return entry ? present(source, entry, files) : null;
 }
 
@@ -350,7 +391,7 @@ function formatHint(ref) {
   const src = SOURCES.find(s => s.id === source);
   const held = src && _cache.get(src.id);
   if (!held) return '';
-  const entry = findEntry(held.entries, slug);
+  const entry = findEntry(src, held.entries, slug);
   if (!entry) return '';
   return formatOf(_files.get(src.id)?.files || null, slug, entry.format) || entry.format;
 }
@@ -359,6 +400,7 @@ function _resetCatalogCache() {
   _cache.clear();
   _inflight.clear();
   _files.clear();
+  _failedAt.clear();
 }
 
 module.exports = {

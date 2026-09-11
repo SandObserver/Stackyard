@@ -150,6 +150,26 @@ test('a catalogue with no mirror is asked once', async t => {
   assert.equal(hits.filter(u => u.includes('selfhst')).length, 1);
 });
 
+/* Every debounced keystroke re-ran a failed fetch. Two of these listings come
+   from api.github.com, whose unauthenticated 60 an hour are shared with the
+   update check, so typing could take the update check down with it. */
+test('a failed listing is not refetched on the next search', async t => {
+  const hits = stubIndexes(t, { fail: ['selfhst'] });
+  await catalogs.searchIcons('plex');
+  const first = hits.filter(u => u.includes('selfhst')).length;
+  assert.equal(first, 1);
+  await catalogs.searchIcons('overseerr');
+  await catalogs.searchIcons('seerr');
+  assert.equal(hits.filter(u => u.includes('selfhst')).length, first, 'the failure was retried');
+});
+
+/* An empty result means "no such icon". With every catalogue unreachable the
+   picker must say that instead. */
+test('no catalogue answering is an error, not an empty result', async t => {
+  stubIndexes(t, { fail: ['cdn.jsdelivr.net', 'api.github.com', 'raw.githubusercontent.com'] });
+  await assert.rejects(() => catalogs.searchIcons('plex'), /no icon catalogue could be read/);
+});
+
 test('one unreachable catalogue does not empty the results', async t => {
   stubIndexes(t, { fail: ['homarr-labs'] });
   const r = await catalogs.searchIcons('plex');
@@ -299,6 +319,16 @@ test('a missing file list falls back to what the metadata claims', async t => {
   const r = await catalogs.searchIcons('plex');
   assert.equal(r[0].ref, 'plex');
   assert.equal(r[0].urls.length, 2, 'with no list, both formats are offered');
+});
+
+/* formatHint runs before the icon cache is consulted on every dashboard icon,
+   so a linear scan there blocks the API for the whole page. */
+test('a saved reference is found without scanning the catalogue', async t => {
+  stubIndexes(t);
+  await catalogs.searchIcons('plex');
+  assert.equal(catalogs.formatHint('plexdrive'), 'png');
+  assert.equal(catalogs.formatHint('dagster-dark'), 'svg', 'a variant is indexed too');
+  assert.equal(catalogs.formatHint('nothing-like-this'), '');
 });
 
 test('simple-icons filenames follow its own slug rules', () => {

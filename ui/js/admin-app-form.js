@@ -564,7 +564,7 @@ function ipMessage(main, hint = '') {
   inpById('ip-in')?.removeAttribute('aria-activedescendant');
 }
 
-function ipSetActive(i) {
+function ipSetActive(i, { scroll = true } = {}) {
   const rs = el('iprs');
   const opts = qa('.ipr', rs);
   if (!opts.length || i == null) return;
@@ -576,7 +576,7 @@ function ipSetActive(i) {
   });
   const act = opts[ipActive];
   inpById('ip-in')?.setAttribute('aria-activedescendant', act.id);
-  act.scrollIntoView({ block: 'nearest' });
+  if (scroll) act.scrollIntoView({ block: 'nearest' });
   fluidHoverKb(act);
 }
 
@@ -677,9 +677,9 @@ function wireIcon() {
 
   inp.onkeydown = e => {
     const open = rs?.classList.contains('open');
-    if (ipList.length) {
-      /* The same cursor the admin's other listboxes use, so both clamp at the
-         ends rather than one wrapping. */
+    /* Arrows only. nextActiveIndex also answers Home and End, which belong to
+       the caret while focus is in a text field. */
+    if (ipList.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
       const moved = nextActiveIndex(e.key, ipActive, ipList.length);
       if (moved != null) {
         e.preventDefault();
@@ -772,10 +772,10 @@ function ipRow(i, iconRef, name, source, urls = [], variants = []) {
     src.textContent = t('app.iconFrom', { source: SOURCE_LABEL[source] || source });
     r.append(src);
   }
-  r.onpointerenter = () => {
-    ipActive = i;
-    inpById('ip-in')?.setAttribute('aria-activedescendant', r.id);
-  };
+  /* Enter acts on the cursor, so the pointer has to move all of it: a row that
+     is announced as active while another is marked selected sends Enter to a
+     row nothing is pointing at. */
+  r.onpointerenter = () => ipSetActive(i, { scroll: false });
   r.onclick = () => ipChoose(i);
   return r;
 }
@@ -784,12 +784,16 @@ function showIPRes(list, rawInput) {
   const rs = el('iprs');
   if (!rs) return;
   const typed = cdnIconRef(rawInput);
-  /* The tile follows the result matching what was typed. */
   const match = list.find(
     ic => sameIconName(ic.name, rawInput) || sameIconName(splitIconRef(ic.ref).slug, rawInput) || ic.ref === typed,
   );
-  if (match) updPrev(match.urls);
-  else if (!list.length) updPrev();
+  if (match) {
+    /* The tile draws the matched catalogue's file, so the saved value has to be
+       that catalogue's reference. Keeping the typed text would save a name that
+       resolves to a different catalogue and loads nothing. */
+    state.siurl = match.ref;
+    updPrev(match.urls);
+  } else if (!list.length) updPrev();
   if (!list.length) {
     if (!typed) return ipClose();
     /* The name may still be a file a catalogue holds without listing it. */

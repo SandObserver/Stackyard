@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=88dfa395';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=72d68feb';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=f87cf37d';
 import { initList, render, syncFilterUI } from '/js/admin-list.js?v=29494758';
 import { resolveAdminSection } from '/js/admin-logic.js?v=74cb4272';
