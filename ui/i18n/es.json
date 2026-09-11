@@ -140,7 +140,7 @@
     "tip": "Toca para añadir o quitar aplicaciones de esta carpeta.",
     "namePh": "Mi carpeta",
     "addAppToFolder": "Añadir aplicación a esta carpeta",
-    "moveTo": "Mover \"{name}\" a una carpeta",
+    "moveTo": "Mover «{name}» a una carpeta",
     "addApp": "Añadir app a la carpeta",
     "none": "Sin carpeta",
     "allInFolder": "Todas las apps ya están en esta carpeta.",
@@ -262,7 +262,7 @@
     "imported": "Importado",
     "importFailed": "Error al importar: {err}",
     "exportFailed": "Error al exportar: {err}",
-    "importNoChange": "Nada que importar — el archivo coincide con tu configuración actual.",
+    "importNoChange": "Nada que importar. El archivo coincide con tu configuración actual.",
     "pwWeak": "Contraseña demasiado débil: {label}",
     "sessionsRevoked": "Se cerró la sesión en todos los dispositivos.",
     "authNeedsPassword": "Establece una contraseña antes de activar la autenticación.",
@@ -290,10 +290,10 @@
     "uploadFailed": "Error al subir: {err}"
   },
   "confirm": {
-    "deleteFolder": "¿Eliminar la carpeta \"{name}\"? Las aplicaciones que contiene no se eliminarán.",
+    "deleteFolder": "¿Eliminar la carpeta «{name}»? Las aplicaciones que contiene no se eliminarán.",
     "revokeSessions": "¿Cerrar sesión en todos los dispositivos, incluido este?",
     "clearPassword": "¿Desactivar la protección con contraseña? Se eliminará la contraseña guardada, por lo que volver a activarla requerirá una nueva.",
-    "remove": "¿Eliminar \"{name}\"?"
+    "remove": "¿Eliminar «{name}»?"
   },
   "list": {
     "empty": "Aún no hay aplicaciones. Haz clic en +Añadir.",

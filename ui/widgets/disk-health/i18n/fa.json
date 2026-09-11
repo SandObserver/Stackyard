@@ -9,7 +9,7 @@
   "scrutinyHref.placeholder": "http://your-server:8080",
   "truenasUrl.label": "آدرس TrueNAS",
   "truenasUrl.placeholder": "truenas.local",
-  "truenasKey.label": "کلید API ترونس",
+  "truenasKey.label": "کلید API TrueNAS",
   "truenasHref.label": "آدرس کلیک",
   "truenasHref.placeholder": "http://truenas.local",
   "bays.label": "محفظه‌ها",
@@ -22,8 +22,8 @@
   "ui.warning": "هشدار",
   "ui.failed": "خراب",
   "ui.ageAlert": "هشدار فرسودگی",
-  "ui.bay": "جایگاه {n}",
-  "ui.bayEmpty": "جایگاه {n}: خالی",
+  "ui.bay": "محفظه {n}",
+  "ui.bayEmpty": "محفظه {n}: خالی",
   "ui.noDrives": "هیچ درایوی گزارش نشد",
   "ui.notReporting": "گزارش نمی‌دهد"
 }

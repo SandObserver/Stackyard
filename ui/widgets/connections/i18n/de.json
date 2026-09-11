@@ -1,9 +1,9 @@
 {
   "widget.label": "Verbindungen",
-  "view.map.label": "Map",
+  "view.map.label": "Karte",
   "view.vpn.label": "VPN",
   "view.label": "Ansicht",
-  "view.opt.map": "Map",
+  "view.opt.map": "Karte",
   "view.opt.vpn": "VPN",
   "vpn.label": "Verbindung",
   "vpn.service.label": "Dienst",

@@ -1,9 +1,9 @@
 {
   "widget.label": "连接",
-  "view.map.label": "Map",
+  "view.map.label": "地图",
   "view.vpn.label": "VPN",
   "view.label": "视图",
-  "view.opt.map": "Map",
+  "view.opt.map": "地图",
   "view.opt.vpn": "VPN",
   "vpn.label": "连接",
   "vpn.service.label": "服务",

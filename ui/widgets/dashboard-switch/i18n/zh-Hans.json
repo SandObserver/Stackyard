@@ -3,7 +3,7 @@
   "keychains.label": "钥匙串",
   "keychains.hint": "挂坠颜色保持为自动，即可根据面板地址自动选取。",
   "keychains.name.label": "名称",
-  "keychains.name.placeholder": "例如 客厅",
+  "keychains.name.placeholder": "例如客厅",
   "keychains.url.label": "面板地址",
   "keychains.url.placeholder": "http://host:port",
   "keychains.color.label": "挂坠颜色",
