@@ -616,6 +616,11 @@
       transition:background .12s;
     }
     .sr:hover, .sr:active, .sr.sel { background:rgba(255,255,255,.07) }
+    /* The moving highlight replaces the row fill while it is on screen. The
+       press state is not a cursor and stays. */
+    #sres:has(> .fh-hl.on) .sr:hover,
+    #sres:has(> .fh-hl.on) .sr.sel { background:transparent }
+    #sres:has(> .fh-hl.on) .sr:active { background:rgba(255,255,255,.07) }
     .sri {
       width:44px; height:44px; border-radius:12px;
       display:flex;
@@ -994,3 +999,27 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
    which is a list that can only ever be incomplete: any new rule with
    `margin-left` in it needed a matching entry, and forgetting meant Persian
    quietly looked wrong. Logical properties remove the need for the list. */
+
+/* ── Moving pill ── */
+#sres { position:relative }
+/* The rows only need a position to paint above the pill, which precedes them.
+   No z-index: one on a row makes it a stacking context and traps any overlay
+   inside it behind the rows that follow. */
+#sres > .sr, #sres > .sr-section { position:relative }
+/* pointer-events:none, or the pill swallows every hover and click in the list. */
+.mp {
+  position:absolute; top:0; inset-inline-start:0;
+  pointer-events:none;
+  opacity:0; transition:opacity .14s ease;
+}
+.mp.on {
+  opacity:1;
+  transition:opacity .14s ease,
+             transform .19s cubic-bezier(.22,1,.36,1),
+             width .19s cubic-bezier(.22,1,.36,1),
+             height .19s cubic-bezier(.22,1,.36,1);
+}
+.fh-hl { background:rgba(255,255,255,.07) }
+@media (prefers-reduced-motion: reduce) {
+  .mp, .mp.on { transition:none }
+}

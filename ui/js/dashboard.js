@@ -25,7 +25,8 @@ import {
   teardownWidgets,
   titleWhenTruncated,
 } from '/js/utils.js?v=e8b2a9f7';
-import { initSpotlight } from '/js/spotlight.js?v=c81114db';
+import { initFluidHover } from '/js/fluid-hover.js?v=2c9f351f';
+import { initSpotlight } from '/js/spotlight.js?v=b89f07bf';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
@@ -845,6 +846,7 @@ async function boot() {
   };
   _stateRef = state;
   initUI(state);
+  initFluidHover();
   initSpotlight({ getItems: () => items, isMob: () => MOB, CB, iconChain, openFolderDesktop, openFolderMobile });
 
   /* Mobile measures the viewport as it builds, so it waits for layout. */

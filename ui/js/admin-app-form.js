@@ -19,9 +19,9 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=70ec6be1';
+} from '/js/admin-shared.js?v=f8867194';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=2d28867b';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=1a19ed2c';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 
 export function buildFolderForm(body, item) {

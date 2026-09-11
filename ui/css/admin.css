@@ -182,7 +182,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .ev-back:hover{opacity:.8}
 
 /* ── Groups ── */
-.grp{background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:8px;border:1px solid var(--bd-inner)}
+.grp{position:relative;background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:8px;border:1px solid var(--bd-inner)}
 .grp-hdr{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm);padding:26px 16px 6px;}
 .grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:8px 16px 14px;line-height:1.55}
 /* Why a widget was refused, one validator message per line. Indented as a list rather than run together, since a manifest can fail several rules at once. */
@@ -211,11 +211,16 @@ html{background:var(--bg-color,var(--bg-outer))}
    dropdown can escape it. So the end rows carry the corners themselves, or a
    row's hover fill squares them off. Last visible, not last child, for the same
    reason as the separator. */
-.grp > .row:first-child,.grp > .row-wrap:first-child > .row:first-child{border-start-start-radius:var(--sy-radius-group);border-start-end-radius:var(--sy-radius-group)}
+/* The `.fh-hl` variants are the same rule for a group whose first child is the
+   hover highlight. Without them the top row loses its corners and squares off
+   the group. */
+.grp > .row:first-child,.grp > .row-wrap:first-child > .row:first-child,
+.grp > .fh-hl + .row,.grp > .fh-hl + .row-wrap > .row:first-child{border-start-start-radius:var(--sy-radius-group);border-start-end-radius:var(--sy-radius-group)}
 .grp > .row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none))),
 .grp > .row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none))) > .row:last-child{border-end-start-radius:var(--sy-radius-group);border-end-end-radius:var(--sy-radius-group)}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:var(--ov-soft)}
+.grp:has(> .fh-hl.on) .row-link:hover{background:transparent}
 /* The label holds its line and the value gives way, which is the order a
    settings row reads in. Without this the label wrapped and the value stayed
    whole, so a long label made the row two lines tall. */
@@ -244,6 +249,8 @@ html{background:var(--bg-color,var(--bg-outer))}
 .row-dd-empty{padding:10px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--dm);cursor:default}
 .row-dd-list li{padding:10px 16px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:10px}
 .row-dd-list li:hover,.row-dd-list li.kb-active{background:var(--ov-strong)}
+.row-dd-list:has(> .fh-hl.on) li:hover,
+.row-dd-list:has(> .fh-hl.on) li.kb-active{background:transparent}
 .row-dd-list li:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
 .row-dd-list li[aria-selected="true"]::before{content:'✓';color:var(--ac);font-weight:700;width:14px;flex-shrink:0;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .row-dd-list li[aria-selected="false"]::before{content:'';width:14px;flex-shrink:0}
@@ -274,6 +281,7 @@ html{background:var(--bg-color,var(--bg-outer))}
 .chip:hover:not(.on){color:var(--tx)}
 .row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:grab;align-items:center}
 .row.drow:hover{background:var(--ov-soft)}
+.grp:has(> .fh-hl.on) .row.drow:hover{background:transparent}
 .row.drow.dragging{opacity:.4;cursor:grabbing}
 .row.drow.drag-above{box-shadow:0 -2px 0 0 var(--ac)}
 .row.drow.drag-below{box-shadow:0 2px 0 0 var(--ac)}
@@ -750,4 +758,44 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
   .tog input:focus-visible+.tr {
     outline-width:3px;
   }
+}
+
+/* ── Moving pill ── */
+/* One element per list, moved between rows. pointer-events:none, or it swallows
+   every hover, click and drag in the list. */
+.mp{
+  position:absolute;top:0;inset-inline-start:0;
+  pointer-events:none;
+  opacity:0;transition:opacity .12s ease;
+}
+.mp.on{
+  opacity:1;
+  transition:opacity .12s ease,
+             transform .19s cubic-bezier(.22,1,.36,1),
+             width .19s cubic-bezier(.22,1,.36,1),
+             height .19s cubic-bezier(.22,1,.36,1);
+}
+/* The pill precedes the rows, so a position is all they need to paint above it.
+   No z-index: one on a row makes it a stacking context, and the dropdown inside
+   that row is then trapped behind every row that follows it. */
+.row-dd-list>li,.sb-nav>li,.mtabbar>.mtab{position:relative}
+
+/* Hover highlight. */
+.fh-hl{background:var(--ov-soft)}
+.row-dd-list>.fh-hl{background:var(--ov-strong)}
+
+/* Navigation selection. */
+.sb-nav{position:relative}
+.sb-nav>.gs-pill{background:var(--ac)}
+.mtabbar>.gs-pill{background:var(--tab-pill)}
+.sb-nav:has(> .gs-pill.on) .nl.active{background:transparent}
+.mtabbar:has(> .gs-pill.on) .mtab.active{background:transparent}
+/* The sidebar pill is a solid accent fill under inverted label text. The ink is
+   held until the pill has arrived, so no label is ever light on the bare pane
+   while the pill is still travelling. */
+.sb-nav.gs-moving .nl{transition:background var(--t),color .12s ease .17s}
+
+@media (prefers-reduced-motion: reduce){
+  .mp,.mp.on{transition:none}
+  .sb-nav.gs-moving .nl{transition:background var(--t),color var(--t)}
 }
