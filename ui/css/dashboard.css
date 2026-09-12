@@ -85,8 +85,7 @@
          horizontal padding keeps .grid inside the content box on a
          narrow-wide viewport. */
       padding-block:clamp(44px,4vh,70px) clamp(110px,10vh,160px);
-      padding-inline:max(clamp(16px,4vw,270px), var(--sa-left,0px))
-                     max(clamp(16px,4vw,270px), var(--sa-right,0px));
+      padding-inline:var(--gutter-l) var(--gutter-r);
     }
     /* Mirrored by desktopSlots() in dashboard.js. */
     body.no-dock .page { padding-block-end:clamp(44px,4vh,70px) }
@@ -105,7 +104,14 @@
        dashboard.js reads --tile-h and --row-gap back to paginate. Changing a
        ratio here without changing DESIGN_TILE there breaks the page breaks. */
     :root {
-      --grid-avail:calc(100vw - 88px);
+      --page-gutter:clamp(16px,4vw,270px);
+      --gutter-l:max(var(--page-gutter), var(--sa-left,0px));
+      --gutter-r:max(var(--page-gutter), var(--sa-right,0px));
+      /* Bounded by the gutters as well as by the design reserve. A device whose
+         side inset is wider than the gutter, which is any notched phone in
+         landscape, otherwise leaves .grid wider than the content box, and
+         .page is overflow:hidden and centred, so the outer columns are cut. */
+      --grid-avail:min(calc(100vw - 88px), calc(100vw - var(--gutter-l) - var(--gutter-r)));
       --grid-w:min(1041px, var(--grid-avail));
       --col-gap:min(25px, calc(var(--grid-avail) * 0.024015));
       --row-gap:min(30px, calc(var(--grid-avail) * 0.028818));
