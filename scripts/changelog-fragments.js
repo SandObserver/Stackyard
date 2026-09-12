@@ -30,6 +30,9 @@ function read(dir = DIR) {
   const out = [];
   for (const file of fs.readdirSync(dir).sort()) {
     if (file === 'README.md') continue;
+    /* Opening this folder in Finder leaves a .DS_Store behind, which is not a
+       fragment anybody wrote and must not fail the gate. */
+    if (file.startsWith('.')) continue;
     if (!file.endsWith('.md')) {
       fail(file, 'is not a .md file');
       continue;
@@ -117,13 +120,25 @@ function check() {
   return fragments;
 }
 
+/* Computes the fold and hands back what would be written, so a caller that can
+   still abort does not delete the fragments before it does. */
+function planFold(markdown = fs.readFileSync(CHANGELOG, 'utf8')) {
+  const fragments = check();
+  return { fragments, markdown: fragments.length ? apply(fragments, markdown) : markdown };
+}
+
+function commitFold(plan) {
+  if (!plan.fragments.length) return 0;
+  for (const f of plan.fragments) fs.unlinkSync(path.join(DIR, f.file));
+  return plan.fragments.length;
+}
+
 /** Fold every fragment into [Unreleased] and delete the files. */
 function fold() {
-  const fragments = check();
-  if (!fragments.length) return 0;
-  fs.writeFileSync(CHANGELOG, apply(fragments, fs.readFileSync(CHANGELOG, 'utf8')), 'utf8');
-  for (const f of fragments) fs.unlinkSync(path.join(DIR, f.file));
-  return fragments.length;
+  const plan = planFold();
+  if (!plan.fragments.length) return 0;
+  fs.writeFileSync(CHANGELOG, plan.markdown, 'utf8');
+  return commitFold(plan);
 }
 
 function main(argv) {
@@ -147,4 +162,4 @@ function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2));
 
-module.exports = { read, apply, bullet, check, fold };
+module.exports = { read, apply, bullet, check, fold, planFold, commitFold };

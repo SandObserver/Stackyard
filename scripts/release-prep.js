@@ -55,24 +55,26 @@ function main(argv) {
   if (version.startsWith('v')) die('give the version without the leading v');
   if (!cl.validDate(date)) die(`"${date}" is not a date in YYYY-MM-DD form`);
 
-  /* Entries live one-per-file until a release, so fold them in before the
-     section is dated or the release ships without them. */
-  fragments.fold();
-
-  const changed = dateTheSection(read('CHANGELOG.md'), version, date);
-  write('CHANGELOG.md', changed.markdown);
+  /* Nothing is written or deleted until every check has passed. dateTheSection
+     and the two pins below still abort, and a run that folded first left the
+     changelog rewritten and the fragment files gone. */
+  const plan = fragments.planFold(read('CHANGELOG.md'));
+  const changed = dateTheSection(plan.markdown, version, date);
 
   const pkgPath = 'api/package.json';
   const pkg = read(pkgPath);
   const bumped = pkg.replace(/("version":\s*")[^"]+(")/, `$1${version}$2`);
   if (bumped === pkg) die(`${pkgPath} has no version field to bump`);
-  write(pkgPath, bumped);
 
   const renderPath = 'render.yaml';
   const render = read(renderPath);
   const pinned = render.replace(/(stackyard:)\d+\.\d+\.\d+\S*/, `$1${version}`);
   if (pinned === render) die(`${renderPath} does not pin an image tag; the demo would stay on the old release`);
+
+  write('CHANGELOG.md', changed.markdown);
+  write(pkgPath, bumped);
   write(renderPath, pinned);
+  fragments.commitFold(plan);
 
   console.error(`release-prep: ${changed.previous ?? 'first release'} -> ${version} (${date})`);
   console.log(`version=${version}`);
