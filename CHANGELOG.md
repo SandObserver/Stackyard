@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-09-11
+
 ### Added
 
 - The System widget's Speedtest Tracker provider accepts an API token, and uses
   the documented v1 API when one is set.
+
+- The icon picker now searches dashboardicons, selfh.st, simple-icons and
+  lobehub together, matches a service by its alias or by any spelling of its
+  name, and offers an icon's light and dark file as a choice.
+
+- The web app manifest declares the icon sizes, screenshots, identity and
+  Settings shortcut browsers use to offer an install.
 
 ### Changed
 
@@ -19,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The System widget draws its charts immediately on the demo, instead of
   filling them one reading at a time.
+
+- Lists and menus now carry a single highlight that glides between rows instead
+  of redrawing on each one.
+
+- The settings navigation pill now travels between sections instead of fading in
+  place.
 
 ### Fixed
 
@@ -32,6 +47,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The demo's network row shows a fabricated speed instead of the demo
   container's own traffic.
+
+- The dashboard and Settings now keep clear of a display's left and right safe
+  areas, which a device reserves for a hinge or for system controls.
+
+- The hover highlight now follows the keyboard when you arrow through a list the
+  pointer is resting in.
+
+- The dashboard grid no longer loses its outer columns on a device whose side
+  inset is wider than the page gutter.
+
+- Correct Persian orthography and translation wording, and localise the
+  connections map label in every language.
+
+- Icon suggestions work again. The catalogue index had moved, so typing a name
+  suggested nothing.
 
 ## [1.10.0] - 2026-09-07
 
@@ -1244,7 +1274,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/SandObserver/stackyard/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/SandObserver/stackyard/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/SandObserver/stackyard/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/SandObserver/stackyard/compare/v1.8.2...v1.9.1
