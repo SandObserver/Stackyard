@@ -65,15 +65,10 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       const doOpen = () => {
         close();
         if (isFolder) {
-          if (MOB())
-            openFolderMobile(
-              app,
-              Math.round(60 * (innerWidth / 393)),
-              Math.round(14 * (innerWidth / 393)),
-              Math.round(38 * (innerWidth / 393)),
-              innerWidth / 393,
-            );
-          else openFolderDesktop(app);
+          if (MOB()) {
+            const s = Math.min(innerWidth, 430) / 393;
+            openFolderMobile(app, Math.round(60 * s), Math.round(14 * s), Math.round(38 * s), s);
+          } else openFolderDesktop(app);
         } else if (app.system === 'settings' && app.href) {
           window.location.href = app.href;
         } else if (app.href) {

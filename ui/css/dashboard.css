@@ -112,11 +112,14 @@
          side inset is wider than the gutter, which is any notched phone in
          landscape, otherwise leaves .grid wider than the content box, and
          .page is overflow:hidden and centred, so the outer columns are cut. */
-      --grid-avail:min(calc(100vw - 88px), calc(100vw - var(--gutter-l) - var(--gutter-r)));
-      --grid-w:min(1041px, var(--grid-avail));
-      --col-gap:min(25px, calc(var(--grid-avail) * 0.024015));
-      --row-gap:min(30px, calc(var(--grid-avail) * 0.028818));
-      --tile-h:min(152px, calc(var(--grid-avail) * 0.146013));
+      --grid-avail:calc(100vw - var(--gutter-l) - var(--gutter-r));
+      /* Set by dashboard.js from --grid-avail. Mirrors DESKTOP_COL in
+         dashboard-logic.js. */
+      --cols:6;
+      --grid-w:calc(var(--cols) * 152.67px + (var(--cols) - 1) * 25px);
+      --col-gap:25px;
+      --row-gap:30px;
+      --tile-h:152px;
     }
     /* Measured by dashboard.js. An element resolves these to pixels; reading the
        custom properties themselves returns their unresolved text. */
@@ -125,8 +128,9 @@
       width:0; height:var(--tile-h);
     }
     .gm-probe > i { display:block; height:var(--row-gap); }
+    .gm-probe > b { display:block; height:0; width:var(--grid-avail); }
     .grid {
-      display:grid; grid-template-columns:repeat(6,1fr);
+      display:grid; grid-template-columns:repeat(var(--cols),1fr);
       column-gap:var(--col-gap); row-gap:var(--row-gap);
       width:var(--grid-w); align-items:start;
     }

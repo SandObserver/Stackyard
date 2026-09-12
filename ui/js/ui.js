@@ -327,6 +327,8 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
 }
 
 let folderOverlayMob = null;
+/* The widest phone viewport. Matches the cap in mobile-metrics.js. */
+export const FOLDER_MAX_VW = 430;
 export function openFolderMobile(folder, isz, _ir, _im, sc) {
   if (folderOverlayMob) {
     folderOverlayMob.remove();
@@ -355,9 +357,12 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
     folderOverlayMob = null;
   });
 
-  const ptScale = vw / 393;
+  /* Phone size on every window. A wider window centres the folder instead of
+     enlarging it. */
+  const ptScale = Math.min(vw, FOLDER_MAX_VW) / 393;
   const margin = Math.round(34 * ptScale),
-    boxW = vw - margin * 2;
+    boxW = Math.min(vw, FOLDER_MAX_VW) - margin * 2,
+    boxLeft = Math.round((vw - boxW) / 2);
   const padH = Math.round(20 * ptScale),
     padVT = Math.round(24 * ptScale),
     padVB = Math.round(22 * ptScale);
@@ -384,7 +389,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   const titleFs = Math.round(30 * ptScale),
     titleGap = Math.round(40 * ptScale);
   const titleRendH = Math.ceil(titleFs * 1.05) + Math.round(4 * ptScale);
-  const titleLeft = margin + padH + Math.round(6 * ptScale);
+  const titleLeft = boxLeft + padH + Math.round(6 * ptScale);
 
   const titleEl = mk('div');
   titleEl.className = 'folder-title-mobile dyn-title-mob';
@@ -399,7 +404,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   const box = mk('div');
   box.className = 'folder-box-mobile dyn-box-mob';
   css(box, {
-    '--left': margin + 'px',
+    '--left': boxLeft + 'px',
     '--bw': boxW + 'px',
     '--bh': boxH + 'px',
     '--top': boxTop + 'px',

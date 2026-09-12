@@ -155,13 +155,14 @@ test('a rule using a size token takes its leading from the scale', () => {
    one of them and is wrong at the other.
 
    A widget tile's corner is 28 at design size, and WIDGET_DESIGN's small is 170
-   square against the reference's 165, so it is the reference value unchanged. It
-   has to scale with the tile or the corners tighten as the dashboard grows. */
+   square against the reference's 165, so it is the reference value unchanged.
+   Desktop tiles keep one size at every width, so the corner does too. */
 test('icon and tile radii are derived, not literal', () => {
   const dash = fs.readFileSync(path.join(cssDir, '..', 'js', 'dashboard.js'), 'utf8');
   assert.match(dash, /const ICON_R = 0\.2237;/);
   assert.match(dash, /mkWrap\(item, iw, Math\.round\(iw \* ICON_R\)/, 'the grid icon derives its corner');
   assert.match(dash, /mkWrap\(item, 78, Math\.round\(78 \* ICON_R\)/, 'the dock icon derives its corner');
   assert.match(dash, /const WIDGET_R = 28;/);
-  assert.match(dash, /borderRadius = Math\.round\(WIDGET_R \* gm\.scale\)/, 'a tile corner scales with the tile');
+  assert.match(dash, /borderRadius = WIDGET_R \+ 'px'/, 'a tile corner comes from the design value');
+  assert.doesNotMatch(dash, /gm\.scale/, 'desktop tiles must not scale with the window');
 });
