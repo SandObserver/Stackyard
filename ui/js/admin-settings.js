@@ -59,17 +59,17 @@ const readWallpaperForm = () =>
   ]);
 
 /** Disables `buttonId` while its section matches what was last saved. */
-function trackSave(sectionId, buttonId, read) {
-  const sec = el(sectionId);
+function trackSave(buttonId, read) {
   const btn = /** @type {HTMLButtonElement|null} */ (el(buttonId));
   const tr = createDirtyTracker(read);
   const sync = () => {
     if (btn) btn.disabled = !tr.dirty();
   };
-  /* Deferred: pickers and inline editors update their value after the event
-     that reaches the section. */
+  /* On the document, not the section: a picker's option list is attached to
+     the body, and a choice made there must still enable Save. Deferred: pickers
+     and inline editors update their value after the event. */
   for (const type of ['input', 'change', 'click', 'keyup', 'focusout'])
-    sec?.addEventListener(type, () => setTimeout(sync));
+    document.addEventListener(type, () => setTimeout(sync));
   sync();
   return {
     dirty: tr.dirty,
@@ -257,8 +257,8 @@ export function loadSettings(c) {
   });
   secEnEl?.addEventListener('change', () => syncSessionRows());
 
-  _srvTrack = trackSave('sec-general', 'srv-save', readServerForm);
-  _bgTrack = trackSave('sec-appearance', 'bg-save', readWallpaperForm);
+  _srvTrack = trackSave('srv-save', readServerForm);
+  _bgTrack = trackSave('bg-save', readWallpaperForm);
   syncAuthFromServer().then(() => _srvTrack?.reset());
 }
 

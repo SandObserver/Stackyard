@@ -26,8 +26,13 @@ test('the item editor heading names the item', () => {
 
 test('each header Save is driven by its own unsaved-change check', () => {
   const src = fs.readFileSync(new URL('../js/admin-settings.js', import.meta.url), 'utf8');
-  assert.match(src, /trackSave\('sec-general', 'srv-save', readServerForm\)/);
-  assert.match(src, /trackSave\('sec-appearance', 'bg-save', readWallpaperForm\)/);
+  assert.match(src, /trackSave\('srv-save', readServerForm\)/);
+  assert.match(src, /trackSave\('bg-save', readWallpaperForm\)/);
+  assert.match(
+    src,
+    /document\.addEventListener\(type, \(\) => setTimeout\(sync\)\)/,
+    'a picker list lives on the body, so listening on the section misses its choice',
+  );
   const reader = src.slice(src.indexOf('const readServerForm'), src.indexOf('const readWallpaperForm'));
   assert.doesNotMatch(reader, /set-lbl|set-awake/, 'a save-on-change switch must not light Save');
   assert.match(fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8'), /addEventListener\('beforeunload'/);

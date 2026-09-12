@@ -16,7 +16,7 @@ import {
   showBgFields,
   showBgFit,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=e53f967b';
+} from '/js/admin-settings.js?v=f939bd39';
 import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=ca64cc9c';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=efa3785c';
