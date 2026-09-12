@@ -23,8 +23,22 @@ import {
   toastHoldMs,
   isBareHostUrl,
   failureIsMissingApiPath,
+  createDirtyTracker,
   BLOCK,
 } from '../js/admin-logic.js';
+
+test('createDirtyTracker is clean until the value moves, and clean again after reset', () => {
+  let v = 'a';
+  const tr = createDirtyTracker(() => v);
+  assert.equal(tr.dirty(), false);
+  v = 'b';
+  assert.equal(tr.dirty(), true);
+  v = 'a';
+  assert.equal(tr.dirty(), false, 'changing back is not a change');
+  v = 'c';
+  tr.reset();
+  assert.equal(tr.dirty(), false);
+});
 /* The real strength check, so these assert the rule the save actually applies. */
 import { pwStrength } from '../js/password-strength.js';
 

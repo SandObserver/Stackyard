@@ -102,19 +102,30 @@ test('the dock reservation follows what is actually docked', () => {
   );
 });
 
-test('the desktop bottom reserve collapses to the top reserve without a dock', () => {
+test('the desktop bottom reserve shrinks without a dock', () => {
   const src = read('js/dashboard.js');
-  assert.match(src, /const bottom = hasDock \? Math\.min\(160, Math\.max\(110, ih \* 0\.1\)\) : top;/);
+  assert.match(src, /const bottom = hasDock \? 204 : 68;/);
   assert.match(src, /desktopSlots\(items\.some\(i => i\.type === 'app' && i\.dock && !i\.hidden\)\)/);
+  assert.doesNotMatch(src, /desktopSlots\(\)/, 'a call without the dock flag reserves the wrong height');
 });
 
 test('the page padding and the slot maths use the same two reserves', () => {
   const css = read('css/dashboard.css');
   const js = read('js/dashboard.js');
-  assert.match(css, /padding-block:clamp\(44px,4vh,70px\) clamp\(110px,10vh,160px\)/);
-  assert.match(css, /body\.no-dock \.page \{ padding-block-end:clamp\(44px,4vh,70px\) \}/);
+  assert.match(css, /padding-block:clamp\(44px,4vh,70px\) 204px/);
+  assert.match(css, /body\.no-dock \.page \{ padding-block-end:68px \}/);
   assert.match(js, /Math\.min\(70, Math\.max\(44, ih \* 0\.04\)\)/);
-  assert.match(js, /Math\.min\(160, Math\.max\(110, ih \* 0\.1\)\)/);
+});
+
+test('the bottom reserve clears the page dots', () => {
+  const css = read('css/dashboard.css');
+  const dots = css.match(/#dots \{([^}]*)\}/)[1];
+  const bottom = Number(dots.match(/bottom:(\d+)px/)[1]);
+  const pad = Number(dots.match(/padding:(\d+)px/)[1]);
+  const dotsTop = bottom + pad * 2 + 8 + 2;
+  assert.ok(204 > dotsTop, `dots reach ${dotsTop}px from the bottom`);
+  const noDock = Number(css.match(/body\.no-dock:not\(\.is-mob\) #dots \{ bottom:(\d+)px \}/)[1]);
+  assert.ok(68 > noDock + pad * 2 + 8 + 2);
 });
 
 test('both layouts mark the body when nothing is docked', () => {

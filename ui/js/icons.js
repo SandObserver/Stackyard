@@ -3,15 +3,19 @@
    user-uploaded SVG loaded that way cannot execute script. Inlined into the DOM
    it can. */
 const LOCAL_ICONS = new Set();
+/* The demo blocks outbound requests, so its icon proxy only ever fails. */
+let _proxy = true;
 
 export async function loadLocalIcons() {
   try {
     const r = await fetch('/api/icons/local', { cache: 'no-store' });
     if (r.ok) {
+      const d = await r.json();
       /* Mutate the existing Set. Reassigning it leaves every other module
          holding a stale reference. */
       LOCAL_ICONS.clear();
-      ((await r.json()).files || []).forEach(f => LOCAL_ICONS.add(f));
+      (d.files || []).forEach(f => LOCAL_ICONS.add(f));
+      _proxy = d.demo !== true;
     }
   } catch {}
 }
@@ -103,8 +107,8 @@ export function iconChain(rawIcon) {
     /* One request, not one per format. Hundreds of catalogue entries are png
        only and hundreds have no png, and the server knows which from the
        catalogue index it already holds. */
-    if (explicitExt) chain.push(`/api/icons/cdn?name=${cdn}&ext=${explicitExt}${src}`);
-    else chain.push(`/api/icons/cdn?name=${cdn}${src}`);
+    if (_proxy && explicitExt) chain.push(`/api/icons/cdn?name=${cdn}&ext=${explicitExt}${src}`);
+    else if (_proxy) chain.push(`/api/icons/cdn?name=${cdn}${src}`);
     for (const ext of ['svg', 'png']) {
       if (explicitExt && explicitExt !== ext) continue;
       const direct = cdnFileUrl(source, cdn, ext);

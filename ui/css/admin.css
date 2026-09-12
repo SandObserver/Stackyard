@@ -473,6 +473,8 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .tog-disabled{opacity:.45;cursor:not-allowed}
 .tog-disabled input{cursor:not-allowed}
 
+a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+
 /* ── Buttons ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:600;min-height:36px;cursor:pointer;border:none;text-decoration:none;transition:background var(--t),opacity var(--t);white-space:nowrap;font-family:inherit}
 .btn:active:not(:disabled){opacity:.8}

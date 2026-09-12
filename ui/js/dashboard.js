@@ -1,4 +1,4 @@
-import { loadLocalIcons, iconChain } from '/js/icons.js?v=04e7796e';
+import { loadLocalIcons, iconChain } from '/js/icons.js?v=9c8c550c';
 import {
   WIDGET_HEIGHTS,
   WIDGET_DESIGN,
@@ -24,14 +24,22 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=970a91b0';
+} from '/js/utils.js?v=ada0c382';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=2b722c16';
+import { initSpotlight } from '/js/spotlight.js?v=d3cdfaa4';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=08ec9951';
+import {
+  initUI,
+  mkFolder,
+  openFolderDesktop,
+  openFolderMobile,
+  buildMobile,
+  resetMobileChrome,
+  mkFolderGlyph,
+} from '/js/ui.js?v=1c5f1aeb';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -85,13 +93,14 @@ function gridMetrics() {
 let gm = { tile: DESIGN_TILE, rowGap: DESIGN_ROW_GAP, scale: 1 };
 
 /* The reserves mirror the .page padding in dashboard.css. Change one and the
-   page breaks stop matching the box.
+   page breaks stop matching the box. The bottom reserve clears the page dots,
+   which sit above the dock.
 
    @param {boolean} hasDock */
 function desktopSlots(hasDock) {
   const ih = innerHeight;
   const top = Math.min(70, Math.max(44, ih * 0.04));
-  const bottom = hasDock ? Math.min(160, Math.max(110, ih * 0.1)) : top;
+  const bottom = hasDock ? 204 : 68;
   const rows = Math.max(1, Math.min(4, Math.floor((ih - top - bottom + gm.rowGap) / (gm.tile + gm.rowGap))));
   return DCOLS * rows;
 }
@@ -385,6 +394,7 @@ function buildDesktop() {
   closeBadgePopover();
   BEL.clear();
   usedWidgetTitles = new Set();
+  resetMobileChrome();
   /* Before paginate() and before any tile is built: both size against it. */
   gm = gridMetrics();
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, 4);
@@ -847,10 +857,21 @@ async function boot() {
   _stateRef = state;
   initUI(state);
   initFluidHover();
-  initSpotlight({ getItems: () => items, isMob: () => MOB, CB, iconChain, openFolderDesktop, openFolderMobile });
+  initSpotlight({
+    getItems: () => items,
+    isMob: () => MOB,
+    CB,
+    iconChain,
+    openFolderDesktop,
+    openFolderMobile,
+    folderGlyph: mkFolderGlyph,
+  });
 
+  /* The width the current layout was built at. */
+  let _mw = innerWidth;
   /* Mobile measures the viewport as it builds, so it waits for layout. */
   const buildLayout = () => {
+    _mw = innerWidth;
     if (MOB) {
       document.body.classList.add('is-mob');
       requestAnimationFrame(() =>
@@ -973,18 +994,24 @@ async function boot() {
   /* The desktop tile size follows the viewport, so a resize can change how many
      rows fit. Rebuild only when the slot count actually moves, not on every
      pixel: a rebuild tears down and remounts every widget iframe. */
+  const hasDock = () => items.some(i => i.type === 'app' && i.dock && !i.hidden);
   let _dz,
-    _slots = desktopSlots();
+    _slots = desktopSlots(hasDock());
+  /* The phone layout rebuilds on a width change only. A phone keyboard changes
+     the height, and a rebuild then would close it. */
   let _rs;
   window.addEventListener('resize', () => {
     clearTimeout(_rs);
-    _rs = setTimeout(resampleBg, 200);
+    _rs = setTimeout(() => {
+      resampleBg();
+      if (MOB && innerWidth !== _mw) buildLayout();
+    }, 200);
     if (MOB) return;
     clearTimeout(_dz);
     _dz = setTimeout(() => {
       if (MOB) return;
       gm = gridMetrics();
-      const slots = desktopSlots();
+      const slots = desktopSlots(hasDock());
       if (slots === _slots) return;
       _slots = slots;
       buildDesktop();

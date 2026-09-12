@@ -314,3 +314,17 @@ export function failureIsMissingApiPath(url, advice) {
   if (advice && advice.sessionExpired) return false;
   return isBareHostUrl(url);
 }
+
+/** Compares what `read` returns now with what it returned at the last reset.
+
+    @param {() => string} read
+    @returns {{ dirty: () => boolean, reset: () => void }} */
+export function createDirtyTracker(read) {
+  let base = read();
+  return {
+    dirty: () => read() !== base,
+    reset: () => {
+      base = read();
+    },
+  };
+}

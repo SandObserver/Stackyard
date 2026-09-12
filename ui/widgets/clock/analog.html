@@ -72,7 +72,7 @@ const DIAL = {
 };
 
 let _mode='dark', _timezone='', _showDate=true;
-let _groups=null, _dateText=null, _rafId=null, _running=false, _vb=0;
+let _groups=null, _dateTexts=[], _rafId=null, _running=false, _vb=0;
 
 function _now(){
   if(!_timezone) return new Date();
@@ -112,11 +112,16 @@ function buildShell(){
     face.appendChild(el('rect',{ x:0, y:0, width:V, height:V, fill:dial.fill }));
   }
 
-  if(_showDate){
-    _dateText=el('text',{ x:cx, y:V-V*0.085, 'text-anchor':'middle',
+  _dateTexts=[];
+  const dateOf=clip=>{
+    if(!_showDate) return;
+    const n=el('text',{ x:cx, y:V-V*0.085, 'text-anchor':'middle',
       'font-size':V*0.072, fill:dial.date });
-    face.appendChild(_dateText);
-  } else { _dateText=null; }
+    if(clip) n.setAttribute('clip-path', clip);
+    _dateTexts.push(n);
+    face.appendChild(n);
+  };
+  dateOf(null);
 
   const dist=V*0.085;
   _groups={ minute:{discs:[],ticks:[]}, hour:{discs:[],ticks:[]}, second:{discs:[],ticks:[]} };
@@ -146,18 +151,24 @@ function buildShell(){
   const inMinute=clipOf('clip-minute','minute',{});
   const inHour=clipOf('clip-hour','hour',{});
   const inMinuteHour=clipOf('clip-minute-hour','hour',{ 'clip-path':inMinute });
+  const inSecond=clipOf('clip-second','second',{});
 
+  /* The date stays under the hands. Each disc repeats it, clipped to the disc,
+     so it shows through tinted like the disc overlaps. */
   face.appendChild(discOf('minute',{ fill:DISC.minute.color }));
+  dateOf(inMinute);
   face.appendChild(tickOf('minute'));
 
   face.appendChild(discOf('hour',{ fill:DISC.hour.color }));
   face.appendChild(discOf('hour',{ fill:OVERLAP.minuteHour, 'clip-path':inMinute }));
+  dateOf(inHour);
   face.appendChild(tickOf('hour'));
 
   face.appendChild(discOf('second',{ fill:DISC.second.color }));
   face.appendChild(discOf('second',{ fill:OVERLAP.minuteSecond, 'clip-path':inMinute }));
   face.appendChild(discOf('second',{ fill:OVERLAP.hourSecond, 'clip-path':inHour }));
   face.appendChild(discOf('second',{ fill:OVERLAP.minuteHourSecond, 'clip-path':inMinuteHour }));
+  dateOf(inSecond);
   face.appendChild(tickOf('second'));
 
   face.appendChild(el('circle',{ cx, cy, r:V*0.022, fill:dial.dot }));
@@ -187,8 +198,9 @@ function render(smoothSeconds){
   }
 
   document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now));
-  if(_showDate && _dateText){
-    _dateText.textContent=_dateShortFmt.format(now);
+  if(_showDate && _dateTexts.length){
+    const d=_dateShortFmt.format(now);
+    for(const n of _dateTexts) n.textContent=d;
   }
 }
 

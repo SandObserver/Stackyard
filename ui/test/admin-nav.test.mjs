@@ -10,6 +10,29 @@ import { fileURLToPath } from 'node:url';
 
 import { resolveAdminSection } from '../js/admin-logic.js';
 
+test('a first visit with no remembered section does not warn', () => {
+  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(requested && id !== requested\) console\.warn\(/);
+});
+
+test('the item editor heading names the item', () => {
+  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  assert.match(
+    src,
+    /if \(isEdit\) setUserText\(evTitle, t\('common\.editNamed', \{ name: item\.label \|\| item\.id \}\)\);/,
+  );
+  assert.match(src, /evTitle\.textContent = t\('type\.addNew'\);/);
+});
+
+test('each header Save is driven by its own unsaved-change check', () => {
+  const src = fs.readFileSync(new URL('../js/admin-settings.js', import.meta.url), 'utf8');
+  assert.match(src, /trackSave\('sec-general', 'srv-save', readServerForm\)/);
+  assert.match(src, /trackSave\('sec-appearance', 'bg-save', readWallpaperForm\)/);
+  const reader = src.slice(src.indexOf('const readServerForm'), src.indexOf('const readWallpaperForm'));
+  assert.doesNotMatch(reader, /set-lbl|set-awake/, 'a save-on-change switch must not light Save');
+  assert.match(fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8'), /addEventListener\('beforeunload'/);
+});
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const html = fs.readFileSync(path.join(root, 'admin/index.html'), 'utf8');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');

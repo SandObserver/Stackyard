@@ -81,14 +81,15 @@
       align-items:center;
       justify-content:start;
       overflow:hidden;
-      /* Top clears the controls bar, bottom clears the dock. The fluid
-         horizontal padding keeps .grid inside the content box on a
-         narrow-wide viewport. */
-      padding-block:clamp(44px,4vh,70px) clamp(110px,10vh,160px);
+      /* Top clears the controls bar, bottom clears the dots and the dock:
+         #dots bottom 160px plus its 30px height. The fluid horizontal
+         padding keeps .grid inside the content box on a narrow-wide
+         viewport. */
+      padding-block:clamp(44px,4vh,70px) 204px;
       padding-inline:var(--gutter-l) var(--gutter-r);
     }
-    /* Mirrored by desktopSlots() in dashboard.js. */
-    body.no-dock .page { padding-block-end:clamp(44px,4vh,70px) }
+    /* Mirrored by desktopSlots() in dashboard.js. Clears #dots at bottom 24px. */
+    body.no-dock .page { padding-block-end:68px }
     /* ── Desktop grid scale ──
        Six columns at every width. The grid, the gaps and the tile height are
        one proportional system derived from the viewport, so six columns stay
@@ -378,6 +379,8 @@
     }
     #dots[data-tone="dark"] .dot { border-color:rgba(0,0,0,.55) }
     #dots[hidden] { display:none }
+    /* Mirrored by the no-dock reserve in desktopSlots(). */
+    body.no-dock:not(.is-mob) #dots { bottom:24px }
 
     /* ── Search pill — mobile only ── */
     #mob-search-pill {
@@ -392,6 +395,8 @@
       border:0.5px solid rgba(255,255,255,.10);
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
+      -webkit-user-select:none; user-select:none;
+      -webkit-touch-callout:none;
       overflow:hidden;
       transition:width .25s cubic-bezier(.4,0,.2,1);
     }
@@ -636,6 +641,8 @@
     }
     .sri img { width:28px; height:28px; object-fit:contain }
     #sres .sri img { width:34px !important; height:34px !important; }
+    #sres .sri img.folder-mini-img,
+    body.is-mob #sres .sri img.folder-mini-img { width:72% !important; height:72% !important; }
     .srn { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight:400; color:rgba(255,255,255,.92) }
     .srh {
       font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color:rgba(255,255,255,.38); margin-top:1px;
