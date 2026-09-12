@@ -15,11 +15,11 @@ import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
 import { snapshotItems } from '/js/admin-save-logic.js?v=4f71ef6c';
 import { reorderItems } from '/js/admin-logic.js?v=dcf7c37d';
 import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=f3b01482';
-import { paintIcon } from '/js/admin-shared.js?v=f8867194';
+import { paintIcon } from '/js/admin-shared.js?v=871469a1';
 import { clr as rc, el, qa, setUserText } from '/js/utils.js?v=e8b2a9f7';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=e644a5c5';
-import { sizeLabel } from '/js/admin-widget-form.js?v=c56fc384';
+import { sizeLabel } from '/js/admin-widget-form.js?v=f2009d0e';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=12b0a947';
 
 /** @type {{ openModal: (idx: number|null) => void,
