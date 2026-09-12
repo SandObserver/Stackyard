@@ -138,3 +138,28 @@ test('each malformed fragment is named, and one does not hide another', () => {
   assert.match(errors.join('\n'), /added-empty\.md: is empty/);
   assert.match(errors.join('\n'), /Fixed-Caps\.md: name must be/);
 });
+
+/* Opening changelog.d/ in Finder leaves a .DS_Store behind. Reporting it as a
+   bad fragment failed the gate on an otherwise clean tree. */
+test('a dotfile in the folder is not a fragment', () => {
+  const dir = tmpDir('frag-dotfile');
+  fs.writeFileSync(path.join(dir, '.DS_Store'), 'junk');
+  fs.writeFileSync(path.join(dir, 'fixed-thing.md'), 'A thing no longer breaks.');
+  const { fragments, errors } = frag.read(dir);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(
+    fragments.map(f => f.file),
+    ['fixed-thing.md'],
+  );
+});
+
+/* A release run can still abort after the fold, so the fold is computed first
+   and the files are deleted only once everything has been written. */
+test('planning a fold writes nothing and deletes nothing', () => {
+  const plan = frag.planFold(CHANGELOG);
+  assert.ok(Array.isArray(plan.fragments));
+  assert.equal(typeof plan.markdown, 'string');
+  for (const f of plan.fragments) {
+    assert.ok(fs.existsSync(path.join(__dirname, '..', '..', 'changelog.d', f.file)), `${f.file} was deleted`);
+  }
+});
