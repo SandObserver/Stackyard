@@ -7,8 +7,14 @@ const FINE = '(hover: hover) and (pointer: fine)';
 
 /* Container element → { hover, kb, bound }. */
 const states = new WeakMap();
-/* Containers holding a live pill, so a resize can reposition them. */
+/* Containers holding a live pill, so a resize can reposition them. Weakly
+   held: the admin rebuilds these lists on every render, and a strong set kept
+   every detached one alive until the window happened to be resized. */
 const live = new Set();
+
+function dropDetached() {
+  for (const c of live) if (!c.isConnected) live.delete(c);
+}
 
 const LISTS = [
   { container: '#sres', item: '.sr' },
@@ -36,6 +42,9 @@ function stateFor(container) {
 
 function refresh(container) {
   const s = stateFor(container);
+  /* Whichever moved last. The pointer holding it meant a keyboard cursor in a
+     hovered list had no highlight at all, because the row's own background is
+     suppressed while the pill is on, and Enter then acted on an invisible row. */
   const target = s.hover || s.kb;
   if (target && target.isConnected && selectable(target)) {
     const pill = ensurePill(container, 'fh-hl');
@@ -43,7 +52,9 @@ function refresh(container) {
     placePill(container, pill, target);
   } else {
     restPill(pillOf(container));
+    live.delete(container);
   }
+  dropDetached();
 }
 
 function bind(container) {
@@ -66,15 +77,23 @@ function locate(item) {
   return null;
 }
 
-/* Moves the highlight to the keyboard cursor. The pointer still wins while it
-   is over the list. */
+/* Moves the highlight to the keyboard cursor, and takes it off the pointer:
+   the last input to move is the one that owns it. */
 export function fluidHoverKb(item) {
   if (!fluidHoverSupported()) return;
   const container = locate(item);
   if (!container) return;
-  stateFor(container).kb = item;
+  const s = stateFor(container);
+  s.hover = null;
+  s.kb = item;
   bind(container);
   refresh(container);
+}
+
+/* For the test: proves a detached container is not retained. */
+export function _liveHolds(container) {
+  dropDetached();
+  return live.has(container);
 }
 
 export function fluidHoverClear(container) {
@@ -107,9 +126,7 @@ export function initFluidHover(root = document) {
     true,
   );
   addEventListener('resize', () => {
-    for (const c of live) {
-      if (c.isConnected) refresh(c);
-      else live.delete(c);
-    }
+    dropDetached();
+    for (const c of live) refresh(c);
   });
 }

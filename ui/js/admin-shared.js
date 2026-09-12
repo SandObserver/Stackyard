@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { nextActiveIndex, recoversSession, toastHoldMs } from '/js/admin-logic.js?v=dcf7c37d';
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=2c9f351f';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=84f0f4f1';
 import { el, qa, q } from '/js/utils.js?v=e8b2a9f7';
 import { t } from '/js/i18n.js?v=e644a5c5';
 import { iconChain } from '/js/icons.js?v=69c2b9bd';

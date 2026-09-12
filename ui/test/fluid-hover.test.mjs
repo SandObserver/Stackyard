@@ -27,9 +27,11 @@ function classList(el) {
   };
 }
 
-function fake(tag, { rect = { left: 0, top: 0, width: 0, height: 0 }, classes = [] } = {}) {
+function fake(tag, { rect = { left: 0, top: 0, width: 0, height: 0 }, classes = [], box = {} } = {}) {
   const el = {
     tagName: tag.toUpperCase(),
+    /* Padding and borders, because the pill is placed from the padding box. */
+    box: { padTop: 0, padStart: 0, bTop: 0, bLeft: 0, bRight: 0, ...box },
     get className() {
       return [...this.classList._set].join(' ');
     },
@@ -84,12 +86,17 @@ function fake(tag, { rect = { left: 0, top: 0, width: 0, height: 0 }, classes = 
 
 function install({ fine = true, dir = 'ltr' } = {}) {
   globalThis.matchMedia = () => ({ matches: fine });
-  globalThis.getComputedStyle = () => ({
+  globalThis.getComputedStyle = el => ({
     direction: dir,
     borderTopLeftRadius: '10px',
     borderTopRightRadius: '10px',
     borderBottomRightRadius: '10px',
     borderBottomLeftRadius: '10px',
+    paddingTop: (el?.box?.padTop ?? 0) + 'px',
+    paddingInlineStart: (el?.box?.padStart ?? 0) + 'px',
+    borderTopWidth: (el?.box?.bTop ?? 0) + 'px',
+    borderLeftWidth: (el?.box?.bLeft ?? 0) + 'px',
+    borderRightWidth: (el?.box?.bRight ?? 0) + 'px',
   });
   globalThis.document = { createElement: tag => fake(tag) };
   globalThis.addEventListener = () => {};
@@ -230,3 +237,84 @@ for (const [name, text] of Object.entries(css)) {
     }
   });
 }
+
+/* The pill's containing block is the container's padding box, whose top edge is
+   the inner edge of the border, so padding is inside the box and must not be
+   subtracted. Measured on a real page: `#sres` with `padding:6px 0` and
+   `.mtabbar` with `padding:7px 8px` both place the pill exactly on the row.
+   Subtracting the padding moves it 6px and 7px off. */
+test('padding on the container does not move the pill', () => {
+  install();
+  const list = fake('ul', {
+    rect: { left: 100, top: 50, width: 200, height: 120 },
+    box: { padTop: 6, padStart: 8, bTop: 1, bLeft: 1 },
+  });
+  list._sel = ['.row-dd-list'];
+  /* Inside the border and the padding, which is where a row actually sits. */
+  const li = fake('li', { rect: { left: 109, top: 57, width: 182, height: 40 } });
+  li._sel = ['li[role="option"]'];
+  li.parent = list;
+  list.clientTop = 1;
+  list.clientLeft = 1;
+  let over;
+  mod.initFluidHover({ addEventListener: (t, fn) => t === 'pointerover' && (over = fn) });
+  over({ pointerType: 'mouse', target: li });
+  assert.equal(list.children[0].style.transform, 'translate3d(8px,6px,0)', 'the padding was subtracted');
+});
+
+/* A row's own background is suppressed while the pill is on, so a keyboard
+   cursor that the pointer outranked had no highlight at all and Enter acted on
+   an invisible row. */
+test('the keyboard takes the highlight off a hovered row', () => {
+  install();
+  const list = fake('ul', { rect: { left: 0, top: 0, width: 200, height: 120 } });
+  list._sel = ['.row-dd-list'];
+  const a = fake('li', { rect: { left: 0, top: 0, width: 200, height: 40 } });
+  const b = fake('li', { rect: { left: 0, top: 40, width: 200, height: 40 } });
+  for (const li of [a, b]) {
+    li._sel = ['li[role="option"]'];
+    li.parent = list;
+  }
+  let over;
+  mod.initFluidHover({ addEventListener: (t, fn) => t === 'pointerover' && (over = fn) });
+  over({ pointerType: 'mouse', target: a });
+  assert.equal(list.children[0].style.transform, 'translate3d(0px,0px,0)');
+  mod.fluidHoverKb(b);
+  assert.equal(list.children[0].style.transform, 'translate3d(0px,40px,0)', 'the pointer kept the highlight');
+});
+
+test('the pointer takes it back on the next move', () => {
+  install();
+  const list = fake('ul', { rect: { left: 0, top: 0, width: 200, height: 120 } });
+  list._sel = ['.row-dd-list'];
+  const a = fake('li', { rect: { left: 0, top: 0, width: 200, height: 40 } });
+  const b = fake('li', { rect: { left: 0, top: 40, width: 200, height: 40 } });
+  for (const li of [a, b]) {
+    li._sel = ['li[role="option"]'];
+    li.parent = list;
+  }
+  let over;
+  mod.initFluidHover({ addEventListener: (t, fn) => t === 'pointerover' && (over = fn) });
+  mod.fluidHoverKb(b);
+  over({ pointerType: 'mouse', target: a });
+  assert.equal(list.children[0].style.transform, 'translate3d(0px,0px,0)');
+});
+
+/* The admin rebuilds these lists on every form render and every save, so a
+   container held after it is detached keeps its whole subtree alive. */
+test('a detached container is not held', () => {
+  install();
+  const list = fake('ul', { rect: { left: 0, top: 0, width: 200, height: 80 } });
+  list._sel = ['.row-dd-list'];
+  const li = fake('li', { rect: { left: 0, top: 0, width: 200, height: 40 } });
+  li._sel = ['li[role="option"]'];
+  li.parent = list;
+  let over;
+  mod.initFluidHover({ addEventListener: (t, fn) => t === 'pointerover' && (over = fn) });
+  over({ pointerType: 'mouse', target: li });
+  assert.equal(mod._liveHolds(list), true);
+  list.isConnected = false;
+  li.isConnected = false;
+  mod.fluidHoverClear(list);
+  assert.equal(mod._liveHolds(list), false, 'the detached list is still held');
+});

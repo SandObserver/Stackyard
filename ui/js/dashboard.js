@@ -25,8 +25,8 @@ import {
   teardownWidgets,
   titleWhenTruncated,
 } from '/js/utils.js?v=e8b2a9f7';
-import { initFluidHover } from '/js/fluid-hover.js?v=2c9f351f';
-import { initSpotlight } from '/js/spotlight.js?v=b89f07bf';
+import { initFluidHover } from '/js/fluid-hover.js?v=84f0f4f1';
+import { initSpotlight } from '/js/spotlight.js?v=ea359211';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
