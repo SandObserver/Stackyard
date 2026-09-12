@@ -23,47 +23,61 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.10.0 - 2026-09-07
+### 1.11.0 - 2026-09-11
 
 ### Added
 
-- The Books widget now offers a medium size, showing more of the shelf.
+- The System widget's Speedtest Tracker provider accepts an API token, and uses
+  the documented v1 API when one is set.
 
-- The Books widget now offers a large size with three shelves, each showing
-  its own view of the library.
+- The icon picker now searches dashboardicons, selfh.st, simple-icons and
+  lobehub together, matches a service by its alias or by any spelling of its
+  name, and offers an icon's light and dark file as a choice.
 
-- A Books shelf can be given a name. Unnamed, a list shelf shows the name of
-  the list it holds.
+- The web app manifest declares the icon sizes, screenshots, identity and
+  Settings shortcut browsers use to offer an install.
 
 ### Changed
 
-- The stored config schema moves to version 6, rewriting Books widget shelves.
-  Downgrading to 1.9.2 afterwards leaves those widgets unreadable.
+- The demo dashboard now shows the apps, icons, tile colours and widgets of the
+  dashboard pictured on the project site.
 
-- An empty dashboard now shows a welcome screen with the app mark, a link to
-  settings and a link to import a backup or another dashboard's config.
+- The System widget draws its charts immediately on the demo, instead of
+  filling them one reading at a time.
 
-- The dock is hidden when no app is docked, and the layout no longer reserves
-  space for it.
+- Lists and menus now carry a single highlight that glides between rows instead
+  of redrawing on each one.
 
-- The page indicator is hidden when the dashboard has one page.
-
-- The demo dashboard shows the Books widget at its large size.
-
-- Widgets keep their layout when a service fails, and report the reason in one
-  line instead of showing the server's message.
-
-- A widget with nothing to show now reads differently from one that failed.
+- The settings navigation pill now travels between sections instead of fading in
+  place.
 
 ### Fixed
 
-- Hovering a disk bay or a connections legend entry works again.
+- The Disk Health widget now reads Scrutiny disks from builds that identify a
+  device by `scrutiny_uuid` or `wwn`, not only `device_id`.
 
-- A disk bay whose drive the service no longer reports is marked, rather than
-  drawn as a healthy drive with no name.
+- Clients that ask for `/favicon.ico` now get the app mark instead of a 404.
 
-- The tab icon now carries its own background, so it shows the same mark in
-  every browser.
+- The demo's dashboard switcher shows its keychain names instead of the
+  addresses behind them.
+
+- The demo's network row shows a fabricated speed instead of the demo
+  container's own traffic.
+
+- The dashboard and Settings now keep clear of a display's left and right safe
+  areas, which a device reserves for a hinge or for system controls.
+
+- The hover highlight now follows the keyboard when you arrow through a list the
+  pointer is resting in.
+
+- The dashboard grid no longer loses its outer columns on a device whose side
+  inset is wider than the page gutter.
+
+- Correct Persian orthography and translation wording, and localise the
+  connections map label in every language.
+
+- Icon suggestions work again. The catalogue index had moved, so typing a name
+  suggested nothing.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
