@@ -19,27 +19,13 @@
   .widget.clickable { cursor:pointer; }
 
   .hero { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
-  .pct  { font-size:clamp(26px,9cqw,36px); font-weight:700; color:#FF4245; line-height:1; letter-spacing:-0.02em; }
+  .pct  { font-size:clamp(26px,9cqw,36px); font-weight:700; color:#FF4245; line-height:1; letter-spacing:-0.02em; transition: color 0.15s ease; }
   .sub  { font-size:clamp(9px,3cqw,11px); font-weight:600; letter-spacing:0.09em; color:rgba(255,255,255,0.5); text-transform:uppercase; }
 
-  .flow { flex:1; min-height:0; margin-top:13px; position:relative; }
+  .flow { flex:1; min-height:0; margin-top:13px; position:relative; touch-action:pan-y; }
   .flow svg { width:100%; height:100%; display:block; overflow:visible; }
   .link { transition: opacity 0.15s ease; }
-
-  .tip {
-    position:absolute; z-index:5;
-    background:rgba(20,20,22,0.96);
-    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
-    border-radius:8px; padding:6px 9px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.55), inset 0 0 0 0.5px rgba(255,255,255,0.1);
-    display:flex; align-items:center; gap:6px; white-space:nowrap;
-    opacity:0; transform:translateY(2px); pointer-events:none;
-    transition: opacity 0.12s ease, transform 0.12s ease;
-  }
-  .tip.show { opacity:1; transform:translateY(0); }
-  .tip i { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-  .tip b { font-size:11px; font-weight:600; color:#fff; }
-  .tip s { font-size:11px; font-weight:500; color:rgba(255,255,255,0.6); text-decoration:none; }
+  @media (prefers-reduced-motion: reduce) { .pct, .link { transition:none; } }
 
   .msg { position:absolute; inset-inline:0; bottom:0; }
 
@@ -54,7 +40,6 @@
   </div>
   <div class="flow" id="flow">
     <svg id="svg" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true"></svg>
-    <div class="tip" id="tip"></div>
     <div class="msg" id="msg" hidden></div>
   </div>
   <div class="sr-only" id="sr"></div>
@@ -80,7 +65,7 @@ let _last = null;
 const widgetEl = document.getElementById('widget');
 const pctEl = document.getElementById('pct');
 const svgEl = document.getElementById('svg');
-const tipEl = document.getElementById('tip');
+const subEl = document.getElementById('sub-label');
 const msgEl = document.getElementById('msg');
 const srEl  = document.getElementById('sr');
 
@@ -124,11 +109,10 @@ function apply(d) {
   const allowed = Math.max(0, total - blocked - cached);
   const pct = total > 0 ? Math.round(blocked / total * 100) : 0;
 
-  pctEl.textContent = formatNumber(pct / 100, { style: 'percent' });
-
   const model = { total, allowed, cached, blocked, pct };
   _last = model;
   render(model);
+  showHeadline();
 
   srEl.textContent = wt('ui.summary', '{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.')
     .replace('{pct}', formatNumber(pct)).replace('{total}', fmt(total))
@@ -136,79 +120,100 @@ function apply(d) {
 }
 
 function constLink(x0,c0,x1,c1,t) {
-  const h=t/2, cx0=x0+(x1-x0)*0.5, cx1=x0+(x1-x0)*0.5;
-  return `M${x0},${c0-h} C${cx0},${c0-h} ${cx1},${c1-h} ${x1},${c1-h} `
-       + `L${x1},${c1+h} C${cx1},${c1+h} ${cx0},${c0+h} ${x0},${c0+h} Z`;
+  const h=t/2, cx=x0+(x1-x0)*0.5;
+  return `M${x0},${c0-h} C${cx},${c0-h} ${cx},${c1-h} ${x1},${c1-h} `
+       + `L${x1},${c1+h} C${cx},${c1+h} ${cx},${c0+h} ${x0},${c0+h} Z`;
 }
 
+const W = 240, H = 120, NODE_W = 8, SRC_SHARE = 0.5;
+let _segs = [];
+let _sel = -1;
+
 function render(m) {
-  const flow = document.getElementById('flow');
-  const W = 240, H = 120;
   svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
-  const sum = m.allowed + m.cached + m.blocked || 1;
   const segs = [
     { key:'allowed', label:wt('ui.allowed','Allowed'), value:m.allowed, color:'#30D158' },
     { key:'cached',  label:wt('ui.cached','Cached'),   value:m.cached,  color:'#0091FF' },
     { key:'blocked', label:wt('ui.blocked','Blocked'), value:m.blocked, color:'#FF4245' },
   ].filter(s => s.value > 0);
 
+  _segs = segs;
+  if (_sel >= segs.length) _sel = -1;
   if (!segs.length) { svgEl.innerHTML=''; return; }
 
-  const nodeW = 9, pad = 2;
-  const nX = pad, nX2 = nX + nodeW;
-  const outX = W - pad - nodeW, outX2 = W - pad;
+  const sum = segs.reduce((a,s)=>a+s.value,0);
+  const srcH = H * SRC_SHARE;
+  const t = segs.map(s => Math.max(2, s.value / sum * srcH));
+  const tSum = t.reduce((a,b)=>a+b,0);
+  const gap = segs.length > 1 ? (H - tSum) / (segs.length - 1) : 0;
+  const x0 = NODE_W, x1 = W - NODE_W;
 
-  const t = segs.map(s => Math.max(2, s.value / sum * H));
-  const tScale = H / t.reduce((a,b)=>a+b,0);
-  const tt = t.map(v => v * tScale);
-
-  let fy = 0; const fc = tt.map(th => { const c=fy+th/2; fy+=th; return c; });
-  const outGap = segs.length > 1 ? 8 : 0;
-  const totalR = tt.reduce((a,b)=>a+b,0) + (segs.length-1)*outGap;
-  const rScale = (H - (segs.length-1)*outGap) / tt.reduce((a,b)=>a+b,0);
-  const rt = tt.map(v => v * rScale);
-  let ry = (H - (rt.reduce((a,b)=>a+b,0) + (segs.length-1)*outGap)) / 2;
-  const rc = rt.map(th => { const c=ry+th/2; ry+=th+outGap; return c; });
-
-  const meta = {};
+  let sy = (H - tSum) / 2;
+  let ty = segs.length > 1 ? 0 : (H - tSum) / 2;
   let links = '', nodes = '';
   segs.forEach((s,i) => {
-    links += `<path class="link" data-k="${s.key}" d="${constLink(nX2,fc[i],outX,rc[i],Math.min(tt[i],rt[i]))}" fill="${s.color}" opacity="0.9"/>`;
-    nodes += `<rect x="${outX}" y="${rc[i]-rt[i]/2}" width="${nodeW}" height="${rt[i]}" rx="2.5" fill="${s.color}"/>`;
-    meta[s.key] = { label:s.label, value:s.value, color:s.color, cy:rc[i] };
+    s.sy = sy + t[i]/2; s.ty = ty + t[i]/2; s.t = t[i];
+    links += `<path class="link" d="${constLink(x0,s.sy,x1,s.ty,t[i])}" fill="${s.color}" fill-opacity="0.6"/>`;
+    nodes += `<rect x="${x1}" y="${ty}" width="${NODE_W}" height="${t[i]}" rx="${Math.min(4,t[i]/2)}" fill="${s.color}"/>`;
+    sy += t[i]; ty += t[i] + gap;
   });
-  nodes = `<rect x="${nX}" y="0" width="${nodeW}" height="${H}" rx="3" fill="rgba(255,255,255,0.9)"/>` + nodes;
+  nodes = `<rect x="0" y="${(H - tSum) / 2}" width="${NODE_W}" height="${tSum}" rx="4" fill="#fff"/>` + nodes;
 
   svgEl.innerHTML = links + nodes;
+  highlight();
+}
 
-  svgEl.querySelectorAll('.link').forEach(p => {
-    const onEnter = () => {
-      const mm = meta[p.dataset.k];
-      svgEl.querySelectorAll('.link').forEach(q => q.style.opacity = q===p ? '1' : '0.3');
-      tipEl.innerHTML = `<i style="background:${mm.color}"></i><b>${mm.label}</b><s>${fmt(mm.value)}</s>`;
-      tipEl.classList.add('show');
-      const fh = document.getElementById('flow').clientHeight;
-      tipEl.style.top = Math.max(0, Math.min(fh - tipEl.offsetHeight, (mm.cy / H * fh) - tipEl.offsetHeight/2)) + 'px';
-      tipEl.style.right = '4px'; tipEl.style.left = 'auto';
-    };
-    const onLeave = () => {
-      svgEl.querySelectorAll('.link').forEach(q => q.style.opacity = '0.9');
-      tipEl.classList.remove('show');
-    };
-    p.style.cursor = _href ? 'pointer' : 'default';
-    p.addEventListener('mouseenter', onEnter);
-    p.addEventListener('mouseleave', onLeave);
-    p.addEventListener('touchstart', e => { onEnter(); }, { passive:true });
+function ribbonY(s, x) {
+  const u = Math.min(1, Math.max(0, (x - NODE_W) / (W - 2*NODE_W)));
+  return s.sy + (s.ty - s.sy) * (3*u*u - 2*u*u*u);
+}
+
+function highlight() {
+  svgEl.querySelectorAll('.link').forEach((p,i) => {
+    p.style.opacity = _sel < 0 || i === _sel ? '1' : '0.3';
   });
 }
 
-document.addEventListener('touchend', e => {
-  if (!e.target.closest('.link')) {
-    svgEl.querySelectorAll('.link').forEach(q => q.style.opacity = '0.9');
-    tipEl.classList.remove('show');
+function showHeadline() {
+  const s = _segs[_sel];
+  if (s) {
+    pctEl.textContent = fmt(s.value);
+    pctEl.style.color = s.color;
+    subEl.textContent = s.label;
+  } else if (_last) {
+    pctEl.textContent = formatNumber(_last.pct / 100, { style: 'percent' });
+    pctEl.style.color = '';
+    subEl.textContent = wt('ui.queriesBlocked', 'Queries Blocked');
   }
-}, { passive:true });
+}
+
+function select(i) {
+  if (i === _sel) return;
+  _sel = i;
+  highlight();
+  showHeadline();
+}
+
+function pick(e) {
+  if (!_segs.length) return;
+  const r = flowEl.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const x = (e.clientX - r.left) / r.width * W;
+  const y = (e.clientY - r.top) / r.height * H;
+  let best = 0, bestD = Infinity;
+  _segs.forEach((s,i) => {
+    const d = Math.abs(ribbonY(s, x) - y) - s.t/2;
+    if (d < bestD) { bestD = d; best = i; }
+  });
+  select(best);
+}
+
+const flowEl = document.getElementById('flow');
+flowEl.addEventListener('pointermove', pick);
+flowEl.addEventListener('pointerdown', pick);
+for (const type of ['pointerleave', 'pointercancel']) flowEl.addEventListener(type, () => select(-1));
+flowEl.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') select(-1); });
 
 boot();
 </script>
