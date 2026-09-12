@@ -339,11 +339,18 @@ test('every page container reserves the side insets as well as the top and botto
   const css = read('css/dashboard.css');
   for (const sel of ['.mob-page', '.page']) {
     const block = css.match(new RegExp(`\\${sel}\\s*{[^}]*}`))[0];
-    assert.match(block, /padding-inline:/, `${sel} sets no inline padding`);
+    const inline = block.match(/padding-inline:[^;]*/);
+    assert.ok(inline, `${sel} sets no inline padding`);
+    /* Either spelled out, or through the gutter variables, which are defined
+       from the insets on :root. */
     for (const side of ['left', 'right']) {
-      assert.match(block, new RegExp(`--sa-${side}`), `${sel} reserves nothing on the ${side}`);
+      const direct = new RegExp(`--sa-${side}`).test(inline[0]);
+      const viaVar = new RegExp(`--gutter-${side[0]}`).test(inline[0]);
+      assert.ok(direct || viaVar, `${sel} reserves nothing on the ${side}`);
     }
   }
+  assert.match(css, /--gutter-l:max\(var\(--page-gutter\), var\(--sa-left,0px\)\)/);
+  assert.match(css, /--gutter-r:max\(var\(--page-gutter\), var\(--sa-right,0px\)\)/);
 });
 
 /* max(), so the design gutter is the floor and the inset only ever widens it.
@@ -353,7 +360,14 @@ test('the side reserve widens the design gutter and never replaces it', () => {
   const css = read('css/dashboard.css');
   for (const sel of ['.mob-page', '.page']) {
     const inline = css.match(new RegExp(`\\${sel}\\s*{[^}]*}`))[0].match(/padding-inline:[^;]*/)[0];
-    assert.equal((inline.match(/max\(/g) || []).length, 2, `${sel} does not take the larger of the two on both sides`);
+    /* Two max(), one per side, whether written here or in the gutter variables
+       this refers to. */
+    const here = (inline.match(/max\(/g) || []).length;
+    const viaVars = /var\(--gutter-l\)/.test(inline) && /var\(--gutter-r\)/.test(inline) ? 2 : 0;
+    assert.equal(Math.max(here, viaVars), 2, `${sel} does not take the larger of the two on both sides`);
+  }
+  for (const v of ['--gutter-l', '--gutter-r']) {
+    assert.match(css.match(new RegExp(`${v}:[^;]*`))[0], /max\(/, `${v} does not keep the design gutter as a floor`);
   }
 });
 
@@ -376,4 +390,23 @@ test('the rebuild clears the grid width before it measures', () => {
   assert.ok(clear !== -1, 'the grid width is never cleared');
   assert.ok(measure !== -1, 'the grid box is no longer measured');
   assert.ok(clear < measure, 'the width is cleared after the measurement, which is too late');
+});
+
+/* A side inset wider than the gutter, which is any notched phone in landscape,
+   left .grid wider than .page's content box. .page is overflow:hidden and
+   centres its child, so the outer columns were cut. Measured at 852x393 with a
+   59px inset: the grid overhung by 30px before the gutters bounded it. */
+test('the desktop grid is bounded by the gutters, not only by the reserve', () => {
+  const css = read('css/dashboard.css');
+  assert.match(css, /--gutter-l:max\(var\(--page-gutter\), var\(--sa-left,0px\)\)/);
+  assert.match(css, /--gutter-r:max\(var\(--page-gutter\), var\(--sa-right,0px\)\)/);
+  assert.match(
+    css,
+    /--grid-avail:min\(calc\(100vw - 88px\), calc\(100vw - var\(--gutter-l\) - var\(--gutter-r\)\)\)/,
+    'the grid width ignores the insets the page reserves',
+  );
+  /* One definition of the gutter, so the padding and the grid cannot drift. */
+  assert.match(css, /padding-inline:var\(--gutter-l\) var\(--gutter-r\)/);
+  assert.doesNotMatch(css, /padding-inline:max\(clamp\(16px,4vw,270px\)/, 'the gutter is spelled out twice');
+  assert.match(css, /--page-gutter:clamp\(16px,4vw,270px\)/);
 });
