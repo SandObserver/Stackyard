@@ -21,11 +21,11 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=c04578f7';
+} from '/js/admin-shared.js?v=0f36d0dc';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=40086ce5';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d162431d';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cfd57c54';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
