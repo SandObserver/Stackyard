@@ -41,7 +41,8 @@ function pruneDetached() {
     @param {{ options?: ListboxOption[], value?: string|string[],
               multiple?: boolean, label: string, placeholder?: string,
               summary?: (selected: ListboxOption[]) => string,
-              onChange?: (value: any) => void, emptyText?: string }} opts
+              onChange?: (value: any) => void, emptyText?: string,
+              id?: string }} opts
     @returns {{ el: HTMLElement, button: HTMLElement, list: HTMLElement,
                 getValue: () => any, setValue: (v: any) => void,
                 setOptions: (o: ListboxOption[], v?: any) => void,
@@ -57,6 +58,7 @@ export function createListbox(
     summary,
     onChange,
     emptyText = '',
+    id = '',
   } = /** @type {any} */ ({}),
 ) {
   let opts = options.slice();
@@ -65,12 +67,12 @@ export function createListbox(
     : new Set(value == null || value === '' ? [] : [String(value)]);
 
   /* The list is not a descendant of its button, so the two are tied by id. */
-  const listId = `lb-${++seq}`;
+  const listId = id ? `${id}-list` : `lb-${++seq}`;
   const dd = document.createElement('div');
   dd.className = 'row-dd';
   setHtml(
     dd,
-    html`<button class="row-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="${listId}"><span class="row-dd-text"></span>${raw(CHEV)}</button>
+    html`<button class="row-dd-btn"${raw(id ? ` id="${id}-btn"` : '')} type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="${listId}"><span class="row-dd-text"></span>${raw(CHEV)}</button>
       <ul class="row-dd-list${multiple ? ' checklist' : ''}" id="${listId}" role="listbox" aria-label="${label}"${raw(multiple ? ' aria-multiselectable="true"' : '')}></ul>`,
   );
   const btn = /** @type {HTMLElement} */ (dd.querySelector('.row-dd-btn'));

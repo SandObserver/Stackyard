@@ -1,7 +1,7 @@
 import { state } from '/js/admin-state.js?v=5a5d655f';
 import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=a77346f6';
-import { createListbox } from '/js/listbox.js?v=10324847';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=2e23f2a0';
+import { createListbox } from '/js/listbox.js?v=12a43a03';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=6c52c3b8';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=74cb4272';
 import { t } from '/js/i18n.js?v=e644a5c5';
@@ -76,6 +76,7 @@ function _renderWidgetForm(body) {
     },
   });
   const typeBox = createListbox({
+    id: 'f-wtype',
     label: t('widgetCfg.type'),
     options: typeList.map(([name, label]) => ({ value: name, label })),
     value: state._wtype,

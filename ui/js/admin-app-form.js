@@ -22,7 +22,7 @@ import {
   setTogDisabled,
   swapContent,
 } from '/js/admin-shared.js?v=a77346f6';
-import { createListbox } from '/js/listbox.js?v=10324847';
+import { createListbox } from '/js/listbox.js?v=12a43a03';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
 import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=bedb7be2';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
@@ -413,6 +413,7 @@ function renderActLabels(host) {
     const pathRow = el(`albl-path-row-${i}`);
     if (pathRow) {
       const box = createListbox({
+        id: `albl-path-${i}`,
         label: t('app.value'),
         options: _valueSelectOptions(),
         value: path,

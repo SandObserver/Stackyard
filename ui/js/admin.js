@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=9ee7cfb3';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=7d8da8d0';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=71e6b54c';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=3b9e502b';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=e0d9aea7';
 import { resolveAdminSection } from '/js/admin-logic.js?v=74cb4272';
 import {
   buildAppItem,
@@ -13,10 +13,10 @@ import {
 import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=405784bd';
 import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=a77346f6';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=aa749032';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=cf56aacb';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=10324847';
+import { createListbox } from '/js/listbox.js?v=12a43a03';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=e644a5c5';
 import { loadLocalIcons } from '/js/icons.js?v=04e7796e';
@@ -765,6 +765,7 @@ function initBgType() {
     if (imgHint) imgHint.style.display = val === 'url' ? '' : 'none';
   };
   const box = createListbox({
+    id: 'bg-type',
     label: t('appearance.wallpaperSource'),
     options: [
       { value: 'unsplash', label: t('appearance.sourceUnsplash') },
@@ -798,6 +799,7 @@ function initBgFit() {
     showBgFit(val);
   };
   const box = createListbox({
+    id: 'bg-fit',
     label: t('appearance.fit'),
     options: [
       { value: 'fill', label: t('appearance.fitFill') },
@@ -900,6 +902,7 @@ function initLogLevel() {
   const hidden = inp('log-level');
   if (!slot || !hidden) return;
   const box = createListbox({
+    id: 'log-level',
     label: t('general.loggingLevel'),
     options: [
       { value: 'debug', label: t('general.logDebug') },
@@ -931,6 +934,7 @@ function initLanguage() {
   const hidden = inp('lang-sel');
   if (!slot || !hidden) return;
   const box = createListbox({
+    id: 'lang',
     label: t('common.language'),
     options: LANGUAGES.map(l => ({ value: l.code, label: l.name })),
     value: hidden.value || 'en',
@@ -970,6 +974,7 @@ function initTheme() {
     { value: 'dark', label: t(THEME_LABEL_KEYS.dark) },
   ];
   const box = createListbox({
+    id: 'theme',
     label: t('appearance.displayMode'),
     options: opts(),
     value: readMode(),
