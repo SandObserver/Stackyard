@@ -1,6 +1,6 @@
-import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=e8b2a9f7';
+import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=970a91b0';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { loadLocalIcons, resolveIcon, iconChain, cdnIconName } from '/js/icons.js?v=69c2b9bd';
+import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=04e7796e';
 import { state } from '/js/admin-state.js?v=7d68e98e';
 import {
   isDockBlocked,
@@ -8,7 +8,9 @@ import {
   clearsStoredSecret,
   isBareHostUrl,
   failureIsMissingApiPath,
-} from '/js/admin-logic.js?v=dcf7c37d';
+  nextActiveIndex,
+  sameIconName,
+} from '/js/admin-logic.js?v=74cb4272';
 import { t } from '/js/i18n.js?v=e644a5c5';
 import {
   toast,
@@ -19,10 +21,11 @@ import {
   initInlineEdit,
   setTogDisabled,
   wireChecklist,
-} from '/js/admin-shared.js?v=871469a1';
+} from '/js/admin-shared.js?v=0f36d0dc';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=85d6e672';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d162431d';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
@@ -127,13 +130,17 @@ export function buildAppForm(body, item) {
 
     <p class="grp-hdr">${t('app.icon')}</p>
     <div class="grp" id="ipw">
+      <div class="icon-src-anchor">
       <div class="row icon-src-row">
         <span class="icon-prev" id="ipv">${state.siurl ? html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">` : html`<span>${(item?.label || '?')[0]?.toUpperCase() || '?'}</span>`}</span>
-        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" placeholder="${t('app.iconPh')}" value="${state.siurl}">
+        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="iprs" aria-autocomplete="list" aria-describedby="ip-status" aria-label="${t('app.icon')}" placeholder="${t('app.iconPh')}" value="${state.siurl}">
         <button type="button" class="row-btn" id="ip-upload-lbl">${t('app.upload')}</button>
         <input type="file" id="ip-upload" class="file-hidden" aria-label="${t('app.upload')}" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon">
       </div>
-      <div class="iprs" id="iprs"></div>
+      <div class="iprs" id="iprs" role="listbox" aria-label="${t('app.iconResults')}"></div>
+      </div>
+      <p class="visually-hidden" id="ip-status" role="status" aria-live="polite"></p>
+      <div id="icon-variant-slot"></div>
       <div id="icon-color-slot"></div>
     </div>
 
@@ -508,47 +515,187 @@ function _ieRow(rowId, label, inpId, val, ph, type = 'text') {
   return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`;
 }
 
+const SOURCE_LABEL = {
+  di: 'dashboardicons',
+  selfhst: 'selfh.st',
+  simple: 'simple-icons',
+  lobe: 'lobehub',
+};
+
+const VARIANT_LABEL = { base: 'app.iconVariantBase', light: 'app.iconVariantLight', dark: 'app.iconVariantDark' };
+
+let ipList = [];
+let ipActive = -1;
+
+function ipClose() {
+  const rs = el('iprs');
+  if (!rs) return;
+  rs.classList.remove('open');
+  rs.replaceChildren();
+  inpById('ip-in')?.setAttribute('aria-expanded', 'false');
+  inpById('ip-in')?.removeAttribute('aria-activedescendant');
+  fluidHoverClear(rs);
+  ipList = [];
+  ipActive = -1;
+}
+
+function ipSay(msg) {
+  const s = el('ip-status');
+  if (s) s.textContent = msg;
+}
+
+function ipMessage(main, hint = '') {
+  const rs = el('iprs');
+  if (!rs) return;
+  ipList = [];
+  ipActive = -1;
+  const d = document.createElement('p');
+  d.className = 'ipr-msg';
+  const strong = document.createElement('strong');
+  strong.textContent = main;
+  d.append(strong);
+  if (hint) {
+    d.append(document.createElement('br'));
+    d.append(document.createTextNode(hint));
+  }
+  rs.replaceChildren(d);
+  rs.classList.add('open');
+  inpById('ip-in')?.setAttribute('aria-expanded', 'true');
+  inpById('ip-in')?.removeAttribute('aria-activedescendant');
+}
+
+function ipSetActive(i, { scroll = true } = {}) {
+  const rs = el('iprs');
+  const opts = qa('.ipr', rs);
+  if (!opts.length || i == null) return;
+  ipActive = i;
+  opts.forEach((o, n) => {
+    const on = n === ipActive;
+    o.classList.toggle('kb-active', on);
+    o.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  const act = opts[ipActive];
+  inpById('ip-in')?.setAttribute('aria-activedescendant', act.id);
+  if (scroll) act.scrollIntoView({ block: 'nearest' });
+  fluidHoverKb(act);
+}
+
+function ipChoose(i) {
+  const pick = ipList[i];
+  if (!pick) return;
+  setIconRef(pick.ref);
+  renderIconVariants([]);
+  ipClose();
+  inpById('ip-in')?.focus();
+  loadIconVariants(pick.ref);
+}
+
+function setIconRef(ref) {
+  state.siurl = ref;
+  const inp = inpById('ip-in');
+  if (inp) inp.value = ref;
+  updPrev();
+}
+
+/* Which file suits the dashboard is the user's choice, never the admin theme. */
+function renderIconVariants(variants) {
+  const slot = el('icon-variant-slot');
+  if (!slot) return;
+  if (!variants.length) return void slot.replaceChildren();
+  setHtml(
+    slot,
+    html`<div class="row">
+      <span class="rl">${t('app.iconVariant')}</span>
+      <div class="segr" role="group" aria-label="${t('app.iconVariant')}">
+        ${variants.map(
+          v =>
+            html`<label class="segr-opt"><input type="radio" name="ip-var" value="${v.ref}"${v.ref === state.siurl ? ' checked' : ''}><span class="segr-dot"></span><span>${t(VARIANT_LABEL[v.key] || 'app.iconVariantBase')}</span></label>`,
+        )}
+      </div>
+    </div>`,
+  );
+  slot.querySelectorAll('input').forEach(r => {
+    r.onchange = () => {
+      if (r.checked) setIconRef(r.value);
+    };
+  });
+}
+
+/* Only the catalogue knows which files an icon has. */
+async function loadIconVariants(ref) {
+  if (!ref || ref.startsWith('http://') || ref.startsWith('https://') || ref.includes('/')) return;
+  try {
+    const d = await ag(`/api/icons/variants?ref=${encodeURIComponent(ref)}`);
+    if (inpById('ip-in')?.value !== ref) return;
+    const variants = d.variants || [];
+    /* The catalogue lists this name but holds no file under it. */
+    if (variants.length && !variants.some(v => v.ref === ref)) setIconRef(variants[0].ref);
+    renderIconVariants(variants);
+  } catch {}
+}
+
 function wireIcon() {
   const inp = inpById('ip-in'),
     rs = el('iprs');
   if (!inp) return;
-  let t;
+  let t0;
+  /* Each keystroke starts a search and the slow ones finish last. The token
+     stops a stale result replacing a newer one. */
+  let run = 0;
+  const search = async v => {
+    const mine = ++run;
+    const q = v.replace(/\.(svg|png|ico)$/i, '');
+    try {
+      const d = await ag(`/api/icons/search?q=${encodeURIComponent(q)}`);
+      if (mine !== run) return;
+      showIPRes(d.results || [], v);
+    } catch {
+      if (mine !== run) return;
+      /* No catalogue to confirm against, so the typed name is all that is left. */
+      updPrev();
+      ipMessage(t('app.iconSearchFailed'), t('app.iconTryUpload'));
+      ipSay(t('app.iconSearchFailed'));
+    }
+  };
   inp.oninput = () => {
     const v = inp.value.trim();
-    if (v.startsWith('http://') || v.startsWith('https://')) {
-      state.siurl = v;
+    clearTimeout(t0);
+    state.siurl = v;
+    /* Nothing to look up: empty, an address, or a file already on this server. */
+    if (!v || v.startsWith('http://') || v.startsWith('https://') || v.includes('/') || resolveIcon(v)) {
+      run++;
       updPrev();
-      rs.classList.remove('open');
+      ipClose();
+      renderIconVariants([]);
       return;
     }
-    if (v && !v.includes('/')) {
-      state.siurl = v;
-      updPrev();
-      clearTimeout(t);
-      t = setTimeout(async () => {
-        const q = v.replace(/\.(svg|png)$/i, '');
-        try {
-          const d = await ag(`/api/icons/search?q=${encodeURIComponent(q)}`);
-          showIPRes(d.results || [], v);
-        } catch {
-          rs.classList.remove('open');
-        }
-      }, 300);
-      return;
-    }
-    clearTimeout(t);
-    if (!v) {
-      rs.classList.remove('open');
-      return;
-    }
-    t = setTimeout(async () => {
-      try {
-        const d = await ag(`/api/icons/search?q=${encodeURIComponent(v)}`);
-        showIPRes(d.results || [], v);
-      } catch {
-        rs.classList.remove('open');
+    /* A half-typed name is never requested. Each miss is held for a day in a
+       cache of 300, so typing evicts icons that do exist. */
+    ipMessage(t('app.iconSearching'));
+    t0 = setTimeout(() => search(v), 300);
+  };
+
+  inp.onkeydown = e => {
+    const open = rs?.classList.contains('open');
+    /* Arrows only. nextActiveIndex also answers Home and End, which belong to
+       the caret while focus is in a text field. */
+    if (ipList.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      const moved = nextActiveIndex(e.key, ipActive, ipList.length);
+      if (moved != null) {
+        e.preventDefault();
+        return void ipSetActive(moved);
       }
-    }, 300);
+    }
+    if (e.key === 'Enter' && ipActive >= 0) {
+      e.preventDefault();
+      return void ipChoose(ipActive);
+    }
+    if (e.key === 'Escape' && open) {
+      e.preventDefault();
+      e.stopPropagation();
+      ipClose();
+    }
+    if (e.key === 'Tab' && open) ipClose();
   };
 
   const upInput = inpById('ip-upload');
@@ -570,6 +717,8 @@ function wireIcon() {
         state.siurl = d.filename;
         const ipIn = inpById('ip-in');
         if (ipIn) ipIn.value = d.filename;
+        renderIconVariants([]);
+        ipClose();
         updPrev();
         toast(t('toast.uploaded', { name: d.filename }));
       } catch (e) {
@@ -582,76 +731,93 @@ function wireIcon() {
   }
 
   document.addEventListener('click', e => {
-    if (!el('ipw')?.contains(/** @type {Node} */ (e.target))) rs?.classList.remove('open');
+    if (!el('ipw')?.contains(/** @type {Node} */ (e.target))) ipClose();
   });
+  loadIconVariants(state.siurl);
 }
+
+function ipRow(i, iconRef, name, source, urls = [], variants = []) {
+  const r = document.createElement('button');
+  r.type = 'button';
+  r.className = 'ipr';
+  r.id = `ipr-${i}`;
+  r.setAttribute('role', 'option');
+  r.setAttribute('aria-selected', 'false');
+  const img = document.createElement('img');
+  img.alt = '';
+  /* Ordered by the catalogue, whose first entry is the file it actually holds. */
+  const srcs = [...urls, ...variants.flatMap(v => v.urls || [])].filter(Boolean);
+  if (!srcs.length) srcs.push(...iconChain(iconRef));
+  let step = 0;
+  img.src = srcs[0] || '';
+  img.onerror = () => {
+    step++;
+    if (step < srcs.length) img.src = srcs[step];
+    else {
+      img.onerror = null;
+      img.removeAttribute('src');
+      img.style.visibility = 'hidden';
+    }
+  };
+  const sp = document.createElement('span');
+  sp.className = 'ipr-name';
+  /* A Latin name truncates at the wrong end in a right-to-left locale without
+     this, and unicode-bidi:plaintext does nothing in WebKit. */
+  sp.dir = 'auto';
+  sp.textContent = name;
+  r.append(img, sp);
+  if (source) {
+    const src = document.createElement('span');
+    src.className = 'ipr-src';
+    src.textContent = t('app.iconFrom', { source: SOURCE_LABEL[source] || source });
+    r.append(src);
+  }
+  /* Enter acts on the cursor, so the pointer has to move all of it: a row that
+     is announced as active while another is marked selected sends Enter to a
+     row nothing is pointing at. */
+  r.onpointerenter = () => ipSetActive(i, { scroll: false });
+  r.onclick = () => ipChoose(i);
+  return r;
+}
+
 function showIPRes(list, rawInput) {
   const rs = el('iprs');
   if (!rs) return;
-  rs.replaceChildren();
-  list.forEach(ic => {
-    const r = document.createElement('button');
-    r.type = 'button';
-    r.className = 'ipr';
-    const img = document.createElement('img');
-    img.alt = '';
-    img.src = ic.svgUrl;
-    img.onerror = () => {
-      img.src = ic.pngUrl;
-    };
-    const sp = document.createElement('span');
-    sp.textContent = ic.name;
-    r.append(img, sp);
-    r.onclick = () => {
-      state.siurl = ic.svgUrl;
-      inpById('ip-in').value = ic.svgUrl;
-      updPrev();
-      rs.classList.remove('open');
-    };
-    rs.appendChild(r);
-  });
-  if (!list.length && rawInput && !rawInput.includes('/')) {
-    const val = cdnIconName(rawInput);
-    if (!val) {
-      rs.classList.remove('open');
-      return;
-    }
-    const srcs = iconChain(val);
-    if (!srcs.length) {
-      rs.classList.remove('open');
-      return;
-    }
-    const r = document.createElement('button');
-    r.type = 'button';
-    r.className = 'ipr';
-    const img = document.createElement('img');
-    img.alt = '';
-    img.style.cssText = 'width:24px;height:24px;object-fit:contain;';
-    let step = 0;
-    img.src = srcs[0];
-    img.onerror = () => {
-      step++;
-      if (step < srcs.length) img.src = srcs[step];
-      else {
-        img.onerror = null;
-        img.src = '';
-        img.style.display = 'none';
-      }
-    };
-    const sp = document.createElement('span');
-    sp.textContent = val;
-    r.append(img, sp);
-    r.onclick = () => {
-      state.siurl = val;
-      inpById('ip-in').value = val;
-      updPrev();
-      rs.classList.remove('open');
-    };
-    rs.appendChild(r);
+  const typed = cdnIconRef(rawInput);
+  const match = list.find(
+    ic => sameIconName(ic.name, rawInput) || sameIconName(splitIconRef(ic.ref).slug, rawInput) || ic.ref === typed,
+  );
+  if (match) {
+    /* The tile draws the matched catalogue's file, so the saved value has to be
+       that catalogue's reference. Keeping the typed text would save a name that
+       resolves to a different catalogue and loads nothing. */
+    state.siurl = match.ref;
+    updPrev(match.urls);
+  } else if (!list.length) updPrev();
+  if (!list.length) {
+    if (!typed) return ipClose();
+    /* The name may still be a file a catalogue holds without listing it. */
+    ipList = [{ ref: typed, name: typed, source: '', variants: [] }];
+    rs.replaceChildren(ipRow(0, typed, typed, ''));
+    const msg = document.createElement('p');
+    msg.className = 'ipr-msg';
+    msg.textContent = t('app.iconTryUpload');
+    rs.append(msg);
+    rs.classList.add('open');
+    inpById('ip-in')?.setAttribute('aria-expanded', 'true');
+    ipActive = -1;
+    ipSay(t('app.iconNoMatch', { q: rawInput }));
+    return;
   }
-  if (rs.children.length) rs.classList.add('open');
-  else rs.classList.remove('open');
+  ipList = list;
+  ipActive = -1;
+  rs.replaceChildren(...list.map((ic, i) => ipRow(i, ic.ref, ic.name, ic.source, ic.urls, ic.variants)));
+  rs.classList.add('open');
+  inpById('ip-in')?.setAttribute('aria-expanded', 'true');
+  inpById('ip-in')?.removeAttribute('aria-activedescendant');
+  ipSay(t('app.iconResultCount', { count: list.length }));
 }
+
 function setInitialGlyph(p) {
   const l = inpById('f-lbl')?.value || '?';
   const s = document.createElement('span');
@@ -661,7 +827,7 @@ function setInitialGlyph(p) {
 /* Several attempts are in flight at once and the half-typed ones finish last.
    The token stops a stale failure replacing a finished preview. */
 let prevRun = 0;
-function updPrev() {
+function updPrev(explicit) {
   const p = el('ipv');
   if (!p) return;
   const run = ++prevRun;
@@ -670,7 +836,7 @@ function updPrev() {
     setInitialGlyph(p);
     return;
   }
-  const fallbacks = iconChain(state.siurl);
+  const fallbacks = explicit?.length ? explicit : iconChain(state.siurl);
   if (!fallbacks.length) {
     setInitialGlyph(p);
     return;

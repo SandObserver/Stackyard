@@ -103,6 +103,18 @@ export function collectFieldValues(reads, { includeTransient = false } = {}) {
   return out;
 }
 
+/* Loose, so "AdGuard Home", "adguard_home" and "adguard-home" are one name. */
+export function sameIconName(a, b) {
+  const norm = s =>
+    String(s ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+  const x = norm(a);
+  return !!x && x === norm(b);
+}
+
 export function nextActiveIndex(key, active, len) {
   if (len <= 0) return null;
   const clamp = i => Math.max(0, Math.min(i, len - 1));

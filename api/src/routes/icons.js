@@ -45,40 +45,35 @@ const { sanitizeSvg } = require('../svg-sanitize');
 const { sniffIconType } = require('../icon-sniff');
 const { parseMultipartFile } = require('../parse-multipart');
 
-let _iconCache = null,
-  _iconCacheAt = 0;
+const { searchIcons, lookupIcon, formatHint, fileUrl, rawFileUrl, SOURCE_IDS } = require('../icon-catalogs');
+
 const ICON_CACHE_TTL = 24 * 60 * 60 * 1000;
 
 on('GET', '/api/icons/search', async (req, res) => {
-  const q = (new URL(req.url, 'http://x').searchParams.get('q') || '').toLowerCase().trim();
+  const q = (new URL(req.url, 'http://x').searchParams.get('q') || '').trim();
   if (!q) return json(res, 200, { results: [] });
   try {
-    if (!_iconCache || Date.now() - _iconCacheAt > ICON_CACHE_TTL) {
-      const r = await fetchUnchecked(
-        'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@main/metadata/icons.json',
-      );
-      _iconCache = Array.isArray(r.data) ? r.data : [];
-      _iconCacheAt = Date.now();
-    }
-    json(res, 200, {
-      results: _iconCache
-        .filter(ic => (ic.name || ic.slug || '').toLowerCase().includes(q))
-        .slice(0, 20)
-        .map(ic => ({
-          name: ic.name || ic.slug,
-          slug: ic.slug || ic.name,
-          svgUrl: `https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/${ic.slug || ic.name}.svg`,
-          pngUrl: `https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/${ic.slug || ic.name}.png`,
-        })),
-    });
+    json(res, 200, { results: await searchIcons(q) });
   } catch (e) {
     fail(res, e, { status: 502 });
   }
 });
 
-const CDN_ICON_BASE = 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons';
 /* The catalogue's slug form. Anything else is refused rather than passed into a
    CDN path. */
+/* The variant files an already-saved icon has, for the picker's light and dark
+   choice. */
+on('GET', '/api/icons/variants', async (req, res) => {
+  const ref = (new URL(req.url, 'http://x').searchParams.get('ref') || '').trim();
+  if (!ref) return json(res, 200, { variants: [] });
+  try {
+    const hit = await lookupIcon(ref);
+    json(res, 200, { variants: hit ? hit.variants : [] });
+  } catch (e) {
+    fail(res, e, { status: 502 });
+  }
+});
+
 const CDN_NAME_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const CDN_ICON_MAX_BYTES = 512 * 1024;
 const CDN_CACHE_MAX = 300;
@@ -99,50 +94,71 @@ function cdnCachePut(key, entry) {
 
 /* Held in memory only. A restart refetches, so a changed upstream icon is never
    served from a file nobody knows is there. */
+/* Fetches one file and caches what came back, hit or miss. Returns null when
+   the host was unwell rather than definite: caching that would keep the icon
+   missing for a day. */
+async function fetchIconFile(source, name, ext) {
+  const key = `${source}:${ext}:${name}`;
+  const cached = _cdnIcons.get(key);
+  if (cached && Date.now() - cached.at < ICON_CACHE_TTL) return cached;
+  let r = await fetchUnchecked(fileUrl(source, name, ext), { binary: true });
+  /* Past 50 MB, jsdelivr answers 403 for files it has not cached. The
+     repository still has them. */
+  const mirror = r.status !== 200 ? rawFileUrl(source, name, ext) : '';
+  if (mirror) r = await fetchUnchecked(mirror, { binary: true });
+  if (r.status !== 200 && r.status !== 404) return null;
+  const body = Buffer.isBuffer(r.data) ? r.data : Buffer.alloc(0);
+  /** @type {CdnIconEntry} */
+  let entry;
+  if (r.status === 404 || !body.length || body.length > CDN_ICON_MAX_BYTES) entry = { at: Date.now(), status: 404 };
+  else if (ext === 'svg')
+    /* Served from this origin, where opening the URL directly runs whatever
+       the file contains. */
+    entry = {
+      at: Date.now(),
+      status: 200,
+      body: Buffer.from(sanitizeSvg(body.toString('utf8'))),
+      type: 'image/svg+xml',
+    };
+  else if (sniffIconType(body) === 'png') entry = { at: Date.now(), status: 200, body, type: 'image/png' };
+  else entry = { at: Date.now(), status: 404 };
+  cdnCachePut(key, entry);
+  return entry;
+}
+
 on('GET', '/api/icons/cdn', async (req, res) => {
   const p = new URL(req.url, 'http://x').searchParams;
   const name = p.get('name') || '';
-  const ext = (p.get('ext') || 'svg').toLowerCase();
-  if (!CDN_NAME_RE.test(name) || (ext !== 'svg' && ext !== 'png'))
+  const asked = (p.get('ext') || '').toLowerCase();
+  const source = p.get('source') || 'di';
+  if (!CDN_NAME_RE.test(name) || (asked && asked !== 'svg' && asked !== 'png') || !SOURCE_IDS.includes(source))
     return json(res, 400, { error: 'Unknown icon', kind: KIND.INVALID });
 
-  const key = `${ext}:${name}`;
-  const hit = _cdnIcons.get(key);
-  const fresh = hit && Date.now() - hit.at < ICON_CACHE_TTL;
-  if (fresh) return sendIcon(res, hit);
+  /* Hundreds of entries are png only and hundreds have no png, so a fixed
+     order is a guaranteed 404 for one group or the other. */
+  const hint = asked || formatHint(source === 'di' ? name : `${source}:${name}`) || 'svg';
+  const order = asked ? [asked] : hint === 'png' ? ['png', 'svg'] : ['svg', 'png'];
+  const exts = order.filter(ext => fileUrl(source, name, ext));
+  if (!exts.length) return json(res, 404, { error: 'Icon not found', kind: KIND.INVALID });
 
-  /** @type {CdnIconEntry} */
-  let entry;
-  try {
-    const r = await fetchUnchecked(`${CDN_ICON_BASE}/${ext}/${name}.${ext}`, { binary: true });
-    const body = Buffer.isBuffer(r.data) ? r.data : Buffer.alloc(0);
-    /* Anything other than a hit or a miss is the CDN being unwell, and caching
-       it would keep every icon missing for a day. */
-    if (r.status !== 200 && r.status !== 404)
-      return json(res, 502, { error: 'Icon could not be fetched', kind: KIND.UPSTREAM });
-    if (r.status === 404 || !body.length || body.length > CDN_ICON_MAX_BYTES) {
-      entry = { at: Date.now(), status: 404 };
-    } else if (ext === 'svg') {
-      /* Served from this origin, where opening the URL directly runs whatever
-         the file contains. */
-      entry = {
-        at: Date.now(),
-        status: 200,
-        body: Buffer.from(sanitizeSvg(body.toString('utf8'))),
-        type: 'image/svg+xml',
-      };
-    } else if (sniffIconType(body) === 'png') {
-      entry = { at: Date.now(), status: 200, body, type: 'image/png' };
-    } else {
-      entry = { at: Date.now(), status: 404 };
-    }
-  } catch {
-    /* Not cached. The browser falls back to the CDN for this load and the next
-       one can still succeed. */
-    return json(res, 502, { error: 'Icon could not be fetched', kind: KIND.UPSTREAM });
+  /* A format already held is served without asking either host for the other. */
+  for (const ext of exts) {
+    const hit = _cdnIcons.get(`${source}:${ext}:${name}`);
+    if (hit && Date.now() - hit.at < ICON_CACHE_TTL && hit.status === 200) return sendIcon(res, hit);
   }
-  cdnCachePut(key, entry);
-  sendIcon(res, entry);
+
+  let missed = null;
+  for (const ext of exts) {
+    let entry = null;
+    try {
+      entry = await fetchIconFile(source, name, ext);
+    } catch {}
+    if (entry?.status === 200) return sendIcon(res, entry);
+    if (entry) missed = entry;
+  }
+  /* Nothing was found, and at least one host never gave a definite answer. */
+  if (!missed) return json(res, 502, { error: 'Icon could not be fetched', kind: KIND.UPSTREAM });
+  sendIcon(res, missed);
 });
 
 /** @param {import('http').ServerResponse} res @param {CdnIconEntry} entry */
