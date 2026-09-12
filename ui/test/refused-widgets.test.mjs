@@ -41,7 +41,7 @@ test('the picker says how many widgets were refused', () => {
 /* The notice belongs above the size and config sections, next to the list the
    widget is missing from, not at the bottom of the form. */
 test('the notice renders next to the type list', () => {
-  const atType = form.indexOf('id="f-wtype"');
+  const atType = form.indexOf('id="wtype-row"');
   const atNotice = form.indexOf("t('widgetCfg.refused'");
   const atSize = form.search(/sizeHdr\.textContent\s*=\s*t\('widgetCfg\.size'\)/);
   assert.ok(atType !== -1 && atNotice !== -1 && atSize !== -1, 'the form no longer has these parts');

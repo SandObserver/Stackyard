@@ -1,7 +1,7 @@
 import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=970a91b0';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=04e7796e';
-import { state } from '/js/admin-state.js?v=7d68e98e';
+import { state } from '/js/admin-state.js?v=5a5d655f';
 import {
   isDockBlocked,
   DOCK_MAX,
@@ -17,13 +17,14 @@ import {
   ag,
   ap,
   PE_SVG,
-  CHEV_SVG,
   initInlineEdit,
+  reveal,
   setTogDisabled,
-  wireChecklist,
-} from '/js/admin-shared.js?v=0f36d0dc';
+  swapContent,
+} from '/js/admin-shared.js?v=a77346f6';
+import { createListbox } from '/js/listbox.js?v=10324847';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d162431d';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=bedb7be2';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 
@@ -37,13 +38,6 @@ export function buildFolderForm(body, item) {
     }
   });
 
-  const opts = apps.length
-    ? apps.map(
-        a =>
-          html`<li role="option" data-val="${a.id}" aria-selected="${children.includes(a.id) ? 'true' : 'false'}">${a.label || a.id}</li>`,
-      )
-    : html`<li class="row-dd-empty" aria-disabled="true">${t('folder.noApps')}</li>`;
-
   setHtml(
     body,
     html`
@@ -54,44 +48,35 @@ export function buildFolderForm(body, item) {
         <input id="f-fname" type="text" value="${item?.label || ''}" class="d-none">
         <button class="pe" type="button">${raw(PE_SVG)}</button>
       </div>
-      <div class="row">
+      <div class="row" id="folder-apps-row">
         <span class="rl">${t('folder.addApps')}</span>
-        <div class="row-dd" id="folder-apps-dd">
-          <button class="row-dd-btn" id="folder-apps-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-            <span id="folder-apps-label">${t('folder.selectApps')}</span>
-            ${raw(CHEV_SVG)}
-          </button>
-          <ul class="row-dd-list checklist" id="folder-apps-list" role="listbox" aria-multiselectable="true" aria-label="${t('folder.appsInFolder')}" hidden>${opts}</ul>
-        </div>
       </div>
     </div>
     <p class="grp-tip">${t('folder.tip')}</p>`,
   );
 
   initInlineEdit('ie-fname', 'f-fname', { placeholder: t('folder.namePh') });
-  _wireFolderApps();
+  _wireFolderApps(apps, children);
 }
 
-function _wireFolderApps() {
-  const dd = el('folder-apps-dd');
-  const btn = inpById('folder-apps-btn');
-  const list = el('folder-apps-list');
-  const label = el('folder-apps-label');
-  if (!dd || !btn || !list || !label) return;
-  const sync = () => {
-    const sel = qa('li[aria-selected="true"]', list);
-    label.textContent =
+function _wireFolderApps(apps, children) {
+  const row = el('folder-apps-row');
+  if (!row) return;
+  const box = createListbox({
+    label: t('folder.appsInFolder'),
+    multiple: true,
+    options: apps.map(a => ({ value: a.id, label: a.label || a.id })),
+    value: children,
+    emptyText: t('folder.noApps'),
+    summary: sel =>
       sel.length === 0
         ? t('folder.selectApps')
         : sel.length === 1
-          ? sel[0].textContent
-          : t('widgetCfg.selectedCount', { count: sel.length });
-  };
-  wireChecklist(dd, btn, list, li => {
-    li.setAttribute('aria-selected', li.getAttribute('aria-selected') === 'true' ? 'false' : 'true');
-    sync();
+          ? sel[0].label
+          : t('widgetCfg.selectedCount', { count: sel.length }),
   });
-  sync();
+  state._folderApps = box;
+  row.appendChild(box.el);
 }
 
 export function buildAppForm(body, item) {
@@ -152,7 +137,7 @@ export function buildAppForm(body, item) {
     <p class="grp-hdr">${t('app.badge')}</p>
     <div class="grp">
       <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled, t('app.healthCheck'))}</div>
-      <div id="hc-sub" ${hc.enabled ? '' : 'hidden'}>
+      <div id="hc-sub" class="reveal${hc.enabled ? ' open' : ''}"><div class="reveal-in">
         <div class="row"><span class="rl">${t('app.type')}</span><div class="segr">
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing ? '' : 'checked'}><span class="segr-dot"></span><span>${t('app.container')}</span></label>
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${isPing ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.ping')}</span></label>
@@ -162,34 +147,34 @@ export function buildAppForm(body, item) {
           ${ier('ie-hc-ping', t('app.pingUrl'), 'hc-ping', hc.pingUrl, t('app.pingUrlPh'), 'url')}
           <div class="row"><span class="rl"></span><span id="hc-ping-status" class="row-status"></span><button type="button" class="row-btn" id="hc-ping-test">${t('app.test')}</button></div>
         </div>
-      </div>
+      </div></div>
     </div>
     ${globalHealthOn ? '' : html`<p class="grp-tip" id="hc-off-tip">${t('app.healthGlobalOff')}</p>`}
 
     <div class="grp">
       <div class="row"><span class="rl">${t('app.fixedLabel')}</span>${tog('static-en', hasStatic, t('app.fixedLabel'))}</div>
-      <div id="static-sub" ${hasStatic ? '' : 'hidden'}>
+      <div id="static-sub" class="reveal${hasStatic ? ' open' : ''}"><div class="reveal-in">
         ${ier('ie-static-label', t('app.labelText'), 'f-static-label', staticBadge.label, t('app.labelPh'))}
         <div id="static-color-slot"></div>
-      </div>
+      </div></div>
     </div>
 
     <div class="grp">
       <div class="row"><span class="rl">${t('app.liveActivity')}</span>${tog('act-en', act.enabled, t('app.liveActivity'))}</div>
-      <div id="act-sub" ${act.enabled ? '' : 'hidden'}>
+      <div id="act-sub" class="reveal${act.enabled ? ' open' : ''}"><div class="reveal-in">
         ${ier('ie-burl', t('app.apiUrl'), 'f-burl', act.url, t('app.apiUrlPh'), 'url')}
         <div class="row"><span class="rl"></span><span id="bst" class="row-status"></span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
         <div id="auth-row-wrap">
           <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers), t('app.authentication'))}</div>
-          <div id="auth-sub" ${act.params?.length || act.headers?.length ? '' : 'hidden'}>
+          <div id="auth-sub" class="reveal${act.params?.length || act.headers?.length ? ' open' : ''}"><div class="reveal-in">
             <div class="row kv-hdr"><span class="rl">${t('app.addToUrl')} <span class="rl-sub">(query params)</span></span></div>
             <div id="bpar-rows" class="kv-rows"></div>
             <div class="row kv-hdr"><span class="rl">${t('app.addToHeader')}</span></div>
             <div id="bhdr-rows" class="kv-rows"></div>
-          </div>
+          </div></div>
         </div>
         <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" min="10" max="3600" value="${act.interval || 30}" aria-label="${t('app.poll')}">${pollAfter}</div></div></div>
-      </div>
+      </div></div>
     </div>
     <div id="act-labels-wrap" class="bprow-hidden">
       <div id="act-labels"></div>
@@ -252,7 +237,9 @@ export function buildAppForm(body, item) {
   const hcEn = el('hc-en');
   const showHide = (id, on) => {
     const node = el(id);
-    if (node) node.hidden = !on;
+    if (!node) return;
+    if (node.classList.contains('reveal')) reveal(node, on);
+    else node.hidden = !on;
   };
   hcEn?.addEventListener('change', e => {
     showHide('hc-sub', tgt(e).checked);
@@ -260,8 +247,10 @@ export function buildAppForm(body, item) {
   document.querySelectorAll('input[name="hc-type"]').forEach(r =>
     r.addEventListener('change', () => {
       const ping = inpById('hc-type-ping')?.checked;
-      showHide('hc-con-row', !ping);
-      showHide('hc-ping-row', ping);
+      swapContent(el('hc-con-row')?.parentElement, () => {
+        showHide('hc-con-row', !ping);
+        showHide('hc-ping-row', ping);
+      });
     }),
   );
   el('hc-ping-test')?.addEventListener('click', testPing);
@@ -351,19 +340,19 @@ function actValueOptions() {
   return out;
 }
 
-function _valueSelect(idx, path) {
+function _valueSelectOptions() {
   const opts = actValueOptions();
   const groups = [
     { name: t('app.values'), rows: opts.filter(o => !o.computed) },
     { name: t('app.computedFromArray'), rows: opts.filter(o => o.computed) },
   ].filter(g => g.rows.length);
-  const optionOf = o =>
-    html`<option value="${o.path}" ${o.path === path ? 'selected' : ''}>${o.value == null ? o.label : `${o.label} — ${o.value}`}</option>`;
-  const body =
-    groups.length > 1
-      ? groups.map(g => html`<optgroup label="${g.name}">${g.rows.map(optionOf)}</optgroup>`)
-      : opts.map(optionOf);
-  return html`<div class="row"><span class="rl">${t('app.value')}</span><div class="sel-wrap"><select class="row-sel" id="albl-path-${idx}" aria-label="${t('app.value')}">${body}</select>${raw(CHEV_SVG)}</div></div>`;
+  const entryOf = o => ({ value: o.path, label: o.value == null ? o.label : `${o.label} \u2014 ${o.value}` });
+  if (groups.length < 2) return opts.map(entryOf);
+  return groups.flatMap(g => [{ group: g.name }, ...g.rows.map(entryOf)]);
+}
+
+function _valueSelect(idx) {
+  return html`<div class="row" id="albl-path-row-${idx}"><span class="rl">${t('app.value')}</span></div>`;
 }
 
 function renderActLabels(host) {
@@ -405,7 +394,7 @@ function renderActLabels(host) {
     card.className = 'grp';
     setHtml(
       card,
-      html`${_valueSelect(i, path)}
+      html`${_valueSelect(i)}
       ${_ieRow(`ie-albl-name-${i}`, _optRow(t('app.labelText')), `albl-name-${i}`, l.name, t('app.labelPh'))}
       <div id="albl-col-slot-${i}"></div>
       ${_ieRow(`ie-albl-unit-${i}`, _optRow(t('app.unit')), `albl-unit-${i}`, l.unit, t('app.unitPh'))}
@@ -421,20 +410,25 @@ function renderActLabels(host) {
       swatchColors: BADGE_SWATCHES,
       label: t('common.color'),
     });
-    const sel = inpById(`albl-path-${i}`);
-    if (sel) {
-      sel.onchange = () => {
-        captureActLabels();
-        const next = sel.value;
-        if (state.spaths.includes(next)) {
-          sel.value = state.spaths[i];
-          toast(t('app.labelValueTaken'), 'err');
-          return;
-        }
-        repathActLabel(state.spaths[i], next);
-        state.spaths[i] = next;
-        syncActMode();
-      };
+    const pathRow = el(`albl-path-row-${i}`);
+    if (pathRow) {
+      const box = createListbox({
+        label: t('app.value'),
+        options: _valueSelectOptions(),
+        value: path,
+        onChange: next => {
+          captureActLabels();
+          if (state.spaths.includes(String(next))) {
+            box.setValue(state.spaths[i]);
+            toast(t('app.labelValueTaken'), 'err');
+            return;
+          }
+          repathActLabel(state.spaths[i], String(next));
+          state.spaths[i] = String(next);
+          syncActMode();
+        },
+      });
+      pathRow.appendChild(box.el);
     }
   });
   wireActLabelDrag(host);

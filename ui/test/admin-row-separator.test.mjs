@@ -26,7 +26,7 @@ const html = read('admin/index.html');
 test('the separator is removed from the last visible row, not the last child', () => {
   assert.match(
     css,
-    /\.row:not\(:has\(~ \.row:not\(\.d-none\), ~ \.row-wrap:not\(\.d-none\)\)\)::after\{content:none\}/,
+    /\.row:not\(:has\(~ \.row:not\(\.d-none\), ~ \.row-wrap:not\(\.d-none\):not\(\.reveal:not\(\.open\)\)\)\)::after\{content:none\}/,
     'the visibility-aware rule is gone',
   );
   assert.doesNotMatch(
@@ -44,7 +44,7 @@ test('a wrapped field draws the separator, and drops it when last visible', () =
   );
   assert.match(
     css,
-    /\.row-wrap:not\(:has\(~ \.row:not\(\.d-none\), ~ \.row-wrap:not\(\.d-none\)\)\)::after\{content:none\}/,
+    /\.row-wrap:not\(:has\(~ \.row:not\(\.d-none\), ~ \.row-wrap:not\(\.d-none\):not\(\.reveal:not\(\.open\)\)\)\)::after\{content:none\}/,
     'a trailing wrapped field draws a separator with nothing under it',
   );
 });
@@ -77,6 +77,26 @@ test('nothing toggles a row back to an inline display', () => {
     [],
     `Use classList.toggle('d-none', …) so the separator rule still applies:\n  ${offenders.join('\n  ')}`,
   );
+});
+
+/* A collapsed disclosure occupies the DOM at zero height. To the rules above it
+   must read as absent, exactly as .d-none does, or the row before it keeps a
+   separator with nothing under it and the group loses its end corners. */
+test('a collapsed disclosure does not count as a visible sibling', () => {
+  const clause = String.raw`:not\(\.reveal:not\(\.open\)\)`;
+  const rules = css.split('\n').filter(l => l.includes(':has(~ .row:not(.d-none)'));
+  assert.ok(rules.length >= 3, 'expected the separator and both corner rules to ask about siblings');
+  for (const rule of rules) {
+    assert.match(
+      rule,
+      new RegExp(`\\.row-wrap:not\\(\\.d-none\\)${clause}`),
+      `this rule counts a shut disclosure as visible:\n  ${rule}`,
+    );
+  }
+});
+
+test('the closed disclosure draws no separator of its own', () => {
+  assert.match(css, /\.reveal:not\(\.open\)::after\{content:none\}/);
 });
 
 /* The class has to actually hide, and to win against the row's own display. */

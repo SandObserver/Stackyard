@@ -1,4 +1,4 @@
-import { toast, ag, ap } from '/js/admin-shared.js?v=0f36d0dc';
+import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=a77346f6';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=e644a5c5';
 import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=74cb4272';
@@ -18,13 +18,12 @@ const SOCKET_HINTS = Object.freeze({
 
 /* Both controls only mean anything while auth is on. Revoke also needs a stored
    password, which is what makes a session possible. */
-function syncSessionRows() {
+function syncSessionRows(now = false) {
   const on = !!inp('sec-en')?.checked;
   el('sec-logout')?.classList.toggle('d-none', !on);
   const canRevoke = on && _passwordSet;
-  el('sec-revoke-row')?.classList.toggle('d-none', !canRevoke);
-  const revokeTip = el('revoke-tip');
-  if (revokeTip) revokeTip.classList.toggle('d-none', !canRevoke);
+  reveal(el('sec-revoke-wrap'), canRevoke, now);
+  reveal(el('revoke-tip-wrap'), canRevoke, now);
 }
 
 export function loadSettings(c) {
@@ -175,19 +174,15 @@ export function loadSettings(c) {
   const dockerEnEl = inp('srv-docker-en');
   const dockerSubEl = el('srv-docker-sub');
   const socketEl = inp('srv-socket');
-  const hideHealthyRowEl = el('srv-hide-healthy-row');
   const hideHealthyEl = inp('srv-hide-healthy');
   if (dockerEnEl) {
     dockerEnEl.checked = !!s.server?.socketProxyUrl;
-    const applyDocker = v => {
+    const applyDocker = (v, now = false) => {
       if (dockerSubEl) dockerSubEl.classList.toggle('open', v);
-      if (hideHealthyRowEl) hideHealthyRowEl.classList.toggle('d-none', !v);
-      const socketRow = el('ie-socket');
-      if (socketRow) socketRow.classList.toggle('d-none', !v);
-      const socketHint = el('socket-hint');
-      if (socketHint) socketHint.classList.toggle('d-none', !v);
+      reveal(el('srv-docker-rows'), v, now);
+      reveal(el('socket-hint-wrap'), v, now);
     };
-    applyDocker(dockerEnEl.checked);
+    applyDocker(dockerEnEl.checked, true);
     dockerEnEl.addEventListener('change', () => applyDocker(dockerEnEl.checked));
   }
   if (hideHealthyEl) hideHealthyEl.checked = s.server?.hideHealthyBadge !== false;
@@ -220,7 +215,7 @@ export function loadSettings(c) {
       secRevoke.disabled = false;
     }
   });
-  secEnEl?.addEventListener('change', syncSessionRows);
+  secEnEl?.addEventListener('change', () => syncSessionRows());
 
   syncAuthFromServer();
 }
@@ -238,14 +233,12 @@ async function syncAuthFromServer() {
   if (secEnEl) {
     /* The effective state. Enabled with no password behaves as off. */
     secEnEl.checked = !!d.enabled;
-    const pwRow = el('ie-pw');
-    const pwHint = el('pw-hint-static');
-    if (pwRow) pwRow.classList.toggle('d-none', !d.enabled);
-    if (pwHint) pwHint.classList.toggle('d-none', !d.enabled);
+    reveal(el('ie-pw-wrap'), !!d.enabled, true);
+    reveal(el('pw-hint-wrap'), !!d.enabled, true);
   }
   const pwValEl = el('ie-pw-v');
   if (pwValEl) pwValEl.textContent = d.passwordSet ? t('common.configured') : t('common.notSet');
-  syncSessionRows();
+  syncSessionRows(true);
 }
 /** The stored wallpaper, named by its file rather than its full path.
 
@@ -272,12 +265,15 @@ export function showBgFit(fit) {
 }
 
 export function showBgFields(type) {
-  ['unsplash', 'url', 'color'].forEach(t => {
-    const node = el(`bg-${t}-fields`);
-    if (node) node.classList.toggle('d-none', t !== type);
+  const host = el('bg-unsplash-fields')?.parentElement;
+  swapContent(host, () => {
+    ['unsplash', 'url', 'color'].forEach(t => {
+      const node = el(`bg-${t}-fields`);
+      if (node) node.classList.toggle('d-none', t !== type);
+    });
+    const brRow = el('bg-brightness-row');
+    if (brRow) brRow.classList.toggle('d-none', type === 'color');
   });
-  const brRow = el('bg-brightness-row');
-  if (brRow) brRow.classList.toggle('d-none', type === 'color');
 }
 /** @param {Event} [e] */
 async function saveLabels(e) {

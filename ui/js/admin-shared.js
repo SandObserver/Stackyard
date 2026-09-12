@@ -1,7 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { nextActiveIndex, recoversSession, toastHoldMs } from '/js/admin-logic.js?v=74cb4272';
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { el, qa, q } from '/js/utils.js?v=970a91b0';
+import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=74cb4272';
+import { el, q } from '/js/utils.js?v=970a91b0';
 import { t } from '/js/i18n.js?v=e644a5c5';
 import { iconChain } from '/js/icons.js?v=04e7796e';
 
@@ -124,11 +123,84 @@ export function setTogDisabled(input, disabled, describedById) {
   });
 }
 
+/** Opens or closes a `.reveal` wrapper.
+
+    @param {Element|null} node @param {boolean} open
+    @param {boolean} [now] Skip the animation, for state restored from the
+      server rather than chosen by the user.
+    @returns {void} */
+export function reveal(node, open, now = false) {
+  if (!node) return;
+  const box = /** @type {HTMLElement} */ (node);
+  if (box.classList.contains('open') === open) return;
+  /* The clip is only for the animation. Left on it cuts off any menu opened
+     from a revealed row. */
+  box.classList.remove('reveal-done');
+  clearTimeout(Number(box.dataset.revealTimer || 0));
+  if (open) {
+    const settle = () => box.classList.add('reveal-done');
+    if (now) settle();
+    else box.dataset.revealTimer = String(setTimeout(settle, 400));
+  }
+  if (now) {
+    box.classList.add('reveal-now');
+    box.classList.toggle('open', open);
+    /* Read back, or both class changes land in one recalculation and it
+       animates anyway. */
+    void box.offsetHeight;
+    box.classList.remove('reveal-now');
+    return;
+  }
+  box.classList.toggle('open', open);
+}
+
+/** Replaces a container's content and animates its height from the old to the
+    new one.
+
+    @param {Element|null} node The box whose height is animated.
+    @param {() => void} apply Renders the new content, synchronously.
+    @returns {void} */
+export function swapContent(node, apply) {
+  if (!node) {
+    apply();
+    return;
+  }
+  const box = /** @type {HTMLElement} */ (node);
+  const from = box.getBoundingClientRect().height;
+  /* Abandon a running swap, or its cleanup lands mid-way and pins a height. */
+  box.classList.remove('swapping');
+  box.style.height = '';
+  box.style.overflow = '';
+  box.style.transition = '';
+  apply();
+  const to = box.getBoundingClientRect().height;
+  if (!(from > 0) || Math.abs(to - from) < 1) return;
+  box.classList.add('swapping');
+  /* Inline, not a class. A disclosure's own rule is more specific and would
+     replace this transition with its own. */
+  box.style.overflow = 'hidden';
+  box.style.transition = 'height var(--t-reveal) var(--ease-reveal)';
+  box.style.height = `${from}px`;
+  void box.offsetHeight;
+  box.style.height = `${to}px`;
+  let timer = 0;
+  const end = e => {
+    if (e && (e.target !== box || e.propertyName !== 'height')) return;
+    clearTimeout(timer);
+    box.removeEventListener('transitionend', end);
+    box.classList.remove('swapping');
+    box.style.height = '';
+    box.style.overflow = '';
+    box.style.transition = '';
+  };
+  box.addEventListener('transitionend', end);
+  /* transitionend never fires if the transition is dropped, and the height
+     would stay pinned for the session. */
+  timer = setTimeout(end, 600);
+}
+
 export const PE_SVG =
   '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
-
-export const CHEV_SVG =
-  '<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
 /* `root` lets a caller wire a subtree that is not in the document yet. */
 /** A function placeholder is resolved on use, not at wiring time: this runs
@@ -206,111 +278,6 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
 
 /* The listbox interaction WAI-ARIA expects for a `.row-dd` checklist. The
    caller owns the markup and what a toggle means. */
-export function wireChecklist(dd, btn, list, onToggle) {
-  const opts = () => qa('li[role="option"]', list);
-  let active = -1;
-
-  const setActive = i => {
-    const o = opts();
-    if (!o.length || i == null) return;
-    active = i;
-    o.forEach((li, n) => {
-      li.tabIndex = n === active ? 0 : -1;
-      li.classList.toggle('kb-active', n === active);
-    });
-    o[active].focus();
-    fluidHoverKb(o[active]);
-  };
-  /* Scoped to the open state. A listener that outlives the list holds the
-     detached subtree it closes over, and the settings form rewires on every
-     render. */
-  let outside = null;
-  const open = () => {
-    list.hidden = false;
-    btn.setAttribute('aria-expanded', 'true');
-    outside = new AbortController();
-    document.addEventListener(
-      'click',
-      e => {
-        if (!dd.contains(e.target)) close();
-      },
-      { signal: outside.signal },
-    );
-    const o = opts();
-    const first = o.findIndex(li => li.getAttribute('aria-selected') === 'true');
-    setActive(first >= 0 ? first : 0);
-  };
-  const close = ({ focusBtn = false } = {}) => {
-    outside?.abort();
-    outside = null;
-    list.hidden = true;
-    btn.setAttribute('aria-expanded', 'false');
-    opts().forEach(li => li.classList.remove('kb-active'));
-    fluidHoverClear(list);
-    if (focusBtn) btn.focus();
-  };
-  const toggle = li => {
-    onToggle(li);
-  };
-
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    if (list.hidden) open();
-    else close();
-  });
-  btn.addEventListener('keydown', e => {
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (list.hidden) open();
-    }
-  });
-
-  list.addEventListener('click', e => {
-    const li = e.target.closest('li[role="option"]');
-    if (li) toggle(li);
-  });
-  list.addEventListener('keydown', e => {
-    const o = opts();
-    if (!o.length) return;
-    const moved = nextActiveIndex(e.key, active, o.length);
-    if (moved != null) {
-      e.preventDefault();
-      setActive(moved);
-      return;
-    }
-    switch (e.key) {
-      case ' ':
-      case 'Enter':
-        e.preventDefault();
-        if (o[active]) toggle(o[active]);
-        break;
-      case 'Escape':
-        e.preventDefault();
-        close({ focusBtn: true });
-        break;
-      case 'Tab':
-        close();
-        break;
-      default:
-        break;
-    }
-  });
-
-  opts().forEach(li => {
-    li.tabIndex = -1;
-  });
-  return { close };
-}
-
-/* An icon name resolves to several candidate URLs, and only the browser can
-   say which one exists. Walk them on error and fall back to a letter, or a
-   name that resolves to nothing leaves a broken image behind.
-
-   Shared because it was not: the folder picker carried its own copy with no
-   fallback at all, and every app whose first candidate missed showed broken.
-
-    @param {HTMLElement} host @param {string} [rawIcon] @param {string} [fallbackText]
-    @param {string} [imgCss] @returns {void} */
 export function paintIcon(host, rawIcon, fallbackText = '?', imgCss = '') {
   const letter = () => {
     host.textContent = fallbackText;
