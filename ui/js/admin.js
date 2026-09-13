@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=ab32365d';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=06ddf610';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=ae0bd2a5';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=c9059926';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=937c0555';
 import { resolveAdminSection } from '/js/admin-logic.js?v=69e57d35';
 import {
   buildAppItem,
@@ -10,19 +10,13 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=4f71ef6c';
-import {
-  loadSettings,
-  settingsDirty,
-  showBgFields,
-  showBgFit,
-  showWallpaperFile,
-} from '/js/admin-settings.js?v=f939bd39';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=98013f90';
 import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=ca64cc9c';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=efa3785c';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=20f4cf98';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=6188bddf';
+import { createListbox } from '/js/listbox.js?v=3e267705';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=e644a5c5';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -161,6 +155,8 @@ async function appendAndSave(newItems) {
     full.items = [...current, ...newItems];
     await ap('/api/config', full);
     state.items = full.items;
+    _savedItems = JSON.stringify(state.items);
+    syncDashSave();
   } finally {
     state.saving = false;
     render();

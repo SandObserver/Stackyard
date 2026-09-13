@@ -5,7 +5,7 @@
 import { t } from '/js/i18n.js?v=e644a5c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { reveal } from '/js/admin-shared.js?v=ca64cc9c';
-import { createListbox } from '/js/listbox.js?v=6188bddf';
+import { createListbox } from '/js/listbox.js?v=3e267705';
 import { renderColorControl } from '/js/admin-color-control.js?v=cfb3b3e9';
 import {
   seedCarried,

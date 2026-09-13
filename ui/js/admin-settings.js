@@ -9,7 +9,7 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=69e57d35';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, q, qa, setUserText } from '/js/utils.js?v=ada0c382';
+import { el, inp, setUserText } from '/js/utils.js?v=ada0c382';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;

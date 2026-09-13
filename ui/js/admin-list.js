@@ -19,7 +19,7 @@ import { paintIcon } from '/js/admin-shared.js?v=ca64cc9c';
 import { clr as rc, el, qa, setUserText } from '/js/utils.js?v=ada0c382';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=e644a5c5';
-import { sizeLabel } from '/js/admin-widget-form.js?v=efa3785c';
+import { sizeLabel } from '/js/admin-widget-form.js?v=20f4cf98';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=12b0a947';
 
 /** @type {{ openModal: (idx: number|null) => void,

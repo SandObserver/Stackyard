@@ -38,6 +38,14 @@ test('each header Save is driven by its own unsaved-change check', () => {
   assert.match(fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8'), /addEventListener\('beforeunload'/);
 });
 
+/* An import writes the config itself. Without this the page warns about
+   unsaved changes that are already on the server. */
+test('an import records what it saved', () => {
+  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  const fn = src.slice(src.indexOf('async function appendAndSave'), src.indexOf('async function saveOrRevert'));
+  assert.match(fn, /state\.items = full\.items;\s*_savedItems = JSON\.stringify\(state\.items\);\s*syncDashSave\(\);/);
+});
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const html = fs.readFileSync(path.join(root, 'admin/index.html'), 'utf8');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');

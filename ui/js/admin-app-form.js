@@ -22,7 +22,7 @@ import {
   setTogDisabled,
   swapContent,
 } from '/js/admin-shared.js?v=ca64cc9c';
-import { createListbox } from '/js/listbox.js?v=6188bddf';
+import { createListbox } from '/js/listbox.js?v=3e267705';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
 import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=cfb3b3e9';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
