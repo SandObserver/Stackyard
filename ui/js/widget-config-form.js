@@ -4,8 +4,9 @@
 
 import { t } from '/js/i18n.js?v=e644a5c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { wireChecklist } from '/js/admin-shared.js?v=0f36d0dc';
-import { renderColorControl } from '/js/admin-color-control.js?v=d162431d';
+import { reveal } from '/js/admin-shared.js?v=a77346f6';
+import { createListbox } from '/js/listbox.js?v=2c9e5359';
+import { renderColorControl } from '/js/admin-color-control.js?v=bedb7be2';
 import {
   seedCarried,
   applyOptionSet,
@@ -19,8 +20,6 @@ import { qi } from '/js/utils.js?v=970a91b0';
 
 const PE =
   '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
-const CHEV =
-  '<svg class="dd-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5 12 6.5 16 10.5"/><path d="M8 13.5 12 17.5 16 13.5"/></svg>';
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a
    long session, and an id that changes per run cannot be asserted on. */
@@ -231,38 +230,26 @@ function _picklist(field, value, ctx, size) {
 
   let opts = Array.isArray(field.options) ? field.options.slice() : [];
   const sels = [];
+  const shown = cur => {
+    const out = opts.map(o => ({ value: String(o.value), label: o.label != null ? String(o.label) : String(o.value) }));
+    if (cur && !opts.some(o => String(o.value) === cur)) out.unshift({ value: cur, label: cur });
+    out.unshift({ value: '', label: t('widgetCfg.empty') });
+    return out;
+  };
   for (let i = 0; i < count; i++) {
     const row = document.createElement('div');
     row.className = 'row';
     setHtml(row, html`<span class="rl">${rowLabel} ${i + 1}</span>`);
-    const selWrap = document.createElement('div');
-    selWrap.className = 'sel-wrap';
-    const sel = document.createElement('select');
-    sel.className = 'row-sel';
-    sel.setAttribute('aria-label', `${rowLabel} ${i + 1}`);
-    selWrap.appendChild(sel);
-    const chevT = document.createElement('template');
-    setHtml(chevT, raw(CHEV));
-    selWrap.appendChild(chevT.content.firstElementChild);
-    row.appendChild(selWrap);
+    const cur = chosen[i] != null ? String(chosen[i]) : '';
+    const lb = createListbox({ label: `${rowLabel} ${i + 1}`, options: shown(cur), value: cur });
+    row.appendChild(lb.el);
     card.appendChild(row);
-    sels.push(sel);
+    sels.push(lb);
   }
 
   function paint() {
-    sels.forEach((sel, i) => {
-      const cur = sel.value || (chosen[i] != null ? String(chosen[i]) : '');
-      const items = opts.map(
-        o =>
-          html`<option value="${o.value}"${String(o.value) === cur ? ' selected' : ''}>${o.label != null ? o.label : o.value}</option>`,
-      );
-      if (cur && !opts.some(o => String(o.value) === cur))
-        items.unshift(html`<option value="${cur}" selected>${cur}</option>`);
-      items.unshift(html`<option value=""${cur ? '' : ' selected'}>${t('widgetCfg.empty')}</option>`);
-      setHtml(sel, html`${items}`);
-    });
+    sels.forEach(lb => lb.setOptions(shown(lb.getValue() || ''), lb.getValue() || ''));
   }
-  paint();
 
   if (field.optionsFrom) {
     btn.addEventListener('click', async () => {
@@ -286,7 +273,7 @@ function _picklist(field, value, ctx, size) {
     btn.style.display = 'none';
   }
 
-  const get = () => [field.key, sels.map(s => s.value || null)];
+  const get = () => [field.key, sels.map(lb => lb.getValue() || null)];
   return { el: wrap, get, control: null, liveValue: () => null };
 }
 
@@ -299,38 +286,46 @@ function _select(field, value, ctx, config = {}) {
   let carried = seedCarried(config, carryKeys);
   let chosen = value != null ? String(value) : field.default != null ? String(field.default) : '';
   setHtml(row, html`<span class="rl">${field.label}${_tag(field)}</span>`);
-  const selWrap = document.createElement('div');
-  selWrap.className = 'sel-wrap';
-  const sel = document.createElement('select');
-  sel.className = 'row-sel';
-  selWrap.appendChild(sel);
-  const chevT = document.createElement('template');
-  setHtml(chevT, raw(CHEV));
-  selWrap.appendChild(chevT.content.firstElementChild);
-  row.appendChild(selWrap);
+  /* Keep a stored value the list does not offer, or opening the picker
+     discards it. */
+  const shown = () => {
+    const out = opts.map(o => ({ value: String(o.value), label: o.label != null ? String(o.label) : String(o.value) }));
+    if (chosen && !opts.some(o => String(o.value) === chosen)) out.unshift({ value: chosen, label: chosen });
+    if (field.optional || !out.length) out.unshift({ value: '', label: t('widgetCfg.none') });
+    return out;
+  };
+  /* A native select lands on its first option when nothing is stored. Fetched
+     options arrive after the field is built, so this runs on every paint. */
+  const normalise = () => {
+    if (!field.optional && !chosen && opts.length) chosen = String(opts[0].value);
+  };
+  normalise();
+  const lb = createListbox({
+    label: field.label,
+    options: shown(),
+    value: chosen,
+    onChange: v => {
+      chosen = v == null ? '' : String(v);
+      syncCarried();
+      wrap.dispatchEvent(new Event('change'));
+    },
+  });
+  row.appendChild(lb.el);
   wrap.appendChild(row);
 
-  function paint() {
-    const items = opts.map(
-      o =>
-        html`<option value="${o.value}"${String(o.value) === chosen ? ' selected' : ''}>${o.label != null ? o.label : o.value}</option>`,
-    );
-    if (chosen && !opts.some(o => String(o.value) === chosen))
-      items.unshift(html`<option value="${chosen}" selected>${chosen}</option>`);
-    if (field.optional) items.unshift(html`<option value="">${t('widgetCfg.none')}</option>`);
-    setHtml(sel, items.length ? html`${items}` : html`<option value="">${t('widgetCfg.none')}</option>`);
-  }
-  paint();
+  const paint = () => {
+    normalise();
+    lb.setOptions(shown(), chosen);
+  };
 
   function syncCarried() {
     if (!carryKeys.length) return;
     carried = applyOptionSet(
       carried,
-      opts.find(x => String(x.value) === sel.value),
+      opts.find(x => String(x.value) === chosen),
       carryKeys,
     );
   }
-  sel.addEventListener('change', syncCarried);
 
   if (field.optionsFrom) {
     const fr = document.createElement('div');
@@ -352,7 +347,7 @@ function _select(field, value, ctx, config = {}) {
       btn.disabled = true;
       try {
         opts = await _fetchOptions(field, ctx);
-        chosen = sel.value || chosen;
+        chosen = lb.getValue() || chosen;
         paint();
         syncCarried();
         status.textContent = opts.length ? t('widgetCfg.loaded', { count: opts.length }) : t('widgetCfg.noOptions');
@@ -372,8 +367,8 @@ function _select(field, value, ctx, config = {}) {
     wrap.appendChild(h);
   }
 
-  const get = () => [field.key, sel.value, carryKeys.length ? carried : null];
-  return { el: wrap, get, control: sel, liveValue: () => sel.value };
+  const get = () => [field.key, chosen, carryKeys.length ? carried : null];
+  return { el: wrap, get, control: wrap, liveValue: () => chosen };
 }
 
 function _pills(field, value) {
@@ -393,10 +388,35 @@ function _pills(field, value) {
     r.addEventListener('change', () => {
       if (r.checked) {
         sel = r.value;
-        group.dispatchEvent(new Event('change'));
+        wrap.dispatchEvent(new Event('change'));
       }
     }),
   );
+
+  /* A segmented control cannot shrink: its labels do not wrap, so it can be
+     wider than the screen. When it does not fit it becomes the picker. */
+  const label = row.querySelector('.rl');
+  const fits = () => {
+    const room = row.clientWidth - label.getBoundingClientRect().width - 24;
+    return room <= 0 || group.scrollWidth <= room;
+  };
+  if (typeof ResizeObserver === 'function') {
+    const ro = new ResizeObserver(() => {
+      if (fits()) return;
+      ro.disconnect();
+      const box = createListbox({
+        label: field.label,
+        options: opts.map(o => ({ value: String(o.value), label: String(o.label) })),
+        value: sel,
+        onChange: v => {
+          sel = String(v);
+          wrap.dispatchEvent(new Event('change'));
+        },
+      });
+      group.replaceWith(box.el);
+    });
+    ro.observe(row);
+  }
   if (field.hint) {
     const h = document.createElement('p');
     h.className = 'grp-tip in-card';
@@ -404,7 +424,7 @@ function _pills(field, value) {
     wrap.appendChild(h);
   }
   const get = () => [field.key, sel];
-  return { el: wrap, get, control: group, liveValue: () => sel };
+  return { el: wrap, get, control: wrap, liveValue: () => sel };
 }
 
 /* ── Multi-select → checklist dropdown (tap to toggle), value is array in declared order. ── */
@@ -413,29 +433,27 @@ function _multiselect(field, value) {
   const row = document.createElement('div');
   row.className = 'row';
   const opts = Array.isArray(field.options) ? field.options : [];
-  const cur = new Set(
+  let cur = new Set(
     Array.isArray(value) ? value.map(String) : Array.isArray(field.default) ? field.default.map(String) : [],
   );
-  const summary = () =>
-    cur.size === 0 ? t('widgetCfg.noneSelected') : t('widgetCfg.selectedCount', { count: cur.size });
-  setHtml(
-    row,
-    html`<span class="rl">${field.label}</span><div class="row-dd"><button class="row-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ms-sum">${summary()}</span>${raw(CHEV)}</button><ul class="row-dd-list checklist" role="listbox" aria-multiselectable="true" hidden>${opts.map(o => html`<li role="option" data-val="${o.value}" aria-selected="${String(cur.has(String(o.value)))}">${o.label}</li>`)}</ul></div>`,
-  );
-  wrap.appendChild(row);
-  const dd = row.querySelector('.row-dd');
-  const btn = row.querySelector('.row-dd-btn'),
-    list = row.querySelector('.row-dd-list'),
-    sumEl = row.querySelector('.ms-sum');
-  wireChecklist(dd, btn, list, li => {
-    const v = li.dataset.val,
-      on = li.getAttribute('aria-selected') !== 'true';
-    li.setAttribute('aria-selected', String(on));
-    if (on) cur.add(v);
-    else cur.delete(v);
-    sumEl.textContent = summary();
-    wrap.dispatchEvent(new Event('change'));
+  /* Reads what it is handed, not `cur`. The button is painted before the
+     change is reported back. */
+  const summary = sel =>
+    sel.length === 0 ? t('widgetCfg.noneSelected') : t('widgetCfg.selectedCount', { count: sel.length });
+  setHtml(row, html`<span class="rl">${field.label}</span>`);
+  const lb = createListbox({
+    label: field.label,
+    multiple: true,
+    options: opts.map(o => ({ value: String(o.value), label: String(o.label) })),
+    value: [...cur],
+    summary,
+    onChange: v => {
+      cur = new Set(v);
+      wrap.dispatchEvent(new Event('change'));
+    },
   });
+  row.appendChild(lb.el);
+  wrap.appendChild(row);
   if (field.hint) {
     const h = document.createElement('p');
     h.className = 'grp-tip in-card';
@@ -470,7 +488,7 @@ function _color(field, value) {
 }
 
 function _visible(b) {
-  return b.el.style.display !== 'none';
+  return b.wrap ? b.wrap.classList.contains('open') : b.el.style.display !== 'none';
 }
 
 function _missingIn(built) {
@@ -494,12 +512,44 @@ function _wireShowIf(built) {
   for (const b of built) if (b.liveValue) liveByKey[b.field.key] = b.liveValue;
   const fields = built.map(b => b.field);
   const readValue = key => (liveByKey[key] ? liveByKey[key]() : undefined);
+  /* The wrapper takes the row's own place, so a single-row field keeps the
+     wrapper that draws its separator. */
+  for (const b of built) {
+    if (!b.field.showIf || !b.el.parentNode) continue;
+    const wrap = document.createElement('div');
+    wrap.className = b.el.classList.contains('row') ? 'row-wrap reveal' : 'reveal';
+    const inner = document.createElement('div');
+    inner.className = 'reveal-in';
+    b.el.replaceWith(wrap);
+    inner.appendChild(b.el);
+    wrap.appendChild(inner);
+    b.wrap = wrap;
+  }
+  /* A card with nothing left in it still draws its border and claims its gap. */
+  const cards = [...new Set(built.map(b => b.el.closest('.grp')).filter(Boolean))];
+  const cardHasRow = card =>
+    [...card.querySelectorAll('.row')].some(r => !r.classList.contains('d-none') && !r.closest('.reveal:not(.open)'));
+  const syncCards = () => {
+    for (const card of cards) {
+      const empty = !cardHasRow(card);
+      card.classList.toggle('grp-empty', empty);
+      const hdr = card.previousElementSibling;
+      if (hdr?.classList.contains('grp-hdr')) hdr.classList.toggle('grp-empty', empty);
+    }
+  };
+
+  let first = true;
   const apply = () => {
     const shown = visibleFieldFlags(fields, readValue);
     built.forEach((b, i) => {
       if (!b.field.showIf) return;
-      b.el.style.display = shown[i] ? '' : 'none';
+      if (b.wrap) reveal(b.wrap, shown[i], first);
+      else b.el.style.display = shown[i] ? '' : 'none';
     });
+    /* Again after the transition: a closing card still holds its rows. */
+    syncCards();
+    setTimeout(syncCards, 400);
+    first = false;
   };
   for (const b of built) {
     if (b.control) b.control.addEventListener('change', apply);

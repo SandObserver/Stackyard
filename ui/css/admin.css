@@ -22,6 +22,8 @@
   --r:var(--sy-radius-lg);
   --rs:var(--sy-radius-md);
   --t:.15s ease;
+  --t-reveal:.2s;
+  --ease-reveal:cubic-bezier(.32,.72,0,1);
   --sbw:320px;
 
   /* Slider fills and colour ramps must run the same way as the native range
@@ -147,7 +149,12 @@ html[data-theme="light"] {
   --shadow-sunken:inset 1px 1px 0 rgba(0,0,0,.06),inset -1px -1px 0 rgba(255,255,255,.7);
 }
 html,body{min-height:100vh;color:var(--tx);font-family:var(--font-ui);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-html{background:var(--bg-color,var(--bg-outer))}
+/* The same colour html::before paints, and the same fallback. The pseudo is
+   position:fixed, so it covers the layout viewport only. iOS collapses its
+   toolbar when a menu opens, which grows the visual viewport past that by the
+   toolbar's height and exposes a strip of canvas at the top and the bottom. The
+   canvas is this background; a different value here is a visible band. */
+html{background:var(--bg-color,var(--bg-base))}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
 .adm-outer{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:44px 0}
@@ -182,6 +189,9 @@ html{background:var(--bg-color,var(--bg-outer))}
 .ev-back:hover{opacity:.8}
 
 /* ── Groups ── */
+/* Nothing left to show. It would otherwise draw its border as a stray rule
+   and still claim the gap between cards. */
+.grp-empty{display:none}
 .grp{position:relative;background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:8px;border:1px solid var(--bd-inner)}
 .grp-hdr{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm);padding:26px 16px 6px;}
 .grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:8px 16px 14px;line-height:1.55}
@@ -200,13 +210,14 @@ html{background:var(--bg-color,var(--bg-outer))}
    how a grouped list draws it. A border cannot be inset, so it is drawn here.
    Absolute, so it is not a grid item in the two-column drow. */
 .row::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:0;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
-.row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none)))::after{content:none}
+.row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open))))::after{content:none}
 /* A field with a hint, or a control that draws several rows, is wrapped so
    `showIf` has one element to hide. The wrapper draws the closing separator,
    below the hint, so the line falls between two fields and not inside one. */
 .row-wrap{position:relative}
 .row-wrap::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:0;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
-.row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none)))::after{content:none}
+.row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open))))::after{content:none}
+.reveal:not(.open)::after{content:none}
 /* The group is rounded hard and cannot clip: it keeps overflow visible so a
    dropdown can escape it. So the end rows carry the corners themselves, or a
    row's hover fill squares them off. Last visible, not last child, for the same
@@ -215,9 +226,12 @@ html{background:var(--bg-color,var(--bg-outer))}
    hover highlight. Without them the top row loses its corners and squares off
    the group. */
 .grp > .row:first-child,.grp > .row-wrap:first-child > .row:first-child,
-.grp > .fh-hl + .row,.grp > .fh-hl + .row-wrap > .row:first-child{border-start-start-radius:var(--sy-radius-group);border-start-end-radius:var(--sy-radius-group)}
-.grp > .row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none))),
-.grp > .row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none))) > .row:last-child{border-end-start-radius:var(--sy-radius-group);border-end-end-radius:var(--sy-radius-group)}
+.grp > .reveal:first-child > .reveal-in > .row:first-child,
+.grp > .fh-hl + .row,.grp > .fh-hl + .row-wrap > .row:first-child,
+.grp > .fh-hl + .reveal > .reveal-in > .row:first-child{border-start-start-radius:var(--sy-radius-group);border-start-end-radius:var(--sy-radius-group)}
+.grp > .row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open)))),
+.grp > .row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open)))) > .row:last-child,
+.grp > .reveal.open:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open)))) > .reveal-in > .row:last-child{border-end-start-radius:var(--sy-radius-group);border-end-end-radius:var(--sy-radius-group)}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:var(--ov-soft)}
 .grp:has(> .fh-hl.on) .row-link:hover{background:transparent}
@@ -243,9 +257,19 @@ html{background:var(--bg-color,var(--bg-outer))}
 .row-dd-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color var(--t)}
 .row-dd-btn:hover{color:var(--tx)}
 .dd-chev{flex-shrink:0;width:22px;height:22px;padding:3px;border-radius:6px;background:rgba(120,120,128,.22);color:var(--tx)}
-.row-dd-list{position:absolute;top:calc(100% + 4px);inset-inline-end:0;background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--rs);list-style:none;min-width:140px;z-index:200;box-shadow:var(--shadow-pop);overflow:hidden;padding:4px 0}
+/* In the top layer, so it escapes the scrolling settings panel that used to
+   clip it and the phone tab bar that used to cover it. The user-agent centres a
+   popover with inset:0 and margin:auto; both are cleared because place() sets
+   the position. Every list scrolls: one with twelve entries is taller than a
+   phone screen. */
+.row-dd-list{position:fixed;inset:auto;margin:0;top:-9999px;z-index:9000;background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--rs);list-style:none;min-width:180px;max-width:min(320px,calc(100vw - 16px));max-height:min(360px,60vh);overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-pop);padding:4px 0}
+/* Off screen until place() sets the real position, so a frame drawn before it
+   lands is not a flash somewhere else. 9000 clears the phone tab bar at 8000. */
 .row-dd-list[hidden]{display:none}
-.row-dd-list.checklist{max-height:240px;overflow-y:auto;min-width:200px}
+.row-dd-list.checklist{min-width:200px}
+
+.row-dd-group{padding:10px 16px 4px;font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;color:var(--dm);cursor:default;text-transform:none}
+.row-dd-group ~ .row-dd-group{padding-top:10px}
 .row-dd-empty{padding:10px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--dm);cursor:default}
 .row-dd-list li{padding:10px 16px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:10px}
 .row-dd-list li:hover,.row-dd-list li.kb-active{background:var(--ov-strong)}
@@ -401,10 +425,6 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .rl-sub{color:var(--dm);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:400}
 .bprow-hidden{display:none}
 /* Settings-row native select (Widget Type, slot Resource) */
-.sel-wrap{margin-inline-start:auto;position:relative;display:flex;align-items:center;justify-content:flex-end;min-width:0}
-.row-sel{appearance:none;-webkit-appearance:none;background:none;border:none;color:var(--dm);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);text-align:end;text-align-last:end;padding-block:0; padding-inline:0 26px;outline:none;cursor:pointer;max-width:100%;text-overflow:ellipsis}
-.row-sel option{background:var(--cp);color:var(--tx)}
-.sel-wrap .dd-chev{position:absolute;inset-inline-end:0;top:50%;transform:translateY(-50%);pointer-events:none}
 .upd-link{color:var(--ac2)}
 /* Left-aligned tile group (Size) */
 .tile-grp-left{margin-inline-start:0;margin-inline-end:auto}
@@ -496,6 +516,23 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .sp{flex:1}
 .sub{overflow:hidden;max-height:0;transition:max-height .25s ease;padding-inline-start:4px}
 .sub.open{max-height:2000px}
+
+/* ── Disclosure: rows a toggle reveals ──────────────────────────────────────
+   Keep min-height:0 and min-width:0 on the inner box. A grid item does not
+   shrink below its content without them: the track never closes, and a long
+   value pushes the row wider than its card. */
+.reveal{display:grid;grid-template-rows:0fr;transition:grid-template-rows calc(var(--t-reveal) * .8) var(--ease-reveal)}
+.reveal > .reveal-in{overflow:hidden;min-height:0;min-width:0;opacity:0;transition:opacity calc(var(--t-reveal) * .32) linear}
+.reveal.open{grid-template-rows:1fr;transition-duration:var(--t-reveal)}
+.reveal.open > .reveal-in{opacity:1;transition:opacity calc(var(--t-reveal) * .55) linear calc(var(--t-reveal) * .25)}
+/* State restored from the server. Nothing may animate. */
+.reveal.reveal-now,.reveal.reveal-now > .reveal-in{transition:none}
+/* Drop the clip once open, or it cuts off a menu opened from a revealed row. */
+.reveal.open.reveal-done > .reveal-in{overflow:visible}
+
+/* ── Swap: one block replaced by another ──────────────────────────────────── */
+.swapping > *{animation:swap-in var(--t-reveal) var(--ease-reveal)}
+@keyframes swap-in{from{opacity:0}to{opacity:1}}
 
 /* ── Modal dialog (folder picker, import preview, prompts) ── */
 /* The dialog is its own box in the top layer, so it needs no wrapper and no
@@ -591,18 +628,20 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .setpw-btn:hover{background:var(--ac2)}
 
 /* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */
-#ev-body{padding:4px 0 24px}
+/* Do not use a sibling combinator below. The editor parks display:none helpers
+   between cards; they stay in the sibling chain and the gap silently goes to
+   zero. Flex, because a display:none child is not a flex item and because these
+   margins must add rather than collapse. */
+#ev-body{padding:4px 0 24px;display:flex;flex-direction:column}
 #ev-body .sec{padding:0;margin-bottom:0}
 /* Headers and tips sit within the gap between cards. */
-#ev-body .grp{margin-bottom:0}
-#ev-body .grp + .grp{margin-top:44px}
+#ev-body > .grp{margin-block:44px 0}
 #ev-body .grp-hdr{margin-top:36px;padding-top:0}
 #ev-body .grp-hdr:first-child{margin-top:0}
-#ev-body .grp-hdr + .grp{margin-top:0}
-#ev-body .grp-tip + .grp{margin-top:44px}
-#ev-body .grp-tip + .grp-hdr{margin-top:36px}
-/* Both classes. The heading is the first child of its own container, so the
-   :first-child rule above outranks a single-class selector and zeroes it. */
+/* Cancels the margin of the card below. Direct children only: applied to a
+   nested heading it pulls a card up over it. */
+#ev-body > .grp-hdr{margin-bottom:-44px}
+#ev-body > :first-child{margin-top:0}
 #ev-body .grp-hdr.albl-hdr-first{margin-top:44px}
 #ev-body .div{margin:20px 0;background:var(--bd-inner)}
 #ev-body .hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm)}
@@ -634,6 +673,7 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
   .al-search { min-height:44px; }
   .tog { min-height:44px; }
   .row-dd-btn { min-height:44px; }
+  .row-dd-list li[role="option"] { min-height:44px; }
   /* The element selector outranks the 36px rule in the mobile block below,
      which this block precedes. */
   html.is-mobile a.m-back { width:44px; height:44px; }

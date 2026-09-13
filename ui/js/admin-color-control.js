@@ -1,4 +1,4 @@
-import { PE_SVG, initInlineEdit, toast } from '/js/admin-shared.js?v=0f36d0dc';
+import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=a77346f6';
 import { t } from '/js/i18n.js?v=e644a5c5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=970a91b0';
@@ -134,15 +134,17 @@ export function renderColorControl(
        ${swatchColors.map(swatch)}`;
   const wrap = document.createElement('div');
   const slider = (label, cls, id, max, val, lo, hi) => html`
-    <div class="row hsb-row cc-tune"><span class="rl">${label}</span><div class="hsb-track"><span class="hsb-ico">${raw(lo)}</span><input type="range" class="${cls}" id="${id}" min="0" max="${max}" value="${val}" aria-label="${label}"><span class="hsb-ico">${raw(hi)}</span></div></div>`;
+    <div class="row hsb-row"><span class="rl">${label}</span><div class="hsb-track"><span class="hsb-ico">${raw(lo)}</span><input type="range" class="${cls}" id="${id}" min="0" max="${max}" value="${val}" aria-label="${label}"><span class="hsb-ico">${raw(hi)}</span></div></div>`;
   setHtml(
     wrap,
     html`
     <div class="row cc-row"><span class="rl">${label}</span><div class="cc-sw">${swatches}</div></div>
+    <div class="row-wrap reveal cc-tune"><div class="reveal-in">
     ${slider('Hue', 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
     ${slider('Saturation', 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
     ${slider('Brightness', 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
-    <div class="row ie-row cc-tune" id="${idPrefix}-code-row"><span class="rl">${t('appearance.colorCode')}</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
+    <div class="row ie-row" id="${idPrefix}-code-row"><span class="rl">${t('appearance.colorCode')}</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
+    </div></div>`,
   );
   /* The markup carries no style attribute, so the page keeps style-src without
      'unsafe-inline'. A swatch paints itself from its own value. */
@@ -157,13 +159,15 @@ export function renderColorControl(
     sEl = qLocal(`#${idPrefix}-s`),
     vEl = qLocal(`#${idPrefix}-v`);
   const codeRv = qLocal(`#${idPrefix}-code-row .rv`);
-  const tune = rows.filter(r => r.classList.contains('cc-tune'));
+  const tune = rows.find(r => r.classList.contains('cc-tune'));
   const hidden = document.createElement('input');
   hidden.type = 'hidden';
   hidden.id = `${idPrefix}-val`;
   container.appendChild(hidden);
   let mode = isSem(value) ? value : 'color';
   let showTune = false;
+  /* The first paint restores stored state, so it must not animate. */
+  let _painted = false;
   /* The value as it was stored. The sliders are integers, so reading a colour
      back out of them shifts it, and an untouched control would save a colour
      nobody picked. Cleared the moment the user changes anything. */
@@ -200,13 +204,14 @@ export function renderColorControl(
     });
     const rb = q('.cc-rainbow', container);
     if (rb) rb.classList.toggle('on', mode === 'color' && showTune);
-    tune.forEach(r => r.classList.toggle('d-none', !showTune));
+    reveal(tune, showTune, !_painted);
     if (!codeRv.closest('.editing')) {
       codeRv.textContent =
         mode === 'color' ? hex : t(mode === 'dark' ? 'appearance.displayDark' : 'appearance.displayLight');
       codeRv.classList.remove('is-ph');
     }
     hidden.value = mode === 'color' ? (pristine ?? hex) : mode;
+    _painted = true;
   }
   const commit = () => {
     pristine = null;

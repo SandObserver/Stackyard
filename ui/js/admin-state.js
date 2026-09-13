@@ -21,6 +21,7 @@ export const state = {
 
   _evItem: null,
   _evIsEdit: false,
+  _folderApps: null,
 
   _wtype: 'custom',
   _wsize: 'medium',

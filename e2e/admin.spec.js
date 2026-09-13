@@ -78,9 +78,12 @@ test('adding a widget stores its type', async ({ page, request }) => {
   /* Selected by data-ctype. The accessible name is untranslated, so matching on
      it breaks the moment that changes. */
   await page.locator('.tile-opt[data-ctype="widget"]').click();
-  const typeSelect = page.locator('#f-wtype');
-  await typeSelect.waitFor({ state: 'visible' });
-  await typeSelect.selectOption('clock');
+  /* The type picker is the shared listbox: a button that opens a list mounted on
+     <body>, not a native select. */
+  const typeButton = page.locator('#f-wtype-btn');
+  await typeButton.waitFor({ state: 'visible' });
+  await typeButton.click();
+  await page.locator('#f-wtype-list li[data-val="clock"]').click();
   await saveEditor(page);
 
   const cfg = await readConfig(request);

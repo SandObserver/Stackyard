@@ -47,8 +47,8 @@ test('the editor opens for an app that already has labels', async ({ page }) => 
   await seedConfig(page.request, { items: [labelled()] });
   await openDashboardList(page);
   await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
-  await expect(page.locator('#albl-path-0')).toBeVisible();
-  await expect(page.locator('#albl-path-1')).toBeVisible();
+  await expect(page.locator('#albl-path-0-btn')).toBeVisible();
+  await expect(page.locator('#albl-path-1-btn')).toBeVisible();
   expect(errors, 'building the editor must not throw').toEqual([]);
 });
 

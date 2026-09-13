@@ -198,6 +198,8 @@
       "/js/label-contrast.js?v=*": [
         "./ui/js/label-contrast.js"
       ],
+      "/js/listbox.js": ["./ui/js/listbox.js"],
+      "/js/listbox.js?v=*": ["./ui/js/listbox.js"],
       "/js/layout.js": [
         "./ui/js/layout.js"
       ],

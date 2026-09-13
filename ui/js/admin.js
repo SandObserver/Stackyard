@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=92c86f9e';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=ee5255ba';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=0c33cd56';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=600edac0';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=71e6b54c';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=72662312';
 import { resolveAdminSection } from '/js/admin-logic.js?v=74cb4272';
 import {
   buildAppItem,
@@ -10,12 +10,13 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=4f71ef6c';
-import { loadSettings, showBgFields, showBgFit, showWallpaperFile } from '/js/admin-settings.js?v=23830fd0';
-import { ag, ap, initInlineEdit, paintIcon, setReauthHandler, toast } from '/js/admin-shared.js?v=0f36d0dc';
-import { collapsedFolders, filter, state } from '/js/admin-state.js?v=7d68e98e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=0cb044d0';
+import { loadSettings, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=97733086';
+import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=a77346f6';
+import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=92d4a9b9';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
+import { createListbox } from '/js/listbox.js?v=2c9e5359';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=e644a5c5';
 import { loadLocalIcons } from '/js/icons.js?v=04e7796e';
@@ -32,7 +33,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=00c011c9';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=970a91b0';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=d162431d';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=bedb7be2';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
@@ -57,7 +58,7 @@ async function load() {
   await initI18n(c.settings?.language || 'en');
   document.title = t('nav.pageTitle');
   initVersion();
-  syncThemeLabel();
+  syncPickerLabels();
   try {
     const wr = await ag('/api/widgets');
     state._widgetReg = Object.create(null);
@@ -73,6 +74,7 @@ async function load() {
   document.body.classList.add('authed');
   render();
   loadSettings(c);
+  syncPickerLabels();
   applyBg();
 }
 
@@ -533,7 +535,7 @@ async function doSave(orig) {
         return;
       }
       /* An app belongs to one folder, or the dashboard renders it twice. */
-      const children = qa('#folder-apps-list li[aria-selected="true"]', document).map(li => li.dataset.val);
+      const children = state._folderApps?.getValue() || [];
       claimFolderChildren(state.items, orig?.id, children);
       item = {
         id:
@@ -731,84 +733,93 @@ async function initVersion() {
 
 function initSecToggle() {
   const en = inp('sec-en');
-  const pwRow = el('ie-pw');
-  const pwHint = el('pw-hint-static');
   if (!en) return;
-  function apply(on) {
-    if (pwRow) pwRow.classList.toggle('d-none', !on);
-    if (pwHint) pwHint.classList.toggle('d-none', !on);
+  function apply(on, now = false) {
+    reveal(el('ie-pw-wrap'), on, now);
+    reveal(el('pw-hint-wrap'), on, now);
   }
-  apply(en.checked);
+  apply(en.checked, true);
   en.addEventListener('change', () => apply(en.checked));
 }
 
 function initDockerToggle() {
   const en = inp('srv-docker-en');
-  const hideRow = el('srv-hide-healthy-row');
-  const socketRow = el('ie-socket');
   if (!en) return;
-  function apply(on) {
-    if (hideRow) hideRow.classList.toggle('d-none', !on);
-    if (socketRow) socketRow.classList.toggle('d-none', !on);
+  function apply(on, now = false) {
+    reveal(el('srv-docker-rows'), on, now);
+    reveal(el('socket-hint-wrap'), on, now);
   }
-  apply(en.checked);
+  apply(en.checked, true);
   en.addEventListener('change', () => apply(en.checked));
 }
 
 function initBgType() {
-  const btn = el('bg-type-btn');
-  const list = el('bg-type-list');
+  const slot = el('bg-type-slot');
   const hidden = inp('bg-type');
-  if (!btn || !list || !hidden) return;
-
-  function setVal(val) {
+  if (!slot || !hidden) return;
+  const apply = val => {
     hidden.value = val;
-    const labels = { unsplash: 'Unsplash', url: 'Image', color: 'Solid color' };
-    /* Update only the text node. The SVG chevron must survive. */
-    const textNode = btn.childNodes[0];
-    if (textNode && textNode.nodeType === 3) textNode.textContent = labels[val] || val;
-    list.querySelectorAll('li').forEach(li => li.setAttribute('aria-selected', String(li.dataset.val === val)));
-    list.hidden = true;
     showBgFields(val);
     const hint = el('bgcol-hint');
     if (hint) hint.style.display = val === 'unsplash' ? '' : 'none';
     const imgHint = el('bg-url-hint');
     if (imgHint) imgHint.style.display = val === 'url' ? '' : 'none';
-  }
-
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    list.hidden = !list.hidden;
+  };
+  const box = createListbox({
+    id: 'bg-type',
+    label: t('appearance.wallpaperSource'),
+    options: [
+      { value: 'unsplash', label: t('appearance.sourceUnsplash') },
+      { value: 'url', label: t('appearance.sourceUrl') },
+      { value: 'color', label: t('appearance.sourceColor') },
+    ],
+    value: hidden.value || 'unsplash',
+    onChange: v => apply(String(v)),
   });
-  list.querySelectorAll('li').forEach(li => {
-    li.addEventListener('click', () => setVal(li.dataset.val));
+  slot.appendChild(box.el);
+  relabel(() => {
+    box.setLabel(t('appearance.wallpaperSource'));
+    box.setOptions(
+      [
+        { value: 'unsplash', label: t('appearance.sourceUnsplash') },
+        { value: 'url', label: t('appearance.sourceUrl') },
+        { value: 'color', label: t('appearance.sourceColor') },
+      ],
+      hidden.value,
+    );
   });
-  document.addEventListener('click', () => {
-    list.hidden = true;
-  });
-
-  setVal(hidden.value || 'unsplash');
+  apply(hidden.value || 'unsplash');
 }
 
 function initBgFit() {
-  const btn = el('bg-fit-btn');
-  const list = el('bg-fit-list');
+  const slot = el('bg-fit-slot');
   const hidden = inp('bg-fit');
-  if (!btn || !list || !hidden) return;
-  function setVal(val) {
+  if (!slot || !hidden) return;
+  const apply = val => {
     hidden.value = val;
-    showBgFit(val);
-    list.hidden = true;
-  }
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    list.hidden = !list.hidden;
+  };
+  const box = createListbox({
+    id: 'bg-fit',
+    label: t('appearance.fit'),
+    options: [
+      { value: 'fill', label: t('appearance.fitFill') },
+      { value: 'fit', label: t('appearance.fitContain') },
+    ],
+    value: hidden.value || 'fill',
+    onChange: v => apply(String(v)),
   });
-  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => setVal(li.dataset.val || 'fill')));
-  document.addEventListener('click', () => {
-    list.hidden = true;
+  slot.appendChild(box.el);
+  relabel(() => {
+    box.setLabel(t('appearance.fit'));
+    box.setOptions(
+      [
+        { value: 'fill', label: t('appearance.fitFill') },
+        { value: 'fit', label: t('appearance.fitContain') },
+      ],
+      hidden.value,
+    );
   });
-  setVal(hidden.value || 'fill');
+  apply(hidden.value || 'fill');
 }
 
 /** A body that is not JSON is the web server answering on its own.
@@ -887,60 +898,68 @@ async function fetchWallpaperLink(url) {
 }
 
 function initLogLevel() {
-  const btn = el('log-level-btn');
-  const list = el('log-level-list');
+  const slot = el('log-level-slot');
   const hidden = inp('log-level');
-  if (!btn || !list || !hidden) return;
-  const labels = { debug: 'Debug', info: 'Info', error: 'Errors' };
-  function setVal(val) {
-    hidden.value = val;
-    const textNode = btn.childNodes[0];
-    if (textNode && textNode.nodeType === 3) textNode.textContent = labels[val] || val;
-    list.querySelectorAll('li').forEach(li => li.setAttribute('aria-selected', String(li.dataset.val === val)));
-    list.hidden = true;
-  }
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    list.hidden = !list.hidden;
+  if (!slot || !hidden) return;
+  const box = createListbox({
+    id: 'log-level',
+    label: t('general.loggingLevel'),
+    options: [
+      { value: 'debug', label: t('general.logDebug') },
+      { value: 'info', label: t('general.logInfo') },
+      { value: 'error', label: t('general.logError') },
+    ],
+    value: hidden.value || 'info',
+    onChange: v => {
+      hidden.value = String(v);
+    },
   });
-  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => setVal(li.dataset.val)));
-  document.addEventListener('click', () => {
-    list.hidden = true;
+  slot.appendChild(box.el);
+  relabel(() => {
+    box.setLabel(t('general.loggingLevel'));
+    box.setOptions(
+      [
+        { value: 'debug', label: t('general.logDebug') },
+        { value: 'info', label: t('general.logInfo') },
+        { value: 'error', label: t('general.logError') },
+      ],
+      hidden.value,
+    );
   });
-  setVal(hidden.value || 'info');
+  hidden.value = hidden.value || 'info';
 }
 
 function initLanguage() {
-  const btn = el('lang-btn');
-  const list = el('lang-list');
+  const slot = el('lang-slot');
   const hidden = inp('lang-sel');
-  if (!btn || !list || !hidden) return;
-  const names = Object.fromEntries(LANGUAGES.map(l => [l.code, l.name]));
-  setHtml(
-    list,
-    html`${LANGUAGES.map(l => html`<li role="option" data-val="${l.code}" aria-selected="false">${l.name}</li>`)}`,
-  );
-  function setVal(val) {
-    hidden.value = val;
-    const tn = btn.childNodes[0];
-    if (tn && tn.nodeType === 3) tn.textContent = names[val] || val;
-    list.querySelectorAll('li').forEach(li => li.setAttribute('aria-selected', String(li.dataset.val === val)));
-    list.hidden = true;
-  }
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    list.hidden = !list.hidden;
+  if (!slot || !hidden) return;
+  const box = createListbox({
+    id: 'lang',
+    label: t('common.language'),
+    options: LANGUAGES.map(l => ({ value: l.code, label: l.name })),
+    value: hidden.value || 'en',
+    onChange: v => {
+      hidden.value = String(v);
+    },
   });
-  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => setVal(li.dataset.val)));
-  document.addEventListener('click', () => {
-    list.hidden = true;
+  slot.appendChild(box.el);
+  relabel(() => {
+    box.setLabel(t('common.language'));
+    box.setValue(hidden.value);
   });
-  setVal(hidden.value || 'en');
+  hidden.value = hidden.value || 'en';
 }
 
-/* The row label follows the catalog, so it is written once the catalog is
-   loaded and again on every language change. */
-let syncThemeLabel = () => {};
+/* The pickers are built before the catalog loads, so each registers how to
+   relabel itself. Without this their options read as raw keys. */
+const relabels = [];
+const relabel = fn => {
+  relabels.push(fn);
+  return fn;
+};
+const syncPickerLabels = () => {
+  relabels.forEach(fn => fn());
+};
 
 const THEME_LABEL_KEYS = {
   system: 'appearance.displaySystem',
@@ -949,32 +968,32 @@ const THEME_LABEL_KEYS = {
 };
 
 function initTheme() {
-  const btn = el('theme-btn');
-  const list = el('theme-list');
+  const slot = el('theme-slot');
   const hidden = inp('theme-sel');
-  if (!btn || !list || !hidden) return;
-  syncThemeLabel = () => {
-    const tn = btn.childNodes[0];
-    if (tn && tn.nodeType === 3) tn.textContent = t(THEME_LABEL_KEYS[hidden.value] || THEME_LABEL_KEYS.system);
-  };
-  function setVal(val) {
-    hidden.value = writeMode(val);
-    syncThemeLabel();
-    list
-      .querySelectorAll('li')
-      .forEach(li => li.setAttribute('aria-selected', String(li.dataset.val === hidden.value)));
-    list.hidden = true;
-  }
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    list.hidden = !list.hidden;
+  if (!slot || !hidden) return;
+  const opts = () => [
+    { value: 'system', label: t(THEME_LABEL_KEYS.system) },
+    { value: 'light', label: t(THEME_LABEL_KEYS.light) },
+    { value: 'dark', label: t(THEME_LABEL_KEYS.dark) },
+  ];
+  const box = createListbox({
+    id: 'theme',
+    label: t('appearance.displayMode'),
+    options: opts(),
+    value: readMode(),
+    onChange: v => {
+      hidden.value = writeMode(String(v));
+      box.setValue(hidden.value);
+    },
   });
-  list.querySelectorAll('li').forEach(li => li.addEventListener('click', () => setVal(li.dataset.val)));
-  document.addEventListener('click', () => {
-    list.hidden = true;
+  slot.appendChild(box.el);
+  relabel(() => {
+    box.setLabel(t('appearance.displayMode'));
+    box.setOptions(opts(), hidden.value);
   });
+  hidden.value = writeMode(readMode());
+  box.setValue(hidden.value);
   watchSystemTheme(() => hidden.value);
-  setVal(readMode());
 }
 
 const dashSaveEl = el('dash-save');
