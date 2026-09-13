@@ -1,0 +1,1 @@
+Fix folder, search and clock details: phone folders close on a click outside, the Search pill is a button, folders show their icon grid in search, the analog clock date shows through the hands, and the item editor names the item.

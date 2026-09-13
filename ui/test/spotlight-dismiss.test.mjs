@@ -11,6 +11,27 @@ const html = read('index.html');
 const css = read('css/dashboard.css');
 const js = read('js/spotlight.js');
 
+test('the Search pill is a button that cannot be text-selected', () => {
+  assert.match(html, /<div id="mob-search-pill" role="button" tabindex="0">/);
+  const rule = css.match(/#mob-search-pill \{([^}]*)\}/)[1];
+  assert.match(rule, /user-select:none/);
+  assert.match(rule, /-webkit-touch-callout:none/);
+  assert.match(read('js/ui.js'), /pillNew\.onkeydown = e => \{\s*if \(e\.key !== 'Enter' && e\.key !== ' '\) return;/);
+});
+
+test('closing search puts focus back where it was', () => {
+  const handler = js.match(/ov\.addEventListener\('close', \(\) => \{([\s\S]*?)\n {2}\}\);/);
+  assert.ok(handler, 'the close handler is gone');
+  assert.match(handler[1], /if \(!ov\.contains\(document\.activeElement\)\) return;/);
+  assert.match(handler[1], /back\.focus\(\)/);
+  assert.match(handler[1], /inp\.blur\(\)/);
+  assert.match(js, /returnFocus = document\.activeElement;\s*ov\.showModal\(\);/);
+});
+
+test('a folder result shows the folder icon grid', () => {
+  assert.match(js, /if \(isFolder && folderGlyph\) \{[\s\S]*?folderGlyph\(app, 44\)/);
+});
+
 test('Cancel sits beside the field, not inside the pill', () => {
   const bar = html.match(/<div class="spot-bar">([\s\S]*?)<\/div>\s*<\/div>/);
   assert.ok(bar, 'the search bar markup moved');

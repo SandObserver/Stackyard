@@ -1,4 +1,4 @@
-import { iconChain } from '/js/icons.js?v=04e7796e';
+import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=a1b61636';
 import {
   mk,
@@ -13,7 +13,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=970a91b0';
+} from '/js/utils.js?v=ada0c382';
 import { t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';
@@ -99,6 +99,28 @@ function mkMiniIcon(child, pointerEvents) {
     bg.appendChild(s);
   }
   return bg;
+}
+
+/** The miniature icon grid a folder tile shows. @param {number} size */
+export function mkFolderGlyph(folder, size) {
+  const wrap = mk('div');
+  wrap.className = 'dyn-fold-wrap';
+  css(wrap, {
+    '--br': Math.round(size * 0.24) + 'px',
+    '--gap': Math.round(size * 0.04) + 'px',
+    '--pad': Math.round(size * 0.1) + 'px',
+  });
+  (folder.children || [])
+    .slice(0, 9)
+    .map(id => items().find(i => i.id === id))
+    .filter(Boolean)
+    .forEach(child => {
+      const cell = mk('div');
+      cell.className = 'dyn-fold-cell';
+      cell.appendChild(mkMiniIcon(child, 'none'));
+      wrap.appendChild(cell);
+    });
+  return wrap;
 }
 
 export function mkFolder(item) {
@@ -283,24 +305,10 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   box.className = 'dyn-sz dyn-box';
   css(box, { '--sz': eff + 'px' });
   box.style.pointerEvents = 'none';
-  const wrap = mk('div');
-  const pad = Math.round(eff * 0.1),
-    gap = Math.round(eff * 0.04);
-  wrap.className = 'dyn-fold-wrap';
-  css(wrap, { '--br': Math.round(eff * 0.24) + 'px', '--gap': gap + 'px', '--pad': pad + 'px' });
+  const wrap = mkFolderGlyph(item, eff);
   const sheen = mk('div');
   sheen.className = 'dyn-fold-sheen';
-  wrap.appendChild(sheen);
-  (item.children || [])
-    .slice(0, 9)
-    .map(id => items().find(i => i.id === id))
-    .filter(Boolean)
-    .forEach(child => {
-      const cell = mk('div');
-      cell.className = 'dyn-fold-cell';
-      cell.appendChild(mkMiniIcon(child, 'none'));
-      wrap.appendChild(cell);
-    });
+  wrap.prepend(sheen);
   box.appendChild(wrap);
   const fb_ = mk('div');
   fb_.className = 'badge';
@@ -319,6 +327,8 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
 }
 
 let folderOverlayMob = null;
+/* The widest phone viewport. Matches the cap in mobile-metrics.js. */
+export const FOLDER_MAX_VW = 430;
 export function openFolderMobile(folder, isz, _ir, _im, sc) {
   if (folderOverlayMob) {
     folderOverlayMob.remove();
@@ -347,9 +357,12 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
     folderOverlayMob = null;
   });
 
-  const ptScale = vw / 393;
+  /* Phone size on every window. A wider window centres the folder instead of
+     enlarging it. */
+  const ptScale = Math.min(vw, FOLDER_MAX_VW) / 393;
   const margin = Math.round(34 * ptScale),
-    boxW = vw - margin * 2;
+    boxW = Math.min(vw, FOLDER_MAX_VW) - margin * 2,
+    boxLeft = Math.round((vw - boxW) / 2);
   const padH = Math.round(20 * ptScale),
     padVT = Math.round(24 * ptScale),
     padVB = Math.round(22 * ptScale);
@@ -376,7 +389,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   const titleFs = Math.round(30 * ptScale),
     titleGap = Math.round(40 * ptScale);
   const titleRendH = Math.ceil(titleFs * 1.05) + Math.round(4 * ptScale);
-  const titleLeft = margin + padH + Math.round(6 * ptScale);
+  const titleLeft = boxLeft + padH + Math.round(6 * ptScale);
 
   const titleEl = mk('div');
   titleEl.className = 'folder-title-mobile dyn-title-mob';
@@ -391,7 +404,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   const box = mk('div');
   box.className = 'folder-box-mobile dyn-box-mob';
   css(box, {
-    '--left': margin + 'px',
+    '--left': boxLeft + 'px',
     '--bw': boxW + 'px',
     '--bh': boxH + 'px',
     '--top': boxTop + 'px',
@@ -520,6 +533,9 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   );
   ov.appendChild(titleEl);
   ov.appendChild(box);
+  ov.onclick = e => {
+    if (e.target === ov) closeMob();
+  };
   ov.addEventListener(
     'touchend',
     e => {
@@ -817,6 +833,12 @@ export function buildMobile() {
   pillNew.onclick = () => {
     if (CB().spotOpen) CB().spotOpen('');
   };
+  pillNew.onkeydown = e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (CB().spotOpen) CB().spotOpen('');
+  };
 
   let _pillIdleTimer = null;
   function pillPaging(on) {
@@ -848,4 +870,21 @@ export function buildMobile() {
   };
   document.addEventListener('touchstart', st()._mobTsCleanup, { passive: true });
   document.addEventListener('touchend', st()._mobTeCleanup, { passive: true });
+}
+
+/* The desktop build shares the dock and pill elements with buildMobile, which
+   styles them inline. */
+export function resetMobileChrome() {
+  const dk = el('dock');
+  dk.className = '';
+  dk.style.cssText = '';
+  const pill = el('mob-search-pill');
+  pill.style.cssText = '';
+  pill.classList.remove('paging');
+  CB().mobPillBump = null;
+  const { _mobTsCleanup, _mobTeCleanup } = st();
+  if (_mobTsCleanup) document.removeEventListener('touchstart', _mobTsCleanup);
+  if (_mobTeCleanup) document.removeEventListener('touchend', _mobTeCleanup);
+  st()._mobTsCleanup = null;
+  st()._mobTeCleanup = null;
 }

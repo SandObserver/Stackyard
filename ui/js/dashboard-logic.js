@@ -22,6 +22,16 @@ function fingerprint(c) {
 /** The page index to open on, clamped to the pages that exist.
 
     @param {string|null} stored @param {number} totalPages @returns {number} */
+/* Desktop tiles keep one size. A narrower window gets fewer columns. */
+export const DESKTOP_COL = { width: 152.67, gap: 25, min: 4, max: 6 };
+
+/** @param {number} avail the width the grid may take, in CSS px */
+export function desktopCols(avail) {
+  /* Half a pixel of slack: six 152.67px columns measure 1041.02px. */
+  const fit = Math.floor((avail + DESKTOP_COL.gap + 0.5) / (DESKTOP_COL.width + DESKTOP_COL.gap));
+  return Math.max(DESKTOP_COL.min, Math.min(DESKTOP_COL.max, fit));
+}
+
 export function restorePage(stored, totalPages) {
   const n = Number(stored);
   if (stored == null || stored === '' || !Number.isInteger(n) || n < 0) return 0;

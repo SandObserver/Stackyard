@@ -1,4 +1,4 @@
-import { loadLocalIcons, iconChain } from '/js/icons.js?v=04e7796e';
+import { loadLocalIcons, iconChain } from '/js/icons.js?v=9c8c550c';
 import {
   WIDGET_HEIGHTS,
   WIDGET_DESIGN,
@@ -24,18 +24,26 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=970a91b0';
+} from '/js/utils.js?v=ada0c382';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=2b722c16';
+import { initSpotlight } from '/js/spotlight.js?v=bcf8c942';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=e644a5c5';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { initUI, mkFolder, openFolderDesktop, openFolderMobile, buildMobile } from '/js/ui.js?v=08ec9951';
+import {
+  initUI,
+  mkFolder,
+  openFolderDesktop,
+  openFolderMobile,
+  buildMobile,
+  resetMobileChrome,
+  mkFolderGlyph,
+} from '/js/ui.js?v=cc6f0031';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
-import { configChanged, landingAfterSetup, restorePage } from '/js/dashboard-logic.js?v=74ffcb7e';
+import { configChanged, desktopCols, landingAfterSetup, restorePage } from '/js/dashboard-logic.js?v=a8f759ed';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=9de1cb7d';
@@ -57,10 +65,8 @@ const ICON_R = 0.2237;
 const WIDGET_R = 28;
 const wCost = { d: WIDGET_COST.desktop, m: WIDGET_COST.mobile };
 
-const DCOLS = 6;
 /* The design values the stylesheet's --tile-h and --row-gap ratios were derived
-   from. Read gridMetrics() for the live sizes; these are only the fallback and
-   the divisor that turns a live tile height back into a scale factor. */
+   from. Read gridMetrics() for the live sizes; these are only the fallback. */
 const DESIGN_TILE = 152;
 const DESIGN_ROW_GAP = 30;
 
@@ -76,24 +82,28 @@ function gridMetrics() {
   probe.className = 'gm-probe';
   const gap = document.createElement('i');
   probe.appendChild(gap);
+  const avail = document.createElement('b');
+  probe.appendChild(avail);
   document.body.appendChild(probe);
   const tile = probe.getBoundingClientRect().height || DESIGN_TILE;
   const rowGap = gap.getBoundingClientRect().height || DESIGN_ROW_GAP;
+  const width = avail.getBoundingClientRect().width || innerWidth;
   probe.remove();
-  return { tile, rowGap, scale: tile / DESIGN_TILE };
+  return { tile, rowGap, cols: desktopCols(width) };
 }
-let gm = { tile: DESIGN_TILE, rowGap: DESIGN_ROW_GAP, scale: 1 };
+let gm = { tile: DESIGN_TILE, rowGap: DESIGN_ROW_GAP, cols: 6 };
 
 /* The reserves mirror the .page padding in dashboard.css. Change one and the
-   page breaks stop matching the box.
+   page breaks stop matching the box. The bottom reserve clears the page dots,
+   which sit above the dock.
 
    @param {boolean} hasDock */
 function desktopSlots(hasDock) {
   const ih = innerHeight;
   const top = Math.min(70, Math.max(44, ih * 0.04));
-  const bottom = hasDock ? Math.min(160, Math.max(110, ih * 0.1)) : top;
+  const bottom = hasDock ? 204 : 68;
   const rows = Math.max(1, Math.min(4, Math.floor((ih - top - bottom + gm.rowGap) / (gm.tile + gm.rowGap))));
-  return DCOLS * rows;
+  return gm.cols * rows;
 }
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
@@ -298,8 +308,8 @@ function paginate() {
 function mkIcon(item) {
   if (item.type === 'folder') return mkFolder(item);
   const showLabel = S.showLabels?.desktop !== false;
-  const iw = Math.round((showLabel ? 72 : 78) * gm.scale),
-    isz = Math.round((showLabel ? 50 : 56) * gm.scale);
+  const iw = showLabel ? 72 : 78,
+    isz = showLabel ? 50 : 56;
   const a =
     item.system === 'settings'
       ? mk('a', { href: '/admin/' })
@@ -338,8 +348,8 @@ function mkWidget(item) {
   const preset = cardPreset(item, widgetReg);
   if (preset) card.dataset.card = preset;
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
-  card.style.height = Math.round(WH.d[sz] * gm.scale) + 'px';
-  card.style.borderRadius = Math.round(WIDGET_R * gm.scale) + 'px';
+  card.style.height = WH.d[sz] + 'px';
+  card.style.borderRadius = WIDGET_R + 'px';
   mountScaledWidget(card, {
     src: widgetSrc(item, widgetReg, { lang: currentLang() }),
     title: widgetTitle(item),
@@ -385,8 +395,10 @@ function buildDesktop() {
   closeBadgePopover();
   BEL.clear();
   usedWidgetTitles = new Set();
+  resetMobileChrome();
   /* Before paginate() and before any tile is built: both size against it. */
   gm = gridMetrics();
+  document.documentElement.style.setProperty('--cols', String(gm.cols));
   const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, 4);
   document.body.classList.toggle('no-dock', !dock.length);
   const pages = paginate();
@@ -847,10 +859,21 @@ async function boot() {
   _stateRef = state;
   initUI(state);
   initFluidHover();
-  initSpotlight({ getItems: () => items, isMob: () => MOB, CB, iconChain, openFolderDesktop, openFolderMobile });
+  initSpotlight({
+    getItems: () => items,
+    isMob: () => MOB,
+    CB,
+    iconChain,
+    openFolderDesktop,
+    openFolderMobile,
+    folderGlyph: mkFolderGlyph,
+  });
 
+  /* The width the current layout was built at. */
+  let _mw = innerWidth;
   /* Mobile measures the viewport as it builds, so it waits for layout. */
   const buildLayout = () => {
+    _mw = innerWidth;
     if (MOB) {
       document.body.classList.add('is-mob');
       requestAnimationFrame(() =>
@@ -973,18 +996,25 @@ async function boot() {
   /* The desktop tile size follows the viewport, so a resize can change how many
      rows fit. Rebuild only when the slot count actually moves, not on every
      pixel: a rebuild tears down and remounts every widget iframe. */
+  const hasDock = () => items.some(i => i.type === 'app' && i.dock && !i.hidden);
   let _dz,
-    _slots = desktopSlots();
+    _slots = desktopSlots(hasDock());
+  /* The phone layout rebuilds on a width change only. A phone keyboard changes
+     the height, and a rebuild then would close it. */
   let _rs;
   window.addEventListener('resize', () => {
     clearTimeout(_rs);
-    _rs = setTimeout(resampleBg, 200);
+    _rs = setTimeout(() => {
+      resampleBg();
+      if (MOB && innerWidth !== _mw) buildLayout();
+    }, 200);
     if (MOB) return;
     clearTimeout(_dz);
     _dz = setTimeout(() => {
       if (MOB) return;
       gm = gridMetrics();
-      const slots = desktopSlots();
+      document.documentElement.style.setProperty('--cols', String(gm.cols));
+      const slots = desktopSlots(hasDock());
       if (slots === _slots) return;
       _slots = slots;
       buildDesktop();

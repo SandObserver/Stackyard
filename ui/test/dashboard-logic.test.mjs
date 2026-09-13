@@ -5,7 +5,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { configChanged, landingAfterSetup, restorePage } from '../js/dashboard-logic.js';
+import { configChanged, desktopCols, landingAfterSetup, restorePage } from '../js/dashboard-logic.js';
+
+test('desktop columns follow the width, tiles keep their size', () => {
+  assert.equal(desktopCols(1041), 6, 'the design width holds six');
+  assert.equal(desktopCols(1040), 5);
+  assert.equal(desktopCols(863), 5);
+  assert.equal(desktopCols(862), 4);
+  assert.equal(desktopCols(700), 4, 'never fewer than a large widget needs beside another tile');
+  assert.equal(desktopCols(3000), 6);
+});
 
 const loaded = {
   _rev: 4,

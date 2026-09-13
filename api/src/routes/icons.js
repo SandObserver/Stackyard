@@ -175,7 +175,7 @@ function sendIcon(res, entry) {
 on('GET', '/api/icons/local', (_, res) => {
   try {
     fs.mkdirSync(ICONS_PATH, { recursive: true });
-    json(res, 200, { files: fs.readdirSync(ICONS_PATH).filter(f => /\.(svg|png|ico)$/i.test(f)) });
+    json(res, 200, { files: fs.readdirSync(ICONS_PATH).filter(f => /\.(svg|png|ico)$/i.test(f)), demo: IS_DEMO });
   } catch (e) {
     fail(res, e, { status: 500 });
   }

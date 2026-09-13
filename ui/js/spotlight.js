@@ -1,5 +1,5 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=970a91b0';
+import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=ada0c382';
 import { t } from '/js/i18n.js?v=e644a5c5';
 
 /* Attached to the window so a re-open can undo the previous one. */
@@ -7,7 +7,7 @@ const _w = /** @type {any} */ (window);
 
 /* `isMob` is a function, not a flag: the window can cross the breakpoint while
    this module is loaded. */
-export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDesktop, openFolderMobile }) {
+export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDesktop, openFolderMobile, folderGlyph }) {
   const MOB = () => isMob();
   const ov = /** @type {HTMLDialogElement} */ (el('spot'));
   const inp = inpById('sin');
@@ -15,7 +15,8 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
   const cancelBtn = el('spot-cancel');
   const live = el('sres-live');
   let si = 0,
-    cur = [];
+    cur = [],
+    returnFocus = null;
 
   inp.setAttribute('role', 'combobox');
   inp.setAttribute('aria-autocomplete', 'list');
@@ -64,15 +65,10 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       const doOpen = () => {
         close();
         if (isFolder) {
-          if (MOB())
-            openFolderMobile(
-              app,
-              Math.round(60 * (innerWidth / 393)),
-              Math.round(14 * (innerWidth / 393)),
-              Math.round(38 * (innerWidth / 393)),
-              innerWidth / 393,
-            );
-          else openFolderDesktop(app);
+          if (MOB()) {
+            const s = Math.min(innerWidth, 430) / 393;
+            openFolderMobile(app, Math.round(60 * s), Math.round(14 * s), Math.round(38 * s), s);
+          } else openFolderDesktop(app);
         } else if (app.system === 'settings' && app.href) {
           window.location.href = app.href;
         } else if (app.href) {
@@ -88,7 +84,11 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       const ic = mk('div');
       ic.className = 'sri';
       ic.style.background = clr(app.color);
-      if (app.iconUrl) {
+      if (isFolder && folderGlyph) {
+        ic.style.background = 'transparent';
+        ic.style.position = 'relative';
+        ic.appendChild(folderGlyph(app, 44));
+      } else if (app.iconUrl) {
         const img = mk('img', { alt: '', loading: 'lazy' });
         img.setAttribute('aria-hidden', 'true');
         const srcs = iconChain(app.iconUrl);
@@ -176,6 +176,7 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
 
   function open(ch) {
     if (ov.open) return;
+    returnFocus = document.activeElement;
     ov.showModal();
     ov.classList.add('on');
     inp.value = ch || '';
@@ -218,6 +219,13 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
     ov.classList.remove('on');
     inp.value = '';
     res.replaceChildren();
+    const back = returnFocus;
+    returnFocus = null;
+    /* Only while focus is still inside the closed dialog. A folder opened from
+       a result has already taken it. */
+    if (!ov.contains(document.activeElement)) return;
+    if (back instanceof HTMLElement && back !== document.body && back.isConnected) back.focus();
+    else inp.blur();
   });
 
   function close() {

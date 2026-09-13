@@ -10,6 +10,42 @@ import { fileURLToPath } from 'node:url';
 
 import { resolveAdminSection } from '../js/admin-logic.js';
 
+test('a first visit with no remembered section does not warn', () => {
+  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(requested && id !== requested\) console\.warn\(/);
+});
+
+test('the item editor heading names the item', () => {
+  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  assert.match(
+    src,
+    /if \(isEdit\) setUserText\(evTitle, t\('common\.editNamed', \{ name: item\.label \|\| item\.id \}\)\);/,
+  );
+  assert.match(src, /evTitle\.textContent = t\('type\.addNew'\);/);
+});
+
+test('each header Save is driven by its own unsaved-change check', () => {
+  const src = fs.readFileSync(new URL('../js/admin-settings.js', import.meta.url), 'utf8');
+  assert.match(src, /trackSave\('srv-save', readServerForm\)/);
+  assert.match(src, /trackSave\('bg-save', readWallpaperForm\)/);
+  assert.match(
+    src,
+    /document\.addEventListener\(type, \(\) => setTimeout\(sync\)\)/,
+    'a picker list lives on the body, so listening on the section misses its choice',
+  );
+  const reader = src.slice(src.indexOf('const readServerForm'), src.indexOf('const readWallpaperForm'));
+  assert.doesNotMatch(reader, /set-lbl|set-awake/, 'a save-on-change switch must not light Save');
+  assert.match(fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8'), /addEventListener\('beforeunload'/);
+});
+
+/* An import writes the config itself. Without this the page warns about
+   unsaved changes that are already on the server. */
+test('an import records what it saved', () => {
+  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  const fn = src.slice(src.indexOf('async function appendAndSave'), src.indexOf('async function saveOrRevert'));
+  assert.match(fn, /state\.items = full\.items;\s*_savedItems = JSON\.stringify\(state\.items\);\s*syncDashSave\(\);/);
+});
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const html = fs.readFileSync(path.join(root, 'admin/index.html'), 'utf8');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');

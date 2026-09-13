@@ -28,6 +28,18 @@ const css = read('css/dashboard.css');
 const overlay = ui.slice(ui.indexOf('export function openFolderMobile('), ui.indexOf('export function buildMobile('));
 assert.ok(overlay.length > 0, 'openFolderMobile was renamed or moved');
 
+test('a wide window centres a phone-size folder instead of enlarging it', () => {
+  assert.match(overlay, /const ptScale = Math\.min\(vw, FOLDER_MAX_VW\) \/ 393;/);
+  assert.match(overlay, /boxW = Math\.min\(vw, FOLDER_MAX_VW\) - margin \* 2/);
+  assert.match(overlay, /boxLeft = Math\.round\(\(vw - boxW\) \/ 2\)/);
+  assert.match(overlay, /'--left': boxLeft \+ 'px'/);
+  assert.match(ui, /export const FOLDER_MAX_VW = 430;/);
+});
+
+test('a pointer click on the scrim closes the folder', () => {
+  assert.match(overlay, /ov\.onclick = e => \{\s*if \(e\.target === ov\) closeMob\(\);/);
+});
+
 test('the page is inset by the badge overhang', () => {
   assert.match(
     overlay,

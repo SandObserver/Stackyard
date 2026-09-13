@@ -1,13 +1,89 @@
-import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=a77346f6';
+import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=ca64cc9c';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=e644a5c5';
-import { shouldWritePassword, settingsSaveBlocker, clearsStoredPassword, BLOCK } from '/js/admin-logic.js?v=74cb4272';
+import {
+  shouldWritePassword,
+  settingsSaveBlocker,
+  clearsStoredPassword,
+  createDirtyTracker,
+  BLOCK,
+} from '/js/admin-logic.js?v=69e57d35';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, setUserText } from '/js/utils.js?v=970a91b0';
+import { el, inp, setUserText } from '/js/utils.js?v=ada0c382';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
 let _authEnabled = false;
+
+/** @type {{ dirty: () => boolean, reset: () => void } | null} */
+let _srvTrack = null;
+/** @type {{ dirty: () => boolean, reset: () => void } | null} */
+let _bgTrack = null;
+
+const _val = (...ids) => {
+  for (const id of ids) {
+    const node = inp(id);
+    if (node) return node.type === 'checkbox' ? String(node.checked) : node.value;
+  }
+  return '';
+};
+const _shown = id => {
+  const node = el(id);
+  return node && !node.classList.contains('is-ph') ? node.textContent : '';
+};
+
+/* Only what the header Save writes. The switches that save on change are left
+   out. */
+const readServerForm = () =>
+  JSON.stringify([
+    _shown('ie-title-v'),
+    _shown('ie-desc-v'),
+    _val('srv-ip'),
+    _val('srv-docker-en'),
+    _val('srv-socket'),
+    _val('srv-hide-healthy'),
+    _val('log-level'),
+    _val('lang-sel'),
+    _val('sec-en'),
+    _val('sec-pw'),
+  ]);
+const readWallpaperForm = () =>
+  JSON.stringify([
+    _val('bg-type'),
+    _val('bg-br'),
+    _val('bg-col-inp', 'bg-col'),
+    _val('bg-url-inp', 'bg-url'),
+    _val('bg-fit'),
+    _val('bg-color-inp', 'bg-color'),
+    _val('bg-apikey-inp', 'bg-apikey'),
+  ]);
+
+/** Disables `buttonId` while its section matches what was last saved. */
+function trackSave(buttonId, read) {
+  const btn = /** @type {HTMLButtonElement|null} */ (el(buttonId));
+  const tr = createDirtyTracker(read);
+  const sync = () => {
+    if (btn) btn.disabled = !tr.dirty();
+  };
+  /* On the document, not the section: a picker's option list is attached to
+     the body, and a choice made there must still enable Save. Deferred: pickers
+     and inline editors update their value after the event. */
+  for (const type of ['input', 'change', 'click', 'keyup', 'focusout'])
+    document.addEventListener(type, () => setTimeout(sync));
+  sync();
+  return {
+    dirty: tr.dirty,
+    reset: () => {
+      tr.reset();
+      sync();
+    },
+  };
+}
+
+/** Whether General or Appearance holds edits their Save has not written. */
+export function settingsDirty() {
+  return !!(_srvTrack?.dirty() || _bgTrack?.dirty());
+}
 
 /* Hint codes from the socket proxy probe. The server picks the code from the
    address shape; the wording lives here so it is translated. */
@@ -181,7 +257,9 @@ export function loadSettings(c) {
   });
   secEnEl?.addEventListener('change', () => syncSessionRows());
 
-  syncAuthFromServer();
+  _srvTrack = trackSave('srv-save', readServerForm);
+  _bgTrack = trackSave('bg-save', readWallpaperForm);
+  syncAuthFromServer().then(() => _srvTrack?.reset());
 }
 
 async function syncAuthFromServer() {
@@ -287,6 +365,7 @@ async function saveWallpaper() {
       const keyVal = (inp('bg-apikey-inp') || inp('bg-apikey'))?.value?.trim() || '';
       if (keyVal) await ap('/api/settings/unsplash-key', { apiKey: keyVal });
     }
+    _bgTrack?.reset();
     toast(t('toast.saved'));
   } catch (e) {
     toast(t('toast.saveFailed', { err: e.message }), 'err');
@@ -396,6 +475,7 @@ async function saveServer() {
         pwEl.value = '';
       }
     }
+    _srvTrack?.reset();
     toast(socketWarning || t('toast.saved'), socketWarning ? 'err' : 'ok');
     if (langChanged) {
       location.reload();

@@ -402,7 +402,7 @@ test('the desktop grid is bounded by the gutters, not only by the reserve', () =
   assert.match(css, /--gutter-r:max\(var\(--page-gutter\), var\(--sa-right,0px\)\)/);
   assert.match(
     css,
-    /--grid-avail:min\(calc\(100vw - 88px\), calc\(100vw - var\(--gutter-l\) - var\(--gutter-r\)\)\)/,
+    /--grid-avail:calc\(100vw - var\(--gutter-l\) - var\(--gutter-r\)\)/,
     'the grid width ignores the insets the page reserves',
   );
   /* One definition of the gutter, so the padding and the grid cannot drift. */

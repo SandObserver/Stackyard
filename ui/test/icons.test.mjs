@@ -18,9 +18,9 @@ const { resolveIcon, iconChain, loadLocalIcons, cdnIconName, cdnIconRef, splitIc
 
 /* loadLocalIcons fills the module's set from the API, so stand in for that
    rather than reaching into the module. */
-async function withLocalIcons(files, fn) {
+async function withLocalIcons(files, fn, demo = false) {
   const realFetch = globalThis.fetch;
-  globalThis.fetch = async () => ({ ok: true, json: async () => ({ files }) });
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ files, demo }) });
   try {
     await loadLocalIcons();
     await fn();
@@ -116,6 +116,22 @@ test('a name with no local copy falls through to the CDN', async () => {
       'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg',
       'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png',
     ]);
+  });
+});
+
+test('the demo skips the icon proxy and goes straight to the CDN', async () => {
+  await withLocalIcons(
+    [],
+    () => {
+      assert.deepEqual(iconChain('radarr'), [
+        'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg',
+        'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png',
+      ]);
+    },
+    true,
+  );
+  await withLocalIcons([], () => {
+    assert.equal(iconChain('radarr')[0], '/api/icons/cdn?name=radarr&source=di');
   });
 });
 
