@@ -117,7 +117,11 @@ test('an open picker listens for the press that dismisses it', () => {
   const { list } = row();
   openIt();
   assert.equal(list.hidden, false, 'the list did not open');
-  assert.equal(live.size, 1, 'nothing is listening for a press outside');
+  assert.deepEqual(
+    [...live].map(e => e.type).sort(),
+    ['click', 'scroll'],
+    'an open picker must close on a press outside and on a scroll outside',
+  );
 });
 
 test('closing removes the listener again', () => {
@@ -129,6 +133,18 @@ test('closing removes the listener again', () => {
   assert.equal(live.size, 0, 'the listener outlived the open state');
 });
 
+test('a scroll outside the list closes it, a scroll inside does not', () => {
+  live.clear();
+  const { list, options } = row();
+  openIt();
+  const scroll = [...live].find(e => e.type === 'scroll');
+  scroll.fn({ target: options[0] });
+  assert.equal(list.hidden, false, 'scrolling the long list itself closed it');
+  scroll.fn({ target: { tagName: 'DIV' } });
+  assert.equal(list.hidden, true, 'the menu stayed open while the pane scrolled');
+  assert.equal(live.size, 0);
+});
+
 /* The form re-rendered while the list was open, so the row is gone and nothing
    will call close. The next press anywhere reaches the stranded listener, which
    closes and removes itself. */
@@ -136,7 +152,7 @@ test('a row discarded while open is cleaned up by the next press', () => {
   live.clear();
   row();
   openIt();
-  assert.equal(live.size, 1);
+  assert.equal(live.size, 2);
   for (const entry of [...live]) if (entry.type === 'click') entry.fn({ target: { tagName: 'BODY' } });
   assert.equal(live.size, 0, 'a discarded open row leaks until the page reloads');
 });

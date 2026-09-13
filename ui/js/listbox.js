@@ -32,6 +32,24 @@ function pruneDetached() {
   }
 }
 
+const FOCUSABLE = 'a[href],button,input,select,textarea,[tabindex]';
+
+/** The list is last on <body>, so the browser's own Tab would leave the form.
+
+    @param {HTMLElement} from @param {1|-1} step */
+function focusBeside(from, step) {
+  const all = qa(FOCUSABLE, document).filter(
+    n =>
+      n === from ||
+      (n.tabIndex >= 0 &&
+        !(/** @type {any} */ (n).disabled) &&
+        n.getClientRects().length &&
+        !n.closest('.row-dd-list')),
+  );
+  const next = all[all.indexOf(from) + step];
+  (next || from).focus();
+}
+
 /** An entry with `group` and no `value` is a heading. The keyboard skips it.
 
     @typedef {{ value?: string, label?: string, group?: string }} ListboxOption */
@@ -167,6 +185,13 @@ export function createListbox(
     visualViewport?.addEventListener('resize', place, { signal: outside.signal });
     visualViewport?.addEventListener('scroll', place, { signal: outside.signal });
     document.addEventListener(
+      'scroll',
+      e => {
+        if (!list.contains(/** @type {Node} */ (e.target))) close();
+      },
+      { capture: true, signal: outside.signal },
+    );
+    document.addEventListener(
       'click',
       e => {
         const t = /** @type {Node} */ (e.target);
@@ -263,7 +288,9 @@ export function createListbox(
         close({ focusBtn: true });
         break;
       case 'Tab':
+        e.preventDefault();
         close();
+        focusBeside(btn, e.shiftKey ? -1 : 1);
         break;
       default:
         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && typeahead(e.key)) e.preventDefault();

@@ -36,6 +36,27 @@ test('Escape returns focus to the trigger', () => {
   assert.match(src, /case 'Escape':[\s\S]{0,80}close\(\{ focusBtn: true \}\)/);
 });
 
+/* The list is last on <body>. The browser's Tab from there leaves the form. */
+test('Tab moves on from the trigger, not from the list', () => {
+  assert.match(src, /case 'Tab':\s*e\.preventDefault\(\);\s*close\(\);\s*focusBeside\(btn, e\.shiftKey \? -1 : 1\)/);
+});
+
+/* The menu is fixed and the settings pane scrolls by itself. */
+test('scrolling anything but the list closes the menu', () => {
+  assert.match(
+    src,
+    /'scroll',\s*e => \{\s*if \(!list\.contains\([^)]*\(e\.target\)\)\) close\(\);\s*\},\s*\{ capture: true, signal: outside\.signal \}/,
+  );
+});
+
+/* Settings load after the pickers are built. A label written from outside the
+   picker is lost, and the saved value reads as the default. */
+test('saved settings reach the pickers through the picker', () => {
+  const settings = read('js/admin-settings.js');
+  assert.doesNotMatch(settings, /-btn'\)|childNodes\[0\]/, 'loadSettings writes a picker button directly again');
+  assert.match(read('js/admin.js'), /loadSettings\(c\);\s*syncPickerLabels\(\);/);
+});
+
 /* A list that is only pointed at cannot be reached by the keyboard. */
 test('options are focusable and the focus roves', () => {
   assert.match(src, /li\.tabIndex = n === active \? 0 : -1/);
