@@ -35,7 +35,7 @@ const BUDGET = {
   'widgets/books/index.html': 1,
   'widgets/connections/connections-vpn.html': 1,
   'widgets/dashboard-switch/index.html': 2,
-  'widgets/dns/index.html': 2,
+  'widgets/dns/index.html': 1,
   'widgets/github/pullrequests.html': 4,
   'widgets/disk-health/index.html': 1,
   'widgets/weather/index.html': 2,
