@@ -47,7 +47,10 @@ function makeParts(values) {
     setAttribute() {},
     focus() {},
     classList: { toggle() {} },
-    getBoundingClientRect: () => ({ top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 }),
+    top: 0,
+    getBoundingClientRect() {
+      return { top: this.top, bottom: this.top, left: 0, right: 0, width: 0, height: 0 };
+    },
   };
   const text = { textContent: '', classList: { toggle() {} } };
   const list = {
@@ -133,13 +136,18 @@ test('closing removes the listener again', () => {
   assert.equal(live.size, 0, 'the listener outlived the open state');
 });
 
-test('a scroll outside the list closes it, a scroll inside does not', () => {
+test('a scroll closes the menu only when it moved the button', () => {
   live.clear();
-  const { list, options } = row();
+  const { btn, list, options } = row();
   openIt();
   const scroll = [...live].find(e => e.type === 'scroll');
+  btn.top = 40;
   scroll.fn({ target: options[0] });
   assert.equal(list.hidden, false, 'scrolling the long list itself closed it');
+  btn.top = 0;
+  scroll.fn({ target: { tagName: 'DIV' } });
+  assert.equal(list.hidden, false, 'a late scroll that moved nothing closed the menu');
+  btn.top = 40;
   scroll.fn({ target: { tagName: 'DIV' } });
   assert.equal(list.hidden, true, 'the menu stayed open while the pane scrolled');
   assert.equal(live.size, 0);

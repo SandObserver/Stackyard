@@ -184,10 +184,14 @@ export function createListbox(
     /* The visible area resizes a frame after the menu opens. */
     visualViewport?.addEventListener('resize', place, { signal: outside.signal });
     visualViewport?.addEventListener('scroll', place, { signal: outside.signal });
+    /* A scroll event lands a frame late. Close only when the button moved. */
+    const at = btn.getBoundingClientRect();
     document.addEventListener(
       'scroll',
       e => {
-        if (!list.contains(/** @type {Node} */ (e.target))) close();
+        if (list.contains(/** @type {Node} */ (e.target))) return;
+        const r = btn.getBoundingClientRect();
+        if (Math.abs(r.top - at.top) > 1 || Math.abs(r.left - at.left) > 1) close();
       },
       { capture: true, signal: outside.signal },
     );

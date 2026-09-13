@@ -42,11 +42,10 @@ test('Tab moves on from the trigger, not from the list', () => {
 });
 
 /* The menu is fixed and the settings pane scrolls by itself. */
-test('scrolling anything but the list closes the menu', () => {
-  assert.match(
-    src,
-    /'scroll',\s*e => \{\s*if \(!list\.contains\([^)]*\(e\.target\)\)\) close\(\);\s*\},\s*\{ capture: true, signal: outside\.signal \}/,
-  );
+test('a scroll that moves the button closes the menu', () => {
+  assert.match(src, /const at = btn\.getBoundingClientRect\(\);/);
+  assert.match(src, /Math\.abs\(r\.top - at\.top\) > 1 \|\| Math\.abs\(r\.left - at\.left\) > 1\) close\(\)/);
+  assert.match(src, /\{ capture: true, signal: outside\.signal \}/);
 });
 
 /* Settings load after the pickers are built. A label written from outside the
