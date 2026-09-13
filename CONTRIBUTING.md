@@ -1,5 +1,7 @@
 # Contributing
 
+The full contributor guide is at [stackyard.sandobserver.com/docs/contributing](https://stackyard.sandobserver.com/docs/contributing/).
+
 Contributions are welcome within the constraints that keep Stackyard small and auditable. A change that breaks one of these will not be merged:
 
 - **One container**: Nginx and the Node API run together under supervisord. No extra services, no database.
@@ -58,7 +60,7 @@ available fails the run. The threshold is in [SECURITY.md](SECURITY.md).
   version, descending versions, and a compare link per version. Structure fails
   the check. Style problems in `[Unreleased]`, such as a rationale clause or a
   three-sentence entry, print as warnings on the pull request and do not fail
-  it. Releasing is documented in [docs/releasing.md](docs/releasing.md).
+  it. Releasing is documented at [Releasing](https://stackyard.sandobserver.com/docs/contributing/releasing/).
 - **`changelog-fragments.js --check`** validates the files in `changelog.d/` and
   proves they fold into `[Unreleased]`. Do not edit `CHANGELOG.md` in a pull
   request: add one file per user-visible change instead, named
@@ -91,9 +93,9 @@ available fails the run. The threshold is in [SECURITY.md](SECURITY.md).
 
 ## More
 
-- Frontend layout: [docs/frontend.md](docs/frontend.md)
-- Widgets: [docs/widgets.md](docs/widgets.md)
-- Translations: [docs/i18n.md](docs/i18n.md)
-- Security model / reporting: [docs/security.md](docs/security.md)
+- Architecture: [How Stackyard works](https://stackyard.sandobserver.com/docs/contributing/architecture/)
+- Widgets: [Build your first widget](https://stackyard.sandobserver.com/docs/create-a-widget/)
+- Translations: [Translations](https://stackyard.sandobserver.com/docs/contributing/translations/)
+- Security model: [Security](https://stackyard.sandobserver.com/docs/security/)
 - Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 - Who maintains this and how decisions are made: [GOVERNANCE.md](GOVERNANCE.md)

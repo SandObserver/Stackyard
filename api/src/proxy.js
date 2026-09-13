@@ -9,8 +9,7 @@ const { parseXml } = require('./parse-xml');
 const log = require('./log');
 const { parsePrometheus } = require('./parse-prometheus');
 
-/* Addresses that are never a legitimate outbound target. A test checks
-   docs/security.md against the third column. */
+/* Addresses that are never a legitimate outbound target. */
 /** @type {Array<[string, number, string]>} */
 const BLOCKED_IPV4 = [
   ['0.0.0.0', 8, 'this network (RFC 1122)'],

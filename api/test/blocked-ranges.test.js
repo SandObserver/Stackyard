@@ -128,14 +128,3 @@ test('a public address is still reachable', () => {
 });
 
 /* ── the documented list ──────────────────────────────────────────────────── */
-
-/* Operators read docs/security.md to decide whether they need ALLOW_PRIVATE_IPS,
-   so a table that drifts from the code is worse than no table. */
-test('docs/security.md lists exactly the ranges the code blocks', () => {
-  const fs = require('node:fs');
-  const path = require('node:path');
-  const doc = fs.readFileSync(path.join(__dirname, '../../docs/security.md'), 'utf8');
-  const documented = [...doc.matchAll(/^\| `(\d[\d.]*\/\d+)` \|/gm)].map(m => m[1]).sort();
-  const inCode = BLOCKED_IPV4.map(([base, bits]) => `${base}/${bits}`).sort();
-  assert.deepEqual(documented, inCode, 'the table in docs/security.md is out of date');
-});

@@ -1,12 +1,11 @@
 /* Renders a widget's declared `fields` into a config form and reads the values
-   back. Each builder returns { el, get, control, liveValue }. See
-   docs/widgets.md. */
+   back. Each builder returns { el, get, control, liveValue }. */
 
-import { t } from '/js/i18n.js?v=e644a5c5';
+import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal } from '/js/admin-shared.js?v=ca64cc9c';
-import { createListbox } from '/js/listbox.js?v=3e267705';
-import { renderColorControl } from '/js/admin-color-control.js?v=cfb3b3e9';
+import { reveal } from '/js/admin-shared.js?v=5cf446fa';
+import { createListbox } from '/js/listbox.js?v=a67e9c98';
+import { renderColorControl } from '/js/admin-color-control.js?v=47d9d808';
 import {
   seedCarried,
   applyOptionSet,
@@ -16,7 +15,7 @@ import {
   visibleFieldFlags,
 } from '/js/admin-logic.js?v=69e57d35';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
-import { qi } from '/js/utils.js?v=ada0c382';
+import { qi } from '/js/utils.js?v=70cbc405';
 
 const PE =
   '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';

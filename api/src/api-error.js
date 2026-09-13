@@ -1,6 +1,6 @@
 /* Structured API errors: { error, kind, detail? }. `kind` is a closed set.
    `detail` carries server-derived values only, never an upstream body, header or
-   filesystem path. See docs/api-errors.md. */
+   filesystem path. */
 
 const { json } = require('./router');
 const log = require('./log');

@@ -132,10 +132,3 @@ test('a widget listener, if one is added back, checks the origin', () => {
 });
 
 /* ── the contract is written down ─────────────────────────────────────────── */
-
-test('docs/widgets.md documents the protocol a widget author has to implement', () => {
-  const doc = fs.readFileSync(path.join(root, '..', 'docs', 'widgets.md'), 'utf8');
-  /* Name-anchored, or a renamed hook still matches as a prefix. */
-  assert.match(doc, /__clearActive\b/, 'the reset hook is not documented');
-  assert.match(doc, /'widget-active'/, 'the message is not documented');
-});

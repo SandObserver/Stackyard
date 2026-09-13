@@ -1,6 +1,5 @@
-/* Never write the choice to the config: it is per device.
-   Why it is resolved here rather than in a media query, and why admin-theme.js
-   repeats it: docs/frontend.md, Theme. */
+/* Never write the choice to the config: it is per device. admin-theme.js
+   repeats this decision before first paint. */
 
 export const THEME_KEY = 'sy-theme';
 

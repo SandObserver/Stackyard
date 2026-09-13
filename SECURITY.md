@@ -30,7 +30,7 @@ public.
 
 This section is about the project's own credentials. For how the application
 stores the secrets you enter into it, see
-[docs/security.md](docs/security.md#secrets).
+[Security](https://stackyard.sandobserver.com/docs/security/#secrets).
 
 - CI credentials are GitHub Actions secrets. Only a maintainer can read or
   change them. The list of who that is, and what else they hold, is in
@@ -69,4 +69,4 @@ Stackyard serves plain HTTP and is designed to run on a trusted LAN, not on the 
 
 The outbound-request guard protects against a compromised or malicious widget reaching internal addresses, not against a malicious administrator: anyone who can edit the config already has full config-write access.
 
-See [docs/security.md](docs/security.md) for the detailed security model.
+See [Security](https://stackyard.sandobserver.com/docs/security/) for the detailed security model.

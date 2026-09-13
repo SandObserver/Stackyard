@@ -1,6 +1,4 @@
-/* docs/frontend.md said every widget tile was a sandboxed iframe. None were.
-
-   A bundled widget is served from this server, so a sandbox would have to grant
+/* A bundled widget is served from this server, so a sandbox would have to grant
    it its own origin back and would withhold nothing. A custom widget frames a
    URL the user typed, and without a sandbox that page can redirect the whole
    dashboard through top.location. */

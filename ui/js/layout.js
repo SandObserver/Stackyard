@@ -1,6 +1,5 @@
 // @ts-check
-/* Keep this module free of imports. Both entry points load it first.
-   Why the test has two halves: docs/frontend.md, Layout. */
+/* Keep this module free of imports. Both entry points load it first. */
 
 export const MOBILE_QUERY = '(max-width:768px)';
 const PORTRAIT_QUERY = '(orientation:portrait)';

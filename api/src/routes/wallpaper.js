@@ -27,8 +27,7 @@ const FETCH_TIMEOUT_MS = 30_000;
 const ACCEPTED = 'JPEG, PNG, WebP, AVIF or GIF';
 const TOO_LARGE = 'image too large (max 16 MB)';
 
-/* A message only reaches the browser when the route hands it over itself. See
-   docs/api-errors.md. */
+/* A message only reaches the browser when the route hands it over itself. */
 const oversize = () => Object.assign(new Error('body over the limit'), { oversize: true });
 
 /** @param {string} ext @returns {string} */

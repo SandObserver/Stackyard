@@ -1,6 +1,6 @@
 // @ts-check
 /* The failure states every widget shares. The wording comes from the kind the
-   API sends, documented in docs/api-errors.md.
+   API sends.
 
    Never draw a response's error message. It names hosts, ports and status
    codes, and it is not translated. */
@@ -126,8 +126,7 @@ function ensureStyle(doc) {
   doc.head.appendChild(s);
 }
 
-/** One widget's error, empty and healthy states. The options are documented in
-    docs/widgets.md.
+/** One widget's error, empty and healthy states. 
 
     @param {any} opts */
 export function errorState(opts = {}) {

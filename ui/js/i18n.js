@@ -91,8 +91,7 @@ async function fetchCatalog(code) {
   }
 }
 
-/* Development locales, reached by ?lang= and absent from the registry.
-   What each one does: docs/i18n.md. */
+/* Development locales, reached by ?lang= and absent from the registry. */
 export const PSEUDO_LANG = 'en-XA';
 export const KEY_LANG = 'cimode';
 
