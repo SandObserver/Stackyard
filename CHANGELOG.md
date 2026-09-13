@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-09-12
+
+### Changed
+
+- The DNS widget flow chart spreads its outcomes apart and shows each count in
+  the headline when you point at or drag across the chart.
+
+- Now Playing moves the player name and previous and next controls into a
+  coloured band on the label, and switches items without sliding the whole
+  cassette.
+
+- Settings sections now expand and collapse instead of appearing at full height.
+
+- Settings Save buttons stay disabled until something changes, and leaving with
+  unsaved changes asks first.
+
+### Fixed
+
+- Fix settings dropdowns being clipped, covered by the tab bar, or running off
+  screen on a phone.
+
+- Fix the Authentication rows staying hidden when a badge fetch reports that
+  credentials are needed.
+
+- Fix folder, search and clock details: phone folders close on a click outside,
+  the Search pill is a button, folders show their icon grid in search, the
+  analog clock date shows through the hands, and the item editor names the item.
+
+- Fix the page dots and dock covering the last row of apps on short desktop
+  windows.
+
+- Dropdowns can be operated by keyboard: arrow keys, Home, End, type-ahead,
+  Enter and Escape.
+
+- Fix missing gaps between cards in the app and widget editor.
+
+- Fix the phone layout not refitting a narrowed window, and the phone dock and
+  Search pill staying after widening to desktop.
+
+- Fix tiles shrinking on a narrow desktop window, which now shows fewer columns,
+  and open folders growing past phone size on a wide phone-layout window.
+
 ## [1.11.0] - 2026-09-11
 
 ### Added
@@ -1274,7 +1316,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.11.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.12.0...HEAD
+[1.12.0]: https://github.com/SandObserver/stackyard/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/SandObserver/stackyard/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/SandObserver/stackyard/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/SandObserver/stackyard/compare/v1.9.1...v1.9.2
