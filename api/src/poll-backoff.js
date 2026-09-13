@@ -1,6 +1,5 @@
 /* Only a thrown request counts as a failure. A service answering with an error
-   status is reachable and is polled normally.
-   Why the batch needs this at all: docs/frontend.md, Badges. */
+   status is reachable and is polled normally. */
 
 const FAILURES_BEFORE_BACKOFF = 3;
 const FIRST_DELAY_MS = 30_000;

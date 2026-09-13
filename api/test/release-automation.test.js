@@ -84,21 +84,6 @@ test('the release runs one at a time', () => {
   }
 });
 
-test('docs/releasing.md documents the app secrets the workflows read', () => {
-  const doc = fs.readFileSync(path.join(ROOT, 'docs', 'releasing.md'), 'utf8');
-  for (const [secret, file] of [
-    ['RELEASE_APP_CLIENT_ID', 'release-prep.yml'],
-    ['RELEASE_APP_PRIVATE_KEY', 'release-prep.yml'],
-    ['DOCS_DEPLOY_HOOK_URL', 'release.yml'],
-  ]) {
-    assert.ok(doc.includes(secret), `${secret} is read by a workflow and not documented`);
-    assert.ok(
-      wf(file).includes(secret),
-      `${secret} is documented but no longer read; the doc would send someone to create a secret nothing uses`,
-    );
-  }
-});
-
 /* Release prep folds changelog.d into the dated section and deletes the files.
    A delete left unstaged folds the same entries in again at the next release. */
 test('release prep stages the fragments it consumed', () => {

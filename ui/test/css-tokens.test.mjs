@@ -214,15 +214,9 @@ test('every spacing step is declared, and names its own value', () => {
   }
 });
 
-test('the token file declares no step the documentation does not list', () => {
+test('the token file declares no step outside the scale', () => {
   const declared = [...read('tokens.css').matchAll(/--sp-(\d+):/g)].map(m => Number(m[1])).sort((a, b) => a - b);
   assert.deepEqual(declared, SPACING);
-});
-
-test('the documentation lists the same steps', () => {
-  const doc = read2('../docs/design-system.md');
-  const listed = [...doc.matchAll(/`--sp-(\d+)`/g)].map(m => Number(m[1])).sort((a, b) => a - b);
-  assert.deepEqual(listed, SPACING, 'design-system.md and tokens.css disagree about the scale');
 });
 
 /* A fallback naming an undeclared token resolves to nothing. */

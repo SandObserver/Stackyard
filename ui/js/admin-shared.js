@@ -1,7 +1,7 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=69e57d35';
-import { el, q } from '/js/utils.js?v=ada0c382';
-import { t } from '/js/i18n.js?v=e644a5c5';
+import { el, q } from '/js/utils.js?v=70cbc405';
+import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 
 export const API = '';
@@ -38,7 +38,7 @@ export const toast = (m, t = 'ok') => {
 
 /* Carry `kind` and `detail`, so callers branch on data, never on message
    text. */
-/** An error carrying the API's structured fields. See docs/api-errors.md.
+/** An error carrying the API's structured fields.
     @typedef {Error & { status?: number, kind?: string, detail?: Record<string, unknown> }} ApiError */
 
 /** @param {number} status @param {any} body @returns {ApiError} */

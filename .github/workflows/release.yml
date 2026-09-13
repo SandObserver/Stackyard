@@ -168,7 +168,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      # Keyless. Verification steps: docs/security.md.
+      # Keyless.
       - name: Sign the image
         run: cosign sign --yes "ghcr.io/sandobserver/stackyard@${DIGEST}"
         env:
@@ -193,7 +193,7 @@ jobs:
           if-no-files-found: error
 
       # The artifact above expires, so the same document is attested to the
-      # registry by digest. Verification steps: docs/security.md.
+      # registry by digest.
       - name: Attest the SBOM to the registry
         run: |
           cosign attest --yes \
@@ -236,7 +236,6 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      # The commands docs/security.md tells a reader to run.
       - name: Verify the signature
         run: |
           cosign verify "ghcr.io/sandobserver/stackyard@${DIGEST}" \

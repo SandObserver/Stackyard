@@ -50,7 +50,7 @@ Widgets and the services they read:
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
 
-Each widget is documented at [Widgets](https://stackyard.sandobserver.com/docs/widgets/). Adding one is a folder plus one registry entry, with no changes to the rest of the app; see [docs/widgets.md](docs/widgets.md).
+Each widget is documented at [Widgets](https://stackyard.sandobserver.com/docs/widgets/). Adding one is a folder plus one registry entry, with no changes to the rest of the app; see [Build your first widget](https://stackyard.sandobserver.com/docs/create-a-widget/).
 
 ## Getting started
 
@@ -77,7 +77,7 @@ Then open `http://localhost:8700` and set everything up at `/admin`. Config and 
 
 On Unraid, install it from [Community Apps](https://ca.unraid.net/apps/stackyard-0ara4ku0sjjwqy).
 
-The same image is on Docker Hub as `sandobserver/stackyard`. Prefer `ghcr.io`: it is the registry the [release signature](docs/security.md#verifying-a-release-image) covers.
+The same image is on Docker Hub as `sandobserver/stackyard`. Prefer `ghcr.io`: it is the registry the [release signature](https://stackyard.sandobserver.com/docs/security/#verifying-a-release-image) covers.
 
 The repo's [`docker-compose.yml`](docker-compose.yml) is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access, and Docker health checks.
 
@@ -88,12 +88,15 @@ Full instructions, including building from source, are at [Installation](https:/
 - [First setup](https://stackyard.sandobserver.com/docs/first-setup/)
 - [Settings reference](https://stackyard.sandobserver.com/docs/settings-reference/)
 - [Badges](https://stackyard.sandobserver.com/docs/badges/)
-- [Customization](https://stackyard.sandobserver.com/docs/customization/)
+- [Wallpaper and themes](https://stackyard.sandobserver.com/docs/customization/)
+- [Widgets](https://stackyard.sandobserver.com/docs/widgets/)
+- [Build a widget](https://stackyard.sandobserver.com/docs/create-a-widget/)
+- [Contributing](https://stackyard.sandobserver.com/docs/contributing/)
 - [Troubleshooting](https://stackyard.sandobserver.com/docs/troubleshooting/) and [Support](https://stackyard.sandobserver.com/docs/support/)
 
 ## Security
 
-Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [docs/security.md](docs/security.md) before exposing Stackyard beyond your LAN.
+Stackyard never returns stored secrets to the browser, guards the URLs you test in the admin UI against SSRF and pins the resolved IP, and bounds every upstream call so one slow service cannot hang the dashboard. Some features trade safety for convenience and are opt-in with warnings. Read [Security](https://stackyard.sandobserver.com/docs/security/) before exposing Stackyard beyond your LAN.
 
 ## Accessibility
 
@@ -101,7 +104,7 @@ Stackyard targets WCAG 2.2 level AA and is partially conformant. Every control i
 
 ## Contributing
 
-Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/frontend.md](docs/frontend.md). Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md). Who maintains Stackyard and how decisions are made is in [GOVERNANCE.md](GOVERNANCE.md).
+Contributions are welcome, within the constraints that keep Stackyard small and auditable (one container, no backend dependencies, vanilla frontend). See [Contributing](https://stackyard.sandobserver.com/docs/contributing/). Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md). Who maintains Stackyard and how decisions are made is in [GOVERNANCE.md](GOVERNANCE.md).
 
 ## Changelog
 

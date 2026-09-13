@@ -141,10 +141,3 @@ test('the widget cache version comes from the manifest, not a hand-written liter
   const literal = /['"`]\/widgets\/[^'"`]*\?v=\d/.exec(src);
   assert.equal(literal, null, `a hand-written widget stamp is back: ${literal && literal[0]}`);
 });
-
-test('the frontend guide describes the mechanism that exists', () => {
-  const doc = fs.readFileSync(path.join(root, '..', 'docs', 'frontend.md'), 'utf8');
-  const section = doc.slice(doc.indexOf('## Cache busting'));
-  assert.match(section, /entryVersions/, 'the guide does not mention where the widget hash lives');
-  assert.doesNotMatch(section, /is manual/, 'the guide tells contributors to bump a stamp the build owns');
-});

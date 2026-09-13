@@ -52,20 +52,20 @@ services:
       # Where your reverse proxy is, if you have one in front (Nginx Proxy
       # Manager, Caddy, Traefik), for example 172.18.0.0/16. Without this, every
       # request through it counts as one client for rate limiting. See
-      # docs/security.md.
+      # https://stackyard.sandobserver.com/docs/reverse-proxy/.
       - TRUSTED_PROXY=${TRUSTED_PROXY:-}
       # Memory used per password hash. Default 16mib suits small hardware;
-      # raise it if you can, for example 64mib. See docs/security.md.
+      # raise it if you can, for example 64mib. See https://stackyard.sandobserver.com/docs/security/.
       - PASSWORD_HASH_MEMORY=${PASSWORD_HASH_MEMORY:-}
       # Turns the SSRF guard off, so badges and widgets may reach private, LAN
       # and loopback addresses. Most homelab installs need it, because the
-      # services they point at live on private IPs. See docs/security.md.
+      # services they point at live on private IPs. See https://stackyard.sandobserver.com/docs/security/.
       - ALLOW_PRIVATE_IPS=${ALLOW_PRIVATE_IPS:-}
       # Log verbosity: debug, info, warn or error, where warn and error behave
       # the same. Settings, General sets this too, and that wins once the config
       # has loaded.
       - LOG_LEVEL=${LOG_LEVEL:-}
-      # Run as a read-only public showcase. See docs/demo.md.
+      # Run as a read-only public showcase. See https://stackyard.sandobserver.com/docs/contributing/releasing/.
       - DEMO_MODE=${DEMO_MODE:-}
       # Idle session lifetime in days before re-login is required (default 12
       # hours). Accepts a fraction. A session in use is extended automatically.

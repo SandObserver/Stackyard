@@ -110,8 +110,7 @@ for (const [file, allowed] of Object.entries(SAME_ON_PURPOSE)) {
    one shipped software uses.
 
    Each entry is the rejected term and what to write instead. Adding one records
-   a terminology decision, so it survives the next bulk retranslation. The
-   glossary in docs/i18n.md carries the same list in prose. */
+   a terminology decision, so it survives the next bulk retranslation. */
 const REJECTED = {
   'fa.json': [
     ['درون‌ریزی', 'وارد کردن'],
@@ -176,7 +175,7 @@ for (const [file, pairs] of Object.entries(REJECTED)) {
         }
       }
     }
-    assert.deepEqual(found, [], `A term the glossary rules out. See docs/i18n.md:\n  ${found.join('\n  ')}`);
+    assert.deepEqual(found, [], `A term this list rules out:\n  ${found.join('\n  ')}`);
   });
 }
 

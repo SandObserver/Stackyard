@@ -2,7 +2,7 @@ import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { SETTINGS_ICON } from '/js/settings-icon.js?v=b96e5b13';
 import { BRAND_MARK } from '/js/brand-mark.js?v=1dcbf1ac';
-import { t } from '/js/i18n.js?v=e644a5c5';
+import { t } from '/js/i18n.js?v=1f1ea9c1';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);

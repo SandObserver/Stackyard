@@ -4,7 +4,7 @@
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
-import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=27d63b49';
+import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=962e496a';
 
 export { esc, html, setHtml };
 
@@ -281,8 +281,6 @@ export function errorLine(err) {
   const { key, text } = errorCopy(errorKind(err));
   return _t(key, text);
 }
-
-/* The options and the poll lifecycle are documented in docs/widgets.md. */
 
 /* Widgets on a page the user has swiped away from keep running: the dashboard
    mounts every page at once. It multiplies their poll interval through
