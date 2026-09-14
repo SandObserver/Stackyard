@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-09-14
+
+### Added
+
+- Add OpenWeather as a Weather widget provider.
+
+### Changed
+
+- Redesign the Books widget shelf and name the book in progress under it.
+
+### Fixed
+
+- Settings headers on phones put the title below the buttons, so a long name no
+  longer pushes Save off screen.
+
+- Widget settings text, number and API key fields accept typing again.
+
 ## [1.12.0] - 2026-09-12
 
 ### Changed
@@ -1316,7 +1333,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.12.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.13.0...HEAD
+[1.13.0]: https://github.com/SandObserver/stackyard/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/SandObserver/stackyard/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/SandObserver/stackyard/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/SandObserver/stackyard/compare/v1.9.2...v1.10.0
