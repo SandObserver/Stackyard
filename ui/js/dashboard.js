@@ -4,7 +4,6 @@ import {
   WIDGET_DESIGN,
   WIDGET_COLS,
   WIDGET_ROWS,
-  WIDGET_COST,
   widgetSrc,
   cardPreset,
   uniqueTitle,
@@ -43,7 +42,13 @@ import {
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
-import { configChanged, desktopCols, landingAfterSetup, restorePage } from '/js/dashboard-logic.js?v=a8f759ed';
+import {
+  configChanged,
+  desktopCols,
+  desktopPages,
+  landingAfterSetup,
+  restorePage,
+} from '/js/dashboard-logic.js?v=bc636d1d';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
@@ -63,7 +68,6 @@ const ICON_R = 0.2237;
 /* A widget tile's corner, at design size. WIDGET_DESIGN's small is 170 square
    against the reference's 165, so this is its 28 unchanged. */
 const WIDGET_R = 28;
-const wCost = { d: WIDGET_COST.desktop, m: WIDGET_COST.mobile };
 
 /* The design values the stylesheet's --tile-h and --row-gap ratios were derived
    from. Read gridMetrics() for the live sizes; these are only the fallback. */
@@ -98,12 +102,11 @@ let gm = { tile: DESIGN_TILE, rowGap: DESIGN_ROW_GAP, cols: 6 };
    which sit above the dock.
 
    @param {boolean} hasDock */
-function desktopSlots(hasDock) {
+function desktopRows(hasDock) {
   const ih = innerHeight;
   const top = Math.min(70, Math.max(44, ih * 0.04));
   const bottom = hasDock ? 204 : 68;
-  const rows = Math.max(1, Math.min(4, Math.floor((ih - top - bottom + gm.rowGap) / (gm.tile + gm.rowGap))));
-  return gm.cols * rows;
+  return Math.max(1, Math.min(4, Math.floor((ih - top - bottom + gm.rowGap) / (gm.tile + gm.rowGap))));
 }
 
 const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
@@ -282,27 +285,18 @@ function paginate() {
       .flatMap(f => f.children || [])
       .map(String),
   );
-  const budget = desktopSlots(items.some(i => i.type === 'app' && i.dock && !i.hidden));
+  const rows = desktopRows(items.some(i => i.type === 'app' && i.dock && !i.hidden));
   const bare = isDashboardEmpty(items);
-  const pages = [];
-  let cur = [],
-    used = 0;
-  for (const item of items) {
-    if (bare && item.system) continue;
-    if (item.dock) continue;
-    if (item.hidden) continue;
-    if (inFolder.has(String(item.id))) continue;
-    const cost = item.type === 'widget' ? wCost[pl][item.widgetSize || 'medium'] : 1;
-    if (used + cost > budget && cur.length) {
-      pages.push([...cur]);
-      cur = [];
-      used = 0;
-    }
-    cur.push(item);
-    used += cost;
-  }
-  if (cur.length) pages.push(cur);
-  return pages;
+  const tiles = items.filter(
+    item => !(bare && item.system) && !item.dock && !item.hidden && !inFolder.has(String(item.id)),
+  );
+  /** @returns {[number, number]} */
+  const span = item => {
+    if (item.type !== 'widget') return [1, 1];
+    const sz = item.widgetSize || 'medium';
+    return [wCols[pl][sz], wRows[pl][sz]];
+  };
+  return desktopPages(tiles, span, gm.cols, rows);
 }
 
 function mkIcon(item) {
@@ -998,7 +992,7 @@ async function boot() {
      pixel: a rebuild tears down and remounts every widget iframe. */
   const hasDock = () => items.some(i => i.type === 'app' && i.dock && !i.hidden);
   let _dz,
-    _slots = desktopSlots(hasDock());
+    _slots = desktopRows(hasDock()) * gm.cols;
   /* The phone layout rebuilds on a width change only. A phone keyboard changes
      the height, and a rebuild then would close it. */
   let _rs;
@@ -1014,7 +1008,7 @@ async function boot() {
       if (MOB) return;
       gm = gridMetrics();
       document.documentElement.style.setProperty('--cols', String(gm.cols));
-      const slots = desktopSlots(hasDock());
+      const slots = desktopRows(hasDock()) * gm.cols;
       if (slots === _slots) return;
       _slots = slots;
       buildDesktop();

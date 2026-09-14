@@ -72,7 +72,7 @@ test('the placard carries the app mark without its plate', () => {
 });
 
 test('both layouts drop the settings tile while the dashboard is empty', () => {
-  assert.match(read('js/dashboard.js'), /if \(bare && item\.system\) continue;/);
+  assert.match(read('js/dashboard.js'), /!\(bare && item\.system\)/);
   assert.match(read('js/ui.js'), /!\(bare && i\.system\)/);
 });
 
@@ -105,8 +105,8 @@ test('the dock reservation follows what is actually docked', () => {
 test('the desktop bottom reserve shrinks without a dock', () => {
   const src = read('js/dashboard.js');
   assert.match(src, /const bottom = hasDock \? 204 : 68;/);
-  assert.match(src, /desktopSlots\(items\.some\(i => i\.type === 'app' && i\.dock && !i\.hidden\)\)/);
-  assert.doesNotMatch(src, /desktopSlots\(\)/, 'a call without the dock flag reserves the wrong height');
+  assert.match(src, /desktopRows\(items\.some\(i => i\.type === 'app' && i\.dock && !i\.hidden\)\)/);
+  assert.doesNotMatch(src, /desktopRows\(\)/, 'a call without the dock flag reserves the wrong height');
 });
 
 test('the page padding and the slot maths use the same two reserves', () => {
