@@ -19,10 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Settings headers on phones put the title below the buttons, so a long name no
-  longer pushes Save off screen.
-
-- Widget settings text, number and API key fields accept typing again.
+- Keep Save on screen in phone Settings headers with long names.
+- Fix typing into widget settings text, number and API key fields.
 
 ## [1.12.0] - 2026-09-12
 
