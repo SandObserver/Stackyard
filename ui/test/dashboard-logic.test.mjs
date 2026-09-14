@@ -5,7 +5,43 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { configChanged, desktopCols, landingAfterSetup, restorePage } from '../js/dashboard-logic.js';
+import { configChanged, desktopCols, desktopPages, landingAfterSetup, restorePage } from '../js/dashboard-logic.js';
+
+const SPANS = { app: [1, 1], small: [1, 0], medium: [2, 0], large: [2, 2], xlarge: [2, 3] };
+const pagesOf = (kinds, cols, rows) =>
+  desktopPages(
+    kinds.map((k, i) => ({ k, i })),
+    t => SPANS[t.k],
+    cols,
+    rows,
+  ).map(p => p.map(t => t.i));
+
+test('a medium widget that wraps leaves a gap, so the page holds one tile fewer', () => {
+  const kinds = [...Array(17).fill('app'), 'medium', ...Array(5).fill('app')];
+  const pages = pagesOf(kinds, 6, 4);
+  assert.equal(pages.length, 2);
+  assert.equal(pages[1].length, 1, 'the last tile would sit in a fifth row');
+});
+
+test('tiles that fill every cell stay on one page', () => {
+  assert.equal(pagesOf(Array(24).fill('app'), 6, 4).length, 1);
+  assert.equal(pagesOf(Array(25).fill('app'), 6, 4).length, 2);
+});
+
+test('a tall widget breaks the page when its rows run past the last', () => {
+  const pages = pagesOf([...Array(12).fill('app'), 'large'], 6, 3);
+  assert.deepEqual(pages[1], [12]);
+});
+
+test('a later tile never fills an earlier gap', () => {
+  const pages = pagesOf(['app', 'app', 'app', 'medium', 'small'], 4, 2);
+  assert.deepEqual(pages, [[0, 1, 2, 3, 4]]);
+  assert.equal(pagesOf(['app', 'app', 'app', 'medium', 'medium', 'small'], 4, 2).length, 2);
+});
+
+test('a widget taller than the page still gets a page', () => {
+  assert.deepEqual(pagesOf(['app', 'xlarge'], 6, 2), [[0], [1]]);
+});
 
 test('desktop columns follow the width, tiles keep their size', () => {
   assert.equal(desktopCols(1041), 6, 'the design width holds six');
