@@ -71,6 +71,46 @@ test('a saved change survives a reload', async ({ page }) => {
   await expect(rowByName(page, 'Delta')).toBeVisible();
 });
 
+/* Widget settings rows are built from the manifest, not the template. A row
+   whose input never becomes visible cannot be typed into at all. */
+test('a widget text field and secret field accept typing and save', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [
+      {
+        id: 'dns',
+        type: 'widget',
+        widgetType: 'dns',
+        label: 'DNS',
+        widgetSize: 'small',
+        widgetConfig: { provider: 'adguard', dnsUrl: 'http://dns.invalid' },
+      },
+    ],
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'DNS').getByRole('button', { name: /^Edit/ }).first().click();
+
+  const fieldRow = label =>
+    page.locator('#ev-body .ie-row').filter({ has: page.locator('.rl', { hasText: new RegExp(`^${label}`) }) });
+
+  const link = fieldRow('Click URL');
+  await link.locator('.pe').click();
+  await expect(link.locator('.row-inp')).toBeVisible();
+  await page.keyboard.type('http://dns-admin.invalid');
+  await page.keyboard.press('Enter');
+  await expect(link.locator('.rv')).toHaveText('http://dns-admin.invalid');
+
+  const pass = fieldRow('Password');
+  await pass.locator('.pe').click();
+  await expect(pass.locator('.row-inp')).toBeVisible();
+  await page.keyboard.type('s3cret');
+  await page.keyboard.press('Enter');
+
+  await saveEditor(page);
+  const saved = expectItem(await readConfig(request), i => i.id === 'dns', 'the DNS widget');
+  expect(saved.widgetConfig.dnsHref).toBe('http://dns-admin.invalid');
+  expect(saved.widgetConfig.dnsPass ?? saved.widgetConfig.dnsPassSet).toBeTruthy();
+});
+
 test('adding a widget stores its type', async ({ page, request }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();
