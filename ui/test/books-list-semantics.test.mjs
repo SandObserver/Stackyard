@@ -1,9 +1,6 @@
 /* The books shelf is a list, and it has to say so in markup. role="listitem"
    with no list above it is dropped, and each book reaches a reader as
-   unpositioned focusable text with no count.
-
-   The shelf itself cannot be that list: it also holds the two decorative ledge
-   strips, which are not books. The list is nested inside it. */
+   unpositioned focusable text with no count. */
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -38,33 +35,35 @@ test('the role is dropped while the shelf is empty', () => {
   assert.ok(drop < set, 'the role has to be cleared before the empty case returns');
 });
 
-/* The ledges are shelf furniture. Inside the list they would be children that
-   are not list items. */
-test('the shelf decorations stay outside the list', () => {
-  assert.match(books, /<ul class="books" id="books"><\/ul>/, 'a ledge would otherwise sit inside the list');
-  const list = books.indexOf('<ul class="books"');
-  const ledge = books.indexOf('class="ledge-top"');
-  assert.ok(list > -1 && ledge > list, 'the ledges are siblings after the list, not children of it');
-  assert.match(books, /class="ledge-top" aria-hidden="true"/);
-  assert.match(books, /class="ledge" aria-hidden="true"/);
+test('the shelf holds the list and nothing else', () => {
+  assert.match(books, /<div class="shelf" id="shelf">\s*<ul class="books" id="books"><\/ul>\s*<\/div>/);
 });
 
-/* The panel sat at the tile's border box, under the rounded corner and over the
-   header, with its smallest line at 9px before the tile's own scaling. */
-test('the hover panel is inset from the tile edge', () => {
-  const rule = /\.info\{([^}]*)\}/.exec(books);
-  assert.ok(rule, 'the info rule is missing');
-  for (const side of ['left', 'right', 'top']) {
-    const px = new RegExp(`${side}:(\\d+)px`).exec(rule[1]);
-    assert.ok(px && Number(px[1]) > 0, `the panel still sits on the tile's ${side} edge`);
-  }
-  assert.match(rule[1], /border-radius:/, 'an inset panel with square corners reads as a torn-off bar');
-});
-
-test('no line in the hover panel is under 10px', () => {
+/* The tile scales down on a phone. Below 10px here the line drops under 9. */
+test('no line under the shelf is under 10px', () => {
   for (const cls of ['t', 'a', 'p']) {
-    const px = new RegExp(`\\.info \\.${cls}\\{font-size:(\\d+)px`).exec(books);
-    assert.ok(px, `.info .${cls} has no size`);
-    assert.ok(Number(px[1]) >= 10, `.info .${cls} is ${px[1]}px, which the tile's scaling drops below 9`);
+    const px = new RegExp(`\\.foot \\.${cls}\\{[^}]*font-size:(\\d+)px`).exec(books);
+    assert.ok(px, `.foot .${cls} has no size`);
+    assert.ok(Number(px[1]) >= 10, `.foot .${cls} is ${px[1]}px`);
   }
+});
+
+test('the line under the shelf is hidden from readers, the books carry the same text', () => {
+  assert.match(books, /<div class="foot" id="foot" aria-hidden="true">/);
+  assert.match(books, /el\.setAttribute\('aria-label',describe\(b\)\)/);
+});
+
+test('a shelf filled under two thirds starts at the edge and leans its last book', () => {
+  assert.match(books, /const sparse=shown\.length>1&&used<room\*2\/3;/);
+  assert.match(books, /sparse&&i===shown\.length-1\?' lean':''/);
+  assert.match(books, /\.books\.sparse\{justify-content:flex-start/);
+});
+
+test('a leaning book mirrors in right-to-left text', () => {
+  assert.match(books, /\.bk\.lean:dir\(rtl\)\{transform-origin:right bottom;transform:rotate\(8deg\)\}/);
+});
+
+/* A frame on a page not yet shown measures zero width. */
+test('a zero-width shelf shows every book rather than one', () => {
+  assert.match(books, /room=cw>0\?cw-4:Infinity/);
 });
