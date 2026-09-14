@@ -10,87 +10,85 @@
     font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif}
 
   .card{position:relative;width:100%;height:100%;border-radius:inherit;
-    overflow:hidden;padding:14px;display:flex;flex-direction:column}
+    overflow:hidden;padding:12px;display:flex;flex-direction:column}
   .card.clickable{cursor:pointer}
   .card.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-3px}
 
-  .head{display:flex;justify-content:space-between;align-items:center;flex:none}
-  .head .lbl{font-size:11px;font-weight:500;color:#8E8E93;letter-spacing:.05em;
+  .head{flex:none;font-size:11px;font-weight:500;color:#8E8E93;letter-spacing:.05em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .head svg{width:13px;height:13px;color:#636366;flex:none}
 
-  .shelves{flex:1;display:flex;flex-direction:column;min-height:0}
+  .shelves{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:6px}
+  .size-large .shelves{margin-top:10px}
   .shelf-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
-  .shelf-lbl{flex:none;font-size:9px;font-weight:600;color:#636366;letter-spacing:.06em;margin-top:5px;
+  .shelf-lbl{flex:none;font-size:10px;font-weight:600;color:#8E8E93;letter-spacing:.06em;margin-bottom:4px;
     text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .shelf-lbl[hidden]{display:none}
-  .shelf{flex:1;position:relative;padding-bottom:9px;margin-top:6px;perspective:520px}
-  .size-large .shelf{margin-top:2px}
-  .books{list-style:none;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
+  .shelf{flex:1;position:relative;min-height:0;border-bottom:1px solid rgba(235,235,245,.5)}
+  .shelf::after{content:"";position:absolute;left:5%;right:5%;bottom:-1px;height:10px;pointer-events:none;
+    background:radial-gradient(50% 100% at 50% 100%,rgba(0,0,0,.5),transparent)}
+  .books{list-style:none;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px;padding:0 2px}
+  .books.sparse{justify-content:flex-start;padding-inline-start:6px}
   .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    color:#636366;font-size:11px}
+    color:#8E8E93;font-size:11px}
 
-  .bk{flex-shrink:0;border-top-left-radius:2px;border-top-right-radius:2px;position:relative;
-    display:flex;align-items:center;justify-content:center;border:.5px solid rgba(0,0,0,.25);
-    border-top:1px solid rgba(255,255,255,.18);transform-origin:center bottom;
-    transition:transform .18s cubic-bezier(.22,.7,.3,1),box-shadow .18s,filter .18s;will-change:transform}
-  .bk::after{content:"";position:absolute;right:0;top:0;bottom:0;width:1.5px;background:rgba(255,250,240,.22)}
+  .bk{flex:none;position:relative;overflow:hidden;border-radius:1.5px 1.5px 0 0;transform-origin:center bottom;
+    box-shadow:inset 0 .5px 0 rgba(255,255,255,.24),inset -1px 0 0 rgba(0,0,0,.14),inset 1px 0 0 rgba(255,255,255,.06);
+    background-image:linear-gradient(180deg,rgba(255,255,255,.07),rgba(0,0,0,.07));
+    transition:transform .2s cubic-bezier(.2,.8,.2,1),filter .2s}
+  .bk::after{content:"";position:absolute;left:0;right:0;bottom:5px;height:1px;background:currentColor;opacity:.18}
   .bk:focus{outline:none}
-  .bk.up{transform:translateZ(16px) translateY(-5px);z-index:5;
-    box-shadow:-3px 6px 14px rgba(0,0,0,.55);filter:brightness(1.08)}
+  .bk:focus-visible{outline:1.5px solid #0091FF;outline-offset:2px}
+  .bk.up{transform:translateY(-4px);filter:brightness(1.06)}
+  .books.pointing .bk:not(.up){filter:brightness(.82)}
+  .bk.lean{transform-origin:left bottom;transform:rotate(-8deg);margin-inline-start:10px}
+  .bk.lean.up{transform:rotate(-8deg) translateY(-4px)}
+  .bk.lean:dir(rtl){transform-origin:right bottom;transform:rotate(8deg)}
+  .bk.lean.up:dir(rtl){transform:rotate(8deg) translateY(-4px)}
 
-  .spine{writing-mode:vertical-rl;text-orientation:mixed;font-size:8px;letter-spacing:.4px;
-    line-height:1;font-weight:600;white-space:nowrap;overflow:hidden;max-height:84%;
-    text-overflow:ellipsis;pointer-events:none}
-  .ribbon{position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:6px;height:11px;
-    clip-path:polygon(0 0,100% 0,100% 55%,50% 100%,0 55%);background:#C9A227;pointer-events:none}
-  .deco{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:60%;
-    display:flex;flex-direction:column;gap:2px;pointer-events:none}
-  .deco span{display:block;height:1px;background:rgba(255,255,255,.32)}
+  .spine{position:absolute;left:50%;top:7px;transform:translateX(-50%);writing-mode:vertical-rl;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:calc(100% - 16px);line-height:1;
+    font-family:ui-serif, Georgia, serif;font-size:7.5px;letter-spacing:.03em;font-weight:500;pointer-events:none}
+  .bk.current .spine{top:15px;max-height:calc(100% - 24px)}
+  .bk.done .spine{max-height:calc(100% - 24px)}
+  .ribbon{position:absolute;left:50%;top:-1px;width:4px;height:13px;transform:translateX(-50%);background:#D6453D;
+    clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%);pointer-events:none}
+  .fin{position:absolute;left:50%;bottom:9px;width:4px;height:4px;transform:translateX(-50%);border-radius:50%;
+    background:currentColor;opacity:.55;pointer-events:none}
 
-  .ledge{position:absolute;left:0;right:0;bottom:0;height:7px;background:#4a3018}
-  .ledge-top{position:absolute;left:0;right:0;bottom:7px;height:1.5px;background:#6b4a28}
-
-  /* Inset to the card's own padding. At the edge it sat under the rounded
-     corner and read as part of the tile rather than a layer over it. */
-  .info{position:absolute;left:14px;right:14px;top:14px;padding:10px 12px 11px;border-radius:10px;
-    background:linear-gradient(180deg,rgba(18,18,18,.97),rgba(18,18,18,.90));
-    border:.5px solid rgba(255,255,255,.08);
-    box-shadow:0 6px 18px rgba(0,0,0,.34);
-    opacity:0;transform:translateY(-4px);transition:opacity .16s,transform .16s;pointer-events:none}
-  .info.show{opacity:1;transform:translateY(0)}
-  .info .t{font-size:13px;font-weight:600;color:#FFFFFF;line-height:1.25;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .info .a{font-size:11px;color:#8E8E93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-  .info .p{font-size:10px;font-weight:600;letter-spacing:.03em;color:#0091FF;margin-top:3px}
-  .info .p.done{color:#30D158}.info .p.none{color:#8E8E93}
+  .foot{flex:none;display:flex;align-items:center;gap:8px;margin-top:8px;height:15px;min-width:0}
+  .foot .t{flex:0 1 auto;min-width:0;font-size:12px;font-weight:600;color:#FFFFFF;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .foot .a{flex:1 1 0;min-width:0;font-size:12px;color:#8E8E93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .foot .p{flex:none;margin-inline-start:auto;font-size:12px;font-weight:500;color:#8E8E93;font-variant-numeric:tabular-nums}
+  .foot .p.done{color:#30D158}
+  .foot .bar{flex:none;width:44px;height:3px;border-radius:2px;background:rgba(120,120,128,.36);overflow:hidden}
+  .foot .bar i{display:block;height:100%;border-radius:2px;background:#FFFFFF}
+  .foot .bar[hidden]{display:none}
+  .size-small .foot .a,.size-small .foot .bar{display:none}
 
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
   @media(prefers-reduced-motion:reduce){
-    .bk,.info{transition:none!important}
-    .bk.up{transform:translateY(-3px)!important}
+    .bk{transition:none!important}
+    .bk.up{transform:none}
+    .bk.lean.up{transform:rotate(-8deg)}
+    .bk.lean.up:dir(rtl){transform:rotate(8deg)}
   }
 </style>
 </head>
 <body>
 <div class="card" id="card" role="group" aria-label="Books">
-  <div class="head">
-    <span class="lbl" id="lbl">READING</span>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z"/></svg>
-  </div>
+  <div class="head" id="lbl">READING</div>
   <div class="shelves" id="shelves">
     <div class="shelf-wrap">
       <span class="shelf-lbl" hidden></span>
       <div class="shelf" id="shelf">
         <ul class="books" id="books"></ul>
-        <div class="ledge-top" aria-hidden="true"></div><div class="ledge" aria-hidden="true"></div>
       </div>
     </div>
   </div>
-  <div class="info" id="info" aria-hidden="true">
-    <div class="t" id="i-t"></div><div class="a" id="i-a"></div><div class="p" id="i-p"></div>
+  <div class="foot" id="foot" aria-hidden="true">
+    <span class="t" id="f-t"></span><span class="a" id="f-a"></span><span class="bar" id="f-bar" hidden><i id="f-fill"></i></span><span class="p" id="f-p"></span>
   </div>
   <div class="wt-cap" id="cap" hidden></div>
   <span class="sr" id="sr" aria-live="polite"></span>
@@ -107,7 +105,7 @@
   const size=Object.hasOwn(SIZES,params.get('size'))?params.get('size'):'small';
   const {shelves:SHELVES,show:SHOW}=SIZES[size];
   const POLL_MS=300000;
-  const PALETTE=['#8E8E93','#008575','#956D51','#48484A','#008198','#A16A00','#C55300'];
+  const PALETTE=['#E7E0D2','#3D5A80','#A8483E','#C9BBA0','#5C6B57','#8D99A6','#2E3340','#B58B52','#7B5E57','#4E6E6A'];
   const SRC={recently:['ui.srcRecently','RECENTLY ADDED'],unread:['ui.srcUnread','ON DECK'],list:['ui.reading','READING']};
   /* The reader's own name for the shelf, then the service's, then the generic
      word for what the shelf holds. */
@@ -128,27 +126,36 @@
     if(i>0){ w.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id')); host.appendChild(w); }
     bays.push({ shelf:w.querySelector('.shelf'), list:w.querySelector('.books'), lbl:w.querySelector('.shelf-lbl') });
   }
-  const info=document.getElementById('info'), iT=document.getElementById('i-t'), iA=document.getElementById('i-a'), iP=document.getElementById('i-p'), sr=document.getElementById('sr');
+  const fT=document.getElementById('f-t'), fA=document.getElementById('f-a'), fBar=document.getElementById('f-bar'),
+    fFill=document.getElementById('f-fill'), fP=document.getElementById('f-p'), sr=document.getElementById('sr');
   let href='';
+  let resting=null, reading=null;
 
   function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
   function lum(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return 0.3;const n=parseInt(m[1],16);
     const r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;return 0.2126*r+0.7152*g+0.0722*b;}
+  function inProgress(b){ return !b.finished && b.progress!=null && b.progress>0 && b.progress<1; }
   function progressText(b){
     if(b.finished) return [wt('ui.finished','Finished'),'done'];
     if(b.progress!=null) return [wt('ui.percentRead','{pct}% read').replace('{pct}',formatNumber(Math.round(b.progress*100))),'reading'];
     return [wt('ui.unread','Unread'),'none'];
   }
-  function showInfo(b){
-    iT.textContent=b.title||''; iA.textContent=b.author||'';
-    const [txt,cls]=progressText(b); iP.textContent=txt; iP.className='p '+(cls==='done'?'done':cls==='none'?'none':'');
-    info.classList.add('show'); info.setAttribute('aria-hidden','false');
-    sr.textContent=(b.title||'')+(b.author?' by '+b.author:'')+', '+txt;
+  function describe(b){
+    const [ptxt]=progressText(b);
+    return (b.title||wt('ui.untitled','Untitled'))+(b.author?' '+wt('ui.by','by')+' '+b.author:'')+', '+ptxt;
   }
-  function hideInfo(){ info.classList.remove('show'); info.setAttribute('aria-hidden','true'); }
+  function paintFoot(b){
+    fT.textContent=b?(b.title||wt('ui.untitled','Untitled')):'';
+    fA.textContent=b?(b.author||''):'';
+    const [txt,cls]=b?progressText(b):['',''];
+    fP.textContent=txt; fP.className='p'+(cls==='done'?' done':'');
+    fBar.hidden=!(b&&inProgress(b));
+    if(b&&inProgress(b)) fFill.style.width=Math.round(b.progress*100)+'%';
+  }
 
   function render(books,list,shelf){
     list.innerHTML='';
+    list.classList.remove('sparse','pointing');
     shelf.querySelectorAll('.empty').forEach(n=>n.remove());
     /* Removing the bullets drops the list semantics in one engine, so the role
        is declared even on a real list. It is set only while there are rows: an
@@ -156,22 +163,28 @@
     list.removeAttribute('role');
     if(!books.length){ const e=document.createElement('div'); e.className='empty'; e.textContent=wt('ui.noBooks','No books'); shelf.appendChild(e); return; }
     list.setAttribute('role','list');
-    const tallestIdx=books.reduce((mi,b,i,a)=>(b._h>a[mi]._h?i:mi),0);
-    books.forEach((b,i)=>{
-      const el=document.createElement('li'); el.className='bk';
-      el.style.width=b._w+'px'; el.style.height=b._h+'px'; el.style.background=b._color;
-      const dark = lum(b._color) > 0.62;
-      const sp=document.createElement('span'); sp.className='spine';
-      sp.style.color = dark ? 'rgba(20,20,20,.9)' : 'rgba(255,255,255,.85)';
-      sp.textContent=(b.title||'').toUpperCase();
-      if(i===tallestIdx){ const rb=document.createElement('div'); rb.className='ribbon'; el.appendChild(rb); }
-      if(b._w>=17){ const d=document.createElement('div'); d.className='deco'; d.innerHTML='<span></span><span></span>'; el.appendChild(d); }
-      el.appendChild(sp);
+    /* A hidden frame measures zero. Show every book rather than one. */
+    const cw=list.clientWidth, room=cw>0?cw-4:Infinity;
+    const shown=[]; let used=0;
+    for(const b of books){
+      const w=b._w+(shown.length?2:0);
+      if(shown.length&&used+w>room) break;
+      used+=w; shown.push(b);
+    }
+    const sparse=shown.length>1&&used<room*2/3;
+    list.classList.toggle('sparse',sparse);
+    shown.forEach((b,i)=>{
+      const el=document.createElement('li');
+      el.className='bk'+(b===reading?' current':'')+(b.finished?' done':'')+(sparse&&i===shown.length-1?' lean':'');
+      el.style.width=b._w+'px'; el.style.height=b._h+'%'; el.style.backgroundColor=b._color;
+      el.style.color=lum(b._color)>0.55?'rgba(0,0,0,.8)':'rgba(250,246,238,.92)';
+      if(b===reading){ const rb=document.createElement('span'); rb.className='ribbon'; el.appendChild(rb); }
+      const sp=document.createElement('span'); sp.className='spine'; sp.textContent=b.title||''; el.appendChild(sp);
+      if(b.finished){ const f=document.createElement('span'); f.className='fin'; el.appendChild(f); }
       el.tabIndex=0;
-      const [ptxt]=progressText(b);
-      el.setAttribute('aria-label',(b.title||wt('ui.untitled','Untitled'))+(b.author?' '+wt('ui.by','by')+' '+b.author:'')+', '+ptxt);
-      const on=()=>{ el.classList.add('up'); showInfo(b); };
-      const off=()=>{ el.classList.remove('up'); hideInfo(); };
+      el.setAttribute('aria-label',describe(b));
+      const on=()=>{ el.classList.add('up'); list.classList.add('pointing'); paintFoot(b); sr.textContent=describe(b); };
+      const off=()=>{ el.classList.remove('up'); list.classList.remove('pointing'); paintFoot(resting); };
       el.addEventListener('mouseenter',on); el.addEventListener('mouseleave',off);
       el.addEventListener('focus',on); el.addEventListener('blur',off);
       list.appendChild(el);
@@ -180,11 +193,12 @@
 
   function decorate(books){
     return books.map((b,i)=>{
-      const h=hash((b.title||'')+'|'+i);
+      const title=b.title||'';
+      const h=hash(title+'|'+i);
       return Object.assign({}, b, {
-        _w: 13 + (h % 7),
-        _h: 48 + (h % 31),
-        _color: b.color || PALETTE[(h>>4) % PALETTE.length],
+        _w: Math.max(11,Math.min(18,9+Math.round(title.length*.45)))+(h%2),
+        _h: 72 + (h % 24),
+        _color: b.color || PALETTE[(h>>>4) % PALETTE.length],
       });
     });
   }
@@ -197,7 +211,7 @@
     if(href){
       card.classList.add('clickable'); card.setAttribute('role','link'); card.tabIndex=0;
       const go=()=>openUrl(href);
-      card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head')) go(); });
+      card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head,.foot')) go(); });
       card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
     }
     const state = errorState({ root:card, content:document.getElementById('shelves'),
@@ -205,18 +219,22 @@
 
     poll({ interval:POLL_MS,
       isEmpty:d=>(Array.isArray(d&&d.shelves)?d.shelves:[]).every(sh=>!(sh&&Array.isArray(sh.books)&&sh.books.length)),
-      onEmpty:()=>state.empty(wt('ui.noBooks','No books')),
+      onEmpty:()=>{ paintFoot(null); state.empty(wt('ui.noBooks','No books')); },
       onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); },
       render:d=>{
       state.ok();
       const shelves=Array.isArray(d.shelves)?d.shelves:[];
       lbl.textContent=SHELVES>1?wt('widget.label','Books'):shelfName(shelves[0]);
+      const rows=bays.map((_,i)=>{ const sh=shelves[i]||{books:[]}; return decorate((Array.isArray(sh.books)?sh.books:[]).slice(0,SHOW)); });
+      const all=rows.flat();
+      reading=all.find(inProgress)||null;
+      resting=reading||all[0]||null;
       bays.forEach((bay,i)=>{
-        const sh=shelves[i]||{books:[]};
         bay.lbl.hidden=SHELVES<2;
-        bay.lbl.textContent=shelfName(sh);
-        render(decorate((Array.isArray(sh.books)?sh.books:[]).slice(0,SHOW)),bay.list,bay.shelf);
+        bay.lbl.textContent=shelfName(shelves[i]||{books:[]});
+        render(rows[i],bay.list,bay.shelf);
       });
+      paintFoot(resting);
     } });
   }
   boot();

@@ -40,8 +40,8 @@ test('the scan sees the project', () => {
 });
 
 /* inherit and monospace are not the UI face. monospace is for the code spans in
-   the admin hints. */
-const ALLOWED = new Set(['inherit', 'monospace', 'var(--font-ui)', 'var(--font)']);
+   the admin hints. The serif is lettering on the books widget's spines. */
+const ALLOWED = new Set(['inherit', 'monospace', 'var(--font-ui)', 'var(--font)', 'ui-serif, Georgia, serif']);
 
 test('every font-family is the one stack', () => {
   const offenders = [];

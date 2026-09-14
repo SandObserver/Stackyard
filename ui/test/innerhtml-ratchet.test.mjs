@@ -32,7 +32,6 @@ import { fileURLToPath } from 'node:url';
    someone appending an interpolation to it later. */
 const BUDGET = {
   'widgets/backup/backup.html': 3,
-  'widgets/books/index.html': 1,
   'widgets/connections/connections-vpn.html': 1,
   'widgets/dashboard-switch/index.html': 2,
   'widgets/dns/index.html': 1,
