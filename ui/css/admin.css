@@ -707,7 +707,9 @@ html.is-mobile .cp{width:100%;border-inline-start:none}
 html.is-mobile .sec{padding-block:16px calc(132px + env(safe-area-inset-bottom));padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
 html.is-mobile .sec-title{font-size:var(--fs-title-1);line-height:var(--lh-title-1);letter-spacing:var(--tr-title-1)}
 html.is-mobile .hsb-track{max-width:min(240px,62%)}
-html.is-mobile .sec-hdr{position:sticky;top:0;z-index:20;background:var(--pane);padding:10px 0 10px}
+html.is-mobile .sec-hdr{position:sticky;top:0;z-index:20;background:var(--pane);padding:10px 0 10px;flex-wrap:wrap;row-gap:6px}
+html.is-mobile .sec-title{order:1;flex-basis:100%;min-width:0;overflow-wrap:break-word}
+html.is-mobile .sec-hdr-actions{margin-inline-start:auto}
 html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--cp);color:var(--ac2);text-decoration:none;flex-shrink:0}
 html.is-mobile .m-back:active{opacity:.7}
 html.is-mobile body.authed .mtabbar{
