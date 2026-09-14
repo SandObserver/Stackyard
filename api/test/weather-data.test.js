@@ -85,6 +85,95 @@ test('the default endpoint reads the forecast, not the geocoder', async () => {
   assert.equal(r.city, 'Ottawa');
 });
 
+const OW = (id, icon, extra = {}) => ({
+  status: 200,
+  data: {
+    dt: 1000,
+    sys: { sunrise: 500, sunset: 2000 },
+    main: { temp: 21.6, feels_like: 24.4 },
+    weather: [{ id, icon }],
+    ...extra,
+  },
+});
+
+test('openweather reads current weather with the key and unit system', async () => {
+  const { ctx, calls } = ctxFor(
+    { provider: 'openweather', owKey: 'k1', lat: 45.42, lon: -75.7, units: 'f', city: 'Ottawa' },
+    '',
+    OW(803, '04d'),
+  );
+  const r = await dataFn(ctx);
+  assert.match(calls[0], /^https:\/\/api\.openweathermap\.org\/data\/2\.5\/weather\?/);
+  assert.match(calls[0], /lat=45\.42&lon=-75\.7/);
+  assert.match(calls[0], /units=imperial/);
+  assert.match(calls[0], /appid=k1/);
+  assert.deepEqual(r, { temp: 22, usedFeels: false, units: 'f', code: 3, isDay: true, city: 'Ottawa' });
+});
+
+test('openweather uses metric for celsius and honours feelsLike', async () => {
+  const { ctx, calls } = ctxFor(
+    { provider: 'openweather', owKey: 'k1', lat: 1, lon: 2, feelsLike: true },
+    '',
+    OW(800, '01n'),
+  );
+  const r = await dataFn(ctx);
+  assert.match(calls[0], /units=metric/);
+  assert.equal(r.temp, 24);
+  assert.equal(r.usedFeels, true);
+  assert.equal(r.isDay, false);
+});
+
+test('openweather condition ids map onto the WMO codes the page draws', async () => {
+  const cases = [
+    [211, 95],
+    [301, 51],
+    [500, 61],
+    [511, 66],
+    [521, 80],
+    [601, 71],
+    [621, 85],
+    [741, 45],
+    [800, 0],
+    [801, 1],
+    [802, 2],
+    [804, 3],
+  ];
+  for (const [id, code] of cases) {
+    const { ctx } = ctxFor({ provider: 'openweather', owKey: 'k', lat: 1, lon: 2 }, '', OW(id, '01d'));
+    assert.equal((await dataFn(ctx)).code, code, `id ${id}`);
+  }
+});
+
+test('openweather falls back to sunrise and sunset without an icon', async () => {
+  const { ctx } = ctxFor({ provider: 'openweather', owKey: 'k', lat: 1, lon: 2 }, '', OW(800, undefined, { dt: 2500 }));
+  assert.equal((await dataFn(ctx)).isDay, false);
+});
+
+test('openweather reports a missing key instead of calling out', async () => {
+  const { ctx, calls } = ctxFor({ provider: 'openweather', lat: 1, lon: 2 }, '', OW(800, '01d'));
+  await assert.rejects(dataFn(ctx), /API key/);
+  assert.equal(calls.length, 0);
+});
+
+test('openweather names a rejected key', async () => {
+  const { ctx } = ctxFor({ provider: 'openweather', owKey: 'bad', lat: 1, lon: 2 }, '', {
+    status: 401,
+    data: { cod: 401, message: 'Invalid API key.' },
+  });
+  await assert.rejects(dataFn(ctx), /rejected the API key/);
+});
+
+test('openweather surfaces other upstream failures', async () => {
+  const { ctx } = ctxFor({ provider: 'openweather', owKey: 'k', lat: 1, lon: 2 }, '', { status: 429, data: {} });
+  await assert.rejects(dataFn(ctx), /Weather unavailable \(429\)/);
+});
+
+test('geocoding stays on open-meteo when openweather is chosen', async () => {
+  const { ctx, calls } = ctxFor({ provider: 'openweather', owKey: 'k', cityQuery: 'Ottawa' }, 'geocode', GEO);
+  await dataFn(ctx);
+  assert.match(calls[0], /^https:\/\/geocoding-api\.open-meteo\.com\//);
+});
+
 test('feelsLike swaps in the apparent temperature', async () => {
   const { ctx } = ctxFor({ lat: 45.42, lon: -75.7, feelsLike: true }, '', {
     status: 200,

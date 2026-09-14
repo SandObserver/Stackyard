@@ -1,5 +1,10 @@
 {
   "widget.label": "天气",
+  "provider.label": "服务",
+  "provider.opt.openmeteo": "Open-Meteo",
+  "provider.opt.openweather": "OpenWeather",
+  "owKey.label": "API 密钥",
+  "owKey.hint": "在 openweathermap.org 免费获取密钥。新密钥可能需要几个小时才能生效。",
   "cityQuery.label": "搜索",
   "cityQuery.placeholder": "例如 Ottawa",
   "city.label": "位置",

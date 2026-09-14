@@ -1,5 +1,10 @@
 {
   "widget.label": "Météo",
+  "provider.label": "Service",
+  "provider.opt.openmeteo": "Open-Meteo",
+  "provider.opt.openweather": "OpenWeather",
+  "owKey.label": "Clé d’API",
+  "owKey.hint": "Clé gratuite sur openweathermap.org. Une nouvelle clé peut mettre quelques heures à s’activer.",
   "cityQuery.label": "Rechercher",
   "cityQuery.placeholder": "ex. Ottawa",
   "city.label": "Lieu",

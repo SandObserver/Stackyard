@@ -7,6 +7,33 @@
   ],
   "fields": [
     {
+      "key": "provider",
+      "type": "select",
+      "variant": "pills",
+      "label": "provider.label",
+      "default": "openmeteo",
+      "options": [
+        {
+          "value": "openmeteo",
+          "label": "provider.opt.openmeteo"
+        },
+        {
+          "value": "openweather",
+          "label": "provider.opt.openweather"
+        }
+      ]
+    },
+    {
+      "key": "owKey",
+      "type": "secret",
+      "label": "owKey.label",
+      "hint": "owKey.hint",
+      "showIf": {
+        "field": "provider",
+        "equals": "openweather"
+      }
+    },
+    {
       "key": "cityQuery",
       "type": "text",
       "label": "cityQuery.label",
