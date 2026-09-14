@@ -41,7 +41,7 @@ Widgets and the services they read:
 
 - **Clock**
 - **Now Playing**: Plex, Jellyfin, Emby, Navidrome
-- **Weather**: Open-Meteo (no API key required)
+- **Weather**: Open-Meteo (no API key required) or OpenWeather (free API key)
 - **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
 - **GitHub**: contribution graph and pull requests
 - **Books**: Audiobookshelf, Komga, Kavita

@@ -1,5 +1,10 @@
 {
   "widget.label": "آب‌وهوا",
+  "provider.label": "سرویس",
+  "provider.opt.openmeteo": "Open-Meteo",
+  "provider.opt.openweather": "OpenWeather",
+  "owKey.label": "کلید API",
+  "owKey.hint": "کلید رایگان را از openweathermap.org بگیرید. فعال شدن کلید تازه ممکن است چند ساعت طول بکشد.",
   "cityQuery.label": "جستجو",
   "cityQuery.placeholder": "مثلاً تهران",
   "city.label": "موقعیت",
