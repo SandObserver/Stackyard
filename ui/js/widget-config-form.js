@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal } from '/js/admin-shared.js?v=5cf446fa';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=fd784739';
 import { createListbox } from '/js/listbox.js?v=a67e9c98';
-import { renderColorControl } from '/js/admin-color-control.js?v=47d9d808';
+import { renderColorControl } from '/js/admin-color-control.js?v=837961fa';
 import {
   seedCarried,
   applyOptionSet,
@@ -36,40 +36,17 @@ function _ieRow(field, value, inputType) {
   const ph = field.placeholder || '';
   const row = document.createElement('div');
   row.className = 'row ie-row';
+  row.id = uniqueId('wcf-ie');
   setHtml(
     row,
     html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp d-none" type="${inputType}" autocomplete="off" value="${has ? value : field.default != null ? field.default : ''}"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
   );
-  const rv = row.querySelector('.rv'),
-    inp = qi('.row-inp', row),
-    pe = row.querySelector('.pe');
-  function open() {
-    row.classList.add('editing');
-    inp.style.display = 'block';
-    inp.focus();
-    inp.select?.();
-  }
-  function commit() {
-    row.classList.remove('editing');
-    inp.style.display = 'none';
-    const v = inp.value.trim();
-    if (v) {
-      rv.textContent = v;
-      rv.classList.remove('is-ph');
-    } else {
-      rv.textContent = ph;
-      rv.classList.add('is-ph');
-    }
-    inp.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-  pe.addEventListener('click', open);
-  rv.addEventListener('click', open);
-  inp.addEventListener('blur', commit);
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      inp.blur();
-    }
+  const inp = qi('.row-inp', row);
+  wireInlineEdit(row, inp, {
+    type: inputType,
+    placeholder: ph,
+    fill: false,
+    onCommit: () => inp.dispatchEvent(new Event('change', { bubbles: true })),
   });
   const get = () => {
     const v = inp.value.trim();
@@ -96,33 +73,21 @@ function _ieRow(field, value, inputType) {
 function _secret(field, isSet) {
   const row = document.createElement('div');
   row.className = 'row ie-row';
+  row.id = uniqueId('wcf-secret');
   const display = isSet ? t('common.configured') : t('common.notSet');
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp d-none" type="password" autocomplete="new-password" placeholder="${isSet ? t('widgetCfg.replaceSecret') : field.placeholder || ''}"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp d-none" type="password" autocomplete="new-password"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
   );
-  const rv = row.querySelector('.rv'),
-    inp = qi('.row-inp', row),
-    pe = row.querySelector('.pe');
-  const open = () => {
-    row.classList.add('editing');
-    inp.style.display = 'block';
-    inp.focus();
-  };
-  const commit = () => {
-    row.classList.remove('editing');
-    inp.style.display = 'none';
-    rv.textContent = inp.value ? t('widgetCfg.newValueSet') : display;
-    inp.dispatchEvent(new Event('change', { bubbles: true }));
-  };
-  pe.addEventListener('click', open);
-  rv.addEventListener('click', open);
-  inp.addEventListener('blur', commit);
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      inp.blur();
-    }
+  const inp = qi('.row-inp', row);
+  wireInlineEdit(row, inp, {
+    type: 'password',
+    placeholder: isSet ? t('widgetCfg.replaceSecret') : field.placeholder || '',
+    fill: false,
+    render: (valEl, v) => {
+      valEl.textContent = v ? t('widgetCfg.newValueSet') : display;
+    },
+    onCommit: () => inp.dispatchEvent(new Event('change', { bubbles: true })),
   });
   const get = () => {
     const v = inp.value.trim();

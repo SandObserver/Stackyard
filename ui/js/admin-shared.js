@@ -209,11 +209,21 @@ export const PE_SVG =
     @param {{ type?: string, placeholder?: string | (() => string),
               onCommit?: (value: string) => void, root?: ParentNode }} [opts] */
 export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = '', onCommit, root = document } = {}) {
-  const ph = () => (typeof placeholder === 'function' ? placeholder() : placeholder);
   const byId = id => (root === document ? el(id) : root.querySelector('#' + CSS.escape(id)));
-  const row = byId(rowId);
+  const row = /** @type {HTMLElement} */ (byId(rowId));
   const inp = /** @type {HTMLInputElement} */ (byId(inputId));
   if (!row || !inp) return;
+  wireInlineEdit(row, inp, { type, placeholder, onCommit });
+}
+
+/** The same row behaviour for elements a caller already holds. `row` needs an id.
+    `fill: false` keeps the input's own value on open. `render` replaces how the
+    committed value is shown.
+    @param {HTMLElement} row @param {HTMLInputElement} inp
+    @param {{ type?: string, placeholder?: string | (() => string), onCommit?: (value: string) => void,
+              fill?: boolean, render?: (valEl: Element, value: string) => void }} [opts] */
+export function wireInlineEdit(row, inp, { type = 'text', placeholder = '', onCommit, fill = true, render } = {}) {
+  const ph = () => (typeof placeholder === 'function' ? placeholder() : placeholder);
   const valEl = q('.rv', row);
   const pen = q('.pe', row);
   if (!valEl || !pen) return;
@@ -227,7 +237,7 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
      name, and several readers drop it once the field holds a value. */
   const labelEl = q('.rl', row);
   if (labelEl) {
-    if (!labelEl.id) labelEl.id = `${rowId}-rl`;
+    if (!labelEl.id) labelEl.id = `${row.id}-rl`;
     inp.setAttribute('aria-labelledby', labelEl.id);
     /* The pencil opens this row, so it is named after this row. Taking the name
        from the label keeps the two in one language, and in step when either
@@ -236,11 +246,13 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
   }
   row.insertBefore(inp, pen);
 
+  let before = '';
   function open() {
     if (row.classList.contains('editing')) return;
     row.classList.add('editing');
     inp.placeholder = ph();
-    inp.value = valEl.classList.contains('is-ph') ? '' : valEl.textContent;
+    if (fill) inp.value = valEl.classList.contains('is-ph') ? '' : valEl.textContent;
+    before = inp.value;
     inp.focus();
     inp.select?.();
   }
@@ -248,7 +260,8 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
     if (!row.classList.contains('editing')) return;
     row.classList.remove('editing');
     const v = inp.value.trim();
-    if (v) {
+    if (render) render(valEl, v);
+    else if (v) {
       valEl.textContent = v;
       valEl.classList.remove('is-ph');
     } else {
@@ -270,6 +283,7 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
       }
       if (e.key === 'Escape') {
         e.preventDefault();
+        inp.value = before;
         row.classList.remove('editing');
       }
     },
