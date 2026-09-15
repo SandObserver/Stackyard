@@ -10,8 +10,7 @@ function svgEl(tag, attrs) {
   return el;
 }
 
-/** The glass edge line: lighter along top and bottom than down the sides.
-    Clip the host to the same path `d`, or half of the stroke paints outside it.
+/** Clip the host to the same path `d`, or half of the stroke paints outside it.
     @param {number} w @param {number} h @param {string} d @returns {SVGSVGElement} */
 export function mkGlassRim(w, h, d) {
   const id = `glass-rim-${++seq}`;

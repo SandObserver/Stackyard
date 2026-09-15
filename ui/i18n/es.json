@@ -39,8 +39,6 @@
     "addNamed": "+ Añadir {name}"
   },
   "general": {
-    "title": "Título",
-    "description": "Descripción",
     "hostIp": "IP del host",
     "hostIpTip": "Permite que las insignias obtengan datos de la propia dirección de tu servidor. Sin esto, esas peticiones se bloquean.",
     "monitoring": "Monitorización",

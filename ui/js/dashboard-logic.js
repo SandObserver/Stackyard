@@ -32,9 +32,7 @@ export function desktopCols(avail) {
   return Math.max(DESKTOP_COL.min, Math.min(DESKTOP_COL.max, fit));
 }
 
-/** Splits tiles into desktop pages by where the grid places them. Mirrors the
-    sparse auto-placement of `.grid`: a tile that does not fit the rest of a row
-    moves to the next row and leaves a gap. Counting cells misses those gaps.
+/** Must match the sparse auto-placement of `.grid`, or a tile lands below the page.
 
     @template T
     @param {T[]} tiles in display order

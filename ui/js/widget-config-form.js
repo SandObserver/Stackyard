@@ -4,7 +4,7 @@
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=fd784739';
-import { createListbox } from '/js/listbox.js?v=a67e9c98';
+import { createListbox } from '/js/listbox.js?v=bedd1104';
 import { renderColorControl } from '/js/admin-color-control.js?v=837961fa';
 import {
   seedCarried,

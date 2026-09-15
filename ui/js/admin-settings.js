@@ -36,8 +36,6 @@ const _shown = id => {
    out. */
 const readServerForm = () =>
   JSON.stringify([
-    _shown('ie-title-v'),
-    _shown('ie-desc-v'),
     _val('srv-ip'),
     _val('srv-docker-en'),
     _val('srv-socket'),
@@ -185,12 +183,6 @@ export function loadSettings(c) {
       node.classList.add('is-ph');
     }
   };
-  _sv('ie-title-v', s.title || 'Stackyard', 'Stackyard');
-  _sv(
-    'ie-desc-v',
-    s.description || 'Stackyard · self-hosted homelab dashboard',
-    'Stackyard · self-hosted homelab dashboard',
-  );
   _sv('ie-ip-v', s.server?.hostIp, '192.168.1.100');
   _sv('ie-socket-v', s.server?.socketProxyUrl, 'http://socket-proxy:2375');
   _sv('ie-pw-v', '', t('common.notSet')); /* set below after auth check */
@@ -439,13 +431,6 @@ async function saveServer() {
     const prevLang = c.settings.language || 'en';
     const dockerEnabled = inp('srv-docker-en')?.checked || false;
     const socketUrl = inp('srv-socket')?.value?.trim() || '';
-    /* A greyed placeholder (.is-ph) means empty, so it is not saved. */
-    const titleEl = el('ie-title-v');
-    const descEl = el('ie-desc-v');
-    const titleV = titleEl && !titleEl.classList.contains('is-ph') ? titleEl.textContent.trim() : '';
-    const descV = descEl && !descEl.classList.contains('is-ph') ? descEl.textContent.trim() : '';
-    if (titleV) c.settings.title = titleV;
-    if (descV) c.settings.description = descV;
     c.settings.server = {
       ...c.settings.server,
       hostIp: inp('srv-ip')?.value?.trim() || '',

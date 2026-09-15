@@ -39,8 +39,6 @@
     "addNamed": "+ {name} hinzufügen"
   },
   "general": {
-    "title": "Titel",
-    "description": "Beschreibung",
     "hostIp": "Host-IP",
     "hostIpTip": "Erlaubt Badges, Daten von der eigenen Adresse Ihres Servers zu holen. Ohne dies werden diese Anfragen blockiert.",
     "monitoring": "Überwachung",

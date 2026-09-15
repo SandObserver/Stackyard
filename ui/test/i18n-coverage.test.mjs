@@ -68,7 +68,6 @@ const SAME_ON_PURPOSE = {
     'appearance.sourceUrl',
     'about.version',
     'appearance.sourceUnsplash',
-    'general.description',
     'appearance.source',
     'about.documentation',
     'dashboard.filterWidgets',

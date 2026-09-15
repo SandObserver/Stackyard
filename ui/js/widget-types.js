@@ -13,10 +13,6 @@ export const WIDGET_ROWS = {
   desktop: { small: 0, medium: 0, large: 2, xlarge: 3 },
   mobile: { small: 2, medium: 2, large: 4, xlarge: 6 },
 };
-export const WIDGET_COST = {
-  desktop: { small: 1, medium: 2, large: 4, xlarge: 6 },
-  mobile: { small: 4, medium: 8, large: 16, xlarge: 24 },
-};
 
 /* The iframe URL, from the manifest entry in `reg`. The cache version is hashed
    from file content at release, never maintained by hand. */

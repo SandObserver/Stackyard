@@ -54,7 +54,7 @@
        covering, so there is no sentence to show. */
     body::before {
       content:''; position:fixed; z-index:10000;
-      inset-inline-start:50%; top:50%; width:28px; height:28px; margin:-14px 0 0 -14px;
+      inset-inline-start:50%; top:50%; width:28px; height:28px; margin-block:-14px 0; margin-inline:-14px 0;
       border-radius:50%; pointer-events:none;
       border:2px solid var(--label-quaternary);
       border-top-color:var(--label-secondary);
@@ -928,6 +928,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
    state this page carries in colour alone. */
 @media (forced-colors: active) {
   #dots { background:Canvas; border:1px solid CanvasText; }
+  #dock, #dock.mdock, .folder-box-desktop, .dyn-box-mob, .folder-icon-grid, .dyn-fold-wrap { border:1px solid CanvasText; }
   /* State by shape, not by fill: forced colors paints both dots the same. */
   .dot { background:Canvas; border:1px solid CanvasText; }
   .dot.on { background:Highlight; border-color:Highlight; }

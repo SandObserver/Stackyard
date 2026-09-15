@@ -161,6 +161,17 @@ test('a row discarded while open is cleaned up by the next press', () => {
   row();
   openIt();
   assert.equal(live.size, 2);
-  for (const entry of [...live]) if (entry.type === 'click') entry.fn({ target: { tagName: 'BODY' } });
+  const body = { tagName: 'BODY' };
+  for (const entry of [...live]) if (entry.type === 'click') entry.fn({ target: body, composedPath: () => [body] });
   assert.equal(live.size, 0, 'a discarded open row leaks until the page reloads');
+});
+
+test('a pick that redraws the list does not close it', () => {
+  live.clear();
+  const { list } = row();
+  openIt();
+  const detached = { tagName: 'LI' };
+  const click = [...live].find(e => e.type === 'click');
+  click.fn({ target: detached, composedPath: () => [detached, list, { tagName: 'BODY' }] });
+  assert.equal(list.hidden, false, 'choosing an item closed a multi-select list');
 });

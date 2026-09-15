@@ -7,7 +7,7 @@ import {
   widgetSrc,
   cardPreset,
   uniqueTitle,
-} from '/js/widget-types.js?v=a1b61636';
+} from '/js/widget-types.js?v=d36b0153';
 import {
   el,
   isDashboardEmpty,
@@ -38,18 +38,18 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=ec2c0857';
+} from '/js/ui.js?v=b530cbb6';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
-import { observeGlass } from '/js/glass-rim.js?v=3898c48c';
+import { observeGlass } from '/js/glass-rim.js?v=3faec233';
 import {
   configChanged,
   desktopCols,
   desktopPages,
   landingAfterSetup,
   restorePage,
-} from '/js/dashboard-logic.js?v=bc636d1d';
+} from '/js/dashboard-logic.js?v=0d519f8b';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';

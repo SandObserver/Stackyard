@@ -1,1 +1,1 @@
-Choosing Widget or a widget size no longer hides the Add New type chooser.
+Fix the Add New type chooser closing after choosing Widget or a size.

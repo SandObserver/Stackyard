@@ -42,6 +42,18 @@ test('adding an app saves it and shows it in the list', async ({ page, request }
   expect(saved.href).toBe('http://charlie.invalid:8080');
 });
 
+test('a multi-select picker stays open for a second pick', async ({ page }) => {
+  await openDashboardList(page);
+  await page.locator('#btn-add').click();
+  await page.locator('.tile-opt[data-ctype="folder"]').click();
+  await page.locator('#folder-apps-row .row-dd-btn').click();
+  const list = page.locator('ul.row-dd-list.checklist');
+  await list.locator('li[role="option"]').nth(0).click();
+  await list.locator('li[role="option"]').nth(1).click();
+  await expect(list).toBeVisible();
+  await expect(list.locator('li[aria-selected="true"]')).toHaveCount(2);
+});
+
 test('editing an app keeps its id and changes only what was edited', async ({ page, request }) => {
   await openDashboardList(page);
   await rowByName(page, 'Alpha').getByRole('button', { name: /edit/i }).click();
