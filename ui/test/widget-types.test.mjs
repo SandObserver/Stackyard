@@ -1,14 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  WIDGET_HEIGHTS,
-  WIDGET_DESIGN,
-  WIDGET_COLS,
-  WIDGET_ROWS,
-  WIDGET_COST,
-  widgetSrc,
-  cardPreset,
-} from '../js/widget-types.js';
+import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, widgetSrc, cardPreset } from '../js/widget-types.js';
 
 /* Stand-in for the /api/widgets registry, keyed by widget name. Mirrors the
    shipped manifests' view routing; versions are illustrative. */
@@ -106,7 +98,7 @@ test('the geometry tables cover the same set of sizes', () => {
     WIDGET_COLS.desktop,
     WIDGET_COLS.mobile,
     WIDGET_ROWS.desktop,
-    WIDGET_COST.desktop,
+    WIDGET_ROWS.mobile,
   ]) {
     assert.deepEqual(Object.keys(table).sort(), sizes);
   }

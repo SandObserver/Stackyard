@@ -66,6 +66,23 @@ test('no stylesheet positions anything by screen side', () => {
   }
 });
 
+test('no stylesheet spaces the two sides differently with a shorthand', () => {
+  for (const sheet of SHEETS) {
+    for (const m of code(sheet).matchAll(/(?<![-\w])(?:padding|margin)\s*:\s*([^;}]+)/g)) {
+      const parts = [''];
+      let depth = 0;
+      for (const ch of m[1].trim()) {
+        if (ch === '(') depth++;
+        if (ch === ')') depth--;
+        if (/\s/.test(ch) && depth === 0) {
+          if (parts.at(-1)) parts.push('');
+        } else parts[parts.length - 1] += ch;
+      }
+      assert.ok(parts.length < 4 || parts[1] === parts[3], `${sheet} uses ${m[0]}, which does not flip for Persian`);
+    }
+  }
+});
+
 /* A widget's own CSS is held to the same rule, but only for the properties
    that sit next to text. A symmetric pair, centring with a translate, and
    artwork are exempt: mirroring a drawing is worse than leaving it. */

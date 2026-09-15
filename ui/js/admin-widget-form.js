@@ -1,7 +1,7 @@
 import { state } from '/js/admin-state.js?v=5a5d655f';
 import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=fd784739';
-import { createListbox } from '/js/listbox.js?v=a67e9c98';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=ad9e05ee';
+import { createListbox } from '/js/listbox.js?v=bedd1104';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=40e30a39';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=69e57d35';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
@@ -108,7 +108,7 @@ function _renderWidgetForm(body) {
   scard.className = 'grp';
   setHtml(
     scard,
-    html`<div class="row tile-row"><div class="tile-grp">${_sizeOpts.map(s => html`<button type="button" class="tile-opt${s === state._wsize ? ' on' : ''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s] || SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${sizeLabel(s)}</span></button>`)}</div></div>`,
+    html`<div class="row tile-row"><div class="tile-grp">${_sizeOpts.map(s => html`<button type="button" class="tile-opt${s === state._wsize ? ' on' : ''}" aria-pressed="${String(s === state._wsize)}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s] || SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${sizeLabel(s)}</span></button>`)}</div></div>`,
   );
   body.appendChild(scard);
   qa('.tile-opt', scard).forEach(b =>

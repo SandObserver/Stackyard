@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=9c8c550c';
-import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=a1b61636';
+import { widgetSrc, cardPreset, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=d36b0153';
 import {
   mk,
   clr,
@@ -18,7 +18,7 @@ import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
-import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3898c48c';
+import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
 
 const PHONE_W = 393;
 

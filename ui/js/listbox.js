@@ -198,8 +198,9 @@ export function createListbox(
     document.addEventListener(
       'click',
       e => {
-        const t = /** @type {Node} */ (e.target);
-        if (!dd.contains(t) && !list.contains(t)) close();
+        /* Read the path, not the target. A pick redraws the list and detaches the target. */
+        const path = e.composedPath();
+        if (!path.includes(dd) && !path.includes(list)) close();
       },
       { signal: outside.signal },
     );

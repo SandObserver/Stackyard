@@ -39,8 +39,6 @@
     "addNamed": "+ Add {name}"
   },
   "general": {
-    "title": "Title",
-    "description": "Description",
     "hostIp": "Host IP",
     "hostIpTip": "Lets badges fetch from your server's own address. Without it, those requests are blocked.",
     "monitoring": "Monitoring",

@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=a53ac0e8';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=47949906';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=c70fb722';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=b1feb5b1';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=94b420e9';
 import { resolveAdminSection } from '/js/admin-logic.js?v=69e57d35';
 import {
   buildAppItem,
@@ -10,13 +10,13 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=4f71ef6c';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=079a3d2d';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=2d1a8a29';
 import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=fd784739';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=25390f36';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=3e1f15dd';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=a67e9c98';
+import { createListbox } from '/js/listbox.js?v=bedd1104';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -633,21 +633,6 @@ function initNav() {
 }
 
 function initAllInlineEdits() {
-  const titleInp = document.createElement('input');
-  titleInp.id = 'ie-input';
-  document.body.appendChild(titleInp);
-  initInlineEdit('ie-title', 'ie-input', {
-    placeholder: 'Stackyard',
-    onCommit(v) {
-      el('ie-title-v').textContent = v || 'Stackyard';
-    },
-  });
-
-  const descInp = document.createElement('input');
-  descInp.id = 'ie-desc-input';
-  document.body.appendChild(descInp);
-  initInlineEdit('ie-desc', 'ie-desc-input', { placeholder: 'Stackyard · self-hosted homelab dashboard' });
-
   initInlineEdit('ie-ip', 'srv-ip', { placeholder: '192.168.1.100' });
   initInlineEdit('ie-socket', 'srv-socket', { placeholder: 'http://socket-proxy:2375' });
 

@@ -39,8 +39,6 @@
     "addNamed": "+ 添加{name}"
   },
   "general": {
-    "title": "标题",
-    "description": "描述",
     "hostIp": "主机 IP",
     "hostIpTip": "允许徽章从服务器自身地址获取数据。否则这些请求会被拦截。",
     "monitoring": "监控",

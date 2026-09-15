@@ -1,1 +1,1 @@
-The dock and folders use a thin glass surface with smooth corners on phone and desktop.
+Restyle the dock and folders as thin glass with smooth corners.
