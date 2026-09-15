@@ -187,19 +187,12 @@ test('admin keeps only the overrides that cannot be logical', () => {
 
 /* ── the logical replacements are actually there ──────────────────────────── */
 
-test('the divider between the navigation and the section follows the text direction', () => {
-  /* It sits on the content pane rather than the sidebar. The sidebar is sticky
-     and one viewport tall, so a border there stopped partway down a section
-     longer than the screen; the pane is as tall as its content. Still logical,
-     so it moves to the other side in Persian. */
+/* The sidebar and the section are told apart by tone. A physical border on
+   either would sit on the wrong side in Persian. */
+test('the navigation and the section carry no side border', () => {
   const src = code('css/admin.css');
-  assert.match(src, /\.cp\{[^}]*border-inline-start:1px solid var\(--bd-inner\)/);
-  assert.doesNotMatch(src, /\.sb\{[^}]*border-inline-(start|end)/, 'the sidebar should no longer carry the divider');
-  assert.match(
-    src,
-    /html\.is-mobile \.cp\{[^}]*border-inline-start:none/,
-    'there is no sidebar on mobile, so no divider either',
-  );
+  assert.doesNotMatch(src, /\.cp\{[^}]*border-(left|right|inline-start|inline-end)/);
+  assert.doesNotMatch(src, /\.sb\{[^}]*border-(left|right|inline-start|inline-end)/);
 });
 
 test('row values align to the end of the line, not the right', () => {
@@ -215,7 +208,6 @@ test('spacers push towards the end of the text', () => {
 });
 
 test('absolutely positioned elements use the inline end', () => {
-  assert.match(code('css/admin.css'), /inset-inline-end:0/, 'the dropdown menu');
   assert.match(code('css/admin.css'), /inset-inline-end:24px/, 'the toast');
 });
 

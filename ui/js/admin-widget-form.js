@@ -55,7 +55,8 @@ function _renderWidgetForm(body) {
     state._wAutoCfg = Object.assign({}, state._wAutoCfg, state._autoForm.getValues());
   }
   state._autoForm = null;
-  body.replaceChildren();
+  const addNew = body.querySelector(':scope > .add-new-card');
+  body.replaceChildren(...(addNew ? [addNew] : []));
 
   const typeList = [...Object.values(state._widgetReg).map(w => [w.name, w.label]), ['custom', 'Custom']].sort((a, b) =>
     a[1].localeCompare(b[1]),
@@ -107,7 +108,7 @@ function _renderWidgetForm(body) {
   scard.className = 'grp';
   setHtml(
     scard,
-    html`<div class="row tile-row"><div class="tile-grp tile-grp-left">${_sizeOpts.map(s => html`<button type="button" class="tile-opt${s === state._wsize ? ' on' : ''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s] || SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${sizeLabel(s)}</span></button>`)}</div></div>`,
+    html`<div class="row tile-row"><div class="tile-grp">${_sizeOpts.map(s => html`<button type="button" class="tile-opt${s === state._wsize ? ' on' : ''}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s] || SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${sizeLabel(s)}</span></button>`)}</div></div>`,
   );
   body.appendChild(scard);
   qa('.tile-opt', scard).forEach(b =>
@@ -237,7 +238,6 @@ function _renderCustomConfig(body) {
     const ri = parseInt(qi('#if-refresh', adv).value, 10);
     state._iframeOpts.refreshInterval = ri && ri >= 250 ? ri : undefined;
   };
-  q('#if-referrer', adv).onchange = sync;
   q('#if-fs', adv).onchange = sync;
   initInlineEdit('if-allow-row', 'if-allow', {
     placeholder: 'autoplay; fullscreen',

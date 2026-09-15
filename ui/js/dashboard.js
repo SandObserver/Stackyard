@@ -38,10 +38,11 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=8c5a8dba';
+} from '/js/ui.js?v=ec2c0857';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
+import { observeGlass } from '/js/glass-rim.js?v=3898c48c';
 import {
   configChanged,
   desktopCols,
@@ -418,6 +419,7 @@ function buildDesktop() {
   dk.replaceChildren();
   dock.forEach(item => dk.appendChild(mkDock(item)));
   dk.hidden = !dock.length;
+  observeGlass(dk, 45, 0.2);
 }
 
 /* Every page is mounted at once, so widgets the user has swiped away from keep

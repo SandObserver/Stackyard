@@ -3,13 +3,10 @@
       --glass-bg:         rgba(0,0,0,.32);
       --glass-border:     rgba(255,255,255,.09);
       --glass-blur:       blur(16px) saturate(140%);
-      --dock-bg:          rgba(155,155,158,.09);
-      --dock-blur:        blur(14px) saturate(160%);
-      --dock-border:      rgba(255,255,255,.07);
-      --dock-shadow:      0 2px 10px rgba(0,0,0,.20),
-                          inset 0 0 0 1px rgba(255,255,255,.06),
-                          inset 1px 1px 0 rgba(255,255,255,.12),
-                          inset -1px -1px 0 rgba(0,0,0,.10);
+      --glass-surface-bg:   rgba(155,155,158,.09);
+      --glass-surface-blur: blur(14px) saturate(160%);
+      --glass-rim-light:  rgba(255,255,255,.30);
+      --glass-rim-dark:   rgba(255,255,255,.07);
       --icon-inset-shadow: inset 1px 1px 0 rgba(255,255,255,.18),
                            inset -1px -1px 0 rgba(0,0,0,.14);
       --icon-sheen:       linear-gradient(135deg,rgba(255,255,255,.10) 0%,transparent 60%);
@@ -452,23 +449,29 @@
       display:flex;
       align-items:center;
       gap:15px; padding:22px;
-      background:var(--dock-bg);
-      -webkit-backdrop-filter:var(--dock-blur); backdrop-filter:var(--dock-blur);
-      border:1px solid var(--dock-border); border-radius:45px;
-      box-shadow:var(--dock-shadow);
+      isolation:isolate;
     }
-    .mdock {
+    #dock.mdock {
       position:fixed; left:50%;
       transform:translateX(-50%);
       z-index:400;
       display:flex;
       align-items:center;
-      justify-content:space-around;
-      background:var(--dock-bg);
-      -webkit-backdrop-filter:var(--dock-blur); backdrop-filter:var(--dock-blur);
-      border:1px solid var(--dock-border);
-      box-shadow:var(--dock-shadow);
+      justify-content:center;
+      background:none; border:0; border-radius:0; box-shadow:none;
+      -webkit-backdrop-filter:none; backdrop-filter:none;
     }
+    .glass-layer { position:absolute; inset:0; z-index:-1; pointer-events:none }
+    .glass-surface {
+      background:var(--glass-surface-bg);
+      -webkit-backdrop-filter:var(--glass-surface-blur); backdrop-filter:var(--glass-surface-blur);
+    }
+    .glass-rim {
+      position:absolute; inset:0; width:100%; height:100%; z-index:2;
+      pointer-events:none; overflow:visible; fill:none;
+    }
+    .glass-rim-light { stop-color:var(--glass-rim-light) }
+    .glass-rim-dark { stop-color:var(--glass-rim-dark) }
     .di {
       display:flex;
       align-items:center;
@@ -713,13 +716,6 @@
       text-shadow:0 1px 6px rgba(0,0,0,.45);
       -webkit-user-select:none; user-select:none;
     }
-    /* Reference: frosted glass, very low opacity dark tint, visible blur of background */
-    .folder-box-mobile {
-      background:rgba(200,200,210,.18);
-      border:0.5px solid rgba(255,255,255,.22);
-      -webkit-backdrop-filter:blur(80px) saturate(180%) brightness(1.40);
-      backdrop-filter:blur(80px) saturate(180%) brightness(1.40);
-    }
     .folder-dots {
       display:flex; justify-content:center; align-items:center;
       flex-shrink:0;
@@ -749,11 +745,9 @@
       text-shadow:0 1px 8px rgba(0,0,0,.6); text-align:center;
     }
     .folder-box-desktop {
-      background:rgba(30,34,52,.88); border-radius:28px; padding:28px 32px 24px;
-      border:1px solid rgba(255,255,255,.16); width:100%;
-      box-shadow:0 32px 80px rgba(0,0,0,.65),0 0 0 0.5px rgba(255,255,255,.08);
-      -webkit-backdrop-filter:blur(40px) saturate(160%);
-      backdrop-filter:blur(40px) saturate(160%);
+      position:relative; isolation:isolate;
+      border-radius:28px; padding:28px 32px 24px; width:100%;
+      box-shadow:0 32px 80px rgba(0,0,0,.65);
     }
     .folder-icon-link {
       display:flex; flex-direction:column;
@@ -765,16 +759,8 @@
     /* ── Folder icon grid (thumbnail on main homescreen page) ── */
     .folder-icon-grid {
       position:absolute; inset:0; border-radius:16px;
-      background:rgba(100,110,140,.30);
       display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
       gap:3px; padding:10px; overflow:hidden;
-      -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
-      box-shadow:var(--icon-inset-shadow);
-    }
-    .folder-icon-grid-sheen {
-      position:absolute; inset:0; border-radius:16px;
-      pointer-events:none; z-index:2;
-      background:var(--icon-sheen);
     }
     .folder-mini-cell {
       display:flex; align-items:center; justify-content:center; z-index:1;
@@ -798,9 +784,8 @@
     .dyn-mob-icon   { display:flex; flex-direction:column; align-items:center; justify-content:center; width:var(--cw); height:var(--rh); cursor:pointer; text-decoration:none; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
     .dyn-mob-label  { font-weight:500; color:rgba(255,255,255,.88); text-align:center; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-label { font-weight:500; color:rgba(255,255,255,.90); text-align:center; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
-    .dyn-fold-wrap  { position:absolute; inset:0; pointer-events:none; border-radius:var(--br); background:rgba(120,130,160,.35); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:var(--gap); padding:var(--pad); overflow:hidden; -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); box-shadow:inset 1px 1px 0 rgba(255,255,255,.22),inset -1px -1px 0 rgba(0,0,0,.12); }
+    .dyn-fold-wrap  { position:absolute; inset:0; pointer-events:none; border-radius:var(--br); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:var(--gap); padding:var(--pad); overflow:hidden; }
     .dyn-fold-cell  { display:flex; align-items:center; justify-content:center; z-index:1; pointer-events:none; min-width:0; min-height:0; }
-    .dyn-fold-sheen { position:absolute; inset:0; pointer-events:none; z-index:2; border-radius:inherit; background:linear-gradient(135deg,rgba(255,255,255,.12) 0%,transparent 55%); }
     .dyn-clip       { overflow:hidden; flex-shrink:0; width:var(--gw); height:var(--gh); }
     .dyn-strip      { display:flex; height:var(--gh); will-change:transform; transition:transform .3s cubic-bezier(.4,0,.2,1); }
     .dyn-page-grid  { flex-shrink:0; display:grid; gap:var(--gap); justify-content:center; align-content:start; width:var(--gw); height:var(--gh); padding:var(--ovh,0); overflow:hidden; grid-template-columns:repeat(3,var(--fiw)); grid-template-rows:repeat(3,var(--fiw)); }
@@ -814,7 +799,7 @@
     .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
     .dyn-title-mob  { position:absolute; pointer-events:none; font-size:var(--tfs); }
     .dyn-box-mob    { position:absolute; display:flex; flex-direction:column; align-items:center; inset-inline-start:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
-    .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:1; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; overflow:visible; position:relative; }
+    .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:0 1 auto; min-width:0; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; overflow:visible; position:relative; }
 
 /* Strip backdrop-filter blur for anyone who asks for reduced motion or
    transparency. */
@@ -823,7 +808,7 @@
 
 /* Reduced transparency → drop blur/material (legibility), keep motion as-is */
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass-blur: none; --dock-blur: none; }
+  :root { --glass-blur: none; --glass-surface-blur: none; }
 }
 
 /* Reduced motion: neutralize slides, springs, and lift transforms. */
@@ -921,8 +906,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   :root {
     --glass-bg:      rgba(0,0,0,.62);
     --glass-border:  rgba(255,255,255,.30);
-    --dock-bg:       rgba(40,40,44,.55);
-    --dock-border:   rgba(255,255,255,.30);
+    --glass-surface-bg: rgba(40,40,44,.55);
     --label-color:   var(--label-primary);
     --label-shadow:  0 1px 4px rgba(0,0,0,.95);
   }

@@ -7,11 +7,11 @@
 
   /* Surfaces and borders, darkest first, from the system greys. */
   --bg-outer:var(--sy-gray6);
-  --sb:var(--sy-gray5);
-  --pane:var(--sy-gray5);
-  --cp:var(--sy-gray4);
+  --sb:#101012;
+  --pane:#000000;
+  --cp:var(--sy-gray6);
   --bd:var(--sy-a11y-border);
-  --bd-inner:var(--sy-gray3);
+  --bd-inner:var(--sy-gray4);
   --ac:var(--accent);
   --ac2:var(--accent-strong);
   --ok:var(--success);
@@ -53,10 +53,10 @@
   --chip-sy-bg:color-mix(in srgb, var(--sy-gray) 22%, transparent);
   --chip-sy-fg:color-mix(in srgb, var(--sy-gray-hi) 82%, var(--chip-ink-boost));
   /* Page neutrals particular to this screen. */
-  --tile-placeholder:var(--sy-gray2-hi);  /* an app tile with no icon yet */
+  --icon-ring:rgba(255,255,255,.14);
   --surface-sunken:var(--sy-gray5);       /* recessed well behind the About icon */
   --login-badge:#1a2a4a;                  /* the tinted square behind the login mark */
-  --tab-pill:rgba(255,255,255,.07);       /* the selection behind the active tab */
+  --tab-pill:rgba(0,0,0,.55);             /* the selection behind the active tab */
   --segment-on:rgba(255,255,255,.27);     /* the selected segment of a segmented control */
 
   /* Overlays. A tint laid over whatever surface a control sits on, rather than
@@ -68,15 +68,18 @@
   --ov:rgba(255,255,255,.06);
   --ov-strong:rgba(255,255,255,.08);
   --field-fill:rgba(255,255,255,.07);   /* a text input that draws its own box */
-  --track-off:rgba(255,255,255,.15);    /* an unfilled switch or meter track */
+  --track-off:rgba(255,255,255,.26);    /* an unfilled switch or meter track */
   --tip-strong:rgba(242,242,247,.65);   /* emphasis inside a footnote */
   --swatch-ring:#FFFFFF;                /* the ring around the chosen colour */
   --row-selected:rgba(2,122,255,.15);   /* the current folder, a picked backup */
   --row-drop:rgba(0,168,107,.12);       /* a drag hovering over a folder */
   --scrim:rgba(0,0,0,.55);
   --scrim-strong:rgba(0,0,0,.70);
-  --mtabbar-bg:rgba(30,30,38,.72);
-  --mtabbar-bd:rgba(255,255,255,.08);
+  --mtabbar-bg:#1F1F21;
+  --menu-bg:rgba(55,55,58,.9);
+  --menu-rim:rgba(255,255,255,.14);
+  --mtabbar-bd:rgba(255,255,255,.06);
+  --mtabbar-rim:rgba(255,255,255,.16);
 
   /* Elevation. A shadow over a dark surface is depth; the same shadow over a
      light one is dirt, so the light theme redraws every one of these. */
@@ -91,24 +94,11 @@
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────────
-   This page's own surfaces, borders and overlays at their light values. The
-   palette and the semantic sets come from tokens.css, which re-declares them
-   under the same attribute.
-
-   The surfaces do not mirror the dark set through the palette. Dark stacks
-   gray6, gray5, gray4 and gets lighter as it rises; light puts a white card on
-   a grey pane, which is the inverse order and not a value swap.
-
-     --bg-outer  #FFFFFF  the menu, dialog, toast and login surfaces
-     --sb/--pane gray6    the panel the cards sit on
-     --cp        #FFFFFF  a grouped card
-
-   --dm and --bd are both gray-hi, the accessible grey. The palette grey clears
-   3.0 on white but reaches only 2.92 on the grey pane, so the border takes the
-   same step as the text. ui/test/contrast.test.mjs holds both. */
+   Keep --dm and --bd at gray-hi. The palette grey fails 3.0 on the grey pane.
+   ui/test/contrast.test.mjs holds both. */
 html[data-theme="light"] {
   --bg-outer:#FFFFFF;
-  --sb:var(--sy-gray6);
+  --sb:#F9F9FB;
   --pane:var(--sy-gray6);
   --cp:#FFFFFF;
   --bd:var(--sy-gray-hi);
@@ -119,7 +109,7 @@ html[data-theme="light"] {
   --chip-ink-boost:#000000;
   --chip-text:#5A5A5E;
 
-  --tile-placeholder:var(--sy-gray2-hi);
+  --icon-ring:rgba(0,0,0,.08);
   --surface-sunken:var(--sy-gray5);
   --login-badge:#D3E4FF;
   --tab-pill:rgba(0,0,0,.06);
@@ -136,8 +126,11 @@ html[data-theme="light"] {
   --row-drop:rgba(0,168,107,.14);
   --scrim:rgba(0,0,0,.35);
   --scrim-strong:rgba(0,0,0,.45);
-  --mtabbar-bg:rgba(255,255,255,.82);
+  --mtabbar-bg:#FFFFFF;
+  --menu-bg:rgba(250,250,252,.92);
+  --menu-rim:rgba(0,0,0,.08);
   --mtabbar-bd:rgba(0,0,0,.08);
+  --mtabbar-rim:rgba(255,255,255,.9);
 
   --shadow-pop:0 8px 24px rgba(0,0,0,.14);
   --shadow-dlg:0 16px 48px rgba(0,0,0,.18);
@@ -160,7 +153,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .adm-outer{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:44px 0}
 
 /* ── Panel card ── */
-.adm{display:flex;width:100%;max-width:1039px;min-height:calc(100vh - 88px);background:var(--sb);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.adm{display:flex;width:100%;max-width:1039px;min-height:calc(100vh - 88px);background:var(--sb);border-radius:var(--r);box-shadow:var(--shadow-dlg);overflow:hidden}
 
 /* ── Sidebar ── */
 .sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 24px;position:sticky;top:0;height:100%;min-height:calc(100vh - 88px);overflow-y:auto}
@@ -171,19 +164,17 @@ html{background:var(--bg-color,var(--bg-base))}
 .nl{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border-radius:22px;border:none;background:transparent;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;text-align:start;transition:background var(--t),color var(--t);min-height:44px;font-family:inherit}
 .nl:hover{color:var(--tx)}
 .nl.active{background:var(--ac);color:var(--on-fill)}
-.nl.active .ni{opacity:1}
+.nl.active .ni,.mtab.active .ni{opacity:1}
 .ni{flex-shrink:0;opacity:.6}
 
 /* ── Content pane ── */
-/* The divider belongs to this pane, not to the sidebar. The sidebar is sticky
-   and one viewport tall, so a border on it stops partway down. */
-.cp{flex:1;min-width:0;background:var(--pane);border-inline-start:1px solid var(--bd-inner);overflow-y:auto}
+.cp{flex:1;min-width:0;background:var(--pane);overflow-y:auto}
 
 /* ── Section ── */
 .sec{padding:20px 20px 48px}
 .sec[hidden]{display:none}
 .sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-.sec-title{font-size:var(--fs-title-3);line-height:var(--lh-title-3);letter-spacing:var(--tr-title-3);font-weight:700;flex:1}
+.sec-title{font-size:var(--fs-title-1);line-height:var(--lh-title-1);letter-spacing:var(--tr-title-1);font-weight:700;flex:1}
 .sec-hdr-actions{display:flex;gap:6px}
 .ev-back{display:flex;align-items:center;gap:3px;background:none;border:none;color:var(--ac2);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-family:inherit;cursor:pointer;padding:4px 6px 4px 0;flex-shrink:0}
 .ev-back:hover{opacity:.8}
@@ -192,8 +183,9 @@ html{background:var(--bg-color,var(--bg-base))}
 /* Nothing left to show. It would otherwise draw its border as a stray rule
    and still claim the gap between cards. */
 .grp-empty{display:none}
-.grp{position:relative;background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:8px;border:1px solid var(--bd-inner)}
-.grp-hdr{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm);padding:26px 16px 6px;}
+.grp{position:relative;background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:8px}
+@media (forced-colors: active){.grp{border:1px solid CanvasText}}
+.grp-hdr{font-size:var(--fs-title-3);line-height:var(--lh-title-3);letter-spacing:var(--tr-title-3);font-weight:600;color:var(--dm);padding:26px 16px 6px;}
 .grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:8px 16px 14px;line-height:1.55}
 /* Why a widget was refused, one validator message per line. Indented as a list rather than run together, since a manifest can fail several rules at once. */
 .cfg-reject-list{list-style:disc;padding-inline-start:20px;margin-block-start:-8px}
@@ -206,16 +198,14 @@ html{background:var(--bg-color,var(--bg-base))}
 /* The separator belongs between two visible rows. :last-child is a DOM
    position, and a group's trailing rows can be hidden. Hidden rows carry
    .d-none, never an inline display. */
-/* Inset to the leading edge of the label, flush at the trailing edge, which is
-   how a grouped list draws it. A border cannot be inset, so it is drawn here.
-   Absolute, so it is not a grid item in the two-column drow. */
-.row::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:0;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
+/* Keep it absolute. In flow it becomes a grid item in the two-column drow. */
+.row::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:16px;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
 .row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open))))::after{content:none}
 /* A field with a hint, or a control that draws several rows, is wrapped so
    `showIf` has one element to hide. The wrapper draws the closing separator,
    below the hint, so the line falls between two fields and not inside one. */
 .row-wrap{position:relative}
-.row-wrap::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:0;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
+.row-wrap::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:16px;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
 .row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open))))::after{content:none}
 .reveal:not(.open)::after{content:none}
 /* The group is rounded hard and cannot clip: it keeps overflow visible so a
@@ -256,13 +246,14 @@ html{background:var(--bg-color,var(--bg-base))}
 .row-dd{position:relative;flex-shrink:0}
 .row-dd-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color var(--t)}
 .row-dd-btn:hover{color:var(--tx)}
-.dd-chev{flex-shrink:0;width:22px;height:22px;padding:3px;border-radius:6px;background:rgba(120,120,128,.22);color:var(--tx)}
+.dd-chev{flex-shrink:0;width:18px;height:18px;color:inherit}
 /* In the top layer, so it escapes the scrolling settings panel that used to
    clip it and the phone tab bar that used to cover it. The user-agent centres a
    popover with inset:0 and margin:auto; both are cleared because place() sets
    the position. Every list scrolls: one with twelve entries is taller than a
    phone screen. */
-.row-dd-list{position:fixed;inset:auto;margin:0;top:-9999px;z-index:9000;background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--rs);list-style:none;min-width:180px;max-width:min(320px,calc(100vw - 16px));max-height:min(360px,60vh);overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-pop);padding:4px 0}
+.row-dd-list{position:fixed;inset:auto;margin:0;top:-9999px;z-index:9000;background:var(--menu-bg);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);border:0.5px solid var(--menu-rim);border-radius:34px;list-style:none;min-width:250px;max-width:min(320px,calc(100vw - 16px));max-height:min(360px,60vh);overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-pop);padding:10px 0}
+@media (prefers-reduced-transparency: reduce){.row-dd-list{background:var(--bg-outer);-webkit-backdrop-filter:none;backdrop-filter:none}}
 /* Off screen until place() sets the real position, so a frame drawn before it
    lands is not a flash somewhere else. 9000 clears the phone tab bar at 8000. */
 .row-dd-list[hidden]{display:none}
@@ -271,13 +262,13 @@ html{background:var(--bg-color,var(--bg-base))}
 .row-dd-group{padding:10px 16px 4px;font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;color:var(--dm);cursor:default;text-transform:none}
 .row-dd-group ~ .row-dd-group{padding-top:10px}
 .row-dd-empty{padding:10px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--dm);cursor:default}
-.row-dd-list li{padding:10px 16px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:10px}
+.row-dd-list li{margin-inline:8px;border-radius:14px;padding:9px 16px 9px 10px;min-height:42px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--tx);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:8px}
 .row-dd-list li:hover,.row-dd-list li.kb-active{background:var(--ov-strong)}
 .row-dd-list:has(> .fh-hl.on) li:hover,
 .row-dd-list:has(> .fh-hl.on) li.kb-active{background:transparent}
 .row-dd-list li:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
-.row-dd-list li[aria-selected="true"]::before{content:'✓';color:var(--ac);font-weight:700;width:14px;flex-shrink:0;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
-.row-dd-list li[aria-selected="false"]::before{content:'';width:14px;flex-shrink:0}
+.row-dd-list li[aria-selected="true"]::before{content:'✓';color:var(--tx);font-weight:600;width:18px;flex-shrink:0;text-align:center}
+.row-dd-list li[aria-selected="false"]::before{content:'';width:18px;flex-shrink:0}
 
 /* ── Slider — wider with JS-driven blue fill ── */
 .slider-wrap{display:flex;align-items:center;gap:8px;flex:2;max-width:none}
@@ -312,7 +303,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .row.drow.drag-into{background:var(--row-drop);box-shadow:inset 0 0 0 2px var(--gn)}
 /* touch-action:none, or a drag starting on the handle scrolls the list instead. */
 .rord{display:flex;align-items:center;justify-content:center;color:var(--dm);font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);opacity:.5;touch-action:none}
-.rico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--on-tint);flex-shrink:0;overflow:hidden}
+.rico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--on-tint);flex-shrink:0;overflow:hidden;box-shadow:inset 0 0 0 1px var(--icon-ring)}
 .rico img{width:30px;height:30px;object-fit:contain}
 .rinf{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px}
 /* dir="auto" on the name makes it align by its own direction, away from the
@@ -337,15 +328,15 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 .fp-add:hover{background:var(--ov-soft)}
 
 /* ── Tile-group row (Add New selector, Widget Size selector) ── */
-.tile-row{align-items:flex-start;padding-top:16px;padding-bottom:16px}
-.tile-row .rl{padding-top:6px}
-.tile-grp{display:flex;gap:18px;margin-inline-start:auto}
-.tile-opt{display:flex;flex-direction:column;align-items:center;gap:7px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit}
-.tile-ico{width:54px;height:54px;border-radius:12px;background:var(--tile-placeholder);display:flex;align-items:center;justify-content:center;color:var(--on-tint);outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--t)}
-.tile-opt.on .tile-ico{outline-color:var(--ac)}
-.tile-cap{font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:500;color:var(--dm);transition:color var(--t)}
-.tile-opt.on .tile-cap{color:var(--tx)}
-.tile-opt:hover .tile-cap{color:var(--tx)}
+.tile-row{padding-top:16px;padding-bottom:16px}
+.tile-grp{display:flex;flex:1;justify-content:center;gap:clamp(0px,calc(6vw - 20px),40px)}
+.tile-opt{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;background:none;border:none;border-radius:12px;padding:4px;cursor:pointer;font-family:inherit;color:var(--dm);transition:color var(--t)}
+.tile-opt.on{color:var(--ac2)}
+.tile-opt:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.tile-ico{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:inherit}
+.tile-ico svg{width:38px;height:38px}
+.tile-cap{white-space:nowrap;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:400;color:var(--tx);padding:3px 12px;border-radius:50px;transition:background var(--t),color var(--t)}
+.tile-opt.on .tile-cap{background:var(--ac);color:var(--on-fill)}
 
 /* ── Color control: swatch row + HSB sliders + code (PSD Icon/Label/Activity) ── */
 .cc-row{padding-top:13px;padding-bottom:13px}
@@ -426,8 +417,6 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .bprow-hidden{display:none}
 /* Settings-row native select (Widget Type, slot Resource) */
 .upd-link{color:var(--ac2)}
-/* Left-aligned tile group (Size) */
-.tile-grp-left{margin-inline-start:0;margin-inline-end:auto}
 /* Widget config-form: in-card hints, repeatable-group header/add */
 .grp-tip.in-card{margin:0;padding:7px 16px 12px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .grp-hdr-row{display:flex;align-items:center;justify-content:space-between}
@@ -480,9 +469,11 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .btn:active:not(:disabled){opacity:.8}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .bp{background:var(--ac);color:var(--on-fill)}
+.bp:disabled{background:var(--field-fill);color:var(--dm);opacity:1}
 .bp:hover:not(:disabled){background:var(--ac2)}
 .bg{background:transparent;color:var(--dm);border:1px solid var(--bd-inner)}
 .bg:hover:not(:disabled){background:var(--ov);color:var(--tx)}
+.bg:disabled{opacity:1;color:var(--bd);border-color:var(--bd-inner)}
 .bd-btn{background:transparent;color:var(--rd);border:1px solid var(--rd)}
 .bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}
 .sm{padding:6px 14px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);min-height:30px}
@@ -702,8 +693,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 html.is-mobile .adm-outer{padding:env(safe-area-inset-top) 0 0;display:block;min-height:100dvh}
 html.is-mobile .adm{max-width:none;width:100%;min-height:100dvh;border:none;border-radius:0}
 html.is-mobile .sb{display:none}
-/* No sidebar on mobile, so nothing for the divider to divide. */
-html.is-mobile .cp{width:100%;border-inline-start:none}
+html.is-mobile .cp{width:100%}
 html.is-mobile .sec{padding-block:16px calc(132px + env(safe-area-inset-bottom));padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
 html.is-mobile .sec-title{font-size:var(--fs-title-1);line-height:var(--lh-title-1);letter-spacing:var(--tr-title-1)}
 html.is-mobile .hsb-track{max-width:min(240px,62%)}
@@ -715,20 +705,14 @@ html.is-mobile .m-back:active{opacity:.7}
 html.is-mobile body.authed .mtabbar{
   display:flex;position:fixed;left:14px;right:14px;bottom:14px;
   z-index:8000;justify-content:space-around;align-items:center;gap:2px;
-  background:var(--mtabbar-bg);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);
-  border:1px solid var(--mtabbar-bd);border-radius:28px;
-  padding:7px 8px;box-shadow:var(--shadow-bar);
+  background:var(--mtabbar-bg);
+  border:1px solid var(--mtabbar-bd);border-radius:50px;
+  padding:4px 4px;box-shadow:inset 0 1px 0 var(--mtabbar-rim),var(--shadow-bar);
 }
-html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;border-radius:16px;padding-block:6px;padding-inline:8px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;cursor:pointer;padding:6px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
-html.is-mobile .mtab .ni{width:31px;height:31px;flex-shrink:0}
-/* The selection covers the whole tab, icon and label. Not a stadium: the label
-   sits along the bottom edge, which is where a stadium's curve is tightest, and
-   at 6 from the bottom a 26 radius cuts about 9 in from each side and clips the
-   ends of a long label. 16 cuts in under 4 and the label clears it.
-
-   The 6 above and below comes off the bar's own padding, so the bar keeps its
-   height. */
-html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--tx)}
+html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;border-radius:50px;padding-block:8px;padding-inline:8px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:500;cursor:pointer;padding:8px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
+html.is-mobile .mtab .ni{width:24px;height:24px;flex-shrink:0}
+/* Keep the radius above half the height. Exactly half tears in WebKit on repaint. */
+html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--ac2)}
 
 /* The handle is the drag zone. It needs touch-action:none, or starting a drag
    on it scrolls the list. */
