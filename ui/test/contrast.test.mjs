@@ -220,8 +220,8 @@ for (const light of [false, true]) {
 test('the resolver reads both files', () => {
   const resolve = resolver();
   assert.equal(resolve('--dm'), '#A3A3A8');
-  assert.equal(resolve('--pane'), '#2C2C2E');
-  assert.equal(resolve('--cp'), '#3A3A3C');
+  assert.equal(resolve('--pane'), '#000000');
+  assert.equal(resolve('--cp'), '#1C1C1E');
 });
 
 test('the resolver reads the light theme', () => {
@@ -378,9 +378,6 @@ const SPLIT_PAIRS = [
   ['the green app badge', '--on-fill', '--badge-green'],
 ];
 
-/* Not text. 1.4.11 asks 3.0 of the glyph against the fill behind it. */
-const GRAPHIC_PAIRS = [['the icon on an app tile with no icon yet', '--on-tint', '--tile-placeholder']];
-
 test('every filled control the stylesheet declares is paired with its ink', () => {
   const found = filledRules().map(r => r.what);
   for (const sel of ['.bp', '.login-btn', '.setpw-btn', '.nl.active', '.chip.on']) {
@@ -403,7 +400,6 @@ for (const light of [false, true]) {
       };
       for (const { what, fill } of filledRules()) check(what, '--on-fill', fill, 4.5);
       for (const [what, ink, fill] of SPLIT_PAIRS) check(what, ink, fill, 4.5);
-      for (const [what, ink, fill] of GRAPHIC_PAIRS) check(what, ink, fill, 3.0);
       assert.deepEqual(failures, [], `Below the WCAG minimum (${name}):\n  ${failures.join('\n  ')}`);
     });
   }

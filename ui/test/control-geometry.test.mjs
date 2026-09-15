@@ -33,10 +33,10 @@ test('a row is 52, and a row carrying two lines is 68', () => {
   assert.match(rule(admin, '.row.drow'), /min-height:68px/);
 });
 
-test('the separator is inset to the leading edge of the label', () => {
+test('the separator is inset at both edges', () => {
   const sep = rule(admin, '.row::after');
   assert.match(sep, /inset-inline-start:16px/, 'the inset is 16 and has to follow the text direction');
-  assert.match(sep, /inset-inline-end:0/, 'flush at the trailing edge');
+  assert.match(sep, /inset-inline-end:16px/, 'inset at the trailing edge too');
   assert.match(sep, /height:1px/);
 });
 
@@ -163,24 +163,22 @@ test('the sidebar is 320 with 44 items and a pill selection', () => {
 
 /* The bar's height is the pill's padding plus its own. Raising one without
    lowering the other grows the bar and eats into the page. */
-test('the tab selection is a pill and the bar keeps its height', () => {
+test('the tab selection is a stadium that clears its label', () => {
   const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   const tab = /html\.is-mobile \.mtab\{([^}]*)\}/.exec(bare);
   assert.ok(tab, 'the tab rule is gone');
-  const pillPad = Number(/padding-block:(\d+)px/.exec(tab[1])[1]);
-  /* Not a stadium. The label runs along the bottom edge, where a stadium's
-     curve is tightest, so at this padding a half-height radius clips the ends
-     of a long label. Checked as a bound, since the failure is geometric. */
+  const pad = Number(/padding:(\d+)px \d+px/.exec(tab[1])[1]);
   const radius = Number(/border-radius:(\d+)px/.exec(tab[1])[1]);
-  const inset = radius - Math.sqrt(Math.max(0, radius ** 2 - (radius - pillPad) ** 2));
-  assert.ok(inset < 5, `the pill cuts ${inset.toFixed(1)} in at the label's line; keep it under 5`);
-
-  assert.match(tab[1], /padding-inline:\d+px/, 'the label needs room either side of it');
+  const icon = Number(/\.mtab \.ni\{width:(\d+)px/.exec(bare)[1]);
+  const gap = Number(/gap:(\d+)px/.exec(tab[1])[1]);
+  const label = 16;
+  const half = (pad * 2 + icon + gap + label) / 2;
+  /* A radius of exactly half the height tears in WebKit on repaint. */
+  assert.ok(radius > half, `radius ${radius} must exceed half the height, ${half}`);
+  /* A long label sits on the bottom line, where the stadium is narrowest. */
+  const inset = half - Math.sqrt(half ** 2 - (half - pad) ** 2);
+  assert.ok(inset < 10, `the stadium cuts ${inset.toFixed(1)} in at the label's line; keep it under 10`);
   assert.match(tab[1], /white-space:nowrap/, 'a label must not wrap inside the pill');
-
-  const bar = /html\.is-mobile body\.authed \.mtabbar\{([\s\S]*?)\}/.exec(bare);
-  const barPad = Number(/padding:(\d+)px \d+px/.exec(bar[1])[1]);
-  assert.equal(pillPad + barPad, 13, `the bar grew: ${pillPad} + ${barPad} should still be 13`);
 
   assert.match(rule(admin, 'html.is-mobile .mtab.active'), /background:var\(--tab-pill\)/);
 });

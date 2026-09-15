@@ -1,6 +1,6 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=a53ac0e8';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=c70fb722';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=b0923a32';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=b1feb5b1';
 import { resolveAdminSection } from '/js/admin-logic.js?v=69e57d35';
 import {
   buildAppItem,
@@ -13,7 +13,7 @@ import {
 import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=079a3d2d';
 import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=fd784739';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=3b1b3546';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=25390f36';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=a67e9c98';
@@ -202,10 +202,9 @@ const typeLabels = () => ({ app: t('type.app'), widget: t('type.widget'), folder
 
 function buildAddNewCard() {
   const grp = document.createElement('div');
-  grp.className = 'grp';
+  grp.className = 'grp add-new-card';
   const row = document.createElement('div');
   row.className = 'row tile-row';
-  setHtml(row, html`<span class="rl">${t('type.addNew')}</span>`);
   const grpTiles = document.createElement('div');
   grpTiles.className = 'tile-grp';
   const labels = typeLabels();
@@ -634,6 +633,9 @@ function initNav() {
 }
 
 function initAllInlineEdits() {
+  const titleInp = document.createElement('input');
+  titleInp.id = 'ie-input';
+  document.body.appendChild(titleInp);
   initInlineEdit('ie-title', 'ie-input', {
     placeholder: 'Stackyard',
     onCommit(v) {

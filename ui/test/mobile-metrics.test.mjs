@@ -311,25 +311,18 @@ test('the layout reads its cell count from the measured box', () => {
   assert.match(ui, /'--mrows'/);
 });
 
-/* ── The dock is sized by what it holds ───────────────────────────────────── */
+/* ── The dock keeps phone width ───────────────────────────────────────────── */
 
-/* The grid gains columns on a wide screen while the dock keeps four icons. A
-   dock stretched to the window then reads as an empty bar. */
-test('the dock is sized to its contents, not to the window', () => {
+/* A wide window must not stretch the dock into an empty bar. */
+test('the dock keeps phone width whatever it holds', () => {
   const ui = read('js/ui.js');
-  assert.match(ui, /const dockW = Math\.min\(maxDockW, dockContentW\)/);
-  assert.doesNotMatch(ui, /const dockW = vw - Math\.round\(18 \* sc\)/, 'the dock still spans the window');
+  assert.match(ui, /const dockW = Math\.min\(maxDockW, Math\.round\(\(PHONE_W - 18\) \* sc\)\)/);
+  assert.doesNotMatch(ui, /dockContentW/, 'the dock is sized to its icons again');
 });
 
 test('the dock never grows past the window', () => {
   const ui = read('js/ui.js');
   assert.match(ui, /const maxDockW = vw - Math\.round\(18 \* sc\)/, 'the width cap is gone');
-});
-
-/* An empty dock has no contents to size to. */
-test('an empty dock keeps a width', () => {
-  const ui = read('js/ui.js');
-  assert.match(ui, /dock\.length\s*\?[\s\S]{0,160}:\s*maxDockW/);
 });
 
 /* The hinge and the system controls sit on a side edge on some devices, and a

@@ -17,6 +17,10 @@ import {
 import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';
+import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
+import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3898c48c';
+
+const PHONE_W = 393;
 
 let _state = null;
 export function initUI(state) {
@@ -104,7 +108,7 @@ function mkMiniIcon(child, pointerEvents) {
 /** The miniature icon grid a folder tile shows. @param {number} size */
 export function mkFolderGlyph(folder, size) {
   const wrap = mk('div');
-  wrap.className = 'dyn-fold-wrap';
+  wrap.className = 'dyn-fold-wrap glass-surface';
   css(wrap, {
     '--br': Math.round(size * 0.24) + 'px',
     '--gap': Math.round(size * 0.04) + 'px',
@@ -139,10 +143,8 @@ export function mkFolder(item) {
   box.className = 'dyn-folder-box';
   css(box, { '--iw': iw + 'px' });
   const wrap = mk('div');
-  wrap.className = 'folder-icon-grid';
-  const g = mk('div');
-  g.className = 'folder-icon-grid-sheen';
-  wrap.appendChild(g);
+  wrap.className = 'folder-icon-grid glass-surface';
+  wrap.appendChild(mkGlassRim(iw, iw, smoothRectPath(iw, iw, 16, 0)));
   (item.children || [])
     .slice(0, 9)
     .map(id => items().find(i => i.id === id))
@@ -224,7 +226,9 @@ export function openFolderDesktop(folder) {
   }
   /* Escape and the tile's own toggle arrive here alike, and a badge registered
      to an element that has gone keeps the dashboard repainting it. */
+  let stopGlass = () => {};
   ov.addEventListener('close', () => {
+    stopGlass();
     registeredBadges.forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
     ov.remove();
     folderOverlay = null;
@@ -242,6 +246,7 @@ export function openFolderDesktop(folder) {
      tiles under the scrim were reachable by Tab and by a screen reader. */
   ov.showModal();
   ov.focus();
+  stopGlass = observeGlass(box, 28, 0.2);
 }
 
 function mFolder(item, cw, rh, isz, ir, im, sc) {
@@ -306,9 +311,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   css(box, { '--sz': eff + 'px' });
   box.style.pointerEvents = 'none';
   const wrap = mkFolderGlyph(item, eff);
-  const sheen = mk('div');
-  sheen.className = 'dyn-fold-sheen';
-  wrap.prepend(sheen);
+  wrap.appendChild(mkGlassRim(eff, eff, smoothRectPath(eff, eff, Math.round(eff * 0.24), 0)));
   box.appendChild(wrap);
   const fb_ = mk('div');
   fb_.className = 'badge';
@@ -402,7 +405,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   setUserText(titleEl, folder.label || t('type.folder'));
 
   const box = mk('div');
-  box.className = 'folder-box-mobile dyn-box-mob';
+  box.className = 'dyn-box-mob glass-surface';
   css(box, {
     '--left': boxLeft + 'px',
     '--bw': boxW + 'px',
@@ -413,6 +416,9 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
     '--ph': padH - badgeOvh + 'px',
     '--pb': padVB - badgeOvh + 'px',
   });
+  const boxD = smoothRectPath(boxW, boxH, boxR, 0.2);
+  box.style.clipPath = `path('${boxD}')`;
+  box.appendChild(mkGlassRim(boxW, boxH, boxD));
 
   const clipW = mk('div');
   clipW.className = 'dyn-clip';
@@ -782,16 +788,14 @@ export function buildMobile() {
   const dockIr = Math.round(dockIconSz * 0.225),
     dockIm = Math.round(dockIconSz * 0.64);
   const dockGap = Math.round(9 * sc);
-  /* Sized to what it holds, not to the window. The grid gains columns on a wide
-     screen while the dock keeps four icons, and a stretched bar reads as empty
-     rather than as a dock. */
-  const dockContentW = dock.length
-    ? dock.length * dockIconSz + (dock.length - 1) * Math.round(22 * sc) + dockPad * 2
-    : maxDockW;
-  const dockW = Math.min(maxDockW, dockContentW);
+  const dockW = Math.min(maxDockW, Math.round((PHONE_W - 18) * sc));
+  const spare = dockW - dockPad * 2 - dock.length * dockIconSz;
+  const maxIconGap = Math.round(22 * sc);
+  const dockIconGap = dock.length > 1 ? Math.max(0, Math.min(maxIconGap, Math.floor(spare / (dock.length - 1)))) : 0;
   dk.hidden = !dock.length;
-  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;border-radius:${Math.round(44 * sc)}px;z-index:400;`;
+  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;gap:${dockIconGap}px;z-index:400;`;
   dk.replaceChildren();
+  observeGlass(dk, Math.round(40 * sc), 0.2);
   dock.forEach(item => {
     const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
     a.className = 'dyn-dock-icon';

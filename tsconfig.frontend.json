@@ -254,6 +254,18 @@
       "/js/mobile-metrics.js?v=*": [
         "./ui/js/mobile-metrics.js"
       ],
+      "/js/glass-rim.js": [
+        "./ui/js/glass-rim.js"
+      ],
+      "/js/glass-rim.js?v=*": [
+        "./ui/js/glass-rim.js"
+      ],
+      "/js/smooth-corner.js": [
+        "./ui/js/smooth-corner.js"
+      ],
+      "/js/smooth-corner.js?v=*": [
+        "./ui/js/smooth-corner.js"
+      ],
       "/js/password-strength.js": [
         "./ui/js/password-strength.js"
       ],
