@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.1] - 2026-09-15
+
+### Changed
+
+- Restyle the dock and folders as thin glass with smooth corners.
+
+- Restyle Settings as grouped lists with a tab bar, dropdown menus and type and
+  size pickers.
+
+### Removed
+
+- Remove the Title and Description rows from General, which never saved.
+
+### Fixed
+
+- Fix the Add New type chooser closing after choosing Widget or a size.
+
+- Fix desktop tiles landing below the page when a wide widget leaves a gap.
+
+- Fix multi-select pickers closing after each choice.
+
+- Fix the loading spinner and the editor back button sitting off-side in
+  Persian.
+
+- Announce the selected widget size to screen readers.
+
 ## [1.13.0] - 2026-09-14
 
 ### Added
@@ -1331,7 +1357,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.13.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.13.1...HEAD
+[1.13.1]: https://github.com/SandObserver/stackyard/compare/v1.13.0...v1.13.1
 [1.13.0]: https://github.com/SandObserver/stackyard/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/SandObserver/stackyard/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/SandObserver/stackyard/compare/v1.10.0...v1.11.0
