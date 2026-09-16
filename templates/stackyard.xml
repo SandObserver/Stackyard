@@ -23,20 +23,31 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.13.0 - 2026-09-14
-
-### Added
-
-- Add OpenWeather as a Weather widget provider.
+### 1.13.1 - 2026-09-15
 
 ### Changed
 
-- Redesign the Books widget shelf and name the book in progress under it.
+- Restyle the dock and folders as thin glass with smooth corners.
+
+- Restyle Settings as grouped lists with a tab bar, dropdown menus and type and
+  size pickers.
+
+### Removed
+
+- Remove the Title and Description rows from General, which never saved.
 
 ### Fixed
 
-- Keep Save on screen in phone Settings headers with long names.
-- Fix typing into widget settings text, number and API key fields.
+- Fix the Add New type chooser closing after choosing Widget or a size.
+
+- Fix desktop tiles landing below the page when a wide widget leaves a gap.
+
+- Fix multi-select pickers closing after each choice.
+
+- Fix the loading spinner and the editor back button sitting off-side in
+  Persian.
+
+- Announce the selected widget size to screen readers.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
