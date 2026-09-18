@@ -1,4 +1,4 @@
-import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=fd784739';
+import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=c916f839';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -7,7 +7,7 @@ import {
   clearsStoredPassword,
   createDirtyTracker,
   BLOCK,
-} from '/js/admin-logic.js?v=69e57d35';
+} from '/js/admin-logic.js?v=e3673bd7';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
 import { el, inp, setUserText } from '/js/utils.js?v=70cbc405';
 

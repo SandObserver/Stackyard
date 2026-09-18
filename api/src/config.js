@@ -132,10 +132,14 @@ function _backupCorrupt(raw) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   try {
     fs.writeFileSync(`${CONFIG_PATH}.corrupt-${stamp}`, raw, { encoding: 'utf8', flag: 'wx' });
-  } catch {}
+  } catch (e) {
+    log.warn('could not write the corrupt-config backup', { path: CONFIG_PATH, error: e.message });
+  }
   _lastCorruptRaw = raw;
 }
 
+/* Returns the live cache. Do not write to it. Call loadConfigForUpdate to
+   change the config. A write here survives a failed save. */
 function loadConfig() {
   if (IS_DEMO) return loadDemoConfig();
 
@@ -178,9 +182,15 @@ function loadConfig() {
   if (shaped._schemaVersion !== before) {
     try {
       saveConfig(shaped);
-    } catch {}
+    } catch (e) {
+      log.warn('migrated config could not be written back', { path: CONFIG_PATH, error: e.message });
+    }
   }
   return shaped;
+}
+
+function loadConfigForUpdate() {
+  return structuredClone(loadConfig());
 }
 
 function saveConfig(data) {
@@ -226,8 +236,8 @@ function saveConfig(data) {
        durable. */
   }
 
-  /* Only after the write succeeded. */
-  _cfgCache = data;
+  /* Only after the write succeeded. A copy: the caller keeps its object. */
+  _cfgCache = structuredClone(data);
   _cfgCacheAt = Date.now();
 }
 
@@ -257,6 +267,7 @@ module.exports = {
   ICONS_PATH,
   SCHEMA_VERSION,
   loadConfig,
+  loadConfigForUpdate,
   saveConfig,
   ensureSystemItems,
   migrate,
