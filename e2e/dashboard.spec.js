@@ -52,6 +52,23 @@ test('seeded items render as tiles carrying their label and link', async ({ page
   await expect(page.locator('#pages a.icon').filter({ hasText: 'Bravo' })).toBeVisible();
 });
 
+test('a tile that opens a new tab rests at full size until the pointer leaves', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [app('alpha', 'Alpha', 'http://example.invalid/alpha'), app('bravo', 'Bravo')],
+  });
+  await stubPolls(page);
+  await page.goto('/');
+
+  const alpha = page.locator('#pages a.icon').filter({ hasText: 'Alpha' });
+  page.context().on('page', p => p.close());
+  await alpha.click();
+  await expect(alpha).toHaveClass(/\bsettled\b/);
+  await expect(alpha.locator('.iwrap')).toHaveCSS('transform', 'none');
+
+  await page.mouse.move(0, 0);
+  await expect(alpha).not.toHaveClass(/\bsettled\b/);
+});
+
 test('a badge value is painted, and the next poll replaces it', async ({ page, request }) => {
   await seedConfig(request, { items: [badged()] });
   await stubPolls(page, { charlie: { value: 7 } });

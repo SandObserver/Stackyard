@@ -1055,6 +1055,15 @@ async function boot() {
     _pollTimers = [];
   };
 
+  /* Keep. Without it Safari leaves the tile scaled after a new tab opens. */
+  document.addEventListener('click', e => {
+    if (!(e.target instanceof Element)) return;
+    const a = e.target.closest('a[target="_blank"]:is(.icon, .di, .folder-icon-link)');
+    if (!a) return;
+    a.classList.add('settled');
+    a.addEventListener('pointerleave', () => a.classList.remove('settled'), { once: true });
+  });
+
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       stopPolling();
