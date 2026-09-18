@@ -25,7 +25,7 @@ test('closing search puts focus back where it was', () => {
   assert.match(handler[1], /if \(!ov\.contains\(document\.activeElement\)\) return;/);
   assert.match(handler[1], /back\.focus\(\)/);
   assert.match(handler[1], /inp\.blur\(\)/);
-  assert.match(js, /returnFocus = document\.activeElement;\s*ov\.showModal\(\);/);
+  assert.match(js, /returnFocus = document\.activeElement;\s*ov\.classList\.add\('on'\);\s*ov\.showModal\(\);/);
 });
 
 test('a folder result shows the folder icon grid', () => {
