@@ -187,13 +187,11 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** Resolve once every finite CSS animation and transition on the page has
-    finished. A pixel read mid-fade can repeat across frames, so a stability
-    check alone passes on a colour the user never sees.
+/** Resolve once every finite animation and transition has finished.
     @param {import('@playwright/test').Page} page */
 async function animationsDone(page) {
   await page.evaluate(async () => {
-    /* A transition triggered by the last action starts on the next frame. */
+    /* Keep the two frames. A transition started by the last action is not listed before then. */
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     const finite = document
       .getAnimations()
