@@ -11,7 +11,7 @@
    same on every run. */
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, dismissSetupPrompt, app, centrePixel, contrast } = require('./helpers');
+const { seedConfig, dismissSetupPrompt, app, centrePixel, contrast, animationsDone } = require('./helpers');
 
 /* SC 1.4.11: a control's state has to be distinguishable at 3:1. */
 const AA_NON_TEXT = 3;
@@ -31,8 +31,7 @@ async function openWith(page, request, colour) {
      pixel before it lands reads the untoned indicator. Wait for the attribute
      rather than for a duration. */
   await page.locator('#dots[data-tone]').waitFor({ state: 'attached' });
-  /* The dots animate on their way in. */
-  await page.waitForTimeout(300);
+  await animationsDone(page);
 }
 
 for (const [name, colour] of [
