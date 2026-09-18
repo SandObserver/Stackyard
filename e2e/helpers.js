@@ -187,12 +187,26 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/** Resolve once every finite animation and transition has finished.
+    @param {import('@playwright/test').Page} page */
+async function animationsDone(page) {
+  await page.evaluate(async () => {
+    /* Keep the two frames. A transition started by the last action is not listed before then. */
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const finite = document
+      .getAnimations()
+      .filter(a => a.effect?.getComputedTiming().endTime !== Number.POSITIVE_INFINITY);
+    await Promise.all(finite.map(a => a.finished.catch(() => {})));
+  });
+}
+
 /** The colour at one point, once it has stopped changing. A panel that fades in
     is still moving when it first becomes visible.
     @param {import('@playwright/test').Locator} locator
     @param {number} fx @param {number} fy fractions of the element's box
     @returns {Promise<[number,number,number]>} */
 async function settledPixelAt(locator, fx, fy) {
+  await animationsDone(locator.page());
   let previous = await pixelAt(locator, fx, fy);
   for (let i = 0; i < 20; i++) {
     await locator.page().waitForTimeout(100);
@@ -217,5 +231,6 @@ module.exports = {
   centrePixel,
   pixelAt,
   settledPixelAt,
+  animationsDone,
   contrast,
 };
