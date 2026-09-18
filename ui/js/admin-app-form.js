@@ -2,15 +2,15 @@ import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=5a5d655f';
+import { DOCK_MAX } from '/js/limits.js?v=2fc30b10';
 import {
   isDockBlocked,
-  DOCK_MAX,
   clearsStoredSecret,
   isBareHostUrl,
   failureIsMissingApiPath,
   nextActiveIndex,
   sameIconName,
-} from '/js/admin-logic.js?v=69e57d35';
+} from '/js/admin-logic.js?v=85ba3690';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
   toast,
@@ -21,10 +21,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=fd784739';
-import { createListbox } from '/js/listbox.js?v=bedd1104';
+} from '/js/admin-shared.js?v=48a588fa';
+import { createListbox } from '/js/listbox.js?v=efea51f2';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=837961fa';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=cc549ffa';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 
@@ -80,7 +80,7 @@ function _wireFolderApps(apps, children) {
 }
 
 export function buildAppForm(body, item) {
-  const dockBlocked = isDockBlocked(state.items, item);
+  const dockBlocked = isDockBlocked(state.items, item, DOCK_MAX);
   const globalHealthOn = !!inpById('srv-docker-en')?.checked;
   const mon = item?.monitoring || {};
   const hc = mon.healthcheck || {

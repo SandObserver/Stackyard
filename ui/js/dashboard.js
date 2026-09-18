@@ -30,6 +30,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
+import { DOCK_MAX } from '/js/limits.js?v=2fc30b10';
 import {
   initUI,
   mkFolder,
@@ -394,7 +395,7 @@ function buildDesktop() {
   /* Before paginate() and before any tile is built: both size against it. */
   gm = gridMetrics();
   document.documentElement.style.setProperty('--cols', String(gm.cols));
-  const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, 4);
+  const dock = items.filter(i => i.type === 'app' && i.dock && !i.hidden).slice(0, DOCK_MAX);
   document.body.classList.toggle('no-dock', !dock.length);
   const pages = paginate();
   totalPages = pages.length;

@@ -230,6 +230,12 @@
       "/js/icons.js?v=*": [
         "./ui/js/icons.js"
       ],
+      "/js/limits.js": [
+        "./ui/js/limits.js"
+      ],
+      "/js/limits.js?v=*": [
+        "./ui/js/limits.js"
+      ],
       "/js/link-url.js": [
         "./ui/js/link-url.js"
       ],

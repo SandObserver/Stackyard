@@ -1,6 +1,6 @@
 const { on, json, readBody, checkOrigin, getIp } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
-const { loadConfig, saveConfig } = require('../config');
+const { loadConfig, loadConfigForUpdate, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
 const {
@@ -22,6 +22,12 @@ const {
   authActive,
   needsRehash,
 } = require('../auth');
+
+const PASSWORD_MIN = 8;
+/* An upper bound belongs on what is accepted, not on what is verified: an
+   existing install may hold a longer password, and rejecting it at login would
+   lock its owner out. */
+const PASSWORD_MAX = 1024;
 
 /* Answers before sign-in. Say only what the login screen has to decide. The
    setup fields describe the install and are added only once the caller is
@@ -65,7 +71,7 @@ on('POST', '/api/auth/login', async (req, res) => {
        way and the old hash still verifies. */
     if (needsRehash(hash)) {
       try {
-        const fresh = loadConfig();
+        const fresh = loadConfigForUpdate();
         if (fresh.settings?.auth?.passwordHash === hash) {
           fresh.settings.auth.passwordHash = await hashPassword(password);
           saveConfig(fresh);
@@ -95,14 +101,16 @@ on('POST', '/api/auth/set-password', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
-    const cfg = loadConfig();
+    const cfg = loadConfigForUpdate();
     const hasPassword = !!cfg.settings?.auth?.passwordHash;
     if (hasPassword && !hasValidSession(req)) {
       return json(res, 401, { error: 'Authentication required to change the existing password.', kind: KIND.AUTH });
     }
     const { password = '' } = JSON.parse(await readBody(req));
-    if (!password || password.length < 8)
-      return json(res, 400, { error: 'Password must be at least 8 characters.', kind: KIND.INVALID });
+    if (!password || password.length < PASSWORD_MIN)
+      return json(res, 400, { error: `Password must be at least ${PASSWORD_MIN} characters.`, kind: KIND.INVALID });
+    if (password.length > PASSWORD_MAX)
+      return json(res, 400, { error: `Password must be at most ${PASSWORD_MAX} characters.`, kind: KIND.INVALID });
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
     cfg.settings.auth.passwordHash = await hashPassword(password);
@@ -143,7 +151,7 @@ on('POST', '/api/auth/revoke-sessions', (req, res) => {
 on('POST', '/api/auth/dismiss-setup', (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
-  const cfg = loadConfig();
+  const cfg = loadConfigForUpdate();
   cfg.settings = cfg.settings || {};
   cfg.settings.auth = cfg.settings.auth || {};
   cfg.settings.auth.setupPrompted = true;
@@ -161,7 +169,7 @@ on('POST', '/api/auth/toggle', async (req, res) => {
     if (typeof enabled !== 'boolean') {
       return json(res, 400, { error: 'enabled must be true or false', kind: KIND.INVALID });
     }
-    const cfg = loadConfig();
+    const cfg = loadConfigForUpdate();
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
     /* Auth on with no password stored locks the install: every login is refused

@@ -473,6 +473,15 @@ test('set-password rejects a too-short password', async () => {
   assert.equal(r.status, 400);
 });
 
+test('set-password rejects a password past the accepted length', async () => {
+  const r = await req('POST', '/api/auth/set-password', {
+    cookie: validCookie,
+    body: { password: 'a'.repeat(1025) },
+  });
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /at most/);
+});
+
 test('set-password succeeds for an authenticated session and issues a new cookie', async () => {
   const r = await req('POST', '/api/auth/set-password', {
     cookie: validCookie,

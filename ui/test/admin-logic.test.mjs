@@ -1,3 +1,4 @@
+import { DOCK_MAX } from '../js/limits.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -80,19 +81,19 @@ test('reorderItems reorders a child within its folder', () => {
 
 test('isDockBlocked blocks a new app once the dock is full', () => {
   const items = [1, 2, 3, 4].map(n => ({ id: `a${n}`, type: 'app', dock: true }));
-  assert.equal(isDockBlocked(items, { id: 'new', type: 'app' }), true);
-  assert.equal(isDockBlocked(items.slice(0, 3), { id: 'new', type: 'app' }), false);
+  assert.equal(isDockBlocked(items, { id: 'new', type: 'app' }, DOCK_MAX), true);
+  assert.equal(isDockBlocked(items.slice(0, 3), { id: 'new', type: 'app' }, DOCK_MAX), false);
 });
 
 test('isDockBlocked never blocks an app already in the dock', () => {
   const items = [1, 2, 3, 4].map(n => ({ id: `a${n}`, type: 'app', dock: true }));
-  assert.equal(isDockBlocked(items, items[0]), false);
+  assert.equal(isDockBlocked(items, items[0], DOCK_MAX), false);
 });
 
 test('isDockBlocked excludes the edited app from the count', () => {
   // four docked, one of them is the app being edited and is being un-docked
   const items = [1, 2, 3, 4].map(n => ({ id: `a${n}`, type: 'app', dock: true }));
-  assert.equal(isDockBlocked(items, { id: 'a1', type: 'app', dock: false }), false);
+  assert.equal(isDockBlocked(items, { id: 'a1', type: 'app', dock: false }, DOCK_MAX), false);
 });
 
 test('isDockBlocked only counts docked apps, not widgets or folders', () => {
@@ -102,12 +103,12 @@ test('isDockBlocked only counts docked apps, not widgets or folders', () => {
     { id: 'f1', type: 'folder', dock: true },
     { id: 'a9', type: 'app', dock: false },
   ];
-  assert.equal(isDockBlocked(items, { id: 'new', type: 'app' }), false);
+  assert.equal(isDockBlocked(items, { id: 'new', type: 'app' }, DOCK_MAX), false);
 });
 
 test('isDockBlocked tolerates junk input', () => {
-  assert.equal(isDockBlocked(null, null), false);
-  assert.equal(isDockBlocked([null, undefined, {}], { id: 'new' }), false);
+  assert.equal(isDockBlocked(null, null, DOCK_MAX), false);
+  assert.equal(isDockBlocked([null, undefined, {}], { id: 'new' }, DOCK_MAX), false);
 });
 
 test('nextActiveIndex moves the active option and clamps at both ends', () => {

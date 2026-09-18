@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { loadConfig, saveConfig } = require('./config');
+const { loadConfig, loadConfigForUpdate, saveConfig } = require('./config');
 const { decodeOrRaw } = require('./percent-decode');
 const log = require('./log');
 
@@ -17,7 +17,7 @@ function _authBlock(cfg) {
 /* Invalidates every outstanding session, including the caller's own. The caller
    must issue a fresh cookie in the same response. */
 function rotateSessionSecret() {
-  const cfg = loadConfig();
+  const cfg = loadConfigForUpdate();
   const auth = _authBlock(cfg);
   auth.secret = newSessionSecret();
   saveConfig(cfg);
@@ -26,7 +26,7 @@ function rotateSessionSecret() {
 
 /* Keep an existing secret. Rotating here signs out every device. */
 function getOrCreateSecret() {
-  const cfg = loadConfig();
+  const cfg = loadConfigForUpdate();
   if (cfg.settings?.auth?.secret) return cfg.settings.auth.secret;
   const auth = _authBlock(cfg);
   auth.secret = newSessionSecret();

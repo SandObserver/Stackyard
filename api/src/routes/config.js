@@ -6,13 +6,12 @@ const { fail, KIND } = require('../api-error');
 /* Shared with the browser rather than copied. The Dockerfile places this file
    where the same relative path resolves inside the image. */
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
+const { DOCK_MAX } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
 const { pruneWallpapers } = require('./wallpaper');
-
-const DOCK_MAX = 4;
 
 function scrubSecrets(cfg) {
   const safe = structuredClone(cfg);
@@ -99,8 +98,6 @@ on('POST', '/api/config', async (req, res) => {
         });
       }
     }
-    /* Mirrors DOCK_MAX in ui/js/admin-logic.js. The two cannot share a module
-       across the CJS/ESM split without a build step. */
     if (data.items.filter(i => i.type === 'app' && i.dock).length > DOCK_MAX)
       return json(res, 400, { error: `at most ${DOCK_MAX} apps can be shown in the dock`, kind: KIND.INVALID });
     const KNOWN_SETTINGS = new Set([

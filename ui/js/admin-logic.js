@@ -132,8 +132,6 @@ export function nextActiveIndex(key, active, len) {
   }
 }
 
-/* dashboard.js slices the dock to DOCK_MAX, so the toggle must refuse beyond
-   it. */
 /* The server never refills a row that arrives non-secret, so unticking always
    loses the stored value. Say so before the save. */
 export function clearsStoredSecret(row, checked) {
@@ -203,14 +201,15 @@ export function resolveAdminSection(requested, available) {
   return list.includes(String(requested ?? '')) ? String(requested) : list[0];
 }
 
-export const DOCK_MAX = 4;
-
-export function isDockBlocked(items, editing) {
+/* The limit is passed in: this module stays import-free so the tests that load
+   it need no path hook.
+   @param {any[]} items @param {any} editing @param {number} max */
+export function isDockBlocked(items, editing, max) {
   if (editing?.dock) return false;
   const docked = (Array.isArray(items) ? items : []).filter(
     i => i?.type === 'app' && i.dock && i.id !== editing?.id,
   ).length;
-  return docked >= DOCK_MAX;
+  return docked >= max;
 }
 
 export function groupBounds(field, size) {

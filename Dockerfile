@@ -70,6 +70,7 @@ COPY --from=assets /src/ui/ /usr/share/nginx/html/
 # path in both places.
 COPY --chown=node:node api/ /app/api/
 COPY --chown=node:node ui/js/link-url.js /app/ui/js/link-url.js
+COPY --chown=node:node ui/js/limits.js /app/ui/js/limits.js
 COPY scripts/exit-on-fatal.py /app/scripts/exit-on-fatal.py
 # Fails the build if python3 is no longer present. Without it the event listener
 # cannot start and no failure is reported.

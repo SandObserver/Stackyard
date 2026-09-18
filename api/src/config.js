@@ -132,10 +132,15 @@ function _backupCorrupt(raw) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   try {
     fs.writeFileSync(`${CONFIG_PATH}.corrupt-${stamp}`, raw, { encoding: 'utf8', flag: 'wx' });
-  } catch {}
+  } catch (e) {
+    log.warn('could not write the corrupt-config backup', { path: CONFIG_PATH, error: e.message });
+  }
   _lastCorruptRaw = raw;
 }
 
+/* The returned object is the live cache. Read it, never write to it. To change
+   the config, call loadConfigForUpdate. Writing here makes the process believe
+   a change that a failed save never put on disk. */
 function loadConfig() {
   if (IS_DEMO) return loadDemoConfig();
 
@@ -178,9 +183,17 @@ function loadConfig() {
   if (shaped._schemaVersion !== before) {
     try {
       saveConfig(shaped);
-    } catch {}
+    } catch (e) {
+      log.warn('migrated config could not be written back', { path: CONFIG_PATH, error: e.message });
+    }
   }
   return shaped;
+}
+
+/* A private copy for a caller that intends to change something. The cache moves
+   only when saveConfig succeeds, so a failed write leaves nothing behind. */
+function loadConfigForUpdate() {
+  return structuredClone(loadConfig());
 }
 
 function saveConfig(data) {
@@ -226,8 +239,9 @@ function saveConfig(data) {
        durable. */
   }
 
-  /* Only after the write succeeded. */
-  _cfgCache = data;
+  /* Only after the write succeeded, and a copy: the caller keeps its object and
+     must not be able to change the cache through it. */
+  _cfgCache = structuredClone(data);
   _cfgCacheAt = Date.now();
 }
 
@@ -257,6 +271,7 @@ module.exports = {
   ICONS_PATH,
   SCHEMA_VERSION,
   loadConfig,
+  loadConfigForUpdate,
   saveConfig,
   ensureSystemItems,
   migrate,
