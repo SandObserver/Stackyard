@@ -5,6 +5,8 @@ import { t } from '/js/i18n.js?v=1f1ea9c1';
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
 
+const ACTIVATES_ON_SPACE = 'a[href], button, input, select, textarea, summary, [role="button"], [contenteditable]';
+
 /* `isMob` is a function, not a flag: the window can cross the breakpoint while
    this module is loaded. */
 export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDesktop, openFolderMobile, folderGlyph }) {
@@ -16,7 +18,8 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
   const live = el('sres-live');
   let si = 0,
     cur = [],
-    returnFocus = null;
+    returnFocus = null,
+    openGen = 0;
 
   inp.setAttribute('role', 'combobox');
   inp.setAttribute('aria-autocomplete', 'list');
@@ -174,13 +177,18 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
     ov.classList.toggle('kb', bottom > 120);
   }
 
+  /* Focus here, not in a later frame: keys typed in between are lost. Keep `on`
+     before showModal. WebKit refuses focus while the dialog is display:none. */
   function open(ch) {
     if (ov.open) return;
+    const gen = ++openGen;
     returnFocus = document.activeElement;
-    ov.showModal();
     ov.classList.add('on');
+    ov.showModal();
     inp.value = ch || '';
     render(inp.value);
+    inp.focus();
+    if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length);
     if (MOB() && window.visualViewport) {
       window.visualViewport.addEventListener('resize', _applyKbLayout);
       window.visualViewport.addEventListener('scroll', _applyKbLayout);
@@ -189,18 +197,11 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
         window.visualViewport.removeEventListener('scroll', _applyKbLayout);
       };
     }
-    if (MOB()) {
-      inp.focus();
-      if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length);
-    }
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
+        if (gen !== openGen) return;
         ov.classList.add('vis');
         _applyKbLayout();
-        if (!MOB()) {
-          inp.focus();
-          if (inp.setSelectionRange) inp.setSelectionRange(inp.value.length, inp.value.length);
-        }
       }),
     );
   }
@@ -230,6 +231,7 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
 
   function close() {
     if (!ov.open) return;
+    openGen++;
     ov.classList.remove('vis');
     inp.setAttribute('aria-expanded', 'false');
     inp.setAttribute('aria-activedescendant', '');
@@ -291,6 +293,7 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       return;
     }
     if (e.key === 'Enter') {
+      if (e.isComposing || e.keyCode === 229) return;
       const s = qa('.sr', res)[si];
       if (s) {
         s.click();
@@ -304,7 +307,9 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
     e => {
       if (ov.classList.contains('on')) return;
       if (e.key === 'Escape' || e.key.length !== 1 || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === ' ' && e.target instanceof Element && e.target.closest(ACTIVATES_ON_SPACE)) return;
       e.stopImmediatePropagation();
+      e.preventDefault();
       open(e.key);
     },
     true,
