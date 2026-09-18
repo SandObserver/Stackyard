@@ -218,14 +218,21 @@
        clears neither tone. */
     .fb.fb-on-light { color:var(--on-tint-dark) }
 
-    /* Hover lift */
-    .icon:hover .iwrap,
-    .folder-icon-link:hover .iwrap {
-      transform:scale(1.10) translateY(-4px);
+    .iwrap, .dwrap { transition:transform .32s var(--bounce-spring), filter .2s ease-out }
+    @media (hover:hover) {
+      .icon:hover .iwrap,
+      .folder-icon-link:hover .iwrap,
+      .di:hover .dwrap { transform:scale(1.03) }
     }
-    .di:hover .dwrap {
-      transform:scale(1.15) translateY(-8px);
+    .icon:active .iwrap,
+    .folder-icon-link:active .iwrap,
+    .di:active .dwrap {
+      transform:scale(.92); filter:brightness(.88);
+      transition:transform .1s ease-out, filter .1s ease-out;
     }
+    .icon.settled .iwrap,
+    .folder-icon-link.settled .iwrap,
+    .di.settled .dwrap { transform:none; filter:none; transition:none }
 
     /* ── Icon label ── */
     .ilabel {
@@ -813,6 +820,7 @@
   body::before { animation:boot-show .3s ease .6s forwards; border-color:var(--label-secondary); }
   #pages { transition: none !important; }
   .icon:hover .iwrap, .folder-icon-link:hover .iwrap, .di:hover .dwrap,
+  .icon:active .iwrap, .folder-icon-link:active .iwrap, .di:active .dwrap,
   .dot.on { transform: none !important; }
 }
 
