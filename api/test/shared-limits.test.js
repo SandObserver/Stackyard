@@ -3,8 +3,6 @@ const fs = require('node:fs');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-/* Required, not imported: this is the same file the browser loads, and the point
-   of the test is that the server can load it. */
 const { DOCK_MAX } = require('../../ui/js/limits.js');
 
 const ROOT = path.join(__dirname, '..', '..');

@@ -24,9 +24,8 @@ const {
 } = require('../auth');
 
 const PASSWORD_MIN = 8;
-/* An upper bound belongs on what is accepted, not on what is verified: an
-   existing install may hold a longer password, and rejecting it at login would
-   lock its owner out. */
+/* Bounds what is accepted, never what is verified. An existing install may hold
+   a longer password. Capping login locks its owner out. */
 const PASSWORD_MAX = 1024;
 
 /* Answers before sign-in. Say only what the login screen has to decide. The

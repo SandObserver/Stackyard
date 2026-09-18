@@ -30,7 +30,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { DOCK_MAX } from '/js/limits.js?v=2fc30b10';
+import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import {
   initUI,
   mkFolder,

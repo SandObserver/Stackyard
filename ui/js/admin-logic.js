@@ -201,8 +201,8 @@ export function resolveAdminSection(requested, available) {
   return list.includes(String(requested ?? '')) ? String(requested) : list[0];
 }
 
-/* The limit is passed in: this module stays import-free so the tests that load
-   it need no path hook.
+/* The limit is a parameter. This module must not import. An import here breaks
+   every test that loads it without the path hook.
    @param {any[]} items @param {any} editing @param {number} max */
 export function isDockBlocked(items, editing, max) {
   if (editing?.dock) return false;

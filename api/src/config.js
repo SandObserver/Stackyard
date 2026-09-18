@@ -138,9 +138,8 @@ function _backupCorrupt(raw) {
   _lastCorruptRaw = raw;
 }
 
-/* The returned object is the live cache. Read it, never write to it. To change
-   the config, call loadConfigForUpdate. Writing here makes the process believe
-   a change that a failed save never put on disk. */
+/* Returns the live cache. Do not write to it. Call loadConfigForUpdate to
+   change the config. A write here survives a failed save. */
 function loadConfig() {
   if (IS_DEMO) return loadDemoConfig();
 
@@ -190,8 +189,6 @@ function loadConfig() {
   return shaped;
 }
 
-/* A private copy for a caller that intends to change something. The cache moves
-   only when saveConfig succeeds, so a failed write leaves nothing behind. */
 function loadConfigForUpdate() {
   return structuredClone(loadConfig());
 }
@@ -239,8 +236,7 @@ function saveConfig(data) {
        durable. */
   }
 
-  /* Only after the write succeeded, and a copy: the caller keeps its object and
-     must not be able to change the cache through it. */
+  /* Only after the write succeeded. A copy: the caller keeps its object. */
   _cfgCache = structuredClone(data);
   _cfgCacheAt = Date.now();
 }

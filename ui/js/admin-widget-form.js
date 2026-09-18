@@ -1,9 +1,9 @@
 import { state } from '/js/admin-state.js?v=5a5d655f';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=48a588fa';
-import { createListbox } from '/js/listbox.js?v=efea51f2';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=2c8989b3';
+import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=c916f839';
+import { createListbox } from '/js/listbox.js?v=6ed1bfda';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=c7891736';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=85ba3690';
+import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=e3673bd7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { q, qi, qa } from '/js/utils.js?v=70cbc405';
 
