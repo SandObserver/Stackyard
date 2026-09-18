@@ -47,6 +47,7 @@ async function openDashboardList(page) {
   await page.goto('/admin/');
   await page.locator('.nl[data-sec="dashboard"]').click();
   await page.locator('#btn-add').waitFor({ state: 'visible' });
+  await page.locator('body.authed').waitFor({ state: 'attached' });
 }
 
 /** Set one inline-edit row: click the value, type, commit with Enter. */
