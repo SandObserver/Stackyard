@@ -7,9 +7,6 @@
       --glass-surface-blur: blur(14px) saturate(160%);
       --glass-rim-light:  rgba(255,255,255,.30);
       --glass-rim-dark:   rgba(255,255,255,.07);
-      --icon-inset-shadow: inset 1px 1px 0 rgba(255,255,255,.18),
-                           inset -1px -1px 0 rgba(0,0,0,.14);
-      --icon-sheen:       linear-gradient(135deg,rgba(255,255,255,.10) 0%,transparent 60%);
       --label-color:      rgba(255,255,255,.90);
       --label-shadow:     0 1px 4px rgba(0,0,0,.70);
       /* The tone the labels take on a background measured as light. The shadow
@@ -203,17 +200,16 @@
     .iwrap { border-radius:16px }
     .dwrap { border-radius:15px }
 
-    /* Inset shadow bevel — applied via ::before so it doesn't clip children */
-    .iwrap::before, .dwrap::before {
-      content:''; position:absolute; inset:0; border-radius:inherit;
-      background:inherit; z-index:0;
-      box-shadow:var(--icon-inset-shadow);
-    }
-    /* Gloss sheen */
-    .iwrap::after, .dwrap::after {
-      content:''; position:absolute; inset:0; border-radius:inherit;
-      background:var(--icon-sheen);
-      pointer-events:none; z-index:2;
+    /* No blend modes here. Safari blends before it clips the rounded edge and
+       leaks a light stroke while the tile scales. */
+    .plate {
+      --icon-band:        calc(var(--pw,60px) * .018);
+      --icon-light:       radial-gradient(60% var(--icon-band) at 50% 0,oklch(from var(--tc,var(--sy-gray)) calc(l + .14) calc(c * 1.15) h),transparent),
+                          radial-gradient(60% var(--icon-band) at 50% 100%,oklch(from var(--tc,var(--sy-gray)) calc(l + .06) c h),transparent);
+      --icon-shade:       radial-gradient(calc(var(--icon-band) * .7) 30% at 0 50%,oklch(from var(--tc,var(--sy-gray)) calc(l - min(c, .2) * .5) c h),transparent),
+                          radial-gradient(calc(var(--icon-band) * .7) 30% at 100% 50%,oklch(from var(--tc,var(--sy-gray)) calc(l - min(c, .2) * .5) c h),transparent);
+      --icon-body:        linear-gradient(oklch(from var(--tc,var(--sy-gray)) calc(l + .04 * (1 - l) + min(c, .2) * .1) c h),transparent 50%,oklch(from var(--tc,var(--sy-gray)) calc(l - .06 * (1 - l) - min(c, .2) * .2) c h));
+      background-image:var(--icon-light), var(--icon-shade), var(--icon-body);
     }
     .iwrap img, .dwrap img { object-fit:contain; position:relative; z-index:3 }
     .iwrap .fb, .dwrap .fb,

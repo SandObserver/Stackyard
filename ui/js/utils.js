@@ -111,12 +111,9 @@ export const tgt = e => /** @type {HTMLInputElement} */ (e.target);
 /* breg is passed in to avoid a circular import. */
 export function mkWrap(item, sz, r, isz, cls, breg) {
   const w = mk('div');
-  if (cls) w.className = cls;
+  w.className = cls ? `plate ${cls}` : 'plate';
   const wrapBg = item.system === 'settings' ? '#027eae' : clr(item.color);
-  w.style.cssText = `width:${sz}px;height:${sz}px;border-radius:${r}px;background:${wrapBg};position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;box-shadow:inset 1px 1px 0 rgba(255,255,255,.18),inset -1px -1px 0 rgba(0,0,0,.14);`;
-  const g = mk('div');
-  g.style.cssText = `position:absolute;inset:0;border-radius:${r}px;pointer-events:none;z-index:2;background:linear-gradient(135deg,rgba(255,255,255,.10) 0%,transparent 60%);`;
-  w.appendChild(g);
+  w.style.cssText = `--pw:${sz}px;--tc:${wrapBg};width:${sz}px;height:${sz}px;border-radius:${r}px;background-color:${wrapBg};position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;`;
   const rawIcon = item.iconUrl || '';
   if (item.system === 'settings') {
     const si = Math.min(sz, Math.round(isz * 1.22));

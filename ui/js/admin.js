@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=0239e02d';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=66367bea';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=1e0239cd';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=7da1ff10';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e2646986';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=c5d8bff8';
 import { resolveAdminSection } from '/js/admin-logic.js?v=e3673bd7';
 import {
   buildAppItem,
@@ -10,13 +10,13 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=4f71ef6c';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=c469142d';
-import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=c916f839';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=4d5e9919';
+import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=69f5c7f9';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=6db90f13';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=c4b11d2a';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=6ed1bfda';
+import { createListbox } from '/js/listbox.js?v=2b633751';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -32,8 +32,8 @@ import {
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=787bfdff';
-import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=70cbc405';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=b7770401';
+import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=5d2b6f16';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=d0c89032';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
