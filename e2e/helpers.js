@@ -47,8 +47,6 @@ async function openDashboardList(page) {
   await page.goto('/admin/');
   await page.locator('.nl[data-sec="dashboard"]').click();
   await page.locator('#btn-add').waitFor({ state: 'visible' });
-  /* The Add button is static markup. The rows render only after the config
-     loads, and the page marks that with this class. */
   await page.locator('body.authed').waitFor({ state: 'attached' });
 }
 
