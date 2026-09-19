@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A new password is limited to 1024 characters.
+
+- Restyle app icon tiles with a top-lit edge and vertical shading.
+
+- App and dock tiles press in on click instead of lifting on hover.
+
+- Redraw the Settings icons, widget glyphs and Settings tile as one icon set.
+
+### Fixed
+
+- A settings change is no longer held in memory when writing it to disk fails.
+
+- Space on a focused tile or folder activates it instead of opening search.
+
+- Search keeps every letter typed to open it, including in Safari on a narrow
+  window.
+
 ## [1.13.1] - 2026-09-15
 
 ### Changed

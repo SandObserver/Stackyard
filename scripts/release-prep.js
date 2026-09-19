@@ -9,7 +9,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const cl = require('./changelog.js');
-const fragments = require('./changelog-fragments.js');
 
 const ROOT = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -55,11 +54,7 @@ function main(argv) {
   if (version.startsWith('v')) die('give the version without the leading v');
   if (!cl.validDate(date)) die(`"${date}" is not a date in YYYY-MM-DD form`);
 
-  /* Nothing is written or deleted until every check has passed. dateTheSection
-     and the two pins below still abort, and a run that folded first left the
-     changelog rewritten and the fragment files gone. */
-  const plan = fragments.planFold(read('CHANGELOG.md'));
-  const changed = dateTheSection(plan.markdown, version, date);
+  const changed = dateTheSection(read('CHANGELOG.md'), version, date);
 
   const pkgPath = 'api/package.json';
   const pkg = read(pkgPath);
@@ -74,7 +69,6 @@ function main(argv) {
   write('CHANGELOG.md', changed.markdown);
   write(pkgPath, bumped);
   write(renderPath, pinned);
-  fragments.commitFold(plan);
 
   console.error(`release-prep: ${changed.previous ?? 'first release'} -> ${version} (${date})`);
   console.log(`version=${version}`);
