@@ -74,6 +74,7 @@
 
   /* Network slot — text only, always one line */
   .net-row  { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; white-space: nowrap; }
+  .net-ico { vertical-align: -0.125em; }
   .net-item { font-size: clamp(10px, 2.6cqw, 13px); font-weight: 500;
     color: rgba(255,255,255,0.65); white-space: nowrap; }
   @media (prefers-reduced-motion: reduce){
@@ -263,8 +264,8 @@ function netRowHtml(net) {
     return html`<div class="net-row"><div class="net-item">Uptime <span id="net-uptime">—</span></div></div>`;
   }
   return html`<div class="net-row">
-    <div class="net-item">↓ <span id="net-dn">—</span></div>
-    <div class="net-item">↑ <span id="net-up">—</span></div>
+    <div class="net-item"><svg class="net-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg> <span id="net-dn">—</span></div>
+    <div class="net-item"><svg class="net-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg> <span id="net-up">—</span></div>
   </div>`;
 }
 

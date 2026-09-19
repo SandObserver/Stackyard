@@ -1,9 +1,4 @@
-/* A glyph per widget type in the Settings item list. The row already names the
-   widget and its size in words, so a size icon says it twice.
-
-   The glyphs are inline SVG, not a file each. They are stroked with
-   currentColor, so they follow the theme and the increased-contrast block with
-   no rule of their own, which an <img> cannot do. */
+/* A glyph per widget type in the Settings item list, drawn from the shared icon set. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,6 +9,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 const { widgetGlyph, GLYPH_NAMES } = await import('../js/widget-glyphs.js');
+const { ICONS } = await import('../js/icon-set.js');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
@@ -45,13 +41,13 @@ test('no two widgets share a glyph', () => {
   assert.equal(new Set(used).size, used.length, `duplicated: ${used.join(', ')}`);
 });
 
-test('a glyph is drawn on the same grid and weight as the other icons', () => {
+test('a glyph is an icon from the shared set', () => {
   for (const name of GLYPH_NAMES) {
     const svg = widgetGlyph(name);
-    assert.match(svg, /viewBox="0 0 24 24"/, `${name} is not on the 24-unit grid`);
-    assert.match(svg, /stroke="currentColor"/, `${name} will not follow the theme`);
-    assert.match(svg, /stroke-width="1.6"/, `${name} does not carry the shared weight`);
-    assert.doesNotMatch(svg, /#[0-9a-fA-F]{3,6}|rgba?\(/, `${name} hardcodes a colour`);
+    const id = svg.match(/href="#sy-solid-([\w-]+)"/)?.[1];
+    assert.ok(id && ICONS[id], `${name} does not point at an icon in the set`);
+    assert.match(svg, /aria-hidden="true"/, `${name} is announced by screen readers`);
+    assert.doesNotMatch(svg, /#[0-9a-fA-F]{3,6}\b|rgba?\(/, `${name} hardcodes a colour`);
   }
 });
 

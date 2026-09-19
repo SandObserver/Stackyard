@@ -14,13 +14,14 @@
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
 import { snapshotItems } from '/js/admin-save-logic.js?v=4f71ef6c';
 import { reorderItems } from '/js/admin-logic.js?v=e3673bd7';
-import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=dbf4e7e6';
-import { paintIcon } from '/js/admin-shared.js?v=69f5c7f9';
-import { clr as rc, el, qa, setUserText } from '/js/utils.js?v=5d2b6f16';
+import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=227e3153';
+import { paintIcon } from '/js/admin-shared.js?v=dc0e02b6';
+import { clr as rc, el, qa, setUserText } from '/js/utils.js?v=045df327';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { sizeLabel } from '/js/admin-widget-form.js?v=c4b11d2a';
-import { widgetGlyph } from '/js/widget-glyphs.js?v=12b0a947';
+import { sizeLabel } from '/js/admin-widget-form.js?v=3237dd3e';
+import { widgetGlyph } from '/js/widget-glyphs.js?v=3adb57ad';
+import { iconSvg } from '/js/icon-set.js?v=606a68c6';
 
 /** @type {{ openModal: (idx: number|null) => void,
              openFolderPicker: (appId: string|null, targetFolderId?: string|null) => void,
@@ -39,17 +40,12 @@ export function initList(page) {
 }
 
 /* Constant markup only. No user data reaches these. */
-const FOLDER_ICON =
-  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"></rect><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"></circle><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"></circle><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"></circle><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"></circle></svg>';
+const FOLDER_ICON = iconSvg('folder', 26);
 const SIZE_ICONS = {
-  small:
-    '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9.7" cy="9.7" r="1" fill="currentColor"></circle><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></line></svg>',
-  medium:
-    '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="7.6" cy="11.4" r="1.1" fill="currentColor"></circle><line x1="10.2" y1="11.4" x2="16.5" y2="11.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="7" y1="14.3" x2="16.5" y2="14.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line></svg>',
-  large:
-    '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5.5" width="12" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9" cy="9" r="1.2" fill="currentColor"></circle><line x1="8" y1="12.6" x2="16" y2="12.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="8" y1="14.8" x2="16" y2="14.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="8" y1="17" x2="13" y2="17" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line></svg>',
-  xlarge:
-    '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3.5" width="10" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="9.7" cy="7" r="1.1" fill="currentColor"></circle><line x1="9" y1="10.5" x2="15" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="12.7" x2="15" y2="12.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="14.9" x2="15" y2="14.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line><line x1="9" y1="17.1" x2="13" y2="17.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></line></svg>',
+  small: iconSvg('small', 26),
+  medium: iconSvg('medium', 26),
+  large: iconSvg('large', 26),
+  xlarge: iconSvg('xlarge', 26),
 };
 function svgNode(markup) {
   const t = document.createElement('template');

@@ -1,22 +1,14 @@
 import { state } from '/js/admin-state.js?v=5a5d655f';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=69f5c7f9';
-import { createListbox } from '/js/listbox.js?v=2b633751';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=253fcdcd';
+import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=dc0e02b6';
+import { createListbox } from '/js/listbox.js?v=96066369';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=e998ed94';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=e3673bd7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { q, qi, qa } from '/js/utils.js?v=5d2b6f16';
+import { q, qi, qa } from '/js/utils.js?v=045df327';
+import { iconSvg } from '/js/icon-set.js?v=606a68c6';
 
-const SIZE_ICONS = {
-  small:
-    '<rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="9.7" r="1" fill="currentColor"/><line x1="9" y1="13.4" x2="13" y2="13.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
-  medium:
-    '<rect x="4" y="8" width="16" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="7.6" cy="11.4" r="1.1" fill="currentColor"/><line x1="10.2" y1="11.4" x2="16.5" y2="11.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="7" y1="14.3" x2="16.5" y2="14.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
-  large:
-    '<rect x="6" y="5.5" width="12" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><line x1="8" y1="12.6" x2="16" y2="12.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="14.8" x2="16" y2="14.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="17" x2="13" y2="17" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
-  xlarge:
-    '<rect x="7" y="3.5" width="10" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.7" cy="7" r="1.1" fill="currentColor"/><line x1="9" y1="10.5" x2="15" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="12.7" x2="15" y2="12.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="14.9" x2="15" y2="14.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="9" y1="17.1" x2="13" y2="17.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
-};
+const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
 
 const CUSTOM_SIZES = ['small', 'medium', 'large', 'xlarge'];
 function widgetSizes(type) {
@@ -108,7 +100,7 @@ function _renderWidgetForm(body) {
   scard.className = 'grp';
   setHtml(
     scard,
-    html`<div class="row tile-row"><div class="tile-grp">${_sizeOpts.map(s => html`<button type="button" class="tile-opt${s === state._wsize ? ' on' : ''}" aria-pressed="${String(s === state._wsize)}" data-size="${s}"><span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(SIZE_ICONS[s] || SIZE_ICONS.medium)}</svg></span><span class="tile-cap">${sizeLabel(s)}</span></button>`)}</div></div>`,
+    html`<div class="row tile-row"><div class="tile-grp">${_sizeOpts.map(s => html`<button type="button" class="tile-opt${s === state._wsize ? ' on' : ''}" aria-pressed="${String(s === state._wsize)}" data-size="${s}"><span class="tile-ico">${raw(iconSvg(SIZES_WITH_ICONS.has(s) ? s : 'medium', 38))}</span><span class="tile-cap">${sizeLabel(s)}</span></button>`)}</div></div>`,
   );
   body.appendChild(scard);
   qa('.tile-opt', scard).forEach(b =>

@@ -1,6 +1,6 @@
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
-import { SETTINGS_ICON } from '/js/settings-icon.js?v=b96e5b13';
+import { SETTINGS_ICON } from '/js/settings-icon.js?v=fe53a1db';
 import { BRAND_MARK } from '/js/brand-mark.js?v=1dcbf1ac';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 
@@ -112,7 +112,7 @@ export const tgt = e => /** @type {HTMLInputElement} */ (e.target);
 export function mkWrap(item, sz, r, isz, cls, breg) {
   const w = mk('div');
   w.className = cls ? `plate ${cls}` : 'plate';
-  const wrapBg = item.system === 'settings' ? '#027eae' : clr(item.color);
+  const wrapBg = item.system === 'settings' ? '#0D1117' : clr(item.color);
   w.style.cssText = `--pw:${sz}px;--tc:${wrapBg};width:${sz}px;height:${sz}px;border-radius:${r}px;background-color:${wrapBg};position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;`;
   const rawIcon = item.iconUrl || '';
   if (item.system === 'settings') {

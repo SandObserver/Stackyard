@@ -23,9 +23,9 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=5d2b6f16';
+} from '/js/utils.js?v=045df327';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=50bd3af5';
+import { initSpotlight } from '/js/spotlight.js?v=38fe61b4';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
@@ -39,7 +39,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=9317d147';
+} from '/js/ui.js?v=e28d57cd';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -56,6 +56,9 @@ import { jitter } from '/js/jitter.js?v=4eeef4c9';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=606a68c6';
+
+ensureSprite();
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();
@@ -665,8 +668,7 @@ async function pollHealth() {
   }
 }
 
-const EYE =
-  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE = iconSvg('eye', 18);
 
 function showSetupPrompt() {
   return new Promise(resolve => {

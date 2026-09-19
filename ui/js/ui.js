@@ -13,7 +13,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=5d2b6f16';
+} from '/js/utils.js?v=045df327';
 import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';

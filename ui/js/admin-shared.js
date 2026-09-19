@@ -1,8 +1,9 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=e3673bd7';
-import { el, q } from '/js/utils.js?v=5d2b6f16';
+import { el, q } from '/js/utils.js?v=045df327';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
+import { iconSvg } from '/js/icon-set.js?v=606a68c6';
 
 export const API = '';
 
@@ -199,8 +200,7 @@ export function swapContent(node, apply) {
   timer = setTimeout(end, 600);
 }
 
-export const PE_SVG =
-  '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
+export const PE_SVG = iconSvg('edit', 17);
 
 /* `root` lets a caller wire a subtree that is not in the document yet. */
 /** A function placeholder is resolved on use, not at wiring time: this runs

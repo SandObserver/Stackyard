@@ -1,22 +1,19 @@
-import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=69f5c7f9';
+import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=dc0e02b6';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa, q } from '/js/utils.js?v=5d2b6f16';
+import { qa, q } from '/js/utils.js?v=045df327';
+import { iconSvg } from '/js/icon-set.js?v=606a68c6';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
 export const BADGE_DEFAULT = '#1e6ef4';
 export const BADGE_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#1e6ef4', '#cb30df'];
 const _ccIco = {
-  hueLo:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
-  hueHi:
-    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
-  satLo:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/></svg>',
-  satHi:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
-  brLo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 5V3M12 21v-2M5 12H3M21 12h-2M6.5 6.5 5.4 5.4M18.6 18.6l-1.1-1.1M17.5 6.5l1.1-1.1M5.4 18.6l1.1-1.1"/></svg>',
-  brHi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="5"/><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4"/></svg>',
+  hueLo: iconSvg('hue-lo', 16),
+  hueHi: iconSvg('hue-hi', 16),
+  satLo: iconSvg('sat-lo', 16),
+  satHi: iconSvg('sat-hi', 16),
+  brLo: iconSvg('bright-lo', 16),
+  brHi: iconSvg('bright-hi', 16),
 };
 /* Normalise the hue before computing `x`. A negative hue otherwise mixes a
    wrapped sextant with an unwrapped `x` and yields a negative channel.

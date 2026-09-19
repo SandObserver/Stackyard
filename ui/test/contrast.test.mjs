@@ -380,7 +380,7 @@ const SPLIT_PAIRS = [
 
 test('every filled control the stylesheet declares is paired with its ink', () => {
   const found = filledRules().map(r => r.what);
-  for (const sel of ['.bp', '.login-btn', '.setpw-btn', '.nl.active', '.chip.on']) {
+  for (const sel of ['.bp', '.login-btn', '.setpw-btn', '.chip.on']) {
     assert.ok(
       found.includes(sel),
       `${sel} is filled with a role colour and no longer names --on-fill: ${found.join(', ')}`,

@@ -224,6 +224,12 @@
       "/js/i18n.js?v=*": [
         "./ui/js/i18n.js"
       ],
+      "/js/icon-set.js": [
+        "./ui/js/icon-set.js"
+      ],
+      "/js/icon-set.js?v=*": [
+        "./ui/js/icon-set.js"
+      ],
       "/js/icons.js": [
         "./ui/js/icons.js"
       ],
