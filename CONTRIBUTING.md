@@ -36,7 +36,6 @@ in `.github/actions/checks/action.yml`, so the list here is the whole of it:
 ```
 npm ci
 node scripts/changelog-check.js
-node scripts/changelog-fragments.js --check
 node scripts/bump-cache-busting.js --check
 npm run paths:check
 cd api && npm test
@@ -61,14 +60,11 @@ available fails the run. The threshold is in [SECURITY.md](SECURITY.md).
   the check. Style problems in `[Unreleased]`, such as a rationale clause or a
   three-sentence entry, print as warnings on the pull request and do not fail
   it. Releasing is documented at [Releasing](https://stackyard.sandobserver.com/docs/contributing/releasing/).
-- **`changelog-fragments.js --check`** validates the files in `changelog.d/` and
-  proves they fold into `[Unreleased]`. Do not edit `CHANGELOG.md` in a pull
-  request: add one file per user-visible change instead, named
-  `<section>-<slug>.md`. Two branches then never edit the same lines, so a
-  second open pull request cannot conflict over an entry. A fragment is
-  optional and nothing fails without one, so release, dependency and tooling
-  changes add none. See [changelog.d/README.md](changelog.d/README.md); the
-  release folds them in.
+- **Changelog entries** go in the pull request description, under
+  **Changelog**, as `- ` lines below a `### Fixed`, `### Added` or other Keep a
+  Changelog heading. Do not edit `CHANGELOG.md` in a pull request. On merge, a
+  workflow adds the entries to `[Unreleased]`. A pull request with no
+  user-visible change leaves the section empty.
 - **`bump-cache-busting.js --check`** verifies that every `/css/` and `/js/`
   reference carries a `?v=` stamp. The release build recomputes the hashes, so
   write `?v=1` and never edit a stamp by hand.

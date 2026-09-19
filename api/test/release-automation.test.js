@@ -84,12 +84,15 @@ test('the release runs one at a time', () => {
   }
 });
 
-/* Release prep folds changelog.d into the dated section and deletes the files.
-   A delete left unstaged folds the same entries in again at the next release. */
-test('release prep stages the fragments it consumed', () => {
-  const add = wf('release-prep.yml')
-    .split('\n')
-    .find(l => l.includes('git add '));
-  assert.ok(add, 'release-prep no longer stages anything');
-  assert.match(add, /\bchangelog\.d\b/, `release-prep does not stage changelog.d: ${add.trim()}`);
+test('the changelog write job never runs pull request code', () => {
+  const doc = yaml.load(wf('changelog.yml'));
+  assert.deepEqual(doc.permissions, {});
+  const write = doc.jobs.write;
+  assert.match(write.if, /merged == true/, 'an unmerged pull request must not write the changelog');
+  const checkout = write.steps.find(s => String(s.uses).startsWith('actions/checkout'));
+  assert.equal(checkout.with.ref, '${{ github.event.repository.default_branch }}');
+  assert.equal(checkout.with['persist-credentials'], false);
+  const script = write.steps.map(s => s.run || '').join('\n');
+  assert.doesNotMatch(script, /\$\{\{/, 'event data must reach the script through env, never inline');
+  assert.ok(wf('changelog.yml').includes(APP_TOKEN), 'the push must use the app token');
 });
