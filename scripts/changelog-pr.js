@@ -31,9 +31,12 @@ const NONE = /^\s*(?:-|[_*]*(?:none|n\/a)\.?[_*]*)\s*$/i;
 function parse(body) {
   const errors = [];
   const entries = [];
-  const text = String(body ?? '')
-    .replace(/\r\n?/g, '\n')
-    .replace(/<!--[\s\S]*?-->/g, '');
+  let text = String(body ?? '').replace(/\r\n?/g, '\n');
+  /* Repeat until stable: removing one comment can join the halves of another. */
+  for (let prev = ''; prev !== text; ) {
+    prev = text;
+    text = text.replace(/<!--[\s\S]*?(?:-->|$)/g, '');
+  }
   const lines = text.split('\n');
   const start = lines.findIndex(l => START.test(l));
   if (start === -1) return { entries, errors };

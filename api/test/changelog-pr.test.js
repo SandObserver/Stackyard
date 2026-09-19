@@ -76,6 +76,13 @@ test('an empty section, "None" and the template comment yield nothing', () => {
   }
 });
 
+test('no comment marker survives, nested or unclosed', () => {
+  const nested = pr.parse(body(['<!-<!-- x -->- hidden -->', '### Fixed', '- A fix.']));
+  assert.deepEqual(nested, { entries: [{ type: 'Fixed', entry: 'A fix.' }], errors: [] });
+  const unclosed = pr.parse(body(['### Fixed', '- A fix.', '<!-- ### Added', '- Not an entry.']));
+  assert.deepEqual(unclosed.entries, [{ type: 'Fixed', entry: 'A fix.' }]);
+});
+
 /* GitHub stores descriptions typed in the browser with CRLF line endings. */
 test('CRLF line endings read the same as LF', () => {
   const crlf = body(['### Fixed', '- A fix.']).replace(/\n/g, '\r\n');
