@@ -785,3 +785,15 @@ test('two or more values still offer it', () => {
   assert.equal(v.more, 1);
   assert.equal(v.rows.length, 2);
 });
+
+test('a named colour resolves through the injected palette', () => {
+  const palette = name => ({ red: '#D70015', info: '#0040DD' })[name] || '';
+  const fixed = computeBadgeVisual({ staticBdg: { enabled: true, label: 'x', color: 'red' }, palette });
+  assert.equal(fixed.bg, '#D70015');
+  const fired = firingLabels([{ path: 'a' }], [3], palette);
+  assert.equal(fired[0].color, '#0040DD');
+  assert.equal(
+    computeBadgeVisual({ staticBdg: { enabled: true, label: 'x', color: '#123456' }, palette }).bg,
+    '#123456',
+  );
+});

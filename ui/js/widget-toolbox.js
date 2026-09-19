@@ -4,7 +4,7 @@
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
-import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=962e496a';
+import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=7da9754b';
 
 export { esc, html, setHtml };
 
@@ -14,6 +14,49 @@ export { esc, html, setHtml };
 const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\))$/i;
 export function safeColor(value, fallback) {
   return COLOR_RE.test(String(value ?? '').trim()) ? String(value).trim() : fallback;
+}
+
+function _hostTheme() {
+  try {
+    if (window.frameElement?.closest('[data-appearance="dark"]')) return 'dark';
+    return window.parent.document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+function _applyTheme() {
+  const theme = _hostTheme();
+  if (document.documentElement.getAttribute('data-theme') === theme) return;
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.style.colorScheme = theme;
+  document.documentElement.style.backgroundColor = '';
+  if (getComputedStyle(document.documentElement).backgroundColor === 'rgba(0, 0, 0, 0)')
+    document.documentElement.style.backgroundColor = theme === 'light' ? '#FFFFFF' : '#1C1C1E';
+}
+try {
+  _applyTheme();
+  new MutationObserver(_applyTheme).observe(window.parent.document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
+} catch {}
+
+const _lin = v => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+/** @param {number[]} c */
+const _lum = c => 0.2126 * _lin(c[0] / 255) + 0.7152 * _lin(c[1] / 255) + 0.0722 * _lin(c[2] / 255);
+
+/** Darkens a colour only as far as 4.5:1 on white needs. Returns it unchanged on the dark theme.
+    @param {string} hex #rrggbb @param {number} [min] */
+export function readableInk(hex, min = 4.5) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+  if (!m || _hostTheme() !== 'light') return hex;
+  let rgb = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
+  for (let k = 0; k < 40 && 1.05 / (_lum(rgb) + 0.05) < min; k++) rgb = rgb.map(v => v * 0.95);
+  return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+
+export function theme() {
+  return _hostTheme();
 }
 
 const NS = 'http://www.w3.org/2000/svg';

@@ -54,6 +54,8 @@ const BESPOKE = new Map(
     '#39D353': 'GitHub contribution scale, step 4',
     '#3FB950': 'GitHub, open pull request',
     '#E5A00D': 'Plex brand',
+    '#6C6C70': 'Books secondary text on white, 5.1:1',
+    '#E5E5EA': 'Analog clock dial in the dark theme',
     '#007CA6': 'Jellyfin brand',
     '#4CAF50': 'Emby brand',
     /* An embedded illustration set, one path list per condition. Artwork, not

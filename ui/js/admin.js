@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=72ab8cad';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9833ce5d';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=1c65c8ad';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b2b2f1f5';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=16b5e0a9';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=49e98c69';
 import { resolveAdminSection } from '/js/admin-logic.js?v=e3673bd7';
 import {
   buildAppItem,
@@ -9,14 +9,14 @@ import {
   saveWithRevert,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=4f71ef6c';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=002dde46';
-import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=dc0e02b6';
-import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=3237dd3e';
+} from '/js/admin-save-logic.js?v=858f3f84';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=07060753';
+import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=68fb1cb2';
+import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=0aa2d9b6';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=96066369';
+import { createListbox } from '/js/listbox.js?v=93ffd65a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -29,12 +29,20 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=722d1c25';
+} from '/js/import-foreign.js?v=d154ca56';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
-import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=787bfdff';
-import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=045df327';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=a48fbc58';
+import {
+  THEME_KEY,
+  applyTheme,
+  prefersDark,
+  readMode,
+  resolveTheme,
+  watchSystemTheme,
+  writeMode,
+} from '/js/theme.js?v=787bfdff';
+import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=18f28539';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=edadf6bb';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
@@ -246,7 +254,7 @@ function openModal(idx) {
   const item = editing ? structuredClone(editing) : null;
   state.ctype = item?.type || 'app';
   state.siurl = item?.iconUrl || '';
-  state.scol = item?.color || 'dark';
+  state.scol = item ? item.color || 'dark' : 'auto';
   state._customUrl = item?.url || '';
   state._iframeOpts = item?.iframe ? { ...item.iframe } : {};
   state.fnums = [];
@@ -262,7 +270,7 @@ function openModal(idx) {
       state.slabels[l.path] = {
         name: l.name || '',
         unit: l.unit || '',
-        color: l.color || '#1e6ef4',
+        color: l.color || 'info',
         min: l.min == null ? '' : String(l.min),
       };
     }
@@ -572,7 +580,7 @@ async function doSave(orig) {
         custMin: parseInt(inp('bcust-min')?.value || '', 10),
         staticEn: inp('static-en')?.checked || false,
         staticLabel: inp('f-static-label')?.value?.trim() || '',
-        staticColor: inp('static-col-val')?.value || '#1e6ef4',
+        staticColor: inp('static-col-val')?.value || 'info',
         dock: inp('f-dock')?.checked || false,
         iconUrl: state.siurl,
         scol: state.scol,
@@ -985,6 +993,12 @@ function initTheme() {
   hidden.value = writeMode(readMode());
   box.setValue(hidden.value);
   watchSystemTheme(() => hidden.value);
+  addEventListener('storage', e => {
+    if (e.key !== THEME_KEY) return;
+    hidden.value = readMode();
+    box.setValue(hidden.value);
+    applyTheme(resolveTheme(hidden.value, prefersDark()));
+  });
 }
 
 const dashSaveEl = /** @type {HTMLButtonElement|null} */ (el('dash-save'));

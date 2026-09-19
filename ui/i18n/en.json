@@ -76,8 +76,8 @@
     "display": "Display",
     "keepAwake": "Keep Screen Awake",
     "keepAwakeTip": "Stops the screen dimming or locking while the dashboard is open. Browsers only allow this over HTTPS, so it has no effect on a plain HTTP address.",
-    "displayMode": "Settings Display Mode",
-    "displayModeTip": "Sets the appearance of the Settings pages. It is stored in this browser, applies to this device only, and takes effect at once.",
+    "displayMode": "Display Mode",
+    "displayModeTip": "Sets the appearance of the dashboard and the Settings pages. It is stored in this browser, applies to this device only, and takes effect at once.",
     "displaySystem": "System Default",
     "displayLight": "Light",
     "displayDark": "Dark",
@@ -101,8 +101,6 @@
     "uploading": "Uploading…",
     "imageTip": "Uploaded and linked images are stored on this server and served from it.",
     "customColor": "Custom color",
-    "themeDark": "Dark (theme)",
-    "themeLight": "Light (theme)",
     "colorCode": "Color Code",
     "wallpaperSource": "Wallpaper source"
   },
@@ -432,5 +430,30 @@
   "pill": {
     "system": "System",
     "hidden": "Hidden"
+  },
+  "color": {
+    "dark": "Dark",
+    "light": "White",
+    "auto": "Auto (Dark or White)",
+    "clear": "Clear",
+    "system": "System",
+    "accent": "Accent",
+    "success": "Success",
+    "warning": "Warning",
+    "danger": "Danger",
+    "info": "Info",
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "mint": "Mint",
+    "teal": "Teal",
+    "cyan": "Cyan",
+    "blue": "Blue",
+    "indigo": "Indigo",
+    "purple": "Purple",
+    "pink": "Pink",
+    "brown": "Brown",
+    "gray": "Gray"
   }
 }

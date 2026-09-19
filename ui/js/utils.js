@@ -1,8 +1,11 @@
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
-import { SETTINGS_ICON } from '/js/settings-icon.js?v=fe53a1db';
+import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
+import { mkGlassRim } from '/js/glass-rim.js?v=3faec233';
+import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { BRAND_MARK } from '/js/brand-mark.js?v=1dcbf1ac';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
+import { pageTheme, tileColor } from '/js/palette.js?v=918226d2';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);
@@ -15,8 +18,9 @@ export const mk = (t, a = {}) => {
 const SAFE_COLOR = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9a-z%.,\s/+-]*\)|[a-z]{3,20})$/i;
 const DEFAULT_TILE_COLOR = '#1C1C1E';
 export const clr = c => {
-  if (!c || c === 'dark') return DEFAULT_TILE_COLOR;
-  if (c === 'light') return '#F2F2F7';
+  if (!c) return DEFAULT_TILE_COLOR;
+  const named = tileColor(c, pageTheme());
+  if (named) return named;
   const v = String(c).trim();
   return SAFE_COLOR.test(v) ? v : DEFAULT_TILE_COLOR;
 };
@@ -25,7 +29,8 @@ export const clr = c => {
 export const fb = (l, sz, plate) => {
   const e = mk('span');
   e.className = 'fb';
-  if (toneForColor(plate) === 'dark') e.classList.add('fb-on-light');
+  const tone = toneForColor(plate) ?? (pageTheme() === 'light' ? 'dark' : 'light');
+  if (tone === 'dark') e.classList.add('fb-on-light');
   e.style.fontSize = Math.round(sz * 0.32) + 'px';
   e.textContent = (l || '?')[0].toUpperCase();
   return e;
@@ -112,12 +117,21 @@ export const tgt = e => /** @type {HTMLInputElement} */ (e.target);
 export function mkWrap(item, sz, r, isz, cls, breg) {
   const w = mk('div');
   w.className = cls ? `plate ${cls}` : 'plate';
-  const wrapBg = item.system === 'settings' ? '#0D1117' : clr(item.color);
-  w.style.cssText = `--pw:${sz}px;--tc:${wrapBg};width:${sz}px;height:${sz}px;border-radius:${r}px;background-color:${wrapBg};position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;`;
+  const wrapBg = clr(item.system === 'settings' ? 'auto' : item.color);
+  const clear = item.color === 'clear' && item.system !== 'settings';
+  w.style.cssText = `--pw:${sz}px;--tc:${wrapBg};width:${sz}px;height:${sz}px;border-radius:${r}px;${clear ? '' : `background-color:${wrapBg};`}position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;`;
+  if (clear) {
+    w.classList.add('plate-clear', 'glass-surface');
+    w.appendChild(mkGlassRim(sz, sz, smoothRectPath(sz, sz, r, 0)));
+  }
   const rawIcon = item.iconUrl || '';
   if (item.system === 'settings') {
     const si = Math.min(sz, Math.round(isz * 1.22));
-    const img = mk('img', { src: SETTINGS_ICON, alt: '', draggable: false });
+    const img = mk('img', {
+      src: pageTheme() === 'light' ? SETTINGS_ICON_LIGHT : SETTINGS_ICON,
+      alt: '',
+      draggable: false,
+    });
     img.setAttribute('aria-hidden', 'true');
     img.style.cssText = `width:${si}px;height:${si}px;object-fit:contain;position:relative;z-index:3;`;
     img.onerror = () => img.replaceWith(fb(item.label, sz, wrapBg));

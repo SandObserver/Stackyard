@@ -32,15 +32,15 @@
   /* Value display — medium */
   .v        { font-size: clamp(18px, 7cqw, 28px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
   /* Slot colors driven by CSS custom properties set per-slot in JS */
-  .v.c-cpu  { color: var(--sc0, #FF375F); } .v.c-ram  { color: var(--sc1, #30d158); }
-  .v.c-temp { color: var(--sc2, #00D2E0); } .v.c-disk { color: var(--sc2, #00D2E0); }
+  .v.c-cpu  { color: var(--sct0, #FF375F); } .v.c-ram  { color: var(--sct1, #30d158); }
+  .v.c-temp { color: var(--sct2, #00D2E0); } .v.c-disk { color: var(--sct2, #00D2E0); }
   .disk-line { display: flex; align-items: baseline; white-space: nowrap; }
-  .disk-num  { font-size: clamp(15px, 5.2cqw, 22px); font-weight: 700; color: var(--sc2, #00D2E0);
+  .disk-num  { font-size: clamp(15px, 5.2cqw, 22px); font-weight: 700; color: var(--sct2, #00D2E0);
     letter-spacing: -0.02em; line-height: 1; }
-  .disk-unit { font-size: clamp(9px, 3cqw, 14px); font-weight: 600; color: var(--sc2, #00D2E0); margin: 0 1px; }
-  .disk-sep  { font-size: clamp(11px, 3.5cqw, 17px); font-weight: 400; color: var(--sc2, #00D2E0);
+  .disk-unit { font-size: clamp(9px, 3cqw, 14px); font-weight: 600; color: var(--sct2, #00D2E0); margin: 0 1px; }
+  .disk-sep  { font-size: clamp(11px, 3.5cqw, 17px); font-weight: 400; color: var(--sct2, #00D2E0);
     opacity: 0.5; margin: 0 1px; }
-  .disk-sub  { font-size: clamp(9px, 2.4cqw, 11px); font-weight: 500; color: var(--sc2, #00D2E0);
+  .disk-sub  { font-size: clamp(9px, 2.4cqw, 11px); font-weight: 500; color: var(--sct2, #00D2E0);
     margin-top: 2px; opacity: 0.7; }
 
   /* Sparkline chart — medium right column */
@@ -80,6 +80,17 @@
   @media (prefers-reduced-motion: reduce){
     .bar-fill,.disk-fill,.spark,.spark *{transition:none !important;animation:none !important}
   }
+  html[data-theme="light"] .disk-sub { opacity:1 }
+  html[data-theme="light"],html[data-theme="light"] body { background:#ffffff }
+  html[data-theme="light"] .col-left { border-inline-end:1px solid rgba(0,0,0,0.08) }
+  html[data-theme="light"] .chart-lbl { color:rgba(0,0,0,0.88) }
+  html[data-theme="light"] .spark-wrap::after { background:repeating-linear-gradient(to right, rgba(0,0,0,0.18) 0,
+      rgba(0,0,0,0.18) 2px, transparent 2px, transparent 6px) }
+  html[data-theme="light"] .bar-bg { background:rgba(0,0,0,0.07) }
+  html[data-theme="light"] .dev-mean { background:repeating-linear-gradient(to right, rgba(0,0,0,0.45) 0,
+      rgba(0,0,0,0.45) 3px, transparent 3px, transparent 6px) }
+  html[data-theme="light"] .disk-track { background:rgba(0,0,0,0.13) }
+  html[data-theme="light"] .net-item { color:rgba(0,0,0,0.65) }
 </style>
 </head>
 <body>
@@ -89,7 +100,7 @@
      the sparklines' time axis right to left. -->
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <script type="module">
-import { poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=22c75845';
+import { readableInk, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=8d8b2683';
 await loadStrings();
 const TICK_MS  = 10000;
 const SPEED_MS = 60000;
@@ -173,6 +184,7 @@ function buildShell() {
   slots.forEach((slot, i) => {
     const c = slot.color || SLOT_DEFS[i] || SLOT_DEFS[0];
     document.documentElement.style.setProperty('--sc'+i, c);
+    document.documentElement.style.setProperty('--sct'+i, readableInk(c));
   });
 
   if (size === 'medium') {
@@ -224,7 +236,7 @@ function mkValueEl(slot, i) {
     ${slot.secondary ? html`<div class="disk-sub" id="disk-sec-${i}">— / —</div>` : ''}`);
   } else if (slot.type === 'iowait' || slot.type === 'procs') {
     const unit = slot.type === 'iowait' ? '%' : '';
-    setHtml(d, html`<div class="v" id="pct-${i}" style="color:var(--sc${i}, #0091FF)">—${unit}</div>`);
+    setHtml(d, html`<div class="v" id="pct-${i}" style="color:var(--sct${i}, #0091FF)">—${unit}</div>`);
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
     /* slot.type reaches a class attribute here, and comes from config. */
@@ -287,7 +299,7 @@ function mkSmallRow(slot, i) {
     </div>`);
   } else if (slot.type === 'iowait' || slot.type === 'procs') {
     const unit = slot.type === 'iowait' ? '%' : '';
-    setHtml(d, html`${lbl}<div class="v" id="small-${i}" style="color:var(--sc${i}, #0091FF)">—${unit}</div>`);
+    setHtml(d, html`${lbl}<div class="v" id="small-${i}" style="color:var(--sct${i}, #0091FF)">—${unit}</div>`);
   } else {
     const unit = slot.type === 'temp' ? '°' : '%';
     setHtml(d, html`${lbl}<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`);

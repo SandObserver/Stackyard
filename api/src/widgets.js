@@ -8,7 +8,7 @@ const { loadConfig } = require('./config');
 const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets';
 
 const VALID_SIZES = new Set(['small', 'medium', 'large', 'xlarge']);
-const VALID_CARDS = new Set(['dark', 'light', 'translucent']);
+const VALID_CARDS = new Set(['dark', 'graphite', 'light', 'translucent']);
 /* Mirrors GLYPH_NAMES in ui/js/widget-glyphs.js. The two cannot share a module
    across the CJS/ESM split without a build step; a test compares them. */
 const VALID_GLYPHS = new Set([
@@ -161,6 +161,7 @@ function validateManifest(name, m) {
     });
 
   if (m.card !== undefined && !VALID_CARDS.has(m.card)) errs.push(`unknown card "${m.card}"`);
+  if (m.appearance !== undefined && m.appearance !== 'dark') errs.push(`unknown appearance "${m.appearance}"`);
   /* Optional. A widget that declares none keeps the size icon. */
   if (m.glyph !== undefined && !VALID_GLYPHS.has(m.glyph)) errs.push(`unknown glyph "${m.glyph}"`);
 
@@ -286,6 +287,7 @@ function _publicEntry(name, e, lang) {
       glyph: m.glyph || null,
       sizes: m.sizes,
       card: m.card || null,
+      appearance: m.appearance || null,
       fields: m.fields || [],
       views: m.views || null,
       viewField: m.viewField || null,

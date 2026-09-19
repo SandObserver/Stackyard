@@ -68,7 +68,7 @@ const OVERLAP = {
 };
 const DIAL = {
   light: { bg:'#ffffff', fill:'#ffffff', date:'rgba(0,0,0,0.4)',  tick:'#ffffff', dot:'#1C1C1E' },
-  dark:  { bg:'#1c1c1e', fill:'#FFFFFF', date:'rgba(0,0,0,0.42)', tick:'#ffffff', dot:'#1C1C1E' },
+  dark:  { bg:'#1c1c1e', fill:'#E5E5EA', date:'rgba(0,0,0,0.5)', tick:'#E5E5EA', dot:'#1C1C1E' },
 };
 
 let _mode='dark', _timezone='', _showDate=true;
@@ -249,11 +249,12 @@ addEventListener('resize', ()=>{
   _rzId=setTimeout(()=>{ const run=_running; stop(); buildShell(); render(!_reduceMotion); if(run) start(); }, 150);
 });
 
+function hostTheme(){ try{ return parent.document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'; }catch{ return 'dark'; } }
 async function boot(){
+  _mode=hostTheme(); document.documentElement.style.colorScheme=_mode;
   try{
     const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
     if(r.ok){ const d=await r.json(); const wc=d.widgetConfig||{};
-      _mode=wc.clockMode||'dark';
       _timezone=wc.clockTimezone||'';
       _showDate=wc.clockShowDate!==false;
     }
@@ -262,6 +263,8 @@ async function boot(){
   render(!_reduceMotion);
   watchVisibility();
   start();
+  try{ new MutationObserver(()=>{ const m=hostTheme(); if(m===_mode) return; _mode=m; document.documentElement.style.colorScheme=m; const run=_running; stop(); buildShell(); render(false); if(run) start(); })
+    .observe(parent.document.documentElement,{ attributes:true, attributeFilter:['data-theme'] }); }catch{}
 }
 
 boot();

@@ -26,12 +26,17 @@
     animation-name:sway;animation-timing-function:cubic-bezier(.33,.68,.36,1);animation-fill-mode:both}
   @keyframes sway{0%{transform:rotate(0)}35%{transform:rotate(var(--amp))}70%{transform:rotate(calc(var(--amp) * -0.35))}100%{transform:rotate(0)}}
   @media (prefers-reduced-motion:reduce){.chain{transition:none}.key{animation:none!important}}
+  .rail { fill:rgba(255,255,255,.07); stroke:rgba(255,255,255,.10) }
+  html[data-theme="light"] .rail { fill:rgba(0,0,0,.07); stroke:rgba(0,0,0,.14) }
+  html[data-theme="light"],html[data-theme="light"] body { background:#ffffff; color:#000000 }
+  html[data-theme="light"] .kc:hover .nm,html[data-theme="light"] .kc:focus-visible .nm,html[data-theme="light"] .kc.cur .nm { fill:#000000 }
+  html[data-theme="light"] .kc:hover .chain,html[data-theme="light"] .kc:focus-visible .chain { filter:drop-shadow(0 3px 4px rgba(0,0,0,0.175)) }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="module">
-  import { widgetId, getConfig, loadStrings, wt } from '/js/widget-toolbox.js?v=22c75845';
+  import { widgetId, getConfig, loadStrings, wt } from '/js/widget-toolbox.js?v=8d8b2683';
   await loadStrings();
   import { buildModel } from '/js/dashboard-switch-model.js?v=b1e85478';
 
@@ -102,7 +107,7 @@
       '<feMerge><feMergeNode in="r"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
       '<filter id="ds-sh"><feDropShadow dx="0.5" dy="1" stdDeviation="0.5" flood-color="#000" flood-opacity="0.5"/></filter>' +
       '</defs>' +
-      `<rect x="8" y="${RAIL_T}" width="${W - 16}" height="${RAIL_B - RAIL_T}" rx="${(RAIL_B - RAIL_T) / 2}" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.10)" stroke-width="1"/>`;
+      `<rect x="8" y="${RAIL_T}" width="${W - 16}" height="${RAIL_B - RAIL_T}" rx="${(RAIL_B - RAIL_T) / 2}" class="rail" stroke-width="1"/>`;
 
     const slots = model.slots;
     if (!slots.length) {

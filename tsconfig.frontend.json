@@ -278,6 +278,12 @@
       "/js/smooth-corner.js?v=*": [
         "./ui/js/smooth-corner.js"
       ],
+      "/js/palette.js": [
+        "./ui/js/palette.js"
+      ],
+      "/js/palette.js?v=*": [
+        "./ui/js/palette.js"
+      ],
       "/js/password-strength.js": [
         "./ui/js/password-strength.js"
       ],

@@ -30,6 +30,9 @@
   .msg { position:absolute; inset-inline:0; bottom:0; }
 
   .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .src-node { fill:#fff }
+  html[data-theme="light"] .src-node { fill:#1c1c1e }
+  html[data-theme="light"] .sub { color:rgba(0,0,0,0.62) }
 </style>
 </head>
 <body>
@@ -46,7 +49,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=22c75845';
+import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=8d8b2683';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -158,7 +161,7 @@ function render(m) {
     nodes += `<rect x="${x1}" y="${ty}" width="${NODE_W}" height="${t[i]}" rx="${Math.min(4,t[i]/2)}" fill="${s.color}"/>`;
     sy += t[i]; ty += t[i] + gap;
   });
-  nodes = `<rect x="0" y="${(H - tSum) / 2}" width="${NODE_W}" height="${tSum}" rx="4" fill="#fff"/>` + nodes;
+  nodes = `<rect x="0" y="${(H - tSum) / 2}" width="${NODE_W}" height="${tSum}" rx="4" class="src-node"/>` + nodes;
 
   svgEl.innerHTML = links + nodes;
   highlight();

@@ -107,6 +107,7 @@ const CSS = `
 /* This rule sets display, which outranks the user agent's [hidden] rule. Without
    its own hidden rule the caption never goes away. */
 .wt-cap[hidden] { display: none; }
+html[data-theme="light"] .wt-cap { color: var(--wt-cap-color, rgba(60,60,67,0.7)); }
 .wt-cap svg { width: 12px; height: 12px; flex: 0 0 auto; opacity: 0.85; }
 .wt-cap b { font-weight: 500; overflow: hidden; min-width: 0;
   /* Two lines, then clip. The narrowest card cannot hold the longest line on

@@ -1,6 +1,6 @@
 /* ── Design tokens ── */
     :root {
-      --glass-bg:         rgba(0,0,0,.32);
+      --glass-bg:         #1C1C1E;
       --glass-border:     rgba(255,255,255,.09);
       --glass-blur:       blur(16px) saturate(140%);
       --glass-surface-bg:   rgba(155,155,158,.09);
@@ -21,6 +21,10 @@
       --bg-base:          #0d1117;
       /* The opaque card preset a widget can ask for by name. */
       --card-dark:        var(--sy-gray6);
+      --card-graphite:    #2C2C2E;
+      --card-fixed-dark:  #1C1C1E;
+      --pill-ink-light:   #3C3C43;
+      --search-ink-light: #636366;
       --badge-red:        var(--danger);
       --badge-blue:       var(--info);
       --badge-green:      var(--success);
@@ -169,9 +173,14 @@
       background: var(--bg-primary-light); border-color: rgba(0,0,0,.12);
       -webkit-backdrop-filter: none; backdrop-filter: none;
     }
+    .widget[data-card="graphite"],
+    .mob-widget-card[data-card="graphite"] {
+      background: var(--card-graphite);
+      -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
     .widget[data-card="translucent"],
     .mob-widget-card[data-card="translucent"] {
-      background: rgba(0,0,0,.25);
+      background: var(--glass-bg);
       -webkit-backdrop-filter: blur(22px) saturate(140%);
               backdrop-filter: blur(22px) saturate(140%);
     }
@@ -914,7 +923,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
     --label-color:   var(--label-primary);
     --label-shadow:  0 1px 4px rgba(0,0,0,.95);
   }
-  .ilabel, .dyn-mob-label, .dyn-fold-label, .dyn-fold-inner-label { color:var(--label-primary); }
+  .ilabel, .dyn-mob-label, .dyn-fold-label, .dyn-fold-inner-label { color:#FFFFFF; }
   .ilabel[data-tone="dark"], .dyn-mob-label[data-tone="dark"], .dyn-fold-label[data-tone="dark"] {
     color:#000000; text-shadow:0 0 2px rgba(255,255,255,.95);
   }
@@ -1039,3 +1048,79 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
 .sy-i3s{stroke:currentColor;stroke-opacity:.4}
 .sy-as{stroke:var(--icon-accent,currentColor)}
 @media (forced-colors:active){.sy-icon{--icon-accent:CanvasText}}
+
+.plate.plate-clear { background-image:none }
+
+html[data-theme="light"] {
+  --bg-base:           #E5E5EA;
+  --glass-bg:          #FFFFFF;
+  --glass-border:      rgba(0,0,0,.06);
+  --glass-surface-bg:  rgba(255,255,255,.4);
+  --glass-surface-blur: blur(24px) saturate(180%);
+  --glass-rim-light:   rgba(255,255,255,1);
+  --glass-rim-dark:    rgba(255,255,255,.4);
+  --glass-lift:        0 12px 32px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08);
+  --card-dark:         #FFFFFF;
+}
+html[data-theme="light"] .widget[data-card="translucent"],
+html[data-theme="light"] .mob-widget-card[data-card="translucent"] { background:#FFFFFF }
+html[data-theme="light"] #mob-search-pill { background:rgba(255,255,255,.72); border-color:rgba(0,0,0,.08) }
+html[data-theme="light"] #mob-search-pill .msp-icon,
+html[data-theme="light"] #mob-search-pill .msp-label { color:var(--pill-ink-light) }
+html[data-theme="light"] #mob-search-pill .msp-dot { background:rgba(60,60,67,.3) }
+html[data-theme="light"] #mob-search-pill .msp-dot.on { background:rgba(0,0,0,.8) }
+html[data-theme="light"] #spot,
+html[data-theme="light"] body:not(.is-mob) #spot { background:rgba(242,242,247,.5) }
+html[data-theme="light"] body:not(.is-mob) #sbox,
+html[data-theme="light"] body:not(.is-mob) #sres {
+  background:rgba(255,255,255,.92); border-color:rgba(0,0,0,.1); box-shadow:0 20px 60px rgba(0,0,0,.18);
+}
+html[data-theme="light"] .spot-bar { border-bottom-color:rgba(0,0,0,.08) }
+html[data-theme="light"] body.is-mob #spot .spot-field { background:rgba(118,118,128,.14) }
+html[data-theme="light"] .spot-icon { color:rgba(60,60,67,.5) }
+html[data-theme="light"] #sin, html[data-theme="light"] .srn { color:var(--label-primary) }
+html[data-theme="light"] #sin::placeholder,
+html[data-theme="light"] #spot #sin::placeholder,
+html[data-theme="light"] #spot-cancel { color:var(--search-ink-light) }
+html[data-theme="light"] .sr-section, html[data-theme="light"] .srh { color:rgba(60,60,67,.6); border-color:rgba(0,0,0,.08) }
+html[data-theme="light"] .sra { color:rgba(60,60,67,.3) }
+html[data-theme="light"] .sr:hover, html[data-theme="light"] .sr:active,
+html[data-theme="light"] .sr.sel, html[data-theme="light"] .fh-hl { background:rgba(0,0,0,.06) }
+html[data-theme="light"] body.is-mob #sres .sr + .sr { border-top-color:rgba(0,0,0,.08) }
+html[data-theme="light"] .badge-pop {
+  background:rgba(255,255,255,.96); border-color:rgba(0,0,0,.1); color:#000;
+  box-shadow:0 18px 44px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.06);
+}
+html[data-theme="light"] .badge-pop-name { color:rgba(60,60,67,.8) }
+html[data-theme="light"] .folder-overlay { background:rgba(242,242,247,.4) }
+html[data-theme="light"] .folder-overlay-mobile {
+  background:rgba(255,255,255,.3);
+  -webkit-backdrop-filter:blur(22px) brightness(1.05); backdrop-filter:blur(22px) brightness(1.05);
+}
+html[data-theme="light"] .folder-title-desktop { color:rgba(0,0,0,.88); text-shadow:0 1px 8px rgba(255,255,255,.6) }
+html[data-theme="light"] .folder-title-mobile { text-shadow:none }
+html[data-theme="light"] .folder-box-desktop { box-shadow:0 32px 80px rgba(0,0,0,.2) }
+html[data-theme="light"] .folder-dot { background:rgba(0,0,0,.25) }
+html[data-theme="light"] .folder-dot.on { background:rgba(0,0,0,.8) }
+html[data-theme="light"] .dyn-fold-inner-label { color:rgba(0,0,0,.88); text-shadow:0 0 2px rgba(255,255,255,.55) }
+html[data-theme="light"] .empty-state-btn,
+html[data-theme="light"] .api-error-btn { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12) }
+html[data-theme="light"] .api-error-screen { color:rgba(0,0,0,.7) }
+html[data-theme="light"] .api-error-sub { color:rgba(0,0,0,.45) }
+html[data-theme="light"] .folder-overlay .ilabel { color:var(--label-color-dark); text-shadow:var(--label-shadow-dark) }
+html[data-theme="light"] #dock:not(.mdock) { border-radius:45px; box-shadow:var(--glass-lift) }
+html[data-theme="light"] .folder-icon-grid,
+html[data-theme="light"] .dyn-fold-wrap,
+html[data-theme="light"] .plate-clear { box-shadow:0 4px 14px rgba(0,0,0,.12) }
+html[data-theme="light"] #dock.mdock { border-radius:calc(40px * var(--sc,1)); box-shadow:var(--glass-lift) }
+html[data-theme="light"] .widget[data-appearance="dark"],
+html[data-theme="light"] .mob-widget-card[data-appearance="dark"] {
+  --glass-bg:var(--card-fixed-dark); --glass-border:rgba(255,255,255,.09); --card-dark:var(--card-fixed-dark);
+}
+html[data-theme="light"] .widget[data-appearance="dark"][data-card="translucent"],
+html[data-theme="light"] .mob-widget-card[data-appearance="dark"][data-card="translucent"] { background:var(--card-fixed-dark) }
+@media (prefers-contrast: more) {
+  html[data-theme="light"] { --glass-bg:rgba(255,255,255,.97); --glass-border:rgba(0,0,0,.35) }
+  html[data-theme="light"] .widget:not([data-appearance="dark"]),
+  html[data-theme="light"] .mob-widget-card:not([data-appearance="dark"]) { border-color:rgba(0,0,0,.35) }
+}

@@ -35,22 +35,6 @@
       ]
     },
     {
-      "key": "clockMode",
-      "type": "select",
-      "variant": "pills",
-      "label": "clockMode.label",
-      "options": [
-        {
-          "value": "dark",
-          "label": "clockMode.opt.dark"
-        },
-        {
-          "value": "light",
-          "label": "clockMode.opt.light"
-        }
-      ]
-    },
-    {
       "key": "clockTimezone",
       "type": "text",
       "label": "clockTimezone.label",
