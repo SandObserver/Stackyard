@@ -16,30 +16,8 @@ export function safeColor(value, fallback) {
   return COLOR_RE.test(String(value ?? '').trim()) ? String(value).trim() : fallback;
 }
 
-function _hostTheme() {
-  try {
-    if (window.frameElement?.closest('[data-appearance="dark"]')) return 'dark';
-    return window.parent.document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-  } catch {
-    return 'dark';
-  }
-}
-function _applyTheme() {
-  const theme = _hostTheme();
-  if (document.documentElement.getAttribute('data-theme') === theme) return;
-  document.documentElement.setAttribute('data-theme', theme);
-  document.documentElement.style.colorScheme = theme;
-  document.documentElement.style.backgroundColor = '';
-  if (getComputedStyle(document.documentElement).backgroundColor === 'rgba(0, 0, 0, 0)')
-    document.documentElement.style.backgroundColor = theme === 'light' ? '#FFFFFF' : '#1C1C1E';
-}
-try {
-  _applyTheme();
-  new MutationObserver(_applyTheme).observe(window.parent.document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-theme'],
-  });
-} catch {}
+/* widget-theme.js sets the attribute before the first paint. */
+const _hostTheme = () => (document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
 
 const _lin = v => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
 /** @param {number[]} c */

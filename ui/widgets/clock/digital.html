@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Digital Clock</title>
+<script src="/js/widget-theme.js?v=efd57c84"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden;
@@ -186,9 +187,9 @@ function tick() {
   _tickId = setTimeout(tick, (60 - now.getSeconds()) * 1000);
 }
 
-function hostTheme(){ try{ return parent.document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'; }catch{ return 'dark'; } }
+function hostTheme(){ return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'; }
 async function boot() {
-  _mode = hostTheme(); document.documentElement.style.colorScheme = _mode;
+  _mode = hostTheme();
   try {
     const r = await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
     if (r.ok) { const d = await r.json(); const wc = d.widgetConfig||{};
@@ -198,8 +199,6 @@ async function boot() {
   } catch {}
   buildShell();
   tick();
-  try { new MutationObserver(() => { const m = hostTheme(); if (m === _mode) return; _mode = m; document.documentElement.style.colorScheme = m; buildShell(); tick(); })
-    .observe(parent.document.documentElement, { attributes: true, attributeFilter: ['data-theme'] }); } catch {}
 }
 
 boot();

@@ -24,7 +24,14 @@ export const ROLE_NAMES = ['accent', 'success', 'warning', 'danger', 'info'];
 /** @type {readonly string[]} */
 export const TILE_KEYWORDS = ['dark', 'light', 'auto', 'clear'];
 
-const HUES = {
+/* Plain object literals inherit Object.prototype, so a name like "constructor"
+   would resolve to a function and reach the DOM as a colour. */
+const _tables = t => {
+  for (const k of Object.keys(t)) t[k] = Object.assign(Object.create(null), t[k]);
+  return t;
+};
+
+const HUES = _tables({
   dark: {
     red: '#FF4245',
     orange: '#FF9230',
@@ -55,17 +62,17 @@ const HUES = {
     brown: '#AC7F5E',
     gray: '#8E8E93',
   },
-};
+});
 
-const ROLES = {
+const ROLES = _tables({
   dark: { accent: '#00D2E0', success: '#30D158', warning: '#FF9230', danger: '#FF4245', info: '#0091FF' },
   light: { accent: '#0071A4', success: '#238539', warning: '#C93400', danger: '#D70015', info: '#0040DD' },
-};
+});
 
-const TILE = {
+const TILE = _tables({
   dark: { dark: '#1C1C1E', light: '#F2F2F7', auto: '#1C1C1E', clear: 'rgba(120,120,128,.36)' },
   light: { dark: '#1C1C1E', light: '#F2F2F7', auto: '#F2F2F7', clear: 'rgba(255,255,255,.45)' },
-};
+});
 
 /** @param {unknown} theme */
 const pick = theme => (theme === 'light' ? 'light' : 'dark');

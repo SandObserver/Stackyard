@@ -357,6 +357,12 @@
       "/js/widget-error.js?v=*": [
         "./ui/js/widget-error.js"
       ],
+      "/js/widget-theme.js": [
+        "./ui/js/widget-theme.js"
+      ],
+      "/js/widget-theme.js?v=*": [
+        "./ui/js/widget-theme.js"
+      ],
       "/js/widget-toolbox.js": [
         "./ui/js/widget-toolbox.js"
       ],

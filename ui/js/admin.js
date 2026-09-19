@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b2b2f1f5';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=16b5e0a9';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=49e98c69';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=f8104066';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5153a3ec';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=23380eab';
 import { resolveAdminSection } from '/js/admin-logic.js?v=e3673bd7';
 import {
   buildAppItem,
@@ -10,13 +10,13 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=858f3f84';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=07060753';
-import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=68fb1cb2';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=1b644e36';
+import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=ee1d30d8';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=0aa2d9b6';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=93ca6dec';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=93ffd65a';
+import { createListbox } from '/js/listbox.js?v=bec7bc4b';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -41,8 +41,8 @@ import {
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=787bfdff';
-import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=18f28539';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=edadf6bb';
+import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=ec5ae295';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=eda30087';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 

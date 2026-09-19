@@ -2,7 +2,6 @@
     :root {
       --glass-bg:         #1C1C1E;
       --glass-border:     rgba(255,255,255,.09);
-      --glass-blur:       blur(16px) saturate(140%);
       --glass-surface-bg:   rgba(155,155,158,.09);
       --glass-surface-blur: blur(14px) saturate(160%);
       --glass-rim-light:  rgba(255,255,255,.30);
@@ -148,7 +147,6 @@
       position:relative;
       width:100%; border-radius:28px; overflow:hidden;
       border:1px solid var(--glass-border); background:var(--glass-bg);
-      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
     }
     .widget iframe { display:block; border:0; width:100% }
 
@@ -156,7 +154,6 @@
        material. Its sizing stays inline. */
     .mob-widget-card {
       border:1px solid var(--glass-border); background:var(--glass-bg);
-      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
     }
 
     /* ── Card backgrounds ──
@@ -820,7 +817,7 @@
 
 /* Reduced transparency → drop blur/material (legibility), keep motion as-is */
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass-blur: none; --glass-surface-blur: none; }
+  :root { --glass-surface-blur: none; }
 }
 
 /* Reduced motion: neutralize slides, springs, and lift transforms. */

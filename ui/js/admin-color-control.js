@@ -1,9 +1,9 @@
-import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=68fb1cb2';
+import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=ee1d30d8';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa, q } from '/js/utils.js?v=18f28539';
+import { qa, q } from '/js/utils.js?v=ec5ae295';
 import { iconSvg } from '/js/icon-set.js?v=606a68c6';
-import { HUE_NAMES, ROLE_NAMES, TILE_KEYWORDS, pageTheme, tileColor } from '/js/palette.js?v=918226d2';
+import { HUE_NAMES, ROLE_NAMES, TILE_KEYWORDS, pageTheme, tileColor } from '/js/palette.js?v=bf6b38a6';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
 export const BADGE_DEFAULT = 'info';
@@ -265,7 +265,7 @@ export function renderColorControl(
     b.addEventListener('click', () => {
       const v = b.dataset.v || '';
       if (v === 'custom') {
-        showTune = !(showTune && mode === 'color');
+        showTune = !(showTune && (mode === 'color' || hues.includes(mode)));
         if (showTune && !hues.includes(mode)) mode = 'color';
         commit();
         return;
@@ -287,6 +287,10 @@ export function renderColorControl(
     root: container,
     placeholder: '#rrggbb or any CSS color',
     onCommit(val) {
+      /* The row shows the keyword's name while one is picked, and the editor
+         seeds itself from what it shows. Committing that unchanged is not a
+         failed colour. */
+      if (mode !== 'color' && val === kwName(mode)) return;
       const { value, ok } = normalizeColorInput(val);
       const hv = ok ? _hexToHsv(value) : null;
       if (hv) {
