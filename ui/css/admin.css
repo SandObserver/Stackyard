@@ -163,7 +163,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .sb-nav{list-style:none;display:flex;flex-direction:column;gap:2px}
 .nl{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border-radius:22px;border:none;background:transparent;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;text-align:start;transition:background var(--t),color var(--t);min-height:44px;font-family:inherit}
 .nl:hover{color:var(--tx)}
-.nl.active{background:var(--ac);color:var(--on-fill)}
+.nl.active{background:var(--nav-tint);color:var(--tx)}
 .nl.active .ni,.mtab.active .ni{opacity:1}
 .ni{flex-shrink:0;opacity:.6}
 
@@ -331,7 +331,7 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 .tile-row{padding-top:16px;padding-bottom:16px}
 .tile-grp{display:flex;flex:1;justify-content:center;gap:clamp(0px,calc(6vw - 20px),40px)}
 .tile-opt{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;background:none;border:none;border-radius:12px;padding:4px;cursor:pointer;font-family:inherit;color:var(--dm);transition:color var(--t)}
-.tile-opt.on{color:var(--ac2)}
+.tile-opt:hover,.tile-opt.on{color:var(--tx)}
 .tile-opt:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .tile-ico{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:inherit}
 .tile-ico svg{width:38px;height:38px}
@@ -445,6 +445,7 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .about-name{font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);font-weight:700;}
 .about-ver{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:3px}
 .about-ri{flex-shrink:0;color:var(--dm)}
+.about-heart{color:var(--sy-pink)}
 .about-ext{flex-shrink:0;color:var(--dm);margin-inline-start:auto}
 
 /* ── Toggle ── */
@@ -712,7 +713,7 @@ html.is-mobile body.authed .mtabbar{
 html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;border-radius:50px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:500;cursor:pointer;padding:8px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
 html.is-mobile .mtab .ni{width:24px;height:24px;flex-shrink:0}
 /* Keep the radius above half the height. Exactly half tears in WebKit on repaint. */
-html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--ac2)}
+html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--tx)}
 
 /* The handle is the drag zone. It needs touch-action:none, or starting a drag
    on it scrolls the list. */
@@ -822,7 +823,7 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
 
 /* Navigation selection. */
 .sb-nav{position:relative}
-.sb-nav>.gs-pill{background:var(--ac)}
+.sb-nav>.gs-pill{background:var(--nav-tint)}
 .mtabbar>.gs-pill{background:var(--tab-pill)}
 .sb-nav:has(> .gs-pill.on) .nl.active{background:transparent}
 .mtabbar:has(> .gs-pill.on) .mtab.active{background:transparent}
@@ -834,4 +835,21 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
 @media (prefers-reduced-motion: reduce){
   .mp,.mp.on{transition:none}
   .sb-nav.gs-moving .nl{transition:background var(--t),color var(--t)}
+}
+
+.sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
+.sy-icon{flex-shrink:0;--icon-accent:var(--ac)}
+.sy-i{fill:currentColor}
+.sy-i3{fill:currentColor;fill-opacity:.4}
+.sy-a{fill:var(--icon-accent,currentColor)}
+.sy-is{stroke:currentColor}
+.sy-i3s{stroke:currentColor;stroke-opacity:.4}
+.sy-as{stroke:var(--icon-accent,currentColor)}
+:root{--nav-tint:color-mix(in srgb,var(--ac) 18%,transparent)}
+.nl .sy-icon,.mtab .sy-icon,.tile-opt .sy-icon{--icon-accent:color-mix(in srgb,currentColor 55%,transparent)}
+.nl:hover .sy-icon,.nl.active .sy-icon,.mtab.active .sy-icon,.tile-opt.on .sy-icon{--icon-accent:var(--ac)}
+.rico .sy-icon{--icon-accent:currentColor}
+@media (forced-colors:active){
+  .sy-icon{--icon-accent:CanvasText}
+  .nl.active .sy-icon,.mtab.active .sy-icon,.tile-opt.on .sy-icon{--icon-accent:Highlight}
 }

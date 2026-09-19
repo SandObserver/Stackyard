@@ -1,4 +1,4 @@
-import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=5d2b6f16';
+import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=045df327';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=5a5d655f';
@@ -21,12 +21,13 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=69f5c7f9';
-import { createListbox } from '/js/listbox.js?v=2b633751';
+} from '/js/admin-shared.js?v=dc0e02b6';
+import { createListbox } from '/js/listbox.js?v=96066369';
 import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d0c89032';
+import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=a48fbc58';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
+import { iconSvg } from '/js/icon-set.js?v=606a68c6';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
@@ -437,8 +438,7 @@ function renderActLabels(host) {
 
 const _optRow = label => html`${label} <span class="rl-sub">${t('app.optional')}</span>`;
 
-const GRIP_SVG =
-  '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" focusable="false"><circle cx="6" cy="4" r="1.3"/><circle cx="10" cy="4" r="1.3"/><circle cx="6" cy="8" r="1.3"/><circle cx="10" cy="8" r="1.3"/><circle cx="6" cy="12" r="1.3"/><circle cx="10" cy="12" r="1.3"/></svg>';
+const GRIP_SVG = iconSvg('grip', 14);
 
 function addActLabel() {
   captureActLabels();

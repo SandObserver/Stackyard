@@ -11,7 +11,7 @@
   <script src="/js/mobile-class.js?v=fe95da0d"></script>
   <script src="/js/admin-theme.js?v=66565254"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=797311cf">
-  <link rel="stylesheet" href="/css/admin.css?v=f731f013">
+  <link rel="stylesheet" href="/css/admin.css?v=3c06e6a0">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
 </head>
 <body>
@@ -29,15 +29,15 @@
     </a>
     <ul class="sb-nav" role="list">
       <li><button class="nl" data-sec="general" type="button">
-        <svg class="ni" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="sy-icon ni" width="20" height="20" aria-hidden="true" focusable="false"><use href="#sy-solid-general"/></svg>
         <span data-i18n="nav.general">General</span>
       </button></li>
       <li><button class="nl" data-sec="appearance" type="button">
-        <svg class="ni" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        <svg class="sy-icon ni" width="20" height="20" aria-hidden="true" focusable="false"><use href="#sy-solid-appearance"/></svg>
         <span data-i18n="nav.appearance">Appearance</span>
       </button></li>
       <li><button class="nl" data-sec="dashboard" type="button">
-        <svg class="ni" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <svg class="sy-icon ni" width="20" height="20" aria-hidden="true" focusable="false"><use href="#sy-solid-dashboard"/></svg>
         <span data-i18n="nav.dashboard">Dashboard</span>
       </button></li>
       <li><button class="nl" data-sec="about" type="button">
@@ -53,13 +53,13 @@
     <!-- General -->
     <section class="sec" id="sec-general" hidden>
       <div class="sec-hdr">
-        <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.general">General</h1>
+        <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.general">General</h1>
         <div class="sec-hdr-actions">
           <button class="btn bp sm" id="srv-save" type="button" data-i18n="common.save">Save</button>
         </div>
       </div>
       <div class="grp">
-        <div class="row ie-row" id="ie-ip"><span class="rl" data-i18n="general.hostIp">Host IP</span><span class="rv is-ph" id="ie-ip-v">192.168.1.100</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
+        <div class="row ie-row" id="ie-ip"><span class="rl" data-i18n="general.hostIp">Host IP</span><span class="rv is-ph" id="ie-ip-v">192.168.1.100</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
       </div>
       <p class="grp-tip" data-i18n="general.hostIpTip">Lets badges fetch from your server's own address. Without it, those requests are blocked.</p>
 
@@ -85,7 +85,7 @@
         <div class="row"><span class="rl" id="rl-srv-docker-en" data-i18n="general.dockerHealth">Docker Container Health Checks</span><label class="tog"><input type="checkbox" id="srv-docker-en" aria-labelledby="rl-srv-docker-en"><div class="tr"></div></label></div>
         <div class="row-wrap reveal" id="srv-docker-rows"><div class="reveal-in">
         <div class="row" id="srv-hide-healthy-row"><span class="rl" id="rl-srv-hide-healthy" data-i18n="general.hideHealthy">Hide Healthy Badge</span><label class="tog"><input type="checkbox" id="srv-hide-healthy" aria-labelledby="rl-srv-hide-healthy"><div class="tr"></div></label></div>
-        <div class="row ie-row" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Socket URL</span><span class="rv is-ph" id="ie-socket-v">http://socket-proxy:2375</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
+        <div class="row ie-row" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Socket URL</span><span class="rv is-ph" id="ie-socket-v">http://socket-proxy:2375</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         </div></div>
       </div>
       <div class="reveal" id="socket-hint-wrap"><div class="reveal-in">
@@ -95,7 +95,7 @@
       <div class="grp-hdr" data-i18n="general.security">Security</div>
       <div class="grp">
         <div class="row"><span class="rl" id="rl-sec-en" data-i18n="general.passwordProtection">Password Protection</span><label class="tog"><input type="checkbox" id="sec-en" aria-labelledby="rl-sec-en"><div class="tr"></div></label></div>
-        <div class="row-wrap reveal" id="ie-pw-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div></div></div>
+        <div class="row-wrap reveal" id="ie-pw-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div></div></div>
         <div class="row-wrap reveal" id="sec-revoke-wrap"><div class="reveal-in"><div class="row" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign out all devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div></div></div>
       </div>
       <div id="sec-pw-bars" class="pw-bars d-none"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
@@ -115,7 +115,7 @@
     <!-- Appearance -->
     <section class="sec" id="sec-appearance" hidden>
       <div class="sec-hdr">
-        <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
+        <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
         <div class="sec-hdr-actions"><button class="btn bp sm" id="bg-save" type="button" data-i18n="common.save">Save</button></div>
       </div>
       <div class="grp-hdr" data-i18n="appearance.appTitle">App Title</div>
@@ -142,8 +142,8 @@
           <input type="hidden" id="bg-type" value="unsplash">
         </div>
         <div id="bg-unsplash-fields">
-          <div class="row ie-row" id="ie-apikey"><span class="rl" data-i18n="appearance.unsplashKey">API Key</span><span class="rv" id="ie-apikey-v">Not set</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
-          <div class="row ie-row" id="ie-bgcol"><span class="rl" data-i18n="appearance.collectionId">Collection ID</span><span class="rv is-ph" id="ie-bgcol-v">Collection ID</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
+          <div class="row ie-row" id="ie-apikey"><span class="rl" data-i18n="appearance.unsplashKey">API Key</span><span class="rv" id="ie-apikey-v">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+          <div class="row ie-row" id="ie-bgcol"><span class="rl" data-i18n="appearance.collectionId">Collection ID</span><span class="rv is-ph" id="ie-bgcol-v">Collection ID</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         </div>
         <div id="bg-url-fields" class="d-none">
           <div class="row">
@@ -152,7 +152,7 @@
             <button type="button" class="row-btn" id="bg-upload-lbl" data-i18n="app.upload">Upload</button>
             <input type="file" id="bg-upload" class="file-hidden" accept="image/png,image/jpeg,image/webp,image/avif,image/gif">
           </div>
-          <div class="row ie-row" id="ie-bgurl"><span class="rl" data-i18n="appearance.imageUrl">Image URL</span><span class="rv is-ph" id="ie-bgurl-v">Image URL</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
+          <div class="row ie-row" id="ie-bgurl"><span class="rl" data-i18n="appearance.imageUrl">Image URL</span><span class="rv is-ph" id="ie-bgurl-v">Image URL</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
           <div class="row">
             <span class="rl" data-i18n="appearance.fit">Fit</span>
             <div id="bg-fit-slot"></div>
@@ -160,14 +160,14 @@
           </div>
         </div>
         <div id="bg-color-fields" class="d-none">
-          <div class="row ie-row" id="ie-bgcolor"><span class="rl" data-i18n="appearance.color">Color</span><span class="rv is-ph" id="ie-bgcolor-v">#rrggbb or any CSS color</span><button class="pe" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg></button></div>
+          <div class="row ie-row" id="ie-bgcolor"><span class="rl" data-i18n="appearance.color">Color</span><span class="rv is-ph" id="ie-bgcolor-v">#rrggbb or any CSS color</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         </div>
         <div class="row" id="bg-brightness-row">
           <span class="rl" data-i18n="appearance.brightness">Brightness</span>
           <div class="slider-wrap">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="si" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            <svg class="sy-icon si" width="14" height="14" aria-hidden="true" focusable="false"><use href="#sy-solid-bright-lo"/></svg>
             <input type="range" id="bg-br" min="0.1" max="1.0" step="0.01" class="adm-range" aria-label="Brightness" data-i18n-al="appearance.brightness">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="si" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            <svg class="sy-icon si" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-bright-hi"/></svg>
           </div>
         </div>
       </div>
@@ -179,7 +179,7 @@
     <section class="sec" id="sec-dashboard" hidden>
       <div id="dash-list-view">
         <div class="sec-hdr">
-          <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.dashboard">Dashboard</h1>
+          <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.dashboard">Dashboard</h1>
           <div class="sec-hdr-actions">
             <button class="btn bp sm" id="btn-add" type="button" data-i18n="common.add">+ Add</button>
             <button class="btn bp sm" id="dash-save" type="button" data-i18n="common.save">Save</button>
@@ -201,7 +201,7 @@
       <div id="dash-edit-view" class="d-none">
         <div class="sec-hdr">
           <button class="ev-back" id="ev-back" type="button" aria-label="Back to dashboard list" data-i18n-al="nav.backToDashboardList">
-            <svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"/></svg>
+            <svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg>
             <span data-i18n="common.back">Back</span>
           </button>
           <h1 class="sec-title" id="ev-title">General</h1>
@@ -217,22 +217,22 @@
 
     <!-- About -->
     <section class="sec" id="sec-about" hidden>
-      <div class="sec-hdr"><a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2 2 9l7 7"></path></svg></a><h1 class="sec-title" data-i18n="nav.about">About</h1></div>
+      <div class="sec-hdr"><a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.about">About</h1></div>
       <div class="about-hero">
         <div class="about-ic-wrap">
           <svg width="64" height="64" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)"><path fill="var(--accent)" d="M4978 9180 c-75 -13 -146 -39 -233 -83 -112 -57 -244 -190 -302 -302 -70 -135 -88 -210 -88 -360 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 141 -72 193 -84 430 -93 354 -15 602 -64 885 -177 803 -319 1400 -1028 1569 -1863 39 -195 46 -272 46 -520 0 -155 -5 -278 -14 -335 -50 -332 -129 -578 -281 -870 -108 -207 -125 -266 -125 -430 0 -150 18 -225 88 -360 58 -112 190 -244 302 -302 135 -70 210 -88 360 -88 108 0 143 4 205 24 174 54 330 167 424 309 65 100 195 366 269 552 135 343 219 677 263 1055 13 111 18 226 18 445 0 318 -13 473 -60 730 -102 550 -309 1064 -617 1525 -668 1002 -1742 1656 -2937 1790 -169 19 -524 28 -592 15z"/><path fill="var(--tx)" d="M2131 7549 c-287 -51 -529 -264 -623 -549 -29 -87 -32 -106 -32 -230 0 -111 3 -149 22 -213 55 -191 173 -354 330 -454 32 -21 426 -249 875 -508 707 -407 814 -472 799 -483 -9 -7 -396 -232 -861 -500 -747 -431 -852 -495 -917 -555 -314 -293 -338 -763 -56 -1104 85 -103 257 -210 402 -249 47 -13 102 -18 195 -18 146 0 214 14 330 69 39 18 441 247 894 509 453 262 826 476 828 476 1 0 3 -445 3 -989 0 -1079 -1 -1063 58 -1213 77 -199 249 -369 448 -444 470 -177 976 104 1070 593 12 63 14 339 14 1723 0 1064 -4 1685 -10 1751 -25 247 -119 435 -284 571 -61 51 -2844 1666 -3014 1749 -40 21 -104 45 -140 54 -79 20 -255 28 -331 14z"/></g></svg>
           <div class="about-dot d-none" id="about-update-dot" title="Update available" data-i18n-title="about.updateAvailable">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+            <svg class="sy-icon" width="10" height="10" aria-hidden="true" focusable="false"><use href="#sy-solid-up"/></svg>
           </div>
         </div>
         <div class="about-name">Stackyard</div>
         <div class="about-ver" id="about-version">Version</div>
       </div>
       <div class="grp">
-        <a class="row row-link" href="https://stackyard.sandobserver.com/docs/" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="rl" data-i18n="about.documentation">Documentation</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-        <a class="row row-link" href="https://github.com/SandObserver/stackyard/issues" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="rl" data-i18n="about.reportIssue">Report an issue</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-        <a class="row row-link" href="https://github.com/SandObserver/stackyard/tree/main" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg><span class="rl" data-i18n="about.sourceCode">Source code</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-        <a class="row row-link" href="https://stackyard.sandobserver.com/docs/support/" target="_blank" rel="noopener"><svg class="about-ri" width="15" height="15" viewBox="0 0 24 24" fill="#e7124d" stroke="none" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="rl" data-i18n="about.support">Support</span><svg class="about-ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+        <a class="row row-link" href="https://stackyard.sandobserver.com/docs/" target="_blank" rel="noopener"><svg class="sy-icon about-ri" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-docs"/></svg><span class="rl" data-i18n="about.documentation">Documentation</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
+        <a class="row row-link" href="https://github.com/SandObserver/stackyard/issues" target="_blank" rel="noopener"><svg class="sy-icon about-ri" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-issue"/></svg><span class="rl" data-i18n="about.reportIssue">Report an issue</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
+        <a class="row row-link" href="https://github.com/SandObserver/stackyard/tree/main" target="_blank" rel="noopener"><svg class="sy-icon about-ri" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-github"/></svg><span class="rl" data-i18n="about.sourceCode">Source code</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
+        <a class="row row-link" href="https://stackyard.sandobserver.com/docs/support/" target="_blank" rel="noopener"><svg class="sy-icon about-ri about-heart" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-heart"/></svg><span class="rl" data-i18n="about.support">Support</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
       </div>
     </section>
 
@@ -254,19 +254,19 @@
 <!-- Mobile bottom tab bar (shown only on small screens, when authenticated) -->
 <nav class="mtabbar" aria-label="Settings sections" data-i18n-al="nav.sections">
   <button class="mtab" data-sec="general" type="button">
-    <svg class="ni" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg class="sy-icon ni" width="24" height="24" aria-hidden="true" focusable="false"><use href="#sy-solid-general"/></svg>
     <span data-i18n="nav.general">General</span>
   </button>
   <button class="mtab" data-sec="appearance" type="button">
-    <svg class="ni" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+    <svg class="sy-icon ni" width="24" height="24" aria-hidden="true" focusable="false"><use href="#sy-solid-appearance"/></svg>
     <span data-i18n="nav.appearance">Appearance</span>
   </button>
   <button class="mtab" data-sec="dashboard" type="button">
-    <svg class="ni" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <svg class="sy-icon ni" width="24" height="24" aria-hidden="true" focusable="false"><use href="#sy-solid-dashboard"/></svg>
     <span data-i18n="nav.dashboard">Dashboard</span>
   </button>
   <button class="mtab" data-sec="about" type="button">
-    <svg class="ni" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <svg class="sy-icon ni" width="24" height="24" aria-hidden="true" focusable="false"><use href="#sy-solid-info"/></svg>
     <span data-i18n="nav.about">About</span>
   </button>
 </nav>
@@ -294,6 +294,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=2e9ad09c"></script>
+<script type="module" src="/js/admin.js?v=12844b8b"></script>
 </body>
 </html>

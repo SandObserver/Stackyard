@@ -1029,3 +1029,13 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
 @media (prefers-reduced-motion: reduce) {
   .mp, .mp.on { transition:none }
 }
+
+.sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
+.sy-icon{flex-shrink:0;--icon-accent:var(--accent)}
+.sy-i{fill:currentColor}
+.sy-i3{fill:currentColor;fill-opacity:.4}
+.sy-a{fill:var(--icon-accent,currentColor)}
+.sy-is{stroke:currentColor}
+.sy-i3s{stroke:currentColor;stroke-opacity:.4}
+.sy-as{stroke:var(--icon-accent,currentColor)}
+@media (forced-colors:active){.sy-icon{--icon-accent:CanvasText}}

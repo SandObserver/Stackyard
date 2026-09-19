@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=7da1ff10';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e2646986';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=c5d8bff8';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=0b617803';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9833ce5d';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=1c65c8ad';
 import { resolveAdminSection } from '/js/admin-logic.js?v=e3673bd7';
 import {
   buildAppItem,
@@ -10,16 +10,17 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=4f71ef6c';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=4d5e9919';
-import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=69f5c7f9';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=002dde46';
+import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=dc0e02b6';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=5a5d655f';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=c4b11d2a';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=3237dd3e';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=2b633751';
+import { createListbox } from '/js/listbox.js?v=96066369';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=606a68c6';
 import {
   clearSkipTls,
   convert,
@@ -32,10 +33,12 @@ import {
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
 import { readMode, watchSystemTheme, writeMode } from '/js/theme.js?v=787bfdff';
-import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=5d2b6f16';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=d0c89032';
+import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=045df327';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=a48fbc58';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
+
+ensureSprite();
 
 /* A class rather than a bare media query. Some phones report a wider CSS
    viewport than they have. The rule lives in layout.js, shared with the
@@ -190,13 +193,6 @@ function showEditView() {
   q('.cp')?.scrollTo?.(0, 0);
 }
 
-const TYPE_ICONS = {
-  app: '<rect x="7" y="7" width="10" height="10" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/>',
-  widget:
-    '<rect x="3.5" y="6.5" width="17" height="11" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7.2" cy="10.2" r="1.5" fill="currentColor"/><line x1="5.6" y1="13.4" x2="17.4" y2="13.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.6" y1="15.2" x2="17.4" y2="15.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-  folder:
-    '<rect x="6" y="6" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9.7" cy="9.7" r="1.25" fill="currentColor"/><circle cx="14.3" cy="9.7" r="1.25" fill="currentColor"/><circle cx="9.7" cy="14.3" r="1.25" fill="currentColor"/><circle cx="14.3" cy="14.3" r="1.25" fill="currentColor"/>',
-};
 /* Read at draw time. The catalog is not loaded when this module evaluates. */
 const typeLabels = () => ({ app: t('type.app'), widget: t('type.widget'), folder: t('type.folder') });
 
@@ -216,10 +212,7 @@ function buildAddNewCard() {
     b.dataset.ctype = kind;
     b.setAttribute('aria-pressed', String(kind === state.ctype));
     b.setAttribute('aria-label', t('type.addNew') + ': ' + label);
-    setHtml(
-      b,
-      html`<span class="tile-ico"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">${raw(TYPE_ICONS[kind])}</svg></span><span class="tile-cap">${label}</span>`,
-    );
+    setHtml(b, html`<span class="tile-ico">${raw(iconSvg(kind, 38))}</span><span class="tile-cap">${label}</span>`);
     b.onclick = () => {
       if (state.ctype === kind) return;
       state.ctype = kind;
