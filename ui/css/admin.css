@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .albl-hdr.albl-dragging{opacity:.5}
 .albl-hdr.albl-dragging .albl-grip{cursor:grabbing}
 .albl-ctl{display:flex;align-items:center;gap:2px;margin-inline-start:auto}
-.albl-move{background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer;padding:3px 7px;border-radius:6px}
+.albl-move{display:inline-flex;align-items:center;background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer;padding:3px 7px;border-radius:6px}
 .albl-move:hover:not(:disabled){background:var(--ov)}
 .albl-move:disabled{color:var(--dm);cursor:default;opacity:.45}
 .albl-move:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
