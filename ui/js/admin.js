@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=858f3f84';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=1b644e36';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=896b21df';
 import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=ee1d30d8';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=93ca6dec';

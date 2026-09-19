@@ -15,9 +15,9 @@ import { el, inp, setUserText } from '/js/utils.js?v=ec5ae295';
 let _passwordSet = false;
 let _authEnabled = false;
 
-/** @type {{ dirty: () => boolean, reset: () => void } | null} */
+/** @type {{ dirty: () => boolean, reset: (force?: boolean) => void } | null} */
 let _srvTrack = null;
-/** @type {{ dirty: () => boolean, reset: () => void } | null} */
+/** @type {{ dirty: () => boolean, reset: (force?: boolean) => void } | null} */
 let _bgTrack = null;
 
 const _val = (...ids) => {
@@ -60,6 +60,7 @@ const readWallpaperForm = () =>
 function trackSave(buttonId, read) {
   const btn = /** @type {HTMLButtonElement|null} */ (el(buttonId));
   const tr = createDirtyTracker(read);
+  let touched = false;
   const sync = () => {
     if (btn) btn.disabled = !tr.dirty();
   };
@@ -67,12 +68,21 @@ function trackSave(buttonId, read) {
      the body, and a choice made there must still enable Save. Deferred: pickers
      and inline editors update their value after the event. */
   for (const type of ['input', 'change', 'click', 'keyup', 'focusout'])
-    document.addEventListener(type, () => setTimeout(sync));
+    document.addEventListener(type, () =>
+      setTimeout(() => {
+        if (tr.dirty()) touched = true;
+        sync();
+      }),
+    );
   sync();
   return {
     dirty: tr.dirty,
-    reset: () => {
-      tr.reset();
+    /* A late reset must not swallow an edit made while it was in flight: the
+       baseline would then match the edit and Save would never light.
+       @param {boolean} [force] */
+    reset: (force = true) => {
+      if (force || !touched) tr.reset();
+      if (force) touched = false;
       sync();
     },
   };
@@ -251,7 +261,7 @@ export function loadSettings(c) {
 
   _srvTrack = trackSave('srv-save', readServerForm);
   _bgTrack = trackSave('bg-save', readWallpaperForm);
-  syncAuthFromServer().then(() => _srvTrack?.reset());
+  syncAuthFromServer().then(() => _srvTrack?.reset(false));
 }
 
 async function syncAuthFromServer() {
