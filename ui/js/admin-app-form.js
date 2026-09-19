@@ -369,19 +369,20 @@ function renderActLabels(host) {
     );
     const ctl = document.createElement('span');
     ctl.className = 'albl-ctl';
-    const mkBtn = (txt, aria, cls, disabled, onClick) => {
+    const mkBtn = (txt, aria, cls, disabled, onClick, icon) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = cls;
-      b.textContent = txt;
+      if (icon) setHtml(b, html`${raw(iconSvg(icon, 14))}`);
+      else b.textContent = txt;
       b.setAttribute('aria-label', aria);
       b.disabled = disabled;
       b.onclick = onClick;
       return b;
     };
     ctl.append(
-      mkBtn('\u2191', t('app.moveUp'), 'albl-move', i === 0, () => moveActLabel(i, -1)),
-      mkBtn('\u2193', t('app.moveDown'), 'albl-move', i === state.spaths.length - 1, () => moveActLabel(i, 1)),
+      mkBtn('', t('app.moveUp'), 'albl-move', i === 0, () => moveActLabel(i, -1), 'arrow-up'),
+      mkBtn('', t('app.moveDown'), 'albl-move', i === state.spaths.length - 1, () => moveActLabel(i, 1), 'arrow-down'),
       mkBtn(t('widgetCfg.remove'), t('app.removeLabel'), 'grp-hdr-rm', false, () => {
         captureActLabels();
         state.spaths.splice(i, 1);
