@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Badge colours Accent, Success, Warning, Danger and Info.
 
+- Umami services can authenticate with an API key instead of a username and
+  password.
+
 ### Changed
 
 - A new password is limited to 1024 characters.
@@ -51,6 +54,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - App labels stay readable over a dark wallpaper with increased contrast in
   light mode.
+
+- Settings sections start at the top on a phone instead of keeping the previous
+  section's scroll position.
+
+- Renaming or recolouring a service no longer clears its stored credential.
+
+- Settings no longer reports a credential as stored after the one it described
+  was dropped.
 
 ## [1.13.1] - 2026-09-15
 
