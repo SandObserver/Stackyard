@@ -24,8 +24,8 @@ export const ROLE_NAMES = ['accent', 'success', 'warning', 'danger', 'info'];
 /** @type {readonly string[]} */
 export const TILE_KEYWORDS = ['dark', 'light', 'auto', 'clear'];
 
-/* Plain object literals inherit Object.prototype, so a name like "constructor"
-   would resolve to a function and reach the DOM as a colour. */
+/* Prototype-free. A name like "constructor" otherwise resolves to a function
+   and reaches the DOM as a colour. */
 const _tables = t => {
   for (const k of Object.keys(t)) t[k] = Object.assign(Object.create(null), t[k]);
   return t;
@@ -77,23 +77,20 @@ const TILE = _tables({
 /** @param {unknown} theme */
 const pick = theme => (theme === 'light' ? 'light' : 'dark');
 
-/** A palette or role name as the colour for this theme, or ''.
-    @param {unknown} name @param {unknown} theme */
+/** @param {unknown} name @param {unknown} theme @returns {string} */
 export function paletteColor(name, theme) {
   const t = pick(theme);
   if (typeof name !== 'string') return '';
   return HUES[t][name] || ROLES[t][name] || '';
 }
 
-/** A tile keyword or palette name as the colour for this theme, or ''.
-    @param {unknown} name @param {unknown} theme */
+/** @param {unknown} name @param {unknown} theme @returns {string} */
 export function tileColor(name, theme) {
   if (typeof name !== 'string') return '';
   return TILE[pick(theme)][name] || paletteColor(name, theme);
 }
 
-/** The theme on the page, read from the root element.
-    @param {{ documentElement?: { getAttribute(n: string): string|null } }} [doc] */
+/** @param {{ documentElement?: { getAttribute(n: string): string|null } }} [doc] */
 export function pageTheme(doc = globalThis.document) {
   return doc?.documentElement?.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
 }

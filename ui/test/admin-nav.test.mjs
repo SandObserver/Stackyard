@@ -33,8 +33,7 @@ test('each header Save is driven by its own unsaved-change check', () => {
     /document\.addEventListener\(type, \(\) =>\s*setTimeout\(/,
     'a picker list lives on the body, so listening on the section misses its choice',
   );
-  /* The auth check resets the baseline when it returns. Forcing it there would
-     swallow a choice made while it was in flight. */
+  /* Forcing the reset there swallows a choice made while it was in flight. */
   assert.match(src, /syncAuthFromServer\(\)\.then\(\(\) => _srvTrack\?\.reset\(false\)\)/);
   const reader = src.slice(src.indexOf('const readServerForm'), src.indexOf('const readWallpaperForm'));
   assert.doesNotMatch(reader, /set-lbl|set-awake/, 'a save-on-change switch must not light Save');

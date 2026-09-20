@@ -5,7 +5,7 @@ import { mkGlassRim } from '/js/glass-rim.js?v=3faec233';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { BRAND_MARK } from '/js/brand-mark.js?v=1dcbf1ac';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { pageTheme, tileColor } from '/js/palette.js?v=bf6b38a6';
+import { pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 export const mk = (t, a = {}) => {
   const e = document.createElement(t);

@@ -1,4 +1,4 @@
-import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=ee1d30d8';
+import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=52e149f5';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -9,7 +9,7 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=e3673bd7';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, setUserText } from '/js/utils.js?v=ec5ae295';
+import { el, inp, setUserText } from '/js/utils.js?v=55685187';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -77,8 +77,8 @@ function trackSave(buttonId, read) {
   sync();
   return {
     dirty: tr.dirty,
-    /* A late reset must not swallow an edit made while it was in flight: the
-       baseline would then match the edit and Save would never light.
+    /* Do not re-baseline a touched form. The edit is swallowed and Save never
+       lights again.
        @param {boolean} [force] */
     reset: (force = true) => {
       if (force || !touched) tr.reset();

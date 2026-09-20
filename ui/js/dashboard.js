@@ -24,9 +24,9 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=ec5ae295';
+} from '/js/utils.js?v=55685187';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=bfb16de3';
+import { initSpotlight } from '/js/spotlight.js?v=f050b4e5';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
@@ -40,7 +40,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=9d8de842';
+} from '/js/ui.js?v=d8363297';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=ad283693';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -58,7 +58,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=606a68c6';
-import { pageTheme, paletteColor } from '/js/palette.js?v=bf6b38a6';
+import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=787bfdff';
 
 ensureSprite();
@@ -563,8 +563,6 @@ async function sampleWallpaper(url, brightness, fit) {
 
 /* The wallpaper is sized against the viewport, so a resize moves which part of
    it each label sits on. */
-/* The tone the theme implies, for a background the sampler cannot read. Without
-   it the labels keep the dark theme's white over a light background. */
 const themeTone = () => (pageTheme() === 'light' ? 'dark' : 'light');
 
 function resampleBg() {
