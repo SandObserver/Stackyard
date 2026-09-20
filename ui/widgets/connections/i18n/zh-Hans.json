@@ -44,6 +44,8 @@
   "services.siteId.label": "站点 ID（域名）",
   "services.siteId.placeholder": "example.com",
   "services.apiKey.label": "统计 API 密钥",
+  "services.apiKey.label.umami": "API 密钥",
+  "services.apiKey.hint.umami": "Umami 3.4.0 及以上版本。留空则使用用户名和密码登录。",
   "services.websiteId.label": "网站 ID",
   "services.websiteId.placeholder": "8dc7… (UUID)",
   "services.username.label": "用户名",

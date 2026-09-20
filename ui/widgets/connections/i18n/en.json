@@ -44,6 +44,8 @@
   "services.siteId.label": "Site ID (domain)",
   "services.siteId.placeholder": "example.com",
   "services.apiKey.label": "Stats API key",
+  "services.apiKey.label.umami": "API key",
+  "services.apiKey.hint.umami": "Umami 3.4.0 and later. Leave empty to sign in with a username and password.",
   "services.websiteId.label": "Website ID",
   "services.websiteId.placeholder": "8dc7… (UUID)",
   "services.username.label": "Username",

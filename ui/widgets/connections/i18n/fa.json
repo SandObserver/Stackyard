@@ -44,6 +44,8 @@
   "services.siteId.label": "شناسهٔ سایت (دامنه)",
   "services.siteId.placeholder": "example.com",
   "services.apiKey.label": "کلید API آمار",
+  "services.apiKey.label.umami": "کلید API",
+  "services.apiKey.hint.umami": "از Umami نسخه ۳.۴.۰ به بعد. برای ورود با نام کاربری و رمز عبور، خالی بگذارید.",
   "services.websiteId.label": "شناسهٔ وب‌سایت",
   "services.websiteId.placeholder": "8dc7… (UUID)",
   "services.username.label": "نام کاربری",

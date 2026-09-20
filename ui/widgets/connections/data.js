@@ -333,15 +333,21 @@ async function mapView(ctx) {
           o.connected = total;
           o.limit = 0;
         } else if (s.type === 'umami') {
-          const lg = await fetchJSON(base + '/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: s.username || '', password: s.password || '' }),
-          });
-          if (authErr(lg)) ctx.fail('Auth required — check username/password', { kind: ctx.KIND.AUTH });
-          if (lg.status >= 400) ctx.fail('Login HTTP ' + lg.status);
-          const token = lg.data && lg.data.token;
-          if (!token) ctx.fail('Login failed', { kind: ctx.KIND.AUTH });
+          const usingKey = !!s.apiKey;
+          let token = s.apiKey || '';
+          if (!token) {
+            if (!s.username && !s.password)
+              ctx.fail('Enter an API key, or a username and password', { kind: ctx.KIND.INVALID });
+            const lg = await fetchJSON(base + '/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: s.username || '', password: s.password || '' }),
+            });
+            if (authErr(lg)) ctx.fail('Auth required — check username/password', { kind: ctx.KIND.AUTH });
+            if (lg.status >= 400) ctx.fail('Login HTTP ' + lg.status);
+            token = (lg.data && lg.data.token) || '';
+            if (!token) ctx.fail('Login failed', { kind: ctx.KIND.AUTH });
+          }
           const end = Date.now(),
             start = end - 7 * 24 * 3600 * 1000;
           const r = await fetchJSON(
@@ -354,6 +360,10 @@ async function mapView(ctx) {
               end,
             { headers: { Authorization: 'Bearer ' + token } },
           );
+          if (authErr(r))
+            ctx.fail(usingKey ? 'Auth rejected — check the API key' : 'Auth rejected — check username/password', {
+              kind: ctx.KIND.AUTH,
+            });
           if (r.status >= 400) ctx.fail('HTTP ' + r.status);
           const rows = Array.isArray(r.data) ? r.data : [];
           const regions = {};
