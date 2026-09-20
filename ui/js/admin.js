@@ -194,11 +194,16 @@ function showListView() {
   el('dash-list-view').classList.remove('d-none');
   el('dash-edit-view').classList.add('d-none');
 }
+/* Keep both. The pane scrolls on a wide window, the document on a phone. */
+function scrollSettingsTop() {
+  q('.cp')?.scrollTo?.(0, 0);
+  scrollTo(0, 0);
+}
+
 function showEditView() {
   el('dash-list-view').classList.add('d-none');
   el('dash-edit-view').classList.remove('d-none');
-  el('cp')?.scrollTo?.(0, 0);
-  q('.cp')?.scrollTo?.(0, 0);
+  scrollSettingsTop();
 }
 
 /* Read at draw time. The catalog is not loaded when this module evaluates. */
@@ -616,7 +621,8 @@ function initNav() {
   const STORE = 'admin_sec';
   const sections = qa('.sec', document).map(s => s.id.replace(/^sec-/, ''));
 
-  function show(requested) {
+  /* Do not scroll on the restoring first call. Only a picked section. */
+  function show(requested, picked) {
     const id = resolveAdminSection(requested, sections);
     if (id === null) return;
     if (requested && id !== requested) console.warn('admin: unknown section', requested, '- showing', id);
@@ -626,9 +632,10 @@ function initNav() {
     links.forEach(l => l.classList.toggle('active', l.dataset.sec === id));
     syncGlideSelect();
     localStorage.setItem(STORE, id);
+    if (picked) scrollSettingsTop();
   }
-  links.forEach(l => l.addEventListener('click', () => show(l.dataset.sec)));
-  addEventListener('hashchange', () => show(location.hash.slice(1)));
+  links.forEach(l => l.addEventListener('click', () => show(l.dataset.sec, true)));
+  addEventListener('hashchange', () => show(location.hash.slice(1), true));
   show(location.hash.slice(1) || localStorage.getItem(STORE));
   initGlideSelect();
 }

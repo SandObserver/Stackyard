@@ -76,7 +76,8 @@
           "type": "text",
           "label": "vpn.name.label",
           "placeholder": "vpn.name.placeholder",
-          "optional": true
+          "optional": true,
+          "cosmetic": true
         },
         {
           "key": "url",
@@ -128,7 +129,8 @@
           "key": "color",
           "type": "color",
           "label": "vpn.color.label",
-          "default": "#30d158"
+          "default": "#30d158",
+          "cosmetic": true
         }
       ]
     },
@@ -174,7 +176,8 @@
           "type": "text",
           "label": "services.name.label",
           "placeholder": "services.name.placeholder",
-          "optional": true
+          "optional": true,
+          "cosmetic": true
         },
         {
           "key": "url",
@@ -266,10 +269,22 @@
           }
         },
         {
+          "key": "apiKey",
+          "type": "secret",
+          "label": "services.apiKey.label.umami",
+          "hint": "services.apiKey.hint.umami",
+          "optional": true,
+          "showIf": {
+            "field": "type",
+            "equals": "umami"
+          }
+        },
+        {
           "key": "username",
           "type": "text",
           "label": "services.username.label",
           "placeholder": "services.username.placeholder",
+          "optional": true,
           "showIf": {
             "field": "type",
             "equals": "umami"
@@ -279,6 +294,7 @@
           "key": "password",
           "type": "secret",
           "label": "services.password.label",
+          "optional": true,
           "showIf": {
             "field": "type",
             "equals": "umami"
@@ -295,7 +311,8 @@
           "key": "color",
           "type": "color",
           "label": "services.color.label",
-          "default": "#30d158"
+          "default": "#30d158",
+          "cosmetic": true
         }
       ]
     },

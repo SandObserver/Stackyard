@@ -1,8 +1,9 @@
-/* Restore a stored secret only when every non-secret field matches what is
-   saved. The request chooses the destination, so matching on the item id alone
-   sends a stored credential anywhere the caller names. */
+/* Restore a stored secret only when every field that can redirect it matches
+   what is saved. The request chooses the destination, so matching on the item
+   id alone sends a stored credential anywhere the caller names. Fields the
+   manifest marks cosmetic are excluded. */
 
-const { secretSpec } = require('./widget-secrets');
+const { secretSpec, cosmeticSpec } = require('./widget-secrets');
 const { toRows } = require('./badge-headers');
 
 function stableEqual(a, b) {
@@ -22,7 +23,6 @@ function stableEqual(a, b) {
 }
 
 function stripWidgetSecrets(config, entry) {
-  const { topLevel, groups, objects } = secretSpec(entry);
   const out = structuredClone(config || {});
   const drop = (obj, keys) => {
     if (!obj || typeof obj !== 'object') return;
@@ -31,11 +31,13 @@ function stripWidgetSecrets(config, entry) {
       delete obj[k + 'Set'];
     }
   };
-  drop(out, topLevel);
-  for (const [gk, subKeys] of Object.entries(groups)) {
-    if (Array.isArray(out[gk])) for (const row of out[gk]) drop(row, subKeys);
+  for (const spec of [secretSpec(entry), cosmeticSpec(entry)]) {
+    drop(out, spec.topLevel);
+    for (const [gk, subKeys] of Object.entries(spec.groups)) {
+      if (Array.isArray(out[gk])) for (const row of out[gk]) drop(row, subKeys);
+    }
+    for (const [ok, subKeys] of Object.entries(spec.objects)) drop(out[ok], subKeys);
   }
-  for (const [ok, subKeys] of Object.entries(objects)) drop(out[ok], subKeys);
   return out;
 }
 

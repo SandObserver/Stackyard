@@ -142,3 +142,28 @@ test('adding a widget stores its type', async ({ page, request }) => {
   const widget = expectItem(cfg, i => i.type === 'widget', 'the widget');
   expect(widget.widgetType).toBe('clock');
 });
+
+test('switching section on a phone starts the new section at the top', async ({ page, request }) => {
+  /* Enough items that the Dashboard section scrolls well past one screen. */
+  await seedConfig(request, {
+    items: Array.from({ length: 16 }, (_, i) => app(`item${i}`, `Item ${i}`)),
+  });
+
+  /* The phone layout hides the sidebar the shared helper clicks. */
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/admin/');
+  await page.locator('body.authed').waitFor({ state: 'attached' });
+  await page.locator('.mtab[data-sec="dashboard"]').click();
+  await page.locator('#btn-add').waitFor({ state: 'visible' });
+
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+
+  await page.locator('.mtab[data-sec="general"]').click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+  await page.evaluate(() => window.scrollTo(0, 300));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.locator('.mtab[data-sec="dashboard"]').click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+});

@@ -138,3 +138,45 @@ test('a badge request with nothing stored never restores', () => {
   assert.equal(badgeRequestMatchesSaved(asSent, null), false);
   assert.equal(badgeRequestMatchesSaved(asSent, undefined), false);
 });
+
+/* ── cosmetic fields ──────────────────────────────────────────────────────── */
+
+const connections = getRegistry().connections;
+
+function svc(over = {}) {
+  return {
+    view: 'map',
+    services: [
+      {
+        type: 'umami',
+        name: 'Analytics',
+        url: 'http://umami.invalid:3000',
+        websiteId: 'abc',
+        color: '#3CD3FE',
+        apiKey: 'umami_stored',
+        ...over,
+      },
+    ],
+  };
+}
+
+test('renaming a service keeps the stored credential in scope', () => {
+  assert.equal(widgetConfigMatchesSaved(svc({ name: 'Renamed' }), svc(), connections), true);
+});
+
+test('recolouring a service keeps the stored credential in scope', () => {
+  assert.equal(widgetConfigMatchesSaved(svc({ color: '#ff0000' }), svc(), connections), true);
+});
+
+test('changing the url takes the stored credential out of scope', () => {
+  assert.equal(widgetConfigMatchesSaved(svc({ url: 'http://attacker.invalid' }), svc(), connections), false);
+});
+
+test('changing a field the manifest does not mark cosmetic takes it out of scope', () => {
+  assert.equal(widgetConfigMatchesSaved(svc({ websiteId: 'other' }), svc(), connections), false);
+});
+
+test('a cosmetic field cannot mask a changed destination', () => {
+  const moved = svc({ name: 'Renamed', url: 'http://attacker.invalid' });
+  assert.equal(widgetConfigMatchesSaved(moved, svc(), connections), false);
+});

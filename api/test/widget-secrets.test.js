@@ -63,7 +63,7 @@ test('preserveWidgetSecrets restores a secret omitted by the browser', () => {
   const newItem = { widgetConfig: { host: 'new.example.com' } };
   preserveWidgetSecrets(newItem, oldItem, ENTRY);
   assert.equal(newItem.widgetConfig.apiKey, 'super-secret');
-  assert.equal(newItem.widgetConfig.apiKeySet, true);
+  assert.equal(newItem.widgetConfig.apiKeySet, undefined);
   assert.equal(newItem.widgetConfig.host, 'new.example.com');
 });
 
@@ -72,7 +72,7 @@ test('preserveWidgetSecrets keeps a newly submitted secret instead of the old on
   const newItem = { widgetConfig: { apiKey: 'new-secret' } };
   preserveWidgetSecrets(newItem, oldItem, ENTRY);
   assert.equal(newItem.widgetConfig.apiKey, 'new-secret');
-  assert.equal(newItem.widgetConfig.apiKeySet, true);
+  assert.equal(newItem.widgetConfig.apiKeySet, undefined);
 });
 
 test('preserveWidgetSecrets matches group rows by position', () => {
@@ -89,9 +89,9 @@ test('preserveWidgetSecrets matches group rows by position', () => {
   };
   preserveWidgetSecrets(newItem, oldItem, ENTRY);
   assert.equal(newItem.widgetConfig.accounts[0].token, 'tok-1');
-  assert.equal(newItem.widgetConfig.accounts[0].tokenSet, true);
+  assert.equal(newItem.widgetConfig.accounts[0].tokenSet, undefined);
   assert.equal(newItem.widgetConfig.accounts[1].token, 'tok-2-new');
-  assert.equal(newItem.widgetConfig.accounts[1].tokenSet, true);
+  assert.equal(newItem.widgetConfig.accounts[1].tokenSet, undefined);
 });
 
 test('preserveWidgetSecrets is a no-op for items without widgetConfig', () => {
@@ -135,7 +135,7 @@ test('preserveWidgetSecrets restores an object secret omitted by the browser', (
   const newItem = { widgetConfig: { network: { enabled: false } } };
   preserveWidgetSecrets(newItem, oldItem, ENTRY2);
   assert.equal(newItem.widgetConfig.network.pass, 'hunter2');
-  assert.equal(newItem.widgetConfig.network.passSet, true);
+  assert.equal(newItem.widgetConfig.network.passSet, undefined);
   assert.equal(newItem.widgetConfig.network.enabled, false);
 });
 
@@ -154,7 +154,7 @@ test('preserveWidgetSecrets matches group rows by id regardless of order', () =>
   preserveWidgetSecrets(newItem, oldItem, ENTRY2);
   assert.equal(newItem.widgetConfig.services[0].token, 'tok-b-new');
   assert.equal(newItem.widgetConfig.services[1].token, 'tok-a');
-  assert.equal(newItem.widgetConfig.services[1].tokenSet, true);
+  assert.equal(newItem.widgetConfig.services[1].tokenSet, undefined);
 });
 
 /* ── P5-8: membership was tested with `in` ───────────────────────────────────
@@ -189,7 +189,7 @@ test('preserve restores a secret whose key is an inherited name', () => {
   const newItem = { widgetType: 'x', widgetConfig: { host: 'example.com' } };
   preserveWidgetSecrets(newItem, oldItem, INHERITED_ENTRY);
   assert.equal(newItem.widgetConfig.toString, 'STORED', 'the omitted secret must come back');
-  assert.equal(newItem.widgetConfig.toStringSet, true);
+  assert.equal(newItem.widgetConfig.toStringSet, undefined);
 });
 
 test('preserve restores a group-row secret whose key is an inherited name', () => {
@@ -197,4 +197,48 @@ test('preserve restores a group-row secret whose key is an inherited name', () =
   const newItem = { widgetType: 'x', widgetConfig: { accounts: [{ id: 1 }] } };
   preserveWidgetSecrets(newItem, oldItem, INHERITED_ENTRY);
   assert.equal(newItem.widgetConfig.accounts[0].constructor, 'ROW-SECRET');
+});
+
+test('a stored marker left by an older version does not survive a scrub', () => {
+  const item = { widgetConfig: { apiKeySet: true, host: 'example.com' } };
+  scrubWidgetSecrets(item, ENTRY);
+  assert.equal(item.widgetConfig.apiKeySet, undefined, 'no secret is held, so nothing claims one is');
+});
+
+test('a marker asserted by the browser is not written to the stored config', () => {
+  const oldItem = { widgetConfig: {} };
+  const newItem = { widgetConfig: { apiKeySet: true, host: 'example.com' } };
+  preserveWidgetSecrets(newItem, oldItem, ENTRY);
+  assert.equal(newItem.widgetConfig.apiKeySet, undefined);
+  assert.equal(newItem.widgetConfig.apiKey, undefined);
+});
+
+test('an empty secret does not count as one being stored', () => {
+  const item = { widgetConfig: { apiKey: '', host: 'example.com' } };
+  scrubWidgetSecrets(item, ENTRY);
+  assert.equal(item.widgetConfig.apiKeySet, undefined);
+});
+
+test('a key declared once per provider is listed once', () => {
+  const entry = {
+    manifest: {
+      fields: [
+        {
+          key: 'services',
+          type: 'group',
+          fields: [
+            { key: 'apiKey', type: 'secret', showIf: { field: 'type', equals: 'one' } },
+            { key: 'apiKey', type: 'secret', showIf: { field: 'type', equals: 'two' } },
+          ],
+        },
+      ],
+    },
+  };
+  assert.deepEqual(secretSpec(entry).groups.services, ['apiKey']);
+
+  /* Acting twice on one key set the marker and then cleared it again. */
+  const item = { widgetConfig: { services: [{ apiKey: 'k' }] } };
+  scrubWidgetSecrets(item, entry);
+  assert.equal(item.widgetConfig.services[0].apiKeySet, true);
+  assert.equal(item.widgetConfig.services[0].apiKey, undefined);
 });

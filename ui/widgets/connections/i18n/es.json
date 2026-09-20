@@ -44,6 +44,8 @@
   "services.siteId.label": "ID del sitio (dominio)",
   "services.siteId.placeholder": "example.com",
   "services.apiKey.label": "Clave de API de estadísticas",
+  "services.apiKey.label.umami": "Clave de API",
+  "services.apiKey.hint.umami": "Umami 3.4.0 o posterior. Déjalo vacío para iniciar sesión con usuario y contraseña.",
   "services.websiteId.label": "ID del sitio web",
   "services.websiteId.placeholder": "8dc7… (UUID)",
   "services.username.label": "Usuario",

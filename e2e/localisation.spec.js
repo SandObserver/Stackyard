@@ -17,6 +17,9 @@ async function seed(request, settings = {}) {
 test('a language chosen in Settings is saved and survives a reload', async ({ page, request }) => {
   await seed(request);
   await page.goto('/admin/');
+  /* The picker is rebuilt when the config load finishes, which detaches an
+     already-open list and loses the click on it. */
+  await page.locator('body.authed').waitFor({ state: 'attached' });
 
   await page.locator('#lang-btn').click();
   await page.locator('#lang-list li[data-val="de"]').click();
