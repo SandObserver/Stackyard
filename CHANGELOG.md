@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-09-20
+
 ### Added
 
 - Display Mode now applies to the dashboard and every widget, not only Settings.
@@ -1413,7 +1415,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.13.1...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.14.0...HEAD
+[1.14.0]: https://github.com/SandObserver/stackyard/compare/v1.13.1...v1.14.0
 [1.13.1]: https://github.com/SandObserver/stackyard/compare/v1.13.0...v1.13.1
 [1.13.0]: https://github.com/SandObserver/stackyard/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/SandObserver/stackyard/compare/v1.11.0...v1.12.0
