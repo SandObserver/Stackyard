@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Display Mode now applies to the dashboard and every widget, not only Settings.
+
+- App icon colours Auto, which follows the display mode, and Clear, a frosted
+  glass plate.
+
+- Badge colours Accent, Success, Warning, Danger and Info.
+
 ### Changed
 
 - A new password is limited to 1024 characters.
@@ -17,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Redraw the Settings icons, widget glyphs and Settings tile as one icon set.
 
+- Preset icon and badge colours adapt to the display mode; a custom colour stays
+  exact.
+
+- Widget cards are opaque, white in light mode and near-black in dark mode.
+
+- The clock follows the display mode; its own Dark and Light option is removed.
+
+- The VPN and Connections maps are larger and easier to see.
+
 ### Fixed
 
 - A settings change is no longer held in memory when writing it to disk fails.
@@ -25,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Search keeps every letter typed to open it, including in Safari on a narrow
   window.
+
+- Disk Health no longer shows dark strips at its sides.
+
+- Settings keeps a choice made while the page is still loading, instead of
+  leaving Save greyed out.
+
+- App labels stay readable over a dark wallpaper with increased contrast in
+  light mode.
 
 ## [1.13.1] - 2026-09-15
 
