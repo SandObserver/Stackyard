@@ -87,11 +87,12 @@ test('the theme colour meta precedes the preload script', () => {
   assert.ok(adminHtml.indexOf('name="theme-color"') < adminHtml.indexOf('/js/admin-theme.js'));
 });
 
-/* The dashboard has one appearance. It never sets the attribute, so a light
-   rule reaching its stylesheet would be dead weight nobody can trigger. */
-test('only the settings page is themed', () => {
-  assert.ok(!read('../index.html').includes('admin-theme.js'));
-  assert.ok(!read('../css/dashboard.css').includes('data-theme'));
+test('the dashboard sets the theme before its stylesheets load', () => {
+  const dashHtml = read('../index.html');
+  const script = dashHtml.indexOf('/js/admin-theme.js');
+  assert.ok(script > dashHtml.indexOf('name="theme-color"'));
+  assert.ok(script < dashHtml.indexOf('/css/tokens.css'));
+  assert.ok(!/admin-theme\.js[^>]*\b(defer|async|type="module")/.test(dashHtml));
 });
 
 test('both stylesheets select the light theme the same way', () => {

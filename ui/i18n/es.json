@@ -76,8 +76,8 @@
     "display": "Pantalla",
     "keepAwake": "Mantener la pantalla encendida",
     "keepAwakeTip": "Evita que la pantalla se atenúe o se bloquee mientras el panel está abierto. Los navegadores solo lo permiten mediante HTTPS, así que no tiene efecto en una dirección HTTP simple.",
-    "displayMode": "Modo de visualización de Ajustes",
-    "displayModeTip": "Define la apariencia de las páginas de Ajustes. Se guarda en este navegador, se aplica solo a este dispositivo y surte efecto de inmediato.",
+    "displayMode": "Modo de visualización",
+    "displayModeTip": "Define la apariencia del panel y de las páginas de Ajustes. Se guarda en este navegador, se aplica solo a este dispositivo y surte efecto de inmediato.",
     "displaySystem": "Predeterminado del sistema",
     "displayLight": "Claro",
     "displayDark": "Oscuro",
@@ -101,8 +101,6 @@
     "uploading": "Subiendo…",
     "imageTip": "Las imágenes subidas y enlazadas se guardan en este servidor y se sirven desde él.",
     "customColor": "Color personalizado",
-    "themeDark": "Oscuro (tema)",
-    "themeLight": "Claro (tema)",
     "colorCode": "Código de color",
     "wallpaperSource": "Origen del fondo"
   },
@@ -442,5 +440,30 @@
   "pill": {
     "system": "Sistema",
     "hidden": "Oculto"
+  },
+  "color": {
+    "dark": "Oscuro",
+    "light": "Blanco",
+    "auto": "Automático (oscuro o blanco)",
+    "clear": "Transparente",
+    "system": "Sistema",
+    "accent": "Acento",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "danger": "Peligro",
+    "info": "Información",
+    "red": "Rojo",
+    "orange": "Naranja",
+    "yellow": "Amarillo",
+    "green": "Verde",
+    "mint": "Menta",
+    "teal": "Verde azulado",
+    "cyan": "Cian",
+    "blue": "Azul",
+    "indigo": "Índigo",
+    "purple": "Morado",
+    "pink": "Rosa",
+    "brown": "Marrón",
+    "gray": "Gris"
   }
 }

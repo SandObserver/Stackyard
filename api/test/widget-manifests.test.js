@@ -24,6 +24,7 @@ const KNOWN_KEYS = new Set([
   'sizes',
   'fields',
   'card',
+  'appearance',
   'views',
   'viewField',
   'defaultView',

@@ -1,7 +1,7 @@
 // @ts-check
 /* Keep this module free of the DOM. The DOM reads stay in doSave. */
 
-const BADGE_DEFAULT = '#1e6ef4';
+const BADGE_DEFAULT = 'info';
 
 /* Keep in step with MAX_LABELS in badge-logic.js. */
 const MAX_LABELS = 5;

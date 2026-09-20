@@ -278,6 +278,12 @@
       "/js/smooth-corner.js?v=*": [
         "./ui/js/smooth-corner.js"
       ],
+      "/js/palette.js": [
+        "./ui/js/palette.js"
+      ],
+      "/js/palette.js?v=*": [
+        "./ui/js/palette.js"
+      ],
       "/js/password-strength.js": [
         "./ui/js/password-strength.js"
       ],
@@ -350,6 +356,12 @@
       ],
       "/js/widget-error.js?v=*": [
         "./ui/js/widget-error.js"
+      ],
+      "/js/widget-theme.js": [
+        "./ui/js/widget-theme.js"
+      ],
+      "/js/widget-theme.js?v=*": [
+        "./ui/js/widget-theme.js"
       ],
       "/js/widget-toolbox.js": [
         "./ui/js/widget-toolbox.js"

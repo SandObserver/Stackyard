@@ -75,7 +75,6 @@ test('clr keeps the colour forms the app and CSS actually use', () => {
     'rgb(255, 0, 0)',
     'rgba(255,0,0,.5)',
     'hsl(210 50% 40%)',
-    'red',
     'rebeccapurple',
   ]) {
     assert.equal(clr(ok), ok, `${ok} should survive`);
@@ -192,4 +191,20 @@ test('the layout runs the pass when it tones the labels', () => {
   const dash = read('js/dashboard.js');
   const retone = dash.slice(dash.indexOf('function retone()'), dash.indexOf('function retone()') + 320);
   assert.match(retone, /titleWhenTruncated\(\)/, 'nothing re-runs it on a rebuild or a resize');
+});
+
+test('clr resolves palette names and tile keywords for the page theme', () => {
+  const setTheme = t => (globalThis.document = { documentElement: { getAttribute: () => t } });
+  const prev = globalThis.document;
+  try {
+    setTheme('dark');
+    assert.equal(clr('red'), '#FF4245');
+    assert.equal(clr('auto'), '#1C1C1E');
+    setTheme('light');
+    assert.equal(clr('red'), '#FF383C');
+    assert.equal(clr('auto'), '#F2F2F7');
+    assert.equal(clr('#123456'), '#123456');
+  } finally {
+    globalThis.document = prev;
+  }
 });

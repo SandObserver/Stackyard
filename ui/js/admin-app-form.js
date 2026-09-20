@@ -1,7 +1,7 @@
-import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=045df327';
+import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=55685187';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
-import { state } from '/js/admin-state.js?v=5a5d655f';
+import { state } from '/js/admin-state.js?v=831e219e';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import {
   isDockBlocked,
@@ -21,10 +21,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=dc0e02b6';
-import { createListbox } from '/js/listbox.js?v=96066369';
-import { MAX_LABELS } from '/js/badge-logic.js?v=b3c8b6c2';
-import { renderColorControl, BADGE_SWATCHES, BADGE_DEFAULT } from '/js/admin-color-control.js?v=a48fbc58';
+} from '/js/admin-shared.js?v=52e149f5';
+import { createListbox } from '/js/listbox.js?v=32f787c3';
+import { MAX_LABELS } from '/js/badge-logic.js?v=ad283693';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=42c11a9b';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=606a68c6';
@@ -210,9 +210,9 @@ export function buildAppForm(body, item) {
   const pv0 = el('ipv');
   if (pv0) pv0.style.background = rc(state.scol);
   renderColorControl(el('icon-color-slot'), {
-    value: state.scol || 'dark',
+    value: state.scol || 'auto',
     idPrefix: 'icon-col',
-    semantic: true,
+    variant: 'tile',
     label: t('common.color'),
     onChange(v) {
       state.scol = v;
@@ -223,7 +223,7 @@ export function buildAppForm(body, item) {
   renderColorControl(el('static-color-slot'), {
     value: staticBadge.color || BADGE_DEFAULT,
     idPrefix: 'static-col',
-    swatchColors: BADGE_SWATCHES,
+    variant: 'badge',
     label: t('common.color'),
   });
   state._bpar = normKvRows(act.params);
@@ -409,7 +409,7 @@ function renderActLabels(host) {
     renderColorControl(el(`albl-col-slot-${i}`), {
       value: l.color || BADGE_DEFAULT,
       idPrefix: `albl-col-${i}`,
-      swatchColors: BADGE_SWATCHES,
+      variant: 'badge',
       label: t('common.color'),
     });
     const pathRow = el(`albl-path-row-${i}`);

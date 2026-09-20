@@ -55,15 +55,17 @@ export function needsDark(hex) {
   }
 }
 
-export function resolveColor(c) {
-  return c ? NAMED[c] || c : '';
+/** @param {unknown} c @param {(name: string) => string} [palette] */
+export function resolveColor(c, palette) {
+  if (!c || typeof c !== 'string') return '';
+  return (typeof palette === 'function' && palette(c)) || NAMED[c] || c;
 }
 
 /** A colour safe to hand to CSS, or ''. The fill lands in a custom property,
     which stores any string: `url(...)` there becomes a real request.
     @param {unknown} c @returns {string} */
-export function safeColor(c) {
-  const v = typeof c === 'string' ? resolveColor(c) : '';
+export function safeColor(c, palette) {
+  const v = resolveColor(c, palette);
   if (!v) return '';
   const supports = globalThis.CSS?.supports;
   if (typeof supports === 'function') return globalThis.CSS.supports('color', v) ? v : '';
@@ -130,9 +132,9 @@ export function badgeMinimum(custom) {
 /** The labels reaching their own threshold, in priority order. `values` is
     positional: index n is the number for `labels[n]`.
 
-    @param {any[]} [labels] @param {number[]} [values]
+    @param {any[]} [labels] @param {number[]} [values] @param {(name: string) => string} [palette]
     @returns {Array<{ index: number, name: string, value: number, unit: string, color: string }>} */
-export function firingLabels(labels, values) {
+export function firingLabels(labels, values, palette) {
   if (!Array.isArray(labels) || !Array.isArray(values)) return [];
   const out = [];
   for (let i = 0; i < labels.length && out.length < MAX_LABELS; i++) {
@@ -145,7 +147,7 @@ export function firingLabels(labels, values) {
       name: String(l.name || l.unit || l.path),
       value: v,
       unit: String(l.unit || ''),
-      color: safeColor(l.color) || LABEL_DEFAULT_COLOR,
+      color: safeColor(l.color, palette) || safeColor('info', palette) || LABEL_DEFAULT_COLOR,
     });
   }
   return out;
@@ -162,6 +164,7 @@ export function firingLabels(labels, values) {
       healthDetail?: Record<string, unknown>,
       translate?: (key: string, vars?: Record<string, unknown>) => string,
       format?: (value: number) => string,
+      palette?: (name: string) => string,
     }} opts */
 export function computeBadgeVisual({
   health,
@@ -178,6 +181,7 @@ export function computeBadgeVisual({
   healthDetail,
   translate,
   format,
+  palette,
 }) {
   const tr = typeof translate === 'function' ? translate : (k, v) => _fallback(k, v);
   /* Digit shape is the reader's, not the interface language's. */
@@ -185,7 +189,7 @@ export function computeBadgeVisual({
   /* Below this the item is treated as having no activity at all. One keeps the
      original behaviour of badging any count above zero. */
   const min = badgeMinimum(custom);
-  const fired = firingLabels(labels, values);
+  const fired = firingLabels(labels, values, palette);
   const top = fired[0];
   const rows = [];
   const active = top ? true : activity >= min;
@@ -207,11 +211,11 @@ export function computeBadgeVisual({
     cls = 'badge on blue';
     num = activity > 99 ? `${fmt(99)}+` : fmt(activity);
     unit = custom.unit ? custom.unit.slice(0, 8) : '';
-    bg = safeColor(custom.color);
+    bg = safeColor(custom.color, palette);
   } else if (fixed) {
     cls = 'badge on blue';
     num = staticBdg.label.slice(0, 10);
-    bg = safeColor(staticBdg.color);
+    bg = safeColor(staticBdg.color, palette);
   } else if (!hideHealthy && hasHC) {
     cls = 'badge on green';
   } else {
@@ -253,7 +257,7 @@ export function computeBadgeVisual({
      the reason beside it. */
   if (health) rows.push({ name: reason || tr('status.needsAttention'), value: '', unit: '', color: NAMED.red });
   for (const f of fired) rows.push(f);
-  if (fixed) rows.push({ name: staticBdg.label, value: '', unit: '', color: safeColor(staticBdg.color) });
+  if (fixed) rows.push({ name: staticBdg.label, value: '', unit: '', color: safeColor(staticBdg.color, palette) });
 
   const more = Math.max(0, rows.length - 1);
   if (more) {

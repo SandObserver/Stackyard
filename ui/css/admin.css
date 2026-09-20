@@ -401,12 +401,15 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .dash-load-fail{padding:32px;text-align:center;color:rgba(255,255,255,.4);font-size:14px}
 .dash-load-fail .retry-btn{padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:14px;font-family:inherit}
 .wcf-add-label{color:var(--ac2)}
-.cc-sem{position:relative}
-.cc-sem-dark{background:var(--cc-plate-dark)}
-.cc-sem-light{background:var(--cc-plate-light)}
+.cc-kw-auto{background:linear-gradient(135deg,var(--cc-plate-dark) 50%,var(--cc-plate-light) 50%);box-shadow:inset 0 0 0 .5px var(--separator)}
+.cc-kw-light,.cc-kw-dark{box-shadow:inset 0 0 0 1px var(--separator)}
+.cc-kw-clear{background:linear-gradient(145deg,rgba(255,255,255,.42),rgba(255,255,255,.06) 55%,rgba(255,255,255,.2));box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),inset 0 1px 1px rgba(255,255,255,.8),0 1px 3px rgba(0,0,0,.35)}
+html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 28%,#fff 0 18%,transparent 40%),linear-gradient(145deg,rgba(210,220,236,.9),rgba(140,150,170,.45) 60%,rgba(235,240,248,.95));box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),inset 0 1px 1px #fff,0 1px 3px rgba(0,0,0,.18)}
+.cc-hues .cc-sw{grid-template-columns:repeat(auto-fill,22px);gap:8px;justify-content:end}
+.cc-hues .cc-swatch{width:22px;height:22px}
 /* App form: icon source row, poll, value list */
 .icon-src-row{gap:12px}
-.icon-prev{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--on-tint);font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden}
+.icon-prev{box-shadow:inset 0 0 0 1px var(--separator);width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--on-tint);font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden}
 /* Inset to match the list icon, which draws a 30px image in a 48px tile. */
 .icon-prev img{width:62%;height:62%;object-fit:contain}
 .icon-srch{flex:1;min-width:0;background:none;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);text-align:end;outline:none;font-family:inherit}
@@ -680,6 +683,8 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
   .adm-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:3px / 22px; }
   .hsb-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:3px / 22px; }
   .cc-swatch { width:34px; height:34px; }
+  .cc-hues .cc-sw { grid-template-columns:repeat(7,34px); }
+  .cc-hues .cc-swatch { width:34px; height:34px; }
 }
 
 /* ─────────────── Mobile: phone settings + bottom tab bar ───────────────

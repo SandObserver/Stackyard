@@ -1,12 +1,12 @@
-import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=dc0e02b6';
+import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=52e149f5';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa, q } from '/js/utils.js?v=045df327';
+import { qa, q } from '/js/utils.js?v=55685187';
 import { iconSvg } from '/js/icon-set.js?v=606a68c6';
+import { HUE_NAMES, ROLE_NAMES, TILE_KEYWORDS, pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
-export const BADGE_DEFAULT = '#1e6ef4';
-export const BADGE_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#1e6ef4', '#cb30df'];
+export const BADGE_DEFAULT = 'info';
 const _ccIco = {
   hueLo: iconSvg('hue-lo', 16),
   hueHi: iconSvg('hue-hi', 16),
@@ -111,32 +111,64 @@ function _hexToHsv(hex) {
 
 export const _internals = { cssToHex: _cssToHex, hsvToRgb: _hsvToRgb, hexToHsv: _hexToHsv };
 
+const COLOR_KEYS = {
+  dark: 'color.dark',
+  light: 'color.light',
+  auto: 'color.auto',
+  clear: 'color.clear',
+  accent: 'color.accent',
+  success: 'color.success',
+  warning: 'color.warning',
+  danger: 'color.danger',
+  info: 'color.info',
+  red: 'color.red',
+  orange: 'color.orange',
+  yellow: 'color.yellow',
+  green: 'color.green',
+  mint: 'color.mint',
+  teal: 'color.teal',
+  cyan: 'color.cyan',
+  blue: 'color.blue',
+  indigo: 'color.indigo',
+  purple: 'color.purple',
+  pink: 'color.pink',
+  brown: 'color.brown',
+  gray: 'color.gray',
+};
+
+/** @param {string} v */
+const _swatchFill = v => tileColor(v, pageTheme());
+
 /** @param {HTMLElement} container
     @param {{ value?: string, idPrefix?: string,
-              onChange?: (value: string) => void, semantic?: boolean,
+              onChange?: (value: string) => void, variant?: 'tile'|'badge',
               swatchColors?: string[], label?: string }} [opts] */
 export function renderColorControl(
   container,
-  { value = '#0289ff', idPrefix, onChange, semantic = false, swatchColors = CC_SWATCHES, label = 'Color' } = {},
+  { value = '#0289ff', idPrefix, onChange, variant, swatchColors = CC_SWATCHES, label = 'Color' } = {},
 ) {
-  const isSem = v => v === 'dark' || v === 'light';
-  const init = _hexToHsv(isSem(value) ? '#0289ff' : value) || { h: 212, s: 99, v: 100 };
+  const top = variant === 'tile' ? TILE_KEYWORDS : variant === 'badge' ? ROLE_NAMES : [];
+  const hues = variant ? HUE_NAMES : [];
+  const isKw = v => typeof v === 'string' && (top.includes(v) || hues.includes(v));
+  const kwName = v => t(COLOR_KEYS[v]);
+  const init = _hexToHsv(isKw(value) ? _swatchFill(value) || '#0289ff' : value) || { h: 212, s: 99, v: 100 };
+  const kwSwatch = v =>
+    html`<button type="button" class="cc-swatch cc-kw cc-kw-${v}" data-v="${v}" title="${kwName(v)}" aria-label="${kwName(v)}"></button>`;
   const swatch = h => html`<button type="button" class="cc-swatch" data-v="${h}" aria-label="${h}"></button>`;
-  const swatches = semantic
-    ? html`<button type="button" class="cc-swatch cc-sem cc-sem-dark" data-v="dark" title="${t('appearance.themeDark')}" aria-label="${t('appearance.displayDark')}"></button>
-       <button type="button" class="cc-swatch cc-sem cc-sem-light" data-v="light" title="${t('appearance.themeLight')}" aria-label="${t('appearance.displayLight')}"></button>
-       <button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="${t('appearance.customColor')}"></button>
-       ${['#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'].map(swatch)}`
-    : html`<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="${t('appearance.customColor')}"></button>
-       ${swatchColors.map(swatch)}`;
+  const rainbow = html`<button type="button" class="cc-swatch cc-rainbow" data-v="custom" aria-label="${t('appearance.customColor')}"></button>`;
+  const swatches = variant ? html`${top.map(kwSwatch)}${rainbow}` : html`${rainbow}${swatchColors.map(swatch)}`;
   const wrap = document.createElement('div');
   const slider = (label, cls, id, max, val, lo, hi) => html`
     <div class="row hsb-row"><span class="rl">${label}</span><div class="hsb-track"><span class="hsb-ico">${raw(lo)}</span><input type="range" class="${cls}" id="${id}" min="0" max="${max}" value="${val}" aria-label="${label}"><span class="hsb-ico">${raw(hi)}</span></div></div>`;
+  const hueRow = hues.length
+    ? html`<div class="row cc-row cc-hues"><span class="rl">${t('color.system')}</span><div class="cc-sw">${hues.map(kwSwatch)}</div></div>`
+    : '';
   setHtml(
     wrap,
     html`
     <div class="row cc-row"><span class="rl">${label}</span><div class="cc-sw">${swatches}</div></div>
     <div class="row-wrap reveal cc-tune"><div class="reveal-in">
+    ${hueRow}
     ${slider('Hue', 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
     ${slider('Saturation', 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
     ${slider('Brightness', 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
@@ -146,8 +178,9 @@ export function renderColorControl(
   /* The markup carries no style attribute, so the page keeps style-src without
      'unsafe-inline'. A swatch paints itself from its own value. */
   for (const b of wrap.querySelectorAll('.cc-swatch[data-v]')) {
-    const v = b.getAttribute('data-v');
-    if (v && v[0] === '#') /** @type {HTMLElement} */ (b).style.background = v;
+    const v = b.getAttribute('data-v') || '';
+    const fill = v[0] === '#' ? v : v === 'auto' || v === 'clear' ? '' : _swatchFill(v);
+    if (fill) /** @type {HTMLElement} */ (b).style.background = fill;
   }
   const rows = /** @type {HTMLElement[]} */ ([...wrap.children]);
   rows.forEach(r => container.appendChild(r));
@@ -161,8 +194,8 @@ export function renderColorControl(
   hidden.type = 'hidden';
   hidden.id = `${idPrefix}-val`;
   container.appendChild(hidden);
-  let mode = isSem(value) ? value : 'color';
-  let showTune = false;
+  let mode = isKw(value) ? value : 'color';
+  let showTune = hues.includes(mode);
   /* The first paint restores stored state, so it must not animate. */
   let _painted = false;
   /* The value as it was stored. The sliders are integers, so reading a colour
@@ -178,6 +211,13 @@ export function renderColorControl(
     const ra = _rgb(a),
       rb = _rgb(b);
     return ra && rb && ra.every((n, i) => Math.abs(n - rb[i]) <= 3);
+  };
+  const setSliders = hex => {
+    const hv = _hexToHsv(hex);
+    if (!hv) return;
+    hEl.value = String(hv.h);
+    sEl.value = String(hv.s);
+    vEl.value = String(hv.v);
   };
   function paint() {
     const h = +hEl.value,
@@ -195,16 +235,15 @@ export function renderColorControl(
     vEl.style.setProperty('--knob-fill', hex);
     qa('.cc-swatch', container).forEach(b => {
       let on = false;
-      if (mode === 'dark' || mode === 'light') on = b.dataset.v === mode;
-      else if (!showTune) on = b.dataset.v !== 'custom' && !b.classList.contains('cc-sem') && _near(b.dataset.v, hex);
+      if (mode !== 'color') on = b.dataset.v === mode;
+      else if (!showTune) on = b.dataset.v !== 'custom' && !b.classList.contains('cc-kw') && _near(b.dataset.v, hex);
       b.classList.toggle('on', on);
     });
     const rb = q('.cc-rainbow', container);
-    if (rb) rb.classList.toggle('on', mode === 'color' && showTune);
+    if (rb) rb.classList.toggle('on', showTune && (mode === 'color' || hues.includes(mode)));
     reveal(tune, showTune, !_painted);
     if (!codeRv.closest('.editing')) {
-      codeRv.textContent =
-        mode === 'color' ? hex : t(mode === 'dark' ? 'appearance.displayDark' : 'appearance.displayLight');
+      codeRv.textContent = mode === 'color' ? hex : kwName(mode);
       codeRv.classList.remove('is-ph');
     }
     hidden.value = mode === 'color' ? (pristine ?? hex) : mode;
@@ -224,26 +263,23 @@ export function renderColorControl(
   );
   qa('.cc-swatch', container).forEach(b =>
     b.addEventListener('click', () => {
-      if (b.dataset.v === 'dark' || b.dataset.v === 'light') {
-        mode = b.dataset.v;
-        showTune = false;
+      const v = b.dataset.v || '';
+      if (v === 'custom') {
+        showTune = !(showTune && (mode === 'color' || hues.includes(mode)));
+        if (showTune && !hues.includes(mode)) mode = 'color';
         commit();
         return;
       }
-      if (b.dataset.v === 'custom') {
-        mode = 'color';
-        showTune = true;
+      if (isKw(v)) {
+        mode = v;
+        showTune = hues.includes(v);
+        if (showTune) setSliders(_swatchFill(v));
         commit();
         return;
       }
       mode = 'color';
       showTune = false;
-      const hv = _hexToHsv(b.dataset.v);
-      if (hv) {
-        hEl.value = String(hv.h);
-        sEl.value = String(hv.s);
-        vEl.value = String(hv.v);
-      }
+      setSliders(v);
       commit();
     }),
   );
@@ -251,21 +287,20 @@ export function renderColorControl(
     root: container,
     placeholder: '#rrggbb or any CSS color',
     onCommit(val) {
+      if (mode !== 'color' && val === kwName(mode)) return;
       const { value, ok } = normalizeColorInput(val);
       const hv = ok ? _hexToHsv(value) : null;
       if (hv) {
         mode = 'color';
         showTune = true;
-        hEl.value = String(hv.h);
-        sEl.value = String(hv.s);
-        vEl.value = String(hv.v);
+        setSliders(value);
       } else if (val) toast(t('toast.colorInvalid'), 'err');
       commit();
     },
   });
   if (mode === 'color') {
     const presets = qa('.cc-swatch', container)
-      .filter(b => b.dataset.v !== 'custom' && !b.classList.contains('cc-sem'))
+      .filter(b => b.dataset.v !== 'custom' && !b.classList.contains('cc-kw'))
       .map(b => b.dataset.v);
     showTune = !presets.some(pv => _near(pv, value));
   }

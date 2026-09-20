@@ -76,8 +76,8 @@
     "display": "Affichage",
     "keepAwake": "Garder l’écran allumé",
     "keepAwakeTip": "Empêche l’écran de s’assombrir ou de se verrouiller tant que le tableau de bord est ouvert. Les navigateurs ne l’autorisent qu’en HTTPS, cela reste donc sans effet sur une adresse HTTP simple.",
-    "displayMode": "Mode d'affichage des Réglages",
-    "displayModeTip": "Définit l'apparence des pages Réglages. Le choix est enregistré dans ce navigateur, s'applique à cet appareil uniquement et prend effet immédiatement.",
+    "displayMode": "Mode d'affichage",
+    "displayModeTip": "Définit l'apparence du tableau de bord et des pages Réglages. Le choix est enregistré dans ce navigateur, s'applique à cet appareil uniquement et prend effet immédiatement.",
     "displaySystem": "Par défaut du système",
     "displayLight": "Clair",
     "displayDark": "Sombre",
@@ -101,8 +101,6 @@
     "uploading": "Téléversement…",
     "imageTip": "Les images téléversées et liées sont stockées sur ce serveur et servies depuis celui-ci.",
     "customColor": "Couleur personnalisée",
-    "themeDark": "Sombre (thème)",
-    "themeLight": "Clair (thème)",
     "colorCode": "Code couleur",
     "wallpaperSource": "Source du fond d'écran"
   },
@@ -442,5 +440,30 @@
   "pill": {
     "system": "Système",
     "hidden": "Masqué"
+  },
+  "color": {
+    "dark": "Sombre",
+    "light": "Blanc",
+    "auto": "Automatique (sombre ou blanc)",
+    "clear": "Transparent",
+    "system": "Système",
+    "accent": "Accent",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "danger": "Danger",
+    "info": "Info",
+    "red": "Rouge",
+    "orange": "Orange",
+    "yellow": "Jaune",
+    "green": "Vert",
+    "mint": "Menthe",
+    "teal": "Bleu canard",
+    "cyan": "Cyan",
+    "blue": "Bleu",
+    "indigo": "Indigo",
+    "purple": "Violet",
+    "pink": "Rose",
+    "brown": "Marron",
+    "gray": "Gris"
   }
 }

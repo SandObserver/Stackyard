@@ -92,7 +92,7 @@ test('the dashboard keeps its own selectors and token overrides', () => {
   const motion = dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion'));
   assert.match(motion.slice(0, 300), /#pages/);
   const transparency = dashboard.slice(dashboard.indexOf('@media (prefers-reduced-transparency'));
-  assert.match(transparency.slice(0, 200), /--glass-blur: none/);
+  assert.match(transparency.slice(0, 200), /--glass-surface-blur: none/);
 });
 
 /* The general rules are in one place, so no page can drift from another. */

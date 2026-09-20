@@ -45,6 +45,14 @@ const SAME_ON_PURPOSE = {
     'status.containerState',
     'widgetCfg.name',
     'general.importExport',
+    /* Colour names German writes the same way. */
+    'color.system',
+    'color.info',
+    'color.orange',
+    'color.mint',
+    'color.cyan',
+    'color.indigo',
+    'color.pink',
   ]),
   'es.json': new Set([
     'appearance.sourceUnsplash',
@@ -61,6 +69,13 @@ const SAME_ON_PURPOSE = {
     'toast.error',
   ]),
   'fr.json': new Set([
+    /* Colour and role names French writes the same way. */
+    'color.accent',
+    'color.danger',
+    'color.info',
+    'color.orange',
+    'color.cyan',
+    'color.indigo',
     /* Info and the version line are written the same way in French. */
     'general.logInfo',
     /* "Image" is the French word too. */

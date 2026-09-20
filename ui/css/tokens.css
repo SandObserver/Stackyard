@@ -296,6 +296,9 @@ html.type-small:not(.is-mobile) {
 
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0 }
 
+:root { color-scheme:dark }
+html[data-theme="light"] { color-scheme:light }
+
 /* The wallpaper. Promoted to its own layer, so scrolling does not repaint
    it. */
 html::before {

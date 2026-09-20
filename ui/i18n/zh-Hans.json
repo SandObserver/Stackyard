@@ -76,8 +76,8 @@
     "display": "显示",
     "keepAwake": "保持屏幕常亮",
     "keepAwakeTip": "打开仪表板期间屏幕不会变暗或锁定。浏览器仅在 HTTPS 下允许该功能，因此在普通 HTTP 地址上无效。",
-    "displayMode": "设置显示模式",
-    "displayModeTip": "设定设置页面的外观。选择保存在此浏览器中，仅适用于此设备，并立即生效。",
+    "displayMode": "显示模式",
+    "displayModeTip": "设定仪表板和设置页面的外观。选择保存在此浏览器中，仅适用于此设备，并立即生效。",
     "displaySystem": "跟随系统",
     "displayLight": "浅色",
     "displayDark": "深色",
@@ -101,8 +101,6 @@
     "uploading": "上传中…",
     "imageTip": "上传和链接的图片都保存在本服务器，并由本服务器提供。",
     "customColor": "自定义颜色",
-    "themeDark": "深色（主题）",
-    "themeLight": "浅色（主题）",
     "colorCode": "颜色代码",
     "wallpaperSource": "壁纸来源"
   },
@@ -422,5 +420,30 @@
   "pill": {
     "system": "系统",
     "hidden": "已隐藏"
+  },
+  "color": {
+    "dark": "深色",
+    "light": "白色",
+    "auto": "自动（深色或白色）",
+    "clear": "透明",
+    "system": "系统",
+    "accent": "强调色",
+    "success": "成功",
+    "warning": "警告",
+    "danger": "危险",
+    "info": "信息",
+    "red": "红色",
+    "orange": "橙色",
+    "yellow": "黄色",
+    "green": "绿色",
+    "mint": "薄荷绿",
+    "teal": "蓝绿色",
+    "cyan": "青色",
+    "blue": "蓝色",
+    "indigo": "靛蓝色",
+    "purple": "紫色",
+    "pink": "粉色",
+    "brown": "棕色",
+    "gray": "灰色"
   }
 }

@@ -76,8 +76,8 @@
     "display": "Anzeige",
     "keepAwake": "Bildschirm anlassen",
     "keepAwakeTip": "Verhindert, dass sich der Bildschirm abdunkelt oder sperrt, solange das Dashboard geöffnet ist. Browser erlauben das nur über HTTPS, bei einer einfachen HTTP-Adresse bleibt es wirkungslos.",
-    "displayMode": "Anzeigemodus der Einstellungen",
-    "displayModeTip": "Legt das Erscheinungsbild der Einstellungsseiten fest. Die Auswahl wird in diesem Browser gespeichert, gilt nur für dieses Gerät und wirkt sofort.",
+    "displayMode": "Anzeigemodus",
+    "displayModeTip": "Legt das Erscheinungsbild des Dashboards und der Einstellungsseiten fest. Die Auswahl wird in diesem Browser gespeichert, gilt nur für dieses Gerät und wirkt sofort.",
     "displaySystem": "Systemstandard",
     "displayLight": "Hell",
     "displayDark": "Dunkel",
@@ -101,8 +101,6 @@
     "uploading": "Wird hochgeladen…",
     "imageTip": "Hochgeladene und verlinkte Bilder werden auf diesem Server gespeichert und von ihm ausgeliefert.",
     "customColor": "Eigene Farbe",
-    "themeDark": "Dunkel (Design)",
-    "themeLight": "Hell (Design)",
     "colorCode": "Farbcode",
     "wallpaperSource": "Hintergrundquelle"
   },
@@ -432,5 +430,30 @@
   "pill": {
     "system": "System",
     "hidden": "Ausgeblendet"
+  },
+  "color": {
+    "dark": "Dunkel",
+    "light": "Weiß",
+    "auto": "Automatisch (Dunkel oder Weiß)",
+    "clear": "Klar",
+    "system": "System",
+    "accent": "Akzent",
+    "success": "Erfolg",
+    "warning": "Warnung",
+    "danger": "Gefahr",
+    "info": "Info",
+    "red": "Rot",
+    "orange": "Orange",
+    "yellow": "Gelb",
+    "green": "Grün",
+    "mint": "Mint",
+    "teal": "Blaugrün",
+    "cyan": "Cyan",
+    "blue": "Blau",
+    "indigo": "Indigo",
+    "purple": "Lila",
+    "pink": "Pink",
+    "brown": "Braun",
+    "gray": "Grau"
   }
 }

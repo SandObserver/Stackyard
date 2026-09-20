@@ -254,6 +254,12 @@ test('a manifest card must be one of the known names, at either level', () => {
   assert.match(widgets.validateManifest('w', withView('nope')).errors.join(), /unknown card/);
 });
 
+test('a manifest may pin a dark appearance and nothing else', () => {
+  const base = { name: 'w', label: 'W', sizes: ['small'] };
+  assert.deepEqual(widgets.validateManifest('w', { ...base, appearance: 'dark', card: 'graphite' }).errors, []);
+  assert.match(widgets.validateManifest('w', { ...base, appearance: 'light' }).errors.join(), /unknown appearance/);
+});
+
 /* ── P5-9: showIf was never validated ────────────────────────────────────────
    Every way it can be wrong fails silently. visibleFieldKeys resolves a
    condition against its sibling set, so a showIf naming nothing reads undefined,

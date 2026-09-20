@@ -6,8 +6,9 @@ import {
   WIDGET_ROWS,
   widgetSrc,
   cardPreset,
+  fixedAppearance,
   uniqueTitle,
-} from '/js/widget-types.js?v=d36b0153';
+} from '/js/widget-types.js?v=9264dee5';
 import {
   el,
   isDashboardEmpty,
@@ -23,9 +24,9 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=045df327';
+} from '/js/utils.js?v=55685187';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=38fe61b4';
+import { initSpotlight } from '/js/spotlight.js?v=f050b4e5';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
@@ -39,8 +40,8 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=e28d57cd';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=b3c8b6c2';
+} from '/js/ui.js?v=d8363297';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=ad283693';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
@@ -57,6 +58,8 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=606a68c6';
+import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
+import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=787bfdff';
 
 ensureSprite();
 
@@ -201,6 +204,7 @@ function bupd(id) {
     healthDetail: s.healthDetail,
     translate: t,
     format: formatNumber,
+    palette: name => paletteColor(name, pageTheme()),
   });
 
   const sig = badgeSignature({ cls, txt, unit, bg, aria, color, nextColor, rows });
@@ -346,6 +350,7 @@ function mkWidget(item) {
   if (item.widgetType) card.dataset.wtype = item.widgetType;
   const preset = cardPreset(item, widgetReg);
   if (preset) card.dataset.card = preset;
+  if (fixedAppearance(item, widgetReg)) card.dataset.appearance = 'dark';
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
   card.style.height = WH.d[sz] + 'px';
   card.style.borderRadius = WIDGET_R + 'px';
@@ -558,6 +563,8 @@ async function sampleWallpaper(url, brightness, fit) {
 
 /* The wallpaper is sized against the viewport, so a resize moves which part of
    it each label sits on. */
+const themeTone = () => (pageTheme() === 'light' ? 'dark' : 'light');
+
 function resampleBg() {
   if (!_bgSample) return retone();
   bgTone = {
@@ -569,13 +576,15 @@ function resampleBg() {
       _bgSample.fit,
       WALLPAPER_BACKDROP,
     ),
-    tone: null,
+    tone: themeTone(),
   };
   retone();
 }
 
 async function applyBg() {
   const root = document.documentElement;
+  bgTone = { grid: null, tone: themeTone() };
+  retone();
   try {
     const bg = S.background || {};
     if (bg.type === 'color' && bg.color) {
@@ -584,7 +593,7 @@ async function applyBg() {
       root.style.setProperty('--bg-color', safeColor);
       root.style.setProperty('--bg-brightness', '1');
       root.style.setProperty('--bg-size', 'cover');
-      bgTone = { grid: null, tone: toneForColor(safeColor) };
+      bgTone = { grid: null, tone: toneForColor(safeColor) ?? themeTone() };
       retone();
     } else if (bg.type === 'url' && bg.url) {
       const url = sanitizeCssUrl(bg.url);
@@ -945,6 +954,20 @@ async function boot() {
   );
 
   applyBg();
+
+  const onTheme = () => {
+    applyTheme(resolveTheme(readMode(), prefersDark()));
+    applyBg();
+    buildLayout();
+  };
+  try {
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (readMode() === 'system') onTheme();
+    });
+  } catch {}
+  window.addEventListener('storage', e => {
+    if (e.key === THEME_KEY) onTheme();
+  });
 
   onLayoutChange(mobile => {
     MOB = mobile;

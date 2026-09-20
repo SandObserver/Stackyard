@@ -17,7 +17,7 @@ export const WIDGET_ROWS = {
 /* The iframe URL, from the manifest entry in `reg`. The cache version is hashed
    from file content at release, never maintained by hand. */
 /* A `card` inside the selected view wins over the manifest's top-level one. */
-const CARD_PRESETS = ['dark', 'light', 'translucent'];
+const CARD_PRESETS = ['dark', 'graphite', 'light', 'translucent'];
 
 export function cardPreset(item, reg) {
   const entry = item?.widgetType ? reg?.[item.widgetType] : null;
@@ -31,6 +31,11 @@ export function cardPreset(item, reg) {
     if (view && view.card) card = view.card;
   }
   return CARD_PRESETS.includes(card) ? card : '';
+}
+
+export function fixedAppearance(item, reg) {
+  const entry = item?.widgetType ? reg?.[item.widgetType] : null;
+  return entry?.appearance === 'dark' ? 'dark' : '';
 }
 
 export function widgetSrc(item, reg, opts) {

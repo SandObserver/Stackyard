@@ -12,7 +12,7 @@ export const state = {
 
   ctype: 'app',
   siurl: '',
-  scol: 'dark',
+  scol: 'auto',
   spaths: [],
   /* Live Activity label styling, keyed by value path. */
   slabels: Object.create(null),

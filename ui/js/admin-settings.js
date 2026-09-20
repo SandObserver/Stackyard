@@ -1,4 +1,4 @@
-import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=dc0e02b6';
+import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=52e149f5';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -9,15 +9,15 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=e3673bd7';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, setUserText } from '/js/utils.js?v=045df327';
+import { el, inp, setUserText } from '/js/utils.js?v=55685187';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
 let _authEnabled = false;
 
-/** @type {{ dirty: () => boolean, reset: () => void } | null} */
+/** @type {{ dirty: () => boolean, reset: (force?: boolean) => void } | null} */
 let _srvTrack = null;
-/** @type {{ dirty: () => boolean, reset: () => void } | null} */
+/** @type {{ dirty: () => boolean, reset: (force?: boolean) => void } | null} */
 let _bgTrack = null;
 
 const _val = (...ids) => {
@@ -60,6 +60,7 @@ const readWallpaperForm = () =>
 function trackSave(buttonId, read) {
   const btn = /** @type {HTMLButtonElement|null} */ (el(buttonId));
   const tr = createDirtyTracker(read);
+  let touched = false;
   const sync = () => {
     if (btn) btn.disabled = !tr.dirty();
   };
@@ -67,12 +68,21 @@ function trackSave(buttonId, read) {
      the body, and a choice made there must still enable Save. Deferred: pickers
      and inline editors update their value after the event. */
   for (const type of ['input', 'change', 'click', 'keyup', 'focusout'])
-    document.addEventListener(type, () => setTimeout(sync));
+    document.addEventListener(type, () =>
+      setTimeout(() => {
+        if (tr.dirty()) touched = true;
+        sync();
+      }),
+    );
   sync();
   return {
     dirty: tr.dirty,
-    reset: () => {
-      tr.reset();
+    /* Do not re-baseline a touched form. The edit is swallowed and Save never
+       lights again.
+       @param {boolean} [force] */
+    reset: (force = true) => {
+      if (force || !touched) tr.reset();
+      if (force) touched = false;
       sync();
     },
   };
@@ -251,7 +261,7 @@ export function loadSettings(c) {
 
   _srvTrack = trackSave('srv-save', readServerForm);
   _bgTrack = trackSave('bg-save', readWallpaperForm);
-  syncAuthFromServer().then(() => _srvTrack?.reset());
+  syncAuthFromServer().then(() => _srvTrack?.reset(false));
 }
 
 async function syncAuthFromServer() {
