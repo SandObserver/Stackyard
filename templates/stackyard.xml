@@ -23,31 +23,63 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.13.1 - 2026-09-15
+### 1.14.0 - 2026-09-20
+
+### Added
+
+- Display Mode now applies to the dashboard and every widget, not only Settings.
+
+- App icon colours Auto, which follows the display mode, and Clear, a frosted
+  glass plate.
+
+- Badge colours Accent, Success, Warning, Danger and Info.
+
+- Umami services can authenticate with an API key instead of a username and
+  password.
 
 ### Changed
 
-- Restyle the dock and folders as thin glass with smooth corners.
+- A new password is limited to 1024 characters.
 
-- Restyle Settings as grouped lists with a tab bar, dropdown menus and type and
-  size pickers.
+- Restyle app icon tiles with a top-lit edge and vertical shading.
 
-### Removed
+- App and dock tiles press in on click instead of lifting on hover.
 
-- Remove the Title and Description rows from General, which never saved.
+- Redraw the Settings icons, widget glyphs and Settings tile as one icon set.
+
+- Preset icon and badge colours adapt to the display mode; a custom colour stays
+  exact.
+
+- Widget cards are opaque, white in light mode and near-black in dark mode.
+
+- The clock follows the display mode; its own Dark and Light option is removed.
+
+- The VPN and Connections maps are larger and easier to see.
 
 ### Fixed
 
-- Fix the Add New type chooser closing after choosing Widget or a size.
+- A settings change is no longer held in memory when writing it to disk fails.
 
-- Fix desktop tiles landing below the page when a wide widget leaves a gap.
+- Space on a focused tile or folder activates it instead of opening search.
 
-- Fix multi-select pickers closing after each choice.
+- Search keeps every letter typed to open it, including in Safari on a narrow
+  window.
 
-- Fix the loading spinner and the editor back button sitting off-side in
-  Persian.
+- Disk Health no longer shows dark strips at its sides.
 
-- Announce the selected widget size to screen readers.
+- Settings keeps a choice made while the page is still loading, instead of
+  leaving Save greyed out.
+
+- App labels stay readable over a dark wallpaper with increased contrast in
+  light mode.
+
+- Settings sections start at the top on a phone instead of keeping the previous
+  section's scroll position.
+
+- Renaming or recolouring a service no longer clears its stored credential.
+
+- Settings no longer reports a credential as stored after the one it described
+  was dropped.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
