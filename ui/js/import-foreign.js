@@ -3,7 +3,7 @@
    only: a widget in the source becomes a plain app tile, never a Stackyard
    widget. Keep this module free of the DOM and of the network. */
 
-import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=858f3f84';
+import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=60a82419';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 
 export const SKIP = Object.freeze({
@@ -188,8 +188,8 @@ function addApp(col, group, { label, href, iconUrl, container, pingUrl, skipTlsV
     null,
     col.taken,
   );
-  if (built.error) {
-    col.skip(SKIP.NO_HREF, label, group, built.error);
+  if (built.errorKey) {
+    col.skip(SKIP.NO_HREF, label, group, built.errorKey);
     return null;
   }
   col.taken.add(built.item.id);

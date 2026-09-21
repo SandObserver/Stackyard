@@ -142,11 +142,12 @@ on('POST', '/api/badge-proxy', async (req, res) => {
        failure here, or the admin UI reads an error body as success. */
     if (r.status >= 400) {
       if (declined && (r.status === 401 || r.status === 403)) {
-        return json(res, 502, { error: RETYPE_MESSAGE, kind: KIND.INVALID });
+        return json(res, 502, { error: RETYPE_MESSAGE, kind: KIND.INVALID, code: 'invalid.retype' });
       }
       return json(res, 502, {
         error: `The service answered ${statusDesc(r.status)} (HTTP ${r.status}).`,
         kind: KIND.UPSTREAM,
+        code: 'upstream.status',
         detail: { status: r.status },
       });
     }

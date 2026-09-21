@@ -113,8 +113,9 @@ export function buildActivityLabel(path, style) {
 
 /** @param {any} v @param {any} [orig] @param {Iterable<string>} [takenIds] */
 export function buildAppItem(v, orig, takenIds = []) {
-  if (!v.label) return { error: 'Name required' };
-  if (!v.href) return { error: 'URL required' };
+  /* A key, not a sentence. This module stays free of imports. */
+  if (!v.label) return { errorKey: 'toast.nameRequired' };
+  if (!v.href) return { errorKey: 'toast.urlRequired' };
   const DEFCOL = '#0289ff';
   /* One badges any count above zero, which is the default, so it is not stored. */
   const custMin = Number.isFinite(v.custMin) && v.custMin > 1 ? Math.floor(v.custMin) : undefined;

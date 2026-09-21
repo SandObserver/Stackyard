@@ -24,8 +24,8 @@ test('cleanId falls back when nothing usable remains', () => {
 });
 
 test('buildAppItem validates name and url', () => {
-  assert.match(buildAppItem({ href: 'http://x' }, null).error, /Name required/);
-  assert.match(buildAppItem({ label: 'A' }, null).error, /URL required/);
+  assert.equal(buildAppItem({ href: 'http://x' }, null).errorKey, 'toast.nameRequired');
+  assert.equal(buildAppItem({ label: 'A' }, null).errorKey, 'toast.urlRequired');
 });
 
 test('buildAppItem builds a minimal app with disabled monitoring', () => {

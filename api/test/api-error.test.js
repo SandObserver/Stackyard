@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { KIND, ApiError, classify, errorBody } = require('../src/api-error');
+const { KIND, KINDS, ApiError, classify, errorBody } = require('../src/api-error');
 
 /* ── classify ─────────────────────────────────────────────────────────────── */
 
@@ -75,8 +75,38 @@ test('errorBody replaces the original message with one chosen by kind', () => {
   assert.deepEqual(errorBody(e), {
     error: 'Could not reach the service.',
     kind: KIND.NETWORK,
+    code: KIND.NETWORK,
     detail: { code: 'ECONNREFUSED' },
   });
+});
+
+/* `code` is what a client displays from, so a rename is a visible change. The
+   set is pinned here rather than left to whichever route happens to be tested:
+   a code added without a translation shows the client a key. */
+test('a refinement of the kind travels as a dotted code', () => {
+  const blocked = Object.assign(new Error('x'), { name: 'SsrfBlockedError', detail: { reason: 'private-address' } });
+  assert.equal(errorBody(blocked).code, 'blocked.private-address');
+
+  const tls = Object.assign(new Error('x'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' });
+  assert.equal(errorBody(tls).code, 'network.tls-untrusted');
+
+  const tagged = Object.assign(new Error('x'), { kind: KIND.UPSTREAM, apiCode: 'upstream.redirect' });
+  assert.equal(errorBody(tagged).code, 'upstream.redirect');
+});
+
+/* Node puts a syscall name on `code`. Reading it as the API's own code would
+   send the client ECONNREFUSED as something to translate. */
+test('a syscall name on the error is never mistaken for the API code', () => {
+  const e = Object.assign(new Error('x'), { code: 'ECONNREFUSED' });
+  assert.equal(errorBody(e).code, KIND.NETWORK);
+});
+
+test('every error body carries a code, and it starts with its kind', () => {
+  for (const kind of KINDS) {
+    const body = errorBody(Object.assign(new Error('x'), { kind }));
+    assert.ok(body.code, `${kind} has no code`);
+    assert.ok(body.code === kind || body.code.startsWith(`${kind}.`), `${kind} -> ${body.code}`);
+  }
 });
 
 test('errorBody omits detail entirely rather than sending an empty object', () => {

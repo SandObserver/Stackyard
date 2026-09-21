@@ -290,6 +290,7 @@ function fetchJSON(raw, opts = {}) {
           /** @type {any} */ (e).vouchedMessage =
             `The address answered with a redirect (HTTP ${sc}). Enter the address it points to.`;
           /** @type {any} */ (e).kind = 'upstream';
+          /** @type {any} */ (e).apiCode = 'upstream.redirect';
           /** @type {any} */ (e).detail = { status: sc };
           return done(reject, e);
         }
@@ -348,7 +349,8 @@ function fetchJSON(raw, opts = {}) {
     });
     req.on('error', (/** @type {unknown} */ e) => {
       if (skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? ''))
-        /** @type {{ vouchedMessage?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
+        /** @type {{ vouchedMessage?: string, apiCode?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
+      /** @type {{ apiCode?: string }} */ (e).apiCode = 'network.tls-ignored';
       done(reject, e);
     });
     if (bodyBuf) req.write(bodyBuf);

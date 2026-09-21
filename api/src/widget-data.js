@@ -160,7 +160,8 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
     json(res, out.status, out.body);
   } catch (e) {
     if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });
-    if (!scoped && saved) return fail(res, e, { status: 502, kind: KIND.INVALID, error: RETYPE_MESSAGE });
+    if (!scoped && saved)
+      return fail(res, e, { status: 502, kind: KIND.INVALID, code: 'invalid.retype', error: RETYPE_MESSAGE });
     log.error('widget-options failed', { widget: body.widgetType, error: log.reason(e) });
     fail(res, e, { status: 502 });
   }

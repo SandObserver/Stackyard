@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=52e149f5';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=dab64a93';
 import { createListbox } from '/js/listbox.js?v=32f787c3';
-import { renderColorControl } from '/js/admin-color-control.js?v=42c11a9b';
+import { renderColorControl } from '/js/admin-color-control.js?v=f665b86a';
 import {
   seedCarried,
   applyOptionSet,
@@ -14,7 +14,7 @@ import {
   groupBounds,
   visibleFieldFlags,
 } from '/js/admin-logic.js?v=e3673bd7';
-import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
+import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=d591044d';
 import { qi } from '/js/utils.js?v=55685187';
 
 const PE =
@@ -227,7 +227,7 @@ function _picklist(field, value, ctx, size) {
         status.className = 'row-status ok';
       } catch (e) {
         const advice = optionsErrorAdvice(e);
-        status.textContent = advice.message;
+        status.textContent = t(advice.key, advice.vars);
         status.className = 'row-status ' + (advice.tone === TONE.WARN ? 'warn' : 'err');
       } finally {
         btn.disabled = false;
@@ -318,7 +318,7 @@ function _select(field, value, ctx, config = {}) {
         status.className = 'row-status ok';
       } catch (e) {
         const advice = optionsErrorAdvice(e);
-        status.textContent = advice.message;
+        status.textContent = t(advice.key, advice.vars);
         status.className = 'row-status ' + (advice.tone === TONE.WARN ? 'warn' : 'err');
       } finally {
         btn.disabled = false;
