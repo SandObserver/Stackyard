@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A malformed background colour falls back to the default instead of painting an
   unintended colour.
 
+- Show a message in Settings when the Unsplash wallpaper cannot be loaded.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
