@@ -11,7 +11,8 @@
       "playwright.config.js",
       "api/test/**/*.js",
       "api/test-support/**/*.js",
-      "ui/test/**/*.mjs"
+      "ui/test/**/*.mjs",
+      "test/repo/**/*.js"
     ]
   },
   "formatter": {
@@ -54,7 +55,7 @@
       }
     },
     {
-      "includes": ["api/test/**/*.js", "api/test-support/**/*.js", "ui/test/**/*.mjs"],
+      "includes": ["api/test/**/*.js", "api/test-support/**/*.js", "ui/test/**/*.mjs", "test/repo/**/*.js"],
       "linter": {
         "rules": {
           "suspicious": {

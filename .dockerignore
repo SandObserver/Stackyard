@@ -8,6 +8,7 @@ api/test
 api/test-support
 api/coverage
 ui/test
+test
 e2e
 playwright.config.js
 playwright-report
