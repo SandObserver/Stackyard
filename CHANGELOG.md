@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Status and error messages in Settings use the full width of their row instead
   of wrapping in a narrow strip.
 
+- A malformed background colour falls back to the default instead of painting an
+  unintended colour.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
