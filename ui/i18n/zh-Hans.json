@@ -296,6 +296,7 @@
     "socketHintPublishPort": "该地址没有任何响应。发布在主机回环上的套接字代理无法从容器内访问；请将其发布到 Docker 网桥地址，或把两个容器放入同一网络并使用代理名称。",
     "wallpaperStored": "壁纸已保存到本服务器。",
     "wallpaperFailed": "壁纸操作失败：{err}",
+    "wallpaperUnavailable": "无法加载壁纸。",
     "imageTooLarge": "该图片过大，服务器无法接受。",
     "updated": "已更新",
     "added": "已添加",

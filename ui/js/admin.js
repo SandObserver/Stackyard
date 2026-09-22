@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=4112c370';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=191ee219';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=e92887e5';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=31b83055';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=ef90ea4e';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=4f2e34a5';
 import { resolveAdminSection } from '/js/admin-logic.js?v=5356a1b3';
 import {
   buildAppItem,
@@ -10,13 +10,21 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=1e0c1f13';
-import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=9acde6aa';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=fd10772f';
+import {
+  apiGet,
+  apiPost,
+  initInlineEdit,
+  paintIcon,
+  reveal,
+  setReauthHandler,
+  toast,
+} from '/js/admin-shared.js?v=051846da';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=1b36286c';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=23040656';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=e4610ea7';
+import { createListbox } from '/js/listbox.js?v=9090b083';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -41,8 +49,8 @@ import {
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=eeafa4b5';
-import { el, inp, q, qa, clr as rc, setUserText, tgt } from '/js/utils.js?v=383027d7';
-import { applyBackground, resolveBackground } from '/js/background.js?v=7befbdbb';
+import { el, inp, q, qa, clr, setUserText, tgt } from '/js/utils.js?v=b6231666';
+import { applyBackground, resolveBackground } from '/js/background.js?v=1fec6318';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 
 ensureSprite();
@@ -62,7 +70,7 @@ onLayoutChange(_syncMobile, _mobileAtLoad);
 
 async function load() {
   await loadLocalIcons();
-  const c = await ag('/api/config');
+  const c = await apiGet('/api/config');
   state.items = c.items || [];
   state._settings = c.settings || {};
   await initI18n(c.settings?.language || 'en');
@@ -70,7 +78,7 @@ async function load() {
   initVersion();
   syncPickerLabels();
   try {
-    const wr = await ag('/api/widgets');
+    const wr = await apiGet('/api/widgets');
     state._widgetReg = Object.create(null);
     (wr.widgets || []).forEach(w => {
       state._widgetReg[w.name] = w;
@@ -91,8 +99,13 @@ async function load() {
 }
 
 async function applyBg() {
-  const bg = await resolveBackground((state._settings && state._settings.background) || {});
+  const s = (state._settings && state._settings.background) || {};
+  let bg = null;
+  try {
+    bg = await resolveBackground(s);
+  } catch {}
   if (bg) applyBackground(document.documentElement, bg);
+  else if (s.type === 'unsplash') toast(t('toast.wallpaperUnavailable'), 'err');
 }
 /** Returns whether the write reached the server. */
 async function save() {
@@ -100,9 +113,9 @@ async function save() {
   state.saving = true;
   let ok = false;
   try {
-    const full = await ag('/api/config');
+    const full = await apiGet('/api/config');
     full.items = state.items;
-    await ap('/api/config', full);
+    await apiPost('/api/config', full);
     _savedItems = JSON.stringify(state.items);
     toast(t('toast.saved'));
     ok = true;
@@ -124,14 +137,14 @@ async function appendAndSave(newItems) {
   if (state.saving) throw new Error('A save is already in progress');
   state.saving = true;
   try {
-    const full = await ag('/api/config');
+    const full = await apiGet('/api/config');
     const current = Array.isArray(full.items) ? full.items : [];
     /* Ids were allocated against the list the preview was built from. */
     const taken = new Set(current.map(i => i && i.id));
     const clash = newItems.find(i => taken.has(i.id));
     if (clash) throw new Error(`${clash.label}: this id already exists. Reload and import again.`);
     full.items = [...current, ...newItems];
-    await ap('/api/config', full);
+    await apiPost('/api/config', full);
     state.items = full.items;
     _savedItems = JSON.stringify(state.items);
     syncDashSave();
@@ -376,7 +389,7 @@ function openFolderPicker(appId, targetFolderId = null) {
       });
       const ri = document.createElement('span');
       ri.className = 'fp-ic';
-      ri.style.background = rc(app.color);
+      ri.style.background = clr(app.color);
       paintIcon(ri, app.iconUrl, (app.label || '?')[0]);
       const nm = document.createElement('span');
       nm.className = 'fp-nm';
@@ -660,7 +673,7 @@ function initAllInlineEdits() {
 
 async function initVersion() {
   try {
-    const d = await ag('/api/version');
+    const d = await apiGet('/api/version');
     const v = (d.current || d.version || '').replace(/^v/i, '');
     if (v) {
       const vEl = el('sidebar-version');
@@ -975,7 +988,7 @@ addEventListener('beforeunload', e => {
 el('btn-exp').onclick = async () => {
   let url;
   try {
-    const config = await ag('/api/config/export');
+    const config = await apiGet('/api/config/export');
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
     url = URL.createObjectURL(blob);
     const a = document.createElement('a');

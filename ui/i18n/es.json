@@ -306,6 +306,7 @@
     "socketHintPublishPort": "Nada respondió en esa dirección. Un socket proxy publicado en el bucle local del host no es accesible desde un contenedor; publícalo en la dirección del puente de Docker, o pon ambos contenedores en una red compartida y usa el nombre del proxy.",
     "wallpaperStored": "Fondo de pantalla guardado en este servidor.",
     "wallpaperFailed": "Error con el fondo de pantalla: {err}",
+    "wallpaperUnavailable": "No se pudo cargar el fondo de pantalla.",
     "imageTooLarge": "Esa imagen es demasiado grande para el servidor.",
     "updated": "Actualizado",
     "added": "Añadido",

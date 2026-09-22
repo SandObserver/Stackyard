@@ -301,6 +301,7 @@
     "socketHintPublishPort": "Nothing at that address answered. A socket proxy published on the host’s loopback cannot be reached from inside a container; publish it on the Docker bridge address, or put both containers on a shared network and use the proxy’s name.",
     "wallpaperStored": "Wallpaper stored on this server.",
     "wallpaperFailed": "Wallpaper failed: {err}",
+    "wallpaperUnavailable": "The wallpaper could not be loaded.",
     "imageTooLarge": "That image is too large for the server to accept.",
     "updated": "Updated",
     "added": "Added",

@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=5356a1b3';
-import { el, q } from '/js/utils.js?v=383027d7';
+import { el, q } from '/js/utils.js?v=b6231666';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { iconSvg } from '/js/icon-set.js?v=606a68c6';
@@ -78,22 +78,22 @@ function reauthenticate() {
 
 /* Retried once only. A second 401 after a successful sign-in is the server
    refusing the request itself. */
-export const ag = async (p, recover = true) => {
+export const apiGet = async (p, recover = true) => {
   const r = await fetch(API + p, { cache: 'no-store' });
-  if (recover && recoversSession(p, r.status) && (await reauthenticate())) return ag(p, false);
+  if (recover && recoversSession(p, r.status) && (await reauthenticate())) return apiGet(p, false);
   if (!r.ok) {
     const d = r.status === 401 ? null : await r.json().catch(() => null);
     throw tagged(r.status, d || (r.status === 401 ? { error: 'Unauthorised', kind: 'auth' } : null));
   }
   return r.json();
 };
-export const ap = async (p, b, recover = true) => {
+export const apiPost = async (p, b, recover = true) => {
   const r = await fetch(API + p, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(b),
   });
-  if (recover && recoversSession(p, r.status) && (await reauthenticate())) return ap(p, b, false);
+  if (recover && recoversSession(p, r.status) && (await reauthenticate())) return apiPost(p, b, false);
   if (!r.ok) {
     const d = await r.json().catch(() => null);
     throw tagged(r.status, d || (r.status === 401 ? { error: 'Unauthorised', kind: 'auth' } : null));

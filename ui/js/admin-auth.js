@@ -1,11 +1,11 @@
-import { ag, ap } from '/js/admin-shared.js?v=9acde6aa';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=051846da';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
-import { el, inp as inpById, qa } from '/js/utils.js?v=383027d7';
+import { el, inp as inpById, qa } from '/js/utils.js?v=b6231666';
 
 export async function checkAuth(onLogin) {
   try {
-    const d = await ag('/api/auth/check');
+    const d = await apiGet('/api/auth/check');
     if (!d.enabled || d.authenticated) return true;
     showLoginScreen(onLogin);
     return false;
@@ -39,7 +39,7 @@ function showLoginScreen(onLogin) {
     if (btn) btn.disabled = true;
     if (err) err.style.display = 'none';
     try {
-      await ap('/api/auth/login', { password: pw?.value || '' });
+      await apiPost('/api/auth/login', { password: pw?.value || '' });
       if (s) s.style.display = 'none';
       onLogin?.();
     } catch (e) {

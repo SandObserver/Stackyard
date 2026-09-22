@@ -1,4 +1,4 @@
-import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=9acde6aa';
+import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=051846da';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -9,9 +9,9 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=5356a1b3';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, setUserText } from '/js/utils.js?v=383027d7';
-import { renderColorControl } from '/js/admin-color-control.js?v=5af7dfd3';
-import { BACKDROP } from '/js/background.js?v=7befbdbb';
+import { el, inp, setUserText } from '/js/utils.js?v=b6231666';
+import { renderColorControl } from '/js/admin-color-control.js?v=c6e490f2';
+import { BACKDROP } from '/js/background.js?v=1fec6318';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -152,7 +152,7 @@ export function loadSettings(c) {
   const apiEl = inp('bg-apikey-inp') || inp('bg-apikey');
   if (apiEl) {
     apiEl.placeholder = '●●●●●●●●●● (configured)';
-    ag('/api/settings/unsplash-key')
+    apiGet('/api/settings/unsplash-key')
       .then(d => {
         const vEl = el('ie-apikey-v');
         if (!d.configured) {
@@ -243,7 +243,7 @@ export function loadSettings(c) {
   const secLogout = el('sec-logout');
   const secRevoke = inp('sec-revoke');
   secLogout?.addEventListener('click', async () => {
-    await ap('/api/auth/logout', {}).catch(() => {});
+    await apiPost('/api/auth/logout', {}).catch(() => {});
     location.reload();
   });
   secRevoke?.addEventListener('click', async () => {
@@ -257,7 +257,7 @@ export function loadSettings(c) {
     if (!ok) return;
     secRevoke.disabled = true;
     try {
-      await ap('/api/auth/revoke-sessions', {});
+      await apiPost('/api/auth/revoke-sessions', {});
       toast(t('toast.sessionsRevoked'), 'ok');
     } catch (e) {
       toast(e.message || t('toast.saveFailed'), 'err');
@@ -275,7 +275,7 @@ export function loadSettings(c) {
 async function syncAuthFromServer() {
   let d;
   try {
-    d = await ag('/api/auth/check');
+    d = await apiGet('/api/auth/check');
   } catch {
     return;
   }
@@ -326,10 +326,10 @@ async function saveLabels(e) {
   const toggled = /** @type {HTMLInputElement|null} */ (e?.target ?? null);
   const wasChecked = toggled ? toggled.checked : false;
   try {
-    const c = await ag('/api/config');
+    const c = await apiGet('/api/config');
     c.settings = c.settings || {};
     c.settings.showLabels = { desktop: inp('set-lbl-d')?.checked !== false, ios: inp('set-lbl-m')?.checked || false };
-    await ap('/api/config', c);
+    await apiPost('/api/config', c);
     toast(t('toast.saved'));
   } catch (err) {
     /* Put the box back on a failure, or it shows a setting the server was never
@@ -342,10 +342,10 @@ async function saveKeepAwake(e) {
   const toggled = /** @type {HTMLInputElement|null} */ (e?.target ?? null);
   const wasChecked = toggled ? toggled.checked : false;
   try {
-    const c = await ag('/api/config');
+    const c = await apiGet('/api/config');
     c.settings = c.settings || {};
     c.settings.keepAwake = !!inp('set-awake')?.checked;
-    await ap('/api/config', c);
+    await apiPost('/api/config', c);
     toast(t('toast.saved'));
   } catch (err) {
     /* Put the box back on a failure, or it shows a setting the server was never
@@ -367,15 +367,15 @@ async function saveWallpaper() {
     } else if (type === 'color') {
       bg.color = inp('bg-color-val')?.value?.trim() || '';
     }
-    const c = await ag('/api/config');
+    const c = await apiGet('/api/config');
     c.settings = c.settings || {};
     c.settings.background = bg;
-    await ap('/api/config', c);
+    await apiPost('/api/config', c);
     /* After the main config. GET /api/config strips the key, so a config write
        that follows would overwrite it with nothing. */
     if (type === 'unsplash') {
       const keyVal = (inp('bg-apikey-inp') || inp('bg-apikey'))?.value?.trim() || '';
-      if (keyVal) await ap('/api/settings/unsplash-key', { apiKey: keyVal });
+      if (keyVal) await apiPost('/api/settings/unsplash-key', { apiKey: keyVal });
     }
     _bgTrack?.reset();
     toast(t('toast.saved'));
@@ -411,7 +411,7 @@ async function saveServer() {
     }
     let probe;
     try {
-      probe = await ap('/api/docker/test', { url });
+      probe = await apiPost('/api/docker/test', { url });
     } catch (e) {
       toast(t('toast.saveFailed', { err: e.message }), 'err');
       return;
@@ -446,7 +446,7 @@ async function saveServer() {
   }
 
   try {
-    const c = await ag('/api/config');
+    const c = await apiGet('/api/config');
     c.settings = c.settings || {};
     const prevLang = c.settings.language || 'en';
     const dockerEnabled = inp('srv-docker-en')?.checked || false;
@@ -461,17 +461,17 @@ async function saveServer() {
     c.settings.language = inp('lang-sel')?.value || 'en';
     const langChanged = c.settings.language !== prevLang;
 
-    await ap('/api/config', c);
+    await apiPost('/api/config', c);
 
     if (shouldWritePassword({ enabled, newPassword: pw })) {
-      await ap('/api/auth/set-password', { password: pw });
+      await apiPost('/api/auth/set-password', { password: pw });
       const pwEl = inp('sec-pw');
       if (pwEl) {
         pwEl.value = '';
         pwEl.placeholder = '●●●●●●●●●● (configured)';
       }
     }
-    await ap('/api/auth/toggle', { enabled });
+    await apiPost('/api/auth/toggle', { enabled });
     if (!enabled) {
       const pwEl = inp('sec-pw');
       if (pwEl) {

@@ -4,7 +4,7 @@
    written to disk as an error body under the backup's own filename. The failure
    then surfaces when the backup is needed.
 
-   Going through `ag` means an expired session raises the sign-in box and the
+   Going through `apiGet` means an expired session raises the sign-in box and the
    export finishes afterwards.
 
    Scanned from the source rather than driven, because the download itself is
@@ -41,7 +41,7 @@ test('the export goes through the shared helper, so a failure is visible', () =>
   const body = exportHandler();
   assert.match(
     body,
-    /await ag\(\s*'\/api\/config\/export'\s*\)/,
+    /await apiGet\(\s*'\/api\/config\/export'\s*\)/,
     'the response has to be checked before anything is saved',
   );
 });
