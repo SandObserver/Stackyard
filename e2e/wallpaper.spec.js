@@ -70,3 +70,16 @@ test('fill covers the viewport and fit shows the whole image', async ({ page, re
   await seedConfig(request, { items: [], settings: { background: { ...WALLPAPER, fit: 'fit' } } });
   await expectSize('contain');
 });
+
+for (const [what, reply] of [
+  ['returns no image', route => route.fulfill({ json: { url: null } })],
+  ['fails', route => route.abort()],
+]) {
+  test(`Settings says so when the Unsplash wallpaper ${what}`, async ({ page, request }) => {
+    await seedConfig(request, { items: [], settings: { background: { type: 'unsplash', query: 'x' } } });
+    await page.route('**/api/wallpaper', reply);
+    await page.goto('/admin/');
+    await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
+    await expect(page.locator('#toast')).toHaveText('The wallpaper could not be loaded.');
+  });
+}

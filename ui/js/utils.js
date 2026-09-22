@@ -34,7 +34,7 @@ export const clr = c => {
 };
 /* The plate is a colour the user chose, so the ink has to be measured from it.
    White on the palette's own yellow reads at 1.5:1. */
-export const fb = (l, sz, plate) => {
+export const letterTile = (l, sz, plate) => {
   const e = mk('span');
   e.className = 'fb';
   const tone = toneForColor(plate) ?? (pageTheme() === 'light' ? 'dark' : 'light');
@@ -142,7 +142,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
     });
     img.setAttribute('aria-hidden', 'true');
     img.style.cssText = `width:${si}px;height:${si}px;object-fit:contain;position:relative;z-index:3;`;
-    img.onerror = () => img.replaceWith(fb(item.label, sz, wrapBg));
+    img.onerror = () => img.replaceWith(letterTile(item.label, sz, wrapBg));
     w.appendChild(img);
   } else if (rawIcon) {
     const chain = iconChain(rawIcon);
@@ -154,7 +154,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
       const tryNext = () => {
         step++;
         if (step < chain.length) img.src = chain[step];
-        else img.replaceWith(fb(item.label, sz, wrapBg));
+        else img.replaceWith(letterTile(item.label, sz, wrapBg));
       };
       img.onerror = tryNext;
       /* A 403 fires load, not onerror. A blocked image has zero dimensions. */
@@ -162,8 +162,8 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
         if (img.naturalWidth === 0) tryNext();
       };
       w.appendChild(img);
-    } else w.appendChild(fb(item.label, sz, wrapBg));
-  } else w.appendChild(fb(item.label, sz, wrapBg));
+    } else w.appendChild(letterTile(item.label, sz, wrapBg));
+  } else w.appendChild(letterTile(item.label, sz, wrapBg));
   if (
     breg &&
     (item.monitoring?.healthcheck?.enabled ||

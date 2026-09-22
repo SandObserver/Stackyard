@@ -8,7 +8,7 @@ register('./js-root-hooks.mjs', import.meta.url);
 /* toast writes into an element; nothing here asserts on it. */
 globalThis.document = { getElementById: () => null, querySelectorAll: () => [], addEventListener() {} };
 
-const { ag, ap, setReauthHandler } = await import('../js/admin-shared.js');
+const { apiGet, apiPost, setReauthHandler } = await import('../js/admin-shared.js');
 
 /* A session that expired under someone who was still working. The first request
    answers 401, and whatever the queue does next decides whether their work
@@ -40,7 +40,7 @@ test('a 401 signs back in and sends the same request again', async () => {
     return true;
   });
 
-  const out = await ap('/api/config', { items: [] });
+  const out = await apiPost('/api/config', { items: [] });
 
   assert.equal(signIns, 1, 'the sign-in box is raised once');
   assert.equal(calls.length, 2, 'the save is retried rather than abandoned');
@@ -60,7 +60,7 @@ test('a second 401 after signing in gives up rather than looping', async () => {
     return true;
   });
 
-  await assert.rejects(ap('/api/config', {}), /Unauthorised/);
+  await assert.rejects(apiPost('/api/config', {}), /Unauthorised/);
   assert.equal(signIns, 1, 'the retry does not raise a second sign-in box');
 });
 
@@ -68,7 +68,7 @@ test('declining to sign in reports the failure instead of hanging', async () => 
   fakeFetch([401]);
   setReauthHandler(async () => false);
 
-  await assert.rejects(ag('/api/config'), /Unauthorised/);
+  await assert.rejects(apiGet('/api/config'), /Unauthorised/);
 });
 
 /* A settings save makes three writes in a row. Without one sign-in shared
@@ -86,7 +86,7 @@ test('requests failing together share one sign-in', async () => {
     return true;
   });
 
-  const all = Promise.all([ap('/api/config', {}), ap('/api/auth/toggle', {}), ag('/api/widgets')]);
+  const all = Promise.all([apiPost('/api/config', {}), apiPost('/api/auth/toggle', {}), apiGet('/api/widgets')]);
   await new Promise(r => setImmediate(r));
   release();
   await all;
@@ -104,8 +104,8 @@ test('the sign-in requests themselves never trigger a sign-in', async () => {
     return true;
   });
 
-  await assert.rejects(ag('/api/auth/check'), /Unauthorised/);
-  await assert.rejects(ap('/api/auth/login', { password: 'x' }), /Unauthorised/);
+  await assert.rejects(apiGet('/api/auth/check'), /Unauthorised/);
+  await assert.rejects(apiPost('/api/auth/login', { password: 'x' }), /Unauthorised/);
   assert.equal(signIns, 0);
 });
 
@@ -117,8 +117,8 @@ test('a later save signs in again, rather than the first one being the only chan
     return true;
   });
 
-  await ap('/api/config', {});
-  await ap('/api/config', {});
+  await apiPost('/api/config', {});
+  await apiPost('/api/config', {});
   assert.equal(signIns, 2, 'the shared sign-in is cleared once it resolves');
 });
 
@@ -130,7 +130,7 @@ test('a request that succeeds never asks anyone to sign in', async () => {
     return true;
   });
 
-  await ag('/api/config');
+  await apiGet('/api/config');
   assert.equal(signIns, 0);
   assert.equal(calls.length, 1);
 });
