@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add swatches and hue, saturation and brightness sliders to the Solid color
+  background.
+
 ### Fixed
 
 - Admin error messages for badge tests and widget option fetches are translated
