@@ -37,16 +37,19 @@ export const toast = (m, t = 'ok') => {
   if (ms != null) tt = setTimeout(() => (e.className = ''), ms);
 };
 
-/* Carry `kind` and `detail`, so callers branch on data, never on message
-   text. */
+/* Carry `kind`, `code` and `detail`, so callers branch on data, never on
+   message text. Dropping a field here fails silently: the advice falls back to
+   the kind and the screen says something true but never the specific sentence. */
 /** An error carrying the API's structured fields.
-    @typedef {Error & { status?: number, kind?: string, detail?: Record<string, unknown> }} ApiError */
+    @typedef {Error & { status?: number, kind?: string, code?: string,
+                        detail?: Record<string, unknown> }} ApiError */
 
 /** @param {number} status @param {any} body @returns {ApiError} */
 function tagged(status, body) {
   const e = /** @type {ApiError} */ (new Error((body && body.error) || 'HTTP ' + status));
   e.status = status;
   if (body && typeof body.kind === 'string') e.kind = body.kind;
+  if (body && typeof body.code === 'string') e.code = body.code;
   if (body && body.detail && typeof body.detail === 'object') e.detail = body.detail;
   return e;
 }

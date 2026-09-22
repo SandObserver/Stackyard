@@ -239,6 +239,25 @@
     "foundValues_many": "{count} de valeurs trouvées",
     "foundValues_other": "{count} valeurs trouvées"
   },
+  "adminError": {
+    "sessionExpired": "Votre session a expiré. Reconnectez-vous pour continuer.",
+    "authRequired": "Authentification requise. Activez Authentification ci-dessous et ajoutez votre clé d’API.",
+    "unreachable": "Cette adresse est injoignable depuis Docker. Essayez le nom du conteneur, par exemple http://container-name:8181/api/v2",
+    "privateAddress": "La plupart des services de homelab utilisent des IP privées. Définissez ALLOW_PRIVATE_IPS=true et redémarrez le conteneur.",
+    "retype": "Cette configuration a changé depuis son enregistrement, les identifiants enregistrés n’ont donc pas été utilisés. Saisissez l’identifiant pour tester ces réglages.",
+    "redirect": "L’adresse a répondu par une redirection (HTTP {status}). Saisissez l’adresse vers laquelle elle pointe.",
+    "tlsIgnored": "Le certificat n’a pas pu être vérifié. Autoriser un certificat auto-signé ne vaut que pour les adresses de votre propre réseau, cela n’a donc pas été appliqué ici.",
+    "tlsUntrusted": "Le certificat du service n’a pas pu être vérifié.",
+    "genericBlocked": "La requête a été bloquée.",
+    "genericUpstream": "Le service a renvoyé une erreur.",
+    "genericInvalid": "La requête n’était pas valide.",
+    "genericInternal": "Une erreur est survenue.",
+    "statusNotFound": "Le service a répondu, mais il n’y a rien à cette adresse (HTTP {status}).",
+    "statusMethod": "Le service a refusé cette méthode de requête (HTTP {status}).",
+    "statusProxyAuth": "Un proxy intermédiaire demande des identifiants (HTTP {status}).",
+    "statusServer": "Le service a signalé une erreur interne (HTTP {status}).",
+    "statusOther": "Le service a répondu par une erreur (HTTP {status})."
+  },
   "home": {
     "search": "Rechercher",
     "searchPh": "Rechercher…",

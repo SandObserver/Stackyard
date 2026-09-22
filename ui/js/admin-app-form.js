@@ -21,11 +21,11 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=52e149f5';
+} from '/js/admin-shared.js?v=dab64a93';
 import { createListbox } from '/js/listbox.js?v=32f787c3';
 import { MAX_LABELS } from '/js/badge-logic.js?v=ad283693';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=42c11a9b';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=10f3cdb1';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=f665b86a';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d591044d';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=606a68c6';
 
@@ -1007,7 +1007,7 @@ async function fetchBadge() {
       const tone = missingPath || advice.tone === TONE.WARN ? 'var(--warning)' : 'var(--danger)';
       st.style.cssText = 'margin-top:4px;color:' + tone;
       if (missingPath) st.textContent = t('app.needsApiPathError');
-      else st.textContent = advice.tone === TONE.WARN ? advice.message : '✗ ' + advice.message;
+      else st.textContent = (advice.tone === TONE.WARN ? '' : '✗ ') + t(advice.key, advice.vars);
     }
     if (advice.openAuth && !missingPath) {
       const authCb = inpById('auth-en');

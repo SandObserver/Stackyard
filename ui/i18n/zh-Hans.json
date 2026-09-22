@@ -229,6 +229,25 @@
     "needsApiPathError": "该地址没有 API 路径。请输入服务的完整 API 地址。",
     "foundValues_other": "找到 {count} 个数值"
   },
+  "adminError": {
+    "sessionExpired": "您的会话已过期。请重新登录以继续。",
+    "authRequired": "需要身份验证。请开启下方的身份验证开关并填写您的 API 密钥。",
+    "unreachable": "无法从 Docker 访问该地址。请改用容器名称，例如 http://container-name:8181/api/v2",
+    "privateAddress": "大多数家庭实验室服务使用私有 IP。请设置 ALLOW_PRIVATE_IPS=true 并重启容器。",
+    "retype": "此配置在保存后已更改，因此未使用已保存的凭据。请输入凭据以测试这些设置。",
+    "redirect": "该地址返回了一个重定向（HTTP {status}）。请输入它指向的地址。",
+    "tlsIgnored": "无法验证证书。允许自签名证书仅适用于您自己网络中的地址，因此此处未予采用。",
+    "tlsUntrusted": "无法验证该服务的证书。",
+    "genericBlocked": "请求被阻止。",
+    "genericUpstream": "服务返回了错误。",
+    "genericInvalid": "请求无效。",
+    "genericInternal": "出了点问题。",
+    "statusNotFound": "服务有响应，但该地址上没有内容（HTTP {status}）。",
+    "statusMethod": "服务拒绝了该请求方法（HTTP {status}）。",
+    "statusProxyAuth": "途中的代理需要凭据（HTTP {status}）。",
+    "statusServer": "服务报告了内部错误（HTTP {status}）。",
+    "statusOther": "服务返回了错误（HTTP {status}）。"
+  },
   "home": {
     "search": "搜索",
     "searchPh": "搜索…",

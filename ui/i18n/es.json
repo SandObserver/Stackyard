@@ -239,6 +239,25 @@
     "foundValues_many": "{count} de valores encontrados",
     "foundValues_other": "{count} valores encontrados"
   },
+  "adminError": {
+    "sessionExpired": "Su sesión ha caducado. Inicie sesión de nuevo para continuar.",
+    "authRequired": "Se requiere autenticación. Active Autenticación abajo y añada su clave de API.",
+    "unreachable": "No se puede llegar a esta dirección desde Docker. Pruebe con el nombre del contenedor, p. ej. http://container-name:8181/api/v2",
+    "privateAddress": "La mayoría de los servicios de homelab están en IP privadas. Defina ALLOW_PRIVATE_IPS=true y reinicie el contenedor.",
+    "retype": "Esta configuración ha cambiado desde que se guardó, por lo que no se usaron las credenciales almacenadas. Introduzca la credencial para probar estos ajustes.",
+    "redirect": "La dirección respondió con una redirección (HTTP {status}). Introduzca la dirección a la que apunta.",
+    "tlsIgnored": "No se pudo verificar el certificado. Permitir un certificado autofirmado solo se aplica a direcciones de su propia red, así que no se usó aquí.",
+    "tlsUntrusted": "No se pudo verificar el certificado del servicio.",
+    "genericBlocked": "La solicitud fue bloqueada.",
+    "genericUpstream": "El servicio devolvió un error.",
+    "genericInvalid": "La solicitud no era válida.",
+    "genericInternal": "Algo salió mal.",
+    "statusNotFound": "El servicio respondió, pero no hay nada en esa dirección (HTTP {status}).",
+    "statusMethod": "El servicio rechazó ese método de solicitud (HTTP {status}).",
+    "statusProxyAuth": "Un proxy intermedio necesita credenciales (HTTP {status}).",
+    "statusServer": "El servicio informó de un error interno (HTTP {status}).",
+    "statusOther": "El servicio respondió con un error (HTTP {status})."
+  },
   "home": {
     "search": "Buscar",
     "searchPh": "Buscar…",

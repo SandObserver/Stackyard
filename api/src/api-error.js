@@ -1,6 +1,9 @@
-/* Structured API errors: { error, kind, detail? }. `kind` is a closed set.
+/* Structured API errors: { error, kind, code, detail? }. `kind` is a closed set.
    `detail` carries server-derived values only, never an upstream body, header or
-   filesystem path. */
+   filesystem path.
+
+   `code` is a stable identifier. Renaming one changes what every client shows.
+   `error` is prose for a log. It is never translated, so no client renders it. */
 
 const { json } = require('./router');
 const log = require('./log');
@@ -71,6 +74,19 @@ class WidgetError extends Error {
 const hasVouchedMessage = e =>
   !!e && typeof e === 'object' && typeof e.vouchedMessage === 'string' && e.vouchedMessage !== '';
 
+/* Node puts a syscall name on `code`. Never read that field here: it would send
+   the client ECONNREFUSED as something to translate. */
+function codeFor(kind, detail, e) {
+  if (e && typeof e === 'object' && typeof (/** @type {any} */ (e).apiCode) === 'string') {
+    return /** @type {any} */ (e).apiCode;
+  }
+  if (kind === KIND.BLOCKED && detail && typeof detail.reason === 'string') return `${kind}.${detail.reason}`;
+  if (kind === KIND.NETWORK && detail && TLS_CODES.has(/** @type {string} */ (detail.code))) {
+    return `${kind}.tls-untrusted`;
+  }
+  return kind;
+}
+
 function classify(e) {
   if (e && typeof e.kind === 'string' && KINDS.includes(e.kind)) {
     return e.detail ? { kind: e.kind, detail: e.detail } : { kind: e.kind };
@@ -116,25 +132,27 @@ function safeMessage(kind) {
 function errorBody(e, overrides = {}) {
   const { kind, detail } = classify(e);
   const finalKind = overrides.kind || kind;
+  const d = overrides.detail || detail;
   const body = {
     /* Only a message the code vouched for. Never e.message. */
     error: overrides.error != null ? overrides.error : hasVouchedMessage(e) ? e.vouchedMessage : safeMessage(finalKind),
     kind: finalKind,
+    code: overrides.code || codeFor(finalKind, d, e),
   };
-  const d = overrides.detail || detail;
   if (d && Object.keys(d).length) body.detail = d;
   return body;
 }
 
 /** @param {import('http').ServerResponse} res
     @param {unknown} e
-    @param {{ status?: number, kind?: string, detail?: Record<string, unknown>,
-              error?: string, extra?: Record<string, unknown> }} [opts] */
+    @param {{ status?: number, kind?: string, code?: string,
+              detail?: Record<string, unknown>, error?: string,
+              extra?: Record<string, unknown> }} [opts] */
 function fail(res, e, opts = {}) {
-  const { status = 502, kind, detail, error, extra } = opts;
+  const { status = 502, kind, code: apiCode, detail, error, extra } = opts;
   const thrown = /** @type {{ status?: unknown, message?: unknown }} */ (e && typeof e === 'object' ? e : {});
   const code = (typeof thrown.status === 'number' && thrown.status) || status;
-  const body = errorBody(e, { kind, detail, error });
+  const body = errorBody(e, { kind, code: apiCode, detail, error });
 
   if (typeof thrown.message === 'string' && thrown.message && thrown.message !== body.error) {
     log.error('request failed', { kind: body.kind, status: code, error: thrown.message });
@@ -150,6 +168,7 @@ module.exports = {
   WidgetError,
   hasVouchedMessage,
   classify,
+  codeFor,
   errorBody,
   safeMessage,
   SAFE_MESSAGES,

@@ -264,6 +264,11 @@ const LATIN_OK = [
   'user',
   'min',
   'max',
+  /* The ALLOW_PRIVATE_IPS=true assignment is typed, not read. */
+  'ALLOW',
+  'PRIVATE',
+  'IPS',
+  'true',
   'chars',
   'rrggbb',
   'autoplay',

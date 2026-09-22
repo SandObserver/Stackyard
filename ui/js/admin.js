@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=442d8e7d';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9efdedbe';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=15bd26cd';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=09845ee5';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9beb31ee';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=dc46bd41';
 import { resolveAdminSection } from '/js/admin-logic.js?v=e3673bd7';
 import {
   buildAppItem,
@@ -9,11 +9,11 @@ import {
   saveWithRevert,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=858f3f84';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=4aed22e2';
-import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=52e149f5';
+} from '/js/admin-save-logic.js?v=60a82419';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=f85d7e17';
+import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=dab64a93';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=17a37df4';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=3a8fc82e';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=32f787c3';
@@ -29,7 +29,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=d154ca56';
+} from '/js/import-foreign.js?v=f9c0a120';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=11fa1eff';
 import {
@@ -42,7 +42,7 @@ import {
   writeMode,
 } from '/js/theme.js?v=787bfdff';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=55685187';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=42c11a9b';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=f665b86a';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
@@ -598,8 +598,8 @@ async function doSave(orig) {
         orig,
         state.items.map(i => i.id),
       );
-      if (res.error) {
-        toast(res.error, 'err');
+      if (res.errorKey) {
+        toast(t(res.errorKey), 'err');
         return;
       }
       item = res.item;

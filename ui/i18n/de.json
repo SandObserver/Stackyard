@@ -234,6 +234,25 @@
     "foundValues_one": "{count} Wert gefunden",
     "foundValues_other": "{count} Werte gefunden"
   },
+  "adminError": {
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um fortzufahren.",
+    "authRequired": "Authentifizierung erforderlich. Schalten Sie unten Authentifizierung ein und tragen Sie Ihren API-Schlüssel ein.",
+    "unreachable": "Diese Adresse ist aus Docker nicht erreichbar. Versuchen Sie den Container-Namen, z. B. http://container-name:8181/api/v2",
+    "privateAddress": "Die meisten Homelab-Dienste liegen auf privaten IP-Adressen. Setzen Sie ALLOW_PRIVATE_IPS=true und starten Sie den Container neu.",
+    "retype": "Diese Konfiguration hat sich seit dem Speichern geändert, daher wurden die gespeicherten Zugangsdaten nicht verwendet. Geben Sie die Zugangsdaten ein, um diese Einstellungen zu testen.",
+    "redirect": "Die Adresse hat mit einer Weiterleitung geantwortet (HTTP {status}). Geben Sie die Adresse ein, auf die sie verweist.",
+    "tlsIgnored": "Das Zertifikat konnte nicht überprüft werden. Ein selbstsigniertes Zertifikat zuzulassen gilt nur für Adressen in Ihrem eigenen Netzwerk und wurde hier nicht angewendet.",
+    "tlsUntrusted": "Das Zertifikat des Dienstes konnte nicht überprüft werden.",
+    "genericBlocked": "Die Anfrage wurde blockiert.",
+    "genericUpstream": "Der Dienst hat einen Fehler zurückgegeben.",
+    "genericInvalid": "Die Anfrage war nicht gültig.",
+    "genericInternal": "Etwas ist schiefgelaufen.",
+    "statusNotFound": "Der Dienst hat geantwortet, aber unter dieser Adresse liegt nichts (HTTP {status}).",
+    "statusMethod": "Der Dienst hat diese Anfragemethode abgelehnt (HTTP {status}).",
+    "statusProxyAuth": "Ein Proxy auf dem Weg benötigt Zugangsdaten (HTTP {status}).",
+    "statusServer": "Der Dienst meldet einen internen Fehler (HTTP {status}).",
+    "statusOther": "Der Dienst hat mit einem Fehler geantwortet (HTTP {status})."
+  },
   "home": {
     "search": "Suchen",
     "searchPh": "Suchen…",
