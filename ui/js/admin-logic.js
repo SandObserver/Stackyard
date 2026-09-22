@@ -303,15 +303,23 @@ export function isBareHostUrl(url) {
 }
 
 /** Whether a failed badge fetch should report the missing API path instead of
-    the failure itself. A session that has expired is reported as itself: the
-    address is not why the request failed.
+    the failure itself.
+
+    The hint is a guess from the address. The error code is what the service
+    reported. A guess never replaces a known cause, so the hint is shown only
+    where a missing path could actually explain the failure: the service
+    answered and had nothing there (404), or answered with something that is not
+    data. A request that was blocked, never connected, or was refused for
+    credentials failed for a reason the path cannot change.
 
     @param {string} url
-    @param {{ sessionExpired?: boolean }} advice
+    @param {{ sessionExpired?: boolean, code?: string, vars?: { status?: number } }} advice
     @returns {boolean} */
 export function failureIsMissingApiPath(url, advice) {
-  if (advice && advice.sessionExpired) return false;
-  return isBareHostUrl(url);
+  if (!advice || advice.sessionExpired) return false;
+  if (!isBareHostUrl(url)) return false;
+  if (advice.code === 'upstream.status') return advice.vars?.status === 404;
+  return advice.code === 'invalid';
 }
 
 /** Compares what `read` returns now with what it returned at the last reset.

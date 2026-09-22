@@ -68,20 +68,20 @@ export function badgeErrorAdvice(e) {
   const status = detail && typeof detail.status === 'number' ? detail.status : null;
 
   if (kind === KIND.AUTH) {
-    return { tone: TONE.ERROR, key: 'adminError.sessionExpired', openAuth: false, sessionExpired: true };
+    return { tone: TONE.ERROR, code, key: 'adminError.sessionExpired', openAuth: false, sessionExpired: true };
   }
 
   if (kind === KIND.UPSTREAM && (status === 401 || status === 403)) {
-    return { tone: TONE.WARN, key: 'adminError.authRequired', openAuth: true, sessionExpired: false };
+    return { tone: TONE.WARN, code, key: 'adminError.authRequired', openAuth: true, sessionExpired: false };
   }
 
   const warn = kind === KIND.NETWORK || kind === KIND.TIMEOUT || code === 'blocked.private-address';
-  return { ...adviceFor(read), tone: warn ? TONE.WARN : TONE.ERROR, openAuth: false, sessionExpired: false };
+  return { ...adviceFor(read), code, tone: warn ? TONE.WARN : TONE.ERROR, openAuth: false, sessionExpired: false };
 }
 
 /* Same wording as badgeErrorAdvice: a settings Fetch and a badge test report the
    same failures and must not disagree about either the text or the tone. */
 export function optionsErrorAdvice(e) {
-  const { tone, key, vars } = badgeErrorAdvice(e);
-  return vars ? { tone, key, vars } : { tone, key };
+  const { tone, key, vars, code } = badgeErrorAdvice(e);
+  return vars ? { tone, code, key, vars } : { tone, code, key };
 }

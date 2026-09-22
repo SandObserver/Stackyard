@@ -576,13 +576,45 @@ test('isBareHostUrl rejects what it cannot parse', () => {
   for (const u of ['', '   ', 'http://', undefined, null, 42]) assert.equal(isBareHostUrl(u), false, String(u));
 });
 
+/* The two failures a missing path actually produces: the service answers and
+   has nothing there, or answers with something that is not data. */
 test('a failed fetch of a bare address reports the missing API path', () => {
-  assert.equal(failureIsMissingApiPath('https://seerr.example.com', { tone: 'error' }), true);
-  assert.equal(failureIsMissingApiPath('https://seerr.example.com/api/v1/request/count', { tone: 'error' }), false);
+  const notFound = { code: 'upstream.status', vars: { status: 404 } };
+  const notData = { code: 'invalid' };
+  for (const advice of [notFound, notData]) {
+    assert.equal(failureIsMissingApiPath('https://seerr.example.com', advice), true, advice.code);
+    assert.equal(failureIsMissingApiPath('https://seerr.example.com/api/v1/request/count', advice), false);
+  }
+});
+
+/* The hint is a guess from the address. A cause the service reported outranks
+   it, or the user is sent to fix a path that was never the problem. */
+test('a known cause is reported instead of the path hint', () => {
+  const bare = 'https://seerr.example.com';
+  for (const advice of [
+    { code: 'blocked.private-address' },
+    { code: 'blocked' },
+    { code: 'network' },
+    { code: 'timeout' },
+    { code: 'network.tls-untrusted' },
+    { code: 'invalid.retype' },
+    { code: 'upstream.redirect', vars: { status: 301 } },
+    { code: 'upstream.status', vars: { status: 401 } },
+    { code: 'upstream.status', vars: { status: 500 } },
+  ]) {
+    assert.equal(failureIsMissingApiPath(bare, advice), false, JSON.stringify(advice));
+  }
 });
 
 test('an expired session is reported as itself, whatever the address', () => {
   assert.equal(failureIsMissingApiPath('https://seerr.example.com', { sessionExpired: true }), false);
+});
+
+/* A code this frontend does not recognise is not evidence of a missing path. */
+test('an unknown cause does not get the path hint', () => {
+  assert.equal(failureIsMissingApiPath('https://seerr.example.com', { code: 'upstream.rate-limited' }), false);
+  assert.equal(failureIsMissingApiPath('https://seerr.example.com', {}), false);
+  assert.equal(failureIsMissingApiPath('https://seerr.example.com', null), false);
 });
 
 /* A service is written with spaces, hyphens, underscores or nothing between
