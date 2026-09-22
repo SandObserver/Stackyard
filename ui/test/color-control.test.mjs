@@ -150,3 +150,31 @@ test('a hue and its wrapped equivalent agree', () => {
   assert.deepEqual(hsvToRgb(-30, 100, 100), hsvToRgb(330, 100, 100));
   assert.deepEqual(hsvToRgb(400, 100, 100), hsvToRgb(40, 100, 100));
 });
+
+/* The background colour was the one colour field that did not use this control:
+   it was a text row you typed a hex into. It now renders the same swatches and
+   sliders as the app icon and badge colours.
+
+   Read from the source: the control needs a browser, and what matters here is
+   that Settings asks for it and that the save path reads the input it creates. */
+test('the background colour uses the shared control, and is saved from it', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+  const settings = fs.readFileSync(path.join(root, 'js/admin-settings.js'), 'utf8');
+  const markup = fs.readFileSync(path.join(root, 'admin/index.html'), 'utf8');
+
+  assert.match(
+    settings,
+    /renderColorControl\(slot, \{[^}]*idPrefix: 'bg-color'/s,
+    'Settings should render the control',
+  );
+  assert.match(markup, /id="bg-color-slot"/, 'the markup needs a slot for it');
+  assert.equal(markup.includes('id="ie-bgcolor"'), false, 'the typed hex row is gone');
+
+  /* renderColorControl writes `<idPrefix>-val`. Reading any other id saves a
+     colour the user never picked, or nothing at all. */
+  assert.match(settings, /inp\('bg-color-val'\)/, 'the save path should read the control');
+  assert.match(settings, /_val\('bg-color-val'\)/, 'Save stays disabled unless dirty tracking reads it too');
+});

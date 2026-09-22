@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=d627cade';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=64342bbf';
 import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=569c6599';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=e7f6c95c';
@@ -43,7 +43,6 @@ import {
 } from '/js/theme.js?v=787bfdff';
 import { el, inp, q, qa, clr as rc, setUserText, tgt } from '/js/utils.js?v=db210447';
 import { applyBackground, resolveBackground } from '/js/background.js?v=f0360111';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=2cc98198';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 
 ensureSprite();
@@ -655,21 +654,6 @@ function initAllInlineEdits() {
     placeholder: 'https://example.com/photo.jpg',
     onCommit(v) {
       fetchWallpaperLink(v.trim());
-    },
-  });
-
-  const colorInp = document.createElement('input');
-  colorInp.id = 'bg-color-inp';
-  document.body.appendChild(colorInp);
-  initInlineEdit('ie-bgcolor', 'bg-color-inp', {
-    placeholder: '#0d1117',
-    onCommit(val) {
-      if (!val) return;
-      const { value, ok } = normalizeColorInput(val);
-      if (!ok) return toast(t('toast.colorInvalid'), 'err');
-      colorInp.value = value;
-      const rv = q('#ie-bgcolor .rv');
-      if (rv) rv.textContent = value;
     },
   });
 }
