@@ -178,3 +178,23 @@ test('the background colour uses the shared control, and is saved from it', asyn
   assert.match(settings, /inp\('bg-color-val'\)/, 'the save path should read the control');
   assert.match(settings, /_val\('bg-color-val'\)/, 'Save stays disabled unless dirty tracking reads it too');
 });
+
+/* A hint belongs to one wallpaper source. It used to be shown from the source
+   picker's own handler, which runs before stored settings load, so opening
+   Settings on a saved colour background showed the Unsplash hint under it. */
+test('each wallpaper hint is toggled where the source is applied', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+  const settings = fs.readFileSync(path.join(root, 'js/admin-settings.js'), 'utf8');
+  const admin = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
+
+  const showBgFields = settings.slice(settings.indexOf('export function showBgFields'));
+  assert.match(showBgFields, /bgcol-hint/, 'the Unsplash hint is not toggled with the fields');
+  assert.match(showBgFields, /bg-url-hint/, 'the image hint is not toggled with the fields');
+
+  /* Toggling it anywhere else reintroduces the load-order bug. */
+  assert.equal(admin.includes('bgcol-hint'), false, 'admin.js should leave the hints to showBgFields');
+  assert.equal(admin.includes('bg-url-hint'), false, 'admin.js should leave the hints to showBgFields');
+});

@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=64342bbf';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=a23846ed';
 import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=569c6599';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=e7f6c95c';
@@ -718,10 +718,6 @@ function initBgType() {
   const apply = val => {
     hidden.value = val;
     showBgFields(val);
-    const hint = el('bgcol-hint');
-    if (hint) hint.style.display = val === 'unsplash' ? '' : 'none';
-    const imgHint = el('bg-url-hint');
-    if (imgHint) imgHint.style.display = val === 'url' ? '' : 'none';
   };
   const box = createListbox({
     id: 'bg-type',

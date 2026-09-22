@@ -308,6 +308,9 @@ export function showWallpaperFile(url) {
   }
 }
 
+/* Every path that changes the wallpaper source comes through here, including
+   the one that loads stored settings. A source's hint shown from anywhere else
+   survives that load and describes the wrong source. */
 export function showBgFields(type) {
   const host = el('bg-unsplash-fields')?.parentElement;
   swapContent(host, () => {
@@ -317,6 +320,8 @@ export function showBgFields(type) {
     });
     const brRow = el('bg-brightness-row');
     if (brRow) brRow.classList.toggle('d-none', type === 'color');
+    el('bgcol-hint')?.classList.toggle('d-none', type !== 'unsplash');
+    el('bg-url-hint')?.classList.toggle('d-none', type !== 'url');
   });
 }
 /** @param {Event} [e] */
