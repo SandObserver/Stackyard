@@ -40,7 +40,7 @@ import {
   resolveTheme,
   watchSystemTheme,
   writeMode,
-} from '/js/theme.js?v=ab001a95';
+} from '/js/theme.js?v=eeafa4b5';
 import { el, inp, q, qa, clr as rc, setUserText, tgt } from '/js/utils.js?v=383027d7';
 import { applyBackground, resolveBackground } from '/js/background.js?v=7befbdbb';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';

@@ -58,7 +58,7 @@ import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=606a68c6';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
-import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=ab001a95';
+import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
 
 ensureSprite();
 
