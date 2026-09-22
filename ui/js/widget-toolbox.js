@@ -12,7 +12,7 @@ export { esc, html, setHtml };
    survives esc() and still parses as a second declaration. Assign the result
    through a specific CSSOM property, never a concatenated style string. */
 const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\))$/i;
-export function safeColor(value, fallback) {
+export function colorOrFallback(value, fallback) {
   return COLOR_RE.test(String(value ?? '').trim()) ? String(value).trim() : fallback;
 }
 

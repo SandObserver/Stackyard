@@ -64,7 +64,7 @@ export function resolveColor(c, palette) {
 /** A colour safe to hand to CSS, or ''. The fill lands in a custom property,
     which stores any string: `url(...)` there becomes a real request.
     @param {unknown} c @returns {string} */
-export function safeColor(c, palette) {
+export function paletteColor(c, palette) {
   const v = resolveColor(c, palette);
   if (!v) return '';
   const supports = globalThis.CSS?.supports;
@@ -147,7 +147,7 @@ export function firingLabels(labels, values, palette) {
       name: String(l.name || l.unit || l.path),
       value: v,
       unit: String(l.unit || ''),
-      color: safeColor(l.color, palette) || safeColor('info', palette) || LABEL_DEFAULT_COLOR,
+      color: paletteColor(l.color, palette) || paletteColor('info', palette) || LABEL_DEFAULT_COLOR,
     });
   }
   return out;
@@ -211,11 +211,11 @@ export function computeBadgeVisual({
     cls = 'badge on blue';
     num = activity > 99 ? `${fmt(99)}+` : fmt(activity);
     unit = custom.unit ? custom.unit.slice(0, 8) : '';
-    bg = safeColor(custom.color, palette);
+    bg = paletteColor(custom.color, palette);
   } else if (fixed) {
     cls = 'badge on blue';
     num = staticBdg.label.slice(0, 10);
-    bg = safeColor(staticBdg.color, palette);
+    bg = paletteColor(staticBdg.color, palette);
   } else if (!hideHealthy && hasHC) {
     cls = 'badge on green';
   } else {
@@ -257,7 +257,7 @@ export function computeBadgeVisual({
      the reason beside it. */
   if (health) rows.push({ name: reason || tr('status.needsAttention'), value: '', unit: '', color: NAMED.red });
   for (const f of fired) rows.push(f);
-  if (fixed) rows.push({ name: staticBdg.label, value: '', unit: '', color: safeColor(staticBdg.color, palette) });
+  if (fixed) rows.push({ name: staticBdg.label, value: '', unit: '', color: paletteColor(staticBdg.color, palette) });
 
   const more = Math.max(0, rows.length - 1);
   if (more) {

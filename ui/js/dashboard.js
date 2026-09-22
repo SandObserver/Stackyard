@@ -20,13 +20,12 @@ import {
   q,
   qa,
   qi,
-  sanitizeCssUrl,
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=55685187';
+} from '/js/utils.js?v=db210447';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=f050b4e5';
+import { initSpotlight } from '/js/spotlight.js?v=b5e1d6be';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
@@ -40,8 +39,8 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=d8363297';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=ad283693';
+} from '/js/ui.js?v=7b3c9a80';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=1cfffab7';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
@@ -52,7 +51,7 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=f0360111';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -537,7 +536,6 @@ function syncMobPages() {
 
 /* Matches --bg-base in tokens.css. It shows wherever a fitted wallpaper does
    not reach. */
-const WALLPAPER_BACKDROP = '#0d1117';
 
 /* A sampled wallpaper grid, or one tone for a solid colour. Null on both leaves
    the labels as they are. */
@@ -574,7 +572,7 @@ function resampleBg() {
       window.innerHeight,
       _bgSample.brightness,
       _bgSample.fit,
-      WALLPAPER_BACKDROP,
+      BACKDROP,
     ),
     tone: themeTone(),
   };
@@ -585,48 +583,15 @@ async function applyBg() {
   const root = document.documentElement;
   bgTone = { grid: null, tone: themeTone() };
   retone();
-  try {
-    const bg = S.background || {};
-    if (bg.type === 'color' && bg.color) {
-      const safeColor = String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g, '');
-      root.style.setProperty('--bg-image', 'none');
-      root.style.setProperty('--bg-color', safeColor);
-      root.style.setProperty('--bg-brightness', '1');
-      root.style.setProperty('--bg-size', 'cover');
-      bgTone = { grid: null, tone: toneForColor(safeColor) ?? themeTone() };
-      retone();
-    } else if (bg.type === 'url' && bg.url) {
-      const url = sanitizeCssUrl(bg.url);
-      const brightness = Number(bg.brightness ?? 0.62);
-      const fit = bg.fit === 'fit' ? 'fit' : 'fill';
-      root.style.setProperty('--bg-image', `url('${url}')`);
-      root.style.setProperty('--bg-color', WALLPAPER_BACKDROP);
-      root.style.setProperty('--bg-brightness', String(brightness));
-      root.style.setProperty('--bg-size', fit === 'fit' ? 'contain' : 'cover');
-      sampleWallpaper(url, brightness, fit);
-    } else if (bg.type === 'unsplash') {
-      let url = loadWallpaper(bg);
-      if (!url) {
-        const r = await fetch('/api/wallpaper', { cache: 'no-store' });
-        const d = await r.json();
-        url = d.url || null;
-        if (url) saveWallpaper(url, bg);
-      }
-      if (url) {
-        const shown = url;
-        const brightness = Number(bg.brightness ?? 0.62);
-        const img = new Image();
-        img.onload = () => {
-          root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(shown)}')`);
-          root.style.setProperty('--bg-color', WALLPAPER_BACKDROP);
-          root.style.setProperty('--bg-brightness', String(brightness));
-          root.style.setProperty('--bg-size', 'cover');
-          sampleWallpaper(sanitizeCssUrl(shown), brightness, 'fill');
-        };
-        img.src = shown;
-      }
-    }
-  } catch {}
+  const bg = await resolveBackground(S.background || {});
+  if (!bg) return;
+  applyBackground(root, bg);
+  if (bg.url) {
+    sampleWallpaper(bg.url, Number(bg.brightness), bg.fit);
+    return;
+  }
+  bgTone = { grid: null, tone: toneForColor(bg.color) ?? themeTone() };
+  retone();
 }
 
 function refreshBadges() {

@@ -2,7 +2,7 @@
    the only CSP context that allows inline script, so markup injected there
    runs.
 
-   safeColor is exercised directly: a CSS value cannot be made safe by escaping,
+   colorOrFallback is exercised directly: a CSS value cannot be made safe by escaping,
    so the validator is the whole defence. The call sites are checked as source
    text, because they live in .html files with inline modules and there is no
    DOM-free way to import and run them. */
@@ -16,7 +16,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
-const { safeColor } = await import('../js/widget-toolbox.js');
+const { colorOrFallback } = await import('../js/widget-toolbox.js');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
@@ -25,47 +25,47 @@ const MAP = 'widgets/connections/connections-map.html';
 const BACKUP = 'widgets/backup/backup.html';
 const STATS = 'widgets/system-summary/index.html';
 
-/* ── safeColor ────────────────────────────────────────────────────────────── */
+/* ── colorOrFallback ────────────────────────────────────────────────────────────── */
 
-test('safeColor accepts the colour formats the widgets actually produce', () => {
-  assert.equal(safeColor('#abc', '#000'), '#abc');
-  assert.equal(safeColor('#AABBCC', '#000'), '#AABBCC');
-  assert.equal(safeColor('rgb(1,2,3)', '#000'), 'rgb(1,2,3)');
-  assert.equal(safeColor('rgb( 10 , 20 , 30 )', '#000'), 'rgb( 10 , 20 , 30 )');
-  assert.equal(safeColor('  #abc  ', '#000'), '#abc', 'surrounding whitespace is trimmed');
+test('colorOrFallback accepts the colour formats the widgets actually produce', () => {
+  assert.equal(colorOrFallback('#abc', '#000'), '#abc');
+  assert.equal(colorOrFallback('#AABBCC', '#000'), '#AABBCC');
+  assert.equal(colorOrFallback('rgb(1,2,3)', '#000'), 'rgb(1,2,3)');
+  assert.equal(colorOrFallback('rgb( 10 , 20 , 30 )', '#000'), 'rgb( 10 , 20 , 30 )');
+  assert.equal(colorOrFallback('  #abc  ', '#000'), '#abc', 'surrounding whitespace is trimmed');
 });
 
-test('safeColor rejects a value carrying a second CSS declaration', () => {
+test('colorOrFallback rejects a value carrying a second CSS declaration', () => {
   /* The case escaping does not cover: no quote, no angle bracket, nothing for
      esc() to act on, but still a second declaration once parsed. */
-  assert.equal(safeColor('red; background-image: url(https://evil.example/)', '#000'), '#000');
-  assert.equal(safeColor('rgb(1,2,3);x:y', '#000'), '#000');
-  assert.equal(safeColor('#abc;position:fixed;top:0', '#000'), '#000');
+  assert.equal(colorOrFallback('red; background-image: url(https://evil.example/)', '#000'), '#000');
+  assert.equal(colorOrFallback('rgb(1,2,3);x:y', '#000'), '#000');
+  assert.equal(colorOrFallback('#abc;position:fixed;top:0', '#000'), '#000');
 });
 
-test('safeColor rejects url() and other non-colour values', () => {
-  assert.equal(safeColor('url(javascript:alert(1))', '#000'), '#000');
-  assert.equal(safeColor('expression(alert(1))', '#000'), '#000');
-  assert.equal(safeColor('var(--x)', '#000'), '#000');
+test('colorOrFallback rejects url() and other non-colour values', () => {
+  assert.equal(colorOrFallback('url(javascript:alert(1))', '#000'), '#000');
+  assert.equal(colorOrFallback('expression(alert(1))', '#000'), '#000');
+  assert.equal(colorOrFallback('var(--x)', '#000'), '#000');
 });
 
-test('safeColor rejects rather than repairs a malformed colour', () => {
-  assert.equal(safeColor('#abcd', '#000'), '#000', 'four digits is not a valid hex colour');
-  assert.equal(safeColor('#ab', '#000'), '#000');
-  assert.equal(safeColor('rgb(1,2)', '#000'), '#000');
+test('colorOrFallback rejects rather than repairs a malformed colour', () => {
+  assert.equal(colorOrFallback('#abcd', '#000'), '#000', 'four digits is not a valid hex colour');
+  assert.equal(colorOrFallback('#ab', '#000'), '#000');
+  assert.equal(colorOrFallback('rgb(1,2)', '#000'), '#000');
 });
 
-test('safeColor falls back for empty and non-string input', () => {
+test('colorOrFallback falls back for empty and non-string input', () => {
   for (const v of ['', null, undefined, 0, {}, []]) {
-    assert.equal(safeColor(v, '#AF52DE'), '#AF52DE', `expected fallback for ${JSON.stringify(v)}`);
+    assert.equal(colorOrFallback(v, '#AF52DE'), '#AF52DE', `expected fallback for ${JSON.stringify(v)}`);
   }
 });
 
 /* Named colours are valid CSS but are not accepted, because the widgets only
    ever produce hex or rgb(). Widening the pattern is a deliberate decision, and
    this test is the reminder. */
-test('safeColor does not accept named colours', () => {
-  assert.equal(safeColor('rebeccapurple', '#000'), '#000');
+test('colorOrFallback does not accept named colours', () => {
+  assert.equal(colorOrFallback('rebeccapurple', '#000'), '#000');
 });
 
 /* ── The four sites ───────────────────────────────────────────────────────── */
@@ -112,7 +112,7 @@ test('the system-stats label falls back through an escaped interpolation', () =>
 
 test('both colour sites validate and assign through named CSSOM properties', () => {
   const src = read(MAP);
-  assert.equal((src.match(/safeColor\(/g) || []).length, 2, 'both dots should validate');
+  assert.equal((src.match(/colorOrFallback\(/g) || []).length, 2, 'both dots should validate');
   assert.equal((src.match(/\.style\.backgroundColor\s*=/g) || []).length, 2);
   /* The shorthand would accept a url(), so a validated colour must never be
      assigned through it. Literal hover colours elsewhere in the file use the

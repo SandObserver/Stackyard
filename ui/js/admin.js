@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b03a09be';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=cc847d1f';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=01b9ad07';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=94a240a2';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=67bf31d2';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=269c850d';
 import { resolveAdminSection } from '/js/admin-logic.js?v=5356a1b3';
 import {
   buildAppItem,
@@ -10,13 +10,13 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=01519bca';
-import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=d4ca7a03';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=d627cade';
+import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=569c6599';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=848b267e';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=e7f6c95c';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=3a4e4fd1';
+import { createListbox } from '/js/listbox.js?v=f5ccb53e';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -41,10 +41,10 @@ import {
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=787bfdff';
-import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=55685187';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=d858cebb';
+import { el, inp, q, qa, clr as rc, setUserText, tgt } from '/js/utils.js?v=db210447';
+import { applyBackground, resolveBackground } from '/js/background.js?v=f0360111';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=2cc98198';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
-import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
 ensureSprite();
 
@@ -92,40 +92,8 @@ async function load() {
 }
 
 async function applyBg() {
-  const root = document.documentElement;
-  try {
-    const bg = (state._settings && state._settings.background) || {};
-    if (bg.type === 'color' && bg.color) {
-      root.style.setProperty('--bg-image', 'none');
-      root.style.setProperty('--bg-color', String(bg.color).replace(/[^a-zA-Z0-9#(),.\s%]/g, ''));
-      root.style.setProperty('--bg-brightness', '1');
-      root.style.setProperty('--bg-size', 'cover');
-    } else if (bg.type === 'url' && bg.url) {
-      root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(bg.url)}')`);
-      root.style.setProperty('--bg-color', '#0d1117');
-      root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
-      root.style.setProperty('--bg-size', bg.fit === 'fit' ? 'contain' : 'cover');
-    } else if (bg.type === 'unsplash') {
-      let url = loadWallpaper(bg);
-      if (!url) {
-        const r = await fetch('/api/wallpaper', { cache: 'no-store' });
-        const d = await r.json();
-        url = d.url || null;
-        if (url) saveWallpaper(url, bg);
-      }
-      if (url) {
-        const shown = url;
-        const img = new Image();
-        img.onload = () => {
-          root.style.setProperty('--bg-image', `url('${sanitizeCssUrl(shown)}')`);
-          root.style.setProperty('--bg-color', '#0d1117');
-          root.style.setProperty('--bg-brightness', String(bg.brightness ?? 0.62));
-          root.style.setProperty('--bg-size', 'cover');
-        };
-        img.src = shown;
-      }
-    }
-  } catch {}
+  const bg = await resolveBackground((state._settings && state._settings.background) || {});
+  if (bg) applyBackground(document.documentElement, bg);
 }
 /** Returns whether the write reached the server. */
 async function save() {

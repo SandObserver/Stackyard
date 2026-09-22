@@ -17,12 +17,20 @@ export const mk = (t, a = {}) => {
    url() fetches from whatever host it names. */
 const SAFE_COLOR = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9a-z%.,\s/+-]*\)|[a-z]{3,20})$/i;
 const DEFAULT_TILE_COLOR = '#1C1C1E';
+
+/** A colour CSS can be given, or `fallback`. Rejects, never repairs: deleting
+    the characters that made a value invalid paints a colour nobody chose.
+    @param {unknown} c @param {string} fallback @returns {string} */
+export const cssColor = (c, fallback) => {
+  const v = String(c ?? '').trim();
+  return v && SAFE_COLOR.test(v) ? v : fallback;
+};
+
 export const clr = c => {
   if (!c) return DEFAULT_TILE_COLOR;
   const named = tileColor(c, pageTheme());
   if (named) return named;
-  const v = String(c).trim();
-  return SAFE_COLOR.test(v) ? v : DEFAULT_TILE_COLOR;
+  return cssColor(c, DEFAULT_TILE_COLOR);
 };
 /* The plate is a colour the user chose, so the ink has to be measured from it.
    White on the palette's own yellow reads at 1.5:1. */
