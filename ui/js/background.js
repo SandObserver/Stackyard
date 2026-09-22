@@ -1,13 +1,7 @@
 // @ts-check
-/* The dashboard and Settings paint the same background from the same settings.
-   `backgroundFor` decides what to paint and touches nothing, `applyBackground`
-   paints it, and callers do whatever else they need with the result. The
-   dashboard samples the wallpaper for its tile tones; Settings does not. */
-
-import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=db210447';
+import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=843b7c2b';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
-/* Behind a wallpaper while it loads, and behind one that never does. */
 export const BACKDROP = '#0d1117';
 
 const DEFAULT_BRIGHTNESS = 0.62;
@@ -15,8 +9,7 @@ const DEFAULT_BRIGHTNESS = 0.62;
 /** @typedef {{ image: string, color: string, brightness: string, size: string,
                 url: string|null, fit: 'fit'|'fill' }} Background */
 
-/** What to paint, or null when the settings name no background.
-    @param {any} bg @param {string|null} [wallpaperUrl] a resolved unsplash url
+/** @param {any} bg @param {string|null} [wallpaperUrl]
     @returns {Background|null} */
 export function backgroundFor(bg, wallpaperUrl = null) {
   const s = bg || {};
@@ -32,7 +25,6 @@ export function backgroundFor(bg, wallpaperUrl = null) {
   }
   const url = s.type === 'url' ? s.url : s.type === 'unsplash' ? wallpaperUrl : null;
   if (!url) return null;
-  /* An unsplash wallpaper is never letterboxed: the fit control is for a URL. */
   const fit = s.type === 'url' && s.fit === 'fit' ? 'fit' : 'fill';
   const brightness = Number(s.brightness ?? DEFAULT_BRIGHTNESS);
   return {
@@ -53,8 +45,6 @@ export function applyBackground(root, b) {
   root.style.setProperty('--bg-size', b.size);
 }
 
-/* Cached first, then the server. An unsplash url is fetched once a day, so a
-   reload does not spend a request. */
 async function unsplashUrl(bg) {
   const cached = loadWallpaper(bg);
   if (cached) return cached;
@@ -65,8 +55,6 @@ async function unsplashUrl(bg) {
   return url;
 }
 
-/* Paint a wallpaper only once it has decoded, or the page flashes the backdrop
-   and then jumps. */
 const decoded = url =>
   new Promise(resolve => {
     const img = new Image();
@@ -75,9 +63,7 @@ const decoded = url =>
     img.src = url;
   });
 
-/** Fetch and preload whatever the settings need, then say what to paint.
-    Returns null when there is nothing to paint or the image never loaded.
-    @param {any} bg @returns {Promise<Background|null>} */
+/** @param {any} bg @returns {Promise<Background|null>} */
 export async function resolveBackground(bg) {
   const s = bg || {};
   if (s.type === 'unsplash') {

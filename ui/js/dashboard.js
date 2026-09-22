@@ -23,9 +23,9 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=db210447';
+} from '/js/utils.js?v=843b7c2b';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=b5e1d6be';
+import { initSpotlight } from '/js/spotlight.js?v=6f505133';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
@@ -39,8 +39,8 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=7b3c9a80';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=1cfffab7';
+} from '/js/ui.js?v=ff1da3ef';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
@@ -51,7 +51,7 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=f0360111';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=f69fb1a7';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';

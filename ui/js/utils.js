@@ -18,8 +18,8 @@ export const mk = (t, a = {}) => {
 const SAFE_COLOR = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9a-z%.,\s/+-]*\)|[a-z]{3,20})$/i;
 const DEFAULT_TILE_COLOR = '#1C1C1E';
 
-/** A colour CSS can be given, or `fallback`. Rejects, never repairs: deleting
-    the characters that made a value invalid paints a colour nobody chose.
+/** Reject an invalid colour. Repairing one by deleting characters paints a
+    colour nobody chose.
     @param {unknown} c @param {string} fallback @returns {string} */
 export const cssColor = (c, fallback) => {
   const v = String(c ?? '').trim();

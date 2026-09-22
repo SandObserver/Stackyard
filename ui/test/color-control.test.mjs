@@ -151,12 +151,8 @@ test('a hue and its wrapped equivalent agree', () => {
   assert.deepEqual(hsvToRgb(400, 100, 100), hsvToRgb(40, 100, 100));
 });
 
-/* The background colour was the one colour field that did not use this control:
-   it was a text row you typed a hex into. It now renders the same swatches and
-   sliders as the app icon and badge colours.
-
-   Read from the source: the control needs a browser, and what matters here is
-   that Settings asks for it and that the save path reads the input it creates. */
+/* Read from the source: the control needs a browser. What matters is that
+   Settings asks for it and that the save path reads the input it creates. */
 test('the background colour uses the shared control, and is saved from it', async () => {
   const fs = await import('node:fs');
   const path = await import('node:path');
@@ -174,14 +170,13 @@ test('the background colour uses the shared control, and is saved from it', asyn
   assert.equal(markup.includes('id="ie-bgcolor"'), false, 'the typed hex row is gone');
 
   /* renderColorControl writes `<idPrefix>-val`. Reading any other id saves a
-     colour the user never picked, or nothing at all. */
+     colour the user never picked. */
   assert.match(settings, /inp\('bg-color-val'\)/, 'the save path should read the control');
   assert.match(settings, /_val\('bg-color-val'\)/, 'Save stays disabled unless dirty tracking reads it too');
 });
 
-/* A hint belongs to one wallpaper source. It used to be shown from the source
-   picker's own handler, which runs before stored settings load, so opening
-   Settings on a saved colour background showed the Unsplash hint under it. */
+/* The source picker's handler runs before stored settings load, so a hint set
+   there describes whatever the picker started on, not the saved source. */
 test('each wallpaper hint is toggled where the source is applied', async () => {
   const fs = await import('node:fs');
   const path = await import('node:path');

@@ -1,8 +1,5 @@
-/* One background, two screens. The dashboard and Settings painted their own
-   copies of this and had already drifted: one named the backdrop colour once,
-   the other spelled it twice.
-
-   backgroundFor touches no DOM, so the three modes are checked directly. */
+/* The dashboard and Settings paint the same background. They each carried a
+   copy of this and had drifted. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,13 +22,9 @@ test('a colour fills the page and needs no dimming', () => {
   assert.equal(b.url, null, 'nothing to sample');
 });
 
-/* Both screens used to delete the characters that made a colour invalid, which
-   paints whatever is left. The value is rejected now.
-
-   The allowlist checks the shape of a colour, not its contents, so it still
-   passes something like `rgb(0 0 0 / bad)` through; CSS then ignores it and the
-   property keeps its previous value. That is the point: an unusable value
-   changes nothing rather than painting a colour nobody chose. */
+/* The allowlist checks a colour's shape, not its contents, so `rgb(0 0 0 / bad)`
+   still passes and CSS ignores it. An unusable value must change nothing, never
+   paint what is left after the bad characters are deleted. */
 test('a malformed colour falls back instead of being repaired', () => {
   const bad = [
     'red; background-image: url(https://evil.example/)',
@@ -61,8 +54,7 @@ test('a wallpaper fills the page unless fit is asked for', () => {
   assert.equal(fill.fit, 'fill');
 });
 
-/* The fit control belongs to a URL wallpaper. An unsplash photo is framed by
-   the service, and letterboxing it leaves bars down the sides. */
+/* The fit control belongs to a URL wallpaper. */
 test('an unsplash wallpaper is never letterboxed', () => {
   const b = backgroundFor({ type: 'unsplash', fit: 'fit' }, 'https://x.test/u.jpg');
   assert.equal(b.fit, 'fill');

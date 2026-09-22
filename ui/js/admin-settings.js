@@ -1,4 +1,4 @@
-import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=569c6599';
+import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=7c3b99fa';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -9,9 +9,9 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=5356a1b3';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, setUserText } from '/js/utils.js?v=db210447';
-import { renderColorControl } from '/js/admin-color-control.js?v=2cc98198';
-import { BACKDROP } from '/js/background.js?v=f0360111';
+import { el, inp, setUserText } from '/js/utils.js?v=843b7c2b';
+import { renderColorControl } from '/js/admin-color-control.js?v=fad4f6dc';
+import { BACKDROP } from '/js/background.js?v=f69fb1a7';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -112,8 +112,8 @@ function syncSessionRows(now = false) {
   reveal(el('revoke-tip-wrap'), canRevoke, now);
 }
 
-/* The control has no setter, so it is built from the stored colour and rebuilt
-   whenever settings load. */
+/* Rebuild on every load. The control takes its value at render time and has no
+   setter, so reusing one shows a stale colour and saves it. */
 function renderBgColor(value) {
   const slot = el('bg-color-slot');
   if (!slot) return;
@@ -308,9 +308,6 @@ export function showWallpaperFile(url) {
   }
 }
 
-/* Every path that changes the wallpaper source comes through here, including
-   the one that loads stored settings. A source's hint shown from anywhere else
-   survives that load and describes the wrong source. */
 export function showBgFields(type) {
   const host = el('bg-unsplash-fields')?.parentElement;
   swapContent(host, () => {

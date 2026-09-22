@@ -1,7 +1,7 @@
-import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=569c6599';
+import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=7c3b99fa';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa, q } from '/js/utils.js?v=db210447';
+import { qa, q } from '/js/utils.js?v=843b7c2b';
 import { iconSvg } from '/js/icon-set.js?v=606a68c6';
 import { HUE_NAMES, ROLE_NAMES, TILE_KEYWORDS, pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
