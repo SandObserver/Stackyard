@@ -237,7 +237,7 @@
   "adminError": {
     "sessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um fortzufahren.",
     "authRequired": "Authentifizierung erforderlich. Schalten Sie unten Authentifizierung ein und tragen Sie Ihren API-Schlüssel ein.",
-    "unreachable": "Diese Adresse ist aus Docker nicht erreichbar. Versuchen Sie den Container-Namen, z. B. http://container-name:8181/api/v2",
+    "unreachable": "Diese Adresse ist aus Docker nicht erreichbar. Versuchen Sie den Container-Namen.",
     "privateAddress": "Die meisten Homelab-Dienste liegen auf privaten IP-Adressen. Setzen Sie ALLOW_PRIVATE_IPS=true und starten Sie den Container neu.",
     "retype": "Diese Konfiguration hat sich seit dem Speichern geändert, daher wurden die gespeicherten Zugangsdaten nicht verwendet. Geben Sie die Zugangsdaten ein, um diese Einstellungen zu testen.",
     "redirect": "Die Adresse hat mit einer Weiterleitung geantwortet (HTTP {status}). Geben Sie die Adresse ein, auf die sie verweist.",

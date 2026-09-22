@@ -242,7 +242,7 @@
   "adminError": {
     "sessionExpired": "Su sesión ha caducado. Inicie sesión de nuevo para continuar.",
     "authRequired": "Se requiere autenticación. Active Autenticación abajo y añada su clave de API.",
-    "unreachable": "No se puede llegar a esta dirección desde Docker. Pruebe con el nombre del contenedor, p. ej. http://container-name:8181/api/v2",
+    "unreachable": "No se puede llegar a esta dirección desde Docker. Pruebe con el nombre del contenedor.",
     "privateAddress": "La mayoría de los servicios de homelab están en IP privadas. Defina ALLOW_PRIVATE_IPS=true y reinicie el contenedor.",
     "retype": "Esta configuración ha cambiado desde que se guardó, por lo que no se usaron las credenciales almacenadas. Introduzca la credencial para probar estos ajustes.",
     "redirect": "La dirección respondió con una redirección (HTTP {status}). Introduzca la dirección a la que apunta.",

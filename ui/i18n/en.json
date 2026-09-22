@@ -237,7 +237,7 @@
   "adminError": {
     "sessionExpired": "Your session has expired. Sign in again to continue.",
     "authRequired": "Authentication required. Enable the Authentication toggle below and add your API key.",
-    "unreachable": "Can't reach this address from Docker. Try using the container name, e.g. http://container-name:8181/api/v2",
+    "unreachable": "Can't reach this address from Docker. Try using the container name.",
     "privateAddress": "Most homelab services live on private IPs. Set ALLOW_PRIVATE_IPS=true and restart the container.",
     "retype": "This configuration has changed since it was saved, so the stored credential was not used. Enter the credential to test these settings.",
     "redirect": "The address answered with a redirect (HTTP {status}). Enter the address it points to.",
