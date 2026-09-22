@@ -7,8 +7,8 @@ import { BRAND_MARK } from '/js/brand-mark.js?v=1dcbf1ac';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
-export const mk = (t, a = {}) => {
-  const e = document.createElement(t);
+export const mk = (tag, a = {}) => {
+  const e = document.createElement(tag);
   Object.assign(e, a);
   return e;
 };
@@ -328,10 +328,10 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
       doc.addEventListener(
         'touchstart',
         e => {
-          const t = e.touches[0];
-          if (!t) return;
-          sx = t.clientX;
-          sy = t.clientY;
+          const touch = e.touches[0];
+          if (!touch) return;
+          sx = touch.clientX;
+          sy = touch.clientY;
           moved = false;
         },
         { passive: true },
@@ -339,19 +339,19 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
       doc.addEventListener(
         'touchmove',
         e => {
-          const t = e.touches[0];
-          if (!t) return;
-          if (Math.abs(t.clientX - sx) > 8 || Math.abs(t.clientY - sy) > 8) moved = true;
+          const touch = e.touches[0];
+          if (!touch) return;
+          if (Math.abs(touch.clientX - sx) > 8 || Math.abs(touch.clientY - sy) > 8) moved = true;
         },
         { passive: true },
       );
       doc.addEventListener(
         'touchend',
         e => {
-          const t = e.changedTouches[0];
-          if (!t) return;
-          const dx = t.clientX - sx,
-            dy = t.clientY - sy;
+          const touch = e.changedTouches[0];
+          if (!touch) return;
+          const dx = touch.clientX - sx,
+            dy = touch.clientY - sy;
           if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.4) {
             /* horizontal swipe → page */
             if (typeof onSwipe === 'function') onSwipe(dx < 0 ? 1 : -1);
@@ -359,11 +359,11 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
           }
           if (!moved && overlayHref) {
             /* tap on non-interactive area → open link */
-            const tgt = e.target;
+            const target = e.target;
             const interactive =
-              tgt &&
-              tgt.closest &&
-              tgt.closest(
+              target &&
+              target.closest &&
+              target.closest(
                 'a,button,[role="button"],[onclick],.clickable,.bay,.val-row,.chart-wrap,input,select,textarea',
               );
             if (!interactive) window.open(overlayHref, '_blank', 'noopener,noreferrer');

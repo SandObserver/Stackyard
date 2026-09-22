@@ -13,7 +13,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=843b7c2b';
+} from '/js/utils.js?v=383027d7';
 import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';
@@ -62,9 +62,9 @@ if (!_win.__wActiveMsgBound) {
   });
 }
 
-function css(el, props) {
-  for (const [k, v] of Object.entries(props)) el.style.setProperty(k, v);
-  return el;
+function css(node, props) {
+  for (const [k, v] of Object.entries(props)) node.style.setProperty(k, v);
+  return node;
 }
 
 function mkMiniIcon(child, pointerEvents) {
@@ -220,7 +220,7 @@ export function openFolderDesktop(folder) {
   box.appendChild(grid);
   const registeredBadges = [];
   children.forEach(c => bupd(c.id));
-  qa('.badge', grid).forEach(el => registeredBadges.push(el));
+  qa('.badge', grid).forEach(badge => registeredBadges.push(badge));
   function closeDesk() {
     ov.close();
   }
@@ -229,7 +229,7 @@ export function openFolderDesktop(folder) {
   let stopGlass = () => {};
   ov.addEventListener('close', () => {
     stopGlass();
-    registeredBadges.forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
+    registeredBadges.forEach(badge => BEL().forEach((_, id) => bunreg(id, badge)));
     ov.remove();
     folderOverlay = null;
   });
@@ -355,7 +355,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   /* A badge registered to an element that has gone keeps the dashboard
      repainting it. */
   ov.addEventListener('close', () => {
-    qa('.badge', ov).forEach(el => BEL().forEach((_, id) => bunreg(id, el)));
+    qa('.badge', ov).forEach(badge => BEL().forEach((_, id) => bunreg(id, badge)));
     ov.remove();
     folderOverlayMob = null;
   });
@@ -545,9 +545,9 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   ov.addEventListener(
     'touchend',
     e => {
-      const t = e.changedTouches[0],
+      const touch = e.changedTouches[0],
         rb = box.getBoundingClientRect();
-      if (t.clientX < rb.left || t.clientX > rb.right || t.clientY < rb.top || t.clientY > rb.bottom) {
+      if (touch.clientX < rb.left || touch.clientX > rb.right || touch.clientY < rb.top || touch.clientY > rb.bottom) {
         e.preventDefault();
         e.stopPropagation();
         closeMob();

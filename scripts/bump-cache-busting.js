@@ -119,9 +119,9 @@ function stampWidgetManifests() {
     const manPath = path.join(dir, 'widget.json');
     if (!fs.existsSync(manPath)) continue;
     const manifest = JSON.parse(fs.readFileSync(manPath, 'utf8'));
-    const files = manifest.views ? [...new Set(Object.values(manifest.views).map(v => v.src))] : ['index.html'];
+    const entries = manifest.views ? [...new Set(Object.values(manifest.views).map(v => v.src))] : ['index.html'];
     const versions = {};
-    for (const file of files) {
+    for (const file of entries) {
       const full = path.join(dir, file);
       if (!fs.existsSync(full)) throw new Error(`Widget "${ent.name}" references a missing entry file: ${file}`);
       versions[file] = crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 8);

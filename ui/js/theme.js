@@ -14,10 +14,10 @@ export function normaliseMode(value) {
 
 /** The theme a mode resolves to.
     @param {string} mode
-    @param {boolean} prefersDark whether the device asks for a dark appearance */
-export function resolveTheme(mode, prefersDark) {
+    @param {boolean} systemDark whether the device asks for a dark appearance */
+export function resolveTheme(mode, systemDark) {
   const m = normaliseMode(mode);
-  if (m === 'system') return prefersDark ? 'dark' : 'light';
+  if (m === 'system') return systemDark ? 'dark' : 'light';
   return m;
 }
 

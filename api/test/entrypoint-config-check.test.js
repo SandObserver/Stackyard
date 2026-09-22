@@ -85,7 +85,6 @@ test('a config nginx accepts starts normally', () => {
    check itself is unchanged: set -eu still stops here, and nginx still prints
    what it rejected. */
 test('the config check is quiet when it passes', () => {
-  const fs = require('node:fs');
   const entrypoint = fs.readFileSync(require('node:path').join(__dirname, '../../docker-entrypoint.sh'), 'utf8');
   assert.match(entrypoint, /^nginx -t -q$/m);
 });

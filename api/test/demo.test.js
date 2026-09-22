@@ -103,7 +103,7 @@ test('every app tile names a color', () => {
   );
   assert.ok(apps.filter(i => i.color === 'dark').length >= apps.length / 2, 'dark is the common case');
   /* An icon drawn in light ink needs a tile dark enough to hold it. */
-  for (const i of apps.filter(i => /-light\.svg$/.test(i.iconUrl || ''))) {
+  for (const i of apps.filter(a => /-light\.svg$/.test(a.iconUrl || ''))) {
     assert.notEqual(i.color, 'light', `${i.id} carries a light icon and cannot sit on a light tile`);
   }
 });

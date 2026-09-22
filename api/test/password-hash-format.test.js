@@ -54,9 +54,9 @@ test('the profiles are comparable in work without being identical', () => {
 test('every profile is at least as strong as the old implicit parameters', () => {
   /* The old format was N=2^14, r=8, p=1. No row may be a downgrade on that. */
   const work = ({ ln, r, p }) => 2 ** ln * r * p;
-  const before = work({ ln: 14, r: 8, p: 1 });
+  const baseline = work({ ln: 14, r: 8, p: 1 });
   for (const [label, params] of Object.entries(HASH_PROFILES)) {
-    assert.ok(work(params) > before, `${label} is weaker than what it replaces`);
+    assert.ok(work(params) > baseline, `${label} is weaker than what it replaces`);
   }
 });
 
@@ -282,9 +282,9 @@ test('logging in with a legacy hash rewrites it in the new format', async () => 
   setStoredHash(legacyHash('correct-horse'));
   const r = await login('correct-horse');
   assert.equal(r.status, 200);
-  const after = loadConfig().settings.auth.passwordHash;
-  assert.match(after, /^\$scrypt\$ln=14,r=8,p=5\$/, 'the hash should have been upgraded');
-  assert.equal(await verifyPassword('correct-horse', after), true, 'and still verify the same password');
+  const upgraded = loadConfig().settings.auth.passwordHash;
+  assert.match(upgraded, /^\$scrypt\$ln=14,r=8,p=5\$/, 'the hash should have been upgraded');
+  assert.equal(await verifyPassword('correct-horse', upgraded), true, 'and still verify the same password');
 });
 
 test('a failed login does not touch the stored hash', async () => {

@@ -48,11 +48,11 @@ test.describe('tile names', () => {
     await page.locator('.badge.on').first().waitFor({ state: 'visible' });
     const nodes = await axNodes(page);
     const named = n => nodes.find(x => x.name.startsWith(n));
-    const watched = named('Watched');
+    const badged = named('Watched');
     const plain = named('Plain');
-    expect(watched, 'the badged tile is missing from the tree').toBeTruthy();
+    expect(badged, 'the badged tile is missing from the tree').toBeTruthy();
     expect(plain, 'the unbadged tile is missing from the tree').toBeTruthy();
-    expect(watched.name, `the badge is absent from "${watched.name}"`).not.toBe('Watched');
+    expect(badged.name, `the badge is absent from "${badged.name}"`).not.toBe('Watched');
     expect(plain.name).toBe('Plain');
   });
 

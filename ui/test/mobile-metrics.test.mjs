@@ -284,8 +284,11 @@ test('a taller box gets more rows, not taller ones', () => {
   const m = mobileMetrics(820);
   const gap = Math.round(m.sm * 0.5);
   const r = cells(820, 1366).rows;
-  const cellH = (1366 - m.dh - m.dz - gap * (r - 1)) / r;
-  assert.ok(Math.abs(cellH - BASE_CELL_H * m.sc) < BASE_CELL_H * 0.35, `cell drifted to ${Math.round(cellH)}`);
+  const cellHeight = (1366 - m.dh - m.dz - gap * (r - 1)) / r;
+  assert.ok(
+    Math.abs(cellHeight - BASE_CELL_H * m.sc) < BASE_CELL_H * 0.35,
+    `cell drifted to ${Math.round(cellHeight)}`,
+  );
 });
 
 /* The tallest footprint is 6 rows. A shorter grid can never place it, and the

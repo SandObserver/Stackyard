@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=5356a1b3';
-import { el, q } from '/js/utils.js?v=843b7c2b';
+import { el, q } from '/js/utils.js?v=383027d7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { iconSvg } from '/js/icon-set.js?v=606a68c6';
@@ -10,11 +10,11 @@ export const API = '';
 let tt;
 let _toastWired = false;
 
-/** @param {string} m @param {'ok'|'err'} [t] @returns {void} */
-export const toast = (m, t = 'ok') => {
+/** @param {string} m @param {'ok'|'err'} [tone] @returns {void} */
+export const toast = (m, tone = 'ok') => {
   const e = el('toast');
   e.textContent = m;
-  e.className = `show ${t}`;
+  e.className = `show ${tone}`;
   clearTimeout(tt);
   if (!_toastWired) {
     _toastWired = true;
@@ -33,7 +33,7 @@ export const toast = (m, t = 'ok') => {
       e.className = '';
     });
   }
-  const ms = toastHoldMs(t, m, 'show');
+  const ms = toastHoldMs(tone, m, 'show');
   if (ms != null) tt = setTimeout(() => (e.className = ''), ms);
 };
 

@@ -56,16 +56,16 @@ function parse(body) {
       if (!type) errors.push(`"${heading[1]}" is not one of ${cl.TYPES.join(', ')}`);
       continue;
     }
-    const bullet = BULLET.exec(line);
-    if (bullet) {
+    const match = BULLET.exec(line);
+    if (match) {
       flush();
-      if (!bullet[1].trim()) continue;
+      if (!match[1].trim()) continue;
       if (type === '') continue;
       if (!type) {
-        errors.push(`"${bullet[1]}" has no ### section heading above it`);
+        errors.push(`"${match[1]}" has no ### section heading above it`);
         continue;
       }
-      current = { type, lines: [bullet[1].trim()] };
+      current = { type, lines: [match[1].trim()] };
       continue;
     }
     if (!line.trim()) {

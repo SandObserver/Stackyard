@@ -241,8 +241,7 @@ test('the registry and the catalog files name the same locales', async () => {
 });
 
 test('no locale leaves a string empty', async () => {
-  const codes = (await readdir(CATALOG_DIR)).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5));
-  for (const code of codes)
+  for (const code of await codes())
     for (const [k, v] of Object.entries(await load(code)))
       assert.ok(typeof v === 'string' && v.trim(), `${code}.json has an empty value for ${k}`);
 });

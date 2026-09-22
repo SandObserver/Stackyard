@@ -1,4 +1,4 @@
-import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=7c3b99fa';
+import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=9acde6aa';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -9,9 +9,9 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=5356a1b3';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, setUserText } from '/js/utils.js?v=843b7c2b';
-import { renderColorControl } from '/js/admin-color-control.js?v=fad4f6dc';
-import { BACKDROP } from '/js/background.js?v=f69fb1a7';
+import { el, inp, setUserText } from '/js/utils.js?v=383027d7';
+import { renderColorControl } from '/js/admin-color-control.js?v=5af7dfd3';
+import { BACKDROP } from '/js/background.js?v=7befbdbb';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -170,15 +170,15 @@ export function loadSettings(c) {
   if (urlEl) urlEl.value = bg.url || '';
   const brEl = inp('bg-br');
   const brVal = el('bg-br-val');
-  function updateSliderFill(el) {
-    if (!el) return;
-    const min = parseFloat(el.min) || 0.1,
-      max = parseFloat(el.max) || 1.0;
-    const pct = ((parseFloat(el.value) - min) / (max - min)) * 100;
+  function updateSliderFill(slider) {
+    if (!slider) return;
+    const min = parseFloat(slider.min) || 0.1,
+      max = parseFloat(slider.max) || 1.0;
+    const pct = ((parseFloat(slider.value) - min) / (max - min)) * 100;
     /* backgroundImage, never the background shorthand. The shorthand resets
        background-clip, which is what keeps the track thin inside the 44px touch
        target on a phone. */
-    el.style.backgroundImage = `linear-gradient(var(--slider-dir), var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
+    slider.style.backgroundImage = `linear-gradient(var(--slider-dir), var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
   }
   if (brEl) {
     brEl.value = bg.brightness ?? 0.62;
@@ -311,9 +311,9 @@ export function showWallpaperFile(url) {
 export function showBgFields(type) {
   const host = el('bg-unsplash-fields')?.parentElement;
   swapContent(host, () => {
-    ['unsplash', 'url', 'color'].forEach(t => {
-      const node = el(`bg-${t}-fields`);
-      if (node) node.classList.toggle('d-none', t !== type);
+    ['unsplash', 'url', 'color'].forEach(kind => {
+      const node = el(`bg-${kind}-fields`);
+      if (node) node.classList.toggle('d-none', kind !== type);
     });
     const brRow = el('bg-brightness-row');
     if (brRow) brRow.classList.toggle('d-none', type === 'color');

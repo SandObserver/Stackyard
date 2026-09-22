@@ -102,9 +102,9 @@ test('a burst of wrong passwords is counted, not waved through', async () => {
 test('the correct password is refused too once the burst has used the attempts', async () => {
   const ip = nextIp();
   await Promise.all(Array.from({ length: 20 }, () => login('wrong', ip)));
-  const after = await login(PASSWORD, ip);
-  assert.equal(after.status, 429);
-  assert.match(after.body.error, /Too many attempts/);
+  const r = await login(PASSWORD, ip);
+  assert.equal(r.status, 429);
+  assert.match(r.body.error, /Too many attempts/);
 });
 
 test('the lockout message counts down in minutes', async () => {
