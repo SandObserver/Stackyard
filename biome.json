@@ -37,6 +37,7 @@
         "useArrowFunction": "off"
       },
       "suspicious": {
+        "noShadow": "error",
         "useIterableCallbackReturn": "off"
       }
     }

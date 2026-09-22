@@ -28,7 +28,7 @@ function widgetDocs() {
   for (const w of fs.readdirSync(dir)) {
     const d = path.join(dir, w);
     if (!fs.statSync(d).isDirectory()) continue;
-    for (const f of fs.readdirSync(d).filter(f => f.endsWith('.html'))) {
+    for (const f of fs.readdirSync(d).filter(name => name.endsWith('.html'))) {
       out.push([`${w}/${f}`, fs.readFileSync(path.join(d, f), 'utf8')]);
     }
   }

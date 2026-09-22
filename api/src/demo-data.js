@@ -59,8 +59,8 @@ function demoBadges(items) {
     const labels = i.monitoring.activity.labels;
     if (!i.monitoring.activity.combine && Array.isArray(labels) && labels.length) {
       const values = labels.map((_, n) => round(wave(30 + n * 11, 0, 9 + n * 37, n)));
-      const at = values.findIndex(v => v >= 1);
-      out[i.id] = { value: at === -1 ? 0 : values[at], values };
+      const first = values.findIndex(v => v >= 1);
+      out[i.id] = { value: first === -1 ? 0 : values[first], values };
     } else out[i.id] = { value: preset[i.id] ?? 1 };
   }
   return out;

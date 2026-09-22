@@ -316,24 +316,24 @@ function toastRules() {
   const src = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   const re =
     /#toast\.(ok|err)\{background:color-mix\(in srgb,\s*var\((--[\w-]+)\)\s+(\d+)%,\s*var\((--[\w-]+)\)\);border-color:var\((--[\w-]+)\)\}/g;
-  const rules = [...src.matchAll(re)].map(m => ({
+  const found = [...src.matchAll(re)].map(m => ({
     cls: m[1],
     accent: m[2],
     percent: Number(m[3]),
     page: m[4],
     border: m[5],
   }));
-  assert.equal(rules.length, 2, 'expected an .ok and an .err toast rule in the form the test reads');
-  return rules;
+  assert.equal(found.length, 2, 'expected an .ok and an .err toast rule in the form the test reads');
+  return found;
 }
 
 test('the toast reads its own colours from the stylesheet', () => {
-  const rules = toastRules();
+  const toasts = toastRules();
   assert.deepEqual(
-    rules.map(r => r.cls),
+    toasts.map(r => r.cls),
     ['ok', 'err'],
   );
-  for (const r of rules) assert.ok(r.percent > 0 && r.percent < 100, `odd mix percentage: ${r.percent}`);
+  for (const r of toasts) assert.ok(r.percent > 0 && r.percent < 100, `odd mix percentage: ${r.percent}`);
 });
 
 for (const raised of [false, true]) {

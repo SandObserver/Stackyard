@@ -57,7 +57,7 @@ test('the include is used, and every use points at the same path', () => {
 
 test('the Dockerfile ships every nginx config file', () => {
   const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
-  for (const f of fs.readdirSync(NGINX_DIR).filter(f => f.endsWith('.conf'))) {
+  for (const f of fs.readdirSync(NGINX_DIR).filter(name => name.endsWith('.conf'))) {
     assert.match(
       dockerfile,
       new RegExp(`COPY nginx/${f.replace('.', '\\.')} `),

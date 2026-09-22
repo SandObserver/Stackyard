@@ -57,7 +57,7 @@ test('no widget renders a response error message', () => {
   for (const w of fs.readdirSync(dir)) {
     const d = path.join(dir, w);
     if (!fs.statSync(d).isDirectory()) continue;
-    for (const f of fs.readdirSync(d).filter(f => f.endsWith('.html'))) {
+    for (const f of fs.readdirSync(d).filter(name => name.endsWith('.html'))) {
       const src = fs.readFileSync(path.join(d, f), 'utf8');
       if (/(?:textContent|setHtml|metricRow)[^\n]*\berror\.message\b/.test(src)) offenders.push(`${w}/${f}`);
       if (/\berror\.message\b/.test(src)) offenders.push(`${w}/${f}`);
@@ -72,7 +72,7 @@ test('every polling widget declares an empty state or draws its own', () => {
   for (const w of fs.readdirSync(dir)) {
     const d = path.join(dir, w);
     if (!fs.statSync(d).isDirectory()) continue;
-    for (const f of fs.readdirSync(d).filter(f => f.endsWith('.html'))) {
+    for (const f of fs.readdirSync(d).filter(name => name.endsWith('.html'))) {
       const src = fs.readFileSync(path.join(d, f), 'utf8');
       if (!/\bpoll\(\{/.test(src)) continue;
       const handled = /isEmpty\s*:/.test(src) || /errorState\(/.test(src) || /errorLine\(/.test(src);
@@ -126,7 +126,7 @@ test('every widget surfaces a failure on the same terms', () => {
   for (const w of fs.readdirSync(dir)) {
     const d = path.join(dir, w);
     if (!fs.statSync(d).isDirectory()) continue;
-    for (const f of fs.readdirSync(d).filter(f => f.endsWith('.html'))) {
+    for (const f of fs.readdirSync(d).filter(name => name.endsWith('.html'))) {
       const src = fs.readFileSync(path.join(d, f), 'utf8');
       for (const gate of src.match(/if\s*\(\s*!?everOk[^)]*\)/g) || []) {
         const norm = gate.replace(/\s+/g, '');

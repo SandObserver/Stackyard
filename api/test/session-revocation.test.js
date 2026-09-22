@@ -72,14 +72,14 @@ const tokenFrom = setCookie => (setCookie.find(c => c.startsWith('ds=')) || '').
 
 test('rotating changes the secret, so existing tokens stop verifying', async () => {
   await enableAuth();
-  const before = secret();
-  const token = makeToken('session-abc', before);
-  assert.equal(verifyToken(token, before), 'session-abc');
+  const oldSecret = secret();
+  const token = makeToken('session-abc', oldSecret);
+  assert.equal(verifyToken(token, oldSecret), 'session-abc');
 
-  const after = rotateSessionSecret();
-  assert.notEqual(after, before);
-  assert.equal(secret(), after, 'the new secret must be stored');
-  assert.equal(verifyToken(token, after), null, 'a token signed with the old secret must not verify');
+  const newSecret = rotateSessionSecret();
+  assert.notEqual(newSecret, oldSecret);
+  assert.equal(secret(), newSecret, 'the new secret must be stored');
+  assert.equal(verifyToken(token, newSecret), null, 'a token signed with the old secret must not verify');
 });
 
 test('rotating works even when no auth block exists yet', () => {
@@ -133,9 +133,9 @@ test('every other device is signed out, not just one', async () => {
 
 test('the password is unchanged, which is the point of having this separately', async () => {
   await enableAuth();
-  const before = loadConfig().settings.auth.passwordHash;
+  const oldHash = loadConfig().settings.auth.passwordHash;
   await req('POST', '/api/auth/revoke-sessions', cookieFor(secret()));
-  assert.equal(loadConfig().settings.auth.passwordHash, before);
+  assert.equal(loadConfig().settings.auth.passwordHash, oldHash);
 });
 
 test('auth stays enabled', async () => {
@@ -148,14 +148,14 @@ test('auth stays enabled', async () => {
 
 test('an unauthenticated caller cannot revoke', async () => {
   await enableAuth();
-  const before = secret();
+  const oldSecret = secret();
   assert.equal((await req('POST', '/api/auth/revoke-sessions', '')).status, 401);
-  assert.equal(secret(), before, 'the secret must not have been rotated');
+  assert.equal(secret(), oldSecret, 'the secret must not have been rotated');
 });
 
 test('a cross-origin request cannot revoke', async () => {
   await enableAuth();
-  const before = secret();
+  const oldSecret = secret();
   const u = new URL(base + '/api/auth/revoke-sessions');
   const r = await new Promise((resolve, reject) => {
     const q = http.request(
@@ -168,7 +168,7 @@ test('a cross-origin request cannot revoke', async () => {
           'Content-Type': 'application/json',
           'Content-Length': 2,
           Origin: 'http://evil.example',
-          Cookie: cookieFor(before),
+          Cookie: cookieFor(oldSecret),
         },
       },
       res => {
@@ -180,7 +180,7 @@ test('a cross-origin request cannot revoke', async () => {
     q.end('{}');
   });
   assert.equal(r.status, 403);
-  assert.equal(secret(), before);
+  assert.equal(secret(), oldSecret);
 });
 
 /* Nothing to revoke, and rotating would only churn the stored secret. */
@@ -193,9 +193,9 @@ test('revoking is refused when auth is not enabled', async () => {
 
 test('revoking is refused when auth is on but no password is set', async () => {
   saveConfig({ items: [], settings: { auth: { enabled: true, secret: 'a'.repeat(64) } } });
-  const before = secret();
+  const oldSecret = secret();
   assert.equal((await req('POST', '/api/auth/revoke-sessions', '')).status, 400);
-  assert.equal(secret(), before);
+  assert.equal(secret(), oldSecret);
 });
 
 /* ── the existing route that rotates as a side effect ─────────────────────── */

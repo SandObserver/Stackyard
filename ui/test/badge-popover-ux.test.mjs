@@ -177,7 +177,7 @@ test('a badge with a popover accepts the pointer', () => {
    attribute, beside the styled popover showing the same text. */
 test('the badge sets no title attribute', () => {
   const dashboard = read('js/dashboard.js');
-  const from = dashboard.indexOf('els.forEach(el =>');
+  const from = dashboard.indexOf('els.forEach(badge =>');
   /* From the loop, not the file: the import names wireBadgePopover first. */
   const paint = dashboard.slice(from, dashboard.indexOf('wireBadgePopover', from));
   assert.doesNotMatch(paint, /\.title\s*=/, 'the browser tooltip would duplicate the popover');

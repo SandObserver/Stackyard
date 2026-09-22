@@ -151,10 +151,10 @@ test('a config write cannot replace an existing password hash', async () => {
   );
   assert.equal(r.status, 200, 'the write must actually be accepted, or this proves nothing');
 
-  const after = loadConfig().settings.auth;
-  assert.equal(after.secret, 'real-secret');
-  assert.equal(after.enabled, true, 'auth must not be switched off through a config write');
-  assert.equal(await verifyPassword('correct-horse', after.passwordHash), true);
+  const auth = loadConfig().settings.auth;
+  assert.equal(auth.secret, 'real-secret');
+  assert.equal(auth.enabled, true, 'auth must not be switched off through a config write');
+  assert.equal(await verifyPassword('correct-horse', auth.passwordHash), true);
 });
 
 /* A field added to settings.auth later must be covered without anyone
@@ -183,10 +183,10 @@ test('a config write drops a password left behind while protection is off', asyn
 
   const r = await post('/api/config', { items: [], settings: { language: 'en' } });
   assert.equal(r.status, 200);
-  const after = loadConfig().settings.auth;
-  assert.equal(after.passwordHash, undefined);
-  assert.equal(after.secret, undefined);
-  assert.equal(after.enabled, false);
+  const auth = loadConfig().settings.auth;
+  assert.equal(auth.passwordHash, undefined);
+  assert.equal(auth.secret, undefined);
+  assert.equal(auth.enabled, false);
 });
 
 test('a config write keeps the stored password while protection is on', async () => {
@@ -196,9 +196,9 @@ test('a config write keeps the stored password while protection is on', async ()
 
   const r = await post('/api/config', { items: [], settings: { language: 'en' } }, { cookie: sessionCookie() });
   assert.equal(r.status, 200);
-  const after = loadConfig().settings.auth;
-  assert.equal(after.secret, 'real-secret');
-  assert.equal(await verifyPassword('correct-horse', after.passwordHash), true);
+  const auth = loadConfig().settings.auth;
+  assert.equal(auth.secret, 'real-secret');
+  assert.equal(await verifyPassword('correct-horse', auth.passwordHash), true);
 });
 
 test('an ordinary config write is unaffected', async () => {

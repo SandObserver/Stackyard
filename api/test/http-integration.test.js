@@ -198,14 +198,14 @@ test('OPTIONS without a session is refused like every other method', async () =>
 });
 
 test('no response carries the dead CORS headers', async () => {
-  for (const [method, path] of [
+  for (const [method, route] of [
     ['GET', '/api/config'],
     ['GET', '/api/health'],
     ['OPTIONS', '/api/config'],
   ]) {
-    const r = await req(method, path, { cookie: validCookie });
-    assert.equal(r.headers['access-control-allow-methods'], undefined, `${method} ${path}`);
-    assert.equal(r.headers['access-control-allow-headers'], undefined, `${method} ${path}`);
+    const r = await req(method, route, { cookie: validCookie });
+    assert.equal(r.headers['access-control-allow-methods'], undefined, `${method} ${route}`);
+    assert.equal(r.headers['access-control-allow-headers'], undefined, `${method} ${route}`);
   }
 });
 

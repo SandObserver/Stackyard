@@ -246,7 +246,6 @@ test('validateManifest rejects a picklist with no option source', () => {
 });
 
 test('a manifest card must be one of the known names, at either level', () => {
-  const base = { name: 'w', label: 'W', sizes: ['small'] };
   assert.deepEqual(widgets.validateManifest('w', { ...base, card: 'dark' }).errors, []);
   assert.match(widgets.validateManifest('w', { ...base, card: 'chartreuse' }).errors.join(), /unknown card/);
   const withView = c => ({ ...base, views: { a: { src: 'a.html', card: c } } });
@@ -255,7 +254,6 @@ test('a manifest card must be one of the known names, at either level', () => {
 });
 
 test('a manifest may pin a dark appearance and nothing else', () => {
-  const base = { name: 'w', label: 'W', sizes: ['small'] };
   assert.deepEqual(widgets.validateManifest('w', { ...base, appearance: 'dark', card: 'graphite' }).errors, []);
   assert.match(widgets.validateManifest('w', { ...base, appearance: 'light' }).errors.join(), /unknown appearance/);
 });

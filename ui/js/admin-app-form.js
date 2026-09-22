@@ -1,4 +1,4 @@
-import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=843b7c2b';
+import { clr as rc, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=383027d7';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=831e219e';
@@ -21,10 +21,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=7c3b99fa';
-import { createListbox } from '/js/listbox.js?v=699c6308';
+} from '/js/admin-shared.js?v=9acde6aa';
+import { createListbox } from '/js/listbox.js?v=e4610ea7';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=fad4f6dc';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=5af7dfd3';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=e4ea7820';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=606a68c6';
@@ -920,21 +920,21 @@ function renderKvRows(host, rows, ph) {
 const defaultValuePlaceholder = ph => ph.split('=')[1] || 'value';
 
 function kvRowEl(host, rows, row, ph) {
-  const el = document.createElement('div');
-  el.className = 'kv-row';
+  const rowEl = document.createElement('div');
+  rowEl.className = 'kv-row';
   const valPh = row.secret && row.valueSet && row.value === '' ? 'Configured' : defaultValuePlaceholder(ph);
   setHtml(
-    el,
+    rowEl,
     html`
     <input class="kv-k" type="text" placeholder="${t('app.headerKeyPh')}" value="${row.key}" aria-label="${t('app.headerKey')}">
     <input class="kv-v" type="${row.secret ? 'password' : 'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="${t('app.headerValue')}">
     <label class="kv-cred" title="${t('app.secretTip')}"><input type="checkbox" ${row.secret ? 'checked' : ''} aria-label="${t('app.secret')}"><span class="kv-box"></span><span class="kv-cred-lbl">${t('app.secret')}</span></label>
     <button class="kv-del" type="button" aria-label="${t('widgetCfg.remove')}">✕</button>`,
   );
-  const kEl = qi('.kv-k', el),
-    vEl = qi('.kv-v', el),
-    cEl = qi('.kv-cred input', el),
-    dEl = qSel('.kv-del', el);
+  const kEl = qi('.kv-k', rowEl),
+    vEl = qi('.kv-v', rowEl),
+    cEl = qi('.kv-cred input', rowEl),
+    dEl = qSel('.kv-del', rowEl);
   kEl.oninput = () => {
     row.key = kEl.value;
   };
@@ -959,7 +959,7 @@ function kvRowEl(host, rows, row, ph) {
     if (idx >= 0) rows.splice(idx, 1);
     renderKvRows(host, rows, ph);
   };
-  return el;
+  return rowEl;
 }
 
 async function fetchBadge() {

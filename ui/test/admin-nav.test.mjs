@@ -96,7 +96,6 @@ test('a stored section from an older version does not blank the page', () => {
    health toggle between them. A footer that is not adjacent to its row reads as
    describing whatever it follows. */
 test('the logging tip follows the logging row, not the group below it', () => {
-  const html = read('admin/index.html');
   const level = html.indexOf('id="log-level"');
   const tip = html.indexOf('data-i18n="general.loggingTip"');
   const docker = html.indexOf('id="rl-srv-docker-en"');

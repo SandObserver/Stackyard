@@ -134,7 +134,7 @@ const dash = read('js/dashboard.js');
 /* The body of the loop that paints one badge. Anchored from the loop, because
    wireBadgePopover also names the import at the top of the file. */
 function badgePaint() {
-  const from = dash.indexOf('els.forEach(el =>');
+  const from = dash.indexOf('els.forEach(badge =>');
   return dash.slice(from, dash.indexOf('wireBadgePopover', from));
 }
 
@@ -186,7 +186,6 @@ test('every tile records its own name', () => {
 /* Two, both user-initiated: the page change and the search results. A badge is
    neither, which is why it must not add a third. */
 test('the declared live regions are only the two intended ones', () => {
-  const html = read('index.html');
   const ids = [...html.matchAll(/<[^>]*id="([^"]+)"[^>]*aria-live=/g)].map(m => m[1]).sort();
   assert.deepEqual(ids, ['page-live', 'sres-live']);
 });
