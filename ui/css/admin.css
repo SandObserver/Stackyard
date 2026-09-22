@@ -368,7 +368,10 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 /* ── In-row trailing button + status (Upload/Test/Fetch) ── */
 .row-btn{background:rgba(120,120,128,.24);border:none;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;font-family:inherit;padding:6px 13px;border-radius:7px;cursor:pointer;flex-shrink:0;transition:background var(--t)}
 .row-btn:hover{background:rgba(120,120,128,.36)}
-.row-status{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);margin-inline-end:8px;color:var(--dm)}
+/* A status row writes no label. The empty spacer still grows, so a failure
+   message gets about half the width it could have. */
+.row .rl:empty{flex:0 0 auto}
+.row-status{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);margin-inline-end:8px;color:var(--dm);flex:1;min-width:0}
 .row-status.ok{color:var(--ok)}
 .row-status.err{color:var(--danger)}
 .row-status.warn{color:var(--warning)}

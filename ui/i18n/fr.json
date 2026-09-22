@@ -242,7 +242,7 @@
   "adminError": {
     "sessionExpired": "Votre session a expiré. Reconnectez-vous pour continuer.",
     "authRequired": "Authentification requise. Activez Authentification ci-dessous et ajoutez votre clé d’API.",
-    "unreachable": "Cette adresse est injoignable depuis Docker. Essayez le nom du conteneur, par exemple http://container-name:8181/api/v2",
+    "unreachable": "Cette adresse est injoignable depuis Docker. Essayez le nom du conteneur.",
     "privateAddress": "La plupart des services de homelab utilisent des IP privées. Définissez ALLOW_PRIVATE_IPS=true et redémarrez le conteneur.",
     "retype": "Cette configuration a changé depuis son enregistrement, les identifiants enregistrés n’ont donc pas été utilisés. Saisissez l’identifiant pour tester ces réglages.",
     "redirect": "L’adresse a répondu par une redirection (HTTP {status}). Saisissez l’adresse vers laquelle elle pointe.",

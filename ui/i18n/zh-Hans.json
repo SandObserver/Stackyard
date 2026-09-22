@@ -232,7 +232,7 @@
   "adminError": {
     "sessionExpired": "您的会话已过期。请重新登录以继续。",
     "authRequired": "需要身份验证。请开启下方的身份验证开关并填写您的 API 密钥。",
-    "unreachable": "无法从 Docker 访问该地址。请改用容器名称，例如 http://container-name:8181/api/v2",
+    "unreachable": "无法从 Docker 访问该地址。请改用容器名称。",
     "privateAddress": "大多数家庭实验室服务使用私有 IP。请设置 ALLOW_PRIVATE_IPS=true 并重启容器。",
     "retype": "此配置在保存后已更改，因此未使用已保存的凭据。请输入凭据以测试这些设置。",
     "redirect": "该地址返回了一个重定向（HTTP {status}）。请输入它指向的地址。",
