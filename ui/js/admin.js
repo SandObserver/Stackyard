@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=09845ee5';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9beb31ee';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=dc46bd41';
-import { resolveAdminSection } from '/js/admin-logic.js?v=e3673bd7';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b03a09be';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=cc847d1f';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=01b9ad07';
+import { resolveAdminSection } from '/js/admin-logic.js?v=5356a1b3';
 import {
   buildAppItem,
   claimFolderChildren,
@@ -10,13 +10,13 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=f85d7e17';
-import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=dab64a93';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=01519bca';
+import { ag, ap, initInlineEdit, paintIcon, reveal, setReauthHandler, toast } from '/js/admin-shared.js?v=d4ca7a03';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=3a8fc82e';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=848b267e';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=32f787c3';
+import { createListbox } from '/js/listbox.js?v=3a4e4fd1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -42,7 +42,7 @@ import {
   writeMode,
 } from '/js/theme.js?v=787bfdff';
 import { el, inp, q, qa, clr as rc, sanitizeCssUrl, setUserText, tgt } from '/js/utils.js?v=55685187';
-import { normalizeColorInput } from '/js/admin-color-control.js?v=f665b86a';
+import { normalizeColorInput } from '/js/admin-color-control.js?v=d858cebb';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
 
