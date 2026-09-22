@@ -41,6 +41,7 @@ npm run paths:check
 cd api && npm test
 cd api && npx c8 check-coverage --lines 92
 cd ui/test && node --test
+cd test/repo && node --test
 npm run lint
 npm run format:check
 npm run typecheck
@@ -73,10 +74,10 @@ available fails the run. The threshold is in [SECURITY.md](SECURITY.md).
   module needs two entries in `tsconfig.frontend.json`, the plain path and the
   `?v=*` form, because TypeScript allows one wildcard per pattern.
 - **Test code is linted and formatted** along with everything else, with a few
-  rules relaxed for `api/test`, `api/test-support` and `ui/test` in `biome.json`:
-  a stub whose signature has to match a real one keeps its unused parameter, a
-  scanner keeps `while ((m = re.exec(s)))`, and `'use strict'` stays where a test
-  depends on strict-mode semantics.
+  rules relaxed for `api/test`, `api/test-support`, `ui/test` and `test/repo` in
+  `biome.json`: a stub whose signature has to match a real one keeps its unused
+  parameter, a scanner keeps `while ((m = re.exec(s)))`, and `'use strict'`
+  stays where a test depends on strict-mode semantics.
 
   They are **not** typechecked. `checkJs` over `api/test` reports 131 errors,
   almost all narrowing around Node's `server.address()` in test harnesses.

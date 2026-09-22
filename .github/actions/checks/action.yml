@@ -72,6 +72,11 @@ runs:
       working-directory: ui/test
       run: node --test
 
+    - name: Run repository tests
+      shell: bash
+      working-directory: test/repo
+      run: node --test
+
     - name: Lint
       shell: bash
       run: npm run lint

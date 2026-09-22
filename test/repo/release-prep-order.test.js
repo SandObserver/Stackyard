@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { tmpDir } = require('../test-support/tmp');
+const { tmpDir } = require('../../api/test-support/tmp');
 
 const ROOT = path.join(__dirname, '..', '..');
 

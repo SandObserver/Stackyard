@@ -135,7 +135,7 @@ test('the PR template points at the list rather than naming its own commands', (
 test('the linter covers the test directories', () => {
   const cfg = JSON.parse(read('biome.json').replace(/^\s*\/\/.*$/gm, ''));
   const globs = cfg.files.includes.join(' ');
-  for (const dir of ['api/test', 'api/test-support', 'ui/test']) {
+  for (const dir of ['api/test', 'api/test-support', 'ui/test', 'test/repo']) {
     assert.ok(globs.includes(dir), `${dir} is not linted`);
   }
 });

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { tmpDir } = require('../test-support/tmp.js');
+const { tmpDir } = require('../../api/test-support/tmp.js');
 
 /* The changelog is the release record and the source of the release notes. A
    malformed one publishes a release describing the wrong version, or none. */

@@ -11,7 +11,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const { tmpDir } = require('../test-support/tmp');
+const { tmpDir } = require('../../api/test-support/tmp');
 
 const ENTRYPOINT = path.join(__dirname, '../../docker-entrypoint.sh');
 
