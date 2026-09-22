@@ -150,3 +150,46 @@ test('a hue and its wrapped equivalent agree', () => {
   assert.deepEqual(hsvToRgb(-30, 100, 100), hsvToRgb(330, 100, 100));
   assert.deepEqual(hsvToRgb(400, 100, 100), hsvToRgb(40, 100, 100));
 });
+
+/* Read from the source: the control needs a browser. What matters is that
+   Settings asks for it and that the save path reads the input it creates. */
+test('the background colour uses the shared control, and is saved from it', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+  const settings = fs.readFileSync(path.join(root, 'js/admin-settings.js'), 'utf8');
+  const markup = fs.readFileSync(path.join(root, 'admin/index.html'), 'utf8');
+
+  assert.match(
+    settings,
+    /renderColorControl\(slot, \{[^}]*idPrefix: 'bg-color'/s,
+    'Settings should render the control',
+  );
+  assert.match(markup, /id="bg-color-slot"/, 'the markup needs a slot for it');
+  assert.equal(markup.includes('id="ie-bgcolor"'), false, 'the typed hex row is gone');
+
+  /* renderColorControl writes `<idPrefix>-val`. Reading any other id saves a
+     colour the user never picked. */
+  assert.match(settings, /inp\('bg-color-val'\)/, 'the save path should read the control');
+  assert.match(settings, /_val\('bg-color-val'\)/, 'Save stays disabled unless dirty tracking reads it too');
+});
+
+/* The source picker's handler runs before stored settings load, so a hint set
+   there describes whatever the picker started on, not the saved source. */
+test('each wallpaper hint is toggled where the source is applied', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+  const settings = fs.readFileSync(path.join(root, 'js/admin-settings.js'), 'utf8');
+  const admin = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
+
+  const showBgFields = settings.slice(settings.indexOf('export function showBgFields'));
+  assert.match(showBgFields, /bgcol-hint/, 'the Unsplash hint is not toggled with the fields');
+  assert.match(showBgFields, /bg-url-hint/, 'the image hint is not toggled with the fields');
+
+  /* Toggling it anywhere else reintroduces the load-order bug. */
+  assert.equal(admin.includes('bgcol-hint'), false, 'admin.js should leave the hints to showBgFields');
+  assert.equal(admin.includes('bg-url-hint'), false, 'admin.js should leave the hints to showBgFields');
+});

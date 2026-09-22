@@ -1,4 +1,4 @@
-import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=d4ca7a03';
+import { toast, ag, ap, reveal, swapContent } from '/js/admin-shared.js?v=7c3b99fa';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -9,7 +9,9 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=5356a1b3';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, setUserText } from '/js/utils.js?v=55685187';
+import { el, inp, setUserText } from '/js/utils.js?v=843b7c2b';
+import { renderColorControl } from '/js/admin-color-control.js?v=fad4f6dc';
+import { BACKDROP } from '/js/background.js?v=f69fb1a7';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -52,7 +54,7 @@ const readWallpaperForm = () =>
     _val('bg-col-inp', 'bg-col'),
     _val('bg-url-inp', 'bg-url'),
     _val('bg-fit'),
-    _val('bg-color-inp', 'bg-color'),
+    _val('bg-color-val'),
     _val('bg-apikey-inp', 'bg-apikey'),
   ]);
 
@@ -110,6 +112,15 @@ function syncSessionRows(now = false) {
   reveal(el('revoke-tip-wrap'), canRevoke, now);
 }
 
+/* Rebuild on every load. The control takes its value at render time and has no
+   setter, so reusing one shows a stale colour and saves it. */
+function renderBgColor(value) {
+  const slot = el('bg-color-slot');
+  if (!slot) return;
+  slot.textContent = '';
+  renderColorControl(slot, { value, idPrefix: 'bg-color', label: t('appearance.color') });
+}
+
 export function loadSettings(c) {
   const s = c.settings || {};
   const ld = inp('set-lbl-d');
@@ -157,8 +168,6 @@ export function loadSettings(c) {
   if (colEl) colEl.value = bg.collection || '';
   const urlEl = inp('bg-url');
   if (urlEl) urlEl.value = bg.url || '';
-  const colorEl = inp('bg-color');
-  if (colorEl) colorEl.value = bg.color || '';
   const brEl = inp('bg-br');
   const brVal = el('bg-br-val');
   function updateSliderFill(el) {
@@ -207,9 +216,8 @@ export function loadSettings(c) {
   _si('bg-url-inp', s.background?.url || '');
   _si('bg-fit', s.background?.fit === 'fit' ? 'fit' : 'fill');
   showWallpaperFile(s.background?.url || '');
-  _si('bg-color-inp', s.background?.color || '');
+  renderBgColor(s.background?.color || BACKDROP);
   _sv('ie-bgurl-v', s.background?.url, 'Image URL');
-  _sv('ie-bgcolor-v', s.background?.color, '#rrggbb or any CSS color');
 
   const ipEl = inp('srv-ip');
   if (ipEl) ipEl.value = s.server?.hostIp || '';
@@ -309,6 +317,8 @@ export function showBgFields(type) {
     });
     const brRow = el('bg-brightness-row');
     if (brRow) brRow.classList.toggle('d-none', type === 'color');
+    el('bgcol-hint')?.classList.toggle('d-none', type !== 'unsplash');
+    el('bg-url-hint')?.classList.toggle('d-none', type !== 'url');
   });
 }
 /** @param {Event} [e] */
@@ -355,7 +365,7 @@ async function saveWallpaper() {
       bg.url = (inp('bg-url-inp') || inp('bg-url'))?.value?.trim() || '';
       bg.fit = inp('bg-fit')?.value === 'fit' ? 'fit' : 'fill';
     } else if (type === 'color') {
-      bg.color = (inp('bg-color-inp') || inp('bg-color'))?.value?.trim() || '';
+      bg.color = inp('bg-color-val')?.value?.trim() || '';
     }
     const c = await ag('/api/config');
     c.settings = c.settings || {};

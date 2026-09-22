@@ -12,7 +12,7 @@ import {
   firingLabels,
   LABEL_DEFAULT_COLOR,
   MAX_LABELS,
-  safeColor,
+  cssUsableColor,
 } from '../js/badge-logic.js';
 
 test('unhealthy takes priority over everything else', () => {
@@ -621,10 +621,10 @@ test('a negative or fractional value is judged against the same threshold', () =
 
 test('a colour the browser would not read as a colour is dropped', () => {
   for (const bad of ['javascript:alert(1)', 'url(https://evil.example/x.png)', 'expression(1)', '#12345', '']) {
-    assert.equal(safeColor(bad), '', `${bad} must not reach CSS`);
+    assert.equal(cssUsableColor(bad), '', `${bad} must not reach CSS`);
   }
   for (const good of ['#fff', '#1e6ef4', '#1e6ef4cc', 'red', 'yellow']) {
-    assert.ok(safeColor(good), `${good} is a colour and should pass`);
+    assert.ok(cssUsableColor(good), `${good} is a colour and should pass`);
   }
 });
 

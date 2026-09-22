@@ -126,6 +126,12 @@
       "/js/badge-popover.js?v=*": [
         "./ui/js/badge-popover.js"
       ],
+      "/js/background.js": [
+        "./ui/js/background.js"
+      ],
+      "/js/background.js?v=*": [
+        "./ui/js/background.js"
+      ],
       "/js/badge-logic.js": [
         "./ui/js/badge-logic.js"
       ],
