@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admin error messages for badge tests and widget option fetches are translated
   instead of always English.
 
+- A failed badge test reports why the request failed instead of always blaming a
+  missing API path.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
