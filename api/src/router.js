@@ -13,7 +13,8 @@ function on(m, p, h) {
   const names = [];
   const re = new RegExp(
     '^' +
-      p.replace(/:([^/]+)/g, (_, n) => {
+      p.replace(/:([^/]+)|[.*+?^${}()|[\]\\]/g, (token, n) => {
+        if (!n) return `\\${token}`;
         names.push(n);
         return '([^/]+)';
       }) +
