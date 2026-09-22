@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A failed badge test reports why the request failed instead of always blaming a
   missing API path.
 
+- Status and error messages in Settings use the full width of their row instead
+  of wrapping in a narrow strip.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
