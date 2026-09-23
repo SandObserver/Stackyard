@@ -2,8 +2,8 @@
     :root {
       --glass-bg:         #1C1C1E;
       --glass-border:     rgba(255,255,255,.09);
-      --glass-surface-bg:   rgba(155,155,158,.09);
-      --glass-surface-blur: blur(14px) saturate(160%);
+      --glass-surface-bg:   rgba(51,51,51,.33);
+      --glass-surface-blur: blur(12px) saturate(180%);
       --glass-rim-light:  rgba(255,255,255,.30);
       --glass-rim-dark:   rgba(255,255,255,.07);
       --label-color:      rgba(255,255,255,.90);
@@ -209,13 +209,13 @@
     /* No blend modes here. Safari blends before it clips the rounded edge and
        leaks a light stroke while the tile scales. */
     .plate {
-      --icon-band:        calc(var(--pw,60px) * .018);
-      --icon-light:       radial-gradient(60% var(--icon-band) at 50% 0,oklch(from var(--tc,var(--sy-gray)) calc(l + .14) calc(c * 1.15) h),transparent),
-                          radial-gradient(60% var(--icon-band) at 50% 100%,oklch(from var(--tc,var(--sy-gray)) calc(l + .06) c h),transparent);
-      --icon-shade:       radial-gradient(calc(var(--icon-band) * .7) 30% at 0 50%,oklch(from var(--tc,var(--sy-gray)) calc(l - min(c, .2) * .5) c h),transparent),
-                          radial-gradient(calc(var(--icon-band) * .7) 30% at 100% 50%,oklch(from var(--tc,var(--sy-gray)) calc(l - min(c, .2) * .5) c h),transparent);
-      --icon-body:        linear-gradient(oklch(from var(--tc,var(--sy-gray)) calc(l + .04 * (1 - l) + min(c, .2) * .1) c h),transparent 50%,oklch(from var(--tc,var(--sy-gray)) calc(l - .06 * (1 - l) - min(c, .2) * .2) c h));
-      background-image:var(--icon-light), var(--icon-shade), var(--icon-body);
+      --icon-rim:         radial-gradient(46% 2% at 50% 0,rgba(255,255,255,.6),rgba(255,255,255,.25) 45%,transparent),
+                          radial-gradient(46% 1.6% at 50% 100%,rgba(255,255,255,.35),rgba(255,255,255,.14) 45%,transparent);
+      --icon-shade:       radial-gradient(1.2% 25% at 0 50%,rgba(0,0,0,.19),transparent),
+                          radial-gradient(1.2% 25% at 100% 50%,rgba(0,0,0,.19),transparent);
+      --icon-body:        linear-gradient(oklch(from var(--tc,var(--sy-gray)) calc(l + .03 + l * .05) c h) 4%,var(--tc,var(--sy-gray)) 50%,oklch(from var(--tc,var(--sy-gray)) calc(l - .03 - l * .05) c h) 96%);
+      background-image:var(--icon-rim), var(--icon-shade), var(--icon-body);
+      box-shadow:inset 0 .5px 0 rgba(255,255,255,.18), inset 0 -.5px 0 rgba(255,255,255,.1);
     }
     .iwrap img, .dwrap img { object-fit:contain; position:relative; z-index:3 }
     .iwrap .fb, .dwrap .fb,
@@ -257,15 +257,15 @@
     /* ── Badge — reference size, scaled by --sc (desktop overrides below) ── */
     .badge {
       position:absolute;
-      top:calc(-7px * var(--sc,1)); inset-inline-end:calc(-7px * var(--sc,1));
+      top:calc(-11px * var(--sc,1)); inset-inline-end:calc(-11px * var(--sc,1));
       min-width:calc(24px * var(--sc,1)); height:calc(24px * var(--sc,1));
-      border-radius:50px; padding:0 calc(6px * var(--sc,1));
+      border-radius:50px; padding:0 calc(7px * var(--sc,1));
       display:none;
       align-items:center;
       justify-content:center;
-      font-size:calc(var(--fs-footnote) * var(--sc,1));letter-spacing:var(--tr-footnote); font-weight:800; color:var(--on-fill); line-height:1;
+      font-size:calc(var(--fs-callout) * var(--sc,1));letter-spacing:var(--tr-callout); font-weight:500; color:var(--on-fill); line-height:1;
       white-space:nowrap;
-      max-width:calc(100% + 7px * var(--sc,1));
+      max-width:calc(100% + 11px * var(--sc,1));
       gap:0;
       z-index:20; pointer-events:none;
       -webkit-touch-callout:none; touch-action:manipulation;
@@ -291,7 +291,7 @@
     /* Both pills are pseudo-elements at negative depth. That is the only order
        where one paints under the other and both stay under the label, and it
        needs the element's own background to stay clear. */
-    .badge.has-more { background:none; inset-inline-end:calc(-7px * var(--sc,1) + var(--badge-peek)) }
+    .badge.has-more { background:none; inset-inline-end:calc(-11px * var(--sc,1) + var(--badge-peek)) }
     /* The badge is transparent to the pointer so a click reaches the tile. One
        with a popover has to take it, or nothing can hover what it opens. */
     .badge.has-pop { pointer-events:auto }
@@ -310,7 +310,7 @@
       box-shadow:0 0 0 1.5px var(--badge-stack-edge,rgba(0,0,0,.55));
     }
     .badge.has-more::after { z-index:-1; background:var(--badge-bg,var(--badge-blue)) }
-    body:not(.is-mob) .badge.has-more { inset-inline-end:calc(-7px + var(--badge-peek)) }
+    body:not(.is-mob) .badge.has-more { inset-inline-end:calc(-9px + var(--badge-peek)) }
 
     /* ── Badge popover — the values the pill has no room for ── */
     /* In the top layer now. The popover defaults have to be undone or they
@@ -319,37 +319,37 @@
     .badge-pop {
       inset:auto; margin:0;
       position:fixed; z-index:900; min-width:124px; max-width:min(300px,calc(100vw - 16px));
-      padding:5px; border-radius:11px;
-      background:rgba(28,30,42,.96);
-      border:1px solid rgba(255,255,255,.16);
-      box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 0 .5px rgba(255,255,255,.08);
-      -webkit-backdrop-filter:blur(24px) saturate(160%);
-      backdrop-filter:blur(24px) saturate(160%);
+      padding:10px 8px; border-radius:22px;
+      background:rgba(30,30,32,.72);
+      border:.5px solid rgba(255,255,255,.12);
+      box-shadow:0 8px 48px rgba(0,0,0,.45);
+      -webkit-backdrop-filter:blur(32px) saturate(180%);
+      backdrop-filter:blur(32px) saturate(180%);
       color:#fff;
       /* SC 1.4.13 asks that hover content be hoverable. pointer-events:none put
          it out of reach and left the outside-pointerdown guard unreachable. */
       pointer-events:auto;
     }
     .badge-pop-row {
-      display:flex; align-items:flex-start; gap:7px; padding:2px 6px;
-      font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);
+      display:flex; align-items:flex-start; gap:8px; padding:3px 8px;
+      font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);
     }
     .badge-pop-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:.35em; background:var(--badge-blue) }
     /* Two lines, then clip. German and Persian labels run longer than English.
        The value stays on one line beside it. */
     .badge-pop-name {
-      flex:1; min-width:0; color:rgba(255,255,255,.78);
+      flex:1; min-width:0; color:rgba(235,235,245,.7);
       overflow-wrap:anywhere;
       display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
     }
-    .badge-pop-val { font-weight:700; flex-shrink:0; font-variant-numeric:tabular-nums }
+    .badge-pop-val { font-weight:600; flex-shrink:0; font-variant-numeric:tabular-nums }
     /* Desktop: restore compact badge size */
     body:not(.is-mob) .badge {
       --badge-peek:6px;
-      max-width:calc(100% + 7px);
-      top:-7px; inset-inline-end:-7px;
-      min-width:20px; height:20px; padding:0 5px;
-      font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2); font-weight:700;
+      max-width:calc(100% + 9px);
+      top:-9px; inset-inline-end:-9px;
+      min-width:22px; height:22px; padding:0 6px;
+      font-size:var(--fs-subheadline);line-height:1;letter-spacing:var(--tr-subheadline); font-weight:500;
     }
 
 
@@ -357,15 +357,14 @@
     #dots {
       position:fixed; bottom:160px; left:50%; /* desktop only — mobile overrides bottom inline */
       transform:translateX(-50%);
-      /* 24px between centres: an interior dot's hit area is bounded by its
-         neighbours', so the pitch is its width. */
+      /* Keep 24px between centres. Less fails the WCAG 2.5.8 target size. */
       display:flex; gap:16px; z-index:500;
       /* The tone is sampled after the first paint. Until it lands the bar is a
          white tint, which over a light wallpaper is invisible, so it carries an
          edge that reads on either ground. */
-      background:rgba(255,255,255,.28); border:1px solid rgba(0,0,0,.22);
-      -webkit-backdrop-filter:blur(12px) saturate(140%); backdrop-filter:blur(12px) saturate(140%);
-      border-radius:24px; padding:10px 18px;
+      background:rgba(255,255,255,.14); border:.5px solid rgba(0,0,0,.18);
+      -webkit-backdrop-filter:blur(24px) saturate(160%); backdrop-filter:blur(24px) saturate(160%);
+      border-radius:999px; padding:8px 12px;
       align-items:center;
     }
     /* State by shape as well as fill. A tint over a wallpaper the project does
@@ -384,11 +383,12 @@
        bright, leave what is dark. The tone is sampled from the wallpaper behind
        the bar, by the same pass that inks the icon labels. */
     #dots[data-tone="dark"] {
-      background:rgba(0,0,0,.35); border-color:rgba(255,255,255,.30);
+      background:rgba(0,0,0,.30); border-color:rgba(255,255,255,.30);
       --dots-ink:rgba(0,0,0,.85);
     }
     #dots[data-tone="dark"] .dot { border-color:rgba(0,0,0,.55) }
     #dots[hidden] { display:none }
+    #dots:empty { display:none }
     /* Mirrored by the no-dock reserve in desktopSlots(). */
     body.no-dock:not(.is-mob) #dots { bottom:24px }
 
@@ -399,10 +399,10 @@
       display:none; /* shown by buildMobile */
       align-items:center;
       justify-content:center;
-      background:rgba(60,60,67,.72);
-      -webkit-backdrop-filter:blur(20px) saturate(160%); backdrop-filter:blur(20px) saturate(160%);
-      border-radius:calc(17px * var(--sc,1));  /* half of pillH = capsule ends */
-      border:0.5px solid rgba(255,255,255,.10);
+      background:var(--glass-surface-bg);
+      -webkit-backdrop-filter:var(--glass-surface-blur); backdrop-filter:var(--glass-surface-blur);
+      border-radius:999px;
+      border:0.5px solid rgba(255,255,255,.22);
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
       -webkit-user-select:none; user-select:none;
@@ -421,11 +421,11 @@
       pointer-events:none;
     }
     #mob-search-pill .msp-icon {
-      font-size:calc(var(--fs-footnote) * var(--sc,1));letter-spacing:var(--tr-footnote); color:rgba(255,255,255,.60); line-height:1;
+      font-size:calc(12px * var(--sc,1)); font-weight:600; color:#FFFFFF; line-height:1;
       font-style:normal;
     }
     #mob-search-pill .msp-label {
-      font-size:calc(var(--fs-subheadline) * var(--sc,1));line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:400; color:rgba(255,255,255,.80);
+      font-size:calc(12px * var(--sc,1));line-height:1; font-weight:600; color:#FFFFFF;
       white-space:nowrap; 
     }
     /* Dots row — shown when paging */
@@ -442,10 +442,10 @@
     /* Pill dots — must match JS _pdotSz/_pdotGap, which size the paging pill */
     #mob-search-pill .msp-dot {
       width:calc(8px * var(--sc,1)); height:calc(8px * var(--sc,1)); border-radius:50%;
-      background:rgba(255,255,255,.38); flex-shrink:0;
-      transition:background .18s,transform .18s;
+      background:rgba(255,255,255,.35); flex-shrink:0;
+      transition:background .18s;
     }
-    #mob-search-pill .msp-dot.on { background:rgba(255,255,255,.90); transform:scale(1.2) }
+    #mob-search-pill .msp-dot.on { background:#FFFFFF }
     /* State transitions */
     #mob-search-pill.paging .msp-search { opacity:0; pointer-events:none }
     #mob-search-pill.paging .msp-dots   { opacity:1; pointer-events:auto }
@@ -548,19 +548,21 @@
     /* Search bar as a floating card at the top */
     body:not(.is-mob) #sbox {
       width:min(680px,92vw);
-      background:rgba(28,28,32,.92);
-      border:1px solid rgba(255,255,255,.14); border-radius:18px;
-      box-shadow:0 20px 60px rgba(0,0,0,.60); overflow:hidden;
+      background:rgba(30,30,32,.72);
+      -webkit-backdrop-filter:blur(32px) saturate(180%); backdrop-filter:blur(32px) saturate(180%);
+      border:.5px solid rgba(255,255,255,.12); border-radius:999px;
+      box-shadow:0 8px 48px rgba(0,0,0,.45); overflow:hidden;
       flex-shrink:0; padding:0; order:-1;
     }
     /* Results as a separate card below the search bar */
     body:not(.is-mob) #sres {
       width:min(680px,92vw);
       max-height:60vh; overflow-y:auto; 
-      padding:6px 0; margin-top:8px; flex:none; min-height:0;
-      background:rgba(28,28,32,.92);
-      border:1px solid rgba(255,255,255,.14); border-radius:18px;
-      box-shadow:0 20px 60px rgba(0,0,0,.40);
+      padding:10px 8px; margin-top:10px; flex:none; min-height:0;
+      background:rgba(30,30,32,.72);
+      -webkit-backdrop-filter:blur(32px) saturate(180%); backdrop-filter:blur(32px) saturate(180%);
+      border:.5px solid rgba(255,255,255,.12); border-radius:34px;
+      box-shadow:0 8px 48px rgba(0,0,0,.45);
     }
     body:not(.is-mob) #sres:empty { display:none; }
 
@@ -568,8 +570,7 @@
     .spot-bar {
       display:flex;
       align-items:center;
-      gap:10px; padding:14px 18px;
-      border-bottom:1px solid rgba(255,255,255,.08);
+      gap:10px; padding:13px 22px;
     }
     .spot-field { display:contents; }
     body.is-mob #spot .spot-bar {
@@ -578,9 +579,10 @@
     }
     body.is-mob #spot .spot-field {
       display:flex; align-items:center; gap:8px;
-      flex:1; min-width:0; min-height:44px;
-      background:rgba(118,118,128,.30);
-      border-radius:12px; padding:0 12px;
+      flex:1; min-width:0; min-height:48px;
+      background:rgba(30,30,32,.72);
+      box-shadow:inset 0 0 0 .5px rgba(255,255,255,.12);
+      border-radius:999px; padding:0 16px;
       box-sizing:border-box;
     }
     .spot-icon {
@@ -632,14 +634,13 @@
 
     /* ── Spotlight result rows ── */
     .sr-section {
-      font-size:var(--fs-footnote);line-height:var(--lh-footnote); font-weight:600; color:rgba(255,255,255,.42);
-      padding:10px 16px 4px; letter-spacing:0.04em; text-transform:uppercase;
-      border-bottom:0.5px solid rgba(255,255,255,.08);
+      font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:600; color:rgba(235,235,245,.6);
+      padding:6px 12px 6px;
     }
     .sr {
       display:flex;
       align-items:center;
-      gap:14px; padding:12px 16px; cursor:pointer; text-decoration:none;
+      gap:14px; padding:10px 12px; border-radius:22px; cursor:pointer; text-decoration:none;
       transition:background .12s;
     }
     .sr:hover, .sr:active, .sr.sel { background:rgba(255,255,255,.07) }
@@ -732,9 +733,9 @@
     .folder-dot {
       border-radius:50%; cursor:pointer; flex-shrink:0;
       background:rgba(255,255,255,.35);
-      transition:background .2s,transform .2s;
+      transition:background .2s;
     }
-    .folder-dot.on { background:var(--control-knob); transform:scale(1.25) }
+    .folder-dot.on { background:var(--control-knob) }
 
     /* ── Folder overlay — desktop ── */
     .folder-overlay {
@@ -791,8 +792,8 @@
     .dyn-grid       { display:grid; grid-template-columns:repeat(6,var(--iw)); gap:24px; justify-content:center; }
     .dyn-mob-btn    { flex:1; height:var(--rh); background:none; border:none; padding:0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; -webkit-tap-highlight-color:transparent; -webkit-appearance:none; }
     .dyn-mob-icon   { display:flex; flex-direction:column; align-items:center; justify-content:center; width:var(--cw); height:var(--rh); cursor:pointer; text-decoration:none; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
-    .dyn-mob-label  { font-weight:500; color:rgba(255,255,255,.88); text-align:center; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
-    .dyn-fold-label { font-weight:500; color:rgba(255,255,255,.90); text-align:center; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
+    .dyn-mob-label  { font-weight:500; color:#FFFFFF; text-align:center; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
+    .dyn-fold-label { font-weight:500; color:#FFFFFF; text-align:center; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-wrap  { position:absolute; inset:0; pointer-events:none; border-radius:var(--br); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:var(--gap); padding:var(--pad); overflow:hidden; }
     .dyn-fold-cell  { display:flex; align-items:center; justify-content:center; z-index:1; pointer-events:none; min-width:0; min-height:0; }
     .dyn-clip       { overflow:hidden; flex-shrink:0; width:var(--gw); height:var(--gh); }
@@ -843,20 +844,21 @@
   margin-block-end: var(--sp-32);
 }
 .empty-state-title {
-  margin: 0 0 var(--sp-10); font-weight: 600; color: var(--label-primary);
-  font-size:var(--fs-title-1);line-height:var(--lh-title-1);letter-spacing:var(--tr-title-1);
+  margin: 0; font-weight: 600; color: var(--label-primary);
+  font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-sub {
-  margin: 0; max-width: 38ch; color: var(--label-secondary);
-  font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);
+  margin: 0; max-width: 38ch; color: var(--label-secondary); font-weight: 500;
+  font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-btn {
   pointer-events: auto;
-  margin-block-start: var(--sp-32); padding: var(--sp-12) var(--sp-32);
-  border-radius: 22px;
-  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
-  color: var(--label-primary); text-decoration: none;
-  font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);
+  margin-block-start: var(--sp-32); padding: 15px var(--sp-32);
+  border-radius: 999px; min-height: 52px;
+  background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter: var(--glass-surface-blur); backdrop-filter: var(--glass-surface-blur);
+  color: var(--label-primary); text-decoration: none; font-weight: 500;
+  font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
 }
 .empty-state-hint {
   pointer-events: auto;
@@ -876,8 +878,9 @@
 .api-error-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 500; margin: 0; }
 .api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.4); margin: 0; }
 .api-error-btn   {
-  margin-top: 8px; padding: 10px 24px; border-radius: 20px;
-  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+  margin-top: 8px; padding: 13px 24px; border-radius: 999px; min-height: 48px;
+  background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter: var(--glass-surface-blur); backdrop-filter: var(--glass-surface-blur); font-weight: 500;
   color: var(--label-primary); font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); cursor: pointer; font-family: inherit;
 }
 
@@ -959,46 +962,46 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   margin: 0; border: 0; color: inherit;
   position: fixed; inset: 0; z-index: 10001;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,.5);
-  -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%);
+  background: rgba(0,0,0,.48);
   font-family: inherit; padding: 24px;
 }
 .setup-prompt::backdrop { background: none }
 .setup-card {
-  width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px;
-  padding: 24px; border-radius: 20px;
-  background: rgba(40,40,44,.7); border: 1px solid rgba(255,255,255,.14);
-  -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
+  width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 10px;
+  padding: 22px 14px 14px; border-radius: 34px;
+  background: rgba(30,30,32,.82); border: .5px solid rgba(255,255,255,.12);
+  -webkit-backdrop-filter: blur(32px) saturate(180%); backdrop-filter: blur(32px) saturate(180%);
+  box-shadow: 0 8px 48px rgba(0,0,0,.45);
   color: var(--label-primary);
 }
-.setup-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 600; margin: 0; }
-.setup-sub   { font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote); line-height: 1.4; color: rgba(255,255,255,.55); margin: 0; }
+.setup-title { font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline); font-weight: var(--fw-headline); margin: 0; padding-inline: 8px; }
+.setup-sub   { font-size:var(--fs-subheadline);letter-spacing:var(--tr-subheadline); line-height: 1.4; color: rgba(235,235,245,.7); margin: 0 0 6px; padding-inline: 8px; }
 .setup-pw {
-  width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 12px;
-  background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.16);
-  color: var(--label-primary); font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-family: inherit; outline: none;
+  width: 100%; box-sizing: border-box; min-height: 52px; padding: 0 16px; border-radius: 26px;
+  background: rgba(118,118,128,.2); border: 0;
+  color: var(--label-primary); font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 500; font-family: inherit; outline: none;
 }
-.setup-pw:focus { border-color: var(--accent); }
+.setup-pw:focus { box-shadow: 0 0 0 2px var(--accent); }
 .setup-field { position: relative; display: flex; align-items: center; }
-.setup-field .setup-pw { padding-inline-end: 44px; }
+.setup-field .setup-pw { padding-inline-end: 48px; }
 .setup-reveal {
-  position: absolute; inset-inline-end: 6px; display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; padding: 0; border: none; border-radius: 8px;
-  background: none; color: rgba(255,255,255,.55); cursor: pointer;
+  position: absolute; inset-inline-end: 8px; display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; padding: 0; border: none; border-radius: 50%;
+  background: none; color: rgba(235,235,245,.6); cursor: pointer;
 }
 .setup-reveal:hover { color: rgba(255,255,255,.9); }
 .setup-reveal[aria-pressed="true"] { color: var(--accent); }
-.setup-bars { display: flex; gap: 4px; }
+.setup-bars { display: flex; gap: 4px; padding-inline: 8px; }
 .setup-bars .pwbar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); transition: background .15s; }
-.setup-hint { font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1); min-height: 14px; color: rgba(255,255,255,.5); }
-.setup-err  { display: none; font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: var(--danger); }
-.setup-btns { display: flex; gap: 10px; margin-top: 4px; }
+.setup-hint { font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1); min-height: 14px; color: rgba(235,235,245,.6); padding-inline: 8px; }
+.setup-err  { display: none; font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: var(--danger); padding-inline: 8px; }
+.setup-btns { display: flex; gap: 8px; margin-top: 6px; }
 .setup-btn {
-  flex: 1; padding: 10px; border-radius: 14px; font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); cursor: pointer; font-family: inherit;
-  border: 1px solid rgba(255,255,255,.18);
+  flex: 1; min-height: 48px; padding: 13px 16px; border-radius: 24px; border: 0; cursor: pointer; font-family: inherit;
+  font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline); font-weight: var(--fw-headline);
 }
-.setup-btn-skip { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
-.setup-btn-set  { background: var(--accent); border-color: var(--accent); color: var(--label-primary); }
+.setup-btn-skip { background: rgba(118,118,128,.32); color: var(--label-primary); }
+.setup-btn-set  { background: var(--accent); color: var(--on-fill); }
 .setup-btn-set:disabled { opacity: .4; cursor: default; }
 
 /* ── RTL ──
@@ -1046,13 +1049,13 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
 .sy-as{stroke:var(--icon-accent,currentColor)}
 @media (forced-colors:active){.sy-icon{--icon-accent:CanvasText}}
 
-.plate.plate-clear { background-image:none }
+.plate.plate-clear { background-image:none; box-shadow:none }
 
 html[data-theme="light"] {
   --bg-base:           #E5E5EA;
   --glass-bg:          #FFFFFF;
   --glass-border:      rgba(0,0,0,.06);
-  --glass-surface-bg:  rgba(255,255,255,.4);
+  --glass-surface-bg:  rgba(153,153,153,.33);
   --glass-surface-blur: blur(24px) saturate(180%);
   --glass-rim-light:   rgba(255,255,255,1);
   --glass-rim-dark:    rgba(255,255,255,.4);

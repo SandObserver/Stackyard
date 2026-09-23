@@ -63,7 +63,7 @@ test('Cancel carries the tint, not a plain white label', () => {
 test('the field keeps the search-bar height and the body type scale', () => {
   const rule = css.match(/body\.is-mob #spot \.spot-field \{([^}]*)\}/);
   assert.ok(rule, 'the phone field rule is gone');
-  assert.match(rule[1], /min-height:44px/);
+  assert.match(rule[1], /min-height:48px/);
   assert.match(css, /body\.is-mob #spot #sin \{[^}]*font-size:var\(--fs-body\)/);
 });
 
