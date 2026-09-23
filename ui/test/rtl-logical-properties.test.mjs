@@ -188,10 +188,15 @@ test('the dashboard needs no direction overrides at all', () => {
   );
 });
 
-/* Only the chevrons, the gradient angle and the toggle knob's travel, none of
-   which a logical property can express. */
+/* Only the chevrons, the gradient angle and the toggle knob's travel, resting
+   and pressed, none of which a logical property can express. */
 test('admin keeps only the overrides that cannot be logical', () => {
-  const allowed = [/transform:\s*scaleX\(-1\)/, /--slider-dir:\s*270deg/, /transform:\s*translateX\(-22px\)/];
+  const allowed = [
+    /transform:\s*scaleX\(-1\)/,
+    /--slider-dir:\s*270deg/,
+    /transform:\s*translateX\(-22px\)/,
+    /transform:\s*translateX\(-14px\)/,
+  ];
   const overrides = [...code('css/admin.css').matchAll(/\[dir="rtl"\][^{]*\{[^}]*\}/g)].map(m => m[0]);
   assert.equal(overrides.length, allowed.length, `unexpected override list, found:\n${overrides.join('\n')}`);
   for (const rule of allowed) {

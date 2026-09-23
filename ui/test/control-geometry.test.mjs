@@ -5,11 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /* Control geometry against the kit. These are measured values, not
-   preferences.
-
-   The slider handle is the one deliberate departure. The kit draws a 2 by 24
-   line, too small to find and drag on a phone, so every slider keeps a 20 round
-   knob and both sliders share one rule. */
+   preferences. */
 
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'css');
 const admin = fs.readFileSync(path.join(dir, 'admin.css'), 'utf8');
@@ -40,13 +36,13 @@ test('the separator is inset at both edges', () => {
   assert.match(sep, /height:1px/);
 });
 
-test('a grouped list is rounded to 26, and the panel is not', () => {
+test('a grouped list is rounded to 26, and the window to 34', () => {
   assert.match(tokens, /--sy-radius-group:26px/);
   assert.match(rule(admin, '.grp'), /border-radius:var\(--sy-radius-group\)/);
-  /* The panel, the dialog and the toast share --r and must not follow the
-     group, or the whole page turns into a lozenge. */
-  assert.match(tokens, /--sy-radius-lg:14px/);
+  assert.match(tokens, /--sy-radius-window:34px/);
+  assert.match(admin, /--r:var\(--sy-radius-window\)/);
   assert.match(rule(admin, '.adm'), /border-radius:var\(--r\)/);
+  assert.match(rule(admin, '.dlg-box'), /border-radius:var\(--sy-radius-window\)/, 'an alert takes the window corner');
 });
 
 test('the switch is 64 by 28 with a capsule knob that travels 22', () => {
@@ -69,17 +65,16 @@ test('both sliders run a 6 track', () => {
   assert.match(rule(admin, '.hsb-range'), /height:6px/);
 });
 
-/* One visual control, so the handle is declared once, size included. The kit
-   draws a colour slider as a thick bar, which would split them again. */
+/* One visual control, so the handle is declared once, size included. */
 test('every slider shares one handle rule', () => {
   const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   for (const kind of ['::-webkit-slider-thumb', '::-moz-range-thumb']) {
     const shared = new RegExp(`\\.adm-range${kind},\\s*\\.hsb-range${kind}\\{([^}]*)\\}`);
     const m = shared.exec(bare);
     assert.ok(m, `the two sliders do not share their ${kind} rule`);
-    assert.match(m[1], /width:20px/);
-    assert.match(m[1], /height:20px/);
-    assert.match(m[1], /border-radius:50%/, 'a round knob, big enough to drag on a phone');
+    assert.match(m[1], /width:38px/);
+    assert.match(m[1], /height:24px/);
+    assert.match(m[1], /border-radius:12px/, "the kit's capsule knob");
   }
   /* A size rule for one slider alone splits them again. Preceded by a closing
      brace, not a comma, so the shared rule's own second selector line does not
@@ -226,7 +221,7 @@ test('the choice rows are a segmented control', () => {
      is the radius that makes it a capsule. */
   assert.match(track, /border-radius:16px/);
   assert.match(rule(admin, '.segr-dot'), /display:none/, 'the dot is replaced by the selected segment');
-  assert.match(admin, /\.segr-opt:has\(input:checked\)\{background:var\(--segment-on\)\}/);
+  assert.match(admin, /\.segr-opt:has\(input:checked\)\{background:var\(--segment-on\)[;}]/);
   /* The input is 0 by 0, so the generic input:focus-visible outline is invisible
      on it and the segment has to wear the ring. */
   assert.match(admin, /\.segr-opt:has\(input:focus-visible\)\{outline:/);

@@ -7,7 +7,7 @@
 
   /* Surfaces and borders, darkest first, from the system greys. */
   --bg-outer:var(--sy-gray6);
-  --sb:#101012;
+  --sb:#141517;
   --pane:#000000;
   --cp:var(--sy-gray6);
   --bd:var(--sy-a11y-border);
@@ -19,7 +19,7 @@
   --gn:var(--success);
   --tx:#f2f2f7;
   --dm:var(--sy-a11y-dim);
-  --r:var(--sy-radius-lg);
+  --r:var(--sy-radius-window);
   --rs:var(--sy-radius-md);
   --t:.15s ease;
   --t-reveal:.2s;
@@ -37,7 +37,7 @@
      of 1.4.3. Lifting it toward the theme's extreme clears every pill on both
      the pane and a card. */
   --chip-ink-boost:#FFFFFF;
-  /* An unselected chip sits on the field fill, not on the pane, and --dm is
+  /* An unselected chip sits on the button fill, not on the pane, and --dm is
      measured against the pane. */
   --chip-text:#C7C7CC;
   --chip-dk-bg:color-mix(in srgb, var(--sy-indigo) 20%, transparent);
@@ -55,8 +55,15 @@
   /* Page neutrals particular to this screen. */
   --icon-ring:rgba(255,255,255,.14);
   --surface-sunken:var(--sy-gray5);       /* recessed well behind the About icon */
-  --login-badge:#1a2a4a;                  /* the tinted square behind the login mark */
-  --tab-pill:rgba(0,0,0,.55);             /* the selection behind the active tab */
+  --tab-pill:rgba(255,255,255,.14);       /* the selection behind the active tab */
+  --sb-sel:rgba(255,255,255,.14);
+  --row-sep:#38383A;
+  --btn-fill:rgba(120,120,128,.32);
+  --btn-danger-fill:rgba(255,66,69,.14);
+  --glass-bg:rgba(30,30,32,.72);
+  --glass-rim:rgba(255,255,255,.12);
+  --menu-ink:#F5F5F5;
+  --menu-ink-dim:#8A8A8A;
   --segment-on:rgba(255,255,255,.27);     /* the selected segment of a segmented control */
 
   /* Overlays. A tint laid over whatever surface a control sits on, rather than
@@ -67,28 +74,25 @@
   --ov-soft:rgba(255,255,255,.04);
   --ov:rgba(255,255,255,.06);
   --ov-strong:rgba(255,255,255,.08);
-  --field-fill:rgba(255,255,255,.07);   /* a text input that draws its own box */
   --track-off:rgba(255,255,255,.26);    /* an unfilled switch or meter track */
   --tip-strong:rgba(242,242,247,.65);   /* emphasis inside a footnote */
   --swatch-ring:#FFFFFF;                /* the ring around the chosen colour */
   --row-selected:rgba(2,122,255,.15);   /* the current folder, a picked backup */
   --row-drop:rgba(0,168,107,.12);       /* a drag hovering over a folder */
-  --scrim:rgba(0,0,0,.55);
+  --scrim:rgba(0,0,0,.48);
   --scrim-strong:rgba(0,0,0,.70);
-  --mtabbar-bg:#1F1F21;
-  --menu-bg:rgba(55,55,58,.9);
-  --menu-rim:rgba(255,255,255,.14);
-  --mtabbar-bd:rgba(255,255,255,.06);
-  --mtabbar-rim:rgba(255,255,255,.16);
+  --menu-bg:var(--glass-bg);
+  --menu-rim:var(--glass-rim);
 
   /* Elevation. A shadow over a dark surface is depth; the same shadow over a
      light one is dirt, so the light theme redraws every one of these. */
-  --shadow-pop:0 8px 24px rgba(0,0,0,.5);
-  --shadow-dlg:0 16px 48px rgba(0,0,0,.6);
+  --shadow-pop:0 8px 48px rgba(0,0,0,.45);
+  --shadow-dlg:0 30px 140px rgba(0,0,0,.6);
+  --shadow-glass-btn:0 2px 12px rgba(0,0,0,.35);
   --shadow-login:0 24px 64px rgba(0,0,0,.6);
   --shadow-ghost:0 10px 30px rgba(0,0,0,.55);
-  --shadow-bar:0 8px 30px rgba(0,0,0,.4);
-  --shadow-knob:0 1px 4px rgba(0,0,0,.5);
+  --shadow-bar:0 8px 30px rgba(0,0,0,.35);
+  --shadow-knob:0 2px 6px rgba(0,0,0,.35),0 0 0 .5px rgba(0,0,0,.04);
   --shadow-tog:0 1px 3px rgba(0,0,0,.3);
   --shadow-sunken:inset 1px 1px 0 rgba(255,255,255,.06),inset -1px -1px 0 rgba(0,0,0,.2);
 }
@@ -98,7 +102,7 @@
    ui/test/contrast.test.mjs holds both. */
 html[data-theme="light"] {
   --bg-outer:#FFFFFF;
-  --sb:#F9F9FB;
+  --sb:#ECEDF0;
   --pane:var(--sy-gray6);
   --cp:#FFFFFF;
   --bd:var(--sy-gray-hi);
@@ -111,33 +115,37 @@ html[data-theme="light"] {
 
   --icon-ring:rgba(0,0,0,.08);
   --surface-sunken:var(--sy-gray5);
-  --login-badge:#D3E4FF;
-  --tab-pill:rgba(0,0,0,.06);
+  --tab-pill:rgba(0,0,0,.07);
+  --sb-sel:rgba(0,0,0,.07);
+  --row-sep:#E6E6E6;
+  --btn-fill:rgba(120,120,128,.16);
+  --btn-danger-fill:rgba(255,56,60,.14);
+  --glass-bg:rgba(255,255,255,.74);
+  --glass-rim:rgba(0,0,0,.06);
+  --menu-ink:#1A1A1A;
+  --menu-ink-dim:#727272;
   --segment-on:#FFFFFF;
 
   --ov-soft:rgba(0,0,0,.03);
   --ov:rgba(0,0,0,.05);
   --ov-strong:rgba(0,0,0,.08);
-  --field-fill:rgba(120,120,128,.12);
   --track-off:rgba(120,120,128,.32);
   --tip-strong:rgba(60,60,67,.75);
   --swatch-ring:#000000;
   --row-selected:rgba(0,122,255,.12);
   --row-drop:rgba(0,168,107,.14);
-  --scrim:rgba(0,0,0,.35);
+  --scrim:rgba(0,0,0,.2);
   --scrim-strong:rgba(0,0,0,.45);
-  --mtabbar-bg:#FFFFFF;
-  --menu-bg:rgba(250,250,252,.92);
-  --menu-rim:rgba(0,0,0,.08);
-  --mtabbar-bd:rgba(0,0,0,.08);
-  --mtabbar-rim:rgba(255,255,255,.9);
+  --menu-bg:var(--glass-bg);
+  --menu-rim:var(--glass-rim);
 
-  --shadow-pop:0 8px 24px rgba(0,0,0,.14);
-  --shadow-dlg:0 16px 48px rgba(0,0,0,.18);
+  --shadow-pop:0 8px 48px rgba(0,0,0,.25);
+  --shadow-dlg:0 30px 140px rgba(0,0,0,.3);
+  --shadow-glass-btn:0 2px 12px rgba(0,0,0,.1);
   --shadow-login:0 24px 64px rgba(0,0,0,.20);
   --shadow-ghost:0 10px 30px rgba(0,0,0,.18);
-  --shadow-bar:0 8px 30px rgba(0,0,0,.14);
-  --shadow-knob:0 1px 4px rgba(0,0,0,.28);
+  --shadow-bar:0 8px 30px rgba(0,0,0,.18);
+  --shadow-knob:0 2px 6px rgba(0,0,0,.18),0 0 0 .5px rgba(0,0,0,.04);
   --shadow-tog:0 1px 3px rgba(0,0,0,.20);
   --shadow-sunken:inset 1px 1px 0 rgba(0,0,0,.06),inset -1px -1px 0 rgba(255,255,255,.7);
 }
@@ -156,16 +164,18 @@ html{background:var(--bg-color,var(--bg-base))}
 .adm{display:flex;width:100%;max-width:1039px;min-height:calc(100vh - 88px);background:var(--sb);border-radius:var(--r);box-shadow:var(--shadow-dlg);overflow:hidden}
 
 /* ── Sidebar ── */
-.sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 24px;position:sticky;top:0;height:100%;min-height:calc(100vh - 88px);overflow-y:auto}
+.sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 10px;position:sticky;top:0;height:100%;min-height:calc(100vh - 88px);overflow-y:auto}
 .sb-brand{display:flex;align-items:center;gap:10px;padding:18px 8px 20px;text-decoration:none;color:inherit}
 .sb-name{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:700;color:var(--tx)}
 .sb-ver{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);color:var(--dm);margin-top:1px}
-.sb-nav{list-style:none;display:flex;flex-direction:column;gap:2px}
-.nl{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border-radius:22px;border:none;background:transparent;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;text-align:start;transition:background var(--t),color var(--t);min-height:44px;font-family:inherit}
-.nl:hover{color:var(--tx)}
-.nl.active{background:var(--nav-tint);color:var(--tx)}
-.nl.active .ni,.mtab.active .ni{opacity:1}
+.sb-nav{list-style:none;display:flex;flex-direction:column;gap:0}
+.nl{display:flex;align-items:center;gap:8px;width:100%;padding-block:0;padding-inline:3px 8px;border-radius:22px;border:none;background:transparent;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:400;cursor:pointer;text-align:start;transition:background var(--t),color var(--t);min-height:44px;font-family:inherit}
+.nl:hover{background:var(--ov-soft)}
+.nl.active{background:var(--nav-tint);font-weight:600}
+.mtab.active .ni{opacity:1}
 .ni{flex-shrink:0;opacity:.6}
+.nl .ni{opacity:1;color:var(--dm);margin-inline:7px}
+.nl:hover .ni,.nl.active .ni{color:var(--ac)}
 
 /* ── Content pane ── */
 .cp{flex:1;min-width:0;background:var(--pane);overflow-y:auto}
@@ -174,9 +184,9 @@ html{background:var(--bg-color,var(--bg-base))}
 .sec{padding:20px 20px 48px}
 .sec[hidden]{display:none}
 .sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-.sec-title{font-size:var(--fs-title-1);line-height:var(--lh-title-1);letter-spacing:var(--tr-title-1);font-weight:700;flex:1}
+.sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title);font-weight:700;flex:1}
 .sec-hdr-actions{display:flex;gap:6px}
-.ev-back{display:flex;align-items:center;gap:3px;background:none;border:none;color:var(--ac2);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-family:inherit;cursor:pointer;padding-block:4px;padding-inline:0 6px;flex-shrink:0}
+.ev-back{display:flex;align-items:center;justify-content:center;gap:3px;background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn);border:none;border-radius:999px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;font-family:inherit;cursor:pointer;min-width:44px;min-height:44px;padding-block:0;padding-inline:10px 14px;flex-shrink:0}
 .ev-back:hover{opacity:.8}
 
 /* ── Groups ── */
@@ -185,8 +195,8 @@ html{background:var(--bg-color,var(--bg-base))}
 .grp-empty{display:none}
 .grp{position:relative;background:var(--cp);border-radius:var(--sy-radius-group);overflow:visible;margin-bottom:8px}
 @media (forced-colors: active){.grp{border:1px solid CanvasText}}
-.grp-hdr{font-size:var(--fs-title-3);line-height:var(--lh-title-3);letter-spacing:var(--tr-title-3);font-weight:600;color:var(--dm);padding:26px 16px 6px;}
-.grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:8px 16px 14px;line-height:1.55}
+.grp-hdr{font-size:var(--fs-title-3);line-height:var(--lh-title-3);letter-spacing:var(--tr-title-3);font-weight:600;color:var(--tx);padding:26px 16px 6px;}
+.grp-tip{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);padding:8px 16px 14px;line-height:var(--lh-footnote)}
 /* Why a widget was refused, one validator message per line. Indented as a list rather than run together, since a manifest can fail several rules at once. */
 .cfg-reject-list{list-style:disc;padding-inline-start:20px;margin-block-start:-8px}
 .cfg-reject-list li{margin-block-end:4px}
@@ -199,13 +209,13 @@ html{background:var(--bg-color,var(--bg-base))}
    position, and a group's trailing rows can be hidden. Hidden rows carry
    .d-none, never an inline display. */
 /* Keep it absolute. In flow it becomes a grid item in the two-column drow. */
-.row::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:16px;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
+.row::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:16px;bottom:0;height:1px;background:var(--row-sep);pointer-events:none}
 .row:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open))))::after{content:none}
 /* A field with a hint, or a control that draws several rows, is wrapped so
    `showIf` has one element to hide. The wrapper draws the closing separator,
    below the hint, so the line falls between two fields and not inside one. */
 .row-wrap{position:relative}
-.row-wrap::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:16px;bottom:0;height:1px;background:var(--bd-inner);pointer-events:none}
+.row-wrap::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:16px;bottom:0;height:1px;background:var(--row-sep);pointer-events:none}
 .row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open))))::after{content:none}
 .reveal:not(.open)::after{content:none}
 /* The group is rounded hard and cannot clip: it keeps overflow visible so a
@@ -236,7 +246,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .ie-row .row-inp{display:none;flex:2;background:transparent;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;text-align:end;padding:0;min-width:0;outline:none}
 .ie-row.editing .row-inp{display:block}
 .ie-row.editing{background:var(--ov-soft)}
-.pe{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--dm);cursor:pointer;flex-shrink:0;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);transition:color var(--t),background var(--t);position:relative}
+.pe{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;border:none;background:transparent;color:var(--dm);cursor:pointer;flex-shrink:0;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);transition:color var(--t),background var(--t);position:relative}
 .pe::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px}
 .pe:hover{color:var(--tx);background:var(--ov-strong)}
 .row-btns{display:flex;gap:6px;flex-shrink:0}
@@ -252,47 +262,40 @@ html{background:var(--bg-color,var(--bg-base))}
    popover with inset:0 and margin:auto; both are cleared because place() sets
    the position. Every list scrolls: one with twelve entries is taller than a
    phone screen. */
-.row-dd-list{position:fixed;inset:auto;margin:0;top:-9999px;z-index:9000;background:var(--menu-bg);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);border:0.5px solid var(--menu-rim);border-radius:34px;list-style:none;min-width:250px;max-width:min(320px,calc(100vw - 16px));max-height:min(360px,60vh);overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-pop);padding:10px 0}
+.row-dd-list{position:fixed;inset:auto;margin:0;top:-9999px;z-index:9000;background:var(--menu-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--menu-rim);border-radius:34px;list-style:none;min-width:250px;max-width:min(320px,calc(100vw - 16px));max-height:min(360px,60vh);overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-pop);padding:10px 0}
 @media (prefers-reduced-transparency: reduce){.row-dd-list{background:var(--bg-outer);-webkit-backdrop-filter:none;backdrop-filter:none}}
 /* Off screen until place() sets the real position, so a frame drawn before it
    lands is not a flash somewhere else. 9000 clears the phone tab bar at 8000. */
 .row-dd-list[hidden]{display:none}
 .row-dd-list.checklist{min-width:200px}
 
-.row-dd-group{padding:10px 16px 4px;font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:600;color:var(--dm);cursor:default;text-transform:none}
-.row-dd-group ~ .row-dd-group{padding-top:10px}
-.row-dd-empty{padding:10px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--dm);cursor:default}
-.row-dd-list li{margin-inline:8px;border-radius:14px;padding-block:9px;padding-inline:10px 16px;min-height:42px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--tx);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:8px}
+.row-dd-group{padding:4px 18px 10px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--menu-ink-dim);cursor:default;text-transform:none}
+.row-dd-group ~ .row-dd-group{padding-top:14px;margin-top:10px;border-top:1px solid var(--row-sep)}
+.row-dd-empty{padding:10px 18px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--menu-ink-dim);cursor:default}
+.row-dd-list li{margin-inline:8px;border-radius:20px;padding-block:10px;padding-inline:6px 16px;min-height:40px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--menu-ink);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:8px}
 .row-dd-list li:hover,.row-dd-list li.kb-active{background:var(--ov-strong)}
 .row-dd-list:has(> .fh-hl.on) li:hover,
 .row-dd-list:has(> .fh-hl.on) li.kb-active{background:transparent}
 .row-dd-list li:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
-.row-dd-list li[aria-selected="true"]::before{content:'✓';color:var(--tx);font-weight:600;width:18px;flex-shrink:0;text-align:center}
-.row-dd-list li[aria-selected="false"]::before{content:'';width:18px;flex-shrink:0}
+.row-dd-list li[aria-selected="true"]::before{content:'✓';color:var(--menu-ink);font-weight:600;width:24px;flex-shrink:0;text-align:center}
+.row-dd-list li[aria-selected="false"]::before{content:'';width:24px;flex-shrink:0}
 
 /* ── Slider — wider with JS-driven blue fill ── */
 .slider-wrap{display:flex;align-items:center;gap:8px;flex:2;max-width:none}
 .si{color:var(--dm);flex-shrink:0}
 .adm-range{flex:1;height:6px;-webkit-appearance:none;appearance:none;background:linear-gradient(var(--slider-dir), var(--ac) 0%, var(--ac) 50%, var(--bd-inner) 50%, var(--bd-inner) 100%);border-radius:3px;cursor:pointer;outline:none}
-/* One handle for every slider, size included. The two used to carry their own
-   copy and drifted apart. The kit draws a thin line here, which is too small a
-   thing to find and drag on a phone, so the round knob stays, and it draws a
-   colour slider as a thick bar, which would split the two again. One control. */
-/* --knob-fill is the value the slider currently holds, set per input. The ring
-   stays the knob colour, so a fill matching the track under it is still
-   visible. Unset, the knob is solid as before. */
 .adm-range::-webkit-slider-thumb,
-.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:20px;height:20px;border-radius:50%;background:var(--knob-fill,var(--control-knob));border:2px solid var(--control-knob);box-shadow:var(--shadow-knob);cursor:pointer}
+.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:38px;height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer}
 .adm-range::-moz-range-thumb,
-.hsb-range::-moz-range-thumb{box-sizing:border-box;width:20px;height:20px;border-radius:50%;background:var(--knob-fill,var(--control-knob));border:2px solid var(--control-knob);box-shadow:var(--shadow-knob);cursor:pointer}
+.hsb-range::-moz-range-thumb{box-sizing:border-box;width:38px;height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer}
 
 /* ── Dashboard list rows — no delete button ── */
 .al-filter{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.al-search{background:var(--ov);border:1px solid var(--bd-inner);border-radius:20px;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);padding:7px 14px;width:180px;font-family:inherit}
-.al-search:focus{outline:none;border-color:var(--ac)}
+.al-search{background:var(--btn-fill);border:none;border-radius:999px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);padding:7px 16px;min-height:36px;width:220px;font-family:inherit}
+.al-search:focus{outline:2px solid var(--ac);outline-offset:0}
 .al-chips{display:flex;gap:5px}
-.chip{padding:6px 13px;border-radius:20px;border:none;background:var(--field-fill);color:var(--chip-text);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;cursor:pointer;transition:background var(--t),color var(--t);font-family:inherit}
-.chip.on{background:var(--ac);color:var(--on-fill)}
+.chip{padding:7px 14px;min-height:36px;border-radius:999px;border:none;background:var(--btn-fill);color:var(--chip-text);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:500;cursor:pointer;transition:background var(--t),color var(--t);font-family:inherit}
+.chip.on{background:var(--ac);color:var(--on-fill);font-weight:600}
 .chip:hover:not(.on){color:var(--tx)}
 .row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:grab;align-items:center}
 .row.drow:hover{background:var(--ov-soft)}
@@ -356,18 +359,18 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
    A 32 track carrying 28 segments, so the segments sit 2 inside it. The radio
    inputs stay: they are what the form reads and what a screen reader announces.
    Only the dot is dropped, since the selected segment is the indicator now. */
-.segr{display:flex;gap:2px;margin-inline-start:auto;align-items:center;background:var(--fill-tertiary);border-radius:16px;padding:2px}
-.segr-opt{flex:1;display:flex;align-items:center;justify-content:center;min-height:28px;padding-inline:12px;border-radius:14px;cursor:pointer;white-space:nowrap;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);transition:background var(--t),color var(--t)}
+.segr{display:flex;gap:4px;margin-inline-start:auto;align-items:center;background:var(--fill-tertiary);border-radius:16px;padding:2px}
+.segr-opt{flex:1;display:flex;align-items:center;justify-content:center;min-height:28px;padding-inline:12px;border-radius:14px;cursor:pointer;white-space:nowrap;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--tx);transition:background var(--t),color var(--t)}
 .segr-opt input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
 .segr-dot{display:none}
-.segr-opt:has(input:checked){background:var(--segment-on)}
-.segr-opt:has(input:checked) span{color:var(--tx)}
+.segr-opt:has(input:checked){background:var(--segment-on);box-shadow:0 2px 20px rgba(0,0,0,.06)}
+.segr-opt:has(input:checked) span{color:var(--tx);font-weight:600}
 /* The input is 0 by 0, so an outline on it is invisible. The segment wears it. */
 .segr-opt:has(input:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
 
 /* ── In-row trailing button + status (Upload/Test/Fetch) ── */
-.row-btn{background:rgba(120,120,128,.24);border:none;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;font-family:inherit;padding:6px 13px;border-radius:7px;cursor:pointer;flex-shrink:0;transition:background var(--t)}
-.row-btn:hover{background:rgba(120,120,128,.36)}
+.row-btn{background:var(--btn-fill);border:none;color:var(--tx);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:500;font-family:inherit;padding:5px 12px;min-height:28px;border-radius:999px;cursor:pointer;flex-shrink:0;transition:background var(--t),opacity var(--t)}
+.row-btn:hover{opacity:.8}
 /* A status row writes no label. The empty spacer still grows, so a failure
    message gets about half the width it could have. */
 .row .rl:empty{flex:0 0 auto}
@@ -383,7 +386,7 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 .kv-row{display:flex;align-items:center;gap:8px;padding:5px 0}
 .kv-row .kv-k{flex:1;min-width:0}
 .kv-row .kv-v{flex:1.4;min-width:0}
-.kv-k,.kv-v{background:rgba(120,120,128,.16);border:none;border-radius:8px;color:var(--tx);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);padding:9px 11px;outline:none}
+.kv-k,.kv-v{background:var(--btn-fill);border:none;border-radius:12px;color:var(--tx);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);padding:9px 11px;outline:none}
 /* One default, not a rule per field. The user agent's placeholder assumes a
    light page and fails contrast on every surface here. Rules below override it
    where a field genuinely differs. */
@@ -391,7 +394,7 @@ input::placeholder,textarea::placeholder{color:var(--dm)}
 .kv-k::placeholder,.kv-v::placeholder{color:var(--dm)}
 .kv-cred{display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;user-select:none}
 .kv-cred input{position:absolute;opacity:0;width:0;height:0}
-.kv-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background var(--t),border-color var(--t)}
+.kv-box{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background var(--t),border-color var(--t)}
 .kv-box::after{content:'✓';color:var(--on-fill);font-size:12px;font-weight:700;opacity:0;transform:scale(.6);transition:opacity var(--t),transform var(--t)}
 .kv-cred input:checked+.kv-box{background:var(--ac);border-color:var(--ac)}
 .kv-cred input:checked+.kv-box::after{opacity:1;transform:scale(1)}
@@ -418,7 +421,7 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 .icon-srch{flex:1;min-width:0;background:none;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);text-align:end;outline:none;font-family:inherit}
 .icon-srch::placeholder{color:var(--dm)}
 .poll-inline{margin-inline-start:auto;display:flex;align-items:center;gap:8px;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
-.poll-inline input{width:64px;background:rgba(120,120,128,.16);border:none;border-radius:7px;color:var(--tx);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);padding:5px 8px;text-align:center;outline:none}
+.poll-inline input{width:64px;background:var(--btn-fill);border:none;border-radius:999px;color:var(--tx);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);padding:5px 8px;text-align:center;outline:none}
 .rl-sub{color:var(--dm);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:400}
 .bprow-hidden{display:none}
 /* Settings-row native select (Widget Type, slot Resource) */
@@ -432,12 +435,12 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 .albl-hdr.albl-dragging{opacity:.5}
 .albl-hdr.albl-dragging .albl-grip{cursor:grabbing}
 .albl-ctl{display:flex;align-items:center;gap:2px;margin-inline-start:auto}
-.albl-move{display:inline-flex;align-items:center;background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer;padding:3px 7px;border-radius:6px}
+.albl-move{display:inline-flex;align-items:center;background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer;padding:3px 7px;border-radius:999px}
 .albl-move:hover:not(:disabled){background:var(--ov)}
 .albl-move:disabled{color:var(--dm);cursor:default;opacity:.45}
 .albl-move:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .albl-add-wrap{display:flex;justify-content:center;padding:10px 16px 4px}
-.albl-add{background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;padding:8px 14px;border-radius:9px}
+.albl-add{background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;padding:8px 14px;border-radius:999px}
 .albl-add::before{content:'+';margin-inline-end:6px;font-weight:600}
 .albl-add:hover{background:var(--ov)}
 .albl-add:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
@@ -448,10 +451,15 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 .about-hero{display:flex;flex-direction:column;align-items:center;padding:16px 0 24px}
 .about-ic-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:19px;background:var(--surface-sunken);margin-bottom:12px;box-shadow:var(--shadow-sunken)}
 .about-dot{position:absolute;top:-3px;inset-inline-end:-5px;width:20px;height:20px;background:var(--gn);border-radius:50%;border:2px solid var(--cp);display:flex;align-items:center;justify-content:center;color:var(--on-fill)}
-.about-name{font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);font-weight:700;}
+.about-name{font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);font-weight:700;}
 .about-ver{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:3px}
-.about-ri{flex-shrink:0;color:var(--dm)}
-.about-heart{color:var(--sy-pink)}
+/* Orange and green fall below 3:1 behind white. Do not use them here. */
+.sy-icon.about-ri{flex-shrink:0;box-sizing:content-box;width:18px;height:18px;padding:6px;border-radius:7px;color:#FFFFFF;--icon-accent:#FFFFFF;background:var(--sy-gray)}
+.grp:has(.about-ri) .row::after{inset-inline-start:56px}
+.grp > .row-link:nth-child(1) .about-ri{background:var(--sy-blue)}
+.grp > .row-link:nth-child(2) .about-ri{background:var(--sy-red)}
+.grp > .row-link:nth-child(3) .about-ri{background:var(--sy-gray)}
+.about-heart{background:var(--sy-pink)}
 .about-ext{flex-shrink:0;color:var(--dm);margin-inline-start:auto}
 
 /* ── Toggle ── */
@@ -463,6 +471,10 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 .tog input:checked+.tr::after{transform:translateX(22px)}
 /* translateX has no logical form, so the travel is mirrored explicitly. */
 [dir="rtl"] .tog input:checked+.tr::after{transform:translateX(-22px)}
+.tr::after{transition:transform .2s,width .2s}
+.tog:active input:not(:disabled)+.tr::after{width:46px}
+.tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(14px)}
+[dir="rtl"] .tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(-14px)}
 .tog input:focus-visible+.tr{outline:2px solid var(--ac);outline-offset:3px}
 /* Still focusable and announced, so it needs a real focus ring rather than
    pointer-events:none. */
@@ -472,18 +484,20 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 
 /* ── Buttons ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:600;min-height:36px;cursor:pointer;border:none;text-decoration:none;transition:background var(--t),opacity var(--t);white-space:nowrap;font-family:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:999px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;min-height:36px;cursor:pointer;border:none;text-decoration:none;transition:background var(--t),opacity var(--t);white-space:nowrap;font-family:inherit}
 .btn:active:not(:disabled){opacity:.8}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.bp{background:var(--ac);color:var(--on-fill)}
-.bp:disabled{background:var(--field-fill);color:var(--dm);opacity:1}
+.bp{background:var(--ac);color:var(--on-fill);font-weight:600}
+.bp:disabled{background:var(--btn-fill);color:var(--dm);opacity:1}
 .bp:hover:not(:disabled){background:var(--ac2)}
-.bg{background:transparent;color:var(--dm);border:1px solid var(--bd-inner)}
-.bg:hover:not(:disabled){background:var(--ov);color:var(--tx)}
-.bg:disabled{opacity:1;color:var(--bd);border-color:var(--bd-inner)}
-.bd-btn{background:transparent;color:var(--rd);border:1px solid var(--rd)}
+.bg{background:var(--btn-fill);color:var(--tx)}
+.bg:hover:not(:disabled){opacity:.8}
+.bg:disabled{opacity:1;color:var(--dm)}
+.bd-btn{background:var(--btn-danger-fill);color:var(--rd)}
 .bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}
-.sm{padding:6px 14px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);min-height:30px}
+.sm{padding:5px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);min-height:28px}
+.sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);box-shadow:var(--shadow-glass-btn)}
+.sec-hdr-actions .bg{background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn)}
 .ic{padding:6px;min-height:0}
 .cursor-ptr{cursor:pointer}
 .file-hidden{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
@@ -491,11 +505,11 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 
 /* ── Password bars ── */
 .pw-bars{display:flex;gap:4px;margin-top:6px;padding-inline:16px}
-.pwbar{flex:1;height:3px;border-radius:2px;background:var(--ov-strong);transition:background .2s}
+.pwbar{flex:1;height:4px;border-radius:2px;background:var(--ov-strong);transition:background .2s}
 .pw-hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:4px;min-height:16px;padding-inline:16px}
 
 /* ── Toast ── */
-#toast{position:fixed;bottom:24px;inset-inline-end:24px;background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);padding:12px 16px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;max-width:320px}
+#toast{position:fixed;bottom:24px;inset-inline-end:24px;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:14px 18px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;max-width:320px}
 /* Only the shown toast takes pointer events. A hidden one would swallow a
    click. */
 #toast.show{opacity:1;transform:translateY(0);pointer-events:auto;cursor:pointer;-webkit-user-select:text;user-select:text}
@@ -540,30 +554,31 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    universal reset in tokens.css zeroes the auto margin the browser centres a
    dialog with, and a width that is not 100%, which would leave that centring
    no free space. The 48px is the gap it keeps from the viewport edge. */
-.dlg-box{margin:auto;background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);width:calc(100% - 48px);max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:var(--shadow-dlg);padding:0;color:var(--tx)}
+.dlg-box{margin:auto;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);width:calc(100% - 48px);max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:var(--shadow-pop);padding:14px;color:var(--tx)}
 .dlg-box::backdrop{background:var(--scrim)}
 .dlg-box.wide{max-width:560px;max-height:80vh}
-.dlg-hdr{padding:16px 20px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:700;border-bottom:1px solid var(--bd-inner)}
+.dlg-hdr{padding:8px 8px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 /* flex:1 sets flex-basis:0, so the body contributes nothing to a dialog that
    is sizing to its content and WebKit collapses it to a clipped row.
    flex-basis:auto sizes it to its content; min-height:0 lets it shrink and
    scroll once the box reaches its maximum height. */
-.dlg-body{overflow-y:auto;flex:1 1 auto;min-height:0;padding:8px}
-.dlg-foot{padding:12px 16px;border-top:1px solid var(--bd-inner);display:flex;justify-content:flex-end;gap:8px}
+.dlg-body{overflow-y:auto;flex:1 1 auto;min-height:0;padding:0}
+.dlg-foot{padding:16px 0 0;display:flex;justify-content:flex-end;gap:8px}
+.dlg-foot .btn{flex:1}
 /* An alert's buttons are capsules and taller than a settings button. Named with
    .sm too, so this outranks the touch block that sizes a small button. */
-.dlg-foot .btn,.dlg-foot .btn.sm{min-height:48px;border-radius:24px;padding-inline:20px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline)}
+.dlg-foot .btn,.dlg-foot .btn.sm{min-height:48px;border-radius:24px;padding-inline:16px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 .dlg-field{display:flex;flex-direction:column;gap:6px;padding:12px}
 .dlg-field span{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm)}
-.dlg-lead{padding:8px 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
-.dlg-sec{padding:12px 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--dm)}
+.dlg-lead{padding:0 8px 8px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
+.dlg-sec{padding:12px 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm)}
 .dlg-ul{list-style:none;margin:0;padding:0 12px 8px;display:flex;flex-direction:column;gap:4px}
 .dlg-li{display:flex;align-items:baseline;gap:8px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .dlg-li .dlg-why{color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1)}
 .dlg-choice{display:flex;align-items:flex-start;gap:8px;padding:0 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer}
 .dlg-choice input{margin-block-start:2px;flex:none}
 .dlg-empty{padding:24px;text-align:center;color:var(--dm);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
-.fp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);background:none;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);cursor:pointer;width:100%;text-align:start;font-family:inherit;transition:background var(--t)}
+.fp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:20px;background:none;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);cursor:pointer;width:100%;text-align:start;font-family:inherit;transition:background var(--t)}
 .fp-row:hover{background:var(--ov)}
 .fp-row.cur{background:var(--row-selected)}
 .fp-row.muted{color:var(--dm)}
@@ -579,9 +594,9 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    below the field it belongs to. */
 .icon-src-anchor{position:relative}
 .ipv{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--on-tint);flex-shrink:0}
-.iprs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--rs);max-height:180px;overflow-y:auto;display:none;z-index:50;box-shadow:var(--shadow-pop)}
+.iprs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:6px;max-height:180px;overflow-y:auto;display:none;z-index:50;box-shadow:var(--shadow-pop)}
 .iprs.open{display:block}
-.ipr{display:flex;align-items:center;gap:10px;padding:8px 12px;background:none;border:none;width:100%;text-align:start;cursor:pointer;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-family:inherit;position:relative;z-index:1}
+.ipr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:20px;background:none;border:none;width:100%;text-align:start;cursor:pointer;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-family:inherit;position:relative;z-index:1}
 /* No hover background of its own: the glide highlight draws it. */
 @media not ((hover:hover) and (pointer:fine)){.ipr:hover{background:var(--ov)}}
 .ipr.kb-active{background:none}
@@ -602,29 +617,28 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 
 /* ── Auth overlays ── */
 .login-screen{position:fixed;inset:0;z-index:9000;background:var(--scrim-strong);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
-.login-wrap{background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);padding:32px 28px;width:100%;max-width:360px;box-shadow:var(--shadow-login);display:flex;flex-direction:column;gap:14px}
+.login-wrap{background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:28px 22px 22px;width:100%;max-width:360px;box-shadow:var(--shadow-login);display:flex;flex-direction:column;gap:14px}
 .login-header{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:4px}
-.login-icon{width:64px;height:64px;border-radius:16px;background:var(--login-badge);display:flex;align-items:center;justify-content:center}
-.login-title{font-size:var(--fs-title-3);line-height:var(--lh-title-3);letter-spacing:var(--tr-title-3);font-weight:700}
+.login-mark{height:34px;width:auto;color:var(--tx);margin-bottom:4px}
 .login-sub{font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--dm)}
 .login-pw,.login-btn{width:100%;font-family:inherit}
-.login-pw{background:var(--field-fill);border:1px solid var(--bd-inner);border-radius:var(--rs);color:var(--tx);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);padding:12px 14px}
-.login-pw:focus{outline:none;border-color:var(--ac)}
-.login-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:var(--rs);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:600;padding:13px;cursor:pointer;transition:background var(--t)}
+.login-pw{background:var(--btn-fill);border:none;border-radius:26px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;min-height:52px;padding:0 18px}
+.login-pw:focus{outline:2px solid var(--ac);outline-offset:0}
+.login-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:999px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline);min-height:48px;padding:13px;cursor:pointer;transition:background var(--t)}
 .login-btn:hover{background:var(--ac2)}
 .login-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);text-align:center;display:none}
 .setpw-screen{position:fixed;inset:0;z-index:8000;background:var(--scrim-strong);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
 .setpw-wrap{width:100%;max-width:360px;padding:24px}
-.setpw-card{background:var(--bg-outer);border:1px solid var(--bd);border-radius:var(--r);padding:28px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow-dlg)}
-.setpw-title{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:700}
+.setpw-card{background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow-dlg)}
+.setpw-title{font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 .setpw-desc{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm)}
 .setpw-input,.setpw-btn{width:100%;font-family:inherit}
-.setpw-input{background:var(--field-fill);border:1px solid var(--bd-inner);border-radius:var(--rs);color:var(--tx);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);padding:12px 14px}
-.setpw-input:focus{outline:none;border-color:var(--ac)}
+.setpw-input{background:var(--btn-fill);border:none;border-radius:26px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;min-height:52px;padding:0 18px}
+.setpw-input:focus{outline:2px solid var(--ac);outline-offset:0}
 .setpw-bars{display:flex;gap:4px}
 .setpw-hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);min-height:16px}
 .setpw-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);display:none}
-.setpw-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:var(--rs);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:600;padding:13px;cursor:pointer;transition:background var(--t)}
+.setpw-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:999px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline);min-height:48px;padding:13px;cursor:pointer;transition:background var(--t)}
 .setpw-btn:hover{background:var(--ac2)}
 
 /* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */
@@ -704,24 +718,25 @@ html.is-mobile .adm{max-width:none;width:100%;min-height:100dvh;border:none;bord
 html.is-mobile .sb{display:none}
 html.is-mobile .cp{width:100%}
 html.is-mobile .sec{padding-block:16px calc(132px + env(safe-area-inset-bottom));padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
-html.is-mobile .sec-title{font-size:var(--fs-title-1);line-height:var(--lh-title-1);letter-spacing:var(--tr-title-1)}
+html.is-mobile .sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title)}
 html.is-mobile .hsb-track{max-width:min(240px,62%)}
 html.is-mobile .sec-hdr{position:sticky;top:0;z-index:20;background:var(--pane);padding:10px 0 10px;flex-wrap:wrap;row-gap:6px}
 html.is-mobile .sec-title{order:1;flex-basis:100%;min-width:0;overflow-wrap:break-word}
 html.is-mobile .sec-hdr-actions{margin-inline-start:auto}
-html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--cp);color:var(--ac2);text-decoration:none;flex-shrink:0}
+html.is-mobile .sec-hdr-actions .btn{min-height:44px;padding-inline:18px}
+html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn);color:var(--tx);text-decoration:none;flex-shrink:0}
 html.is-mobile .m-back:active{opacity:.7}
 html.is-mobile body.authed .mtabbar{
-  display:flex;position:fixed;left:14px;right:14px;bottom:14px;
+  display:flex;position:fixed;left:21px;right:21px;bottom:21px;
   z-index:8000;justify-content:space-around;align-items:center;gap:2px;
-  background:var(--mtabbar-bg);
-  border:1px solid var(--mtabbar-bd);border-radius:50px;
-  padding:4px 4px;box-shadow:inset 0 1px 0 var(--mtabbar-rim),var(--shadow-bar);
+  background:var(--glass-bg);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
+  border:.5px solid var(--glass-rim);border-radius:50px;
+  padding:4px;box-shadow:var(--shadow-bar);
 }
-html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;border-radius:50px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);font-weight:500;cursor:pointer;padding:8px 2px;font-family:inherit;-webkit-tap-highlight-color:transparent}
-html.is-mobile .mtab .ni{width:24px;height:24px;flex-shrink:0}
+html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;border-radius:50px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:10px;line-height:12px;letter-spacing:0;font-weight:600;cursor:pointer;padding:7px 2px 6px;min-height:54px;justify-content:center;font-family:inherit;-webkit-tap-highlight-color:transparent}
+html.is-mobile .mtab .ni{width:26px;height:26px;flex-shrink:0}
 /* Keep the radius above half the height. Exactly half tears in WebKit on repaint. */
-html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--tx)}
+html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--ac2)}
 
 /* The handle is the drag zone. It needs touch-action:none, or starting a drag
    on it scrolls the list. */
@@ -835,9 +850,6 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
 .mtabbar>.gs-pill{background:var(--tab-pill)}
 .sb-nav:has(> .gs-pill.on) .nl.active{background:transparent}
 .mtabbar:has(> .gs-pill.on) .mtab.active{background:transparent}
-/* The sidebar pill is a solid accent fill under inverted label text. The ink is
-   held until the pill has arrived, so no label is ever light on the bare pane
-   while the pill is still travelling. */
 .sb-nav.gs-moving .nl{transition:background var(--t),color .12s ease .17s}
 
 @media (prefers-reduced-motion: reduce){
@@ -853,7 +865,7 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
 .sy-is{stroke:currentColor}
 .sy-i3s{stroke:currentColor;stroke-opacity:.4}
 .sy-as{stroke:var(--icon-accent,currentColor)}
-:root{--nav-tint:color-mix(in srgb,var(--ac) 18%,transparent)}
+:root{--nav-tint:var(--sb-sel)}
 .nl .sy-icon,.mtab .sy-icon,.tile-opt .sy-icon{--icon-accent:color-mix(in srgb,currentColor 55%,transparent)}
 .nl:hover .sy-icon,.nl.active .sy-icon,.mtab.active .sy-icon,.tile-opt.on .sy-icon{--icon-accent:var(--ac)}
 .rico .sy-icon{--icon-accent:currentColor}

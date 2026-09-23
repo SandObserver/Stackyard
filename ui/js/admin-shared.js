@@ -3,7 +3,7 @@ import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=5356a1b3';
 import { el, q } from '/js/utils.js?v=b6231666';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
-import { iconSvg } from '/js/icon-set.js?v=606a68c6';
+import { iconSvg } from '/js/icon-set.js?v=ba9434d9';
 
 export const API = '';
 
