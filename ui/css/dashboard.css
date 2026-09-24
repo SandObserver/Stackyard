@@ -388,7 +388,6 @@
     }
     #dots[data-tone="dark"] .dot { border-color:rgba(0,0,0,.55) }
     #dots[hidden] { display:none }
-    #dots:empty { display:none }
     /* Mirrored by the no-dock reserve in desktopSlots(). */
     body.no-dock:not(.is-mob) #dots { bottom:24px }
 
@@ -422,10 +421,10 @@
     }
     #mob-search-pill .msp-icon {
       font-size:calc(12px * var(--sc,1)); font-weight:600; color:#FFFFFF; line-height:1;
-      font-style:normal;
+      font-style:normal; text-shadow:var(--label-shadow);
     }
     #mob-search-pill .msp-label {
-      font-size:calc(12px * var(--sc,1));line-height:1; font-weight:600; color:#FFFFFF;
+      font-size:calc(12px * var(--sc,1));line-height:1; font-weight:600; color:#FFFFFF; text-shadow:var(--label-shadow);
       white-space:nowrap; 
     }
     /* Dots row — shown when paging */
@@ -443,9 +442,9 @@
     #mob-search-pill .msp-dot {
       width:calc(8px * var(--sc,1)); height:calc(8px * var(--sc,1)); border-radius:50%;
       background:rgba(255,255,255,.35); flex-shrink:0;
-      transition:background .18s;
+      transition:background .18s,transform .18s;
     }
-    #mob-search-pill .msp-dot.on { background:#FFFFFF }
+    #mob-search-pill .msp-dot.on { background:#FFFFFF; transform:scale(1.2) }
     /* State transitions */
     #mob-search-pill.paging .msp-search { opacity:0; pointer-events:none }
     #mob-search-pill.paging .msp-dots   { opacity:1; pointer-events:auto }
@@ -733,9 +732,9 @@
     .folder-dot {
       border-radius:50%; cursor:pointer; flex-shrink:0;
       background:rgba(255,255,255,.35);
-      transition:background .2s;
+      transition:background .2s,transform .2s;
     }
-    .folder-dot.on { background:var(--control-knob) }
+    .folder-dot.on { background:var(--control-knob); transform:scale(1.25) }
 
     /* ── Folder overlay — desktop ── */
     .folder-overlay {
@@ -1066,7 +1065,7 @@ html[data-theme="light"] .widget[data-card="translucent"],
 html[data-theme="light"] .mob-widget-card[data-card="translucent"] { background:#FFFFFF }
 html[data-theme="light"] #mob-search-pill { background:rgba(255,255,255,.72); border-color:rgba(0,0,0,.08) }
 html[data-theme="light"] #mob-search-pill .msp-icon,
-html[data-theme="light"] #mob-search-pill .msp-label { color:var(--pill-ink-light) }
+html[data-theme="light"] #mob-search-pill .msp-label { color:var(--pill-ink-light); text-shadow:none }
 html[data-theme="light"] #mob-search-pill .msp-dot { background:rgba(60,60,67,.3) }
 html[data-theme="light"] #mob-search-pill .msp-dot.on { background:rgba(0,0,0,.8) }
 html[data-theme="light"] #spot,
@@ -1108,11 +1107,11 @@ html[data-theme="light"] .api-error-btn { background:rgba(0,0,0,.06); border-col
 html[data-theme="light"] .api-error-screen { color:rgba(0,0,0,.7) }
 html[data-theme="light"] .api-error-sub { color:rgba(0,0,0,.45) }
 html[data-theme="light"] .folder-overlay .ilabel { color:var(--label-color-dark); text-shadow:var(--label-shadow-dark) }
-html[data-theme="light"] #dock:not(.mdock) { border-radius:45px; box-shadow:var(--glass-lift) }
+html[data-theme="light"] #dock:not(.mdock) { border-radius:38px; box-shadow:var(--glass-lift) }
 html[data-theme="light"] .folder-icon-grid,
 html[data-theme="light"] .dyn-fold-wrap,
 html[data-theme="light"] .plate-clear { box-shadow:0 4px 14px rgba(0,0,0,.12) }
-html[data-theme="light"] #dock.mdock { border-radius:calc(40px * var(--sc,1)); box-shadow:var(--glass-lift) }
+html[data-theme="light"] #dock.mdock { border-radius:calc(38px * var(--sc,1)); box-shadow:var(--glass-lift) }
 html[data-theme="light"] .widget[data-appearance="dark"],
 html[data-theme="light"] .mob-widget-card[data-appearance="dark"] {
   --glass-bg:var(--card-fixed-dark); --glass-border:rgba(255,255,255,.09); --card-dark:var(--card-fixed-dark);

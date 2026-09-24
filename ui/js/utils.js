@@ -121,9 +121,9 @@ export const qa = (sel, root = document) => /** @type {HTMLElement[]} */ ([...ro
     @param {Event} e @returns {HTMLInputElement} */
 export const tgt = e => /** @type {HTMLInputElement} */ (e.target);
 
-/* breg is passed in to avoid a circular import. */
 export const ICON_R = 0.26;
 
+/* breg is passed in to avoid a circular import. */
 export function mkWrap(item, sz, r, isz, cls, breg) {
   const w = mk('div');
   w.className = cls ? `plate ${cls}` : 'plate';

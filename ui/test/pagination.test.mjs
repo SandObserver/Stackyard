@@ -208,5 +208,9 @@ test('the pager is hidden when there is one page', () => {
 test('the hidden pager is not painted', () => {
   const css = read('css/dashboard.css');
   assert.match(css, /#dots\[hidden\] \{ display:none \}/, 'display:flex on #dots beats the hidden attribute');
-  assert.match(css, /#dots:empty \{ display:none \}/, 'an empty bar shows on the error screen');
+  assert.match(
+    read('index.html'),
+    /<nav id="dots"[^>]*\shidden>/,
+    'the bar must start hidden, or the error screen shows it empty',
+  );
 });

@@ -43,7 +43,7 @@ test('a pointer click on the scrim closes the folder', () => {
 test('the page is inset by the badge overhang', () => {
   assert.match(
     overlay,
-    /badgeOvh = Math\.min\(Math\.ceil\(7 \* \(sc \|\| 1\)\)/,
+    /badgeOvh = Math\.min\(Math\.ceil\(11 \* \(sc \|\| 1\)\)/,
     'the inset must follow the badge scale',
   );
   assert.match(overlay, /pageW = gridInnerW \+ badgeOvh \* 2/);
@@ -57,7 +57,7 @@ test('the inset comes out of the box padding, so the icons keep their place', ()
 });
 
 test('the inset never exceeds the padding it is taken from', () => {
-  assert.match(overlay, /Math\.min\(Math\.ceil\(7 \* \(sc \|\| 1\)\), padH, padVT, padVB\)/);
+  assert.match(overlay, /Math\.min\(Math\.ceil\(11 \* \(sc \|\| 1\)\), padH, padVT, padVB\)/);
 });
 
 test('the icon grid itself is unchanged', () => {

@@ -14,7 +14,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=01662438';
+} from '/js/utils.js?v=ed0f1802';
 import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
@@ -373,13 +373,13 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   const innerW = boxW - padH * 2,
     gap = Math.round(14 * ptScale);
   const folderIconW = Math.min(Math.floor((innerW - gap * 2) / 3), isz);
-  const folderIr = Math.round(folderIconW * 0.22),
+  const folderIr = Math.round(folderIconW * ICON_R),
     folderIm = Math.round(folderIconW * 0.64);
   const gridInnerW = folderIconW * 3 + gap * 2,
     gridH = folderIconW * 3 + gap * 2;
-  /* A badge sits 7px outside its icon corner. Without this inset the outer
+  /* A badge sits 11px outside its icon corner. Without this inset the outer
      icons' badges cross into the next page and the viewport shows them. */
-  const badgeOvh = Math.min(Math.ceil(7 * (sc || 1)), padH, padVT, padVB);
+  const badgeOvh = Math.min(Math.ceil(11 * (sc || 1)), padH, padVT, padVB);
   const pageW = gridInnerW + badgeOvh * 2,
     pageH = gridH + badgeOvh * 2;
   const dotSz = Math.round(7 * ptScale);

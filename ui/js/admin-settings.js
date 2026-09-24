@@ -1,4 +1,4 @@
-import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=e477e574';
+import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=d218efee';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -9,9 +9,9 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=5356a1b3';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
-import { el, inp, setUserText } from '/js/utils.js?v=01662438';
-import { renderColorControl } from '/js/admin-color-control.js?v=ee39fb36';
-import { BACKDROP } from '/js/background.js?v=09beead7';
+import { el, inp, setUserText } from '/js/utils.js?v=ed0f1802';
+import { renderColorControl } from '/js/admin-color-control.js?v=96364a80';
+import { BACKDROP } from '/js/background.js?v=848da677';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;

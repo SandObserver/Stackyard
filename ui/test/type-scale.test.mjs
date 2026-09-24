@@ -162,6 +162,8 @@ test('icon and tile radii are derived, not literal', () => {
   const dash = fs.readFileSync(path.join(cssDir, '..', 'js', 'dashboard.js'), 'utf8');
   const utils = fs.readFileSync(path.join(cssDir, '..', 'js', 'utils.js'), 'utf8');
   assert.match(utils, /export const ICON_R = 0\.26;/);
+  const ui = fs.readFileSync(path.join(cssDir, '..', 'js', 'ui.js'), 'utf8');
+  assert.doesNotMatch(ui, /\* 0\.22\d?\)/, 'a phone icon corner is a literal again');
   assert.match(dash, /mkWrap\(item, iw, Math\.round\(iw \* ICON_R\)/, 'the grid icon derives its corner');
   assert.match(dash, /mkWrap\(item, 78, Math\.round\(78 \* ICON_R\)/, 'the dock icon derives its corner');
   assert.match(dash, /const WIDGET_R = 28;/);
