@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Restyle Settings to match iOS and iPadOS 27.
 
+- Restyle the home screen and app icons to match iOS and iPadOS 27.
+
 ### Fixed
 
 - Admin error messages for badge tests and widget option fetches are translated
@@ -31,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unintended colour.
 
 - Show a message in Settings when the Unsplash wallpaper cannot be loaded.
+
+- Hide the empty page indicator on the connection error screen.
 
 ## [1.14.0] - 2026-09-20
 
