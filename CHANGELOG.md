@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add swatches and hue, saturation and brightness sliders to the Solid color
   background.
 
+### Changed
+
+- Restyle Settings to match iOS and iPadOS 27.
+
 ### Fixed
 
 - Admin error messages for badge tests and widget option fetches are translated
