@@ -459,7 +459,7 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 .grp > .row-link:nth-child(1) .about-ri{background:var(--sy-blue)}
 .grp > .row-link:nth-child(2) .about-ri{background:var(--sy-red)}
 .grp > .row-link:nth-child(3) .about-ri{background:var(--sy-gray)}
-.about-heart{background:var(--sy-pink)}
+.sy-icon.about-heart{background:var(--sy-pink)}
 .about-ext{flex-shrink:0;color:var(--dm);margin-inline-start:auto}
 
 /* ── Toggle ── */
@@ -467,11 +467,10 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 .tog input{position:absolute;opacity:0;width:0;height:0}
 .tr{width:64px;height:28px;border-radius:14px;background:var(--track-off);position:relative;transition:background .2s}
 .tog input:checked+.tr{background:var(--gn)}
-.tr::after{content:'';position:absolute;width:38px;height:24px;border-radius:12px;background:var(--control-knob);top:2px;inset-inline-start:2px;transition:transform .2s;box-shadow:var(--shadow-tog)}
+.tr::after{content:'';position:absolute;width:38px;height:24px;border-radius:12px;background:var(--control-knob);top:2px;inset-inline-start:2px;transition:transform .2s,width .2s;box-shadow:var(--shadow-tog)}
 .tog input:checked+.tr::after{transform:translateX(22px)}
 /* translateX has no logical form, so the travel is mirrored explicitly. */
 [dir="rtl"] .tog input:checked+.tr::after{transform:translateX(-22px)}
-.tr::after{transition:transform .2s,width .2s}
 .tog:active input:not(:disabled)+.tr::after{width:46px}
 .tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(14px)}
 [dir="rtl"] .tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(-14px)}
@@ -554,16 +553,17 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    universal reset in tokens.css zeroes the auto margin the browser centres a
    dialog with, and a width that is not 100%, which would leave that centring
    no free space. The 48px is the gap it keeps from the viewport edge. */
-.dlg-box{margin:auto;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);width:calc(100% - 48px);max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:var(--shadow-pop);padding:14px;color:var(--tx)}
+.dlg-box{margin:auto;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);width:calc(100% - 48px);max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:var(--shadow-pop);padding:0;color:var(--tx)}
 .dlg-box::backdrop{background:var(--scrim)}
 .dlg-box.wide{max-width:560px;max-height:80vh}
-.dlg-hdr{padding:8px 8px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
+.dlg-hdr{padding:22px 22px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 /* flex:1 sets flex-basis:0, so the body contributes nothing to a dialog that
    is sizing to its content and WebKit collapses it to a clipped row.
    flex-basis:auto sizes it to its content; min-height:0 lets it shrink and
    scroll once the box reaches its maximum height. */
-.dlg-body{overflow-y:auto;flex:1 1 auto;min-height:0;padding:0}
-.dlg-foot{padding:16px 0 0;display:flex;justify-content:flex-end;gap:8px}
+.dlg-body{overflow-y:auto;flex:1 1 auto;min-height:0;padding:0 14px}
+.dlg-body:last-child{padding-bottom:14px}
+.dlg-foot{padding:16px 14px 14px;display:flex;justify-content:flex-end;gap:8px}
 .dlg-foot .btn{flex:1}
 /* An alert's buttons are capsules and taller than a settings button. Named with
    .sm too, so this outranks the touch block that sizes a small button. */
@@ -850,11 +850,13 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
 .mtabbar>.gs-pill{background:var(--tab-pill)}
 .sb-nav:has(> .gs-pill.on) .nl.active{background:transparent}
 .mtabbar:has(> .gs-pill.on) .mtab.active{background:transparent}
-.sb-nav.gs-moving .nl{transition:background var(--t),color .12s ease .17s}
+.sb-nav.gs-moving .nl{transition:background var(--t),font-weight .12s ease .17s}
+.sb-nav.gs-moving .nl .ni{transition:color .12s ease .17s}
 
 @media (prefers-reduced-motion: reduce){
   .mp,.mp.on{transition:none}
-  .sb-nav.gs-moving .nl{transition:background var(--t),color var(--t)}
+  .sb-nav.gs-moving .nl{transition:background var(--t),font-weight var(--t)}
+  .sb-nav.gs-moving .nl .ni{transition:color var(--t)}
 }
 
 .sy-sprite{position:absolute;width:0;height:0;overflow:hidden}

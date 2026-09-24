@@ -70,3 +70,12 @@ test('nothing keeps its own copy of the trap', () => {
     );
   }
 });
+
+/* modal.js closes the dialog when a click lands on the dialog element itself,
+   which is also where padding on it would be clicked. */
+test('the admin dialog box has no padding of its own', () => {
+  const rule = /\.dlg-box\{([^}]*)\}/.exec(read('css/admin.css').replace(/\/\*[\s\S]*?\*\//g, ''));
+  assert.ok(rule, 'the .dlg-box rule is gone');
+  assert.match(rule[1], /padding:0[;}]?/);
+  assert.match(read('js/modal.js'), /e\.target === box/, 'the close test changed; revisit this rule');
+});
