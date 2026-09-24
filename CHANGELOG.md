@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Hide the empty page indicator on the connection error screen.
 
+- Opening an app from search opens one tab, not two.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
