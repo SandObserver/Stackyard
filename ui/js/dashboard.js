@@ -11,6 +11,7 @@ import {
 } from '/js/widget-types.js?v=9264dee5';
 import {
   el,
+  ICON_R,
   isDashboardEmpty,
   mk,
   mkWrap as _mkWrap,
@@ -23,9 +24,9 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=b6231666';
+} from '/js/utils.js?v=ed0f1802';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=a59d932e';
+import { initSpotlight } from '/js/spotlight.js?v=6cac6066';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
@@ -39,7 +40,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=5d62b8d2';
+} from '/js/ui.js?v=42f30621';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -51,7 +52,7 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=1fec6318';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=848da677';
 import { jitter } from '/js/jitter.js?v=4eeef4c9';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -68,10 +69,6 @@ let MOB = isMobileLayout();
 const wCols = { d: WIDGET_COLS.desktop, m: WIDGET_COLS.mobile };
 const wRows = { d: WIDGET_ROWS.desktop, m: WIDGET_ROWS.mobile };
 const WH = { d: WIDGET_HEIGHTS };
-/* An app icon's corner is 22.37% of its width. A fixed radius only lands on that
-   at one icon size, and the grid draws two: 72 with a label under it, 78
-   without. */
-const ICON_R = 0.2237;
 /* A widget tile's corner, at design size. WIDGET_DESIGN's small is 170 square
    against the reference's 165, so this is its 28 unchanged. */
 const WIDGET_R = 28;
@@ -427,7 +424,7 @@ function buildDesktop() {
   dk.replaceChildren();
   dock.forEach(item => dk.appendChild(mkDock(item)));
   dk.hidden = !dock.length;
-  observeGlass(dk, 45, 0.2);
+  observeGlass(dk, 38, 0.6);
 }
 
 /* Every page is mounted at once, so widgets the user has swiped away from keep

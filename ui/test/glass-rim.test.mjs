@@ -9,12 +9,12 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
 test('every dock and folder surface shares one edge', () => {
   const ui = read('js/ui.js');
-  assert.match(ui, /observeGlass\(dk, Math\.round\(40 \* sc\), 0\.2\)/);
+  assert.match(ui, /observeGlass\(dk, Math\.round\(38 \* sc\), 0\.6\)/);
   assert.match(ui, /mkGlassRim\(boxW, boxH, boxD\)/);
   assert.match(ui, /mkGlassRim\(eff, eff,/);
   assert.match(ui, /mkGlassRim\(iw, iw,/);
   assert.match(ui, /observeGlass\(box, 28, 0\.2\)/);
-  assert.match(read('js/dashboard.js'), /observeGlass\(dk, 45, 0\.2\)/);
+  assert.match(read('js/dashboard.js'), /observeGlass\(dk, 38, 0\.6\)/);
 });
 
 test('the open phone folder is clipped to the rim path', () => {

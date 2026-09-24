@@ -6,6 +6,7 @@ import {
   isDashboardEmpty,
   renderEmptyState,
   mkWrap as _mkWrap,
+  ICON_R,
   mountScaledWidget,
   pageDir,
   teardownWidgets,
@@ -13,10 +14,10 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=b6231666';
+} from '/js/utils.js?v=ed0f1802';
 import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
-import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=ab5fe77e';
+import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
 
@@ -110,7 +111,7 @@ export function mkFolderGlyph(folder, size) {
   const wrap = mk('div');
   wrap.className = 'dyn-fold-wrap glass-surface';
   css(wrap, {
-    '--br': Math.round(size * 0.24) + 'px',
+    '--br': Math.round(size * ICON_R) + 'px',
     '--gap': Math.round(size * 0.04) + 'px',
     '--pad': Math.round(size * 0.1) + 'px',
   });
@@ -311,7 +312,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   css(box, { '--sz': eff + 'px' });
   box.style.pointerEvents = 'none';
   const wrap = mkFolderGlyph(item, eff);
-  wrap.appendChild(mkGlassRim(eff, eff, smoothRectPath(eff, eff, Math.round(eff * 0.24), 0)));
+  wrap.appendChild(mkGlassRim(eff, eff, smoothRectPath(eff, eff, Math.round(eff * ICON_R), 0)));
   box.appendChild(wrap);
   const fb_ = mk('div');
   fb_.className = 'badge';
@@ -322,7 +323,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
     const l = mk('div');
     l.className = 'dyn-fold-label';
     l.dir = 'auto';
-    css(l, { '--lfs': Math.max(9, Math.round(9 * sc)) + 'px', '--lw': cw - 4 + 'px' });
+    css(l, { '--lfs': Math.max(11, Math.round(12 * sc)) + 'px', '--lw': cw - 4 + 'px' });
     setUserText(l, item.label || t('type.folder'));
     a.appendChild(l);
   }
@@ -372,13 +373,13 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   const innerW = boxW - padH * 2,
     gap = Math.round(14 * ptScale);
   const folderIconW = Math.min(Math.floor((innerW - gap * 2) / 3), isz);
-  const folderIr = Math.round(folderIconW * 0.22),
+  const folderIr = Math.round(folderIconW * ICON_R),
     folderIm = Math.round(folderIconW * 0.64);
   const gridInnerW = folderIconW * 3 + gap * 2,
     gridH = folderIconW * 3 + gap * 2;
-  /* A badge sits 7px outside its icon corner. Without this inset the outer
+  /* A badge sits 11px outside its icon corner. Without this inset the outer
      icons' badges cross into the next page and the viewport shows them. */
-  const badgeOvh = Math.min(Math.ceil(7 * (sc || 1)), padH, padVT, padVB);
+  const badgeOvh = Math.min(Math.ceil(11 * (sc || 1)), padH, padVT, padVB);
   const pageW = gridInnerW + badgeOvh * 2,
     pageH = gridH + badgeOvh * 2;
   const dotSz = Math.round(7 * ptScale);
@@ -641,7 +642,7 @@ export function buildMobile() {
   css(document.body, { '--mgw': Math.round(gridW) + 'px' });
   const maxIsz = Math.round(74 * sc);
   const isz = Math.round(Math.min(cw * 0.9, rh * 0.8, maxIsz));
-  const ir = Math.round(isz * 0.225),
+  const ir = Math.round(isz * ICON_R),
     im = Math.round(isz * 0.64);
   const showLabel = S().showLabels?.ios === true;
   /* The reference draws a 66 icon and a 28 widget corner, so a widget's corner
@@ -705,7 +706,7 @@ export function buildMobile() {
 
   function mIcon(item) {
     const eff = showLabel ? Math.round(isz * 0.82) : isz;
-    const er = Math.round(eff * 0.225),
+    const er = Math.round(eff * ICON_R),
       em = Math.round(eff * 0.64);
     const a =
       item.system === 'settings'
@@ -720,7 +721,7 @@ export function buildMobile() {
       const l = mk('div');
       l.className = 'dyn-mob-label';
       l.dir = 'auto';
-      css(l, { '--lfs': Math.max(9, Math.round(9 * sc)) + 'px', '--lw': '100%' });
+      css(l, { '--lfs': Math.max(11, Math.round(12 * sc)) + 'px', '--lw': '100%' });
       setUserText(l, item.label || item.id);
       a.appendChild(l);
     }
@@ -786,7 +787,7 @@ export function buildMobile() {
   const maxDockW = vw - Math.round(18 * sc);
   const dockPad = Math.round(14 * sc);
   const dockIconSz = Math.round(Math.min(isz, ((maxDockW - Math.round(28 * sc)) / 4) * 0.85));
-  const dockIr = Math.round(dockIconSz * 0.225),
+  const dockIr = Math.round(dockIconSz * ICON_R),
     dockIm = Math.round(dockIconSz * 0.64);
   const dockGap = Math.round(9 * sc);
   const dockW = Math.min(maxDockW, Math.round((PHONE_W - 18) * sc));
@@ -796,7 +797,7 @@ export function buildMobile() {
   dk.hidden = !dock.length;
   dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;gap:${dockIconGap}px;z-index:400;`;
   dk.replaceChildren();
-  observeGlass(dk, Math.round(40 * sc), 0.2);
+  observeGlass(dk, Math.round(38 * sc), 0.6);
   dock.forEach(item => {
     const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
     a.className = 'dyn-dock-icon';
