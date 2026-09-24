@@ -107,3 +107,10 @@ test('the browser is asked to resize the page for the keyboard', () => {
 test('the list drops the status-bar inset once the keyboard has moved it', () => {
   assert.match(css, /body\.is-mob #spot\.kb #sres \{[^}]*padding-top:12px/);
 });
+
+test('a click on a result leaves the new tab to the link', () => {
+  assert.match(js, /target: isInternal \? '_self' : '_blank'/);
+  assert.match(js, /\} else if \(viaTouch && app\.href\) \{\s*window\.open\(/);
+  assert.match(js, /a\.onclick = \(\) => doOpen\(false\);/);
+  assert.match(js, /e\.preventDefault\(\);\s*doOpen\(true\);/);
+});

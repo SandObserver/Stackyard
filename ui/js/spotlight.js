@@ -65,7 +65,8 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
       a.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
       a.style.cssText =
         'display:flex;align-items:center;gap:18px;padding:14px 20px;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;';
-      const doOpen = () => {
+      /* A click also follows the link. Opening here as well opens two tabs. */
+      const doOpen = viaTouch => {
         close();
         if (isFolder) {
           if (MOB()) {
@@ -74,15 +75,15 @@ export function initSpotlight({ getItems, isMob, CB, iconChain, openFolderDeskto
           } else openFolderDesktop(app);
         } else if (app.system === 'settings' && app.href) {
           window.location.href = app.href;
-        } else if (app.href) {
+        } else if (viaTouch && app.href) {
           window.open(app.href, '_blank', 'noreferrer,noopener');
         }
       };
       a.addEventListener('touchend', e => {
         e.preventDefault();
-        doOpen();
+        doOpen(true);
       });
-      a.onclick = doOpen;
+      a.onclick = () => doOpen(false);
 
       const ic = mk('div');
       ic.className = 'sri';
