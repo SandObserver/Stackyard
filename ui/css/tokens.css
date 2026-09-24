@@ -71,7 +71,7 @@
      literal: both run before any stylesheet is parsed. */
   --bg-base:#0d1117;
 
-  --sy-radius-lg:14px;
+  --sy-radius-window:34px;
   --sy-radius-md:10px;
   --sy-radius-group:26px;
 

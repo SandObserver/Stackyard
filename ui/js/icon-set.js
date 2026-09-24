@@ -220,7 +220,14 @@ export const ICONS = {
   'bright-hi': { shapes: [dot(12, 12, 4), line('M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1 1M18 18l1 1M5 19l1-1M18 6l1-1')] },
   external: { shapes: [line('M14 4h6v6M20 4l-9 9'), line('M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4')] },
   docs: { shapes: [rect(4, 2, 16, 20, T.R_MD), bar(7, 7, 6), bar(7, 11, 10), bar(7, 15, 8)] },
-  issue: { shapes: [circle(12, 12, 10), line('M12 7v6', 'cut'), detail(11, 16, 2, 2, 1, 'cut')] },
+  bug: {
+    shapes: [
+      shape('M9 6a3 3 0 0 1 6 0z', 'accent'),
+      shape('M6 14a6 6 0 0 1 12 0v2a6 6 0 0 1-12 0z'),
+      line('M12 11v8', 'cut'),
+      line('M2 9l2 2M2 15h2M2 21l2-2M22 9l-2 2M22 15h-2M22 21l-2-2'),
+    ],
+  },
   info: { shapes: [circle(12, 12, 10), line('M12 11v6', 'cut'), detail(11, 6, 2, 2, 1, 'cut')] },
   heart: { shapes: [shape('M12 21l-8-8a5 5 0 0 1 8-6 5 5 0 0 1 8 6z')] },
   grip: {

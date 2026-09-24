@@ -149,14 +149,17 @@ test('the label ink waits for the pill', () => {
   const css = fs.readFileSync(path.join(root, 'css/admin.css'), 'utf8');
   const rule = /\.sb-nav\.gs-moving \.nl\{([^}]*)\}/.exec(css);
   assert.ok(rule, 'the ink hold must be declared');
-  const delay = /color\s+[\d.]+m?s\s+[a-z-]+\s+([\d.]+)s/.exec(rule[1]);
-  assert.ok(delay, 'the colour transition must carry a delay');
+  const delay = /font-weight\s+[\d.]+m?s\s+[a-z-]+\s+([\d.]+)s/.exec(rule[1]);
+  assert.ok(delay, 'the weight transition must carry a delay');
   assert.ok(Number(delay[1]) >= 0.15, `the delay must cover the glide, got ${delay[1]}s`);
+  const icon = /\.sb-nav\.gs-moving \.nl \.ni\{transition:color\s+[\d.]+m?s\s+[a-z-]+\s+([\d.]+)s\}/.exec(css);
+  assert.ok(icon && Number(icon[1]) >= 0.15, 'the icon tint must wait for the glide too');
 });
 
 test('reduced motion drops the hold as well as the glide', () => {
   const css = fs.readFileSync(path.join(root, 'css/admin.css'), 'utf8');
   const block = css.slice(css.lastIndexOf('prefers-reduced-motion'));
   assert.match(block, /\.mp,\.mp\.on\{transition:none\}/);
-  assert.match(block, /\.sb-nav\.gs-moving \.nl\{transition:background var\(--t\),color var\(--t\)\}/);
+  assert.match(block, /\.sb-nav\.gs-moving \.nl\{transition:background var\(--t\),font-weight var\(--t\)\}/);
+  assert.match(block, /\.sb-nav\.gs-moving \.nl \.ni\{transition:color var\(--t\)\}/);
 });

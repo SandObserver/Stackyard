@@ -198,7 +198,7 @@ const TINTED = [
   ['--chip-bg-fg', '--chip-bg-bg', 'the badge pill'],
   ['--chip-fl-fg', '--chip-fl-bg', 'the folder-type pill'],
   ['--chip-sy-fg', '--chip-sy-bg', 'the system-item pill'],
-  ['--chip-text', '--field-fill', 'an unselected filter chip'],
+  ['--chip-text', '--btn-fill', 'an unselected filter chip'],
 ];
 
 const TINT_BACKDROPS = ['--pane', '--cp'];
