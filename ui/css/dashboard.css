@@ -151,8 +151,6 @@
       border:1px solid var(--glass-border); background:var(--glass-bg);
     }
     .widget iframe { display:block; border:0; width:100% }
-    /* Keep it on its own layer. WebKit otherwise composites it late over a
-       moving frame, and the edge flashes in after a page change. */
     .widget::after, .mob-widget-card::after {
       content:''; position:absolute; inset:0; border-radius:inherit;
       pointer-events:none; z-index:5; transform:translateZ(0);
@@ -1126,6 +1124,7 @@ html[data-theme="light"] #dock.mdock { border-radius:calc(38px * var(--sc,1)); b
 html[data-theme="light"] .widget[data-appearance="dark"],
 html[data-theme="light"] .mob-widget-card[data-appearance="dark"] {
   --glass-bg:var(--card-fixed-dark); --glass-border:rgba(255,255,255,.09); --card-dark:var(--card-fixed-dark);
+  --card-edge-hi:rgba(255,255,255,.16); --card-edge-lo:rgba(255,255,255,.05);
 }
 html[data-theme="light"] .widget[data-appearance="dark"][data-card="translucent"],
 html[data-theme="light"] .mob-widget-card[data-appearance="dark"][data-card="translucent"] { background:var(--card-fixed-dark) }
