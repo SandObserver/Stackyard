@@ -6,7 +6,7 @@
    Do not use popover. The top layer makes iOS collapse its browser toolbar,
    which exposes a strip of page canvas and misplaces the menu. */
 
-import { nextActiveIndex } from '/js/admin-logic.js?v=5356a1b3';
+import { nextActiveIndex } from '/js/admin-logic.js?v=cbb7417d';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa } from '/js/utils.js?v=ed0f1802';
