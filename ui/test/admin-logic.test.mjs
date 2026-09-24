@@ -576,12 +576,10 @@ test('isBareHostUrl rejects what it cannot parse', () => {
   for (const u of ['', '   ', 'http://', undefined, null, 42]) assert.equal(isBareHostUrl(u), false, String(u));
 });
 
-/* The two failures a missing path actually produces: the service answers and
-   has nothing there, or answers with something that is not data. */
 test('a failed fetch of a bare address reports the missing API path', () => {
   const notFound = { code: 'upstream.status', vars: { status: 404 } };
-  const notData = { code: 'invalid' };
-  for (const advice of [notFound, notData]) {
+  const redirected = { code: 'upstream.redirect', vars: { status: 302 } };
+  for (const advice of [notFound, redirected]) {
     assert.equal(failureIsMissingApiPath('https://seerr.example.com', advice), true, advice.code);
     assert.equal(failureIsMissingApiPath('https://seerr.example.com/api/v1/request/count', advice), false);
   }
@@ -598,7 +596,7 @@ test('a known cause is reported instead of the path hint', () => {
     { code: 'timeout' },
     { code: 'network.tls-untrusted' },
     { code: 'invalid.retype' },
-    { code: 'upstream.redirect', vars: { status: 301 } },
+    { code: 'invalid' },
     { code: 'upstream.status', vars: { status: 401 } },
     { code: 'upstream.status', vars: { status: 500 } },
   ]) {
