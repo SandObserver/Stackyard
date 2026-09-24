@@ -113,3 +113,12 @@ test('the light palette carries an increased-contrast partner for every hue', ()
   assert.ok(hues.length >= 18, `expected the twelve hues and six greys, found ${hues.length}`);
   for (const h of hues) assert.match(light, new RegExp(`--sy-${h}-hi:\\s*#`), `--sy-${h} has no -hi partner`);
 });
+
+test('a widget held dark in the light theme keeps the dark edge light', () => {
+  const css = read('../css/dashboard.css');
+  const at = css.indexOf('html[data-theme="light"] .mob-widget-card[data-appearance="dark"] {');
+  assert.ok(at > -1, 'the forced-dark block is gone');
+  const block = css.slice(at, css.indexOf('}', at));
+  assert.match(block, /--card-edge-hi:rgba\(255,255,255,\.16\)/);
+  assert.match(block, /--card-edge-lo:rgba\(255,255,255,\.05\)/);
+});

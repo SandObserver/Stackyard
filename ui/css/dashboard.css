@@ -2,6 +2,8 @@
     :root {
       --glass-bg:         #1C1C1E;
       --glass-border:     rgba(255,255,255,.09);
+      --card-edge-hi:     rgba(255,255,255,.16);
+      --card-edge-lo:     rgba(255,255,255,.05);
       --glass-surface-bg:   rgba(51,51,51,.33);
       --glass-surface-blur: blur(12px) saturate(180%);
       --glass-rim-light:  rgba(255,255,255,.30);
@@ -149,6 +151,11 @@
       border:1px solid var(--glass-border); background:var(--glass-bg);
     }
     .widget iframe { display:block; border:0; width:100% }
+    .widget::after, .mob-widget-card::after {
+      content:''; position:absolute; inset:0; border-radius:inherit;
+      pointer-events:none; z-index:5; transform:translateZ(0);
+      box-shadow:inset 0 1px 0 var(--card-edge-hi), inset 0 -1px 0 var(--card-edge-lo);
+    }
 
     /* The mobile home screen builds its own card element with the same glass
        material. Its sizing stays inline. */
@@ -1054,6 +1061,8 @@ html[data-theme="light"] {
   --bg-base:           #E5E5EA;
   --glass-bg:          #FFFFFF;
   --glass-border:      rgba(0,0,0,.06);
+  --card-edge-hi:      rgba(255,255,255,.9);
+  --card-edge-lo:      rgba(0,0,0,.05);
   --glass-surface-bg:  rgba(153,153,153,.33);
   --glass-surface-blur: blur(24px) saturate(180%);
   --glass-rim-light:   rgba(255,255,255,1);
@@ -1115,6 +1124,7 @@ html[data-theme="light"] #dock.mdock { border-radius:calc(38px * var(--sc,1)); b
 html[data-theme="light"] .widget[data-appearance="dark"],
 html[data-theme="light"] .mob-widget-card[data-appearance="dark"] {
   --glass-bg:var(--card-fixed-dark); --glass-border:rgba(255,255,255,.09); --card-dark:var(--card-fixed-dark);
+  --card-edge-hi:rgba(255,255,255,.16); --card-edge-lo:rgba(255,255,255,.05);
 }
 html[data-theme="light"] .widget[data-appearance="dark"][data-card="translucent"],
 html[data-theme="light"] .mob-widget-card[data-appearance="dark"][data-card="translucent"] { background:var(--card-fixed-dark) }

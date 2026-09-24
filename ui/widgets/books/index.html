@@ -15,14 +15,14 @@
   .card.clickable{cursor:pointer}
   .card.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-3px}
 
-  .head{flex:none;font-size:11px;font-weight:500;color:#8E8E93;letter-spacing:.05em;
+  .head{flex:none;font-size:13px;font-weight:600;color:#8E8E93;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   .shelves{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:6px}
   .size-large .shelves{margin-top:10px}
   .shelf-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
-  .shelf-lbl{flex:none;font-size:10px;font-weight:600;color:#8E8E93;letter-spacing:.06em;margin-bottom:4px;
-    text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .shelf-lbl{flex:none;font-size:11px;font-weight:600;color:#8E8E93;margin-bottom:4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .shelf-lbl[hidden]{display:none}
   .shelf{flex:1;position:relative;min-height:0;border-bottom:1px solid rgba(235,235,245,.5)}
   .shelf::after{content:"";position:absolute;left:5%;right:5%;bottom:-1px;height:10px;pointer-events:none;
@@ -101,7 +101,7 @@
 <script type="module">
   import { poll, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=22640314';
   await loadStrings();
-  document.getElementById('lbl').textContent = wt('ui.reading', 'READING');
+  document.getElementById('lbl').textContent = wt('ui.reading', 'Reading');
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const API='/api';
   const params=new URLSearchParams(location.search);
@@ -111,7 +111,7 @@
   const {shelves:SHELVES,show:SHOW}=SIZES[size];
   const POLL_MS=300000;
   const PALETTE=['#E7E0D2','#3D5A80','#A8483E','#C9BBA0','#5C6B57','#8D99A6','#2E3340','#B58B52','#7B5E57','#4E6E6A'];
-  const SRC={recently:['ui.srcRecently','RECENTLY ADDED'],unread:['ui.srcUnread','ON DECK'],list:['ui.reading','READING']};
+  const SRC={recently:['ui.srcRecently','Recently Added'],unread:['ui.srcUnread','On Deck'],list:['ui.reading','Reading']};
   /* The reader's own name for the shelf, then the service's, then the generic
      word for what the shelf holds. */
   function shelfName(sh){
