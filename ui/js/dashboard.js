@@ -26,7 +26,7 @@ import {
   titleWhenTruncated,
 } from '/js/utils.js?v=ed0f1802';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=6cac6066';
+import { initSpotlight } from '/js/spotlight.js?v=2d911c06';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
