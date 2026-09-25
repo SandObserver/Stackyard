@@ -1,7 +1,7 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=7407b339';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=d2e8b6dc';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
-import { el, inp as inpById, qa } from '/js/utils.js?v=ed0f1802';
+import { el, inp as inpById, qa } from '/js/utils.js?v=eadafbcd';
 
 export async function checkAuth(onLogin) {
   try {
