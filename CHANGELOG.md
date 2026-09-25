@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Give widget cards the iOS 27 edge light and drop the uppercase widget
   headings.
 
+- Redraw the logo as exact geometry in the favicon, the app icons and Settings.
+
 ### Fixed
 
 - Admin error messages for badge tests and widget option fetches are translated
