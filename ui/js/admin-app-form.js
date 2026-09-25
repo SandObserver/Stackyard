@@ -1,4 +1,4 @@
-import { clr, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=eadafbcd';
+import { clr, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=7d0a2f7d';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=831e219e';
@@ -21,13 +21,13 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=d2e8b6dc';
-import { createListbox } from '/js/listbox.js?v=f057351d';
+} from '/js/admin-shared.js?v=9d789975';
+import { createListbox } from '/js/listbox.js?v=c14ab216';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=e963853a';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=15d6a495';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=e4ea7820';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { iconSvg } from '/js/icon-set.js?v=08b74a28';
+import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
