@@ -12,6 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -80,14 +81,56 @@ test('every icon file exists and matches its declared size', () => {
   }
 });
 
-/* The reason the two cannot be one image: a maskable icon must keep its content
-   inside the middle 80%, since a circular mask cuts the rest. */
-test('the maskable icon keeps its content inside the safe zone', () => {
+test('the maskable icon is square and large enough', () => {
   const icon = manifest.icons.find(i => i.purpose === 'maskable');
   const buf = fs.readFileSync(path.join(root, icon.src.replace(/^\//, '')));
   const [w, h] = [buf.readUInt32BE(16), buf.readUInt32BE(20)];
   assert.equal(w, h, 'a maskable icon must be square or the crop is uneven');
   assert.ok(w >= 192, `${w}px is below the 192px Android asks for`);
+});
+
+function pngPixels(buf) {
+  const w = buf.readUInt32BE(16);
+  const h = buf.readUInt32BE(20);
+  assert.ok(buf[24] === 8 && [2, 6].includes(buf[25]) && buf[28] === 0, 'expected 8-bit RGB or RGBA, not interlaced');
+  const n = buf[25] === 6 ? 4 : 3;
+  const idat = [];
+  for (let i = 8; i < buf.length; ) {
+    const len = buf.readUInt32BE(i);
+    if (buf.toString('latin1', i + 4, i + 8) === 'IDAT') idat.push(buf.subarray(i + 8, i + 8 + len));
+    i += 12 + len;
+  }
+  const raw = zlib.inflateSync(Buffer.concat(idat));
+  const row = w * n;
+  const out = Buffer.alloc(row * h);
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * (row + 1)];
+    for (let x = 0; x < row; x++) {
+      const v = raw[y * (row + 1) + 1 + x];
+      const a = x >= n ? out[y * row + x - n] : 0;
+      const b = y ? out[(y - 1) * row + x] : 0;
+      const c = x >= n && y ? out[(y - 1) * row + x - n] : 0;
+      const p = a + b - c;
+      const [pa, pb, pc] = [Math.abs(p - a), Math.abs(p - b), Math.abs(p - c)];
+      const pred = [0, a, b, (a + b) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? b : c][f];
+      out[y * row + x] = (v + pred) & 0xff;
+    }
+  }
+  const px = (x, y) => [...out.subarray(y * row + x * n, y * row + x * n + n)];
+  return { w, h, px: n === 4 ? px : (x, y) => [...px(x, y), 255] };
+}
+
+test('the maskable icon fills its frame and draws nothing outside the safe zone', () => {
+  const icon = manifest.icons.find(i => i.purpose === 'maskable');
+  const { w, h, px } = pngPixels(fs.readFileSync(path.join(root, icon.src.replace(/^\//, ''))));
+  const bg = px(0, 0);
+  assert.equal(bg[3], 255, 'transparent corners show the launcher backing through the mask');
+  const r = 0.4 * w;
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (Math.hypot(x + 0.5 - w / 2, y + 0.5 - h / 2) <= r) continue;
+      assert.deepEqual(px(x, y), bg, `pixel ${x},${y} is outside the safe zone and a circular mask cuts it`);
+    }
 });
 
 /* ── language ─────────────────────────────────────────────────────────────── */
