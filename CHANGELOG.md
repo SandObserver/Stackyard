@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Opening an app from search opens one tab, not two.
 
+- Dashboard switch names are readable in the light theme.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
