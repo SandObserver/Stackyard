@@ -211,13 +211,16 @@ const SAFE_IFRAME_FEATURES = new Set([
   'web-share',
 ]);
 
-/** @param {unknown} value @returns {string} */
-export function safeAllow(value) {
+/** @param {unknown} value @param {boolean} [fullscreen] @returns {string} */
+export function safeAllow(value, fullscreen = true) {
   const kept = String(value == null ? '' : value)
     .split(';')
     .map(part => part.trim())
-    .filter(part => part && SAFE_IFRAME_FEATURES.has(part.split(/[\s(]/)[0].toLowerCase()));
-  return kept.join('; ') || 'fullscreen';
+    .filter(part => {
+      const feature = part.split(/[\s(]/)[0].toLowerCase();
+      return part && SAFE_IFRAME_FEATURES.has(feature) && (fullscreen || feature !== 'fullscreen');
+    });
+  return kept.join('; ') || (fullscreen ? 'fullscreen' : '');
 }
 
 /* Mounts the iframe at a fixed design resolution and scales it to fill `card`.
@@ -259,8 +262,10 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
   const ifr = mk('iframe', { src, scrolling: o.scrolling === true || o.scrolling === 'yes' ? 'yes' : 'no', title });
   if (isCrossOrigin(src)) ifr.setAttribute('sandbox', SANDBOX);
-  ifr.setAttribute('allow', safeAllow(o.allow));
-  if (o.allowFullscreen !== false) ifr.setAttribute('allowfullscreen', '');
+  const fullscreen = o.allowFullscreen !== false;
+  const allow = safeAllow(o.allow, fullscreen);
+  if (allow) ifr.setAttribute('allow', allow);
+  if (fullscreen) ifr.setAttribute('allowfullscreen', '');
   if (o.referrerPolicy) ifr.setAttribute('referrerpolicy', o.referrerPolicy);
   if (o.loading) ifr.setAttribute('loading', o.loading);
   ifr.setAttribute('aria-label', title);

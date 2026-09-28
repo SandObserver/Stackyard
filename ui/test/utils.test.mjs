@@ -114,6 +114,13 @@ test('safeAllow falls back to fullscreen when nothing usable is asked for', () =
   assert.equal(safeAllow(undefined), 'fullscreen');
 });
 
+test('safeAllow withholds fullscreen when the frame may not go fullscreen', () => {
+  assert.equal(safeAllow('autoplay; fullscreen', false), 'autoplay');
+  assert.equal(safeAllow("fullscreen 'self'", false), '');
+  assert.equal(safeAllow('', false), '');
+  assert.equal(safeAllow(undefined, false), '');
+});
+
 const uiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => fs.readFileSync(path.join(uiRoot, f), 'utf8');
 
