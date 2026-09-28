@@ -45,6 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dashboard switch names are readable in the light theme.
 
+- Show the whole logo on the empty dashboard in the light theme.
+
+- Fill the Android home screen icon to its edges instead of leaving transparent
+  corners.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
