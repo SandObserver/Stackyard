@@ -40,6 +40,17 @@ export function theme() {
 const NS = 'http://www.w3.org/2000/svg';
 const _params = new URLSearchParams(location.search);
 
+/** Gives the card the dark card's edge and border while the widget paints its own dark background.
+    @param {boolean} dark */
+export function setCardAppearance(dark) {
+  const card = /** @type {HTMLElement | null | undefined} */ (
+    window.frameElement?.closest('.widget, .mob-widget-card')
+  );
+  if (!card) return;
+  if (dark) card.dataset.appearance = 'dark';
+  else delete card.dataset.appearance;
+}
+
 export function widgetId() {
   return _params.get('id') || '';
 }
