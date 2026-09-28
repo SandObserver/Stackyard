@@ -55,7 +55,7 @@
   /* Page neutrals particular to this screen. */
   --icon-ring:rgba(255,255,255,.14);
   --surface-sunken:var(--sy-gray5);       /* recessed well behind the About icon */
-  --tab-pill:rgba(255,255,255,.14);       /* the selection behind the active tab */
+  --tab-pill:rgba(255,255,255,.14);
   --sb-sel:rgba(255,255,255,.14);
   --row-sep:#38383A;
   --btn-fill:rgba(120,120,128,.32);

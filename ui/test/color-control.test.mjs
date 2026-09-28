@@ -151,8 +151,6 @@ test('a hue and its wrapped equivalent agree', () => {
   assert.deepEqual(hsvToRgb(400, 100, 100), hsvToRgb(40, 100, 100));
 });
 
-/* Read from the source: the control needs a browser. What matters is that
-   Settings asks for it and that the save path reads the input it creates. */
 test('the background colour uses the shared control, and is saved from it', async () => {
   const fs = await import('node:fs');
   const path = await import('node:path');

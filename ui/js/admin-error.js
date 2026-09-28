@@ -79,8 +79,6 @@ export function badgeErrorAdvice(e) {
   return { ...adviceFor(read), code, tone: warn ? TONE.WARN : TONE.ERROR, openAuth: false, sessionExpired: false };
 }
 
-/* Same wording as badgeErrorAdvice: a settings Fetch and a badge test report the
-   same failures and must not disagree about either the text or the tone. */
 export function optionsErrorAdvice(e) {
   const { tone, key, vars, code } = badgeErrorAdvice(e);
   return vars ? { tone, code, key, vars } : { tone, code, key };

@@ -3,11 +3,6 @@
    suites. An importer picks whichever module it happens to name, and a reader
    comparing two call sites has no way to tell they are different functions.
 
-   This found nothing when it was written. It exists because renaming
-   badge-logic.js's `safeColor` to `paletteColor` collided with palette.js's own
-   `paletteColor`, recreating the defect the rename was removing, with every
-   gate green.
-
    Re-exports are not definitions. A facade that forwards another module's
    binding is one function with one name, which is the point of a facade. */
 

@@ -128,7 +128,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
   w.className = cls ? `plate ${cls}` : 'plate';
   const wrapBg = clr(item.system === 'settings' ? 'auto' : item.color);
   const clear = item.color === 'clear' && item.system !== 'settings';
-  w.style.cssText = `--pw:${sz}px;--tc:${wrapBg};width:${sz}px;height:${sz}px;border-radius:${r}px;${clear ? '' : `background-color:${wrapBg};`}position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;`;
+  w.style.cssText = `--tc:${wrapBg};width:${sz}px;height:${sz}px;border-radius:${r}px;${clear ? '' : `background-color:${wrapBg};`}position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;`;
   if (clear) {
     w.classList.add('plate-clear', 'glass-surface');
     w.appendChild(mkGlassRim(sz, sz, smoothRectPath(sz, sz, r, 0)));
