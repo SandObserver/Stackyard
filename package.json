@@ -13,7 +13,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@playwright/test": "^1.63.0",
-    "@types/node": "26.6.1",
+    "@types/node": "26.6.2",
     "c8": "12.0.0",
     "js-yaml": "^5.4.2",
     "typescript": "6.0.3"
