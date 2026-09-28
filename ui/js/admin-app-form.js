@@ -1,4 +1,4 @@
-import { clr, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=7d0a2f7d';
+import { clr, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=6d4d869b';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=831e219e';
@@ -21,10 +21,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=9d789975';
-import { createListbox } from '/js/listbox.js?v=c14ab216';
+} from '/js/admin-shared.js?v=10665320';
+import { createListbox } from '/js/listbox.js?v=7372c1d5';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=15d6a495';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=60fe4b32';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=e4ea7820';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';

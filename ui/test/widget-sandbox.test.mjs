@@ -69,11 +69,11 @@ function harness() {
   };
 }
 
-async function mount(src) {
+async function mount(src, iframeOpts) {
   const h = harness();
   const { mountScaledWidget } = await import('../js/utils.js');
   try {
-    mountScaledWidget(h.card, { src, title: 'A widget', design: [200, 100] });
+    mountScaledWidget(h.card, { src, title: 'A widget', design: [200, 100], iframeOpts });
   } finally {
     h.restore();
   }
@@ -110,4 +110,22 @@ test('the sandbox withholds top-level navigation and nothing else it needs', asy
 test('a custom widget pointing back at this server is left alone', async () => {
   const attrs = await mount(`${ORIGIN}/some/local/page.html`);
   assert.equal(attrs.has('sandbox'), false, 'a same-origin page is this app, not a third party');
+});
+
+test('turning fullscreen off withholds it even when the allow list names it', async () => {
+  for (const allow of [undefined, 'autoplay; fullscreen']) {
+    const attrs = await mount('https://grafana.example.invalid/d/abc', { allow, allowFullscreen: false });
+    assert.equal(attrs.has('allowfullscreen'), false);
+    assert.doesNotMatch(
+      attrs.get('allow') ?? '',
+      /fullscreen/,
+      `allow="${attrs.get('allow')}" still grants fullscreen`,
+    );
+  }
+});
+
+test('fullscreen is granted by default', async () => {
+  const attrs = await mount('https://grafana.example.invalid/d/abc');
+  assert.ok(attrs.has('allowfullscreen'));
+  assert.equal(attrs.get('allow'), 'fullscreen');
 });
