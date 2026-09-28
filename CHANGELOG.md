@@ -50,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fill the Android home screen icon to its edges instead of leaving transparent
   corners.
 
+- Turning off Allow Fullscreen on an iframe widget now stops the framed page
+  going fullscreen.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
