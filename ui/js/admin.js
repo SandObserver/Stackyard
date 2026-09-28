@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=58e2b685';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=2bd61e6c';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=4e82ea4a';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=7604b201';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=1d822df2';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=fe5e00b2';
 import { resolveAdminSection } from '/js/admin-logic.js?v=cbb7417d';
 import {
   buildAppItem,
@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=23cfe19f';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=9ed2fd03';
 import {
   apiGet,
   apiPost,
@@ -19,16 +19,16 @@ import {
   reveal,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=d2e8b6dc';
+} from '/js/admin-shared.js?v=9d789975';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=fd3dcc6c';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=f9235794';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=f057351d';
+import { createListbox } from '/js/listbox.js?v=c14ab216';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=08b74a28';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=34af798f';
 import {
   clearSkipTls,
   convert,
@@ -49,8 +49,8 @@ import {
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=eeafa4b5';
-import { el, inp, q, qa, clr, setUserText, tgt } from '/js/utils.js?v=eadafbcd';
-import { applyBackground, resolveBackground } from '/js/background.js?v=175d9a7f';
+import { el, inp, q, qa, clr, setUserText, tgt } from '/js/utils.js?v=7d0a2f7d';
+import { applyBackground, resolveBackground } from '/js/background.js?v=92d3f3c2';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 
 ensureSprite();

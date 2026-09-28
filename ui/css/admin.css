@@ -453,6 +453,7 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 .about-dot{position:absolute;top:-3px;inset-inline-end:-5px;width:20px;height:20px;background:var(--gn);border-radius:50%;border:2px solid var(--cp);display:flex;align-items:center;justify-content:center;color:var(--on-fill)}
 .about-name{font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);font-weight:700;}
 .about-ver{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:3px}
+.sy-icon.brand-logo{color:var(--tx);--icon-accent:var(--accent)}
 /* Orange and green fall below 3:1 behind white. Do not use them here. */
 .sy-icon.about-ri{flex-shrink:0;box-sizing:content-box;width:18px;height:18px;padding:6px;border-radius:7px;color:#FFFFFF;--icon-accent:#FFFFFF;background:var(--sy-gray)}
 .grp:has(.about-ri) .row::after{inset-inline-start:56px}

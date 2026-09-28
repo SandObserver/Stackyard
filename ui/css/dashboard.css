@@ -846,7 +846,8 @@
   pointer-events: none;
 }
 .empty-state-mark {
-  width: clamp(84px, 13vh, 132px); height: auto;
+  width: clamp(71px, 11vh, 112px); height: clamp(71px, 11vh, 112px);
+  color: var(--label-primary);
   margin-block-end: var(--sp-32);
 }
 .empty-state-title {

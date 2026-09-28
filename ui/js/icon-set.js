@@ -112,7 +112,6 @@ const TOGGLES = {
 };
 const CLOUD = 'M6 20h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.2A3.5 3.5 0 0 0 6 20z';
 
-/* Keep the fractions. Whole units drift from the logo files. */
 function logoIcon() {
   const f = n => +n.toFixed(3);
   const k = 24 / 1024;

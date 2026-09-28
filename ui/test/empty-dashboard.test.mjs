@@ -63,12 +63,11 @@ test('the placard strings exist in every catalog', () => {
   }
 });
 
-test('the placard carries the app mark without its plate', () => {
-  const mark = read('js/brand-mark.js');
-  const svg = Buffer.from(mark.split('base64,')[1].split("'")[0], 'base64').toString('utf8');
-  assert.equal(svg.includes('<rect'), false);
-  assert.match(svg, /#00D2E0/i);
-  assert.match(read('js/utils.js'), /BRAND_MARK/);
+test('the placard draws the logo from the icon set in theme colours', () => {
+  const src = read('js/utils.js');
+  assert.match(src, /href', '#sy-solid-logo'/);
+  assert.match(src, /'sy-icon empty-state-mark'/);
+  assert.match(read('css/dashboard.css'), /\.empty-state-mark\s*\{[^}]*color:\s*var\(--label-primary\)/);
 });
 
 test('both layouts drop the settings tile while the dashboard is empty', () => {

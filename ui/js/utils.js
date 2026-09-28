@@ -3,7 +3,6 @@ import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { mkGlassRim } from '/js/glass-rim.js?v=3faec233';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
-import { BRAND_MARK } from '/js/brand-mark.js?v=e363e477';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
@@ -436,8 +435,13 @@ export function renderEmptyState(items) {
 
   const box = mk('div');
   box.className = 'empty-state';
-  const mark = mk('img', { src: BRAND_MARK, alt: '' });
-  mark.className = 'empty-state-mark';
+  const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  mark.setAttribute('class', 'sy-icon empty-state-mark');
+  mark.setAttribute('aria-hidden', 'true');
+  mark.setAttribute('focusable', 'false');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', '#sy-solid-logo');
+  mark.append(use);
   const title = mk('h2');
   title.className = 'empty-state-title';
   title.textContent = t('home.emptyTitle');
