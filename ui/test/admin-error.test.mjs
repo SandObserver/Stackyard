@@ -113,8 +113,6 @@ test('an upstream 500 does not suggest credentials', () => {
   assert.equal(a.key, 'adminError.statusServer');
 });
 
-/* Matching on 'Unauthori' caught this project's own session-expiry error, so an
-   expired admin session advised the user to add an upstream API key. */
 test('our own expired session does not offer an upstream API key', () => {
   const a = badgeErrorAdvice({ kind: KIND.AUTH });
   assert.equal(a.openAuth, false, 'must not tick the Authentication toggle');

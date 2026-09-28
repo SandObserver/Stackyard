@@ -1,6 +1,3 @@
-/* The dashboard and Settings paint the same background. They each carried a
-   copy of this and had drifted. */
-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
@@ -54,7 +51,6 @@ test('a wallpaper fills the page unless fit is asked for', () => {
   assert.equal(fill.fit, 'fill');
 });
 
-/* The fit control belongs to a URL wallpaper. */
 test('an unsplash wallpaper is never letterboxed', () => {
   const b = backgroundFor({ type: 'unsplash', fit: 'fit' }, 'https://x.test/u.jpg');
   assert.equal(b.fit, 'fill');

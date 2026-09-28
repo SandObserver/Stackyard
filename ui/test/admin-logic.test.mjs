@@ -608,7 +608,6 @@ test('an expired session is reported as itself, whatever the address', () => {
   assert.equal(failureIsMissingApiPath('https://seerr.example.com', { sessionExpired: true }), false);
 });
 
-/* A code this frontend does not recognise is not evidence of a missing path. */
 test('an unknown cause does not get the path hint', () => {
   assert.equal(failureIsMissingApiPath('https://seerr.example.com', { code: 'upstream.rate-limited' }), false);
   assert.equal(failureIsMissingApiPath('https://seerr.example.com', {}), false);
