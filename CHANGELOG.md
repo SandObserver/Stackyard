@@ -53,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Turning off Allow Fullscreen on an iframe widget now stops the framed page
   going fullscreen.
 
+- Open folders no longer wash out the wallpaper in the light theme.
+
 ## [1.14.0] - 2026-09-20
 
 ### Added
