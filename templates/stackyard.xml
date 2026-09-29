@@ -23,63 +23,55 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.14.0 - 2026-09-20
+### 1.15.0 - 2026-09-28
 
 ### Added
 
-- Display Mode now applies to the dashboard and every widget, not only Settings.
-
-- App icon colours Auto, which follows the display mode, and Clear, a frosted
-  glass plate.
-
-- Badge colours Accent, Success, Warning, Danger and Info.
-
-- Umami services can authenticate with an API key instead of a username and
-  password.
+- Add swatches and hue, saturation and brightness sliders to the Solid color
+  background.
 
 ### Changed
 
-- A new password is limited to 1024 characters.
+- Restyle Settings to match iOS and iPadOS 27.
 
-- Restyle app icon tiles with a top-lit edge and vertical shading.
+- Restyle the home screen and app icons to match iOS and iPadOS 27.
 
-- App and dock tiles press in on click instead of lifting on hover.
+- Give widget cards the iOS 27 edge light and drop the uppercase widget
+  headings.
 
-- Redraw the Settings icons, widget glyphs and Settings tile as one icon set.
-
-- Preset icon and badge colours adapt to the display mode; a custom colour stays
-  exact.
-
-- Widget cards are opaque, white in light mode and near-black in dark mode.
-
-- The clock follows the display mode; its own Dark and Light option is removed.
-
-- The VPN and Connections maps are larger and easier to see.
+- Redraw the logo as exact geometry in the favicon, the app icons and Settings.
 
 ### Fixed
 
-- A settings change is no longer held in memory when writing it to disk fails.
+- Admin error messages for badge tests and widget option fetches are translated
+  instead of always English.
 
-- Space on a focused tile or folder activates it instead of opening search.
+- A failed badge test reports why the request failed instead of always blaming a
+  missing API path.
 
-- Search keeps every letter typed to open it, including in Safari on a narrow
-  window.
+- Status and error messages in Settings use the full width of their row instead
+  of wrapping in a narrow strip.
 
-- Disk Health no longer shows dark strips at its sides.
+- A malformed background colour falls back to the default instead of painting an
+  unintended colour.
 
-- Settings keeps a choice made while the page is still loading, instead of
-  leaving Save greyed out.
+- Show a message in Settings when the Unsplash wallpaper cannot be loaded.
 
-- App labels stay readable over a dark wallpaper with increased contrast in
-  light mode.
+- Hide the empty page indicator on the connection error screen.
 
-- Settings sections start at the top on a phone instead of keeping the previous
-  section's scroll position.
+- Opening an app from search opens one tab, not two.
 
-- Renaming or recolouring a service no longer clears its stored credential.
+- Dashboard switch names are readable in the light theme.
 
-- Settings no longer reports a credential as stored after the one it described
-  was dropped.
+- Show the whole logo on the empty dashboard in the light theme.
+
+- Fill the Android home screen icon to its edges instead of leaving transparent
+  corners.
+
+- Turning off Allow Fullscreen on an iframe widget now stops the framed page
+  going fullscreen.
+
+- Open folders no longer wash out the wallpaper in the light theme.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
