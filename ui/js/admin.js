@@ -1,6 +1,6 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=e203674f';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=82a63c44';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=a3a03ef9';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=fc772edc';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=01bf2bc8';
 import { resolveAdminSection } from '/js/admin-logic.js?v=cbb7417d';
 import {
   buildAppItem,
@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=ac7685df';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=028c76b9';
 import {
   apiGet,
   apiPost,
@@ -21,7 +21,7 @@ import {
   toast,
 } from '/js/admin-shared.js?v=3870d0d0';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=bcfb87e2';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=479f4d31';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=6e7b7060';

@@ -191,3 +191,14 @@ test('each wallpaper hint is toggled where the source is applied', async () => {
   assert.equal(admin.includes('bgcol-hint'), false, 'admin.js should leave the hints to showBgFields');
   assert.equal(admin.includes('bg-url-hint'), false, 'admin.js should leave the hints to showBgFields');
 });
+
+test('the control writes no English of its own', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(new URL('../js/admin-color-control.js', import.meta.url), 'utf8');
+  for (const word of ["'Hue'", "'Saturation'", "'Brightness'", "'Color'", 'any CSS color']) {
+    assert.equal(src.includes(word), false, `${word} is hard-coded`);
+  }
+  for (const key of ['appearance.hue', 'appearance.saturation', 'appearance.brightness', 'appearance.colorCodePh']) {
+    assert.ok(src.includes(`t('${key}')`), `${key} is not used`);
+  }
+});

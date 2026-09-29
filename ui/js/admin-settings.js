@@ -10,7 +10,7 @@ import {
 } from '/js/admin-logic.js?v=cbb7417d';
 import { confirmText } from '/js/modal.js?v=11fa1eff';
 import { el, inp, setUserText } from '/js/utils.js?v=b1cfbd45';
-import { renderColorControl } from '/js/admin-color-control.js?v=844bdeb2';
+import { renderColorControl } from '/js/admin-color-control.js?v=07f26d25';
 import { BACKDROP } from '/js/background.js?v=cd1cc453';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */

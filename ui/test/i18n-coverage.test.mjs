@@ -95,6 +95,8 @@ const SAME_ON_PURPOSE = {
     'app.dockPill',
     'app.badgePill',
     'home.dock',
+    /* "Saturation" is the French word too. */
+    'appearance.saturation',
   ]),
   'fa.json': new Set(['appearance.sourceUnsplash']),
   'zh-Hans.json': new Set(['app.ping', 'appearance.sourceUnsplash']),
