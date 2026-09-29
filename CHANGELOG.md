@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Translate the hue, saturation and brightness sliders and the colour code hint
+  in colour pickers.
+
 ## [1.15.0] - 2026-09-28
 
 ### Added
