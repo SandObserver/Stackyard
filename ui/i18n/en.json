@@ -102,6 +102,9 @@
     "imageTip": "Uploaded and linked images are stored on this server and served from it.",
     "customColor": "Custom color",
     "colorCode": "Color Code",
+    "colorCodePh": "#rrggbb or any CSS color",
+    "hue": "Hue",
+    "saturation": "Saturation",
     "wallpaperSource": "Wallpaper source"
   },
   "about": {

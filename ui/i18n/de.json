@@ -102,6 +102,9 @@
     "imageTip": "Hochgeladene und verlinkte Bilder werden auf diesem Server gespeichert und von ihm ausgeliefert.",
     "customColor": "Eigene Farbe",
     "colorCode": "Farbcode",
+    "colorCodePh": "#rrggbb oder eine beliebige CSS-Farbe",
+    "hue": "Farbton",
+    "saturation": "Sättigung",
     "wallpaperSource": "Hintergrundquelle"
   },
   "about": {

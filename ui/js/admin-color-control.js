@@ -145,7 +145,7 @@ const _swatchFill = v => tileColor(v, pageTheme());
               swatchColors?: string[], label?: string }} [opts] */
 export function renderColorControl(
   container,
-  { value = '#0289ff', idPrefix, onChange, variant, swatchColors = CC_SWATCHES, label = 'Color' } = {},
+  { value = '#0289ff', idPrefix, onChange, variant, swatchColors = CC_SWATCHES, label = t('common.color') } = {},
 ) {
   const top = variant === 'tile' ? TILE_KEYWORDS : variant === 'badge' ? ROLE_NAMES : [];
   const hues = variant ? HUE_NAMES : [];
@@ -169,10 +169,10 @@ export function renderColorControl(
     <div class="row cc-row"><span class="rl">${label}</span><div class="cc-sw">${swatches}</div></div>
     <div class="row-wrap reveal cc-tune"><div class="reveal-in">
     ${hueRow}
-    ${slider('Hue', 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
-    ${slider('Saturation', 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
-    ${slider('Brightness', 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
-    <div class="row ie-row" id="${idPrefix}-code-row"><span class="rl">${t('appearance.colorCode')}</span><span class="rv is-ph">#rrggbb or any CSS color</span><input id="${idPrefix}-hex" type="text" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
+    ${slider(t('appearance.hue'), 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
+    ${slider(t('appearance.saturation'), 'hsb-range', `${idPrefix}-s`, 100, init.s, _ccIco.satLo, _ccIco.satHi)}
+    ${slider(t('appearance.brightness'), 'hsb-range', `${idPrefix}-v`, 100, init.v, _ccIco.brLo, _ccIco.brHi)}
+    <div class="row ie-row" id="${idPrefix}-code-row"><span class="rl">${t('appearance.colorCode')}</span><span class="rv is-ph">${t('appearance.colorCodePh')}</span><input id="${idPrefix}-hex" type="text" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
     </div></div>`,
   );
   /* The markup carries no style attribute, so the page keeps style-src without
@@ -280,7 +280,7 @@ export function renderColorControl(
   );
   initInlineEdit(`${idPrefix}-code-row`, `${idPrefix}-hex`, {
     root: container,
-    placeholder: '#rrggbb or any CSS color',
+    placeholder: t('appearance.colorCodePh'),
     onCommit(val) {
       if (mode !== 'color' && val === kwName(mode)) return;
       const { value: parsed, ok } = normalizeColorInput(val);

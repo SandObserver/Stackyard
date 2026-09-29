@@ -102,6 +102,9 @@
     "imageTip": "تصویرهای بارگذاری‌شده و پیوندشده روی همین سرور ذخیره و از همان‌جا ارائه می‌شوند.",
     "customColor": "رنگ دلخواه",
     "colorCode": "کد رنگ",
+    "colorCodePh": "#rrggbb یا هر رنگ CSS",
+    "hue": "فام",
+    "saturation": "اشباع",
     "wallpaperSource": "منبع تصویر پس‌زمینه"
   },
   "about": {

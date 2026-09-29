@@ -102,6 +102,9 @@
     "imageTip": "Les images téléversées et liées sont stockées sur ce serveur et servies depuis celui-ci.",
     "customColor": "Couleur personnalisée",
     "colorCode": "Code couleur",
+    "colorCodePh": "#rrggbb ou toute couleur CSS",
+    "hue": "Teinte",
+    "saturation": "Saturation",
     "wallpaperSource": "Source du fond d'écran"
   },
   "about": {

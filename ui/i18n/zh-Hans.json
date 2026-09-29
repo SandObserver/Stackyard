@@ -102,6 +102,9 @@
     "imageTip": "上传和链接的图片都保存在本服务器，并由本服务器提供。",
     "customColor": "自定义颜色",
     "colorCode": "颜色代码",
+    "colorCodePh": "#rrggbb 或任意 CSS 颜色",
+    "hue": "色相",
+    "saturation": "饱和度",
     "wallpaperSource": "壁纸来源"
   },
   "about": {
