@@ -454,6 +454,18 @@ async function saveServer() {
   }
 
   try {
+    /* Before the config is read. A wrong current password then writes nothing,
+       and the read carries the revision these writes produce. */
+    if (shouldWritePassword({ enabled, newPassword: pw })) {
+      await apiPost('/api/auth/set-password', { password: pw, currentPassword });
+      const pwEl = inp('sec-pw');
+      if (pwEl) {
+        pwEl.value = '';
+        pwEl.placeholder = '●●●●●●●●●● (configured)';
+      }
+    }
+    await apiPost('/api/auth/toggle', { enabled, currentPassword });
+
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};
     const prevLang = c.settings.language || 'en';
@@ -468,17 +480,6 @@ async function saveServer() {
     c.settings.logLevel = inp('log-level')?.value || 'info';
     c.settings.language = inp('lang-sel')?.value || 'en';
     const langChanged = c.settings.language !== prevLang;
-
-    /* Before the config, so a wrong current password writes nothing. */
-    if (shouldWritePassword({ enabled, newPassword: pw })) {
-      await apiPost('/api/auth/set-password', { password: pw, currentPassword });
-      const pwEl = inp('sec-pw');
-      if (pwEl) {
-        pwEl.value = '';
-        pwEl.placeholder = '●●●●●●●●●● (configured)';
-      }
-    }
-    await apiPost('/api/auth/toggle', { enabled, currentPassword });
 
     await apiPost('/api/config', c);
     if (!enabled) {
