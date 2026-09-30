@@ -482,10 +482,23 @@ test('set-password rejects a password past the accepted length', async () => {
   assert.match(r.body.error, /at most/);
 });
 
+test('set-password refuses a session without the right current password', async () => {
+  for (const body of [
+    { password: 'a-long-enough-password' },
+    { password: 'a-long-enough-password', currentPassword: 'wrong-horse' },
+  ]) {
+    const stored = loadConfig().settings.auth.passwordHash;
+    const r = await req('POST', '/api/auth/set-password', { cookie: validCookie, body });
+    assert.equal(r.status, 403);
+    assert.equal(r.body.code, 'invalid.current-password');
+    assert.equal(loadConfig().settings.auth.passwordHash, stored);
+  }
+});
+
 test('set-password succeeds for an authenticated session and issues a new cookie', async () => {
   const r = await req('POST', '/api/auth/set-password', {
     cookie: validCookie,
-    body: { password: 'a-long-enough-password' },
+    body: { password: 'a-long-enough-password', currentPassword: 'correct-horse' },
   });
   assert.equal(r.status, 200);
   assert.match(String(r.headers['set-cookie'] || ''), /ds=.+/);

@@ -54,6 +54,7 @@
     "signOutEverywhere": "Sign out all devices",
     "passwordProtection": "Password Protection",
     "password": "Password",
+    "currentPassword": "Current password",
     "passwordTip": "Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.",
     "backup": "Backup",
     "importExport": "Import / Export",
@@ -290,6 +291,9 @@
     "exportFailed": "Export failed: {err}",
     "importNoChange": "Nothing to import. The file matches your current config.",
     "pwWeak": "Password too weak: {label}",
+    "currentPasswordWrong": "The current password is incorrect.",
+    "passwordChangedElsewhere": "The password was changed elsewhere. Reload the page and try again.",
+    "tooManyAttempts": "Too many attempts. Try again later.",
     "sessionsRevoked": "All devices signed out.",
     "authNeedsPassword": "Set a password before turning authentication on.",
     "importForeignDone": "Import finished. Apps: {apps}. Folders: {folders}.",
@@ -320,6 +324,7 @@
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",
     "revokeSessions": "Sign out all devices, including this one?",
     "clearPassword": "Turn off Password Protection? The stored password is deleted, so turning it back on will need a new one.",
+    "changePassword": "Enter your current password to change it.",
     "remove": "Remove \"{name}\"?"
   },
   "list": {

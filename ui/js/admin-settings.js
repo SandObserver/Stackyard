@@ -1,16 +1,17 @@
-import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=3870d0d0';
+import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=ed3ecef1';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
   shouldWritePassword,
   settingsSaveBlocker,
   clearsStoredPassword,
+  needsCurrentPassword,
   createDirtyTracker,
   BLOCK,
-} from '/js/admin-logic.js?v=cbb7417d';
-import { confirmText } from '/js/modal.js?v=11fa1eff';
+} from '/js/admin-logic.js?v=2d547584';
+import { confirmText, promptModal } from '/js/modal.js?v=b0e412f1';
 import { el, inp, setUserText } from '/js/utils.js?v=b1cfbd45';
-import { renderColorControl } from '/js/admin-color-control.js?v=07f26d25';
+import { renderColorControl } from '/js/admin-color-control.js?v=60f83ee9';
 import { BACKDROP } from '/js/background.js?v=cd1cc453';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
@@ -383,6 +384,12 @@ async function saveWallpaper() {
     toast(t('toast.saveFailed', { err: e.message }), 'err');
   }
 }
+const PASSWORD_ERROR_KEYS = Object.freeze({
+  'invalid.current-password': 'toast.currentPasswordWrong',
+  'invalid.password-changed': 'toast.passwordChangedElsewhere',
+  'blocked.rate-limit': 'toast.tooManyAttempts',
+});
+
 async function saveServer() {
   const pw = inp('sec-pw')?.value || '';
   const enabled = inp('sec-en')?.checked || false;
@@ -431,21 +438,40 @@ async function saveServer() {
 
   /* Switching protection off deletes the stored password. Ask before anything
      is written. */
-  if (clearsStoredPassword({ enabled, wasEnabled: _authEnabled, passwordSet: _passwordSet })) {
-    const ok = await confirmText({
+  /** @type {string|undefined} */
+  let currentPassword;
+  const was = { enabled, wasEnabled: _authEnabled, passwordSet: _passwordSet };
+  if (needsCurrentPassword({ ...was, newPassword: pw })) {
+    const clearing = clearsStoredPassword(was);
+    const answer = await promptModal({
       title: t('general.passwordProtection'),
-      text: t('confirm.clearPassword'),
-      confirmLabel: t('common.delete'),
+      text: t(clearing ? 'confirm.clearPassword' : 'confirm.changePassword'),
+      label: t('general.currentPassword'),
+      password: true,
+      destructive: clearing,
+      confirmLabel: t(clearing ? 'common.delete' : 'common.save'),
       cancelLabel: t('common.cancel'),
-      destructive: true,
     });
-    if (!ok) {
-      await syncAuthFromServer();
+    if (answer === null) {
+      if (clearing) await syncAuthFromServer();
       return;
     }
+    currentPassword = answer;
   }
 
   try {
+    /* Before the config is read. A wrong current password then writes nothing,
+       and the read carries the revision these writes produce. */
+    if (shouldWritePassword({ enabled, newPassword: pw })) {
+      await apiPost('/api/auth/set-password', { password: pw, currentPassword });
+      const pwEl = inp('sec-pw');
+      if (pwEl) {
+        pwEl.value = '';
+        pwEl.placeholder = '●●●●●●●●●● (configured)';
+      }
+    }
+    await apiPost('/api/auth/toggle', { enabled, currentPassword });
+
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};
     const prevLang = c.settings.language || 'en';
@@ -462,16 +488,6 @@ async function saveServer() {
     const langChanged = c.settings.language !== prevLang;
 
     await apiPost('/api/config', c);
-
-    if (shouldWritePassword({ enabled, newPassword: pw })) {
-      await apiPost('/api/auth/set-password', { password: pw });
-      const pwEl = inp('sec-pw');
-      if (pwEl) {
-        pwEl.value = '';
-        pwEl.placeholder = '●●●●●●●●●● (configured)';
-      }
-    }
-    await apiPost('/api/auth/toggle', { enabled });
     if (!enabled) {
       const pwEl = inp('sec-pw');
       if (pwEl) {
@@ -489,7 +505,9 @@ async function saveServer() {
     /* Read back from the server, never inferred from what was asked for. */
     await syncAuthFromServer();
   } catch (e) {
-    toast(t('toast.saveFailed', { err: e.message }), 'err');
+    const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (e).code];
+    if (key) toast(t(key), 'err');
+    else toast(t('toast.saveFailed', { err: e.message }), 'err');
     await syncAuthFromServer();
   }
 }

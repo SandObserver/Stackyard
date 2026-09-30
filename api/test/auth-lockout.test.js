@@ -10,8 +10,8 @@ const http = require('node:http');
 
 require('../src/routes');
 const { dispatch } = require('../src/router');
-const { loadConfig, saveConfig } = require('../src/config');
-const { hashPassword, authActive, makeToken } = require('../src/auth');
+const { loadConfig, loadConfigForUpdate, saveConfig } = require('../src/config');
+const { hashPassword, authActive, makeToken, clearAttempts } = require('../src/auth');
 
 const SECRET = 'a'.repeat(64);
 let server, base;
@@ -29,6 +29,7 @@ after(async () => {
 });
 beforeEach(() => {
   saveConfig({ items: [], settings: {} });
+  clearAttempts('127.0.0.1');
 });
 
 function req(method, pathname, body, cookie) {
@@ -101,14 +102,140 @@ test('auth can be switched on once a password exists', async () => {
   assert.equal(loadConfig().settings.auth.enabled, true);
 });
 
-test('auth can always be switched off', async () => {
+test('auth can be switched off with the current password', async () => {
   const cfg = loadConfig();
   cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
   saveConfig(cfg);
 
-  const r = await req('POST', '/api/auth/toggle', { enabled: false }, 'ds=' + makeToken('s1', SECRET));
+  const r = await req(
+    'POST',
+    '/api/auth/toggle',
+    { enabled: false, currentPassword: 'correct-horse' },
+    'ds=' + makeToken('s1', SECRET),
+  );
   assert.equal(r.status, 200);
   assert.equal(loadConfig().settings.auth.enabled, false);
+});
+
+for (const [label, extra] of [
+  ['no current password', {}],
+  ['a wrong current password', { currentPassword: 'wrong-horse' }],
+  ['a non-string current password', { currentPassword: ['correct-horse'] }],
+]) {
+  test(`switching auth off with ${label} is refused and keeps the password`, async () => {
+    const hash = await hashPassword('correct-horse');
+    const cfg = loadConfig();
+    cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: hash };
+    saveConfig(cfg);
+
+    const r = await req('POST', '/api/auth/toggle', { enabled: false, ...extra }, 'ds=' + makeToken('s1', SECRET));
+    assert.equal(r.status, 403);
+    assert.equal(r.body.code, 'invalid.current-password');
+    assert.equal(loadConfig().settings.auth.passwordHash, hash);
+    assert.equal(loadConfig().settings.auth.enabled, true);
+  });
+}
+
+test('an orphaned hash cannot be replaced without a session', async () => {
+  const hash = await hashPassword('correct-horse');
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: false, secret: SECRET, passwordHash: hash };
+  saveConfig(cfg);
+  const r = await req('POST', '/api/auth/set-password', {
+    password: 'a-brand-new-one',
+    currentPassword: 'correct-horse',
+  });
+  assert.equal(r.status, 401);
+  assert.equal(loadConfig().settings.auth.passwordHash, hash);
+  assert.equal(loadConfig().settings.auth.enabled, false);
+});
+
+test('wrong current passwords count against the sign-in lockout', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  const cookie = 'ds=' + makeToken('s1', SECRET);
+  const statuses = [];
+  for (let i = 0; i < 6; i++) {
+    statuses.push((await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'nope' }, cookie)).status);
+  }
+  assert.deepEqual(statuses, [403, 403, 403, 403, 403, 429]);
+  const blocked = await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'nope' }, cookie);
+  assert.equal(blocked.body.code, 'blocked.rate-limit');
+  assert.equal((await req('POST', '/api/auth/login', { password: 'correct-horse' })).status, 429);
+});
+
+/* Sends the body in two parts and runs `midway` between them, while the route
+   is waiting on the body. */
+function setPasswordWithWriteMidway(body, midway) {
+  const data = JSON.stringify(body);
+  const u = new URL(base + '/api/auth/set-password');
+  return new Promise((resolve, reject) => {
+    const q = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(data),
+          Origin: base,
+          Cookie: 'ds=' + makeToken('s1', SECRET),
+        },
+      },
+      res => {
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(b) }));
+      },
+    );
+    q.on('error', reject);
+    q.write(data.slice(0, 10));
+    setTimeout(() => {
+      const mid = loadConfigForUpdate();
+      midway(mid);
+      saveConfig(mid);
+      q.end(data.slice(10));
+    }, 50);
+  });
+}
+
+test('a config write made while set-password runs is kept', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  const r = await setPasswordWithWriteMidway({ password: 'a-brand-new-one', currentPassword: 'correct-horse' }, mid => {
+    mid.items = [{ id: 'added-meanwhile', type: 'app', name: 'Added' }];
+  });
+  assert.equal(r.status, 200);
+  assert.deepEqual(
+    loadConfig().items.map(i => i.id),
+    ['added-meanwhile'],
+  );
+});
+
+test('set-password refuses when the password changes while it runs', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  const other = await hashPassword('changed-elsewhere');
+  const r = await setPasswordWithWriteMidway({ password: 'a-brand-new-one', currentPassword: 'correct-horse' }, mid => {
+    mid.settings.auth.passwordHash = other;
+  });
+  assert.equal(r.status, 409);
+  assert.equal(r.body.code, 'invalid.password-changed');
+  assert.equal(loadConfig().settings.auth.passwordHash, other);
+});
+
+test('a stale hash with protection off is cleared without the current password', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: false, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  assert.equal((await req('POST', '/api/auth/toggle', { enabled: false })).status, 200);
+  assert.equal(loadConfig().settings.auth.passwordHash, undefined);
 });
 
 /* ── switching off discards the password ──────────────────────────────────── */
@@ -124,7 +251,14 @@ test('switching auth off clears the stored password and secret', async () => {
   saveConfig(cfg);
 
   assert.equal(
-    (await req('POST', '/api/auth/toggle', { enabled: false }, 'ds=' + makeToken('s1', SECRET))).status,
+    (
+      await req(
+        'POST',
+        '/api/auth/toggle',
+        { enabled: false, currentPassword: 'correct-horse' },
+        'ds=' + makeToken('s1', SECRET),
+      )
+    ).status,
     200,
   );
 
@@ -144,7 +278,10 @@ test('an orphaned hash left by an earlier version is cleared on the next switch 
      same way the admin would, with a session. The stored secret is untouched by
      the enable, so a token signed with it is valid. */
   const cookie = 'ds=' + makeToken('s1', SECRET);
-  assert.equal((await req('POST', '/api/auth/toggle', { enabled: false }, cookie)).status, 200);
+  assert.equal(
+    (await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'correct-horse' }, cookie)).status,
+    200,
+  );
   assert.equal(loadConfig().settings.auth.passwordHash, undefined);
 
   const r = await req('POST', '/api/auth/toggle', { enabled: true });
@@ -158,7 +295,7 @@ test('a session token from before the switch off is not honoured again', async (
   saveConfig(cfg);
   const cookie = 'ds=' + makeToken('s1', SECRET);
 
-  await req('POST', '/api/auth/toggle', { enabled: false }, cookie);
+  await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'correct-horse' }, cookie);
   await req('POST', '/api/auth/set-password', { password: 'a-brand-new-one' });
 
   assert.equal((await req('GET', '/api/config', null, cookie)).status, 401);

@@ -24,6 +24,7 @@ const {
 } = require('../auth');
 
 const PASSWORD_MIN = 8;
+const CURRENT_PASSWORD_CODE = 'invalid.current-password';
 /* Bounds what is accepted, never what is verified. An existing install may hold
    a longer password. Capping login locks its owner out. */
 const PASSWORD_MAX = 1024;
@@ -70,9 +71,10 @@ on('POST', '/api/auth/login', async (req, res) => {
        way and the old hash still verifies. */
     if (needsRehash(hash)) {
       try {
+        const upgraded = await hashPassword(password);
         const fresh = loadConfigForUpdate();
         if (fresh.settings?.auth?.passwordHash === hash) {
-          fresh.settings.auth.passwordHash = await hashPassword(password);
+          fresh.settings.auth.passwordHash = upgraded;
           saveConfig(fresh);
           log.info('password hash upgraded to the current format', {});
         }
@@ -96,23 +98,54 @@ on('POST', '/api/auth/logout', (req, res) => {
   json(res, 200, { ok: true });
 });
 
+/* Sends the refusal and returns true when the current password is wrong.
+   Attempts count against the sign-in lockout. */
+async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
+  const ip = getIp(req);
+  const limitErr = registerLoginAttempt(ip);
+  if (limitErr) {
+    log.audit('password check blocked', { ip, reason: 'rate_limit' });
+    json(res, 429, { error: limitErr, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
+    return true;
+  }
+  if (!(await verifyPassword(typeof currentPassword === 'string' ? currentPassword : '', hash))) {
+    log.audit('password check failed', { ip });
+    json(res, 403, { error: 'Current password is incorrect.', kind: KIND.INVALID, code: CURRENT_PASSWORD_CODE });
+    return true;
+  }
+  clearAttempts(ip);
+  return false;
+}
+
 on('POST', '/api/auth/set-password', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
-    const cfg = loadConfigForUpdate();
-    const hasPassword = !!cfg.settings?.auth?.passwordHash;
-    if (hasPassword && !hasValidSession(req)) {
+    const before = loadConfig();
+    const storedHash = before.settings?.auth?.passwordHash;
+    if (storedHash && !hasValidSession(req)) {
       return json(res, 401, { error: 'Authentication required to change the existing password.', kind: KIND.AUTH });
     }
-    const { password = '' } = JSON.parse(await readBody(req));
+    const { password = '', currentPassword } = JSON.parse(await readBody(req));
     if (!password || password.length < PASSWORD_MIN)
       return json(res, 400, { error: `Password must be at least ${PASSWORD_MIN} characters.`, kind: KIND.INVALID });
     if (password.length > PASSWORD_MAX)
       return json(res, 400, { error: `Password must be at most ${PASSWORD_MAX} characters.`, kind: KIND.INVALID });
+    if (authActive(before) && (await refuseWrongCurrentPassword(req, res, storedHash, currentPassword))) return;
+    const passwordHash = await hashPassword(password);
+    /* Read again after the awaits. Saving the earlier copy drops any config
+       write made in between. */
+    const cfg = loadConfigForUpdate();
+    if (cfg.settings?.auth?.passwordHash !== storedHash) {
+      return json(res, 409, {
+        error: 'The password changed during this request.',
+        kind: KIND.INVALID,
+        code: 'invalid.password-changed',
+      });
+    }
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
-    cfg.settings.auth.passwordHash = await hashPassword(password);
+    cfg.settings.auth.passwordHash = passwordHash;
     /* Rotating the secret is what signs other devices out. Assigned here rather
        than calling rotateSessionSecret, which would load and write again. */
     cfg.settings.auth.secret = newSessionSecret();
@@ -162,11 +195,15 @@ on('POST', '/api/auth/toggle', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
-    const { enabled } = JSON.parse(await readBody(req));
+    const { enabled, currentPassword } = JSON.parse(await readBody(req));
     /* Only a real true or false. Turning protection off deletes the password,
        so an unclear body must change nothing rather than read as "off". */
     if (typeof enabled !== 'boolean') {
       return json(res, 400, { error: 'enabled must be true or false', kind: KIND.INVALID });
+    }
+    const before = loadConfig();
+    if (!enabled && authActive(before)) {
+      if (await refuseWrongCurrentPassword(req, res, before.settings.auth.passwordHash, currentPassword)) return;
     }
     const cfg = loadConfigForUpdate();
     cfg.settings = cfg.settings || {};
