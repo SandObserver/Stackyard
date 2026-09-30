@@ -23,6 +23,18 @@ test('falls back to the default when the field names an unknown provider', async
   assert.equal(r.picked, 'a');
 });
 
+test('falls back to the default when the field names an inherited member', async () => {
+  for (const provider of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+    const r = await dispatchProvider({ config: { provider } }, handlers, { default: 'a' });
+    assert.equal(r.picked, 'a', provider);
+  }
+});
+
+test('fails on an inherited member when no default is given', async () => {
+  const ctx = { config: { provider: 'constructor' }, ...errorParts() };
+  await assert.rejects(dispatchProvider(ctx, handlers, {}), /Unknown provider: constructor/);
+});
+
 test('reads the provider from a custom field', async () => {
   const r = await dispatchProvider({ config: { diskProvider: 'b' } }, handlers, {
     field: 'diskProvider',

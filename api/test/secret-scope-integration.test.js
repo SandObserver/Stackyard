@@ -13,7 +13,7 @@ const http = require('node:http');
 require('../src/routes');
 require('../src/widget-data'); /* registers /api/widget-options, loaded by server.js in production */
 const { dispatch } = require('../src/router');
-const { saveConfig } = require('../src/config');
+const { saveConfig, loadConfig } = require('../src/config');
 
 const SECRET_VALUE = 'STORED-CREDENTIAL-DO-NOT-LEAK';
 
@@ -60,8 +60,14 @@ before(async () => {
         widgetType: 'books',
         widgetConfig: { provider: 'audiobookshelf', absUrl: realBase, absKey: SECRET_VALUE },
       },
+      {
+        id: 'w-inherited',
+        type: 'widget',
+        widgetType: 'books',
+        widgetConfig: { provider: 'constructor', absUrl: realBase, absKey: SECRET_VALUE, komgaKey: SECRET_VALUE },
+      },
     ],
-    settings: {},
+    settings: { background: { apiKey: SECRET_VALUE } },
   });
 
   server = http.createServer(dispatch);
@@ -74,17 +80,19 @@ after(async () => {
   await close(evilSrv);
 });
 
-function post(pathname, body) {
-  const data = JSON.stringify(body);
+function request(method, pathname, body, { origin = base } = {}) {
+  const data = body == null ? '' : JSON.stringify(body);
   const u = new URL(base + pathname);
+  const headers = { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) };
+  if (origin) headers.Origin = origin;
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
         hostname: u.hostname,
         port: u.port,
-        path: u.pathname,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base },
+        path: u.pathname + u.search,
+        method,
+        headers,
       },
       res => {
         let b = '';
@@ -96,7 +104,7 @@ function post(pathname, body) {
           try {
             j = JSON.parse(b);
           } catch {}
-          resolve({ status: res.statusCode, body: j });
+          resolve({ status: res.statusCode, body: j, raw: b });
         });
       },
     );
@@ -104,6 +112,9 @@ function post(pathname, body) {
     r.end(data);
   });
 }
+
+const post = (pathname, body, opts) => request('POST', pathname, body, opts);
+const get = pathname => request('GET', pathname);
 
 const sawSecret = seen => seen.some(r => JSON.stringify(r).includes(SECRET_VALUE));
 
@@ -142,6 +153,7 @@ test('badge-proxy does not leak via a changed non-secret param either', async ()
     headers: [{ key: 'X-Api-Key', secret: true }],
     params: [{ key: 'mode', value: 'CHANGED', secret: false }],
   });
+  assert.equal(realSeen.length, 1, 'the request should still go out, just without the secret');
   assert.ok(!sawSecret(realSeen), 'a config that no longer matches must not reuse the credential');
 });
 
@@ -159,20 +171,60 @@ test('widget-options sends the stored credential to the saved destination', asyn
 
 test('widget-options does not send the stored credential to a caller-chosen host', async () => {
   evilSeen.length = 0;
-  await post('/api/widget-options/w1', {
+  const r = await post('/api/widget-options/w1', {
     widgetType: 'books',
     endpoint: 'lists',
     widgetConfig: { provider: 'audiobookshelf', absUrl: evilBase },
   });
+  assert.equal(r.body.code, 'invalid.retype', 'the widget should run without the stored credential');
   assert.ok(!sawSecret(evilSeen), `the stored credential leaked: ${JSON.stringify(evilSeen)}`);
 });
 
-test('widget-options ignores an id that is not saved', async () => {
-  evilSeen.length = 0;
-  await post('/api/widget-options/__preview__', {
+test('widget-options sends no stored credential for an id that is not saved', async () => {
+  realSeen.length = 0;
+  const r = await post('/api/widget-options/__preview__', {
     widgetType: 'books',
     endpoint: 'lists',
-    widgetConfig: { provider: 'audiobookshelf', absUrl: evilBase },
+    widgetConfig: { provider: 'audiobookshelf', absUrl: realBase },
   });
-  assert.ok(!sawSecret(evilSeen));
+  assert.match(r.body.error, /API key required/, 'the widget should run without the stored credential');
+  assert.ok(!sawSecret(realSeen), `the stored credential leaked: ${JSON.stringify(realSeen)}`);
+});
+
+/* ── responses to the browser ─────────────────────────────────────────────── */
+
+for (const pathname of ['/api/config', '/api/config/export']) {
+  test(`${pathname} returns the saved items without any stored secret`, async () => {
+    const r = await get(pathname);
+    assert.equal(r.status, 200);
+    const app = r.body.items.find(i => i.id === 'app1');
+    assert.equal(app.badge.headers[0].key, 'X-Api-Key');
+    assert.equal(r.body.items.find(i => i.id === 'w1').widgetConfig.absUrl, realBase);
+    assert.ok(!r.raw.includes(SECRET_VALUE), `a stored secret leaked: ${r.raw}`);
+  });
+}
+
+test('/api/widget-config returns the saved config without the stored secret', async () => {
+  const r = await get('/api/widget-config/w1');
+  assert.equal(r.status, 200);
+  assert.equal(r.body.widgetConfig.absUrl, realBase);
+  assert.ok(!r.raw.includes(SECRET_VALUE), `a stored secret leaked: ${r.raw}`);
+});
+
+test('/api/widget-data does not return the config when the provider names an inherited member', async () => {
+  realSeen.length = 0;
+  const r = await get('/api/widget-data/w-inherited');
+  assert.ok(realSeen.length > 0, 'the default provider should run instead');
+  assert.ok(!r.raw.includes(SECRET_VALUE), `a stored secret leaked: ${r.raw}`);
+});
+
+test('the Unsplash key is reported as set, stored on write and never returned', async () => {
+  assert.deepEqual((await get('/api/settings/unsplash-key')).body, { configured: true });
+  assert.equal((await post('/api/settings/unsplash-key', { apiKey: 'REFUSED' }, { origin: null })).status, 403);
+  assert.equal(loadConfig().settings.background.apiKey, SECRET_VALUE);
+  assert.equal((await post('/api/settings/unsplash-key', { apiKey: ' NEW-KEY ' })).status, 200);
+  assert.equal(loadConfig().settings.background.apiKey, 'NEW-KEY');
+  assert.ok(!(await get('/api/config')).raw.includes('NEW-KEY'));
+  assert.equal((await post('/api/settings/unsplash-key', { apiKey: '' })).status, 200);
+  assert.deepEqual((await get('/api/settings/unsplash-key')).body, { configured: false });
 });
