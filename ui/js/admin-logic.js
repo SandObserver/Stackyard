@@ -182,8 +182,6 @@ export function clearsStoredPassword({ enabled, wasEnabled, passwordSet }) {
   return !enabled && !!wasEnabled && !!passwordSet;
 }
 
-/* The server refuses both without the current password while protection is
-   on. */
 export function needsCurrentPassword({ enabled, wasEnabled, passwordSet, newPassword }) {
   return !!wasEnabled && !!passwordSet && (!enabled || !!(newPassword || '').length);
 }

@@ -98,8 +98,7 @@ on('POST', '/api/auth/logout', (req, res) => {
   json(res, 200, { ok: true });
 });
 
-/* Sends the refusal and returns true when the current password is wrong.
-   Attempts count against the sign-in lockout. */
+/* Keep the lockout count. Without it a session can brute-force the password. */
 async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
   const ip = getIp(req);
   const limitErr = registerLoginAttempt(ip);
