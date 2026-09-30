@@ -138,6 +138,18 @@
       "/js/badge-logic.js?v=*": [
         "./ui/js/badge-logic.js"
       ],
+      "/js/config-recovery-logic.js": [
+        "./ui/js/config-recovery-logic.js"
+      ],
+      "/js/config-recovery-logic.js?v=*": [
+        "./ui/js/config-recovery-logic.js"
+      ],
+      "/js/config-recovery.js": [
+        "./ui/js/config-recovery.js"
+      ],
+      "/js/config-recovery.js?v=*": [
+        "./ui/js/config-recovery.js"
+      ],
       "/js/dashboard-logic.js": [
         "./ui/js/dashboard-logic.js"
       ],

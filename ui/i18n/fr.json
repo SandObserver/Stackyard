@@ -287,6 +287,23 @@
     "emptyAction": "Ouvrir les réglages",
     "emptyImportLink": "Importer une sauvegarde ou une configuration Homepage ou Dashy"
   },
+  "configRecovery": {
+    "title": "Stackyard ne peut pas utiliser son fichier de réglages",
+    "whyCorrupt": "Le fichier de réglages <code>{file}</code> est endommagé. Il ne contient plus de réglages valides.",
+    "whyUnreadable": "Le fichier de réglages <code>{file}</code> existe, mais Stackyard n’a pas le droit de le lire.",
+    "locked": "Rien n’a été modifié ni supprimé. La connexion et l’enregistrement restent bloqués jusqu’à ce que le fichier soit réparé. Personne ne peut donc remplacer vos réglages ou votre mot de passe.",
+    "stepsTitle": "Pour corriger, sur le serveur",
+    "stepRepairBackup": "Dans le dossier de données, ouvrez la copie <code>{backup}</code>. Corrigez l’erreur, puis enregistrez-la sous <code>{file}</code>.",
+    "stepRepair": "Dans le dossier de données, ouvrez <code>{file}</code> et corrigez l’erreur.",
+    "stepExport": "Ou remplacez <code>{file}</code> par un fichier enregistré avec Exporter.",
+    "stepPermissions": "Donnez à l’utilisateur du conteneur les droits de lecture et d’écriture sur <code>{file}</code> dans le dossier de données.",
+    "stepStartOver": "Pour repartir sans aucun réglage, supprimez <code>{file}</code>. La première configuration se lance alors.",
+    "stepCheck": "Choisissez Vérifier à nouveau.",
+    "checkAgain": "Vérifier à nouveau",
+    "stillDamaged": "Le fichier reste inutilisable.",
+    "logHint": "Le journal du conteneur indique l’erreur exacte.",
+    "troubleshooting": "Dépannage"
+  },
   "toast": {
     "saved": "Enregistré",
     "saveFailed": "Échec de l'enregistrement : {err}",

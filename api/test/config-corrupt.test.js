@@ -17,7 +17,7 @@ function fresh() {
 }
 
 function reset() {
-  for (const f of fs.readdirSync(DIR)) fs.unlinkSync(path.join(DIR, f));
+  for (const f of fs.readdirSync(DIR)) fs.rmSync(path.join(DIR, f), { recursive: true });
 }
 
 function backups() {
@@ -26,21 +26,36 @@ function backups() {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-test('an unparseable file is backed up (timestamped) and load returns blank', () => {
+test('an unparseable file is backed up, marked damaged, and never overwritten', () => {
   reset();
   fs.writeFileSync(CFG, '{ not valid json');
-  const loaded = fresh().loadConfig();
+  const cfg = fresh();
+  const loaded = cfg.loadConfig();
   assert.deepEqual(loaded.items, []);
   const b = backups();
   assert.equal(b.length, 1);
   assert.equal(fs.readFileSync(path.join(DIR, b[0]), 'utf8'), '{ not valid json');
+  assert.deepEqual(cfg.configDamage(), { reason: 'corrupt', file: 'apps.json', backup: b[0] });
+  assert.throws(() => cfg.saveConfig({ items: [], settings: { auth: { enabled: false } } }));
+  assert.equal(fs.readFileSync(CFG, 'utf8'), '{ not valid json');
+});
+
+test('a file that cannot be read is marked damaged without a backup', () => {
+  reset();
+  fs.mkdirSync(CFG);
+  const cfg = fresh();
+  assert.deepEqual(cfg.configDamage(), { reason: 'unreadable', file: 'apps.json' });
+  assert.throws(() => cfg.saveConfig({ items: [], settings: {} }));
+  fs.rmdirSync(CFG);
 });
 
 test('a missing file returns blank without creating a backup', () => {
   reset();
-  const loaded = fresh().loadConfig();
+  const cfg = fresh();
+  const loaded = cfg.loadConfig();
   assert.deepEqual(loaded.items, []);
   assert.equal(backups().length, 0);
+  assert.equal(cfg.configDamage(), null);
 });
 
 test('valid JSON missing items is repaired to empty, not backed up', () => {
@@ -55,9 +70,11 @@ test('valid JSON missing items is repaired to empty, not backed up', () => {
 test('valid JSON with a wrong-typed items is treated as corrupt', () => {
   reset();
   fs.writeFileSync(CFG, JSON.stringify({ items: 5 }));
-  const loaded = fresh().loadConfig();
+  const cfg = fresh();
+  const loaded = cfg.loadConfig();
   assert.deepEqual(loaded.items, []);
   assert.equal(backups().length, 1);
+  assert.equal(cfg.configDamage()?.reason, 'corrupt');
 });
 
 test('a top-level JSON array is treated as corrupt', () => {

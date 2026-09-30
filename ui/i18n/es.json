@@ -287,6 +287,23 @@
     "emptyAction": "Abrir ajustes",
     "emptyImportLink": "Importar una copia de seguridad o una configuración de Homepage o Dashy"
   },
+  "configRecovery": {
+    "title": "Stackyard no puede usar su archivo de ajustes",
+    "whyCorrupt": "El archivo de ajustes <code>{file}</code> está dañado. Ya no contiene ajustes válidos.",
+    "whyUnreadable": "El archivo de ajustes <code>{file}</code> existe, pero Stackyard no tiene permiso para leerlo.",
+    "locked": "No se ha cambiado ni eliminado nada. El inicio de sesión y el guardado siguen bloqueados hasta que se repare el archivo. Así nadie puede reemplazar tus ajustes ni tu contraseña.",
+    "stepsTitle": "Para solucionarlo, en el servidor",
+    "stepRepairBackup": "En la carpeta de datos, abre la copia <code>{backup}</code>. Corrige el error y guárdala como <code>{file}</code>.",
+    "stepRepair": "En la carpeta de datos, abre <code>{file}</code> y corrige el error.",
+    "stepExport": "O reemplaza <code>{file}</code> por un archivo que guardaste con Exportar.",
+    "stepPermissions": "Da al usuario del contenedor permiso de lectura y escritura sobre <code>{file}</code> en la carpeta de datos.",
+    "stepStartOver": "Para empezar de nuevo sin ajustes, elimina <code>{file}</code>. Después se inicia la configuración inicial.",
+    "stepCheck": "Elige Comprobar de nuevo.",
+    "checkAgain": "Comprobar de nuevo",
+    "stillDamaged": "El archivo sigue sin poder usarse.",
+    "logHint": "El registro del contenedor indica el error exacto.",
+    "troubleshooting": "Solución de problemas"
+  },
   "toast": {
     "saved": "Guardado",
     "saveFailed": "Error al guardar: {err}",

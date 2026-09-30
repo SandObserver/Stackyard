@@ -1,0 +1,45 @@
+.cfg-recovery {
+  position: fixed; inset: 0; z-index: 10000; overflow-y: auto;
+  display: flex; justify-content: center; align-items: safe center;
+  padding: max(var(--sp-24), env(safe-area-inset-top)) max(var(--sp-16), env(safe-area-inset-right))
+    max(var(--sp-24), env(safe-area-inset-bottom)) max(var(--sp-16), env(safe-area-inset-left));
+  background: var(--bg-primary); color: var(--label-primary); font-family: var(--font-ui);
+}
+.cfg-recovery-card {
+  width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: var(--sp-12);
+  padding: var(--sp-24); border-radius: var(--sy-radius-window);
+  background: var(--bg-secondary); border: 0.5px solid var(--separator);
+}
+.cfg-recovery-body { display: flex; flex-direction: column; gap: var(--sp-12) }
+.cfg-recovery-title {
+  margin: 0; font-size: var(--fs-title-2); line-height: var(--lh-title-2); letter-spacing: var(--tr-title-2); font-weight: 700;
+}
+.cfg-recovery-title:focus { outline: none }
+.cfg-recovery-why, .cfg-recovery-safe, .cfg-recovery-steps, .cfg-recovery-status, .cfg-recovery-help {
+  margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); letter-spacing: var(--tr-body);
+}
+.cfg-recovery-safe, .cfg-recovery-help { color: var(--label-secondary) }
+.cfg-recovery-steps-title {
+  margin: var(--sp-8) 0 0; font-size: var(--fs-headline); line-height: var(--lh-headline); letter-spacing: var(--tr-headline);
+  font-weight: var(--fw-headline);
+}
+.cfg-recovery-steps { padding-inline-start: var(--sp-24); display: flex; flex-direction: column; gap: var(--sp-8) }
+.cfg-recovery code {
+  font-family: monospace;
+  direction: ltr; unicode-bidi: isolate; overflow-wrap: anywhere;
+}
+.cfg-recovery-btn {
+  align-self: flex-start; margin-top: var(--sp-8); min-height: 48px; padding: var(--sp-12) var(--sp-24);
+  border: none; border-radius: 999px; background: var(--accent); color: var(--on-fill); cursor: pointer;
+  font-family: inherit; font-size: var(--fs-headline); line-height: var(--lh-headline); letter-spacing: var(--tr-headline);
+  font-weight: var(--fw-headline);
+}
+.cfg-recovery-btn:disabled { opacity: 0.6; cursor: default }
+.cfg-recovery-btn:focus-visible, .cfg-recovery-help a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.cfg-recovery-status:empty { display: none }
+.cfg-recovery-help a { color: var(--label-primary); text-decoration: underline }
+
+@media (forced-colors: active) {
+  .cfg-recovery-card { border-color: CanvasText }
+  .cfg-recovery-btn { border: 1px solid ButtonText }
+}

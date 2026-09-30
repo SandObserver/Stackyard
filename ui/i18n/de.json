@@ -282,6 +282,23 @@
     "emptyAction": "Einstellungen öffnen",
     "emptyImportLink": "Backup oder Homepage-/Dashy-Konfiguration importieren"
   },
+  "configRecovery": {
+    "title": "Stackyard kann seine Einstellungsdatei nicht verwenden",
+    "whyCorrupt": "Die Einstellungsdatei <code>{file}</code> ist beschädigt. Sie enthält keine gültigen Einstellungen mehr.",
+    "whyUnreadable": "Die Einstellungsdatei <code>{file}</code> ist vorhanden, aber Stackyard darf sie nicht lesen.",
+    "locked": "Nichts wurde geändert oder gelöscht. Anmelden und Speichern bleiben gesperrt, bis die Datei repariert ist. So kann niemand deine Einstellungen oder dein Passwort ersetzen.",
+    "stepsTitle": "So behebst du es auf dem Server",
+    "stepRepairBackup": "Öffne im Datenordner die Kopie <code>{backup}</code>. Behebe den Fehler und speichere sie als <code>{file}</code>.",
+    "stepRepair": "Öffne im Datenordner <code>{file}</code> und behebe den Fehler.",
+    "stepExport": "Oder ersetze <code>{file}</code> durch eine Datei, die du mit Exportieren gespeichert hast.",
+    "stepPermissions": "Gib dem Benutzer des Containers Lese- und Schreibrechte für <code>{file}</code> im Datenordner.",
+    "stepStartOver": "Um ohne Einstellungen neu zu beginnen, lösche <code>{file}</code>. Danach startet die Ersteinrichtung.",
+    "stepCheck": "Wähle „Erneut prüfen“.",
+    "checkAgain": "Erneut prüfen",
+    "stillDamaged": "Die Datei kann weiterhin nicht verwendet werden.",
+    "logHint": "Das Container-Log nennt den genauen Fehler.",
+    "troubleshooting": "Fehlerbehebung"
+  },
   "toast": {
     "saved": "Gespeichert",
     "saveFailed": "Speichern fehlgeschlagen: {err}",

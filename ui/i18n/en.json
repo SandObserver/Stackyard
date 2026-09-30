@@ -282,6 +282,23 @@
     "emptyAction": "Open settings",
     "emptyImportLink": "Import a backup, Homepage or Dashy config"
   },
+  "configRecovery": {
+    "title": "Stackyard cannot use its settings file",
+    "whyCorrupt": "The settings file <code>{file}</code> is damaged. It no longer holds valid settings.",
+    "whyUnreadable": "The settings file <code>{file}</code> exists, but Stackyard is not allowed to read it.",
+    "locked": "Nothing was changed or deleted. Sign-in and saving stay off until the file is fixed, so no one can replace your settings or your password.",
+    "stepsTitle": "To fix it, on the server",
+    "stepRepairBackup": "In the data folder, open the copy <code>{backup}</code>. Fix the error, then save it as <code>{file}</code>.",
+    "stepRepair": "In the data folder, open <code>{file}</code> and fix the error.",
+    "stepExport": "Or replace <code>{file}</code> with a file you saved with Export.",
+    "stepPermissions": "Give the container’s user read and write access to <code>{file}</code> in the data folder.",
+    "stepStartOver": "To start again with no settings, delete <code>{file}</code>. First-time setup then runs.",
+    "stepCheck": "Choose Check again.",
+    "checkAgain": "Check again",
+    "stillDamaged": "The file still cannot be used.",
+    "logHint": "The container log names the exact error.",
+    "troubleshooting": "Troubleshooting"
+  },
   "toast": {
     "saved": "Saved",
     "saveFailed": "Save failed: {err}",

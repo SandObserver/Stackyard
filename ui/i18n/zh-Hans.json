@@ -277,6 +277,23 @@
     "emptyAction": "打开设置",
     "emptyImportLink": "导入备份或 Homepage、Dashy 配置"
   },
+  "configRecovery": {
+    "title": "Stackyard 无法使用其设置文件",
+    "whyCorrupt": "设置文件 <code>{file}</code> 已损坏，其中不再包含有效的设置。",
+    "whyUnreadable": "设置文件 <code>{file}</code> 存在，但 Stackyard 无权读取它。",
+    "locked": "没有任何内容被更改或删除。在文件修复之前，登录和保存将保持关闭，因此任何人都无法替换你的设置或密码。",
+    "stepsTitle": "在服务器上按以下步骤修复",
+    "stepRepairBackup": "在数据文件夹中打开副本 <code>{backup}</code>，修正错误，然后将其另存为 <code>{file}</code>。",
+    "stepRepair": "在数据文件夹中打开 <code>{file}</code> 并修正错误。",
+    "stepExport": "或者用你通过“导出”保存的文件替换 <code>{file}</code>。",
+    "stepPermissions": "在数据文件夹中，为容器的用户授予 <code>{file}</code> 的读写权限。",
+    "stepStartOver": "如要不带任何设置重新开始，请删除 <code>{file}</code>。之后将运行首次设置。",
+    "stepCheck": "选择“重新检查”。",
+    "checkAgain": "重新检查",
+    "stillDamaged": "该文件仍无法使用。",
+    "logHint": "容器日志会给出确切的错误。",
+    "troubleshooting": "故障排除"
+  },
   "toast": {
     "saved": "已保存",
     "saveFailed": "保存失败：{err}",

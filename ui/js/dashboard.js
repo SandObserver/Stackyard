@@ -29,6 +29,8 @@ import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initSpotlight } from '/js/spotlight.js?v=53fd6b55';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
+import { showConfigRecovery } from '/js/config-recovery.js?v=10b4b724';
+import { readConfigDamage } from '/js/config-recovery-logic.js?v=2838f879';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
@@ -753,6 +755,11 @@ async function boot() {
       return;
     }
     authData = await authCheck.json();
+    const damage = authCheck.status === 503 ? readConfigDamage(authData) : null;
+    if (damage) {
+      await showConfigRecovery(damage);
+      return;
+    }
     if (authData.enabled && !authData.authenticated) {
       window.location.href = '/admin/';
       return;
