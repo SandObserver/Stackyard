@@ -10,7 +10,7 @@ const http = require('node:http');
 
 require('../src/routes');
 const { dispatch } = require('../src/router');
-const { loadConfig, saveConfig } = require('../src/config');
+const { loadConfig, loadConfigForUpdate, saveConfig } = require('../src/config');
 const { hashPassword, authActive, makeToken, clearAttempts } = require('../src/auth');
 
 const SECRET = 'a'.repeat(64);
@@ -160,16 +160,17 @@ test('wrong current passwords count against the sign-in lockout', async () => {
     statuses.push((await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'nope' }, cookie)).status);
   }
   assert.deepEqual(statuses, [403, 403, 403, 403, 403, 429]);
+  const blocked = await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'nope' }, cookie);
+  assert.equal(blocked.body.code, 'blocked.rate-limit');
   assert.equal((await req('POST', '/api/auth/login', { password: 'correct-horse' })).status, 429);
 });
 
-test('a config write made while set-password runs is kept', async () => {
-  const cfg = loadConfig();
-  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
-  saveConfig(cfg);
-  const data = JSON.stringify({ password: 'a-brand-new-one', currentPassword: 'correct-horse' });
+/* Sends the body in two parts and runs `midway` between them, while the route
+   is waiting on the body. */
+function setPasswordWithWriteMidway(body, midway) {
+  const data = JSON.stringify(body);
   const u = new URL(base + '/api/auth/set-password');
-  const status = await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const q = http.request(
       {
         hostname: u.hostname,
@@ -184,24 +185,57 @@ test('a config write made while set-password runs is kept', async () => {
         },
       },
       res => {
-        res.resume();
-        res.on('end', () => resolve(res.statusCode));
+        let b = '';
+        res.on('data', c => {
+          b += c;
+        });
+        res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(b) }));
       },
     );
     q.on('error', reject);
     q.write(data.slice(0, 10));
     setTimeout(() => {
-      const mid = loadConfig();
-      mid.items = [{ id: 'added-meanwhile', type: 'app', name: 'Added' }];
+      const mid = loadConfigForUpdate();
+      midway(mid);
       saveConfig(mid);
       q.end(data.slice(10));
     }, 50);
   });
-  assert.equal(status, 200);
+}
+
+test('a config write made while set-password runs is kept', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  const r = await setPasswordWithWriteMidway({ password: 'a-brand-new-one', currentPassword: 'correct-horse' }, mid => {
+    mid.items = [{ id: 'added-meanwhile', type: 'app', name: 'Added' }];
+  });
+  assert.equal(r.status, 200);
   assert.deepEqual(
     loadConfig().items.map(i => i.id),
     ['added-meanwhile'],
   );
+});
+
+test('set-password refuses when the password changes while it runs', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  const other = await hashPassword('changed-elsewhere');
+  const r = await setPasswordWithWriteMidway({ password: 'a-brand-new-one', currentPassword: 'correct-horse' }, mid => {
+    mid.settings.auth.passwordHash = other;
+  });
+  assert.equal(r.status, 409);
+  assert.equal(r.body.code, 'invalid.password-changed');
+  assert.equal(loadConfig().settings.auth.passwordHash, other);
+});
+
+test('a stale hash with protection off is cleared without the current password', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: false, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  assert.equal((await req('POST', '/api/auth/toggle', { enabled: false })).status, 200);
+  assert.equal(loadConfig().settings.auth.passwordHash, undefined);
 });
 
 /* ── switching off discards the password ──────────────────────────────────── */

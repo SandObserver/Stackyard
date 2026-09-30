@@ -71,9 +71,10 @@ on('POST', '/api/auth/login', async (req, res) => {
        way and the old hash still verifies. */
     if (needsRehash(hash)) {
       try {
+        const upgraded = await hashPassword(password);
         const fresh = loadConfigForUpdate();
         if (fresh.settings?.auth?.passwordHash === hash) {
-          fresh.settings.auth.passwordHash = await hashPassword(password);
+          fresh.settings.auth.passwordHash = upgraded;
           saveConfig(fresh);
           log.info('password hash upgraded to the current format', {});
         }
@@ -139,7 +140,7 @@ on('POST', '/api/auth/set-password', async (req, res) => {
       return json(res, 409, {
         error: 'The password changed during this request.',
         kind: KIND.INVALID,
-        code: CURRENT_PASSWORD_CODE,
+        code: 'invalid.password-changed',
       });
     }
     cfg.settings = cfg.settings || {};

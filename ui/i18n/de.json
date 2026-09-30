@@ -292,6 +292,8 @@
     "importNoChange": "Nichts zu importieren. Die Datei stimmt mit deiner aktuellen Konfiguration überein.",
     "pwWeak": "Passwort zu schwach: {label}",
     "currentPasswordWrong": "Das aktuelle Passwort ist falsch.",
+    "passwordChangedElsewhere": "Das Passwort wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
+    "tooManyAttempts": "Zu viele Versuche. Versuche es später erneut.",
     "sessionsRevoked": "Alle Geräte wurden abgemeldet.",
     "authNeedsPassword": "Legen Sie ein Passwort fest, bevor Sie die Authentifizierung aktivieren.",
     "importForeignDone": "Import abgeschlossen. Apps: {apps}. Ordner: {folders}.",

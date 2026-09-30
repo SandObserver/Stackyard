@@ -292,6 +292,8 @@
     "importNoChange": "Nothing to import. The file matches your current config.",
     "pwWeak": "Password too weak: {label}",
     "currentPasswordWrong": "The current password is incorrect.",
+    "passwordChangedElsewhere": "The password was changed elsewhere. Reload the page and try again.",
+    "tooManyAttempts": "Too many attempts. Try again later.",
     "sessionsRevoked": "All devices signed out.",
     "authNeedsPassword": "Set a password before turning authentication on.",
     "importForeignDone": "Import finished. Apps: {apps}. Folders: {folders}.",

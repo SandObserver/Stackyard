@@ -287,6 +287,8 @@
     "importNoChange": "没有可导入的内容。该文件与您当前的配置一致。",
     "pwWeak": "密码强度不足：{label}",
     "currentPasswordWrong": "当前密码不正确。",
+    "passwordChangedElsewhere": "密码已在其他地方更改。请重新加载页面后重试。",
+    "tooManyAttempts": "尝试次数过多，请稍后再试。",
     "sessionsRevoked": "已退出所有设备。",
     "authNeedsPassword": "启用身份验证前请先设置密码。",
     "importForeignDone": "导入完成。应用：{apps}。文件夹：{folders}。",

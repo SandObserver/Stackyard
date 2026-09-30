@@ -297,6 +297,8 @@
     "importNoChange": "Nada que importar. El archivo coincide con tu configuración actual.",
     "pwWeak": "Contraseña demasiado débil: {label}",
     "currentPasswordWrong": "La contraseña actual es incorrecta.",
+    "passwordChangedElsewhere": "La contraseña se cambió en otro lugar. Recarga la página e inténtalo de nuevo.",
+    "tooManyAttempts": "Demasiados intentos. Inténtalo más tarde.",
     "sessionsRevoked": "Se cerró la sesión en todos los dispositivos.",
     "authNeedsPassword": "Establece una contraseña antes de activar la autenticación.",
     "importForeignDone": "Importación terminada. Apps: {apps}. Carpetas: {folders}.",

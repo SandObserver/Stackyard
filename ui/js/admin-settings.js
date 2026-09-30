@@ -384,6 +384,12 @@ async function saveWallpaper() {
     toast(t('toast.saveFailed', { err: e.message }), 'err');
   }
 }
+const PASSWORD_ERROR_KEYS = Object.freeze({
+  'invalid.current-password': 'toast.currentPasswordWrong',
+  'invalid.password-changed': 'toast.passwordChangedElsewhere',
+  'blocked.rate-limit': 'toast.tooManyAttempts',
+});
+
 async function saveServer() {
   const pw = inp('sec-pw')?.value || '';
   const enabled = inp('sec-en')?.checked || false;
@@ -499,7 +505,8 @@ async function saveServer() {
     /* Read back from the server, never inferred from what was asked for. */
     await syncAuthFromServer();
   } catch (e) {
-    if (/** @type {any} */ (e).code === 'invalid.current-password') toast(t('toast.currentPasswordWrong'), 'err');
+    const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (e).code];
+    if (key) toast(t(key), 'err');
     else toast(t('toast.saveFailed', { err: e.message }), 'err');
     await syncAuthFromServer();
   }
