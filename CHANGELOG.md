@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop a widget provider set to an inherited object name from returning saved
   API keys.
 
+- Require the current password to change the password or turn off password
+  protection.
+
 ## [1.15.0] - 2026-09-28
 
 ### Added
