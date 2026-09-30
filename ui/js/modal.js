@@ -114,30 +114,39 @@ export function confirmText({ title, text, confirmLabel, cancelLabel, destructiv
   return confirmModal({ title, body: lead, confirmLabel, cancelLabel, destructive });
 }
 
-/** A modal asking for one line of text, resolving to the trimmed value or null.
+/** A modal asking for one line of text, resolving to the value or null. Text
+    is trimmed; a password is returned as typed.
 
-    @param {{ title: string, label: string, placeholder?: string,
+    @param {{ title: string, label: string, placeholder?: string, text?: string,
+              password?: boolean, destructive?: boolean,
               confirmLabel: string, cancelLabel: string }} opts
     @returns {Promise<string|null>} */
-export function promptModal({ title, label, placeholder, confirmLabel, cancelLabel }) {
+export function promptModal({ title, label, placeholder, text, password, destructive, confirmLabel, cancelLabel }) {
   return new Promise(resolve => {
     /** @type {string|null} */
     let answer = null;
     const m = openModal({ title, onClose: () => resolve(answer) });
 
+    if (text) {
+      const lead = document.createElement('p');
+      lead.className = 'dlg-lead';
+      lead.textContent = text;
+      m.body.appendChild(lead);
+    }
     const field = document.createElement('label');
     field.className = 'dlg-field';
     const cap = document.createElement('span');
     cap.textContent = label;
     const input = document.createElement('input');
-    input.type = 'text';
+    input.type = password ? 'password' : 'text';
+    if (password) input.autocomplete = 'current-password';
     input.className = 'inp';
     if (placeholder) input.placeholder = placeholder;
     field.append(cap, input);
     m.body.appendChild(field);
 
     const accept = () => {
-      const v = input.value.trim();
+      const v = password ? input.value : input.value.trim();
       if (!v) return;
       answer = v;
       m.close();
@@ -149,7 +158,7 @@ export function promptModal({ title, label, placeholder, confirmLabel, cancelLab
       }
     };
     m.addAction(cancelLabel, 'bg sm', m.close);
-    m.addAction(confirmLabel, 'bp sm', accept);
+    m.addAction(confirmLabel, destructive ? 'bd-btn sm' : 'bp sm', accept);
     m.focus(input);
   });
 }

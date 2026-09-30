@@ -19,6 +19,7 @@ import {
   rejectionLines,
   settingsSaveBlocker,
   clearsStoredPassword,
+  needsCurrentPassword,
   recoversSession,
   toastMs,
   toastHoldMs,
@@ -418,6 +419,21 @@ test('a missing or non-array list is no lines rather than a throw', () => {
   for (const v of [undefined, null, {}, 'nope', 0]) {
     assert.deepEqual(rejectionLines(v), [], `${JSON.stringify(v)} should give no lines`);
   }
+});
+
+/* ── needsCurrentPassword ─────────────────────────────────────────────────── */
+
+test('the current password is asked for a change or a switch off while protection is on', () => {
+  const on = { wasEnabled: true, passwordSet: true };
+  assert.equal(needsCurrentPassword({ ...on, enabled: true, newPassword: 'a-new-one' }), true);
+  assert.equal(needsCurrentPassword({ ...on, enabled: false, newPassword: '' }), true);
+  assert.equal(needsCurrentPassword({ ...on, enabled: true, newPassword: '' }), false);
+});
+
+test('the current password is not asked while protection is off', () => {
+  assert.equal(needsCurrentPassword({ wasEnabled: false, passwordSet: true, enabled: false, newPassword: '' }), false);
+  assert.equal(needsCurrentPassword({ wasEnabled: false, passwordSet: false, enabled: true, newPassword: 'x' }), false);
+  assert.equal(needsCurrentPassword({ wasEnabled: true, passwordSet: false, enabled: false, newPassword: '' }), false);
 });
 
 /* ── shouldWritePassword ──────────────────────────────────────────────────── */

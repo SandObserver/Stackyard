@@ -204,8 +204,8 @@ test('changing the password still signs other devices out', async () => {
   await enableAuth();
   const old = cookieFor(secret());
   const u = new URL(base + '/api/auth/set-password');
-  const data = JSON.stringify({ password: 'a-new-password' });
-  await new Promise((resolve, reject) => {
+  const data = JSON.stringify({ password: 'a-new-password', currentPassword: 'correct-horse' });
+  const status = await new Promise((resolve, reject) => {
     const q = http.request(
       {
         hostname: u.hostname,
@@ -221,11 +221,12 @@ test('changing the password still signs other devices out', async () => {
       },
       res => {
         res.resume();
-        res.on('end', resolve);
+        res.on('end', () => resolve(res.statusCode));
       },
     );
     q.on('error', reject);
     q.end(data);
   });
+  assert.equal(status, 200);
   assert.equal((await req('GET', '/api/config', old)).status, 401);
 });
