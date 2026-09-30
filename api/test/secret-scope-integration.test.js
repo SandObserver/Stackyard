@@ -212,13 +212,16 @@ test('/api/widget-config returns the saved config without the stored secret', as
 });
 
 test('/api/widget-data does not return the config when the provider names an inherited member', async () => {
+  realSeen.length = 0;
   const r = await get('/api/widget-data/w-inherited');
+  assert.ok(realSeen.length > 0, 'the default provider should run instead');
   assert.ok(!r.raw.includes(SECRET_VALUE), `a stored secret leaked: ${r.raw}`);
 });
 
 test('the Unsplash key is reported as set, stored on write and never returned', async () => {
   assert.deepEqual((await get('/api/settings/unsplash-key')).body, { configured: true });
-  assert.equal((await post('/api/settings/unsplash-key', { apiKey: 'NEW-KEY' }, { origin: null })).status, 403);
+  assert.equal((await post('/api/settings/unsplash-key', { apiKey: 'REFUSED' }, { origin: null })).status, 403);
+  assert.equal(loadConfig().settings.background.apiKey, SECRET_VALUE);
   assert.equal((await post('/api/settings/unsplash-key', { apiKey: ' NEW-KEY ' })).status, 200);
   assert.equal(loadConfig().settings.background.apiKey, 'NEW-KEY');
   assert.ok(!(await get('/api/config')).raw.includes('NEW-KEY'));
