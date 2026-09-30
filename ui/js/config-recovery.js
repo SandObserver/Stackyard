@@ -4,6 +4,9 @@ import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=1f1ea9c1';
 import { i18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
 import { HELP_URL, pickLanguage, readConfigDamage, recoverySteps } from '/js/config-recovery-logic.js?v=2838f879';
 
+let _shown = false;
+export const recoveryShown = () => _shown;
+
 /** Replace the page with the recovery screen. Nothing else on the page may keep
     running: the API refuses every request until the file is fixed.
     @param {{ reason: string, file: string, backup: string | null }} damage */
@@ -14,6 +17,7 @@ export async function showConfigRecovery(damage) {
       LANGUAGES.map(l => l.code),
     ),
   );
+  _shown = true;
   document.title = t('configRecovery.title');
   const screen = document.createElement('div');
   screen.className = 'cfg-recovery';

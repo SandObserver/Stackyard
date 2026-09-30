@@ -1,5 +1,6 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b2ce3205';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=a1e5e246';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=43be3c43';
+import { recoveryShown } from '/js/config-recovery.js?v=3a0f8169';
 import { initList, render, syncFilterUI } from '/js/admin-list.js?v=e1e5a2e5';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
@@ -978,6 +979,7 @@ function syncDashSave() {
   if (dashSaveEl) dashSaveEl.disabled = JSON.stringify(state.items) === _savedItems;
 }
 addEventListener('beforeunload', e => {
+  if (recoveryShown()) return;
   if (!settingsDirty() && JSON.stringify(state.items) === _savedItems) return;
   e.preventDefault();
   e.returnValue = '';

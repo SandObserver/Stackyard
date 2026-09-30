@@ -2,7 +2,7 @@ import { apiGet, apiPost } from '/js/admin-shared.js?v=ecb387bd';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { el, inp as inpById, qa } from '/js/utils.js?v=b1cfbd45';
-import { showConfigRecovery } from '/js/config-recovery.js?v=10b4b724';
+import { showConfigRecovery } from '/js/config-recovery.js?v=3a0f8169';
 import { readConfigDamage } from '/js/config-recovery-logic.js?v=2838f879';
 
 export async function checkAuth(onLogin) {
