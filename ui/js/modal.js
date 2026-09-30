@@ -114,8 +114,8 @@ export function confirmText({ title, text, confirmLabel, cancelLabel, destructiv
   return confirmModal({ title, body: lead, confirmLabel, cancelLabel, destructive });
 }
 
-/** A modal asking for one line of text, resolving to the value or null. Text
-    is trimmed; a password is returned as typed.
+/** A modal asking for one line of text, resolving to the value or null. Never
+    trim a password.
 
     @param {{ title: string, label: string, placeholder?: string, text?: string,
               password?: boolean, destructive?: boolean,

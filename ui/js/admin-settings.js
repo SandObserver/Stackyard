@@ -1,4 +1,4 @@
-import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=ed3ecef1';
+import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=ecb387bd';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -8,10 +8,10 @@ import {
   needsCurrentPassword,
   createDirtyTracker,
   BLOCK,
-} from '/js/admin-logic.js?v=2d547584';
-import { confirmText, promptModal } from '/js/modal.js?v=b0e412f1';
+} from '/js/admin-logic.js?v=fc7f0836';
+import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=b1cfbd45';
-import { renderColorControl } from '/js/admin-color-control.js?v=60f83ee9';
+import { renderColorControl } from '/js/admin-color-control.js?v=5a9fb676';
 import { BACKDROP } from '/js/background.js?v=cd1cc453';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
@@ -460,8 +460,8 @@ async function saveServer() {
   }
 
   try {
-    /* Before the config is read. A wrong current password then writes nothing,
-       and the read carries the revision these writes produce. */
+    /* Keep before the config read. These writes bump the config revision, and
+       a config save built on an earlier read is refused as stale. */
     if (shouldWritePassword({ enabled, newPassword: pw })) {
       await apiPost('/api/auth/set-password', { password: pw, currentPassword });
       const pwEl = inp('sec-pw');

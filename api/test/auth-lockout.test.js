@@ -165,8 +165,6 @@ test('wrong current passwords count against the sign-in lockout', async () => {
   assert.equal((await req('POST', '/api/auth/login', { password: 'correct-horse' })).status, 429);
 });
 
-/* Sends the body in two parts and runs `midway` between them, while the route
-   is waiting on the body. */
 function setPasswordWithWriteMidway(body, midway) {
   const data = JSON.stringify(body);
   const u = new URL(base + '/api/auth/set-password');

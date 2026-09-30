@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=816c08cf';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5a27eff7';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=e5401671';
-import { resolveAdminSection } from '/js/admin-logic.js?v=2d547584';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b2ce3205';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=fb08b174';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=e1e5a2e5';
+import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
   claimFolderChildren,
@@ -10,7 +10,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=74e139d2';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=3e718d20';
 import {
   apiGet,
   apiPost,
@@ -19,12 +19,12 @@ import {
   reveal,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=ed3ecef1';
+} from '/js/admin-shared.js?v=ecb387bd';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=5a396889';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=3edb69b5';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=7dc5c7b5';
+import { createListbox } from '/js/listbox.js?v=a3a1177d';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -39,7 +39,7 @@ import {
   SKIP,
 } from '/js/import-foreign.js?v=f9c0a120';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
-import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=b0e412f1';
+import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
   THEME_KEY,
   applyTheme,
