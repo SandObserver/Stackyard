@@ -113,20 +113,7 @@ function json(res, status, data) {
 /* Buffered in memory before parsing, so this is a memory limit too. */
 const BODY_LIMIT = 2 * 1024 * 1024;
 function readBody(req) {
-  return new Promise((res, rej) => {
-    const c = [];
-    let total = 0;
-    req.on('data', d => {
-      total += d.length;
-      if (total > BODY_LIMIT) {
-        req.destroy();
-        return rej(new Error('Request body too large'));
-      }
-      c.push(d);
-    });
-    req.on('end', () => res(Buffer.concat(c).toString('utf8')));
-    req.on('error', rej);
-  });
+  return readBodyCapped(req, BODY_LIMIT).then(b => b.toString('utf8'));
 }
 
 /** Rejects with `oversize: true` past `max` bytes. Do not destroy the request

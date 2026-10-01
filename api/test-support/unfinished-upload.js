@@ -4,8 +4,9 @@ const http = require('node:http');
     never finishes it. Resolves with the answer, which only comes if the route
     stops reading at its cap.
     @param {string} url @param {number} declared @param {number} sent
+    @param {Record<string,string>} [headers] replace the multipart type
     @returns {Promise<{status:number, body:any}>} */
-function unfinishedUpload(url, declared, sent) {
+function unfinishedUpload(url, declared, sent, headers = {}) {
   const b = '----sytest';
   const u = new URL(url);
   return new Promise((resolve, reject) => {
@@ -19,6 +20,7 @@ function unfinishedUpload(url, declared, sent) {
           'Content-Type': `multipart/form-data; boundary=${b}`,
           'Content-Length': declared,
           Origin: u.origin,
+          ...headers,
         },
       },
       res => {

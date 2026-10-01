@@ -70,6 +70,21 @@ test('editing an app keeps its id and changes only what was edited', async ({ pa
   expect(cfg.items.filter(i => i.id === 'alpha')).toHaveLength(1);
 });
 
+test('an icon too large for the web server says so', async ({ page }) => {
+  await page.route('**/api/icons/upload', route =>
+    route.fulfill({
+      status: 413,
+      contentType: 'text/html',
+      body: '<html><body>413 Request Entity Too Large</body></html>',
+    }),
+  );
+  await openDashboardList(page);
+  await rowByName(page, 'Alpha').getByRole('button', { name: /edit/i }).click();
+  await page.locator('#ip-upload').setInputFiles({ name: 'big.png', mimeType: 'image/png', buffer: Buffer.alloc(8) });
+  await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
+  await expect(page.locator('#toast')).toHaveText('Upload failed: That image is too large for the server to accept.');
+});
+
 test('a saved change survives a reload', async ({ page }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();

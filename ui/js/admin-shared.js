@@ -57,6 +57,20 @@ function tagged(status, body) {
   if (body && body.detail && typeof body.detail === 'object') e.detail = body.detail;
   return e;
 }
+
+/** A body that is not JSON is the web server answering on its own.
+
+    @param {Response} r @returns {Promise<string>} */
+export async function responseError(r) {
+  const text = await r.text().catch(() => '');
+  try {
+    const d = JSON.parse(text);
+    if (d && d.error) return String(d.error);
+  } catch {}
+  if (r.status === 413) return t('toast.imageTooLarge');
+  return `HTTP ${r.status}`;
+}
+
 /* Set by the admin entry point, never imported. The sign-in screen imports this
    module, so importing it back is a cycle. */
 /** @type {(() => Promise<boolean>) | null} */
