@@ -163,6 +163,7 @@ function checkOrigin(req, res) {
 
 module.exports = {
   BODY_LIMIT,
+  _routeTable: () => routes.map(r => ({ method: r.m, path: r.p })),
   on,
   dispatch,
   json,
