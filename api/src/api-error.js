@@ -155,7 +155,10 @@ function fail(res, e, opts = {}) {
   const body = errorBody(e, { kind, code: apiCode, detail, error });
 
   if (typeof thrown.message === 'string' && thrown.message && thrown.message !== body.error) {
-    log.error('request failed', { kind: body.kind, status: code, error: thrown.message });
+    /* A SyntaxError message quotes the text it failed on, which can be a
+       password or an API key. */
+    const logged = e instanceof SyntaxError ? 'not valid JSON' : thrown.message;
+    log.error('request failed', { kind: body.kind, status: code, error: logged });
   }
 
   json(res, code, Object.assign({}, extra, body));

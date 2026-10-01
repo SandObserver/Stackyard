@@ -93,16 +93,13 @@ async function getWidgetData(item, entry, endpointName, searchParams, fetch, row
 }
 
 on('GET', '/api/widget-data/:id', async (req, res) => {
-  const limited = rateLimit(
-    getIp(req),
-    `widget-data:${req.params.id}`,
-    LIMITS.WIDGET_DATA.max,
-    LIMITS.WIDGET_DATA.windowMs,
-  );
-  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
   const cfg = loadConfig();
   const item = cfg.items?.find(i => i.id === req.params.id && i.type === 'widget');
+  /* Before the rate limit. Its key holds the id, so an unknown id would store a
+     bucket per request. */
   if (!item) return json(res, 404, { error: 'widget not found', kind: KIND.INVALID });
+  const limited = rateLimit(getIp(req), `widget-data:${item.id}`, LIMITS.WIDGET_DATA.max, LIMITS.WIDGET_DATA.windowMs);
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
 
   const entry = getRegistry()[item.widgetType];
   if (!entry) return json(res, 404, { error: 'unknown widget type', kind: KIND.INVALID });
