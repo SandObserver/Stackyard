@@ -58,8 +58,8 @@ test('verifyToken rejects a token older than the max age', () => {
 
 test('verifyToken rejects a token whose issued-at was altered after signing', () => {
   const token = makeToken('session-1', 'secret-a');
-  const [sid, iat, sig] = token.split('.');
-  const bumped = `${sid}.${Number(iat) - 1}.${sig}`;
+  const [sid, createdAt, iat, sig] = token.split('.');
+  const bumped = `${sid}.${createdAt}.${Number(iat) - 1}.${sig}`;
   assert.equal(verifyToken(bumped, 'secret-a'), null);
 });
 

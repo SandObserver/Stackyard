@@ -10,7 +10,16 @@ const http = require('node:http');
 require('../src/routes');
 const { dispatch } = require('../src/router');
 const { loadConfig, saveConfig } = require('../src/config');
-const { hashPassword, makeToken, verifyToken, rotateSessionSecret } = require('../src/auth');
+const fs = require('node:fs');
+const {
+  hashPassword,
+  makeToken,
+  verifyToken,
+  rotateSessionSecret,
+  revokeSession,
+  SESSION_ABSOLUTE_MS,
+} = require('../src/auth');
+const crypto = require('node:crypto');
 
 let server, base;
 
@@ -229,4 +238,122 @@ test('changing the password still signs other devices out', async () => {
   });
   assert.equal(status, 200);
   assert.equal((await req('GET', '/api/config', old)).status, 401);
+});
+
+/* ── signing out ──────────────────────────────────────────────────────────── */
+
+test('a token copied before sign-out is refused after it', async () => {
+  await enableAuth();
+  const copied = cookieFor(secret());
+  assert.equal((await req('GET', '/api/config', copied)).status, 200, 'precondition: the session works');
+
+  const out = await req('POST', '/api/auth/logout', copied);
+  assert.equal(out.status, 200);
+  assert.match(
+    out.setCookie.find(c => c.startsWith('ds=')),
+    /Max-Age=0(;|$)/,
+  );
+  assert.equal((await req('GET', '/api/config', copied)).status, 401);
+});
+
+test('signing out one device leaves the others signed in', async () => {
+  await enableAuth();
+  const s = secret();
+  const leaving = 'ds=' + makeToken('session-a', s);
+  const staying = 'ds=' + makeToken('session-b', s);
+  await req('POST', '/api/auth/logout', leaving);
+  assert.equal((await req('GET', '/api/config', leaving)).status, 401);
+  assert.equal((await req('GET', '/api/config', staying)).status, 200);
+});
+
+/* Protection off with a hash left behind: set-password is past the router gate
+   and only its own session check stands. */
+test('a signed-out session cannot replace a password left behind', async () => {
+  const s = 'a'.repeat(64);
+  saveConfig({
+    items: [],
+    settings: {
+      auth: {
+        enabled: false,
+        secret: s,
+        passwordHash: await hashPassword('correct-horse'),
+        revoked: { 'session-abc': Date.now() + 60_000 },
+      },
+    },
+  });
+  const r = await req('POST', '/api/auth/set-password', cookieFor(s));
+  assert.equal(r.status, 401);
+});
+
+test('sign-out without a valid session writes nothing', async () => {
+  await enableAuth();
+  const forged = { headers: { cookie: 'ds=forged.1.1.' + 'a'.repeat(64) } };
+  assert.equal(revokeSession(forged), false);
+  assert.equal(loadConfig().settings.auth.revoked, undefined);
+});
+
+test('sign-out does not change the config revision open dashboards watch', async () => {
+  await enableAuth();
+  const rev = loadConfig()._rev;
+  await req('POST', '/api/auth/logout', cookieFor(secret()));
+  assert.ok(loadConfig().settings.auth.revoked);
+  assert.equal(loadConfig()._rev, rev);
+});
+
+/* A copy renewed from a three-part token takes its own issued-at as its sign-in
+   time, which can be later than the copy that signs out. */
+test('the sign-out record outlasts every copy of the session', async () => {
+  await enableAuth();
+  const payload = `session-abc.${Date.now() - 60 * 60 * 1000}`;
+  const legacy = `${payload}.${crypto.createHmac('sha256', secret()).update(payload).digest('hex')}`;
+  const signedOutAt = Date.now();
+  await req('POST', '/api/auth/logout', 'ds=' + legacy);
+  assert.ok(loadConfig().settings.auth.revoked['session-abc'] >= signedOutAt + SESSION_ABSOLUTE_MS);
+});
+
+test('sign-out reports a failure to record it and still clears the cookie', async t => {
+  if (process.getuid?.() === 0) return t.skip('root ignores directory permissions');
+  await enableAuth();
+  const copied = cookieFor(secret());
+  const dir = path.dirname(process.env.CONFIG_PATH);
+  fs.chmodSync(dir, 0o555);
+  let out;
+  try {
+    out = await req('POST', '/api/auth/logout', copied);
+  } finally {
+    fs.chmodSync(dir, 0o755);
+  }
+  assert.equal(out.status, 500);
+  assert.match(
+    out.setCookie.find(c => c.startsWith('ds=')),
+    /Max-Age=0(;|$)/,
+  );
+});
+
+test('the sign-out record is not sent to the browser', async () => {
+  await enableAuth();
+  const s = secret();
+  await req('POST', '/api/auth/logout', 'ds=' + makeToken('session-a', s));
+  const r = await req('GET', '/api/config', 'ds=' + makeToken('session-b', s));
+  assert.equal(r.status, 200);
+  assert.equal(r.body.settings.auth?.revoked, undefined);
+});
+
+test('a sign-out record is dropped once its session would have expired', async () => {
+  await enableAuth();
+  const cfg = loadConfig();
+  saveConfig({
+    ...cfg,
+    settings: { auth: { ...cfg.settings.auth, revoked: { 'session-gone': Date.now() - 1 } } },
+  });
+  await req('POST', '/api/auth/logout', cookieFor(secret()));
+  assert.deepEqual(Object.keys(loadConfig().settings.auth.revoked), ['session-abc']);
+});
+
+test('rotating the secret clears the sign-out record', async () => {
+  await enableAuth();
+  await req('POST', '/api/auth/logout', cookieFor(secret()));
+  assert.ok(loadConfig().settings.auth.revoked);
+  rotateSessionSecret();
+  assert.equal(loadConfig().settings.auth.revoked, undefined);
 });

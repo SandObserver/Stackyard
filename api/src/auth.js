@@ -20,6 +20,7 @@ function rotateSessionSecret() {
   const cfg = loadConfigForUpdate();
   const auth = _authBlock(cfg);
   auth.secret = newSessionSecret();
+  delete auth.revoked;
   saveConfig(cfg);
   return auth.secret;
 }
@@ -175,32 +176,37 @@ const SESSION_MAX_AGE_MS = _maxAgeDays > 0 ? _maxAgeDays * 24 * 60 * 60 * 1000 :
 
 const RENEW_AFTER_MS = SESSION_MAX_AGE_MS / 2;
 
-/* `${sessionId}.${issuedAt}.${sig}`, where sig covers the first two. The signed
-   timestamp is what enforces the max age with no session store. */
-function makeToken(sessionId, secret) {
-  const iat = Date.now();
-  const payload = `${sessionId}.${iat}`;
+/* Renewal never extends a session past this, counted from sign-in. */
+const SESSION_ABSOLUTE_MS = Math.max(30 * 24 * 60 * 60 * 1000, SESSION_MAX_AGE_MS);
+
+/* `${sessionId}.${createdAt}.${issuedAt}.${sig}`, where sig covers the rest.
+   The signed timestamps enforce both lifetimes with no session store. */
+function makeToken(sessionId, secret, createdAt = Date.now()) {
+  const payload = `${sessionId}.${createdAt}.${Date.now()}`;
   const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex');
   return `${payload}.${sig}`;
 }
 
 /** @param {string} token @param {string} secret
-    @returns {{ sessionId: string, iat: number }|null} */
+    @returns {{ sessionId: string, createdAt: number, iat: number }|null} */
 function readToken(token, secret) {
-  const dot2 = token.lastIndexOf('.');
-  if (dot2 === -1) return null;
-  const sig = token.slice(dot2 + 1);
-  const rest = token.slice(0, dot2);
-  const dot1 = rest.lastIndexOf('.');
-  if (dot1 === -1) return null; /* a 2-part token carries no issued-at */
-  const sessionId = rest.slice(0, dot1),
-    iat = rest.slice(dot1 + 1);
+  const parts = token.split('.');
+  /* Three parts is the format before createdAt. Its issued-at stands in. */
+  if (parts.length !== 3 && parts.length !== 4) return null;
+  const [sessionId, ...times] = parts;
+  const sig = times.pop() ?? '';
   if (sig.length !== 64 || !/^[0-9a-f]+$/.test(sig)) return null;
-  if (!/^[0-9]+$/.test(iat)) return null;
-  const expected = crypto.createHmac('sha256', secret).update(rest).digest('hex');
+  if (!times.every(t => /^[0-9]+$/.test(t))) return null;
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update([sessionId, ...times].join('.'))
+    .digest('hex');
   if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) return null;
-  if (Date.now() - Number(iat) > SESSION_MAX_AGE_MS) return null;
-  return { sessionId, iat: Number(iat) };
+  const iat = Number(times.at(-1));
+  const createdAt = Number(times[0]);
+  const now = Date.now();
+  if (now - iat > SESSION_MAX_AGE_MS || now - createdAt > SESSION_ABSOLUTE_MS) return null;
+  return { sessionId, createdAt, iat };
 }
 
 function verifyToken(token, secret) {
@@ -233,9 +239,9 @@ function isSecureRequest(req) {
   return false;
 }
 
-function setSessionCookie(res, token, secure) {
+function setSessionCookie(res, token, secure, maxAgeMs = SESSION_MAX_AGE_MS) {
   const flag = secure ? ' Secure;' : '';
-  const maxAge = Math.floor(SESSION_MAX_AGE_MS / 1000);
+  const maxAge = Math.floor(maxAgeMs / 1000);
   res.setHeader('Set-Cookie', `ds=${token}; HttpOnly;${flag} SameSite=Strict; Path=/; Max-Age=${maxAge}`);
 }
 
@@ -316,44 +322,65 @@ function stripDisabledCredentials(auth) {
   const had = !!auth.passwordHash || !!auth.secret;
   delete auth.passwordHash;
   delete auth.secret;
+  delete auth.revoked;
   return had;
+}
+
+function readSession(req, cfg) {
+  const auth = cfg.settings?.auth;
+  if (!auth?.secret) return null;
+  const token = parseCookies(req).ds;
+  if (!token) return null;
+  const read = readToken(token, auth.secret);
+  if (!read || Object.hasOwn(auth.revoked || {}, read.sessionId)) return null;
+  return read;
+}
+
+/* A record is pruned only once every copy of its session has expired. Pruning
+   earlier makes a signed-out token valid again. Copies renewed from a
+   three-part token can carry a later sign-in time than the caller's. */
+function revokeSession(req) {
+  const read = readSession(req, loadConfig());
+  if (!read) return false;
+  const cfg = loadConfigForUpdate();
+  const auth = _authBlock(cfg);
+  const now = Date.now();
+  const revoked = {};
+  for (const [id, until] of Object.entries(auth.revoked || {})) if (until > now) revoked[id] = until;
+  revoked[read.sessionId] = now + SESSION_ABSOLUTE_MS;
+  auth.revoked = revoked;
+  saveConfig(cfg, { keepRev: true });
+  return true;
 }
 
 function isAuthenticated(req) {
   const cfg = loadConfig();
   if (!authActive(cfg)) return true;
-  const token = parseCookies(req).ds;
-  if (!token) return false;
-  const secret = cfg.settings.auth.secret;
-  if (!secret) return false;
-  return !!verifyToken(token, secret);
+  return !!readSession(req, cfg);
 }
 
-/* Extend a session that is still in use. The identifier is carried over and
-   only the issued-at moves, so this lengthens a session rather than starting
-   one. A handler that sets its own cookie runs after this and replaces the
-   header. */
+/* Extend a session that is still in use. The identifier and sign-in time are
+   carried over and only the issued-at moves, so this lengthens a session rather
+   than starting one. A handler that sets its own cookie runs after this and
+   replaces the header. */
 function refreshSession(req, res) {
   const cfg = loadConfig();
   if (!authActive(cfg)) return false;
-  const secret = cfg.settings.auth.secret;
-  if (!secret) return false;
-  const token = parseCookies(req).ds;
-  if (!token) return false;
-  const read = readToken(token, secret);
+  const read = readSession(req, cfg);
   if (!read || Date.now() - read.iat < RENEW_AFTER_MS) return false;
-  setSessionCookie(res, makeToken(read.sessionId, secret), isSecureRequest(req));
+  const left = Math.min(SESSION_MAX_AGE_MS, read.createdAt + SESSION_ABSOLUTE_MS - Date.now());
+  setSessionCookie(
+    res,
+    makeToken(read.sessionId, cfg.settings.auth.secret, read.createdAt),
+    isSecureRequest(req),
+    left,
+  );
   return true;
 }
 
 /* Unlike isAuthenticated, requires a real session even when auth is off. */
 function hasValidSession(req) {
-  const cfg = loadConfig();
-  const secret = cfg.settings?.auth?.secret;
-  if (!secret) return false;
-  const token = parseCookies(req).ds;
-  if (!token) return false;
-  return !!verifyToken(token, secret);
+  return !!readSession(req, loadConfig());
 }
 
 module.exports = {
@@ -372,6 +399,7 @@ module.exports = {
   verifyToken,
   readToken,
   refreshSession,
+  revokeSession,
   parseCookies,
   setSessionCookie,
   clearSessionCookie,
@@ -384,5 +412,6 @@ module.exports = {
   stripDisabledCredentials,
   _resetRateLimits: () => _rateBuckets.clear(),
   SESSION_MAX_AGE_MS,
+  SESSION_ABSOLUTE_MS,
   RENEW_AFTER_MS,
 };

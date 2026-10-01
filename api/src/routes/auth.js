@@ -14,6 +14,7 @@ const {
   makeToken,
   setSessionCookie,
   clearSessionCookie,
+  revokeSession,
   isSecureRequest,
   registerLoginAttempt,
   clearAttempts,
@@ -96,6 +97,11 @@ on('POST', '/api/auth/logout', (req, res) => {
   if (!checkOrigin(req, res)) return;
   log.audit('logout', { ip: getIp(req) });
   clearSessionCookie(res, isSecureRequest(req));
+  try {
+    revokeSession(req);
+  } catch (e) {
+    return fail(res, e, { status: 500, kind: KIND.INTERNAL, error: 'Could not end the session on the server.' });
+  }
   json(res, 200, { ok: true });
 });
 
@@ -149,6 +155,7 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     /* Rotating the secret is what signs other devices out. Assigned here rather
        than calling rotateSessionSecret, which would load and write again. */
     cfg.settings.auth.secret = newSessionSecret();
+    delete cfg.settings.auth.revoked;
     cfg.settings.auth.enabled = true;
     cfg.settings.auth.setupPrompted = true;
     saveConfig(cfg);

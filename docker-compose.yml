@@ -68,7 +68,8 @@ services:
       # Run as a read-only public showcase. See https://stackyard.sandobserver.com/docs/contributing/releasing/.
       - DEMO_MODE=${DEMO_MODE:-}
       # Idle session lifetime in days before re-login is required (default 12
-      # hours). Accepts a fraction. A session in use is extended automatically.
+      # hours). Accepts a fraction. A session in use is extended automatically,
+      # up to 30 days after sign-in or this lifetime if longer.
       - SESSION_MAX_AGE_DAYS=${SESSION_MAX_AGE_DAYS:-}
       # Node sizes its heap from the host's memory, not from mem_limit above, so
       # without this the API is killed by the kernel instead of collecting. Keep
