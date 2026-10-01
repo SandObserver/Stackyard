@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restore the last saved wallpaper, not the one from page load, when a wallpaper
   link fails.
 
+- Keep a newly uploaded wallpaper when another setting is saved before the
+  wallpaper.
+
+- Stop a failed Unsplash key save from taking effect until the next config read.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
