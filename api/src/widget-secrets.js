@@ -34,6 +34,11 @@ function cosmeticSpec(entry) {
   return _spec(entry, f => f.cosmetic === true);
 }
 
+/* Never stored, so a saved config can never match on them. */
+function transientSpec(entry) {
+  return _spec(entry, f => f.transient === true);
+}
+
 function _entryFor(item, entry) {
   return entry || getRegistry()[item && item.widgetType];
 }
@@ -158,6 +163,7 @@ function preserveConfigSecrets(newCfg, oldCfg) {
 module.exports = {
   secretSpec,
   cosmeticSpec,
+  transientSpec,
   WITHHELD_FLAG,
   scrubWidgetSecrets,
   preserveWidgetSecrets,

@@ -181,6 +181,16 @@ test('widget-options does not send the stored credential to a caller-chosen host
   assert.ok(!sawSecret(evilSeen), `the stored credential leaked: ${JSON.stringify(evilSeen)}`);
 });
 
+test('widget-options reports a plain failure when no stored credential was held back', async () => {
+  const r = await post('/api/widget-options/w1', {
+    widgetType: 'books',
+    endpoint: 'lists',
+    widgetConfig: { provider: 'audiobookshelf', absUrl: 'http://127.0.0.1:9', absKey: 'typed-now' },
+  });
+  assert.notEqual(r.body.code, 'invalid.retype');
+  assert.equal(r.body.kind, 'network');
+});
+
 test('widget-options sends no stored credential for an id that is not saved', async () => {
   realSeen.length = 0;
   const r = await post('/api/widget-options/__preview__', {

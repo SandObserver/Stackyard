@@ -138,7 +138,7 @@ test('a widget text field and secret field accept typing and save', async ({ pag
   expect(saved.widgetConfig.dnsPass ?? saved.widgetConfig.dnsPassSet).toBeTruthy();
 });
 
-test("a saved widget's Fetch sends its id, so the stored key is used", async ({ page, request }) => {
+test("a saved widget's Fetch sends its id and shows the server's advice", async ({ page, request }) => {
   await seedConfig(request, {
     items: [
       {
@@ -154,23 +154,27 @@ test("a saved widget's Fetch sends its id, so the stored key is used", async ({ 
   const sent = [];
   await page.route('**/api/widget-options/**', route => {
     sent.push(new URL(route.request().url()).pathname);
-    return route.fulfill({ json: { options: [] } });
+    return route.fulfill({ status: 502, json: { error: 'x', kind: 'invalid', code: 'invalid.retype' } });
   });
   await openDashboardList(page);
   await rowByName(page, 'Weather').getByRole('button', { name: /^Edit/ }).first().click();
   await page.locator('#ev-body').getByRole('button', { name: 'Fetch' }).first().click();
   await expect.poll(() => sent).toEqual(['/api/widget-options/wx']);
+  await expect(page.locator('#ev-body')).toContainText('the stored credential was not used');
 });
 
-test("a saved app's Live Activity Fetch sends its id, so stored headers are used", async ({ page, request }) => {
+test("a saved app's Live Activity Fetch sends its id with the stored header row", async ({ page, request }) => {
   await seedConfig(request, {
     items: [
       {
         ...app('svc', 'Service'),
-        badge: {
-          enabled: true,
-          url: 'http://svc.invalid/api',
-          headers: [{ key: 'X-Api-Key', value: 'stored-secret', secret: true }],
+        monitoring: {
+          activity: {
+            enabled: true,
+            url: 'http://svc.invalid/api',
+            interval: 30,
+            headers: [{ key: 'X-Api-Key', value: 'stored-secret', secret: true }],
+          },
         },
       },
     ],
@@ -184,6 +188,7 @@ test("a saved app's Live Activity Fetch sends its id, so stored headers are used
   await rowByName(page, 'Service').getByRole('button', { name: /^Edit/ }).first().click();
   await page.locator('#bfetch').click();
   await expect.poll(() => bodies.map(b => b.itemId)).toEqual(['svc']);
+  expect(bodies[0].headers).toEqual([{ key: 'X-Api-Key', secret: true, valueSet: true }]);
 });
 
 test('adding a widget stores its type', async ({ page, request }) => {
