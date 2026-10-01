@@ -48,6 +48,14 @@ test('an import records what it saved', () => {
   assert.match(fn, /state\.items = full\.items;\s*_savedItems = JSON\.stringify\(state\.items\);\s*syncDashSave\(\);/);
 });
 
+/* A list change made while a save runs must wait for it, not be undone. */
+test('list saves run through one queue and a waiting change is not reverted', () => {
+  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  assert.match(src, /function save\(\) \{\s*return saves\.run\(writeItems\);/);
+  assert.match(src, /return saves\.run\(\(\) => appendItems\(newItems\)\);/);
+  assert.match(src, /superseded: \(\) => saves\.pending\(\) > 0/);
+});
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const html = fs.readFileSync(path.join(root, 'admin/index.html'), 'utf8');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');

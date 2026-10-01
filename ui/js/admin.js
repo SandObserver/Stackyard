@@ -494,7 +494,12 @@ function openFolderPicker(appId, targetFolderId = null) {
   dlg.focus(q('button', list));
 }
 
+/* A second press during the write would add a new item a second time. */
+let _editorSaving = false;
+
 async function doSave(orig) {
+  if (_editorSaving) return;
+  _editorSaving = true;
   try {
     /** @type {Record<string, any>} */
     let item;
@@ -616,6 +621,8 @@ async function doSave(orig) {
     toast(t(replaced ? 'toast.updated' : 'toast.added'));
   } catch (e) {
     toast(t('toast.error', { err: e.message }), 'err');
+  } finally {
+    _editorSaving = false;
   }
 }
 

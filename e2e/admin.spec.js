@@ -214,3 +214,23 @@ test('two saves in a row from one page both land', async ({ page, request }) => 
   const labels = (await readConfig(request)).items.map(i => i.label);
   expect(labels).toEqual(expect.arrayContaining(['Alpha 2', 'Bravo 2']));
 });
+
+test('pressing Save twice on a new app adds it once', async ({ page, request }) => {
+  await openDashboardList(page);
+  await page.locator('#btn-add').click();
+  await setInlineRow(page, 'ie-name', 'f-lbl', 'Echo');
+  await setInlineRow(page, 'ie-url', 'f-href', 'http://echo.invalid');
+  await page.route('**/api/config', async route => {
+    if (route.request().method() === 'POST') await new Promise(r => setTimeout(r, 300));
+    await route.continue();
+  });
+  let writes = 0;
+  page.on('request', r => {
+    if (r.url().includes('/api/config') && r.method() === 'POST') writes++;
+  });
+  await page.locator('#ev-save').dblclick();
+  await expect(rowByName(page, 'Echo')).toBeVisible();
+  await page.waitForTimeout(1000);
+  expect(writes).toBe(1);
+  expect((await readConfig(request)).items.filter(i => i.label === 'Echo')).toHaveLength(1);
+});
