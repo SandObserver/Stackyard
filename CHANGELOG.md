@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Translate the hue, saturation and brightness sliders and the colour code hint
   in colour pickers.
 
+- Read Prometheus series whose label values contain spaces.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
@@ -35,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   working.
 
 - End every session 30 days after sign-in, even while it is in use.
+
+- Stop a crafted XML or Prometheus reply from a configured service from freezing
+  the API.
 
 ## [1.15.0] - 2026-09-28
 
