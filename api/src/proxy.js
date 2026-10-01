@@ -190,7 +190,25 @@ function urlPolicyError(u) {
   return null;
 }
 
-async function guardSsrf(rawUrl) {
+/** @param {string} host @param {number} ms */
+function lookupWithin(host, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Timed out')), ms);
+    if (timer.unref) timer.unref();
+    dns.lookup(host).then(
+      r => {
+        clearTimeout(timer);
+        resolve(r);
+      },
+      e => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
+async function guardSsrf(rawUrl, ms = FETCH_MS) {
   let u;
   try {
     u = new URL(rawUrl);
@@ -210,8 +228,9 @@ async function guardSsrf(rawUrl) {
     return { error: `Blocked: ${h} is a private address.`, ip: null, reason: PRIVATE_ADDRESS };
   let address;
   try {
-    ({ address } = await dns.lookup(h));
-  } catch {
+    ({ address } = await lookupWithin(h, ms));
+  } catch (e) {
+    if (e instanceof Error && e.message === 'Timed out') throw e;
     return { error: `Blocked: ${h} could not be resolved.`, ip: null };
   }
   if (!ALLOW_PRIVATE_IPS && isPrivateAddress(address))
@@ -284,7 +303,7 @@ function fetchJSON(raw, opts = {}) {
       res => {
         const sc = res.statusCode ?? 0;
         if (sc >= 300 && sc < 400) {
-          res.resume();
+          req.destroy();
           const e = new Error(`Redirect blocked (${sc}). Use the final URL directly`);
           /* Wording only, and a status this project read. Safe to show. */
           /** @type {any} */ (e).vouchedMessage =
@@ -307,6 +326,7 @@ function fetchJSON(raw, opts = {}) {
           }
           bufs.push(c);
         });
+        res.on('error', e => done(reject, e));
         res.on('end', () => {
           /* Before any string conversion. utf8 corrupts image bytes. */
           if (opts.binary)
@@ -348,9 +368,10 @@ function fetchJSON(raw, opts = {}) {
       done(reject, new Error('Timed out'));
     });
     req.on('error', (/** @type {unknown} */ e) => {
-      if (skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? ''))
-        /** @type {{ vouchedMessage?: string, apiCode?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
-      /** @type {{ apiCode?: string }} */ (e).apiCode = 'network.tls-ignored';
+      if (skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? '')) {
+        /** @type {{ vouchedMessage?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
+        /** @type {{ apiCode?: string }} */ (e).apiCode = 'network.tls-ignored';
+      }
       done(reject, e);
     });
     if (bodyBuf) req.write(bodyBuf);
@@ -428,7 +449,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
 
     const send = (method, onResponse) => {
       const req = lib.request({ ...opts, method }, res => {
-        res.resume();
+        req.destroy();
         if (dl.expired()) return;
         onResponse(res.statusCode ?? 0);
       });
@@ -477,9 +498,11 @@ async function fetchChecked(url, opts = {}) {
   /* Before guardSsrf. Its dns.lookup is itself an outbound request. */
   if (IS_DEMO) return fetchJSON(url, opts);
   const target = rewriteUrl(url);
-  const guard = await guardSsrf(target);
+  const budget = opts.timeout || FETCH_MS;
+  const started = Date.now();
+  const guard = await guardSsrf(target, budget);
   if (guard.error) throw new SsrfBlockedError(guard.error, guard.reason);
-  return fetchJSON(target, { ...opts, pinIp: guard.ip });
+  return fetchJSON(target, { ...opts, pinIp: guard.ip, timeout: Math.max(1, budget - (Date.now() - started)) });
 }
 
 function fetchUnchecked(url, opts = {}) {
@@ -493,9 +516,16 @@ function pingUnchecked(url, ms, skipTls) {
 async function pingChecked(url, ms, skipTls) {
   if (IS_DEMO) return pingUrl(url, ms, skipTls);
   const target = rewriteUrl(url);
-  const guard = await guardSsrf(target);
+  const budget = ms || PING_MS;
+  const started = Date.now();
+  let guard;
+  try {
+    guard = await guardSsrf(target, budget);
+  } catch {
+    return { ok: false, status: 0, error: 'Timed out' };
+  }
   if (guard.error) throw new SsrfBlockedError(guard.error, guard.reason);
-  return pingUrl(target, ms, skipTls, guard.ip);
+  return pingUrl(target, Math.max(1, budget - (Date.now() - started)), skipTls, guard.ip);
 }
 
 module.exports = {
