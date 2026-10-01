@@ -21,6 +21,7 @@ function scrubSecrets(cfg) {
   if (safe.settings?.auth) {
     delete safe.settings.auth.secret;
     delete safe.settings.auth.passwordHash;
+    delete safe.settings.auth.revoked;
   }
   return safe;
 }

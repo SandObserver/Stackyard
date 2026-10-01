@@ -230,3 +230,72 @@ test('changing the password still signs other devices out', async () => {
   assert.equal(status, 200);
   assert.equal((await req('GET', '/api/config', old)).status, 401);
 });
+
+/* ── signing out ──────────────────────────────────────────────────────────── */
+
+test('a token copied before sign-out is refused after it', async () => {
+  await enableAuth();
+  const copied = cookieFor(secret());
+  assert.equal((await req('GET', '/api/config', copied)).status, 200, 'precondition: the session works');
+
+  const out = await req('POST', '/api/auth/logout', copied);
+  assert.equal(out.status, 200);
+  assert.match(
+    out.setCookie.find(c => c.startsWith('ds=')),
+    /Max-Age=0(;|$)/,
+  );
+  assert.equal((await req('GET', '/api/config', copied)).status, 401);
+});
+
+test('signing out one device leaves the others signed in', async () => {
+  await enableAuth();
+  const s = secret();
+  const leaving = 'ds=' + makeToken('session-a', s);
+  const staying = 'ds=' + makeToken('session-b', s);
+  await req('POST', '/api/auth/logout', leaving);
+  assert.equal((await req('GET', '/api/config', leaving)).status, 401);
+  assert.equal((await req('GET', '/api/config', staying)).status, 200);
+});
+
+test('a signed-out session cannot change the password', async () => {
+  await enableAuth();
+  const copied = cookieFor(secret());
+  await req('POST', '/api/auth/logout', copied);
+  assert.equal((await req('POST', '/api/auth/set-password', copied)).status, 401);
+});
+
+test('sign-out without a valid session writes nothing', async () => {
+  await enableAuth();
+  const rev = loadConfig()._rev;
+  await req('POST', '/api/auth/logout', 'ds=forged.1.1.' + 'a'.repeat(64));
+  assert.equal(loadConfig()._rev, rev);
+  assert.equal(loadConfig().settings.auth.revoked, undefined);
+});
+
+test('the sign-out record is not sent to the browser', async () => {
+  await enableAuth();
+  const s = secret();
+  await req('POST', '/api/auth/logout', 'ds=' + makeToken('session-a', s));
+  const r = await req('GET', '/api/config', 'ds=' + makeToken('session-b', s));
+  assert.equal(r.status, 200);
+  assert.equal(r.body.settings.auth?.revoked, undefined);
+});
+
+test('a sign-out record is dropped once its session would have expired', async () => {
+  await enableAuth();
+  const cfg = loadConfig();
+  saveConfig({
+    ...cfg,
+    settings: { auth: { ...cfg.settings.auth, revoked: { 'session-gone': Date.now() - 1 } } },
+  });
+  await req('POST', '/api/auth/logout', cookieFor(secret()));
+  assert.deepEqual(Object.keys(loadConfig().settings.auth.revoked), ['session-abc']);
+});
+
+test('rotating the secret clears the sign-out record', async () => {
+  await enableAuth();
+  await req('POST', '/api/auth/logout', cookieFor(secret()));
+  assert.ok(loadConfig().settings.auth.revoked);
+  rotateSessionSecret();
+  assert.equal(loadConfig().settings.auth.revoked, undefined);
+});
