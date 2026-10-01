@@ -15,7 +15,13 @@ const http = require('node:http');
 const { unfinishedUpload } = require('../test-support/unfinished-upload');
 
 const { sniffImageType } = require('../src/image-sniff');
-const { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE } = require('../src/routes/wallpaper');
+const {
+  storeWallpaper,
+  pruneWallpapers,
+  wallpapersToDrop,
+  WALLPAPER_URL_BASE,
+  PENDING_MS,
+} = require('../src/routes/wallpaper');
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]);
@@ -33,6 +39,12 @@ function age(url, secondsOlder) {
   const when = new Date(Date.now() - secondsOlder * 1000);
   fs.utimesSync(file, when, when);
   return url;
+}
+
+const PAST_PENDING_S = PENDING_MS / 1000 + 60;
+
+function settleStored() {
+  for (const name of fs.readdirSync(dir())) age(name, PAST_PENDING_S + 60);
 }
 
 /* ── the format is read from the bytes ────────────────────────────────────── */
@@ -89,6 +101,7 @@ test('an upload leaves the wallpaper still on screen alone', () => {
 test('a save keeps only the wallpaper the config points at', () => {
   const dropped = storeWallpaper(PNG, '.png');
   const kept = storeWallpaper(JPEG, '.jpg');
+  settleStored();
   pruneWallpapers(kept);
   const files = fs.readdirSync(dir());
   assert.deepEqual(files, [path.basename(kept)]);
@@ -108,8 +121,9 @@ test('pruning a directory that was never written does nothing', () => {
 });
 
 test('a URL outside the wallpaper directory keeps nothing by name', () => {
-  age(storeWallpaper(PNG, '.png'), 60);
-  const newest = storeWallpaper(GIF, '.gif');
+  storeWallpaper(PNG, '.png');
+  settleStored();
+  const newest = age(storeWallpaper(GIF, '.gif'), PAST_PENDING_S);
   pruneWallpapers('https://example.invalid/photo.jpg');
   assert.deepEqual(fs.readdirSync(dir()), [path.basename(newest)]);
 });
@@ -221,6 +235,7 @@ test('an over-size upload is refused with a message, not a broken response', asy
 test('saving a config that names the new wallpaper drops the old file', async () => {
   const dropped = storeWallpaper(PNG, '.png');
   const kept = storeWallpaper(JPEG, '.jpg');
+  settleStored();
   const { loadConfig } = require('../src/config');
   const cfg = loadConfig();
   const body = Buffer.from(
@@ -235,6 +250,42 @@ test('saving a config that names the new wallpaper drops the old file', async ()
   assert.equal(r.status, 200);
   assert.deepEqual(fs.readdirSync(dir()), [path.basename(kept)]);
   assert.ok(!fs.existsSync(path.join(iconsDir, dropped.replace('/icons/', ''))));
+});
+
+function saveBackground(url) {
+  const { loadConfig } = require('../src/config');
+  const cfg = loadConfig();
+  const body = Buffer.from(
+    JSON.stringify({
+      _schemaVersion: cfg._schemaVersion,
+      _rev: cfg._rev,
+      items: [],
+      settings: { background: { type: 'url', url, brightness: 1, fit: 'fill' } },
+    }),
+  );
+  return request('/api/config', { 'Content-Type': 'application/json' }, body);
+}
+
+const onDisk = url => fs.existsSync(path.join(iconsDir, url.replace('/icons/', '')));
+
+test('an unrelated save leaves an upload that is not saved yet', async () => {
+  const inUse = storeWallpaper(PNG, '.png');
+  settleStored();
+  assert.equal((await saveBackground(inUse)).status, 200);
+  const pending = (await upload('next.jpg', JPEG)).body.url;
+  assert.equal((await saveBackground(inUse)).status, 200);
+  assert.ok(onDisk(pending), 'the pending upload was deleted');
+  assert.equal((await saveBackground(pending)).status, 200);
+  assert.ok(onDisk(pending));
+});
+
+test('an upload never saved is dropped once it is past the pending window', () => {
+  const inUse = storeWallpaper(PNG, '.png');
+  const abandoned = storeWallpaper(JPEG, '.jpg');
+  settleStored();
+  pruneWallpapers(inUse);
+  assert.ok(!onDisk(abandoned));
+  assert.ok(onDisk(inUse));
 });
 
 test('a link on a scheme that is not http is refused', async () => {

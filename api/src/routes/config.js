@@ -1,6 +1,6 @@
 const { on, json, readBody, checkOrigin } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
-const { loadConfig, saveConfig, ensureSystemItems, migrate } = require('../config');
+const { loadConfig, loadConfigForUpdate, saveConfig, ensureSystemItems, migrate } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
 /* Shared with the browser rather than copied. The Dockerfile places this file
@@ -41,7 +41,7 @@ on('POST', '/api/settings/unsplash-key', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   try {
     const { apiKey = '' } = JSON.parse(await readBody(req));
-    const cfg = loadConfig();
+    const cfg = loadConfigForUpdate();
     cfg.settings = cfg.settings || {};
     cfg.settings.background = cfg.settings.background || {};
     if (apiKey.trim()) cfg.settings.background.apiKey = apiKey.trim();

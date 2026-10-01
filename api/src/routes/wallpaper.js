@@ -20,6 +20,9 @@ const UPLOAD_MAX_BYTES = 16 * 1024 * 1024;
 const UPLOAD_STREAM_MAX_BYTES = Math.round(UPLOAD_MAX_BYTES * 1.25);
 const LINK_BODY_MAX_BYTES = 4096;
 const UPLOADS_PER_HOUR = 20;
+/* An upload is stored before the config names it. A save inside this window
+   must not delete it, or the later wallpaper save points at a missing file. */
+const PENDING_MS = 3_600_000;
 
 /* Keep proxy_read_timeout on /api/wallpaper/fetch above this. */
 const FETCH_TIMEOUT_MS = 30_000;
@@ -54,16 +57,16 @@ function wallpapersToDrop(files, referenced) {
   return files.filter(f => f !== newest);
 }
 
-/** @param {string} dir @returns {string[]} names, oldest first */
+/** @param {string} dir @returns {{ name: string, at: number }[]} oldest first */
 function storedByAge(dir) {
   return fs
     .readdirSync(dir)
     .map(name => ({ name, at: fs.statSync(path.join(dir, name)).mtimeMs }))
-    .sort((a, b) => a.at - b.at || a.name.localeCompare(b.name))
-    .map(f => f.name);
+    .sort((a, b) => a.at - b.at || a.name.localeCompare(b.name));
 }
 
-/** Removes every stored wallpaper the saved config no longer points at.
+/** Removes every stored wallpaper the saved config no longer points at, except
+    uploads younger than PENDING_MS.
 
     @param {unknown} url `settings.background.url` @returns {void} */
 function pruneWallpapers(url) {
@@ -75,7 +78,9 @@ function pruneWallpapers(url) {
     return;
   }
   const referenced = typeof url === 'string' && url.startsWith(WALLPAPER_URL_BASE) ? path.basename(url) : '';
-  for (const name of wallpapersToDrop(files, referenced)) {
+  const pending = new Set(files.filter(f => Date.now() - f.at < PENDING_MS).map(f => f.name));
+  const names = files.map(f => f.name);
+  for (const name of wallpapersToDrop(names, referenced).filter(n => !pending.has(n))) {
     try {
       fs.unlinkSync(path.join(dir, name));
     } catch (e) {
@@ -178,4 +183,4 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
   }
 });
 
-module.exports = { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE };
+module.exports = { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE, PENDING_MS };
