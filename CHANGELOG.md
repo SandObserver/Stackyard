@@ -40,6 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop a failed Unsplash key save from taking effect until the next config read.
 
+- Use a saved widget's stored API key when its settings Fetch button is pressed,
+  instead of asking for it again.
+
+- Use an app's stored Live Activity headers and parameters when its Fetch button
+  is pressed.
+
+- Show the specific reason a widget settings Fetch failed, such as a private
+  address or an untrusted certificate, instead of a generic message.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
