@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Report a service that hangs up mid-reply at once, instead of as a timeout.
 
+- Answer an oversized icon upload or wallpaper link with an error instead of
+  dropping the connection.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
