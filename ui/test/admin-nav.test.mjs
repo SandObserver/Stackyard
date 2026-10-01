@@ -44,7 +44,7 @@ test('each header Save is driven by its own unsaved-change check', () => {
    unsaved changes that are already on the server. */
 test('an import records what it saved', () => {
   const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-  const fn = src.slice(src.indexOf('async function appendAndSave'), src.indexOf('async function saveOrRevert'));
+  const fn = src.slice(src.indexOf('async function appendItems'), src.indexOf('async function saveOrRevert'));
   assert.match(fn, /state\.items = full\.items;\s*_savedItems = JSON\.stringify\(state\.items\);\s*syncDashSave\(\);/);
 });
 

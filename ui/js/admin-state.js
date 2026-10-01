@@ -4,7 +4,6 @@ export const state = {
   items: [],
   /* An id, never a position. A position goes stale as soon as items move. */
   eid: null,
-  saving: false,
   _settings: {},
   _widgetReg: Object.create(null),
   /* Widgets the server found but refused, as { name, errors }. */

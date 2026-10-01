@@ -23,6 +23,10 @@ let _authEnabled = false;
 let _srvTrack = null;
 /** @type {{ dirty: () => boolean, reset: (force?: boolean) => void } | null} */
 let _bgTrack = null;
+let _savedWallpaperUrl = '';
+
+/** The wallpaper link the server holds, for undoing a link that failed. */
+export const savedWallpaperUrl = () => _savedWallpaperUrl;
 
 const _val = (...ids) => {
   for (const id of ids) {
@@ -142,6 +146,7 @@ export function loadSettings(c) {
     aw.addEventListener('change', saveKeepAwake);
   }
   const bg = s.background || { type: 'unsplash', brightness: 0.62 };
+  _savedWallpaperUrl = bg.url || '';
   const typeEl = inp('bg-type');
   if (typeEl) {
     typeEl.value = bg.type || 'unsplash';
@@ -376,6 +381,7 @@ async function saveWallpaper() {
     c.settings = c.settings || {};
     c.settings.background = bg;
     await apiPost('/api/config', c);
+    _savedWallpaperUrl = bg.url || '';
     /* After the main config. GET /api/config strips the key, so a config write
        that follows would overwrite it with nothing. */
     if (type === 'unsplash') {

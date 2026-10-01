@@ -325,6 +325,7 @@
     "pwWeak": "Passwort zu schwach: {label}",
     "currentPasswordWrong": "Das aktuelle Passwort ist falsch.",
     "passwordChangedElsewhere": "Das Passwort wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
+    "dashboardChangedElsewhere": "Das Dashboard wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
     "tooManyAttempts": "Zu viele Versuche. Versuche es später erneut.",
     "sessionsRevoked": "Alle Geräte wurden abgemeldet.",
     "authNeedsPassword": "Legen Sie ein Passwort fest, bevor Sie die Authentifizierung aktivieren.",

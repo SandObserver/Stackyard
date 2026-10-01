@@ -182,3 +182,35 @@ test('switching section on a phone starts the new section at the top', async ({ 
   await page.locator('.mtab[data-sec="dashboard"]').click();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
+
+test('a save refuses to overwrite a change made in another tab', async ({ page, request }) => {
+  await openDashboardList(page);
+  const elsewhere = await readConfig(request);
+  await seedConfig(request, { items: [...elsewhere.items, app('charlie', 'Charlie')] });
+
+  await rowByName(page, 'Alpha').getByRole('button', { name: /edit/i }).click();
+  await setInlineRow(page, 'ie-name', 'f-lbl', 'Alpha renamed');
+  await page.locator('#ev-save').click();
+  await expect(page.locator('#toast')).toHaveText(
+    'The dashboard was changed elsewhere. Reload the page and try again.',
+  );
+
+  const cfg = await readConfig(request);
+  expectItem(cfg, i => i.id === 'charlie', 'the item added in the other tab');
+  expect(expectItem(cfg, i => i.id === 'alpha', 'the item edited here').label).toBe('Alpha');
+});
+
+test('two saves in a row from one page both land', async ({ page, request }) => {
+  await openDashboardList(page);
+  for (const [name, renamed] of [
+    ['Alpha', 'Alpha 2'],
+    ['Bravo', 'Bravo 2'],
+  ]) {
+    await rowByName(page, name).getByRole('button', { name: /edit/i }).click();
+    await setInlineRow(page, 'ie-name', 'f-lbl', renamed);
+    await saveEditor(page);
+    await expect(rowByName(page, renamed)).toBeVisible();
+  }
+  const labels = (await readConfig(request)).items.map(i => i.label);
+  expect(labels).toEqual(expect.arrayContaining(['Alpha 2', 'Bravo 2']));
+});
