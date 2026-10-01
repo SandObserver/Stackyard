@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { DAMAGE_CODES, pickLanguage, readConfigDamage, recoverySteps } from '../js/config-recovery-logic.js';
+import { DAMAGE_CODES, fillNames, pickLanguage, readConfigDamage, recoverySteps } from '../js/config-recovery-logic.js';
 
 const en = JSON.parse(fs.readFileSync(new URL('../i18n/en.json', import.meta.url), 'utf8'));
 
@@ -25,12 +25,22 @@ test('ignores any other error', () => {
     assert.equal(readConfigDamage(body), null);
 });
 
-test('drops a name that could carry markup', () => {
-  const read = readConfigDamage({
-    code: DAMAGE_CODES.corrupt,
-    detail: { file: '<img src=x onerror=alert(1)>', backup: 'a</code><b>' },
-  });
-  assert.deepEqual(read, { reason: 'corrupt', file: 'apps.json', backup: null });
+test('keeps any plain file name, and drops one with a path or control character', () => {
+  assert.equal(readConfigDamage({ code: DAMAGE_CODES.corrupt, detail: { file: 'my apps.json' } }).file, 'my apps.json');
+  for (const file of ['../etc/passwd', 'a\\b', 'a\u0001b', '', 'x'.repeat(256)])
+    assert.equal(readConfigDamage({ code: DAMAGE_CODES.corrupt, detail: { file } }).file, 'apps.json', file);
+});
+
+test('names are escaped once and can never add a tag', () => {
+  const escapeName = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const sanitize = s => s.replace(/<(?!\/?code>)/g, '&lt;');
+  const out = fillNames(
+    v => `Open <code>${v.backup}</code> as <code>${v.file}</code>`,
+    { file: 'a&b.json', backup: '<img src=x onerror=alert(1)></code>' },
+    sanitize,
+    escapeName,
+  );
+  assert.equal(out, 'Open <code>&lt;img src=x onerror=alert(1)&gt;&lt;/code&gt;</code> as <code>a&amp;b.json</code>');
 });
 
 test('the steps name the backup when one was written', () => {

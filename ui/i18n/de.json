@@ -290,7 +290,7 @@
     "stepsTitle": "So behebst du es auf dem Server",
     "stepRepairBackup": "Öffne im Datenordner die Kopie <code>{backup}</code>. Behebe den Fehler und speichere sie als <code>{file}</code>.",
     "stepRepair": "Öffne im Datenordner <code>{file}</code> und behebe den Fehler.",
-    "stepExport": "Oder ersetze <code>{file}</code> durch eine Datei, die du mit Exportieren gespeichert hast.",
+    "stepExport": "Oder ersetze <code>{file}</code> durch eine Datei, die du mit Exportieren gespeichert hast. Ein Export enthält kein Passwort. Lege in den Einstellungen sofort wieder eines fest.",
     "stepPermissions": "Gib dem Benutzer des Containers Lese- und Schreibrechte für <code>{file}</code> im Datenordner.",
     "stepStartOver": "Um ohne Einstellungen neu zu beginnen, lösche <code>{file}</code>. Danach startet die Ersteinrichtung.",
     "stepCheck": "Wähle „Erneut prüfen“.",

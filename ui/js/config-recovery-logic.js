@@ -10,8 +10,8 @@ export const DAMAGE_CODES = Object.freeze({
   unreadable: 'internal.config-unreadable',
 });
 
-/* The names go into translated markup unescaped. */
-const FILE_NAME = /^[\w.-]{1,200}$/;
+// biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what it refuses
+const FILE_NAME = /^[^\u0000-\u001f\u007f/\\]{1,255}$/;
 
 /** The damage an API error body reports, or null when it reports none.
     @param {unknown} body
@@ -25,6 +25,23 @@ export function readConfigDamage(body) {
   const file = typeof detail.file === 'string' && FILE_NAME.test(detail.file) ? detail.file : 'apps.json';
   const backup = typeof detail.backup === 'string' && FILE_NAME.test(detail.backup) ? detail.backup : null;
   return { reason: /** @type {'corrupt' | 'unreadable'} */ (reason), file, backup };
+}
+
+/** Translated markup with each name escaped once. The names are filled in after
+    the markup is sanitized, so a name can never add a tag.
+    @param {(vars: Record<string, string>) => string} translate
+    @param {Record<string, string> | undefined} vars
+    @param {(s: string) => string} sanitize @param {(s: string) => string} escapeName
+    @returns {string} */
+export function fillNames(translate, vars, sanitize, escapeName) {
+  const given = vars || {};
+  const names = Object.keys(given);
+  const marker = i => `\u0001${i}\u0001`;
+  let out = sanitize(translate(Object.fromEntries(names.map((n, i) => [n, marker(i)]))));
+  names.forEach((n, i) => {
+    out = out.split(marker(i)).join(escapeName(given[n]));
+  });
+  return out;
 }
 
 /** @param {{ reason: string, file: string, backup: string | null }} damage

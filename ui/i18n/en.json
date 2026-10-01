@@ -290,7 +290,7 @@
     "stepsTitle": "To fix it, on the server",
     "stepRepairBackup": "In the data folder, open the copy <code>{backup}</code>. Fix the error, then save it as <code>{file}</code>.",
     "stepRepair": "In the data folder, open <code>{file}</code> and fix the error.",
-    "stepExport": "Or replace <code>{file}</code> with a file you saved with Export.",
+    "stepExport": "Or replace <code>{file}</code> with a file you saved with Export. An export holds no password. Set one again in Settings straight away.",
     "stepPermissions": "Give the container’s user read and write access to <code>{file}</code> in the data folder.",
     "stepStartOver": "To start again with no settings, delete <code>{file}</code>. First-time setup then runs.",
     "stepCheck": "Choose Check again.",

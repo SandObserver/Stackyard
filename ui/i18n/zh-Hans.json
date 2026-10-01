@@ -285,7 +285,7 @@
     "stepsTitle": "在服务器上按以下步骤修复",
     "stepRepairBackup": "在数据文件夹中打开副本 <code>{backup}</code>，修正错误，然后将其另存为 <code>{file}</code>。",
     "stepRepair": "在数据文件夹中打开 <code>{file}</code> 并修正错误。",
-    "stepExport": "或者用你通过“导出”保存的文件替换 <code>{file}</code>。",
+    "stepExport": "或者用你通过“导出”保存的文件替换 <code>{file}</code>。导出的文件不含密码，请立即在设置中重新设置密码。",
     "stepPermissions": "在数据文件夹中，为容器的用户授予 <code>{file}</code> 的读写权限。",
     "stepStartOver": "如要不带任何设置重新开始，请删除 <code>{file}</code>。之后将运行首次设置。",
     "stepCheck": "选择“重新检查”。",

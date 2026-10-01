@@ -1,8 +1,14 @@
 // @ts-check
-import { html, setHtml } from '/js/html.js?v=c71f8903';
+import { esc, html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=1f1ea9c1';
-import { i18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
-import { HELP_URL, pickLanguage, readConfigDamage, recoverySteps } from '/js/config-recovery-logic.js?v=2838f879';
+import { sanitizeI18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
+import {
+  fillNames,
+  HELP_URL,
+  pickLanguage,
+  readConfigDamage,
+  recoverySteps,
+} from '/js/config-recovery-logic.js?v=43ade6d7';
 
 let _shown = false;
 export const recoveryShown = () => _shown;
@@ -11,13 +17,13 @@ export const recoveryShown = () => _shown;
     running: the API refuses every request until the file is fixed.
     @param {{ reason: string, file: string, backup: string | null }} damage */
 export async function showConfigRecovery(damage) {
+  _shown = true;
   await initI18n(
     pickLanguage(
       navigator.languages || [navigator.language],
       LANGUAGES.map(l => l.code),
     ),
   );
-  _shown = true;
   document.title = t('configRecovery.title');
   const screen = document.createElement('div');
   screen.className = 'cfg-recovery';
@@ -63,11 +69,14 @@ function renderBody(body, damage) {
   setHtml(
     body,
     html`<h1 class="cfg-recovery-title" tabindex="-1">${t('configRecovery.title')}</h1>
-      <p class="cfg-recovery-why">${i18nMarkup(t(why, { file: damage.file }))}</p>
+      <p class="cfg-recovery-why">${named(why, { file: damage.file })}</p>
       <p class="cfg-recovery-safe">${t('configRecovery.locked')}</p>
       <h2 class="cfg-recovery-steps-title">${t('configRecovery.stepsTitle')}</h2>
       <ol class="cfg-recovery-steps">
-        ${recoverySteps(damage).map(s => html`<li>${i18nMarkup(t(s.key, s.vars))}</li>`)}
+        ${recoverySteps(damage).map(s => html`<li>${named(s.key, s.vars)}</li>`)}
       </ol>`,
   );
 }
+
+/** @param {string} key @param {Record<string, string>} [vars] */
+const named = (key, vars) => raw(fillNames(v => t(key, v), vars, sanitizeI18nMarkup, esc));

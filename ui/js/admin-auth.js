@@ -1,9 +1,8 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=ecb387bd';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=e888f2cc';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { el, inp as inpById, qa } from '/js/utils.js?v=b1cfbd45';
-import { showConfigRecovery } from '/js/config-recovery.js?v=3a0f8169';
-import { readConfigDamage } from '/js/config-recovery-logic.js?v=2838f879';
+import { readConfigDamage } from '/js/config-recovery-logic.js?v=43ade6d7';
 
 export async function checkAuth(onLogin) {
   try {
@@ -16,12 +15,7 @@ export async function checkAuth(onLogin) {
       showLoginScreen(onLogin);
       return false;
     }
-    const damage = e.status === 503 ? readConfigDamage(e) : null;
-    if (damage) {
-      await showConfigRecovery(damage);
-      return false;
-    }
-    return true;
+    return !(e.status === 503 && readConfigDamage(e));
   }
 }
 

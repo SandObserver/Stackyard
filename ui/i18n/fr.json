@@ -295,7 +295,7 @@
     "stepsTitle": "Pour corriger, sur le serveur",
     "stepRepairBackup": "Dans le dossier de données, ouvrez la copie <code>{backup}</code>. Corrigez l’erreur, puis enregistrez-la sous <code>{file}</code>.",
     "stepRepair": "Dans le dossier de données, ouvrez <code>{file}</code> et corrigez l’erreur.",
-    "stepExport": "Ou remplacez <code>{file}</code> par un fichier enregistré avec Exporter.",
+    "stepExport": "Ou remplacez <code>{file}</code> par un fichier enregistré avec Exporter. Un export ne contient aucun mot de passe. Définissez-en un de nouveau dans les Réglages sans attendre.",
     "stepPermissions": "Donnez à l’utilisateur du conteneur les droits de lecture et d’écriture sur <code>{file}</code> dans le dossier de données.",
     "stepStartOver": "Pour repartir sans aucun réglage, supprimez <code>{file}</code>. La première configuration se lance alors.",
     "stepCheck": "Choisissez Vérifier à nouveau.",

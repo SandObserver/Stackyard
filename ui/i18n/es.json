@@ -295,7 +295,7 @@
     "stepsTitle": "Para solucionarlo, en el servidor",
     "stepRepairBackup": "En la carpeta de datos, abre la copia <code>{backup}</code>. Corrige el error y guárdala como <code>{file}</code>.",
     "stepRepair": "En la carpeta de datos, abre <code>{file}</code> y corrige el error.",
-    "stepExport": "O reemplaza <code>{file}</code> por un archivo que guardaste con Exportar.",
+    "stepExport": "O reemplaza <code>{file}</code> por un archivo que guardaste con Exportar. Una exportación no incluye la contraseña. Vuelve a definir una en Ajustes enseguida.",
     "stepPermissions": "Da al usuario del contenedor permiso de lectura y escritura sobre <code>{file}</code> en la carpeta de datos.",
     "stepStartOver": "Para empezar de nuevo sin ajustes, elimina <code>{file}</code>. Después se inicia la configuración inicial.",
     "stepCheck": "Elige Comprobar de nuevo.",
