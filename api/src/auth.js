@@ -336,8 +336,9 @@ function readSession(req, cfg) {
   return read;
 }
 
-/* A record is pruned only once its session has expired. Pruning earlier makes
-   the signed-out token valid again. */
+/* A record is pruned only once every copy of its session has expired. Pruning
+   earlier makes a signed-out token valid again. Copies renewed from a
+   three-part token can carry a later sign-in time than the caller's. */
 function revokeSession(req) {
   const read = readSession(req, loadConfig());
   if (!read) return false;
@@ -346,9 +347,9 @@ function revokeSession(req) {
   const now = Date.now();
   const revoked = {};
   for (const [id, until] of Object.entries(auth.revoked || {})) if (until > now) revoked[id] = until;
-  revoked[read.sessionId] = read.createdAt + SESSION_ABSOLUTE_MS;
+  revoked[read.sessionId] = now + SESSION_ABSOLUTE_MS;
   auth.revoked = revoked;
-  saveConfig(cfg);
+  saveConfig(cfg, { keepRev: true });
   return true;
 }
 

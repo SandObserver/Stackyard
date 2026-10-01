@@ -228,12 +228,14 @@ function loadConfigForUpdate() {
   return structuredClone(loadConfig());
 }
 
-function saveConfig(data) {
+/* keepRev is only for writes the browser never sees. Every open dashboard
+   reloads when _rev changes. */
+function saveConfig(data, { keepRev = false } = {}) {
   if (_damage) loadConfig();
   if (_damage) throw new Error('config file cannot be used; refusing to overwrite it');
   if (data && typeof data === 'object') {
     data._schemaVersion = SCHEMA_VERSION;
-    data._rev = (Number(data._rev) || 0) + 1;
+    if (!keepRev) data._rev = (Number(data._rev) || 0) + 1;
   }
   const dir = path.dirname(CONFIG_PATH);
   fs.mkdirSync(dir, { recursive: true });

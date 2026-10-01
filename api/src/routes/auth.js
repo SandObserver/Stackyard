@@ -96,12 +96,12 @@ on('POST', '/api/auth/login', async (req, res) => {
 on('POST', '/api/auth/logout', (req, res) => {
   if (!checkOrigin(req, res)) return;
   log.audit('logout', { ip: getIp(req) });
+  clearSessionCookie(res, isSecureRequest(req));
   try {
     revokeSession(req);
   } catch (e) {
-    log.warn('could not record the sign-out', { error: e.message });
+    return fail(res, e, { status: 500, kind: KIND.INTERNAL, error: 'Could not end the session on the server.' });
   }
-  clearSessionCookie(res, isSecureRequest(req));
   json(res, 200, { ok: true });
 });
 
