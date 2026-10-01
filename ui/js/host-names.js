@@ -4,7 +4,7 @@
 
 export const ALLOWED_HOSTS_MAX = 50;
 
-const LABEL = /^(?!-)[a-z0-9-]{1,63}(?<!-)$/;
+const LABEL = /^(?!-)[a-z0-9_-]{1,63}(?<!-)$/;
 const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 
 /* Names no public DNS answers for. A page elsewhere cannot point one of them

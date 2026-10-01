@@ -11,7 +11,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=50228345';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=ac122b47';
 import {
   apiGet,
   apiPost,

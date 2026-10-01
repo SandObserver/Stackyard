@@ -13,7 +13,7 @@ import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=b1cfbd45';
 import { renderColorControl } from '/js/admin-color-control.js?v=5c887239';
 import { BACKDROP } from '/js/background.js?v=cd1cc453';
-import { firstBadHost, hostnameOf, isLocalAddress, parseHostList } from '/js/host-names.js?v=da117878';
+import { firstBadHost, hostnameOf, isLocalAddress, parseHostList } from '/js/host-names.js?v=842f96ca';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -487,7 +487,7 @@ async function saveServer() {
         pwEl.placeholder = '●●●●●●●●●● (configured)';
       }
     }
-    await apiPost('/api/auth/toggle', { enabled, currentPassword });
+    await apiPost('/api/auth/toggle', { enabled, currentPassword, allowedHosts });
 
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};

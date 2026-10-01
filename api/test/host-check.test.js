@@ -18,7 +18,7 @@ let server, port;
 
 /* Host and Origin both name the attacker's site, as a browser sends them after
    DNS rebinding. */
-function request(method, pathName, host, body) {
+function request(method, pathName, host, body, cookie) {
   return new Promise((resolve, reject) => {
     const payload = body === undefined ? null : JSON.stringify(body);
     const req = http.request(
@@ -30,13 +30,20 @@ function request(method, pathName, host, body) {
         headers: {
           Host: host,
           Origin: `http://${host}`,
+          ...(cookie ? { Cookie: cookie } : {}),
           ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {}),
         },
       },
       res => {
         let data = '';
         res.on('data', c => (data += c));
-        res.on('end', () => resolve({ status: res.statusCode, body: data ? JSON.parse(data) : null }));
+        res.on('end', () =>
+          resolve({
+            status: res.statusCode,
+            body: data ? JSON.parse(data) : null,
+            cookie: (res.headers['set-cookie'] || [])[0]?.split(';')[0],
+          }),
+        );
       },
     );
     req.on('error', reject);
@@ -139,4 +146,38 @@ test('health answers on any address', async () => {
   saveConfig({ items: [], settings: { server: { allowedHosts: [] } } });
   expireCache();
   assert.equal((await request('GET', '/health', 'evil.example')).status, 200);
+});
+
+test('turning the password off from a name stores that name in the same write', async () => {
+  const passwordHash = await hashPassword('correct-horse');
+  saveConfig({ items: [], settings: { auth: { enabled: true, passwordHash }, server: { allowedHosts: [] } } });
+  expireCache();
+  const login = await request('POST', '/api/auth/login', 'dash.example.com', { password: 'correct-horse' });
+  assert.equal(login.status, 200);
+  const off = await request(
+    'POST',
+    '/api/auth/toggle',
+    'dash.example.com',
+    { enabled: false, currentPassword: 'correct-horse', allowedHosts: ['dash.example.com'] },
+    login.cookie,
+  );
+  assert.equal(off.status, 200);
+  assert.deepEqual(stored(), ['dash.example.com']);
+  assert.equal((await request('GET', '/api/config', 'dash.example.com')).status, 200);
+});
+
+test('a toggle with a malformed list changes nothing', async () => {
+  saveConfig({ items: [], settings: { server: { allowedHosts: [] } } });
+  expireCache();
+  const r = await request('POST', '/api/auth/toggle', '127.0.0.1', { enabled: false, allowedHosts: ['not a host'] });
+  assert.equal(r.status, 400);
+  assert.deepEqual(stored(), []);
+});
+
+test('names with an underscore are answered and can be allowed', async () => {
+  saveConfig({ items: [], settings: { server: { allowedHosts: ['stackyard_app.example.com'] } } });
+  for (const host of ['my_nas:8700', 'stackyard_app.example.com']) {
+    expireCache();
+    assert.equal((await request('GET', '/api/auth/check', host)).status, 200, host);
+  }
 });
