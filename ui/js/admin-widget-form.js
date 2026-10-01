@@ -117,11 +117,9 @@ function _renderWidgetForm(body) {
   if (_mode === 'registry') {
     const d = document.createElement('div');
     body.appendChild(d);
-    const _wid =
-      state.eid !== null && state.items[state.eid] && state.items[state.eid].id ? state.items[state.eid].id : null;
     const _vf = state._widgetReg[state._wtype].viewField;
     state._autoForm = renderWidgetConfigForm(d, state._widgetReg[state._wtype].fields || [], state._wAutoCfg, {
-      widgetId: _wid,
+      widgetId: state.eid,
       widgetType: state._wtype,
       size: state._wsize,
       /* A view switch can change which sizes are offered, and the tiles are

@@ -986,7 +986,7 @@ async function fetchBadge() {
       params,
       headers,
       skipTls,
-      itemId: state.eid !== null ? state.items[state.eid]?.id : undefined,
+      itemId: state.eid ?? undefined,
     });
     state.fnums = r.numbers || [];
     if (st) {

@@ -138,6 +138,54 @@ test('a widget text field and secret field accept typing and save', async ({ pag
   expect(saved.widgetConfig.dnsPass ?? saved.widgetConfig.dnsPassSet).toBeTruthy();
 });
 
+test("a saved widget's Fetch sends its id, so the stored key is used", async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [
+      {
+        id: 'wx',
+        type: 'widget',
+        widgetType: 'weather',
+        label: 'Weather',
+        widgetSize: 'small',
+        widgetConfig: { provider: 'openweather', owKey: 'stored-key', cityQuery: 'Berlin' },
+      },
+    ],
+  });
+  const sent = [];
+  await page.route('**/api/widget-options/**', route => {
+    sent.push(new URL(route.request().url()).pathname);
+    return route.fulfill({ json: { options: [] } });
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Weather').getByRole('button', { name: /^Edit/ }).first().click();
+  await page.locator('#ev-body').getByRole('button', { name: 'Fetch' }).first().click();
+  await expect.poll(() => sent).toEqual(['/api/widget-options/wx']);
+});
+
+test("a saved app's Live Activity Fetch sends its id, so stored headers are used", async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [
+      {
+        ...app('svc', 'Service'),
+        badge: {
+          enabled: true,
+          url: 'http://svc.invalid/api',
+          headers: [{ key: 'X-Api-Key', value: 'stored-secret', secret: true }],
+        },
+      },
+    ],
+  });
+  const bodies = [];
+  await page.route('**/api/badge-proxy', route => {
+    bodies.push(route.request().postDataJSON());
+    return route.fulfill({ json: { numbers: [] } });
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Service').getByRole('button', { name: /^Edit/ }).first().click();
+  await page.locator('#bfetch').click();
+  await expect.poll(() => bodies.map(b => b.itemId)).toEqual(['svc']);
+});
+
 test('adding a widget stores its type', async ({ page, request }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();
