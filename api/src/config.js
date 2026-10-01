@@ -125,17 +125,56 @@ function _normalizeShape(parsed) {
   return parsed;
 }
 
+const { HELP_URL } = require('../../ui/js/config-recovery-logic.js');
+
+/* Set while the file on disk cannot be used. Do not save then: the blank
+   config has sign-in off and replaces the owner's settings and password. */
+let _damage = null;
+let _damageLogged = null;
+
+function _markDamaged(reason, error, backup) {
+  _damage = { reason, file: path.basename(CONFIG_PATH), ...(backup ? { backup } : {}) };
+  const key = `${reason}:${backup || ''}`;
+  if (key === _damageLogged) return;
+  _damageLogged = key;
+  log.error('config file cannot be used; sign-in and saving are refused until it is fixed', {
+    path: CONFIG_PATH,
+    reason,
+    ...(backup ? { backup } : {}),
+    ...(error ? { error } : {}),
+    help: HELP_URL,
+  });
+}
+
+function _clearDamage() {
+  if (_damage) log.info('config file readable again', { path: CONFIG_PATH });
+  _damage = null;
+  _damageLogged = null;
+}
+
+/** @returns {{ reason: 'unreadable' | 'corrupt', file: string, backup?: string } | null} */
+function configDamage() {
+  if (IS_DEMO) return null;
+  loadConfig();
+  return _damage;
+}
+
 /* Written with wx. One corruption must not overwrite an earlier backup. */
 let _lastCorruptRaw = null;
+let _lastBackup = null;
 function _backupCorrupt(raw) {
-  if (raw === _lastCorruptRaw) return;
+  if (raw === _lastCorruptRaw) return _lastBackup;
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const target = `${CONFIG_PATH}.corrupt-${stamp}`;
+  _lastBackup = null;
   try {
-    fs.writeFileSync(`${CONFIG_PATH}.corrupt-${stamp}`, raw, { encoding: 'utf8', flag: 'wx' });
+    fs.writeFileSync(target, raw, { encoding: 'utf8', flag: 'wx' });
+    _lastBackup = path.basename(target);
   } catch (e) {
     log.warn('could not write the corrupt-config backup', { path: CONFIG_PATH, error: e.message });
   }
   _lastCorruptRaw = raw;
+  return _lastBackup;
 }
 
 /* Returns the live cache. Do not write to it. Call loadConfigForUpdate to
@@ -150,8 +189,8 @@ function loadConfig() {
   try {
     raw = fs.readFileSync(CONFIG_PATH, 'utf8');
   } catch (e) {
-    if (e.code !== 'ENOENT')
-      log.warn('config file unreadable, starting with a blank config', { path: CONFIG_PATH, error: e.message });
+    if (e.code === 'ENOENT') _clearDamage();
+    else _markDamaged('unreadable', e.message);
     return migrate({ items: [], settings: {} });
   }
 
@@ -159,21 +198,17 @@ function loadConfig() {
   try {
     parsed = JSON.parse(raw);
   } catch (e) {
-    log.warn('config file corrupt, backing up and starting with a blank config', {
-      path: CONFIG_PATH,
-      error: e.message,
-    });
-    _backupCorrupt(raw);
+    _markDamaged('corrupt', e.message, _backupCorrupt(raw));
     return migrate({ items: [], settings: {} });
   }
 
   const shaped = _normalizeShape(parsed);
   if (!shaped) {
-    log.warn('config file has the wrong shape, backing up and starting with a blank config', { path: CONFIG_PATH });
-    _backupCorrupt(raw);
+    _markDamaged('corrupt', 'wrong shape', _backupCorrupt(raw));
     return migrate({ items: [], settings: {} });
   }
 
+  _clearDamage();
   const before = shaped._schemaVersion;
   migrate(shaped);
   _cfgCache = shaped;
@@ -194,6 +229,8 @@ function loadConfigForUpdate() {
 }
 
 function saveConfig(data) {
+  if (_damage) loadConfig();
+  if (_damage) throw new Error('config file cannot be used; refusing to overwrite it');
   if (data && typeof data === 'object') {
     data._schemaVersion = SCHEMA_VERSION;
     data._rev = (Number(data._rev) || 0) + 1;
@@ -268,6 +305,7 @@ module.exports = {
   SCHEMA_VERSION,
   loadConfig,
   loadConfigForUpdate,
+  configDamage,
   saveConfig,
   ensureSystemItems,
   migrate,

@@ -1,6 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b2ce3205';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=fb08b174';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=e1e5a2e5';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=dc98d255';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=c3640e9e';
+import { recoveryShown } from '/js/config-recovery.js?v=5df4ccf1';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=8c7688eb';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -10,7 +11,7 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=3e718d20';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=a8c2d9a8';
 import {
   apiGet,
   apiPost,
@@ -19,9 +20,9 @@ import {
   reveal,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=ecb387bd';
+} from '/js/admin-shared.js?v=e888f2cc';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=3edb69b5';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=d5c0a37d';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=a3a1177d';
@@ -978,6 +979,7 @@ function syncDashSave() {
   if (dashSaveEl) dashSaveEl.disabled = JSON.stringify(state.items) === _savedItems;
 }
 addEventListener('beforeunload', e => {
+  if (recoveryShown()) return;
   if (!settingsDirty() && JSON.stringify(state.items) === _savedItems) return;
   e.preventDefault();
   e.returnValue = '';

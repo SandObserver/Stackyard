@@ -1,4 +1,6 @@
 const { isAuthenticated, refreshSession } = require('./auth');
+const { configDamage } = require('./config');
+const { DAMAGE_CODES } = require('../../ui/js/config-recovery-logic.js');
 const log = require('./log');
 const { tryDecode } = require('./percent-decode');
 
@@ -34,6 +36,19 @@ function dispatch(req, res) {
 function route(req, res) {
   const u = new URL(req.url, 'http://x');
   const method = req.method.toUpperCase();
+
+  if (u.pathname !== '/health') {
+    const damage = configDamage();
+    if (damage) {
+      const { reason, ...detail } = damage;
+      return json(res, 503, {
+        error: `config file ${reason}`,
+        kind: 'internal',
+        code: DAMAGE_CODES[reason],
+        detail,
+      });
+    }
+  }
 
   if (!PUBLIC_PATHS.has(u.pathname)) {
     if (!isAuthenticated(req)) return json(res, 401, { error: 'Unauthorised', auth: true, kind: 'auth' });

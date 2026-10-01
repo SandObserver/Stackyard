@@ -4,6 +4,8 @@ import { el, q } from '/js/utils.js?v=b1cfbd45';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
+import { showConfigRecovery, recoveryShown } from '/js/config-recovery.js?v=5df4ccf1';
+import { readConfigDamage } from '/js/config-recovery-logic.js?v=43ade6d7';
 
 export const API = '';
 
@@ -13,6 +15,7 @@ let _toastWired = false;
 /** @param {string} m @param {'ok'|'err'} [tone] @returns {void} */
 export const toast = (m, tone = 'ok') => {
   const e = el('toast');
+  if (!e) return;
   e.textContent = m;
   e.className = `show ${tone}`;
   clearTimeout(tt);
@@ -46,6 +49,8 @@ export const toast = (m, tone = 'ok') => {
 
 /** @param {number} status @param {any} body @returns {ApiError} */
 function tagged(status, body) {
+  const damage = status === 503 ? readConfigDamage(body) : null;
+  if (damage && !recoveryShown()) showConfigRecovery(damage);
   const e = /** @type {ApiError} */ (new Error((body && body.error) || 'HTTP ' + status));
   e.status = status;
   if (body && typeof body.kind === 'string') e.kind = body.kind;
