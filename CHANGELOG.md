@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Read Prometheus series whose label values contain spaces.
 
+- Say an address cannot be reached, instead of showing a certificate warning,
+  when a service refuses the connection or cannot be found.
+
+- Report a service that hangs up mid-reply at once, instead of as a timeout.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
@@ -40,6 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop a crafted XML or Prometheus reply from a configured service from freezing
   the API.
+
+- Close health checks and refused redirects against a service that streams
+  without end, so they no longer pile up connections.
+
+- Count the DNS lookup toward the time limit for addresses tested in Settings.
 
 ## [1.15.0] - 2026-09-28
 
