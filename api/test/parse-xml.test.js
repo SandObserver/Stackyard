@@ -294,3 +294,7 @@ test('an empty or unparseable document is not flagged', () => {
   assert.equal(parseXml('')['#truncated'], undefined);
   assert.equal(parseXml('not xml at all')['#truncated'], undefined);
 });
+
+test('an attribute with no closing quote does not hide the attributes after it', () => {
+  assert.deepEqual(parseXml(`<t a "b=" c='v'/>`), { t: { c: 'v' } });
+});

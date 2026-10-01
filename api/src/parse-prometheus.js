@@ -3,16 +3,23 @@ const NAME_CHAR = /[a-zA-Z0-9_:{}=",./ -]/;
 const SPACE = /\s/;
 const VALUE = /[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?/y;
 
-/* The series is everything before the first run of whitespace that a number
-   follows. Keep this a single forward pass. A backtracking regex here is
-   quadratic, and one hostile reply blocks the API for hours.
+/* Keep this a single forward pass. A backtracking regex here is quadratic,
+   and one hostile reply blocks the API for hours.
 
    @param {string} t a trimmed, non-empty line @returns {[string, number] | null} */
 function _metricLine(t) {
   if (!FIRST.test(t[0])) return null;
   let i = 1;
+  let quoted = false;
   while (i < t.length) {
     const c = t[i];
+    if (quoted) {
+      if (c === '\\') i++;
+      else if (c === '"') quoted = false;
+      i++;
+      continue;
+    }
+    if (c === '"') quoted = true;
     if (!SPACE.test(c)) {
       if (!NAME_CHAR.test(c)) return null;
       i++;

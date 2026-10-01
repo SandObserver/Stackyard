@@ -89,6 +89,7 @@ const SPACE = /\s/;
    @param {string} s @param {Record<string,string>} attrs */
 function _xmlAttrs(s, attrs) {
   const len = s.length;
+  const unclosed = new Set();
   let k = 0;
   while (k < len) {
     if (!NAME_CHAR.test(s[k])) {
@@ -103,9 +104,12 @@ function _xmlAttrs(s, attrs) {
     k++;
     while (k < len && SPACE.test(s[k])) k++;
     const q = s[k];
-    if (q !== '"' && q !== "'") continue;
+    if ((q !== '"' && q !== "'") || unclosed.has(q)) continue;
     const end = s.indexOf(q, k + 1);
-    if (end === -1) return;
+    if (end === -1) {
+      unclosed.add(q);
+      continue;
+    }
     attrs[name] = _xmlDecode(s.slice(k + 1, end));
     k = end + 1;
   }
