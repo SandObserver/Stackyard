@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Allowed Addresses in Settings, General.
+
 ### Fixed
 
 - Translate the hue, saturation and brightness sliders and the colour code hint
@@ -22,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep sign-in on and refuse saves when the config file is damaged or cannot be
   read, and show how to fix it.
+
+- Answer only IP addresses, local names and allowed addresses while no password
+  is set, so a web page on another site cannot reach Stackyard through DNS
+  rebinding.
 
 ## [1.15.0] - 2026-09-28
 
