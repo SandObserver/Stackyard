@@ -127,9 +127,8 @@ function _normalizeShape(parsed) {
 
 const { HELP_URL } = require('../../ui/js/config-recovery-logic.js');
 
-/* Set while the file on disk cannot be used. Every route but /health refuses,
-   and saveConfig throws: a save would replace the owner's settings and password
-   with a blank config, and sign-in is off in a blank config. */
+/* Set while the file on disk cannot be used. Do not save then: the blank
+   config has sign-in off and replaces the owner's settings and password. */
 let _damage = null;
 let _damageLogged = null;
 
