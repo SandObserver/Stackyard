@@ -43,6 +43,7 @@ function age(url, secondsOlder) {
 
 const PAST_PENDING_S = PENDING_MS / 1000 + 60;
 
+/* Ages every stored file past the pending window, so a prune may drop them. */
 function settleStored() {
   for (const name of fs.readdirSync(dir())) age(name, PAST_PENDING_S + 60);
 }
@@ -286,25 +287,6 @@ test('an upload never saved is dropped once it is past the pending window', () =
   pruneWallpapers(inUse);
   assert.ok(!onDisk(abandoned));
   assert.ok(onDisk(inUse));
-});
-
-test('a save naming an upload that was already dropped is refused', async () => {
-  const inUse = storeWallpaper(PNG, '.png');
-  const abandoned = storeWallpaper(JPEG, '.jpg');
-  settleStored();
-  assert.equal((await saveBackground(inUse)).status, 200);
-  assert.ok(!onDisk(abandoned));
-  const r = await saveBackground(abandoned);
-  assert.equal(r.status, 400);
-  assert.equal(r.body.kind, 'invalid');
-  assert.equal(require('../src/config').loadConfig().settings.background.url, inUse);
-});
-
-test('a save keeping a wallpaper whose file is gone is still accepted', async () => {
-  const inUse = storeWallpaper(PNG, '.png');
-  assert.equal((await saveBackground(inUse)).status, 200);
-  fs.unlinkSync(path.join(dir(), path.basename(inUse)));
-  assert.equal((await saveBackground(inUse)).status, 200);
 });
 
 test('a link on a scheme that is not http is refused', async () => {

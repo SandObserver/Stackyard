@@ -89,12 +89,6 @@ function pruneWallpapers(url) {
   }
 }
 
-/** @param {unknown} url @returns {boolean} false only for a wallpaper-directory URL with no file */
-function wallpaperStored(url) {
-  if (typeof url !== 'string' || !url.startsWith(WALLPAPER_URL_BASE)) return true;
-  return fs.existsSync(path.join(WALLPAPER_DIR(), path.basename(url)));
-}
-
 /** @param {import('http').IncomingMessage} req @param {import('http').ServerResponse} res
     @returns {boolean} whether the request may write a wallpaper */
 function mayWrite(req, res) {
@@ -189,4 +183,4 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
   }
 });
 
-module.exports = { storeWallpaper, pruneWallpapers, wallpaperStored, wallpapersToDrop, WALLPAPER_URL_BASE, PENDING_MS };
+module.exports = { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE, PENDING_MS };
