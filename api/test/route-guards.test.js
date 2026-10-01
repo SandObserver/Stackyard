@@ -7,6 +7,7 @@ process.env.CONFIG_PATH = path.join(tmpDir('guards'), 'apps.json');
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
+const fs = require('node:fs');
 
 require('../src/routes');
 require('../src/widgets');
@@ -64,6 +65,17 @@ function send(method, pathname, headers) {
 
 const session = () => `ds=${makeToken('session-guards', SECRET)}`;
 
+test('every source file that registers a route is loaded', () => {
+  const src = path.join(__dirname, '../src');
+  const registering = fs
+    .readdirSync(src, { recursive: true })
+    .map(f => path.join(src, String(f)))
+    .filter(f => f.endsWith('.js') && /^on\('/m.test(fs.readFileSync(f, 'utf8')));
+  assert.ok(registering.length > 5);
+  for (const f of registering)
+    assert.ok(require.cache[f], `${path.relative(src, f)} registers routes the walk never loads`);
+});
+
 test('the walk sees every route file', () => {
   const paths = new Set(routes.map(r => r.path));
   for (const p of [
@@ -84,18 +96,26 @@ test('every route outside the public list needs a session', async () => {
   }
 });
 
+/* checkOrigin sends the 403 itself. A handler that ignores its result still
+   answers 403 after it has written. */
+const configFile = () => fs.readFileSync(process.env.CONFIG_PATH, 'utf8');
+
 test('every write refuses another origin', async () => {
+  const stored = configFile();
   for (const r of writes) {
     const res = await send(r.method, concrete(r.path), { Cookie: session(), Origin: 'http://evil.example' });
     assert.equal(res.status, 403, `${r.method} ${r.path}`);
     assert.match(res.body, /origin mismatch/, `${r.method} ${r.path}`);
+    assert.equal(configFile(), stored, `${r.method} ${r.path} wrote the config`);
   }
 });
 
 test('every write refuses a request with no origin', async () => {
+  const stored = configFile();
   for (const r of writes) {
     const res = await send(r.method, concrete(r.path), { Cookie: session() });
     assert.equal(res.status, 403, `${r.method} ${r.path}`);
     assert.match(res.body, /needs an Origin header/, `${r.method} ${r.path}`);
+    assert.equal(configFile(), stored, `${r.method} ${r.path} wrote the config`);
   }
 });
