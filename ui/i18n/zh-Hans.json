@@ -41,6 +41,9 @@
   "general": {
     "hostIp": "主机 IP",
     "hostIpTip": "允许徽章从服务器自身地址获取数据。否则这些请求会被拦截。",
+    "allowedHosts": "允许的地址",
+    "allowedHostsNone": "仅本地地址",
+    "allowedHostsTip": "在未设置密码时，Stackyard 只在 IP 地址、<code>nas</code> 或 <code>nas.local</code> 这样的本地名称以及此处列出的地址上响应。多个地址用逗号分隔。",
     "monitoring": "监控",
     "loggingLevel": "日志级别",
     "dockerHealth": "Docker 容器健康检查",
@@ -294,9 +297,21 @@
     "logHint": "容器日志会给出确切的错误。",
     "troubleshooting": "故障排除"
   },
+  "hostBlock": {
+    "title": "Stackyard 不在此地址上响应",
+    "why": "尚未设置密码，因此 Stackyard 只在 IP 地址、本地名称和你允许的地址上响应。<code>{host}</code> 不在其中。",
+    "safe": "这可以防止其他网站的网页把自己的地址指向 Stackyard 并更改你的设置。",
+    "stepsTitle": "修复方法",
+    "stepOpen": "通过 IP 地址或你已允许的地址打开 Stackyard。",
+    "stepAllow": "在“设置”的“通用”中，将 <code>{host}</code> 添加到“允许的地址”并保存。",
+    "stepPassword": "或者在设置中设置密码。设置密码后，Stackyard 在任何地址上都会响应。",
+    "stillBlocked": "此地址仍未被允许。"
+  },
   "toast": {
     "saved": "已保存",
     "saveFailed": "保存失败：{err}",
+    "allowedHostInvalid": "不是有效地址：{host}",
+    "allowedHostsKeepCurrent": "请将 {host} 保留在“允许的地址”中，否则此页面将无法使用。如需移除，请使用其他地址。",
     "colorInvalid": "这不是颜色。请使用 #rrggbb 或 CSS 颜色名称。",
     "imported": "已导入",
     "importFailed": "导入失败：{err}",

@@ -2,8 +2,9 @@
 /* What the settings-file recovery screen says. Keep it free of the DOM and of
    imports: the API requires it. */
 
-export const HELP_URL =
-  'https://stackyard.sandobserver.com/docs/troubleshooting/#stackyard-cannot-read-its-settings-file';
+const DOCS = 'https://stackyard.sandobserver.com/docs/troubleshooting/';
+export const HELP_URL = `${DOCS}#stackyard-cannot-read-its-settings-file`;
+export const HOST_HELP_URL = `${DOCS}#stackyard-does-not-answer-on-this-address`;
 
 export const DAMAGE_CODES = Object.freeze({
   corrupt: 'internal.config-corrupt',
@@ -12,6 +13,19 @@ export const DAMAGE_CODES = Object.freeze({
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what it refuses
 const FILE_NAME = /^[^\u0000-\u001f\u007f/\\]{1,255}$/;
+
+export const HOST_BLOCKED_CODE = 'blocked.host';
+
+/** The address an API error body refuses, or null when it refuses none.
+    @param {unknown} body @returns {{ host: string } | null} */
+export function readHostBlock(body) {
+  if (!body || typeof body !== 'object') return null;
+  const b = /** @type {Record<string, any>} */ (body);
+  if (b.code !== HOST_BLOCKED_CODE) return null;
+  const host = b.detail && typeof b.detail.host === 'string' ? b.detail.host : '';
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what it refuses
+  return { host: /^[^\u0000-\u001f\u007f]{1,255}$/.test(host) ? host : '' };
+}
 
 /** The damage an API error body reports, or null when it reports none.
     @param {unknown} body
@@ -76,4 +90,44 @@ export function pickLanguage(preferred, supported) {
     if (loose) return loose;
   }
   return 'en';
+}
+
+/** What the screen shows for an API error body, or null when the body is not
+    one that stops the whole page.
+    @param {unknown} body @param {string} [fallbackHost] the page's own address */
+export function screenFor(body, fallbackHost = '') {
+  const damage = readConfigDamage(body);
+  if (damage) {
+    const why = damage.reason === 'unreadable' ? 'configRecovery.whyUnreadable' : 'configRecovery.whyCorrupt';
+    return {
+      title: 'configRecovery.title',
+      why: { key: why, vars: { file: damage.file } },
+      safe: 'configRecovery.locked',
+      stepsTitle: 'configRecovery.stepsTitle',
+      steps: recoverySteps(damage),
+      still: 'configRecovery.stillDamaged',
+      logHint: true,
+      help: HELP_URL,
+    };
+  }
+  const block = readHostBlock(body);
+  if (block) {
+    const host = block.host || fallbackHost;
+    return {
+      title: 'hostBlock.title',
+      why: { key: 'hostBlock.why', vars: { host } },
+      safe: 'hostBlock.safe',
+      stepsTitle: 'hostBlock.stepsTitle',
+      steps: [
+        { key: 'hostBlock.stepOpen' },
+        { key: 'hostBlock.stepAllow', vars: { host } },
+        { key: 'hostBlock.stepPassword' },
+        { key: 'configRecovery.stepCheck' },
+      ],
+      still: 'hostBlock.stillBlocked',
+      logHint: false,
+      help: HOST_HELP_URL,
+    };
+  }
+  return null;
 }

@@ -285,6 +285,7 @@ for (const file of ['fa.json', 'zh-Hans.json']) {
       if (key.startsWith('_meta') || /Ph$/.test(key)) continue; /* examples are literal */
       /* Markup tag names and placeholder names are not prose. */
       const prose = String(value)
+        .replace(/<code>[\s\S]*?<\/code>/g, ' ') /* typed literally */
         .replace(/<\/?[a-zA-Z][a-zA-Z0-9]*\s*\/?>/g, ' ')
         .replace(/\{\w+\}/g, ' ')
         .replace(/\b[a-z][a-z0-9+.-]*:\/\/\S+/gi, ' ') /* a URL is typed, not read */;

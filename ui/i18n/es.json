@@ -41,6 +41,9 @@
   "general": {
     "hostIp": "IP del host",
     "hostIpTip": "Permite que las insignias obtengan datos de la propia dirección de tu servidor. Sin esto, esas peticiones se bloquean.",
+    "allowedHosts": "Direcciones permitidas",
+    "allowedHostsNone": "Solo direcciones locales",
+    "allowedHostsTip": "Mientras no haya contraseña, Stackyard solo responde en direcciones IP, nombres locales como <code>nas</code> o <code>nas.local</code>, y las direcciones de esta lista. Sepáralas con comas.",
     "monitoring": "Monitorización",
     "loggingLevel": "Nivel de registro",
     "dockerHealth": "Comprobaciones de estado de contenedores Docker",
@@ -304,9 +307,21 @@
     "logHint": "El registro del contenedor indica el error exacto.",
     "troubleshooting": "Solución de problemas"
   },
+  "hostBlock": {
+    "title": "Stackyard no responde en esta dirección",
+    "why": "No hay contraseña, así que Stackyard solo responde en direcciones IP, nombres locales y direcciones que permitas. <code>{host}</code> no es una de ellas.",
+    "safe": "Así las páginas de otros sitios no pueden apuntar su propia dirección a Stackyard y cambiar tus ajustes.",
+    "stepsTitle": "Para solucionarlo",
+    "stepOpen": "Abre Stackyard por su dirección IP o por una dirección que ya hayas permitido.",
+    "stepAllow": "En Ajustes, General, añade <code>{host}</code> a Direcciones permitidas y guarda.",
+    "stepPassword": "O define una contraseña en Ajustes. Con contraseña, Stackyard responde en cualquier dirección.",
+    "stillBlocked": "Esta dirección sigue sin estar permitida."
+  },
   "toast": {
     "saved": "Guardado",
     "saveFailed": "Error al guardar: {err}",
+    "allowedHostInvalid": "No es una dirección: {host}",
+    "allowedHostsKeepCurrent": "Deja {host} en Direcciones permitidas o esta página dejará de funcionar. Para quitarla, usa otra dirección.",
     "colorInvalid": "Eso no es un color. Usa #rrggbb o un nombre de color CSS.",
     "imported": "Importado",
     "importFailed": "Error al importar: {err}",

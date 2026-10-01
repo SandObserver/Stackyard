@@ -1,4 +1,4 @@
-import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=e888f2cc';
+import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=8599e32a';
 import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
@@ -11,8 +11,9 @@ import {
 } from '/js/admin-logic.js?v=fc7f0836';
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=b1cfbd45';
-import { renderColorControl } from '/js/admin-color-control.js?v=29603f84';
+import { renderColorControl } from '/js/admin-color-control.js?v=5c887239';
 import { BACKDROP } from '/js/background.js?v=cd1cc453';
+import { firstBadHost, hostnameOf, isLocalAddress, parseHostList } from '/js/host-names.js?v=da117878';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -43,6 +44,7 @@ const readServerForm = () =>
     _val('srv-docker-en'),
     _val('srv-socket'),
     _val('srv-hide-healthy'),
+    _val('srv-hosts'),
     _val('log-level'),
     _val('lang-sel'),
     _val('sec-en'),
@@ -205,6 +207,7 @@ export function loadSettings(c) {
   };
   _sv('ie-ip-v', s.server?.hostIp, '192.168.1.100');
   _sv('ie-socket-v', s.server?.socketProxyUrl, 'http://socket-proxy:2375');
+  _sv('ie-hosts-v', (s.server?.allowedHosts || []).join(', '), t('general.allowedHostsNone'));
   _sv('ie-pw-v', '', t('common.notSet')); /* set below after auth check */
   const _si = (id, v) => {
     const node = inp(id);
@@ -212,6 +215,7 @@ export function loadSettings(c) {
   };
   _si('srv-ip', s.server?.hostIp || '');
   _si('srv-socket', s.server?.socketProxyUrl || '');
+  _si('srv-hosts', (s.server?.allowedHosts || []).join(', '));
   _sv('ie-bgcol-v', s.background?.collection, 'Collection ID');
   _si('bg-col-inp', s.background?.collection || '');
   _si('bg-url-inp', s.background?.url || '');
@@ -408,6 +412,19 @@ async function saveServer() {
     return;
   }
 
+  const hostsText = inp('srv-hosts')?.value || '';
+  const badHost = firstBadHost(hostsText);
+  if (badHost) {
+    toast(t('toast.allowedHostInvalid', { host: badHost }), 'err');
+    return;
+  }
+  const allowedHosts = parseHostList(hostsText);
+  const here = hostnameOf(location.host);
+  if (!enabled && here && !isLocalAddress(here) && !allowedHosts.includes(here)) {
+    toast(t('toast.allowedHostsKeepCurrent', { host: here }), 'err');
+    return;
+  }
+
   /* Asked with the other refusals, so a wrong address never reaches the
      config. */
   if (inp('srv-docker-en')?.checked) {
@@ -482,6 +499,7 @@ async function saveServer() {
       hostIp: inp('srv-ip')?.value?.trim() || '',
       socketProxyUrl: dockerEnabled ? socketUrl : '',
       hideHealthyBadge: inp('srv-hide-healthy')?.checked !== false,
+      allowedHosts,
     };
     c.settings.logLevel = inp('log-level')?.value || 'info';
     c.settings.language = inp('lang-sel')?.value || 'en';

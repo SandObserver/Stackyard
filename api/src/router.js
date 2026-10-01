@@ -1,6 +1,7 @@
 const { isAuthenticated, refreshSession } = require('./auth');
 const { configDamage } = require('./config');
-const { DAMAGE_CODES } = require('../../ui/js/config-recovery-logic.js');
+const { DAMAGE_CODES, HOST_BLOCKED_CODE } = require('../../ui/js/config-recovery-logic.js');
+const { refusedHost } = require('./host-check');
 const log = require('./log');
 const { tryDecode } = require('./percent-decode');
 
@@ -46,6 +47,18 @@ function route(req, res) {
         kind: 'internal',
         code: DAMAGE_CODES[reason],
         detail,
+      });
+    }
+  }
+
+  if (u.pathname !== '/health') {
+    const host = refusedHost(req, u.pathname);
+    if (host !== null) {
+      return json(res, 403, {
+        error: 'Forbidden: this address is not allowed while no password is set',
+        kind: 'blocked',
+        code: HOST_BLOCKED_CODE,
+        detail: { host: host.slice(0, 255) },
       });
     }
   }

@@ -198,6 +198,12 @@
       "/js/widget-glyphs.js?v=*": [
         "./ui/js/widget-glyphs.js"
       ],
+      "/js/host-names.js": [
+        "./ui/js/host-names.js"
+      ],
+      "/js/host-names.js?v=*": [
+        "./ui/js/host-names.js"
+      ],
       "/js/html.js": [
         "./ui/js/html.js"
       ],

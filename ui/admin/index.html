@@ -103,6 +103,10 @@
       <div id="sec-pw-hint" class="pw-hint d-none"></div>
       <div class="reveal" id="revoke-tip-wrap"><div class="reveal-in"><p class="grp-tip" id="revoke-tip" data-i18n="general.signOutEverywhereTip">Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.</p></div></div>
       <div class="reveal" id="pw-hint-wrap"><div class="reveal-in"><p class="grp-tip" id="pw-hint-static" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p></div></div>
+      <div class="grp">
+        <div class="row ie-row" id="ie-hosts"><span class="rl" data-i18n="general.allowedHosts">Allowed Addresses</span><span class="rv is-ph" id="ie-hosts-v">Local addresses only</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+      </div>
+      <p class="grp-tip" data-i18n-html="general.allowedHostsTip">While no password is set, Stackyard answers only on IP addresses, local names such as <code>nas</code> or <code>nas.local</code>, and the addresses listed here. Separate them with commas.</p>
 
       <div class="grp-hdr" data-i18n="general.backup">Backup</div>
       <div class="grp">
@@ -245,6 +249,7 @@
 <!-- Hidden inputs mounted into ie-rows by JS -->
 <input id="srv-ip"    type="text"     class="d-none" autocomplete="off">
 <input id="srv-socket" type="text"   class="d-none" autocomplete="off">
+<input id="srv-hosts" type="text"    class="d-none" autocomplete="off">
 <input id="sec-pw"    type="password" class="d-none" autocomplete="new-password">
 <input id="bg-apikey" type="text"    class="d-none" autocomplete="off">
 <input id="bg-col"    type="text"    class="d-none" autocomplete="off">
@@ -293,6 +298,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=48113186"></script>
+<script type="module" src="/js/admin.js?v=62e1dd29"></script>
 </body>
 </html>
