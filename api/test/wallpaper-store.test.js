@@ -43,7 +43,6 @@ function age(url, secondsOlder) {
 
 const PAST_PENDING_S = PENDING_MS / 1000 + 60;
 
-/* Ages every stored file past the pending window, so a prune may drop them. */
 function settleStored() {
   for (const name of fs.readdirSync(dir())) age(name, PAST_PENDING_S + 60);
 }
