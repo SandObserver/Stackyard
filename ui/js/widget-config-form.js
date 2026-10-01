@@ -146,11 +146,13 @@ async function _fetchOptions(field, ctx) {
   if (!r.ok || d.error) {
     /* Carry the structured fields so the caller branches on `kind`, never on
        the message. */
-    const err = /** @type {Error & { status?: number, kind?: string, detail?: Record<string, unknown> }} */ (
-      new Error(d.error || 'HTTP ' + r.status)
-    );
+    const err =
+      /** @type {Error & { status?: number, kind?: string, code?: string, detail?: Record<string, unknown> }} */ (
+        new Error(d.error || 'HTTP ' + r.status)
+      );
     err.status = r.status;
     if (typeof d.kind === 'string') err.kind = d.kind;
+    if (typeof d.code === 'string') err.code = d.code;
     if (d.detail && typeof d.detail === 'object') err.detail = d.detail;
     throw err;
   }

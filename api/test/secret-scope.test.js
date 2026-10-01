@@ -10,6 +10,7 @@ const {
   widgetConfigMatchesSaved,
   rowsMatch,
   badgeRequestMatchesSaved,
+  leavesStoredSecretBlank,
 } = require('../src/secret-scope');
 const { getRegistry } = require('../src/widgets');
 
@@ -179,4 +180,22 @@ test('changing a field the manifest does not mark cosmetic takes it out of scope
 test('a cosmetic field cannot mask a changed destination', () => {
   const moved = svc({ name: 'Renamed', url: 'http://attacker.invalid' });
   assert.equal(widgetConfigMatchesSaved(moved, svc(), connections), false);
+});
+
+/* ── transient fields and blanked secrets ─────────────────────────────────── */
+
+test('a transient field never stops the saved config matching', () => {
+  const weather = getRegistry().weather;
+  const saved = { provider: 'openweather', owKey: 'STORED-KEY', city: 'Berlin', lat: 52.5, lon: 13.4 };
+  const draft = { provider: 'openweather', cityQuery: 'Berl', city: 'Berlin', lat: 52.5, lon: 13.4 };
+  assert.equal(widgetConfigMatchesSaved(draft, saved, weather), true);
+});
+
+test('a blank secret counts only when the saved config holds one', () => {
+  assert.equal(leavesStoredSecretBlank({ absUrl: 'https://other.example' }, SAVED, books), true);
+  assert.equal(leavesStoredSecretBlank({ absUrl: 'https://other.example', absKey: 'typed' }, SAVED, books), false);
+  assert.equal(
+    leavesStoredSecretBlank({ absUrl: 'https://other.example' }, { absUrl: 'https://real.example' }, books),
+    false,
+  );
 });

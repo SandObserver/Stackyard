@@ -6,7 +6,7 @@ const { parsePrometheus } = require('./parse-prometheus');
 const { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { preserveWidgetSecrets } = require('./widget-secrets');
-const { widgetConfigMatchesSaved, RETYPE_MESSAGE } = require('./secret-scope');
+const { widgetConfigMatchesSaved, leavesStoredSecretBlank, RETYPE_MESSAGE } = require('./secret-scope');
 const { dispatchProvider } = require('./provider-dispatch');
 const { widgetSettings } = require('./widget-settings');
 const { IS_DEMO } = require('./demo');
@@ -142,6 +142,7 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
      what is saved. Otherwise the request picks the destination while the server
      supplies the credential. */
   const scoped = !!saved && widgetConfigMatchesSaved(item.widgetConfig, saved.widgetConfig, entry);
+  const withheld = !scoped && !!saved && leavesStoredSecretBlank(item.widgetConfig, saved.widgetConfig, entry);
   if (scoped) preserveWidgetSecrets(item, saved, entry);
 
   try {
@@ -157,7 +158,7 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
     json(res, out.status, out.body);
   } catch (e) {
     if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });
-    if (!scoped && saved)
+    if (withheld)
       return fail(res, e, { status: 502, kind: KIND.INVALID, code: 'invalid.retype', error: RETYPE_MESSAGE });
     log.error('widget-options failed', { widget: body.widgetType, error: log.reason(e) });
     fail(res, e, { status: 502 });
