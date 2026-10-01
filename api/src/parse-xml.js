@@ -80,6 +80,37 @@ function _tagEnd(xml, from, len) {
   return -1;
 }
 
+const NAME_CHAR = /[\w:.-]/;
+const SPACE = /\s/;
+
+/* Keep this a single forward pass. A backtracking regex here is quadratic,
+   and one hostile reply blocks the API for hours.
+
+   @param {string} s @param {Record<string,string>} attrs */
+function _xmlAttrs(s, attrs) {
+  const len = s.length;
+  let k = 0;
+  while (k < len) {
+    if (!NAME_CHAR.test(s[k])) {
+      k++;
+      continue;
+    }
+    const start = k;
+    while (k < len && NAME_CHAR.test(s[k])) k++;
+    const name = s.slice(start, k);
+    while (k < len && SPACE.test(s[k])) k++;
+    if (s[k] !== '=') continue;
+    k++;
+    while (k < len && SPACE.test(s[k])) k++;
+    const q = s[k];
+    if (q !== '"' && q !== "'") continue;
+    const end = s.indexOf(q, k + 1);
+    if (end === -1) return;
+    attrs[name] = _xmlDecode(s.slice(k + 1, end));
+    k = end + 1;
+  }
+}
+
 function parseXml(xml) {
   if (typeof xml !== 'string') return Object.create(null);
   const MAX_NODES = 5000,
@@ -143,10 +174,7 @@ function parseXml(xml) {
     const sp = raw.search(/\s/);
     const name = sp === -1 ? raw : raw.slice(0, sp);
     const node = /** @type {XmlNode} */ ({ tag: name, attrs: Object.create(null), children: [], text: '' });
-    if (sp !== -1) {
-      for (const m of raw.slice(sp + 1).matchAll(/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g))
-        node.attrs[m[1]] = _xmlDecode(m[2] !== undefined ? m[2] : m[3]);
-    }
+    if (sp !== -1) _xmlAttrs(raw.slice(sp + 1), node.attrs);
     if (++nodes > MAX_NODES) {
       truncated = true;
       break;
