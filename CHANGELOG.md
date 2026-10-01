@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is set, so a web page on another site cannot reach Stackyard through DNS
   rebinding.
 
+- End the session on the server at sign-out, so a copied session cookie stops
+  working.
+
+- End every session 30 days after sign-in, even while it is in use.
+
 ## [1.15.0] - 2026-09-28
 
 ### Added
