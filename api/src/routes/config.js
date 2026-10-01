@@ -11,7 +11,7 @@ const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
-const { pruneWallpapers } = require('./wallpaper');
+const { pruneWallpapers, wallpaperStored } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
 
 function scrubSecrets(cfg) {
@@ -151,6 +151,10 @@ on('POST', '/api/config', async (req, res) => {
     /* An absent list is set by the next page load, so a write that leaves it out
        must not clear it. */
     data.settings = data.settings || {};
+    const wallpaper = data.settings.background?.url;
+    if (wallpaper !== existing.settings?.background?.url && !wallpaperStored(wallpaper)) {
+      return json(res, 400, { error: 'the wallpaper file no longer exists', kind: KIND.INVALID });
+    }
     const server =
       data.settings.server && typeof data.settings.server === 'object' && !Array.isArray(data.settings.server)
         ? data.settings.server
