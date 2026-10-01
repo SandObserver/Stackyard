@@ -89,3 +89,10 @@ test('pingChecked still allows a host-IP port with no portMap entry', async () =
   assert.equal(r.ok, false);
   assert.doesNotMatch(String(r.error), /Blocked/);
 });
+
+test('fetchChecked guards the rewritten target, not the url as typed', async () => {
+  await assert.rejects(
+    () => fetchChecked('http://192.168.1.50:7000/', { timeout: MS }),
+    e => e instanceof SsrfBlockedError && /10\.0\.0\.9/.test(e.message),
+  );
+});
