@@ -4,12 +4,9 @@ const { IS_DEMO } = require('./demo');
 const log = require('./log');
 const { hostnameOf, isLocalAddress } = require('../../ui/js/host-names.js');
 
-/* While no password is set, a page on another site can point its own name at
-   this server and read or write everything (DNS rebinding). Only addresses no
-   such page can use are answered: local ones, and the ones the owner allowed.
-
-   The first page load decides the list when none is stored: a host name is
-   trusted and saved, an IP address saves an empty list. */
+/* While no password is set, answer only addresses a page on another site
+   cannot point at this server (DNS rebinding). The first page load sets the
+   list when none is stored. An IP address sets an empty one. */
 
 /** @returns {string | null} the refused host name, or null when allowed */
 function refusedHost(req, pathname) {
