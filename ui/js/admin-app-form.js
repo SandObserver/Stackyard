@@ -14,6 +14,7 @@ import {
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
   toast,
+  responseError,
   apiGet,
   apiPost,
   PE_SVG,
@@ -21,10 +22,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=8599e32a';
+} from '/js/admin-shared.js?v=6254eafb';
 import { createListbox } from '/js/listbox.js?v=a3a1177d';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=5c887239';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=6f50d622';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=f82486b2';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -707,8 +708,8 @@ function wireIcon() {
         const form = new FormData();
         form.append('icon', file, file.name);
         const r = await fetch('/api/icons/upload', { method: 'POST', body: form });
+        if (!r.ok) throw new Error(await responseError(r));
         const d = await r.json();
-        if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
         await loadLocalIcons();
         state.siurl = d.filename;
         const ipIn = inpById('ip-in');

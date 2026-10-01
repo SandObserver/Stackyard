@@ -105,6 +105,25 @@ test('widget-options is limited', async () => {
   assert.equal(limited, 5);
 });
 
+for (const [route, max] of [
+  ['/api/ping', 30],
+  ['/api/badge-proxy', 60],
+  ['/api/docker/test', 20],
+  ['/api/icons/upload', 20],
+  ['/api/wallpaper/upload', 20],
+  ['/api/wallpaper/fetch', 20],
+]) {
+  test(`${route} is limited`, async () => {
+    const limited = await burst('POST', route, max + 3);
+    assert.equal(limited, 3);
+  });
+}
+
+test('icon and wallpaper uploads share one budget', async () => {
+  await burst('POST', '/api/icons/upload', 20);
+  assert.equal(await req('POST', '/api/wallpaper/upload'), 429);
+});
+
 test('a refused request never reaches the upstream service', async () => {
   await burst('GET', '/api/badges', LIMITS.BADGES.max + 40);
   assert.equal(

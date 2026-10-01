@@ -113,19 +113,28 @@ function json(res, status, data) {
 /* Buffered in memory before parsing, so this is a memory limit too. */
 const BODY_LIMIT = 2 * 1024 * 1024;
 function readBody(req) {
-  return new Promise((res, rej) => {
-    const c = [];
+  return readBodyCapped(req, BODY_LIMIT).then(b => b.toString('utf8'));
+}
+
+/** Rejects with `oversize: true` past `max` bytes. Do not destroy the request
+    there: the client then gets a reset instead of the answer.
+    @param {import('http').IncomingMessage} req @param {number} max
+    @returns {Promise<Buffer>} */
+function readBodyCapped(req, max) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
     let total = 0;
-    req.on('data', d => {
-      total += d.length;
-      if (total > BODY_LIMIT) {
-        req.destroy();
-        return rej(new Error('Request body too large'));
+    req.on('data', c => {
+      if (total > max) return;
+      total += c.length;
+      if (total > max) {
+        chunks.length = 0;
+        return reject(Object.assign(new Error('body over the limit'), { oversize: true }));
       }
-      c.push(d);
+      chunks.push(c);
     });
-    req.on('end', () => res(Buffer.concat(c).toString('utf8')));
-    req.on('error', rej);
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
   });
 }
 
@@ -168,6 +177,7 @@ module.exports = {
   dispatch,
   json,
   readBody,
+  readBodyCapped,
   checkOrigin,
   getIp,
 };

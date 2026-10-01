@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=f5240a95';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=94737506';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b8547880';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=169ab45f';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=7bc6c171';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=f401d461';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -11,18 +11,19 @@ import {
   snapshotItems,
   upsertItem,
 } from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=ac122b47';
+import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=fa94db1c';
 import {
   apiGet,
   apiPost,
   initInlineEdit,
   paintIcon,
   reveal,
+  responseError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=8599e32a';
+} from '/js/admin-shared.js?v=6254eafb';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=e3c12c7d';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=4b217dfe';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=a3a1177d';
@@ -789,19 +790,6 @@ function initBgFit() {
     );
   });
   apply(hidden.value || 'fill');
-}
-
-/** A body that is not JSON is the web server answering on its own.
-
-    @param {Response} r @returns {Promise<string>} */
-async function responseError(r) {
-  const text = await r.text().catch(() => '');
-  try {
-    const d = JSON.parse(text);
-    if (d && d.error) return String(d.error);
-  } catch {}
-  if (r.status === 413) return t('toast.imageTooLarge');
-  return `HTTP ${r.status}`;
 }
 
 /** @param {string} url an image this server holds @returns {void} */

@@ -30,6 +30,7 @@ fs.writeFileSync(path.join(_fx, 'data.js'), 'module.exports = async ctx => ctx.f
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
+const { unfinishedUpload } = require('../test-support/unfinished-upload');
 
 require('../src/routes'); // registers auth/config/health/badges/... + OPTIONS
 require('../src/widget-data'); // registers /api/widget-data/:id (pulls in widgets)
@@ -422,6 +423,28 @@ test('POST /api/widget-options blocks a private target URL', async () => {
   assert.equal(r.status, 403);
   assert.equal(r.body?.kind, 'blocked');
   assert.doesNotMatch(String(r.body?.error), /\d+\.\d+\.\d+\.\d+/, 'must not echo the address back');
+});
+
+for (const [route, body] of [
+  ['/api/badge-proxy', { url: 'http://127.0.0.1:1/' }],
+  ['/api/ping', { url: 'http://127.0.0.1:1/' }],
+  ['/api/wallpaper/fetch', { url: 'http://127.0.0.1:1/x.png' }],
+]) {
+  test(`POST ${route} blocks a private target URL`, async () => {
+    const r = await req('POST', route, { cookie: validCookie, body });
+    assert.equal(r.status, 403);
+    assert.equal(r.body?.kind, 'blocked');
+  });
+}
+
+test('a JSON body past the 2 MB limit is answered before it ends', { timeout: 10_000 }, async () => {
+  const was = JSON.stringify(loadConfig());
+  const r = await unfinishedUpload(base + '/api/config', 8 * 1024 * 1024, 3 * 1024 * 1024, {
+    'Content-Type': 'application/json',
+    Cookie: validCookie,
+  });
+  assert.ok(r.status >= 400 && r.status < 600, `answered ${r.status}`);
+  assert.equal(JSON.stringify(loadConfig()), was);
 });
 
 test('POST /api/widget-options rejects a cross-origin write', async () => {
