@@ -1,6 +1,7 @@
-function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 }) {
+function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0, scanned: 0 }) {
   const MAX_DEPTH = 6,
-    MAX_NODES = 256;
+    MAX_NODES = 256,
+    MAX_SCANNED = 1_000_000;
   if (_state.n++ > MAX_NODES || _depth > MAX_DEPTH || obj == null) return out;
   if (typeof obj === 'number') {
     out.push({ path: path || '(root)', value: obj });
@@ -11,20 +12,24 @@ function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0 })
     out.push({ path: countPath, value: obj.length, label: `${path || 'root'} (count)` });
     const sample = obj.find(i => i && typeof i === 'object' && !Array.isArray(i));
     if (sample) {
-      const seen = Object.create(null);
       for (const [field, val] of Object.entries(sample)) {
-        if (_state.n > MAX_NODES) break;
-        if (typeof val === 'boolean') {
-          for (const bval of [true, false]) {
-            const n = obj.filter(i => i && i[field] === bval).length;
-            if (n > 0) {
-              const p = `${path ? path + '.' : ''}filter(${field}==${bval}).count`;
-              if (!seen[p]) {
-                seen[p] = 1;
-                out.push({ path: p, value: n, label: `${field} == ${bval}` });
-              }
-            }
-          }
+        if (typeof val !== 'boolean') continue;
+        if (_state.n++ > MAX_NODES || _state.scanned + obj.length > MAX_SCANNED) break;
+        _state.scanned += obj.length;
+        let yes = 0,
+          no = 0;
+        for (const i of obj) {
+          if (i?.[field] === true) yes++;
+          else if (i?.[field] === false) no++;
+        }
+        for (const bval of [true, false]) {
+          const n = bval ? yes : no;
+          if (n > 0)
+            out.push({
+              path: `${path ? path + '.' : ''}filter(${field}==${bval}).count`,
+              value: n,
+              label: `${field} == ${bval}`,
+            });
         }
       }
     }

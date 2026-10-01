@@ -73,6 +73,16 @@ test('collectNumbers is null-safe and bounded', () => {
   assert.doesNotThrow(() => collectNumbers(deep));
 });
 
+test('collectNumbers bounds the boolean filter scan on a wide, long array', () => {
+  const sample = {};
+  for (let i = 0; i < 1000; i++) sample[`f${i}`] = true;
+  const rows = [sample, ...Array.from({ length: 50_000 }, () => ({}))];
+  const started = performance.now();
+  const out = collectNumbers({ rows });
+  assert.ok(performance.now() - started < 1000);
+  assert.equal(out.find(e => e.path === 'rows.filter(f0==true).count')?.value, 1);
+});
+
 test('computeBadgeValue supports string, array, and object extract specs', () => {
   assert.equal(computeBadgeValue({ a: 5 }, { extract: 'a' }), 5);
   assert.equal(computeBadgeValue({ a: 5, b: 3 }, { extract: ['a', 'b'] }), 8);

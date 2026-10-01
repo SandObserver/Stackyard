@@ -114,3 +114,12 @@ test('xml and an absent content type are not metrics', () => {
   assert.equal(looksLikeMetrics('application/xml', '<r><a>1</a></r>'), false);
   assert.equal(looksLikeMetrics('', BARE), false, 'no content-type: behaviour unchanged');
 });
+
+test('parsePrometheus keeps spaces, digits and escaped quotes inside label values', () => {
+  const out = parsePrometheus('a{v="build 1.0"} 42\nb{v="say \\"hi 2\\""} 7\nc{v="é ü"} 3');
+  assert.deepEqual(Object.entries(out), [
+    ['a{v="build 1.0"}', 42],
+    ['b{v="say \\"hi 2\\""}', 7],
+    ['c{v="é ü"}', 3],
+  ]);
+});
