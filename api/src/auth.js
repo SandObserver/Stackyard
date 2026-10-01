@@ -411,6 +411,7 @@ module.exports = {
   hasValidSession,
   stripDisabledCredentials,
   _resetRateLimits: () => _rateBuckets.clear(),
+  _rateBucketCount: () => _rateBuckets.size,
   SESSION_MAX_AGE_MS,
   SESSION_ABSOLUTE_MS,
   RENEW_AFTER_MS,

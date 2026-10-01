@@ -17,6 +17,7 @@ const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
 const { KIND } = require('../src/api-error');
+const log = require('../src/log');
 
 const SECRET = 'b'.repeat(64);
 let server, base, cookie;
@@ -54,7 +55,7 @@ after(async () => {
 });
 
 function post(pathname, body, opts = {}) {
-  const data = JSON.stringify(body);
+  const data = opts.raw ? body : JSON.stringify(body);
   const u = new URL(base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(
@@ -221,4 +222,29 @@ test('a rejected config save is tagged invalid, with its message intact', async 
   assert.equal(r.status, 400);
   assert.equal(r.body.kind, KIND.INVALID);
   assert.equal(r.body.error, 'items must be an array');
+});
+
+test('a malformed body never reaches the log', async t => {
+  const logged = [];
+  t.mock.method(log, 'error', (msg, data) => logged.push({ msg, data }));
+  const login = await post('/api/auth/login', 'hunter2', { raw: true, cookie: null });
+  const save = await post('/api/config', 'sk-live-9', { raw: true });
+  assert.equal(login.status, 400);
+  assert.equal(save.status, 400);
+  assert.ok(logged.length > 0, 'the failures should still be logged');
+  const text = JSON.stringify(logged);
+  assert.ok(!text.includes('hunter2'), text);
+  assert.ok(!text.includes('sk-live-9'), text);
+});
+
+test('a password sent as a number never reaches the log', async t => {
+  const logged = [];
+  t.mock.method(log, 'error', (msg, data) => logged.push({ msg, data }));
+  const login = await post('/api/auth/login', { password: 31415926 }, { cookie: null });
+  const set = await post('/api/auth/set-password', { password: 27182818, currentPassword: 'correct-horse' });
+  assert.equal(login.status, 401);
+  assert.equal(set.status, 400);
+  const text = JSON.stringify(logged);
+  assert.ok(!text.includes('31415926'), text);
+  assert.ok(!text.includes('27182818'), text);
 });

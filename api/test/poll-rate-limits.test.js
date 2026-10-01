@@ -12,7 +12,7 @@ require('../src/routes');
 require('../src/widget-data');
 const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
-const { _resetRateLimits } = require('../src/auth');
+const { _resetRateLimits, _rateBucketCount } = require('../src/auth');
 const LIMITS = require('../src/poll-limits');
 
 let server,
@@ -32,6 +32,8 @@ before(async () => {
   saveConfig({
     items: [
       { id: 'a1', type: 'app', name: 'A', href: 'https://a', badge: { enabled: true, url: upUrl, interval: 30 } },
+      { id: 'w1', type: 'widget', widgetType: 'absent' },
+      { id: 'w2', type: 'widget', widgetType: 'absent' },
     ],
     settings: {},
   });
@@ -138,6 +140,12 @@ test('a refused request never reaches the upstream service', async () => {
 test('widget-data counts each widget separately', async () => {
   await burst('GET', '/api/widget-data/w1', LIMITS.WIDGET_DATA.max + 5);
   assert.notEqual(await req('GET', '/api/widget-data/w2'), 429, 'a different widget should still be reachable');
+});
+
+test('an unknown widget id is refused without storing a rate-limit bucket', async () => {
+  const buckets = _rateBucketCount();
+  for (let i = 0; i < 50; i++) assert.equal(await req('GET', `/api/widget-data/unknown-${i}`), 404);
+  assert.equal(_rateBucketCount(), buckets);
 });
 
 /* ── the limits fit real use ──────────────────────────────────────────────── */

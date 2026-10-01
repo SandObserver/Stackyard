@@ -62,7 +62,7 @@ on('POST', '/api/auth/login', async (req, res) => {
       log.audit('login blocked', { ip, reason: 'rate_limit' });
       return json(res, 429, { error: limitErr, kind: KIND.AUTH });
     }
-    const ok = await verifyPassword(password, hash);
+    const ok = await verifyPassword(typeof password === 'string' ? password : '', hash);
     if (!ok) {
       log.audit('login failed', { ip });
       return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
@@ -133,7 +133,7 @@ on('POST', '/api/auth/set-password', async (req, res) => {
       return json(res, 401, { error: 'Authentication required to change the existing password.', kind: KIND.AUTH });
     }
     const { password = '', currentPassword } = JSON.parse(await readBody(req));
-    if (!password || password.length < PASSWORD_MIN)
+    if (typeof password !== 'string' || password.length < PASSWORD_MIN)
       return json(res, 400, { error: `Password must be at least ${PASSWORD_MIN} characters.`, kind: KIND.INVALID });
     if (password.length > PASSWORD_MAX)
       return json(res, 400, { error: `Password must be at most ${PASSWORD_MAX} characters.`, kind: KIND.INVALID });
