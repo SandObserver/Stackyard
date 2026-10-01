@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Answer an oversized icon upload or wallpaper link with an error instead of
   dropping the connection.
 
+- Refuse a Settings save that would overwrite dashboard changes made in another
+  tab or on another device.
+
+- Keep a second dashboard change made while the first is still saving instead of
+  undoing it.
+
+- Restore the last saved wallpaper, not the one from page load, when a wallpaper
+  link fails.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
