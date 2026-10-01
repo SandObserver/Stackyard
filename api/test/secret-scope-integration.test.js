@@ -1,3 +1,4 @@
+const fs = require('node:fs');
 const path = require('node:path');
 
 process.env.ALLOW_PRIVATE_IPS = 'true';
@@ -227,4 +228,21 @@ test('the Unsplash key is reported as set, stored on write and never returned', 
   assert.ok(!(await get('/api/config')).raw.includes('NEW-KEY'));
   assert.equal((await post('/api/settings/unsplash-key', { apiKey: '' })).status, 200);
   assert.deepEqual((await get('/api/settings/unsplash-key')).body, { configured: false });
+});
+
+test('a failed Unsplash key save leaves the served config unchanged', async () => {
+  const rev = (await get('/api/config')).body._rev;
+  const real = fs.renameSync;
+  fs.renameSync = () => {
+    throw new Error('disk full');
+  };
+  let status;
+  try {
+    status = (await post('/api/settings/unsplash-key', { apiKey: 'NOT-SAVED' })).status;
+  } finally {
+    fs.renameSync = real;
+  }
+  assert.notEqual(status, 200);
+  assert.deepEqual((await get('/api/settings/unsplash-key')).body, { configured: false });
+  assert.equal((await get('/api/config')).body._rev, rev);
 });
