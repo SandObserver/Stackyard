@@ -1,4 +1,4 @@
-import { state } from '/js/admin-state.js?v=831e219e';
+import { state } from '/js/admin-state.js?v=af772a1b';
 import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=6254eafb';
 import { createListbox } from '/js/listbox.js?v=a3a1177d';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=adc5d212';

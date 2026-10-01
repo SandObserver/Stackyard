@@ -9,6 +9,7 @@ import {
   randomSuffix,
   snapshotItems,
   saveWithRevert,
+  serialWrites,
 } from '../js/admin-save-logic.js';
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
@@ -359,4 +360,73 @@ test('buildAppItem stores a badge minimum only above one', () => {
   assert.equal(build(1), undefined, 'one is the default and is not stored');
   assert.equal(build(0), undefined);
   assert.deepEqual(build(5), { color: undefined, unit: undefined, min: 5 });
+});
+
+test('saveWithRevert leaves the list alone when a later change is waiting to save', async () => {
+  let restored = null;
+  const ok = await saveWithRevert({
+    write: async () => false,
+    snapshot: ['before'],
+    restore: s => {
+      restored = s;
+    },
+    superseded: () => true,
+  });
+  assert.equal(ok, false);
+  assert.equal(restored, null);
+});
+
+test('serialWrites runs a write asked for during another after it, not alongside or instead', async () => {
+  const writes = serialWrites();
+  const log = [];
+  let release;
+  const first = writes.run(async () => {
+    log.push('first start');
+    await new Promise(r => {
+      release = r;
+    });
+    log.push('first end');
+    return 1;
+  });
+  const second = writes.run(async () => {
+    log.push('second');
+    return 2;
+  });
+  await Promise.resolve();
+  assert.equal(writes.pending(), 2);
+  release();
+  assert.deepEqual(await Promise.all([first, second]), [1, 2]);
+  assert.deepEqual(log, ['first start', 'first end', 'second']);
+  assert.equal(writes.pending(), 0);
+});
+
+test('serialWrites keeps going after a write fails', async () => {
+  const writes = serialWrites();
+  const failed = writes.run(async () => {
+    throw new Error('offline');
+  });
+  const next = writes.run(async () => 'ran');
+  await assert.rejects(failed, /offline/);
+  assert.equal(await next, 'ran');
+});
+
+test('a failed save with a later change waiting does not undo that change', async () => {
+  const writes = serialWrites();
+  let list = ['a'];
+  const results = [];
+  const change = (item, ok) => {
+    const before = [...list];
+    list = [...list, item];
+    return saveWithRevert({
+      write: () => writes.run(async () => ok),
+      snapshot: before,
+      restore: s => {
+        list = s;
+      },
+      superseded: () => writes.pending() > 0,
+    }).then(r => results.push(r));
+  };
+  await Promise.all([change('b', false), change('c', true)]);
+  assert.deepEqual(results, [false, true]);
+  assert.deepEqual(list, ['a', 'b', 'c']);
 });

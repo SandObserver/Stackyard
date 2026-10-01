@@ -1,17 +1,24 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=b8547880';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=3b630ee5';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=169ab45f';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=f401d461';
+import { initList, render, syncFilterUI } from '/js/admin-list.js?v=bd0925ed';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
   claimFolderChildren,
   newItemId,
   saveWithRevert,
+  serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=60a82419';
-import { loadSettings, settingsDirty, showBgFields, showWallpaperFile } from '/js/admin-settings.js?v=fa94db1c';
+} from '/js/admin-save-logic.js?v=8389782f';
+import {
+  loadSettings,
+  savedWallpaperUrl,
+  settingsDirty,
+  showBgFields,
+  showWallpaperFile,
+} from '/js/admin-settings.js?v=28ba0c56';
 import {
   apiGet,
   apiPost,
@@ -22,8 +29,8 @@ import {
   setReauthHandler,
   toast,
 } from '/js/admin-shared.js?v=6254eafb';
-import { collapsedFolders, filter, state } from '/js/admin-state.js?v=831e219e';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=4b217dfe';
+import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=658ef216';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=a3a1177d';
@@ -39,7 +46,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=f9c0a120';
+} from '/js/import-foreign.js?v=2aa3bf02';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -73,6 +80,7 @@ onLayoutChange(_syncMobile, _mobileAtLoad);
 async function load() {
   await loadLocalIcons();
   const c = await apiGet('/api/config');
+  _serverItems = JSON.stringify(c.items || []);
   state.items = c.items || [];
   state._settings = c.settings || {};
   await initI18n(c.settings?.language || 'en');
@@ -109,22 +117,31 @@ async function applyBg() {
   if (bg) applyBackground(document.documentElement, bg);
   else if (s.type === 'unsplash') toast(t('toast.wallpaperUnavailable'), 'err');
 }
+/* The list as the server last returned it to this page. A save that finds a
+   different list on the server would delete what another tab or device added. */
+let _serverItems = '';
+const saves = serialWrites();
+
 /** Returns whether the write reached the server. */
-async function save() {
-  if (state.saving) return false;
-  state.saving = true;
+function save() {
+  return saves.run(writeItems);
+}
+
+async function writeItems() {
   let ok = false;
   try {
     const full = await apiGet('/api/config');
+    if (JSON.stringify(full.items || []) !== _serverItems) throw Object.assign(new Error('stale'), { status: 409 });
+    const sent = JSON.stringify(state.items);
     full.items = state.items;
-    await apiPost('/api/config', full);
-    _savedItems = JSON.stringify(state.items);
+    const r = await apiPost('/api/config', full);
+    _serverItems = JSON.stringify(r.items);
+    _savedItems = sent;
     toast(t('toast.saved'));
     ok = true;
   } catch (e) {
-    toast(t('toast.saveFailed', { err: e.message }), 'err');
+    toast(e.status === 409 ? t('toast.dashboardChangedElsewhere') : t('toast.saveFailed', { err: e.message }), 'err');
   }
-  state.saving = false;
   render();
   syncDashSave();
   return ok;
@@ -135,9 +152,12 @@ async function save() {
     tab while the preview was open.
 
     @param {any[]} newItems */
-async function appendAndSave(newItems) {
-  if (state.saving) throw new Error('A save is already in progress');
-  state.saving = true;
+function appendAndSave(newItems) {
+  return saves.run(() => appendItems(newItems));
+}
+
+/** @param {any[]} newItems */
+async function appendItems(newItems) {
   try {
     const full = await apiGet('/api/config');
     const current = Array.isArray(full.items) ? full.items : [];
@@ -146,12 +166,12 @@ async function appendAndSave(newItems) {
     const clash = newItems.find(i => taken.has(i.id));
     if (clash) throw new Error(`${clash.label}: this id already exists. Reload and import again.`);
     full.items = [...current, ...newItems];
-    await apiPost('/api/config', full);
+    const r = await apiPost('/api/config', full);
+    _serverItems = JSON.stringify(r.items);
     state.items = full.items;
     _savedItems = JSON.stringify(state.items);
     syncDashSave();
   } finally {
-    state.saving = false;
     render();
   }
 }
@@ -166,6 +186,7 @@ async function saveOrRevert(before) {
         state.items = items;
         render();
       },
+      superseded: () => saves.pending() > 0,
     });
   } catch {
     return false;
@@ -473,7 +494,12 @@ function openFolderPicker(appId, targetFolderId = null) {
   dlg.focus(q('button', list));
 }
 
+/* A second press during the write would add a new item a second time. */
+let _editorSaving = false;
+
 async function doSave(orig) {
+  if (_editorSaving) return;
+  _editorSaving = true;
   try {
     /** @type {Record<string, any>} */
     let item;
@@ -595,6 +621,8 @@ async function doSave(orig) {
     toast(t(replaced ? 'toast.updated' : 'toast.added'));
   } catch (e) {
     toast(t('toast.error', { err: e.message }), 'err');
+  } finally {
+    _editorSaving = false;
   }
 }
 
@@ -849,7 +877,7 @@ async function fetchWallpaperLink(url) {
     toast(t('toast.wallpaperStored'));
   } catch (e) {
     /* A link that failed must not replace the wallpaper already saved. */
-    setWallpaperUrl(state._settings?.background?.url || '');
+    setWallpaperUrl(savedWallpaperUrl());
     toast(t('toast.wallpaperFailed', { err: e.message }), 'err');
   }
 }

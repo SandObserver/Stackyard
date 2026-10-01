@@ -4,7 +4,7 @@
    page cannot show. */
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, readConfig, dismissSetupPrompt } = require('./helpers');
+const { seedConfig, readConfig, dismissSetupPrompt, setInlineRow } = require('./helpers');
 
 const WALLPAPER = { type: 'url', url: '/icons/wallpaper/none.png', brightness: 1, fit: 'fill' };
 
@@ -83,3 +83,21 @@ for (const [what, reply] of [
     await expect(page.locator('#toast')).toHaveText('The wallpaper could not be loaded.');
   });
 }
+
+test('a failed wallpaper link goes back to the last saved wallpaper, not the one at page load', async ({ page }) => {
+  let fetches = 0;
+  await page.route('**/api/wallpaper/fetch', route =>
+    ++fetches === 1 ? route.fulfill({ json: { url: '/icons/wallpaper/saved-later.png' } }) : route.abort(),
+  );
+  await openAppearance(page);
+
+  await setInlineRow(page, 'ie-bgurl', 'bg-url-inp', 'https://example.invalid/first.jpg');
+  await expect(page.locator('#ie-bgurl-v')).toContainText('saved-later.png');
+  const saved = page.waitForResponse(r => r.url().includes('/api/config') && r.request().method() === 'POST');
+  await page.locator('#bg-save').click();
+  expect((await saved).ok()).toBeTruthy();
+
+  await setInlineRow(page, 'ie-bgurl', 'bg-url-inp', 'https://example.invalid/second.jpg');
+  await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
+  await expect(page.locator('#ie-bgurl-v')).toContainText('saved-later.png');
+});

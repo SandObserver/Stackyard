@@ -50,19 +50,42 @@ export function snapshotItems(items) {
 /** Run `write` and undo the local change when it did not reach the server.
     Without this the list shows a dashboard the server does not have. `write`
     reports failure by resolving false; a throw is re-raised after the restore.
+    `superseded` reports a later change still waiting to save. Its write carries
+    this change too, so restoring here would drop the later change.
 
     @template T
     @param {{ write: () => Promise<boolean|void>, snapshot: T,
-              restore: (snapshot: T) => void }} opts
+              restore: (snapshot: T) => void, superseded?: () => boolean }} opts
     @returns {Promise<boolean>} */
-export async function saveWithRevert({ write, snapshot, restore }) {
+export async function saveWithRevert({ write, snapshot, restore, superseded = () => false }) {
   let ok = false;
   try {
     ok = (await write()) !== false;
   } finally {
-    if (!ok) restore(snapshot);
+    if (!ok && !superseded()) restore(snapshot);
   }
   return ok;
+}
+
+/** Run writes one at a time, in the order asked. A write asked for while
+    another runs waits for it instead of being dropped.
+
+    @returns {{ run: <R>(write: () => Promise<R>) => Promise<R>, pending: () => number }} */
+export function serialWrites() {
+  /** @type {Promise<unknown>} */
+  let tail = Promise.resolve();
+  let pending = 0;
+  return {
+    run(write) {
+      pending++;
+      const p = tail.then(write).finally(() => {
+        pending--;
+      });
+      tail = p.catch(() => {});
+      return p;
+    },
+    pending: () => pending,
+  };
 }
 
 /** Put `item` where the item with `id` currently is, or append it. Match by id,

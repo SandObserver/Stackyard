@@ -26,8 +26,10 @@ function scrubSecrets(cfg) {
   return safe;
 }
 
+const clientConfig = () => ensureSystemItems(scrubSecrets(loadConfig()));
+
 on('GET', '/api/config', (_, res) => {
-  json(res, 200, ensureSystemItems(scrubSecrets(loadConfig())));
+  json(res, 200, clientConfig());
 });
 
 on('GET', '/api/settings/unsplash-key', (_, res) => {
@@ -176,7 +178,8 @@ on('POST', '/api/config', async (req, res) => {
     if (data.settings) log.setLevel(data.settings.logLevel);
     log.audit('config saved', {});
     if (withheld.length) log.audit('stored credentials withheld', { items: withheld.map(w => w.id) });
-    json(res, 200, withheld.length ? { ok: true, withheld } : { ok: true });
+    const { items } = clientConfig();
+    json(res, 200, withheld.length ? { ok: true, items, withheld } : { ok: true, items });
   } catch (e) {
     fail(res, e, { status: 400 });
   }

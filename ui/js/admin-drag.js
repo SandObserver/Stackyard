@@ -10,8 +10,8 @@
    it is near, and which classes say so. */
 
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=6b767e76';
-import { state } from '/js/admin-state.js?v=831e219e';
-import { snapshotItems } from '/js/admin-save-logic.js?v=60a82419';
+import { state } from '/js/admin-state.js?v=af772a1b';
+import { snapshotItems } from '/js/admin-save-logic.js?v=8389782f';
 import { qa } from '/js/utils.js?v=b1cfbd45';
 
 /** @type {(before: unknown) => void} */
