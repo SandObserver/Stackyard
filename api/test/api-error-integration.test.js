@@ -236,3 +236,15 @@ test('a malformed body never reaches the log', async t => {
   assert.ok(!text.includes('hunter2'), text);
   assert.ok(!text.includes('sk-live-9'), text);
 });
+
+test('a password sent as a number never reaches the log', async t => {
+  const logged = [];
+  t.mock.method(log, 'error', (msg, data) => logged.push({ msg, data }));
+  const login = await post('/api/auth/login', { password: 31415926 }, { cookie: null });
+  const set = await post('/api/auth/set-password', { password: 27182818, currentPassword: 'correct-horse' });
+  assert.equal(login.status, 401);
+  assert.equal(set.status, 400);
+  const text = JSON.stringify(logged);
+  assert.ok(!text.includes('31415926'), text);
+  assert.ok(!text.includes('27182818'), text);
+});
