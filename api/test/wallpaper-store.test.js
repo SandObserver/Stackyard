@@ -7,10 +7,12 @@ const { tmpDir } = require('../test-support/tmp');
 const iconsDir = tmpDir('wallpaper-icons');
 process.env.ICONS_PATH = iconsDir;
 process.env.CONFIG_PATH = path.join(tmpDir('wallpaper-cfg'), 'apps.json');
+process.env.ALLOW_PRIVATE_IPS = 'true';
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
+const { unfinishedUpload } = require('../test-support/unfinished-upload');
 
 const { sniffImageType } = require('../src/image-sniff');
 const { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE } = require('../src/routes/wallpaper');
@@ -239,4 +241,79 @@ test('a link on a scheme that is not http is refused', async () => {
   const r = await fetchLink('file:///etc/passwd');
   assert.equal(r.status, 400);
   assert.match(r.body.error, /http and https/);
+});
+
+/* ── size and type limits ─────────────────────────────────────────────────── */
+
+let upstream, upBase;
+
+before(async () => {
+  upstream = http.createServer((req, res) => {
+    const bodies = {
+      '/page': Buffer.from('<!doctype html><title>not an image</title>'),
+      '/15mb.png': Buffer.concat([PNG, Buffer.alloc(15 * 1024 * 1024)]),
+      '/17mb.png': Buffer.concat([PNG, Buffer.alloc(17 * 1024 * 1024)]),
+    };
+    const body = bodies[req.url];
+    res.writeHead(body ? 200 : 404);
+    res.end(body);
+  });
+  await new Promise(r => upstream.listen(0, '127.0.0.1', r));
+  upBase = `http://127.0.0.1:${upstream.address().port}`;
+});
+after(async () => {
+  await new Promise(r => {
+    upstream.closeAllConnections?.();
+    upstream.close(r);
+  });
+});
+
+const stored = () => (fs.existsSync(dir()) ? fs.readdirSync(dir()).length : 0);
+
+test('a fetched link that is not an image is refused and nothing is stored', async () => {
+  const was = stored();
+  const r = await fetchLink(`${upBase}/page`);
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /not a JPEG/);
+  assert.equal(stored(), was);
+});
+
+test('a fetched image up to 16 MB is stored', async () => {
+  const r = await fetchLink(`${upBase}/15mb.png`);
+  assert.equal(r.status, 200);
+  assert.equal(fs.statSync(path.join(iconsDir, r.body.url.replace('/icons/', ''))).size, PNG.length + 15 * 1024 * 1024);
+});
+
+test('a fetched image over 16 MB is refused and nothing is stored', async () => {
+  const was = stored();
+  const r = await fetchLink(`${upBase}/17mb.png`);
+  assert.equal(r.status, 502);
+  assert.equal(stored(), was);
+});
+
+test('a link request over 4 KB is answered, not dropped', async () => {
+  const body = Buffer.from(JSON.stringify({ url: 'not a url', pad: 'a'.repeat(5000) }));
+  const r = await request('/api/wallpaper/fetch', { 'Content-Type': 'application/json' }, body);
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /too large/);
+});
+
+test('two files in one wallpaper upload are refused', async () => {
+  const b = '----sytest';
+  const part = name =>
+    Buffer.concat([
+      Buffer.from(`--${b}\r\nContent-Disposition: form-data; name="wallpaper"; filename="${name}"\r\n\r\n`),
+      PNG,
+      Buffer.from('\r\n'),
+    ]);
+  const body = Buffer.concat([part('a.png'), part('b.png'), Buffer.from(`--${b}--\r\n`)]);
+  const r = await request('/api/wallpaper/upload', { 'Content-Type': `multipart/form-data; boundary=${b}` }, body);
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /only one file/);
+});
+
+test('an upload past the stream cap is answered before the body ends', { timeout: 10_000 }, async () => {
+  const r = await unfinishedUpload(base + '/api/wallpaper/upload', 64 * 1024 * 1024, 21 * 1024 * 1024);
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /16 MB/);
 });

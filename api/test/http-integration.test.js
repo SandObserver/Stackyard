@@ -424,6 +424,18 @@ test('POST /api/widget-options blocks a private target URL', async () => {
   assert.doesNotMatch(String(r.body?.error), /\d+\.\d+\.\d+\.\d+/, 'must not echo the address back');
 });
 
+for (const [route, body] of [
+  ['/api/badge-proxy', { url: 'http://127.0.0.1:1/' }],
+  ['/api/ping', { url: 'http://127.0.0.1:1/' }],
+  ['/api/wallpaper/fetch', { url: 'http://127.0.0.1:1/x.png' }],
+]) {
+  test(`POST ${route} blocks a private target URL`, async () => {
+    const r = await req('POST', route, { cookie: validCookie, body });
+    assert.equal(r.status, 403);
+    assert.equal(r.body?.kind, 'blocked');
+  });
+}
+
 test('POST /api/widget-options rejects a cross-origin write', async () => {
   const r = await req('POST', '/api/widget-options/x', {
     cookie: validCookie,

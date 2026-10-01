@@ -118,6 +118,7 @@ test('a very long name is shortened', () => {
 
 const http = require('node:http');
 const { test: t2, before, after } = require('node:test');
+const { unfinishedUpload } = require('../test-support/unfinished-upload');
 
 let server, base;
 
@@ -196,4 +197,112 @@ t2('an upload never writes outside the icons directory', async () => {
   assert.equal(r.status, 200);
   assert.ok(!r.body.filename.includes('..'), `saved as ${r.body.filename}`);
   assert.ok(fs.existsSync(path.join(uploadDir, r.body.filename)));
+});
+
+/* ── what the upload route lets through ───────────────────────────────────── */
+
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+
+/** @param {Buffer} body @returns {Promise<{status:number, body:any}>} */
+function postMultipart(body, boundary = '----sytest') {
+  const u = new URL(base + '/api/icons/upload');
+  return new Promise((resolve, reject) => {
+    const r = http.request(
+      {
+        hostname: u.hostname,
+        port: u.port,
+        path: u.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': body.length,
+          Origin: base,
+        },
+      },
+      res => {
+        const chunks = [];
+        res.on('data', c => chunks.push(c));
+        res.on('end', () => {
+          let j = null;
+          try {
+            j = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          } catch {}
+          resolve({ status: res.statusCode, body: j });
+        });
+      },
+    );
+    r.on('error', reject);
+    r.end(body);
+  });
+}
+
+/** @param {...[string, Buffer]} files @returns {Buffer} */
+function parts(...files) {
+  const b = '----sytest';
+  return Buffer.concat([
+    ...files.flatMap(([name, data]) => [
+      Buffer.from(
+        `--${b}\r\nContent-Disposition: form-data; name="file"; filename="${name}"\r\n` +
+          'Content-Type: application/octet-stream\r\n\r\n',
+      ),
+      data,
+      Buffer.from('\r\n'),
+    ]),
+    Buffer.from(`--${b}--\r\n`),
+  ]);
+}
+
+const saved = name => fs.readFileSync(path.join(uploadDir, name), 'utf8');
+
+t2('script and event handlers are removed from an uploaded svg', async () => {
+  const r = await upload(
+    'hostile.svg',
+    '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><script>alert(2)</script><path d="M0 0"/></svg>',
+  );
+  assert.equal(r.status, 200);
+  const stored = saved(r.body.filename);
+  assert.doesNotMatch(stored, /<script|onload/i);
+  assert.match(stored, /<path/);
+});
+
+t2('a file that is not svg, png or ico is refused by its name', async () => {
+  const r = await postMultipart(parts(['page.html', Buffer.from('<svg/>')]));
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /only \.svg, \.png, \.ico/);
+  assert.ok(!fs.existsSync(path.join(uploadDir, 'page.html')));
+});
+
+t2('a png or ico name on bytes that are neither is refused', async () => {
+  for (const name of ['fake.png', 'fake.ico']) {
+    const r = await postMultipart(parts([name, Buffer.from('<svg onload="alert(1)"/>')]));
+    assert.equal(r.status, 400, name);
+    assert.match(r.body.error, /not a valid PNG or ICO/);
+    assert.ok(!fs.existsSync(path.join(uploadDir, name)), name);
+  }
+});
+
+t2('a real png is stored unchanged', async () => {
+  const r = await postMultipart(parts(['real.png', PNG]));
+  assert.equal(r.status, 200);
+  assert.deepEqual(fs.readFileSync(path.join(uploadDir, r.body.filename)), PNG);
+});
+
+t2('an icon over 2 MB is refused', async () => {
+  const r = await postMultipart(parts(['big.png', Buffer.concat([PNG, Buffer.alloc(2 * 1024 * 1024)])]));
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /too large/);
+  assert.ok(!fs.existsSync(path.join(uploadDir, 'big.png')));
+});
+
+t2('two files in one upload are refused', async () => {
+  const r = await postMultipart(parts(['one.png', PNG], ['two.png', PNG]));
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /only one file/);
+  assert.ok(!fs.existsSync(path.join(uploadDir, 'one.png')));
+});
+
+t2('an icon upload past the stream cap is answered before the body ends', { timeout: 10_000 }, async () => {
+  const r = await unfinishedUpload(base + '/api/icons/upload', 8 * 1024 * 1024, 3 * 1024 * 1024);
+  assert.equal(r.status, 400);
+  assert.match(r.body.error, /too large/);
 });

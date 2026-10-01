@@ -227,3 +227,16 @@ test('a png that is not a png is treated as missing', async t => {
   stubCdn(t, [{ status: 200, body: '<html>error page</html>', type: 'text/html' }]);
   assert.equal((await get('/api/icons/cdn?name=fake&ext=png')).status, 404);
 });
+
+test('a served icon tells the browser not to guess its type', async t => {
+  stubCdn(t, [{ status: 200, body: PNG, type: 'image/png' }]);
+  const r = await get('/api/icons/cdn?name=nosniff-check&ext=png');
+  assert.equal(r.status, 200);
+  assert.equal(r.headers['x-content-type-options'], 'nosniff');
+});
+
+test('an upstream icon over 512 KB is treated as missing', async t => {
+  stubCdn(t, [{ status: 200, body: Buffer.concat([PNG, Buffer.alloc(512 * 1024)]), type: 'image/png' }]);
+  const r = await get('/api/icons/cdn?name=oversize-check&ext=png');
+  assert.equal(r.status, 404);
+});

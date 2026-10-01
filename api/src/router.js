@@ -129,6 +129,28 @@ function readBody(req) {
   });
 }
 
+/** Rejects with `oversize: true` past `max` bytes. Do not destroy the request
+    there: the client then gets a reset instead of the answer.
+    @param {import('http').IncomingMessage} req @param {number} max
+    @returns {Promise<Buffer>} */
+function readBodyCapped(req, max) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let total = 0;
+    req.on('data', c => {
+      if (total > max) return;
+      total += c.length;
+      if (total > max) {
+        chunks.length = 0;
+        return reject(Object.assign(new Error('body over the limit'), { oversize: true }));
+      }
+      chunks.push(c);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
 /* Trust X-Real-IP only over loopback, where our own nginx is the only thing that
    can set it. Do not parse a header chain: nginx has already resolved the real
    client from TRUSTED_PROXY. */
@@ -168,6 +190,7 @@ module.exports = {
   dispatch,
   json,
   readBody,
+  readBodyCapped,
   checkOrigin,
   getIp,
 };

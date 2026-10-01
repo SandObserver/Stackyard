@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { on, json, checkOrigin, getIp } = require('../router');
+const { on, json, checkOrigin, getIp, readBodyCapped } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, ICONS_PATH } = require('../config');
 const { fetchChecked, fetchUnchecked, SsrfBlockedError } = require('../proxy');
@@ -26,9 +26,6 @@ const FETCH_TIMEOUT_MS = 30_000;
 
 const ACCEPTED = 'JPEG, PNG, WebP, AVIF or GIF';
 const TOO_LARGE = 'image too large (max 16 MB)';
-
-/* A message only reaches the browser when the route hands it over itself. */
-const oversize = () => Object.assign(new Error('body over the limit'), { oversize: true });
 
 /** @param {string} ext @returns {string} */
 function wallpaperName(ext) {
@@ -85,25 +82,6 @@ function pruneWallpapers(url) {
       log.warn('wallpaper could not be removed', { name, error: e.message });
     }
   }
-}
-
-/** @param {import('http').IncomingMessage} req @param {number} max
-    @returns {Promise<Buffer>} */
-function readBodyCapped(req, max) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    let total = 0;
-    req.on('data', c => {
-      total += c.length;
-      if (total > max) {
-        req.destroy();
-        return reject(oversize());
-      }
-      chunks.push(c);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
 }
 
 /** @param {import('http').IncomingMessage} req @param {import('http').ServerResponse} res

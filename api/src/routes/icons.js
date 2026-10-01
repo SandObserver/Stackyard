@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { on, json, checkOrigin, getIp } = require('../router');
+const { on, json, checkOrigin, getIp, readBodyCapped } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { ICONS_PATH } = require('../config');
 const { fetchUnchecked } = require('../proxy');
@@ -194,20 +194,7 @@ on('POST', '/api/icons/upload', async (req, res) => {
     const bMatch = ct.match(/boundary=(?:"([^"]+)"|([^\s;]+))/i);
     if (!bMatch) return json(res, 400, { error: 'missing boundary', kind: KIND.INVALID });
     const boundary = bMatch[1] || bMatch[2];
-    const buf = await new Promise((resolve, reject) => {
-      const chunks = [];
-      let total = 0;
-      req.on('data', c => {
-        total += c.length;
-        if (total > ICON_STREAM_MAX_BYTES) {
-          req.destroy();
-          return reject(new Error('file too large (max 2 MB)'));
-        }
-        chunks.push(c);
-      });
-      req.on('end', () => resolve(Buffer.concat(chunks)));
-      req.on('error', reject);
-    });
+    const buf = await readBodyCapped(req, ICON_STREAM_MAX_BYTES);
     const { filename, data, fileParts } = parseMultipartFile(buf, boundary);
     let fileData = data;
     if (!filename || !fileData?.length) return json(res, 400, { error: 'no file found in upload', kind: KIND.INVALID });
@@ -228,6 +215,7 @@ on('POST', '/api/icons/upload', async (req, res) => {
     log.audit('icon uploaded', { filename: saved });
     json(res, 200, { ok: true, filename: saved });
   } catch (e) {
+    if (e.oversize) return json(res, 400, { error: 'file too large (max 2 MB)', kind: KIND.INVALID });
     fail(res, e, { status: 500 });
   }
 });
