@@ -54,6 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Count the DNS lookup toward the time limit for addresses tested in Settings.
 
+- Keep malformed request bodies, such as a mistyped password, out of the server
+  log.
+
+- Stop requests for unknown widget ids from growing the API's memory.
+
 ## [1.15.0] - 2026-09-28
 
 ### Added
