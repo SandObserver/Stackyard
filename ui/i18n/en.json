@@ -41,6 +41,9 @@
   "general": {
     "hostIp": "Host IP",
     "hostIpTip": "Lets badges fetch from your server's own address. Without it, those requests are blocked.",
+    "allowedHosts": "Allowed Addresses",
+    "allowedHostsNone": "Local addresses only",
+    "allowedHostsTip": "While no password is set, Stackyard answers only on IP addresses, local names such as <code>nas</code> or <code>nas.local</code>, and the addresses listed here. Separate them with commas.",
     "monitoring": "Monitoring",
     "loggingLevel": "Logging Level",
     "dockerHealth": "Docker Container Health Checks",
@@ -299,9 +302,21 @@
     "logHint": "The container log names the exact error.",
     "troubleshooting": "Troubleshooting"
   },
+  "hostBlock": {
+    "title": "Stackyard does not answer on this address",
+    "why": "No password is set, so Stackyard answers only on IP addresses, local names and addresses you allow. <code>{host}</code> is not one of them.",
+    "safe": "This stops web pages on other sites from pointing their own address at Stackyard and changing your settings.",
+    "stepsTitle": "To fix it",
+    "stepOpen": "Open Stackyard by its IP address, or by an address you already allowed.",
+    "stepAllow": "In Settings, General, add <code>{host}</code> to Allowed Addresses and save.",
+    "stepPassword": "Or set a password in Settings. With a password, Stackyard answers on every address.",
+    "stillBlocked": "This address is still not allowed."
+  },
   "toast": {
     "saved": "Saved",
     "saveFailed": "Save failed: {err}",
+    "allowedHostInvalid": "Not an address: {host}",
+    "allowedHostsKeepCurrent": "Keep {host} in Allowed Addresses, or this page stops working. To remove it, use another address.",
     "colorInvalid": "That is not a color. Use #rrggbb or a CSS color name.",
     "imported": "Imported",
     "importFailed": "Import failed: {err}",

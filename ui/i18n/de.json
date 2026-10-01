@@ -41,6 +41,9 @@
   "general": {
     "hostIp": "Host-IP",
     "hostIpTip": "Erlaubt Badges, Daten von der eigenen Adresse Ihres Servers zu holen. Ohne dies werden diese Anfragen blockiert.",
+    "allowedHosts": "Erlaubte Adressen",
+    "allowedHostsNone": "Nur lokale Adressen",
+    "allowedHostsTip": "Solange kein Passwort festgelegt ist, antwortet Stackyard nur unter IP-Adressen, lokalen Namen wie <code>nas</code> oder <code>nas.local</code> und den hier aufgeführten Adressen. Trenne sie mit Kommas.",
     "monitoring": "Überwachung",
     "loggingLevel": "Protokollstufe",
     "dockerHealth": "Docker-Container-Zustandsprüfungen",
@@ -299,9 +302,21 @@
     "logHint": "Das Container-Log nennt den genauen Fehler.",
     "troubleshooting": "Fehlerbehebung"
   },
+  "hostBlock": {
+    "title": "Stackyard antwortet nicht unter dieser Adresse",
+    "why": "Es ist kein Passwort festgelegt. Deshalb antwortet Stackyard nur unter IP-Adressen, lokalen Namen und Adressen, die du erlaubst. <code>{host}</code> gehört nicht dazu.",
+    "safe": "So können Webseiten anderer Websites ihre eigene Adresse nicht auf Stackyard zeigen lassen und deine Einstellungen ändern.",
+    "stepsTitle": "So behebst du es",
+    "stepOpen": "Öffne Stackyard über seine IP-Adresse oder über eine Adresse, die du bereits erlaubt hast.",
+    "stepAllow": "Füge in Einstellungen, Allgemein <code>{host}</code> zu „Erlaubte Adressen“ hinzu und speichere.",
+    "stepPassword": "Oder lege in den Einstellungen ein Passwort fest. Mit Passwort antwortet Stackyard unter jeder Adresse.",
+    "stillBlocked": "Diese Adresse ist weiterhin nicht erlaubt."
+  },
   "toast": {
     "saved": "Gespeichert",
     "saveFailed": "Speichern fehlgeschlagen: {err}",
+    "allowedHostInvalid": "Keine gültige Adresse: {host}",
+    "allowedHostsKeepCurrent": "Lass {host} in „Erlaubte Adressen“, sonst funktioniert diese Seite nicht mehr. Entferne sie über eine andere Adresse.",
     "colorInvalid": "Das ist keine Farbe. Verwende #rrggbb oder einen CSS-Farbnamen.",
     "imported": "Importiert",
     "importFailed": "Import fehlgeschlagen: {err}",

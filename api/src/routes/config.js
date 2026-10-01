@@ -12,6 +12,7 @@ const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
 const { pruneWallpapers } = require('./wallpaper');
+const { normalizeHostList } = require('../../../ui/js/host-names.js');
 
 function scrubSecrets(cfg) {
   const safe = structuredClone(cfg);
@@ -144,6 +145,22 @@ on('POST', '/api/config', async (req, res) => {
       data.settings.auth = structuredClone(existing.settings.auth);
       if (stripDisabledCredentials(data.settings.auth)) log.audit('stale password cleared', {});
     }
+    /* An absent list is set by the next page load, so a write that leaves it out
+       must not clear it. */
+    data.settings = data.settings || {};
+    const server =
+      data.settings.server && typeof data.settings.server === 'object' && !Array.isArray(data.settings.server)
+        ? data.settings.server
+        : {};
+    if (server.allowedHosts === undefined) {
+      const kept = existing.settings?.server?.allowedHosts;
+      if (Array.isArray(kept)) server.allowedHosts = kept;
+    } else {
+      const list = normalizeHostList(server.allowedHosts);
+      if (!list) return json(res, 400, { error: 'allowedHosts must be a list of host names', kind: KIND.INVALID });
+      server.allowedHosts = list;
+    }
+    data.settings.server = server;
     /* A stored credential is only refilled for the request it was stored for. */
     const { withheld } = preserveAllSecrets(data, existing);
     migrate(data);

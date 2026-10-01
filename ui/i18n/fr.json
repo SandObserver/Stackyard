@@ -41,6 +41,9 @@
   "general": {
     "hostIp": "IP de l'hôte",
     "hostIpTip": "Permet aux badges de récupérer des données à l'adresse de votre propre serveur. Sans cela, ces requêtes sont bloquées.",
+    "allowedHosts": "Adresses autorisées",
+    "allowedHostsNone": "Adresses locales uniquement",
+    "allowedHostsTip": "Tant qu’aucun mot de passe n’est défini, Stackyard ne répond qu’aux adresses IP, aux noms locaux comme <code>nas</code> ou <code>nas.local</code>, et aux adresses listées ici. Séparez-les par des virgules.",
     "monitoring": "Surveillance",
     "loggingLevel": "Niveau de journalisation",
     "dockerHealth": "Vérifications de l'état des conteneurs Docker",
@@ -304,9 +307,21 @@
     "logHint": "Le journal du conteneur indique l’erreur exacte.",
     "troubleshooting": "Dépannage"
   },
+  "hostBlock": {
+    "title": "Stackyard ne répond pas à cette adresse",
+    "why": "Aucun mot de passe n’est défini : Stackyard ne répond donc qu’aux adresses IP, aux noms locaux et aux adresses que vous autorisez. <code>{host}</code> n’en fait pas partie.",
+    "safe": "Cela empêche des pages d’autres sites de faire pointer leur propre adresse vers Stackyard et de modifier vos réglages.",
+    "stepsTitle": "Pour corriger",
+    "stepOpen": "Ouvrez Stackyard par son adresse IP, ou par une adresse déjà autorisée.",
+    "stepAllow": "Dans Réglages, Général, ajoutez <code>{host}</code> aux Adresses autorisées et enregistrez.",
+    "stepPassword": "Ou définissez un mot de passe dans les Réglages. Avec un mot de passe, Stackyard répond à toutes les adresses.",
+    "stillBlocked": "Cette adresse n’est toujours pas autorisée."
+  },
   "toast": {
     "saved": "Enregistré",
     "saveFailed": "Échec de l'enregistrement : {err}",
+    "allowedHostInvalid": "Adresse non valide : {host}",
+    "allowedHostsKeepCurrent": "Gardez {host} dans les Adresses autorisées, sinon cette page cessera de fonctionner. Pour la retirer, utilisez une autre adresse.",
     "colorInvalid": "Ceci n'est pas une couleur. Utilisez #rrggbb ou un nom de couleur CSS.",
     "imported": "Importé",
     "importFailed": "Échec de l'import : {err}",

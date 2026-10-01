@@ -3,6 +3,7 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
+const { normalizeHostList } = require('../../../ui/js/host-names.js');
 const {
   getOrCreateSecret,
   rotateSessionSecret,
@@ -194,12 +195,17 @@ on('POST', '/api/auth/toggle', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
   if (!checkOrigin(req, res)) return;
   try {
-    const { enabled, currentPassword } = JSON.parse(await readBody(req));
+    const { enabled, currentPassword, allowedHosts } = JSON.parse(await readBody(req));
     /* Only a real true or false. Turning protection off deletes the password,
        so an unclear body must change nothing rather than read as "off". */
     if (typeof enabled !== 'boolean') {
       return json(res, 400, { error: 'enabled must be true or false', kind: KIND.INVALID });
     }
+    /* Stored in the same write as the switch. Turning protection off starts the
+       address check, and a list saved afterwards no longer reaches this page. */
+    const hosts = allowedHosts === undefined ? undefined : normalizeHostList(allowedHosts);
+    if (hosts === null)
+      return json(res, 400, { error: 'allowedHosts must be a list of host names', kind: KIND.INVALID });
     const before = loadConfig();
     if (!enabled && authActive(before)) {
       if (await refuseWrongCurrentPassword(req, res, before.settings.auth.passwordHash, currentPassword)) return;
@@ -219,6 +225,7 @@ on('POST', '/api/auth/toggle', async (req, res) => {
     const cleared = !enabled && !!cfg.settings.auth.passwordHash;
     stripDisabledCredentials(cfg.settings.auth);
     if (enabled && !cfg.settings.auth.secret) cfg.settings.auth.secret = newSessionSecret();
+    if (hosts) cfg.settings.server = { ...cfg.settings.server, allowedHosts: hosts };
     saveConfig(cfg);
     log.audit('auth toggled', { enabled: !!enabled });
     if (cleared) log.audit('password cleared', {});
