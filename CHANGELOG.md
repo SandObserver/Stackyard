@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require the current password to change the password or turn off password
   protection.
 
+- Keep sign-in on and refuse saves when the config file is damaged or cannot be
+  read, and show how to fix it.
+
 ## [1.15.0] - 2026-09-28
 
 ### Added
