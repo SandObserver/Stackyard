@@ -135,6 +135,10 @@ async function slots(config, ctx) {
   });
 
   const result = Array(list.length).fill(null);
+  /* A card for an instance that stopped answering must not keep its last status. */
+  const failSlots = (gs, kind) => {
+    for (const { i } of gs) result[i] = { error: kind };
+  };
 
   await Promise.all(
     Object.values(dupGroups).map(async ({ base, pass, slots: gs }) => {
@@ -143,7 +147,8 @@ async function slots(config, ctx) {
           dupFetch(base, pass, '/api/v1/serverstate', ctx),
           dupFetch(base, pass, '/api/v1/backups', ctx),
         ]);
-        if (stateR.status === 401 || backupsR.status === 401) return;
+        if (stateR.status === 401 || backupsR.status === 401) return failSlots(gs, ctx.KIND.AUTH);
+        if (stateR.status >= 400 || backupsR.status >= 400) return failSlots(gs, ctx.KIND.UPSTREAM);
         const serverState = stateR.data || {};
         const backups = dupList(backupsR.data);
         const proposed = {};
@@ -166,6 +171,7 @@ async function slots(config, ctx) {
       } catch (e) {
         /* One unreachable instance must leave the rest of the widget intact. */
         ctx.log.warn('backup: duplicati group failed', { base, error: e.message });
+        failSlots(gs, e.kind || ctx.KIND.NETWORK);
       }
     }),
   );
@@ -174,7 +180,8 @@ async function slots(config, ctx) {
     Object.values(kopiaGroups).map(async ({ url, user, pass, slots: gs }) => {
       try {
         const r = await kopiaFetch(url, user, pass, '/api/v1/sources', ctx);
-        if (r.status !== 200) return;
+        if (r.status === 401 || r.status === 403) return failSlots(gs, ctx.KIND.AUTH);
+        if (r.status !== 200) return failSlots(gs, ctx.KIND.UPSTREAM);
         const allSources = r.data?.sources || [];
         gs.forEach(({ i, jobId, customName }) => {
           const s = allSources.find(src => kopiaSourceId(src.source) === jobId);
@@ -189,6 +196,7 @@ async function slots(config, ctx) {
         });
       } catch (e) {
         ctx.log.warn('backup: kopia group failed', { url, error: e.message });
+        failSlots(gs, e.kind || ctx.KIND.NETWORK);
       }
     }),
   );

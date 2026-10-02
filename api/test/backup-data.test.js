@@ -149,11 +149,49 @@ test('slots collapses same-instance slots into one round of upstream calls', asy
   assert.equal(calls.filter(c => c.url.endsWith('/api/v1/serverstate')).length, 1);
 });
 
-test('an unreachable instance leaves its slots null instead of failing the request', async () => {
+test('an unreachable instance marks its slots failed instead of failing the request', async () => {
   const { ctx } = ctxFor({ slots: [{ provider: 'duplicati', dupUrl: 'http://d:8200', jobId: '1' }] }, 'slots', {
     '/api/v1/auth/login': () => {
       throw new Error('ECONNREFUSED');
     },
   });
-  assert.deepEqual(await dataFn(ctx), [null]);
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.NETWORK }]);
+});
+
+for (const [name, status, kind] of [
+  ['a server error', 500, KIND.UPSTREAM],
+  ['a refused login', 401, KIND.AUTH],
+]) {
+  test(`a Duplicati instance answering with ${name} marks its slots failed`, async () => {
+    const { ctx } = ctxFor({ slots: [{ provider: 'duplicati', dupUrl: 'http://d:8200', jobId: '1' }] }, 'slots', {
+      '/api/v1/auth/login': LOGIN,
+      '/api/v1/serverstate': { status, data: null },
+      '/api/v1/backups': { status, data: null },
+    });
+    assert.deepEqual(await dataFn(ctx), [{ error: kind }]);
+  });
+}
+
+test('a failing Kopia instance marks only its own slots failed', async () => {
+  const config = {
+    slots: [
+      { provider: 'kopia', kopiaUrl: 'http://down:51515', jobId: 'h@u:/a' },
+      { provider: 'kopia', kopiaUrl: 'http://up:51515', jobId: 'h@u:/data' },
+      { provider: 'kopia', kopiaUrl: 'http://gone:51515', jobId: 'h@u:/b' },
+    ],
+  };
+  const { ctx } = ctxFor(config, 'slots', {
+    'down:51515/api/v1/sources': { status: 503, data: null },
+    'up:51515/api/v1/sources': {
+      status: 200,
+      data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' }, status: 'IDLE' }] },
+    },
+    'gone:51515/api/v1/sources': () => {
+      throw new Error('ECONNREFUSED');
+    },
+  });
+  const out = await dataFn(ctx);
+  assert.deepEqual(out[0], { error: KIND.UPSTREAM });
+  assert.equal(out[1].name, '/data');
+  assert.deepEqual(out[2], { error: KIND.NETWORK });
 });

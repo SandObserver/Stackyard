@@ -3,22 +3,33 @@ const enc = encodeURIComponent;
 const clamp01 = n => Math.min(1, Math.max(0, n));
 const cap = arr => (Array.isArray(arr) ? arr : []).slice(0, CAP);
 
-function jget(ctx, base, path, headers) {
-  return ctx.fetchJSON(base + path, {
-    headers: Object.assign({ Accept: 'application/json' }, headers || {}),
-    timeout: 8000,
-  });
+const NAMES = { audiobookshelf: 'Audiobookshelf', komga: 'Komga', kavita: 'Kavita' };
+
+function checked(ctx, r) {
+  const name = NAMES[ctx.config.provider] || NAMES.audiobookshelf;
+  if (r.status === 401 || r.status === 403) ctx.fail(`${name} auth failed (check API key)`, { kind: ctx.KIND.AUTH });
+  if (r.status >= 400) ctx.fail(`${name} HTTP ${r.status}`);
+  return r;
 }
-function jpost(ctx, base, path, headers, body) {
-  return ctx.fetchJSON(base + path, {
-    method: 'POST',
-    timeout: 8000,
-    headers: Object.assign({ Accept: 'application/json', 'Content-Type': 'application/json' }, headers || {}),
-    body: body != null ? JSON.stringify(body) : undefined,
-  });
+async function jget(ctx, base, path, headers) {
+  return checked(
+    ctx,
+    await ctx.fetchJSON(base + path, {
+      headers: Object.assign({ Accept: 'application/json' }, headers || {}),
+      timeout: 8000,
+    }),
+  );
 }
-function authErr(r) {
-  return r.status === 401 || r.status === 403;
+async function jpost(ctx, base, path, headers, body) {
+  return checked(
+    ctx,
+    await ctx.fetchJSON(base + path, {
+      method: 'POST',
+      timeout: 8000,
+      headers: Object.assign({ Accept: 'application/json', 'Content-Type': 'application/json' }, headers || {}),
+      body: body != null ? JSON.stringify(body) : undefined,
+    }),
+  );
 }
 /* The reader's own word for a shelf, when the service has one. */
 function listName(r) {
@@ -38,7 +49,6 @@ function shelvesOf(ctx) {
 /* ───────────────────────── Audiobookshelf ───────────────────────── */
 async function absLibrary(ctx, base, hdr) {
   const r = await jget(ctx, base, '/api/libraries', hdr);
-  if (authErr(r)) ctx.fail('Audiobookshelf auth failed (check API key)', { kind: ctx.KIND.AUTH });
   const libs = (r.data && r.data.libraries) || [];
   const book = libs.find(l => l.mediaType === 'book') || libs[0];
   if (!book) ctx.fail('No Audiobookshelf library found');
@@ -135,7 +145,8 @@ function komgaBook(b) {
 /* The books endpoint carries no list name, so the same listing the settings
    picker uses is read back. Only for a shelf the reader has not named. */
 async function komgaListName(ctx, base, hdr, listId) {
-  const r = await jget(ctx, base, `/api/v1/readlists?size=100`, hdr);
+  const r = await jget(ctx, base, `/api/v1/readlists?size=100`, hdr).catch(() => null);
+  if (!r) return '';
   const hit = ((r.data && r.data.content) || []).find(l => l && String(l.id) === String(listId));
   return (hit && hit.name) || '';
 }
@@ -151,7 +162,6 @@ async function komga(ctx) {
     else if (shelf.source === 'unread') path = `/api/v1/books/ondeck?size=${CAP}`;
     else path = `/api/v1/books/latest?size=${CAP}`;
     const r = await jget(ctx, base, path, hdr);
-    if (authErr(r)) ctx.fail('Komga auth failed (check API key)', { kind: ctx.KIND.AUTH });
     const content = (r.data && r.data.content) || (Array.isArray(r.data) ? r.data : []);
     let name = shelf.label;
     if (!name && shelf.source === 'list' && shelf.listId) name = await komgaListName(ctx, base, hdr, shelf.listId);
@@ -177,7 +187,7 @@ async function komgaLists(ctx) {
 /* ───────────────────────────── Kavita ───────────────────────────── */
 async function kavitaToken(ctx, base, key) {
   const r = await jpost(ctx, base, `/api/Plugin/authenticate?apiKey=${enc(key)}&pluginName=Stackyard`, null, null);
-  if (authErr(r) || !(r.data && r.data.token)) ctx.fail('Kavita auth failed (check API key)', { kind: ctx.KIND.AUTH });
+  if (!(r.data && r.data.token)) ctx.fail('Kavita auth failed (check API key)', { kind: ctx.KIND.AUTH });
   return r.data.token;
 }
 function kavitaSeries(s) {
@@ -216,7 +226,10 @@ async function kavitaList(ctx, base, hdr, shelf) {
 }
 /* Same as Komga: the items endpoint carries no list title. */
 async function kavitaListName(ctx, base, hdr, listId) {
-  const r = await jpost(ctx, base, `/api/ReadingList/lists?PageNumber=1&PageSize=100&includePromoted=true`, hdr);
+  const r = await jpost(ctx, base, `/api/ReadingList/lists?PageNumber=1&PageSize=100&includePromoted=true`, hdr).catch(
+    () => null,
+  );
+  if (!r) return '';
   const arr = Array.isArray(r.data) ? r.data : (r.data && r.data.content) || [];
   const hit = arr.find(l => l && String(l.id) === String(listId));
   return (hit && (hit.title || hit.name)) || '';

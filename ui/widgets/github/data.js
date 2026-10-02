@@ -36,9 +36,11 @@ async function contributions(ctx, token, username, fetchJSON) {
 
   if (r.status === 401) ctx.fail('Invalid GitHub token', { kind: ctx.KIND.AUTH });
   if (r.data && r.data.errors) ctx.fail('GitHub rejected the query — check the token scopes');
+  if (r.status >= 400) ctx.fail('GitHub HTTP ' + r.status);
 
-  const cal = r.data?.data?.user?.contributionsCollection?.contributionCalendar || {};
-  return { view: 'contributions', weeks: cal.weeks || [], totalContributions: cal.totalContributions || 0 };
+  const cal = r.data?.data?.user?.contributionsCollection?.contributionCalendar;
+  if (!cal || !Array.isArray(cal.weeks)) ctx.fail('GitHub returned no contribution calendar');
+  return { view: 'contributions', weeks: cal.weeks, totalContributions: cal.totalContributions || 0 };
 }
 
 async function pullRequests(ctx, token, username, config, fetchJSON) {
@@ -70,8 +72,10 @@ async function pullRequests(ctx, token, username, config, fetchJSON) {
 
   if (r.status === 401) ctx.fail('Invalid GitHub token', { kind: ctx.KIND.AUTH });
   if (r.status === 422) ctx.fail('Invalid search query — check username', { kind: ctx.KIND.INVALID });
+  if (r.status >= 400) ctx.fail('GitHub HTTP ' + r.status);
+  if (!Array.isArray(r.data?.items)) ctx.fail('GitHub returned no search results');
 
-  const items = (r.data?.items || []).map(pr => {
+  const items = r.data.items.map(pr => {
     const m = (pr.repository_url || '').match(/repos\/(.+)$/);
     return { number: pr.number, title: pr.title, repo: m ? m[1] : '—', url: pr.html_url };
   });

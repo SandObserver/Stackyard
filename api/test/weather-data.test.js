@@ -183,3 +183,17 @@ test('feelsLike swaps in the apparent temperature', async () => {
   assert.equal(r.temp, 25);
   assert.equal(r.usedFeels, true);
 });
+
+for (const [name, config, reply] of [
+  [
+    'open-meteo',
+    { lat: 1, lon: 2 },
+    { status: 200, data: { current: { weather_code: 0, is_day: 1, apparent_temperature: 3 } } },
+  ],
+  ['openweather', { lat: 1, lon: 2, provider: 'openweather', owKey: 'k' }, OW(800, '01d', { main: {} })],
+]) {
+  test(`${name} with no temperature fails instead of showing 0°`, async () => {
+    const { ctx } = ctxFor(config, '', reply);
+    await assert.rejects(dataFn(ctx), /no temperature/);
+  });
+}
