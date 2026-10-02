@@ -70,3 +70,9 @@ test('the Compose hardening is in place', () => {
   assert.ok(!/^\s*user:/m.test(compose), 'the Compose file now sets a user');
   assert.match(read('supervisord.conf'), /^user=node$/m, 'the API should run as node');
 });
+
+/* supervisord runs as root and the API as node. Without KILL, root cannot signal
+   another user's process, so a stop never reaches the API. */
+test('supervisord can stop the API under the Compose capabilities', () => {
+  assert.match(compose, /cap_add:\s*\n(?:\s*- \w+\n)*\s*- KILL\n/);
+});

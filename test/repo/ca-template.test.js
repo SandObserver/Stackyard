@@ -118,3 +118,41 @@ test('the donation link is the canonical form', () => {
     assert.ok(tag(xml, 'DonateText'));
   }
 });
+
+/* An Unraid install gets no other hardening: the Compose file does not apply. */
+test('the template applies the Compose hardening', () => {
+  const compose = fs.readFileSync(path.join(ROOT, 'docker-compose.yml'), 'utf8');
+  const value = key => {
+    const m = new RegExp(`^\\s+${key}:\\s*"?([^"\\s]+)"?$`, 'm').exec(compose);
+    assert.ok(m, `docker-compose.yml has no ${key}`);
+    return m[1];
+  };
+  const list = key => {
+    const m = new RegExp(`^\\s+${key}:\\n((?:\\s+- .+\\n)+)`, 'm').exec(compose);
+    assert.ok(m, `docker-compose.yml has no ${key}`);
+    return [...m[1].matchAll(/- (\S+)/g)].map(i => i[1]);
+  };
+
+  const expected = [
+    ...(value('init') === 'true' ? ['--init'] : []),
+    ...list('cap_drop').map(c => `--cap-drop=${c}`),
+    ...list('cap_add').map(c => `--cap-add=${c}`),
+    ...list('security_opt').map(o => `--security-opt=${o}`),
+    `--pids-limit=${value('pids_limit')}`,
+    `--memory=${value('mem_limit')}`,
+    `--memory-reservation=${value('mem_reservation')}`,
+    `--memory-swap=${value('memswap_limit')}`,
+    `--cpus=${value('cpus')}`,
+  ];
+  const params = (tag(template, 'ExtraParams') || '').split(/\s+/);
+  assert.deepEqual(params.toSorted(), expected.toSorted());
+
+  /* Node sizes its heap from the host, not --memory. Without the cap the kernel
+     kills the API instead of it collecting. */
+  const heap = /NODE_OPTIONS=\$\{NODE_OPTIONS:-([^}]+)\}/.exec(compose);
+  assert.ok(heap, 'docker-compose.yml has no NODE_OPTIONS default');
+  const config = /<Config[^>]*Target="NODE_OPTIONS"[^>]*Default="([^"]+)"[^>]*>([^<]*)<\/Config>/.exec(template);
+  assert.ok(config, 'the template sets a memory limit but no heap cap');
+  assert.equal(config[1], heap[1]);
+  assert.equal(config[2], heap[1]);
+});

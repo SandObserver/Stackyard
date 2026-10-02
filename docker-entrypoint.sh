@@ -77,7 +77,7 @@ nginx -t -q
 # marker carries that failure out as the container's exit code, so a dead API
 # reads as a failure rather than a normal shutdown and `restart: on-failure`
 # behaves the same as `unless-stopped` here.
-MARKER="${SUPERVISOR_FATAL_MARKER:-/tmp/stackyard-fatal}"
+MARKER="${SUPERVISOR_FATAL_MARKER:-/run/stackyard-fatal}"
 rm -f "$MARKER"
 
 # Run in the background rather than exec, so this script survives to read the
@@ -88,13 +88,14 @@ rm -f "$MARKER"
 child=$!
 trap 'kill -TERM "$child" 2>/dev/null' TERM INT
 
-# `wait` returns early when a signal is handled, so wait again for the real exit.
-wait "$child"
-status=$?
-if [ "$status" -gt 128 ]; then
-  wait "$child" 2>/dev/null
-  status=$?
-fi
+# Keep `|| status=$?`. A trapped signal makes `wait` return 143, and set -e
+# would exit here: the kernel then kills supervisord mid-shutdown.
+status=0
+wait "$child" || status=$?
+while kill -0 "$child" 2>/dev/null; do
+  status=0
+  wait "$child" || status=$?
+done
 
 if [ -f "$MARKER" ]; then
   echo "stackyard: $(cat "$MARKER") could not be started; exiting so the container is restarted" >&2

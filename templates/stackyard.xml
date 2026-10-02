@@ -5,6 +5,7 @@
   <Registry>https://ghcr.io</Registry>
   <Network>bridge</Network>
   <Privileged>false</Privileged>
+  <ExtraParams>--init --cap-drop=ALL --cap-add=NET_BIND_SERVICE --cap-add=CHOWN --cap-add=SETUID --cap-add=SETGID --cap-add=DAC_OVERRIDE --cap-add=KILL --security-opt=no-new-privileges:true --pids-limit=256 --memory=384m --memory-reservation=96m --memory-swap=384m --cpus=0.5</ExtraParams>
   <Support>https://github.com/SandObserver/Stackyard/issues</Support>
   <Project>https://github.com/SandObserver/Stackyard</Project>
   <ReadMe>https://github.com/SandObserver/Stackyard/blob/main/README.md</ReadMe>
@@ -79,4 +80,5 @@
   <Config Name="Allow Private IPs" Target="ALLOW_PRIVATE_IPS" Default="true" Mode="" Description="Let widgets and badges reach private addresses, which most homelab services use. Set to false to keep the SSRF guard on." Type="Variable" Display="always" Required="false" Mask="false">true</Config>
   <Config Name="Docker Socket Proxy URL" Target="SOCKET_PROXY_URL" Default="" Mode="" Description="Optional. Address of a Docker socket proxy, for the Docker widgets. Example: http://socket-proxy:2375" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
   <Config Name="Trust Proxy" Target="TRUST_PROXY" Default="" Mode="" Description="Optional. Set to true when running behind a reverse proxy, so client addresses are read from the forwarded headers." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Node Options" Target="NODE_OPTIONS" Default="--max-old-space-size=192" Mode="" Description="Node heap cap. Keep it near half the --memory limit in Extra Parameters, and raise both together." Type="Variable" Display="advanced" Required="false" Mask="false">--max-old-space-size=192</Config>
 </Container>

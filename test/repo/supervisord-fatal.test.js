@@ -182,3 +182,13 @@ test('only the supervisor listener reaches the runtime image', () => {
   const copied = [...runtime.matchAll(/^COPY (?:--\S+ )*(scripts\/\S+)/gm)].map(m => m[1]);
   assert.deepEqual(copied, ['scripts/exit-on-fatal.py']);
 });
+
+/* supervisord and the listener run as root, and the API user can write /tmp. A
+   link planted there would make root overwrite the file it points at. */
+test('root writes its marker and pid file outside world-writable /tmp', () => {
+  const marker = /SUPERVISOR_FATAL_MARKER',\s*'([^']+)'/.exec(listener)[1];
+  const pidfile = /^pidfile=(\S+)$/m.exec(supervisord)[1];
+  for (const file of [marker, pidfile]) {
+    assert.match(file, /^\/run\//, `${file} is not in a root-owned directory`);
+  }
+});
