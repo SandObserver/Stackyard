@@ -263,9 +263,8 @@ function watchVisibility(){
 
 let _rzId=null;
 addEventListener('resize', ()=>{
-  if(_zoneBad) return;
   clearTimeout(_rzId);
-  _rzId=setTimeout(()=>{ const run=_running; stop(); buildShell(); render(!_reduceMotion); if(run) start(); }, 150);
+  _rzId=setTimeout(()=>{ if(_zoneBad) return; const run=_running; stop(); buildShell(); render(!_reduceMotion); if(run) start(); }, 150);
 });
 
 function hostTheme(){ return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'; }

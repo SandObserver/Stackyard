@@ -41,11 +41,12 @@ function element() {
   return el;
 }
 
-async function boot(file, clockTimezone) {
+async function boot(file, clockTimezone, { resizeDuringLoad = false } = {}) {
   const els = new Map();
   const byId = id => els.get(id) || els.set(id, element()).get(id);
   const timers = [];
   const painted = [];
+  const resizers = [];
   const globals = {
     location: { search: '?id=c1' },
     document: {
@@ -55,9 +56,12 @@ async function boot(file, clockTimezone) {
       addEventListener() {},
       hidden: false,
     },
-    addEventListener() {},
+    addEventListener: (type, fn) => type === 'resize' && resizers.push(fn),
     matchMedia: () => ({ matches: true }),
-    fetch: async () => ({ ok: true, json: async () => ({ widgetConfig: { clockTimezone } }) }),
+    fetch: async () => {
+      if (resizeDuringLoad) for (const fn of resizers) fn();
+      return { ok: true, json: async () => ({ widgetConfig: { clockTimezone } }) };
+    },
     setTimeout: fn => timers.push(fn),
     clearTimeout() {},
     requestAnimationFrame: () => 0,
@@ -75,13 +79,14 @@ async function boot(file, clockTimezone) {
   }
   try {
     await new Function(pageScript(file))();
+    for (const fn of timers.splice(0)) fn();
   } finally {
     for (const k of Object.keys(globals)) {
       if (saved[k]) Object.defineProperty(globalThis, k, saved[k]);
       else delete globalThis[k];
     }
   }
-  return { painted, timers, label: byId('widget').attrs['aria-label'] };
+  return { painted, timers, label: byId('widget').attrs['aria-label'], face: byId('face').children.length };
 }
 
 for (const file of ['digital.html', 'analog.html']) {
@@ -92,6 +97,12 @@ for (const file of ['digital.html', 'analog.html']) {
     assert.equal(r.timers.length, 0, 'no tick is scheduled');
   });
 }
+
+test('analog.html: a resize while the config loads draws no face behind the error', async () => {
+  const r = await boot('analog.html', 'Berlin', { resizeDuringLoad: true });
+  assert.deepEqual(r.painted, ['Unknown timezone']);
+  assert.equal(r.face, 0);
+});
 
 test('digital.html: a known timezone ticks', async () => {
   const r = await boot('digital.html', 'Europe/Berlin');
