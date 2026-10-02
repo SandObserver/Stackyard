@@ -90,6 +90,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Blur the background behind the Settings sign-in and set-password screens on
   Safari 17.
 
+- Stop the dashboard from adding an extra background refresh each time the tab
+  is hidden during a refresh, or when it first opens in a background tab.
+
+- Mark badges and health as out of date when the dashboard is signed out,
+  instead of showing frozen values as current.
+
+- Load each widget once, not twice, when a phone rotates into the phone layout.
+
+- Stop widgets with an auto-refresh from reloading while the tab is hidden.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
