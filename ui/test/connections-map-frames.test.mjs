@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = fs.readFileSync(path.join(root, 'widgets/connections/connections-map.html'), 'utf8');
-const scripts = [...source.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+const scripts = [...source.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
 const [dotsScript, moduleScript] = scripts;
 const importLine = /^import \{([^}]+)\} from '[^']+';$/m;
 const toolboxNames = moduleScript
