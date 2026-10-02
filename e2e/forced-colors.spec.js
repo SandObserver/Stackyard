@@ -22,7 +22,12 @@ test.describe('forced colors', () => {
     await seedConfig(request, { items: [app('alpha', 'Alpha')] });
     await page.goto('/admin/');
     await page.locator('body.authed').waitFor({ state: 'attached' });
-    await page.addStyleTag({ content: '*,*::after{transition:none!important}' });
+    /* The page CSP refuses a style tag. A constructed sheet is CSSOM and passes. */
+    await page.evaluate(() => {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync('*,*::after{transition:none!important}');
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    });
     const input = page.locator('#set-awake');
     const track = page.locator('#set-awake + .tr');
     const read = async () => ({
