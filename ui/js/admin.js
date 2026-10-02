@@ -42,11 +42,12 @@ import {
   clearSkipTls,
   convert,
   detectSource,
+  ImportTooLargeError,
   insecureApps,
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=2aa3bf02';
+} from '/js/import-foreign.js?v=dda5296a';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -1140,7 +1141,13 @@ el('imp-foreign').onchange = async e => {
       }
       const kind = detectSource(doc);
       if (!kind) throw new Error(t('toast.importUnknownFormat', { file: file.name }));
-      const out = convert(kind, doc, taken, t('importForeign.untitledFolder'));
+      let out;
+      try {
+        out = convert(kind, doc, taken, t('importForeign.untitledFolder'));
+      } catch (err) {
+        if (err instanceof ImportTooLargeError) throw new Error(t('toast.importTooLarge', { file: file.name }));
+        throw err;
+      }
       items.push(...out.items);
       skipped.push(...parseErrorsAsSkipped(parseErrors, file.name), ...out.skipped);
       notes.push(...out.notes);

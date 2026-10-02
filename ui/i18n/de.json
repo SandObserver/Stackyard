@@ -333,6 +333,7 @@
     "importForeignNothing": "Aus diesen Dateien gibt es nichts zu importieren.",
     "importYamlUnsupported": "{file}: {reason} (Zeile {line})",
     "importUnknownFormat": "{file} ist keine gethomepage- oder Dashy-Konfiguration.",
+    "importTooLarge": "{file} enthält zu viele Einträge für einen Import.",
     "secretsWithheld": "Zugangsdaten erneut eingeben für: {items}. Sie wurden nicht übernommen, weil sich die zugehörige Anfrage geändert hat.",
     "socketUrlMissing": "Adresse des Socket-Proxys eingeben oder Docker-Überwachung ausschalten.",
     "socketUrlBad": "Socket-Proxy nicht gespeichert: {reason}",

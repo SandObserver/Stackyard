@@ -333,6 +333,7 @@
     "importForeignNothing": "در این فایل‌ها چیزی برای وارد کردن نیست.",
     "importYamlUnsupported": "{file}: {reason} (خط {line})",
     "importUnknownFormat": "{file} پیکربندی gethomepage یا Dashy نیست.",
+    "importTooLarge": "{file} برای وارد کردن بیش از حد مورد دارد.",
     "secretsWithheld": "اعتبارنامه را دوباره وارد کنید برای: {items}. نگه داشته نشد، چون درخواستِ مربوط به آن تغییر کرده است.",
     "socketUrlMissing": "آدرس پراکسی سوکت را وارد کنید یا پایش داکر را خاموش کنید.",
     "socketUrlBad": "پراکسی سوکت ذخیره نشد: {reason}",

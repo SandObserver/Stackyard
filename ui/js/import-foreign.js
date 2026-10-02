@@ -16,6 +16,12 @@ export const SKIP = Object.freeze({
   UNPARSABLE: 'unparsable',
 });
 
+/* An alias is the same object as its anchor, so a short file can list millions
+   of entries and freeze the tab. Real configs hold a few hundred. */
+export const MAX_IMPORT_ENTRIES = 5000;
+
+export class ImportTooLargeError extends Error {}
+
 export const NOTE = Object.freeze({
   ICON_DROPPED: 'icon-dropped',
   PING_DROPPED: 'ping-dropped',
@@ -128,8 +134,12 @@ export function convertIcon(raw) {
     @param {Iterable<string>} takenIds */
 function collector(takenIds) {
   const taken = takenIds instanceof Set ? takenIds : new Set(takenIds || []);
+  let entries = 0;
   return {
     taken,
+    visit() {
+      if (++entries > MAX_IMPORT_ENTRIES) throw new ImportTooLargeError();
+    },
     /** @type {any[]} */ items: [],
     /** @type {Array<{ reason: string, name: string, group: string, detail?: string }>} */ skipped: [],
     /** @type {Array<{ code: string, name: string, group: string, detail?: string }>} */ notes: [],
@@ -219,6 +229,7 @@ export function convertHomepageServices(doc, takenIds = []) {
     const at = col.items.length;
     const children = [];
     for (const entry of Array.isArray(entries) ? entries : []) {
+      col.visit();
       const e = soleEntry(entry);
       if (!e) {
         /* Not a `{ name: fields }` wrapper, so there is no service to read. */
@@ -289,6 +300,7 @@ export function convertHomepageBookmarks(doc, takenIds = []) {
     const at = col.items.length;
     const children = [];
     for (const entry of entries) {
+      col.visit();
       const e = soleEntry(entry);
       if (!e) {
         col.skip(SKIP.UNREADABLE, '', groupLabel);
@@ -338,6 +350,7 @@ export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
     const children = [];
 
     const addDashyItem = (raw, viaSubItem) => {
+      col.visit();
       if (!isMap(raw)) {
         col.skip(SKIP.UNREADABLE, '', groupLabel);
         return;
