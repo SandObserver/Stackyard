@@ -109,3 +109,16 @@ test('-webkit-box appears only alongside line clamping', () => {
     }
   }
 });
+
+test('every backdrop-filter has its -webkit- form beside it', () => {
+  const bare = [];
+  for (const f of styleFiles(uiDir).filter(p => /\.(css|html)$/.test(p))) {
+    const src = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const block of src.split(/[{}]/)) {
+      if (/(?<!-webkit-)backdrop-filter\s*:/.test(block) && !/-webkit-backdrop-filter\s*:/.test(block)) {
+        bare.push(`${path.relative(uiDir, f)}: ${block.trim().slice(0, 60)}`);
+      }
+    }
+  }
+  assert.deepEqual(bare, [], 'Safari before 18 reads only the prefixed form');
+});

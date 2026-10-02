@@ -133,9 +133,25 @@ test('the first observation does not rebuild what is being built', () => {
   assert.match(dash, /_saFirst/, 'observing delivers the current size at once');
 });
 
-test('admin reserves the top inset too', () => {
+test('admin reserves the top inset in its sticky header', () => {
   const css = read('css/admin.css');
-  assert.match(css, /html\.is-mobile \.adm-outer\{padding:env\(safe-area-inset-top\) 0 0/);
+  assert.match(
+    css,
+    /html\.is-mobile \.sec-hdr\{position:sticky;top:0;[^}]*padding:calc\(10px \+ env\(safe-area-inset-top\)\)/,
+  );
+  assert.match(css, /html\.is-mobile \.adm-outer\{padding:0;/, 'the inset is reserved once');
+});
+
+test('admin keeps clear of the side insets in landscape', () => {
+  const css = read('css/admin.css');
+  assert.match(
+    css,
+    /\.adm-outer \{ padding:24px max\(16px,env\(safe-area-inset-left\),env\(safe-area-inset-right\)\); \}/,
+  );
+  assert.match(
+    css,
+    /#toast\{[^}]*inset-inline-end:max\(24px,env\(safe-area-inset-left\),env\(safe-area-inset-right\)\)/,
+  );
 });
 
 /* ── Widget cards fit, and stay on one modular grid ───────────────────────── */

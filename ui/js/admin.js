@@ -197,9 +197,7 @@ function showListView() {
   el('dash-list-view').classList.remove('d-none');
   el('dash-edit-view').classList.add('d-none');
 }
-/* Keep both. The pane scrolls on a wide window, the document on a phone. */
 function scrollSettingsTop() {
-  q('.cp')?.scrollTo?.(0, 0);
   scrollTo(0, 0);
 }
 
