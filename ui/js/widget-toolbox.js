@@ -3,7 +3,7 @@
 
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
-import { jitter } from '/js/jitter.js?v=4eeef4c9';
+import { jitter } from '/js/jitter.js?v=087a1fcf';
 import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=7da9754b';
 
 export { esc, html, setHtml };

@@ -24,9 +24,9 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=b1cfbd45';
+} from '/js/utils.js?v=c5766a9d';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=53fd6b55';
+import { initSpotlight } from '/js/spotlight.js?v=75f7fd04';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=706fc9a7';
@@ -41,7 +41,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=d7ddfd15';
+} from '/js/ui.js?v=d9417e1e';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -53,8 +53,8 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=cd1cc453';
-import { jitter } from '/js/jitter.js?v=4eeef4c9';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=5f478ebf';
+import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
@@ -597,7 +597,9 @@ function refreshBadges() {
 }
 async function pollBadges() {
   try {
-    const d = await (await fetch('/api/badges', { cache: 'no-store' })).json();
+    const res = await fetch('/api/badges', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`badges ${res.status}`);
+    const d = await res.json();
     for (const [id, v] of Object.entries(d)) {
       const { value, failed } = readBadgeUpdate(v);
       /* A failed item keeps its last value, marked stale. Overwriting it with
@@ -622,7 +624,9 @@ async function pollBadges() {
 }
 async function pollHealth() {
   try {
-    const d = await (await fetch('/api/health', { cache: 'no-store' })).json();
+    const res = await fetch('/api/health', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`health ${res.status}`);
+    const d = await res.json();
     for (const [id, v] of Object.entries(d)) {
       bset(id, 'healthDetail', v);
       bset(id, 'health', v.unhealthy ? 1 : 0);
@@ -843,11 +847,22 @@ async function boot() {
     folderGlyph: mkFolderGlyph,
   });
 
-  /* The width the current layout was built at. */
+  /* One rotation fires several of the events below. Rebuild only when the
+     space moved since the last build: each rebuild reloads every widget. */
   let _mw = innerWidth;
+  let _saAt = '';
+  /** @type {HTMLElement|null} */
+  let saProbe = null;
+  const saSize = () => {
+    if (!saProbe) return '';
+    const r = saProbe.getBoundingClientRect();
+    return `${r.width}x${r.height}`;
+  };
+  const spaceMoved = () => innerWidth !== _mw || saSize() !== _saAt;
   /* Mobile measures the viewport as it builds, so it waits for layout. */
   const buildLayout = () => {
     _mw = innerWidth;
+    _saAt = saSize();
     if (MOB) {
       document.body.classList.add('is-mob');
       requestAnimationFrame(() =>
@@ -947,6 +962,7 @@ async function boot() {
     const probe = document.createElement('div');
     probe.className = 'sa-probe';
     document.body.appendChild(probe);
+    saProbe = probe;
     let _sat,
       _saH = -1,
       _saW = -1,
@@ -964,7 +980,7 @@ async function boot() {
       }
       clearTimeout(_sat);
       _sat = setTimeout(() => {
-        if (MOB) buildLayout();
+        if (MOB && spaceMoved()) buildLayout();
       }, 100);
     }).observe(probe);
   }
@@ -976,7 +992,7 @@ async function boot() {
   screen.orientation.addEventListener('change', () => {
     clearTimeout(_rt);
     _rt = setTimeout(() => {
-      if (MOB) buildLayout();
+      if (MOB && spaceMoved()) buildLayout();
       resampleBg();
     }, 150);
   });
@@ -1013,17 +1029,7 @@ async function boot() {
 
   /* Jittered, so several open clients do not poll on the same tick. */
   let _pollTimers = [];
-  const _repeat = (fn, base) => {
-    let h;
-    const tick = async () => {
-      try {
-        await fn();
-      } catch {}
-      h = setTimeout(tick, jitter(base));
-    };
-    h = setTimeout(tick, Math.round(Math.random() * base));
-    _pollTimers.push(() => clearTimeout(h));
-  };
+  const _repeat = (fn, base) => _pollTimers.push(repeatJittered(fn, base));
 
   const pollConfig = async () => {
     try {
@@ -1035,15 +1041,17 @@ async function boot() {
     } catch {}
   };
 
-  const startPolling = () => {
-    _repeat(pollBadges, 20_000);
-    _repeat(pollHealth, 30_000);
-    _repeat(pollConfig, 15_000);
-  };
-
   const stopPolling = () => {
     _pollTimers.forEach(clear => clear());
     _pollTimers = [];
+  };
+
+  /* A tab that boots hidden starts here and again when first shown. */
+  const startPolling = () => {
+    stopPolling();
+    _repeat(pollBadges, 20_000);
+    _repeat(pollHealth, 30_000);
+    _repeat(pollConfig, 15_000);
   };
 
   /* Keep. Without it Safari leaves the tile scaled after a new tab opens. */

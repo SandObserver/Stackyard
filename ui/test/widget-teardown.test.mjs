@@ -58,7 +58,17 @@ function harness() {
     ct: realClearTimeout,
   };
 
-  globalThis.document = { createElement: el, querySelectorAll: () => [] };
+  const docListeners = new Set();
+  globalThis.document = {
+    createElement: el,
+    querySelectorAll: () => [],
+    addEventListener(type, fn) {
+      if (type === 'visibilitychange') docListeners.add(fn);
+    },
+    removeEventListener(type, fn) {
+      if (type === 'visibilitychange') docListeners.delete(fn);
+    },
+  };
   globalThis.window = { addEventListener() {}, removeEventListener() {} };
   globalThis.requestAnimationFrame = () => {};
   globalThis.setTimeout = (fn, ms) => {
@@ -84,6 +94,8 @@ function harness() {
 
   return {
     counts,
+    realSetTimeout,
+    docListeners,
     card: () => el('div'),
     done() {
       globalThis.document = restore.document;
@@ -214,4 +226,31 @@ test('the rebuild is driven by the shared layout rule', () => {
   const src = read('js/dashboard.js');
   assert.match(src, /import \{[^}]*onLayoutChange[^}]*\} from '\/js\/layout\.js/);
   assert.match(src, /onLayoutChange\(mobile => \{/, 'the layout change is what triggers a rebuild');
+});
+
+test('a hidden tab does not reload its widgets, and catches up on return', async () => {
+  const h = harness();
+  const frames = [];
+  const make = globalThis.document.createElement;
+  globalThis.document.createElement = tag => {
+    const e = make(tag);
+    if (tag === 'iframe') frames.push(e);
+    return e;
+  };
+  globalThis.document.hidden = true;
+  const wait = ms => new Promise(r => h.realSetTimeout(r, ms));
+  const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+  try {
+    mountScaledWidget(h.card(), { ...OPTS, iframeOpts: { refreshInterval: 250 } });
+    const first = frames[0].src;
+    await wait(800);
+    assert.equal(frames[0].src, first, 'reloaded while hidden');
+    globalThis.document.hidden = false;
+    for (const fn of h.docListeners) fn();
+    assert.notEqual(frames[0].src, first, 'a reload missed while hidden runs on return');
+  } finally {
+    teardownWidgets();
+    h.done();
+  }
+  assert.equal(h.docListeners.size, 0, 'teardown leaves a visibility listener');
 });
