@@ -74,6 +74,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show a focus ring on the header, poll interval and icon search fields and on
   the Settings sliders.
 
+- Fit the empty dashboard welcome and its import link on short screens and at
+  400% zoom.
+
+- Wrap the Dashboard list filter chips on narrow phones instead of scrolling
+  Settings sideways.
+
+- Keep the Settings sidebar on screen while scrolling a long list.
+
+- Keep Settings clear of the notch and rounded corners on an iPhone in
+  landscape.
+
+- Make folder page dots and badges that open a value list easier to tap.
+
+- Blur the background behind the Settings sign-in and set-password screens on
+  Safari 17.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
