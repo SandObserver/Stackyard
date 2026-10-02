@@ -72,7 +72,7 @@ const DIAL = {
   dark:  { bg:'#1c1c1e', fill:'#E5E5EA', date:'rgba(0,0,0,0.5)', tick:'#E5E5EA', dot:'#1C1C1E' },
 };
 
-let _mode='dark', _timezone='', _showDate=true;
+let _mode='dark', _timezone='', _showDate=true, _zoneBad=false;
 let _groups=null, _dateTexts=[], _rafId=null, _running=false, _vb=0;
 
 function _now(){
@@ -83,6 +83,22 @@ function _now(){
   const shifted = new Date(d.toLocaleString('en-US', { timeZone: _timezone }));
   shifted.setMilliseconds(d.getMilliseconds());
   return shifted;
+}
+
+/* An unknown zone makes every toLocaleString call throw, so the clock never
+   draws. */
+function zoneOk(z){
+  try{ new Intl.DateTimeFormat('en-US', { timeZone: z || undefined }); return true; }
+  catch{ return false; }
+}
+async function showZoneError(){
+  const w=document.getElementById('widget');
+  w.className='widget mode-'+_mode;
+  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=e44a2dd4');
+  await loadStrings();
+  const line=wt('ui.unknownZone','Unknown timezone');
+  errorState({ root: w, place: 'center' }).empty(line);
+  w.setAttribute('aria-label', line);
 }
 
 function el(tag, attrs){
@@ -228,6 +244,7 @@ function stop(){
 }
 
 document.addEventListener('visibilitychange', ()=>{
+  if(_zoneBad) return;
   if(document.hidden) stop();
   else { render(!_reduceMotion); start(); }
 });
@@ -247,7 +264,7 @@ function watchVisibility(){
 let _rzId=null;
 addEventListener('resize', ()=>{
   clearTimeout(_rzId);
-  _rzId=setTimeout(()=>{ const run=_running; stop(); buildShell(); render(!_reduceMotion); if(run) start(); }, 150);
+  _rzId=setTimeout(()=>{ if(_zoneBad) return; const run=_running; stop(); buildShell(); render(!_reduceMotion); if(run) start(); }, 150);
 });
 
 function hostTheme(){ return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'; }
@@ -260,6 +277,7 @@ async function boot(){
       _showDate=wc.clockShowDate!==false;
     }
   }catch{}
+  if(!zoneOk(_timezone)){ _zoneBad=true; return showZoneError(); }
   buildShell();
   render(!_reduceMotion);
   watchVisibility();

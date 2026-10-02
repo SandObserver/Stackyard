@@ -8,5 +8,6 @@
   "clockTimezone.label": "منطقهٔ زمانی",
   "clockTimezone.placeholder": "Asia/Tehran",
   "clockTimezone.hint": "نام منطقهٔ زمانی IANA. برای زمان محلی مرورگر خالی بگذارید.",
-  "clockShowDate.label": "نمایش تاریخ"
+  "clockShowDate.label": "نمایش تاریخ",
+  "ui.unknownZone": "منطقهٔ زمانی ناشناخته"
 }

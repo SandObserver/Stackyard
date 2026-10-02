@@ -8,5 +8,6 @@
   "clockTimezone.label": "时区",
   "clockTimezone.placeholder": "Asia/Shanghai",
   "clockTimezone.hint": "IANA 时区名称。留空则使用浏览器本地时间。",
-  "clockShowDate.label": "显示日期"
+  "clockShowDate.label": "显示日期",
+  "ui.unknownZone": "未知时区"
 }

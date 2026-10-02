@@ -122,3 +122,27 @@ test('an entry carrying no device object is skipped', async () => {
   const r = await dataFn(ctx);
   assert.deepEqual(r.options, [{ value: 'b1', label: 'D' }]);
 });
+
+for (const [status, failed] of [
+  [0, false],
+  [1, true],
+  [2, true],
+  [3, true],
+]) {
+  test(`Scrutiny status ${status} is ${failed ? 'a failed' : 'a healthy'} drive`, async () => {
+    const summary = { d: { device: { device_id: 'd', device_status: status }, smart: { temp: 30 } } };
+    const config = { diskProvider: 'scrutiny', scrutinyUrl: 'http://s.local', bays: ['d'] };
+    const [bay] = (await dataFn(makeCtx('', config, summaryFetch(summary)))).bays;
+    assert.equal(bay.hasSmart, true);
+    assert.equal(bay.device_status, failed ? 2 : 0);
+  });
+}
+
+for (const status of ['2', 4.5, -1, null, undefined]) {
+  test(`Scrutiny status ${JSON.stringify(status)} is not read as healthy`, async () => {
+    const summary = { d: { device: { device_id: 'd', device_status: status }, smart: { temp: 30 } } };
+    const config = { diskProvider: 'scrutiny', scrutinyUrl: 'http://s.local', bays: ['d'] };
+    const [bay] = (await dataFn(makeCtx('', config, summaryFetch(summary)))).bays;
+    assert.equal(bay.hasSmart, false);
+  });
+}

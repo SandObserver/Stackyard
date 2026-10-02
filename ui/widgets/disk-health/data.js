@@ -99,10 +99,11 @@ async function diskHealthScrutiny(ctx) {
     if (!deviceId) return null;
     const entry = byId[deviceId];
     if (!entry) return { device_id: deviceId, device_status: 0, hasSmart: false, error: 'not found' };
+    const failed = scrutinyFailed(entry.device.device_status);
     return {
       device_id: deviceId,
-      device_status: entry.device.device_status ?? 0,
-      hasSmart: !!entry.smart,
+      device_status: failed ? 2 : 0,
+      hasSmart: !!entry.smart && failed !== null,
       model_name: entry.device.model_name || entry.device.device_serial_id || entry.device.device_name,
       device_name: entry.device.device_name,
       temp: entry.smart?.temp ?? null,
@@ -111,6 +112,12 @@ async function diskHealthScrutiny(ctx) {
   });
 
   return { bays: result, href: config.scrutinyHref || '', provider: 'scrutiny' };
+}
+
+/* Scrutiny's device_status is a bit set: 1 is a failed SMART check, 2 a failed
+   Scrutiny threshold. Any set bit is a failed drive. */
+function scrutinyFailed(status) {
+  return Number.isInteger(status) && status >= 0 ? status !== 0 : null;
 }
 
 /* A pool's `healthy` flag becomes the per-bay status, in the codes the widget

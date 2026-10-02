@@ -354,6 +354,19 @@ async function beszelLatestRecord(ctx, base, systemId) {
   return data?.items?.[0] || null;
 }
 
+/* A 1m record lands each minute while the agent reports. An older latest record
+   holds frozen values, and without this check they are shown as live. */
+const BESZEL_STALE_MS = 5 * 60 * 1000;
+
+async function beszelFreshRecord(ctx, base, systemId) {
+  const record = await beszelLatestRecord(ctx, base, systemId);
+  const at = Date.parse(record?.created);
+  if (at && Date.now() - at > BESZEL_STALE_MS) {
+    ctx.fail('Beszel has no reading from that system in the last five minutes', { kind: ctx.KIND.NETWORK });
+  }
+  return record;
+}
+
 async function beszelLatest(ctx, base, systemId) {
   return (await beszelLatestRecord(ctx, base, systemId))?.stats || null;
 }
@@ -388,11 +401,15 @@ async function systemSummaryBeszel(ctx) {
   if (!systems.length) ctx.fail('Beszel is reporting no systems for this account');
   const system = systems.find(s => s.id === id);
   if (!system) ctx.fail('That system is no longer in Beszel. Choose it again.', { kind: ctx.KIND.INVALID });
+  if (system.status === 'down' || system.status === 'paused') {
+    ctx.fail(`Beszel reports that system as ${system.status}`, { kind: ctx.KIND.NETWORK });
+  }
 
-  const [record, stats] = await Promise.all([
+  const [record, latest] = await Promise.all([
     beszelGet(ctx, base, `/api/collections/systems/records/${encodeURIComponent(id)}?fields=info`),
-    beszelLatest(ctx, base, id),
+    beszelFreshRecord(ctx, base, id),
   ]);
+  const stats = latest?.stats;
   if (!stats) ctx.fail('Beszel has no readings for that system yet');
 
   const slots = ctx.config.slots || [];
@@ -641,7 +658,7 @@ async function beszelThroughput(ctx) {
   if (!id) ctx.fail('Choose a system first.', { kind: ctx.KIND.INVALID });
   const name = chosenInterface(ctx);
   if (!name) ctx.fail('Choose a network interface first.', { kind: ctx.KIND.INVALID });
-  const record = await beszelLatestRecord(ctx, base, id);
+  const record = await beszelFreshRecord(ctx, base, id);
   const stats = record?.stats;
   if (!stats) ctx.fail('Beszel has no readings for that system yet');
 

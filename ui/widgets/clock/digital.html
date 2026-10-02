@@ -170,6 +170,22 @@ function applyDigit(svg, n, prev) {
   svg.querySelectorAll('polygon').forEach((p, i) => { p.style.fill = bits[i] ? on : off; });
 }
 
+/* An unknown zone makes every toLocaleString call throw, so the clock never
+   draws. */
+function zoneOk(z) {
+  try { new Intl.DateTimeFormat('en-US', { timeZone: z || undefined }); return true; }
+  catch { return false; }
+}
+async function showZoneError() {
+  const w = document.getElementById('widget');
+  w.className = 'widget mode-' + _mode;
+  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=e44a2dd4');
+  await loadStrings();
+  const line = wt('ui.unknownZone', 'Unknown timezone');
+  errorState({ root: w, place: 'center' }).empty(line);
+  w.setAttribute('aria-label', line);
+}
+
 function tick() {
   const now = _timezone
     ? new Date(new Date().toLocaleString('en-US', { timeZone: _timezone }))
@@ -197,6 +213,7 @@ async function boot() {
       _showDate = wc.clockShowDate !== false;
     }
   } catch {}
+  if (!zoneOk(_timezone)) return showZoneError();
   buildShell();
   tick();
 }
