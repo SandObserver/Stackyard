@@ -1,5 +1,5 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=4034de69';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=169ab45f';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5980e313';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
 import { initList, render, syncFilterUI } from '/js/admin-list.js?v=905ee6e1';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=28ba0c56';
+} from '/js/admin-settings.js?v=83bd2c2e';
 import {
   apiGet,
   apiPost,

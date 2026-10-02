@@ -293,7 +293,7 @@
     .badge.red  { --badge-bg:var(--badge-red) }
     .badge.blue { --badge-bg:var(--badge-blue) }
     .badge.green { --badge-bg:var(--badge-green) }
-    .badge.stale { outline:1.5px dashed rgba(255,255,255,.92); outline-offset:1px }
+    .badge.stale { outline:1.5px dashed var(--on-fill); outline-offset:-3px }
 
     /* Both pills are pseudo-elements at negative depth. That is the only order
        where one paints under the other and both stay under the label, and it
@@ -519,7 +519,7 @@
 
     /* ── Spotlight — mobile layout (default, overridden for desktop below) ── */
     #spot {
-      background:rgba(0,0,0,.52);
+      background:rgba(0,0,0,.62);
       -webkit-backdrop-filter:blur(40px) saturate(180%) brightness(.76);
       backdrop-filter:blur(40px) saturate(180%) brightness(.76);
       align-items:stretch;
@@ -976,7 +976,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
 .setup-card {
   width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 10px;
   padding: 22px 14px 14px; border-radius: 34px;
-  background: rgba(30,30,32,.82); border: .5px solid rgba(255,255,255,.12);
+  background: rgba(30,30,32,.9); border: .5px solid rgba(255,255,255,.12);
   -webkit-backdrop-filter: blur(32px) saturate(180%); backdrop-filter: blur(32px) saturate(180%);
   box-shadow: 0 8px 48px rgba(0,0,0,.45);
   color: var(--label-primary);
@@ -1001,7 +1001,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
 .setup-bars { display: flex; gap: 4px; padding-inline: 8px; }
 .setup-bars .pwbar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); transition: background .15s; }
 .setup-hint { font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1); min-height: 14px; color: rgba(235,235,245,.6); padding-inline: 8px; }
-.setup-err  { display: none; font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: var(--danger); padding-inline: 8px; }
+.setup-err  { display: none; font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: var(--sy-red-hi); padding-inline: 8px; }
 .setup-btns { display: flex; gap: 8px; margin-top: 6px; }
 .setup-btn {
   flex: 1; min-height: 48px; padding: 13px 16px; border-radius: 24px; border: 0; cursor: pointer; font-family: inherit;
@@ -1010,7 +1010,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
 .setup-btn-skip { background: rgba(118,118,128,.32); color: var(--label-primary); }
 .setup-btn-set  { background: var(--accent); color: var(--on-fill); }
 .setup-btn-set:disabled { opacity: .4; cursor: default; }
-html[data-theme="light"] .setup-card { background: rgba(255,255,255,.9); border-color: rgba(0,0,0,.08); box-shadow: 0 8px 48px rgba(0,0,0,.18); }
+html[data-theme="light"] .setup-card { background: rgba(255,255,255,.95); border-color: rgba(0,0,0,.08); box-shadow: 0 8px 48px rgba(0,0,0,.18); }
 html[data-theme="light"] .setup-sub,
 html[data-theme="light"] .setup-hint,
 html[data-theme="light"] .setup-reveal,
@@ -1089,8 +1089,11 @@ html[data-theme="light"] #mob-search-pill .msp-icon,
 html[data-theme="light"] #mob-search-pill .msp-label { color:var(--pill-ink-light); text-shadow:none }
 html[data-theme="light"] #mob-search-pill .msp-dot { background:rgba(60,60,67,.3) }
 html[data-theme="light"] #mob-search-pill .msp-dot.on { background:rgba(0,0,0,.8) }
-html[data-theme="light"] #spot,
+html[data-theme="light"] #spot { background:rgba(242,242,247,.9) }
 html[data-theme="light"] body:not(.is-mob) #spot { background:rgba(242,242,247,.5) }
+html[data-theme="light"] body.is-mob #spot {
+  -webkit-backdrop-filter:blur(40px) saturate(180%); backdrop-filter:blur(40px) saturate(180%);
+}
 html[data-theme="light"] body:not(.is-mob) #sbox,
 html[data-theme="light"] body:not(.is-mob) #sres {
   background:rgba(255,255,255,.92); border-color:rgba(0,0,0,.1); box-shadow:0 20px 60px rgba(0,0,0,.18);
@@ -1102,6 +1105,8 @@ html[data-theme="light"] #sin, html[data-theme="light"] .srn { color:var(--label
 html[data-theme="light"] #sin::placeholder,
 html[data-theme="light"] #spot #sin::placeholder,
 html[data-theme="light"] #spot-cancel { color:var(--search-ink-light) }
+html[data-theme="light"] body.is-mob #spot-cancel { color:var(--accent-strong) }
+html[data-theme="light"] body.is-mob #spot #sin::placeholder { color:rgba(60,60,67,.85) }
 html[data-theme="light"] .sr-section, html[data-theme="light"] .srh { color:rgba(60,60,67,.85); border-color:rgba(0,0,0,.08) }
 html[data-theme="light"] .sra { color:rgba(60,60,67,.85) }
 html[data-theme="light"] .sr:hover, html[data-theme="light"] .sr:active,

@@ -416,10 +416,11 @@ test('--on-tint is white in both themes', () => {
 /* ── the dashboard's own text ─────────────────────────────────────────────── */
 
 /* Text on translucent layers is composited over a black and a white wallpaper.
-   Blur is not modelled. The two extremes still bound it. */
+   Blur is not modelled. The two extremes still bound it. A backdrop
+   `brightness()` is applied to what is under its layer. */
 
 /** The value a theme gives `prop` on `selector`, last declaration winning. */
-function paint(light, selector, prop) {
+function paint(light, selector, prop, optional = false) {
   const names = light ? [selector, `${LIGHT} ${selector}`] : [selector];
   const re = new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;]+)`);
   let value;
@@ -429,8 +430,15 @@ function paint(light, selector, prop) {
     const m = re.exec(rule.body);
     if (m) value = m[1].trim();
   }
-  assert.ok(value, `${selector} declares no ${prop}`);
+  assert.ok(value || optional, `${selector} declares no ${prop}`);
   return value;
+}
+
+/** The backdrop a layer paints over, after its own `brightness()` filter. */
+function filtered(light, selector, under) {
+  const filter = paint(light, selector, 'backdrop-filter', true) || '';
+  const m = /brightness\(\s*([\d.]+)\s*\)/.exec(filter);
+  return m ? under.map(c => c * Number(m[1])) : under;
 }
 
 /** [r, g, b, a] for a declared colour. `none` is a layer that paints nothing. */
@@ -455,9 +463,11 @@ const WALLPAPERS = [
 
 const SETUP = ['.setup-prompt', '.setup-card'];
 const SPOTLIGHT = ['body:not(.is-mob) #spot', 'body:not(.is-mob) #sres'];
+const PHONE_SPOTLIGHT = ['#spot'];
 
 /* [what, ink selector, layers from the bottom up, backdrop, themes]. A
-   backdrop of `wallpaper` is measured over black and over white. */
+   backdrop of `wallpaper` is measured over black and over white. An ink given
+   as a pair is the dark selector, then the light one. */
 const DASHBOARD_TEXT = [
   ['first-run title', '.setup-card', SETUP, 'wallpaper'],
   ['first-run explanation', '.setup-sub', SETUP, 'wallpaper'],
@@ -465,6 +475,7 @@ const DASHBOARD_TEXT = [
   ['first-run password', '.setup-pw', [...SETUP, '.setup-pw'], 'wallpaper'],
   ['first-run placeholder', 'input::placeholder', [...SETUP, '.setup-pw'], 'wallpaper'],
   ['first-run Skip label', '.setup-btn-skip', [...SETUP, '.setup-btn-skip'], 'wallpaper'],
+  ['first-run mismatch error', '.setup-err', SETUP, 'wallpaper'],
   ['API error title', '.api-error-screen', [], '--bg-base'],
   ['API error explanation', '.api-error-sub', [], '--bg-base'],
   ['empty dashboard title', '.empty-state-title', [], '--bg-base'],
@@ -476,6 +487,14 @@ const DASHBOARD_TEXT = [
   ['Spotlight section header', '.sr-section', SPOTLIGHT, 'wallpaper'],
   ['Spotlight external-link arrow', '.sra', SPOTLIGHT, 'wallpaper'],
   ['Spotlight selected external-link arrow', '.sra', [...SPOTLIGHT, '.sr.sel'], 'wallpaper'],
+  ['phone Spotlight Cancel', 'body.is-mob #spot-cancel', PHONE_SPOTLIGHT, 'wallpaper'],
+  [
+    'phone Spotlight placeholder',
+    ['#spot #sin::placeholder', 'body.is-mob #spot #sin::placeholder'],
+    [...PHONE_SPOTLIGHT, 'body.is-mob #spot .spot-field'],
+    'wallpaper',
+  ],
+  ['phone Spotlight result name', '.srn', PHONE_SPOTLIGHT, 'wallpaper'],
   /* Light only. The dark title also relies on its text shadow. */
   ['folder title, desktop', '.folder-title-desktop', ['.folder-overlay'], 'wallpaper', [true]],
   ['folder title, phone', '.folder-title-mobile', ['.folder-overlay-mobile'], 'wallpaper', [true]],
@@ -495,10 +514,11 @@ for (const light of [false, true]) {
     for (const [what, ink, layers, backdrop, themes = [false, true]] of DASHBOARD_TEXT) {
       if (!themes.includes(light)) continue;
       const bases = backdrop === 'wallpaper' ? WALLPAPERS : [rgbaOf(resolve, resolve(backdrop)).slice(0, 3)];
-      const inkColour = rgbaOf(resolve, paint(light, ink, 'color'));
+      const inkSelector = Array.isArray(ink) ? ink[light ? 1 : 0] : ink;
+      const inkColour = rgbaOf(resolve, paint(light, inkSelector, 'color'));
       for (const base of bases) {
         const surface = layers.reduce(
-          (under, sel) => layer(rgbaOf(resolve, paint(light, sel, 'background')), under),
+          (under, sel) => layer(rgbaOf(resolve, paint(light, sel, 'background')), filtered(light, sel, under)),
           base,
         );
         const r = ratio(toHex(layer(inkColour, surface)), toHex(surface));
