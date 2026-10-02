@@ -27,9 +27,12 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-  # Pinned GitHub Actions used by the workflows.
+  # Pinned GitHub Actions. `/` covers the workflows only; each composite action
+  # directory must be listed or its pins are never updated.
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - /.github/actions/checks
     schedule:
       interval: weekly
     groups:

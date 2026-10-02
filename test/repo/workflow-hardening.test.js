@@ -30,12 +30,10 @@ test('the scan finds the workflows', () => {
   assert.ok(compositeActions().length >= 1, 'the shared checks action should be found');
 });
 
-/* A workflow with no permissions block inherits the repository default, which
-   here is write. */
+/* A workflow with no top-level permissions block inherits the repository
+   default, which here is write, for any job added without its own block. */
 test('every workflow declares its permissions', () => {
-  const missing = workflows
-    .filter(([, s]) => !/^permissions:/m.test(s) && !/^\s+permissions:/m.test(s))
-    .map(([f]) => f);
+  const missing = workflows.filter(([, s]) => !/^permissions:/m.test(s)).map(([f]) => f);
   assert.deepEqual(missing, [], `These inherit the repository default, which is write:\n  ${missing.join('\n  ')}`);
 });
 
@@ -117,6 +115,10 @@ test('checkout does not leave its credentials behind', () => {
 test('dependabot watches the actions', () => {
   const cfg = fs.readFileSync(path.join(root, '.github', 'dependabot.yml'), 'utf8');
   assert.match(cfg, /package-ecosystem:\s*github-actions/, 'pinned SHAs need Dependabot to update them');
+  /* `/` covers .github/workflows only. */
+  for (const [name] of compositeActions()) {
+    assert.ok(cfg.includes(`- /.github/${name}\n`), `Dependabot never updates the pins in .github/${name}`);
+  }
 });
 
 /* Dependency code runs in these jobs, and the release build publishes what they

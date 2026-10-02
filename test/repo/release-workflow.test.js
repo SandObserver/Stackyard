@@ -66,13 +66,20 @@ test('every published platform is scanned before anything is pushed', () => {
       /APP_VERSION=\$\{\{ steps\.meta\.outputs\.version \}\}/,
       `${arch}: a different build-arg would build different layers from the ones pushed`,
     );
-    assert.match(String(built.with['cache-to']), /type=gha/, `${arch}: the push step rebuilds this from cache`);
   }
+});
 
-  assert.match(
-    String(byName('Build and push').with['cache-from']),
-    /type=gha/,
-    'without the shared cache every platform is built twice over',
+/* Any job with a runtime token can write the gha cache, including the ones that
+   run dev dependencies. A planted layer would be signed. */
+test('the signed image is not built from a cache other jobs can write', () => {
+  for (const s of steps.filter(step => /build-push-action/.test(step.uses || ''))) {
+    assert.equal(s.with['cache-from'], undefined, `${s.name} reads an outside cache`);
+    assert.equal(s.with['cache-to'], undefined, `${s.name} writes an outside cache`);
+  }
+  assert.equal(
+    byName('Set up Docker Buildx').with?.driver,
+    undefined,
+    'the push reuses the scan layers from the builder',
   );
 });
 
@@ -128,9 +135,36 @@ test('ghcr.io is published unconditionally', () => {
   assert.equal(byName('Log in to GitHub Container Registry').if, undefined);
 });
 
-test('the checks still run before anything is published', () => {
-  assert.ok(indexOf('Run project checks') < indexOf('Build and push'));
-  assert.equal(byName('Run project checks').with.mode, 'release');
+/* Dev dependencies run install scripts and the linters. They must not run
+   where the publishing and signing tokens are. */
+test('the checks run in their own read-only job before anything is published', () => {
+  const checks = workflow.jobs.checks;
+  assert.ok(checks, 'the release has no checks job');
+  assert.deepEqual(checks.permissions, { contents: 'read' });
+  const step = checks.steps.find(s => s.uses === './.github/actions/checks');
+  assert.equal(step?.with?.mode, 'release');
+  assert.ok([].concat(job.needs).includes('checks'), 'publishing must wait for the checks');
+});
+
+test('the publishing job runs no dev tooling', () => {
+  assert.equal(indexOf('Run project checks'), -1);
+  for (const s of steps) {
+    assert.ok(!String(s.uses || '').startsWith('./'), `${s.name}: a local action can install dev dependencies`);
+    assert.doesNotMatch(
+      String(s.run || ''),
+      /\b(npm|npx|yarn|pnpm|corepack)\b|node_modules/,
+      `${s.name} runs a package manager`,
+    );
+    if (/actions\/setup-node@/.test(s.uses || '')) assert.equal(s.with?.cache, undefined, `${s.name} restores a cache`);
+  }
+});
+
+test('the QEMU and BuildKit images are pinned by digest', () => {
+  assert.match(byName('Set up QEMU').with?.image || '', /^docker\.io\/tonistiigi\/binfmt:\S+@sha256:[0-9a-f]{64}$/);
+  assert.match(
+    byName('Set up Docker Buildx').with?.['driver-opts'] || '',
+    /^image=moby\/buildkit:\S+@sha256:[0-9a-f]{64}$/,
+  );
 });
 
 /* A tag must not publish an image the browser tests reject. */
@@ -141,7 +175,7 @@ test('the release waits for the end-to-end suite', () => {
     './.github/workflows/e2e.yml',
     'the release should call the same e2e workflow, not a copy of it',
   );
-  assert.deepEqual([].concat(job.needs || []), ['e2e'], 'publishing must depend on the browser tests');
+  assert.ok([].concat(job.needs || []).includes('e2e'), 'publishing must depend on the browser tests');
 });
 
 test('the e2e workflow can be called, and still runs on its own', () => {
