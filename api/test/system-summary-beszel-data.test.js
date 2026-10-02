@@ -23,7 +23,13 @@ const INFO = { info: { u: 267222, cpu: 31.58 } };
 /* Stands in for a PocketBase hub: a login hands out a token, and a request
    carrying anything else is answered the way PocketBase answers an
    unauthenticated read, with an empty list rather than a refusal. */
-function hub({ collection = '_superusers', password = 'pw', tokens = ['t1', 't2'] } = {}) {
+function hub({
+  collection = '_superusers',
+  password = 'pw',
+  tokens = ['t1', 't2'],
+  system = SYSTEM,
+  record = {},
+} = {}) {
   const state = { issued: 0, logins: [], reads: [] };
   const live = new Set();
   return {
@@ -45,10 +51,10 @@ function hub({ collection = '_superusers', password = 'pw', tokens = ['t1', 't2'
         return authed ? { status: 200, data: INFO } : { status: 404, data: null };
       }
       if (url.includes('/systems/records')) {
-        return { status: 200, data: { items: authed ? [SYSTEM] : [] } };
+        return { status: 200, data: { items: authed ? [system] : [] } };
       }
       if (url.includes('/system_stats/records')) {
-        return { status: 200, data: { items: authed ? [{ stats: STATS }] : [] } };
+        return { status: 200, data: { items: authed ? [{ stats: STATS, ...record }] : [] } };
       }
       return { status: 404, data: null };
     },
@@ -173,4 +179,43 @@ test('the pickers offer the hub systems and that system sensors', async () => {
     { value: 'coretemp_package_id_0', label: 'coretemp_package_id_0' },
     { value: 'iwlwifi_1', label: 'iwlwifi_1' },
   ]);
+});
+
+for (const status of ['down', 'paused']) {
+  test(`a system Beszel reports as ${status} is an error, not its last readings`, async () => {
+    const h = hub({ system: { ...SYSTEM, status } });
+    await assert.rejects(
+      dataFn(ctxFor({ beszelUrl: `http://${status}:8090`, beszelSystem: 'sys1', slots: SLOTS }, h)),
+      e => {
+        assert.equal(e.kind, 'network');
+        assert.match(e.message, new RegExp(status));
+        return true;
+      },
+    );
+  });
+}
+
+const minutesAgo = m => new Date(Date.now() - m * 60 * 1000).toISOString().replace('T', ' ');
+
+test('a latest record over five minutes old is refused as stale', async () => {
+  const h = hub({ record: { created: minutesAgo(6) } });
+  await assert.rejects(dataFn(ctxFor({ beszelUrl: 'http://stale:8090', beszelSystem: 'sys1', slots: SLOTS }, h)), e => {
+    assert.equal(e.kind, 'network');
+    return true;
+  });
+});
+
+test('a record from the last minutes is read', async () => {
+  const h = hub({ record: { created: minutesAgo(1) } });
+  const r = await dataFn(ctxFor({ beszelUrl: 'http://fresh:8090', beszelSystem: 'sys1', slots: SLOTS }, h));
+  assert.equal(r.cpu, STATS.cpu);
+});
+
+test('a stale record is refused for traffic too', async () => {
+  const h = hub({ record: { created: minutesAgo(6) } });
+  const config = { beszelUrl: 'http://stale-net:8090', beszelSystem: 'sys1', network: { interface: '*' } };
+  await assert.rejects(dataFn(ctxFor(config, h, 'throughput')), e => {
+    assert.equal(e.kind, 'network');
+    return true;
+  });
 });

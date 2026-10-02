@@ -8,5 +8,6 @@
   "clockTimezone.label": "Zeitzone",
   "clockTimezone.placeholder": "Europe/Berlin",
   "clockTimezone.hint": "IANA-Zeitzonenname. Leer lassen für die lokale Zeit des Browsers.",
-  "clockShowDate.label": "Datum anzeigen"
+  "clockShowDate.label": "Datum anzeigen",
+  "ui.unknownZone": "Unbekannte Zeitzone"
 }

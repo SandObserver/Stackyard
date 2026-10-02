@@ -8,5 +8,6 @@
   "clockTimezone.label": "Timezone",
   "clockTimezone.placeholder": "America/Toronto",
   "clockTimezone.hint": "IANA timezone name. Leave blank for the browser's local time.",
-  "clockShowDate.label": "Show date"
+  "clockShowDate.label": "Show date",
+  "ui.unknownZone": "Unknown timezone"
 }

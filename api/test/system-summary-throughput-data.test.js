@@ -60,8 +60,10 @@ test('the Glances interface list is offered by name', async () => {
 
 /* ── Beszel: a rate for the host, totals per interface ───────────────────── */
 
+/* Beszel records older than five minutes are refused as stale. */
+const RECENT = Date.now() - 2 * 60 * 1000;
 const beszelReply =
-  (stats, created = '2026-08-18T12:00:00.000Z') =>
+  (stats, created = new Date(RECENT).toISOString()) =>
   (url, opts) => {
     if (url.includes('auth-with-password')) return { status: 200, data: { token: 'tok' } };
     if (url.includes('/systems/records')) return { status: 200, data: { items: [{ id: 'sys1', name: 'host' }] } };
@@ -86,7 +88,7 @@ test('the whole host uses the rate Beszel already computed', async () => {
 
 test('one interface is derived from its totals between two records', async () => {
   const config = beszelConfig({ beszelUrl: 'http://rate:8090', network: { interface: 'eth0' } });
-  const at = t => new Date(Date.parse('2026-08-18T12:00:00.000Z') + t * 1000).toISOString();
+  const at = t => new Date(RECENT + t * 1000).toISOString();
 
   const first = ctxFor(config, beszelReply({ ni: { eth0: [0, 0, 1000, 2000] } }, at(0)));
   assert.equal(await dataFn(first), null, 'one record is not a rate');
@@ -99,7 +101,7 @@ test('one interface is derived from its totals between two records', async () =>
    read the same record as a minute of no traffic. */
 test('polling between records repeats the rate rather than reporting nothing', async () => {
   const config = beszelConfig({ beszelUrl: 'http://repeat:8090', network: { interface: 'eth0' } });
-  const at = t => new Date(Date.parse('2026-08-18T13:00:00.000Z') + t * 1000).toISOString();
+  const at = t => new Date(RECENT + t * 1000).toISOString();
   await dataFn(ctxFor(config, beszelReply({ ni: { eth0: [0, 0, 0, 0] } }, at(0))));
   const moved = await dataFn(ctxFor(config, beszelReply({ ni: { eth0: [0, 0, 600, 1200] } }, at(60))));
   assert.deepEqual(moved, { rx: 20, tx: 10 });
@@ -110,7 +112,7 @@ test('polling between records repeats the rate rather than reporting nothing', a
 
 test('a counter that went backwards is skipped rather than reported negative', async () => {
   const config = beszelConfig({ beszelUrl: 'http://reset:8090', network: { interface: 'eth0' } });
-  const at = t => new Date(Date.parse('2026-08-18T14:00:00.000Z') + t * 1000).toISOString();
+  const at = t => new Date(RECENT + t * 1000).toISOString();
   await dataFn(ctxFor(config, beszelReply({ ni: { eth0: [0, 0, 9000, 9000] } }, at(0))));
   const after = await dataFn(ctxFor(config, beszelReply({ ni: { eth0: [0, 0, 5, 5] } }, at(60))));
   assert.equal(after, null);

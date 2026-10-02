@@ -8,5 +8,6 @@
   "clockTimezone.label": "Zona horaria",
   "clockTimezone.placeholder": "Europe/Madrid",
   "clockTimezone.hint": "Nombre de zona horaria IANA. Déjalo en blanco para la hora local del navegador.",
-  "clockShowDate.label": "Mostrar la fecha"
+  "clockShowDate.label": "Mostrar la fecha",
+  "ui.unknownZone": "Zona horaria desconocida"
 }

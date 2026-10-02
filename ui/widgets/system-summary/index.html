@@ -32,16 +32,15 @@
 
   /* Value display — medium */
   .v        { font-size: clamp(18px, 7cqw, 28px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
-  /* Slot colors driven by CSS custom properties set per-slot in JS */
-  .v.c-cpu  { color: var(--sct0, #FF375F); } .v.c-ram  { color: var(--sct1, #30d158); }
-  .v.c-temp { color: var(--sct2, #00D2E0); } .v.c-disk { color: var(--sct2, #00D2E0); }
+  .slot-0 { --ink: var(--sct0); } .slot-1 { --ink: var(--sct1); } .slot-2 { --ink: var(--sct2); }
+  .v { color: var(--ink); }
   .disk-line { display: flex; align-items: baseline; white-space: nowrap; }
-  .disk-num  { font-size: clamp(15px, 5.2cqw, 22px); font-weight: 700; color: var(--sct2, #00D2E0);
+  .disk-num  { font-size: clamp(15px, 5.2cqw, 22px); font-weight: 700; color: var(--ink);
     letter-spacing: -0.02em; line-height: 1; }
-  .disk-unit { font-size: clamp(9px, 3cqw, 14px); font-weight: 600; color: var(--sct2, #00D2E0); margin: 0 1px; }
-  .disk-sep  { font-size: clamp(11px, 3.5cqw, 17px); font-weight: 400; color: var(--sct2, #00D2E0);
+  .disk-unit { font-size: clamp(9px, 3cqw, 14px); font-weight: 600; color: var(--ink); margin: 0 1px; }
+  .disk-sep  { font-size: clamp(11px, 3.5cqw, 17px); font-weight: 400; color: var(--ink);
     opacity: 0.5; margin: 0 1px; }
-  .disk-sub  { font-size: clamp(9px, 2.4cqw, 11px); font-weight: 500; color: var(--sct2, #00D2E0);
+  .disk-sub  { font-size: clamp(9px, 2.4cqw, 11px); font-weight: 500; color: var(--ink);
     margin-top: 2px; opacity: 0.7; }
 
   /* Sparkline chart — medium right column */
@@ -70,7 +69,7 @@
   .disk-track  { width: 100%; height: 10px; background: rgba(255,255,255,0.13);
     border-radius: 2px; overflow: hidden; }
   .disk-track.secondary { height: 6px; }
-  .disk-fill   { height: 100%; background: var(--sc2, #00D2E0); border-radius: 2px; width: 0%;
+  .disk-fill   { height: 100%; border-radius: 2px; width: 0%;
     transition: width 0.6s ease; }
 
   /* Network slot — text only, always one line */
@@ -228,6 +227,7 @@ function buildShell() {
 function mkValueEl(slot, i) {
   const d = document.createElement('div');
   d.id = `val-${i}`;
+  d.className = `slot-${i}`;
   if (slot.type === 'disk') {
     setHtml(d, html`<div class="disk-line">
       <span class="disk-num" id="disk-used-${i}">—</span><span class="disk-unit">GB</span>
@@ -235,13 +235,9 @@ function mkValueEl(slot, i) {
       <span class="disk-num" id="disk-total-${i}">—</span><span class="disk-unit">GB</span>
     </div>
     ${slot.secondary ? html`<div class="disk-sub" id="disk-sec-${i}">— / —</div>` : ''}`);
-  } else if (slot.type === 'iowait' || slot.type === 'procs') {
-    const unit = slot.type === 'iowait' ? '%' : '';
-    setHtml(d, html`<div class="v" id="pct-${i}" style="color:var(--sct${i}, #0091FF)">—${unit}</div>`);
   } else {
-    const unit = slot.type === 'temp' ? '°' : '%';
-    /* slot.type reaches a class attribute here, and comes from config. */
-    setHtml(d, html`<div class="v c-${slot.type}" id="pct-${i}">—${unit}</div>`);
+    const unit = slot.type === 'temp' ? '°' : slot.type === 'procs' ? '' : '%';
+    setHtml(d, html`<div class="v" id="pct-${i}">—${unit}</div>`);
   }
   return d;
 }
@@ -259,8 +255,8 @@ function mkChartEl(slot, i) {
   if (slot.type === 'disk') {
     setHtml(d, html`<div class="chart-lbl">${lbl}</div>
       <div class="disk-bars">
-        <div class="disk-track"><div class="disk-fill" id="disk-bar-p-${i}"></div></div>
-        ${slot.secondary ? html`<div class="disk-track secondary"><div class="disk-fill" id="disk-bar-s-${i}"></div></div>` : ''}
+        <div class="disk-track"><div class="disk-fill bc-${i}" id="disk-bar-p-${i}"></div></div>
+        ${slot.secondary ? html`<div class="disk-track secondary"><div class="disk-fill bc-${i}" id="disk-bar-s-${i}"></div></div>` : ''}
       </div>`);
   } else if (slot.type === 'procs') {
     setHtml(d, html`<div class="chart-lbl">${lbl}</div>
@@ -289,21 +285,17 @@ function mkNetValueEl(net) {
 }
 
 function mkSmallRow(slot, i) {
-  const d = document.createElement('div'); d.className = 'slot-row';
+  const d = document.createElement('div'); d.className = `slot-row slot-${i}`;
   const lbl = html`<div class="chart-lbl">${slotLabel(slot)}</div>`;
   if (slot.type === 'disk') {
-    /* Disk: show used/total in cyan like medium left column */
     setHtml(d, html`${lbl}<div class="disk-line">
       <span class="disk-num" id="small-disk-used-${i}">—</span><span class="disk-unit">GB</span>
       <span class="disk-sep">/</span>
       <span class="disk-num" id="small-disk-total-${i}">—</span><span class="disk-unit">GB</span>
     </div>`);
-  } else if (slot.type === 'iowait' || slot.type === 'procs') {
-    const unit = slot.type === 'iowait' ? '%' : '';
-    setHtml(d, html`${lbl}<div class="v" id="small-${i}" style="color:var(--sct${i}, #0091FF)">—${unit}</div>`);
   } else {
-    const unit = slot.type === 'temp' ? '°' : '%';
-    setHtml(d, html`${lbl}<div class="v c-${slot.type}" id="small-${i}">—${unit}</div>`);
+    const unit = slot.type === 'temp' ? '°' : slot.type === 'procs' ? '' : '%';
+    setHtml(d, html`${lbl}<div class="v" id="small-${i}">—${unit}</div>`);
   }
   return d;
 }
