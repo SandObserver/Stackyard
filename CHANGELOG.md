@@ -100,6 +100,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop widgets with an auto-refresh from reloading while the tab is hidden.
 
+- Stop widgets from polling twice as often after the tab is hidden and shown, or
+  the dashboard page is swiped, during a slow refresh.
+
+- Stop the Connections map from adding another animation loop on every refresh
+  and resize.
+
+- Release the Pi-hole session when a DNS widget refresh fails, so repeated
+  failures no longer lock the widget out.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
