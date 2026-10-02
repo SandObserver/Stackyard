@@ -67,6 +67,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep the weather temperature readable on the day card at every reading.
 
+- Show Settings switches and sliders, the selected segment, filter chip and
+  colour swatch, the keyboard-selected search and icon result, and the first-run
+  password field in Windows high contrast mode.
+
+- Show a focus ring on the header, poll interval and icon search fields and on
+  the Settings sliders.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
