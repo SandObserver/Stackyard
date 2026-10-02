@@ -59,6 +59,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Make the password strength meter readable in the light theme.
 
+- Show the Settings load-failure message and Retry button when the config cannot
+  be read, readable in both themes.
+
+- Raise the contrast of field placeholders, the sign-in and set-password
+  explanations, the sidebar version and the Hidden pill in the light theme.
+
+- Keep the weather temperature readable on the day card at every reading.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
