@@ -49,6 +49,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show the specific reason a widget settings Fetch failed, such as a private
   address or an untrusted certificate, instead of a generic message.
 
+- Make the first-run password prompt readable in the light theme.
+
+- Raise the contrast of the dashboard's error and empty screens, the search
+  result addresses and headers, and folder titles in the light theme.
+
+- Keep a stale badge's count at full contrast, with its stale ring visible on
+  light backgrounds.
+
+- Make the password strength meter readable in the light theme.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
