@@ -84,6 +84,7 @@ function harness() {
 
   return {
     counts,
+    realSetTimeout,
     card: () => el('div'),
     done() {
       globalThis.document = restore.document;
@@ -214,4 +215,30 @@ test('the rebuild is driven by the shared layout rule', () => {
   const src = read('js/dashboard.js');
   assert.match(src, /import \{[^}]*onLayoutChange[^}]*\} from '\/js\/layout\.js/);
   assert.match(src, /onLayoutChange\(mobile => \{/, 'the layout change is what triggers a rebuild');
+});
+
+test('a hidden tab does not reload its widgets', async () => {
+  const h = harness();
+  const frames = [];
+  const make = globalThis.document.createElement;
+  globalThis.document.createElement = tag => {
+    const e = make(tag);
+    if (tag === 'iframe') frames.push(e);
+    return e;
+  };
+  globalThis.document.hidden = true;
+  const wait = ms => new Promise(r => h.realSetTimeout(r, ms));
+  const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+  try {
+    mountScaledWidget(h.card(), { ...OPTS, iframeOpts: { refreshInterval: 250 } });
+    const first = frames[0].src;
+    await wait(800);
+    assert.equal(frames[0].src, first, 'reloaded while hidden');
+    globalThis.document.hidden = false;
+    await wait(800);
+    assert.notEqual(frames[0].src, first, 'never reloaded once visible again');
+  } finally {
+    teardownWidgets();
+    h.done();
+  }
 });

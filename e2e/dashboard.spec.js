@@ -114,6 +114,43 @@ test('a badge whose item failed keeps its value and is marked out of date', asyn
   await expect(badge).toHaveText('7');
 });
 
+test('a refused poll marks badges out of date instead of current', async ({ page, request }) => {
+  await seedConfig(request, { items: [badged()] });
+  await stubPolls(page, { charlie: { value: 7 } });
+  await page.goto('/');
+  const badge = page.locator('#pages .iwrap .badge');
+  await expect(badge).toHaveText('7');
+
+  await page.route('**/api/badges', route =>
+    route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Sign in"}' }),
+  );
+  for (let i = 0; i < 2; i++) {
+    const refused = page.waitForResponse('**/api/badges');
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await refused;
+  }
+  await expect(badge).toHaveClass(/stale/);
+  await expect(badge).toHaveText('7');
+});
+
+test('one rotation into the phone layout loads each widget once', async ({ page, request }) => {
+  await seedConfig(request, { items: [clock()] });
+  await stubPolls(page);
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto('/');
+  await page.locator('iframe').first().waitFor({ state: 'attached' });
+  await page.waitForTimeout(500);
+  let loads = 0;
+  page.on('framenavigated', f => {
+    if (f !== page.mainFrame() && f.url().includes('/widgets/')) loads++;
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => screen.orientation.dispatchEvent(new Event('change')));
+  await page.locator('body.is-mob').waitFor({ state: 'attached' });
+  await page.waitForTimeout(1000);
+  expect(loads, 'widget documents loaded after one rotation').toBe(1);
+});
+
 test('typing opens search and filters to the matching app', async ({ page, request }) => {
   await seedConfig(request, { items: [app('alpha', 'Alpha'), app('bravo', 'Bravo')] });
   await stubPolls(page);

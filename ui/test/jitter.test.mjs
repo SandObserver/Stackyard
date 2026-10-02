@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { jitter } from '../js/jitter.js';
+import { jitter, repeatJittered } from '../js/jitter.js';
 
 const withRandom = (value, fn) => {
   const real = Math.random;
@@ -48,5 +48,43 @@ test('two pollers on the same interval do not keep the same delay', () => {
 test('an unusable interval gives zero, not NaN', () => {
   for (const v of [0, -5, NaN, undefined, null, 'soon', {}]) {
     assert.equal(jitter(v), 0, String(v));
+  }
+});
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+test('a stop during a call in flight ends the loop', async () => {
+  let calls = 0;
+  let release;
+  const stop = repeatJittered(() => {
+    calls++;
+    return new Promise(r => {
+      release = r;
+    });
+  }, 20);
+  try {
+    await sleep(60);
+    assert.equal(calls, 1, 'the first call starts within one interval');
+    stop();
+    release();
+    await sleep(120);
+    assert.equal(calls, 1, `${calls - 1} calls ran after the stop`);
+  } finally {
+    stop();
+    release?.();
+  }
+});
+
+test('the loop calls again after each call settles, even a failed one', async () => {
+  let calls = 0;
+  const stop = repeatJittered(() => {
+    calls++;
+    throw new Error('down');
+  }, 15);
+  try {
+    await sleep(150);
+    assert.ok(calls >= 3, `only ${calls} calls in 150 ms at a 15 ms interval`);
+  } finally {
+    stop();
   }
 });

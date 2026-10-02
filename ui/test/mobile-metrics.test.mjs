@@ -125,7 +125,7 @@ test('a probe sized by the insets drives the rebuild', () => {
   assert.match(probe, /height:calc\(env\(safe-area-inset-top\) \+ env\(safe-area-inset-bottom\)\)/);
   const dash = read('js/dashboard.js');
   assert.match(dash, /new ResizeObserver\([\s\S]{0,600}?\)\.observe\(probe\)/);
-  assert.match(dash, /if \(MOB\) buildLayout\(\)/);
+  assert.match(dash, /if \(MOB && spaceMoved\(\)\) buildLayout\(\)/);
 });
 
 test('the first observation does not rebuild what is being built', () => {

@@ -308,7 +308,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
        one. */
     let timer = setTimeout(
       function tick() {
-        reload();
+        if (!document.hidden) reload();
         timer = setTimeout(tick, jit());
       },
       Math.round(Math.random() * base),
