@@ -10,7 +10,7 @@ const TOOLBOX_IMPORT = /import\('\/js\/widget-toolbox\.js\?v=[0-9a-z]+'\)/;
 
 function pageScript(file) {
   const src = fs.readFileSync(new URL(`../widgets/clock/${file}`, import.meta.url), 'utf8');
-  const body = src.match(/<script>([\s\S]*?)<\/script>/)[1];
+  const body = src.match(/<script>([\s\S]*?)<\/script[^>]*>/i)[1];
   assert.match(body, TOOLBOX_IMPORT, `${file} loads the toolbox for its error line`);
   assert.match(body, /\nboot\(\);\s*$/);
   return body.replace(TOOLBOX_IMPORT, '__toolbox()').replace(/\nboot\(\);\s*$/, '\nreturn boot();');
