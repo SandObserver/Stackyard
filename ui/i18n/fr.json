@@ -338,6 +338,7 @@
     "importForeignNothing": "Rien à importer dans ces fichiers.",
     "importYamlUnsupported": "{file} : {reason} (ligne {line})",
     "importUnknownFormat": "{file} n’est pas une configuration gethomepage ou Dashy.",
+    "importTooLarge": "{file} contient trop d’entrées pour être importé.",
     "secretsWithheld": "Saisissez à nouveau les identifiants pour : {items}. Ils n’ont pas été conservés, car la requête associée a changé.",
     "socketUrlMissing": "Saisissez l’adresse du proxy de socket ou désactivez la surveillance Docker.",
     "socketUrlBad": "Proxy de socket non enregistré : {reason}",

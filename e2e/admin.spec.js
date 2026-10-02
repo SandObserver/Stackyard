@@ -85,6 +85,20 @@ test('an icon too large for the web server says so', async ({ page }) => {
   await expect(page.locator('#toast')).toHaveText('Upload failed: That image is too large for the server to accept.');
 });
 
+test('an import file whose aliases expand past the entry budget is refused', async ({ page, request }) => {
+  let yaml = 'sections:\n  - name: S\n    items:\n      - &a0\n        title: A\n        url: http://a.invalid\n';
+  for (let i = 1; i <= 16; i++)
+    yaml += `      - &a${i}\n        title: A${i}\n        url: http://a${i}.invalid\n        subItems: [*a${i - 1}, *a${i - 1}]\n`;
+  await openDashboardList(page);
+  await page
+    .locator('#imp-foreign')
+    .setInputFiles({ name: 'conf.yml', mimeType: 'application/yaml', buffer: Buffer.from(yaml) });
+  await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
+  await expect(page.locator('#toast')).toHaveText('Import failed: conf.yml has too many entries to import.');
+  const hrefs = (await readConfig(request)).items.map(i => i.href || '');
+  expect(hrefs.filter(h => h.includes('.invalid') && !h.includes('example'))).toEqual([]);
+});
+
 test('a saved change survives a reload', async ({ page }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();

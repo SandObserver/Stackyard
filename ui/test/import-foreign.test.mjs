@@ -25,6 +25,7 @@ const {
   parseErrorsAsSkipped,
   SKIP,
   NOTE,
+  ImportTooLargeError,
 } = await import('/js/import-foreign.js');
 
 const apps = out => out.items.filter(i => i.type === 'app');
@@ -473,7 +474,7 @@ test('a clean parse contributes no skipped rows', () => {
 });
 
 /* Each level lists the one before twice, so expanding every alias doubles the
-   item count per level. */
+   entry count per level. */
 function dashyAliasLadder(levels) {
   let y = 'sections:\n  - name: S\n    items:\n      - &a0\n        title: A\n        url: http://a.lan\n';
   for (let i = 1; i <= levels; i++) {
@@ -482,12 +483,36 @@ function dashyAliasLadder(levels) {
   return y;
 }
 
-test('Dashy aliases are read once per section, so a short file cannot expand without limit', () => {
-  const out = convertDashy(parseYaml(dashyAliasLadder(16)));
-  assert.equal(apps(out).length, 17);
+const tooLarge = err => err instanceof ImportTooLargeError;
+
+test('a Dashy file whose aliases double per level stops at the entry budget', () => {
+  assert.throws(() => convertDashy(parseYaml(dashyAliasLadder(16))), tooLarge);
 });
 
-test('a Dashy item anchored in one section and aliased in another imports in both', () => {
+test('one Dashy section aliased into many sections stops at the entry budget', () => {
+  let y = 'sections:\n  - &s\n    name: S\n    items:\n';
+  for (let i = 0; i < 100; i++) y += `      - title: T${i}\n        url: http://t${i}.lan\n`;
+  for (let i = 0; i < 100; i++) y += '  - *s\n';
+  assert.throws(() => convertDashy(parseYaml(y)), tooLarge);
+});
+
+test('one Homepage group aliased into many groups stops at the entry budget', () => {
+  let y = '- G0: &e\n';
+  for (let i = 0; i < 100; i++) y += `    - S${i}:\n        href: http://s${i}.lan\n`;
+  for (let i = 1; i <= 100; i++) y += `- G${i}: *e\n`;
+  assert.throws(() => convertHomepageServices(parseYaml(y)), tooLarge);
+  assert.throws(() => convertHomepageBookmarks(parseYaml(y.replaceAll('href:', '- href:'))), tooLarge);
+});
+
+test('a Homepage list shared by many entries in one group stops at the entry budget', () => {
+  let list = '';
+  for (let i = 0; i < 100; i++) list += `${i ? ', ' : ''}{S${i}: {href: http://s${i}.lan}}`;
+  let y = `- Base: &l [${list}]\n- G:\n`;
+  for (let i = 0; i < 100; i++) y += `    - W${i}: *l\n`;
+  assert.throws(() => convertHomepageServices(parseYaml(y)), tooLarge);
+});
+
+test('aliases that stay under the budget still import everywhere they are used', () => {
   const out = convertDashy(
     parseYaml(
       'sections:\n  - name: A\n    items:\n      - &p\n        title: Plex\n        url: http://plex.lan\n' +
@@ -498,11 +523,14 @@ test('a Dashy item anchored in one section and aliased in another imports in bot
     apps(out).map(a => a.label),
     ['Plex', 'Plex'],
   );
-});
-
-test('Homepage aliases are read once per group, so a short file cannot expand without limit', () => {
-  let y = '- G:\n    - &e0\n      S0:\n        href: http://a.lan\n';
-  for (let i = 1; i <= 16; i++) y += `    - &e${i}\n      N${i}: [*e${i - 1}, *e${i - 1}]\n`;
-  const out = convertHomepageServices(parseYaml(y));
-  assert.equal(apps(out).length, 1);
+  const hp = convertHomepageServices(
+    parseYaml(
+      '- Media:\n    - Movies:\n        - &plex\n          Plex:\n            href: http://plex.lan\n' +
+        '    - TV:\n        - *plex\n        - Sonarr:\n            href: http://sonarr.lan\n',
+    ),
+  );
+  assert.deepEqual(
+    apps(hp).map(a => a.label),
+    ['Plex', 'Plex', 'Sonarr'],
+  );
 });
