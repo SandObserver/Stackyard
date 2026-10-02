@@ -109,6 +109,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release the Pi-hole session when a DNS widget refresh fails, so repeated
   failures no longer lock the widget out.
 
+- Show an error on the GitHub widget when GitHub rate-limits or fails, instead
+  of zero pull requests or an empty calendar.
+
+- Show an error on the Books widget when the service fails, instead of "No
+  books".
+
+- Show an error on the Weather widget when the provider sends no temperature,
+  instead of 0°.
+
+- Show an error on a Backup card whose server stops answering, instead of its
+  last status.
+
+- Make the widget template report failures as errors, so widgets copied from it
+  do not show them as empty data.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
