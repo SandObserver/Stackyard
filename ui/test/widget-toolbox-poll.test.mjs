@@ -255,6 +255,28 @@ test('a slow fetch that lands after the tab returns keeps polling', async () => 
   });
 });
 
+test('a rate change during a fetch does not start a second loop', async () => {
+  try {
+    await run(async (_dom, start) => {
+      let calls = 0;
+      start({
+        interval: 100,
+        fetch: async () => {
+          if (++calls === 2) await tick(100);
+          return {};
+        },
+      });
+      await tick(150);
+      assert.equal(calls, 2, 'the second fetch is in flight');
+      setPollRate(1.0001);
+      await tick(1000);
+      assert.ok(calls <= 12, `expected about 10 fetches at one loop's pace, got ${calls}`);
+    });
+  } finally {
+    setPollRate(1);
+  }
+});
+
 test('a poll started while hidden does not keep polling', async () => {
   await run(
     async (dom, start) => {

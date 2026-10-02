@@ -377,9 +377,13 @@ export function poll(opts = {}) {
 
   /* setTimeout, not setInterval. A slow fetch must not overlap the next one. */
   async function loop() {
+    timer = null;
     inFlight = true;
-    await tick();
-    inFlight = false;
+    try {
+      await tick();
+    } finally {
+      inFlight = false;
+    }
     if (stopped) return;
     /* Schedule nothing while hidden. Each tick reaches the user's own service,
        and browser throttling only slows that. */
@@ -399,12 +403,8 @@ export function poll(opts = {}) {
     if (stopped || paused || timer === null) return;
     clearTimeout(timer);
     const due = lastTick + intervalFor(lastData) * rate - Date.now();
-    if (due <= 0) {
-      timer = null;
-      loop();
-    } else {
-      timer = setTimeout(loop, jitter(due));
-    }
+    if (due <= 0) loop();
+    else timer = setTimeout(loop, jitter(due));
   }
   _polls.add(onRate);
 
