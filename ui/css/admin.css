@@ -294,6 +294,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .hsb-range::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:38px;height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer}
 .adm-range::-moz-range-thumb,
 .hsb-range::-moz-range-thumb{box-sizing:border-box;width:38px;height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer}
+.adm-range:focus-visible,.hsb-range:focus-visible{outline:2px solid var(--ac);outline-offset:4px}
 
 /* ── Dashboard list rows — no delete button ── */
 .al-filter{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -398,6 +399,7 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
    where a field genuinely differs. */
 input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .kv-k::placeholder,.kv-v::placeholder{color:var(--dm-strong)}
+.kv-k:focus,.kv-v:focus{outline:2px solid var(--ac);outline-offset:0}
 .kv-cred{display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;user-select:none}
 .kv-cred input{position:absolute;opacity:0;width:0;height:0}
 .kv-box{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background var(--t),border-color var(--t)}
@@ -426,8 +428,10 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
 .icon-prev img{width:62%;height:62%;object-fit:contain}
 .icon-srch{flex:1;min-width:0;background:none;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);text-align:end;outline:none;font-family:inherit}
 .icon-srch::placeholder{color:var(--dm-strong)}
+.icon-srch:focus{outline:2px solid var(--ac);outline-offset:2px}
 .poll-inline{margin-inline-start:auto;display:flex;align-items:center;gap:8px;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
 .poll-inline input{width:64px;background:var(--btn-fill);border:none;border-radius:999px;color:var(--tx);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);padding:5px 8px;text-align:center;outline:none}
+.poll-inline input:focus{outline:2px solid var(--ac);outline-offset:0}
 .rl-sub{color:var(--dm);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:400}
 .bprow-hidden{display:none}
 /* Settings-row native select (Widget Type, slot Resource) */
@@ -486,6 +490,16 @@ html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 2
    pointer-events:none. */
 .tog-disabled{opacity:.45;cursor:not-allowed}
 .tog-disabled input{cursor:not-allowed}
+@media (forced-colors: active){
+  .tr{border:1px solid CanvasText}
+  .tr::after{background:CanvasText}
+  .tog input:checked+.tr{background:Highlight;border-color:Highlight}
+  .tog input:checked+.tr::after{background:HighlightText}
+  .segr-opt:has(input:checked){background:Highlight}
+  .segr-opt:has(input:checked) span{color:HighlightText}
+  .chip.on{background:Highlight;color:HighlightText}
+  .ipr.kb-active{outline:2px solid Highlight;outline-offset:-2px}
+}
 
 a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 

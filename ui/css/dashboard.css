@@ -956,6 +956,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
      no way to say "needs attention". The border keeps the pill a shape once the
      fill is no longer trusted to. */
   .badge { forced-color-adjust:none; border:1px solid CanvasText; }
+  .sr.sel { outline:2px solid Highlight; outline-offset:-2px; }
 }
 
 /* Do not add `container-type:size` here. It applies size containment and
@@ -989,6 +990,10 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   color: var(--label-primary); font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 500; font-family: inherit; outline: none;
 }
 .setup-pw:focus { box-shadow: 0 0 0 2px var(--accent); }
+@media (forced-colors: active) {
+  .setup-pw { border:1px solid CanvasText; }
+  .setup-pw:focus { outline:2px solid Highlight; }
+}
 .setup-field { position: relative; display: flex; align-items: center; }
 .setup-field .setup-pw { padding-inline-end: 48px; }
 .setup-reveal {
