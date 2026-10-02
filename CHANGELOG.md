@@ -136,6 +136,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show "Unknown timezone" on the clock when its timezone name is not recognised,
   instead of a blank or stopped clock.
 
+- Stop the container cleanly on `docker stop` instead of killing the dashboard
+  mid-shutdown.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
@@ -171,6 +174,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refuse a Dashy or Homepage import file that expands to more than 5,000
   entries, instead of freezing the page.
+
+- Send a restrictive Content-Security-Policy on API responses.
+
+- Apply the Compose file's capability, privilege and resource limits to the
+  Unraid template.
 
 ## [1.15.0] - 2026-09-28
 
