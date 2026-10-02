@@ -58,7 +58,17 @@ function harness() {
     ct: realClearTimeout,
   };
 
-  globalThis.document = { createElement: el, querySelectorAll: () => [] };
+  const docListeners = new Set();
+  globalThis.document = {
+    createElement: el,
+    querySelectorAll: () => [],
+    addEventListener(type, fn) {
+      if (type === 'visibilitychange') docListeners.add(fn);
+    },
+    removeEventListener(type, fn) {
+      if (type === 'visibilitychange') docListeners.delete(fn);
+    },
+  };
   globalThis.window = { addEventListener() {}, removeEventListener() {} };
   globalThis.requestAnimationFrame = () => {};
   globalThis.setTimeout = (fn, ms) => {
@@ -85,6 +95,7 @@ function harness() {
   return {
     counts,
     realSetTimeout,
+    docListeners,
     card: () => el('div'),
     done() {
       globalThis.document = restore.document;
@@ -217,7 +228,7 @@ test('the rebuild is driven by the shared layout rule', () => {
   assert.match(src, /onLayoutChange\(mobile => \{/, 'the layout change is what triggers a rebuild');
 });
 
-test('a hidden tab does not reload its widgets', async () => {
+test('a hidden tab does not reload its widgets, and catches up on return', async () => {
   const h = harness();
   const frames = [];
   const make = globalThis.document.createElement;
@@ -235,10 +246,11 @@ test('a hidden tab does not reload its widgets', async () => {
     await wait(800);
     assert.equal(frames[0].src, first, 'reloaded while hidden');
     globalThis.document.hidden = false;
-    await wait(800);
-    assert.notEqual(frames[0].src, first, 'never reloaded once visible again');
+    for (const fn of h.docListeners) fn();
+    assert.notEqual(frames[0].src, first, 'a reload missed while hidden runs on return');
   } finally {
     teardownWidgets();
     h.done();
   }
+  assert.equal(h.docListeners.size, 0, 'teardown leaves a visibility listener');
 });

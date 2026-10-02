@@ -24,9 +24,9 @@ import {
   setUserText,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=0b00bd07';
+} from '/js/utils.js?v=c5766a9d';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=5caccb78';
+import { initSpotlight } from '/js/spotlight.js?v=75f7fd04';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=706fc9a7';
@@ -41,7 +41,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=b93eda2f';
+} from '/js/ui.js?v=d9417e1e';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -53,7 +53,7 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=4aec13fa';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=5f478ebf';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -1041,15 +1041,17 @@ async function boot() {
     } catch {}
   };
 
-  const startPolling = () => {
-    _repeat(pollBadges, 20_000);
-    _repeat(pollHealth, 30_000);
-    _repeat(pollConfig, 15_000);
-  };
-
   const stopPolling = () => {
     _pollTimers.forEach(clear => clear());
     _pollTimers = [];
+  };
+
+  /* A tab that boots hidden starts here and again when first shown. */
+  const startPolling = () => {
+    stopPolling();
+    _repeat(pollBadges, 20_000);
+    _repeat(pollHealth, 30_000);
+    _repeat(pollConfig, 15_000);
   };
 
   /* Keep. Without it Safari leaves the tile scaled after a new tab opens. */

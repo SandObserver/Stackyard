@@ -151,6 +151,27 @@ test('one rotation into the phone layout loads each widget once', async ({ page,
   expect(loads, 'widget documents loaded after one rotation').toBe(1);
 });
 
+test('a safe-area change rebuilds the phone layout once', async ({ page, request }) => {
+  await seedConfig(request, { items: [clock()] });
+  await stubPolls(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.locator('body.is-mob').waitFor({ state: 'attached' });
+  await page.locator('iframe').first().waitFor({ state: 'attached' });
+  await page.waitForTimeout(500);
+  let loads = 0;
+  page.on('framenavigated', f => {
+    if (f !== page.mainFrame() && f.url().includes('/widgets/')) loads++;
+  });
+  await page.evaluate(() => {
+    const probe = /** @type {HTMLElement} */ (document.querySelector('.sa-probe'));
+    probe.style.height = '47px';
+  });
+  await expect.poll(() => loads).toBe(1);
+  await page.waitForTimeout(500);
+  expect(loads).toBe(1);
+});
+
 test('typing opens search and filters to the matching app', async ({ page, request }) => {
   await seedConfig(request, { items: [app('alpha', 'Alpha'), app('bravo', 'Bravo')] });
   await stubPolls(page);

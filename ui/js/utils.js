@@ -306,14 +306,25 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     const jit = () => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
     /* The handle is reassigned every tick. The cleanup must read the current
        one. */
+    let missed = false;
     let timer = setTimeout(
       function tick() {
-        if (!document.hidden) reload();
+        if (document.hidden) missed = true;
+        else reload();
         timer = setTimeout(tick, jit());
       },
       Math.round(Math.random() * base),
     );
-    cleanups.push(() => clearTimeout(timer));
+    const onShow = () => {
+      if (document.hidden || !missed) return;
+      missed = false;
+      reload();
+    };
+    document.addEventListener('visibilitychange', onShow);
+    cleanups.push(() => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onShow);
+    });
   }
 
   /* An iframe swallows touches. Listening on its own document keeps interior
