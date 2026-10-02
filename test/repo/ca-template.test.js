@@ -146,4 +146,13 @@ test('the template applies the Compose hardening', () => {
   ];
   const params = (tag(template, 'ExtraParams') || '').split(/\s+/);
   assert.deepEqual(params.toSorted(), expected.toSorted());
+
+  /* Node sizes its heap from the host, not --memory. Without the cap the kernel
+     kills the API instead of it collecting. */
+  const heap = /NODE_OPTIONS=\$\{NODE_OPTIONS:-([^}]+)\}/.exec(compose);
+  assert.ok(heap, 'docker-compose.yml has no NODE_OPTIONS default');
+  const config = /<Config[^>]*Target="NODE_OPTIONS"[^>]*Default="([^"]+)"[^>]*>([^<]*)<\/Config>/.exec(template);
+  assert.ok(config, 'the template sets a memory limit but no heap cap');
+  assert.equal(config[1], heap[1]);
+  assert.equal(config[2], heap[1]);
 });
