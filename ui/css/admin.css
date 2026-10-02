@@ -741,16 +741,15 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    not. */
 .mtabbar{display:none}
 .m-back{display:none}
-/* The status bar overlaps the page in a home-screen install. The sticky section
-   header reserves the top inset, or it sticks under the status bar. */
-html.is-mobile .adm-outer{padding:0;display:block;min-height:100dvh}
+/* The status bar overlaps the page in a home-screen install. */
+html.is-mobile .adm-outer{padding:env(safe-area-inset-top) 0 0;display:block;min-height:100dvh}
 html.is-mobile .adm{max-width:none;width:100%;min-height:100dvh;border:none;border-radius:0}
 html.is-mobile .sb{display:none}
 html.is-mobile .cp{width:100%}
 html.is-mobile .sec{padding-block:16px calc(132px + env(safe-area-inset-bottom));padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
 html.is-mobile .sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title)}
 html.is-mobile .hsb-track{max-width:min(240px,62%)}
-html.is-mobile .sec-hdr{position:sticky;top:0;z-index:20;background:var(--pane);padding:calc(10px + env(safe-area-inset-top)) 0 10px;flex-wrap:wrap;row-gap:6px}
+html.is-mobile .sec-hdr{padding:10px 0 10px;flex-wrap:wrap;row-gap:6px}
 html.is-mobile .sec-title{order:1;flex-basis:100%;min-width:0;overflow-wrap:break-word}
 html.is-mobile .sec-hdr-actions{margin-inline-start:auto}
 html.is-mobile .sec-hdr-actions .btn{min-height:44px;padding-inline:18px}

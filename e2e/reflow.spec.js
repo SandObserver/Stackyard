@@ -26,6 +26,23 @@ test('the empty dashboard welcome fits at 400% zoom', async ({ page, request }) 
   expect(title.y, 'the heading starts on screen').toBeGreaterThanOrEqual(0);
 });
 
+test('the empty dashboard welcome scrolls when it does not fit', async ({ page, request }) => {
+  await seedConfig(request, { items: [] });
+  await dismissSetupPrompt(request);
+  await page.setViewportSize({ width: 320, height: 120 });
+  await page.goto('/');
+  const title = page.locator('.empty-state-title');
+  await title.waitFor({ state: 'visible' });
+  const t = await box(title);
+  await page.mouse.move(t.x + t.width / 2, t.y + t.height / 2);
+  await page.mouse.wheel(0, 400);
+  await expect
+    .poll(() => page.evaluate(() => document.querySelector('.empty-state')?.scrollTop ?? 0))
+    .toBeGreaterThan(0);
+  const hint = await box(page.locator('.empty-state-hint'));
+  expect(hint.y + hint.height, 'the import link scrolls into view').toBeLessThanOrEqual(120);
+});
+
 test.describe('on a touch screen', () => {
   test.use({ hasTouch: true });
 
@@ -46,21 +63,6 @@ test.describe('on a touch screen', () => {
       expect(wide, 'the page does not scroll sideways').toBeLessThanOrEqual(320);
     });
   }
-});
-
-test('the phone Settings header stays on screen while the list scrolls', async ({ page, request }) => {
-  await seedConfig(request, { items: MANY });
-  await dismissSetupPrompt(request);
-  await page.setViewportSize({ width: 390, height: 700 });
-  await page.goto('/admin/#dashboard');
-  await page.locator('html.is-mobile').waitFor({ state: 'attached' });
-  const save = page.locator('#dash-save');
-  await save.waitFor({ state: 'visible' });
-  await page.locator('#al .drow').nth(30).waitFor({ state: 'attached' });
-  await page.evaluate(() => window.scrollTo(0, 900));
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(800);
-  const b = await box(save);
-  expect(b.y, 'Save is still on screen').toBeGreaterThanOrEqual(0);
 });
 
 test('the desktop Settings sidebar stays on screen while the list scrolls', async ({ page, request }) => {
@@ -87,31 +89,54 @@ function hits(page, x, y, selector) {
   );
 }
 
-test('folder page dots are 24px targets on a phone', async ({ page, request }) => {
-  const children = Array.from({ length: 12 }, (_, i) => app(`f${i}`, `Folder app ${i}`));
+/** Open a folder of `count` apps in the phone layout. */
+async function openFolder(page, request, count, width) {
+  const children = Array.from({ length: count }, (_, i) => app(`f${i}`, `Folder app ${i}`));
   const folder = { id: 'box', type: 'folder', label: 'Box', children: children.map(c => c.id), color: 'dark' };
   await seedConfig(request, { items: [folder, ...children] });
   await dismissSetupPrompt(request);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width, height: 844 });
   await page.goto('/');
   await page.locator('body.is-mob').waitFor({ state: 'attached' });
   await page.getByRole('button', { name: 'Box folder' }).click();
-  const dots = page.locator('.folder-dot');
-  await expect(dots).toHaveCount(2);
+  await page.locator('.folder-dot').first().waitFor({ state: 'visible' });
   await animationsDone(page);
-  const [a, b] = [await box(dots.nth(0)), await box(dots.nth(1))];
-  const pitch = Math.abs(b.x + b.width / 2 - (a.x + a.width / 2));
-  expect(pitch, 'dot centres are 24px apart').toBeGreaterThanOrEqual(24 - 0.5);
-  const cx = a.x + a.width / 2;
-  const cy = a.y + a.height / 2;
-  for (const [dx, dy] of [
-    [-11.5, 0],
-    [11.5, 0],
-    [0, -11.5],
-    [0, 11.5],
-  ]) {
-    expect(await hits(page, cx + dx, cy + dy, '.folder-dot'), `a tap ${dx},${dy} from the centre`).toBe(true);
-  }
+}
+
+for (const width of [320, 390]) {
+  test(`folder page dots are 24px targets at ${width}px`, async ({ page, request }) => {
+    await openFolder(page, request, 12, width);
+    const dots = page.locator('.folder-dot');
+    await expect(dots).toHaveCount(2);
+    const [a, b] = [await box(dots.nth(0)), await box(dots.nth(1))];
+    const pitch = Math.abs(b.x + b.width / 2 - (a.x + a.width / 2));
+    expect(pitch, 'dot centres are 24px apart').toBeGreaterThanOrEqual(24 - 0.5);
+    const top = b.y - 3.5;
+    const cx = b.x + b.width / 2;
+    for (const [x, y] of [
+      [cx - 11.5, b.y + b.height / 2],
+      [cx + 11.5, b.y + b.height / 2],
+      [cx, top],
+      [cx, top + 23],
+    ]) {
+      expect(await hits(page, x, y, '.folder-dot'), `a tap at ${x},${y}`).toBe(true);
+    }
+    for (const icon of await page.locator('.dyn-page-grid').first().locator('.dyn-fold-anchor').all()) {
+      const r = await box(icon);
+      const [x, y] = [r.x + r.width / 2, r.y + r.height - 1];
+      expect(await hits(page, x, y, '.dyn-fold-anchor'), `the bottom edge of an app at ${x},${y}`).toBe(true);
+    }
+  });
+}
+
+test('every folder page dot stays inside the folder', async ({ page, request }) => {
+  await openFolder(page, request, 126, 320);
+  const dots = page.locator('.folder-dot');
+  await expect(dots).toHaveCount(14);
+  const row = await box(page.locator('.folder-dots'));
+  const [first, last] = [await box(dots.first()), await box(dots.last())];
+  expect(first.x).toBeGreaterThanOrEqual(Math.max(0, row.x));
+  expect(last.x + last.width).toBeLessThanOrEqual(Math.min(320, row.x + row.width));
 });
 
 test('a badge that opens a popover is a 24px target', async ({ page, request }) => {

@@ -484,7 +484,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
     dotsEl.className = 'folder-dots dyn-dots-row';
     css(dotsEl, {
       padding: `${Math.max(0, Math.round(18 * ptScale) - badgeOvh)}px 0 ${Math.round(4 * ptScale)}px`,
-      gap: Math.max(Math.round(7 * ptScale), 24 - dotSz) + 'px',
+      gap: Math.max(dotSz + 2, Math.min(24, Math.floor(pageW / pages.length))) - dotSz + 'px',
     });
     dotEls = pages.map((_, i) => {
       const d = mk('div');

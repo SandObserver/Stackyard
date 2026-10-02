@@ -744,7 +744,7 @@
     }
     .folder-dot.on { background:var(--control-knob); transform:scale(1.25) }
     .folder-dot { position:relative }
-    .folder-dot::after { content:''; position:absolute; inset:-18px calc((var(--dsz) - 24px) / 2) }
+    .folder-dot::after { content:''; position:absolute; inset:-4px calc((var(--dsz) - 24px) / 2) calc(var(--dsz) - 20px) }
 
     /* ── Folder overlay — desktop ── */
     .folder-overlay {
@@ -847,7 +847,6 @@
   align-items: center;
   padding-inline: 24px; text-align: center;
   overflow-y: auto;
-  pointer-events: none;
 }
 /* Do not centre with justify-content. An overflowing stack then starts above
    the scroll origin and cannot be reached. */
@@ -866,7 +865,6 @@
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-btn {
-  pointer-events: auto;
   margin-block-start: var(--sp-32); padding: 15px var(--sp-32);
   border-radius: 999px; min-height: 52px;
   background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
@@ -875,7 +873,6 @@
   font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
 }
 .empty-state-hint {
-  pointer-events: auto;
   margin-block-start: var(--sp-20); color: var(--accent); text-decoration: none;
   font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);
 }
