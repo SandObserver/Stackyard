@@ -13,6 +13,7 @@ services:
       - SETUID
       - SETGID
       - DAC_OVERRIDE
+      - KILL
     security_opt:
       - no-new-privileges:true
     privileged: false

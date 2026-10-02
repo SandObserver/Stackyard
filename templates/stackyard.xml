@@ -5,6 +5,7 @@
   <Registry>https://ghcr.io</Registry>
   <Network>bridge</Network>
   <Privileged>false</Privileged>
+  <ExtraParams>--init --cap-drop=ALL --cap-add=NET_BIND_SERVICE --cap-add=CHOWN --cap-add=SETUID --cap-add=SETGID --cap-add=DAC_OVERRIDE --cap-add=KILL --security-opt=no-new-privileges:true --pids-limit=256 --memory=384m --memory-reservation=96m --memory-swap=384m --cpus=0.5</ExtraParams>
   <Support>https://github.com/SandObserver/Stackyard/issues</Support>
   <Project>https://github.com/SandObserver/Stackyard</Project>
   <ReadMe>https://github.com/SandObserver/Stackyard/blob/main/README.md</ReadMe>

@@ -462,3 +462,23 @@ test('the image stamps assets itself, so a locally built image is not pinned to 
     'the web root must come from the stamped stage, not straight from the build context',
   );
 });
+
+/* ── the API policy ───────────────────────────────────────────────────────── */
+
+/* /api/ sets its own headers, so the server-level policy does not reach it. The
+   icon proxy serves third-party SVG on this origin. */
+test('every /api/ location sends the locked-down API policy', () => {
+  const apiPolicy = (read('csp-api.conf').match(/add_header Content-Security-Policy "([^"]+)"/) || [])[1];
+  assert.ok(apiPolicy, 'csp-api.conf has no policy');
+  for (const directive of ["default-src 'none'", "frame-ancestors 'none'", 'sandbox']) {
+    assert.ok(apiPolicy.includes(directive), `the API policy lacks ${directive}`);
+  }
+
+  const locations = [...dashboard.matchAll(/location (?:= )?(\/api\/\S*) \{/g)];
+  assert.equal(locations.length, 3, 'an /api/ location was added or removed; check it sends the API policy');
+  for (const m of locations) {
+    const block = dashboard.slice(m.index, dashboard.indexOf('\n    }', m.index));
+    assert.ok(block.includes('include /etc/nginx/http.d/csp-api.conf;'), `${m[1]} sends no API policy`);
+    assert.ok(!block.includes(INCLUDE), `${m[1]} also sends the page policy`);
+  }
+});

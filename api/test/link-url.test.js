@@ -114,8 +114,8 @@ test('the Dockerfile puts the shared rule where the server can require it', () =
   const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
   /* The image mirrors the repository layout, so the same relative path resolves
      in both. If either line changes without the other, the API cannot start. */
-  assert.match(dockerfile, /COPY --chown=node:node api\/ \/app\/api\//);
-  assert.match(dockerfile, /COPY --chown=node:node ui\/js\/link-url\.js \/app\/ui\/js\/link-url\.js/);
+  assert.match(dockerfile, /^COPY api\/ \/app\/api\/$/m);
+  assert.match(dockerfile, /^COPY ui\/js\/link-url\.js \/app\/ui\/js\/link-url\.js$/m);
   const supervisord = fs.readFileSync(path.join(__dirname, '../../supervisord.conf'), 'utf8');
   assert.match(supervisord, /command=node \/app\/api\/src\/server\.js/);
 });

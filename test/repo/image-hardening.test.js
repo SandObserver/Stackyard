@@ -119,3 +119,12 @@ test('the upgrade cannot be served from a cache across releases', () => {
   const argAt = dockerfile.lastIndexOf('ARG APP_VERSION', dockerfile.indexOf(run));
   assert.ok(argAt !== -1, 'APP_VERSION is read in the step but never declared above it');
 });
+
+/* The API runs as node. Code it owns, it can rewrite, and the change survives a
+   restart. */
+test('the API cannot rewrite its own code', () => {
+  const runtime = dockerfile.split(/^FROM /m).pop();
+  const copies = runtime.split('\n').filter(l => /^COPY .*\/app\//.test(l));
+  assert.ok(copies.length > 0);
+  for (const line of copies) assert.doesNotMatch(line, /--chown/, line);
+});

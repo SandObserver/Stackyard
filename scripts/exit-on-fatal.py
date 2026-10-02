@@ -24,7 +24,7 @@ import signal
 import sys
 
 # Read by docker-entrypoint.sh after supervisord exits.
-FAILURE_MARKER = os.environ.get('SUPERVISOR_FATAL_MARKER', '/tmp/stackyard-fatal')
+FAILURE_MARKER = os.environ.get('SUPERVISOR_FATAL_MARKER', '/run/stackyard-fatal')
 
 
 def write_stdout(s):
