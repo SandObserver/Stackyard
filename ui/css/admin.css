@@ -167,10 +167,10 @@ html{background:var(--bg-color,var(--bg-base))}
 .adm-outer{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:44px 0}
 
 /* ── Panel card ── */
-.adm{display:flex;width:100%;max-width:1039px;min-height:calc(100vh - 88px);background:var(--sb);border-radius:var(--r);box-shadow:var(--shadow-dlg);overflow:hidden}
+.adm{display:flex;width:100%;max-width:1039px;min-height:calc(100vh - 88px);background:var(--sb);border-radius:var(--r);box-shadow:var(--shadow-dlg);overflow:clip}
 
 /* ── Sidebar ── */
-.sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 10px;position:sticky;top:0;height:100%;min-height:calc(100vh - 88px);overflow-y:auto}
+.sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 10px;position:sticky;top:0;align-self:flex-start;max-height:100vh;min-height:calc(100vh - 88px);overflow-y:auto}
 .sb-brand{display:flex;align-items:center;gap:10px;padding:18px 8px 20px;text-decoration:none;color:inherit}
 .sb-name{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:700;color:var(--tx)}
 .sb-ver{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);color:var(--dm-strong);margin-top:1px}
@@ -184,7 +184,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .nl:hover .ni,.nl.active .ni{color:var(--ac)}
 
 /* ── Content pane ── */
-.cp{flex:1;min-width:0;background:var(--pane);overflow-y:auto}
+.cp{flex:1;min-width:0;background:var(--pane)}
 
 /* ── Section ── */
 .sec{padding:20px 20px 48px}
@@ -305,7 +305,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .al-filter{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .al-search{background:var(--btn-fill);border:none;border-radius:999px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);padding:7px 16px;min-height:36px;width:220px;font-family:inherit}
 .al-search:focus{outline:2px solid var(--ac);outline-offset:0}
-.al-chips{display:flex;gap:5px}
+.al-chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{padding:7px 14px;min-height:36px;border-radius:999px;border:none;background:var(--btn-fill);color:var(--chip-text);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:500;cursor:pointer;transition:background var(--t),color var(--t);font-family:inherit}
 .chip.on{background:var(--ac);color:var(--on-fill);font-weight:600}
 .chip:hover:not(.on){color:var(--tx)}
@@ -538,7 +538,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .pw-hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:4px;min-height:16px;padding-inline:16px}
 
 /* ── Toast ── */
-#toast{position:fixed;bottom:24px;inset-inline-end:24px;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:14px 18px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;max-width:320px}
+#toast{position:fixed;bottom:24px;inset-inline-end:max(24px,env(safe-area-inset-left),env(safe-area-inset-right));background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:14px 18px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;max-width:320px}
 /* Only the shown toast takes pointer events. A hidden one would swallow a
    click. */
 #toast.show{opacity:1;transform:translateY(0);pointer-events:auto;cursor:pointer;-webkit-user-select:text;user-select:text}
@@ -646,7 +646,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .bprow-hidden{display:none!important}
 
 /* ── Auth overlays ── */
-.login-screen{position:fixed;inset:0;z-index:9000;background:var(--scrim-strong);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
+.login-screen{position:fixed;inset:0;z-index:9000;background:var(--scrim-strong);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
 .login-wrap{background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:28px 22px 22px;width:100%;max-width:360px;box-shadow:var(--shadow-login);display:flex;flex-direction:column;gap:14px}
 .login-header{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:4px}
 .login-mark{height:34px;width:auto;color:var(--tx);margin-bottom:4px}
@@ -657,7 +657,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .login-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:999px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline);min-height:48px;padding:13px;cursor:pointer;transition:background var(--t)}
 .login-btn:hover{background:var(--ac2)}
 .login-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);text-align:center;display:none}
-.setpw-screen{position:fixed;inset:0;z-index:8000;background:var(--scrim-strong);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
+.setpw-screen{position:fixed;inset:0;z-index:8000;background:var(--scrim-strong);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
 .setpw-wrap{width:100%;max-width:360px;padding:24px}
 .setpw-card{background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow-dlg)}
 .setpw-title{font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
@@ -695,7 +695,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    308px is a third of the window and the app list is what pays for it. */
 @media (min-width:769px) and (max-width:1024px) {
   :root { --sbw:220px; }
-  .adm-outer { padding:24px 16px; }
+  .adm-outer { padding:24px max(16px,env(safe-area-inset-left),env(safe-area-inset-right)); }
   .adm { min-height:calc(100vh - 48px); }
   .sb { min-height:calc(100vh - 48px); }
 }
@@ -741,8 +741,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    not. */
 .mtabbar{display:none}
 .m-back{display:none}
-/* The status bar overlaps the page in a home-screen install. The sticky section
-   header scrolls under it without this. */
+/* The status bar overlaps the page in a home-screen install. */
 html.is-mobile .adm-outer{padding:env(safe-area-inset-top) 0 0;display:block;min-height:100dvh}
 html.is-mobile .adm{max-width:none;width:100%;min-height:100dvh;border:none;border-radius:0}
 html.is-mobile .sb{display:none}
@@ -750,7 +749,7 @@ html.is-mobile .cp{width:100%}
 html.is-mobile .sec{padding-block:16px calc(132px + env(safe-area-inset-bottom));padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
 html.is-mobile .sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title)}
 html.is-mobile .hsb-track{max-width:min(240px,62%)}
-html.is-mobile .sec-hdr{position:sticky;top:0;z-index:20;background:var(--pane);padding:10px 0 10px;flex-wrap:wrap;row-gap:6px}
+html.is-mobile .sec-hdr{padding:10px 0 10px;flex-wrap:wrap;row-gap:6px}
 html.is-mobile .sec-title{order:1;flex-basis:100%;min-width:0;overflow-wrap:break-word}
 html.is-mobile .sec-hdr-actions{margin-inline-start:auto}
 html.is-mobile .sec-hdr-actions .btn{min-height:44px;padding-inline:18px}

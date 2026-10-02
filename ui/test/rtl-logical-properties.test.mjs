@@ -230,7 +230,7 @@ test('spacers push towards the end of the text', () => {
 });
 
 test('absolutely positioned elements use the inline end', () => {
-  assert.match(code('css/admin.css'), /inset-inline-end:24px/, 'the toast');
+  assert.match(code('css/admin.css'), /#toast\{[^}]*inset-inline-end:max\(24px,/, 'the toast');
 });
 
 /* The toast is a tinted fill with a border on every side, so it has no leading

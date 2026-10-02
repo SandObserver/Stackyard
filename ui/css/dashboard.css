@@ -302,6 +302,7 @@
     /* The badge is transparent to the pointer so a click reaches the tile. One
        with a popover has to take it, or nothing can hover what it opens. */
     .badge.has-pop { pointer-events:auto }
+    .badge.has-pop .badge-txt::after { content:''; position:absolute; inset:min(0px, calc((100% - 24px) / 2)) }
     .badge.has-more::before, .badge.has-more::after {
       content:''; position:absolute; inset:0; border-radius:50px;
     }
@@ -742,6 +743,8 @@
       transition:background .2s,transform .2s;
     }
     .folder-dot.on { background:var(--control-knob); transform:scale(1.25) }
+    .folder-dot { position:relative }
+    .folder-dot::after { content:''; position:absolute; inset:-4px calc((var(--dsz) - 24px) / 2) calc(var(--dsz) - 20px) }
 
     /* ── Folder overlay — desktop ── */
     .folder-overlay {
@@ -841,10 +844,13 @@
 .empty-state {
   position: fixed; inset: 0; z-index: 300;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
+  align-items: center;
   padding-inline: 24px; text-align: center;
-  pointer-events: none;
+  overflow-y: auto;
 }
+/* Do not centre with justify-content. An overflowing stack then starts above
+   the scroll origin and cannot be reached. */
+.empty-state::before, .empty-state::after { content: ''; flex: 1 0 0 }
 .empty-state-mark {
   width: clamp(71px, 11vh, 112px); height: clamp(71px, 11vh, 112px);
   color: var(--label-primary);
@@ -859,7 +865,6 @@
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-btn {
-  pointer-events: auto;
   margin-block-start: var(--sp-32); padding: 15px var(--sp-32);
   border-radius: 999px; min-height: 52px;
   background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
@@ -868,11 +873,16 @@
   font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
 }
 .empty-state-hint {
-  pointer-events: auto;
   margin-block-start: var(--sp-20); color: var(--accent); text-decoration: none;
   font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);
 }
 .empty-state-hint:hover { text-decoration: underline }
+@media (max-height: 480px) {
+  .empty-state-mark { display: none }
+  .empty-state-sub { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body) }
+  .empty-state-btn { margin-block-start: var(--sp-16) }
+  .empty-state-hint { margin-block-start: var(--sp-8) }
+}
 
 #dock[hidden] { display: none }
 

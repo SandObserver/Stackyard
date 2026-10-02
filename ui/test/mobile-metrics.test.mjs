@@ -138,6 +138,26 @@ test('admin reserves the top inset too', () => {
   assert.match(css, /html\.is-mobile \.adm-outer\{padding:env\(safe-area-inset-top\) 0 0/);
 });
 
+/* A sticky header with the large title covers a keyboard-focused row, and at
+   400% zoom it leaves almost no room for the list. */
+test('the phone section header scrolls with the page', () => {
+  const rule = read('css/admin.css').match(/html\.is-mobile \.sec-hdr\{([^}]*)\}/)?.[1] ?? '';
+  assert.ok(rule, 'the phone header rule is missing');
+  assert.doesNotMatch(rule, /position:\s*(sticky|fixed)/);
+});
+
+test('admin keeps clear of the side insets in landscape', () => {
+  const css = read('css/admin.css');
+  assert.match(
+    css,
+    /\.adm-outer \{ padding:24px max\(16px,env\(safe-area-inset-left\),env\(safe-area-inset-right\)\); \}/,
+  );
+  assert.match(
+    css,
+    /#toast\{[^}]*inset-inline-end:max\(24px,env\(safe-area-inset-left\),env\(safe-area-inset-right\)\)/,
+  );
+});
+
 /* ── Widget cards fit, and stay on one modular grid ───────────────────────── */
 
 const COLS = 4,
