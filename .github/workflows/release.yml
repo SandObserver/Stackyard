@@ -132,6 +132,10 @@ jobs:
       # A multi-platform image never exists locally, so each platform is built
       # and scanned here before anything is pushed. Keep both scans. Package
       # versions differ by architecture.
+      #
+      # No type=gha cache on any build here. Jobs that run dev dependencies can
+      # write that cache, and this job signs what it builds. The push reuses the
+      # scanned layers from this builder's own cache.
       - name: Build amd64 for scanning
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -142,8 +146,6 @@ jobs:
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
           tags: stackyard:scan-amd64
-          cache-to: type=gha,mode=max
-          cache-from: type=gha
 
       - name: Scan the amd64 image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -164,8 +166,6 @@ jobs:
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
           tags: stackyard:scan-arm64
-          cache-to: type=gha,mode=max
-          cache-from: type=gha
 
       - name: Scan the arm64 image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -187,7 +187,6 @@ jobs:
             APP_VERSION=${{ steps.meta.outputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
 
       # Everything below addresses the image by digest. A tag can be moved.
 

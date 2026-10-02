@@ -66,13 +66,20 @@ test('every published platform is scanned before anything is pushed', () => {
       /APP_VERSION=\$\{\{ steps\.meta\.outputs\.version \}\}/,
       `${arch}: a different build-arg would build different layers from the ones pushed`,
     );
-    assert.match(String(built.with['cache-to']), /type=gha/, `${arch}: the push step rebuilds this from cache`);
   }
+});
 
-  assert.match(
-    String(byName('Build and push').with['cache-from']),
-    /type=gha/,
-    'without the shared cache every platform is built twice over',
+/* Any job with a runtime token can write the gha cache, including the ones that
+   run dev dependencies. A planted layer would be signed. */
+test('the signed image is not built from a cache other jobs can write', () => {
+  for (const s of steps.filter(step => /build-push-action/.test(step.uses || ''))) {
+    assert.equal(s.with['cache-from'], undefined, `${s.name} reads an outside cache`);
+    assert.equal(s.with['cache-to'], undefined, `${s.name} writes an outside cache`);
+  }
+  assert.equal(
+    byName('Set up Docker Buildx').with?.driver,
+    undefined,
+    'the push reuses the scan layers from the builder',
   );
 });
 
@@ -142,8 +149,13 @@ test('the checks run in their own read-only job before anything is published', (
 test('the publishing job runs no dev tooling', () => {
   assert.equal(indexOf('Run project checks'), -1);
   for (const s of steps) {
-    assert.notEqual(s.uses, './.github/actions/checks', 'the checks action installs dev dependencies');
-    assert.doesNotMatch(String(s.run || ''), /\bnpm\b|\bnpx\b/, `${s.name} runs npm`);
+    assert.ok(!String(s.uses || '').startsWith('./'), `${s.name}: a local action can install dev dependencies`);
+    assert.doesNotMatch(
+      String(s.run || ''),
+      /\b(npm|npx|yarn|pnpm|corepack)\b|node_modules/,
+      `${s.name} runs a package manager`,
+    );
+    if (/actions\/setup-node@/.test(s.uses || '')) assert.equal(s.with?.cache, undefined, `${s.name} restores a cache`);
   }
 });
 
