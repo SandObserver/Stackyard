@@ -215,10 +215,17 @@ export function convertHomepageServices(doc, takenIds = []) {
   const col = collector(takenIds);
   if (!Array.isArray(doc)) return result(col);
 
+  /* An alias is the same object as its anchor. Reading one twice lets a small
+     file expand to millions of items and freeze the tab. */
+  let seen = new Set();
   const walk = (entries, groupLabel) => {
     const at = col.items.length;
     const children = [];
     for (const entry of Array.isArray(entries) ? entries : []) {
+      if (entry && typeof entry === 'object') {
+        if (seen.has(entry)) continue;
+        seen.add(entry);
+      }
       const e = soleEntry(entry);
       if (!e) {
         /* Not a `{ name: fields }` wrapper, so there is no service to read. */
@@ -269,6 +276,7 @@ export function convertHomepageServices(doc, takenIds = []) {
       col.skip(SKIP.UNREADABLE, g ? g[0] : '', '');
       continue;
     }
+    seen = new Set();
     walk(g[1], g[0]);
   }
   return result(col);
@@ -336,12 +344,17 @@ export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
     const groupLabel = text(section.name) || untitledFolder;
     const at = col.items.length;
     const children = [];
+    /* An alias is the same object as its anchor. Reading one twice lets a
+       small file expand to millions of items and freeze the tab. */
+    const seen = new Set();
 
     const addDashyItem = (raw, viaSubItem) => {
       if (!isMap(raw)) {
         col.skip(SKIP.UNREADABLE, '', groupLabel);
         return;
       }
+      if (seen.has(raw)) return;
+      seen.add(raw);
       const title = text(raw.title);
       const icon = convertIcon(raw.icon);
       const href = str(raw.url);

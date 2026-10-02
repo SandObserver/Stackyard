@@ -471,3 +471,38 @@ test('a clean parse contributes no skipped rows', () => {
   assert.deepEqual(parseErrorsAsSkipped([], 'services.yaml'), []);
   assert.deepEqual(parseErrorsAsSkipped(null), []);
 });
+
+/* Each level lists the one before twice, so expanding every alias doubles the
+   item count per level. */
+function dashyAliasLadder(levels) {
+  let y = 'sections:\n  - name: S\n    items:\n      - &a0\n        title: A\n        url: http://a.lan\n';
+  for (let i = 1; i <= levels; i++) {
+    y += `      - &a${i}\n        title: A${i}\n        url: http://a${i}.lan\n        subItems: [*a${i - 1}, *a${i - 1}]\n`;
+  }
+  return y;
+}
+
+test('Dashy aliases are read once per section, so a short file cannot expand without limit', () => {
+  const out = convertDashy(parseYaml(dashyAliasLadder(16)));
+  assert.equal(apps(out).length, 17);
+});
+
+test('a Dashy item anchored in one section and aliased in another imports in both', () => {
+  const out = convertDashy(
+    parseYaml(
+      'sections:\n  - name: A\n    items:\n      - &p\n        title: Plex\n        url: http://plex.lan\n' +
+        '  - name: B\n    items:\n      - *p\n',
+    ),
+  );
+  assert.deepEqual(
+    apps(out).map(a => a.label),
+    ['Plex', 'Plex'],
+  );
+});
+
+test('Homepage aliases are read once per group, so a short file cannot expand without limit', () => {
+  let y = '- G:\n    - &e0\n      S0:\n        href: http://a.lan\n';
+  for (let i = 1; i <= 16; i++) y += `    - &e${i}\n      N${i}: [*e${i - 1}, *e${i - 1}]\n`;
+  const out = convertHomepageServices(parseYaml(y));
+  assert.equal(apps(out).length, 1);
+});
