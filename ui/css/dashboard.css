@@ -293,7 +293,7 @@
     .badge.red  { --badge-bg:var(--badge-red) }
     .badge.blue { --badge-bg:var(--badge-blue) }
     .badge.green { --badge-bg:var(--badge-green) }
-    .badge.stale { opacity:.55; outline:1.5px dashed rgba(255,255,255,.92); outline-offset:1px }
+    .badge.stale { outline:1.5px dashed rgba(255,255,255,.92); outline-offset:1px }
 
     /* Both pills are pseudo-elements at negative depth. That is the only order
        where one paints under the other and both stay under the label, and it
@@ -608,7 +608,7 @@
     /* One default, not a rule per field. The user agent's placeholder assumes a
        light page and fails contrast on every surface here. Rules below override
        it where a field genuinely differs. */
-    input::placeholder, textarea::placeholder { color:rgba(255,255,255,.55); }
+    input::placeholder, textarea::placeholder { color:rgba(255,255,255,.6); }
     /* The panel is a scrim and a blur over a wallpaper the project does not
        control, so the ink has to clear 4.5:1 against whatever that composites
        to. At .38 it did not over a light one. */
@@ -640,7 +640,7 @@
 
     /* ── Spotlight result rows ── */
     .sr-section {
-      font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:600; color:rgba(235,235,245,.6);
+      font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:600; color:rgba(235,235,245,.7);
       padding:6px 12px 6px;
     }
     .sr {
@@ -668,10 +668,10 @@
     body.is-mob #sres .sri img.folder-mini-img { width:72% !important; height:72% !important; }
     .srn { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight:400; color:rgba(255,255,255,.92) }
     .srh {
-      font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color:rgba(255,255,255,.38); margin-top:1px;
+      font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color:rgba(255,255,255,.65); margin-top:1px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .sra { margin-inline-start:auto; color:rgba(255,255,255,.25); font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
+    .sra { margin-inline-start:auto; color:rgba(255,255,255,.65); font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 
     /* The side reserves, used by both layouts. A device that reserves no side
        edge reports 0px, which leaves every gutter at its design value. */
@@ -883,7 +883,7 @@
   color: rgba(255,255,255,.7); font-family: inherit; gap: 16px; z-index: 10000;
 }
 .api-error-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 500; margin: 0; }
-.api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.4); margin: 0; }
+.api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.6); margin: 0; }
 .api-error-btn   {
   margin-top: 8px; padding: 13px 24px; border-radius: 999px; min-height: 48px;
   background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
@@ -1010,6 +1010,17 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
 .setup-btn-skip { background: rgba(118,118,128,.32); color: var(--label-primary); }
 .setup-btn-set  { background: var(--accent); color: var(--on-fill); }
 .setup-btn-set:disabled { opacity: .4; cursor: default; }
+html[data-theme="light"] .setup-card { background: rgba(255,255,255,.9); border-color: rgba(0,0,0,.08); box-shadow: 0 8px 48px rgba(0,0,0,.18); }
+html[data-theme="light"] .setup-sub,
+html[data-theme="light"] .setup-hint,
+html[data-theme="light"] .setup-reveal,
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder { color: rgba(60,60,67,.85); }
+html[data-theme="light"] .setup-reveal:hover { color: var(--label-primary); }
+html[data-theme="light"] .setup-reveal[aria-pressed="true"] { color: var(--accent); }
+html[data-theme="light"] .setup-pw,
+html[data-theme="light"] .setup-btn-skip { background: rgba(118,118,128,.12); }
+html[data-theme="light"] .setup-bars .pwbar { background: rgba(0,0,0,.1); }
 
 /* ── RTL ──
    The grid and dock are symmetric, and flexbox rows reverse on their own. What
@@ -1091,8 +1102,8 @@ html[data-theme="light"] #sin, html[data-theme="light"] .srn { color:var(--label
 html[data-theme="light"] #sin::placeholder,
 html[data-theme="light"] #spot #sin::placeholder,
 html[data-theme="light"] #spot-cancel { color:var(--search-ink-light) }
-html[data-theme="light"] .sr-section, html[data-theme="light"] .srh { color:rgba(60,60,67,.6); border-color:rgba(0,0,0,.08) }
-html[data-theme="light"] .sra { color:rgba(60,60,67,.3) }
+html[data-theme="light"] .sr-section, html[data-theme="light"] .srh { color:rgba(60,60,67,.85); border-color:rgba(0,0,0,.08) }
+html[data-theme="light"] .sra { color:rgba(60,60,67,.85) }
 html[data-theme="light"] .sr:hover, html[data-theme="light"] .sr:active,
 html[data-theme="light"] .sr.sel, html[data-theme="light"] .fh-hl { background:rgba(0,0,0,.06) }
 html[data-theme="light"] body.is-mob #sres .sr + .sr { border-top-color:rgba(0,0,0,.08) }
@@ -1101,9 +1112,9 @@ html[data-theme="light"] .badge-pop {
   box-shadow:0 18px 44px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.06);
 }
 html[data-theme="light"] .badge-pop-name { color:rgba(60,60,67,.8) }
-html[data-theme="light"] .folder-overlay { background:none }
+html[data-theme="light"] .folder-overlay { background:rgba(255,255,255,.55) }
 html[data-theme="light"] .folder-overlay-mobile {
-  background:none;
+  background:rgba(255,255,255,.55);
   -webkit-backdrop-filter:blur(22px); backdrop-filter:blur(22px);
 }
 html[data-theme="light"] .folder-title-desktop { color:rgba(0,0,0,.88); text-shadow:0 1px 8px rgba(255,255,255,.6) }
@@ -1115,7 +1126,9 @@ html[data-theme="light"] .dyn-fold-inner-label { color:rgba(0,0,0,.88); text-sha
 html[data-theme="light"] .empty-state-btn,
 html[data-theme="light"] .api-error-btn { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12) }
 html[data-theme="light"] .api-error-screen { color:rgba(0,0,0,.7) }
-html[data-theme="light"] .api-error-sub { color:rgba(0,0,0,.45) }
+html[data-theme="light"] .api-error-sub { color:rgba(0,0,0,.6) }
+html[data-theme="light"] .empty-state-sub { color:rgba(60,60,67,.85) }
+html[data-theme="light"] .empty-state-hint { color:var(--accent-strong) }
 html[data-theme="light"] .folder-overlay .ilabel { color:var(--label-color-dark); text-shadow:var(--label-shadow-dark) }
 html[data-theme="light"] #dock:not(.mdock) { border-radius:38px; box-shadow:var(--glass-lift) }
 html[data-theme="light"] .folder-icon-grid,
