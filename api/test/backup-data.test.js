@@ -195,3 +195,30 @@ test('a failing Kopia instance marks only its own slots failed', async () => {
   assert.equal(out[1].name, '/data');
   assert.deepEqual(out[2], { error: KIND.NETWORK });
 });
+
+for (const [name, status, kind] of [
+  ['a server that is down', 503, KIND.UPSTREAM],
+  ['a wrong password', 401, KIND.AUTH],
+]) {
+  test(`a Duplicati login refused by ${name} marks the card ${kind}`, async () => {
+    const dupUrl = `http://login-${status}:8200`;
+    const { ctx } = ctxFor({ slots: [{ provider: 'duplicati', dupUrl, jobId: '1' }] }, 'slots', {
+      '/api/v1/auth/login': { status, data: null },
+    });
+    assert.deepEqual(await dataFn(ctx), [{ error: kind }]);
+  });
+}
+
+test('an instance that times out marks its cards as timed out', async () => {
+  const timedOut = () => {
+    throw new Error('Timed out');
+  };
+  const config = {
+    slots: [
+      { provider: 'duplicati', dupUrl: 'http://slow-dup:8200', jobId: '1' },
+      { provider: 'kopia', kopiaUrl: 'http://slow-kopia:51515', jobId: 'h@u:/a' },
+    ],
+  };
+  const { ctx } = ctxFor(config, 'slots', { '/api/v1/auth/login': timedOut, '/api/v1/sources': timedOut });
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.TIMEOUT }, { error: KIND.TIMEOUT }]);
+});

@@ -20,6 +20,15 @@ const BACKUP_MS = 10000; /* backup providers respond more slowly than a normal d
    fresh login. */
 const _dupTokens = new Map();
 
+const authKind = (r, ctx) => ([400, 401, 403].includes(r.status) ? ctx.KIND.AUTH : ctx.KIND.UPSTREAM);
+
+function thrownKind(e, ctx) {
+  if (e && typeof e.kind === 'string') return e.kind;
+  if (e && e.message === 'Timed out') return ctx.KIND.TIMEOUT;
+  if (e && e.message === 'Response too large') return ctx.KIND.UPSTREAM;
+  return ctx.KIND.NETWORK;
+}
+
 async function dupLogin(base, password, ctx) {
   const r = await ctx.fetchJSON(base + '/api/v1/auth/login', {
     method: 'POST',
@@ -27,7 +36,7 @@ async function dupLogin(base, password, ctx) {
     body: JSON.stringify({ Password: password }),
     timeout: BACKUP_MS,
   });
-  if (r.status !== 200) ctx.fail(`Duplicati login failed: HTTP ${r.status}`, { kind: ctx.KIND.AUTH });
+  if (r.status !== 200) ctx.fail(`Duplicati login failed: HTTP ${r.status}`, { kind: authKind(r, ctx) });
   const { AccessToken, RefreshNonce } = r.data || {};
   if (!AccessToken) ctx.fail('Duplicati login returned no token');
   return { accessToken: AccessToken, refreshNonce: RefreshNonce };
@@ -40,7 +49,7 @@ async function dupRefresh(base, refreshNonce, ctx) {
     body: JSON.stringify({ RefreshNonce: refreshNonce }),
     timeout: BACKUP_MS,
   });
-  if (r.status !== 200) ctx.fail(`Duplicati refresh failed: HTTP ${r.status}`, { kind: ctx.KIND.AUTH });
+  if (r.status !== 200) ctx.fail(`Duplicati refresh failed: HTTP ${r.status}`, { kind: authKind(r, ctx) });
   const { AccessToken, RefreshNonce } = r.data || {};
   if (!AccessToken) ctx.fail('Duplicati refresh returned no token');
   return { accessToken: AccessToken, refreshNonce: RefreshNonce };
@@ -171,7 +180,7 @@ async function slots(config, ctx) {
       } catch (e) {
         /* One unreachable instance must leave the rest of the widget intact. */
         ctx.log.warn('backup: duplicati group failed', { base, error: e.message });
-        failSlots(gs, e.kind || ctx.KIND.NETWORK);
+        failSlots(gs, thrownKind(e, ctx));
       }
     }),
   );
@@ -196,7 +205,7 @@ async function slots(config, ctx) {
         });
       } catch (e) {
         ctx.log.warn('backup: kopia group failed', { url, error: e.message });
-        failSlots(gs, e.kind || ctx.KIND.NETWORK);
+        failSlots(gs, thrownKind(e, ctx));
       }
     }),
   );
