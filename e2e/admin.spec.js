@@ -287,3 +287,13 @@ test('pressing Save twice on a new app adds it once', async ({ page, request }) 
   expect(writes).toBe(1);
   expect((await readConfig(request)).items.filter(i => i.label === 'Echo')).toHaveLength(1);
 });
+
+test('a failed config load shows the message and Retry in the Dashboard list', async ({ page }) => {
+  await page.route('**/api/config', route =>
+    route.request().method() === 'GET' ? route.fulfill({ status: 500, json: { error: 'x' } }) : route.continue(),
+  );
+  await page.goto('/admin/');
+  await page.locator('.nl[data-sec="dashboard"]').click();
+  await expect(page.locator('.dash-load-fail')).toBeVisible();
+  await expect(page.locator('.dash-load-fail .retry-btn')).toBeVisible();
+});
