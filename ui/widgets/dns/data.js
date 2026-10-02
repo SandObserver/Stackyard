@@ -48,6 +48,20 @@ async function piHole(ctx, base, config, fetchJSON) {
   }
   const headers = sid ? { 'X-FTL-SID': sid } : {};
 
+  /* Release the session on every path. Pi-hole v6 caps concurrent sessions,
+     and polling piles them up until it locks this client out. */
+  try {
+    return await piHoleStats(ctx, base, headers, fetchJSON);
+  } finally {
+    if (sid) {
+      try {
+        await fetchJSON(base + '/api/auth', { method: 'DELETE', headers, timeout: 5000 });
+      } catch {}
+    }
+  }
+}
+
+async function piHoleStats(ctx, base, headers, fetchJSON) {
   const sum = await fetchJSON(base + '/api/stats/summary', { headers, timeout: 8000 });
   if (sum.status === 401) ctx.fail('Pi-hole auth failed — set a password', { kind: ctx.KIND.AUTH });
   if (sum.status >= 400 || !sum.data || !sum.data.queries) ctx.fail('Pi-hole HTTP ' + sum.status);
@@ -78,14 +92,6 @@ async function piHole(ctx, base, config, fetchJSON) {
       out.blocked_filtering = hours.map(hr => byHour.get(hr).blocked);
     }
   } catch {}
-
-  /* Release the session. Pi-hole v6 caps concurrent sessions, and polling piles
-     them up until it locks this client out. */
-  if (sid) {
-    try {
-      await fetchJSON(base + '/api/auth', { method: 'DELETE', headers, timeout: 5000 });
-    } catch {}
-  }
 
   return out;
 }

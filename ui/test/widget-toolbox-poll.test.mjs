@@ -218,6 +218,65 @@ test('repeated visibility changes do not multiply the loop', async () => {
   });
 });
 
+test('hiding and showing during a slow fetch does not start a second loop', async () => {
+  await run(async (dom, start) => {
+    let calls = 0;
+    start({
+      interval: 10_000,
+      fetch: async () => {
+        calls++;
+        await tick(40);
+        return {};
+      },
+    });
+    await tick(5);
+    dom.setHidden(true);
+    dom.setHidden(false);
+    await tick(80);
+    assert.equal(calls, 1, 'the fetch in flight is the only one until the interval passes');
+  });
+});
+
+test('a slow fetch that lands after the tab returns keeps polling', async () => {
+  await run(async (dom, start) => {
+    let calls = 0;
+    start({
+      interval: 5,
+      fetch: async () => {
+        if (++calls === 1) await tick(30);
+        return {};
+      },
+    });
+    await tick(5);
+    dom.setHidden(true);
+    dom.setHidden(false);
+    await tick(80);
+    assert.ok(calls > 2, `expected polling to continue, got ${calls} calls`);
+  });
+});
+
+test('a rate change during a fetch does not start a second loop', async () => {
+  try {
+    await run(async (_dom, start) => {
+      let calls = 0;
+      start({
+        interval: 100,
+        fetch: async () => {
+          if (++calls === 2) await tick(100);
+          return {};
+        },
+      });
+      await tick(150);
+      assert.equal(calls, 2, 'the second fetch is in flight');
+      setPollRate(1.0001);
+      await tick(1000);
+      assert.ok(calls <= 12, `expected about 10 fetches at one loop's pace, got ${calls}`);
+    });
+  } finally {
+    setPollRate(1);
+  }
+});
+
 test('a poll started while hidden does not keep polling', async () => {
   await run(
     async (dom, start) => {
