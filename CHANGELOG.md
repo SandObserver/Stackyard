@@ -124,6 +124,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make the widget template report failures as errors, so widgets copied from it
   do not show them as empty data.
 
+- Show an error on System Stats when its Beszel system is down or has stopped
+  reporting, instead of its last readings as live values.
+
+- Show a disk that failed its SMART check as failed on Disk Health, instead of
+  as a warning.
+
+- Colour each System Stats value with its own slot colour, whatever the slot
+  order.
+
+- Show "Unknown timezone" on the clock when its timezone name is not recognised,
+  instead of a blank or stopped clock.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
