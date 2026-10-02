@@ -20,6 +20,15 @@ const BACKUP_MS = 10000; /* backup providers respond more slowly than a normal d
    fresh login. */
 const _dupTokens = new Map();
 
+const authKind = (r, ctx) => ([400, 401, 403].includes(r.status) ? ctx.KIND.AUTH : ctx.KIND.UPSTREAM);
+
+function thrownKind(e, ctx) {
+  if (e && typeof e.kind === 'string') return e.kind;
+  if (e && e.message === 'Timed out') return ctx.KIND.TIMEOUT;
+  if (e && e.message === 'Response too large') return ctx.KIND.UPSTREAM;
+  return ctx.KIND.NETWORK;
+}
+
 async function dupLogin(base, password, ctx) {
   const r = await ctx.fetchJSON(base + '/api/v1/auth/login', {
     method: 'POST',
@@ -27,7 +36,7 @@ async function dupLogin(base, password, ctx) {
     body: JSON.stringify({ Password: password }),
     timeout: BACKUP_MS,
   });
-  if (r.status !== 200) ctx.fail(`Duplicati login failed: HTTP ${r.status}`, { kind: ctx.KIND.AUTH });
+  if (r.status !== 200) ctx.fail(`Duplicati login failed: HTTP ${r.status}`, { kind: authKind(r, ctx) });
   const { AccessToken, RefreshNonce } = r.data || {};
   if (!AccessToken) ctx.fail('Duplicati login returned no token');
   return { accessToken: AccessToken, refreshNonce: RefreshNonce };
@@ -40,7 +49,7 @@ async function dupRefresh(base, refreshNonce, ctx) {
     body: JSON.stringify({ RefreshNonce: refreshNonce }),
     timeout: BACKUP_MS,
   });
-  if (r.status !== 200) ctx.fail(`Duplicati refresh failed: HTTP ${r.status}`, { kind: ctx.KIND.AUTH });
+  if (r.status !== 200) ctx.fail(`Duplicati refresh failed: HTTP ${r.status}`, { kind: authKind(r, ctx) });
   const { AccessToken, RefreshNonce } = r.data || {};
   if (!AccessToken) ctx.fail('Duplicati refresh returned no token');
   return { accessToken: AccessToken, refreshNonce: RefreshNonce };
@@ -135,6 +144,10 @@ async function slots(config, ctx) {
   });
 
   const result = Array(list.length).fill(null);
+  /* A card for an instance that stopped answering must not keep its last status. */
+  const failSlots = (gs, kind) => {
+    for (const { i } of gs) result[i] = { error: kind };
+  };
 
   await Promise.all(
     Object.values(dupGroups).map(async ({ base, pass, slots: gs }) => {
@@ -143,7 +156,8 @@ async function slots(config, ctx) {
           dupFetch(base, pass, '/api/v1/serverstate', ctx),
           dupFetch(base, pass, '/api/v1/backups', ctx),
         ]);
-        if (stateR.status === 401 || backupsR.status === 401) return;
+        if (stateR.status === 401 || backupsR.status === 401) return failSlots(gs, ctx.KIND.AUTH);
+        if (stateR.status >= 400 || backupsR.status >= 400) return failSlots(gs, ctx.KIND.UPSTREAM);
         const serverState = stateR.data || {};
         const backups = dupList(backupsR.data);
         const proposed = {};
@@ -166,6 +180,7 @@ async function slots(config, ctx) {
       } catch (e) {
         /* One unreachable instance must leave the rest of the widget intact. */
         ctx.log.warn('backup: duplicati group failed', { base, error: e.message });
+        failSlots(gs, thrownKind(e, ctx));
       }
     }),
   );
@@ -174,7 +189,8 @@ async function slots(config, ctx) {
     Object.values(kopiaGroups).map(async ({ url, user, pass, slots: gs }) => {
       try {
         const r = await kopiaFetch(url, user, pass, '/api/v1/sources', ctx);
-        if (r.status !== 200) return;
+        if (r.status === 401 || r.status === 403) return failSlots(gs, ctx.KIND.AUTH);
+        if (r.status !== 200) return failSlots(gs, ctx.KIND.UPSTREAM);
         const allSources = r.data?.sources || [];
         gs.forEach(({ i, jobId, customName }) => {
           const s = allSources.find(src => kopiaSourceId(src.source) === jobId);
@@ -189,6 +205,7 @@ async function slots(config, ctx) {
         });
       } catch (e) {
         ctx.log.warn('backup: kopia group failed', { url, error: e.message });
+        failSlots(gs, thrownKind(e, ctx));
       }
     }),
   );

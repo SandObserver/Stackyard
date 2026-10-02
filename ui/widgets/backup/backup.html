@@ -119,7 +119,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=e44a2dd4';
+import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, errorState, errorLine } from '/js/widget-toolbox.js?v=e44a2dd4';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -568,6 +568,10 @@ function applyCard(idx, job) {
   const fname = document.getElementById(`front-name-${idx}`);
   if(!back||!front) return;
 
+  if(job && job.error) {
+    applyCardError(idx, errorLine({ kind: job.error }));
+    return;
+  }
   if(!job) {
     back.style.background='rgba(255,255,255,0.06)'; back.style.color='';
     back.classList.remove('running');
@@ -609,19 +613,21 @@ function applyCard(idx, job) {
 }
 
 function applyError(line) {
-  slotList().forEach((_,idx)=>{
-    const back  = document.getElementById(`back-${idx}`);
-    const front = document.getElementById(`front-${idx}`);
-    const bname = document.getElementById(`back-name-${idx}`);
-    const bmeta = document.getElementById(`back-meta-${idx}`);
-    const fname = document.getElementById(`front-name-${idx}`);
-    /* Set both. An unset colour inherits black onto a dark card. */
-    if(back){ back.style.background='rgba(255,255,255,0.06)'; back.style.color='#fff'; }
-    if(front){ front.setAttribute('role','img'); front.setAttribute('aria-label', line); }
-    if(bname) bname.textContent = line;
-    if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
-    if(fname) fname.textContent = '\u2014';
-  });
+  slotList().forEach((_,idx)=>applyCardError(idx, line));
+}
+
+function applyCardError(idx, line) {
+  const back  = document.getElementById(`back-${idx}`);
+  const front = document.getElementById(`front-${idx}`);
+  const bname = document.getElementById(`back-name-${idx}`);
+  const bmeta = document.getElementById(`back-meta-${idx}`);
+  const fname = document.getElementById(`front-name-${idx}`);
+  /* Set both. An unset colour inherits black onto a dark card. */
+  if(back){ back.style.background='rgba(255,255,255,0.06)'; back.style.color='#fff'; back.classList.remove('running'); }
+  if(front){ front.setAttribute('role','img'); front.setAttribute('aria-label', line); front.style.removeProperty('--status-color'); }
+  if(bname) bname.textContent = line;
+  if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
+  if(fname) fname.textContent = '\u2014';
 }
 
 boot();

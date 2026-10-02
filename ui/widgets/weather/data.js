@@ -105,8 +105,10 @@ module.exports = async function (ctx) {
   const w = await read(ctx, lat, lon, units);
 
   const useFeels = config.feelsLike === true || config.feelsLike === 'true';
+  const temp = useFeels ? w.feels : w.real;
+  if (typeof temp !== 'number' || !Number.isFinite(temp)) ctx.fail('Weather reply has no temperature');
   return {
-    temp: Math.round(useFeels ? w.feels : w.real),
+    temp: Math.round(temp),
     usedFeels: useFeels,
     units: units,
     code: w.code,

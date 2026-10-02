@@ -156,3 +156,41 @@ test('a shelf with no name of any kind reports none, so the widget picks the wor
   const r = await dataFn(ctx);
   assert.equal(r.shelves[0].name, '');
 });
+
+const KOMGA = { provider: 'komga', komgaUrl: 'http://komga:25600', komgaKey: 'k' };
+const KAVITA = { provider: 'kavita', kavitaUrl: 'http://kavita:5000', kavitaKey: 'k' };
+const ABS_LIBRARY = { status: 200, data: { libraries: [{ id: 'L', mediaType: 'book' }] } };
+const KAVITA_TOKEN = { status: 200, data: { token: 't' } };
+
+for (const status of [404, 429, 500, 503]) {
+  test(`an Audiobookshelf ${status} fails the poll instead of showing an empty shelf`, async () => {
+    const ctx = ctxFor(ABS, url => (url.endsWith('/api/libraries') ? ABS_LIBRARY : { status, data: null }));
+    await assert.rejects(dataFn(ctx), new RegExp(`Audiobookshelf HTTP ${status}`));
+  });
+
+  test(`a Komga ${status} fails the poll instead of showing an empty shelf`, async () => {
+    const ctx = ctxFor(KOMGA, () => ({ status, data: null }));
+    await assert.rejects(dataFn(ctx), new RegExp(`Komga HTTP ${status}`));
+  });
+
+  test(`a Kavita ${status} fails the poll instead of showing an empty shelf`, async () => {
+    const ctx = ctxFor(KAVITA, url =>
+      url.includes('/api/Plugin/authenticate') ? KAVITA_TOKEN : { status, data: null },
+    );
+    await assert.rejects(dataFn(ctx), new RegExp(`Kavita HTTP ${status}`));
+  });
+}
+
+test('a rejected key on a shelf request reports an auth failure', async () => {
+  const ctx = ctxFor(ABS, url => (url.endsWith('/api/libraries') ? ABS_LIBRARY : { status: 403, data: null }));
+  await assert.rejects(dataFn(ctx), err => err.kind === 'auth');
+});
+
+test('a failed list name lookup keeps the shelf and leaves it unnamed', async () => {
+  const ctx = ctxFor({ ...KOMGA, shelves: [{ source: 'list', listId: '7' }] }, url =>
+    url.includes('/api/v1/readlists?') ? { status: 500, data: null } : { status: 200, data: { content: [] } },
+  );
+  const r = await dataFn(ctx);
+  assert.equal(r.shelves.length, 1);
+  assert.equal(r.shelves[0].name, '');
+});
