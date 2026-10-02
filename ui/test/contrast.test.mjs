@@ -198,6 +198,7 @@ const TINTED = [
   ['--chip-bg-fg', '--chip-bg-bg', 'the badge pill'],
   ['--chip-fl-fg', '--chip-fl-bg', 'the folder-type pill'],
   ['--chip-sy-fg', '--chip-sy-bg', 'the system-item pill'],
+  ['--chip-hd-fg', '--chip-hd-bg', 'the hidden pill'],
   ['--chip-text', '--btn-fill', 'an unselected filter chip'],
 ];
 
@@ -420,11 +421,11 @@ test('--on-tint is white in both themes', () => {
    `brightness()` is applied to what is under its layer. */
 
 /** The value a theme gives `prop` on `selector`, last declaration winning. */
-function paint(light, selector, prop, optional = false) {
+function paint(light, selector, prop, optional = false, src = dashboard) {
   const names = light ? [selector, `${LIGHT} ${selector}`] : [selector];
   const re = new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;]+)`);
   let value;
-  for (const rule of rules(dashboard)) {
+  for (const rule of rules(src)) {
     if (rule.media) continue;
     if (!rule.selectors.some(s => names.includes(s))) continue;
     const m = re.exec(rule.body);
@@ -533,4 +534,58 @@ test('a stale badge keeps its count at full contrast', () => {
   const stale = rules(dashboard).filter(r => !r.media && r.selectors.includes('.badge.stale'));
   assert.ok(stale.length, '.badge.stale is not declared');
   for (const rule of stale) assert.doesNotMatch(rule.body, /(^|[;\s])(opacity|filter)\s*:/);
+});
+
+/* ── Settings text on translucent layers ──────────────────────────────────── */
+
+/* [what, ink, layers from the bottom up]. The first layer is opaque. */
+const ADMIN_LAYERED = [
+  ['a placeholder in a field on the pane', '--dm-strong', ['--pane', '--btn-fill']],
+  ['a placeholder in a field on a card', '--dm-strong', ['--cp', '--btn-fill']],
+  ['the sign-in and set-password explanation', '--dm-strong', ['--pane', '--scrim-strong', '--glass-bg']],
+  ['the sign-in password placeholder', '--dm-strong', ['--pane', '--scrim-strong', '--glass-bg', '--btn-fill']],
+  ['the sidebar version', '--dm-strong', ['--sb']],
+  ['the Retry label', '--tx', ['--cp', '--btn-fill']],
+];
+
+for (const light of [false, true]) {
+  for (const raised of [false, true]) {
+    const name = `${light ? 'light' : 'dark'}${raised ? ', increased contrast' : ''}`;
+    test(`Settings text on translucent layers clears 4.5: ${name}`, () => {
+      const resolve = resolver({ raised, light });
+      const failures = [];
+      for (const [what, ink, [base, ...layers]] of ADMIN_LAYERED) {
+        const surface = layers.reduce(
+          (under, token) => layer(rgbaOf(resolve, resolve.raw(token)), under),
+          rgbaOf(resolve, resolve(base)).slice(0, 3),
+        );
+        const r = ratio(toHex(layer(rgbaOf(resolve, resolve.raw(ink)), surface)), toHex(surface));
+        if (r < 4.5) failures.push(`${what}: ${ink} is ${r.toFixed(2)}, needs 4.5`);
+      }
+      assert.deepEqual(failures, [], `Below the WCAG minimum (${name}):\n  ${failures.join('\n  ')}`);
+    });
+  }
+}
+
+test('the measured Settings rules name the measured tokens', () => {
+  const uses = [
+    ['input::placeholder', 'color', 'var(--dm-strong)'],
+    ['.kv-k::placeholder', 'color', 'var(--dm-strong)'],
+    ['.icon-srch::placeholder', 'color', 'var(--dm-strong)'],
+    ['.login-sub', 'color', 'var(--dm-strong)'],
+    ['.setpw-desc', 'color', 'var(--dm-strong)'],
+    ['.sb-ver', 'color', 'var(--dm-strong)'],
+    ['.p-hd', 'color', 'var(--chip-hd-fg)'],
+    ['.p-hd', 'background', 'var(--chip-hd-bg)'],
+    ['.dash-load-fail', 'color', 'var(--dm)'],
+    ['.dash-load-fail .retry-btn', 'color', 'var(--tx)'],
+    ['.dash-load-fail .retry-btn', 'background', 'var(--btn-fill)'],
+    ['.login-wrap', 'background', 'var(--glass-bg)'],
+    ['.setpw-card', 'background', 'var(--glass-bg)'],
+  ];
+  for (const light of [false, true]) {
+    for (const [selector, prop, want] of uses) {
+      assert.equal(paint(light, selector, prop, false, admin), want, `${selector} ${prop}`);
+    }
+  }
 });
