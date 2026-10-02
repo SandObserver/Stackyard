@@ -169,6 +169,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop requests for unknown widget ids from growing the API's memory.
 
+- Refuse a Dashy or Homepage import file that expands to more than 5,000
+  entries, instead of freezing the page.
+
 ## [1.15.0] - 2026-09-28
 
 ### Added
