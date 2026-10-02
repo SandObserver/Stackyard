@@ -215,3 +215,38 @@ test('clr resolves palette names and tile keywords for the page theme', () => {
     globalThis.document = prev;
   }
 });
+
+test('focusFirst skips detached, disabled, hidden and unrendered candidates', async () => {
+  const { focusFirst } = await import('../js/utils.js');
+  const prev = globalThis.document;
+  const doc = { activeElement: null };
+  globalThis.document = /** @type {any} */ (doc);
+  const mkEl = (name, over = {}) => ({
+    name,
+    isConnected: true,
+    disabled: false,
+    hidden: false,
+    getClientRects: () => [{}],
+    focus() {
+      doc.activeElement = this;
+    },
+    ...over,
+  });
+  try {
+    const picked = mkEl('picked');
+    const ok = focusFirst(
+      null,
+      mkEl('detached', { isConnected: false }),
+      mkEl('disabled', { disabled: true }),
+      mkEl('hidden', { hidden: true }),
+      mkEl('display-none', { getClientRects: () => [] }),
+      picked,
+      mkEl('later'),
+    );
+    assert.equal(ok, true);
+    assert.equal(doc.activeElement, picked);
+    assert.equal(focusFirst(mkEl('detached', { isConnected: false })), false);
+  } finally {
+    globalThis.document = prev;
+  }
+});

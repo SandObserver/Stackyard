@@ -12,7 +12,7 @@
 import { applyDrop, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=6b767e76';
 import { state } from '/js/admin-state.js?v=af772a1b';
 import { snapshotItems } from '/js/admin-save-logic.js?v=8389782f';
-import { qa } from '/js/utils.js?v=c5766a9d';
+import { qa } from '/js/utils.js?v=d9246f59';
 
 /** @type {(before: unknown) => void} */
 let _save = () => {};

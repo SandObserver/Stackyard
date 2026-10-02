@@ -14,12 +14,12 @@
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
 import { snapshotItems } from '/js/admin-save-logic.js?v=8389782f';
 import { reorderItems } from '/js/admin-logic.js?v=fc7f0836';
-import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=18af71d8';
-import { paintIcon } from '/js/admin-shared.js?v=a81b9cbe';
-import { clr, el, qa, setUserText } from '/js/utils.js?v=c5766a9d';
+import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=6f04cf3a';
+import { paintIcon } from '/js/admin-shared.js?v=1a49ceb0';
+import { clr, el, focusFirst, qa, setUserText } from '/js/utils.js?v=d9246f59';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { sizeLabel } from '/js/admin-widget-form.js?v=ef53bce9';
+import { sizeLabel } from '/js/admin-widget-form.js?v=1191172a';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=648cc374';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
@@ -112,6 +112,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
   if (isFolderRow) {
     const collapsed = collapsedFolders.has(item.id);
     nm.setAttribute('type', 'button');
+    nm.dataset.act = 'toggle';
     nm.style.cssText = 'display:flex;align-items:center;gap:6px;';
     nm.setAttribute('aria-expanded', String(!collapsed));
     nm.setAttribute('aria-label', t(collapsed ? 'folder.expandAria' : 'folder.collapseAria', { name: item.label }));
@@ -165,6 +166,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     b.title = lbl;
     b.setAttribute('aria-label', lbl + ': ' + (item.label || item.id || t('type.app')));
     b.textContent = dir < 0 ? '↑' : '↓';
+    b.dataset.act = dir < 0 ? 'up' : 'down';
     b.disabled = !can;
     b.onclick = () => moveRow(item, dir, { folderId, childIdx });
     return b;
@@ -174,6 +176,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     const hb = document.createElement('button');
     hb.className = 'btn bg sm';
     hb.textContent = t(item.hidden ? 'common.show' : 'common.hide');
+    hb.dataset.act = 'hide';
     const lbl = t(item.hidden ? 'general.showSettingsAria' : 'general.hideSettingsAria');
     hb.title = lbl;
     hb.setAttribute('aria-label', lbl);
@@ -187,6 +190,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     const ed = document.createElement('button');
     ed.className = 'btn bg sm';
     ed.textContent = t('common.edit');
+    ed.dataset.act = 'edit';
     ed.onclick = () => _page.openModal(idx);
     ac.append(ed);
   }
@@ -195,8 +199,26 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
   return row;
 }
 
+const FALLBACK = { up: ['up', 'down'], down: ['down', 'up'] };
+
+/** @param {string|null|undefined} itemId @param {string} [act] @returns {boolean} */
+export function focusRow(itemId, act = 'edit') {
+  const row = qa('.drow', el('al')).find(r => r.dataset.itemId === itemId);
+  if (!row) return false;
+  const order = [...(FALLBACK[act] || [act]), 'edit', 'hide', 'toggle'];
+  return focusFirst(...order.map(a => row.querySelector(`[data-act="${a}"]`)));
+}
+
 export function render() {
   const l = el('al');
+  const was = /** @type {HTMLElement|null} */ (document.activeElement);
+  const row = /** @type {HTMLElement|null} */ (was && l?.contains(was) ? was.closest('.drow') : null);
+  const kept = row ? { id: row.dataset.itemId, act: was?.dataset.act } : null;
+  draw(l);
+  if (kept?.act) focusRow(kept.id, kept.act);
+}
+
+function draw(l) {
   const bar = el('al-filter');
   const grp = el('al-grp');
   if (bar) {

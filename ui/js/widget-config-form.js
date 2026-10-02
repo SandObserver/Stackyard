@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=a81b9cbe';
-import { createListbox } from '/js/listbox.js?v=9a8ae607';
-import { renderColorControl } from '/js/admin-color-control.js?v=0d4d1038';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=1a49ceb0';
+import { createListbox } from '/js/listbox.js?v=1ce8c94a';
+import { renderColorControl } from '/js/admin-color-control.js?v=a49a3b75';
 import {
   seedCarried,
   applyOptionSet,
@@ -15,7 +15,7 @@ import {
   visibleFieldFlags,
 } from '/js/admin-logic.js?v=fc7f0836';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=f82486b2';
-import { qi } from '/js/utils.js?v=c5766a9d';
+import { qi } from '/js/utils.js?v=d9246f59';
 
 const PE =
   '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';

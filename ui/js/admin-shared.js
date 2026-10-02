@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=fc7f0836';
-import { el, q } from '/js/utils.js?v=c5766a9d';
+import { el, q } from '/js/utils.js?v=d9246f59';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -301,11 +301,13 @@ export function wireInlineEdit(row, inp, { type = 'text', placeholder = '', onCo
       if (e.key === 'Enter') {
         e.preventDefault();
         commit();
+        pen.focus();
       }
       if (e.key === 'Escape') {
         e.preventDefault();
         inp.value = before;
         row.classList.remove('editing');
+        pen.focus();
       }
     },
   );

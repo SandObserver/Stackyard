@@ -120,6 +120,18 @@ export const qa = (sel, root = document) => /** @type {HTMLElement[]} */ ([...ro
     @param {Event} e @returns {HTMLInputElement} */
 export const tgt = e => /** @type {HTMLInputElement} */ (e.target);
 
+/** Focus the first candidate that is attached, enabled and rendered.
+    @param {...(Element|null|undefined)} els @returns {boolean} whether one took focus */
+export function focusFirst(...els) {
+  for (const e of els) {
+    const h = /** @type {HTMLElement & { disabled?: boolean }} */ (e);
+    if (!h?.isConnected || h.disabled || h.hidden || !h.getClientRects().length) continue;
+    h.focus();
+    if (document.activeElement === h) return true;
+  }
+  return false;
+}
+
 export const ICON_R = 0.26;
 
 /* breg is passed in to avoid a circular import. */
