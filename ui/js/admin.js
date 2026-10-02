@@ -1261,8 +1261,7 @@ initTheme();
 
 setReauthHandler(requireLogin);
 
-checkAuth(load).then(ok => {
-  if (!ok) return;
+const loadOrShowFailure = () =>
   load().catch(e => {
     toast(t('toast.configLoadFailed', { err: e.message }), 'err');
     const al = el('al');
@@ -1273,6 +1272,10 @@ checkAuth(load).then(ok => {
         html`<div class="dash-load-fail">${t('home.loadFailed')}<br><br><button class="retry-btn" type="button">${t('home.retry')}</button></div>`,
       );
       q('.retry-btn', al)?.addEventListener('click', () => location.reload());
+      el('al-grp')?.classList.remove('d-none');
     }
   });
+
+checkAuth(loadOrShowFailure).then(ok => {
+  if (ok) loadOrShowFailure();
 });

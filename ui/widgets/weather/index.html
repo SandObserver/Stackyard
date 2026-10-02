@@ -135,7 +135,7 @@ function tempColor(temp,units,lightCard){
     hue = 45 - 37*t;
   }
   const sat = c<=10 ? 65 : 80;
-  const light = lightCard ? 40 : 58;
+  const light = lightCard ? 36 : 58;
   return `hsl(${Math.round(hue)},${sat}%,${light}%)`;
 }
 

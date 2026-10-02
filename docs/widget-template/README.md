@@ -12,6 +12,10 @@ To start a new widget called `mywidget`:
 4. Optionally edit `demo.js`, which is used only when `DEMO_MODE=true`, or delete
    it if you do not need one.
 
+Keep the `widget-theme.js` script in `<head>`, before the styles. Without it no
+`html[data-theme="light"]` rule applies, and light text is unreadable on the
+light theme's white card.
+
 Nothing outside the folder needs editing. The widget is picked up from its
 manifest at startup.
 
