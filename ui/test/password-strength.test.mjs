@@ -87,9 +87,20 @@ test('the score never exceeds the five bars the markup draws', () => {
   assert.ok(r.score >= 1 && r.score <= 5, `score ${r.score} must fit the bars`);
 });
 
-test('a colour is always returned', () => {
-  for (const pw of ['', 'abc', 'aaaaaaaa', 'aaaaAAAA1111!!!!']) {
-    assert.match(pwStrength(pw).color, /^(#[0-9a-f]{6}|rgba\(.+\))$/i, JSON.stringify(pw));
+/* A literal hue is drawn for one theme. A bar set inline beats the
+   stylesheet's light rule. */
+test('a bar colour is a theme token, and an empty password leaves the bar to the stylesheet', () => {
+  assert.equal(pwStrength('').color, '');
+  for (const pw of ['abc', 'aaaaaaaa', 'aaaaaaaaaaaa', 'aaaaAAAA1111', 'aaaaAAAA1111!!!!']) {
+    assert.match(pwStrength(pw).color, /^var\(--[\w-]+\)$/, JSON.stringify(pw));
+  }
+});
+
+test('no strength hint is coloured from script', async () => {
+  for (const file of ['dashboard.js', 'admin-auth.js']) {
+    const src = await readFile(new URL(`../js/${file}`, import.meta.url), 'utf8');
+    assert.match(src, /pwStrength\(/, `${file} no longer draws the strength meter`);
+    assert.doesNotMatch(src, /hint\.style\.color/, `${file} colours the hint inline`);
   }
 });
 

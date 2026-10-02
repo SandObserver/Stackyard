@@ -412,3 +412,125 @@ test('--on-tint is white in both themes', () => {
   assert.equal(resolver()('--on-tint'), '#FFFFFF');
   assert.equal(resolver({ light: true })('--on-tint'), '#FFFFFF');
 });
+
+/* ── the dashboard's own text ─────────────────────────────────────────────── */
+
+/* Text on translucent layers is composited over a black and a white wallpaper.
+   Blur is not modelled. The two extremes still bound it. A backdrop
+   `brightness()` is applied to what is under its layer. */
+
+/** The value a theme gives `prop` on `selector`, last declaration winning. */
+function paint(light, selector, prop, optional = false) {
+  const names = light ? [selector, `${LIGHT} ${selector}`] : [selector];
+  const re = new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;]+)`);
+  let value;
+  for (const rule of rules(dashboard)) {
+    if (rule.media) continue;
+    if (!rule.selectors.some(s => names.includes(s))) continue;
+    const m = re.exec(rule.body);
+    if (m) value = m[1].trim();
+  }
+  assert.ok(value || optional, `${selector} declares no ${prop}`);
+  return value;
+}
+
+/** The backdrop a layer paints over, after its own `brightness()` filter. */
+function filtered(light, selector, under) {
+  const filter = paint(light, selector, 'backdrop-filter', true) || '';
+  const m = /brightness\(\s*([\d.]+)\s*\)/.exec(filter);
+  return m ? under.map(c => c * Number(m[1])) : under;
+}
+
+/** [r, g, b, a] for a declared colour. `none` is a layer that paints nothing. */
+function rgbaOf(resolve, value) {
+  const v = value.trim();
+  if (v === 'none' || v === 'transparent') return [0, 0, 0, 0];
+  const ref = /^var\(\s*(--[\w-]+)\s*\)$/.exec(v);
+  if (ref) return rgbaOf(resolve, resolve.raw(ref[1]));
+  const m = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/.exec(v);
+  if (m) return [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])];
+  assert.match(v, /^#[0-9a-fA-F]{6}$/, `not a colour the gate can read: ${v}`);
+  return [1, 3, 5].map(i => parseInt(v.substr(i, 2), 16)).concat(1);
+}
+
+const toHex = rgb => `#${rgb.map(c => Math.round(c).toString(16).padStart(2, '0')).join('')}`;
+const layer = ([r, g, b, a], under) => [r, g, b].map((c, i) => c * a + under[i] * (1 - a));
+
+const WALLPAPERS = [
+  [0, 0, 0],
+  [255, 255, 255],
+];
+
+const SETUP = ['.setup-prompt', '.setup-card'];
+const SPOTLIGHT = ['body:not(.is-mob) #spot', 'body:not(.is-mob) #sres'];
+const PHONE_SPOTLIGHT = ['#spot'];
+
+/* [what, ink selector, layers from the bottom up, backdrop, themes]. A
+   backdrop of `wallpaper` is measured over black and over white. An ink given
+   as a pair is the dark selector, then the light one. */
+const DASHBOARD_TEXT = [
+  ['first-run title', '.setup-card', SETUP, 'wallpaper'],
+  ['first-run explanation', '.setup-sub', SETUP, 'wallpaper'],
+  ['first-run strength hint', '.setup-hint', SETUP, 'wallpaper'],
+  ['first-run password', '.setup-pw', [...SETUP, '.setup-pw'], 'wallpaper'],
+  ['first-run placeholder', 'input::placeholder', [...SETUP, '.setup-pw'], 'wallpaper'],
+  ['first-run Skip label', '.setup-btn-skip', [...SETUP, '.setup-btn-skip'], 'wallpaper'],
+  ['first-run mismatch error', '.setup-err', SETUP, 'wallpaper'],
+  ['API error title', '.api-error-screen', [], '--bg-base'],
+  ['API error explanation', '.api-error-sub', [], '--bg-base'],
+  ['empty dashboard title', '.empty-state-title', [], '--bg-base'],
+  ['empty dashboard explanation', '.empty-state-sub', [], '--bg-base'],
+  ['empty dashboard import link', '.empty-state-hint', [], '--bg-base'],
+  ['Spotlight result name', '.srn', SPOTLIGHT, 'wallpaper'],
+  ['Spotlight result address', '.srh', SPOTLIGHT, 'wallpaper'],
+  ['Spotlight selected result address', '.srh', [...SPOTLIGHT, '.sr.sel'], 'wallpaper'],
+  ['Spotlight section header', '.sr-section', SPOTLIGHT, 'wallpaper'],
+  ['Spotlight external-link arrow', '.sra', SPOTLIGHT, 'wallpaper'],
+  ['Spotlight selected external-link arrow', '.sra', [...SPOTLIGHT, '.sr.sel'], 'wallpaper'],
+  ['phone Spotlight Cancel', 'body.is-mob #spot-cancel', PHONE_SPOTLIGHT, 'wallpaper'],
+  [
+    'phone Spotlight placeholder',
+    ['#spot #sin::placeholder', 'body.is-mob #spot #sin::placeholder'],
+    [...PHONE_SPOTLIGHT, 'body.is-mob #spot .spot-field'],
+    'wallpaper',
+  ],
+  ['phone Spotlight result name', '.srn', PHONE_SPOTLIGHT, 'wallpaper'],
+  /* Light only. The dark title also relies on its text shadow. */
+  ['folder title, desktop', '.folder-title-desktop', ['.folder-overlay'], 'wallpaper', [true]],
+  ['folder title, phone', '.folder-title-mobile', ['.folder-overlay-mobile'], 'wallpaper', [true]],
+  [
+    'folder app name, phone',
+    '.dyn-fold-inner-label',
+    ['.folder-overlay-mobile', '.glass-surface'],
+    'wallpaper',
+    [true],
+  ],
+];
+
+for (const light of [false, true]) {
+  test(`the dashboard's text clears 4.5 on its layers: ${light ? 'light' : 'dark'}`, () => {
+    const resolve = resolver({ light, extra: [dashboard] });
+    const failures = [];
+    for (const [what, ink, layers, backdrop, themes = [false, true]] of DASHBOARD_TEXT) {
+      if (!themes.includes(light)) continue;
+      const bases = backdrop === 'wallpaper' ? WALLPAPERS : [rgbaOf(resolve, resolve(backdrop)).slice(0, 3)];
+      const inkSelector = Array.isArray(ink) ? ink[light ? 1 : 0] : ink;
+      const inkColour = rgbaOf(resolve, paint(light, inkSelector, 'color'));
+      for (const base of bases) {
+        const surface = layers.reduce(
+          (under, sel) => layer(rgbaOf(resolve, paint(light, sel, 'background')), filtered(light, sel, under)),
+          base,
+        );
+        const r = ratio(toHex(layer(inkColour, surface)), toHex(surface));
+        if (r < 4.5) failures.push(`${what} over ${toHex(base)}: ${r.toFixed(2)}, needs 4.5`);
+      }
+    }
+    assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
+  });
+}
+
+test('a stale badge keeps its count at full contrast', () => {
+  const stale = rules(dashboard).filter(r => !r.media && r.selectors.includes('.badge.stale'));
+  assert.ok(stale.length, '.badge.stale is not declared');
+  for (const rule of stale) assert.doesNotMatch(rule.body, /(^|[;\s])(opacity|filter)\s*:/);
+});

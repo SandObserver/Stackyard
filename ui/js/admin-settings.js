@@ -1,5 +1,5 @@
 import { toast, apiGet, apiPost, reveal, swapContent } from '/js/admin-shared.js?v=6254eafb';
-import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
+import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
   shouldWritePassword,

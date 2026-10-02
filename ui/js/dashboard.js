@@ -30,7 +30,7 @@ import { initSpotlight } from '/js/spotlight.js?v=53fd6b55';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=706fc9a7';
-import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=42f45ac7';
+import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=389e0ed0';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import {
@@ -659,17 +659,15 @@ function showSetupPrompt() {
     const err = q('#setup-err', ov);
     const setB = qi('#setup-set', ov);
     const skip = qi('#setup-skip', ov);
-    const dim = 'rgba(255,255,255,.1)';
 
     /* A typo here locks the dashboard with no way back in. */
     const matches = () => pw2.value !== '' && !passwordMismatch(pw.value, pw2.value);
     const sync = () => {
       const { score, labelKey, color, ok } = pwStrength(pw.value);
       bars.forEach((b, i) => {
-        b.style.background = pw.value && i < score ? color : dim;
+        b.style.background = pw.value && i < score ? color : '';
       });
       hint.textContent = pw.value && labelKey ? t(labelKey) : '';
-      hint.style.color = color;
       const mismatch = pw2.value !== '' && passwordMismatch(pw.value, pw2.value);
       err.textContent = mismatch ? t('setup.mismatch') : '';
       err.style.display = mismatch ? 'block' : 'none';

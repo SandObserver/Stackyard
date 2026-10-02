@@ -1,6 +1,6 @@
 import { apiGet, apiPost } from '/js/admin-shared.js?v=6254eafb';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { pwStrength } from '/js/password-strength.js?v=42f45ac7';
+import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { el, inp as inpById, qa } from '/js/utils.js?v=b1cfbd45';
 import { blockingScreenFor } from '/js/config-recovery.js?v=706fc9a7';
 
@@ -71,15 +71,13 @@ export function wirePasswordStrength(inputId, barsId, hintId) {
   const bars = qa('.pwbar', el(barsId));
   const hint = el(hintId);
   if (!inp || !bars?.length) return;
-  const dim = 'rgba(255,255,255,.1)';
   inp.addEventListener('input', () => {
     const { score, labelKey, color } = pwStrength(inp.value);
     bars.forEach((b, i) => {
-      b.style.background = inp.value && i < score ? color : dim;
+      b.style.background = inp.value && i < score ? color : '';
     });
     if (hint) {
       hint.textContent = inp.value && labelKey ? t(labelKey) : '';
-      hint.style.color = color;
     }
   });
 }
