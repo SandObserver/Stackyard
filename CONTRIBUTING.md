@@ -31,7 +31,8 @@ is not the whole of it.
 ## Before opening a PR
 
 These are the checks CI runs, in the order it runs them. They are defined once,
-in `.github/actions/checks/action.yml`, so the list here is the whole of it:
+in `.github/actions/checks/action.yml`, so the list here is the whole of that
+action:
 
 ```
 npm ci
@@ -47,6 +48,15 @@ npm run format:check
 npm run typecheck
 npm run typecheck:ui
 docker build -t stackyard:ci .
+```
+
+The end-to-end suite is a separate required check, in
+`.github/workflows/e2e.yml`. It starts the image on a local port and runs the
+browser specs against it:
+
+```
+npx playwright install chromium webkit
+BASE_URL=http://127.0.0.1:<port> npx playwright test
 ```
 
 CodeQL also runs on every pull request. A finding it reports has to be resolved

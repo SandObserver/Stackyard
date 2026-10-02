@@ -128,9 +128,31 @@ test('ghcr.io is published unconditionally', () => {
   assert.equal(byName('Log in to GitHub Container Registry').if, undefined);
 });
 
-test('the checks still run before anything is published', () => {
-  assert.ok(indexOf('Run project checks') < indexOf('Build and push'));
-  assert.equal(byName('Run project checks').with.mode, 'release');
+/* Dev dependencies run install scripts and the linters. They must not run
+   where the publishing and signing tokens are. */
+test('the checks run in their own read-only job before anything is published', () => {
+  const checks = workflow.jobs.checks;
+  assert.ok(checks, 'the release has no checks job');
+  assert.deepEqual(checks.permissions, { contents: 'read' });
+  const step = checks.steps.find(s => s.uses === './.github/actions/checks');
+  assert.equal(step?.with?.mode, 'release');
+  assert.ok([].concat(job.needs).includes('checks'), 'publishing must wait for the checks');
+});
+
+test('the publishing job runs no dev tooling', () => {
+  assert.equal(indexOf('Run project checks'), -1);
+  for (const s of steps) {
+    assert.notEqual(s.uses, './.github/actions/checks', 'the checks action installs dev dependencies');
+    assert.doesNotMatch(String(s.run || ''), /\bnpm\b|\bnpx\b/, `${s.name} runs npm`);
+  }
+});
+
+test('the QEMU and BuildKit images are pinned by digest', () => {
+  assert.match(byName('Set up QEMU').with?.image || '', /^docker\.io\/tonistiigi\/binfmt:\S+@sha256:[0-9a-f]{64}$/);
+  assert.match(
+    byName('Set up Docker Buildx').with?.['driver-opts'] || '',
+    /^image=moby\/buildkit:\S+@sha256:[0-9a-f]{64}$/,
+  );
 });
 
 /* A tag must not publish an image the browser tests reject. */
@@ -141,7 +163,7 @@ test('the release waits for the end-to-end suite', () => {
     './.github/workflows/e2e.yml',
     'the release should call the same e2e workflow, not a copy of it',
   );
-  assert.deepEqual([].concat(job.needs || []), ['e2e'], 'publishing must depend on the browser tests');
+  assert.ok([].concat(job.needs || []).includes('e2e'), 'publishing must depend on the browser tests');
 });
 
 test('the e2e workflow can be called, and still runs on its own', () => {
