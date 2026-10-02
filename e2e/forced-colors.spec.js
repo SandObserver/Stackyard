@@ -22,6 +22,7 @@ test.describe('forced colors', () => {
     await seedConfig(request, { items: [app('alpha', 'Alpha')] });
     await page.goto('/admin/');
     await page.locator('body.authed').waitFor({ state: 'attached' });
+    await page.addStyleTag({ content: '*,*::after{transition:none!important}' });
     const input = page.locator('#set-awake');
     const track = page.locator('#set-awake + .tr');
     const read = async () => ({
@@ -40,6 +41,22 @@ test.describe('forced colors', () => {
     expect(on.track['background-color']).not.toBe(off.track['background-color']);
     expect(on.knob['background-color']).not.toBe(on.track['background-color']);
     expect(off.knob['background-color']).not.toBe(off.track['background-color']);
+  });
+
+  test('a Settings slider keeps its track and thumb', async ({ page, request }) => {
+    await seedConfig(request, { items: [app('alpha', 'Alpha')] });
+    await page.goto('/admin/');
+    await page.locator('body.authed').waitFor({ state: 'attached' });
+    const slider = page.locator('#bg-br');
+    expect((await styleOf(slider, ['border-top-style']))['border-top-style']).toBe('solid');
+    const thumb = await styleOf(slider, ['background-color'], '::-webkit-slider-thumb');
+    const canvas = await page.evaluate(() => {
+      const probe = document.createElement('div');
+      probe.style.background = 'Canvas';
+      document.body.append(probe);
+      return getComputedStyle(probe).backgroundColor;
+    });
+    expect(thumb['background-color']).not.toBe(canvas);
   });
 
   test('the search row Enter opens is outlined', async ({ page, request }) => {

@@ -295,6 +295,11 @@ html{background:var(--bg-color,var(--bg-base))}
 .adm-range::-moz-range-thumb,
 .hsb-range::-moz-range-thumb{box-sizing:border-box;width:38px;height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer}
 .adm-range:focus-visible,.hsb-range:focus-visible{outline:2px solid var(--ac);outline-offset:4px}
+@media (forced-colors: active){
+  .adm-range,.hsb-range{border:1px solid CanvasText}
+  .adm-range::-webkit-slider-thumb,.hsb-range::-webkit-slider-thumb{background:CanvasText}
+  .adm-range::-moz-range-thumb,.hsb-range::-moz-range-thumb{background:CanvasText}
+}
 
 /* ── Dashboard list rows — no delete button ── */
 .al-filter{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -355,6 +360,10 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 .cc-sw{display:grid;grid-template-columns:repeat(auto-fit,26px);gap:10px;margin-inline-start:auto;flex:2;max-width:none;justify-content:space-between}
 .cc-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:none;padding:0;outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--t);flex-shrink:0}
 .cc-swatch.on{outline-color:var(--swatch-ring)}
+@media (forced-colors: active){
+  .cc-swatch{border:1px solid CanvasText;outline-color:Canvas}
+  .cc-swatch.on{outline-color:Highlight}
+}
 .cc-rainbow{background:conic-gradient(from 90deg,#ff3b30,#ffcd00,#35c759,#0289ff,#cb30df,#ff3b30)}
 .hsb-row{min-height:46px}
 .hsb-track{display:flex;align-items:center;gap:10px;margin-inline-start:auto;flex:2;max-width:none}

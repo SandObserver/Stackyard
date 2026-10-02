@@ -134,15 +134,33 @@ test('the keyboard row in search and the icon picker is outlined', () => {
   assert.match(adm, /\.ipr\.kb-active\{[^}]*outline:\s*2px solid Highlight/);
 });
 
+test('Settings sliders keep a track and a thumb', () => {
+  assert.match(adm, /\.adm-range,\.hsb-range\{[^}]*border:\s*1px solid CanvasText/);
+  assert.match(adm, /-webkit-slider-thumb\{[^}]*background:\s*CanvasText/);
+  assert.match(adm, /-moz-range-thumb\{[^}]*background:\s*CanvasText/);
+});
+
+test('the selected colour swatch is marked', () => {
+  assert.match(adm, /\.cc-swatch\{[^}]*border:\s*1px solid CanvasText[^}]*outline-color:\s*Canvas\b/);
+  assert.match(adm, /\.cc-swatch\.on\{[^}]*outline-color:\s*Highlight/);
+});
+
 test('the first-run password field shows its edge and its focus', () => {
   assert.match(dash, /\.setup-pw\s*\{[^}]*border:\s*1px solid CanvasText/);
   assert.match(dash, /\.setup-pw:focus\s*\{[^}]*outline:\s*2px solid Highlight/);
 });
 
 /* A media query adds no specificity. A plain rule for the same selector later
-   in the file wins, and the forced-colors rule never applies. */
-test('no forced-colors rule is overridden by a later plain rule', () => {
-  const overlaps = (a, b) => a === b || a.startsWith(`${b}-`) || b.startsWith(`${a}-`);
+   in the file, or a longer selector ending in it anywhere, wins, and the
+   forced-colors rule never applies. */
+test('no forced-colors rule is overridden by a plain rule', () => {
+  /* border-radius and outline-offset are not part of their shorthands. */
+  const separate = /-(radius|offset)$/;
+  const overlaps = (a, b) =>
+    a === b || (!separate.test(a) && !separate.test(b) && (a.startsWith(`${b}-`) || b.startsWith(`${a}-`)));
+  /* A literal border colour. Forced colors replaces it with a system colour. */
+  const allowed = new Set(['dashboard.css: .dot { border } loses to #dots[data-tone="dark"] .dot']);
+  const split = sel => sel.split(/,(?![^(]*\))/).map(x => x.trim());
   const bad = [];
   for (const [name, css] of [
     ['tokens.css', tokens],
@@ -154,10 +172,15 @@ test('no forced-colors rule is overridden by a later plain rule', () => {
     const plain = rules(css).filter(r => !inside(r.at));
     for (const range of ranges) {
       for (const forced of rules(css.slice(range.from, range.to), range.from)) {
-        for (const later of plain) {
-          if (later.at < range.to || later.selector !== forced.selector) continue;
-          const prop = forced.props.find(p => later.props.some(q => overlaps(p, q)));
-          if (prop) bad.push(`${name}: ${forced.selector} { ${prop} }`);
+        for (const f of split(forced.selector)) {
+          for (const other of plain) {
+            const wins = split(other.selector).some(
+              s => (s === f && other.at > range.to) || s.endsWith(` ${f}`) || s.endsWith(`>${f}`),
+            );
+            const prop = wins && forced.props.find(p => !p.startsWith('--') && other.props.some(q => overlaps(p, q)));
+            const entry = `${name}: ${f} { ${prop} } loses to ${other.selector}`;
+            if (prop && !allowed.has(entry)) bad.push(entry);
+          }
         }
       }
     }
