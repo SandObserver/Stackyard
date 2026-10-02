@@ -17,28 +17,42 @@ const read = f => fs.readFileSync(path.join(dir, f), 'utf8');
 
 const tokens = read('tokens.css');
 const dashboard = read('dashboard.css');
+const admin = read('admin.css');
+
+/** Every `@media (forced-colors: active)` block in a file, with where its body starts and ends. */
+function forcedRanges(css) {
+  const out = [];
+  const re = /@media\s*\(forced-colors:\s*active\)\s*\{/g;
+  for (let m = re.exec(css); m; m = re.exec(css)) {
+    let depth = 1,
+      i = re.lastIndex;
+    for (; i < css.length && depth; i++) {
+      if (css[i] === '{') depth++;
+      else if (css[i] === '}') depth--;
+    }
+    out.push({ from: re.lastIndex, to: i - 1 });
+    re.lastIndex = i;
+  }
+  return out;
+}
 
 /** The body of every `@media (forced-colors: active)` block in a file. */
-function forcedBlocks(css) {
+const forcedBlocks = css => forcedRanges(css).map(r => css.slice(r.from, r.to));
+
+/** `selector { declarations }` rules in a stretch of CSS, with their offsets. Comments removed. */
+function rules(css, offset = 0) {
   const out = [];
-  let at = 0;
-  for (;;) {
-    const start = css.indexOf('@media (forced-colors: active)', at);
-    if (start === -1) return out;
-    let depth = 0,
-      i = css.indexOf('{', start);
-    const from = i;
-    for (; i < css.length; i++) {
-      if (css[i] === '{') depth++;
-      else if (css[i] === '}' && --depth === 0) break;
-    }
-    out.push(css.slice(from + 1, i));
-    at = i;
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, m => ' '.repeat(m.length));
+  for (const m of clean.matchAll(/([^{}@;]+)\{([^{}]*)\}/g)) {
+    const props = [...m[2].matchAll(/([\w-]+)\s*:/g)].map(p => p[1]);
+    out.push({ selector: m[1].trim().replace(/\s+/g, ' '), props, at: offset + m.index });
   }
+  return out;
 }
 
 const shared = forcedBlocks(tokens).join('\n');
 const dash = forcedBlocks(dashboard).join('\n');
+const adm = forcedBlocks(admin).join('\n');
 
 test('the mode is handled at all', () => {
   assert.ok(shared.length, 'tokens.css has no forced-colors block');
@@ -88,8 +102,88 @@ test('the blocks use system colours, not literals', () => {
   for (const [name, block] of [
     ['tokens.css', shared],
     ['dashboard.css', dash],
+    ['admin.css', adm],
   ]) {
     assert.doesNotMatch(block, /#[0-9a-fA-F]{3,8}\b/, `${name} declares a colour literal inside forced colors`);
     assert.doesNotMatch(block, /rgba?\(/, `${name} declares an rgb colour inside forced colors`);
   }
+});
+
+/* A switch is a filled track and knob with no border. Both states otherwise
+   paint Canvas on Canvas. */
+test('Settings switches keep a shape and show on and off', () => {
+  assert.match(adm, /\.tr\{[^}]*border:\s*1px solid CanvasText/, 'the track has no outline');
+  assert.match(adm, /\.tr::after\{[^}]*background:\s*CanvasText/, 'the knob has no system colour');
+  assert.match(adm, /\.tog input:checked\+\.tr\{[^}]*background:\s*Highlight/, 'on looks the same as off');
+  assert.match(
+    adm,
+    /\.tog input:checked\+\.tr::after\{[^}]*background:\s*HighlightText/,
+    'the knob vanishes on Highlight',
+  );
+});
+
+test('the selected segment and filter chip are marked', () => {
+  assert.match(adm, /\.segr-opt:has\(input:checked\)\{[^}]*background:\s*Highlight/);
+  assert.match(adm, /\.segr-opt:has\(input:checked\) span\{[^}]*color:\s*HighlightText/);
+  assert.match(adm, /\.chip\.on\{[^}]*background:\s*Highlight/);
+});
+
+/* Focus stays in the search field. The row Enter opens is marked by class only. */
+test('the keyboard row in search and the icon picker is outlined', () => {
+  assert.match(dash, /\.sr\.sel\s*\{[^}]*outline:\s*2px solid Highlight/);
+  assert.match(adm, /\.ipr\.kb-active\{[^}]*outline:\s*2px solid Highlight/);
+});
+
+test('Settings sliders keep a track and a thumb', () => {
+  assert.match(adm, /\.adm-range,\.hsb-range\{[^}]*border:\s*1px solid CanvasText/);
+  assert.match(adm, /-webkit-slider-thumb\{[^}]*background:\s*CanvasText/);
+  assert.match(adm, /-moz-range-thumb\{[^}]*background:\s*CanvasText/);
+});
+
+test('the selected colour swatch is marked', () => {
+  assert.match(adm, /\.cc-swatch\{[^}]*border:\s*1px solid CanvasText[^}]*outline-color:\s*Canvas\b/);
+  assert.match(adm, /\.cc-swatch\.on\{[^}]*outline-color:\s*Highlight/);
+});
+
+test('the first-run password field shows its edge and its focus', () => {
+  assert.match(dash, /\.setup-pw\s*\{[^}]*border:\s*1px solid CanvasText/);
+  assert.match(dash, /\.setup-pw:focus\s*\{[^}]*outline:\s*2px solid Highlight/);
+});
+
+/* A media query adds no specificity. A plain rule for the same selector later
+   in the file, or a longer selector ending in it anywhere, wins, and the
+   forced-colors rule never applies. */
+test('no forced-colors rule is overridden by a plain rule', () => {
+  /* border-radius and outline-offset are not part of their shorthands. */
+  const separate = /-(radius|offset)$/;
+  const overlaps = (a, b) =>
+    a === b || (!separate.test(a) && !separate.test(b) && (a.startsWith(`${b}-`) || b.startsWith(`${a}-`)));
+  /* A literal border colour. Forced colors replaces it with a system colour. */
+  const allowed = new Set(['dashboard.css: .dot { border } loses to #dots[data-tone="dark"] .dot']);
+  const split = sel => sel.split(/,(?![^(]*\))/).map(x => x.trim());
+  const bad = [];
+  for (const [name, css] of [
+    ['tokens.css', tokens],
+    ['dashboard.css', dashboard],
+    ['admin.css', admin],
+  ]) {
+    const ranges = forcedRanges(css);
+    const inside = at => ranges.some(r => at >= r.from && at < r.to);
+    const plain = rules(css).filter(r => !inside(r.at));
+    for (const range of ranges) {
+      for (const forced of rules(css.slice(range.from, range.to), range.from)) {
+        for (const f of split(forced.selector)) {
+          for (const other of plain) {
+            const wins = split(other.selector).some(
+              s => (s === f && other.at > range.to) || s.endsWith(` ${f}`) || s.endsWith(`>${f}`),
+            );
+            const prop = wins && forced.props.find(p => !p.startsWith('--') && other.props.some(q => overlaps(p, q)));
+            const entry = `${name}: ${f} { ${prop} } loses to ${other.selector}`;
+            if (prop && !allowed.has(entry)) bad.push(entry);
+          }
+        }
+      }
+    }
+  }
+  assert.deepEqual(bad, []);
 });
