@@ -344,6 +344,7 @@ export function poll(opts = {}) {
     lastData = null,
     timer = null;
   let paused = false;
+  let inFlight = false;
   let lastTick = 0;
 
   async function tick() {
@@ -376,7 +377,9 @@ export function poll(opts = {}) {
 
   /* setTimeout, not setInterval. A slow fetch must not overlap the next one. */
   async function loop() {
+    inFlight = true;
     await tick();
+    inFlight = false;
     if (stopped) return;
     /* Schedule nothing while hidden. Each tick reaches the user's own service,
        and browser throttling only slows that. */
@@ -415,7 +418,9 @@ export function poll(opts = {}) {
     }
     if (!paused) return;
     paused = false;
-    loop();
+    /* A tick still in flight schedules the next one when it lands. A second
+       loop here would double the poll rate for good. */
+    if (!inFlight) loop();
   }
   /* poll() is unit-tested outside a browser, where there is no document. */
   const canObserve = typeof document !== 'undefined' && typeof document.addEventListener === 'function';
