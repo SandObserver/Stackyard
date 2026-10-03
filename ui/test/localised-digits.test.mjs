@@ -154,6 +154,12 @@ test("the dock limit in a save error is in the reader's digits", () => {
   assert.match(read('js/admin-shared.js'), /vars\.max = formatNumber\(vars\.max\)/);
 });
 
+test("the widget editor numbers its rows and groups in the reader's digits", () => {
+  const form = read('js/widget-config-form.js');
+  assert.deepEqual(form.match(/\$\{(?!formatNumber\()[^}]*\+ 1\)?\}/g), null);
+  assert.equal(form.match(/formatNumber\((?:i|idx) \+ 1\)/g)?.length, 3);
+});
+
 test('the wallpaper brightness follows the locale', () => {
   const settings = read('js/admin-settings.js');
   assert.doesNotMatch(settings, /\.toFixed\(/);

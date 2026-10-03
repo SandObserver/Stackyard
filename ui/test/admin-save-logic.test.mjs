@@ -8,7 +8,7 @@ import {
   claimFolderChildren,
   randomSuffix,
   snapshotItems,
-  saveWithRevert,
+  revertingSaves,
   serialWrites,
 } from '../js/admin-save-logic.js';
 
@@ -314,57 +314,42 @@ test('snapshotItems tolerates junk', () => {
   assert.deepEqual(snapshotItems(undefined), []);
 });
 
-test('saveWithRevert keeps the change when the write lands', async () => {
-  let restored = null;
-  const ok = await saveWithRevert({
-    write: async () => true,
-    snapshot: ['before'],
-    restore: s => {
-      restored = s;
-    },
-  });
-  assert.equal(ok, true);
-  assert.equal(restored, null);
+const saver = (write, restore = () => assert.fail('should not revert')) => revertingSaves({ write, restore });
+
+test('a save keeps the change when the write lands', async () => {
+  assert.equal(await saver(async () => true)(['before']), true);
 });
 
-test('saveWithRevert puts the list back when the write reports failure', async () => {
+test('a save puts the list back when the write reports failure', async () => {
   let restored = null;
-  const ok = await saveWithRevert({
-    write: async () => false,
-    snapshot: ['before'],
-    restore: s => {
+  const ok = await saver(
+    async () => false,
+    s => {
       restored = s;
     },
-  });
+  )(['before']);
   assert.equal(ok, false);
   assert.deepEqual(restored, ['before']);
 });
 
-test('saveWithRevert restores and re-raises when the write throws', async () => {
+test('a save restores and re-raises when the write throws', async () => {
   let restored = null;
-  await assert.rejects(
-    saveWithRevert({
-      write: async () => {
-        throw new Error('offline');
-      },
-      snapshot: ['before'],
-      restore: s => {
-        restored = s;
-      },
-    }),
-    /offline/,
+  const save = saver(
+    async () => {
+      throw new Error('offline');
+    },
+    s => {
+      restored = s;
+    },
   );
+  await assert.rejects(save(['before']), /offline/);
   assert.deepEqual(restored, ['before']);
 });
 
-test('saveWithRevert treats a write that returns nothing as success', () => {
+test('a save treats a write that returns nothing as success', async () => {
   /* `save` is the only caller and returns a boolean, but a void write must not
      be read as a failure and silently undone. */
-  return saveWithRevert({
-    write: async () => {},
-    snapshot: ['before'],
-    restore: () => assert.fail('should not revert'),
-  }).then(ok => assert.equal(ok, true));
+  assert.equal(await saver(async () => {})(['before']), true);
 });
 
 test('buildAppItem stores a badge minimum only above one', () => {
@@ -375,20 +360,6 @@ test('buildAppItem stores a badge minimum only above one', () => {
   assert.equal(build(1), undefined, 'one is the default and is not stored');
   assert.equal(build(0), undefined);
   assert.deepEqual(build(5), { color: undefined, unit: undefined, min: 5 });
-});
-
-test('saveWithRevert leaves the list alone when a later change is waiting to save', async () => {
-  let restored = null;
-  const ok = await saveWithRevert({
-    write: async () => false,
-    snapshot: ['before'],
-    restore: s => {
-      restored = s;
-    },
-    superseded: () => true,
-  });
-  assert.equal(ok, false);
-  assert.equal(restored, null);
 });
 
 test('serialWrites runs a write asked for during another after it, not alongside or instead', async () => {
@@ -408,11 +379,9 @@ test('serialWrites runs a write asked for during another after it, not alongside
     return 2;
   });
   await Promise.resolve();
-  assert.equal(writes.pending(), 2);
   release();
   assert.deepEqual(await Promise.all([first, second]), [1, 2]);
   assert.deepEqual(log, ['first start', 'first end', 'second']);
-  assert.equal(writes.pending(), 0);
 });
 
 test('serialWrites keeps going after a write fails', async () => {
@@ -425,23 +394,41 @@ test('serialWrites keeps going after a write fails', async () => {
   assert.equal(await next, 'ran');
 });
 
-test('a failed save with a later change waiting does not undo that change', async () => {
+/* Each change edits the list, then saves it. Outcomes are answered in order. */
+function listEditor(outcomes) {
   const writes = serialWrites();
-  let list = ['a'];
-  const results = [];
-  const change = (item, ok) => {
-    const before = [...list];
-    list = [...list, item];
-    return saveWithRevert({
-      write: () => writes.run(async () => ok),
-      snapshot: before,
-      restore: s => {
-        list = s;
-      },
-      superseded: () => writes.pending() > 0,
-    }).then(r => results.push(r));
+  const editor = { list: ['a'], results: [] };
+  const save = revertingSaves({
+    write: () => writes.run(async () => outcomes.shift()),
+    restore: s => {
+      editor.list = s;
+    },
+  });
+  editor.change = item => {
+    const before = [...editor.list];
+    editor.list = [...editor.list, item];
+    return save(before).then(r => editor.results.push(r));
   };
-  await Promise.all([change('b', false), change('c', true)]);
-  assert.deepEqual(results, [false, true]);
-  assert.deepEqual(list, ['a', 'b', 'c']);
+  return editor;
+}
+
+test('a failed save with a later change waiting does not undo that change', async () => {
+  const editor = listEditor([false, true]);
+  await Promise.all([editor.change('b'), editor.change('c')]);
+  assert.deepEqual(editor.results, [false, true]);
+  assert.deepEqual(editor.list, ['a', 'b', 'c']);
+});
+
+test('two quick changes that both fail to save put back the list from before both', async () => {
+  const editor = listEditor([false, false]);
+  await Promise.all([editor.change('b'), editor.change('c')]);
+  assert.deepEqual(editor.results, [false, false]);
+  assert.deepEqual(editor.list, ['a']);
+});
+
+test('a failure handed on is dropped once a later save lands', async () => {
+  const editor = listEditor([false, true, false]);
+  await Promise.all([editor.change('b'), editor.change('c')]);
+  await editor.change('d');
+  assert.deepEqual(editor.list, ['a', 'b', 'c']);
 });

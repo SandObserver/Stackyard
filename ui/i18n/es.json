@@ -332,6 +332,7 @@
     "saveFailed": "Error al guardar: {err}",
     "allowedHostInvalid": "No es una dirección: {host}",
     "allowedHostsKeepCurrent": "Deja {host} en Direcciones permitidas o esta página dejará de funcionar. Para quitarla, usa otra dirección.",
+    "allowedHostsTooMany": "Demasiadas direcciones. El límite es {max}.",
     "colorInvalid": "Eso no es un color. Usa #rrggbb o un nombre de color CSS.",
     "imported": "Importado",
     "importFailed": "Error al importar: {err}",

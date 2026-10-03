@@ -47,44 +47,51 @@ export function snapshotItems(items) {
   return Array.isArray(items) ? structuredClone(items) : [];
 }
 
-/** Run `write` and undo the local change when it did not reach the server.
-    Without this the list shows a dashboard the server does not have. `write`
-    reports failure by resolving false; a throw is re-raised after the restore.
-    `superseded` reports a later change still waiting to save. Its write carries
-    this change too, so restoring here would drop the later change.
+/** Saves that undo the local change when it did not reach the server. Without
+    this the list shows a dashboard the server does not have. `write` reports
+    failure by resolving false; a throw is re-raised after the restore. A failed
+    save with another one waiting leaves the list alone: the later write carries
+    this change too. It hands its snapshot to that save, which restores it if it
+    also fails.
 
     @template T
-    @param {{ write: () => Promise<boolean|void>, snapshot: T,
-              restore: (snapshot: T) => void, superseded?: () => boolean }} opts
-    @returns {Promise<boolean>} */
-export async function saveWithRevert({ write, snapshot, restore, superseded = () => false }) {
-  let ok = false;
-  try {
-    ok = (await write()) !== false;
-  } finally {
-    if (!ok && !superseded()) restore(snapshot);
-  }
-  return ok;
+    @param {{ write: () => Promise<boolean|void>, restore: (snapshot: T) => void }} opts
+    @returns {(snapshot: T) => Promise<boolean>} */
+export function revertingSaves({ write, restore }) {
+  let waiting = 0;
+  /** @type {{ snapshot: T } | null} */
+  let carried = null;
+  return async snapshot => {
+    waiting++;
+    let ok = false;
+    try {
+      ok = (await write()) !== false;
+    } finally {
+      waiting--;
+      const before = carried ? carried.snapshot : snapshot;
+      carried = null;
+      if (!ok) {
+        if (waiting > 0) carried = { snapshot: before };
+        else restore(before);
+      }
+    }
+    return ok;
+  };
 }
 
 /** Run writes one at a time, in the order asked. A write asked for while
     another runs waits for it instead of being dropped.
 
-    @returns {{ run: <R>(write: () => Promise<R>) => Promise<R>, pending: () => number }} */
+    @returns {{ run: <R>(write: () => Promise<R>) => Promise<R> }} */
 export function serialWrites() {
   /** @type {Promise<unknown>} */
   let tail = Promise.resolve();
-  let pending = 0;
   return {
     run(write) {
-      pending++;
-      const p = tail.then(write).finally(() => {
-        pending--;
-      });
+      const p = tail.then(write);
       tail = p.catch(() => {});
       return p;
     },
-    pending: () => pending,
   };
 }
 

@@ -76,24 +76,24 @@ export function normalizeHostList(value) {
   return out.length > ALLOWED_HOSTS_MAX ? null : out;
 }
 
+/* The Persian and full-width commas are what fa and zh-Hans keyboards type. */
+const SEPARATOR = /[,\u060C\uFF0C]/;
+
+/** @param {string} text @returns {string[]} */
+const splitHosts = text =>
+  String(text || '')
+    .split(SEPARATOR)
+    .map(p => p.trim())
+    .filter(Boolean);
+
 /** The first entry of a comma-separated list that is not a host name, or null.
     @param {string} text @returns {string | null} */
 export function firstBadHost(text) {
-  for (const part of String(text || '').split(',')) {
-    const p = part.trim();
-    if (p && !hostnameOf(p)) return p;
-  }
-  return null;
+  return splitHosts(text).find(p => !hostnameOf(p)) ?? null;
 }
 
-/** @param {string} text @returns {string[]} */
+/** The list as stored, or null when it holds more than ALLOWED_HOSTS_MAX names.
+    @param {string} text @returns {string[] | null} */
 export function parseHostList(text) {
-  return (
-    normalizeHostList(
-      String(text || '')
-        .split(',')
-        .map(p => p.trim())
-        .filter(Boolean),
-    ) || []
-  );
+  return normalizeHostList(splitHosts(text));
 }

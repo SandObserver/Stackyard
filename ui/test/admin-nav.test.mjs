@@ -49,11 +49,11 @@ test('an import records what it saved', () => {
 });
 
 /* A list change made while a save runs must wait for it, not be undone. */
-test('list saves run through one queue and a waiting change is not reverted', () => {
+test('list saves run through one queue and undo through one reverting save', () => {
   const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
   assert.match(src, /function save\(\) \{\s*return saves\.run\(writeItems\);/);
   assert.match(src, /return saves\.run\(\(\) => appendItems\(newItems\)\);/);
-  assert.match(src, /superseded: \(\) => saves\.pending\(\) > 0/);
+  assert.match(src, /revertingSaves\(\{\s*write: save,/);
 });
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

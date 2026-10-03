@@ -55,6 +55,20 @@ test('the Settings field takes a comma-separated list', () => {
   assert.equal(firstBadHost('a.example, b.example'), null);
 });
 
+test('the Settings field also splits on the Persian and full-width commas', () => {
+  for (const text of ['a.example، b.example', 'a.example，b.example']) {
+    assert.equal(firstBadHost(text), null, text);
+    assert.deepEqual(parseHostList(text), ['a.example', 'b.example'], text);
+  }
+});
+
+test('a Settings list over the limit is refused, not saved empty', () => {
+  const names = n => Array.from({ length: n }, (_, i) => `h${i}.example`).join(', ');
+  assert.equal(parseHostList(names(ALLOWED_HOSTS_MAX)).length, ALLOWED_HOSTS_MAX);
+  assert.equal(parseHostList(names(ALLOWED_HOSTS_MAX + 1)), null);
+  assert.deepEqual(parseHostList(''), []);
+});
+
 test('a refused address gets the blocked-address screen', () => {
   const s = screenFor({ code: HOST_BLOCKED_CODE, detail: { host: 'dash.example.com' } });
   assert.equal(s.title, 'hostBlock.title');

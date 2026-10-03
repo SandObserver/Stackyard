@@ -327,6 +327,7 @@
     "saveFailed": "ذخیره ناموفق بود: {err}",
     "allowedHostInvalid": "آدرس معتبر نیست: {host}",
     "allowedHostsKeepCurrent": "{host} را در آدرس‌های مجاز نگه دارید، وگرنه این صفحه دیگر کار نمی‌کند. برای حذف آن از آدرس دیگری استفاده کنید.",
+    "allowedHostsTooMany": "تعداد آدرس‌ها بیش از حد است. حداکثر {max} آدرس مجاز است.",
     "colorInvalid": "این یک رنگ نیست. از #rrggbb یا نام رنگ CSS استفاده کنید.",
     "imported": "وارد شد",
     "importFailed": "وارد کردن ناموفق بود: {err}",

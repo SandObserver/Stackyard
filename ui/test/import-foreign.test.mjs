@@ -517,6 +517,17 @@ test('a Homepage list shared by many entries in one group stops at the entry bud
   assert.throws(() => convertHomepageServices(parseYaml(y)), tooLarge);
 });
 
+test('telling the format apart stops at the entry budget on an aliased Homepage list', () => {
+  const rows = Array.from({ length: 2000 }, () => '{}').join(', ');
+  const wraps = Array.from({ length: 2000 }, () => '{k: *c}').join(', ');
+  let y = `- g1: &c [${rows}]\n- g2: &b [${wraps}]\n`;
+  for (let i = 3; i < 53; i++) y += `- g${i}: *b\n`;
+  const doc = parseYaml(y);
+  const started = performance.now();
+  assert.throws(() => detectSource(doc), tooLarge);
+  assert.ok(performance.now() - started < 1000);
+});
+
 test('aliases that stay under the budget still import everywhere they are used', () => {
   const out = convertDashy(
     parseYaml(

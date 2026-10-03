@@ -12,14 +12,14 @@
    reads and writes them too. */
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { snapshotItems } from '/js/admin-save-logic.js?v=8389782f';
+import { snapshotItems } from '/js/admin-save-logic.js?v=30449c75';
 import { reorderItems } from '/js/admin-logic.js?v=fc7f0836';
-import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=85f0727b';
+import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=480c671f';
 import { paintIcon } from '/js/admin-shared.js?v=d03d0ece';
 import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=d845c473';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=5a09eb37';
-import { sizeLabel } from '/js/admin-widget-form.js?v=6d7c5ca5';
+import { sizeLabel } from '/js/admin-widget-form.js?v=02853781';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=648cc374';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 

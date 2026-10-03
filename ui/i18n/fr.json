@@ -332,6 +332,7 @@
     "saveFailed": "Échec de l'enregistrement : {err}",
     "allowedHostInvalid": "Adresse non valide : {host}",
     "allowedHostsKeepCurrent": "Gardez {host} dans les Adresses autorisées, sinon cette page cessera de fonctionner. Pour la retirer, utilisez une autre adresse.",
+    "allowedHostsTooMany": "Trop d’adresses. La limite est de {max}.",
     "colorInvalid": "Ceci n'est pas une couleur. Utilisez #rrggbb ou un nom de couleur CSS.",
     "imported": "Importé",
     "importFailed": "Échec de l'import : {err}",

@@ -322,6 +322,7 @@
     "saveFailed": "保存失败：{err}",
     "allowedHostInvalid": "不是有效地址：{host}",
     "allowedHostsKeepCurrent": "请将 {host} 保留在“允许的地址”中，否则此页面将无法使用。如需移除，请使用其他地址。",
+    "allowedHostsTooMany": "地址过多。上限为 {max} 个。",
     "colorInvalid": "这不是颜色。请使用 #rrggbb 或 CSS 颜色名称。",
     "imported": "已导入",
     "importFailed": "导入失败：{err}",
