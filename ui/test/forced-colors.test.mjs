@@ -233,12 +233,10 @@ test('no state is drawn by fill alone', () => {
       'dashboard.css .setup-reveal[aria-pressed="true"]': 'the password fields show their text',
     }),
   );
-  const found = [
-    ['tokens.css', tokens],
-    ['dashboard.css', dashboard],
-    ['admin.css', admin],
-    ['widget-config-form.css', read('widget-config-form.css')],
-  ].flatMap(([name, css]) => fillOnlyStates(css).map(sel => `${name} ${sel}`));
+  const found = fs
+    .readdirSync(dir)
+    .filter(name => name.endsWith('.css'))
+    .flatMap(name => fillOnlyStates(read(name)).map(sel => `${name} ${sel}`));
   assert.deepEqual(
     found.filter(f => !allowed.has(f)),
     [],

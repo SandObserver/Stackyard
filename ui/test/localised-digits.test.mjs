@@ -169,7 +169,7 @@ test('the wallpaper brightness follows the locale', () => {
 /* Where a number becomes text a person reads. A sentence from t() is left out:
    t() formats its count. */
 const RENDER =
-  /\.(?:textContent|innerText)\s*=|setUserText\(|setAttribute\(\s*['"](?:aria-label|title|aria-valuetext)['"]/;
+  /\.(?:textContent|innerText|innerHTML)\s*=|setUserText\(|setHtml\(|insertAdjacentHTML\(|setAttribute\(\s*['"](?:aria-label|title|aria-valuetext)['"]/;
 const RAW_NUMBER =
   /Math\.(?:round|floor|ceil|trunc)\(|\.toFixed\(|\.toLocaleString\(\s*\)|\.(?:length|size)\b(?!\s*[-*/<>=!?&|)])|\bString\(/;
 
@@ -180,11 +180,19 @@ const GLUED = new RegExp(
   String.raw`${NUMBER}\s*\+\s*['"\x60](?!(?:px|deg|em|rem|ms|s|vh|vw|fr|turn)\b|%)|['"\x60]\s*\+\s*(?:Math\.(?:round|floor|ceil|trunc)\(|[\w.$]+\.toFixed\()`,
 );
 
-/* The line with every t() and wt() call removed, parentheses balanced. */
+/* A raw number in a template hole beside words or markup: text built over
+   several lines reaches the reader with no sink on the same line. */
+const HOLE = new RegExp(
+  String.raw`(?:>\s*\$\{\s*[\w.$]*${NUMBER}\s*\}|\$\{\s*[\w.$]*${NUMBER}\s*\}(?=\s*<|\s+\p{L}{2}))`,
+  'u',
+);
+
+/* The line with every t(), wt(), formatNumber() and localiseDigits() call
+   removed, parentheses balanced. */
 function withoutSentences(line) {
   let out = '';
   for (let i = 0; i < line.length; ) {
-    const call = /^\bw?t\(/.exec(line.slice(i));
+    const call = /^\b(?:w?t|formatNumber|localiseDigits)\(/.exec(line.slice(i));
     if (!call || /[\w$.]/.test(line[i - 1] ?? '')) {
       out += line[i++];
       continue;
@@ -201,9 +209,8 @@ function withoutSentences(line) {
 
 function latinDigits(src, file) {
   return src.split('\n').flatMap((line, i) => {
-    if (/formatNumber|localiseDigits/.test(line)) return [];
     const code = withoutSentences(line);
-    const raw = (RENDER.test(line) && RAW_NUMBER.test(code)) || GLUED.test(code);
+    const raw = (RENDER.test(line) && RAW_NUMBER.test(code)) || GLUED.test(code) || HOLE.test(code);
     return raw ? [`${file}:${i + 1}: ${line.trim()}`] : [];
   });
 }
@@ -217,6 +224,11 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     "live.textContent = cur.length + ' ' + t('home.results');",
     "  return v >= 1000 ? (v/1000).toFixed(1)+' Gbps' : Math.round(v)+' Mbps';",
     "  l = Math.round(abs/60)+'m';",
+    'setHtml(el, html`<b>${Math.round(v)} items</b>`);',
+    'el.textContent = `${formatNumber(x)} of ${Math.round(v)}`;',
+    'node.innerHTML = `<span>${n.toFixed(1)}</span>`;',
+    '      <span class="n">${rows.length}</span>',
+    '    ${Math.round(gb)} GB free',
   ]) {
     assert.equal(latinDigits(line, 'probe.js').length, 1, line);
   }
@@ -227,6 +239,11 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     "if (rows.length) el.setAttribute('aria-label', label);",
     "p.style.top = Math.round(top) + 'px';",
     "fill.style.width = Math.round(b.progress * 100) + '%';",
+    'el.textContent = formatNumber(Math.round(v));',
+    'setHtml(el, html`<b>${formatNumber(rows.length)}</b>`);',
+    'return `hsl(${Math.round(hue)},${sat}%,${light}%)`;',
+    "vp.setAttribute('content', `width=${Math.round(iw / 3)},initial-scale=1`);",
+    'bar.style.width = `${Math.round(p)}%`;',
   ]) {
     assert.deepEqual(latinDigits(line, 'probe.js'), [], line);
   }

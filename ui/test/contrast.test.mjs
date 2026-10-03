@@ -634,7 +634,7 @@ const UNMEASURED_INK = [
 ];
 
 const LITERAL_INK =
-  /(?:^|[;{\s])color\s*:\s*(?:#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?|color-mix)\(|(?!var\b|inherit\b|currentcolor\b|transparent\b|unset\b|initial\b)[a-z]+\s*(?:;|$))/i;
+  /(?:^|[;{\s])color\s*:\s*(?:#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?|color-mix)\(|(?!var\b|inherit\b|currentcolor\b|transparent\b|unset\b|initial\b)[a-z]+\s*(?:!\s*important\s*)?(?:;|$))/i;
 
 function literalInks() {
   const found = new Set();
@@ -653,11 +653,13 @@ test('the literal ink check reads every way of writing a colour', () => {
     'rgba(255,255,255,.3)',
     'hsl(0 0% 100% / .3)',
     'gray',
+    'white !important',
+    'white!important;',
     'color-mix(in srgb,#fff 30%,transparent)',
   ]) {
     assert.match(`color:${v}`, LITERAL_INK, v);
   }
-  for (const v of ['var(--dm)', 'inherit', 'currentColor', 'transparent'])
+  for (const v of ['var(--dm)', 'inherit', 'currentColor', 'transparent', 'inherit !important'])
     assert.doesNotMatch(`color:${v};`, LITERAL_INK, v);
   assert.doesNotMatch('background-color:#fff', LITERAL_INK);
 });
