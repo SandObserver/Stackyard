@@ -383,6 +383,7 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 .segr-opt:has(input:checked) span{color:var(--tx);font-weight:600}
 /* The input is 0 by 0, so an outline on it is invisible. The segment wears it. */
 .segr-opt:has(input:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
+.btn:has(>.file-hidden:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
 
 /* ── In-row trailing button + status (Upload/Test/Fetch) ── */
 .row-btn{background:var(--btn-fill);border:none;color:var(--tx);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:500;font-family:inherit;padding:5px 12px;min-height:28px;border-radius:999px;cursor:pointer;flex-shrink:0;transition:background var(--t),opacity var(--t)}

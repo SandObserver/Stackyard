@@ -108,8 +108,7 @@
     "colorCode": "颜色代码",
     "colorCodePh": "#rrggbb 或任意 CSS 颜色",
     "hue": "色相",
-    "saturation": "饱和度",
-    "wallpaperSource": "壁纸来源"
+    "saturation": "饱和度"
   },
   "about": {
     "documentation": "文档",
@@ -150,7 +149,6 @@
     "createNew": "新建文件夹",
     "expandAria": "展开文件夹 {name}",
     "collapseAria": "折叠文件夹 {name}",
-    "appsInFolder": "此文件夹中的应用",
     "appsCount_other": "{count} 个应用"
   },
   "app": {

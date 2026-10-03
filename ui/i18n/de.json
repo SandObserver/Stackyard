@@ -108,8 +108,7 @@
     "colorCode": "Farbcode",
     "colorCodePh": "#rrggbb oder eine beliebige CSS-Farbe",
     "hue": "Farbton",
-    "saturation": "Sättigung",
-    "wallpaperSource": "Hintergrundquelle"
+    "saturation": "Sättigung"
   },
   "about": {
     "documentation": "Dokumentation",
@@ -150,7 +149,6 @@
     "createNew": "Neuen Ordner erstellen",
     "expandAria": "Ordner {name} aufklappen",
     "collapseAria": "Ordner {name} zuklappen",
-    "appsInFolder": "Apps in diesem Ordner",
     "appsCount_one": "{count} App",
     "appsCount_other": "{count} Apps"
   },

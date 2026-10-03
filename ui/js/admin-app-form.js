@@ -65,7 +65,7 @@ function _wireFolderApps(apps, children) {
   const row = el('folder-apps-row');
   if (!row) return;
   const box = createListbox({
-    label: t('folder.appsInFolder'),
+    label: t('folder.addApps'),
     multiple: true,
     options: apps.map(a => ({ value: a.id, label: a.label || a.id })),
     value: children,
@@ -122,7 +122,7 @@ export function buildAppForm(body, item) {
         <span class="icon-prev" id="ipv">${state.siurl ? html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">` : html`<span>${(item?.label || '?')[0]?.toUpperCase() || '?'}</span>`}</span>
         <input class="icon-srch" id="ip-in" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="iprs" aria-autocomplete="list" aria-describedby="ip-status" aria-label="${t('app.icon')}" placeholder="${t('app.iconPh')}" value="${state.siurl}">
         <button type="button" class="row-btn" id="ip-upload-lbl">${t('app.upload')}</button>
-        <input type="file" id="ip-upload" class="file-hidden" aria-label="${t('app.upload')}" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon">
+        <input type="file" id="ip-upload" class="file-hidden" tabindex="-1" aria-hidden="true" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon">
       </div>
       <div class="iprs" id="iprs" role="listbox" aria-label="${t('app.iconResults')}"></div>
       </div>

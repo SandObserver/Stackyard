@@ -53,3 +53,25 @@ test('the health check type radios are grouped under their label', async ({ page
   const group = page.getByRole('group').filter({ has: page.locator('#hc-type-con') });
   await expect(group).toHaveAccessibleName('Typ');
 });
+
+test('picker names start with the label shown beside them', async ({ page }) => {
+  await openSection(page, 'appearance');
+  await expect(page.locator('#bg-type-btn')).toHaveAccessibleName(/^Quelle /);
+});
+
+test('the icon file input is not a separate unnamed stop', async ({ page }) => {
+  await openDashboardList(page);
+  await page.locator('#btn-add').click();
+  await expect(page.locator('#ip-upload')).toHaveAttribute('tabindex', '-1');
+  await expect(page.locator('#ip-upload')).toHaveAttribute('aria-hidden', 'true');
+});
+
+test('the import buttons show a focus ring', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'WebKit tabs only to text fields by default');
+  await openSection(page, 'general');
+  await page.locator('#imp').focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  const outline = await page.locator('#imp').evaluate(e => getComputedStyle(e.closest('.btn')).outlineStyle);
+  expect(outline).toBe('solid');
+});

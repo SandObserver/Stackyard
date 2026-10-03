@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=817acaf2';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=d5184a11';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=93082af6';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
 import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=694684ea';
@@ -769,7 +769,7 @@ function initBgType() {
   };
   const box = createListbox({
     id: 'bg-type',
-    label: t('appearance.wallpaperSource'),
+    label: t('appearance.source'),
     options: [
       { value: 'unsplash', label: t('appearance.sourceUnsplash') },
       { value: 'url', label: t('appearance.sourceUrl') },
@@ -780,7 +780,7 @@ function initBgType() {
   });
   slot.appendChild(box.el);
   relabel(() => {
-    box.setLabel(t('appearance.wallpaperSource'));
+    box.setLabel(t('appearance.source'));
     box.setOptions(
       [
         { value: 'unsplash', label: t('appearance.sourceUnsplash') },
