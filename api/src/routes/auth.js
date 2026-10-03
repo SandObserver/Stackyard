@@ -30,6 +30,7 @@ const CURRENT_PASSWORD_CODE = 'invalid.current-password';
 /* Bounds what is accepted, never what is verified. An existing install may hold
    a longer password. Capping login locks its owner out. */
 const PASSWORD_MAX = 1024;
+const LANGUAGE_TAG = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/;
 
 /* Answers before sign-in. Say only what the login screen has to decide. The
    setup fields describe the install and are added only once the caller is
@@ -42,6 +43,8 @@ on('GET', '/api/auth/check', (req, res) => {
     enabled: authActive(cfg),
     authenticated,
   };
+  const language = cfg.settings?.language;
+  if (typeof language === 'string' && LANGUAGE_TAG.test(language)) body.language = language;
   if (authenticated) {
     body.passwordSet = !!cfg.settings?.auth?.passwordHash;
     body.setupPrompted = !!cfg.settings?.auth?.setupPrompted;
@@ -60,7 +63,7 @@ on('POST', '/api/auth/login', async (req, res) => {
     const limitErr = registerLoginAttempt(ip);
     if (limitErr) {
       log.audit('login blocked', { ip, reason: 'rate_limit' });
-      return json(res, 429, { error: limitErr, kind: KIND.AUTH });
+      return json(res, 429, { error: limitErr, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
     }
     const ok = await verifyPassword(typeof password === 'string' ? password : '', hash);
     if (!ok) {

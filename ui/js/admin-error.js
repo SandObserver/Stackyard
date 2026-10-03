@@ -83,3 +83,20 @@ export function optionsErrorAdvice(e) {
   const { tone, key, vars, code } = badgeErrorAdvice(e);
   return vars ? { tone, code, key, vars } : { tone, code, key };
 }
+
+/** @param {unknown} e @returns {string} */
+export function loginErrorKey(e) {
+  const { kind, code } = readError(e);
+  if (code === 'blocked.rate-limit') return 'toast.tooManyAttempts';
+  if (kind === KIND.AUTH) return 'login.incorrect';
+  return 'adminError.genericInternal';
+}
+
+/* A first-run password is refused as auth or as changed when another tab or
+   device set one first. */
+/** @param {unknown} e @returns {string} */
+export function setupErrorKey(e) {
+  const { kind, code } = readError(e);
+  if (kind === KIND.AUTH || code === 'invalid.password-changed') return 'toast.passwordChangedElsewhere';
+  return 'setup.failed';
+}

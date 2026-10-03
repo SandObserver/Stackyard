@@ -33,6 +33,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=706fc9a7';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=389e0ed0';
+import { setupErrorKey } from '/js/admin-error.js?v=df2459e3';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import {
@@ -713,12 +714,15 @@ function showSetupPrompt() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: pw.value }),
         });
-        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || t('setup.failed'));
+        if (!r.ok) {
+          const body = await r.json().catch(() => null);
+          throw Object.assign(new Error(`HTTP ${r.status}`), { kind: body?.kind, code: body?.code });
+        }
         const to = landingAfterSetup(items);
         if (to) location.href = to;
         else location.reload();
       } catch (e) {
-        err.textContent = e.message;
+        err.textContent = t(setupErrorKey(e));
         err.style.display = 'block';
         setB.disabled = false;
         skip.disabled = false;

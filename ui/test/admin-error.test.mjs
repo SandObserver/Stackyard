@@ -13,7 +13,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import { badgeErrorAdvice, optionsErrorAdvice, readError, KIND, TONE } from '../js/admin-error.js';
+import {
+  badgeErrorAdvice,
+  loginErrorKey,
+  optionsErrorAdvice,
+  readError,
+  setupErrorKey,
+  KIND,
+  TONE,
+} from '../js/admin-error.js';
 
 /* api/src/api-error.js is CommonJS (the server half of the codebase is), so it
    needs createRequire rather than a plain import. */
@@ -162,4 +170,24 @@ test('advice never carries the server s message', () => {
       assert.equal(a[field], undefined, `${field} must not travel with advice`);
     }
   }
+});
+
+test('a refused sign-in maps to a translated sentence, never the server text', () => {
+  const wrong = Object.assign(new Error('Incorrect password.'), { kind: 'auth' });
+  const locked = Object.assign(new Error('Too many attempts. Try again in 5 minutes.'), {
+    kind: 'blocked',
+    code: 'blocked.rate-limit',
+  });
+  assert.equal(loginErrorKey(wrong), 'login.incorrect');
+  assert.equal(loginErrorKey(locked), 'toast.tooManyAttempts');
+  assert.equal(loginErrorKey(new TypeError('Failed to fetch')), 'adminError.genericInternal');
+  for (const e of [wrong, locked]) assert.equal(typeof lookup(loginErrorKey(e)), 'string');
+});
+
+test('a refused first-run password maps to a translated sentence', () => {
+  assert.equal(setupErrorKey({ kind: 'auth' }), 'toast.passwordChangedElsewhere');
+  assert.equal(setupErrorKey({ kind: 'invalid', code: 'invalid.password-changed' }), 'toast.passwordChangedElsewhere');
+  assert.equal(setupErrorKey({ kind: 'blocked' }), 'setup.failed');
+  assert.equal(setupErrorKey(new TypeError('Failed to fetch')), 'setup.failed');
+  assert.equal(typeof lookup('setup.failed'), 'string');
 });

@@ -384,3 +384,30 @@ for (const [label, body] of [
     assert.equal(stored.enabled, true, 'the flag is untouched');
   });
 }
+
+test('a locked-out sign-in answers with a code the sign-in screen can translate', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  for (let i = 0; i < 5; i++) await req('POST', '/api/auth/login', { password: 'nope' });
+  const r = await req('POST', '/api/auth/login', { password: 'nope' });
+  assert.equal(r.status, 429);
+  assert.equal(r.body.kind, 'blocked');
+  assert.equal(r.body.code, 'blocked.rate-limit');
+});
+
+test('the pre-auth check tells the sign-in screen the saved language, and only a language tag', async () => {
+  const cfg = loadConfig();
+  cfg.settings = {
+    language: 'fa',
+    auth: { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') },
+  };
+  saveConfig(cfg);
+  const r = await req('GET', '/api/auth/check');
+  assert.equal(r.body.authenticated, false);
+  assert.equal(r.body.language, 'fa');
+
+  cfg.settings.language = '../../admin/index';
+  saveConfig(cfg);
+  assert.ok(!('language' in (await req('GET', '/api/auth/check')).body));
+});
