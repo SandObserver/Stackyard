@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=1265217f';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=fb3114a2';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=f1ebbe78';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d604b19f';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=73ff01e9';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=29b461a3';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=bc6549de';
+} from '/js/admin-settings.js?v=186af717';
 import {
   apiGet,
   apiPost,
@@ -26,12 +26,14 @@ import {
   nameEditPen,
   paintIcon,
   reveal,
+  errorText,
   responseError,
+  ShownError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=f5551857';
+} from '/js/admin-shared.js?v=5ce4c5aa';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=7d7f2f73';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=20808e42';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=30c1b9d1';
@@ -143,7 +145,10 @@ async function writeItems() {
     toast(t('toast.saved'));
     ok = true;
   } catch (e) {
-    toast(e.status === 409 ? t('toast.dashboardChangedElsewhere') : t('toast.saveFailed', { err: e.message }), 'err');
+    toast(
+      e.status === 409 ? t('toast.dashboardChangedElsewhere') : t('toast.saveFailed', { err: errorText(e) }),
+      'err',
+    );
   }
   render();
   syncDashSave();
@@ -167,7 +172,7 @@ async function appendItems(newItems) {
     /* Ids were allocated against the list the preview was built from. */
     const taken = new Set(current.map(i => i && i.id));
     const clash = newItems.find(i => taken.has(i.id));
-    if (clash) throw new Error(`${clash.label}: this id already exists. Reload and import again.`);
+    if (clash) throw new ShownError(t('toast.importIdTaken', { name: clash.label }));
     full.items = [...current, ...newItems];
     const r = await apiPost('/api/config', full);
     _serverItems = JSON.stringify(r.items);
@@ -624,7 +629,7 @@ async function doSave(orig) {
     closeModal(item.id);
     toast(t(replaced ? 'toast.updated' : 'toast.added'));
   } catch (e) {
-    toast(t('toast.error', { err: e.message }), 'err');
+    toast(t('toast.error', { err: errorText(e) }), 'err');
   } finally {
     _editorSaving = false;
   }
@@ -854,12 +859,12 @@ function initWallpaperUpload() {
       const form = new FormData();
       form.append('wallpaper', file, file.name);
       const r = await fetch('/api/wallpaper/upload', { method: 'POST', body: form });
-      if (!r.ok) throw new Error(await responseError(r));
+      if (!r.ok) throw await responseError(r);
       const d = await r.json();
       setWallpaperUrl(d.url);
       toast(t('toast.wallpaperStored'));
     } catch (e) {
-      toast(t('toast.wallpaperFailed', { err: e.message }), 'err');
+      toast(t('toast.wallpaperFailed', { err: errorText(e) }), 'err');
     } finally {
       btn.textContent = orig;
       /** @type {HTMLInputElement} */ (input).value = '';
@@ -880,14 +885,14 @@ async function fetchWallpaperLink(url) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
-    if (!r.ok) throw new Error(await responseError(r));
+    if (!r.ok) throw await responseError(r);
     const d = await r.json();
     setWallpaperUrl(d.url);
     toast(t('toast.wallpaperStored'));
   } catch (e) {
     /* A link that failed must not replace the wallpaper already saved. */
     setWallpaperUrl(savedWallpaperUrl());
-    toast(t('toast.wallpaperFailed', { err: e.message }), 'err');
+    toast(t('toast.wallpaperFailed', { err: errorText(e) }), 'err');
   }
 }
 
@@ -1026,7 +1031,7 @@ el('btn-exp').onclick = async () => {
     a.click();
     document.body.removeChild(a);
   } catch (e) {
-    toast(t('toast.exportFailed', { err: e.message }), 'err');
+    toast(t('toast.exportFailed', { err: errorText(e) }), 'err');
   } finally {
     /* Revoked on the next frame. Revoking it in this one races the download the
        click just started. */
@@ -1038,7 +1043,7 @@ el('imp').onchange = async e => {
   if (!f) return;
   try {
     const d = JSON.parse(await f.text());
-    if (!d || !Array.isArray(d.items)) throw new Error('Invalid');
+    if (!d || !Array.isArray(d.items)) throw new ShownError(t('toast.importNotStackyard'));
     const cur = new Map(state.items.map(i => [i.id, i]));
     const inc = new Map(d.items.map(i => [i.id, i]));
     let added = 0,
@@ -1074,7 +1079,8 @@ el('imp').onchange = async e => {
     state.items = d.items;
     if (await saveOrRevert(before)) toast(t('toast.imported'));
   } catch (err) {
-    toast(t('toast.importFailed', { err: err.message }), 'err');
+    const why = err instanceof SyntaxError ? t('toast.importNotStackyard') : errorText(err);
+    toast(t('toast.importFailed', { err: why }), 'err');
   }
   tgt(e).value = '';
 };
@@ -1146,16 +1152,16 @@ el('imp-foreign').onchange = async e => {
         ({ doc, errors: parseErrors } = parseYamlTolerant(await file.text()));
       } catch (err) {
         if (err instanceof YamlLiteError)
-          throw new Error(t('toast.importYamlUnsupported', { file: file.name, reason: err.reason, line: err.line }));
+          throw new ShownError(t('toast.importYamlUnsupported', { file: file.name, line: err.line }));
         throw err;
       }
       const kind = detectSource(doc);
-      if (!kind) throw new Error(t('toast.importUnknownFormat', { file: file.name }));
+      if (!kind) throw new ShownError(t('toast.importUnknownFormat', { file: file.name }));
       let out;
       try {
         out = convert(kind, doc, taken, t('importForeign.untitledFolder'));
       } catch (err) {
-        if (err instanceof ImportTooLargeError) throw new Error(t('toast.importTooLarge', { file: file.name }));
+        if (err instanceof ImportTooLargeError) throw new ShownError(t('toast.importTooLarge', { file: file.name }));
         throw err;
       }
       items.push(...out.items);
@@ -1255,7 +1261,7 @@ el('imp-foreign').onchange = async e => {
     await appendAndSave(items);
     toast(t('toast.importForeignDone', { apps, folders }));
   } catch (err) {
-    toast(t('toast.importFailed', { err: err.message }), 'err');
+    toast(t('toast.importFailed', { err: errorText(err) }), 'err');
   }
   input.value = '';
 };
@@ -1278,7 +1284,7 @@ setReauthHandler(requireLogin);
 
 const loadOrShowFailure = () =>
   load().catch(e => {
-    toast(t('toast.configLoadFailed', { err: e.message }), 'err');
+    toast(t('toast.configLoadFailed', { err: errorText(e) }), 'err');
     const al = el('al');
     if (al) {
       /* An inline onclick is blocked by the CSP. */

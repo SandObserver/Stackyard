@@ -18,7 +18,7 @@ on('POST', '/api/ping', async (req, res) => {
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'ping', 30, 60_000);
-    if (limited) return json(res, 429, { ok: false, error: limited, kind: KIND.BLOCKED });
+    if (limited) return json(res, 429, { ok: false, error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
     const { url, skipTls = false } = JSON.parse(await readBody(req));
     if (!url) return json(res, 400, { ok: false, error: 'url required', kind: KIND.INVALID });
     json(res, 200, await pingChecked(url, PING_MS, skipTls === true));
@@ -40,7 +40,7 @@ function activityLabels(block) {
 
 on('GET', '/api/badges', async (req, res) => {
   const limited = rateLimit(getIp(req), 'badges', LIMITS.BADGES.max, LIMITS.BADGES.windowMs);
-  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
   const cfg = loadConfig(),
     out = Object.create(null);
   if (IS_DEMO) return json(res, 200, demoData.demoBadges(cfg.items));
@@ -108,7 +108,7 @@ on('POST', '/api/badge-proxy', async (req, res) => {
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'badge-proxy', 60, 60_000);
-    if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
+    if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
     const body = JSON.parse(await readBody(req));
     const { url, itemId, skipTls = false } = body;
     if (!url) return json(res, 400, { error: 'url required', kind: KIND.INVALID });

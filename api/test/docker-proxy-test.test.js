@@ -87,6 +87,7 @@ test('another service on that port is refused', async () => {
   const r = await probe(proxyBase);
   assert.equal(r.body.ok, false);
   assert.equal(r.body.fatal, true);
+  assert.equal(r.body.code, 'upstream.not-docker');
 });
 
 test('a proxy that refuses the request is refused', async () => {
@@ -94,12 +95,14 @@ test('a proxy that refuses the request is refused', async () => {
   const r = await probe(proxyBase);
   assert.equal(r.body.ok, false);
   assert.equal(r.body.fatal, true);
+  assert.equal(r.body.code, 'upstream.refused');
 });
 
 test('an address with nothing listening is refused', async () => {
   const r = await probe(deadBase);
   assert.equal(r.body.ok, false);
   assert.equal(r.body.fatal, true, 'a refused connection means the address is wrong');
+  assert.equal(r.body.code, 'network');
 });
 
 test('a name that resolves nowhere is refused', async () => {
@@ -112,6 +115,7 @@ test('a scheme that cannot be requested is refused before any connection', async
   const r = await probe('tcp://socket-proxy:2375');
   assert.equal(r.body.ok, false);
   assert.equal(r.body.fatal, true);
+  assert.equal(r.body.code, 'invalid.url');
 });
 
 /* The hint carries the address shape, and the UI turns it into advice. */
@@ -145,4 +149,12 @@ test('a missing address is rejected', async () => {
 test('the probe needs an origin, like every other request that acts', async () => {
   const r = await probe(proxyBase, { origin: false });
   assert.equal(r.status, 403);
+});
+
+test('an error status from the address carries the status for the UI to word', async () => {
+  reply = { status: 500, body: '{}' };
+  const r = await probe(proxyBase);
+  assert.equal(r.body.fatal, true);
+  assert.equal(r.body.code, 'upstream.status');
+  assert.deepEqual(r.body.detail, { status: 500 });
 });

@@ -211,6 +211,7 @@ test('a name claiming a format the bytes do not have is refused', async () => {
   const r = await upload('photo.png', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'));
   assert.equal(r.status, 400);
   assert.match(r.body.error, /not a JPEG/);
+  assert.equal(r.body.code, 'invalid.file-type');
 });
 
 test('a name that walks out of the wallpaper directory cannot', async () => {
@@ -223,6 +224,7 @@ test('fetching something that is not a URL is refused before any request', async
   const r = await fetchLink('not a url');
   assert.equal(r.status, 400);
   assert.match(r.body.error, /valid URL/);
+  assert.equal(r.body.code, 'invalid.url');
 });
 
 test('an over-size upload is refused with a message, not a broken response', async () => {
@@ -230,6 +232,7 @@ test('an over-size upload is refused with a message, not a broken response', asy
   const r = await upload('huge.png', huge);
   assert.equal(r.status, 400);
   assert.match(r.body.error, /16 MB/);
+  assert.equal(r.body.code, 'invalid.too-large');
 });
 
 test('saving a config that names the new wallpaper drops the old file', async () => {
@@ -326,6 +329,7 @@ test('a fetched link that is not an image is refused and nothing is stored', asy
   const r = await fetchLink(`${upBase}/page`);
   assert.equal(r.status, 400);
   assert.match(r.body.error, /not a JPEG/);
+  assert.equal(r.body.code, 'invalid.file-type');
   assert.equal(stored(), was);
 });
 
@@ -339,6 +343,7 @@ test('a fetched image over 16 MB is refused and nothing is stored', async () => 
   const was = stored();
   const r = await fetchLink(`${upBase}/17mb.png`);
   assert.equal(r.status, 502);
+  assert.equal(r.body.code, 'invalid.too-large');
   assert.equal(stored(), was);
 });
 
@@ -347,6 +352,7 @@ test('a link request over 4 KB is answered, not dropped', async () => {
   const r = await request('/api/wallpaper/fetch', { 'Content-Type': 'application/json' }, body);
   assert.equal(r.status, 400);
   assert.match(r.body.error, /too large/);
+  assert.equal(r.body.code, 'invalid.url', 'an over-long link is a bad address, not a large image');
 });
 
 test('two files in one wallpaper upload are refused', async () => {
@@ -367,4 +373,5 @@ test('an upload past the stream cap is answered before the body ends', { timeout
   const r = await unfinishedUpload(base + '/api/wallpaper/upload', 64 * 1024 * 1024, 21 * 1024 * 1024);
   assert.equal(r.status, 400);
   assert.match(r.body.error, /16 MB/);
+  assert.equal(r.body.code, 'invalid.too-large');
 });

@@ -259,7 +259,16 @@
     "statusMethod": "Der Dienst hat diese Anfragemethode abgelehnt (HTTP {status}).",
     "statusProxyAuth": "Ein Proxy auf dem Weg benötigt Zugangsdaten (HTTP {status}).",
     "statusServer": "Der Dienst meldet einen internen Fehler (HTTP {status}).",
-    "statusOther": "Der Dienst hat mit einem Fehler geantwortet (HTTP {status})."
+    "statusOther": "Der Dienst hat mit einem Fehler geantwortet (HTTP {status}).",
+    "readOnly": "In der Live-Demo ist das Speichern deaktiviert.",
+    "fileType": "Dieser Dateityp wird nicht unterstützt.",
+    "invalidUrl": "Das ist keine gültige http- oder https-Adresse.",
+    "socketRefused": "Der Socket-Proxy hat die Anfrage abgelehnt.",
+    "notSocketProxy": "Dort hat etwas geantwortet, aber es ist kein Docker-Socket-Proxy.",
+    "noConnection": "Die Verbindung ist fehlgeschlagen.",
+    "duplicateId": "Zwei Einträge haben dieselbe ID {id}. Jeder Eintrag braucht eine eigene ID.",
+    "missingChildren": "Der Ordner {id} verweist auf Einträge, die nicht in der Datei sind.",
+    "unsafeLink": "Der Eintrag {id} hat einen unzulässigen Link. Links müssen http oder https verwenden."
   },
   "home": {
     "search": "Suchen",
@@ -332,7 +341,7 @@
     "authNeedsPassword": "Legen Sie ein Passwort fest, bevor Sie die Authentifizierung aktivieren.",
     "importForeignDone": "Import abgeschlossen. Apps: {apps}. Ordner: {folders}.",
     "importForeignNothing": "Aus diesen Dateien gibt es nichts zu importieren.",
-    "importYamlUnsupported": "{file}: {reason} (Zeile {line})",
+    "importYamlUnsupported": "{file}: Zeile {line} enthält YAML, das der Import nicht lesen kann.",
     "importUnknownFormat": "{file} ist keine gethomepage- oder Dashy-Konfiguration.",
     "importTooLarge": "{file} enthält zu viele Einträge für einen Import.",
     "secretsWithheld": "Zugangsdaten erneut eingeben für: {items}. Sie wurden nicht übernommen, weil sich die zugehörige Anfrage geändert hat.",
@@ -353,7 +362,9 @@
     "fieldRequired": "{field} ist erforderlich",
     "configLoadFailed": "Konfiguration konnte nicht geladen werden. Läuft der API-Container? ({err})",
     "uploaded": "{name} hochgeladen",
-    "uploadFailed": "Hochladen fehlgeschlagen: {err}"
+    "uploadFailed": "Hochladen fehlgeschlagen: {err}",
+    "importNotStackyard": "Diese Datei ist kein Stackyard-Export.",
+    "importIdTaken": "{name} ist bereits im Dashboard. Seite neu laden und erneut importieren."
   },
   "confirm": {
     "deleteFolder": "Ordner „{name}“ löschen? Enthaltene Apps werden nicht gelöscht.",

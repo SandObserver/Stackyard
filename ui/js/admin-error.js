@@ -23,6 +23,18 @@ const BY_CODE = Object.freeze({
   'upstream.redirect': 'adminError.redirect',
   'network.tls-ignored': 'adminError.tlsIgnored',
   'network.tls-untrusted': 'adminError.tlsUntrusted',
+  'blocked.read-only': 'adminError.readOnly',
+  'blocked.rate-limit': 'toast.tooManyAttempts',
+  'invalid.too-large': 'toast.imageTooLarge',
+  'invalid.file-type': 'adminError.fileType',
+  'invalid.url': 'adminError.invalidUrl',
+  'upstream.refused': 'adminError.socketRefused',
+  'upstream.not-docker': 'adminError.notSocketProxy',
+  'blocked.unresolved': 'adminError.unreachable',
+  'invalid.duplicate-id': 'adminError.duplicateId',
+  'invalid.missing-children': 'adminError.missingChildren',
+  'invalid.unsafe-link': 'adminError.unsafeLink',
+  'invalid.dock-full': 'app.dockFull',
 });
 
 const BY_KIND = Object.freeze({
@@ -52,14 +64,41 @@ export function readError(e) {
   return { kind, code, detail };
 }
 
+/* Placeholders only. A value is an id, a status or a limit, never a sentence. */
+/** @param {Record<string, unknown> | null} detail @returns {Record<string, unknown> | null} */
+function detailVars(detail) {
+  if (!detail) return null;
+  /** @type {Record<string, unknown>} */
+  const vars = {};
+  for (const [k, v] of Object.entries(detail)) {
+    if (k === 'reason') continue;
+    if (typeof v === 'number' || (typeof v === 'string' && v.length <= 200)) vars[k] = v;
+  }
+  return Object.keys(vars).length ? vars : null;
+}
+
 function adviceFor(read) {
   const { kind, code, detail } = read;
   const status = detail && typeof detail.status === 'number' ? detail.status : null;
   if (code === 'upstream.status' && status !== null) return { key: statusKey(status), vars: { status } };
   if (BY_CODE[code]) {
-    return status !== null ? { key: BY_CODE[code], vars: { status } } : { key: BY_CODE[code] };
+    const vars = detailVars(detail);
+    return vars ? { key: BY_CODE[code], vars } : { key: BY_CODE[code] };
   }
   return { key: BY_KIND[kind] || BY_KIND[KIND.INTERNAL] };
+}
+
+/** What to show for a failed request to the API's own routes.
+    @param {unknown} e @returns {{ key: string, vars?: Record<string, unknown> }} */
+export function errorAdvice(e) {
+  return adviceFor(readError(e));
+}
+
+/* The probe's hint already says why nothing answered and what to change. */
+/** @param {unknown} probe @returns {{ key: string, vars?: Record<string, unknown> }} */
+export function socketProbeAdvice(probe) {
+  const read = readError(probe);
+  return read.code === KIND.NETWORK ? { key: 'adminError.noConnection' } : adviceFor(read);
 }
 
 export function badgeErrorAdvice(e) {

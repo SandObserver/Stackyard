@@ -23,7 +23,6 @@ This is a self-assessment. No external audit has been carried out.
 
 - **Widgets need an extra step to read.** Each widget is an embedded document. A screen reader does not enter one during linear navigation, so its contents are read only after the reader is asked to enter it. Widgets containing a button or a link are also reachable with Tab.
 - **A phone shortcut that responds only to touch.** On a phone, a widget that has a link set opens it when tapped away from the widget's own controls. There is no keyboard equivalent for that shortcut. Widgets that carry their own link also expose it as a control, and that one is reachable by keyboard. The shortcut does not exist on a desktop.
-- **Some error messages from the server are shown in English in every language.** Examples are the reason given for a failed save and the result of a Health Check test.
 - **Collapsed sections in Settings keep their controls in the tab order.** When a section of the item editor such as Health Check is switched off, its hidden fields can still take keyboard focus, and the focus is not visible.
 - **Two Settings controls are below the 3:1 contrast minimum for non-text elements.** The selected segment of a segmented control, and the track of a switch that is off, are faint against their background. The selected segment also has a heavier label, and the switch shows its state by the knob position.
 - **The contrast test measures a fixed list of colour pairs.** Other colours and other pairings, including colours written directly into a rule, are checked by hand.

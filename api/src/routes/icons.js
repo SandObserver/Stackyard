@@ -182,12 +182,12 @@ on('GET', '/api/icons/local', (_, res) => {
 });
 
 on('POST', '/api/icons/upload', async (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   try {
     const ip = getIp(req);
     const limited = rateLimit(ip, 'upload', 20, 3_600_000);
-    if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
+    if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
     const ct = req.headers['content-type'] || '';
     if (!ct.includes('multipart/form-data'))
       return json(res, 400, { error: 'multipart/form-data required', kind: KIND.INVALID });
@@ -200,13 +200,21 @@ on('POST', '/api/icons/upload', async (req, res) => {
     if (!filename || !fileData?.length) return json(res, 400, { error: 'no file found in upload', kind: KIND.INVALID });
     if (fileParts > 1) return json(res, 400, { error: 'only one file per upload', kind: KIND.INVALID });
     if (!/\.(svg|png|ico)$/i.test(filename))
-      return json(res, 400, { error: 'only .svg, .png, .ico files allowed', kind: KIND.INVALID });
+      return json(res, 400, {
+        error: 'only .svg, .png, .ico files allowed',
+        kind: KIND.INVALID,
+        code: 'invalid.file-type',
+      });
     if (fileData.length > ICON_MAX_BYTES)
-      return json(res, 400, { error: 'file too large (max 2 MB)', kind: KIND.INVALID });
+      return json(res, 400, { error: 'file too large (max 2 MB)', kind: KIND.INVALID, code: 'invalid.too-large' });
     if (/\.svg$/i.test(filename)) {
       fileData = Buffer.from(sanitizeSvg(fileData.toString('utf8')), 'utf8');
     } else if (!sniffIconType(fileData)) {
-      return json(res, 400, { error: 'file is not a valid PNG or ICO image', kind: KIND.INVALID });
+      return json(res, 400, {
+        error: 'file is not a valid PNG or ICO image',
+        kind: KIND.INVALID,
+        code: 'invalid.file-type',
+      });
     }
     fs.mkdirSync(ICONS_PATH, { recursive: true });
     /* Never the submitted name directly. See safeIconName. */
@@ -215,7 +223,8 @@ on('POST', '/api/icons/upload', async (req, res) => {
     log.audit('icon uploaded', { filename: saved });
     json(res, 200, { ok: true, filename: saved });
   } catch (e) {
-    if (e.oversize) return json(res, 400, { error: 'file too large (max 2 MB)', kind: KIND.INVALID });
+    if (e.oversize)
+      return json(res, 400, { error: 'file too large (max 2 MB)', kind: KIND.INVALID, code: 'invalid.too-large' });
     fail(res, e, { status: 500 });
   }
 });

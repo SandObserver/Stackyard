@@ -99,7 +99,7 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
      bucket per request. */
   if (!item) return json(res, 404, { error: 'widget not found', kind: KIND.INVALID });
   const limited = rateLimit(getIp(req), `widget-data:${item.id}`, LIMITS.WIDGET_DATA.max, LIMITS.WIDGET_DATA.windowMs);
-  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
 
   const entry = getRegistry()[item.widgetType];
   if (!entry) return json(res, 404, { error: 'unknown widget type', kind: KIND.INVALID });
@@ -121,7 +121,7 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
 on('POST', '/api/widget-options/:id', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const limited = rateLimit(getIp(req), 'widget-options', LIMITS.WIDGET_OPTIONS.max, LIMITS.WIDGET_OPTIONS.windowMs);
-  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
   let body;
   try {
     body = JSON.parse(await readBody(req));

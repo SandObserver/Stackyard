@@ -91,30 +91,42 @@ async function probeSocketProxy(url) {
   try {
     u = new URL(url);
   } catch {
-    return { ok: false, fatal: true, error: 'That is not a valid URL.' };
+    return { ok: false, fatal: true, error: 'That is not a valid URL.', code: 'invalid.url' };
   }
   const policy = urlPolicyError(u);
-  if (policy) return { ok: false, fatal: true, error: policy };
+  if (policy) return { ok: false, fatal: true, error: policy, code: 'invalid.url' };
   try {
     const r = await fetchUnchecked(`${url.replace(/\/+$/, '')}/version`, { timeout: PING_MS });
     if (r.status === 401 || r.status === 403)
-      return { ok: false, fatal: true, error: 'The socket proxy refused the request.' };
-    if (r.status >= 400) return { ok: false, fatal: true, error: `The address answered with HTTP ${r.status}.` };
+      return { ok: false, fatal: true, error: 'The socket proxy refused the request.', code: 'upstream.refused' };
+    if (r.status >= 400)
+      return {
+        ok: false,
+        fatal: true,
+        error: `The address answered with HTTP ${r.status}.`,
+        code: 'upstream.status',
+        detail: { status: r.status },
+      };
     if (!r.data || typeof r.data !== 'object' || !r.data.ApiVersion)
-      return { ok: false, fatal: true, error: 'Something is listening there, but it is not a Docker socket proxy.' };
+      return {
+        ok: false,
+        fatal: true,
+        error: 'Something is listening there, but it is not a Docker socket proxy.',
+        code: 'upstream.not-docker',
+      };
     return { ok: true, version: String(r.data.ApiVersion) };
   } catch (e) {
     const host = bareHost(u.hostname);
     const code = errCode(e) ?? '';
     const fatal = WRONG_ADDRESS_CODES.has(code) || (!code && isLiteralAddress(host));
-    return { ok: false, fatal, error: pingErrorText(e), hint: addressHint(host) };
+    return { ok: false, fatal, error: pingErrorText(e), code: 'network', hint: addressHint(host) };
   }
 }
 
 on('POST', '/api/docker/test', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const limited = rateLimit(getIp(req), 'docker-test', 20, 60_000);
-  if (limited) return json(res, 429, { ok: false, error: limited, kind: KIND.BLOCKED });
+  if (limited) return json(res, 429, { ok: false, error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
   try {
     const { url } = JSON.parse(await readBody(req));
     if (!url || typeof url !== 'string')
@@ -129,7 +141,7 @@ on('GET', '/health', (_, res) => json(res, 200, { ok: true }));
 
 on('GET', '/api/health', async (req, res) => {
   const limited = rateLimit(getIp(req), 'health', LIMITS.HEALTH.max, LIMITS.HEALTH.windowMs);
-  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED });
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
   if (IS_DEMO) {
     const cfg = loadConfig();
     return json(res, 200, demoData.demoHealth(cfg.items));

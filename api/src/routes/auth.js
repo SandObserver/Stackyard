@@ -127,7 +127,7 @@ async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
 }
 
 on('POST', '/api/auth/set-password', async (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   try {
     const before = loadConfig();
@@ -172,7 +172,7 @@ on('POST', '/api/auth/set-password', async (req, res) => {
 });
 
 on('POST', '/api/auth/revoke-sessions', (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   const cfg = loadConfig();
   if (!authActive(cfg)) {
@@ -191,7 +191,7 @@ on('POST', '/api/auth/revoke-sessions', (req, res) => {
 });
 
 on('POST', '/api/auth/dismiss-setup', (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   const cfg = loadConfigForUpdate();
   cfg.settings = cfg.settings || {};
@@ -202,7 +202,7 @@ on('POST', '/api/auth/dismiss-setup', (req, res) => {
 });
 
 on('POST', '/api/auth/toggle', async (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   try {
     const { enabled, currentPassword, allowedHosts } = JSON.parse(await readBody(req));

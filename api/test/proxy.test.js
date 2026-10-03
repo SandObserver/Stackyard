@@ -159,6 +159,7 @@ test('guardSsrf blocks when the hostname cannot be resolved', async t => {
   const r = await guardSsrf('http://nxdomain.example.com/');
   assert.equal(r.ip, null);
   assert.match(r.error, /could not be resolved/);
+  assert.equal(r.reason, 'unresolved');
 });
 
 test('shouldSkipTls returns false unless skipTlsVerify is explicitly true', () => {
@@ -195,6 +196,20 @@ test('fetchJSON returns the untouched body with opts.raw, and auto-parses withou
     assert.notEqual(typeof parsed.data, 'string'); // auto-parsed into an object
     const raw = await fetchJSON(`http://127.0.0.1:${port}/metrics`, { raw: true, timeout: 3000 });
     assert.equal(raw.data, metrics); // returned untouched
+  } finally {
+    server.close();
+  }
+});
+
+test('a reply past the size limit is marked, so a route can word it as too large', async () => {
+  const server = http.createServer((req, res) => res.end(Buffer.alloc(4096)));
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address();
+  try {
+    const e = await fetchJSON(`http://127.0.0.1:${port}/big`, { raw: true, maxBytes: 1024, timeout: 3000 }).catch(
+      x => x,
+    );
+    assert.equal(e.responseTooLarge, true);
   } finally {
     server.close();
   }

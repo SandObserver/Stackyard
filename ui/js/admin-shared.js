@@ -2,6 +2,7 @@
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=fc7f0836';
 import { el, q } from '/js/utils.js?v=9a9bfb54';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
+import { errorAdvice } from '/js/admin-error.js?v=a1f2695a';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=706fc9a7';
@@ -58,17 +59,30 @@ function tagged(status, body) {
   return e;
 }
 
-/** A body that is not JSON is the web server answering on its own.
+/** An error whose message is already a sentence in the reader's language. */
+export class ShownError extends Error {}
 
-    @param {Response} r @returns {Promise<string>} */
+/** The sentence for a failed action. Never the API's own text: it is English
+    written for a log.
+    @param {unknown} e @returns {string} */
+export function errorText(e) {
+  if (e instanceof ShownError) return e.message;
+  const { key, vars } = errorAdvice(e);
+  return t(key, vars);
+}
+
+/** For a raw `fetch`. A body that is not JSON is the web server answering on
+    its own.
+
+    @param {Response} r @returns {Promise<Error>} */
 export async function responseError(r) {
   const text = await r.text().catch(() => '');
+  let body = null;
   try {
-    const d = JSON.parse(text);
-    if (d && d.error) return String(d.error);
+    body = JSON.parse(text);
   } catch {}
-  if (r.status === 413) return t('toast.imageTooLarge');
-  return `HTTP ${r.status}`;
+  if (!body && r.status === 413) return new ShownError(t('toast.imageTooLarge'));
+  return tagged(r.status, body);
 }
 
 /* Set by the admin entry point, never imported. The sign-in screen imports this
