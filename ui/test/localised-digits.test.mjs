@@ -112,3 +112,17 @@ test('geometry is left in Latin digits', () => {
     assert.doesNotMatch(src, /formatNumber/, `${w} localises geometry, which will not render`);
   }
 });
+
+/* The pill beside it is already formatted, so a Latin row reads as a mismatch. */
+test('the badge popover rows follow the locale', () => {
+  const pop = read('js/badge-popover.js');
+  assert.match(pop, /import \{ formatNumber \} from '\/js\/format-number\.js/);
+  assert.match(pop, /typeof row\.value === 'number' \? formatNumber\(row\.value\)/);
+  assert.doesNotMatch(pop, /String\(row\.value\)/);
+});
+
+test('the wallpaper brightness follows the locale', () => {
+  const settings = read('js/admin-settings.js');
+  assert.doesNotMatch(settings, /\.toFixed\(/);
+  assert.match(settings, /formatNumber\(parseFloat\(v\), \{ minimumFractionDigits: 2, maximumFractionDigits: 2 \}\)/);
+});

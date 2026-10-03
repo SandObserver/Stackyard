@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=f1ebbe78';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d604b19f';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=d726f5a2';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=200c56b3';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=29b461a3';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=eca39fa0';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=186af717';
+} from '/js/admin-settings.js?v=b34b317b';
 import {
   apiGet,
   apiPost,
@@ -31,12 +31,12 @@ import {
   ShownError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=5ce4c5aa';
+} from '/js/admin-shared.js?v=008f63ae';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=20808e42';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=7faadc86';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=30c1b9d1';
+import { createListbox } from '/js/listbox.js?v=bbfda5a2';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -62,8 +62,21 @@ import {
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=eeafa4b5';
-import { el, focusFirst, inp, q, qa, clr, setUserText, storeGet, storeSet, tgt } from '/js/utils.js?v=9a9bfb54';
-import { applyBackground, resolveBackground } from '/js/background.js?v=43a04bdb';
+import {
+  el,
+  focusFirst,
+  initial,
+  inp,
+  isolate,
+  q,
+  qa,
+  clr,
+  setUserText,
+  storeGet,
+  storeSet,
+  tgt,
+} from '/js/utils.js?v=da375634';
+import { applyBackground, resolveBackground } from '/js/background.js?v=e035a44d';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 
 ensureSprite();
@@ -172,7 +185,7 @@ async function appendItems(newItems) {
     /* Ids were allocated against the list the preview was built from. */
     const taken = new Set(current.map(i => i && i.id));
     const clash = newItems.find(i => taken.has(i.id));
-    if (clash) throw new ShownError(t('toast.importIdTaken', { name: clash.label }));
+    if (clash) throw new ShownError(t('toast.importIdTaken', { name: isolate(clash.label) }));
     full.items = [...current, ...newItems];
     const r = await apiPost('/api/config', full);
     _serverItems = JSON.stringify(r.items);
@@ -305,7 +318,7 @@ function openModal(idx) {
 
   const isEdit = idx != null;
   const evTitle = el('ev-title');
-  if (isEdit) setUserText(evTitle, t('common.editNamed', { name: item.label || item.id }));
+  if (isEdit) setUserText(evTitle, t('common.editNamed', { name: isolate(item.label || item.id) }));
   else {
     evTitle.textContent = t('type.addNew');
     evTitle.removeAttribute('dir');
@@ -336,8 +349,8 @@ async function _evDelete(item, idx) {
   const ok = await confirmText({
     title: t('common.delete'),
     text: isFolder
-      ? t('confirm.deleteFolder', { name: item.label })
-      : t('confirm.remove', { name: item.label || item.id }),
+      ? t('confirm.deleteFolder', { name: isolate(item.label) })
+      : t('confirm.remove', { name: isolate(item.label || item.id) }),
     confirmLabel: t('common.delete'),
     cancelLabel: t('common.cancel'),
     destructive: true,
@@ -384,7 +397,7 @@ function openFolderPicker(appId, targetFolderId = null) {
   const appName = appItem?.label || appId;
 
   const dlg = openDialog({
-    title: appId ? t('folder.moveTo', { name: appName }) : t('folder.addApp'),
+    title: appId ? t('folder.moveTo', { name: isolate(appName) }) : t('folder.addApp'),
   });
   const list = dlg.body;
   const close = dlg.close;
@@ -422,7 +435,7 @@ function openFolderPicker(appId, targetFolderId = null) {
       const ri = document.createElement('span');
       ri.className = 'fp-ic';
       ri.style.background = clr(app.color);
-      paintIcon(ri, app.iconUrl, (app.label || '?')[0]);
+      paintIcon(ri, app.iconUrl, initial(app.label));
       const nm = document.createElement('span');
       nm.className = 'fp-nm';
       setUserText(nm, app.label || app.id);

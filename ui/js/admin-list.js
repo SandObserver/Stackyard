@@ -14,12 +14,12 @@
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
 import { snapshotItems } from '/js/admin-save-logic.js?v=8389782f';
 import { reorderItems } from '/js/admin-logic.js?v=fc7f0836';
-import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=444456dd';
-import { paintIcon } from '/js/admin-shared.js?v=5ce4c5aa';
-import { clr, el, focusFirst, qa, setUserText } from '/js/utils.js?v=9a9bfb54';
+import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=958aa866';
+import { paintIcon } from '/js/admin-shared.js?v=008f63ae';
+import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=da375634';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { sizeLabel } from '/js/admin-widget-form.js?v=20808e42';
+import { sizeLabel } from '/js/admin-widget-form.js?v=7faadc86';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=648cc374';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
@@ -61,9 +61,6 @@ function moveRow(item, dir, opts = {}) {
 export function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } = {}) {
   const row = document.createElement('div');
   row.className = 'row drow';
-  if (indent)
-    row.style.cssText =
-      'padding-left:28px;background:rgba(255,255,255,.02);border-left:2px solid var(--bd);margin-left:8px;border-radius:0 var(--rs) var(--rs) 0;';
   const _filtering = !!(filter.q || filter.type !== 'all');
   row.draggable = !_filtering;
   row.dataset.itemId = item.id;
@@ -102,8 +99,8 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     const glyph = widgetGlyph(state._widgetReg?.[item.widgetType]?.glyph);
     ico.appendChild(svgNode(glyph || SIZE_ICONS[item.widgetSize] || SIZE_ICONS.medium));
   } else if (item.iconUrl) {
-    paintIcon(ico, item.iconUrl, (item.label || '?')[0].toUpperCase(), 'width:28px;height:28px;object-fit:contain;');
-  } else ico.textContent = (item.label || item.id || '?')[0].toUpperCase();
+    paintIcon(ico, item.iconUrl, initial(item.label), 'width:28px;height:28px;object-fit:contain;');
+  } else ico.textContent = initial(item.label || item.id);
   const inf = document.createElement('div');
   inf.className = 'rinf';
   const isFolderRow = item.type === 'folder';
@@ -121,7 +118,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     chevron.textContent = '▼';
     chevron.style.transform = collapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
     chevron.id = 'chev-' + item.id;
-    nm.append(chevron, document.createTextNode(item.label));
+    nm.append(chevron, setUserText(document.createElement('span'), item.label));
     nm.onclick = e => {
       e.stopPropagation();
       if (collapsedFolders.has(item.id)) {

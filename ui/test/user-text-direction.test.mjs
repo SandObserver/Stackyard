@@ -21,8 +21,8 @@ register('./js-root-hooks.mjs', import.meta.url);
 const JS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'js');
 
 /* An initial for a fallback icon is a single character, so it has no direction
-   to get wrong. Matched on taking [0] or a first-character slice. */
-const INITIAL_ONLY = /\[0\]|\.charAt\(0\)|\.slice\(0, ?1\)/;
+   to get wrong. */
+const INITIAL_ONLY = /\binitial\(/;
 
 function offendingLines(file) {
   const src = fs.readFileSync(path.join(JS_DIR, file), 'utf8');
@@ -85,4 +85,41 @@ test('setUserText isolates the name in a bdi and leaves the block alone', async 
     'the block still carries a direction, which sets its alignment too',
   );
   assert.equal(returned, node, 'returns the node so it can be appended inline');
+});
+
+/* Indexing takes one UTF-16 unit, half of an emoji. */
+test('no initial is taken by indexing a name', () => {
+  const files = fs.readdirSync(JS_DIR).filter(f => f.endsWith('.js'));
+  const offenders = files.flatMap(file =>
+    fs
+      .readFileSync(path.join(JS_DIR, file), 'utf8')
+      .split('\n')
+      .flatMap((line, i) =>
+        /\[0\][^\n]*toUpperCase|\.label\b[^\n]*\)\[0\]|\.label\b[^\n]*\.charAt\(0\)/.test(line)
+          ? [`${file}:${i + 1}: ${line.trim()}`]
+          : [],
+      ),
+  );
+  assert.deepEqual(offenders, [], 'use initial(name)');
+});
+
+/* Without isolation the closing bracket of "Media (old)" joins the Persian
+   sentence and is drawn on the far side of the name. */
+test('a name inside a visible translated sentence is isolated', () => {
+  const admin = fs.readFileSync(path.join(JS_DIR, 'admin.js'), 'utf8');
+  for (const key of [
+    'common.editNamed',
+    'confirm.deleteFolder',
+    'confirm.remove',
+    'folder.moveTo',
+    'toast.importIdTaken',
+  ]) {
+    const call = new RegExp(`t\\('${key.replace('.', '\\.')}', \\{ name: ([^}]+) \\}\\)`).exec(admin);
+    assert.ok(call, `${key} is no longer built here`);
+    assert.match(call[1], /^isolate\(/, `${key} interpolates a bare name`);
+  }
+  const form = fs.readFileSync(path.join(JS_DIR, 'admin-app-form.js'), 'utf8');
+  assert.match(form, /t\('toast\.uploaded', \{ name: isolate\(/);
+  const list = fs.readFileSync(path.join(JS_DIR, 'admin-list.js'), 'utf8');
+  assert.doesNotMatch(list, /createTextNode\(item\.label\)/, 'the folder row name is a bare text node');
 });

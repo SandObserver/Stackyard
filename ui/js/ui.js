@@ -3,6 +3,7 @@ import { widgetSrc, cardPreset, fixedAppearance, uniqueTitle, WIDGET_DESIGN } fr
 import {
   mk,
   clr,
+  initial,
   isDashboardEmpty,
   renderEmptyState,
   mkWrap as _mkWrap,
@@ -14,7 +15,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=9a9bfb54';
+} from '/js/utils.js?v=da375634';
 import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
@@ -93,14 +94,14 @@ function mkMiniIcon(child, pointerEvents) {
       const s = mk('span');
       s.className = onLight ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
       if (pointerEvents === 'none') s.style.pointerEvents = 'none';
-      s.textContent = (child.label || '?')[0].toUpperCase();
+      s.textContent = initial(child.label);
       bg.appendChild(s);
     }
   } else {
     const s = mk('span');
     s.className = onLight ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
     if (pointerEvents === 'none') s.style.pointerEvents = 'none';
-    s.textContent = (child.label || '?')[0].toUpperCase();
+    s.textContent = initial(child.label);
     bg.appendChild(s);
   }
   return bg;
@@ -400,7 +401,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   titleEl.className = 'folder-title-mobile dyn-title-mob';
   css(titleEl, {
     '--tfs': titleFs + 'px',
-    left: titleLeft + 'px',
+    'inset-inline-start': titleLeft + 'px',
     width: boxW - padH + 'px',
     top: boxTop - titleRendH - titleGap + Math.round(8 * ptScale) + 'px',
   });
@@ -754,7 +755,7 @@ export function buildMobile() {
       iframeOpts: item.iframe,
       overlayHref,
       mobile: true,
-      onSwipe: dir => goTo(st().pg + dir),
+      onSwipe: dir => goTo(st().pg + dir * pageDir()),
     });
     return card;
   }

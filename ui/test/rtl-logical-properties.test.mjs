@@ -315,3 +315,33 @@ test('the inset check still recognises what it is meant to allow', () => {
     'an uneven pair is a defect',
   );
 });
+
+/* The stylesheet checks above do not see a style written from a script. */
+test('no script writes a physical side into an inline style', () => {
+  const dir = path.join(root, 'js');
+  const offenders = fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith('.js'))
+    .flatMap(f =>
+      code(`js/${f}`)
+        .split('\n')
+        .flatMap((line, i) => (/(padding|margin|border)-(left|right)\s*:/.test(line) ? [`${f}:${i + 1}`] : [])),
+    );
+  assert.deepEqual(offenders, []);
+});
+
+test("the phone folder title starts on the panel's leading edge", () => {
+  const ui = code('js/ui.js');
+  const title = /titleEl\.className = 'folder-title-mobile[\s\S]*?\}\);/.exec(ui)?.[0] ?? '';
+  assert.match(title, /'inset-inline-start': titleLeft/);
+  assert.doesNotMatch(title, /\bleft:/);
+});
+
+/* pageDir() is -1 in a right-to-left page. A widget reports the raw finger
+   direction, so an unmirrored call pages the opposite way to the grid. */
+test('every swipe and drag pager mirrors its direction', () => {
+  const ui = code('js/ui.js');
+  const calls = [...ui.matchAll(/(goTo|gotoPage)\((st\(\)\.pg|curPage) \+ ([^)]*\)?[^)]*)\)/g)].map(m => m[0]);
+  assert.ok(calls.length >= 3, 'the pager calls moved');
+  for (const c of calls) assert.match(c, /pageDir\(\)/, `${c} ignores the page direction`);
+});

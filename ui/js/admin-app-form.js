@@ -1,4 +1,4 @@
-import { clr, el, focusFirst, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=9a9bfb54';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=da375634';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=af772a1b';
@@ -23,10 +23,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=5ce4c5aa';
-import { createListbox } from '/js/listbox.js?v=30c1b9d1';
+} from '/js/admin-shared.js?v=008f63ae';
+import { createListbox } from '/js/listbox.js?v=bbfda5a2';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=c0780c9c';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=b358fc25';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=a1f2695a';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -120,7 +120,7 @@ export function buildAppForm(body, item) {
     <div class="grp" id="ipw">
       <div class="icon-src-anchor">
       <div class="row icon-src-row">
-        <span class="icon-prev" id="ipv">${state.siurl ? html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">` : html`<span>${(item?.label || '?')[0]?.toUpperCase() || '?'}</span>`}</span>
+        <span class="icon-prev" id="ipv">${state.siurl ? html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">` : html`<span>${initial(item?.label)}</span>`}</span>
         <input class="icon-srch" id="ip-in" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="iprs" aria-autocomplete="list" aria-describedby="ip-status" aria-label="${t('app.icon')}" placeholder="${t('app.iconPh')}" value="${state.siurl}">
         <button type="button" class="row-btn" id="ip-upload-lbl">${t('app.upload')}</button>
         <input type="file" id="ip-upload" class="file-hidden" tabindex="-1" aria-hidden="true" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon">
@@ -737,7 +737,7 @@ function wireIcon() {
         renderIconVariants([]);
         ipClose();
         updPrev();
-        toast(t('toast.uploaded', { name: d.filename }));
+        toast(t('toast.uploaded', { name: isolate(d.filename) }));
       } catch (e) {
         toast(t('toast.uploadFailed', { err: errorText(e) }), 'err');
       } finally {
@@ -841,7 +841,7 @@ function showIPRes(list, rawInput) {
 function setInitialGlyph(p) {
   const l = inpById('f-lbl')?.value || '?';
   const s = document.createElement('span');
-  s.textContent = (l[0] || '?').toUpperCase();
+  s.textContent = initial(l);
   p.replaceChildren(s);
 }
 /* Several attempts are in flight at once and the half-typed ones finish last.

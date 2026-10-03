@@ -310,6 +310,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .chip.on{background:var(--ac);color:var(--on-fill);font-weight:600}
 .chip:hover:not(.on){color:var(--tx)}
 .row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:grab;align-items:center}
+.row.drow[data-indent]{padding-inline-start:28px;background:rgba(255,255,255,.02);border-inline-start:2px solid var(--bd);margin-inline-start:8px;border-start-end-radius:var(--rs);border-end-end-radius:var(--rs)}
 .row.drow:hover{background:var(--ov-soft)}
 .grp:has(> .fh-hl.on) .row.drow:hover{background:transparent}
 .row.drow.dragging{opacity:.4;cursor:grabbing}

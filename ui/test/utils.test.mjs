@@ -11,7 +11,7 @@ import { register } from 'node:module';
    here (rather than via --import) keeps it working under the test runner's
    per-file child processes. */
 register('./js-root-hooks.mjs', import.meta.url);
-const { clr, esc, sanitizeCssUrl, safeAllow } = await import('../js/utils.js');
+const { clr, esc, initial, isolate, sanitizeCssUrl, safeAllow } = await import('../js/utils.js');
 
 test('clr maps the sentinel color names to concrete hex', () => {
   assert.equal(clr('dark'), '#1C1C1E');
@@ -249,4 +249,20 @@ test('focusFirst skips detached, disabled, hidden and unrendered candidates', as
   } finally {
     globalThis.document = prev;
   }
+});
+
+test('initial keeps an emoji or supplementary-plane character whole', () => {
+  assert.equal(initial('\u{1F3AC} Movies'), '\u{1F3AC}');
+  assert.equal(initial('\u{2000B}\u{2000B}'), '\u{2000B}');
+  assert.equal(initial('\u{1F468}\u200D\u{1F469}\u200D\u{1F467} Family'), '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}');
+});
+
+test('initial upper-cases a letter and falls back to a question mark', () => {
+  assert.equal(initial('plex'), 'P');
+  assert.equal(initial(''), '?');
+  assert.equal(initial(undefined), '?');
+});
+
+test('isolate wraps a name in first-strong isolate marks', () => {
+  assert.equal(isolate('Home Assistant (dev)'), '\u2068Home Assistant (dev)\u2069');
 });

@@ -1,4 +1,4 @@
-import { toast, apiGet, apiPost, errorText, reveal, swapContent } from '/js/admin-shared.js?v=5ce4c5aa';
+import { toast, apiGet, apiPost, errorText, reveal, swapContent } from '/js/admin-shared.js?v=008f63ae';
 import { socketProbeAdvice } from '/js/admin-error.js?v=a1f2695a';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
@@ -11,10 +11,11 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=fc7f0836';
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
-import { el, inp, setUserText } from '/js/utils.js?v=9a9bfb54';
+import { el, inp, setUserText } from '/js/utils.js?v=da375634';
+import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { serialWrites } from '/js/admin-save-logic.js?v=8389782f';
-import { renderColorControl } from '/js/admin-color-control.js?v=c0780c9c';
-import { BACKDROP } from '/js/background.js?v=43a04bdb';
+import { renderColorControl } from '/js/admin-color-control.js?v=b358fc25';
+import { BACKDROP } from '/js/background.js?v=e035a44d';
 import { firstBadHost, hostnameOf, isLocalAddress, parseHostList } from '/js/host-names.js?v=842f96ca';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
@@ -195,13 +196,14 @@ export function loadSettings(c) {
        target on a phone. */
     slider.style.backgroundImage = `linear-gradient(var(--slider-dir), var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
   }
+  const twoPlaces = v => formatNumber(parseFloat(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (brEl) {
     brEl.value = bg.brightness ?? 0.62;
-    if (brVal) brVal.textContent = parseFloat(brEl.value).toFixed(2);
+    if (brVal) brVal.textContent = twoPlaces(brEl.value);
     updateSliderFill(brEl);
     brEl.addEventListener('input', () => {
       updateSliderFill(brEl);
-      if (brVal) brVal.textContent = parseFloat(brEl.value).toFixed(2);
+      if (brVal) brVal.textContent = twoPlaces(brEl.value);
     });
   }
   el('bg-save').addEventListener('click', saveWallpaper);

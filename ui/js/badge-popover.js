@@ -2,6 +2,8 @@
 /* One element for the whole dashboard. A per-tile popover outlives the tiles
    the grid rebuilds on every resize. */
 
+import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
+
 const HOVER_IN_MS = 320;
 const COMPAT_CLICK_MS = 500;
 /* SC 1.4.13 asks that hover content be hoverable. The pointer has to cross the
@@ -80,7 +82,8 @@ function open(badge) {
     name.textContent = row.name;
     const val = document.createElement('span');
     val.className = 'badge-pop-val';
-    val.textContent = row.unit ? `${row.value} ${row.unit}` : String(row.value);
+    const value = typeof row.value === 'number' ? formatNumber(row.value) : row.value;
+    val.textContent = row.unit ? `${value} ${row.unit}` : value;
     line.append(dot, name, val);
     p.appendChild(line);
   }
