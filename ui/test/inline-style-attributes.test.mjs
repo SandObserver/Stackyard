@@ -21,16 +21,28 @@ const sources = [
   ...fs.readdirSync(path.join(root, 'js')).map(f => path.join('js', f)),
 ].filter(f => /\.(html|js)$/.test(f));
 
-const ATTR = /\bstyle\s*=\s*["']/g;
+/* setAttribute('style') writes the attribute, so style-src applies to it. The
+   call can span lines once formatted, and attribute names ignore case. */
+const ATTR = /\bstyle\s*=\s*["']|setAttribute\(\s*['"`]style['"`]/gi;
+
+const styleAttributeLines = (rel, src) =>
+  [...src.matchAll(ATTR)].map(m => {
+    const line = src.slice(0, m.index).split('\n').length;
+    return `${rel}:${line}: ${src.slice(m.index, m.index + 60).replace(/\s+/g, ' ')}`;
+  });
+
+test('the scan catches every way of writing the attribute', () => {
+  assert.equal(styleAttributeLines('x', '<div style="color:red">').length, 1);
+  assert.equal(styleAttributeLines('x', "el.setAttribute('style', 'color:red');").length, 1);
+  assert.equal(styleAttributeLines('x', "el.setAttribute(\n  'style',\n  `color:${c}`,\n);").length, 1);
+  assert.equal(styleAttributeLines('x', "el.setAttribute('STYLE', 'color:red');").length, 1);
+  assert.equal(styleAttributeLines('x', "el.style.color = 'red';").length, 0);
+});
 
 test('no first-party markup carries a style attribute', () => {
   const offenders = [];
   for (const rel of sources) {
-    const src = fs.readFileSync(path.join(root, rel), 'utf8');
-    for (const line of src.split('\n')) {
-      if (ATTR.test(line)) offenders.push(`${rel}: ${line.trim().slice(0, 80)}`);
-      ATTR.lastIndex = 0;
-    }
+    offenders.push(...styleAttributeLines(rel, fs.readFileSync(path.join(root, rel), 'utf8')));
   }
   assert.deepEqual(
     offenders,

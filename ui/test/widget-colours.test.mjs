@@ -104,6 +104,18 @@ const BESPOKE = new Map(
     '#40C463': 'GitHub demo contribution scale, step 2',
     '#30A14E': 'GitHub demo contribution scale, step 3',
     '#216E39': 'GitHub demo contribution scale, step 4',
+    '#3C3C43': 'connections map, secondary label in the light theme',
+    '#EBEBF5': 'secondary label in the dark theme',
+    '#E4E4EC': 'connections map, land dots in the dark theme',
+    '#1C1C20': 'connections map, hover card in the dark theme',
+    '#1E1E22': 'connections map, detail card',
+    '#141416': 'disk health, detail panel',
+    '#64646E': 'backup, idle status flag',
+    '#787880': 'books, progress track',
+    '#808080': 'nowplaying, arrow hover fill',
+    '#96969E': 'connections VPN, idle dots',
+    '#FAF6EE': 'books, title ink on a dark spine',
+    '#E8E8EA': 'widget template, text in the dark theme',
   }).map(([k, v]) => [k.toUpperCase(), v]),
 );
 
@@ -120,7 +132,65 @@ function files(dir, out = []) {
   return out;
 }
 
-const all = files(widgets).map(p => [path.relative(widgets, p), fs.readFileSync(p, 'utf8')]);
+/* The template is what a new widget is copied from. */
+const template = path.resolve(widgets, '..', '..', 'docs', 'widget-template');
+
+const all = [...files(widgets), ...files(template)].map(p => [path.relative(widgets, p), fs.readFileSync(p, 'utf8')]);
+
+const hex2 = n =>
+  Math.round(Math.min(255, Math.max(0, n)))
+    .toString(16)
+    .padStart(2, '0');
+
+function hslToHex(h, s, l) {
+  const k = n => (n + h / 30) % 12;
+  const a = (s / 100) * Math.min(l / 100, 1 - l / 100);
+  const f = n => 255 * (l / 100 - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)));
+  return `#${hex2(f(0))}${hex2(f(8))}${hex2(f(4))}`;
+}
+
+/* Every literal colour as #RRGGBB, or #RGB as written. Alpha is not a colour
+   choice, so #RRGGBBAA and rgba() are read without it. A component built at
+   run time, such as rgba(color, 0.5), is not a literal. Named colours are not
+   read: the words collide with prose and identifiers. */
+const NUM = '(-?[\\d.]+)(%|deg|turn|rad)?';
+const COLOUR = new RegExp(
+  `#([0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})\\b|\\b(rgba?|hsla?)\\(\\s*${NUM}[\\s,]+${NUM}[\\s,]+${NUM}`,
+  'gi',
+);
+
+const channel = (n, unit) => (unit === '%' ? n * 2.55 : n);
+const degrees = (n, unit) => (unit === 'turn' ? n * 360 : unit === 'rad' ? (n * 180) / Math.PI : n);
+
+function colours(src) {
+  const out = [];
+  for (const m of src.matchAll(COLOUR)) {
+    if (m[1]) {
+      const h = m[1].length === 8 ? m[1].slice(0, 6) : m[1].length === 4 ? m[1].slice(0, 3) : m[1];
+      out.push({ written: m[0], hex: `#${h}`.toUpperCase() });
+      continue;
+    }
+    const [a, b, c] = [3, 5, 7].map(i => Number(m[i]));
+    const hex = m[2].toLowerCase().startsWith('hsl')
+      ? hslToHex(((degrees(a, m[4]) % 360) + 360) % 360, b, c)
+      : `#${hex2(channel(a, m[4]))}${hex2(channel(b, m[6]))}${hex2(channel(c, m[8]))}`;
+    out.push({ written: m[0], hex: hex.toUpperCase() });
+  }
+  return out;
+}
+
+test('the scan reads every way of writing a colour', () => {
+  assert.deepEqual(
+    colours('a:#12345678; b:rgb(12, 34, 56); c:rgba(255,255,255,.5); d:hsl(0 100% 50%); e:rgba(color,0.5)').map(
+      c => c.hex,
+    ),
+    ['#123456', '#0C2238', '#FFFFFF', '#FF0000'],
+  );
+  assert.deepEqual(
+    colours('a:rgb(100%,0%,0%); b:RGB(1,2,3); c:hsl(-120 100% 50%); d:hsl(0.5turn 100% 50%); e:#ABC').map(c => c.hex),
+    ['#FF0000', '#010203', '#0000FF', '#00FFFF', '#ABC'],
+  );
+});
 
 test('the scan sees the widgets', () => {
   assert.ok(all.length >= 14, `only ${all.length} widget pages found, the scan is probably wrong`);
@@ -129,10 +199,9 @@ test('the scan sees the widgets', () => {
 test('every widget colour is a palette value or a named bespoke one', () => {
   const offenders = [];
   for (const [name, src] of all) {
-    for (const m of src.matchAll(/#[0-9a-fA-F]{3,6}\b/g)) {
-      const hex = m[0].toUpperCase();
+    for (const { written, hex } of colours(src)) {
       if (PALETTE.has(hex) || BESPOKE.has(hex)) continue;
-      offenders.push(`${name}: ${m[0]}`);
+      offenders.push(`${name}: ${written}`);
     }
   }
   assert.deepEqual(
@@ -145,10 +214,7 @@ test('every widget colour is a palette value or a named bespoke one', () => {
 /* A bespoke entry that no widget uses any more is a stale exemption, and the
    next colour that happens to match it slips through unexamined. */
 test('every bespoke colour is still used', () => {
-  const joined = all
-    .map(([, src]) => src)
-    .join('')
-    .toUpperCase();
-  const stale = [...BESPOKE.keys()].filter(hex => !joined.includes(hex));
+  const used = new Set(all.flatMap(([, src]) => colours(src).map(c => c.hex)));
+  const stale = [...BESPOKE.keys()].filter(hex => !used.has(hex));
   assert.deepEqual(stale, [], `Listed but unused, remove it:\n  ${stale.join('\n  ')}`);
 });

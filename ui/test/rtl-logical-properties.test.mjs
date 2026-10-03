@@ -52,6 +52,9 @@ const PHYSICAL = [
   /padding-right\s*:/,
   /border-left\s*:/,
   /border-right\s*:/,
+  /border-(left|right)-(width|style|color)\s*:/,
+  /border-(top|bottom)-(left|right)-radius\s*:/,
+  /(?<![\w-])(float|clear)\s*:\s*(left|right)\b/,
   /text-align\s*:\s*(left|right)\b/,
   /text-align-last\s*:\s*(left|right)\b/,
 ];
@@ -66,21 +69,75 @@ test('no stylesheet positions anything by screen side', () => {
   }
 });
 
+/* Space-separated values, keeping calc() and var() whole. */
+function values(text, sep = /\s/) {
+  const parts = [''];
+  let depth = 0;
+  for (const ch of text.trim()) {
+    if (ch === '(') depth++;
+    if (ch === ')') depth--;
+    if (sep.test(ch) && depth === 0) {
+      if (parts.at(-1)) parts.push('');
+    } else parts[parts.length - 1] += ch;
+  }
+  return parts;
+}
+
+/* Four-value shorthands run top, right, bottom, left. border-radius runs
+   top-left, top-right, bottom-right, bottom-left, and a mirror swaps each pair. */
+const SIDED =
+  /(?<![-\w])(padding|margin|inset|border-width|border-style|border-color|scroll-margin|scroll-padding|border-radius)\s*:\s*([^;}]+)/g;
+
+function asymmetricShorthands(css) {
+  const out = [];
+  for (const m of css.matchAll(SIDED)) {
+    const value = m[2].replace(/\s*!important\s*$/, '');
+    const even = values(value, /\//).every(half => {
+      const p = values(half);
+      if (m[1] !== 'border-radius') return p.length < 4 || p[1] === p[3];
+      const [tl, tr = tl, br = tl, bl = tr] = p;
+      return tl === tr && br === bl;
+    });
+    if (!even) out.push(m[0].trim());
+  }
+  return out;
+}
+
+test('the shorthand check tells a mirrored pair from an uneven one', () => {
+  assert.deepEqual(asymmetricShorthands('.a{padding:1px 2px 3px 2px;border-radius:calc(10px * var(--sc,1))}'), []);
+  assert.deepEqual(asymmetricShorthands('.b{border-radius:8px 8px 0 0;inset:0 4px auto 4px}'), []);
+  assert.deepEqual(asymmetricShorthands('.c{border-radius:0 8px 8px 0}'), ['border-radius:0 8px 8px 0']);
+  assert.deepEqual(asymmetricShorthands('.d{inset:0 auto 0 12px}'), ['inset:0 auto 0 12px']);
+  assert.deepEqual(asymmetricShorthands('.e{border-width:0 2px 0 0}'), ['border-width:0 2px 0 0']);
+  assert.deepEqual(asymmetricShorthands('.f{border-radius:4px 8px}'), ['border-radius:4px 8px']);
+  assert.deepEqual(asymmetricShorthands('.g{border-radius:8px / 4px 8px 8px 4px}'), [
+    'border-radius:8px / 4px 8px 8px 4px',
+  ]);
+  assert.deepEqual(asymmetricShorthands('.h{border-radius:12px !important;padding:1px 2px 3px !important}'), []);
+  assert.deepEqual(asymmetricShorthands('.i{margin:0 calc(10px / 2) 0 4px}'), ['margin:0 calc(10px / 2) 0 4px']);
+});
+
 test('no stylesheet spaces the two sides differently with a shorthand', () => {
   for (const sheet of SHEETS) {
-    for (const m of code(sheet).matchAll(/(?<![-\w])(?:padding|margin)\s*:\s*([^;}]+)/g)) {
-      const parts = [''];
-      let depth = 0;
-      for (const ch of m[1].trim()) {
-        if (ch === '(') depth++;
-        if (ch === ')') depth--;
-        if (/\s/.test(ch) && depth === 0) {
-          if (parts.at(-1)) parts.push('');
-        } else parts[parts.length - 1] += ch;
-      }
-      assert.ok(parts.length < 4 || parts[1] === parts[3], `${sheet} uses ${m[0]}, which does not flip for Persian`);
-    }
+    const uneven = asymmetricShorthands(code(sheet));
+    assert.deepEqual(uneven, [], `${sheet} uses these, which do not flip for Persian`);
   }
+});
+
+test('the side check sees the long-hand forms', () => {
+  for (const sample of [
+    '.a{border-left-width:2px}',
+    '.b{border-right-color:red}',
+    '.c{border-top-left-radius:4px}',
+    '.d{float:left}',
+    '.e{clear:right}',
+  ]) {
+    assert.ok(
+      PHYSICAL.some(p => p.test(sample)),
+      `not caught: ${sample}`,
+    );
+  }
+  assert.ok(!PHYSICAL.some(p => p.test('.f{float:inline-start;border-start-start-radius:4px}')));
 });
 
 /* A widget's own CSS is held to the same rule, but only for the properties
@@ -317,6 +374,57 @@ test('the inset check still recognises what it is meant to allow', () => {
 });
 
 /* The stylesheet checks above do not see a style written from a script. */
+/* An inline style written by a module, as CSS text. `.style.x =`,
+   setProperty() and object keys become `prop:value;`, camelCase becomes
+   kebab-case, concatenations join into one value, and each ${...} hole becomes a
+   token without spaces, so two different holes compare unequal. */
+function inlineCss(line) {
+  const kebab = n => n.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
+  return line
+    .replace(/\s*\+\s*/g, '+')
+    .replace(/\$\{([^}]*)\}/g, (_, e) => `$(${e.replace(/\s+/g, '')})`)
+    .replace(/\.style\.cssText\s*\+?=\s*/g, ';')
+    .replace(/\.style\.(\w+)\s*=\s*/g, (_, p) => `;${p === 'cssFloat' ? 'float' : kebab(p)}:`)
+    .replace(/setProperty\(\s*(['"`])([\w-]+)\1\s*,\s*/g, (_, q, p) => `;${p}:`)
+    .replace(/(['"`])([\w-]+)\1\s*:/g, (_, q, p) => `;${p}:`)
+    .replace(/(?<![\w.$-])([a-z]+[A-Z]\w*)\s*:/g, (_, p) => `;${kebab(p)}:`)
+    .replace(/:\s*(['"`])(.*?)\1/g, (_, q, v) => `:${v};`)
+    .replace(/['"`]/g, ';');
+}
+
+const INLINE_SIDE =
+  /(padding|margin|border)-(left|right)[\w-]*\s*:|border-(top|bottom)-(left|right)-radius\s*:|(?<![\w-])(float|clear)\s*:\s*(left|right)\b/;
+
+const inlineSideOffender = line => {
+  const css = inlineCss(line);
+  return INLINE_SIDE.test(css) || asymmetricShorthands(css).length > 0;
+};
+
+test('the inline style check reads the forms modules write', () => {
+  for (const line of [
+    "css(el, { 'padding-left': a + 'px' });",
+    "css(el, { padding: '0 4px 0 8px' });",
+    'el.style.cssText = `padding:0 ${a}px 0 ${b}px`;',
+    "el.style.paddingLeft = '4px';",
+    "el.style.setProperty('margin-right', '4px');",
+    "el.style.cssFloat = 'left';",
+    "el.style.borderRadius = '0 8px 8px 0';",
+    "el.style.cssText = 'clear:right';",
+    'el.style.borderTopLeftRadius = r;',
+  ]) {
+    assert.ok(inlineSideOffender(line), `not caught: ${line}`);
+  }
+  for (const line of [
+    "css(el, { 'inset-inline-start': a + 'px' });",
+    "el.style.padding = '0 4px';",
+    'el.style.cssText = `margin:0 ${a}px 0 ${a}px`;',
+    "el.style.borderRadius = '8px 8px 0 0';",
+    "card.style.borderRadius = WIDGET_R + 'px';",
+  ]) {
+    assert.ok(!inlineSideOffender(line), `wrongly caught: ${line}`);
+  }
+});
+
 test('no script writes a physical side into an inline style', () => {
   const dir = path.join(root, 'js');
   const offenders = fs
@@ -325,7 +433,7 @@ test('no script writes a physical side into an inline style', () => {
     .flatMap(f =>
       code(`js/${f}`)
         .split('\n')
-        .flatMap((line, i) => (/(padding|margin|border)-(left|right)\s*:/.test(line) ? [`${f}:${i + 1}`] : [])),
+        .flatMap((line, i) => (inlineSideOffender(line) ? [`${f}:${i + 1}: ${line.trim().slice(0, 80)}`] : [])),
     );
   assert.deepEqual(offenders, []);
 });
