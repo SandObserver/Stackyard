@@ -11,6 +11,7 @@
       align-items:center; justify-content:center; gap:4px }
     .n { font-size:34px; font-weight:600; letter-spacing:-0.5px }
     .l { font-size:12px; color:#8e8e93 }
+    .i { max-width:100%; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
     html[data-theme="light"] body { color:#1c1c1e }
     html[data-theme="light"] .l { color:#6c6c70 }
   </style>
@@ -25,13 +26,21 @@
     poll({
       render: data => {
         root.replaceChildren();
-        const n = document.createElement('div');
-        n.className = 'n';
-        n.textContent = String(data.total);
-        const l = document.createElement('div');
-        l.className = 'l';
-        l.textContent = data.total === 1 ? 'item' : 'items';
-        root.append(n, l);
+        if (data.total != null) {
+          const n = document.createElement('div');
+          n.className = 'n';
+          n.textContent = String(data.total);
+          const l = document.createElement('div');
+          l.className = 'l';
+          l.textContent = data.total === 1 ? 'item' : 'items';
+          root.append(n, l);
+        }
+        for (const item of data.items.slice(0, 3)) {
+          const row = document.createElement('div');
+          row.className = 'i';
+          row.textContent = item.name;
+          root.append(row);
+        }
       },
       isEmpty: data => !data.items?.length,
       emptyText: 'Nothing here',

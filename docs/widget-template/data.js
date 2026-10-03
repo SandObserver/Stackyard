@@ -1,5 +1,5 @@
 module.exports = async function (ctx) {
-  const { url, apiKey } = ctx.config;
+  const { url, apiKey, showTotal } = ctx.config;
   if (!url) ctx.fail('Not configured', { kind: ctx.KIND.INVALID });
 
   const base = ctx.normalizeBase(url);
@@ -13,6 +13,6 @@ module.exports = async function (ctx) {
 
   return {
     items: r.data.items.slice(0, 10).map(i => ({ name: i.name })),
-    total: r.data.total ?? r.data.items.length,
+    total: showTotal === false ? null : (r.data.total ?? r.data.items.length),
   };
 };

@@ -22,5 +22,5 @@ manifest at startup.
 `widget.json` here is validated in CI along with the shipped manifests, so this
 template cannot drift out of date with the schema.
 
-See [../widgets.md](../widgets.md) for the field types, the `ctx` reference, and
-the toolbox.
+See [Build your first widget](https://stackyard.sandobserver.com/docs/create-a-widget/)
+for the field types, the `ctx` reference, and the toolbox.

@@ -49,8 +49,9 @@ Widgets and the services they read:
 - **Disk health**: TrueNAS, Scrutiny
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
+- **Dashboard switch**: links to your other Stackyard dashboards
 
-Each widget is documented at [Widgets](https://stackyard.sandobserver.com/docs/widgets/). Adding one is a folder plus one registry entry, with no changes to the rest of the app; see [Build your first widget](https://stackyard.sandobserver.com/docs/create-a-widget/).
+Each widget is documented at [Widgets](https://stackyard.sandobserver.com/docs/widgets/). Adding one is a folder, with no changes to the rest of the app; see [Build your first widget](https://stackyard.sandobserver.com/docs/create-a-widget/).
 
 ## Getting started
 
