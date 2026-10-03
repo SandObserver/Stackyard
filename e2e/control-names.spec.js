@@ -99,6 +99,13 @@ test('the selected colour swatch is announced as pressed', async ({ page }) => {
   await swatch('light').click();
   await expect(swatch('light')).toHaveAttribute('aria-pressed', 'true');
   await expect(swatch('dark')).toHaveAttribute('aria-pressed', 'false');
+  await swatch('custom').click();
+  await expect(swatch('custom')).toHaveAttribute('aria-expanded', 'true');
+  await expect(swatch('custom')).toHaveAttribute('aria-pressed', 'true');
+  await swatch('red').click();
+  await expect(swatch('red')).toHaveAttribute('aria-pressed', 'true');
+  await expect(swatch('custom')).toHaveAttribute('aria-pressed', 'false');
+  await expect(swatch('custom')).toHaveAttribute('aria-expanded', 'true');
 });
 
 test('the Test result is announced', async ({ page }) => {

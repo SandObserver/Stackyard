@@ -19,7 +19,7 @@ import { paintIcon } from '/js/admin-shared.js?v=be847687';
 import { clr, el, focusFirst, qa, setUserText } from '/js/utils.js?v=d9246f59';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { sizeLabel } from '/js/admin-widget-form.js?v=9bc09461';
+import { sizeLabel } from '/js/admin-widget-form.js?v=f60cbde3';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=648cc374';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 

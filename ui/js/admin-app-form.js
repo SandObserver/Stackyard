@@ -25,7 +25,7 @@ import {
 } from '/js/admin-shared.js?v=be847687';
 import { createListbox } from '/js/listbox.js?v=198d4a2d';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=3949ca51';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=f60e9e8b';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=f82486b2';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -366,7 +366,7 @@ function renderActLabels(host) {
     hdr.dataset.idx = String(i);
     setHtml(
       hdr,
-      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><span role="heading" aria-level="2">${t('app.labelN', { n: i + 1 })}</span>`,
+      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><span role="heading" aria-level="3">${t('app.labelN', { n: i + 1 })}</span>`,
     );
     const ctl = document.createElement('span');
     ctl.className = 'albl-ctl';
