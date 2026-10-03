@@ -11,7 +11,7 @@
   <script src="/js/mobile-class.js?v=fe95da0d"></script>
   <script src="/js/admin-theme.js?v=66565254"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=0f4ba0b8">
-  <link rel="stylesheet" href="/css/admin.css?v=26a5e803">
+  <link rel="stylesheet" href="/css/admin.css?v=42bcfb3e">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
   <link rel="stylesheet" href="/css/config-recovery.css?v=6b5bc9d8">
 </head>
@@ -21,12 +21,13 @@
 
   <!-- Sidebar -->
   <nav class="sb" aria-label="Settings navigation" data-i18n-al="nav.navigation">
-    <a class="sb-brand" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard">
+    <a class="sb-brand" href="/">
       <svg class="sy-icon brand-logo" width="30" height="30" aria-hidden="true" focusable="false"><use href="#sy-solid-logo"/></svg>
       <div>
         <div class="sb-name">Stackyard</div>
         <div class="sb-ver" id="sidebar-version"></div>
       </div>
+      <span class="visually-hidden" data-i18n="nav.backToDashboard">Back to dashboard</span>
     </a>
     <ul class="sb-nav" role="list">
       <li><button class="nl" data-sec="general" type="button">
@@ -155,7 +156,7 @@
             <span class="rl" data-i18n="appearance.image">Image</span>
             <span class="rv is-ph" id="bg-file-v" data-i18n="appearance.noImage">No image</span>
             <button type="button" class="row-btn" id="bg-upload-lbl" data-i18n="app.upload">Upload</button>
-            <input type="file" id="bg-upload" class="file-hidden" accept="image/png,image/jpeg,image/webp,image/avif,image/gif">
+            <input type="file" id="bg-upload" class="file-hidden" tabindex="-1" aria-hidden="true" accept="image/png,image/jpeg,image/webp,image/avif,image/gif">
           </div>
           <div class="row ie-row" id="ie-bgurl"><span class="rl" data-i18n="appearance.imageUrl">Image URL</span><span class="rv is-ph" id="ie-bgurl-v">Image URL</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
           <div class="row">
@@ -298,6 +299,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=762480c8"></script>
+<script type="module" src="/js/admin.js?v=4af3650b"></script>
 </body>
 </html>

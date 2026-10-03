@@ -108,8 +108,7 @@
     "colorCode": "کد رنگ",
     "colorCodePh": "#rrggbb یا هر رنگ CSS",
     "hue": "فام",
-    "saturation": "اشباع",
-    "wallpaperSource": "منبع تصویر پس‌زمینه"
+    "saturation": "اشباع"
   },
   "about": {
     "documentation": "مستندات",
@@ -150,7 +149,6 @@
     "createNew": "ساخت پوشه تازه",
     "expandAria": "باز کردن پوشه {name}",
     "collapseAria": "بستن پوشه {name}",
-    "appsInFolder": "برنامه‌های این پوشه",
     "appsCount_one": "{count} برنامه",
     "appsCount_other": "{count} برنامه"
   },

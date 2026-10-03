@@ -108,8 +108,7 @@
     "colorCode": "Code couleur",
     "colorCodePh": "#rrggbb ou toute couleur CSS",
     "hue": "Teinte",
-    "saturation": "Saturation",
-    "wallpaperSource": "Source du fond d'écran"
+    "saturation": "Saturation"
   },
   "about": {
     "documentation": "Documentation",
@@ -150,7 +149,6 @@
     "createNew": "Créer un dossier",
     "expandAria": "Développer le dossier {name}",
     "collapseAria": "Réduire le dossier {name}",
-    "appsInFolder": "Applications de ce dossier",
     "appsCount_one": "{count} application",
     "appsCount_many": "{count} d’applications",
     "appsCount_other": "{count} applications"
