@@ -74,7 +74,18 @@ test('the toolbox reads the language from its own URL', () => {
 
 test('the toolbox fetches the same locale file the parent uses', () => {
   assert.match(toolbox, /fetch\(`\/i18n\/\$\{encodeURIComponent\(_lang\)\}\.json`/);
-  assert.match(toolbox, /cache: 'force-cache'/, 'the parent already fetched it');
+});
+
+/* The server answers catalogs with no-cache. force-cache would skip that
+   revalidation and keep the previous release's strings after an upgrade, and
+   no-store would download the whole catalog again in every widget. */
+test('every catalog fetch revalidates the stored copy', () => {
+  const sources = { 'js/widget-toolbox.js': toolbox, 'js/i18n.js': read('js/i18n.js') };
+  for (const [file, src] of Object.entries(sources)) {
+    const fetches = [...src.matchAll(/fetch\(`[^`]*\/i18n\/[^`]*`,\s*\{([^}]*)\}/g)];
+    assert.ok(fetches.length, `${file} has no catalog fetch`);
+    for (const [, opts] of fetches) assert.match(opts, /cache: 'no-cache'/, file);
+  }
 });
 
 test('English skips the fetch entirely', () => {

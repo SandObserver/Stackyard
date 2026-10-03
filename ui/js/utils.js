@@ -3,7 +3,7 @@ import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { mkGlassRim } from '/js/glass-rim.js?v=3faec233';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
-import { t } from '/js/i18n.js?v=1f1ea9c1';
+import { t } from '/js/i18n.js?v=71885535';
 import { pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 export const mk = (tag, a = {}) => {

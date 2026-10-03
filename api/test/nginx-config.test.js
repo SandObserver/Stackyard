@@ -445,7 +445,7 @@ test('hashed asset paths are immutable and their entry points are not', () => {
     assert.match(block(name), /add_header Cache-Control "public, max-age=31536000, immutable"/, name);
   }
   /* Stamped by hand or not at all, so a year-long lifetime would strand them. */
-  for (const name of ['^~ /widgets/', '/i18n/', '= /', '^~ /admin']) {
+  for (const name of ['/i18n/', '= /', '^~ /admin']) {
     assert.match(block(name), /add_header Cache-Control "no-cache/, name);
   }
 });
@@ -481,4 +481,54 @@ test('every /api/ location sends the locked-down API policy', () => {
     assert.ok(block.includes('include /etc/nginx/http.d/csp-api.conf;'), `${m[1]} sends no API policy`);
     assert.ok(!block.includes(INCLUDE), `${m[1]} also sends the page policy`);
   }
+});
+
+/* ── Widget and catalog caching (08-1, 08-3) ─────────────────────────────── */
+
+function locationBlock(name) {
+  const at = dashboard.indexOf(`location ${name} {`);
+  assert.ok(at !== -1, `location ${name} not found`);
+  return dashboard.slice(at, dashboard.indexOf('\n    }', at));
+}
+
+const widgetCacheMap = (() => {
+  const m = /map "\$arg_v:\$uri" \$widget_cache_control \{([\s\S]*?)\n\}/.exec(dashboard);
+  assert.ok(m, 'the widget cache map is missing');
+  const rules = [...m[1].matchAll(/^\s*"~([^"]+)"\s+"([^"]+)";/gm)].map(r => [new RegExp(r[1]), r[2]]);
+  const fallback = (/^\s*default\s+"([^"]+)";/m.exec(m[1]) || [])[1];
+  assert.ok(fallback, 'the widget cache map has no default');
+  return (v, uri) => {
+    const key = `${v}:${uri}`;
+    for (const [re, value] of rules) if (re.test(key)) return value;
+    return fallback;
+  };
+})();
+
+test('a widget page under its content stamp is cached for good', () => {
+  assert.match(widgetCacheMap('0f4ba0b8', '/widgets/clock/analog.html'), /\bimmutable\b/);
+  assert.match(locationBlock('^~ /widgets/'), /add_header Cache-Control \$widget_cache_control;/);
+});
+
+test('an unstamped widget file revalidates instead of being cached for good', () => {
+  for (const [v, uri] of [
+    ['', '/widgets/clock/analog.html'],
+    ['1', '/widgets/dashboard-switch/art/home.png'],
+    ['0f4ba0b8', '/widgets/clock/i18n/fa.json'],
+    ['0f4ba0b8', '/widgets/clock/widget.json'],
+    ['zzzzzzzz', '/widgets/clock/analog.html'],
+  ]) {
+    assert.equal(widgetCacheMap(v, uri), 'no-cache', `${uri}?v=${v}`);
+  }
+});
+
+test('the stamp the map accepts is the stamp the build writes', () => {
+  const bump = fs.readFileSync(path.join(__dirname, '../../scripts/bump-cache-busting.js'), 'utf8');
+  const manifests = bump.slice(bump.indexOf('function stampWidgetManifests'));
+  assert.match(manifests, /versions\[file\] = crypto\.createHash\('sha256'\)[^\n]*\.digest\('hex'\)\.slice\(0, 8\)/);
+});
+
+test('translation catalogs are stored and revalidated, not refetched in full', () => {
+  const block = locationBlock('/i18n/');
+  assert.match(block, /add_header Cache-Control "no-cache";/);
+  assert.doesNotMatch(block, /no-store/);
 });
