@@ -1117,7 +1117,7 @@ html[data-theme="light"] body:not(.is-mob) #sres {
 }
 html[data-theme="light"] .spot-bar { border-bottom-color:rgba(0,0,0,.08) }
 html[data-theme="light"] body.is-mob #spot .spot-field { background:rgba(118,118,128,.14) }
-html[data-theme="light"] .spot-icon { color:rgba(60,60,67,.6) }
+html[data-theme="light"] .spot-icon { color:rgba(60,60,67,.66) }
 html[data-theme="light"] #sin, html[data-theme="light"] .srn { color:var(--label-primary) }
 html[data-theme="light"] #sin::placeholder,
 html[data-theme="light"] #spot #sin::placeholder,
