@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const net = require('node:net');
 const http = require('node:http');
 
-const { pingUnchecked, fetchUnchecked } = require('../src/proxy');
+const { pingUnchecked, fetchUnchecked, _internals } = require('../src/proxy');
+const { withDeadline } = _internals;
 
 const BUDGET = 1000;
 /* Generous, so a slow machine cannot fail this on timing noise alone. What is
@@ -132,17 +133,24 @@ test('a closed port fails fast rather than waiting out the budget', async () => 
   assert.ok(ms < BUDGET, `a refused connection took ${ms}ms`);
 });
 
-test('only one result is delivered even when the deadline races a response', async () => {
-  /* Answers right at the budget, so the timer and the response may both fire. */
-  const srv = http.createServer((_, res) => {
-    setTimeout(() => {
-      try {
-        res.writeHead(200);
-        res.end();
-      } catch {}
-    }, BUDGET);
+test('a deadline delivers one result when the timer and the response both fire', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const delivered = [];
+  const dl = withDeadline(BUDGET, () => dl.settle(v => delivered.push(v), 'timeout'));
+  t.mock.timers.tick(BUDGET);
+  dl.settle(v => delivered.push(v), 'response');
+  dl.settle(v => delivered.push(v), 'response again');
+  assert.deepEqual(delivered, ['timeout']);
+  assert.equal(dl.expired(), true);
+});
+
+test('a settled deadline never expires', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let expired = false;
+  const dl = withDeadline(BUDGET, () => {
+    expired = true;
   });
-  const port = await listen(srv);
-  const { result } = await timed(() => pingUnchecked(`http://127.0.0.1:${port}/`, BUDGET));
-  assert.ok(typeof result.ok === 'boolean', `expected a single settled result, got ${JSON.stringify(result)}`);
+  dl.settle(() => {});
+  t.mock.timers.tick(BUDGET * 2);
+  assert.equal(expired, false);
 });

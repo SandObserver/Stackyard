@@ -190,6 +190,7 @@ test('badge-proxy tags an unreachable target as a network failure', async () => 
   const r = await post('/api/badge-proxy', { url: `http://127.0.0.1:${dead}` });
   assert.equal(r.status, 502);
   assert.equal(r.body.kind, KIND.NETWORK);
+  assert.equal(r.body.code, KIND.NETWORK, 'a refused connection is not a skipped certificate check');
   assert.equal(r.body.detail.code, 'ECONNREFUSED');
 });
 

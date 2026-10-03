@@ -183,16 +183,18 @@ test('the wait is reported in the unit each surface uses', () => {
   assert.match(rateLimit(ip, 'unit', 2, 60_000), /Try again in 60s\./);
 });
 
-test('being refused does not push the window out', async () => {
+test('being refused does not push the window out', t => {
   const ip = '203.0.113.27';
   const WINDOW = 60;
+  let now = 1_000_000;
+  t.mock.method(Date, 'now', () => now);
   assert.equal(rateLimit(ip, 'slide', 1, WINDOW), null, 'the first hit opens the window');
   assert.ok(rateLimit(ip, 'slide', 1, WINDOW), 'the second is refused');
 
-  await new Promise(r => setTimeout(r, WINDOW * 0.6));
+  now += WINDOW * 0.6;
   assert.ok(rateLimit(ip, 'slide', 1, WINDOW), 'still inside the window, still refused');
 
-  await new Promise(r => setTimeout(r, WINDOW * 0.8));
+  now += WINDOW * 0.8;
   assert.equal(
     rateLimit(ip, 'slide', 1, WINDOW),
     null,
