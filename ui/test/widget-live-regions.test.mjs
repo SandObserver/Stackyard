@@ -76,9 +76,12 @@ test('the summaries a reader navigates to are still written', () => {
   for (const [file, id] of cases) {
     const src = docs.get(file);
     assert.match(src, new RegExp(`id="${id}"`), `${file} dropped #${id} instead of its live region`);
-    assert.match(
-      src,
-      new RegExp(`(getElementById\\('${id}'\\)|${id.replace('-', '')}|${id})`),
+    const vars = [...src.matchAll(new RegExp(`(\\w+)\\s*=\\s*document\\.getElementById\\('${id}'\\)`, 'g'))].map(
+      m => m[1],
+    );
+    assert.ok(vars.length, `${file} never looks up #${id}`);
+    assert.ok(
+      vars.some(v => new RegExp(`\\b${v}\\.textContent\\s*=(?!=)`).test(src)),
       `${file} never writes #${id}`,
     );
   }

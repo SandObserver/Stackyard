@@ -80,6 +80,23 @@ test('the current page is marked by shape, not only by fill', () => {
   assert.match(dash, /\.dot\.on\s*\{[^}]*background:\s*Highlight/, 'the active dot does not use the system highlight');
 });
 
+test('glass surfaces keep an edge', () => {
+  const clean = dash.replace(/\/\*[\s\S]*?\*\//g, '');
+  const edged = [...clean.matchAll(/([^{}@;]+)\{([^{}]*)\}/g)]
+    .filter(m => /border:\s*1px solid CanvasText/.test(m[2]))
+    .flatMap(m => m[1].split(',').map(sel => sel.trim()));
+  for (const sel of [
+    '#dock',
+    '#dock.mdock',
+    '.folder-box-desktop',
+    '.dyn-box-mob',
+    '.folder-icon-grid',
+    '.dyn-fold-wrap',
+  ]) {
+    assert.ok(edged.includes(sel), `${sel} has no forced-colors border`);
+  }
+});
+
 /* Status is information the system palette cannot express, which is the only
    thing that justifies opting out. */
 test('the badge keeps its status colour, and keeps its shape', () => {

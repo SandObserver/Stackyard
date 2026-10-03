@@ -13,6 +13,7 @@ import { register } from 'node:module';
 register('./js-root-hooks.mjs', import.meta.url);
 
 const { parseYaml } = await import('/js/yaml-lite.js');
+const { newItemId } = await import('/js/admin-save-logic.js');
 const {
   detectSource,
   convert,
@@ -346,8 +347,10 @@ test('a section with no name takes the caller-supplied label, so it can be trans
   assert.equal(folders(out)[0].label, 'Importé');
 });
 
-test('ids never collide with what is already on the dashboard, or across files', () => {
-  const existing = ['Plex_abc', 'Media_abc'];
+test('ids never collide with what is already on the dashboard, or across files', t => {
+  t.mock.method(Date, 'now', () => 0);
+  t.mock.method(globalThis.crypto, 'getRandomValues', a => a.fill(0));
+  const existing = [newItemId('Plex', 'app'), newItemId('Media', 'folder')];
   const taken = new Set(existing);
   const first = convert('homepage-services', parseYaml(SERVICES), taken);
   for (const item of first.items) taken.add(item.id);
@@ -402,6 +405,7 @@ test('a Dashy section holding only widgets reports the widgets alone', () => {
 test('the caller sees the ids a conversion allocated', () => {
   const taken = new Set(['Plex_abc']);
   const out = convertHomepageServices(parseYaml(SERVICES), taken);
+  assert.ok(out.items.length > 0);
   for (const item of out.items) assert.ok(taken.has(item.id), 'the id is in the caller’s set');
 });
 

@@ -12,6 +12,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { register } from 'node:module';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -19,12 +20,39 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const dashboard = read('js/dashboard.js');
 const ui = read('js/ui.js');
+register('./js-root-hooks.mjs', import.meta.url);
+const { inertAllBut } = await import('../js/utils.js');
 
-test('the home pager marks every page but the current one inert', () => {
+function strip(n) {
+  const children = Array.from({ length: n }, () => {
+    const attrs = new Set();
+    return {
+      attrs,
+      setAttribute: name => attrs.add(name),
+      removeAttribute: name => attrs.delete(name),
+    };
+  });
+  return { children };
+}
+
+test('every page but the current one is inert', () => {
+  const s = strip(3);
+  inertAllBut(/** @type {any} */ (s), 1);
+  assert.deepEqual(
+    s.children.map(c => c.attrs.has('inert')),
+    [true, false, true],
+  );
+  inertAllBut(/** @type {any} */ (s), 0);
+  assert.deepEqual(
+    s.children.map(c => c.attrs.has('inert')),
+    [false, true, true],
+    'the page left behind becomes inert and the new one is released',
+  );
+});
+
+test('the home pager uses it', () => {
   const fn = dashboard.slice(dashboard.indexOf('function syncPageInert'));
-  assert.ok(fn, 'syncPageInert is gone');
-  assert.match(fn, /removeAttribute\('inert'\)/);
-  assert.match(fn, /setAttribute\('inert', ''\)/);
+  assert.match(fn.slice(0, fn.indexOf('\n}\n')), /inertAllBut\(strip, current\)/);
 });
 
 /* Both layouts build into the same strip, so one call covers them. */
@@ -37,8 +65,8 @@ test('the pager applies it on every page change', () => {
 });
 
 test('the folder overlay pages the same way', () => {
-  const fn = ui.slice(ui.indexOf('function gotoPage('), ui.indexOf('function gotoPage(') + 700);
-  assert.match(fn, /setAttribute\('inert', ''\)/, 'the overlay leaves its off-screen pages focusable');
+  const start = ui.indexOf('function gotoPage(');
+  assert.match(ui.slice(start, ui.indexOf('\n  }\n', start)), /inertAllBut\(strip, curPage\)/);
 });
 
 /* An interior dot cannot be wider than the gap between it and its neighbour:

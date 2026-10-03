@@ -179,11 +179,10 @@ test('the widget options Fetch gives the same wording and tone as the badge test
    would put English on a translated screen. */
 test('advice never carries the server s message', () => {
   const e = { kind: KIND.BLOCKED, code: 'blocked.private-address', error: 'The request was blocked.' };
+  const ADVICE = ['code', 'key', 'openAuth', 'sessionExpired', 'tone', 'vars'];
   for (const a of [badgeErrorAdvice(e), optionsErrorAdvice(e)]) {
-    assert.deepEqual(Object.keys(a).sort(), Object.keys(a).sort());
-    for (const field of ['error', 'message', 'raw', 'msg']) {
-      assert.equal(a[field], undefined, `${field} must not travel with advice`);
-    }
+    for (const field of Object.keys(a)) assert.ok(ADVICE.includes(field), `${field} must not travel with advice`);
+    assert.ok(!JSON.stringify(a).includes(e.error), 'the server text is in the advice');
   }
 });
 

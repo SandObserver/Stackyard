@@ -29,13 +29,13 @@ test('the bars and the hint sit in the security section', () => {
 });
 
 test('nothing moves them at runtime, so the markup decides where they appear', () => {
-  const js = fs
-    .readdirSync(path.join(root, 'js'))
-    .filter(f => f.endsWith('.js'))
-    .map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8'))
-    .join('\n');
-
-  for (const m of js.matchAll(/(appendChild|insertBefore|append|prepend)\([^)]*\)/g)) {
-    assert.doesNotMatch(m[0], /sec-pw-(bars|hint)/, `${m[0]} moves an element the markup places`);
+  const MOVE = /\.(appendChild|insertBefore|append|prepend|before|after|replaceWith|insertAdjacentElement)\(([^)]*)\)/g;
+  for (const f of fs.readdirSync(path.join(root, 'js')).filter(n => n.endsWith('.js'))) {
+    const js = fs.readFileSync(path.join(root, 'js', f), 'utf8');
+    const names = [...js.matchAll(/(\w+)\s*=\s*[\w.]+\(\s*['"]#?sec-pw-(?:bars|hint)['"]\s*\)/g)].map(m => m[1]);
+    const held = new RegExp(`sec-pw-(bars|hint)${names.map(n => `|\\b${n}\\b`).join('')}`);
+    for (const m of js.matchAll(MOVE)) {
+      assert.doesNotMatch(m[2], held, `${f}: ${m[0]} moves an element the markup places`);
+    }
   }
 });

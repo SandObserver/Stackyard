@@ -12,6 +12,7 @@ import {
 import {
   el,
   ICON_R,
+  inertAllBut,
   isDashboardEmpty,
   mk,
   mkWrap as _mkWrap,
@@ -26,9 +27,9 @@ import {
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=88d2e1ce';
+} from '/js/utils.js?v=e8dc60ee';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=5011bbdb';
+import { initSpotlight } from '/js/spotlight.js?v=6a00ceba';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=899386d8';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=783fc0be';
@@ -44,7 +45,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=46ce6759';
+} from '/js/ui.js?v=56f11ed7';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=03ed9ada';
@@ -56,7 +57,7 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=072d927c';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=9a311b80';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -459,11 +460,7 @@ function announcePage(index, total) {
 /** @param {number} current */
 function syncPageInert(current) {
   const strip = el('pages');
-  if (!strip) return;
-  [...strip.children].forEach((page, i) => {
-    if (i === current) page.removeAttribute('inert');
-    else page.setAttribute('inert', '');
-  });
+  if (strip) inertAllBut(strip, current);
 }
 
 function goTo(n, dotEls, announce = true) {
