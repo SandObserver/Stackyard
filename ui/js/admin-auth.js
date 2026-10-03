@@ -10,6 +10,7 @@ export async function checkAuth(onLogin) {
     const d = await apiGet('/api/auth/check');
     if (!d.enabled || d.authenticated) return true;
     await initI18n(d.language || 'en');
+    document.title = t('nav.pageTitle');
     showLoginScreen(onLogin);
     return false;
   } catch (e) {

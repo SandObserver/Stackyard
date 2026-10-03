@@ -1,5 +1,5 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=1265217f';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=6d2565d1';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=fb3114a2';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
 import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=73ff01e9';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';

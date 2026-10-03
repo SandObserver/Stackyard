@@ -50,8 +50,6 @@ test('Persian sets the direction as well as the language', async ({ page, reques
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 });
 
-/* A widget is an iframe and does not load the i18n module. The language must
-   arrive on its URL. */
 test('the sign-in screen and its errors use the saved language', async ({ page }) => {
   const fa = JSON.parse(fs.readFileSync(path.join(__dirname, '../ui/i18n/fa.json'), 'utf8'));
   await page.route('**/api/auth/check', route =>
@@ -63,11 +61,14 @@ test('the sign-in screen and its errors use the saved language', async ({ page }
   await page.goto('/admin/');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.locator('#login-btn')).toHaveText(fa.login.signIn);
+  await expect(page).toHaveTitle(fa.nav.pageTitle);
   await page.locator('#login-pw').fill('wrong-password');
   await page.locator('#login-btn').click();
   await expect(page.locator('#login-err')).toHaveText(fa.toast.tooManyAttempts);
 });
 
+/* A widget is an iframe and does not load the i18n module. The language must
+   arrive on its URL. */
 test('a widget frame is given the language', async ({ page, request }) => {
   await seedConfig(request, {
     items: [{ id: 'w1', type: 'widget', widgetType: 'clock', widgetSize: 'medium', label: 'Clock' }],
