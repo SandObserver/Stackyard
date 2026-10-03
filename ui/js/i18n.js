@@ -4,6 +4,7 @@
 
 import { setHtml } from '/js/html.js?v=c71f8903';
 import { i18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
+import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 
 /* The locale registry: the one place a supported language is defined.
 
@@ -225,7 +226,8 @@ function lookupPlural(key, count) {
 }
 
 /** Translate a key. Pass a numeric `count` for a counted message: it selects
-    the plural form and fills `{count}`.
+    the plural form and fills `{count}` in the reader's digits. Other
+    placeholders are inserted as given.
     @param {string} key @param {Record<string, unknown>} [vars]
     @returns {string} */
 export function t(key, vars) {
@@ -233,6 +235,9 @@ export function t(key, vars) {
   let s = /** @type {string|null} */ (null);
   if (typeof count === 'number' && Number.isFinite(count)) s = lookupPlural(key, count);
   if (s == null) s = active[key] != null ? active[key] : base[key] != null ? base[key] : key;
-  if (vars) s = String(s).replace(/\{(\w+)\}/g, (m, k) => (vars[k] != null ? String(vars[k]) : m));
+  if (vars)
+    s = String(s).replace(/\{(\w+)\}/g, (m, k) =>
+      vars[k] == null ? m : k === 'count' && typeof vars[k] === 'number' ? formatNumber(vars[k]) : String(vars[k]),
+    );
   return s;
 }

@@ -8,8 +8,19 @@ import { register } from 'node:module';
    i18n.js dynamically so the hook is active when its imports resolve. Same
    reasoning as utils.test.mjs. */
 register('./js-root-hooks.mjs', import.meta.url);
-const { dirFor, t, getLang, LANGUAGES, SOURCE_LANG, isSupported, pluralCategory, pseudo, PSEUDO_LANG, KEY_LANG } =
-  await import('../js/i18n.js');
+const {
+  dirFor,
+  t,
+  initI18n,
+  getLang,
+  LANGUAGES,
+  SOURCE_LANG,
+  isSupported,
+  pluralCategory,
+  pseudo,
+  PSEUDO_LANG,
+  KEY_LANG,
+} = await import('../js/i18n.js');
 
 test('dirFor returns the listed direction for known locales', () => {
   assert.equal(dirFor('en'), 'ltr');
@@ -64,6 +75,33 @@ test('t returns the key itself for a key named after an inherited member', () =>
   ]) {
     assert.equal(t(key), key, key);
   }
+});
+
+async function withLocale(tag, fn) {
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { value: { language: tag }, configurable: true });
+  try {
+    return await fn();
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'navigator', had);
+    else delete globalThis.navigator;
+  }
+}
+
+test("t writes a numeric count in the reader's digits", async () => {
+  await withLocale('fa-IR', () => {
+    assert.equal(t('{count} apps', { count: 3 }), '۳ apps');
+  });
+  await withLocale('en-US', () => {
+    assert.equal(t('{count} apps', { count: 1234 }), '1,234 apps');
+  });
+});
+
+test('t leaves other placeholders and a count given as text as they are', async () => {
+  await withLocale('fa-IR', () => {
+    assert.equal(t('port {port}, line {n}', { port: 8080, n: 3 }), 'port 8080, line 3');
+    assert.equal(t('{count} pending', { count: '99+' }), '99+ pending');
+  });
 });
 
 test('t interpolates provided vars and leaves unmatched placeholders intact', () => {
@@ -283,4 +321,26 @@ test('every counted noun has plural forms', async () => {
     [],
     `A count and a plural noun, with no plural forms. Split it per category, or add it to NOT_COUNTED with a reason:\n  ${missing.join('\n  ')}`,
   );
+});
+
+test("a count in the reader's digits still picks its plural form from the number", async () => {
+  const had = { document: globalThis.document, fetch: globalThis.fetch };
+  globalThis.document = /** @type {any} */ ({ documentElement: { setAttribute() {} } });
+  globalThis.fetch = /** @type {any} */ (
+    async url => ({
+      ok: true,
+      json: async () =>
+        String(url).endsWith('/fa.json') ? { n: { a_one: 'one {count}', a_other: 'other {count}' } } : {},
+    })
+  );
+  try {
+    await initI18n('fa');
+    await withLocale('fa-IR', () => {
+      assert.equal(t('n.a', { count: 1 }), 'one ۱');
+      assert.equal(t('n.a', { count: 12 }), 'other ۱۲');
+    });
+  } finally {
+    globalThis.document = had.document;
+    globalThis.fetch = had.fetch;
+  }
 });

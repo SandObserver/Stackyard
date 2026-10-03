@@ -1,7 +1,7 @@
-import { toast, apiGet, apiPost, errorText, reveal, swapContent } from '/js/admin-shared.js?v=d1b7b149';
+import { toast, apiGet, apiPost, errorText, reveal, swapContent } from '/js/admin-shared.js?v=922d8fc1';
 import { socketProbeAdvice } from '/js/admin-error.js?v=a1f2695a';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
-import { t } from '/js/i18n.js?v=899386d8';
+import { t } from '/js/i18n.js?v=5a09eb37';
 import {
   shouldWritePassword,
   settingsSaveBlocker,
@@ -11,11 +11,11 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=fc7f0836';
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
-import { el, inp, setUserText } from '/js/utils.js?v=e8dc60ee';
+import { el, inp, setUserText } from '/js/utils.js?v=93658cb8';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { serialWrites } from '/js/admin-save-logic.js?v=8389782f';
-import { renderColorControl } from '/js/admin-color-control.js?v=8bc1da41';
-import { BACKDROP } from '/js/background.js?v=9a311b80';
+import { renderColorControl } from '/js/admin-color-control.js?v=f02959db';
+import { BACKDROP } from '/js/background.js?v=8a723481';
 import { firstBadHost, hostnameOf, isLocalAddress, parseHostList } from '/js/host-names.js?v=842f96ca';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */

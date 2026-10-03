@@ -1,11 +1,11 @@
 /* Renders a widget's declared `fields` into a config form and reads the values
    back. Each builder returns { el, get, control, liveValue }. */
 
-import { t } from '/js/i18n.js?v=899386d8';
+import { t } from '/js/i18n.js?v=5a09eb37';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=d1b7b149';
-import { createListbox } from '/js/listbox.js?v=922e8c3a';
-import { renderColorControl } from '/js/admin-color-control.js?v=8bc1da41';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=922d8fc1';
+import { createListbox } from '/js/listbox.js?v=50539f37';
+import { renderColorControl } from '/js/admin-color-control.js?v=f02959db';
 import {
   seedCarried,
   applyOptionSet,
@@ -15,7 +15,7 @@ import {
   visibleFieldFlags,
 } from '/js/admin-logic.js?v=fc7f0836';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=a1f2695a';
-import { qi } from '/js/utils.js?v=e8dc60ee';
+import { qi } from '/js/utils.js?v=93658cb8';
 
 const PE =
   '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
