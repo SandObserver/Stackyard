@@ -15,9 +15,9 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=53bef046';
+} from '/js/utils.js?v=88d2e1ce';
 import { t, currentLang } from '/js/i18n.js?v=899386d8';
-import { toneForColor } from '/js/label-contrast.js?v=5105210b';
+import { toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';

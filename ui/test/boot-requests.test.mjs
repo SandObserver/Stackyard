@@ -50,3 +50,11 @@ test('boot starts the config, widget and icon requests before the sign-in check 
     assert.ok(rest.includes(read), `the early request is not the one boot reads: ${read}`);
   }
 });
+
+test('a widget list refused while the first-run password was set is requested again', () => {
+  const start = dashboard.indexOf('async function boot()');
+  const boot = dashboard.slice(start, dashboard.indexOf('\n}\n', start));
+  assert.match(boot, /if \(!r\.ok\) throw new Error/, 'an error reply is read as the widget list');
+  const prompt = boot.slice(boot.indexOf('await showSetupPrompt()'));
+  assert.match(prompt.slice(0, 200), /if \(\(await widgetsReq\)\.e\) widgetsReq = loadWidgets\(\);/);
+});

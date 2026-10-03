@@ -108,23 +108,37 @@ test('an unknown fit is treated as fill', () => {
   assert.deepEqual(drawPlan(2000, 1000, 1000, 1000, 'stretch'), drawPlan(2000, 1000, 1000, 1000, 'fill'));
 });
 
-/* A fake 2D canvas that understands #rrggbb and keeps its previous fill for
-   anything else, as a real one does. */
+/* A fake 2D canvas that understands #rrggbb, #rrggbbaa and rgba(), keeps its
+   previous fill for anything else, and draws over what is already there, as a
+   real one does. */
 function fakeCanvasDocument() {
   const calls = { canvases: 0, reads: 0 };
+  const parse = v => {
+    let m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/i.exec(v);
+    if (m) return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16), m[4] ? parseInt(m[4], 16) / 255 : 1];
+    m = /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(v.replace(/\s/g, ''));
+    return m ? [+m[1], +m[2], +m[3], +m[4]] : null;
+  };
   globalThis.document = {
     createElement() {
       calls.canvases++;
-      let fill = [0, 0, 0];
+      let fill = [0, 0, 0, 1];
+      let px = [0, 0, 0, 0];
       const ctx = {
         set fillStyle(v) {
-          const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(v);
-          if (m) fill = [1, 2, 3].map(i => parseInt(m[i], 16));
+          fill = parse(v) || fill;
         },
-        fillRect() {},
+        clearRect() {
+          px = [0, 0, 0, 0];
+        },
+        fillRect() {
+          const a = fill[3];
+          const out = px[3] * (1 - a) + a;
+          px = [0, 1, 2].map(i => (fill[i] * a + px[i] * px[3] * (1 - a)) / (out || 1)).concat(out);
+        },
         getImageData() {
           calls.reads++;
-          return { data: [...fill, 255] };
+          return { data: [...px.slice(0, 3).map(Math.round), Math.round(px[3] * 255)] };
         },
       };
       return { getContext: () => ctx };
@@ -147,4 +161,15 @@ test('an unreadable colour still answers null when asked again', async () => {
   const { toneForColor } = await import('../js/label-contrast.js');
   assert.equal(toneForColor('not-a-colour'), null);
   assert.equal(toneForColor('not-a-colour'), null);
+});
+
+test('a translucent colour reads the same after another colour as on its own', async () => {
+  fakeCanvasDocument();
+  const { toneForColor } = await import('../js/label-contrast.js');
+  const alone = toneForColor('rgba(120,120,128,.36)');
+  assert.ok(alone, 'the translucent plate did not parse');
+  toneForColor('#ffffff');
+  assert.equal(toneForColor('rgba(121,120,128,.36)'), alone);
+  toneForColor('#000000');
+  assert.equal(toneForColor('#7978808c'), alone);
 });

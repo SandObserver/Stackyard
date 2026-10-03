@@ -159,6 +159,7 @@ function parseCssColor(value) {
   const read = (/** @type {string} */ seed) => {
     ctx.fillStyle = seed;
     ctx.fillStyle = value;
+    ctx.clearRect(0, 0, 1, 1);
     ctx.fillRect(0, 0, 1, 1);
     const d = ctx.getImageData(0, 0, 1, 1).data;
     return /** @type {[number, number, number]} */ ([d[0], d[1], d[2]]);

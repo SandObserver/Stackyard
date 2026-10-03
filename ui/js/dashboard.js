@@ -26,9 +26,9 @@ import {
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=53bef046';
+} from '/js/utils.js?v=88d2e1ce';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=37271ccf';
+import { initSpotlight } from '/js/spotlight.js?v=5011bbdb';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=899386d8';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=783fc0be';
@@ -44,7 +44,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=57a2eb82';
+} from '/js/ui.js?v=46ce6759';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=03ed9ada';
@@ -56,11 +56,11 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=85c36e81';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=072d927c';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=5105210b';
+import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=34af798f';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
@@ -743,7 +743,14 @@ async function boot() {
       e => ({ e }),
     );
   const configReq = settled(fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) }));
-  const widgetsReq = settled(fetch('/api/widgets', { cache: 'no-store' }).then(r => r.json()));
+  const loadWidgets = () =>
+    settled(
+      fetch('/api/widgets', { cache: 'no-store' }).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }),
+    );
+  let widgetsReq = loadWidgets();
   const iconsReq = loadLocalIcons();
 
   let authData = null;
@@ -810,6 +817,8 @@ async function boot() {
 
   if (authData && !authData.setupPrompted && !authData.passwordSet) {
     await showSetupPrompt();
+    /* A password set in the prompt refuses a request that was still open. */
+    if ((await widgetsReq).e) widgetsReq = loadWidgets();
   }
 
   widgetReg = Object.create(null);

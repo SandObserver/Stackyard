@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=9c8c550c';
-import { toneForColor } from '/js/label-contrast.js?v=5105210b';
+import { toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { mkGlassRim } from '/js/glass-rim.js?v=3faec233';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';

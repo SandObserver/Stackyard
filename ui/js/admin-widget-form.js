@@ -1,11 +1,11 @@
 import { state } from '/js/admin-state.js?v=af772a1b';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=51722479';
-import { createListbox } from '/js/listbox.js?v=7f5dc20d';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=e531cfdf';
+import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=9a901b1c';
+import { createListbox } from '/js/listbox.js?v=fdbdcbe7';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=8c7ab7c4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=fc7f0836';
 import { t } from '/js/i18n.js?v=899386d8';
-import { focusFirst, q, qi, qa } from '/js/utils.js?v=53bef046';
+import { focusFirst, q, qi, qa } from '/js/utils.js?v=88d2e1ce';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
 const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
