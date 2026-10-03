@@ -169,7 +169,7 @@ test('the wallpaper brightness follows the locale', () => {
 /* Where a number becomes text a person reads. A sentence from t() is left out:
    t() formats its count. */
 const RENDER =
-  /\.(?:textContent|innerText|innerHTML)\s*=|setUserText\(|setHtml\(|insertAdjacentHTML\(|setAttribute\(\s*['"](?:aria-label|title|aria-valuetext)['"]/;
+  /\.(?:textContent|innerText|innerHTML)\s*\+?=|setUserText\(|setHtml\(|insertAdjacentHTML\(|setAttribute\(\s*['"](?:aria-label|title|aria-valuetext)['"]/;
 const RAW_NUMBER =
   /Math\.(?:round|floor|ceil|trunc)\(|\.toFixed\(|\.toLocaleString\(\s*\)|\.(?:length|size)\b(?!\s*[-*/<>=!?&|)])|\bString\(/;
 
@@ -182,10 +182,9 @@ const GLUED = new RegExp(
 
 /* A raw number in a template hole beside words or markup: text built over
    several lines reaches the reader with no sink on the same line. */
-const HOLE = new RegExp(
-  String.raw`(?:>\s*\$\{\s*[\w.$]*${NUMBER}\s*\}|\$\{\s*[\w.$]*${NUMBER}\s*\}(?=\s*<|\s+\p{L}{2}))`,
-  'u',
-);
+const RECEIVER = String.raw`(?:[\w.$?]|\((?:[^()]|\([^()]*\))*\))*`;
+const IN_HOLE = String.raw`\$\{\s*${RECEIVER}${NUMBER}\s*\}`;
+const HOLE = new RegExp(String.raw`(?:>|\p{L}{2}\s+)\s*${IN_HOLE}|${IN_HOLE}(?=\s*<|\s+\p{L}{2})`, 'u');
 
 /* The line with every t(), wt(), formatNumber() and localiseDigits() call
    removed, parentheses balanced. */
@@ -229,6 +228,12 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     'node.innerHTML = `<span>${n.toFixed(1)}</span>`;',
     '      <span class="n">${rows.length}</span>',
     '    ${Math.round(gb)} GB free',
+    '    <b>${(v / 1000).toFixed(1)}</b>',
+    '    ${(v / 1000).toFixed(1)} Gbps',
+    '    <b>${Object.keys(x).length}</b>',
+    '    <b>${x?.length}</b>',
+    '  return `Up ${Math.round(v)}`;',
+    'el.innerHTML += Math.round(v);',
   ]) {
     assert.equal(latinDigits(line, 'probe.js').length, 1, line);
   }
@@ -244,6 +249,8 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     'return `hsl(${Math.round(hue)},${sat}%,${light}%)`;',
     "vp.setAttribute('content', `width=${Math.round(iw / 3)},initial-scale=1`);",
     'bar.style.width = `${Math.round(p)}%`;',
+    'd += `M ${Math.round(x)} ${Math.round(y)}`;',
+    "g.setAttribute('transform', `translate(${(w / 2).toFixed(1)} 0)`);",
   ]) {
     assert.deepEqual(latinDigits(line, 'probe.js'), [], line);
   }
