@@ -48,8 +48,9 @@
     }
     body.ready::after { opacity:0; }
 
-    /* Something is happening. boot() makes five sequential round trips, and an
-       empty rectangle for the whole of it reads as hung rather than as loading.
+    /* Something is happening. boot() waits on the API and then the catalogues,
+       and an empty rectangle for the whole of it reads as hung rather than as
+       loading.
 
        Held back so the usual fast boot stays a clean fade and only a slow one
        shows anything. Wordless: the catalogue is loaded by the boot this is
