@@ -19,7 +19,7 @@
 <body>
   <div id="root"></div>
   <script type="module">
-    import { poll } from '/js/widget-toolbox.js?v=1';
+    import { formatNumber, poll } from '/js/widget-toolbox.js?v=1';
 
     const root = document.getElementById('root');
 
@@ -29,7 +29,7 @@
         if (data.total != null) {
           const n = document.createElement('div');
           n.className = 'n';
-          n.textContent = String(data.total);
+          n.textContent = formatNumber(data.total);
           const l = document.createElement('div');
           l.className = 'l';
           l.textContent = data.total === 1 ? 'item' : 'items';

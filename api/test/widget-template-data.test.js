@@ -49,3 +49,10 @@ test('every template field is read by its data module', () => {
     [],
   );
 });
+
+test('the template demo leaves the total out when Show total is off', () => {
+  const demoFn = require(path.join(template, 'demo.js'));
+  const { helpers } = require('../src/demo-data');
+  assert.equal(demoFn({ config: { showTotal: false }, demo: helpers }).total, null);
+  assert.equal(typeof demoFn({ config: {}, demo: helpers }).total, 'number');
+});

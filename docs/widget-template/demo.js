@@ -10,7 +10,7 @@ module.exports = function (ctx) {
   const { wave, round } = ctx.demo;
   return {
     items: [{ name: 'First item' }, { name: 'Second item' }],
-    total: Math.round(wave(600, 8, 20)),
+    total: ctx.config.showTotal === false ? null : Math.round(wave(600, 8, 20)),
     ratio: round(wave(300, 0, 1), 2),
   };
 };

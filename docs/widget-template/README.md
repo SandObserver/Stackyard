@@ -16,8 +16,12 @@ Keep the `widget-theme.js` script in `<head>`, before the styles. Without it no
 `html[data-theme="light"]` rule applies, and light text is unreadable on the
 light theme's white card.
 
-Nothing outside the folder needs editing. The widget is picked up from its
+A widget of your own needs nothing outside its folder. It is picked up from its
 manifest at startup.
+
+A widget shipped with Stackyard needs two more changes. Its manifest names a
+`glyph` that no other widget uses; add one to `ui/js/widget-glyphs.js` when none
+is free. The main README lists it under Widgets.
 
 `widget.json` here is validated in CI along with the shipped manifests, so this
 template cannot drift out of date with the schema.
