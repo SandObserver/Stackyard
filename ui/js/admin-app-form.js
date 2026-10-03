@@ -169,7 +169,7 @@ export function buildAppForm(body, item) {
         <div id="auth-row-wrap">
           <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers), t('app.authentication'))}</div>
           <div id="auth-sub" class="reveal${act.params?.length || act.headers?.length ? ' open' : ''}"><div class="reveal-in">
-            <div class="row kv-hdr"><span class="rl">${t('app.addToUrl')} <span class="rl-sub">(query params)</span></span></div>
+            <div class="row kv-hdr"><span class="rl">${t('app.addToUrl')} <span class="rl-sub">${t('app.queryParams')}</span></span></div>
             <div id="bpar-rows" class="kv-rows"></div>
             <div class="row kv-hdr"><span class="rl">${t('app.addToHeader')}</span></div>
             <div id="bhdr-rows" class="kv-rows"></div>
@@ -229,8 +229,8 @@ export function buildAppForm(body, item) {
   });
   state._bpar = normKvRows(act.params);
   state._bhdr = normKvRows(act.headers);
-  renderKvRows(el('bpar-rows'), state._bpar, 'key=value');
-  renderKvRows(el('bhdr-rows'), state._bhdr, 'X-Api-Key=…');
+  renderKvRows(el('bpar-rows'), state._bpar, t('app.value'));
+  renderKvRows(el('bhdr-rows'), state._bhdr, '…');
 
   wireIcon();
   if (state.siurl) updPrev();
@@ -941,12 +941,10 @@ function renderKvRows(host, rows, ph) {
   host.appendChild(add);
 }
 
-const defaultValuePlaceholder = ph => ph.split('=')[1] || 'value';
-
 function kvRowEl(host, rows, row, ph) {
   const rowEl = document.createElement('div');
   rowEl.className = 'kv-row';
-  const valPh = row.secret && row.valueSet && row.value === '' ? 'Configured' : defaultValuePlaceholder(ph);
+  const valPh = row.secret && row.valueSet && row.value === '' ? t('common.configured') : ph;
   setHtml(
     rowEl,
     html`
@@ -975,7 +973,7 @@ function kvRowEl(host, rows, row, ph) {
     if (clearsStoredSecret(row, cEl.checked)) {
       row.valueSet = false;
       vEl.value = '';
-      vEl.placeholder = defaultValuePlaceholder(ph);
+      vEl.placeholder = ph;
     }
   };
   dEl.onclick = () => {

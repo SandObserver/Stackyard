@@ -50,9 +50,10 @@ function _renderWidgetForm(body) {
   const addNew = body.querySelector(':scope > .add-new-card');
   body.replaceChildren(...(addNew ? [addNew] : []));
 
-  const typeList = [...Object.values(state._widgetReg).map(w => [w.name, w.label]), ['custom', 'Custom']].sort((a, b) =>
-    a[1].localeCompare(b[1]),
-  );
+  const typeList = [
+    ...Object.values(state._widgetReg).map(w => [w.name, w.label]),
+    ['custom', t('widgetCfg.typeCustom')],
+  ].sort((a, b) => a[1].localeCompare(b[1]));
   const shell = document.createElement('div');
   shell.className = 'grp';
   setHtml(
@@ -214,14 +215,14 @@ function _renderCustomConfig(body) {
     'strict-origin',
     'strict-origin-when-cross-origin',
     'unsafe-url',
-  ].map(v => ({ value: v, label: v || 'Default' }));
+  ].map(v => ({ value: v, label: v || t('widgetCfg.referrerDefault') }));
   setHtml(
     adv,
     html`
     <div class="row" id="if-referrer-row"><span class="rl">${t('widgetCfg.referrerPolicy')}</span></div>
     <div class="row ie-row" id="if-allow-row"><span class="rl">${t('widgetCfg.allowFeaturePolicy')}</span><span class="rv${o.allow ? '' : ' is-ph'}">${o.allow ? o.allow : 'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${o.allow || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
     <div class="row"><span class="rl">${t('widgetCfg.allowFullscreen')}</span><label class="tog"><input type="checkbox" id="if-fs" aria-label="${t('widgetCfg.allowFullscreen')}" ${o.allowFullscreen !== false ? 'checked' : ''}><div class="tr"></div></label></div>
-    <div class="row ie-row" id="if-refresh-row"><span class="rl">${t('widgetCfg.refreshInterval')} <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval ? '' : ' is-ph'}">${o.refreshInterval ? o.refreshInterval : 'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
+    <div class="row ie-row" id="if-refresh-row"><span class="rl">${t('widgetCfg.refreshInterval')} <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval ? '' : ' is-ph'}">${o.refreshInterval ? o.refreshInterval : t('widgetCfg.refreshPh')}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
   );
   const refBox = createListbox({
     label: t('widgetCfg.referrerPolicy'),
@@ -246,7 +247,7 @@ function _renderCustomConfig(body) {
     },
   });
   initInlineEdit('if-refresh-row', 'if-refresh', {
-    placeholder: 'e.g. 2000',
+    placeholder: () => t('widgetCfg.refreshPh'),
     onCommit() {
       sync();
     },

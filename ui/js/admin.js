@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=5703fb88';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=142d8355';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=276069af';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=fc1559fb';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=f47f4b56';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=88b89f37';
+} from '/js/admin-settings.js?v=bc6549de';
 import {
   apiGet,
   apiPost,
@@ -31,7 +31,7 @@ import {
   toast,
 } from '/js/admin-shared.js?v=f5551857';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=53ceafd3';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=77239d78';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=30c1b9d1';
@@ -692,7 +692,7 @@ function initAllInlineEdits() {
   const apiInp = document.createElement('input');
   apiInp.id = 'bg-apikey-inp';
   document.body.appendChild(apiInp);
-  initInlineEdit('ie-apikey', 'bg-apikey-inp', { placeholder: 'Paste your Unsplash API key' });
+  initInlineEdit('ie-apikey', 'bg-apikey-inp', { placeholder: () => t('appearance.unsplashKeyPh') });
 
   const colInp = document.createElement('input');
   colInp.id = 'bg-col-inp';
