@@ -143,7 +143,12 @@ export function loadSettings(c) {
   const aw = inp('set-awake');
   if (aw) {
     aw.checked = s.keepAwake === true;
-    aw.addEventListener('change', saveKeepAwake);
+    aw.addEventListener('change', e => saveSwitch(e, 'keepAwake'));
+  }
+  const ts = inp('set-type-search');
+  if (ts) {
+    ts.checked = s.typeToSearch !== false;
+    ts.addEventListener('change', e => saveSwitch(e, 'typeToSearch'));
   }
   const bg = s.background || { type: 'unsplash', brightness: 0.62 };
   _savedWallpaperUrl = bg.url || '';
@@ -348,19 +353,21 @@ async function saveLabels(e) {
     toast(t('toast.saveFailed', { err: err.message }), 'err');
   }
 }
-async function saveKeepAwake(e) {
-  const toggled = /** @type {HTMLInputElement|null} */ (e?.target ?? null);
-  const wasChecked = toggled ? toggled.checked : false;
+/** A switch whose whole value is one boolean setting.
+    @param {Event} e @param {string} key */
+async function saveSwitch(e, key) {
+  const toggled = /** @type {HTMLInputElement} */ (e.target);
+  const wasChecked = toggled.checked;
   try {
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};
-    c.settings.keepAwake = !!inp('set-awake')?.checked;
+    c.settings[key] = toggled.checked;
     await apiPost('/api/config', c);
     toast(t('toast.saved'));
   } catch (err) {
     /* Put the box back on a failure, or it shows a setting the server was never
        given. Assigning `checked` fires no event, so this does not loop. */
-    if (toggled) toggled.checked = !wasChecked;
+    toggled.checked = !wasChecked;
     toast(t('toast.saveFailed', { err: err.message }), 'err');
   }
 }

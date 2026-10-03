@@ -80,6 +80,8 @@
     "display": "Affichage",
     "keepAwake": "Garder l’écran allumé",
     "keepAwakeTip": "Empêche l’écran de s’assombrir ou de se verrouiller tant que le tableau de bord est ouvert. Les navigateurs ne l’autorisent qu’en HTTPS, cela reste donc sans effet sur une adresse HTTP simple.",
+    "typeToSearch": "Saisir pour rechercher",
+    "typeToSearchTip": "Taper une lettre n’importe où sur le tableau de bord ouvre la recherche. Désactivez cette option si la recherche s’ouvre par erreur, par exemple avec le contrôle vocal.",
     "displayMode": "Mode d'affichage",
     "displayModeTip": "Définit l'apparence du tableau de bord et des pages Réglages. Le choix est enregistré dans ce navigateur, s'applique à cet appareil uniquement et prend effet immédiatement.",
     "displaySystem": "Par défaut du système",
