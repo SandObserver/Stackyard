@@ -153,6 +153,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Open widget links from the keyboard in the DNS, Weather, GitHub, VPN and
   Backup widgets, and let Enter on the Now Playing arrows change the item.
 
+- Announce badges of apps inside an open folder to screen readers.
+
+- Keep keyboard focus inside the Settings sign-in screen.
+
+- Show focus rings on the search field and Cancel button.
+
+- Open Settings when the browser blocks site storage.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
