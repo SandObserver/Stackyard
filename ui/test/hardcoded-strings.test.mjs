@@ -45,7 +45,8 @@ const NOT_PROSE = [
 ];
 
 /* One bare token is an example value only in a placeholder: AGVpqBZnzUE,
-   autoplay. An accessible name of one word is still a word. */
+   autoplay. An accessible name of one word is still a word, and so is a
+   capitalised one in a placeholder. */
 const TOKEN = /^[A-Za-z0-9_-]+$/;
 
 /* The whole tag around an attribute, so wiring on a neighbouring element does
@@ -88,7 +89,7 @@ const attributeOffenders = (file, src) => {
       const value = m[1].trim();
       if (!/[A-Za-z]{2}/.test(value)) continue;
       if (!ENGLISH.has(value) && NOT_PROSE.some(re => re.test(value))) continue;
-      if (!ENGLISH.has(value) && what === 'placeholder' && TOKEN.test(value)) continue;
+      if (!ENGLISH.has(value) && what === 'placeholder' && TOKEN.test(value) && !/^[A-Z][a-z]+$/.test(value)) continue;
       /* Already wired: the literal is the English default beside its own key. */
       const scope = what === 'row label' ? src.slice(m.index, m.index + m[0].length + 90) : tagAround(src, m.index);
       if (wired.test(scope)) continue;
@@ -109,6 +110,7 @@ test('the attribute scan sees a one-word name and wiring for another attribute o
     '<input aria-label="Filter apps" data-i18n-ph="k">',
     '<button aria-label="Close the list"></button><input data-i18n-al="k">',
     '<button title="Refresh"></button>',
+    '<input placeholder="Nickname">',
   ]) {
     assert.equal(attributeOffenders('probe.html', src).length, 1, src);
   }
@@ -116,6 +118,7 @@ test('the attribute scan sees a one-word name and wiring for another attribute o
     '<input data-i18n-al="k" aria-label="Filter apps">',
     '<input placeholder="AGVpqBZnzUE">',
     '<svg role="img" aria-label="Stackyard"></svg>',
+    '<input placeholder="autoplay">',
   ]) {
     assert.deepEqual(attributeOffenders('probe.html', src), [], src);
   }
@@ -297,15 +300,18 @@ const readTemplate = (src, i) => {
 const htmlBlocks = src =>
   [...src.matchAll(/\bhtml`/g)].map(m => ({ index: m.index, ...readTemplate(src, m.index + 4) }));
 
-/* A literal in a hole, such as `${v || 'Default value'}`. Nested templates are
-   blanked: an html`` one is a block of its own, any other is markup. */
+/* A literal in a hole, such as `${v || 'Default value'}`. A nested html``
+   template is a block of its own and is blanked. The text of any other nested
+   template is read with the literals. */
 const holeLiterals = hole => {
   let code = hole;
+  const nested = [];
   for (let at = code.indexOf('`'); at !== -1; at = code.indexOf('`', at + 1)) {
-    const end = readTemplate(code, at).end;
+    const { text, holes, end } = readTemplate(code, at);
+    if (!/\bhtml\s*$/.test(code.slice(0, at))) nested.push(text, ...holes.flatMap(holeLiterals));
     code = code.slice(0, at) + ' '.repeat(end - at) + code.slice(end);
   }
-  return textLiterals(code)
+  return [...textLiterals(code), ...nested]
     .map(withoutHoles)
     .filter(v => READS_AS_PROSE(v) && (/\s/.test(v) || /^[A-Z][a-z]+$/.test(v)))
     .filter(v => !(/-/.test(v) && /^[a-z0-9-]+(?: [a-z0-9-]+)*$/.test(v)) /* a class list */);
@@ -324,6 +330,8 @@ test('the markup scan reads literals inside a hole', () => {
   assert.deepEqual(block('html`<input placeholder="${p || \'Paste a key\'}">`'), ['Paste a key']);
   assert.deepEqual(block("html`<i class=\"${on ? 'hsb-range hsb-hue' : ''}\">${t('k')}</i>`"), []);
   assert.deepEqual(block("html`<b>${x ? html`<i>${t('k')}</i>` : ''}</b>`"), []);
+  assert.deepEqual(block("html`<span>${n ? `${n} apps selected` : t('x')}</span>`"), ['apps selected']);
+  assert.deepEqual(block("html`<i class=\"${`tile-opt${on ? ' on' : ''}`}\"></i>`"), []);
 });
 
 test('no user-facing string is written into the markup builder', () => {

@@ -132,7 +132,14 @@ test('the wallpaper brightness follows the locale', () => {
 const RENDER =
   /\.(?:textContent|innerText)\s*=|setUserText\(|setAttribute\(\s*['"](?:aria-label|title|aria-valuetext)['"]/;
 const RAW_NUMBER =
-  /Math\.(?:round|floor|ceil|trunc)\(|\.toFixed\(|\.toLocaleString\(\s*\)|\.(?:length|size)\b(?!\s*[-+*/<>=!?&|)])|\bString\(/;
+  /Math\.(?:round|floor|ceil|trunc)\(|\.toFixed\(|\.toLocaleString\(\s*\)|\.(?:length|size)\b(?!\s*[-*/<>=!?&|)])|\bString\(/;
+
+/* A number joined to text anywhere, not only on the line that renders it: a
+   helper returns '12 Mbps' and its caller writes it. A CSS length is not read. */
+const NUMBER = String.raw`(?:\.toFixed\([^)]*\)|Math\.(?:round|floor|ceil|trunc)\((?:[^()]|\([^()]*\))*\)|\.length\b)`;
+const GLUED = new RegExp(
+  String.raw`${NUMBER}\s*\+\s*['"\x60](?!(?:px|deg|em|rem|ms|s|vh|vw|fr|turn)\b|%)|['"\x60]\s*\+\s*(?:Math\.(?:round|floor|ceil|trunc)\(|[\w.$]+\.toFixed\()`,
+);
 
 /* The line with every t() and wt() call removed, parentheses balanced. */
 function withoutSentences(line) {
@@ -155,8 +162,10 @@ function withoutSentences(line) {
 
 function latinDigits(src, file) {
   return src.split('\n').flatMap((line, i) => {
-    if (!RENDER.test(line) || /formatNumber|localiseDigits/.test(line)) return [];
-    return RAW_NUMBER.test(withoutSentences(line)) ? [`${file}:${i + 1}: ${line.trim()}`] : [];
+    if (/formatNumber|localiseDigits/.test(line)) return [];
+    const code = withoutSentences(line);
+    const raw = (RENDER.test(line) && RAW_NUMBER.test(code)) || GLUED.test(code);
+    return raw ? [`${file}:${i + 1}: ${line.trim()}`] : [];
   });
 }
 
@@ -166,6 +175,9 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     'if (u) u.textContent = Math.round(pd.totalGb);',
     "el.textContent = val.toFixed(1) + '°';",
     "el.setAttribute('aria-label', String(n));",
+    "live.textContent = cur.length + ' ' + t('home.results');",
+    "  return v >= 1000 ? (v/1000).toFixed(1)+' Gbps' : Math.round(v)+' Mbps';",
+    "  l = Math.round(abs/60)+'m';",
   ]) {
     assert.equal(latinDigits(line, 'probe.js').length, 1, line);
   }
@@ -174,6 +186,8 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     "mt.textContent = t('folder.appsCount', { count: (item.children || []).length });",
     'h.textContent = `${heading} (${formatNumber(rows.length)})`;',
     "if (rows.length) el.setAttribute('aria-label', label);",
+    "p.style.top = Math.round(top) + 'px';",
+    "fill.style.width = Math.round(b.progress * 100) + '%';",
   ]) {
     assert.deepEqual(latinDigits(line, 'probe.js'), [], line);
   }

@@ -43,7 +43,7 @@ test('no render site writes a user-supplied name straight to textContent', () =>
   assert.deepEqual(offenders, [], 'use setUserText(node, name) so the name keeps its own direction');
 });
 
-const USER_LABEL = /\b(?:item|child|app|folder|f|clash|i)\.label\b/;
+const USER_LABEL = /\b(?:item|child|app|folder|f|clash|i)\.label\b|\bappName\b|\.filename\b|\bfile\.name\b/;
 
 /* A name passed into a sentence reaches the screen wherever the sentence goes,
    so the call itself is checked, not the line that renders it. */
@@ -66,6 +66,9 @@ test('the sentence check sees a name put into t() and rendered on another line',
   const src = "  const s = t('confirm.deleteFolder', {\n    name: item.label,\n  });\n  lead.textContent = s;\n";
   assert.deepEqual(unisolatedNames(src, 'probe.js'), ['probe.js: confirm.deleteFolder item.label']);
   assert.deepEqual(unisolatedNames("t('k', { name: isolate(item.label || item.id) })", 'probe.js'), []);
+  for (const value of ['appName', 'd.filename', 'file.name']) {
+    assert.equal(unisolatedNames(`t('k', { name: ${value} })`, 'probe.js').length, 1, value);
+  }
 });
 
 test('no translated sentence takes a user-supplied name without isolating it', () => {

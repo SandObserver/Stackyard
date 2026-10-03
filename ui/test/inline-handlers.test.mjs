@@ -32,7 +32,7 @@ const FILES = sources('.');
 const INLINE_ATTR = /\son[a-z]+\s*=\s*["'][^"']/gi;
 /* An unquoted value is only markup inside a tag, so the tag opener is required
    here. Without it `let onclick = fn` in plain code would match. */
-const UNQUOTED_ATTR = /<[a-z][\w-]*\b[^<>]*?\son[a-z]+\s*=\s*[^\s"'=<>`]/gi;
+const UNQUOTED_ATTR = /(?<![\w$)\]])<[a-z][\w-]*\b[^<>]*?\son[a-z]+\s*=\s*[^\s"'=<>`]/gi;
 
 /* Comment spans, as [start, end) offsets.
 
@@ -45,7 +45,7 @@ const UNQUOTED_ATTR = /<[a-z][\w-]*\b[^<>]*?\son[a-z]+\s*=\s*[^\s"'=<>`]/gi;
    Deliberately not a full tokenizer: `//` inside a string or a regular
    expression is read as a comment here. That errs towards ignoring a match, and
    the retry-button assertions below pin the two real call sites. `//` after a
-   letter, a colon or a quote is a URL, not a comment. */
+   letter, a colon, a quote or an opening bracket is a URL, not a comment. */
 function commentSpans(src) {
   const spans = [];
   const push = (open, close, keepOpen) => {
@@ -64,7 +64,7 @@ function commentSpans(src) {
   /* Line comments end at the newline, so they never run away. */
   let i = 0;
   while ((i = src.indexOf('//', i)) !== -1) {
-    if (i > 0 && /[\w:"'=/]/.test(src[i - 1])) {
+    if (i > 0 && /[\w:"'=/(]/.test(src[i - 1])) {
       i += 2;
       continue;
     }
@@ -118,7 +118,9 @@ test('the scan finds a handler after a URL and one with an unquoted value', () =
   assert.equal(handlers('<script src="//cdn.example.com/x.js"></script><b onclick="x()">').length, 1);
   assert.equal(handlers('<button onclick=alert(1)>').length, 1);
   assert.equal(handlers('<button\n  type="button"\n  onclick=go>').length, 1);
+  assert.equal(handlers('<div style="background:url(//x.example/a.png)" onclick="x()">').length, 1);
   assert.deepEqual(handlers('let onclick = fn;\nel.onclick = () => go();'), []);
+  assert.deepEqual(handlers('for(let i=0;i<n;i++){ let onResize = fn; }'), []);
   assert.deepEqual(handlers('const a = 1; // <button onclick=alert(1)>'), []);
 });
 

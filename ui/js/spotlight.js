@@ -1,6 +1,7 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=e8dc60ee';
 import { t } from '/js/i18n.js?v=899386d8';
+import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
@@ -145,7 +146,8 @@ export function initSpotlight({
     });
     res.appendChild(f);
     fluidHoverClear(res);
-    if (live) live.textContent = cur.length + ' ' + (cur.length === 1 ? t('home.result') : t('home.results'));
+    if (live)
+      live.textContent = formatNumber(cur.length) + ' ' + (cur.length === 1 ? t('home.result') : t('home.results'));
     inp.setAttribute('aria-expanded', 'true');
     inp.setAttribute('aria-activedescendant', cur.length ? 'sr-opt-0' : '');
   };

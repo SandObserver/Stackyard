@@ -121,7 +121,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine } from '/js/widget-toolbox.js?v=0b7672de';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatNumber } from '/js/widget-toolbox.js?v=0b7672de';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -165,8 +165,8 @@ function relTime(v) {
   const d=parseDate(v); if(!d) return '—';
   const diff=(Date.now()-d.getTime())/1000, abs=Math.abs(diff), past=diff>=0;
   let l;
-  if(abs<90) l='< 2m'; else if(abs<3600) l=Math.round(abs/60)+'m';
-  else if(abs<86400) l=Math.round(abs/3600)+'h'; else l=Math.round(abs/86400)+'d';
+  if(abs<90) l='< 2m'; else if(abs<3600) l=formatNumber(Math.round(abs/60))+'m';
+  else if(abs<86400) l=formatNumber(Math.round(abs/3600))+'h'; else l=formatNumber(Math.round(abs/86400))+'d';
   return past?l+' ago':'in '+l;
 }
 

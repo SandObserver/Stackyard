@@ -481,28 +481,31 @@ async function fetchStats() {
   return d;
 }
 
+/* toFixed in the reader's digits. */
+const fixed = (v, d) => formatNumber(v, { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: false });
+
 function fmtMbps(v) {
   if (v == null || isNaN(v)) return wt('ui.noData','No data');
-  return v >= 1000 ? (v/1000).toFixed(1)+' Gbps' : Math.round(v)+' Mbps';
+  return v >= 1000 ? fixed(v/1000, 1)+' Gbps' : fixed(v, 0)+' Mbps';
 }
 
 /* Bytes/second → human rate for the RX/TX throughput mode. */
 function fmtRate(bytesPerSec) {
   const v = Number(bytesPerSec);
   if (v == null || isNaN(v)) return '—';
-  if (v >= 1024*1024*1024) return (v/(1024*1024*1024)).toFixed(1)+' GB/s';
-  if (v >= 1024*1024)       return (v/(1024*1024)).toFixed(1)+' MB/s';
-  if (v >= 1024)            return (v/1024).toFixed(0)+' KB/s';
-  return Math.round(v)+' B/s';
+  if (v >= 1024*1024*1024) return fixed(v/(1024*1024*1024), 1)+' GB/s';
+  if (v >= 1024*1024)       return fixed(v/(1024*1024), 1)+' MB/s';
+  if (v >= 1024)            return fixed(v/1024, 0)+' KB/s';
+  return fixed(v, 0)+' B/s';
 }
 
 /* Whole seconds → compact uptime label (e.g. "3d 4h", "5h 12m", "8m"). */
 function fmtUptime(sec) {
   sec = Math.max(0, Math.floor(Number(sec) || 0));
   const d = Math.floor(sec/86400), h = Math.floor((sec%86400)/3600), m = Math.floor((sec%3600)/60);
-  if (d) return `${d}d ${h}h`;
-  if (h) return `${h}h ${m}m`;
-  return `${m}m`;
+  if (d) return `${formatNumber(d)}d ${formatNumber(h)}h`;
+  if (h) return `${formatNumber(h)}h ${formatNumber(m)}m`;
+  return `${formatNumber(m)}m`;
 }
 
 async function fetchThroughput() {
