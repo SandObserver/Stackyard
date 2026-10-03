@@ -75,3 +75,38 @@ test('the import buttons show a focus ring', async ({ page, browserName }) => {
   const outline = await page.locator('#imp').evaluate(e => getComputedStyle(e.closest('.btn')).outlineStyle);
   expect(outline).toBe('solid');
 });
+
+test('the current Settings section is marked current', async ({ page }) => {
+  await openSection(page, 'appearance');
+  await expect(page.locator('.nl[data-sec="appearance"]')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.mtab[data-sec="appearance"]')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.nl[data-sec="general"]')).not.toHaveAttribute('aria-current');
+});
+
+test('Settings group titles are headings', async ({ page }) => {
+  await openSection(page, 'general');
+  await expect(page.locator('#sec-general').getByRole('heading', { level: 2, name: 'Sprache' })).toBeVisible();
+});
+
+test('the selected colour swatch is announced as pressed', async ({ page }) => {
+  await openDashboardList(page);
+  await rowByName(page, 'Alpha')
+    .getByRole('button', { name: /^Bearbeiten/ })
+    .click();
+  const swatch = v => page.locator(`#icon-color-slot .cc-swatch[data-v="${v}"]`);
+  await expect(swatch('dark')).toHaveAttribute('aria-pressed', 'true');
+  await expect(swatch('light')).toHaveAttribute('aria-pressed', 'false');
+  await swatch('light').click();
+  await expect(swatch('light')).toHaveAttribute('aria-pressed', 'true');
+  await expect(swatch('dark')).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('the Test result is announced', async ({ page }) => {
+  await openDashboardList(page);
+  await rowByName(page, 'Alpha')
+    .getByRole('button', { name: /^Bearbeiten/ })
+    .click();
+  await page.locator('label:has(#hc-type-ping)').click();
+  await page.locator('#hc-ping-test').click();
+  await expect(page.getByRole('status').filter({ hasText: /URL/ })).toHaveAttribute('id', 'hc-ping-status');
+});

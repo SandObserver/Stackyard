@@ -5,7 +5,7 @@ import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=be847687';
 import { createListbox } from '/js/listbox.js?v=198d4a2d';
-import { renderColorControl } from '/js/admin-color-control.js?v=88767aab';
+import { renderColorControl } from '/js/admin-color-control.js?v=3949ca51';
 import {
   seedCarried,
   applyOptionSet,
@@ -174,6 +174,8 @@ function _picklist(field, value, ctx, size) {
   wrap.className = 'wcf-group';
   const hdr = document.createElement('p');
   hdr.className = 'grp-hdr';
+  hdr.setAttribute('role', 'heading');
+  hdr.setAttribute('aria-level', '2');
   hdr.textContent = field.label;
   wrap.appendChild(hdr);
   const card = document.createElement('div');
@@ -184,6 +186,7 @@ function _picklist(field, value, ctx, size) {
   fr.className = 'row';
   const status = document.createElement('span');
   status.className = 'row-status';
+  status.setAttribute('role', 'status');
   status.textContent = field.hint || '';
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -298,6 +301,7 @@ function _select(field, value, ctx, config = {}) {
     fr.className = 'row';
     const status = document.createElement('span');
     status.className = 'row-status';
+    status.setAttribute('role', 'status');
     status.textContent = field.hint || '';
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -533,6 +537,8 @@ function _object(field, value, ctx) {
   const wrap = document.createElement('div');
   const hdr = document.createElement('p');
   hdr.className = 'grp-hdr';
+  hdr.setAttribute('role', 'heading');
+  hdr.setAttribute('aria-level', '2');
   hdr.textContent = field.label;
   wrap.appendChild(hdr);
   const card = document.createElement('div');
@@ -604,7 +610,7 @@ function _group(field, rows, size, ctx) {
     data.forEach((rowData, idx) => {
       const hdr = document.createElement('p');
       hdr.className = 'grp-hdr grp-hdr-row';
-      setHtml(hdr, html`<span>${field.label} ${idx + 1}</span>`);
+      setHtml(hdr, html`<span role="heading" aria-level="2">${field.label} ${idx + 1}</span>`);
       const rm = document.createElement('button');
       rm.type = 'button';
       rm.className = 'grp-hdr-rm';

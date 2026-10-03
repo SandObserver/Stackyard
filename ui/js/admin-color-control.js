@@ -236,6 +236,7 @@ export function renderColorControl(
     });
     const rb = q('.cc-rainbow', container);
     if (rb) rb.classList.toggle('on', showTune && (mode === 'color' || hues.includes(mode)));
+    qa('.cc-swatch', container).forEach(b => b.setAttribute('aria-pressed', String(b.classList.contains('on'))));
     reveal(tune, showTune, !_painted);
     if (!codeRv.closest('.editing')) {
       codeRv.textContent = mode === 'color' ? hex : kwName(mode);

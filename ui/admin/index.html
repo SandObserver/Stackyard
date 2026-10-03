@@ -65,7 +65,7 @@
       </div>
       <p class="grp-tip" data-i18n="general.hostIpTip">Lets badges fetch from your server's own address. Without it, those requests are blocked.</p>
 
-      <div class="grp-hdr" data-i18n="common.language">Language</div>
+      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="common.language">Language</div>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="common.language">Language</span>
@@ -74,7 +74,7 @@
         </div>
       </div>
 
-      <div class="grp-hdr" data-i18n="general.monitoring">Monitoring</div>
+      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="general.monitoring">Monitoring</div>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="general.loggingLevel">Logging Level</span>
@@ -94,7 +94,7 @@
       <p class="grp-tip" id="socket-hint" data-i18n-html="general.socketTip">Use the URL of a <strong>socket proxy</strong> container, never the Docker socket itself. A name such as <code>http://socket-proxy:2375</code> works only when this container and the proxy share a Docker network; an IP address works only when the proxy publishes its port beyond the host's own loopback.</p>
       </div></div>
 
-      <div class="grp-hdr" data-i18n="general.security">Security</div>
+      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="general.security">Security</div>
       <div class="grp">
         <div class="row"><span class="rl" id="rl-sec-en" data-i18n="general.passwordProtection">Password Protection</span><label class="tog"><input type="checkbox" id="sec-en" aria-labelledby="rl-sec-en"><div class="tr"></div></label></div>
         <div class="row-wrap reveal" id="ie-pw-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div></div></div>
@@ -109,7 +109,7 @@
       </div>
       <p class="grp-tip" data-i18n-html="general.allowedHostsTip">While no password is set, Stackyard answers only on IP addresses, local names such as <code>nas</code> or <code>nas.local</code>, and the addresses listed here. Separate them with commas.</p>
 
-      <div class="grp-hdr" data-i18n="general.backup">Backup</div>
+      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="general.backup">Backup</div>
       <div class="grp">
         <div class="row"><span class="rl" data-i18n="general.importExport">Import / Export</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.import">Import</span><input type="file" id="imp" accept=".json" class="file-hidden" aria-label="Import configuration JSON" data-i18n-al="general.importJson"></label><button class="btn bg sm" id="btn-exp" type="button" data-i18n="common.export">Export</button></div></div>
         <div class="row"><span class="rl" data-i18n="general.importForeign">Import from another dashboard</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.chooseFiles">Choose files</span><input type="file" id="imp-foreign" accept=".yml,.yaml" multiple class="file-hidden" aria-label="Import Homepage or Dashy YAML config" data-i18n-al="general.importForeignFiles"></label></div></div>
@@ -124,12 +124,12 @@
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
         <div class="sec-hdr-actions"><button class="btn bp sm" id="bg-save" type="button" data-i18n="common.save">Save</button></div>
       </div>
-      <div class="grp-hdr" data-i18n="appearance.appTitle">App Title</div>
+      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.appTitle">App Title</div>
       <div class="grp">
         <div class="row"><span class="rl" id="rl-set-lbl-d" data-i18n="appearance.showTitleDesktop">Show App Title On Desktop</span><label class="tog"><input type="checkbox" id="set-lbl-d" aria-labelledby="rl-set-lbl-d"><div class="tr"></div></label></div>
         <div class="row"><span class="rl" id="rl-set-lbl-m" data-i18n="appearance.showTitleMobile">Show App Title On Mobile</span><label class="tog"><input type="checkbox" id="set-lbl-m" aria-labelledby="rl-set-lbl-m"><div class="tr"></div></label></div>
       </div>
-      <div class="grp-hdr" data-i18n="appearance.display">Display</div>
+      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.display">Display</div>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="appearance.displayMode">Settings Display Mode</span>
@@ -140,7 +140,7 @@
       </div>
       <p class="grp-tip" data-i18n="appearance.displayModeTip">Sets the appearance of the Settings pages. It is stored in this browser, applies to this device only, and takes effect at once.</p>
       <p class="grp-tip" data-i18n="appearance.keepAwakeTip">Stops the screen dimming or locking while the dashboard is open. Browsers only allow this over HTTPS, so it has no effect on a plain HTTP address.</p>
-      <div class="grp-hdr" data-i18n="appearance.wallpaper">Wallpaper</div>
+      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.wallpaper">Wallpaper</div>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="appearance.source">Source</span>
@@ -299,6 +299,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=4af3650b"></script>
+<script type="module" src="/js/admin.js?v=f06c11e4"></script>
 </body>
 </html>

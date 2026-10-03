@@ -194,3 +194,13 @@ test('the declared live regions are only the two intended ones', () => {
 test('the heading is inside a landmark', () => {
   assert.match(read('index.html'), /<header[^>]*>\s*<h1>/, 'the h1 is not in a landmark');
 });
+
+test('every Fetch and Test result line in Settings is a status region', () => {
+  const sources = ['js/admin-app-form.js', 'js/widget-config-form.js'].map(read).join('\n');
+  const markup = sources.match(/<span[^>]*class="row-status"[^>]*>/g) || [];
+  for (const tag of markup) assert.match(tag, /role="status"/, tag);
+  const built = sources.split("const status = document.createElement('span');").slice(1);
+  assert.ok(markup.length + built.length >= 4);
+  for (const after of built)
+    assert.match(after, /^\s*status\.className = 'row-status';\s*status\.setAttribute\('role', 'status'\);/);
+});
