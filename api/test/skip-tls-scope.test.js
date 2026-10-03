@@ -49,7 +49,7 @@ test('the server-wide setting is scoped to internal hosts too', () => {
 
 /* The decision is only worth anything if it reaches the transport, so these read
    the options actually handed to https.request. */
-function captureRequest(t) {
+function captureRequest(t, code = 'DEPTH_ZERO_SELF_SIGNED_CERT') {
   const calls = [];
   const original = https.request;
   https.request = (opts, _cb) => {
@@ -58,7 +58,7 @@ function captureRequest(t) {
     req.end = () => {};
     req.write = () => {};
     req.destroy = () => {};
-    setImmediate(() => req.emit('error', Object.assign(new Error('stub'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' })));
+    setImmediate(() => req.emit('error', Object.assign(new Error('stub'), { code })));
     return req;
   };
   t.after(() => {
@@ -86,6 +86,13 @@ test('a certificate failure on a public host explains that the skip did not appl
      unvouched message with a generic one. */
   assert.equal(err.vouchedMessage, SKIP_TLS_IGNORED_MESSAGE);
   assert.equal(err.apiCode, 'network.tls-ignored');
+});
+
+test('a refused connection on a public host that asked to skip is not called a certificate failure', async t => {
+  captureRequest(t, 'ECONNREFUSED');
+  const err = await _internals.fetchJSON('https://api.github.com/x', { skipTls: true }).catch(e => e);
+  assert.equal(err.vouchedMessage, undefined);
+  assert.equal(err.apiCode, undefined);
 });
 
 test('a certificate failure nobody asked to skip is not explained away', async t => {
