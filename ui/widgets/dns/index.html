@@ -18,6 +18,7 @@
     position:relative;
   }
   .widget.clickable { cursor:pointer; }
+  .widget.clickable:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
 
   .hero { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
   .pct  { font-size:clamp(26px,9cqw,36px); font-weight:700; color:#FF4245; line-height:1; letter-spacing:-0.02em; transition: color 0.15s ease; }
@@ -50,7 +51,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=e44a2dd4';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=b4ee9b14';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -90,10 +91,7 @@ async function boot() {
   } catch {}
   _href = cfg?.widgetConfig?.dnsHref || '';
   _provider = cfg?.widgetConfig?.provider || 'adguard';
-  if (_href) {
-    widgetEl.classList.add('clickable');
-    widgetEl.addEventListener('click', () => openUrl(_href));
-  }
+  linkTo(widgetEl, _href);
   poll({ fetch:gfetch, interval:TICK_MS,
     render:d=>{ state.ok(); apply(d); },
     onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); } });

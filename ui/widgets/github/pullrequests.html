@@ -29,10 +29,11 @@
   .small-sub{color:rgba(255,255,255,0.45);}
 
   /* PR list */
-  .pr-list{display:flex;flex-direction:column;gap:0;overflow:hidden;flex:1;min-height:0;}
-  .pr-item{display:flex;flex-direction:column;gap:1px;
-    padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+  .pr-list{display:flex;flex-direction:column;gap:0;overflow:hidden;flex:1;min-height:0;margin:0 -4px;padding:0 4px;}
+  .pr-item{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);
     cursor:pointer;transition:opacity .15s;flex-shrink:0;}
+  .pr-link{display:flex;flex-direction:column;gap:1px;}
+  .pr-link:focus-visible{outline:2px solid #0091FF;outline-offset:2px}
   .pr-item:last-child{border-bottom:none;}
   .pr-item:active{opacity:.65;}
   .pr-meta{color:rgba(255,255,255,0.38);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -65,7 +66,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="GitHub pull requests"></div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=e44a2dd4';
+import { poll, fetchData, openUrl, linkTo, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=b4ee9b14';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.prAria','GitHub pull requests'));
 
@@ -240,24 +241,22 @@ function render(data) {
 
   const visible = items.slice(0, MAX_ITEMS);
   if (visible.length === 0) {
+    list.removeAttribute('role');
     const empty = document.createElement('div'); empty.className = 'msg';
     empty.textContent = wt('ui.noPrs','No pull requests'); list.appendChild(empty); return;
   }
 
   visible.forEach(pr => {
     const item  = document.createElement('div'); item.className = 'pr-item';
+    item.setAttribute('role','listitem');
+    const link  = document.createElement('div'); link.className = 'pr-link';
     const meta  = document.createElement('div'); meta.className = 'pr-meta';
     meta.textContent = `${pr.repo} #${pr.number}`;
     const title = document.createElement('div'); title.className = 'pr-title';
     title.textContent = pr.title;
-    item.append(meta, title);
-    item.setAttribute('aria-label', `${pr.repo} #${pr.number}: ${pr.title}`);
-    if (pr.url) {
-      item.setAttribute('role','link'); item.setAttribute('tabindex','0');
-      const go = () => openUrl(pr.url);
-      item.addEventListener('click', go);
-      item.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } });
-    } else { item.setAttribute('role','listitem'); }
+    link.append(meta, title);
+    if (linkTo(link, pr.url)) link.setAttribute('aria-label', `${pr.repo} #${pr.number}: ${pr.title}`);
+    item.appendChild(link);
     list.appendChild(item);
   });
 }

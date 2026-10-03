@@ -30,6 +30,7 @@
     align-self: stretch;
   }
   .card-wrap.clickable { cursor: pointer; }
+  .card-wrap.clickable:focus-visible { outline: 2px solid #0091FF; outline-offset: 2px; }
   .card-wrap.inactive  { opacity: 0.38; pointer-events: none; }
 
   /* Back card */
@@ -119,7 +120,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, errorState, errorLine } from '/js/widget-toolbox.js?v=e44a2dd4';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine } from '/js/widget-toolbox.js?v=b4ee9b14';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -451,14 +452,13 @@ function buildShell() {
     const haiku = haikus[idx];
 
     const wrap = document.createElement('div');
-    wrap.className = 'card-wrap'
-      + (href&&isActive?' clickable':'')
-      + (isActive?'':' inactive');
+    wrap.className = 'card-wrap' + (isActive?'':' inactive');
     wrap.style.width = cardW;
     wrap.style.flex  = '0 0 ' + cardW;
     if (cardH) { wrap.style.height = cardH; wrap.style.alignSelf = 'center'; }
 
     if (href && isActive) {
+      linkTo(wrap, href);
       if (isTouch) {
         let _revealTimer = null;
         wrap.addEventListener('touchend', (e) => {
@@ -484,9 +484,6 @@ function buildShell() {
             }, 3000);
           }
         });
-      } else {
-        wrap.classList.add('clickable');
-        wrap.addEventListener('click', () => openUrl(href));
       }
     }
 

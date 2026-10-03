@@ -91,6 +91,44 @@ export function openUrl(href) {
   }
 }
 
+const _links = new WeakMap();
+const CONTROL = 'button, a[href], input, select, textarea, [role="button"]';
+
+/** Make `el` a link to `href` for mouse and keyboard: role link, a tab stop,
+    click and Enter. Call again to change the link; an empty or unsafe `href`
+    removes it and restores the element's own role. A click or key on a
+    control inside `el` is left to that control.
+    @param {HTMLElement} el @param {string} href @returns {boolean} whether `el` is now a link */
+export function linkTo(el, href) {
+  const on = !!href && isSafeLinkUrl(href);
+  let link = _links.get(el);
+  if (!link) {
+    if (!on) return false;
+    link = { href: '', role: el.getAttribute('role') };
+    _links.set(el, link);
+    el.addEventListener('click', e => {
+      const hit = /** @type {Element} */ (e.target);
+      if (link.href && !(hit !== el && hit.closest?.(CONTROL))) openUrl(link.href);
+    });
+    el.addEventListener('keydown', e => {
+      if (!link.href || e.key !== 'Enter' || e.target !== el) return;
+      e.preventDefault();
+      openUrl(link.href);
+    });
+  }
+  link.href = on ? href : '';
+  el.classList.toggle('clickable', on);
+  if (on) {
+    el.setAttribute('role', 'link');
+    el.tabIndex = 0;
+  } else {
+    if (link.role) el.setAttribute('role', link.role);
+    else el.removeAttribute('role');
+    el.removeAttribute('tabindex');
+  }
+  return on;
+}
+
 export async function getConfig() {
   const id = widgetId();
   const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`, { cache: 'no-store' });

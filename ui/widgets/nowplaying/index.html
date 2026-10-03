@@ -127,7 +127,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState, localiseDigits } from '/js/widget-toolbox.js?v=e44a2dd4';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits } from '/js/widget-toolbox.js?v=b4ee9b14';
 await loadStrings();
 document.getElementById('title').textContent = wt('ui.nothingPlaying', 'Nothing playing');
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
@@ -222,7 +222,6 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   prevB.addEventListener('click',e=>{e.stopPropagation();nav(-1);});
   nextB.addEventListener('click',e=>{e.stopPropagation();nav(1);});
 
-  function openHref(){ if(href) openUrl(href); }
 
   async function npFetch(){
     return fetchData();
@@ -240,13 +239,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
       const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
       if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
     }catch(e){}
-    if(href){
-      wEl.classList.add('clickable');
-      wEl.setAttribute('role','link');
-      wEl.setAttribute('tabindex','0');
-      wEl.addEventListener('click',openHref);
-      wEl.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openHref(); } });
-    }
+    linkTo(wEl,href);
     const state=errorState({ root:wEl, content:[document.querySelector('.window')],
       caption:document.getElementById('np-cap') });
 
