@@ -239,3 +239,23 @@ test('signing in again mid-session returns focus to the control that asked', asy
   await expect(page.locator('#login-screen')).toBeHidden();
   await expect(awake).toBeFocused();
 });
+
+/* A closed section is zero height, so focus inside it is lost from view. */
+test('a switched-off editor section takes no focus until it opens', async ({ page }) => {
+  await openDashboardList(page);
+  await rowByName(page, 'Alpha').getByRole('button', { name: /^Edit/ }).click();
+  await editorOpened(page);
+  const focusableInside = () =>
+    page.evaluate(
+      () =>
+        [...document.querySelectorAll('#hc-sub input, #hc-sub button')].filter(el => {
+          /** @type {HTMLElement} */ (el).focus();
+          return document.activeElement === el;
+        }).length,
+    );
+  await expect(page.locator('#hc-en')).not.toBeChecked();
+  expect(await focusableInside()).toBe(0);
+  await page.locator('label.tog:has(#hc-en)').click();
+  await expect(page.locator('#hc-sub')).toHaveClass(/\bopen\b/);
+  await expect.poll(focusableInside).toBeGreaterThan(0);
+});
