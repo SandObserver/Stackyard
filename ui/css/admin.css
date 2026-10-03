@@ -567,9 +567,11 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    shrink below its content without them: the track never closes, and a long
    value pushes the row wider than its card. */
 .reveal{display:grid;grid-template-rows:0fr;transition:grid-template-rows calc(var(--t-reveal) * .8) var(--ease-reveal)}
-.reveal > .reveal-in{overflow:hidden;min-height:0;min-width:0;opacity:0;transition:opacity calc(var(--t-reveal) * .32) linear}
+/* Hidden once the close has run, so a closed section takes no focus and is
+   not read out. */
+.reveal > .reveal-in{overflow:hidden;min-height:0;min-width:0;opacity:0;visibility:hidden;transition:opacity calc(var(--t-reveal) * .32) linear,visibility 0s linear calc(var(--t-reveal) * .8)}
 .reveal.open{grid-template-rows:1fr;transition-duration:var(--t-reveal)}
-.reveal.open > .reveal-in{opacity:1;transition:opacity calc(var(--t-reveal) * .55) linear calc(var(--t-reveal) * .25)}
+.reveal.open > .reveal-in{opacity:1;visibility:inherit;transition:opacity calc(var(--t-reveal) * .55) linear calc(var(--t-reveal) * .25),visibility 0s}
 /* State restored from the server. Nothing may animate. */
 .reveal.reveal-now,.reveal.reveal-now > .reveal-in{transition:none}
 /* Drop the clip once open, or it cuts off a menu opened from a revealed row. */

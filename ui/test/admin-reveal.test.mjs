@@ -204,3 +204,20 @@ test('an opened disclosure stops clipping its content', () => {
 test('a disclosure can shrink on both axes', () => {
   assert.match(css, /\.reveal > \.reveal-in\{overflow:hidden;min-height:0;min-width:0/);
 });
+
+/* A zero-height section still holds its controls. Without visibility:hidden
+   they take Tab focus out of sight and are read out. */
+test('a closed section takes no focus and is not read out', () => {
+  assert.match(css, /\.reveal > \.reveal-in\{[^}]*visibility:hidden/);
+  /* inherit, not visible: an open section inside a closed one must stay hidden. */
+  assert.match(css, /\.reveal\.open > \.reveal-in\{[^}]*visibility:inherit/);
+  assert.doesNotMatch(css, /\.reveal[^{]*\{[^}]*visibility:visible/);
+});
+
+test('a closing section stays visible until the close has run', () => {
+  const shut = /\.reveal > \.reveal-in\{[^}]*visibility 0s linear calc\(var\(--t-reveal\) \* ([.\d]+)\)/.exec(css);
+  const track = /\.reveal\{[^}]*transition:grid-template-rows calc\(var\(--t-reveal\) \* ([.\d]+)\)/.exec(css);
+  assert.ok(shut && track, 'the delay or the track duration moved');
+  assert.ok(Number(shut[1]) >= Number(track[1]), 'the fields vanish before the section has closed');
+  assert.match(css, /\.reveal\.open > \.reveal-in\{[^}]*visibility 0s\}/, 'opening must show the fields at once');
+});
