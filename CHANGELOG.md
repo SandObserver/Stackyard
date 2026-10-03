@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allowed Addresses in Settings, General.
 
+- Add a Type to Search switch to Settings, so typing on the dashboard can stop
+  opening search.
+
 ### Fixed
 
 - Translate the hue, saturation and brightness sliders and the colour code hint
@@ -160,6 +163,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show focus rings on the search field and Cancel button.
 
 - Open Settings when the browser blocks site storage.
+
+- Keep both changes when two Appearance switches are flipped in quick
+  succession.
 
 ### Security
 
