@@ -10,10 +10,10 @@ This is a self-assessment. No external audit has been carried out.
 
 ## What is supported
 
-- Every control has a name, a role, and a visible focus indicator.
+- Every control has a name, a role, and a visible focus indicator, apart from those listed below.
 - The interface is operable by keyboard alone. Reordering, paging, search, and dialogs each have a keyboard route.
 - Dialogs trap focus, close on Escape, and return focus to the control that opened them.
-- Text in the dashboard and in Settings meets the 4.5:1 contrast minimum in both the light and the dark theme. The ratios are computed from the stylesheets by a test, so a colour change that drops a pair below the minimum fails the build.
+- Text in the dashboard and in Settings meets the 4.5:1 contrast minimum in both the light and the dark theme. A test computes the ratios of the theme colour pairs from the stylesheets, so a change that drops one of those pairs below the minimum fails the build.
 - The interface honours `prefers-reduced-motion` and `prefers-contrast`.
 - Content reflows to a 320 CSS pixel viewport with no horizontal scrolling, and survives text resizing to 200%.
 - The interface is translated into six languages. Accessible names are translated with it, apart from those listed below.
@@ -23,6 +23,10 @@ This is a self-assessment. No external audit has been carried out.
 
 - **Widgets need an extra step to read.** Each widget is an embedded document. A screen reader does not enter one during linear navigation, so its contents are read only after the reader is asked to enter it. Widgets containing a button or a link are also reachable with Tab.
 - **A phone shortcut that responds only to touch.** On a phone, a widget that has a link set opens it when tapped away from the widget's own controls. There is no keyboard equivalent for that shortcut. Widgets that carry their own link also expose it as a control, and that one is reachable by keyboard. The shortcut does not exist on a desktop.
+- **Some text is shown in English in every language.** This covers the sign-in screen, some error messages from the server, a few labels in the item editor, and the name of the Settings app search field. The sign-in screen is also always laid out left to right.
+- **Collapsed sections in Settings keep their controls in the tab order.** When a section such as Health Check is switched off, its hidden fields can still take keyboard focus, and the focus is not visible.
+- **Two Settings controls are below the 3:1 contrast minimum for non-text elements.** The selected segment of a segmented control, and the track of a switch that is off, are faint against their background. The selected segment also has a heavier label, and the switch shows its state by the knob position.
+- **Colours written directly into a rule are not covered by the contrast test.** The test measures the theme colour pairs only. Those colours are checked by hand.
 - **Widget colours are not covered by the contrast test.** Each widget is a separate document with its own stylesheet. Those colours are checked by hand rather than by the build, and a widget rendered on a transparent background cannot be measured automatically.
 
 ## How this was assessed
@@ -30,6 +34,7 @@ This is a self-assessment. No external audit has been carried out.
 - Automated testing with [axe-core](https://github.com/dequelabs/axe-core) in Chromium and WebKit, against the released container.
 - Manual browser testing for reflow, text resize, text spacing, target size, and keyboard operation.
 - Manual screen reader testing with VoiceOver, on macOS with Safari and on iOS.
+- A review of the source for names, focus, keyboard routes, contrast, and translation, in September 2026.
 
 Automated testing has covered every widget. Screen reader testing has covered the dashboard, Settings, and the widgets on a running dashboard, but not every widget in every configuration. The Windows screen readers NVDA and JAWS have not been used.
 
@@ -37,4 +42,4 @@ Automated testing has covered every widget. Screen reader testing has covered th
 
 Open an issue at [github.com/SandObserver/stackyard/issues](https://github.com/SandObserver/stackyard/issues). Include the page, the assistive technology and browser, and what you expected to happen.
 
-Last reviewed 2026-08-23, against Stackyard 1.8.0 and later.
+Last reviewed 2026-10-02, for the release that follows Stackyard 1.15.0.
