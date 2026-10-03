@@ -87,6 +87,7 @@ test('every widget with a configurable link uses the shared link', () => {
     'connections/connections-vpn.html',
     'backup/backup.html',
     'nowplaying/index.html',
+    'books/index.html',
   ]) {
     const src = widget(p);
     assert.match(src, /linkTo\(/, p);
@@ -99,6 +100,13 @@ test('the Now Playing link holds no controls', () => {
   const src = widget('nowplaying/index.html');
   assert.match(src, /<div class="np-link" id="np-link"><\/div>/);
   assert.match(src, /linkTo\(linkEl,href\)/);
+});
+
+test('the Books link holds no spines and is not their container', () => {
+  const src = widget('books/index.html');
+  assert.match(src, /<div class="bk-link" id="bk-link"><\/div>/);
+  assert.match(src, /linkTo\(link,href\)/);
+  assert.doesNotMatch(src, /card\.setAttribute\('role',\s*'link'\)/);
 });
 
 test('the DNS link is described by its summary', () => {

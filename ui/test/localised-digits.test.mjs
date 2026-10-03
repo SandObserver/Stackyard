@@ -240,3 +240,18 @@ test('no interface module or widget writes a number in Latin digits', () => {
   const found = files.flatMap(f => latinDigits(read(f), f));
   assert.deepEqual(found, [], `format it with formatNumber():\n  ${found.join('\n  ')}`);
 });
+
+test('every Backup age is in the reader digits, including the youngest', async () => {
+  const src = read('widgets/backup/backup.html');
+  const fn = name => {
+    const at = src.indexOf(`function ${name}(`);
+    return src.slice(at, src.indexOf('\n}\n', at) + 2);
+  };
+  await withLocale('fa-IR', ({ formatNumber }) => {
+    const relTime = new Function('formatNumber', `${fn('parseDate')}${fn('relTime')}return relTime;`)(formatNumber);
+    for (const seconds of [30, 600, 5 * 3600, 3 * 86400]) {
+      const age = relTime(new Date(Date.now() - seconds * 1000).toISOString());
+      assert.doesNotMatch(age, /[0-9]/, `${seconds} s reads ${age}`);
+    }
+  });
+});
