@@ -739,7 +739,9 @@ async function boot() {
       v => ({ v }),
       e => ({ e }),
     );
-  const configReq = settled(fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) }));
+  const loadConfig = () =>
+    settled(fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) }));
+  let configReq = loadConfig();
   const loadWidgets = () =>
     settled(
       fetch('/api/widgets', { cache: 'no-store' }).then(r => {
@@ -748,7 +750,7 @@ async function boot() {
       }),
     );
   let widgetsReq = loadWidgets();
-  const iconsReq = loadLocalIcons();
+  let iconsReq = loadLocalIcons();
 
   let authData = null;
   try {
@@ -769,6 +771,13 @@ async function boot() {
     if (authData.enabled && !authData.authenticated) {
       window.location.href = '/admin/';
       return;
+    }
+    /* Only the sign-in check stores the first address. Requests sent before it
+       on a first visit by host name are refused. */
+    if ((await configReq).v?.status === 403) {
+      configReq = loadConfig();
+      widgetsReq = loadWidgets();
+      iconsReq = loadLocalIcons();
     }
   } catch {
     /* API down, handled below */
