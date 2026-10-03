@@ -63,12 +63,21 @@ function isAbsoluteLink(href) {
 /* A value Homepage or Dashy resolves from its own environment. */
 const hasPlaceholder = s => /\{\{[^}]*\}\}|\$\{[^}]*\}/.test(s);
 
+/* An alias is the same map every time. Listing a wide map's keys on each visit
+   freezes the tab. */
+/** @type {WeakMap<object, string|null>} */
+const soleKeys = new WeakMap();
+
 /** The single key of a `{ name: value }` wrapper, or null.
     @param {any} v @returns {[string, any]|null} */
 function soleEntry(v) {
   if (!isMap(v)) return null;
-  const keys = Object.keys(v);
-  return keys.length === 1 ? [keys[0], v[keys[0]]] : null;
+  if (!soleKeys.has(v)) {
+    const keys = Object.keys(v);
+    soleKeys.set(v, keys.length === 1 ? keys[0] : null);
+  }
+  const key = soleKeys.get(v);
+  return key === null ? null : [key, v[key]];
 }
 
 /** Which format a parsed document is, by shape rather than by filename.

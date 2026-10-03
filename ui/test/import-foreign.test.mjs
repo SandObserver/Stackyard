@@ -528,6 +528,17 @@ test('telling the format apart stops at the entry budget on an aliased Homepage 
   assert.ok(performance.now() - started < 1000);
 });
 
+test('one wide map aliased under the budget is read once, not once per alias', () => {
+  let y = '- g1:\n    - &m\n';
+  for (let i = 0; i < 20000; i++) y += `      k${i}: 1\n`;
+  y += `- g2: [${Array(2000).fill('*m').join(', ')}]\n`;
+  const doc = parseYaml(y);
+  const started = performance.now();
+  assert.equal(detectSource(doc), 'homepage-services');
+  assert.equal(convertHomepageServices(doc).items.length, 0);
+  assert.ok(performance.now() - started < 1000);
+});
+
 test('aliases that stay under the budget still import everywhere they are used', () => {
   const out = convertDashy(
     parseYaml(
