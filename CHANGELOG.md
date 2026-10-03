@@ -143,6 +143,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   item, when opening or closing the item editor, after an inline edit, and after
   a form control redraws.
 
+- Give screen readers the right names for Settings edit buttons, pickers, the
+  fullscreen switch, the health check type and the sidebar link, and show focus
+  on the Import buttons.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
