@@ -11,7 +11,7 @@ import {
 } from '/js/admin-logic.js?v=fc7f0836';
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=d9246f59';
-import { renderColorControl } from '/js/admin-color-control.js?v=88767aab';
+import { renderColorControl } from '/js/admin-color-control.js?v=f60e9e8b';
 import { BACKDROP } from '/js/background.js?v=f859fed0';
 import { firstBadHost, hostnameOf, isLocalAddress, parseHostList } from '/js/host-names.js?v=842f96ca';
 

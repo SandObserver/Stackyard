@@ -236,6 +236,12 @@ export function renderColorControl(
     });
     const rb = q('.cc-rainbow', container);
     if (rb) rb.classList.toggle('on', showTune && (mode === 'color' || hues.includes(mode)));
+    const sw = qa('.cc-swatch', container);
+    const preset = sw.some(b => b !== rb && b.classList.contains('on'));
+    sw.forEach(b =>
+      b.setAttribute('aria-pressed', String(b === rb ? mode === 'color' && !preset : b.classList.contains('on'))),
+    );
+    rb?.setAttribute('aria-expanded', String(showTune));
     reveal(tune, showTune, !_painted);
     if (!codeRv.closest('.editing')) {
       codeRv.textContent = mode === 'color' ? hex : kwName(mode);

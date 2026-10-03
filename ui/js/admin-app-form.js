@@ -25,7 +25,7 @@ import {
 } from '/js/admin-shared.js?v=be847687';
 import { createListbox } from '/js/listbox.js?v=198d4a2d';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=88767aab';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=f60e9e8b';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=f82486b2';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -115,7 +115,7 @@ export function buildAppForm(body, item) {
       ${ier('ie-url', t('app.url'), 'f-href', item?.href, t('app.urlPh'), 'url')}
     </div>
 
-    <p class="grp-hdr">${t('app.icon')}</p>
+    <p class="grp-hdr" role="heading" aria-level="2">${t('app.icon')}</p>
     <div class="grp" id="ipw">
       <div class="icon-src-anchor">
       <div class="row icon-src-row">
@@ -136,7 +136,7 @@ export function buildAppForm(body, item) {
     </div>
     ${dockBlocked ? html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull', { max: DOCK_MAX })}</p>` : ''}
 
-    <p class="grp-hdr">${t('app.badge')}</p>
+    <p class="grp-hdr" role="heading" aria-level="2">${t('app.badge')}</p>
     <div class="grp">
       <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled, t('app.healthCheck'))}</div>
       <div id="hc-sub" class="reveal${hc.enabled ? ' open' : ''}"><div class="reveal-in">
@@ -147,7 +147,7 @@ export function buildAppForm(body, item) {
         <div id="hc-con-row" ${isPing ? 'hidden' : ''}>${ier('ie-hc-con', t('app.container'), 'hc-con', hc.container, t('app.containerPh'))}</div>
         <div id="hc-ping-row" ${isPing ? '' : 'hidden'}>
           ${ier('ie-hc-ping', t('app.pingUrl'), 'hc-ping', hc.pingUrl, t('app.pingUrlPh'), 'url')}
-          <div class="row"><span class="rl"></span><span id="hc-ping-status" class="row-status"></span><button type="button" class="row-btn" id="hc-ping-test">${t('app.test')}</button></div>
+          <div class="row"><span class="rl"></span><span id="hc-ping-status" class="row-status" role="status"></span><button type="button" class="row-btn" id="hc-ping-test">${t('app.test')}</button></div>
         </div>
       </div></div>
     </div>
@@ -165,7 +165,7 @@ export function buildAppForm(body, item) {
       <div class="row"><span class="rl">${t('app.liveActivity')}</span>${tog('act-en', act.enabled, t('app.liveActivity'))}</div>
       <div id="act-sub" class="reveal${act.enabled ? ' open' : ''}"><div class="reveal-in">
         ${ier('ie-burl', t('app.apiUrl'), 'f-burl', act.url, t('app.apiUrlPh'), 'url')}
-        <div class="row"><span class="rl"></span><span id="bst" class="row-status"></span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
+        <div class="row"><span class="rl"></span><span id="bst" class="row-status" role="status"></span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
         <div id="auth-row-wrap">
           <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers), t('app.authentication'))}</div>
           <div id="auth-sub" class="reveal${act.params?.length || act.headers?.length ? ' open' : ''}"><div class="reveal-in">
@@ -366,7 +366,7 @@ function renderActLabels(host) {
     hdr.dataset.idx = String(i);
     setHtml(
       hdr,
-      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><span>${t('app.labelN', { n: i + 1 })}</span>`,
+      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><span role="heading" aria-level="3">${t('app.labelN', { n: i + 1 })}</span>`,
     );
     const ctl = document.createElement('span');
     ctl.className = 'albl-ctl';

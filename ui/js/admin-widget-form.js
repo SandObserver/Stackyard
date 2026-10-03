@@ -1,7 +1,7 @@
 import { state } from '/js/admin-state.js?v=af772a1b';
 import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=be847687';
 import { createListbox } from '/js/listbox.js?v=198d4a2d';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=6a55e3d6';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=890f3c07';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=fc7f0836';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
@@ -94,6 +94,8 @@ function _renderWidgetForm(body) {
   if (!_sizeOpts.includes(state._wsize)) state._wsize = _sizeOpts.includes('medium') ? 'medium' : _sizeOpts[0];
   const sizeHdr = document.createElement('p');
   sizeHdr.className = 'grp-hdr';
+  sizeHdr.setAttribute('role', 'heading');
+  sizeHdr.setAttribute('aria-level', '2');
   sizeHdr.textContent = t('widgetCfg.size');
   body.appendChild(sizeHdr);
   const scard = document.createElement('div');
@@ -195,6 +197,8 @@ function _renderCustomConfig(body) {
   const o = state._iframeOpts || {};
   const advHdr = document.createElement('p');
   advHdr.className = 'grp-hdr';
+  advHdr.setAttribute('role', 'heading');
+  advHdr.setAttribute('aria-level', '2');
   advHdr.textContent = t('widgetCfg.advanced');
   body.appendChild(advHdr);
   const adv = document.createElement('div');

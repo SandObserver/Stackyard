@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=d5184a11';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=9d7fa3eb';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=93082af6';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=694684ea';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=06bb307a';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=3383e591';
+} from '/js/admin-settings.js?v=b0e0e84f';
 import {
   apiGet,
   apiPost,
@@ -31,7 +31,7 @@ import {
   toast,
 } from '/js/admin-shared.js?v=be847687';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=567b17ad';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=f60cbde3';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=198d4a2d';
@@ -643,7 +643,12 @@ function initNav() {
     qa('.sec', document).forEach(s => {
       s.hidden = s.id !== 'sec-' + id;
     });
-    links.forEach(l => l.classList.toggle('active', l.dataset.sec === id));
+    links.forEach(l => {
+      const on = l.dataset.sec === id;
+      l.classList.toggle('active', on);
+      if (on) l.setAttribute('aria-current', 'page');
+      else l.removeAttribute('aria-current');
+    });
     syncGlideSelect();
     localStorage.setItem(STORE, id);
     if (picked) scrollSettingsTop();
