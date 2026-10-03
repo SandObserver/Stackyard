@@ -147,6 +147,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fullscreen switch, the health check type and the sidebar link, and show focus
   on the Import buttons.
 
+- Announce Fetch and Test results, the selected colour swatch, the current
+  Settings section and Settings group headings to screen readers.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
