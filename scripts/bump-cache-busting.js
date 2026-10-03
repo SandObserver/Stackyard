@@ -104,6 +104,12 @@ if (unstamped.length) {
    literal in code, so the pass above cannot reach those files. Stamp them by
    content hash into the manifest under `entryVersions`. */
 const WIDGETS_DIR = path.join(UI_DIR, 'widgets');
+/* A cached widget page keeps the headers it was served with, including its
+   Content-Security-Policy. The stamp must cover the files that set them, or a
+   header change does not reach a page whose body is unchanged. */
+const WIDGET_HEADER_FILES = ['dashboard.conf', 'security-headers.conf'].map(f =>
+  path.join(__dirname, '..', 'nginx', f),
+);
 
 function stampWidgetManifests() {
   let dirents;
@@ -124,7 +130,9 @@ function stampWidgetManifests() {
     for (const file of entries) {
       const full = path.join(dir, file);
       if (!fs.existsSync(full)) throw new Error(`Widget "${ent.name}" references a missing entry file: ${file}`);
-      versions[file] = crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 8);
+      const hash = crypto.createHash('sha256').update(fs.readFileSync(full));
+      for (const conf of WIDGET_HEADER_FILES) hash.update(fs.readFileSync(conf));
+      versions[file] = hash.digest('hex').slice(0, 8);
     }
     /* Only when something changed. Rewriting unconditionally reformats every
        manifest on every run. */

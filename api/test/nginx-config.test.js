@@ -453,6 +453,11 @@ test('hashed asset paths are immutable and their entry points are not', () => {
 test('the image stamps assets itself, so a locally built image is not pinned to ?v=1', () => {
   const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
   assert.match(dockerfile, /RUN node scripts\/bump-cache-busting\.js/);
+  assert.match(
+    dockerfile,
+    /COPY nginx\/ \.\/nginx\/\nCOPY scripts\/bump-cache-busting\.js/,
+    'widget stamps cover the nginx headers',
+  );
   /* scripts/ is excluded from the build context except by name. */
   const ignore = fs.readFileSync(path.join(__dirname, '../../.dockerignore'), 'utf8');
   assert.match(ignore, /^!scripts\/bump-cache-busting\.js$/m, 'the script must reach the build context');
@@ -524,7 +529,7 @@ test('an unstamped widget file revalidates instead of being cached for good', ()
 test('the stamp the map accepts is the stamp the build writes', () => {
   const bump = fs.readFileSync(path.join(__dirname, '../../scripts/bump-cache-busting.js'), 'utf8');
   const manifests = bump.slice(bump.indexOf('function stampWidgetManifests'));
-  assert.match(manifests, /versions\[file\] = crypto\.createHash\('sha256'\)[^\n]*\.digest\('hex'\)\.slice\(0, 8\)/);
+  assert.match(manifests, /versions\[file\] = hash\.digest\('hex'\)\.slice\(0, 8\)/);
 });
 
 test('translation catalogs are stored and revalidated, not refetched in full', () => {
