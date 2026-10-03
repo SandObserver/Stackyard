@@ -148,11 +148,15 @@ const GRID_ROWS = 18;
     @param {string} value @returns {[number, number, number]|null} */
 function parseCssColor(value) {
   if (typeof value !== 'string' || !value.trim()) return null;
-  const read = (/** @type {string} */ seed) => {
+  if (_parsed.has(value)) return _parsed.get(value) || null;
+  if (!_ctx) {
     const cv = document.createElement('canvas');
     cv.width = cv.height = 1;
-    const ctx = cv.getContext('2d');
-    if (!ctx) return null;
+    _ctx = cv.getContext('2d', { willReadFrequently: true });
+    if (!_ctx) return null;
+  }
+  const ctx = _ctx;
+  const read = (/** @type {string} */ seed) => {
     ctx.fillStyle = seed;
     ctx.fillStyle = value;
     ctx.fillRect(0, 0, 1, 1);
@@ -161,10 +165,16 @@ function parseCssColor(value) {
   };
   const a = read('#000000'),
     b = read('#ffffff');
-  if (!a || !b) return null;
-  if (a[0] !== b[0] || a[1] !== b[1] || a[2] !== b[2]) return null;
-  return a;
+  const rgb = a[0] === b[0] && a[1] === b[1] && a[2] === b[2] ? a : null;
+  if (_parsed.size >= 512) _parsed.clear();
+  _parsed.set(value, rgb);
+  return rgb;
 }
+
+/** @type {CanvasRenderingContext2D|null} */
+let _ctx = null;
+/** @type {Map<string, [number, number, number]|null>} */
+const _parsed = new Map();
 
 /** The ink for a solid fill, from the fill's own luminance.
 

@@ -131,6 +131,7 @@ function devLocale() {
 export async function initI18n(code) {
   code = code || 'en';
   const dev = devLocale();
+  const wanted = !dev && code !== 'en' ? fetchCatalog(code) : null;
   base = (await fetchCatalog('en')) || Object.create(null);
 
   if (dev === KEY_LANG) {
@@ -144,7 +145,7 @@ export async function initI18n(code) {
     active = mapped;
     current = PSEUDO_LANG;
   } else {
-    const loaded = code === 'en' ? base : await fetchCatalog(code);
+    const loaded = wanted ? await wanted : base;
     active = loaded || base;
     current = loaded && code !== 'en' ? code : 'en';
   }

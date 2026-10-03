@@ -15,9 +15,9 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=c66a55da';
-import { t, currentLang } from '/js/i18n.js?v=71885535';
-import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
+} from '/js/utils.js?v=53bef046';
+import { t, currentLang } from '/js/i18n.js?v=899386d8';
+import { toneForColor } from '/js/label-contrast.js?v=5105210b';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
@@ -75,7 +75,6 @@ function mkMiniIcon(child, pointerEvents) {
   const plate = clr(child.color);
   bg.style.background = plate;
   if (pointerEvents === 'none') bg.style.pointerEvents = 'none';
-  const onLight = toneForColor(plate) === 'dark';
   if (child.iconUrl) {
     const srcs = iconChain(child.iconUrl);
     if (srcs.length) {
@@ -92,14 +91,14 @@ function mkMiniIcon(child, pointerEvents) {
       bg.appendChild(img);
     } else {
       const s = mk('span');
-      s.className = onLight ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
+      s.className = toneForColor(plate) === 'dark' ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
       if (pointerEvents === 'none') s.style.pointerEvents = 'none';
       s.textContent = initial(child.label);
       bg.appendChild(s);
     }
   } else {
     const s = mk('span');
-    s.className = onLight ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
+    s.className = toneForColor(plate) === 'dark' ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
     if (pointerEvents === 'none') s.style.pointerEvents = 'none';
     s.textContent = initial(child.label);
     bg.appendChild(s);

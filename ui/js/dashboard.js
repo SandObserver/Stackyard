@@ -26,12 +26,12 @@ import {
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=c66a55da';
+} from '/js/utils.js?v=53bef046';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=e797c113';
+import { initSpotlight } from '/js/spotlight.js?v=37271ccf';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
-import { initI18n, t, currentLang } from '/js/i18n.js?v=71885535';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=3a47b8a3';
+import { initI18n, t, currentLang } from '/js/i18n.js?v=899386d8';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=783fc0be';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=389e0ed0';
 import { setupErrorKey } from '/js/admin-error.js?v=a1f2695a';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
@@ -44,7 +44,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=62aa130e';
+} from '/js/ui.js?v=57a2eb82';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=03ed9ada';
@@ -56,11 +56,11 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=7b6822bf';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=85c36e81';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
+import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=5105210b';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=34af798f';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
@@ -737,6 +737,15 @@ function showSetupPrompt() {
 }
 
 async function boot() {
+  const settled = p =>
+    p.then(
+      v => ({ v }),
+      e => ({ e }),
+    );
+  const configReq = settled(fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) }));
+  const widgetsReq = settled(fetch('/api/widgets', { cache: 'no-store' }).then(r => r.json()));
+  const iconsReq = loadLocalIcons();
+
   let authData = null;
   try {
     const authCheck = await fetch('/api/auth/check', {
@@ -763,7 +772,9 @@ async function boot() {
 
   let configFailed = false;
   try {
-    const res = await fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) });
+    const got = await configReq;
+    if (got.e) throw got.e;
+    const res = got.v;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
     /* Saving rejects these, but a config written earlier still reaches here.
@@ -777,7 +788,7 @@ async function boot() {
     configFailed = true;
   }
 
-  await loadLocalIcons();
+  await iconsReq;
 
   if (configFailed) {
     /* The catalog is loaded as the last step of the fetch that just failed, so
@@ -801,13 +812,9 @@ async function boot() {
     await showSetupPrompt();
   }
 
-  try {
-    const wr = await (await fetch('/api/widgets', { cache: 'no-store' })).json();
-    widgetReg = Object.create(null);
-    for (const w of wr.widgets || []) if (w && w.name) widgetReg[w.name] = w;
-  } catch {
-    widgetReg = Object.create(null);
-  }
+  widgetReg = Object.create(null);
+  const wr = (await widgetsReq).v;
+  for (const w of Array.isArray(wr?.widgets) ? wr.widgets : []) if (w && w.name) widgetReg[w.name] = w;
 
   const state = {
     items,
