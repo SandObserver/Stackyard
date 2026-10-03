@@ -373,7 +373,7 @@ function mkDot(i, total, current, go) {
   const d = mk('button');
   d.type = 'button';
   d.className = 'dot' + (i === current ? ' on' : '');
-  d.setAttribute('aria-label', t('home.goToPage', { page: i + 1, total }));
+  d.setAttribute('aria-label', t('home.goToPage', { page: formatNumber(i + 1), total: formatNumber(total) }));
   if (i === current) d.setAttribute('aria-current', 'true');
   d.onclick = () => go(i);
   return d;
@@ -450,7 +450,7 @@ function applyPollRates() {
 function announcePage(index, total) {
   const live = el('page-live');
   if (!live) return;
-  live.textContent = t('home.pageAnnounce', { page: index + 1, total });
+  live.textContent = t('home.pageAnnounce', { page: formatNumber(index + 1), total: formatNumber(total) });
 }
 
 /* A page that has scrolled off is still in the DOM and still focusable, so Tab

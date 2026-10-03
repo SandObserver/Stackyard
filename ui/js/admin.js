@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=fca18391';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5db9cd98';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=c7bc70db';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=a9f27b74';
 import { recoveryShown } from '/js/config-recovery.js?v=3b63c74b';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=48f1cea9';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=007795ff';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=ad2af7e7';
+} from '/js/admin-settings.js?v=210b2305';
 import {
   apiGet,
   apiPost,
@@ -31,9 +31,9 @@ import {
   ShownError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=922d8fc1';
+} from '/js/admin-shared.js?v=fefb67b5';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=d61c5914';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=7c5dddf5';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
@@ -1221,7 +1221,11 @@ el('imp-foreign').onchange = async e => {
       t('importForeign.willCreate'),
       items
         .filter(i => i.type === 'folder')
-        .map(i => ({ name: i.label, group: '', why: t('importForeign.appCount', { n: i.children.length }) })),
+        .map(i => ({
+          name: i.label,
+          group: '',
+          why: t('importForeign.appCount', { n: formatNumber(i.children.length) }),
+        })),
     );
     dlgSection(
       body,
@@ -1279,7 +1283,7 @@ el('imp-foreign').onchange = async e => {
     /* Appended, never merged. An import must not rename, reorder or remove
        anything already on the dashboard. */
     await appendAndSave(items);
-    toast(t('toast.importForeignDone', { apps, folders }));
+    toast(t('toast.importForeignDone', { apps: formatNumber(apps), folders: formatNumber(folders) }));
   } catch (err) {
     toast(t('toast.importFailed', { err: errorText(err) }), 'err');
   }

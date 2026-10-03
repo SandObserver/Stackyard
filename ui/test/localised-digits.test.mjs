@@ -121,11 +121,37 @@ test('the badge popover rows follow the locale', () => {
   assert.doesNotMatch(pop, /String\(row\.value\)/);
 });
 
-/* t() formats only the count. The other numbers in the same sentence are the
-   caller's to format. */
-test('the import confirmation shows every number in the same digits', () => {
-  const call = read('js/admin.js').match(/t\('import\.confirm', \{[^}]*\}\)/)?.[0] ?? '';
-  for (const k of ['added', 'updated', 'deleted']) assert.match(call, new RegExp(`${k}: formatNumber\\(${k}\\)`), k);
+/* t() formats only the count. Another placeholder that holds a number a person
+   reads is formatted by the caller. A line number or a port identifies, and is
+   not in this list. */
+const READ_NUMBERS = ['added', 'updated', 'deleted', 'page', 'total', 'max', 'n', 'apps', 'folders'];
+
+function unformatted(name, src) {
+  const out = [];
+  for (const m of src.matchAll(/\bt\(\s*'[^']+',\s*\{([^{}]*)\}/g)) {
+    for (const part of m[1].split(',')) {
+      const [k, v] = part.split(':').map(x => x.trim());
+      if (READ_NUMBERS.includes(k) && !/^formatNumber\(/.test(v ?? '')) out.push(`${name}: ${part.trim()}`);
+    }
+  }
+  return out;
+}
+
+test('the placeholder check flags a number that is not formatted', () => {
+  assert.deepEqual(unformatted('x', "t('a', { page: i + 1, total })"), ['x: page: i + 1', 'x: total']);
+  assert.deepEqual(unformatted('x', "t('a', { n: formatNumber(n), line: 3 })"), []);
+});
+
+test("a number in a translated sentence is in the reader's digits", () => {
+  const offenders = fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => f.endsWith('.js'))
+    .flatMap(f => unformatted(f, read(`js/${f}`)));
+  assert.deepEqual(offenders, []);
+});
+
+test("the dock limit in a save error is in the reader's digits", () => {
+  assert.match(read('js/admin-shared.js'), /vars\.max = formatNumber\(vars\.max\)/);
 });
 
 test('the wallpaper brightness follows the locale', () => {
