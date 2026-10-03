@@ -126,3 +126,84 @@ test('the wallpaper brightness follows the locale', () => {
   assert.doesNotMatch(settings, /\.toFixed\(/);
   assert.match(settings, /formatNumber\(parseFloat\(v\), \{ minimumFractionDigits: 2, maximumFractionDigits: 2 \}\)/);
 });
+
+/* Where a number becomes text a person reads. A sentence from t() is left out:
+   the count inside it also picks the plural form. */
+const RENDER =
+  /\.(?:textContent|innerText)\s*=|setUserText\(|setAttribute\(\s*['"](?:aria-label|title|aria-valuetext)['"]/;
+const RAW_NUMBER =
+  /Math\.(?:round|floor|ceil|trunc)\(|\.toFixed\(|\.toLocaleString\(\s*\)|\.(?:length|size)\b(?!\s*[-*/<>=!?&|)])|\bString\(/;
+
+/* A number joined to text anywhere, not only on the line that renders it: a
+   helper returns '12 Mbps' and its caller writes it. A CSS length is not read. */
+const NUMBER = String.raw`(?:\.toFixed\([^)]*\)|Math\.(?:round|floor|ceil|trunc)\((?:[^()]|\([^()]*\))*\)|\.length\b)`;
+const GLUED = new RegExp(
+  String.raw`${NUMBER}\s*\+\s*['"\x60](?!(?:px|deg|em|rem|ms|s|vh|vw|fr|turn)\b|%)|['"\x60]\s*\+\s*(?:Math\.(?:round|floor|ceil|trunc)\(|[\w.$]+\.toFixed\()`,
+);
+
+/* The line with every t() and wt() call removed, parentheses balanced. */
+function withoutSentences(line) {
+  let out = '';
+  for (let i = 0; i < line.length; ) {
+    const call = /^\bw?t\(/.exec(line.slice(i));
+    if (!call || /[\w$.]/.test(line[i - 1] ?? '')) {
+      out += line[i++];
+      continue;
+    }
+    let depth = 0;
+    for (i += call[0].length - 1; i < line.length; i++) {
+      if (line[i] === '(') depth++;
+      else if (line[i] === ')' && --depth === 0) break;
+    }
+    i++;
+  }
+  return out;
+}
+
+function latinDigits(src, file) {
+  return src.split('\n').flatMap((line, i) => {
+    if (/formatNumber|localiseDigits/.test(line)) return [];
+    const code = withoutSentences(line);
+    const raw = (RENDER.test(line) && RAW_NUMBER.test(code)) || GLUED.test(code);
+    return raw ? [`${file}:${i + 1}: ${line.trim()}`] : [];
+  });
+}
+
+test('the digit check sees a count, a rounded value and a fixed decimal', () => {
+  for (const line of [
+    'h.textContent = `${heading} (${rows.length})`;',
+    'if (u) u.textContent = Math.round(pd.totalGb);',
+    "el.textContent = val.toFixed(1) + '°';",
+    "el.setAttribute('aria-label', String(n));",
+    "live.textContent = cur.length + ' ' + t('home.results');",
+    "  return v >= 1000 ? (v/1000).toFixed(1)+' Gbps' : Math.round(v)+' Mbps';",
+    "  l = Math.round(abs/60)+'m';",
+  ]) {
+    assert.equal(latinDigits(line, 'probe.js').length, 1, line);
+  }
+  for (const line of [
+    "lead.textContent = t('import.confirm', { count: d.items.length });",
+    "mt.textContent = t('folder.appsCount', { count: (item.children || []).length });",
+    'h.textContent = `${heading} (${formatNumber(rows.length)})`;',
+    "if (rows.length) el.setAttribute('aria-label', label);",
+    "p.style.top = Math.round(top) + 'px';",
+    "fill.style.width = Math.round(b.progress * 100) + '%';",
+  ]) {
+    assert.deepEqual(latinDigits(line, 'probe.js'), [], line);
+  }
+});
+
+test('no interface module or widget writes a number in Latin digits', () => {
+  const files = fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => f.endsWith('.js'))
+    .map(f => `js/${f}`);
+  for (const d of fs.readdirSync(path.join(root, 'widgets'), { withFileTypes: true })) {
+    if (!d.isDirectory()) continue;
+    for (const f of fs.readdirSync(path.join(root, 'widgets', d.name))) {
+      if (/\.(js|html)$/.test(f)) files.push(`widgets/${d.name}/${f}`);
+    }
+  }
+  const found = files.flatMap(f => latinDigits(read(f), f));
+  assert.deepEqual(found, [], `format it with formatNumber():\n  ${found.join('\n  ')}`);
+});

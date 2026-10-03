@@ -29,7 +29,7 @@ import {
   titleWhenTruncated,
 } from '/js/utils.js?v=e8dc60ee';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=6a00ceba';
+import { initSpotlight } from '/js/spotlight.js?v=7777c8f0';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=899386d8';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=783fc0be';

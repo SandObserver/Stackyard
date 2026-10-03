@@ -66,7 +66,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="GitHub pull requests"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=0b7672de';
+import { poll, fetchData, openUrl, linkTo, loadStrings, wt, errorState, formatNumber } from '/js/widget-toolbox.js?v=0b7672de';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.prAria','GitHub pull requests'));
 
@@ -205,14 +205,14 @@ function render(data) {
   if (existing) existing.remove();
 
   if (size === 'small') {
-    const sc = document.getElementById('small-count'); if(sc) sc.textContent = total;
-    const sl = document.getElementById('hdr-label');   if(sl) sl.textContent = `${total} ${label}`;
+    const sc = document.getElementById('small-count'); if(sc) sc.textContent = formatNumber(total);
+    const sl = document.getElementById('hdr-label');   if(sl) sl.textContent = `${formatNumber(total)} ${label}`;
     /* Make count clickable to open all PRs */
     const body = document.querySelector('.small-body');
     if (body && data.allUrl) {
       body.style.cursor = 'pointer';
       body.setAttribute('role','link'); body.setAttribute('tabindex','0');
-      body.setAttribute('aria-label', `${total} ${label}, ${wt('ui.viewAll','view all')}`);
+      body.setAttribute('aria-label', `${formatNumber(total)} ${label}, ${wt('ui.viewAll','view all')}`);
       const go = () => openUrl(data.allUrl);
       body.onclick = go;
       body.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } };
@@ -221,7 +221,7 @@ function render(data) {
   }
 
   /* Medium / Large */
-  const cnt = document.getElementById('hdr-count'); if(cnt) cnt.textContent = total;
+  const cnt = document.getElementById('hdr-count'); if(cnt) cnt.textContent = formatNumber(total);
   const lbl = document.getElementById('hdr-label'); if(lbl) lbl.textContent = ` ${label}`;
 
   /* Header click → all PRs */
@@ -229,7 +229,7 @@ function render(data) {
   if (hdr && data.allUrl) {
     hdr.style.cursor = 'pointer';
     hdr.setAttribute('role','link'); hdr.setAttribute('tabindex','0');
-    hdr.setAttribute('aria-label', `${total} ${label}, ${wt('ui.viewAll','view all')}`);
+    hdr.setAttribute('aria-label', `${formatNumber(total)} ${label}, ${wt('ui.viewAll','view all')}`);
     const go = () => openUrl(data.allUrl);
     hdr.onclick = go;
     hdr.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); go(); } };

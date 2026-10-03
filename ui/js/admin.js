@@ -35,6 +35,7 @@ import {
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=63e8602f';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
+import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=922e8c3a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
@@ -1129,7 +1130,7 @@ function dlgSection(parent, heading, rows) {
   if (!rows.length) return;
   const h = document.createElement('div');
   h.className = 'dlg-sec';
-  h.textContent = `${heading} (${rows.length})`;
+  h.textContent = `${heading} (${formatNumber(rows.length)})`;
   const ul = document.createElement('ul');
   ul.className = 'dlg-ul';
   for (const row of rows) {
@@ -1236,7 +1237,7 @@ el('imp-foreign').onchange = async e => {
     if (insecure.length) {
       const heading = document.createElement('div');
       heading.className = 'dlg-sec';
-      heading.textContent = `${t('app.allowSelfSigned')} (${insecure.length})`;
+      heading.textContent = `${t('app.allowSelfSigned')} (${formatNumber(insecure.length)})`;
       const choice = document.createElement('label');
       choice.className = 'dlg-choice';
       skipTlsChoice = document.createElement('input');

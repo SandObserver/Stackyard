@@ -43,6 +43,46 @@ test('no render site writes a user-supplied name straight to textContent', () =>
   assert.deepEqual(offenders, [], 'use setUserText(node, name) so the name keeps its own direction');
 });
 
+const USER_LABEL = /\b(?:item|child|app|folder|f|clash|i)\.label\b|\bappName\b|\.filename\b|\bfile\.name\b/;
+
+/* A name passed into a sentence reaches the screen wherever the sentence goes,
+   so the call itself is checked, not the line that renders it. */
+function unisolatedNames(src, file) {
+  const found = [];
+  for (const m of src.matchAll(/\bt\(\s*'([^']+)',\s*\{([^}]*)\}/g)) {
+    for (const v of m[2].matchAll(/\w+\s*:\s*([^,]+)/g)) {
+      const value = v[1].trim();
+      if (USER_LABEL.test(value) && !value.startsWith('isolate(')) found.push(`${file}: ${m[1]} ${value}`);
+    }
+  }
+  return found;
+}
+
+/* Accessible names only. A screen reader does not draw the sentence, so it has
+   no side to clip from. */
+const SPOKEN_ONLY = ['ui.js: type.folderNamed f.label'];
+
+test('the sentence check sees a name put into t() and rendered on another line', () => {
+  const src = "  const s = t('confirm.deleteFolder', {\n    name: item.label,\n  });\n  lead.textContent = s;\n";
+  assert.deepEqual(unisolatedNames(src, 'probe.js'), ['probe.js: confirm.deleteFolder item.label']);
+  assert.deepEqual(unisolatedNames("t('k', { name: isolate(item.label || item.id) })", 'probe.js'), []);
+  for (const value of ['appName', 'd.filename', 'file.name']) {
+    assert.equal(unisolatedNames(`t('k', { name: ${value} })`, 'probe.js').length, 1, value);
+  }
+});
+
+test('no translated sentence takes a user-supplied name without isolating it', () => {
+  const files = fs.readdirSync(JS_DIR).filter(f => f.endsWith('.js'));
+  const all = files.flatMap(file => unisolatedNames(fs.readFileSync(path.join(JS_DIR, file), 'utf8'), file));
+  const offenders = all.filter(o => !SPOKEN_ONLY.includes(o));
+  assert.deepEqual(offenders, [], 'wrap the name in isolate() so it keeps its own direction inside the sentence');
+  assert.deepEqual(
+    SPOKEN_ONLY.filter(o => !all.includes(o)),
+    [],
+    'a listed exemption no longer exists; remove it',
+  );
+});
+
 test('setUserText is what the dashboard, folders, search and admin all use', () => {
   /* Named individually so removing the call from one of them fails here rather
      than only showing up as a truncated name in a right-to-left language. */

@@ -39,11 +39,22 @@ const NOT_PROSE = [
   /^[\d.:/]+$/ /* 192.168.1.100, 2000 */,
   /^https?:\/\//i,
   /^#[0-9a-fA-F]{3,8}$/,
-  /^[A-Za-z0-9_-]+$/ /* one bare token: AGVpqBZnzUE, autoplay */,
   /^Stackyard\b/,
   /^e\.g\./i,
   /^\(.*\)$/ /* a parenthesised unit beside a translated label */,
 ];
+
+/* One bare token is an example value only in a placeholder: AGVpqBZnzUE,
+   autoplay. An accessible name of one word is still a word, and so is a
+   capitalised one in a placeholder. */
+const TOKEN = /^[A-Za-z0-9_-]+$/;
+
+/* The whole tag around an attribute, so wiring on a neighbouring element does
+   not count. */
+const tagAround = (src, at) => {
+  const end = src.indexOf('>', at);
+  return src.slice(src.lastIndexOf('<', at), end === -1 ? src.length : end + 1);
+};
 
 const sources = () => {
   const out = [];
@@ -70,24 +81,47 @@ test('the scan reads the interface source', () => {
   );
 });
 
-test('no user-facing string is written into the source instead of a catalogue', () => {
+const attributeOffenders = (file, src) => {
   const found = [];
-  for (const file of sources()) {
-    const src = fs.readFileSync(path.join(root, file), 'utf8');
-    for (const [what, pattern, wired] of PATTERNS) {
-      pattern.lastIndex = 0;
-      for (let m = pattern.exec(src); m !== null; m = pattern.exec(src)) {
-        const value = m[1].trim();
-        if (!/[A-Za-z]{2}/.test(value)) continue;
-        if (!ENGLISH.has(value) && NOT_PROSE.some(re => re.test(value))) continue;
-        /* Already wired: the literal is the English default beside its own key. */
-        const after = src.slice(m.index, m.index + m[0].length + 90);
-        if (wired.test(after)) continue;
-        found.push(`${file}: ${what} "${value}"`);
-      }
+  for (const [what, pattern, wired] of PATTERNS) {
+    pattern.lastIndex = 0;
+    for (let m = pattern.exec(src); m !== null; m = pattern.exec(src)) {
+      const value = m[1].trim();
+      if (!/[A-Za-z]{2}/.test(value)) continue;
+      if (!ENGLISH.has(value) && NOT_PROSE.some(re => re.test(value))) continue;
+      if (!ENGLISH.has(value) && what === 'placeholder' && TOKEN.test(value) && !/^[A-Z][a-z]+$/.test(value)) continue;
+      /* Already wired: the literal is the English default beside its own key. */
+      const scope = what === 'row label' ? src.slice(m.index, m.index + m[0].length + 90) : tagAround(src, m.index);
+      if (wired.test(scope)) continue;
+      found.push(`${file}: ${what} "${value}"`);
     }
   }
+  return found;
+};
+
+test('no user-facing string is written into the source instead of a catalogue', () => {
+  const found = sources().flatMap(file => attributeOffenders(file, fs.readFileSync(path.join(root, file), 'utf8')));
   assert.deepEqual(found, [], `English written into the source. Add a key and reference it:\n  ${found.join('\n  ')}`);
+});
+
+test('the attribute scan sees a one-word name and wiring for another attribute or element', () => {
+  for (const src of [
+    '<input aria-label="Filter" data-i18n-ph="k">',
+    '<input aria-label="Filter apps" data-i18n-ph="k">',
+    '<button aria-label="Close the list"></button><input data-i18n-al="k">',
+    '<button title="Refresh"></button>',
+    '<input placeholder="Nickname">',
+  ]) {
+    assert.equal(attributeOffenders('probe.html', src).length, 1, src);
+  }
+  for (const src of [
+    '<input data-i18n-al="k" aria-label="Filter apps">',
+    '<input placeholder="AGVpqBZnzUE">',
+    '<svg role="img" aria-label="Stackyard"></svg>',
+    '<input placeholder="autoplay">',
+  ]) {
+    assert.deepEqual(attributeOffenders('probe.html', src), [], src);
+  }
 });
 
 /* The scan above reads attributes in source text. It cannot see a string
@@ -102,6 +136,8 @@ const SINKS = [
   /\.dataset\.tileName\s*=/g,
   /\btoast\(/g,
   /\bsetUserText\(\s*[^,]+,/g,
+  /* An option a helper renders: { placeholder: '...' }, { label: v || '...' }. */
+  /\b(?:placeholder|label|title|ariaLabel|hint|heading|caption)\s*:\s*/g,
 ];
 
 /* The tone of a toast, at the end of the call. */
@@ -135,28 +171,54 @@ const READS_AS_PROSE = v =>
   !/="/.test(v) &&
   !/^Stackyard\b/.test(v.trim()) &&
   !/^https?:/i.test(v.trim()) &&
-  !(v === v.trim() && /^[a-z][a-z0-9-]*$/.test(v));
+  !(v === v.trim() && /^[a-z][a-z0-9-]*(?:;\s*[a-z][a-z0-9-]*)*$/.test(v)) &&
+  !/^[a-z]\w*(?:\.\w+)+$/.test(v) /* a catalogue key */ &&
+  !/^#[0-9a-fA-F]{3,8}$/.test(v) &&
+  !(/^[A-Za-z0-9_-]+$/.test(v) && /[a-z][A-Z]|[A-Z]{2}/.test(v)) /* an id: AGVpqBZnzUE */;
 
-const runtimeStrings = () => {
+const runtimeOffenders = (file, src) => {
   const seen = [];
-  for (const file of fs.readdirSync(path.join(root, 'js')).sort()) {
-    if (!file.endsWith('.js')) continue;
-    const src = fs.readFileSync(path.join(root, 'js', file), 'utf8');
-    for (const line of src.split('\n')) {
-      for (const sink of SINKS) {
-        sink.lastIndex = 0;
-        for (const m of line.matchAll(sink)) {
-          const slice = line.slice(m.index + m[0].length).replace(TONE, '');
-          if (slice.includes('html`')) continue;
-          for (const v of textLiterals(slice)) {
-            if (READS_AS_PROSE(v)) seen.push(`${file}: ${JSON.stringify(v)}`);
-          }
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, c => c.replace(/[^\n]/g, ' '));
+  for (const line of code.split('\n')) {
+    if (/^\s*\/\//.test(line)) continue;
+    for (const sink of SINKS) {
+      sink.lastIndex = 0;
+      for (const m of line.matchAll(sink)) {
+        const slice = line.slice(m.index + m[0].length).replace(TONE, '');
+        if (slice.includes('html`')) continue;
+        for (const v of textLiterals(slice)) {
+          if (READS_AS_PROSE(v)) seen.push(`${file}: ${JSON.stringify(v)}`);
         }
       }
     }
   }
   return seen;
 };
+
+const runtimeStrings = () =>
+  fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(file => file.endsWith('.js'))
+    .sort()
+    .flatMap(file => runtimeOffenders(file, fs.readFileSync(path.join(root, 'js', file), 'utf8')));
+
+test('the run-time scan sees English passed as an option', () => {
+  for (const src of [
+    "  initInlineEdit('ie-x', 'x', { placeholder: 'Paste a collection id here' });",
+    "  const opts = { label: v || 'Default value' };",
+    "  renderColorControl(slot, { title: 'Pick a colour' });",
+  ]) {
+    assert.equal(runtimeOffenders('probe.js', src).length, 1, src);
+  }
+  for (const src of [
+    "  initInlineEdit('ie-x', 'x', { placeholder: 'AGVpqBZnzUE' });",
+    "  initInlineEdit('ie-x', 'x', { placeholder: 'autoplay; fullscreen' });",
+    "  return { title: 'configRecovery.title' };",
+    '  /* Names only.\n   `title: 2024` and `title: no` are both real. */',
+  ]) {
+    assert.deepEqual(runtimeOffenders('probe.js', src), [], src);
+  }
+});
 
 test('no user-facing string is built at run time instead of translated', () => {
   const found = [...new Set(runtimeStrings())].sort();
@@ -191,18 +253,21 @@ const skipRegex = (src, i) => {
 };
 
 /* Reads a template literal from its opening backtick. Returns the text with each
-   `${}` hole replaced by a space, and the index past the closing backtick.
-   Holes may hold strings, braces and further template literals. */
+   `${}` hole replaced by a space, the source of each hole, and the index past
+   the closing backtick. Holes may hold strings, braces and further template
+   literals. */
 const readTemplate = (src, i) => {
   let text = '';
+  const holes = [];
   for (i++; i < src.length; ) {
     const c = src[i];
     if (c === '\\') {
       text += src.slice(i, i + 2);
       i += 2;
-    } else if (c === '`') return { text, end: i + 1 };
+    } else if (c === '`') return { text, holes, end: i + 1 };
     else if (c === '$' && src[i + 1] === '{') {
       text += ' ';
+      const from = i + 2;
       let depth = 0;
       let prev = '{';
       for (i += 2; i < src.length; ) {
@@ -223,16 +288,34 @@ const readTemplate = (src, i) => {
         } else i++;
         if (!/\s/.test(h)) prev = h;
       }
+      holes.push(src.slice(from, i - 1));
     } else {
       text += c;
       i++;
     }
   }
-  return { text, end: i };
+  return { text, holes, end: i };
 };
 
 const htmlBlocks = src =>
-  [...src.matchAll(/\bhtml`/g)].map(m => ({ index: m.index, text: readTemplate(src, m.index + 4).text }));
+  [...src.matchAll(/\bhtml`/g)].map(m => ({ index: m.index, ...readTemplate(src, m.index + 4) }));
+
+/* A literal in a hole, such as `${v || 'Default value'}`. A nested html``
+   template is a block of its own and is blanked. The text of any other nested
+   template is read with the literals. */
+const holeLiterals = hole => {
+  let code = hole;
+  const nested = [];
+  for (let at = code.indexOf('`'); at !== -1; at = code.indexOf('`', at + 1)) {
+    const { text, holes, end } = readTemplate(code, at);
+    if (!/\bhtml\s*$/.test(code.slice(0, at))) nested.push(text, ...holes.flatMap(holeLiterals));
+    code = code.slice(0, at) + ' '.repeat(end - at) + code.slice(end);
+  }
+  return [...textLiterals(code), ...nested]
+    .map(withoutHoles)
+    .filter(v => READS_AS_PROSE(v) && (/\s/.test(v) || /^[A-Z][a-z]+$/.test(v)))
+    .filter(v => !(/-/.test(v) && /^[a-z0-9-]+(?: [a-z0-9-]+)*$/.test(v)) /* a class list */);
+};
 
 const withoutHoles = v => v.replace(/\s+/g, ' ').trim();
 
@@ -240,6 +323,16 @@ const withoutHoles = v => v.replace(/\s+/g, ' ').trim();
    one. A word on its own in a text node is not, so this scan exempts only a
    unit, a brand and a URL. */
 const MARKUP_NOT_PROSE = [/^\([a-z]{1,4}\)$/, /^Stackyard\b/, /^https?:\/\//i, /^[\d.:/]+$/];
+
+test('the markup scan reads literals inside a hole', () => {
+  const block = src => htmlBlocks(src).flatMap(b => b.holes.flatMap(holeLiterals));
+  assert.deepEqual(block("html`<i>${v || 'Default'}</i>`"), ['Default']);
+  assert.deepEqual(block('html`<input placeholder="${p || \'Paste a key\'}">`'), ['Paste a key']);
+  assert.deepEqual(block("html`<i class=\"${on ? 'hsb-range hsb-hue' : ''}\">${t('k')}</i>`"), []);
+  assert.deepEqual(block("html`<b>${x ? html`<i>${t('k')}</i>` : ''}</b>`"), []);
+  assert.deepEqual(block("html`<span>${n ? `${n} apps selected` : t('x')}</span>`"), ['apps selected']);
+  assert.deepEqual(block("html`<i class=\"${`tile-opt${on ? ' on' : ''}`}\"></i>`"), []);
+});
 
 test('no user-facing string is written into the markup builder', () => {
   const found = [];
@@ -251,6 +344,7 @@ test('no user-facing string is written into the markup builder', () => {
       const seen = [];
       for (const m of block.text.matchAll(/>([^<>]+)</g)) seen.push(withoutHoles(m[1]));
       for (const m of block.text.matchAll(/(?:aria-label|title|placeholder)="([^"]*)"/g)) seen.push(withoutHoles(m[1]));
+      for (const hole of block.holes) seen.push(...holeLiterals(hole));
       for (const value of seen) {
         if (!/[A-Za-z]{2}/.test(value)) continue;
         if (MARKUP_NOT_PROSE.some(re => re.test(value))) continue;

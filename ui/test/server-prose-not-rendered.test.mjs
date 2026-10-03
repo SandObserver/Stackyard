@@ -44,6 +44,9 @@ test('the check sees a thrown, chained or wrapped render of the server text', ()
     "  p.catch(x => toast(t('k', { err: x.message })));\n",
     "  toast(\n    t('k', {\n      err: failure.error,\n    }),\n    'err',\n  );\n",
     "  st.textContent = '✗ ' + res.error;\n",
+    '  el.textContent = e.message;\n',
+    "  toast(probe.error, 'err');\n",
+    "  toast(t('k', { reason: probe.error }), 'err');\n",
   ];
   for (const src of forms) assert.equal(offendersIn(src, 'probe.js').length, 1, src);
   assert.deepEqual(offendersIn("  toast(t('toast.error', { err: errorText(e) }), 'err');\n", 'probe.js'), []);
