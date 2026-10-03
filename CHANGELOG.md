@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make typing in search faster when folders match, and show the dashboard sooner
   on slow connections by sending its start-up requests together.
 
+- Show the Clear app icon background as a checkerboard in the colour picker.
+
 ### Fixed
 
 - Translate the hue, saturation and brightness sliders and the colour code hint
