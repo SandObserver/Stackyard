@@ -203,6 +203,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raise the contrast of the badge list item names, the light-theme search icon,
   the "(optional)" notes in Settings and the row drag handles.
 
+- Show counts inside translated sentences in the reader's digits.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
