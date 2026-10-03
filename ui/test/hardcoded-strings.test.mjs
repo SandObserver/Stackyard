@@ -18,7 +18,7 @@ const PATTERNS = [
   ['aria-label', /aria-label="([^"${}<>]{2,})"/g, /data-i18n-al=/],
   ['placeholder', /placeholder="([^"${}<>]{2,})"/g, /data-i18n-ph=/],
   ['title', /(?<!data-i18n-)title="([^"${}<>]{2,})"/g, /data-i18n-title=/],
-  ['row label', /<span class="rl">([^<${}]{2,})</g, /data-i18n(-html)?=/],
+  ['row label', /<span\b[^>]*\bclass="(?:[^"]*\s)?rl(?:\s[^"]*)?"[^>]*>([^<${}]{2,})</g, /data-i18n(-html)?=/],
 ];
 
 const ENGLISH = (() => {
@@ -91,7 +91,7 @@ const attributeOffenders = (file, src) => {
       if (!ENGLISH.has(value) && NOT_PROSE.some(re => re.test(value))) continue;
       if (!ENGLISH.has(value) && what === 'placeholder' && TOKEN.test(value) && !/^[A-Z][a-z]+$/.test(value)) continue;
       /* Already wired: the literal is the English default beside its own key. */
-      const scope = what === 'row label' ? src.slice(m.index, m.index + m[0].length + 90) : tagAround(src, m.index);
+      const scope = tagAround(src, m.index);
       if (wired.test(scope)) continue;
       found.push(`${file}: ${what} "${value}"`);
     }
@@ -111,6 +111,8 @@ test('the attribute scan sees a one-word name and wiring for another attribute o
     '<button aria-label="Close the list"></button><input data-i18n-al="k">',
     '<button title="Refresh"></button>',
     '<input placeholder="Nickname">',
+    '<div class="row"><span class="rl">Planted Label</span></div><div class="row"><span class="rl" data-i18n="k">Kept</span></div>',
+    '<span class="rl" id="rl-x">Planted Label</span>',
   ]) {
     assert.equal(attributeOffenders('probe.html', src).length, 1, src);
   }
@@ -119,6 +121,7 @@ test('the attribute scan sees a one-word name and wiring for another attribute o
     '<input placeholder="AGVpqBZnzUE">',
     '<svg role="img" aria-label="Stackyard"></svg>',
     '<input placeholder="autoplay">',
+    '<span class="rl" id="rl-x" data-i18n="k">Kept Label</span>',
   ]) {
     assert.deepEqual(attributeOffenders('probe.html', src), [], src);
   }

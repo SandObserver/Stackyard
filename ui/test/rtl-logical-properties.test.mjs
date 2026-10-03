@@ -14,7 +14,10 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
-const SHEETS = ['css/admin.css', 'css/dashboard.css', 'css/tokens.css', 'css/widget-config-form.css'];
+const SHEETS = fs
+  .readdirSync(path.join(root, 'css'))
+  .filter(f => f.endsWith('.css'))
+  .map(f => `css/${f}`);
 
 /* Widget pages, whose CSS lives in a <style> block. The dashboard sets the
    frame's direction, so their logical properties resolve. */

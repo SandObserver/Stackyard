@@ -52,16 +52,44 @@ test.describe('forced colors', () => {
     await seedConfig(request, { items: [app('alpha', 'Alpha')] });
     await page.goto('/admin/');
     await page.locator('body.authed').waitFor({ state: 'attached' });
+    await page.locator('.nl[data-sec="appearance"]').click();
     const slider = page.locator('#bg-br');
+    await slider.scrollIntoViewIfNeeded();
     expect((await styleOf(slider, ['border-top-style']))['border-top-style']).toBe('solid');
-    const thumb = await styleOf(slider, ['background-color'], '::-webkit-slider-thumb');
-    const canvas = await page.evaluate(() => {
-      const probe = document.createElement('div');
-      probe.style.background = 'Canvas';
-      document.body.append(probe);
-      return getComputedStyle(probe).backgroundColor;
+    /* getComputedStyle cannot read a slider thumb in Chromium, so read its pixels.
+       The thumb is 24px tall over a 6px track: sample 8px above the centre line. */
+    await slider.evaluate(el => {
+      /** @type {HTMLInputElement} */ (el).value = '0.55';
     });
-    expect(thumb['background-color']).not.toBe(canvas);
+    const box = await slider.boundingBox();
+    if (!box) throw new Error('the slider is not laid out');
+    const mid = box.y + box.height / 2;
+    const png = await page.screenshot({ clip: { x: box.x, y: mid - 14, width: box.width, height: 28 } });
+    const [thumb, canvas] = await page.evaluate(
+      async ([src, at]) => {
+        const img = new Image();
+        img.src = src;
+        await img.decode();
+        const c = document.createElement('canvas');
+        c.width = img.width;
+        c.height = img.height;
+        const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
+        g.drawImage(img, 0, 0);
+        const scale = img.width / at.width;
+        const px = g.getImageData(Math.round(at.x * scale), Math.round(6 * scale), 1, 1).data;
+        const probe = document.createElement('div');
+        probe.style.background = 'Canvas';
+        document.body.append(probe);
+        const bg = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return [`rgb(${px[0]}, ${px[1]}, ${px[2]})`, bg];
+      },
+      /** @type {[string, { x: number, width: number }]} */ ([
+        `data:image/png;base64,${png.toString('base64')}`,
+        { x: 1 + 0.5 * (box.width - 2 - 38) + 19, width: box.width },
+      ]),
+    );
+    expect(thumb).not.toBe(canvas);
   });
 
   test('the search row Enter opens is outlined', async ({ page, request }) => {
