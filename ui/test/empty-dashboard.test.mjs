@@ -135,7 +135,7 @@ test('both layouts mark the body when nothing is docked', () => {
 test('the import link opens the settings section that holds import', () => {
   assert.match(read('js/utils.js'), /href: '\/admin\/#general'/, 'it lands wherever settings was left');
   const admin = read('js/admin.js');
-  assert.match(admin, /show\(location\.hash\.slice\(1\) \|\| localStorage/, 'admin ignores the hash on load');
+  assert.match(admin, /show\(location\.hash\.slice\(1\) \|\| storeGet\(STORE\)\)/, 'admin ignores the hash on load');
   assert.match(admin, /addEventListener\('hashchange'/, 'admin ignores a later hash change');
 });
 

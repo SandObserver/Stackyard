@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=9d7fa3eb';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=93082af6';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=5703fb88';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=1224a764';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=06bb307a';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=fc1559fb';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=b0e0e84f';
+} from '/js/admin-settings.js?v=0d0efd3f';
 import {
   apiGet,
   apiPost,
@@ -29,12 +29,12 @@ import {
   responseError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=be847687';
+} from '/js/admin-shared.js?v=f5551857';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=f60cbde3';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=53ceafd3';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=198d4a2d';
+import { createListbox } from '/js/listbox.js?v=30c1b9d1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -60,8 +60,8 @@ import {
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=eeafa4b5';
-import { el, focusFirst, inp, q, qa, clr, setUserText, tgt } from '/js/utils.js?v=d9246f59';
-import { applyBackground, resolveBackground } from '/js/background.js?v=f859fed0';
+import { el, focusFirst, inp, q, qa, clr, setUserText, storeGet, storeSet, tgt } from '/js/utils.js?v=9a9bfb54';
+import { applyBackground, resolveBackground } from '/js/background.js?v=43a04bdb';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 
 ensureSprite();
@@ -650,12 +650,12 @@ function initNav() {
       else l.removeAttribute('aria-current');
     });
     syncGlideSelect();
-    localStorage.setItem(STORE, id);
+    storeSet(STORE, id);
     if (picked) scrollSettingsTop();
   }
   links.forEach(l => l.addEventListener('click', () => show(l.dataset.sec, true)));
   addEventListener('hashchange', () => show(location.hash.slice(1), true));
-  show(location.hash.slice(1) || localStorage.getItem(STORE));
+  show(location.hash.slice(1) || storeGet(STORE));
   initGlideSelect();
 }
 

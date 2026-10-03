@@ -204,3 +204,17 @@ test('removing the only saved activity label before a Fetch moves focus to Fetch
   await expect(page.locator('#act-labels .albl-hdr')).toHaveCount(0);
   await expect(page.locator('#bfetch')).toBeFocused();
 });
+
+test('Tab stays inside the sign-in screen', async ({ page }) => {
+  await page.route('**/api/auth/check', route => route.fulfill({ json: { enabled: true, authenticated: false } }));
+  await page.goto('/admin/');
+  await expect(page.locator('#login-pw')).toBeFocused();
+  for (let i = 0; i < 12; i++) {
+    await page.keyboard.press('Tab');
+    const outside = await page.evaluate(() => {
+      const a = document.activeElement;
+      return a && a !== document.body && !document.getElementById('login-screen')?.contains(a) ? a.outerHTML : '';
+    });
+    expect(outside, `Tab ${i + 1} left the sign-in screen`).toBe('');
+  }
+});

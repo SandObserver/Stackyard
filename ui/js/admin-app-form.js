@@ -1,4 +1,4 @@
-import { clr, el, focusFirst, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=d9246f59';
+import { clr, el, focusFirst, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=9a9bfb54';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=af772a1b';
@@ -22,10 +22,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=be847687';
-import { createListbox } from '/js/listbox.js?v=198d4a2d';
+} from '/js/admin-shared.js?v=f5551857';
+import { createListbox } from '/js/listbox.js?v=30c1b9d1';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=f60e9e8b';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=233683ad';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=f82486b2';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -541,6 +541,7 @@ const VARIANT_LABEL = { base: 'app.iconVariantBase', light: 'app.iconVariantLigh
 
 let ipList = [];
 let ipActive = -1;
+let ipOutsideWired = false;
 
 function ipClose() {
   const rs = el('iprs');
@@ -745,9 +746,12 @@ function wireIcon() {
     };
   }
 
-  document.addEventListener('click', e => {
-    if (!el('ipw')?.contains(/** @type {Node} */ (e.target))) ipClose();
-  });
+  if (!ipOutsideWired) {
+    ipOutsideWired = true;
+    document.addEventListener('click', e => {
+      if (!el('ipw')?.contains(/** @type {Node} */ (e.target))) ipClose();
+    });
+  }
   loadIconVariants(state.siurl);
 }
 
