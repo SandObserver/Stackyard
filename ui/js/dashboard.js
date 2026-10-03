@@ -1,4 +1,4 @@
-import { loadLocalIcons, iconChain } from '/js/icons.js?v=9c8c550c';
+import { loadLocalIcons, iconChain } from '/js/icons.js?v=9c7b5111';
 import {
   WIDGET_HEIGHTS,
   WIDGET_DESIGN,
@@ -27,9 +27,9 @@ import {
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=93658cb8';
+} from '/js/utils.js?v=d845c473';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=20057dd3';
+import { initSpotlight } from '/js/spotlight.js?v=aaab371c';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=5a09eb37';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=3b63c74b';
@@ -45,7 +45,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=541d5a2d';
+} from '/js/ui.js?v=7064da0d';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=03ed9ada';
@@ -57,7 +57,7 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=8a723481';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=28c6caf2';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -745,7 +745,7 @@ async function boot() {
   const loadWidgets = () =>
     settled(
       fetch('/api/widgets', { cache: 'no-store' }).then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status });
         return r.json();
       }),
     );
@@ -774,11 +774,9 @@ async function boot() {
     }
     /* Only the sign-in check stores the first address. Requests sent before it
        on a first visit by host name are refused. */
-    if ((await configReq).v?.status === 403) {
-      configReq = loadConfig();
-      widgetsReq = loadWidgets();
-      iconsReq = loadLocalIcons();
-    }
+    if ((await configReq).v?.status === 403) configReq = loadConfig();
+    if ((await widgetsReq).e?.status === 403) widgetsReq = loadWidgets();
+    if ((await iconsReq) === 403) iconsReq = loadLocalIcons();
   } catch {
     /* API down, handled below */
   }

@@ -6,6 +6,7 @@ const LOCAL_ICONS = new Set();
 /* The demo blocks outbound requests, so its icon proxy only ever fails. */
 let _proxy = true;
 
+/** @returns {Promise<number>} the HTTP status, or 0 when the API did not answer */
 export async function loadLocalIcons() {
   try {
     const r = await fetch('/api/icons/local', { cache: 'no-store' });
@@ -17,7 +18,10 @@ export async function loadLocalIcons() {
       (d.files || []).forEach(f => LOCAL_ICONS.add(f));
       _proxy = d.demo !== true;
     }
-  } catch {}
+    return r.status;
+  } catch {
+    return 0;
+  }
 }
 
 /* Percent-encode the filename only, never the '/icons/' prefix, or the
