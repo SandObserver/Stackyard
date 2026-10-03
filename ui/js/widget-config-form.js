@@ -341,6 +341,7 @@ function _pills(field, value) {
   const wrap = document.createElement('div');
   const row = document.createElement('div');
   row.className = 'row';
+  row.dataset.field = field.key;
   const opts = Array.isArray(field.options) ? field.options : [];
   let sel = value != null ? value : field.default != null ? field.default : opts[0] ? opts[0].value : '';
   const name = uniqueId('wcf-' + field.key);
@@ -379,7 +380,9 @@ function _pills(field, value) {
           wrap.dispatchEvent(new Event('change'));
         },
       });
+      const hadFocus = group.contains(document.activeElement);
       group.replaceWith(box.el);
+      if (hadFocus) box.el.querySelector('button')?.focus();
     });
     ro.observe(row);
   }

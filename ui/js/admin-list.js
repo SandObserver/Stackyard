@@ -19,7 +19,7 @@ import { paintIcon } from '/js/admin-shared.js?v=1a49ceb0';
 import { clr, el, focusFirst, qa, setUserText } from '/js/utils.js?v=d9246f59';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { sizeLabel } from '/js/admin-widget-form.js?v=1191172a';
+import { sizeLabel } from '/js/admin-widget-form.js?v=48ca5b1b';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=648cc374';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
@@ -212,10 +212,13 @@ export function focusRow(itemId, act = 'edit') {
 export function render() {
   const l = el('al');
   const was = /** @type {HTMLElement|null} */ (document.activeElement);
-  const row = /** @type {HTMLElement|null} */ (was && l?.contains(was) ? was.closest('.drow') : null);
-  const kept = row ? { id: row.dataset.itemId, act: was?.dataset.act } : null;
+  const inList = !!was && !!l?.contains(was);
+  const row = /** @type {HTMLElement|null} */ (inList ? was.closest('.drow') : null);
+  const act = inList ? was.dataset.act : undefined;
+  const id = row ? row.dataset.itemId : was?.dataset.folderId;
   draw(l);
-  if (kept?.act) focusRow(kept.id, kept.act);
+  if (act === 'add-to') focusFirst(qa('.fp-add', l).find(b => b.dataset.folderId === id));
+  else if (act) focusRow(id, act);
 }
 
 function draw(l) {
@@ -270,6 +273,8 @@ function draw(l) {
       const addRow = document.createElement('button');
       addRow.type = 'button';
       addRow.className = 'fp-add';
+      addRow.dataset.act = 'add-to';
+      addRow.dataset.folderId = item.id;
       setHtml(addRow, html`<span>+</span> ${t('folder.addAppToFolder')}`);
       addRow.onclick = () => _page.openFolderPicker(null, item.id);
       l.appendChild(addRow);

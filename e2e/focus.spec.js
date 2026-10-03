@@ -10,6 +10,11 @@ const focused = page =>
     return a ? (a.getAttribute('aria-label') || a.textContent || a.id || a.tagName).trim() : '';
   });
 
+const editorOpened = page =>
+  expect
+    .poll(() => page.evaluate(() => document.getElementById('ev-body')?.contains(document.activeElement)))
+    .toBe(true);
+
 test.beforeEach(async ({ request }) => {
   await seedConfig(request, { items: [app('alpha', 'Alpha'), app('bravo', 'Bravo'), app('charlie', 'Charlie')] });
 });
@@ -35,10 +40,12 @@ test('closing the editor returns focus to the row that opened it', async ({ page
   const edit = rowByName(page, 'Bravo').getByRole('button', { name: /^Edit/ });
   await edit.focus();
   await page.keyboard.press('Enter');
+  await editorOpened(page);
   await page.locator('#ev-back').click();
   await expect(edit).toBeFocused();
 
   await edit.press('Enter');
+  await editorOpened(page);
   await page.locator('#ev-save').click();
   await expect(page.locator('#dash-edit-view')).toBeHidden();
   await expect(rowByName(page, 'Bravo').getByRole('button', { name: /^Edit/ })).toBeFocused();
@@ -47,6 +54,7 @@ test('closing the editor returns focus to the row that opened it', async ({ page
 test('deleting from the editor moves focus to Add', async ({ page }) => {
   await openDashboardList(page);
   await rowByName(page, 'Charlie').getByRole('button', { name: /^Edit/ }).click();
+  await editorOpened(page);
   await page.locator('#ev-delete').click();
   await page.locator('dialog .bd-btn').click();
   await expect(page.locator('#dash-edit-view')).toBeHidden();
@@ -56,6 +64,7 @@ test('deleting from the editor moves focus to Add', async ({ page }) => {
 test('Enter and Escape in an inline edit return focus to its pencil', async ({ page }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();
+  await editorOpened(page);
   const pen = page.locator('#ie-name .pe');
   await pen.focus();
   await page.keyboard.press('Enter');
@@ -72,6 +81,7 @@ test('Enter and Escape in an inline edit return focus to its pencil', async ({ p
 test('a widget size tile and the type picker keep focus after the form redraws', async ({ page }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();
+  await editorOpened(page);
   await page.locator('.tile-opt[data-ctype="widget"]').click();
   const small = page.locator('#ev-body .tile-opt[data-size="small"]');
   await small.focus();
@@ -105,6 +115,7 @@ test('header rows and activity labels keep focus when added, moved or removed', 
   );
   await openDashboardList(page);
   await rowByName(page, 'Service').getByRole('button', { name: /^Edit/ }).click();
+  await editorOpened(page);
   await page.locator('#bfetch').click();
   await expect(page.locator('#act-labels .albl-hdr')).toHaveCount(1);
 
@@ -128,4 +139,68 @@ test('header rows and activity labels keep focus when added, moved or removed', 
   await page.keyboard.press('Enter');
   await expect(page.locator('#act-labels .albl-hdr')).toHaveCount(1);
   await expect(page.locator('#act-labels .albl-hdr[data-idx="0"] .grp-hdr-rm')).toBeFocused();
+});
+
+test('opening the editor and switching its type keep focus inside the editor', async ({ page }) => {
+  await openDashboardList(page);
+  await page.locator('#btn-add').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#ev-body .tile-opt[data-ctype="app"]')).toBeFocused();
+
+  await page.locator('#ev-body .tile-opt[data-ctype="widget"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#ev-body .tile-opt[data-ctype="widget"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#ev-body .tile-opt[data-ctype="widget"]')).toBeFocused();
+
+  await page.locator('#ev-back').click();
+  await rowByName(page, 'Alpha').getByRole('button', { name: /^Edit/ }).press('Enter');
+  await expect(page.locator('#dash-edit-view')).toBeVisible();
+  await editorOpened(page);
+});
+
+test('a view switch keeps focus on the view control', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [{ id: 'net', type: 'widget', widgetType: 'connections', widgetSize: 'medium', label: 'Net' }],
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Net').getByRole('button', { name: /^Edit/ }).click();
+  await editorOpened(page);
+  await page.locator('[data-field="view"] input:checked').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('[data-field="view"] input[value="vpn"]')).toBeChecked();
+  await expect(page.locator('[data-field="view"] input[value="vpn"]')).toBeFocused();
+});
+
+test('adding an app to a folder keeps focus on the folder add button', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [app('alpha', 'Alpha'), { id: 'box', type: 'folder', label: 'Box', children: [] }],
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Box').locator('.rnm').click();
+  const add = page.locator('#al .fp-add');
+  await add.focus();
+  await page.keyboard.press('Enter');
+  await page.locator('dialog').getByText('Alpha').click();
+  await expect(rowByName(page, 'Alpha')).toHaveAttribute('data-indent', '1');
+  await expect(page.locator('#al .fp-add')).toBeFocused();
+});
+
+test('removing the only saved activity label before a Fetch moves focus to Fetch', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [
+      {
+        ...app('svc', 'Service'),
+        monitoring: {
+          activity: { enabled: true, url: 'http://svc.invalid/api', interval: 30, labels: [{ path: 'a', name: 'A' }] },
+        },
+      },
+    ],
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Service').getByRole('button', { name: /^Edit/ }).click();
+  await editorOpened(page);
+  await page.locator('#act-labels .grp-hdr-rm').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#act-labels .albl-hdr')).toHaveCount(0);
+  await expect(page.locator('#bfetch')).toBeFocused();
 });

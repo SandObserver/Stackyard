@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=771f5d12';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=eb4416c1';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d08edce5';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=6fb3b1c3';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=98907b64';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -30,7 +30,7 @@ import {
   toast,
 } from '/js/admin-shared.js?v=1a49ceb0';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=1191172a';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=48ca5b1b';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=1ce8c94a';
@@ -233,7 +233,7 @@ function buildAddNewCard() {
     b.onclick = () => {
       if (state.ctype === kind) return;
       state.ctype = kind;
-      _renderEditBody();
+      _renderEditBody(kind);
     };
     grpTiles.appendChild(b);
   });
@@ -243,7 +243,8 @@ function buildAddNewCard() {
 }
 
 /* Prepended after the builder runs, so the builder's reset cannot wipe it. */
-function _renderEditBody() {
+/** @param {string} [focusKind] the type tile that keeps focus */
+function _renderEditBody(focusKind) {
   const body = el('ev-body');
   body.replaceChildren();
   if (state.ctype === 'widget') buildWidgetForm(body, state._evItem);
@@ -251,9 +252,9 @@ function _renderEditBody() {
   else buildAppForm(body, state._evItem);
   if (!state._evIsEdit) body.insertBefore(buildAddNewCard(), body.firstChild);
   setTimeout(() => {
-    try {
-      q('input,select,textarea', body)?.focus();
-    } catch {}
+    if (el('dash-edit-view').contains(document.activeElement)) return;
+    const tile = focusKind ? qa('.tile-opt', body).find(b => b.dataset.ctype === focusKind) : null;
+    focusFirst(tile, ...qa('input,select,textarea,button', body));
   }, 50);
 }
 

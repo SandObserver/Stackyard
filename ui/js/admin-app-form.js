@@ -388,7 +388,12 @@ function renderActLabels(host) {
         captureActLabels();
         state.spaths.splice(i, 1);
         syncActMode();
-        focusFirst(actLabelBtns(i, '.grp-hdr-rm')[0], actLabelBtns(i - 1, '.grp-hdr-rm')[0], el('act-add-label'));
+        focusFirst(
+          actLabelBtns(i, '.grp-hdr-rm')[0],
+          actLabelBtns(i - 1, '.grp-hdr-rm')[0],
+          el('act-add-label'),
+          el('bfetch'),
+        );
       }),
     );
     hdr.appendChild(ctl);
