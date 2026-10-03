@@ -263,7 +263,7 @@ let _strings = null;
 async function _loadStrings() {
   if (_lang === 'en') return;
   try {
-    const r = await fetch(`/i18n/${encodeURIComponent(_lang)}.json`, { cache: 'force-cache' });
+    const r = await fetch(`/i18n/${encodeURIComponent(_lang)}.json`, { cache: 'no-cache' });
     if (r.ok) _strings = (await r.json())?.widget || null;
   } catch {
     /* English is a usable answer */
@@ -290,7 +290,7 @@ export async function loadStrings() {
   if (!_widgetName || _lang === 'en' || _own) return;
   try {
     const r = await fetch(`/widgets/${encodeURIComponent(_widgetName)}/i18n/${encodeURIComponent(_lang)}.json`, {
-      cache: 'force-cache',
+      cache: 'no-cache',
     });
     if (r.ok) {
       const parsed = await r.json();

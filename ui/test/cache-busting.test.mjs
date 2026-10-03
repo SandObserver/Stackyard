@@ -92,7 +92,7 @@ test('--check fails on a stamp that no longer matches its file', () => {
   const repo = path.resolve(root, '..');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-stamp-'));
   try {
-    for (const dir of ['ui', 'scripts']) {
+    for (const dir of ['ui', 'scripts', 'nginx']) {
       fs.cpSync(path.join(repo, dir), path.join(tmp, dir), { recursive: true });
     }
     const script = path.join(tmp, 'scripts', 'bump-cache-busting.js');
@@ -140,4 +140,32 @@ test('the widget cache version comes from the manifest, not a hand-written liter
   assert.match(src, /entryVersions\?\.\[file\]/, 'widget-types.js no longer reads the manifest hash');
   const literal = /['"`]\/widgets\/[^'"`]*\?v=\d/.exec(src);
   assert.equal(literal, null, `a hand-written widget stamp is back: ${literal && literal[0]}`);
+});
+
+/* The widget page is cached for a year with its headers, so a policy change in
+   nginx must produce a new stamp even when the page itself is unchanged. */
+test('a change to the widget headers changes every widget stamp', () => {
+  const repo = path.resolve(root, '..');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-stamp-'));
+  try {
+    for (const dir of ['ui', 'scripts', 'nginx']) {
+      fs.cpSync(path.join(repo, dir), path.join(tmp, dir), { recursive: true });
+    }
+    const script = path.join(tmp, 'scripts', 'bump-cache-busting.js');
+    const manifest = path.join(tmp, 'ui', 'widgets', 'clock', 'widget.json');
+    const stamp = () => {
+      assert.equal(spawnSync(process.execPath, [script], { encoding: 'utf8' }).status, 0);
+      return JSON.parse(fs.readFileSync(manifest, 'utf8')).entryVersions;
+    };
+
+    const before = stamp();
+    const conf = path.join(tmp, 'nginx', 'dashboard.conf');
+    fs.writeFileSync(conf, fs.readFileSync(conf, 'utf8').replace("frame-ancestors 'self';", "frame-ancestors 'none';"));
+    const after = stamp();
+
+    assert.ok(Object.keys(before).length, 'the clock manifest was not stamped');
+    for (const file of Object.keys(before)) assert.notEqual(after[file], before[file], file);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
 });

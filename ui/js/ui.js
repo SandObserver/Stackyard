@@ -15,8 +15,8 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=da375634';
-import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
+} from '/js/utils.js?v=c66a55da';
+import { t, currentLang } from '/js/i18n.js?v=71885535';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';

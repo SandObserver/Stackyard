@@ -83,7 +83,7 @@ function flatten(obj, prefix, out) {
 
 async function fetchCatalog(code) {
   try {
-    const r = await fetch(`/i18n/${code}.json`, { cache: 'no-store' });
+    const r = await fetch(`/i18n/${code}.json`, { cache: 'no-cache' });
     if (!r.ok) return null;
     return flatten(await r.json(), '', Object.create(null));
   } catch {

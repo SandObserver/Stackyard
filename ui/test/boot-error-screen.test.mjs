@@ -52,8 +52,7 @@ test('the error branch loads a catalog before it renders', () => {
   );
 });
 
-/* Loading it up front would put a catalog fetch on every successful boot, and
-   the catalogs are fetched with cache: 'no-store'. */
+/* Loading it up front would put a catalog request on every successful boot. */
 test('the success path does not pay for the failure path', () => {
   const dashboard = read('js/dashboard.js');
   const beforeFetch = dashboard.slice(
