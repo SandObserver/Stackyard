@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=d726f5a2';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=200c56b3';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=5bbf3c5a';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e9ce0b53';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=eca39fa0';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=fa9fd2d6';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=b34b317b';
+} from '/js/admin-settings.js?v=de137ea3';
 import {
   apiGet,
   apiPost,
@@ -31,9 +31,9 @@ import {
   ShownError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=008f63ae';
+} from '/js/admin-shared.js?v=ec0bca7f';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=7faadc86';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=b278ab62';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=bbfda5a2';
@@ -185,7 +185,7 @@ async function appendItems(newItems) {
     /* Ids were allocated against the list the preview was built from. */
     const taken = new Set(current.map(i => i && i.id));
     const clash = newItems.find(i => taken.has(i.id));
-    if (clash) throw new ShownError(t('toast.importIdTaken', { name: isolate(clash.label) }));
+    if (clash) throw new ShownError(t('toast.importIdTaken', { name: isolate(clash.label || clash.id) }));
     full.items = [...current, ...newItems];
     const r = await apiPost('/api/config', full);
     _serverItems = JSON.stringify(r.items);
@@ -349,7 +349,7 @@ async function _evDelete(item, idx) {
   const ok = await confirmText({
     title: t('common.delete'),
     text: isFolder
-      ? t('confirm.deleteFolder', { name: isolate(item.label) })
+      ? t('confirm.deleteFolder', { name: isolate(item.label || item.id) })
       : t('confirm.remove', { name: isolate(item.label || item.id) }),
     confirmLabel: t('common.delete'),
     cancelLabel: t('common.cancel'),
@@ -1165,16 +1165,17 @@ el('imp-foreign').onchange = async e => {
         ({ doc, errors: parseErrors } = parseYamlTolerant(await file.text()));
       } catch (err) {
         if (err instanceof YamlLiteError)
-          throw new ShownError(t('toast.importYamlUnsupported', { file: file.name, line: err.line }));
+          throw new ShownError(t('toast.importYamlUnsupported', { file: isolate(file.name), line: err.line }));
         throw err;
       }
       const kind = detectSource(doc);
-      if (!kind) throw new ShownError(t('toast.importUnknownFormat', { file: file.name }));
+      if (!kind) throw new ShownError(t('toast.importUnknownFormat', { file: isolate(file.name) }));
       let out;
       try {
         out = convert(kind, doc, taken, t('importForeign.untitledFolder'));
       } catch (err) {
-        if (err instanceof ImportTooLargeError) throw new ShownError(t('toast.importTooLarge', { file: file.name }));
+        if (err instanceof ImportTooLargeError)
+          throw new ShownError(t('toast.importTooLarge', { file: isolate(file.name) }));
         throw err;
       }
       items.push(...out.items);

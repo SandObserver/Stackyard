@@ -94,7 +94,9 @@ test('an import file whose aliases expand past the entry budget is refused', asy
     .locator('#imp-foreign')
     .setInputFiles({ name: 'conf.yml', mimeType: 'application/yaml', buffer: Buffer.from(yaml) });
   await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
-  await expect(page.locator('#toast')).toHaveText('Import failed: conf.yml has too many entries to import.');
+  await expect(page.locator('#toast')).toHaveText(
+    'Import failed: \u2068conf.yml\u2069 has too many entries to import.',
+  );
   const hrefs = (await readConfig(request)).items.map(i => i.href || '');
   expect(hrefs.filter(h => h.includes('.invalid') && !h.includes('example'))).toEqual([]);
 });

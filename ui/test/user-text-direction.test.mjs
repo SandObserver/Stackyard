@@ -118,6 +118,21 @@ test('a name inside a visible translated sentence is isolated', () => {
     assert.ok(call, `${key} is no longer built here`);
     assert.match(call[1], /^isolate\(/, `${key} interpolates a bare name`);
   }
+  for (const key of ['toast.importYamlUnsupported', 'toast.importUnknownFormat', 'toast.importTooLarge']) {
+    assert.match(
+      admin,
+      new RegExp(`t\\('${key.replace('.', '\\.')}', \\{ file: isolate\\(file\\.name\\)`),
+      `${key} interpolates a bare file name`,
+    );
+  }
+  /* isolate() stringifies, so a missing label would show as "undefined". */
+  assert.doesNotMatch(admin, /isolate\((item|clash)\.label\)/, 'a label is optional; fall back to the id');
+  const shared = fs.readFileSync(path.join(JS_DIR, 'admin-shared.js'), 'utf8');
+  assert.match(
+    shared,
+    /\.map\(w => w\.label\)\s*\.filter\(Boolean\)\s*\.map\(isolate\)/,
+    'withheld item names are not isolated',
+  );
   const form = fs.readFileSync(path.join(JS_DIR, 'admin-app-form.js'), 'utf8');
   assert.match(form, /t\('toast\.uploaded', \{ name: isolate\(/);
   const list = fs.readFileSync(path.join(JS_DIR, 'admin-list.js'), 'utf8');
