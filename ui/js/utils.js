@@ -161,6 +161,14 @@ export function focusFirst(...els) {
   return false;
 }
 
+/** @param {Element} parent @param {number} current */
+export function inertAllBut(parent, current) {
+  [...parent.children].forEach((child, i) => {
+    if (i === current) child.removeAttribute('inert');
+    else child.setAttribute('inert', '');
+  });
+}
+
 export const ICON_R = 0.26;
 
 /* breg is passed in to avoid a circular import. */

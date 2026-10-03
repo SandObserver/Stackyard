@@ -37,10 +37,31 @@ test('the input and the results are a combobox and its listbox', () => {
 /* A listbox with no active option and no way to say which one is active tells
    a screen reader nothing about where the cursor is. */
 test('the active option is published, not only styled', () => {
-  assert.match(form, /aria-activedescendant/, 'the cursor is never announced');
+  const start = form.indexOf('function ipSetActive');
+  const body = form.slice(start, form.indexOf('\n}\n', start));
+  assert.match(body, /setAttribute\('aria-activedescendant', act\.id\)/, 'the cursor is never announced');
   assert.match(form, /r\.id = /, 'the options have no ids to point at');
-  assert.match(form, /aria-selected/, 'the active option is not marked selected');
-  assert.match(form, /aria-expanded/, 'the open state is not announced');
+  assert.match(
+    body,
+    /setAttribute\('aria-selected', on \? 'true' : 'false'\)/,
+    'the active option is not marked selected',
+  );
+});
+
+test('every open and close of the results is announced', () => {
+  const lines = form.split('\n');
+  const changes = lines.flatMap((l, i) => {
+    const m = /\brs\.classList\.(add|remove)\('open'\)/.exec(l);
+    return m ? [{ i, open: m[1] === 'add' }] : [];
+  });
+  assert.ok(changes.length >= 3, 'the results no longer open and close');
+  for (const { i, open } of changes) {
+    const after = lines.slice(i + 1, i + 4).join('\n');
+    assert.ok(
+      after.includes(`setAttribute('aria-expanded', '${open}')`),
+      `line ${i + 1} ${open ? 'opens' : 'closes'} the results without saying so`,
+    );
+  }
 });
 
 /* The cursor itself is nextActiveIndex, which admin-logic.test covers. What

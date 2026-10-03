@@ -28,14 +28,49 @@ test('the bars and the hint sit in the security section', () => {
   }
 });
 
-test('nothing moves them at runtime, so the markup decides where they appear', () => {
-  const js = fs
-    .readdirSync(path.join(root, 'js'))
-    .filter(f => f.endsWith('.js'))
-    .map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8'))
-    .join('\n');
+const MOVE = /\.(appendChild|insertBefore|append|prepend|before|after|replaceWith|insertAdjacentElement)\(([^)]*)\)/g;
+const sources = fs
+  .readdirSync(path.join(root, 'js'))
+  .filter(n => n.endsWith('.js'))
+  .map(f => [f, fs.readFileSync(path.join(root, 'js', f), 'utf8')]);
 
-  for (const m of js.matchAll(/(appendChild|insertBefore|append|prepend)\([^)]*\)/g)) {
-    assert.doesNotMatch(m[0], /sec-pw-(bars|hint)/, `${m[0]} moves an element the markup places`);
+/** The text from `from` to the end of the block that holds it. */
+function blockFrom(js, from) {
+  const lineStart = js.lastIndexOf('\n', from) + 1;
+  const indent = /^\s*/.exec(js.slice(lineStart))[0].length;
+  const close = new RegExp(`\\n\\s{0,${Math.max(0, indent - 1)}}\\}`, 'g');
+  close.lastIndex = from;
+  const end = close.exec(js);
+  return js.slice(from, end ? end.index : js.length);
+}
+
+test('nothing moves them at runtime, so the markup decides where they appear', () => {
+  for (const [f, js] of sources) {
+    for (const m of js.matchAll(MOVE)) {
+      assert.doesNotMatch(m[2], /sec-pw-(bars|hint)/, `${f}: ${m[0]} moves an element the markup places`);
+    }
+    for (const b of js.matchAll(/(\w+)\s*=\s*[\w.]+\(\s*['"]#?sec-pw-(?:bars|hint)['"]\s*\)/g)) {
+      const held = new RegExp(`\\b${b[1]}\\b`);
+      for (const m of blockFrom(js, b.index).matchAll(MOVE)) {
+        assert.doesNotMatch(m[2], held, `${f}: ${m[0]} moves an element the markup places`);
+      }
+    }
+  }
+});
+
+test('nothing they are handed to moves them either', () => {
+  const callees = new Set();
+  for (const [, js] of sources) {
+    for (const m of js.matchAll(/\b(\w+)\([^()]*['"]sec-pw-(?:bars|hint)['"]/g)) callees.add(m[1]);
+  }
+  for (const lookup of ['el', 'qi', 'getElementById', 'querySelector', 'inpById']) callees.delete(lookup);
+  assert.ok(callees.has('wirePasswordStrength'), 'the strength meter is no longer wired by id');
+  for (const name of callees) {
+    for (const [f, js] of sources) {
+      const start = js.search(new RegExp(`function ${name}\\(`));
+      if (start < 0) continue;
+      const moves = [...blockFrom(js, start).matchAll(MOVE)].map(m => m[0]);
+      assert.deepEqual(moves, [], `${f}: ${name} moves what it is handed`);
+    }
   }
 });

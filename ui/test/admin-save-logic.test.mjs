@@ -106,20 +106,28 @@ test('an id is built from the label', () => {
   assert.match(newItemId('!!!', 'folder'), /^folder_/);
 });
 
-/* Two items created in the same millisecond.
+/* Every attempt yields the same id, so only the taken set keeps them apart. */
+function fixedRandomness(t) {
+  t.mock.method(Date, 'now', () => 0);
+  t.mock.method(globalThis.crypto, 'getRandomValues', a => a.fill(0));
+}
 
-   Written the way every caller uses it, passing the ids already in the config.
-   That is what makes uniqueness a guarantee rather than a probability. Omitting
-   the taken set and asserting the guarantee anyway fails about one run in
-   fifty. */
-test('an id is never one already in the config', () => {
-  const taken = new Set();
-  for (let i = 0; i < 200; i++) {
-    const id = newItemId('App', 'app', taken);
-    assert.ok(!taken.has(id), `returned an id already in use: ${id}`);
-    taken.add(id);
-  }
-  assert.equal(taken.size, 200);
+test('an id already taken is never returned, even when every attempt repeats it', t => {
+  fixedRandomness(t);
+  const generated = newItemId('App', 'app');
+  assert.equal(newItemId('App', 'app', [generated]), 'App_2');
+  assert.equal(newItemId('App', 'app', [generated, 'App_2', 'App_3']), 'App_4');
+});
+
+test('a retry is used when the first attempt is taken', t => {
+  t.mock.method(Date, 'now', () => 0);
+  let call = 0;
+  t.mock.method(globalThis.crypto, 'getRandomValues', a => a.fill(call++));
+  const first = newItemId('App', 'app');
+  call = 0;
+  const id = newItemId('App', 'app', [first]);
+  assert.notEqual(id, first);
+  assert.match(id, /^App_0/, 'a fresh random id, not the numbered fallback');
 });
 
 /* Without a taken set there is only randomness, so this asserts that a
@@ -163,6 +171,13 @@ test('a new item gets an id not already in the config', () => {
   const built = buildAppItem({ label: 'App', href: 'https://x.example' }, null, existing);
   assert.ok(!existing.includes(built.item.id));
   assert.match(built.item.id, /^App_/);
+});
+
+test('a new item skips an id the config already holds', t => {
+  fixedRandomness(t);
+  const generated = newItemId('App', 'app');
+  const built = buildAppItem({ label: 'App', href: 'https://x.example' }, null, [generated]);
+  assert.equal(built.item.id, 'App_2');
 });
 
 /* ── the edit target is an id, not an array position ─────────────────────────

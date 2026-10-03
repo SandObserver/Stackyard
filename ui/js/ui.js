@@ -3,6 +3,7 @@ import { widgetSrc, cardPreset, fixedAppearance, uniqueTitle, WIDGET_DESIGN } fr
 import {
   mk,
   clr,
+  inertAllBut,
   initial,
   isDashboardEmpty,
   renderEmptyState,
@@ -15,7 +16,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=88d2e1ce';
+} from '/js/utils.js?v=e8dc60ee';
 import { t, currentLang } from '/js/i18n.js?v=899386d8';
 import { toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
@@ -434,12 +435,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
     curPage = Math.max(0, Math.min(pages.length - 1, n));
     strip.style.transform = strip.style.webkitTransform = `translateX(${-pageDir() * curPage * pageW}px)`;
     dotEls.forEach((d, j) => d.classList.toggle('on', j === curPage));
-    /* A page that has scrolled off stays focusable, so Tab would leave the
-       visible page for tiles nobody can see. */
-    [...strip.children].forEach((page, j) => {
-      if (j === curPage) page.removeAttribute('inert');
-      else page.setAttribute('inert', '');
-    });
+    inertAllBut(strip, curPage);
   }
 
   function buildPage(apps) {
