@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a Type to Search switch to Settings, so typing on the dashboard can stop
   opening search.
 
+### Changed
+
+- Keep widget pages in the browser cache between dashboard loads, and check
+  translation files for changes instead of downloading them again in every
+  widget.
+
 ### Fixed
 
 - Translate the hue, saturation and brightness sliders and the colour code hint
