@@ -332,8 +332,8 @@
       background:rgba(30,30,32,.72);
       border:.5px solid rgba(255,255,255,.12);
       box-shadow:0 8px 48px rgba(0,0,0,.45);
-      -webkit-backdrop-filter:blur(32px) saturate(180%);
-      backdrop-filter:blur(32px) saturate(180%);
+      -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(.72);
+      backdrop-filter:blur(32px) saturate(180%) brightness(.72);
       color:#fff;
       /* SC 1.4.13 asks that hover content be hoverable. pointer-events:none put
          it out of reach and left the outside-pointerdown guard unreachable. */
@@ -1117,7 +1117,7 @@ html[data-theme="light"] body:not(.is-mob) #sres {
 }
 html[data-theme="light"] .spot-bar { border-bottom-color:rgba(0,0,0,.08) }
 html[data-theme="light"] body.is-mob #spot .spot-field { background:rgba(118,118,128,.14) }
-html[data-theme="light"] .spot-icon { color:rgba(60,60,67,.5) }
+html[data-theme="light"] .spot-icon { color:rgba(60,60,67,.6) }
 html[data-theme="light"] #sin, html[data-theme="light"] .srn { color:var(--label-primary) }
 html[data-theme="light"] #sin::placeholder,
 html[data-theme="light"] #spot #sin::placeholder,

@@ -450,8 +450,9 @@ function rgbaOf(resolve, value) {
   if (ref) return rgbaOf(resolve, resolve.raw(ref[1]));
   const m = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/.exec(v);
   if (m) return [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])];
-  assert.match(v, /^#[0-9a-fA-F]{6}$/, `not a colour the gate can read: ${v}`);
-  return [1, 3, 5].map(i => parseInt(v.substr(i, 2), 16)).concat(1);
+  const hex = v.replace(/^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/, '#$1$1$2$2$3$3');
+  assert.match(hex, /^#[0-9a-fA-F]{6}$/, `not a colour the gate can read: ${v}`);
+  return [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16)).concat(1);
 }
 
 const toHex = rgb => `#${rgb.map(c => Math.round(c).toString(16).padStart(2, '0')).join('')}`;
@@ -496,6 +497,15 @@ const DASHBOARD_TEXT = [
     'wallpaper',
   ],
   ['phone Spotlight result name', '.srn', PHONE_SPOTLIGHT, 'wallpaper'],
+  ['Spotlight query', '#sin', SPOTLIGHT, 'wallpaper'],
+  ['Spotlight Cancel', '#spot-cancel', SPOTLIGHT, 'wallpaper'],
+  ['Spotlight placeholder', '#sin::placeholder', SPOTLIGHT, 'wallpaper'],
+  ['Spotlight search icon', '.spot-icon', SPOTLIGHT, 'wallpaper', [false, true], 3],
+  ['first-run show-password icon', '.setup-reveal', SETUP, 'wallpaper', [false, true], 3],
+  ['badge list value', '.badge-pop', ['.badge-pop'], 'wallpaper'],
+  ['badge list name', '.badge-pop-name', ['.badge-pop'], 'wallpaper'],
+  ['phone search pill label', '#mob-search-pill .msp-label', ['#mob-search-pill'], 'wallpaper', [true]],
+  ['phone search pill icon', '#mob-search-pill .msp-icon', ['#mob-search-pill'], 'wallpaper', [true], 3],
   /* Light only. The dark title also relies on its text shadow. */
   ['folder title, desktop', '.folder-title-desktop', ['.folder-overlay'], 'wallpaper', [true]],
   ['folder title, phone', '.folder-title-mobile', ['.folder-overlay-mobile'], 'wallpaper', [true]],
@@ -512,7 +522,7 @@ for (const light of [false, true]) {
   test(`the dashboard's text clears 4.5 on its layers: ${light ? 'light' : 'dark'}`, () => {
     const resolve = resolver({ light, extra: [dashboard] });
     const failures = [];
-    for (const [what, ink, layers, backdrop, themes = [false, true]] of DASHBOARD_TEXT) {
+    for (const [what, ink, layers, backdrop, themes = [false, true], min = 4.5] of DASHBOARD_TEXT) {
       if (!themes.includes(light)) continue;
       const bases = backdrop === 'wallpaper' ? WALLPAPERS : [rgbaOf(resolve, resolve(backdrop)).slice(0, 3)];
       const inkSelector = Array.isArray(ink) ? ink[light ? 1 : 0] : ink;
@@ -523,7 +533,7 @@ for (const light of [false, true]) {
           base,
         );
         const r = ratio(toHex(layer(inkColour, surface)), toHex(surface));
-        if (r < 4.5) failures.push(`${what} over ${toHex(base)}: ${r.toFixed(2)}, needs 4.5`);
+        if (r < min) failures.push(`${what} over ${toHex(base)}: ${r.toFixed(2)}, needs ${min}`);
       }
     }
     assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
@@ -588,4 +598,92 @@ test('the measured Settings rules name the measured tokens', () => {
       assert.equal(paint(light, selector, prop, false, admin), want, `${selector} ${prop}`);
     }
   }
+});
+
+/* ── nothing on the page goes unmeasured ─────────────────────────────────── */
+
+const unthemed = selector => selector.replace(/^html\[data-theme="light"\]\s+/, '');
+
+/* A literal ink is not a token, so no pair above can name it unless its rule
+   is measured by selector. [selector, why it is not measured]. */
+const UNMEASURED_INK = [
+  ['.sy-icon.about-ri', 'an icon on a filled tile, measured with the filled controls'],
+  ['.dyn-mob-label', 'a tile name over the wallpaper; its tone is picked per wallpaper at run time'],
+  ['.dyn-fold-label', 'a tile name over the wallpaper; its tone is picked per wallpaper at run time'],
+  ['textarea::placeholder', 'one rule with input::placeholder, which is measured'],
+  ['.setup-reveal:hover', 'brighter than .setup-reveal, which is measured'],
+];
+
+function literalInks() {
+  const found = new Set();
+  for (const src of [admin, dashboard]) {
+    for (const rule of rules(src)) {
+      if (rule.media) continue;
+      if (!/(?:^|[;{\s])color\s*:\s*(?:#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\()/.test(rule.body)) continue;
+      for (const s of rule.selectors) found.add(unthemed(s));
+    }
+  }
+  return found;
+}
+
+test('every literal text colour is measured or listed with its reason', () => {
+  const measured = new Set(DASHBOARD_TEXT.flatMap(([, ink]) => (Array.isArray(ink) ? ink : [ink]).map(unthemed)));
+  const listed = new Set(UNMEASURED_INK.map(([s]) => s));
+  const inks = literalInks();
+  const unmeasured = [...inks].filter(s => !measured.has(s) && !listed.has(s));
+  assert.deepEqual(unmeasured, [], 'add each to DASHBOARD_TEXT, or to UNMEASURED_INK with the reason');
+  assert.deepEqual(
+    [...listed].filter(s => !inks.has(s)),
+    [],
+    'UNMEASURED_INK names a rule with no literal colour; remove it',
+  );
+});
+
+/* Opacity dims everything inside the element, ink included. A state the
+   reader passes through (hover, press, drag, disabled, hidden) is not text at
+   rest. */
+const TRANSIENT = /:hover|:active|:disabled|disabled|dragging|drag-ghost|^#toast$|::?(?:before|after)\b/;
+
+/* [selector, why it is not measured]. Text or a control dimmed at rest gets a
+   grey token instead, which the pairs above measure. */
+const UNMEASURED_DIM = [['.ni', 'a hidden icon beside its own text label in the sidebar']];
+
+function dimmedRules() {
+  const out = new Set();
+  for (const src of [admin, dashboard]) {
+    for (const rule of rules(src)) {
+      if (rule.media) continue;
+      const m = /(?:^|[;{\s])opacity\s*:\s*([\d.]+)/.exec(rule.body);
+      if (!m || Number(m[1]) === 0 || Number(m[1]) >= 1) continue;
+      for (const s of rule.selectors) if (!TRANSIENT.test(s)) out.add(s);
+    }
+  }
+  return out;
+}
+
+test('nothing is dimmed at rest unless listed with its reason', () => {
+  const dimmed = dimmedRules();
+  const known = new Set(UNMEASURED_DIM.map(([s]) => s));
+  assert.deepEqual(
+    [...dimmed].filter(s => !known.has(s)),
+    [],
+    'use a grey token instead, or add it to UNMEASURED_DIM with the reason',
+  );
+  assert.deepEqual(
+    [...known].filter(s => !dimmed.has(s)),
+    [],
+    'a listed rule is no longer dimmed; remove it',
+  );
+});
+
+/* A new pill brings its own fill and ink tokens. */
+test('every chip fill Settings declares is measured as a tinted label', () => {
+  const fills = new Set([...admin.matchAll(/(--chip-[\w-]+-bg)\s*:/g)].map(m => m[1]));
+  const measured = new Set(TINTED.map(([, fill]) => fill));
+  assert.ok(fills.size >= 7, `only ${fills.size} chip fills found`);
+  assert.deepEqual(
+    [...fills].filter(f => !measured.has(f)),
+    [],
+    'add the pill to TINTED',
+  );
 });

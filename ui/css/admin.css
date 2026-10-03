@@ -318,7 +318,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .row.drow.drag-below{box-shadow:0 2px 0 0 var(--ac)}
 .row.drow.drag-into{background:var(--row-drop);box-shadow:inset 0 0 0 2px var(--gn)}
 /* touch-action:none, or a drag starting on the handle scrolls the list instead. */
-.rord{display:flex;align-items:center;justify-content:center;color:var(--dm);font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);opacity:.5;touch-action:none}
+.rord{display:flex;align-items:center;justify-content:center;color:var(--dm);font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);touch-action:none}
 .rico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--on-tint);flex-shrink:0;overflow:hidden;box-shadow:inset 0 0 0 1px var(--icon-ring)}
 .rico img{width:30px;height:30px;object-fit:contain}
 .rinf{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px}
@@ -553,7 +553,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 
 /* ── Form fields inside ev-body ── */
 .req{color:var(--rd);margin-inline-start:2px}
-.opt-span{opacity:.45;font-weight:400}
+.opt-span{color:var(--dm);font-weight:400}
 .hint{font-size:var(--fs-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:5px;line-height:1.5}
 .hint strong{color:var(--tx)}
 .hint code{font-family:monospace;font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2)}
@@ -789,7 +789,7 @@ html.is-mobile .rinf{grid-area:info;align-self:center}
 html.is-mobile .rmt{display:none}
 html.is-mobile .rpills{grid-area:pills;align-self:center}
 html.is-mobile .ract{grid-area:actions}
-html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);opacity:.55}
+html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline)}
 .drag-ghost{position:fixed;z-index:1000;pointer-events:none;opacity:.92;border:1px solid var(--bd-inner);background:var(--cp);box-shadow:var(--shadow-ghost)}
 
 /* ─────────────── RTL ───────────────

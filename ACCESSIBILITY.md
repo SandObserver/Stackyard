@@ -13,7 +13,7 @@ This is a self-assessment. No external audit has been carried out.
 - Every control has a name, a role, and a visible focus indicator, apart from those listed below.
 - The interface is operable by keyboard alone. Reordering, paging, search, and dialogs each have a keyboard route.
 - Dialogs trap focus, close on Escape, and return focus to the control that opened them. The first-run password prompt does not close on Escape; Skip dismisses it.
-- Text in the dashboard and in Settings, outside widgets, meets the 4.5:1 contrast minimum in both the light and the dark theme. A test computes a fixed list of these colour pairs from the stylesheets, so a change that drops one of them below the minimum fails the build.
+- Text in the dashboard and in Settings, outside widgets, meets the 4.5:1 contrast minimum in both the light and the dark theme. A test computes these colour pairs from the stylesheets, so a change that drops one of them below the minimum fails the build. A colour written directly into a rule, or text dimmed with opacity, fails the build until it is measured.
 - The interface honours `prefers-reduced-motion` and `prefers-contrast`.
 - Content reflows to a 320 CSS pixel viewport with no horizontal scrolling, and survives text resizing to 200%.
 - The interface is translated into six languages. Accessible names are translated with it, apart from those listed below.
@@ -24,7 +24,7 @@ This is a self-assessment. No external audit has been carried out.
 - **Widgets need an extra step to read.** Each widget is an embedded document. A screen reader does not enter one during linear navigation, so its contents are read only after the reader is asked to enter it. Widgets containing a button or a link are also reachable with Tab.
 - **A phone shortcut that responds only to touch.** On a phone, a widget that has a link set opens it when tapped away from the widget's own controls. There is no keyboard equivalent for that shortcut. Widgets that carry their own link also expose it as a control, and that one is reachable by keyboard. The shortcut does not exist on a desktop.
 - **Two Settings controls are below the 3:1 contrast minimum for non-text elements.** The selected segment of a segmented control, and the track of a switch that is off, are faint against their background. The selected segment also has a heavier label, and the switch shows its state by the knob position.
-- **The contrast test measures a fixed list of colour pairs.** Other colours and other pairings, including colours written directly into a rule, are checked by hand.
+- **The contrast test does not read every colour.** Colours set from scripts and colours inside media queries are checked by hand. So are app and folder names on the dashboard, which pick a light or dark tone for each wallpaper.
 - **Widget colours are not covered by the contrast test.** Each widget is a separate document with its own stylesheet. Those colours are checked by hand rather than by the build, and a widget rendered on a transparent background cannot be measured automatically.
 
 ## How this was assessed
