@@ -133,7 +133,7 @@ test('slots marks a slot failed when its job is no longer listed', async () => {
     '/api/v1/backups': { status: 200, data: [] },
     '/api/v1/sources': { status: 200, data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' } }] } },
   });
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.UPSTREAM }, { error: KIND.UPSTREAM }]);
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.INVALID }, { error: KIND.INVALID }]);
 });
 
 test('slots collapses same-instance slots into one round of upstream calls', async () => {

@@ -167,7 +167,7 @@ async function slots(config, ctx) {
         gs.forEach(({ i, jobId, customName }) => {
           const j = backups.find(b => dupId(b) === jobId);
           if (!j) {
-            result[i] = { error: ctx.KIND.UPSTREAM };
+            result[i] = { error: ctx.KIND.INVALID };
             return;
           }
           const id = dupId(j);
@@ -198,7 +198,7 @@ async function slots(config, ctx) {
         gs.forEach(({ i, jobId, customName }) => {
           const s = allSources.find(src => kopiaSourceId(src.source) === jobId);
           if (!s) {
-            result[i] = { error: ctx.KIND.UPSTREAM };
+            result[i] = { error: ctx.KIND.INVALID };
             return;
           }
           result[i] = {
