@@ -169,6 +169,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Translate the remaining English labels and hints in Settings.
 
+- Show the sign-in screen and its errors in the saved language.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
