@@ -139,6 +139,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop the container cleanly on `docker stop` instead of killing the dashboard
   mid-shutdown.
 
+- Keep keyboard focus in Settings after moving, hiding or editing a dashboard
+  item, when opening or closing the item editor, after an inline edit, and after
+  a form control redraws.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
