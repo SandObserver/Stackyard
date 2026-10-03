@@ -92,12 +92,11 @@ export function openUrl(href) {
 }
 
 const _links = new WeakMap();
-const CONTROL = 'button, a[href], input, select, textarea, [role="button"]';
 
 /** Make `el` a link to `href` for mouse and keyboard: role link, a tab stop,
     click and Enter. Call again to change the link; an empty or unsafe `href`
-    removes it and restores the element's own role. A click or key on a
-    control inside `el` is left to that control.
+    removes it and restores the element's own role. Keep buttons and other
+    controls out of `el`: a link must not contain them.
     @param {HTMLElement} el @param {string} href @returns {boolean} whether `el` is now a link */
 export function linkTo(el, href) {
   const on = !!href && isSafeLinkUrl(href);
@@ -106,9 +105,8 @@ export function linkTo(el, href) {
     if (!on) return false;
     link = { href: '', role: el.getAttribute('role') };
     _links.set(el, link);
-    el.addEventListener('click', e => {
-      const hit = /** @type {Element} */ (e.target);
-      if (link.href && !(hit !== el && hit.closest?.(CONTROL))) openUrl(link.href);
+    el.addEventListener('click', () => {
+      if (link.href) openUrl(link.href);
     });
     el.addEventListener('keydown', e => {
       if (!link.href || e.key !== 'Enter' || e.target !== el) return;

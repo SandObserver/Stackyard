@@ -34,15 +34,12 @@ function fakeEl(role = null) {
       on[type] = fn;
     },
     classList: { toggle: (c, v) => (v ? classes.add(c) : classes.delete(c)), contains: c => classes.has(c) },
-    closest: () => null,
     fire(type, ev) {
       on[type]?.({ preventDefault() {}, ...ev });
     },
   };
   return el;
 }
-
-const control = el => ({ closest: sel => (sel.includes('button') ? el : null) });
 
 test('a linked element is a focusable link that opens on click and Enter', () => {
   opened = [];
@@ -57,13 +54,11 @@ test('a linked element is a focusable link that opens on click and Enter', () =>
   assert.deepEqual(opened, ['https://example.test/', 'https://example.test/']);
 });
 
-test('Enter or a click on a control inside the link is left to that control', () => {
+test('Enter on a focusable element inside the link is left to it', () => {
   opened = [];
   const el = fakeEl();
   linkTo(el, 'https://example.test/');
-  const button = control(null);
-  el.fire('keydown', { target: button, key: 'Enter' });
-  el.fire('click', { target: control(button) });
+  el.fire('keydown', { target: {}, key: 'Enter' });
   assert.deepEqual(opened, []);
 });
 
@@ -98,6 +93,19 @@ test('every widget with a configurable link uses the shared link', () => {
     assert.doesNotMatch(src, /addEventListener\(\s*'click',\s*\(\)\s*=>\s*\{?\s*(if\s*\(\w+\)\s*)?openUrl\(/, p);
     assert.match(src, /\.clickable\s*:focus-visible\s*\{\s*outline:/, p);
   }
+});
+
+test('the Now Playing link holds no controls', () => {
+  const src = widget('nowplaying/index.html');
+  assert.match(src, /<div class="np-link" id="np-link"><\/div>/);
+  assert.match(src, /linkTo\(linkEl,href\)/);
+});
+
+test('the DNS link is described by its summary', () => {
+  assert.match(
+    widget('dns/index.html'),
+    /if \(linkTo\(widgetEl, _href\)\) widgetEl\.setAttribute\('aria-describedby', 'sr'\);/,
+  );
 });
 
 test('the pull request list holds list items', () => {

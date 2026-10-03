@@ -109,7 +109,7 @@ test('a widget that toggles hidden on a styled element says so in its own CSS', 
 test('a widget naming its root with the line hides the caption from readers', () => {
   for (const f of ['nowplaying/index.html', 'github/contributions.html']) {
     const src = fs.readFileSync(path.join(root, 'widgets', f), 'utf8');
-    assert.match(src, /aria-label['"]?,\s*line\)/, `${f} does not name its root`);
+    assert.match(src, /aria-label['"]?,\s*line\)|\bname\(line\)/, `${f} does not name its root`);
     assert.match(src, /setAttribute\(\s*['"]aria-hidden['"]\s*,\s*['"]true['"]\s*\)/, `${f} reads the line twice`);
     assert.match(src, /removeAttribute\(\s*['"]aria-hidden['"]\s*\)/, `${f} never restores the caption`);
   }

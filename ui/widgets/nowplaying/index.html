@@ -12,8 +12,9 @@
 
   .widget{width:100%;height:100%;position:relative;border-radius:inherit;overflow:hidden;
     background:linear-gradient(160deg,#3A3A3C,#2C2C2E 60%,#2C2C2E)}
-  .widget.clickable{cursor:pointer}
-  .widget.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-3px}
+  .np-link{position:absolute;inset:0;z-index:2;border-radius:inherit}
+  .np-link.clickable{cursor:pointer}
+  .np-link.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-3px}
 
   .stage{position:absolute;inset:0}
 
@@ -35,14 +36,14 @@
   /* .title sets display. Without this rule the hidden attribute does nothing. */
   .sticker [hidden],.band [hidden]{display:none}
 
-  .band{position:absolute;left:14px;right:14px;top:68px;height:19px;z-index:3;
+  .band{position:absolute;left:14px;right:14px;top:68px;height:19px;z-index:3;pointer-events:none;
     display:flex;align-items:center;justify-content:space-between;gap:4px;padding-inline:12px 4px;
     border-radius:0 0 14px 14px;box-shadow:inset 0 .5px 0 rgba(0,0,0,.2);
     background:var(--band,#8E8E93);color:var(--band-ink,#FFFFFF)}
   .err .band{background:#636366;color:#FFFFFF}
   .player{min-width:0;font-size:8.5px;font-weight:700;line-height:1;letter-spacing:.06em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
-  .ctl{flex:none;display:flex;align-items:center}
+  .ctl{flex:none;display:flex;align-items:center;pointer-events:auto}
   .count{min-width:14px;font-size:8.5px;font-weight:600;line-height:1;text-align:center;opacity:.8;
     font-variant-numeric:tabular-nums}
 
@@ -83,6 +84,7 @@
 </head>
 <body>
 <div class="widget idle" id="w" role="group" aria-label="Now Playing">
+  <div class="np-link" id="np-link"></div>
   <div class="stage">
     <div class="sticker" id="sticker">
       <div class="title" id="title">Nothing playing</div>
@@ -127,7 +129,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits } from '/js/widget-toolbox.js?v=b4ee9b14';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits } from '/js/widget-toolbox.js?v=f23ad458';
 await loadStrings();
 document.getElementById('title').textContent = wt('ui.nothingPlaying', 'Nothing playing');
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
@@ -143,7 +145,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   const TAPE_MIN=64, TAPE_MAX=126, TAPE_NOPROG=92;
   const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-  const wEl=document.getElementById('w');
+  const wEl=document.getElementById('w'), linkEl=document.getElementById('np-link');
   const titleEl=document.getElementById('title'), subEl=document.getElementById('sub'), playerEl=document.getElementById('player');
   const tapeEl=document.getElementById('tape'), spinEl=document.getElementById('spin'), reelEl=document.getElementById('reel');
   const prevB=document.getElementById('prev'), nextB=document.getElementById('next'), srEl=document.getElementById('sr');
@@ -194,7 +196,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     let ly=-8+d/2-6; if(ly>50)ly=50; if(ly<18)ly=18;
     strandEl.setAttribute('d', `M142 19 L74 ${(ly-3).toFixed(1)} L74 ${(ly+3).toFixed(1)} L142 25 Z`);
     const label=describe(s);
-    wEl.setAttribute('aria-label', href? label+'. '+wt('ui.activateToOpen','Activate to open link.') : label);
+    name(label);
     if(announce) srEl.textContent=label;
     const many=sessions.length>1;
     ctlEl.hidden=!many;
@@ -234,12 +236,16 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     if(idx>=sessions.length) idx=0;
     paint(changed);
   }
+  function name(text){
+    wEl.setAttribute('aria-label', text);
+    if(href) linkEl.setAttribute('aria-label', text+'. '+wt('ui.activateToOpen','Activate to open link.'));
+  }
   async function boot(){
     try{
       const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
       if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
     }catch(e){}
-    linkTo(wEl,href);
+    linkTo(linkEl,href);
     const state=errorState({ root:wEl, content:[document.querySelector('.window')],
       caption:document.getElementById('np-cap') });
 
@@ -251,7 +257,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
           wEl.classList.add('err');
           showText(false);
           const line=state.fail(error,{since,inert:everOk});
-          wEl.setAttribute('aria-label', line);
+          name(line);
           document.getElementById('np-cap').setAttribute('aria-hidden','true');
         }
       } });

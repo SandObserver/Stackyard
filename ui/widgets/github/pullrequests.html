@@ -29,13 +29,13 @@
   .small-sub{color:rgba(255,255,255,0.45);}
 
   /* PR list */
-  .pr-list{display:flex;flex-direction:column;gap:0;overflow:hidden;flex:1;min-height:0;margin:0 -4px;padding:0 4px;}
-  .pr-item{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);
-    cursor:pointer;transition:opacity .15s;flex-shrink:0;}
-  .pr-link{display:flex;flex-direction:column;gap:1px;}
+  .pr-list{display:flex;flex-direction:column;gap:0;overflow:hidden;flex:1;min-height:0;margin:-4px;padding:4px;}
+  .pr-item{border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
+  .pr-link{display:flex;flex-direction:column;gap:1px;padding:6px 0;transition:opacity .15s;}
+  .pr-link.clickable{cursor:pointer;}
+  .pr-link.clickable:active{opacity:.65;}
   .pr-link:focus-visible{outline:2px solid #0091FF;outline-offset:2px}
   .pr-item:last-child{border-bottom:none;}
-  .pr-item:active{opacity:.65;}
   .pr-meta{color:rgba(255,255,255,0.38);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .pr-title{font-weight:500;color:rgba(255,255,255,0.88);white-space:nowrap;overflow:hidden;
     text-overflow:ellipsis;line-height:1.3;}
@@ -66,7 +66,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="GitHub pull requests"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=b4ee9b14';
+import { poll, fetchData, openUrl, linkTo, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=f23ad458';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.prAria','GitHub pull requests'));
 

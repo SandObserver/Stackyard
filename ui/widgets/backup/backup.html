@@ -30,7 +30,7 @@
     align-self: stretch;
   }
   .card-wrap.clickable { cursor: pointer; }
-  .card-wrap.clickable:focus-visible { outline: 2px solid #0091FF; outline-offset: 2px; }
+  .card-wrap.clickable:focus-visible { outline: 2px solid #0091FF; outline-offset: 2px; filter: none; }
   .card-wrap.inactive  { opacity: 0.38; pointer-events: none; }
 
   /* Back card */
@@ -92,6 +92,7 @@
     display: block;
   }
   .card-wrap:hover .card-front,
+  .card-wrap:focus-visible .card-front,
   .card-wrap:active .card-front { opacity: 0; }
 
   .card-front-name-zone {
@@ -120,7 +121,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine } from '/js/widget-toolbox.js?v=b4ee9b14';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine } from '/js/widget-toolbox.js?v=f23ad458';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';

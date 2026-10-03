@@ -32,7 +32,7 @@
   <div class="msg wt-cap" id="msg" hidden></div>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=b4ee9b14';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=f23ad458';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -59,6 +59,7 @@ async function boot() {
     }
   } catch {}
   const w = document.getElementById('widget');
+  w.setAttribute('aria-label', wt('view.contributions.label', 'Contributions'));
   _isLink = linkTo(w, _href);
   poll({ fetch: fetchGraph, interval: TICK_MS,
     render: d => { document.getElementById('msg').removeAttribute('aria-hidden'); state.ok(); render(d); },
