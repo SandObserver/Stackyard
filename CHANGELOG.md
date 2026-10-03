@@ -185,6 +185,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Raise the contrast of the DNS widget's Allowed headline in the light theme.
 
+- Keep the fields of a switched-off section in the item editor out of keyboard
+  focus and screen reader output.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
