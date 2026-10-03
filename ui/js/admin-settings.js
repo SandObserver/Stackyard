@@ -165,7 +165,7 @@ export function loadSettings(c) {
   /* The key itself is never included in /api/config. */
   const apiEl = inp('bg-apikey-inp') || inp('bg-apikey');
   if (apiEl) {
-    apiEl.placeholder = '●●●●●●●●●● (configured)';
+    apiEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
     apiGet('/api/settings/unsplash-key')
       .then(d => {
         const vEl = el('ie-apikey-v');
@@ -227,13 +227,13 @@ export function loadSettings(c) {
   _si('srv-ip', s.server?.hostIp || '');
   _si('srv-socket', s.server?.socketProxyUrl || '');
   _si('srv-hosts', (s.server?.allowedHosts || []).join(', '));
-  _sv('ie-bgcol-v', s.background?.collection, 'Collection ID');
+  _sv('ie-bgcol-v', s.background?.collection, t('appearance.collectionId'));
   _si('bg-col-inp', s.background?.collection || '');
   _si('bg-url-inp', s.background?.url || '');
   _si('bg-fit', s.background?.fit === 'fit' ? 'fit' : 'fill');
   showWallpaperFile(s.background?.url || '');
   renderBgColor(s.background?.color || BACKDROP);
-  _sv('ie-bgurl-v', s.background?.url, 'Image URL');
+  _sv('ie-bgurl-v', s.background?.url, t('appearance.imageUrl'));
 
   const ipEl = inp('srv-ip');
   if (ipEl) ipEl.value = s.server?.hostIp || '';
@@ -504,7 +504,7 @@ async function saveServer() {
       const pwEl = inp('sec-pw');
       if (pwEl) {
         pwEl.value = '';
-        pwEl.placeholder = '●●●●●●●●●● (configured)';
+        pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
       }
     }
     await apiPost('/api/auth/toggle', { enabled, currentPassword, allowedHosts });

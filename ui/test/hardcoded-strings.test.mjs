@@ -15,11 +15,23 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /* Attributes a reader is given, and the row label the pencil is named after. */
 const PATTERNS = [
-  ['aria-label', /aria-label="([^"${}<>]{2,})"/g],
-  ['placeholder', /placeholder="([^"${}<>]{2,})"/g],
-  ['title', /(?<!data-i18n-)title="([^"${}<>]{2,})"/g],
-  ['row label', /<span class="rl">([^<${}]{2,})</g],
+  ['aria-label', /aria-label="([^"${}<>]{2,})"/g, /data-i18n-al=/],
+  ['placeholder', /placeholder="([^"${}<>]{2,})"/g, /data-i18n-ph=/],
+  ['title', /(?<!data-i18n-)title="([^"${}<>]{2,})"/g, /data-i18n-title=/],
+  ['row label', /<span class="rl">([^<${}]{2,})</g, /data-i18n(-html)?=/],
 ];
+
+const ENGLISH = (() => {
+  const out = new Set();
+  const walk = o => {
+    for (const v of Object.values(o)) {
+      if (v && typeof v === 'object') walk(v);
+      else if (typeof v === 'string') out.add(v);
+    }
+  };
+  walk(JSON.parse(fs.readFileSync(path.join(root, 'i18n', 'en.json'), 'utf8')));
+  return out;
+})();
 
 /* A literal that is not prose: an example value, a technical token, a brand.
    Each is text no language changes. */
@@ -62,15 +74,15 @@ test('no user-facing string is written into the source instead of a catalogue', 
   const found = [];
   for (const file of sources()) {
     const src = fs.readFileSync(path.join(root, file), 'utf8');
-    for (const [what, pattern] of PATTERNS) {
+    for (const [what, pattern, wired] of PATTERNS) {
       pattern.lastIndex = 0;
       for (let m = pattern.exec(src); m !== null; m = pattern.exec(src)) {
         const value = m[1].trim();
         if (!/[A-Za-z]{2}/.test(value)) continue;
-        if (NOT_PROSE.some(re => re.test(value))) continue;
-        /* Already wired: the literal is the English default beside its key. */
+        if (!ENGLISH.has(value) && NOT_PROSE.some(re => re.test(value))) continue;
+        /* Already wired: the literal is the English default beside its own key. */
         const after = src.slice(m.index, m.index + m[0].length + 90);
-        if (/data-i18n(-html|-ph|-al|-title)?=/.test(after)) continue;
+        if (wired.test(after)) continue;
         found.push(`${file}: ${what} "${value}"`);
       }
     }
@@ -158,13 +170,71 @@ test('no user-facing string is built at run time instead of translated', () => {
 /* The builder writes markup from a template literal, so neither scan above sees
    the words inside it. This one reads the text nodes and the named attributes
    of every html`` block, across lines, because those blocks span them. */
-const BLOCKS = /html`((?:[^`\\]|\\.)*)`/g;
+const skipString = (src, i) => {
+  const q = src[i];
+  for (i++; i < src.length && src[i] !== q; i++) if (src[i] === '\\') i++;
+  return i + 1;
+};
 
-const withoutHoles = v =>
-  v
-    .replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+/* A slash after one of these starts a regex literal, not a division. */
+const BEFORE_REGEX = /[(,=:[!&|?{};]/;
+
+const skipRegex = (src, i) => {
+  let inClass = false;
+  for (i++; i < src.length && src[i] !== '\n'; i++) {
+    if (src[i] === '\\') i++;
+    else if (src[i] === '[') inClass = true;
+    else if (src[i] === ']') inClass = false;
+    else if (src[i] === '/' && !inClass) break;
+  }
+  return i + 1;
+};
+
+/* Reads a template literal from its opening backtick. Returns the text with each
+   `${}` hole replaced by a space, and the index past the closing backtick.
+   Holes may hold strings, braces and further template literals. */
+const readTemplate = (src, i) => {
+  let text = '';
+  for (i++; i < src.length; ) {
+    const c = src[i];
+    if (c === '\\') {
+      text += src.slice(i, i + 2);
+      i += 2;
+    } else if (c === '`') return { text, end: i + 1 };
+    else if (c === '$' && src[i + 1] === '{') {
+      text += ' ';
+      let depth = 0;
+      let prev = '{';
+      for (i += 2; i < src.length; ) {
+        const h = src[i];
+        if (h === '/' && (src[i + 1] === '*' || src[i + 1] === '/')) {
+          const close = src[i + 1] === '*' ? '*/' : '\n';
+          const at = src.indexOf(close, i + 2);
+          i = at === -1 ? src.length : at + close.length;
+          continue;
+        }
+        if (h === '/' && BEFORE_REGEX.test(prev)) i = skipRegex(src, i);
+        else if (h === "'" || h === '"') i = skipString(src, i);
+        else if (h === '`') i = readTemplate(src, i).end;
+        else if (h === '{') depth++, i++;
+        else if (h === '}') {
+          i++;
+          if (depth-- === 0) break;
+        } else i++;
+        if (!/\s/.test(h)) prev = h;
+      }
+    } else {
+      text += c;
+      i++;
+    }
+  }
+  return { text, end: i };
+};
+
+const htmlBlocks = src =>
+  [...src.matchAll(/\bhtml`/g)].map(m => ({ index: m.index, text: readTemplate(src, m.index + 4).text }));
+
+const withoutHoles = v => v.replace(/\s+/g, ' ').trim();
 
 /* NOT_PROSE above exempts a bare token, because an attribute value is often
    one. A word on its own in a text node is not, so this scan exempts only a
@@ -177,10 +247,10 @@ test('no user-facing string is written into the markup builder', () => {
     if (!file.endsWith('.js')) continue;
     const src = fs.readFileSync(path.join(root, 'js', file), 'utf8');
     const lineOf = at => src.slice(0, at).split('\n').length;
-    for (const block of src.matchAll(BLOCKS)) {
+    for (const block of htmlBlocks(src)) {
       const seen = [];
-      for (const m of block[1].matchAll(/>([^<>]+)</g)) seen.push(withoutHoles(m[1]));
-      for (const m of block[1].matchAll(/(?:aria-label|title|placeholder)="([^"]*)"/g)) seen.push(withoutHoles(m[1]));
+      for (const m of block.text.matchAll(/>([^<>]+)</g)) seen.push(withoutHoles(m[1]));
+      for (const m of block.text.matchAll(/(?:aria-label|title|placeholder)="([^"]*)"/g)) seen.push(withoutHoles(m[1]));
       for (const value of seen) {
         if (!/[A-Za-z]{2}/.test(value)) continue;
         if (MARKUP_NOT_PROSE.some(re => re.test(value))) continue;
@@ -189,4 +259,24 @@ test('no user-facing string is written into the markup builder', () => {
     }
   }
   assert.deepEqual(found, [], `English written into markup. Add a key and reference it:\n  ${found.join('\n  ')}`);
+});
+
+/* A Settings literal that matches an English catalogue value is a translated
+   string typed out again. It shows in English in every language. Dashboard
+   modules are left out: they keep English fallbacks for widgets on purpose. */
+test('no Settings script repeats an English catalogue string as a literal', () => {
+  const found = [];
+  for (const file of fs.readdirSync(path.join(root, 'js')).sort()) {
+    if (!/^admin.*\.js$/.test(file)) continue;
+    const src = fs.readFileSync(path.join(root, 'js', file), 'utf8');
+    for (const m of src.matchAll(/'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`([^`$\\\n]*)`/g)) {
+      const value = m[1] ?? m[2] ?? m[3];
+      if (/[A-Za-z]{2}/.test(value) && ENGLISH.has(value)) found.push(`${file}: ${JSON.stringify(value)}`);
+    }
+  }
+  assert.deepEqual(
+    found,
+    [],
+    `English catalogue text repeated in a script. Use t() with its key:\n  ${found.join('\n  ')}`,
+  );
 });
