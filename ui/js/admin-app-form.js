@@ -26,7 +26,7 @@ import {
 import { createListbox } from '/js/listbox.js?v=30c1b9d1';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
 import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=233683ad';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=f82486b2';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=df2459e3';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 

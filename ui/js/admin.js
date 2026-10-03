@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=142d8355';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=276069af';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=1265217f';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=6d2565d1';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=f47f4b56';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=73ff01e9';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -31,7 +31,7 @@ import {
   toast,
 } from '/js/admin-shared.js?v=f5551857';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=77239d78';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=7d7f2f73';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
 import { createListbox } from '/js/listbox.js?v=30c1b9d1';
