@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=7949fa07';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9035d41b';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=eb4416c1';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d08edce5';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { initList, render, syncFilterUI } from '/js/admin-list.js?v=f868b68c';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=98907b64';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=4354171b';
+} from '/js/admin-settings.js?v=7a30e5d1';
 import {
   apiGet,
   apiPost,
@@ -28,12 +28,12 @@ import {
   responseError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=a81b9cbe';
+} from '/js/admin-shared.js?v=1a49ceb0';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=ef53bce9';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=48ca5b1b';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=9a8ae607';
+import { createListbox } from '/js/listbox.js?v=1ce8c94a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -59,8 +59,8 @@ import {
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=eeafa4b5';
-import { el, inp, q, qa, clr, setUserText, tgt } from '/js/utils.js?v=c5766a9d';
-import { applyBackground, resolveBackground } from '/js/background.js?v=5f478ebf';
+import { el, focusFirst, inp, q, qa, clr, setUserText, tgt } from '/js/utils.js?v=d9246f59';
+import { applyBackground, resolveBackground } from '/js/background.js?v=f859fed0';
 import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
 
 ensureSprite();
@@ -194,9 +194,11 @@ async function saveOrRevert(before) {
   }
 }
 
-function showListView() {
+/** @param {string|null} [focusId] the item whose row takes focus */
+function showListView(focusId = null) {
   el('dash-list-view').classList.remove('d-none');
   el('dash-edit-view').classList.add('d-none');
+  if (!focusRow(focusId)) focusFirst(el('btn-add'));
 }
 function scrollSettingsTop() {
   scrollTo(0, 0);
@@ -231,7 +233,7 @@ function buildAddNewCard() {
     b.onclick = () => {
       if (state.ctype === kind) return;
       state.ctype = kind;
-      _renderEditBody();
+      _renderEditBody(kind);
     };
     grpTiles.appendChild(b);
   });
@@ -241,7 +243,8 @@ function buildAddNewCard() {
 }
 
 /* Prepended after the builder runs, so the builder's reset cannot wipe it. */
-function _renderEditBody() {
+/** @param {string} [focusKind] the type tile that keeps focus */
+function _renderEditBody(focusKind) {
   const body = el('ev-body');
   body.replaceChildren();
   if (state.ctype === 'widget') buildWidgetForm(body, state._evItem);
@@ -249,9 +252,9 @@ function _renderEditBody() {
   else buildAppForm(body, state._evItem);
   if (!state._evIsEdit) body.insertBefore(buildAddNewCard(), body.firstChild);
   setTimeout(() => {
-    try {
-      q('input,select,textarea', body)?.focus();
-    } catch {}
+    if (el('dash-edit-view').contains(document.activeElement)) return;
+    const tile = focusKind ? qa('.tile-opt', body).find(b => b.dataset.ctype === focusKind) : null;
+    focusFirst(tile, ...qa('input,select,textarea,button', body));
   }, 50);
 }
 
@@ -357,8 +360,8 @@ async function _evDelete(item, idx) {
 }
 
 el('btn-add').onclick = () => openModal(null);
-function closeModal() {
-  showListView();
+function closeModal(focusId = state.eid) {
+  showListView(focusId);
   state.eid = null;
   state._wtype = 'custom';
   state._wsize = 'medium';
@@ -616,7 +619,7 @@ async function doSave(orig) {
     const { replaced } = upsertItem(state.items, state.eid, item);
     /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;
-    closeModal();
+    closeModal(item.id);
     toast(t(replaced ? 'toast.updated' : 'toast.added'));
   } catch (e) {
     toast(t('toast.error', { err: e.message }), 'err');

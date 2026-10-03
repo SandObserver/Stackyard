@@ -1,11 +1,11 @@
 import { state } from '/js/admin-state.js?v=af772a1b';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=a81b9cbe';
-import { createListbox } from '/js/listbox.js?v=9a8ae607';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=d95ac911';
+import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=1a49ceb0';
+import { createListbox } from '/js/listbox.js?v=1ce8c94a';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=39db6f81';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=fc7f0836';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { q, qi, qa } from '/js/utils.js?v=c5766a9d';
+import { focusFirst, q, qi, qa } from '/js/utils.js?v=d9246f59';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
 const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
@@ -107,6 +107,7 @@ function _renderWidgetForm(body) {
     b.addEventListener('click', () => {
       state._wsize = b.dataset.size;
       _renderWidgetForm(body);
+      focusFirst(q(`.tile-opt[data-size="${state._wsize}"]`, body));
     }),
   );
 
@@ -125,7 +126,12 @@ function _renderWidgetForm(body) {
       /* A view switch can change which sizes are offered, and the tiles are
          drawn above this form. */
       onChange(key) {
-        if (_vf && key === _vf) swapContent(body, () => _renderWidgetForm(body));
+        if (!_vf || key !== _vf || !d.isConnected) return;
+        const hadFocus = d.contains(document.activeElement);
+        swapContent(body, () => _renderWidgetForm(body));
+        if (!hadFocus) return;
+        const row = qa('[data-field]', body).find(r => r.dataset.field === key);
+        focusFirst(row?.querySelector('input:checked'), row?.querySelector('button'));
       },
     });
     state._autoFormType = state._wtype;

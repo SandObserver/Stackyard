@@ -5,7 +5,7 @@
    shows: that the admin form saves what it displays, that an edit changes only
    what was edited, that a saved change survives a reload, and that the
    dashboard renders tiles, badges, search and an embedded widget. Drag
-   reordering, focus handling, the mobile layout and the Persian mirroring are
+   reordering, the mobile layout and the Persian mirroring are
    not covered here yet.
 
    Two browsers on purpose. WebKit is not decoration: the documented support

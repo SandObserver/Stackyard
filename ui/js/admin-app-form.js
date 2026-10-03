@@ -1,4 +1,4 @@
-import { clr, el, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=c5766a9d';
+import { clr, el, focusFirst, inp as inpById, q as qSel, qa, qi, tgt } from '/js/utils.js?v=d9246f59';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=af772a1b';
@@ -22,10 +22,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=a81b9cbe';
-import { createListbox } from '/js/listbox.js?v=9a8ae607';
+} from '/js/admin-shared.js?v=1a49ceb0';
+import { createListbox } from '/js/listbox.js?v=1ce8c94a';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=0d4d1038';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=a49a3b75';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=f82486b2';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -388,6 +388,12 @@ function renderActLabels(host) {
         captureActLabels();
         state.spaths.splice(i, 1);
         syncActMode();
+        focusFirst(
+          actLabelBtns(i, '.grp-hdr-rm')[0],
+          actLabelBtns(i - 1, '.grp-hdr-rm')[0],
+          el('act-add-label'),
+          el('bfetch'),
+        );
       }),
     );
     hdr.appendChild(ctl);
@@ -453,17 +459,29 @@ function addActLabel() {
     toast(t('app.noValuesLeft'), 'err');
     return;
   }
+  const add = el('act-add-label');
+  const hadFocus = document.activeElement === add;
   state.spaths.push(free.path);
   syncActMode();
+  if (hadFocus && add?.hidden) focusFirst(actLabelBtns(state.spaths.length - 1, '.grp-hdr-rm')[0]);
 }
 
 function moveActLabel(from, delta) {
   const to = from + delta;
   if (to < 0 || to >= state.spaths.length) return;
   captureActLabels();
+  const hadFocus = !!el('act-labels')?.contains(document.activeElement);
   const [p] = state.spaths.splice(from, 1);
   state.spaths.splice(to, 0, p);
   syncActMode();
+  if (!hadFocus) return;
+  const [up, down] = actLabelBtns(to, '.albl-move');
+  focusFirst(delta < 0 ? up : down, delta < 0 ? down : up);
+}
+
+function actLabelBtns(i, sel) {
+  const hdr = el('act-labels')?.querySelector(`.albl-hdr[data-idx="${i}"]`);
+  return hdr ? qa(sel, hdr) : [];
 }
 
 /** Drag a label header to reorder. Keep the arrows: a pointer drag is
@@ -914,6 +932,7 @@ function renderKvRows(host, rows, ph) {
   add.onclick = () => {
     rows.push({ key: '', value: '', secret: false, valueSet: false });
     renderKvRows(host, rows, ph);
+    focusFirst(qa('.kv-row .kv-k', host).at(-1));
   };
   host.appendChild(add);
 }
@@ -959,6 +978,8 @@ function kvRowEl(host, rows, row, ph) {
     const idx = rows.indexOf(row);
     if (idx >= 0) rows.splice(idx, 1);
     renderKvRows(host, rows, ph);
+    const dels = qa('.kv-del', host);
+    focusFirst(dels[idx], dels[idx - 1], qSel('.kv-add', host));
   };
   return rowEl;
 }
