@@ -150,6 +150,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Announce Fetch and Test results, the selected colour swatch, the current
   Settings section and Settings group headings to screen readers.
 
+- Open widget links from the keyboard in the DNS, Weather, GitHub, VPN and
+  Backup widgets, and let Enter on the Now Playing arrows change the item.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
