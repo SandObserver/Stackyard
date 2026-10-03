@@ -197,6 +197,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep the fields of a switched-off section in the item editor out of keyboard
   focus and screen reader output.
 
+- Show the import dialog counts, the search result count, System Summary values,
+  Backup ages and the GitHub pull request total in the reader's digits.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
