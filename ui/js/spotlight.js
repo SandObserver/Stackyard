@@ -1,5 +1,5 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { mk, clr, el, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=9a9bfb54';
+import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=da375634';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 
 /* Attached to the window so a re-open can undo the previous one. */
@@ -112,14 +112,14 @@ export function initSpotlight({
           if (step < srcs.length) img.src = srcs[step];
           else {
             ic.replaceChildren();
-            ic.textContent = (app.label || app.id)[0].toUpperCase();
+            ic.textContent = initial(app.label || app.id);
             ic.style.color = '#fff';
             ic.style.fontWeight = '600';
           }
         };
         ic.appendChild(img);
       } else {
-        ic.textContent = (app.label || app.id)[0].toUpperCase();
+        ic.textContent = initial(app.label || app.id);
         ic.style.color = '#fff';
         ic.style.fontWeight = '600';
       }

@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=fc7f0836';
-import { el, q } from '/js/utils.js?v=9a9bfb54';
+import { el, isolate, q } from '/js/utils.js?v=da375634';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { errorAdvice } from '/js/admin-error.js?v=a1f2695a';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
@@ -133,7 +133,10 @@ export const apiPost = async (p, b, recover = true) => {
   const body = await r.json();
   /* Every config write goes through here, and a withheld credential has to be
      said out loud. */
-  const withheld = (body?.withheld || []).map(w => w.label).filter(Boolean);
+  const withheld = (body?.withheld || [])
+    .map(w => w.label)
+    .filter(Boolean)
+    .map(isolate);
   if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err');
   return body;
 };

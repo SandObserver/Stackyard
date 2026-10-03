@@ -9,7 +9,7 @@
 import { nextActiveIndex } from '/js/admin-logic.js?v=fc7f0836';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=9a9bfb54';
+import { qa } from '/js/utils.js?v=da375634';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');

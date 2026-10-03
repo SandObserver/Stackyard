@@ -19,7 +19,7 @@ test('the item editor heading names the item', () => {
   const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
   assert.match(
     src,
-    /if \(isEdit\) setUserText\(evTitle, t\('common\.editNamed', \{ name: item\.label \|\| item\.id \}\)\);/,
+    /if \(isEdit\) setUserText\(evTitle, t\('common\.editNamed', \{ name: isolate\(item\.label \|\| item\.id\) \}\)\);/,
   );
   assert.match(src, /evTitle\.textContent = t\('type\.addNew'\);/);
 });

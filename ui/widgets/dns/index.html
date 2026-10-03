@@ -51,7 +51,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=f23ad458';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, readableInk } from '/js/widget-toolbox.js?v=f23ad458';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -181,7 +181,7 @@ function showHeadline() {
   const s = _segs[_sel];
   if (s) {
     pctEl.textContent = fmt(s.value);
-    pctEl.style.color = s.color;
+    pctEl.style.color = readableInk(s.color, 3);
     subEl.textContent = s.label;
   } else if (_last) {
     pctEl.textContent = formatNumber(_last.pct / 100, { style: 'percent' });

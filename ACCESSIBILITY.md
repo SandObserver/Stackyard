@@ -26,7 +26,7 @@ This is a self-assessment. No external audit has been carried out.
 - **Collapsed sections in Settings keep their controls in the tab order.** When a section of the item editor such as Health Check is switched off, its hidden fields can still take keyboard focus, and the focus is not visible.
 - **Two Settings controls are below the 3:1 contrast minimum for non-text elements.** The selected segment of a segmented control, and the track of a switch that is off, are faint against their background. The selected segment also has a heavier label, and the switch shows its state by the knob position.
 - **The contrast test measures a fixed list of colour pairs.** Other colours and other pairings, including colours written directly into a rule, are checked by hand.
-- **Widget colours are not covered by the contrast test.** Each widget is a separate document with its own stylesheet. Those colours are checked by hand rather than by the build, and a widget rendered on a transparent background cannot be measured automatically. In the light theme, the DNS widget's Allowed headline is below the 3:1 minimum for large text.
+- **Widget colours are not covered by the contrast test.** Each widget is a separate document with its own stylesheet. Those colours are checked by hand rather than by the build, and a widget rendered on a transparent background cannot be measured automatically.
 
 ## How this was assessed
 
