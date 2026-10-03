@@ -260,7 +260,10 @@
     "invalidUrl": "这不是有效的 http 或 https 地址。",
     "socketRefused": "套接字代理拒绝了该请求。",
     "notSocketProxy": "该地址有响应，但不是 Docker 套接字代理。",
-    "noConnection": "连接失败。"
+    "noConnection": "连接失败。",
+    "duplicateId": "两个项目使用了相同的 ID {id}。每个项目都需要自己的 ID。",
+    "missingChildren": "文件夹 {id} 列出了文件中不存在的项目。",
+    "unsafeLink": "项目 {id} 包含不允许的链接。链接必须使用 http 或 https。"
   },
   "home": {
     "search": "搜索",

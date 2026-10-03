@@ -192,8 +192,8 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
     log.audit('wallpaper fetched', { url: parsed.origin + parsed.pathname, type: kind.type, bytes: data.length });
     json(res, 200, { ok: true, url: saved });
   } catch (e) {
-    if (e.oversize)
-      return json(res, 400, { error: 'request too large', kind: KIND.INVALID, code: 'invalid.too-large' });
+    if (e.oversize) return json(res, 400, { error: 'request too large', kind: KIND.INVALID, code: 'invalid.url' });
+    if (e.responseTooLarge) return json(res, 502, { error: TOO_LARGE, kind: KIND.INVALID, code: 'invalid.too-large' });
     if (e instanceof SsrfBlockedError) return json(res, 403, errorBody(e));
     fail(res, e, { status: 502 });
   }

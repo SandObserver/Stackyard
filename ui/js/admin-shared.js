@@ -2,7 +2,7 @@
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=fc7f0836';
 import { el, q } from '/js/utils.js?v=9a9bfb54';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { errorAdvice } from '/js/admin-error.js?v=44fdd6fb';
+import { errorAdvice } from '/js/admin-error.js?v=a1f2695a';
 import { iconChain } from '/js/icons.js?v=9c8c550c';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=706fc9a7';

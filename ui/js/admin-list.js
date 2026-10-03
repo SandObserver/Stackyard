@@ -15,11 +15,11 @@ import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
 import { snapshotItems } from '/js/admin-save-logic.js?v=8389782f';
 import { reorderItems } from '/js/admin-logic.js?v=fc7f0836';
 import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=444456dd';
-import { paintIcon } from '/js/admin-shared.js?v=28bd6694';
+import { paintIcon } from '/js/admin-shared.js?v=5ce4c5aa';
 import { clr, el, focusFirst, qa, setUserText } from '/js/utils.js?v=9a9bfb54';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
-import { sizeLabel } from '/js/admin-widget-form.js?v=4c6b9d04';
+import { sizeLabel } from '/js/admin-widget-form.js?v=20808e42';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=648cc374';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 

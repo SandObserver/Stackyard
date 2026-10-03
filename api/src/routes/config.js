@@ -67,7 +67,12 @@ on('POST', '/api/config', async (req, res) => {
     const seen = new Set();
     for (const item of data.items) {
       if (seen.has(item.id)) {
-        return json(res, 400, { error: `duplicate item id: ${item.id}`, kind: KIND.INVALID });
+        return json(res, 400, {
+          error: `duplicate item id: ${item.id}`,
+          kind: KIND.INVALID,
+          code: 'invalid.duplicate-id',
+          detail: { id: item.id },
+        });
       }
       seen.add(item.id);
     }
@@ -81,6 +86,8 @@ on('POST', '/api/config', async (req, res) => {
         return json(res, 400, {
           error: `${item.id}: children point at items that are not here: ${dangling.join(', ')}`,
           kind: KIND.INVALID,
+          code: 'invalid.missing-children',
+          detail: { id: item.id },
         });
       }
     }
@@ -99,11 +106,18 @@ on('POST', '/api/config', async (req, res) => {
         return json(res, 400, {
           error: `${item.id}: ${unsafe.field} must not use the ${unsafe.value.split(':')[0].trim().toLowerCase()} scheme`,
           kind: KIND.INVALID,
+          code: 'invalid.unsafe-link',
+          detail: { id: item.id },
         });
       }
     }
     if (data.items.filter(i => i.type === 'app' && i.dock).length > DOCK_MAX)
-      return json(res, 400, { error: `at most ${DOCK_MAX} apps can be shown in the dock`, kind: KIND.INVALID });
+      return json(res, 400, {
+        error: `at most ${DOCK_MAX} apps can be shown in the dock`,
+        kind: KIND.INVALID,
+        code: 'invalid.dock-full',
+        detail: { max: DOCK_MAX },
+      });
     const KNOWN_SETTINGS = new Set([
       'background',
       'showLabels',

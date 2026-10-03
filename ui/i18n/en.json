@@ -265,7 +265,10 @@
     "invalidUrl": "That is not a valid http or https address.",
     "socketRefused": "The socket proxy refused the request.",
     "notSocketProxy": "Something answered there, but it is not a Docker socket proxy.",
-    "noConnection": "The connection failed."
+    "noConnection": "The connection failed.",
+    "duplicateId": "Two items share the id {id}. Each item needs its own id.",
+    "missingChildren": "Some items in the folder {id} are not in the file.",
+    "unsafeLink": "The item {id} has a link that is not allowed. Links must use http or https."
   },
   "home": {
     "search": "Search",

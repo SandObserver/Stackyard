@@ -64,6 +64,11 @@ test('every advice the module can produce names a real key with matching placeho
     { code: 'upstream.refused' },
     { code: 'upstream.not-docker' },
     { code: 'network' },
+    { kind: KIND.BLOCKED, code: 'blocked.unresolved', detail: { reason: 'unresolved' } },
+    { kind: KIND.INVALID, code: 'invalid.duplicate-id', detail: { id: 'dup' } },
+    { kind: KIND.INVALID, code: 'invalid.missing-children', detail: { id: 'media' } },
+    { kind: KIND.INVALID, code: 'invalid.unsafe-link', detail: { id: 'x' } },
+    { kind: KIND.INVALID, code: 'invalid.dock-full', detail: { max: 4 } },
     { kind: 'quota-exceeded', code: 'quota-exceeded.hourly' },
     new Error('something odd'),
     null,
@@ -73,7 +78,7 @@ test('every advice the module can produce names a real key with matching placeho
       const where = `${JSON.stringify(e)} -> ${JSON.stringify(advice)}`;
       const value = lookup(advice.key);
       assert.equal(typeof value, 'string', `no such key: ${where}`);
-      const wanted = (value.match(/\{(\w+)\}/g) || []).sort();
+      const wanted = [...new Set(value.match(/\{(\w+)\}/g) || [])].sort();
       const given = Object.keys(advice.vars || {})
         .map(k => `{${k}}`)
         .sort();
@@ -220,5 +225,19 @@ test('a socket probe result maps to a sentence for each way it fails', () => {
   assert.deepEqual(socketProbeAdvice(probe('upstream.status', { detail: { status: 404 } })), {
     key: 'adminError.statusNotFound',
     vars: { status: 404 },
+  });
+});
+
+test('a refused config names the item from the detail, never from the message', () => {
+  assert.deepEqual(errorAdvice({ kind: 'invalid', code: 'invalid.duplicate-id', detail: { id: 'dup' } }), {
+    key: 'adminError.duplicateId',
+    vars: { id: 'dup' },
+  });
+  assert.deepEqual(errorAdvice({ kind: 'invalid', code: 'invalid.dock-full', detail: { max: 4 } }), {
+    key: 'app.dockFull',
+    vars: { max: 4 },
+  });
+  assert.deepEqual(errorAdvice({ kind: 'blocked', code: 'blocked.unresolved', detail: { reason: 'unresolved' } }), {
+    key: 'adminError.unreachable',
   });
 });

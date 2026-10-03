@@ -343,6 +343,7 @@ test('a fetched image over 16 MB is refused and nothing is stored', async () => 
   const was = stored();
   const r = await fetchLink(`${upBase}/17mb.png`);
   assert.equal(r.status, 502);
+  assert.equal(r.body.code, 'invalid.too-large');
   assert.equal(stored(), was);
 });
 
@@ -351,6 +352,7 @@ test('a link request over 4 KB is answered, not dropped', async () => {
   const r = await request('/api/wallpaper/fetch', { 'Content-Type': 'application/json' }, body);
   assert.equal(r.status, 400);
   assert.match(r.body.error, /too large/);
+  assert.equal(r.body.code, 'invalid.url', 'an over-long link is a bad address, not a large image');
 });
 
 test('two files in one wallpaper upload are refused', async () => {

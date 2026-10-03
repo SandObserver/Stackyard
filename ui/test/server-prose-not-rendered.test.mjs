@@ -14,23 +14,40 @@ import { fileURLToPath } from 'node:url';
 const JS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'js');
 
 /* Reading the field is fine; putting it on screen is not. A translated
-   sentence counts as on screen. */
-const RENDERS = /\.textContent\s*=|setHtml\(|setUserText\(|toast\(|\bt\(/;
+   sentence, or a ShownError, counts as on screen. */
+const RENDERS = /\.textContent\s*=|setHtml\(|setUserText\(|toast\(|\bt\(|ShownError\(/;
 /* An Error from the fetch wrapper carries the field as its message. */
-const SERVER_TEXT =
-  /\b(?:advice|err|error|e|res|body|data|j|r|probe)\s*(?:\??\.)\s*error\b|\b(?:e|err|error)\s*(?:\??\.)\s*message\b/;
+const SERVER_TEXT = /\b\w+\s*\??\.\s*(?:error|message)\b/;
 
 /* Keys that legitimately name the field while building a request or a log. */
-const READS_ONLY = /log\.|console\.|JSON\.stringify|catch|throw/;
+const READS_ONLY = /log\.|console\.|JSON\.stringify/;
 
-function offendingLines(file) {
-  const src = fs.readFileSync(path.join(JS_DIR, file), 'utf8');
-  return src.split('\n').flatMap((line, i) => {
-    if (!RENDERS.test(line) || !SERVER_TEXT.test(line)) return [];
-    if (READS_ONLY.test(line)) return [];
-    return [`${file}:${i + 1}: ${line.trim()}`];
+/* One statement per entry, so a call wrapped over several lines is read whole. */
+function statements(src) {
+  return src.split(/;\s*\n|(?:\)|=>|else|try)\s*\{\s*\n|^\s*\}.*\n/m);
+}
+
+function offendersIn(src, file) {
+  return statements(src).flatMap(stmt => {
+    const code = stmt.replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g, "''");
+    if (!RENDERS.test(code) || !SERVER_TEXT.test(code)) return [];
+    if (READS_ONLY.test(code)) return [];
+    return [`${file}: ${stmt.trim().replace(/\s+/g, ' ')}`];
   });
 }
+
+const offendingLines = file => offendersIn(fs.readFileSync(path.join(JS_DIR, file), 'utf8'), file);
+
+test('the check sees a thrown, chained or wrapped render of the server text', () => {
+  const forms = [
+    "  throw new ShownError(t('k', { err: e.message }));\n",
+    "  p.catch(x => toast(t('k', { err: x.message })));\n",
+    "  toast(\n    t('k', {\n      err: failure.error,\n    }),\n    'err',\n  );\n",
+    "  st.textContent = '✗ ' + res.error;\n",
+  ];
+  for (const src of forms) assert.equal(offendersIn(src, 'probe.js').length, 1, src);
+  assert.deepEqual(offendersIn("  toast(t('toast.error', { err: errorText(e) }), 'err');\n", 'probe.js'), []);
+});
 
 test('no render site puts the API error prose on screen', () => {
   const files = fs.readdirSync(JS_DIR).filter(f => f.endsWith('.js'));

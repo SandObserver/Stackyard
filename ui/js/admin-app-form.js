@@ -23,11 +23,11 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=28bd6694';
+} from '/js/admin-shared.js?v=5ce4c5aa';
 import { createListbox } from '/js/listbox.js?v=30c1b9d1';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=142f39db';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=44fdd6fb';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=c0780c9c';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=a1f2695a';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 

@@ -180,6 +180,7 @@ const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 /* A code, never the address. The block message must not repeat what was
    blocked, so the reason travels as this instead. */
 const PRIVATE_ADDRESS = 'private-address';
+const UNRESOLVED = 'unresolved';
 
 /** @param {URL} u @returns {string|null} */
 function urlPolicyError(u) {
@@ -231,7 +232,7 @@ async function guardSsrf(rawUrl, ms = FETCH_MS) {
     ({ address } = await lookupWithin(h, ms));
   } catch (e) {
     if (e instanceof Error && e.message === 'Timed out') throw e;
-    return { error: `Blocked: ${h} could not be resolved.`, ip: null };
+    return { error: `Blocked: ${h} could not be resolved.`, ip: null, reason: UNRESOLVED };
   }
   if (!ALLOW_PRIVATE_IPS && isPrivateAddress(address))
     return { error: `Blocked: ${h} resolves to private IP ${address}.`, ip: null, reason: PRIVATE_ADDRESS };
@@ -322,7 +323,7 @@ function fetchJSON(raw, opts = {}) {
           total += c.length;
           if (total > sizeLimit) {
             req.destroy();
-            return done(reject, new Error('Response too large'));
+            return done(reject, Object.assign(new Error('Response too large'), { responseTooLarge: true }));
           }
           bufs.push(c);
         });

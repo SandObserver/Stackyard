@@ -344,6 +344,8 @@ test('a config save is rejected when two items share an id', async () => {
     });
     assert.equal(bad.status, 400);
     assert.match(bad.body.error, /duplicate item id: dup/);
+    assert.equal(bad.body.code, 'invalid.duplicate-id');
+    assert.deepEqual(bad.body.detail, { id: 'dup' });
     assert.equal(loadConfig().items.filter(i => i.id === 'dup').length, 0, 'nothing may be stored');
 
     /* Different types, same id, is still a collision: the lookup does not care. */
@@ -434,6 +436,8 @@ test('a config save is rejected when a folder points at an item that is not ther
     });
     assert.equal(bad.status, 400);
     assert.match(bad.body.error, /media: children point at items that are not here/);
+    assert.equal(bad.body.code, 'invalid.missing-children');
+    assert.deepEqual(bad.body.detail, { id: 'media' });
     assert.match(bad.body.error, /gone/, 'the message has to name what is missing to be fixable');
     assert.match(bad.body.error, /also-gone/, 'every dangling id, not just the first');
     assert.equal(loadConfig().items.filter(i => i.id === 'media').length, 0, 'nothing may be stored');

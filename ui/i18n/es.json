@@ -270,7 +270,10 @@
     "invalidUrl": "Esa no es una dirección http o https válida.",
     "socketRefused": "El proxy de socket rechazó la solicitud.",
     "notSocketProxy": "Algo respondió ahí, pero no es un proxy de socket de Docker.",
-    "noConnection": "La conexión falló."
+    "noConnection": "La conexión falló.",
+    "duplicateId": "Dos elementos comparten el id {id}. Cada elemento necesita su propio id.",
+    "missingChildren": "La carpeta {id} incluye elementos que no están en el archivo.",
+    "unsafeLink": "El elemento {id} tiene un enlace no permitido. Los enlaces deben usar http o https."
   },
   "home": {
     "search": "Buscar",
