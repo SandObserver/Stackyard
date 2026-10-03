@@ -167,6 +167,83 @@ test('the first-run password field shows its edge and its focus', () => {
   assert.match(dash, /\.setup-pw:focus\s*\{[^}]*outline:\s*2px solid Highlight/);
 });
 
+/* Forced colors replaces every fill with Canvas, so a state drawn only by a
+   fill disappears. Every state rule must also change something the mode keeps,
+   or have a rule in a forced-colors block. */
+const STATE =
+  /\.(?:[\w-]+-)?(on|sel|active|selected|current|checked|pressed)\b|:checked|\[aria-(selected|pressed|checked|current)/;
+const FILL_ONLY = new Set([
+  'background',
+  'background-color',
+  'background-image',
+  'box-shadow',
+  'opacity',
+  'filter',
+  'fill',
+  'transition',
+  'cursor',
+  'will-change',
+]);
+
+/** State selectors whose plain rules, taken together, change only fills, and that no forced-colors rule names. */
+function fillOnlyStates(css) {
+  const ranges = forcedRanges(css);
+  const inside = at => ranges.some(r => at >= r.from && at < r.to);
+  /* A theme or layout prefix styles the same element. */
+  const norm = sel => sel.replace(/^html(\[data-theme="\w+"\]|\.is-mobile)\s+/, '');
+  const forced = new Set();
+  const plain = new Map();
+  for (const r of rules(css)) {
+    for (const sel of r.selector.split(/,(?![^(]*\))/).map(x => norm(x.trim()))) {
+      if (inside(r.at)) forced.add(sel);
+      else plain.set(sel, [...(plain.get(sel) || []), ...r.props.filter(p => !p.startsWith('--'))]);
+    }
+  }
+  return [...plain]
+    .filter(([sel]) => STATE.test(sel) && !/:hover|:active\b|:has\(> \.(fh-hl|gs-pill)\.on\)/.test(sel))
+    .filter(([sel, props]) => props.length && props.every(p => FILL_ONLY.has(p)) && !forced.has(sel))
+    .map(([sel]) => sel);
+}
+
+test('the fill-only check finds a state drawn by fill alone', () => {
+  assert.deepEqual(fillOnlyStates('.x.sel{background:rgba(255,255,255,.07)}'), ['.x.sel']);
+  assert.deepEqual(fillOnlyStates('.plant-sel{background:rgba(255,255,255,.07)}'), ['.plant-sel']);
+  assert.deepEqual(fillOnlyStates('.icon{background:red}'), []);
+  assert.deepEqual(fillOnlyStates('.x.sel{background:red;font-weight:600}'), []);
+  assert.deepEqual(
+    fillOnlyStates('.x.sel{background:red}@media (forced-colors: active){.x.sel{outline:2px solid Highlight}}'),
+    [],
+  );
+  assert.deepEqual(fillOnlyStates('.x.sel{background:red}html[data-theme="light"] .x.sel{color:#000}'), []);
+});
+
+test('no state is drawn by fill alone', () => {
+  const allowed = new Map(
+    Object.entries({
+      'admin.css .row-dd-list li.kb-active': 'the row also takes focus and shows its focus ring',
+      'admin.css .mtab.active .ni': 'the tab icon takes Highlight',
+      'admin.css .mp.on': 'the sliding highlight shows; the row it sits behind carries the state',
+      'dashboard.css .mp.on': 'the sliding highlight shows; the row it sits behind carries the state',
+    }),
+  );
+  const found = [
+    ['tokens.css', tokens],
+    ['dashboard.css', dashboard],
+    ['admin.css', admin],
+    ['widget-config-form.css', read('widget-config-form.css')],
+  ].flatMap(([name, css]) => fillOnlyStates(css).map(sel => `${name} ${sel}`));
+  assert.deepEqual(
+    found.filter(f => !allowed.has(f)),
+    [],
+    'Forced colors removes the fill. Add an outline, border or system colour in a forced-colors block',
+  );
+  assert.deepEqual(
+    [...allowed.keys()].filter(k => !found.includes(k)),
+    [],
+    'listed but no longer fill-only, remove it',
+  );
+});
+
 /* A media query adds no specificity. A plain rule for the same selector later
    in the file, or a longer selector ending in it anywhere, wins, and the
    forced-colors rule never applies. */

@@ -55,6 +55,41 @@ test('every font-family is the one stack', () => {
   assert.deepEqual(offenders, [], `Font stack spelled differently:\n  ${offenders.join('\n  ')}`);
 });
 
+/* The family in a `font` shorthand or a canvas `ctx.font`, after the size. A
+   value with no size is a keyword such as inherit, or a bare family. */
+function shorthandFamily(value) {
+  const v = value.trim().replace(/\s+/g, ' ');
+  const m = /(?:^|\s)(?:[\d.]+(?:px|em|rem|pt|%)|\$\{[^}]+\}px)(?:\/\S+)?\s+(.+)$/.exec(v);
+  return m ? m[1] : v;
+}
+
+const FONT_SHORTHAND = /(?<![\w-])font\s*:\s*([^;}'"`]+)|\.font\s*=\s*['"`]([^'"`]+)['"`]/g;
+
+function shorthandOffenders(name, src) {
+  const out = [];
+  for (const m of src.matchAll(FONT_SHORTHAND)) {
+    const family = shorthandFamily(m[1] ?? m[2]);
+    if (ALLOWED.has(family) || family === CANON) continue;
+    out.push(`${name}: ${family}`);
+  }
+  return out;
+}
+
+test('the shorthand check reads the family after the size', () => {
+  assert.deepEqual(shorthandOffenders('x', '.a{font:600 12px Helvetica, Arial, sans-serif}'), [
+    'x: Helvetica, Arial, sans-serif',
+  ]);
+  assert.deepEqual(shorthandOffenders('x', "ctx.font = '12px Arial';"), ['x: Arial']);
+  assert.deepEqual(shorthandOffenders('x', `.b{font:600 10.5px/1.2 ${CANON}}`), []);
+  assert.deepEqual(shorthandOffenders('x', 'ctx.font = `700 ${h}px ' + CANON + '`;'), []);
+  assert.deepEqual(shorthandOffenders('x', '.c{font:inherit}'), []);
+});
+
+test('every font shorthand and canvas font is the one stack', () => {
+  const offenders = all.flatMap(([name, src]) => shorthandOffenders(name, src));
+  assert.deepEqual(offenders, [], `Font stack spelled differently:\n  ${offenders.join('\n  ')}`);
+});
+
 /* Declarations only. The prose in tokens.css and in this file names both cuts to
    say not to use them. */
 test('no declaration names an optical cut', () => {

@@ -52,6 +52,9 @@ const PHYSICAL = [
   /padding-right\s*:/,
   /border-left\s*:/,
   /border-right\s*:/,
+  /border-(left|right)-(width|style|color)\s*:/,
+  /border-(top|bottom)-(left|right)-radius\s*:/,
+  /(?<![\w-])(float|clear)\s*:\s*(left|right)\b/,
   /text-align\s*:\s*(left|right)\b/,
   /text-align-last\s*:\s*(left|right)\b/,
 ];
@@ -66,21 +69,72 @@ test('no stylesheet positions anything by screen side', () => {
   }
 });
 
+/* Space-separated values, keeping calc() and var() whole. */
+function values(text) {
+  const parts = [''];
+  let depth = 0;
+  for (const ch of text.trim()) {
+    if (ch === '(') depth++;
+    if (ch === ')') depth--;
+    if (/\s/.test(ch) && depth === 0) {
+      if (parts.at(-1)) parts.push('');
+    } else parts[parts.length - 1] += ch;
+  }
+  return parts;
+}
+
+/* Four-value shorthands run top, right, bottom, left. border-radius runs
+   top-left, top-right, bottom-right, bottom-left, and a mirror swaps each pair. */
+const SIDED =
+  /(?<![-\w])(padding|margin|inset|border-width|border-style|border-color|scroll-margin|scroll-padding|border-radius)\s*:\s*([^;}]+)/g;
+
+function asymmetricShorthands(css) {
+  const out = [];
+  for (const m of css.matchAll(SIDED)) {
+    const even = m[2].split('/').every(half => {
+      const p = values(half);
+      if (m[1] !== 'border-radius') return p.length < 4 || p[1] === p[3];
+      const [tl, tr = tl, br = tl, bl = tr] = p;
+      return tl === tr && br === bl;
+    });
+    if (!even) out.push(m[0].trim());
+  }
+  return out;
+}
+
+test('the shorthand check tells a mirrored pair from an uneven one', () => {
+  assert.deepEqual(asymmetricShorthands('.a{padding:1px 2px 3px 2px;border-radius:calc(10px * var(--sc,1))}'), []);
+  assert.deepEqual(asymmetricShorthands('.b{border-radius:8px 8px 0 0;inset:0 4px auto 4px}'), []);
+  assert.deepEqual(asymmetricShorthands('.c{border-radius:0 8px 8px 0}'), ['border-radius:0 8px 8px 0']);
+  assert.deepEqual(asymmetricShorthands('.d{inset:0 auto 0 12px}'), ['inset:0 auto 0 12px']);
+  assert.deepEqual(asymmetricShorthands('.e{border-width:0 2px 0 0}'), ['border-width:0 2px 0 0']);
+  assert.deepEqual(asymmetricShorthands('.f{border-radius:4px 8px}'), ['border-radius:4px 8px']);
+  assert.deepEqual(asymmetricShorthands('.g{border-radius:8px / 4px 8px 8px 4px}'), [
+    'border-radius:8px / 4px 8px 8px 4px',
+  ]);
+});
+
 test('no stylesheet spaces the two sides differently with a shorthand', () => {
   for (const sheet of SHEETS) {
-    for (const m of code(sheet).matchAll(/(?<![-\w])(?:padding|margin)\s*:\s*([^;}]+)/g)) {
-      const parts = [''];
-      let depth = 0;
-      for (const ch of m[1].trim()) {
-        if (ch === '(') depth++;
-        if (ch === ')') depth--;
-        if (/\s/.test(ch) && depth === 0) {
-          if (parts.at(-1)) parts.push('');
-        } else parts[parts.length - 1] += ch;
-      }
-      assert.ok(parts.length < 4 || parts[1] === parts[3], `${sheet} uses ${m[0]}, which does not flip for Persian`);
-    }
+    const uneven = asymmetricShorthands(code(sheet));
+    assert.deepEqual(uneven, [], `${sheet} uses these, which do not flip for Persian`);
   }
+});
+
+test('the side check sees the long-hand forms', () => {
+  for (const sample of [
+    '.a{border-left-width:2px}',
+    '.b{border-right-color:red}',
+    '.c{border-top-left-radius:4px}',
+    '.d{float:left}',
+    '.e{clear:right}',
+  ]) {
+    assert.ok(
+      PHYSICAL.some(p => p.test(sample)),
+      `not caught: ${sample}`,
+    );
+  }
+  assert.ok(!PHYSICAL.some(p => p.test('.f{float:inline-start;border-start-start-radius:4px}')));
 });
 
 /* A widget's own CSS is held to the same rule, but only for the properties
@@ -325,7 +379,13 @@ test('no script writes a physical side into an inline style', () => {
     .flatMap(f =>
       code(`js/${f}`)
         .split('\n')
-        .flatMap((line, i) => (/(padding|margin|border)-(left|right)\s*:/.test(line) ? [`${f}:${i + 1}`] : [])),
+        .flatMap((line, i) =>
+          /(padding|margin|border)-(left|right)[\w-]*\s*:|border-(top|bottom)-(left|right)-radius\s*:|(?<![\w-])float\s*:\s*(left|right)\b/.test(
+            line,
+          ) || asymmetricShorthands(line.replace(/['"`]/g, ';')).length
+            ? [`${f}:${i + 1}`]
+            : [],
+        ),
     );
   assert.deepEqual(offenders, []);
 });
