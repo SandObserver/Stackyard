@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=922d8fc1';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=fefb67b5';
 import { initI18n, t } from '/js/i18n.js?v=5a09eb37';
 import { loginErrorKey } from '/js/admin-error.js?v=a1f2695a';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';

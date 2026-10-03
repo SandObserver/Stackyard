@@ -3,6 +3,7 @@ import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c8c550c';
 import { state } from '/js/admin-state.js?v=af772a1b';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
+import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import {
   isDockBlocked,
   clearsStoredSecret,
@@ -23,10 +24,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=922d8fc1';
+} from '/js/admin-shared.js?v=fefb67b5';
 import { createListbox } from '/js/listbox.js?v=50539f37';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=f02959db';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=1141b431';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=a1f2695a';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -135,7 +136,7 @@ export function buildAppForm(body, item) {
     <div class="grp">
       <div class="row"><span class="rl">${t('app.showInDock')}</span>${tog('f-dock', !!item?.dock, t('app.showInDock'))}</div>
     </div>
-    ${dockBlocked ? html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull', { max: DOCK_MAX })}</p>` : ''}
+    ${dockBlocked ? html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull', { max: formatNumber(DOCK_MAX) })}</p>` : ''}
 
     <p class="grp-hdr" role="heading" aria-level="2">${t('app.badge')}</p>
     <div class="grp">
@@ -367,7 +368,7 @@ function renderActLabels(host) {
     hdr.dataset.idx = String(i);
     setHtml(
       hdr,
-      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><span role="heading" aria-level="3">${t('app.labelN', { n: i + 1 })}</span>`,
+      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><span role="heading" aria-level="3">${t('app.labelN', { n: formatNumber(i + 1) })}</span>`,
     );
     const ctl = document.createElement('span');
     ctl.className = 'albl-ctl';

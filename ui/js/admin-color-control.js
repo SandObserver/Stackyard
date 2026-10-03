@@ -1,4 +1,4 @@
-import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=922d8fc1';
+import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=fefb67b5';
 import { t } from '/js/i18n.js?v=5a09eb37';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=93658cb8';
