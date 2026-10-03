@@ -104,9 +104,16 @@ test('key mode names each string instead of translating it', async ({ page, requ
 test('a development locale is not written to the config', async ({ page, request }) => {
   await seed(request, { language: 'de' });
   await page.goto('/admin/?lang=en-XA');
+  await page.locator('body.authed').waitFor({ state: 'attached' });
   await expect(page.locator('#srv-save')).toHaveText(/^\[.*\]$/);
-  const cfg = await (await request.get('/api/config')).json();
-  expect(cfg.settings?.language).toBe('de');
+
+  await page.locator('#log-level-btn').click();
+  await page.locator('#log-level-list li[data-val="error"]').click();
+  await page.locator('#srv-save').click();
+
+  const settings = async () => (await (await request.get('/api/config')).json()).settings;
+  await expect.poll(async () => (await settings())?.logLevel).toBe('error');
+  expect((await settings())?.language).toBe('de');
 });
 
 /* ── the words fit ────────────────────────────────────────────────────────── */
@@ -127,14 +134,15 @@ const CLIPPED = `() => {
   return out;
 }`;
 
-for (const [name, url] of [
-  ['the dashboard', '/?lang=en-XA'],
-  ['Settings', '/admin/?lang=en-XA'],
+for (const [name, url, loaded] of [
+  ['the dashboard', '/?lang=en-XA', 'body.ready'],
+  ['Settings', '/admin/?lang=en-XA', 'body.authed'],
 ]) {
   test(`${name} clips no text when every string is 40% longer`, async ({ page, request }) => {
     await seed(request);
     await page.goto(url);
-    await page.locator('body').waitFor({ state: 'visible' });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-XA');
+    await page.locator(loaded).waitFor({ state: 'attached' });
     const clipped = await page.evaluate(`(${CLIPPED})()`);
     expect(clipped, `these elements overflow their box:\n${JSON.stringify(clipped, null, 2)}`).toEqual([]);
   });
@@ -144,7 +152,8 @@ test('Settings clips no text at a narrow width', async ({ page, request }) => {
   await seed(request);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/admin/?lang=en-XA');
-  await page.locator('body').waitFor({ state: 'visible' });
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en-XA');
+  await page.locator('body.authed').waitFor({ state: 'attached' });
   const clipped = await page.evaluate(`(${CLIPPED})()`);
   expect(clipped, `these elements overflow their box:\n${JSON.stringify(clipped, null, 2)}`).toEqual([]);
 });

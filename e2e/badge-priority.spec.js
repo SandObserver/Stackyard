@@ -47,7 +47,14 @@ async function paint(page, opts, { unhealthy = false, values = [0, 4] } = {}) {
   await page.goto('/');
   const badge = page.locator('.badge').first();
   await expect(badge).toBeVisible();
-  await page.waitForTimeout(600);
+  /* A fixed label paints before either poll answers. Negative assertions made
+     before both replies are applied pass whatever the replies hold. */
+  await page.waitForFunction(() =>
+    ['/api/badges', '/api/health'].every(p =>
+      performance.getEntriesByType('resource').some(e => new URL(e.name).pathname === p),
+    ),
+  );
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => setTimeout(r))));
   return badge;
 }
 
@@ -88,8 +95,8 @@ test('one badge opens no list', async ({ page }) => {
   const badge = await paint(page, { healthy: true, fixed: true });
   await expect(badge).toHaveText('backup');
   await expect(badge).not.toHaveClass(/has-more/);
-  await badge.hover();
-  await page.waitForTimeout(500);
+  /* Focus opens the list at once. Hover waits for a delay. */
+  await badge.evaluate(el => /** @type {HTMLElement} */ (el.closest('a, button, [role="button"]')).focus());
   await expect(page.locator('#badge-pop')).toBeHidden();
 });
 
