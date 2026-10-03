@@ -167,6 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep both changes when two Appearance switches are flipped in quick
   succession.
 
+- Translate the remaining English labels and hints in Settings.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
