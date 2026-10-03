@@ -174,6 +174,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show the reason for a failed save, upload, import or socket proxy check in the
   selected language.
 
+- Mirror folder rows, the phone folder title and widget swipes in right-to-left
+  languages.
+
+- Keep brackets around names in place in right-to-left messages.
+
+- Show badge popover values and wallpaper brightness in the reader's digits.
+
+- Show an emoji initial on an app with no icon.
+
+- Raise the contrast of the DNS widget's Allowed headline in the light theme.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
