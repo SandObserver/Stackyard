@@ -237,6 +237,14 @@ export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = ''
   wireInlineEdit(row, inp, { type, placeholder, onCommit });
 }
 
+/** Name a row's pencil after its label. Call again once the catalog loads.
+    @param {Element} row */
+export function nameEditPen(row) {
+  const labelEl = q('.rl', row);
+  const pen = q('.pe', row);
+  if (labelEl && pen) pen.setAttribute('aria-label', t('common.editNamed', { name: labelEl.textContent.trim() }));
+}
+
 /** The same row behaviour for elements a caller already holds. `row` needs an id.
     `fill: false` keeps the input's own value on open. `render` replaces how the
     committed value is shown.
@@ -260,10 +268,7 @@ export function wireInlineEdit(row, inp, { type = 'text', placeholder = '', onCo
   if (labelEl) {
     if (!labelEl.id) labelEl.id = `${row.id}-rl`;
     inp.setAttribute('aria-labelledby', labelEl.id);
-    /* The pencil opens this row, so it is named after this row. Taking the name
-       from the label keeps the two in one language, and in step when either
-       changes. */
-    pen.setAttribute('aria-label', t('common.editNamed', { name: labelEl.textContent.trim() }));
+    nameEditPen(row);
   }
   row.insertBefore(inp, pen);
 

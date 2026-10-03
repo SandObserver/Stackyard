@@ -22,10 +22,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=1a49ceb0';
-import { createListbox } from '/js/listbox.js?v=1ce8c94a';
+} from '/js/admin-shared.js?v=be847687';
+import { createListbox } from '/js/listbox.js?v=198d4a2d';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=a49a3b75';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=88767aab';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=f82486b2';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
@@ -140,7 +140,7 @@ export function buildAppForm(body, item) {
     <div class="grp">
       <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled, t('app.healthCheck'))}</div>
       <div id="hc-sub" class="reveal${hc.enabled ? ' open' : ''}"><div class="reveal-in">
-        <div class="row"><span class="rl">${t('app.type')}</span><div class="segr">
+        <div class="row"><span class="rl" id="hc-type-lbl">${t('app.type')}</span><div class="segr" role="group" aria-labelledby="hc-type-lbl">
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing ? '' : 'checked'}><span class="segr-dot"></span><span>${t('app.container')}</span></label>
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${isPing ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.ping')}</span></label>
         </div></div>

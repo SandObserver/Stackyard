@@ -90,11 +90,12 @@ export function createListbox(
   dd.className = 'row-dd';
   setHtml(
     dd,
-    html`<button class="row-dd-btn"${raw(id ? ` id="${id}-btn"` : '')} type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="${listId}"><span class="row-dd-text"></span>${raw(CHEV)}</button>
+    html`<button class="row-dd-btn"${raw(id ? ` id="${id}-btn"` : '')} type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="${listId}" aria-labelledby="${listId}-name ${listId}-value"><span class="visually-hidden" id="${listId}-name">${label}</span><span class="row-dd-text" id="${listId}-value"></span>${raw(CHEV)}</button>
       <ul class="row-dd-list${multiple ? ' checklist' : ''}" id="${listId}" role="listbox" aria-label="${label}"${raw(multiple ? ' aria-multiselectable="true"' : '')}></ul>`,
   );
   const btn = /** @type {HTMLElement} */ (dd.querySelector('.row-dd-btn'));
   const text = /** @type {HTMLElement} */ (dd.querySelector('.row-dd-text'));
+  const name = /** @type {HTMLElement} */ (dd.querySelector('.visually-hidden'));
   const list = /** @type {HTMLElement} */ (dd.querySelector('.row-dd-list'));
   pruneDetached();
   list.remove();
@@ -340,6 +341,7 @@ export function createListbox(
     },
     setLabel(next) {
       list.setAttribute('aria-label', next);
+      name.textContent = next;
     },
     close: () => close(),
   };

@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=eb4416c1';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d08edce5';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=817acaf2';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=93082af6';
 import { recoveryShown } from '/js/config-recovery.js?v=706fc9a7';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=98907b64';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=694684ea';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
@@ -18,22 +18,23 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=7a30e5d1';
+} from '/js/admin-settings.js?v=3383e591';
 import {
   apiGet,
   apiPost,
   initInlineEdit,
+  nameEditPen,
   paintIcon,
   reveal,
   responseError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=1a49ceb0';
+} from '/js/admin-shared.js?v=be847687';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=48ca5b1b';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=567b17ad';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=1ce8c94a';
+import { createListbox } from '/js/listbox.js?v=198d4a2d';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=1f1ea9c1';
 import { loadLocalIcons } from '/js/icons.js?v=9c8c550c';
@@ -85,6 +86,7 @@ async function load() {
   state.items = c.items || [];
   state._settings = c.settings || {};
   await initI18n(c.settings?.language || 'en');
+  qa('.ie-row').forEach(nameEditPen);
   document.title = t('nav.pageTitle');
   initVersion();
   syncPickerLabels();

@@ -1,7 +1,7 @@
 import { state } from '/js/admin-state.js?v=af772a1b';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=1a49ceb0';
-import { createListbox } from '/js/listbox.js?v=1ce8c94a';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=39db6f81';
+import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=be847687';
+import { createListbox } from '/js/listbox.js?v=198d4a2d';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=6a55e3d6';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=fc7f0836';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
@@ -216,7 +216,7 @@ function _renderCustomConfig(body) {
     html`
     <div class="row" id="if-referrer-row"><span class="rl">${t('widgetCfg.referrerPolicy')}</span></div>
     <div class="row ie-row" id="if-allow-row"><span class="rl">${t('widgetCfg.allowFeaturePolicy')}</span><span class="rv${o.allow ? '' : ' is-ph'}">${o.allow ? o.allow : 'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${o.allow || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
-    <div class="row"><span class="rl">${t('widgetCfg.allowFullscreen')}</span><label class="tog"><input type="checkbox" id="if-fs" ${o.allowFullscreen !== false ? 'checked' : ''}><div class="tr"></div></label></div>
+    <div class="row"><span class="rl">${t('widgetCfg.allowFullscreen')}</span><label class="tog"><input type="checkbox" id="if-fs" aria-label="${t('widgetCfg.allowFullscreen')}" ${o.allowFullscreen !== false ? 'checked' : ''}><div class="tr"></div></label></div>
     <div class="row ie-row" id="if-refresh-row"><span class="rl">${t('widgetCfg.refreshInterval')} <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval ? '' : ' is-ph'}">${o.refreshInterval ? o.refreshInterval : 'e.g. 2000'}</span><input id="if-refresh" type="number" min="250" step="250" value="${o.refreshInterval || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
   );
   const refBox = createListbox({
