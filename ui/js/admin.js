@@ -1,24 +1,24 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=9ae0ab18';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=244d98de';
 import { recoveryShown } from '/js/config-recovery.js?v=3b63c74b';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=6ec7d24d';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=58655a1e';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   buildAppItem,
   claimFolderChildren,
   newItemId,
-  saveWithRevert,
+  revertingSaves,
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=8389782f';
+} from '/js/admin-save-logic.js?v=30449c75';
 import {
   loadSettings,
   savedWallpaperUrl,
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=7b0e3f82';
+} from '/js/admin-settings.js?v=ac43ba93';
 import {
   apiGet,
   apiPost,
@@ -33,7 +33,7 @@ import {
   toast,
 } from '/js/admin-shared.js?v=d03d0ece';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=6d7c5ca5';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=02853781';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
@@ -51,7 +51,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=dda5296a';
+} from '/js/import-foreign.js?v=94c5929e';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -198,18 +198,18 @@ async function appendItems(newItems) {
   }
 }
 
+const saveOrRestore = revertingSaves({
+  write: save,
+  restore: items => {
+    state.items = items;
+    render();
+  },
+});
+
 /** Save, and put the list back if the write did not land. Never rejects. */
 async function saveOrRevert(before) {
   try {
-    return await saveWithRevert({
-      write: save,
-      snapshot: before,
-      restore: items => {
-        state.items = items;
-        render();
-      },
-      superseded: () => saves.pending() > 0,
-    });
+    return await saveOrRestore(before);
   } catch {
     return false;
   }
@@ -1174,10 +1174,10 @@ el('imp-foreign').onchange = async e => {
           throw new ShownError(t('toast.importYamlUnsupported', { file: isolate(file.name), line: err.line }));
         throw err;
       }
-      const kind = detectSource(doc);
-      if (!kind) throw new ShownError(t('toast.importUnknownFormat', { file: isolate(file.name) }));
       let out;
       try {
+        const kind = detectSource(doc);
+        if (!kind) throw new ShownError(t('toast.importUnknownFormat', { file: isolate(file.name) }));
         out = convert(kind, doc, taken, t('importForeign.untitledFolder'));
       } catch (err) {
         if (err instanceof ImportTooLargeError)

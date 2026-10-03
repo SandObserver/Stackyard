@@ -327,6 +327,7 @@
     "saveFailed": "Speichern fehlgeschlagen: {err}",
     "allowedHostInvalid": "Keine gültige Adresse: {host}",
     "allowedHostsKeepCurrent": "Lass {host} in „Erlaubte Adressen“, sonst funktioniert diese Seite nicht mehr. Entferne sie über eine andere Adresse.",
+    "allowedHostsTooMany": "Zu viele Adressen. Die Grenze liegt bei {max}.",
     "colorInvalid": "Das ist keine Farbe. Verwende #rrggbb oder einen CSS-Farbnamen.",
     "imported": "Importiert",
     "importFailed": "Import fehlgeschlagen: {err}",

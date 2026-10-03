@@ -13,10 +13,16 @@ import {
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=d845c473';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
-import { serialWrites } from '/js/admin-save-logic.js?v=8389782f';
+import { serialWrites } from '/js/admin-save-logic.js?v=30449c75';
 import { renderColorControl } from '/js/admin-color-control.js?v=0e03c814';
 import { BACKDROP } from '/js/background.js?v=28c6caf2';
-import { firstBadHost, hostnameOf, isLocalAddress, parseHostList } from '/js/host-names.js?v=842f96ca';
+import {
+  ALLOWED_HOSTS_MAX,
+  firstBadHost,
+  hostnameOf,
+  isLocalAddress,
+  parseHostList,
+} from '/js/host-names.js?v=98bf44d7';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -442,6 +448,10 @@ async function saveServer() {
     return;
   }
   const allowedHosts = parseHostList(hostsText);
+  if (!allowedHosts) {
+    toast(t('toast.allowedHostsTooMany', { max: formatNumber(ALLOWED_HOSTS_MAX) }), 'err');
+    return;
+  }
   const here = hostnameOf(location.host);
   if (!enabled && here && !isLocalAddress(here) && !allowedHosts.includes(here)) {
     toast(t('toast.allowedHostsKeepCurrent', { host: here }), 'err');

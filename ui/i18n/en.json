@@ -327,6 +327,7 @@
     "saveFailed": "Save failed: {err}",
     "allowedHostInvalid": "Not an address: {host}",
     "allowedHostsKeepCurrent": "Keep {host} in Allowed Addresses, or this page stops working. To remove it, use another address.",
+    "allowedHostsTooMany": "Too many addresses. The limit is {max}.",
     "colorInvalid": "That is not a color. Use #rrggbb or a CSS color name.",
     "imported": "Imported",
     "importFailed": "Import failed: {err}",

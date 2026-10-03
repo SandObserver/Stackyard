@@ -3,7 +3,7 @@
    only: a widget in the source becomes a plain app tile, never a Stackyard
    widget. Keep this module free of the DOM and of the network. */
 
-import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=8389782f';
+import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=30449c75';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 
 export const SKIP = Object.freeze({
@@ -63,15 +63,25 @@ function isAbsoluteLink(href) {
 /* A value Homepage or Dashy resolves from its own environment. */
 const hasPlaceholder = s => /\{\{[^}]*\}\}|\$\{[^}]*\}/.test(s);
 
+/* An alias is the same map every time. Listing a wide map's keys on each visit
+   freezes the tab. */
+/** @type {WeakMap<object, string|null>} */
+const soleKeys = new WeakMap();
+
 /** The single key of a `{ name: value }` wrapper, or null.
     @param {any} v @returns {[string, any]|null} */
 function soleEntry(v) {
   if (!isMap(v)) return null;
-  const keys = Object.keys(v);
-  return keys.length === 1 ? [keys[0], v[keys[0]]] : null;
+  if (!soleKeys.has(v)) {
+    const keys = Object.keys(v);
+    soleKeys.set(v, keys.length === 1 ? keys[0] : null);
+  }
+  const key = soleKeys.get(v);
+  return key === null ? null : [key, v[key]];
 }
 
 /** Which format a parsed document is, by shape rather than by filename.
+    Throws ImportTooLargeError past the entry budget.
     @param {any} doc @returns {'homepage-services'|'homepage-bookmarks'|'dashy'|null} */
 export function detectSource(doc) {
   if (isMap(doc)) {
@@ -81,16 +91,22 @@ export function detectSource(doc) {
   }
   if (!Array.isArray(doc) || !doc.length) return null;
   let sawGroup = false;
+  let seen = 0;
+  const visit = () => {
+    if (++seen > MAX_IMPORT_ENTRIES) throw new ImportTooLargeError();
+  };
   for (const group of doc) {
     const g = soleEntry(group);
     if (!g || !Array.isArray(g[1])) return null;
     sawGroup = true;
     for (const entry of g[1]) {
+      visit();
       const e = soleEntry(entry);
-      if (!e) continue;
+      if (!e || !Array.isArray(e[1])) continue;
       /* A bookmark's fields sit inside an extra list, a service's do not. */
-      if (Array.isArray(e[1]) && e[1].some(row => isMap(row) && ('href' in row || 'abbr' in row))) {
-        return 'homepage-bookmarks';
+      for (const row of e[1]) {
+        visit();
+        if (isMap(row) && ('href' in row || 'abbr' in row)) return 'homepage-bookmarks';
       }
     }
   }
