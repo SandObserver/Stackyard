@@ -171,6 +171,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the sign-in screen and its errors in the saved language.
 
+- Show the reason for a failed save, upload, import or socket proxy check in the
+  selected language.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
