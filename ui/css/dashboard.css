@@ -918,10 +918,10 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
   outline:2px solid var(--accent); outline-offset:3px; border-radius:8px;
 }
 #sin:focus-visible { outline:none; }
-.spot-bar:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
-body.is-mob .spot-bar:focus-within { outline:none; }
+/* On the box, not the bar. The box clips everything inside it. */
+body:not(.is-mob) #sbox:has(#sin:focus-visible) { outline:2px solid var(--accent); outline-offset:2px; }
 body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
-body.is-mob #spot-cancel:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; border-radius:8px; }
+#spot-cancel:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; border-radius:8px; }
 
 /* Larger tap/click area for page dots without changing their visual size */
 .dot { position:relative; }

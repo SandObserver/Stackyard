@@ -31,10 +31,13 @@ export function requireLogin() {
 
 /** @type {Element[]} */
 let madeInert = [];
+/** @type {HTMLElement|null} */
+let focusBefore = null;
 
 /** @param {HTMLElement|null} screen */
 function blockPageBehind(screen) {
   if (madeInert.length) return;
+  focusBefore = /** @type {HTMLElement|null} */ (document.activeElement);
   madeInert = [...document.body.children].filter(c => c !== screen && !c.hasAttribute('inert'));
   madeInert.forEach(c => c.setAttribute('inert', ''));
 }
@@ -42,6 +45,8 @@ function blockPageBehind(screen) {
 function unblockPageBehind() {
   madeInert.forEach(c => c.removeAttribute('inert'));
   madeInert = [];
+  if (focusBefore?.isConnected && focusBefore !== document.body) focusBefore.focus();
+  focusBefore = null;
 }
 
 function showLoginScreen(onLogin) {

@@ -218,3 +218,24 @@ test('Tab stays inside the sign-in screen', async ({ page }) => {
     expect(outside, `Tab ${i + 1} left the sign-in screen`).toBe('');
   }
 });
+
+test('signing in again mid-session returns focus to the control that asked', async ({ page }) => {
+  let refused = false;
+  await page.route('**/api/config', route => {
+    if (route.request().method() !== 'POST' || refused) return route.fallback();
+    refused = true;
+    return route.fulfill({ status: 401, json: { error: 'Unauthorised', kind: 'auth' } });
+  });
+  await page.route('**/api/auth/login', route => route.fulfill({ json: { ok: true } }));
+  await page.goto('/admin/');
+  await page.locator('body.authed').waitFor({ state: 'attached' });
+  await page.locator('.nl[data-sec="appearance"]').click();
+  const awake = page.locator('#set-awake');
+  await awake.focus();
+  await page.keyboard.press('Space');
+  await expect(page.locator('#login-pw')).toBeFocused();
+  await page.locator('#login-pw').fill('anything');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#login-screen')).toBeHidden();
+  await expect(awake).toBeFocused();
+});

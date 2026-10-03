@@ -34,7 +34,7 @@ test('every Settings field that removes the outline draws a focus ring', () => {
 
 const dashboard = fs.readFileSync(path.join(dir, 'dashboard.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
-/* The search field's ring is drawn on its bar. */
+/* The search field's ring is drawn on its search box. */
 const DASHBOARD_EXEMPT = new Set(['#sin']);
 
 /* An id rule that removes the outline outranks the generic
@@ -49,6 +49,6 @@ test('every dashboard control that removes the outline draws a focus ring', () =
   const ringed = pick(/([^{}]+)\{[^}]*(?:outline:\s*\d+px\s+solid|box-shadow:[^;}]*\b\d+px\s+var\(--accent\))/g)
     .filter(s => /:focus(-visible)?$/.test(s))
     .map(s => s.replace(/:focus(-visible)?$/, ''));
-  const missing = removed.filter(s => !ringed.some(r => r === s || r.endsWith(' ' + s)));
+  const missing = removed.filter(s => !ringed.includes(s));
   assert.deepEqual(missing, []);
 });
