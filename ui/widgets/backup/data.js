@@ -166,7 +166,10 @@ async function slots(config, ctx) {
         });
         gs.forEach(({ i, jobId, customName }) => {
           const j = backups.find(b => dupId(b) === jobId);
-          if (!j) return;
+          if (!j) {
+            result[i] = { error: ctx.KIND.UPSTREAM };
+            return;
+          }
           const id = dupId(j);
           const meta = dupMeta(j);
           result[i] = {
@@ -194,7 +197,10 @@ async function slots(config, ctx) {
         const allSources = r.data?.sources || [];
         gs.forEach(({ i, jobId, customName }) => {
           const s = allSources.find(src => kopiaSourceId(src.source) === jobId);
-          if (!s) return;
+          if (!s) {
+            result[i] = { error: ctx.KIND.UPSTREAM };
+            return;
+          }
           result[i] = {
             id: kopiaSourceId(s.source),
             name: customName || s.source.path,

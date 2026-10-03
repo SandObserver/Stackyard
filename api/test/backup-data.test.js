@@ -120,13 +120,20 @@ test('slots returns one entry per slot, null where unconfigured', async () => {
   assert.equal(out[2].name, '/data');
 });
 
-test('slots leaves a slot null when its job is gone upstream', async () => {
-  const { ctx } = ctxFor({ slots: [{ provider: 'duplicati', dupUrl: 'http://gone:8200', jobId: '9' }] }, 'slots', {
+test('slots marks a slot failed when its job is no longer listed', async () => {
+  const config = {
+    slots: [
+      { provider: 'duplicati', dupUrl: 'http://gone:8200', jobId: '9' },
+      { provider: 'kopia', kopiaUrl: 'http://k:51515', jobId: 'h@u:/deleted' },
+    ],
+  };
+  const { ctx } = ctxFor(config, 'slots', {
     '/api/v1/auth/login': LOGIN,
     '/api/v1/serverstate': { status: 200, data: {} },
     '/api/v1/backups': { status: 200, data: [] },
+    '/api/v1/sources': { status: 200, data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' } }] } },
   });
-  assert.deepEqual(await dataFn(ctx), [null]);
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.UPSTREAM }, { error: KIND.UPSTREAM }]);
 });
 
 test('slots collapses same-instance slots into one round of upstream calls', async () => {

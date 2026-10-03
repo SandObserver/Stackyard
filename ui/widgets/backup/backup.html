@@ -165,7 +165,7 @@ function relTime(v) {
   const d=parseDate(v); if(!d) return '—';
   const diff=(Date.now()-d.getTime())/1000, abs=Math.abs(diff), past=diff>=0;
   let l;
-  if(abs<90) l='< 2m'; else if(abs<3600) l=formatNumber(Math.round(abs/60))+'m';
+  if(abs<90) l='< '+formatNumber(2)+'m'; else if(abs<3600) l=formatNumber(Math.round(abs/60))+'m';
   else if(abs<86400) l=formatNumber(Math.round(abs/3600))+'h'; else l=formatNumber(Math.round(abs/86400))+'d';
   return past?l+' ago':'in '+l;
 }

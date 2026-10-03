@@ -12,13 +12,14 @@
 
   .card{position:relative;width:100%;height:100%;border-radius:inherit;
     overflow:hidden;padding:12px;display:flex;flex-direction:column}
-  .card.clickable{cursor:pointer}
-  .card.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-3px}
+  .bk-link{position:absolute;inset:0;z-index:1;border-radius:inherit}
+  .bk-link.clickable{cursor:pointer}
+  .bk-link.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-3px}
 
   .head{flex:none;font-size:13px;font-weight:600;color:#8E8E93;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .shelves{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:6px}
+  .shelves{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;margin-top:6px}
   .size-large .shelves{margin-top:10px}
   .shelf-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
   .shelf-lbl{flex:none;font-size:11px;font-weight:600;color:#8E8E93;margin-bottom:4px;
@@ -83,6 +84,7 @@
 </head>
 <body>
 <div class="card" id="card" role="group" aria-label="Books">
+  <div class="bk-link" id="bk-link"></div>
   <div class="head" id="lbl">READING</div>
   <div class="shelves" id="shelves">
     <div class="shelf-wrap">
@@ -99,7 +101,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=0b7672de';
+  import { poll, linkTo, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=0b7672de';
   await loadStrings();
   document.getElementById('lbl').textContent = wt('ui.reading', 'Reading');
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
@@ -214,10 +216,8 @@
       if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
     }catch(e){}
     if(href){
-      card.classList.add('clickable'); card.setAttribute('role','link'); card.tabIndex=0;
-      const go=()=>openUrl(href);
-      card.addEventListener('click',e=>{ if(e.target===card||e.target.closest('.head,.foot')) go(); });
-      card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ go(); } });
+      const link=document.getElementById('bk-link');
+      if(linkTo(link,href)) link.setAttribute('aria-label', wt('widget.label','Books'));
     }
     const state = errorState({ root:card, content:document.getElementById('shelves'),
       caption:document.getElementById('cap') });
