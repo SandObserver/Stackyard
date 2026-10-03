@@ -80,6 +80,8 @@
     "display": "Pantalla",
     "keepAwake": "Mantener la pantalla encendida",
     "keepAwakeTip": "Evita que la pantalla se atenúe o se bloquee mientras el panel está abierto. Los navegadores solo lo permiten mediante HTTPS, así que no tiene efecto en una dirección HTTP simple.",
+    "typeToSearch": "Escribir para buscar",
+    "typeToSearchTip": "Escribir una letra en cualquier parte del panel abre la búsqueda. Desactívalo si la búsqueda se abre sin querer, por ejemplo con el control por voz.",
     "displayMode": "Modo de visualización",
     "displayModeTip": "Define la apariencia del panel y de las páginas de Ajustes. Se guarda en este navegador, se aplica solo a este dispositivo y surte efecto de inmediato.",
     "displaySystem": "Predeterminado del sistema",

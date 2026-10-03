@@ -269,6 +269,26 @@ test('a saved setting on the known list survives, an unknown one is dropped', as
   }
 });
 
+for (const [sent, stored] of [
+  [false, false],
+  [true, true],
+  ['no', true],
+]) {
+  test(`typeToSearch sent as ${JSON.stringify(sent)} is stored as ${stored}`, async () => {
+    const cfg = loadConfig();
+    try {
+      const r = await req('POST', '/api/config', {
+        cookie: validCookie,
+        body: { items: [], _rev: cfg._rev, settings: { typeToSearch: sent } },
+      });
+      assert.equal(r.status, 200);
+      assert.equal(loadConfig().settings.typeToSearch, stored);
+    } finally {
+      saveConfig(cfg);
+    }
+  });
+}
+
 test('saving the config clears the poll backoff, so an edited address is retried', async () => {
   const backoff = require('../src/poll-backoff');
   const cfg = loadConfig();

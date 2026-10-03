@@ -311,3 +311,27 @@ test('a failed config load shows the message and Retry in the Dashboard list', a
   await expect(page.locator('.dash-load-fail')).toBeVisible();
   await expect(page.locator('.dash-load-fail .retry-btn')).toBeVisible();
 });
+
+test('two quick switch changes in Settings both save', async ({ page, request }) => {
+  await page.route('**/api/config', async route => {
+    if (route.request().method() === 'POST') await new Promise(r => setTimeout(r, 400));
+    return route.fallback();
+  });
+  await page.goto('/admin/');
+  await page.locator('body.authed').waitFor({ state: 'attached' });
+  await page.locator('.nl[data-sec="appearance"]').click();
+  const awake = page.locator('#set-awake');
+  const typeSearch = page.locator('#set-type-search');
+  await awake.focus();
+  await page.keyboard.press('Space');
+  await typeSearch.focus();
+  await page.keyboard.press('Space');
+  await expect
+    .poll(async () => {
+      const { settings } = await readConfig(request);
+      return [settings.keepAwake, settings.typeToSearch];
+    })
+    .toEqual([true, false]);
+  await expect(awake).toBeChecked();
+  await expect(typeSearch).not.toBeChecked();
+});

@@ -28,7 +28,7 @@ import {
   titleWhenTruncated,
 } from '/js/utils.js?v=9a9bfb54';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=4716f2f4';
+import { initSpotlight } from '/js/spotlight.js?v=17a182a1';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=706fc9a7';
@@ -828,6 +828,7 @@ async function boot() {
   initSpotlight({
     getItems: () => items,
     isMob: () => MOB,
+    typeToOpen: () => S.typeToSearch !== false,
     CB,
     iconChain,
     openFolderDesktop,

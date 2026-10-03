@@ -28,7 +28,7 @@ const { uniqueTitle } = await import('../js/widget-types.js');
 const TOGGLES = [...admin.matchAll(/<label class="tog"[^>]*>\s*<input type="checkbox"([^>]*)>/g)].map(m => m[1]);
 
 test('every toggle is found', () => {
-  assert.equal(TOGGLES.length, 6, 'the toggle markup changed shape');
+  assert.equal(TOGGLES.length, 7, 'the toggle markup changed shape');
 });
 
 test('every toggle is named by the row label beside it', () => {

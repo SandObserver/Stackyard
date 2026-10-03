@@ -80,6 +80,8 @@
     "display": "Anzeige",
     "keepAwake": "Bildschirm anlassen",
     "keepAwakeTip": "Verhindert, dass sich der Bildschirm abdunkelt oder sperrt, solange das Dashboard geöffnet ist. Browser erlauben das nur über HTTPS, bei einer einfachen HTTP-Adresse bleibt es wirkungslos.",
+    "typeToSearch": "Suche bei Tastatureingabe",
+    "typeToSearchTip": "Ein Buchstabe, irgendwo auf dem Dashboard eingegeben, öffnet die Suche. Schalte das aus, wenn sich die Suche versehentlich öffnet, zum Beispiel bei Sprachsteuerung.",
     "displayMode": "Anzeigemodus",
     "displayModeTip": "Legt das Erscheinungsbild des Dashboards und der Einstellungsseiten fest. Die Auswahl wird in diesem Browser gespeichert, gilt nur für dieses Gerät und wirkt sofort.",
     "displaySystem": "Systemstandard",
