@@ -11,6 +11,23 @@ export const mk = (tag, a = {}) => {
   Object.assign(e, a);
   return e;
 };
+/* Site storage blocked by the browser throws on every access. */
+/** @param {string} key @returns {string|null} */
+export function storeGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/** @param {string} key @param {string} value */
+export function storeSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
 /* Every colour an item renders with passes through here, and the value can
    arrive in an imported config. It is assigned to a background, where a CSS
    url() fetches from whatever host it names. */

@@ -1,7 +1,7 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=be847687';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=f5551857';
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
-import { el, inp as inpById, qa } from '/js/utils.js?v=d9246f59';
+import { el, inp as inpById, qa } from '/js/utils.js?v=9a9bfb54';
 import { blockingScreenFor } from '/js/config-recovery.js?v=706fc9a7';
 
 export async function checkAuth(onLogin) {
@@ -29,12 +29,33 @@ export function requireLogin() {
   });
 }
 
+/** @type {Element[]} */
+let madeInert = [];
+/** @type {HTMLElement|null} */
+let focusBefore = null;
+
+/** @param {HTMLElement|null} screen */
+function blockPageBehind(screen) {
+  if (madeInert.length) return;
+  focusBefore = /** @type {HTMLElement|null} */ (document.activeElement);
+  madeInert = [...document.body.children].filter(c => c !== screen && !c.hasAttribute('inert'));
+  madeInert.forEach(c => c.setAttribute('inert', ''));
+}
+
+function unblockPageBehind() {
+  madeInert.forEach(c => c.removeAttribute('inert'));
+  madeInert = [];
+  if (focusBefore?.isConnected && focusBefore !== document.body) focusBefore.focus();
+  focusBefore = null;
+}
+
 function showLoginScreen(onLogin) {
   const s = el('login-screen');
   const btn = inpById('login-btn');
   const pw = inpById('login-pw');
   const err = el('login-err');
   if (s) s.style.display = 'flex';
+  blockPageBehind(s);
 
   async function doLogin() {
     if (btn) btn.disabled = true;
@@ -42,6 +63,7 @@ function showLoginScreen(onLogin) {
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       if (s) s.style.display = 'none';
+      unblockPageBehind();
       onLogin?.();
     } catch (e) {
       if (err) {

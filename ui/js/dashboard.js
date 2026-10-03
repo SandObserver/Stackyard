@@ -22,11 +22,13 @@ import {
   qa,
   qi,
   setUserText,
+  storeGet,
+  storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=d9246f59';
+} from '/js/utils.js?v=9a9bfb54';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=10c0749f';
+import { initSpotlight } from '/js/spotlight.js?v=4716f2f4';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=706fc9a7';
@@ -41,7 +43,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=23c4222e';
+} from '/js/ui.js?v=c64101c8';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=aa52b1a3';
@@ -53,7 +55,7 @@ import {
   landingAfterSetup,
   restorePage,
 } from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=f859fed0';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=43a04bdb';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -126,22 +128,6 @@ const BOOT_TIMEOUT_MS = 15000;
 
 const PAGE_STORE = 'dash_page';
 
-/** @param {string} key @returns {string|null} */
-function storeGet(key) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-/** @param {string} key @param {string} value */
-function storeSet(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {}
-}
-
 let items = [],
   pg = 0,
   totalPages = 0,
@@ -207,6 +193,11 @@ function bupd(id) {
   const sig = badgeSignature({ cls, txt, unit, bg, aria, color, nextColor, rows });
 
   els.forEach(badge => {
+    /* Before the signature check. A badge first paints before its tile holds
+       it, and an unchanged repaint would never name the tile. */
+    const tile = /** @type {HTMLElement|null} */ (badge.closest('a, button, [role="button"]'));
+    const tileName = tile?.dataset.tileName;
+    if (tile && tileName) tile.setAttribute('aria-label', aria ? `${tileName}, ${aria}` : tileName);
     if (BSIG.get(badge) === sig) return;
     BSIG.set(badge, sig);
     badge.className = cls;
@@ -229,9 +220,6 @@ function bupd(id) {
     badge.setAttribute('aria-hidden', 'true');
     badge.removeAttribute('role');
     badge.removeAttribute('aria-label');
-    const tile = /** @type {HTMLElement|null} */ (badge.closest('a, button, [role="button"]'));
-    const tileName = tile?.dataset.tileName;
-    if (tile && tileName) tile.setAttribute('aria-label', aria ? `${tileName}, ${aria}` : tileName);
     /* Never the `background` shorthand. It resets background-clip, and the
        pill behind is painted from this same value. */
     if (bg) badge.style.setProperty('--badge-bg', bg);

@@ -56,6 +56,18 @@ test.describe('tile names', () => {
     expect(plain.name).toBe('Plain');
   });
 
+  test('a badged app inside an open folder says so in its name', async ({ page, request }) => {
+    const folder = { id: 'box', type: 'folder', label: 'Box', children: ['watched', 'plain'], color: 'dark' };
+    await seedConfig(request, { items: [folder, ...ITEMS], settings: { showLabels: { desktop: false } } });
+    await page.goto('/');
+    await page.locator('.badge.on').first().waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: /^Box/ }).press('Enter');
+    await page.locator('.folder-overlay .badge.on').first().waitFor({ state: 'visible' });
+    const links = page.locator('.folder-overlay a');
+    await expect(links.filter({ has: page.locator('.badge.on') }).first()).toHaveAttribute('aria-label', /^Watched, ./);
+    await expect(page.locator('.folder-overlay a[aria-label^="Plain"]')).toHaveAttribute('aria-label', 'Plain');
+  });
+
   /* Counting them absolutely is brittle: the browser prunes announcers that are
      empty and hidden. What matters is that the number does not depend on how
      many badges are on screen, which is what a live region per badge did. */

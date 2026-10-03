@@ -14,7 +14,7 @@ import {
   q,
   qa,
   setUserText,
-} from '/js/utils.js?v=d9246f59';
+} from '/js/utils.js?v=9a9bfb54';
 import { t, currentLang } from '/js/i18n.js?v=1f1ea9c1';
 import { toneForColor } from '/js/label-contrast.js?v=c1ac6fb8';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
@@ -78,7 +78,7 @@ function mkMiniIcon(child, pointerEvents) {
   if (child.iconUrl) {
     const srcs = iconChain(child.iconUrl);
     if (srcs.length) {
-      const img = mk('img', { loading: 'lazy', draggable: false });
+      const img = mk('img', { alt: '', loading: 'lazy', draggable: false });
       img.className = 'folder-mini-img';
       if (pointerEvents === 'none') img.style.pointerEvents = 'none';
       let step = 0;
@@ -203,6 +203,7 @@ export function openFolderDesktop(folder) {
     a.className = 'folder-icon-link';
     a.style.width = iw + 'px';
     a.setAttribute('aria-label', child.label || child.id);
+    a.dataset.tileName = child.label || child.id;
     if (!showLabel) a.title = child.label || child.id;
     a.onclick = () => {
       closeDesk();
@@ -457,6 +458,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
         const a = mk('a', { href: child.href, target: '_blank', rel: 'noreferrer noopener' });
         a.className = 'dyn-fold-anchor';
         a.setAttribute('aria-label', child.label || child.id);
+        a.dataset.tileName = child.label || child.id;
         a.onclick = e => {
           e.stopPropagation();
           closeMob();

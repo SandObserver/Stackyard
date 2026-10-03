@@ -179,8 +179,15 @@ test('the badge is composed into the tile name instead', () => {
 
 /* Recomposing needs the tile's own name, or the badge text would accumulate. */
 test('every tile records its own name', () => {
-  assert.match(dash, /a\.dataset\.tileName =/, 'dashboard tiles do not record a name');
-  assert.match(read('js/ui.js'), /a\.dataset\.tileName =/, 'mobile tiles do not record a name');
+  for (const [file, src] of [
+    ['js/dashboard.js', dash],
+    ['js/ui.js', read('js/ui.js')],
+  ]) {
+    const labelled = src.match(/\ba\.setAttribute\('aria-label', [^)]+\);\n\s*(?:a\.dataset\.tileName = )?/g) || [];
+    assert.ok(labelled.length >= 2, `${file}: the scan found no tiles`);
+    const unnamed = labelled.filter(m => !m.endsWith('a.dataset.tileName = '));
+    assert.deepEqual(unnamed, [], `${file}: a tile is labelled without recording its name`);
+  }
 });
 
 /* Two, both user-initiated: the page change and the search results. A badge is
