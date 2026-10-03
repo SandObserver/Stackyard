@@ -176,6 +176,20 @@ const skipString = (src, i) => {
   return i + 1;
 };
 
+/* A slash after one of these starts a regex literal, not a division. */
+const BEFORE_REGEX = /[(,=:[!&|?{};]/;
+
+const skipRegex = (src, i) => {
+  let inClass = false;
+  for (i++; i < src.length && src[i] !== '\n'; i++) {
+    if (src[i] === '\\') i++;
+    else if (src[i] === '[') inClass = true;
+    else if (src[i] === ']') inClass = false;
+    else if (src[i] === '/' && !inClass) break;
+  }
+  return i + 1;
+};
+
 /* Reads a template literal from its opening backtick. Returns the text with each
    `${}` hole replaced by a space, and the index past the closing backtick.
    Holes may hold strings, braces and further template literals. */
@@ -190,15 +204,24 @@ const readTemplate = (src, i) => {
     else if (c === '$' && src[i + 1] === '{') {
       text += ' ';
       let depth = 0;
+      let prev = '{';
       for (i += 2; i < src.length; ) {
         const h = src[i];
-        if (h === "'" || h === '"') i = skipString(src, i);
+        if (h === '/' && (src[i + 1] === '*' || src[i + 1] === '/')) {
+          const close = src[i + 1] === '*' ? '*/' : '\n';
+          const at = src.indexOf(close, i + 2);
+          i = at === -1 ? src.length : at + close.length;
+          continue;
+        }
+        if (h === '/' && BEFORE_REGEX.test(prev)) i = skipRegex(src, i);
+        else if (h === "'" || h === '"') i = skipString(src, i);
         else if (h === '`') i = readTemplate(src, i).end;
         else if (h === '{') depth++, i++;
         else if (h === '}') {
           i++;
           if (depth-- === 0) break;
         } else i++;
+        if (!/\s/.test(h)) prev = h;
       }
     } else {
       text += c;
@@ -246,8 +269,8 @@ test('no Settings script repeats an English catalogue string as a literal', () =
   for (const file of fs.readdirSync(path.join(root, 'js')).sort()) {
     if (!/^admin.*\.js$/.test(file)) continue;
     const src = fs.readFileSync(path.join(root, 'js', file), 'utf8');
-    for (const m of src.matchAll(/'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"/g)) {
-      const value = m[1] ?? m[2];
+    for (const m of src.matchAll(/'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`([^`$\\\n]*)`/g)) {
+      const value = m[1] ?? m[2] ?? m[3];
       if (/[A-Za-z]{2}/.test(value) && ENGLISH.has(value)) found.push(`${file}: ${JSON.stringify(value)}`);
     }
   }
