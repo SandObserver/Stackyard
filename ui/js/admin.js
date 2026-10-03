@@ -18,7 +18,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=728cfd63';
+} from '/js/admin-settings.js?v=88b89f37';
 import {
   apiGet,
   apiPost,

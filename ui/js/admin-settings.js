@@ -11,6 +11,7 @@ import {
 } from '/js/admin-logic.js?v=fc7f0836';
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=9a9bfb54';
+import { serialWrites } from '/js/admin-save-logic.js?v=8389782f';
 import { renderColorControl } from '/js/admin-color-control.js?v=233683ad';
 import { BACKDROP } from '/js/background.js?v=43a04bdb';
 import { firstBadHost, hostnameOf, isLocalAddress, parseHostList } from '/js/host-names.js?v=842f96ca';
@@ -337,39 +338,45 @@ export function showBgFields(type) {
   });
 }
 /** @param {Event} [e] */
-async function saveLabels(e) {
-  const toggled = /** @type {HTMLInputElement|null} */ (e?.target ?? null);
-  const wasChecked = toggled ? toggled.checked : false;
-  try {
-    const c = await apiGet('/api/config');
-    c.settings = c.settings || {};
-    c.settings.showLabels = { desktop: inp('set-lbl-d')?.checked !== false, ios: inp('set-lbl-m')?.checked || false };
-    await apiPost('/api/config', c);
-    toast(t('toast.saved'));
-  } catch (err) {
-    /* Put the box back on a failure, or it shows a setting the server was never
-       given. Assigning `checked` fires no event, so this does not loop. */
-    if (toggled) toggled.checked = !wasChecked;
-    toast(t('toast.saveFailed', { err: err.message }), 'err');
-  }
+/* Switch saves run one after another. Overlapping saves read the same _rev,
+   so the second one is refused as stale and its switch is put back. */
+const switchSaves = serialWrites();
+
+/** Save a switch's change, and put it back if the save fails and no later
+    click has moved it since.
+    @param {Event} e @param {(c: any) => void} apply */
+function saveSwitchChange(e, apply) {
+  const toggled = /** @type {HTMLInputElement} */ (e.target);
+  const value = toggled.checked;
+  return switchSaves.run(async () => {
+    try {
+      const c = await apiGet('/api/config');
+      c.settings = c.settings || {};
+      apply(c.settings);
+      await apiPost('/api/config', c);
+      toast(t('toast.saved'));
+    } catch (err) {
+      /* Assigning `checked` fires no event, so this does not loop. */
+      if (toggled.checked === value) toggled.checked = !value;
+      toast(t('toast.saveFailed', { err: err.message }), 'err');
+    }
+  });
 }
+
+/** @param {Event} e */
+function saveLabels(e) {
+  return saveSwitchChange(e, settings => {
+    settings.showLabels = { desktop: inp('set-lbl-d')?.checked !== false, ios: inp('set-lbl-m')?.checked || false };
+  });
+}
+
 /** A switch whose whole value is one boolean setting.
     @param {Event} e @param {string} key */
-async function saveSwitch(e, key) {
-  const toggled = /** @type {HTMLInputElement} */ (e.target);
-  const wasChecked = toggled.checked;
-  try {
-    const c = await apiGet('/api/config');
-    c.settings = c.settings || {};
-    c.settings[key] = toggled.checked;
-    await apiPost('/api/config', c);
-    toast(t('toast.saved'));
-  } catch (err) {
-    /* Put the box back on a failure, or it shows a setting the server was never
-       given. Assigning `checked` fires no event, so this does not loop. */
-    toggled.checked = !wasChecked;
-    toast(t('toast.saveFailed', { err: err.message }), 'err');
-  }
+function saveSwitch(e, key) {
+  const value = /** @type {HTMLInputElement} */ (e.target).checked;
+  return saveSwitchChange(e, settings => {
+    settings[key] = value;
+  });
 }
 async function saveWallpaper() {
   try {
