@@ -121,6 +121,13 @@ test('the badge popover rows follow the locale', () => {
   assert.doesNotMatch(pop, /String\(row\.value\)/);
 });
 
+/* t() formats only the count. The other numbers in the same sentence are the
+   caller's to format. */
+test('the import confirmation shows every number in the same digits', () => {
+  const call = read('js/admin.js').match(/t\('import\.confirm', \{[^}]*\}\)/)?.[0] ?? '';
+  for (const k of ['added', 'updated', 'deleted']) assert.match(call, new RegExp(`${k}: formatNumber\\(${k}\\)`), k);
+});
+
 test('the wallpaper brightness follows the locale', () => {
   const settings = read('js/admin-settings.js');
   assert.doesNotMatch(settings, /\.toFixed\(/);
@@ -128,7 +135,7 @@ test('the wallpaper brightness follows the locale', () => {
 });
 
 /* Where a number becomes text a person reads. A sentence from t() is left out:
-   the count inside it also picks the plural form. */
+   t() formats its count. */
 const RENDER =
   /\.(?:textContent|innerText)\s*=|setUserText\(|setAttribute\(\s*['"](?:aria-label|title|aria-valuetext)['"]/;
 const RAW_NUMBER =
