@@ -428,8 +428,8 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .wcf-add-label{color:var(--ac2)}
 .cc-kw-auto{background:linear-gradient(135deg,var(--cc-plate-dark) 50%,var(--cc-plate-light) 50%);box-shadow:inset 0 0 0 .5px var(--separator)}
 .cc-kw-light,.cc-kw-dark{box-shadow:inset 0 0 0 1px var(--separator)}
-.cc-kw-clear{background:linear-gradient(145deg,rgba(255,255,255,.42),rgba(255,255,255,.06) 55%,rgba(255,255,255,.2));box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),inset 0 1px 1px rgba(255,255,255,.8),0 1px 3px rgba(0,0,0,.35)}
-html[data-theme="light"] .cc-kw-clear{background:radial-gradient(circle at 32% 28%,#fff 0 18%,transparent 40%),linear-gradient(145deg,rgba(210,220,236,.9),rgba(140,150,170,.45) 60%,rgba(235,240,248,.95));box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),inset 0 1px 1px #fff,0 1px 3px rgba(0,0,0,.18)}
+.cc-kw-clear{background:repeating-conic-gradient(var(--sy-gray2) 0 25%,var(--sy-gray4) 0 50%) 50% 50%/8px 8px;box-shadow:inset 0 0 0 1px var(--separator)}
+html[data-theme="light"] .cc-kw-clear{background-image:repeating-conic-gradient(var(--sy-gray4) 0 25%,#fff 0 50%)}
 .cc-hues .cc-sw{grid-template-columns:repeat(auto-fill,22px);gap:8px;justify-content:end}
 .cc-hues .cc-swatch{width:22px;height:22px}
 /* App form: icon source row, poll, value list */
@@ -734,6 +734,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
   .adm-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:3px / 22px; }
   .hsb-range { height:44px; padding-block:19px; background-clip:content-box; border-radius:3px / 22px; }
   .cc-swatch { width:34px; height:34px; }
+  .cc-kw-clear { background-size:10px 10px; }
   .cc-hues .cc-sw { grid-template-columns:repeat(7,34px); }
   .cc-hues .cc-swatch { width:34px; height:34px; }
 }
