@@ -205,6 +205,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show counts inside translated sentences in the reader's digits.
 
+- Show the page position, the dock limit, label numbers and import totals in the
+  reader's digits.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
