@@ -210,6 +210,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show the page position, the dock limit, label numbers and import totals in the
   reader's digits.
 
+- Show an error on a Backup card whose job or source was deleted, instead of its
+  last status.
+
+- Stop Enter on a focused book in the Books widget from opening the widget's
+  link.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
