@@ -355,6 +355,7 @@ test('ids never collide with what is already on the dashboard, or across files',
   const first = convert('homepage-services', parseYaml(SERVICES), taken);
   for (const item of first.items) taken.add(item.id);
   const second = convert('homepage-services', parseYaml(SERVICES), taken);
+  assert.ok(first.items.length > 0 && second.items.length > 0);
   const all = [...existing, ...first.items.map(i => i.id), ...second.items.map(i => i.id)];
   assert.equal(new Set(all).size, all.length, 'every id is unique');
 });

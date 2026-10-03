@@ -46,7 +46,22 @@ test('the active option is published, not only styled', () => {
     /setAttribute\('aria-selected', on \? 'true' : 'false'\)/,
     'the active option is not marked selected',
   );
-  assert.match(form, /setAttribute\('aria-expanded', 'true'\)/, 'the open state is not announced');
+});
+
+test('every open and close of the results is announced', () => {
+  const lines = form.split('\n');
+  const changes = lines.flatMap((l, i) => {
+    const m = /\brs\.classList\.(add|remove)\('open'\)/.exec(l);
+    return m ? [{ i, open: m[1] === 'add' }] : [];
+  });
+  assert.ok(changes.length >= 3, 'the results no longer open and close');
+  for (const { i, open } of changes) {
+    const after = lines.slice(i + 1, i + 4).join('\n');
+    assert.ok(
+      after.includes(`setAttribute('aria-expanded', '${open}')`),
+      `line ${i + 1} ${open ? 'opens' : 'closes'} the results without saying so`,
+    );
+  }
 });
 
 /* The cursor itself is nextActiveIndex, which admin-logic.test covers. What

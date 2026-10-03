@@ -76,13 +76,15 @@ test('the summaries a reader navigates to are still written', () => {
   for (const [file, id] of cases) {
     const src = docs.get(file);
     assert.match(src, new RegExp(`id="${id}"`), `${file} dropped #${id} instead of its live region`);
-    const vars = [...src.matchAll(new RegExp(`(\\w+)\\s*=\\s*document\\.getElementById\\('${id}'\\)`, 'g'))].map(
-      m => m[1],
-    );
-    assert.ok(vars.length, `${file} never looks up #${id}`);
-    assert.ok(
-      vars.some(v => new RegExp(`\\b${v}\\.textContent\\s*=(?!=)`).test(src)),
-      `${file} never writes #${id}`,
-    );
+    const lookups = [...src.matchAll(new RegExp(`(\\w+)\\s*=\\s*document\\.getElementById\\('${id}'\\)`, 'g'))];
+    assert.ok(lookups.length, `${file} never looks up #${id}`);
+    lookups.forEach((m, n) => {
+      const scope = src.slice(m.index, lookups[n + 1]?.index ?? src.length);
+      assert.match(
+        scope,
+        new RegExp(`\\b${m[1]}\\.textContent\\s*=(?!=)`),
+        `${file} looks up #${id} and never writes it`,
+      );
+    });
   }
 });
