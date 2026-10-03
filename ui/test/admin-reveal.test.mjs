@@ -209,7 +209,9 @@ test('a disclosure can shrink on both axes', () => {
    they take Tab focus out of sight and are read out. */
 test('a closed section takes no focus and is not read out', () => {
   assert.match(css, /\.reveal > \.reveal-in\{[^}]*visibility:hidden/);
-  assert.match(css, /\.reveal\.open > \.reveal-in\{[^}]*visibility:visible/);
+  /* inherit, not visible: an open section inside a closed one must stay hidden. */
+  assert.match(css, /\.reveal\.open > \.reveal-in\{[^}]*visibility:inherit/);
+  assert.doesNotMatch(css, /\.reveal[^{]*\{[^}]*visibility:visible/);
 });
 
 test('a closing section stays visible until the close has run', () => {

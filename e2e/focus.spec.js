@@ -259,3 +259,34 @@ test('a switched-off editor section takes no focus until it opens', async ({ pag
   await expect(page.locator('#hc-sub')).toHaveClass(/\bopen\b/);
   await expect.poll(focusableInside).toBeGreaterThan(0);
 });
+
+test('an open section inside a switched-off one takes no focus', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [
+      {
+        ...app('svc', 'Service'),
+        monitoring: {
+          activity: {
+            enabled: false,
+            url: 'http://svc.invalid/api',
+            interval: 30,
+            params: [{ key: 'token', value: 'x' }],
+          },
+        },
+      },
+    ],
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Service').getByRole('button', { name: /^Edit/ }).click();
+  await editorOpened(page);
+  await expect(page.locator('#auth-sub')).toHaveClass(/\bopen\b/);
+  await expect(page.locator('#act-sub')).not.toHaveClass(/\bopen\b/);
+  const focusable = await page.evaluate(
+    () =>
+      [...document.querySelectorAll('#act-sub input, #act-sub button')].filter(el => {
+        /** @type {HTMLElement} */ (el).focus();
+        return document.activeElement === el;
+      }).length,
+  );
+  expect(focusable).toBe(0);
+});
