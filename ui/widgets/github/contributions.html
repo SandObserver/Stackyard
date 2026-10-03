@@ -13,6 +13,7 @@
   .widget{width:100%;height:100%;display:flex;align-items:center;
     justify-content:center;padding:8px;cursor:default;}
   .widget.clickable{cursor:pointer;}
+  .widget.clickable:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
   .graph{display:flex;flex-direction:row;gap:2px;align-items:flex-start;}
   .col{display:flex;flex-direction:column;gap:2px;}
   .cell{border-radius:2px;flex-shrink:0;transition:opacity .1s;}
@@ -31,7 +32,7 @@
   <div class="msg wt-cap" id="msg" hidden></div>
 </div>
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=e44a2dd4';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=f23ad458';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -47,6 +48,7 @@ const COLS = size === 'medium' ? 16 : 7;
 const ROWS = 7;
 
 let _href = '';
+let _isLink = false;
 
 async function boot() {
   try {
@@ -57,10 +59,8 @@ async function boot() {
     }
   } catch {}
   const w = document.getElementById('widget');
-  if (_href) {
-    w.classList.add('clickable');
-    w.addEventListener('click', () => openUrl(_href));
-  }
+  w.setAttribute('aria-label', wt('view.contributions.label', 'Contributions'));
+  _isLink = linkTo(w, _href);
   poll({ fetch: fetchGraph, interval: TICK_MS,
     render: d => { document.getElementById('msg').removeAttribute('aria-hidden'); state.ok(); render(d); },
     onError: ({ error, everOk, stale, since }) => {
@@ -99,9 +99,8 @@ function _renderGraph(data, weeks, widget) {
   const graph = document.createElement('div'); graph.className = 'graph'; graph.setAttribute('aria-hidden','true');
 
   /* Screen-reader summary — the grid itself is colour-only */
-  let total = 0;
-  weeks.forEach(w => (w.contributionDays||[]).forEach(d => { total += (d.contributionCount||0); }));
-  widget.setAttribute('role','img');
+  const total = data.totalContributions || 0;
+  widget.setAttribute('role', _isLink ? 'link' : 'img');
   /* Do not name an empty grid. It would report zero contributions as fact. */
   if (weeks.length)
     widget.setAttribute('aria-label',
@@ -136,7 +135,7 @@ function showError(error, since, everOk) {
   const widget = document.getElementById('widget');
   if (!widget.querySelector('.graph')) _renderGraph({}, [], widget);
   const line = state.fail(error, { since, inert: everOk });
-  widget.setAttribute('role', 'img');
+  widget.setAttribute('role', _isLink ? 'link' : 'img');
   widget.setAttribute('aria-label', line);
   document.getElementById('msg').setAttribute('aria-hidden', 'true');
 }
