@@ -259,7 +259,13 @@
     "statusMethod": "The service refused that request method (HTTP {status}).",
     "statusProxyAuth": "A proxy on the way needs credentials (HTTP {status}).",
     "statusServer": "The service reported an internal error (HTTP {status}).",
-    "statusOther": "The service answered with an error (HTTP {status})."
+    "statusOther": "The service answered with an error (HTTP {status}).",
+    "readOnly": "Saving is turned off in the live demo.",
+    "fileType": "That file type is not supported.",
+    "invalidUrl": "That is not a valid http or https address.",
+    "socketRefused": "The socket proxy refused the request.",
+    "notSocketProxy": "Something answered there, but it is not a Docker socket proxy.",
+    "noConnection": "The connection failed."
   },
   "home": {
     "search": "Search",
@@ -332,7 +338,7 @@
     "authNeedsPassword": "Set a password before turning authentication on.",
     "importForeignDone": "Import finished. Apps: {apps}. Folders: {folders}.",
     "importForeignNothing": "Nothing to import from those files.",
-    "importYamlUnsupported": "{file}: {reason} (line {line})",
+    "importYamlUnsupported": "{file}: the importer cannot read the YAML on line {line}.",
     "importUnknownFormat": "{file} is not a gethomepage or Dashy config.",
     "importTooLarge": "{file} has too many entries to import.",
     "secretsWithheld": "Enter the credential again for: {items}. It was not kept, because the request it belongs to changed.",
@@ -353,7 +359,9 @@
     "fieldRequired": "{field} is required",
     "configLoadFailed": "Could not load config. Is the API container running? ({err})",
     "uploaded": "Uploaded {name}",
-    "uploadFailed": "Upload failed: {err}"
+    "uploadFailed": "Upload failed: {err}",
+    "importNotStackyard": "That file is not a Stackyard export.",
+    "importIdTaken": "{name} is already on the dashboard. Reload the page and import again."
   },
   "confirm": {
     "deleteFolder": "Delete folder \"{name}\"? Apps inside will not be deleted.",

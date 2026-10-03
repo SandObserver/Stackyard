@@ -93,13 +93,13 @@ function pruneWallpapers(url) {
     @returns {boolean} whether the request may write a wallpaper */
 function mayWrite(req, res) {
   if (IS_DEMO) {
-    json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+    json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
     return false;
   }
   if (!checkOrigin(req, res)) return false;
   const limited = rateLimit(getIp(req), 'upload', UPLOADS_PER_HOUR, 3_600_000);
   if (limited) {
-    json(res, 429, { error: limited, kind: KIND.BLOCKED });
+    json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
     return false;
   }
   return true;
@@ -134,15 +134,21 @@ on('POST', '/api/wallpaper/upload', async (req, res) => {
     const { filename, data, fileParts } = parseMultipartFile(buf, bMatch[1] || bMatch[2]);
     if (!filename || !data?.length) return json(res, 400, { error: 'no file found in upload', kind: KIND.INVALID });
     if (fileParts > 1) return json(res, 400, { error: 'only one file per upload', kind: KIND.INVALID });
-    if (data.length > UPLOAD_MAX_BYTES) return json(res, 400, { error: TOO_LARGE, kind: KIND.INVALID });
+    if (data.length > UPLOAD_MAX_BYTES)
+      return json(res, 400, { error: TOO_LARGE, kind: KIND.INVALID, code: 'invalid.too-large' });
     const kind = sniffImageType(data);
-    if (!kind) return json(res, 400, { error: `file is not a ${ACCEPTED} image`, kind: KIND.INVALID });
+    if (!kind)
+      return json(res, 400, {
+        error: `file is not a ${ACCEPTED} image`,
+        kind: KIND.INVALID,
+        code: 'invalid.file-type',
+      });
 
     const url = storeWallpaper(data, kind.ext);
     log.audit('wallpaper uploaded', { url, type: kind.type, bytes: data.length });
     json(res, 200, { ok: true, url });
   } catch (e) {
-    if (e.oversize) return json(res, 400, { error: TOO_LARGE, kind: KIND.INVALID });
+    if (e.oversize) return json(res, 400, { error: TOO_LARGE, kind: KIND.INVALID, code: 'invalid.too-large' });
     fail(res, e, { status: 500 });
   }
 });
@@ -161,24 +167,34 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
     try {
       parsed = new URL(url);
     } catch {
-      return json(res, 400, { error: 'that is not a valid URL', kind: KIND.INVALID });
+      return json(res, 400, { error: 'that is not a valid URL', kind: KIND.INVALID, code: 'invalid.url' });
     }
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')
-      return json(res, 400, { error: 'only http and https links can be fetched', kind: KIND.INVALID });
+      return json(res, 400, {
+        error: 'only http and https links can be fetched',
+        kind: KIND.INVALID,
+        code: 'invalid.url',
+      });
 
     const r = await fetchChecked(url, { binary: true, maxBytes: UPLOAD_MAX_BYTES, timeout: FETCH_TIMEOUT_MS });
     if (r.status !== 200)
       return json(res, 502, { error: `the image could not be fetched (HTTP ${r.status})`, kind: KIND.UPSTREAM });
     const data = Buffer.isBuffer(r.data) ? r.data : Buffer.alloc(0);
     const kind = sniffImageType(data);
-    if (!kind) return json(res, 400, { error: `that link is not a ${ACCEPTED} image`, kind: KIND.INVALID });
+    if (!kind)
+      return json(res, 400, {
+        error: `that link is not a ${ACCEPTED} image`,
+        kind: KIND.INVALID,
+        code: 'invalid.file-type',
+      });
 
     const saved = storeWallpaper(data, kind.ext);
     log.audit('wallpaper fetched', { url: parsed.origin + parsed.pathname, type: kind.type, bytes: data.length });
     json(res, 200, { ok: true, url: saved });
   } catch (e) {
-    if (e.oversize) return json(res, 400, { error: 'request too large', kind: KIND.INVALID });
-    if (e instanceof SsrfBlockedError) return json(res, 403, { error: e.message, kind: KIND.BLOCKED });
+    if (e.oversize)
+      return json(res, 400, { error: 'request too large', kind: KIND.INVALID, code: 'invalid.too-large' });
+    if (e instanceof SsrfBlockedError) return json(res, 403, errorBody(e));
     fail(res, e, { status: 502 });
   }
 });

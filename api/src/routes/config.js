@@ -37,7 +37,7 @@ on('GET', '/api/settings/unsplash-key', (_, res) => {
 });
 
 on('POST', '/api/settings/unsplash-key', async (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   try {
     const { apiKey = '' } = JSON.parse(await readBody(req));
@@ -54,7 +54,7 @@ on('POST', '/api/settings/unsplash-key', async (req, res) => {
 });
 
 on('POST', '/api/config', async (req, res) => {
-  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED });
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   try {
     const data = JSON.parse(await readBody(req));

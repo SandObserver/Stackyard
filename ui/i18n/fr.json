@@ -264,7 +264,13 @@
     "statusMethod": "Le service a refusé cette méthode de requête (HTTP {status}).",
     "statusProxyAuth": "Un proxy intermédiaire demande des identifiants (HTTP {status}).",
     "statusServer": "Le service a signalé une erreur interne (HTTP {status}).",
-    "statusOther": "Le service a répondu par une erreur (HTTP {status})."
+    "statusOther": "Le service a répondu par une erreur (HTTP {status}).",
+    "readOnly": "L’enregistrement est désactivé dans la démo en ligne.",
+    "fileType": "Ce type de fichier n’est pas pris en charge.",
+    "invalidUrl": "Ce n’est pas une adresse http ou https valide.",
+    "socketRefused": "Le proxy de socket a refusé la requête.",
+    "notSocketProxy": "Quelque chose a répondu, mais ce n’est pas un proxy de socket Docker.",
+    "noConnection": "La connexion a échoué."
   },
   "home": {
     "search": "Rechercher",
@@ -337,7 +343,7 @@
     "authNeedsPassword": "Définissez un mot de passe avant d'activer l'authentification.",
     "importForeignDone": "Importation terminée. Apps : {apps}. Dossiers : {folders}.",
     "importForeignNothing": "Rien à importer dans ces fichiers.",
-    "importYamlUnsupported": "{file} : {reason} (ligne {line})",
+    "importYamlUnsupported": "{file} : la ligne {line} utilise du YAML que l’importation ne sait pas lire.",
     "importUnknownFormat": "{file} n’est pas une configuration gethomepage ou Dashy.",
     "importTooLarge": "{file} contient trop d’entrées pour être importé.",
     "secretsWithheld": "Saisissez à nouveau les identifiants pour : {items}. Ils n’ont pas été conservés, car la requête associée a changé.",
@@ -358,7 +364,9 @@
     "fieldRequired": "{field} est requis",
     "configLoadFailed": "Impossible de charger la configuration. Le conteneur API est-il démarré ? ({err})",
     "uploaded": "{name} téléversé",
-    "uploadFailed": "Échec du téléversement : {err}"
+    "uploadFailed": "Échec du téléversement : {err}",
+    "importNotStackyard": "Ce fichier n’est pas un export Stackyard.",
+    "importIdTaken": "{name} est déjà sur le tableau de bord. Rechargez la page et importez à nouveau."
   },
   "confirm": {
     "deleteFolder": "Supprimer le dossier « {name} » ? Les applications qu'il contient ne seront pas supprimées.",

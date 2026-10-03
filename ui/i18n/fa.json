@@ -259,7 +259,13 @@
     "statusMethod": "سرویس آن روش درخواست را نپذیرفت (HTTP {status}).",
     "statusProxyAuth": "یک پروکسی در مسیر به اعتبارنامه نیاز دارد (HTTP {status}).",
     "statusServer": "سرویس خطای داخلی گزارش کرد (HTTP {status}).",
-    "statusOther": "سرویس با خطا پاسخ داد (HTTP {status})."
+    "statusOther": "سرویس با خطا پاسخ داد (HTTP {status}).",
+    "readOnly": "ذخیره کردن در نسخهٔ نمایشی آنلاین غیرفعال است.",
+    "fileType": "این نوع فایل پشتیبانی نمی‌شود.",
+    "invalidUrl": "این یک آدرس http یا https معتبر نیست.",
+    "socketRefused": "پراکسی سوکت درخواست را رد کرد.",
+    "notSocketProxy": "چیزی در آن آدرس پاسخ داد، اما پراکسی سوکت داکر نیست.",
+    "noConnection": "اتصال برقرار نشد."
   },
   "home": {
     "search": "جستجو",
@@ -332,7 +338,7 @@
     "authNeedsPassword": "پیش از فعال‌سازی احراز هویت، یک رمز عبور تعیین کنید.",
     "importForeignDone": "وارد کردن پایان یافت. برنامه‌ها: {apps}. پوشه‌ها: {folders}.",
     "importForeignNothing": "در این فایل‌ها چیزی برای وارد کردن نیست.",
-    "importYamlUnsupported": "{file}: {reason} (خط {line})",
+    "importYamlUnsupported": "{file}: خط {line} از YAML استفاده می‌کند که وارد کردن نمی‌تواند آن را بخواند.",
     "importUnknownFormat": "{file} پیکربندی gethomepage یا Dashy نیست.",
     "importTooLarge": "{file} برای وارد کردن بیش از حد مورد دارد.",
     "secretsWithheld": "اعتبارنامه را دوباره وارد کنید برای: {items}. نگه داشته نشد، چون درخواستِ مربوط به آن تغییر کرده است.",
@@ -353,7 +359,9 @@
     "fieldRequired": "{field} لازم است",
     "configLoadFailed": "پیکربندی بارگذاری نشد. آیا کانتینر API در حال اجراست؟ ({err})",
     "uploaded": "{name} بارگذاری شد",
-    "uploadFailed": "بارگذاری ناموفق بود: {err}"
+    "uploadFailed": "بارگذاری ناموفق بود: {err}",
+    "importNotStackyard": "این فایل خروجی Stackyard نیست.",
+    "importIdTaken": "{name} از قبل در داشبورد هست. صفحه را دوباره بارگذاری کنید و دوباره وارد کنید."
   },
   "confirm": {
     "deleteFolder": "پوشه «{name}» حذف شود؟ برنامه‌های داخل آن حذف نخواهند شد.",

@@ -15,6 +15,8 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import {
   badgeErrorAdvice,
+  errorAdvice,
+  socketProbeAdvice,
   loginErrorKey,
   optionsErrorAdvice,
   readError,
@@ -54,12 +56,20 @@ test('every advice the module can produce names a real key with matching placeho
     { kind: KIND.INVALID, code: 'invalid.retype' },
     { kind: KIND.NETWORK, code: 'network.tls-ignored' },
     { kind: KIND.NETWORK, code: 'network.tls-untrusted' },
+    { kind: KIND.BLOCKED, code: 'blocked.read-only' },
+    { kind: KIND.BLOCKED, code: 'blocked.rate-limit' },
+    { kind: KIND.INVALID, code: 'invalid.too-large' },
+    { kind: KIND.INVALID, code: 'invalid.file-type' },
+    { kind: KIND.INVALID, code: 'invalid.url' },
+    { code: 'upstream.refused' },
+    { code: 'upstream.not-docker' },
+    { code: 'network' },
     { kind: 'quota-exceeded', code: 'quota-exceeded.hourly' },
     new Error('something odd'),
     null,
   ];
   for (const e of cases) {
-    for (const advice of [badgeErrorAdvice(e), optionsErrorAdvice(e)]) {
+    for (const advice of [badgeErrorAdvice(e), optionsErrorAdvice(e), errorAdvice(e), socketProbeAdvice(e)]) {
       const where = `${JSON.stringify(e)} -> ${JSON.stringify(advice)}`;
       const value = lookup(advice.key);
       assert.equal(typeof value, 'string', `no such key: ${where}`);
@@ -190,4 +200,25 @@ test('a refused first-run password maps to a translated sentence', () => {
   assert.equal(setupErrorKey({ kind: 'blocked' }), 'setup.failed');
   assert.equal(setupErrorKey(new TypeError('Failed to fetch')), 'setup.failed');
   assert.equal(typeof lookup('setup.failed'), 'string');
+});
+
+test('an API refusal maps to its own sentence, not the per-kind one', () => {
+  assert.equal(errorAdvice({ kind: 'blocked', code: 'blocked.read-only' }).key, 'adminError.readOnly');
+  assert.equal(errorAdvice({ kind: 'blocked', code: 'blocked.rate-limit' }).key, 'toast.tooManyAttempts');
+  assert.equal(errorAdvice({ kind: 'invalid', code: 'invalid.too-large' }).key, 'toast.imageTooLarge');
+  assert.equal(errorAdvice({ kind: 'invalid', code: 'invalid.file-type' }).key, 'adminError.fileType');
+  assert.equal(errorAdvice({ kind: 'invalid' }).key, 'adminError.genericInvalid');
+  assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.genericInternal');
+});
+
+test('a socket probe result maps to a sentence for each way it fails', () => {
+  const probe = (code, extra = {}) => ({ ok: false, fatal: true, error: 'English prose', code, ...extra });
+  assert.equal(socketProbeAdvice(probe('invalid.url')).key, 'adminError.invalidUrl');
+  assert.equal(socketProbeAdvice(probe('upstream.refused')).key, 'adminError.socketRefused');
+  assert.equal(socketProbeAdvice(probe('upstream.not-docker')).key, 'adminError.notSocketProxy');
+  assert.equal(socketProbeAdvice(probe('network')).key, 'adminError.noConnection');
+  assert.deepEqual(socketProbeAdvice(probe('upstream.status', { detail: { status: 404 } })), {
+    key: 'adminError.statusNotFound',
+    vars: { status: 404 },
+  });
 });

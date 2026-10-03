@@ -23,6 +23,13 @@ const BY_CODE = Object.freeze({
   'upstream.redirect': 'adminError.redirect',
   'network.tls-ignored': 'adminError.tlsIgnored',
   'network.tls-untrusted': 'adminError.tlsUntrusted',
+  'blocked.read-only': 'adminError.readOnly',
+  'blocked.rate-limit': 'toast.tooManyAttempts',
+  'invalid.too-large': 'toast.imageTooLarge',
+  'invalid.file-type': 'adminError.fileType',
+  'invalid.url': 'adminError.invalidUrl',
+  'upstream.refused': 'adminError.socketRefused',
+  'upstream.not-docker': 'adminError.notSocketProxy',
 });
 
 const BY_KIND = Object.freeze({
@@ -60,6 +67,19 @@ function adviceFor(read) {
     return status !== null ? { key: BY_CODE[code], vars: { status } } : { key: BY_CODE[code] };
   }
   return { key: BY_KIND[kind] || BY_KIND[KIND.INTERNAL] };
+}
+
+/** What to show for a failed request to the API's own routes.
+    @param {unknown} e @returns {{ key: string, vars?: Record<string, unknown> }} */
+export function errorAdvice(e) {
+  return adviceFor(readError(e));
+}
+
+/* The probe's hint already says why nothing answered and what to change. */
+/** @param {unknown} probe @returns {{ key: string, vars?: Record<string, unknown> }} */
+export function socketProbeAdvice(probe) {
+  const read = readError(probe);
+  return read.code === KIND.NETWORK ? { key: 'adminError.noConnection' } : adviceFor(read);
 }
 
 export function badgeErrorAdvice(e) {

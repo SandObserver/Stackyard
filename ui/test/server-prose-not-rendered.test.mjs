@@ -13,9 +13,12 @@ import { fileURLToPath } from 'node:url';
 
 const JS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'js');
 
-/* Reading the field is fine; putting it on screen is not. */
-const RENDERS = /\.textContent\s*=|setHtml\(|setUserText\(|toast\(/;
-const SERVER_TEXT = /\b(?:advice|err|error|e|res|body|data|j|r)\s*(?:\??\.)\s*error\b/;
+/* Reading the field is fine; putting it on screen is not. A translated
+   sentence counts as on screen. */
+const RENDERS = /\.textContent\s*=|setHtml\(|setUserText\(|toast\(|\bt\(/;
+/* An Error from the fetch wrapper carries the field as its message. */
+const SERVER_TEXT =
+  /\b(?:advice|err|error|e|res|body|data|j|r|probe)\s*(?:\??\.)\s*error\b|\b(?:e|err|error)\s*(?:\??\.)\s*message\b/;
 
 /* Keys that legitimately name the field while building a request or a log. */
 const READS_ONLY = /log\.|console\.|JSON\.stringify|catch|throw/;

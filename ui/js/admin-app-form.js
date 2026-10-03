@@ -14,6 +14,7 @@ import {
 import { t } from '/js/i18n.js?v=1f1ea9c1';
 import {
   toast,
+  errorText,
   responseError,
   apiGet,
   apiPost,
@@ -22,11 +23,11 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=f5551857';
+} from '/js/admin-shared.js?v=28bd6694';
 import { createListbox } from '/js/listbox.js?v=30c1b9d1';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=233683ad';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=df2459e3';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=142f39db';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=44fdd6fb';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
@@ -727,7 +728,7 @@ function wireIcon() {
         const form = new FormData();
         form.append('icon', file, file.name);
         const r = await fetch('/api/icons/upload', { method: 'POST', body: form });
-        if (!r.ok) throw new Error(await responseError(r));
+        if (!r.ok) throw await responseError(r);
         const d = await r.json();
         await loadLocalIcons();
         state.siurl = d.filename;
@@ -738,7 +739,7 @@ function wireIcon() {
         updPrev();
         toast(t('toast.uploaded', { name: d.filename }));
       } catch (e) {
-        toast(t('toast.uploadFailed', { err: e.message }), 'err');
+        toast(t('toast.uploadFailed', { err: errorText(e) }), 'err');
       } finally {
         upBtn.textContent = origText;
         upInput.value = '';
@@ -891,7 +892,7 @@ async function testPing() {
       ? '✓ ' + t('app.reachable', { status: r.status })
       : '✗ ' + t('app.httpError', { status: r.status });
   } catch (e) {
-    st.textContent = '✗ ' + e.message;
+    st.textContent = '✗ ' + errorText(e);
   }
 }
 

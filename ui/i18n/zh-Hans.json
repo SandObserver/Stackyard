@@ -254,7 +254,13 @@
     "statusMethod": "服务拒绝了该请求方法（HTTP {status}）。",
     "statusProxyAuth": "途中的代理需要凭据（HTTP {status}）。",
     "statusServer": "服务报告了内部错误（HTTP {status}）。",
-    "statusOther": "服务返回了错误（HTTP {status}）。"
+    "statusOther": "服务返回了错误（HTTP {status}）。",
+    "readOnly": "在线演示中已关闭保存功能。",
+    "fileType": "不支持该文件类型。",
+    "invalidUrl": "这不是有效的 http 或 https 地址。",
+    "socketRefused": "套接字代理拒绝了该请求。",
+    "notSocketProxy": "该地址有响应，但不是 Docker 套接字代理。",
+    "noConnection": "连接失败。"
   },
   "home": {
     "search": "搜索",
@@ -327,7 +333,7 @@
     "authNeedsPassword": "启用身份验证前请先设置密码。",
     "importForeignDone": "导入完成。应用：{apps}。文件夹：{folders}。",
     "importForeignNothing": "这些文件中没有可导入的内容。",
-    "importYamlUnsupported": "{file}：{reason}（第 {line} 行）",
+    "importYamlUnsupported": "{file}：第 {line} 行使用了导入程序无法读取的 YAML。",
     "importUnknownFormat": "{file} 不是 gethomepage 或 Dashy 配置。",
     "importTooLarge": "{file} 的条目太多，无法导入。",
     "secretsWithheld": "请重新输入以下项的凭据：{items}。凭据未被保留，因为它所属的请求已更改。",
@@ -348,7 +354,9 @@
     "fieldRequired": "需要{field}",
     "configLoadFailed": "无法加载配置。API 容器正在运行吗？({err})",
     "uploaded": "已上传 {name}",
-    "uploadFailed": "上传失败：{err}"
+    "uploadFailed": "上传失败：{err}",
+    "importNotStackyard": "该文件不是 Stackyard 导出文件。",
+    "importIdTaken": "{name} 已在仪表板中。请重新加载页面后再次导入。"
   },
   "confirm": {
     "deleteFolder": "删除文件夹“{name}”？其中的应用不会被删除。",
