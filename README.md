@@ -100,7 +100,7 @@ Stackyard never returns stored secrets to the browser, guards the URLs you test 
 
 ## Accessibility
 
-Stackyard targets WCAG 2.2 level AA and is partially conformant. Every control is named and reachable by keyboard, colours meet the contrast minimum in both themes, and the interface honours the reduced-motion and increased-contrast settings. Known limitations and how this was assessed are in [ACCESSIBILITY.md](ACCESSIBILITY.md).
+Stackyard targets WCAG 2.2 level AA and is partially conformant. What is supported, the known limitations, and how this was assessed are in [ACCESSIBILITY.md](ACCESSIBILITY.md).
 
 ## Contributing
 
