@@ -151,9 +151,16 @@ function hslToHex(h, s, l) {
 
 /* Every literal colour as #RRGGBB, or #RGB as written. Alpha is not a colour
    choice, so #RRGGBBAA and rgba() are read without it. A component built at
-   run time, such as rgba(color, 0.5), is not a literal. */
-const COLOUR =
-  /#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b|\b(rgba?|hsla?)\(\s*([\d.]+)(deg)?[\s,]+([\d.]+)%?[\s,]+([\d.]+)%?/g;
+   run time, such as rgba(color, 0.5), is not a literal. Named colours are not
+   read: the words collide with prose and identifiers. */
+const NUM = '(-?[\\d.]+)(%|deg|turn|rad)?';
+const COLOUR = new RegExp(
+  `#([0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})\\b|\\b(rgba?|hsla?)\\(\\s*${NUM}[\\s,]+${NUM}[\\s,]+${NUM}`,
+  'gi',
+);
+
+const channel = (n, unit) => (unit === '%' ? n * 2.55 : n);
+const degrees = (n, unit) => (unit === 'turn' ? n * 360 : unit === 'rad' ? (n * 180) / Math.PI : n);
 
 function colours(src) {
   const out = [];
@@ -161,11 +168,13 @@ function colours(src) {
     if (m[1]) {
       const h = m[1].length === 8 ? m[1].slice(0, 6) : m[1].length === 4 ? m[1].slice(0, 3) : m[1];
       out.push({ written: m[0], hex: `#${h}`.toUpperCase() });
-    } else {
-      const [a, b, c] = [m[3], m[5], m[6]].map(Number);
-      const hex = m[2].startsWith('hsl') ? hslToHex(a, b, c) : `#${hex2(a)}${hex2(b)}${hex2(c)}`;
-      out.push({ written: m[0], hex: hex.toUpperCase() });
+      continue;
     }
+    const [a, b, c] = [3, 5, 7].map(i => Number(m[i]));
+    const hex = m[2].toLowerCase().startsWith('hsl')
+      ? hslToHex(((degrees(a, m[4]) % 360) + 360) % 360, b, c)
+      : `#${hex2(channel(a, m[4]))}${hex2(channel(b, m[6]))}${hex2(channel(c, m[8]))}`;
+    out.push({ written: m[0], hex: hex.toUpperCase() });
   }
   return out;
 }
@@ -176,6 +185,10 @@ test('the scan reads every way of writing a colour', () => {
       c => c.hex,
     ),
     ['#123456', '#0C2238', '#FFFFFF', '#FF0000'],
+  );
+  assert.deepEqual(
+    colours('a:rgb(100%,0%,0%); b:RGB(1,2,3); c:hsl(-120 100% 50%); d:hsl(0.5turn 100% 50%); e:#ABC').map(c => c.hex),
+    ['#FF0000', '#010203', '#0000FF', '#00FFFF', '#ABC'],
   );
 });
 

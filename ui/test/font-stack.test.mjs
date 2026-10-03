@@ -55,12 +55,24 @@ test('every font-family is the one stack', () => {
   assert.deepEqual(offenders, [], `Font stack spelled differently:\n  ${offenders.join('\n  ')}`);
 });
 
-/* The family in a `font` shorthand or a canvas `ctx.font`, after the size. A
-   value with no size is a keyword such as inherit, or a bare family. */
+/* The family in a `font` shorthand or a canvas `ctx.font`: what follows the
+   size. A size is a length, a percentage, a ${...}px hole, or a var(), calc(),
+   clamp(), min() or max(), with an optional /line-height. A value with no size
+   is a keyword such as inherit, or a bare family. */
+const SIZE = /^(?:[\d.]+(?:px|em|rem|pt|%|vw|vh|ch|ex)|\$\{[^}]+\}px|(?:var|calc|clamp|min|max)\(.*\))(?:\/.+)?$/;
+
 function shorthandFamily(value) {
-  const v = value.trim().replace(/\s+/g, ' ');
-  const m = /(?:^|\s)(?:[\d.]+(?:px|em|rem|pt|%)|\$\{[^}]+\}px)(?:\/\S+)?\s+(.+)$/.exec(v);
-  return m ? m[1] : v;
+  const tokens = [''];
+  let depth = 0;
+  for (const ch of value.trim()) {
+    if (ch === '(' || ch === '{') depth++;
+    if (ch === ')' || ch === '}') depth--;
+    if (/\s/.test(ch) && depth === 0) {
+      if (tokens.at(-1)) tokens.push('');
+    } else tokens[tokens.length - 1] += ch;
+  }
+  const at = tokens.findIndex(t => SIZE.test(t));
+  return (at < 0 || at === tokens.length - 1 ? tokens : tokens.slice(at + 1)).join(' ');
 }
 
 const FONT_SHORTHAND = /(?<![\w-])font\s*:\s*([^;}'"`]+)|\.font\s*=\s*['"`]([^'"`]+)['"`]/g;
@@ -83,6 +95,8 @@ test('the shorthand check reads the family after the size', () => {
   assert.deepEqual(shorthandOffenders('x', `.b{font:600 10.5px/1.2 ${CANON}}`), []);
   assert.deepEqual(shorthandOffenders('x', 'ctx.font = `700 ${h}px ' + CANON + '`;'), []);
   assert.deepEqual(shorthandOffenders('x', '.c{font:inherit}'), []);
+  assert.deepEqual(shorthandOffenders('x', '.d{font:600 var(--fs-body) var(--font-ui)}'), []);
+  assert.deepEqual(shorthandOffenders('x', '.e{font:500 clamp(12px, 2vw, 14px)/1.3 Arial}'), ['x: Arial']);
 });
 
 test('every font shorthand and canvas font is the one stack', () => {
