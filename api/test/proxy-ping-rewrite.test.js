@@ -9,7 +9,7 @@ fs.writeFileSync(
     items: [],
     settings: {
       server: {
-        hostIp: '192.168.1.50',
+        hostIp: '127.0.0.1',
         portMap: {
           8096: { host: 'stackyard-test-nx-host', port: '8096' },
           7000: { host: '10.0.0.9', port: '80' },
@@ -19,8 +19,10 @@ fs.writeFileSync(
   }),
 );
 
-const { test } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
+const dns = require('node:dns');
+const net = require('node:net');
 const log = require('../src/log');
 const { fetchChecked, pingChecked, pingUnchecked, SsrfBlockedError } = require('../src/proxy');
 
@@ -39,8 +41,23 @@ async function targetOf(fn) {
   return seen.map(f => String(f.url || '')).join(' ');
 }
 
-const MAPPED = 'http://192.168.1.50:8096/';
+const MAPPED = 'http://127.0.0.1:8096/';
 const MS = 4000;
+
+const realLookup = dns.lookup;
+dns.lookup = (host, opts, cb) => {
+  const done = typeof opts === 'function' ? opts : cb;
+  if (host !== 'stackyard-test-nx-host') return realLookup(host, opts, cb);
+  process.nextTick(() => done(Object.assign(new Error(`getaddrinfo ENOTFOUND ${host}`), { code: 'ENOTFOUND' })));
+};
+
+let closedPort;
+before(async () => {
+  const s = net.createServer();
+  await new Promise(r => s.listen(0, '127.0.0.1', r));
+  closedPort = s.address().port;
+  await new Promise(r => s.close(r));
+});
 
 test('pingChecked follows portMap to the mapped container', async () => {
   let r;
@@ -78,21 +95,21 @@ test('pingChecked guards the rewritten target, not the url as typed', async () =
   /* The host-IP form would pass the guard on its own via the host-IP branch.
      Blocking proves the guard sees the mapped private target instead. */
   await assert.rejects(
-    () => pingChecked('http://192.168.1.50:7000/', MS, false),
+    () => pingChecked('http://127.0.0.1:7000/', MS, false),
     e => e instanceof SsrfBlockedError && /10\.0\.0\.9/.test(e.message),
   );
 });
 
 test('pingChecked still allows a host-IP port with no portMap entry', async () => {
   /* Unmapped host-IP ports stay trusted and connect to the host directly. */
-  const r = await pingChecked('http://192.168.1.50:9/', 1500, false);
+  const r = await pingChecked(`http://127.0.0.1:${closedPort}/`, 1500, false);
   assert.equal(r.ok, false);
   assert.doesNotMatch(String(r.error), /Blocked/);
 });
 
 test('fetchChecked guards the rewritten target, not the url as typed', async () => {
   await assert.rejects(
-    () => fetchChecked('http://192.168.1.50:7000/', { timeout: MS }),
+    () => fetchChecked('http://127.0.0.1:7000/', { timeout: MS }),
     e => e instanceof SsrfBlockedError && /10\.0\.0\.9/.test(e.message),
   );
 });

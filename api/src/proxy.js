@@ -553,5 +553,5 @@ module.exports = {
   isBlockedIPv4,
   embeddedIPv4,
   BLOCKED_IPV4,
-  _internals: { fetchJSON, pingUrl, guardSsrf },
+  _internals: { fetchJSON, pingUrl, guardSsrf, withDeadline },
 };

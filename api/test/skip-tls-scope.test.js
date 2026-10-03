@@ -85,12 +85,14 @@ test('a certificate failure on a public host explains that the skip did not appl
   /* Vouched rather than left on the message, because api-error.js replaces an
      unvouched message with a generic one. */
   assert.equal(err.vouchedMessage, SKIP_TLS_IGNORED_MESSAGE);
+  assert.equal(err.apiCode, 'network.tls-ignored');
 });
 
 test('a certificate failure nobody asked to skip is not explained away', async t => {
   captureRequest(t);
   const err = await _internals.fetchJSON('https://api.github.com/x', { skipTls: false }).catch(e => e);
   assert.equal(err.vouchedMessage, undefined);
+  assert.equal(err.apiCode, undefined);
 });
 
 test('pingUrl scopes the flag the same way and says so on a certificate failure', async t => {

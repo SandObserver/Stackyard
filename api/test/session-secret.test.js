@@ -7,7 +7,7 @@ process.env.CONFIG_PATH = path.join(tmpDir('secret'), 'apps.json');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { getOrCreateSecret, rotateSessionSecret, newSessionSecret } = require('../src/auth');
-const { loadConfig } = require('../src/config');
+const { loadConfig, saveConfig } = require('../src/config');
 
 const HEX32 = /^[0-9a-f]{64}$/;
 
@@ -44,11 +44,18 @@ test('the stored secret has the shape newSessionSecret produces', () => {
   assert.equal(rotateSessionSecret().length, newSessionSecret().length);
 });
 
-/* The block is created rather than assumed, which is what the inline call sites
-   each had to remember to do. */
 test('both work on a config with no settings block at all', () => {
-  fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({ items: [] }));
-  assert.match(getOrCreateSecret(), HEX32);
-  fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({ items: [] }));
-  assert.match(rotateSessionSecret(), HEX32);
+  const stored = () => JSON.parse(fs.readFileSync(process.env.CONFIG_PATH, 'utf8')).settings?.auth?.secret;
+  const old = getOrCreateSecret();
+
+  saveConfig({ items: [] });
+  const created = getOrCreateSecret();
+  assert.match(created, HEX32);
+  assert.notEqual(created, old, 'the cached secret must not be returned');
+  assert.equal(stored(), created);
+
+  saveConfig({ items: [] });
+  const rotated = rotateSessionSecret();
+  assert.match(rotated, HEX32);
+  assert.equal(stored(), rotated);
 });

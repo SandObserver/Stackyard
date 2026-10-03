@@ -2,14 +2,20 @@ const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
 process.env.CONFIG_PATH = path.join(tmpDir('ver'), 'apps.json');
+process.env.APP_VERSION = '1.2.3';
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
+const proxy = require('../src/proxy');
+/** @type {() => Promise<any>} */
+let lookup = () => Promise.reject(new Error('offline'));
+proxy.fetchUnchecked = () => lookup();
+
 require('../src/routes');
 const { dispatch } = require('../src/router');
-const { shouldFetch, CACHE_MS } = require('../src/routes/version');
+const { shouldFetch, CACHE_MS, _resetCache } = require('../src/routes/version');
 
 /* ── the cache decision ───────────────────────────────────────────────────── */
 
@@ -73,9 +79,26 @@ function version() {
 }
 
 test('the installed version is reported even when the lookup fails', async () => {
+  _resetCache();
+  lookup = () => Promise.reject(new Error('offline'));
   const r = await version();
   assert.ok(r.current, 'the installed version is always reported');
   assert.equal(r.updateAvailable, false, 'and nothing is claimed about an update');
+});
+
+test('a newer release is reported as an update', async () => {
+  _resetCache();
+  lookup = () => Promise.resolve({ status: 200, data: { tag_name: 'v1.3.0' } });
+  const r = await version();
+  assert.equal(r.latest, '1.3.0');
+  assert.equal(r.updateAvailable, true);
+});
+
+test('the installed release is not reported as an update', async () => {
+  _resetCache();
+  lookup = () => Promise.resolve({ status: 200, data: { tag_name: 'v1.2.3' } });
+  const r = await version();
+  assert.equal(r.updateAvailable, false);
 });
 
 test('repeated requests keep answering', async () => {
