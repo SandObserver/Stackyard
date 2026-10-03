@@ -443,13 +443,13 @@ function applyStats(data) {
         if (pd) {
           const u = document.getElementById(`small-disk-used-${i}`);
           const t = document.getElementById(`small-disk-total-${i}`);
-          if (u) u.textContent = Math.round((pd.usedPct/100)*pd.totalGb);
-          if (t) t.textContent = Math.round(pd.totalGb); /* GB suffix is in the HTML */
+          if (u) u.textContent = formatNumber(Math.round((pd.usedPct/100)*pd.totalGb));
+          if (t) t.textContent = formatNumber(Math.round(pd.totalGb)); /* GB suffix is in the HTML */
         }
       } else if (val !== null) {
         const unit = slot.type === 'temp' ? '°' : (slot.type === 'procs' ? '' : '%');
         const el = document.getElementById(`small-${i}`);
-        if (el) el.textContent = (slot.type === 'temp' ? val.toFixed(1) : Math.round(val)) + unit;
+        if (el) el.textContent = (slot.type === 'temp' ? formatNumber(Number(val.toFixed(1))) : formatNumber(Math.round(val))) + unit;
       }
     }
   });

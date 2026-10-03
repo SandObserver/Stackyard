@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/* Raw `el.innerHTML = ` and `el.insertAdjacentHTML(...)` string-building is
+/* Raw `el.innerHTML = `, `el.outerHTML = ` and `el.insertAdjacentHTML(...)` string-building is
    safe only while every interpolation remembers esc(). setHtml() + html`` from
    utils.js remove that requirement.
 
@@ -49,7 +49,7 @@ const jsDir = path.join(uiDir, 'js');
 const widgetsDir = path.join(uiDir, 'widgets');
 /* Matches `= ` and `+= `. The compound form appends markup and is exactly as
    unsafe. Only the plain form can be a clear: `+= ''` writes nothing anyway. */
-const ASSIGN = /\.innerHTML\s*(\+?)=(?!=)\s*/g;
+const ASSIGN = /\.(?:inner|outer)HTML\s*(\+?)=(?!=)\s*/g;
 /* insertAdjacentHTML writes markup exactly like an innerHTML assignment. */
 const INSERT = /\.insertAdjacentHTML\s*\(/g;
 const CLEAR = /^(?:''|""|``)\s*[;,)]/;
@@ -98,6 +98,11 @@ const counts = Object.fromEntries(
   scanned.map(([key, full]) => [key, countWrites(fs.readFileSync(full, 'utf8'))]).filter(([, n]) => n > 0),
 );
 
+test('an outerHTML write counts like an innerHTML one', () => {
+  assert.equal(countWrites('el.outerHTML = `<b>${v}</b>`;'), 1);
+  assert.equal(countWrites("el.outerHTML = '';"), 0);
+});
+
 test('no unlisted file writes markup through innerHTML', () => {
   const unlisted = Object.keys(counts).filter(f => !(f in BUDGET));
   assert.deepEqual(unlisted, [], `Use setHtml(el, html\`...\`) from utils.js instead: ${unlisted.join(', ')}`);
@@ -133,7 +138,7 @@ test('no module outside html.js names innerHTML at all', () => {
   for (const file of fs.readdirSync(jsDir).sort()) {
     if (!file.endsWith('.js') || file === IMPLEMENTATION) continue;
     const src = fs.readFileSync(path.join(jsDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    const hits = (src.match(/innerHTML/g) || []).length;
+    const hits = (src.match(/(?:inner|outer)HTML/g) || []).length;
     if (hits) offenders.push(`js/${file}: ${hits}`);
   }
   assert.deepEqual(

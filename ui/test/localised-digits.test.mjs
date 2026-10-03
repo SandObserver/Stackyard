@@ -126,3 +126,70 @@ test('the wallpaper brightness follows the locale', () => {
   assert.doesNotMatch(settings, /\.toFixed\(/);
   assert.match(settings, /formatNumber\(parseFloat\(v\), \{ minimumFractionDigits: 2, maximumFractionDigits: 2 \}\)/);
 });
+
+/* Where a number becomes text a person reads. A sentence from t() is left out:
+   the count inside it also picks the plural form. */
+const RENDER =
+  /\.(?:textContent|innerText)\s*=|setUserText\(|setAttribute\(\s*['"](?:aria-label|title|aria-valuetext)['"]/;
+const RAW_NUMBER =
+  /Math\.(?:round|floor|ceil|trunc)\(|\.toFixed\(|\.toLocaleString\(\s*\)|\.(?:length|size)\b(?!\s*[-+*/<>=!?&|)])|\bString\(/;
+
+/* The line with every t() and wt() call removed, parentheses balanced. */
+function withoutSentences(line) {
+  let out = '';
+  for (let i = 0; i < line.length; ) {
+    const call = /^\bw?t\(/.exec(line.slice(i));
+    if (!call || /[\w$.]/.test(line[i - 1] ?? '')) {
+      out += line[i++];
+      continue;
+    }
+    let depth = 0;
+    for (i += call[0].length - 1; i < line.length; i++) {
+      if (line[i] === '(') depth++;
+      else if (line[i] === ')' && --depth === 0) break;
+    }
+    i++;
+  }
+  return out;
+}
+
+function latinDigits(src, file) {
+  return src.split('\n').flatMap((line, i) => {
+    if (!RENDER.test(line) || /formatNumber|localiseDigits/.test(line)) return [];
+    return RAW_NUMBER.test(withoutSentences(line)) ? [`${file}:${i + 1}: ${line.trim()}`] : [];
+  });
+}
+
+test('the digit check sees a count, a rounded value and a fixed decimal', () => {
+  for (const line of [
+    'h.textContent = `${heading} (${rows.length})`;',
+    'if (u) u.textContent = Math.round(pd.totalGb);',
+    "el.textContent = val.toFixed(1) + '°';",
+    "el.setAttribute('aria-label', String(n));",
+  ]) {
+    assert.equal(latinDigits(line, 'probe.js').length, 1, line);
+  }
+  for (const line of [
+    "lead.textContent = t('import.confirm', { count: d.items.length });",
+    "mt.textContent = t('folder.appsCount', { count: (item.children || []).length });",
+    'h.textContent = `${heading} (${formatNumber(rows.length)})`;',
+    "if (rows.length) el.setAttribute('aria-label', label);",
+  ]) {
+    assert.deepEqual(latinDigits(line, 'probe.js'), [], line);
+  }
+});
+
+test('no interface module or widget writes a number in Latin digits', () => {
+  const files = fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => f.endsWith('.js'))
+    .map(f => `js/${f}`);
+  for (const d of fs.readdirSync(path.join(root, 'widgets'), { withFileTypes: true })) {
+    if (!d.isDirectory()) continue;
+    for (const f of fs.readdirSync(path.join(root, 'widgets', d.name))) {
+      if (/\.(js|html)$/.test(f)) files.push(`widgets/${d.name}/${f}`);
+    }
+  }
+  const found = files.flatMap(f => latinDigits(read(f), f));
+  assert.deepEqual(found, [], `format it with formatNumber():\n  ${found.join('\n  ')}`);
+});

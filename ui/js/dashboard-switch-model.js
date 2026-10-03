@@ -3,14 +3,14 @@
    keychain. */
 
 export const PALETTE = [
-  { id: 'teal', label: 'Teal', hex: '#14b8c6' },
-  { id: 'cyan', label: 'Cyan', hex: '#22c1d6' },
-  { id: 'orange', label: 'Orange', hex: '#ef8a2b' },
-  { id: 'pink', label: 'Pink', hex: '#f5325b' },
-  { id: 'purple', label: 'Purple', hex: '#7c5cff' },
-  { id: 'green', label: 'Green', hex: '#2fbf71' },
-  { id: 'yellow', label: 'Yellow', hex: '#f4c430' },
-  { id: 'blue', label: 'Blue', hex: '#2f6df4' },
+  { id: 'teal', hex: '#14b8c6' },
+  { id: 'cyan', hex: '#22c1d6' },
+  { id: 'orange', hex: '#ef8a2b' },
+  { id: 'pink', hex: '#f5325b' },
+  { id: 'purple', hex: '#7c5cff' },
+  { id: 'green', hex: '#2fbf71' },
+  { id: 'yellow', hex: '#f4c430' },
+  { id: 'blue', hex: '#2f6df4' },
 ];
 
 /* Each id maps to an art asset in the widget frontend. */

@@ -30,6 +30,9 @@ const FILES = sources('.');
    is ordinary JavaScript and works fine; `onclick="..."` inside a string or a
    template is what the CSP refuses. */
 const INLINE_ATTR = /\son[a-z]+\s*=\s*["'][^"']/gi;
+/* An unquoted value is only markup inside a tag, so the tag opener is required
+   here. Without it `let onclick = fn` in plain code would match. */
+const UNQUOTED_ATTR = /<[a-z][\w-]*\b[^<>]*?\son[a-z]+\s*=\s*[^\s"'=<>`]/gi;
 
 /* Comment spans, as [start, end) offsets.
 
@@ -41,7 +44,8 @@ const INLINE_ATTR = /\son[a-z]+\s*=\s*["'][^"']/gi;
 
    Deliberately not a full tokenizer: `//` inside a string or a regular
    expression is read as a comment here. That errs towards ignoring a match, and
-   the retry-button assertions below pin the two real call sites. */
+   the retry-button assertions below pin the two real call sites. `//` after a
+   letter, a colon or a quote is a URL, not a comment. */
 function commentSpans(src) {
   const spans = [];
   const push = (open, close, keepOpen) => {
@@ -60,6 +64,10 @@ function commentSpans(src) {
   /* Line comments end at the newline, so they never run away. */
   let i = 0;
   while ((i = src.indexOf('//', i)) !== -1) {
+    if (i > 0 && /[\w:"'=/]/.test(src[i - 1])) {
+      i += 2;
+      continue;
+    }
     const nl = src.indexOf('\n', i);
     spans.push([i, nl === -1 ? src.length : nl]);
     i = nl === -1 ? src.length : nl;
@@ -68,6 +76,15 @@ function commentSpans(src) {
 }
 
 const inComment = (spans, at) => spans.some(([a, b]) => at >= a && at < b);
+
+/* Each handler once, at the offset of its own attribute. */
+function handlers(src) {
+  const spans = commentSpans(src);
+  const at = new Set();
+  for (const m of src.matchAll(INLINE_ATTR)) at.add(m.index);
+  for (const m of src.matchAll(UNQUOTED_ATTR)) at.add(m.index + m[0].search(/\son[a-z]+\s*=\s*\S+$/i));
+  return [...at].filter(i => !inComment(spans, i)).sort((a, b) => a - b);
+}
 
 const lineOf = (src, at) => src.slice(0, at).split('\n').length;
 
@@ -79,11 +96,7 @@ test('no markup carries an inline event handler', () => {
   const found = [];
   for (const f of FILES) {
     const src = fs.readFileSync(path.join(root, f), 'utf8');
-    const spans = commentSpans(src);
-    for (const m of src.matchAll(INLINE_ATTR)) {
-      if (inComment(spans, m.index)) continue;
-      found.push(`${f}:${lineOf(src, m.index)} ${m[0].trim()}`);
-    }
+    for (const at of handlers(src)) found.push(`${f}:${lineOf(src, at)} ${src.slice(at, at + 40).trim()}`);
   }
   assert.deepEqual(found, [], `inline handlers are refused by the CSP:\n${found.join('\n')}`);
 });
@@ -98,6 +111,15 @@ test('the scan finds an inline handler in code and ignores one in a comment', ()
   const commented = '/* written as onclick="x" once */\nconst a = 1;';
   const cSpans = commentSpans(commented);
   assert.equal([...commented.matchAll(INLINE_ATTR)].filter(m => !inComment(cSpans, m.index)).length, 0);
+});
+
+test('the scan finds a handler after a URL and one with an unquoted value', () => {
+  assert.equal(handlers('<a href="https://example.com" onclick="alert(1)">').length, 1);
+  assert.equal(handlers('<script src="//cdn.example.com/x.js"></script><b onclick="x()">').length, 1);
+  assert.equal(handlers('<button onclick=alert(1)>').length, 1);
+  assert.equal(handlers('<button\n  type="button"\n  onclick=go>').length, 1);
+  assert.deepEqual(handlers('let onclick = fn;\nel.onclick = () => go();'), []);
+  assert.deepEqual(handlers('const a = 1; // <button onclick=alert(1)>'), []);
 });
 
 /* An unterminated comment must not let a later handler slip through. */
