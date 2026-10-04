@@ -275,6 +275,7 @@
     "connectionReset": "The service closed the connection before it answered.",
     "notHttp": "The service did not answer in HTTP. Check http or https and the port.",
     "selfSigned": "The service uses a self-signed certificate. Turn on “Allow self-signed certificate” to accept it.",
+    "selfSignedPublic": "The service uses a self-signed certificate. Allowing a self-signed certificate only applies to addresses on your own network.",
     "tlsExpired": "The service's certificate has expired.",
     "timedOut": "The service did not answer in time.",
     "demoOutbound": "Checks are turned off in the live demo."

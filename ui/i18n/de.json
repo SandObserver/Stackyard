@@ -275,6 +275,7 @@
     "connectionReset": "Der Dienst hat die Verbindung vor einer Antwort geschlossen.",
     "notHttp": "Der Dienst hat nicht per HTTP geantwortet. Prüfen Sie http oder https und den Port.",
     "selfSigned": "Der Dienst verwendet ein selbstsigniertes Zertifikat. Aktivieren Sie „Selbstsigniertes Zertifikat zulassen“, um es zu akzeptieren.",
+    "selfSignedPublic": "Der Dienst verwendet ein selbstsigniertes Zertifikat. Ein selbstsigniertes Zertifikat zuzulassen gilt nur für Adressen in Ihrem eigenen Netzwerk.",
     "tlsExpired": "Das Zertifikat des Dienstes ist abgelaufen.",
     "timedOut": "Der Dienst hat nicht rechtzeitig geantwortet.",
     "demoOutbound": "In der Live-Demo sind Prüfungen deaktiviert."

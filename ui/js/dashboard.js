@@ -34,7 +34,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=5579776a';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=dbe542e1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=389e0ed0';
-import { setupErrorKey } from '/js/admin-error.js?v=3b5d8dfd';
+import { setupErrorKey } from '/js/admin-error.js?v=61f73e4d';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import {
