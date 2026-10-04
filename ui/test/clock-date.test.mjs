@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { clockDateFormatter } from '../js/clock-date.js';
+import { clockDateFormatter, clockDateParts } from '../js/clock-date.js';
 
 const at = s => new Date(`${s}T12:00:00`);
 
@@ -40,4 +40,16 @@ test('both clock faces use the shared formatter', () => {
     assert.match(src, /await import\('\/js\/clock-date\.js\?v=[0-9a-f]+'\)/, face);
     assert.doesNotMatch(src, /new Intl\.DateTimeFormat\(_lang/, face);
   }
+});
+
+test('the parts split the date after the weekday', () => {
+  assert.deepEqual(clockDateParts('fa', 'short')(at('2026-10-04')), {
+    full: 'یکشنبه ۱۲ مهر ۲۵۸۵',
+    weekday: 'یکشنبه',
+    date: '۱۲ مهر ۲۵۸۵',
+  });
+  const en = clockDateParts('en', 'short')(at('2026-10-04'));
+  assert.equal(en.full, clockDateFormatter('en', 'short')(at('2026-10-04')));
+  assert.equal(en.weekday, 'Sun');
+  assert.equal(en.date, 'Oct 4');
 });

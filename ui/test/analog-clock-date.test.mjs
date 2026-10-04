@@ -29,7 +29,7 @@ test('each disc repeats the date clipped to itself, before the next disc', () =>
 });
 
 test('every copy of the date shows the same text', () => {
-  assert.match(src, /for\(const n of _dateTexts\)\{ n\.textContent=d;/);
+  assert.match(src, /for\(const t of _dateTexts\)\{ t\[key\]\.textContent=text;/);
 });
 
 /* Safari draws spaced SVG text one glyph at a time. Persian and Arabic letters
@@ -38,9 +38,16 @@ test('the date on the dial has no letter spacing', () => {
   assert.doesNotMatch(src.match(/\.face text \{[^}]*\}/)[0], /letter-spacing/);
 });
 
-test('a date wider than the dial is scaled down to fit', () => {
-  assert.match(
-    src,
-    /if\(w<=max\) return;\n\s*for\(const n of _dateTexts\) n\.setAttribute\('font-size', size\*max\/w\);/,
-  );
+test('a date wider than the dial moves to two lines after the weekday', () => {
+  assert.match(src, /if\(w<=max\) return;\n\s*set\('weekday', d\.weekday, size\);\n\s*set\('date', d\.date, size\);/);
+});
+
+test('two lines still wider than the dial are scaled down to fit', () => {
+  assert.match(src, /if\(widest<=max\) return;\n\s*set\('weekday', d\.weekday, size\*max\/widest\);/);
+});
+
+/* Safari reorders right-to-left text across tspans. */
+test('each line of the date is its own text element', () => {
+  assert.doesNotMatch(src, /el\('tspan'/);
+  assert.match(src, /_dateTexts\.push\(\{ date:line\(0\), weekday:line\(/);
 });
