@@ -123,13 +123,17 @@ function buildShell(){
 
   _dateTexts=[];
   _dateShown='';
+  /* Two text elements, not two tspans. Safari reorders right-to-left text
+     across tspans and scrambles a Persian date. */
   const dateOf=clip=>{
     if(!_showDate) return;
-    const n=el('text',{ x:cx, y:V-V*0.085, 'text-anchor':'middle',
-      fill:dial.date });
-    if(clip) n.setAttribute('clip-path', clip);
-    _dateTexts.push(n);
-    face.appendChild(n);
+    const y=V-V*0.085;
+    const line=dy=>{
+      const n=el('text',{ x:cx, y:y-dy, 'text-anchor':'middle', fill:dial.date });
+      if(clip) n.setAttribute('clip-path', clip);
+      return face.appendChild(n);
+    };
+    _dateTexts.push({ date:line(0), weekday:line(V*DATE_SIZE*DATE_LINE_GAP) });
   };
   dateOf(null);
 
@@ -210,20 +214,29 @@ function render(smoothSeconds){
   document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now));
   if(_showDate && _dateTexts.length){
     const d=_dateShort(now);
-    if(d!==_dateShown) showDate(d);
+    if(d.full!==_dateShown) showDate(d);
   }
 }
 
 /* Wider than the dial chord at the date's baseline, the date runs off the face. */
-const DATE_SIZE=0.072, DATE_MAX_WIDTH=0.46;
+const DATE_SIZE=0.072, DATE_MAX_WIDTH=0.46, DATE_LINE_GAP=1.15;
 function showDate(d){
   const size=_vb*DATE_SIZE, max=_vb*DATE_MAX_WIDTH;
-  for(const n of _dateTexts){ n.textContent=d; n.setAttribute('font-size', size); }
-  const w=_dateTexts[0].getComputedTextLength();
+  const set=(key, text, px)=>{
+    for(const t of _dateTexts){ t[key].textContent=text; t[key].setAttribute('font-size', px); }
+  };
+  set('weekday', '', size);
+  set('date', d.full, size);
+  const w=_dateTexts[0].date.getComputedTextLength();
   if(!w) return;
-  _dateShown=d;
+  _dateShown=d.full;
   if(w<=max) return;
-  for(const n of _dateTexts) n.setAttribute('font-size', size*max/w);
+  set('weekday', d.weekday, size);
+  set('date', d.date, size);
+  const widest=Math.max(_dateTexts[0].weekday.getComputedTextLength(), _dateTexts[0].date.getComputedTextLength());
+  if(widest<=max) return;
+  set('weekday', d.weekday, size*max/widest);
+  set('date', d.date, size*max/widest);
 }
 
 function _loop(){
@@ -283,9 +296,9 @@ async function boot(){
     }
   }catch{}
   if(!zoneOk(_timezone)){ _zoneBad=true; return showZoneError(); }
-  const { clockDateFormatter } = await import('/js/clock-date.js?v=22d2c48a');
+  const { clockDateFormatter, clockDateParts } = await import('/js/clock-date.js?v=978eaa4f');
   _dateLong = clockDateFormatter(_lang, 'long');
-  _dateShort = clockDateFormatter(_lang, 'short');
+  _dateShort = clockDateParts(_lang, 'short');
   buildShell();
   render(!_reduceMotion);
   watchVisibility();
