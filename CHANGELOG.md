@@ -219,6 +219,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show widget editor row and group numbers in the reader's digits.
 
+- Keep a dashboard change that already reached the server when a later Settings
+  list save fails.
+
+- Show Disk Health bay numbers and the GitHub Contributions total in the
+  reader's digits.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
