@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-10-04
+
 ### Added
 
 - Add Allowed Addresses to Settings, General, to list extra host names
@@ -1636,7 +1638,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.15.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.16.0...HEAD
+[1.16.0]: https://github.com/SandObserver/stackyard/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/SandObserver/stackyard/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/SandObserver/stackyard/compare/v1.13.1...v1.14.0
 [1.13.1]: https://github.com/SandObserver/stackyard/compare/v1.13.0...v1.13.1
