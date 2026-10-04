@@ -655,9 +655,9 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .login-header{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:4px}
 .login-mark{height:34px;width:auto;color:var(--tx);margin-bottom:4px}
 .login-sub{font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--dm-strong)}
-.login-pw,.login-btn{width:100%;font-family:inherit}
-.login-pw{background:var(--btn-fill);border:none;border-radius:26px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;min-height:52px;padding:0 18px}
-.login-pw:focus{outline:2px solid var(--ac);outline-offset:0}
+.login-pw,.dlg-field .inp,.login-btn{width:100%;font-family:inherit}
+.login-pw,.dlg-field .inp{background:var(--btn-fill);border:none;border-radius:26px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;min-height:52px;padding:0 18px}
+.login-pw:focus,.dlg-field .inp:focus{outline:2px solid var(--ac);outline-offset:0}
 .login-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:999px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline);min-height:48px;padding:13px;cursor:pointer;transition:background var(--t)}
 .login-btn:hover{background:var(--ac2)}
 .login-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);text-align:center;display:none}
