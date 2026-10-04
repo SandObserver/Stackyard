@@ -231,16 +231,53 @@ function withoutSentences(line) {
   return out;
 }
 
-const READ_ATTR = /\b(?:aria-label|aria-valuetext|title|alt)="[^"]*"/g;
+const READ_ATTR = /(?<![\w-])(?:aria-label|aria-valuetext|title|alt|placeholder)=(?:"[^"]*"|'[^']*')/g;
 
-/* A line that ends in `=`, `(` or `,` is read with the lines that finish it:
-   the formatter splits a long call or assignment there. */
+/* A statement runs on while a parenthesis, bracket or template literal is open,
+   or while a line ends, or the next one starts, with an operator: the formatter
+   splits a long statement there. A brace opens a block, which ends it. */
+const OPEN_END = /(?:[=(,[+?:]|\|\||&&)\s*$/;
+const GOES_ON = /^\s*(?:[.?:+)\]]|\|\||&&)/;
+const CLOSES = { ')': '(', ']': '[', '}': '{' };
+
+/** Track open brackets and template literals through one line. Quotes and line
+    comments end with the line. */
+function scan(line, stack) {
+  let quote = '';
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    const top = stack[stack.length - 1];
+    if (c === '\\') i++;
+    else if (quote) {
+      if (c === quote) quote = '';
+    } else if (top === '`') {
+      if (c === '`') stack.pop();
+      else if (c === '$' && line[i + 1] === '{') stack.push('${'), i++;
+    } else if (c === "'" || c === '"') quote = c;
+    else if (c === '/' && line[i + 1] === '/') break;
+    else if (c === '`' || c === '(' || c === '[' || c === '{') stack.push(c);
+    else if (c === '}' && top === '${') stack.pop();
+    else if (CLOSES[c] && top === CLOSES[c]) stack.pop();
+  }
+}
+
 function statements(src) {
   const out = [];
+  let stack = [];
   src.split('\n').forEach((line, i) => {
     const last = out[out.length - 1];
-    if (last && /[=(,]\s*$/.test(last.lines[last.lines.length - 1])) last.lines.push(line.trim());
+    if (/^\S/.test(line) && stack[stack.length - 1] !== '`') stack = [];
+    const inner = stack[stack.length - 1];
+    const open =
+      last &&
+      (inner === '(' ||
+        inner === '[' ||
+        inner === '`' ||
+        OPEN_END.test(last.lines[last.lines.length - 1]) ||
+        GOES_ON.test(line));
+    if (open && last.lines.length < 40) last.lines.push(line.trim());
     else out.push({ at: i + 1, lines: [line] });
+    scan(line, stack);
   });
   return out;
 }
@@ -252,7 +289,7 @@ function latinDigits(src, file) {
     /* Markup on a later line keeps only the attributes a reader hears. The
        rest are geometry or state. */
     const heard = l => l.replace(/<[a-z][^<>]*>/gi, tag => (tag.match(READ_ATTR) || []).join(' '));
-    const sunk = withoutSentences([lines[0], ...lines.slice(1).map(heard)].join(' '));
+    const sunk = withoutSentences([lines[0], heard(lines.slice(1).join(' '))].join(' '));
     const raw = (RENDER.test(text) && RAW_NUMBER.test(sunk)) || GLUED.test(code) || HOLE.test(code);
     return raw ? [`${file}:${at}: ${text.trim()}`] : [];
   });
@@ -289,6 +326,13 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     "x = wt('ui.bay', 'Bay {n}').replace(\n  '{n}',\n  rows.length,\n);",
     'b.innerHTML =\n  `<button aria-label="${rows.length}"></button>`;',
     'setHtml(\n  el,\n  html`<span title="${Math.round(v)}">x</span>`,\n);',
+    'num.textContent =\n  n > 0\n    ? n.toFixed(1)\n    : "-";',
+    'el.textContent =\n  label ||\n  rows.length;',
+    'el.textContent =\n  rows\n    .length;',
+    'el.textContent = `${heading}\n  (${rows.length})`;',
+    'setHtml(\n  el,\n  html`<span\n    title="${Math.round(v)}">x</span>`,\n);',
+    "b.innerHTML =\n  `<button aria-label='${rows.length}'></button>`;",
+    'b.innerHTML =\n  `<input placeholder="${rows.length}">`;',
   ]) {
     assert.equal(latinDigits(line, 'probe.js').length, 1, line);
   }
@@ -310,6 +354,9 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     "g.setAttribute('transform', `translate(${(w / 2).toFixed(1)} 0)`);",
     "x = wt('ui.bay', 'Bay {n}').replace(\n  '{n}',\n  formatNumber(rows.length),\n);",
     'a.innerHTML =\n  `<rect x="${(cx - 2).toFixed(1)}" aria-pressed="${String(on)}"/>`;',
+    'a.innerHTML =\n  `<rect\n    x="${(cx - 2).toFixed(1)}"/>`;',
+    'a.innerHTML =\n  `<rect data-title="${(cx - 2).toFixed(1)}"/>`;',
+    "items.forEach((it, i) => {\n  it.style.top = Math.round(i * h) + 'px';\n});",
   ]) {
     assert.deepEqual(latinDigits(line, 'probe.js'), [], line);
   }
