@@ -243,6 +243,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show Persian and other joined-script dates correctly on the analog clock in
   Safari.
 
+- Show the edge of the sign-in and Settings dialog text fields in high contrast
+  mode.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
