@@ -54,29 +54,46 @@ export function snapshotItems(items) {
     this change too. It hands its snapshot to that save, which restores it if it
     also fails.
 
+    A writer calls `capture()` when it reads the list it sends, and calls the
+    function it returns with that list once the write lands. A failed change
+    the landed list already carried restores that list, not the older snapshot:
+    the older snapshot lacks a change the server has, and the next save would
+    delete it.
+
     @template T
     @param {{ write: () => Promise<boolean|void>, restore: (snapshot: T) => void }} opts
-    @returns {(snapshot: T) => Promise<boolean>} */
+    @returns {((snapshot: T) => Promise<boolean>) & { capture: () => (sent: T) => void }} */
 export function revertingSaves({ write, restore }) {
   let waiting = 0;
-  /** @type {{ snapshot: T } | null} */
+  let edits = 0;
+  /** @type {{ edit: number, snapshot: T } | null} */
   let carried = null;
-  return async snapshot => {
+  /** @type {{ edit: number, sent: T } | null} */
+  let landed = null;
+  const save = async (/** @type {T} */ snapshot) => {
+    const edit = ++edits;
     waiting++;
     let ok = false;
     try {
       ok = (await write()) !== false;
     } finally {
       waiting--;
-      const before = carried ? carried.snapshot : snapshot;
+      const before = carried || { edit, snapshot };
       carried = null;
       if (!ok) {
-        if (waiting > 0) carried = { snapshot: before };
-        else restore(before);
+        if (waiting > 0) carried = before;
+        else restore(landed && landed.edit >= before.edit ? landed.sent : before.snapshot);
       }
     }
     return ok;
   };
+  save.capture = () => {
+    const edit = edits;
+    return (/** @type {T} */ sent) => {
+      if (!landed || edit >= landed.edit) landed = { edit, sent };
+    };
+  };
+  return save;
 }
 
 /** Run writes one at a time, in the order asked. A write asked for while
