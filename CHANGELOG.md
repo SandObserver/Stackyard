@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show numbers in the digits of the language chosen in Settings, such as Persian
   digits for Persian, instead of the browser's region.
 
+- Show the Shahanshahi date with its year on the clock in Persian.
+
 ### Fixed
 
 - Translate the hue, saturation and brightness sliders and the colour code hint
