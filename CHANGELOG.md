@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the Shahanshahi date with its year on the clock in Persian.
 
+- Draw the analog clock date at the same weight as the digital clock date.
+
 ### Fixed
 
 - Translate the hue, saturation and brightness sliders and the colour code hint
