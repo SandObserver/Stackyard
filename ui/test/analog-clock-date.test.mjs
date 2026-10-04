@@ -51,3 +51,9 @@ test('each line of the date is its own text element', () => {
   assert.doesNotMatch(src, /el\('tspan'/);
   assert.match(src, /_dateTexts\.push\(\{ date:line\(0\), weekday:line\(/);
 });
+
+test('the dial date uses the same weight as the digital date', () => {
+  const digital = fs.readFileSync(new URL('../widgets/clock/digital.html', import.meta.url), 'utf8');
+  const weight = css => css.match(/font-weight: (\d+)/)[1];
+  assert.equal(weight(src.match(/\.face text \{[^}]*\}/)[0]), weight(digital.match(/\.date-line \{[^}]*\}/)[0]));
+});
