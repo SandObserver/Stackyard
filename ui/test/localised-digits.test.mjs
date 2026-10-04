@@ -206,6 +206,8 @@ function withoutSentences(line) {
   return out;
 }
 
+const READ_ATTR = /\b(?:aria-label|aria-valuetext|title|alt)="[^"]*"/g;
+
 /* A line that ends in `=`, `(` or `,` is read with the lines that finish it:
    the formatter splits a long call or assignment there. */
 function statements(src) {
@@ -222,8 +224,10 @@ function latinDigits(src, file) {
   return statements(src).flatMap(({ at, lines }) => {
     const text = lines.join(' ');
     const code = withoutSentences(text);
-    /* Attributes in markup on a later line are geometry or state, not text. */
-    const sunk = withoutSentences([lines[0], ...lines.slice(1).map(l => l.replace(/<[a-z][^<>]*>/gi, ''))].join(' '));
+    /* Markup on a later line keeps only the attributes a reader hears. The
+       rest are geometry or state. */
+    const heard = l => l.replace(/<[a-z][^<>]*>/gi, tag => (tag.match(READ_ATTR) || []).join(' '));
+    const sunk = withoutSentences([lines[0], ...lines.slice(1).map(heard)].join(' '));
     const raw = (RENDER.test(text) && RAW_NUMBER.test(sunk)) || GLUED.test(code) || HOLE.test(code);
     return raw ? [`${file}:${at}: ${text.trim()}`] : [];
   });
@@ -258,6 +262,8 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     "  .replace('{n}', (i + 1));",
     'num.textContent =\n  i + 1;',
     "x = wt('ui.bay', 'Bay {n}').replace(\n  '{n}',\n  rows.length,\n);",
+    'b.innerHTML =\n  `<button aria-label="${rows.length}"></button>`;',
+    'setHtml(\n  el,\n  html`<span title="${Math.round(v)}">x</span>`,\n);',
   ]) {
     assert.equal(latinDigits(line, 'probe.js').length, 1, line);
   }

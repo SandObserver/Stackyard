@@ -93,16 +93,21 @@ export function revertingSaves({ write, restore }) {
   return save;
 }
 
-/** The list a page shows once its import lands. A list change made while the
+/** What a page holds once its import lands. A list change made while the
     import ran is not in `current`; dropping it lets its queued save send the
     list without it. A page whose list is stale takes the server list, or its
-    next save deletes what another tab added.
+    next save deletes what another tab added, and a change queued on the stale
+    list must be refused.
 
-    @param {any[]} local @param {any[]} current the list the import read
-    @param {string} serverItems the server list this page last saw, as JSON
-    @param {any[]} newItems @returns {any[]} */
-export function listAfterImport(local, current, serverItems, newItems) {
-  return JSON.stringify(current) === serverItems ? [...local, ...newItems] : [...current, ...newItems];
+    @param {{ local: any[], saved: any[], current: any[], serverItems: string, newItems: any[] }} lists
+    `saved` is the list this page last sent, `current` the list the import
+    read, `serverItems` the server list this page last saw, as JSON.
+    @returns {{ items: any[], saved: any[], stale: boolean }} */
+export function afterImport({ local, saved, current, serverItems, newItems }) {
+  if (JSON.stringify(current) !== serverItems) {
+    return { items: [...current, ...newItems], saved: [...current, ...newItems], stale: true };
+  }
+  return { items: [...local, ...newItems], saved: [...saved, ...newItems], stale: false };
 }
 
 /** Run writes one at a time, in the order asked. A write asked for while

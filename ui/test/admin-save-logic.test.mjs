@@ -8,7 +8,7 @@ import {
   claimFolderChildren,
   randomSuffix,
   snapshotItems,
-  listAfterImport,
+  afterImport,
   revertingSaves,
   serialWrites,
 } from '../js/admin-save-logic.js';
@@ -467,7 +467,13 @@ function serverEditor(outcomes) {
       await gate(editor.reads);
       const current = [...editor.server];
       if (post) await gate(editor.posts);
-      editor.list = listAfterImport(editor.list, current, editor.seen, [item]);
+      editor.list = afterImport({
+        local: editor.list,
+        saved: JSON.parse(editor.seen),
+        current,
+        serverItems: editor.seen,
+        newItems: [item],
+      }).items;
       land([...current, item]);
     });
   const answer = async queue => {
@@ -564,7 +570,26 @@ test('a failed save after an import that read before the change keeps the import
   assert.deepEqual(editor.server, ['a', 'X', 'c']);
 });
 
-test('an import on a stale page shows the server list, not the stale one', () => {
-  assert.deepEqual(listAfterImport(['a', 'b', 'c'], ['a', 'b'], '["a","b"]', ['X']), ['a', 'b', 'c', 'X']);
-  assert.deepEqual(listAfterImport(['a'], ['a', 'z'], '["a"]', ['X']), ['a', 'z', 'X']);
+test('an import on a stale page shows the server list and marks it stale', () => {
+  const lists = { local: ['a'], saved: ['a'], current: ['a', 'z'], serverItems: '["a"]', newItems: ['X'] };
+  assert.deepEqual(afterImport(lists), { items: ['a', 'z', 'X'], saved: ['a', 'z', 'X'], stale: true });
+});
+
+test('an import keeps a pending change on screen and records only what was saved', () => {
+  const lists = { local: ['a', 'b'], saved: ['a'], current: ['a'], serverItems: '["a"]', newItems: ['X'] };
+  assert.deepEqual(afterImport(lists), { items: ['a', 'b', 'X'], saved: ['a', 'X'], stale: false });
+});
+
+/* The server reshapes some fields, so the list it returns differs from the one this page sent. */
+test('an import compares against the list this page sent, not the server copy', () => {
+  const sent = [{ id: 'a', headers: [{ key: 'k', secret: false, value: 'v' }] }];
+  const current = [{ id: 'a', headers: [{ key: 'k', value: 'v', secret: false }] }];
+  const next = afterImport({
+    local: sent,
+    saved: sent,
+    current,
+    serverItems: JSON.stringify(current),
+    newItems: [{ id: 'X' }],
+  });
+  assert.equal(JSON.stringify(next.saved), JSON.stringify(next.items));
 });
