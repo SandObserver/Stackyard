@@ -138,6 +138,12 @@
       "/js/badge-logic.js?v=*": [
         "./ui/js/badge-logic.js"
       ],
+      "/js/clock-date.js": [
+        "./ui/js/clock-date.js"
+      ],
+      "/js/clock-date.js?v=*": [
+        "./ui/js/clock-date.js"
+      ],
       "/js/config-recovery-logic.js": [
         "./ui/js/config-recovery-logic.js"
       ],

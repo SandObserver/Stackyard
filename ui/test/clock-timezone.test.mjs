@@ -7,13 +7,18 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const TOOLBOX_IMPORT = /import\('\/js\/widget-toolbox\.js\?v=[0-9a-z]+'\)/;
+const CLOCK_DATE_IMPORT = /import\('\/js\/clock-date\.js\?v=[0-9a-z]+'\)/;
 
 function pageScript(file) {
   const src = fs.readFileSync(new URL(`../widgets/clock/${file}`, import.meta.url), 'utf8');
   const body = src.match(/<script>([\s\S]*?)<\/script[^>]*>/i)[1];
   assert.match(body, TOOLBOX_IMPORT, `${file} loads the toolbox for its error line`);
   assert.match(body, /\nboot\(\);\s*$/);
-  return body.replace(TOOLBOX_IMPORT, '__toolbox()').replace(/\nboot\(\);\s*$/, '\nreturn boot();');
+  assert.match(body, CLOCK_DATE_IMPORT, `${file} loads its date formatter`);
+  return body
+    .replace(TOOLBOX_IMPORT, '__toolbox()')
+    .replace(CLOCK_DATE_IMPORT, '__clockDate()')
+    .replace(/\nboot\(\);\s*$/, '\nreturn boot();');
 }
 
 function element() {
@@ -66,6 +71,7 @@ async function boot(file, clockTimezone, { resizeDuringLoad = false } = {}) {
     clearTimeout() {},
     requestAnimationFrame: () => 0,
     cancelAnimationFrame() {},
+    __clockDate: () => import('../js/clock-date.js'),
     __toolbox: async () => ({
       loadStrings: async () => {},
       wt: (_k, fallback) => fallback,
