@@ -67,6 +67,11 @@ test('list saves run through one queue and undo through one reverting save', () 
     src,
     /_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = sent;\s*saveOrRestore\.landed\(JSON\.parse\(sent\)\);/,
   );
+  assert.match(
+    src,
+    /const sent = JSON\.stringify\(state\.items\);\s*full\.items = JSON\.parse\(sent\);/,
+    'a retry after sign-in sends the body again; it must hold the list recorded as sent, not the live one',
+  );
 });
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

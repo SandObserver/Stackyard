@@ -161,7 +161,7 @@ async function writeItems(asked) {
       throw Object.assign(new Error('stale'), { status: 409 });
     }
     const sent = JSON.stringify(state.items);
-    full.items = state.items;
+    full.items = JSON.parse(sent);
     const r = await apiPost('/api/config', full);
     _serverItems = JSON.stringify(r.items);
     _savedItems = sent;
