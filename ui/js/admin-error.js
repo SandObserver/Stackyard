@@ -41,6 +41,7 @@ const BY_CODE = Object.freeze({
   'network.reset': 'adminError.connectionReset',
   'network.not-http': 'adminError.notHttp',
   'network.self-signed': 'adminError.selfSigned',
+  'network.self-signed-public': 'adminError.selfSignedPublic',
   'network.tls-expired': 'adminError.tlsExpired',
   'timeout.no-answer': 'adminError.timedOut',
   'blocked.demo': 'adminError.demoOutbound',

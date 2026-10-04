@@ -433,13 +433,20 @@ const PING_CODES = Object.freeze({
   CERT_HAS_EXPIRED: 'network.tls-expired',
 });
 
-/** @param {unknown} e @param {boolean} skipIgnored @returns {string} */
-function pingCode(e, skipIgnored) {
+/** @param {unknown} e @param {boolean} skipIgnored @param {string} hostname @returns {string} */
+function pingCode(e, skipIgnored, hostname) {
   const code = errCode(e) ?? '';
-  if (TLS_ERROR_CODES.has(code))
-    return skipIgnored ? 'network.tls-ignored' : PING_CODES[code] || 'network.tls-untrusted';
+  if (TLS_ERROR_CODES.has(code)) {
+    if (skipIgnored) return 'network.tls-ignored';
+    const mapped = PING_CODES[code] || 'network.tls-untrusted';
+    return mapped === 'network.self-signed' && !isInternalHost(hostname) ? 'network.self-signed-public' : mapped;
+  }
+  if (code.startsWith('HPE_')) return 'network.not-http';
   return PING_CODES[code] || 'network';
 }
+
+/** @param {string} error */
+const pingInvalid = error => ({ ok: false, status: 0, error, kind: 'invalid', code: 'invalid.url' });
 
 const PING_TIMED_OUT = Object.freeze({
   ok: false,
@@ -464,10 +471,10 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
     try {
       u = new URL(raw);
     } catch {
-      return resolve({ ok: false, status: 0, error: 'Invalid URL', kind: 'invalid', code: 'invalid.url' });
+      return resolve(pingInvalid('Invalid URL'));
     }
     const policy = urlPolicyError(u);
-    if (policy) return resolve({ ok: false, status: 0, error: policy, kind: 'invalid', code: 'invalid.url' });
+    if (policy) return resolve(pingInvalid(policy));
     const lib = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const { skip, ignored: skipIgnored } = resolveSkipTls(u.hostname, skipTls);
@@ -505,7 +512,13 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
            query can carry an API key. */
         log.warn('ping failed', { url: u.origin, error: errMessage(e) });
         const text = skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? '') ? SKIP_TLS_IGNORED_MESSAGE : pingErrorText(e);
-        dl.settle(resolve, { ok: false, status: 0, error: text, kind: 'network', code: pingCode(e, skipIgnored) });
+        dl.settle(resolve, {
+          ok: false,
+          status: 0,
+          error: text,
+          kind: 'network',
+          code: pingCode(e, skipIgnored, u.hostname),
+        });
       });
       req.end();
     };
@@ -556,6 +569,14 @@ function pingUnchecked(url, ms, skipTls) {
 async function pingChecked(url, ms, skipTls) {
   if (IS_DEMO) return pingUrl(url, ms, skipTls);
   const target = rewriteUrl(url);
+  let parsed;
+  try {
+    parsed = new URL(target);
+  } catch {
+    return pingInvalid('Invalid URL');
+  }
+  const policy = urlPolicyError(parsed);
+  if (policy) return pingInvalid(policy);
   const budget = ms || PING_MS;
   const started = Date.now();
   let guard;

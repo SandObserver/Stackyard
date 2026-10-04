@@ -280,6 +280,7 @@
     "connectionReset": "Le service a fermé la connexion avant de répondre.",
     "notHttp": "Le service n’a pas répondu en HTTP. Vérifiez http ou https et le port.",
     "selfSigned": "Le service utilise un certificat auto-signé. Activez « Autoriser un certificat auto-signé » pour l’accepter.",
+    "selfSignedPublic": "Le service utilise un certificat auto-signé. Autoriser un certificat auto-signé ne vaut que pour les adresses de votre propre réseau.",
     "tlsExpired": "Le certificat du service a expiré.",
     "timedOut": "Le service n’a pas répondu à temps.",
     "demoOutbound": "Les vérifications sont désactivées dans la démo en ligne."

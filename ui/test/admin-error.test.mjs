@@ -35,6 +35,7 @@ const { _internals } = require('../../api/src/proxy.js');
 const PING_FAILURES = [
   ...[...new Set(Object.values(_internals.PING_CODES))].map(code => ({ kind: KIND.NETWORK, code })),
   { kind: KIND.NETWORK, code: 'network.tls-untrusted' },
+  { kind: KIND.NETWORK, code: 'network.self-signed-public' },
   { kind: KIND.NETWORK, code: 'network.tls-ignored' },
   { kind: KIND.TIMEOUT, code: 'timeout.no-answer' },
   { kind: KIND.BLOCKED, code: 'blocked.demo' },
