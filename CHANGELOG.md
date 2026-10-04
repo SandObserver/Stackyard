@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- About link icons keep their colours after the pointer moves over the list.
+
 ## [1.16.0] - 2026-10-04
 
 ### Added
