@@ -176,13 +176,13 @@ const RAW_NUMBER =
 /* A number joined to text anywhere, not only on the line that renders it: a
    helper returns '12 Mbps' and its caller writes it. A CSS length is not read. */
 const NUMBER = String.raw`(?:\.toFixed\([^)]*\)|Math\.(?:round|floor|ceil|trunc)\((?:[^()]|\([^()]*\))*\)|\.length\b|\b\w+\s*\+\s*1\b(?!\.\d))`;
+const RECEIVER = String.raw`(?:[\w.$?]|\((?:[^()]|\([^()]*\))*\))*`;
 const GLUED = new RegExp(
-  String.raw`${NUMBER}\s*\+\s*['"\x60](?!(?:px|deg|em|rem|ms|s|vh|vw|fr|turn)\b|%)|['"\x60]\s*\+\s*(?:Math\.(?:round|floor|ceil|trunc)\(|[\w.$]+\.toFixed\()|\.replace\(\s*['"]\{\w+\}['"]\s*,\s*${NUMBER}\s*\)`,
+  String.raw`${NUMBER}\s*\+\s*['"\x60](?!(?:px|deg|em|rem|ms|s|vh|vw|fr|turn)\b|%)|['"\x60]\s*\+\s*(?:Math\.(?:round|floor|ceil|trunc)\(|[\w.$]+\.toFixed\()|\.replace\(\s*['"]\{\w+\}['"]\s*,\s*\(?${RECEIVER}${NUMBER}\)?\s*\)`,
 );
 
 /* A raw number in a template hole beside words or markup: text built over
    several lines reaches the reader with no sink on the same line. */
-const RECEIVER = String.raw`(?:[\w.$?]|\((?:[^()]|\([^()]*\))*\))*`;
 const IN_HOLE = String.raw`\$\{\s*${RECEIVER}${NUMBER}\s*\}`;
 const HOLE = new RegExp(String.raw`(?:>|\p{L}{2}\s+)\s*${IN_HOLE}|${IN_HOLE}(?=\s*<|\s+\p{L}{2})`, 'u');
 
@@ -238,6 +238,9 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     '    <span class="n">${i + 1}</span>',
     '    Disk ${idx + 1} of',
     "        `${wt('ui.bay','Bay {n}').replace('{n}', i+1)}: ${wt('ui.notReporting','Not reporting')}`);",
+    "  .replace('{n}', rows.length);",
+    "  .replace('{n}', t.toFixed(0));",
+    "  .replace('{n}', (i + 1));",
   ]) {
     assert.equal(latinDigits(line, 'probe.js').length, 1, line);
   }

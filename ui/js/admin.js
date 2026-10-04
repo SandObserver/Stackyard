@@ -190,10 +190,12 @@ async function appendItems(newItems) {
     const clash = newItems.find(i => taken.has(i.id));
     if (clash) throw new ShownError(t('toast.importIdTaken', { name: isolate(clash.label || clash.id) }));
     full.items = [...current, ...newItems];
+    const landed = saveOrRestore.capture();
     const r = await apiPost('/api/config', full);
     _serverItems = JSON.stringify(r.items);
     state.items = full.items;
     _savedItems = JSON.stringify(state.items);
+    landed(JSON.parse(_savedItems));
     syncDashSave();
   } finally {
     render();

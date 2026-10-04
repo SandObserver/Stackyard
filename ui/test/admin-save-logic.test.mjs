@@ -457,6 +457,14 @@ function serverEditor(outcomes) {
     editor.list = [...editor.list, item];
     return save(before).then(r => editor.results.push(r));
   };
+  editor.importItem = item =>
+    writes.run(async () => {
+      await new Promise(r => editor.reads.push(r));
+      const landed = save.capture();
+      editor.server = [...editor.server, item];
+      editor.list = [...editor.server];
+      landed([...editor.server]);
+    });
   editor.answerRead = async () => {
     while (!editor.reads.length) await new Promise(r => setTimeout(r));
     editor.reads.shift()();
@@ -499,4 +507,20 @@ test('a failed save that no landed write carried still puts back its snapshot', 
   await editor.answerRead();
   await second;
   assert.deepEqual(editor.list, ['a', 'b']);
+});
+
+test('a failed save after an import lands keeps the imported items', async () => {
+  const editor = serverEditor([true, false]);
+  const first = editor.change('b');
+  const imported = editor.importItem('X');
+  const second = editor.change('c');
+  await editor.answerRead();
+  await first;
+  await editor.answerRead();
+  await imported;
+  await editor.answerRead();
+  await second;
+  assert.deepEqual(editor.results, [true, false]);
+  assert.deepEqual(editor.server, ['a', 'b', 'c', 'X']);
+  assert.deepEqual(editor.list, ['a', 'b', 'c', 'X']);
 });

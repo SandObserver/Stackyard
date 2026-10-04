@@ -45,7 +45,10 @@ test('each header Save is driven by its own unsaved-change check', () => {
 test('an import records what it saved', () => {
   const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
   const fn = src.slice(src.indexOf('async function appendItems'), src.indexOf('async function saveOrRevert'));
-  assert.match(fn, /state\.items = full\.items;\s*_savedItems = JSON\.stringify\(state\.items\);\s*syncDashSave\(\);/);
+  assert.match(
+    fn,
+    /const landed = saveOrRestore\.capture\(\);[\s\S]*?state\.items = full\.items;\s*_savedItems = JSON\.stringify\(state\.items\);\s*landed\(JSON\.parse\(_savedItems\)\);\s*syncDashSave\(\);/,
+  );
 });
 
 /* A list change made while a save runs must wait for it, not be undone. */
