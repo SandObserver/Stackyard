@@ -117,3 +117,23 @@ test('the Test result is announced', async ({ page }) => {
   await page.locator('#hc-ping-test').click();
   await expect(page.getByRole('status').filter({ hasText: /URL/ })).toHaveAttribute('id', 'hc-ping-status');
 });
+
+test('a Test that got no HTTP answer says why, in the page language', async ({ page }) => {
+  await page.route('**/api/ping', route =>
+    route.fulfill({
+      json: { ok: false, status: 0, error: 'Connection refused.', kind: 'network', code: 'network.refused' },
+    }),
+  );
+  await openDashboardList(page);
+  await rowByName(page, 'Alpha')
+    .getByRole('button', { name: /^Bearbeiten/ })
+    .click();
+  await page.locator('label:has(#hc-type-ping)').click();
+  await page.locator('#ie-hc-ping .pe').click();
+  await page.keyboard.type('http://192.168.1.10:1/');
+  await page.keyboard.press('Enter');
+  await page.locator('#hc-ping-test').click();
+  await expect(page.locator('#hc-ping-status')).toHaveText(
+    '✗ Der Host hat die Verbindung abgelehnt. Prüfen Sie den Port.',
+  );
+});

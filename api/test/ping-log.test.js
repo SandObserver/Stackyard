@@ -104,6 +104,6 @@ test('the ping still reports the failure to its caller', async () => {
   const r = await pingUrl(`http://127.0.0.1:${port}/`, 2000);
   assert.equal(r.ok, false);
   assert.equal(r.status, 0);
-  assert.equal(r.code, 'ECONNREFUSED');
+  assert.equal(r.code, 'network.refused');
   assert.ok(!/127\.0\.0\.1/.test(r.error), 'and it still names no address');
 });

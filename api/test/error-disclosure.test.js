@@ -113,7 +113,7 @@ test('a failed ping does not name the host it could not reach', async () => {
   for (const pattern of REVEALING) {
     assert.doesNotMatch(r.error, pattern, `${pattern} leaked via a ping: ${r.error}`);
   }
-  assert.equal(r.code, 'ECONNREFUSED', 'the code is kept, since it names no address');
+  assert.equal(r.code, 'network.refused', 'the reason is kept as an API code, which names no address');
 });
 
 test('a ping to a host that does not exist says so without naming it', async () => {

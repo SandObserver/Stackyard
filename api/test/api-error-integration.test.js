@@ -214,6 +214,8 @@ test('ping keeps its ok:false shape and gains a kind', async () => {
   assert.equal(r.status, 200);
   assert.equal(r.body.ok, false, 'the existing ok flag must survive');
   assert.equal(r.body.status, 0);
+  assert.equal(r.body.kind, KIND.NETWORK);
+  assert.equal(r.body.code, 'network.refused');
 });
 
 /* ── config ───────────────────────────────────────────────────────────────── */

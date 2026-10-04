@@ -273,7 +273,16 @@
     "noConnection": "La conexión falló.",
     "duplicateId": "Dos elementos comparten el id {id}. Cada elemento necesita su propio id.",
     "missingChildren": "La carpeta {id} incluye elementos que no están en el archivo.",
-    "unsafeLink": "El elemento {id} tiene un enlace no permitido. Los enlaces deben usar http o https."
+    "unsafeLink": "El elemento {id} tiene un enlace no permitido. Los enlaces deben usar http o https.",
+    "refused": "El host rechazó la conexión. Compruebe el puerto.",
+    "hostNotFound": "No se encontró el nombre del host.",
+    "hostUnreachable": "No se puede llegar al host en la red.",
+    "connectionReset": "El servicio cerró la conexión antes de responder.",
+    "notHttp": "El servicio no respondió en HTTP. Compruebe http o https y el puerto.",
+    "selfSigned": "El servicio usa un certificado autofirmado. Active «Permitir certificado autofirmado» para aceptarlo.",
+    "tlsExpired": "El certificado del servicio ha caducado.",
+    "timedOut": "El servicio no respondió a tiempo.",
+    "demoOutbound": "Las comprobaciones están desactivadas en la demo en vivo."
   },
   "home": {
     "search": "Buscar",

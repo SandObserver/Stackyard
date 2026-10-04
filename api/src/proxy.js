@@ -418,17 +418,56 @@ function pingErrorText(e) {
   return PING_ERRORS[errCode(e) ?? ''] || 'Could not reach the service.';
 }
 
+/* API codes. `code` reaches the browser, which translates it. Never send Node's
+   syscall name there. */
+const PING_CODES = Object.freeze({
+  ECONNREFUSED: 'network.refused',
+  ENOTFOUND: 'network.not-found',
+  EAI_AGAIN: 'network.not-found',
+  EHOSTUNREACH: 'network.unreachable',
+  ENETUNREACH: 'network.unreachable',
+  ECONNRESET: 'network.reset',
+  EPROTO: 'network.not-http',
+  DEPTH_ZERO_SELF_SIGNED_CERT: 'network.self-signed',
+  SELF_SIGNED_CERT_IN_CHAIN: 'network.self-signed',
+  CERT_HAS_EXPIRED: 'network.tls-expired',
+});
+
+/** @param {unknown} e @param {boolean} skipIgnored @returns {string} */
+function pingCode(e, skipIgnored) {
+  const code = errCode(e) ?? '';
+  if (TLS_ERROR_CODES.has(code))
+    return skipIgnored ? 'network.tls-ignored' : PING_CODES[code] || 'network.tls-untrusted';
+  return PING_CODES[code] || 'network';
+}
+
+const PING_TIMED_OUT = Object.freeze({
+  ok: false,
+  status: 0,
+  error: 'Timed out',
+  kind: 'timeout',
+  code: 'timeout.no-answer',
+});
+
 function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
-  if (IS_DEMO) return Promise.resolve({ ok: false, status: 0, error: 'Outbound requests are disabled in demo mode' });
+  if (IS_DEMO) {
+    return Promise.resolve({
+      ok: false,
+      status: 0,
+      error: 'Outbound requests are disabled in demo mode',
+      kind: 'blocked',
+      code: 'blocked.demo',
+    });
+  }
   return new Promise(resolve => {
     let u;
     try {
       u = new URL(raw);
     } catch {
-      return resolve({ ok: false, status: 0, error: 'Invalid URL' });
+      return resolve({ ok: false, status: 0, error: 'Invalid URL', kind: 'invalid', code: 'invalid.url' });
     }
     const policy = urlPolicyError(u);
-    if (policy) return resolve({ ok: false, status: 0, error: policy });
+    if (policy) return resolve({ ok: false, status: 0, error: policy, kind: 'invalid', code: 'invalid.url' });
     const lib = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const { skip, ignored: skipIgnored } = resolveSkipTls(u.hostname, skipTls);
@@ -445,7 +484,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
     let current = null;
     const dl = withDeadline(ms, () => {
       if (current) current.destroy();
-      dl.settle(resolve, { ok: false, status: 0, error: 'Timed out' });
+      dl.settle(resolve, { ...PING_TIMED_OUT });
     });
 
     const send = (method, onResponse) => {
@@ -457,7 +496,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
       current = req;
       req.on('timeout', () => {
         req.destroy();
-        dl.settle(resolve, { ok: false, status: 0, error: 'Timed out' });
+        dl.settle(resolve, { ...PING_TIMED_OUT });
       });
       /* This result reaches the browser as-is. Keep the code, never the message:
          the message names the address it failed to reach. */
@@ -466,7 +505,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
            query can carry an API key. */
         log.warn('ping failed', { url: u.origin, error: errMessage(e) });
         const text = skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? '') ? SKIP_TLS_IGNORED_MESSAGE : pingErrorText(e);
-        dl.settle(resolve, { ok: false, status: 0, error: text, code: errCode(e) });
+        dl.settle(resolve, { ok: false, status: 0, error: text, kind: 'network', code: pingCode(e, skipIgnored) });
       });
       req.end();
     };
@@ -523,7 +562,7 @@ async function pingChecked(url, ms, skipTls) {
   try {
     guard = await guardSsrf(target, budget);
   } catch {
-    return { ok: false, status: 0, error: 'Timed out' };
+    return { ...PING_TIMED_OUT };
   }
   if (guard.error) throw new SsrfBlockedError(guard.error, guard.reason);
   return pingUrl(target, Math.max(1, budget - (Date.now() - started)), skipTls, guard.ip);
@@ -553,5 +592,5 @@ module.exports = {
   isBlockedIPv4,
   embeddedIPv4,
   BLOCKED_IPV4,
-  _internals: { fetchJSON, pingUrl, guardSsrf, withDeadline },
+  _internals: { fetchJSON, pingUrl, guardSsrf, withDeadline, PING_CODES },
 };

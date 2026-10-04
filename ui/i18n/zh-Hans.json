@@ -263,7 +263,16 @@
     "noConnection": "连接失败。",
     "duplicateId": "两个项目使用了相同的 ID {id}。每个项目都需要自己的 ID。",
     "missingChildren": "文件夹 {id} 列出了文件中不存在的项目。",
-    "unsafeLink": "项目 {id} 包含不允许的链接。链接必须使用 http 或 https。"
+    "unsafeLink": "项目 {id} 包含不允许的链接。链接必须使用 http 或 https。",
+    "refused": "主机拒绝了连接。请检查端口。",
+    "hostNotFound": "找不到该主机名。",
+    "hostUnreachable": "无法在网络上访问该主机。",
+    "connectionReset": "服务在响应前关闭了连接。",
+    "notHttp": "服务未以 HTTP 响应。请检查 http 或 https 以及端口。",
+    "selfSigned": "该服务使用自签名证书。开启“允许自签名证书”即可接受。",
+    "tlsExpired": "该服务的证书已过期。",
+    "timedOut": "服务未及时响应。",
+    "demoOutbound": "在线演示中已关闭检查功能。"
   },
   "home": {
     "search": "搜索",

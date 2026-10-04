@@ -268,7 +268,16 @@
     "noConnection": "Die Verbindung ist fehlgeschlagen.",
     "duplicateId": "Zwei Einträge haben dieselbe ID {id}. Jeder Eintrag braucht eine eigene ID.",
     "missingChildren": "Der Ordner {id} verweist auf Einträge, die nicht in der Datei sind.",
-    "unsafeLink": "Der Eintrag {id} hat einen unzulässigen Link. Links müssen http oder https verwenden."
+    "unsafeLink": "Der Eintrag {id} hat einen unzulässigen Link. Links müssen http oder https verwenden.",
+    "refused": "Der Host hat die Verbindung abgelehnt. Prüfen Sie den Port.",
+    "hostNotFound": "Der Hostname wurde nicht gefunden.",
+    "hostUnreachable": "Der Host ist im Netzwerk nicht erreichbar.",
+    "connectionReset": "Der Dienst hat die Verbindung vor einer Antwort geschlossen.",
+    "notHttp": "Der Dienst hat nicht per HTTP geantwortet. Prüfen Sie http oder https und den Port.",
+    "selfSigned": "Der Dienst verwendet ein selbstsigniertes Zertifikat. Aktivieren Sie „Selbstsigniertes Zertifikat zulassen“, um es zu akzeptieren.",
+    "tlsExpired": "Das Zertifikat des Dienstes ist abgelaufen.",
+    "timedOut": "Der Dienst hat nicht rechtzeitig geantwortet.",
+    "demoOutbound": "In der Live-Demo sind Prüfungen deaktiviert."
   },
   "home": {
     "search": "Suchen",
