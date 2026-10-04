@@ -246,6 +246,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show the edge of the sign-in and Settings dialog text fields in high contrast
   mode.
 
+- Say an address is not a valid http or https address in the Health Check Test,
+  instead of "The request was blocked."
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
