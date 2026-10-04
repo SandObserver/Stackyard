@@ -1,9 +1,9 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=d6a34174';
-import { initI18n, t } from '/js/i18n.js?v=5a09eb37';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=8e2c92ea';
+import { initI18n, t } from '/js/i18n.js?v=5579776a';
 import { loginErrorKey } from '/js/admin-error.js?v=3b5d8dfd';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
-import { el, inp as inpById, qa } from '/js/utils.js?v=d845c473';
-import { blockingScreenFor } from '/js/config-recovery.js?v=3b63c74b';
+import { el, inp as inpById, qa } from '/js/utils.js?v=fdc0243f';
+import { blockingScreenFor } from '/js/config-recovery.js?v=dbe542e1';
 
 export async function checkAuth(onLogin) {
   try {

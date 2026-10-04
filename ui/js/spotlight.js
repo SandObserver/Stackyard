@@ -1,7 +1,7 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=d845c473';
-import { t } from '/js/i18n.js?v=5a09eb37';
-import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
+import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=fdc0243f';
+import { t } from '/js/i18n.js?v=5579776a';
+import { formatNumber } from '/js/format-number.js?v=349a741d';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);

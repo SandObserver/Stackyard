@@ -1,7 +1,7 @@
-import { toast, apiGet, apiPost, errorText, reveal, swapContent } from '/js/admin-shared.js?v=d6a34174';
+import { toast, apiGet, apiPost, errorText, reveal, swapContent } from '/js/admin-shared.js?v=8e2c92ea';
 import { socketProbeAdvice } from '/js/admin-error.js?v=3b5d8dfd';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
-import { t } from '/js/i18n.js?v=5a09eb37';
+import { t } from '/js/i18n.js?v=5579776a';
 import {
   shouldWritePassword,
   settingsSaveBlocker,
@@ -11,11 +11,11 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=fc7f0836';
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
-import { el, inp, setUserText } from '/js/utils.js?v=d845c473';
-import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
+import { el, inp, setUserText } from '/js/utils.js?v=fdc0243f';
+import { formatNumber } from '/js/format-number.js?v=349a741d';
 import { serialWrites } from '/js/admin-save-logic.js?v=ae65f9c8';
-import { renderColorControl } from '/js/admin-color-control.js?v=d45b4f63';
-import { BACKDROP } from '/js/background.js?v=28c6caf2';
+import { renderColorControl } from '/js/admin-color-control.js?v=6e8d50e9';
+import { BACKDROP } from '/js/background.js?v=abd33088';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
