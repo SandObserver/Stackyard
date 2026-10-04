@@ -1,9 +1,10 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=9ae0ab18';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=244d98de';
 import { recoveryShown } from '/js/config-recovery.js?v=3b63c74b';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=d58a04df';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=f77d5b35';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
+  afterImport,
   buildAppItem,
   claimFolderChildren,
   newItemId,
@@ -11,14 +12,14 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=fbd25052';
+} from '/js/admin-save-logic.js?v=ae65f9c8';
 import {
   loadSettings,
   savedWallpaperUrl,
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=97af9041';
+} from '/js/admin-settings.js?v=95e3a678';
 import {
   apiGet,
   apiPost,
@@ -51,7 +52,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=2b78744a';
+} from '/js/import-foreign.js?v=9efb127f';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -141,23 +142,30 @@ async function applyBg() {
 let _serverItems = '';
 const saves = serialWrites();
 
+/* Counts imports that replaced a stale list. Refuse a save asked for before
+   one: its change was made on the replaced list. */
+let _replaced = 0;
+
 /** Returns whether the write reached the server. */
 function save() {
-  return saves.run(writeItems);
+  const asked = _replaced;
+  return saves.run(() => writeItems(asked));
 }
 
-async function writeItems() {
+/** @param {number} asked */
+async function writeItems(asked) {
   let ok = false;
   try {
     const full = await apiGet('/api/config');
-    if (JSON.stringify(full.items || []) !== _serverItems) throw Object.assign(new Error('stale'), { status: 409 });
+    if (asked !== _replaced || JSON.stringify(full.items || []) !== _serverItems) {
+      throw Object.assign(new Error('stale'), { status: 409 });
+    }
     const sent = JSON.stringify(state.items);
-    const landed = saveOrRestore.capture();
     full.items = state.items;
     const r = await apiPost('/api/config', full);
     _serverItems = JSON.stringify(r.items);
     _savedItems = sent;
-    landed(JSON.parse(sent));
+    saveOrRestore.landed(JSON.parse(sent));
     toast(t('toast.saved'));
     ok = true;
   } catch (e) {
@@ -190,12 +198,19 @@ async function appendItems(newItems) {
     const clash = newItems.find(i => taken.has(i.id));
     if (clash) throw new ShownError(t('toast.importIdTaken', { name: isolate(clash.label || clash.id) }));
     full.items = [...current, ...newItems];
-    const landed = saveOrRestore.capture();
     const r = await apiPost('/api/config', full);
+    const next = afterImport({
+      local: state.items,
+      saved: JSON.parse(_savedItems),
+      current,
+      serverItems: _serverItems,
+      newItems,
+    });
+    if (next.stale) _replaced++;
+    state.items = next.items;
     _serverItems = JSON.stringify(r.items);
-    state.items = full.items;
-    _savedItems = JSON.stringify(state.items);
-    landed(JSON.parse(_savedItems));
+    _savedItems = JSON.stringify(next.saved);
+    saveOrRestore.landed(JSON.parse(JSON.stringify(full.items)));
     syncDashSave();
   } finally {
     render();

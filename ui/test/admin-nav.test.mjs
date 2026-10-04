@@ -47,19 +47,25 @@ test('an import records what it saved', () => {
   const fn = src.slice(src.indexOf('async function appendItems'), src.indexOf('async function saveOrRevert'));
   assert.match(
     fn,
-    /const landed = saveOrRestore\.capture\(\);[\s\S]*?state\.items = full\.items;\s*_savedItems = JSON\.stringify\(state\.items\);\s*landed\(JSON\.parse\(_savedItems\)\);\s*syncDashSave\(\);/,
+    /state\.items = next\.items;\s*_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = JSON\.stringify\(next\.saved\);\s*saveOrRestore\.landed\(JSON\.parse\(JSON\.stringify\(full\.items\)\)\);\s*syncDashSave\(\);/,
   );
 });
 
 /* A list change made while a save runs must wait for it, not be undone. */
 test('list saves run through one queue and undo through one reverting save', () => {
   const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-  assert.match(src, /function save\(\) \{\s*return saves\.run\(writeItems\);/);
   assert.match(src, /return saves\.run\(\(\) => appendItems\(newItems\)\);/);
   assert.match(src, /revertingSaves\(\{\s*write: save,/);
   assert.match(
     src,
-    /const landed = saveOrRestore\.capture\(\);[\s\S]*?_serverItems = JSON\.stringify\(r\.items\);[\s\S]*?landed\(/,
+    /if \(next\.stale\) _replaced\+\+;/,
+    'a change queued on a list an import replaced must be refused, not saved over',
+  );
+  assert.match(src, /const asked = _replaced;\s*return saves\.run\(\(\) => writeItems\(asked\)\);/);
+  assert.match(src, /if \(asked !== _replaced \|\| JSON\.stringify\(full\.items \|\| \[\]\) !== _serverItems\)/);
+  assert.match(
+    src,
+    /_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = sent;\s*saveOrRestore\.landed\(JSON\.parse\(sent\)\);/,
   );
 });
 
