@@ -54,6 +54,10 @@ test('list saves run through one queue and undo through one reverting save', () 
   assert.match(src, /function save\(\) \{\s*return saves\.run\(writeItems\);/);
   assert.match(src, /return saves\.run\(\(\) => appendItems\(newItems\)\);/);
   assert.match(src, /revertingSaves\(\{\s*write: save,/);
+  assert.match(
+    src,
+    /const landed = saveOrRestore\.capture\(\);[\s\S]*?_serverItems = JSON\.stringify\(r\.items\);[\s\S]*?landed\(/,
+  );
 });
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

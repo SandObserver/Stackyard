@@ -12,9 +12,9 @@
    reads and writes them too. */
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { snapshotItems } from '/js/admin-save-logic.js?v=30449c75';
+import { snapshotItems } from '/js/admin-save-logic.js?v=fbd25052';
 import { reorderItems } from '/js/admin-logic.js?v=fc7f0836';
-import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=480c671f';
+import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=a2d7595d';
 import { paintIcon } from '/js/admin-shared.js?v=d03d0ece';
 import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=d845c473';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';

@@ -432,3 +432,71 @@ test('a failure handed on is dropped once a later save lands', async () => {
   await editor.change('d');
   assert.deepEqual(editor.list, ['a', 'b', 'c']);
 });
+
+/* Each write reads the server, then sends the list as it is at that moment. */
+function serverEditor(outcomes) {
+  const writes = serialWrites();
+  const editor = { list: ['a'], server: ['a'], results: [], reads: [] };
+  const save = revertingSaves({
+    write: () =>
+      writes.run(async () => {
+        await new Promise(r => editor.reads.push(r));
+        if (!outcomes.shift()) return false;
+        const sent = [...editor.list];
+        const landed = save.capture();
+        editor.server = sent;
+        landed([...sent]);
+        return true;
+      }),
+    restore: s => {
+      editor.list = s;
+    },
+  });
+  editor.change = item => {
+    const before = [...editor.list];
+    editor.list = [...editor.list, item];
+    return save(before).then(r => editor.results.push(r));
+  };
+  editor.answerRead = async () => {
+    while (!editor.reads.length) await new Promise(r => setTimeout(r));
+    editor.reads.shift()();
+  };
+  return editor;
+}
+
+test('a failed save keeps a change an earlier save already carried to the server', async () => {
+  const editor = serverEditor([true, false]);
+  const first = editor.change('b');
+  const second = editor.change('c');
+  await editor.answerRead();
+  await editor.answerRead();
+  await Promise.all([first, second]);
+  assert.deepEqual(editor.results, [true, false]);
+  assert.deepEqual(editor.server, ['a', 'b', 'c']);
+  assert.deepEqual(editor.list, ['a', 'b', 'c']);
+});
+
+test('a failure handed on restores the list the server last took', async () => {
+  const editor = serverEditor([true, false, false]);
+  const first = editor.change('b');
+  const second = editor.change('c');
+  await editor.answerRead();
+  await first;
+  const third = editor.change('d');
+  await editor.answerRead();
+  await editor.answerRead();
+  await Promise.all([second, third]);
+  assert.deepEqual(editor.results, [true, false, false]);
+  assert.deepEqual(editor.list, ['a', 'b', 'c']);
+});
+
+test('a failed save that no landed write carried still puts back its snapshot', async () => {
+  const editor = serverEditor([true, false]);
+  const first = editor.change('b');
+  await editor.answerRead();
+  await first;
+  const second = editor.change('c');
+  await editor.answerRead();
+  await second;
+  assert.deepEqual(editor.list, ['a', 'b']);
+});
