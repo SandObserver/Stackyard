@@ -478,9 +478,8 @@ html[data-theme="light"] .cc-kw-clear{background-image:repeating-conic-gradient(
 /* Orange and green fall below 3:1 behind white. Do not use them here. */
 .sy-icon.about-ri{flex-shrink:0;box-sizing:content-box;width:18px;height:18px;padding:6px;border-radius:7px;color:#FFFFFF;--icon-accent:#FFFFFF;background:var(--sy-gray)}
 .grp:has(.about-ri) .row::after{inset-inline-start:56px}
-.grp > .row-link:nth-child(1) .about-ri{background:var(--sy-blue)}
-.grp > .row-link:nth-child(2) .about-ri{background:var(--sy-red)}
-.grp > .row-link:nth-child(3) .about-ri{background:var(--sy-gray)}
+.sy-icon.about-docs{background:var(--sy-blue)}
+.sy-icon.about-bug{background:var(--sy-red)}
 .sy-icon.about-heart{background:var(--sy-pink)}
 .about-ext{flex-shrink:0;color:var(--dm);margin-inline-start:auto}
 

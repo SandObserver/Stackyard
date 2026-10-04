@@ -200,6 +200,11 @@ test('the top row keeps its corners once the pill is in the group', () => {
   assert.match(rule[1], /\.grp > \.fh-hl \+ \.row-wrap > \.row:first-child/);
 });
 
+test('no admin rule picks a group row by its position', () => {
+  const text = fs.readFileSync(path.join(root, 'css/admin.css'), 'utf8');
+  assert.doesNotMatch(text, /\.grp\s*>\s*[^,{]*?:nth-(?:last-)?child\(/);
+});
+
 const css = {
   dashboard: fs.readFileSync(path.join(root, 'css/dashboard.css'), 'utf8'),
   admin: fs.readFileSync(path.join(root, 'css/admin.css'), 'utf8'),
