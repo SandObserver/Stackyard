@@ -178,7 +178,7 @@ const RAW_NUMBER =
 const NUMBER = String.raw`(?:\.toFixed\([^)]*\)|Math\.(?:round|floor|ceil|trunc)\((?:[^()]|\([^()]*\))*\)|\.length\b|\b\w+\s*\+\s*1\b(?!\.\d))`;
 const RECEIVER = String.raw`(?:[\w.$?]|\((?:[^()]|\([^()]*\))*\))*`;
 const GLUED = new RegExp(
-  String.raw`${NUMBER}\s*\+\s*['"\x60](?!(?:px|deg|em|rem|ms|s|vh|vw|fr|turn)\b|%)|['"\x60]\s*\+\s*(?:Math\.(?:round|floor|ceil|trunc)\(|[\w.$]+\.toFixed\()|\.replace\(\s*['"]\{\w+\}['"]\s*,\s*\(?${RECEIVER}${NUMBER}\)?\s*\)`,
+  String.raw`${NUMBER}\s*\+\s*['"\x60](?!(?:px|deg|em|rem|ms|s|vh|vw|fr|turn)\b|%)|['"\x60]\s*\+\s*(?:Math\.(?:round|floor|ceil|trunc)\(|[\w.$]+\.toFixed\()|\.replace\(\s*['"]\{\w+\}['"]\s*,\s*\(?${RECEIVER}${NUMBER}\)?\s*,?\s*\)`,
 );
 
 /* A raw number in a template hole beside words or markup: text built over
@@ -206,11 +206,26 @@ function withoutSentences(line) {
   return out;
 }
 
+/* A line that ends in `=`, `(` or `,` is read with the lines that finish it:
+   the formatter splits a long call or assignment there. */
+function statements(src) {
+  const out = [];
+  src.split('\n').forEach((line, i) => {
+    const last = out[out.length - 1];
+    if (last && /[=(,]\s*$/.test(last.lines[last.lines.length - 1])) last.lines.push(line.trim());
+    else out.push({ at: i + 1, lines: [line] });
+  });
+  return out;
+}
+
 function latinDigits(src, file) {
-  return src.split('\n').flatMap((line, i) => {
-    const code = withoutSentences(line);
-    const raw = (RENDER.test(line) && RAW_NUMBER.test(code)) || GLUED.test(code) || HOLE.test(code);
-    return raw ? [`${file}:${i + 1}: ${line.trim()}`] : [];
+  return statements(src).flatMap(({ at, lines }) => {
+    const text = lines.join(' ');
+    const code = withoutSentences(text);
+    /* Attributes in markup on a later line are geometry or state, not text. */
+    const sunk = withoutSentences([lines[0], ...lines.slice(1).map(l => l.replace(/<[a-z][^<>]*>/gi, ''))].join(' '));
+    const raw = (RENDER.test(text) && RAW_NUMBER.test(sunk)) || GLUED.test(code) || HOLE.test(code);
+    return raw ? [`${file}:${at}: ${text.trim()}`] : [];
   });
 }
 
@@ -241,6 +256,8 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     "  .replace('{n}', rows.length);",
     "  .replace('{n}', t.toFixed(0));",
     "  .replace('{n}', (i + 1));",
+    'num.textContent =\n  i + 1;',
+    "x = wt('ui.bay', 'Bay {n}').replace(\n  '{n}',\n  rows.length,\n);",
   ]) {
     assert.equal(latinDigits(line, 'probe.js').length, 1, line);
   }
@@ -260,6 +277,8 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
     'bar.style.width = `${Math.round(p)}%`;',
     'd += `M ${Math.round(x)} ${Math.round(y)}`;',
     "g.setAttribute('transform', `translate(${(w / 2).toFixed(1)} 0)`);",
+    "x = wt('ui.bay', 'Bay {n}').replace(\n  '{n}',\n  formatNumber(rows.length),\n);",
+    'a.innerHTML =\n  `<rect x="${(cx - 2).toFixed(1)}" aria-pressed="${String(on)}"/>`;',
   ]) {
     assert.deepEqual(latinDigits(line, 'probe.js'), [], line);
   }

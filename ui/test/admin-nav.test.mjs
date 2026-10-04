@@ -47,7 +47,7 @@ test('an import records what it saved', () => {
   const fn = src.slice(src.indexOf('async function appendItems'), src.indexOf('async function saveOrRevert'));
   assert.match(
     fn,
-    /const landed = saveOrRestore\.capture\(\);[\s\S]*?state\.items = full\.items;\s*_savedItems = JSON\.stringify\(state\.items\);\s*landed\(JSON\.parse\(_savedItems\)\);\s*syncDashSave\(\);/,
+    /state\.items = listAfterImport\(state\.items, current, _serverItems, newItems\);\s*_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = JSON\.stringify\(full\.items\);\s*saveOrRestore\.landed\(JSON\.parse\(_savedItems\)\);\s*syncDashSave\(\);/,
   );
 });
 
@@ -59,7 +59,7 @@ test('list saves run through one queue and undo through one reverting save', () 
   assert.match(src, /revertingSaves\(\{\s*write: save,/);
   assert.match(
     src,
-    /const landed = saveOrRestore\.capture\(\);[\s\S]*?_serverItems = JSON\.stringify\(r\.items\);[\s\S]*?landed\(/,
+    /_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = sent;\s*saveOrRestore\.landed\(JSON\.parse\(sent\)\);/,
   );
 });
 

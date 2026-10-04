@@ -54,46 +54,55 @@ export function snapshotItems(items) {
     this change too. It hands its snapshot to that save, which restores it if it
     also fails.
 
-    A writer calls `capture()` when it reads the list it sends, and calls the
-    function it returns with that list once the write lands. A failed change
-    the landed list already carried restores that list, not the older snapshot:
-    the older snapshot lacks a change the server has, and the next save would
-    delete it.
+    Every writer calls `landed` with the list the server took. A failed save
+    restores that list, not its snapshot, when a write landed after the
+    snapshot was taken: the snapshot lacks a change the server has, and the
+    next save would delete it.
 
     @template T
     @param {{ write: () => Promise<boolean|void>, restore: (snapshot: T) => void }} opts
-    @returns {((snapshot: T) => Promise<boolean>) & { capture: () => (sent: T) => void }} */
+    @returns {((snapshot: T) => Promise<boolean>) & { landed: (sent: T) => void }} */
 export function revertingSaves({ write, restore }) {
   let waiting = 0;
-  let edits = 0;
-  /** @type {{ edit: number, snapshot: T } | null} */
+  let landings = 0;
+  /** @type {T | undefined} */
+  let lastLanded;
+  /** @type {{ seen: number, snapshot: T } | null} */
   let carried = null;
-  /** @type {{ edit: number, sent: T } | null} */
-  let landed = null;
   const save = async (/** @type {T} */ snapshot) => {
-    const edit = ++edits;
+    const seen = landings;
     waiting++;
     let ok = false;
     try {
       ok = (await write()) !== false;
     } finally {
       waiting--;
-      const before = carried || { edit, snapshot };
+      const before = carried || { seen, snapshot };
       carried = null;
       if (!ok) {
         if (waiting > 0) carried = before;
-        else restore(landed && landed.edit >= before.edit ? landed.sent : before.snapshot);
+        else restore(landings > before.seen ? /** @type {T} */ (lastLanded) : before.snapshot);
       }
     }
     return ok;
   };
-  save.capture = () => {
-    const edit = edits;
-    return (/** @type {T} */ sent) => {
-      if (!landed || edit >= landed.edit) landed = { edit, sent };
-    };
+  save.landed = (/** @type {T} */ sent) => {
+    landings++;
+    lastLanded = sent;
   };
   return save;
+}
+
+/** The list a page shows once its import lands. A list change made while the
+    import ran is not in `current`; dropping it lets its queued save send the
+    list without it. A page whose list is stale takes the server list, or its
+    next save deletes what another tab added.
+
+    @param {any[]} local @param {any[]} current the list the import read
+    @param {string} serverItems the server list this page last saw, as JSON
+    @param {any[]} newItems @returns {any[]} */
+export function listAfterImport(local, current, serverItems, newItems) {
+  return JSON.stringify(current) === serverItems ? [...local, ...newItems] : [...current, ...newItems];
 }
 
 /** Run writes one at a time, in the order asked. A write asked for while

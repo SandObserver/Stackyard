@@ -8,6 +8,7 @@ import {
   claimFolderChildren,
   randomSuffix,
   snapshotItems,
+  listAfterImport,
   revertingSaves,
   serialWrites,
 } from '../js/admin-save-logic.js';
@@ -433,19 +434,23 @@ test('a failure handed on is dropped once a later save lands', async () => {
   assert.deepEqual(editor.list, ['a', 'b', 'c']);
 });
 
-/* Each write reads the server, then sends the list as it is at that moment. */
+/* Each write reads the server, then sends the list as it is at that moment.
+   An import lands only when its post is answered. */
 function serverEditor(outcomes) {
   const writes = serialWrites();
-  const editor = { list: ['a'], server: ['a'], results: [], reads: [] };
+  const editor = { list: ['a'], server: ['a'], seen: '["a"]', results: [], reads: [], posts: [] };
+  const gate = queue => new Promise(r => queue.push(r));
+  const land = sent => {
+    editor.server = sent;
+    editor.seen = JSON.stringify(sent);
+    save.landed([...sent]);
+  };
   const save = revertingSaves({
     write: () =>
       writes.run(async () => {
-        await new Promise(r => editor.reads.push(r));
+        await gate(editor.reads);
         if (!outcomes.shift()) return false;
-        const sent = [...editor.list];
-        const landed = save.capture();
-        editor.server = sent;
-        landed([...sent]);
+        land([...editor.list]);
         return true;
       }),
     restore: s => {
@@ -457,18 +462,20 @@ function serverEditor(outcomes) {
     editor.list = [...editor.list, item];
     return save(before).then(r => editor.results.push(r));
   };
-  editor.importItem = item =>
+  editor.importItem = (item, { post = false } = {}) =>
     writes.run(async () => {
-      await new Promise(r => editor.reads.push(r));
-      const landed = save.capture();
-      editor.server = [...editor.server, item];
-      editor.list = [...editor.server];
-      landed([...editor.server]);
+      await gate(editor.reads);
+      const current = [...editor.server];
+      if (post) await gate(editor.posts);
+      editor.list = listAfterImport(editor.list, current, editor.seen, [item]);
+      land([...current, item]);
     });
-  editor.answerRead = async () => {
-    while (!editor.reads.length) await new Promise(r => setTimeout(r));
-    editor.reads.shift()();
+  const answer = async queue => {
+    while (!queue.length) await new Promise(r => setTimeout(r));
+    queue.shift()();
   };
+  editor.answerRead = () => answer(editor.reads);
+  editor.answerPost = () => answer(editor.posts);
   return editor;
 }
 
@@ -523,4 +530,41 @@ test('a failed save after an import lands keeps the imported items', async () =>
   assert.deepEqual(editor.results, [true, false]);
   assert.deepEqual(editor.server, ['a', 'b', 'c', 'X']);
   assert.deepEqual(editor.list, ['a', 'b', 'c', 'X']);
+});
+
+test('a list change made while an import saves reaches the server', async () => {
+  const editor = serverEditor([true]);
+  const imported = editor.importItem('X', { post: true });
+  await editor.answerRead();
+  const change = editor.change('b');
+  await editor.answerPost();
+  await imported;
+  assert.deepEqual(editor.list, ['a', 'b', 'X']);
+  await editor.answerRead();
+  await change;
+  assert.deepEqual(editor.results, [true]);
+  assert.deepEqual(editor.server, ['a', 'b', 'X']);
+});
+
+test('a failed save after an import that read before the change keeps the imported items', async () => {
+  const editor = serverEditor([false, true]);
+  const imported = editor.importItem('X', { post: true });
+  await editor.answerRead();
+  const change = editor.change('b');
+  await editor.answerPost();
+  await imported;
+  await editor.answerRead();
+  await change;
+  assert.deepEqual(editor.results, [false]);
+  assert.deepEqual(editor.server, ['a', 'X']);
+  assert.deepEqual(editor.list, ['a', 'X']);
+  const next = editor.change('c');
+  await editor.answerRead();
+  await next;
+  assert.deepEqual(editor.server, ['a', 'X', 'c']);
+});
+
+test('an import on a stale page shows the server list, not the stale one', () => {
+  assert.deepEqual(listAfterImport(['a', 'b', 'c'], ['a', 'b'], '["a","b"]', ['X']), ['a', 'b', 'c', 'X']);
+  assert.deepEqual(listAfterImport(['a'], ['a', 'z'], '["a"]', ['X']), ['a', 'z', 'X']);
 });
