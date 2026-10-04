@@ -225,6 +225,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show Disk Health bay numbers and the GitHub Contributions total in the
   reader's digits.
 
+- Stop a later list save from silently deleting a change sent during a sign-in
+  retry.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
