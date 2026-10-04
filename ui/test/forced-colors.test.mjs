@@ -167,6 +167,11 @@ test('the first-run password field shows its edge and its focus', () => {
   assert.match(dash, /\.setup-pw:focus\s*\{[^}]*outline:\s*2px solid Highlight/);
 });
 
+test('the sign-in and dialog text fields show their edge and their focus', () => {
+  assert.match(adm, /\.login-pw,\.dlg-field \.inp\{border:1px solid CanvasText\}/);
+  assert.match(adm, /\.login-pw:focus,\.dlg-field \.inp:focus\{outline:2px solid Highlight\}/);
+});
+
 /* Forced colors replaces every colour and fill with a system colour, so a state
    drawn only by them disappears. Opacity, weight, shape and transforms survive.
    A state is marked if some rule for it or for anything under it (a descendant,
