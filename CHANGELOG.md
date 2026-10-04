@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the Clear app icon background as a checkerboard in the colour picker.
 
+- Show numbers in the digits of the language chosen in Settings, such as Persian
+  digits for Persian, instead of the browser's region.
+
 ### Fixed
 
 - Translate the hue, saturation and brightness sliders and the colour code hint
