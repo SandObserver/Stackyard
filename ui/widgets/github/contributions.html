@@ -32,7 +32,7 @@
   <div class="msg wt-cap" id="msg" hidden></div>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=0b7672de';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=0b7672de';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -104,7 +104,7 @@ function _renderGraph(data, weeks, widget) {
   /* Do not name an empty grid. It would report zero contributions as fact. */
   if (weeks.length)
     widget.setAttribute('aria-label',
-      wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', total));
+      wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', formatNumber(total)));
 
   const padded = [];
   for (let i = 0; i < COLS; i++) {
