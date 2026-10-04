@@ -35,13 +35,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Translate the hue, saturation and brightness sliders and the colour code hint
-  in colour pickers.
+- Translate the remaining English labels and hints in Settings, the colour
+  picker and the sign-in screen, and show failure reasons in the selected
+  language.
+
+- Show counts, totals, badge values and other numbers on the dashboard, in
+  widgets and in Settings in the reader's digits.
+
+- Mirror folder rows, the phone folder title and widget swipes in right-to-left
+  languages, and keep brackets around names in place.
 
 - Read Prometheus series whose label values contain spaces.
 
-- Say an address cannot be reached, instead of showing a certificate warning,
-  when a service refuses the connection or cannot be found.
+- Say why an address check got no answer, such as a refused connection, an
+  unknown host or an invalid address, instead of a certificate warning.
 
 - Report a service that hangs up mid-reply at once, instead of as a timeout.
 
@@ -51,79 +58,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refuse a Settings save that would overwrite dashboard changes made in another
   tab or on another device.
 
-- Keep a second dashboard change made while the first is still saving instead of
-  undoing it.
+- Keep both changes when two dashboard edits or two Appearance switches are
+  saved in quick succession.
 
-- Restore the last saved wallpaper, not the one from page load, when a wallpaper
-  link fails.
-
-- Keep a newly uploaded wallpaper when another setting is saved before the
-  wallpaper.
+- Keep the last saved wallpaper when a wallpaper link fails, or when another
+  setting is saved before a new upload.
 
 - Stop a failed Unsplash key save from taking effect until the next config read.
 
-- Use a saved widget's stored API key when its settings Fetch button is pressed,
-  instead of asking for it again.
-
-- Use an app's stored Live Activity headers and parameters when its Fetch button
-  is pressed.
-
-- Show the specific reason a widget settings Fetch failed, such as a private
-  address or an untrusted certificate, instead of a generic message.
-
-- Make the first-run password prompt readable in the light theme.
-
-- Raise the contrast of the dashboard's error and empty screens, the search
-  result addresses and headers, and folder titles in the light theme.
-
-- Keep a stale badge's count at full contrast, with its stale ring visible on
-  light backgrounds.
-
-- Make the password strength meter readable in the light theme.
+- Use a saved widget's or app's stored key, headers and parameters when its
+  Fetch button is pressed, and show the specific reason a Fetch failed.
 
 - Show the Settings load-failure message and Retry button when the config cannot
   be read, readable in both themes.
 
-- Raise the contrast of field placeholders, the sign-in and set-password
-  explanations, the sidebar version and the Hidden pill in the light theme.
+- Raise the contrast of text, badges, fields and icons in the light theme across
+  the dashboard, Settings, the sign-in screens and the DNS and Weather widgets.
 
-- Keep the weather temperature readable on the day card at every reading.
+- Show Settings controls, selected items, keyboard-selected results and text
+  field edges in Windows high contrast mode.
 
-- Show Settings switches and sliders, the selected segment, filter chip and
-  colour swatch, the keyboard-selected search and icon result, and the first-run
-  password field in Windows high contrast mode.
+- Show focus rings on the search, header, poll interval and icon search fields,
+  the Cancel and Import buttons and the Settings sliders.
 
-- Show a focus ring on the header, poll interval and icon search fields and on
-  the Settings sliders.
+- Keep keyboard focus in place when Settings redraws or edits an item, inside
+  the sign-in screen, and off switched-off sections of the item editor.
 
-- Fit the empty dashboard welcome and its import link on short screens and at
-  400% zoom.
+- Name and announce Settings controls, Fetch and Test results, the current
+  section, group headings and folder app badges for screen readers.
 
-- Wrap the Dashboard list filter chips on narrow phones instead of scrolling
-  Settings sideways.
+- Open widget links from the keyboard in the DNS, Weather, GitHub, VPN and
+  Backup widgets, and fix Enter on the Now Playing arrows and Books spines.
 
-- Keep the Settings sidebar on screen while scrolling a long list.
-
-- Keep Settings clear of the notch and rounded corners on an iPhone in
-  landscape.
+- Fit Settings and the empty dashboard on narrow and short screens, at 400% zoom
+  and around the iPhone notch, and keep the Settings sidebar on screen.
 
 - Make folder page dots and badges that open a value list easier to tap.
 
 - Blur the background behind the Settings sign-in and set-password screens on
   Safari 17.
 
-- Stop the dashboard from adding an extra background refresh each time the tab
-  is hidden during a refresh, or when it first opens in a background tab.
+- Style the text field in the current password and New Folder dialogs like other
+  Settings fields.
+
+- Stop extra dashboard and widget refreshes after the tab is hidden, the
+  dashboard page is swiped or a phone rotates.
 
 - Mark badges and health as out of date when the dashboard is signed out,
   instead of showing frozen values as current.
-
-- Load each widget once, not twice, when a phone rotates into the phone layout.
-
-- Stop widgets with an auto-refresh from reloading while the tab is hidden.
-
-- Stop widgets from polling twice as often after the tab is hidden and shown, or
-  the dashboard page is swiped, during a slow refresh.
 
 - Stop the Connections map from adding another animation loop on every refresh
   and resize.
@@ -131,23 +113,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release the Pi-hole session when a DNS widget refresh fails, so repeated
   failures no longer lock the widget out.
 
-- Show an error on the GitHub widget when GitHub rate-limits or fails, instead
-  of zero pull requests or an empty calendar.
-
-- Show an error on the Books widget when the service fails, instead of "No
-  books".
-
-- Show an error on the Weather widget when the provider sends no temperature,
-  instead of 0°.
-
-- Show an error on a Backup card whose server stops answering, instead of its
-  last status.
+- Show an error instead of stale or empty data when the GitHub, Books, Weather,
+  Backup or System Stats source fails, or a Backup job is deleted.
 
 - Make the widget template report failures as errors, so widgets copied from it
   do not show them as empty data.
-
-- Show an error on System Stats when its Beszel system is down or has stopped
-  reporting, instead of its last readings as live values.
 
 - Show a disk that failed its SMART check as failed on Disk Health, instead of
   as a warning.
@@ -158,96 +128,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show "Unknown timezone" on the clock when its timezone name is not recognised,
   instead of a blank or stopped clock.
 
-- Stop the container cleanly on `docker stop` instead of killing the dashboard
-  mid-shutdown.
-
-- Keep keyboard focus in Settings after moving, hiding or editing a dashboard
-  item, when opening or closing the item editor, after an inline edit, and after
-  a form control redraws.
-
-- Give screen readers the right names for Settings edit buttons, pickers, the
-  fullscreen switch, the health check type and the sidebar link, and show focus
-  on the Import buttons.
-
-- Announce Fetch and Test results, the selected colour swatch, the current
-  Settings section and Settings group headings to screen readers.
-
-- Open widget links from the keyboard in the DNS, Weather, GitHub, VPN and
-  Backup widgets, and let Enter on the Now Playing arrows change the item.
-
-- Announce badges of apps inside an open folder to screen readers.
-
-- Keep keyboard focus inside the Settings sign-in screen.
-
-- Show focus rings on the search field and Cancel button.
-
-- Open Settings when the browser blocks site storage.
-
-- Keep both changes when two Appearance switches are flipped in quick
-  succession.
-
-- Translate the remaining English labels and hints in Settings.
-
-- Show the sign-in screen and its errors in the saved language.
-
-- Show the reason for a failed save, upload, import or socket proxy check in the
-  selected language.
-
-- Mirror folder rows, the phone folder title and widget swipes in right-to-left
-  languages.
-
-- Keep brackets around names in place in right-to-left messages.
-
-- Show badge popover values and wallpaper brightness in the reader's digits.
-
-- Show an emoji initial on an app with no icon.
-
-- Raise the contrast of the DNS widget's Allowed headline in the light theme.
-
-- Keep the fields of a switched-off section in the item editor out of keyboard
-  focus and screen reader output.
-
-- Show the import dialog counts, the search result count, System Summary values,
-  Backup ages and the GitHub pull request total in the reader's digits.
-
-- Raise the contrast of the badge list item names, the light-theme search icon,
-  the "(optional)" notes in Settings and the row drag handles.
-
-- Show counts inside translated sentences in the reader's digits.
-
-- Show the page position, the dock limit, label numbers and import totals in the
-  reader's digits.
-
-- Show an error on a Backup card whose job or source was deleted, instead of its
-  last status.
-
-- Stop Enter on a focused book in the Books widget from opening the widget's
-  link.
-
-- Show widget editor row and group numbers in the reader's digits.
-
-- Keep a dashboard change that already reached the server when a later Settings
-  list save fails.
-
-- Show Disk Health bay numbers and the GitHub Contributions total in the
-  reader's digits.
-
-- Stop a later list save from silently deleting a change sent during a sign-in
-  retry.
-
-- Show why a Health Check Test got no answer instead of "HTTP error 0".
-
-- Style the text field in the current password and New Folder dialogs like other
-  Settings fields.
-
 - Show Persian and other joined-script dates correctly on the analog clock in
   Safari.
 
-- Show the edge of the sign-in and Settings dialog text fields in high contrast
-  mode.
+- Show an emoji initial on an app with no icon.
 
-- Say an address is not a valid http or https address in the Health Check Test,
-  instead of "The request was blocked."
+- Open Settings when the browser blocks site storage.
+
+- Stop the container cleanly on `docker stop` instead of killing the dashboard
+  mid-shutdown.
 
 ### Security
 
@@ -261,8 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   read, and show how to fix it.
 
 - Answer only IP addresses, local names and allowed addresses while no password
-  is set, so a web page on another site cannot reach Stackyard through DNS
-  rebinding.
+  is set. Add each extra domain name in Settings, General, Allowed Addresses.
 
 - End the session on the server at sign-out, so a copied session cookie stops
   working.
