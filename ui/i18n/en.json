@@ -268,7 +268,16 @@
     "noConnection": "The connection failed.",
     "duplicateId": "Two items share the id {id}. Each item needs its own id.",
     "missingChildren": "Some items in the folder {id} are not in the file.",
-    "unsafeLink": "The item {id} has a link that is not allowed. Links must use http or https."
+    "unsafeLink": "The item {id} has a link that is not allowed. Links must use http or https.",
+    "refused": "The host refused the connection. Check the port.",
+    "hostNotFound": "The host name could not be found.",
+    "hostUnreachable": "The host could not be reached on the network.",
+    "connectionReset": "The service closed the connection before it answered.",
+    "notHttp": "The service did not answer in HTTP. Check http or https and the port.",
+    "selfSigned": "The service uses a self-signed certificate. Turn on “Allow self-signed certificate” to accept it.",
+    "tlsExpired": "The service's certificate has expired.",
+    "timedOut": "The service did not answer in time.",
+    "demoOutbound": "Checks are turned off in the live demo."
   },
   "home": {
     "search": "Search",

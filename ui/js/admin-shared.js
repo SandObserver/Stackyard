@@ -2,7 +2,7 @@
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=fc7f0836';
 import { el, isolate, q } from '/js/utils.js?v=d845c473';
 import { t } from '/js/i18n.js?v=5a09eb37';
-import { errorAdvice } from '/js/admin-error.js?v=a1f2695a';
+import { errorAdvice } from '/js/admin-error.js?v=3b5d8dfd';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 import { iconChain } from '/js/icons.js?v=9c7b5111';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';

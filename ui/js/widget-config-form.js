@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=5a09eb37';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=d03d0ece';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=d6a34174';
 import { createListbox } from '/js/listbox.js?v=d7c5a298';
-import { renderColorControl } from '/js/admin-color-control.js?v=0e03c814';
+import { renderColorControl } from '/js/admin-color-control.js?v=d45b4f63';
 import {
   seedCarried,
   applyOptionSet,
@@ -14,7 +14,7 @@ import {
   groupBounds,
   visibleFieldFlags,
 } from '/js/admin-logic.js?v=fc7f0836';
-import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=a1f2695a';
+import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=3b5d8dfd';
 import { qi } from '/js/utils.js?v=d845c473';
 import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
 

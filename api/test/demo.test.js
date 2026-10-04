@@ -136,6 +136,7 @@ test('pingUrl makes no outbound request in demo mode', async () => {
   const r = await pingUrl('https://media.example.com');
   assert.equal(r.ok, false);
   assert.equal(r.status, 0);
+  assert.equal(r.code, 'blocked.demo');
 });
 
 /* The demo config is written by hand: a key no widget reads is not an error. */

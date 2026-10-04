@@ -35,6 +35,15 @@ const BY_CODE = Object.freeze({
   'invalid.missing-children': 'adminError.missingChildren',
   'invalid.unsafe-link': 'adminError.unsafeLink',
   'invalid.dock-full': 'app.dockFull',
+  'network.refused': 'adminError.refused',
+  'network.not-found': 'adminError.hostNotFound',
+  'network.unreachable': 'adminError.hostUnreachable',
+  'network.reset': 'adminError.connectionReset',
+  'network.not-http': 'adminError.notHttp',
+  'network.self-signed': 'adminError.selfSigned',
+  'network.tls-expired': 'adminError.tlsExpired',
+  'timeout.no-answer': 'adminError.timedOut',
+  'blocked.demo': 'adminError.demoOutbound',
 });
 
 const BY_KIND = Object.freeze({

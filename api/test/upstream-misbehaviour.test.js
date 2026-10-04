@@ -113,7 +113,7 @@ test('a ping whose DNS lookup hangs stops at its budget', { timeout: 5000 }, asy
   const t0 = Date.now();
   const r = await withHungLookup(t, () => pingChecked('http://hung.example.com/', BUDGET));
   const ms = Date.now() - t0;
-  assert.deepEqual(r, { ok: false, status: 0, error: 'Timed out' });
+  assert.deepEqual(r, { ok: false, status: 0, error: 'Timed out', kind: 'timeout', code: 'timeout.no-answer' });
   assert.ok(ms < BUDGET + TOLERANCE, `took ${ms} ms against a ${BUDGET} ms budget`);
 });
 

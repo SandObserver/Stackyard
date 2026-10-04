@@ -24,11 +24,11 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=d03d0ece';
+} from '/js/admin-shared.js?v=d6a34174';
 import { createListbox } from '/js/listbox.js?v=d7c5a298';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=0e03c814';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=a1f2695a';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d45b4f63';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=3b5d8dfd';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 
@@ -889,9 +889,8 @@ async function testPing() {
   const skipTls = inpById('f-skip-tls')?.checked || false;
   try {
     const r = await apiPost('/api/ping', { url, skipTls });
-    st.textContent = r.ok
-      ? '✓ ' + t('app.reachable', { status: r.status })
-      : '✗ ' + t('app.httpError', { status: r.status });
+    if (r.ok) st.textContent = '✓ ' + t('app.reachable', { status: r.status });
+    else st.textContent = '✗ ' + (r.status ? t('app.httpError', { status: r.status }) : errorText(r));
   } catch (e) {
     st.textContent = '✗ ' + errorText(e);
   }

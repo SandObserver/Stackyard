@@ -1,7 +1,7 @@
 import { state } from '/js/admin-state.js?v=af772a1b';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=d03d0ece';
+import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=d6a34174';
 import { createListbox } from '/js/listbox.js?v=d7c5a298';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=cd1fdac4';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=bd8d82f6';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=fc7f0836';
 import { t } from '/js/i18n.js?v=5a09eb37';

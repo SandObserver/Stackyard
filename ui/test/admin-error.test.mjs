@@ -29,6 +29,17 @@ import {
    needs createRequire rather than a plain import. */
 const require = createRequire(import.meta.url);
 const { KINDS } = require('../../api/src/api-error.js');
+const { _internals } = require('../../api/src/proxy.js');
+
+/* Every reason a ping with no HTTP answer can report. */
+const PING_FAILURES = [
+  ...[...new Set(Object.values(_internals.PING_CODES))].map(code => ({ kind: KIND.NETWORK, code })),
+  { kind: KIND.NETWORK, code: 'network.tls-untrusted' },
+  { kind: KIND.NETWORK, code: 'network.tls-ignored' },
+  { kind: KIND.TIMEOUT, code: 'timeout.no-answer' },
+  { kind: KIND.BLOCKED, code: 'blocked.demo' },
+  { kind: KIND.INVALID, code: 'invalid.url' },
+];
 
 const en = JSON.parse(fs.readFileSync(new URL('../i18n/en.json', import.meta.url), 'utf8'));
 const lookup = key => key.split('.').reduce((o, part) => (o == null ? o : o[part]), en);
@@ -69,6 +80,7 @@ test('every advice the module can produce names a real key with matching placeho
     { kind: KIND.INVALID, code: 'invalid.missing-children', detail: { id: 'media' } },
     { kind: KIND.INVALID, code: 'invalid.unsafe-link', detail: { id: 'x' } },
     { kind: KIND.INVALID, code: 'invalid.dock-full', detail: { max: 4 } },
+    ...PING_FAILURES,
     { kind: 'quota-exceeded', code: 'quota-exceeded.hourly' },
     new Error('something odd'),
     null,
@@ -239,4 +251,18 @@ test('a refused config names the item from the detail, never from the message', 
   assert.deepEqual(errorAdvice({ kind: 'blocked', code: 'blocked.unresolved', detail: { reason: 'unresolved' } }), {
     key: 'adminError.unreachable',
   });
+});
+
+test('each reason a ping can fail has its own sentence, not its kind s', () => {
+  const keys = PING_FAILURES.map(e => errorAdvice(e).key);
+  for (const [i, e] of PING_FAILURES.entries()) {
+    assert.notEqual(keys[i], errorAdvice({ kind: e.kind }).key, e.code);
+  }
+  assert.equal(new Set(keys).size, keys.length, 'two reasons share a sentence');
+});
+
+test('the Health Check Test explains a ping that got no HTTP answer', () => {
+  const src = fs.readFileSync(new URL('../js/admin-app-form.js', import.meta.url), 'utf8');
+  const fn = src.slice(src.indexOf('async function testPing'), src.indexOf('function normKvRows'));
+  assert.match(fn, /r\.status \? t\('app\.httpError', \{ status: r\.status \}\) : errorText\(r\)/);
 });

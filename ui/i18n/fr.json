@@ -273,7 +273,16 @@
     "noConnection": "La connexion a échoué.",
     "duplicateId": "Deux éléments partagent l’identifiant {id}. Chaque élément doit avoir son propre identifiant.",
     "missingChildren": "Le dossier {id} contient des éléments absents du fichier.",
-    "unsafeLink": "L’élément {id} a un lien non autorisé. Les liens doivent utiliser http ou https."
+    "unsafeLink": "L’élément {id} a un lien non autorisé. Les liens doivent utiliser http ou https.",
+    "refused": "L’hôte a refusé la connexion. Vérifiez le port.",
+    "hostNotFound": "Le nom d’hôte est introuvable.",
+    "hostUnreachable": "L’hôte est injoignable sur le réseau.",
+    "connectionReset": "Le service a fermé la connexion avant de répondre.",
+    "notHttp": "Le service n’a pas répondu en HTTP. Vérifiez http ou https et le port.",
+    "selfSigned": "Le service utilise un certificat auto-signé. Activez « Autoriser un certificat auto-signé » pour l’accepter.",
+    "tlsExpired": "Le certificat du service a expiré.",
+    "timedOut": "Le service n’a pas répondu à temps.",
+    "demoOutbound": "Les vérifications sont désactivées dans la démo en ligne."
   },
   "home": {
     "search": "Rechercher",
