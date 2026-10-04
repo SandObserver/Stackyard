@@ -1,11 +1,11 @@
 /* Renders a widget's declared `fields` into a config form and reads the values
    back. Each builder returns { el, get, control, liveValue }. */
 
-import { t } from '/js/i18n.js?v=5a09eb37';
+import { t } from '/js/i18n.js?v=5579776a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=d6a34174';
-import { createListbox } from '/js/listbox.js?v=d7c5a298';
-import { renderColorControl } from '/js/admin-color-control.js?v=d45b4f63';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=8e2c92ea';
+import { createListbox } from '/js/listbox.js?v=11c869c4';
+import { renderColorControl } from '/js/admin-color-control.js?v=6e8d50e9';
 import {
   seedCarried,
   applyOptionSet,
@@ -15,8 +15,8 @@ import {
   visibleFieldFlags,
 } from '/js/admin-logic.js?v=fc7f0836';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=3b5d8dfd';
-import { qi } from '/js/utils.js?v=d845c473';
-import { formatNumber } from '/js/format-number.js?v=4a5ccef4';
+import { qi } from '/js/utils.js?v=fdc0243f';
+import { formatNumber } from '/js/format-number.js?v=349a741d';
 
 const PE =
   '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';

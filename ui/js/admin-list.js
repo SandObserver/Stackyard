@@ -14,12 +14,12 @@
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
 import { snapshotItems } from '/js/admin-save-logic.js?v=ae65f9c8';
 import { reorderItems } from '/js/admin-logic.js?v=fc7f0836';
-import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=863a8575';
-import { paintIcon } from '/js/admin-shared.js?v=d6a34174';
-import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=d845c473';
+import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=5e9c57c7';
+import { paintIcon } from '/js/admin-shared.js?v=8e2c92ea';
+import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=fdc0243f';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=5a09eb37';
-import { sizeLabel } from '/js/admin-widget-form.js?v=e89a73d9';
+import { t } from '/js/i18n.js?v=5579776a';
+import { sizeLabel } from '/js/admin-widget-form.js?v=9ae91b4f';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=648cc374';
 import { iconSvg } from '/js/icon-set.js?v=34af798f';
 

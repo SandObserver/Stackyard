@@ -1,6 +1,5 @@
-/* The language setting picks the words and the locale picks the digits. Neither
-   Arabic nor Persian always uses native digits: it depends on the country and
-   the reader can choose.
+/* The language setting picks the words and the digits. A browser locale that
+   names its own numbering system overrides the digits.
 
    A number that identifies rather than counts is left alone. So is a number no
    person reads: an SVG coordinate or a CSS length in Persian digits does not
@@ -18,12 +17,13 @@ register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
-async function withLocale(tag, fn) {
+async function withLocale(tag, fn, language) {
   const had = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
   Object.defineProperty(globalThis, 'navigator', { value: { language: tag }, configurable: true });
   try {
     /* The module caches one formatter, so it has to be re-imported per locale. */
-    const mod = await import(`../js/format-number.js?locale=${encodeURIComponent(tag)}`);
+    const mod = await import(`../js/format-number.js?locale=${encodeURIComponent(tag)}&lang=${language ?? ''}`);
+    if (language) mod.setNumberLanguage(language);
     return fn(mod);
   } finally {
     if (had) Object.defineProperty(globalThis, 'navigator', had);
@@ -44,6 +44,31 @@ test('a Persian speaker who asks for Latin digits gets them', async () => {
   await withLocale('fa-IR-u-nu-latn', ({ formatNumber }) => {
     assert.equal(formatNumber(128), '128');
   });
+});
+
+test('Persian chosen in Stackyard gets Persian digits on an English browser', async () => {
+  await withLocale(
+    'en-US',
+    ({ formatNumber, localiseDigits }) => {
+      assert.equal(formatNumber(128), '۱۲۸');
+      assert.match(formatNumber(0.5, { style: 'percent' }), /۵۰/);
+      assert.equal(localiseDigits('3h'), '۳h');
+    },
+    'fa',
+  );
+});
+
+test('English chosen in Stackyard gets Latin digits on a Persian browser', async () => {
+  await withLocale('fa-IR', ({ formatNumber }) => assert.equal(formatNumber(128), '128'), 'en');
+});
+
+test('a browser locale that names its digits overrides the language', async () => {
+  await withLocale('en-US-u-nu-latn', ({ formatNumber }) => assert.equal(formatNumber(128), '128'), 'fa');
+});
+
+test('both pages hand the language to the formatter', () => {
+  assert.match(read('js/i18n.js'), /setNumberLanguage\(current\);/);
+  assert.match(read('js/widget-toolbox.js'), /setNumberLanguage\(_lang\);/);
 });
 
 test('the other five languages are unaffected', async () => {
