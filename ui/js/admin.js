@@ -210,7 +210,7 @@ async function appendItems(newItems) {
     state.items = next.items;
     _serverItems = JSON.stringify(r.items);
     _savedItems = JSON.stringify(next.saved);
-    saveOrRestore.landed(JSON.parse(JSON.stringify(full.items)));
+    saveOrRestore.landed(JSON.parse(_savedItems));
     syncDashSave();
   } finally {
     render();

@@ -47,7 +47,7 @@ test('an import records what it saved', () => {
   const fn = src.slice(src.indexOf('async function appendItems'), src.indexOf('async function saveOrRevert'));
   assert.match(
     fn,
-    /state\.items = next\.items;\s*_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = JSON\.stringify\(next\.saved\);\s*saveOrRestore\.landed\(JSON\.parse\(JSON\.stringify\(full\.items\)\)\);\s*syncDashSave\(\);/,
+    /state\.items = next\.items;\s*_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = JSON\.stringify\(next\.saved\);\s*saveOrRestore\.landed\(JSON\.parse\(_savedItems\)\);\s*syncDashSave\(\);/,
   );
 });
 
