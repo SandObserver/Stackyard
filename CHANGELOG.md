@@ -228,6 +228,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop a later list save from silently deleting a change sent during a sign-in
   retry.
 
+- Show why a Health Check Test got no answer instead of "HTTP error 0".
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
