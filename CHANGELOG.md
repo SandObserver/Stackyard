@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add Allowed Addresses to Settings, General, to list the host names Stackyard
-  answers on while no password is set.
+- Add Allowed Addresses to Settings, General, to list extra host names
+  Stackyard answers on while no password is set.
 
 - Add a Type to Search switch to Settings, so typing on the dashboard can stop
   opening search.
