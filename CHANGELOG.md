@@ -230,6 +230,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show why a Health Check Test got no answer instead of "HTTP error 0".
 
+- Style the text field in the current password and New Folder dialogs like other
+  Settings fields.
+
 ### Security
 
 - Stop a widget provider set to an inherited object name from returning saved
