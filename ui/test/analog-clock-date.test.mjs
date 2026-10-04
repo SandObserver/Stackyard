@@ -31,3 +31,9 @@ test('each disc repeats the date clipped to itself, before the next disc', () =>
 test('every copy of the date shows the same text', () => {
   assert.match(src, /for\(const n of _dateTexts\) n\.textContent=d;/);
 });
+
+/* Safari draws spaced SVG text one glyph at a time. Persian and Arabic letters
+   then lose their joins and run in reverse. */
+test('the date on the dial has no letter spacing', () => {
+  assert.doesNotMatch(src.match(/\.face text \{[^}]*\}/)[0], /letter-spacing/);
+});
