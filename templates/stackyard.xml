@@ -24,55 +24,178 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.15.0 - 2026-09-28
+### 1.16.0 - 2026-10-04
 
 ### Added
 
-- Add swatches and hue, saturation and brightness sliders to the Solid color
-  background.
+- Add Allowed Addresses to Settings, General, to list extra host names
+  Stackyard answers on while no password is set.
+
+- Add a Type to Search switch to Settings, so typing on the dashboard can stop
+  opening search.
 
 ### Changed
 
-- Restyle Settings to match iOS and iPadOS 27.
+- Keep widget pages in the browser cache between dashboard loads, and check
+  translation files for changes instead of downloading them again in every
+  widget.
 
-- Restyle the home screen and app icons to match iOS and iPadOS 27.
+- Make typing in search faster when folders match, and show the dashboard sooner
+  on slow connections by sending its start-up requests together.
 
-- Give widget cards the iOS 27 edge light and drop the uppercase widget
-  headings.
+- Show the Clear app icon background as a checkerboard in the colour picker.
 
-- Redraw the logo as exact geometry in the favicon, the app icons and Settings.
+- Show numbers in the digits of the language chosen in Settings, such as Persian
+  digits for Persian, instead of the browser's region.
+
+- Show the Shahanshahi date with its year on the clock in Persian.
+
+- Draw the analog clock date at the same weight as the digital clock date.
 
 ### Fixed
 
-- Admin error messages for badge tests and widget option fetches are translated
-  instead of always English.
+- Translate the remaining English labels and hints in Settings, the colour
+  picker and the sign-in screen, and show failure reasons in the selected
+  language.
 
-- A failed badge test reports why the request failed instead of always blaming a
-  missing API path.
+- Show counts, totals, badge values and other numbers on the dashboard, in
+  widgets and in Settings in the reader's digits.
 
-- Status and error messages in Settings use the full width of their row instead
-  of wrapping in a narrow strip.
+- Mirror folder rows, the phone folder title and widget swipes in right-to-left
+  languages, and keep brackets around names in place.
 
-- A malformed background colour falls back to the default instead of painting an
-  unintended colour.
+- Read Prometheus series whose label values contain spaces.
 
-- Show a message in Settings when the Unsplash wallpaper cannot be loaded.
+- Say why an address check got no answer, such as a refused connection, an
+  unknown host or an invalid address, instead of a certificate warning.
 
-- Hide the empty page indicator on the connection error screen.
+- Report a service that hangs up mid-reply at once, instead of as a timeout.
 
-- Opening an app from search opens one tab, not two.
+- Answer an oversized icon upload or wallpaper link with an error instead of
+  dropping the connection.
 
-- Dashboard switch names are readable in the light theme.
+- Refuse a Settings save that would overwrite dashboard changes made in another
+  tab or on another device.
 
-- Show the whole logo on the empty dashboard in the light theme.
+- Keep both changes when two dashboard edits or two Appearance switches are
+  saved in quick succession.
 
-- Fill the Android home screen icon to its edges instead of leaving transparent
-  corners.
+- Keep the last saved wallpaper when a wallpaper link fails, or when another
+  setting is saved before a new upload.
 
-- Turning off Allow Fullscreen on an iframe widget now stops the framed page
-  going fullscreen.
+- Stop a failed Unsplash key save from taking effect until the next config read.
 
-- Open folders no longer wash out the wallpaper in the light theme.
+- Use a saved widget's or app's stored key, headers and parameters when its
+  Fetch button is pressed, and show the specific reason a Fetch failed.
+
+- Show the Settings load-failure message and Retry button when the config cannot
+  be read, readable in both themes.
+
+- Raise the contrast of text, badges, fields and icons in the light theme across
+  the dashboard, Settings, the sign-in screens and the DNS and Weather widgets.
+
+- Show Settings controls, selected items, keyboard-selected results and text
+  field edges in Windows high contrast mode.
+
+- Show focus rings on the search, header, poll interval and icon search fields,
+  the Cancel and Import buttons and the Settings sliders.
+
+- Keep keyboard focus in place when Settings redraws or edits an item, inside
+  the sign-in screen, and off switched-off sections of the item editor.
+
+- Name and announce Settings controls, Fetch and Test results, the current
+  section, group headings and folder app badges for screen readers.
+
+- Open widget links from the keyboard in the DNS, Weather, GitHub, VPN and
+  Backup widgets, and fix Enter on the Now Playing arrows and Books spines.
+
+- Fit Settings and the empty dashboard on narrow and short screens, at 400% zoom
+  and around the iPhone notch, and keep the Settings sidebar on screen.
+
+- Make folder page dots and badges that open a value list easier to tap.
+
+- Blur the background behind the Settings sign-in and set-password screens on
+  Safari 17.
+
+- Style the text field in the current password and New Folder dialogs like other
+  Settings fields.
+
+- Stop extra dashboard and widget refreshes after the tab is hidden, the
+  dashboard page is swiped or a phone rotates.
+
+- Mark badges and health as out of date when the dashboard is signed out,
+  instead of showing frozen values as current.
+
+- Stop the Connections map from adding another animation loop on every refresh
+  and resize.
+
+- Release the Pi-hole session when a DNS widget refresh fails, so repeated
+  failures no longer lock the widget out.
+
+- Show an error instead of stale or empty data when the GitHub, Books, Weather,
+  Backup or System Stats source fails, or a Backup job is deleted.
+
+- Make the widget template report failures as errors, so widgets copied from it
+  do not show them as empty data.
+
+- Show a disk that failed its SMART check as failed on Disk Health, instead of
+  as a warning.
+
+- Colour each System Stats value with its own slot colour, whatever the slot
+  order.
+
+- Show "Unknown timezone" on the clock when its timezone name is not recognised,
+  instead of a blank or stopped clock.
+
+- Show Persian and other joined-script dates correctly on the analog clock in
+  Safari.
+
+- Show an emoji initial on an app with no icon.
+
+- Open Settings when the browser blocks site storage.
+
+- Stop the container cleanly on `docker stop` instead of killing the dashboard
+  mid-shutdown.
+
+### Security
+
+- Stop a widget provider set to an inherited object name from returning saved
+  API keys.
+
+- Require the current password to change the password or turn off password
+  protection.
+
+- Keep sign-in on and refuse saves when the config file is damaged or cannot be
+  read, and show how to fix it.
+
+- Answer only IP addresses, local names and allowed addresses while no password
+  is set. Add each extra domain name in Settings, General, Allowed Addresses.
+
+- End the session on the server at sign-out, so a copied session cookie stops
+  working.
+
+- End every session 30 days after sign-in, even while it is in use.
+
+- Stop a crafted XML or Prometheus reply from a configured service from freezing
+  the API.
+
+- Close health checks and refused redirects against a service that streams
+  without end, so they no longer pile up connections.
+
+- Count the DNS lookup toward the time limit for addresses tested in Settings.
+
+- Keep malformed request bodies, such as a mistyped password, out of the server
+  log.
+
+- Stop requests for unknown widget ids from growing the API's memory.
+
+- Refuse a Dashy or Homepage import file that expands to more than 5,000
+  entries, instead of freezing the page.
+
+- Send a restrictive Content-Security-Policy on API responses.
+
+- Apply the Compose file's capability, privilege and resource limits to the
+  Unraid template.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
