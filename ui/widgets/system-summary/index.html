@@ -29,24 +29,35 @@
   .size-medium .lbl { max-width: 104px; }
   .size-medium .lbl { font-size: 12px; line-height: 1.2; }
   .size-medium .val { font-size: 19px; }
-  .plot { height: 100%; max-height: 30px; }
+  .plot { height: 100%; max-height: 30px; touch-action: pan-y; }
   .size-medium .cap { grid-column: 1 / -1; }
-  .disk { display: flex; flex-direction: column; gap: 4px; }
+  .disk { position: relative; touch-action: pan-y; }
+  .bars { display: flex; flex-direction: column; gap: 4px; transition: opacity 0.2s ease; }
   .second .tb-bar-fill { opacity: 0.7; }
+  .sizes { position: absolute; inset-inline-start: 0; top: 50%; transform: translateY(-50%); opacity: 0;
+    font-size: 12px; font-weight: 500; color: #8E8E93; white-space: nowrap; transition: opacity 0.2s ease; }
+  .disk.show .bars { opacity: 0; }
+  .disk.show .sizes { opacity: 1; }
+  .size-small .val.detail { font-size: 13px; font-weight: 600; letter-spacing: 0; color: #8E8E93; }
+  .tb-col-mark { background-color: rgba(255,255,255,0.9); }
 
   .tb-bar, .tb-col { background-color: rgba(255,255,255,0.12); }
-  .net { grid-column: 2; display: flex; gap: 12px; font-size: 11px; font-weight: 500;
+  .net { grid-column: 1 / -1; display: flex; gap: 12px; font-size: 11px; font-weight: 500;
     color: #8E8E93; white-space: nowrap; }
   .net-item { display: inline-flex; align-items: center; gap: 2px; }
 
   html[data-theme="light"], html[data-theme="light"] body { background: #FFFFFF; }
-  html[data-theme="light"] .lbl, html[data-theme="light"] .net { color: #6C6C70; }
+  html[data-theme="light"] .lbl, html[data-theme="light"] .net, html[data-theme="light"] .sizes,
+  html[data-theme="light"] .size-small .val.detail { color: #6C6C70; }
+  html[data-theme="light"] .tb-col-mark { background-color: rgba(0,0,0,0.75); }
+  @media (prefers-reduced-motion: reduce) { .bars, .sizes { transition: none; } }
   html[data-theme="light"] .tb-bar, html[data-theme="light"] .tb-col { background-color: rgba(0,0,0,0.07); }
 
   @media (forced-colors: active) {
     .tb-bar, .tb-col { forced-color-adjust: none; background-color: Canvas !important;
       outline: 1px solid CanvasText; outline-offset: -1px; }
     .tb-bar-fill, .tb-col-fill { forced-color-adjust: none; background-color: Highlight !important; }
+    .tb-col-mark { forced-color-adjust: none; background-color: CanvasText !important; }
   }
 </style>
 </head>
@@ -57,7 +68,7 @@
      charts' time axis right to left. -->
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <script type="module">
-import { contrastInk, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=9ee71c7a';
+import { contrastInk, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=803737aa';
 await loadStrings();
 const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;
@@ -68,6 +79,7 @@ const REMOTE_THROUGHPUT_MS = 10000;
 const SEED_STEP_MS = 10000;
 const COLS = 24;
 const SLOT_DEFS = ['#FF375F', '#30D158', '#00D2E0'];
+const LANG = new URLSearchParams(location.search).get('lang') || 'en';
 const DEFAULT_SLOTS = [{ type: 'cpu' }, { type: 'ram' }, { type: 'disk', primary: '/' }];
 const id       = new URLSearchParams(location.search).get('id') || '';
 const API      = '/api';
@@ -78,8 +90,10 @@ let tickMs = 10000;
 let medium = true;
 let lastSampleAt = 0;
 
-/* One entry per slot: { vals } holds the newest COLS readings, oldest first. */
+/* One entry per slot: { vals } holds the newest COLS readings, oldest first.
+   stamps holds when each column was read, shared by every slot. */
 const history = [{}, {}, {}];
+let stamps = Array(COLS).fill(null);
 /** @type {{ slot: any, label: string, el: HTMLElement, val: HTMLElement, chart?: ReturnType<typeof columns>, bar?: HTMLElement, bar2?: HTMLElement }[]} */
 const rows = [];
 
@@ -163,29 +177,44 @@ function buildShell() {
     const row = el('div', 'row');
     const lbl = el('span', 'lbl', label);
     const val = el('span', 'val', '—');
-    const entry = { slot, label, colour, el: row, val };
+    const entry = { slot, idx: i, label, colour, el: row, lbl, val, latest: '—', sizes: '', hover: null };
     history[i].vals = Array(COLS).fill(null);
 
     if (!medium) {
       row.append(lbl, val);
+      if (slot.type === 'disk') holdToShow(row, on => showSizes(entry, on));
     } else {
       const head = el('div', 'head');
       head.append(lbl, val);
       row.append(head);
       if (slot.type === 'disk') {
         const box = el('div', 'disk');
+        const bars = el('div', 'bars');
         entry.bar = barFill(0, { height: 8, radius: 4, track: null, color: colour });
-        box.append(entry.bar);
+        bars.append(entry.bar);
         if (slot.secondary) {
           entry.bar2 = barFill(0, { height: 4, radius: 2, track: null, color: colour });
           entry.bar2.classList.add('second');
-          box.append(entry.bar2);
+          bars.append(entry.bar2);
         }
+        entry.sizeEl = el('span', 'sizes');
+        entry.box = box;
+        box.append(bars, entry.sizeEl);
+        holdToShow(box, on => showSizes(entry, on));
         row.append(box);
       } else {
         entry.chart = columns({ count: COLS, color: colour, track: null });
         const plot = el('div', 'plot');
         plot.append(entry.chart.el);
+        const scrub = e => {
+          entry.hover = entry.chart.indexAt(e.clientX);
+          showHover(entry);
+        };
+        plot.addEventListener('pointerdown', scrub);
+        plot.addEventListener('pointermove', scrub);
+        plot.addEventListener('pointerleave', () => endHover(entry));
+        plot.addEventListener('pointercancel', () => endHover(entry));
+        plot.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') endHover(entry); });
         row.append(plot);
       }
     }
@@ -214,6 +243,58 @@ function applyInks() {
     if (r.chart) r.chart.setColor(fill);
     for (const bar of [r.bar, r.bar2]) if (bar) bar.firstElementChild.style.backgroundColor = fill;
   }
+}
+
+/* Pointer and touch only. The current figures never depend on it: the row
+   shows them at rest, and the summary paragraph reads them out. */
+function holdToShow(target, show) {
+  target.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(true); });
+  target.addEventListener('pointerdown', () => show(true));
+  target.addEventListener('pointerleave', () => show(false));
+  target.addEventListener('pointercancel', () => show(false));
+  target.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') show(false); });
+}
+
+function showSizes(entry, on) {
+  const show = on && !!entry.sizes;
+  if (entry.box) {
+    entry.box.classList.toggle('show', show);
+  } else {
+    entry.val.classList.toggle('detail', show);
+    entry.val.textContent = show ? entry.sizes : entry.latest;
+  }
+  entry.showing = show;
+}
+
+const rtf = (() => {
+  try {
+    return new Intl.RelativeTimeFormat(LANG, { numeric: 'auto', style: 'short' });
+  } catch {
+    return null;
+  }
+})();
+function ageText(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (!rtf) return '';
+  return s < 60 ? rtf.format(-s, 'second') : rtf.format(-Math.round(s / 60), 'minute');
+}
+
+/* The column under the pointer stays put while new readings arrive, so its
+   figure follows whatever is drawn there. */
+function showHover(entry) {
+  const i = entry.hover;
+  if (i === null) return;
+  const v = history[entry.idx].vals[i];
+  entry.chart.mark(i);
+  entry.lbl.textContent = stamps[i] ? ageText(Date.now() - stamps[i]) : entry.label;
+  entry.val.textContent = valueText(entry.slot.type, v ?? null);
+}
+
+function endHover(entry) {
+  entry.hover = null;
+  entry.chart.mark(null);
+  entry.lbl.textContent = entry.label;
+  entry.val.textContent = entry.latest;
 }
 
 const ARROW_DOWN = html`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg>`;
@@ -311,13 +392,22 @@ function scaleFor(type, vals) {
   return { min: lo - ((hi - lo) * 12) / 88, max: hi, dim: v => v <= mean };
 }
 
-const LANG = new URLSearchParams(location.search).get('lang') || 'en';
 function listOf(items) {
   try {
     return new Intl.ListFormat(LANG, { style: 'short', type: 'unit' }).format(items);
   } catch {
     return items.join(', ');
   }
+}
+
+/* TB and GB are symbols, not words: only the figures are localised. */
+function sizeText(d) {
+  const total = reading(d?.totalGb);
+  const pct = share(d);
+  if (!total || pct === null) return '';
+  const tb = total >= 1000;
+  const f = v => formatNumber(Number((tb ? v / 1024 : v).toFixed(tb ? 1 : 0)));
+  return `${f((pct / 100) * total)} / ${f(total)} ${tb ? 'TB' : 'GB'}`;
 }
 
 const share = d => { const v = reading(d?.usedPct); return v === null ? null : Math.min(v, 100); };
@@ -330,8 +420,13 @@ function applyStats(raw) {
   /* A gap longer than the whole chart means every column is from another
      time. Drawing new readings beside them would join two unrelated stretches. */
   const now = Date.now();
-  if (lastSampleAt && now - lastSampleAt > tickMs * COLS) for (const h of history) if (h.vals) h.vals = Array(COLS).fill(null);
+  if (lastSampleAt && now - lastSampleAt > tickMs * COLS) {
+    for (const h of history) if (h.vals) h.vals = Array(COLS).fill(null);
+    stamps = Array(COLS).fill(null);
+  }
   lastSampleAt = now;
+  stamps.push(now);
+  stamps.shift();
 
   const step = Math.max(1, Math.round(tickMs / SEED_STEP_MS));
   const spoken = [];
@@ -340,20 +435,33 @@ function applyStats(raw) {
     if (slot.type === 'disk') {
       const p = share(byMount.get(slot.primary || '/'));
       const s = slot.secondary ? share(byMount.get(slot.secondary)) : null;
-      r.val.textContent = valueText('disk', p);
+      r.latest = valueText('disk', p);
+      /* Small draws only the first disk, so it names only that one. */
+      r.sizes = [sizeText(byMount.get(slot.primary || '/')), medium && slot.secondary ? sizeText(byMount.get(slot.secondary)) : '']
+        .filter(Boolean)
+        .join(' · ');
+      if (r.sizeEl) r.sizeEl.textContent = r.sizes;
+      if (!r.showing || r.box) r.val.textContent = r.latest;
+      else r.val.textContent = r.sizes || r.latest;
       if (r.bar) r.bar.firstElementChild.style.width = (p ?? 0) + '%';
       if (r.bar2) r.bar2.firstElementChild.style.width = (s ?? 0) + '%';
-      if (p !== null) spoken.push(`${r.label} ${r.val.textContent}`);
+      if (p !== null) spoken.push(`${r.label} ${r.latest}`);
       return;
+    }
+    if (!r.seededStamps && data.history) {
+      r.seededStamps = true;
+      stamps = stamps.map((t, k) => t ?? now - (COLS - 1 - k) * tickMs);
     }
     seedFromPast(slot, i, data.history, step);
     const v = readingFor(slot, data);
     const h = history[i].vals;
     h.push(v);
     h.shift();
-    r.val.textContent = valueText(slot.type, v);
+    r.latest = valueText(slot.type, v);
     if (r.chart) r.chart.update(h, scaleFor(slot.type, h));
-    if (v !== null) spoken.push(`${r.label} ${r.val.textContent}`);
+    if (r.hover === null) r.val.textContent = r.latest;
+    else showHover(r);
+    if (v !== null) spoken.push(`${r.label} ${r.latest}`);
   });
 
   /* Slot 4 in Uptime mode reads from the same system poll. */

@@ -279,7 +279,7 @@ export function barFill(percent, opts = {}) {
     track: null paints no track, so the page styles .tb-col per theme.
 
     @param {{ count?: number, color?: string, track?: string | null, gap?: number, radius?: number }} [opts]
-    @returns {{ el: HTMLElement, update: (values: unknown[], scale?: { min?: number, max?: number, dim?: (v: number) => boolean }) => void, setColor: (color: string) => void }} */
+    @returns {{ el: HTMLElement, update: (values: unknown[], scale?: { min?: number, max?: number, dim?: (v: number) => boolean }) => void, setColor: (color: string) => void, indexAt: (clientX: number) => number, mark: (index: number | null) => void }} */
 export function columns(opts = {}) {
   const count = Math.max(1, Math.floor(Number(opts.count) || 24));
   const radius = opts.radius != null ? opts.radius : 3;
@@ -289,6 +289,10 @@ export function columns(opts = {}) {
   el.style.cssText = `display:flex;align-items:stretch;height:100%;gap:${opts.gap != null ? opts.gap : 3}px`;
   /** @type {HTMLElement[]} */
   const fills = [];
+  /** @type {HTMLElement[]} */
+  const cols = [];
+  /** @type {HTMLElement | null} */
+  let marker = null;
   for (let i = 0; i < count; i++) {
     const col = document.createElement('div');
     col.className = 'tb-col';
@@ -300,6 +304,7 @@ export function columns(opts = {}) {
     fill.style.backgroundColor = color;
     col.appendChild(fill);
     el.appendChild(col);
+    cols.push(col);
     fills.push(fill);
   }
   return {
@@ -327,6 +332,30 @@ export function columns(opts = {}) {
     setColor(next) {
       color = colorOrFallback(next, color);
       for (const fill of fills) fill.style.backgroundColor = color;
+    },
+    /** The column under a pointer, so the whole plot is the hit target.
+        @param {number} clientX @returns {number} */
+    indexAt(clientX) {
+      const box = el.getBoundingClientRect();
+      const share = box.width > 0 ? (clientX - box.left) / box.width : 1;
+      return Math.max(0, Math.min(count - 1, Math.floor(share * count)));
+    },
+    /** A thin marker on one column, or none. track: null leaves its colour to
+        the page as .tb-col-mark.
+        @param {number | null} index */
+    mark(index) {
+      if (index === null || !Number.isInteger(index) || index < 0 || index >= count) {
+        marker?.remove();
+        return;
+      }
+      if (!marker) {
+        marker = document.createElement('div');
+        marker.className = 'tb-col-mark';
+        marker.style.cssText =
+          'position:absolute;top:0;bottom:0;left:50%;width:2px;border-radius:1px;transform:translateX(-50%)';
+        if (opts.track !== null) marker.style.backgroundColor = 'rgba(255,255,255,0.9)';
+      }
+      cols[index].appendChild(marker);
     },
   };
 }

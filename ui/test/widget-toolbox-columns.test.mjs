@@ -113,3 +113,33 @@ test('a faint colour is moved only as far as the card needs', () => {
 test('anything but six-digit hex comes back unchanged', () => {
   for (const v of ['rgb(1,2,3)', '#abc', '', undefined]) assert.equal(contrastInk(v), v);
 });
+
+test('the whole plot is the hit target, clamped to the first and last column', () => {
+  const c = columns({ count: 4 });
+  c.el.getBoundingClientRect = () => ({ left: 100, width: 200 });
+  assert.equal(c.indexAt(100), 0);
+  assert.equal(c.indexAt(149), 0);
+  assert.equal(c.indexAt(150), 1);
+  assert.equal(c.indexAt(299), 3);
+  assert.equal(c.indexAt(40), 0, 'left of the plot');
+  assert.equal(c.indexAt(900), 3, 'right of the plot');
+});
+
+test('one marker moves between columns and leaves on null', () => {
+  const c = columns({ count: 3, track: null });
+  c.mark(1);
+  const marker = c.el.children[1].children[1];
+  assert.equal(marker.className, 'tb-col-mark');
+  assert.equal(marker.style.backgroundColor, undefined, 'the page colours it');
+  let removed = false;
+  marker.remove = () => {
+    removed = true;
+  };
+  c.mark(2);
+  assert.equal(c.el.children[2].children[1], marker, 'the same marker, not a second one');
+  c.mark(null);
+  assert.equal(removed, true);
+  c.mark(7);
+  c.mark(-1);
+  c.mark(1.5);
+});
