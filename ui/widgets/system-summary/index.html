@@ -43,6 +43,8 @@
   .disk.show .bars { opacity: 0; }
   .disk.show .sizes { opacity: 1; }
   .size-small .val.detail { font-size: 13px; font-weight: 600; letter-spacing: 0; color: #8E8E93; }
+  .size-small .val.detail.two { display: flex; flex-direction: column; align-items: flex-end;
+    font-size: 11px; line-height: 13px; }
   .tb-col-mark { background-color: rgba(255,255,255,0.9); }
 
   .tb-bar, .tb-col { background-color: rgba(255,255,255,0.12); }
@@ -174,14 +176,17 @@ function buildShell() {
   const net = medium && wc.network?.enabled ? wc.network : null;
 
   w.className = 'widget ' + (medium ? 'size-medium' : 'size-small');
-  if (medium) w.style.gridTemplateRows = `repeat(${slots.length}, 1fr) auto auto`;
+  /* Auto tracks for what is drawn, so space-between leaves the same gap above
+     the network line as between rows. The caption adds its own track only
+     while it shows. */
+  if (medium) w.style.gridTemplateRows = `repeat(${slots.length + (net ? 1 : 0)}, auto)`;
   slots.forEach((slot, i) => {
     const label = slotLabel(slot);
     const colour = slotColour(slot, i);
     const row = el('div', 'row');
     const lbl = el('span', 'lbl', label);
     const val = el('span', 'val', '—');
-    const entry = { slot, idx: i, label, colour, el: row, lbl, val, latest: '—', sizes: '', hover: null };
+    const entry = { slot, idx: i, label, colour, el: row, lbl, val, latest: '—', sizes: '', sizeList: [], hover: null };
     history[i].vals = Array(COLS).fill(null);
 
     if (!medium) {
@@ -277,7 +282,9 @@ function showSizes(entry, on) {
     entry.box.classList.toggle('show', show);
   } else {
     entry.val.classList.toggle('detail', show);
-    entry.val.textContent = show ? entry.sizes : entry.latest;
+    entry.val.classList.toggle('two', show && entry.sizeList.length > 1);
+    entry.val.textContent = show && entry.sizeList.length < 2 ? entry.sizes : show ? '' : entry.latest;
+    if (show && entry.sizeList.length > 1) for (const line of entry.sizeList) entry.val.append(el('span', null, line));
   }
   entry.showing = show;
 }
@@ -487,13 +494,13 @@ function applyStats(raw) {
       const p = share(byMount.get(slot.primary || '/'));
       const s = slot.secondary ? share(byMount.get(slot.secondary)) : null;
       r.latest = valueText('disk', p);
-      /* Small draws only the first disk, so it names only that one. */
-      r.sizes = [sizeText(byMount.get(slot.primary || '/')), medium && slot.secondary ? sizeText(byMount.get(slot.secondary)) : '']
-        .filter(Boolean)
-        .join(' · ');
+      r.sizeList = [sizeText(byMount.get(slot.primary || '/')), slot.secondary ? sizeText(byMount.get(slot.secondary)) : ''].filter(
+        Boolean,
+      );
+      r.sizes = r.sizeList.join(' · ');
       if (r.sizeEl) r.sizeEl.textContent = r.sizes;
       if (!r.showing || r.box) r.val.textContent = r.latest;
-      else r.val.textContent = r.sizes || r.latest;
+      else showSizes(r, true);
       if (r.bar) r.bar.firstElementChild.style.width = (p ?? 0) + '%';
       if (r.bar2) r.bar2.firstElementChild.style.width = (s ?? 0) + '%';
       if (p !== null) spoken.push(`${r.label} ${r.latest}`);
