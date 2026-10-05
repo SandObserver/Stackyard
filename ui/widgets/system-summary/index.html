@@ -7,158 +7,130 @@
 <script src="/js/widget-theme.js?v=db11b06d"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #1c1c1e;
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1C1C1E;
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 
-  /* ── Layout ── */
-  .widget { width: 100%; height: 100%; display: flex; flex-direction: column;
-    padding: 12px 14px 12px 16px; gap: 0; container-type: inline-size;
-    justify-content: space-evenly; }
-  .widget.size-medium { flex-direction: row; }
+  .widget { width: 100%; height: 100%; font-variant-numeric: tabular-nums; }
+  .lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 600; color: #8E8E93; }
+  .val { white-space: nowrap; font-weight: 700; line-height: 1.1; color: var(--ink); }
 
-  /* Small: stacked rows, each a label above its value */
-  .slot-row { display: flex; flex-direction: column; justify-content: center;
-    flex: 1; min-height: 0; gap: 1px; }
-  .slot-row .chart-lbl { margin-bottom: 0; }
-  .slot-row .v { font-size: clamp(22px, 8.5cqw, 30px); }
-  .slot-row .disk-num { font-size: clamp(18px, 6.6cqw, 24px); }
+  .size-small { display: flex; flex-direction: column; justify-content: space-evenly; padding: 16px; }
+  .size-small .row { display: flex; align-items: center; gap: 8px; }
+  .size-small .lbl { flex: 1; font-size: 13px; }
+  .size-small .val { font-size: 22px; letter-spacing: -0.01em; }
 
-  /* Medium: left column (values) + right column (charts) */
-  .col-left  { display: flex; flex-direction: column; justify-content: space-evenly;
-    width: 46%; padding-inline-end: 10px; border-inline-end: 1px solid rgba(255,255,255,0.08);
-    min-width: 0; overflow: hidden; }
-  .col-right { display: flex; flex-direction: column; justify-content: space-evenly;
-    flex: 1; padding-inline-start: 12px; min-width: 0; overflow: hidden; }
+  /* One grid for every row, so the charts start at the same x whatever the
+     longest label is in the reader's language. */
+  .size-medium { display: grid; grid-template-columns: minmax(56px, max-content) minmax(0, 1fr);
+    column-gap: 16px; align-content: space-between; align-items: center; padding: 15px 20px 14px 18px; }
+  .size-medium .row { display: contents; }
+  .size-medium .head { display: flex; flex-direction: column; min-width: 0; }
+  .size-medium .lbl { max-width: 104px; }
+  .size-medium .lbl { font-size: 12px; line-height: 1.2; }
+  .size-medium .val { font-size: 19px; }
+  .plot { height: 100%; max-height: 30px; }
+  .size-medium .cap { grid-column: 1 / -1; }
+  .disk { display: flex; flex-direction: column; gap: 4px; }
+  .second .tb-bar-fill { opacity: 0.7; }
 
-  /* Value display — medium */
-  .v        { font-size: clamp(18px, 7cqw, 28px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
-  .slot-0 { --ink: var(--sct0); } .slot-1 { --ink: var(--sct1); } .slot-2 { --ink: var(--sct2); }
-  .v { color: var(--ink); }
-  .disk-line { display: flex; align-items: baseline; white-space: nowrap; }
-  .disk-num  { font-size: clamp(15px, 5.2cqw, 22px); font-weight: 700; color: var(--ink);
-    letter-spacing: -0.02em; line-height: 1; }
-  .disk-unit { font-size: clamp(9px, 3cqw, 14px); font-weight: 600; color: var(--ink); margin: 0 1px; }
-  .disk-sep  { font-size: clamp(11px, 3.5cqw, 17px); font-weight: 400; color: var(--ink);
-    opacity: 0.5; margin: 0 1px; }
-  .disk-sub  { font-size: clamp(9px, 2.4cqw, 11px); font-weight: 500; color: var(--ink);
-    margin-top: 2px; opacity: 0.7; }
+  .tb-bar, .tb-col { background-color: rgba(255,255,255,0.12); }
+  .net { grid-column: 2; display: flex; gap: 12px; font-size: 11px; font-weight: 500;
+    color: #8E8E93; white-space: nowrap; }
+  .net-item { display: inline-flex; align-items: center; gap: 2px; }
 
-  /* Sparkline chart — medium right column */
-  .chart-section { display: flex; flex-direction: column; }
-  .chart-lbl { font-size: clamp(9px, 1.9cqw, 12px); font-weight: 700; letter-spacing: .07em;
-    color: rgba(255,255,255,0.88); text-transform: uppercase; line-height: 1; margin-bottom: 4px; }
-  .spark-wrap { position: relative; height: 28px; flex-shrink: 0; overflow: hidden; }
-  .spark-wrap::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-    background: repeating-linear-gradient(to right, rgba(255,255,255,0.18) 0,
-      rgba(255,255,255,0.18) 2px, transparent 2px, transparent 6px); pointer-events: none; }
-  .spark { display: flex; align-items: flex-end; height: 100%; padding-bottom: 2px; gap: 1px; overflow: hidden; }
-  .bar-slot { position: relative; height: 100%; flex-shrink: 0; }
-  .bar-bg   { position: absolute; inset: 0; background: rgba(255,255,255,0.07); border-radius: 1px 1px 0 0; }
-  .bar-fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 1px 1px 0 0; transition: height 0.5s ease; }
-  .bc-0 { background: var(--sc0, #FF375F); }
-  .bc-1 { background: var(--sc1, #30d158); }
-  .bc-2 { background: var(--sc2, #00D2E0); }
-  /* Process-count deviation chart: bars above the mean highlighted, dashed mean line */
-  .bar-fill.dev-hi { background: #FF9230; }
-  .dev-mean { position: absolute; left: 0; right: 0; height: 1px; pointer-events: none;
-    background: repeating-linear-gradient(to right, rgba(255,255,255,0.45) 0,
-      rgba(255,255,255,0.45) 3px, transparent 3px, transparent 6px); }
+  html[data-theme="light"], html[data-theme="light"] body { background: #FFFFFF; }
+  html[data-theme="light"] .lbl, html[data-theme="light"] .net { color: #6C6C70; }
+  html[data-theme="light"] .tb-bar, html[data-theme="light"] .tb-col { background-color: rgba(0,0,0,0.07); }
 
-  /* Disk bar track */
-  .disk-bars   { display: flex; flex-direction: column; gap: 4px; }
-  .disk-track  { width: 100%; height: 10px; background: rgba(255,255,255,0.13);
-    border-radius: 2px; overflow: hidden; }
-  .disk-track.secondary { height: 6px; }
-  .disk-fill   { height: 100%; border-radius: 2px; width: 0%;
-    transition: width 0.6s ease; }
-
-  /* Network slot — text only, always one line */
-  .net-row  { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; white-space: nowrap; }
-  .net-ico { vertical-align: -0.125em; }
-  .net-item { font-size: clamp(10px, 2.6cqw, 13px); font-weight: 500;
-    color: rgba(255,255,255,0.65); white-space: nowrap; }
-  @media (prefers-reduced-motion: reduce){
-    .bar-fill,.disk-fill,.spark,.spark *{transition:none !important;animation:none !important}
+  @media (forced-colors: active) {
+    .tb-bar, .tb-col { forced-color-adjust: none; background-color: Canvas !important;
+      outline: 1px solid CanvasText; outline-offset: -1px; }
+    .tb-bar-fill, .tb-col-fill { forced-color-adjust: none; background-color: Highlight !important; }
   }
-  html[data-theme="light"] .disk-sub { opacity:1 }
-  html[data-theme="light"],html[data-theme="light"] body { background:#ffffff }
-  html[data-theme="light"] .col-left { border-inline-end:1px solid rgba(0,0,0,0.08) }
-  html[data-theme="light"] .chart-lbl { color:rgba(0,0,0,0.88) }
-  html[data-theme="light"] .spark-wrap::after { background:repeating-linear-gradient(to right, rgba(0,0,0,0.18) 0,
-      rgba(0,0,0,0.18) 2px, transparent 2px, transparent 6px) }
-  html[data-theme="light"] .bar-bg { background:rgba(0,0,0,0.07) }
-  html[data-theme="light"] .dev-mean { background:repeating-linear-gradient(to right, rgba(0,0,0,0.45) 0,
-      rgba(0,0,0,0.45) 3px, transparent 3px, transparent 6px) }
-  html[data-theme="light"] .disk-track { background:rgba(0,0,0,0.13) }
-  html[data-theme="light"] .net-item { color:rgba(0,0,0,0.65) }
 </style>
 </head>
 <body>
 <p id="sr-sum" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:-1px;"></p>
 <!-- dir="ltr", not inherited from the page. This widget is percentages, byte
-     counts and sparklines: content with its own direction. Mirroring it runs
-     the sparklines' time axis right to left. -->
+     counts and charts: content with its own direction. Mirroring it runs the
+     charts' time axis right to left. -->
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <script type="module">
-import { readableInk, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=5ecee136';
+import { contrastInk, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=9ee71c7a';
 await loadStrings();
-const TICK_MS  = 10000;
+const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;
 const THROUGHPUT_MS = 3000;
 /* Every tick is a call to someone else's server, so a remote source is read at
    the same rate as the rest of the widget rather than every three seconds. */
 const REMOTE_THROUGHPUT_MS = 10000;
+const SEED_STEP_MS = 10000;
+const COLS = 24;
+const SLOT_DEFS = ['#FF375F', '#30D158', '#00D2E0'];
+const DEFAULT_SLOTS = [{ type: 'cpu' }, { type: 'ram' }, { type: 'disk', primary: '/' }];
 const id       = new URLSearchParams(location.search).get('id') || '';
 const API      = '/api';
 
 let cfg = null;      /* widget config from /api/widget-config/:id */
 const isRemote = () => (cfg?.widgetConfig?.statProvider || 'system') !== 'system';
-let stats = null;    /* latest /api/system-stats response */
-let speed = null;    /* latest myspeed response */
+let tickMs = 10000;
+let medium = true;
+let lastSampleAt = 0;
 
-/* History arrays keyed by slot index */
-const history = [{},{},{},{}];
-let BARS = 50;
+/* One entry per slot: { vals } holds the newest COLS readings, oldest first. */
+const history = [{}, {}, {}];
+/** @type {{ slot: any, label: string, el: HTMLElement, val: HTMLElement, chart?: ReturnType<typeof columns>, bar?: HTMLElement, bar2?: HTMLElement }[]} */
+const rows = [];
 
-/* ── Boot — load config then start polling ── */
+const LABELS = {
+  cpu: ['slots.type.opt.cpu', 'CPU'],
+  ram: ['slots.type.opt.ram', 'RAM'],
+  temp: ['slots.type.opt.temp', 'Temperature'],
+  disk: ['row.disk', 'Disk'],
+  iowait: ['slots.type.opt.iowait', 'IO Wait'],
+  procs: ['slots.type.opt.procs', 'Processes'],
+};
+/* slot.type comes from config, which can arrive by import, so an unknown type
+   falls back to its own text, which is only ever written as text. */
+function slotLabel(slot) {
+  const l = LABELS[slot?.type];
+  return l ? wt(l[0], l[1]) : String(slot?.type || '');
+}
+
+function slotColour(slot, i) {
+  const c = colorOrFallback(slot?.color, SLOT_DEFS[i] || SLOT_DEFS[0]);
+  return /^#[0-9a-f]{3}$/i.test(c) ? '#' + [...c.slice(1)].map(x => x + x).join('') : c;
+}
+
+function refreshSeconds(wc) {
+  const v = String(wc?.refresh ?? '10');
+  return REFRESH_SECONDS.includes(v) ? Number(v) : 10;
+}
+
 async function boot() {
   try {
     const r = await fetch(`${API}/widget-config/${id}`);
     if (r.ok) cfg = await r.json();
   } catch {}
-  if (!cfg) cfg = { widgetType:'system-summary', widgetSize:'medium',
-    widgetConfig:{ slots:[{type:'cpu'},{type:'ram'},{type:'disk',primary:'/'}], network:{enabled:false} }};
+  if (!cfg) cfg = { widgetType: 'system-summary', widgetSize: 'medium', widgetConfig: {} };
 
-  /* Detect a narrow viewport */
-  if (document.documentElement.clientHeight >= 180) document.body.classList.add('narrow');
-
+  const wc = cfg.widgetConfig || {};
+  tickMs = refreshSeconds(wc) * 1000;
+  medium = (cfg.widgetSize || 'medium') === 'medium';
   buildShell();
-  const net = cfg.widgetConfig?.network || {};
-  const netMode = net.mode || 'speed';
-  /* Uptime mode needs no extra poll, it updates from the stats loop. */
-  const netFailed = on => {
-    const row = document.querySelector('.net-row');
-    if (row) row.classList.toggle('wt-inert', on);
-    if (!on) return;
-    for (const el of ['net-dn', 'net-up', 'net-uptime']) {
-      const n = document.getElementById(el);
-      if (n) n.textContent = '—';
-    }
-  };
-  if (net.enabled && netMode === 'speed')
-    poll({ fetch: fetchSpeed, interval: SPEED_MS,
-      render: d => { netFailed(false); applySpeed(d); },
-      onError: ({ stale }) => { if (stale) netFailed(true); } });
-  if (net.enabled && netMode === 'throughput')
-    poll({ fetch: fetchThroughput, interval: isRemote() ? REMOTE_THROUGHPUT_MS : THROUGHPUT_MS,
-      render: d => { netFailed(false); applyThroughput(d); },
-      onError: ({ stale }) => { if (stale) netFailed(true); } });
+  new MutationObserver(applyInks).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  if (medium) startNetwork(wc.network || {});
 
   const widgetEl = document.getElementById('widget');
-  const state = errorState({ root: document.body, content: [widgetEl] });
+  /* The caption sits inside the widget, and a faded element fades everything
+     in it, so only the content around the caption is named. */
+  const state = errorState({ root: document.body, caption: document.getElementById('cap'),
+    content: () => [...widgetEl.querySelectorAll(medium ? '.head, .plot, .disk, .net' : '.row')] });
 
-  poll({ fetch: fetchStats, interval: TICK_MS,
-    render: d => { state.ok(); stats = d; applyStats(stats); },
+  poll({ fetch: fetchStats, interval: tickMs,
+    render: d => { state.ok(); applyStats(d); },
     onError: ({ error, everOk, stale, since }) => {
       if (everOk && !stale) return;
       const line = state.fail(error, { since, inert: everOk });
@@ -169,202 +141,118 @@ async function boot() {
     } });
 }
 
-/* ── Build static HTML shell based on config ── */
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
 function buildShell() {
-  const w     = document.getElementById('widget');
-  const wc    = cfg.widgetConfig || {};
-  const slots = (wc.slots || []).slice(0, 3);
-  const net   = wc.network || {};
-  const size  = cfg.widgetSize || 'medium';
+  const w = document.getElementById('widget');
+  const wc = cfg.widgetConfig || {};
+  const configured = Array.isArray(wc.slots) ? wc.slots.filter(s => s && typeof s === 'object').slice(0, 3) : [];
+  const slots = configured.length ? configured : DEFAULT_SLOTS;
+  const net = medium && wc.network?.enabled ? wc.network : null;
 
-  w.className = 'widget' + (size === 'medium' ? ' size-medium' : '');
-
-  /* Apply per-slot color as CSS custom property so both text and charts update automatically */
-  const SLOT_DEFS = ['#FF375F','#30d158','#00D2E0'];
+  w.className = 'widget ' + (medium ? 'size-medium' : 'size-small');
+  if (medium) w.style.gridTemplateRows = `repeat(${slots.length}, 1fr) auto auto`;
   slots.forEach((slot, i) => {
-    const c = slot.color || SLOT_DEFS[i] || SLOT_DEFS[0];
-    document.documentElement.style.setProperty('--sc'+i, c);
-    document.documentElement.style.setProperty('--sct'+i, readableInk(c));
-  });
+    const label = slotLabel(slot);
+    const colour = slotColour(slot, i);
+    const row = el('div', 'row');
+    const lbl = el('span', 'lbl', label);
+    const val = el('span', 'val', '—');
+    const entry = { slot, label, colour, el: row, val };
+    history[i].vals = Array(COLS).fill(null);
 
-  if (size === 'medium') {
-    /* Left: numeric values. Right: charts. */
-    const left  = document.createElement('div'); left.className  = 'col-left';
-    const right = document.createElement('div'); right.className = 'col-right';
-
-    slots.forEach((slot, i) => {
-      left.appendChild(mkValueEl(slot, i));
-      right.appendChild(mkChartEl(slot, i));
-    });
-    /* Network slot — left value only, no chart */
-    if (net.enabled) {
-      left.appendChild(mkNetValueEl(net));
-    }
-    w.append(left, right);
-  } else {
-    /* Small: stacked text rows */
-    slots.forEach((slot, i) => w.appendChild(mkSmallRow(slot, i)));
-    if (net.enabled) w.appendChild(mkSmallNetRow(net));
-  }
-
-  /* Initialize history arrays immediately so applyStats never hits undefined.vals */
-  [0,1,2].forEach(i => { history[i].vals = Array(BARS).fill(null); });
-
-  /* Refine bar count once layout is painted — doesn't affect data correctness */
-  requestAnimationFrame(() => {
-    const wrap = document.querySelector('.spark-wrap');
-    if (wrap) {
-      const n = Math.max(20, Math.floor(wrap.offsetWidth / 2.2));
-      if (n !== BARS) {
-        BARS = n;
-        [0,1,2].forEach(i => { history[i].vals = fitBars(history[i].vals); });
+    if (!medium) {
+      row.append(lbl, val);
+    } else {
+      const head = el('div', 'head');
+      head.append(lbl, val);
+      row.append(head);
+      if (slot.type === 'disk') {
+        const box = el('div', 'disk');
+        entry.bar = barFill(0, { height: 8, radius: 4, track: null, color: colour });
+        box.append(entry.bar);
+        if (slot.secondary) {
+          entry.bar2 = barFill(0, { height: 4, radius: 2, track: null, color: colour });
+          entry.bar2.classList.add('second');
+          box.append(entry.bar2);
+        }
+        row.append(box);
+      } else {
+        entry.chart = columns({ count: COLS, color: colour, track: null });
+        const plot = el('div', 'plot');
+        plot.append(entry.chart.el);
+        row.append(plot);
       }
     }
+    w.append(row);
+    rows.push(entry);
   });
-}
 
-/* ── DOM element builders ── */
-function mkValueEl(slot, i) {
-  const d = document.createElement('div');
-  d.id = `val-${i}`;
-  d.className = `slot-${i}`;
-  if (slot.type === 'disk') {
-    setHtml(d, html`<div class="disk-line">
-      <span class="disk-num" id="disk-used-${i}">—</span><span class="disk-unit">GB</span>
-      <span class="disk-sep">/</span>
-      <span class="disk-num" id="disk-total-${i}">—</span><span class="disk-unit">GB</span>
-    </div>
-    ${slot.secondary ? html`<div class="disk-sub" id="disk-sec-${i}">— / —</div>` : ''}`);
-  } else {
-    const unit = slot.type === 'temp' ? '°' : slot.type === 'procs' ? '' : '%';
-    setHtml(d, html`<div class="v" id="pct-${i}">—${unit}</div>`);
+  if (net) {
+    const n = el('div', 'net');
+    n.id = 'net-val';
+    setHtml(n, netRowHtml(net));
+    w.append(n);
   }
-  return d;
+  const cap = el('div', 'cap');
+  cap.id = 'cap';
+  w.append(cap);
+  applyInks();
 }
 
-/* slot.type comes from config, which can arrive by import, so an unknown type
-   falls back to its own text and every use escapes it. */
-const SLOT_LABELS = { cpu:'CPU', ram:'RAM', temp:'TEMP', disk:'DISK', iowait:'IO WAIT', procs:'PROCS' };
-const slotLabel = slot => SLOT_LABELS[slot.type] || String(slot.type || '').toUpperCase();
-
-function mkChartEl(slot, i) {
-  const d = document.createElement('div'); d.className = 'chart-section';
-  const lbl = slotLabel(slot);
-  /* slot.type comes from config, which can arrive by import. html`` escapes
-     it. */
-  if (slot.type === 'disk') {
-    setHtml(d, html`<div class="chart-lbl">${lbl}</div>
-      <div class="disk-bars">
-        <div class="disk-track"><div class="disk-fill bc-${i}" id="disk-bar-p-${i}"></div></div>
-        ${slot.secondary ? html`<div class="disk-track secondary"><div class="disk-fill bc-${i}" id="disk-bar-s-${i}"></div></div>` : ''}
-      </div>`);
-  } else if (slot.type === 'procs') {
-    setHtml(d, html`<div class="chart-lbl">${lbl}</div>
-      <div class="spark-wrap"><div class="spark" id="spark-${i}"></div><div class="dev-mean" id="dev-mean-${i}" style="display:none"></div></div>`);
-  } else {
-    setHtml(d, html`<div class="chart-lbl">${lbl}</div>
-      <div class="spark-wrap"><div class="spark" id="spark-${i}"></div></div>`);
+/* The host theme can change while the widget is open, and a user colour can be
+   too faint on either card. Text needs 4.5:1; a fill only needs to show. */
+function applyInks() {
+  for (const r of rows) {
+    r.el.style.setProperty('--ink', contrastInk(r.colour, 4.5));
+    const fill = contrastInk(r.colour, 1.5);
+    if (r.chart) r.chart.setColor(fill);
+    for (const bar of [r.bar, r.bar2]) if (bar) bar.firstElementChild.style.backgroundColor = fill;
   }
-  return d;
 }
+
+const ARROW_DOWN = html`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg>`;
+const ARROW_UP = html`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>`;
 
 function netRowHtml(net) {
   if ((net.mode || 'speed') === 'uptime') {
-    return html`<div class="net-row"><div class="net-item">Uptime <span id="net-uptime">—</span></div></div>`;
+    return html`<span class="net-item" dir="auto">${wt('network.mode.opt.uptime', 'Uptime')} <span id="net-uptime">—</span></span>`;
   }
-  return html`<div class="net-row">
-    <div class="net-item"><svg class="net-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg> <span id="net-dn">—</span></div>
-    <div class="net-item"><svg class="net-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg> <span id="net-up">—</span></div>
-  </div>`;
+  return html`<span class="net-item">${ARROW_DOWN}<span id="net-dn">—</span></span><span class="net-item">${ARROW_UP}<span id="net-up">—</span></span>`;
 }
 
-function mkNetValueEl(net) {
-  const d = document.createElement('div'); d.id = 'net-val';
-  setHtml(d, netRowHtml(net));
-  return d;
-}
-
-function mkSmallRow(slot, i) {
-  const d = document.createElement('div'); d.className = `slot-row slot-${i}`;
-  const lbl = html`<div class="chart-lbl">${slotLabel(slot)}</div>`;
-  if (slot.type === 'disk') {
-    setHtml(d, html`${lbl}<div class="disk-line">
-      <span class="disk-num" id="small-disk-used-${i}">—</span><span class="disk-unit">GB</span>
-      <span class="disk-sep">/</span>
-      <span class="disk-num" id="small-disk-total-${i}">—</span><span class="disk-unit">GB</span>
-    </div>`);
-  } else {
-    const unit = slot.type === 'temp' ? '°' : slot.type === 'procs' ? '' : '%';
-    setHtml(d, html`${lbl}<div class="v" id="small-${i}">—${unit}</div>`);
-  }
-  return d;
-}
-
-function mkSmallNetRow(net) {
-  const d = document.createElement('div'); d.className = 'slot-row';
-  setHtml(d, netRowHtml(net));
-  return d;
-}
-
-/* ── Sparkline ── */
-function buildSpark(id, hist, colorCls) {
-  const el = document.getElementById(id); if (!el) return;
-  el.innerHTML = '';
-  hist.forEach((v, i) => {
-    const accent = (i + 1) % 5 === 0;
-    const slot = document.createElement('div'); slot.className = 'bar-slot';
-    slot.style.cssText = `width:1px;min-width:1px;${accent?'margin-right:1px;':''}`;
-    const bg = document.createElement('div'); bg.className = 'bar-bg'; slot.appendChild(bg);
-    if (v !== null) {
-      const fill = document.createElement('div');
-      fill.className = `bar-fill ${colorCls}`;
-      fill.style.height = Math.max(2, v) + '%';
-      slot.appendChild(fill);
+function startNetwork(net) {
+  if (!net.enabled) return;
+  const mode = net.mode || 'speed';
+  /* Uptime mode needs no extra poll, it updates from the stats loop. */
+  const netFailed = on => {
+    const row = document.getElementById('net-val');
+    if (row) row.classList.toggle('wt-inert', on);
+    if (!on) return;
+    for (const name of ['net-dn', 'net-up', 'net-uptime']) {
+      const n = document.getElementById(name);
+      if (n) n.textContent = '—';
     }
-    el.appendChild(slot);
-  });
+  };
+  if (mode === 'speed')
+    poll({ fetch: fetchSpeed, interval: SPEED_MS,
+      render: d => { netFailed(false); applySpeed(d); },
+      onError: ({ stale }) => { if (stale) netFailed(true); } });
+  if (mode === 'throughput')
+    poll({ fetch: fetchThroughput, interval: isRemote() ? Math.max(REMOTE_THROUGHPUT_MS, tickMs) : THROUGHPUT_MS,
+      render: d => { netFailed(false); applyThroughput(d); },
+      onError: ({ stale }) => { if (stale) netFailed(true); } });
 }
 
-/* ── Deviation bars (process count) ── scaled to the window's own spread, so
-   small moves in a large, stable count stay visible. */
-function buildDevBars(id, hist, colorCls) {
-  const el = document.getElementById(id); if (!el) return;
-  el.innerHTML = '';
-  const nums = hist.filter(v => v !== null && typeof v === 'number');
-  const mean = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
-  const lo = nums.length ? Math.min(...nums) : 0;
-  const hi = nums.length ? Math.max(...nums) : 0;
-  const span = Math.max(hi - lo, 1);
-  const pos = v => 12 + ((v - lo) / span) * 88;
-  hist.forEach((v, i) => {
-    const accent = (i + 1) % 5 === 0;
-    const slot = document.createElement('div'); slot.className = 'bar-slot';
-    slot.style.cssText = `width:1px;min-width:1px;${accent ? 'margin-right:1px;' : ''}`;
-    const bg = document.createElement('div'); bg.className = 'bar-bg'; slot.appendChild(bg);
-    if (v !== null) {
-      const fill = document.createElement('div');
-      fill.className = 'bar-fill ' + (v > mean ? 'dev-hi' : colorCls);
-      fill.style.height = pos(v) + '%';
-      slot.appendChild(fill);
-    }
-    el.appendChild(slot);
-  });
-  const line = document.getElementById(id.replace('spark-', 'dev-mean-'));
-  if (line) { line.style.display = 'block'; line.style.bottom = pos(mean) + '%'; }
-}
-
-/* The bar count is measured after the first paint, and the readings have to
-   survive it. Refilling with nulls empties a chart that was already drawn. */
-function fitBars(vals) {
-  const out = Array(BARS).fill(null);
-  const tail = (vals || []).slice(-BARS);
-  for (let i = 0; i < tail.length; i++) out[BARS - tail.length + i] = tail[i];
-  return out;
-}
-
-/* Takes the tail of a supplied past and leaves room for the live value the same
-   tick appends. Runs once per slot, while the chart still holds no readings. */
-function seedFromPast(slot, i, past) {
+/* Takes the tail of a supplied past, one point per tick, and leaves room for
+   the live value the same tick appends. Runs once per slot, while the chart
+   still holds no readings. */
+function seedFromPast(slot, i, past, step = 1) {
   const h = history[i].vals;
   if (!past || history[i].seeded || h.some(v => v !== null)) return;
   history[i].seeded = true;
@@ -381,98 +269,104 @@ function seedFromPast(slot, i, past) {
   if (!Array.isArray(src) || !src.length) return;
 
   const want = h.length - 1;
-  const tail = src.slice(-want);
+  const tail = [];
+  for (let k = src.length - step; k >= 0 && tail.length < want; k -= step) tail.unshift(src[k]);
   history[i].vals = Array(h.length - tail.length).fill(null).concat(tail);
 }
 
-/* ── Update DOM from stats ── */
-function applyStats(data) {
-  const wc    = cfg.widgetConfig || {};
-  const slots = (wc.slots || []).slice(0, 3);
-  const size  = cfg.widgetSize || 'medium';
+/* Upstream values arrive from four different sources and an import; anything
+   that is not a finite, non-negative number is no reading. */
+const reading = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 
-  /* Build a disk lookup by mount path */
-  const diskByMount = {};
-  (data.disks || []).forEach(d => { diskByMount[d.mount] = d; });
+function readingFor(slot, data) {
+  if (slot.type === 'cpu') return reading(data.cpu);
+  if (slot.type === 'ram') return reading(data.ram);
+  if (slot.type === 'iowait') return reading(data.iowait);
+  if (slot.type === 'procs') return reading(data.procs);
+  if (slot.type === 'temp') {
+    /* A slot names either a thermal zone or a sensor, depending on the source */
+    const key = slot.sensor ? slot.sensor : (Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0);
+    return reading(data.temps?.[key]);
+  }
+  return null;
+}
 
-  slots.forEach((slot, i) => {
-    if (!history[i].vals) history[i].vals = Array(BARS).fill(null);
-    seedFromPast(slot, i, data.history);
+function valueText(type, v) {
+  if (v === null) return '—';
+  if (type === 'temp') return formatNumber(Math.round(v)) + '°';
+  if (type === 'procs') return formatNumber(Math.round(v));
+  return formatNumber(Math.round(Math.min(v, 100))) + '%';
+}
 
-    /* val holds a percentage (cpu/ram) or a temperature in °C — named generically to cover both */
-    let val = null;
-    if (slot.type === 'cpu')  val = data.cpu  ?? null;
-    if (slot.type === 'ram')  val = data.ram  ?? null;
-    if (slot.type === 'iowait') val = data.iowait ?? null;
-    if (slot.type === 'procs')  val = data.procs  ?? null;
-    if (slot.type === 'temp') {
-      /* A slot names either a thermal zone or a sensor, depending on the source */
-      const key = slot.sensor ? slot.sensor : (Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0);
-      val = data.temps?.[key] ?? null;
+/* A process count has no ceiling, so its columns span the window's own low to
+   high, and the readings above the window's mean are the ones drawn at full
+   strength. Everything else is a share of 100. */
+function scaleFor(type, vals) {
+  if (type !== 'procs') return { min: 0, max: 100 };
+  const nums = vals.filter(v => v !== null);
+  if (!nums.length) return {};
+  const lo = Math.min(...nums), hi = Math.max(...nums);
+  if (hi === lo) return { min: lo - 1, max: hi + 1 };
+  const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+  return { min: lo - ((hi - lo) * 12) / 88, max: hi, dim: v => v <= mean };
+}
+
+const LANG = new URLSearchParams(location.search).get('lang') || 'en';
+function listOf(items) {
+  try {
+    return new Intl.ListFormat(LANG, { style: 'short', type: 'unit' }).format(items);
+  } catch {
+    return items.join(', ');
+  }
+}
+
+const share = d => { const v = reading(d?.usedPct); return v === null ? null : Math.min(v, 100); };
+
+function applyStats(raw) {
+  const data = raw && typeof raw === 'object' ? raw : {};
+  const byMount = new Map();
+  for (const d of Array.isArray(data.disks) ? data.disks : []) if (d && typeof d.mount === 'string') byMount.set(d.mount, d);
+
+  /* A gap longer than the whole chart means every column is from another
+     time. Drawing new readings beside them would join two unrelated stretches. */
+  const now = Date.now();
+  if (lastSampleAt && now - lastSampleAt > tickMs * COLS) for (const h of history) if (h.vals) h.vals = Array(COLS).fill(null);
+  lastSampleAt = now;
+
+  const step = Math.max(1, Math.round(tickMs / SEED_STEP_MS));
+  const spoken = [];
+  rows.forEach((r, i) => {
+    const slot = r.slot;
+    if (slot.type === 'disk') {
+      const p = share(byMount.get(slot.primary || '/'));
+      const s = slot.secondary ? share(byMount.get(slot.secondary)) : null;
+      r.val.textContent = valueText('disk', p);
+      if (r.bar) r.bar.firstElementChild.style.width = (p ?? 0) + '%';
+      if (r.bar2) r.bar2.firstElementChild.style.width = (s ?? 0) + '%';
+      if (p !== null) spoken.push(`${r.label} ${r.val.textContent}`);
+      return;
     }
-
-    if (size === 'medium') {
-      if (slot.type === 'disk') {
-        const pd = diskByMount[slot.primary || '/'];
-        const sd = slot.secondary ? diskByMount[slot.secondary] : null;
-        if (pd) {
-          document.getElementById(`disk-used-${i}`)  && (document.getElementById(`disk-used-${i}`).textContent  = formatNumber(Math.round((pd.usedPct/100)*pd.totalGb)));
-          document.getElementById(`disk-total-${i}`) && (document.getElementById(`disk-total-${i}`).textContent = formatNumber(Math.round(pd.totalGb)));
-          const bp = document.getElementById(`disk-bar-p-${i}`); if (bp) bp.style.width = pd.usedPct + '%';
-        }
-        if (sd) {
-          /* TB and GB are symbols, not words: only the figure is localised. */
-          const tb = sd.totalGb >= 1000 ? formatNumber(Number((sd.totalGb/1024).toFixed(2)))+' TB' : formatNumber(Math.round(sd.totalGb))+' GB';
-          const ub = sd.totalGb >= 1000 ? formatNumber(Number(((sd.usedPct/100)*sd.totalGb/1024).toFixed(2)))+' TB' : formatNumber(Math.round((sd.usedPct/100)*sd.totalGb))+' GB';
-          const sec = document.getElementById(`disk-sec-${i}`); if (sec) sec.textContent = `${ub} / ${tb}`;
-          const bs = document.getElementById(`disk-bar-s-${i}`); if (bs) bs.style.width = sd.usedPct + '%';
-        }
-      } else if (val !== null) {
-        const unit = slot.type === 'temp' ? '°' : (slot.type === 'procs' ? '' : '%');
-        const disp = slot.type === 'temp' ? formatNumber(Number(val.toFixed(1))) : formatNumber(Math.round(val));
-        const el = document.getElementById(`pct-${i}`); if (el) el.textContent = disp + unit;
-        const h = history[i].vals; h.push(val); h.shift();
-        const colorCls = 'bc-'+i;
-        if (slot.type === 'procs') buildDevBars(`spark-${i}`, h, colorCls);
-        else buildSpark(`spark-${i}`, h, colorCls);
-      }
-    } else {
-      /* Small size */
-      if (slot.type === 'disk') {
-        const pd = diskByMount[slot.primary || '/'];
-        if (pd) {
-          const u = document.getElementById(`small-disk-used-${i}`);
-          const t = document.getElementById(`small-disk-total-${i}`);
-          if (u) u.textContent = formatNumber(Math.round((pd.usedPct/100)*pd.totalGb));
-          if (t) t.textContent = formatNumber(Math.round(pd.totalGb)); /* GB suffix is in the HTML */
-        }
-      } else if (val !== null) {
-        const unit = slot.type === 'temp' ? '°' : (slot.type === 'procs' ? '' : '%');
-        const el = document.getElementById(`small-${i}`);
-        if (el) el.textContent = (slot.type === 'temp' ? formatNumber(Number(val.toFixed(1))) : formatNumber(Math.round(val))) + unit;
-      }
-    }
+    seedFromPast(slot, i, data.history, step);
+    const v = readingFor(slot, data);
+    const h = history[i].vals;
+    h.push(v);
+    h.shift();
+    r.val.textContent = valueText(slot.type, v);
+    if (r.chart) r.chart.update(h, scaleFor(slot.type, h));
+    if (v !== null) spoken.push(`${r.label} ${r.val.textContent}`);
   });
 
   /* Slot 4 in Uptime mode reads from the same system poll. */
   const netCfg = cfg.widgetConfig?.network || {};
-  if (netCfg.enabled && (netCfg.mode || 'speed') === 'uptime') {
-    const el = document.getElementById('net-uptime'); if (el) el.textContent = fmtUptime(data.uptime);
+  if (medium && netCfg.enabled && (netCfg.mode || 'speed') === 'uptime') {
+    const up = document.getElementById('net-uptime');
+    if (up) up.textContent = reading(data.uptime) === null ? '—' : fmtUptime(data.uptime);
   }
 
-  /* Screen-reader summary of the headline metrics (HIG: expose key values) */
   const sum = document.getElementById('sr-sum');
-  if (sum) {
-    const parts = [];
-    if (data.cpu != null) parts.push('CPU ' + formatNumber(Math.round(data.cpu)) + ' percent');
-    if (data.ram != null) parts.push('RAM ' + formatNumber(Math.round(data.ram)) + ' percent');
-    const root = (data.disks || []).find(d => d.mount === '/');
-    if (root) parts.push('disk ' + formatNumber(Math.round(root.usedPct)) + ' percent used');
-    sum.textContent = parts.join(', ');
-  }
+  if (sum) sum.textContent = listOf(spoken);
 }
 
-/* ── Fetch and apply ── */
 /* The server omits the seeded past unless this asks for it. */
 let wantSeed = true;
 async function fetchStats() {
@@ -492,7 +386,7 @@ function fmtMbps(v) {
 /* Bytes/second → human rate for the RX/TX throughput mode. */
 function fmtRate(bytesPerSec) {
   const v = Number(bytesPerSec);
-  if (v == null || isNaN(v)) return '—';
+  if (bytesPerSec == null || isNaN(v)) return '—';
   if (v >= 1024*1024*1024) return fixed(v/(1024*1024*1024), 1)+' GB/s';
   if (v >= 1024*1024)       return fixed(v/(1024*1024), 1)+' MB/s';
   if (v >= 1024)            return fixed(v/1024, 0)+' KB/s';

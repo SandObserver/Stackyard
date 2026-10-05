@@ -34,6 +34,22 @@ export function readableInk(hex, min = 4.5) {
   return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 }
 
+/** Moves a colour toward black on the light card or toward white on the dark
+    one, only as far as min:1 against that card needs.
+    @param {string} hex #rrggbb @param {number} [min] */
+export function contrastInk(hex, min = 4.5) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+  if (!m) return hex;
+  let rgb = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
+  if (_hostTheme() === 'light') {
+    for (let k = 0; k < 40 && 1.05 / (_lum(rgb) + 0.05) < min; k++) rgb = rgb.map(v => v * 0.95);
+  } else {
+    const card = _lum([28, 28, 30]) + 0.05;
+    for (let k = 0; k < 40 && (_lum(rgb) + 0.05) / card < min; k++) rgb = rgb.map(v => v + (255 - v) * 0.08);
+  }
+  return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+
 export function theme() {
   return _hostTheme();
 }
@@ -238,22 +254,81 @@ function reducedMotion() {
   }
 }
 
-/* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 } */
+/* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 }
+   track: null paints no track, so the page styles .tb-bar per theme. */
 export function barFill(percent, opts = {}) {
   const pct = Math.max(0, Math.min(100, Number(percent) || 0));
   const h = opts.height != null ? opts.height : 6;
   const radius = opts.radius != null ? opts.radius : 3;
   const track = document.createElement('div');
-  track.style.cssText =
-    `position:relative;width:100%;height:${h}px;border-radius:${radius}px;` +
-    `background:${opts.track || 'rgba(255,255,255,0.10)'};overflow:hidden`;
+  track.className = 'tb-bar';
+  track.style.cssText = `position:relative;width:100%;height:${h}px;border-radius:${radius}px;overflow:hidden`;
+  if (opts.track !== null) track.style.backgroundColor = opts.track || 'rgba(255,255,255,0.10)';
   const fill = document.createElement('div');
+  fill.className = 'tb-bar-fill';
   fill.style.cssText =
-    `position:absolute;left:0;top:0;bottom:0;width:${pct}%;border-radius:${radius}px;` +
-    `background:${opts.color || '#0a84ff'}` +
+    `position:absolute;left:0;top:0;bottom:0;width:${pct}%;border-radius:${radius}px` +
     (reducedMotion() ? '' : ';transition:width .4s ease');
+  fill.style.backgroundColor = colorOrFallback(opts.color, '#0a84ff');
   track.appendChild(fill);
   return track;
+}
+
+/** Rounded columns, newest on the right, for a short history at a glance.
+    Built once; update() moves heights only, so a poll never rebuilds the DOM.
+    track: null paints no track, so the page styles .tb-col per theme.
+
+    @param {{ count?: number, color?: string, track?: string | null, gap?: number, radius?: number }} [opts]
+    @returns {{ el: HTMLElement, update: (values: unknown[], scale?: { min?: number, max?: number, dim?: (v: number) => boolean }) => void, setColor: (color: string) => void }} */
+export function columns(opts = {}) {
+  const count = Math.max(1, Math.floor(Number(opts.count) || 24));
+  const radius = opts.radius != null ? opts.radius : 3;
+  let color = colorOrFallback(opts.color, '#0a84ff');
+  const el = document.createElement('div');
+  el.className = 'tb-cols';
+  el.style.cssText = `display:flex;align-items:stretch;height:100%;gap:${opts.gap != null ? opts.gap : 3}px`;
+  /** @type {HTMLElement[]} */
+  const fills = [];
+  for (let i = 0; i < count; i++) {
+    const col = document.createElement('div');
+    col.className = 'tb-col';
+    col.style.cssText = `flex:1 1 0;position:relative;overflow:hidden;border-radius:${radius}px`;
+    if (opts.track !== null) col.style.backgroundColor = opts.track || 'rgba(255,255,255,0.10)';
+    const fill = document.createElement('div');
+    fill.className = 'tb-col-fill';
+    fill.style.cssText = `position:absolute;left:0;right:0;bottom:0;height:0;border-radius:${radius}px`;
+    fill.style.backgroundColor = color;
+    col.appendChild(fill);
+    el.appendChild(col);
+    fills.push(fill);
+  }
+  return {
+    el,
+    update(values, scale = {}) {
+      const list = Array.isArray(values) ? values.slice(-count) : [];
+      const offset = count - list.length;
+      const min = Number.isFinite(scale.min) ? Number(scale.min) : 0;
+      const max = Number.isFinite(scale.max) && Number(scale.max) > min ? Number(scale.max) : min + 100;
+      for (let i = 0; i < count; i++) {
+        const v = i < offset ? null : list[i - offset];
+        const fill = fills[i];
+        /* No reading draws no column. A reading of zero still draws a sliver,
+           so the two cannot be mistaken for each other. */
+        if (typeof v !== 'number' || !Number.isFinite(v)) {
+          fill.style.height = '0';
+          fill.style.opacity = '';
+          continue;
+        }
+        const share = Math.max(0, Math.min(1, (v - min) / (max - min)));
+        fill.style.height = `max(2px, ${(share * 100).toFixed(2)}%)`;
+        fill.style.opacity = scale.dim && scale.dim(v) ? '0.45' : '';
+      }
+    },
+    setColor(next) {
+      color = colorOrFallback(next, color);
+      for (const fill of fills) fill.style.backgroundColor = color;
+    },
+  };
 }
 
 /* A widget is an iframe and does not load the i18n module. The language arrives

@@ -122,6 +122,32 @@
       }
     },
     {
+      "key": "refresh",
+      "type": "select",
+      "variant": "pills",
+      "label": "refresh.label",
+      "default": "10",
+      "options": [
+        {
+          "value": "5",
+          "label": "refresh.opt.5"
+        },
+        {
+          "value": "10",
+          "label": "refresh.opt.10"
+        },
+        {
+          "value": "30",
+          "label": "refresh.opt.30"
+        },
+        {
+          "value": "60",
+          "label": "refresh.opt.60"
+        }
+      ],
+      "hint": "refresh.hint"
+    },
+    {
       "key": "slots",
       "type": "group",
       "label": "slots.label",

@@ -105,9 +105,11 @@ test('the backup failure draws no upstream text', () => {
   assert.match(src, /applyError\(state\.fail\(/);
 });
 
-test('the system-stats label falls back through an escaped interpolation', () => {
+test('the system-stats label is written as text, never as markup', () => {
   const src = read(STATS);
-  assert.match(src, /setHtml\(d, html`<div class="chart-lbl">\$\{lbl\}<\/div>/);
+  assert.match(src, /const lbl = el\('span', 'lbl', label\);/);
+  assert.match(src, /if \(text != null\) n\.textContent = text;/);
+  assert.doesNotMatch(src, /html`[^`]*\$\{label\}/, 'the label is interpolated into markup');
 });
 
 test('both colour sites validate and assign through named CSSOM properties', () => {
