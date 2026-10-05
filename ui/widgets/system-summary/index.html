@@ -16,19 +16,23 @@
   .val { white-space: nowrap; font-weight: 700; line-height: 1.1; color: var(--ink); }
 
   .size-small { display: flex; flex-direction: column; justify-content: space-evenly; padding: 16px; }
-  .size-small .row { display: flex; align-items: center; gap: 8px; }
+  /* A fixed row height, so a hover that swaps in smaller text moves nothing. */
+  .size-small .row { display: flex; align-items: center; gap: 8px; height: 28px; }
   .size-small .lbl { flex: 1; font-size: 13px; }
-  .size-small .val { font-size: 22px; letter-spacing: -0.01em; }
+  .size-small .val { font-size: 22px; letter-spacing: -0.0118em; }
 
   /* One grid for every row, so the charts start at the same x whatever the
      longest label is in the reader's language. */
   .size-medium { display: grid; grid-template-columns: minmax(56px, max-content) minmax(0, 1fr);
-    column-gap: 16px; align-content: space-between; align-items: center; padding: 15px 20px 14px 18px; }
+    column-gap: 16px; align-content: space-between; align-items: center; padding: 16px; }
   .size-medium .row { display: contents; }
   .size-medium .head { display: flex; flex-direction: column; min-width: 0; }
   .size-medium .lbl { max-width: 104px; }
   .size-medium .lbl { font-size: 12px; line-height: 1.2; }
-  .size-medium .val { font-size: 19px; }
+  .size-medium .val { font-size: 20px; letter-spacing: -0.0225em; }
+  /* Holds the name column open for the longest hover text, so swapping a name
+     for a time never moves the charts. */
+  .sizer { display: flex; flex-direction: column; height: 0; overflow: hidden; visibility: hidden; }
   .plot { height: 100%; max-height: 30px; touch-action: pan-y; }
   .size-medium .cap { grid-column: 1 / -1; }
   .disk { position: relative; touch-action: pan-y; }
@@ -228,6 +232,12 @@ function buildShell() {
     setHtml(n, netRowHtml(net));
     w.append(n);
   }
+  if (medium) {
+    const sizer = el('div', 'sizer');
+    const longest = Math.ceil(((COLS - 1) * tickMs) / 60000);
+    for (const ms of [59000, 600000, longest * 60000]) sizer.append(el('span', 'lbl', ageText(ms)));
+    w.querySelector('.head')?.append(sizer);
+  }
   const cap = el('div', 'cap');
   cap.id = 'cap';
   w.append(cap);
@@ -281,9 +291,21 @@ function ageText(ms) {
 
 /* The column under the pointer stays put while new readings arrive, so its
    figure follows whatever is drawn there. */
+function holdColumns(on) {
+  const w = document.getElementById('widget');
+  if (!on) {
+    if (!rows.some(r => r.hover !== null)) w.style.gridTemplateColumns = '';
+    return;
+  }
+  if (w.style.gridTemplateColumns) return;
+  const head = w.querySelector('.head');
+  if (head) w.style.gridTemplateColumns = `${head.getBoundingClientRect().width}px minmax(0, 1fr)`;
+}
+
 function showHover(entry) {
   const i = entry.hover;
   if (i === null) return;
+  holdColumns(true);
   const v = history[entry.idx].vals[i];
   entry.chart.mark(i);
   entry.lbl.textContent = stamps[i] ? ageText(Date.now() - stamps[i]) : entry.label;
@@ -291,7 +313,9 @@ function showHover(entry) {
 }
 
 function endHover(entry) {
+  if (entry.hover === null) return;
   entry.hover = null;
+  holdColumns(false);
   entry.chart.mark(null);
   entry.lbl.textContent = entry.label;
   entry.val.textContent = entry.latest;
