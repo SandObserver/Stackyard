@@ -186,7 +186,10 @@ function buildShell() {
 
     if (!medium) {
       row.append(lbl, val);
-      if (slot.type === 'disk') holdToShow(row, on => showSizes(entry, on));
+      if (slot.type === 'disk') {
+        entry.hit = row;
+        holdToShow(row, on => showSizes(entry, on));
+      }
     } else {
       const head = el('div', 'head');
       head.append(lbl, val);
@@ -202,6 +205,7 @@ function buildShell() {
           bars.append(entry.bar2);
         }
         entry.sizeEl = el('span', 'sizes');
+        entry.hit = box;
         entry.box = box;
         box.append(bars, entry.sizeEl);
         holdToShow(box, on => showSizes(entry, on));
@@ -209,6 +213,7 @@ function buildShell() {
       } else {
         entry.chart = columns({ count: COLS, color: colour, track: null });
         const plot = el('div', 'plot');
+        entry.plot = plot;
         plot.append(entry.chart.el);
         const scrub = e => {
           entry.hover = entry.chart.indexAt(e.clientX);
@@ -242,6 +247,7 @@ function buildShell() {
   cap.id = 'cap';
   w.append(cap);
   applyInks();
+  watchHoverEnd();
 }
 
 /* The host theme can change while the widget is open, and a user colour can be
@@ -274,6 +280,27 @@ function showSizes(entry, on) {
     entry.val.textContent = show ? entry.sizes : entry.latest;
   }
   entry.showing = show;
+}
+
+/* Safari can skip pointerleave when the pointer leaves the frame quickly, which
+   left a past reading on screen. Any of these also ends a hover. */
+function endAllHovers() {
+  for (const r of rows) {
+    if (r.chart) endHover(r);
+    if (r.showing) showSizes(r, false);
+  }
+}
+function watchHoverEnd() {
+  document.addEventListener('pointermove', e => {
+    for (const r of rows) {
+      if (r.chart && r.hover !== null && !r.plot.contains(/** @type {Node} */ (e.target))) endHover(r);
+      if (r.showing && !r.hit.contains(/** @type {Node} */ (e.target))) showSizes(r, false);
+    }
+  });
+  document.documentElement.addEventListener('pointerleave', endAllHovers);
+  document.documentElement.addEventListener('mouseleave', endAllHovers);
+  window.addEventListener('blur', endAllHovers);
+  document.addEventListener('visibilitychange', endAllHovers);
 }
 
 const rtf = (() => {
