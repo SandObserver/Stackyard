@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add an Update Every setting to System Summary, from 5 seconds to 1 minute.
+
+- Point at a System Summary chart to see a past reading, or at a disk to see its
+  used and total size.
+
+### Changed
+
+- Redesign System Summary with coloured figures in the small size and column
+  charts in the medium size.
+
+- Show the System Summary network line in the medium size only.
+
+- Show System Summary temperatures in whole degrees.
+
 ### Fixed
 
 - About link icons keep their colours after the pointer moves over the list.
