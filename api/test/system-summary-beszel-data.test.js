@@ -150,6 +150,30 @@ test('a rejected password is an auth failure, not a missing system', async () =>
   );
 });
 
+/* The login is accepted and every read is refused. */
+const refusingHub = () => ({
+  fetchJSON: async url =>
+    /auth-with-password$/.test(url)
+      ? { status: 200, data: { token: 't' } }
+      : { status: 403, data: { message: 'Only superusers can perform this action.' } },
+});
+
+test('a read refused after a fresh login is an auth failure, not an empty hub', async () => {
+  for (const [endpoint, url] of [
+    ['system', 'http://refused-a:8090'],
+    ['systems', 'http://refused-b:8090'],
+    ['sensors', 'http://refused-c:8090'],
+  ]) {
+    await assert.rejects(
+      dataFn(ctxFor({ beszelUrl: url, beszelSystem: 'sys1', slots: SLOTS }, refusingHub(), endpoint)),
+      e => {
+        assert.equal(e.kind, 'auth', endpoint);
+        return true;
+      },
+    );
+  }
+});
+
 test('a system that has gone away asks for a new choice', async () => {
   const r = dataFn(ctxFor({ beszelUrl: 'http://gone:8090', beszelSystem: 'removed', slots: SLOTS }));
   await assert.rejects(r, e => {
