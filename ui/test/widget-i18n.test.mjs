@@ -277,12 +277,14 @@ test('no widget writes display text in English', () => {
 
 /* The fallback is what renders until the catalog arrives, so it has to be the
    English the catalog was written from. */
-test('the pull request caption is looked up, and every locale translates it', () => {
-  assert.match(read('widgets/github/pullrequests.html'), /wt\('view\.prs\.label', 'Pull Requests'\)/);
+test('the GitHub labels are looked up, and every locale translates them', () => {
+  assert.match(read('widgets/github/pullrequests.html'), /wt\('ui\.pullRequests', 'Pull requests'\)/);
+  assert.match(read('widgets/github/pullrequests.html'), /wt\('ui\.noPrs', 'No open pull requests'\)/);
+  assert.match(read('widgets/github/contributions.html'), /wt\('ui\.lastYear', 'Last year'\)/);
   const dir = path.join(root, 'widgets', 'github', 'i18n');
   for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
     const cat = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
-    assert.ok(cat['view.prs.label'], `${file} cannot name the pull request view`);
+    for (const key of ['ui.pullRequests', 'ui.noPrs', 'ui.lastYear']) assert.ok(cat[key], `${file} is missing ${key}`);
   }
 });
 

@@ -59,12 +59,17 @@ test('weather body matches the widget contract', () => {
   assert.equal(typeof b.isDay, 'boolean');
 });
 
-test('github calendar is 53 weeks of 7 days and is stable across calls', () => {
+test('github calendar runs Sunday-first weeks up to today and is stable across calls', () => {
   const fn = demoFn('github');
   const a = fn(ctx()),
     b = fn(ctx());
+  const days = a.weeks.flatMap(w => w.contributionDays);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   assert.equal(a.weeks.length, 53);
-  assert.ok(a.weeks.every(w => w.contributionDays.length === 7));
+  assert.ok(a.weeks.slice(0, -1).every(w => w.contributionDays.length === 7));
+  assert.ok(a.weeks.every(w => new Date(`${w.contributionDays[0].date}T00:00:00Z`).getUTCDay() === 0));
+  assert.equal(days.at(-1).date, today);
   assert.equal(a.totalContributions, b.totalContributions);
   assert.deepEqual(a.weeks[0], b.weeks[0]);
 });

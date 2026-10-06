@@ -116,13 +116,33 @@ test('the DNS link is described by its summary', () => {
   );
 });
 
+test('the pull request header link is named by its visible label first', () => {
+  assert.match(
+    widget('github/pullrequests.html'),
+    /'aria-label',\s*`\$\{wt\('ui\.pullRequests', 'Pull requests'\)\}, /,
+  );
+});
+
+test('a pull request row without a number is named without one', () => {
+  assert.match(widget('github/pullrequests.html'), /const ref = pr\.number \? `\$\{repo\} #\$\{pr\.number\}` : repo;/);
+});
+
+test('both GitHub pages keep their links clickable while the data is stale', () => {
+  for (const p of ['github/pullrequests.html', 'github/contributions.html']) {
+    assert.match(widget(p), /\.wt-inert \.clickable, \.clickable\.wt-inert \{ pointer-events: auto; \}/, p);
+  }
+});
+
 test('the pull request list holds list items', () => {
   const src = widget('github/pullrequests.html');
-  assert.match(src, /item\.setAttribute\('role','listitem'\);/);
+  assert.match(src, /item\.setAttribute\('role', 'listitem'\);/);
   assert.match(src, /linkTo\(link, pr\.url\)/);
-  assert.match(src, /visible\.length === 0\) \{\n\s*list\.removeAttribute\('role'\);/);
+  assert.match(src, /if \(!items\.length\) \{\n\s*list\.removeAttribute\('role'\);/);
 });
 
 test('the contributions summary uses the yearly total', () => {
-  assert.match(widget('github/contributions.html'), /const total = data\.totalContributions \|\| 0;/);
+  assert.match(
+    widget('github/contributions.html'),
+    /const total = formatNumber\(Math\.max\(0, Number\(data\.totalContributions\) \|\| 0\)\);/,
+  );
 });

@@ -28,7 +28,7 @@ let _cfgCache = null,
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape. Add a matching step in migrate(). */
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 function migrateSocketProxyScheme(settings) {
   const url = settings?.server?.socketProxyUrl;
@@ -55,6 +55,14 @@ function migrateDnsWidgetSize(cfg) {
   if (!Array.isArray(cfg.items)) return;
   for (const item of cfg.items) {
     if (item && item.widgetType === 'dns' && item.widgetSize === 'medium') item.widgetSize = 'small';
+  }
+}
+
+/* The GitHub widget no longer offers an extra large size. */
+function migrateGithubWidgetSize(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  for (const item of cfg.items) {
+    if (item && item.widgetType === 'github' && item.widgetSize === 'xlarge') item.widgetSize = 'large';
   }
 }
 
@@ -101,6 +109,10 @@ function migrate(cfg) {
   if (v < 6) {
     migrateBooksShelves(cfg);
     v = 6;
+  }
+  if (v < 7) {
+    migrateGithubWidgetSize(cfg);
+    v = 7;
   }
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;

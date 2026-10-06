@@ -18,7 +18,9 @@
   "githubPrFilters.opt.mentioned": "Erwähnt",
   "githubPrFilters.opt.review-requested": "Review angefragt",
   "ui.prAria": "GitHub-Pull-Requests",
-  "ui.noPrs": "Keine Pull Requests",
+  "ui.pullRequests": "Pull Requests",
+  "ui.lastYear": "Letztes Jahr",
+  "ui.noPrs": "Keine offenen Pull Requests",
   "ui.contributionsAria": "GitHub-Beiträge: {total} im letzten Jahr",
   "ui.viewAll": "alle anzeigen"
 }

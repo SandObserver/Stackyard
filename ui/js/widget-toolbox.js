@@ -275,6 +275,18 @@ function reducedMotion() {
   }
 }
 
+/** Shrink a figure's type until its text fits its box, down to `min` px. The
+    element must clip its overflow. Starts again from the stylesheet size.
+    @param {HTMLElement} el @param {number} [min] */
+export function fitText(el, min = 20) {
+  el.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(el).fontSize) || min;
+  while (el.scrollWidth > el.clientWidth && size > min) {
+    size -= 1;
+    el.style.fontSize = size + 'px';
+  }
+}
+
 /* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 }
    track: null paints no track, so the page styles .tb-bar per theme. */
 export function barFill(percent, opts = {}) {
