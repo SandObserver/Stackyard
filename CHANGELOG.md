@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The GitHub widget now follows the light and dark theme.
 
+- Redesign the digital clock as large overlapping hour and minute figures in the
+  analog clock's colours.
+
 ### Removed
 
 - The GitHub widget no longer offers an extra large size. Existing extra large
