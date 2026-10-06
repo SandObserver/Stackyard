@@ -34,6 +34,43 @@ export function readableInk(hex, min = 4.5) {
   return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 }
 
+/** @param {unknown} value @returns {number[] | null} */
+function _rgbOf(value) {
+  const s = String(value ?? '').trim();
+  let m = /^#([0-9a-f]{6})$/i.exec(s);
+  if (m) return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
+  m = /^#([0-9a-f]{3})$/i.exec(s);
+  if (m) return [...m[1]].map(c => parseInt(c + c, 16));
+  m = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i.exec(s);
+  return m ? m.slice(1, 4).map(v => Math.min(255, Number(v))) : null;
+}
+
+const _cardLum = () => (_hostTheme() === 'light' ? 1 : _lum([28, 28, 30]));
+
+/** Contrast of a colour against the card, as a ratio. NaN when it cannot be read.
+    @param {string} colour @returns {number} */
+export function cardContrast(colour) {
+  const rgb = _rgbOf(colour);
+  if (!rgb) return NaN;
+  const a = _lum(rgb) + 0.05;
+  const b = _cardLum() + 0.05;
+  return Math.max(a, b) / Math.min(a, b);
+}
+
+/** Moves a colour toward black on the light card or toward white on the dark
+    one, only as far as min:1 against that card needs. For text: a fill keeps
+    the colour the user picked.
+    @param {string} colour hex or rgb() @param {number} [min] @returns {string} #rrggbb, or the input when unreadable */
+export function contrastInk(colour, min = 4.5) {
+  let rgb = _rgbOf(colour);
+  if (!rgb) return colour;
+  const light = _hostTheme() === 'light';
+  const card = _cardLum() + 0.05;
+  const ratio = c => (light ? card / (_lum(c) + 0.05) : (_lum(c) + 0.05) / card);
+  for (let k = 0; k < 40 && ratio(rgb) < min; k++) rgb = rgb.map(v => (light ? v * 0.95 : v + (255 - v) * 0.08));
+  return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+
 export function theme() {
   return _hostTheme();
 }
@@ -238,22 +275,105 @@ function reducedMotion() {
   }
 }
 
-/* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 } */
+/* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 }
+   track: null paints no track, so the page styles .tb-bar per theme. */
 export function barFill(percent, opts = {}) {
   const pct = Math.max(0, Math.min(100, Number(percent) || 0));
   const h = opts.height != null ? opts.height : 6;
   const radius = opts.radius != null ? opts.radius : 3;
   const track = document.createElement('div');
-  track.style.cssText =
-    `position:relative;width:100%;height:${h}px;border-radius:${radius}px;` +
-    `background:${opts.track || 'rgba(255,255,255,0.10)'};overflow:hidden`;
+  track.className = 'tb-bar';
+  track.style.cssText = `position:relative;width:100%;height:${h}px;border-radius:${radius}px;overflow:hidden`;
+  if (opts.track !== null) track.style.backgroundColor = opts.track || 'rgba(255,255,255,0.10)';
   const fill = document.createElement('div');
+  fill.className = 'tb-bar-fill';
   fill.style.cssText =
-    `position:absolute;left:0;top:0;bottom:0;width:${pct}%;border-radius:${radius}px;` +
-    `background:${opts.color || '#0a84ff'}` +
+    `position:absolute;left:0;top:0;bottom:0;width:${pct}%;border-radius:${radius}px` +
     (reducedMotion() ? '' : ';transition:width .4s ease');
+  fill.style.backgroundColor = colorOrFallback(opts.color, '#0a84ff');
   track.appendChild(fill);
   return track;
+}
+
+/** Rounded columns, newest on the right, for a short history at a glance.
+    Built once; update() moves heights only, so a poll never rebuilds the DOM.
+    track: null paints no track, so the page styles .tb-col per theme.
+
+    @param {{ count?: number, color?: string, track?: string | null, gap?: number, radius?: number }} [opts]
+    @returns {{ el: HTMLElement, update: (values: unknown[], scale?: { min?: number, max?: number, dim?: (v: number) => boolean }) => void, indexAt: (clientX: number) => number, mark: (index: number | null) => void }} */
+export function columns(opts = {}) {
+  const count = Math.max(1, Math.floor(Number(opts.count) || 24));
+  const radius = opts.radius != null ? opts.radius : 3;
+  const color = colorOrFallback(opts.color, '#0a84ff');
+  const el = document.createElement('div');
+  el.className = 'tb-cols';
+  el.style.cssText = `display:flex;align-items:stretch;height:100%;gap:${opts.gap != null ? opts.gap : 3}px`;
+  /** @type {HTMLElement[]} */
+  const fills = [];
+  /** @type {HTMLElement[]} */
+  const cols = [];
+  /** @type {HTMLElement | null} */
+  let marker = null;
+  for (let i = 0; i < count; i++) {
+    const col = document.createElement('div');
+    col.className = 'tb-col';
+    col.style.cssText = `flex:1 1 0;position:relative;overflow:hidden;border-radius:${radius}px`;
+    if (opts.track !== null) col.style.backgroundColor = opts.track || 'rgba(255,255,255,0.10)';
+    const fill = document.createElement('div');
+    fill.className = 'tb-col-fill';
+    fill.style.cssText = `position:absolute;left:0;right:0;bottom:0;height:0;border-radius:${radius}px`;
+    fill.style.backgroundColor = color;
+    col.appendChild(fill);
+    el.appendChild(col);
+    cols.push(col);
+    fills.push(fill);
+  }
+  return {
+    el,
+    update(values, scale = {}) {
+      const list = Array.isArray(values) ? values.slice(-count) : [];
+      const offset = count - list.length;
+      const min = Number.isFinite(scale.min) ? Number(scale.min) : 0;
+      const max = Number.isFinite(scale.max) && Number(scale.max) > min ? Number(scale.max) : min + 100;
+      for (let i = 0; i < count; i++) {
+        const v = i < offset ? null : list[i - offset];
+        const fill = fills[i];
+        /* Keep the sliver. Without it a zero reading looks like a missing one. */
+        if (typeof v !== 'number' || !Number.isFinite(v)) {
+          fill.style.height = '0';
+          fill.style.opacity = '';
+          continue;
+        }
+        const share = Math.max(0, Math.min(1, (v - min) / (max - min)));
+        fill.style.height = `max(2px, ${(share * 100).toFixed(2)}%)`;
+        fill.style.opacity = scale.dim && scale.dim(v) ? '0.45' : '';
+      }
+    },
+    /** The column under a pointer, so the whole plot is the hit target.
+        @param {number} clientX @returns {number} */
+    indexAt(clientX) {
+      const box = el.getBoundingClientRect();
+      const share = box.width > 0 ? (clientX - box.left) / box.width : 1;
+      return Math.max(0, Math.min(count - 1, Math.floor(share * count)));
+    },
+    /** A thin marker on one column, or none. track: null leaves its colour to
+        the page as .tb-col-mark.
+        @param {number | null} index */
+    mark(index) {
+      if (index === null || !Number.isInteger(index) || index < 0 || index >= count) {
+        marker?.remove();
+        return;
+      }
+      if (!marker) {
+        marker = document.createElement('div');
+        marker.className = 'tb-col-mark';
+        marker.style.cssText =
+          'position:absolute;top:0;bottom:0;left:50%;width:2px;border-radius:1px;transform:translateX(-50%)';
+        if (opts.track !== null) marker.style.backgroundColor = 'rgba(255,255,255,0.9)';
+      }
+      cols[index].appendChild(marker);
+    },
+  };
 }
 
 /* A widget is an iframe and does not load the i18n module. The language arrives
