@@ -315,12 +315,14 @@ async function beszelGet(ctx, base, path) {
       headers: { Authorization: session.token },
       timeout: 8000,
     });
-    if (r.status === 401 || r.status === 403 || (Array.isArray(r.data?.items) && !r.data.items.length)) {
+    const refused = r.status === 401 || r.status === 403;
+    if (refused || (Array.isArray(r.data?.items) && !r.data.items.length)) {
       if (attempt === 0) {
         _beszelSession.delete(base);
         session = await beszelLogin(ctx, base);
         continue;
       }
+      if (refused) ctx.fail('Beszel refused this account access to its systems', { kind: ctx.KIND.AUTH });
       return r.data;
     }
     if (r.status >= 400) ctx.fail('Beszel HTTP ' + r.status);
