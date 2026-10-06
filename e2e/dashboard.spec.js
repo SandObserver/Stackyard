@@ -206,7 +206,7 @@ test('a widget renders inside its frame under the page policy', async ({ page, r
   const frame = page.frameLocator('#pages .widget iframe');
   /* The digits are drawn by the widget's own script, so a rendered one proves
      it ran rather than that the element exists. */
-  await expect(frame.locator('#row-h svg').first()).toBeVisible();
+  await expect(frame.locator('#hh')).toHaveText(/^\d{2}$/);
   expect(violations, `the page refused something: ${violations.join(' | ')}`).toEqual([]);
 });
 
