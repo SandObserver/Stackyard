@@ -34,19 +34,42 @@ export function readableInk(hex, min = 4.5) {
   return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 }
 
+/** The channels of a colour colorOrFallback accepts, or null.
+    @param {unknown} value @returns {number[] | null} */
+function _rgbOf(value) {
+  const s = String(value ?? '').trim();
+  let m = /^#([0-9a-f]{6})$/i.exec(s);
+  if (m) return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
+  m = /^#([0-9a-f]{3})$/i.exec(s);
+  if (m) return [...m[1]].map(c => parseInt(c + c, 16));
+  m = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i.exec(s);
+  return m ? m.slice(1, 4).map(v => Math.min(255, Number(v))) : null;
+}
+
+/* The card a widget paints on, per theme. */
+const _cardLum = () => (_hostTheme() === 'light' ? 1 : _lum([28, 28, 30]));
+
+/** Contrast of a colour against the card, as a ratio. NaN when it cannot be read.
+    @param {string} colour @returns {number} */
+export function cardContrast(colour) {
+  const rgb = _rgbOf(colour);
+  if (!rgb) return NaN;
+  const a = _lum(rgb) + 0.05;
+  const b = _cardLum() + 0.05;
+  return Math.max(a, b) / Math.min(a, b);
+}
+
 /** Moves a colour toward black on the light card or toward white on the dark
-    one, only as far as min:1 against that card needs.
-    @param {string} hex #rrggbb @param {number} [min] */
-export function contrastInk(hex, min = 4.5) {
-  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
-  if (!m) return hex;
-  let rgb = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
-  if (_hostTheme() === 'light') {
-    for (let k = 0; k < 40 && 1.05 / (_lum(rgb) + 0.05) < min; k++) rgb = rgb.map(v => v * 0.95);
-  } else {
-    const card = _lum([28, 28, 30]) + 0.05;
-    for (let k = 0; k < 40 && (_lum(rgb) + 0.05) / card < min; k++) rgb = rgb.map(v => v + (255 - v) * 0.08);
-  }
+    one, only as far as min:1 against that card needs. For text: a fill keeps
+    the colour the user picked.
+    @param {string} colour hex or rgb() @param {number} [min] @returns {string} #rrggbb, or the input when unreadable */
+export function contrastInk(colour, min = 4.5) {
+  let rgb = _rgbOf(colour);
+  if (!rgb) return colour;
+  const light = _hostTheme() === 'light';
+  const card = _cardLum() + 0.05;
+  const ratio = c => (light ? card / (_lum(c) + 0.05) : (_lum(c) + 0.05) / card);
+  for (let k = 0; k < 40 && ratio(rgb) < min; k++) rgb = rgb.map(v => (light ? v * 0.95 : v + (255 - v) * 0.08));
   return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 }
 

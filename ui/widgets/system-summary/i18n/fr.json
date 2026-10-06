@@ -34,6 +34,7 @@
   "slots.type.opt.iowait": "Attente d’E/S",
   "slots.type.opt.procs": "Processus",
   "row.disk": "Disque",
+  "sr.diskSize": "{used} sur {total}",
   "slots.primary.label": "Premier point de montage",
   "slots.primary.placeholder": "/",
   "slots.secondary.label": "Second point de montage",

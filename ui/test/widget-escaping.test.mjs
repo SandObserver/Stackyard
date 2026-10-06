@@ -107,7 +107,8 @@ test('the backup failure draws no upstream text', () => {
 
 test('the system-stats label is written as text, never as markup', () => {
   const src = read(STATS);
-  assert.match(src, /const lbl = el\('span', 'lbl', label\);/);
+  assert.match(src, /setLabel\(lbl, label\);/);
+  assert.match(src, /node\.replaceChildren\(el\('bdi', null, text\)\);/);
   assert.match(src, /if \(text != null\) n\.textContent = text;/);
   assert.doesNotMatch(src, /html`[^`]*\$\{label\}/, 'the label is interpolated into markup');
 });

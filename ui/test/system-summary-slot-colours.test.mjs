@@ -28,9 +28,10 @@ test('a slot with no colour takes the default for its own position', () => {
   assert.equal(slotColour({ type: 'disk' }, 2), '#00D2E0');
 });
 
-test('a chosen colour wins, and a short hex is expanded for the ink check', () => {
+test('a chosen colour is kept exactly as picked', () => {
   assert.equal(slotColour({ color: '#0091FF' }, 2), '#0091FF');
-  assert.equal(slotColour({ color: '#abc' }, 0), '#aabbcc');
+  assert.equal(slotColour({ color: '#abc' }, 0), '#abc');
+  assert.equal(slotColour({ color: 'rgb(255, 255, 255)' }, 0), 'rgb(255, 255, 255)');
 });
 
 test('a colour carrying a second declaration falls back', () => {
@@ -42,5 +43,6 @@ test('the value, the chart and the bars all take the row colour', () => {
   assert.match(src, /columns\(\{ count: COLS, color: colour, track: null \}\)/);
   assert.equal(src.match(/barFill\(0, \{[^}]*color: colour \}\)/g)?.length, 2, 'both disk bars');
   assert.match(src, /setProperty\('--ink', contrastInk\(r\.colour, 4\.5\)\)/);
-  assert.match(src, /const fill = contrastInk\(r\.colour, 1\.5\);\n {4}if \(r\.chart\) r\.chart\.setColor\(fill\);/);
+  assert.doesNotMatch(src, /setColor\(|backgroundColor = fill/, 'a fill must keep the colour the user picked');
+  assert.match(src, /classList\.toggle\('faint', cardContrast\(r\.colour\) < 1\.5\)/);
 });

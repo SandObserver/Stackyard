@@ -34,6 +34,7 @@
   "slots.type.opt.iowait": "IO 等待",
   "slots.type.opt.procs": "进程数",
   "row.disk": "磁盘",
+  "sr.diskSize": "已用 {used}，共 {total}",
   "slots.primary.label": "第一个挂载路径",
   "slots.primary.placeholder": "/",
   "slots.secondary.label": "第二个挂载路径",

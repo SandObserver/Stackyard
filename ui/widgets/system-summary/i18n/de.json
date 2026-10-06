@@ -34,6 +34,7 @@
   "slots.type.opt.iowait": "IO-Wartezeit",
   "slots.type.opt.procs": "Prozesse",
   "row.disk": "Datenträger",
+  "sr.diskSize": "{used} von {total}",
   "slots.primary.label": "Erster Einhängepunkt",
   "slots.primary.placeholder": "/",
   "slots.secondary.label": "Zweiter Einhängepunkt",

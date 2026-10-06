@@ -12,10 +12,10 @@ function lift(name, sig, deps = {}) {
   assert.ok(m, `${name} is defined in the widget`);
   return new Function(...Object.keys(deps), `${m[0]}; return ${name};`)(...Object.values(deps));
 }
-function liftConst(name) {
-  const m = src.match(new RegExp(`const ${name} = ([^;]+);`));
+function liftConst(name, deps = {}) {
+  const m = src.match(new RegExp(`const ${name} = (.+);\\n`));
   assert.ok(m, `${name} is defined in the widget`);
-  return new Function(`return ${m[1]};`)();
+  return new Function(...Object.keys(deps), `return ${m[1]};`)(...Object.values(deps));
 }
 
 const REFRESH_SECONDS = liftConst('REFRESH_SECONDS');
@@ -24,6 +24,10 @@ const refreshSeconds = lift('refreshSeconds', 'wc', { REFRESH_SECONDS });
 const valueText = lift('valueText', 'type, v', { formatNumber: n => String(n) });
 const scaleFor = lift('scaleFor', 'type, vals');
 const readingFor = lift('readingFor', 'slot, data', { reading });
+const share = liftConst('share', { reading });
+const sizeParts = lift('sizeParts', 'd', { reading, share, formatNumber: n => String(n) });
+const sizeText = liftConst('sizeText');
+const ageText = lift('ageText', 'ms', { rtf: new Intl.RelativeTimeFormat('en', { numeric: 'auto', style: 'short' }) });
 
 test('the refresh setting takes only the offered choices, 10 s otherwise', () => {
   assert.equal(refreshSeconds({ refresh: '5' }), 5);
@@ -72,4 +76,23 @@ test('a process count draws against its own window, and above the mean is full s
 test('a flat or empty process window still draws', () => {
   assert.deepEqual(scaleFor('procs', [200, 200]), { min: 199, max: 201 });
   assert.deepEqual(scaleFor('procs', [null, null]), {});
+});
+
+test('a disk size reads in GB, or in TB from 1000 GB', () => {
+  assert.deepEqual(sizeParts({ usedPct: 50, totalGb: 467 }), { used: '234', total: '467', unit: 'GB' });
+  assert.deepEqual(sizeParts({ usedPct: 78, totalGb: 1863 }), { used: '1.4', total: '1.8', unit: 'TB' });
+  assert.equal(sizeText(sizeParts({ usedPct: 50, totalGb: 467 })), '234 / 467 GB');
+});
+
+test('a disk with no total or no share has no size, never a zero', () => {
+  for (const d of [null, {}, { usedPct: 50 }, { totalGb: 0, usedPct: 50 }, { totalGb: 100, usedPct: 'x' }]) {
+    assert.equal(sizeParts(d), null, JSON.stringify(d));
+  }
+  assert.equal(sizeText(null), '');
+});
+
+test('a hovered column says how long ago it was read', () => {
+  assert.equal(ageText(400), 'now');
+  assert.equal(ageText(40000), '40 sec. ago');
+  assert.equal(ageText(3 * 60000), '3 min. ago');
 });

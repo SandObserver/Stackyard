@@ -34,6 +34,7 @@
   "slots.type.opt.iowait": "Espera de E/S",
   "slots.type.opt.procs": "Procesos",
   "row.disk": "Disco",
+  "sr.diskSize": "{used} de {total}",
   "slots.primary.label": "Primera ruta de montaje",
   "slots.primary.placeholder": "/",
   "slots.secondary.label": "Segunda ruta de montaje",

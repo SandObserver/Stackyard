@@ -34,6 +34,7 @@
   "slots.type.opt.iowait": "انتظار ورودی/خروجی",
   "slots.type.opt.procs": "فرایندها",
   "row.disk": "دیسک",
+  "sr.diskSize": "{used} از {total}",
   "slots.primary.label": "نخستین مسیر اتصال",
   "slots.primary.placeholder": "/",
   "slots.secondary.label": "دومین مسیر اتصال",

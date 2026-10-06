@@ -34,6 +34,7 @@
   "slots.type.opt.iowait": "IO Wait",
   "slots.type.opt.procs": "Processes",
   "row.disk": "Disk",
+  "sr.diskSize": "{used} of {total}",
   "slots.primary.label": "First Mount Path",
   "slots.primary.placeholder": "/",
   "slots.secondary.label": "Second Mount Path",
