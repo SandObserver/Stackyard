@@ -19,7 +19,6 @@
   .mode-dark  { background: #1c1c1e; }
   .mode-light { background: #ffffff; }
 
-  /* Two rows: HH on top, MM below */
   .time-block {
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -142,7 +141,6 @@ function buildShell() {
   function makeRow(container, svgArr) {
     const d1 = makeDigitSVG(dw, dh);
     const d2 = makeDigitSVG(dw, dh);
-    container.style.gap = '3px';
     container.append(d1, d2);
     svgArr.push(d1, d2);
     [d1, d2].forEach(svg =>
