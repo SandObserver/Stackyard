@@ -1,13 +1,11 @@
 {
   "name": "github",
   "label": "widget.label",
-  "appearance": "dark",
   "glyph": "merge",
   "sizes": [
     "small",
     "medium",
-    "large",
-    "xlarge"
+    "large"
   ],
   "card": "translucent",
   "viewField": "githubView",

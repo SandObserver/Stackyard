@@ -118,11 +118,14 @@ test('the DNS link is described by its summary', () => {
 
 test('the pull request list holds list items', () => {
   const src = widget('github/pullrequests.html');
-  assert.match(src, /item\.setAttribute\('role','listitem'\);/);
+  assert.match(src, /item\.setAttribute\('role', 'listitem'\);/);
   assert.match(src, /linkTo\(link, pr\.url\)/);
-  assert.match(src, /visible\.length === 0\) \{\n\s*list\.removeAttribute\('role'\);/);
+  assert.match(src, /if \(!items\.length\) \{\n\s*list\.removeAttribute\('role'\);/);
 });
 
 test('the contributions summary uses the yearly total', () => {
-  assert.match(widget('github/contributions.html'), /const total = data\.totalContributions \|\| 0;/);
+  assert.match(
+    widget('github/contributions.html'),
+    /const total = formatNumber\(Math\.max\(0, Number\(data\.totalContributions\) \|\| 0\)\);/,
+  );
 });

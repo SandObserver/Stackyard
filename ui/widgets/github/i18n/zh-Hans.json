@@ -18,7 +18,9 @@
   "githubPrFilters.opt.mentioned": "提到我的",
   "githubPrFilters.opt.review-requested": "请求我评审的",
   "ui.prAria": "GitHub 拉取请求",
-  "ui.noPrs": "没有拉取请求",
+  "ui.pullRequests": "拉取请求",
+  "ui.lastYear": "过去一年",
+  "ui.noPrs": "没有打开的拉取请求",
   "ui.contributionsAria": "GitHub 贡献：过去一年 {total} 次",
   "ui.viewAll": "查看全部"
 }

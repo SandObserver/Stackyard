@@ -18,7 +18,9 @@
   "githubPrFilters.opt.mentioned": "نام‌برده‌شده",
   "githubPrFilters.opt.review-requested": "درخواست بازبینی",
   "ui.prAria": "درخواست‌های ادغام GitHub",
-  "ui.noPrs": "درخواست ادغامی نیست",
+  "ui.pullRequests": "درخواست‌های ادغام",
+  "ui.lastYear": "سال گذشته",
+  "ui.noPrs": "درخواست ادغام بازی نیست",
   "ui.contributionsAria": "مشارکت‌های GitHub: {total} در سال گذشته",
   "ui.viewAll": "مشاهدهٔ همه"
 }

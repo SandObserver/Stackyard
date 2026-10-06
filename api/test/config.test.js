@@ -111,6 +111,20 @@ test('migrate downsizes a medium DNS widget to small', () => {
   assert.equal(cfg.items[2].widgetSize, 'medium');
 });
 
+test('migrate downsizes an extra large GitHub widget to large', () => {
+  const cfg = migrate({
+    items: [
+      { id: 'a', type: 'widget', widgetType: 'github', widgetSize: 'xlarge' },
+      { id: 'b', type: 'widget', widgetType: 'github', widgetSize: 'large' },
+      { id: 'c', type: 'widget', widgetType: 'connections', widgetSize: 'xlarge' },
+    ],
+    settings: {},
+  });
+  assert.equal(cfg.items[0].widgetSize, 'large');
+  assert.equal(cfg.items[1].widgetSize, 'large');
+  assert.equal(cfg.items[2].widgetSize, 'xlarge');
+});
+
 test('migrate moves a books widget onto a shelf row', () => {
   const cfg = migrate({
     items: [

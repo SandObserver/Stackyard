@@ -4,7 +4,6 @@
 let _cal = null;
 
 function githubCalendar() {
-  const COLORS = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
   let seed = 1337,
     total = 0;
   const rnd = () => {
@@ -20,10 +19,9 @@ function githubCalendar() {
       const r = rnd();
       const count = r < 0.45 ? 0 : Math.floor(rnd() * 14) + 1;
       total += count;
-      const lvl = count === 0 ? 0 : count < 3 ? 1 : count < 6 ? 2 : count < 10 ? 3 : 4;
       const date = new Date(start);
       date.setDate(start.getDate() + w * 7 + d);
-      days.push({ contributionCount: count, date: date.toISOString().slice(0, 10), color: COLORS[lvl] });
+      days.push({ contributionCount: count, date: date.toISOString().slice(0, 10) });
     }
     weeks.push({ contributionDays: days });
   }

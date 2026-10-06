@@ -2,149 +2,264 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GitHub Contributions</title>
 <script src="/js/widget-theme.js?v=db11b06d"></script>
 <style>
-  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-  html,body{width:100%;height:100%;overflow:hidden;
-    background:transparent;
-    font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;}
-  .widget{width:100%;height:100%;display:flex;align-items:center;
-    justify-content:center;padding:8px;cursor:default;}
-  .widget.clickable{cursor:pointer;}
-  .widget.clickable:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
-  .graph{display:flex;flex-direction:row;gap:2px;align-items:flex-start;}
-  .col{display:flex;flex-direction:column;gap:2px;}
-  .cell{border-radius:2px;flex-shrink:0;transition:opacity .1s;}
-  .cell:hover{opacity:.75;}
-  .l0{background:rgba(255,255,255,0.07);}
-  .l1{background:#0e4429;}
-  .l2{background:#006d32;}
-  .l3{background:#26a641;}
-  .l4{background:#39d353;}
-  .msg{position:absolute;inset-inline:8px;bottom:6px;justify-content:center;}
-  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1C1C1E;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  body { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; }
+
+  .widget { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 13px; border-radius: 6px; }
+  .widget.size-medium { flex-direction: row; gap: 20px; }
+  .head { display: flex; flex-direction: column; gap: 2px; min-width: 0; border-radius: 8px; }
+  .size-small .head, .size-medium .head { flex: 1; justify-content: space-between; }
+  .size-medium .head { flex: 0 0 124px; }
+  .lbl { font-size: 14px; font-weight: 600; color: #8E8E93; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fig { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .num { font-weight: 700; line-height: 1.05; letter-spacing: -0.03em; color: #FFFFFF; font-variant-numeric: tabular-nums;
+    white-space: nowrap; overflow: hidden; }
+  .size-small .num { font-size: 44px; }
+  .size-medium .num { font-size: 40px; }
+  .size-large .num { font-size: 50px; }
+  .sub { height: 18px; font-size: 14px; line-height: 18px; color: #8E8E93; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+
+  .plot { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px;
+    touch-action: pan-y; }
+  .size-medium .plot { justify-content: center; }
+  .band { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); column-gap: 2px; }
+  .size-medium .band { column-gap: 3px; }
+  .week { display: grid; grid-template-rows: repeat(7, auto); row-gap: 2px; }
+  .size-medium .week { row-gap: 3px; }
+  .cell { aspect-ratio: 1; border-radius: 2px; background: rgba(255,255,255,0.07); }
+  .size-medium .cell { border-radius: 3px; }
+  .cell.future { visibility: hidden; }
+  .l1 { background: #0E4429; }
+  .l2 { background: #006D32; }
+  .l3 { background: #26A641; }
+  .l4 { background: #39D353; }
+  .cell.on { box-shadow: 0 0 0 1.5px #FFFFFF; }
+
+  .tip { position: absolute; z-index: 1; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    white-space: nowrap; color: #FFFFFF; background: #3A3A3C; pointer-events: none; font-variant-numeric: tabular-nums; }
+  .tip[hidden] { display: none; }
+
+  .clickable { cursor: pointer; }
+  .clickable:focus-visible { outline: 2px solid #0091FF; outline-offset: 4px; }
+  .cap { justify-content: center; }
+
+  .arrive .num, .arrive .l1, .arrive .l2, .arrive .l3, .arrive .l4 { animation: fade 0.25s ease-out both; }
+  @keyframes fade { from { opacity: 0; } }
+
+  html[data-theme="light"], html[data-theme="light"] body { background: #FFFFFF; }
+  html[data-theme="light"] .num { color: #000000; }
+  html[data-theme="light"] .lbl, html[data-theme="light"] .sub { color: #6C6C70; }
+  html[data-theme="light"] .cell { background: rgba(0,0,0,0.06); }
+  html[data-theme="light"] .l1 { background: #9BE9A8; }
+  html[data-theme="light"] .l2 { background: #40C463; }
+  html[data-theme="light"] .l3 { background: #30A14E; }
+  html[data-theme="light"] .l4 { background: #216E39; }
+  html[data-theme="light"] .cell.on { box-shadow: 0 0 0 1.5px #000000; }
+  html[data-theme="light"] .tip { color: #000000; background: #FFFFFF; box-shadow: 0 1px 6px rgba(0,0,0,0.18); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .arrive .num, .arrive .l1, .arrive .l2, .arrive .l3, .arrive .l4 { animation: none; }
+  }
+  @media (forced-colors: active) {
+    .cell { forced-color-adjust: none; background: Canvas; outline: 1px solid CanvasText; outline-offset: -1px; }
+    .l1, .l2, .l3, .l4 { background: Highlight; }
+    .cell.on { outline: 2px solid CanvasText; }
+  }
 </style>
 </head>
 <body>
-<div class="widget" id="widget">
-  <div class="msg wt-cap" id="msg" hidden></div>
-</div>
+<div class="widget" id="widget"></div>
+<div class="tip" id="tip" hidden aria-hidden="true"></div>
+<div class="cap" id="cap"></div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=2a8d756c';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText } from '/js/widget-toolbox.js?v=556ee947';
 await loadStrings();
 
 const TICK_MS = 300000;
-const id      = new URLSearchParams(location.search).get('id')      || '';
-const size    = new URLSearchParams(location.search).get('size')    || 'small';
-const compact = new URLSearchParams(location.search).get('compact') === '1';
-const IW      = parseInt(new URLSearchParams(location.search).get('iw') || '0', 10);
-const IH      = parseInt(new URLSearchParams(location.search).get('ih') || '0', 10);
-const API  = '/api';
+const params = new URLSearchParams(location.search);
+const id = params.get('id') || '';
+const LANG = params.get('lang') || 'en';
+const MOBILE = params.get('mobile') === '1';
+const size = ['small', 'medium', 'large'].includes(params.get('size')) ? params.get('size') : 'small';
+const GRID = { small: { cols: 0, bands: 0 }, medium: { cols: 10, bands: 1 }, large: { cols: 26, bands: 2 } }[size];
 
-/* Small: 7×7. Medium: 16×7 (one more column than before) */
-const COLS = size === 'medium' ? 16 : 7;
-const ROWS = 7;
+const w = document.getElementById('widget');
+const cap = document.getElementById('cap');
+const tip = document.getElementById('tip');
+let linkEl = null;
+const dayOf = new WeakMap();
 
-let _href = '';
-let _isLink = false;
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+const head = el('div', 'head');
+const fig = el('div', 'fig');
+const num = el('div', 'num', '—');
+const sub = el('div', 'sub');
+const plot = el('div', 'plot');
+plot.setAttribute('aria-hidden', 'true');
+fig.append(num, sub);
+head.append(el('div', 'lbl', wt('view.contributions.label', 'Contributions')), fig);
+w.className = 'widget size-' + size;
+w.append(head);
+if (GRID.cols) w.append(plot);
+
+function levelsOf(weeks) {
+  const nz = weeks
+    .flatMap(wk => (Array.isArray(wk?.contributionDays) ? wk.contributionDays : []))
+    .map(d => Number(d?.contributionCount) || 0)
+    .filter(c => c > 0);
+  nz.sort((a, b) => a - b);
+  const q = p => (nz.length ? nz[Math.floor(p * (nz.length - 1))] : 1);
+  const cut = [q(0.25), q(0.5), q(0.75)];
+  return c => (c <= 0 ? 0 : c <= cut[0] ? 1 : c <= cut[1] ? 2 : c <= cut[2] ? 3 : 4);
+}
+
+let dayFmt = null;
+function dayName(iso) {
+  try {
+    if (!dayFmt) dayFmt = new Intl.DateTimeFormat(LANG, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    return dayFmt.format(new Date(iso + 'T00:00:00Z'));
+  } catch {
+    return iso;
+  }
+}
+
+function weekColumn(week, level) {
+  const col = el('div', 'week');
+  const slots = Array(7).fill(null);
+  for (const d of Array.isArray(week?.contributionDays) ? week.contributionDays : []) {
+    if (!d || typeof d !== 'object') continue;
+    const wd = new Date(String(d.date) + 'T00:00:00Z').getUTCDay();
+    if (wd >= 0 && wd < 7) slots[wd] = d;
+  }
+  const known = slots.some(Boolean);
+  slots.forEach(d => {
+    if (!d) {
+      col.append(el('div', known ? 'cell future' : 'cell'));
+      return;
+    }
+    const c = Math.max(0, Number(d.contributionCount) || 0);
+    const cell = el('div', `cell l${level(c)}`);
+    dayOf.set(cell, { date: String(d.date), count: c });
+    col.append(cell);
+  });
+  return col;
+}
+
+function drawGrid(weeks) {
+  const { cols, bands } = GRID;
+  const level = levelsOf(weeks);
+  const shown = weeks.slice(-cols * bands);
+  while (shown.length < cols * bands) shown.unshift(null);
+  plot.replaceChildren();
+  for (let b = 0; b < bands; b++) {
+    const band = el('div', 'band');
+    for (const week of shown.slice(b * cols, (b + 1) * cols)) band.append(weekColumn(week, level));
+    plot.append(band);
+  }
+}
+
+function name(text) {
+  linkEl.setAttribute('aria-label', text);
+}
+
+let marked = null;
+function endHover() {
+  if (!marked) return;
+  marked.classList.remove('on');
+  marked = null;
+  tip.hidden = true;
+}
+
+function hover(e) {
+  const hit = document.elementFromPoint(e.clientX, e.clientY);
+  const day = hit && dayOf.get(hit);
+  if (!day) return endHover();
+  if (hit === marked) return;
+  marked?.classList.remove('on');
+  marked = hit;
+  hit.classList.add('on');
+  tip.textContent = `${dayName(day.date)} · ${formatNumber(day.count)}`;
+  tip.hidden = false;
+  const r = hit.getBoundingClientRect();
+  const t = tip.getBoundingClientRect();
+  const x = Math.min(Math.max(8, r.left + r.width / 2 - t.width / 2), innerWidth - t.width - 8);
+  const above = r.top - t.height - 6;
+  tip.style.left = `${x}px`;
+  tip.style.top = `${above >= 4 ? above : r.bottom + 6}px`;
+}
+
+plot.addEventListener('pointerdown', hover);
+plot.addEventListener('pointermove', hover);
+plot.addEventListener('pointerleave', endHover);
+plot.addEventListener('pointercancel', endHover);
+plot.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') endHover(); });
+/* Keep every one of these. Safari can skip pointerleave when the pointer leaves the frame. */
+document.documentElement.addEventListener('mouseleave', endHover);
+window.addEventListener('blur', endHover);
+document.addEventListener('visibilitychange', endHover);
+
+let arrived = false;
+function render(data) {
+  const weeks = Array.isArray(data.weeks) ? data.weeks : [];
+  const total = formatNumber(Math.max(0, Number(data.totalContributions) || 0));
+  endHover();
+  if (GRID.cols) drawGrid(weeks);
+  num.textContent = total;
+  fitText(num);
+  sub.textContent = wt('ui.lastYear', 'Last year');
+  name(wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', total));
+  if (!arrived) {
+    arrived = true;
+    w.classList.add('arrive');
+    setTimeout(() => w.classList.remove('arrive'), 600);
+  }
+}
+
+const state = errorState({ root: document.body, caption: cap, content: () => [w] });
 
 async function boot() {
+  let href = '';
   try {
-    const r = await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
+    const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`);
     if (r.ok) {
-      const cfg = await r.json();
-      _href = cfg.widgetConfig?.githubHref || '';
+      const wc = (await r.json())?.widgetConfig || {};
+      href = wc.githubHref || '';
     }
   } catch {}
-  const w = document.getElementById('widget');
-  w.setAttribute('aria-label', wt('view.contributions.label', 'Contributions'));
-  _isLink = linkTo(w, _href);
-  poll({ fetch: fetchGraph, interval: TICK_MS,
-    render: d => { document.getElementById('msg').removeAttribute('aria-hidden'); state.ok(); render(d); },
+  /* On a phone the whole card is the target. On a desktop only the figure is,
+     so the grid can be pointed at without opening anything. */
+  linkEl = MOBILE ? w : head;
+  const linked = linkTo(linkEl, href);
+  linkEl.setAttribute('role', linked ? 'link' : 'img');
+  if (MOBILE) head.setAttribute('aria-hidden', 'true');
+  name(wt('view.contributions.label', 'Contributions'));
+  if (GRID.cols) drawGrid([]);
+  poll({
+    fetch: () => fetchData('data'),
+    interval: TICK_MS,
+    render: d => { cap.removeAttribute('aria-hidden'); state.ok(); render(d); },
     onError: ({ error, everOk, stale, since }) => {
-      if (!everOk || stale) showError(error, since, everOk);
-    } });
-}
-
-const fetchGraph = () => fetchData('data');
-
-function render(data) {
-  const weeks  = (data.weeks || []).slice(-COLS);
-  const widget = document.getElementById('widget');
-  const old = widget.querySelector('.graph');
-  if (old) old.remove();
-
-  /* Wait for layout to settle before measuring — critical inside iframes on mobile WebKit */
-  requestAnimationFrame(() => _renderGraph(data, weeks, widget));
-}
-
-function _renderGraph(data, weeks, widget) {
-
-  /* Quartile-based levels relative to max in visible window */
-  let maxCount = 0;
-  weeks.forEach(w => (w.contributionDays||[]).forEach(d => {
-    if ((d.contributionCount||0) > maxCount) maxCount = d.contributionCount;
-  }));
-  const q = maxCount > 0 ? maxCount / 4 : 1;
-
-  const pad  = compact ? 4 : 8;
-  const W = (IW || widget.offsetWidth)  - pad*2;
-  const H = (IH || widget.offsetHeight) - pad*2;
-  const cellW = Math.floor((W - (COLS-1)*2) / COLS);
-  const cellH = Math.floor((H - (ROWS-1)*2) / ROWS);
-  const cell  = Math.min(cellW, cellH); /* no cap — fill the full space */
-
-  const graph = document.createElement('div'); graph.className = 'graph'; graph.setAttribute('aria-hidden','true');
-
-  /* Screen-reader summary — the grid itself is colour-only */
-  const total = data.totalContributions || 0;
-  widget.setAttribute('role', _isLink ? 'link' : 'img');
-  /* Do not name an empty grid. It would report zero contributions as fact. */
-  if (weeks.length)
-    widget.setAttribute('aria-label',
-      wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', formatNumber(total)));
-
-  const padded = [];
-  for (let i = 0; i < COLS; i++) {
-    padded.push(weeks[i] || { contributionDays: Array(7).fill({ contributionCount:0 }) });
-  }
-
-  padded.forEach(week => {
-    const col = document.createElement('div'); col.className = 'col';
-    const days = week.contributionDays || [];
-    for (let d = 0; d < ROWS; d++) {
-      const day = days[d] || { contributionCount:0 };
-      const c   = day.contributionCount || 0;
-      const lvl = c === 0 ? 0 : c <= q ? 1 : c <= q*2 ? 2 : c <= q*3 ? 3 : 4;
-      const el  = document.createElement('div');
-      el.className = `cell l${lvl}`;
-      el.style.width  = cell + 'px';
-      el.style.height = cell + 'px';
-      if (day.date) el.title = `${day.date}: ${c} contribution${c!==1?'s':''}`;
-      col.appendChild(el);
-    }
-    graph.appendChild(col);
+      if (!everOk || stale) {
+        const line = state.fail(error, { since, inert: everOk });
+        name(line);
+        cap.setAttribute('aria-hidden', 'true');
+      }
+    },
   });
-
-  widget.appendChild(graph);
 }
-
-function showError(error, since, everOk) {
-  const widget = document.getElementById('widget');
-  if (!widget.querySelector('.graph')) _renderGraph({}, [], widget);
-  const line = state.fail(error, { since, inert: everOk });
-  widget.setAttribute('role', _isLink ? 'link' : 'img');
-  widget.setAttribute('aria-label', line);
-  document.getElementById('msg').setAttribute('aria-hidden', 'true');
-}
-
-const state = errorState({
-  root: document.getElementById('widget'),
-  content: () => [document.getElementById('widget').querySelector('.graph')],
-  caption: document.getElementById('msg'),
-});
 
 boot();
 </script>
