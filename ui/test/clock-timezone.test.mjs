@@ -46,14 +46,14 @@ function element() {
   return el;
 }
 
-async function boot(file, clockTimezone, { resizeDuringLoad = false } = {}) {
+async function boot(file, clockTimezone, { resizeDuringLoad = false, search = '?id=c1', config = {} } = {}) {
   const els = new Map();
   const byId = id => els.get(id) || els.set(id, element()).get(id);
   const timers = [];
   const painted = [];
   const resizers = [];
   const globals = {
-    location: { search: '?id=c1' },
+    location: { search },
     document: {
       documentElement: { getAttribute: () => null },
       getElementById: byId,
@@ -65,7 +65,7 @@ async function boot(file, clockTimezone, { resizeDuringLoad = false } = {}) {
     matchMedia: () => ({ matches: true }),
     fetch: async () => {
       if (resizeDuringLoad) for (const fn of resizers) fn();
-      return { ok: true, json: async () => ({ widgetConfig: { clockTimezone } }) };
+      return { ok: true, json: async () => ({ widgetConfig: { clockTimezone, ...config } }) };
     },
     setTimeout: fn => timers.push(fn),
     clearTimeout() {},
@@ -92,7 +92,7 @@ async function boot(file, clockTimezone, { resizeDuringLoad = false } = {}) {
       else delete globalThis[k];
     }
   }
-  return { painted, timers, label: byId('widget').attrs['aria-label'], face: byId('face').children.length };
+  return { painted, timers, byId, label: byId('widget').attrs['aria-label'], face: byId('face').children.length };
 }
 
 for (const file of ['digital.html', 'analog.html']) {
@@ -115,4 +115,21 @@ test('digital.html: a known timezone ticks', async () => {
   assert.deepEqual(r.painted, []);
   assert.equal(r.timers.length, 1);
   assert.match(r.label, /^\d\d:\d\d, /);
+});
+
+test('digital.html: figures use the page language digits, and the overlap layers match them', async () => {
+  const { byId } = await boot('digital.html', 'Asia/Tehran', { search: '?id=c1&lang=fa' });
+  assert.match(byId('hh').textContent, /^[۰-۹]{2}$/);
+  assert.match(byId('mm').textContent, /^[۰-۹]{2}$/);
+  assert.equal(byId('hh-over').textContent, byId('hh').textContent);
+  assert.equal(byId('mm-clip').textContent, byId('mm').textContent);
+});
+
+test('digital.html: the figures move down when the date is off', async () => {
+  const on = (await boot('digital.html', 'Europe/Berlin')).byId;
+  const off = (await boot('digital.html', 'Europe/Berlin', { config: { clockShowDate: false } })).byId;
+  assert.deepEqual([on('hh').attrs.y, on('mm').attrs.y], [82, 116]);
+  assert.deepEqual([off('hh').attrs.y, off('mm').attrs.y], [88, 124]);
+  assert.deepEqual([off('hh-over').attrs.y, off('mm-clip').attrs.y], [88, 124]);
+  assert.equal(off('date-line').style.display, 'none');
 });

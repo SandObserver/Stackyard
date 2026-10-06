@@ -97,6 +97,9 @@ const BESPOKE = new Map(
     '#F00F14': 'analog clock, minute and second discs overlapping',
     '#577C40': 'analog clock, hour and second discs overlapping',
     '#5F2123': 'analog clock, all three discs overlapping',
+    '#0A84C8': 'digital clock hours on white, 4.1:1',
+    '#E0246F': 'digital clock minutes on white, 4.5:1',
+    '#4A2470': 'digital clock hours and minutes overlapping on white',
     /* GitHub's own light contribution scale. */
     '#9BE9A8': 'GitHub light contribution scale, step 1',
     '#40C463': 'GitHub light contribution scale, step 2',
