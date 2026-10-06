@@ -34,8 +34,7 @@ export function readableInk(hex, min = 4.5) {
   return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 }
 
-/** The channels of a colour colorOrFallback accepts, or null.
-    @param {unknown} value @returns {number[] | null} */
+/** @param {unknown} value @returns {number[] | null} */
 function _rgbOf(value) {
   const s = String(value ?? '').trim();
   let m = /^#([0-9a-f]{6})$/i.exec(s);
@@ -46,7 +45,6 @@ function _rgbOf(value) {
   return m ? m.slice(1, 4).map(v => Math.min(255, Number(v))) : null;
 }
 
-/* The card a widget paints on, per theme. */
 const _cardLum = () => (_hostTheme() === 'light' ? 1 : _lum([28, 28, 30]));
 
 /** Contrast of a colour against the card, as a ratio. NaN when it cannot be read.
@@ -302,11 +300,11 @@ export function barFill(percent, opts = {}) {
     track: null paints no track, so the page styles .tb-col per theme.
 
     @param {{ count?: number, color?: string, track?: string | null, gap?: number, radius?: number }} [opts]
-    @returns {{ el: HTMLElement, update: (values: unknown[], scale?: { min?: number, max?: number, dim?: (v: number) => boolean }) => void, setColor: (color: string) => void, indexAt: (clientX: number) => number, mark: (index: number | null) => void }} */
+    @returns {{ el: HTMLElement, update: (values: unknown[], scale?: { min?: number, max?: number, dim?: (v: number) => boolean }) => void, indexAt: (clientX: number) => number, mark: (index: number | null) => void }} */
 export function columns(opts = {}) {
   const count = Math.max(1, Math.floor(Number(opts.count) || 24));
   const radius = opts.radius != null ? opts.radius : 3;
-  let color = colorOrFallback(opts.color, '#0a84ff');
+  const color = colorOrFallback(opts.color, '#0a84ff');
   const el = document.createElement('div');
   el.className = 'tb-cols';
   el.style.cssText = `display:flex;align-items:stretch;height:100%;gap:${opts.gap != null ? opts.gap : 3}px`;
@@ -340,8 +338,7 @@ export function columns(opts = {}) {
       for (let i = 0; i < count; i++) {
         const v = i < offset ? null : list[i - offset];
         const fill = fills[i];
-        /* No reading draws no column. A reading of zero still draws a sliver,
-           so the two cannot be mistaken for each other. */
+        /* Keep the sliver. Without it a zero reading looks like a missing one. */
         if (typeof v !== 'number' || !Number.isFinite(v)) {
           fill.style.height = '0';
           fill.style.opacity = '';
@@ -351,10 +348,6 @@ export function columns(opts = {}) {
         fill.style.height = `max(2px, ${(share * 100).toFixed(2)}%)`;
         fill.style.opacity = scale.dim && scale.dim(v) ? '0.45' : '';
       }
-    },
-    setColor(next) {
-      color = colorOrFallback(next, color);
-      for (const fill of fills) fill.style.backgroundColor = color;
     },
     /** The column under a pointer, so the whole plot is the hit target.
         @param {number} clientX @returns {number} */

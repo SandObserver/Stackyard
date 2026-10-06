@@ -69,10 +69,6 @@ test('more values than columns keeps the newest', () => {
 test('a colour carrying a second declaration is refused', () => {
   const c = columns({ count: 1, color: 'red; background-image: url(x)' });
   assert.equal(c.el.children[0].children[0].style.backgroundColor, '#0a84ff');
-  c.setColor('#30D158');
-  assert.equal(c.el.children[0].children[0].style.backgroundColor, '#30D158');
-  c.setColor('url(x)');
-  assert.equal(c.el.children[0].children[0].style.backgroundColor, '#30D158', 'a bad colour keeps the last good one');
 });
 
 test('track: null leaves the track to the page, so a theme can restyle it', () => {

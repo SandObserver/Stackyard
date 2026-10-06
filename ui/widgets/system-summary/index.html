@@ -9,26 +9,20 @@
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #1C1C1E;
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
-  /* The caption sits outside #widget so it takes the reader's direction. */
+  /* Keep #cap outside #widget. Inside it the caption loses the reader's direction. */
   body { display: flex; flex-direction: column; gap: 4px; padding: 16px; }
 
   .widget { flex: 1; min-height: 0; font-variant-numeric: tabular-nums; }
-  /* Text in the reader's language orders itself by its own content inside the
-     left-to-right data layout. These shrink to their text, so alignment does
-     not change; a name fills its column and isolates through <bdi> instead. */
   .net-item, .sizes { unicode-bidi: plaintext; }
   .lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     font-weight: 600; color: #8E8E93; }
   .val { white-space: nowrap; font-weight: 700; line-height: 1.1; color: var(--ink); }
 
   .size-small { display: flex; flex-direction: column; justify-content: space-evenly; }
-  /* A fixed row height, so a hover that swaps in smaller text moves nothing. */
   .size-small .row { display: flex; align-items: center; gap: 8px; height: 28px; }
   .size-small .lbl { flex: 1; font-size: 13px; }
   .size-small .val { font-size: 22px; letter-spacing: -0.0118em; }
 
-  /* One grid for every row, so the charts start at the same x whatever the
-     longest label is in the reader's language. */
   .size-medium { display: grid; grid-template-columns: minmax(56px, max-content) minmax(0, 1fr);
     column-gap: 16px; align-content: space-between; align-items: center; }
   .size-medium .row { display: contents; }
@@ -36,8 +30,7 @@
   .size-medium .lbl { max-width: 104px; }
   .size-medium .lbl { font-size: 12px; line-height: 1.2; }
   .size-medium .val { font-size: 20px; letter-spacing: -0.0225em; }
-  /* Holds the name column open for the longest hover text, so swapping a name
-     for a time never moves the charts. */
+  /* Do not remove. It reserves room for the hover time; without it the charts shift. */
   .sizer { display: flex; flex-direction: column; height: 0; overflow: hidden; visibility: hidden; }
   .plot { height: 100%; max-height: 30px; touch-action: pan-y; }
   .disk { position: relative; touch-action: pan-y; }
@@ -51,8 +44,7 @@
   .size-small .val.detail.two { display: flex; flex-direction: column; align-items: flex-end;
     font-size: 11px; line-height: 13px; }
   .tb-col-mark { background-color: rgba(255,255,255,0.9); }
-  /* A colour the user picked that nearly matches the card keeps its colour and
-     gains an edge, so the bar still reads. */
+  /* Keep the picked colour. The edge is what keeps a colour near the card visible. */
   .faint .tb-col-fill, .faint .tb-bar-fill { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
 
   .tb-bar, .tb-col { background-color: rgba(255,255,255,0.12); }
@@ -85,7 +77,7 @@
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <div id="cap"></div>
 <script type="module">
-import { contrastInk, cardContrast, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=3ee4f031';
+import { contrastInk, cardContrast, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=2a8d756c';
 await loadStrings();
 const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;
@@ -107,11 +99,8 @@ let tickMs = 10000;
 let medium = true;
 let lastSampleAt = 0;
 
-/* One entry per slot: { vals } holds the newest COLS readings, oldest first.
-   stamps holds when each column was read, shared by every slot. */
 const history = [{}, {}, {}];
 let stamps = Array(COLS).fill(null);
-/** @type {{ slot: any, label: string, el: HTMLElement, val: HTMLElement, chart?: ReturnType<typeof columns>, bar?: HTMLElement, bar2?: HTMLElement }[]} */
 const rows = [];
 
 const LABELS = {
@@ -122,8 +111,7 @@ const LABELS = {
   iowait: ['slots.type.opt.iowait', 'IO Wait'],
   procs: ['slots.type.opt.procs', 'Processes'],
 };
-/* slot.type comes from config, which can arrive by import, so an unknown type
-   falls back to its own text, which is only ever written as text. */
+/* slot.type can arrive by import. Write it only as text. */
 function slotLabel(slot) {
   const l = LABELS[slot?.type];
   return l ? wt(l[0], l[1]) : String(slot?.type || '');
@@ -154,8 +142,7 @@ async function boot() {
   if (medium) startNetwork(wc.network || {});
 
   const widgetEl = document.getElementById('widget');
-  /* The network line has its own source and its own failure state, so a stats
-     reply must not clear its fade. */
+  /* Leave .net out. A stats reply would clear the network line's own failure fade. */
   const state = errorState({ root: document.body, caption: document.getElementById('cap'),
     content: () => [...widgetEl.querySelectorAll(medium ? '.head, .plot, .disk' : '.row')] });
 
@@ -171,8 +158,7 @@ async function boot() {
     } });
 }
 
-/* A <bdi> takes its direction from its own text and leaves the label's
-   alignment to the layout. */
+/* Keep the <bdi>. Without it a right-to-left name or time reads in the wrong order. */
 function setLabel(node, text) {
   node.replaceChildren(el('bdi', null, text));
 }
@@ -192,8 +178,6 @@ function buildShell() {
   const net = medium && wc.network?.enabled ? wc.network : null;
 
   w.className = 'widget ' + (medium ? 'size-medium' : 'size-small');
-  /* Auto tracks for what is drawn, so space-between leaves the same gap above
-     the network line as between rows. */
   if (medium) w.style.gridTemplateRows = `repeat(${slots.length + (net ? 1 : 0)}, auto)`;
   slots.forEach((slot, i) => {
     const label = slotLabel(slot);
@@ -268,8 +252,7 @@ function buildShell() {
   watchHoverEnd();
 }
 
-/* The host theme can change while the widget is open. Fills keep the colour
-   the user picked; only the figure is adjusted to stay readable. */
+/* Never recolour a fill: the user picked it. Only the figure's ink is adjusted. */
 function applyInks() {
   for (const r of rows) {
     r.el.style.setProperty('--ink', contrastInk(r.colour, 4.5));
@@ -277,8 +260,6 @@ function applyInks() {
   }
 }
 
-/* Pointer and touch only. The current figures never depend on it: the row
-   shows them at rest, and the summary paragraph reads them out. */
 function holdToShow(target, show) {
   target.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(true); });
   target.addEventListener('pointerdown', () => show(true));
@@ -300,8 +281,8 @@ function showSizes(entry, on) {
   entry.showing = show;
 }
 
-/* Safari can skip pointerleave when the pointer leaves the frame quickly, which
-   left a past reading on screen. Any of these also ends a hover. */
+/* Keep these. Safari can skip pointerleave on a quick exit from the frame and
+   leave a past reading on screen. */
 function endAllHovers() {
   for (const r of rows) {
     if (r.chart) endHover(r);
@@ -334,8 +315,6 @@ function ageText(ms) {
   return s < 60 ? rtf.format(-s, 'second') : rtf.format(-Math.round(s / 60), 'minute');
 }
 
-/* The column under the pointer stays put while new readings arrive, so its
-   figure follows whatever is drawn there. */
 function holdColumns(on) {
   const w = document.getElementById('widget');
   if (!on) {
@@ -424,8 +403,6 @@ function seedFromPast(slot, i, past, step = 1) {
   history[i].vals = Array(h.length - tail.length).fill(null).concat(tail);
 }
 
-/* Upstream values arrive from four different sources and an import; anything
-   that is not a finite, non-negative number is no reading. */
 const reading = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 
 function readingFor(slot, data) {
@@ -448,9 +425,6 @@ function valueText(type, v) {
   return formatNumber(Math.round(Math.min(v, 100))) + '%';
 }
 
-/* A process count has no ceiling, so its columns span the window's own low to
-   high, and the readings above the window's mean are the ones drawn at full
-   strength. Everything else is a share of 100. */
 function scaleFor(type, vals) {
   if (type !== 'procs') return { min: 0, max: 100 };
   const nums = vals.filter(v => v !== null);
@@ -489,8 +463,7 @@ function applyStats(raw) {
   const byMount = new Map();
   for (const d of Array.isArray(data.disks) ? data.disks : []) if (d && typeof d.mount === 'string') byMount.set(d.mount, d);
 
-  /* A gap longer than the whole chart means every column is from another
-     time. Drawing new readings beside them would join two unrelated stretches. */
+  /* Clear after a gap longer than the chart, or new readings join unrelated old ones. */
   const now = Date.now();
   if (lastSampleAt && now - lastSampleAt > tickMs * COLS) {
     for (const h of history) if (h.vals) h.vals = Array(COLS).fill(null);
@@ -519,15 +492,13 @@ function applyStats(raw) {
       else showSizes(r, true);
       if (r.bar) r.bar.firstElementChild.style.width = (p ?? 0) + '%';
       if (r.bar2) r.bar2.firstElementChild.style.width = (s ?? 0) + '%';
-      /* Sizes and the second disk are drawn only on hover, and #widget is
-         aria-hidden, so the summary carries them. */
+      /* #widget is aria-hidden. The summary must carry the sizes and the second disk. */
       if (p !== null) spoken.push(`${r.label} ${r.latest}${firstSize ? ` (${sizeSpoken(firstSize)})` : ''}`);
       if (s !== null)
         spoken.push(`${String(slot.secondary)} ${valueText('disk', s)}${secondSize ? ` (${sizeSpoken(secondSize)})` : ''}`);
       return;
     }
-    /* The demo past is one point per SEED_STEP_MS, and at a refresh faster than
-       that each seeded column is still one past point apart. */
+    /* Seeded columns are one past point apart even at a faster refresh, or hover ages are wrong. */
     if (!r.seededStamps && data.history) {
       r.seededStamps = true;
       stamps = stamps.map((t, k) => t ?? now - (COLS - 1 - k) * step * SEED_STEP_MS);
