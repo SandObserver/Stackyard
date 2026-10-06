@@ -48,6 +48,7 @@
 
   .clickable { cursor: pointer; }
   .clickable:focus-visible { outline: 2px solid #0091FF; outline-offset: 4px; }
+  .wt-inert .clickable, .clickable.wt-inert { pointer-events: auto; }
   .cap { justify-content: center; }
 
   .arrive .num, .arrive .l1, .arrive .l2, .arrive .l3, .arrive .l4 { animation: fade 0.25s ease-out both; }
@@ -136,11 +137,14 @@ function dayName(iso) {
   }
 }
 
+const now = new Date();
+const TODAY = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
 function weekColumn(week, level) {
   const col = el('div', 'week');
   const slots = Array(7).fill(null);
   for (const d of Array.isArray(week?.contributionDays) ? week.contributionDays : []) {
-    if (!d || typeof d !== 'object') continue;
+    if (!d || typeof d !== 'object' || String(d.date) > TODAY) continue;
     const wd = new Date(String(d.date) + 'T00:00:00Z').getUTCDay();
     if (wd >= 0 && wd < 7) slots[wd] = d;
   }
@@ -239,8 +243,6 @@ async function boot() {
       href = wc.githubHref || '';
     }
   } catch {}
-  /* On a phone the whole card is the target. On a desktop only the figure is,
-     so the grid can be pointed at without opening anything. */
   linkEl = MOBILE ? w : head;
   const linked = linkTo(linkEl, href);
   linkEl.setAttribute('role', linked ? 'link' : 'img');

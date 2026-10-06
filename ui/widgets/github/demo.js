@@ -11,19 +11,19 @@ function githubCalendar() {
     return seed / 0x7fffffff;
   };
   const weeks = [];
-  const start = new Date();
-  start.setDate(start.getDate() - 52 * 7);
-  for (let w = 0; w < 53; w++) {
-    const days = [];
-    for (let d = 0; d < 7; d++) {
-      const r = rnd();
-      const count = r < 0.45 ? 0 : Math.floor(rnd() * 14) + 1;
-      total += count;
-      const date = new Date(start);
-      date.setDate(start.getDate() + w * 7 + d);
-      days.push({ contributionCount: count, date: date.toISOString().slice(0, 10) });
-    }
-    weeks.push({ contributionDays: days });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const day = new Date(today);
+  day.setDate(day.getDate() - 52 * 7 - today.getDay());
+  const iso = d =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  while (day <= today) {
+    if (day.getDay() === 0) weeks.push({ contributionDays: [] });
+    const r = rnd();
+    const count = r < 0.45 ? 0 : Math.floor(rnd() * 14) + 1;
+    total += count;
+    weeks[weeks.length - 1].contributionDays.push({ contributionCount: count, date: iso(day) });
+    day.setDate(day.getDate() + 1);
   }
   return { view: 'contributions', weeks, totalContributions: total };
 }

@@ -36,6 +36,7 @@
 
   .clickable { cursor: pointer; border-radius: 8px; }
   .clickable:focus-visible { outline: 2px solid #0091FF; outline-offset: 4px; }
+  .wt-inert .clickable, .clickable.wt-inert { pointer-events: auto; }
   .cap { justify-content: center; }
 
   .arrive .num, .arrive .list { animation: fade 0.25s ease-out both; }
@@ -78,8 +79,6 @@ function el(tag, cls, text) {
   return n;
 }
 
-/* Each line takes its text's direction, so an English title reads and cuts left
-   to right on a right-to-left dashboard. */
 const RTL_LETTER = /[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}]/u;
 function line(cls, text) {
   const n = el('div', cls, text);
@@ -113,9 +112,12 @@ function render(data) {
   num.textContent = total;
   fitText(num);
   sub.textContent = label;
-  /* On a phone the small card has no rows, so the whole card is the target. */
   const target = MOBILE && !ROWS ? w : head;
-  if (linkTo(target, data.allUrl)) target.setAttribute('aria-label', `${total} ${label}, ${wt('ui.viewAll', 'view all')}`);
+  if (linkTo(target, data.allUrl))
+    target.setAttribute(
+      'aria-label',
+      `${wt('ui.pullRequests', 'Pull requests')}, ${total} ${label}, ${wt('ui.viewAll', 'view all')}`,
+    );
   if (!arrived) {
     arrived = true;
     w.classList.add('arrive');
@@ -138,7 +140,8 @@ function render(data) {
     const repo = repoName(pr.repo || '');
     const title = String(pr.title || (pr.number ? '#' + pr.number : ''));
     link.append(line('title', title), line('repo', repo));
-    if (linkTo(link, pr.url)) link.setAttribute('aria-label', `${repo} #${pr.number}: ${title}`);
+    const ref = pr.number ? `${repo} #${pr.number}` : repo;
+    if (linkTo(link, pr.url)) link.setAttribute('aria-label', `${ref}: ${title}`);
     item.append(link);
     list.append(item);
   }
