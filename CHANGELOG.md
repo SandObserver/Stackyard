@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System Summary reports a Beszel account that cannot read its systems as a
   sign-in problem instead of an empty hub.
 
+- The digital clock shows its digits in the right order on a Persian dashboard.
+
 ## [1.16.0] - 2026-10-04
 
 ### Added
