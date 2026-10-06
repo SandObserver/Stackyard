@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show System Summary temperatures in whole degrees.
 
+- Redesign the GitHub widget with a headline figure, a cleaner pull request list
+  and a contribution grid that fills the card.
+
+- Point at a day on the GitHub contribution grid to see its date and count.
+
+- The GitHub widget now follows the light and dark theme.
+
+### Removed
+
+- The GitHub widget no longer offers an extra large size. Existing extra large
+  GitHub widgets become large.
+
 ### Fixed
 
 - About link icons keep their colours after the pointer moves over the list.
