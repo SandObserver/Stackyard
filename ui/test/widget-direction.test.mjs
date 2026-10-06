@@ -1,5 +1,6 @@
 /* Widgets follow the interface direction, which is what makes a Persian
-   dashboard mirror properly. The System Summary is the deliberate exception.
+   dashboard mirror properly. The System Summary and the digital clock's digits
+   are the deliberate exceptions.
 
    Its content is percentages, byte counts and sparklines rather than prose.
    Mirroring runs each sparkline's time axis backwards, which reads as a
@@ -37,6 +38,13 @@ test('the pin is on the widget root, not on the document', () => {
   assert.doesNotMatch(srLine, /\sdir=/, 'the screen-reader summary should follow the page');
 });
 
+test('the digital clock keeps hour-then-minute order', () => {
+  const src = read('clock/digital.html');
+  assert.match(src, /<div[^>]*id="time-block"[^>]*\sdir="ltr"/, 'mirrored rows read 21:47 as 12 74');
+  const dateLine = src.match(/<div[^>]*id="date-line"[^>]*>/)[0];
+  assert.doesNotMatch(dateLine, /\sdir=/, 'the date is prose and follows the page');
+});
+
 test('no other widget pins a direction', () => {
   /* Every other widget mirrors. A second exception should be a decision, not
      something that accumulates. */
@@ -44,7 +52,7 @@ test('no other widget pins a direction', () => {
   for (const dir of fs.readdirSync(WIDGETS, { withFileTypes: true }).filter(d => d.isDirectory())) {
     for (const file of fs.readdirSync(path.join(WIDGETS, dir.name)).filter(f => f.endsWith('.html'))) {
       const rel = `${dir.name}/${file}`;
-      if (rel === 'system-summary/index.html') continue;
+      if (rel === 'system-summary/index.html' || rel === 'clock/digital.html') continue;
       if (/\sdir="(ltr|rtl)"/.test(read(rel))) offenders.push(rel);
     }
   }
