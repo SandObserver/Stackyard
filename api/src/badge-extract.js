@@ -166,7 +166,8 @@ function extractPath(obj, dotPath) {
 }
 
 /** Positional: index n is the value for `labels[n]`. A label that resolves to
-    no number reads as 0 and keeps its slot.
+    no number reads as 0 and keeps its slot. A non-finite number is kept, so
+    the caller can report it.
     @param {any} data @param {any} labels @returns {number[]} */
 function computeLabelValues(data, labels) {
   if (!Array.isArray(labels)) return [];
@@ -174,7 +175,7 @@ function computeLabelValues(data, labels) {
     const path = typeof l === 'string' ? l : l?.path;
     if (typeof path !== 'string' || !path) return 0;
     const v = extractPath(data, path);
-    return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+    return typeof v === 'number' ? v : 0;
   });
 }
 

@@ -28,6 +28,35 @@ on('POST', '/api/ping', async (req, res) => {
   }
 });
 
+/** Why a resolved response cannot give a reading, as an error to report, or
+    null. A failed poll must not read as a number.
+    @param {{ status: number, data: any }} r @returns {Error|null} */
+function unreadable(r) {
+  if (r.status >= 400) {
+    return Object.assign(new Error(`The service answered ${statusDesc(r.status)} (HTTP ${r.status}).`), {
+      kind: KIND.UPSTREAM,
+      apiCode: 'upstream.status',
+      detail: { status: r.status },
+    });
+  }
+  return truncated(r) ? tooLarge() : null;
+}
+
+/** @param {{ data: any }} r */
+const truncated = r => !!r.data && typeof r.data === 'object' && r.data['#truncated'] === true;
+
+const notANumber = () =>
+  Object.assign(new Error('The service sent a value that is not a usable number.'), {
+    kind: KIND.UPSTREAM,
+    apiCode: 'upstream.not-a-number',
+  });
+
+const tooLarge = () =>
+  Object.assign(new Error('The response was too large to read in full.'), {
+    kind: KIND.UPSTREAM,
+    apiCode: 'upstream.too-large',
+  });
+
 /** The labels a block renders from, or null when it sums into one number.
     @param {any} block @returns {any[]|null} */
 function activityLabels(block) {
@@ -91,6 +120,13 @@ on('GET', '/api/badges', async (req, res) => {
             ? baseUrl + (baseUrl.includes('?') ? '&' : '?') + new URLSearchParams(params)
             : baseUrl;
           const r = await fetchUnchecked(url, { headers, timeout: BATCH_MS, skipTls: item.skipTlsVerify === true });
+          const bad = unreadable(r);
+          if (bad) {
+            /* Reachable, so not a backoff failure. */
+            backoff.success(key);
+            out[item.id] = Object.assign({ value: 0 }, errorBody(bad));
+            return;
+          }
           const badge = item.monitoring?.activity?.enabled
             ? {
                 extract: item.monitoring.activity.extract,
@@ -103,14 +139,17 @@ on('GET', '/api/badges', async (req, res) => {
           if (labels) {
             const values = computeLabelValues(r.data, labels);
             const at = firstFiringLabel(labels, values);
-            out[item.id] = { value: at === -1 ? 0 : values[at], values };
+            out[item.id] = values.every(Number.isFinite)
+              ? { value: at === -1 ? 0 : values[at], values }
+              : Object.assign({ value: 0 }, errorBody(notANumber()));
           } else {
-            out[item.id] = { value: computeBadgeValue(r.data, badge) };
+            const value = computeBadgeValue(r.data, badge);
+            out[item.id] = Number.isFinite(value) ? { value } : Object.assign({ value: 0 }, errorBody(notANumber()));
           }
           backoff.success(key);
-          readings.set(item.id, { fp, at: Date.now(), body: out[item.id] });
+          if (!out[item.id].kind) readings.set(item.id, { fp, at: Date.now(), body: out[item.id] });
         } catch (e) {
-          const body = Object.assign({ value: 0 }, errorBody(e));
+          const body = Object.assign({ value: 0 }, errorBody(e.responseTooLarge ? tooLarge() : e));
           backoff.failure(key, body);
           out[item.id] = body;
         }
@@ -160,6 +199,7 @@ on('POST', '/api/badge-proxy', async (req, res) => {
     const r = await fetchChecked(fullUrl, { headers, timeout: FETCH_MS, skipTls: skipTls === true });
     /* fetchJSON resolves on a 4xx/5xx rather than rejecting. Report it as a
        failure here, or the admin UI reads an error body as success. */
+    if (r.status < 400 && truncated(r)) return fail(res, tooLarge(), { status: 502 });
     if (r.status >= 400) {
       if (declined && (r.status === 401 || r.status === 403)) {
         return json(res, 502, { error: RETYPE_MESSAGE, kind: KIND.INVALID, code: 'invalid.retype' });
@@ -173,6 +213,6 @@ on('POST', '/api/badge-proxy', async (req, res) => {
     }
     json(res, 200, { status: r.status, data: r.data, numbers: collectNumbers(r.data) });
   } catch (e) {
-    fail(res, e, { status: 502 });
+    fail(res, e.responseTooLarge ? tooLarge() : e, { status: 502 });
   }
 });

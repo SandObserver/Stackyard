@@ -254,6 +254,7 @@
     "privateAddress": "La plupart des services de homelab utilisent des IP privées. Définissez ALLOW_PRIVATE_IPS=true et redémarrez le conteneur.",
     "retype": "Cette configuration a changé depuis son enregistrement, les identifiants enregistrés n’ont donc pas été utilisés. Saisissez l’identifiant pour tester ces réglages.",
     "redirect": "L’adresse a répondu par une redirection (HTTP {status}). Saisissez l’adresse vers laquelle elle pointe.",
+    "responseTooLarge": "La réponse du service est trop volumineuse pour être lue en entier. Utilisez un chemin d’API qui renvoie moins de données.",
     "tlsIgnored": "Le certificat n’a pas pu être vérifié. Autoriser un certificat auto-signé ne vaut que pour les adresses de votre propre réseau, cela n’a donc pas été appliqué ici.",
     "tlsUntrusted": "Le certificat du service n’a pas pu être vérifié.",
     "genericBlocked": "La requête a été bloquée.",

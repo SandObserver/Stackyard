@@ -125,9 +125,17 @@ test('a label entry that is not an object keeps its slot as zero', () => {
 });
 
 test('a path resolving to a non-number reads as zero', () => {
-  const data = { s: 'x', o: {}, arr: [1, 2], b: true, n: null, nan: Number.NaN, inf: Number.POSITIVE_INFINITY };
-  const paths = ['s', 'o', 'arr', 'b', 'n', 'nan', 'inf'].map(p => ({ path: p }));
-  assert.deepEqual(computeLabelValues(data, paths), [0, 0, 0, 0, 0, 0, 0]);
+  const data = { s: 'x', o: {}, arr: [1, 2], b: true, n: null };
+  const paths = ['s', 'o', 'arr', 'b', 'n'].map(p => ({ path: p }));
+  assert.deepEqual(computeLabelValues(data, paths), [0, 0, 0, 0, 0]);
+});
+
+test('a non-finite number is kept for the caller to report', () => {
+  const got = computeLabelValues({ nan: Number.NaN, inf: Number.POSITIVE_INFINITY }, [
+    { path: 'nan' },
+    { path: 'inf' },
+  ]);
+  assert.ok(got.every(v => !Number.isFinite(v)));
 });
 
 test('a hostile path does not reach the prototype chain', () => {

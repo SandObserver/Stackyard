@@ -249,6 +249,7 @@
     "privateAddress": "Most homelab services live on private IPs. Set ALLOW_PRIVATE_IPS=true and restart the container.",
     "retype": "This configuration has changed since it was saved, so the stored credential was not used. Enter the credential to test these settings.",
     "redirect": "The address answered with a redirect (HTTP {status}). Enter the address it points to.",
+    "responseTooLarge": "The service's answer is too large to read in full. Use an API path that returns less.",
     "tlsIgnored": "The certificate could not be verified. Allowing a self-signed certificate only applies to addresses on your own network, so it was not used here.",
     "tlsUntrusted": "The service's certificate could not be verified.",
     "genericBlocked": "The request was blocked.",

@@ -249,6 +249,7 @@
     "privateAddress": "Die meisten Homelab-Dienste liegen auf privaten IP-Adressen. Setzen Sie ALLOW_PRIVATE_IPS=true und starten Sie den Container neu.",
     "retype": "Diese Konfiguration hat sich seit dem Speichern geändert, daher wurden die gespeicherten Zugangsdaten nicht verwendet. Geben Sie die Zugangsdaten ein, um diese Einstellungen zu testen.",
     "redirect": "Die Adresse hat mit einer Weiterleitung geantwortet (HTTP {status}). Geben Sie die Adresse ein, auf die sie verweist.",
+    "responseTooLarge": "Die Antwort des Dienstes ist zu groß, um sie vollständig zu lesen. Verwenden Sie einen API-Pfad, der weniger zurückgibt.",
     "tlsIgnored": "Das Zertifikat konnte nicht überprüft werden. Ein selbstsigniertes Zertifikat zuzulassen gilt nur für Adressen in Ihrem eigenen Netzwerk und wurde hier nicht angewendet.",
     "tlsUntrusted": "Das Zertifikat des Dienstes konnte nicht überprüft werden.",
     "genericBlocked": "Die Anfrage wurde blockiert.",

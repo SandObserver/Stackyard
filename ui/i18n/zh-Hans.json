@@ -244,6 +244,7 @@
     "privateAddress": "大多数家庭实验室服务使用私有 IP。请设置 ALLOW_PRIVATE_IPS=true 并重启容器。",
     "retype": "此配置在保存后已更改，因此未使用已保存的凭据。请输入凭据以测试这些设置。",
     "redirect": "该地址返回了一个重定向（HTTP {status}）。请输入它指向的地址。",
+    "responseTooLarge": "服务的响应太大，无法完整读取。请使用返回内容更少的 API 路径。",
     "tlsIgnored": "无法验证证书。允许自签名证书仅适用于您自己网络中的地址，因此此处未予采用。",
     "tlsUntrusted": "无法验证该服务的证书。",
     "genericBlocked": "请求被阻止。",
