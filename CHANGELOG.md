@@ -82,6 +82,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changing a widget's display settings, such as Weather units or city, a GitHub
   view or a slot colour, no longer asks for its API key or password again.
 
+- Widgets no longer stay blank when the widget list fails to load once while the
+  dashboard starts.
+
+- System Summary no longer shows Unraid's own error text when Unraid reports a
+  problem.
+
+- A widget manifest whose options are not value and label pairs is now refused
+  at startup instead of showing "undefined" in its settings.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
