@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redesign the digital clock as large overlapping hour and minute figures in the
   analog clock's colours.
 
+- Name a config export downloaded straight from the API `stackyard-config.json`,
+  matching the Export button.
+
 ### Removed
 
 - The GitHub widget no longer offers an extra large size. Existing extra large
