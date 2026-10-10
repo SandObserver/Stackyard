@@ -2,6 +2,7 @@
   "name": "nowplaying",
   "label": "widget.label",
   "appearance": "dark",
+  "card": "graphite",
   "glyph": "play",
   "sizes": [
     "small"
