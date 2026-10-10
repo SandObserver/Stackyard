@@ -108,6 +108,21 @@ test('a host address change with no port map keeps stored credentials', async ()
   assert.equal(loadConfig().settings.background.apiKey, SECRET);
 });
 
+test('turning off certificate checking on an app withholds its stored credential', async () => {
+  const cfg = await fetch(`${base}/api/config`).then(r => r.json());
+  cfg.items[0].skipTlsVerify = true;
+  const res = await fetch(`${base}/api/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: base },
+    body: JSON.stringify(cfg),
+  });
+  const body = await res.json();
+  assert.deepEqual(
+    body.withheld.map(w => w.id),
+    ['app1'],
+  );
+});
+
 test('rewriteChanged', () => {
   const m = { 80: { host: 'a', port: '80' } };
   assert.equal(rewriteChanged({ hostIp: 'x' }, {}), false);

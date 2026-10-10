@@ -108,7 +108,11 @@ function preserveAllSecrets(newCfg, oldCfg) {
         ],
       ]) {
         if (!block) continue;
-        if (badgeRequestMatchesSaved(asRequest(block), oldBlock ? asRequest(oldBlock) : null)) continue;
+        if (
+          (item.skipTlsVerify === true) === (prev.skipTlsVerify === true) &&
+          badgeRequestMatchesSaved(asRequest(block), oldBlock ? asRequest(oldBlock) : null)
+        )
+          continue;
         set(undefined);
         if (blockHoldsSecret(oldBlock)) note(item);
       }
