@@ -211,7 +211,7 @@ on('GET', '/api/config/export', (_, res) => {
   const d = JSON.stringify(safe, null, 2);
   res.writeHead(200, {
     'Content-Type': 'application/json',
-    'Content-Disposition': 'attachment; filename="dashboard-apps.json"',
+    'Content-Disposition': 'attachment; filename="stackyard-config.json"',
     'Content-Length': Buffer.byteLength(d),
   });
   res.end(d);

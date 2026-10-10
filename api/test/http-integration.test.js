@@ -349,7 +349,7 @@ test('POST /api/config rejects an item missing id or type', async () => {
 test('GET /api/config/export is downloadable and free of secrets', async () => {
   const r = await req('GET', '/api/config/export', { cookie: validCookie });
   assert.equal(r.status, 200);
-  assert.match(String(r.headers['content-disposition'] || ''), /attachment/);
+  assert.equal(r.headers['content-disposition'], 'attachment; filename="stackyard-config.json"');
   assert.equal(r.body.settings?.auth?.secret, undefined);
   assert.equal(r.body.settings?.auth?.passwordHash, undefined);
 });
