@@ -341,6 +341,7 @@
     "allowedHostsTooMany": "تعداد آدرس‌ها بیش از حد است. حداکثر {max} آدرس مجاز است.",
     "colorInvalid": "این یک رنگ نیست. از #rrggbb یا نام رنگ CSS استفاده کنید.",
     "imported": "وارد شد",
+    "reloadToFinishRestore": "تنظیمات بازیابی شد. پیش از تغییر تنظیمات، صفحه را دوباره بارگذاری کنید.",
     "importFailed": "وارد کردن ناموفق بود: {err}",
     "exportFailed": "خروجی گرفتن ناموفق بود: {err}",
     "importNoChange": "چیزی برای وارد کردن نیست. فایل با تنظیمات فعلی شما مطابقت دارد.",
@@ -392,7 +393,8 @@
   "import": {
     "confirm_one": "{count} مورد وارد شود؟ {added} افزوده، {updated} به‌روزرسانی، {deleted} حذف.",
     "confirm_other": "{count} مورد وارد شود؟ {added} افزوده، {updated} به‌روزرسانی، {deleted} حذف.",
-    "confirmTitle": "وارد کردن پیکربندی"
+    "confirmTitle": "وارد کردن پیکربندی",
+    "settingsToo": "تنظیمات با تنظیمات فایل جایگزین می‌شود."
   },
   "status": {
     "needsAttention": "وضعیت: نیاز به رسیدگی",

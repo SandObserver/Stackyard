@@ -341,6 +341,7 @@
     "allowedHostsTooMany": "Zu viele Adressen. Die Grenze liegt bei {max}.",
     "colorInvalid": "Das ist keine Farbe. Verwende #rrggbb oder einen CSS-Farbnamen.",
     "imported": "Importiert",
+    "reloadToFinishRestore": "Einstellungen wiederhergestellt. Lade die Seite neu, bevor du Einstellungen änderst.",
     "importFailed": "Import fehlgeschlagen: {err}",
     "exportFailed": "Export fehlgeschlagen: {err}",
     "importNoChange": "Nichts zu importieren. Die Datei stimmt mit deiner aktuellen Konfiguration überein.",
@@ -392,7 +393,8 @@
   "import": {
     "confirm_one": "{count} Element importieren? {added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht.",
     "confirm_other": "{count} Elemente importieren? {added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht.",
-    "confirmTitle": "Konfiguration importieren"
+    "confirmTitle": "Konfiguration importieren",
+    "settingsToo": "Die Einstellungen werden durch die aus der Datei ersetzt."
   },
   "status": {
     "needsAttention": "Status: benötigt Aufmerksamkeit",

@@ -65,6 +65,12 @@ function storedByAge(dir) {
     .sort((a, b) => a.at - b.at || a.name.localeCompare(b.name));
 }
 
+/** @param {unknown} url @returns {boolean} whether `url` names a stored wallpaper that is not on disk */
+function storedWallpaperMissing(url) {
+  if (typeof url !== 'string' || !url.startsWith(WALLPAPER_URL_BASE)) return false;
+  return !fs.existsSync(path.join(WALLPAPER_DIR(), path.basename(url)));
+}
+
 /** Removes every stored wallpaper the saved config no longer points at, except
     uploads younger than PENDING_MS.
 
@@ -199,4 +205,11 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
   }
 });
 
-module.exports = { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE, PENDING_MS };
+module.exports = {
+  storeWallpaper,
+  pruneWallpapers,
+  storedWallpaperMissing,
+  wallpapersToDrop,
+  WALLPAPER_URL_BASE,
+  PENDING_MS,
+};

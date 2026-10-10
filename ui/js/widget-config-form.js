@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=5579776a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=ee8df871';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=fd2693ca';
 import { createListbox } from '/js/listbox.js?v=11c869c4';
-import { renderColorControl } from '/js/admin-color-control.js?v=95609e60';
+import { renderColorControl } from '/js/admin-color-control.js?v=9f78b9d1';
 import {
   seedCarried,
   applyOptionSet,

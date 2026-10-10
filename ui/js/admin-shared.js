@@ -141,13 +141,20 @@ export const apiPost = async (p, b, recover = true) => {
   const body = await r.json();
   /* Every config write goes through here, and a withheld credential has to be
      said out loud. */
-  const withheld = (body?.withheld || [])
+  const withheld = withheldText(body);
+  if (withheld) toast(withheld, 'err', { pin: true });
+  return body;
+};
+
+/** @param {any} body a config write's reply
+    @returns {string} the notice naming the credentials it withheld, or '' */
+export function withheldText(body) {
+  const names = (body?.withheld || [])
     .map(w => w.label)
     .filter(Boolean)
     .map(isolate);
-  if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err', { pin: true });
-  return body;
-};
+  return names.length ? t('toast.secretsWithheld', { items: names.join(', ') }) : '';
+}
 
 /* A native `disabled` control is skipped by screen readers. aria-disabled keeps
    it announced but carries no behaviour, so activation is blocked here. */

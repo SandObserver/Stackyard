@@ -12,7 +12,7 @@ const { rewriteChanged } = require('../secret-scope');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
-const { pruneWallpapers } = require('./wallpaper');
+const { pruneWallpapers, storedWallpaperMissing } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
 
 function scrubSecrets(cfg) {
@@ -152,6 +152,10 @@ on('POST', '/api/config', async (req, res) => {
         error: 'This config was changed somewhere else. Reload the page and try again.',
         kind: KIND.INVALID,
       });
+    if (storedWallpaperMissing(data.settings?.background?.url)) {
+      if (existing.settings?.background) data.settings.background = structuredClone(existing.settings.background);
+      else delete data.settings.background;
+    }
     const redirected = rewriteChanged(data.settings?.server, existing.settings?.server);
     if (existing.settings?.background?.apiKey && !data.settings?.background?.apiKey && !redirected) {
       data.settings = data.settings || {};
