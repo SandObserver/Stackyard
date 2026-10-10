@@ -157,3 +157,53 @@ test('a nonsense minimum falls back to one rather than never firing', () => {
   }
   assert.equal(firstFiringLabel([{ path: 'a', min: 1e9 }], [999]), -1);
 });
+
+test('every number Fetch offers reads back as the same value', () => {
+  const { parsePrometheus } = require('../src/parse-prometheus');
+  const { parseXml } = require('../src/parse-xml');
+  const shapes = {
+    'dotted keys': { 'cpu.load': 3, a: { 'x.y': 4 } },
+    'arrays under keys with dashes and colons': { 'download-queue': [{ size: 5 }], 'd:entry': [{ 'd:n': 9 }] },
+    'nested arrays': {
+      grid: [
+        [1, 2],
+        [3, 4],
+      ],
+    },
+    'filter fields with dashes': [{ 'is-up': true }, { 'is-up': false }],
+    'keys with parentheses, quotes and backslashes': { 'size (MB)': 12, 'say "hi"': 1, 'back\\slash': 2 },
+    'keys that look like tokens': { $count: 7, '(root)': 8, count: [1, 2] },
+    'a bare number': 42,
+    'a root array': [1, 2],
+    prometheus: parsePrometheus('up{instance="10.0.0.5:9100"} 1\nhttp_requests_total{path="/v1.2"} 10\n'),
+    'namespaced XML': parseXml('<feed><d:entry><d:n>4</d:n></d:entry><d:entry><d:n>5</d:n></d:entry></feed>'),
+  };
+  for (const [what, data] of Object.entries(shapes)) {
+    const offered = collectNumbers(data);
+    assert.ok(offered.length, `${what}: something is offered`);
+    for (const { path, value } of offered) assert.equal(extractPath(data, path), value, `${what}: ${path}`);
+  }
+});
+
+test('paths saved in the earlier format still resolve', () => {
+  const cases = [
+    [{ a: { b: [{ c: 5 }] } }, 'a.b[0].c', 5],
+    [{ x: [{ on: true }, { on: false }] }, 'x.filter(on==true).count', 1],
+    [{ s: [{ st: 'ok' }, { st: 'no' }] }, 's.filter(st==ok).count', 1],
+    [{ x: [1, 2] }, 'x.$count', 2],
+    [{ x: [1, 2, 3] }, 'x.count', 3],
+    [{ x: { count: 9 } }, 'x.count', 9],
+    [[{ v: 1 }], '[0].v', 1],
+    [{ 'a (v1.2)': { x: 1 } }, 'a (v1.2).x', 1],
+  ];
+  for (const [data, path, want] of cases) assert.equal(extractPath(data, path), want, path);
+});
+
+test('an offered path with a quoted key carries a readable label', () => {
+  const [n] = collectNumbers({ 'cpu.load': 3 });
+  assert.equal(n.label, 'cpu.load');
+});
+
+test('a malformed path resolves to nothing', () => {
+  for (const p of ['a["x', 'a[x]', 'filter(==true)', 'a[1']) assert.equal(extractPath({ a: [1, 2] }, p), undefined, p);
+});
