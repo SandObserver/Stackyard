@@ -7,7 +7,7 @@ import { register } from 'node:module';
    before loading it. */
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
-const { poll, setPollRate } = await import('../js/widget-toolbox.js');
+const { poll, setPollRate, errorState } = await import('../js/widget-toolbox.js');
 
 const tick = ms => new Promise(r => setTimeout(r, ms));
 
@@ -407,4 +407,77 @@ test('a stopped poll is not rescheduled by a later rate change', async () => {
     await tick(30);
     assert.equal(calls, after);
   });
+});
+
+function fakeRoot() {
+  const el = tag => {
+    const classes = new Set();
+    const node = {
+      tag,
+      children: [],
+      style: {},
+      hidden: false,
+      textContent: '',
+      classList: {
+        add: (...c) => c.forEach(x => classes.add(x)),
+        remove: (...c) => c.forEach(x => classes.delete(x)),
+        toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)),
+        contains: c => classes.has(c),
+      },
+      appendChild: child => node.children.push(child),
+    };
+    Object.defineProperty(node, 'className', { set: v => v.split(' ').forEach(c => classes.add(c)) });
+    return node;
+  };
+  const doc = {
+    head: el('head'),
+    getElementById: () => null,
+    createElement: el,
+    defaultView: { getComputedStyle: () => ({ position: 'relative' }) },
+  };
+  const root = el('body');
+  root.ownerDocument = doc;
+  const content = el('div');
+  root.appendChild(content);
+  return { root, content };
+}
+
+test('an empty reply hides the last render, and the next data shows again', async () => {
+  const { root, content } = fakeRoot();
+  const replies = [{ items: [1] }, { items: [] }, { items: [2] }];
+  let calls = 0;
+  let release;
+  const gate = () => new Promise(r => (release = r));
+  const states = [];
+  const p = poll({
+    root,
+    interval: 1,
+    fetch: async () => {
+      const reply = replies[calls++];
+      if (calls > 1) await gate();
+      return reply;
+    },
+    isEmpty: d => !d.items.length,
+    render: () => {},
+  });
+  const step = async () => {
+    while (!release) await tick(1);
+    const r = release;
+    release = null;
+    r();
+    await tick(1);
+    states.push(content.classList.contains('wt-gone'));
+  };
+  await tick(1);
+  states.push(content.classList.contains('wt-gone'));
+  await step();
+  await step();
+  p.stop();
+  assert.deepEqual(states, [false, true, false]);
+});
+
+test('a widget drawing its own empty state keeps its content', () => {
+  const { root, content } = fakeRoot();
+  errorState({ root }).empty('Nothing here');
+  assert.equal(content.classList.contains('wt-gone'), false);
 });
