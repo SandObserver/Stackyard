@@ -94,6 +94,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep the warning that a stored credential must be entered again on screen
   after a save.
 
+- Restore settings from a backup, not only apps, folders and widgets.
+
+- Upgrade a backup from an older release when it is restored.
+
+- Show a credential as missing after a restore when it was not kept.
+
+- Keep the current wallpaper when a restored backup names an uploaded wallpaper
+  this install does not have.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
