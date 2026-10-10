@@ -73,6 +73,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TrueNAS disk health no longer names TrueNAS 26 in its unsupported-version
   message.
 
+- The time since the last update, shown on a failed widget, now meets text
+  contrast in both themes.
+
+- A widget built from the template no longer shows its previous items under
+  "Nothing here" when a refresh comes back empty.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
