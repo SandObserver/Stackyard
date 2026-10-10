@@ -149,3 +149,41 @@ test('a caption too long for its card wraps instead of being cut', () => {
   assert.doesNotMatch(block, /white-space:\s*nowrap/, 'the line is still held to one row');
   assert.match(block, /-webkit-line-clamp:\s*2/, 'the line is not clamped');
 });
+
+test('the failure caption and its time suffix meet 4.5:1 on every card', () => {
+  const src = fs.readFileSync(path.join(root, 'js/widget-error.js'), 'utf8');
+  const ink = sel => {
+    const m = src.match(
+      new RegExp(sel.replace(/[.[\]"]/g, '\\$&') + '\\s*\\{[^}]*?color:\\s*var\\(--wt-cap-color,\\s*([^)]+\\)?)\\)'),
+    );
+    assert.ok(m, `no default ink for ${sel}`);
+    return m[1].trim();
+  };
+  const suffix = src.match(/\.wt-cap i \{([^}]*)\}/)[1];
+  const dim = Number(suffix.match(/opacity:\s*([\d.]+)/)?.[1] ?? 1);
+  const rgba = v => {
+    if (v.startsWith('#')) return [...[1, 3, 5].map(i => parseInt(v.slice(i, i + 2), 16)), 1];
+    const [r, g, b, a = 1] = v.match(/[\d.]+/g).map(Number);
+    return [r, g, b, a];
+  };
+  const lum = c =>
+    c
+      .map(v => v / 255)
+      .map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+      .reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const ratio = (fg, bg) => {
+    const [r, g, b, a] = rgba(fg);
+    const top = [r, g, b].map((v, i) => v * a * dim + bg[i] * (1 - a * dim));
+    const [x, y] = [lum(top), lum(bg)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const cards = {
+    dark: [[0x1c, 0x1c, 0x1e], ink('.wt-cap ')],
+    graphite: [[0x2c, 0x2c, 0x2e], ink('.wt-cap ')],
+    light: [[0xff, 0xff, 0xff], ink('html[data-theme="light"] .wt-cap ')],
+  };
+  for (const [card, [bg, fg]] of Object.entries(cards)) {
+    const r = ratio(fg, bg);
+    assert.ok(r >= 4.5, `${card} card: ${r.toFixed(2)}:1`);
+  }
+});

@@ -99,6 +99,7 @@ export const ERROR_KINDS = Object.freeze(Object.keys(COPY));
 const STYLE_ID = 'wt-error-css';
 const CSS = `
 .wt-inert { filter: grayscale(0.9) opacity(0.5); transition: filter 0.4s ease; pointer-events: none; }
+.wt-gone { visibility: hidden; }
 .wt-cap { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 11px; font-weight: 500;
   line-height: 1.3; color: var(--wt-cap-color, rgba(255,255,255,0.62));
   /* The caption is never a target. A centred one covers its whole widget, and
@@ -107,13 +108,13 @@ const CSS = `
 /* This rule sets display, which outranks the user agent's [hidden] rule. Without
    its own hidden rule the caption never goes away. */
 .wt-cap[hidden] { display: none; }
-html[data-theme="light"] .wt-cap { color: var(--wt-cap-color, rgba(60,60,67,0.7)); }
+html[data-theme="light"] .wt-cap { color: var(--wt-cap-color, #636366); }
 .wt-cap svg { width: 12px; height: 12px; flex: 0 0 auto; opacity: 0.85; }
 .wt-cap b { font-weight: 500; overflow: hidden; min-width: 0;
   /* Two lines, then clip. The narrowest card cannot hold the longest line on
      one, and an ellipsised failure does not say what failed. */
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.wt-cap i { font-style: normal; opacity: 0.7; flex: 0 0 auto; }
+.wt-cap i { font-style: normal; flex: 0 0 auto; }
 .wt-cap-auto { position: absolute; inset-inline: 16px; bottom: 12px; }
 .wt-cap-center { position: absolute; inset: 0; justify-content: center; text-align: center; padding: 0 14px; }
 @media (prefers-reduced-motion: reduce) { .wt-inert { transition: none; } }
@@ -191,11 +192,14 @@ export function errorState(opts = {}) {
     },
     /** @param {string} text */
     empty(text) {
-      for (const el of contentOf()) el.classList.remove('wt-inert');
+      for (const el of contentOf()) {
+        el.classList.remove('wt-inert');
+        if (opts.hideOnEmpty) el.classList.add('wt-gone');
+      }
       paint(null, text, '');
     },
     ok() {
-      for (const el of contentOf()) el.classList.remove('wt-inert');
+      for (const el of contentOf()) el.classList.remove('wt-inert', 'wt-gone');
       if (cap) {
         cap.hidden = true;
         cap.textContent = '';

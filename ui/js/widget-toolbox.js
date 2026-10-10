@@ -4,7 +4,7 @@
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
-import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=7da9754b';
+import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=3bfb691c';
 import { setNumberLanguage } from '/js/format-number.js?v=349a741d';
 
 export { esc, html, setHtml };
@@ -506,7 +506,7 @@ export function poll(opts = {}) {
   const isEmpty = opts.isEmpty || (() => false);
   const doFetch = opts.fetch || (() => fetchData(opts.endpoint));
   const custom = typeof opts.onError === 'function'; /* widget draws its own error UI */
-  const ov = custom ? null : errorState({ root: opts.root || document.body, content: opts.content });
+  const ov = custom ? null : errorState({ root: opts.root || document.body, content: opts.content, hideOnEmpty: true });
   let lastOk = 0,
     fails = 0,
     everOk = false,
