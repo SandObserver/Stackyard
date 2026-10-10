@@ -62,6 +62,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Live Activity poll interval is now used: each service is read once per
   interval, however many dashboards are open.
 
+### Security
+
+- Changing the port map now asks for stored API keys again instead of sending
+  them to the newly mapped host.
+
+- Turning on Allow self-signed certificate for an app now asks for its stored
+  API key again before it is sent without certificate checking.
+
 ## [1.16.0] - 2026-10-04
 
 ### Added
