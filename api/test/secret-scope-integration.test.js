@@ -158,6 +158,19 @@ test('badge-proxy does not leak via a changed non-secret param either', async ()
   assert.ok(!sawSecret(realSeen), 'a config that no longer matches must not reuse the credential');
 });
 
+test('badge-proxy does not reuse the stored credential with certificate checking turned off', async () => {
+  realSeen.length = 0;
+  await post('/api/badge-proxy', {
+    itemId: 'app1',
+    url: `${realBase}/api`,
+    skipTls: true,
+    headers: [{ key: 'X-Api-Key', secret: true }],
+    params: [{ key: 'mode', value: 'full', secret: false }],
+  });
+  assert.equal(realSeen.length, 1, 'the request should still go out, just without the secret');
+  assert.ok(!sawSecret(realSeen), 'a changed certificate setting must not reuse the credential');
+});
+
 /* ── widget-options ───────────────────────────────────────────────────────── */
 
 test('widget-options sends the stored credential to the saved destination', async () => {

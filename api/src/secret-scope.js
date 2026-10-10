@@ -84,6 +84,15 @@ function badgeRequestMatchesSaved(request, stored) {
   return rowsMatch(request.headers, stored.headers) && rowsMatch(request.params, stored.params);
 }
 
+/** Whether a save changes where outbound requests are rewritten to. A rewrite
+    moves every stored credential to the mapped host.
+    @param {any} next @param {any} prev @returns {boolean} */
+function rewriteChanged(next, prev) {
+  const map = s => (s && s.portMap && typeof s.portMap === 'object' ? s.portMap : {});
+  if (!Object.keys(map(next)).length) return false;
+  return !stableEqual(map(next), map(prev)) || (next?.hostIp || '') !== (prev?.hostIp || '');
+}
+
 const RETYPE_MESSAGE =
   'This configuration has changed since it was saved, so the stored credential was not used. ' +
   'Enter the credential to test these settings.';
@@ -95,5 +104,6 @@ module.exports = {
   leavesStoredSecretBlank,
   rowsMatch,
   badgeRequestMatchesSaved,
+  rewriteChanged,
   RETYPE_MESSAGE,
 };

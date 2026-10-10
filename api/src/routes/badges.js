@@ -139,7 +139,10 @@ on('POST', '/api/badge-proxy', async (req, res) => {
       const stored = loadConfig().items?.find(i => i && i.id === itemId);
       if (stored) {
         const oldSrc = stored.monitoring?.activity?.enabled ? stored.monitoring.activity : stored.badge;
-        if (badgeRequestMatchesSaved({ url, headers: headerRows, params: paramRows }, oldSrc)) {
+        if (
+          badgeRequestMatchesSaved({ url, headers: headerRows, params: paramRows }, oldSrc) &&
+          (skipTls === true) === (stored.skipTlsVerify === true)
+        ) {
           const shim = { badge: { headers: headerRows, params: paramRows } };
           preserveItemBadgeSecrets(shim, { badge: { headers: oldSrc?.headers, params: oldSrc?.params } });
           headerRows = shim.badge.headers;
