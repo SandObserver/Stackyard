@@ -109,6 +109,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refuse a config whose folder contents are not a list of item ids, instead of
   saving it and breaking the dashboard.
 
+- Import a link written as `host:port` from Homepage or Dashy as a working
+  `http://` link.
+
+- Drop a health-check address from Homepage or Dashy that only the other
+  dashboard can resolve, instead of importing a check that always fails.
+
+- Refuse a Homepage or Dashy file whose merge keys expand too far, instead of
+  freezing the page.
+
+- Read a Homepage or Dashy file with very long lines without freezing the page.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
