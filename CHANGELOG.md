@@ -91,6 +91,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A widget manifest whose options are not value and label pairs is now refused
   at startup instead of showing "undefined" in its settings.
 
+- Keep the warning that a stored credential must be entered again on screen
+  after a save.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
