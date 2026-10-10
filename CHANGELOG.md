@@ -55,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editing an app set up in an older version no longer drops its Live Activity
   headers, including a stored API key.
 
+- Every number listed by Fetch in Live Activity now shows on the badge,
+  including Prometheus metrics with labels, names containing dots or dashes,
+  nested lists and plain-number answers.
+
 ## [1.16.0] - 2026-10-04
 
 ### Added
