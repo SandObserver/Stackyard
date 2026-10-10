@@ -79,6 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A widget built from the template no longer shows its previous items under
   "Nothing here" when a refresh comes back empty.
 
+- Changing a widget's display settings, such as Weather units or city, a GitHub
+  view or a slot colour, no longer asks for its API key or password again.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
