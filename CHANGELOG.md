@@ -62,6 +62,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Live Activity poll interval is now used: each service is read once per
   interval, however many dashboards are open.
 
+- A badge whose service answers with an error now keeps its last value, marked
+  out of date, instead of showing 0 or a number from the error page.
+
+- A badge reading a response too large to read in full now reports it instead of
+  showing a short count.
+
+- A folder badge is now marked out of date when an app inside it fails its poll.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
