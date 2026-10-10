@@ -52,14 +52,16 @@ function get(pathname) {
   });
 }
 
+let configured = 0;
 function configure(extract) {
+  configured++;
   saveConfig({
     items: [
       {
         id: 'a1',
         type: 'app',
         name: 'App',
-        badge: { enabled: true, url: `${upstreamBase}/api/counts`, extract },
+        badge: { enabled: true, url: `${upstreamBase}/api/counts?run=${configured}`, extract },
       },
     ],
     settings: {},

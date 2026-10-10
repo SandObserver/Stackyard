@@ -38,6 +38,15 @@ function activityLabels(block) {
   return labels;
 }
 
+/** @type {Map<string, { fp: string, at: number, body: any }>} */
+const readings = new Map();
+
+/** @param {any} src @returns {number} */
+function intervalMs(src) {
+  const s = Math.floor(Number(src?.interval));
+  return (Number.isFinite(s) ? Math.min(3600, Math.max(10, s)) : 30) * 1000;
+}
+
 on('GET', '/api/badges', async (req, res) => {
   const limited = rateLimit(getIp(req), 'badges', LIMITS.BADGES.max, LIMITS.BADGES.windowMs);
   if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
@@ -53,12 +62,18 @@ on('GET', '/api/badges', async (req, res) => {
       )
       .map(async item => {
         const key = `badge:${item.id}`;
+        const src = item.monitoring?.activity?.enabled ? item.monitoring.activity : item.badge;
+        const fp = JSON.stringify([src, item.skipTlsVerify === true]);
+        const kept = readings.get(item.id);
+        if (kept && kept.fp === fp && Date.now() - kept.at < intervalMs(src)) {
+          out[item.id] = kept.body;
+          return;
+        }
         if (backoff.skip(key)) {
           out[item.id] = backoff.remembered(key) || { value: 0 };
           return;
         }
         try {
-          const src = item.monitoring?.activity?.enabled ? item.monitoring.activity : item.badge;
           /* A skipped row means the request goes out without its credential.
              Report which item is damaged. */
           const dropped =
@@ -93,6 +108,7 @@ on('GET', '/api/badges', async (req, res) => {
             out[item.id] = { value: computeBadgeValue(r.data, badge) };
           }
           backoff.success(key);
+          readings.set(item.id, { fp, at: Date.now(), body: out[item.id] });
         } catch (e) {
           const body = Object.assign({ value: 0 }, errorBody(e));
           backoff.failure(key, body);
@@ -100,6 +116,7 @@ on('GET', '/api/badges', async (req, res) => {
         }
       }),
   );
+  for (const id of readings.keys()) if (!(id in out)) readings.delete(id);
   json(res, 200, out);
 });
 
