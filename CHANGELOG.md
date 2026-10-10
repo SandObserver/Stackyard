@@ -70,6 +70,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A folder badge is now marked out of date when an app inside it fails its poll.
 
+- TrueNAS disk health no longer names TrueNAS 26 in its unsupported-version
+  message.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
