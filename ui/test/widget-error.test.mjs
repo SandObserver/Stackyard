@@ -153,10 +153,9 @@ test('a caption too long for its card wraps instead of being cut', () => {
 test('the failure caption and its time suffix meet 4.5:1 on every card', () => {
   const src = fs.readFileSync(path.join(root, 'js/widget-error.js'), 'utf8');
   const ink = sel => {
-    const m = src.match(
-      new RegExp(sel.replace(/[.[\]"]/g, '\\$&') + '\\s*\\{[^}]*?color:\\s*var\\(--wt-cap-color,\\s*([^)]+\\)?)\\)'),
-    );
-    assert.ok(m, `no default ink for ${sel}`);
+    const rule = src.slice(src.indexOf(sel + '{'), src.indexOf('}', src.indexOf(sel + '{')));
+    const m = rule.match(/color:\s*var\(--wt-cap-color,\s*([^)]+\)?)\)/);
+    assert.ok(src.includes(sel + '{') && m, `no default ink for ${sel}`);
     return m[1].trim();
   };
   const suffix = src.match(/\.wt-cap i \{([^}]*)\}/)[1];
