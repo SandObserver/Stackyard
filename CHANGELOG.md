@@ -59,6 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   including Prometheus metrics with labels, names containing dots or dashes,
   nested lists and plain-number answers.
 
+- The Live Activity poll interval is now used: each service is read once per
+  interval, however many dashboards are open.
+
 ## [1.16.0] - 2026-10-04
 
 ### Added
