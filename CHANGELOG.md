@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove the thin dark lines along the sides of the Now Playing widget.
 
+- Editing an app no longer drops a summed Live Activity badge's unit, colour and
+  minimum.
+
+- Editing an app set up in an older version no longer drops its Live Activity
+  headers, including a stored API key.
+
 ## [1.16.0] - 2026-10-04
 
 ### Added
