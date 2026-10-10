@@ -3,7 +3,7 @@
 
 const { scrubConfigSecrets, preserveConfigSecrets, secretSpec } = require('./widget-secrets');
 const { scrubItemBadgeSecrets, preserveItemBadgeSecrets, toRows } = require('./badge-headers');
-const { badgeRequestMatchesSaved, widgetConfigMatchesSaved } = require('./secret-scope');
+const { badgeRequestMatchesSaved, widgetConfigMatchesSaved, rewriteChanged } = require('./secret-scope');
 const { getRegistry } = require('./widgets');
 
 function scrubAllSecrets(cfg) {
@@ -49,7 +49,21 @@ function preserveAllSecrets(newCfg, oldCfg) {
   const note = item => {
     if (!withheld.some(w => w.id === item.id)) withheld.push({ id: item.id, label: item.label || item.id });
   };
-  const oldItems = Array.isArray(oldCfg?.items) ? oldCfg.items : [];
+  const savedItems = Array.isArray(oldCfg?.items) ? oldCfg.items : [];
+  const redirected = rewriteChanged(newCfg.settings?.server, oldCfg?.settings?.server);
+  if (redirected && Array.isArray(newCfg.items)) {
+    const reg = getRegistry();
+    for (const item of newCfg.items) {
+      const prev = item && savedItems.find(e => e && e.id === item.id);
+      if (!prev) continue;
+      const holds =
+        prev.type === 'widget'
+          ? widgetHoldsSecret(prev.widgetConfig, reg[prev.widgetType])
+          : blockHoldsSecret(prev.badge) || blockHoldsSecret(prev.monitoring?.activity);
+      if (holds) note(item);
+    }
+  }
+  const oldItems = redirected ? [] : savedItems;
   const prevOf = item => oldItems.find(e => e && e.id === item.id);
 
   if (Array.isArray(newCfg.items)) {

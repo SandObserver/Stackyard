@@ -8,6 +8,7 @@ const { fail, KIND } = require('../api-error');
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { DOCK_MAX } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
+const { rewriteChanged } = require('../secret-scope');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
@@ -151,7 +152,8 @@ on('POST', '/api/config', async (req, res) => {
         error: 'This config was changed somewhere else. Reload the page and try again.',
         kind: KIND.INVALID,
       });
-    if (existing.settings?.background?.apiKey && !data.settings?.background?.apiKey) {
+    const redirected = rewriteChanged(data.settings?.server, existing.settings?.server);
+    if (existing.settings?.background?.apiKey && !data.settings?.background?.apiKey && !redirected) {
       data.settings = data.settings || {};
       data.settings.background = data.settings.background || {};
       data.settings.background.apiKey = existing.settings.background.apiKey;
@@ -182,6 +184,8 @@ on('POST', '/api/config', async (req, res) => {
     data.settings.server = server;
     /* A stored credential is only refilled for the request it was stored for. */
     const { withheld } = preserveAllSecrets(data, existing);
+    if (redirected && existing.settings?.background?.apiKey && !data.settings?.background?.apiKey)
+      withheld.push({ id: 'background', label: 'Unsplash' });
     migrate(data);
     ensureSystemItems(data);
     saveConfig(data);
