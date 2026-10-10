@@ -200,7 +200,14 @@ const withViews = views =>
     viewField: 'view',
     views,
     /* viewField has to name a real field offering exactly the view keys. */
-    fields: [{ key: 'view', type: 'select', label: 'View', options: Object.keys(views) }],
+    fields: [
+      {
+        key: 'view',
+        type: 'select',
+        label: 'View',
+        options: Object.keys(views).map(value => ({ value, label: value })),
+      },
+    ],
   }).errors;
 
 test('validateManifest accepts a view that narrows the size list', () => {
@@ -267,7 +274,7 @@ test('a manifest may pin a dark appearance and nothing else', () => {
 
 test('validateManifest rejects a showIf naming a field that does not exist', () => {
   const errs = errsFor([
-    { key: 'provider', type: 'select', label: 'P', options: ['a'] },
+    { key: 'provider', type: 'select', label: 'P', options: [{ value: 'a', label: 'a' }] },
     { key: 'url', type: 'text', label: 'U', showIf: { field: 'provdier', equals: 'a' } },
   ]);
   assert.equal(errs.length, 1);
@@ -359,7 +366,21 @@ const withViewField = (viewField, fields, views) =>
 const TWO_VIEWS = { vpn: { src: 'v.html' }, map: { src: 'm.html' } };
 
 test('validateManifest rejects a viewField naming no declared field', () => {
-  const errs = withViewField('veiw', [{ key: 'view', type: 'select', label: 'V', options: ['vpn', 'map'] }], TWO_VIEWS);
+  const errs = withViewField(
+    'veiw',
+    [
+      {
+        key: 'view',
+        type: 'select',
+        label: 'V',
+        options: [
+          { value: 'vpn', label: 'vpn' },
+          { value: 'map', label: 'map' },
+        ],
+      },
+    ],
+    TWO_VIEWS,
+  );
   assert.equal(errs.length, 1);
   assert.match(errs[0], /"viewField" \("veiw"\) is not a declared field/);
 });
@@ -367,7 +388,17 @@ test('validateManifest rejects a viewField naming no declared field', () => {
 test('validateManifest rejects a view no option can select', () => {
   const errs = withViewField(
     'view',
-    [{ key: 'view', type: 'select', label: 'V', options: ['vpn', 'graph'] }],
+    [
+      {
+        key: 'view',
+        type: 'select',
+        label: 'V',
+        options: [
+          { value: 'vpn', label: 'vpn' },
+          { value: 'graph', label: 'graph' },
+        ],
+      },
+    ],
     TWO_VIEWS,
   );
   assert.ok(
@@ -382,7 +413,21 @@ test('validateManifest rejects a view no option can select', () => {
 
 test('validateManifest accepts a viewField whose options are exactly the views', () => {
   assert.deepEqual(
-    withViewField('view', [{ key: 'view', type: 'select', label: 'V', options: ['vpn', 'map'] }], TWO_VIEWS),
+    withViewField(
+      'view',
+      [
+        {
+          key: 'view',
+          type: 'select',
+          label: 'V',
+          options: [
+            { value: 'vpn', label: 'vpn' },
+            { value: 'map', label: 'map' },
+          ],
+        },
+      ],
+      TWO_VIEWS,
+    ),
     [],
   );
 });
@@ -414,4 +459,15 @@ test('validateManifest does not check the views against an optionsFrom field', (
     withViewField('view', [{ key: 'view', type: 'select', label: 'V', optionsFrom: 'modes' }], TWO_VIEWS),
     [],
   );
+});
+
+test('validateManifest rejects options the settings form cannot show', () => {
+  for (const options of [['a', 'b'], [{ value: 'a' }], [{ label: 'A' }], [null]]) {
+    const errs = errsFor([{ key: 'k', type: 'select', label: 'K', options }]);
+    assert.ok(
+      errs.some(e => /option 0 of "k" must be an object with a "value" and a "label"/.test(e)),
+      JSON.stringify(options),
+    );
+  }
+  assert.deepEqual(errsFor([{ key: 'k', type: 'select', label: 'K', options: [{ value: 1, label: 'One' }] }]), []);
 });

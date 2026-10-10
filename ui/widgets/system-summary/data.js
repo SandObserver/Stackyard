@@ -474,7 +474,8 @@ async function unraidQuery(ctx, query) {
       code === 'FORBIDDEN' ||
       code === 'UNAUTHENTICATED' ||
       /permission|forbidden|unauthor|api key/i.test(problem.message || '');
-    ctx.fail('Unraid: ' + problem.message, { kind: denied ? ctx.KIND.AUTH : ctx.KIND.UPSTREAM });
+    if (denied) ctx.fail('Unraid refused this API key or its role', { kind: ctx.KIND.AUTH });
+    ctx.fail('Unraid could not answer the query');
   }
   if (!r.data?.data) ctx.fail('Unraid returned no data');
   return r.data.data;

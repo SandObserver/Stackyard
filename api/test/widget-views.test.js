@@ -16,7 +16,17 @@ test('a views block with viewField and defaultView is valid', () => {
     defaultView: 'a',
     views: { a: { src: 'a.html' }, b: { label: 'B', src: 'b.html' } },
     /* viewField has to name a field the form renders, offering the view keys. */
-    fields: [{ key: 'mode', type: 'select', label: 'Mode', options: ['a', 'b'] }],
+    fields: [
+      {
+        key: 'mode',
+        type: 'select',
+        label: 'Mode',
+        options: [
+          { value: 'a', label: 'a' },
+          { value: 'b', label: 'b' },
+        ],
+      },
+    ],
   });
   assert.deepEqual(errors, []);
 });
