@@ -54,7 +54,7 @@ async function scrutinyDeviceOptions(ctx) {
 
 function truenasStatus(ctx, r) {
   if (r.status === 401 || r.status === 403) ctx.fail('TrueNAS auth failed, check API key', { kind: ctx.KIND.AUTH });
-  if (r.status === 404) ctx.fail('TrueNAS REST API not found (removed in v26; supported on 25.x, or use Scrutiny)');
+  if (r.status === 404) ctx.fail('TrueNAS REST API not found (supported on 25.x only, or use Scrutiny)');
   if (r.status >= 400) ctx.fail('TrueNAS HTTP ' + r.status);
 }
 
