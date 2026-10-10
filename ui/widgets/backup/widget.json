@@ -85,7 +85,8 @@
           "showIf": {
             "field": "provider",
             "equals": "duplicati"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "dupPollSec",
@@ -95,7 +96,8 @@
           "showIf": {
             "field": "provider",
             "equals": "duplicati"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "kopiaUrl",
@@ -149,7 +151,8 @@
           "showIf": {
             "field": "provider",
             "equals": "kopia"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "customName",
@@ -163,7 +166,8 @@
               "duplicati",
               "kopia"
             ]
-          }
+          },
+          "cosmetic": true
         }
       ]
     }

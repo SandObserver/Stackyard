@@ -35,13 +35,15 @@
           "value": "contributions",
           "label": "githubView.opt.contributions"
         }
-      ]
+      ],
+      "cosmetic": true
     },
     {
       "key": "githubUser",
       "type": "text",
       "label": "githubUser.label",
-      "placeholder": "githubUser.placeholder"
+      "placeholder": "githubUser.placeholder",
+      "cosmetic": true
     },
     {
       "key": "githubToken",
@@ -54,7 +56,8 @@
       "type": "text",
       "label": "githubHref.label",
       "optional": true,
-      "hint": "githubHref.hint"
+      "hint": "githubHref.hint",
+      "cosmetic": true
     },
     {
       "key": "githubPrFilters",
@@ -85,7 +88,8 @@
           "value": "review-requested",
           "label": "githubPrFilters.opt.review-requested"
         }
-      ]
+      ],
+      "cosmetic": true
     }
   ]
 }

@@ -51,7 +51,8 @@
       "type": "text",
       "label": "dnsHref.label",
       "optional": true,
-      "hint": "dnsHref.hint"
+      "hint": "dnsHref.hint",
+      "cosmetic": true
     },
     {
       "key": "dnsUser",
@@ -113,7 +114,8 @@
         "field": "provider",
         "equals": "nextdns"
       },
-      "hint": "dnsNextdnsProfile.hint"
+      "hint": "dnsNextdnsProfile.hint",
+      "cosmetic": true
     }
   ]
 }

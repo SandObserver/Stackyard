@@ -43,7 +43,8 @@
           "value": "vpn",
           "label": "view.opt.vpn"
         }
-      ]
+      ],
+      "cosmetic": true
     },
     {
       "key": "vpn",
@@ -123,7 +124,8 @@
           "type": "text",
           "label": "vpn.href.label",
           "placeholder": "vpn.href.placeholder",
-          "optional": true
+          "optional": true,
+          "cosmetic": true
         },
         {
           "key": "color",
@@ -305,7 +307,8 @@
           "type": "text",
           "label": "services.adminUrl.label",
           "placeholder": "services.adminUrl.placeholder",
-          "optional": true
+          "optional": true,
+          "cosmetic": true
         },
         {
           "key": "color",
@@ -325,7 +328,8 @@
         "field": "view",
         "equals": "map"
       },
-      "hint": "showLegend.hint"
+      "hint": "showLegend.hint",
+      "cosmetic": true
     }
   ]
 }

@@ -105,7 +105,8 @@
           "label": "shelfName.label",
           "optional": true,
           "placeholder": "shelfName.placeholder",
-          "hint": "shelfName.hint"
+          "hint": "shelfName.hint",
+          "cosmetic": true
         },
         {
           "key": "source",
@@ -146,7 +147,8 @@
       "type": "text",
       "label": "href.label",
       "placeholder": "href.placeholder",
-      "optional": true
+      "optional": true,
+      "cosmetic": true
     }
   ]
 }

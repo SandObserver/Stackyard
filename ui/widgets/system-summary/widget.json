@@ -145,7 +145,8 @@
           "label": "refresh.opt.60"
         }
       ],
-      "hint": "refresh.hint"
+      "hint": "refresh.hint",
+      "cosmetic": true
     },
     {
       "key": "slots",
@@ -195,7 +196,8 @@
           "showIf": {
             "field": "type",
             "equals": "disk"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "secondary",
@@ -206,7 +208,8 @@
           "showIf": {
             "field": "type",
             "equals": "disk"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "thermalZone",
@@ -216,13 +219,15 @@
           "showIf": {
             "field": "type",
             "equals": "temp"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "color",
           "type": "color",
           "label": "slots.color.label",
-          "default": "#0091FF"
+          "default": "#0091FF",
+          "cosmetic": true
         }
       ],
       "showIf": {
@@ -278,7 +283,8 @@
           "showIf": {
             "field": "type",
             "equals": "disk"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "secondary",
@@ -289,7 +295,8 @@
           "showIf": {
             "field": "type",
             "equals": "disk"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "sensor",
@@ -300,13 +307,15 @@
           "showIf": {
             "field": "type",
             "equals": "temp"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "color",
           "type": "color",
           "label": "slots.color.label",
-          "default": "#0091FF"
+          "default": "#0091FF",
+          "cosmetic": true
         }
       ],
       "showIf": {
@@ -358,7 +367,8 @@
           "showIf": {
             "field": "type",
             "equals": "disk"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "secondary",
@@ -369,7 +379,8 @@
           "showIf": {
             "field": "type",
             "equals": "disk"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "sensor",
@@ -380,13 +391,15 @@
           "showIf": {
             "field": "type",
             "equals": "temp"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "color",
           "type": "color",
           "label": "slots.color.label",
-          "default": "#0091FF"
+          "default": "#0091FF",
+          "cosmetic": true
         }
       ],
       "showIf": {
@@ -436,7 +449,8 @@
             "field": "type",
             "equals": "disk"
           },
-          "hint": "slots.share.hint"
+          "hint": "slots.share.hint",
+          "cosmetic": true
         },
         {
           "key": "secondary",
@@ -447,7 +461,8 @@
           "showIf": {
             "field": "type",
             "equals": "disk"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "sensor",
@@ -458,13 +473,15 @@
           "showIf": {
             "field": "type",
             "equals": "temp"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "color",
           "type": "color",
           "label": "slots.color.label",
-          "default": "#0091FF"
+          "default": "#0091FF",
+          "cosmetic": true
         }
       ],
       "showIf": {
@@ -482,7 +499,8 @@
           "key": "enabled",
           "type": "toggle",
           "label": "network.enabled.label",
-          "default": false
+          "default": false,
+          "cosmetic": true
         },
         {
           "key": "mode",
@@ -507,7 +525,8 @@
               "value": "uptime",
               "label": "network.mode.opt.uptime"
             }
-          ]
+          ],
+          "cosmetic": true
         },
         {
           "key": "provider",
@@ -576,7 +595,8 @@
           "key": "enabled",
           "type": "toggle",
           "label": "network.enabled.label",
-          "default": false
+          "default": false,
+          "cosmetic": true
         },
         {
           "key": "mode",
@@ -601,7 +621,8 @@
               "value": "uptime",
               "label": "network.mode.opt.uptime"
             }
-          ]
+          ],
+          "cosmetic": true
         },
         {
           "key": "interface",
@@ -612,7 +633,8 @@
           "showIf": {
             "field": "mode",
             "equals": "throughput"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "provider",
@@ -681,7 +703,8 @@
           "key": "enabled",
           "type": "toggle",
           "label": "network.enabled.label",
-          "default": false
+          "default": false,
+          "cosmetic": true
         },
         {
           "key": "mode",
@@ -706,7 +729,8 @@
               "value": "uptime",
               "label": "network.mode.opt.uptime"
             }
-          ]
+          ],
+          "cosmetic": true
         },
         {
           "key": "interface",
@@ -717,7 +741,8 @@
           "showIf": {
             "field": "mode",
             "equals": "throughput"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "provider",
@@ -786,7 +811,8 @@
           "key": "enabled",
           "type": "toggle",
           "label": "network.enabled.label",
-          "default": false
+          "default": false,
+          "cosmetic": true
         },
         {
           "key": "mode",
@@ -811,7 +837,8 @@
               "value": "uptime",
               "label": "network.mode.opt.uptime"
             }
-          ]
+          ],
+          "cosmetic": true
         },
         {
           "key": "interface",
@@ -822,7 +849,8 @@
           "showIf": {
             "field": "mode",
             "equals": "throughput"
-          }
+          },
+          "cosmetic": true
         },
         {
           "key": "provider",
