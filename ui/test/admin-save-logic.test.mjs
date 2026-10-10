@@ -627,3 +627,14 @@ test('a backup that leaves out the host list does not count as a settings change
   assert.equal(restoresSettings({ settings: { theme: 'dark', server: {} } }, live), false);
   assert.equal(restoresSettings({ settings: { theme: 'dark', server: { allowedHosts: [] } } }, live), true);
 });
+
+test('a backup whose uploaded wallpaper is missing keeps the live background', () => {
+  const live = { settings: { background: { type: 'upload', url: '/icons/wallpaper/now.jpg' } } };
+  const file = {
+    items: [],
+    settings: { theme: 'dark', background: { type: 'upload', url: '/icons/wallpaper/gone.jpg' } },
+  };
+  assert.deepEqual(restoreBody(file, live, true).settings, { theme: 'dark', background: live.settings.background });
+  assert.deepEqual(restoreBody(file, { settings: {} }, true).settings, { theme: 'dark' });
+  assert.equal(restoreBody(file, live).settings.background.url, '/icons/wallpaper/gone.jpg');
+});

@@ -146,13 +146,20 @@ export function restoresSettings(file, live) {
 
 /** The config write that restores a backup over `live`. It carries the file's
     schema version so the server migrates what an older release wrote.
-    @param {any} file @param {any} live @returns {any} */
-export function restoreBody(file, live) {
+    @param {any} file @param {any} live
+    @param {boolean} [keepBackground] the file names an uploaded wallpaper this install does not hold
+    @returns {any} */
+export function restoreBody(file, live, keepBackground = false) {
+  const settings = restorableSettings(file?.settings);
+  if (settings && keepBackground) {
+    if (live?.settings?.background) settings.background = live.settings.background;
+    else delete settings.background;
+  }
   return {
     _rev: live?._rev,
     _schemaVersion: file?._schemaVersion,
     items: file?.items,
-    settings: restorableSettings(file?.settings) || live?.settings,
+    settings: settings || live?.settings,
   };
 }
 

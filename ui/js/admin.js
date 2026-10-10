@@ -1,7 +1,7 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=58f1cd76';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=96e79972';
 import { recoveryShown } from '/js/config-recovery.js?v=dbe542e1';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=fb073a35';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=a89b29d2';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   afterImport,
@@ -14,14 +14,14 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=0dd815e8';
+} from '/js/admin-save-logic.js?v=5811620e';
 import {
   loadSettings,
   savedWallpaperUrl,
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=cb5e84f2';
+} from '/js/admin-settings.js?v=eb65e57c';
 import {
   apiGet,
   apiPost,
@@ -55,7 +55,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=0d2dbbcc';
+} from '/js/import-foreign.js?v=7423356c';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -220,6 +220,16 @@ async function appendItems(newItems) {
   }
 }
 
+/** @param {unknown} url @returns {Promise<boolean>} whether `url` names an uploaded wallpaper the server answers 404 for */
+async function wallpaperMissing(url) {
+  if (typeof url !== 'string' || !url.startsWith('/icons/wallpaper/')) return false;
+  try {
+    return (await fetch(url, { method: 'HEAD', cache: 'no-store' })).status === 404;
+  } catch {
+    return false;
+  }
+}
+
 /** Replace the list and the settings with a backup's. Returns whether the write
     reached the server.
     @param {any} file */
@@ -234,7 +244,8 @@ async function writeBackup(file) {
     if (JSON.stringify(live.items || []) !== _serverItems) {
       throw Object.assign(new Error('stale'), { status: 409 });
     }
-    const r = await apiPost('/api/config', restoreBody(file, live));
+    const keepBackground = await wallpaperMissing(file?.settings?.background?.url);
+    const r = await apiPost('/api/config', restoreBody(file, live, keepBackground));
     _replaced++;
     state.items = r.items;
     _serverItems = JSON.stringify(r.items);

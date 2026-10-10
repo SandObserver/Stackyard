@@ -13,7 +13,7 @@ import {
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=fdc0243f';
 import { formatNumber } from '/js/format-number.js?v=349a741d';
-import { serialWrites } from '/js/admin-save-logic.js?v=0dd815e8';
+import { serialWrites } from '/js/admin-save-logic.js?v=5811620e';
 import { renderColorControl } from '/js/admin-color-control.js?v=9f78b9d1';
 import { BACKDROP } from '/js/background.js?v=abd33088';
 import {
