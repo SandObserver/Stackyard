@@ -33,6 +33,8 @@ export const NOTE = Object.freeze({
   LOCAL_URL_DROPPED: 'local-url-dropped',
   FIELDS_DROPPED: 'fields-dropped',
   PAGES_NOT_FOLLOWED: 'pages-not-followed',
+  SCHEME_ADDED: 'scheme-added',
+  HEALTH_URL_DROPPED: 'health-url-dropped',
 });
 
 /* Fields with no equivalent on a Stackyard item. */
@@ -59,6 +61,9 @@ function isAbsoluteLink(href) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(href)) return true;
   return href.startsWith('//');
 }
+
+/** @param {string} href @returns {string} `href` with http:// added when it is a bare host:port */
+const withScheme = href => (/^[a-z0-9.-]+:\d{1,5}(?:[/?#]|$)/i.test(href) ? `http://${href}` : href);
 
 /* A value Homepage or Dashy resolves from its own environment. */
 const hasPlaceholder = s => /\{\{[^}]*\}\}|\$\{[^}]*\}/.test(s);
@@ -175,7 +180,8 @@ function collector(takenIds) {
     @param {{ label: string, href: string, iconUrl: string, container: string,
               pingUrl: string, skipTlsVerify?: boolean }} parts
     @returns {any|null} */
-function addApp(col, group, { label, href, iconUrl, container, pingUrl, skipTlsVerify }) {
+function addApp(col, group, { label, href: raw, iconUrl, container, pingUrl: rawPing, skipTlsVerify }) {
+  const href = withScheme(raw);
   if (!label) {
     col.skip(SKIP.NO_LABEL, href || '', group);
     return null;
@@ -196,6 +202,11 @@ function addApp(col, group, { label, href, iconUrl, container, pingUrl, skipTlsV
   if (!isSafeLinkUrl(href)) {
     col.skip(SKIP.UNSAFE_HREF, label, group, href);
     return null;
+  }
+  let pingUrl = withScheme(rawPing);
+  if (pingUrl && (hasPlaceholder(pingUrl) || !/^https?:\/\//i.test(pingUrl))) {
+    col.note(NOTE.HEALTH_URL_DROPPED, label, group, rawPing);
+    pingUrl = '';
   }
   const built = buildAppItem(
     {
@@ -220,6 +231,7 @@ function addApp(col, group, { label, href, iconUrl, container, pingUrl, skipTlsV
   }
   col.taken.add(built.item.id);
   col.items.push(built.item);
+  if (href !== raw) col.note(NOTE.SCHEME_ADDED, label, group, raw);
   return built.item;
 }
 

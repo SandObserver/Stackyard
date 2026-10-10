@@ -482,6 +482,8 @@
     "skipPlaceholderHref": "链接需要只有对方仪表板才知道的变量",
     "noteIcon": "已舍弃图标：{detail}",
     "notePing": "已舍弃 ICMP ping：{detail}",
+    "noteSchemeAdded": "已为链接添加 http://：{detail}",
+    "noteHealthUrl": "已舍弃健康检查地址，它不是完整的网址：{detail}",
     "noteRemoteContainer": "已忽略容器，它运行在 {detail}",
     "noteFlattened": "嵌套分组已成为独立文件夹",
     "noteSubItems": "子项已移入该文件夹",

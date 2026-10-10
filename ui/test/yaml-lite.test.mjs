@@ -374,3 +374,23 @@ test('a clean file reports no errors and parses identically either way', () => {
   assert.deepEqual(errors, []);
   assert.deepEqual(plain(doc), plain(parseYaml(text)));
 });
+
+test('merge keys that copy too many keys refuse the whole file', async () => {
+  const { YamlTooLargeError } = await import('/js/yaml-lite.js');
+  const keys = Array.from({ length: 5000 }, (_, i) => `k${i}: 1`).join(', ');
+  const text = `base: &a {${keys}}\nlist:\n${'  - <<: *a\n'.repeat(20)}`;
+  assert.throws(() => parseYaml(text), YamlTooLargeError);
+  assert.throws(() => parseYamlTolerant(text), YamlTooLargeError);
+});
+
+test('a few merges of a small map still read', () => {
+  const doc = parseYaml('base: &a {x: 1, y: 2}\nlist:\n  - <<: *a\n    y: 3\n  - <<: *a\n');
+  assert.deepEqual({ ...doc.list[0] }, { y: 3, x: 1 });
+  assert.deepEqual({ ...doc.list[1] }, { x: 1, y: 2 });
+});
+
+test('a long line with no colon is read in linear time', () => {
+  const started = performance.now();
+  parseYamlTolerant(`a${' '.repeat(200000)}b\n`);
+  assert.ok(performance.now() - started < 2000);
+});

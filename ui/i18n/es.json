@@ -502,6 +502,8 @@
     "skipPlaceholderHref": "el enlace necesita una variable que solo conoce el otro panel",
     "noteIcon": "icono descartado: {detail}",
     "notePing": "ping ICMP descartado: {detail}",
+    "noteSchemeAdded": "http:// añadido al enlace: {detail}",
+    "noteHealthUrl": "dirección de comprobación de estado descartada, no es una dirección web completa: {detail}",
     "noteRemoteContainer": "contenedor ignorado, se ejecuta en {detail}",
     "noteFlattened": "el grupo anidado pasó a ser su propia carpeta",
     "noteSubItems": "subelemento movido a la carpeta",
