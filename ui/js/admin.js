@@ -1,25 +1,27 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=1309b0f1';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=db81b76a';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=58f1cd76';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=96e79972';
 import { recoveryShown } from '/js/config-recovery.js?v=dbe542e1';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=89d64d14';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=a89b29d2';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   afterImport,
   buildAppItem,
   claimFolderChildren,
   newItemId,
+  restoreBody,
+  restoresSettings,
   revertingSaves,
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=ae65f9c8';
+} from '/js/admin-save-logic.js?v=5811620e';
 import {
   loadSettings,
   savedWallpaperUrl,
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=95544ed1';
+} from '/js/admin-settings.js?v=eb65e57c';
 import {
   apiGet,
   apiPost,
@@ -32,9 +34,10 @@ import {
   ShownError,
   setReauthHandler,
   toast,
-} from '/js/admin-shared.js?v=ee8df871';
+  withheldText,
+} from '/js/admin-shared.js?v=fd2693ca';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=9f4b9b90';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=f5271384';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=349a741d';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
@@ -52,7 +55,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=9efb127f';
+} from '/js/import-foreign.js?v=7423356c';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -214,6 +217,55 @@ async function appendItems(newItems) {
     syncDashSave();
   } finally {
     render();
+  }
+}
+
+/** @param {unknown} url @returns {Promise<boolean>} whether `url` names an uploaded wallpaper the server answers 404 for */
+async function wallpaperMissing(url) {
+  if (typeof url !== 'string' || !url.startsWith('/icons/wallpaper/')) return false;
+  try {
+    return (await fetch(url, { method: 'HEAD', cache: 'no-store' })).status === 404;
+  } catch {
+    return false;
+  }
+}
+
+/** Replace the list and the settings with a backup's. Returns whether the write
+    reached the server.
+    @param {any} file */
+function restoreBackup(file) {
+  return saves.run(() => writeBackup(file));
+}
+
+/** @param {any} file */
+async function writeBackup(file) {
+  try {
+    const live = await apiGet('/api/config');
+    if (JSON.stringify(live.items || []) !== _serverItems) {
+      throw Object.assign(new Error('stale'), { status: 409 });
+    }
+    const keepBackground = await wallpaperMissing(file?.settings?.background?.url);
+    const r = await apiPost('/api/config', restoreBody(file, live, keepBackground));
+    _replaced++;
+    state.items = r.items;
+    _serverItems = JSON.stringify(r.items);
+    _savedItems = _serverItems;
+    saveOrRestore.landed(JSON.parse(_savedItems));
+    const notice = [withheldText(r), restoresSettings(file, live) ? t('toast.reloadToFinishRestore') : '']
+      .filter(Boolean)
+      .join(' ');
+    if (notice) toast(notice, 'err', { pin: true });
+    else toast(t('toast.imported'));
+    return true;
+  } catch (e) {
+    toast(
+      e.status === 409 ? t('toast.dashboardChangedElsewhere') : t('toast.importFailed', { err: errorText(e) }),
+      'err',
+    );
+    return false;
+  } finally {
+    render();
+    syncDashSave();
   }
 }
 
@@ -1097,7 +1149,8 @@ el('imp').onchange = async e => {
     for (const id of cur.keys()) {
       if (!inc.has(id)) deleted++;
     }
-    if (added + updated + deleted === 0) {
+    const settingsToo = restoresSettings(d, await apiGet('/api/config'));
+    if (added + updated + deleted === 0 && !settingsToo) {
       toast(t('toast.importNoChange'));
       tgt(e).value = '';
       return;
@@ -1110,6 +1163,7 @@ el('imp').onchange = async e => {
       updated: formatNumber(updated),
       deleted: formatNumber(deleted),
     });
+    if (settingsToo) lead.textContent += ` ${t('import.settingsToo')}`;
     const ok = await confirmModal({
       title: t('import.confirmTitle'),
       body: lead,
@@ -1121,9 +1175,7 @@ el('imp').onchange = async e => {
       tgt(e).value = '';
       return;
     }
-    const before = snapshotItems(state.items);
-    state.items = d.items;
-    if (await saveOrRevert(before)) toast(t('toast.imported'));
+    await restoreBackup(d);
   } catch (err) {
     const why = err instanceof SyntaxError ? t('toast.importNotStackyard') : errorText(err);
     toast(t('toast.importFailed', { err: why }), 'err');

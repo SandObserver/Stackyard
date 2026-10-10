@@ -9,6 +9,8 @@ import {
   randomSuffix,
   snapshotItems,
   afterImport,
+  restoreBody,
+  restoresSettings,
   revertingSaves,
   serialWrites,
 } from '../js/admin-save-logic.js';
@@ -592,4 +594,47 @@ test('an import compares against the list this page sent, not the server copy', 
     newItems: [{ id: 'X' }],
   });
   assert.equal(JSON.stringify(next.saved), JSON.stringify(next.items));
+});
+
+test('a backup restores its own settings, schema version and items', () => {
+  const live = { _rev: 4, _schemaVersion: 8, items: [{ id: 'a' }], settings: { theme: 'light' } };
+  const file = { _schemaVersion: 6, items: [{ id: 'b' }], settings: { theme: 'dark', auth: { enabled: false } } };
+  assert.deepEqual(restoreBody(file, live), {
+    _rev: 4,
+    _schemaVersion: 6,
+    items: [{ id: 'b' }],
+    settings: { theme: 'dark' },
+  });
+});
+
+test('a backup without settings keeps the live ones', () => {
+  const live = { _rev: 1, settings: { theme: 'light' } };
+  assert.deepEqual(restoreBody({ items: [] }, live).settings, { theme: 'light' });
+  assert.equal(restoresSettings({ items: [] }, live), false);
+});
+
+test('settings count as changed only when their data differs, ignoring key order and auth', () => {
+  const live = { settings: { theme: 'dark', layout: { cols: 6, rows: 4 }, auth: { enabled: true } } };
+  assert.equal(restoresSettings({ settings: { layout: { rows: 4, cols: 6 }, theme: 'dark' } }, live), false);
+  assert.equal(restoresSettings({ settings: { theme: 'dark', layout: { cols: 6, rows: 4 }, auth: {} } }, live), false);
+  assert.equal(restoresSettings({ settings: { theme: 'light', layout: { cols: 6, rows: 4 } } }, live), true);
+  assert.equal(restoresSettings({ settings: { theme: 'dark' } }, live), true);
+});
+
+test('a backup that leaves out the host list does not count as a settings change', () => {
+  const live = { settings: { theme: 'dark', server: { allowedHosts: ['home.lan'] } } };
+  assert.equal(restoresSettings({ settings: { theme: 'dark' } }, live), false);
+  assert.equal(restoresSettings({ settings: { theme: 'dark', server: {} } }, live), false);
+  assert.equal(restoresSettings({ settings: { theme: 'dark', server: { allowedHosts: [] } } }, live), true);
+});
+
+test('a backup whose uploaded wallpaper is missing keeps the live background', () => {
+  const live = { settings: { background: { type: 'upload', url: '/icons/wallpaper/now.jpg' } } };
+  const file = {
+    items: [],
+    settings: { theme: 'dark', background: { type: 'upload', url: '/icons/wallpaper/gone.jpg' } },
+  };
+  assert.deepEqual(restoreBody(file, live, true).settings, { theme: 'dark', background: live.settings.background });
+  assert.deepEqual(restoreBody(file, { settings: {} }, true).settings, { theme: 'dark' });
+  assert.equal(restoreBody(file, live).settings.background.url, '/icons/wallpaper/gone.jpg');
 });

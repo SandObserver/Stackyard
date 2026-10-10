@@ -336,6 +336,7 @@
     "allowedHostsTooMany": "地址过多。上限为 {max} 个。",
     "colorInvalid": "这不是颜色。请使用 #rrggbb 或 CSS 颜色名称。",
     "imported": "已导入",
+    "reloadToFinishRestore": "设置已恢复。更改任何设置前，请重新加载页面。",
     "importFailed": "导入失败：{err}",
     "exportFailed": "导出失败：{err}",
     "importNoChange": "没有可导入的内容。该文件与您当前的配置一致。",
@@ -386,7 +387,8 @@
   },
   "import": {
     "confirm_other": "导入 {count} 个项目？新增 {added} 个，更新 {updated} 个，删除 {deleted} 个。",
-    "confirmTitle": "导入配置"
+    "confirmTitle": "导入配置",
+    "settingsToo": "设置将被替换为文件中的设置。"
   },
   "status": {
     "needsAttention": "状态：需要处理",

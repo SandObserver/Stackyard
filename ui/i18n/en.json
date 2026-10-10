@@ -341,6 +341,7 @@
     "allowedHostsTooMany": "Too many addresses. The limit is {max}.",
     "colorInvalid": "That is not a color. Use #rrggbb or a CSS color name.",
     "imported": "Imported",
+    "reloadToFinishRestore": "Settings restored. Reload the page before changing any settings.",
     "importFailed": "Import failed: {err}",
     "exportFailed": "Export failed: {err}",
     "importNoChange": "Nothing to import. The file matches your current config.",
@@ -392,7 +393,8 @@
   "import": {
     "confirm_one": "Import {count} item? {added} added, {updated} updated, {deleted} deleted.",
     "confirm_other": "Import {count} items? {added} added, {updated} updated, {deleted} deleted.",
-    "confirmTitle": "Import configuration"
+    "confirmTitle": "Import configuration",
+    "settingsToo": "Settings will be replaced with the ones in the file."
   },
   "status": {
     "needsAttention": "Status: needs attention",

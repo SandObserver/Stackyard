@@ -110,6 +110,59 @@ export function afterImport({ local, saved, current, serverItems, newItems }) {
   return { items: [...local, ...newItems], saved: [...saved, ...newItems], stale: false };
 }
 
+/** @param {unknown} a @param {unknown} b @returns {boolean} equal data, whatever the key order */
+function sameData(a, b) {
+  if (a === b) return true;
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const ka = Object.keys(a);
+  return (
+    ka.length === Object.keys(b).length &&
+    ka.every(k => Object.hasOwn(b, k) && sameData(/** @type {any} */ (a)[k], /** @type {any} */ (b)[k]))
+  );
+}
+
+/** The settings a backup restores. The server owns `auth` and drops it from
+    every write.
+    @param {unknown} settings @returns {Record<string, unknown> | null} */
+function restorableSettings(settings) {
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return null;
+  const { auth: _auth, ...rest } = /** @type {Record<string, unknown>} */ (settings);
+  return rest;
+}
+
+/** @param {any} file a backup @param {any} live the config as the server holds it
+    @returns {boolean} whether restoring the file changes the settings */
+export function restoresSettings(file, live) {
+  const next = restorableSettings(file?.settings);
+  if (!next) return false;
+  const now = restorableSettings(live?.settings) || {};
+  /* The server keeps the stored host list when a write leaves it out. */
+  const server = /** @type {any} */ (next.server);
+  const kept = /** @type {any} */ (now.server)?.allowedHosts;
+  if (server?.allowedHosts === undefined && kept !== undefined) next.server = { ...server, allowedHosts: kept };
+  return !sameData(next, now);
+}
+
+/** The config write that restores a backup over `live`. It carries the file's
+    schema version so the server migrates what an older release wrote.
+    @param {any} file @param {any} live
+    @param {boolean} [keepBackground] the file names an uploaded wallpaper this install does not hold
+    @returns {any} */
+export function restoreBody(file, live, keepBackground = false) {
+  const settings = restorableSettings(file?.settings);
+  if (settings && keepBackground) {
+    if (live?.settings?.background) settings.background = live.settings.background;
+    else delete settings.background;
+  }
+  return {
+    _rev: live?._rev,
+    _schemaVersion: file?._schemaVersion,
+    items: file?.items,
+    settings: settings || live?.settings,
+  };
+}
+
 /** Run writes one at a time, in the order asked. A write asked for while
     another runs waits for it instead of being dropped.
 
