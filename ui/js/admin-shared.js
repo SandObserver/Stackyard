@@ -12,11 +12,16 @@ export const API = '';
 
 let tt;
 let _toastWired = false;
+let _pinned = false;
 
-/** @param {string} m @param {'ok'|'err'} [tone] @returns {void} */
-export const toast = (m, tone = 'ok') => {
+/** @param {string} m @param {'ok'|'err'} [tone]
+    @param {{ pin?: boolean }} [opts] pin: no 'ok' notice replaces it until it is dismissed
+    @returns {void} */
+export const toast = (m, tone = 'ok', { pin = false } = {}) => {
   const e = el('toast');
   if (!e) return;
+  if (tone === 'ok' && _pinned && e.classList.contains('show')) return;
+  _pinned = pin;
   e.textContent = m;
   e.className = `show ${tone}`;
   clearTimeout(tt);
@@ -35,6 +40,7 @@ export const toast = (m, tone = 'ok') => {
     e.addEventListener('click', () => {
       clearTimeout(tt);
       e.className = '';
+      _pinned = false;
     });
   }
   const ms = toastHoldMs(tone, m, 'show');
@@ -139,7 +145,7 @@ export const apiPost = async (p, b, recover = true) => {
     .map(w => w.label)
     .filter(Boolean)
     .map(isolate);
-  if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err');
+  if (withheld.length) toast(t('toast.secretsWithheld', { items: withheld.join(', ') }), 'err', { pin: true });
   return body;
 };
 
