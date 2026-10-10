@@ -243,3 +243,19 @@ test('a stale record is refused for traffic too', async () => {
     return true;
   });
 });
+
+test('a session belongs to the account that logged in, not to the hub URL', async () => {
+  const h = hub();
+  const config = { beszelUrl: 'http://shared:8090', beszelSystem: 'sys1', slots: SLOTS };
+  await dataFn(ctxFor(config, h));
+  for (const [over, kind] of [
+    [{ beszelPass: 'wrong' }, 'auth'],
+    [{ beszelUser: 'other@x', beszelPass: 'wrong' }, 'auth'],
+    [{ beszelPass: '' }, 'invalid'],
+  ]) {
+    await assert.rejects(dataFn(ctxFor({ ...config, ...over }, h)), e => {
+      assert.equal(e.kind, kind, JSON.stringify(over));
+      return true;
+    });
+  }
+});

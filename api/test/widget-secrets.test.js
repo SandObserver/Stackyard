@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { secretSpec, scrubWidgetSecrets, preserveWidgetSecrets } = require('../src/widget-secrets');
+const { secretSpec, cosmeticSpec, scrubWidgetSecrets, preserveWidgetSecrets } = require('../src/widget-secrets');
 const { plain } = require('../test-support/plain');
 
 const ENTRY = {
@@ -241,4 +241,59 @@ test('a key declared once per provider is listed once', () => {
   scrubWidgetSecrets(item, entry);
   assert.equal(item.widgetConfig.services[0].apiKeySet, true);
   assert.equal(item.widgetConfig.services[0].apiKey, undefined);
+});
+
+/* Two variants of one object, each shown for a different type. */
+const VARIANTS = {
+  manifest: {
+    fields: [
+      { key: 'type', type: 'select', label: 'Type' },
+      {
+        key: 'conn',
+        type: 'object',
+        label: 'Connection',
+        showIf: { field: 'type', equals: 'a' },
+        fields: [
+          { key: 'url', type: 'text', label: 'URL' },
+          { key: 'apiKey', type: 'secret', label: 'API key' },
+        ],
+      },
+      {
+        key: 'conn',
+        type: 'object',
+        label: 'Connection',
+        showIf: { field: 'type', equals: 'b' },
+        fields: [
+          { key: 'url', type: 'text', label: 'URL' },
+          { key: 'password', type: 'secret', label: 'Password' },
+        ],
+      },
+    ],
+  },
+};
+
+test('every variant of a repeated object key has its secrets scrubbed', () => {
+  assert.deepEqual(plain(secretSpec(VARIANTS).objects), { conn: ['apiKey', 'password'] });
+  const item = { widgetConfig: { type: 'a', conn: { url: 'http://svc', apiKey: 'k-a' } } };
+  scrubWidgetSecrets(item, VARIANTS);
+  assert.equal(item.widgetConfig.conn.apiKey, undefined);
+  assert.equal(item.widgetConfig.conn.apiKeySet, true);
+});
+
+test('every variant of a repeated group key has its secrets scrubbed', () => {
+  const entry = structuredClone(VARIANTS);
+  for (const f of entry.manifest.fields) if (f.key === 'conn') f.type = 'group';
+  const item = { widgetConfig: { type: 'a', conn: [{ url: 'http://svc', apiKey: 'k-a' }] } };
+  scrubWidgetSecrets(item, entry);
+  assert.equal(item.widgetConfig.conn[0].apiKey, undefined);
+  assert.equal(item.widgetConfig.conn[0].apiKeySet, true);
+});
+
+test('a repeated key is cosmetic only when every declaration says so', () => {
+  const entry = structuredClone(VARIANTS);
+  const [, a, b] = entry.manifest.fields;
+  a.fields[0].cosmetic = true;
+  assert.deepEqual(plain(cosmeticSpec(entry).objects), {});
+  b.fields[0].cosmetic = true;
+  assert.deepEqual(plain(cosmeticSpec(entry).objects), { conn: ['url'] });
 });
