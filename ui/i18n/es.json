@@ -274,6 +274,7 @@
     "noConnection": "La conexión falló.",
     "duplicateId": "Dos elementos comparten el id {id}. Cada elemento necesita su propio id.",
     "missingChildren": "La carpeta {id} incluye elementos que no están en el archivo.",
+    "badChildren": "La carpeta {id} enumera su contenido en un formato que Stackyard no puede leer.",
     "unsafeLink": "El elemento {id} tiene un enlace no permitido. Los enlaces deben usar http o https.",
     "refused": "El host rechazó la conexión. Compruebe el puerto.",
     "hostNotFound": "No se encontró el nombre del host.",

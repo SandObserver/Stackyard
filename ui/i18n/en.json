@@ -269,6 +269,7 @@
     "noConnection": "The connection failed.",
     "duplicateId": "Two items share the id {id}. Each item needs its own id.",
     "missingChildren": "Some items in the folder {id} are not in the file.",
+    "badChildren": "Stackyard cannot read the list of items in the folder {id}.",
     "unsafeLink": "The item {id} has a link that is not allowed. Links must use http or https.",
     "refused": "The host refused the connection. Check the port.",
     "hostNotFound": "The host name could not be found.",

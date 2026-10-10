@@ -79,6 +79,7 @@ test('every advice the module can produce names a real key with matching placeho
     { kind: KIND.BLOCKED, code: 'blocked.unresolved', detail: { reason: 'unresolved' } },
     { kind: KIND.INVALID, code: 'invalid.duplicate-id', detail: { id: 'dup' } },
     { kind: KIND.INVALID, code: 'invalid.missing-children', detail: { id: 'media' } },
+    { kind: KIND.INVALID, code: 'invalid.bad-children', detail: { id: 'media' } },
     { kind: KIND.INVALID, code: 'invalid.unsafe-link', detail: { id: 'x' } },
     { kind: KIND.INVALID, code: 'invalid.dock-full', detail: { max: 4 } },
     ...PING_FAILURES,

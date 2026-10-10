@@ -274,6 +274,7 @@
     "noConnection": "La connexion a échoué.",
     "duplicateId": "Deux éléments partagent l’identifiant {id}. Chaque élément doit avoir son propre identifiant.",
     "missingChildren": "Le dossier {id} contient des éléments absents du fichier.",
+    "badChildren": "Le dossier {id} décrit son contenu sous une forme que Stackyard ne peut pas lire.",
     "unsafeLink": "L’élément {id} a un lien non autorisé. Les liens doivent utiliser http ou https.",
     "refused": "L’hôte a refusé la connexion. Vérifiez le port.",
     "hostNotFound": "Le nom d’hôte est introuvable.",
