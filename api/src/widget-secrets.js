@@ -40,7 +40,17 @@ function secretSpec(entry) {
 /* Fields that cannot change where a request goes. Unmarked is the safe
    default: an unknown field still invalidates a stored secret. */
 function cosmeticSpec(entry) {
-  return _spec(entry, f => f.cosmetic === true, true);
+  const spec = _spec(entry, f => f.cosmetic === true, true);
+  /* A carried key is cosmetic only when no field declares it. Otherwise a
+     cosmetic picker could exempt a destination field. */
+  const fields = (entry && entry.manifest && entry.manifest.fields) || [];
+  const declared = new Set(fields.map(f => f && f.key));
+  for (const f of fields) {
+    if (!f || !spec.topLevel.includes(f.key) || !Array.isArray(f.carries)) continue;
+    for (const k of f.carries)
+      if (typeof k === 'string' && !declared.has(k) && !spec.topLevel.includes(k)) spec.topLevel.push(k);
+  }
+  return spec;
 }
 
 /* Never stored, so a saved config can never match on them. */

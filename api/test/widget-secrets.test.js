@@ -297,3 +297,16 @@ test('a repeated key is cosmetic only when every declaration says so', () => {
   b.fields[0].cosmetic = true;
   assert.deepEqual(plain(cosmeticSpec(entry).objects), { conn: ['url'] });
 });
+
+test('a cosmetic picker exempts the keys it carries, never a declared field', () => {
+  const entry = {
+    manifest: {
+      fields: [
+        { key: 'url', type: 'text', label: 'URL' },
+        { key: 'place', type: 'select', label: 'Place', cosmetic: true, carries: ['lat', 'lon', 'url'] },
+        { key: 'zone', type: 'select', label: 'Zone', carries: ['tz'] },
+      ],
+    },
+  };
+  assert.deepEqual(cosmeticSpec(entry).topLevel, ['place', 'lat', 'lon']);
+});

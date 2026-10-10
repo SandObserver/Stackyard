@@ -123,7 +123,8 @@
       "type": "text",
       "label": "href.label",
       "placeholder": "href.placeholder",
-      "optional": true
+      "optional": true,
+      "cosmetic": true
     }
   ]
 }

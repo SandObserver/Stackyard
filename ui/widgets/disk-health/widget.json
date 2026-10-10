@@ -44,7 +44,8 @@
       "showIf": {
         "field": "diskProvider",
         "equals": "scrutiny"
-      }
+      },
+      "cosmetic": true
     },
     {
       "key": "truenasUrl",
@@ -74,7 +75,8 @@
       "showIf": {
         "field": "diskProvider",
         "equals": "truenas"
-      }
+      },
+      "cosmetic": true
     },
     {
       "key": "bays",
@@ -87,7 +89,8 @@
         "small": 4,
         "medium": 10
       },
-      "hint": "bays.hint"
+      "hint": "bays.hint",
+      "cosmetic": true
     }
   ]
 }

@@ -50,7 +50,8 @@
         "lat",
         "lon"
       ],
-      "hint": "city.hint"
+      "hint": "city.hint",
+      "cosmetic": true
     },
     {
       "key": "units",
@@ -67,20 +68,23 @@
           "value": "f",
           "label": "units.opt.f"
         }
-      ]
+      ],
+      "cosmetic": true
     },
     {
       "key": "feelsLike",
       "type": "toggle",
       "label": "feelsLike.label",
-      "default": false
+      "default": false,
+      "cosmetic": true
     },
     {
       "key": "href",
       "type": "text",
       "label": "href.label",
       "placeholder": "href.placeholder",
-      "optional": true
+      "optional": true,
+      "cosmetic": true
     }
   ]
 }

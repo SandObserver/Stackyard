@@ -318,3 +318,21 @@ test('an item that never had a stored secret is not reported', () => {
   const incoming = { items: [{ id: 'a1', type: 'app', monitoring: { activity: { url: 'https://b.example' } } }] };
   assert.deepEqual(preserveAllSecrets(incoming, stored).withheld, []);
 });
+
+test('saving a weather display change keeps the stored OpenWeather key', () => {
+  const stored = {
+    items: [
+      {
+        id: 'w1',
+        type: 'widget',
+        widgetType: 'weather',
+        widgetConfig: { provider: 'openweather', owKey: 'OWK', city: 'Berlin', lat: 52.5, lon: 13.4, units: 'c' },
+      },
+    ],
+  };
+  const sent = scrubAllSecrets(structuredClone(stored));
+  Object.assign(sent.items[0].widgetConfig, { units: 'f', feelsLike: true, city: 'Paris', lat: 48.9, lon: 2.4 });
+  const { withheld } = preserveAllSecrets(sent, stored);
+  assert.deepEqual(withheld, []);
+  assert.equal(sent.items[0].widgetConfig.owKey, 'OWK');
+});

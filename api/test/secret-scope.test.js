@@ -67,7 +67,8 @@ test('a redirected destination does not restore the stored secret', () => {
 });
 
 test('any other changed field also declines, not just the URL', () => {
-  assert.equal(widgetConfigMatchesSaved({ absUrl: 'https://real.example', href: '/x' }, SAVED, books), false);
+  const shelves = [{ source: 'unread' }];
+  assert.equal(widgetConfigMatchesSaved({ absUrl: 'https://real.example', shelves }, SAVED, books), false);
 });
 
 test('a differing secret value never affects the decision', () => {
@@ -198,4 +199,48 @@ test('a blank secret counts only when the saved config holds one', () => {
     leavesStoredSecretBlank({ absUrl: 'https://other.example' }, { absUrl: 'https://real.example' }, books),
     false,
   );
+});
+
+/* ── display-only fields in bundled widgets ───────────────────────────────── */
+
+const weather = getRegistry().weather;
+const OW = { provider: 'openweather', owKey: 'STORED-KEY', city: 'Berlin', lat: 52.5, lon: 13.4, units: 'c' };
+
+test('changing weather units, feels-like or the link keeps the stored key in scope', () => {
+  for (const over of [{ units: 'f' }, { feelsLike: true }, { href: 'https://example.com' }]) {
+    assert.equal(widgetConfigMatchesSaved({ ...OW, ...over }, OW, weather), true, JSON.stringify(over));
+  }
+});
+
+test('choosing another city keeps the stored key in scope, with its coordinates', () => {
+  assert.equal(widgetConfigMatchesSaved({ ...OW, city: 'Paris', lat: 48.9, lon: 2.4 }, OW, weather), true);
+});
+
+test('switching the weather provider takes the stored key out of scope', () => {
+  assert.equal(widgetConfigMatchesSaved({ ...OW, provider: 'openmeteo' }, OW, weather), false);
+});
+
+test('changing the github view, user or filters keeps the stored token in scope', () => {
+  const github = getRegistry().github;
+  const saved = { githubView: 'pullrequests', githubUser: 'me', githubToken: 'STORED' };
+  for (const over of [{ githubView: 'contributions' }, { githubUser: 'other' }, { githubPrFilters: ['review'] }]) {
+    assert.equal(widgetConfigMatchesSaved({ ...saved, ...over }, saved, github), true, JSON.stringify(over));
+  }
+});
+
+test('a field that reaches the request still takes the stored credential out of scope', () => {
+  const r = getRegistry();
+  const cases = [
+    ['dns', { provider: 'adguard', dnsUrl: 'http://a', dnsUser: 'u', dnsPass: 'S' }, { dnsUser: 'v' }],
+    ['backup', { slots: [{ provider: 'duplicati', dupUrl: 'http://a', dupPass: 'S', jobId: '1' }] }, null],
+    [
+      'system-summary',
+      { statProvider: 'beszel', beszelUrl: 'http://a', beszelPass: 'S', beszelSystem: 'x' },
+      { beszelSystem: 'y' },
+    ],
+  ];
+  for (const [name, saved, over] of cases) {
+    const changed = over ? { ...saved, ...over } : { slots: [{ ...saved.slots[0], jobId: '2' }] };
+    assert.equal(widgetConfigMatchesSaved(changed, saved, r[name]), false, name);
+  }
 });
