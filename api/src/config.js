@@ -28,7 +28,7 @@ let _cfgCache = null,
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape. Add a matching step in migrate(). */
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 
 function migrateSocketProxyScheme(settings) {
   const url = settings?.server?.socketProxyUrl;
@@ -82,6 +82,19 @@ function migrateBooksShelves(cfg) {
   }
 }
 
+/* The editor reads only `monitoring.activity`. A top-level `badge` block loses
+   its headers on the next save. */
+function migrateLegacyBadge(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  for (const item of cfg.items) {
+    if (!item || item.type !== 'app' || !item.badge || typeof item.badge !== 'object') continue;
+    const act = item.monitoring?.activity;
+    if (act && (act.enabled || act.url)) continue;
+    item.monitoring = { ...(item.monitoring || {}), activity: item.badge };
+    delete item.badge;
+  }
+}
+
 /* Must stay idempotent. It runs on every read and every write. A config with no
    _schemaVersion is version 1. */
 function migrate(cfg) {
@@ -113,6 +126,10 @@ function migrate(cfg) {
   if (v < 7) {
     migrateGithubWidgetSize(cfg);
     v = 7;
+  }
+  if (v < 8) {
+    migrateLegacyBadge(cfg);
+    v = 8;
   }
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;

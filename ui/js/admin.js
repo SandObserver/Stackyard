@@ -335,6 +335,17 @@ function openModal(idx) {
     state.spaths = ex.map(e => (typeof e === 'string' ? e : e.path)).filter(Boolean);
     state.slegacySum = state.spaths.length >= 2;
   }
+  /* The save reads a summed or single-path badge's style from the first label.
+     Without this seed the stored style is lost. */
+  const custom = item?.monitoring?.activity?.custom;
+  if (!state.slabels[state.spaths[0]] && state.spaths.length && custom && typeof custom === 'object') {
+    state.slabels[state.spaths[0]] = {
+      name: '',
+      unit: typeof custom.unit === 'string' ? custom.unit : '',
+      color: typeof custom.color === 'string' && custom.color ? custom.color : 'info',
+      min: custom.min == null ? '' : String(custom.min),
+    };
+  }
 
   const isEdit = idx != null;
   const evTitle = el('ev-title');
@@ -630,9 +641,6 @@ async function doSave(orig) {
         actInt: Math.min(3600, Math.max(10, parseInt(inp('f-bint')?.value || '30', 10))),
         actParams: serializeKvRows(state._bpar),
         actHeaders: serializeKvRows(state._bhdr),
-        actColor: inp('act-col-val')?.value || '#0289ff',
-        custUnit: inp('bcust-unit')?.value?.trim() || '',
-        custMin: parseInt(inp('bcust-min')?.value || '', 10),
         staticEn: inp('static-en')?.checked || false,
         staticLabel: inp('f-static-label')?.value?.trim() || '',
         staticColor: inp('static-col-val')?.value || 'info',
