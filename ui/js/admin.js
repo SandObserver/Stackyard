@@ -55,7 +55,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=7423356c';
+} from '/js/import-foreign.js?v=6ecd782f';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -82,7 +82,7 @@ import {
   tgt,
 } from '/js/utils.js?v=fdc0243f';
 import { applyBackground, resolveBackground } from '/js/background.js?v=abd33088';
-import { parseYamlTolerant, YamlLiteError } from '/js/yaml-lite.js?v=6ebb564c';
+import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
 ensureSprite();
 
@@ -1205,6 +1205,8 @@ const NOTE_TEXT = {
   [NOTE.LOCAL_URL_DROPPED]: 'importForeign.noteLocalUrl',
   [NOTE.FIELDS_DROPPED]: 'importForeign.noteFields',
   [NOTE.PAGES_NOT_FOLLOWED]: 'importForeign.notePages',
+  [NOTE.SCHEME_ADDED]: 'importForeign.noteSchemeAdded',
+  [NOTE.HEALTH_URL_DROPPED]: 'importForeign.noteHealthUrl',
 };
 
 /** One "Heading (n)" block followed by a line per entry.
@@ -1251,6 +1253,8 @@ el('imp-foreign').onchange = async e => {
       } catch (err) {
         if (err instanceof YamlLiteError)
           throw new ShownError(t('toast.importYamlUnsupported', { file: isolate(file.name), line: err.line }));
+        if (err instanceof YamlTooLargeError)
+          throw new ShownError(t('toast.importTooLarge', { file: isolate(file.name) }));
         throw err;
       }
       let out;

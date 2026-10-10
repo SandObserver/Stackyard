@@ -492,6 +492,8 @@
     "skipPlaceholderHref": "پیوند به متغیری نیاز دارد که فقط داشبورد دیگر آن را می‌داند",
     "noteIcon": "نماد کنار گذاشته شد: {detail}",
     "notePing": "پینگ ICMP کنار گذاشته شد: {detail}",
+    "noteSchemeAdded": "http:// به پیوند افزوده شد: {detail}",
+    "noteHealthUrl": "آدرس بررسی سلامت کنار گذاشته شد، آدرس وب کامل نیست: {detail}",
     "noteRemoteContainer": "کانتینر نادیده گرفته شد، روی {detail} اجرا می‌شود",
     "noteFlattened": "گروه تودرتو به پوشه‌ای جداگانه تبدیل شد",
     "noteSubItems": "زیرمورد به پوشه منتقل شد",

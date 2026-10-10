@@ -1,5 +1,10 @@
 // @ts-check
 
+/** Thrown when merge keys copy more than MAX_MERGED_KEYS keys. */
+export class YamlTooLargeError extends Error {}
+
+const MAX_MERGED_KEYS = 50000;
+
 /** Thrown for anything outside the supported subset, with the source line. */
 export class YamlLiteError extends Error {
   /** @param {string} message @param {number} line */
@@ -13,7 +18,7 @@ export class YamlLiteError extends Error {
 
 /* The key stops at the first colon followed by a space or end of line, so
    "url: http://host:8080" splits once and keeps the port. */
-const KEY_RE = /^(?:(?:"((?:[^"\\]|\\.)*)")|(?:'((?:[^']|'')*)')|([^:#]+?))\s*:(?:\s+(.*))?$/;
+const KEY_RE = /^(?:(?:"((?:[^"\\]|\\.)*)")|(?:'((?:[^']|'')*)')|([^:#\s](?:[^:#]*[^:#\s])?))\s*:(?:\s+(.*))?$/;
 
 /** @param {string} s */
 const unescapeDouble = s => s.replace(/\\(["\\/nrt])/g, (_, c) => ({ n: '\n', r: '\r', t: '\t' })[c] || c);
@@ -260,7 +265,7 @@ function scan(text) {
 }
 
 /** @typedef {{ tolerant: boolean, errors: Array<{ line: number, reason: string }>,
-                anchors: Map<string, any> }} Ctx */
+                anchors: Map<string, any>, merged: number }} Ctx */
 
 /** Parse a block starting at `pos` whose lines are indented at least `indent`.
     @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent @param {Ctx} ctx */
@@ -288,13 +293,16 @@ const blockAnchor = inline => {
 
 /** Fold a merge key's value into the mapping it was written in. Keys already
     set win, which is what a merge means.
-    @param {any} map @param {any} value @param {number} line */
-function merge(map, value, line) {
+    @param {any} map @param {any} value @param {number} line @param {Ctx} ctx */
+function merge(map, value, line, ctx) {
   const sources = Array.isArray(value) ? value : [value];
   for (const src of sources) {
     if (!src || typeof src !== 'object' || Array.isArray(src))
       throw new YamlLiteError('a merge key needs a mapping', line);
-    for (const k of Object.keys(src)) if (!(k in map)) map[k] = src[k];
+    const keys = Object.keys(src);
+    ctx.merged += keys.length;
+    if (ctx.merged > MAX_MERGED_KEYS) throw new YamlTooLargeError();
+    for (const k of keys) if (!(k in map)) map[k] = src[k];
   }
 }
 
@@ -389,7 +397,7 @@ function assign(map, m, line, lines, cur, indent, ctx, own) {
   /** Record the anchor this key carried, then store the value under the key. */
   const set = value => {
     if (anchor) ctx.anchors.set(anchor, value);
-    if (key === '<<') merge(map, value, line);
+    if (key === '<<') merge(map, value, line, ctx);
     else map[key] = value;
   };
   if (!anchor && inline !== undefined && inline.trim() !== '' && !/^#/.test(inline.trim())) {
@@ -459,7 +467,7 @@ function mapping(lines, cur, indent, ctx) {
 /** @param {string} text @param {boolean} tolerant */
 function run(text, tolerant) {
   /** @type {Ctx} */
-  const ctx = { tolerant, errors: [], anchors: new Map() };
+  const ctx = { tolerant, errors: [], anchors: new Map(), merged: 0 };
   const lines = scan(String(text == null ? '' : text));
   if (!lines.length) return { doc: null, errors: ctx.errors };
   if (lines[0].indent !== 0) throw new YamlLiteError('unexpected indentation', lines[0].line);

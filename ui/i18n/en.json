@@ -492,6 +492,8 @@
     "skipPlaceholderHref": "the link needs a variable only the other dashboard can fill in",
     "noteIcon": "icon dropped: {detail}",
     "notePing": "ICMP ping dropped: {detail}",
+    "noteSchemeAdded": "http:// added to the link: {detail}",
+    "noteHealthUrl": "health check address dropped, it is not a full web address: {detail}",
     "noteRemoteContainer": "container ignored, it runs on {detail}",
     "noteFlattened": "nested group became its own folder",
     "noteSubItems": "sub-item moved into the folder",

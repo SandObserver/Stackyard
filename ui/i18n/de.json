@@ -492,6 +492,8 @@
     "skipPlaceholderHref": "der Link braucht eine Variable, die nur das andere Dashboard kennt",
     "noteIcon": "Symbol verworfen: {detail}",
     "notePing": "ICMP-Ping verworfen: {detail}",
+    "noteSchemeAdded": "http:// zum Link hinzugefügt: {detail}",
+    "noteHealthUrl": "Adresse der Zustandsprüfung verworfen, sie ist keine vollständige Webadresse: {detail}",
     "noteRemoteContainer": "Container ignoriert, er läuft auf {detail}",
     "noteFlattened": "verschachtelte Gruppe wurde ein eigener Ordner",
     "noteSubItems": "Untereintrag in den Ordner verschoben",

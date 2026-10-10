@@ -561,3 +561,61 @@ test('aliases that stay under the budget still import everywhere they are used',
     ['Plex', 'Plex', 'Sonarr'],
   );
 });
+
+const hostPortYaml = `- Media:
+    - Plex:
+        href: plex.lan:32400
+    - Jellyfin:
+        href: 10.0.0.5:8096/web
+`;
+
+test('a host:port link gets http:// and says so', () => {
+  const out = convert('homepage-services', parseYaml(hostPortYaml), []);
+  const hrefs = Object.fromEntries(out.items.filter(i => i.type === 'app').map(a => [a.label, a.href]));
+  assert.deepEqual(hrefs, { Plex: 'http://plex.lan:32400', Jellyfin: 'http://10.0.0.5:8096/web' });
+  assert.deepEqual(
+    out.notes.filter(n => n.code === NOTE.SCHEME_ADDED).map(n => n.detail),
+    ['plex.lan:32400', '10.0.0.5:8096/web'],
+  );
+  assert.deepEqual(out.skipped, []);
+});
+
+const monitorYaml = `- Media:
+    - Plex:
+        href: https://plex.example
+        siteMonitor: "{{HOMEPAGE_VAR_PLEX_URL}}"
+    - Sonarr:
+        href: https://sonarr.example
+        siteMonitor: /health
+    - Radarr:
+        href: https://radarr.example
+        siteMonitor: radarr.lan:7878
+`;
+
+test('a health check address that cannot be reached from here is dropped with a note', () => {
+  const out = convert('homepage-services', parseYaml(monitorYaml), []);
+  const hc = Object.fromEntries(out.items.filter(i => i.type === 'app').map(a => [a.label, a.monitoring.healthcheck]));
+  assert.equal(hc.Plex.pingUrl, '');
+  assert.equal(hc.Plex.enabled, false);
+  assert.equal(hc.Sonarr.pingUrl, '');
+  assert.equal(hc.Radarr.pingUrl, 'http://radarr.lan:7878');
+  assert.deepEqual(
+    out.notes.filter(n => n.code === NOTE.HEALTH_URL_DROPPED).map(n => n.detail),
+    ['{{HOMEPAGE_VAR_PLEX_URL}}', '/health'],
+  );
+});
+
+test('a Dashy status check URL that is only a path is dropped', () => {
+  const doc = parseYaml(`sections:
+  - name: Home
+    items:
+      - title: NAS
+        url: https://nas.example
+        statusCheck: true
+        statusCheckUrl: /status
+`);
+  const out = convert('dashy', doc, []);
+  const nas = out.items.find(i => i.type === 'app');
+  assert.equal(nas.monitoring.healthcheck.pingUrl, '');
+  assert.ok(out.notes.some(n => n.code === NOTE.HEALTH_URL_DROPPED && n.detail === '/status'));
+});

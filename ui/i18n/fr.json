@@ -502,6 +502,8 @@
     "skipPlaceholderHref": "le lien exige une variable que seul l’autre tableau de bord connaît",
     "noteIcon": "icône abandonnée : {detail}",
     "notePing": "ping ICMP abandonné : {detail}",
+    "noteSchemeAdded": "http:// ajouté au lien : {detail}",
+    "noteHealthUrl": "adresse de vérification de l’état abandonnée, ce n’est pas une adresse web complète : {detail}",
     "noteRemoteContainer": "conteneur ignoré, il tourne sur {detail}",
     "noteFlattened": "le groupe imbriqué est devenu un dossier distinct",
     "noteSubItems": "sous-élément déplacé dans le dossier",
