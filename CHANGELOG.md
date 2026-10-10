@@ -106,6 +106,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep the current wallpaper when a restored backup names an uploaded wallpaper
   this install does not have.
 
+- Refuse a config whose folder contents are not a list of item ids, instead of
+  saving it and breaking the dashboard.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
