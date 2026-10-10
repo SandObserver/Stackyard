@@ -110,6 +110,12 @@ function _validateField(f, where, depth = 0) {
     typeof f.optionsFrom !== 'string'
   )
     errs.push(`${where}: ${f.type} "${f.key}" needs "options" or "optionsFrom"`);
+  if (Array.isArray(f.options))
+    f.options.forEach((o, i) => {
+      const value = o && typeof o === 'object' ? o.value : undefined;
+      if (!(typeof value === 'string' || typeof value === 'number') || typeof o.label !== 'string' || !o.label)
+        errs.push(`${where}: option ${i} of "${f.key}" must be an object with a "value" and a "label"`);
+    });
   if (f.type === 'picklist' && f.count === undefined && f.countBySize === undefined)
     errs.push(`${where}: picklist "${f.key}" needs "count" or "countBySize"`);
   if (f.type === 'group' || f.type === 'object') {
@@ -126,8 +132,6 @@ function _validateField(f, where, depth = 0) {
   return errs;
 }
 
-const _optionValue = o => (o && typeof o === 'object' ? o.value : o);
-
 /* A typo in "viewField" fails silently: the widget pins to defaultView and the
    selector does nothing. */
 function _validateViewField(m) {
@@ -137,7 +141,7 @@ function _validateViewField(m) {
   if (!field) return [`"viewField" ("${m.viewField}") is not a declared field`];
   if (!Array.isArray(field.options)) return errs;
 
-  const values = new Set(field.options.map(_optionValue).filter(v => typeof v === 'string'));
+  const values = new Set(field.options.map(o => o && o.value).filter(v => typeof v === 'string'));
   for (const vk of Object.keys(m.views)) {
     if (!values.has(vk))
       errs.push(`view "${vk}" cannot be selected: "${m.viewField}" offers no option with that value`);

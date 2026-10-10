@@ -783,7 +783,7 @@ async function boot() {
     /* API down, handled below */
   }
 
-  let configFailed = false;
+  let apiFailed = false;
   try {
     const got = await configReq;
     if (got.e) throw got.e;
@@ -798,12 +798,19 @@ async function boot() {
     await initI18n(S.language || 'en');
   } catch (e) {
     console.error('[boot]', e);
-    configFailed = true;
+    apiFailed = true;
   }
 
   await iconsReq;
 
-  if (configFailed) {
+  /* Without the list every widget renders as a blank frame. */
+  if (!apiFailed && (await widgetsReq).e) widgetsReq = loadWidgets();
+  if (!apiFailed && (await widgetsReq).e) {
+    console.error('[boot]', (await widgetsReq).e);
+    apiFailed = true;
+  }
+
+  if (apiFailed) {
     /* The catalog is loaded as the last step of the fetch that just failed, so
        without this the only screen left renders its own keys. nginx serves this
        file, the API served the config, so it is still reachable. */

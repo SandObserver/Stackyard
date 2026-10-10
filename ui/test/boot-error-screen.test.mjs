@@ -44,7 +44,7 @@ test('English makes every string on the screen readable', async () => {
 
 test('the error branch loads a catalog before it renders', () => {
   const dashboard = read('js/dashboard.js');
-  const branch = dashboard.slice(dashboard.indexOf('if (configFailed) {'), dashboard.indexOf('api-error-btn'));
+  const branch = dashboard.slice(dashboard.indexOf('if (apiFailed) {'), dashboard.indexOf('api-error-btn'));
   assert.match(branch, /await initI18n\('en'\)/, 'the screen would render its own keys');
   assert.ok(
     branch.indexOf("initI18n('en')") < branch.indexOf('apiDownTitle'),
@@ -103,5 +103,5 @@ test('the timeout is long enough not to fire on a slow start', () => {
    screen. */
 test('a timeout reaches the API-down screen, not a blank page', () => {
   const src = boot();
-  assert.match(src, /catch \(e\)[\s\S]{0,120}configFailed = true/);
+  assert.match(src, /catch \(e\)[\s\S]{0,120}apiFailed = true/);
 });

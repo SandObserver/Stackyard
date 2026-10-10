@@ -121,7 +121,7 @@ test('an auth problem is read from the GraphQL error code, not the status', asyn
     const { ctx } = ctxFor({ slots: SLOTS }, { status: 200, data: { errors: [error] } });
     await assert.rejects(dataFn(ctx), e => {
       assert.equal(e.kind, kind, error.message);
-      assert.match(e.message, new RegExp(error.message.split('"')[0]));
+      assert.ok(!e.message.includes(error.message), `the upstream text reached the message: ${e.message}`);
       return true;
     });
   }

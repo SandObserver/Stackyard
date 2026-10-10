@@ -121,3 +121,48 @@ for (const early of firstVisitOrders) {
     }
   });
 }
+
+for (const failures of [1, 2]) {
+  test(`a widget list that fails ${failures === 1 ? 'once is asked for again' : 'twice shows the API-down screen'}`, async () => {
+    const start = dashboard.indexOf('async function boot()');
+    const src = dashboard.slice(start, dashboard.indexOf('\n}\n', start) + 2);
+    const sent = [];
+    let left = failures;
+    const reply = (status, body) => ({ ok: status < 300, status, json: async () => body });
+    const fetch = async url => {
+      sent.push(url);
+      if (url === '/api/auth/check') return reply(200, { enabled: false, passwordSet: false, setupPrompted: false });
+      if (url === '/api/widgets' && left-- > 0) throw new TypeError('Failed to fetch');
+      return reply(200, url === '/api/config' ? { items: [], settings: {}, _rev: 1 } : { widgets: [], files: [] });
+    };
+    const shown = [];
+    const stop = new Error('reached the first-run prompt');
+    const boot = new Function(
+      'fetch, loadLocalIcons, document, initI18n, sanitizeItemLinks, showSetupPrompt, setHtml, html, t, BOOT_TIMEOUT_MS, blockingScreenFor, showBlockingScreen, console',
+      `let items, S, _rev, widgetReg; ${src} return boot;`,
+    )(
+      fetch,
+      async () => (await fetch('/api/icons/local')).status,
+      {
+        body: { appendChild: el => shown.push(el.className), classList: { add() {} } },
+        createElement: () => ({ querySelector: () => null }),
+      },
+      async () => {},
+      x => x,
+      async () => {
+        throw stop;
+      },
+      () => {},
+      () => '',
+      k => k,
+      1000,
+      () => null,
+      async () => {},
+      { error() {} },
+    );
+    if (failures === 1) await assert.rejects(boot(), stop);
+    else await boot();
+    assert.equal(sent.filter(u => u === '/api/widgets').length, 2);
+    assert.deepEqual(shown, failures === 1 ? [] : ['api-error-screen']);
+  });
+}
