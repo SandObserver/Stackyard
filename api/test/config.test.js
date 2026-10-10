@@ -167,6 +167,38 @@ test('migrating a stats widget twice changes nothing the second time', () => {
   assert.deepEqual(cfg, once);
 });
 
+const legacyApp = () => ({
+  id: 'a',
+  type: 'app',
+  badge: {
+    enabled: true,
+    url: 'http://sonarr:8989/api/queue',
+    extract: 'totalRecords',
+    headers: [{ key: 'X-Api-Key', value: 'k', secret: true }],
+    interval: 60,
+  },
+});
+
+test('migrate moves a top-level badge into Live Activity with its headers', () => {
+  const [item] = migrate({ _schemaVersion: 7, items: [legacyApp()], settings: {} }).items;
+  assert.equal(item.badge, undefined);
+  assert.deepEqual(item.monitoring.activity, legacyApp().badge);
+});
+
+test('migrate keeps a top-level badge when Live Activity is already in use', () => {
+  const app = { ...legacyApp(), monitoring: { activity: { enabled: true, url: 'http://other/api' } } };
+  const [item] = migrate({ _schemaVersion: 7, items: [app], settings: {} }).items;
+  assert.equal(item.monitoring.activity.url, 'http://other/api');
+  assert.equal(item.badge.url, 'http://sonarr:8989/api/queue');
+});
+
+test('migrate moves a top-level badge over an empty Live Activity block', () => {
+  const app = { ...legacyApp(), monitoring: { healthcheck: { enabled: true }, activity: { enabled: false } } };
+  const [item] = migrate({ _schemaVersion: 7, items: [app], settings: {} }).items;
+  assert.equal(item.monitoring.activity.url, 'http://sonarr:8989/api/queue');
+  assert.equal(item.monitoring.healthcheck.enabled, true);
+});
+
 test('loadConfig upgrades an unversioned file on disk and keeps data intact', () => {
   fs.writeFileSync(TMP, JSON.stringify({ items: [{ id: 'x', type: 'app' }], settings: { greeting: 'hi' } }));
   const loaded = loadConfig();

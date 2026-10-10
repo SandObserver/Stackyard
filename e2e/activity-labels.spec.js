@@ -105,6 +105,52 @@ test('a single label keeps its own styling rather than losing it', async ({ page
   expect(saved.monitoring.activity.labels[0].color).toBe('#ffcc00');
 });
 
+test('a summed badge keeps its unit, colour and minimum when the app is renamed', async ({ page }) => {
+  const summed = {
+    ...app('seerr', 'Requests'),
+    monitoring: {
+      activity: {
+        enabled: true,
+        url: 'http://counts.invalid/api',
+        interval: 30,
+        extract: [{ path: 'a' }, { path: 'b' }],
+        combine: true,
+        custom: { unit: 'GB', color: '#ff0000', min: 5 },
+      },
+    },
+  };
+  await seedConfig(page.request, { items: [summed] });
+  await openDashboardList(page);
+  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await setInlineRow(page, 'ie-name', 'f-lbl', 'Requests 2');
+  await saveEditor(page);
+
+  const cfg = await readConfig(page.request);
+  const saved = expectItem(cfg, i => i.label === 'Requests 2', 'the app');
+  expect(saved.monitoring.activity.custom).toEqual({ unit: 'GB', color: '#ff0000', min: 5 });
+});
+
+test('an app saved in the older badge format keeps its secret header when edited', async ({ page }) => {
+  const legacy = {
+    ...app('sonarr', 'Sonarr'),
+    badge: {
+      enabled: true,
+      url: 'http://counts.invalid/api',
+      extract: 'n',
+      headers: [{ key: 'X-Api-Key', value: 'stored-key', secret: true }],
+    },
+  };
+  await seedConfig(page.request, { items: [legacy] });
+  await openDashboardList(page);
+  await rowByName(page, 'Sonarr').locator('button', { hasText: 'Edit' }).click();
+  await setInlineRow(page, 'ie-name', 'f-lbl', 'Sonarr 2');
+  await saveEditor(page);
+
+  const cfg = await readConfig(page.request);
+  const saved = expectItem(cfg, i => i.label === 'Sonarr 2', 'the app');
+  expect(saved.monitoring.activity.headers).toEqual([{ key: 'X-Api-Key', secret: true, valueSet: true }]);
+});
+
 /* Bad config reaches the editor from the file, not from the form, so these
    shapes cannot be produced by using the admin and must not break it. */
 const withActivity = activity => ({
