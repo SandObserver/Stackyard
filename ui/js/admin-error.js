@@ -21,6 +21,7 @@ const BY_CODE = Object.freeze({
   'blocked.private-address': 'adminError.privateAddress',
   'invalid.retype': 'adminError.retype',
   'upstream.redirect': 'adminError.redirect',
+  'upstream.too-large': 'adminError.responseTooLarge',
   'network.tls-ignored': 'adminError.tlsIgnored',
   'network.tls-untrusted': 'adminError.tlsUntrusted',
   'blocked.read-only': 'adminError.readOnly',

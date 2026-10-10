@@ -34,7 +34,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=5579776a';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=dbe542e1';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=389e0ed0';
-import { setupErrorKey } from '/js/admin-error.js?v=61f73e4d';
+import { setupErrorKey } from '/js/admin-error.js?v=a9a7e60c';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import {
@@ -248,13 +248,15 @@ function bset(id, type, val) {
 function folderBadge(folder) {
   const children = (folder.children || []).map(id => items.find(i => i.id === id)).filter(Boolean);
   let actSum = 0,
-    hasHealth = false;
+    hasHealth = false,
+    stale = false;
   const labels = [],
     values = [];
   for (const c of children) {
     const s = badgeState[c.id] || {};
     if (s.health) hasHealth = true;
     const ca = c.monitoring?.activity;
+    if (s.activityStale) stale = true;
     const own = !ca?.combine && Array.isArray(ca?.labels) && ca.labels.length ? ca.labels : null;
     if (own && Array.isArray(s.values)) {
       own.forEach((l, n) => {
@@ -268,7 +270,7 @@ function folderBadge(folder) {
        not raise the folder's either. */
     if (s.activity >= badgeMinimum(ca?.custom)) actSum += s.activity;
   }
-  return { health: hasHealth, activity: actSum, labels, values };
+  return { health: hasHealth, activity: actSum, labels, values, activityStale: stale };
 }
 
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);

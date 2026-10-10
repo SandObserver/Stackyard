@@ -219,6 +219,10 @@ test('a refused first-run password maps to a translated sentence', () => {
   assert.equal(typeof lookup('setup.failed'), 'string');
 });
 
+test('a badge answer too large to read maps to its own sentence', () => {
+  assert.equal(badgeErrorAdvice({ kind: 'upstream', code: 'upstream.too-large' }).key, 'adminError.responseTooLarge');
+});
+
 test('an API refusal maps to its own sentence, not the per-kind one', () => {
   assert.equal(errorAdvice({ kind: 'blocked', code: 'blocked.read-only' }).key, 'adminError.readOnly');
   assert.equal(errorAdvice({ kind: 'blocked', code: 'blocked.rate-limit' }).key, 'toast.tooManyAttempts');

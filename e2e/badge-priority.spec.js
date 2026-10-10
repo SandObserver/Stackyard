@@ -126,3 +126,30 @@ test('the phone pill drops the unit and keeps it in the list', async ({ page }) 
   });
   expect(wide, 'the pill must not outgrow the icon it sits on').toBe(false);
 });
+
+test('a folder badge is marked stale when an app inside it fails its poll', async ({ page }) => {
+  let failing = false;
+  await page.route('**/api/badges', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        subject: failing ? { value: 0, error: 'x', kind: 'upstream', code: 'upstream.status' } : { value: 3 },
+      }),
+    }),
+  );
+  const child = {
+    ...app('subject', 'Subject'),
+    monitoring: { activity: { enabled: true, url: 'http://example.invalid/api', extract: 'n' } },
+  };
+  const folder = { id: 'box', type: 'folder', label: 'Box', children: ['subject'], color: 'dark' };
+  await seedConfig(page.request, { items: [child, folder] });
+  await page.goto('/');
+  const badge = page.locator('.badge').first();
+  await expect(badge).toHaveText('3');
+  await expect(badge).not.toHaveClass(/stale/);
+  failing = true;
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(badge).toHaveClass(/stale/);
+  await expect(badge).toHaveText('3');
+});
