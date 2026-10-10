@@ -1,6 +1,6 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=fd2693ca';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=c2067d02';
 import { initI18n, t } from '/js/i18n.js?v=5579776a';
-import { loginErrorKey } from '/js/admin-error.js?v=a9a7e60c';
+import { loginErrorKey } from '/js/admin-error.js?v=b0881957';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { el, inp as inpById, qa } from '/js/utils.js?v=fdc0243f';
 import { blockingScreenFor } from '/js/config-recovery.js?v=dbe542e1';

@@ -269,6 +269,7 @@
     "noConnection": "Die Verbindung ist fehlgeschlagen.",
     "duplicateId": "Zwei Einträge haben dieselbe ID {id}. Jeder Eintrag braucht eine eigene ID.",
     "missingChildren": "Der Ordner {id} verweist auf Einträge, die nicht in der Datei sind.",
+    "badChildren": "Der Ordner {id} listet seinen Inhalt in einer Form, die Stackyard nicht lesen kann.",
     "unsafeLink": "Der Eintrag {id} hat einen unzulässigen Link. Links müssen http oder https verwenden.",
     "refused": "Der Host hat die Verbindung abgelehnt. Prüfen Sie den Port.",
     "hostNotFound": "Der Hostname wurde nicht gefunden.",

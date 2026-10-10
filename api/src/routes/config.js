@@ -81,8 +81,16 @@ on('POST', '/api/config', async (req, res) => {
        empty folder with no way to tell why, and a hand-edited or partly-merged
        export is how it happens. */
     for (const item of data.items) {
-      if (!Array.isArray(item.children)) continue;
-      const dangling = item.children.filter(id => !seen.has(String(id)));
+      if (item.children == null) continue;
+      if (!Array.isArray(item.children) || item.children.some(id => typeof id !== 'string')) {
+        return json(res, 400, {
+          error: `${item.id}: children must be a list of item ids`,
+          kind: KIND.INVALID,
+          code: 'invalid.bad-children',
+          detail: { id: item.id },
+        });
+      }
+      const dangling = item.children.filter(id => !seen.has(id));
       if (dangling.length) {
         return json(res, 400, {
           error: `${item.id}: children point at items that are not here: ${dangling.join(', ')}`,

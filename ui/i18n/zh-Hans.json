@@ -264,6 +264,7 @@
     "noConnection": "连接失败。",
     "duplicateId": "两个项目使用了相同的 ID {id}。每个项目都需要自己的 ID。",
     "missingChildren": "文件夹 {id} 列出了文件中不存在的项目。",
+    "badChildren": "文件夹 {id} 的内容列表格式无法被 Stackyard 读取。",
     "unsafeLink": "项目 {id} 包含不允许的链接。链接必须使用 http 或 https。",
     "refused": "主机拒绝了连接。请检查端口。",
     "hostNotFound": "找不到该主机名。",

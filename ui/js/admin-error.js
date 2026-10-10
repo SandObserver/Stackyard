@@ -34,6 +34,7 @@ const BY_CODE = Object.freeze({
   'blocked.unresolved': 'adminError.unreachable',
   'invalid.duplicate-id': 'adminError.duplicateId',
   'invalid.missing-children': 'adminError.missingChildren',
+  'invalid.bad-children': 'adminError.badChildren',
   'invalid.unsafe-link': 'adminError.unsafeLink',
   'invalid.dock-full': 'app.dockFull',
   'network.refused': 'adminError.refused',

@@ -346,6 +346,24 @@ test('POST /api/config rejects an item missing id or type', async () => {
   assert.equal(r.status, 400);
 });
 
+test('POST /api/config rejects a folder whose children are not a list of ids', async () => {
+  const app = { id: 'a', type: 'app', label: 'A', href: 'https://a.invalid' };
+  for (const children of ['a', { a: 1 }, [1], ['a', null]]) {
+    const r = await req('POST', '/api/config', {
+      cookie: validCookie,
+      body: { items: [app, { id: 'f', type: 'folder', label: 'F', children }], settings: {} },
+    });
+    assert.equal(r.status, 400, JSON.stringify(children));
+    assert.equal(r.body.code, 'invalid.bad-children');
+    assert.deepEqual(r.body.detail, { id: 'f' });
+  }
+  const ok = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [app, { id: 'f', type: 'folder', label: 'F', children: null }], settings: {} },
+  });
+  assert.equal(ok.status, 200);
+});
+
 test('GET /api/config/export is downloadable and free of secrets', async () => {
   const r = await req('GET', '/api/config/export', { cookie: validCookie });
   assert.equal(r.status, 200);
