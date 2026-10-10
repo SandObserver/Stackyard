@@ -3,25 +3,34 @@ const { getRegistry } = require('./widgets');
 /* The matching field keys a widget declares, top level and one row deep. Test
    membership with Object.hasOwn. Config from disk inherits "constructor" and the
    rest of Object.prototype. Keys are deduplicated. A group declares one key per
-   provider it serves, and a caller acting per entry would act on it twice. */
-function _spec(entry, match) {
+   provider it serves, and a caller acting per entry would act on it twice.
+   Sibling declarations may share a key. With every set, a key matches only when
+   all its declarations match; otherwise one match is enough. */
+function _spec(entry, match, every = false) {
   const fields = (entry && entry.manifest && entry.manifest.fields) || [];
-  const topLevel = new Set();
-  const groups = Object.create(null);
-  const objects = Object.create(null);
-  const subKeys = f => [...new Set(f.fields.filter(sf => sf && sf.key && match(sf)).map(sf => sf.key))];
-  for (const f of fields) {
-    if (!f || !f.key) continue;
-    if (match(f)) topLevel.add(f.key);
-    else if (f.type === 'group' && Array.isArray(f.fields)) {
-      const sub = subKeys(f);
-      if (sub.length) groups[f.key] = sub;
-    } else if (f.type === 'object' && Array.isArray(f.fields)) {
-      const sub = subKeys(f);
-      if (sub.length) objects[f.key] = sub;
+  const keysOf = list => {
+    const seen = new Map();
+    for (const f of list) {
+      if (!f || !f.key) continue;
+      const hit = match(f);
+      seen.set(f.key, seen.has(f.key) ? (every ? seen.get(f.key) && hit : seen.get(f.key) || hit) : hit);
     }
-  }
-  return { topLevel: [...topLevel], groups, objects };
+    return [...seen].filter(([, hit]) => hit).map(([k]) => k);
+  };
+  const nested = type => {
+    const out = Object.create(null);
+    const byKey = new Map();
+    for (const f of fields) {
+      if (!f || !f.key || match(f) || f.type !== type || !Array.isArray(f.fields)) continue;
+      byKey.set(f.key, (byKey.get(f.key) || []).concat(f.fields));
+    }
+    for (const [k, sub] of byKey) {
+      const keys = keysOf(sub);
+      if (keys.length) out[k] = keys;
+    }
+    return out;
+  };
+  return { topLevel: keysOf(fields), groups: nested('group'), objects: nested('object') };
 }
 
 function secretSpec(entry) {
@@ -31,12 +40,12 @@ function secretSpec(entry) {
 /* Fields that cannot change where a request goes. Unmarked is the safe
    default: an unknown field still invalidates a stored secret. */
 function cosmeticSpec(entry) {
-  return _spec(entry, f => f.cosmetic === true);
+  return _spec(entry, f => f.cosmetic === true, true);
 }
 
 /* Never stored, so a saved config can never match on them. */
 function transientSpec(entry) {
-  return _spec(entry, f => f.transient === true);
+  return _spec(entry, f => f.transient === true, true);
 }
 
 function _entryFor(item, entry) {

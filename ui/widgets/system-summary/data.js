@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 const SEED_POINTS = 120;
 const SEED_STEP_SEC = 10;
 
@@ -279,12 +281,20 @@ async function systemSummaryGlances(ctx) {
 const BESZEL_COLLECTIONS = ['_superusers', 'users'];
 const _beszelSession = new Map();
 
+/* Keep the account and password in the key. A URL-only key gives one account's
+   token to every config that names the same hub. */
+function beszelSessionKey(ctx, base) {
+  const { beszelUser = '', beszelPass = '' } = ctx.config;
+  return [base, beszelUser, crypto.createHash('sha256').update(String(beszelPass)).digest('hex')].join('\n');
+}
+
 async function beszelLogin(ctx, base) {
   const { config, fetchJSON } = ctx;
   if (!config.beszelUser || !config.beszelPass)
     ctx.fail('Enter the Beszel account and password first.', { kind: ctx.KIND.INVALID });
   const body = JSON.stringify({ identity: config.beszelUser, password: config.beszelPass });
-  const known = _beszelSession.get(base);
+  const key = beszelSessionKey(ctx, base);
+  const known = _beszelSession.get(key);
   const tries = known ? [known.collection] : BESZEL_COLLECTIONS;
 
   for (const collection of tries) {
@@ -296,11 +306,11 @@ async function beszelLogin(ctx, base) {
     });
     if (r.status < 400 && r.data?.token) {
       const session = { collection, token: r.data.token };
-      _beszelSession.set(base, session);
+      _beszelSession.set(key, session);
       return session;
     }
   }
-  _beszelSession.delete(base);
+  _beszelSession.delete(key);
   ctx.fail('Beszel rejected the account and password', { kind: ctx.KIND.AUTH });
 }
 
@@ -309,7 +319,7 @@ async function beszelLogin(ctx, base) {
    empty answer is retried once with a fresh token before it is believed. */
 async function beszelGet(ctx, base, path) {
   const { fetchJSON } = ctx;
-  let session = _beszelSession.get(base) || (await beszelLogin(ctx, base));
+  let session = _beszelSession.get(beszelSessionKey(ctx, base)) || (await beszelLogin(ctx, base));
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await fetchJSON(`${base}${path}`, {
       headers: { Authorization: session.token },
@@ -318,7 +328,7 @@ async function beszelGet(ctx, base, path) {
     const refused = r.status === 401 || r.status === 403;
     if (refused || (Array.isArray(r.data?.items) && !r.data.items.length)) {
       if (attempt === 0) {
-        _beszelSession.delete(base);
+        _beszelSession.delete(beszelSessionKey(ctx, base));
         session = await beszelLogin(ctx, base);
         continue;
       }
