@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GitHub Contributions</title>
-<script src="/js/widget-theme.js?v=db11b06d"></script>
+<script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #1C1C1E;
@@ -80,7 +80,7 @@
 <div class="tip" id="tip" hidden aria-hidden="true"></div>
 <div class="cap" id="cap"></div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText } from '/js/widget-toolbox.js?v=0218d3c4';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText, cssZoom } from '/js/widget-toolbox.js?v=5532b552';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -201,8 +201,9 @@ function hover(e) {
   const t = tip.getBoundingClientRect();
   const x = Math.min(Math.max(8, r.left + r.width / 2 - t.width / 2), innerWidth - t.width - 8);
   const above = r.top - t.height - 6;
-  tip.style.left = `${x}px`;
-  tip.style.top = `${above >= 4 ? above : r.bottom + 6}px`;
+  const z = cssZoom();
+  tip.style.left = `${x / z}px`;
+  tip.style.top = `${(above >= 4 ? above : r.bottom + 6) / z}px`;
 }
 
 plot.addEventListener('pointerdown', hover);

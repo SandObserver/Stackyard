@@ -7,7 +7,11 @@ import { fileURLToPath } from 'node:url';
 const WIDGETS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'widgets');
 const read = p => fs.readFileSync(path.join(WIDGETS, p), 'utf8');
 
-const PINS = { 'system-summary/index.html': 'widget', 'clock/digital.html': 'time-block' };
+const PINS = {
+  'system-summary/index.html': 'widget',
+  'clock/digital.html': 'time-block',
+  'connections/connections-map.html': 'key',
+};
 const pinTags = rel => read(rel).match(/<[a-z][^>]*\sdir="(?:ltr|rtl)"[^>]*>/g) || [];
 
 function widgetPages() {

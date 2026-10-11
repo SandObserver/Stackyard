@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Backup</title>
-<script src="/js/widget-theme.js?v=db11b06d"></script>
+<script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: transparent;
@@ -121,7 +121,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatNumber } from '/js/widget-toolbox.js?v=0218d3c4';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatNumber, cssZoom } from '/js/widget-toolbox.js?v=5532b552';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -206,11 +206,41 @@ function drawPh(canvas, haiku, isFront, seed) {
   const H   = canvas.offsetHeight;
   if (!W || !H) return;
 
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
+  /* The browser draws the canvas over whole device pixels: from the rounded
+     left edge to the rounded right edge. A backing store of any other size is
+     stretched to fit, and blurs on a 1x screen. */
+  const z = cssZoom();
+  const box = canvas.getBoundingClientRect();
+  let ox = 0, oy = 0;
+  try {
+    const f = window.frameElement && window.frameElement.getBoundingClientRect();
+    if (f) { ox = f.left; oy = f.top; }
+  } catch {}
+  const L = (ox + box.left) * dpr, T = (oy + box.top) * dpr;
+  const bw = (box.width || W * z) * dpr, bh = (box.height || H * z) * dpr;
+  canvas.width  = Math.max(1, Math.round(L + bw) - Math.round(L));
+  canvas.height = Math.max(1, Math.round(T + bh) - Math.round(T));
   const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, W, H);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  /* Layout is in CSS pixels. Every shape is snapped to whole device pixels
+     when drawn, or its edges blur on a 1x screen. */
+  const k = canvas.width / W;
+  const px = v => Math.round(v * k);
+  const bar = (x, y, w, h, r) => {
+    const X = px(x), Y = px(y);
+    const bw = Math.max(1, px(x + w) - X), bh = Math.max(1, px(y + h) - Y);
+    if (bh <= 2) ctx.fillRect(X, Y, bw, bh);
+    else { rrect(ctx, X, Y, bw, bh, r * k); ctx.fill(); }
+  };
+  const dot = (x, y, d) => {
+    const D = Math.max(1, px(d)), X = px(x), Y = px(y - d / 2);
+    if (D <= 2) { ctx.fillRect(X, Y, D, D); return; }
+    ctx.beginPath();
+    ctx.arc(X + D / 2, Y + D / 2, D / 2, 0, Math.PI * 2);
+    ctx.fill();
+  };
 
   /* Both faces of a card must draw the same pattern, and a redraw must repeat
      it. Never use Math.random here. */
@@ -257,26 +287,22 @@ function drawPh(canvas, haiku, isFront, seed) {
     if (y > H) break;
 
     if (entry.type === 'text') {
-      ctx.font = `700 ${TEXT_H}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`;
+      ctx.font = `700 ${Math.max(6, px(TEXT_H))}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`;
       ctx.fillStyle = textC;
       ctx.textBaseline = 'top';
       /* Small left dash */
       const ldW = 4 + Math.floor(rng() * 10);
       ctx.fillStyle = dashC;
-      rrect(ctx, PAD, y + TEXT_H/2 - 1, ldW, 2, 1);
-      ctx.fill();
+      bar(PAD, y + TEXT_H/2 - 1, ldW, 2, 1);
       /* Text */
       ctx.fillStyle = textC;
-      ctx.fillText(entry.line, PAD + ldW + 3, y);
+      ctx.fillText(entry.line, px(PAD + ldW + 3), px(y));
       /* Right dash — measure text first */
-      const textW = ctx.measureText(entry.line).width;
+      const textW = ctx.measureText(entry.line).width / k;
       const rdX   = PAD + ldW + 3 + textW + 3;
       const rdW   = Math.max(4, usableW - (ldW + 3 + textW + 3));
       ctx.fillStyle = dashC;
-      if (rdW > 0 && rdX + rdW <= W - PAD) {
-        rrect(ctx, rdX, y + TEXT_H/2 - 1, rdW, 2, 1);
-        ctx.fill();
-      }
+      if (rdW > 0 && rdX + rdW <= W - PAD) bar(rdX, y + TEXT_H/2 - 1, rdW, 2, 1);
       y += TEXT_STEP;
 
     } else {
@@ -294,14 +320,11 @@ function drawPh(canvas, haiku, isFront, seed) {
           for (let d=0; d<dotCount; d++) {
             const dx = x + d * (dotSz + 2);
             if (dx + dotSz > W - PAD) break;
-            ctx.beginPath();
-            ctx.arc(dx + dotSz/2, y + ROW_H/2, dotSz/2, 0, Math.PI*2);
-            ctx.fill();
+            dot(dx, y + ROW_H/2, dotSz);
           }
         } else {
           ctx.fillStyle = dashC;
-          rrect(ctx, x, y, segW, ROW_H, 1.5);
-          ctx.fill();
+          bar(x, y, segW, ROW_H, 1.5);
         }
         x += budgetW; /* advance by full budget slot — gap is implicit */
       }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Disk Health</title>
-<script src="/js/widget-theme.js?v=db11b06d"></script>
+<script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html, body {
@@ -66,14 +66,14 @@
     flex:1; min-height:0;
     display:flex; align-items:center; justify-content:center;
     writing-mode:vertical-rl; transform:rotate(180deg);
-    font-size:clamp(8px,3.6vmin,11px); font-weight:600; letter-spacing:0.06em;
+    font-size:8px; font-weight:600; letter-spacing:0.06em;
     color:rgba(255,255,255,0.4);
     white-space:nowrap; overflow:hidden; pointer-events:none;
   }
-  #root.size-medium .bay-name { font-size:clamp(7px,2.4vmin,10px); letter-spacing:0.02em; }
+  #root.size-medium .bay-name { font-size:7px; letter-spacing:0.02em; }
 
   #nums { height:13px; flex-shrink:0; display:flex; align-items:center; padding:2px 4px 0; }
-  #nums span { flex:1; text-align:center; font-size:clamp(6px,2vmin,8px); font-weight:500; color:rgba(255,255,255,0.28); }
+  #nums span { flex:1; text-align:center; font-size:6px; font-weight:500; color:rgba(255,255,255,0.28); }
 
   #right { width:20px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:7px; padding-top:1px; }
   #pwrbtn {
@@ -147,7 +147,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=0218d3c4';
+import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState, cssZoom } from '/js/widget-toolbox.js?v=5532b552';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -229,8 +229,10 @@ function hideTip() { rootEl.classList.remove('tip-active'); }
 
 function positionTip(i) {
   const bay = bayEls[i];
-  const rootRect = rootEl.getBoundingClientRect();
-  const bayRect  = bay.getBoundingClientRect();
+  const z = cssZoom();
+  const unzoom = r => ({ left:r.left/z, top:r.top/z, width:r.width/z, height:r.height/z, bottom:r.bottom/z });
+  const rootRect = unzoom(rootEl.getBoundingClientRect());
+  const bayRect  = unzoom(bay.getBoundingClientRect());
   tipEl.style.left = '0px'; tipEl.style.top = '0px';
   const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
   const bayCx = (bayRect.left - rootRect.left) + bayRect.width / 2;

@@ -9,6 +9,8 @@
     const root = document.documentElement;
     root.setAttribute('data-theme', dark ? 'dark' : 'light');
     root.style.colorScheme = dark ? 'dark' : 'light';
+    const zoom = frame && frame.getAttribute('data-zoom');
+    if (zoom) root.style.zoom = zoom;
     /* A page with no background of its own shows the card through it. */
     if (getComputedStyle(root).backgroundColor === 'rgba(0, 0, 0, 0)')
       root.style.backgroundColor = dark ? '#1C1C1E' : '#FFFFFF';

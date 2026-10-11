@@ -71,5 +71,6 @@
   "ui.worldMap": "Mapa mundial de conexiones",
   "ui.service": "Servicio",
   "ui.users": "Usuarios",
-  "ui.openAdmin": "abrir administración"
+  "ui.openAdmin": "abrir administración",
+  "ui.more": "+{n} más"
 }

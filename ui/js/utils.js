@@ -338,8 +338,22 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     doc.documentElement.setAttribute('dir', root.getAttribute('dir') || 'ltr');
     doc.documentElement.setAttribute('lang', root.getAttribute('lang') || 'en');
   };
+  /* A bundled widget page is zoomed to the card rather than scaled as a
+     picture. A scaled frame is resampled, and blurs on a 1x screen. Any other
+     page lays out at the design size it was written for. */
+  const zoomable = /^\/widgets\//.test(src);
+  const applyZoom = () => {
+    try {
+      const doc = ifr.contentDocument;
+      if (doc && doc.documentElement) doc.documentElement.style.zoom = ifr.getAttribute('data-zoom') || '';
+    } catch {}
+  };
   ifr.addEventListener('load', applyDir);
-  cleanups.push(() => ifr.removeEventListener('load', applyDir));
+  ifr.addEventListener('load', applyZoom);
+  cleanups.push(() => {
+    ifr.removeEventListener('load', applyDir);
+    ifr.removeEventListener('load', applyZoom);
+  });
   try {
     if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') applyDir();
   } catch {}
@@ -453,9 +467,18 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
        fills the card exactly. Where the card's aspect drifts from the design's,
        cover crops the widget instead, and the card clips what it cropped. */
     const s = Math.min(w / dw, h / dh);
-    const tx = (w - dw * s) / 2,
-      ty = (h - dh * s) / 2;
-    ifr.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+    /* Whole pixels. A fractional offset or size blurs the page on a 1x screen. */
+    if (zoomable) {
+      const fw = Math.round(dw * s),
+        fh = Math.round(dh * s);
+      ifr.style.width = fw + 'px';
+      ifr.style.height = fh + 'px';
+      ifr.style.transform = `translate(${Math.round((w - fw) / 2)}px, ${Math.round((h - fh) / 2)}px)`;
+      ifr.setAttribute('data-zoom', String(fw / dw));
+      applyZoom();
+    } else {
+      ifr.style.transform = `translate(${Math.round((w - dw * s) / 2)}px, ${Math.round((h - dh * s) / 2)}px) scale(${s})`;
+    }
     ifr.style.opacity = '1'; /* reveal only once scaled, avoids the flash of unscaled content on load */
   };
   if (typeof ResizeObserver !== 'undefined') {
