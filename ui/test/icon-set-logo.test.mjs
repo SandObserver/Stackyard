@@ -160,6 +160,9 @@ test('the About logo halves draw exactly the logo', () => {
   const d = id => ICONS[id].shapes.map(sh => JSON.stringify(sh));
   assert.deepEqual([...d('logo-ink'), ...d('logo-arc')], d('logo'));
   const about = read('ui/admin/index.html');
-  assert.match(about, /href="#sy-solid-logo-ink"/);
-  assert.match(about, /class="about-orbit" href="#sy-solid-logo-arc"/);
+  assert.match(
+    about,
+    /class="about-orbit" href="#sy-solid-logo-arc"\/><\/g><use href="#sy-solid-logo-ink"\/>/,
+    'the arc turns under the ink',
+  );
 });
