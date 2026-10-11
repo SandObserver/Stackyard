@@ -108,7 +108,6 @@ const BESPOKE = new Map(
     '#3C3C43': 'connections map, secondary label in the light theme',
     '#EBEBF5': 'secondary label in the dark theme',
     '#E4E4EC': 'connections map, land dots in the dark theme',
-    '#1C1C20': 'connections map, hover card in the dark theme',
     '#1E1E22': 'connections map, detail card',
     '#141416': 'disk health, detail panel',
     '#64646E': 'backup, idle status flag',

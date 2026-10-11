@@ -71,5 +71,6 @@
   "ui.worldMap": "全球连接地图",
   "ui.service": "服务",
   "ui.users": "用户",
-  "ui.openAdmin": "打开管理"
+  "ui.openAdmin": "打开管理",
+  "ui.more": "另外 {n} 个"
 }
