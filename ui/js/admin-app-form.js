@@ -24,13 +24,13 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=5f250897';
-import { createListbox } from '/js/listbox.js?v=7fb018a8';
+} from '/js/admin-shared.js?v=352fe8b5';
+import { createListbox } from '/js/listbox.js?v=c0187efc';
 import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=20fc406e';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=63cc6464';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { iconSvg } from '/js/icon-set.js?v=34af798f';
+import { iconSvg } from '/js/icon-set.js?v=628341d4';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];

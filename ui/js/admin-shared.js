@@ -5,7 +5,7 @@ import { t } from '/js/i18n.js?v=5579776a';
 import { errorAdvice } from '/js/admin-error.js?v=b0881957';
 import { formatNumber } from '/js/format-number.js?v=349a741d';
 import { iconChain } from '/js/icons.js?v=9c7b5111';
-import { iconSvg } from '/js/icon-set.js?v=34af798f';
+import { iconSvg } from '/js/icon-set.js?v=628341d4';
 import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=dbe542e1';
 
 export const API = '';

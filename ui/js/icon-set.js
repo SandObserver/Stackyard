@@ -139,6 +139,8 @@ function logoIcon() {
   };
 }
 
+const LOGO = logoIcon();
+
 function sizeIcon(k) {
   const [x, y, w, h] = { small: [5, 5, 14, 14], medium: [2, 7, 20, 10], large: [3, 3, 18, 18], xlarge: [5, 2, 14, 20] }[
     k
@@ -272,7 +274,10 @@ export const ICONS = {
   'arrow-down': { shapes: [line('M12 4v15M6 13l6 6 6-6')] },
   'arrow-up': { shapes: [line('M12 20V5M6 11l6-6 6 6')] },
 
-  logo: logoIcon(),
+  logo: LOGO,
+  /* The About logo turns its arc alone, so it needs the two halves apart. */
+  'logo-ink': { inkMask: false, shapes: LOGO.shapes.slice(0, 3) },
+  'logo-arc': { inkMask: false, shapes: LOGO.shapes.slice(3) },
   start: { inkMask: false, shapes: [line('M12 2v9M8 7l4 4 4-4', 'accent'), rect(2, 14, 20, 8, 4), bar(5, 17, 6)] },
   run: { gap: 0, shapes: [rect(2, 4, 20, 16, 4), line('M6 9l3 3-3 3', 'accent'), bar(12, 14, 6)] },
   create: { shapes: [rect(3, 5, 16, 16, 4), line('M19 3v4M17 5h4', 'accent'), bar(6, 10, 6), bar(6, 14, 10)] },
