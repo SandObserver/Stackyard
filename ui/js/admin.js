@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=5944d82b';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=116791d0';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=a457a197';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=3c46af12';
 import { recoveryShown } from '/js/config-recovery.js?v=dbe542e1';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=b9418d76';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=35fcb4b0';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   afterImport,
@@ -21,7 +21,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=0f8ffe46';
+} from '/js/admin-settings.js?v=6bde63e6';
 import {
   apiGet,
   apiPost,
@@ -35,17 +35,17 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=5f250897';
+} from '/js/admin-shared.js?v=352fe8b5';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=5a418463';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=79cb212b';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=349a741d';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=7fb018a8';
+import { createListbox } from '/js/listbox.js?v=c0187efc';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=5579776a';
 import { loadLocalIcons } from '/js/icons.js?v=9c7b5111';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=34af798f';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=628341d4';
 import {
   clearSkipTls,
   convert,
@@ -109,6 +109,7 @@ async function load() {
   qa('.ie-row').forEach(nameEditPen);
   document.title = t('nav.pageTitle');
   initVersion();
+  initAboutLogo();
   syncPickerLabels();
   try {
     const wr = await apiGet('/api/widgets');
@@ -807,6 +808,30 @@ function initAllInlineEdits() {
       fetchWallpaperLink(v.trim());
     },
   });
+}
+
+/* The arc turns once, as on the docs site, when the logo is pointed at or
+   tapped. Never on its own. */
+function initAboutLogo() {
+  const wrap = document.querySelector('.about-ic-wrap');
+  const orbit = document.querySelector('.about-orbit');
+  if (!wrap || !orbit || typeof orbit.animate !== 'function') return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  let run = null;
+  const spin = () => {
+    if (run || reduce.matches) return;
+    run = orbit.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], {
+      duration: 1000,
+      easing: 'cubic-bezier(.65,0,.35,1)',
+    });
+    run.onfinish = run.oncancel = () => {
+      run = null;
+    };
+  };
+  wrap.addEventListener('pointerenter', e => {
+    if (/** @type {PointerEvent} */ (e).pointerType !== 'touch') spin();
+  });
+  wrap.addEventListener('click', spin);
 }
 
 async function initVersion() {
