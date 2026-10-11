@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Connections — Map</title>
-<script src="/js/widget-theme.js?v=db11b06d"></script>
+<script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{width:100%;height:100%;background:transparent;overflow:hidden;
@@ -143,7 +143,7 @@ window.__MAP=(function(D){
 })(window.__DOTS);
 </script>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber } from '/js/widget-toolbox.js?v=0218d3c4';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, cssZoom } from '/js/widget-toolbox.js?v=5532b552';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
 (function(){
@@ -265,20 +265,18 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     keyEl.querySelectorAll('.k > bdi').forEach(b=>{if(b.scrollWidth>b.clientWidth)b.title=b.textContent;});
   }
 
-  /* The dashboard scales this page. Size the canvas from the scaled frame, or
-     dots blur on a 1x screen. */
   function frameScale(){
     try{
-      const f=window.frameElement, w=f&&f.getBoundingClientRect().width;
-      if(w>0&&innerWidth>0)return w/innerWidth;
+      const f=window.frameElement, w=f&&f.getBoundingClientRect().width, r=document.documentElement.getBoundingClientRect().width;
+      if(w>0&&r>0)return w/r;
     }catch(e){}
     return 1;
   }
   let L=null;
   function relayout(){
-    const cw=cv.clientWidth||360,ch=cv.clientHeight||170;
-    const q=(window.devicePixelRatio||1)*frameScale(), u=Math.min(cw/360,ch/170)*q;
-    const W=Math.max(1,Math.round(cw*q)),H=Math.max(1,Math.round(ch*q));
+    const cw=cv.clientWidth||360,ch=cv.clientHeight||170, box=cv.getBoundingClientRect(), g=(window.devicePixelRatio||1)*frameScale();
+    const W=Math.max(1,Math.round((box.width||cw)*g)),H=Math.max(1,Math.round((box.height||ch)*g));
+    const u=Math.min(cw/360,ch/170)*W/cw;
     cv.width=W;cv.height=H;
     const p=Math.max(2,Math.round(PITCH*u));
     L={W,H,p,x0:Math.round((W-D.cols*p)/2),y0:Math.round(TOP*u),off:Math.round(p/3)};
@@ -292,7 +290,12 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     const {W,H,p}=L, light=theme()==='light';
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=light?'rgba(60,60,67,0.26)':'rgba(228,228,236,0.26)';
-    for(const d of M.all)if(!lit.has(M.key(d)))disc(cx(d[0]),cy(d[1]),p/3);
+    /* A circle this small antialiases into a smear in WebKit. Square it on 1x. */
+    for(const d of M.all){
+      if(lit.has(M.key(d)))continue;
+      if(p<=3)ctx.fillRect(L.x0+d[0]*p,L.y0+d[1]*p,p-1,p-1);
+      else disc(cx(d[0]),cy(d[1]),p/3);
+    }
     for(const [k,v] of lit){
       const dim=emphasis&&v.role!==emphasis;
       const c=k.split(',');
@@ -340,7 +343,8 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       tdot.style.boxShadow='0 0 5px '+c;
     }
     tt.style.opacity='1';
-    const pad=8,ww=window.innerWidth,wh=window.innerHeight,tw=tt.offsetWidth,th=tt.offsetHeight;
+    const z=cssZoom(), pad=8, ww=window.innerWidth/z, wh=window.innerHeight/z, tw=tt.offsetWidth, th=tt.offsetHeight;
+    x0/=z;y0/=z;
     let x=x0+13,y=y0+13;
     if(x+tw>ww-pad)x=x0-tw-13;if(x<pad)x=pad;
     if(y+th>wh-pad)y=y0-th-13;if(y<pad)y=pad;

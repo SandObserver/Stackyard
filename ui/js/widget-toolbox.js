@@ -435,6 +435,18 @@ export async function loadStrings() {
   }
 }
 
+/* The dashboard zooms the page. Rects and pointer positions come back zoomed,
+   CSS lengths do not. Divide a rect value by this before writing it to a style.
+
+   @returns {number} */
+export function cssZoom() {
+  const z = /** @type {any} */ (document.documentElement).currentCSSZoom;
+  if (typeof z === 'number' && z > 0) return z;
+  const b = document.body;
+  const w = b && b.offsetWidth;
+  return (w && b.getBoundingClientRect().width / w) || 1;
+}
+
 /** @param {string} key @param {string} fallback @returns {string} */
 export function wt(key, fallback) {
   const v = _own && _own[key];
