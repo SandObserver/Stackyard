@@ -216,3 +216,49 @@ test('the key can be turned off', async () => {
     map.restore();
   }
 });
+
+test('islands by the date line stay in the Pacific', () => {
+  for (const cc of ['TO', 'WS', 'AS', 'PF']) {
+    const [cell] = M.place(cc, 1, new Set());
+    assert.ok(cell[0] >= 90, `${cc} landed at column ${cell[0]}, across the map`);
+  }
+});
+
+test('placing many countries stays fast', () => {
+  const codes = Object.keys(D.areas).filter(cc => /^[A-Z]{2}$/.test(cc));
+  const start = performance.now();
+  const taken = new Set();
+  for (let s = 0; s < 12; s++) {
+    const regions = {};
+    codes.slice(0, 220).forEach((cc, i) => {
+      regions[cc] = 1 + ((i * 37 + s) % 500);
+    });
+    for (const a of M.allocate(regions)) M.place(a.cc, a.n, taken);
+  }
+  const ms = performance.now() - start;
+  assert.ok(ms < 500, `12 services in 220 countries took ${Math.round(ms)} ms`);
+});
+
+test('a highlighted service leaves the others as plain map dots', async () => {
+  const map = await mount();
+  try {
+    map.render({
+      services: [
+        svc('Alpha', { color: '#FF0000', regions: { FR: 1 } }),
+        svc('Beta', { color: '#0000FF', regions: { BR: 3 } }),
+      ],
+    });
+    const [alpha] = map.key.children;
+    for (const fn of alpha.listeners.pointerenter) fn();
+    map.runFrames();
+    const fills = map.painted();
+    const colours = new Set(fills.map(f => f.color));
+    assert.ok(colours.has('rgb(255,0,0)'), 'the highlighted service is drawn');
+    assert.ok(!colours.has('rgb(0,0,255)'), 'the other service still shows in colour');
+    const lit = fills.filter(f => f.color === 'rgb(255,0,0)').length;
+    const land = fills.filter(f => f.color !== 'rgb(255,0,0)').length;
+    assert.equal(lit + land, M.all.length, 'a cell is left empty');
+  } finally {
+    map.restore();
+  }
+});

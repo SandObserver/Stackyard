@@ -25,7 +25,7 @@
   .k.dim{opacity:.45}
   /* Keep the colour in forced colors. It is the only link to the map. */
   .k .dot{width:9px;height:9px;border-radius:50%;flex:none;forced-color-adjust:none}
-  .k bdi{display:block;max-width:78px;overflow:hidden;text-overflow:ellipsis}
+  .k bdi{display:block;max-width:66px;overflow:hidden;text-overflow:ellipsis}
   .k.more{padding-inline-start:15.9px}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
@@ -41,13 +41,20 @@ window.__MAP=(function(D){
   const own=new Map(), all=[];
   for(let k=0;k<D.dots.length;k+=3){
     const d=[D.dots[k],D.dots[k+1]], cc=D.countries[D.dots[k+2]];
+    d.k=d[0]+','+d[1];
     all.push(d);
     if(!own.has(cc))own.set(cc,[]);
     own.get(cc).push(d);
   }
   const hasAreas=cc=>Object.prototype.hasOwnProperty.call(D.areas,cc);
-  const key=d=>d[0]+','+d[1];
-  const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+  const at=new Map(all.map(d=>[d.k,d]));
+  const key=d=>d.k||d[0]+','+d[1];
+  /* Columns wrap at the date line. Tonga is next to Fiji, not to California. */
+  const dist=(a,b)=>{
+    let dx=Math.abs(a[0]-b[0]);
+    if(dx>D.cols/2)dx=D.cols-dx;
+    return Math.hypot(dx,a[1]-b[1]);
+  };
   const toGrid=(lon,lat)=>[(lon+180)/360*D.cols-0.5,(D.maxLat-lat)/(D.maxLat-D.minLat)*D.rows-0.5];
 
   const capacity=cc=>own.has(cc)?own.get(cc).length:(hasAreas(cc)?1:0);
@@ -112,12 +119,38 @@ window.__MAP=(function(D){
       hubs.forEach((h,j)=>{const v=h.p/(2*k[j]+1);if(v>bv){bv=v;bi=j;}});
       k[bi]++;
     }
-    const nearest=(list,g,m)=>list.filter(x=>!taken.has(key(x))).sort((a,b)=>dist(a,g)-dist(b,g)).slice(0,m);
+    const byDist=(a,b)=>a[0]-b[0];
+    const nearest=(list,g,m)=>{
+      const free=[];
+      for(const x of list)if(!taken.has(key(x)))free.push([dist(x,g),x]);
+      return free.sort(byDist).slice(0,m).map(f=>f[1]);
+    };
+    /* Rings outward from g. Every cell within distance R lies inside ring R, so
+       the m nearest are final once the m-th is no farther than R. Past R 8 the
+       rings would wrap onto themselves; scan all land instead. */
+    const nearestLand=(g,m)=>{
+      const gc=Math.round(g[0]), gr=Math.round(g[1]), found=[];
+      for(let R=0;R<=8;R++){
+        for(let r=gr-R;r<=gr+R;r++){
+          if(r<0||r>=D.rows)continue;
+          const step=Math.abs(r-gr)===R?1:2*R;
+          for(let c=gc-R;c<=gc+R;c+=step||1){
+            const d=at.get((((c%D.cols)+D.cols)%D.cols)+','+r);
+            if(d&&!taken.has(d.k))found.push([dist(d,g),d]);
+          }
+        }
+        if(found.length>=m){
+          found.sort(byDist);
+          if(found[m-1][0]<=R)return found.slice(0,m).map(f=>f[1]);
+        }
+      }
+      return nearest(all,g,m);
+    };
     const take=(g,m)=>{
-      if(m<=0)return;
-      let got=nearest(cells,g,m);
+      if(m<=0||taken.size>=all.length)return;
+      let got=cells===all?nearestLand(g,m):nearest(cells,g,m);
       for(const x of got)taken.add(key(x));
-      if(got.length<m)got=got.concat(nearest(all,g,m-got.length));
+      if(got.length<m)got=got.concat(nearestLand(g,m-got.length));
       for(const x of got){taken.add(key(x));out.push(x);}
     };
     hubs.forEach((h,j)=>take(h.g,k[j]));

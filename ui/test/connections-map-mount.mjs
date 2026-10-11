@@ -25,6 +25,26 @@ export function placement() {
   return { D: window.__DOTS, M: window.__MAP };
 }
 
+/* Records what the last frame painted: each fill with its colour and shape. */
+const ctx = {
+  fills: [],
+  fillStyle: '',
+  _shape: null,
+  clearRect() {
+    ctx.fills = [];
+  },
+  beginPath() {},
+  arc(x, y, r) {
+    ctx._shape = { kind: 'arc', x, y, r };
+  },
+  fill() {
+    ctx.fills.push({ ...ctx._shape, color: ctx.fillStyle });
+  },
+  fillRect(x, y, w, h) {
+    ctx.fills.push({ kind: 'rect', x, y, w, h, color: ctx.fillStyle });
+  },
+};
+
 function element(tag = 'div') {
   const el = {
     tagName: tag.toUpperCase(),
@@ -80,14 +100,7 @@ function element(tag = 'div') {
       return out;
     },
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 360, height: 170 }),
-    getContext: () =>
-      new Proxy(
-        {},
-        {
-          get: (_, k) => (k === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {}),
-          set: () => true,
-        },
-      ),
+    getContext: () => ctx,
   };
   return el;
 }
@@ -153,6 +166,7 @@ export async function mount({ theme = 'dark' } = {}) {
   return {
     frames,
     key: byId.key,
+    painted: () => ctx.fills,
     sr: byId.sr,
     render: data => render(data),
     resize: () => resizeCallbacks.forEach(fn => fn()),

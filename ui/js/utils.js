@@ -338,9 +338,10 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     doc.documentElement.setAttribute('dir', root.getAttribute('dir') || 'ltr');
     doc.documentElement.setAttribute('lang', root.getAttribute('lang') || 'en');
   };
-  /* A same-origin page is zoomed to the card rather than scaled as a picture.
-     A scaled frame is resampled, and blurs on a 1x screen. */
-  const zoomable = !isCrossOrigin(src);
+  /* A bundled widget page is zoomed to the card rather than scaled as a
+     picture. A scaled frame is resampled, and blurs on a 1x screen. Any other
+     page lays out at the design size it was written for. */
+  const zoomable = /^\/widgets\//.test(src);
   const applyZoom = () => {
     try {
       const doc = ifr.contentDocument;

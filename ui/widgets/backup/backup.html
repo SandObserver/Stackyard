@@ -121,7 +121,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatNumber } from '/js/widget-toolbox.js?v=5532b552';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatNumber, cssZoom } from '/js/widget-toolbox.js?v=5532b552';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -206,10 +206,11 @@ function drawPh(canvas, haiku, isFront, seed) {
   const H   = canvas.offsetHeight;
   if (!W || !H) return;
 
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
+  const z = cssZoom();
+  canvas.width  = Math.max(1, Math.round(W * z * dpr));
+  canvas.height = Math.max(1, Math.round(H * z * dpr));
   const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
+  ctx.scale(canvas.width / W, canvas.height / H);
   ctx.clearRect(0, 0, W, H);
 
   /* Both faces of a card must draw the same pattern, and a redraw must repeat

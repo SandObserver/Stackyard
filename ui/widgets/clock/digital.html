@@ -23,8 +23,8 @@
   #hh-over { fill: var(--overlap); }
 
   .date-line {
-    position: absolute; left: 6vmin; right: 6vmin; bottom: 8.1vmin;
-    font-size: 8.1vmin; font-weight: 500; line-height: 1.2;
+    position: absolute; left: 10.2px; right: 10.2px; bottom: 13.77px;
+    font-size: 13.77px; font-weight: 500; line-height: 1.2;
     text-align: center; white-space: nowrap; overflow: hidden;
     color: var(--date);
   }
@@ -70,10 +70,10 @@ function layout() {
 
 function fitDate(el) {
   el.style.fontSize = '';
-  let size = 8.1;
-  while (el.scrollWidth > el.clientWidth && size > 5) {
-    size -= 0.3;
-    el.style.fontSize = size + 'vmin';
+  let size = 13.77;
+  while (el.scrollWidth > el.clientWidth && size > 8.5) {
+    size -= 0.51;
+    el.style.fontSize = size + 'px';
   }
 }
 
