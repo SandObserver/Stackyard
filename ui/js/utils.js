@@ -291,6 +291,21 @@ const isCrossOrigin = src => {
   }
 };
 
+/** Whether a wheel moving dx sideways belongs to something under the pointer
+    that can still scroll that way.
+
+    @param {EventTarget | null} target @param {number} dx */
+export function scrollsSideways(target, dx) {
+  for (let n = /** @type {any} */ (target); n && n.nodeType === 1; n = n.parentElement) {
+    const view = n.ownerDocument && n.ownerDocument.defaultView;
+    if (!view || n.scrollWidth <= n.clientWidth) continue;
+    if (!/(auto|scroll)/.test(view.getComputedStyle(n).overflowX)) continue;
+    const left = Math.abs(n.scrollLeft);
+    if (dx > 0 ? left + n.clientWidth < n.scrollWidth - 1 : left > 0) return true;
+  }
+  return false;
+}
+
 /** @param {HTMLElement} card
     @param {{
       src?: string, title?: string, design?: [number, number],
@@ -348,11 +363,43 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
       if (doc && doc.documentElement) doc.documentElement.style.zoom = ifr.getAttribute('data-zoom') || '';
     } catch {}
   };
+  /* A wheel over a frame never reaches the dashboard. Hand a bundled page's
+     wheel to the card, so sideways scrolling turns pages over widgets too. */
+  let wheelWin = null;
+  const forwardWheel = e => {
+    if (e.ctrlKey || scrollsSideways(e.target, e.deltaX)) return;
+    const copy = new WheelEvent('wheel', {
+      deltaX: e.deltaX,
+      deltaY: e.deltaY,
+      deltaMode: e.deltaMode,
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(copy, 'timeStamp', {
+      value: e.timeStamp + (wheelWin?.performance.timeOrigin ?? performance.timeOrigin) - performance.timeOrigin,
+    });
+    card.dispatchEvent(copy);
+    if (copy.defaultPrevented) e.preventDefault();
+  };
+  const attachWheel = () => {
+    try {
+      if (wheelWin) wheelWin.removeEventListener('wheel', forwardWheel);
+      wheelWin = ifr.contentWindow;
+      if (wheelWin) wheelWin.addEventListener('wheel', forwardWheel, { passive: false });
+    } catch {
+      wheelWin = null;
+    }
+  };
   ifr.addEventListener('load', applyDir);
   ifr.addEventListener('load', applyZoom);
+  if (zoomable) ifr.addEventListener('load', attachWheel);
   cleanups.push(() => {
     ifr.removeEventListener('load', applyDir);
     ifr.removeEventListener('load', applyZoom);
+    ifr.removeEventListener('load', attachWheel);
+    try {
+      if (wheelWin) wheelWin.removeEventListener('wheel', forwardWheel);
+    } catch {}
   });
   try {
     if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') applyDir();
