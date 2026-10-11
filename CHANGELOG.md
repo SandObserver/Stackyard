@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Name a config export downloaded straight from the API `stackyard-config.json`,
   matching the Export button.
 
+- The connections map places each country's dots on its most populated areas.
+
+- Widgets render sharp on 1x screens.
+
 ### Removed
 
 - The GitHub widget no longer offers an extra large size. Existing extra large
@@ -119,6 +123,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   freezing the page.
 
 - Read a Homepage or Dashy file with very long lines without freezing the page.
+
+- The connections map draws users from small countries such as Belgium,
+  Switzerland, Israel and Singapore.
+
+- A second service in the same country no longer covers the first one's dots on
+  the connections map.
+
+- The connections map key no longer runs over the map with many services or long
+  names.
 
 ### Security
 
