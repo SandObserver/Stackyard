@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Point at a System Summary chart to see a past reading, or at a disk to see its
   used and total size.
 
+- The logo on the About page turns its arc once on hover or tap.
+
 ### Changed
 
 - Redesign System Summary with coloured figures in the small size and column
