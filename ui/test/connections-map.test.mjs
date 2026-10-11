@@ -224,19 +224,23 @@ test('islands by the date line stay in the Pacific', () => {
   }
 });
 
+/* Counts distance checks, not time, so a busy machine cannot fail it. 145,746
+   today; scanning all land for every placement is 414,537. */
 test('placing many countries stays fast', () => {
+  let checks = 0;
+  const counting = Object.create(Math);
+  counting.hypot = (...a) => (checks++, Math.hypot(...a));
+  const map = placement(counting).M;
   const codes = Object.keys(D.areas).filter(cc => /^[A-Z]{2}$/.test(cc));
-  const start = performance.now();
   const taken = new Set();
   for (let s = 0; s < 12; s++) {
     const regions = {};
     codes.slice(0, 220).forEach((cc, i) => {
       regions[cc] = 1 + ((i * 37 + s) % 500);
     });
-    for (const a of M.allocate(regions)) M.place(a.cc, a.n, taken);
+    for (const a of map.allocate(regions)) map.place(a.cc, a.n, taken);
   }
-  const ms = performance.now() - start;
-  assert.ok(ms < 500, `12 services in 220 countries took ${Math.round(ms)} ms`);
+  assert.ok(checks < 200_000, `12 services in 220 countries took ${checks} distance checks`);
 });
 
 test('a highlighted service leaves the others as plain map dots', async () => {
