@@ -290,24 +290,27 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     const {W,H,p}=L, light=theme()==='light';
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=light?'rgba(60,60,67,0.26)':'rgba(228,228,236,0.26)';
+    const shown=v=>!emphasis||v.role===emphasis;
     /* A circle this small antialiases into a smear in WebKit. Square it on 1x. */
     for(const d of M.all){
-      if(lit.has(M.key(d)))continue;
+      const v=lit.get(M.key(d));
+      if(v&&shown(v))continue;
       if(p<=3)ctx.fillRect(L.x0+d[0]*p,L.y0+d[1]*p,p-1,p-1);
       else disc(cx(d[0]),cy(d[1]),p/3);
     }
     for(const [k,v] of lit){
-      const dim=emphasis&&v.role!==emphasis;
+      if(!shown(v))continue;
       const c=k.split(',');
-      ctx.fillStyle='rgba('+v.col.join(',')+','+(dim?0.12:1)+')';
-      disc(cx(+c[0]),cy(+c[1]),(v.over?p*0.75:p/2)*(dim?0.85:1));
+      ctx.fillStyle=rgbCss(v.col);
+      disc(cx(+c[0]),cy(+c[1]),v.over?p*0.75:p/2);
     }
     const pulse=reduce?1:(0.82+0.18*Math.sin((now-t0)/1500));
     for(const pt of points){
-      const dim=emphasis&&pt.role!==emphasis, x=cx(pt.cell[0]), y=cy(pt.cell[1]);
+      if(!shown(pt))continue;
+      const x=cx(pt.cell[0]), y=cy(pt.cell[1]);
       ctx.fillStyle=light?'#FFFFFF':'#1C1C1E';
       disc(x,y,p);
-      ctx.fillStyle='rgba('+pt.col.join(',')+','+(dim?0.12:1)+')';
+      ctx.fillStyle=rgbCss(pt.col);
       disc(x,y,p*2/3*pulse);
     }
     if(!reduce&&points.length)kick();
