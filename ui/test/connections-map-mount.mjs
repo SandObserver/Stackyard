@@ -18,10 +18,10 @@ const toolboxNames = moduleScript
   .map(s => s.trim());
 const body = moduleScript.replace(importLine, '');
 
-export function placement() {
+export function placement(math = Math) {
   const window = {};
   new Function('window', dataScript)(window);
-  new Function('window', placeScript)(window);
+  new Function('window', 'Math', placeScript)(window, math);
   return { D: window.__DOTS, M: window.__MAP };
 }
 
