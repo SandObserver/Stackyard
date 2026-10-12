@@ -337,3 +337,21 @@ test('two quick switch changes in Settings both save', async ({ page, request })
   await expect(awake).toBeChecked();
   await expect(typeSearch).not.toBeChecked();
 });
+
+test('the menu stays put when the version arrives', async ({ page }) => {
+  let release = () => {};
+  const held = new Promise(r => {
+    release = r;
+  });
+  await page.route('**/api/version', async route => {
+    await held;
+    return route.fallback();
+  });
+  await page.goto('/admin/');
+  const first = page.locator('.nl').first();
+  await first.waitFor({ state: 'visible' });
+  const before = await first.boundingBox();
+  release();
+  await expect(page.locator('#sidebar-version')).not.toBeEmpty();
+  expect(await first.boundingBox()).toEqual(before);
+});

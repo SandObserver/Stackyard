@@ -234,3 +234,7 @@ test("an alert's buttons are capsules", () => {
   assert.match(m[1], /min-height:48px/);
   assert.match(m[1], /border-radius:24px/, 'half the height, so it is a capsule');
 });
+
+test('the settings card keeps its place when a scrollbar appears', () => {
+  assert.match(rule(admin, 'html'), /scrollbar-gutter:stable(;|$)/);
+});
