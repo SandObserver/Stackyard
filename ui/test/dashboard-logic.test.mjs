@@ -5,7 +5,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { configChanged, desktopCols, desktopPages, landingAfterSetup, restorePage } from '../js/dashboard-logic.js';
+import {
+  configChanged,
+  desktopCols,
+  desktopPages,
+  landingAfterSetup,
+  restorePage,
+  wheelPager,
+} from '../js/dashboard-logic.js';
 
 const SPANS = { app: [1, 1], small: [1, 0], medium: [2, 0], large: [2, 2], xlarge: [2, 3] };
 const pagesOf = (kinds, cols, rows) =>
@@ -187,4 +194,30 @@ test('anything that is not a list leaves the browser alone', () => {
   for (const v of [undefined, null, 0, '', 'items', {}, { length: 0 }]) {
     assert.equal(landingAfterSetup(v), null, `should not redirect on ${JSON.stringify(v)}`);
   }
+});
+
+/* A trackpad swipe: about 30 events, 16 ms apart, with momentum fading out. */
+const swipe = (step, t0, dx = 1) =>
+  Array.from({ length: 30 }, (_, i) => step(dx * Math.max(1, 30 - i), 0, t0 + i * 16)).filter(Boolean);
+
+test('one sideways swipe turns exactly one page', () => {
+  const step = wheelPager();
+  assert.deepEqual(swipe(step, 0), [1]);
+});
+
+test('the swipe direction picks the page', () => {
+  assert.deepEqual(swipe(wheelPager(), 0, -1), [-1]);
+});
+
+test('a second swipe after a pause turns the next page', () => {
+  const step = wheelPager();
+  assert.deepEqual([...swipe(step, 0), ...swipe(step, 30 * 16 + 300)], [1, 1]);
+});
+
+test('vertical scrolling and a small sideways nudge turn nothing', () => {
+  const step = wheelPager();
+  assert.equal(step(30, 80, 0), 0, 'mostly vertical');
+  assert.equal(step(10, 0, 16), 0);
+  assert.equal(step(10, 0, 32), 0);
+  assert.equal(step(5, 0, 600), 0, 'the nudge was forgotten after the pause');
 });

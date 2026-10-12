@@ -102,3 +102,27 @@ export function restorePage(stored, totalPages) {
 export function landingAfterSetup(items) {
   return Array.isArray(items) && items.length === 0 ? '/admin' : null;
 }
+
+/** One page per sideways wheel gesture. A trackpad swipe or a thumb wheel sends
+    a stream of events, momentum included. The page turns once the stream has
+    travelled far enough sideways, and not again until the stream pauses.
+
+    @param {{ threshold?: number, quietMs?: number }} [opts]
+    @returns {(dx: number, dy: number, t: number) => -1 | 0 | 1} */
+export function wheelPager({ threshold = 40, quietMs = 220 } = {}) {
+  let sum = 0;
+  let last = Number.NEGATIVE_INFINITY;
+  let spent = false;
+  return (dx, dy, t) => {
+    if (t - last > quietMs) {
+      sum = 0;
+      spent = false;
+    }
+    last = t;
+    if (spent || Math.abs(dx) <= Math.abs(dy)) return 0;
+    sum += dx;
+    if (Math.abs(sum) < threshold) return 0;
+    spent = true;
+    return sum > 0 ? 1 : -1;
+  };
+}

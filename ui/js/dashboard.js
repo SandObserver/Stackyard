@@ -22,14 +22,15 @@ import {
   q,
   qa,
   qi,
+  scrollsSideways,
   setUserText,
   storeGet,
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=a282f4a9';
+} from '/js/utils.js?v=0d64dfd3';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=2346ae96';
+import { initSpotlight } from '/js/spotlight.js?v=e89d7f89';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=5579776a';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=dbe542e1';
@@ -45,7 +46,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=f46cc64f';
+} from '/js/ui.js?v=3c85d5d7';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=349a741d';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=1e0ab5d1';
@@ -56,8 +57,9 @@ import {
   desktopPages,
   landingAfterSetup,
   restorePage,
-} from '/js/dashboard-logic.js?v=0d519f8b';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=9345e336';
+  wheelPager,
+} from '/js/dashboard-logic.js?v=6a29cedc';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=fe705356';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
@@ -916,6 +918,26 @@ async function boot() {
     if (e.key === 'ArrowRight') goTo(pg + pageDir());
     if (e.key === 'ArrowLeft') goTo(pg - pageDir());
   });
+  /* A trackpad swipe or a thumb wheel turns one page per gesture. Widget frames
+     hand their wheel to the card, so this also runs over widgets. */
+  const wheelStep = wheelPager();
+  document.addEventListener(
+    'wheel',
+    e => {
+      if (e.ctrlKey) return;
+      if (el('spot').classList.contains('on')) return;
+      if (document.querySelector('.folder-overlay, .folder-overlay-mobile')) return;
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerWidth : 1;
+      const dx = e.deltaX * unit,
+        dy = e.deltaY * unit;
+      if (Math.abs(dx) <= Math.abs(dy) || scrollsSideways(e.target, dx)) return;
+      /* Unhandled, a sideways swipe is the browser's back and forward gesture. */
+      e.preventDefault();
+      const step = wheelStep(dx, dy, e.timeStamp);
+      if (step) goTo(pg + step * pageDir());
+    },
+    { passive: false },
+  );
   let _dMx = 0,
     _dDragging = false;
   document.addEventListener('mousedown', e => {

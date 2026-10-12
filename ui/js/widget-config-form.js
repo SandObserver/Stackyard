@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=5579776a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=352fe8b5';
-import { createListbox } from '/js/listbox.js?v=c0187efc';
-import { renderColorControl } from '/js/admin-color-control.js?v=63cc6464';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=2b48ff3f';
+import { createListbox } from '/js/listbox.js?v=35d8318a';
+import { renderColorControl } from '/js/admin-color-control.js?v=3b14e88c';
 import {
   seedCarried,
   applyOptionSet,
@@ -15,7 +15,7 @@ import {
   visibleFieldFlags,
 } from '/js/admin-logic.js?v=fc7f0836';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
-import { qi } from '/js/utils.js?v=a282f4a9';
+import { qi } from '/js/utils.js?v=0d64dfd3';
 import { formatNumber } from '/js/format-number.js?v=349a741d';
 
 const PE =
