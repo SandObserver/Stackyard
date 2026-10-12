@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The logo on the About page turns its arc once on hover or tap.
 
+- A sideways trackpad swipe or mouse wheel turns dashboard pages, one page per
+  gesture.
+
 ### Changed
 
 - Redesign System Summary with coloured figures in the small size and column
