@@ -138,6 +138,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The connections map key no longer runs over the map with many services or long
   names.
 
+- The settings navigation no longer jumps when the version number loads.
+
+- The settings page no longer shifts sideways when its scrollbar appears.
+
 ### Security
 
 - Changing the port map now asks for stored API keys again instead of sending
