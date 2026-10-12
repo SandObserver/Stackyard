@@ -161,7 +161,7 @@ html,body{min-height:100vh;color:var(--tx);font-family:var(--font-ui);font-size:
    toolbar when a menu opens, which grows the visual viewport past that by the
    toolbar's height and exposes a strip of canvas at the top and the bottom. The
    canvas is this background; a different value here is a visible band. */
-html{background:var(--bg-color,var(--bg-base))}
+html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
 .adm-outer{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:44px 0}
@@ -173,7 +173,7 @@ html{background:var(--bg-color,var(--bg-base))}
 .sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 10px;position:sticky;top:0;align-self:flex-start;max-height:100vh;min-height:calc(100vh - 88px);overflow-y:auto}
 .sb-brand{display:flex;align-items:center;gap:10px;padding:18px 8px 20px;text-decoration:none;color:inherit}
 .sb-name{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:700;color:var(--tx)}
-.sb-ver{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);color:var(--dm-strong);margin-top:1px}
+.sb-ver{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);color:var(--dm-strong);margin-top:1px;min-height:1lh}
 .sb-nav{list-style:none;display:flex;flex-direction:column;gap:0}
 .nl{display:flex;align-items:center;gap:8px;width:100%;padding-block:0;padding-inline:3px 8px;border-radius:22px;border:none;background:transparent;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:400;cursor:pointer;text-align:start;transition:background var(--t),color var(--t);min-height:44px;font-family:inherit}
 .nl:hover{background:var(--ov-soft)}

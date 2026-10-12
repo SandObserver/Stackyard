@@ -176,7 +176,7 @@ test('the menu starts off screen until it is placed', () => {
 
 /* The exposed strip is the page canvas. A different value there is a band. */
 test('the canvas matches the layer that paints the ground', () => {
-  assert.match(css, /html\{background:var\(--bg-color,var\(--bg-base\)\)\}/);
+  assert.match(css, /html\{background:var\(--bg-color,var\(--bg-base\)\)[;}]/);
 });
 
 /* The lists live on <body> while their rows do not, and the admin rebuilds a
