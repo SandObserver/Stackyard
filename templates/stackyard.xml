@@ -24,178 +24,156 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.16.0 - 2026-10-04
+### 1.17.0 - 2026-10-11
 
 ### Added
 
-- Add Allowed Addresses to Settings, General, to list extra host names
-  Stackyard answers on while no password is set.
+- Add an Update Every setting to System Summary, from 5 seconds to 1 minute.
 
-- Add a Type to Search switch to Settings, so typing on the dashboard can stop
-  opening search.
+- Point at a System Summary chart to see a past reading, or at a disk to see its
+  used and total size.
+
+- The logo on the About page turns its arc once on hover or tap.
+
+- A sideways trackpad swipe or mouse wheel turns dashboard pages, one page per
+  gesture.
 
 ### Changed
 
-- Keep widget pages in the browser cache between dashboard loads, and check
-  translation files for changes instead of downloading them again in every
-  widget.
+- Redesign System Summary with coloured figures in the small size and column
+  charts in the medium size.
 
-- Make typing in search faster when folders match, and show the dashboard sooner
-  on slow connections by sending its start-up requests together.
+- Show the System Summary network line in the medium size only.
 
-- Show the Clear app icon background as a checkerboard in the colour picker.
+- Show System Summary temperatures in whole degrees.
 
-- Show numbers in the digits of the language chosen in Settings, such as Persian
-  digits for Persian, instead of the browser's region.
+- Redesign the GitHub widget with a headline figure, a cleaner pull request list
+  and a contribution grid that fills the card.
 
-- Show the Shahanshahi date with its year on the clock in Persian.
+- Point at a day on the GitHub contribution grid to see its date and count.
 
-- Draw the analog clock date at the same weight as the digital clock date.
+- The GitHub widget now follows the light and dark theme.
+
+- Redesign the digital clock as large overlapping hour and minute figures in the
+  analog clock's colours.
+
+- Name a config export downloaded straight from the API `stackyard-config.json`,
+  matching the Export button.
+
+- The connections map places each country's dots on its most populated areas.
+
+- Widgets render sharp on 1x screens.
+
+### Removed
+
+- The GitHub widget no longer offers an extra large size. Existing extra large
+  GitHub widgets become large.
 
 ### Fixed
 
-- Translate the remaining English labels and hints in Settings, the colour
-  picker and the sign-in screen, and show failure reasons in the selected
-  language.
+- About link icons keep their colours after the pointer moves over the list.
 
-- Show counts, totals, badge values and other numbers on the dashboard, in
-  widgets and in Settings in the reader's digits.
+- System Summary reports a Beszel account that cannot read its systems as a
+  sign-in problem instead of an empty hub.
 
-- Mirror folder rows, the phone folder title and widget swipes in right-to-left
-  languages, and keep brackets around names in place.
+- The digital clock shows its digits in the right order on a Persian dashboard.
 
-- Read Prometheus series whose label values contain spaces.
+- Remove the thin dark lines along the sides of the Now Playing widget.
 
-- Say why an address check got no answer, such as a refused connection, an
-  unknown host or an invalid address, instead of a certificate warning.
+- Editing an app no longer drops a summed Live Activity badge's unit, colour and
+  minimum.
 
-- Report a service that hangs up mid-reply at once, instead of as a timeout.
+- Editing an app set up in an older version no longer drops its Live Activity
+  headers, including a stored API key.
 
-- Answer an oversized icon upload or wallpaper link with an error instead of
-  dropping the connection.
+- Every number listed by Fetch in Live Activity now shows on the badge,
+  including Prometheus metrics with labels, names containing dots or dashes,
+  nested lists and plain-number answers.
 
-- Refuse a Settings save that would overwrite dashboard changes made in another
-  tab or on another device.
+- The Live Activity poll interval is now used: each service is read once per
+  interval, however many dashboards are open.
 
-- Keep both changes when two dashboard edits or two Appearance switches are
-  saved in quick succession.
+- A badge whose service answers with an error now keeps its last value, marked
+  out of date, instead of showing 0 or a number from the error page.
 
-- Keep the last saved wallpaper when a wallpaper link fails, or when another
-  setting is saved before a new upload.
+- A badge reading a response too large to read in full now reports it instead of
+  showing a short count.
 
-- Stop a failed Unsplash key save from taking effect until the next config read.
+- A folder badge is now marked out of date when an app inside it fails its poll.
 
-- Use a saved widget's or app's stored key, headers and parameters when its
-  Fetch button is pressed, and show the specific reason a Fetch failed.
+- TrueNAS disk health no longer names TrueNAS 26 in its unsupported-version
+  message.
 
-- Show the Settings load-failure message and Retry button when the config cannot
-  be read, readable in both themes.
+- The time since the last update, shown on a failed widget, now meets text
+  contrast in both themes.
 
-- Raise the contrast of text, badges, fields and icons in the light theme across
-  the dashboard, Settings, the sign-in screens and the DNS and Weather widgets.
+- A widget built from the template no longer shows its previous items under
+  "Nothing here" when a refresh comes back empty.
 
-- Show Settings controls, selected items, keyboard-selected results and text
-  field edges in Windows high contrast mode.
+- Changing a widget's display settings, such as Weather units or city, a GitHub
+  view or a slot colour, no longer asks for its API key or password again.
 
-- Show focus rings on the search, header, poll interval and icon search fields,
-  the Cancel and Import buttons and the Settings sliders.
+- Widgets no longer stay blank when the widget list fails to load once while the
+  dashboard starts.
 
-- Keep keyboard focus in place when Settings redraws or edits an item, inside
-  the sign-in screen, and off switched-off sections of the item editor.
+- System Summary no longer shows Unraid's own error text when Unraid reports a
+  problem.
 
-- Name and announce Settings controls, Fetch and Test results, the current
-  section, group headings and folder app badges for screen readers.
+- A widget manifest whose options are not value and label pairs is now refused
+  at startup instead of showing "undefined" in its settings.
 
-- Open widget links from the keyboard in the DNS, Weather, GitHub, VPN and
-  Backup widgets, and fix Enter on the Now Playing arrows and Books spines.
+- Keep the warning that a stored credential must be entered again on screen
+  after a save.
 
-- Fit Settings and the empty dashboard on narrow and short screens, at 400% zoom
-  and around the iPhone notch, and keep the Settings sidebar on screen.
+- Restore settings from a backup, not only apps, folders and widgets.
 
-- Make folder page dots and badges that open a value list easier to tap.
+- Upgrade a backup from an older release when it is restored.
 
-- Blur the background behind the Settings sign-in and set-password screens on
-  Safari 17.
+- Show a credential as missing after a restore when it was not kept.
 
-- Style the text field in the current password and New Folder dialogs like other
-  Settings fields.
+- Keep the current wallpaper when a restored backup names an uploaded wallpaper
+  this install does not have.
 
-- Stop extra dashboard and widget refreshes after the tab is hidden, the
-  dashboard page is swiped or a phone rotates.
+- Refuse a config whose folder contents are not a list of item ids, instead of
+  saving it and breaking the dashboard.
 
-- Mark badges and health as out of date when the dashboard is signed out,
-  instead of showing frozen values as current.
+- Import a link written as `host:port` from Homepage or Dashy as a working
+  `http://` link.
 
-- Stop the Connections map from adding another animation loop on every refresh
-  and resize.
+- Drop a health-check address from Homepage or Dashy that only the other
+  dashboard can resolve, instead of importing a check that always fails.
 
-- Release the Pi-hole session when a DNS widget refresh fails, so repeated
-  failures no longer lock the widget out.
+- Refuse a Homepage or Dashy file whose merge keys expand too far, instead of
+  freezing the page.
 
-- Show an error instead of stale or empty data when the GitHub, Books, Weather,
-  Backup or System Stats source fails, or a Backup job is deleted.
+- Read a Homepage or Dashy file with very long lines without freezing the page.
 
-- Make the widget template report failures as errors, so widgets copied from it
-  do not show them as empty data.
+- The connections map draws users from small countries such as Belgium,
+  Switzerland, Israel and Singapore.
 
-- Show a disk that failed its SMART check as failed on Disk Health, instead of
-  as a warning.
+- A second service in the same country no longer covers the first one's dots on
+  the connections map.
 
-- Colour each System Stats value with its own slot colour, whatever the slot
-  order.
+- The connections map key no longer runs over the map with many services or long
+  names.
 
-- Show "Unknown timezone" on the clock when its timezone name is not recognised,
-  instead of a blank or stopped clock.
+- The settings navigation no longer jumps when the version number loads.
 
-- Show Persian and other joined-script dates correctly on the analog clock in
-  Safari.
-
-- Show an emoji initial on an app with no icon.
-
-- Open Settings when the browser blocks site storage.
-
-- Stop the container cleanly on `docker stop` instead of killing the dashboard
-  mid-shutdown.
+- The settings page no longer shifts sideways when its scrollbar appears.
 
 ### Security
 
-- Stop a widget provider set to an inherited object name from returning saved
-  API keys.
+- Changing the port map now asks for stored API keys again instead of sending
+  them to the newly mapped host.
 
-- Require the current password to change the password or turn off password
-  protection.
+- Turning on Allow self-signed certificate for an app now asks for its stored
+  API key again before it is sent without certificate checking.
 
-- Keep sign-in on and refuse saves when the config file is damaged or cannot be
-  read, and show how to fix it.
+- Secrets in a widget setting that is declared more than once, one per provider,
+  are no longer sent to the browser or written to the config export.
 
-- Answer only IP addresses, local names and allowed addresses while no password
-  is set. Add each extra domain name in Settings, General, Allowed Addresses.
-
-- End the session on the server at sign-out, so a copied session cookie stops
-  working.
-
-- End every session 30 days after sign-in, even while it is in use.
-
-- Stop a crafted XML or Prometheus reply from a configured service from freezing
-  the API.
-
-- Close health checks and refused redirects against a service that streams
-  without end, so they no longer pile up connections.
-
-- Count the DNS lookup toward the time limit for addresses tested in Settings.
-
-- Keep malformed request bodies, such as a mistyped password, out of the server
-  log.
-
-- Stop requests for unknown widget ids from growing the API's memory.
-
-- Refuse a Dashy or Homepage import file that expands to more than 5,000
-  entries, instead of freezing the page.
-
-- Send a restrictive Content-Security-Policy on API responses.
-
-- Apply the Compose file's capability, privilege and resource limits to the
-  Unraid template.
+- System Summary no longer reuses one Beszel account's login for a widget
+  configured with a different account or password.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
