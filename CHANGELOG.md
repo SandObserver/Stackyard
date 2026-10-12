@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-10-11
+
 ### Added
 
 - Add an Update Every setting to System Summary, from 5 seconds to 1 minute.
@@ -1787,7 +1789,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.16.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.17.0...HEAD
+[1.17.0]: https://github.com/SandObserver/stackyard/compare/v1.16.0...v1.17.0
 [1.16.0]: https://github.com/SandObserver/stackyard/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/SandObserver/stackyard/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/SandObserver/stackyard/compare/v1.13.1...v1.14.0
