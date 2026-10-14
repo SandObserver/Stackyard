@@ -146,3 +146,8 @@ test('translateTree preserves structure, arrays and non-string values', () => {
   const entry = { sizes: ['small', 'medium'], card: null, n: 3, ok: true, nested: { deep: [{ label: 'x' }] } };
   assert.deepEqual(translateTree(entry, t), entry);
 });
+
+test('a manifest description is translated like a label', () => {
+  const dir = widget('desc', { de: { 'w.description': 'Sehen Sie es.' } });
+  assert.equal(translateEntry({ description: 'w.description' }, dir, 'desc', 'de').description, 'Sehen Sie es.');
+});

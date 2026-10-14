@@ -1,5 +1,6 @@
 {
   "widget.label": "در حال پخش",
+  "widget.description": "ببینید روی سرور رسانه‌تان چه چیزی در حال پخش است.",
   "provider.label": "سرور رسانه",
   "provider.opt.plex": "Plex",
   "provider.opt.jellyfin": "Jellyfin",

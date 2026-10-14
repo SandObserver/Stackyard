@@ -454,6 +454,7 @@
     "name": "Nom",
     "type": "Type de widget",
     "typeCustom": "Personnalisé",
+    "typeCustomDesc": "Affichez la page web de votre choix.",
     "namePh": "Mon widget",
     "editName": "Modifier le nom",
     "size": "Taille",

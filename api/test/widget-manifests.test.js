@@ -20,6 +20,7 @@ const WIDGETS_DIR = path.join(__dirname, '..', '..', 'ui', 'widgets');
 const KNOWN_KEYS = new Set([
   'name',
   'label',
+  'description',
   'glyph',
   'sizes',
   'fields',
@@ -67,6 +68,11 @@ for (const name of widgetFolders()) {
     assert.deepEqual(extra, [], `${name}/widget.json: unrecognised key(s) ${extra.join(', ')}`);
   });
 
+  test(`${name}: widget.json has a description for the widget picker`, () => {
+    const manifest = JSON.parse(fs.readFileSync(path.join(WIDGETS_DIR, name, 'widget.json'), 'utf8'));
+    assert.equal(typeof manifest.description, 'string');
+  });
+
   test(`${name}: every declared view points at a file that exists`, () => {
     const dir = path.join(WIDGETS_DIR, name);
     const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'widget.json'), 'utf8'));
@@ -93,4 +99,9 @@ test('the widget template manifest is valid', () => {
   assert.deepEqual(errors, [], `widget-template: ${errors.join('; ')}`);
   const extra = unknownKeys(manifest);
   assert.deepEqual(extra, [], `widget-template: unrecognised key(s) ${extra.join(', ')}`);
+});
+
+test('an empty description is refused', () => {
+  const { errors } = validateManifest('x', { name: 'x', label: 'X', description: '', sizes: ['small'] });
+  assert.ok(errors.some(e => e.includes('"description"')));
 });

@@ -1,6 +1,7 @@
 {
   "name": "dashboard-switch",
   "label": "widget.label",
+  "description": "widget.description",
   "glyph": "panels",
   "sizes": [
     "small",

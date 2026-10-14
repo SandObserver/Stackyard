@@ -1,5 +1,6 @@
 {
   "widget.label": "Uhr",
+  "widget.description": "Zeigen Sie Uhrzeit und Datum in jeder Zeitzone an.",
   "view.digital.label": "Digital",
   "view.analog.label": "Analog",
   "clockStyle.label": "Stil",

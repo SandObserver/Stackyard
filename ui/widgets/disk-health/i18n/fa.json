@@ -1,5 +1,6 @@
 {
   "widget.label": "سلامت دیسک",
+  "widget.description": "سلامت همهٔ دیسک‌های سرورتان را بررسی کنید.",
   "diskProvider.label": "منبع",
   "diskProvider.opt.scrutiny": "Scrutiny",
   "diskProvider.opt.truenas": "TrueNAS",

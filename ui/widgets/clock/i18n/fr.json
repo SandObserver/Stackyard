@@ -1,5 +1,6 @@
 {
   "widget.label": "Horloge",
+  "widget.description": "Affichez l’heure et la date dans n’importe quel fuseau horaire.",
   "view.digital.label": "Numérique",
   "view.analog.label": "Analogique",
   "clockStyle.label": "Style",

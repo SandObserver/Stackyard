@@ -1,5 +1,6 @@
 {
   "widget.label": "Backup",
+  "widget.description": "Sehen Sie, wann Ihre Backups zuletzt liefen und ob sie erfolgreich waren.",
   "slots.label": "Slot",
   "slots.provider.label": "Anbieter",
   "slots.provider.opt.default": "Keiner",

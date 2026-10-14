@@ -1,5 +1,6 @@
 {
   "widget.label": "Now Playing",
+  "widget.description": "See what's playing on your media server.",
   "provider.label": "Media server",
   "provider.opt.plex": "Plex",
   "provider.opt.jellyfin": "Jellyfin",

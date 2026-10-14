@@ -1,5 +1,6 @@
 {
   "widget.label": "Copia de seguridad",
+  "widget.description": "Compruebe cuándo se ejecutaron por última vez sus copias de seguridad y si tuvieron éxito.",
   "slots.label": "Ranura",
   "slots.provider.label": "Proveedor",
   "slots.provider.opt.default": "Ninguno",

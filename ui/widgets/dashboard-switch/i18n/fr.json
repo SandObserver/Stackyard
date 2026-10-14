@@ -1,5 +1,6 @@
 {
   "widget.label": "Changement de tableau de bord",
+  "widget.description": "Passez à vos autres tableaux de bord.",
   "keychains.label": "Porte-clés",
   "keychains.hint": "Laissez la couleur du porte-clés sur Automatique pour la déduire de l’URL du tableau de bord.",
   "keychains.name.label": "Nom",

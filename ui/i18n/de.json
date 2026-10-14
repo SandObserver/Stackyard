@@ -446,6 +446,7 @@
     "name": "Name",
     "type": "Widget-Typ",
     "typeCustom": "Eigenes",
+    "typeCustomDesc": "Zeigen Sie eine beliebige Webseite an.",
     "namePh": "Mein Widget",
     "editName": "Namen bearbeiten",
     "size": "Größe",

@@ -1,5 +1,6 @@
 {
   "widget.label": "کتاب‌ها",
+  "widget.description": "ببینید الان چه می‌خوانید و نوبت کدام کتاب‌های قفسه است.",
   "provider.label": "سرویس",
   "provider.opt.audiobookshelf": "Audiobookshelf",
   "provider.opt.komga": "Komga",

@@ -1,5 +1,6 @@
 {
   "widget.label": "Résumé du système",
+  "widget.description": "Surveillez le processeur, la mémoire, le disque et le réseau de votre serveur.",
   "statProvider.label": "Source",
   "statProvider.opt.system": "Cette machine",
   "statProvider.opt.glances": "Glances",

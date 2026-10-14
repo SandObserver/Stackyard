@@ -1,6 +1,7 @@
 {
   "name": "disk-health",
   "label": "widget.label",
+  "description": "widget.description",
   "appearance": "dark",
   "card": "graphite",
   "glyph": "drive",

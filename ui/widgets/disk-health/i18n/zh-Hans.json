@@ -1,5 +1,6 @@
 {
   "widget.label": "磁盘健康",
+  "widget.description": "检查服务器中每块硬盘的健康状况。",
   "diskProvider.label": "数据源",
   "diskProvider.opt.scrutiny": "Scrutiny",
   "diskProvider.opt.truenas": "TrueNAS",

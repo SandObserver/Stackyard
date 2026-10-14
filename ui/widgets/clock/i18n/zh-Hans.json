@@ -1,5 +1,6 @@
 {
   "widget.label": "时钟",
+  "widget.description": "显示任意时区的时间和日期。",
   "view.digital.label": "数字",
   "view.analog.label": "指针",
   "clockStyle.label": "样式",

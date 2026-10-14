@@ -1,5 +1,6 @@
 {
   "widget.label": "连接",
+  "widget.description": "在地图上查看访客的来源，或检查 VPN 状态。",
   "view.map.label": "地图",
   "view.vpn.label": "VPN",
   "view.label": "视图",

@@ -1,5 +1,6 @@
 {
   "widget.label": "Laufwerkszustand",
+  "widget.description": "Prüfen Sie den Zustand jedes Laufwerks in Ihrem Server.",
   "diskProvider.label": "Quelle",
   "diskProvider.opt.scrutiny": "Scrutiny",
   "diskProvider.opt.truenas": "TrueNAS",

@@ -1,5 +1,6 @@
 {
   "widget.label": "Reproduciendo",
+  "widget.description": "Vea qué se está reproduciendo en su servidor multimedia.",
   "provider.label": "Servidor multimedia",
   "provider.opt.plex": "Plex",
   "provider.opt.jellyfin": "Jellyfin",

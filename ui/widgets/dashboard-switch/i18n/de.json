@@ -1,5 +1,6 @@
 {
   "widget.label": "Dashboard-Wechsel",
+  "widget.description": "Wechseln Sie zu Ihren anderen Dashboards.",
   "keychains.label": "Schlüsselbund",
   "keychains.hint": "Anhängerfarbe auf Automatisch lassen, um sie aus der Dashboard-URL abzuleiten.",
   "keychains.name.label": "Name",

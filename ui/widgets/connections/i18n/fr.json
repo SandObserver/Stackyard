@@ -1,5 +1,6 @@
 {
   "widget.label": "Connexions",
+  "widget.description": "Voyez sur une carte d’où se connectent vos visiteurs, ou vérifiez votre VPN.",
   "view.map.label": "Carte",
   "view.vpn.label": "VPN",
   "view.label": "Vue",

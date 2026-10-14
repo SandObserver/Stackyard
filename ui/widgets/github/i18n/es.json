@@ -1,5 +1,6 @@
 {
   "widget.label": "GitHub",
+  "widget.description": "Siga sus pull requests abiertas o su gráfico de contribuciones.",
   "view.prs.label": "Pull requests",
   "view.contributions.label": "Contribuciones",
   "githubView.label": "Vista",

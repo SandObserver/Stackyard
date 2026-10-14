@@ -438,6 +438,7 @@
     "name": "名称",
     "type": "小组件类型",
     "typeCustom": "自定义",
+    "typeCustomDesc": "显示任意网页。",
     "namePh": "我的小组件",
     "editName": "编辑名称",
     "size": "尺寸",

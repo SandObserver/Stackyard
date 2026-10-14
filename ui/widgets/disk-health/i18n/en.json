@@ -1,5 +1,6 @@
 {
   "widget.label": "Disk Health",
+  "widget.description": "Check the health of every drive in your server.",
   "diskProvider.label": "Source",
   "diskProvider.opt.scrutiny": "Scrutiny",
   "diskProvider.opt.truenas": "TrueNAS",

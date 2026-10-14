@@ -1,6 +1,7 @@
 {
   "name": "clock",
   "label": "widget.label",
+  "description": "widget.description",
   "glyph": "clock",
   "sizes": [
     "small"

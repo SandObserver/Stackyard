@@ -1,5 +1,6 @@
 {
   "widget.label": "天气",
+  "widget.description": "查看某地的当前天气。",
   "provider.label": "服务",
   "provider.opt.openmeteo": "Open-Meteo",
   "provider.opt.openweather": "OpenWeather",

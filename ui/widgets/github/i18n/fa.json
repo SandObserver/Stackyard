@@ -1,5 +1,6 @@
 {
   "widget.label": "GitHub",
+  "widget.description": "درخواست‌های ادغام باز یا نمودار مشارکتتان را دنبال کنید.",
   "view.prs.label": "درخواست‌های ادغام",
   "view.contributions.label": "مشارکت‌ها",
   "githubView.label": "نما",

@@ -1,5 +1,6 @@
 {
   "widget.label": "آب‌وهوا",
+  "widget.description": "آب‌وهوای فعلی یک مکان را ببینید.",
   "provider.label": "سرویس",
   "provider.opt.openmeteo": "Open-Meteo",
   "provider.opt.openweather": "OpenWeather",
