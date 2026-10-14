@@ -31,3 +31,31 @@ test('the headline takes the readable ink, not the raw segment colour', () => {
   const fn = /function showHeadline\(\)[\s\S]*?\n\}/.exec(page)?.[0] ?? '';
   assert.match(fn, /pctEl\.style\.color = readableInk\(s\.color, 3\)/);
 });
+
+test('the legend names every segment on show, so the ribbons do not rest on colour', () => {
+  const fn = /function renderLegend\(segs\) \{[\s\S]*?\n\}/.exec(page)?.[0] ?? '';
+  const el = {
+    hidden: true,
+    items: [],
+    replaceChildren(...c) {
+      this.items = c;
+    },
+  };
+  const mk = () => ({
+    style: { setProperty() {} },
+    parts: [],
+    append(...p) {
+      this.parts.push(...p);
+    },
+  });
+  const doc = { getElementById: () => el, createElement: mk };
+  new Function(
+    'document',
+    `${fn}; renderLegend([{ label: 'Allowed', color: '#30D158' }, { label: 'Blocked', color: '#FF4245' }]);`,
+  )(doc);
+  assert.equal(el.hidden, false);
+  assert.deepEqual(
+    el.items.map(i => i.parts[1]),
+    ['Allowed', 'Blocked'],
+  );
+});

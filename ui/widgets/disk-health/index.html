@@ -74,6 +74,10 @@
 
   #nums { height:13px; flex-shrink:0; display:flex; align-items:center; padding:2px 4px 0; }
   #nums span { flex:1; text-align:center; font-size:6px; font-weight:500; color:rgba(255,255,255,0.28); }
+  #alert { display:flex; align-items:center; gap:5px; padding:5px 2px 0; font-size:11px; font-weight:600;
+    line-height:1.2; color:rgba(255,255,255,0.92); }
+  #alert::before { content:''; width:6px; height:6px; border-radius:50%; flex-shrink:0; background:#FF4245; }
+  #alert[hidden], #nums[hidden] { display:none; }
 
   #right { width:20px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:7px; padding-top:1px; }
   #pwrbtn {
@@ -128,6 +132,7 @@
     <div id="left">
       <div id="bays"></div>
       <div id="nums"></div>
+      <div id="alert" hidden></div>
     </div>
     <div id="right">
       <div id="pwrbtn" aria-hidden="true">
@@ -301,6 +306,21 @@ function update() {
       bay.setAttribute('aria-label', wt('ui.bayEmpty','Bay {n}: empty').replace('{n}', formatNumber(i + 1)));
     }
   }
+  updateAlert();
+}
+
+/* Names failed bays in words, so a failure does not rest on the LED colour. */
+function updateAlert() {
+  const failed = [];
+  bayData.forEach((d, i) => {
+    if (d && !unread(d) && ledClass(d.device_status ?? 0, d.hasSmart ?? false) === 'red') failed.push(formatNumber(i + 1));
+  });
+  const alertEl = document.getElementById('alert');
+  alertEl.hidden = !failed.length;
+  document.getElementById('nums').hidden = failed.length > 0;
+  alertEl.textContent = failed.length === 1
+    ? wt('ui.bayFailed', 'Bay {n} failed').replace('{n}', failed[0])
+    : wt('ui.baysFailed', 'Bays {list} failed').replace('{list}', failed.join(', '));
 }
 
 function openBay(i) {

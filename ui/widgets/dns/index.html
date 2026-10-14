@@ -31,10 +31,16 @@
 
   .msg { position:absolute; inset-inline:0; bottom:0; }
 
+  .legend { display:flex; flex-wrap:wrap; gap:2px 10px; margin-top:8px; flex-shrink:0;
+    font-size:11px; font-weight:600; line-height:1.2; color:rgba(235,235,245,0.6); }
+  .legend[hidden] { display:none; }
+  .legend span { display:flex; align-items:center; gap:4px; white-space:nowrap; }
+  .legend i { width:6px; height:6px; border-radius:50%; background:var(--c); }
+
   .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
   .src-node { fill:#fff }
   html[data-theme="light"] .src-node { fill:#1c1c1e }
-  html[data-theme="light"] .sub { color:rgba(0,0,0,0.62) }
+  html[data-theme="light"] .sub, html[data-theme="light"] .legend { color:rgba(0,0,0,0.62) }
 </style>
 </head>
 <body>
@@ -47,6 +53,7 @@
     <svg id="svg" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true"></svg>
     <div class="msg" id="msg" hidden></div>
   </div>
+  <div class="legend" id="legend" aria-hidden="true" hidden></div>
   <div class="sr-only" id="sr"></div>
 </div>
 
@@ -98,7 +105,7 @@ async function boot() {
   addEventListener('resize', () => { if (_last) render(_last); });
 }
 
-const state = errorState({ root: widgetEl, content: [pctEl, svgEl], caption: msgEl });
+const state = errorState({ root: widgetEl, content: [pctEl, svgEl, document.getElementById('legend')], caption: msgEl });
 
 const gfetch = () => fetchData('stats');
 
@@ -142,6 +149,7 @@ function render(m) {
 
   _segs = segs;
   if (_sel >= segs.length) _sel = -1;
+  renderLegend(segs);
   if (!segs.length) { svgEl.innerHTML=''; return; }
 
   const sum = segs.reduce((a,s)=>a+s.value,0);
@@ -164,6 +172,18 @@ function render(m) {
 
   svgEl.innerHTML = links + nodes;
   highlight();
+}
+
+function renderLegend(segs) {
+  const el = document.getElementById('legend');
+  el.replaceChildren(...segs.map(s => {
+    const item = document.createElement('span');
+    const dot = document.createElement('i');
+    dot.style.setProperty('--c', s.color);
+    item.append(dot, s.label);
+    return item;
+  }));
+  el.hidden = !segs.length;
 }
 
 function ribbonY(s, x) {

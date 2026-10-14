@@ -22,6 +22,8 @@
   "ui.failed": "Failed",
   "ui.bay": "Bay {n}",
   "ui.bayEmpty": "Bay {n}: empty",
+  "ui.bayFailed": "Bay {n} failed",
+  "ui.baysFailed": "Bays {list} failed",
   "ui.noDrives": "No drives reported",
   "ui.notReporting": "Not reporting"
 }

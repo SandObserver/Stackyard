@@ -22,6 +22,8 @@
   "ui.failed": "En échec",
   "ui.bay": "Baie {n}",
   "ui.bayEmpty": "Baie {n} : vide",
+  "ui.bayFailed": "Baie {n} en échec",
+  "ui.baysFailed": "Baies {list} en échec",
   "ui.noDrives": "Aucun disque signalé",
   "ui.notReporting": "Ne répond plus"
 }
