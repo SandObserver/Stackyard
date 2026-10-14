@@ -56,6 +56,22 @@ test('consecutive failures past staleAfter report stale', async () => {
   );
 });
 
+test('a widget polling every five minutes or slower is stale after one failure', async () => {
+  const errors = [];
+  const p = poll({
+    interval: 300000,
+    fetch: async () => {
+      throw new Error('down');
+    },
+    onError: info => errors.push(info),
+  });
+  await tick(20);
+  p.stop();
+
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].stale, true);
+});
+
 test('interval can be a function of the last successful result', async () => {
   const seen = [];
   const p = poll({

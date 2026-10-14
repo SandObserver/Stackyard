@@ -512,9 +512,13 @@ export function setPollRate(rate) {
 
 if (typeof window !== 'undefined') /** @type {any} */ (window).__setPollRate = setPollRate;
 
+const SLOW_POLL_MS = 300000;
+
 export function poll(opts = {}) {
   const intervalFor = d => (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000;
-  const staleAfter = opts.staleAfter != null ? opts.staleAfter : 2;
+  /* A slow widget that waits for a second failure shows data two intervals old
+     with no sign of it. */
+  const staleAfter = () => (opts.staleAfter != null ? opts.staleAfter : intervalFor(lastData) >= SLOW_POLL_MS ? 1 : 2);
   const isEmpty = opts.isEmpty || (() => false);
   const doFetch = opts.fetch || (() => fetchData(opts.endpoint));
   const custom = typeof opts.onError === 'function'; /* widget draws its own error UI */
@@ -549,7 +553,7 @@ export function poll(opts = {}) {
     } catch (e) {
       if (stopped) return;
       fails++;
-      const stale = fails >= staleAfter;
+      const stale = fails >= staleAfter();
       if (custom) opts.onError({ error: e, everOk, stale, since: lastOk ? sinceLabel(lastOk) : '' });
       else if (!everOk || stale) ov.fail(e, { since: everOk && lastOk ? sinceLabel(lastOk) : '' });
     }
