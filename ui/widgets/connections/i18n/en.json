@@ -19,6 +19,8 @@
   "vpn.token.label": "Access Token (PAT)",
   "vpn.href.label": "Click URL",
   "vpn.href.placeholder": "http://your-server:8000",
+  "vpn.showIp.label": "Show IP Address",
+  "vpn.showIp.hint": "Visible to anyone who can see the dashboard. When the tunnel is down this is your home address.",
   "vpn.color.label": "Dot Color",
   "services.label": "Service",
   "services.type.label": "Service",

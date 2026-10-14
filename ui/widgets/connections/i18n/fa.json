@@ -19,6 +19,8 @@
   "vpn.token.label": "توکن دسترسی (PAT)",
   "vpn.href.label": "آدرس کلیک",
   "vpn.href.placeholder": "http://your-server:8000",
+  "vpn.showIp.label": "نمایش آدرس IP",
+  "vpn.showIp.hint": "برای هر کسی که داشبورد را می‌بیند نمایان است. وقتی تونل قطع است، این آدرس خانهٔ شماست.",
   "vpn.color.label": "رنگ نقطه",
   "services.label": "سرویس",
   "services.type.label": "سرویس",

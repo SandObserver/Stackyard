@@ -19,6 +19,8 @@
   "vpn.token.label": "Token de acceso (PAT)",
   "vpn.href.label": "URL de clic",
   "vpn.href.placeholder": "http://your-server:8000",
+  "vpn.showIp.label": "Mostrar dirección IP",
+  "vpn.showIp.hint": "Visible para cualquiera que vea el panel. Si el túnel está caído, es la dirección de su casa.",
   "vpn.color.label": "Color del punto",
   "services.label": "Servicio",
   "services.type.label": "Servicio",

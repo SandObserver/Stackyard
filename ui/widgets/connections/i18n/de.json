@@ -19,6 +19,8 @@
   "vpn.token.label": "Zugriffstoken (PAT)",
   "vpn.href.label": "Klick-URL",
   "vpn.href.placeholder": "http://your-server:8000",
+  "vpn.showIp.label": "IP-Adresse anzeigen",
+  "vpn.showIp.hint": "Für alle sichtbar, die das Dashboard sehen. Ist der Tunnel getrennt, ist das Ihre Heimadresse.",
   "vpn.color.label": "Punktfarbe",
   "services.label": "Dienst",
   "services.type.label": "Dienst",

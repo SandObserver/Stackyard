@@ -19,6 +19,8 @@
   "vpn.token.label": "访问令牌（PAT）",
   "vpn.href.label": "点击跳转地址",
   "vpn.href.placeholder": "http://your-server:8000",
+  "vpn.showIp.label": "显示 IP 地址",
+  "vpn.showIp.hint": "所有能看到仪表板的人都能看到。隧道断开时，这是你家里的地址。",
   "vpn.color.label": "圆点颜色",
   "services.label": "服务",
   "services.type.label": "服务",
