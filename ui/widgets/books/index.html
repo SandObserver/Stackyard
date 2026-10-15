@@ -85,7 +85,7 @@
 <body>
 <div class="card" id="card" role="group" aria-label="Books">
   <div class="bk-link" id="bk-link"></div>
-  <div class="head" id="lbl">READING</div>
+  <div class="head" id="lbl"></div>
   <div class="shelves" id="shelves">
     <div class="shelf-wrap">
       <span class="shelf-lbl" hidden></span>
@@ -101,9 +101,8 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, formatNumber, errorState } from '/js/widget-toolbox.js?v=7d38d7fb';
+  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=7d38d7fb';
   await loadStrings();
-  document.getElementById('lbl').textContent = wt('ui.reading', 'Reading');
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const API='/api';
   const params=new URLSearchParams(location.search);
@@ -162,6 +161,7 @@
 
   function render(books,list,shelf){
     list.innerHTML='';
+    list.removeAttribute('aria-hidden');
     list.classList.remove('sparse','pointing');
     shelf.querySelectorAll('.empty').forEach(n=>n.remove());
     /* Removing the bullets drops the list semantics in one engine, so the role
@@ -210,7 +210,24 @@
     });
   }
 
+  function paintPlaceholders(){
+    lbl.replaceChildren(placeholder(72,9));
+    for(const bay of bays){
+      const n=Math.min(SHOW,Math.max(5,Math.floor((bay.list.clientWidth||140)/18)));
+      bay.list.setAttribute('aria-hidden','true');
+      bay.list.replaceChildren(...Array.from({length:n},(_,i)=>{
+        const ph=placeholder(14+(i*7)%5,0,1.5);
+        ph.style.height=(62+(i*37)%32)+'%';
+        ph.style.borderRadius='1.5px 1.5px 0 0';
+        return ph;
+      }));
+    }
+    fT.replaceChildren(placeholder(90,10));
+    fP.replaceChildren(placeholder(36,10));
+  }
+
   async function boot(){
+    paintPlaceholders();
     try{
       const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
       if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
@@ -223,7 +240,11 @@
 
     poll({ interval:POLL_MS,
       isEmpty:d=>(Array.isArray(d&&d.shelves)?d.shelves:[]).every(sh=>!(sh&&Array.isArray(sh.books)&&sh.books.length)),
-      onEmpty:()=>{ paintFoot(null); state.empty(wt('ui.noBooks','No books')); },
+      onEmpty:d=>{
+        lbl.textContent=SHELVES>1?wt('widget.label','Books'):shelfName((d&&d.shelves||[])[0]);
+        for(const bay of bays){ bay.list.replaceChildren(); bay.list.removeAttribute('aria-hidden'); }
+        paintFoot(null); state.empty(wt('ui.noBooks','No books'));
+      },
       onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); },
       render:d=>{
       state.ok();

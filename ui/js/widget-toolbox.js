@@ -488,6 +488,32 @@ export function errorState(opts = {}) {
   return _errorState(Object.assign({ t: _t }, opts));
 }
 
+const PH_STYLE_ID = 'wt-ph-css';
+const PH_CSS =
+  '.wt-ph{display:inline-block;vertical-align:middle;flex:none;border-radius:4px;' +
+  'background:var(--wt-ph,rgba(235,235,245,0.16))}' +
+  'html[data-theme="light"] .wt-ph{background:var(--wt-ph,rgba(60,60,67,0.12))}';
+
+/** A soft rounded shape that stands in for content still loading. Set --wt-ph
+    on an ancestor to recolour it for a light surface.
+    @param {number|string} width px, or any CSS length @param {number} [height] px
+    @param {number} [radius] px @returns {HTMLElement} */
+export function placeholder(width, height = 10, radius = 4) {
+  if (!document.getElementById(PH_STYLE_ID)) {
+    const s = document.createElement('style');
+    s.id = PH_STYLE_ID;
+    s.textContent = PH_CSS;
+    document.head.appendChild(s);
+  }
+  const el = document.createElement('span');
+  el.className = 'wt-ph';
+  el.setAttribute('aria-hidden', 'true');
+  el.style.width = typeof width === 'number' ? width + 'px' : width;
+  el.style.height = height + 'px';
+  el.style.borderRadius = radius + 'px';
+  return el;
+}
+
 /** The reader's wording for a failure, for a widget that draws its own state.
     @param {unknown} err a caught error, or { kind } from a response
     @returns {string} */
