@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The DNS widget labels its chart, so allowed, cached and blocked queries no
   longer rely on colour alone.
 
+- Widget text is never smaller than 11 points, including book spines, disk bay
+  labels, backup cards and the Now Playing band.
+
+- Book spine titles and disk bay labels no longer shift letter by letter on
+  hover.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
