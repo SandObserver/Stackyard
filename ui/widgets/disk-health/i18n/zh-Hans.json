@@ -22,6 +22,8 @@
   "ui.failed": "故障",
   "ui.bay": "硬盘位 {n}",
   "ui.bayEmpty": "硬盘位 {n}：空",
+  "ui.bayFailed": "硬盘位 {n} 故障",
+  "ui.baysFailed": "硬盘位 {list} 故障",
   "ui.noDrives": "未报告任何硬盘",
   "ui.notReporting": "未上报"
 }

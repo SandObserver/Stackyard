@@ -22,6 +22,8 @@
   "ui.failed": "Fallido",
   "ui.bay": "Bahía {n}",
   "ui.bayEmpty": "Bahía {n}: vacía",
+  "ui.bayFailed": "Bahía {n} falló",
+  "ui.baysFailed": "Bahías {list} fallaron",
   "ui.noDrives": "No se han detectado unidades",
   "ui.notReporting": "No responde"
 }
