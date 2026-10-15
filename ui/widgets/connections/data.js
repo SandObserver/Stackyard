@@ -209,6 +209,7 @@ async function vpnView(ctx) {
         } catch {}
         out.connected = !!out.ip || out.status === 'running';
       }
+      if (vpn.showIp !== true) delete out.ip;
     } else {
       const base = normBase(vpn.url).replace(/\/+$/, '');
       if (!base) ctx.fail('No management API URL configured', { kind: ctx.KIND.INVALID });
