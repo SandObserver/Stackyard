@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The widget picker shows a one-line description of each widget type.
 
+- Widgets open their service when no Click URL is set, if the browser can reach
+  its address.
+
+- Backup, Now Playing and System Summary open the job, item or system they show,
+  under the Click URL when one is set.
+
+- System Summary and the Connections map have a Click URL setting.
+
 ### Changed
 
 - The small VPN view leaves more room between its text and the card edge.
