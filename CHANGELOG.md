@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The widget picker shows a one-line description of each widget type.
+
 ### Changed
 
 - The small VPN view leaves more room between its text and the card edge.
