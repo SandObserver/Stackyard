@@ -17,14 +17,14 @@
 
   #shell {
     width:100%; height:100%;
-    padding:7px;
+    padding:7px; padding-inline-end:0;
   }
   #panel {
     width:100%; height:100%;
     border-radius:15px;
     background:#2C2C2E;
-    padding:11px;
-    display:flex; gap:7px;
+    padding:11px; padding-inline-end:0;
+    display:flex; gap:8px;
     position:relative;
   }
 
@@ -32,46 +32,56 @@
 
   #bays {
     flex:1; min-height:0;
-    display:flex; gap:3px;
-    border-radius:6px; padding:3px;
+    display:flex;
+    border-radius:10px; padding:1.5px;
     background:#1C1C1E;
     box-shadow:0 0 0 2px #1C1C1E;
   }
-  #root.size-medium #bays { gap:2px; }
+  #root.size-medium #bays { padding:2px; }
 
   .bay {
-    will-change:transform;
     flex:1 1 0; min-width:0;
-    border-radius:4px;
+    border:1.5px solid transparent;
+    background-clip:padding-box;
+    border-radius:8.5px;
     position:relative;
     overflow:hidden;
-    background:#3A3A3C;
+    background-color:#3A3A3C;
     cursor:default;
     display:flex;
     transform-origin:center;
-    transition: transform 0.2s cubic-bezier(.34,1.2,.64,1), box-shadow 0.2s ease, background 0.2s ease;
+    transition: transform 0.2s cubic-bezier(.34,1.2,.64,1), box-shadow 0.2s ease, background-color 0.2s ease;
   }
-  .bay.empty { background:#2C2C2E; }
-  .bay.unread { background:#2C2C2E; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.22); }
+  .bay.empty { background-color:#2C2C2E; }
+  .bay.unread { background-color:#2C2C2E; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.22); }
   .bay.unread .bay-name { color:rgba(255,255,255,0.28); }
   .bay.assigned { cursor:pointer; }
+  #root.size-medium .bay { border-width:1px; border-radius:8px; }
   .bay.assigned:hover,
   .bay.assigned.touch-active {
+    will-change:transform;
     transform: scale(1.08);
-    background:#48484A;
+    background-color:#48484A;
     z-index:3;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.06);
   }
 
   .bay-name {
     flex:1; min-height:0;
     display:flex; align-items:center; justify-content:center;
-    writing-mode:vertical-rl; transform:rotate(180deg);
-    font-size:11px; font-weight:600; letter-spacing:0.04em;
-    color:rgba(255,255,255,0.4);
+    writing-mode:vertical-rl;
+    font-size:11px; font-weight:500; letter-spacing:0.08em;
+    color:rgba(255,255,255,0.34);
     white-space:nowrap; overflow:hidden; pointer-events:none;
   }
-  #root.size-medium .bay-name { letter-spacing:0.02em; }
+  .led {
+    position:absolute; top:6px; inset-inline:0; margin-inline:auto;
+    width:6px; height:6px; border-radius:50%;
+    background:rgba(0,0,0,0.42); pointer-events:none;
+  }
+  .bay.empty .led { display:none; }
+  .led.green { background:#30D158; } .led.red { background:#FF4245; }
+  .led.unread { background:transparent; box-shadow: inset 0 0 0 1.5px #8E8E93; }
 
   #nums { height:16px; flex-shrink:0; display:flex; align-items:center; padding:3px 4px 0; }
   #nums span { flex:1; text-align:center; font-size:11px; font-weight:500; color:rgba(255,255,255,0.4); }
@@ -80,28 +90,32 @@
   #alert::before { content:''; width:6px; height:6px; border-radius:50%; flex-shrink:0; background:#FF4245; }
   #alert[hidden], #nums[hidden] { display:none; }
 
-  #right { width:20px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:7px; padding-top:1px; }
+  #right {
+    width:34px; flex-shrink:0;
+    display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:1px;
+    border-inline-start:1px solid rgba(0,0,0,0.55);
+  }
   #pwrbtn {
-    width:18px; height:18px; border-radius:50%;
+    width:14px; height:14px; border-radius:50%;
     background:#2C2C2E;
     display:flex; align-items:center; justify-content:center;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
     flex-shrink:0;
   }
   #usb {
-    width:12px; height:18px; border-radius:3px;
+    width:8px; height:13px; border-radius:2.5px;
     background:#1C1C1E; position:relative; flex-shrink:0;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
   }
   #usb::before {
-    content:''; position:absolute; top:2px; bottom:2px; left:3px;
-    width:3.5px; border-radius:2px; background:#0091FF;
+    content:''; position:absolute; top:2px; bottom:2px; left:2px;
+    width:2.5px; border-radius:2px; background:#0091FF;
   }
-  #dots { margin-top:auto; display:flex; flex-direction:column; align-items:center; gap:8px; padding-bottom:2px; }
-  #root.size-medium #dots { gap:3.5px; }
-  #dots i { width:5.5px; height:5.5px; border-radius:50%; background:#3A3A3C; transition: background 0.2s; }
-  #dots i.green { background:#30D158; } #dots i.red { background:#FF4245; }
-  #dots i.unread { background:transparent; box-shadow: inset 0 0 0 1.5px #8E8E93; }
+  #sysled {
+    margin-top:auto; margin-bottom:2px; flex-shrink:0;
+    width:4.5px; height:4.5px; border-radius:50%; background:#3A3A3C;
+  }
+  #sysled.green { background:#30D158; }
 
   #tip {
     position:absolute; z-index:20;
@@ -110,7 +124,7 @@
     border-radius:8px; padding:7px 10px;
     box-shadow:0 6px 18px rgba(0,0,0,0.55), inset 0 0 0 0.5px rgba(255,255,255,0.1);
     display:flex; flex-direction:column; gap:3px;
-    max-width:150px; pointer-events:none;
+    pointer-events:none;
     opacity:0; transform:translateY(2px);
     transition: opacity 0.13s ease, transform 0.13s ease;
   }
@@ -123,7 +137,7 @@
   #tip .meta { font-size:11px; font-weight:500; color:rgba(255,255,255,0.62); white-space:nowrap; padding-inline-start:13px; }
 
   @media (prefers-reduced-motion: reduce){
-    .bay,#dots i,#tip{transition:none !important}
+    .bay,#tip{transition:none !important}
   }
 </style>
 </head>
@@ -137,19 +151,19 @@
     </div>
     <div id="right">
       <div id="pwrbtn" aria-hidden="true">
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+        <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
           <path d="M6 1v3.2" stroke="rgba(255,255,255,0.6)" stroke-width="1.3" stroke-linecap="round"/>
           <path d="M3.8 2.9A4.3 4.3 0 1 0 8.2 2.9" stroke="rgba(255,255,255,0.6)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
         </svg>
       </div>
       <div id="usb" aria-hidden="true"></div>
-      <div id="dots"></div>
-    </div>
-    <div id="tip" role="status" aria-live="polite">
-      <div class="t1"><i id="tip-led"></i><span class="nm" id="tip-name"></span></div>
-      <div class="meta" id="tip-meta"></div>
+      <i id="sysled" aria-hidden="true"></i>
     </div>
   </div></div>
+  <div id="tip" role="status" aria-live="polite">
+    <div class="t1"><i id="tip-led"></i><span class="nm" id="tip-name"></span></div>
+    <div class="meta" id="tip-meta"></div>
+  </div>
 </div>
 
 <script type="module">
@@ -167,7 +181,7 @@ rootEl.classList.add(size === 'medium' ? 'size-medium' : 'size-small');
 
 if (isMobile) {
   const s = document.createElement('style');
-  s.textContent = `#panel { padding:9px; } #right { width:22px; }`;
+  s.textContent = `#panel { padding:9px; padding-inline-end:0; }`;
   document.head.appendChild(s);
 }
 
@@ -240,6 +254,7 @@ function positionTip(i) {
   const rootRect = unzoom(rootEl.getBoundingClientRect());
   const bayRect  = unzoom(bay.getBoundingClientRect());
   tipEl.style.left = '0px'; tipEl.style.top = '0px';
+  tipEl.style.maxWidth = (rootRect.width - 8) + 'px';
   const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
   const bayCx = (bayRect.left - rootRect.left) + bayRect.width / 2;
   let left = bayCx - tw / 2;
@@ -255,23 +270,18 @@ function positionTip(i) {
 function build() {
   const baysEl = document.getElementById('bays');
   const numsEl = document.getElementById('nums');
-  const dotsEl = document.getElementById('dots');
-  baysEl.innerHTML = ''; numsEl.innerHTML = ''; dotsEl.innerHTML = '';
+  baysEl.innerHTML = ''; numsEl.innerHTML = '';
   bayEls = [];
   for (let i = 0; i < BAY_COUNT; i++) {
     const bay = document.createElement('div');
     bay.className = 'bay';
-    bay.innerHTML = `<div class="bay-name" id="nm-${i}"></div>`;
+    bay.innerHTML = `<div class="bay-name" id="nm-${i}"></div><i class="led" id="led-${i}"></i>`;
     baysEl.appendChild(bay);
     bayEls.push(bay);
 
     const num = document.createElement('span');
     num.textContent = formatNumber(i + 1);
     numsEl.appendChild(num);
-
-    const dot = document.createElement('i');
-    dot.id = `dot-${i}`;
-    dotsEl.appendChild(dot);
 
     addEvents(bay, i);
   }
@@ -282,10 +292,10 @@ function update() {
     const d   = bayData[i];
     const bay = bayEls[i];
     const nm  = document.getElementById(`nm-${i}`);
-    const dot = document.getElementById(`dot-${i}`);
+    const led = document.getElementById(`led-${i}`);
     if (unread(d)) {
       bay.classList.add('unread'); bay.classList.remove('empty', 'assigned');
-      dot.className = 'unread';
+      led.className = 'led unread';
       nm.textContent = shortName(d);
       bay.setAttribute('role', 'img'); bay.removeAttribute('tabindex');
       bay.setAttribute('aria-label',
@@ -293,7 +303,7 @@ function update() {
     } else if (d) {
       bay.classList.add('assigned'); bay.classList.remove('empty', 'unread');
       const lc = ledClass(d.device_status ?? 0, d.hasSmart ?? false);
-      dot.className = lc || '';
+      led.className = lc ? 'led ' + lc : 'led';
       nm.textContent = shortName(d);
       const cap = fmtCap(d.capacity);
       const st  = statusText(d.device_status ?? 0, d.hasSmart ?? false);
@@ -301,7 +311,7 @@ function update() {
       bay.setAttribute('aria-label', `${wt('ui.bay','Bay {n}').replace('{n}', formatNumber(i + 1))}: ${shortName(d)}${cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
     } else {
       bay.classList.add('empty'); bay.classList.remove('assigned', 'unread');
-      dot.className = '';
+      led.className = 'led';
       nm.textContent = '';
       bay.setAttribute('role','img'); bay.removeAttribute('tabindex');
       bay.setAttribute('aria-label', wt('ui.bayEmpty','Bay {n}: empty').replace('{n}', formatNumber(i + 1)));
@@ -378,6 +388,7 @@ function applyBays(d) {
 build();
 update();
 
+const sysLed = document.getElementById('sysled');
 const state = errorState({
   root: document.getElementById('root'),
   content: document.getElementById('shell'),
@@ -387,10 +398,12 @@ const state = errorState({
 poll({
   fetch: () => fetchData('disk-health'),
   interval: 60_000,
-  render: d => { state.ok(); applyBays(d); },
+  render: d => { state.ok(); sysLed.classList.add('green'); applyBays(d); },
   isEmpty: d => !d || !Array.isArray(d.bays) || d.bays.length === 0,
   onEmpty: () => state.empty(wt('ui.noDrives', 'No drives reported')),
-  onError: ({ error, everOk, stale, since }) => { if (!everOk || stale) state.fail(error, { since, inert: everOk }); },
+  onError: ({ error, everOk, stale, since }) => {
+    if (!everOk || stale) { sysLed.classList.remove('green'); state.fail(error, { since, inert: everOk }); }
+  },
 });
 </script>
 </body>

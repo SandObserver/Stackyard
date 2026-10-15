@@ -66,3 +66,16 @@ test('healthy, unread and SMART-less drives raise no alert', () => {
   assert.equal(els.alert.hidden, true);
   assert.equal(els.nums.hidden, false);
 });
+
+const css = src.slice(src.indexOf('<style>'), src.indexOf('</style>'));
+
+test('bays are spaced by their own border, not a flex gap or a resting layer', () => {
+  assert.doesNotMatch(css.match(/#bays \{[^}]*\}/)[0], /\bgap:/);
+  assert.match(css, /\.bay \{[^}]*border:1\.5px solid transparent;[^}]*background-clip:padding-box;/);
+  assert.doesNotMatch(css.match(/\.bay \{[^}]*\}/)[0], /will-change|background:/);
+});
+
+test('each bay carries its own status light', () => {
+  assert.match(src, /<i class="led" id="led-\$\{i\}"><\/i>/);
+  assert.doesNotMatch(src, /id="dots"/);
+});

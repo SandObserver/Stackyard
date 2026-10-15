@@ -87,7 +87,7 @@ test('a disk bay that reports an error is drawn as neither healthy nor empty', (
   assert.match(src, /const unread = d => !!\(d && d\.error\)/, 'no unread test');
   assert.match(src, /if \(unread\(d\)\) \{\s*\n\s*bay\.classList\.add\('unread'\)/, 'update() does not branch on it');
   assert.match(src, /\.bay\.unread \{/, 'the unread bay has no styling of its own');
-  assert.match(src, /#dots i\.unread \{/, 'the status dot does not mark it');
+  assert.match(src, /\.led\.unread \{/, 'the status light does not mark it');
   assert.ok(
     /openBay\(i\) \{\s*\n\s*const d = bayData\[i\]; if \(!d \|\| unread\(d\)\) return;/.test(src),
     'an unreported bay still opens a device page',
