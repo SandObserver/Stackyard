@@ -27,7 +27,7 @@
   .sub{flex:none;font-size:11px;font-weight:600;line-height:1.12;letter-spacing:.02em;color:#48484A;margin-top:auto;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
   .idle .title{color:#636366;font-weight:600}
-  .sticker{--wt-cap-color:#1C1C1E}
+  .sticker{--wt-cap-color:#1C1C1E;--wt-ph:rgba(60,60,67,0.14)}
   .np-cap{flex:none;flex-wrap:wrap;row-gap:3px}
   .sticker .np-cap b{font-size:12.5px;font-weight:600;line-height:1.2}
   .sticker .np-cap svg{width:14px;height:14px}
@@ -87,7 +87,7 @@
   <div class="np-link" id="np-link"></div>
   <div class="stage">
     <div class="sticker" id="sticker">
-      <div class="title" id="title">Nothing playing</div>
+      <div class="title" id="title"></div>
       <div class="sub" id="sub"></div>
       <div class="np-cap" id="np-cap" hidden></div>
     </div>
@@ -129,9 +129,8 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits } from '/js/widget-toolbox.js?v=7d38d7fb';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder } from '/js/widget-toolbox.js?v=9f9c7421';
 await loadStrings();
-document.getElementById('title').textContent = wt('ui.nothingPlaying', 'Nothing playing');
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
 document.getElementById('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
 document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next item'));
@@ -245,8 +244,15 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   async function boot(){
     try{
       const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
-      if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
+      if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; provider=(c&&c.widgetConfig&&c.widgetConfig.provider)||''; }
     }catch(e){}
+    const tint=COLORS[provider]||'#8E8E93';
+    reelEl.parentElement.style.color=tint;
+    wEl.style.setProperty('--band',tint);
+    wEl.style.setProperty('--band-ink',INK[provider]||'#FFFFFF');
+    playerEl.textContent=PROVIDER_NAME[provider]||'';
+    titleEl.replaceChildren(placeholder(96,12));
+    subEl.replaceChildren(placeholder(58,9));
     linked=linkTo(linkEl,href);
     const state=errorState({ root:wEl, content:[document.querySelector('.window')],
       caption:document.getElementById('np-cap') });

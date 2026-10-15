@@ -30,6 +30,9 @@
   @media (prefers-reduced-motion: reduce) { .pct, .link { transition:none; } }
 
   .msg { position:absolute; inset-inline:0; bottom:0; }
+  .flow.ph { color:rgba(235,235,245,0.16); }
+  .flow.ph .src-node { fill:currentColor; }
+  html[data-theme="light"] .flow.ph { color:rgba(60,60,67,0.12); }
 
   .legend { display:flex; flex-wrap:wrap; gap:2px 10px; margin-top:8px; flex-shrink:0;
     font-size:11px; font-weight:600; line-height:1.2; color:rgba(235,235,245,0.6); }
@@ -46,7 +49,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="DNS filtering">
   <div class="hero" id="hero">
-    <div class="pct" id="pct">—</div>
+    <div class="pct" id="pct"></div>
     <div class="sub" id="sub-label">Queries Blocked</div>
   </div>
   <div class="flow" id="flow">
@@ -58,7 +61,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, readableInk } from '/js/widget-toolbox.js?v=7d38d7fb';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=9f9c7421';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -91,6 +94,9 @@ function fmt(n) {
 }
 
 async function boot() {
+  pctEl.replaceChildren(placeholder(64, 26, 6));
+  flowEl.classList.add('ph');
+  render({ allowed: 6, cached: 3, blocked: 2 }, true);
   let cfg = null;
   try {
     const r = await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
@@ -122,6 +128,7 @@ function apply(d) {
   const allowed = Math.max(0, total - blocked - cached);
   const pct = total > 0 ? Math.round(blocked / total * 100) : 0;
 
+  flowEl.classList.remove('ph');
   const model = { total, allowed, cached, blocked, pct };
   _last = model;
   render(model);
@@ -142,18 +149,18 @@ const W = 240, H = 120, NODE_W = 8, SRC_SHARE = 0.5;
 let _segs = [];
 let _sel = -1;
 
-function render(m) {
+function render(m, ph = false) {
   svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
   const segs = [
     { key:'allowed', label:wt('ui.allowed','Allowed'), value:m.allowed, color:'#30D158' },
     { key:'cached',  label:wt('ui.cached','Cached'),   value:m.cached,  color:'#0091FF' },
     { key:'blocked', label:wt('ui.blocked','Blocked'), value:m.blocked, color:'#FF4245' },
-  ].filter(s => s.value > 0);
+  ].filter(s => s.value > 0).map(s => (ph ? { ...s, color: 'currentColor' } : s));
 
   _segs = segs;
   if (_sel >= segs.length) _sel = -1;
-  renderLegend(segs);
+  if (!ph) renderLegend(segs);
   if (!segs.length) { svgEl.innerHTML=''; return; }
 
   const sum = segs.reduce((a,s)=>a+s.value,0);
@@ -222,7 +229,7 @@ function select(i) {
 }
 
 function pick(e) {
-  if (!_segs.length) return;
+  if (!_segs.length || flowEl.classList.contains('ph')) return;
   const r = flowEl.getBoundingClientRect();
   if (!r.width || !r.height) return;
   const x = (e.clientX - r.left) / r.width * W;
