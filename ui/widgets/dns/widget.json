@@ -1,6 +1,7 @@
 {
   "name": "dns",
   "label": "widget.label",
+  "description": "widget.description",
   "glyph": "shield",
   "sizes": [
     "small"

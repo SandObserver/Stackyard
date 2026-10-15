@@ -1,5 +1,6 @@
 {
   "widget.label": "Tiempo",
+  "widget.description": "Vea el tiempo actual de un lugar.",
   "provider.label": "Servicio",
   "provider.opt.openmeteo": "Open-Meteo",
   "provider.opt.openweather": "OpenWeather",

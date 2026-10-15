@@ -1,5 +1,6 @@
 {
   "widget.label": "System Summary",
+  "widget.description": "Watch your server's CPU, memory, disk and network.",
   "statProvider.label": "Source",
   "statProvider.opt.system": "This Machine",
   "statProvider.opt.glances": "Glances",

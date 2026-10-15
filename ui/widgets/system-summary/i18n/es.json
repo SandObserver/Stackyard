@@ -1,5 +1,6 @@
 {
   "widget.label": "Resumen del sistema",
+  "widget.description": "Vigile la CPU, la memoria, el disco y la red de su servidor.",
   "statProvider.label": "Origen",
   "statProvider.opt.system": "Este equipo",
   "statProvider.opt.glances": "Glances",

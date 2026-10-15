@@ -1,5 +1,6 @@
 {
   "widget.label": "Systemübersicht",
+  "widget.description": "Behalten Sie CPU, Arbeitsspeicher, Festplatte und Netzwerk Ihres Servers im Blick.",
   "statProvider.label": "Quelle",
   "statProvider.opt.system": "Dieser Rechner",
   "statProvider.opt.glances": "Glances",

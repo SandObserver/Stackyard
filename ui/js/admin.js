@@ -1,7 +1,7 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=7e288a05';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=db741421';
 import { recoveryShown } from '/js/config-recovery.js?v=dbe542e1';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=e7e8ec6e';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=581b7729';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   afterImport,
@@ -37,7 +37,7 @@ import {
   withheldText,
 } from '/js/admin-shared.js?v=2b48ff3f';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=8bb8feb4';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=8d89e268';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=349a741d';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';

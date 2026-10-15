@@ -1,5 +1,6 @@
 {
   "widget.label": "Lecture en cours",
+  "widget.description": "Voyez ce qui est en lecture sur votre serveur multimédia.",
   "provider.label": "Serveur multimédia",
   "provider.opt.plex": "Plex",
   "provider.opt.jellyfin": "Jellyfin",

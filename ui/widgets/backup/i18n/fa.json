@@ -1,5 +1,6 @@
 {
   "widget.label": "پشتیبان‌گیری",
+  "widget.description": "ببینید پشتیبان‌گیری‌هایتان آخرین بار کی اجرا شده‌اند و موفق بوده‌اند یا نه.",
   "slots.label": "جایگاه",
   "slots.provider.label": "ارائه‌دهنده",
   "slots.provider.opt.default": "هیچ‌کدام",

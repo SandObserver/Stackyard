@@ -1,5 +1,6 @@
 {
   "widget.label": "Santé des disques",
+  "widget.description": "Vérifiez la santé de chaque disque de votre serveur.",
   "diskProvider.label": "Source",
   "diskProvider.opt.scrutiny": "Scrutiny",
   "diskProvider.opt.truenas": "TrueNAS",

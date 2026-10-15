@@ -1,5 +1,6 @@
 {
   "widget.label": "GitHub",
+  "widget.description": "关注待处理的拉取请求或贡献图。",
   "view.prs.label": "拉取请求",
   "view.contributions.label": "贡献",
   "githubView.label": "视图",

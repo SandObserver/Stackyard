@@ -1,5 +1,6 @@
 {
   "widget.label": "Dashboard Switch",
+  "widget.description": "Jump to your other dashboards.",
   "keychains.label": "Keychain",
   "keychains.hint": "Leave Fob colour on Auto to derive it from the dashboard URL.",
   "keychains.name.label": "Name",

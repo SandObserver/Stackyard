@@ -1,5 +1,6 @@
 {
   "widget.label": "Connections",
+  "widget.description": "Map where your visitors connect from, or check your VPN.",
   "view.map.label": "Map",
   "view.vpn.label": "VPN",
   "view.label": "View",

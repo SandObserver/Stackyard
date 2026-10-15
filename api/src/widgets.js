@@ -158,6 +158,8 @@ function validateManifest(name, m) {
   if (typeof m.name !== 'string' || !m.name) errs.push('missing "name"');
   if (m.name && m.name !== name) errs.push(`"name" ("${m.name}") must match the folder name ("${name}")`);
   if (typeof m.label !== 'string' || !m.label) errs.push('missing "label"');
+  if (m.description !== undefined && (typeof m.description !== 'string' || !m.description))
+    errs.push('"description" must be a non-empty string');
   if (!Array.isArray(m.sizes) || !m.sizes.length) errs.push('"sizes" must be a non-empty array');
   else
     m.sizes.forEach(s => {
@@ -288,6 +290,7 @@ function _publicEntry(name, e, lang) {
     {
       name: m.name,
       label: m.label,
+      description: m.description || null,
       glyph: m.glyph || null,
       sizes: m.sizes,
       card: m.card || null,

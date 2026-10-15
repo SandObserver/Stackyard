@@ -1,5 +1,6 @@
 {
   "widget.label": "Libros",
+  "widget.description": "Vea lo que está leyendo y lo que sigue en sus estanterías.",
   "provider.label": "Servicio",
   "provider.opt.audiobookshelf": "Audiobookshelf",
   "provider.opt.komga": "Komga",

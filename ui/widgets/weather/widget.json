@@ -1,6 +1,7 @@
 {
   "name": "weather",
   "label": "widget.label",
+  "description": "widget.description",
   "glyph": "weather",
   "sizes": [
     "small"

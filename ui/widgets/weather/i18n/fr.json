@@ -1,5 +1,6 @@
 {
   "widget.label": "Météo",
+  "widget.description": "Consultez la météo actuelle d’un lieu.",
   "provider.label": "Service",
   "provider.opt.openmeteo": "Open-Meteo",
   "provider.opt.openweather": "OpenWeather",

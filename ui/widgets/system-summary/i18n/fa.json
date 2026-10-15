@@ -1,5 +1,6 @@
 {
   "widget.label": "خلاصهٔ سیستم",
+  "widget.description": "پردازنده، حافظه، دیسک و شبکهٔ سرورتان را زیر نظر بگیرید.",
   "statProvider.label": "منبع",
   "statProvider.opt.system": "همین دستگاه",
   "statProvider.opt.glances": "Glances",

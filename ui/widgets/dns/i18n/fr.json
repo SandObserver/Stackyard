@@ -1,5 +1,6 @@
 {
   "widget.label": "Serveur DNS",
+  "widget.description": "Voyez combien de requêtes DNS votre filtre bloque.",
   "provider.label": "Fournisseur",
   "dnsUrl.label": "URL du serveur",
   "dnsUrl.placeholder": "dns-host:80",

@@ -446,6 +446,7 @@
     "name": "Name",
     "type": "Widget Type",
     "typeCustom": "Custom",
+    "typeCustomDesc": "Show any web page you choose.",
     "namePh": "My Widget",
     "editName": "Edit name",
     "size": "Size",

@@ -1,5 +1,6 @@
 {
   "widget.label": "面板切换",
+  "widget.description": "跳转到其他仪表板。",
   "keychains.label": "钥匙串",
   "keychains.hint": "挂坠颜色保持为自动，即可根据面板地址自动选取。",
   "keychains.name.label": "名称",

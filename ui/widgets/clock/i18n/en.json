@@ -1,5 +1,6 @@
 {
   "widget.label": "Clock",
+  "widget.description": "Show the time and date in any time zone.",
   "view.digital.label": "Digital",
   "view.analog.label": "Analog",
   "clockStyle.label": "Style",

@@ -1,5 +1,6 @@
 {
   "widget.label": "Cambio de panel",
+  "widget.description": "Cambie a sus otros paneles.",
   "keychains.label": "Llavero",
   "keychains.hint": "Deja el color del llavero en Automático para deducirlo de la URL del panel.",
   "keychains.name.label": "Nombre",

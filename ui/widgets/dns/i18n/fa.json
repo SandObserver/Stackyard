@@ -1,5 +1,6 @@
 {
   "widget.label": "سرور DNS",
+  "widget.description": "ببینید فیلترتان چند درخواست DNS را مسدود می‌کند.",
   "provider.label": "ارائه‌دهنده",
   "dnsUrl.label": "آدرس سرور",
   "dnsUrl.placeholder": "dns-host:80",

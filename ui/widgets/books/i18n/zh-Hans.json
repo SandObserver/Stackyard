@@ -1,5 +1,6 @@
 {
   "widget.label": "书籍",
+  "widget.description": "查看正在阅读的书和书架上接下来要读的书。",
   "provider.label": "服务",
   "provider.opt.audiobookshelf": "Audiobookshelf",
   "provider.opt.komga": "Komga",

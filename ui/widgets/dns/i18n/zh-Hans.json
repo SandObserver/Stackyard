@@ -1,5 +1,6 @@
 {
   "widget.label": "DNS 服务器",
+  "widget.description": "查看过滤器拦截了多少 DNS 查询。",
   "provider.label": "提供方",
   "dnsUrl.label": "服务器地址",
   "dnsUrl.placeholder": "dns-host:80",

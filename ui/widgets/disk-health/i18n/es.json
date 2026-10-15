@@ -1,5 +1,6 @@
 {
   "widget.label": "Estado de los discos",
+  "widget.description": "Compruebe el estado de cada disco de su servidor.",
   "diskProvider.label": "Origen",
   "diskProvider.opt.scrutiny": "Scrutiny",
   "diskProvider.opt.truenas": "TrueNAS",

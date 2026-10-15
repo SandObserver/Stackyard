@@ -1,5 +1,6 @@
 {
   "widget.label": "ساعت",
+  "widget.description": "ساعت و تاریخ را در هر منطقهٔ زمانی نمایش دهید.",
   "view.digital.label": "دیجیتال",
   "view.analog.label": "عقربه‌ای",
   "clockStyle.label": "سبک",

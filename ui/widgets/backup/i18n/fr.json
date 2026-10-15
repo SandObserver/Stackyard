@@ -1,5 +1,6 @@
 {
   "widget.label": "Sauvegarde",
+  "widget.description": "Vérifiez quand vos sauvegardes ont tourné pour la dernière fois et si elles ont réussi.",
   "slots.label": "Emplacement",
   "slots.provider.label": "Fournisseur",
   "slots.provider.opt.default": "Aucun",

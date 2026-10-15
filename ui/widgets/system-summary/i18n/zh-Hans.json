@@ -1,5 +1,6 @@
 {
   "widget.label": "系统概览",
+  "widget.description": "监控服务器的 CPU、内存、磁盘和网络。",
   "statProvider.label": "数据源",
   "statProvider.opt.system": "本机",
   "statProvider.opt.glances": "Glances",

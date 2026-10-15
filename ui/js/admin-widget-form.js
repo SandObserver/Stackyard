@@ -81,6 +81,15 @@ function _renderWidgetForm(body) {
     },
   });
   q('#wtype-row', shell).appendChild(typeBox.el);
+  const desc = state._wtype === 'custom' ? t('widgetCfg.typeCustomDesc') : state._widgetReg[state._wtype]?.description;
+  if (desc) {
+    const tip = document.createElement('p');
+    tip.className = 'grp-tip';
+    tip.id = 'wtype-desc';
+    tip.textContent = desc;
+    body.appendChild(tip);
+    typeBox.button.setAttribute('aria-describedby', tip.id);
+  }
 
   const refused = (state._widgetRejected || []).filter(r => r && r.name);
   if (refused.length) {

@@ -1,5 +1,6 @@
 {
   "widget.label": "备份",
+  "widget.description": "查看备份上次运行的时间以及是否成功。",
   "slots.label": "插槽",
   "slots.provider.label": "提供方",
   "slots.provider.opt.default": "无",

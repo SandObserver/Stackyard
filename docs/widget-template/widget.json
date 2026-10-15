@@ -1,6 +1,7 @@
 {
   "name": "mywidget",
   "label": "My Widget",
+  "description": "See the status of your service.",
   "sizes": ["small", "medium"],
   "fields": [
     { "key": "url", "type": "text", "label": "Service URL",

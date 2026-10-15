@@ -1,6 +1,7 @@
 {
   "name": "nowplaying",
   "label": "widget.label",
+  "description": "widget.description",
   "appearance": "dark",
   "card": "graphite",
   "glyph": "play",
