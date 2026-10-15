@@ -22,7 +22,7 @@
   "navidromePassword.label": "Contraseña",
   "href.label": "URL de clic (opcional)",
   "href.placeholder": "https://…",
-  "href.hint": "Déjalo en blanco para abrir el servicio, si tu navegador puede acceder a su dirección.",
+  "href.hint": "La dirección con la que tu navegador abre este servicio. Déjalo en blanco para usar la de arriba, si tu navegador puede acceder a ella.",
   "ui.nothingPlaying": "No se reproduce nada",
   "ui.nowPlayingPrefix": "Reproduciendo:",
   "ui.onPlayer": "en",

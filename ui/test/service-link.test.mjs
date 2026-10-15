@@ -29,3 +29,15 @@ test('an address only the server can reach gives no link', () => {
 test('credentials, query and fragment never reach the link', () => {
   assert.equal(browserLink('http://admin:pw@10.0.0.5:3000/?apikey=s3cret#x'), 'http://10.0.0.5:3000');
 });
+
+test('a Click URL is the base for item pages and is kept as typed without one', async () => {
+  const { serviceLink } = await import('../js/service-link.js');
+  assert.equal(
+    serviceLink('https://plex.example.com/', 'http://plex:32400', '/web/x'),
+    'https://plex.example.com/web/x',
+  );
+  assert.equal(serviceLink('', 'http://10.0.0.5:32400', '/web/x'), 'http://10.0.0.5:32400/web/x');
+  assert.equal(serviceLink('', 'http://plex:32400', '/web/x'), '');
+  assert.equal(serviceLink('https://example.com/page?a=1', 'http://plex:32400'), 'https://example.com/page?a=1');
+  assert.equal(serviceLink('http://nas:32400', 'http://plex:32400', '/web/x'), 'http://nas:32400');
+});

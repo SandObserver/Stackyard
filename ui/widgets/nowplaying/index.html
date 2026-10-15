@@ -195,7 +195,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
        lower edge otherwise shows as a detached stub. */
     let ly=-8+d/2-6; if(ly>50)ly=50; if(ly<18)ly=18;
     strandEl.setAttribute('d', `M142 19 L74 ${(ly-3).toFixed(1)} L74 ${(ly+3).toFixed(1)} L142 25 Z`);
-    linked=linkTo(linkEl, href||(s&&s.link)||baseLink);
+    linked=linkTo(linkEl, (s&&s.link)||baseLink||href);
     const label=describe(s);
     name(label);
     if(announce) srEl.textContent=label;

@@ -28,7 +28,7 @@
   "refresh.hint": "远程来源的更新频率可能低于此设置。",
   "href.label": "点击跳转地址",
   "href.placeholder": "https://…",
-  "href.hint": "留空则打开该服务（前提是浏览器能访问其地址）。",
+  "href.hint": "浏览器访问此服务所用的地址。留空则使用上方地址（前提是浏览器能访问它）。",
   "slots.label": "插槽",
   "slots.type.label": "资源",
   "slots.type.opt.cpu": "CPU",

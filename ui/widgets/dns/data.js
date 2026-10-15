@@ -7,7 +7,10 @@ module.exports = async function (ctx) {
 
   if (provider === 'nextdns') {
     const stats = await nextDns(ctx, config, fetchJSON);
-    return { ...stats, link: `https://my.nextdns.io/${encodeURIComponent(config.dnsNextdnsProfile)}/analytics` };
+    return {
+      ...stats,
+      link: config.dnsHref || `https://my.nextdns.io/${encodeURIComponent(config.dnsNextdnsProfile)}/analytics`,
+    };
   }
 
   const base = normalizeBase(config.dnsUrl);
@@ -15,7 +18,7 @@ module.exports = async function (ctx) {
 
   const read = provider === 'pihole' ? piHole : provider === 'technitium' ? technitium : adGuard;
   const stats = await read(ctx, base, config, fetchJSON);
-  return { ...stats, link: ctx.browserLink(config.dnsUrl) };
+  return { ...stats, link: ctx.serviceLink(config.dnsHref, config.dnsUrl) };
 };
 
 function authErr(r) {

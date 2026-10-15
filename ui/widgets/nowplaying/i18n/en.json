@@ -22,7 +22,7 @@
   "navidromePassword.label": "Password",
   "href.label": "Click URL (optional)",
   "href.placeholder": "https://…",
-  "href.hint": "Leave blank to open the service, if your browser can reach its address.",
+  "href.hint": "The address your browser uses for this service. Leave blank to use the one above, if your browser can reach it.",
   "ui.nothingPlaying": "Nothing playing",
   "ui.nowPlayingPrefix": "Now playing:",
   "ui.onPlayer": "on",

@@ -6,7 +6,7 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'books', 'data.js'));
-const { browserLink } = require('../../ui/js/service-link.js');
+const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
 
 function ctxFor(config, reply) {
   const ctx = {
@@ -14,6 +14,7 @@ function ctxFor(config, reply) {
     config,
     normalizeBase,
     browserLink,
+    serviceLink,
     fetchJSON: async url => reply(url),
     ...errorParts(),
   };

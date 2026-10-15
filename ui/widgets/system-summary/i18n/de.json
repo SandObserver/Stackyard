@@ -28,7 +28,7 @@
   "refresh.hint": "Eine entfernte Quelle aktualisiert eventuell seltener.",
   "href.label": "Klick-URL",
   "href.placeholder": "https://…",
-  "href.hint": "Leer lassen, um den Dienst zu öffnen, sofern Ihr Browser seine Adresse erreicht.",
+  "href.hint": "Die Adresse, unter der Ihr Browser diesen Dienst öffnet. Leer lassen, um die Adresse oben zu verwenden, sofern Ihr Browser sie erreicht.",
   "slots.label": "Slot",
   "slots.type.label": "Ressource",
   "slots.type.opt.cpu": "CPU",

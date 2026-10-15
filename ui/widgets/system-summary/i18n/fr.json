@@ -28,7 +28,7 @@
   "refresh.hint": "Une source distante peut se mettre à jour moins souvent.",
   "href.label": "URL de clic",
   "href.placeholder": "https://…",
-  "href.hint": "Laisser vide pour ouvrir le service, si votre navigateur peut atteindre son adresse.",
+  "href.hint": "L’adresse que votre navigateur utilise pour ce service. Laisser vide pour utiliser celle ci-dessus, si votre navigateur peut l’atteindre.",
   "slots.label": "Emplacement",
   "slots.type.label": "Ressource",
   "slots.type.opt.cpu": "CPU",

@@ -7,6 +7,8 @@ const MAX = 5;
 
 const plexMachineIds = new Map();
 
+const linkFor = (ctx, url, path) => ctx.serviceLink(ctx.config.href, url, path);
+
 async function plexMachineId(ctx, base, token) {
   if (plexMachineIds.has(base)) return plexMachineIds.get(base);
   const r = await ctx.fetchJSON(`${base}/identity`, {
@@ -35,8 +37,8 @@ async function plex(ctx) {
   if (r.status >= 400) ctx.fail('Plex HTTP ' + r.status);
   let list = (r.data && r.data.MediaContainer && r.data.MediaContainer.Metadata) || [];
   if (!Array.isArray(list)) list = [list];
-  const web = ctx.browserLink(ctx.config.plexUrl);
-  const machine = web && list.length ? await plexMachineId(ctx, base, token).catch(() => '') : '';
+  const reachable = ctx.browserLink(ctx.config.href || ctx.config.plexUrl);
+  const machine = reachable && list.length ? await plexMachineId(ctx, base, token).catch(() => '') : '';
   return list.map(m => {
     const type = (m.type || '').toLowerCase();
     let title = m.title || '',
@@ -50,8 +52,12 @@ async function plex(ctx) {
     const player = (m.Player && (m.Player.title || m.Player.product)) || '';
     const link =
       machine && m.ratingKey
-        ? `${web}/web/index.html#!/server/${machine}/details?key=${encodeURIComponent(`/library/metadata/${m.ratingKey}`)}`
-        : web;
+        ? linkFor(
+            ctx,
+            ctx.config.plexUrl,
+            `/web/index.html#!/server/${machine}/details?key=${encodeURIComponent(`/library/metadata/${m.ratingKey}`)}`,
+          )
+        : linkFor(ctx, ctx.config.plexUrl);
     return { title, subtitle, progress, state: pstate === 'paused' ? 'paused' : 'playing', type, player, link };
   });
 }
@@ -67,11 +73,11 @@ async function jellyfinLike(ctx, provider) {
   if (authErr(r)) ctx.fail(name + ' auth failed', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail(name + ' HTTP ' + r.status);
   const list = Array.isArray(r.data) ? r.data : [];
-  const web = ctx.browserLink(provider === 'emby' ? ctx.config.embyUrl : ctx.config.jellyfinUrl);
+  const url = provider === 'emby' ? ctx.config.embyUrl : ctx.config.jellyfinUrl;
   const itemLink = (itemId, serverId) => {
-    if (!web || !itemId) return web;
+    if (!itemId) return linkFor(ctx, url);
     const q = `id=${encodeURIComponent(itemId)}&serverId=${encodeURIComponent(serverId || '')}`;
-    return provider === 'emby' ? `${web}/web/index.html#!/item?${q}` : `${web}/web/#/details?${q}`;
+    return linkFor(ctx, url, provider === 'emby' ? `/web/index.html#!/item?${q}` : `/web/#/details?${q}`);
   };
   const out = [];
   for (const s of list) {
@@ -125,7 +131,6 @@ async function navidrome(ctx) {
     ctx.fail('Navidrome rejected the request, check username and password', { kind: ctx.KIND.AUTH });
   let entries = (sr && sr.nowPlaying && sr.nowPlaying.entry) || [];
   if (!Array.isArray(entries)) entries = [entries];
-  const web = ctx.browserLink(ctx.config.navidromeUrl);
   return entries.map(e => {
     const dur = +e.duration || 0; // Subsonic duration is seconds
     const pos = e.positionMs != null ? +e.positionMs : null; // OpenSubsonic playbackReport (Navidrome >= 0.62), ms
@@ -138,7 +143,9 @@ async function navidrome(ctx) {
       state,
       type: 'track',
       player: e.playerName || '',
-      link: web && e.albumId ? `${web}/app/#/album/${encodeURIComponent(e.albumId)}/show` : web,
+      link: e.albumId
+        ? linkFor(ctx, ctx.config.navidromeUrl, `/app/#/album/${encodeURIComponent(e.albumId)}/show`)
+        : linkFor(ctx, ctx.config.navidromeUrl),
     };
   });
 }
@@ -151,5 +158,5 @@ module.exports = async function (ctx) {
   else if (provider === 'navidrome') sessions = await navidrome(ctx);
   else ctx.fail('No media server configured', { kind: ctx.KIND.INVALID });
   const base = { plex: 'plexUrl', jellyfin: 'jellyfinUrl', emby: 'embyUrl', navidrome: 'navidromeUrl' }[provider];
-  return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX), link: ctx.browserLink(ctx.config[base]) };
+  return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX), link: linkFor(ctx, ctx.config[base]) };
 };

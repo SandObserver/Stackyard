@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { normalizeBase } = require('../src/widget-data');
-const { browserLink } = require('../../ui/js/service-link.js');
+const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
 const { KIND, WidgetError } = require('../src/api-error');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'dns', 'data.js'));
@@ -11,6 +11,7 @@ const ctxFor = config => ({
   config,
   normalizeBase,
   browserLink,
+  serviceLink,
   KIND,
   fail(msg, opts) {
     throw new WidgetError(msg, opts);

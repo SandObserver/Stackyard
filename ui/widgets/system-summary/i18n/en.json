@@ -28,7 +28,7 @@
   "refresh.hint": "A remote source may update less often than this.",
   "href.label": "Click URL",
   "href.placeholder": "https://…",
-  "href.hint": "Leave blank to open the service, if your browser can reach its address.",
+  "href.hint": "The address your browser uses for this service. Leave blank to use the one above, if your browser can reach it.",
   "slots.label": "Slot",
   "slots.type.label": "Resource",
   "slots.type.opt.cpu": "CPU",

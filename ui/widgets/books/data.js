@@ -285,5 +285,5 @@ module.exports = async ctx => {
   if (wantLists) return out;
   const { absUrl, komgaUrl, kavitaUrl } = ctx.config;
   const url = { audiobookshelf: absUrl, komga: komgaUrl, kavita: kavitaUrl }[out.provider];
-  return { ...out, link: ctx.browserLink(url) };
+  return { ...out, link: ctx.serviceLink(ctx.config.href, url) };
 };

@@ -27,11 +27,11 @@ async function systemSummary(ctx) {
 
 function summaryLink(ctx) {
   const c = ctx.config;
-  if (c.statProvider === 'glances') return ctx.browserLink(c.glancesUrl);
-  if (c.statProvider === 'unraid') return ctx.browserLink(c.unraidUrl);
-  if (c.statProvider !== 'beszel') return '';
-  const web = ctx.browserLink(c.beszelUrl);
-  return web && c.beszelSystem ? `${web}/system/${encodeURIComponent(c.beszelSystem)}` : web;
+  if (c.statProvider === 'glances') return ctx.serviceLink(c.href, c.glancesUrl);
+  if (c.statProvider === 'unraid') return ctx.serviceLink(c.href, c.unraidUrl);
+  if (c.statProvider !== 'beszel') return c.href || '';
+  if (!c.beszelSystem) return ctx.serviceLink(c.href, c.beszelUrl);
+  return ctx.serviceLink(c.href, c.beszelUrl, `/system/${encodeURIComponent(c.beszelSystem)}`);
 }
 
 /* Only a source that names its sensors offers the picker, so the local machine

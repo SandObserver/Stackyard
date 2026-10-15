@@ -4,7 +4,7 @@ const path = require('node:path');
 const { normalizeBase } = require('../src/widget-data');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'nowplaying', 'data.js'));
-const { browserLink } = require('../../ui/js/service-link.js');
+const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
 
 /* Minimal stand-in for the ctx widget-data.js builds. */
 function ctxFor(config, payload) {
@@ -12,6 +12,7 @@ function ctxFor(config, payload) {
     config,
     normalizeBase,
     browserLink,
+    serviceLink,
     fetchJSON: async () => ({ status: 200, data: payload }),
   };
 }
@@ -172,4 +173,19 @@ test('a media server only the server can reach gives no link', async () => {
   );
   assert.equal(r.sessions[0].link, '');
   assert.equal(r.link, '');
+});
+
+test('a Click URL set by the reader becomes the base of the item link', async () => {
+  const r = await dataFn(
+    ctxFor(
+      {
+        provider: 'jellyfin',
+        jellyfinUrl: 'http://jellyfin:8096',
+        jellyfinKey: 'k',
+        href: 'https://watch.example.com',
+      },
+      [{ ServerId: 's1', NowPlayingItem: { Id: 'i9', Name: 'Arrival', Type: 'Movie' } }],
+    ),
+  );
+  assert.equal(r.sessions[0].link, 'https://watch.example.com/web/#/details?id=i9&serverId=s1');
 });

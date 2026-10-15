@@ -99,7 +99,7 @@ async function boot() {
   _href = cfg?.widgetConfig?.dnsHref || '';
   _provider = cfg?.widgetConfig?.provider || 'adguard';
   const link = d => {
-    if (linkTo(widgetEl, _href || d?.link || '')) widgetEl.setAttribute('aria-describedby', 'sr');
+    if (linkTo(widgetEl, d?.link || _href)) widgetEl.setAttribute('aria-describedby', 'sr');
     else widgetEl.removeAttribute('aria-describedby');
   };
   link(null);

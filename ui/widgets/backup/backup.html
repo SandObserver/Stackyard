@@ -149,7 +149,7 @@ function statusColor(s) {
 }
 
 let _cfg={}, _pollSec=60, _href='', _jobSlots=[], _hrefs=[], _links=[];
-const cardLink = idx => _hrefs[idx] || _links[idx] || '';
+const cardLink = idx => _links[idx] || _hrefs[idx] || '';
 
 function parseDate(v) {
   if(!v) return null;

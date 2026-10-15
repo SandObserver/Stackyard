@@ -6,7 +6,7 @@ const { dispatchProvider } = require(path.join(__dirname, '..', 'src', 'provider
 const { normalizeBase } = require(path.join(__dirname, '..', 'src', 'widget-data.js'));
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'disk-health', 'data.js'));
-const { browserLink } = require('../../ui/js/service-link.js');
+const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
 
 const KIND = { INVALID: 'invalid', AUTH: 'auth' };
 
@@ -17,6 +17,7 @@ function makeCtx(endpoint, config, fetchJSON) {
     fetchJSON,
     normalizeBase,
     browserLink,
+    serviceLink,
     KIND,
     fail: (message, opts) => {
       const e = new Error(message);

@@ -216,7 +216,7 @@
       if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
     }catch(e){}
     const link=document.getElementById('bk-link');
-    const setLink=d=>{ if(linkTo(link,href||(d&&d.link)||'')) link.setAttribute('aria-label', wt('widget.label','Books')); };
+    const setLink=d=>{ if(linkTo(link,(d&&d.link)||href)) link.setAttribute('aria-label', wt('widget.label','Books')); };
     setLink(null);
     const state = errorState({ root:card, content:document.getElementById('shelves'),
       caption:document.getElementById('cap') });
