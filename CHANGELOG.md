@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The VPN view no longer shows the public IP address unless Show IP Address is
   turned on in its settings.
 
+- Widgets show soft placeholder shapes while they load, and Books and Now
+  Playing no longer show a heading or "Nothing playing" before their data
+  arrives.
+
 ### Fixed
 
 - Weather, Books and GitHub contributions now mark their data as out of date
