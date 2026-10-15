@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Weather, Books and GitHub contributions now mark their data as out of date
   after one failed refresh, not two.
 
+- Disk Health names a failed drive in words instead of only turning its light
+  red.
+
+- The DNS widget labels its chart, so allowed, cached and blocked queries no
+  longer rely on colour alone.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
