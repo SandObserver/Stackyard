@@ -34,6 +34,13 @@ test('an unknown language falls back to English', () => {
   );
 });
 
+test('a malformed Persian tag falls back instead of throwing', () => {
+  assert.equal(
+    clockDateFormatter('fa-', 'short')(at('2026-10-04')),
+    clockDateFormatter('en', 'short')(at('2026-10-04')),
+  );
+});
+
 test('both clock faces use the shared formatter', () => {
   for (const face of ['digital', 'analog']) {
     const src = fs.readFileSync(new URL(`../widgets/clock/${face}.html`, import.meta.url), 'utf8');

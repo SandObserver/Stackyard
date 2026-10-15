@@ -24,10 +24,12 @@
   "href.placeholder": "https://…",
   "href.hint": "浏览器访问此服务所用的地址。留空则使用上方地址（前提是浏览器能访问它）。",
   "ui.nothingPlaying": "当前没有播放",
-  "ui.nowPlayingPrefix": "正在播放：",
-  "ui.onPlayer": "于",
-  "ui.paused": "已暂停",
+  "ui.describeTitle": "正在播放：{title}",
+  "ui.describeSubtitle": "{text}，{subtitle}",
+  "ui.describePlayer": "{text}（{player}）",
+  "ui.describeProvider": "{text}，{provider}",
+  "ui.describePaused": "{text}（已暂停）",
   "ui.previous": "上一项",
   "ui.next": "下一项",
-  "ui.activateToOpen": "激活以打开链接。"
+  "ui.linkName": "{text}。轻点以打开链接。"
 }

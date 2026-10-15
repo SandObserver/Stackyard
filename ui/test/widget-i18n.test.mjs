@@ -307,3 +307,62 @@ test('a books shelf label comes from the catalog, not the source key', () => {
     assert.ok(src.includes(key), `${key} is never looked up`);
   assert.match(src, /if\s*\(sh&&sh\.name\)\s*return sh\.name/, 'a named shelf no longer wins');
 });
+
+test('every counted widget message carries the plural categories its language uses', () => {
+  for (const name of widgetCatalogDirs()) {
+    const dir = `widgets/${name}/i18n`;
+    const en = JSON.parse(read(`${dir}/en.json`));
+    const counted = [
+      ...new Set(
+        Object.keys(en)
+          .filter(k => PLURAL.test(k))
+          .map(k => k.replace(PLURAL, '')),
+      ),
+    ];
+    for (const file of fs.readdirSync(path.join(root, dir)).filter(f => f.endsWith('.json'))) {
+      const cat = JSON.parse(read(`${dir}/${file}`));
+      const wanted = new Intl.PluralRules(file.slice(0, -5)).resolvedOptions().pluralCategories;
+      for (const base of counted) {
+        for (const category of wanted)
+          assert.ok(cat[`${base}_${category}`], `${dir}/${file} is missing ${base}_${category}`);
+        const extra = CATEGORIES.filter(c => !wanted.includes(c) && cat[`${base}_${c}`]);
+        assert.deepEqual(extra, [], `${dir}/${file} has ${base} forms its language never selects: ${extra}`);
+      }
+    }
+  }
+});
+
+/* A plural chosen by `=== 1` is the English rule, and words glued with spaces
+   keep the English word order. Both belong in one catalog message. */
+test('no widget or interface module picks a plural or joins translated words in code', () => {
+  const files = [
+    ...fs
+      .readdirSync(path.join(root, 'js'))
+      .filter(f => f.endsWith('.js'))
+      .map(f => `js/${f}`),
+    ...fs
+      .readdirSync(path.join(root, 'widgets'), { withFileTypes: true })
+      .filter(e => e.isDirectory())
+      .flatMap(e =>
+        fs
+          .readdirSync(path.join(root, 'widgets', e.name))
+          .filter(f => f.endsWith('.html') || f.endsWith('.js'))
+          .map(f => `widgets/${e.name}/${f}`),
+      ),
+  ];
+  /* A symbol such as ✓ or ↑ before a message is not a word. */
+  const wordy = lit => /^\s+$/.test(lit) || /[\p{L},.():;]/u.test(lit);
+  const glued = line =>
+    [...line.matchAll(/(['"`])([^'"`]*)\1\s*\+\s*w?t\(/g)].some(m => wordy(m[2])) ||
+    [...line.matchAll(/\bw?t\([^()]*\)\s*\+\s*(['"`])([^'"`]*)\1/g)].some(m => wordy(m[2]));
+  const offenders = [];
+  for (const f of files) {
+    read(f)
+      .split('\n')
+      .forEach((line, i) => {
+        if (/===\s*1\s*\?[^:]*\bw?t\(/.test(line) || glued(line))
+          offenders.push(`${f}:${i + 1}: ${line.trim().slice(0, 100)}`);
+      });
+  }
+  assert.deepEqual(offenders, []);
+});

@@ -24,10 +24,12 @@
   "href.placeholder": "https://…",
   "href.hint": "آدرسی که مرورگرتان برای این سرویس به کار می‌برد. خالی بگذارید تا آدرس بالا به کار رود، اگر مرورگرتان به آن دسترسی دارد.",
   "ui.nothingPlaying": "چیزی پخش نمی‌شود",
-  "ui.nowPlayingPrefix": "در حال پخش:",
-  "ui.onPlayer": "روی",
-  "ui.paused": "مکث",
+  "ui.describeTitle": "در حال پخش: {title}",
+  "ui.describeSubtitle": "{text}، {subtitle}",
+  "ui.describePlayer": "{text} روی {player}",
+  "ui.describeProvider": "{text}، {provider}",
+  "ui.describePaused": "{text} (مکث)",
   "ui.previous": "مورد قبلی",
   "ui.next": "مورد بعدی",
-  "ui.activateToOpen": "برای باز کردن پیوند فعال کنید."
+  "ui.linkName": "{text}. برای باز کردن پیوند فعال کنید."
 }

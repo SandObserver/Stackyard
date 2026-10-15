@@ -167,7 +167,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, formatNumber, errorState, cssZoom } from '/js/widget-toolbox.js?v=9f9c7421';
+import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, errorState, cssZoom } from '/js/widget-toolbox.js?v=89cbaf61';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -329,9 +329,7 @@ function updateAlert() {
   const alertEl = document.getElementById('alert');
   alertEl.hidden = !failed.length;
   document.getElementById('nums').hidden = failed.length > 0;
-  alertEl.textContent = failed.length === 1
-    ? wt('ui.bayFailed', 'Bay {n} failed').replace('{n}', failed[0])
-    : wt('ui.baysFailed', 'Bays {list} failed').replace('{list}', failed.join(', '));
+  alertEl.textContent = wtCount('ui.baysFailed', failed.length, { one: 'Bay {list} failed', other: 'Bays {list} failed' }, { list: formatList(failed) });
 }
 
 function openBay(i) {

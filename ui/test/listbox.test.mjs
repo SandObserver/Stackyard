@@ -210,3 +210,15 @@ test('a required select lands on its first option', () => {
     'fetched options arrive after the field is built',
   );
 });
+
+/* Each language is named in its own script. WCAG 2.2 SC 3.1.2 needs the option
+   and the button showing it to say which language that is. */
+test('the language picker marks each language name with its language', () => {
+  assert.match(read('js/admin.js'), /LANGUAGES\.map\(l => \(\{ value: l\.code, label: l\.name, lang: l\.code \}\)\)/);
+  assert.match(src, /if \(o && o\.lang\) li\.lang = o\.lang;/, 'the option does not carry its language');
+  assert.match(
+    src,
+    /if \(lang\) text\.lang = lang;\s*else text\.removeAttribute\('lang'\);/,
+    'the button does not carry it',
+  );
+});

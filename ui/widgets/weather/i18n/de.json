@@ -27,5 +27,7 @@
   "ui.snow": "Schnee",
   "ui.snowShowers": "Schneeschauer",
   "ui.thunderstorm": "Gewitter",
-  "ui.feelsLike": "gefühlt"
+  "ui.summary": "{place}: {condition}, {temp}",
+  "ui.currentLocation": "Aktueller Standort",
+  "ui.feelsLikeTemp": "{temp} (gefühlt)"
 }

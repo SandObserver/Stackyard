@@ -24,10 +24,12 @@
   "href.placeholder": "https://…",
   "href.hint": "L’adresse que votre navigateur utilise pour ce service. Laisser vide pour utiliser celle ci-dessus, si votre navigateur peut l’atteindre.",
   "ui.nothingPlaying": "Aucune lecture en cours",
-  "ui.nowPlayingPrefix": "Lecture en cours :",
-  "ui.onPlayer": "sur",
-  "ui.paused": "en pause",
+  "ui.describeTitle": "Lecture en cours : {title}",
+  "ui.describeSubtitle": "{text}, {subtitle}",
+  "ui.describePlayer": "{text} sur {player}",
+  "ui.describeProvider": "{text}, {provider}",
+  "ui.describePaused": "{text} (en pause)",
   "ui.previous": "Élément précédent",
   "ui.next": "Élément suivant",
-  "ui.activateToOpen": "Activer pour ouvrir le lien."
+  "ui.linkName": "{text}. Activer pour ouvrir le lien."
 }

@@ -31,9 +31,14 @@
   "ui.backupStatus": "État de la sauvegarde",
   "ui.running": "en cours",
   "ui.unknown": "inconnu",
-  "ui.last": "dernière",
-  "ui.next": "prochaine",
   "ui.runningNow": "En cours…",
-  "ui.lastCap": "Dernière",
-  "ui.nextCap": "Prochaine"
+  "ui.lastAt": "Dernière {when}",
+  "ui.nextAt": "Prochaine {when}",
+  "ui.lastAria": "dernière exécution {when}",
+  "ui.nextAria": "prochaine exécution {when}",
+  "ui.summary": "{name} : {status}",
+  "ui.status.healthy": "en bon état",
+  "ui.status.warning": "avertissement",
+  "ui.status.error": "en échec",
+  "ui.status.missed": "manquée"
 }

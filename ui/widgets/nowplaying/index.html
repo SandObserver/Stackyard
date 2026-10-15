@@ -129,7 +129,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder } from '/js/widget-toolbox.js?v=9f9c7421';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder } from '/js/widget-toolbox.js?v=89cbaf61';
 await loadStrings();
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
 document.getElementById('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
@@ -160,11 +160,11 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   }
   function describe(s){
     if(!s) return wt('ui.nothingPlaying','Nothing playing');
-    let t=wt('ui.nowPlayingPrefix','Now playing:')+' '+(s.title||'');
-    if(s.subtitle) t+=', '+s.subtitle;
-    if(s.player) t+=' '+wt('ui.onPlayer','on')+' '+s.player;
-    if(PROVIDER_NAME[provider]) t+=' — '+PROVIDER_NAME[provider];
-    if(s.state==='paused') t+=' ('+wt('ui.paused','paused')+')';
+    let t=wt('ui.describeTitle','Now playing: {title}',{title:s.title||''});
+    if(s.subtitle) t=wt('ui.describeSubtitle','{text}, {subtitle}',{text:t,subtitle:s.subtitle});
+    if(s.player) t=wt('ui.describePlayer','{text} on {player}',{text:t,player:s.player});
+    if(PROVIDER_NAME[provider]) t=wt('ui.describeProvider','{text}, {provider}',{text:t,provider:PROVIDER_NAME[provider]});
+    if(s.state==='paused') t=wt('ui.describePaused','{text} (paused)',{text:t});
     return t;
   }
   function showText(on){
@@ -239,7 +239,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   }
   function name(text){
     wEl.setAttribute('aria-label', text);
-    if(linked) linkEl.setAttribute('aria-label', text+'. '+wt('ui.activateToOpen','Activate to open link.'));
+    if(linked) linkEl.setAttribute('aria-label', wt('ui.linkName','{text}. Activate to open link.',{text}));
   }
   async function boot(){
     try{

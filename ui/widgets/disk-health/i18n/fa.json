@@ -25,8 +25,8 @@
   "ui.failed": "خراب",
   "ui.bay": "محفظه {n}",
   "ui.bayEmpty": "محفظه {n}: خالی",
-  "ui.bayFailed": "محفظه {n} خراب است",
-  "ui.baysFailed": "محفظه‌های {list} خراب‌اند",
+  "ui.baysFailed_one": "محفظه {list} خراب است",
+  "ui.baysFailed_other": "محفظه‌های {list} خراب‌اند",
   "ui.noDrives": "هیچ درایوی گزارش نشد",
   "ui.notReporting": "گزارش نمی‌دهد"
 }

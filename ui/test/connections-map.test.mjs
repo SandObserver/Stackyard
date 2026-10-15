@@ -184,7 +184,7 @@ test('an unavailable service shows a hollow dot and says so', async () => {
     const [dot, , state] = line.children;
     assert.equal(dot.style.backgroundColor, 'transparent');
     assert.match(dot.style.boxShadow, /^inset /);
-    assert.equal(state.textContent, ', Unavailable');
+    assert.equal(state.textContent, ', unavailable');
     assert.match(map.sr.textContent, /^Down: Unavailable$/);
   } finally {
     map.restore();

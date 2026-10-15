@@ -25,8 +25,8 @@
   "ui.failed": "Ausgefallen",
   "ui.bay": "Schacht {n}",
   "ui.bayEmpty": "Schacht {n}: leer",
-  "ui.bayFailed": "Schacht {n} defekt",
-  "ui.baysFailed": "Schächte {list} defekt",
+  "ui.baysFailed_one": "Schacht {list} defekt",
+  "ui.baysFailed_other": "Schächte {list} defekt",
   "ui.noDrives": "Keine Laufwerke gemeldet",
   "ui.notReporting": "Meldet sich nicht"
 }

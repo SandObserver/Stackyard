@@ -25,9 +25,11 @@ const { healthReason, computeBadgeVisual } = await import('../js/badge-logic.js'
    which is what the i18n module does. */
 const translatorFor = file => {
   const cat = JSON.parse(read(`i18n/${file}`));
+  const rules = new Intl.PluralRules(file.slice(0, -5));
   return (key, vars) => {
     const [section, name] = key.split('.');
-    const s = cat[section]?.[name] ?? key;
+    const counted = typeof vars?.count === 'number' ? cat[section]?.[`${name}_${rules.select(vars.count)}`] : null;
+    const s = counted ?? cat[section]?.[name] ?? key;
     return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : s;
   };
 };
@@ -38,7 +40,8 @@ test('every locale carries the status strings', () => {
   const needed = [
     'needsAttention',
     'healthy',
-    'pending',
+    'pending_other',
+    'pendingValue',
     'stale',
     'containerNotFound',
     'containerState',
@@ -72,7 +75,8 @@ test('every locale carries the API-unreachable message', () => {
 /* A translation that loses a placeholder produces a message with a hole in it. */
 test('no translation drops a placeholder', () => {
   const withVars = {
-    'status.pending': ['count'],
+    'status.pending_other': ['count'],
+    'status.pendingValue': ['value'],
     'status.containerState': ['state'],
     'status.pingFailed': ['error'],
     'status.pingReturned': ['status'],
@@ -135,6 +139,20 @@ test('the reason a tile is red is translated', () => {
 /* Docker's own text comes from the daemon, so inventing a translation for
    "Exited (1) 2 hours ago" would be guessing at a string this code never
    produces. */
+test('a pending count takes the plural form of its language', () => {
+  const es = translatorFor('es.json');
+  assert.equal(computeBadgeVisual({ health: 0, activity: 1, hasHC: true, translate: es }).aria, '1 pendiente');
+  assert.equal(computeBadgeVisual({ health: 0, activity: 3, hasHC: true, translate: es }).aria, '3 pendientes');
+});
+
+test('a container state without daemon text is named in the reader language', () => {
+  const de = translatorFor('de.json');
+  assert.equal(healthReason({ state: 'exited' }, de), de('status.containerExited'));
+  assert.doesNotMatch(healthReason({ state: 'exited' }, de), /exited/);
+  assert.equal(healthReason({ state: 'exited' }), 'Container stopped');
+  assert.equal(healthReason({ state: 'mystery' }), 'Container mystery');
+});
+
 test("Docker's own status text is passed through untranslated", () => {
   const fa = translatorFor('fa.json');
   assert.equal(healthReason({ state: 'exited', status: 'Exited (1) 2 hours ago' }, fa), 'Exited (1) 2 hours ago');

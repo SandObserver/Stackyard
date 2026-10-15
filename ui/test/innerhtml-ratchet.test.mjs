@@ -31,7 +31,7 @@ import { fileURLToPath } from 'node:url';
    `replaceChildren()`, which says what it does and cannot become a write by
    someone appending an interpolation to it later. */
 const BUDGET = {
-  'widgets/backup/backup.html': 3,
+  'widgets/backup/backup.html': 2,
   'widgets/connections/connections-vpn.html': 1,
   'widgets/dashboard-switch/index.html': 2,
   'widgets/dns/index.html': 1,

@@ -8,8 +8,9 @@
 
 import { nextActiveIndex } from '/js/admin-logic.js?v=fc7f0836';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
+import { formatList } from '/js/format-number.js?v=52226e9c';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=0d64dfd3';
+import { qa } from '/js/utils.js?v=b6e6c040';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');
@@ -52,7 +53,7 @@ function focusBeside(from, step) {
 
 /** An entry with `group` and no `value` is a heading. The keyboard skips it.
 
-    @typedef {{ value?: string, label?: string, group?: string }} ListboxOption */
+    @typedef {{ value?: string, label?: string, group?: string, lang?: string }} ListboxOption */
 
 /** Builds a picker and returns it with its own small API.
 
@@ -114,8 +115,15 @@ export function createListbox(
     const sel = selected();
     if (summary) text.textContent = summary(sel);
     else if (!sel.length) text.textContent = placeholder;
-    else text.textContent = sel.map(o => o.label).join(', ');
+    else
+      text.textContent = formatList(
+        sel.map(o => o.label),
+        'unit',
+      );
     text.classList.toggle('is-ph', !sel.length && !summary);
+    const lang = !summary && sel.length === 1 ? sel[0].lang : '';
+    if (lang) text.lang = lang;
+    else text.removeAttribute('lang');
   }
 
   function paintList() {
@@ -133,6 +141,8 @@ export function createListbox(
     );
     items().forEach(li => {
       li.tabIndex = -1;
+      const o = opts.find(x => x.group == null && String(x.value) === li.dataset.val);
+      if (o && o.lang) li.lang = o.lang;
     });
   }
 

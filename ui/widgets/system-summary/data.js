@@ -670,7 +670,7 @@ async function beszelInterfaces(ctx) {
   if (!id) ctx.fail('Choose a system first.', { kind: ctx.KIND.INVALID });
   const stats = await beszelLatest(ctx, base, id);
   const options = Object.keys(stats?.ni || {}).map(name => ({ value: name, label: name }));
-  return { options: [{ value: BESZEL_ALL, label: 'All interfaces' }, ...options] };
+  return { options: [{ value: BESZEL_ALL, label: 'All interfaces', labelKey: 'network.interface.all' }, ...options] };
 }
 
 const BESZEL_ALL = '*';

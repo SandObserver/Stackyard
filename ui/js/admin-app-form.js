@@ -1,9 +1,9 @@
-import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=0d64dfd3';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=b6e6c040';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c7b5111';
 import { state } from '/js/admin-state.js?v=af772a1b';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
-import { formatNumber } from '/js/format-number.js?v=349a741d';
+import { formatNumber } from '/js/format-number.js?v=52226e9c';
 import {
   isDockBlocked,
   clearsStoredSecret,
@@ -12,7 +12,7 @@ import {
   nextActiveIndex,
   sameIconName,
 } from '/js/admin-logic.js?v=fc7f0836';
-import { t } from '/js/i18n.js?v=5579776a';
+import { t } from '/js/i18n.js?v=f754f6fe';
 import {
   toast,
   errorText,
@@ -24,10 +24,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=2b48ff3f';
-import { createListbox } from '/js/listbox.js?v=35d8318a';
-import { MAX_LABELS } from '/js/badge-logic.js?v=9e6d9d4b';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=3b14e88c';
+} from '/js/admin-shared.js?v=38ed2b51';
+import { createListbox } from '/js/listbox.js?v=ae7b9a38';
+import { MAX_LABELS } from '/js/badge-logic.js?v=e3c32915';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=44fdebde';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';

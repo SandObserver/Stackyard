@@ -71,16 +71,14 @@ test('colorOrFallback does not accept named colours', () => {
 /* ── The four sites ───────────────────────────────────────────────────────── */
 
 /* A ratchet in the same shape as ui/test/innerhtml-ratchet.test.mjs. Clears
-   (`= ''`) write no markup and are not counted. backup.html keeps three writes
+   (`= ''`) write no markup and are not counted. backup.html keeps two writes
    on purpose:
 
      a literal '&nbsp;<br>&nbsp;' placeholder
      the running-state SVG, which interpolates nothing
-     `Last ${last}` / `Next ${next}`, where relTime() returns only '—' or a
-     number followed by a unit
 
-   None can carry a value from config or from upstream. */
-const BUDGET = { [MAP]: 0, [STATS]: 0, [BACKUP]: 3 };
+   Neither can carry a value from config or from upstream. */
+const BUDGET = { [MAP]: 0, [STATS]: 0, [BACKUP]: 2 };
 
 test('no widget frontend touched here exceeds its innerHTML budget', () => {
   const over = [];
@@ -96,7 +94,7 @@ test('no widget frontend touched here exceeds its innerHTML budget', () => {
 test('the upstream users value is escaped, not concatenated', () => {
   const src = read(MAP);
   assert.ok(!src.includes('+info.users+'), 'info.users is still concatenated into markup');
-  assert.match(src, /\$\{info\.users\}/, 'info.users should be an html`` interpolation');
+  assert.match(src, /\$\{[^}]*formatNumber\(info\.users\)[^}]*\}/, 'info.users should be an html`` interpolation');
 });
 
 test('the backup failure draws no upstream text', () => {

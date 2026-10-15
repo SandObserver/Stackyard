@@ -16,6 +16,11 @@ function format(lang, opts) {
     @param {string} lang @param {'long'|'short'} width
     @returns {(date: Date) => { full: string, weekday: string, date: string }} */
 export function clockDateParts(lang, width) {
+  try {
+    lang = Intl.getCanonicalLocales(lang)[0] || 'en';
+  } catch {
+    lang = 'en';
+  }
   /** @type {Intl.DateTimeFormatOptions} */
   const opts = { weekday: width, month: width, day: 'numeric' };
   if (String(lang).split('-')[0] !== 'fa') {

@@ -24,10 +24,12 @@
   "href.placeholder": "https://…",
   "href.hint": "The address your browser uses for this service. Leave blank to use the one above, if your browser can reach it.",
   "ui.nothingPlaying": "Nothing playing",
-  "ui.nowPlayingPrefix": "Now playing:",
-  "ui.onPlayer": "on",
-  "ui.paused": "paused",
+  "ui.describeTitle": "Now playing: {title}",
+  "ui.describeSubtitle": "{text}, {subtitle}",
+  "ui.describePlayer": "{text} on {player}",
+  "ui.describeProvider": "{text}, {provider}",
+  "ui.describePaused": "{text} (paused)",
   "ui.previous": "Previous item",
   "ui.next": "Next item",
-  "ui.activateToOpen": "Activate to open link."
+  "ui.linkName": "{text}. Activate to open link."
 }

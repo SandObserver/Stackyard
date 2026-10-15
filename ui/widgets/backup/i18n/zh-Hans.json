@@ -31,9 +31,14 @@
   "ui.backupStatus": "备份状态",
   "ui.running": "运行中",
   "ui.unknown": "未知",
-  "ui.last": "上次",
-  "ui.next": "下次",
   "ui.runningNow": "运行中…",
-  "ui.lastCap": "上次",
-  "ui.nextCap": "下次"
+  "ui.lastAt": "上次 {when}",
+  "ui.nextAt": "下次 {when}",
+  "ui.lastAria": "上次运行 {when}",
+  "ui.nextAria": "下次运行 {when}",
+  "ui.summary": "{name}：{status}",
+  "ui.status.healthy": "正常",
+  "ui.status.warning": "警告",
+  "ui.status.error": "失败",
+  "ui.status.missed": "已错过"
 }

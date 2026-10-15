@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=7e288a05';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=db741421';
-import { recoveryShown } from '/js/config-recovery.js?v=dbe542e1';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=581b7729';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=f7f58a4d';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8aee98e6';
+import { recoveryShown } from '/js/config-recovery.js?v=e22b5e5a';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=547999d2';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   afterImport,
@@ -21,7 +21,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=a5dc252e';
+} from '/js/admin-settings.js?v=a310b96a';
 import {
   apiGet,
   apiPost,
@@ -35,15 +35,15 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=2b48ff3f';
+} from '/js/admin-shared.js?v=38ed2b51';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=8d89e268';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=0879c8a7';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { formatNumber } from '/js/format-number.js?v=349a741d';
+import { formatNumber } from '/js/format-number.js?v=52226e9c';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=35d8318a';
+import { createListbox } from '/js/listbox.js?v=ae7b9a38';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=5579776a';
+import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=f754f6fe';
 import { loadLocalIcons } from '/js/icons.js?v=9c7b5111';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=628341d4';
 import {
@@ -80,8 +80,8 @@ import {
   storeGet,
   storeSet,
   tgt,
-} from '/js/utils.js?v=0d64dfd3';
-import { applyBackground, resolveBackground } from '/js/background.js?v=fe705356';
+} from '/js/utils.js?v=b6e6c040';
+import { applyBackground, resolveBackground } from '/js/background.js?v=1bd5f25e';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
 ensureSprite();
@@ -321,7 +321,7 @@ function buildAddNewCard() {
     b.className = 'tile-opt' + (kind === state.ctype ? ' on' : '');
     b.dataset.ctype = kind;
     b.setAttribute('aria-pressed', String(kind === state.ctype));
-    b.setAttribute('aria-label', t('type.addNew') + ': ' + label);
+    b.setAttribute('aria-label', t('type.addNewNamed', { name: label }));
     setHtml(b, html`<span class="tile-ico">${raw(iconSvg(kind, 38))}</span><span class="tile-cap">${label}</span>`);
     b.onclick = () => {
       if (state.ctype === kind) return;
@@ -1053,7 +1053,7 @@ function initLanguage() {
   const box = createListbox({
     id: 'lang',
     label: t('common.language'),
-    options: LANGUAGES.map(l => ({ value: l.code, label: l.name })),
+    options: LANGUAGES.map(l => ({ value: l.code, label: l.name, lang: l.code })),
     value: hidden.value || 'en',
     onChange: v => {
       hidden.value = String(v);

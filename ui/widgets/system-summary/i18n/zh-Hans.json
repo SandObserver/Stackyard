@@ -66,6 +66,7 @@
   "network.mode.opt.uptime": "在线时长",
   "network.interface.label": "网络接口",
   "network.interface.hint": "先填写上方连接信息，然后加载列表。",
+  "network.interface.all": "所有接口",
   "network.provider.label": "提供方",
   "network.provider.opt.myspeed": "MySpeed",
   "network.provider.opt.speedtest-tracker": "Speedtest Tracker",

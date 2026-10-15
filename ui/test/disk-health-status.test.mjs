@@ -34,11 +34,22 @@ assert.ok(alertFn, 'updateAlert is defined in the widget');
 
 function runAlert(bays) {
   const els = { alert: { hidden: true, textContent: '' }, nums: { hidden: false } };
-  new Function('bayData', 'unread', 'formatNumber', 'wt', 'document', `${led[0]}; ${alertFn[0]}; updateAlert();`)(
+  new Function(
+    'bayData',
+    'unread',
+    'formatNumber',
+    'wt',
+    'wtCount',
+    'formatList',
+    'document',
+    `${led[0]}; ${alertFn[0]}; updateAlert();`,
+  )(
     bays,
     d => !!d?.error,
     n => String(n),
     (_k, fallback) => fallback,
+    (_k, count, fallback, vars) => (count === 1 ? fallback.one : fallback.other).replace('{list}', vars.list),
+    items => items.join(', '),
     { getElementById: id => els[id] },
   );
   return els;
