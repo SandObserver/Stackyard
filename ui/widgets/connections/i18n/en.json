@@ -57,6 +57,8 @@
   "services.adminUrl.label": "Admin UI URL",
   "services.adminUrl.placeholder": "http://your-server:3002",
   "services.color.label": "Dot Color",
+  "href.label": "Click URL",
+  "href.placeholder": "https://…",
   "showLegend.label": "Show Legend",
   "showLegend.hint": "Service key along the bottom of the map.",
   "ui.vpnStatus": "VPN status",

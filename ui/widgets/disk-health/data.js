@@ -111,7 +111,7 @@ async function diskHealthScrutiny(ctx) {
     };
   });
 
-  return { bays: result, href: config.scrutinyHref || '', provider: 'scrutiny' };
+  return { bays: result, href: config.scrutinyHref || ctx.browserLink(url), provider: 'scrutiny' };
 }
 
 /* Scrutiny's device_status is a bit set: 1 is a failed SMART check, 2 a failed
@@ -157,5 +157,5 @@ async function diskHealthTrueNas(ctx) {
     };
   });
 
-  return { bays: result, href: config.truenasHref || '', provider: 'truenas' };
+  return { bays: result, href: config.truenasHref || ctx.browserLink(url), provider: 'truenas' };
 }

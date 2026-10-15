@@ -57,6 +57,8 @@
   "services.adminUrl.label": "管理界面地址",
   "services.adminUrl.placeholder": "http://your-server:3002",
   "services.color.label": "圆点颜色",
+  "href.label": "点击跳转地址",
+  "href.placeholder": "https://…",
   "showLegend.label": "显示图例",
   "showLegend.hint": "地图底部的服务图例。",
   "ui.vpnStatus": "VPN 状态",

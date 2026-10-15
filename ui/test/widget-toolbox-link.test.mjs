@@ -105,14 +105,14 @@ test('the Now Playing link holds no controls', () => {
 test('the Books link holds no spines and is not their container', () => {
   const src = widget('books/index.html');
   assert.match(src, /<div class="bk-link" id="bk-link"><\/div>/);
-  assert.match(src, /linkTo\(link,href\)/);
+  assert.match(src, /linkTo\(link,href\|\|\(d&&d\.link\)\|\|''\)/);
   assert.doesNotMatch(src, /card\.setAttribute\('role',\s*'link'\)/);
 });
 
 test('the DNS link is described by its summary', () => {
   assert.match(
     widget('dns/index.html'),
-    /if \(linkTo\(widgetEl, _href\)\) widgetEl\.setAttribute\('aria-describedby', 'sr'\);/,
+    /if \(linkTo\(widgetEl, _href \|\| d\?\.link \|\| ''\)\) widgetEl\.setAttribute\('aria-describedby', 'sr'\);/,
   );
 });
 

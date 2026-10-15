@@ -150,6 +150,15 @@
       "cosmetic": true
     },
     {
+      "key": "href",
+      "type": "text",
+      "label": "href.label",
+      "placeholder": "href.placeholder",
+      "optional": true,
+      "hint": "href.hint",
+      "cosmetic": true
+    },
+    {
       "key": "slots",
       "type": "group",
       "label": "slots.label",

@@ -6,6 +6,7 @@ const { dispatchProvider } = require(path.join(__dirname, '..', 'src', 'provider
 const { normalizeBase } = require(path.join(__dirname, '..', 'src', 'widget-data.js'));
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'disk-health', 'data.js'));
+const { browserLink } = require('../../ui/js/service-link.js');
 
 const KIND = { INVALID: 'invalid', AUTH: 'auth' };
 
@@ -15,6 +16,7 @@ function makeCtx(endpoint, config, fetchJSON) {
     config,
     fetchJSON,
     normalizeBase,
+    browserLink,
     KIND,
     fail: (message, opts) => {
       const e = new Error(message);
@@ -146,3 +148,14 @@ for (const status of ['2', 4.5, -1, null, undefined]) {
     assert.equal(bay.hasSmart, false);
   });
 }
+
+test('with no link set the widget opens the Scrutiny address the browser can reach', async () => {
+  const run = (scrutinyUrl, extra = {}) =>
+    dataFn(makeCtx(undefined, { diskProvider: 'scrutiny', scrutinyUrl, bays: [], ...extra }, summaryFetch(FORK)));
+  assert.equal((await run('http://10.0.0.5:8080')).href, 'http://10.0.0.5:8080');
+  assert.equal((await run('http://scrutiny:8080')).href, '');
+  assert.equal(
+    (await run('http://10.0.0.5:8080', { scrutinyHref: 'https://disks.example.com' })).href,
+    'https://disks.example.com',
+  );
+});

@@ -6,7 +6,7 @@
   "dnsUrl.placeholder": "dns-host:80",
   "dnsUrl.hint": "容器名称和端口，或完整的 URL。",
   "dnsHref.label": "点击跳转地址",
-  "dnsHref.hint": "点击此小组件后打开的地址。留空则不跳转。",
+  "dnsHref.hint": "点击此小组件后打开的地址。留空则打开该服务（前提是浏览器能访问其地址）。",
   "dnsUser.label": "用户名",
   "dnsPass.label": "密码",
   "dnsPiholePassword.label": "Pi-hole 密码",

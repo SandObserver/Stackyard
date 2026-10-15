@@ -333,6 +333,18 @@
       ]
     },
     {
+      "key": "href",
+      "type": "text",
+      "label": "href.label",
+      "placeholder": "href.placeholder",
+      "optional": true,
+      "showIf": {
+        "field": "view",
+        "equals": "map"
+      },
+      "cosmetic": true
+    },
+    {
       "key": "showLegend",
       "type": "toggle",
       "label": "showLegend.label",

@@ -29,6 +29,7 @@
   "listId.hint": "Enter the URL + key above, then click Fetch to load your collections / reading lists.",
   "href.label": "Click URL (optional)",
   "href.placeholder": "https://…",
+  "href.hint": "Leave blank to open the service, if your browser can reach its address.",
   "ui.reading": "Reading",
   "ui.srcRecently": "Recently Added",
   "ui.srcUnread": "On Deck",

@@ -5,14 +5,17 @@ module.exports = async function (ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const provider = config.provider || 'adguard';
 
-  if (provider === 'nextdns') return nextDns(ctx, config, fetchJSON);
+  if (provider === 'nextdns') {
+    const stats = await nextDns(ctx, config, fetchJSON);
+    return { ...stats, link: `https://my.nextdns.io/${encodeURIComponent(config.dnsNextdnsProfile)}/analytics` };
+  }
 
   const base = normalizeBase(config.dnsUrl);
   if (!base) ctx.fail('Server URL not configured', { kind: ctx.KIND.INVALID });
 
-  if (provider === 'pihole') return piHole(ctx, base, config, fetchJSON);
-  if (provider === 'technitium') return technitium(ctx, base, config, fetchJSON);
-  return adGuard(ctx, base, config, fetchJSON);
+  const read = provider === 'pihole' ? piHole : provider === 'technitium' ? technitium : adGuard;
+  const stats = await read(ctx, base, config, fetchJSON);
+  return { ...stats, link: ctx.browserLink(config.dnsUrl) };
 };
 
 function authErr(r) {

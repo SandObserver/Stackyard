@@ -5,6 +5,7 @@ const path = require('node:path');
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'backup', 'data.js'));
 const { WidgetError, KIND } = require('../src/api-error');
 const log = require('../src/log');
+const { browserLink } = require('../../ui/js/service-link.js');
 
 /* Duplicati mints a fresh token per instance, so every fixture answers the login
    route as well as the data route it is asked about. */
@@ -20,6 +21,7 @@ function ctxFor(config, endpoint, routes, row = null) {
         throw new WidgetError(message, opts);
       },
       KIND,
+      browserLink,
       log,
       async fetchJSON(url, opts) {
         calls.push({ url, opts });
@@ -228,4 +230,33 @@ test('an instance that times out marks its cards as timed out', async () => {
   };
   const { ctx } = ctxFor(config, 'slots', { '/api/v1/auth/login': timedOut, '/api/v1/sources': timedOut });
   assert.deepEqual(await dataFn(ctx), [{ error: KIND.TIMEOUT }, { error: KIND.TIMEOUT }]);
+});
+
+test('each slot links to its own job page when the service address works in a browser', async () => {
+  const { ctx } = ctxFor(
+    {
+      slots: [
+        { provider: 'duplicati', dupUrl: 'http://10.0.0.5:8200', jobId: '3' },
+        { provider: 'kopia', kopiaUrl: 'http://10.0.0.5:51515', jobId: 'nas@backup:/srv/photos' },
+        { provider: 'duplicati', dupUrl: 'http://duplicati:8200', jobId: '3' },
+      ],
+    },
+    'slots',
+    {
+      '/api/v1/auth/login': LOGIN,
+      '/api/v1/serverstate': { status: 200, data: {} },
+      '/api/v1/backups': { status: 200, data: [{ Backup: { ID: '3', Name: 'Nightly' } }] },
+      '/api/v1/sources': {
+        status: 200,
+        data: { sources: [{ source: { host: 'nas', userName: 'backup', path: '/srv/photos' } }] },
+      },
+    },
+  );
+  const out = await dataFn(ctx);
+  assert.equal(out[0].link, 'http://10.0.0.5:8200/ngclient/backup/3/log');
+  assert.equal(
+    out[1].link,
+    'http://10.0.0.5:51515/snapshots/single-source?userName=backup&host=nas&path=%2Fsrv%2Fphotos',
+  );
+  assert.equal(out[2].link, '');
 });

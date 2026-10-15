@@ -29,6 +29,7 @@
   "listId.hint": "Saisissez l’URL et la clé ci-dessus, puis cliquez sur Récupérer pour charger vos collections et listes de lecture.",
   "href.label": "URL de clic (facultatif)",
   "href.placeholder": "https://…",
+  "href.hint": "Laisser vide pour ouvrir le service, si votre navigateur peut atteindre son adresse.",
   "ui.reading": "En cours",
   "ui.srcRecently": "Ajouts récents",
   "ui.srcUnread": "À poursuivre",

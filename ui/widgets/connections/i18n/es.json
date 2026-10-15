@@ -57,6 +57,8 @@
   "services.adminUrl.label": "URL del panel de administración",
   "services.adminUrl.placeholder": "http://your-server:3002",
   "services.color.label": "Color del punto",
+  "href.label": "URL de clic",
+  "href.placeholder": "https://…",
   "showLegend.label": "Mostrar la leyenda",
   "showLegend.hint": "Clave de servicios en la parte inferior del mapa.",
   "ui.vpnStatus": "Estado de la VPN",

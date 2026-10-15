@@ -57,6 +57,8 @@
   "services.adminUrl.label": "آدرس پنل مدیریت",
   "services.adminUrl.placeholder": "http://your-server:3002",
   "services.color.label": "رنگ نقطه",
+  "href.label": "آدرس کلیک",
+  "href.placeholder": "https://…",
   "showLegend.label": "نمایش راهنما",
   "showLegend.hint": "کلید سرویس‌ها در پایین نقشه.",
   "ui.vpnStatus": "وضعیت VPN",

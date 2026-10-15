@@ -11,7 +11,7 @@
   "githubToken.label": "Persönlicher Zugriffstoken",
   "githubToken.hint": "Klassischer PAT mit den Berechtigungen repo und read:user (oder ein feingranularer PAT mit gleichwertigem Lesezugriff). Wird nur von diesem Widget verwendet.",
   "githubHref.label": "Klick-URL",
-  "githubHref.hint": "Wohin ein Klick auf das Widget führt. Leer lassen, um es zu deaktivieren.",
+  "githubHref.hint": "Wohin ein Klick auf das Widget führt. Leer lassen, um das GitHub-Profil zu öffnen.",
   "githubPrFilters.label": "Pull-Request-Filter",
   "githubPrFilters.hint": "Welche offenen Pull Requests angezeigt werden. Mehrere Filter werden kombiniert.",
   "githubPrFilters.opt.created": "Erstellt",

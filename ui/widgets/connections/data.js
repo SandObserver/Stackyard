@@ -392,7 +392,7 @@ async function mapView(ctx) {
       return o;
     }),
   );
-  return { services: results, meta: { showLegend: wc.showLegend !== false } };
+  return { services: results, meta: { showLegend: wc.showLegend !== false, href: wc.href || '' } };
 }
 
 module.exports = run;

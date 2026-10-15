@@ -22,6 +22,7 @@
   "navidromePassword.label": "رمز عبور",
   "href.label": "آدرس کلیک (اختیاری)",
   "href.placeholder": "https://…",
+  "href.hint": "خالی بگذارید تا خود سرویس باز شود، اگر مرورگرتان به آدرسش دسترسی دارد.",
   "ui.nothingPlaying": "چیزی پخش نمی‌شود",
   "ui.nowPlayingPrefix": "در حال پخش:",
   "ui.onPlayer": "روی",

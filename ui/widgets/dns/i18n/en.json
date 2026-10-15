@@ -6,7 +6,7 @@
   "dnsUrl.placeholder": "dns-host:80",
   "dnsUrl.hint": "Container name and port, or a full URL.",
   "dnsHref.label": "Click URL",
-  "dnsHref.hint": "Where clicking the widget opens. Leave blank to disable.",
+  "dnsHref.hint": "Where clicking the widget opens. Leave blank to open the service, if your browser can reach its address.",
   "dnsUser.label": "Username",
   "dnsPass.label": "Password",
   "dnsPiholePassword.label": "Pi-hole Password",

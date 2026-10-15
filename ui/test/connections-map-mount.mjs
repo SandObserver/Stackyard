@@ -148,6 +148,7 @@ export async function mount({ theme = 'dark' } = {}) {
     },
     fetchData: async () => ({}),
     openUrl() {},
+    linkTo: () => false,
     html: () => '',
     setHtml() {},
     colorOrFallback: c => c,

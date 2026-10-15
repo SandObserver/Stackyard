@@ -215,10 +215,9 @@
       const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
       if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
     }catch(e){}
-    if(href){
-      const link=document.getElementById('bk-link');
-      if(linkTo(link,href)) link.setAttribute('aria-label', wt('widget.label','Books'));
-    }
+    const link=document.getElementById('bk-link');
+    const setLink=d=>{ if(linkTo(link,href||(d&&d.link)||'')) link.setAttribute('aria-label', wt('widget.label','Books')); };
+    setLink(null);
     const state = errorState({ root:card, content:document.getElementById('shelves'),
       caption:document.getElementById('cap') });
 
@@ -228,6 +227,7 @@
       onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); },
       render:d=>{
       state.ok();
+      setLink(d);
       const shelves=Array.isArray(d.shelves)?d.shelves:[];
       lbl.textContent=SHELVES>1?wt('widget.label','Books'):shelfName(shelves[0]);
       const rows=bays.map((_,i)=>{ const sh=shelves[i]||{books:[]}; return decorate((Array.isArray(sh.books)?sh.books:[]).slice(0,SHOW)); });

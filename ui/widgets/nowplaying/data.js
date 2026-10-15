@@ -1,9 +1,22 @@
-/* Returns { provider, sessions: [{ title, subtitle, progress, state, type,
-   player }] }. progress is 0..1, or null when the source has no duration. */
+/* Returns { provider, link, sessions: [{ title, subtitle, progress, state, type,
+   player, link }] }. progress is 0..1, or null when the source has no duration. */
 
 const crypto = require('crypto');
 
 const MAX = 5;
+
+const plexMachineIds = new Map();
+
+async function plexMachineId(ctx, base, token) {
+  if (plexMachineIds.has(base)) return plexMachineIds.get(base);
+  const r = await ctx.fetchJSON(`${base}/identity`, {
+    headers: { Accept: 'application/json', 'X-Plex-Token': token },
+    timeout: 5000,
+  });
+  const id = (r.status < 400 && r.data?.MediaContainer?.machineIdentifier) || '';
+  if (id) plexMachineIds.set(base, id);
+  return id;
+}
 
 function authErr(r) {
   return r.status === 401 || r.status === 403;
@@ -22,6 +35,8 @@ async function plex(ctx) {
   if (r.status >= 400) ctx.fail('Plex HTTP ' + r.status);
   let list = (r.data && r.data.MediaContainer && r.data.MediaContainer.Metadata) || [];
   if (!Array.isArray(list)) list = [list];
+  const web = ctx.browserLink(ctx.config.plexUrl);
+  const machine = web && list.length ? await plexMachineId(ctx, base, token).catch(() => '') : '';
   return list.map(m => {
     const type = (m.type || '').toLowerCase();
     let title = m.title || '',
@@ -33,7 +48,11 @@ async function plex(ctx) {
     const progress = dur > 0 ? Math.min(1, Math.max(0, off / dur)) : null;
     const pstate = (m.Player && m.Player.state) || 'playing'; // playing | paused | buffering
     const player = (m.Player && (m.Player.title || m.Player.product)) || '';
-    return { title, subtitle, progress, state: pstate === 'paused' ? 'paused' : 'playing', type, player };
+    const link =
+      machine && m.ratingKey
+        ? `${web}/web/index.html#!/server/${machine}/details?key=${encodeURIComponent(`/library/metadata/${m.ratingKey}`)}`
+        : web;
+    return { title, subtitle, progress, state: pstate === 'paused' ? 'paused' : 'playing', type, player, link };
   });
 }
 
@@ -48,6 +67,12 @@ async function jellyfinLike(ctx, provider) {
   if (authErr(r)) ctx.fail(name + ' auth failed', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail(name + ' HTTP ' + r.status);
   const list = Array.isArray(r.data) ? r.data : [];
+  const web = ctx.browserLink(provider === 'emby' ? ctx.config.embyUrl : ctx.config.jellyfinUrl);
+  const itemLink = (itemId, serverId) => {
+    if (!web || !itemId) return web;
+    const q = `id=${encodeURIComponent(itemId)}&serverId=${encodeURIComponent(serverId || '')}`;
+    return provider === 'emby' ? `${web}/web/index.html#!/item?${q}` : `${web}/web/#/details?${q}`;
+  };
   const out = [];
   for (const s of list) {
     const np = s.NowPlayingItem;
@@ -72,6 +97,7 @@ async function jellyfinLike(ctx, provider) {
       state: ps.IsPaused ? 'paused' : 'playing',
       type: t.toLowerCase(),
       player: s.DeviceName || s.Client || '',
+      link: itemLink(np.Id, s.ServerId),
     });
   }
   return out;
@@ -99,6 +125,7 @@ async function navidrome(ctx) {
     ctx.fail('Navidrome rejected the request, check username and password', { kind: ctx.KIND.AUTH });
   let entries = (sr && sr.nowPlaying && sr.nowPlaying.entry) || [];
   if (!Array.isArray(entries)) entries = [entries];
+  const web = ctx.browserLink(ctx.config.navidromeUrl);
   return entries.map(e => {
     const dur = +e.duration || 0; // Subsonic duration is seconds
     const pos = e.positionMs != null ? +e.positionMs : null; // OpenSubsonic playbackReport (Navidrome >= 0.62), ms
@@ -111,6 +138,7 @@ async function navidrome(ctx) {
       state,
       type: 'track',
       player: e.playerName || '',
+      link: web && e.albumId ? `${web}/app/#/album/${encodeURIComponent(e.albumId)}/show` : web,
     };
   });
 }
@@ -122,5 +150,6 @@ module.exports = async function (ctx) {
   else if (provider === 'jellyfin' || provider === 'emby') sessions = await jellyfinLike(ctx, provider);
   else if (provider === 'navidrome') sessions = await navidrome(ctx);
   else ctx.fail('No media server configured', { kind: ctx.KIND.INVALID });
-  return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX) };
+  const base = { plex: 'plexUrl', jellyfin: 'jellyfinUrl', emby: 'embyUrl', navidrome: 'navidromeUrl' }[provider];
+  return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX), link: ctx.browserLink(ctx.config[base]) };
 };

@@ -148,7 +148,8 @@ function statusColor(s) {
   return null;
 }
 
-let _cfg={}, _pollSec=60, _href='', _jobSlots=[], _hrefs=[];
+let _cfg={}, _pollSec=60, _href='', _jobSlots=[], _hrefs=[], _links=[];
+const cardLink = idx => _hrefs[idx] || _links[idx] || '';
 
 function parseDate(v) {
   if(!v) return null;
@@ -470,21 +471,23 @@ function buildShell() {
 
   slots.forEach((jobId, idx) => {
     const isActive = !!jobId;
-    const href  = _hrefs[idx] || '';
     const seed  = idx * 9371 + 3;
     const haiku = haikus[idx];
 
     const wrap = document.createElement('div');
+    wrap.id = `wrap-${idx}`;
     wrap.className = 'card-wrap' + (isActive?'':' inactive');
     wrap.style.width = cardW;
     wrap.style.flex  = '0 0 ' + cardW;
     if (cardH) { wrap.style.height = cardH; wrap.style.alignSelf = 'center'; }
 
-    if (href && isActive) {
-      linkTo(wrap, href);
+    if (isActive) {
+      linkTo(wrap, cardLink(idx));
       if (isTouch) {
         let _revealTimer = null;
         wrap.addEventListener('touchend', (e) => {
+          const href = cardLink(idx);
+          if (!href) return;
           e.preventDefault();
           const isRevealed = wrap.classList.contains('touch-revealed');
           /* Reset all cards and clear any pending timers */
@@ -592,6 +595,9 @@ function applyCard(idx, job) {
     applyCardError(idx, errorLine({ kind: job.error }));
     return;
   }
+  _links[idx] = (job && job.link) || '';
+  const wrapEl = document.getElementById(`wrap-${idx}`);
+  if (wrapEl && !wrapEl.classList.contains('inactive')) linkTo(wrapEl, cardLink(idx));
   if(!job) {
     back.style.background='rgba(255,255,255,0.06)'; back.style.color='';
     back.classList.remove('running');

@@ -152,7 +152,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   const ctlEl=document.getElementById('ctl'), countEl=document.getElementById('count');
   const strandEl=document.getElementById('strandpath');
 
-  let sessions=[], provider='', idx=0, href='';
+  let sessions=[], provider='', idx=0, href='', baseLink='', linked=false;
 
   function tapeSize(s){
     if(!s) return TAPE_MIN;
@@ -195,6 +195,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
        lower edge otherwise shows as a detached stub. */
     let ly=-8+d/2-6; if(ly>50)ly=50; if(ly<18)ly=18;
     strandEl.setAttribute('d', `M142 19 L74 ${(ly-3).toFixed(1)} L74 ${(ly+3).toFixed(1)} L142 25 Z`);
+    linked=linkTo(linkEl, href||(s&&s.link)||baseLink);
     const label=describe(s);
     name(label);
     if(announce) srEl.textContent=label;
@@ -230,6 +231,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   }
   function apply(d){
     provider=d.provider||provider;
+    baseLink=d.link||'';
     const next=Array.isArray(d.sessions)?d.sessions:[];
     const changed=JSON.stringify(next)!==JSON.stringify(sessions);
     sessions=next;
@@ -238,14 +240,14 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   }
   function name(text){
     wEl.setAttribute('aria-label', text);
-    if(href) linkEl.setAttribute('aria-label', text+'. '+wt('ui.activateToOpen','Activate to open link.'));
+    if(linked) linkEl.setAttribute('aria-label', text+'. '+wt('ui.activateToOpen','Activate to open link.'));
   }
   async function boot(){
     try{
       const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
       if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
     }catch(e){}
-    linkTo(linkEl,href);
+    linked=linkTo(linkEl,href);
     const state=errorState({ root:wEl, content:[document.querySelector('.window')],
       caption:document.getElementById('np-cap') });
 
