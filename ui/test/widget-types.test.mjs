@@ -164,3 +164,11 @@ test('cardPreset ignores an unknown name and an unknown widget', () => {
   assert.equal(cardPreset({ widgetType: 'nope' }, CARD_REG), '');
   assert.equal(cardPreset({}, CARD_REG), '');
 });
+
+test('a widget over several desktop rows is as tall as those rows and the gaps between them', () => {
+  const ROW_GAP = 30;
+  for (const sz of Object.keys(WIDGET_HEIGHTS)) {
+    const rows = WIDGET_ROWS.desktop[sz] || 1;
+    assert.equal(WIDGET_HEIGHTS[sz], rows * WIDGET_HEIGHTS.small + (rows - 1) * ROW_GAP, sz);
+  }
+});

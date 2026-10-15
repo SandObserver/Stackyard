@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=9c7b5111';
-import { widgetSrc, cardPreset, fixedAppearance, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=9264dee5';
+import { widgetSrc, cardPreset, fixedAppearance, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=b0e8f76d';
 import {
   mk,
   clr,

@@ -8,7 +8,7 @@ import {
   cardPreset,
   fixedAppearance,
   uniqueTitle,
-} from '/js/widget-types.js?v=9264dee5';
+} from '/js/widget-types.js?v=b0e8f76d';
 import {
   el,
   ICON_R,
@@ -46,7 +46,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=3c85d5d7';
+} from '/js/ui.js?v=d648c39b';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=9e6d9d4b';
 import { formatNumber } from '/js/format-number.js?v=349a741d';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=1e0ab5d1';
@@ -343,7 +343,10 @@ function mkWidget(item) {
   if (preset) card.dataset.card = preset;
   if (fixedAppearance(item, widgetReg)) card.dataset.appearance = 'dark';
   const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
-  card.style.height = WH.d[sz] + 'px';
+  if (wRows.d[sz] >= 2) {
+    card.style.minHeight = WH.d[sz] + 'px';
+    card.style.height = '100%';
+  } else card.style.height = WH.d[sz] + 'px';
   card.style.borderRadius = WIDGET_R + 'px';
   mountScaledWidget(card, {
     src: widgetSrc(item, widgetReg, { lang: currentLang() }),

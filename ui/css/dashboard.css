@@ -138,6 +138,7 @@
        literally in the source and a scan for one will not find it. */
     .c1 { grid-column:span 1 }
     .c2 { grid-column:span 2 }
+    .r2, .r3 { align-self:stretch }
     .r2 { grid-row:span 2 }
     .r3 { grid-row:span 3 }
 

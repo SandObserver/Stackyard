@@ -1,7 +1,7 @@
 // @ts-check
 
 /* Layout geometry, keyed by widget family size, never by widget. */
-export const WIDGET_HEIGHTS = { small: 150, medium: 150, large: 304, xlarge: 456 };
+export const WIDGET_HEIGHTS = { small: 150, medium: 150, large: 330, xlarge: 510 };
 /* The fixed design canvas per family, in px. Widgets render at these dimensions
    and are scaled to fit the card. */
 export const WIDGET_DESIGN = { small: [170, 170], medium: [360, 170], large: [360, 360], xlarge: [360, 540] };
