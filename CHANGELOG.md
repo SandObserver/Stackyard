@@ -47,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Book spine titles and disk bay labels no longer shift letter by letter on
   hover.
 
+- Large and extra large widgets on desktop now end level with the widgets beside
+  them.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
