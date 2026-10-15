@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The small VPN view leaves more room between its text and the card edge.
 
+- The VPN view no longer shows the public IP address unless Show IP Address is
+  turned on in its settings.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
