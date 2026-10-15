@@ -12,8 +12,8 @@ module.exports = async function (ctx) {
   return systemSummary(ctx);
 };
 
-function systemSummary(ctx) {
-  return ctx.dispatchProvider(
+async function systemSummary(ctx) {
+  const out = await ctx.dispatchProvider(
     {
       system: systemSummaryLocal,
       glances: systemSummaryGlances,
@@ -22,6 +22,16 @@ function systemSummary(ctx) {
     },
     { field: 'statProvider', default: 'system' },
   );
+  return { ...out, link: summaryLink(ctx) };
+}
+
+function summaryLink(ctx) {
+  const c = ctx.config;
+  if (c.statProvider === 'glances') return ctx.serviceLink(c.href, c.glancesUrl);
+  if (c.statProvider === 'unraid') return ctx.serviceLink(c.href, c.unraidUrl);
+  if (c.statProvider !== 'beszel') return c.href || '';
+  if (!c.beszelSystem) return ctx.serviceLink(c.href, c.beszelUrl);
+  return ctx.serviceLink(c.href, c.beszelUrl, `/system/${encodeURIComponent(c.beszelSystem)}`);
 }
 
 /* Only a source that names its sensors offers the picker, so the local machine

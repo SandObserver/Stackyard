@@ -271,7 +271,7 @@ async function kavitaLists(ctx) {
 
 module.exports = async ctx => {
   const wantLists = ctx.endpoint === 'lists';
-  return ctx.dispatchProvider(
+  const out = await ctx.dispatchProvider(
     {
       audiobookshelf: c => (wantLists ? absLists(c) : abs(c)),
       komga: c => (wantLists ? komgaLists(c) : komga(c)),
@@ -282,4 +282,8 @@ module.exports = async ctx => {
       default: 'audiobookshelf',
     },
   );
+  if (wantLists) return out;
+  const { absUrl, komgaUrl, kavitaUrl } = ctx.config;
+  const url = { audiobookshelf: absUrl, komga: komgaUrl, kavita: kavitaUrl }[out.provider];
+  return { ...out, link: ctx.serviceLink(ctx.config.href, url) };
 };

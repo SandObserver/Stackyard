@@ -98,9 +98,13 @@ async function boot() {
   } catch {}
   _href = cfg?.widgetConfig?.dnsHref || '';
   _provider = cfg?.widgetConfig?.provider || 'adguard';
-  if (linkTo(widgetEl, _href)) widgetEl.setAttribute('aria-describedby', 'sr');
+  const link = d => {
+    if (linkTo(widgetEl, d?.link || _href)) widgetEl.setAttribute('aria-describedby', 'sr');
+    else widgetEl.removeAttribute('aria-describedby');
+  };
+  link(null);
   poll({ fetch:gfetch, interval:TICK_MS,
-    render:d=>{ state.ok(); apply(d); },
+    render:d=>{ state.ok(); link(d); apply(d); },
     onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); } });
   addEventListener('resize', () => { if (_last) render(_last); });
 }

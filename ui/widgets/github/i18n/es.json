@@ -11,7 +11,7 @@
   "githubToken.label": "Token de acceso personal",
   "githubToken.hint": "PAT clásico con permisos repo y read:user (o un PAT granular con el acceso de lectura equivalente). Solo lo usa este widget.",
   "githubHref.label": "URL de clic",
-  "githubHref.hint": "Adónde lleva al hacer clic en el widget. Déjalo en blanco para desactivarlo.",
+  "githubHref.hint": "Adónde lleva al hacer clic en el widget. Déjalo en blanco para abrir el perfil de GitHub.",
   "githubPrFilters.label": "Filtros de pull requests",
   "githubPrFilters.hint": "Qué pull requests abiertos mostrar. Los filtros se combinan entre sí.",
   "githubPrFilters.opt.created": "Creados",

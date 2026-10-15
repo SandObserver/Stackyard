@@ -41,6 +41,7 @@
       "type": "text",
       "label": "scrutinyHref.label",
       "placeholder": "scrutinyHref.placeholder",
+      "hint": "scrutinyHref.hint",
       "optional": true,
       "showIf": {
         "field": "diskProvider",
@@ -72,6 +73,7 @@
       "type": "text",
       "label": "truenasHref.label",
       "placeholder": "truenasHref.placeholder",
+      "hint": "truenasHref.hint",
       "optional": true,
       "showIf": {
         "field": "diskProvider",

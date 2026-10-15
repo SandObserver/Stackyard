@@ -67,6 +67,9 @@
     .tb-bar-fill, .tb-col-fill { forced-color-adjust: none; background-color: Highlight !important; }
     .tb-col-mark { forced-color-adjust: none; background-color: CanvasText !important; }
   }
+  #ss-link { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
+  #ss-link:focus-visible { outline: 2px solid #0091FF; outline-offset: -3px; }
+  body.linked { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -76,8 +79,9 @@
      charts' time axis right to left. -->
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <div id="cap"></div>
+<div id="ss-link" aria-labelledby="sr-sum"></div>
 <script type="module">
-import { contrastInk, cardContrast, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState, cssZoom } from '/js/widget-toolbox.js?v=7d38d7fb';
+import { contrastInk, cardContrast, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState, cssZoom, linkTo, openUrl } from '/js/widget-toolbox.js?v=7d38d7fb';
 await loadStrings();
 const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;
@@ -146,8 +150,20 @@ async function boot() {
   const state = errorState({ root: document.body, caption: document.getElementById('cap'),
     content: () => [...widgetEl.querySelectorAll(medium ? '.head, .plot, .disk' : '.row')] });
 
+  const linkEl = document.getElementById('ss-link');
+  let target = '';
+  const setLink = d => {
+    target = d?.link || wc.href || '';
+    document.body.classList.toggle('linked', linkTo(linkEl, target));
+  };
+  setLink(null);
+  /* The charts take presses for their own detail, so a press there never opens the link. */
+  document.body.addEventListener('click', e => {
+    if (target && !e.target.closest('.plot, .disk')) openUrl(target);
+  });
+
   poll({ fetch: fetchStats, interval: tickMs,
-    render: d => { state.ok(); applyStats(d); },
+    render: d => { state.ok(); setLink(d); applyStats(d); },
     onError: ({ error, everOk, stale, since }) => {
       if (everOk && !stale) return;
       const line = state.fail(error, { since, inert: everOk });

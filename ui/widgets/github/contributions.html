@@ -241,7 +241,7 @@ async function boot() {
     const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`);
     if (r.ok) {
       const wc = (await r.json())?.widgetConfig || {};
-      href = wc.githubHref || '';
+      href = wc.githubHref || (wc.githubUser ? `https://github.com/${encodeURIComponent(wc.githubUser)}` : '');
     }
   } catch {}
   linkEl = MOBILE ? w : head;

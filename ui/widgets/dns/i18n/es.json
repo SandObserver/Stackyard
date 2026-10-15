@@ -6,7 +6,7 @@
   "dnsUrl.placeholder": "dns-host:80",
   "dnsUrl.hint": "Nombre del contenedor y puerto, o una URL completa.",
   "dnsHref.label": "URL de clic",
-  "dnsHref.hint": "Adónde lleva al hacer clic en el widget. Déjalo en blanco para desactivarlo.",
+  "dnsHref.hint": "La dirección con la que tu navegador abre este servicio. Déjalo en blanco para usar la de arriba, si tu navegador puede acceder a ella.",
   "dnsUser.label": "Usuario",
   "dnsPass.label": "Contraseña",
   "dnsPiholePassword.label": "Contraseña de Pi-hole",

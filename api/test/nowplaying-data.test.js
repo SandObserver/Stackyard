@@ -4,12 +4,15 @@ const path = require('node:path');
 const { normalizeBase } = require('../src/widget-data');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'nowplaying', 'data.js'));
+const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
 
 /* Minimal stand-in for the ctx widget-data.js builds. */
 function ctxFor(config, payload) {
   return {
     config,
     normalizeBase,
+    browserLink,
+    serviceLink,
     fetchJSON: async () => ({ status: 200, data: payload }),
   };
 }
@@ -129,4 +132,60 @@ test('progress never leaves 0..1 even when the source overruns', async () => {
     ),
   );
   assert.equal(r.sessions[0].progress, 1);
+});
+
+test('a plex session links to its item on the server that is playing it', async () => {
+  const ctx = ctxFor({ provider: 'plex', plexUrl: 'http://10.0.0.5:32400', plexToken: 't' }, null);
+  ctx.fetchJSON = async url =>
+    url.endsWith('/identity')
+      ? { status: 200, data: { MediaContainer: { machineIdentifier: 'abc123' } } }
+      : { status: 200, data: { MediaContainer: { Metadata: [{ type: 'movie', title: 'Arrival', ratingKey: '42' }] } } };
+  const r = await dataFn(ctx);
+  assert.equal(
+    r.sessions[0].link,
+    'http://10.0.0.5:32400/web/index.html#!/server/abc123/details?key=%2Flibrary%2Fmetadata%2F42',
+  );
+  assert.equal(r.link, 'http://10.0.0.5:32400');
+});
+
+test('jellyfin, emby and navidrome sessions link to their item pages', async () => {
+  const session = [{ ServerId: 's1', DeviceName: 'TV', NowPlayingItem: { Id: 'i9', Name: 'Arrival', Type: 'Movie' } }];
+  const jf = await dataFn(
+    ctxFor({ provider: 'jellyfin', jellyfinUrl: 'http://10.0.0.5:8096', jellyfinKey: 'k' }, session),
+  );
+  assert.equal(jf.sessions[0].link, 'http://10.0.0.5:8096/web/#/details?id=i9&serverId=s1');
+  const em = await dataFn(ctxFor({ provider: 'emby', embyUrl: 'http://10.0.0.5:8920', embyKey: 'k' }, session));
+  assert.equal(em.sessions[0].link, 'http://10.0.0.5:8920/web/index.html#!/item?id=i9&serverId=s1');
+  const nd = await dataFn(
+    ctxFor(
+      { provider: 'navidrome', navidromeUrl: 'http://10.0.0.5:4533', navidromeUser: 'u', navidromePassword: 'p' },
+      { 'subsonic-response': { status: 'ok', nowPlaying: { entry: [{ title: 'Song', albumId: 'al7' }] } } },
+    ),
+  );
+  assert.equal(nd.sessions[0].link, 'http://10.0.0.5:4533/app/#/album/al7/show');
+});
+
+test('a media server only the server can reach gives no link', async () => {
+  const r = await dataFn(
+    ctxFor({ provider: 'jellyfin', jellyfinUrl: 'http://jellyfin:8096', jellyfinKey: 'k' }, [
+      { NowPlayingItem: { Id: 'i9', Name: 'Arrival', Type: 'Movie' } },
+    ]),
+  );
+  assert.equal(r.sessions[0].link, '');
+  assert.equal(r.link, '');
+});
+
+test('a Click URL set by the reader becomes the base of the item link', async () => {
+  const r = await dataFn(
+    ctxFor(
+      {
+        provider: 'jellyfin',
+        jellyfinUrl: 'http://jellyfin:8096',
+        jellyfinKey: 'k',
+        href: 'https://watch.example.com',
+      },
+      [{ ServerId: 's1', NowPlayingItem: { Id: 'i9', Name: 'Arrival', Type: 'Movie' } }],
+    ),
+  );
+  assert.equal(r.sessions[0].link, 'https://watch.example.com/web/#/details?id=i9&serverId=s1');
 });

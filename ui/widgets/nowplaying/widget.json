@@ -124,6 +124,7 @@
       "type": "text",
       "label": "href.label",
       "placeholder": "href.placeholder",
+      "hint": "href.hint",
       "optional": true,
       "cosmetic": true
     }

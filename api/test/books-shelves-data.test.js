@@ -6,9 +6,18 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'books', 'data.js'));
+const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
 
 function ctxFor(config, reply) {
-  const ctx = { endpoint: undefined, config, normalizeBase, fetchJSON: async url => reply(url), ...errorParts() };
+  const ctx = {
+    endpoint: undefined,
+    config,
+    normalizeBase,
+    browserLink,
+    serviceLink,
+    fetchJSON: async url => reply(url),
+    ...errorParts(),
+  };
   ctx.dispatchProvider = (handlers, opts) => dispatchProvider(ctx, handlers, opts);
   return ctx;
 }
@@ -193,4 +202,16 @@ test('a failed list name lookup keeps the shelf and leaves it unnamed', async ()
   const r = await dataFn(ctx);
   assert.equal(r.shelves.length, 1);
   assert.equal(r.shelves[0].name, '');
+});
+
+test('the widget links to the reading service when the browser can reach it', async () => {
+  const reply = url =>
+    url.endsWith('/api/libraries')
+      ? { status: 200, data: { libraries: [{ id: 'L', mediaType: 'book' }] } }
+      : { status: 200, data: { results: [item('One')] } };
+  assert.equal(
+    (await dataFn(ctxFor({ ...ABS, absUrl: 'https://books.example.com' }, reply))).link,
+    'https://books.example.com',
+  );
+  assert.equal((await dataFn(ctxFor(ABS, reply))).link, '');
 });

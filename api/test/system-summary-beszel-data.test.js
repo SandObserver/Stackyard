@@ -6,6 +6,7 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
+const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
 
 const SYSTEM = { id: 'sys1', name: 'homelab', status: 'up' };
 const STATS = {
@@ -72,6 +73,8 @@ function ctxFor(config, h = hub(), endpoint = 'system') {
       ...config,
     },
     normalizeBase,
+    browserLink,
+    serviceLink,
     fetchJSON: h.fetchJSON,
     ...errorParts(),
   };
@@ -258,4 +261,11 @@ test('a session belongs to the account that logged in, not to the hub URL', asyn
       return true;
     });
   }
+});
+
+test('the widget links to the chosen system on a hub the browser can reach', async () => {
+  const r = await dataFn(ctxFor({ beszelUrl: 'http://10.0.0.5:8090', beszelSystem: 'sys1', slots: SLOTS }));
+  assert.equal(r.link, 'http://10.0.0.5:8090/system/sys1');
+  const internal = await dataFn(ctxFor({ beszelSystem: 'sys1', slots: SLOTS }));
+  assert.equal(internal.link, '');
 });

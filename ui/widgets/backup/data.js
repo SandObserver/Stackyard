@@ -123,6 +123,15 @@ async function kopiaSources(row, ctx) {
   };
 }
 
+function dupLink(ctx, slot, id) {
+  return ctx.serviceLink(slot.dupHref, slot.dupUrl, `/ngclient/backup/${encodeURIComponent(id)}/log`);
+}
+
+function kopiaLink(ctx, slot, source) {
+  const q = ['userName', 'host', 'path'].map(k => `${k}=${encodeURIComponent(source[k] ?? '')}`).join('&');
+  return ctx.serviceLink(slot.kopiaHref, slot.kopiaUrl, `/snapshots/single-source?${q}`);
+}
+
 /* Grouped by instance, then written back by index. Nulls are kept: the card
    maps result to slot by position. */
 async function slots(config, ctx) {
@@ -178,6 +187,7 @@ async function slots(config, ctx) {
             status: dupDeriveStatus(j, serverState),
             lastFinished: meta.LastBackupFinished || meta.LastBackupDate || meta.LastBackupStarted || null,
             nextRun: proposed[id] || dupSchedule(j)?.Time || null,
+            link: dupLink(ctx, list[i], id),
           };
         });
       } catch (e) {
@@ -207,6 +217,7 @@ async function slots(config, ctx) {
             status: kopiaDeriveStatus(s),
             lastFinished: s.lastSnapshot?.endTime || null,
             nextRun: null,
+            link: kopiaLink(ctx, list[i], s.source),
           };
         });
       } catch (e) {

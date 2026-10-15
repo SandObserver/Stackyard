@@ -29,6 +29,7 @@
   "listId.hint": "Oben URL und Schlüssel eingeben, dann Abrufen klicken, um Sammlungen und Leselisten zu laden.",
   "href.label": "Klick-URL (optional)",
   "href.placeholder": "https://…",
+  "href.hint": "Die Adresse, unter der Ihr Browser diesen Dienst öffnet. Leer lassen, um die Adresse oben zu verwenden, sofern Ihr Browser sie erreicht.",
   "ui.reading": "Lese gerade",
   "ui.srcRecently": "Zuletzt hinzugefügt",
   "ui.srcUnread": "Weiterlesen",

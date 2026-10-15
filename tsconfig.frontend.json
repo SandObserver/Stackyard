@@ -210,6 +210,12 @@
       "/js/host-names.js?v=*": [
         "./ui/js/host-names.js"
       ],
+      "/js/service-link.js": [
+        "./ui/js/service-link.js"
+      ],
+      "/js/service-link.js?v=*": [
+        "./ui/js/service-link.js"
+      ],
       "/js/html.js": [
         "./ui/js/html.js"
       ],

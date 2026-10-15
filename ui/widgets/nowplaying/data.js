@@ -1,9 +1,24 @@
-/* Returns { provider, sessions: [{ title, subtitle, progress, state, type,
-   player }] }. progress is 0..1, or null when the source has no duration. */
+/* Returns { provider, link, sessions: [{ title, subtitle, progress, state, type,
+   player, link }] }. progress is 0..1, or null when the source has no duration. */
 
 const crypto = require('crypto');
 
 const MAX = 5;
+
+const plexMachineIds = new Map();
+
+const linkFor = (ctx, url, path) => ctx.serviceLink(ctx.config.href, url, path);
+
+async function plexMachineId(ctx, base, token) {
+  if (plexMachineIds.has(base)) return plexMachineIds.get(base);
+  const r = await ctx.fetchJSON(`${base}/identity`, {
+    headers: { Accept: 'application/json', 'X-Plex-Token': token },
+    timeout: 5000,
+  });
+  const id = (r.status < 400 && r.data?.MediaContainer?.machineIdentifier) || '';
+  if (id) plexMachineIds.set(base, id);
+  return id;
+}
 
 function authErr(r) {
   return r.status === 401 || r.status === 403;
@@ -22,6 +37,8 @@ async function plex(ctx) {
   if (r.status >= 400) ctx.fail('Plex HTTP ' + r.status);
   let list = (r.data && r.data.MediaContainer && r.data.MediaContainer.Metadata) || [];
   if (!Array.isArray(list)) list = [list];
+  const reachable = ctx.browserLink(ctx.config.href || ctx.config.plexUrl);
+  const machine = reachable && list.length ? await plexMachineId(ctx, base, token).catch(() => '') : '';
   return list.map(m => {
     const type = (m.type || '').toLowerCase();
     let title = m.title || '',
@@ -33,7 +50,15 @@ async function plex(ctx) {
     const progress = dur > 0 ? Math.min(1, Math.max(0, off / dur)) : null;
     const pstate = (m.Player && m.Player.state) || 'playing'; // playing | paused | buffering
     const player = (m.Player && (m.Player.title || m.Player.product)) || '';
-    return { title, subtitle, progress, state: pstate === 'paused' ? 'paused' : 'playing', type, player };
+    const link =
+      machine && m.ratingKey
+        ? linkFor(
+            ctx,
+            ctx.config.plexUrl,
+            `/web/index.html#!/server/${machine}/details?key=${encodeURIComponent(`/library/metadata/${m.ratingKey}`)}`,
+          )
+        : linkFor(ctx, ctx.config.plexUrl);
+    return { title, subtitle, progress, state: pstate === 'paused' ? 'paused' : 'playing', type, player, link };
   });
 }
 
@@ -48,6 +73,12 @@ async function jellyfinLike(ctx, provider) {
   if (authErr(r)) ctx.fail(name + ' auth failed', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail(name + ' HTTP ' + r.status);
   const list = Array.isArray(r.data) ? r.data : [];
+  const url = provider === 'emby' ? ctx.config.embyUrl : ctx.config.jellyfinUrl;
+  const itemLink = (itemId, serverId) => {
+    if (!itemId) return linkFor(ctx, url);
+    const q = `id=${encodeURIComponent(itemId)}&serverId=${encodeURIComponent(serverId || '')}`;
+    return linkFor(ctx, url, provider === 'emby' ? `/web/index.html#!/item?${q}` : `/web/#/details?${q}`);
+  };
   const out = [];
   for (const s of list) {
     const np = s.NowPlayingItem;
@@ -72,6 +103,7 @@ async function jellyfinLike(ctx, provider) {
       state: ps.IsPaused ? 'paused' : 'playing',
       type: t.toLowerCase(),
       player: s.DeviceName || s.Client || '',
+      link: itemLink(np.Id, s.ServerId),
     });
   }
   return out;
@@ -111,6 +143,9 @@ async function navidrome(ctx) {
       state,
       type: 'track',
       player: e.playerName || '',
+      link: e.albumId
+        ? linkFor(ctx, ctx.config.navidromeUrl, `/app/#/album/${encodeURIComponent(e.albumId)}/show`)
+        : linkFor(ctx, ctx.config.navidromeUrl),
     };
   });
 }
@@ -122,5 +157,6 @@ module.exports = async function (ctx) {
   else if (provider === 'jellyfin' || provider === 'emby') sessions = await jellyfinLike(ctx, provider);
   else if (provider === 'navidrome') sessions = await navidrome(ctx);
   else ctx.fail('No media server configured', { kind: ctx.KIND.INVALID });
-  return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX) };
+  const base = { plex: 'plexUrl', jellyfin: 'jellyfinUrl', emby: 'embyUrl', navidrome: 'navidromeUrl' }[provider];
+  return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX), link: linkFor(ctx, ctx.config[base]) };
 };

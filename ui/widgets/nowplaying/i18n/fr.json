@@ -22,6 +22,7 @@
   "navidromePassword.label": "Mot de passe",
   "href.label": "URL de clic (facultatif)",
   "href.placeholder": "https://…",
+  "href.hint": "L’adresse que votre navigateur utilise pour ce service. Laisser vide pour utiliser celle ci-dessus, si votre navigateur peut l’atteindre.",
   "ui.nothingPlaying": "Aucune lecture en cours",
   "ui.nowPlayingPrefix": "Lecture en cours :",
   "ui.onPlayer": "sur",
