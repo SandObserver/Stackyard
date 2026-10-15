@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Playing no longer show a heading or "Nothing playing" before their data
   arrives.
 
+- Disk Health shows each drive's status light on its bay.
+
+- Disk Health bay tooltips use the full widget width, so drive names are cut
+  less often.
+
 ### Fixed
 
 - Weather, Books and GitHub contributions now mark their data as out of date
