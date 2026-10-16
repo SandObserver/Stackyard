@@ -71,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System Summary translates "All interfaces" and badges translate container
   states.
 
+- Persian text reads as everyday Persian and no longer misdescribes several
+  settings.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
