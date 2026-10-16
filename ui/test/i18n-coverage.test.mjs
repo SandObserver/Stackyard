@@ -139,12 +139,17 @@ const REJECTED = {
     ['سامانه', 'سیستم'],
     ['پیش‌تخته', 'داشبورد'],
     ['پساکند', 'ذخیره'],
-    ['کاراکتر', 'نویسه'],
+    ['نویسه', 'کاراکتر'],
     ['پورت', 'درگاه'],
     ['یکا', 'واحد'],
     ['جست‌وجو', 'جستجو'],
     ['حافظه‌شده', 'کش‌شده'],
     ['بارگیری', 'بارگذاری'],
+    ['پالایش', 'فیلتر'],
+    ['پالایه', 'فیلتر'],
+    ['سربرگ', 'هدر'],
+    ['پروکسی', 'پراکسی'],
+    ['نمایه', 'پروفایل'],
     /* Product names stay in Latin, as the English catalogue writes them. */
     ['ترونس', 'TrueNAS'],
     ['آنرید', 'Unraid'],
@@ -152,6 +157,7 @@ const REJECTED = {
     ['امبی', 'Emby'],
     ['آنسپلش', 'Unsplash'],
     ['گیت‌هاب', 'GitHub'],
+    ['داکر', 'Docker'],
   ],
   /* Abzeichen is a pinned badge or a medal. The reference locales use Badge 26
      times and Abzeichen never. Bezeichnung is what the rest of the catalogue
@@ -194,6 +200,20 @@ for (const [file, pairs] of Object.entries(REJECTED)) {
     assert.deepEqual(found, [], `A term this list rules out:\n  ${found.join('\n  ')}`);
   });
 }
+
+/* Persian is written without Arabic marks or letters: no ezafe هٔ, tanvin,
+   short vowels, hamza on alef, or Arabic ي ك ة ى ؤ and digits. */
+const ARABIC_MARKS = /[\u0654\u06C0\u064B-\u0652\u0670\u0623\u0625\u064A\u0643\u0629\u0649\u0624\u0660-\u0669]/u;
+
+test('fa.json uses no Arabic marks or letters', () => {
+  const found = [];
+  for (const [name, catalogue] of [['fa.json', read('fa.json')], ...widgetCatalogues('fa.json')]) {
+    for (const [key, value] of flat(catalogue)) {
+      if (ARABIC_MARKS.test(String(value))) found.push(`${name} ${key}: ${value}`);
+    }
+  }
+  assert.deepEqual(found, [], `Arabic marks or letters in Persian text:\n  ${found.join('\n  ')}`);
+});
 
 /* ── English left inside a non-Latin catalogue ────────────────────────────── */
 
