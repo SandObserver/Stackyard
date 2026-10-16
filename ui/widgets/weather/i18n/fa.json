@@ -28,6 +28,7 @@
   "ui.snowShowers": "رگبار برف",
   "ui.thunderstorm": "رعدوبرق",
   "ui.summary": "{place}: {condition}، {temp}",
+  "ui.updated": "{summary}. {time} به‌روزرسانی شد",
   "ui.currentLocation": "موقعیت فعلی",
   "ui.feelsLikeTemp": "{temp} (دمای ظاهری)"
 }

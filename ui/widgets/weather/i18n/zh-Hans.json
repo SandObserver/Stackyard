@@ -28,6 +28,7 @@
   "ui.snowShowers": "阵雪",
   "ui.thunderstorm": "雷雨",
   "ui.summary": "{place}：{condition}，{temp}",
+  "ui.updated": "{summary}。{time}更新",
   "ui.currentLocation": "当前位置",
   "ui.feelsLikeTemp": "{temp}（体感）"
 }

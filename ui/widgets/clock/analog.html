@@ -65,7 +65,7 @@ const DIAL = {
 };
 
 let _mode='dark', _timezone='', _showDate=true, _zoneBad=false;
-let _groups=null, _dateTexts=[], _dateShown='', _rafId=null, _running=false, _vb=0;
+let _groups=null, _dateTexts=[], _dateShown='', _rafId=null, _running=false, _vb=0, _faceSz=0;
 
 function _now(){
   if(!_timezone) return new Date();
@@ -107,6 +107,7 @@ function buildShell(){
   const ww=w.clientWidth||220, wh=w.clientHeight||150;
   const sz=Math.max(40, Math.min(ww-24, wh-24));
   _vb=200;
+  _faceSz=sz;
   face.setAttribute('width', sz);
   face.setAttribute('height', sz);
   face.setAttribute('viewBox', `0 0 ${_vb} ${_vb}`);
@@ -219,9 +220,9 @@ function render(smoothSeconds){
 }
 
 /* Wider than the dial chord at the date's baseline, the date runs off the face. */
-const DATE_SIZE=0.072, DATE_MAX_WIDTH=0.46, DATE_LINE_GAP=1.15;
+const DATE_SIZE=0.072, DATE_MAX_WIDTH=0.48, DATE_LINE_GAP=1.15, DATE_MIN_PX=11;
 function showDate(d){
-  const size=_vb*DATE_SIZE, max=_vb*DATE_MAX_WIDTH;
+  const size=Math.max(_vb*DATE_SIZE, DATE_MIN_PX*_vb/_faceSz), max=_vb*DATE_MAX_WIDTH;
   const set=(key, text, px)=>{
     for(const t of _dateTexts){ t[key].textContent=text; t[key].setAttribute('font-size', px); }
   };

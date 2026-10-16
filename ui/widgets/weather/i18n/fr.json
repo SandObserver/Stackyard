@@ -28,6 +28,7 @@
   "ui.snowShowers": "Averses de neige",
   "ui.thunderstorm": "Orage",
   "ui.summary": "{place} : {condition}, {temp}",
+  "ui.updated": "{summary}. Mis à jour {time}",
   "ui.currentLocation": "Position actuelle",
   "ui.feelsLikeTemp": "{temp} (ressenti)"
 }

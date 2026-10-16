@@ -20,7 +20,10 @@
   #key[hidden]{display:none}
   .k{display:flex;align-items:center;gap:6.8px;white-space:nowrap;transition:opacity .12s}
   button.k{all:unset;display:flex;align-items:center;gap:6.8px;white-space:nowrap;cursor:pointer;transition:opacity .12s;
-    -webkit-tap-highlight-color:transparent}
+    -webkit-tap-highlight-color:transparent;position:relative}
+  button.k::before{content:"";position:absolute;inset:-1.7px -8px -1.7px -13.4px}
+  button.k:first-child::before{top:-14px}
+  button.k:last-child::before{bottom:-15.9px}
   .k:focus-visible{outline:2px solid #0091FF;outline-offset:2px;border-radius:4px}
   .k.dim{opacity:.45}
   /* Keep the colour in forced colors. It is the only link to the map. */
