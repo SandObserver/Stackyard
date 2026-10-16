@@ -1165,6 +1165,11 @@ html[data-theme="light"] .mob-widget-card[data-appearance="dark"] {
 }
 html[data-theme="light"] .widget[data-appearance="dark"][data-card="translucent"],
 html[data-theme="light"] .mob-widget-card[data-appearance="dark"][data-card="translucent"] { background:var(--card-fixed-dark) }
+html:not([data-theme="light"]) .widget[data-appearance="light"],
+html:not([data-theme="light"]) .mob-widget-card[data-appearance="light"] {
+  --glass-bg:#FFFFFF; --glass-border:rgba(0,0,0,.06); --card-dark:#FFFFFF;
+  --card-edge-hi:rgba(255,255,255,.9); --card-edge-lo:rgba(0,0,0,.05);
+}
 @media (prefers-contrast: more) {
   html[data-theme="light"] { --glass-bg:rgba(255,255,255,.97); --glass-border:rgba(0,0,0,.35) }
   html[data-theme="light"] .widget:not([data-appearance="dark"]),
