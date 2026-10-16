@@ -30,7 +30,7 @@ test('credentials, query and fragment never reach the link', () => {
   assert.equal(browserLink('http://admin:pw@10.0.0.5:3000/?apikey=s3cret#x'), 'http://10.0.0.5:3000');
 });
 
-test('a Click URL is the base for item pages and is kept as typed without one', async () => {
+test('a Link URL is the base for item pages and is kept as typed without one', async () => {
   const { serviceLink } = await import('../js/service-link.js');
   assert.equal(
     serviceLink('https://plex.example.com/', 'http://plex:32400', '/web/x'),

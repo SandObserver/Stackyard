@@ -28,7 +28,7 @@ export function browserLink(raw) {
   return u.href.replace(/\/+$/, '');
 }
 
-/** Where a widget opens. `own` is the Click URL the reader set, taken as the
+/** Where a widget opens. `own` is the Link URL the reader set, taken as the
     service's address in the browser; `url` is the address the server reads.
     With a `path`, the item's page under that address, else `own` as typed.
     @param {unknown} own @param {unknown} url @param {string} [path] @returns {string} */

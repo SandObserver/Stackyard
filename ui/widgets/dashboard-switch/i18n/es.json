@@ -1,10 +1,10 @@
 {
-  "widget.label": "Cambio de panel",
-  "widget.description": "Cambie a sus otros paneles.",
+  "widget.label": "Selector de paneles",
+  "widget.description": "Cambia a tus otros paneles.",
   "keychains.label": "Llavero",
   "keychains.hint": "Deja el color del llavero en Automático para deducirlo de la URL del panel.",
   "keychains.name.label": "Nombre",
-  "keychains.name.placeholder": "p. ej. Salón",
+  "keychains.name.placeholder": "p. ej. Salón",
   "keychains.url.label": "URL del panel",
   "keychains.url.placeholder": "http://host:port",
   "keychains.color.label": "Color del llavero",

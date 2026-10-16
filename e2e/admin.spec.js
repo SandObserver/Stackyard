@@ -135,7 +135,7 @@ test('a widget text field and secret field accept typing and save', async ({ pag
   const fieldRow = label =>
     page.locator('#ev-body .ie-row').filter({ has: page.locator('.rl', { hasText: new RegExp(`^${label}`) }) });
 
-  const link = fieldRow('Click URL');
+  const link = fieldRow('Link URL');
   await link.locator('.pe').click();
   await expect(link.locator('.row-inp')).toBeVisible();
   await page.keyboard.type('http://dns-admin.invalid');

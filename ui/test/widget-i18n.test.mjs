@@ -280,7 +280,7 @@ test('no widget writes display text in English', () => {
 test('the GitHub labels are looked up, and every locale translates them', () => {
   assert.match(read('widgets/github/pullrequests.html'), /wt\('ui\.pullRequests', 'Pull requests'\)/);
   assert.match(read('widgets/github/pullrequests.html'), /wt\('ui\.noPrs', 'No open pull requests'\)/);
-  assert.match(read('widgets/github/contributions.html'), /wt\('ui\.lastYear', 'Last year'\)/);
+  assert.match(read('widgets/github/contributions.html'), /wt\('ui\.lastYear', 'Past 12 months'\)/);
   const dir = path.join(root, 'widgets', 'github', 'i18n');
   for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
     const cat = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));

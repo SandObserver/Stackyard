@@ -27,7 +27,7 @@
   "source.opt.list": "Custom List",
   "listId.label": "List",
   "listId.hint": "Enter the URL + key above, then click Fetch to load your collections / reading lists.",
-  "href.label": "Click URL (optional)",
+  "href.label": "Link URL (optional)",
   "href.placeholder": "https://…",
   "href.hint": "The address your browser uses for this service. Leave blank to use the one above, if your browser can reach it.",
   "ui.reading": "Reading",

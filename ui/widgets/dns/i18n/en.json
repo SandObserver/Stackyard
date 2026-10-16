@@ -5,7 +5,7 @@
   "dnsUrl.label": "Server URL",
   "dnsUrl.placeholder": "dns-host:80",
   "dnsUrl.hint": "Container name and port, or a full URL.",
-  "dnsHref.label": "Click URL",
+  "dnsHref.label": "Link URL",
   "dnsHref.hint": "The address your browser uses for this service. Leave blank to use the one above, if your browser can reach it.",
   "dnsUser.label": "Username",
   "dnsPass.label": "Password",
