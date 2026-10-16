@@ -157,6 +157,7 @@ export async function mount({ theme = 'dark' } = {}) {
     errorState: () => ({ ok() {}, empty() {}, fail() {} }),
     theme: () => theme,
     formatNumber: n => String(n),
+    formatList: items => items.join(', '),
     cssZoom: () => 1,
   };
   new Function(dataScript)();

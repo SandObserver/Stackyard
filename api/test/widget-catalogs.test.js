@@ -23,6 +23,11 @@ const widgets = fs
   .filter(d => d.isDirectory() && fs.existsSync(path.join(WIDGETS_DIR, d.name, 'widget.json')))
   .map(d => d.name);
 
+/* A counted message is one key per plural category, and each language uses its
+   own categories. Keys are compared by base name. */
+const PLURAL = /_(zero|one|two|few|many|other)$/;
+const baseKeys = cat => [...new Set(Object.keys(cat).map(k => k.replace(PLURAL, '')))].sort();
+
 const hasCatalog = w => fs.existsSync(path.join(WIDGETS_DIR, w, 'i18n', 'en.json'));
 const readCatalog = (w, lang) => JSON.parse(fs.readFileSync(path.join(WIDGETS_DIR, w, 'i18n', lang + '.json'), 'utf8'));
 
@@ -48,12 +53,12 @@ test('at least one bundled widget ships a catalog, or these tests prove nothing'
 
 for (const widget of widgets.filter(hasCatalog)) {
   test(`${widget}: every language has exactly the English keys`, () => {
-    const en = Object.keys(readCatalog(widget, 'en')).sort();
+    const en = baseKeys(readCatalog(widget, 'en'));
     for (const lang of LANGUAGES.filter(l => l !== 'en')) {
       const file = path.join(WIDGETS_DIR, widget, 'i18n', lang + '.json');
       assert.ok(fs.existsSync(file), `${widget} is missing ${lang}.json`);
       assert.deepEqual(
-        Object.keys(readCatalog(widget, lang)).sort(),
+        baseKeys(readCatalog(widget, lang)),
         en,
         `${widget}/${lang}.json does not have the same keys as en.json`,
       );
@@ -82,9 +87,10 @@ for (const widget of widgets.filter(hasCatalog)) {
     const en = readCatalog(widget, 'en');
     for (const lang of LANGUAGES.filter(l => l !== 'en')) {
       const other = readCatalog(widget, lang);
-      for (const [k, v] of Object.entries(en)) {
-        const want = (v.match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
-        const got = ((other[k] || '').match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
+      for (const [k, v] of Object.entries(other)) {
+        const source = en[k] ?? en[`${k.replace(PLURAL, '')}_other`] ?? '';
+        const want = (source.match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
+        const got = (v.match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
         assert.deepEqual(got, want, `${widget}/${lang}.json: ${k} does not carry the same placeholders`);
       }
     }

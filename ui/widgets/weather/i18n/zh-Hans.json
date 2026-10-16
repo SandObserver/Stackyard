@@ -27,5 +27,7 @@
   "ui.snow": "雪",
   "ui.snowShowers": "阵雪",
   "ui.thunderstorm": "雷雨",
-  "ui.feelsLike": "体感"
+  "ui.summary": "{place}：{condition}，{temp}",
+  "ui.currentLocation": "当前位置",
+  "ui.feelsLikeTemp": "{temp}（体感）"
 }

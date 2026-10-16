@@ -27,5 +27,7 @@
   "ui.snow": "برف",
   "ui.snowShowers": "رگبار برف",
   "ui.thunderstorm": "رعدوبرق",
-  "ui.feelsLike": "دمای محسوس"
+  "ui.summary": "{place}: {condition}، {temp}",
+  "ui.currentLocation": "موقعیت فعلی",
+  "ui.feelsLikeTemp": "{temp} (دمای ظاهری)"
 }

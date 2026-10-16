@@ -31,9 +31,14 @@
   "ui.backupStatus": "وضعیت پشتیبان‌گیری",
   "ui.running": "در حال اجرا",
   "ui.unknown": "نامشخص",
-  "ui.last": "آخرین",
-  "ui.next": "بعدی",
   "ui.runningNow": "در حال اجرا…",
-  "ui.lastCap": "آخرین",
-  "ui.nextCap": "بعدی"
+  "ui.lastAt": "آخرین اجرا {when}",
+  "ui.nextAt": "اجرای بعدی {when}",
+  "ui.lastAria": "آخرین اجرا {when}",
+  "ui.nextAria": "اجرای بعدی {when}",
+  "ui.summary": "{name}: {status}",
+  "ui.status.healthy": "سالم",
+  "ui.status.warning": "هشدار",
+  "ui.status.error": "ناموفق",
+  "ui.status.missed": "اجرا نشده"
 }

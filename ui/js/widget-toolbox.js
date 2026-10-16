@@ -5,7 +5,7 @@ import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
 import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=3bfb691c';
-import { setNumberLanguage } from '/js/format-number.js?v=349a741d';
+import { formatNumber, setNumberLanguage } from '/js/format-number.js?v=52226e9c';
 
 export { esc, html, setHtml };
 
@@ -403,7 +403,7 @@ async function _loadStrings() {
     /* English is a usable answer */
   }
 }
-_loadStrings();
+const _sharedStrings = _loadStrings();
 
 /** @param {string} key @param {string} fallback */
 function _t(key, fallback) {
@@ -421,6 +421,7 @@ let _own = null;
 
     @returns {Promise<void>} */
 export async function loadStrings() {
+  await _sharedStrings;
   if (!_widgetName || _lang === 'en' || _own) return;
   try {
     const r = await fetch(`/widgets/${encodeURIComponent(_widgetName)}/i18n/${encodeURIComponent(_lang)}.json`, {
@@ -447,17 +448,38 @@ export function cssZoom() {
   return (w && b.getBoundingClientRect().width / w) || 1;
 }
 
-/** @param {string} key @param {string} fallback @returns {string} */
-export function wt(key, fallback) {
+const _fill = (s, vars) => (vars ? s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k]))) : s);
+
+/** @param {string} key @param {string} fallback
+    @param {Record<string, unknown>} [vars] placeholder values
+    @returns {string} */
+export function wt(key, fallback, vars) {
   const v = _own && _own[key];
-  return typeof v === 'string' && v ? v : fallback;
+  return _fill(typeof v === 'string' && v ? v : fallback, vars);
+}
+
+/** A counted message, stored as `key_<category>` in the widget catalog. `{count}`
+    is filled in the reader's digits; other placeholders come from `vars`.
+    @param {string} key @param {number} count
+    @param {{ one: string, other: string }} fallback English forms
+    @param {Record<string, unknown>} [vars] @returns {string} */
+export function wtCount(key, count, fallback, vars) {
+  let category = 'other';
+  try {
+    category = new Intl.PluralRules(_lang).select(count);
+  } catch {
+    /* An unusable tag: the `other` form still reads. */
+  }
+  const own = _own && (_own[`${key}_${category}`] || _own[`${key}_other`]);
+  const en = new Intl.PluralRules('en').select(count) === 'one' ? fallback.one : fallback.other;
+  return _fill(typeof own === 'string' && own ? own : en, { ...vars, count: formatNumber(count) });
 }
 
 /** @param {number} ts @returns {string} */
 /* Digit shape follows the interface language. Re-exported here so a widget takes it
    from the toolbox rather than reaching for toLocaleString, which is the same
    thing until someone passes it a language. */
-export { formatNumber, localiseDigits } from '/js/format-number.js?v=349a741d';
+export { formatNumber, formatList, localiseDigits } from '/js/format-number.js?v=52226e9c';
 
 export function sinceLabel(ts) {
   if (!ts) return '';
@@ -479,6 +501,31 @@ export function sinceLabel(ts) {
   } catch {
     /* An unknown locale tag, or a browser without it. */
     return `${value}${unit[0]} ago`;
+  }
+}
+
+/** A signed distance from now, in the interface language: "2 hr. ago", "in 3 days".
+    @param {number} ts epoch milliseconds @returns {string} */
+export function relativeTime(ts) {
+  const s = (ts - Date.now()) / 1000;
+  const abs = Math.abs(s);
+  const [value, unit] =
+    abs < 3600
+      ? [Math.max(1, Math.round(abs / 60)), 'minute']
+      : abs < 86400
+        ? [Math.round(abs / 3600), 'hour']
+        : [Math.round(abs / 86400), 'day'];
+  const signed = s < 0 ? -value : value;
+  try {
+    return new Intl.RelativeTimeFormat(_lang, { numeric: 'always', style: 'short' }).format(
+      signed,
+      /** @type {Intl.RelativeTimeFormatUnit} */ (unit),
+    );
+  } catch {
+    return new Intl.RelativeTimeFormat('en', { numeric: 'always', style: 'short' }).format(
+      signed,
+      /** @type {Intl.RelativeTimeFormatUnit} */ (unit),
+    );
   }
 }
 

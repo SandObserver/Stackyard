@@ -5,14 +5,31 @@
 const EN = {
   'status.needsAttention': 'Status: needs attention',
   'status.healthy': 'Status: healthy',
-  'status.pending': '{count} pending',
+  'status.pending_one': '{count} pending',
+  'status.pending_other': '{count} pending',
+  'status.pendingValue': '{value} pending',
   'status.stale': '(may be out of date)',
   'status.moreValues_one': '{count} more badge',
   'status.moreValues_other': '{count} more badges',
   'status.containerNotFound': 'Container not found',
   'status.containerState': 'Container {state}',
+  'status.containerCreated': 'Container created',
+  'status.containerRestarting': 'Container restarting',
+  'status.containerRemoving': 'Container being removed',
+  'status.containerPaused': 'Container paused',
+  'status.containerExited': 'Container stopped',
+  'status.containerDead': 'Container failed',
   'status.pingFailed': 'Ping failed: {error}',
   'status.pingReturned': 'Ping returned {status}',
+};
+
+const CONTAINER_STATES = {
+  created: 'status.containerCreated',
+  restarting: 'status.containerRestarting',
+  removing: 'status.containerRemoving',
+  paused: 'status.containerPaused',
+  exited: 'status.containerExited',
+  dead: 'status.containerDead',
 };
 
 /** English, with the same counted-message resolution the real translator does.
@@ -90,7 +107,10 @@ export function healthReason(detail, translate) {
     parts.push(tr('status.containerNotFound'));
   } else if (detail.state && detail.state !== 'running') {
     /* Untranslated. The text comes from the daemon. */
-    parts.push(_clip(detail.status || tr('status.containerState', { state: detail.state }), REASON_MAX));
+    const known = CONTAINER_STATES[detail.state];
+    parts.push(
+      _clip(detail.status || (known ? tr(known) : tr('status.containerState', { state: detail.state })), REASON_MAX),
+    );
   } else if (detail.status && /unhealthy/i.test(detail.status)) {
     parts.push(_clip(detail.status, REASON_MAX));
   }
@@ -226,13 +246,18 @@ export function computeBadgeVisual({
   const txt = num + (unit ? ' ' + unit : '');
 
   /* Status text, so meaning is not carried by colour alone. */
+  const pending = (value, suffix) =>
+    typeof value === 'number' && Number.isFinite(value) && value <= 99 && !suffix
+      ? tr('status.pending', { count: value })
+      : tr('status.pendingValue', {
+          value:
+            (typeof value !== 'number' ? value : value > 99 ? `${fmt(99)}+` : fmt(value)) +
+            (suffix ? ' ' + suffix : ''),
+        });
   let aria = '';
   if (health) aria = tr('status.needsAttention');
-  else if (top) aria = top.name ? `${top.name}: ${fmt(top.value)}` : tr('status.pending', { count: fmt(top.value) });
-  else if (active)
-    aria = tr('status.pending', {
-      count: (activity > 99 ? `${fmt(99)}+` : fmt(activity)) + (custom.unit ? ' ' + custom.unit : ''),
-    });
+  else if (top) aria = top.name ? `${top.name}: ${fmt(top.value)}` : pending(top.value, '');
+  else if (active) aria = pending(activity, custom.unit);
   else if (fixed) aria = staticBdg.label;
   else if (cls.includes('green')) aria = tr('status.healthy');
 

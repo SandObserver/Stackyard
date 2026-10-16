@@ -101,7 +101,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=9f9c7421';
+  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=89cbaf61';
   await loadStrings();
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const API='/api';
@@ -148,7 +148,10 @@
   }
   function describe(b){
     const [ptxt]=progressText(b);
-    return (b.title||wt('ui.untitled','Untitled'))+(b.author?' '+wt('ui.by','by')+' '+b.author:'')+', '+ptxt;
+    const title=b.title||wt('ui.untitled','Untitled');
+    return b.author
+      ?wt('ui.describeAuthor','{title} by {author}, {progress}',{title,author:b.author,progress:ptxt})
+      :wt('ui.describe','{title}, {progress}',{title,progress:ptxt});
   }
   function paintFoot(b){
     fT.textContent=b?(b.title||wt('ui.untitled','Untitled')):'';

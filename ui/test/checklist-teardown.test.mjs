@@ -52,7 +52,7 @@ function makeParts(values) {
       return { top: this.top, bottom: this.top, left: 0, right: 0, width: 0, height: 0 };
     },
   };
-  const text = { textContent: '', classList: { toggle() {} } };
+  const text = { textContent: '', classList: { toggle() {} }, removeAttribute() {} };
   const list = {
     hidden: true,
     style: {},

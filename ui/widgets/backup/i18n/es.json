@@ -31,9 +31,14 @@
   "ui.backupStatus": "Estado de la copia",
   "ui.running": "en curso",
   "ui.unknown": "desconocido",
-  "ui.last": "última",
-  "ui.next": "siguiente",
   "ui.runningNow": "En curso…",
-  "ui.lastCap": "Última",
-  "ui.nextCap": "Siguiente"
+  "ui.lastAt": "Última {when}",
+  "ui.nextAt": "Siguiente {when}",
+  "ui.lastAria": "última ejecución {when}",
+  "ui.nextAria": "próxima ejecución {when}",
+  "ui.summary": "{name}: {status}",
+  "ui.status.healthy": "correcto",
+  "ui.status.warning": "advertencia",
+  "ui.status.error": "con errores",
+  "ui.status.missed": "omitida"
 }

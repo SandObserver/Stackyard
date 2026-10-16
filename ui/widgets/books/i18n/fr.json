@@ -38,5 +38,6 @@
   "ui.percentRead": "{pct} % lu",
   "ui.noBooks": "Aucun livre",
   "ui.untitled": "Sans titre",
-  "ui.by": "de"
+  "ui.describeAuthor": "{title} de {author}, {progress}",
+  "ui.describe": "{title}, {progress}"
 }

@@ -27,5 +27,7 @@
   "ui.snow": "Snow",
   "ui.snowShowers": "Snow Showers",
   "ui.thunderstorm": "Thunderstorm",
-  "ui.feelsLike": "feels like"
+  "ui.summary": "{place}: {condition}, {temp}",
+  "ui.currentLocation": "Current location",
+  "ui.feelsLikeTemp": "{temp} (feels like)"
 }

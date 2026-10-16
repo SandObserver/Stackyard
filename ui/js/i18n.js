@@ -4,7 +4,7 @@
 
 import { setHtml } from '/js/html.js?v=c71f8903';
 import { i18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
-import { formatNumber, setNumberLanguage } from '/js/format-number.js?v=349a741d';
+import { formatNumber, setNumberLanguage } from '/js/format-number.js?v=52226e9c';
 
 /* The locale registry: the one place a supported language is defined.
 

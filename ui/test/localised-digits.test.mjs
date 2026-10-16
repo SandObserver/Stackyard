@@ -112,7 +112,7 @@ test('the badge takes its formatter by injection, not by import', () => {
 
 test('widgets take it from the toolbox rather than each inventing one', () => {
   const toolbox = read('js/widget-toolbox.js');
-  assert.match(toolbox, /export \{ formatNumber, localiseDigits \}/);
+  assert.match(toolbox, /export \{ formatNumber, formatList, localiseDigits \}/);
   for (const w of ['dns', 'weather', 'books', 'system-summary', 'disk-health']) {
     const src = read(`widgets/${w}/index.html`);
     assert.match(src, /formatNumber/, `${w} still writes raw digits`);
@@ -211,12 +211,12 @@ const GLUED = new RegExp(
 const IN_HOLE = String.raw`\$\{\s*${RECEIVER}${NUMBER}\s*\}`;
 const HOLE = new RegExp(String.raw`(?:>|\p{L}{2}\s+)\s*${IN_HOLE}|${IN_HOLE}(?=\s*<|\s+\p{L}{2})`, 'u');
 
-/* The line with every t(), wt(), formatNumber() and localiseDigits() call
+/* The line with every t(), wt(), wtCount(), formatNumber() and localiseDigits() call
    removed, parentheses balanced. */
 function withoutSentences(line) {
   let out = '';
   for (let i = 0; i < line.length; ) {
-    const call = /^\b(?:w?t|formatNumber|localiseDigits)\(/.exec(line.slice(i));
+    const call = /^\b(?:w?t|wtCount|formatNumber|localiseDigits)\(/.exec(line.slice(i));
     if (!call || /[\w$.]/.test(line[i - 1] ?? '')) {
       out += line[i++];
       continue;
@@ -338,6 +338,7 @@ test('the digit check sees a count, a rounded value and a fixed decimal', () => 
   }
   for (const line of [
     "lead.textContent = t('import.confirm', { count: d.items.length });",
+    "el.textContent = wtCount('ui.baysFailed', failed.length, { one: 'Bay {list}', other: 'Bays {list}' });",
     "mt.textContent = t('folder.appsCount', { count: (item.children || []).length });",
     'h.textContent = `${heading} (${formatNumber(rows.length)})`;',
     "if (rows.length) el.setAttribute('aria-label', label);",
@@ -377,17 +378,26 @@ test('no interface module or widget writes a number in Latin digits', () => {
   assert.deepEqual(found, [], `format it with formatNumber():\n  ${found.join('\n  ')}`);
 });
 
-test('every Backup age is in the reader digits, including the youngest', async () => {
+test('every Backup age comes from the toolbox relative time', () => {
   const src = read('widgets/backup/backup.html');
-  const fn = name => {
-    const at = src.indexOf(`function ${name}(`);
-    return src.slice(at, src.indexOf('\n}\n', at) + 2);
-  };
-  await withLocale('fa-IR', ({ formatNumber }) => {
-    const relTime = new Function('formatNumber', `${fn('parseDate')}${fn('relTime')}return relTime;`)(formatNumber);
-    for (const seconds of [30, 600, 5 * 3600, 3 * 86400]) {
-      const age = relTime(new Date(Date.now() - seconds * 1000).toISOString());
-      assert.doesNotMatch(age, /[0-9]/, `${seconds} s reads ${age}`);
-    }
+  assert.match(src, /return d \? relativeTime\(d\.getTime\(\)\) : '\u2014';/);
+  assert.doesNotMatch(src, /' ago'|'in '/, 'an age is written in English');
+});
+
+test('a list is joined in the interface language', async () => {
+  await withLocale(
+    'en-US',
+    ({ formatList }) => {
+      assert.equal(
+        formatList(['1', '2', '3']),
+        new Intl.ListFormat('fa', { type: 'conjunction' }).format(['1', '2', '3']),
+      );
+      assert.match(formatList(['a', 'b'], 'unit'), /،/);
+    },
+    'fa',
+  );
+  await withLocale('en-US', ({ formatList }) => {
+    assert.equal(formatList(['a', 'b', 'c']), 'a, b, and c');
   });
+  await withLocale('en-US', ({ formatList }) => assert.equal(formatList(['a', 'b']), 'a, b'), 'not a tag');
 });

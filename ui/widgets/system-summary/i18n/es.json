@@ -66,6 +66,7 @@
   "network.mode.opt.uptime": "Tiempo activo",
   "network.interface.label": "Interfaz",
   "network.interface.hint": "Completa la conexión de arriba y carga la lista.",
+  "network.interface.all": "Todas las interfaces",
   "network.provider.label": "Proveedor",
   "network.provider.opt.myspeed": "MySpeed",
   "network.provider.opt.speedtest-tracker": "Speedtest Tracker",

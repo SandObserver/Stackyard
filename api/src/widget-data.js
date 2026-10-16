@@ -5,6 +5,7 @@ const { fetchChecked, fetchUnchecked, SsrfBlockedError } = require('./proxy');
 const { parsePrometheus } = require('./parse-prometheus');
 const { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
+const { translatorFor } = require('./widget-i18n');
 const { preserveWidgetSecrets } = require('./widget-secrets');
 const { widgetConfigMatchesSaved, leavesStoredSecretBlank, RETYPE_MESSAGE } = require('./secret-scope');
 const { dispatchProvider } = require('./provider-dispatch');
@@ -121,6 +122,18 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
 
 /* Config-time "Fetch" for a select field declared with optionsFrom. The id is
    '__preview__' before the first save. */
+function labelOptions(body, entry, widget) {
+  if (!body || !Array.isArray(body.options) || !body.options.some(o => o && o.labelKey)) return body;
+  const translate = translatorFor(entry.dir, widget, loadConfig().settings?.language || 'en');
+  const options = body.options.map(o => {
+    if (!o || typeof o.labelKey !== 'string') return o;
+    const { labelKey, ...rest } = o;
+    const found = translate(labelKey);
+    return found === labelKey ? rest : { ...rest, label: found };
+  });
+  return { ...body, options };
+}
+
 on('POST', '/api/widget-options/:id', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const limited = rateLimit(getIp(req), 'widget-options', LIMITS.WIDGET_OPTIONS.max, LIMITS.WIDGET_OPTIONS.windowMs);
@@ -158,7 +171,7 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
       body.row,
       true,
     );
-    json(res, out.status, out.body);
+    json(res, out.status, labelOptions(out.body, entry, body.widgetType));
   } catch (e) {
     if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });
     if (withheld)
@@ -168,4 +181,4 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   }
 });
 
-module.exports = { getWidgetData, normalizeBase, dataFnContext, resolveRow };
+module.exports = { getWidgetData, normalizeBase, dataFnContext, resolveRow, labelOptions };

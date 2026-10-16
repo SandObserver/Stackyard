@@ -31,9 +31,14 @@
   "ui.backupStatus": "Backup status",
   "ui.running": "running",
   "ui.unknown": "unknown",
-  "ui.last": "last",
-  "ui.next": "next",
   "ui.runningNow": "Running…",
-  "ui.lastCap": "Last",
-  "ui.nextCap": "Next"
+  "ui.lastAt": "Last {when}",
+  "ui.nextAt": "Next {when}",
+  "ui.lastAria": "last run {when}",
+  "ui.nextAria": "next run {when}",
+  "ui.summary": "{name}: {status}",
+  "ui.status.healthy": "healthy",
+  "ui.status.warning": "warning",
+  "ui.status.error": "failed",
+  "ui.status.missed": "missed"
 }

@@ -38,5 +38,6 @@
   "ui.percentRead": "{pct}٪ خوانده‌شده",
   "ui.noBooks": "کتابی نیست",
   "ui.untitled": "بدون عنوان",
-  "ui.by": "نوشتهٔ"
+  "ui.describeAuthor": "{title} اثر {author}، {progress}",
+  "ui.describe": "{title}، {progress}"
 }

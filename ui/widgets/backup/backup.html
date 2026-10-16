@@ -121,7 +121,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatNumber, cssZoom } from '/js/widget-toolbox.js?v=9f9c7421';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom } from '/js/widget-toolbox.js?v=89cbaf61';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -163,13 +163,12 @@ function parseDate(v) {
 }
 
 function relTime(v) {
-  const d=parseDate(v); if(!d) return '—';
-  const diff=(Date.now()-d.getTime())/1000, abs=Math.abs(diff), past=diff>=0;
-  let l;
-  if(abs<90) l='< '+formatNumber(2)+'m'; else if(abs<3600) l=formatNumber(Math.round(abs/60))+'m';
-  else if(abs<86400) l=formatNumber(Math.round(abs/3600))+'h'; else l=formatNumber(Math.round(abs/86400))+'d';
-  return past?l+' ago':'in '+l;
+  const d=parseDate(v);
+  return d ? relativeTime(d.getTime()) : '—';
 }
+
+const STATUS_KEY={healthy:'ui.status.healthy',warning:'ui.status.warning',error:'ui.status.error',missed:'ui.status.missed'};
+const STATUS_EN={healthy:'healthy',warning:'warning',error:'failed',missed:'missed'};
 
 /* ── Seeded LCG ── */
 function mkRng(seed) {
@@ -629,12 +628,18 @@ function applyCard(idx, job) {
     if(running){
       bmeta.innerHTML=`<svg class="sync-icon" aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg>${wt('ui.runningNow','Running…')}<br>&nbsp;`;
     } else {
-      bmeta.innerHTML = next ? `${wt('ui.lastCap','Last')} ${last}<br>${wt('ui.nextCap','Next')} ${next}` : `${wt('ui.lastCap','Last')} ${last}`;
+      setHtml(bmeta, next
+        ? html`${wt('ui.lastAt','Last {when}',{when:last})}<br>${wt('ui.nextAt','Next {when}',{when:next})}`
+        : html`${wt('ui.lastAt','Last {when}',{when:last})}`);
     }
   }
   /* Screen-reader summary on the visible face — status is otherwise colour-only */
   front.setAttribute('role','img');
-  front.setAttribute('aria-label', `${job.name||wt('widget.label','Backup')}: ${running?wt('ui.running','running'):(job.status||wt('ui.unknown','unknown'))}${last?', '+wt('ui.last','last')+' '+last:''}${next?', '+wt('ui.next','next')+' '+next:''}`);
+  const status=running?wt('ui.running','running'):STATUS_KEY[job.status]?wt(STATUS_KEY[job.status],STATUS_EN[job.status]):wt('ui.unknown','unknown');
+  const parts=[wt('ui.summary','{name}: {status}',{name:job.name||wt('widget.label','Backup'),status})];
+  if(last) parts.push(wt('ui.lastAria','last run {when}',{when:last}));
+  if(next) parts.push(wt('ui.nextAria','next run {when}',{when:next}));
+  front.setAttribute('aria-label', formatList(parts,'unit'));
   back.setAttribute('aria-hidden','true');
 }
 

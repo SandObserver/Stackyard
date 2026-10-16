@@ -27,5 +27,7 @@
   "ui.snow": "Nieve",
   "ui.snowShowers": "Chubascos de nieve",
   "ui.thunderstorm": "Tormenta",
-  "ui.feelsLike": "sensación"
+  "ui.summary": "{place}: {condition}, {temp}",
+  "ui.currentLocation": "Ubicación actual",
+  "ui.feelsLikeTemp": "{temp} (sensación térmica)"
 }

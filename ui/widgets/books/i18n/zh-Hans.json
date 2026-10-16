@@ -38,5 +38,6 @@
   "ui.percentRead": "已读 {pct}%",
   "ui.noBooks": "暂无书籍",
   "ui.untitled": "无标题",
-  "ui.by": "作者"
+  "ui.describeAuthor": "{title}，作者：{author}，{progress}",
+  "ui.describe": "{title}，{progress}"
 }
