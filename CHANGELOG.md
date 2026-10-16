@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disk Health bay tooltips use the full widget width, so drive names are cut
   less often.
 
+- Widget link fields are labelled Link URL.
+
 ### Fixed
 
 - Weather, Books and GitHub contributions now mark their data as out of date
@@ -73,6 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Persian text reads as everyday Persian and no longer misdescribes several
   settings.
+
+- German, Spanish, French and Chinese text reads naturally, uses one form of
+  address, and follows each language's typography.
 
 ## [1.17.0] - 2026-10-11
 
