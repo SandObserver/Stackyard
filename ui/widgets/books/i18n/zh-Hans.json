@@ -27,7 +27,7 @@
   "source.opt.list": "自定义列表",
   "listId.label": "列表",
   "listId.hint": "在上方填入地址和密钥，然后点击获取以载入你的合集和阅读列表。",
-  "href.label": "点击跳转地址（可选）",
+  "href.label": "链接地址（可选）",
   "href.placeholder": "https://…",
   "href.hint": "浏览器访问此服务所用的地址。留空则使用上方地址（前提是浏览器能访问它）。",
   "ui.reading": "正在阅读",

@@ -26,7 +26,7 @@
   "refresh.opt.30": "30 秒",
   "refresh.opt.60": "1 分钟",
   "refresh.hint": "远程来源的更新频率可能低于此设置。",
-  "href.label": "点击跳转地址",
+  "href.label": "链接地址",
   "href.placeholder": "https://…",
   "href.hint": "浏览器访问此服务所用的地址。留空则使用上方地址（前提是浏览器能访问它）。",
   "slots.label": "插槽",

@@ -45,6 +45,8 @@ const SAME_ON_PURPOSE = {
     'status.containerState',
     'widgetCfg.name',
     'general.importExport',
+    /* German software says Backup, as the Backup widget does. */
+    'general.backup',
     /* Colour names German writes the same way. */
     'color.system',
     'color.info',
@@ -214,6 +216,42 @@ test('fa.json uses no Arabic marks or letters', () => {
   }
   assert.deepEqual(found, [], `Arabic marks or letters in Persian text:\n  ${found.join('\n  ')}`);
 });
+
+/* Each locale's own typography and the address form chosen for it. Markup,
+   placeholders and URLs are left out, since they are not prose. */
+const PROSE = /\{[^}]*\}|<code>.*?<\/code>|<[^>]+>|\S+:\/\/\S+/g;
+const HOUSE_STYLE = {
+  'de.json': [
+    ['addresses the reader as du', v => /\b(Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihres|Ihnen)\b|[a-zäöüß,]\s+Sie\b/.test(v)],
+    ['keeps z. B. together', v => v.includes('z. B.')],
+  ],
+  'es.json': [
+    ['addresses the reader as tú', v => /\busted(es)?\b/i.test(v)],
+    ['opens questions with ¿', v => v.includes('?') && !v.includes('¿')],
+  ],
+  'fr.json': [
+    ['puts a no-break space before : ; ! ?', v => / [:;!?](\s|$)/.test(v)],
+    ['puts a no-break space inside « »', v => /« | »/.test(v)],
+    ['uses the typographic apostrophe', v => /\p{L}'\p{L}/u.test(v)],
+  ],
+  'zh-Hans.json': [
+    ['addresses the reader as 你', v => v.includes('您')],
+    ['uses full-width punctuation next to Chinese', v => /[一-鿿][,.:;?!()]|[(,:;?!][一-鿿]/.test(v)],
+  ],
+};
+
+for (const [file, rules] of Object.entries(HOUSE_STYLE)) {
+  test(`${file} follows its house style`, () => {
+    const found = [];
+    for (const [name, catalogue] of [[file, read(file)], ...widgetCatalogues(file)]) {
+      for (const [key, value] of flat(catalogue)) {
+        const prose = String(value).replace(PROSE, ' ');
+        for (const [rule, breaks] of rules) if (breaks(prose)) found.push(`${name} ${key}: ${rule}`);
+      }
+    }
+    assert.deepEqual(found, [], `House style broken:\n  ${found.join('\n  ')}`);
+  });
+}
 
 /* ── English left inside a non-Latin catalogue ────────────────────────────── */
 

@@ -175,7 +175,7 @@ test('a media server only the server can reach gives no link', async () => {
   assert.equal(r.link, '');
 });
 
-test('a Click URL set by the reader becomes the base of the item link', async () => {
+test('a Link URL set by the reader becomes the base of the item link', async () => {
   const r = await dataFn(
     ctxFor(
       {

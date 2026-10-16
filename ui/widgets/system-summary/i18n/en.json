@@ -26,7 +26,7 @@
   "refresh.opt.30": "30 s",
   "refresh.opt.60": "1 min",
   "refresh.hint": "A remote source may update less often than this.",
-  "href.label": "Click URL",
+  "href.label": "Link URL",
   "href.placeholder": "https://…",
   "href.hint": "The address your browser uses for this service. Leave blank to use the one above, if your browser can reach it.",
   "slots.label": "Slot",

@@ -8,7 +8,7 @@
   "clockStyle.opt.analog": "Analogique",
   "clockTimezone.label": "Fuseau horaire",
   "clockTimezone.placeholder": "Europe/Paris",
-  "clockTimezone.hint": "Nom de fuseau horaire IANA. Laisser vide pour l’heure locale du navigateur.",
+  "clockTimezone.hint": "Nom de fuseau horaire IANA. Laissez vide pour l’heure locale du navigateur.",
   "clockShowDate.label": "Afficher la date",
   "ui.unknownZone": "Fuseau horaire inconnu"
 }

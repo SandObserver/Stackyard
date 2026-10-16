@@ -10,7 +10,7 @@
   "githubUser.placeholder": "octocat",
   "githubToken.label": "Personal Access Token",
   "githubToken.hint": "Classic PAT with repo + read:user scope (or a fine-grained PAT with the equivalent read access). Used only by this widget.",
-  "githubHref.label": "Click URL",
+  "githubHref.label": "Link URL",
   "githubHref.hint": "Where clicking the widget opens. Leave blank to open the GitHub profile.",
   "githubPrFilters.label": "Pull request filters",
   "githubPrFilters.hint": "Which open PRs to show. Multiple filters are combined.",
@@ -20,8 +20,8 @@
   "githubPrFilters.opt.review-requested": "Review requested",
   "ui.prAria": "GitHub pull requests",
   "ui.pullRequests": "Pull requests",
-  "ui.lastYear": "Last year",
+  "ui.lastYear": "Past 12 months",
   "ui.noPrs": "No open pull requests",
-  "ui.contributionsAria": "GitHub contributions: {total} in the last year",
+  "ui.contributionsAria": "GitHub contributions: {total} in the past 12 months",
   "ui.viewAll": "view all"
 }

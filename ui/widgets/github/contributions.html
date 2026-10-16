@@ -224,8 +224,8 @@ function render(data) {
   if (GRID.cols) drawGrid(weeks);
   num.textContent = total;
   fitText(num);
-  sub.textContent = wt('ui.lastYear', 'Last year');
-  name(wt('ui.contributionsAria', 'GitHub contributions: {total} in the last year').replace('{total}', total));
+  sub.textContent = wt('ui.lastYear', 'Past 12 months');
+  name(wt('ui.contributionsAria', 'GitHub contributions: {total} in the past 12 months').replace('{total}', total));
   if (!arrived) {
     arrived = true;
     w.classList.add('arrive');

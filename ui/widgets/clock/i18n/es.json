@@ -1,6 +1,6 @@
 {
   "widget.label": "Reloj",
-  "widget.description": "Muestre la hora y la fecha en cualquier zona horaria.",
+  "widget.description": "Muestra la hora y la fecha en cualquier zona horaria.",
   "view.digital.label": "Digital",
   "view.analog.label": "Analógico",
   "clockStyle.label": "Estilo",

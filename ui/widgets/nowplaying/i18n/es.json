@@ -1,6 +1,6 @@
 {
   "widget.label": "Reproduciendo",
-  "widget.description": "Vea qué se está reproduciendo en su servidor multimedia.",
+  "widget.description": "Mira qué se está reproduciendo en tu servidor multimedia.",
   "provider.label": "Servidor multimedia",
   "provider.opt.plex": "Plex",
   "provider.opt.jellyfin": "Jellyfin",
@@ -20,7 +20,7 @@
   "navidromeUrl.placeholder": "http://host:4533",
   "navidromeUser.label": "Usuario",
   "navidromePassword.label": "Contraseña",
-  "href.label": "URL de clic (opcional)",
+  "href.label": "URL del enlace (opcional)",
   "href.placeholder": "https://…",
   "href.hint": "La dirección con la que tu navegador abre este servicio. Déjalo en blanco para usar la de arriba, si tu navegador puede acceder a ella.",
   "ui.nothingPlaying": "No se reproduce nada",

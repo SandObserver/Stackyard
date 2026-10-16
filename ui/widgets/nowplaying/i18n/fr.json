@@ -8,7 +8,7 @@
   "provider.opt.navidrome": "Navidrome",
   "plexUrl.label": "URL du serveur Plex",
   "plexUrl.placeholder": "http://host:32400",
-  "plexUrl.hint": "Votre serveur Plex Media Server (port 32400 par défaut).",
+  "plexUrl.hint": "Votre Plex Media Server (port 32400 par défaut).",
   "plexToken.label": "Jeton Plex (X-Plex-Token)",
   "jellyfinUrl.label": "URL Jellyfin",
   "jellyfinUrl.placeholder": "http://host:8096",
@@ -20,9 +20,9 @@
   "navidromeUrl.placeholder": "http://host:4533",
   "navidromeUser.label": "Nom d’utilisateur",
   "navidromePassword.label": "Mot de passe",
-  "href.label": "URL de clic (facultatif)",
+  "href.label": "URL du lien (facultatif)",
   "href.placeholder": "https://…",
-  "href.hint": "L’adresse que votre navigateur utilise pour ce service. Laisser vide pour utiliser celle ci-dessus, si votre navigateur peut l’atteindre.",
+  "href.hint": "L’adresse que votre navigateur utilise pour ce service. Laissez vide pour utiliser celle ci-dessus, si votre navigateur peut l’atteindre.",
   "ui.nothingPlaying": "Aucune lecture en cours",
   "ui.describeTitle": "Lecture en cours : {title}",
   "ui.describeSubtitle": "{text}, {subtitle}",
@@ -31,5 +31,5 @@
   "ui.describePaused": "{text} (en pause)",
   "ui.previous": "Élément précédent",
   "ui.next": "Élément suivant",
-  "ui.linkName": "{text}. Activer pour ouvrir le lien."
+  "ui.linkName": "{text}. Activez pour ouvrir le lien."
 }
