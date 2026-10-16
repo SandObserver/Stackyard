@@ -66,6 +66,16 @@ test('more values than columns keeps the newest', () => {
   assert.deepEqual(heights(c), ['max(2px, 20.00%)', 'max(2px, 30.00%)']);
 });
 
+test('the gap between columns is transparent borders, so a fractional zoom keeps gaps equal', () => {
+  const c = columns({ count: 2, gap: 4 });
+  assert.doesNotMatch(c.el.style.cssText, /gap:/);
+  assert.match(c.el.style.cssText, /margin:0 -2px/);
+  for (const col of c.el.children) {
+    assert.match(col.style.cssText, /border-width:0 2px/);
+    assert.match(col.style.cssText, /background-clip:padding-box/);
+  }
+});
+
 test('a colour carrying a second declaration is refused', () => {
   const c = columns({ count: 1, color: 'red; background-image: url(x)' });
   assert.equal(c.el.children[0].children[0].style.backgroundColor, '#0a84ff');

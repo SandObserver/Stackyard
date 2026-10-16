@@ -8,13 +8,13 @@ const { setCardAppearance } = await import('../js/widget-toolbox.js');
 
 const frameIn = card => ({ closest: sel => (sel === '.widget, .mob-widget-card' ? card : null) });
 
-test('a dark widget page marks its card dark, and a light one clears it', () => {
+test('a widget page marks its card dark or light to match its own background', () => {
   const card = { dataset: {} };
   globalThis.window = { frameElement: frameIn(card) };
   setCardAppearance(true);
   assert.equal(card.dataset.appearance, 'dark');
   setCardAppearance(false);
-  assert.equal('appearance' in card.dataset, false);
+  assert.equal(card.dataset.appearance, 'light');
 });
 
 test('a widget page outside a dashboard card changes nothing', () => {

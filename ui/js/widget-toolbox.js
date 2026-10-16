@@ -78,15 +78,14 @@ export function theme() {
 const NS = 'http://www.w3.org/2000/svg';
 const _params = new URLSearchParams(location.search);
 
-/** Gives the card the dark card's edge and border while the widget paints its own dark background.
+/** Matches the card to the background the widget paints, dark or light, in either theme.
     @param {boolean} dark */
 export function setCardAppearance(dark) {
   const card = /** @type {HTMLElement | null | undefined} */ (
     window.frameElement?.closest('.widget, .mob-widget-card')
   );
   if (!card) return;
-  if (dark) card.dataset.appearance = 'dark';
-  else delete card.dataset.appearance;
+  card.dataset.appearance = dark ? 'dark' : 'light';
 }
 
 export function widgetId() {
@@ -319,7 +318,8 @@ export function columns(opts = {}) {
   const color = colorOrFallback(opts.color, '#0a84ff');
   const el = document.createElement('div');
   el.className = 'tb-cols';
-  el.style.cssText = `display:flex;align-items:stretch;height:100%;gap:${opts.gap != null ? opts.gap : 3}px`;
+  const half = (opts.gap != null ? opts.gap : 3) / 2;
+  el.style.cssText = `display:flex;align-items:stretch;height:100%;margin:0 -${half}px`;
   /** @type {HTMLElement[]} */
   const fills = [];
   /** @type {HTMLElement[]} */
@@ -329,7 +329,10 @@ export function columns(opts = {}) {
   for (let i = 0; i < count; i++) {
     const col = document.createElement('div');
     col.className = 'tb-col';
-    col.style.cssText = `flex:1 1 0;position:relative;overflow:hidden;border-radius:${radius}px`;
+    col.style.cssText =
+      `flex:1 1 0;box-sizing:content-box;position:relative;overflow:hidden;` +
+      `border:solid transparent;border-width:0 ${half}px;background-clip:padding-box;` +
+      `border-radius:${radius + half}px / ${radius}px`;
     if (opts.track !== null) col.style.backgroundColor = opts.track || 'rgba(255,255,255,0.10)';
     const fill = document.createElement('div');
     fill.className = 'tb-col-fill';
