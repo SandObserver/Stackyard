@@ -79,6 +79,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - German, Spanish, French and Chinese text reads naturally, uses one form of
   address, and follows each language's typography.
 
+- Weather no longer shows dark bands at the card's sides in daytime with the
+  dark theme.
+
+- System Summary chart columns have equal gaps.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
