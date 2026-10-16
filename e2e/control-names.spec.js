@@ -133,7 +133,5 @@ test('a Test that got no HTTP answer says why, in the page language', async ({ p
   await page.keyboard.type('http://192.168.1.10:1/');
   await page.keyboard.press('Enter');
   await page.locator('#hc-ping-test').click();
-  await expect(page.locator('#hc-ping-status')).toHaveText(
-    '✗ Der Host hat die Verbindung abgelehnt. Prüfe den Port.',
-  );
+  await expect(page.locator('#hc-ping-status')).toHaveText('✗ Der Host hat die Verbindung abgelehnt. Prüfe den Port.');
 });
