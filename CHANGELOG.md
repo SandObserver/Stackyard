@@ -55,6 +55,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Large and extra large widgets on desktop now end level with the widgets beside
   them.
 
+- Counts in search, badges and widgets follow the plural rules of the selected
+  language.
+
+- Backup, Now Playing, Books, Weather and Connections read their labels in the
+  selected language's word order.
+
+- Backup shows run times in the selected language.
+
+- Lists use the selected language's separators.
+
+- The language picker marks each language name with its language for screen
+  readers.
+
+- System Summary translates "All interfaces" and badges translate container
+  states.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
