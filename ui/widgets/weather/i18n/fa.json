@@ -29,5 +29,5 @@
   "ui.thunderstorm": "رعدوبرق",
   "ui.summary": "{place}: {condition}، {temp}",
   "ui.currentLocation": "موقعیت فعلی",
-  "ui.feelsLikeTemp": "{temp} (دمای محسوس)"
+  "ui.feelsLikeTemp": "{temp} (دمای ظاهری)"
 }

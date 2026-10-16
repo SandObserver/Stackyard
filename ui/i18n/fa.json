@@ -407,7 +407,7 @@
     "containerCreated": "کانتینر ساخته شده",
     "containerRestarting": "کانتینر در حال راه‌اندازی دوباره",
     "containerRemoving": "کانتینر در حال حذف",
-    "containerPaused": "کانتینر موقتاً متوقف شده",
+    "containerPaused": "کانتینر موقتا متوقف شده",
     "containerExited": "کانتینر متوقف شده",
     "containerDead": "کانتینر از کار افتاده",
     "stale": "(ممکن است قدیمی باشد)",

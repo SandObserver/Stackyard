@@ -31,5 +31,5 @@
   "ui.describePaused": "{text} (مکث)",
   "ui.previous": "مورد قبلی",
   "ui.next": "مورد بعدی",
-  "ui.linkName": "{text}. برای باز کردن پیوند فعال کنید."
+  "ui.linkName": "{text}. برای بازکردن پیوند، آن را انتخاب کنید."
 }
