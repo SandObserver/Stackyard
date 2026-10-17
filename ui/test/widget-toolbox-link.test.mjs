@@ -8,13 +8,21 @@ globalThis.location = { search: '?id=test' };
 const { linkTo } = await import('../js/widget-toolbox.js');
 
 let opened = [];
+let bubbled = 0;
 globalThis.document = {
-  createElement: () => ({
-    click() {
-      opened.push(this.href);
-    },
-    remove() {},
-  }),
+  createElement: () => {
+    const listeners = [];
+    return {
+      addEventListener: (type, fn) => type === 'click' && listeners.push(fn),
+      click() {
+        opened.push(this.href);
+        let stopped = false;
+        for (const fn of listeners) fn({ stopPropagation: () => (stopped = true) });
+        if (!stopped) bubbled++;
+      },
+      remove() {},
+    };
+  },
   body: { appendChild() {} },
 };
 
@@ -145,4 +153,14 @@ test('the contributions summary uses the yearly total', () => {
     widget('github/contributions.html'),
     /const total = formatNumber\(Math\.max\(0, Number\(data\.totalContributions\) \|\| 0\)\);/,
   );
+});
+
+test('the click that opens a link never bubbles to a widget handler', () => {
+  opened = [];
+  bubbled = 0;
+  const el = fakeEl();
+  linkTo(el, 'https://example.test/');
+  el.fire('click', { target: el });
+  assert.deepEqual(opened, ['https://example.test/']);
+  assert.equal(bubbled, 0);
 });
