@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - System Summary and the Connections map have a Click URL setting.
 
+- Add an optional API token for Scrutiny in Disk Health, needed from Scrutiny
+  2.0.
+
 ### Changed
 
 - The small VPN view leaves more room between its text and the card edge.
