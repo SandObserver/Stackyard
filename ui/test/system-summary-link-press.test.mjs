@@ -14,15 +14,17 @@ const pressOpensLink = new Function(
 )();
 const holdToShow = lift('holdToShow', 'target, show');
 
-function node(classes = [], parent = null) {
+function node(classes = [], parent = null, id = '') {
   const el = {
     parent,
+    id,
     classes: new Set(classes),
     classList: { add: c => el.classes.add(c) },
     addEventListener() {},
     closest(sel) {
-      const wanted = sel.split(',').map(s => s.trim().slice(1));
-      for (let n = el; n; n = n.parent) if (wanted.some(c => n.classes.has(c))) return n;
+      const wanted = sel.split(',').map(s => s.trim());
+      const hit = n => wanted.some(w => (w[0] === '#' ? n.id === w.slice(1) : n.classes.has(w.slice(1))));
+      for (let n = el; n; n = n.parent) if (hit(n)) return n;
       return null;
     },
   };
@@ -50,4 +52,8 @@ test('a press anywhere else opens the link', () => {
 
 test('the body click handler opens the link only through that check', () => {
   assert.match(src, /if \(target && pressOpensLink\(e\.target\)\) openUrl\(target\);/);
+});
+
+test('a press on the link element is left to the link, so it opens once', () => {
+  assert.equal(pressOpensLink(node([], node(), 'ss-link')), false);
 });

@@ -120,6 +120,9 @@ export function openUrl(href) {
     a.href = href;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
+    /* Keep this. Without it, a click handler on the body opens the link
+       again, in a loop, and the browser blocks every tab. */
+    a.addEventListener('click', e => e.stopPropagation());
     document.body.appendChild(a);
     a.click();
     a.remove();
