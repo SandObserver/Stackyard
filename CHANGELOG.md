@@ -105,6 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop logging an nginx warning on every settings save.
 
+- Show settings labels in full on a phone instead of cutting them off.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
