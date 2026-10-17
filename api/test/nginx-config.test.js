@@ -538,9 +538,13 @@ test('translation catalogs are stored and revalidated, not refetched in full', (
   assert.doesNotMatch(block, /no-store/);
 });
 
-test('the API location keeps any body the API accepts in memory', () => {
+/* nginx reads a whole body before the API sees the request. A large in-memory
+   buffer lets unauthenticated slow uploads exhaust the container's memory. */
+test('the API location buffers a settings save in memory, but not a full-size body', () => {
   const block = /location\s+\/api\/\s*\{([\s\S]*?)\n {4}\}/.exec(dashboard);
   assert.ok(block, 'no /api/ location');
   const buffer = nginxSize(block[1], 'client_body_buffer_size');
-  assert.ok(buffer >= BODY_LIMIT, `nginx buffers ${buffer} in memory but the API accepts bodies up to ${BODY_LIMIT}`);
+  assert.ok(buffer >= 128 * 1024, `nginx buffers only ${buffer} in memory; a large config is written to a temp file`);
+  assert.ok(buffer <= 512 * 1024, `nginx holds up to ${buffer} per request in memory`);
+  assert.ok(buffer < BODY_LIMIT);
 });
