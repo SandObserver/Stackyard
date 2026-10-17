@@ -292,6 +292,7 @@ function drawPh(canvas, haiku, isFront, seed) {
     /* A line wider than the card is drawn as a plain row. Text is never clipped. */
     if (entry.type === 'text' && textW + 7 <= usableW) {
       ctx.textBaseline = 'top';
+      ctx.textAlign = 'left';
       /* Small left dash */
       const ldW = Math.min(4 + Math.floor(rng() * 10), usableW - textW - 3);
       ctx.fillStyle = dashC;
