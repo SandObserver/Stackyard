@@ -37,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Widget link fields are labelled Link URL.
 
+- Weather hover and screen-reader text include when the data was last updated.
+
+- The Persian analog clock no longer shows the year on the dial.
+
 ### Fixed
 
 - Weather, Books and GitHub contributions now mark their data as out of date
@@ -83,6 +87,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dark theme.
 
 - System Summary chart columns have equal gaps.
+
+- Backup job names and error lines no longer break inside a word.
+
+- The analog clock date is no longer drawn below 11px.
+
+- Connections map legend entries have larger tap areas.
 
 ## [1.17.0] - 2026-10-11
 
