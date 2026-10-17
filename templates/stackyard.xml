@@ -24,156 +24,111 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.17.0 - 2026-10-11
+### 1.18.0 - 2026-10-17
 
 ### Added
 
-- Add an Update Every setting to System Summary, from 5 seconds to 1 minute.
+- The widget picker shows a one-line description of each widget type.
 
-- Point at a System Summary chart to see a past reading, or at a disk to see its
-  used and total size.
+- Widgets open their service when no Click URL is set, if the browser can reach
+  its address.
 
-- The logo on the About page turns its arc once on hover or tap.
+- Backup, Now Playing and System Summary open the job, item or system they show,
+  under the Click URL when one is set.
 
-- A sideways trackpad swipe or mouse wheel turns dashboard pages, one page per
-  gesture.
+- System Summary and the Connections map have a Click URL setting.
+
+- Add an optional API token for Scrutiny in Disk Health, needed from Scrutiny
+  2.0.
 
 ### Changed
 
-- Redesign System Summary with coloured figures in the small size and column
-  charts in the medium size.
+- The small VPN view leaves more room between its text and the card edge.
 
-- Show the System Summary network line in the medium size only.
+- The VPN view no longer shows the public IP address unless Show IP Address is
+  turned on in its settings.
 
-- Show System Summary temperatures in whole degrees.
+- Widgets show soft placeholder shapes while they load, and Books and Now
+  Playing no longer show a heading or "Nothing playing" before their data
+  arrives.
 
-- Redesign the GitHub widget with a headline figure, a cleaner pull request list
-  and a contribution grid that fills the card.
+- Disk Health shows each drive's status light on its bay.
 
-- Point at a day on the GitHub contribution grid to see its date and count.
+- Disk Health bay tooltips use the full widget width, so drive names are cut
+  less often.
 
-- The GitHub widget now follows the light and dark theme.
+- Widget link fields are labelled Link URL.
 
-- Redesign the digital clock as large overlapping hour and minute figures in the
-  analog clock's colours.
+- Weather hover and screen-reader text include when the data was last updated.
 
-- Name a config export downloaded straight from the API `stackyard-config.json`,
-  matching the Export button.
-
-- The connections map places each country's dots on its most populated areas.
-
-- Widgets render sharp on 1x screens.
-
-### Removed
-
-- The GitHub widget no longer offers an extra large size. Existing extra large
-  GitHub widgets become large.
+- The Persian analog clock no longer shows the year on the dial.
 
 ### Fixed
 
-- About link icons keep their colours after the pointer moves over the list.
+- Weather, Books and GitHub contributions now mark their data as out of date
+  after one failed refresh, not two.
 
-- System Summary reports a Beszel account that cannot read its systems as a
-  sign-in problem instead of an empty hub.
+- Disk Health names a failed drive in words instead of only turning its light
+  red.
 
-- The digital clock shows its digits in the right order on a Persian dashboard.
+- The DNS widget labels its chart, so allowed, cached and blocked queries no
+  longer rely on colour alone.
 
-- Remove the thin dark lines along the sides of the Now Playing widget.
+- Widget text is never smaller than 11 points, including book spines, disk bay
+  labels, backup cards and the Now Playing band.
 
-- Editing an app no longer drops a summed Live Activity badge's unit, colour and
-  minimum.
+- Book spine titles and disk bay labels no longer shift letter by letter on
+  hover.
 
-- Editing an app set up in an older version no longer drops its Live Activity
-  headers, including a stored API key.
+- Large and extra large widgets on desktop now end level with the widgets beside
+  them.
 
-- Every number listed by Fetch in Live Activity now shows on the badge,
-  including Prometheus metrics with labels, names containing dots or dashes,
-  nested lists and plain-number answers.
+- Counts in search, badges and widgets follow the plural rules of the selected
+  language.
 
-- The Live Activity poll interval is now used: each service is read once per
-  interval, however many dashboards are open.
+- Backup, Now Playing, Books, Weather and Connections read their labels in the
+  selected language's word order.
 
-- A badge whose service answers with an error now keeps its last value, marked
-  out of date, instead of showing 0 or a number from the error page.
+- Backup shows run times in the selected language.
 
-- A badge reading a response too large to read in full now reports it instead of
-  showing a short count.
+- Lists use the selected language's separators.
 
-- A folder badge is now marked out of date when an app inside it fails its poll.
+- The language picker marks each language name with its language for screen
+  readers.
 
-- TrueNAS disk health no longer names TrueNAS 26 in its unsupported-version
-  message.
+- System Summary translates "All interfaces" and badges translate container
+  states.
 
-- The time since the last update, shown on a failed widget, now meets text
-  contrast in both themes.
+- Persian text reads as everyday Persian and no longer misdescribes several
+  settings.
 
-- A widget built from the template no longer shows its previous items under
-  "Nothing here" when a refresh comes back empty.
+- German, Spanish, French and Chinese text reads naturally, uses one form of
+  address, and follows each language's typography.
 
-- Changing a widget's display settings, such as Weather units or city, a GitHub
-  view or a slot colour, no longer asks for its API key or password again.
+- Weather no longer shows dark bands at the card's sides in daytime with the
+  dark theme.
 
-- Widgets no longer stay blank when the widget list fails to load once while the
-  dashboard starts.
+- System Summary chart columns have equal gaps.
 
-- System Summary no longer shows Unraid's own error text when Unraid reports a
-  problem.
+- Backup job names and error lines no longer break inside a word.
 
-- A widget manifest whose options are not value and label pairs is now refused
-  at startup instead of showing "undefined" in its settings.
+- The analog clock date is no longer drawn below 11px.
 
-- Keep the warning that a stored credential must be entered again on screen
-  after a save.
+- Connections map legend entries have larger tap areas.
 
-- Restore settings from a backup, not only apps, folders and widgets.
+- Backup card text no longer runs past the card in Persian.
 
-- Upgrade a backup from an older release when it is restored.
+- Large Books spines show more of each title.
 
-- Show a credential as missing after a restore when it was not kept.
+- Stackyard icon no longer shows blank on the Unraid Docker tab and Dashboard.
 
-- Keep the current wallpaper when a restored backup names an uploaded wallpaper
-  this install does not have.
+- Stop logging an nginx warning on every settings save.
 
-- Refuse a config whose folder contents are not a list of item ids, instead of
-  saving it and breaking the dashboard.
-
-- Import a link written as `host:port` from Homepage or Dashy as a working
-  `http://` link.
-
-- Drop a health-check address from Homepage or Dashy that only the other
-  dashboard can resolve, instead of importing a check that always fails.
-
-- Refuse a Homepage or Dashy file whose merge keys expand too far, instead of
-  freezing the page.
-
-- Read a Homepage or Dashy file with very long lines without freezing the page.
-
-- The connections map draws users from small countries such as Belgium,
-  Switzerland, Israel and Singapore.
-
-- A second service in the same country no longer covers the first one's dots on
-  the connections map.
-
-- The connections map key no longer runs over the map with many services or long
-  names.
-
-- The settings navigation no longer jumps when the version number loads.
-
-- The settings page no longer shifts sideways when its scrollbar appears.
+- Show settings labels in full on a phone instead of cutting them off.
 
 ### Security
 
-- Changing the port map now asks for stored API keys again instead of sending
-  them to the newly mapped host.
-
-- Turning on Allow self-signed certificate for an app now asks for its stored
-  API key again before it is sent without certificate checking.
-
-- Secrets in a widget setting that is declared more than once, one per provider,
-  are no longer sent to the browser or written to the config export.
-
-- System Summary no longer reuses one Beszel account's login for a widget
-  configured with a different account or password.
+- Update expat to 2.9.0 to fix CVE-2026-77214 and CVE-2026-102633.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
