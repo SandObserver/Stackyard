@@ -89,8 +89,14 @@ function badgeRequestMatchesSaved(request, stored) {
     @param {any} next @param {any} prev @returns {boolean} */
 function rewriteChanged(next, prev) {
   const map = s => (s && s.portMap && typeof s.portMap === 'object' ? s.portMap : {});
-  if (!Object.keys(map(next)).length) return false;
+  if (!Object.keys(map(next)).length && !Object.keys(map(prev)).length) return false;
   return !stableEqual(map(next), map(prev)) || (next?.hostIp || '') !== (prev?.hostIp || '');
+}
+
+/** Whether a save turns the global certificate skip on or off. Widget requests
+    fall back to it. @param {any} next @param {any} prev @returns {boolean} */
+function widgetTlsChanged(next, prev) {
+  return (next?.skipTlsVerify === true) !== (prev?.skipTlsVerify === true);
 }
 
 const RETYPE_MESSAGE =
@@ -105,5 +111,6 @@ module.exports = {
   rowsMatch,
   badgeRequestMatchesSaved,
   rewriteChanged,
+  widgetTlsChanged,
   RETYPE_MESSAGE,
 };
