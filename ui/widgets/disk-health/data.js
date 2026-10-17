@@ -20,8 +20,12 @@ function scrutinyDeviceIds(key, device) {
   return [device?.device_id, device?.scrutiny_uuid, device?.wwn, key].filter(v => typeof v === 'string' && v);
 }
 
+function scrutinyHeaders(config) {
+  return config.scrutinyToken ? { Authorization: 'Bearer ' + config.scrutinyToken } : {};
+}
+
 function scrutinyStatus(ctx, r) {
-  if (r.status === 401 || r.status === 403) ctx.fail('Scrutiny auth failed', { kind: ctx.KIND.AUTH });
+  if (r.status === 401 || r.status === 403) ctx.fail('Scrutiny auth failed, check API token', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail('Scrutiny HTTP ' + r.status);
 }
 
@@ -40,7 +44,10 @@ function scrutinyIndex(summary) {
 async function scrutinyDeviceOptions(ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   if (!config.scrutinyUrl) ctx.fail('Enter the Scrutiny URL first.', { kind: ctx.KIND.INVALID });
-  const r = await fetchJSON(normalizeBase(config.scrutinyUrl) + '/api/summary', { timeout: 8000 });
+  const r = await fetchJSON(normalizeBase(config.scrutinyUrl) + '/api/summary', {
+    headers: scrutinyHeaders(config),
+    timeout: 8000,
+  });
   scrutinyStatus(ctx, r);
   const summary = r.data?.data?.summary || {};
   const options = Object.entries(summary)
@@ -90,7 +97,7 @@ async function diskHealthScrutiny(ctx) {
   const bays = config.bays || [];
 
   const base = normalizeBase(url);
-  const r = await fetchJSON(base + '/api/summary', { timeout: 8000 });
+  const r = await fetchJSON(base + '/api/summary', { headers: scrutinyHeaders(config), timeout: 8000 });
   scrutinyStatus(ctx, r);
 
   const byId = scrutinyIndex(r.data?.data?.summary || {});

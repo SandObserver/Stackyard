@@ -6,6 +6,8 @@
   "diskProvider.opt.truenas": "TrueNAS",
   "scrutinyUrl.label": "Scrutiny 地址",
   "scrutinyUrl.placeholder": "scrutiny:8080",
+  "scrutinyToken.label": "Scrutiny API 令牌",
+  "scrutinyToken.hint": "Scrutiny 要求登录时需要填写，Scrutiny 2.0 起默认要求登录。具有 read 权限的令牌即可。",
   "scrutinyHref.label": "链接地址",
   "scrutinyHref.placeholder": "http://your-server:8080",
   "scrutinyHref.hint": "浏览器访问此服务所用的地址。留空则使用上方地址（前提是浏览器能访问它）。",

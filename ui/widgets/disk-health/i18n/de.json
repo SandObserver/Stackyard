@@ -6,6 +6,8 @@
   "diskProvider.opt.truenas": "TrueNAS",
   "scrutinyUrl.label": "Scrutiny-URL",
   "scrutinyUrl.placeholder": "scrutiny:8080",
+  "scrutinyToken.label": "Scrutiny-API-Token",
+  "scrutinyToken.hint": "Nötig, wenn Scrutiny eine Anmeldung verlangt. Ab Scrutiny 2.0 ist das die Vorgabe. Ein Token mit dem Bereich read genügt.",
   "scrutinyHref.label": "Link-URL",
   "scrutinyHref.placeholder": "http://your-server:8080",
   "scrutinyHref.hint": "Die Adresse, unter der dein Browser diesen Dienst öffnet. Leer lassen, um die Adresse oben zu verwenden, sofern dein Browser sie erreicht.",
