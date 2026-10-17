@@ -207,7 +207,7 @@
       const h=hash(title+'|'+i);
       return Object.assign({}, b, {
         _w: Math.max(14,Math.min(19,12+Math.round(title.length*.35)))+(h%2),
-        _h: 72 + (h % 24),
+        _h: SHELVES>1 ? 90 + (h % 10) : 72 + (h % 24),
         _color: b.color || PALETTE[(h>>>4) % PALETTE.length],
       });
     });

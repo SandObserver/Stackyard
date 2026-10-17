@@ -82,3 +82,7 @@ test('a cut name takes its direction from its own text', () => {
 test('an error line is fitted like a name', () => {
   assert.match(page, /if\(bname\) fitName\(bname, line\);/);
 });
+
+test('decorative lines start at their left edge in every direction', () => {
+  assert.match(page, /ctx\.textAlign = 'left';\n\s*\/\* Small left dash \*\//);
+});
