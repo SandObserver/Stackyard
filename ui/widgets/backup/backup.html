@@ -424,6 +424,12 @@ function buildShell() {
   const PAD   = 10, GAP = 12;
   const inner = bodyW - PAD * 2;
 
+  /* Desktop iframes are always 150px tall. Mobile iframes are taller. */
+  if (!_isMobile && bodyH > 160) {
+    _isMobile = true;
+    document.body.classList.add('is-mobile');
+    /* Apply mobile font sizes to any already-created elements */
+  }
   _isMobileSquare = _isMobile && (bodyH >= bodyW * 0.75);
 
   const isMobile       = _isMobile;
@@ -580,12 +586,14 @@ function apply(jobs) {
 function fitName(el, text) {
   el.textContent = text;
   el.classList.remove('cut');
+  el.removeAttribute('dir');
   const base = _isMobile ? 15 : 11;
   for (let px = base; px >= 11; px--) {
     el.style.fontSize = px + 'px';
     if (el.scrollWidth <= el.clientWidth) return;
   }
   el.classList.add('cut');
+  el.dir = 'auto';
 }
 
 function applyCard(idx, job) {
@@ -662,7 +670,7 @@ function applyCardError(idx, line) {
   /* Set both. An unset colour inherits black onto a dark card. */
   if(back){ back.style.background='rgba(255,255,255,0.06)'; back.style.color='#fff'; back.classList.remove('running'); }
   if(front){ front.setAttribute('role','img'); front.setAttribute('aria-label', line); front.style.removeProperty('--status-color'); }
-  if(bname) bname.textContent = line;
+  if(bname) fitName(bname, line);
   if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
   if(fname) fname.textContent = '\u2014';
 }

@@ -60,3 +60,15 @@ test('the parts split the date after the weekday', () => {
   assert.equal(en.weekday, 'Sun');
   assert.equal(en.date, 'Oct 4');
 });
+
+test('the parts can leave out the Persian year', () => {
+  assert.deepEqual(clockDateParts('fa', 'short', false)(at('2026-10-04')), {
+    full: 'یکشنبه ۱۲ مهر',
+    weekday: 'یکشنبه',
+    date: '۱۲ مهر',
+  });
+  assert.deepEqual(
+    clockDateParts('en', 'short', false)(at('2026-10-04')),
+    clockDateParts('en', 'short')(at('2026-10-04')),
+  );
+});

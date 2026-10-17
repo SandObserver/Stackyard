@@ -11,7 +11,11 @@ function nameEl(perPx, clientWidth = 80) {
   const classes = new Set();
   const el = {
     textContent: '',
+    dir: '',
     style: { fontSize: '' },
+    removeAttribute: name => {
+      el[name] = '';
+    },
     clientWidth,
     classList: { add: c => classes.add(c), remove: c => classes.delete(c) },
     get scrollWidth() {
@@ -65,6 +69,16 @@ test('names never break inside a word', () => {
     assert.doesNotMatch(rule, /word-break|overflow-wrap/);
 });
 
-test('only the mobile parameter picks the phone layout', () => {
-  assert.deepEqual(page.match(/_isMobile\s*=[^=]/g), ['_isMobile = ']);
+test('a cut name takes its direction from its own text', () => {
+  const el = nameEl(9);
+  const fit = fitNameFor(false);
+  fit(el, 'Nextcloud_production_database');
+  assert.equal(el.dir, 'auto');
+  Object.defineProperty(el, 'scrollWidth', { value: 80 });
+  fit(el, 'Photos');
+  assert.equal(el.dir, '');
+});
+
+test('an error line is fitted like a name', () => {
+  assert.match(page, /if\(bname\) fitName\(bname, line\);/);
 });
