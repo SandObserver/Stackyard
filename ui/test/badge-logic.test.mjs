@@ -201,8 +201,11 @@ test('a user colour is always given its own ink', () => {
    The reason is the tile's hover text, and is appended to the accessible label
    so it is not sight-only. */
 
-test('a stopped container explains itself using Docker wording', () => {
-  assert.equal(healthReason({ state: 'exited', status: 'Exited (1) 2 hours ago' }), 'Exited (1) 2 hours ago');
+test('a stopped container names its state, then Docker wording', () => {
+  assert.equal(
+    healthReason({ state: 'exited', status: 'Exited (1) 2 hours ago' }),
+    'Container stopped · Exited (1) 2 hours ago',
+  );
 });
 
 test('a container with no status falls back to its state', () => {
@@ -261,8 +264,8 @@ test('an unhealthy badge carries the reason as hover text', () => {
     hasHC: true,
     healthDetail: { state: 'exited', status: 'Exited (1)' },
   });
-  assert.equal(v.title, 'Exited (1)');
-  assert.match(v.aria, /needs attention: Exited \(1\)/, 'and is not sight-only');
+  assert.equal(v.title, 'Container stopped · Exited (1)');
+  assert.match(v.aria, /needs attention: Container stopped · Exited \(1\)/, 'and is not sight-only');
 });
 
 test('a healthy badge carries no hover text', () => {

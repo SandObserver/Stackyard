@@ -26,7 +26,7 @@ import {
   swapContent,
 } from '/js/admin-shared.js?v=38ed2b51';
 import { createListbox } from '/js/listbox.js?v=ae7b9a38';
-import { MAX_LABELS } from '/js/badge-logic.js?v=e3c32915';
+import { MAX_LABELS } from '/js/badge-logic.js?v=5c72bd4c';
 import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=44fdebde';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
