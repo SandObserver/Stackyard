@@ -28,12 +28,12 @@ import {
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=b6e6c040';
+} from '/js/utils.js?v=14b18b8c';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=c39b3f63';
+import { initSpotlight } from '/js/spotlight.js?v=97143da4';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
-import { initI18n, t, currentLang } from '/js/i18n.js?v=f754f6fe';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=e22b5e5a';
+import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=85138697';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=389e0ed0';
 import { setupErrorKey } from '/js/admin-error.js?v=b0881957';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
@@ -46,10 +46,10 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=fd480686';
+} from '/js/ui.js?v=6af083c8';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=5c72bd4c';
-import { formatNumber } from '/js/format-number.js?v=52226e9c';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=9f510a4c';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
 import {
   configChanged,
@@ -59,7 +59,7 @@ import {
   restorePage,
   wheelPager,
 } from '/js/dashboard-logic.js?v=6a29cedc';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=1bd5f25e';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=0f4ca726';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';

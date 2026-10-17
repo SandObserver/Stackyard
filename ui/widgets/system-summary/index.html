@@ -81,7 +81,7 @@
 <div id="cap"></div>
 <div id="ss-link" aria-labelledby="sr-sum"></div>
 <script type="module">
-import { contrastInk, cardContrast, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState, cssZoom, linkTo, openUrl } from '/js/widget-toolbox.js?v=43644d20';
+import { contrastInk, cardContrast, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState, cssZoom, linkTo, openUrl, formatList } from '/js/widget-toolbox.js?v=2ef4de23';
 await loadStrings();
 const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;
@@ -454,14 +454,6 @@ function scaleFor(type, vals) {
   return { min: lo - ((hi - lo) * 12) / 88, max: hi, dim: v => v <= mean };
 }
 
-function listOf(items) {
-  try {
-    return new Intl.ListFormat(LANG, { style: 'short', type: 'unit' }).format(items);
-  } catch {
-    return items.join(', ');
-  }
-}
-
 /* TB and GB are symbols, not words: only the figures are localised. */
 function sizeParts(d) {
   const total = reading(d?.totalGb);
@@ -542,7 +534,7 @@ function applyStats(raw) {
   }
 
   const sum = document.getElementById('sr-sum');
-  if (sum) sum.textContent = listOf(spoken);
+  if (sum) sum.textContent = formatList(spoken, 'plain');
 }
 
 /* The server omits the seeded past unless this asks for it. */

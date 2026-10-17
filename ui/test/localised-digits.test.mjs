@@ -392,7 +392,7 @@ test('a list is joined in the interface language', async () => {
         formatList(['1', '2', '3']),
         new Intl.ListFormat('fa', { type: 'conjunction' }).format(['1', '2', '3']),
       );
-      assert.match(formatList(['a', 'b'], 'unit'), /،/);
+      assert.match(formatList(['a', 'b'], 'plain'), /،/);
     },
     'fa',
   );
@@ -400,4 +400,22 @@ test('a list is joined in the interface language', async () => {
     assert.equal(formatList(['a', 'b', 'c']), 'a, b, and c');
   });
   await withLocale('en-US', ({ formatList }) => assert.equal(formatList(['a', 'b']), 'a, b'), 'not a tag');
+});
+
+test('a plain list keeps a separator in every interface language', async () => {
+  await withLocale('en-US', ({ formatList }) => assert.equal(formatList(['a', 'b', 'c'], 'plain'), 'a, b, c'));
+  await withLocale(
+    'en-US',
+    ({ formatList }) => assert.equal(formatList(['甲', '乙', '丙'], 'plain'), '甲、乙、丙'),
+    'zh-Hans',
+  );
+});
+
+test('no widget joins a visible or spoken list with a hard-coded comma', () => {
+  for (const file of [
+    'widgets/github/pullrequests.html',
+    'widgets/connections/connections-map.html',
+    'widgets/system-summary/index.html',
+  ])
+    assert.doesNotMatch(read(file), /\.join\(', '\)|type: 'unit'/, file);
 });

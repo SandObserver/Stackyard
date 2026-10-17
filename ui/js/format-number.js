@@ -60,12 +60,15 @@ export function formatNumber(value, options) {
 }
 
 /** Join items the way the interface language writes a list.
-    @param {string[]} items @param {'conjunction'|'unit'} [type]
+    @param {string[]} items @param {'conjunction'|'plain'} [type]
     @returns {string} */
 export function formatList(items, type = 'conjunction') {
   const list = items.map(String);
   try {
-    return new Intl.ListFormat(language || 'en', { type, style: type === 'unit' ? 'short' : 'long' }).format(list);
+    return new Intl.ListFormat(language || 'en', {
+      type: 'conjunction',
+      style: type === 'plain' ? 'narrow' : 'long',
+    }).format(list);
   } catch {
     return list.join(', ');
   }
