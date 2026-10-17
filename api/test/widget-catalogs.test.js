@@ -96,3 +96,18 @@ for (const widget of widgets.filter(hasCatalog)) {
     }
   });
 }
+
+const LINK_LABEL = /(^|\.)[A-Za-z]*[hH]ref\.label$/;
+const OPTIONAL = /\s*[(（][^)）]*[)）]$/;
+
+test('every link field in a language has the same label', () => {
+  for (const lang of LANGUAGES) {
+    const labels = new Set();
+    for (const w of widgets.filter(hasCatalog)) {
+      for (const [key, value] of Object.entries(readCatalog(w, lang))) {
+        if (LINK_LABEL.test(key)) labels.add(value.replace(OPTIONAL, ''));
+      }
+    }
+    assert.equal(labels.size, 1, `${lang}: ${[...labels].join(' | ')}`);
+  }
+});
