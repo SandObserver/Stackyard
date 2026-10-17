@@ -98,6 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Large Books spines show more of each title.
 
+- Stackyard icon no longer shows blank on the Unraid Docker tab and Dashboard.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
