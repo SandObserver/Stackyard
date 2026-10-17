@@ -3,7 +3,12 @@
 
 const { scrubConfigSecrets, preserveConfigSecrets, secretSpec } = require('./widget-secrets');
 const { scrubItemBadgeSecrets, preserveItemBadgeSecrets, toRows } = require('./badge-headers');
-const { badgeRequestMatchesSaved, widgetConfigMatchesSaved, rewriteChanged } = require('./secret-scope');
+const {
+  badgeRequestMatchesSaved,
+  widgetConfigMatchesSaved,
+  rewriteChanged,
+  widgetTlsChanged,
+} = require('./secret-scope');
 const { getRegistry } = require('./widgets');
 
 function scrubAllSecrets(cfg) {
@@ -38,6 +43,9 @@ function widgetHoldsSecret(config, entry) {
   return false;
 }
 
+const mayHoldSecret = (config, entry) =>
+  entry ? widgetHoldsSecret(config, entry) : !!config && typeof config === 'object' && Object.keys(config).length > 0;
+
 /** Refill the secrets a save arrived without, but only for the items whose
     request is still the one the secret was stored for. Matching by item id
     alone sends a stored credential to a destination the incoming config names.
@@ -58,7 +66,7 @@ function preserveAllSecrets(newCfg, oldCfg) {
       if (!prev) continue;
       const holds =
         prev.type === 'widget'
-          ? widgetHoldsSecret(prev.widgetConfig, reg[prev.widgetType])
+          ? mayHoldSecret(prev.widgetConfig, reg[prev.widgetType])
           : blockHoldsSecret(prev.badge) || blockHoldsSecret(prev.monitoring?.activity);
       if (holds) note(item);
     }
@@ -70,13 +78,19 @@ function preserveAllSecrets(newCfg, oldCfg) {
     const reg = getRegistry();
     const scopedForWidgets = { ...newCfg, items: [] };
     const keepWidget = new Map();
+    const tlsChanged = widgetTlsChanged(newCfg.settings?.server, oldCfg?.settings?.server);
     for (const item of newCfg.items) {
       if (!item || item.type !== 'widget') continue;
       const prev = prevOf(item);
+      if (!prev) continue;
       const entry = reg[item.widgetType];
-      const ok = !prev || !entry || widgetConfigMatchesSaved(item.widgetConfig || {}, prev.widgetConfig || {}, entry);
+      const ok =
+        prev.type === 'widget' &&
+        prev.widgetType === item.widgetType &&
+        !tlsChanged &&
+        (!entry || widgetConfigMatchesSaved(item.widgetConfig || {}, prev.widgetConfig || {}, entry));
       keepWidget.set(item, ok);
-      if (!ok && widgetHoldsSecret(prev.widgetConfig, entry)) note(item);
+      if (!ok && mayHoldSecret(prev.widgetConfig, reg[prev.widgetType])) note(item);
     }
     /* preserveConfigSecrets matches oldCfg.items by id. Hide an item from it to
        stop its secret being refilled. */

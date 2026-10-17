@@ -153,7 +153,9 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
     widgetType: body.widgetType,
     widgetConfig: body.widgetConfig || {},
   };
-  const saved = (loadConfig().items || []).find(i => i.id === req.params.id && i.type === 'widget');
+  const saved = (loadConfig().items || []).find(
+    i => i.id === req.params.id && i.type === 'widget' && i.widgetType === body.widgetType,
+  );
   /* Only restore a blanked secret when the rest of the posted config matches
      what is saved. Otherwise the request picks the destination while the server
      supplies the credential. */

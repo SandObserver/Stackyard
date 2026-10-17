@@ -190,11 +190,12 @@ on('POST', '/api/config', async (req, res) => {
       server.allowedHosts = list;
     }
     data.settings.server = server;
-    /* A stored credential is only refilled for the request it was stored for. */
+    /* Migrate first. A migration that renames a widget type after the refill
+       stores secrets the new manifest does not scrub. */
+    migrate(data);
     const { withheld } = preserveAllSecrets(data, existing);
     if (redirected && existing.settings?.background?.apiKey && !data.settings?.background?.apiKey)
       withheld.push({ id: 'background', label: 'Unsplash' });
-    migrate(data);
     ensureSystemItems(data);
     saveConfig(data);
     /* Only now: until the config points at it, the file being replaced is still

@@ -123,9 +123,86 @@ test('turning off certificate checking on an app withholds its stored credential
   );
 });
 
+async function post(cfg) {
+  const res = await fetch(`${base}/api/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: base },
+    body: JSON.stringify(cfg),
+  });
+  assert.equal(res.status, 200);
+  return res.json();
+}
+
+const MAP = { hostIp: '10.0.0.5', portMap: { 8989: { host: 'sonarr', port: '8989' } } };
+
+for (const [name, serverSettings] of [
+  ['removing', { hostIp: '10.0.0.5' }],
+  ['emptying', { hostIp: '10.0.0.5', portMap: {} }],
+]) {
+  test(`${name} the port map withholds every stored credential`, async () => {
+    const cfg = loadConfig();
+    saveConfig({ ...cfg, settings: { ...cfg.settings, server: MAP } });
+    const sent = await fetch(`${base}/api/config`).then(r => r.json());
+    sent.settings.server = serverSettings;
+    const body = await post(sent);
+    assert.deepEqual(body.withheld.map(w => w.id).sort(), ['app1', 'background', 'w1']);
+    assert.ok(!JSON.stringify(loadConfig()).includes(SECRET));
+  });
+}
+
+test('turning on certificate skipping for widgets withholds stored widget credentials', async () => {
+  const body = await saveServer({ skipTlsVerify: true });
+  assert.deepEqual(
+    body.withheld.map(w => w.id),
+    ['w1'],
+  );
+  assert.equal(loadConfig().items.find(i => i.id === 'w1').widgetConfig.absKey, undefined);
+});
+
+test('a widget sent under a type a migration renames does not get its secret back', async () => {
+  const sent = await fetch(`${base}/api/config`).then(r => r.json());
+  delete sent._schemaVersion;
+  const w1 = sent.items.find(i => i.id === 'w1');
+  w1.widgetType = 'stats';
+  w1.widgetConfig = {};
+  const body = await post(sent);
+  assert.ok(!JSON.stringify(body).includes(SECRET));
+  assert.ok(!JSON.stringify(await fetch(`${base}/api/config`).then(r => r.text())).includes(SECRET));
+  assert.ok(body.withheld.some(w => w.id === 'w1'));
+});
+
+test('an old backup of the same widget keeps its secret through the migration', async () => {
+  const cfg = loadConfig();
+  cfg.items.push({
+    id: 'y1',
+    type: 'widget',
+    widgetType: 'system-summary',
+    widgetConfig: { statProvider: 'glances', glancesUrl: 'http://g.test', glancesPass: SECRET },
+  });
+  saveConfig(cfg);
+  const sent = await fetch(`${base}/api/config`).then(r => r.json());
+  delete sent._schemaVersion;
+  const y1 = sent.items.find(i => i.id === 'y1');
+  y1.widgetType = 'stats';
+  y1.widgetConfig = { statProvider: 'glances', glancesUrl: 'http://g.test', widgetSubType: 'system-summary' };
+  const body = await post(sent);
+  assert.ok(!body.withheld?.some(w => w.id === 'y1'));
+  assert.equal(loadConfig().items.find(i => i.id === 'y1').widgetConfig.glancesPass, SECRET);
+});
+
+test('a port map change names a widget whose config is withheld', async () => {
+  const cfg = loadConfig();
+  cfg.items.push({ id: 'u1', type: 'widget', widgetType: 'no-such-widget', widgetConfig: { url: 'http://u.test' } });
+  saveConfig(cfg);
+  const body = await saveServer({ hostIp: '10.0.0.5', portMap: { 8989: { host: 'other', port: '8989' } } });
+  assert.ok(body.withheld.some(w => w.id === 'u1'));
+});
+
 test('rewriteChanged', () => {
   const m = { 80: { host: 'a', port: '80' } };
   assert.equal(rewriteChanged({ hostIp: 'x' }, {}), false);
+  assert.equal(rewriteChanged({ hostIp: 'x' }, { hostIp: 'x', portMap: m }), true);
+  assert.equal(rewriteChanged({ hostIp: 'x', portMap: {} }, { hostIp: 'x', portMap: m }), true);
   assert.equal(rewriteChanged({ hostIp: 'x', portMap: m }, { hostIp: 'x', portMap: m }), false);
   assert.equal(rewriteChanged({ hostIp: 'x', portMap: m }, { hostIp: 'x' }), true);
   assert.equal(rewriteChanged({ hostIp: 'y', portMap: m }, { hostIp: 'x', portMap: m }), true);
