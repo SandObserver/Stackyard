@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Name a widget without a manifest for re-entry when a port map change clears
+  its settings.
+
+### Security
+
+- Keep a stored widget secret out of the browser when a save sends the widget
+  under a legacy type.
+
+- Withhold stored secrets when a widget's type changes, the port map is removed,
+  or certificate checking for widgets is turned on or off.
+
 ## [1.18.0] - 2026-10-17
 
 ### Added
