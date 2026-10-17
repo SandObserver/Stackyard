@@ -17,9 +17,14 @@ export function browserLink(raw) {
     return '';
   }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
-  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  const host = u.hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '');
   if (host === 'localhost' || host.endsWith('.localhost') || host === 'host.docker.internal') return '';
-  if (host === '::1' || host === '0.0.0.0' || /^127\./.test(host)) return '';
+  if (host === '::1' || host === '::' || host === '0.0.0.0' || /^127\./.test(host)) return '';
+  const mapped = /^::ffff:([0-9a-f]{1,4}):[0-9a-f]{1,4}$/.exec(host);
+  if (mapped && [0, 127].includes(parseInt(mapped[1], 16) >> 8)) return '';
   if (!host.includes('.') && !host.includes(':')) return '';
   u.username = '';
   u.password = '';
