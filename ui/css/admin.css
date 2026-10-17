@@ -241,11 +241,8 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
 .row-link:hover{background:var(--ov-soft)}
 .grp:has(> .fh-hl.on) .row-link:hover{background:transparent}
-/* The label holds its line and the value gives way, which is the order a
-   settings row reads in. Without this the label wrapped and the value stayed
-   whole, so a long label made the row two lines tall. */
-.rl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--tx);font-weight:400}
-.rv{flex:2;min-width:0;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--dm);text-align:end;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl{flex:0 1 auto;min-width:0;margin-inline-end:auto;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--tx);font-weight:400}
+.rv{flex:1 1 0;min-width:0;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--dm);text-align:end;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rv.is-ph{color:var(--dm)}
 .ie-row.editing .rv,.ie-row.editing .pe{display:none}
 .ie-row .rv{cursor:pointer}
@@ -399,7 +396,6 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 
 /* ── Textarea row (Add to URL / Add to Header) ── */
 .kv-hdr{padding-bottom:4px}
-.kv-hdr .rl{white-space:normal}
 .kv-rows{padding:0 16px 8px}
 .kv-row{display:flex;align-items:center;gap:8px;padding:5px 0}
 .kv-row .kv-k{flex:1;min-width:0}
