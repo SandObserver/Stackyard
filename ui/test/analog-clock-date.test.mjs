@@ -57,3 +57,12 @@ test('the dial date uses the same weight as the digital date', () => {
   const weight = css => css.match(/font-weight: (\d+)/)[1];
   assert.equal(weight(src.match(/\.face text \{[^}]*\}/)[0]), weight(digital.match(/\.date-line \{[^}]*\}/)[0]));
 });
+
+test('the date starts at 11px or more at design size', () => {
+  assert.match(src, /DATE_MIN_PX=11\b/);
+  assert.match(src, /const size=Math\.max\(_vb\*DATE_SIZE, DATE_MIN_PX\*_vb\/_faceSz\)/);
+});
+
+test('the dial date leaves out the year', () => {
+  assert.match(src, /_dateShort = clockDateParts\(_lang, 'short', false\);/);
+});

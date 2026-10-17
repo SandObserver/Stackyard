@@ -13,9 +13,9 @@ function format(lang, opts) {
 }
 
 /** The whole date, and its weekday and day-month parts for a two-line layout.
-    @param {string} lang @param {'long'|'short'} width
+    @param {string} lang @param {'long'|'short'} width @param {boolean} [withYear]
     @returns {(date: Date) => { full: string, weekday: string, date: string }} */
-export function clockDateParts(lang, width) {
+export function clockDateParts(lang, width, withYear = true) {
   try {
     lang = Intl.getCanonicalLocales(lang)[0] || 'en';
   } catch {
@@ -34,9 +34,12 @@ export function clockDateParts(lang, width) {
   const digits = new Intl.NumberFormat(lang, { useGrouping: false });
   return date => {
     const part = Object.fromEntries(names.formatToParts(date).map(p => [p.type, p.value]));
-    const solar = Number.parseInt(year.formatToParts(date).find(p => p.type === 'year')?.value ?? '', 10);
-    const dayMonthYear = `${part.day} ${part.month} ${digits.format(solar + SHAHANSHAHI_OFFSET)}`;
-    return { full: `${part.weekday} ${dayMonthYear}`, weekday: part.weekday, date: dayMonthYear };
+    let dayMonth = `${part.day} ${part.month}`;
+    if (withYear) {
+      const solar = Number.parseInt(year.formatToParts(date).find(p => p.type === 'year')?.value ?? '', 10);
+      dayMonth += ` ${digits.format(solar + SHAHANSHAHI_OFFSET)}`;
+    }
+    return { full: `${part.weekday} ${dayMonth}`, weekday: part.weekday, date: dayMonth };
   };
 }
 

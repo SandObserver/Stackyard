@@ -28,6 +28,7 @@
   "ui.snowShowers": "Chubascos de nieve",
   "ui.thunderstorm": "Tormenta",
   "ui.summary": "{place}: {condition}, {temp}",
+  "ui.updated": "{summary}. Actualizado {time}",
   "ui.currentLocation": "Ubicación actual",
   "ui.feelsLikeTemp": "{temp} (sensación térmica)"
 }

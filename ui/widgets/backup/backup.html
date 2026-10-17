@@ -58,11 +58,12 @@
     flex-shrink: 0; margin-bottom: 2px;
   }
   .card-back-name {
-    font-size: 11px; font-weight: 700; line-height: 1.18; word-break: break-word;
+    font-size: 11px; font-weight: 700; line-height: 1.18;
     flex-shrink: 0;
     display: -webkit-box; -webkit-line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
   }
+  .card-back-name.cut, .card-front-name.cut { display: block; white-space: nowrap; text-overflow: ellipsis; }
   .card-back.running { animation: pulse-bg 2s ease-in-out infinite; }
   @keyframes pulse-bg { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.15)} }
 
@@ -102,7 +103,7 @@
   }
   .card-front-name {
     font-size: 11px; font-weight: 700; color: #1c1c1e;
-    line-height: 1.18; word-break: break-word;
+    line-height: 1.18;
     display: -webkit-box; -webkit-line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
   }
@@ -582,6 +583,19 @@ function apply(jobs) {
   });
 }
 
+function fitName(el, text) {
+  el.textContent = text;
+  el.classList.remove('cut');
+  el.removeAttribute('dir');
+  const base = _isMobile ? 15 : 11;
+  for (let px = base; px >= 11; px--) {
+    el.style.fontSize = px + 'px';
+    if (el.scrollWidth <= el.clientWidth) return;
+  }
+  el.classList.add('cut');
+  el.dir = 'auto';
+}
+
 function applyCard(idx, job) {
   const back  = document.getElementById(`back-${idx}`);
   const front = document.getElementById(`front-${idx}`);
@@ -618,8 +632,8 @@ function applyCard(idx, job) {
     drawPh(c.back, c.haiku, false, c.seed);
   }
 
-  if(bname) bname.textContent = job.name||'—';
-  if(fname) fname.textContent = job.name||'—';
+  if(bname) fitName(bname, job.name||'—');
+  if(fname) fitName(fname, job.name||'—');
 
   const running = job.status==='running';
   const last = running ? '' : relTime(job.lastFinished);
@@ -656,7 +670,7 @@ function applyCardError(idx, line) {
   /* Set both. An unset colour inherits black onto a dark card. */
   if(back){ back.style.background='rgba(255,255,255,0.06)'; back.style.color='#fff'; back.classList.remove('running'); }
   if(front){ front.setAttribute('role','img'); front.setAttribute('aria-label', line); front.style.removeProperty('--status-color'); }
-  if(bname) bname.textContent = line;
+  if(bname) fitName(bname, line);
   if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
   if(fname) fname.textContent = '\u2014';
 }
