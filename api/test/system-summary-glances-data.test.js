@@ -6,7 +6,7 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
-const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
+const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 const PLUGINS = {
   cpu: { total: 12.5, iowait: 3.5, idle: 84 },
@@ -31,7 +31,7 @@ function ctxFor(config, { serves = [4], endpoint = 'system' } = {}) {
     endpoint,
     config,
     normalizeBase,
-    browserLink,
+    serviceBase,
     serviceLink,
     fetchJSON: async (url, opts) => {
       urls.push(url);
@@ -194,7 +194,7 @@ test('the local source is still the default when no provider is saved', async ()
     settings: {},
     metrics,
     normalizeBase,
-    browserLink,
+    serviceBase,
     serviceLink,
     ...errorParts(),
   };

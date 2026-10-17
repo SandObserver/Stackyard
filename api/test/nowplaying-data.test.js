@@ -4,14 +4,14 @@ const path = require('node:path');
 const { normalizeBase } = require('../src/widget-data');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'nowplaying', 'data.js'));
-const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
+const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 /* Minimal stand-in for the ctx widget-data.js builds. */
 function ctxFor(config, payload) {
   return {
     config,
     normalizeBase,
-    browserLink,
+    serviceBase,
     serviceLink,
     fetchJSON: async () => ({ status: 200, data: payload }),
   };
@@ -188,4 +188,23 @@ test('a Link URL set by the reader becomes the base of the item link', async () 
     ),
   );
   assert.equal(r.sessions[0].link, 'https://watch.example.com/web/#/details?id=i9&serverId=s1');
+});
+
+test('a Link URL that points at a page opens that page for every item', async () => {
+  const href = 'http://10.0.0.5:8096/web/index.html';
+  const r = await dataFn(
+    ctxFor({ provider: 'jellyfin', jellyfinUrl: 'http://jellyfin:8096', jellyfinKey: 'k', href }, [
+      { ServerId: 's1', NowPlayingItem: { Id: 'i9', Name: 'Arrival', Type: 'Movie' } },
+    ]),
+  );
+  assert.equal(r.sessions[0].link, href);
+});
+
+test('a typed Link URL on a name without a dot still gets Plex item links', async () => {
+  const ctx = ctxFor(
+    { provider: 'plex', plexUrl: 'http://plex:32400', plexToken: 't', href: 'http://nas:32400' },
+    { MediaContainer: { machineIdentifier: 'm1', Metadata: [{ type: 'movie', title: 'Arrival', ratingKey: '7' }] } },
+  );
+  const r = await dataFn(ctx);
+  assert.match(r.sessions[0].link, /^http:\/\/nas:32400\/web\/index\.html#!\/server\/m1\/details\?key=/);
 });
