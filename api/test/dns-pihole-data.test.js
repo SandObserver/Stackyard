@@ -5,7 +5,7 @@ const path = require('node:path');
 const { normalizeBase } = require(path.join(__dirname, '..', 'src', 'widget-data.js'));
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'dns', 'data.js'));
-const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
+const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 const KIND = { INVALID: 'invalid', AUTH: 'auth' };
 const CONFIG = { provider: 'pihole', dnsUrl: 'http://pi.local', dnsPiholePassword: 'pw' };
@@ -15,7 +15,7 @@ function makeCtx(fetchJSON) {
     config: CONFIG,
     fetchJSON,
     normalizeBase,
-    browserLink,
+    serviceBase,
     serviceLink,
     KIND,
     fail: (message, opts) => {

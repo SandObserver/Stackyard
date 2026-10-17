@@ -6,7 +6,7 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
-const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
+const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 const BOOTED = '2026-08-15T00:00:00.000Z';
 
@@ -37,7 +37,7 @@ function ctxFor(config, reply = { status: 200, data: { data: REPLY } }, endpoint
     endpoint,
     config: { statProvider: 'unraid', unraidUrl: 'tower.local', unraidApiKey: 'KEY', ...config },
     normalizeBase,
-    browserLink,
+    serviceBase,
     serviceLink,
     fetchJSON: async (url, opts) => {
       sent.push({ url, opts, query: JSON.parse(opts.body || '{}').query || '' });

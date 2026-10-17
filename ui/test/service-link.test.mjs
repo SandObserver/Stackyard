@@ -39,5 +39,28 @@ test('a Link URL is the base for item pages and is kept as typed without one', a
   assert.equal(serviceLink('', 'http://10.0.0.5:32400', '/web/x'), 'http://10.0.0.5:32400/web/x');
   assert.equal(serviceLink('', 'http://plex:32400', '/web/x'), '');
   assert.equal(serviceLink('https://example.com/page?a=1', 'http://plex:32400'), 'https://example.com/page?a=1');
-  assert.equal(serviceLink('http://nas:32400', 'http://plex:32400', '/web/x'), 'http://nas:32400');
+  assert.equal(serviceLink('http://nas:32400', 'http://plex:32400', '/web/x'), 'http://nas:32400/web/x');
+});
+
+test('a Link URL that points at a page opens that page, never a joined path', async () => {
+  const { serviceLink } = await import('../js/service-link.js');
+  for (const typed of [
+    'http://10.0.0.5:32400/web/index.html#!/',
+    'https://app.plex.tv/desktop',
+    'http://10.0.0.5:8096/web/index.html',
+    'http://10.0.0.5:8200/ngax/index.html',
+    'https://example.com/plex/',
+    'http://10.0.0.5:8200/?tab=logs',
+  ])
+    assert.equal(serviceLink(typed, 'http://plex:32400', '/web/index.html#!/server/x'), typed, typed);
+});
+
+test('the service base is a typed bare address, or else the reachable server address', async () => {
+  const { serviceBase } = await import('../js/service-link.js');
+  assert.equal(serviceBase('http://nas:8080/', 'http://plex:32400'), 'http://nas:8080');
+  assert.equal(serviceBase('nas.local:8080', ''), 'http://nas.local:8080');
+  assert.equal(serviceBase('', 'http://10.0.0.5:32400'), 'http://10.0.0.5:32400');
+  assert.equal(serviceBase('', 'http://plex:32400'), '');
+  for (const typed of ['https://app.plex.tv/desktop', 'http://u:p@10.0.0.5', 'javascript:alert(1)', 'http://['])
+    assert.equal(serviceBase(typed, 'http://10.0.0.5:32400'), '', typed);
 });

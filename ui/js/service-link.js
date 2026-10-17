@@ -28,13 +28,31 @@ export function browserLink(raw) {
   return u.href.replace(/\/+$/, '');
 }
 
-/** Where a widget opens. `own` is the Link URL the reader set, taken as the
-    service's address in the browser; `url` is the address the server reads.
-    With a `path`, the item's page under that address, else `own` as typed.
+/** The address item pages go under, or '' when there is none. A Link URL the
+    reader typed is trusted to be reachable, but only a bare address takes item
+    paths: one with its own path, query or fragment points at a page.
+    @param {unknown} own @param {unknown} url @returns {string} */
+export function serviceBase(own, url) {
+  const typed = typeof own === 'string' ? own.trim() : '';
+  if (!typed) return browserLink(url);
+  let u;
+  try {
+    u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(typed) ? typed : 'http://' + typed);
+  } catch {
+    return '';
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
+  if ((u.pathname !== '/' && u.pathname !== '') || u.search || u.hash || u.username || u.password) return '';
+  return u.origin;
+}
+
+/** Where a widget opens. `own` is the Link URL the reader set; `url` is the
+    address the server reads. With a `path`, the item's page under the service
+    base, else `own` as typed.
     @param {unknown} own @param {unknown} url @param {string} [path] @returns {string} */
 export function serviceLink(own, url, path = '') {
   const typed = typeof own === 'string' ? own.trim() : '';
-  const web = browserLink(typed || url);
-  if (!path) return typed || web;
-  return web ? web + path : typed;
+  if (!path) return typed || browserLink(url);
+  const base = serviceBase(typed, url);
+  return base ? base + path : typed;
 }

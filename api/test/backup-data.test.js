@@ -5,7 +5,7 @@ const path = require('node:path');
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'backup', 'data.js'));
 const { WidgetError, KIND } = require('../src/api-error');
 const log = require('../src/log');
-const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
+const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 /* Duplicati mints a fresh token per instance, so every fixture answers the login
    route as well as the data route it is asked about. */
@@ -21,7 +21,7 @@ function ctxFor(config, endpoint, routes, row = null) {
         throw new WidgetError(message, opts);
       },
       KIND,
-      browserLink,
+      serviceBase,
       serviceLink,
       log,
       async fetchJSON(url, opts) {

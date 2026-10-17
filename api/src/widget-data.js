@@ -16,7 +16,7 @@ const log = require('./log');
 const { fail, KIND, WidgetError } = require('./api-error');
 const { rateLimit } = require('./auth');
 const LIMITS = require('./poll-limits');
-const { browserLink, serviceLink } = require('../../ui/js/service-link.js');
+const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 function normalizeBase(raw) {
   if (!raw) return '';
@@ -51,7 +51,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     metrics: IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
     demo: IS_DEMO ? demoData.helpers : null,
     normalizeBase,
-    browserLink,
+    serviceBase,
     serviceLink,
     fail: (message, opts) => {
       throw new WidgetError(message, opts);

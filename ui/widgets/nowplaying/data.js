@@ -37,7 +37,7 @@ async function plex(ctx) {
   if (r.status >= 400) ctx.fail('Plex HTTP ' + r.status);
   let list = (r.data && r.data.MediaContainer && r.data.MediaContainer.Metadata) || [];
   if (!Array.isArray(list)) list = [list];
-  const reachable = ctx.browserLink(ctx.config.href || ctx.config.plexUrl);
+  const reachable = ctx.serviceBase(ctx.config.href, ctx.config.plexUrl);
   const machine = reachable && list.length ? await plexMachineId(ctx, base, token).catch(() => '') : '';
   return list.map(m => {
     const type = (m.type || '').toLowerCase();
