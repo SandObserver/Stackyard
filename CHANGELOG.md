@@ -107,6 +107,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show settings labels in full on a phone instead of cutting them off.
 
+### Security
+
+- Update expat to 2.9.0 to fix CVE-2026-77214 and CVE-2026-102633.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
