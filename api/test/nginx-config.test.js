@@ -537,3 +537,10 @@ test('translation catalogs are stored and revalidated, not refetched in full', (
   assert.match(block, /add_header Cache-Control "no-cache";/);
   assert.doesNotMatch(block, /no-store/);
 });
+
+test('the API location keeps any body the API accepts in memory', () => {
+  const block = /location\s+\/api\/\s*\{([\s\S]*?)\n {4}\}/.exec(dashboard);
+  assert.ok(block, 'no /api/ location');
+  const buffer = nginxSize(block[1], 'client_body_buffer_size');
+  assert.ok(buffer >= BODY_LIMIT, `nginx buffers ${buffer} in memory but the API accepts bodies up to ${BODY_LIMIT}`);
+});
