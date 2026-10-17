@@ -57,13 +57,25 @@ test('config and icon storage are both mapped, or an update wipes them', () => {
 
 test('every referenced asset exists in the repo', () => {
   const assets = {
-    [tag(template, 'Icon')]: 'templates/icon.svg',
+    [tag(template, 'Icon')]: 'templates/icon.png',
     [tag(template, 'Screenshot')]: 'docs/screenshot.png',
   };
   for (const [url, file] of Object.entries(assets)) {
     assert.equal(url, `${RAW}/${file}`, `${file} must be referenced by its raw URL`);
     assert.ok(fs.existsSync(path.join(ROOT, file)), `${file} is referenced but missing`);
   }
+});
+
+/* Unraid saves the template icon as <Name>-icon.png whatever its format. An SVG
+   saved under that name draws blank on the Docker tab and the Dashboard. */
+test('the template icon is a PNG and matches the 512 px favicon', () => {
+  const icon = fs.readFileSync(path.join(ROOT, 'templates', 'icon.png'));
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  assert.deepEqual(icon.subarray(0, 8), signature, 'templates/icon.png is not a PNG');
+  assert.ok(
+    icon.equals(fs.readFileSync(path.join(ROOT, 'ui', 'icons', 'favicon-512.png'))),
+    'templates/icon.png differs from ui/icons/favicon-512.png',
+  );
 });
 
 test('the legacy light and dark icons ship alongside the tile icon', () => {
