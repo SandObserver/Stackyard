@@ -14,7 +14,7 @@
   <Category>Tools:Utilities</Category>
   <WebUI>http://[IP]:[PORT:80]</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/SandObserver/Stackyard/main/templates/stackyard.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/SandObserver/Stackyard/main/templates/icon.svg</Icon>
+  <Icon>https://raw.githubusercontent.com/SandObserver/Stackyard/main/templates/icon.png</Icon>
   <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot.png</Screenshot>
   <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot-general.png</Screenshot>
   <Screenshot>https://raw.githubusercontent.com/SandObserver/Stackyard/main/docs/screenshot-appearance.png</Screenshot>
