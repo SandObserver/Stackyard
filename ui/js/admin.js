@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=a896a105';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8aee98e6';
-import { recoveryShown } from '/js/config-recovery.js?v=e22b5e5a';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=547999d2';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=dd5f148f';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=71f8a57a';
+import { recoveryShown } from '/js/config-recovery.js?v=85138697';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=5bdad01b';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   afterImport,
@@ -21,7 +21,7 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=a310b96a';
+} from '/js/admin-settings.js?v=d69636fc';
 import {
   apiGet,
   apiPost,
@@ -35,15 +35,15 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=38ed2b51';
+} from '/js/admin-shared.js?v=36dc5cc1';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=0879c8a7';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=8a6be17f';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { formatNumber } from '/js/format-number.js?v=52226e9c';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=ae7b9a38';
+import { createListbox } from '/js/listbox.js?v=23e87940';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=f754f6fe';
+import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=9c7b5111';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=628341d4';
 import {
@@ -80,8 +80,8 @@ import {
   storeGet,
   storeSet,
   tgt,
-} from '/js/utils.js?v=b6e6c040';
-import { applyBackground, resolveBackground } from '/js/background.js?v=1bd5f25e';
+} from '/js/utils.js?v=14b18b8c';
+import { applyBackground, resolveBackground } from '/js/background.js?v=0f4ca726';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
 ensureSprite();

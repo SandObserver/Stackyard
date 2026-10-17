@@ -8,9 +8,9 @@
 
 import { nextActiveIndex } from '/js/admin-logic.js?v=fc7f0836';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { formatList } from '/js/format-number.js?v=52226e9c';
+import { formatList } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=b6e6c040';
+import { qa } from '/js/utils.js?v=14b18b8c';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');
@@ -118,7 +118,7 @@ export function createListbox(
     else
       text.textContent = formatList(
         sel.map(o => o.label),
-        'unit',
+        'plain',
       );
     text.classList.toggle('is-ph', !sel.length && !summary);
     const lang = !summary && sel.length === 1 ? sel[0].lang : '';

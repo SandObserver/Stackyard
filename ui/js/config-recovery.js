@@ -1,6 +1,6 @@
 // @ts-check
 import { esc, html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=f754f6fe';
+import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=ed7c5565';
 import { sanitizeI18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
 import { fillNames, pickLanguage, screenFor } from '/js/config-recovery-logic.js?v=e6e24763';
 

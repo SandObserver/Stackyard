@@ -182,7 +182,7 @@ window.__MAP=(function(D){
 })(window.__DOTS);
 </script>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo } from '/js/widget-toolbox.js?v=43644d20';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo } from '/js/widget-toolbox.js?v=2ef4de23';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
 (function(){
@@ -230,7 +230,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
         if(!cell)continue;
         taken.add(M.key(cell));
         points.push({cell,col,role:s.role,info:{role:s.role,serviceName:s.name,color:rgbCss(col),city:svc.city||'',country:svc.country||''}});
-        s.chip.spoken=[svc.city,svc.country].filter(Boolean).join(', ');
+        s.chip.spoken=formatList([svc.city,svc.country].filter(Boolean),'plain');
       }
     }
     for(const s of services){
@@ -244,7 +244,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       const top=shares.slice().sort((x,y)=>y.users-x.users);
       const said=top.slice(0,10).map(a=>fmtName(a.cc)+' '+formatNumber(a.users));
       if(top.length>10)said.push(wt('ui.more','+{n} more').replace('{n}',formatNumber(top.length-10)));
-      s.chip.spoken=said.join(', ');
+      s.chip.spoken=formatList(said,'plain');
     }
     srEl.textContent=legend.map(l=>l.spoken?l.name+': '+l.spoken:l.name).join('. ');
     renderLegend();
@@ -278,7 +278,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       it.append(dot,name);
       if(clickable){
         it.type='button';
-        it.setAttribute('aria-label',formatList([l.name,...(l.error?[wt('ui.unavailable','Unavailable')]:[]),wt('ui.openAdmin','open admin')],'unit'));
+        it.setAttribute('aria-label',formatList([l.name,...(l.error?[wt('ui.unavailable','Unavailable')]:[]),wt('ui.openAdmin','open admin')],'plain'));
         it.addEventListener('click',()=>openUrl(l.adminUrl));
         it.addEventListener('focus',()=>setEmphasis(l.role));
         it.addEventListener('blur',()=>setEmphasis(null));
@@ -297,7 +297,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       more.className='k more';
       const text=document.createElement('bdi');
       text.textContent=wt('ui.more','+{n} more').replace('{n}',formatNumber(legend.length-2));
-      more.title=legend.slice(2).map(l=>l.name).join(', ');
+      more.title=formatList(legend.slice(2).map(l=>l.name),'plain');
       more.append(text);
       keyEl.append(more);
     }
