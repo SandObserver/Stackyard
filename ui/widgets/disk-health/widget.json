@@ -37,6 +37,17 @@
       }
     },
     {
+      "key": "scrutinyToken",
+      "type": "secret",
+      "label": "scrutinyToken.label",
+      "hint": "scrutinyToken.hint",
+      "optional": true,
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "scrutiny"
+      }
+    },
+    {
       "key": "scrutinyHref",
       "type": "text",
       "label": "scrutinyHref.label",

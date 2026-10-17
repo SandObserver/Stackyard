@@ -160,3 +160,17 @@ test('with no link set the widget opens the Scrutiny address the browser can rea
     'https://disks.example.com',
   );
 });
+
+for (const endpoint of ['', 'devices']) {
+  test(`${endpoint || 'the bay list'} sends the Scrutiny token as a Bearer header only when one is set`, async () => {
+    const seen = [];
+    const fetchJSON = async (url, opts) => {
+      seen.push(opts.headers);
+      return { status: 200, data: { data: { summary: FORK } } };
+    };
+    const base = { diskProvider: 'scrutiny', scrutinyUrl: 'http://s.local', bays: [] };
+    await dataFn(makeCtx(endpoint, { ...base, scrutinyToken: 'tok' }, fetchJSON));
+    await dataFn(makeCtx(endpoint, base, fetchJSON));
+    assert.deepEqual(seen, [{ Authorization: 'Bearer tok' }, {}]);
+  });
+}
