@@ -136,9 +136,6 @@ test('the reason a tile is red is translated', () => {
   assert.match(healthReason({ pingStatus: 503 }, zh), /503/, 'the status code must survive');
 });
 
-/* Docker's own text comes from the daemon, so inventing a translation for
-   "Exited (1) 2 hours ago" would be guessing at a string this code never
-   produces. */
 test('a pending count takes the plural form of its language', () => {
   const es = translatorFor('es.json');
   assert.equal(computeBadgeVisual({ health: 0, activity: 1, hasHC: true, translate: es }).aria, '1 pendiente');
@@ -153,9 +150,20 @@ test('a container state without daemon text is named in the reader language', ()
   assert.equal(healthReason({ state: 'mystery' }), 'Container mystery');
 });
 
-test("Docker's own status text is passed through untranslated", () => {
+test("the translated state leads and Docker's own text follows it", () => {
   const fa = translatorFor('fa.json');
-  assert.equal(healthReason({ state: 'exited', status: 'Exited (1) 2 hours ago' }, fa), 'Exited (1) 2 hours ago');
+  assert.equal(
+    healthReason({ state: 'exited', status: 'Exited (1) 2 hours ago' }, fa),
+    `${fa('status.containerExited')} · Exited (1) 2 hours ago`,
+  );
+});
+
+test('a long Docker status is trimmed, never the translated state', () => {
+  const de = translatorFor('de.json');
+  const r = healthReason({ state: 'restarting', status: 'Restarting '.repeat(20) }, de);
+  assert.ok(r.startsWith(`${de('status.containerRestarting')} · Restarting`), r);
+  assert.ok(r.length <= 90, `too long: ${r.length}`);
+  assert.match(r, /…$/);
 });
 
 /* ── the fallback ─────────────────────────────────────────────────────────── */

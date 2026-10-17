@@ -106,11 +106,11 @@ export function healthReason(detail, translate) {
   if (detail.state === 'unknown') {
     parts.push(tr('status.containerNotFound'));
   } else if (detail.state && detail.state !== 'running') {
-    /* Untranslated. The text comes from the daemon. */
     const known = CONTAINER_STATES[detail.state];
-    parts.push(
-      _clip(detail.status || (known ? tr(known) : tr('status.containerState', { state: detail.state })), REASON_MAX),
-    );
+    const state = known ? tr(known) : tr('status.containerState', { state: detail.state });
+    const daemon = String(detail.status ?? '').trim();
+    const room = Math.max(8, REASON_MAX - state.length - 3);
+    parts.push(_clip(daemon ? `${state} · ${_clip(daemon, room)}` : state, REASON_MAX));
   } else if (detail.status && /unhealthy/i.test(detail.status)) {
     parts.push(_clip(detail.status, REASON_MAX));
   }

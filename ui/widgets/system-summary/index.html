@@ -157,9 +157,9 @@ async function boot() {
     document.body.classList.toggle('linked', linkTo(linkEl, target));
   };
   setLink(null);
-  /* The charts take presses for their own detail, so a press there never opens the link. */
+  /* The charts and disk rows take presses for their own detail, so a press there never opens the link. */
   document.body.addEventListener('click', e => {
-    if (target && !e.target.closest('.plot, .disk')) openUrl(target);
+    if (target && pressOpensLink(e.target)) openUrl(target);
   });
 
   poll({ fetch: fetchStats, interval: tickMs,
@@ -276,7 +276,10 @@ function applyInks() {
   }
 }
 
+function pressOpensLink(el) { return !el.closest('.plot, .hold'); }
+
 function holdToShow(target, show) {
+  target.classList.add('hold');
   target.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(true); });
   target.addEventListener('pointerdown', () => show(true));
   target.addEventListener('pointerleave', () => show(false));
