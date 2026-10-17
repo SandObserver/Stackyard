@@ -94,6 +94,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Connections map legend entries have larger tap areas.
 
+- Backup card text no longer runs past the card in Persian.
+
+- Large Books spines show more of each title.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
