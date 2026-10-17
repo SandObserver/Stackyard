@@ -103,6 +103,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stackyard icon no longer shows blank on the Unraid Docker tab and Dashboard.
 
+- Stop logging an nginx warning on every settings save.
+
 ## [1.17.0] - 2026-10-11
 
 ### Added
