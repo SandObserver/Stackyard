@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep every widget, badge and health check working while the DNS server is
   down, instead of stalling behind lookups that never finish.
 
+- Keep app health dots updating while the Docker socket proxy stops answering.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
