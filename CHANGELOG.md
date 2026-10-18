@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Nine short Backup haikus that fit small cards.
+
 ### Fixed
 
 - Name a widget without a manifest for re-entry when a port map change clears
   its settings.
+
+- Backup cards show a whole haiku or none, never part of one.
 
 ### Security
 
