@@ -51,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report no changes when importing an export that matches the current
   configuration.
 
+- Stop an icon upload from overwriting an existing icon when many share its
+  name.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
