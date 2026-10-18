@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Backup cards show a whole haiku or none, never part of one.
 
+- Show an error instead of zero DNS queries, "Nothing playing" or "Not secured"
+  when a service sends an unreadable reply.
+
+- Stop a large non-JSON reply from a service from stalling the dashboard.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
