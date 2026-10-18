@@ -83,3 +83,22 @@ test('the ctx a data function receives carries no secret settings', () => {
   assert.ok(!JSON.stringify(ctx.settings).includes('SIGNING-KEY'));
   assert.ok(!JSON.stringify(ctx.settings).includes('HASHED'));
 });
+
+test('a data function cannot read a reply that is not JSON as data', async () => {
+  const fetchFor = data => async () => ({ status: 200, data });
+  const ctx = dataFnContext({}, '', new URLSearchParams(), fetchFor('{"num_dns_queries": 12'));
+  await assert.rejects(ctx.fetchJSON('http://svc'), { name: 'WidgetError', kind: 'upstream' });
+});
+
+test('raw text, empty bodies, error replies and parsed replies still reach the data function', async () => {
+  const cases = [
+    [{ status: 200, data: 'line one' }, { raw: true }],
+    [{ status: 204, data: '' }, {}],
+    [{ status: 401, data: 'Unauthorized' }, {}],
+    [{ status: 200, data: { ok: true } }, {}],
+  ];
+  for (const [reply, opts] of cases) {
+    const ctx = dataFnContext({}, '', new URLSearchParams(), async () => reply);
+    assert.deepEqual(await ctx.fetchJSON('http://svc', opts), reply);
+  }
+});

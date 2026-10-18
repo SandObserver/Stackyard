@@ -72,7 +72,8 @@ async function jellyfinLike(ctx, provider) {
   const r = await ctx.fetchJSON(`${base}/Sessions`, { headers: authHeaders, timeout: 8000 });
   if (authErr(r)) ctx.fail(name + ' auth failed', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail(name + ' HTTP ' + r.status);
-  const list = Array.isArray(r.data) ? r.data : [];
+  if (!Array.isArray(r.data)) ctx.fail(name + ' sent a reply without a session list');
+  const list = r.data;
   const url = provider === 'emby' ? ctx.config.embyUrl : ctx.config.jellyfinUrl;
   const itemLink = (itemId, serverId) => {
     if (!itemId) return linkFor(ctx, url);
