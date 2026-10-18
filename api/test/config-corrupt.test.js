@@ -117,3 +117,37 @@ test('a second, different corruption is preserved alongside the first', async ()
   const contents = b.map(f => fs.readFileSync(path.join(DIR, f), 'utf8')).sort();
   assert.deepEqual(contents, ['{ broken one', '{ broken two']);
 });
+
+for (const [name, settings] of [
+  ['an array', [{ auth: { enabled: true, passwordHash: 'h', secret: 's' } }]],
+  ['a string', 'x'],
+  ['null', null],
+]) {
+  test(`a settings block that is ${name} is treated as corrupt, not reset`, () => {
+    reset();
+    const raw = JSON.stringify({ items: [], settings });
+    fs.writeFileSync(CFG, raw);
+    const cfg = fresh();
+    cfg.loadConfig();
+    assert.equal(cfg.configDamage()?.reason, 'corrupt');
+    assert.equal(backups().length, 1);
+    assert.throws(() => cfg.saveConfig({ items: [], settings: {} }));
+    assert.equal(fs.readFileSync(CFG, 'utf8'), raw);
+  });
+}
+
+test('item entries that are not objects are skipped and the file is backed up', () => {
+  reset();
+  const raw = JSON.stringify({ items: [{ id: 'a', type: 'app' }, null, 'x', []], settings: {} });
+  fs.writeFileSync(CFG, raw);
+  const cfg = fresh();
+  const loaded = cfg.loadConfig();
+  assert.deepEqual(
+    loaded.items.map(i => i.id),
+    ['a'],
+  );
+  assert.equal(cfg.configDamage(), null);
+  const b = backups();
+  assert.equal(b.length, 1);
+  assert.equal(fs.readFileSync(path.join(DIR, b[0]), 'utf8'), raw);
+});

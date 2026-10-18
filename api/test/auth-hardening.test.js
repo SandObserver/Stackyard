@@ -201,6 +201,23 @@ test('a config write keeps the stored password while protection is on', async ()
   assert.equal(await verifyPassword('correct-horse', auth.passwordHash), true);
 });
 
+for (const [name, settings] of [
+  ['an array', []],
+  ['a string', 'x'],
+]) {
+  test(`a config write with settings as ${name} is refused and keeps the password`, async () => {
+    const cfg = loadConfig();
+    cfg.settings.auth = { enabled: true, passwordHash: await hashPassword('correct-horse'), secret: 'real-secret' };
+    saveConfig(cfg);
+
+    const r = await post('/api/config', { items: [], settings }, { cookie: sessionCookie() });
+    assert.equal(r.status, 400);
+    const auth = loadConfig().settings.auth;
+    assert.equal(auth.enabled, true);
+    assert.equal(await verifyPassword('correct-horse', auth.passwordHash), true);
+  });
+}
+
 test('an ordinary config write is unaffected', async () => {
   const r = await post('/api/config', {
     items: [{ id: 'a1', type: 'app', name: 'App' }],
