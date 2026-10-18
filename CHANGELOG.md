@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show an error when a widget cannot draw the data it received, instead of
   leaving old data on screen.
 
+- Keep healthy Backup cards when another backup server stops answering.
+
+- Answer every widget request before the dashboard's proxy gives up, even when a
+  service stalls on several calls.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
