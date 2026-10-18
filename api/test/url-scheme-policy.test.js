@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const https = require('node:https');
 
+const dns = require('node:dns').promises;
 const { _internals, urlPolicyError, fetchUnchecked, pingUnchecked, ALLOWED_PROTOCOLS } = require('../src/proxy');
 
 const BAD_SCHEMES = [
@@ -66,7 +67,8 @@ test('an empty hostname no longer passes as a Docker service name', async () => 
   assert.equal(g.ip, null);
 });
 
-test('guardSsrf still allows a dotless service name over http', async () => {
+test('guardSsrf still allows a dotless service name over http', async t => {
+  t.mock.method(dns, 'lookup', async () => ({ address: '172.18.0.5', family: 4 }));
   const g = await _internals.guardSsrf('http://qbittorrent:8080/api/v2');
   assert.equal(g.error, null);
 });

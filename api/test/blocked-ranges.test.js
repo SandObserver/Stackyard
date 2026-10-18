@@ -99,6 +99,13 @@ test('the existing IPv6 ranges still work', () => {
   for (const a of ['2001:db8::1', '2606:4700::1111']) assert.ok(!isPrivateAddress(a), `${a} should be allowed`);
 });
 
+test('6to4, local-use NAT64 and site-local IPv6 are blocked', () => {
+  for (const a of ['2002:c0a8:101::1', '2002::', '64:ff9b:1::a00:1', '64:ff9b:1:ffff::1', 'fec0::1', 'feff::1'])
+    assert.ok(isPrivateAddress(a), `${a} should be blocked`);
+  for (const a of ['2003::1', '64:ff9b:2::1', '64:ff9b:1a::1', 'ff::1', 'fe7f::1'])
+    assert.ok(!isPrivateAddress(a), `${a} should be allowed`);
+});
+
 /* ── the new ranges through the IPv4-in-IPv6 wrappers ─────────────────────── */
 
 /* The wrappers decode to IPv4 and then use the same table, so a range added to
