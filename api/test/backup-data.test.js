@@ -261,3 +261,60 @@ test('each slot links to its own job page when the service address works in a br
   );
   assert.equal(out[2].link, '');
 });
+
+test('a stalled Duplicati does not hold back the Kopia cards', async () => {
+  const config = {
+    slots: [
+      { provider: 'duplicati', dupUrl: 'http://stalled-dup:8200', jobId: '1' },
+      { provider: 'kopia', kopiaUrl: 'http://kopia:51515', jobId: 'h@u:/data' },
+    ],
+  };
+  let release;
+  const stalled = new Promise((_, reject) => {
+    release = () => reject(new Error('Timed out'));
+  });
+  let kopiaAsked = false;
+  const { ctx } = ctxFor(config, 'slots', {
+    '/api/v1/auth/login': () => stalled,
+    '/api/v1/sources': () => {
+      kopiaAsked = true;
+      return {
+        status: 200,
+        data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' }, status: 'IDLE' }] },
+      };
+    },
+  });
+  const out = dataFn(ctx);
+  await new Promise(r => setImmediate(r));
+  assert.equal(kopiaAsked, true, 'Kopia is asked while Duplicati still stalls');
+  release();
+  const cards = await out;
+  assert.deepEqual(cards[0], { error: KIND.TIMEOUT });
+  assert.equal(cards[1].name, '/data');
+});
+
+test('a token refresh that fails is not tried again on the next poll', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 });
+  const config = { slots: [{ provider: 'duplicati', dupUrl: 'http://refresh-stall:8200', jobId: '1' }] };
+  let up = true;
+  const timedOut = () => {
+    throw new Error('Timed out');
+  };
+  const { ctx, calls } = ctxFor(config, 'slots', {
+    '/api/v1/auth/login': () => (up ? LOGIN : timedOut()),
+    '/api/v1/auth/refresh': timedOut,
+    '/api/v1/serverstate': { status: 200, data: {} },
+    '/api/v1/backups': { status: 200, data: [{ Backup: { ID: '1', Name: 'Nightly' } }] },
+  });
+  assert.equal((await dataFn(ctx))[0].name, 'Nightly');
+
+  up = false;
+  t.mock.timers.tick(5 * 60 * 1000);
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.TIMEOUT }]);
+  const refreshes = () => calls.filter(c => c.url.endsWith('/auth/refresh')).length;
+  const tried = refreshes();
+  assert.ok(tried > 0);
+
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.TIMEOUT }]);
+  assert.equal(refreshes(), tried, 'the next poll logs in without the old refresh nonce');
+});

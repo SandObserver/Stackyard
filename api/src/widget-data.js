@@ -17,6 +17,7 @@ const { fail, KIND, WidgetError } = require('./api-error');
 const { rateLimit } = require('./auth');
 const LIMITS = require('./poll-limits');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
+const { FETCH_MS, WIDGET_BUDGET_MS } = require('./timeouts');
 
 function normalizeBase(raw) {
   if (!raw) return '';
@@ -47,6 +48,14 @@ const refuseUnreadable =
     return r;
   };
 
+const withinBudget =
+  (fetch, deadline) =>
+  (url, opts = {}) => {
+    const left = deadline - Date.now();
+    if (left <= 0) return Promise.reject(new Error('Timed out'));
+    return fetch(url, { ...opts, timeout: Math.min(opts.timeout || FETCH_MS, left) });
+  };
+
 function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
   const ctx = {
     config: wc /* full widgetConfig, including secrets (server-side only) */,
@@ -58,7 +67,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     params: searchParams,
     /* The caller supplies the fetcher to match the URL's provenance: unchecked
        for saved config, checked for a request-supplied preview config. */
-    fetchJSON: refuseUnreadable(fetch),
+    fetchJSON: refuseUnreadable(withinBudget(fetch, Date.now() + WIDGET_BUDGET_MS)),
     parsePrometheus,
     metrics: IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
     demo: IS_DEMO ? demoData.helpers : null,

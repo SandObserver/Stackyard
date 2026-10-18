@@ -5,4 +5,8 @@ module.exports = {
      dead service delays every tile by this much. Shorter than PING_MS, which
      bounds a single connection test a user is waiting on. */
   BATCH_MS: 2500,
+  /* Every upstream call of one widget-data request shares this. Keep it under
+     proxy_read_timeout for /api/ in nginx/dashboard.conf. Past that, nginx
+     drops the whole reply. */
+  WIDGET_BUDGET_MS: 12000,
 };
