@@ -211,21 +211,14 @@ function _backupCorrupt(raw) {
   return _lastBackup;
 }
 
-/* Returns the live cache. Do not write to it. Call loadConfigForUpdate to
-   change the config. A write here survives a failed save. */
-function loadConfig() {
-  if (IS_DEMO) return loadDemoConfig();
-
-  const now = Date.now();
-  if (_cfgCache && now - _cfgCacheAt < CONFIG_TTL_MS) return _cfgCache;
-
+function _readDisk() {
   let raw;
   try {
     raw = fs.readFileSync(CONFIG_PATH, 'utf8');
   } catch (e) {
     if (e.code === 'ENOENT') _clearDamage();
     else _markDamaged('unreadable', e.message);
-    return migrate({ items: [], settings: {} });
+    return null;
   }
 
   let parsed;
@@ -233,13 +226,13 @@ function loadConfig() {
     parsed = JSON.parse(raw);
   } catch (e) {
     _markDamaged('corrupt', e.message, _backupCorrupt(raw));
-    return migrate({ items: [], settings: {} });
+    return null;
   }
 
   const shaped = _normalizeShape(parsed);
   if (!shaped) {
     _markDamaged('corrupt', 'wrong shape', _backupCorrupt(raw));
-    return migrate({ items: [], settings: {} });
+    return null;
   }
 
   _clearDamage();
@@ -254,6 +247,20 @@ function loadConfig() {
         ...(backup ? { backup } : {}),
       });
   }
+  return shaped;
+}
+
+/* Returns the live cache. Do not write to it. Call loadConfigForUpdate to
+   change the config. A write here survives a failed save. */
+function loadConfig() {
+  if (IS_DEMO) return loadDemoConfig();
+
+  const now = Date.now();
+  if (_cfgCache && now - _cfgCacheAt < CONFIG_TTL_MS) return _cfgCache;
+
+  const shaped = _readDisk();
+  if (!shaped) return migrate({ items: [], settings: {} });
+
   const before = shaped._schemaVersion;
   migrate(shaped);
   _cfgCache = shaped;
@@ -269,14 +276,19 @@ function loadConfig() {
   return shaped;
 }
 
+/* Reads the file, not the cache. A hand edit made in the cache window would
+   otherwise be overwritten by the next save. */
 function loadConfigForUpdate() {
+  _cfgCacheAt = 0;
   return structuredClone(loadConfig());
 }
 
 /* keepRev is only for writes the browser never sees. Every open dashboard
    reloads when _rev changes. */
 function saveConfig(data, { keepRev = false } = {}) {
-  if (_damage) loadConfig();
+  /* Check the file, not the cache. A file broken after the last read must be
+     kept, not overwritten. */
+  _readDisk();
   if (_damage) throw new Error('config file cannot be used; refusing to overwrite it');
   if (data && typeof data === 'object') {
     data._schemaVersion = SCHEMA_VERSION;

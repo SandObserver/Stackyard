@@ -168,7 +168,7 @@ on('POST', '/api/config', async (req, res) => {
       if ('keepAwake' in data.settings) data.settings.keepAwake = data.settings.keepAwake === true;
       if ('typeToSearch' in data.settings) data.settings.typeToSearch = data.settings.typeToSearch !== false;
     }
-    const existing = loadConfig();
+    const existing = loadConfigForUpdate();
     /* Stale-write check. A client that sends no _rev overwrites. */
     if (data._rev != null && Number(data._rev) !== (Number(existing._rev) || 0))
       return json(res, 409, {
