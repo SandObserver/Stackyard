@@ -146,11 +146,16 @@ function loadDemoConfig() {
   return _demoCfg;
 }
 
+const isPlainObject = v => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/* A wrong-typed settings must count as damage. Replacing it with {} turns
+   sign-in off and the next save erases the password. */
 function _normalizeShape(parsed) {
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  if (!isPlainObject(parsed)) return null;
   if (parsed.items !== undefined && !Array.isArray(parsed.items)) return null;
+  if (parsed.settings !== undefined && !isPlainObject(parsed.settings)) return null;
   if (!Array.isArray(parsed.items)) parsed.items = [];
-  if (!parsed.settings || typeof parsed.settings !== 'object' || Array.isArray(parsed.settings)) parsed.settings = {};
+  if (parsed.settings === undefined) parsed.settings = {};
   return parsed;
 }
 
@@ -238,6 +243,17 @@ function loadConfig() {
   }
 
   _clearDamage();
+  /* Every reader dereferences items without a guard. */
+  if (!shaped.items.every(isPlainObject)) {
+    const first = raw !== _lastCorruptRaw;
+    const backup = _backupCorrupt(raw);
+    shaped.items = shaped.items.filter(isPlainObject);
+    if (first)
+      log.warn('config entries that are not objects were skipped', {
+        path: CONFIG_PATH,
+        ...(backup ? { backup } : {}),
+      });
+  }
   const before = shaped._schemaVersion;
   migrate(shaped);
   _cfgCache = shaped;

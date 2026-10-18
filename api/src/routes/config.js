@@ -60,6 +60,9 @@ on('POST', '/api/config', async (req, res) => {
   try {
     const data = JSON.parse(await readBody(req));
     if (!Array.isArray(data.items)) return json(res, 400, { error: 'items must be an array', kind: KIND.INVALID });
+    /* An array or a primitive here drops the stored password on write. */
+    if (data.settings != null && (typeof data.settings !== 'object' || Array.isArray(data.settings)))
+      return json(res, 400, { error: 'settings must be an object', kind: KIND.INVALID });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error: 'every item needs a non-empty id and type', kind: KIND.INVALID });
     /* Lookups take the first match, so a second item sharing an id is
