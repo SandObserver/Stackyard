@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { normalizeBase } = require('../src/widget-data');
+const { KIND, WidgetError } = require('../src/api-error');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'nowplaying', 'data.js'));
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
@@ -14,6 +15,10 @@ function ctxFor(config, payload) {
     serviceBase,
     serviceLink,
     fetchJSON: async () => ({ status: 200, data: payload }),
+    KIND,
+    fail(msg, opts) {
+      throw new WidgetError(msg, opts);
+    },
   };
 }
 
@@ -208,3 +213,16 @@ test('a typed Link URL on a name without a dot still gets Plex item links', asyn
   const r = await dataFn(ctx);
   assert.match(r.sessions[0].link, /^http:\/\/nas:32400\/web\/index\.html#!\/server\/m1\/details\?key=/);
 });
+
+for (const provider of ['jellyfin', 'emby']) {
+  for (const [name, data] of [
+    ['null', null],
+    ['an empty body', ''],
+    ['a sign-in page', { html: { body: 'Sign in' } }],
+  ]) {
+    test(`a ${provider} session reply that is ${name} fails instead of showing nothing playing`, async () => {
+      const config = { provider, [`${provider}Url`]: 'http://10.0.0.5:8096', [`${provider}Key`]: 'k' };
+      await assert.rejects(dataFn(ctxFor(config, data)), { name: 'WidgetError', kind: 'upstream' });
+    });
+  }
+}

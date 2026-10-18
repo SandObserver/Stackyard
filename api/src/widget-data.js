@@ -35,6 +35,18 @@ function resolveRow(wc, row) {
   return r && typeof r === 'object' && !Array.isArray(r) ? r : null;
 }
 
+/* A body that is not JSON, XML or metrics resolves as a string. A widget that
+   spreads it into its reply blocks the API for seconds. */
+const refuseUnreadable =
+  fetch =>
+  async (url, opts = {}) => {
+    const r = await fetch(url, opts);
+    if (!opts.raw && r.status < 400 && typeof r.data === 'string' && r.data.trim() !== '') {
+      throw new WidgetError('The service sent a reply that is not JSON.', { kind: KIND.UPSTREAM });
+    }
+    return r;
+  };
+
 function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
   const ctx = {
     config: wc /* full widgetConfig, including secrets (server-side only) */,
@@ -46,7 +58,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     params: searchParams,
     /* The caller supplies the fetcher to match the URL's provenance: unchecked
        for saved config, checked for a request-supplied preview config. */
-    fetchJSON: fetch,
+    fetchJSON: refuseUnreadable(fetch),
     parsePrometheus,
     metrics: IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
     demo: IS_DEMO ? demoData.helpers : null,

@@ -34,7 +34,15 @@ async function adGuard(ctx, base, config, fetchJSON) {
   const r = await fetchJSON(base + '/control/stats', { headers, timeout: 8000 });
   if (authErr(r)) ctx.fail(`AdGuard auth failed (${r.status}) — check credentials`, { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail('AdGuard HTTP ' + r.status);
-  return r.data; /* already in the shape the widget reads */
+  const d = r.data;
+  if (typeof d?.num_dns_queries !== 'number') ctx.fail('AdGuard sent a reply without query counts');
+  return {
+    num_dns_queries: d.num_dns_queries,
+    num_blocked_filtering: d.num_blocked_filtering,
+    num_replaced_safebrowsing: d.num_replaced_safebrowsing,
+    num_replaced_parental: d.num_replaced_parental,
+    num_cached: d.num_cached,
+  };
 }
 
 async function piHole(ctx, base, config, fetchJSON) {
@@ -117,6 +125,7 @@ async function technitium(ctx, base, config, fetchJSON) {
     ctx.fail('Technitium rejected the request — check the API token');
   }
   const s = (r.data && (r.data.stats || (r.data.response && r.data.response.stats))) || r.data || {};
+  if (typeof s.totalQueries !== 'number') ctx.fail('Technitium sent a reply without query counts');
   return {
     num_dns_queries: +s.totalQueries || 0,
     num_blocked_filtering: (+s.totalBlocked || 0) + (+s.totalDropped || 0),
