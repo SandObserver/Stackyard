@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep the dashboard and healthy widgets responsive while several services
   stall.
 
+- Keep every widget, badge and health check working while the DNS server is
+  down, instead of stalling behind lookups that never finish.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
