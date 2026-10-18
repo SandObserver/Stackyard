@@ -15,10 +15,12 @@ const {
 } = require('../proxy');
 const { PING_MS, BATCH_MS } = require('../timeouts');
 const backoff = require('../poll-backoff');
+const { latest } = require('../latest');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const log = require('../log');
 const SOCKET_PROXY_URL_DEFAULT = process.env.SOCKET_PROXY_URL || '';
+const CONTAINERS_KEEP_MS = 2 * 60 * 1000;
 
 function socketProxyUrl(cfg) {
   return cfg.settings?.server?.socketProxyUrl || SOCKET_PROXY_URL_DEFAULT;
@@ -150,7 +152,12 @@ on('GET', '/api/health', async (req, res) => {
   const socketUrl = socketProxyUrl(cfg);
   /* Without a proxy address every container lookup misses, which would report
      every container-backed app as unhealthy. */
-  const containers = socketUrl ? await fetchContainerHealth(socketUrl) : Object.create(null);
+  const containersReady = socketUrl
+    ? latest(`containers:${socketUrl}`, () => fetchContainerHealth(socketUrl), {
+        holdMs: BATCH_MS,
+        keepMs: CONTAINERS_KEEP_MS,
+      }).then(o => (o?.ok ? o.value : Object.create(null)))
+    : Promise.resolve(Object.create(null));
   const result = Object.create(null);
   await Promise.allSettled(
     cfg.items
@@ -163,7 +170,11 @@ on('GET', '/api/health', async (req, res) => {
            container and a ping, and the tile needs the detail from each. */
         let unhealthy = false;
         const detail = {};
+        const key = `ping:${item.id}`;
+        const skipped = ping ? backoff.skip(key) : false;
+        const pinged = ping && !skipped ? pingUnchecked(ping, BATCH_MS, item.skipTlsVerify === true) : null;
         if (cName) {
+          const containers = await containersReady;
           const norm = cName.toLowerCase().replace(/[\s_]+/g, '-');
           const c = containers[cName] || containers[norm];
           unhealthy = !c || c.unhealthy;
@@ -171,13 +182,9 @@ on('GET', '/api/health', async (req, res) => {
           detail.status = c?.status || '';
         }
         if (ping) {
-          const key = `ping:${item.id}`;
           /* status 0 is a host that never answered. A status of any kind means
              the address is reachable and stays on the normal cycle. */
-          const skipped = backoff.skip(key);
-          const r = skipped
-            ? backoff.remembered(key)
-            : await pingUnchecked(ping, BATCH_MS, item.skipTlsVerify === true);
+          const r = skipped ? backoff.remembered(key) : await pinged;
           if (!r.ok) unhealthy = true;
           if (!skipped) {
             if (r.ok) backoff.success(key);

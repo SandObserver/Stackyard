@@ -174,3 +174,19 @@ test('a ping check still runs while no socket proxy is configured', async () => 
   assert.equal(r.pingStatus, 200);
   assert.equal(r.state, undefined);
 });
+
+test('a stalled socket proxy delays the health reply by at most the batch timeout', async t => {
+  const { BATCH_MS } = require('../src/timeouts');
+  const stalled = http.createServer(() => {});
+  const stalledBase = await listen(stalled);
+  t.after(() => close(stalled));
+  targetStatus = 200;
+  configure({ container: 'myapp', ping: `${targetBase}/` }, stalledBase);
+
+  const t0 = Date.now();
+  const r = (await health()).a1;
+  const took = Date.now() - t0;
+  assert.ok(took < BATCH_MS + 1000, `${took} ms`);
+  assert.equal(r.pingStatus, 200, 'the ping ran while the proxy stalled');
+  assert.equal(r.state, 'unknown');
+});
