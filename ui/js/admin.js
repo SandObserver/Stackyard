@@ -1,12 +1,13 @@
 import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=dd5f148f';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=71f8a57a';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=5bdad01b';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=7b21e1a0';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   afterImport,
   buildAppItem,
   claimFolderChildren,
+  importCounts,
   newItemId,
   restoreBody,
   restoresSettings,
@@ -14,14 +15,14 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=5811620e';
+} from '/js/admin-save-logic.js?v=5613a9fa';
 import {
   loadSettings,
   savedWallpaperUrl,
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=d69636fc';
+} from '/js/admin-settings.js?v=65546081';
 import {
   apiGet,
   apiPost,
@@ -55,7 +56,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=6ecd782f';
+} from '/js/import-foreign.js?v=3b635c16';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -1162,18 +1163,7 @@ el('imp').onchange = async e => {
   try {
     const d = JSON.parse(await f.text());
     if (!d || !Array.isArray(d.items)) throw new ShownError(t('toast.importNotStackyard'));
-    const cur = new Map(state.items.map(i => [i.id, i]));
-    const inc = new Map(d.items.map(i => [i.id, i]));
-    let added = 0,
-      updated = 0,
-      deleted = 0;
-    for (const [id, it] of inc) {
-      if (!cur.has(id)) added++;
-      else if (JSON.stringify(cur.get(id)) !== JSON.stringify(it)) updated++;
-    }
-    for (const id of cur.keys()) {
-      if (!inc.has(id)) deleted++;
-    }
+    const { added, updated, deleted } = importCounts((await apiGet('/api/config/export')).items, d.items);
     const settingsToo = restoresSettings(d, await apiGet('/api/config'));
     if (added + updated + deleted === 0 && !settingsToo) {
       toast(t('toast.importNoChange'));

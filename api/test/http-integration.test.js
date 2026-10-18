@@ -35,7 +35,7 @@ const { unfinishedUpload } = require('../test-support/unfinished-upload');
 require('../src/routes'); // registers auth/config/health/badges/... + OPTIONS
 require('../src/widget-data'); // registers /api/widget-data/:id (pulls in widgets)
 const { dispatch, on } = require('../src/router');
-const { saveConfig, loadConfig } = require('../src/config');
+const { saveConfig, loadConfig, loadConfigForUpdate } = require('../src/config');
 const { hashPassword, makeToken, verifyToken, clearAttempts, RENEW_AFTER_MS } = require('../src/auth');
 
 /* Routes that fail on purpose, to prove the router turns a handler error into a
@@ -405,6 +405,19 @@ test('GET /api/config/export is downloadable and free of secrets', async () => {
   assert.equal(r.headers['content-disposition'], 'attachment; filename="stackyard-config.json"');
   assert.equal(r.body.settings?.auth?.secret, undefined);
   assert.equal(r.body.settings?.auth?.passwordHash, undefined);
+});
+
+test('GET /api/config/export lists the same items as GET /api/config', async () => {
+  const cfg = loadConfigForUpdate();
+  cfg.items = [];
+  saveConfig(cfg, { keepRev: true });
+  const exp = await req('GET', '/api/config/export', { cookie: validCookie });
+  const live = await req('GET', '/api/config', { cookie: validCookie });
+  assert.deepEqual(
+    exp.body.items.map(i => i.id),
+    live.body.items.map(i => i.id),
+  );
+  assert.ok(exp.body.items.some(i => i.system === 'settings'));
 });
 
 test('POST /api/config drops unknown settings and preserves the stored auth secret', async () => {
