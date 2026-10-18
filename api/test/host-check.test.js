@@ -86,20 +86,28 @@ test('a rebound page cannot read or replace the config', async () => {
   assert.equal(loadConfig().items.length, 1);
 });
 
-test('the first page load by name trusts that name and no other', async () => {
-  const first = await request('GET', '/api/auth/check', 'Dash.Example.com:8700');
-  assert.equal(first.status, 200);
-  assert.deepEqual(stored(), ['dash.example.com']);
+test('a rebound page that loads first is refused and stores nothing', async () => {
+  const first = await request('GET', '/api/auth/check', 'evil.example:8700');
+  assert.equal(first.status, 403);
+  assert.equal(first.body.code, 'blocked.host');
+  assert.equal(fs.existsSync(CFG), false);
   expireCache();
-  assert.equal((await request('GET', '/api/config', 'dash.example.com')).status, 200);
   assert.equal((await request('GET', '/api/auth/check', 'evil.example')).status, 403);
 });
 
-test('the first page load by IP address trusts no name', async () => {
+test('a page load by IP address trusts no name, and a name added there is answered', async () => {
   assert.equal((await request('GET', '/api/auth/check', '192.168.1.10:8700')).status, 200);
-  assert.deepEqual(stored(), []);
+  assert.equal(fs.existsSync(CFG), false);
   expireCache();
   assert.equal((await request('GET', '/api/auth/check', 'dash.example.com')).status, 403);
+  const add = await request('POST', '/api/config', '192.168.1.10', {
+    items: [],
+    settings: { server: { allowedHosts: ['dash.example.com'] } },
+  });
+  assert.equal(add.status, 200);
+  expireCache();
+  assert.equal((await request('GET', '/api/auth/check', 'dash.example.com')).status, 200);
+  assert.equal((await request('GET', '/api/auth/check', 'evil.example')).status, 403);
 });
 
 test('local addresses are always answered', async () => {
