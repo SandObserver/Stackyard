@@ -230,7 +230,7 @@ on('POST', '/api/config', async (req, res) => {
 });
 
 on('GET', '/api/config/export', (_, res) => {
-  const safe = scrubSecrets(loadConfig());
+  const safe = ensureSystemItems(scrubSecrets(loadConfig()));
   delete safe._rev;
   const d = JSON.stringify(safe, null, 2);
   res.writeHead(200, {

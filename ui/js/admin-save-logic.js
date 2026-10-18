@@ -122,6 +122,25 @@ function sameData(a, b) {
   );
 }
 
+/** What restoring `incoming` over `current` does to the item list. Compare
+    against the server's export, not the editor's items: the editor keeps row
+    shapes and secrets the export does not.
+    @param {any[]} current @param {any[]} incoming
+    @returns {{ added: number, updated: number, deleted: number }} */
+export function importCounts(current, incoming) {
+  const cur = new Map(current.map(i => [i?.id, i]));
+  const inc = new Map(incoming.map(i => [i?.id, i]));
+  let added = 0,
+    updated = 0,
+    deleted = 0;
+  for (const [id, it] of inc) {
+    if (!cur.has(id)) added++;
+    else if (!sameData(cur.get(id), it)) updated++;
+  }
+  for (const id of cur.keys()) if (!inc.has(id)) deleted++;
+  return { added, updated, deleted };
+}
+
 /** The settings a backup restores. The server owns `auth` and drops it from
     every write.
     @param {unknown} settings @returns {Record<string, unknown> | null} */

@@ -9,6 +9,7 @@ import {
   randomSuffix,
   snapshotItems,
   afterImport,
+  importCounts,
   restoreBody,
   restoresSettings,
   revertingSaves,
@@ -637,4 +638,28 @@ test('a backup whose uploaded wallpaper is missing keeps the live background', (
   assert.deepEqual(restoreBody(file, live, true).settings, { theme: 'dark', background: live.settings.background });
   assert.deepEqual(restoreBody(file, { settings: {} }, true).settings, { theme: 'dark' });
   assert.equal(restoreBody(file, live).settings.background.url, '/icons/wallpaper/gone.jpg');
+});
+
+test('importCounts reports no change for the same items in another key order', () => {
+  const live = [
+    { id: 'settings', type: 'app', system: 'settings' },
+    { id: 'a', type: 'app', monitoring: { activity: { headers: [{ key: 'q', value: '1', secret: false }] } } },
+  ];
+  const file = [
+    { system: 'settings', type: 'app', id: 'settings' },
+    { type: 'app', id: 'a', monitoring: { activity: { headers: [{ secret: false, key: 'q', value: '1' }] } } },
+  ];
+  assert.deepEqual(importCounts(live, file), { added: 0, updated: 0, deleted: 0 });
+});
+
+test('importCounts counts added, updated and deleted items', () => {
+  const live = [
+    { id: 'a', type: 'app', label: 'A' },
+    { id: 'b', type: 'app' },
+  ];
+  const file = [
+    { id: 'a', type: 'app', label: 'A2' },
+    { id: 'c', type: 'app' },
+  ];
+  assert.deepEqual(importCounts(live, file), { added: 1, updated: 1, deleted: 1 });
 });
