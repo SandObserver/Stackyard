@@ -167,3 +167,12 @@ test('a successful save bumps the revision', () => {
   saveConfig(loadConfig());
   assert.equal(loadConfig()._rev, before + 1);
 });
+
+test('a value too deep to clone is refused before the file changes', () => {
+  const before = fs.readFileSync(process.env.CONFIG_PATH, 'utf8');
+  let deep = 1;
+  for (let i = 0; i < 5000; i++) deep = [deep];
+  assert.throws(() => saveConfig({ items: [{ id: 'a', type: 'app', note: deep }], settings: {} }));
+  assert.equal(fs.readFileSync(process.env.CONFIG_PATH, 'utf8'), before);
+  assert.equal(fs.existsSync(TMP), false);
+});

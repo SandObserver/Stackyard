@@ -282,6 +282,9 @@ function saveConfig(data, { keepRev = false } = {}) {
     data._schemaVersion = SCHEMA_VERSION;
     if (!keepRev) data._rev = (Number(data._rev) || 0) + 1;
   }
+  /* Clone before writing. A value the clone cannot handle must fail here, not
+     after the file is replaced: every later read clones it and fails too. */
+  const copy = structuredClone(data);
   const dir = path.dirname(CONFIG_PATH);
   fs.mkdirSync(dir, { recursive: true });
   const tmp = CONFIG_PATH + '.tmp';
@@ -320,8 +323,8 @@ function saveConfig(data, { keepRev = false } = {}) {
        durable. */
   }
 
-  /* Only after the write succeeded. A copy: the caller keeps its object. */
-  _cfgCache = structuredClone(data);
+  /* Only after the write succeeded. */
+  _cfgCache = copy;
   _cfgCacheAt = Date.now();
 }
 

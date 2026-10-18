@@ -15,6 +15,16 @@ const { stripDisabledCredentials } = require('../auth');
 const { pruneWallpapers } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
 
+/* Real configs nest under 10 levels. Far deeper input is written to disk and
+   then breaks every read of the config. */
+const MAX_DEPTH = 32;
+function tooDeep(v, depth = 0) {
+  if (!v || typeof v !== 'object') return false;
+  if (depth >= MAX_DEPTH) return true;
+  for (const k in v) if (tooDeep(v[k], depth + 1)) return true;
+  return false;
+}
+
 function scrubSecrets(cfg) {
   const safe = structuredClone(cfg);
   scrubAllSecrets(safe);
@@ -59,6 +69,8 @@ on('POST', '/api/config', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   try {
     const data = JSON.parse(await readBody(req));
+    if (tooDeep(data))
+      return json(res, 400, { error: `config nests deeper than ${MAX_DEPTH} levels`, kind: KIND.INVALID });
     if (!Array.isArray(data.items)) return json(res, 400, { error: 'items must be an array', kind: KIND.INVALID });
     /* An array or a primitive here drops the stored password on write. */
     if (data.settings != null && (typeof data.settings !== 'object' || Array.isArray(data.settings)))

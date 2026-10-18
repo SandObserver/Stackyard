@@ -227,6 +227,25 @@ test('a rejected config save is tagged invalid, with its message intact', async 
   assert.equal(r.body.error, 'items must be an array');
 });
 
+test('a config save nested too deep is refused and leaves the file alone', async () => {
+  const onDisk = fs.readFileSync(process.env.CONFIG_PATH, 'utf8');
+  const deep = '['.repeat(5000) + '1' + ']'.repeat(5000);
+  const r = await post('/api/config', `{"items":[{"id":"a","type":"app","note":${deep}}],"settings":{}}`, {
+    raw: true,
+  });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.kind, KIND.INVALID);
+  assert.equal(fs.readFileSync(process.env.CONFIG_PATH, 'utf8'), onDisk);
+});
+
+test('a config save at a realistic depth is accepted', async () => {
+  const r = await post('/api/config', {
+    items: [{ id: 'a', type: 'widget', widgetConfig: { shelves: [{ rows: [{ cells: [{ v: 1 }] }] }] } }],
+    settings: {},
+  });
+  assert.equal(r.status, 200);
+});
+
 test('a malformed body never reaches the log', async t => {
   const logged = [];
   t.mock.method(log, 'error', (msg, data) => logged.push({ msg, data }));
