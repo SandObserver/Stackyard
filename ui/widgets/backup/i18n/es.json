@@ -27,7 +27,7 @@
   "slots.kopiaHref.hint": "La dirección con la que tu navegador abre este servicio. Déjalo en blanco para usar la de arriba, si tu navegador puede acceder a ella.",
   "slots.customName.label": "Nombre visible",
   "slots.customName.placeholder": "Se muestra en la tarjeta",
-  "ui.haikus": "Confía, pero|verifica.\nHaz copias|o lo lamentarás.\nNada dura|para siempre.\nCopia nocturna.|Despertar tranquilo.|Los datos viven.\nPrimero copia.|Luego borra.|Duerme mejor.\nRegistros en verde.|Café caliente.|Todo bien.\nLa esperanza no|es una estrategia.\nGuárdalo a salvo.\nEspera lo|inesperado.\nPreocuparse no sirve.|Las buenas copias|sí.\nPrepárate antes.|Pánico, poco.|Sonríe.",
+  "ui.haikus": "Confía, pero|verifica.\nHaz copias|o lo lamentarás.\nNada dura|para siempre.\nCopia nocturna.|Despertar tranquilo.|Los datos viven.\nPrimero copia.|Luego borra.|Duerme mejor.\nRegistros en verde.|Café caliente.|Todo bien.\nLa esperanza no|es una estrategia.\nGuárdalo|a salvo.\nEspera lo|inesperado.\nPreocuparse no sirve.|Las buenas copias|sí.\nPrepárate antes.|Pánico, poco.|Sonríe.\nRAID no es|una copia.\nLa suerte no|es un plan.\nHaz una|copia.\nCopia.|Verifica.\nPrueba la|restauración.\nGuarda ahora.|Agradece luego.\nBits a salvo.|Mente en calma.\n3-2-1.|Listo.\nDuerme|tranquilo.",
   "ui.backupStatus": "Estado de la copia",
   "ui.running": "en curso",
   "ui.unknown": "desconocido",

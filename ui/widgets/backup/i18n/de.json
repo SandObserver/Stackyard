@@ -27,7 +27,7 @@
   "slots.kopiaHref.hint": "Die Adresse, unter der dein Browser diesen Dienst öffnet. Leer lassen, um die Adresse oben zu verwenden, sofern dein Browser sie erreicht.",
   "slots.customName.label": "Anzeigename",
   "slots.customName.placeholder": "Wird auf der Karte angezeigt",
-  "ui.haikus": "Vertraue, aber|prüfe nach.\nSichern oder|bereuen.\nNichts hält|für immer.\nNachtlauf.|Ruhiger Morgen.|Daten leben.\nErst sichern.|Dann löschen.|Besser schlafen.\nLogs grün.|Kaffee warm.|Alles gut.\nHoffnung ist|keine Strategie.\nGut aufbewahren.\nRechne mit|dem Unerwarteten.\nSorgen helfen nicht.|Gute Backups|schon.\nFrüh vorbereiten.|Selten hadern.|Lächeln.",
+  "ui.haikus": "Vertraue, aber|prüfe nach.\nSichern oder|bereuen.\nNichts hält|für immer.\nNachtlauf.|Ruhiger Morgen.|Daten leben.\nErst sichern.|Dann löschen.|Besser schlafen.\nLogs grün.|Kaffee warm.|Alles gut.\nHoffnung ist|keine Strategie.\nGut|aufbewahren.\nRechne mit|dem Unerwarteten.\nSorgen helfen nicht.|Gute Backups|schon.\nFrüh vorbereiten.|Selten hadern.|Lächeln.\nRAID ist|kein Backup.\nGlück ist|kein Plan.\nEinfach|sichern.\nKopieren.|Prüfen.\nWiederherstellung|testen.\nJetzt sichern.|Später danken.\nBits sicher.|Kopf frei.\n3-2-1.|Fertig.\nRuhig|schlafen.",
   "ui.backupStatus": "Backup-Status",
   "ui.running": "läuft",
   "ui.unknown": "unbekannt",

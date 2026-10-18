@@ -180,8 +180,10 @@ function mkRng(seed) {
 const HAIKUS = (wt('ui.haikus',
   'Trust, but|verify.\nBackup or|regret.\nNothing lasts|forever.\nNightly run.|Morning calm.|Data lives.\n'
   + 'Backup first.|Delete later.|Sleep better.\nLogs green.|Coffee warm.|All good.\nHope is not|a strategy.\n'
-  + 'Keep it safe.\nExpect the|unexpected.\nWorries don\'t.|Good backups|do.\nPrepare early.|Panic rarely.|Smile.')
-).split('\n').map(line => line.split('|'))
+  + 'Keep it|safe.\nExpect the|unexpected.\nWorries don\'t.|Good backups|do.\nPrepare early.|Panic rarely.|Smile.\n'
+  + 'RAID is not|a backup.\nLuck is not|a plan.\nBack it|up.\nCopy.|Verify.\nTest the|restore.\n'
+  + 'Save now.|Thank later.\nBits safe.|Mind calm.\n3-2-1.|Done.\nSleep|easy.')
+).split('\n').map(line => line.split('|')).filter(lines => lines.length >= 2);
 
 /* Safe rounded rect — avoids ctx.roundRect which has iframe bugs in WebKit */
 function rrect(ctx, x, y, w, h, r) {
@@ -200,8 +202,15 @@ function rrect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+/* Text is never clipped. A haiku shows whole or not at all. */
+function pickHaiku(haikus, textW, usableW, H, top, rowStep, textH, textStep) {
+  return (haikus || []).find(lines =>
+    top + rowStep + (lines.length - 1) * textStep + textH <= H
+    && lines.every(line => textW(line) + 7 <= usableW)) || null;
+}
+
 /* ── Canvas placeholder drawing ── */
-function drawPh(canvas, haiku, isFront, seed) {
+function drawPh(canvas, haikus, isFront, seed) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2); /* cap DPR at 2 */
   const W   = canvas.offsetWidth;
   const H   = canvas.offsetHeight;
@@ -260,6 +269,10 @@ function drawPh(canvas, haiku, isFront, seed) {
   const TEXT_H = 11;  /* font size for haiku lines */
   const TEXT_STEP = TEXT_H + GAP;
 
+  ctx.font = `700 ${px(TEXT_H)}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`;
+  const textW = line => ctx.measureText(line).width / k;
+  const haiku = pickHaiku(haikus, textW, usableW, H, 2, STEP, TEXT_H, TEXT_STEP);
+
   /* Build row plan */
   const plan = [];
   if (haiku && haiku.length > 0) {
@@ -287,21 +300,19 @@ function drawPh(canvas, haiku, isFront, seed) {
   for (const entry of plan) {
     if (y > H) break;
 
-    ctx.font = `700 ${px(TEXT_H)}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`;
-    const textW = entry.type === 'text' ? ctx.measureText(entry.line).width / k : 0;
-    /* A line wider than the card is drawn as a plain row. Text is never clipped. */
-    if (entry.type === 'text' && textW + 7 <= usableW) {
+    if (entry.type === 'text') {
+      const lineW = textW(entry.line);
       ctx.textBaseline = 'top';
       ctx.textAlign = 'left';
       /* Small left dash */
-      const ldW = Math.min(4 + Math.floor(rng() * 10), usableW - textW - 3);
+      const ldW = Math.min(4 + Math.floor(rng() * 10), usableW - lineW - 3);
       ctx.fillStyle = dashC;
       bar(PAD, y + TEXT_H/2 - 1, ldW, 2, 1);
       /* Text */
       ctx.fillStyle = textC;
       ctx.fillText(entry.line, px(PAD + ldW + 3), px(y));
-      const rdX   = PAD + ldW + 3 + textW + 3;
-      const rdW   = Math.max(4, usableW - (ldW + 3 + textW + 3));
+      const rdX   = PAD + ldW + 3 + lineW + 3;
+      const rdW   = Math.max(4, usableW - (ldW + 3 + lineW + 3));
       ctx.fillStyle = dashC;
       if (rdW > 0 && rdX + rdW <= W - PAD) bar(rdX, y + TEXT_H/2 - 1, rdW, 2, 1);
       y += TEXT_STEP;
@@ -336,13 +347,13 @@ function drawPh(canvas, haiku, isFront, seed) {
 
 /* Draw once the canvas has a real size. A card whose height comes from
    aspect-ratio layout has no size at draw time. */
-function observeDraw(canvas, haiku, isFront, seed) {
+function observeDraw(canvas, haikus, isFront, seed) {
   let lastW = 0, lastH = 0;
   const ro = new ResizeObserver(() => {
     const w = canvas.offsetWidth, h = canvas.offsetHeight;
     if (!w || !h || (w === lastW && h === lastH)) return;
     lastW = w; lastH = h;
-    drawPh(canvas, haiku, isFront, seed);
+    drawPh(canvas, haikus, isFront, seed);
   });
   ro.observe(canvas);
 }
@@ -365,11 +376,11 @@ function slotList() {
 function assignHaikus(slots) {
   /* Shuffle pool randomly — different every reload */
   const pool = [...HAIKUS].sort(() => Math.random()-0.5);
-  if (size==='small') return slots.map(j => j ? pool[0] : null);
+  if (size==='small') return slots.map(j => j ? pool : null);
   const activeIdxs = slots.map((j,i)=>j?i:-1).filter(i=>i>=0);
   if (!activeIdxs.length) return slots.map(()=>null);
   const chosen = activeIdxs[Math.floor(Math.random()*activeIdxs.length)];
-  return slots.map((j,i) => (i===chosen&&j) ? pool[0] : null);
+  return slots.map((j,i) => (i===chosen&&j) ? pool : null);
 }
 
 async function boot() {

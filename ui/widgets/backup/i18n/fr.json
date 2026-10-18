@@ -27,7 +27,7 @@
   "slots.kopiaHref.hint": "L’adresse que votre navigateur utilise pour ce service. Laissez vide pour utiliser celle ci-dessus, si votre navigateur peut l’atteindre.",
   "slots.customName.label": "Nom affiché",
   "slots.customName.placeholder": "Affiché sur la carte",
-  "ui.haikus": "Faire confiance,|mais vérifier.\nSauvegarder|ou regretter.\nRien ne dure|toujours.\nExécution nocturne.|Matin tranquille.|Les données vivent.\nSauvegarder d’abord.|Supprimer ensuite.|Mieux dormir.\nJournaux au vert.|Café chaud.|Tout va bien.\nL’espoir n’est|pas une stratégie.\nGardez-le en sûreté.\nAttendez-vous|à l’imprévu.\nS’inquiéter n’aide pas.|Les bonnes sauvegardes|si.\nPréparez-vous tôt.|Paniquez peu.|Souriez.",
+  "ui.haikus": "Faire confiance,|mais vérifier.\nSauvegarder|ou regretter.\nRien ne dure|toujours.\nExécution nocturne.|Matin tranquille.|Les données vivent.\nSauvegarder d’abord.|Supprimer ensuite.|Mieux dormir.\nJournaux au vert.|Café chaud.|Tout va bien.\nL’espoir n’est|pas une stratégie.\nGardez-le|en sûreté.\nAttendez-vous|à l’imprévu.\nS’inquiéter n’aide pas.|Les bonnes sauvegardes|si.\nPréparez-vous tôt.|Paniquez peu.|Souriez.\nLe RAID n’est|pas une copie.\nLa chance n’est|pas un plan.\nSauvegardez|tout.\nCopier.|Vérifier.\nTestez la|restauration.\nSauvez tôt.|Merci plus tard.\nBits à l’abri.|Esprit serein.\n3-2-1.|Terminé.\nDormez|tranquille.",
   "ui.backupStatus": "État de la sauvegarde",
   "ui.running": "en cours",
   "ui.unknown": "inconnu",
