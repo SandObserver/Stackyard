@@ -102,3 +102,30 @@ test('raw text, empty bodies, error replies and parsed replies still reach the d
     assert.deepEqual(await ctx.fetchJSON('http://svc', opts), reply);
   }
 });
+
+test('every upstream call of one request shares the widget time budget', async t => {
+  const { FETCH_MS, WIDGET_BUDGET_MS } = require('../src/timeouts');
+  t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 });
+  const seen = [];
+  const ctx = dataFnContext({}, '', new URLSearchParams(), async (url, opts) => {
+    seen.push(opts.timeout);
+    return { status: 200, data: {} };
+  });
+
+  await ctx.fetchJSON('http://svc/a');
+  t.mock.timers.tick(WIDGET_BUDGET_MS - 3000);
+  await ctx.fetchJSON('http://svc/b', { timeout: 10000 });
+  t.mock.timers.tick(3000);
+  await assert.rejects(ctx.fetchJSON('http://svc/c'), /Timed out/);
+
+  assert.deepEqual(seen, [FETCH_MS, 3000]);
+});
+
+test('the widget time budget ends before nginx gives up on the request', () => {
+  const fs = require('node:fs');
+  const { WIDGET_BUDGET_MS } = require('../src/timeouts');
+  const conf = fs.readFileSync(path.join(__dirname, '..', '..', 'nginx', 'dashboard.conf'), 'utf8');
+  const api = conf.slice(conf.indexOf('location /api/'));
+  const seconds = Number(/proxy_read_timeout\s+(\d+)s/.exec(api)[1]);
+  assert.ok(WIDGET_BUDGET_MS + 2000 <= seconds * 1000, `${WIDGET_BUDGET_MS} ms against ${seconds} s`);
+});

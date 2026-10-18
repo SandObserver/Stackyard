@@ -63,6 +63,7 @@ async function dupGetToken(base, password, ctx) {
     try {
       tokens = await dupRefresh(base, cached.refreshNonce, ctx);
     } catch {
+      _dupTokens.delete(base);
       tokens = await dupLogin(base, password, ctx);
     }
   } else {
@@ -158,7 +159,7 @@ async function slots(config, ctx) {
     for (const { i } of gs) result[i] = { error: kind };
   };
 
-  await Promise.all(
+  const dupDone = Promise.all(
     Object.values(dupGroups).map(async ({ base, pass, slots: gs }) => {
       try {
         const [stateR, backupsR] = await Promise.all([
@@ -198,7 +199,7 @@ async function slots(config, ctx) {
     }),
   );
 
-  await Promise.all(
+  const kopiaDone = Promise.all(
     Object.values(kopiaGroups).map(async ({ url, user, pass, slots: gs }) => {
       try {
         const r = await kopiaFetch(url, user, pass, '/api/v1/sources', ctx);
@@ -227,6 +228,7 @@ async function slots(config, ctx) {
     }),
   );
 
+  await Promise.all([dupDone, kopiaDone]);
   return result;
 }
 
