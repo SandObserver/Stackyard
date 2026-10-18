@@ -48,6 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep a config file edited by hand while the container runs instead of
   overwriting it on the next save.
 
+- Report no changes when importing an export that matches the current
+  configuration.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
