@@ -52,7 +52,7 @@ function route(req, res) {
   }
 
   if (u.pathname !== '/health') {
-    const host = refusedHost(req, u.pathname);
+    const host = refusedHost(req);
     if (host !== null) {
       return json(res, 403, {
         error: 'Forbidden: this address is not allowed while no password is set',
