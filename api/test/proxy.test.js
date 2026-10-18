@@ -6,7 +6,7 @@ process.env.CONFIG_PATH = tmpPath('apps.json');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
-const dns = require('node:dns').promises;
+const resolver = require('../src/resolve');
 const { getHostIp, shouldSkipTls, isPrivateAddress, embeddedIPv4, _internals } = require('../src/proxy');
 /* guardSsrf/fetchJSON are private to proxy.js: routes go through the
    fetchChecked/fetchUnchecked boundary. Tests reach the primitives directly. */
@@ -78,13 +78,13 @@ test('guardSsrf blocks IPv4-mapped and NAT64 loopback/metadata literals', async 
 });
 
 test('guardSsrf resolves a dotless Docker service name, allows its private address and pins it', async t => {
-  t.mock.method(dns, 'lookup', async () => ({ address: '172.18.0.5', family: 4 }));
+  t.mock.method(resolver, 'resolveHost', async () => ({ address: '172.18.0.5', family: 4 }));
   assert.deepEqual(await guardSsrf('http://navidrome:4533'), { error: null, ip: '172.18.0.5' });
 });
 
 test('guardSsrf blocks a dotless name that resolves to loopback, link-local or this host', async t => {
   for (const address of ['::1', '127.0.1.1', '169.254.169.254', '0.0.0.0', 'fe80::1', '::ffff:127.0.0.1']) {
-    t.mock.method(dns, 'lookup', async () => ({ address, family: address.includes(':') ? 6 : 4 }));
+    t.mock.method(resolver, 'resolveHost', async () => ({ address, family: address.includes(':') ? 6 : 4 }));
     for (const name of ['ip6-localhost', 'ip6-loopback', 'homelab']) {
       const r = await guardSsrf(`http://${name}:8080/`);
       assert.equal(r.reason, 'private-address', `${name} -> ${address}`);
@@ -94,7 +94,7 @@ test('guardSsrf blocks a dotless name that resolves to loopback, link-local or t
 });
 
 test('guardSsrf blocks a dotless name that does not resolve', async t => {
-  t.mock.method(dns, 'lookup', async () => {
+  t.mock.method(resolver, 'resolveHost', async () => {
     throw Object.assign(new Error('getaddrinfo ENOTFOUND'), { code: 'ENOTFOUND' });
   });
   assert.equal((await guardSsrf('http://typo-container:8080/')).reason, 'unresolved');
@@ -153,26 +153,26 @@ test('fetchJSON pins the IP and preserves the Host header', async () => {
    looks public (which a stale re-resolution could otherwise exploit). ── */
 
 test('guardSsrf resolves a public hostname and returns the IP to pin', async t => {
-  t.mock.method(dns, 'lookup', async () => ({ address: '93.184.216.34', family: 4 }));
+  t.mock.method(resolver, 'resolveHost', async () => ({ address: '93.184.216.34', family: 4 }));
   assert.deepEqual(await guardSsrf('http://example.com/path'), { error: null, ip: '93.184.216.34' });
 });
 
 test('guardSsrf blocks a public-looking name that resolves to a private IP', async t => {
-  t.mock.method(dns, 'lookup', async () => ({ address: '192.168.1.50', family: 4 }));
+  t.mock.method(resolver, 'resolveHost', async () => ({ address: '192.168.1.50', family: 4 }));
   const r = await guardSsrf('http://sneaky.example.com/');
   assert.equal(r.ip, null);
   assert.match(r.error, /private IP/);
 });
 
 test('guardSsrf blocks a name that resolves to the link-local metadata IP', async t => {
-  t.mock.method(dns, 'lookup', async () => ({ address: '169.254.169.254', family: 4 }));
+  t.mock.method(resolver, 'resolveHost', async () => ({ address: '169.254.169.254', family: 4 }));
   const r = await guardSsrf('http://rebind.example.com/');
   assert.equal(r.ip, null);
   assert.match(r.error, /private IP/);
 });
 
 test('guardSsrf blocks when the hostname cannot be resolved', async t => {
-  t.mock.method(dns, 'lookup', async () => {
+  t.mock.method(resolver, 'resolveHost', async () => {
     throw new Error('ENOTFOUND');
   });
   const r = await guardSsrf('http://nxdomain.example.com/');

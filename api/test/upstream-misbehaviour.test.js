@@ -4,7 +4,7 @@ const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const net = require('node:net');
-const dns = require('node:dns').promises;
+const resolver = require('../src/resolve');
 
 const { fetchChecked, fetchUnchecked, pingChecked, pingUnchecked } = require('../src/proxy');
 const { errorBody } = require('../src/api-error');
@@ -89,7 +89,7 @@ test('a refused connection is not labelled as a certificate problem', { timeout:
 
 /* Keep the timer. A pending mocked lookup holds no handle and the run exits early. */
 async function withHungLookup(t, fn) {
-  t.mock.method(dns, 'lookup', () => new Promise(() => {}));
+  t.mock.method(resolver, 'resolveHost', () => new Promise(() => {}));
   const keepAlive = setTimeout(() => {}, 10_000);
   try {
     return await fn();
@@ -119,7 +119,7 @@ test('a ping whose DNS lookup hangs stops at its budget', { timeout: 5000 }, asy
 
 async function pinnedServer(t) {
   const seen = { host: '', lookups: [] };
-  t.mock.method(dns, 'lookup', async host => {
+  t.mock.method(resolver, 'resolveHost', async host => {
     seen.lookups.push(host);
     return { address: '127.0.0.1', family: 4 };
   });

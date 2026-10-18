@@ -1,7 +1,7 @@
 const http = require('http');
 const https = require('https');
 const net = require('net');
-const dns = require('dns').promises;
+const resolver = require('./resolve');
 const { loadConfig } = require('./config');
 const { PING_MS, FETCH_MS } = require('./timeouts');
 const { IS_DEMO } = require('./demo');
@@ -215,7 +215,7 @@ function lookupWithin(host, ms) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Timed out')), ms);
     if (timer.unref) timer.unref();
-    dns.lookup(host).then(
+    resolver.resolveHost(host, ms).then(
       r => {
         clearTimeout(timer);
         resolve(r);
@@ -317,6 +317,7 @@ function fetchJSON(raw, opts = {}) {
         headers: hdrs,
         servername: pin ? u.hostname : undefined /* keep SNI and cert validation on the real hostname */,
         timeout: opts.timeout || FETCH_MS,
+        lookup: resolver.lookupWithin(opts.timeout || FETCH_MS),
         rejectUnauthorized: !skipTls,
       },
       res => {
@@ -498,7 +499,14 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
     const { skip, ignored: skipIgnored } = resolveSkipTls(u.hostname, skipTls);
     const pin = pinIp && pinIp !== u.hostname ? pinIp : null;
     const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
-    const opts = { hostname: connectHost, port, path: u.pathname || '/', timeout: ms, rejectUnauthorized: !skip };
+    const opts = {
+      hostname: connectHost,
+      port,
+      path: u.pathname || '/',
+      timeout: ms,
+      lookup: resolver.lookupWithin(ms),
+      rejectUnauthorized: !skip,
+    };
     if (pin) {
       opts.headers = { Host: u.host };
       opts.servername = u.hostname;
@@ -566,7 +574,7 @@ class SsrfBlockedError extends Error {
 }
 
 async function fetchChecked(url, opts = {}) {
-  /* Before guardSsrf. Its dns.lookup is itself an outbound request. */
+  /* Before guardSsrf. Its DNS lookup is itself an outbound request. */
   if (IS_DEMO) return fetchJSON(url, opts);
   const target = rewriteUrl(url);
   const budget = opts.timeout || FETCH_MS;

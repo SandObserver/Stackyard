@@ -27,7 +27,7 @@ fs.writeFileSync(
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const dns = require('node:dns').promises;
+const resolver = require('../src/resolve');
 const { rewriteUrl, _internals } = require('../src/proxy');
 const { guardSsrf } = _internals;
 
@@ -90,7 +90,7 @@ test('rewriting changes the host, so the guard must run after it', async () => {
 });
 
 test('guarding the rewritten URL also passes, via the dotless-name branch', async t => {
-  t.mock.method(dns, 'lookup', async () => ({ address: '172.18.0.5', family: 4 }));
+  t.mock.method(resolver, 'resolveHost', async () => ({ address: '172.18.0.5', family: 4 }));
   assert.deepEqual(await guardSsrf(rewriteUrl('http://192.168.1.50:8096/')), { error: null, ip: '172.18.0.5' });
 });
 
@@ -117,6 +117,6 @@ test('guardSsrf blocks an IPv4-in-IPv6 wrapper around a loopback address', async
 /* The other half: a real dotless name still passes, so the exclusion above is
    narrow rather than a blanket refusal of short hostnames. */
 test('guardSsrf still trusts an ordinary dotless container name', async t => {
-  t.mock.method(dns, 'lookup', async () => ({ address: '172.18.0.5', family: 4 }));
+  t.mock.method(resolver, 'resolveHost', async () => ({ address: '172.18.0.5', family: 4 }));
   assert.deepEqual(await guardSsrf('http://jellyfin:8096/'), { error: null, ip: '172.18.0.5' });
 });
