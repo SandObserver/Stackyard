@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   set. Add a domain name in Allowed Addresses from an IP address or a local
   name.
 
+- Refuse service names that resolve to loopback or link-local addresses, such as
+  `ip6-localhost`, in admin URL tests.
+
+- Block 6to4, local-use NAT64 and site-local IPv6 addresses in admin URL tests.
+
 ## [1.18.0] - 2026-10-17
 
 ### Added
