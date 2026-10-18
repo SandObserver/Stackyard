@@ -27,7 +27,12 @@ const BLOCKED_IPV4 = [
 
 /* ff00::/8 needs all four hex digits. A group written 'ff' is 0x00ff, which is
    not multicast. */
-const BLOCKED_IPV6_RE = /^(::1$|::$|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|ff[0-9a-f]{2}:)/i;
+const BLOCKED_IPV6_RE = /^(::1$|::$|f[cd][0-9a-f]{2}:|fe[89a-f][0-9a-f]:|ff[0-9a-f]{2}:|2002:|64:ff9b:1:)/i;
+
+/* Refused for a Docker service name too. These reach this machine or the cloud
+   metadata service, never another container. */
+const SELF_IPV4 = new Set(['0.0.0.0', '127.0.0.0', '169.254.0.0']);
+const SELF_IPV6_RE = /^(::1$|::$|fe[89ab][0-9a-f]:)/i;
 
 /** @param {string} addr @returns {number|null} */
 function ipv4ToInt(addr) {
@@ -36,18 +41,26 @@ function ipv4ToInt(addr) {
   return ((+p[0] << 24) >>> 0) + (+p[1] << 16) + (+p[2] << 8) + +p[3];
 }
 
-const _blockedV4 = BLOCKED_IPV4.map(([base, bits]) => ({
-  /* A /0 would need a 32-bit shift, which JavaScript treats as a no-op. */
-  mask: bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0,
-  base: ipv4ToInt(base),
-}));
+/** @param {Array<[string, number, string]>} list */
+const toRanges = list =>
+  list.map(([base, bits]) => ({
+    /* A /0 would need a 32-bit shift, which JavaScript treats as a no-op. */
+    mask: bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0,
+    base: ipv4ToInt(base),
+  }));
 
-/** @param {string} addr @returns {boolean} */
-function isBlockedIPv4(addr) {
+const _blockedV4 = toRanges(BLOCKED_IPV4);
+const _selfV4 = toRanges(BLOCKED_IPV4.filter(([base]) => SELF_IPV4.has(base)));
+
+/** @param {string} addr @param {Array<{ mask: number, base: number | null }>} ranges */
+function inRanges(addr, ranges) {
   const n = ipv4ToInt(addr);
   if (n === null) return false;
-  return _blockedV4.some(r => (n & r.mask) >>> 0 === r.base);
+  return ranges.some(r => (n & r.mask) >>> 0 === r.base);
 }
+
+/** @param {string} addr @returns {boolean} */
+const isBlockedIPv4 = addr => inRanges(addr, _blockedV4);
 
 /* The range check only understands dotted-decimal. Without this a hex-tailed
    literal such as ::7f00:1 or 64:ff9b::a9fe:a9fe slips past it. */
@@ -66,20 +79,26 @@ function embeddedIPv4(addr) {
   return `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`;
 }
 
-function isPrivateAddress(addr) {
+function inAddressSet(addr, v4Ranges, v6Re) {
   if (typeof addr !== 'string' || !addr) return false;
   const s = addr.toLowerCase();
   if (s.startsWith('::ffff:') || s.startsWith('64:ff9b::')) {
     const v4 = embeddedIPv4(s);
-    if (v4) return isBlockedIPv4(v4);
+    if (v4) return inRanges(v4, v4Ranges);
     return true; /* unparseable tail behind a wrapper prefix: refuse */
   }
   if (s.startsWith('::')) {
     const v4 = embeddedIPv4(s);
-    if (v4) return isBlockedIPv4(v4);
+    if (v4) return inRanges(v4, v4Ranges);
   }
-  return isBlockedIPv4(s) || BLOCKED_IPV6_RE.test(s);
+  return inRanges(s, v4Ranges) || v6Re.test(s);
 }
+
+/** @param {string} addr @returns {boolean} */
+const isPrivateAddress = addr => inAddressSet(addr, _blockedV4, BLOCKED_IPV6_RE);
+
+/** Loopback, unspecified or link-local. @param {string} addr @returns {boolean} */
+const isSelfAddress = addr => inAddressSet(addr, _selfV4, SELF_IPV6_RE);
 /* Never sniff this from the body alone. A plain-text line like "Version 1.2"
    matches the metric grammar exactly. */
 function looksLikeMetrics(ct, body) {
@@ -219,10 +238,8 @@ async function guardSsrf(rawUrl, ms = FETCH_MS) {
   const policy = urlPolicyError(u);
   if (policy) return { error: policy, ip: null };
   const h = bareHost(u.hostname);
-  /* Loopback, not a service name. Block it before the allowance below. */
   if (!ALLOW_PRIVATE_IPS && h === 'localhost')
     return { error: `Blocked: ${h} is a private address.`, ip: null, reason: PRIVATE_ADDRESS };
-  if (isDockerServiceName(h)) return { error: null, ip: null };
   const hostIp = getHostIp();
   if (hostIp && h === hostIp) return { error: null, ip: null };
   if (!ALLOW_PRIVATE_IPS && isPrivateAddress(h))
@@ -234,7 +251,8 @@ async function guardSsrf(rawUrl, ms = FETCH_MS) {
     if (e instanceof Error && e.message === 'Timed out') throw e;
     return { error: `Blocked: ${h} could not be resolved.`, ip: null, reason: UNRESOLVED };
   }
-  if (!ALLOW_PRIVATE_IPS && isPrivateAddress(address))
+  const refused = isDockerServiceName(h) ? isSelfAddress(address) : isPrivateAddress(address);
+  if (!ALLOW_PRIVATE_IPS && refused)
     return { error: `Blocked: ${h} resolves to private IP ${address}.`, ip: null, reason: PRIVATE_ADDRESS };
   /* A literal address cannot be rebound. */
   if (h === address) return { error: null, ip: null };

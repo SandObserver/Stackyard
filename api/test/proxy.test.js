@@ -6,6 +6,7 @@ process.env.CONFIG_PATH = tmpPath('apps.json');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
+const dns = require('node:dns').promises;
 const { getHostIp, shouldSkipTls, isPrivateAddress, embeddedIPv4, _internals } = require('../src/proxy');
 /* guardSsrf/fetchJSON are private to proxy.js: routes go through the
    fetchChecked/fetchUnchecked boundary. Tests reach the primitives directly. */
@@ -76,8 +77,27 @@ test('guardSsrf blocks IPv4-mapped and NAT64 loopback/metadata literals', async 
   }
 });
 
-test('guardSsrf allows dotless Docker service names without pinning', async () => {
-  assert.deepEqual(await guardSsrf('http://navidrome:4533'), { error: null, ip: null });
+test('guardSsrf resolves a dotless Docker service name, allows its private address and pins it', async t => {
+  t.mock.method(dns, 'lookup', async () => ({ address: '172.18.0.5', family: 4 }));
+  assert.deepEqual(await guardSsrf('http://navidrome:4533'), { error: null, ip: '172.18.0.5' });
+});
+
+test('guardSsrf blocks a dotless name that resolves to loopback, link-local or this host', async t => {
+  for (const address of ['::1', '127.0.1.1', '169.254.169.254', '0.0.0.0', 'fe80::1', '::ffff:127.0.0.1']) {
+    t.mock.method(dns, 'lookup', async () => ({ address, family: address.includes(':') ? 6 : 4 }));
+    for (const name of ['ip6-localhost', 'ip6-loopback', 'homelab']) {
+      const r = await guardSsrf(`http://${name}:8080/`);
+      assert.equal(r.reason, 'private-address', `${name} -> ${address}`);
+      assert.equal(r.ip, null);
+    }
+  }
+});
+
+test('guardSsrf blocks a dotless name that does not resolve', async t => {
+  t.mock.method(dns, 'lookup', async () => {
+    throw Object.assign(new Error('getaddrinfo ENOTFOUND'), { code: 'ENOTFOUND' });
+  });
+  assert.equal((await guardSsrf('http://typo-container:8080/')).reason, 'unresolved');
 });
 
 test('guardSsrf blocks private IP literals', async () => {
@@ -131,7 +151,6 @@ test('fetchJSON pins the IP and preserves the Host header', async () => {
    once and the validated IP is returned to be pinned for the connection; a name
    that resolves to a private address is blocked even though the name itself
    looks public (which a stale re-resolution could otherwise exploit). ── */
-const dns = require('node:dns').promises;
 
 test('guardSsrf resolves a public hostname and returns the IP to pin', async t => {
   t.mock.method(dns, 'lookup', async () => ({ address: '93.184.216.34', family: 4 }));

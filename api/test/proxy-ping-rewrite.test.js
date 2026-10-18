@@ -25,6 +25,7 @@ const dns = require('node:dns');
 const net = require('node:net');
 const log = require('../src/log');
 const { fetchChecked, pingChecked, pingUnchecked, SsrfBlockedError } = require('../src/proxy');
+const { errorBody } = require('../src/api-error');
 
 /* Capture what proxy.js logs about the attempt, which names the host it tried. */
 async function targetOf(fn) {
@@ -60,13 +61,13 @@ before(async () => {
 });
 
 test('pingChecked follows portMap to the mapped container', async () => {
-  let r;
-  const target = await targetOf(async () => {
-    r = await pingChecked(MAPPED, MS, false);
-  });
-  assert.equal(r.ok, false);
-  assert.match(target, /stackyard-test-nx-host/, 'ping must target the rewritten host');
-  assert.doesNotMatch(r.error, /stackyard-test-nx-host/, 'and must not tell the browser the host');
+  const e = await pingChecked(MAPPED, MS, false).then(
+    () => null,
+    x => x,
+  );
+  assert.ok(e instanceof SsrfBlockedError);
+  assert.match(e.message, /stackyard-test-nx-host/, 'ping must guard the rewritten host');
+  assert.doesNotMatch(errorBody(e).error, /stackyard-test-nx-host/, 'and must not tell the browser the host');
 });
 
 test('pingUnchecked follows portMap to the mapped container', async () => {
@@ -80,14 +81,15 @@ test('pingUnchecked follows portMap to the mapped container', async () => {
 });
 
 test('ping and fetch resolve the same url to the same target', async () => {
-  const pingTarget = await targetOf(async () => {
-    await pingChecked(MAPPED, MS, false);
-  });
+  const pingErr = await pingChecked(MAPPED, MS, false).then(
+    () => null,
+    e => e.message,
+  );
   const fetchErr = await fetchChecked(MAPPED, { timeout: MS }).then(
     () => null,
     e => e.message,
   );
-  assert.match(pingTarget, /stackyard-test-nx-host/);
+  assert.match(pingErr, /stackyard-test-nx-host/);
   assert.match(fetchErr, /stackyard-test-nx-host/, 'both must resolve to the same host');
 });
 
