@@ -188,6 +188,41 @@ test('a widget type naming an inherited member is unknown, not data-less', async
   }
 });
 
+test('a widget whose service stalls answers pending, then with the data once it arrives', async () => {
+  let release;
+  const released = new Promise(r => {
+    release = r;
+  });
+  const upstream = http.createServer(async (_, res) => {
+    await released;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{"n":7}');
+  });
+  await new Promise(r => upstream.listen(0, '127.0.0.1', r));
+  const cfg = loadConfig();
+  const url = `http://127.0.0.1:${upstream.address().port}/`;
+  saveConfig({
+    ...cfg,
+    items: [...(cfg.items || []), { id: 'slow-w', type: 'widget', widgetType: 'fixture', widgetConfig: { url } }],
+  });
+  try {
+    const first = await req('GET', '/api/widget-data/slow-w', { cookie: validCookie });
+    assert.equal(first.status, 202);
+    assert.deepEqual(first.body, { pending: true });
+
+    release();
+    await new Promise(r => setTimeout(r, 50));
+    const second = await req('GET', '/api/widget-data/slow-w', { cookie: validCookie });
+    assert.equal(second.status, 200);
+    assert.deepEqual(second.body, { status: 200, data: { n: 7 } });
+  } finally {
+    release();
+    saveConfig(cfg);
+    upstream.closeAllConnections?.();
+    await new Promise(r => upstream.close(r));
+  }
+});
+
 test('OPTIONS is no longer specially routed', async () => {
   const r = await req('OPTIONS', '/api/config', { cookie: validCookie });
   assert.equal(r.status, 404, 'it must fall through like any other unmatched method');

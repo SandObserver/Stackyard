@@ -9,4 +9,10 @@ module.exports = {
      proxy_read_timeout for /api/ in nginx/dashboard.conf. Past that, nginx
      drops the whole reply. */
   WIDGET_BUDGET_MS: 12000,
+  /* Keep it short. A stalled widget holds a browser connection this long, and 6
+     of them block every other request from the dashboard. */
+  WIDGET_HOLD_MS: 1000,
+  /* Keep it above the longest widget poll interval. Below that, a slow service
+     shows an error instead of its last result. */
+  WIDGET_KEEP_MS: 15 * 60 * 1000,
 };

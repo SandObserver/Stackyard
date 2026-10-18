@@ -92,6 +92,9 @@ export function widgetId() {
   return _params.get('id') || '';
 }
 
+const PENDING_RETRY_MS = 1000;
+const PENDING_TRIES = 20;
+
 export async function fetchData(endpoint, opts = {}) {
   const id = widgetId();
   const p = new URLSearchParams();
@@ -99,7 +102,15 @@ export async function fetchData(endpoint, opts = {}) {
   for (const [k, v] of Object.entries(opts.params || {})) p.set(k, String(v));
   const query = p.toString();
   const qs = query ? '?' + query : '';
-  const r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, { cache: 'no-store', signal: opts.signal });
+  let r;
+  for (let tries = 0; ; tries++) {
+    r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, { cache: 'no-store', signal: opts.signal });
+    if (r.status !== 202) break;
+    if (tries >= PENDING_TRIES) {
+      throw Object.assign(new Error('The service did not respond in time.'), { status: 202, kind: 'timeout' });
+    }
+    await new Promise(resolve => setTimeout(resolve, PENDING_RETRY_MS));
+  }
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
     const e = /** @type {Error & { status?: number, kind?: string }} */ (new Error(d.error || 'HTTP ' + r.status));

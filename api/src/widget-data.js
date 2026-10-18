@@ -17,7 +17,8 @@ const { fail, KIND, WidgetError } = require('./api-error');
 const { rateLimit } = require('./auth');
 const LIMITS = require('./poll-limits');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
-const { FETCH_MS, WIDGET_BUDGET_MS } = require('./timeouts');
+const { FETCH_MS, WIDGET_BUDGET_MS, WIDGET_HOLD_MS, WIDGET_KEEP_MS } = require('./timeouts');
+const { latest } = require('./latest');
 
 function normalizeBase(raw) {
   if (!raw) return '';
@@ -132,13 +133,18 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
   const u = new URL(req.url, 'http://x');
   const endpointName = u.searchParams.get('endpoint') || '';
 
-  try {
-    const out = await getWidgetData(item, entry, endpointName, u.searchParams, fetchUnchecked);
-    json(res, out.status, out.body);
-  } catch (e) {
-    log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: log.reason(e) });
-    fail(res, e, { status: 502 });
-  }
+  const refresh = () =>
+    getWidgetData(item, entry, endpointName, u.searchParams, fetchUnchecked).catch(e => {
+      log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: log.reason(e) });
+      throw e;
+    });
+  const outcome = await latest(`${cfg._rev}:${item.id}?${u.searchParams}`, refresh, {
+    holdMs: WIDGET_HOLD_MS,
+    keepMs: WIDGET_KEEP_MS,
+  });
+  if (!outcome) return json(res, 202, { pending: true });
+  if (outcome.ok) return json(res, outcome.value.status, outcome.value.body);
+  fail(res, outcome.error, { status: 502 });
 });
 
 /* Config-time "Fetch" for a select field declared with optionsFrom. The id is
