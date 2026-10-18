@@ -37,6 +37,15 @@ test('several uploads of the same name each get their own', () => {
   }
 });
 
+test('a name whose numbered copies are all taken still gets a free name', () => {
+  const d = dir();
+  touch(d, 'logo.svg');
+  for (let n = 2; n <= 999; n++) touch(d, `logo-${n}.svg`);
+  const got = safeIconName(d, 'logo.svg');
+  assert.match(got, /^logo-[0-9a-f]{12}\.svg$/);
+  assert.equal(fs.existsSync(path.join(d, got)), false);
+});
+
 test('the extension is preserved when a suffix is added', () => {
   const d = dir();
   touch(d, 'icon.png');

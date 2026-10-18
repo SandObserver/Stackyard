@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { on, json, checkOrigin, getIp, readBodyCapped } = require('../router');
@@ -35,6 +36,7 @@ function safeIconName(dir, raw) {
   for (let n = 2; n <= 999 && fs.existsSync(path.join(dir, candidate)); n++) {
     candidate = `${stem}-${n}${ext}`;
   }
+  if (fs.existsSync(path.join(dir, candidate))) candidate = `${stem}-${crypto.randomBytes(6).toString('hex')}${ext}`;
   return candidate;
 }
 
@@ -219,7 +221,7 @@ on('POST', '/api/icons/upload', async (req, res) => {
     fs.mkdirSync(ICONS_PATH, { recursive: true });
     /* Never the submitted name directly. See safeIconName. */
     const saved = safeIconName(ICONS_PATH, filename);
-    fs.writeFileSync(path.join(ICONS_PATH, saved), fileData);
+    fs.writeFileSync(path.join(ICONS_PATH, saved), fileData, { flag: 'wx' });
     log.audit('icon uploaded', { filename: saved });
     json(res, 200, { ok: true, filename: saved });
   } catch (e) {
