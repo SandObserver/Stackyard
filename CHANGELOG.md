@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep app health dots updating while the Docker socket proxy stops answering.
 
+- Treat a damaged settings block in the config file as damage instead of loading
+  it as an open install.
+
+- Skip invalid entries in the config file's app list instead of failing health
+  checks, badges and widgets.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
@@ -55,6 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ip6-localhost`, in admin URL tests.
 
 - Block 6to4, local-use NAT64 and site-local IPv6 addresses in admin URL tests.
+
+- Refuse a config save whose settings block is not an object, which could remove
+  the password.
 
 ## [1.18.0] - 2026-10-17
 
