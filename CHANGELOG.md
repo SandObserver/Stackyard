@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Withhold stored secrets when a widget's type changes, the port map is removed,
   or certificate checking for widgets is turned on or off.
 
+- Stop trusting the first host name that opens Stackyard while no password is
+  set. Add a domain name in Allowed Addresses from an IP address or a local
+  name.
+
 ## [1.18.0] - 2026-10-17
 
 ### Added
