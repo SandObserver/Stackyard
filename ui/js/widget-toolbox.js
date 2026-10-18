@@ -618,10 +618,6 @@ export function poll(opts = {}) {
     try {
       const data = await doFetch();
       if (stopped) return;
-      fails = 0;
-      lastOk = Date.now();
-      everOk = true;
-      lastData = data;
       if (isEmpty(data)) {
         if (ov) ov.empty(opts.emptyText || _t('noData', 'No data'));
         else opts.onEmpty && opts.onEmpty(data);
@@ -629,6 +625,10 @@ export function poll(opts = {}) {
         if (ov) ov.ok();
         opts.render && opts.render(data);
       }
+      fails = 0;
+      lastOk = Date.now();
+      everOk = true;
+      lastData = data;
     } catch (e) {
       if (stopped) return;
       fails++;

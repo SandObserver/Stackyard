@@ -497,3 +497,42 @@ test('a widget drawing its own empty state keeps its content', () => {
   errorState({ root }).empty('Nothing here');
   assert.equal(content.classList.contains('wt-gone'), false);
 });
+
+test('a render that throws on every tick goes stale like a failed fetch', async () => {
+  const errors = [];
+  let call = 0;
+  const p = poll({
+    interval: 5,
+    staleAfter: 2,
+    fetch: async () => ({ call: ++call }),
+    render: d => {
+      if (d.call > 1) throw new TypeError('bad field');
+    },
+    onError: info => errors.push(info),
+  });
+  await tick(60);
+  p.stop();
+
+  assert.equal(errors[0].stale, false, 'one failed render is within tolerance');
+  assert.equal(errors[0].everOk, true);
+  assert.ok(
+    errors.some(e => e.stale),
+    'repeated render failures go stale',
+  );
+});
+
+test('a widget that never rendered reports its first render failure', async () => {
+  const errors = [];
+  const p = poll({
+    interval: 5,
+    fetch: async () => ({}),
+    render: () => {
+      throw new TypeError('bad field');
+    },
+    onError: info => errors.push(info),
+  });
+  await tick(20);
+  p.stop();
+
+  assert.equal(errors[0].everOk, false);
+});
