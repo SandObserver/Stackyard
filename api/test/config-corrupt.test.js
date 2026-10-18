@@ -151,3 +151,31 @@ test('item entries that are not objects are skipped and the file is backed up', 
   assert.equal(b.length, 1);
   assert.equal(fs.readFileSync(path.join(DIR, b[0]), 'utf8'), raw);
 });
+
+test('a file broken after the last read is kept, not overwritten by the next save', () => {
+  reset();
+  const cfg = fresh();
+  cfg.saveConfig({ items: [{ id: 'a', type: 'app' }], settings: {} });
+  cfg.loadConfig();
+  fs.writeFileSync(CFG, '{ edited by hand');
+  assert.throws(() => cfg.saveConfig(cfg.loadConfigForUpdate()));
+  assert.equal(fs.readFileSync(CFG, 'utf8'), '{ edited by hand');
+  assert.equal(backups().length, 1);
+});
+
+test('a hand edit made after the last read survives a read-modify-write', () => {
+  reset();
+  const cfg = fresh();
+  cfg.saveConfig({ items: [], settings: { theme: 'dark' } });
+  cfg.loadConfig();
+  fs.writeFileSync(
+    CFG,
+    JSON.stringify({ _schemaVersion: cfg.SCHEMA_VERSION, items: [], settings: { theme: 'light' } }),
+  );
+  const next = cfg.loadConfigForUpdate();
+  next.settings.language = 'de';
+  cfg.saveConfig(next);
+  const onDisk = JSON.parse(fs.readFileSync(CFG, 'utf8'));
+  assert.equal(onDisk.settings.theme, 'light');
+  assert.equal(onDisk.settings.language, 'de');
+});
