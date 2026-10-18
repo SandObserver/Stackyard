@@ -27,7 +27,7 @@
   "slots.kopiaHref.hint": "The address your browser uses for this service. Leave blank to use the one above, if your browser can reach it.",
   "slots.customName.label": "Display Name",
   "slots.customName.placeholder": "Shown on the card",
-  "ui.haikus": "Trust, but|verify.\nBackup or|regret.\nNothing lasts|forever.\nNightly run.|Morning calm.|Data lives.\nBackup first.|Delete later.|Sleep better.\nLogs green.|Coffee warm.|All good.\nHope is not|a strategy.\nKeep it safe.\nExpect the|unexpected.\nWorries don't.|Good backups|do.\nPrepare early.|Panic rarely.|Smile.",
+  "ui.haikus": "Trust, but|verify.\nBackup or|regret.\nNothing lasts|forever.\nNightly run.|Morning calm.|Data lives.\nBackup first.|Delete later.|Sleep better.\nLogs green.|Coffee warm.|All good.\nHope is not|a strategy.\nKeep it|safe.\nExpect the|unexpected.\nWorries don't.|Good backups|do.\nPrepare early.|Panic rarely.|Smile.\nRAID is not|a backup.\nLuck is not|a plan.\nBack it|up.\nCopy.|Verify.\nTest the|restore.\nSave now.|Thank later.\nBits safe.|Mind calm.\n3-2-1.|Done.\nSleep|easy.",
   "ui.backupStatus": "Backup status",
   "ui.running": "running",
   "ui.unknown": "unknown",
