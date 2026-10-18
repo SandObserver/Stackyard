@@ -45,12 +45,17 @@ async function targetOf(fn) {
 const MAPPED = 'http://127.0.0.1:8096/';
 const MS = 4000;
 
-const realLookup = dns.lookup;
-dns.lookup = (host, opts, cb) => {
-  const done = typeof opts === 'function' ? opts : cb;
-  if (host !== 'stackyard-test-nx-host') return realLookup(host, opts, cb);
-  process.nextTick(() => done(Object.assign(new Error(`getaddrinfo ENOTFOUND ${host}`), { code: 'ENOTFOUND' })));
-};
+const NX = 'stackyard-test-nx-host';
+const notFound = code => Object.assign(new Error(`${code} ${NX}`), { code, hostname: NX });
+for (const name of ['resolve4', 'resolve6']) {
+  const real = dns.promises.Resolver.prototype[name];
+  dns.promises.Resolver.prototype[name] = function (host, ...rest) {
+    return host === NX ? Promise.reject(notFound(dns.NOTFOUND)) : real.call(this, host, ...rest);
+  };
+}
+const realLookup = dns.promises.lookup;
+dns.promises.lookup = (host, ...rest) =>
+  host === NX ? Promise.reject(notFound('ENOTFOUND')) : realLookup(host, ...rest);
 
 let closedPort;
 before(async () => {
