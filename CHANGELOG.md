@@ -65,6 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refuse a config save whose settings block is not an object, which could remove
   the password.
 
+- Refuse a config save or import nested too deeply, which could leave the config
+  unreadable.
+
 ## [1.18.0] - 2026-10-17
 
 ### Added
