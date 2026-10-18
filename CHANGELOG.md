@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop a large non-JSON reply from a service from stalling the dashboard.
 
+- Show an error when a widget cannot draw the data it received, instead of
+  leaving old data on screen.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
