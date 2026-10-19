@@ -213,19 +213,6 @@ function verifyToken(token, secret) {
   return readToken(token, secret)?.sessionId ?? null;
 }
 
-/* Decode without throwing. A stray '%' in any cookie on the domain would
-   otherwise fail every authenticated request. */
-function parseCookies(req) {
-  const header = req.headers.cookie || '';
-  /* Null prototype. The keys are cookie names straight off the request. */
-  const out = Object.create(null);
-  for (const part of header.split(';')) {
-    const [k, ...v] = part.trim().split('=');
-    if (k) out[k.trim()] = decodeOrRaw(v.join('='));
-  }
-  return out;
-}
-
 const TRUST_PROXY = process.env.TRUST_PROXY === 'true';
 
 /* A Secure cookie set over plain HTTP, the normal case on a LAN, is dropped by
@@ -326,14 +313,27 @@ function stripDisabledCredentials(auth) {
   return had;
 }
 
+/* Every `ds` the request carries. Do not keep only one: a host on the parent
+   domain can set its own, and the owner then fails every request. Decode
+   without throwing: a stray '%' in any cookie on the domain would otherwise
+   fail every authenticated request. */
+function sessionTokens(req) {
+  const out = [];
+  for (const part of (req.headers.cookie || '').split(';')) {
+    const [k, ...v] = part.trim().split('=');
+    if (k.trim() === 'ds') out.push(decodeOrRaw(v.join('=')));
+  }
+  return out;
+}
+
 function readSession(req, cfg) {
   const auth = cfg.settings?.auth;
   if (!auth?.secret) return null;
-  const token = parseCookies(req).ds;
-  if (!token) return null;
-  const read = readToken(token, auth.secret);
-  if (!read || Object.hasOwn(auth.revoked || {}, read.sessionId)) return null;
-  return read;
+  for (const token of sessionTokens(req)) {
+    const read = readToken(token, auth.secret);
+    if (read && !Object.hasOwn(auth.revoked || {}, read.sessionId)) return read;
+  }
+  return null;
 }
 
 /* A record is pruned only once every copy of its session has expired. Pruning
@@ -400,7 +400,7 @@ module.exports = {
   readToken,
   refreshSession,
   revokeSession,
-  parseCookies,
+  sessionTokens,
   setSessionCookie,
   clearSessionCookie,
   isSecureRequest,

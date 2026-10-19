@@ -9,7 +9,7 @@ const {
   verifyToken,
   hashPassword,
   verifyPassword,
-  parseCookies,
+  sessionTokens,
   rateLimit,
   registerLoginAttempt,
   clearAttempts,
@@ -87,10 +87,10 @@ test('verifyPassword rejects a malformed hash', async () => {
   assert.equal(await verifyPassword('anything', 'not-a-valid-hash'), false);
 });
 
-test('parseCookies parses the session cookie', () => {
-  const c = parseCookies({ headers: { cookie: 'ds=abc123; other=x' } });
-  assert.equal(c.ds, 'abc123');
-  assert.equal(c.other, 'x');
+test('sessionTokens returns every session cookie, in order', () => {
+  assert.deepEqual(sessionTokens({ headers: { cookie: 'ds=abc123; other=x' } }), ['abc123']);
+  assert.deepEqual(sessionTokens({ headers: { cookie: 'ds=a; other=x; ds=b' } }), ['a', 'b']);
+  assert.deepEqual(sessionTokens({ headers: {} }), []);
 });
 
 test('rateLimit allows up to the max then blocks', () => {
