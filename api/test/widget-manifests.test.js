@@ -29,6 +29,7 @@ const KNOWN_KEYS = new Set([
   'views',
   'viewField',
   'defaultView',
+  'params',
   'entryVersions',
 ]);
 

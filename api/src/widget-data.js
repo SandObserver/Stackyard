@@ -105,6 +105,21 @@ async function runWidgetModule(name, file, ctx) {
   return await fn(ctx);
 }
 
+/* Only these reach data.js and the cache key. Passing the raw query lets each
+   distinct value store its own cached reply. */
+function widgetParams(searchParams, manifest) {
+  const out = new URLSearchParams();
+  for (const k of ['endpoint', ...(manifest?.params || [])]) {
+    const v = searchParams.get(k);
+    if (v !== null) out.set(k, v);
+  }
+  return out;
+}
+
+/* Declared values still come from the request. Without this cap one client can
+   fill the heap. */
+const KEPT_PER_WIDGET = 16;
+
 async function getWidgetData(item, entry, endpointName, searchParams, fetch, row = null, isOptions = false) {
   const wc = item.widgetConfig || {};
   /* An options fetch must run the real path, or the editor shows fabricated
@@ -130,17 +145,19 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
   const entry = getRegistry()[item.widgetType];
   if (!entry) return json(res, 404, { error: 'unknown widget type', kind: KIND.INVALID });
 
-  const u = new URL(req.url, 'http://x');
-  const endpointName = u.searchParams.get('endpoint') || '';
+  const params = widgetParams(new URL(req.url, 'http://x').searchParams, entry.manifest);
+  const endpointName = params.get('endpoint') || '';
 
   const refresh = () =>
-    getWidgetData(item, entry, endpointName, u.searchParams, fetchUnchecked).catch(e => {
+    getWidgetData(item, entry, endpointName, params, fetchUnchecked).catch(e => {
       log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: log.reason(e) });
       throw e;
     });
-  const outcome = await latest(`${cfg._rev}:${item.id}?${u.searchParams}`, refresh, {
+  const outcome = await latest(`${cfg._rev}:${item.id}?${params}`, refresh, {
     holdMs: WIDGET_HOLD_MS,
     keepMs: WIDGET_KEEP_MS,
+    group: `${cfg._rev}:${item.id}`,
+    maxPerGroup: KEPT_PER_WIDGET,
   });
   if (!outcome) return json(res, 202, { pending: true });
   if (outcome.ok) return json(res, outcome.value.status, outcome.value.body);
@@ -210,4 +227,4 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   }
 });
 
-module.exports = { getWidgetData, normalizeBase, dataFnContext, resolveRow, labelOptions };
+module.exports = { getWidgetData, widgetParams, normalizeBase, dataFnContext, resolveRow, labelOptions };

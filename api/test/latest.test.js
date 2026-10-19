@@ -1,6 +1,6 @@
 const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { latest, reset } = require('../src/latest');
+const { latest, reset, _size } = require('../src/latest');
 
 const OPTS = { holdMs: 30, keepMs: 60_000 };
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -64,4 +64,29 @@ test('a result older than keepMs is not used', async t => {
 test('different keys do not share a result', async () => {
   await latest('a', async () => 'a', OPTS);
   assert.deepEqual(await latest('b', async () => 'b', OPTS), { ok: true, value: 'b' });
+});
+
+test('a group keeps at most maxPerGroup entries, dropping the oldest settled ones', async () => {
+  const opts = { ...OPTS, group: 'w1', maxPerGroup: 3 };
+  for (let i = 0; i < 10; i++) await latest(`w1?${i}`, async () => i, opts);
+  assert.equal(_size(), 3);
+  assert.deepEqual(await latest('w1?9', () => wait(50).then(() => 'again'), { ...opts, holdMs: 0 }), {
+    ok: true,
+    value: 9,
+  });
+});
+
+test('the cap never drops a refresh in flight, and leaves other groups alone', async () => {
+  await latest('other', async () => 0, OPTS);
+  const opts = { ...OPTS, holdMs: 0, group: 'w1', maxPerGroup: 2 };
+  const slow = () => wait(100).then(() => 1);
+  for (let i = 0; i < 5; i++) await latest(`w1?${i}`, slow, opts);
+  assert.equal(_size(), 6, 'five refreshes in flight plus the other group');
+  await wait(150);
+  await latest('w1?new', async () => 2, opts);
+  assert.equal(_size(), 3);
+  assert.deepEqual(await latest('other', () => wait(50).then(() => 'x'), { ...OPTS, holdMs: 0 }), {
+    ok: true,
+    value: 0,
+  });
 });

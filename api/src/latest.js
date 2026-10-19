@@ -4,11 +4,26 @@
 
 /** @typedef {{ ok: true, value: any } | { ok: false, error: unknown }} Outcome */
 
-/** @type {Map<string, { started: number, at: number, outcome: Outcome | null, pending: Promise<Outcome> | null }>} */
+/** @type {Map<string, { started: number, at: number, outcome: Outcome | null, pending: Promise<Outcome> | null, group: string | null }>} */
 const _entries = new Map();
 
 function prune(now, keepMs) {
   for (const [key, e] of _entries) if (!e.pending && now - e.at >= keepMs) _entries.delete(key);
+}
+
+/* Drops the oldest settled entries of a group until at most max remain. A
+   refresh in flight is never dropped. */
+function cap(group, max) {
+  /** @type {{ key: string, at: number }[]} */
+  const settled = [];
+  let count = 0;
+  for (const [key, e] of _entries) {
+    if (e.group !== group) continue;
+    count++;
+    if (!e.pending) settled.push({ key, at: e.at });
+  }
+  settled.sort((a, b) => a.at - b.at);
+  for (let i = 0; count > max && i < settled.length; i++, count--) _entries.delete(settled[i].key);
 }
 
 /** @param {number} ms @param {Promise<Outcome>} pending @returns {Promise<Outcome | undefined>} */
@@ -21,13 +36,15 @@ function within(ms, pending) {
 }
 
 /** @param {string} key @param {() => any} refresh
-    @param {{ holdMs: number, keepMs: number }} opts @returns {Promise<Outcome | null>} */
-async function latest(key, refresh, { holdMs, keepMs }) {
+    @param {{ holdMs: number, keepMs: number, group?: string, maxPerGroup?: number }} opts
+    @returns {Promise<Outcome | null>} */
+async function latest(key, refresh, { holdMs, keepMs, group, maxPerGroup }) {
   const now = Date.now();
   prune(now, keepMs);
   let e = _entries.get(key);
+  const created = !e;
   if (!e) {
-    e = { started: 0, at: 0, outcome: null, pending: null };
+    e = { started: 0, at: 0, outcome: null, pending: null, group: group ?? null };
     _entries.set(key, e);
   }
   const entry = e;
@@ -45,6 +62,7 @@ async function latest(key, refresh, { holdMs, keepMs }) {
         return outcome;
       });
   }
+  if (created && group != null && maxPerGroup) cap(group, maxPerGroup);
   const fresh = await within(entry.started + holdMs - now, entry.pending);
   if (fresh) return fresh;
   return entry.outcome && Date.now() - entry.at < keepMs ? entry.outcome : null;
@@ -54,4 +72,4 @@ function reset() {
   _entries.clear();
 }
 
-module.exports = { latest, reset };
+module.exports = { latest, reset, _size: () => _entries.size };

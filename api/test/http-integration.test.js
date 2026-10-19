@@ -223,6 +223,67 @@ test('a widget whose service stalls answers pending, then with the data once it 
   }
 });
 
+test('query values a widget does not read share one refresh and one cached reply', async () => {
+  let release;
+  const released = new Promise(r => {
+    release = r;
+  });
+  let calls = 0;
+  const upstream = http.createServer(async (_, res) => {
+    calls++;
+    await released;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{"n":7}');
+  });
+  await new Promise(r => upstream.listen(0, '127.0.0.1', r));
+  const cfg = loadConfig();
+  const url = `http://127.0.0.1:${upstream.address().port}/`;
+  saveConfig({
+    ...cfg,
+    items: [...(cfg.items || []), { id: 'junk-w', type: 'widget', widgetType: 'fixture', widgetConfig: { url } }],
+  });
+  try {
+    const replies = await Promise.all(
+      [1, 2, 3, 4, 5].map(n => req('GET', `/api/widget-data/junk-w?_=${n}`, { cookie: validCookie })),
+    );
+    assert.deepEqual(
+      replies.map(r => r.status),
+      [202, 202, 202, 202, 202],
+    );
+    assert.equal(calls, 1);
+  } finally {
+    release();
+    saveConfig(cfg);
+    upstream.closeAllConnections?.();
+    await new Promise(r => upstream.close(r));
+  }
+});
+
+test('a query value the widget manifest declares reaches its data function', async () => {
+  const manifest = path.join(_fx, 'widget.json');
+  const dataFn = path.join(_fx, 'data.js');
+  const savedManifest = fs.readFileSync(manifest, 'utf8');
+  const savedData = fs.readFileSync(dataFn, 'utf8');
+  fs.writeFileSync(manifest, JSON.stringify({ ...JSON.parse(savedManifest), params: ['range'] }));
+  fs.writeFileSync(dataFn, 'module.exports = async ctx => ({ q: ctx.params.toString() });\n');
+  delete require.cache[require.resolve(dataFn)];
+  const { loadRegistry } = require('../src/widgets');
+  loadRegistry();
+  const cfg = loadConfig();
+  saveConfig({ ...cfg, items: [...(cfg.items || []), { id: 'param-w', type: 'widget', widgetType: 'fixture' }] });
+  try {
+    const r = await req('GET', '/api/widget-data/param-w?endpoint=e&range=week&_=1', { cookie: validCookie });
+    assert.equal(r.status, 200);
+    assert.deepEqual(r.body, { q: 'endpoint=e&range=week' });
+  } finally {
+    saveConfig(cfg);
+    fs.writeFileSync(manifest, savedManifest);
+    fs.writeFileSync(dataFn, savedData);
+    delete require.cache[require.resolve(dataFn)];
+    loadRegistry();
+  }
+});
+
 test('OPTIONS is no longer specially routed', async () => {
   const r = await req('OPTIONS', '/api/config', { cookie: validCookie });
   assert.equal(r.status, 404, 'it must fall through like any other unmatched method');

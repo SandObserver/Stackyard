@@ -8,6 +8,9 @@
     "medium"
   ],
   "card": "dark",
+  "params": [
+    "seed"
+  ],
   "fields": [
     {
       "key": "statProvider",

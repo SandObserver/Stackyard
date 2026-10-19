@@ -4,7 +4,7 @@ process.env.CONFIG_PATH = path.join(tmpDir('wd'), 'apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeBase, dataFnContext, resolveRow } = require('../src/widget-data');
+const { normalizeBase, dataFnContext, resolveRow, widgetParams } = require('../src/widget-data');
 const { saveConfig } = require('../src/config');
 
 test('normalizeBase adds a scheme, trims, and strips trailing slashes', () => {
@@ -21,6 +21,31 @@ test('a widget with no data.js reports no data source', async () => {
   const out = await getWidgetData({ widgetType: 'clock' }, entry, '', new URLSearchParams(), null);
   assert.equal(out.status, 503);
   assert.match(out.body.error, /no data source/);
+});
+
+test('widgetParams keeps the endpoint and declared params and drops everything else', () => {
+  const q = new URLSearchParams('endpoint=system&seed=1&_=123&x=y');
+  assert.equal(widgetParams(q, { params: ['seed'] }).toString(), 'endpoint=system&seed=1');
+  assert.equal(widgetParams(q, {}).toString(), 'endpoint=system');
+  assert.equal(widgetParams(new URLSearchParams('_=1'), {}).toString(), '');
+});
+
+test('every query value a widget reads is declared in its manifest', () => {
+  const fs = require('node:fs');
+  const widgets = path.join(__dirname, '..', '..', 'ui', 'widgets');
+  for (const name of fs.readdirSync(widgets)) {
+    const file = path.join(widgets, name, 'data.js');
+    if (!fs.existsSync(file)) continue;
+    const manifest = JSON.parse(fs.readFileSync(path.join(widgets, name, 'widget.json'), 'utf8'));
+    const src = fs.readFileSync(file, 'utf8');
+    for (const [, key] of src.matchAll(/params\??\.get\(\s*['"]([^'"]+)['"]/g)) {
+      assert.equal(
+        widgetParams(new URLSearchParams({ [key]: 'v' }), manifest).get(key),
+        'v',
+        `${name}/data.js reads "${key}" but widget.json does not list it in "params"`,
+      );
+    }
+  }
 });
 
 /* ── Group-row resolution for an options fetch ──────────────────────────── */
