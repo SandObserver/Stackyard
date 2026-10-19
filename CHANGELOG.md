@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Unsplash wallpaper changes once a day instead of on every load.
 
+- Log a failing widget once, with a reminder every 10 minutes and a line on
+  recovery, instead of on every request.
+
 ### Fixed
 
 - Name a widget without a manifest for re-entry when a port map change clears
