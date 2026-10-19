@@ -336,3 +336,13 @@ export function createDirtyTracker(read) {
     },
   };
 }
+
+/** What a single-choice picker shows as chosen. An empty string is a choice
+    only when an option carries it.
+    @param {unknown} value @param {{ value?: unknown, group?: unknown }[]} options
+    @returns {string[]} */
+export function singleChoice(value, options) {
+  if (value == null) return [];
+  const v = String(value);
+  return v !== '' || options.some(o => o.group == null && String(o.value) === '') ? [v] : [];
+}

@@ -6,7 +6,7 @@
    Do not use popover. The top layer makes iOS collapse its browser toolbar,
    which exposes a strip of page canvas and misplaces the menu. */
 
-import { nextActiveIndex } from '/js/admin-logic.js?v=fc7f0836';
+import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=1cca36f5';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { formatList } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
@@ -81,9 +81,7 @@ export function createListbox(
   } = /** @type {any} */ ({}),
 ) {
   let opts = options.slice();
-  let chosen = multiple
-    ? new Set((Array.isArray(value) ? value : []).map(String))
-    : new Set(value == null || value === '' ? [] : [String(value)]);
+  let chosen = multiple ? new Set((Array.isArray(value) ? value : []).map(String)) : new Set(singleChoice(value, opts));
 
   /* The list is not a descendant of its button, so the two are tied by id. */
   const listId = id ? `${id}-list` : `lb-${++seq}`;
@@ -331,17 +329,13 @@ export function createListbox(
     list,
     getValue,
     setValue(v) {
-      chosen = multiple
-        ? new Set((Array.isArray(v) ? v : []).map(String))
-        : new Set(v == null || v === '' ? [] : [String(v)]);
+      chosen = multiple ? new Set((Array.isArray(v) ? v : []).map(String)) : new Set(singleChoice(v, opts));
       paint();
     },
     setOptions(next, v) {
       opts = (next || []).slice();
       if (v !== undefined) {
-        chosen = multiple
-          ? new Set((Array.isArray(v) ? v : []).map(String))
-          : new Set(v == null || v === '' ? [] : [String(v)]);
+        chosen = multiple ? new Set((Array.isArray(v) ? v : []).map(String)) : new Set(singleChoice(v, opts));
       } else if (!multiple) {
         /* A refreshed list may no longer carry what was chosen. */
         const still = [...chosen].filter(c => opts.some(o => String(o.value) === c));
