@@ -86,7 +86,7 @@ function zoneOk(z){
 async function showZoneError(){
   const w=document.getElementById('widget');
   w.className='widget mode-'+_mode;
-  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=29dcd8c6');
+  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=85032a30');
   await loadStrings();
   const line=wt('ui.unknownZone','Unknown timezone');
   errorState({ root: w, place: 'center' }).empty(line);
@@ -262,9 +262,10 @@ function stop(){
   if(_stepId){ clearTimeout(_stepId); _stepId=null; }
 }
 
+let _inView=true;
 document.addEventListener('visibilitychange', ()=>{
   if(_zoneBad) return;
-  if(document.hidden) stop();
+  if(document.hidden || !_inView) stop();
   else { render(!_reduceMotion); start(); }
 });
 
@@ -273,7 +274,8 @@ function watchVisibility(){
   if(!('IntersectionObserver' in window)) return;
   _io=new IntersectionObserver(entries=>{
     for(const e of entries){
-      if(e.isIntersecting && !document.hidden) start();
+      _inView=e.isIntersecting;
+      if(_inView && !document.hidden) start();
       else stop();
     }
   }, { threshold: 0 });

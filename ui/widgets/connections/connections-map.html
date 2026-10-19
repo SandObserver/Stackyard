@@ -182,7 +182,7 @@ window.__MAP=(function(D){
 })(window.__DOTS);
 </script>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo } from '/js/widget-toolbox.js?v=29dcd8c6';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen } from '/js/widget-toolbox.js?v=85032a30';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
 (function(){
@@ -211,6 +211,8 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
   let raf=0;
   function kick(){if(!raf)raf=requestAnimationFrame(frame);}
   function frame(now){raf=0;draw(now);}
+  let onScreen=false;
+  whileOnScreen(cv,v=>{onScreen=v;if(v)kick();});
 
   function computeLayers(data){
     lit=new Map();points=[];legend=[];
@@ -352,7 +354,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       ctx.fillStyle=rgbCss(pt.col);
       disc(x,y,p*2/3*pulse);
     }
-    if(!reduce&&points.length)kick();
+    if(!reduce&&points.length&&onScreen)kick();
   }
   function redraw(){relayout();kick();}
 
