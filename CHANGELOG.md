@@ -80,6 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Saving the wallpaper no longer replaces the stored Unsplash key with the
   field's label.
 
+- Icons always load through the server, so the CDN does not learn which services
+  a dashboard shows.
+
 ## [1.18.0] - 2026-10-17
 
 ### Added
