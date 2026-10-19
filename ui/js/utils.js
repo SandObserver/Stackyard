@@ -410,8 +410,15 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   const refreshInterval = Number(o.refreshInterval) || 0;
   if (refreshInterval >= 250) {
     const base = refreshInterval;
+    /* Not ifr.src alone: each assignment adds an entry to the tab's Back
+       history. */
     const reload = () => {
-      ifr.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
+      const next = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
+      try {
+        ifr.contentWindow.location.replace(next);
+      } catch {
+        ifr.src = next;
+      }
     };
     const jit = () => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
     /* The handle is reassigned every tick. The cleanup must read the current
