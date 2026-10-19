@@ -304,9 +304,9 @@ test('picker URLs from the catalogue go through the proxy, except in the demo', 
   await withLocalIcons([], () => assert.equal(throughServer(u), u), true);
 });
 
-test('no chain outside the demo names the CDN', async () => {
+test('every chain outside the demo stays on this server', async () => {
   await withLocalIcons([], () => {
     for (const raw of ['radarr', 'radarr.png', 'selfhst:bigbluebutton', 'simple:plex', 'lobe:deepseek', 'nosuch:plex'])
-      for (const u of iconChain(raw)) assert.ok(!u.includes('cdn.jsdelivr.net'), `${raw} -> ${u}`);
+      for (const u of iconChain(raw)) assert.match(u, /^\/(?!\/)/, `${raw} -> ${u}`);
   });
 });
