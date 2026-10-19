@@ -5,6 +5,7 @@
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, readConfig, dismissSetupPrompt, setInlineRow } = require('./helpers');
+const { BASE_URL } = require('./base-url');
 
 const WALLPAPER = { type: 'url', url: '/icons/wallpaper/none.png', brightness: 1, fit: 'fill' };
 
@@ -100,4 +101,51 @@ test('a failed wallpaper link goes back to the last saved wallpaper, not the one
   await setInlineRow(page, 'ie-bgurl', 'bg-url-inp', 'https://example.invalid/second.jpg');
   await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
   await expect(page.locator('#ie-bgurl-v')).toContainText('saved-later.png');
+});
+
+test.describe('Unsplash key', () => {
+  const UNSPLASH = { type: 'unsplash', brightness: 0.62, collection: '' };
+
+  test.beforeEach(async ({ page, request }) => {
+    await seedConfig(request, { items: [], settings: { background: { ...UNSPLASH } } });
+    const res = await request.post('/api/settings/unsplash-key', {
+      data: { apiKey: 'stored-key' },
+      headers: { Origin: BASE_URL },
+    });
+    expect(res.ok()).toBeTruthy();
+    await page.route('**/api/wallpaper', route => route.fulfill({ json: { url: null } }));
+    await page.goto('/admin/');
+    await page.locator('.nl[data-sec="appearance"]').click();
+    await expect(page.locator('#ie-apikey-v')).toHaveText('Configured');
+  });
+
+  test('opening the field and saving does not send a key', async ({ page }) => {
+    const sent = [];
+    page.on('request', r => {
+      if (r.url().includes('/api/settings/unsplash-key') && r.method() === 'POST') sent.push(r.postData());
+    });
+    await page.locator('#ie-apikey .rv').click();
+    const input = page.locator('#bg-apikey-inp');
+    await expect(input).toHaveValue('');
+    await expect(input).toHaveAttribute('type', 'password');
+    await page.locator('#ie-apikey .rl').click();
+    await expect(page.locator('#ie-apikey-v')).toHaveText('Configured');
+
+    await setInlineRow(page, 'ie-bgcol', 'bg-col-inp', 'AGVpqBZnzUE');
+    const saved = page.waitForResponse(r => r.url().includes('/api/config') && r.request().method() === 'POST');
+    await page.locator('#bg-save').click();
+    expect((await saved).ok()).toBeTruthy();
+    await expect(page.locator('#toast')).not.toHaveClass(/\berr\b/);
+    expect(sent).toEqual([]);
+  });
+
+  test('a typed key is sent once and the field is emptied', async ({ page }) => {
+    await setInlineRow(page, 'ie-apikey', 'bg-apikey-inp', 'new-key');
+    await expect(page.locator('#ie-apikey-v')).toHaveText('New value set');
+    const posted = page.waitForRequest(r => r.url().includes('/api/settings/unsplash-key') && r.method() === 'POST');
+    await page.locator('#bg-save').click();
+    expect(JSON.parse((await posted).postData() || '{}')).toEqual({ apiKey: 'new-key' });
+    await expect(page.locator('#ie-apikey-v')).toHaveText('Configured');
+    await expect(page.locator('#bg-apikey-inp')).toHaveValue('');
+  });
 });

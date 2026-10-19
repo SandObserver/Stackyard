@@ -22,7 +22,8 @@ import {
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-} from '/js/admin-settings.js?v=65546081';
+  wireUnsplashKey,
+} from '/js/admin-settings.js?v=5d039019';
 import {
   apiGet,
   apiPost,
@@ -789,10 +790,7 @@ function initAllInlineEdits() {
     );
   }
 
-  const apiInp = document.createElement('input');
-  apiInp.id = 'bg-apikey-inp';
-  document.body.appendChild(apiInp);
-  initInlineEdit('ie-apikey', 'bg-apikey-inp', { placeholder: () => t('appearance.unsplashKeyPh') });
+  wireUnsplashKey();
 
   const colInp = document.createElement('input');
   colInp.id = 'bg-col-inp';
