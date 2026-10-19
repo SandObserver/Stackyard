@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Nine short Backup haikus that fit small cards.
 
+- Let a widget manifest list the query parameters its data function reads.
+
 ### Changed
 
 - The Unsplash wallpaper changes once a day instead of on every load.
@@ -61,6 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Referrer policy picker shows and selects Default.
 
 - Now Playing no longer cuts off the second line of a long title.
+
+- Stop extra query values on widget data requests from filling server memory and
+  multiplying upstream calls.
 
 ### Security
 
