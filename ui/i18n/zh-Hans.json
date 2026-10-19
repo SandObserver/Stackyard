@@ -43,6 +43,7 @@
     "hostIpTip": "允许徽章从服务器自身地址获取数据。否则这些请求会被拦截。",
     "allowedHosts": "允许的地址",
     "allowedHostsNone": "仅本地地址",
+    "allowedHostsAddTip": "此页面所在的地址不在列表中。添加它，以免其他网站的页面耗尽你的登录尝试次数。",
     "allowedHostsTip": "在未设置密码时，Stackyard 只在 IP 地址、<code>nas</code> 或 <code>nas.local</code> 这样的本地名称以及此处列出的地址上响应。多个地址用逗号分隔。",
     "monitoring": "监控",
     "loggingLevel": "日志级别",

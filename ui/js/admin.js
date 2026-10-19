@@ -23,7 +23,7 @@ import {
   showBgFields,
   showWallpaperFile,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=41547198';
+} from '/js/admin-settings.js?v=de5b1723';
 import {
   apiGet,
   apiPost,

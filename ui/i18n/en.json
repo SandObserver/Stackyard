@@ -43,6 +43,7 @@
     "hostIpTip": "Lets badges fetch from your server's own address. Without it, those requests are blocked.",
     "allowedHosts": "Allowed Addresses",
     "allowedHostsNone": "Local addresses only",
+    "allowedHostsAddTip": "This page is open on an address that isn’t listed. Add it so a page on another site can’t use up your sign-in attempts.",
     "allowedHostsTip": "While no password is set, Stackyard answers only on IP addresses, local names such as <code>nas</code> or <code>nas.local</code>, and the addresses listed here. Separate them with commas.",
     "monitoring": "Monitoring",
     "loggingLevel": "Logging Level",

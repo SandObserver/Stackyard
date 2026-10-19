@@ -43,6 +43,7 @@
     "hostIpTip": "Permite que las insignias obtengan datos de la propia dirección de tu servidor. Sin esto, esas solicitudes se bloquean.",
     "allowedHosts": "Direcciones permitidas",
     "allowedHostsNone": "Solo direcciones locales",
+    "allowedHostsAddTip": "Esta página está abierta en una dirección que no está en la lista. Añádela para que una página de otro sitio no pueda agotar tus intentos de inicio de sesión.",
     "allowedHostsTip": "Mientras no haya contraseña, Stackyard solo responde en direcciones IP, nombres locales como <code>nas</code> o <code>nas.local</code>, y las direcciones de esta lista. Sepáralas con comas.",
     "monitoring": "Monitorización",
     "loggingLevel": "Nivel de registro",
