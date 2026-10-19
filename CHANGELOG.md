@@ -77,6 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refuse a config save or import nested too deeply, which could leave the config
   unreadable.
 
+- Saving the wallpaper no longer replaces the stored Unsplash key with the
+  field's label.
+
 ## [1.18.0] - 2026-10-17
 
 ### Added
