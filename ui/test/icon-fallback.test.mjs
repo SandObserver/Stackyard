@@ -60,7 +60,7 @@ function host() {
 const settle = () => new Promise(r => setTimeout(r, 0));
 
 const { paintIcon } = await import('../js/admin-shared.js');
-const { iconChain } = await import('../js/icons.js');
+const { iconChain, loadLocalIcons } = await import('../js/icons.js');
 
 test('an icon that resolves is painted as an image', async () => {
   const chain = iconChain('plex');
@@ -74,11 +74,15 @@ test('an icon that resolves is painted as an image', async () => {
 
 /* The defect: the picker set candidates[0] and stopped. */
 test('a first candidate that misses falls through to the next', async () => {
-  const chain = iconChain('plex');
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ files: ['plex.png'] }) });
+  await loadLocalIcons();
+  globalThis.fetch = realFetch;
+  const chain = iconChain('plex.png');
   assert.ok(chain.length > 1, 'this icon name should offer more than one candidate');
   makeDom([chain[chain.length - 1]]);
   const h = host();
-  paintIcon(h, 'plex', 'P');
+  paintIcon(h, 'plex.png', 'P');
   await settle();
   const img = h.children[0];
   assert.ok(img, 'the image was dropped even though a later candidate exists');

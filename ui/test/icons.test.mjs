@@ -12,7 +12,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const { resolveIcon, iconChain, loadLocalIcons, cdnIconName, cdnIconRef, splitIconRef } = await import(
+const { resolveIcon, iconChain, loadLocalIcons, cdnIconName, cdnIconRef, splitIconRef, throughServer } = await import(
   '../js/icons.js'
 );
 
@@ -100,22 +100,17 @@ test('an empty or missing value produces nothing', async () => {
 
 /* ── iconChain ────────────────────────────────────────────────────────────── */
 
-test('a local icon is tried before the CDN', async () => {
+test('a local icon is tried before the proxy', async () => {
   await withLocalIcons(ON_DISK, () => {
     const chain = iconChain('LOGO.SVG');
     assert.equal(chain[0], '/icons/LOGO.SVG', 'the local file comes first');
-    assert.ok(chain.length > 1, 'and the CDN is still a fallback');
+    assert.ok(chain[1].startsWith('/api/icons/cdn?'), 'and the proxy is still a fallback');
   });
 });
 
-test('a name with no local copy falls through to the CDN', async () => {
+test('a name with no local copy goes to the proxy and never to the CDN', async () => {
   await withLocalIcons([], () => {
-    const chain = iconChain('radarr');
-    assert.deepEqual(chain, [
-      '/api/icons/cdn?name=radarr&source=di',
-      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg',
-      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png',
-    ]);
+    assert.deepEqual(iconChain('radarr'), ['/api/icons/cdn?name=radarr&source=di']);
   });
 });
 
@@ -185,7 +180,6 @@ test('a mixed-case name reaches the right CDN URL', async () => {
   await withLocalIcons([], () => {
     assert.equal(iconChain('MySpeed')[0], '/api/icons/cdn?name=myspeed&source=di');
     assert.equal(iconChain('Home Assistant')[0], '/api/icons/cdn?name=home-assistant&source=di');
-    assert.ok(iconChain('MySpeed').includes('https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/myspeed.svg'));
   });
 });
 
@@ -210,11 +204,7 @@ test('a local icon still takes precedence over the CDN', async () => {
    stored as source and name together. */
 test('a catalogue prefix picks that catalogue', async () => {
   await withLocalIcons([], () => {
-    assert.deepEqual(iconChain('selfhst:bigbluebutton'), [
-      '/api/icons/cdn?name=bigbluebutton&source=selfhst',
-      'https://cdn.jsdelivr.net/gh/selfhst/icons/svg/bigbluebutton.svg',
-      'https://cdn.jsdelivr.net/gh/selfhst/icons/png/bigbluebutton.png',
-    ]);
+    assert.deepEqual(iconChain('selfhst:bigbluebutton'), ['/api/icons/cdn?name=bigbluebutton&source=selfhst']);
   });
 });
 
@@ -240,12 +230,19 @@ test('an extension in the name is still passed through', async () => {
    404 on every dashboard load. */
 test('a catalogue with no png is not asked for one', async () => {
   await withLocalIcons([], () => {
-    assert.deepEqual(iconChain('simple:plex'), [
-      '/api/icons/cdn?name=plex&source=simple',
-      'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/plex.svg',
-    ]);
-    assert.equal(iconChain('lobe:deepseek').length, 2);
+    assert.deepEqual(iconChain('simple:plex'), ['/api/icons/cdn?name=plex&source=simple']);
   });
+  await withLocalIcons(
+    [],
+    () => {
+      assert.deepEqual(iconChain('simple:plex'), [
+        'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/plex.svg',
+      ]);
+      assert.equal(iconChain('lobe:deepseek').length, 1);
+    },
+    true,
+  );
+  await withLocalIcons([], () => {});
 });
 
 test('an unknown prefix is treated as a name, not a catalogue', async () => {
@@ -259,4 +256,57 @@ test('a prefix survives normalising and a stray one does not', async () => {
   assert.equal(cdnIconRef('Adguard Home'), 'adguard-home');
   assert.equal(cdnIconRef('selfhst:'), '');
   assert.deepEqual(splitIconRef('lobe:openai-color'), { source: 'lobe', slug: 'openai-color' });
+});
+
+/* ── the CDN is not told which services the dashboard shows ─────────────── */
+
+test('a saved catalogue link loads through the proxy', async () => {
+  await withLocalIcons([], () => {
+    assert.deepEqual(iconChain('https://cdn.jsdelivr.net/gh/selfhst/icons/svg/jellyfin-light.svg'), [
+      '/api/icons/cdn?name=jellyfin-light&ext=svg&source=selfhst',
+    ]);
+    assert.deepEqual(iconChain('https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/plex.png'), [
+      '/api/icons/cdn?name=plex&ext=png&source=di',
+    ]);
+    assert.deepEqual(iconChain('https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/plex.svg'), [
+      '/api/icons/cdn?name=plex&ext=svg&source=simple',
+    ]);
+  });
+});
+
+test('a saved catalogue link held locally is served locally first', async () => {
+  await withLocalIcons(['plex.png'], () => {
+    assert.deepEqual(iconChain('https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/plex.png'), [
+      '/icons/plex.png',
+      '/api/icons/cdn?name=plex&ext=png&source=di',
+    ]);
+  });
+});
+
+test('a link that is not a catalogue file is loaded as saved', async () => {
+  await withLocalIcons([], () => {
+    for (const u of [
+      'https://example.invalid/plex.svg',
+      'https://cdn.jsdelivr.net/gh/someone/else/plex.svg',
+      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/plex.png',
+      'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/webp/plex.webp',
+    ])
+      assert.deepEqual(iconChain(u), [u]);
+  });
+});
+
+test('picker URLs from the catalogue go through the proxy, except in the demo', async () => {
+  const u = 'https://cdn.jsdelivr.net/gh/lobehub/lobe-icons/packages/static-svg/icons/openai.svg';
+  await withLocalIcons([], () => {
+    assert.equal(throughServer(u), '/api/icons/cdn?name=openai&ext=svg&source=lobe');
+    assert.equal(throughServer('/icons/x.svg'), '/icons/x.svg');
+  });
+  await withLocalIcons([], () => assert.equal(throughServer(u), u), true);
+});
+
+test('every chain outside the demo stays on this server', async () => {
+  await withLocalIcons([], () => {
+    for (const raw of ['radarr', 'radarr.png', 'selfhst:bigbluebutton', 'simple:plex', 'lobe:deepseek', 'nosuch:plex'])
+      for (const u of iconChain(raw)) assert.match(u, /^\/(?!\/)/, `${raw} -> ${u}`);
+  });
 });

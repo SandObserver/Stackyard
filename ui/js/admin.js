@@ -1,7 +1,7 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=dd5f148f';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=71f8a57a';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=92c6949c';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=73ed7df1';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=7b21e1a0';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=02db1758';
 import { resolveAdminSection } from '/js/admin-logic.js?v=fc7f0836';
 import {
   afterImport,
@@ -23,7 +23,7 @@ import {
   showBgFields,
   showWallpaperFile,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=5d039019';
+} from '/js/admin-settings.js?v=9ffe0860';
 import {
   apiGet,
   apiPost,
@@ -37,16 +37,16 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=36dc5cc1';
+} from '/js/admin-shared.js?v=da7df247';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=8a6be17f';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=047fef40';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=23e87940';
+import { createListbox } from '/js/listbox.js?v=4afb5969';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
-import { loadLocalIcons } from '/js/icons.js?v=9c7b5111';
+import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=628341d4';
 import {
   clearSkipTls,
@@ -82,8 +82,8 @@ import {
   storeGet,
   storeSet,
   tgt,
-} from '/js/utils.js?v=14b18b8c';
-import { applyBackground, resolveBackground } from '/js/background.js?v=0f4ca726';
+} from '/js/utils.js?v=dc4ac52e';
+import { applyBackground, resolveBackground } from '/js/background.js?v=d6f2e701';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
 ensureSprite();
