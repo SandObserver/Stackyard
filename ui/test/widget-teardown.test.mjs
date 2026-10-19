@@ -228,6 +228,35 @@ test('the rebuild is driven by the shared layout rule', () => {
   assert.match(src, /onLayoutChange\(mobile => \{/, 'the layout change is what triggers a rebuild');
 });
 
+test('a reload replaces the frame location instead of adding a Back entry', async () => {
+  const h = harness();
+  const frames = [];
+  const make = globalThis.document.createElement;
+  globalThis.document.createElement = tag => {
+    const e = make(tag);
+    if (tag === 'iframe') {
+      e.replaced = [];
+      e.contentWindow = { location: { replace: url => e.replaced.push(url) } };
+      frames.push(e);
+    }
+    return e;
+  };
+  globalThis.document.hidden = false;
+  const wait = ms => new Promise(r => h.realSetTimeout(r, ms));
+  const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+  try {
+    mountScaledWidget(h.card(), { ...OPTS, iframeOpts: { refreshInterval: 250 } });
+    const first = frames[0].src;
+    await wait(800);
+    assert.ok(frames[0].replaced.length > 0, 'no reload ran');
+    assert.match(frames[0].replaced[0], /^http:\/\/svc\/w\?_r=\d+$/);
+    assert.equal(frames[0].src, first, 'src was reassigned, which adds a Back entry');
+  } finally {
+    teardownWidgets();
+    h.done();
+  }
+});
+
 test('a hidden tab does not reload its widgets, and catches up on return', async () => {
   const h = harness();
   const frames = [];

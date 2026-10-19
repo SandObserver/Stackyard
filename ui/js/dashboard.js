@@ -28,9 +28,9 @@ import {
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=dc4ac52e';
+} from '/js/utils.js?v=705ca896';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=c76fb899';
+import { initSpotlight } from '/js/spotlight.js?v=ad660003';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=85138697';
@@ -46,7 +46,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=4265d299';
+} from '/js/ui.js?v=049178d3';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=5c72bd4c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
@@ -59,7 +59,7 @@ import {
   restorePage,
   wheelPager,
 } from '/js/dashboard-logic.js?v=6a29cedc';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=d6f2e701';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=25428bf2';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
