@@ -67,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop extra query values on widget data requests from filling server memory and
   multiplying upstream calls.
 
+- Stop app tiles with a refresh interval from filling the browser Back history.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
