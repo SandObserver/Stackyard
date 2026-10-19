@@ -127,6 +127,32 @@ function syncSessionRows(now = false) {
   const canRevoke = on && _passwordSet;
   reveal(el('sec-revoke-wrap'), canRevoke, now);
   reveal(el('revoke-tip-wrap'), canRevoke, now);
+  syncHostOffer(now);
+}
+
+function syncHostOffer(now = false) {
+  const here = hostnameOf(location.host);
+  const listed = parseHostList(inp('srv-hosts')?.value || '') || [];
+  const show = !!inp('sec-en')?.checked && _passwordSet && !!here && !isLocalAddress(here) && !listed.includes(here);
+  const name = el('hosts-add-name');
+  if (name && here) setUserText(name, here);
+  reveal(el('hosts-add-wrap'), show, now);
+  reveal(el('hosts-add-tip-wrap'), show, now);
+}
+
+function addCurrentHost() {
+  const here = hostnameOf(location.host);
+  const hostsEl = inp('srv-hosts');
+  const list = parseHostList(hostsEl?.value || '');
+  if (!hostsEl || !here || !list) return;
+  hostsEl.value = [...list, here].join(', ');
+  const valEl = el('ie-hosts-v');
+  if (valEl) {
+    setUserText(valEl, hostsEl.value);
+    valEl.classList.remove('is-ph');
+  }
+  syncHostOffer();
+  /** @type {HTMLElement | null | undefined} */ (el('ie-hosts')?.querySelector('.pe'))?.focus();
 }
 
 /* Rebuild on every load. The control takes its value at render time and has no
@@ -279,6 +305,8 @@ export function loadSettings(c) {
     }
   });
   secEnEl?.addEventListener('change', () => syncSessionRows());
+  el('hosts-add')?.addEventListener('click', addCurrentHost);
+  inp('srv-hosts')?.addEventListener('blur', () => syncHostOffer());
 
   _srvTrack = trackSave('srv-save', readServerForm);
   _bgTrack = trackSave('bg-save', readWallpaperForm);
