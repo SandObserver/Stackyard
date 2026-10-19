@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop an icon upload from overwriting an existing icon when many share its
   name.
 
+- The Referrer policy picker shows and selects Default.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
