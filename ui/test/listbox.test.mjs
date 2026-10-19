@@ -222,3 +222,8 @@ test('the language picker marks each language name with its language', () => {
     'the button does not carry it',
   );
 });
+
+test('every single-choice value goes through singleChoice', () => {
+  assert.equal((src.match(/new Set\(singleChoice\(/g) || []).length, 3);
+  assert.doesNotMatch(src, /=== '' \? \[\] :/);
+});

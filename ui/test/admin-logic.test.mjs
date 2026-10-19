@@ -27,6 +27,7 @@ import {
   failureIsMissingApiPath,
   createDirtyTracker,
   BLOCK,
+  singleChoice,
 } from '../js/admin-logic.js';
 
 test('createDirtyTracker is clean until the value moves, and clean again after reset', () => {
@@ -650,4 +651,21 @@ test('sameIconName treats nothing as nothing', () => {
   assert.equal(sameIconName('', ''), false);
   assert.equal(sameIconName(null, undefined), false);
   assert.equal(sameIconName('---', '***'), false);
+});
+
+test('an empty string is a choice when an option carries it', () => {
+  const opts = [
+    { value: '', label: 'Default' },
+    { value: 'no-referrer', label: 'no-referrer' },
+  ];
+  assert.deepEqual(singleChoice('', opts), ['']);
+  assert.deepEqual(singleChoice('no-referrer', opts), ['no-referrer']);
+});
+
+test('an empty string or nothing is no choice otherwise', () => {
+  const opts = [{ value: 'a' }, { group: 'Heading', value: '' }];
+  assert.deepEqual(singleChoice('', opts), []);
+  assert.deepEqual(singleChoice(null, opts), []);
+  assert.deepEqual(singleChoice(undefined, opts), []);
+  assert.deepEqual(singleChoice(3, [{ value: 3 }]), ['3']);
 });
