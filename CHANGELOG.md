@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Nine short Backup haikus that fit small cards.
 
+### Changed
+
+- The Unsplash wallpaper changes once a day instead of on every load.
+
 ### Fixed
 
 - Name a widget without a manifest for re-entry when a port map change clears
@@ -85,6 +89,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A page on another site can no longer lock the owner out of sign-in by pointing
   its host name at the server.
+
+- The wallpaper endpoint no longer returns Unsplash's error text.
 
 ## [1.18.0] - 2026-10-17
 
