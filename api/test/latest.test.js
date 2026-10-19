@@ -1,6 +1,13 @@
 const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { latest, reset, _size } = require('../src/latest');
+const { latest: latestWithTime, reset, _size } = require('../src/latest');
+
+const latest = async (...args) => {
+  const outcome = await latestWithTime(...args);
+  if (!outcome) return outcome;
+  const { at, ...rest } = outcome;
+  return rest;
+};
 
 const OPTS = { holdMs: 30, keepMs: 60_000 };
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -100,4 +107,12 @@ test('the cap never drops a refresh in flight, and leaves other groups alone', a
     ok: true,
     value: 0,
   });
+});
+
+test('an outcome carries the time it settled, and a stored one keeps it', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 });
+  assert.equal((await latestWithTime('k', async () => 'old', OPTS)).at, 1_000_000);
+  t.mock.timers.tick(10_000);
+  const stored = await latestWithTime('k', () => new Promise(() => {}), { holdMs: 0, keepMs: OPTS.keepMs });
+  assert.deepEqual(stored, { ok: true, value: 'old', at: 1_000_000 });
 });

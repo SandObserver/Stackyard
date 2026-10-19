@@ -4,9 +4,14 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=w1' };
-const { fetchData } = await import('../js/widget-toolbox.js');
+const { fetchData, readingTime } = await import('../js/widget-toolbox.js');
 
-const reply = (status, body) => ({ status, ok: status >= 200 && status < 300, json: async () => body });
+const reply = (status, body, headers = {}) => ({
+  status,
+  ok: status >= 200 && status < 300,
+  headers: new Headers(headers),
+  json: async () => body,
+});
 
 /* Settles `promise` while advancing mocked timers one second at a time. */
 async function drive(t, promise) {
@@ -44,4 +49,18 @@ test('a reply that stays pending ends as a timeout', async t => {
   };
   await assert.rejects(drive(t, fetchData()), { kind: 'timeout' });
   assert.ok(calls > 1 && calls < 50, `${calls} fetches`);
+});
+
+test('a reply the server held back is dated by its Age', async () => {
+  globalThis.fetch = async () => reply(200, { n: 1 }, { Age: '600' });
+  const before = Date.now();
+  const data = await fetchData('stats');
+  assert.ok(Math.abs(readingTime(data) - (before - 600_000)) < 1000);
+});
+
+test('a fresh reply is dated now', async () => {
+  globalThis.fetch = async () => reply(200, { n: 1 }, { Age: '0' });
+  const data = await fetchData('stats');
+  assert.ok(Date.now() - readingTime(data) < 1000);
+  assert.ok(Date.now() - readingTime({ other: true }) < 1000);
 });

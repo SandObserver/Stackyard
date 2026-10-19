@@ -2,7 +2,7 @@
    holdMs old. After that it gets the last settled outcome, or null when there
    is none younger than keepMs. */
 
-/** @typedef {{ ok: true, value: any } | { ok: false, error: unknown }} Outcome */
+/** @typedef {{ ok: true, value: any, at: number } | { ok: false, error: unknown, at: number }} Outcome */
 
 /** @type {Map<string, { started: number, at: number, keepMs: number, outcome: Outcome | null, pending: Promise<Outcome> | null, group: string | null }>} */
 const _entries = new Map();
@@ -53,12 +53,12 @@ async function latest(key, refresh, { holdMs, keepMs, group, maxPerGroup }) {
     entry.started = now;
     entry.pending = (async () => refresh())()
       .then(
-        value => /** @type {Outcome} */ ({ ok: true, value }),
-        error => /** @type {Outcome} */ ({ ok: false, error }),
+        value => /** @type {Outcome} */ ({ ok: true, value, at: Date.now() }),
+        error => /** @type {Outcome} */ ({ ok: false, error, at: Date.now() }),
       )
       .then(outcome => {
         entry.outcome = outcome;
-        entry.at = Date.now();
+        entry.at = outcome.at;
         entry.pending = null;
         return outcome;
       });

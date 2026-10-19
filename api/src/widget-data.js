@@ -172,7 +172,10 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
     maxPerGroup: KEPT_PER_WIDGET,
   });
   if (!outcome) return json(res, 202, { pending: true });
-  if (outcome.ok) return json(res, outcome.value.status, outcome.value.body);
+  if (outcome.ok) {
+    res.setHeader('Age', String(Math.max(0, Math.floor((Date.now() - outcome.at) / 1000))));
+    return json(res, outcome.value.status, outcome.value.body);
+  }
   fail(res, outcome.error, { status: 502, quiet: true });
 });
 

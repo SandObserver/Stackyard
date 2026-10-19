@@ -118,7 +118,19 @@ export async function fetchData(endpoint, opts = {}) {
     if (typeof d.kind === 'string') e.kind = d.kind;
     throw e;
   }
-  return r.json();
+  const data = await r.json();
+  const age = Number(r.headers.get('Age'));
+  if (data && typeof data === 'object') _readAt.set(data, Date.now() - (age > 0 ? age * 1000 : 0));
+  return data;
+}
+
+/** @type {WeakMap<object, number>} */
+const _readAt = new WeakMap();
+
+/** When the service produced data that fetchData returned.
+    @param {unknown} data @returns {number} */
+export function readingTime(data) {
+  return (data && typeof data === 'object' && _readAt.get(data)) || Date.now();
 }
 
 export function openUrl(href) {
@@ -678,7 +690,7 @@ export function poll(opts = {}) {
         opts.render && opts.render(data);
       }
       fails = 0;
-      lastOk = Date.now();
+      lastOk = readingTime(data);
       everOk = true;
       lastData = data;
     } catch (caught) {
