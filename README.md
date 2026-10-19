@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/logo.svg" width="96" alt=""></p>
+<p align="center"><picture><source media="(prefers-color-scheme: light)" srcset="docs/logo-light.svg"><img src="docs/logo.svg" width="64" alt=""></picture></p>
 
 <h1 align="center">Stackyard</h1>
 
