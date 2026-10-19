@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.svg" width="96" alt=""></p>
+
 <h1 align="center">Stackyard</h1>
 
 <p align="center"><b>A self-hosted homelab dashboard you actually want to look at.</b></p>
