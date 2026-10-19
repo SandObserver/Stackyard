@@ -4,6 +4,7 @@ const { loadConfig, loadConfigForUpdate, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
+const { knownHost } = require('../host-check');
 const {
   getOrCreateSecret,
   rotateSessionSecret,
@@ -60,7 +61,8 @@ on('POST', '/api/auth/login', async (req, res) => {
     const cfg = loadConfig();
     if (!authActive(cfg)) return json(res, 200, { ok: true });
     const hash = cfg.settings.auth.passwordHash;
-    const limitErr = registerLoginAttempt(ip);
+    const key = attemptKey(req, cfg);
+    const limitErr = registerLoginAttempt(key);
     if (limitErr) {
       log.audit('login blocked', { ip, reason: 'rate_limit' });
       return json(res, 429, { error: limitErr, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
@@ -70,7 +72,7 @@ on('POST', '/api/auth/login', async (req, res) => {
       log.audit('login failed', { ip });
       return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
     }
-    clearAttempts(ip);
+    clearAttempts(key);
     log.audit('login success', { ip });
     /* A failure here must not fail the login. The password is correct either
        way and the old hash still verifies. */
@@ -108,10 +110,18 @@ on('POST', '/api/auth/logout', (req, res) => {
   json(res, 200, { ok: true });
 });
 
+/* Keep unlisted names on a count of their own. A page on another site that
+   points its name at this server could otherwise lock the owner out. */
+function attemptKey(req, cfg) {
+  const ip = getIp(req);
+  return knownHost(req, cfg) ? ip : `${ip} unlisted`;
+}
+
 /* Keep the lockout count. Without it a session can brute-force the password. */
 async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
   const ip = getIp(req);
-  const limitErr = registerLoginAttempt(ip);
+  const key = attemptKey(req, loadConfig());
+  const limitErr = registerLoginAttempt(key);
   if (limitErr) {
     log.audit('password check blocked', { ip, reason: 'rate_limit' });
     json(res, 429, { error: limitErr, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
@@ -122,7 +132,7 @@ async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
     json(res, 403, { error: 'Current password is incorrect.', kind: KIND.INVALID, code: CURRENT_PASSWORD_CODE });
     return true;
   }
-  clearAttempts(ip);
+  clearAttempts(key);
   return false;
 }
 
