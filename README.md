@@ -33,7 +33,7 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 - **A glance should tell you more than a number would.** Widgets are small visuals, not readouts.
 - **Anything can be a badge.** Point Stackyard at any API and show what it reports as a [live activity badge](https://stackyard.sandobserver.com/docs/badges/). One poll can carry several labelled values, each with its own colour and threshold. No custom widget, no code.
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
-- **No dependencies.** Review it once and stop worrying about the supply chain.
+- **No runtime npm dependencies.** The image adds only nginx and supervisor, from Alpine, to the official Node base.
 - **Six languages, right-to-left included.** Contrast and screen-reader labels are covered by tests.
 - **Installs like an app.** A mobile layout that opens in its own window from a home screen. No offline mode: every tile is live.
 
