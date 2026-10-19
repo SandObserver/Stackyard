@@ -78,6 +78,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pause the Analog clock, Connections map and VPN animations on dashboard pages
   not shown.
 
+- Adding or removing a row in a widget's settings keeps the stored passwords and
+  keys of the other rows.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
