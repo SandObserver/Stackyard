@@ -4,11 +4,11 @@
 
 /** @typedef {{ ok: true, value: any } | { ok: false, error: unknown }} Outcome */
 
-/** @type {Map<string, { started: number, at: number, outcome: Outcome | null, pending: Promise<Outcome> | null, group: string | null }>} */
+/** @type {Map<string, { started: number, at: number, keepMs: number, outcome: Outcome | null, pending: Promise<Outcome> | null, group: string | null }>} */
 const _entries = new Map();
 
-function prune(now, keepMs) {
-  for (const [key, e] of _entries) if (!e.pending && now - e.at >= keepMs) _entries.delete(key);
+function prune(now) {
+  for (const [key, e] of _entries) if (!e.pending && now - e.at >= e.keepMs) _entries.delete(key);
 }
 
 /* Drops the oldest settled entries of a group until at most max remain. A
@@ -40,13 +40,14 @@ function within(ms, pending) {
     @returns {Promise<Outcome | null>} */
 async function latest(key, refresh, { holdMs, keepMs, group, maxPerGroup }) {
   const now = Date.now();
-  prune(now, keepMs);
+  prune(now);
   let e = _entries.get(key);
   const created = !e;
   if (!e) {
-    e = { started: 0, at: 0, outcome: null, pending: null, group: group ?? null };
+    e = { started: 0, at: 0, keepMs, outcome: null, pending: null, group: group ?? null };
     _entries.set(key, e);
   }
+  e.keepMs = keepMs;
   const entry = e;
   if (!entry.pending) {
     entry.started = now;

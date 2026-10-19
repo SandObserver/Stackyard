@@ -61,6 +61,17 @@ test('a result older than keepMs is not used', async t => {
   assert.equal(await latest('k', () => new Promise(() => {}), { holdMs: 0, keepMs: OPTS.keepMs }), null);
 });
 
+test('a short keepMs on one key does not drop another key kept longer', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 });
+  await latest('long', async () => 'kept', { holdMs: 30, keepMs: 15 * 60_000 });
+  t.mock.timers.tick(5 * 60_000);
+  await latest('short', async () => 'other', { holdMs: 30, keepMs: 2 * 60_000 });
+  assert.deepEqual(await latest('long', () => new Promise(() => {}), { holdMs: 0, keepMs: 15 * 60_000 }), {
+    ok: true,
+    value: 'kept',
+  });
+});
+
 test('different keys do not share a result', async () => {
   await latest('a', async () => 'a', OPTS);
   assert.deepEqual(await latest('b', async () => 'b', OPTS), { ok: true, value: 'b' });
