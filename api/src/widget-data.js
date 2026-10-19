@@ -13,6 +13,7 @@ const { widgetSettings } = require('./widget-settings');
 const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
 const log = require('./log');
+const failureLog = require('./failure-log');
 const { fail, KIND, WidgetError } = require('./api-error');
 const { rateLimit } = require('./auth');
 const LIMITS = require('./poll-limits');
@@ -148,11 +149,19 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
   const params = widgetParams(new URL(req.url, 'http://x').searchParams, entry.manifest);
   const endpointName = params.get('endpoint') || '';
 
+  const logKey = `${item.id}\n${endpointName}`;
+  const logFields = { widget: item.widgetType, id: item.id };
   const refresh = () =>
-    getWidgetData(item, entry, endpointName, params, fetchUnchecked).catch(e => {
-      log.error('widget-data failed', { widget: item.widgetType, id: item.id, error: log.reason(e) });
-      throw e;
-    });
+    getWidgetData(item, entry, endpointName, params, fetchUnchecked).then(
+      out => {
+        failureLog.recovered(logKey, 'widget-data recovered', logFields);
+        return out;
+      },
+      e => {
+        failureLog.failed(logKey, 'widget-data failed', logFields, log.reason(e));
+        throw e;
+      },
+    );
   const outcome = await latest(`${cfg._rev}:${item.id}?${params}`, refresh, {
     holdMs: WIDGET_HOLD_MS,
     keepMs: WIDGET_KEEP_MS,
@@ -161,7 +170,7 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
   });
   if (!outcome) return json(res, 202, { pending: true });
   if (outcome.ok) return json(res, outcome.value.status, outcome.value.body);
-  fail(res, outcome.error, { status: 502 });
+  fail(res, outcome.error, { status: 502, quiet: true });
 });
 
 /* Config-time "Fetch" for a select field declared with optionsFrom. The id is
