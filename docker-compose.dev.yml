@@ -1,0 +1,82 @@
+# Development only. Run with: docker compose -f docker-compose.dev.yml watch
+# Keep the port on 127.0.0.1. A fresh instance has no password, and any device
+# that can reach it gets the admin.
+name: stackyard-dev
+
+services:
+  stackyard:
+    build: .
+    image: stackyard:dev
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+      - KILL
+    security_opt:
+      - no-new-privileges:true
+    privileged: false
+    mem_limit: 384m
+    mem_reservation: 96m
+    memswap_limit: 384m
+    cpus: "0.5"
+    pids_limit: 256
+    init: true
+    ports:
+      - "127.0.0.1:8701:80"
+    volumes:
+      - ./.dev/data:/data
+      - ./.dev/icons:/icons
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=192
+    entrypoint:
+      - /bin/sh
+      - -c
+      - sed -i 's/public, max-age=31536000, immutable/no-cache/' /etc/nginx/http.d/dashboard.conf && exec /docker-entrypoint.sh "$$@"
+      - --
+    command: ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/stackyard.conf"]
+    develop:
+      watch:
+        - path: ./ui
+          target: /usr/share/nginx/html
+          action: sync
+          ignore:
+            - test/
+            - widgets/
+        - path: ./ui/widgets
+          target: /usr/share/nginx/html/widgets
+          action: sync+restart
+        - path: ./api/src
+          target: /app/api/src
+          action: sync+restart
+        - path: ./ui/js/link-url.js
+          target: /app/ui/js/link-url.js
+          action: sync+restart
+        - path: ./ui/js/limits.js
+          target: /app/ui/js/limits.js
+          action: sync+restart
+        - path: ./ui/js/config-recovery-logic.js
+          target: /app/ui/js/config-recovery-logic.js
+          action: sync+restart
+        - path: ./ui/js/host-names.js
+          target: /app/ui/js/host-names.js
+          action: sync+restart
+        - path: ./ui/js/service-link.js
+          target: /app/ui/js/service-link.js
+          action: sync+restart
+        - path: ./ui/js/saved-row.js
+          target: /app/ui/js/saved-row.js
+          action: sync+restart
+        - path: ./Dockerfile
+          action: rebuild
+        - path: ./docker-entrypoint.sh
+          action: rebuild
+        - path: ./supervisord.conf
+          action: rebuild
+        - path: ./nginx
+          action: rebuild
+        - path: ./api/package.json
+          action: rebuild

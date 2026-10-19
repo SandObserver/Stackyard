@@ -21,3 +21,4 @@ scripts/**
 docs
 .dockerignore
 Dockerfile
+.dev
