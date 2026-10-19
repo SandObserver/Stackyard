@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Let a widget manifest list the query parameters its data function reads.
 
+- Settings offers to add the address you are signed in on to Allowed Addresses.
+
 ### Changed
 
 - The Unsplash wallpaper changes once a day instead of on every load.
