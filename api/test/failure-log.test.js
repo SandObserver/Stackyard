@@ -16,7 +16,7 @@ beforeEach(() => failureLog.reset());
 test('a failure that repeats is logged once until the reminder is due', t => {
   const lines = record(t);
   for (let i = 0; i < 200; i++)
-    failureLog.failed('w1', 'widget-data failed', { id: 'w1' }, 'Timed out', 1000 + i * 5000);
+    failureLog.failed('w1', 'widget-data failed', { id: 'w1' }, 'Timed out', { now: 1000 + i * 5000 });
   assert.equal(lines.length, 2);
   assert.deepEqual(lines[0], { level: 'error', msg: 'widget-data failed', data: { id: 'w1', error: 'Timed out' } });
   assert.equal(lines[1].data.failures, 1 + REPEAT_MS / 5000);
@@ -25,8 +25,8 @@ test('a failure that repeats is logged once until the reminder is due', t => {
 
 test('a changed reason is logged at once', t => {
   const lines = record(t);
-  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', 0);
-  failureLog.failed('w1', 'widget-data failed', {}, 'AdGuard HTTP 500', 1000);
+  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', { now: 0 });
+  failureLog.failed('w1', 'widget-data failed', {}, 'AdGuard HTTP 500', { now: 1000 });
   assert.deepEqual(
     lines.map(l => l.data.error),
     ['Timed out', 'AdGuard HTTP 500'],
@@ -36,8 +36,8 @@ test('a changed reason is logged at once', t => {
 test('recovery is logged once with the failure count, and only after a failure', t => {
   const lines = record(t);
   failureLog.recovered('w1', 'widget-data recovered', { id: 'w1' });
-  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', 0);
-  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', 1000);
+  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', { now: 0 });
+  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', { now: 1000 });
   failureLog.recovered('w1', 'widget-data recovered', { id: 'w1' });
   failureLog.recovered('w1', 'widget-data recovered', { id: 'w1' });
   assert.deepEqual(lines.at(-1), { level: 'info', msg: 'widget-data recovered', data: { id: 'w1', failures: 2 } });
@@ -46,15 +46,36 @@ test('recovery is logged once with the failure count, and only after a failure',
 
 test('separate keys are tracked separately', t => {
   const lines = record(t);
-  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', 0);
-  failureLog.failed('w2', 'widget-data failed', {}, 'Timed out', 0);
+  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', { now: 0 });
+  failureLog.failed('w2', 'widget-data failed', {}, 'Timed out', { now: 0 });
   assert.equal(lines.length, 2);
 });
 
 test('an entry untouched for an hour is forgotten', t => {
   const lines = record(t);
-  failureLog.failed('junk', 'widget-data failed', {}, 'Timed out', 0);
-  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', FORGET_MS);
+  failureLog.failed('junk', 'widget-data failed', {}, 'Timed out', { now: 0 });
+  failureLog.failed('w1', 'widget-data failed', {}, 'Timed out', { now: FORGET_MS });
   failureLog.recovered('junk', 'widget-data recovered', {});
   assert.equal(lines.filter(l => l.level === 'info').length, 0);
+});
+
+test('a widget keeps at most maxPerGroup failing keys, and the rest are not logged', t => {
+  const lines = record(t);
+  const opts = { now: 0, group: 'w1', maxPerGroup: 16 };
+  for (let i = 0; i < 2000; i++) failureLog.failed(`w1\nendpoint-${i}`, 'widget-data failed', {}, 'Timed out', opts);
+  failureLog.failed('w2\n', 'widget-data failed', {}, 'Timed out', { ...opts, group: 'w2' });
+  assert.equal(lines.length, 17);
+  assert.equal(failureLog._size(), 17);
+});
+
+test('a kept key still logs a changed reason when its group is full', t => {
+  const lines = record(t);
+  const opts = { now: 0, group: 'w1', maxPerGroup: 2 };
+  failureLog.failed('w1\na', 'widget-data failed', {}, 'Timed out', opts);
+  failureLog.failed('w1\nb', 'widget-data failed', {}, 'Timed out', opts);
+  failureLog.failed('w1\na', 'widget-data failed', {}, 'HTTP 500', opts);
+  assert.deepEqual(
+    lines.map(l => l.data.error),
+    ['Timed out', 'Timed out', 'HTTP 500'],
+  );
 });

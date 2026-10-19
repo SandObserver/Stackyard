@@ -158,7 +158,10 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
         return out;
       },
       e => {
-        failureLog.failed(logKey, 'widget-data failed', logFields, log.reason(e));
+        failureLog.failed(logKey, 'widget-data failed', logFields, log.reason(e), {
+          group: item.id,
+          maxPerGroup: KEPT_PER_WIDGET,
+        });
         throw e;
       },
     );
