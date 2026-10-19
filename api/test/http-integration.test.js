@@ -223,6 +223,39 @@ test('a widget whose service stalls answers pending, then with the data once it 
   }
 });
 
+test('a stored reply served while a refresh stalls says how old it is', async () => {
+  let release;
+  const released = new Promise(r => {
+    release = r;
+  });
+  let calls = 0;
+  const upstream = http.createServer(async (_, res) => {
+    if (++calls > 1) await released;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(`{"n":${calls}}`);
+  });
+  await new Promise(r => upstream.listen(0, '127.0.0.1', r));
+  const cfg = loadConfig();
+  const url = `http://127.0.0.1:${upstream.address().port}/`;
+  saveConfig({
+    ...cfg,
+    items: [...(cfg.items || []), { id: 'aged-w', type: 'widget', widgetType: 'fixture', widgetConfig: { url } }],
+  });
+  try {
+    const first = await req('GET', '/api/widget-data/aged-w', { cookie: validCookie });
+    assert.equal(first.headers.age, '0');
+    await new Promise(r => setTimeout(r, 2100));
+    const second = await req('GET', '/api/widget-data/aged-w', { cookie: validCookie });
+    assert.deepEqual(second.body, { status: 200, data: { n: 1 } });
+    assert.ok(Number(second.headers.age) >= 2, `Age was ${second.headers.age}`);
+  } finally {
+    release();
+    saveConfig(cfg);
+    upstream.closeAllConnections?.();
+    await new Promise(r => upstream.close(r));
+  }
+});
+
 test('query values a widget does not read share one refresh and one cached reply', async () => {
   let release;
   const released = new Promise(r => {

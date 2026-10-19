@@ -21,3 +21,7 @@ test('the hover and screen-reader text say when the reading arrived', () => {
   );
   assert.match(page, /setInterval\(describe, 60000\)/);
 });
+
+test('the updated time is when the service produced the reading', () => {
+  assert.match(page, /_fetchedAt = readingTime\(d\);/);
+});
