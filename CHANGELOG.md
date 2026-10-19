@@ -92,6 +92,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The wallpaper endpoint no longer returns Unsplash's error text.
 
+- A session cookie set by another host on the same parent domain no longer signs
+  the owner out.
+
+- The Connections widget no longer names an address the guard blocked.
+
 ## [1.18.0] - 2026-10-17
 
 ### Added
