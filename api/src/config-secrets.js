@@ -3,12 +3,7 @@
 
 const { scrubConfigSecrets, preserveConfigSecrets, secretSpec } = require('./widget-secrets');
 const { scrubItemBadgeSecrets, preserveItemBadgeSecrets, toRows } = require('./badge-headers');
-const {
-  badgeRequestMatchesSaved,
-  widgetConfigMatchesSaved,
-  rewriteChanged,
-  widgetTlsChanged,
-} = require('./secret-scope');
+const { badgeRequestMatchesSaved, alignSavedConfig, rewriteChanged, widgetTlsChanged } = require('./secret-scope');
 const { getRegistry } = require('./widgets');
 
 function scrubAllSecrets(cfg) {
@@ -77,6 +72,7 @@ function preserveAllSecrets(newCfg, oldCfg) {
   if (Array.isArray(newCfg.items)) {
     const reg = getRegistry();
     const scopedForWidgets = { ...newCfg, items: [] };
+    /** @type {Map<any, any>} the saved item each widget may take secrets from, or null */
     const keepWidget = new Map();
     const tlsChanged = widgetTlsChanged(newCfg.settings?.server, oldCfg?.settings?.server);
     for (const item of newCfg.items) {
@@ -84,22 +80,26 @@ function preserveAllSecrets(newCfg, oldCfg) {
       const prev = prevOf(item);
       if (!prev) continue;
       const entry = reg[item.widgetType];
-      const ok =
-        prev.type === 'widget' &&
-        prev.widgetType === item.widgetType &&
-        !tlsChanged &&
-        (!entry || widgetConfigMatchesSaved(item.widgetConfig || {}, prev.widgetConfig || {}, entry));
-      keepWidget.set(item, ok);
-      if (!ok && mayHoldSecret(prev.widgetConfig, reg[prev.widgetType])) note(item);
+      const sameWidget = prev.type === 'widget' && prev.widgetType === item.widgetType && !tlsChanged;
+      if (!entry) {
+        keepWidget.set(item, sameWidget ? prev : null);
+        if (!sameWidget && mayHoldSecret(prev.widgetConfig, reg[prev.widgetType])) note(item);
+        continue;
+      }
+      const aligned = sameWidget ? alignSavedConfig(item.widgetConfig || {}, prev.widgetConfig || {}, entry) : null;
+      keepWidget.set(item, aligned ? { ...prev, widgetConfig: aligned.config } : null);
+      if (aligned ? aligned.dropped : mayHoldSecret(prev.widgetConfig, reg[prev.widgetType])) note(item);
     }
     /* preserveConfigSecrets matches oldCfg.items by id. Hide an item from it to
        stop its secret being refilled. */
     scopedForWidgets.items = newCfg.items;
     const oldForWidgets = {
       ...oldCfg,
-      items: oldItems.filter(o => {
+      items: oldItems.flatMap(o => {
         const match = newCfg.items.find(n => n && n.id === o.id && n.type === 'widget');
-        return !match || keepWidget.get(match) !== false;
+        if (!match || !keepWidget.has(match)) return [o];
+        const keep = keepWidget.get(match);
+        return keep ? [keep] : [];
       }),
     };
     preserveConfigSecrets(scopedForWidgets, oldForWidgets);

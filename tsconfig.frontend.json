@@ -278,6 +278,12 @@
       "/js/limits.js?v=*": [
         "./ui/js/limits.js"
       ],
+      "/js/saved-row.js": [
+        "./ui/js/saved-row.js"
+      ],
+      "/js/saved-row.js?v=*": [
+        "./ui/js/saved-row.js"
+      ],
       "/js/link-url.js": [
         "./ui/js/link-url.js"
       ],

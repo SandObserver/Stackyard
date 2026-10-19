@@ -3,7 +3,7 @@
    id alone sends a stored credential anywhere the caller names. Fields the
    manifest marks cosmetic or transient are excluded. */
 
-const { secretSpec, cosmeticSpec, transientSpec } = require('./widget-secrets');
+const { SAVED_ROW, secretSpec, cosmeticSpec, transientSpec } = require('./widget-secrets');
 const { toRows } = require('./badge-headers');
 
 function stableEqual(a, b) {
@@ -38,7 +38,53 @@ function stripWidgetSecrets(config, entry) {
     }
     for (const [ok, subKeys] of Object.entries(spec.objects)) drop(out[ok], subKeys);
   }
+  for (const gk of Object.keys(secretSpec(entry).groups)) {
+    if (Array.isArray(out[gk])) for (const row of out[gk]) if (row && typeof row === 'object') delete row[SAVED_ROW];
+  }
   return out;
+}
+
+/* A row naming a saved row by SAVED_ROW gets that one, or none when the value is
+   not an index. Without it, a row matches by id, then by position. */
+function savedRowFor(row, i, oldRows) {
+  if (row && typeof row === 'object' && Object.hasOwn(row, SAVED_ROW)) {
+    const n = row[SAVED_ROW];
+    return Number.isInteger(n) && n >= 0 ? oldRows[n] : undefined;
+  }
+  return row && row.id != null ? oldRows.find(r => r && r.id === row.id) : oldRows[i];
+}
+
+/** The saved config with each secret-holding group lined up row for row with
+    the posted one, for preserveWidgetSecrets. A row gets its saved row only when
+    every field that can redirect the secret matches. Null when a field outside
+    those groups differs. `dropped` is true when a row left blank a stored secret
+    it does not get back.
+    @returns {{ config: Record<string, any>, dropped: boolean } | null} */
+function alignSavedConfig(newConfig, savedConfig, entry) {
+  if (!entry) return null;
+  const cfg = newConfig || {};
+  const saved = savedConfig || {};
+  const groups = secretSpec(entry).groups;
+  const shared = c => {
+    const out = { ...c };
+    for (const gk of Object.keys(groups)) delete out[gk];
+    return out;
+  };
+  if (!widgetConfigMatchesSaved(shared(cfg), shared(saved), entry)) return null;
+  const config = { ...saved };
+  let dropped = false;
+  for (const [gk, subKeys] of Object.entries(groups)) {
+    if (!Array.isArray(cfg[gk])) continue;
+    const oldRows = Array.isArray(saved[gk]) ? saved[gk] : [];
+    config[gk] = cfg[gk].map((row, i) => {
+      const old = savedRowFor(row, i, oldRows);
+      if (!old) return {};
+      if (widgetConfigMatchesSaved({ [gk]: [row] }, { [gk]: [old] }, entry)) return old;
+      if (subKeys.some(k => blankStored(row, old, k))) dropped = true;
+      return {};
+    });
+  }
+  return { config, dropped };
 }
 
 function widgetConfigMatchesSaved(newConfig, savedConfig, entry) {
@@ -46,23 +92,21 @@ function widgetConfigMatchesSaved(newConfig, savedConfig, entry) {
   return stableEqual(stripWidgetSecrets(newConfig, entry), stripWidgetSecrets(savedConfig, entry));
 }
 
+const blankStored = (obj, old, k) => !!old && old[k] != null && old[k] !== '' && !(obj && obj[k]);
+
 /** Whether the config leaves blank a secret the saved config holds. */
 function leavesStoredSecretBlank(config, savedConfig, entry) {
   const cfg = config || {};
   const saved = savedConfig || {};
-  const blank = (obj, old, k) => !!old && old[k] != null && old[k] !== '' && !(obj && obj[k]);
   const { topLevel, groups, objects } = secretSpec(entry);
-  if (topLevel.some(k => blank(cfg, saved, k))) return true;
+  if (topLevel.some(k => blankStored(cfg, saved, k))) return true;
   for (const [gk, subKeys] of Object.entries(groups)) {
     if (!Array.isArray(cfg[gk])) continue;
     const oldRows = Array.isArray(saved[gk]) ? saved[gk] : [];
-    const hit = cfg[gk].some((row, i) => {
-      const old = row && row.id != null ? oldRows.find(r => r && r.id === row.id) : oldRows[i];
-      return subKeys.some(k => blank(row, old, k));
-    });
+    const hit = cfg[gk].some((row, i) => subKeys.some(k => blankStored(row, savedRowFor(row, i, oldRows), k)));
     if (hit) return true;
   }
-  return Object.entries(objects).some(([ok, subKeys]) => subKeys.some(k => blank(cfg[ok], saved[ok], k)));
+  return Object.entries(objects).some(([ok, subKeys]) => subKeys.some(k => blankStored(cfg[ok], saved[ok], k)));
 }
 
 function rowsMatch(newRows, oldRows) {
@@ -107,6 +151,7 @@ module.exports = {
   stableEqual,
   stripWidgetSecrets,
   widgetConfigMatchesSaved,
+  alignSavedConfig,
   leavesStoredSecretBlank,
   rowsMatch,
   badgeRequestMatchesSaved,

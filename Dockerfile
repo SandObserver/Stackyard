@@ -76,6 +76,7 @@ COPY ui/js/limits.js /app/ui/js/limits.js
 COPY ui/js/config-recovery-logic.js /app/ui/js/config-recovery-logic.js
 COPY ui/js/host-names.js /app/ui/js/host-names.js
 COPY ui/js/service-link.js /app/ui/js/service-link.js
+COPY ui/js/saved-row.js /app/ui/js/saved-row.js
 COPY scripts/exit-on-fatal.py /app/scripts/exit-on-fatal.py
 # Fails the build if python3 is no longer present. Without it the event listener
 # cannot start and no failure is reported.

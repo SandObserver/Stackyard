@@ -1,4 +1,5 @@
 const { getRegistry } = require('./widgets');
+const { SAVED_ROW } = require('../../ui/js/saved-row.js');
 
 /* The matching field keys a widget declares, top level and one row deep. Test
    membership with Object.hasOwn. Config from disk inherits "constructor" and the
@@ -95,7 +96,8 @@ function scrubWidgetSecrets(item, entry) {
 }
 
 /* Mutates newItem.widgetConfig. Never store a "<key>Set" marker. A stored
-   marker outlives the secret it describes and can be asserted by the caller. */
+   marker outlives the secret it describes and can be asserted by the caller.
+   oldItem rows must line up with newItem rows: see alignSavedConfig. */
 function preserveWidgetSecrets(newItem, oldItem, entry) {
   const e = _entryFor(newItem, entry);
   if (!e || !newItem || !newItem.widgetConfig) return;
@@ -112,6 +114,7 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
     const oldRows = Array.isArray(owc[gk]) ? owc[gk] : [];
     nwc[gk].forEach((row, i) => {
       if (!row || typeof row !== 'object') return;
+      delete row[SAVED_ROW];
       /* Match by id first. Position alone misassigns a stored secret after a
          reorder or a delete. */
       const oldRow = (row.id != null ? oldRows.find(r => r && r.id === row.id) : oldRows[i]) || {};
@@ -180,6 +183,7 @@ function preserveConfigSecrets(newCfg, oldCfg) {
 }
 
 module.exports = {
+  SAVED_ROW,
   secretSpec,
   cosmeticSpec,
   transientSpec,

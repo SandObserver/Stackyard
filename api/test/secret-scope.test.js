@@ -11,6 +11,7 @@ const {
   rowsMatch,
   badgeRequestMatchesSaved,
   leavesStoredSecretBlank,
+  alignSavedConfig,
 } = require('../src/secret-scope');
 const { getRegistry } = require('../src/widgets');
 
@@ -243,4 +244,59 @@ test('a field that reaches the request still takes the stored credential out of 
     const changed = over ? { ...saved, ...over } : { slots: [{ ...saved.slots[0], jobId: '2' }] };
     assert.equal(widgetConfigMatchesSaved(changed, saved, r[name]), false, name);
   }
+});
+
+/* ── alignSavedConfig ─────────────────────────────────────────────────────── */
+
+const backup = getRegistry().backup;
+const SLOT_A = { provider: 'duplicati', dupUrl: 'http://a:8200', dupPass: 'PASS-A' };
+const SLOT_B = { provider: 'duplicati', dupUrl: 'http://b:8200', dupPass: 'PASS-B' };
+
+test('alignSavedConfig lines up each saved row with the row that names it', () => {
+  const out = alignSavedConfig(
+    { slots: [{ provider: 'duplicati', dupUrl: 'http://b:8200', dupPassSet: true, savedRow: 1 }] },
+    { slots: [SLOT_A, SLOT_B] },
+    backup,
+  );
+  assert.deepEqual(out, { config: { slots: [SLOT_B] }, dropped: false });
+});
+
+test('alignSavedConfig gives a changed row nothing and reports the dropped secret', () => {
+  const out = alignSavedConfig(
+    { slots: [{ provider: 'duplicati', dupUrl: 'http://evil:8200', savedRow: 0 }] },
+    { slots: [SLOT_A, SLOT_B] },
+    backup,
+  );
+  assert.deepEqual(out, { config: { slots: [{}] }, dropped: true });
+});
+
+test('alignSavedConfig ignores a savedRow that is not an index', () => {
+  for (const savedRow of [null, -1, 0.5, '0', '__proto__']) {
+    const out = alignSavedConfig({ slots: [{ ...SLOT_A, dupPass: undefined, savedRow }] }, { slots: [SLOT_A] }, backup);
+    assert.deepEqual(out.config.slots, [{}], String(savedRow));
+  }
+});
+
+test('alignSavedConfig refuses when a field outside the rows changed', () => {
+  assert.equal(alignSavedConfig({ absUrl: 'https://evil.example' }, SAVED, books), null);
+});
+
+test('stripWidgetSecrets drops savedRow, so an unchanged editor save still matches', () => {
+  assert.equal(
+    widgetConfigMatchesSaved(
+      { slots: [{ provider: 'duplicati', dupUrl: 'http://a:8200', savedRow: 0 }] },
+      { slots: [SLOT_A] },
+      backup,
+    ),
+    true,
+  );
+});
+
+test('leavesStoredSecretBlank follows savedRow', () => {
+  const rows = [{ provider: 'duplicati', dupUrl: 'http://b:8200', dupPass: 'typed', savedRow: 1 }];
+  assert.equal(leavesStoredSecretBlank({ slots: rows }, { slots: [SLOT_A, SLOT_B] }, backup), false);
+  assert.equal(
+    leavesStoredSecretBlank({ slots: [{ ...rows[0], dupPass: '' }] }, { slots: [SLOT_A, SLOT_B] }, backup),
+    true,
+  );
 });

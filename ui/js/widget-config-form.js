@@ -17,6 +17,7 @@ import {
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { qi } from '/js/utils.js?v=705ca896';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
 
 const PE =
   '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
@@ -579,8 +580,11 @@ function _object(field, value, ctx) {
 function _group(field, rows, size, ctx) {
   const { min, max } = groupBounds(field, size);
   const subFields = Array.isArray(field.fields) ? field.fields : [];
-  let data = Array.isArray(rows) ? rows.map(r => Object.assign({}, r)) : [];
-  while (data.length < min) data.push({});
+  const secretKeys = subFields.filter(sf => sf.type === 'secret').map(sf => sf.key);
+  const tracked = secretKeys.length > 0;
+  const newRow = () => (tracked ? { [SAVED_ROW]: null } : {});
+  let data = Array.isArray(rows) ? rows.map((r, i) => (tracked ? { ...r, [SAVED_ROW]: i } : { ...r })) : [];
+  while (data.length < min) data.push(newRow());
   if (data.length > max) data.length = max;
 
   const wrap = document.createElement('div');
@@ -654,14 +658,19 @@ function _group(field, rows, size, ctx) {
   }
 
   function captureCurrent() {
-    data = rowBuilt.map(built =>
-      collectFieldValues(built.map(b => ({ field: b.field, visible: _visible(b), kv: b.get() }))),
-    );
+    data = rowBuilt.map((built, i) => {
+      const row = collectFieldValues(built.map(b => ({ field: b.field, visible: _visible(b), kv: b.get() })));
+      const before = data[i] || {};
+      if (!tracked) return row;
+      for (const k of secretKeys) if (!Object.hasOwn(row, k) && before[k + 'Set'] === true) row[k + 'Set'] = true;
+      row[SAVED_ROW] = before[SAVED_ROW] ?? null;
+      return row;
+    });
   }
 
   addBtn.onclick = () => {
     captureCurrent();
-    data.push({});
+    data.push(newRow());
     render();
   };
   render();
