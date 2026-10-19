@@ -3,7 +3,7 @@ const log = require('./log');
 const REPEAT_MS = 10 * 60 * 1000;
 const FORGET_MS = 60 * 60 * 1000;
 
-/** @type {Map<string, { reason: string, since: number, loggedAt: number, seenAt: number, failures: number }>} */
+/** @type {Map<string, { reason: string, since: number, loggedAt: number, seenAt: number, failures: number, group: string | null }>} */
 const _failing = new Map();
 
 /* Keys can come from a request. An entry nothing has touched for an hour is
@@ -12,15 +12,23 @@ function prune(now) {
   for (const [key, s] of _failing) if (now - s.seenAt >= FORGET_MS) _failing.delete(key);
 }
 
+function groupSize(group) {
+  let n = 0;
+  for (const s of _failing.values()) if (s.group === group) n++;
+  return n;
+}
+
 /** Logs the first failure, a changed reason, and a reminder at most every
-    REPEAT_MS while the same failure lasts.
-    @param {string} key @param {string} msg @param {Record<string, unknown>} fields
-    @param {string} reason @param {number} [now] */
-function failed(key, msg, fields, reason, now = Date.now()) {
+    REPEAT_MS while the same failure lasts. A new key in a group that already
+    holds maxPerGroup keys is neither kept nor logged.
+    @param {string} key @param {string} msg @param {Record<string, unknown>} fields @param {string} reason
+    @param {{ now?: number, group?: string, maxPerGroup?: number }} [opts] */
+function failed(key, msg, fields, reason, { now = Date.now(), group, maxPerGroup } = {}) {
   prune(now);
   const s = _failing.get(key);
   if (!s || s.reason !== reason) {
-    _failing.set(key, { reason, since: now, loggedAt: now, seenAt: now, failures: 1 });
+    if (!s && group != null && maxPerGroup && groupSize(group) >= maxPerGroup) return;
+    _failing.set(key, { reason, since: now, loggedAt: now, seenAt: now, failures: 1, group: group ?? null });
     log.error(msg, { ...fields, error: reason });
     return;
   }
@@ -43,4 +51,4 @@ function reset() {
   _failing.clear();
 }
 
-module.exports = { failed, recovered, reset, REPEAT_MS, FORGET_MS };
+module.exports = { failed, recovered, reset, REPEAT_MS, FORGET_MS, _size: () => _failing.size };

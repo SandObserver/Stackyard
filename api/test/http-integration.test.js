@@ -309,6 +309,32 @@ test('a widget whose service stays down logs one line, not one per request', asy
   }
 });
 
+test('a client cannot grow the failure log with endpoint values', async t => {
+  const failureLog = require('../src/failure-log');
+  const log = require('../src/log');
+  failureLog.reset();
+  const errors = [];
+  t.mock.method(log, 'error', msg => errors.push(msg));
+  const cfg = loadConfig();
+  saveConfig({
+    ...cfg,
+    items: [
+      ...(cfg.items || []),
+      { id: 'down-e', type: 'widget', widgetType: 'fixture', widgetConfig: { url: 'http://127.0.0.1:1/' } },
+    ],
+  });
+  try {
+    for (let i = 0; i < 40; i++) {
+      const r = await req('GET', `/api/widget-data/down-e?endpoint=e${i}`, { cookie: validCookie });
+      assert.equal(r.status, 502);
+    }
+    assert.equal(errors.length, 16);
+    assert.equal(failureLog._size(), 16);
+  } finally {
+    saveConfig(cfg);
+  }
+});
+
 test('OPTIONS is no longer specially routed', async () => {
   const r = await req('OPTIONS', '/api/config', { cookie: validCookie });
   assert.equal(r.status, 404, 'it must fall through like any other unmatched method');
