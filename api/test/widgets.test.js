@@ -98,6 +98,28 @@ test('loadRegistry returns an empty registry when the directory is unreadable', 
   assert.deepEqual(plain(widgets.loadRegistry()), {});
 });
 
+/* ── Query parameters ───────────────────────────────────────────────────── */
+
+const paramErrs = params => widgets.validateManifest('w', { name: 'w', label: 'W', sizes: ['small'], params }).errors;
+
+test('validateManifest accepts a list of query parameter names', () => {
+  assert.deepEqual(paramErrs(['seed', 'range_2']), []);
+});
+
+test('validateManifest rejects params that are not a short list of names', () => {
+  assert.equal(paramErrs('seed').length, 1);
+  assert.equal(paramErrs(Array.from({ length: 9 }, (_, i) => 'p' + i)).length, 1);
+  assert.equal(paramErrs(['']).length, 1);
+  assert.equal(paramErrs(['a b']).length, 1);
+  assert.equal(paramErrs([7]).length, 1);
+  assert.equal(paramErrs(['x'.repeat(33)]).length, 1);
+});
+
+test('validateManifest rejects a listed endpoint and a repeated name', () => {
+  assert.match(paramErrs(['endpoint'])[0], /always passed/);
+  assert.match(paramErrs(['seed', 'seed'])[0], /listed twice/);
+});
+
 /* ── Field type validation ──────────────────────────────────────────────── */
 
 const base = { name: 'w', label: 'W', sizes: ['small'] };

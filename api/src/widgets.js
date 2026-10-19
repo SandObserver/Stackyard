@@ -7,6 +7,8 @@ const { loadConfig } = require('./config');
 
 const WIDGETS_PATH = process.env.WIDGETS_PATH || '/usr/share/nginx/html/widgets';
 
+const MAX_PARAMS = 8;
+const PARAM_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,31}$/;
 const VALID_SIZES = new Set(['small', 'medium', 'large', 'xlarge']);
 const VALID_CARDS = new Set(['dark', 'graphite', 'light', 'translucent']);
 /* Mirrors GLYPH_NAMES in ui/js/widget-glyphs.js. The two cannot share a module
@@ -178,6 +180,17 @@ function validateManifest(name, m) {
       errs.push(..._validateSiblingKeys(m.fields, 'fields'));
       errs.push(..._validateShowIfTargets(m.fields, 'fields'));
     }
+  }
+
+  if (m.params !== undefined) {
+    if (!Array.isArray(m.params) || m.params.length > MAX_PARAMS)
+      errs.push(`"params" must be an array of at most ${MAX_PARAMS} names`);
+    else
+      m.params.forEach((p, i) => {
+        if (typeof p !== 'string' || !PARAM_NAME.test(p)) errs.push(`params[${i}] must be a query parameter name`);
+        else if (p === 'endpoint') errs.push('params: "endpoint" is always passed and must not be listed');
+        else if (m.params.indexOf(p) !== i) errs.push(`params: "${p}" is listed twice`);
+      });
   }
 
   if (m.views !== undefined) {
