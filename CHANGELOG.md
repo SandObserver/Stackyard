@@ -69,6 +69,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop app tiles with a refresh interval from filling the browser Back history.
 
+- Stop the Connections VPN view from stacking animation loops while its page is
+  off screen.
+
+- Pause the Analog clock, Connections map and VPN animations on dashboard pages
+  not shown.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
