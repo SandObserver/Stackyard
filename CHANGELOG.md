@@ -83,6 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Icons always load through the server, so the CDN does not learn which services
   a dashboard shows.
 
+- A page on another site can no longer lock the owner out of sign-in by pointing
+  its host name at the server.
+
 ## [1.18.0] - 2026-10-17
 
 ### Added
