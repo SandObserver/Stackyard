@@ -70,3 +70,16 @@ test('a NetBird peer reply that is not a list shows an error', async () => {
   assert.equal(r.errorKind, 'upstream');
   assert.equal(r.connected, false);
 });
+
+test('a blocked address is not named in the reply', async () => {
+  const { SsrfBlockedError } = require('../src/proxy');
+  const r = await dataFn({
+    ...ctxFor({}),
+    fetchJSON: async () => {
+      throw new SsrfBlockedError('Blocked: gluetun.lan resolves to private IP 10.0.0.5.', 'private_address');
+    },
+  });
+  assert.equal(r.errorKind, 'blocked');
+  assert.equal(r.error, 'The request was blocked.');
+  assert.doesNotMatch(JSON.stringify(r), /10\.0\.0\.5|gluetun\.lan/);
+});

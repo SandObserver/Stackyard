@@ -92,8 +92,7 @@ const MAP_DEFAULT_COLOR = {
 const TIMEOUT_CODES = new Set(['ETIMEDOUT', 'ESOCKETTIMEDOUT', 'UND_ERR_HEADERS_TIMEOUT']);
 function errorText(e) {
   if (e && e.vouchedMessage) return e.vouchedMessage;
-  /* Already a sentence this repo wrote. */
-  if (e && e.name === 'SsrfBlockedError') return e.message;
+  if (e && e.name === 'SsrfBlockedError') return 'The request was blocked.';
   const code = e && e.code;
   if (code === 'ECONNREFUSED') return 'Connection refused';
   if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') return 'Host not found';
