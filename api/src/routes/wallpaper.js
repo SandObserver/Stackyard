@@ -105,17 +105,45 @@ function mayWrite(req, res) {
   return true;
 }
 
+/* Keep the cache. Without it every request, including one sent by a page on
+   another site, spends a call of the key's hourly quota. */
+const PHOTO_TTL_MS = 24 * 60 * 60 * 1000;
+/** @type {{ key: string, at: number, url: string } | null} */
+let _photo = null;
+/** @type {{ key: string, promise: Promise<{ url: string|null, error?: string }> } | null} */
+let _pending = null;
+
+/** @param {{ apiKey?: string, collection?: string }} bg */
+function randomPhoto(bg) {
+  const key = `${bg.apiKey || ''}\n${bg.collection || ''}`;
+  if (_photo && _photo.key === key && Date.now() - _photo.at < PHOTO_TTL_MS)
+    return Promise.resolve({ url: _photo.url });
+  if (_pending?.key === key) return _pending.promise;
+  const promise = (async () => {
+    const p = new URLSearchParams({ orientation: 'landscape', content_filter: 'high', client_id: bg.apiKey || '' });
+    if (bg.collection) p.set('collections', bg.collection);
+    const r = await fetchUnchecked(`https://api.unsplash.com/photos/random?${p}`);
+    const raw = r.data?.urls?.raw;
+    if (!raw) {
+      log.warn('Unsplash returned no image', { status: r.status });
+      return { url: null, error: 'No image returned' };
+    }
+    const url = `${raw}&w=2800&h=1800&q=85&fm=jpg&fit=crop&crop=entropy`;
+    _photo = { key, at: Date.now(), url };
+    return { url };
+  })().finally(() => {
+    if (_pending?.promise === promise) _pending = null;
+  });
+  _pending = { key, promise };
+  return promise;
+}
+
 on('GET', '/api/wallpaper', async (_, res) => {
   const cfg = loadConfig(),
     bg = cfg.settings?.background || {};
   if (bg.type !== 'unsplash') return json(res, 200, { url: null });
   try {
-    const p = new URLSearchParams({ orientation: 'landscape', content_filter: 'high', client_id: bg.apiKey || '' });
-    if (bg.collection) p.set('collections', bg.collection);
-    const r = await fetchUnchecked(`https://api.unsplash.com/photos/random?${p}`);
-    const raw = r.data?.urls?.raw;
-    if (!raw) return json(res, 200, { url: null, error: r.data?.errors?.[0] || 'No image returned' });
-    json(res, 200, { url: `${raw}&w=2800&h=1800&q=85&fm=jpg&fit=crop&crop=entropy` });
+    json(res, 200, await randomPhoto(bg));
   } catch (e) {
     json(res, 200, Object.assign({ url: null }, errorBody(e)));
   }
@@ -199,4 +227,14 @@ on('POST', '/api/wallpaper/fetch', async (req, res) => {
   }
 });
 
-module.exports = { storeWallpaper, pruneWallpapers, wallpapersToDrop, WALLPAPER_URL_BASE, PENDING_MS };
+module.exports = {
+  storeWallpaper,
+  pruneWallpapers,
+  wallpapersToDrop,
+  WALLPAPER_URL_BASE,
+  PENDING_MS,
+  _resetPhoto: () => {
+    _photo = null;
+    _pending = null;
+  },
+};
