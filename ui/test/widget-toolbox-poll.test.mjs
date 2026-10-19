@@ -8,6 +8,7 @@ import { register } from 'node:module';
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
 const { poll, setPollRate, errorState } = await import('../js/widget-toolbox.js');
+const { errorKind } = await import('../js/widget-error.js');
 
 const tick = ms => new Promise(r => setTimeout(r, ms));
 
@@ -535,4 +536,26 @@ test('a widget that never rendered reports its first render failure', async () =
   p.stop();
 
   assert.equal(errors[0].everOk, false);
+});
+
+test('a render failure reads as the widget going wrong, and a fetch failure as out of reach', async () => {
+  const errors = [];
+  let call = 0;
+  const p = poll({
+    interval: 5,
+    fetch: async () => {
+      call++;
+      if (call === 2) throw new TypeError('Failed to fetch');
+      return {};
+    },
+    render: () => {
+      if (call === 1) throw new TypeError('bad field');
+    },
+    onError: info => errors.push(info),
+  });
+  await tick(30);
+  p.stop();
+
+  assert.equal(errorKind(errors[0].error), 'internal');
+  assert.equal(errorKind(errors[1].error), 'network');
 });

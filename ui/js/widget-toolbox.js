@@ -635,6 +635,14 @@ if (typeof window !== 'undefined') /** @type {any} */ (window).__setPollRate = s
 
 const SLOW_POLL_MS = 300000;
 
+function asInternal(e) {
+  if (e && typeof e === 'object' && !Object.isFrozen(e)) {
+    if (typeof e.kind !== 'string') e.kind = 'internal';
+    return e;
+  }
+  return Object.assign(new Error(String(e)), { kind: 'internal' });
+}
+
 export function poll(opts = {}) {
   const intervalFor = d => (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000;
   /* A slow widget that waits for a second failure shows data two intervals old
@@ -657,8 +665,10 @@ export function poll(opts = {}) {
   async function tick() {
     if (stopped) return;
     lastTick = Date.now();
+    let fetched = false;
     try {
       const data = await doFetch();
+      fetched = true;
       if (stopped) return;
       if (isEmpty(data)) {
         if (ov) ov.empty(opts.emptyText || _t('noData', 'No data'));
@@ -671,8 +681,9 @@ export function poll(opts = {}) {
       lastOk = Date.now();
       everOk = true;
       lastData = data;
-    } catch (e) {
+    } catch (caught) {
       if (stopped) return;
+      const e = fetched ? asInternal(caught) : caught;
       fails++;
       const stale = fails >= staleAfter();
       if (custom) opts.onError({ error: e, everOk, stale, since: lastOk ? sinceLabel(lastOk) : '' });
