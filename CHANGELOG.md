@@ -60,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Referrer policy picker shows and selects Default.
 
+- Now Playing no longer cuts off the second line of a long title.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
