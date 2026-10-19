@@ -147,14 +147,14 @@ function errorBody(e, overrides = {}) {
     @param {unknown} e
     @param {{ status?: number, kind?: string, code?: string,
               detail?: Record<string, unknown>, error?: string,
-              extra?: Record<string, unknown> }} [opts] */
+              extra?: Record<string, unknown>, quiet?: boolean }} [opts] */
 function fail(res, e, opts = {}) {
-  const { status = 502, kind, code: apiCode, detail, error, extra } = opts;
+  const { status = 502, kind, code: apiCode, detail, error, extra, quiet = false } = opts;
   const thrown = /** @type {{ status?: unknown, message?: unknown }} */ (e && typeof e === 'object' ? e : {});
   const code = (typeof thrown.status === 'number' && thrown.status) || status;
   const body = errorBody(e, { kind, code: apiCode, detail, error });
 
-  if (typeof thrown.message === 'string' && thrown.message && thrown.message !== body.error) {
+  if (!quiet && typeof thrown.message === 'string' && thrown.message && thrown.message !== body.error) {
     /* A SyntaxError message quotes the text it failed on, which can be a
        password or an API key. */
     const logged = e instanceof SyntaxError ? 'not valid JSON' : thrown.message;
