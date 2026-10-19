@@ -34,3 +34,28 @@ test('the pulse keeps animating after a refresh', async () => {
     map.restore();
   }
 });
+
+test('off screen, a refresh paints once and starts no pulse loop', async () => {
+  const map = await mount({ onScreen: false });
+  try {
+    map.render(PULSING);
+    map.runFrames();
+    assert.ok(map.painted().length > 0, 'the refresh still paints');
+    assert.equal(map.frames.size, 0);
+  } finally {
+    map.restore();
+  }
+});
+
+test('the pulse resumes when the map comes back on screen', async () => {
+  const map = await mount({ onScreen: false });
+  try {
+    map.render(PULSING);
+    map.runFrames();
+    map.setOnScreen(true);
+    map.runFrames();
+    assert.equal(map.frames.size, 1);
+  } finally {
+    map.restore();
+  }
+});

@@ -105,11 +105,12 @@ function element(tag = 'div') {
   return el;
 }
 
-export async function mount({ theme = 'dark' } = {}) {
+export async function mount({ theme = 'dark', onScreen = true } = {}) {
   const frames = new Map();
   let nextFrame = 1;
   const resizeCallbacks = [];
   let render = null;
+  let screenChanged = null;
   const byId = { c: element('canvas'), key: element(), sr: element('p') };
 
   const saved = {};
@@ -159,6 +160,11 @@ export async function mount({ theme = 'dark' } = {}) {
     formatNumber: n => String(n),
     formatList: items => items.join(', '),
     cssZoom: () => 1,
+    whileOnScreen: (_, fn) => {
+      screenChanged = fn;
+      fn(onScreen);
+      return { stop() {} };
+    },
   };
   new Function(dataScript)();
   new Function(placeScript)();
@@ -172,6 +178,7 @@ export async function mount({ theme = 'dark' } = {}) {
     sr: byId.sr,
     render: data => render(data),
     resize: () => resizeCallbacks.forEach(fn => fn()),
+    setOnScreen: v => screenChanged(v),
     runFrames() {
       const due = [...frames.entries()];
       frames.clear();

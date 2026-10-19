@@ -586,6 +586,37 @@ export function errorLine(err) {
   return _t(key, text);
 }
 
+/** Calls onChange(true) while el is on screen in a visible tab and
+    onChange(false) when it leaves.
+    @param {Element} el @param {(shown: boolean) => void} onChange
+    @returns {{ stop(): void }} */
+export function whileOnScreen(el, onChange) {
+  const observable = typeof IntersectionObserver === 'function';
+  let inView = !observable;
+  let shown = null;
+  const update = () => {
+    const now = inView && !document.hidden;
+    if (now === shown) return;
+    shown = now;
+    onChange(now);
+  };
+  const io = observable
+    ? new IntersectionObserver(entries => {
+        inView = entries[entries.length - 1].isIntersecting;
+        update();
+      })
+    : null;
+  if (io) io.observe(el);
+  else update();
+  document.addEventListener('visibilitychange', update);
+  return {
+    stop() {
+      if (io) io.disconnect();
+      document.removeEventListener('visibilitychange', update);
+    },
+  };
+}
+
 /* Widgets on a page the user has swiped away from keep running: the dashboard
    mounts every page at once. It multiplies their poll interval through
    window.__setPollRate, which the dashboard calls on each frame. */
