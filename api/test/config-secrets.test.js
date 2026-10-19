@@ -336,3 +336,54 @@ test('saving a weather display change keeps the stored OpenWeather key', () => {
   assert.deepEqual(withheld, []);
   assert.equal(sent.items[0].widgetConfig.owKey, 'OWK');
 });
+
+function backupWith(slots) {
+  return { items: [{ id: 'b1', type: 'widget', widgetType: 'backup', widgetConfig: { slots } }] };
+}
+
+const DUP_A = { provider: 'duplicati', dupUrl: 'http://a:8200', dupPass: 'PASS-A' };
+const DUP_B = { provider: 'duplicati', dupUrl: 'http://b:8200', dupPass: 'PASS-B' };
+const urlOnly = ({ dupPass, ...rest }) => rest;
+
+test('removing a row keeps the stored secret of every row that stays', () => {
+  const next = backupWith([{ ...urlOnly(DUP_B), savedRow: 1 }]);
+  const { withheld } = preserveAllSecrets(next, backupWith([DUP_A, DUP_B]));
+  assert.deepEqual(next.items[0].widgetConfig.slots, [DUP_B]);
+  assert.deepEqual(withheld, []);
+});
+
+test('adding a row keeps the stored secrets and gives the new row none', () => {
+  const added = { provider: 'duplicati', dupUrl: 'http://c:8200' };
+  const next = backupWith([
+    { ...urlOnly(DUP_A), savedRow: 0 },
+    { ...urlOnly(DUP_B), savedRow: 1 },
+    { ...added, savedRow: null },
+  ]);
+  const { withheld } = preserveAllSecrets(next, backupWith([DUP_A, DUP_B]));
+  assert.deepEqual(next.items[0].widgetConfig.slots, [DUP_A, DUP_B, added]);
+  assert.deepEqual(withheld, []);
+});
+
+test('a row whose address changed does not get its stored secret back', () => {
+  const moved = { provider: 'duplicati', dupUrl: 'http://evil:8200' };
+  const next = backupWith([
+    { ...moved, savedRow: 0 },
+    { ...urlOnly(DUP_B), savedRow: 1 },
+  ]);
+  const { withheld } = preserveAllSecrets(next, backupWith([DUP_A, DUP_B]));
+  assert.deepEqual(next.items[0].widgetConfig.slots, [moved, DUP_B]);
+  assert.deepEqual(withheld, [{ id: 'b1', label: 'b1' }]);
+});
+
+test('a row cannot take the secret of a saved row with another address', () => {
+  const next = backupWith([{ ...urlOnly(DUP_B), savedRow: 0 }]);
+  preserveAllSecrets(next, backupWith([DUP_A, DUP_B]));
+  assert.equal(next.items[0].widgetConfig.slots[0].dupPass, undefined);
+});
+
+test('without savedRow a removed row still withholds by position', () => {
+  const next = backupWith([urlOnly(DUP_B)]);
+  const { withheld } = preserveAllSecrets(next, backupWith([DUP_A, DUP_B]));
+  assert.equal(next.items[0].widgetConfig.slots[0].dupPass, undefined);
+  assert.deepEqual(withheld, [{ id: 'b1', label: 'b1' }]);
+});

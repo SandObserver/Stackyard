@@ -7,7 +7,7 @@ const { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds } = 
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { translatorFor } = require('./widget-i18n');
 const { preserveWidgetSecrets } = require('./widget-secrets');
-const { widgetConfigMatchesSaved, leavesStoredSecretBlank, RETYPE_MESSAGE } = require('./secret-scope');
+const { alignSavedConfig, leavesStoredSecretBlank, RETYPE_MESSAGE } = require('./secret-scope');
 const { dispatchProvider } = require('./provider-dispatch');
 const { widgetSettings } = require('./widget-settings');
 const { IS_DEMO } = require('./demo');
@@ -215,9 +215,11 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
   /* Only restore a blanked secret when the rest of the posted config matches
      what is saved. Otherwise the request picks the destination while the server
      supplies the credential. */
-  const scoped = !!saved && widgetConfigMatchesSaved(item.widgetConfig, saved.widgetConfig, entry);
-  const withheld = !scoped && !!saved && leavesStoredSecretBlank(item.widgetConfig, saved.widgetConfig, entry);
-  if (scoped) preserveWidgetSecrets(item, saved, entry);
+  const aligned = saved ? alignSavedConfig(item.widgetConfig, saved.widgetConfig, entry) : null;
+  const withheld = aligned
+    ? aligned.dropped
+    : !!saved && leavesStoredSecretBlank(item.widgetConfig, saved.widgetConfig, entry);
+  if (aligned) preserveWidgetSecrets(item, { ...saved, widgetConfig: aligned.config }, entry);
 
   try {
     const out = await getWidgetData(

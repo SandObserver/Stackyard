@@ -154,6 +154,38 @@ test('a widget text field and secret field accept typing and save', async ({ pag
   expect(saved.widgetConfig.dnsPass ?? saved.widgetConfig.dnsPassSet).toBeTruthy();
 });
 
+test('removing a group row keeps the stored secret of the row that stays', async ({ page, request }) => {
+  const service = (name, url, token) => ({ type: 'netbird', name, url, token });
+  await seedConfig(request, {
+    items: [
+      {
+        id: 'net',
+        type: 'widget',
+        widgetType: 'connections',
+        label: 'Net',
+        widgetSize: 'medium',
+        widgetConfig: {
+          services: [service('A', 'http://a.invalid', 'token-a'), service('B', 'http://b.invalid', 'token-b')],
+        },
+      },
+    ],
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Net').getByRole('button', { name: /^Edit/ }).first().click();
+  await page.locator('#ev-body .grp-hdr-rm').first().click();
+
+  const tokenRow = page.locator('#ev-body .ie-row').filter({ has: page.locator('.rl', { hasText: /^Access token/ }) });
+  await expect(tokenRow).toHaveCount(1);
+  await expect(tokenRow.locator('.rv')).toHaveText('Configured');
+
+  const response = await saveEditor(page);
+  expect((await response.json()).withheld).toBeUndefined();
+  const saved = expectItem(await readConfig(request), i => i.id === 'net', 'the Connections widget');
+  expect(saved.widgetConfig.services).toHaveLength(1);
+  expect(saved.widgetConfig.services[0]).toMatchObject({ name: 'B', url: 'http://b.invalid', tokenSet: true });
+  expect(saved.widgetConfig.services[0]).not.toHaveProperty('savedRow');
+});
+
 test("a saved widget's Fetch sends its id and shows the server's advice", async ({ page, request }) => {
   await seedConfig(request, {
     items: [
