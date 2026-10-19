@@ -1,6 +1,13 @@
-import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=14b18b8c';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=dc4ac52e';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { loadLocalIcons, resolveIcon, iconChain, cdnIconRef, splitIconRef } from '/js/icons.js?v=9c7b5111';
+import {
+  loadLocalIcons,
+  resolveIcon,
+  iconChain,
+  cdnIconRef,
+  splitIconRef,
+  throughServer,
+} from '/js/icons.js?v=5ac01d72';
 import { state } from '/js/admin-state.js?v=af772a1b';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
@@ -24,10 +31,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=36dc5cc1';
-import { createListbox } from '/js/listbox.js?v=23e87940';
+} from '/js/admin-shared.js?v=da7df247';
+import { createListbox } from '/js/listbox.js?v=4afb5969';
 import { MAX_LABELS } from '/js/badge-logic.js?v=5c72bd4c';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=e80f4a68';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=82916010';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
@@ -121,7 +128,7 @@ export function buildAppForm(body, item) {
     <div class="grp" id="ipw">
       <div class="icon-src-anchor">
       <div class="row icon-src-row">
-        <span class="icon-prev" id="ipv">${state.siurl ? html`<img src="${resolveIcon(state.siurl)}" alt="" id="ipv-img">` : html`<span>${initial(item?.label)}</span>`}</span>
+        <span class="icon-prev" id="ipv">${state.siurl ? html`<img src="${throughServer(resolveIcon(state.siurl))}" alt="" id="ipv-img">` : html`<span>${initial(item?.label)}</span>`}</span>
         <input class="icon-srch" id="ip-in" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="iprs" aria-autocomplete="list" aria-describedby="ip-status" aria-label="${t('app.icon')}" placeholder="${t('app.iconPh')}" value="${state.siurl}">
         <button type="button" class="row-btn" id="ip-upload-lbl">${t('app.upload')}</button>
         <input type="file" id="ip-upload" class="file-hidden" tabindex="-1" aria-hidden="true" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon">
@@ -767,7 +774,7 @@ function ipRow(i, iconRef, name, source, urls = [], variants = []) {
   const img = document.createElement('img');
   img.alt = '';
   /* Ordered by the catalogue, whose first entry is the file it actually holds. */
-  const srcs = [...urls, ...variants.flatMap(v => v.urls || [])].filter(Boolean);
+  const srcs = [...urls, ...variants.flatMap(v => v.urls || [])].filter(Boolean).map(throughServer);
   if (!srcs.length) srcs.push(...iconChain(iconRef));
   let step = 0;
   img.src = srcs[0] || '';
@@ -857,7 +864,7 @@ function updPrev(explicit) {
     setInitialGlyph(p);
     return;
   }
-  const fallbacks = explicit?.length ? explicit : iconChain(state.siurl);
+  const fallbacks = explicit?.length ? explicit.map(throughServer) : iconChain(state.siurl);
   if (!fallbacks.length) {
     setInitialGlyph(p);
     return;

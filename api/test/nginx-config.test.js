@@ -172,6 +172,18 @@ test('every policy in the config states a frame-ancestors', () => {
 /* Google Fonts was allowed by three policies for a widget that no longer
    exists, so every page could pull a stylesheet and a font from a host nothing
    asked for. The app uses system fonts and ships its own assets. */
+test('no policy lets a page connect to an outside host', () => {
+  const all = [...dashboard.matchAll(/add_header Content-Security-Policy "([^"]+)"/g)].map(m => m[1]);
+  all.push(policy);
+  for (const p of all) {
+    const connect = p
+      .split(';')
+      .map(d => d.trim())
+      .find(d => d.startsWith('connect-src '));
+    if (connect) assert.equal(connect, "connect-src 'self'");
+  }
+});
+
 test('no policy allows an outside font or stylesheet host', () => {
   const all = [...dashboard.matchAll(/add_header Content-Security-Policy "([^"]+)"/g)].map(m => m[1]);
   all.push(policy);

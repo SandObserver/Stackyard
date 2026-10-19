@@ -86,38 +86,53 @@ function cdnFileUrl(source, slug, ext) {
   return `${CDN_BASE[source]}/${ext}/${slug}.${ext}`;
 }
 
+function proxiedCdnUrl(url) {
+  for (const source of SOURCES) {
+    const base = `${CDN_BASE[source]}/`;
+    if (!url.startsWith(base)) continue;
+    const rest = url.slice(base.length);
+    const svgOnly = source === 'simple' || source === 'lobe';
+    const m = svgOnly ? /^([^/?#]+)\.(svg)$/.exec(rest) : /^(svg|png)\/([^/?#]+)\.\1$/.exec(rest);
+    if (!m) return '';
+    const [slug, ext] = svgOnly ? [m[1], m[2]] : [m[2], m[1]];
+    return `/api/icons/cdn?name=${encodeURIComponent(slug)}&ext=${ext}&source=${source}`;
+  }
+  return '';
+}
+
+/** Load catalogue files through the server. A direct load tells the CDN which
+    services this dashboard shows.
+    @param {string} url @returns {string} */
+export function throughServer(url) {
+  return (_proxy && proxiedCdnUrl(url)) || url;
+}
+
 export function iconChain(rawIcon) {
   if (!rawIcon) return [];
   const localUrl = resolveIcon(rawIcon);
+  if (rawIcon.startsWith('http://') || rawIcon.startsWith('https://')) {
+    const chain = localUrl && localUrl !== rawIcon ? [localUrl] : [];
+    chain.push(throughServer(rawIcon));
+    return chain;
+  }
   const name = rawIcon
     .replace(/\.(svg|png)$/i, '')
     .split('/')
     .pop()
     .split('?')[0];
   const dot = rawIcon.lastIndexOf('.');
-  const explicitExt = !rawIcon.startsWith('http') && dot > 0 ? rawIcon.slice(dot + 1).toLowerCase() : '';
-  const chain = [];
-  if (localUrl) chain.push(localUrl);
-  if (rawIcon.startsWith('http')) {
-    if (localUrl && rawIcon !== localUrl) chain.push(rawIcon);
-    if (!localUrl) chain.push(rawIcon);
-  } else {
-    const { source, slug } = splitIconRef(name);
-    const cdn = encodeURIComponent(cdnIconName(slug));
-    const src = `&source=${source}`;
-    /* Through the API first, which holds the file, so the CDN is not told which
-       services this dashboard shows on every load. The direct link stays as the
-       fallback for a failed proxy fetch. */
-    /* One request, not one per format. Hundreds of catalogue entries are png
-       only and hundreds have no png, and the server knows which from the
-       catalogue index it already holds. */
-    if (_proxy && explicitExt) chain.push(`/api/icons/cdn?name=${cdn}&ext=${explicitExt}${src}`);
-    else if (_proxy) chain.push(`/api/icons/cdn?name=${cdn}${src}`);
-    for (const ext of ['svg', 'png']) {
-      if (explicitExt && explicitExt !== ext) continue;
-      const direct = cdnFileUrl(source, cdn, ext);
-      if (direct) chain.push(direct);
-    }
+  const explicitExt = dot > 0 ? rawIcon.slice(dot + 1).toLowerCase() : '';
+  const chain = localUrl ? [localUrl] : [];
+  const { source, slug } = splitIconRef(name);
+  const cdn = encodeURIComponent(cdnIconName(slug));
+  if (_proxy) {
+    chain.push(`/api/icons/cdn?name=${cdn}${explicitExt ? `&ext=${explicitExt}` : ''}&source=${source}`);
+    return chain;
+  }
+  for (const ext of ['svg', 'png']) {
+    if (explicitExt && explicitExt !== ext) continue;
+    const direct = cdnFileUrl(source, cdn, ext);
+    if (direct) chain.push(direct);
   }
   return chain;
 }
