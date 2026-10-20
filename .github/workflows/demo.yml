@@ -136,6 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: {}
+    environment: demo
     outputs:
       url: ${{ steps.version.outputs.url }}
       id: ${{ steps.version.outputs.id }}
@@ -214,7 +215,8 @@ jobs:
           mkdir -p placeholder/site
           printf '<!doctype html><meta charset="utf-8"><title>Stackyard demo</title><p>The demo is being prepared.</p>\n' > placeholder/site/index.html
           printf '/ /index.html 200\n' > placeholder/site/_redirects
-          cp upload/wrangler.jsonc placeholder/
+          # Without the routes, so a placeholder never takes the demo address.
+          node -e 'const c = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")); delete c.routes; require("fs").writeFileSync(process.argv[2], JSON.stringify(c, null, 2));' upload/wrangler.jsonc placeholder/wrangler.jsonc
 
       - name: Create the Worker
         if: steps.creds.outputs.set == 'true' && steps.worker.outputs.exists == 'false'
@@ -303,11 +305,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: {}
+    environment: demo
     steps:
-      - name: Deploy the version
+      - name: Checkout the Wrangler config
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          path: repo
+          sparse-checkout: scripts/demo/wrangler.jsonc
+          sparse-checkout-cone-mode: false
+
+      - name: Prepare the config
+        run: |
+          set -euo pipefail
+          mkdir -p promote/site
+          cp repo/scripts/demo/wrangler.jsonc promote/
+          rm -rf repo
+
+      # Version uploads leave routes alone; triggers deploy applies the demo address.
+      - name: Deploy the version and its address
         uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: ${{ env.WRANGLER_VERSION }}
-          command: versions deploy ${{ needs.upload.outputs.id }}@100 --name stackyard-demo --yes --message "Stackyard ${{ inputs.version }}"
+          workingDirectory: promote
+          command: |
+            versions deploy ${{ needs.upload.outputs.id }}@100 --yes --message "Stackyard ${{ inputs.version }}"
+            triggers deploy

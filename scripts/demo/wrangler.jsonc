@@ -4,6 +4,7 @@
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
   "preview_urls": true,
+  "routes": [{ "pattern": "demo.sandobserver.com", "custom_domain": true }],
   "assets": {
     "directory": "./site",
     "html_handling": "none",
