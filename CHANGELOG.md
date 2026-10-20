@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Log a failing widget once, with a reminder every 10 minutes and a line on
   recovery, instead of on every request.
 
+- Redraw the Weather widget artwork as frosted glass with gentle motion that
+  pauses off screen.
+
 ### Fixed
 
 - Name a widget without a manifest for re-entry when a port map change clears
