@@ -146,6 +146,31 @@ function redirectRules(routes) {
   return `${lines.join('\n')}\n`;
 }
 
+/* The image tells browsers to keep a stamped widget page for a year. The demo
+   changes that page, so it needs a stamp of its own, or a browser that saw the
+   image keeps the page without the replay script.
+   @param {Record<string, [number, string]>} fixed
+   @param {(path: string) => string|null} readPage */
+function restampWidgets(fixed, readPage) {
+  const key = 'GET /api/widgets';
+  if (!fixed[key]) throw new Error(`${key} was not recorded`);
+  const [status, body] = fixed[key];
+  const list = JSON.parse(body);
+  let stamped = 0;
+  for (const w of list.widgets || []) {
+    for (const file of Object.keys(w.entryVersions || {})) {
+      const page = readPage(`/widgets/${w.name}/${file}`);
+      if (page === null) throw new Error(`/widgets/${w.name}/${file} is listed but not in the web root`);
+      const fresh = hash(`demo-replay\n${page}`).slice(0, 8);
+      if (fresh === w.entryVersions[file]) throw new Error(`/widgets/${w.name}/${file} kept the image's stamp`);
+      w.entryVersions[file] = fresh;
+      stamped++;
+    }
+  }
+  if (!stamped) throw new Error(`${key} lists no stamped widget pages; the demo would reuse cached image pages`);
+  return { ...fixed, [key]: [status, JSON.stringify(list)] };
+}
+
 /** @param {string} html @param {string} src */
 function injectScript(html, src) {
   const out = html.replace(/<head(\s[^>]*)?>/i, m => `${m}<script src="${src}"></script>`);
@@ -159,7 +184,8 @@ function build(webroot, recording, out) {
   const files = listFiles(out);
 
   const { fixed: still, varying } = classify(recording.frames);
-  const fixed = { ...recording.once, ...still };
+  const readPage = p => (fs.existsSync(path.join(out, p)) ? fs.readFileSync(path.join(out, p), 'utf8') : null);
+  const fixed = restampWidgets({ ...recording.once, ...still }, readPage);
   const bad = Object.entries(fixed).filter(([, [status]]) => status === 429);
   if (bad.length) throw new Error(`rate limited while recording: ${bad.map(([k]) => k).join(', ')}`);
 
@@ -206,7 +232,16 @@ function build(webroot, recording, out) {
   return { pages: files.filter(p => p.endsWith('.html')).length, fixed: Object.keys(fixed).length, varying };
 }
 
-module.exports = { classify, splitSeries, fallbackRoutes, headerRules, redirectRules, injectScript, build };
+module.exports = {
+  classify,
+  splitSeries,
+  fallbackRoutes,
+  headerRules,
+  redirectRules,
+  injectScript,
+  restampWidgets,
+  build,
+};
 
 if (require.main === module) {
   const [webroot, recordingFile, out] = process.argv.slice(2);

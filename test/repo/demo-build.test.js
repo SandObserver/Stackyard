@@ -9,6 +9,7 @@ const {
   headerRules,
   redirectRules,
   injectScript,
+  restampWidgets,
 } = require('../../scripts/demo/build');
 const { writeRoutes, routePattern } = require('../../scripts/demo/source');
 
@@ -158,4 +159,36 @@ test('every write route of the API is found, with its parameters', () => {
   assert.ok(routes.every(r => /^(POST|PUT|PATCH|DELETE) \/api\//.test(r)));
   assert.match('/api/widget-options/w-stats', new RegExp(routePattern('/api/widget-options/:id')));
   assert.doesNotMatch('/api/widget-options/a/b', new RegExp(routePattern('/api/widget-options/:id')));
+});
+
+const widgetList = versions =>
+  ok({ widgets: Object.entries(versions).map(([name, entryVersions]) => ({ name, entryVersions })) });
+
+test('every widget page gets a stamp of its own, so cached image pages are not reused', () => {
+  const pages = { '/widgets/clock/analog.html': '<head></head>clock', '/widgets/dns/index.html': '<head></head>dns' };
+  const before = { clock: { 'analog.html': 'b640345d' }, dns: { 'index.html': 'b5911a46' } };
+  const read = p => pages[p] ?? null;
+  const fixed = restampWidgets({ 'GET /api/widgets': widgetList(before), 'GET /api/config': ok({}) }, read);
+  const after = Object.fromEntries(
+    JSON.parse(fixed['GET /api/widgets'][1]).widgets.map(w => [w.name, w.entryVersions]),
+  );
+  assert.notEqual(after.clock['analog.html'], 'b640345d');
+  assert.notEqual(after.dns['index.html'], 'b5911a46');
+  assert.match(after.clock['analog.html'], /^[0-9a-f]{8}$/);
+  assert.deepEqual(fixed['GET /api/config'], ok({}), 'other answers stay as recorded');
+  const again = restampWidgets({ 'GET /api/widgets': widgetList(before) }, read);
+  assert.deepEqual(again['GET /api/widgets'], fixed['GET /api/widgets'], 'the same page gets the same stamp');
+  pages['/widgets/clock/analog.html'] += ' changed';
+  const changed = restampWidgets({ 'GET /api/widgets': widgetList(before) }, read);
+  assert.notDeepEqual(changed['GET /api/widgets'], fixed['GET /api/widgets'], 'a changed page gets a new stamp');
+});
+
+test('a widget list the build cannot restamp stops the build', () => {
+  const read = () => '<head></head>';
+  assert.throws(() => restampWidgets({}, read), /was not recorded/);
+  assert.throws(() => restampWidgets({ 'GET /api/widgets': widgetList({}) }, read), /no stamped widget pages/);
+  assert.throws(
+    () => restampWidgets({ 'GET /api/widgets': widgetList({ clock: { 'analog.html': 'b640345d' } }) }, () => null),
+    /not in the web root/,
+  );
 });
