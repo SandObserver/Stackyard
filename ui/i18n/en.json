@@ -538,9 +538,10 @@
     "hidden": "Hidden"
   },
   "color": {
+    "style": "Style",
     "dark": "Dark",
     "light": "White",
-    "auto": "Auto (Dark or White)",
+    "auto": "Auto",
     "clear": "Clear",
     "system": "System",
     "accent": "Accent",

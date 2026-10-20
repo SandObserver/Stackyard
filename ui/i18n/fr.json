@@ -550,9 +550,10 @@
     "hidden": "Masqué"
   },
   "color": {
+    "style": "Style",
     "dark": "Sombre",
     "light": "Blanc",
-    "auto": "Automatique (sombre ou blanc)",
+    "auto": "Automatique",
     "clear": "Transparent",
     "system": "Système",
     "accent": "Accent",
