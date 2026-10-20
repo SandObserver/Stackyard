@@ -91,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Colour sliders in Settings share one length.
 
+- Safari no longer logs a viewport warning when the dashboard loads.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
