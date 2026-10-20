@@ -2,11 +2,24 @@
   const INDEX = '__REPLAY_INDEX__';
   const realFetch = window.fetch.bind(window);
   const loaded = new Map();
+  /* A 404 means a newer release replaced this page's recording. Only a reload
+     fetches the new one. One reload a minute, so a missing file cannot loop. */
+  const RELOADED_AT = 'demo-replay-reloaded-at';
+  const reloadOnce = () => {
+    try {
+      if (Date.now() - (Number(sessionStorage.getItem(RELOADED_AT)) || 0) < 60_000) return;
+      sessionStorage.setItem(RELOADED_AT, String(Date.now()));
+    } catch {
+      return;
+    }
+    location.reload();
+  };
   /* A failed load is dropped, so the next request retries it. Kept, it fails every
      later request until the page reloads. */
   const load = path => {
     if (!loaded.has(path)) {
       const p = realFetch(path).then(r => {
+        if (r.status === 404) reloadOnce();
         if (!r.ok) throw new Error(`${path} answered ${r.status}`);
         return r.json();
       });

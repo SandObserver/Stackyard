@@ -33,9 +33,10 @@ const chunks = {
   ],
 };
 
-function page(now, intercept = () => null) {
+function page(now, intercept = () => null, storage = new Map()) {
   const warnings = [];
   const passed = [];
+  const reloads = [];
   const window = {
     fetch: async input => {
       const url = String(input);
@@ -50,7 +51,13 @@ function page(now, intercept = () => null) {
   };
   const ctx = {
     window,
-    location: { href: `${ORIGIN}/`, origin: ORIGIN },
+    location: { href: `${ORIGIN}/`, origin: ORIGIN, reload: () => reloads.push(now) },
+    sessionStorage: {
+      getItem: k => (storage.has(k) ? storage.get(k) : null),
+      setItem: (k, v) => storage.set(k, String(v)),
+    },
+    Number,
+    String,
     console: { warn: (...a) => warnings.push(a.join(' ')) },
     Date: class extends Date {
       static now() {
@@ -70,7 +77,7 @@ function page(now, intercept = () => null) {
     const r = await window.fetch(url, init);
     return { status: r.status, body: await r.text() };
   };
-  return { get, warnings, passed };
+  return { get, warnings, passed, reloads };
 }
 
 test('a fixed answer replays as recorded', async () => {
@@ -121,6 +128,26 @@ test('a failed load is retried on the next request', async () => {
   await assert.rejects(p.get('/api/config'));
   await assert.rejects(p.get('/api/widget-data/w?endpoint=system'));
   assert.equal(JSON.parse((await p.get('/api/widget-data/w?endpoint=system')).body).cpu, 0);
+});
+
+test('a chunk the new release no longer serves reloads the page, once a minute at most', async () => {
+  const gone = url => (url.endsWith('.json') && !url.includes('index') ? new Response('', { status: 404 }) : null);
+  const storage = new Map();
+  const first = page(START, gone, storage);
+  await assert.rejects(first.get('/api/widget-data/w?endpoint=system'));
+  await assert.rejects(first.get('/api/widget-data/w?endpoint=system'));
+  assert.equal(first.reloads.length, 1, 'repeated 404s must not reload again');
+  const soon = page(START + 30_000, gone, storage);
+  await assert.rejects(soon.get('/api/widget-data/w?endpoint=system'));
+  assert.equal(soon.reloads.length, 0, 'a reload within a minute would loop');
+  const later = page(START + 61_000, gone, storage);
+  await assert.rejects(later.get('/api/widget-data/w?endpoint=system'));
+  assert.equal(later.reloads.length, 1);
+  const offline = page(START, url =>
+    url.endsWith('.json') && !url.includes('index') ? new Response('', { status: 503 }) : null,
+  );
+  await assert.rejects(offline.get('/api/widget-data/w?endpoint=system'));
+  assert.equal(offline.reloads.length, 0, 'only a missing file means a new release');
 });
 
 test('files and other sites go to the network', async () => {
