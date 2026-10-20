@@ -168,6 +168,7 @@
     "iconNoMatch": "No icon found for “{q}”",
     "iconTryUpload": "Upload your own, or leave it empty to use the first letter.",
     "iconSearchFailed": "Icon catalogues could not be reached",
+    "iconSearchDemo": "Icon search is turned off in the live demo.",
     "iconFrom": "from {source}",
     "iconResults": "Icon suggestions",
     "iconResultCount_one": "{count} icon found",

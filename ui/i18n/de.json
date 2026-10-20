@@ -168,6 +168,7 @@
     "iconNoMatch": "Kein Symbol für „{q}“ gefunden",
     "iconTryUpload": "Lade ein eigenes hoch oder lasse das Feld leer, um den ersten Buchstaben zu verwenden.",
     "iconSearchFailed": "Symbolkataloge sind nicht erreichbar",
+    "iconSearchDemo": "In der Live-Demo ist die Symbolsuche deaktiviert.",
     "iconFrom": "von {source}",
     "iconResults": "Symbolvorschläge",
     "iconResultCount_one": "{count} Symbol gefunden",

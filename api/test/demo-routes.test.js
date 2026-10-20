@@ -98,3 +98,18 @@ test('no demo write reached the disk', () => {
   assert.equal(fs.existsSync(process.env.CONFIG_PATH), false);
   assert.deepEqual(fs.readdirSync(process.env.ICONS_PATH), []);
 });
+
+test('icon search answers the demo refusal instead of failing on the blocked catalogues', async () => {
+  const r = await new Promise((resolve, reject) => {
+    http
+      .get(`${base}/api/icons/search?q=plex`, res => {
+        let raw = '';
+        res.on('data', c => (raw += c));
+        res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(raw) }));
+      })
+      .on('error', reject);
+  });
+  assert.equal(r.status, 403);
+  assert.equal(r.body.code, 'blocked.demo');
+  assert.equal(r.body.kind, 'blocked');
+});

@@ -54,6 +54,13 @@ const ICON_CACHE_TTL = 24 * 60 * 60 * 1000;
 on('GET', '/api/icons/search', async (req, res) => {
   const q = (new URL(req.url, 'http://x').searchParams.get('q') || '').trim();
   if (!q) return json(res, 200, { results: [] });
+  if (IS_DEMO) {
+    return json(res, 403, {
+      error: 'Outbound requests are disabled in demo mode',
+      kind: KIND.BLOCKED,
+      code: 'blocked.demo',
+    });
+  }
   try {
     json(res, 200, { results: await searchIcons(q) });
   } catch (e) {
