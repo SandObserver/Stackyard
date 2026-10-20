@@ -24,111 +24,138 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.18.0 - 2026-10-17
+### 1.19.0 - 2026-10-20
 
 ### Added
 
-- The widget picker shows a one-line description of each widget type.
+- Nine short Backup haikus that fit small cards.
 
-- Widgets open their service when no Click URL is set, if the browser can reach
-  its address.
+- Let a widget manifest list the query parameters its data function reads.
 
-- Backup, Now Playing and System Summary open the job, item or system they show,
-  under the Click URL when one is set.
-
-- System Summary and the Connections map have a Click URL setting.
-
-- Add an optional API token for Scrutiny in Disk Health, needed from Scrutiny
-  2.0.
+- Settings offers to add the address you are signed in on to Allowed Addresses.
 
 ### Changed
 
-- The small VPN view leaves more room between its text and the card edge.
+- The Unsplash wallpaper changes once a day instead of on every load.
 
-- The VPN view no longer shows the public IP address unless Show IP Address is
-  turned on in its settings.
+- Log a failing widget once, with a reminder every 10 minutes and a line on
+  recovery, instead of on every request.
 
-- Widgets show soft placeholder shapes while they load, and Books and Now
-  Playing no longer show a heading or "Nothing playing" before their data
-  arrives.
+- Redraw the Weather widget artwork as frosted glass with gentle motion that
+  pauses off screen.
 
-- Disk Health shows each drive's status light on its bay.
+- Choose the icon colour style (Dark, White, Auto, Clear or Color) from a
+  drop-down; colours and sliders show only under Color.
 
-- Disk Health bay tooltips use the full widget width, so drive names are cut
-  less often.
-
-- Widget link fields are labelled Link URL.
-
-- Weather hover and screen-reader text include when the data was last updated.
-
-- The Persian analog clock no longer shows the year on the dial.
+- Badge and wallpaper colour swatches sit together at the end of their row, all
+  one size.
 
 ### Fixed
 
-- Weather, Books and GitHub contributions now mark their data as out of date
-  after one failed refresh, not two.
+- Name a widget without a manifest for re-entry when a port map change clears
+  its settings.
 
-- Disk Health names a failed drive in words instead of only turning its light
-  red.
+- Backup cards show a whole haiku or none, never part of one.
 
-- The DNS widget labels its chart, so allowed, cached and blocked queries no
-  longer rely on colour alone.
+- Show an error instead of zero DNS queries, "Nothing playing" or "Not secured"
+  when a service sends an unreadable reply.
 
-- Widget text is never smaller than 11 points, including book spines, disk bay
-  labels, backup cards and the Now Playing band.
+- Stop a large non-JSON reply from a service from stalling the dashboard.
 
-- Book spine titles and disk bay labels no longer shift letter by letter on
-  hover.
+- Show an error when a widget cannot draw the data it received, instead of
+  leaving old data on screen.
 
-- Large and extra large widgets on desktop now end level with the widgets beside
-  them.
+- Keep healthy Backup cards when another backup server stops answering.
 
-- Counts in search, badges and widgets follow the plural rules of the selected
-  language.
+- Answer every widget request before the dashboard's proxy gives up, even when a
+  service stalls on several calls.
 
-- Backup, Now Playing, Books, Weather and Connections read their labels in the
-  selected language's word order.
+- Keep the dashboard and healthy widgets responsive while several services
+  stall.
 
-- Backup shows run times in the selected language.
+- Keep every widget, badge and health check working while the DNS server is
+  down, instead of stalling behind lookups that never finish.
 
-- Lists use the selected language's separators.
+- Keep app health dots updating while the Docker socket proxy stops answering.
 
-- The language picker marks each language name with its language for screen
-  readers.
+- Treat a damaged settings block in the config file as damage instead of loading
+  it as an open install.
 
-- System Summary translates "All interfaces" and badges translate container
-  states.
+- Skip invalid entries in the config file's app list instead of failing health
+  checks, badges and widgets.
 
-- Persian text reads as everyday Persian and no longer misdescribes several
-  settings.
+- Keep a config file edited by hand while the container runs instead of
+  overwriting it on the next save.
 
-- German, Spanish, French and Chinese text reads naturally, uses one form of
-  address, and follows each language's typography.
+- Report no changes when importing an export that matches the current
+  configuration.
 
-- Weather no longer shows dark bands at the card's sides in daytime with the
-  dark theme.
+- Stop an icon upload from overwriting an existing icon when many share its
+  name.
 
-- System Summary chart columns have equal gaps.
+- The Referrer policy picker shows and selects Default.
 
-- Backup job names and error lines no longer break inside a word.
+- Now Playing no longer cuts off the second line of a long title.
 
-- The analog clock date is no longer drawn below 11px.
+- Stop extra query values on widget data requests from filling server memory and
+  multiplying upstream calls.
 
-- Connections map legend entries have larger tap areas.
+- Stop app tiles with a refresh interval from filling the browser Back history.
 
-- Backup card text no longer runs past the card in Persian.
+- Stop the Connections VPN view from stacking animation loops while its page is
+  off screen.
 
-- Large Books spines show more of each title.
+- Pause the Analog clock, Connections map and VPN animations on dashboard pages
+  not shown.
 
-- Stackyard icon no longer shows blank on the Unraid Docker tab and Dashboard.
+- Adding or removing a row in a widget's settings keeps the stored passwords and
+  keys of the other rows.
 
-- Stop logging an nginx warning on every settings save.
+- Colour pickers in Settings fit on narrow phones without cutting off labels or
+  swatches.
 
-- Show settings labels in full on a phone instead of cutting them off.
+- Colour sliders in Settings share one length.
+
+- Safari no longer logs a viewport warning when the dashboard loads.
 
 ### Security
 
-- Update expat to 2.9.0 to fix CVE-2026-77214 and CVE-2026-102633.
+- Keep a stored widget secret out of the browser when a save sends the widget
+  under a legacy type.
+
+- Withhold stored secrets when a widget's type changes, the port map is removed,
+  or certificate checking for widgets is turned on or off.
+
+- Stop trusting the first host name that opens Stackyard while no password is
+  set. Add a domain name in Allowed Addresses from an IP address or a local
+  name.
+
+- Refuse service names that resolve to loopback or link-local addresses, such as
+  `ip6-localhost`, in admin URL tests.
+
+- Block 6to4, local-use NAT64 and site-local IPv6 addresses in admin URL tests.
+
+- Refuse a config save whose settings block is not an object, which could remove
+  the password.
+
+- Refuse a config save or import nested too deeply, which could leave the config
+  unreadable.
+
+- Saving the wallpaper no longer replaces the stored Unsplash key with the
+  field's label.
+
+- Icons always load through the server, so the CDN does not learn which services
+  a dashboard shows.
+
+- A page on another site can no longer lock the owner out of sign-in by pointing
+  its host name at the server.
+
+- The wallpaper endpoint no longer returns Unsplash's error text.
+
+- A session cookie set by another host on the same parent domain no longer signs
+  the owner out.
+
+- The Connections widget no longer names an address the guard blocked.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
