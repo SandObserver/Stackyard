@@ -63,6 +63,39 @@ test.describe('on a touch screen', () => {
       expect(wide, 'the page does not scroll sideways').toBeLessThanOrEqual(320);
     });
   }
+
+  for (const language of ['fr', 'fa']) {
+    test(`the icon colour picker fits at 320px in ${language}`, async ({ page, request }) => {
+      await seedConfig(request, { items: [app('one', 'One')], settings: { language } });
+      await dismissSetupPrompt(request);
+      await page.setViewportSize({ width: 320, height: 700 });
+      await page.goto('/admin/#dashboard');
+      await page.locator('#al [data-act="edit"]').first().click();
+      await page.locator('#icon-color-slot .cc-swatch[data-v="custom"]').click();
+      const picker = page.locator('#icon-color-slot');
+      await picker.locator('.cc-hues').waitFor({ state: 'visible' });
+      await animationsDone(page);
+      const misfits = await picker.evaluate(slot => {
+        const out = [];
+        for (const row of slot.querySelectorAll('.row')) {
+          const r = row.getBoundingClientRect();
+          for (const n of row.querySelectorAll('.cc-swatch, .rl, .hsb-ico, .hsb-range')) {
+            const b = n.getBoundingClientRect();
+            if (!b.width) continue;
+            if (b.left < r.left - 0.5 || b.right > r.right + 0.5) out.push(`${n.className} leaves its row`);
+            if (n.classList.contains('rl') && n.scrollWidth > n.clientWidth)
+              out.push(`label "${n.textContent}" is cut off`);
+          }
+          const sw = [...row.querySelectorAll('.cc-swatch')].map(n => n.getBoundingClientRect());
+          for (let i = 1; i < sw.length; i++)
+            if (Math.abs(sw[i].top - sw[i - 1].top) < 1 && Math.abs(sw[i].left - sw[i - 1].left) < sw[i].width)
+              out.push('two swatches overlap');
+        }
+        return out;
+      });
+      expect(misfits).toEqual([]);
+    });
+  }
 });
 
 test('the desktop Settings sidebar stays on screen while the list scrolls', async ({ page, request }) => {
