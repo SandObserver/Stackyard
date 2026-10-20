@@ -1,0 +1,260 @@
+name: Demo
+
+on:
+  workflow_call:
+    inputs:
+      digest:
+        type: string
+        required: true
+      version:
+        type: string
+        required: true
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published version, for example 1.18.0
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  WRANGLER_VERSION: 4.151.3
+
+jobs:
+  # Dev dependencies run here. Never give this job a token.
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      # The version reaches Wrangler's command line below.
+      - name: Check the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::$VERSION is not a stable version such as 1.18.0"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Install dev tooling
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Start the image in demo mode
+        env:
+          DIGEST: ${{ inputs.digest }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "$DIGEST" ]; then
+            IMAGE="ghcr.io/sandobserver/stackyard@${DIGEST}"
+          else
+            IMAGE="ghcr.io/sandobserver/stackyard:${VERSION}"
+          fi
+          docker pull "$IMAGE"
+          echo "Demo from $(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE")"
+          docker run -d --name stackyard-demo -e DEMO_MODE=true -p 8740:80 "$IMAGE"
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8740/health >/dev/null 2>&1; then echo "up after ${i}s"; exit 0; fi
+            sleep 1
+          done
+          echo "::error::the demo container never became healthy"
+          docker logs stackyard-demo
+          exit 1
+
+      - name: Copy the web root
+        run: docker cp stackyard-demo:/usr/share/nginx/html "$RUNNER_TEMP/webroot"
+
+      - name: Tour the container
+        run: node scripts/demo/tour.js discover http://127.0.0.1:8740 "$RUNNER_TEMP/tour.json"
+
+      - name: Record the demo
+        run: node scripts/demo/record.js http://127.0.0.1:8740 "$RUNNER_TEMP/tour.json" "$RUNNER_TEMP/webroot" "$RUNNER_TEMP/recording.json" 10
+
+      - name: Build the static demo
+        run: |
+          set -euo pipefail
+          node scripts/demo/build.js "$RUNNER_TEMP/webroot" "$RUNNER_TEMP/recording.json" demo/site
+          cp scripts/demo/wrangler.jsonc "$RUNNER_TEMP/tour.json" "$RUNNER_TEMP/recording.json" demo/
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs stackyard-demo
+
+      - name: Upload the static demo
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: demo
+          path: demo/
+          retention-days: 7
+
+  upload:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {}
+    outputs:
+      url: ${{ steps.version.outputs.url }}
+      id: ${{ steps.version.outputs.id }}
+    steps:
+      - name: Check for Cloudflare credentials
+        id: creds
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo 'CLOUDFLARE_API_TOKEN is not set. Nothing uploaded.'
+            echo 'set=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'set=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download the static demo
+        if: steps.creds.outputs.set == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: demo
+          path: demo
+
+      # Wrangler cannot upload a version of a Worker that does not exist yet.
+      - name: Check the Worker exists
+        id: worker
+        if: steps.creds.outputs.set == 'true'
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          code=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 30 \
+            --header "Authorization: Bearer $TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/workers/scripts/stackyard-demo/settings")
+          case "$code" in
+            200) echo 'exists=true' >> "$GITHUB_OUTPUT" ;;
+            404) echo 'exists=false' >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Cloudflare answered HTTP $code"; exit 1 ;;
+          esac
+
+      - name: Create the Worker
+        if: steps.creds.outputs.set == 'true' && steps.worker.outputs.exists == 'false'
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          workingDirectory: demo
+          command: deploy
+
+      - name: Upload a version
+        id: wrangler
+        if: steps.creds.outputs.set == 'true'
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          workingDirectory: demo
+          command: versions upload --tag v${{ inputs.version }} --message "Stackyard ${{ inputs.version }}"
+
+      - name: Read the version
+        id: version
+        if: steps.creds.outputs.set == 'true'
+        env:
+          OUT: ${{ steps.wrangler.outputs.command-output }}
+        run: |
+          set -euo pipefail
+          id=$(printf '%s\n' "$OUT" | sed -n 's/.*Worker Version ID: *\([0-9a-f-]\{36\}\).*/\1/p' | head -1)
+          url=$(printf '%s\n' "$OUT" | sed -n 's/.*Version Preview URL: *\(https:[^ ]*\).*/\1/p' | head -1)
+          if [ -z "$id" ] || [ -z "$url" ]; then
+            echo '::error::the upload printed no version ID or preview address'
+            exit 1
+          fi
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Version $id previews at $url"
+
+  # Dev dependencies run here. Never give this job a token.
+  verify:
+    needs: upload
+    if: needs.upload.outputs.url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Install dev tooling
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Download the recording
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: demo
+          path: demo
+
+      - name: Tour the preview
+        env:
+          URL: ${{ needs.upload.outputs.url }}
+        run: node scripts/demo/tour.js verify "$URL" demo/tour.json demo/recording.json
+
+  # Keep verify in needs. Without it, an untested version goes live.
+  promote:
+    needs: [upload, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {}
+    steps:
+      - name: Deploy the version
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          command: versions deploy ${{ needs.upload.outputs.id }}@100 --name stackyard-demo --yes --message "Stackyard ${{ inputs.version }}"
