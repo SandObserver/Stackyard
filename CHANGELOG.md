@@ -86,6 +86,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adding or removing a row in a widget's settings keeps the stored passwords and
   keys of the other rows.
 
+- Colour pickers in Settings fit on narrow phones without cutting off labels or
+  swatches.
+
+- Colour sliders in Settings share one length.
+
 ### Security
 
 - Keep a stored widget secret out of the browser when a save sends the widget
