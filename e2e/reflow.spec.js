@@ -98,6 +98,23 @@ test.describe('on a touch screen', () => {
   }
 });
 
+test('the colour sliders share one length', async ({ page, request }) => {
+  await seedConfig(request, { items: [app('one', 'One')] });
+  await dismissSetupPrompt(request);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openDashboardList(page);
+  await page.locator('#al [data-act="edit"]').first().click();
+  await page.locator('#icon-color-slot .cc-swatch[data-v="custom"]').click();
+  const sliders = page.locator('#icon-color-slot .hsb-range');
+  await expect(sliders).toHaveCount(3);
+  await animationsDone(page);
+  const boxes = await Promise.all((await sliders.all()).map(box));
+  for (const b of boxes.slice(1)) {
+    expect(b.x, 'every slider starts where the first does').toBeCloseTo(boxes[0].x, 0);
+    expect(b.width, 'every slider is as long as the first').toBeCloseTo(boxes[0].width, 0);
+  }
+});
+
 test('the desktop Settings sidebar stays on screen while the list scrolls', async ({ page, request }) => {
   await seedConfig(request, { items: MANY });
   await dismissSetupPrompt(request);
