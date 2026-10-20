@@ -12,7 +12,18 @@ If a feature seems to need a dependency or a build step, open an issue first.
 
 ## Development
 
-The frontend is static; edit files under `ui/` and reload. Unit tests use Node's
+Run Stackyard from the working tree with Docker Compose 2.23 or later:
+
+```
+docker compose -f docker-compose.dev.yml watch
+```
+
+It serves `http://127.0.0.1:8701`. A saved file reaches the container within a
+few seconds. A change under `api/src` or `ui/widgets`, or to a module the API
+shares with the frontend, restarts the container. A change to the Dockerfile,
+nginx or supervisord config rebuilds the image. Data is kept in `.dev/`.
+
+Unit tests use Node's
 built-in runner and need nothing installed; coverage and the browser tests use
 the dev tooling in the root `package.json`.
 
