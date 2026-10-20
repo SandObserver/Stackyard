@@ -36,9 +36,8 @@ runs:
       shell: bash
       run: node scripts/changelog-check.js
 
-    # A release must also agree with itself: the newest dated section, the
-    # package version and the demo pin all name one version, and nothing is left
-    # under [Unreleased].
+    # A release must also agree with itself: the newest dated section and the
+    # package version name one version, and nothing is left under [Unreleased].
     - name: Check the changelog describes this release
       if: inputs.mode == 'release'
       shell: bash

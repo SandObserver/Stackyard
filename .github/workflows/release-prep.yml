@@ -39,8 +39,7 @@ jobs:
         with:
           node-version: '24'
 
-      # Dates the section, writes the compare link, bumps api/package.json and
-      # moves the demo pin in render.yaml.
+      # Dates the section, writes the compare link and bumps api/package.json.
       - name: Prepare the release
         env:
           VERSION: ${{ inputs.version }}
@@ -65,7 +64,7 @@ jobs:
           git config user.name 'SandObserver'
           git config user.email '260779319+SandObserver@users.noreply.github.com'
           git checkout -b "${BRANCH}"
-          git add CHANGELOG.md api/package.json render.yaml
+          git add CHANGELOG.md api/package.json
           git commit -m "Release ${VERSION}"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${BRANCH}"
           gh pr create \
@@ -77,7 +76,6 @@ jobs:
               '**Summary**' \
               "- Date Unreleased as ${VERSION} and add its compare link." \
               "- Bump api/package.json to ${VERSION}." \
-              "- Pin the demo image to ${VERSION} in render.yaml." \
               '' \
               '**Testing**' \
               'The changelog gate ran in release mode before this branch was pushed. Merging this tags the release and publishes the image.' \

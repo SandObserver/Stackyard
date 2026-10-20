@@ -159,8 +159,8 @@ function checkStyle(version) {
 
 const short = text => (text.length > 60 ? `${text.slice(0, 57)}...` : text);
 
-/** The release-time half: the changelog, the package version and the demo pin
-    must all name the same release. */
+/** The release-time half: the changelog and the package version must name the
+    same release. */
 function checkRelease(doc, version) {
   const releases = cl.released(doc);
   const newest = releases[0];
@@ -174,12 +174,6 @@ function checkRelease(doc, version) {
 
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'api', 'package.json'), 'utf8'));
   if (pkg.version !== version) fail(1, `api/package.json is ${pkg.version}, not ${version}`);
-
-  const render = fs.readFileSync(path.join(ROOT, 'render.yaml'), 'utf8');
-  const pinned = /stackyard:(\S+)/.exec(render);
-  if (!pinned || pinned[1] !== version) {
-    fail(1, `render.yaml pins the demo to ${pinned ? pinned[1] : 'nothing'}, not ${version}`);
-  }
 
   const previous = releases[1];
   if (previous && newest) {

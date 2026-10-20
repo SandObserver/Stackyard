@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     @param {string} name @returns {string} absolute path to the copy */
 function seededRepo(name) {
   const dir = path.join(tmpDir(name), 'repo');
-  for (const p of ['scripts', 'api/package.json', 'render.yaml']) {
+  for (const p of ['scripts', 'api/package.json']) {
     const dst = path.join(dir, p);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     fs.cpSync(path.join(ROOT, p), dst, { recursive: true });

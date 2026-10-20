@@ -31,7 +31,6 @@ const HEADER = `# Stackyard
 ![Stackyard dashboard](${RAW}/docs/screenshot.png)
 
 Try it: **[demo.sandobserver.com](https://demo.sandobserver.com)**
-The first demo visit may take up to a minute due to Render's free-tier cold start.
 
 Documentation: **[stackyard.sandobserver.com/docs](https://stackyard.sandobserver.com/docs/)**
 

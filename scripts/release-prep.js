@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Prepares a release: dates the [Unreleased] section, adds its compare link,
-   bumps api/package.json, and moves the demo image pin in render.yaml.
+   and bumps api/package.json.
 
    Writes files. Run it on a branch, never on the default branch.
 
@@ -61,14 +61,8 @@ function main(argv) {
   const bumped = pkg.replace(/("version":\s*")[^"]+(")/, `$1${version}$2`);
   if (bumped === pkg) die(`${pkgPath} has no version field to bump`);
 
-  const renderPath = 'render.yaml';
-  const render = read(renderPath);
-  const pinned = render.replace(/(stackyard:)\d+\.\d+\.\d+\S*/, `$1${version}`);
-  if (pinned === render) die(`${renderPath} does not pin an image tag; the demo would stay on the old release`);
-
   write('CHANGELOG.md', changed.markdown);
   write(pkgPath, bumped);
-  write(renderPath, pinned);
 
   console.error(`release-prep: ${changed.previous ?? 'first release'} -> ${version} (${date})`);
   console.log(`version=${version}`);
