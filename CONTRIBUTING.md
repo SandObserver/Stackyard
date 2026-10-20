@@ -12,7 +12,7 @@ If a feature seems to need a dependency or a build step, open an issue first.
 
 ## Development
 
-Run Stackyard from the working tree with Docker Compose 2.22 or later:
+Run Stackyard from the working tree with Docker Compose 2.23 or later:
 
 ```
 docker compose -f docker-compose.dev.yml watch

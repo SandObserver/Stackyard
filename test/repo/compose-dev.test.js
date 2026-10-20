@@ -37,6 +37,8 @@ test('the dev instance turns no guard off and gets no Docker socket', () => {
   const env = (dev.environment || []).join('\n');
   assert.doesNotMatch(env, /ALLOW_PRIVATE_IPS|SOCKET_PROXY_URL|TRUST_PROXY|DEMO_MODE/);
   for (const v of dev.volumes) assert.doesNotMatch(v, /docker\.sock/);
+  assert.equal(dev.network_mode, undefined);
+  assert.equal(dev.env_file, undefined);
 });
 
 /* The data folder holds stored secrets and corrupt-config backups. */
@@ -62,11 +64,37 @@ test('every module the API shares with the UI is watched', () => {
 /* The rewrite fails silently. A changed cache line would serve stale files. */
 test('the dev cache rewrite matches every long-lived cache line in nginx', () => {
   const script = dev.entrypoint.find(a => a.startsWith('sed '));
-  const from = /s\/([^/]+)\//.exec(script)?.[1];
+  const [, from, to] = /s\/([^/]+)\/([^/]*)\//.exec(script) || [];
   assert.ok(from, 'no sed substitution in the dev entrypoint');
+  assert.equal(to, 'no-cache');
   const lines = read('nginx/dashboard.conf')
     .split('\n')
     .filter(l => /max-age=\d{5,}/.test(l));
   assert.ok(lines.length > 0);
   for (const l of lines) assert.ok(l.includes(from), `not rewritten in dev: ${l.trim()}`);
+});
+
+/* Compose skips any watched path that .dockerignore excludes, with no warning. */
+test('no watched path is excluded by .dockerignore', () => {
+  const toRegex = glob =>
+    new RegExp(
+      `^${glob
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*\*/g, '\0')
+        .replace(/\*/g, '[^/]*')
+        .replace(/\?/g, '[^/]')
+        .replace(/\0/g, '.*')}$`,
+    );
+  const patterns = read('.dockerignore')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('#'))
+    .map(l => ({ keep: l.startsWith('!'), re: toRegex(l.replace(/^!/, '')) }));
+  for (const { path: watched } of dev.develop.watch) {
+    const parts = watched.replace(/^\.\//, '').split('/');
+    const prefixes = parts.map((_, i) => parts.slice(0, i + 1).join('/'));
+    let excluded = false;
+    for (const { keep, re } of patterns) if (prefixes.some(p => re.test(p))) excluded = !keep;
+    assert.equal(excluded, false, `${watched} is excluded by .dockerignore`);
+  }
 });
