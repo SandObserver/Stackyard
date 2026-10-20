@@ -34,7 +34,7 @@ import {
 } from '/js/admin-shared.js?v=1c01be9a';
 import { createListbox } from '/js/listbox.js?v=f814170f';
 import { MAX_LABELS } from '/js/badge-logic.js?v=5c72bd4c';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=ef504f96';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=4083ea3b';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';

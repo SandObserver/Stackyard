@@ -3,6 +3,7 @@ import { t } from '/js/i18n.js?v=ed7c5565';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=705ca896';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
+import { createListbox } from '/js/listbox.js?v=f814170f';
 import { HUE_NAMES, ROLE_NAMES, TILE_KEYWORDS, pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
@@ -147,9 +148,11 @@ export function renderColorControl(
   container,
   { value = '#0289ff', idPrefix, onChange, variant, swatchColors = CC_SWATCHES, label = t('common.color') } = {},
 ) {
-  const top = variant === 'tile' ? TILE_KEYWORDS : variant === 'badge' ? ROLE_NAMES : [];
+  const styled = variant === 'tile';
+  const styles = styled ? TILE_KEYWORDS : [];
+  const top = variant === 'badge' ? ROLE_NAMES : [];
   const hues = variant ? HUE_NAMES : [];
-  const isKw = v => typeof v === 'string' && (top.includes(v) || hues.includes(v));
+  const isKw = v => typeof v === 'string' && (styles.includes(v) || top.includes(v) || hues.includes(v));
   const kwName = v => t(COLOR_KEYS[v]);
   const init = _hexToHsv(isKw(value) ? _swatchFill(value) || '#0289ff' : value) || { h: 212, s: 99, v: 100 };
   const kwSwatch = v =>
@@ -160,13 +163,18 @@ export function renderColorControl(
   const wrap = document.createElement('div');
   const slider = (name, cls, id, max, val, lo, hi) => html`
     <div class="row hsb-row"><span class="rl">${name}</span><div class="hsb-track"><span class="hsb-ico">${raw(lo)}</span><input type="range" class="${cls}" id="${id}" min="0" max="${max}" value="${val}" aria-label="${name}"><span class="hsb-ico">${raw(hi)}</span></div></div>`;
-  const hueRow = hues.length
-    ? html`<div class="row cc-row cc-hues"><span class="rl">${t('color.system')}</span><div class="cc-sw">${hues.map(kwSwatch)}</div></div>`
-    : '';
+  const hueRow = !hues.length
+    ? ''
+    : styled
+      ? html`<div class="row cc-row cc-hues"><span class="rl">${label}</span><div class="cc-sw">${hues.map(kwSwatch)}${rainbow}</div></div>`
+      : html`<div class="row cc-row cc-hues"><span class="rl">${t('color.system')}</span><div class="cc-sw">${hues.map(kwSwatch)}</div></div>`;
+  const topRow = styled
+    ? html`<div class="row cc-style-row"><span class="rl">${t('color.style')}</span></div>`
+    : html`<div class="row cc-row"><span class="rl">${label}</span><div class="cc-sw">${swatches}</div></div>`;
   setHtml(
     wrap,
     html`
-    <div class="row cc-row"><span class="rl">${label}</span><div class="cc-sw">${swatches}</div></div>
+    ${topRow}
     <div class="row-wrap reveal cc-tune"><div class="reveal-in">
     ${hueRow}
     ${slider(t('appearance.hue'), 'hsb-range hsb-hue', `${idPrefix}-h`, 360, init.h, _ccIco.hueLo, _ccIco.hueHi)}
@@ -179,7 +187,7 @@ export function renderColorControl(
      'unsafe-inline'. A swatch paints itself from its own value. */
   for (const b of wrap.querySelectorAll('.cc-swatch[data-v]')) {
     const v = b.getAttribute('data-v') || '';
-    const fill = v[0] === '#' ? v : v === 'auto' || v === 'clear' ? '' : _swatchFill(v);
+    const fill = v[0] === '#' ? v : _swatchFill(v);
     if (fill) /** @type {HTMLElement} */ (b).style.background = fill;
   }
   const rows = /** @type {HTMLElement[]} */ ([...wrap.children]);
@@ -196,6 +204,33 @@ export function renderColorControl(
   container.appendChild(hidden);
   let mode = isKw(value) ? value : 'color';
   let showTune = hues.includes(mode);
+  /* The colour a Style other than Color replaced, so choosing Color brings it back. */
+  let resume = null;
+  const styleOf = () => (styles.includes(mode) ? mode : 'color');
+  const styleBox = styled
+    ? createListbox({
+        id: `${idPrefix}-style`,
+        label: t('color.style'),
+        options: [...styles, 'color'].map(v => ({ value: v, label: v === 'color' ? label : kwName(v) })),
+        value: styleOf(),
+        onChange: next => {
+          if (next !== 'color') {
+            if (!styles.includes(mode)) resume = { mode, hex: curHex(), pristine };
+            mode = next;
+            showTune = false;
+            commit();
+            return;
+          }
+          if (styles.includes(mode)) {
+            mode = resume?.mode ?? 'blue';
+            setSliders(resume?.hex ?? _swatchFill('blue'));
+          }
+          showTune = true;
+          commit(resume?.pristine);
+        },
+      })
+    : null;
+  if (styleBox) rows[0].appendChild(styleBox.el);
   /* The first paint restores stored state, so it must not animate. */
   let _painted = false;
   /* The value as it was stored. The sliders are integers, so reading a colour
@@ -235,13 +270,15 @@ export function renderColorControl(
       b.classList.toggle('on', on);
     });
     const rb = q('.cc-rainbow', container);
-    if (rb) rb.classList.toggle('on', showTune && (mode === 'color' || hues.includes(mode)));
+    if (rb)
+      rb.classList.toggle('on', styled ? mode === 'color' : showTune && (mode === 'color' || hues.includes(mode)));
     const sw = qa('.cc-swatch', container);
     const preset = sw.some(b => b !== rb && b.classList.contains('on'));
     sw.forEach(b =>
       b.setAttribute('aria-pressed', String(b === rb ? mode === 'color' && !preset : b.classList.contains('on'))),
     );
-    rb?.setAttribute('aria-expanded', String(showTune));
+    if (!styled) rb?.setAttribute('aria-expanded', String(showTune));
+    styleBox?.setValue(styleOf());
     reveal(tune, showTune, !_painted);
     if (!codeRv.closest('.editing')) {
       codeRv.textContent = mode === 'color' ? hex : kwName(mode);
@@ -250,8 +287,8 @@ export function renderColorControl(
     hidden.value = mode === 'color' ? (pristine ?? hex) : mode;
     _painted = true;
   }
-  const commit = () => {
-    pristine = null;
+  const commit = (keep = null) => {
+    pristine = keep;
     paint();
     onChange?.(hidden.value);
   };
@@ -265,6 +302,11 @@ export function renderColorControl(
   qa('.cc-swatch', container).forEach(b =>
     b.addEventListener('click', () => {
       const v = b.dataset.v || '';
+      if (v === 'custom' && styled) {
+        mode = 'color';
+        commit();
+        return;
+      }
       if (v === 'custom') {
         showTune = !(showTune && (mode === 'color' || hues.includes(mode)));
         if (showTune && !hues.includes(mode)) mode = 'color';

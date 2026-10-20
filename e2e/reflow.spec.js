@@ -71,7 +71,8 @@ test.describe('on a touch screen', () => {
       await page.setViewportSize({ width: 320, height: 700 });
       await page.goto('/admin/#dashboard');
       await page.locator('#al [data-act="edit"]').first().click();
-      await page.locator('#icon-color-slot .cc-swatch[data-v="custom"]').click();
+      await page.locator('#icon-col-style-btn').click();
+      await page.locator('#icon-col-style-list [data-val="color"]').click();
       const picker = page.locator('#icon-color-slot');
       await picker.locator('.cc-hues').waitFor({ state: 'visible' });
       await animationsDone(page);
@@ -104,7 +105,8 @@ test('the colour sliders share one length', async ({ page, request }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await openDashboardList(page);
   await page.locator('#al [data-act="edit"]').first().click();
-  await page.locator('#icon-color-slot .cc-swatch[data-v="custom"]').click();
+  await page.locator('#icon-col-style-btn').click();
+  await page.locator('#icon-col-style-list [data-val="color"]').click();
   const sliders = page.locator('#icon-color-slot .hsb-range');
   await expect(sliders).toHaveCount(3);
   await animationsDone(page);

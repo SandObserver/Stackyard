@@ -526,9 +526,10 @@
     "hidden": "已隐藏"
   },
   "color": {
+    "style": "样式",
     "dark": "深色",
     "light": "白色",
-    "auto": "自动（深色或白色）",
+    "auto": "自动",
     "clear": "透明",
     "system": "系统",
     "accent": "强调色",

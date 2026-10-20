@@ -78,6 +78,8 @@ const SAME_ON_PURPOSE = {
     'color.orange',
     'color.cyan',
     'color.indigo',
+    /* "Style" is the French word too. */
+    'color.style',
     /* Info and the version line are written the same way in French. */
     'general.logInfo',
     /* "Image" is the French word too. */

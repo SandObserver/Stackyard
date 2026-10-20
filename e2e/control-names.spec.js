@@ -88,24 +88,33 @@ test('Settings group titles are headings', async ({ page }) => {
   await expect(page.locator('#sec-general').getByRole('heading', { level: 2, name: 'Sprache' })).toBeVisible();
 });
 
-test('the selected colour swatch is announced as pressed', async ({ page }) => {
+test('the icon colour Style is a named drop-down', async ({ page }) => {
   await openDashboardList(page);
   await rowByName(page, 'Alpha')
     .getByRole('button', { name: /^Bearbeiten/ })
     .click();
+  const style = page.getByRole('button', { name: /^Stil/ });
+  await expect(style).toHaveAccessibleName('Stil Dunkel');
+  const pick = async v => {
+    await style.click();
+    await page.locator(`#icon-col-style-list [data-val="${v}"]`).click();
+  };
   const swatch = v => page.locator(`#icon-color-slot .cc-swatch[data-v="${v}"]`);
-  await expect(swatch('dark')).toHaveAttribute('aria-pressed', 'true');
-  await expect(swatch('light')).toHaveAttribute('aria-pressed', 'false');
-  await swatch('light').click();
-  await expect(swatch('light')).toHaveAttribute('aria-pressed', 'true');
-  await expect(swatch('dark')).toHaveAttribute('aria-pressed', 'false');
-  await swatch('custom').click();
-  await expect(swatch('custom')).toHaveAttribute('aria-expanded', 'true');
-  await expect(swatch('custom')).toHaveAttribute('aria-pressed', 'true');
+  await expect(swatch('red')).toBeHidden();
+  await pick('color');
+  await expect(style).toHaveAccessibleName('Stil Farbe');
+  await expect(swatch('blue')).toHaveAttribute('aria-pressed', 'true');
   await swatch('red').click();
   await expect(swatch('red')).toHaveAttribute('aria-pressed', 'true');
+  await expect(swatch('blue')).toHaveAttribute('aria-pressed', 'false');
   await expect(swatch('custom')).toHaveAttribute('aria-pressed', 'false');
-  await expect(swatch('custom')).toHaveAttribute('aria-expanded', 'true');
+  await pick('light');
+  await expect(swatch('red')).toBeHidden();
+  await pick('color');
+  await expect(swatch('red')).toHaveAttribute('aria-pressed', 'true');
+  await swatch('custom').click();
+  await expect(swatch('custom')).toHaveAttribute('aria-pressed', 'true');
+  await expect(swatch('red')).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('the Test result is announced', async ({ page }) => {
