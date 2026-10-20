@@ -55,7 +55,7 @@ function fallbackRoutes({ fixed, writes }) {
   const blocked = ping && JSON.parse(ping.answer[1]);
   for (const w of writes) {
     if (OUTBOUND_ROUTES.includes(`${w.method} ${w.route}`)) {
-      if (!blocked?.error) throw new Error(`no recorded outbound refusal to answer ${w.route} with`);
+      if (blocked?.code !== 'blocked.demo') throw new Error(`no recorded demo-mode refusal to answer ${w.route} with`);
       const body = JSON.stringify({ error: blocked.error, kind: blocked.kind, code: blocked.code });
       routes.push([{ method: w.method, path: routePattern(w.route) }, [502, body]]);
     } else {

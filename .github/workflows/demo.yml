@@ -24,6 +24,12 @@ on:
 permissions:
   contents: read
 
+# The release's demo job holds the same group. Runs that overlap would promote out
+# of order. A called workflow gets a group of its own, so it never waits on its caller.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && 'stackyard-demo-deploy' || format('demo-{0}', github.run_id) }}
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   WRANGLER_VERSION: 4.151.3
@@ -103,8 +109,9 @@ jobs:
       - name: Build the static demo
         run: |
           set -euo pipefail
-          node scripts/demo/build.js "$RUNNER_TEMP/webroot" "$RUNNER_TEMP/recording.json" demo/site
-          cp scripts/demo/wrangler.jsonc "$RUNNER_TEMP/tour.json" "$RUNNER_TEMP/recording.json" demo/
+          node scripts/demo/build.js "$RUNNER_TEMP/webroot" "$RUNNER_TEMP/recording.json" demo-site
+          mkdir demo-recording
+          cp "$RUNNER_TEMP/tour.json" "$RUNNER_TEMP/recording.json" demo-recording/
 
       - name: Container logs on failure
         if: failure()
@@ -113,8 +120,15 @@ jobs:
       - name: Upload the static demo
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: demo
-          path: demo/
+          name: demo-site
+          path: demo-site/
+          retention-days: 7
+
+      - name: Upload the recording
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: demo-recording
+          path: demo-recording/
           retention-days: 7
 
   upload:
@@ -138,14 +152,43 @@ jobs:
             echo 'set=true' >> "$GITHUB_OUTPUT"
           fi
 
+      # The Wrangler config comes from the repository, never from the build job.
+      - name: Checkout the Wrangler config
+        if: steps.creds.outputs.set == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          path: repo
+          sparse-checkout: scripts/demo/wrangler.jsonc
+          sparse-checkout-cone-mode: false
+
       - name: Download the static demo
         if: steps.creds.outputs.set == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: demo
-          path: demo
+          name: demo-site
+          path: upload/site
 
-      # Wrangler cannot upload a version of a Worker that does not exist yet.
+      # The build job runs dev dependencies. Wrangler runs in this folder with the
+      # token, so it must hold web files only: no package, config or link.
+      - name: Check the site holds web files only
+        if: steps.creds.outputs.set == 'true'
+        run: |
+          set -euo pipefail
+          bad=$(find upload/site \( -type l -o -name '.*' -o -name node_modules -o -name 'package*.json' \
+            -o -name 'wrangler.*' -o -name '_worker.js' -o \( -type f \
+            ! -regex '.*\.\(html\|js\|css\|json\|png\|jpg\|jpeg\|webp\|svg\|ico\|woff2\)$' \
+            ! -name _headers ! -name _redirects \) \) -print)
+          if [ -n "$bad" ]; then
+            echo "::error::the site holds files that are not web files:"
+            printf '%s\n' "$bad"
+            exit 1
+          fi
+          cp repo/scripts/demo/wrangler.jsonc upload/
+          rm -rf repo
+
+      # Wrangler cannot upload a version of a Worker that does not exist yet. The
+      # first run creates it with a placeholder page, so nothing untested goes live.
       - name: Check the Worker exists
         id: worker
         if: steps.creds.outputs.set == 'true'
@@ -154,14 +197,24 @@ jobs:
           ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          code=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 30 \
-            --header "Authorization: Bearer $TOKEN" \
+          # The header comes from stdin, so the token never appears in a process list.
+          code=$(printf 'Authorization: Bearer %s' "$TOKEN" | curl --silent --output /dev/null \
+            --write-out '%{http_code}' --max-time 30 --header @- \
             "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/workers/scripts/stackyard-demo/settings")
           case "$code" in
             200) echo 'exists=true' >> "$GITHUB_OUTPUT" ;;
             404) echo 'exists=false' >> "$GITHUB_OUTPUT" ;;
             *) echo "::error::Cloudflare answered HTTP $code"; exit 1 ;;
           esac
+
+      - name: Prepare the placeholder
+        if: steps.creds.outputs.set == 'true' && steps.worker.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          mkdir -p placeholder/site
+          printf '<!doctype html><meta charset="utf-8"><title>Stackyard demo</title><p>The demo is being prepared.</p>\n' > placeholder/site/index.html
+          printf '/ /index.html 200\n' > placeholder/site/_redirects
+          cp upload/wrangler.jsonc placeholder/
 
       - name: Create the Worker
         if: steps.creds.outputs.set == 'true' && steps.worker.outputs.exists == 'false'
@@ -170,7 +223,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: ${{ env.WRANGLER_VERSION }}
-          workingDirectory: demo
+          workingDirectory: placeholder
           command: deploy
 
       - name: Upload a version
@@ -181,7 +234,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: ${{ env.WRANGLER_VERSION }}
-          workingDirectory: demo
+          workingDirectory: upload
           command: versions upload --tag v${{ inputs.version }} --message "Stackyard ${{ inputs.version }}"
 
       - name: Read the version
@@ -236,13 +289,13 @@ jobs:
       - name: Download the recording
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: demo
-          path: demo
+          name: demo-recording
+          path: demo-recording
 
       - name: Tour the preview
         env:
           URL: ${{ needs.upload.outputs.url }}
-        run: node scripts/demo/tour.js verify "$URL" demo/tour.json demo/recording.json
+        run: node scripts/demo/tour.js verify "$URL" demo-recording/tour.json demo-recording/recording.json
 
   # Keep verify in needs. Without it, an untested version goes live.
   promote:

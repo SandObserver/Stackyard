@@ -5,6 +5,8 @@ const path = require('node:path');
 const { listFiles, writeRoutes } = require('./source');
 
 const STEP_MS = 5000;
+/* A valid address, so routes that call out reach the demo-mode refusal, not input validation. */
+const PROBE_BODY = JSON.stringify({ url: 'https://example.com', name: 'demo' });
 
 /** @param {string} origin @param {string} target */
 async function headersOf(origin, target) {
@@ -59,7 +61,7 @@ async function record({ origin, tour, webroot, minutes, apiSource }) {
     writes.push({
       method: w.method,
       route: w.route,
-      answer: await exchange(origin, w.method, w.route.replace(/:[a-z]+/gi, widgetId)),
+      answer: await exchange(origin, w.method, w.route.replace(/:[a-z]+/gi, widgetId), PROBE_BODY),
     });
   }
 

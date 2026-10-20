@@ -25,6 +25,7 @@ async function run(origin) {
   const exchanges = [];
   const problems = [];
   const errors = new Set();
+  const outcomes = new Set();
   let changed = false;
 
   const open = async view => {
@@ -41,6 +42,7 @@ async function run(origin) {
     });
     const page = await ctx.newPage();
     page.setDefaultTimeout(5000);
+    page.setDefaultNavigationTimeout(30_000);
     page.on('pageerror', e => errors.add(`page error: ${e.message}`));
     page.on('console', m => {
       if (m.text().startsWith('[demo-replay]')) problems.push(`${view.name}: ${m.text()}`);
@@ -93,7 +95,7 @@ async function run(origin) {
         .first()
         .click()
         .catch(() => {});
-      await page.waitForTimeout(500);
+      outcomes.add(`${view.name}: save: ${await toastText(page)}`);
       await page
         .locator('button:has-text("Back"):visible')
         .first()
@@ -110,11 +112,62 @@ async function run(origin) {
       .fill('jellyfin')
       .catch(() => {});
     await page.waitForTimeout(1500);
+    await page
+      .locator('#hc-en')
+      .evaluate(e => /** @type {HTMLElement} */ (e).click())
+      .catch(() => {});
+    await page
+      .locator('#hc-type-ping')
+      .evaluate(e => /** @type {HTMLElement} */ (e).click())
+      .catch(() => {});
+    await page.evaluate(() => {
+      const input = /** @type {HTMLInputElement|null} */ (document.getElementById('hc-ping'));
+      if (input) input.value = 'https://example.com';
+    });
+    await page
+      .locator('#hc-ping-test')
+      .evaluate(e => /** @type {HTMLElement} */ (e).click())
+      .catch(() => {});
+    await page.waitForTimeout(2500);
+    outcomes.add(
+      `${view.name}: test: ${await page
+        .locator('#hc-ping-status')
+        .innerText()
+        .catch(() => '')}`,
+    );
+    await page.goto(`${origin}/admin`, { waitUntil: 'networkidle' });
+    await page
+      .locator('[data-sec="general"]:visible')
+      .first()
+      .click()
+      .catch(() => {});
+    const download = page.waitForEvent('download', { timeout: 5000 }).then(
+      d => `download ${d.suggestedFilename()}`,
+      () => 'no download',
+    );
+    await page
+      .locator('#btn-exp')
+      .click({ force: true })
+      .catch(() => {});
+    outcomes.add(`${view.name}: export: ${await download}`);
     await ctx.close();
   }
 
   await browser.close();
-  return { exchanges, problems, errors: [...errors].sort(), changed };
+  return { exchanges, problems, errors: [...errors].sort(), outcomes: [...outcomes].sort(), changed };
+}
+
+/** @param {import('@playwright/test').Page} page */
+async function toastText(page) {
+  await page
+    .waitForFunction(() => document.getElementById('toast')?.textContent?.trim(), null, { timeout: 3000 })
+    .catch(() => {});
+  const text = await page.evaluate(() => document.getElementById('toast')?.textContent?.trim() || '');
+  await page.evaluate(() => {
+    const toast = document.getElementById('toast');
+    if (toast) toast.textContent = '';
+  });
+  return text;
 }
 
 /** @param {import('@playwright/test').Page} page */
@@ -148,15 +201,28 @@ async function main() {
   if (mode === 'discover' && tourFile) {
     const result = await run(origin);
     if (!result.changed) throw new Error('no widget changed in 25 seconds on the container');
-    fs.writeFileSync(tourFile, JSON.stringify({ exchanges: result.exchanges, errors: result.errors }));
+    if (result.outcomes.some(o => o.endsWith(': ') || o.endsWith('no download'))) {
+      throw new Error(`the container showed no result for an action:\n${result.outcomes.join('\n')}`);
+    }
+    fs.writeFileSync(
+      tourFile,
+      JSON.stringify({ exchanges: result.exchanges, errors: result.errors, outcomes: result.outcomes }),
+    );
     console.log(`${result.exchanges.length} API exchanges, ${result.errors.length} console errors on the container`);
+    console.log(result.outcomes.join('\n'));
     return;
   }
   if (mode === 'verify' && recordingFile) {
-    const baseline = new Set(JSON.parse(fs.readFileSync(tourFile, 'utf8')).errors);
+    const container = JSON.parse(fs.readFileSync(tourFile, 'utf8'));
+    const baseline = new Set(container.errors);
     const result = await run(origin);
     const problems = [...result.problems];
     for (const e of result.errors) if (!baseline.has(e)) problems.push(e);
+    const seen = new Set(result.outcomes);
+    for (const o of container.outcomes)
+      if (!seen.has(o)) problems.push(`the container showed "${o}", the static demo did not`);
+    for (const o of result.outcomes)
+      if (!container.outcomes.includes(o)) problems.push(`the static demo showed "${o}"`);
     if (!result.changed) problems.push('no widget changed in 25 seconds');
     problems.push(...(await checkHeaders(origin, JSON.parse(fs.readFileSync(recordingFile, 'utf8')))));
     if (problems.length) {

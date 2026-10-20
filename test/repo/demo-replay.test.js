@@ -33,12 +33,14 @@ const chunks = {
   ],
 };
 
-function page(now) {
+function page(now, intercept = () => null) {
   const warnings = [];
   const passed = [];
   const window = {
     fetch: async input => {
       const url = String(input);
+      const stubbed = intercept(url);
+      if (stubbed) return stubbed;
       if (url === '/demo-replay/index.test.json') return new Response(JSON.stringify(index));
       const name = url.replace('/demo-replay/', '');
       if (chunks[name]) return new Response(JSON.stringify(chunks[name]));
@@ -105,6 +107,20 @@ test('an unrecorded request is reported, not hidden', async () => {
   const p = page(START);
   assert.equal((await p.get('/api/nothing')).status, 503);
   assert.match(p.warnings[0], /^\[demo-replay\] not recorded: GET \/api\/nothing$/);
+});
+
+test('a failed load is retried on the next request', async () => {
+  let fail = 2;
+  const p = page(START, url => {
+    if (fail > 0) {
+      fail--;
+      return new Response('', { status: url.endsWith('index.test.json') ? 503 : 404 });
+    }
+    return null;
+  });
+  await assert.rejects(p.get('/api/config'));
+  await assert.rejects(p.get('/api/widget-data/w?endpoint=system'));
+  assert.equal(JSON.parse((await p.get('/api/widget-data/w?endpoint=system')).body).cpu, 0);
 });
 
 test('files and other sites go to the network', async () => {

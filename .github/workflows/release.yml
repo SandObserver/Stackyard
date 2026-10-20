@@ -404,6 +404,9 @@ jobs:
   demo:
     needs: [build-and-push, release-page]
     if: needs.release-page.outputs.prerelease == 'false'
+    concurrency:
+      group: stackyard-demo-deploy
+      cancel-in-progress: false
     permissions:
       contents: read
     uses: ./.github/workflows/demo.yml

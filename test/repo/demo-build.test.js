@@ -71,6 +71,16 @@ test('an options lookup answers with the outbound refusal the image gives', () =
   assert.throws(() =>
     fallbackRoutes({ fixed: {}, writes: [{ method: 'POST', route: '/api/widget-options/:id', answer: [400, '{}'] }] }),
   );
+  const invalidPing = { ...ping, answer: [400, JSON.stringify({ ok: false, error: 'url required', kind: 'invalid' })] };
+  assert.throws(
+    () =>
+      fallbackRoutes({
+        fixed: {},
+        writes: [invalidPing, { method: 'POST', route: '/api/widget-options/:id', answer: [400, '{}'] }],
+      }),
+    /demo-mode refusal/,
+    'an input error recorded for ping must not stand in for the demo refusal',
+  );
 });
 
 const BASE = {
