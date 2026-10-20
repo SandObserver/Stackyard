@@ -167,6 +167,7 @@
     "iconNoMatch": "未找到“{q}”的图标",
     "iconTryUpload": "可上传自定义图标，或留空以使用首字母。",
     "iconSearchFailed": "无法访问图标目录",
+    "iconSearchDemo": "在线演示中已关闭图标搜索。",
     "iconFrom": "来自 {source}",
     "iconResults": "图标建议",
     "iconResultCount_other": "找到 {count} 个图标",

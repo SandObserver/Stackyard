@@ -1,4 +1,4 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=4853370b';
+import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=622c5ce8';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5246ff39';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
 import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=61d89772';

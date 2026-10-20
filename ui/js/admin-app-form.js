@@ -674,12 +674,14 @@ function wireIcon() {
       const d = await apiGet(`/api/icons/search?q=${encodeURIComponent(q)}`);
       if (mine !== run) return;
       showIPRes(d.results || [], v);
-    } catch {
+    } catch (e) {
       if (mine !== run) return;
       /* No catalogue to confirm against, so the typed name is all that is left. */
       updPrev();
-      ipMessage(t('app.iconSearchFailed'), t('app.iconTryUpload'));
-      ipSay(t('app.iconSearchFailed'));
+      const demo = /** @type {{ code?: string }} */ (e)?.code === 'blocked.demo';
+      const why = t(demo ? 'app.iconSearchDemo' : 'app.iconSearchFailed');
+      ipMessage(why, demo ? '' : t('app.iconTryUpload'));
+      ipSay(why);
     }
   };
   inp.oninput = () => {

@@ -169,6 +169,7 @@
     "iconNoMatch": "No se encontró ningún icono para «{q}»",
     "iconTryUpload": "Sube el tuyo o déjalo vacío para usar la primera letra.",
     "iconSearchFailed": "No se pudo acceder a los catálogos de iconos",
+    "iconSearchDemo": "La búsqueda de iconos está desactivada en la demo en vivo.",
     "iconFrom": "de {source}",
     "iconResults": "Sugerencias de iconos",
     "iconResultCount_one": "{count} icono encontrado",

@@ -100,7 +100,8 @@ test('the count and the empty result are announced', () => {
   assert.match(form, /role="status" aria-live="polite"/, 'nothing is announced');
   assert.match(form, /ipSay\(t\('app\.iconResultCount'/);
   assert.match(form, /ipSay\(t\('app\.iconNoMatch'/);
-  assert.match(form, /ipSay\(t\('app\.iconSearchFailed'/);
+  assert.match(form, /const why = t\(demo \? 'app\.iconSearchDemo' : 'app\.iconSearchFailed'\)/);
+  assert.match(form, /ipSay\(why\)/, 'a failed search is not announced');
   assert.match(form, /aria-describedby="ip-status"/, 'the input is not tied to the status line');
 });
 
@@ -172,6 +173,7 @@ test('every string the picker shows is translated', () => {
     'iconNoMatch',
     'iconTryUpload',
     'iconSearchFailed',
+    'iconSearchDemo',
     'iconFrom',
     'iconResults',
     'iconVariant',
@@ -246,7 +248,8 @@ test('the tile follows the result that matches what was typed', () => {
    to try, or the field would go quiet whenever the catalogues are down. */
 test('a search that fails still previews the typed name', () => {
   const search = form.slice(form.indexOf('const search = async'), form.indexOf('inp.oninput'));
-  const fail = search.slice(search.indexOf('} catch {'));
+  const fail = search.slice(search.indexOf('} catch (e) {'));
+  assert.ok(fail.length > 1, 'the failure branch is gone');
   assert.match(fail, /updPrev\(\)/);
 });
 

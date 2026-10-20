@@ -169,6 +169,7 @@
     "iconNoMatch": "Aucune icône trouvée pour « {q} »",
     "iconTryUpload": "Téléversez la vôtre, ou laissez vide pour utiliser la première lettre.",
     "iconSearchFailed": "Les catalogues d’icônes sont inaccessibles",
+    "iconSearchDemo": "La recherche d’icônes est désactivée dans la démo en ligne.",
     "iconFrom": "de {source}",
     "iconResults": "Suggestions d’icônes",
     "iconResultCount_one": "{count} icône trouvée",
